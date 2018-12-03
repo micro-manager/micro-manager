@@ -525,7 +525,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
             OutputStreamWriter writer = new OutputStreamWriter(
                     new FileOutputStream(newLogFile), "UTF-8");
             // not sure if buffering is useful
-            logFileWriter_ = new BufferedWriter(writer, 1024);
+            logFileWriter_ = new BufferedWriter(writer, 128);
          } catch (UnsupportedEncodingException | FileNotFoundException ex) {
             studio_.alerts().postAlert("Error opening logfile", this.getClass(),
                     "Failed to open log file");
@@ -1242,6 +1242,12 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       clearLogDirButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent evt) {
+            if (logFileWriter_ != null) {
+                try {
+                   logFileWriter_.flush();
+                   logFileWriter_.close();
+                } catch (IOException ioe) {}
+            }
             String logDirectory = logDirectoryTextField_.getText();
             File logDir = new File(logDirectory);
             if (logDir.isDirectory()) {
