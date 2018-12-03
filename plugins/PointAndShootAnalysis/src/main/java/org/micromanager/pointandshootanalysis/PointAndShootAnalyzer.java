@@ -105,6 +105,7 @@ public class PointAndShootAnalyzer implements Runnable {
          Consumer<String> action = new pointAndShootParser();
          Stream<String> fileLines = Files.lines(f.toPath());
          fileLines.forEach(action);
+         fileLines.close();
       } catch (IOException ex) {
          studio_.logs().showError("Error while parsing file: " + f.getName());
          return;
@@ -286,7 +287,7 @@ public class PointAndShootAnalyzer implements Runnable {
                data.add(frameTimeStamps.get(startFrame + i).toEpochMilli() -
                        frameTimeStamps.get(centralFrame).toEpochMilli(),
                        intData.get(i) / preBleachAverage);
-            }            
+            }  
             plotData.add(data);
             
             for (Double val : intData) {
@@ -313,6 +314,7 @@ public class PointAndShootAnalyzer implements Runnable {
       boolean[] showShapes = new boolean[plotData.size()];
       for (int i = 0; i < showShapes.length; i++) {
          showShapes[i] = true;
+         plots[i].setKey(i);
       }
 
       PlotUtils pu = new PlotUtils(studio_.profile().getSettings(this.getClass()));

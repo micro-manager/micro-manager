@@ -13,6 +13,7 @@ public class Terms {
    public final static String LOCATIONSFILENAME = "LocationFileName";
    public final static String[] FILESUFFIXES = {"txt", "tproj", ""};
    public final static String RADIUS = "Radius";
+   public final static String CORERECEIVEDTIMEKEY = "TimeReceivedByCore";
    
    
 }
