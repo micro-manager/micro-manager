@@ -103,6 +103,7 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.events.NewDisplayEvent;
 import org.micromanager.events.SLMExposureChangedEvent;
+import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
 import org.micromanager.propertymap.MutablePropertyMapView;
@@ -127,6 +128,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private final AtomicBoolean pointAndShooteModeOn_ = new AtomicBoolean(false);
    private final BlockingQueue<PointAndShootInfo> pointAndShootQueue_;
    private Thread pointAndShootThread_;
+   private ImageCanvas pointAndShootCanvas_;
    private final CMMCore core_;
    private final Studio studio_;
    private final MutablePropertyMapView settings_;
@@ -150,6 +152,104 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    public static final FileType PROJECTOR_LOG_FILE = new FileType("PROJECTOR_LOG_FILE",
       "Projector Log File", "./MyProjector.log", true, "log");
   
+   
+    /**
+    * Constructor. Creates the main window for the Projector plugin.
+    */
+   private ProjectorControlForm(CMMCore core, Studio app) {
+      studio_ = app;
+      core_ = app.getCMMCore();
+      settings_ = studio_.profile().getSettings(this.getClass());
+      dev_ = ProjectorActions.getProjectionDevice(studio_);
+      mapping_ = Mapping.loadMapping(core_, dev_, settings_);
+      pointAndShootQueue_ = new LinkedBlockingQueue<PointAndShootInfo>();
+      pointAndShootMouseListener_ = createPointAndShootMouseListenerInstance();
+      
+      // Create GUI
+      initComponents();
+
+      // Make sure that the POint and Shoot code listens to the correct window
+      Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
+         @Override
+         public void eventDispatched(AWTEvent e) {
+            enablePointAndShootMode(pointAndShooteModeOn_.get());
+         }
+      }, AWTEvent.WINDOW_EVENT_MASK);
+      
+      isSLM_ = dev_ instanceof SLM;
+      // Only an SLM (not a galvo) has pixels.
+      allPixelsButton_.setVisible(isSLM_);
+      checkerBoardButton_.setVisible(isSLM_);
+      // No point in looping ROIs on an SLM.
+      roiLoopSpinner_.setVisible(!isSLM_);
+      roiLoopLabel_.setVisible(!isSLM_);
+      roiLoopTimesLabel_.setVisible(!isSLM_);
+      pointAndShootOffButton_.setSelected(true);
+      populateChannelComboBox(settings_.getString(Terms.PTCHANNEL, ""));
+      populateShutterComboBox(settings_.getString(Terms.PTSHUTTER, ""));
+      super.addWindowFocusListener(new WindowAdapter() {
+         @Override
+         public void windowGainedFocus(WindowEvent e) {
+            if (!disposing_)
+            {
+               populateChannelComboBox(settings_.getString(Terms.PTCHANNEL, ""));
+               populateShutterComboBox(settings_.getString(Terms.PTSHUTTER, ""));
+            }
+         }
+      });
+      
+      commitSpinnerOnValidEdit(pointAndShootIntervalSpinner_);
+      commitSpinnerOnValidEdit(startFrameSpinner_);
+      commitSpinnerOnValidEdit(repeatEveryFrameSpinner_);
+      commitSpinnerOnValidEdit(repeatEveryIntervalSpinner_);
+      commitSpinnerOnValidEdit(roiLoopSpinner_);
+      pointAndShootIntervalSpinner_.setValue(dev_.getExposure() / 1000);
+      sequencingButton_.setVisible(MosaicSequencingFrame.getMosaicDevices(core).size() > 0);
+     
+      studio_.events().registerForEvents(new Object() {
+         @Subscribe
+         public void onSlmExposureChanged(SLMExposureChangedEvent event) {
+            String deviceName = event.getDeviceName();
+            double exposure = event.getNewExposureTime();
+            if (deviceName.equals(dev_.getName())) {
+               pointAndShootIntervalSpinner_.setValue(exposure);
+            }
+         }
+         
+         @Subscribe
+         public void onShutdownStarting(ShutdownCommencingEvent sce) {
+            dispose();
+         }
+      });
+
+      studio_.displays().registerForEvents(new Object(){
+         @Subscribe
+         public void onNewDisplayEvent(NewDisplayEvent nde) {
+            Window asWindow = nde.getDisplay().getWindow();
+            if (asWindow instanceof ImageWindow) {
+               ImageCanvas canvas = ((ImageWindow) asWindow).getCanvas();
+               pointAndShootWindow(canvas, pointAndShooteModeOn_.get());
+            }
+         }
+      });
+      
+      delayField_.setText(settings_.getString( Terms.DELAY, "0"));
+      logDirectoryTextField_.setText(settings_.getString( Terms.LOGDIRECTORY, ""));
+
+      super.loadAndRestorePosition(500, 300);
+      updateROISettings();
+   }
+   
+   // Show the form, which is a singleton.
+   public static ProjectorControlForm showSingleton(CMMCore core, Studio app) {
+      if (formSingleton_ == null) {
+         formSingleton_ = new ProjectorControlForm(core, app);
+      }
+      formSingleton_.setVisible(true);
+      return formSingleton_;
+   }
+   
+   
    // ## Methods for handling targeting channel and shutter
    
    /**
@@ -447,7 +547,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
       pointAndShooteModeOn_.set(on);
       // restart this thread if it is not running?
-      if (pointAndShootThread_ == null) {
+      if (pointAndShootThread_ == null || !pointAndShootThread_.isAlive()) {
          pointAndShootThread_ = new Thread(
                  new Runnable() {
             @Override
@@ -497,7 +597,11 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                }
             }
             if (!found) {
+               if (canvas != pointAndShootCanvas_ && pointAndShootCanvas_ != null) {  // this should be true whenever pointAndShootCanvas_ != null
+                  pointAndShootCanvas_.removeMouseListener(pointAndShootMouseListener_);
+               }
                canvas.addMouseListener(pointAndShootMouseListener_);
+               pointAndShootCanvas_ = canvas;
             }
          } else {
             for (MouseListener listener : canvas.getMouseListeners()) {
@@ -505,6 +609,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                   canvas.removeMouseListener(listener);
                }
             }
+            pointAndShootCanvas_ = null;
          }
       }
 
@@ -1008,94 +1113,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       mosaicSequencingFrame_.setVisible(true);
    }
    
-   /**
-    * Constructor. Creates the main window for the Projector plugin.
-    */
-   private ProjectorControlForm(CMMCore core, Studio app) {
-      studio_ = app;
-      core_ = app.getCMMCore();
-      settings_ = studio_.profile().getSettings(this.getClass());
-      dev_ = ProjectorActions.getProjectionDevice(studio_);
-      mapping_ = Mapping.loadMapping(core_, dev_, settings_);
-      pointAndShootQueue_ = new LinkedBlockingQueue<PointAndShootInfo>();
-      pointAndShootMouseListener_ = createPointAndShootMouseListenerInstance();
-      
-      // Create GUI
-      initComponents();
-
-      // Make sure that the POint and Shoot code listens to the correct window
-      Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
-         @Override
-         public void eventDispatched(AWTEvent e) {
-            enablePointAndShootMode(pointAndShooteModeOn_.get());
-         }
-      }, AWTEvent.WINDOW_EVENT_MASK);
-      
-      isSLM_ = dev_ instanceof SLM;
-      // Only an SLM (not a galvo) has pixels.
-      allPixelsButton_.setVisible(isSLM_);
-      checkerBoardButton_.setVisible(isSLM_);
-      // No point in looping ROIs on an SLM.
-      roiLoopSpinner_.setVisible(!isSLM_);
-      roiLoopLabel_.setVisible(!isSLM_);
-      roiLoopTimesLabel_.setVisible(!isSLM_);
-      pointAndShootOffButton_.setSelected(true);
-      populateChannelComboBox(settings_.getString(Terms.PTCHANNEL, ""));
-      populateShutterComboBox(settings_.getString(Terms.PTSHUTTER, ""));
-      super.addWindowFocusListener(new WindowAdapter() {
-         @Override
-         public void windowGainedFocus(WindowEvent e) {
-            if (!disposing_)
-            {
-               populateChannelComboBox(settings_.getString(Terms.PTCHANNEL, ""));
-               populateShutterComboBox(settings_.getString(Terms.PTSHUTTER, ""));
-            }
-         }
-      });
-      
-      commitSpinnerOnValidEdit(pointAndShootIntervalSpinner_);
-      commitSpinnerOnValidEdit(startFrameSpinner_);
-      commitSpinnerOnValidEdit(repeatEveryFrameSpinner_);
-      commitSpinnerOnValidEdit(repeatEveryIntervalSpinner_);
-      commitSpinnerOnValidEdit(roiLoopSpinner_);
-      pointAndShootIntervalSpinner_.setValue(dev_.getExposure() / 1000);
-      sequencingButton_.setVisible(MosaicSequencingFrame.getMosaicDevices(core).size() > 0);
-     
-      studio_.events().registerForEvents(new Object() {
-         @Subscribe
-         public void onSlmExposureChanged(SLMExposureChangedEvent event) {
-            String deviceName = event.getDeviceName();
-            double exposure = event.getNewExposureTime();
-            if (deviceName.equals(dev_.getName())) {
-               pointAndShootIntervalSpinner_.setValue(exposure);
-            }
-         }
-
-         @Subscribe
-         public void onNewDisplayEvent(NewDisplayEvent nde) {
-            Window asWindow = nde.getDisplay().getWindow();
-            if (asWindow instanceof ImageWindow) {
-               ImageCanvas canvas = ((ImageWindow) asWindow).getCanvas();
-               pointAndShootWindow(canvas, pointAndShooteModeOn_.get());
-            }
-         }
-      });
-      
-      delayField_.setText(settings_.getString( Terms.DELAY, "0"));
-      logDirectoryTextField_.setText(settings_.getString( Terms.LOGDIRECTORY, ""));
-
-      super.loadAndRestorePosition(500, 300);
-      updateROISettings();
-   }
-   
-   // Show the form, which is a singleton.
-   public static ProjectorControlForm showSingleton(CMMCore core, Studio app) {
-      if (formSingleton_ == null) {
-         formSingleton_ = new ProjectorControlForm(core, app);
-      }
-      formSingleton_.setVisible(true);
-      return formSingleton_;
-   }
+  
    
    /**
     * Returns singleton instance if it exists, null otherwise
