@@ -36,6 +36,7 @@ import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -100,6 +101,7 @@ import org.micromanager.data.DataProvider;
 import org.micromanager.data.Image;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.displaywindow.DisplayController;
+import org.micromanager.events.NewDisplayEvent;
 import org.micromanager.events.SLMExposureChangedEvent;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
@@ -407,7 +409,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private MouseListener createPointAndShootMouseListenerInstance() {
       return new MouseAdapter() {
          @Override
-         public void mouseClicked(MouseEvent e) {
+         public void mouseReleased(MouseEvent e) {
             if (e.isShiftDown()) {
                final Point p = e.getPoint();
                final ImageCanvas canvas = (ImageCanvas) e.getSource();
@@ -428,6 +430,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                pointAndShootQueue_.add(psi);
             }
          }
+         
       };
    }
 
@@ -480,29 +483,33 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       ImageWindow window = WindowManager.getCurrentWindow();
       if (window != null) {
          ImageCanvas canvas = window.getCanvas();
-         if (canvas != null) {
-            if (on) {
-               boolean found = false;
-               for (MouseListener listener : canvas.getMouseListeners()) {
-                  if (listener == pointAndShootMouseListener_) {
-                     found = true;
-                  }
+         pointAndShootWindow(canvas, on);
+      }
+   }
+
+   private void pointAndShootWindow(ImageCanvas canvas, Boolean on) {
+      if (canvas != null) {
+         if (on) {
+            boolean found = false;
+            for (MouseListener listener : canvas.getMouseListeners()) {
+               if (listener == pointAndShootMouseListener_) {
+                  found = true;
                }
-               if (!found) {
-                  canvas.addMouseListener(pointAndShootMouseListener_);
-               }
-            } else {
-               for (MouseListener listener : canvas.getMouseListeners()) {
-                  if (listener == pointAndShootMouseListener_) {
-                     canvas.removeMouseListener(listener);
-                  }
+            }
+            if (!found) {
+               canvas.addMouseListener(pointAndShootMouseListener_);
+            }
+         } else {
+            for (MouseListener listener : canvas.getMouseListeners()) {
+               if (listener == pointAndShootMouseListener_) {
+                  canvas.removeMouseListener(listener);
                }
             }
          }
       }
+
    }
-   
-   
+
    /**
     * Creates the log file - names with the current date - if it 
     * did not yet exist.
@@ -1061,6 +1068,15 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
             double exposure = event.getNewExposureTime();
             if (deviceName.equals(dev_.getName())) {
                pointAndShootIntervalSpinner_.setValue(exposure);
+            }
+         }
+
+         @Subscribe
+         public void onNewDisplayEvent(NewDisplayEvent nde) {
+            Window asWindow = nde.getDisplay().getWindow();
+            if (asWindow instanceof ImageWindow) {
+               ImageCanvas canvas = ((ImageWindow) asWindow).getCanvas();
+               pointAndShootWindow(canvas, pointAndShooteModeOn_.get());
             }
          }
       });
