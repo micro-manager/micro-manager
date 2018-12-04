@@ -31,6 +31,7 @@ import ij.plugin.frame.RoiManager;
 import ij.process.FloatPolygon;
 
 import java.awt.AWTEvent;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Polygon;
@@ -664,6 +665,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       try {
          logFileWriter.write(currentTime + "\t" + p.x + "\t" + p.y);
          logFileWriter.newLine();
+         logFileWriter.flush();
       } catch (IOException ioe) {
          studio_.alerts().postAlert("Projector logfile error", this.getClass(),
                  "Failed to open write to Projector log file");
@@ -1208,6 +1210,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       JPanel asyncRoiPanel = new JPanel();
       JButton centerButton = new JButton();
       JButton clearLogDirButton = new JButton();
+      JButton openLogDirButton = new JButton();
       JButton logDirectoryChooserButton = new JButton();
       JTabbedPane mainTabbedPane = new JTabbedPane();
       JPanel pointAndShootTab = new JPanel();
@@ -1300,6 +1303,22 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
             }
          }
       });
+      
+      openLogDirButton.setText("Open Log Directory");
+      openLogDirButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent evt) {
+            if (logDirectoryTextField_.getText() != null) {
+               try {
+               Desktop.getDesktop().open(
+                       new File(logDirectoryTextField_.getText()));
+               } catch (IOException ioe) {
+                  studio_.logs().showMessage("Invalid directory");
+               }
+            }
+            
+         }
+      });
 
       pointAndShootTab.setLayout(new MigLayout("", "", "[40]"));
       
@@ -1313,7 +1332,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       pointAndShootTab.add(logDirectoryTextField_, "grow");
       pointAndShootTab.add(logDirectoryChooserButton, "wrap");
       
-      pointAndShootTab.add(clearLogDirButton, "span 3, wrap");
+      pointAndShootTab.add(clearLogDirButton, "span 4, split 2");
+      pointAndShootTab.add(openLogDirButton, "wrap");
       
       mainTabbedPane.addTab("Point and Shoot", pointAndShootTab);
 
