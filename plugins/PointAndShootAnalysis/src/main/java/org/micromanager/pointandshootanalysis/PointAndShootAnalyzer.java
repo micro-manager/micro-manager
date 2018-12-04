@@ -69,7 +69,7 @@ public class PointAndShootAnalyzer implements Runnable {
    final private int roiWidth_ = 100;  // may need to changed by user
    final private int roiHeight_ = 100;  // may need to changed by user
    final private int nrFramesBefore_ = 2; // may need to changed by user
-   final private int nrFramesAfter_ = 10; // may need to changed by user
+   final private int nrFramesAfter_ = 300; // may need to changed by user
    final private int maxDistance_ = 10; // max distance in pixels from the expected position
                         // if more, we will reject the bleach spot
                         // may need to be changed buy the user
@@ -206,7 +206,7 @@ public class PointAndShootAnalyzer implements Runnable {
                     ? dataProvider.getAxisLength(Coords.T) : endFrame;
             Coords.Builder cb = dataProvider.getAnyImage().getCoords().copyBuilder();
             ImageStack stack = new ImageStack(roiWidth_, roiHeight_);
-            for (int frame = startFrame; frame <= endFrame; frame++) {
+            for (int frame = startFrame; frame < endFrame; frame++) {
                Coords coord = cb.t(frame).build();
                Image img = dataProvider.getImage(coord);
                ImageProcessor iProc = studio_.data().getImageJConverter().createProcessor(img);
