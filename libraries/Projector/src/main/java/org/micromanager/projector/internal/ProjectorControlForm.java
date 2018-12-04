@@ -101,7 +101,7 @@ import org.micromanager.data.DataProvider;
 import org.micromanager.data.Image;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.displaywindow.DisplayController;
-import org.micromanager.events.NewDisplayEvent;
+import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
 import org.micromanager.events.SLMExposureChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.utils.FileDialogs;
@@ -220,15 +220,18 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          public void onShutdownStarting(ShutdownCommencingEvent sce) {
             dispose();
          }
+         
       });
 
-      studio_.displays().registerForEvents(new Object(){
+      studio_.displays().registerForEvents(new Object() {
          @Subscribe
-         public void onNewDisplayEvent(NewDisplayEvent nde) {
-            Window asWindow = nde.getDisplay().getWindow();
-            if (asWindow instanceof ImageWindow) {
-               ImageCanvas canvas = ((ImageWindow) asWindow).getCanvas();
-               pointAndShootWindow(canvas, pointAndShooteModeOn_.get());
+         public void onDataViewerBecameActiveEvent(DataViewerDidBecomeActiveEvent dve) {
+            if (dve.getDataViewer() instanceof DisplayWindow) {
+               Window asWindow = ((DisplayWindow) (dve.getDataViewer())).getWindow();
+               if (asWindow instanceof ImageWindow) {
+                  ImageCanvas canvas = ((ImageWindow) asWindow).getCanvas();
+                  pointAndShootWindow(canvas, pointAndShooteModeOn_.get());
+               }
             }
          }
       });
@@ -505,32 +508,33 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * Creates a MouseListener instance for future use with Point and Shoot
     * mode. When the MouseListener is attached to an ImageJ window, any
     * clicks will result in a spot being illuminated.
-   */
+    */
    private MouseListener createPointAndShootMouseListenerInstance() {
       return new MouseAdapter() {
          @Override
          public void mouseReleased(MouseEvent e) {
             if (e.isShiftDown()) {
-               final Point p = e.getPoint();
-               final ImageCanvas canvas = (ImageCanvas) e.getSource();
-               Point pOff = new Point(canvas.offScreenX(p.x), canvas.offScreenY(p.y));
-               final Point pOffScreen = mirrorIfNecessary(canvas, pOff);
-               final Point2D.Double devP = ProjectorActions.transformPoint(
-                       Mapping.loadMapping(core_, dev_, settings_),
-                       new Point2D.Double(pOffScreen.x, pOffScreen.y));
-               final Configuration originalConfig = prepareChannel();
-               final boolean originalShutterState = prepareShutter();
-               PointAndShootInfo.Builder psiBuilder = new PointAndShootInfo.Builder();
-               PointAndShootInfo psi = psiBuilder.projectionDevice(dev_).
-                       devPoint(devP).
-                       originalShutterState(originalShutterState).
-                       originalConfig(originalConfig).
-                       canvasPoint(pOffScreen).
-                       build();
-               pointAndShootQueue_.add(psi);
+               if (studio_.acquisitions().isAcquisitionRunning() || studio_.live().getIsLiveModeOn()) {
+                  final Point p = e.getPoint();
+                  final ImageCanvas canvas = (ImageCanvas) e.getSource();
+                  Point pOff = new Point(canvas.offScreenX(p.x), canvas.offScreenY(p.y));
+                  final Point pOffScreen = mirrorIfNecessary(canvas, pOff);
+                  final Point2D.Double devP = ProjectorActions.transformPoint(
+                          Mapping.loadMapping(core_, dev_, settings_),
+                          new Point2D.Double(pOffScreen.x, pOffScreen.y));
+                  final Configuration originalConfig = prepareChannel();
+                  final boolean originalShutterState = prepareShutter();
+                  PointAndShootInfo.Builder psiBuilder = new PointAndShootInfo.Builder();
+                  PointAndShootInfo psi = psiBuilder.projectionDevice(dev_).
+                          devPoint(devP).
+                          originalShutterState(originalShutterState).
+                          originalConfig(originalConfig).
+                          canvasPoint(pOffScreen).
+                          build();
+                  pointAndShootQueue_.add(psi);
+               }
             }
          }
-         
       };
    }
 
