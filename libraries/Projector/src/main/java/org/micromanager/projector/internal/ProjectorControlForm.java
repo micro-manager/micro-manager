@@ -1109,6 +1109,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
             logFileWriter_.close();
          } catch (IOException ioe) {
             // we are trying to close this file.  silently ignoring should be OK....
+         } finally {
+            logFileWriter_ = null;
          }
       }
       super.dispose();
@@ -1243,10 +1245,13 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          @Override
          public void actionPerformed(ActionEvent evt) {
             if (logFileWriter_ != null) {
-                try {
-                   logFileWriter_.flush();
-                   logFileWriter_.close();
-                } catch (IOException ioe) {}
+               try {
+                  logFileWriter_.flush();
+                  logFileWriter_.close();
+               } catch (IOException ioe) {
+               } finally {
+                  logFileWriter_ = null;
+               }
             }
             String logDirectory = logDirectoryTextField_.getText();
             File logDir = new File(logDirectory);
