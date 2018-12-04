@@ -97,19 +97,21 @@ public final class PipelineTableModel extends AbstractTableModel {
    }
 
    /**
-    * Provide a list of configurators for all enabled processors.
+    * Provide a list of configurators for all processors.
     */
    public List<ProcessorConfigurator> getPipelineConfigurators() {
       ArrayList<ProcessorConfigurator> result = new ArrayList<ProcessorConfigurator>();
       for (ConfiguratorWrapper config : pipelineConfigs_) {
-         if (config.getIsEnabled()) {
             result.add(config.getConfigurator());
-         }
       }
       return result;
    }
 
-   public ArrayList<ConfiguratorWrapper> getEnabledConfigurators(boolean isLiveMode) {
+   /*
+   Provide a list of all enabled configurators. If the argument is true then only configurators
+   that are enabled for live mode are returned.
+   */
+   public List<ConfiguratorWrapper> getEnabledConfigurators(boolean isLiveMode) {
       ArrayList<ConfiguratorWrapper> result = new ArrayList<ConfiguratorWrapper>();
       for (ConfiguratorWrapper config : pipelineConfigs_) {
          if ((isLiveMode && config.getIsEnabledInLive()) ||
