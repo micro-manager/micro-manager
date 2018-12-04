@@ -331,6 +331,12 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
       }
+      
+      
+      // Arrange to log stack traces when the EDT hangs.
+      // Use parameters that ensure a stack trace dump within 10 seconds of an
+      // EDT hang (and _no_ dump on hangs under 5.5 seconds)
+      EDTHangLogger.startDefault(core_, 4500, 1000);
 
       // Move ImageJ window to place where it last was if possible or else
       // (150,150) if not
@@ -397,11 +403,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
 
       logStartupProperties();
-
-      // Arrange to log stack traces when the EDT hangs.
-      // Use parameters that ensure a stack trace dump within 10 seconds of an
-      // EDT hang (and _no_ dump on hangs under 5.5 seconds)
-      EDTHangLogger.startDefault(core, 4500, 1000);
 
       // Although our general rule is to perform identical logging regardless
       // of the current log level, we make an exception for UIMonitor, which we
@@ -1284,6 +1285,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          if (frame_ != null) {
             frame_.setEnabled(true);
          }
+
       }
 
       initializeGUI();
