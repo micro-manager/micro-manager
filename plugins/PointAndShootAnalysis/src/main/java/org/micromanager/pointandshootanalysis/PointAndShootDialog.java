@@ -77,6 +77,7 @@ public class PointAndShootDialog extends MMDialog {
       );
       final Font arialSmallFont = new Font("Arial", Font.PLAIN, 12);
       final Dimension buttonSize = new Dimension(70, 21);
+      final Dimension smallButtonSize = new Dimension(25, 21);
       
       super.setLayout(new MigLayout());
       super.loadAndRestorePosition(100, 100);
@@ -92,7 +93,7 @@ public class PointAndShootDialog extends MMDialog {
       locationsField.setHorizontalAlignment(JTextField.LEFT);
       super.add(locationsField, "span 2, split 2");
 
-      final JButton locationsFieldButton =  mcsButton(buttonSize, arialSmallFont);
+      final JButton locationsFieldButton =  mcsButton(smallButtonSize, arialSmallFont);
       locationsFieldButton.setText("...");
       locationsFieldButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
@@ -120,6 +121,34 @@ public class PointAndShootDialog extends MMDialog {
          }
       });
       super.add(radiusSpinner, "wrap");
+      
+      JLabel nrFramesBeforeText = new JLabel("Nr. of Frames before");
+      super.add(nrFramesBeforeText);
+      
+      int nrFramesBefore = profileSettings_.getInteger(Terms.NRFRAMESBEFORE, 4);
+      final SpinnerNumberModel beforeModel = new SpinnerNumberModel(nrFramesBefore, 1, 1000, 1);
+      final JSpinner beforeSpinner = new JSpinner (beforeModel);
+      beforeSpinner.addChangeListener(new ChangeListener(){
+         @Override
+         public void stateChanged(ChangeEvent e) {
+            profileSettings_.putInteger(Terms.NRFRAMESBEFORE, (Integer) beforeSpinner.getValue());
+         }
+      });
+      super.add(beforeSpinner, "wrap");
+      
+      JLabel nrFramesAfterText = new JLabel("Nr. of Frames after");
+      super.add(nrFramesAfterText);
+      
+      int nrFramesAfter = profileSettings_.getInteger(Terms.NRFRAMESAFTER, 40);
+      final SpinnerNumberModel afterModel = new SpinnerNumberModel(nrFramesAfter, 1, 1000, 1);
+      final JSpinner afterSpinner = new JSpinner (afterModel);
+      afterSpinner.addChangeListener(new ChangeListener(){
+         @Override
+         public void stateChanged(ChangeEvent e) {
+            profileSettings_.putInteger(Terms.NRFRAMESAFTER, (Integer) afterSpinner.getValue());
+         }
+      });
+      super.add(afterSpinner, "wrap");
       
       JButton cancelButton = mcsButton(buttonSize, arialSmallFont);
       cancelButton.setText("Cancel");

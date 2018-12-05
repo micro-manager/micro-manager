@@ -55,6 +55,7 @@ import org.micromanager.display.DataViewer;
 import org.micromanager.pointandshootanalysis.algorithm.Utils;
 import org.micromanager.pointandshootanalysis.data.PASData;
 import org.micromanager.pointandshootanalysis.data.Terms;
+import org.micromanager.pointandshootanalysis.plot.DataSeriesKey;
 import org.micromanager.pointandshootanalysis.plot.PlotUtils;
 import org.micromanager.pointandshootanalysis.utils.ListUtils;
 
@@ -66,10 +67,8 @@ public class PointAndShootAnalyzer implements Runnable {
    final private Studio studio_;
    final private PropertyMap settings_;;
    final Map<String, Point> coordinates_;
-   final private int roiWidth_ = 100;  // may need to changed by user
-   final private int roiHeight_ = 100;  // may need to changed by user
-   final private int nrFramesBefore_ = 2; // may need to changed by user
-   final private int nrFramesAfter_ = 300; // may need to changed by user
+   final private int roiWidth_ = 50;  // may need to changed by user
+   final private int roiHeight_ = 50;  // may need to changed by user
    final private int maxDistance_ = 10; // max distance in pixels from the expected position
                         // if more, we will reject the bleach spot
                         // may need to be changed buy the user
@@ -88,8 +87,14 @@ public class PointAndShootAnalyzer implements Runnable {
       final Map<Instant, Point> datedCoordinates = new TreeMap<Instant, Point>();
       final Map<Integer, Instant>  frameTimeStamps = new TreeMap<Integer, Instant>();
       
+      // Read variables provided by UI from profile
       String fileName = settings_.getString(Terms.LOCATIONSFILENAME, "");
       int radius = settings_.getInteger(Terms.RADIUS, 3);
+      int nrFramesBefore = settings_.getInteger(Terms.NRFRAMESBEFORE, 2);
+      int nrFramesAfter = settings_.getInteger(Terms.NRFRAMESAFTER, 200);
+      
+      
+      
       File f = new File(fileName);
       if (!f.exists()) {
          studio_.logs().showError("File " + f.getName() + " does not exist");
@@ -199,9 +204,9 @@ public class PointAndShootAnalyzer implements Runnable {
             
             // Make a substack with this ROI, starting nrFramesBefore and ending nrFramesAfter
             int centralFrame = pasEntry.framePasClicked();
-            int startFrame = centralFrame - nrFramesBefore_;
+            int startFrame = centralFrame - nrFramesBefore;
             startFrame = startFrame < 0 ? 0 : startFrame;
-            int endFrame = centralFrame + nrFramesAfter_;
+            int endFrame = centralFrame + nrFramesAfter;
             endFrame = endFrame > dataProvider.getAxisLength(Coords.T)
                     ? dataProvider.getAxisLength(Coords.T) : endFrame;
             Coords.Builder cb = dataProvider.getAnyImage().getCoords().copyBuilder();
@@ -235,7 +240,7 @@ public class PointAndShootAnalyzer implements Runnable {
             ImageCalculator ic = new ImageCalculator();
             ImagePlus result = ic.run("Divide 32-bit", min, before);
             IJ.run(result, "Gaussian Blur...", "sigma=3");
-            //result.show();
+            // result.show();
             
             // Find the minimum and define this as the bleachPoint
             Point minPoint = findMinPixel(result.getProcessor());
@@ -277,17 +282,18 @@ public class PointAndShootAnalyzer implements Runnable {
             
             // normalize by intensity of frames before bleaching
             double preBleachAverage = 0.0;
-            for (int i = 0; i <= nrFramesBefore_; i++) { 
+            for (int i = 0; i <= nrFramesBefore; i++) { 
                preBleachAverage += intData.get(i);
             } 
-            preBleachAverage /= (nrFramesBefore_ + 1);
+            preBleachAverage /= (nrFramesBefore + 1);
             
             XYSeries data = new XYSeries("" + centralFrame, false, false);
             for (int i = 0; i < intData.size(); i++) {
                data.add(frameTimeStamps.get(startFrame + i).toEpochMilli() -
                        frameTimeStamps.get(centralFrame).toEpochMilli(),
                        intData.get(i) / preBleachAverage);
-            }  
+            }
+            data.setKey(new DataSeriesKey(centralFrame, pasActual.x, pasActual.y));
             plotData.add(data);
             
             for (Double val : intData) {
@@ -314,7 +320,6 @@ public class PointAndShootAnalyzer implements Runnable {
       boolean[] showShapes = new boolean[plotData.size()];
       for (int i = 0; i < showShapes.length; i++) {
          showShapes[i] = true;
-         plots[i].setKey(i);
       }
 
       PlotUtils pu = new PlotUtils(studio_.profile().getSettings(this.getClass()));
