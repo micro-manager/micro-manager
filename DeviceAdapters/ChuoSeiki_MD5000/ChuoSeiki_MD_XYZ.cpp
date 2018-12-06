@@ -58,9 +58,9 @@ using namespace std;
 MODULE_API void InitializeModuleData()
 {
 
-	RegisterDevice(g_ChuoSeikiTwoStagesDeviceName, MM::XYStageDevice, "ChuoSeiki XY Stages");
+	RegisterDevice(g_ChuoSeikiTwoStagesDeviceName, MM::XYStageDevice, "MD5000 XY Stages");
 
-	RegisterDevice(g_ChuoSeikiSingleStageDeviceName, MM::StageDevice, "ChuoSeiki Z Stage");
+	RegisterDevice(g_ChuoSeikiSingleStageDeviceName, MM::StageDevice, "MD5000 Z Stage");
 }                                                                            
                                                                              
 MODULE_API MM::Device* CreateDevice(const char* deviceName)        // createdevice
