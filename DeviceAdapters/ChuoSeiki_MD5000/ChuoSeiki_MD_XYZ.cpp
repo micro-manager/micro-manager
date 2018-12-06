@@ -63,7 +63,7 @@ MODULE_API void InitializeModuleData()
 	RegisterDevice(g_ChuoSeikiSingleStageDeviceName, MM::StageDevice, "ChuoSeiki Z Stage");
 }                                                                            
                                                                              
-MODULE_API MM::Device* CreateDevice(const char* deviceName)        // createdevice for 1st devices for XY stages
+MODULE_API MM::Device* CreateDevice(const char* deviceName)        // createdevice
 {
 	if (deviceName == 0)
 		 return 0;
@@ -677,7 +677,7 @@ int MD_SingleStage::OnSpeed(MM::PropertyBase* pPropBase, MM::ActionType eActType
 
 	speed_mm_ = speed_step_ *stepSize_um_ /1000;
 
-	if (speed_step_ > 0 && speed_step_ < 10000)
+	if (speed_step_ > 0 && speed_step_ < 20000)
 	{
 		command << "SPD " << controllerAxis_ << " " << speed_step_;
 		status = ExecuteCommand(command.str().c_str());
@@ -1141,11 +1141,11 @@ int MD_TwoStages::Home()
 	if (status != DEVICE_OK)		return status;
 
 
-	while (answer.length()<1)				// wait until there is response
-	{
-		status = ReadMessage(answer);
-      CDeviceUtils::SleepMs(1);
-	}
+//	while (answer.length()<1)	{			// wait until there is response
+
+	status = ReadMessage(answer);
+//      CDeviceUtils::SleepMs(1);
+//	}
 
 	if (status != DEVICE_OK)		
 		return status;
@@ -1226,7 +1226,7 @@ int MD_TwoStages::ReadMessage(std::string& sMessage)
         }
 		bTimeout = ((GetClockTicksUs() - startTime) / 1000) > answerTimeoutMs_;
 		// delay 1ms = time to read 1 char, total timeout is 20ms -> can read upto 20 char
-		if (!bTimeout) CDeviceUtils::SleepMs (1);  // Sleep(0.2);  // can be smaller depend on reading speed
+		if (!bTimeout) CDeviceUtils::SleepMs (1);  // if you want to sleep with smaller time, use select() and timeval
     }
 
 	sMessage = (char*) answer;
