@@ -353,6 +353,34 @@ final public class PipelineFrame extends MMFrame
    public List<ProcessorConfigurator> getPipelineConfigurators() {
       return convertWrappersToConfigurators(getTableModel().getPipelineConfigurators());
    }
+   
+    /**
+    * Return a list of the enabled configurators.
+    */
+   public List<ProcessorConfigurator> getEnabledPipelineConfigurators() {
+        List<ConfiguratorWrapper> configs = getTableModel().getEnabledConfigurators(false);
+        return convertWrappersToConfigurators(configs);
+   }
+   
+    /**
+    * Return a list of the live-mode enabled configurators.
+    */
+   public List<ProcessorConfigurator> getEnabledLivePipelineConfigurators() {
+        List<ConfiguratorWrapper> configs = getTableModel().getEnabledConfigurators(true);
+        return convertWrappersToConfigurators(configs);
+   }
+   
+   public void setConfiguratorEnabled(int row, boolean enabled) {
+       int column = getTableModel().ENABLED_COLUMN;
+       getTableModel().setValueAt(enabled, row, column);
+   }
+   
+    public void setConfiguratorEnabledLive(int row, boolean enabled) {
+       int column = getTableModel().ENABLED_LIVE_COLUMN;
+       getTableModel().setValueAt(enabled, row, column);
+    }
+   
+   
 
    /**
     * Clear the pipeline table.
