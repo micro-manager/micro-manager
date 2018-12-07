@@ -95,6 +95,7 @@ SUBDIRS = \
 	Arduino \
 	BlueboxOptics_niji \
 	CARVII \
+	ChuoSeiki_MD5000 \
 	CNCMicroscope \
 	CSUW1 \
 	Cobolt \

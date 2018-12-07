@@ -427,6 +427,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    Arduino
    BlueboxOptics_niji
    CARVII
+   ChuoSeiki_MD5000
    CNCMicroscope
    CNCMicroscope/ArduinoNeoPixelShutter
    CNCMicroscope/RAMPSStage
