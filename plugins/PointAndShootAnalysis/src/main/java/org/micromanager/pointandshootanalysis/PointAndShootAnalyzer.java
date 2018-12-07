@@ -28,6 +28,7 @@ import ij.plugin.ImageCalculator;
 import ij.plugin.ZProjector;
 import ij.process.ImageProcessor;
 import java.awt.Point;
+import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -52,8 +53,10 @@ import org.micromanager.data.DataProvider;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.display.DataViewer;
+import org.micromanager.pointandshootanalysis.algorithm.MovementByCrossCorrelation;
 import org.micromanager.pointandshootanalysis.algorithm.Utils;
 import org.micromanager.pointandshootanalysis.data.PASData;
+import org.micromanager.pointandshootanalysis.data.PASFrameSet;
 import org.micromanager.pointandshootanalysis.data.Terms;
 import org.micromanager.pointandshootanalysis.plot.DataSeriesKey;
 import org.micromanager.pointandshootanalysis.plot.PlotUtils;
@@ -72,6 +75,10 @@ public class PointAndShootAnalyzer implements Runnable {
    final private int maxDistance_ = 10; // max distance in pixels from the expected position
                         // if more, we will reject the bleach spot
                         // may need to be changed buy the user
+   final private int findMinFramesBefore_ = 5; // frames before user clicked PAS.  
+                              //Used to find actual bleach spot and to normalize
+   final private int findMinFramesAfter_ = 20;  // frames after used clicked PAS.  
+                              //Used to find actual bleach spot
    
 
    public PointAndShootAnalyzer(Studio studio, PropertyMap settings)
@@ -116,6 +123,7 @@ public class PointAndShootAnalyzer implements Runnable {
          return;
       }
 
+      // Store timeStamp and x/y coordinates from file into datedCoordinates
       for (Map.Entry<String, Point> entry : coordinates_.entrySet()) {
          datedCoordinates.put(dateStringToInstant(entry.getKey()),
                  entry.getValue());
@@ -129,6 +137,7 @@ public class PointAndShootAnalyzer implements Runnable {
       
       final  List<PASData> pasData = new ArrayList<PASData>(datedCoordinates.size());
       
+      // Store TimeStamps from images into frameTimeStamps
       final DataProvider dataProvider = activeDataViewer.getDataProvider();
       Iterable<Coords> unorderedImageCoords = dataProvider.getUnorderedImageCoords();
        for (Coords c : unorderedImageCoords) {
@@ -154,6 +163,7 @@ public class PointAndShootAnalyzer implements Runnable {
        }
       
       // for each Point and Shoot timeStamp, find the frame where it happened
+      // and store in pasData
       for (Map.Entry<Instant, Point> entry : datedCoordinates.entrySet()) {
          Instant entryInstant = entry.getKey();
          Iterator<Map.Entry<Integer, Instant>> it = frameTimeStamps.entrySet().iterator();
@@ -176,7 +186,6 @@ public class PointAndShootAnalyzer implements Runnable {
       }
       
       // We have the bleach Coordinates as frame - x/y. Check with the actual images
-      
       List<XYSeries> plotData = new ArrayList<XYSeries>();
       try {
          int imgWidth = dataProvider.getAnyImage().getWidth();
@@ -192,7 +201,6 @@ public class PointAndShootAnalyzer implements Runnable {
          
          ListIterator<PASData> pasDataIt = pasData.listIterator();
          while (pasDataIt.hasNext()) {
-            
             // define an ROI around the expected postion 
             PASData pasEntry = pasDataIt.next();
             int roiX = pasEntry.pasIntended().x - (int) (roiWidth_ / 2);
@@ -202,30 +210,32 @@ public class PointAndShootAnalyzer implements Runnable {
             roiY = roiY < 0 ? 0 : roiY;
             roiY = (roiY + roiHeight_ > imgHeight) ? imgHeight - roiHeight_ : roiY;
             
-            // Make a substack with this ROI, starting nrFramesBefore and ending nrFramesAfter
-            int centralFrame = pasEntry.framePasClicked();
-            int startFrame = centralFrame - nrFramesBefore;
-            startFrame = startFrame < 0 ? 0 : startFrame;
-            int endFrame = centralFrame + nrFramesAfter;
-            endFrame = endFrame > dataProvider.getAxisLength(Coords.T)
-                    ? dataProvider.getAxisLength(Coords.T) : endFrame;
+            // Make a substack with this ROI, starting findMinFramesBefore_ and ending findMinFramesAfter_
+            PASFrameSet findMinFrames = new PASFrameSet (
+                    pasEntry.framePasClicked() - findMinFramesBefore_,
+                    pasEntry.framePasClicked(),
+                    pasEntry.framePasClicked() + findMinFramesAfter_,
+                    dataProvider.getAxisLength(Coords.T));
             Coords.Builder cb = dataProvider.getAnyImage().getCoords().copyBuilder();
-            ImageStack stack = new ImageStack(roiWidth_, roiHeight_);
-            for (int frame = startFrame; frame < endFrame; frame++) {
+            ImageStack subStack = new ImageStack(roiWidth_, roiHeight_);
+            for (int frame = findMinFrames.getStartFrame(); 
+                    frame < findMinFrames.getEndFrame(); 
+                    frame++) {
                Coords coord = cb.t(frame).build();
                Image img = dataProvider.getImage(coord);
                ImageProcessor iProc = studio_.data().getImageJConverter().createProcessor(img);
                iProc.setRoi(roiX, roiY, roiWidth_, roiHeight_);
                ImageProcessor crop = iProc.crop();
-               stack.addSlice(crop);
+               subStack.addSlice(crop);
             }
-            ImagePlus imp = new ImagePlus("f: " + pasEntry.framePasClicked(), stack);
+            ImagePlus imp = new ImagePlus("f: " + pasEntry.framePasClicked(), subStack);
             
             // make an average projection of this substack
             ZProjector zp = new ZProjector(imp);
             zp.setMethod(ZProjector.AVG_METHOD);
             zp.setStartSlice(1);
-            zp.setStopSlice(3);  // TODO: make sure this is always correct
+            zp.setStopSlice(findMinFrames.getCentralFrame() - 
+                    findMinFrames.getStartFrame());  // TODO: make sure this is always correct
             zp.doProjection();
             ImagePlus before = zp.getProjection();
                     
@@ -253,50 +263,102 @@ public class PointAndShootAnalyzer implements Runnable {
                pasDataIt.remove();
                continue;
             }
+            // Store coordinates indicating where the bleach actually happened
+            // (in pixel coordinates of the original data)
             Point pasActual = new Point(roiX + minPoint.x, roiY + minPoint.y);
             
-            // Calculate intensity in the stack of a spot with diameter "radius"
+            // Calculate intensity in the subStack of a spot with diameter "radius"
             // TODO: evalute background
             // TODO: track spot
-            // TODO: analyze complete stack, while tracking moving spots
+            // TODO: analyze complete subStack, while tracking moving spots
 
-            List<Double> intData = new ArrayList<Double>();
-            for (int slice = 1; slice <= stack.getSize(); slice++) {
-               ImageProcessor iProc = stack.getProcessor(slice);
-               intData.add((double) Utils.GetIntensity(iProc.convertToFloatProcessor(), 
+            // Estimate when the bleach actually happened by looking for frames
+            // that are much brighter than the average
+            // This is not always accurate
+            List<Double> subStackIntensityData = new ArrayList<Double>();
+            for (int slice = 1; slice <= subStack.getSize(); slice++) {
+               ImageProcessor iProc = subStack.getProcessor(slice);
+               subStackIntensityData.add((double) Utils.GetIntensity(iProc.convertToFloatProcessor(), 
                        minPoint.x, minPoint.y, radius));
             }
-            double avg = ListUtils.listAvg(intData);
-            double stdDev = ListUtils.listStdDev(intData, avg);
+            double avg = ListUtils.listAvg(subStackIntensityData);
+            double stdDev = ListUtils.listStdDev(subStackIntensityData, avg);
             List<Integer> bleachFrames = new ArrayList<Integer>();
-            for (int frame = 0; frame < intData.size(); frame++) {
-               if (intData.get(frame) > avg + 2 * stdDev ||
-                       intData.get(frame) < avg - 2 * stdDev) {
+            for (int frame = 0; frame < subStackIntensityData.size(); frame++) {
+               if (subStackIntensityData.get(frame) > avg + 2 * stdDev ) {
                   bleachFrames.add(frame);
                }
             }
             int[] pasFrames = new int[bleachFrames.size()];
             for (int frame = 0; frame < bleachFrames.size(); frame++) {
-               pasFrames[frame] = bleachFrames.get(frame) + startFrame;
+               pasFrames[frame] = bleachFrames.get(frame) + findMinFrames.getStartFrame();
+            }          
+            
+            // find average intensity of frames before bleaching for later normalization
+            double preBleachAverage = Utils.GetIntensity(
+                    before.getProcessor().convertToFloatProcessor(), 
+                    minPoint.x, minPoint.y, radius);
+            
+            // Get intensity data from the complete desired range of the stack
+            PASFrameSet intensityAnalysisFrames = new PASFrameSet (
+                    pasEntry.framePasClicked() - nrFramesBefore,
+                    pasEntry.framePasClicked(),
+                    pasEntry.framePasClicked() + nrFramesAfter,
+                    dataProvider.getAxisLength(Coords.T));
+            
+                        
+            // Track particle that received the bleach by cross-correlation
+            // First go backwards in time, then forward
+            Map<Integer, Point> track = new TreeMap<Integer, Point>();
+            track.put(pasEntry.framePasClicked(), new Point(pasActual.x, pasActual.y));
+            final int fftSize = 64;
+            final int halfFFTSize = fftSize / 2;
+            int currentX = pasActual.x;
+            int currentY = pasActual.y;
+            for (int frame = intensityAnalysisFrames.getCentralFrame(); 
+                    frame > intensityAnalysisFrames.getStartFrame(); frame--) {
+               Coords coord = cb.t(frame).build();
+               Image img = dataProvider.getImage(coord);
+               ImageProcessor iProc = studio_.data().getImageJConverter().createProcessor(img);
+               // TODO: check ROI out of bounds!
+               iProc.setRoi(currentX - halfFFTSize, currentY - halfFFTSize, fftSize, fftSize);
+               iProc = iProc.crop();
+               Coords coord2 = cb.t(frame - 1).build();
+               Image img2 = dataProvider.getImage(coord2);
+               ImageProcessor iProc2 = studio_.data().getImageJConverter().createProcessor(img2);
+               // TODO: check ROI out of bounds!
+               iProc2.setRoi(currentX - fftSize, currentY - fftSize, 2 * fftSize, 2 * fftSize);
+               iProc2 = iProc2.crop();
+               MovementByCrossCorrelation mbdd = new MovementByCrossCorrelation(iProc);
+               Point2D.Double p = new Point2D.Double();
+               mbdd.getJitter(iProc2, p);
+               currentX += (int) p.x - halfFFTSize;
+               currentY += (int) p.y - halfFFTSize;
+               track.put(frame, new Point(currentX, currentY));
+            }
+ 
+            
+            List<Double> intensityData = new ArrayList<Double>();
+            for (int frame = intensityAnalysisFrames.getStartFrame(); 
+                    frame < intensityAnalysisFrames.getEndFrame(); frame++) {
+               Coords coord = cb.t(frame).build();
+               Image img = dataProvider.getImage(coord);
+               ImageProcessor iProc = studio_.data().getImageJConverter().createProcessor(img);
+               intensityData.add((double) Utils.GetIntensity(iProc.convertToFloatProcessor(), 
+                       pasActual.x, pasActual.y, radius));
             }
             
-            // normalize by intensity of frames before bleaching
-            double preBleachAverage = 0.0;
-            for (int i = 0; i <= nrFramesBefore; i++) { 
-               preBleachAverage += intData.get(i);
-            } 
-            preBleachAverage /= (nrFramesBefore + 1);
-            
-            XYSeries data = new XYSeries("" + centralFrame, false, false);
-            for (int i = 0; i < intData.size(); i++) {
-               data.add(frameTimeStamps.get(startFrame + i).toEpochMilli() -
-                       frameTimeStamps.get(centralFrame).toEpochMilli(),
-                       intData.get(i) / preBleachAverage);
+            XYSeries data = new XYSeries("" + findMinFrames.getCentralFrame(), false, false);
+            for (int i = 0; i < intensityData.size(); i++) {
+               data.add(frameTimeStamps.get(intensityAnalysisFrames.getStartFrame() + i).toEpochMilli() -
+                       frameTimeStamps.get(intensityAnalysisFrames.getCentralFrame()).toEpochMilli(),
+                       intensityData.get(i) / preBleachAverage);
             }
-            data.setKey(new DataSeriesKey(centralFrame, pasActual.x, pasActual.y));
+            data.setKey(new DataSeriesKey(intensityAnalysisFrames.getCentralFrame(), 
+                    pasActual.x, pasActual.y));
             plotData.add(data);
             
-            for (Double val : intData) {
+            for (Double val : subStackIntensityData) {
                System.out.print(" " + val / preBleachAverage);
             }
             System.out.println();
@@ -324,7 +386,7 @@ public class PointAndShootAnalyzer implements Runnable {
 
       PlotUtils pu = new PlotUtils(studio_.profile().getSettings(this.getClass()));
       pu.plotDataN("Bleach Intensity Profile", plots, "Time (ms)",
-              "Intensity", showShapes, "", 1.3);
+              "Normalized Intensity", showShapes, "", 1.3);
 
       
    }

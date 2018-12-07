@@ -1,6 +1,6 @@
  ///////////////////////////////////////////////////////////////////////////////
- //FILE:          
- //PROJECT:       
+ //FILE:          PASData.java     
+ //PROJECT:       PointAndShootAnalysis
  //-----------------------------------------------------------------------------
  //
  // AUTHOR:       Nico Stuurman
@@ -24,7 +24,8 @@ import java.awt.Point;
 import java.time.Instant;
 
 /**
- *
+ * Note PAS is short for "Point And Shoot"
+ * 
  * @author nico
  */
 public class PASData {
@@ -81,8 +82,10 @@ public class PASData {
    public static Builder builder() { return new Builder(); }
 
    /**
+    * PAS is short for "Point And Shoot"
     * 
-    * @param pasClicked Instant when PAS was Clicked (as recorded by Project plugin
+    * 
+    * @param pasClicked Instant when PAS was Clicked (as recorded by the Projector plugin
     * @param tsOfFrameBeforePas Instant of frame during which PAS was clicked
     * @param framePasClicked frame number when point and shoot was clicked
     *                        0-based (as in MM, unlike ImageJ)
