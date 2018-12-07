@@ -99,12 +99,8 @@ public final class PipelineTableModel extends AbstractTableModel {
    /**
     * Provide a list of configurators for all processors.
     */
-   public List<ProcessorConfigurator> getPipelineConfigurators() {
-      ArrayList<ProcessorConfigurator> result = new ArrayList<ProcessorConfigurator>();
-      for (ConfiguratorWrapper config : pipelineConfigs_) {
-            result.add(config.getConfigurator());
-      }
-      return result;
+   public List<ConfiguratorWrapper> getPipelineConfigurators() {
+      return pipelineConfigs_;
    }
 
    /*
