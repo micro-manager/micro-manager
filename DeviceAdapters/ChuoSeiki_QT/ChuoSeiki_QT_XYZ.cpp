@@ -526,8 +526,8 @@ int ChuoSeikiXYStage::GetPositionSteps(long& x, long& y)
 
 		if( (answer.substr(9, 1) == "K") && (answer.substr(20, 1) == "K") )
 		{
-			x = std::stol(answer.substr(0,9));
-			y = std::stol(answer.substr(11,9));
+			x = std::atol(answer.substr(0,9).c_str());
+			y = std::atol(answer.substr(11,9).c_str());
 			posX_um_ = x * stepSize_umX_;
 			posY_um_ = y * stepSize_umY_;
 
@@ -536,8 +536,8 @@ int ChuoSeikiXYStage::GetPositionSteps(long& x, long& y)
 
 		if( answer.substr(9, 1) == "K" && answer.substr(20, 1) == "L" )
 		{
-			x = std::stol(answer.substr(0,9));
-			y = std::stol(answer.substr(11,9));
+			x = std::atol(answer.substr(0,9).c_str());
+			y = std::atol(answer.substr(11,9).c_str());
 			posX_um_ = x * stepSize_umX_;
 			posY_um_ = y * stepSize_umY_;
 
@@ -546,8 +546,8 @@ int ChuoSeikiXYStage::GetPositionSteps(long& x, long& y)
 
 		if( answer.substr(9, 1) == "L" && answer.substr(20, 1) == "K" )
 		{
-			x = std::stol(answer.substr(0,9));
-			y = std::stol(answer.substr(11,9));
+			x = std::atol(answer.substr(0,9).c_str());
+			y = std::atol(answer.substr(11,9).c_str());
 			posX_um_ = x * stepSize_umX_;
 			posY_um_ = y * stepSize_umY_;
 
@@ -556,8 +556,8 @@ int ChuoSeikiXYStage::GetPositionSteps(long& x, long& y)
 
 		if( answer.substr(9, 1) == "L" && answer.substr(20, 1) == "L" )
 		{
-			x = std::stol(answer.substr(0,9));
-			y = std::stol(answer.substr(11,9));
+			x = std::atol(answer.substr(0,9).c_str());
+			y = std::atol(answer.substr(11,9).c_str());
 			posX_um_ = x * stepSize_umX_;
 			posY_um_ = y * stepSize_umY_;
 
@@ -1318,14 +1318,14 @@ int ChuoSeikiZStage::GetPositionSteps(long& z)
 
 		if( answer.substr(9, 1) == "K" )
 		{
-			z = std::stol(answer.substr(0,9));
+			z = std::atol(answer.substr(0,9).c_str());
 			posZ_um_ = z * stepSize_umZ_;
 			return DEVICE_OK;
 		}
 
 		if( answer.substr(9, 1) == "L" )
 		{
-			z = std::stol(answer.substr(0,9));
+			z = std::atol(answer.substr(0,9).c_str());
 			posZ_um_ = z * stepSize_umZ_;
 			return DEVICE_OK;
 		}
