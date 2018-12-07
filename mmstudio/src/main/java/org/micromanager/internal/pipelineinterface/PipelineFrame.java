@@ -370,11 +370,17 @@ final public class PipelineFrame extends MMFrame
         return convertWrappersToConfigurators(configs);
    }
    
+    /*
+    * Set whether or not a configurator is enabled.
+    */
    public void setConfiguratorEnabled(int row, boolean enabled) {
        int column = getTableModel().ENABLED_COLUMN;
        getTableModel().setValueAt(enabled, row, column);
    }
    
+   /*
+   * Set whether or not a configurator is enabled for live mode
+   */
     public void setConfiguratorEnabledLive(int row, boolean enabled) {
        int column = getTableModel().ENABLED_LIVE_COLUMN;
        getTableModel().setValueAt(enabled, row, column);
