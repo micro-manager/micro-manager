@@ -348,10 +348,10 @@ final public class PipelineFrame extends MMFrame
    }
    
    /**
-    * Return a list of the currently-active configurators.
+    * Return a list of the configurators.
     */
    public List<ProcessorConfigurator> getPipelineConfigurators() {
-      return getTableModel().getEnabledConfigurators(false);
+      return convertWrappersToConfigurators(getTableModel().getPipelineConfigurators());
    }
 
    /**
