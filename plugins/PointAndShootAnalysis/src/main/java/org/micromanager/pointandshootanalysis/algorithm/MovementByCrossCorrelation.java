@@ -63,7 +63,7 @@ public class MovementByCrossCorrelation {
       // return the position of the brightest pixel
       Point brightPix = new Point(0, 0);
       BrightestPixel(m, brightPix, 32);     
-      
+      /*
       try {
          // Gaussian fit using Nelder Mead and 3D fitting
          GaussianFit gs = new GaussianFit(3, 2);
@@ -80,10 +80,11 @@ public class MovementByCrossCorrelation {
          com.y = fitResult.getParms()[GaussianFit.YC] - hs + brightPix.y;
 
       } catch (Exception ex) { 
+      */
          // Gaussian fit failed, try second best estimate
          com.x = brightPix.x;
          com.y = brightPix.y;
-      }
+      //}
          
    }
    
