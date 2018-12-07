@@ -339,6 +339,14 @@ final public class PipelineFrame extends MMFrame
       return getTableModel().getPipelineFactories(true);
    }
 
+   private List<ProcessorConfigurator> convertWrappersToConfigurators(List<ConfiguratorWrapper> configs){
+        ArrayList<ProcessorConfigurator> result = new ArrayList<ProcessorConfigurator>();
+        for (ConfiguratorWrapper config : configs) {
+            result.add(config.getConfigurator());
+        }
+        return result; 
+   }
+   
    /**
     * Return a list of the currently-active configurators.
     */
