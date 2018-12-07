@@ -96,6 +96,7 @@ SUBDIRS = \
 	BlueboxOptics_niji \
 	CARVII \
 	ChuoSeiki_MD5000 \
+	ChuoSeiki_QT \
 	CNCMicroscope \
 	CSUW1 \
 	Cobolt \

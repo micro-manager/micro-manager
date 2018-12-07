@@ -428,6 +428,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    BlueboxOptics_niji
    CARVII
    ChuoSeiki_MD5000
+   ChuoSeiki_QT
    CNCMicroscope
    CNCMicroscope/ArduinoNeoPixelShutter
    CNCMicroscope/RAMPSStage
