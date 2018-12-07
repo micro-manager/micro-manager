@@ -388,6 +388,14 @@ const char* const g_LaserSwitchTimePropertyName = "LaserSwitchTime(ms)";
 const char* const g_TargetExposureTimePropertyName = "TargetExposureTime(ms)";
 const char* const g_TargetSettlingTimePropertyName = "TargetSettlingTime(ms)";
 
+// scanner FAST_CIRCLES property names
+const char* const g_FastCirclesRadiusPropertyName = "FastCirclesRadius(deg)";
+const char* const g_FastCirclesRatePropertyName = "FastCirclesRate(Hz)";
+const char* const g_FastCirclesAsymmetryPropertyName = "FastCirclesAsymmetry";
+const char* const g_FastCirclesStatePropertyName = "FastCirclesState";
+const char* const g_RestartState = "Restart";
+
+
 // LED property names
 const char* const g_LEDIntensityPropertyName = "LED Intensity(%)";
 const char* const g_ShutterState = "State";

@@ -143,6 +143,12 @@ public:
    // phototargeting properties
    int OnTargetExposureTime   (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTargetSettlingTime   (MM::PropertyBase* pProp, MM::ActionType eAct);
+   // FAST_CIRCLES properties
+   int OnFastCirclesRadius   (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFastCirclesRate     (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFastCirclesAsymmetry(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFastCirclesState    (MM::PropertyBase* pProp, MM::ActionType eAct);
+   // vector properties
    int OnVectorGeneric		  (MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter);
    int OnVectorX			  (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnVectorGeneric(pProp, eAct, axisLetterX_); }
    int OnVectorY              (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnVectorGeneric(pProp, eAct, axisLetterY_); }
@@ -184,6 +190,8 @@ private:
 
    unsigned char laser_side_;  // code for corresponding laser line: 0 for none, 1 for side0, 2 for side1
    bool laserTTLenabled_;      // whether it has MM_LASER_TTL module
+
+   bool fastCirclesOn_;
 
    int SetIlluminationStateHelper(bool on);
    int OnSaveJoystickSettings();

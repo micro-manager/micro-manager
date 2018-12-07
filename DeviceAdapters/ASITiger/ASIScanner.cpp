@@ -67,7 +67,8 @@ CScanner::CScanner(const char* name) :
    targetExposure_(0),
    targetSettling_(5),
    axisIndexX_(0),
-   axisIndexY_(1)
+   axisIndexY_(1),
+   fastCirclesOn_(false)
 {
 
    // initialize these structs
@@ -548,6 +549,29 @@ int CScanner::Initialize()
       AddAllowedValue(g_RB_AutoplayRunningPropertyName, g_NoState);
       AddAllowedValue(g_RB_AutoplayRunningPropertyName, g_YesState);
       UpdateProperty(g_RB_AutoplayRunningPropertyName);
+   }
+
+   // add FAST_CIRCLES properties if MULTIAXIS_FUNCTION is supported
+   if (build.vAxesProps[0] & BIT5)
+   {
+      pAct = new CPropertyAction (this, &CScanner::OnFastCirclesRadius);
+      CreateProperty(g_FastCirclesRadiusPropertyName, "1.0", MM::Float, false, pAct);
+      UpdateProperty(g_FastCirclesRadiusPropertyName);
+
+      pAct = new CPropertyAction (this, &CScanner::OnFastCirclesRate);
+      CreateProperty(g_FastCirclesRatePropertyName, "1.0", MM::Float, false, pAct);
+      UpdateProperty(g_FastCirclesRatePropertyName);
+
+      pAct = new CPropertyAction (this, &CScanner::OnFastCirclesAsymmetry);
+      CreateProperty(g_FastCirclesAsymmetryPropertyName, "1.0", MM::Float, false, pAct);
+      UpdateProperty(g_FastCirclesAsymmetryPropertyName);
+
+      pAct = new CPropertyAction (this, &CScanner::OnFastCirclesState);
+      CreateProperty(g_FastCirclesStatePropertyName, g_OffState, MM::String, false, pAct);
+      UpdateProperty(g_FastCirclesStatePropertyName);
+      AddAllowedValue(g_FastCirclesStatePropertyName, g_OffState);
+      AddAllowedValue(g_FastCirclesStatePropertyName, g_OnState);
+      AddAllowedValue(g_FastCirclesStatePropertyName, g_RestartState);
    }
 
    if (FirmwareVersionAtLeast(2.88))  // 2.88+
@@ -3686,6 +3710,118 @@ int CScanner::OnTargetSettlingTime(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int CScanner::OnFastCirclesRadius(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "MM X?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A X="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "MM X=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CScanner::OnFastCirclesRate(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "MM Y?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Y="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "MM Y=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CScanner::OnFastCirclesAsymmetry(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "MM Z?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "MM Z=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CScanner::OnFastCirclesState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp = 0;
+   bool restart = false;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_ && !refreshOverride_)
+         return DEVICE_OK;
+      refreshOverride_ = false;
+      command << addressChar_ << "MM R?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A R="));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      fastCirclesOn_ = (tmp != 73);
+      if (!pProp->Set(fastCirclesOn_ ? g_OnState : g_OffState))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      tmp = 80;
+      fastCirclesOn_ = false;
+      if (tmpstr.compare(g_RestartState) == 0)
+      {
+         tmp = 82;
+         fastCirclesOn_ = true;
+         restart = true;
+      }
+      else if (tmpstr.compare(g_OnState) == 0)
+      {
+         tmp = fastCirclesOn_ ? 82 : 83;
+         fastCirclesOn_ = true;
+      }
+      command << addressChar_ << "MM R=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+
+   if (restart)
+   {
+      refreshOverride_ = true;
+      return OnFastCirclesState(pProp, MM::BeforeGet);
+   }
+
+   return DEVICE_OK;
+}
+
    int CScanner::OnVectorGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter)
 {
    ostringstream command; command.str("");
@@ -3707,7 +3843,6 @@ int CScanner::OnTargetSettlingTime(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(tmp);
       command << "VE " << axisLetter << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-
    }
    return DEVICE_OK;
 }
