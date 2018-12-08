@@ -415,6 +415,7 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LaserQuantumLaser", "DeviceAdapters\LaserQuantumLaser\LaserQuantumLaser.vcxproj", "{C1769CC1-A247-432C-9575-3A5A3C7402C7}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ChuoSeiki_MD5000", "DeviceAdapters\ChuoSeiki_MD5000\ChuoSeiki_MD5000.vcxproj", "{0C72F391-6E64-4C65-9029-CD20C3B9CE10}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ChuoSeiki_QT", "DeviceAdapters\ChuoSeiki_QT\ChuoSeiki_QT.vcxproj", "{474D32D8-5BEC-453B-ADEA-ACF6F742DE0D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -2887,6 +2888,18 @@ Global
 		{0C72F391-6E64-4C65-9029-CD20C3B9CE10}.Release|Win32.Build.0 = Release|Win32
 		{0C72F391-6E64-4C65-9029-CD20C3B9CE10}.Release|x64.ActiveCfg = Release|x64
 		{0C72F391-6E64-4C65-9029-CD20C3B9CE10}.Release|x64.Build.0 = Release|x64
+		{474D32D8-5BEC-453B-ADEA-ACF6F742DE0D}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
+		{474D32D8-5BEC-453B-ADEA-ACF6F742DE0D}.Debug|Mixed Platforms.Build.0 = Debug|x64
+		{474D32D8-5BEC-453B-ADEA-ACF6F742DE0D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{474D32D8-5BEC-453B-ADEA-ACF6F742DE0D}.Debug|Win32.Build.0 = Debug|Win32
+		{474D32D8-5BEC-453B-ADEA-ACF6F742DE0D}.Debug|x64.ActiveCfg = Debug|x64
+		{474D32D8-5BEC-453B-ADEA-ACF6F742DE0D}.Debug|x64.Build.0 = Debug|x64
+		{474D32D8-5BEC-453B-ADEA-ACF6F742DE0D}.Release|Mixed Platforms.ActiveCfg = Release|x64
+		{474D32D8-5BEC-453B-ADEA-ACF6F742DE0D}.Release|Mixed Platforms.Build.0 = Release|x64
+		{474D32D8-5BEC-453B-ADEA-ACF6F742DE0D}.Release|Win32.ActiveCfg = Release|Win32
+		{474D32D8-5BEC-453B-ADEA-ACF6F742DE0D}.Release|Win32.Build.0 = Release|Win32
+		{474D32D8-5BEC-453B-ADEA-ACF6F742DE0D}.Release|x64.ActiveCfg = Release|x64
+		{474D32D8-5BEC-453B-ADEA-ACF6F742DE0D}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
