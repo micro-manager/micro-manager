@@ -48,10 +48,10 @@
 #include <algorithm>
 
 // XYStage
-const char* g_ChuoSeikiXYStageDeviceName = "ChuoSeiki QT 2-Axis";
+const char* g_ChuoSeikiXYStageDeviceName = "ChuoSeiki_QT 2-Aaxis";
 
 // single axis stage
-const char* g_ChuoSeikiZStageDeviceName = "ChuoSeiki QT 1-Axis";
+const char* g_ChuoSeikiZStageDeviceName = "ChuoSeiki_QT 1-Axis";
 
 
 const char* g_ChuoSeikiController = "ChuoSeiki QT Controller";
@@ -59,7 +59,7 @@ const char* g_ChuoSeiki_Controller_Axis = "ChuoSeikiAxisName";
 
 const char* g_Acceleration_TimeX = "X Axis Acceleration time ms";
 const char* g_Acceleration_TimeY = "Y Axis Acceleration time ms";
-const char* g_Acceleration_Time = "Axis Acceleration time ms";
+const char* g_Acceleration_Time = "Acceleration time ms";
 
 using namespace std;
 
@@ -69,8 +69,8 @@ using namespace std;
 MODULE_API void InitializeModuleData()
 {
 //	RegisterDevice(g_ChuoSeikiController, MM::GenericDevice, "HUB");
-	RegisterDevice(g_ChuoSeikiXYStageDeviceName, MM::XYStageDevice, "A&B Channels");
-	RegisterDevice(g_ChuoSeikiZStageDeviceName, MM::StageDevice, "Selectable Channel (A,B,C)");
+	RegisterDevice(g_ChuoSeikiXYStageDeviceName, MM::XYStageDevice, "XY stages");
+	RegisterDevice(g_ChuoSeikiZStageDeviceName, MM::StageDevice, "Z stage");
 }                                                                            
                                                                              
 MODULE_API MM::Device* CreateDevice(const char* deviceName)                  
@@ -230,18 +230,20 @@ int ChuoSeikiXYStage::ConfirmComm()
 	string answer;
 
 	PurgeComPort(portName_XY.c_str());
-	ret= SendSerialCommand(portName_XY.c_str(), "?:CHUOSEIKI", "\r\n");		// it will return the phase after ?:
-	if (ret!= DEVICE_OK) 		return ret;
+	ret= SendSerialCommand(portName_XY.c_str(), "?:CHUOSEIKI", "\r\n");		// it will return the phase after "?:"
+	if (ret!= DEVICE_OK) 
+		return ret;
 
 	ret= GetSerialAnswer(portName_XY.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK) 		return ret;
+	if (ret != DEVICE_OK) 
+		return ret;
 	
 	if( answer.substr(0, 9).compare("CHUOSEIKI") != 0)
 	{
 		return ERR_UNRECOGNIZED_ANSWER;
 	}
 
-	ret = SendSerialCommand(portName_XY.c_str(), "X:1", "\r\n");  // request feedback "\r\n" after each command
+	ret = SendSerialCommand(portName_XY.c_str(), "X:1", "\r\n");  // request feedback "\r\n" after send control command
 	if (ret != DEVICE_OK)		
 		return ret;
 
@@ -262,51 +264,51 @@ int ChuoSeikiXYStage::Initialize()
 {
 	int status = 0;
 
-		//Step Size X
+	//Step Size X
 	CPropertyAction* pAct = new CPropertyAction(this, &ChuoSeikiXYStage::OnStepSizeX);
-	status = CreateProperty("Step SizeX : um", "1", MM::Float, false, pAct);
+	status = CreateProperty("X-Axis StepSize: um", "1", MM::Float, false, pAct);
 	if (status != DEVICE_OK)
       return status;
 
 	//Step Size Y
 	pAct = new CPropertyAction(this, &ChuoSeikiXYStage::OnStepSizeY);
-	status = CreateProperty("Step SizeY : um", "1", MM::Float, false, pAct);
+	status = CreateProperty("Y-Axis StepSize: um", "1", MM::Float, false, pAct);
 	if (status != DEVICE_OK)
       return status;
 
 	//Speed High X
 	pAct = new CPropertyAction(this, &ChuoSeikiXYStage::OnSpeedXHigh);
-	status = CreateProperty("X Axis Speed High : pps", "2000", MM::Float, false, pAct);
+	status = CreateProperty("X-Axis HighSpeed: pps", "2000", MM::Float, false, pAct);
 	if (status != DEVICE_OK)
       return status;
 
 	//Speed Low X
 	pAct = new CPropertyAction(this, &ChuoSeikiXYStage::OnSpeedXLow);
-	status = CreateProperty("X Axis Speed Low : pps", "500", MM::Float, false, pAct);
+	status = CreateProperty("X-Axis LowSpeed: pps", "500", MM::Float, false, pAct);
 	if (status != DEVICE_OK)
       return status;
 
 	//Accel Time X
 	pAct = new CPropertyAction(this, &ChuoSeikiXYStage::OnAccelTimeX);
-	status = CreateProperty("X Accelerating Time : msec", "100", MM::Float, false, pAct);
+	status = CreateProperty("X-Axis AcceleratingTime: msec", "100", MM::Float, false, pAct);
 	if (status != DEVICE_OK)
       return status;
 
 	//Speed High Y
 	pAct = new CPropertyAction(this, &ChuoSeikiXYStage::OnSpeedYHigh);
-	status = CreateProperty("Y Axis Speed High : pps", "2000", MM::Float, false, pAct);
+	status = CreateProperty("Y-Axis HighSpeed: pps", "2000", MM::Float, false, pAct);
 	if (status != DEVICE_OK)
       return status;
 
 	//Speed Low Y
 	pAct = new CPropertyAction(this, &ChuoSeikiXYStage::OnSpeedYLow);
-	status = CreateProperty("Y Axis Speed Low : pps", "500", MM::Float, false, pAct);
+	status = CreateProperty("Y-Axis LowSpeed: pps", "500", MM::Float, false, pAct);
 	if (status != DEVICE_OK)
       return status;
 
 	//Accel Time Y
 	pAct = new CPropertyAction(this, &ChuoSeikiXYStage::OnAccelTimeY);
-	status = CreateProperty("Y Accelerating Time : msec", "100", MM::Float, false, pAct);
+	status = CreateProperty("Y-Axis Accelerating Time: msec", "100", MM::Float, false, pAct);
 	if (status != DEVICE_OK)
       return status;
 	
@@ -1055,25 +1057,25 @@ int ChuoSeikiZStage::Initialize()
 
 	//Step Size Z
 	CPropertyAction* pAct = new CPropertyAction(this, &ChuoSeikiZStage::OnStepSizeZ);
-	ret = CreateProperty("Step Size : um", "1.0", MM::Float, false, pAct);
+	ret = CreateProperty("Step Size: um", "1.0", MM::Float, false, pAct);
 	if (ret != DEVICE_OK)
       return ret;
 
 	//Speed High Z
 	pAct = new CPropertyAction(this, &ChuoSeikiZStage::OnSpeedZHigh);
-	ret = CreateProperty("Axis Speed High : pps", "3000", MM::Float, false, pAct);
+	ret = CreateProperty("High Speed: pps", "2000", MM::Float, false, pAct);
 	if (ret != DEVICE_OK)
       return ret;
 
 	//Speed Low Z
 	pAct = new CPropertyAction(this, &ChuoSeikiZStage::OnSpeedZLow);
-	ret = CreateProperty("Axis Speed Low : pps", "1000", MM::Float, false, pAct);
+	ret = CreateProperty("Low Speed: pps", "500", MM::Float, false, pAct);
 	if (ret != DEVICE_OK)
       return ret;
 
 	//Accel Time Z
 	pAct = new CPropertyAction(this, &ChuoSeikiZStage::OnAccelTimeZ);
-	ret = CreateProperty("Axis Accelerating Time : msec", "100", MM::Float, false, pAct);
+	ret = CreateProperty("Accelerating Time: msec", "100", MM::Float, false, pAct);
 	if (ret != DEVICE_OK)
       return ret;
 
@@ -1587,11 +1589,11 @@ int ChuoSeikiZStage::OnControllerAxis(MM::PropertyBase* pProp, MM::ActionType eA
 	}
 	else if (eAct == MM::AfterSet)
 	{
-		string axis;
+		string Z_axis;
 		pProp->Get(controllerAxisZ_);
-		if (axis == "A" || axis == "B" || axis == "C")
+		if (Z_axis == "A" || Z_axis == "B" || Z_axis == "C")
 		{
-			controllerAxisZ_ = axis;
+			controllerAxisZ_ = Z_axis;
 		}
 	}
 	return DEVICE_OK;
