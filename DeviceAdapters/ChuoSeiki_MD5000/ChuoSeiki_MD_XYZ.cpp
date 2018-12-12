@@ -40,8 +40,8 @@
 #include <sstream>
 #include <algorithm>
 
-const char* g_ChuoSeikiTwoStagesDeviceName = "ChuoSeiki XY Controller";
-const char* g_ChuoSeikiSingleStageDeviceName = "ChuoSeiki Z Controller";
+const char* g_ChuoSeikiTwoStagesDeviceName = "ChuoSeiki_MD 2-Axis";
+const char* g_ChuoSeikiSingleStageDeviceName = "ChuoSeiki_MD 1-Axis";
 
 const char* g_ChuoSeiki_Controller_Axis = "Controller Axis";
 const char* g_ChuoSeiki_Accelration_Time_Pattern = "AccelrationTime Pattern";
