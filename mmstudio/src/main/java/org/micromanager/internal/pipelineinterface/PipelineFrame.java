@@ -386,7 +386,21 @@ final public class PipelineFrame extends MMFrame
        getTableModel().setValueAt(enabled, row, column);
     }
    
+    /*
+    * Get whether or not a configurator is enabled.
+    */
+   public boolean getConfiguratorEnabled(int row) {
+       int column = getTableModel().ENABLED_COLUMN;
+       return (boolean) getTableModel().getValueAt(row, column);
+   }
    
+   /*
+   * Get whether or not a configurator is enabled for live mode
+   */
+    public boolean getConfiguratorEnabledLive(int row) {
+       int column = getTableModel().ENABLED_LIVE_COLUMN;
+       return (boolean) getTableModel().getValueAt(row, column);
+    }
 
    /**
     * Clear the pipeline table.
