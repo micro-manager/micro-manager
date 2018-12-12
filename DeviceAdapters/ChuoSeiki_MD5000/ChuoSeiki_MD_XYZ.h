@@ -207,11 +207,6 @@ public:
 	int OnSpeedY		(MM::PropertyBase* pPropBase, MM::ActionType eActType);
 	int OnAccelTimeY	(MM::PropertyBase* pPropBase, MM::ActionType eActType);
 
-protected:
-// check controller
-	int ConfirmVersion();
-	void QueryPeripheralInventory();
-
 // Stage control function
 	int SetPositionSteps(long x, long y);
 	int GetPositionSteps(long& x, long& y);
@@ -232,6 +227,11 @@ protected:
 	double GetStepSizeYUm() { return stepSize_umY_; }
 
 	int IsXYStageSequenceable(bool& isSequenceable) const	{isSequenceable = false; return DEVICE_OK;	}
+
+protected:
+	// check controller
+	int ConfirmVersion();
+	void QueryPeripheralInventory();
 
 private:
 

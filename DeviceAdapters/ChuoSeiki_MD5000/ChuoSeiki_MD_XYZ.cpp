@@ -43,10 +43,10 @@
 const char* g_ChuoSeikiTwoStagesDeviceName = "ChuoSeiki XY Controller";
 const char* g_ChuoSeikiSingleStageDeviceName = "ChuoSeiki Z Controller";
 
-const char* g_ChuoSeiki_Controller_Axis = "ChuoSeikiStage";
-const char* g_ChuoSeiki_Accelration_Time_Pattern = "AccelrationTimePattern";
-const char* g_ChuoSeiki_Accelration_Time_PatternX = "AccelrationTimePatternX";
-const char* g_ChuoSeiki_Accelration_Time_PatternY = "AccelrationTimePatternY";
+const char* g_ChuoSeiki_Controller_Axis = "Controller Axis";
+const char* g_ChuoSeiki_Accelration_Time_Pattern = "AccelrationTime Pattern";
+const char* g_ChuoSeiki_Accelration_Time_PatternX = "AccelrationTime Pattern X";
+const char* g_ChuoSeiki_Accelration_Time_PatternY = "AccelrationTime Pattern Y";
 using namespace std;
 
 
@@ -57,10 +57,9 @@ using namespace std;
 
 MODULE_API void InitializeModuleData()
 {
+	RegisterDevice(g_ChuoSeikiTwoStagesDeviceName, MM::XYStageDevice, "XY Stages");
 
-	RegisterDevice(g_ChuoSeikiTwoStagesDeviceName, MM::XYStageDevice, "MD5000 XY Stages");
-
-	RegisterDevice(g_ChuoSeikiSingleStageDeviceName, MM::StageDevice, "MD5000 Z Stage");
+	RegisterDevice(g_ChuoSeikiSingleStageDeviceName, MM::StageDevice, "Z Stage");
 }                                                                            
                                                                              
 MODULE_API MM::Device* CreateDevice(const char* deviceName)        // createdevice
@@ -112,12 +111,12 @@ int clearPort(MM::Device& device, MM::Core& core, const char* port)
 
 MD_SingleStage::MD_SingleStage():
 
-transmissionDelay_(10), 
-initializationStatus_(false),
-stepSize_um_	(1),
-speed_step_		(1000),	//pps
-accelTime_pattern_	(2),
-answerTimeoutMs_(20)		// answer time out is 100ms
+transmissionDelay_		(10), 
+initializationStatus_	(false),
+stepSize_um_			(1),
+speed_step_				(1000),	//pps
+accelTime_pattern_		(2),
+answerTimeoutMs_		(20)		// answer time out is 100ms
 
 {
 	InitializeDefaultErrorMessages();
@@ -298,7 +297,9 @@ int MD_SingleStage::Initialize()
 int MD_SingleStage::Shutdown()
 {
 	if (initializationStatus_)
+	{
 		initializationStatus_ = false;
+	}
 	return DEVICE_OK;
 }
 
@@ -387,7 +388,7 @@ int MD_SingleStage::ConfirmAnswer(std::string answer)				// check controller err
 
 int MD_SingleStage::SetPositionUm(double positionUm)
 {
-	long steps = abs( (long) (positionUm / stepSize_um_) );
+	long steps = (long) (positionUm / stepSize_um_) ;
 	return SetPositionSteps( steps );
 }
 
@@ -593,8 +594,9 @@ int MD_SingleStage::Autofocus(long param)
 int MD_SingleStage::OnSelectPort_1S(MM::PropertyBase* pPropBase, MM::ActionType pActType)
 {
 	if (pActType == MM::BeforeGet)
+	{
 		pPropBase->Set(portName_1S.c_str());
-
+	}
 	else if (pActType == MM::AfterSet)
 	{
 		if (initializationStatus_)
@@ -610,8 +612,9 @@ int MD_SingleStage::OnSelectPort_1S(MM::PropertyBase* pPropBase, MM::ActionType 
 int MD_SingleStage::OnConfigPort_1S(MM::PropertyBase* pProp, MM::ActionType pAct)
 {
    if (pAct == MM::BeforeGet)
+   {
       pProp->Set("Operate");
-
+   }
    else if (pAct == MM::AfterSet)
    {
       string request;
@@ -629,8 +632,9 @@ int MD_SingleStage::OnConfigPort_1S(MM::PropertyBase* pProp, MM::ActionType pAct
 int MD_SingleStage::OnResetPort_1S(MM::PropertyBase* pProp, MM::ActionType pAct)
 {
    if (pAct == MM::BeforeGet)
+   {
       pProp->Set("Operate");
-
+   }
    else if (pAct == MM::AfterSet)
    {
       string request;
@@ -654,22 +658,26 @@ int MD_SingleStage::OnResetPort_1S(MM::PropertyBase* pProp, MM::ActionType pAct)
 int MD_SingleStage::OnStepSize(MM::PropertyBase* pPropBase, MM::ActionType eActType)
 {
 	if (eActType == MM::BeforeGet)
+	{
 		pPropBase->Set(stepSize_um_);
-	
+	}
 	else if (eActType == MM::AfterSet)
+	{
 		pPropBase->Get(stepSize_um_);
-
+	}
 	return DEVICE_OK;
 }
 
 int MD_SingleStage::OnSpeed(MM::PropertyBase* pPropBase, MM::ActionType eActType)
 {
 	if (eActType == MM::BeforeGet)
+	{
 		pPropBase->Set(speed_step_);
-
+	}
 	else if (eActType == MM::AfterSet)
+	{
 		pPropBase->Get(speed_step_);
-
+	}
 	// set moving speed
 	ostringstream command;
 	string answer;
@@ -699,11 +707,13 @@ int MD_SingleStage::OnSpeed(MM::PropertyBase* pPropBase, MM::ActionType eActType
 int MD_SingleStage::OnAccelTime(MM::PropertyBase* pPropBase, MM::ActionType eActType)
 {
 	if (eActType == MM::BeforeGet)
+	{
 		pPropBase->Set(accelTime_pattern_);
-
+	}
 	else if (eActType == MM::AfterSet)
+	{
 		pPropBase->Get(accelTime_pattern_);
-
+	}
 // set accelaration time
 	ostringstream command;
 	string answer;
@@ -727,11 +737,13 @@ int MD_SingleStage::OnAccelTime(MM::PropertyBase* pPropBase, MM::ActionType eAct
 int MD_SingleStage::OnPosition(MM::PropertyBase* pPropBase, MM::ActionType eActType)
 {
    	if (eActType == MM::BeforeGet)
+	{
 		pPropBase->Set(position_um_);
-
+	}
 	else if (eActType == MM::AfterSet)
+	{
 		pPropBase->Get(position_um_);
-
+	}
 	return DEVICE_OK;
 	
 }
@@ -740,8 +752,9 @@ int MD_SingleStage::OnPosition(MM::PropertyBase* pPropBase, MM::ActionType eActT
 int MD_SingleStage::OnControllerAxis(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	if (eAct == MM::BeforeGet)
+	{
 		pProp->Set(controllerAxis_.c_str());
-
+	}
 	else if (eAct == MM::AfterSet)
 	{
 		string axis;
@@ -749,7 +762,6 @@ int MD_SingleStage::OnControllerAxis(MM::PropertyBase* pProp, MM::ActionType eAc
 		if (axis == "X" || axis == "Y")
 			controllerAxis_ = axis;
 	}
-
 	return DEVICE_OK;
 }
 
@@ -779,14 +791,14 @@ int MD_SingleStage::OnAutofocus(MM::PropertyBase* pProp, MM::ActionType eAct)
 //-----------------------------------------------------------------------------
 MD_TwoStages::MD_TwoStages() :
 
-initializationStatus_(false),
-stepSize_umX_	(1),
-stepSize_umY_	(1),
-speed_stepX_	(1000),	//pps
-speed_stepY_	(1000),	//pps
-accelTime_patternX_	(2),	// pattern 1-4
-accelTime_patternY_	(2),	// pattern 1-4
-answerTimeoutMs_(20)	// answer timeout is 100ms
+initializationStatus_	(false),
+stepSize_umX_			(1),
+stepSize_umY_			(1),
+speed_stepX_			(1000),	//pps
+speed_stepY_			(1000),	//pps
+accelTime_patternX_		(2),	// pattern 1-4
+accelTime_patternY_		(2),	// pattern 1-4
+answerTimeoutMs_		(20)	// answer timeout is 100ms
 
 {
 	InitializeDefaultErrorMessages();
@@ -820,7 +832,7 @@ answerTimeoutMs_(20)	// answer timeout is 100ms
 	// Description, RO
 	CreateProperty(MM::g_Keyword_Description, "ChuoSeiki MD5000 2Axes driver adapter", MM::String, true);
 
-		// select Port:
+	// select Port:
 	CPropertyAction* pActType = new CPropertyAction(this, &MD_TwoStages::OnSelectPort_2S);
 	CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pActType, true);
 
@@ -842,7 +854,9 @@ answerTimeoutMs_(20)	// answer timeout is 100ms
 MD_TwoStages::~MD_TwoStages()
 {
  if (initializationStatus_)
+ {
       initializationStatus_ = false;
+ }
 	Shutdown();
 }
 
@@ -931,7 +945,9 @@ int MD_TwoStages::Initialize()
 int MD_TwoStages::Shutdown()
 {
 	if (initializationStatus_)
+	{
 		initializationStatus_ = false;
+	}
 
 	return DEVICE_OK;
 }
