@@ -39,8 +39,8 @@
 #include <map>
 
 //////////////////////////////////////////////////////////////////////////////
-// Error codes
-//
+//// Custom Error codes
+
 #define ERR_PORT_CHANGE_FORBIDDEN		10001
 #define ERR_UNRECOGNIZED_ANSWER			10002
 #define ERR_NO_ANSWER					10003
@@ -48,7 +48,8 @@
 #define ERR_HOMING						10005
 #define ERR_TIMEOUT						10006
 
-//Controller Error Code Read Manual
+//// QT Error Code
+
 #define ERR_CONTROLER_0					10100	//Controller Error Code: Not In Command Recive Mode
 #define ERR_CONTROLER_1					10101	//Controller Error Code: Command Syntax Error
 #define ERR_CONTROLER_2					10102	//Controller Error Code: Command Set Value Overflow Error
@@ -66,6 +67,9 @@ const int nrShuttersPerDevice = 3;
 const int nrWheelsPerDevice = 2;
 const int nrDevicesPerController = 5;
 
+//-----------------------------------------------------------------------------
+//........... Class1: XY stage controller..................................
+//-----------------------------------------------------------------------------
 
 class ChuoSeikiXYStage : public CXYStageBase<ChuoSeikiXYStage>
 {
@@ -123,10 +127,6 @@ public:
 	int WaitForBusy(long Time);
 	int ConfirmAnswer(std::string ans);
 
-	// action interface
-	// ----------------
-//	int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
-
 // Checking device functions
 	int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
 	bool IsContinuousFocusDrive() const {return DEVICE_OK;}
@@ -135,7 +135,7 @@ public:
 
 private:
 
-	// check device functions
+// check device functions
 	int		ConfirmComm();
 	void	QueryPeripheralInventory();
 	int		GetNumberOfDiscoverableDevices			();
@@ -187,6 +187,10 @@ private:
 
 };
 
+//-----------------------------------------------------------------------------
+//........... Class2: Z stage controller..................................
+//-----------------------------------------------------------------------------
+
 class ChuoSeikiZStage : public CStageBase<ChuoSeikiZStage>
 {
 public:
@@ -206,18 +210,20 @@ public:
 	int OnResetPort_Z (MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnTransmissionDelay_Z (MM::PropertyBase* pProp, MM::ActionType eAct);
 
+// Interface stage setting
 	int OnStepSizeZ(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnSpeedZHigh(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnSpeedZLow(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnAccelTimeZ(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-
-//	virtual double GetStepSize() {return stepSize_um_;}
+// Control functions
 	virtual int SetPositionSteps(long z);
 	virtual int GetPositionSteps(long& z);
 	virtual int SetRelativePositionSteps(long z);
-//	virtual int Home();// { return DEVICE_OK; }
-//	virtual int Stop();// { return DEVICE_OK; }
+
+/*/	virtual double GetStepSize() {return stepSize_um_;}
+	virtual int Home();// { return DEVICE_OK; }
+	virtual int Stop();// { return DEVICE_OK; }		/*/
 
 	virtual int SetOrigin();// { return DEVICE_OK; }
 
@@ -234,13 +240,13 @@ public:
 	int WaitForBusy(long Time);
 	int ConfirmAnswer(std::string ans);
 
-	// action interface
-	// ----------------
+// action interface
+
 	int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnControllerAxis(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnAutofocus(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-	// Checking device functions
+// Checking device functions
 	int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
 	bool IsContinuousFocusDrive() const {return DEVICE_OK;}
 	bool SupportsDeviceDetection(void){return DEVICE_OK;}
@@ -248,7 +254,7 @@ public:
 
 private:
 
-	// check device functions
+// check device functions
 	int		ConfirmComm();
 	void	QueryPeripheralInventory();
 	int		GetNumberOfDiscoverableDevices			();
@@ -282,7 +288,6 @@ private:
 
 	long accelTimeZ_;
 
-
 	double posZ_um_;
 	bool busy_;
 	MM::TimeoutMs* timeOutTimer_;
@@ -291,8 +296,6 @@ private:
 	double answerTimeoutMs_;
 
 	std::string controllerAxisZ_;
-
-
 
 };
 
