@@ -153,7 +153,7 @@ accelTimeY_			(100)
 
 
 	// Name, read-only (RO)
-	CreateProperty(MM::g_Keyword_Name, g_ChuoSeikiZStageDeviceName, MM::String, true);
+	CreateProperty(MM::g_Keyword_Name, g_ChuoSeikiXYStageDeviceName, MM::String, true);
 
 	// Description, RO
 	CreateProperty(MM::g_Keyword_Description, "ChuoSeiki 2-stage driver adapter", MM::String, true);
@@ -387,22 +387,23 @@ int ChuoSeikiXYStage::WaitForBusy(long Time)
 }
 
 
-int ChuoSeikiXYStage::ConfirmAnswer(std::string ans)
+int ChuoSeikiXYStage::ConfirmAnswer(std::string errorcode)
 {
-	std::string errorcode = ans.substr(0,2) ;
-	
-	if (errorcode == "!0") return ERR_CONTROLER_0;
-	if (errorcode == "!1") return ERR_CONTROLER_1;
-	if (errorcode == "!2") return ERR_CONTROLER_2;
-	if (errorcode == "!3") return ERR_CONTROLER_3;
-	if (errorcode == "!4") return ERR_CONTROLER_4;
-	if (errorcode == "!5") return ERR_CONTROLER_5;
-	if (errorcode == "!6") return ERR_CONTROLER_6;
-	if (errorcode == "!7") return ERR_CONTROLER_7;
-	if (errorcode == "!8") return ERR_CONTROLER_8;
-	if (errorcode == "!9") return ERR_CONTROLER_9;
-	
-	return DEVICE_OK;
+	if (errorcode.length()==2)
+	{
+		if (errorcode == "!0") return ERR_CONTROLER_0;
+		if (errorcode == "!1") return ERR_CONTROLER_1;
+		if (errorcode == "!2") return ERR_CONTROLER_2;
+		if (errorcode == "!3") return ERR_CONTROLER_3;
+		if (errorcode == "!4") return ERR_CONTROLER_4;
+		if (errorcode == "!5") return ERR_CONTROLER_5;
+		if (errorcode == "!6") return ERR_CONTROLER_6;
+		if (errorcode == "!7") return ERR_CONTROLER_7;
+		if (errorcode == "!8") return ERR_CONTROLER_8;
+		if (errorcode == "!9") return ERR_CONTROLER_9;
+		return ERR_UNRECOGNIZED_ANSWER;
+	}
+	else return DEVICE_OK;
 }
 
 
@@ -995,7 +996,7 @@ MM::DeviceDetectionStatus ChuoSeikiZStage::DetectDevice(void)
 			// device specific default communication parameters
 			GetCoreCallback()->SetDeviceProperty(portName_Z.c_str(), MM::g_Keyword_BaudRate,	"9600"	);
 			GetCoreCallback()->SetDeviceProperty(portName_Z.c_str(), MM::g_Keyword_StopBits,	"1"		);
-			GetCoreCallback()->SetDeviceProperty(portName_Z.c_str(), "AnswerTimeout",			"600.0"	);
+			GetCoreCallback()->SetDeviceProperty(portName_Z.c_str(), "AnswerTimeout",			"500.0"	);
 			GetCoreCallback()->SetDeviceProperty(portName_Z.c_str(), "DelayBetweenCharsMs",		"0.0"	);
 
 			// get portname for 1 stage controller
@@ -1181,12 +1182,7 @@ int ChuoSeikiZStage::ConfirmAnswer(std::string ans)
 int ChuoSeikiZStage::SetPositionUm(double pos)
 {
 	double dSteps = ( pos / stepSize_umZ_);
-	ostringstream strSteps;
-	strSteps << dSteps;
-	string str = strSteps.str();
-	stringstream ss(str);
-	long steps;
-	ss >> steps;
+	long steps = (long) dSteps;
 	return SetPositionSteps( steps );
 }
 
