@@ -83,18 +83,21 @@ public final class TimestampOverlay extends AbstractOverlay {
    private static enum TSColor {
       // Enum constant names used for persistence; do not change
       WHITE("White", Color.getHSBColor(0.0f, 0.0f, 0.1f)) {
+         @Override
          Color getForeground(Image image, DisplaySettings settings) {
             return Color.WHITE;
          }
       },
 
       BLACK("Black", Color.getHSBColor(0.0f, 0.0f, 0.9f)) {
+         @Override
          Color getForeground(Image image, DisplaySettings settings) {
             return Color.BLACK;
          }
       },
 
       CHANNEL("Channel Color", Color.getHSBColor(0.0f, 0.0f, 0.1f)) {
+         @Override
          Color getForeground(Image image, DisplaySettings settings) {
             Coords c = image.getCoords();
             if (!c.hasAxis(Coords.CHANNEL)) {
@@ -131,6 +134,7 @@ public final class TimestampOverlay extends AbstractOverlay {
 
    private static enum TSFormat {
       ABSOLUTE_TIME("Absolute") {
+         @Override
          String formatTime(Image image) {
             Metadata metadata = image.getMetadata();
             if (metadata.getReceivedTime() == null) {
@@ -140,9 +144,9 @@ public final class TimestampOverlay extends AbstractOverlay {
             // the acquisition engine (mm.clj) that generates the datetime
             // string.
             SimpleDateFormat source = new SimpleDateFormat(
-                  "yyyy-MM-dd HH:mm:ss Z");
+                  "yyyy-MM-dd HH:mm:ss.SSS Z");
             SimpleDateFormat dest = new SimpleDateFormat(
-                  "yyyy-MM-dd HH:mm:ss");
+                  "yyyy-MM-dd HH:mm:ss.SSS");
             try {
                return dest.format(source.parse(metadata.getReceivedTime()));
             }
@@ -167,7 +171,7 @@ public final class TimestampOverlay extends AbstractOverlay {
             int minutes = (int) totalSeconds / 60;
             totalSeconds -= minutes * 60;
             int seconds = (int) totalSeconds;
-            return String.format("T+%02d:%02d:%02d.%03d", hours, minutes,
+            return String.format("%02d:%02d:%02d.%03d", hours, minutes,
                   seconds, milliseconds);
          }
       },
