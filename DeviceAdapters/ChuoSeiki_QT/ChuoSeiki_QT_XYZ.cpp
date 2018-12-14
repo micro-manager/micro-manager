@@ -48,7 +48,7 @@
 #include <algorithm>
 
 // XYStage
-const char* g_ChuoSeikiXYStageDeviceName = "ChuoSeiki_QT 2-Aaxis";
+const char* g_ChuoSeikiXYStageDeviceName = "ChuoSeiki_QT 2-Axis";
 
 // single axis stage
 const char* g_ChuoSeikiZStageDeviceName = "ChuoSeiki_QT 1-Axis";
