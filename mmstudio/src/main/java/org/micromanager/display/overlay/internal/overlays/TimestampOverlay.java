@@ -195,7 +195,7 @@ public final class TimestampOverlay extends AbstractOverlay {
       }
    }
 
-   private TSFormat format_ = TSFormat.ABSOLUTE_TIME;
+   private TSFormat format_ = TSFormat.RELATIVE_TIME;
    private boolean perChannel_ = false;
    private TSColor color_ = TSColor.WHITE;
    private boolean addBackground_ = true;
@@ -480,7 +480,7 @@ public final class TimestampOverlay extends AbstractOverlay {
       configUI_.add(colorComboBox_, new CC().gapAfter("unrel"));
       configUI_.add(addBackgroundCheckBox_, new CC().wrap());
 
-      configUI_.add(new JLabel("Position"), new CC().split().gapAfter("rel"));
+      configUI_.add(new JLabel("Position:"), new CC().split().gapAfter("rel"));
       configUI_.add(positionComboBox_, new CC().gapAfter("unrel"));
       configUI_.add(new JLabel("X Offset:"), new CC().gapAfter("rel"));
       configUI_.add(xOffsetField_, new CC().gapAfter("0"));
