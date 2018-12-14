@@ -503,40 +503,38 @@ int ChuoSeikiXYStage::GetPositionSteps(long& x, long& y)
 	ostringstream command;
 	int ret = 0;
 	string answer;
-	
-REPEAT:
+
+	command << "Q:"<< controllerAxisX_ << "0" << controllerAxisY_ << "0";		// request positions and states
+	ret = SendSerialCommand(portName_XY.c_str(), command.str().c_str(), "\r\n");
+	command.str("");
+	if (ret != DEVICE_OK)
+			return ret;
+
+	ret = GetSerialAnswer(portName_XY.c_str(), "\r\n", answer);
+	if (ret != DEVICE_OK)
+			return ret;
+
+	if (answer.length() == 21)					// answer format: (+ or -)(8 digits)(stage A state keyword)(,)(+ or -)(8 digits)(stage B state keyword)
 	{
-		command << "Q:"<< controllerAxisX_ << "0" << controllerAxisY_ << "0";		// request positions and states
-		ret = SendSerialCommand(portName_XY.c_str(), command.str().c_str(), "\r\n");
-		command.str("");
-		if (ret != DEVICE_OK)
-			return ret;
-
-		ret = GetSerialAnswer(portName_XY.c_str(), "\r\n", answer);
-		if (ret != DEVICE_OK)
-			return ret;
-
-		if (answer.length() == 21)		// // answer format: (+ or -)(8 digits)(stage A state keyword)(,)(+ or -)(8 digits)(stage B state keyword)
-		{
-			if( (answer.substr(9, 1) == "D") || (answer.substr(20, 1) == "D") )
-			{	
-				goto REPEAT;
-			}
-			else if( answer.substr(9, 1) == "H" || answer.substr(20, 1) == "H" )
-			{
-				return ERR_HOMING;	
-			}
-			else
-			{
-				x = std::atol(answer.substr(0,9).c_str());
-				y = std::atol(answer.substr(11,9).c_str());
-				posX_um_ = x * stepSize_umX_;
-				posY_um_ = y * stepSize_umY_;
-				return DEVICE_OK;
-			}
+		if( (answer.substr(9, 1) == "D") || (answer.substr(20, 1) == "D") )
+		{	
+			return GetPositionSteps(x,y);		// if stage is running, repeat
 		}
-	else return ERR_UNRECOGNIZED_ANSWER;
+		else if( answer.substr(9, 1) == "H" || answer.substr(20, 1) == "H" )
+		{
+			return ERR_HOMING;	
+		}
+		else
+		{
+			x = std::atol(answer.substr(0,9).c_str());
+			y = std::atol(answer.substr(11,9).c_str());
+			posX_um_ = x * stepSize_umX_;
+			posY_um_ = y * stepSize_umY_;
+			return DEVICE_OK;
+		}
 	}
+	else return ERR_UNRECOGNIZED_ANSWER;
+	
 }
 
 
@@ -1238,37 +1236,35 @@ int ChuoSeikiZStage::GetPositionSteps(long& z)
 	int ret = 0;
 	string answer;
 	ostringstream command;
-REPEAT:
-	{
-		command << "Q:"<< controllerAxisZ_ << "0";
-		ret = SendSerialCommand(portName_Z.c_str(), command.str().c_str(), "\r\n");
-		command.str("");
-		if (ret != DEVICE_OK)		
+
+	command << "Q:"<< controllerAxisZ_ << "0";
+	ret = SendSerialCommand(portName_Z.c_str(), command.str().c_str(), "\r\n");
+	command.str("");
+	if (ret != DEVICE_OK)		
 			return ret;	
 
-		ret = GetSerialAnswer(portName_Z.c_str(), "\r\n", answer);
-		if (ret != DEVICE_OK)
+	ret = GetSerialAnswer(portName_Z.c_str(), "\r\n", answer);
+	if (ret != DEVICE_OK)
 			return ret;	
 	
-		if (answer.length() == 10)			// answer format: (+ or -)(8 digits)(stage state keyword)
+	if (answer.length() == 10)				// answer format: (+ or -)(8 digits)(stage state keyword)
+	{
+		if( answer.substr(9, 1) == "D" )
 		{
-			if( answer.substr(9, 1) == "D" )
-			{
-				goto REPEAT;
-			}
-			else if( answer.substr(9, 1) == "H" )
-			{
-				return ERR_HOMING;	
-			}
-			else
-			{
-				z = std::atol(answer.substr(0,9).c_str());
-				posZ_um_ = z * stepSize_umZ_;
-				return DEVICE_OK;
-			}
+			return GetPositionSteps(z);		// if stage is running, repeat
 		}
-		else return ERR_UNRECOGNIZED_ANSWER;
-	  }	
+		else if( answer.substr(9, 1) == "H" )
+		{
+			return ERR_HOMING;	
+		}
+		else
+		{
+			z = std::atol(answer.substr(0,9).c_str());
+			posZ_um_ = z * stepSize_umZ_;
+				return DEVICE_OK;
+		}
+	}
+	else return ERR_UNRECOGNIZED_ANSWER;
 }
 
 
