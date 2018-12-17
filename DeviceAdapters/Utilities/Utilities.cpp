@@ -2968,7 +2968,7 @@ int DAZStage::SetPositionUm(double pos)
    if (DADevice_ == 0)
       return ERR_NO_DA_DEVICE;
 
-   double volt = ( (pos + originPos_) / (maxStagePos_ - minStagePos_)) * (maxStageVolt_ - minStageVolt_);
+   double volt =  (pos - minStagePos_) / (maxStagePos_ - minStagePos_) * (maxStageVolt_ - minStageVolt_) + minStageVolt_;
    if (volt > maxStageVolt_ || volt < minStageVolt_)
       return ERR_POS_OUT_OF_RANGE;
 
@@ -2989,8 +2989,11 @@ int DAZStage::GetPositionUm(double& pos)
    if (ret != DEVICE_OK) 
       // DA Device cannot read, set position from cache
       pos = pos_;
-   else
-      pos = volt/(maxStageVolt_ - minStageVolt_) * (maxStagePos_ - minStagePos_) + originPos_;
+   else 
+   {
+      pos = (volt - minStageVolt_) / (maxStageVolt_ - minStageVolt_) * (maxStagePos_ - minStagePos_) + minStagePos_;
+      pos_ = pos;
+   }
 
    return DEVICE_OK;
 }
@@ -3011,7 +3014,7 @@ int DAZStage::SetPositionSteps(long steps)
    else
       return ERR_VOLT_OUT_OF_RANGE;
 
-   pos_ = volt/(maxStageVolt_ - minStageVolt_) * (maxStagePos_ - minStagePos_) + originPos_;
+   pos_ = (volt - minStageVolt_) / (maxStageVolt_ - minStageVolt_) * (maxStagePos_ - minStagePos_) + minStagePos_;
 
    return DEVICE_OK;
 }
@@ -3024,7 +3027,7 @@ int DAZStage::GetPositionSteps(long& steps)
    double volt;
    int ret = DADevice_->GetSignal(volt);
    if (ret != DEVICE_OK)
-      steps = (long) ((pos_ + originPos_)/(maxStagePos_ - minStagePos_) * (maxStageVolt_ - minStageVolt_) * 1000.0); 
+      steps = (long) ((pos_ - minStagePos_)/(maxStagePos_ - minStagePos_) * (maxStageVolt_ - minStageVolt_) * 1000.0); 
    else
       steps = (long) ((volt - minStageVolt_) * 1000.0);
 
@@ -3038,7 +3041,7 @@ int DAZStage::SetOrigin()
 {
    if (DADevice_ == 0)
       return ERR_NO_DA_DEVICE;
-
+   /*
    double volt;
    int ret = DADevice_->GetSignal(volt);
    if (ret != DEVICE_OK)
@@ -3049,6 +3052,7 @@ int DAZStage::SetOrigin()
 
    if (originPos_ < minStagePos_ || originPos_ > maxStagePos_)
       return ERR_POS_OUT_OF_RANGE;
+   */
 
    return DEVICE_OK;
 }
