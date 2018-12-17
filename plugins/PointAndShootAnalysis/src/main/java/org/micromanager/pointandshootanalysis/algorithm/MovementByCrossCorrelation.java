@@ -45,12 +45,14 @@ public class MovementByCrossCorrelation {
    private final FHT ref_;
    
    public MovementByCrossCorrelation(ImageProcessor reference) {
+     // (new ij.ImagePlus("reference", reference)).show();
      ref_ = new FHT(reference);
      ref_.transform();
      ref_.resetMinAndMax();
    }
    
    public void getJitter(ImageProcessor test, Point2D.Double com) {
+      //(new ij.ImagePlus("test", test)).show();
       FHT t = new FHT(test);
       t.transform();
       t.resetMinAndMax();
@@ -59,6 +61,10 @@ public class MovementByCrossCorrelation {
             
       m.inverseTransform();
       m.swapQuadrants();
+      
+      //ij.ImagePlus imp = new ij.ImagePlus("Test", m);
+      //imp.show();
+      
       
       // return the position of the brightest pixel
       Point brightPix = new Point(0, 0);
