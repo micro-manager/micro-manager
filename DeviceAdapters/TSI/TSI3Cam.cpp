@@ -43,25 +43,23 @@
 
 using namespace std;
 
-namespace
-{
-   void camera_connect_callback(char* /*cameraSerialNumber*/, enum USB_BUS_SPEED /*usb_bus_speed*/, void* /*context*/)
-   {
-      // TODO
-   }
 
-   void camera_disconnect_callback(char* /*cameraSerialNumber*/, void* /*context*/)
-   {
-      // TODO
-   }
+void camera_connect_callback(char* /* cameraSerialNumber */, enum TL_CAMERA_USB_PORT_TYPE /* usb_bus_speed */, void* /* context */)
+{
+	// printf("camera %s connected with bus speed = %d!\n", cameraSerialNumber, usb_bus_speed);
+}
+
+void camera_disconnect_callback(char* /* cameraSerialNumber */, void* /* context */)
+{
+	//printf("camera %s disconnected!\n", cameraSerialNumber);
 }
 
 
 Tsi3Cam::Tsi3Cam() :
    initialized(0),
    stopOnOverflow(false),
-   triggerPolarity(ACTIVE_HIGH),
-   trigger(NONE),
+   triggerPolarity(TL_CAMERA_TRIGGER_POLARITY_ACTIVE_HIGH),
+   operationMode(TL_CAMERA_OPERATION_MODE_SOFTWARE_TRIGGERED),
    camHandle(nullptr),
    acquiringSequence(false),
    acquiringFrame(false),
@@ -98,9 +96,11 @@ void Tsi3Cam::GetName(char* name) const
 
 int Tsi3Cam::Initialize()
 {
-   const int maxSdkStringLength = 1024;
+	LogMessage("Initializing TSI3 camera...");
+	
+	const int maxSdkStringLength = 1024;
 
-   if (init_camera_sdk_dll())
+   if (tl_camera_sdk_dll_initialize())
    {
       return ERR_TSI_DLL_LOAD_FAILED;
    }
@@ -122,7 +122,7 @@ int Tsi3Cam::Initialize()
       return ERR_INTERNAL_ERROR;
    }
 
-   if (tl_camera_get_available_cameras(camera_ids, maxSdkStringLength))
+   if (tl_camera_discover_available_cameras(camera_ids, maxSdkStringLength))
    {
       return ERR_TSI_CAMERA_NOT_FOUND;
    }
@@ -167,9 +167,9 @@ int Tsi3Cam::Initialize()
 
    // obtain full frame parameters and reset the frame
    int minWidth, minHeight;
-   if (tl_camera_get_image_width_range_pixels(camHandle, &minWidth, &fullFrame.xPixels))
+   if (tl_camera_get_image_width_range(camHandle, &minWidth, &fullFrame.xPixels))
       return ERR_INTERNAL_ERROR;
-   if (tl_camera_get_image_height_range_pixels(camHandle, &minHeight, &fullFrame.yPixels))
+   if (tl_camera_get_image_height_range(camHandle, &minHeight, &fullFrame.yPixels))
       return ERR_INTERNAL_ERROR;
    
    fullFrame.xOrigin = 0;
@@ -177,12 +177,11 @@ int Tsi3Cam::Initialize()
    fullFrame.xBin = 1;
    fullFrame.yBin = 1;
    ResetImageBuffer();
-   tl_camera_get_pixel_size_bytes(camHandle, &fullFrame.pixDepth);
-   tl_camera_get_pixel_bit_depth(camHandle, &fullFrame.bitDepth);
+   tl_camera_get_sensor_pixel_size_bytes(camHandle, &fullFrame.pixDepth);
+   tl_camera_get_bit_depth(camHandle, &fullFrame.bitDepth);
 
-   // exposure
-   int exp_min = 0, exp_max = 0;
-   if (tl_camera_get_exposure_range_us(camHandle, &exp_min, &exp_max))
+   long long exp_min = 0, exp_max = 0;
+   if (tl_camera_get_exposure_time_range(camHandle, &exp_min, &exp_max))
       return ERR_INTERNAL_ERROR;
 
    CPropertyAction *pAct = new CPropertyAction (this, &Tsi3Cam::OnExposure);
@@ -193,10 +192,10 @@ int Tsi3Cam::Initialize()
 
    // binning
    int hbin_min = 0, hbin_max = 0, vbin_min = 0, vbin_max = 0;
-   if (tl_camera_get_hbin_range(camHandle, &hbin_min, &hbin_max))
+   if (tl_camera_get_binx_range(camHandle, &hbin_min, &hbin_max))
       return ERR_INTERNAL_ERROR;
 
-   if (tl_camera_get_vbin_range(camHandle, &vbin_min, &vbin_max))
+   if (tl_camera_get_biny_range(camHandle, &vbin_min, &vbin_max))
       return ERR_INTERNAL_ERROR;
 
    int binMax = min(vbin_max, hbin_max);
@@ -218,28 +217,28 @@ int Tsi3Cam::Initialize()
 
    // create Trigger mode property
    pAct = new CPropertyAction(this, &Tsi3Cam::OnTriggerMode);
-   trigger = NONE;
+   operationMode = TL_CAMERA_OPERATION_MODE_SOFTWARE_TRIGGERED;
    ret = CreateProperty(g_TriggerMode, g_Software, MM::String, false, pAct);
-   AddAllowedValue(g_TriggerMode, g_Software); // NONE
+   AddAllowedValue(g_TriggerMode, g_Software); // SOFTWARE
    AddAllowedValue(g_TriggerMode, g_HardwareEdge); // STANDARD
    AddAllowedValue(g_TriggerMode, g_HardwareDuration); // BULB
 
    // create Trigger polarity
    pAct = new CPropertyAction(this, &Tsi3Cam::OnTriggerPolarity);
-   triggerPolarity = ACTIVE_HIGH;
+   triggerPolarity = TL_CAMERA_TRIGGER_POLARITY_ACTIVE_HIGH;
    ret = CreateProperty(g_TriggerPolarity, g_Positive, MM::String, false, pAct);
    AddAllowedValue(g_TriggerPolarity, g_Positive);
    AddAllowedValue(g_TriggerPolarity, g_Negative);
 
    // create temperature property
-   pAct = new CPropertyAction(this, &Tsi3Cam::OnTemperature);
-   ret = CreateProperty(g_Temperature, "0", MM::Integer, true, pAct);
+   //pAct = new CPropertyAction(this, &Tsi3Cam::OnTemperature);
+   //ret = CreateProperty(g_Temperature, "0", MM::Integer, true, pAct);
 
    // create EEP On/Off property
-   pAct = new CPropertyAction(this, &Tsi3Cam::OnEEP);
-   ret = CreateProperty(g_EEP, g_Off, MM::String, false, pAct);
-   AddAllowedValue(g_EEP, g_Off);
-   AddAllowedValue(g_EEP, g_On);
+   //pAct = new CPropertyAction(this, &Tsi3Cam::OnEEP);
+   //ret = CreateProperty(g_EEP, g_Off, MM::String, false, pAct);
+   //AddAllowedValue(g_EEP, g_Off);
+   //AddAllowedValue(g_EEP, g_On);
 
    // create HotPixel threshold property
    int thrMin(0), thrMax(0);
@@ -287,9 +286,8 @@ int Tsi3Cam::Shutdown()
    if (tl_camera_close_sdk())
       LogMessage("TSI SDK3 close failed!");
 
-   // release the library
-   if (free_camera_sdk_dll())
-      LogMessage("Failed to release TSI SDK3!");
+	if (tl_camera_sdk_dll_terminate())
+		LogMessage("TSI SDK3 dll terminate failed");
 
    initialized = false;
    return DEVICE_OK;
@@ -353,12 +351,12 @@ int Tsi3Cam::SnapImage()
 {
    // set callback for collecting frames
    tl_camera_set_frame_available_callback(camHandle, &Tsi3Cam::frame_available_callback, this);
-   tl_camera_set_number_of_frames_per_trigger(camHandle, 1);
+   tl_camera_set_frames_per_trigger_zero_for_unlimited(camHandle, 1);
    tl_camera_arm(camHandle, 2);
 
    InterlockedExchange(&acquiringFrame, 1);
    InterlockedExchange(&acquiringSequence, 0);
-   if (trigger == NONE)
+   if (operationMode == TL_CAMERA_OPERATION_MODE_SOFTWARE_TRIGGERED)
    {
       if (tl_camera_issue_software_trigger(camHandle))
          return ERR_TRIGGER_FAILED;
@@ -396,7 +394,7 @@ unsigned Tsi3Cam::GetBitDepth() const
 int Tsi3Cam::GetBinning() const
 {
    int bin(1);
-   tl_camera_get_hbin(camHandle, &bin); // vbin is the same
+   tl_camera_get_binx(camHandle, &bin); // vbin is the same
    return bin;
 }
 
@@ -409,22 +407,22 @@ int Tsi3Cam::SetBinning(int binSize)
 
 double Tsi3Cam::GetExposure() const
 {
-   int exp(0);
-   tl_camera_get_exposure_us(camHandle, &exp);
+   long long exp(0);
+   tl_camera_get_exposure_time(camHandle, &exp);
    return (double)exp / 1000.0; // exposure is expressed always in ms
 }
 
 void Tsi3Cam::SetExposure(double dExpMs)
 {
-   int exp = (int)(dExpMs * 1000 + 0.5);
-   tl_camera_set_exposure_us(camHandle, exp);
+   long long exp = (long long)(dExpMs * 1000 + 0.5);
+   tl_camera_set_exposure_time(camHandle, exp);
 }
 
 int Tsi3Cam::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 {
    // obtain current binning factor
    int bin(1);
-   tl_camera_get_hbin(camHandle, &bin); // vbin is the same
+   tl_camera_get_binx(camHandle, &bin); // vbin is the same
 
    // translate roi from screen coordinates to full frame
    int xFull = x*bin;
@@ -443,7 +441,7 @@ int Tsi3Cam::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 int Tsi3Cam::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
 {
    int bin(1);
-   tl_camera_get_hbin(camHandle, &bin); // vbin is the same
+   tl_camera_get_binx(camHandle, &bin); // vbin is the same
 
    int xtl(0), ytl(0), xbr(0), ybr(0); 
    if (tl_camera_get_roi(camHandle, &xtl, &ytl, &xbr, &ybr))
@@ -529,9 +527,9 @@ bool Tsi3Cam::IsCapturing()
 int Tsi3Cam::ResizeImageBuffer()
 {
    int w(0), h(0), d(0);
-   tl_camera_get_image_width_pixels(camHandle, &w);
-   tl_camera_get_image_height_pixels(camHandle, &h);
-   tl_camera_get_pixel_size_bytes(camHandle, &d);
+   tl_camera_get_image_width(camHandle, &w);
+   tl_camera_get_image_height(camHandle, &h);
+   tl_camera_get_sensor_pixel_size_bytes(camHandle, &d);
 
    img.Resize(w, h, d);
    ostringstream os;
@@ -580,74 +578,54 @@ bool Tsi3Cam::StopCamera()
 bool Tsi3Cam::StartCamera( int frames )
 {
    tl_camera_set_frame_available_callback(camHandle, &Tsi3Cam::frame_available_callback, this);
-   tl_camera_set_number_of_frames_per_trigger(camHandle, frames);
+   tl_camera_set_frames_per_trigger_zero_for_unlimited(camHandle, frames);
 
-   if (tl_camera_get_hardware_trigger_mode(camHandle, &trigger, &triggerPolarity))
-      ERR_TRIGGER_FAILED;
+   if (tl_camera_get_trigger_polarity(camHandle, &triggerPolarity))
+      return false;
+
+	if (tl_camera_get_operation_mode(camHandle, &operationMode))
+		return false;
 
    tl_camera_arm(camHandle, 2);
 
-   if (trigger == NONE)
+   if (operationMode == TL_CAMERA_OPERATION_MODE_SOFTWARE_TRIGGERED)
       return tl_camera_issue_software_trigger(camHandle) == 0;
 
    return true;
 }
 
-/// <param name="sender">The instance of the tl_camera sending the event.</param>
-/// <param name="image_buffer">The pointer to the buffer that contains the image data.</param>
-/// <param name="image_width">The image width in pixels.</param>
-/// <param name="image_height">The image height in pixels.</param>
-/// <param name="bit_depth">The number of bits of image information per pixel.</param>
-/// <param name="number_of_color_channels">The number of color channels.  This parameter will be 1 for monochrome images and 3 for color images.</param>
-/// <param name="frame_count">The image count corresponding to the received image during the current acquisition run.</param>
-/// <param name="context">A pointer to a user specified context.  This parameter is ignored by the SDK.</param>
-void Tsi3Cam::frame_available_callback(void*       /*sender*/,
-                                                  unsigned short* image_buffer,
-                                                  int image_width, int image_height, int /*bit_depth*/,
-                                                  int number_of_color_channels,
-                                                  int frame_count,
-                                                  void* context)
+void Tsi3Cam::frame_available_callback(void* /*sender*/, unsigned short* image_buffer, int frame_count, unsigned char* /*metadata*/, int /*metadata_size_in_bytes*/, void* context)
 {
    Tsi3Cam* instance = static_cast<Tsi3Cam*>(context);
+	int img_width(0);
+	int img_height(0);
+	tl_camera_get_image_width(instance->camHandle, &img_width);
+	tl_camera_get_image_height(instance->camHandle, &img_height);
+
    ostringstream os;
-   os << "Frame callback: " << image_width << " X " << image_height << ", frame: "
+   os << "Frame callback: " << img_width << " X " << img_height << ", frame: "
       << frame_count << ", buffer: " << instance->img.Width() << "X" << instance->img.Height();
    instance->LogMessage(os.str().c_str());
    
    if (instance->acquiringFrame)
    {
-      assert(number_of_color_channels == 1);
-      if (number_of_color_channels != 1)
-      {
-         instance->LogMessage("More than one color channel encountered. Not supported.");
-         return;
-      }
-
       // ONLY GRAYSCALE SUPPORTED
       // we are not supporting color or 8-bit pixels
 
       // reformat image buffer
-      instance->img.Resize(image_width, image_height, instance->fullFrame.pixDepth);
+      instance->img.Resize(img_width, img_height, instance->fullFrame.pixDepth);
 
-      memcpy(instance->img.GetPixelsRW(), image_buffer, instance->fullFrame.pixDepth * image_height * image_width);
-       InterlockedExchange(&instance->acquiringFrame, 0);
+      memcpy(instance->img.GetPixelsRW(), image_buffer, instance->fullFrame.pixDepth * img_height * img_width);
+      InterlockedExchange(&instance->acquiringFrame, 0);
    }
    else if (instance->acquiringSequence)
    {
-      assert(number_of_color_channels == 1);
-      if (number_of_color_channels != 1)
-      {
-         instance->LogMessage("More than one color channel encountered. Not supported.");
-         instance->StopCamera();
-         return;
-      }
-
       // ONLY GRAYSCALE SUPPORTED
       // we are not supporting color or 8-bit pixels
 
       // reformat image buffer
-      instance->img.Resize(image_width, image_height, instance->fullFrame.pixDepth);
-      memcpy(instance->img.GetPixelsRW(), image_buffer, instance->fullFrame.pixDepth * image_height * image_width);
+      instance->img.Resize(img_width, img_height, instance->fullFrame.pixDepth);
+      memcpy(instance->img.GetPixelsRW(), image_buffer, instance->fullFrame.pixDepth * img_height * img_width);
       int ret = instance->InsertImage();
       if (ret != DEVICE_OK)
       {
@@ -665,12 +643,12 @@ void Tsi3Cam::frame_available_callback(void*       /*sender*/,
 
 void Tsi3Cam::ResetImageBuffer()
 {
-   if (tl_camera_set_hbin(camHandle, 1))
+   if (tl_camera_set_binx(camHandle, 1))
    {
       LogMessage("Error setting xbin factor");
    }
 
-   if (tl_camera_set_vbin(camHandle, 1))
+   if (tl_camera_set_biny(camHandle, 1))
    {
       LogMessage("Error setting ybin factor");
    }

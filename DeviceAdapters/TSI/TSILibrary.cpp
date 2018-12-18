@@ -62,10 +62,14 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    {
       // first try if old SDK is installed
       if (isTsiSDKAvailable())
+		{
          return new TsiCam(); // instantiate old camera
+		}
       // then try SDK3
       if (isTsiSDK3Available())
+		{
          return new Tsi3Cam(); // instantiate new camera
+		}
    }
 
    return 0;
@@ -78,18 +82,19 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
  */
 bool isTsiSDK3Available()
 {
-   if (init_camera_sdk_dll())
+   if (tl_camera_sdk_dll_initialize())
    {
       return false;
    }
 
    if (tl_camera_open_sdk())
    {
-      return false;
+		tl_camera_sdk_dll_terminate();
+		return false;
    }
 
    tl_camera_close_sdk();
-   free_camera_sdk_dll();
+	tl_camera_sdk_dll_terminate();
 
    return true;
 }
