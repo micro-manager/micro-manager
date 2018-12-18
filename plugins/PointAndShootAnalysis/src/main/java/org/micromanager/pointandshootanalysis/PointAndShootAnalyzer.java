@@ -189,6 +189,7 @@ public class PointAndShootAnalyzer implements Runnable {
       
       // We have the bleach Coordinates as frame - x/y. Check with the actual images
       List<XYSeries> plotData = new ArrayList<XYSeries>();
+      List<Map<Integer, Point>> tracks = new ArrayList<Map<Integer, Point>>();
       try {
          int imgWidth = dataProvider.getAnyImage().getWidth();
          int imgHeight = dataProvider.getAnyImage().getHeight();
@@ -326,6 +327,7 @@ public class PointAndShootAnalyzer implements Runnable {
                current = ccParticle(dataProvider, cb, frame, frame + 1, current);
                track.put(frame + 1, current);
             }
+            tracks.add(track);
  
             
             List<Double> intensityData = new ArrayList<Double>();
@@ -377,6 +379,8 @@ public class PointAndShootAnalyzer implements Runnable {
       PlotUtils pu = new PlotUtils(studio_.profile().getSettings(this.getClass()));
       pu.plotDataN("Bleach Intensity Profile", plots, "Time (ms)",
               "Normalized Intensity", showShapes, "", 1.3);
+      
+      
 
       
    }
