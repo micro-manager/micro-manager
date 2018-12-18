@@ -1760,7 +1760,6 @@ bool isINFOCommand(const string command)
    }
    return ret;
 }
-}
 
 int XYStage::OnSerialCommand(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
