@@ -78,7 +78,9 @@ public class PointAndShootAnalyzer implements Runnable {
    final private int findMinFramesBefore_ = 5; // frames before user clicked PAS.  
                               //Used to find actual bleach spot and to normalize
    final private int findMinFramesAfter_ = 20;  // frames after used clicked PAS.  
-                              //Used to find actual bleach spot
+   //Used to find actual bleach spot
+   final private int fftSize_ = 64;
+   final private int halfFFTSize_ = fftSize_ / 2;
    
 
    public PointAndShootAnalyzer(Studio studio, PropertyMap settings)
@@ -310,31 +312,19 @@ public class PointAndShootAnalyzer implements Runnable {
             // Track particle that received the bleach by cross-correlation
             // First go backwards in time, then forward
             Map<Integer, Point> track = new TreeMap<Integer, Point>();
-            track.put(pasEntry.framePasClicked(), new Point(pasActual.x, pasActual.y));
-            final int fftSize = 64;
-            final int halfFFTSize = fftSize / 2;
-            int currentX = pasActual.x;
-            int currentY = pasActual.y;
+            Point current = new Point(pasActual.x, pasActual.y);
+            track.put(pasEntry.framePasClicked(), current);
+            
             for (int frame = intensityAnalysisFrames.getCentralFrame(); 
-                    frame > intensityAnalysisFrames.getStartFrame(); frame--) {
-               Coords coord = cb.t(frame).build();
-               Image img = dataProvider.getImage(coord);
-               ImageProcessor iProc = studio_.data().getImageJConverter().createProcessor(img);
-               // TODO: check ROI out of bounds!
-               iProc.setRoi(currentX - halfFFTSize, currentY - halfFFTSize, fftSize, fftSize);
-               iProc = iProc.crop();
-               Coords coord2 = cb.t(frame - 1).build();
-               Image img2 = dataProvider.getImage(coord2);
-               ImageProcessor iProc2 = studio_.data().getImageJConverter().createProcessor(img2);
-               // TODO: check ROI out of bounds!
-               iProc2.setRoi(currentX - fftSize, currentY - fftSize, 2 * fftSize, 2 * fftSize);
-               iProc2 = iProc2.crop();
-               MovementByCrossCorrelation mbdd = new MovementByCrossCorrelation(iProc);
-               Point2D.Double p = new Point2D.Double();
-               mbdd.getJitter(iProc2, p);
-               currentX += (int) p.x - halfFFTSize;
-               currentY += (int) p.y - halfFFTSize;
-               track.put(frame, new Point(currentX, currentY));
+                    frame > intensityAnalysisFrames.getStartFrame() && frame > 1; frame--) {
+               current = ccParticle(dataProvider, cb, frame, frame - 1, current);
+               track.put(frame - 1, current);
+            }
+            for (int frame = intensityAnalysisFrames.getCentralFrame(); 
+                    frame < intensityAnalysisFrames.getEndFrame() && 
+                    frame < dataProvider.getAxisLength(Coords.T) - 1; frame++) {
+               current = ccParticle(dataProvider, cb, frame, frame + 1, current);
+               track.put(frame + 1, current);
             }
  
             
@@ -434,6 +424,28 @@ public class PointAndShootAnalyzer implements Runnable {
       }
       return p;        
    }
+   
+   
+   private Point ccParticle(DataProvider dp, Coords.Builder cb, 
+           int frame1, int frame2, Point p) throws IOException {
+      Coords coord = cb.t(frame1).build();
+      Image img = dp.getImage(coord);
+      ImageProcessor iProc = studio_.data().getImageJConverter().createProcessor(img);
+      // TODO: check ROI out of bounds!
+      iProc.setRoi((int) p.getX() - halfFFTSize_, (int) p.getY() - halfFFTSize_, fftSize_, fftSize_);
+      iProc = iProc.crop();
+      Coords coord2 = cb.t(frame2).build();
+      Image img2 = dp.getImage(coord2);
+      ImageProcessor iProc2 = studio_.data().getImageJConverter().createProcessor(img2);
+      // TODO: check ROI out of bounds!
+      iProc2.setRoi((int) p.getX() - fftSize_, (int) p.getY() - fftSize_, 2 * fftSize_, 2 * fftSize_);
+      iProc2 = iProc2.crop();
+      MovementByCrossCorrelation mbdd = new MovementByCrossCorrelation(iProc);
+      Point2D.Double p2 = new Point2D.Double();
+      mbdd.getJitter(iProc2, p2);
+      return new Point(p.x + (int) p2.x - halfFFTSize_, p.y + (int) p2.y - halfFFTSize_);
+   }
+   
    
    private class pointAndShootParser implements Consumer<String> {
       @Override
