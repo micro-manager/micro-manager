@@ -44,6 +44,8 @@
 #define ERR_UNSPECIFIED_ERROR        10010
 #define ERR_NOT_LOCKED               10011
 #define ERR_NOT_CALIBRATED           10012
+#define ERR_INFO_COMMAND_NOT_SUPPORTED   10023   // can't receive output from INFO command because >1023 characters
+const char* const g_Msg_ERR_INFO_COMMAND_NOT_SUPPORTED = "Cannot use the INFO command due to Micro-Manager limitations";
 
 #define ERR_OFFSET 10100
 

@@ -1744,6 +1744,15 @@ int XYStage::OnJSSlowSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+// use the peculiar fact that the info command is the only Tiger command
+// that begins with the letter I.  So isolate for the actual command
+// (stripping card address and leading whitespace) and then see if the
+// first character is an "I" (not case sensitive)
+bool isINFOCommand(const string command)
+{
+   return toupper(command.at(command.find_first_not_of(" 0123456789"))) == 'I';
+}
+
 int XYStage::OnSerialCommand(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
@@ -1751,14 +1760,18 @@ int XYStage::OnSerialCommand(MM::PropertyBase* pProp, MM::ActionType eAct)
       // do nothing
    }
    else if (eAct == MM::AfterSet) {
-      static string last_command;
+      static string last_command_via_property;
       string tmpstr;
       pProp->Get(tmpstr);
       tmpstr =   UnescapeControlCharacters(tmpstr);
       // only send the command if it has been updated, or if the feature has been set to "no"/false then always send
-      if (!serialOnlySendChanged_ || (tmpstr.compare(last_command) != 0))
+      if (!serialOnlySendChanged_ || (tmpstr.compare(last_command_via_property) != 0))
       {
-         last_command = tmpstr;
+         // prevent executing the INFO command
+         if (isINFOCommand(tmpstr))
+            return ERR_INFO_COMMAND_NOT_SUPPORTED;
+
+         last_command_via_property = tmpstr;
          int ret = QueryCommand(tmpstr.c_str(), manualSerialAnswer_);
          if (ret != DEVICE_OK)
             return ret;
