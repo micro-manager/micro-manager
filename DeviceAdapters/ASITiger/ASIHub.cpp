@@ -556,7 +556,15 @@ int ASIHub::OnSerialTerminator(MM::PropertyBase* pProp, MM::ActionType eAct)
 // first character is an "I" (not case sensitive)
 bool isINFOCommand(const string command)
 {
-   return toupper(command.at(command.find_first_not_of(" 0123456789"))) == 'I';
+   bool ret = false;
+   try
+   {
+      ret = toupper(command.at(command.find_first_not_of(" 0123456789"))) == 'I';
+   }
+   catch (...)
+   {
+   }
+   return ret;
 }
 
 int ASIHub::OnSerialCommand(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -566,18 +574,18 @@ int ASIHub::OnSerialCommand(MM::PropertyBase* pProp, MM::ActionType eAct)
       // do nothing
    }
    else if (eAct == MM::AfterSet) {
-      static string last_command;
+      static string last_command_via_property;
       string tmpstr;
       pProp->Get(tmpstr);
       tmpstr =   UnescapeControlCharacters(tmpstr);
       // only send the command if it has been updated, or if the feature has been set to "no"/false then always send
-      if (!serialOnlySendChanged_ || (tmpstr.compare(last_command) != 0))
+      if (!serialOnlySendChanged_ || (tmpstr.compare(last_command_via_property) != 0))
       {
          // prevent executing the INFO command
          if (isINFOCommand(tmpstr))
             return ERR_INFO_COMMAND_NOT_SUPPORTED;
 
-         last_command = tmpstr;
+         last_command_via_property = tmpstr;
          QueryCommand(tmpstr);
          // TODO add some sort of check if command was successful, update manualSerialAnswer_ accordingly (e.g. leave blank for invalid command like aoeu)
          manualSerialAnswer_ = serialAnswer_;  // remember this reply even if SendCommand is called elsewhere
