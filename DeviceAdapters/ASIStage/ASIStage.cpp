@@ -1750,7 +1750,16 @@ int XYStage::OnJSSlowSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
 // first character is an "I" (not case sensitive)
 bool isINFOCommand(const string command)
 {
-   return toupper(command.at(command.find_first_not_of(" 0123456789"))) == 'I';
+   bool ret = false;
+   try
+   {
+      ret = toupper(command.at(command.find_first_not_of(" 0123456789"))) == 'I';
+   }
+   catch (...)
+   {
+   }
+   return ret;
+}
 }
 
 int XYStage::OnSerialCommand(MM::PropertyBase* pProp, MM::ActionType eAct)
