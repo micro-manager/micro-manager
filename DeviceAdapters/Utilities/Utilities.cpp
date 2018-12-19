@@ -3089,17 +3089,15 @@ int DAZStage::ClearStageSequence()
    return DADevice_->ClearDASequence();
 }
 
-int DAZStage::AddToStageSequence(double position) 
+int DAZStage::AddToStageSequence(double pos) 
 {
-   double voltage;
+   double voltage =  (pos - minStagePos_) / (maxStagePos_ - minStagePos_) * (maxStageVolt_ - minStageVolt_) + minStageVolt_;
 
-      voltage = ( (position + originPos_) / (maxStagePos_ - minStagePos_)) * 
-                     (maxStageVolt_ - minStageVolt_);
-      if (voltage > maxStageVolt_)
-         voltage = maxStageVolt_;
-      else if (voltage < minStageVolt_)
-         voltage = minStageVolt_;
-   
+   if (voltage > maxStageVolt_)
+      voltage = maxStageVolt_;
+   else if (voltage < minStageVolt_)
+      voltage = minStageVolt_;
+
    return DADevice_->AddToDASequence(voltage);
 }
 
