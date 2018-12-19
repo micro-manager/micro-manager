@@ -234,11 +234,16 @@ int Tsi3Cam::Initialize()
    //pAct = new CPropertyAction(this, &Tsi3Cam::OnTemperature);
    //ret = CreateProperty(g_Temperature, "0", MM::Integer, true, pAct);
 
-   // create EEP On/Off property
-   //pAct = new CPropertyAction(this, &Tsi3Cam::OnEEP);
-   //ret = CreateProperty(g_EEP, g_Off, MM::String, false, pAct);
-   //AddAllowedValue(g_EEP, g_Off);
-   //AddAllowedValue(g_EEP, g_On);
+   //tl_camera_get_is_eep_supported create EEP On/Off property
+	bool eepSupported(false);
+	tl_camera_get_is_eep_supported(camHandle, &eepSupported);
+	if (eepSupported)
+	{
+		pAct = new CPropertyAction(this, &Tsi3Cam::OnEEP);
+		ret = CreateProperty(g_EEP, g_Off, MM::String, false, pAct);
+		AddAllowedValue(g_EEP, g_Off);
+		AddAllowedValue(g_EEP, g_On);
+	}
 
    // create HotPixel threshold property
    int thrMin(0), thrMax(0);
