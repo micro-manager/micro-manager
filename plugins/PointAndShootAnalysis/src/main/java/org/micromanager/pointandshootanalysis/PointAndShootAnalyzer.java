@@ -440,15 +440,21 @@ public class PointAndShootAnalyzer implements Runnable {
       Coords coord = cb.t(frame1).build();
       Image img = dp.getImage(coord);
       ImageProcessor iProc = studio_.data().getImageJConverter().createProcessor(img);
-      // TODO: check ROI out of bounds!
       iProc.setRoi((int) p.getX() - halfFFTSize_, (int) p.getY() - halfFFTSize_, fftSize_, fftSize_);
       iProc = iProc.crop();
+      // check ROI out of bounds!
+      if (iProc.getWidth() != fftSize_ || iProc.getHeight() != fftSize_) {
+         return p;  // TODO: log/show this problem?
+      }
       Coords coord2 = cb.t(frame2).build();
       Image img2 = dp.getImage(coord2);
       ImageProcessor iProc2 = studio_.data().getImageJConverter().createProcessor(img2);
-      // TODO: check ROI out of bounds!
       iProc2.setRoi((int) p.getX() - halfFFTSize_, (int) p.getY() - halfFFTSize_, fftSize_, fftSize_);
       iProc2 = iProc2.crop();
+      // check ROI out of bounds
+      if (iProc2.getWidth() != fftSize_ || iProc2.getHeight() != fftSize_) {
+         return p;  // TODO: log/show this problem?
+      }
       MovementByCrossCorrelation mbdd = new MovementByCrossCorrelation(iProc);
       Point2D.Double p2 = new Point2D.Double();
       mbdd.getJitter(iProc2, p2);
