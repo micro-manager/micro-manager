@@ -151,6 +151,7 @@ void TsiCam::GetName(char* name) const
 
 int TsiCam::Initialize()
 {
+	LogMessage("Initializing TSI legacy camera...");
    if (g_tsiDllHandle == 0)
    {
       // load TSL dll and create api handle

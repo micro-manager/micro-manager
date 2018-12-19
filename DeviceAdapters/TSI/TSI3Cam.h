@@ -26,7 +26,8 @@
 #include <DeviceUtils.h>
 #include <DeviceThreads.h>
 #include "TsiLibrary.h"
-#include "thorlabs_tsi_camera_sdk.h"
+#include "tl_camera_sdk.h"
+#include "tl_camera_sdk_load.h"
 
 #ifdef WIN32
 //...
@@ -136,7 +137,7 @@ private:
    bool StopCamera();
    bool StartCamera(int frames);
 
-   static void frame_available_callback(void* sender, unsigned short* image_buffer, int image_width, int image_height, int bit_depth, int number_of_color_channels, int frame_count, void* context);
+   static void frame_available_callback(void* sender, unsigned short* image_buffer, int frame_count, unsigned char* metadata, int metadata_size_in_bytes, void* context);
 
    ImgBuffer img;
    bool initialized;
@@ -148,6 +149,6 @@ private:
 
    Tsi3RoiBin fullFrame;
 
-   TRIGGER_TYPE trigger;
-   TRIGGER_POLARITY triggerPolarity;
+   TL_CAMERA_OPERATION_MODE operationMode;
+   TL_CAMERA_TRIGGER_POLARITY triggerPolarity;
 };

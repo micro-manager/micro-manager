@@ -30,7 +30,7 @@
     <ClCompile Include="TSILibrary.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="thorlabs_tsi_camera_sdk_load.c">
+    <ClCompile Include="tl_camera_sdk_load.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -42,6 +42,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TSILibrary.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stdbool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tl_camera_sdk_load.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
