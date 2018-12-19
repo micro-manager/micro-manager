@@ -1,9 +1,13 @@
 
 package org.micromanager.pointandshootanalysis.display;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +26,7 @@ public class Overlay extends AbstractOverlay {
    private final String TITLE = "Point and Shoot Overlay";
    private final List<Map<Integer, Point>> tracks_;
    private final Map<Integer, List<Point>> tracksIndexedByFrame_;
+   private final int symbolLenght_ = 30;
    
    
    public Overlay(List<Map<Integer, Point>> tracks) {
@@ -38,6 +43,7 @@ public class Overlay extends AbstractOverlay {
             tracksIndexedByFrame_.put(entry.getKey(), pointsInFrame);
          }
       }
+      super.setVisible(true);
    }
    
    @Override
@@ -48,18 +54,36 @@ public class Overlay extends AbstractOverlay {
    /**
     * {@inheritDoc}
     * <p>
-    * This default implementation draws nothing. Override to draw the overlay
-    * graphics.
+    * 
     */
    @Override
-   public void paintOverlay(Graphics2D graphicsContext, Rectangle screenRect,
+   public void paintOverlay(Graphics2D g, Rectangle screenRect,
          DisplaySettings displaySettings,
          List<Image> images, Image primaryImage,
          Rectangle2D.Float imageViewPort)
    {
+      // TODO: make sure this is our dataviewer
       Integer frame = primaryImage.getCoords().getTimePoint();
-      for (Point p : tracksIndexedByFrame_.get(frame)) {
-         // TODO: draw indicator for point p
+      if (tracksIndexedByFrame_.get(frame) != null) {
+         g.setColor(Color.RED);
+         final double zoomRatio = imageViewPort.width / screenRect.width;
+         final int halfLength = symbolLenght_ / 2;
+
+         // Draw the pattern in image pixel coordinates by applying a transform
+         Graphics2D gTfm = (Graphics2D) g.create();
+         gTfm.transform(AffineTransform.
+                 getScaleInstance(1.0 / zoomRatio, 1.0 / zoomRatio));
+         gTfm.transform(AffineTransform.
+                 getTranslateInstance(-imageViewPort.x, -imageViewPort.y));
+         // Stroke width should be 1.0 in screen coordinates
+         gTfm.setStroke(new BasicStroke((float) zoomRatio));
+
+         for (Point p : tracksIndexedByFrame_.get(frame)) {
+            gTfm.draw(new Line2D.Float(p.x, p.y - halfLength,
+                    p.x, p.y + halfLength));
+            gTfm.draw(new Line2D.Float(p.x - halfLength, p.y,
+                    p.x + halfLength, p.y));
+         }
       }
    }
 }
