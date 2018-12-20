@@ -67,12 +67,19 @@ static const char* g_HardwareDuration = "HardwareBulb";
 static const char* g_Positive = "Positive";
 static const char* g_Negative = "Negative";
 
+static const char* g_PixelType_32bitRGB = "32bitRGB";
+static const char* g_PixelType_64bitRGB = "64bitRGB";
+
 static const char* g_pv_BinH = "BinningHorizontal";
 static const char* g_pv_BinV = "BinningVertical";
 static const char* g_pv_Width = "Width";
 static const char* g_pv_Height = "Height";
 static const char* g_pv_OffsetX = "OffsetX";
 static const char* g_pv_OffsetY = "OffsetY";
+static const char* g_pv_PixelFormat = "PixelFormat";
+
+static const char* g_pv_PixelFormat_BGR8 = "BGR8";
+static const char* g_pv_PixelFormat_BGR12 = "BGR12p";
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
@@ -179,23 +186,23 @@ public:
    // action interface
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnReadoutRate(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGamma(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnWhiteBalance(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTestPattern(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnColorEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTemperatureSetPoint(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFps(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTriggerPolarity(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int ResizeImageBuffer();
    int PushImage(unsigned char* imgBuf);
 	int processPvError(const PvResult& pvr);
-	static void convertBGR2RGBA(const uint8_t* src, uint8_t* dest, unsigned pixSize);
+	static void convert_BGR8_RGBA32(const uint8_t* src, uint8_t* dest, unsigned w, unsigned h);
+	static void convert_BGR12P_RGBA64(const uint8_t* src, uint8_t* dest, unsigned w, unsigned h);
 	bool verifyPvFormat(const PvImage* pvimg);
 	void ClearPvBuffers();
 
@@ -204,6 +211,7 @@ private:
    bool stopOnOverflow;
    long acquiring;
 	int bitDepth;
+	int pixelSize;
 
 	PvDevice* camera;
 	PvGenParameterArray* genParams;

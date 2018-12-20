@@ -73,7 +73,8 @@ JAICamera::JAICamera() :
    acquiring(0),
 	camera(0),
 	genParams(0),
-	bitDepth(8)
+	bitDepth(8),
+	pixelSize(4)
 {
    // set default error messages
    InitializeDefaultErrorMessages();
@@ -366,6 +367,29 @@ int JAICamera::Initialize()
 		}
 	}
 
+	// PIXEL TYPE
+	pvr = genParams->SetEnumValue(g_pv_PixelFormat, g_pv_PixelFormat_BGR8);
+	if (!pvr.IsOK())
+		return processPvError(pvr);
+
+   pAct = new CPropertyAction (this, &JAICamera::OnPixelType);
+	pixelSize = 4; // 32bitRGB
+   ret = CreateStringProperty(MM::g_Keyword_PixelType, g_PixelType_32bitRGB, false, pAct);
+   assert(ret == DEVICE_OK);
+
+   vector<string> pixelTypeValues;
+	pixelTypeValues.push_back(g_PixelType_32bitRGB);
+	pixelTypeValues.push_back(g_PixelType_64bitRGB);
+
+   ret = SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);
+   if (ret != DEVICE_OK)
+      return ret;
+
+	// disable multi roi mode
+	pvr = genParams->SetEnumValue("MultiRoiMode", "Off");
+	if (!pvr.IsOK())
+		return processPvError(pvr);
+
 	//* Root\Connection:DeviceGUID, String : 14FB0164E37A
 	//	>> Root\ImageFormatControl : SensorDigitizationBits, Enum : Twelve
 	//	Root\ImageFormatControl : TestPattern, Enum : Off
@@ -531,10 +555,15 @@ int JAICamera::SnapImage()
 			return ERR_UNSUPPORTED_IMAGE_FORMAT;
 
 		// transfer pv image to camera buffer
+		img.Resize((unsigned)width, (unsigned)height, pixelSize);
 		uint8_t* pSrcImg = pvImg->GetDataPointer();
-		img.Resize(width, height, 4); // RGBA format
 		uint8_t* pDestImg = img.GetPixelsRW();
-		convertBGR2RGBA(pSrcImg, pDestImg, img.Width()*img.Height());
+		if (pixelSize == 4)
+			convert_BGR8_RGBA32(pSrcImg, pDestImg, img.Width(), img.Height());
+		else if (pixelSize == 8)
+			convert_BGR12P_RGBA64(pSrcImg, pDestImg, img.Width(), img.Height());
+		else
+			assert(!"Wrong pixel size");
 	}
 	else
 	{
@@ -760,16 +789,7 @@ int JAICamera::ResizeImageBuffer()
 	pvr = camera->GetParameters()->GetIntegerValue("Height", height);
 	assert(pvr.IsOK());
 
-	// NOTE: we are expecting that camera returns pixels in BGR8 format
-	PvString pixFormat;
-	pvr = camera->GetParameters()->GetEnumValue("PixelFormat", pixFormat);
-	assert(pvr.IsOK());
-	if (pixFormat != "BGR8")
-		return ERR_UNSUPPORTED_IMAGE_FORMAT;
-
-	// we are supporting only RGBA format for sending color images to micro-manager
-	// therefore pixel depth of the image buffer is four bytes
-	img.Resize((unsigned)width, (unsigned)height, 4);
+	img.Resize((unsigned)width, (unsigned)height, pixelSize);
 	return DEVICE_OK;
 }
 
@@ -810,16 +830,56 @@ int JAICamera::processPvError(const PvResult& pvr)
  * @param dest - destination buffer, should be pixSize * 4 bytes
  * @param pixSize - image buffer size in pixels
  */
-void JAICamera::convertBGR2RGBA(const uint8_t * src, uint8_t * dest, unsigned pixSize)
+void JAICamera::convert_BGR8_RGBA32(const uint8_t * src, uint8_t * dest, unsigned w, unsigned h)
 {
 	const int byteDepth = 4;
 	int srcCounter = 0;
-	for (unsigned i = 0; i < pixSize; i++)
+	unsigned sizeInPixels = w * h;
+	for (unsigned i = 0; i < sizeInPixels; i++)
 	{
 		dest[i*byteDepth] = src[srcCounter++]; // R
 		dest[i*byteDepth + 1] = src[srcCounter++]; // G
 		dest[i*byteDepth + 2] = src[srcCounter++]; // B
 		dest[i*byteDepth + 3] = 0; // alpha
+	}
+}
+
+/**
+ * Converts BGR 36-bit image to RGBA 64-bit image. Alpha channel is set to 0.
+ *
+ * @return void
+ * @param src - source buffer, should be pixSize * 3 bytes
+ * @param dest - destination buffer, should be pixSize * 4 bytes
+ * @param pixSize - image buffer size in pixels
+ */
+void JAICamera::convert_BGR12P_RGBA64(const uint8_t * src, uint8_t * dest, unsigned w, unsigned h)
+{
+	const int byteDepth = 8;
+	unsigned sizeInPixels = w * h;
+	for (unsigned i = 0; i < sizeInPixels; i++)
+	{
+		int pixPtrR = i * 36 / 8;
+		int bitPtrR = i * 36 % 8;
+		uint16_t* bufR = (uint16_t*)(src + pixPtrR);
+		*bufR = *bufR << bitPtrR;
+		*bufR = *bufR >> 4;
+		*((uint16_t*)(dest + i*byteDepth)) = *bufR; // R
+
+		int pixPtrG = (i * 36 + 12) / 8;
+		int bitPtrG = (i * 36 + 12) % 8;
+		uint16_t* bufG = (uint16_t*)(src + pixPtrG);
+		*bufG = *bufG << bitPtrG;
+		*bufG = *bufG >> 4;
+		*((uint16_t*)(dest + i*byteDepth + 2)) = *bufG; // G
+
+		int pixPtrB = (i * 36 + 24) / 8;
+		int bitPtrB = (i * 36 + 24) % 8;
+		uint16_t* bufB = (uint16_t*)(src + pixPtrB);
+		*bufB = *bufB << bitPtrB;
+		*bufB = *bufB >> 4;
+		*((uint16_t*)(dest + i*byteDepth + 4)) = *bufB; // B
+
+		*((uint16_t*)(dest + i*byteDepth + 6)) = 0; // alpha
 	}
 }
 
@@ -845,27 +905,27 @@ bool JAICamera::verifyPvFormat(const PvImage * pvImg)
 	}
 
 	uint32_t bpc = pvImg->GetBitsPerComponent(pt);
-	if (bpc != 8)
+	if (bpc != 8 && bpc != 12)
 	{
 		ostringstream os;
-		os << "Only 8-bits per color plane are supported: BPC=" << bpc;
+		os << "Only 8-bits and 12-bits per color plane are supported: BPC=" << bpc;
 		LogMessage(os.str());
 		return false;
 	}
 
-	uint32_t pixSize = pvImg->GetPixelSize(pt);
-	uint32_t bpp = pvImg->GetBitsPerPixel();
-	if (pixSize != 24)
+	uint32_t pvPixSize = pvImg->GetPixelSize(pt);
+	uint32_t pvBpp = pvImg->GetBitsPerPixel();
+	if (pvPixSize != 24 && pvPixSize != 36)
 	{
 		ostringstream os;
-		os << "Only 3-byte RGB camera pixels are supported: PixSize=" << pixSize << ", BPP=" << bpp;
+		os << "Only 3-byte and 4-byte RGB camera pixels are supported: PixSize=" << pvPixSize << ", BPP=" << pvBpp;
 		LogMessage(os.str());
 		return false;
 	}
 
 	uint32_t imgSize = pvImg->GetImageSize();
 	uint32_t effImgSize = pvImg->GetEffectiveImageSize();
-	if (imgSize != width * height * 3)
+	if (imgSize != width * height * pvPixSize / 8 + ((width * height * pvPixSize) % 8 ? 1 : 0))
 	{
 		ostringstream os;
 		os << "Image size does not match width and height, W=" << width << ", H=" << height << ", Size=" << imgSize << ", EffSize=" << effImgSize;
@@ -1009,7 +1069,7 @@ int AcqSequenceThread::svc (void)
 			uint8_t* pSrcImg = pvImg->GetDataPointer();
 			moduleInstance->img.Resize(width, height, 4); // RGBA format
 			uint8_t* pDestImg = moduleInstance->img.GetPixelsRW();
-			JAICamera::convertBGR2RGBA(pSrcImg, pDestImg, moduleInstance->img.Width()*moduleInstance->img.Height());
+			JAICamera::convert_BGR8_RGBA32(pSrcImg, pDestImg, moduleInstance->img.Width(), moduleInstance->img.Height());
 
 			// push image to queue
 			moduleInstance->InsertImage();
