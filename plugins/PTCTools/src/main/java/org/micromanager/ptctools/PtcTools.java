@@ -30,8 +30,7 @@ import org.scijava.plugin.SciJavaPlugin;
 import org.micromanager.Studio;
 
 /** 
- * Micro-Manager plugin that can split the acquired image top-down or left-right
- * and display the split image as a two channel image.
+ * Micro-Manager plugin acuiring a data set for Photon Transfer Curve analysis
  *
  * @author nico
  */

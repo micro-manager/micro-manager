@@ -26,6 +26,7 @@ import ij.ImageStack;
 import ij.plugin.ImageCalculator;
 import ij.plugin.ZProjector;
 import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.io.File;
@@ -366,6 +367,7 @@ public class PointAndShootAnalyzer implements Runnable {
             track.put(pasEntry.framePasClicked() + 2, current);
             for (int frame = pasEntry.framePasClicked() + 2;
                     frame > 1; frame--) {
+               current = centerOfCentralParticle(dataProvider, cb, frame, current);
                current = ccParticle(dataProvider, cb, frame, frame - 1, current);
                track.put(frame - 1, current);
             }
@@ -459,6 +461,35 @@ public class PointAndShootAnalyzer implements Runnable {
       Point2D.Double p2 = new Point2D.Double();
       mbdd.getJitter(iProc2, p2);
       return new Point(p.x + (int) p2.x - halfFFTSize_, p.y + (int) p2.y - halfFFTSize_);
+      /*
+     NormalizedCrossCorrelation ncc = new NormalizedCrossCorrelation( 
+             (ShortProcessor)  iProc);
+     return ncc.correlate((ShortProcessor) iProc2, p, new Point(2,2));
+*/
+   
+   }
+   
+    private Point centerOfCentralParticle(DataProvider dp, Coords.Builder cb,
+           int frame, Point p) throws IOException {
+      Coords coord = cb.t(frame).build();
+      Image img = dp.getImage(coord);
+      ImageProcessor iProc = studio_.data().getImageJConverter().createProcessor(img);
+      iProc.setRoi((int) p.getX() - halfFFTSize_, (int) p.getY() - halfFFTSize_, fftSize_, fftSize_);
+      iProc = iProc.crop();
+      // check ROI out of bounds!
+      if (iProc.getWidth() != fftSize_ || iProc.getHeight() != fftSize_) {
+         return p;  // TODO: log/show this problem?
+      }
+      ImagePlus test = new ImagePlus("tmp", iProc);
+      // test.show();
+      IJ.run(test, "Convert to Mask", "method=Huang background=Dark");
+      IJ.run(test, "Set Measurements...", "area centroid center redirect=None decimal=4");
+      IJ.run(test, "Analyze Particles...", "size=0-10000 pixel show=Nothing add slice"); 
+      IJ.run(test, "Measure", "");
+   
+      return p;
+     
+ 
    }
 
    private class pointAndShootParser implements Consumer<String> {
