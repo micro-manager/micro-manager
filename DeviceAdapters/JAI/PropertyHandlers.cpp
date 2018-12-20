@@ -59,24 +59,7 @@ int JAICamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int JAICamera::OnReadoutRate(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (eAct == MM::AfterSet)
-   {
-      long rateIdx(0);
-      int ret = GetCurrentPropertyData(g_ReadoutRate, rateIdx);
-      if (ret != DEVICE_OK)
-         return ret;
-   }
-   else if (eAct == MM::BeforeGet)
-   {
-      uint32_t idx;
-     // pProp->Set(val);
-   }
-   return DEVICE_OK;
-}
-
-int JAICamera::OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+int JAICamera::OnTriggerMode(MM::PropertyBase* /*pProp*/, MM::ActionType eAct)
 {
 	if (eAct == MM::AfterSet)
 	{
@@ -87,13 +70,58 @@ int JAICamera::OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 	return DEVICE_OK;
 }
 
-int JAICamera::OnTriggerPolarity(MM::PropertyBase* pProp, MM::ActionType eAct)
+int JAICamera::OnTriggerPolarity(MM::PropertyBase* /*pProp*/, MM::ActionType eAct)
 {
 	if (eAct == MM::AfterSet)
 	{
 	}
 	else if (eAct == MM::BeforeGet)
 	{
+	}
+	return DEVICE_OK;
+}
+
+int JAICamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::AfterSet)
+	{
+      if(IsCapturing())
+         return DEVICE_CAMERA_BUSY_ACQUIRING;
+
+      string pixelType;
+      pProp->Get(pixelType);
+      if ( pixelType.compare(g_PixelType_32bitRGB) == 0)
+      {
+			PvResult pvr = genParams->SetEnumValue(g_pv_PixelFormat, g_pv_PixelFormat_BGR8);
+			if (!pvr.IsOK())
+				return processPvError(pvr);
+         pixelSize = 4;
+         bitDepth = 8;
+      }
+      else if ( pixelType.compare(g_PixelType_64bitRGB) == 0)
+      {
+			PvResult pvr = genParams->SetEnumValue(g_pv_PixelFormat, g_pv_PixelFormat_BGR12);
+			if (!pvr.IsOK())
+				return processPvError(pvr);
+			pixelSize = 8;
+         bitDepth = 12;
+		}
+		return ResizeImageBuffer();
+	}
+	else if (eAct == MM::BeforeGet)
+	{
+		PvString val;
+		PvResult pvr = genParams->GetEnumValue(g_pv_PixelFormat, val);
+		if (!pvr.IsOK())
+			return processPvError(pvr);
+
+		if (strcmp(val.GetAscii(), g_pv_PixelFormat_BGR8) == 0)
+			pProp->Set(g_PixelType_32bitRGB);
+		else if (strcmp(val.GetAscii(), g_pv_PixelFormat_BGR12) == 0)
+			pProp->Set(g_PixelType_64bitRGB);
+		else
+			assert(!"Unsupported pixel type");
+
 	}
 	return DEVICE_OK;
 }
@@ -242,15 +270,4 @@ int JAICamera::OnTemperatureSetPoint(MM::PropertyBase* /*pProp*/, MM::ActionType
    {
    }
    return DEVICE_OK;
-}
-
-int JAICamera::OnColorEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-	if (eAct == MM::AfterSet)
-	{
-	}
-	else if (eAct == MM::BeforeGet)
-	{
-	}
-	return DEVICE_OK;
 }
