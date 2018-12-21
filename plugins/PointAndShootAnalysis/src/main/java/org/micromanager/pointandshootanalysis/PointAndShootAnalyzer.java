@@ -23,10 +23,13 @@ package org.micromanager.pointandshootanalysis;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.measure.Measurements;
 import ij.plugin.ImageCalculator;
 import ij.plugin.ZProjector;
+import static ij.plugin.filter.ParticleAnalyzer.SHOW_NONE;
+import ij.process.AutoThresholder;
+import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
-import ij.process.ShortProcessor;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.io.File;
@@ -63,6 +66,8 @@ import org.micromanager.pointandshootanalysis.display.Overlay;
 import org.micromanager.pointandshootanalysis.plot.DataSeriesKey;
 import org.micromanager.pointandshootanalysis.plot.PlotUtils;
 import org.micromanager.pointandshootanalysis.utils.ListUtils;
+import org.micromanager.pointandshootanalysis.utils.PASParticleAnalyzer;
+import org.micromanager.pointandshootanalysis.utils.PASParticleAnalyzer.ParticleData;
 
 /**
  *
@@ -85,6 +90,7 @@ public class PointAndShootAnalyzer implements Runnable {
    //Used to find actual bleach spot
    final private int fftSize_ = 64;
    final private int halfFFTSize_ = fftSize_ / 2;
+   final private Point centerPoint_ = new Point (halfFFTSize_, halfFFTSize_);
 
    public PointAndShootAnalyzer(Studio studio, PropertyMap settings) {
       studio_ = studio;
@@ -366,16 +372,17 @@ public class PointAndShootAnalyzer implements Runnable {
             Point current = new Point(pasEntry.pasActual().x, pasEntry.pasActual().y);
             track.put(pasEntry.framePasClicked() + 2, current);
             for (int frame = pasEntry.framePasClicked() + 2;
-                    frame > 1; frame--) {
+                    frame > 0; frame--) {
                current = centerOfCentralParticle(dataProvider, cb, frame, current);
-               current = ccParticle(dataProvider, cb, frame, frame - 1, current);
+               //current = ccParticle(dataProvider, cb, frame, frame - 1, current);
                track.put(frame - 1, current);
             }
 
             current = new Point(pasEntry.pasActual().x, pasEntry.pasActual().y);
             for (int frame = pasEntry.framePasClicked() + 2;
                     frame < dataProvider.getAxisLength(Coords.T) - 1; frame++) {
-               current = ccParticle(dataProvider, cb, frame, frame + 1, current);
+               //current = ccParticle(dataProvider, cb, frame, frame + 1, current);
+               current = centerOfCentralParticle(dataProvider, cb, frame, current);
                track.put(frame + 1, current);
             }
             tracks.add(track);
@@ -480,16 +487,52 @@ public class PointAndShootAnalyzer implements Runnable {
       if (iProc.getWidth() != fftSize_ || iProc.getHeight() != fftSize_) {
          return p;  // TODO: log/show this problem?
       }
-      ImagePlus test = new ImagePlus("tmp", iProc);
-      // test.show();
-      IJ.run(test, "Convert to Mask", "method=Huang background=Dark");
-      IJ.run(test, "Set Measurements...", "area centroid center redirect=None decimal=4");
-      IJ.run(test, "Analyze Particles...", "size=0-10000 pixel show=Nothing add slice"); 
-      IJ.run(test, "Measure", "");
-   
+      
+      // Autothresholder only works with histograms with 256 values
+      ImageProcessor iProcB = iProc.convertToByte(true);
+      int[] histogram = iProcB.getHistogram();
+      AutoThresholder ath = new AutoThresholder();
+      final int cutOff = ath.getThreshold(AutoThresholder.Method.Yen, 
+              histogram);
+      // Apply threshold
+      byte[] inputPixels = (byte[]) iProcB.getPixels();
+      byte[] outputPixels = new byte[inputPixels.length];
+      for (int i = 0; i < inputPixels.length; i++) {
+         if ( (inputPixels[i] & 0xff) < cutOff) {
+            outputPixels[i] = -1;
+         }
+      }
+      ByteProcessor bp = new ByteProcessor(iProc.getWidth(), iProc.getHeight(), outputPixels);          
+      ImagePlus ipMask = new ImagePlus("tmp", bp);
+      //ipMask.show();
+      
+      PASParticleAnalyzer pasPA = new PASParticleAnalyzer(SHOW_NONE, Measurements.CENTROID | Measurements.AREA,
+         null, 0, 10000);
+      pasPA.analyze(ipMask);
+      List<PASParticleAnalyzer.ParticleData> data = pasPA.getData();
+      // select largest area
+      double distance = Double.MAX_VALUE;
+      Point cp = null;
+      for (ParticleData pd : data) {
+         double testDistance = distance(centerPoint_, pd.getCentroid());
+         if (testDistance < distance) {
+            distance = testDistance;
+            cp = pd.getCentroid();
+         }
+      }
+      
+      if (cp != null) {
+         Point r = new Point (p.x - halfFFTSize_ + cp.x, p.y - halfFFTSize_ + cp.y);
+         return r;
+      } 
+      
       return p;
      
- 
+   }
+    
+   private Double distance(Point p1, Point p2) {
+      return Math.sqrt( (p1.x - p2.x) * (p1.x - p2.x) + 
+                        (p1.y - p2.y) * (p1.y - p2.y));
    }
 
    private class pointAndShootParser implements Consumer<String> {
