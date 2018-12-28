@@ -185,6 +185,12 @@ int CPLogic::Initialize()
       AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode29, 29);
       AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode30, 30);
       AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode31, 31);
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode32, 32);
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode33, 33);
+   }
+   if (FirmwareVersionAtLeast(3.23)) {
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode34, 34);
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode35, 35);
    }
    UpdateProperty(g_SetCardPresetPropertyName);
 
