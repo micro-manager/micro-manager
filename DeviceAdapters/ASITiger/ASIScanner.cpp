@@ -64,6 +64,8 @@ CScanner::CScanner(const char* name) :
    laser_side_(0),   // will be set to 1 or 2 if used
    laserTTLenabled_(false),
    mmTarget_(false),
+   mmFastCircles_(false),
+   laserTriggerPLogic_(false),
    targetExposure_(0),
    targetSettling_(5),
    axisIndexX_(0),
@@ -554,6 +556,8 @@ int CScanner::Initialize()
    // add FAST_CIRCLES properties if MULTIAXIS_FUNCTION is supported
    if (build.vAxesProps[0] & BIT5)
    {
+      mmFastCircles_ = true;
+
       pAct = new CPropertyAction (this, &CScanner::OnFastCirclesRadius);
       CreateProperty(g_FastCirclesRadiusPropertyName, "1.0", MM::Float, false, pAct);
       UpdateProperty(g_FastCirclesRadiusPropertyName);
@@ -600,6 +604,7 @@ int CScanner::Initialize()
          AddAllowedValue(g_LaserOutputModePropertyName, g_SPIMLaserOutputMode_0);
          AddAllowedValue(g_LaserOutputModePropertyName, g_SPIMLaserOutputMode_1);
          AddAllowedValue(g_LaserOutputModePropertyName, g_SPIMLaserOutputMode_2);
+         AddAllowedValue(g_LaserOutputModePropertyName, g_SPIMLaserOutputMode_3);
          UpdateProperty(g_LaserOutputModePropertyName);
 
          pAct = new CPropertyAction (this, &CScanner::OnLaserSwitchTime);
@@ -692,7 +697,7 @@ void CScanner::UpdateIlluminationState()
 {
    ostringstream command; command.str("");
    long tmp;
-   if (mmTarget_) {
+   if (mmTarget_ && !laserTriggerPLogic_) {
       // should consider having a dedicated property for TTL output state; for now just do this
       command << addressChar_ << "TTL Y?";
       hub_->QueryCommandVerify(command.str(), ":A Y=");
@@ -739,7 +744,7 @@ int CScanner::SetIlluminationStateHelper(bool on)
 // takes care of setting LED X appropriately, preserving existing setting for other scanner
 {
    // don't do this if we have phototargeting firmware
-   if (mmTarget_)
+   if (mmTarget_ && !laserTriggerPLogic_)
    {
       return DEVICE_OK;
    }
@@ -758,15 +763,6 @@ int CScanner::SetIlluminationStateHelper(bool on)
    // other scanner device on same card
    if (FirmwareVersionAtLeast(3.11))
    {
-      command.str("");
-      if (laser_side_ == 1)
-      {
-
-      }
-      else
-      {
-
-      }
       command << addressChar_ << "LED ";
       if (laser_side_ == 1)
          command << "R";
@@ -812,7 +808,7 @@ int CScanner::SetIlluminationStateHelper(bool on)
 
 int CScanner::SetIlluminationState(bool on)
 {
-   if (mmTarget_)
+   if (mmTarget_ && !laserTriggerPLogic_)
    {  // for phototargeting firmware
       // should consider having a dedicated property for TTL output state; for now just do this
       ostringstream command; command.str("");
@@ -2887,11 +2883,13 @@ int CScanner::OnLaserOutputMode(MM::PropertyBase* pProp, MM::ActionType eAct)
          RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), "Z="));
          RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
          tmp &= (0x07);    // only care about 3 LSBs
+         laserTriggerPLogic_ = (tmp == 3);
          switch (tmp)
          {
             case 0: success = pProp->Set(g_SPIMLaserOutputMode_0); break;
             case 1: success = pProp->Set(g_SPIMLaserOutputMode_1); break;
             case 2: success = pProp->Set(g_SPIMLaserOutputMode_2); break;
+            case 3: success = pProp->Set(g_SPIMLaserOutputMode_3); break;
             default: success = 0;
          }
          if (!success)
@@ -2908,8 +2906,11 @@ int CScanner::OnLaserOutputMode(MM::PropertyBase* pProp, MM::ActionType eAct)
             tmp = 1;
          else if (tmpstr.compare(g_SPIMLaserOutputMode_2) == 0)
             tmp = 2;
+         else if (tmpstr.compare(g_SPIMLaserOutputMode_3) == 0)
+            tmp = 3;
          else
             return DEVICE_INVALID_PROPERTY_VALUE;
+         laserTriggerPLogic_ = (tmp == 3);
          command << addressChar_ << "LED Z?";
          long tmp2;
          RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), "Z="));
