@@ -170,6 +170,8 @@ private:
    double lastY_;    // used to cache position (in degrees)
    bool illuminationState_;  // true if on, false if beam is turned off
    bool mmTarget_;    // true iff MM_TARGET firmware in place for phototargeting
+   bool mmFastCircles_;   // true iff FAST_CIRCLES firmware in place (usually together with MM_TARGET)
+   bool laserTriggerPLogic_;  // true iff using PLogic for laser trigger (currently equivalent to LED Z=3 mode)
    long targetExposure_;  // exposure time for targeting, stored locally
    long targetSettling_;  // settling time for targeting, stored locally
    unsigned int axisIndexX_;

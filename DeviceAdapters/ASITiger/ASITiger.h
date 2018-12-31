@@ -520,6 +520,7 @@ const char g_SPIMStateCode_Armed ='A';  // it reports this state when armed
 const char* const g_SPIMLaserOutputMode_0 = "individual shutters";
 const char* const g_SPIMLaserOutputMode_1 = "shutter + side";
 const char* const g_SPIMLaserOutputMode_2 = "side + side";
+const char* const g_SPIMLaserOutputMode_3 = "fast circles";
 // SPIM state on piezo card
 const char g_PZSPIMStateCode_Idle = 'I';
 const char g_PZSPIMStateCode_Arm =  'a';
