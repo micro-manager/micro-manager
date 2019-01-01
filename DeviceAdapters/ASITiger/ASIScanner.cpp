@@ -831,17 +831,21 @@ int CScanner::SetIlluminationState(bool on)
    { // for standard micro-mirror firmware
       // we can't turn off beam but we can steer beam to corner where hopefully it is blocked internally
       // to reduce serial traffic we count on illuminationState_ being up to date
-      // if user manually moves to home position then we won't know it
+      // if user manually moves to home position then we won't know it (?is this route to corrupting position?)
       // UpdateIlluminationState();  // don't do to reduce traffic
       if (on && !illuminationState_)  // was off, turning on
       {
          illuminationState_ = true;
+         RETURN_ON_MM_ERROR ( SetPosition(lastX_, lastY_) );  // move to where it was when last turned off
          RETURN_ON_MM_ERROR ( SetIlluminationStateHelper(true) );
-         return SetPosition(lastX_, lastY_);  // move to where it was when last turned off
       }
       else if (!on && illuminationState_) // was on, turning off
       {
-         // stop any single-axis action happening first; should go to position before single-axis was started
+         // turn off laser signal
+         RETURN_ON_MM_ERROR ( SetIlluminationStateHelper(false) );
+
+         // until 20190101 we stopped SAM move before turning off laser, but wanted to eliminate parking the beam before
+         // stop any single-axis action happening after adjusting laser; should go to position before single-axis was started
          // firmware will stop single-axis actions anyway but this gives us the right position
          char SAModeX[MM::MaxStrLength];
          RETURN_ON_MM_ERROR ( GetProperty(g_SAModeXPropertyName, SAModeX) );
@@ -855,13 +859,13 @@ int CScanner::SetIlluminationState(bool on)
          {
             SetProperty(g_SAModeYPropertyName, g_SAMode_0);
          }
-         GetPosition(lastX_, lastY_);  // read and store pre-off position so we can undo
+         RETURN_ON_MM_ERROR ( GetPosition(lastX_, lastY_) );  // read and store pre-off position so we can undo
+
+         // move beam to corner (home position)
          illuminationState_ = false;
          ostringstream command; command.str("");
          command << "! " << axisLetterX_ << " " << axisLetterY_;
-         RETURN_ON_MM_ERROR ( SetIlluminationStateHelper(false) );
          RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
-         return DEVICE_OK;
       }
       // if was off, turning off do nothing
       // if was on, turning on do nothing
