@@ -379,18 +379,6 @@ int CScanner::Initialize()
       UpdateProperty(g_TargetSettlingTimePropertyName);
    }
 
-   // turn the beam on and off
-   // need to do this after finding the correct value for mmTarget_
-   // also after creating single-axis properties which we use when turning off beam
-   pAct = new CPropertyAction (this, &CScanner::OnBeamEnabled);
-   CreateProperty(g_ScannerBeamEnabledPropertyName, g_NoState, MM::String, false, pAct);
-   AddAllowedValue(g_ScannerBeamEnabledPropertyName, g_NoState);
-   AddAllowedValue(g_ScannerBeamEnabledPropertyName, g_YesState);
-   UpdateProperty(g_ScannerBeamEnabledPropertyName);
-   UpdateIlluminationState();
-   // always start with the beam off for safety
-   SetProperty(g_ScannerBeamEnabledPropertyName, g_NoState);
-
    // everything below only supported in firmware 2.8 and newer
 
    // add SPIM properties if SPIM is supported
@@ -616,7 +604,19 @@ int CScanner::Initialize()
       }
    }
 
-      //Vector Move VE X=### Y=###
+   // turn the beam on and off
+   // need to do this after finding the correct value for mmTarget_ and laserTriggerPLogic_
+   // also after creating single-axis properties which we use when turning off beam
+   pAct = new CPropertyAction (this, &CScanner::OnBeamEnabled);
+   CreateProperty(g_ScannerBeamEnabledPropertyName, g_NoState, MM::String, false, pAct);
+   AddAllowedValue(g_ScannerBeamEnabledPropertyName, g_NoState);
+   AddAllowedValue(g_ScannerBeamEnabledPropertyName, g_YesState);
+   UpdateProperty(g_ScannerBeamEnabledPropertyName);
+   UpdateIlluminationState();
+   // always start with the beam off for safety
+   SetProperty(g_ScannerBeamEnabledPropertyName, g_NoState);
+
+   //Vector Move VE X=### Y=###
    pAct = new CPropertyAction (this, &CScanner::OnVectorX);
    CreateProperty(g_VectorXPropertyName, "0", MM::Float, false, pAct);
    SetPropertyLimits(g_VectorXPropertyName, -10, 10);//hardcoded as -+10mm/sec , can he higher 
