@@ -615,6 +615,10 @@ public class ControllerUtils {
       Devices.Keys galvoDevice = Devices.getSideSpecificKey(Devices.Keys.GALVOA, side);
       boolean skipScannerWarnings = getSkipScannerWarnings(galvoDevice);
       
+      // make sure SPIM state machine is stopped; device adapter takes care of querying
+      props_.setPropValue(galvoDevice, Properties.Keys.SPIM_STATE,
+               Properties.Values.SPIM_IDLE, true);
+      
       Properties.Keys widthProp = (side == Devices.Sides.A) ?
             Properties.Keys.PLUGIN_SHEET_WIDTH_A : Properties.Keys.PLUGIN_SHEET_WIDTH_B;
       Properties.Keys offsetProp = (side == Devices.Sides.A) ?
