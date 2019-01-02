@@ -372,13 +372,23 @@ public interface DataManager {
 
    /**
     * Return a list of the ProcessorConfigurators currently being used by the
-    * application pipeline interface. This only returns those configurators that are
-    * currently enabled; if a processor is part of the pipeline but has been disabled,
-    * then it will not be in this list.
+    * application pipeline interface. If `includeDisabled` is false this only returns those configurators that are
+    * currently enabled.
+    * @param boolean determines whether or not to include configurators that are not currently enabled.
     * @return An ordered list of ProcessorConfigurators.
     */
-   List<ProcessorConfigurator> getApplicationPipelineConfigurators();
+   List<ProcessorConfigurator> getApplicationPipelineConfigurators(boolean includeDisabled);
 
+   
+  /**
+    * Return a list of the ProcessorConfigurators currently being used by the
+    * live pipeline interface. If `includeDisabled` is false this only returns those configurators that are
+    * currently enabled.
+    * @param boolean determines whether or not to include configurators that are not currently enabled.
+    * @return An ordered list of ProcessorConfigurators.
+    */
+    List<ProcessorConfigurator> getLivePipelineConfigurators(boolean includeDisabled);
+       
    /**
     * Clear the current application pipeline, so that no on-the-fly image
     * processing is performed.
@@ -419,6 +429,39 @@ public interface DataManager {
     */
    void setApplicationPipeline(List<ProcessorPlugin> plugins);
 
+   
+    /**
+    * Checks whether or not the plugin at position `index` in the list is enabled
+    * for the application pipeline.
+    * @param index. an int determining which position in the list to check
+    * @return boolean of whether or not the plugin is enabled.
+    */
+    boolean isApplicationPipelineStepEnabled(int index);
+    
+    /**
+    * Sets whether or not the plugin at position `index` in the list is enabled
+    * for the application pipeline.
+    * @param index. an int determining which position in the list to check
+    * @param boolean of whether or not the plugin should be enabled.
+    */
+    void setApplicationPipelineStepEnabled(int index, boolean enabled);
+    
+    /**
+    * Checks whether or not the plugin at position `index` in the list is enabled
+    * for the live pipeline.
+    * @param index. an int determining which position in the list to check
+    * @return boolean of whether or not the plugin is enabled.
+    */
+    boolean isLivePipelineStepEnabled(int index);
+    
+    /**
+    * Sets whether or not the plugin at position `index` in the list is enabled
+    * for the live pipeline.
+    * @param index. an int determining which position in the list to check
+    * @param boolean of whether or not the plugin should be enabled.
+    */
+    void setLivePipelineStepEnabled(int index, boolean enabled);
+    
    /**
     * Notify the application that the state of one of the processors in the
     * pipeline has changed, and thus that entities that use the application

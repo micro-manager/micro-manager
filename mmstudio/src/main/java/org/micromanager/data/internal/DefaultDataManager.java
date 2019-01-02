@@ -328,9 +328,23 @@ public final class DefaultDataManager implements DataManager {
    }
 
    @Override
-   public List<ProcessorConfigurator> getApplicationPipelineConfigurators() {
-      return MMStudio.getInstance().getPipelineFrame().getPipelineConfigurators();
+   public List<ProcessorConfigurator> getApplicationPipelineConfigurators(boolean includeDisabled) {
+       if (includeDisabled) {
+        return MMStudio.getInstance().getPipelineFrame().getPipelineConfigurators();
+       } else {
+           return MMStudio.getInstance().getPipelineFrame().getEnabledPipelineConfigurators();
+       }
    }
+   
+     @Override
+    public List<ProcessorConfigurator> getLivePipelineConfigurators(boolean includeDisabled) {
+        if (includeDisabled) {
+            return MMStudio.getInstance().getPipelineFrame().getPipelineConfigurators();
+        } else {
+           return MMStudio.getInstance().getPipelineFrame().getEnabledLivePipelineConfigurators();
+        }
+    }
+    
 
    @Override
    public void clearPipeline() {
@@ -356,6 +370,26 @@ public final class DefaultDataManager implements DataManager {
          addAndConfigureProcessor(plugin);
       }
    }
+
+    @Override
+    public boolean isApplicationPipelineStepEnabled(int index) {
+        return MMStudio.getInstance().getPipelineFrame().getConfiguratorEnabled(index);
+    }
+    
+    @Override
+    public void setApplicationPipelineStepEnabled(int index, boolean enabled) {
+        MMStudio.getInstance().getPipelineFrame().setConfiguratorEnabled(index, enabled);
+    }
+    
+    @Override
+    public boolean isLivePipelineStepEnabled(int index) {
+        return MMStudio.getInstance().getPipelineFrame().getConfiguratorEnabledLive(index);
+    }
+    
+    @Override
+    public void setLivePipelineStepEnabled(int index, boolean enabled) {
+        MMStudio.getInstance().getPipelineFrame().setConfiguratorEnabledLive(index, enabled);
+    }
 
    @Override
    public void notifyPipelineChanged() {

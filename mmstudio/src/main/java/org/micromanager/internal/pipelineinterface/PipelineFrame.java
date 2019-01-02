@@ -339,12 +339,68 @@ final public class PipelineFrame extends MMFrame
       return getTableModel().getPipelineFactories(true);
    }
 
+   private List<ProcessorConfigurator> convertWrappersToConfigurators(List<ConfiguratorWrapper> configs){
+        ArrayList<ProcessorConfigurator> result = new ArrayList<ProcessorConfigurator>();
+        for (ConfiguratorWrapper config : configs) {
+            result.add(config.getConfigurator());
+        }
+        return result; 
+   }
+   
    /**
-    * Return a list of the currently-active configurators.
+    * Return a list of the configurators.
     */
    public List<ProcessorConfigurator> getPipelineConfigurators() {
-      return getTableModel().getPipelineConfigurators();
+      return convertWrappersToConfigurators(getTableModel().getPipelineConfigurators());
    }
+   
+    /**
+    * Return a list of the enabled configurators.
+    */
+   public List<ProcessorConfigurator> getEnabledPipelineConfigurators() {
+        List<ConfiguratorWrapper> configs = getTableModel().getEnabledConfigurators(false);
+        return convertWrappersToConfigurators(configs);
+   }
+   
+    /**
+    * Return a list of the live-mode enabled configurators.
+    */
+   public List<ProcessorConfigurator> getEnabledLivePipelineConfigurators() {
+        List<ConfiguratorWrapper> configs = getTableModel().getEnabledConfigurators(true);
+        return convertWrappersToConfigurators(configs);
+   }
+   
+    /*
+    * Set whether or not a configurator is enabled.
+    */
+   public void setConfiguratorEnabled(int row, boolean enabled) {
+       int column = getTableModel().ENABLED_COLUMN;
+       getTableModel().setValueAt(enabled, row, column);
+   }
+   
+   /*
+   * Set whether or not a configurator is enabled for live mode
+   */
+    public void setConfiguratorEnabledLive(int row, boolean enabled) {
+       int column = getTableModel().ENABLED_LIVE_COLUMN;
+       getTableModel().setValueAt(enabled, row, column);
+    }
+   
+    /*
+    * Get whether or not a configurator is enabled.
+    */
+   public boolean getConfiguratorEnabled(int row) {
+       int column = getTableModel().ENABLED_COLUMN;
+       return (boolean) getTableModel().getValueAt(row, column);
+   }
+   
+   /*
+   * Get whether or not a configurator is enabled for live mode
+   */
+    public boolean getConfiguratorEnabledLive(int row) {
+       int column = getTableModel().ENABLED_LIVE_COLUMN;
+       return (boolean) getTableModel().getValueAt(row, column);
+    }
 
    /**
     * Clear the pipeline table.
