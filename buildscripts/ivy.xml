@@ -62,8 +62,13 @@
 
 		<dependency conf="imagej" org="net.imagej" name="ij" rev="1.51s"/>
 
+
+      <dependency org="org.boofcv" name="boofcv-core" rev="0.31"/>
+      <dependency org="org.boofcv" name="boofcv-swing" rev="0.31"/>
+
 		<!-- Not in Maven yet (resolved in 3rdpartypublic/classext) -->
 		<dependency org="" name="iconloader" rev="GIT"/>
+
       <!---		<dependency org="" name="TSFProto" rev="SVN"/>--><!-- dependency on protobuf-java will not be resolved -->
 
 		<!-- Magellan dependencies -->
