@@ -100,20 +100,21 @@ public class PointAndShootAnalyzer implements Runnable {
    public PointAndShootAnalyzer(Studio studio, PropertyMap settings) {
       studio_ = studio;
       settings_ = settings;
-      coordinates_ = new HashMap<String, Point>();
+      coordinates_ = new HashMap<>();
    }
 
    @Override
    public void run() {
 
-      final Map<Instant, Point> datedCoordinates = new TreeMap<Instant, Point>();
-      final Map<Integer, Instant> frameTimeStamps = new TreeMap<Integer, Instant>();
+      final Map<Instant, Point> datedCoordinates = new TreeMap<>();
+      final Map<Integer, Instant> frameTimeStamps = new TreeMap<>();
 
       // Read variables provided by UI from profile
       String fileName = settings_.getString(Terms.LOCATIONSFILENAME, "");
       int radius = settings_.getInteger(Terms.RADIUS, 3);
       int nrFramesBefore = settings_.getInteger(Terms.NRFRAMESBEFORE, 2);
       int nrFramesAfter = settings_.getInteger(Terms.NRFRAMESAFTER, 200);
+      int maxDistance = settings_.getInteger(Terms.MAXDISTANCE, 3);
 
       File f = new File(fileName);
       if (!f.exists()) {
@@ -148,7 +149,7 @@ public class PointAndShootAnalyzer implements Runnable {
          return;
       }
 
-      final List<PASData> pasData = new ArrayList<PASData>(datedCoordinates.size());
+      final List<PASData> pasData = new ArrayList<>(datedCoordinates.size());
 
       // Store TimeStamps from images into frameTimeStamps
       final DataProvider dataProvider = activeDataViewer.getDataProvider();
@@ -199,8 +200,8 @@ public class PointAndShootAnalyzer implements Runnable {
       }
 
       // We have the bleach Coordinates as frame - x/y. Check with the actual images
-      List<XYSeries> plotData = new ArrayList<XYSeries>();
-      List<Map<Integer, Point>> tracks = new ArrayList<Map<Integer, Point>>();
+      List<XYSeries> plotData = new ArrayList<>();
+      List<Map<Integer, Point>> tracks = new ArrayList<>();
       try {
          int imgWidth = dataProvider.getAnyImage().getWidth();
          int imgHeight = dataProvider.getAnyImage().getHeight();
@@ -288,7 +289,7 @@ public class PointAndShootAnalyzer implements Runnable {
             // Estimate when the bleach actually happened by looking for frames
             // that are much brighter than the average
             // This is not always accurate
-            List<Double> subStackIntensityData = new ArrayList<Double>();
+            List<Double> subStackIntensityData = new ArrayList<>();
             for (int slice = 1; slice <= subStack.getSize(); slice++) {
                ImageProcessor iProc = subStack.getProcessor(slice);
                subStackIntensityData.add((double) Utils.GetIntensity(iProc.convertToFloatProcessor(),
@@ -296,7 +297,7 @@ public class PointAndShootAnalyzer implements Runnable {
             }
             double avg = ListUtils.listAvg(subStackIntensityData);
             double stdDev = ListUtils.listStdDev(subStackIntensityData, avg);
-            List<Integer> bleachFrames = new ArrayList<Integer>();
+            List<Integer> bleachFrames = new ArrayList<>();
             for (int frame = 0; frame < subStackIntensityData.size(); frame++) {
                if (subStackIntensityData.get(frame) > avg + 2 * stdDev) {
                   bleachFrames.add(frame);
@@ -319,7 +320,7 @@ public class PointAndShootAnalyzer implements Runnable {
                     pasEntry.framePasClicked() + nrFramesAfter,
                     dataProvider.getAxisLength(Coords.T));
 
-            List<Double> intensityData = new ArrayList<Double>();
+            List<Double> intensityData = new ArrayList<>();
             for (int frame = intensityAnalysisFrames.getStartFrame();
                     frame < intensityAnalysisFrames.getEndFrame(); frame++) {
                Coords coord = cb.t(frame).build();
@@ -339,9 +340,9 @@ public class PointAndShootAnalyzer implements Runnable {
                     pasActual.x, pasActual.y));
             plotData.add(data);
 
-            for (Double val : subStackIntensityData) {
+            subStackIntensityData.forEach((val) -> {
                System.out.print(" " + val / preBleachAverage);
-            }
+            });
             System.out.println();
 
             pasDataIt.set(pasEntry.copyBuilder().
@@ -373,22 +374,32 @@ public class PointAndShootAnalyzer implements Runnable {
          while (pasDataIt.hasNext()) {
             // define an ROI around the expected postion 
             PASData pasEntry = pasDataIt.next();
-            Map<Integer, Point> track = new TreeMap<Integer, Point>();
-            Point current = new Point(pasEntry.pasActual().x, pasEntry.pasActual().y);
-            track.put(pasEntry.framePasClicked() + 2, current);
+            Map<Integer, Point> track = new TreeMap<>();
+            Point currentPoint = new Point(pasEntry.pasActual().x, pasEntry.pasActual().y);
+            track.put(pasEntry.framePasClicked() + 2, currentPoint);
             for (int frame = pasEntry.framePasClicked() + 2;
                     frame > 0; frame--) {
-               current = centroidOfCentralParticle(dataProvider, cb, frame, current);
+               Point nextPoint = centroidOfCentralParticle(dataProvider, cb, frame, currentPoint);
                //current = ccParticle(dataProvider, cb, frame, frame - 1, current);
-               track.put(frame - 1, current);
+               if (distance(currentPoint, nextPoint) < maxDistance) {
+                  currentPoint = nextPoint;
+               } else {
+                  // increase counter, give up when too high
+               }
+               track.put(frame - 1, currentPoint);
             }
 
-            current = new Point(pasEntry.pasActual().x, pasEntry.pasActual().y);
+            currentPoint = new Point(pasEntry.pasActual().x, pasEntry.pasActual().y);
             for (int frame = pasEntry.framePasClicked() + 2;
                     frame < dataProvider.getAxisLength(Coords.T) - 1; frame++) {
                //current = ccParticle(dataProvider, cb, frame, frame + 1, current);
-               current = centroidOfCentralParticle(dataProvider, cb, frame, current);
-               track.put(frame + 1, current);
+               Point nextPoint = centroidOfCentralParticle(dataProvider, cb, frame, currentPoint);
+               if (distance(currentPoint, nextPoint) < maxDistance) {
+                  currentPoint = nextPoint;
+               } else {
+                  // increase counter, give up when too high
+               }
+               track.put(frame + 1, currentPoint);
             }
             tracks.add(track);
          }
@@ -507,10 +518,10 @@ public class PointAndShootAnalyzer implements Runnable {
       List<List<Point2D_I32>> clusters = BinaryImageOps.labelToClusters(contourImg, contours.size(), null);
 
       Map<Point2D_I32, List<Point2D_I32>> centroidedClusters = 
-              new HashMap<Point2D_I32, List<Point2D_I32>>();
-      for (List<Point2D_I32> cluster : clusters) {
+              new HashMap<>();
+      clusters.forEach((cluster) -> {
          centroidedClusters.put(ContourStats.centroid(cluster), cluster);
-      }
+      });
       Point2D_I32 nearestPoint = ContourStats.nearestPoint(p, centroidedClusters.keySet());
       Rectangle2D_I32 boundingBox = null;
       if (nearestPoint != null) {
@@ -554,10 +565,10 @@ public class PointAndShootAnalyzer implements Runnable {
       GrayS32 contourImg = new GrayS32(sub.width, sub.height);
       List<Contour> contours = BinaryImageOps.contour(mask, ConnectRule.FOUR, contourImg);
       List<List<Point2D_I32>> clusters = BinaryImageOps.labelToClusters(contourImg, contours.size(), null);
-      List<Point2D_I32> centroids = new ArrayList<Point2D_I32>();
-      for (List<Point2D_I32> cluster: clusters) {
+      List<Point2D_I32> centroids = new ArrayList<>();
+      clusters.forEach((cluster) -> {
          centroids.add(ContourStats.centroid(cluster));
-      }
+      });
       if (centroids.isEmpty()) {
          // TODO: not good, log
          return p;

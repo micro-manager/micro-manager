@@ -12,7 +12,6 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.TreeMap;
 import org.micromanager.data.Image;
 import org.micromanager.display.DisplaySettings;
@@ -32,17 +31,17 @@ public class Overlay extends AbstractOverlay {
    public Overlay(List<Map<Integer, Point>> tracks) {
       tracks_ = tracks;
       // index tracks by frame for quick look up when we need it
-      tracksIndexedByFrame_ = new TreeMap<Integer, List<Point>>();
-      for (Map<Integer, Point> track : tracks_) {
-         for (Entry<Integer, Point> entry : track.entrySet()) {
+      tracksIndexedByFrame_ = new TreeMap<>();
+      tracks_.forEach((Map<Integer, Point> track) -> {
+         track.entrySet().forEach((entry) -> {
             List<Point> pointsInFrame = tracksIndexedByFrame_.get(entry.getKey());
             if (pointsInFrame == null) {
-               pointsInFrame = new ArrayList<Point>();
+               pointsInFrame = new ArrayList<>();
             }
             pointsInFrame.add(entry.getValue());
             tracksIndexedByFrame_.put(entry.getKey(), pointsInFrame);
-         }
-      }
+         });
+      });
       super.setVisible(true);
    }
    
@@ -78,12 +77,29 @@ public class Overlay extends AbstractOverlay {
          // Stroke width should be 1.0 in screen coordinates
          gTfm.setStroke(new BasicStroke((float) zoomRatio));
 
-         for (Point p : tracksIndexedByFrame_.get(frame)) {
-            gTfm.draw(new Line2D.Float(p.x, p.y - halfLength,
-                    p.x, p.y + halfLength));
-            gTfm.draw(new Line2D.Float(p.x - halfLength, p.y,
-                    p.x + halfLength, p.y));
-         }
+         tracksIndexedByFrame_.get(frame).forEach((p) -> {
+            drawMarker1(gTfm, p, halfLength, halfLength / 2);
+         });
       }
+   }
+   
+   
+   /**
+    * Draws:
+    *      |
+    *    -   -
+    *      |
+    * 
+    * @param g - graphics environment to draw on
+    * @param p - 
+    * @param width1
+    * @param width2 
+    */
+   
+   private void drawMarker1(Graphics2D g, Point p, int width1, int width2) {
+      g.draw(new Line2D.Float(p.x, p.y - width1, p.x, p.y - width1 + width2));
+      g.draw(new Line2D.Float(p.x, p.y + width1, p.x, p.y + width1 - width2));
+      g.draw(new Line2D.Float(p.x - width1, p.y, p.x - width1 + width2, p.y));
+      g.draw(new Line2D.Float(p.x + width1, p.y, p.x + width1 - width2, p.y));
    }
 }

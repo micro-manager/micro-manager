@@ -31,7 +31,8 @@ public class Terms {
    public final static String RADIUS = "Radius";
    public final static String CORERECEIVEDTIMEKEY = "TimeReceivedByCore";
    public final static String NRFRAMESBEFORE = "NrFramesBefore";
-   public final static String NRFRAMESAFTER = "NrFramesAfter";         
+   public final static String NRFRAMESAFTER = "NrFramesAfter";  
+   public final static String MAXDISTANCE = "MaxDistance";
    
    
 }
