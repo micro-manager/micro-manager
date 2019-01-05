@@ -23,6 +23,7 @@ package org.micromanager.pointandshootanalysis;
 import boofcv.alg.filter.binary.BinaryImageOps;
 import boofcv.alg.filter.binary.Contour;
 import boofcv.alg.filter.binary.GThresholdImageOps;
+import boofcv.struct.ConfigLength;
 import boofcv.struct.ConnectRule;
 import boofcv.struct.image.GrayS32;
 import boofcv.struct.image.GrayU8;
@@ -64,10 +65,12 @@ import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.pointandshootanalysis.algorithm.ContourStats;
 import org.micromanager.pointandshootanalysis.algorithm.MovementByCrossCorrelation;
+import org.micromanager.pointandshootanalysis.algorithm.ThresholdImageOps;
 import org.micromanager.pointandshootanalysis.algorithm.Utils;
 import org.micromanager.pointandshootanalysis.data.BoofCVImageConverter;
 import org.micromanager.pointandshootanalysis.data.PASData;
 import org.micromanager.pointandshootanalysis.data.PASFrameSet;
+import org.micromanager.pointandshootanalysis.data.ParticleData;
 import org.micromanager.pointandshootanalysis.data.Terms;
 import org.micromanager.pointandshootanalysis.display.Overlay;
 import org.micromanager.pointandshootanalysis.plot.DataSeriesKey;
@@ -201,7 +204,7 @@ public class PointAndShootAnalyzer implements Runnable {
 
       // We have the bleach Coordinates as frame - x/y. Check with the actual images
       List<XYSeries> plotData = new ArrayList<>();
-      List<Map<Integer, Point>> tracks = new ArrayList<>();
+      List<Map<Integer, ParticleData>> tracks = new ArrayList<>();
       try {
          int imgWidth = dataProvider.getAnyImage().getWidth();
          int imgHeight = dataProvider.getAnyImage().getHeight();
@@ -374,32 +377,35 @@ public class PointAndShootAnalyzer implements Runnable {
          while (pasDataIt.hasNext()) {
             // define an ROI around the expected postion 
             PASData pasEntry = pasDataIt.next();
-            Map<Integer, Point> track = new TreeMap<>();
-            Point currentPoint = new Point(pasEntry.pasActual().x, pasEntry.pasActual().y);
-            track.put(pasEntry.framePasClicked() + 2, currentPoint);
+            Map<Integer, ParticleData> track = new TreeMap<>();
+            Point2D_I32 currentPoint = new Point2D_I32(pasEntry.pasActual().x, pasEntry.pasActual().y);
             for (int frame = pasEntry.framePasClicked() + 2;
-                    frame > 0; frame--) {
-               Point nextPoint = centroidOfCentralParticle(dataProvider, cb, frame, currentPoint);
-               //current = ccParticle(dataProvider, cb, frame, frame - 1, current);
-               if (distance(currentPoint, nextPoint) < maxDistance) {
-                  currentPoint = nextPoint;
+                    frame >= 0; frame--) {
+               ParticleData nextParticle = centralParticle(dataProvider, cb, frame, currentPoint);
+               if (nextParticle != null && ( 
+                       ContourStats.contains(currentPoint, nextParticle.getMask())|| 
+                       Utils.distance(currentPoint, nextParticle.getCentroid()) < maxDistance )) {
+                  currentPoint = nextParticle.getCentroid();
+                  track.put(frame, nextParticle);
                } else {
-                  // increase counter, give up when too high
+                  System.out.println("Missing particle");
+                  // TODO: increase counter, give up when too high
                }
-               track.put(frame - 1, currentPoint);
             }
 
-            currentPoint = new Point(pasEntry.pasActual().x, pasEntry.pasActual().y);
-            for (int frame = pasEntry.framePasClicked() + 2;
-                    frame < dataProvider.getAxisLength(Coords.T) - 1; frame++) {
-               //current = ccParticle(dataProvider, cb, frame, frame + 1, current);
-               Point nextPoint = centroidOfCentralParticle(dataProvider, cb, frame, currentPoint);
-               if (distance(currentPoint, nextPoint) < maxDistance) {
-                  currentPoint = nextPoint;
+            currentPoint = new Point2D_I32(pasEntry.pasActual().x, pasEntry.pasActual().y);
+            for (int frame = pasEntry.framePasClicked() + 3;
+                    frame < dataProvider.getAxisLength(Coords.T); frame++) {
+               ParticleData nextParticle = centralParticle(dataProvider, cb, frame, currentPoint);
+               if (nextParticle != null && ( 
+                       ContourStats.contains(currentPoint, nextParticle.getMask())|| 
+                       Utils.distance(currentPoint, nextParticle.getCentroid()) < maxDistance )) {
+                  currentPoint = nextParticle.getCentroid();
+                  track.put(frame, nextParticle);
                } else {
-                  // increase counter, give up when too high
+                  System.out.println("Missing particle");
+                  // TODO: increase counter, give up when too high
                }
-               track.put(frame + 1, currentPoint);
             }
             tracks.add(track);
          }
@@ -543,8 +549,10 @@ public class PointAndShootAnalyzer implements Runnable {
     * @return new cy positoin of the particle
     * @throws IOException 
     */
-   private Point centroidOfCentralParticle(DataProvider dp, Coords.Builder cb,
-           int frame, Point p) throws IOException {
+   private ParticleData centralParticle(final DataProvider dp, 
+           final Coords.Builder cb,
+           final int frame, 
+           final Point2D_I32 p) throws IOException {
       Coords coord = cb.t(frame).build();
       Image img = dp.getImage(coord);
       
@@ -553,100 +561,48 @@ public class PointAndShootAnalyzer implements Runnable {
               p.getY() - halfFFTSize_ < 0 ||
               p.getX() + halfFFTSize_ >= ig.getWidth() ||
               p.getY() + halfFFTSize_ >= ig.getHeight()) {
-         return p; // TODO: we'll get stuck at the edge
+         return null; // TODO: we'll get stuck at the edge
       }
       ImageGray sub = (ImageGray) ig.subimage((int) p.getX() - halfFFTSize_, 
               (int) p.getY() - halfFFTSize_, (int) p.getX() + halfFFTSize_, 
               (int) p.getY() + halfFFTSize_);
-      int threshold =  GThresholdImageOps.computeOtsu2(sub, 
-              0, (int)sub.getImageType().getDataType().getMaxValue());
       GrayU8 mask = new GrayU8(sub.width, sub.height);
-      GThresholdImageOps.threshold(sub, mask, threshold, false);
+      // GThresholdImageOps.localSauvola(sub, mask, ConfigLength.fixed(5.0), 0.30f, true);
+      // int threshold =  GThresholdImageOps.computeOtsu2(sub, 
+       //       0, (int)sub.getImageType().getDataType().getMaxValue());
+      int threshold2 = (int) ThresholdImageOps.computeLi(sub, 
+              0.0, (double)sub.getImageType().getDataType().getMaxValue());
+      GThresholdImageOps.threshold(sub, mask, threshold2, false);
+      
+      
+      // Erode single points
+      mask = BinaryImageOps.erode4(mask, 1, null);
+      mask = BinaryImageOps.dilate4(mask, 1, null);
+      
+      // Fill hole caused by bleaching.  We could be more sophisticated and only
+      // do this when needed, but how do we find out?
+      // mask = BinaryImageOps.dilate8(mask, 2, null);
+      // mask = BinaryImageOps.erode8(mask, 2, null);
+      
+      
       GrayS32 contourImg = new GrayS32(sub.width, sub.height);
       List<Contour> contours = BinaryImageOps.contour(mask, ConnectRule.FOUR, contourImg);
       List<List<Point2D_I32>> clusters = BinaryImageOps.labelToClusters(contourImg, contours.size(), null);
-      List<Point2D_I32> centroids = new ArrayList<>();
+      List<ParticleData> particles = new ArrayList<>();
       clusters.forEach((cluster) -> {
-         centroids.add(ContourStats.centroid(cluster));
+         particles.add(new ParticleData(cluster, 
+                 new Point2D_I32(p.x - halfFFTSize_, p.y - halfFFTSize_)));
       });
-      if (centroids.isEmpty()) {
+      if (particles.isEmpty()) {
          // TODO: not good, log
-         return p;
+         return null;
       }
       
-      Point2D_I32 center = new Point2D_I32(halfFFTSize_, halfFFTSize_);
-      Point2D_I32 cp = ContourStats.nearestPoint(center, centroids);
-
-      Point r = new Point (p.x - halfFFTSize_ + cp.x, p.y - halfFFTSize_ + cp.y);
-      return r;
-      
-      
-     // BufferedImage out = ConvertBufferedImage.convertTo(mask,null);
-     // ImagePlus tip = new ImagePlus("out", out);
-     // tip.show();
-      
-      /*
-      
-      ImageProcessor iProc = studio_.data().getImageJConverter().createProcessor(img);
-      iProc.setRoi((int) p.getX() - halfFFTSize_, (int) p.getY() - halfFFTSize_, fftSize_, fftSize_);
-      iProc = iProc.crop();
-      // check ROI out of bounds!
-      if (iProc.getWidth() != fftSize_ || iProc.getHeight() != fftSize_) {
-         return p;  // TODO: log/show this problem?
-      }
-      
-      // Autothresholder only works with histograms with 256 values
-      ImageProcessor iProcB = iProc.convertToByte(true);
-      int[] histogram = iProcB.getHistogram();
-      AutoThresholder ath = new AutoThresholder();
-      final int cutOff = ath.getThreshold(AutoThresholder.Method.Yen, 
-              histogram);
-      // Apply threshold
-      byte[] inputPixels = (byte[]) iProcB.getPixels();
-      byte[] outputPixels = new byte[inputPixels.length];
-      for (int i = 0; i < inputPixels.length; i++) {
-         if ( (inputPixels[i] & 0xff) > cutOff) {
-            outputPixels[i] = -1;
-         }
-      }
-      ByteProcessor bp = new ByteProcessor(iProc.getWidth(), iProc.getHeight(), outputPixels); 
-      Wand wand = new Wand(bp);
-      Wand.setAllPoints(true);
-      wand.autoOutline(halfFFTSize_, halfFFTSize_, 254, 256);
-      if (wand.npoints < 1) {
-         // TODO: deal with problem
-      }
-      Roi roi = new PolygonRoi(wand.xpoints, wand.ypoints, wand.npoints, Roi.FREEROI);
-		Rectangle r = roi.getBounds();
-      
-      ImagePlus ipMask = new ImagePlus("tmp", bp);
-      ipMask.setLut(LUT.createLutFromColor(Color.white));
-      ipMask.show();
-      
-      //
-      PASParticleAnalyzer pasPA = new PASParticleAnalyzer(SHOW_NONE, Measurements.CENTROID | Measurements.AREA,
-         null, 0, 10000);
-      pasPA.analyze(ipMask);
-      List<PASParticleAnalyzer.ParticleData> data = pasPA.getData();
-      // select largest area
-      double distance = Double.MAX_VALUE;
-      Point cp = null;
-      for (ParticleData pd : data) {
-         double testDistance = distance(centerPoint_, pd.getCentroid());
-         if (testDistance < distance) {
-            distance = testDistance;
-            cp = pd.getCentroid();
-         }
-      }
-      */
-     
+      return (ContourStats.nearestParticle(p, particles));
      
    }
     
-   private Double distance(Point p1, Point p2) {
-      return Math.sqrt( (p1.x - p2.x) * (p1.x - p2.x) + 
-                        (p1.y - p2.y) * (p1.y - p2.y));
-   }
+   
 
    private class pointAndShootParser implements Consumer<String> {
 

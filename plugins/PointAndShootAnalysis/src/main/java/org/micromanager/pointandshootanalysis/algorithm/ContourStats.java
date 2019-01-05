@@ -6,6 +6,7 @@ import georegression.struct.point.Point2D_I32;
 import georegression.struct.shapes.Rectangle2D_I32;
 import java.util.Collection;
 import java.util.List;
+import org.micromanager.pointandshootanalysis.data.ParticleData;
 
 /**
  *
@@ -73,4 +74,42 @@ public class ContourStats {
       return cp;
    }
    
+   /**
+    * Finds the particle with centroid closes to given target
+    *
+    * @param target Point that we want to match
+    * @param source List of particles to look through for near points
+    * @return nearest point from the list (or null if source is empty)
+   */
+   public static ParticleData nearestParticle(Point2D_I32 target, Collection<ParticleData> source) {
+      ParticleData closestParticle = null;
+      double minDist = Double.MAX_VALUE;
+      for (ParticleData particle : source) {
+         double newDistance = (new LineSegment2D_I32(target, particle.getCentroid())).getLength();
+         if (newDistance < minDist) {
+            minDist = newDistance;
+            closestParticle = particle;
+         }
+      }
+      return closestParticle;
+   }
+   
+   /**
+    * Test whether a given point is in the source list
+    * Has to be used instead of source.contains(Point2D_I32) since one object 
+    * Point2D_I32 with the same values as another Point2D_I32 is not the same
+    * object
+    * 
+    * @param target Point to be found in the List
+    * @param source List to be looked through
+    * @return 
+    */
+   public static boolean contains (Point2D_I32 target, List<Point2D_I32> source) {
+      for (Point2D_I32 p : source) {
+         if (target.x == p.x && target.y == p.y) {
+            return true;
+         }
+      }
+      return false;
+   }
 }

@@ -1,10 +1,10 @@
 
 package org.micromanager.pointandshootanalysis.display;
 
+import georegression.struct.point.Point2D_I32;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
@@ -16,6 +16,7 @@ import java.util.TreeMap;
 import org.micromanager.data.Image;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.overlay.AbstractOverlay;
+import org.micromanager.pointandshootanalysis.data.ParticleData;
 
 /**
  *
@@ -23,23 +24,24 @@ import org.micromanager.display.overlay.AbstractOverlay;
  */
 public class Overlay extends AbstractOverlay {
    private final String TITLE = "Point and Shoot Overlay";
-   private final List<Map<Integer, Point>> tracks_;
-   private final Map<Integer, List<Point>> tracksIndexedByFrame_;
+   private final List<Map<Integer, ParticleData>> tracks_;
+   private final Map<Integer, List<ParticleData>> tracksIndexedByFrame_;
    private final int symbolLenght_ = 30;
+   private final Color[] colors = {Color.RED, Color.BLUE, Color.GREEN, Color.ORANGE, Color.YELLOW, Color.CYAN, Color.MAGENTA};
+   private final Color maskColor_ = new Color(255, 125, 10);
    
-   
-   public Overlay(List<Map<Integer, Point>> tracks) {
+   public Overlay(List<Map<Integer, ParticleData>> tracks) {
       tracks_ = tracks;
       // index tracks by frame for quick look up when we need it
       tracksIndexedByFrame_ = new TreeMap<>();
-      tracks_.forEach((Map<Integer, Point> track) -> {
+      tracks_.forEach( (track) -> {
          track.entrySet().forEach((entry) -> {
-            List<Point> pointsInFrame = tracksIndexedByFrame_.get(entry.getKey());
-            if (pointsInFrame == null) {
-               pointsInFrame = new ArrayList<>();
+            List<ParticleData> particlesInFrame = tracksIndexedByFrame_.get(entry.getKey());
+            if (particlesInFrame == null) {
+               particlesInFrame = new ArrayList<>();
             }
-            pointsInFrame.add(entry.getValue());
-            tracksIndexedByFrame_.put(entry.getKey(), pointsInFrame);
+            particlesInFrame.add(entry.getValue());
+            tracksIndexedByFrame_.put(entry.getKey(), particlesInFrame);
          });
       });
       super.setVisible(true);
@@ -64,7 +66,6 @@ public class Overlay extends AbstractOverlay {
       // TODO: make sure this is our dataviewer
       Integer frame = primaryImage.getCoords().getTimePoint();
       if (tracksIndexedByFrame_.get(frame) != null) {
-         g.setColor(Color.RED);
          final double zoomRatio = imageViewPort.width / screenRect.width;
          final int halfLength = symbolLenght_ / 2;
 
@@ -76,10 +77,21 @@ public class Overlay extends AbstractOverlay {
                  getTranslateInstance(-imageViewPort.x, -imageViewPort.y));
          // Stroke width should be 1.0 in screen coordinates
          gTfm.setStroke(new BasicStroke((float) zoomRatio));
-
-         tracksIndexedByFrame_.get(frame).forEach((p) -> {
-            drawMarker1(gTfm, p, halfLength, halfLength / 2);
-         });
+         
+         int colorIndex = 0;
+         for (ParticleData p : tracksIndexedByFrame_.get(frame)) {
+            gTfm.setColor(maskColor_);
+            p.getMask().forEach((point) -> {
+               g.draw(new Line2D.Float(point.x, point.y, point.x, point.y));
+            });
+            gTfm.setColor(colors[colorIndex]);
+            colorIndex++;
+            if (colorIndex >= colors.length) { 
+               colorIndex = 0; 
+            }
+            drawMarker1(gTfm, p.getCentroid(), halfLength, halfLength / 2);
+            
+         }
       }
    }
    
@@ -96,10 +108,13 @@ public class Overlay extends AbstractOverlay {
     * @param width2 
     */
    
-   private void drawMarker1(Graphics2D g, Point p, int width1, int width2) {
+   private void drawMarker1(Graphics2D g, Point2D_I32 p, int width1, int width2) {
       g.draw(new Line2D.Float(p.x, p.y - width1, p.x, p.y - width1 + width2));
       g.draw(new Line2D.Float(p.x, p.y + width1, p.x, p.y + width1 - width2));
       g.draw(new Line2D.Float(p.x - width1, p.y, p.x - width1 + width2, p.y));
       g.draw(new Line2D.Float(p.x + width1, p.y, p.x + width1 - width2, p.y));
    }
+   
+
+   
 }

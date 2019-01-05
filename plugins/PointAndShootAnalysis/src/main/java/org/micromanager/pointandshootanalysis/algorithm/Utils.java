@@ -21,6 +21,7 @@
 package org.micromanager.pointandshootanalysis.algorithm;
 
 
+import georegression.struct.point.Point2D_I32;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.Overlay;
@@ -29,6 +30,7 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import java.awt.Color;
+import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
@@ -140,6 +142,23 @@ public class Utils {
       }
       return output;
    }
+   
+   public static double distance(Point p1, Point p2) {
+      return Math.sqrt( (p1.x - p2.x) * (p1.x - p2.x) + 
+                        (p1.y - p2.y) * (p1.y - p2.y));
+   }
+   
+   public static double distance(Point p1, Point2D_I32 p2) {
+      return Math.sqrt( (p1.x - p2.x) * (p1.x - p2.x) + 
+                        (p1.y - p2.y) * (p1.y - p2.y));
+   }
+   
+   public static double distance(Point2D_I32 p1, Point2D_I32 p2) {
+      return Math.sqrt( (p1.x - p2.x) * (p1.x - p2.x) + 
+                        (p1.y - p2.y) * (p1.y - p2.y));
+   }
+   
+
    
 }
 
