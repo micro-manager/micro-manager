@@ -25,7 +25,6 @@ import boofcv.alg.filter.binary.Contour;
 import boofcv.alg.filter.binary.GThresholdImageOps;
 import boofcv.alg.filter.blur.BlurImageOps;
 import boofcv.alg.misc.GPixelMath;
-import boofcv.alg.misc.PixelMath;
 import boofcv.struct.ConnectRule;
 import boofcv.struct.image.GrayF32;
 import boofcv.struct.image.GrayS32;
@@ -33,10 +32,8 @@ import boofcv.struct.image.GrayU8;
 import boofcv.struct.image.ImageGray;
 import georegression.struct.point.Point2D_I32;
 import georegression.struct.shapes.Rectangle2D_I32;
-import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.plugin.ImageCalculator;
 import ij.plugin.ZProjector;
 import ij.process.ImageProcessor;
 import java.awt.Point;
@@ -267,6 +264,7 @@ public class PointAndShootAnalyzer implements Runnable {
             zp.doProjection();
             ImagePlus min = zp.getProjection();
             
+            // Normalize (divide) the minimum projection with the average projection 
             ImageGray minBCV = BoofCVImageConverter.convert(
                     min.getProcessor().convertToFloatProcessor(), false);
             ImageGray beforeCV = BoofCVImageConverter.convert(
@@ -276,14 +274,14 @@ public class PointAndShootAnalyzer implements Runnable {
             GrayF32 gResult = new GrayF32(minBCV.width, minBCV.height);
             BlurImageOps.gaussian(dResult, gResult, 3, 0, null);
             
-            ImageProcessor tmp = BoofCVImageConverter.convert(gResult, false);
-            ImagePlus tTmp = new ImagePlus("BoofCV", tmp);
+            // ImageProcessor tmp = BoofCVImageConverter.convert(gResult, false);
+            // ImagePlus tTmp = new ImagePlus("BoofCV", tmp);
             //tTmp.show();
 
             // Normalize (divivde) the minimum projection with the average projection 
-            ImageCalculator ic = new ImageCalculator();
-            ImagePlus result = ic.run("Divide 32-bit", min, before);
-            IJ.run(result, "Gaussian Blur...", "sigma=3");
+            // ImageCalculator ic = new ImageCalculator();
+            // ImagePlus result = ic.run("Divide 32-bit", min, before);
+            // IJ.run(result, "Gaussian Blur...", "sigma=3");
             //result.show();
 
             // Find the minimum and define this as the bleachPoint
@@ -396,13 +394,19 @@ public class PointAndShootAnalyzer implements Runnable {
             // define an ROI around the expected postion 
             PASData pasEntry = pasDataIt.next();
             Map<Integer, ParticleData> track = new TreeMap<>();
-            Point2D_I32 currentPoint = new Point2D_I32(pasEntry.pasActual().x, pasEntry.pasActual().y);
+            Point2D_I32 bleachPoint = new Point2D_I32(pasEntry.pasActual().x, pasEntry.pasActual().y);
+            ParticleData firstParticle = centralParticle(dataProvider, cb, 
+                    pasEntry.framePasClicked() + 2, bleachPoint, halfFFTSize_);
+            if (firstParticle == null) {
+               continue;
+            }
+            Point2D_I32 currentPoint = firstParticle.getCentroid().copy();
             for (int frame = pasEntry.framePasClicked() + 2;
                     frame >= 0; frame--) {
                ParticleData nextParticle = centralParticle(
                        dataProvider, cb, frame, currentPoint, halfFFTSize_);
                if (nextParticle != null && ( 
-                       ContourStats.contains(currentPoint, nextParticle.getMask())|| 
+                       // ContourStats.contains(currentPoint, nextParticle.getMask())|| 
                        Utils.distance(currentPoint, nextParticle.getCentroid()) < maxDistance )) {
                   currentPoint = nextParticle.getCentroid();
                   track.put(frame, nextParticle);
@@ -412,13 +416,14 @@ public class PointAndShootAnalyzer implements Runnable {
                }
             }
 
-            currentPoint = new Point2D_I32(pasEntry.pasActual().x, pasEntry.pasActual().y);
+            // now go forward in time
+            currentPoint = firstParticle.getCentroid().copy();
             for (int frame = pasEntry.framePasClicked() + 3;
                     frame < dataProvider.getAxisLength(Coords.T); frame++) {
                ParticleData nextParticle = centralParticle(
                        dataProvider, cb, frame, currentPoint, halfFFTSize_);
                if (nextParticle != null && ( 
-                       ContourStats.contains(currentPoint, nextParticle.getMask())|| 
+                       // ContourStats.contains(currentPoint, nextParticle.getMask())|| 
                        Utils.distance(currentPoint, nextParticle.getCentroid()) < maxDistance )) {
                   currentPoint = nextParticle.getCentroid();
                   track.put(frame, nextParticle);
@@ -622,7 +627,8 @@ public class PointAndShootAnalyzer implements Runnable {
       
       GrayS32 contourImg = new GrayS32(sub.width, sub.height);
       List<Contour> contours = BinaryImageOps.contour(mask, ConnectRule.FOUR, contourImg);
-      List<List<Point2D_I32>> clusters = BinaryImageOps.labelToClusters(contourImg, contours.size(), null);
+      List<List<Point2D_I32>> clusters = BinaryImageOps.labelToClusters(
+              contourImg, contours.size(), null);
       List<ParticleData> particles = new ArrayList<>();
       clusters.forEach((cluster) -> {
          particles.add(new ParticleData(cluster, 
