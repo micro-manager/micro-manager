@@ -23,7 +23,6 @@ package org.micromanager.pointandshootanalysis;
 import boofcv.alg.filter.binary.BinaryImageOps;
 import boofcv.alg.filter.binary.Contour;
 import boofcv.alg.filter.binary.GThresholdImageOps;
-import boofcv.struct.ConfigLength;
 import boofcv.struct.ConnectRule;
 import boofcv.struct.image.GrayS32;
 import boofcv.struct.image.GrayU8;
@@ -381,7 +380,8 @@ public class PointAndShootAnalyzer implements Runnable {
             Point2D_I32 currentPoint = new Point2D_I32(pasEntry.pasActual().x, pasEntry.pasActual().y);
             for (int frame = pasEntry.framePasClicked() + 2;
                     frame >= 0; frame--) {
-               ParticleData nextParticle = centralParticle(dataProvider, cb, frame, currentPoint);
+               ParticleData nextParticle = centralParticle(
+                       dataProvider, cb, frame, currentPoint, halfFFTSize_);
                if (nextParticle != null && ( 
                        ContourStats.contains(currentPoint, nextParticle.getMask())|| 
                        Utils.distance(currentPoint, nextParticle.getCentroid()) < maxDistance )) {
@@ -396,7 +396,8 @@ public class PointAndShootAnalyzer implements Runnable {
             currentPoint = new Point2D_I32(pasEntry.pasActual().x, pasEntry.pasActual().y);
             for (int frame = pasEntry.framePasClicked() + 3;
                     frame < dataProvider.getAxisLength(Coords.T); frame++) {
-               ParticleData nextParticle = centralParticle(dataProvider, cb, frame, currentPoint);
+               ParticleData nextParticle = centralParticle(
+                       dataProvider, cb, frame, currentPoint, halfFFTSize_);
                if (nextParticle != null && ( 
                        ContourStats.contains(currentPoint, nextParticle.getMask())|| 
                        Utils.distance(currentPoint, nextParticle.getCentroid()) < maxDistance )) {
@@ -545,27 +546,30 @@ public class PointAndShootAnalyzer implements Runnable {
     * @param cb Micro-Manager Coords builder.  For efficiency only
     * @param frame Frame number in which to look for the particle centroid
     * @param p input xy position around which to look
+    * @param halfBoxSize Defines size of the Box in which the code looks for a particle
+    *        Box is p.x - halfBoxSize, p.y - halfBoxSize; p.x + halfBoxSize, p.y + halfBoxSize
     * 
     * @return new cy positoin of the particle
     * @throws IOException 
     */
-   private ParticleData centralParticle(final DataProvider dp, 
+   public static ParticleData centralParticle(final DataProvider dp, 
            final Coords.Builder cb,
            final int frame, 
-           final Point2D_I32 p) throws IOException {
+           final Point2D_I32 p,
+           final int halfBoxSize) throws IOException {
       Coords coord = cb.t(frame).build();
       Image img = dp.getImage(coord);
       
       ImageGray ig = BoofCVImageConverter.createBoofCVImage(img, false);
-      if (p.getX() - halfFFTSize_ < 0 ||
-              p.getY() - halfFFTSize_ < 0 ||
-              p.getX() + halfFFTSize_ >= ig.getWidth() ||
-              p.getY() + halfFFTSize_ >= ig.getHeight()) {
+      if (p.getX() - halfBoxSize < 0 ||
+              p.getY() - halfBoxSize < 0 ||
+              p.getX() + halfBoxSize >= ig.getWidth() ||
+              p.getY() + halfBoxSize >= ig.getHeight()) {
          return null; // TODO: we'll get stuck at the edge
       }
-      ImageGray sub = (ImageGray) ig.subimage((int) p.getX() - halfFFTSize_, 
-              (int) p.getY() - halfFFTSize_, (int) p.getX() + halfFFTSize_, 
-              (int) p.getY() + halfFFTSize_);
+      ImageGray sub = (ImageGray) ig.subimage((int) p.getX() - halfBoxSize, 
+              (int) p.getY() - halfBoxSize, (int) p.getX() + halfBoxSize, 
+              (int) p.getY() + halfBoxSize);
       GrayU8 mask = new GrayU8(sub.width, sub.height);
       // GThresholdImageOps.localSauvola(sub, mask, ConfigLength.fixed(5.0), 0.30f, true);
       // int threshold =  GThresholdImageOps.computeOtsu2(sub, 
@@ -591,7 +595,7 @@ public class PointAndShootAnalyzer implements Runnable {
       List<ParticleData> particles = new ArrayList<>();
       clusters.forEach((cluster) -> {
          particles.add(new ParticleData(cluster, 
-                 new Point2D_I32(p.x - halfFFTSize_, p.y - halfFFTSize_)));
+                 new Point2D_I32(p.x - halfBoxSize, p.y - halfBoxSize)));
       });
       if (particles.isEmpty()) {
          // TODO: not good, log
