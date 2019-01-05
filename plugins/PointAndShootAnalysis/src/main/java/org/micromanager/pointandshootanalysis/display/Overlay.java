@@ -6,6 +6,8 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
@@ -13,6 +15,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import net.miginfocom.layout.CC;
+import net.miginfocom.layout.LC;
+import net.miginfocom.swing.MigLayout;
 import org.micromanager.data.Image;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.overlay.AbstractOverlay;
@@ -29,6 +37,10 @@ public class Overlay extends AbstractOverlay {
    private final int symbolLenght_ = 30;
    private final Color[] colors = {Color.RED, Color.BLUE, Color.GREEN, Color.ORANGE, Color.YELLOW, Color.CYAN, Color.MAGENTA};
    private final Color maskColor_ = new Color(255, 125, 10);
+   
+   // UI components
+   private JPanel configUI_;
+   private JCheckBox showMasksCheckBox_;
    
    public Overlay(List<Map<Integer, ParticleData>> tracks) {
       tracks_ = tracks;
@@ -50,6 +62,24 @@ public class Overlay extends AbstractOverlay {
    @Override
    public String getTitle() {
       return TITLE;
+   }
+   
+   @Override
+   public JComponent getConfigurationComponent() {
+      if (configUI_ == null) {
+         
+         showMasksCheckBox_ = new JCheckBox("Show masks");
+         showMasksCheckBox_.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               fireOverlayConfigurationChanged();
+            }
+         });
+
+         configUI_ = new JPanel(new MigLayout(new LC().insets("4")));
+         configUI_.add(showMasksCheckBox_, new CC().wrap());
+      }
+      return configUI_;
    }
    
    /**
@@ -80,10 +110,13 @@ public class Overlay extends AbstractOverlay {
          
          int colorIndex = 0;
          for (ParticleData p : tracksIndexedByFrame_.get(frame)) {
-            gTfm.setColor(maskColor_);
-            p.getMask().forEach((point) -> {
-               g.draw(new Line2D.Float(point.x, point.y, point.x, point.y));
-            });
+            if (showMasksCheckBox_ != null && showMasksCheckBox_.isSelected()) {
+               gTfm.setColor(maskColor_);
+               p.getMask().forEach((point) -> {
+                  // Note: drawLine is much faster the g.draw(new Line2D.Float());
+                  g.drawLine(point.x, point.y, point.x, point.y);
+               });
+            }
             gTfm.setColor(colors[colorIndex]);
             colorIndex++;
             if (colorIndex >= colors.length) { 
@@ -109,12 +142,11 @@ public class Overlay extends AbstractOverlay {
     */
    
    private void drawMarker1(Graphics2D g, Point2D_I32 p, int width1, int width2) {
-      g.draw(new Line2D.Float(p.x, p.y - width1, p.x, p.y - width1 + width2));
-      g.draw(new Line2D.Float(p.x, p.y + width1, p.x, p.y + width1 - width2));
-      g.draw(new Line2D.Float(p.x - width1, p.y, p.x - width1 + width2, p.y));
-      g.draw(new Line2D.Float(p.x + width1, p.y, p.x + width1 - width2, p.y));
+      g.drawLine(p.x, p.y - width1, p.x, p.y - width1 + width2);
+      g.drawLine(p.x, p.y + width1, p.x, p.y + width1 - width2);
+      g.drawLine(p.x - width1, p.y, p.x - width1 + width2, p.y);
+      g.drawLine(p.x + width1, p.y, p.x + width1 - width2, p.y);
    }
    
-
-   
+     
 }
