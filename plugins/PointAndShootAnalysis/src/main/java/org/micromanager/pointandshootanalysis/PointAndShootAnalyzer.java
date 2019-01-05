@@ -23,7 +23,11 @@ package org.micromanager.pointandshootanalysis;
 import boofcv.alg.filter.binary.BinaryImageOps;
 import boofcv.alg.filter.binary.Contour;
 import boofcv.alg.filter.binary.GThresholdImageOps;
+import boofcv.alg.filter.blur.BlurImageOps;
+import boofcv.alg.misc.GPixelMath;
+import boofcv.alg.misc.PixelMath;
 import boofcv.struct.ConnectRule;
+import boofcv.struct.image.GrayF32;
 import boofcv.struct.image.GrayS32;
 import boofcv.struct.image.GrayU8;
 import boofcv.struct.image.ImageGray;
@@ -262,15 +266,30 @@ public class PointAndShootAnalyzer implements Runnable {
             zp.setStopSlice(imp.getNSlices());
             zp.doProjection();
             ImagePlus min = zp.getProjection();
+            
+            ImageGray minBCV = BoofCVImageConverter.convert(
+                    min.getProcessor().convertToFloatProcessor(), false);
+            ImageGray beforeCV = BoofCVImageConverter.convert(
+                    before.getProcessor().convertToFloatProcessor(), false);
+            GrayF32 dResult = new GrayF32(minBCV.width, minBCV.height);
+            GPixelMath.divide(minBCV, beforeCV, dResult);
+            GrayF32 gResult = new GrayF32(minBCV.width, minBCV.height);
+            BlurImageOps.gaussian(dResult, gResult, 3, 0, null);
+            
+            ImageProcessor tmp = BoofCVImageConverter.convert(gResult, false);
+            ImagePlus tTmp = new ImagePlus("BoofCV", tmp);
+            //tTmp.show();
 
             // Normalize (divivde) the minimum projection with the average projection 
             ImageCalculator ic = new ImageCalculator();
             ImagePlus result = ic.run("Divide 32-bit", min, before);
             IJ.run(result, "Gaussian Blur...", "sigma=3");
-            // result.show();
+            //result.show();
 
             // Find the minimum and define this as the bleachPoint
-            Point minPoint = findMinPixel(result.getProcessor());
+            //Point minPoint = findMinPixel(result.getProcessor());
+            Point minPoint = findMinPixel(gResult);
+            
             System.out.println("Lowest Pixel position: " + minPoint.x + ", " + minPoint.y);
             // check if this is within expected range
             if (minPoint.x < xMiddle - maxDistance_
@@ -369,7 +388,7 @@ public class PointAndShootAnalyzer implements Runnable {
          pu.plotDataN("Bleach Intensity Profile", plots, "Time (ms)",
                  "Normalized Intensity", showShapes, "", 1.3);
 
-         // Track particle that received the bleach by cross-correlation
+         // Track particle that received the bleach by local thresholding
          // First go backwards in time, then forward
          pasDataIt = pasData.listIterator();
          Coords.Builder cb = dataProvider.getAnyImage().getCoords().copyBuilder();
@@ -466,6 +485,21 @@ public class PointAndShootAnalyzer implements Runnable {
       }
       return p;
    }
+   
+   public static Point findMinPixel(GrayF32 img) {
+      Point p = new Point(0, 0);
+      Float val = img.unsafe_get(0, 0);
+      for (int x = 0; x < img.getWidth(); x++) {
+         for (int y = 0; y < img.getHeight(); y++) {
+            if (img.unsafe_get(x, y) < val) {
+               p.x = x;
+               p.y = y;
+               val = img.unsafe_get(x, y);
+            }
+         }
+      }
+      return p;
+   }
 
    private Point ccParticle(DataProvider dp, Coords.Builder cb,
            int frame1, int frame2, Point p) throws IOException {
@@ -505,7 +539,7 @@ public class PointAndShootAnalyzer implements Runnable {
       Coords coord = cb.t(frame).build();
       Image img = dp.getImage(coord);
       
-      ImageGray ig = BoofCVImageConverter.createBoofCVImage(img, false);
+      ImageGray ig = BoofCVImageConverter.mmToBoofCV(img, false);
       if (p.getX() - halfFFTSize_ < 0 ||
               p.getY() - halfFFTSize_ < 0 ||
               p.getX() + halfFFTSize_ >= ig.getWidth() ||
@@ -549,10 +583,10 @@ public class PointAndShootAnalyzer implements Runnable {
     * @param halfBoxSize Defines size of the Box in which the code looks for a particle
     *        Box is p.x - halfBoxSize, p.y - halfBoxSize; p.x + halfBoxSize, p.y + halfBoxSize
     * 
-    * @return new cy positoin of the particle
+    * @return particle (or null if not found)
     * @throws IOException 
     */
-   public static ParticleData centralParticle(final DataProvider dp, 
+   private static ParticleData centralParticle(final DataProvider dp, 
            final Coords.Builder cb,
            final int frame, 
            final Point2D_I32 p,
@@ -560,7 +594,7 @@ public class PointAndShootAnalyzer implements Runnable {
       Coords coord = cb.t(frame).build();
       Image img = dp.getImage(coord);
       
-      ImageGray ig = BoofCVImageConverter.createBoofCVImage(img, false);
+      ImageGray ig = BoofCVImageConverter.mmToBoofCV(img, false);
       if (p.getX() - halfBoxSize < 0 ||
               p.getY() - halfBoxSize < 0 ||
               p.getX() + halfBoxSize >= ig.getWidth() ||
@@ -571,15 +605,12 @@ public class PointAndShootAnalyzer implements Runnable {
               (int) p.getY() - halfBoxSize, (int) p.getX() + halfBoxSize, 
               (int) p.getY() + halfBoxSize);
       GrayU8 mask = new GrayU8(sub.width, sub.height);
-      // GThresholdImageOps.localSauvola(sub, mask, ConfigLength.fixed(5.0), 0.30f, true);
-      // int threshold =  GThresholdImageOps.computeOtsu2(sub, 
-       //       0, (int)sub.getImageType().getDataType().getMaxValue());
-      int threshold2 = (int) ThresholdImageOps.computeLi(sub, 
+      int threshold = (int) ThresholdImageOps.computeLi(sub, 
               0.0, (double)sub.getImageType().getDataType().getMaxValue());
-      GThresholdImageOps.threshold(sub, mask, threshold2, false);
+      GThresholdImageOps.threshold(sub, mask, threshold, false);
       
       
-      // Erode single points
+      // Remove small particles
       mask = BinaryImageOps.erode4(mask, 1, null);
       mask = BinaryImageOps.dilate4(mask, 1, null);
       
