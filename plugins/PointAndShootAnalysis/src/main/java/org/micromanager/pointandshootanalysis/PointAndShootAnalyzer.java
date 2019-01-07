@@ -272,7 +272,7 @@ public class PointAndShootAnalyzer implements Runnable {
             GrayF32 dResult = new GrayF32(minBCV.width, minBCV.height);
             GPixelMath.divide(minBCV, beforeCV, dResult);
             GrayF32 gResult = new GrayF32(minBCV.width, minBCV.height);
-            BlurImageOps.gaussian(dResult, gResult, 3, 0, null);
+            BlurImageOps.gaussian(dResult, gResult, 3, -1, null);
             
             // ImageProcessor tmp = BoofCVImageConverter.convert(gResult, false);
             // ImagePlus tTmp = new ImagePlus("BoofCV", tmp);
