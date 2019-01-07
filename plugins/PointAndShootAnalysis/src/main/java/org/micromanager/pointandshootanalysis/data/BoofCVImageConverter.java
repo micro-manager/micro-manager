@@ -78,25 +78,29 @@ public final class BoofCVImageConverter {
    public static ImageProcessor convert(ImageGray imgG, boolean copy) {
       ImageProcessor ip = null;
       if (imgG instanceof GrayU8) {
-         ip = new ByteProcessor(imgG.width, imgG.height);
          if (copy) {
-            ip.setPixels(((GrayU8) imgG).getData().clone());
+            ip = new ByteProcessor(imgG.width, imgG.height, 
+                    ((GrayU8) imgG).getData().clone());
          } else {
-            ip.setPixels(((GrayU8) imgG).getData());
+            ip = new ByteProcessor(imgG.width, imgG.height, 
+                    ((GrayU8) imgG).getData());
          }
       } else if (imgG instanceof GrayU16) {
-         ip = new ShortProcessor(imgG.width, imgG.height);
+         
          if (copy) {
-            ip.setPixels(((GrayU16) imgG).getData().clone());
+            ip = new ShortProcessor(imgG.width, imgG.height, 
+                    ((GrayU16) imgG).getData().clone(), null );
          } else {
-            ip.setPixels(((GrayU16) imgG).getData());
+            ip = new ShortProcessor(imgG.width, imgG.height, 
+                    ((GrayU16) imgG).getData(), null );
          }
       } else if (imgG instanceof GrayF32) {
-         ip = new FloatProcessor(imgG.width, imgG.height);
-         if (copy) {
-            ip.setPixels(((GrayF32) imgG).getData().clone());
+         if (copy) {            
+            ip = new FloatProcessor(imgG.width, imgG.height, 
+                    ((GrayF32) imgG).getData().clone());
          } else {
-            ip.setPixels(((GrayF32) imgG).getData());  
+            ip = new FloatProcessor(imgG.width, imgG.height, 
+                    ((GrayF32) imgG).getData());
          }
       }
       return ip;
@@ -113,15 +117,15 @@ public final class BoofCVImageConverter {
    public static ImageGray convert (ImageProcessor ip, boolean copy) {
       ImageGray ig = null;
       if (ip instanceof ByteProcessor) {
-         GrayU8 tmp8Image = new GrayU8(ip.getWidth(), ip.getHeight());
+         GrayU8 tmp8Image = new GrayU8(); //ip.getWidth(), ip.getHeight());
          if (copy) {
             tmp8Image.setData(((byte[]) ip.getPixels()).clone());
          } else {
             tmp8Image.setData((byte[]) ip.getPixels());
-         }
+         }         
          ig = tmp8Image;
       } else if (ip instanceof ShortProcessor) {
-         GrayU16 tmp16Image = new GrayU16(ip.getWidth(), ip.getHeight());
+         GrayU16 tmp16Image = new GrayU16();
          if (copy) {
             tmp16Image.setData(((short[]) ip.getPixels()).clone());
          } else {
@@ -129,13 +133,18 @@ public final class BoofCVImageConverter {
          }
          ig = tmp16Image;
       } else if (ip instanceof FloatProcessor) {
-         GrayF32 tmpF32Image = new GrayF32(ip.getWidth(), ip.getHeight());
+         GrayF32 tmpF32Image = new GrayF32();
          if (copy) {
             tmpF32Image.setData(((float[]) ip.getPixels()).clone());
          } else {
             tmpF32Image.setData((float[]) ip.getPixels());
          }
          ig = tmpF32Image;
+      }
+      if (ig != null) {
+         ig.setWidth(ip.getWidth());
+         ig.setStride(ip.getWidth());
+         ig.setHeight(ip.getHeight());
       }
       
       return ig;
