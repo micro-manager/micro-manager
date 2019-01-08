@@ -24,10 +24,13 @@ import boofcv.alg.filter.binary.BinaryImageOps;
 import boofcv.alg.filter.binary.Contour;
 import boofcv.alg.filter.binary.GThresholdImageOps;
 import boofcv.alg.filter.blur.BlurImageOps;
+import boofcv.alg.misc.GImageStatistics;
 import boofcv.alg.misc.GPixelMath;
+import boofcv.core.image.ConvertImage;
 import boofcv.struct.ConnectRule;
 import boofcv.struct.image.GrayF32;
 import boofcv.struct.image.GrayS32;
+import boofcv.struct.image.GrayU16;
 import boofcv.struct.image.GrayU8;
 import boofcv.struct.image.ImageGray;
 import georegression.struct.point.Point2D_I32;
@@ -87,18 +90,17 @@ public class PointAndShootAnalyzer implements Runnable {
    final private PropertyMap settings_;
    ;
    final Map<String, Point> coordinates_;
-   final private int roiWidth_ = 50;  // may need to changed by user
-   final private int roiHeight_ = 50;  // may need to changed by user
-   final private int maxDistance_ = 10; // max distance in pixels from the expected position
+   final private static int MAXDISTANCE = 10; // max distance in pixels from the expected position
    // if more, we will reject the bleach spot
    // may need to be changed buy the user
    final private int findMinFramesBefore_ = 5; // frames before user clicked PAS.  
    //Used to find actual bleach spot and to normalize
    final private int findMinFramesAfter_ = 20;  // frames after used clicked PAS.  
    //Used to find actual bleach spot
-   final private int fftSize_ = 64;
-   final private int halfFFTSize_ = fftSize_ / 2;
-   final private Point centerPoint_ = new Point (halfFFTSize_, halfFFTSize_);
+   final private int roiSize_ = 64;  // keep at factor of 2 to enable FFT 
+   final private int halfROISize_ = roiSize_ / 2;
+   final private int roiWidth_ = roiSize_;  // may need to changed by user
+   final private int roiHeight_ = roiSize_;  // may need to changed by user
 
    public PointAndShootAnalyzer(Studio studio, PropertyMap settings) {
       studio_ = studio;
@@ -216,6 +218,7 @@ public class PointAndShootAnalyzer implements Runnable {
          }
          final int xMiddle = roiWidth_ / 2;
          final int yMiddle = roiHeight_ / 2;
+         final Point2D_I32 middle = new Point2D_I32(xMiddle, yMiddle);
 
          ListIterator<PASData> pasDataIt = pasData.listIterator();
          while (pasDataIt.hasNext()) {
@@ -286,14 +289,11 @@ public class PointAndShootAnalyzer implements Runnable {
 
             // Find the minimum and define this as the bleachPoint
             //Point minPoint = findMinPixel(result.getProcessor());
-            Point minPoint = findMinPixel(gResult);
+            Point2D_I32 minPoint = findMinPixel(gResult);
             
             System.out.println("Lowest Pixel position: " + minPoint.x + ", " + minPoint.y);
             // check if this is within expected range
-            if (minPoint.x < xMiddle - maxDistance_
-                    || minPoint.x > xMiddle + maxDistance_
-                    || minPoint.y < yMiddle - maxDistance_
-                    || minPoint.y > yMiddle + maxDistance_) {
+            if (Utils.distance(minPoint, middle) > MAXDISTANCE) {
                pasDataIt.remove();
                continue;
             }
@@ -391,22 +391,19 @@ public class PointAndShootAnalyzer implements Runnable {
          pasDataIt = pasData.listIterator();
          Coords.Builder cb = dataProvider.getAnyImage().getCoords().copyBuilder();
          while (pasDataIt.hasNext()) {
-            // define an ROI around the expected postion 
             PASData pasEntry = pasDataIt.next();
             Map<Integer, ParticleData> track = new TreeMap<>();
             Point2D_I32 bleachPoint = new Point2D_I32(pasEntry.pasActual().x, pasEntry.pasActual().y);
             ParticleData firstParticle = centralParticle(dataProvider, cb, 
-                    pasEntry.framePasClicked() + 2, bleachPoint, halfFFTSize_);
+                    pasEntry.framePasClicked() + 1, bleachPoint, halfROISize_);
             if (firstParticle == null) {
                continue;
             }
             Point2D_I32 currentPoint = firstParticle.getCentroid().copy();
-            for (int frame = pasEntry.framePasClicked() + 2;
+            for (int frame = pasEntry.framePasClicked() + 1;
                     frame >= 0; frame--) {
-               ParticleData nextParticle = centralParticle(
-                       dataProvider, cb, frame, currentPoint, halfFFTSize_);
+               ParticleData nextParticle = centralParticle(dataProvider, cb, frame, currentPoint, halfROISize_);
                if (nextParticle != null && ( 
-                       // ContourStats.contains(currentPoint, nextParticle.getMask())|| 
                        Utils.distance(currentPoint, nextParticle.getCentroid()) < maxDistance )) {
                   currentPoint = nextParticle.getCentroid();
                   track.put(frame, nextParticle);
@@ -418,13 +415,18 @@ public class PointAndShootAnalyzer implements Runnable {
 
             // now go forward in time
             currentPoint = firstParticle.getCentroid().copy();
-            for (int frame = pasEntry.framePasClicked() + 3;
+            GrayU16 preBleach = (GrayU16)subImage(dataProvider, cb, 
+                    pasEntry.framePasClicked() + 1, currentPoint, halfROISize_);
+            GrayF32 fPreBleach = new GrayF32(preBleach.getWidth(), preBleach.getHeight());
+            ConvertImage.convert(preBleach, fPreBleach);
+            for (int frame = pasEntry.framePasClicked() + 2;
                     frame < dataProvider.getAxisLength(Coords.T); frame++) {
-               ParticleData nextParticle = centralParticle(
-                       dataProvider, cb, frame, currentPoint, halfFFTSize_);
+               ParticleData nextParticle = centralParticle(dataProvider, cb, frame, currentPoint, halfROISize_);
                if (nextParticle != null && ( 
-                       // ContourStats.contains(currentPoint, nextParticle.getMask())|| 
                        Utils.distance(currentPoint, nextParticle.getCentroid()) < maxDistance )) {
+                  ImageGray current = subImage(dataProvider, cb, frame, currentPoint, halfROISize_);
+                  nextParticle = addBleachSpotToParticle(fPreBleach, (GrayU16) current, nextParticle, 
+                          new Point2D_I32(currentPoint.x - halfROISize_, currentPoint.y - halfROISize_) );
                   currentPoint = nextParticle.getCentroid();
                   track.put(frame, nextParticle);
                } else {
@@ -491,8 +493,8 @@ public class PointAndShootAnalyzer implements Runnable {
       return p;
    }
    
-   public static Point findMinPixel(GrayF32 img) {
-      Point p = new Point(0, 0);
+   public static Point2D_I32 findMinPixel(GrayF32 img) {
+      Point2D_I32 p = new Point2D_I32(0, 0);
       Float val = img.unsafe_get(0, 0);
       for (int x = 0; x < img.getWidth(); x++) {
          for (int y = 0; y < img.getHeight(); y++) {
@@ -506,77 +508,36 @@ public class PointAndShootAnalyzer implements Runnable {
       return p;
    }
 
-   private Point ccParticle(DataProvider dp, Coords.Builder cb,
-           int frame1, int frame2, Point p) throws IOException {
-      Coords coord = cb.t(frame1).build();
-      Image img = dp.getImage(coord);
-      ImageProcessor iProc = studio_.data().getImageJConverter().createProcessor(img);
-      iProc.setRoi((int) p.getX() - halfFFTSize_, (int) p.getY() - halfFFTSize_, fftSize_, fftSize_);
-      iProc = iProc.crop();
-      // check ROI out of bounds!
-      if (iProc.getWidth() != fftSize_ || iProc.getHeight() != fftSize_) {
-         return p;  // TODO: log/show this problem?
-      }
-      Coords coord2 = cb.t(frame2).build();
-      Image img2 = dp.getImage(coord2);
-      ImageProcessor iProc2 = studio_.data().getImageJConverter().createProcessor(img2);
-      iProc2.setRoi((int) p.getX() - halfFFTSize_, (int) p.getY() - halfFFTSize_, fftSize_, fftSize_);
-      iProc2 = iProc2.crop();
-      // check ROI out of bounds
-      if (iProc2.getWidth() != fftSize_ || iProc2.getHeight() != fftSize_) {
-         return p;  // TODO: log/show this problem?
-      }
-      MovementByCrossCorrelation mbdd = new MovementByCrossCorrelation(iProc);
-      Point2D.Double p2 = new Point2D.Double();
-      mbdd.getJitter(iProc2, p2);
-      return new Point(p.x + (int) p2.x - halfFFTSize_, p.y + (int) p2.y - halfFFTSize_);
-      /*
-     NormalizedCrossCorrelation ncc = new NormalizedCrossCorrelation( 
-             (ShortProcessor)  iProc);
-     return ncc.correlate((ShortProcessor) iProc2, p, new Point(2,2));
-*/
-   
-   }
-   
-   private Rectangle2D_I32 boundingBoxSize(DataProvider dp, Coords.Builder cb,
-           int frame, Point2D_I32 p) throws IOException
-   {
+ 
+   /**
+    * Utility function.  Extracts region from a MM dataset and returns as 
+    * a BoofCV ImageGray.  Points to the same pixel data as the original
+    * 
+    * @param dp Micro-Manager Datasource
+    * @param cb Micro-Manager Coords Builder (for efficiency)
+    * @param frame Frame number from which we want the image data
+    * @param p point around which to build the ROI
+    * @param halfBoxSize Half the width and length of the ROI
+    * @return ImageGray Note that the pixels are not copied.
+    * 
+    * @throws IOException 
+    */
+   private static ImageGray subImage(final DataProvider dp, final Coords.Builder cb,
+           final int frame, final Point2D_I32 p, final int halfBoxSize) throws IOException {
       Coords coord = cb.t(frame).build();
       Image img = dp.getImage(coord);
       
       ImageGray ig = BoofCVImageConverter.mmToBoofCV(img, false);
-      if (p.getX() - halfFFTSize_ < 0 ||
-              p.getY() - halfFFTSize_ < 0 ||
-              p.getX() + halfFFTSize_ >= ig.getWidth() ||
-              p.getY() + halfFFTSize_ >= ig.getHeight()) {
+      if (p.getX() - halfBoxSize < 0 ||
+              p.getY() - halfBoxSize < 0 ||
+              p.getX() + halfBoxSize >= ig.getWidth() ||
+              p.getY() + halfBoxSize >= ig.getHeight()) {
          return null; // TODO: we'll get stuck at the edge
       }
-      ImageGray sub = (ImageGray) ig.subimage((int) p.getX() - halfFFTSize_, 
-              (int) p.getY() - halfFFTSize_, (int) p.getX() + halfFFTSize_, 
-              (int) p.getY() + halfFFTSize_);
-      int threshold =  GThresholdImageOps.computeOtsu2(sub, 
-              0, (int)sub.getImageType().getDataType().getMaxValue());
-      GrayU8 mask = new GrayU8(sub.width, sub.height);
-      GThresholdImageOps.threshold(sub, mask, threshold, false);
-      GrayS32 contourImg = new GrayS32(sub.width, sub.height);
-      List<Contour> contours = BinaryImageOps.contour(mask, ConnectRule.FOUR, contourImg);
-      
-      List<List<Point2D_I32>> clusters = BinaryImageOps.labelToClusters(contourImg, contours.size(), null);
-
-      Map<Point2D_I32, List<Point2D_I32>> centroidedClusters = 
-              new HashMap<>();
-      clusters.forEach((cluster) -> {
-         centroidedClusters.put(ContourStats.centroid(cluster), cluster);
-      });
-      Point2D_I32 nearestPoint = ContourStats.nearestPoint(p, centroidedClusters.keySet());
-      Rectangle2D_I32 boundingBox = null;
-      if (nearestPoint != null) {
-         boundingBox = ContourStats.boundingBox(centroidedClusters.get(nearestPoint));
-      }
-      return boundingBox;      
-      
+      return (ImageGray) ig.subimage((int) p.getX() - halfBoxSize, 
+              (int) p.getY() - halfBoxSize, (int) p.getX() + halfBoxSize, 
+              (int) p.getY() + halfBoxSize);
    }
-   
    
    /**
     * Finds the centroid of the particle closest to the given input coordinates
@@ -596,19 +557,8 @@ public class PointAndShootAnalyzer implements Runnable {
            final int frame, 
            final Point2D_I32 p,
            final int halfBoxSize) throws IOException {
-      Coords coord = cb.t(frame).build();
-      Image img = dp.getImage(coord);
-      
-      ImageGray ig = BoofCVImageConverter.mmToBoofCV(img, false);
-      if (p.getX() - halfBoxSize < 0 ||
-              p.getY() - halfBoxSize < 0 ||
-              p.getX() + halfBoxSize >= ig.getWidth() ||
-              p.getY() + halfBoxSize >= ig.getHeight()) {
-         return null; // TODO: we'll get stuck at the edge
-      }
-      ImageGray sub = (ImageGray) ig.subimage((int) p.getX() - halfBoxSize, 
-              (int) p.getY() - halfBoxSize, (int) p.getX() + halfBoxSize, 
-              (int) p.getY() + halfBoxSize);
+
+      ImageGray sub = subImage(dp, cb, frame, p, halfBoxSize);
       GrayU8 mask = new GrayU8(sub.width, sub.height);
       int threshold = (int) ThresholdImageOps.computeLi(sub, 
               0.0, (double)sub.getImageType().getDataType().getMaxValue());
@@ -644,9 +594,50 @@ public class PointAndShootAnalyzer implements Runnable {
    }
     
    
+   private static ParticleData addBleachSpotToParticle(GrayF32 preBleach, 
+           GrayU16 current, ParticleData particle, Point2D_I32 offset) {
+      
+
+      GrayF32 fCurrent = new GrayF32(current.getWidth(), current.getHeight());
+      ConvertImage.convert((GrayU16) current, fCurrent);
+      GrayF32 dResult = new GrayF32(preBleach.width, preBleach.height);
+      GPixelMath.divide(fCurrent, preBleach, dResult);
+      GrayF32 gResult = new GrayF32(dResult.width, dResult.height);
+      BlurImageOps.gaussian(dResult, gResult, 3, -1, null);
+      Point2D_I32 minPixel = findMinPixel(gResult);
+      
+      if (Utils.distance(minPixel, new Point2D_I32(gResult.width / 2, gResult.height / 2)) 
+              < MAXDISTANCE) {
+         double mean = GImageStatistics.mean(gResult);
+         double value = gResult.get(minPixel.x, minPixel.y);
+         // TODO: evaluate this ratio and add other criteria to determine if this is
+         // really the bleach spot
+         if ( (value / mean) < 0.5) {
+            particle.setBleachSpot(new Point2D_I32(minPixel.x + offset.x, minPixel.y + offset.y));
+            
+            List<Point2D_I32> bleachSpot = new ArrayList<>();
+            bleachSpot.add(minPixel);
+            List<List<Point2D_I32>> bleachSpotCluster = new ArrayList<>();
+            bleachSpotCluster.add(bleachSpot);
+            GrayU8 bleachSpotMask = new GrayU8(gResult.getWidth(), gResult.getHeight());
+            BinaryImageOps.clusterToBinary(bleachSpotCluster, bleachSpotMask);
+            GrayU8 bleachSpotDilated = new GrayU8(gResult.getWidth(), gResult.getHeight());
+            bleachSpotDilated = BinaryImageOps.dilate4(bleachSpotMask, 4, bleachSpotDilated);
+            
+
+            
+            
+            
+            List<Point2D_I32> mask = particle.getMask();
+            
+         }
+      }
+      
+      return particle;
+   }
+   
 
    private class pointAndShootParser implements Consumer<String> {
-
       @Override
       public void accept(String t) {
          String[] parts = t.split("\t");
@@ -659,5 +650,84 @@ public class PointAndShootAnalyzer implements Runnable {
          }
       }
    }
+   
+   
+   
+   
+   private Point ccParticle(DataProvider dp, Coords.Builder cb,
+           int frame1, int frame2, Point p) throws IOException {
+      Coords coord = cb.t(frame1).build();
+      Image img = dp.getImage(coord);
+      ImageProcessor iProc = studio_.data().getImageJConverter().createProcessor(img);
+      iProc.setRoi((int) p.getX() - halfROISize_, (int) p.getY() - halfROISize_, roiSize_, roiSize_);
+      iProc = iProc.crop();
+      // check ROI out of bounds!
+      if (iProc.getWidth() != roiSize_ || iProc.getHeight() != roiSize_) {
+         return p;  // TODO: log/show this problem?
+      }
+      Coords coord2 = cb.t(frame2).build();
+      Image img2 = dp.getImage(coord2);
+      ImageProcessor iProc2 = studio_.data().getImageJConverter().createProcessor(img2);
+      iProc2.setRoi((int) p.getX() - halfROISize_, (int) p.getY() - halfROISize_, roiSize_, roiSize_);
+      iProc2 = iProc2.crop();
+      // check ROI out of bounds
+      if (iProc2.getWidth() != roiSize_ || iProc2.getHeight() != roiSize_) {
+         return p;  // TODO: log/show this problem?
+      }
+      MovementByCrossCorrelation mbdd = new MovementByCrossCorrelation(iProc);
+      Point2D.Double p2 = new Point2D.Double();
+      mbdd.getJitter(iProc2, p2);
+      return new Point(p.x + (int) p2.x - halfROISize_, p.y + (int) p2.y - halfROISize_);
+      /*
+     NormalizedCrossCorrelation ncc = new NormalizedCrossCorrelation( 
+             (ShortProcessor)  iProc);
+     return ncc.correlate((ShortProcessor) iProc2, p, new Point(2,2));
+*/
+   
+   }
+   
+   private Rectangle2D_I32 boundingBoxSize(DataProvider dp, Coords.Builder cb,
+           int frame, Point2D_I32 p) throws IOException
+   {
+      Coords coord = cb.t(frame).build();
+      Image img = dp.getImage(coord);
+      
+      ImageGray ig = BoofCVImageConverter.mmToBoofCV(img, false);
+      if (p.getX() - halfROISize_ < 0 ||
+              p.getY() - halfROISize_ < 0 ||
+              p.getX() + halfROISize_ >= ig.getWidth() ||
+              p.getY() + halfROISize_ >= ig.getHeight()) {
+         return null; // TODO: we'll get stuck at the edge
+      }
+      ImageGray sub = (ImageGray) ig.subimage((int) p.getX() - halfROISize_, 
+              (int) p.getY() - halfROISize_, (int) p.getX() + halfROISize_, 
+              (int) p.getY() + halfROISize_);
+      int threshold =  GThresholdImageOps.computeOtsu2(sub, 
+              0, (int)sub.getImageType().getDataType().getMaxValue());
+      GrayU8 mask = new GrayU8(sub.width, sub.height);
+      GThresholdImageOps.threshold(sub, mask, threshold, false);
+      GrayS32 contourImg = new GrayS32(sub.width, sub.height);
+      List<Contour> contours = BinaryImageOps.contour(mask, ConnectRule.FOUR, contourImg);
+      
+      List<List<Point2D_I32>> clusters = BinaryImageOps.labelToClusters(contourImg, contours.size(), null);
+
+      Map<Point2D_I32, List<Point2D_I32>> centroidedClusters = 
+              new HashMap<>();
+      clusters.forEach((cluster) -> {
+         centroidedClusters.put(ContourStats.centroid(cluster), cluster);
+      });
+      Point2D_I32 nearestPoint = ContourStats.nearestPoint(p, centroidedClusters.keySet());
+      Rectangle2D_I32 boundingBox = null;
+      if (nearestPoint != null) {
+         boundingBox = ContourStats.boundingBox(centroidedClusters.get(nearestPoint));
+      }
+      return boundingBox;      
+      
+   }
+   
+   
+
+ 
+   
 
 }

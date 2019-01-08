@@ -9,7 +9,6 @@ import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
@@ -123,7 +122,9 @@ public class Overlay extends AbstractOverlay {
                colorIndex = 0; 
             }
             drawMarker1(gTfm, p.getCentroid(), halfLength, halfLength / 2);
-            
+            if (p.getBleachSpot() != null) {
+               drawCross(gTfm, p.getBleachSpot(), halfLength / 2);
+            }
          }
       }
    }
@@ -146,6 +147,11 @@ public class Overlay extends AbstractOverlay {
       g.drawLine(p.x, p.y + width1, p.x, p.y + width1 - width2);
       g.drawLine(p.x - width1, p.y, p.x - width1 + width2, p.y);
       g.drawLine(p.x + width1, p.y, p.x + width1 - width2, p.y);
+   }
+   
+   private void drawCross(Graphics2D g, Point2D_I32 p, int width) {
+      g.drawLine(p.x - width, p.y - width, p.x + width, p.y + width);
+      g.drawLine(p.x + width, p.y - width, p.x - width, p.y + width);
    }
    
      
