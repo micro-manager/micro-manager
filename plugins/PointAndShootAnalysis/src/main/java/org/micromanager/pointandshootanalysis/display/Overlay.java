@@ -112,8 +112,9 @@ public class Overlay extends AbstractOverlay {
             if (showMasksCheckBox_ != null && showMasksCheckBox_.isSelected()) {
                gTfm.setColor(maskColor_);
                p.getMask().forEach((point) -> {
+                  gTfm.drawRect(point.x, point.y, 1, 1);
                   // Note: drawLine is much faster the g.draw(new Line2D.Float());
-                  g.drawLine(point.x, point.y, point.x, point.y);
+                  //gTfm.drawLine(point.x, point.y, point.x, point.y);
                });
             }
             gTfm.setColor(colors[colorIndex]);
