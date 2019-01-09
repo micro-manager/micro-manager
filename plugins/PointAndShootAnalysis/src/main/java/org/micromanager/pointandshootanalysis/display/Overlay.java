@@ -36,6 +36,7 @@ public class Overlay extends AbstractOverlay {
    private final int symbolLenght_ = 30;
    private final Color[] colors = {Color.RED, Color.BLUE, Color.GREEN, Color.ORANGE, Color.YELLOW, Color.CYAN, Color.MAGENTA};
    private final Color maskColor_ = new Color(255, 125, 10);
+   private final Color bleachColor_ = new Color(255, 5, 25);
    
    // UI components
    private JPanel configUI_;
@@ -111,11 +112,23 @@ public class Overlay extends AbstractOverlay {
          for (ParticleData p : tracksIndexedByFrame_.get(frame)) {
             if (showMasksCheckBox_ != null && showMasksCheckBox_.isSelected()) {
                gTfm.setColor(maskColor_);
-               p.getMask().forEach((point) -> {
+               List<Point2D_I32> mask = p.getMaskIncludingBleach();
+               if (mask == null) {
+                  mask = p.getMask();
+               }
+               mask.forEach((point) -> {
                   gTfm.drawRect(point.x, point.y, 1, 1);
                   // Note: drawLine is much faster the g.draw(new Line2D.Float());
                   //gTfm.drawLine(point.x, point.y, point.x, point.y);
                });
+               List<Point2D_I32> bleachMask = p.getBleachMask();
+               if (bleachMask != null) {
+                  gTfm.setColor(bleachColor_);
+                  bleachMask.forEach((point) -> {
+                     gTfm.drawRect(point.x, point.y, 1, 1);
+                  });
+               }
+                          
             }
             gTfm.setColor(colors[colorIndex]);
             colorIndex++;
@@ -124,7 +137,7 @@ public class Overlay extends AbstractOverlay {
             }
             drawMarker1(gTfm, p.getCentroid(), halfLength, halfLength / 2);
             if (p.getBleachSpot() != null) {
-               drawCross(gTfm, p.getBleachSpot(), halfLength / 2);
+            //   drawCross(gTfm, p.getBleachSpot(), halfLength / 2);
             }
          }
       }
