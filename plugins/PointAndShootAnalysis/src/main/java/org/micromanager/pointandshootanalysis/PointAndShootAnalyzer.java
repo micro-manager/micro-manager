@@ -50,10 +50,12 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -66,6 +68,7 @@ import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.pointandshootanalysis.algorithm.BinaryListOps;
 import org.micromanager.pointandshootanalysis.algorithm.ContourStats;
 import org.micromanager.pointandshootanalysis.algorithm.MovementByCrossCorrelation;
 import org.micromanager.pointandshootanalysis.algorithm.ThresholdImageOps;
@@ -615,17 +618,25 @@ public class PointAndShootAnalyzer implements Runnable {
          if ( (value / mean) < 0.5) {
             particle.setBleachSpot(new Point2D_I32(minPixel.x + offset.x, minPixel.y + offset.y));
             
-            List<Point2D_I32> bleachSpot = new ArrayList<>();
-            bleachSpot.add(minPixel);
+            Set<Point> bleachSpot = new HashSet<>();
+            
+            bleachSpot.add(new Point(minPixel.x, minPixel.y));
+            for (int i = 0; i < 3; i++) {
+               bleachSpot = BinaryListOps.dilate4(bleachSpot, gResult.getWidth(), 
+                       gResult.getHeight());
+            }/*
             List<List<Point2D_I32>> bleachSpotCluster = new ArrayList<>();
             bleachSpotCluster.add(bleachSpot);
             GrayU8 bleachSpotMask = new GrayU8(gResult.getWidth(), gResult.getHeight());
             BinaryImageOps.clusterToBinary(bleachSpotCluster, bleachSpotMask);
             GrayU8 bleachSpotDilated = new GrayU8(gResult.getWidth(), gResult.getHeight());
             bleachSpotDilated = BinaryImageOps.dilate4(bleachSpotMask, 4, bleachSpotDilated);
+            */
             
-
+            List<Point2D_I32> bleachMask = BinaryListOps.setToList(bleachSpot);
+            bleachMask = ParticleData.offset(bleachMask, offset, false);
             
+                       
             
             
             List<Point2D_I32> mask = particle.getMask();
