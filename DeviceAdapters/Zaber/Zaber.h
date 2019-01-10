@@ -7,7 +7,7 @@
 //                
 // AUTHOR:        David Goosen & Athabasca Witschi (contact@zaber.com)
 //                
-// COPYRIGHT:     Zaber Technologies, 2014
+// COPYRIGHT:     Zaber Technologies Inc., 2014
 //
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
