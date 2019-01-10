@@ -166,82 +166,79 @@ public class ThresholdImageOps {
     * @return Selected threshold
     */
    public static int computeHuang(int[] histogram, int length, int totalPixels) {
-      int threshold;
-      int ih, it;
-      int first_bin;
-      int last_bin;
-      double sum_pix;
-      double num_pix;
-      double term;
-      double ent;  // entropy 
-      double min_ent; // min entropy 
-      double mu_x;
+     // This function has been released by various authors under a public domain license
 
-      /* Determine the first non-zero bin */
-      first_bin = 0;
-      for (ih = 0; ih < length; ih++) {
-         if (histogram[ih] != 0) {
-            first_bin = ih;
-            break;
-         }
-      }
+		double mu_x;
 
-      /* Determine the last non-zero bin */
-      last_bin = length - 1;
-      for (ih = length - 1; ih >= first_bin; ih--) {
-         if (histogram[ih] != 0) {
-            last_bin = ih;
-            break;
-         }
-      }
-      term = 1.0 / (double) (last_bin - first_bin);
-      double[] mu_0 = new double[length];
-      sum_pix = num_pix = 0;
-      for (ih = first_bin; ih < length; ih++) {
-         sum_pix += (double) ih * histogram[ih];
-         num_pix += histogram[ih];
-         /* NUM_PIX cannot be zero ! */
-         mu_0[ih] = sum_pix / num_pix;
-      }
+		// Determine the first non-zero bin
+		int first_bin = 0;
+		for (int ih = 0; ih < length; ih++) {
+			if (histogram[ih] != 0) {
+				first_bin = ih;
+				break;
+			}
+		}
 
-      double[] mu_1 = new double[length];
-      sum_pix = num_pix = 0;
-      for (ih = last_bin; ih >= 0; ih--) { // original: (ih = last_bin; ih > 0; ih--)
-         sum_pix += (double) ih * histogram[ih];
-         num_pix += histogram[ih];
-         /* NUM_PIX cannot be zero ! */
-         mu_1[ih] = sum_pix / (double) num_pix; // original: mu_1[ih -1] = sum_pix/(double) num_pix
-      }
+		// Determine the last non-zero bin
+		int last_bin = length - 1;
+		for (int ih = length - 1; ih >= first_bin; ih--) {
+			if (histogram[ih] != 0) {
+				last_bin = ih;
+				break;
+			}
+		}
+		double term = 1.0 / (double) (last_bin - first_bin);
+		double[] mu_0 = new double[length];
+		{
+			double sum_pix = 0.0, num_pix = 0.0;
+			for (int ih = first_bin; ih < length; ih++) {
+				sum_pix += ih * histogram[ih];
+				num_pix += histogram[ih];
+				// NUM_PIX cannot be zero !
+				mu_0[ih] = sum_pix / (double) num_pix;
+			}
+		}
 
-      /* Determine the threshold that minimizes the fuzzy entropy */
-      threshold = -1;
-      min_ent = Double.MAX_VALUE;
-      for (it = 0; it < length; it++) {
-         ent = 0.0;
-         for (ih = 0; ih <= it; ih++) {
-            /* Equation (4) in Ref. 1 */
-            mu_x = 1.0 / (1.0 + term * Math.abs(ih - mu_0[it]));
-            if (!((mu_x < 1e-06) || (mu_x > 0.999999))) {
-               /* Equation (6) & (8) in Ref. 1 */
-               ent += histogram[ih] * (-mu_x * Math.log(mu_x) - (1.0 - mu_x) * Math.log(1.0 - mu_x));
-            }
-         }
+		double[] mu_1 = new double[length];
+		{
+			double sum_pix = 0.0, num_pix = 0.0;
+			for (int ih = last_bin; ih >= 0; ih--) { // original: (ih = last_bin; ih > 0; ih--)
+				sum_pix += ih * histogram[ih];
+				num_pix += histogram[ih];
+				// NUM_PIX cannot be zero !
+				mu_1[ih] = sum_pix / (double) num_pix; // original: mu_1[ih -1] = sum_pix/(double) num_pix
+			}
+		}
 
-         for (ih = it + 1; ih < length; ih++) {
-            /* Equation (4) in Ref. 1 */
-            mu_x = 1.0 / (1.0 + term * Math.abs(ih - mu_1[it]));
-            if (!((mu_x < 1e-06) || (mu_x > 0.999999))) {
-               /* Equation (6) & (8) in Ref. 1 */
-               ent += histogram[ih] * (-mu_x * Math.log(mu_x) - (1.0 - mu_x) * Math.log(1.0 - mu_x));
-            }
-         }
-         /* No need to divide by NUM_ROWS * NUM_COLS * LOG(2) ! */
-         if (ent < min_ent) {
-            min_ent = ent;
-            threshold = it;
-         }
-      }
-      return threshold;
+		/* Determine the threshold that minimizes the fuzzy entropy */
+		int threshold = -1;
+		double min_ent = Double.MAX_VALUE; // min entropy
+		for (int it = 0; it < length; it++) {
+			double ent = 0.0;  // entropy
+			for (int ih = 0; ih <= it; ih++) {
+				/* Equation (4) in Ref. 1 */
+				mu_x = 1.0 / (1.0 + term * Math.abs(ih - mu_0[it]));
+				if (!((mu_x < 1e-06) || (mu_x > 0.999999))) {
+					/* Equation (6) & (8) in Ref. 1 */
+					ent += histogram[ih] * (-mu_x * Math.log(mu_x) - (1.0 - mu_x) * Math.log(1.0 - mu_x));
+				}
+			}
+
+			for (int ih = it + 1; ih < length; ih++) {
+				/* Equation (4) in Ref. 1 */
+				mu_x = 1.0 / (1.0 + term * Math.abs(ih - mu_1[it]));
+				if (!((mu_x < 1e-06) || (mu_x > 0.999999))) {
+					/* Equation (6) & (8) in Ref. 1 */
+					ent += histogram[ih] * (-mu_x * Math.log(mu_x) - (1.0 - mu_x) * Math.log(1.0 - mu_x));
+				}
+			}
+			/* No need to divide by NUM_ROWS * NUM_COLS * LOG(2) ! */
+			if (ent < min_ent) {
+				min_ent = ent;
+				threshold = it;
+			}
+		}
+		return threshold;
    }
 
 
