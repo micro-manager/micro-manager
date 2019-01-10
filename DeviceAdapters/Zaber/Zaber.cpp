@@ -7,7 +7,7 @@
 //                
 // AUTHOR:        David Goosen & Athabasca Witschi (contact@zaber.com)
 //                
-// COPYRIGHT:     Zaber Technologies, 2014
+// COPYRIGHT:     Zaber Technologies Inc., 2014
 //
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
@@ -30,6 +30,7 @@
 #include "XYStage.h"
 #include "Stage.h"
 #include "FilterWheel.h"
+#include "FilterCubeTurret.h"
 
 using namespace std;
 
@@ -51,6 +52,7 @@ MODULE_API void InitializeModuleData()
 	RegisterDevice(g_XYStageName, MM::XYStageDevice, g_XYStageDescription);
 	RegisterDevice(g_StageName, MM::StageDevice, g_StageDescription);
 	RegisterDevice(g_FilterWheelName, MM::StateDevice, g_FilterWheelDescription);
+	RegisterDevice(g_FilterTurretName, MM::StateDevice, g_FilterTurretDescription);
 }                                                            
 
 
@@ -67,6 +69,10 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 	else if (strcmp(deviceName, g_FilterWheelName) == 0)
 	{	
 		return new FilterWheel();
+	}
+	else if (strcmp(deviceName, g_FilterTurretName) == 0)
+	{	
+		return new FilterCubeTurret();
 	}
 	else
 	{	

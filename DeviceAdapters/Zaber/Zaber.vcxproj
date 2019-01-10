@@ -118,12 +118,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="FilterCubeTurret.cpp" />
     <ClCompile Include="FilterWheel.cpp" />
     <ClCompile Include="Stage.cpp" />
     <ClCompile Include="XYStage.cpp" />
     <ClCompile Include="Zaber.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="FilterCubeTurret.h" />
     <ClInclude Include="FilterWheel.h" />
     <ClInclude Include="Stage.h" />
     <ClInclude Include="XYStage.h" />
