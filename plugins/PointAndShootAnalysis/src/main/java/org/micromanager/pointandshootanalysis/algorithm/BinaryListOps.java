@@ -49,27 +49,26 @@ public class BinaryListOps {
       return output;
    }
    
-   public static List<Point2D_I32> setToList(Set<Point> input) {
-      List<Point2D_I32> output = new ArrayList<>();
-      for (Point pixel : input) {
-         Point2D_I32 np = new Point2D_I32(pixel.x, pixel.y);
-         output.add(np);
-      }
+   public static <E> List<E> setToList(Set<E> input) {
+      List<E> output = new ArrayList<>();
+      input.forEach((pixel) -> {
+         output.add(pixel);
+      });
       return output;
    }
    
-   public static Set<Point> listToSet(List<Point2D_I32> input) {
-      Set<Point> output = new HashSet<>();
-      for (Point2D_I32 p : input) {
-         output.add(new Point(p.x, p.y));
-      }
+   public static <E> Set<E> listToSet(List<E> input) {
+      Set<E> output = new HashSet<>();
+      input.forEach((p) -> {
+         output.add(p);
+      });
       return output;
    }
    
-   public static Set<Point> combineSets(Set<Point>... input) {
-      Set<Point> output = new HashSet<>();
-      for (Set<Point> mySet : input) {
-         for (Point p : mySet) {
+   public static <E> Set<E> combineSets(Set<E>... input) {
+      Set<E> output = new HashSet<>();
+      for (Set<E> mySet : input) {
+         for (E p : mySet) {
             output.add(p);
          }
       }

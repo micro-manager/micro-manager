@@ -22,6 +22,7 @@
 
 package org.micromanager.pointandshootanalysis;
 
+import georegression.struct.point.Point2D_I32;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
@@ -30,6 +31,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.util.Objects;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JSpinner;

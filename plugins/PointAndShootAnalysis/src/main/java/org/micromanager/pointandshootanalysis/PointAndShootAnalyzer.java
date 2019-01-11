@@ -620,30 +620,34 @@ public class PointAndShootAnalyzer implements Runnable {
             Point2D_I32 bleachPoint = 
                     new Point2D_I32(minPixel.x + offset.x, minPixel.y + offset.y);
             CircleMask cm = new CircleMask(3);
-            Set<Point> bleachSet = new HashSet<Point>();
-            bleachSet.add(new Point(bleachPoint.x, bleachPoint.y));
+            Set<Point2D_I32> bleachSet = new HashSet<>();
+            bleachSet.add(bleachPoint);
             for (int x = 0; x < cm.getMask().length; x++) {
                for (int y = 0; y < cm.getMask()[x].length; y++) {
                   if (cm.getMask()[x][y]) {
-                     bleachSet.add(new Point(bleachPoint.x + x, bleachPoint.y + y));
-                     bleachSet.add(new Point(bleachPoint.x + x, bleachPoint.y - y));
-                     bleachSet.add(new Point(bleachPoint.x - x, bleachPoint.y + y));
-                     bleachSet.add(new Point(bleachPoint.x - x, bleachPoint.y - y));
+                     bleachSet.add(new Point2D_I32(bleachPoint.x + x, bleachPoint.y + y));
+                     bleachSet.add(new Point2D_I32(bleachPoint.x + x, bleachPoint.y - y));
+                     bleachSet.add(new Point2D_I32(bleachPoint.x - x, bleachPoint.y + y));
+                     bleachSet.add(new Point2D_I32(bleachPoint.x - x, bleachPoint.y - y));
                   }
                }
             }
-            
-            List<Point2D_I32> bleachMask = BinaryListOps.setToList(bleachSet);
+            List<Point2D_I32> bleachMask = new ArrayList<>();
+            bleachSet.forEach((pixel) -> {
+               bleachMask.add(pixel);
+            });
             //bleachMask = ParticleData.offset(bleachMask, offset, false);
             List<Point2D_I32> mask = particle.getMask();
             // remove bleached pixels from the mask
-            for (Point2D_I32 p : bleachMask) {
-               mask.remove(p);
+            for (Point2D_I32 pixel : bleachMask) {
+               mask.remove(pixel);
             }
             List<Point2D_I32> maskIncludingBleach = BinaryListOps.setToList(
                     BinaryListOps.combineSets(
                             BinaryListOps.listToSet(mask), 
                             BinaryListOps.listToSet(bleachMask)));
+            
+            
             // TODO: fill holes in maskIncludingBleach            
             Point2D_I32 newCentroid = ContourStats.centroid(maskIncludingBleach);
             return new ParticleData(mask, bleachMask,
