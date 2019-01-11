@@ -70,6 +70,7 @@ protected:
 	int GetLimits(long device, long axis, long& min, long& max) const;
 	int SendMoveCommand(long device, long axis, std::string type, long data) const;
 	int SendAndPollUntilIdle(long device, long axis, std::string command, int timeoutMs) const;
+	int GetRotaryIndexedDeviceInfo(long device, long axis, long& numIndices, long& currentIndex) const;
 
 	bool initialized_;
 	std::string port_;

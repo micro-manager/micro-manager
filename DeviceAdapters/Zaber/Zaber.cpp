@@ -328,3 +328,61 @@ int ZaberBase::SendAndPollUntilIdle(long device, long axis, string command, int 
 	core_->LogMessage(device_, os.str().c_str(), true);
 	return DEVICE_OK;
 }
+
+
+int ZaberBase::GetRotaryIndexedDeviceInfo(long device, long axis, long& numIndices, long& currentIndex) const
+{
+	core_->LogMessage(device_, "ZaberBase::GetRotaryIndexedDeviceInfo\n", true);
+
+   // Get the size of a full circle in microsteps.
+   long cycleSize = -1;
+   int ret = GetSetting(device, axis, "limit.cycle.dist", cycleSize);
+   if (ret != DEVICE_OK) 
+   {
+      core_->LogMessage(device_, "Attempt to detect rotary cycle distance failed.\n", true);
+      return ret;
+   }
+
+   if ((cycleSize < 1) || (cycleSize > 1000000000))
+   {
+      core_->LogMessage(device_, "Device cycle distance is out of range or was not returned.\n", true);
+      return DEVICE_SERIAL_INVALID_RESPONSE;
+   }
+
+
+   // Get the size of a filter increment in microsteps.
+   long indexSize = -1;
+   ret = GetSetting(device, axis, "motion.index.dist", indexSize);
+   if (ret != DEVICE_OK) 
+   {
+      core_->LogMessage(device_, "Attempt to detect index spacing failed.\n", true);
+      return ret;
+   }
+
+   if ((indexSize < 1) || (indexSize > 1000000000) || (indexSize > cycleSize))
+   {
+      core_->LogMessage(device_, "Device index distance is out of range or was not returned.\n", true);
+      return DEVICE_SERIAL_INVALID_RESPONSE;
+   }
+
+   numIndices = cycleSize / indexSize;
+
+   long index = -1;
+   ret = GetSetting(device, axis, "motion.index.num", index);
+   if (ret != DEVICE_OK) 
+   {
+      core_->LogMessage(device_, "Attempt to detect current index position failed.\n", true);
+      return ret;
+   }
+
+   if ((index < 0) || (index > 1000000000))
+   {
+      core_->LogMessage(device_, "Device current index is out of range or was not returned.\n", true);
+      return DEVICE_SERIAL_INVALID_RESPONSE;
+   }
+
+   currentIndex = index;
+
+   return ret;
+}
+

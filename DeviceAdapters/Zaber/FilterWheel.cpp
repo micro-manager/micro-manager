@@ -114,55 +114,16 @@ int FilterWheel::Initialize()
       return ret;
    }
 
-
-   // Get the size of a full circle in microsteps.
-   long cycleSize = -1;
-   ret = GetSetting(deviceAddress_, 0, "limit.cycle.dist", cycleSize);
-   if (ret != DEVICE_OK) 
-   {
-      this->LogMessage("Attempt to detect filter wheel cycle distance failed.\n", true);
-      return ret;
-   }
-
-   if ((cycleSize < 1) || (cycleSize > 1000000000))
-   {
-      this->LogMessage("Device cycle distance is out of range or was not returned.\n", true);
-      return DEVICE_SERIAL_INVALID_RESPONSE;
-   }
-
-
-   // Get the size of a filter increment in microsteps.
-   long indexSize = -1;
-   ret = GetSetting(deviceAddress_, 0, "motion.index.dist", indexSize);
-   if (ret != DEVICE_OK) 
-   {
-      this->LogMessage("Attempt to detect filter spacing failed.\n", true);
-      return ret;
-   }
-
-   if ((indexSize < 1) || (indexSize > 1000000000) || (indexSize > cycleSize))
-   {
-      this->LogMessage("Device index distance is out of range or was not returned.\n", true);
-      return DEVICE_SERIAL_INVALID_RESPONSE;
-   }
-
-   numPositions_ = cycleSize / indexSize;
-   CreateIntegerProperty("Number of Positions", numPositions_, true, 0, false);
-
-
+   // Get the number of positions and the current position.
    long index = -1;
-   ret = GetSetting(deviceAddress_, 0, "motion.index.num", index);
+   ret = GetRotaryIndexedDeviceInfo(deviceAddress_, 0, numPositions_, index);
    if (ret != DEVICE_OK) 
    {
-      this->LogMessage("Attempt to detect current filter position failed.\n", true);
+      this->LogMessage("Attempt to detect filter wheel state and number of positions failed.\n", true);
       return ret;
    }
 
-   if ((index < 0) || (index > 1000000000))
-   {
-      this->LogMessage("Device current index is out of range or was not returned.\n", true);
-      return DEVICE_SERIAL_INVALID_RESPONSE;
-   }
+   CreateIntegerProperty("Number of Positions", numPositions_, true, 0, false);
 
    CPropertyAction* pAct = new CPropertyAction(this, &FilterWheel::PositionGetSet);
    CreateIntegerProperty(MM::g_Keyword_State, index, false, pAct, false);
