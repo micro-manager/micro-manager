@@ -29,6 +29,8 @@
 #ifdef WIN32
 #include <windows.h>
 #define snprintf _snprintf 
+#elif __linux__
+#include <arpa/inet.h>
 #endif
 
 #include "CAN29.h"
