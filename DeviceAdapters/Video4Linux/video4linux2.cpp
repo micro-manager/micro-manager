@@ -173,8 +173,12 @@ VideoInit(State*state)
 
   if(-1==state->fd)
     {
-    LogMessage("v4l2: ould not open the video device");
+    LogMessage("v4l2: could not open the video device");
     return false;
+    }
+  else
+    {
+    LogMessage("v4l2: opened device");
     }
 
   sleep(3); // let it settle; there is probably an ioctl for this
@@ -248,6 +252,10 @@ VideoInit(State*state)
     LogMessage("v4l2: could not initialize stream");
     return false;
     }
+  else
+    {
+    LogMessage("v4l2: initialized data stream");
+    }
   return true;
 }
 
@@ -286,6 +294,7 @@ VideoInit(State*state)
   {
     if(initialized_)
       return DEVICE_OK;
+    LogMessage("v4l2: initializing device driver");
     CreateProperty(MM::g_Keyword_Name,gName,
 		   MM::String, true);
     CreateProperty(MM::g_Keyword_Description, gDescription,
@@ -315,6 +324,7 @@ VideoInit(State*state)
     assert(nRet == DEVICE_OK);
     
     image = (unsigned char*) malloc(state->W*state->H*4);
+    LogMessage("v4l2: calling video init");
     if(VideoInit(state))
       {
       initialized_=true;
@@ -356,6 +366,7 @@ VideoInit(State*state)
   // blocks until exposure is finished
   int SnapImage()
   {
+    LogMessage("v4l2: snap immage called");
     unsigned char* data = VideoTakeBuffer(state);
   
     /* Convert YUYV to RGBA32, apparently mm does only display colors
@@ -384,6 +395,7 @@ VideoInit(State*state)
     }
   
     VideoReturnBuffer(state);
+    LogMessage("v4l2: snap immage returning data");
     return DEVICE_OK;
   }
 
