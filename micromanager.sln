@@ -418,6 +418,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ChuoSeiki_MD5000", "DeviceA
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ChuoSeiki_QT", "DeviceAdapters\ChuoSeiki_QT\ChuoSeiki_QT.vcxproj", "{474D32D8-5BEC-453B-ADEA-ACF6F742DE0D}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Basler_Pylon", "DeviceAdapters\Basler\BaslerPylon5.vcxproj", "{bd5dd57f-a092-4441-ba35-5b0701c7cce5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -2901,6 +2903,18 @@ Global
 		{474D32D8-5BEC-453B-ADEA-ACF6F742DE0D}.Release|Win32.Build.0 = Release|Win32
 		{474D32D8-5BEC-453B-ADEA-ACF6F742DE0D}.Release|x64.ActiveCfg = Release|x64
 		{474D32D8-5BEC-453B-ADEA-ACF6F742DE0D}.Release|x64.Build.0 = Release|x64
+		{bd5dd57f-a092-4441-ba35-5b0701c7cce5}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
+		{bd5dd57f-a092-4441-ba35-5b0701c7cce5}.Debug|Mixed Platforms.Build.0 = Debug|x64
+		{bd5dd57f-a092-4441-ba35-5b0701c7cce5}.Debug|Win32.ActiveCfg = Debug|Win32
+		{bd5dd57f-a092-4441-ba35-5b0701c7cce5}.Debug|Win32.Build.0 = Debug|Win32
+		{bd5dd57f-a092-4441-ba35-5b0701c7cce5}.Debug|x64.ActiveCfg = Debug|x64
+		{bd5dd57f-a092-4441-ba35-5b0701c7cce5}.Debug|x64.Build.0 = Debug|x64
+		{bd5dd57f-a092-4441-ba35-5b0701c7cce5}.Release|Mixed Platforms.ActiveCfg = Release|x64
+		{bd5dd57f-a092-4441-ba35-5b0701c7cce5}.Release|Mixed Platforms.Build.0 = Release|x64
+		{bd5dd57f-a092-4441-ba35-5b0701c7cce5}.Release|Win32.ActiveCfg = Release|Win32
+		{bd5dd57f-a092-4441-ba35-5b0701c7cce5}.Release|Win32.Build.0 = Release|Win32
+		{bd5dd57f-a092-4441-ba35-5b0701c7cce5}.Release|x64.ActiveCfg = Release|x64
+		{bd5dd57f-a092-4441-ba35-5b0701c7cce5}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

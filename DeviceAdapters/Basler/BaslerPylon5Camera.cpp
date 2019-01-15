@@ -75,40 +75,22 @@ const char* g_PixelType_8bitBGR =       "8bitBGR";
 
 MODULE_API void InitializeModuleData()
 {
-	try
-	{
-		RegisterDevice(g_BaslerCameraDeviceName, MM::CameraDevice, "Basler Ace Camera");
-	}
-	catch (exception &ex)
-	{		
-	   std::cerr << ex.what() << std::endl;
-	   throw;
-	}	
+   RegisterDevice(g_BaslerCameraDeviceName, MM::CameraDevice, "Basler Ace Camera");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
 {
-	
-
-	try
-	{
-		if (deviceName == 0)
+	if (deviceName == 0)
 		return 0;
 
-		// decide which device class to create based on the deviceName parameter
-		if (strcmp(deviceName, g_BaslerCameraDeviceName) == 0) {
-			// create camera
-			return new BaslerCamera();
-		} 
-		// ...supplied name not recognized
-		return 0;
-	
-	}
-	catch (exception &ex)
-	{		
-	   std::cerr << ex.what() << std::endl;
-	   throw;
-	}
+   // decide which device class to create based on the deviceName parameter
+	if (strcmp(deviceName, g_BaslerCameraDeviceName) == 0) {
+		// create camera
+		return new BaslerCamera();
+	} 
+	// ...supplied name not recognized
+	return 0;
+
 }
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)
@@ -202,14 +184,14 @@ int BaslerCamera::Initialize()
 		// Get the camera nodeMap_ object.
 		nodeMap_ = &camera_->GetNodeMap();
 		const CIntegerPtr width = nodeMap_->GetNode("Width");
-		maxWidth_ = width->GetMax();
+		maxWidth_ = (unsigned int) width->GetMax();
 		const CIntegerPtr height = nodeMap_->GetNode("Height");
-		maxHeight_ = height->GetMax();
+		maxHeight_ = (unsigned int) height->GetMax();
 	#if (!_DEBUG)
 			ClearROI();// to be enabled for release
 	#endif
 
-		long bytes = height->GetValue() * width->GetValue() * 4 ;
+		long bytes = (long) (height->GetValue() * width->GetValue() * 4) ;
 		Buffer4ContinuesShot = malloc(bytes);
 
 
@@ -414,7 +396,7 @@ void BaslerCamera::CopyToImageBuffer(CGrabResultPtr ptrGrabResult)
 	{
 		IsByerFormat = true;
 	}
-	if(ptrGrabResult->GetPixelType() == EPixelType::PixelType_Mono8)
+	if(ptrGrabResult->GetPixelType() == PixelType_Mono8)
 	{
        // Workaround : OnPixelType call back will not be fired always.
 	    nComponents_ = 1;
@@ -425,8 +407,8 @@ void BaslerCamera::CopyToImageBuffer(CGrabResultPtr ptrGrabResult)
 		memcpy(imgBuffer_, buffer, GetImageBufferSize());
 		SetProperty( MM::g_Keyword_PixelType, g_PixelType_8bit);
 	}
-	else if (ptrGrabResult->GetPixelType() == EPixelType::PixelType_Mono10 ||
-	   ptrGrabResult->GetPixelType() == EPixelType::PixelType_Mono12 || ptrGrabResult->GetPixelType() == EPixelType::PixelType_Mono16)
+	else if (ptrGrabResult->GetPixelType() == PixelType_Mono10 ||
+	   ptrGrabResult->GetPixelType() == PixelType_Mono12 || ptrGrabResult->GetPixelType() == PixelType_Mono16)
 	{
 		 nComponents_ = 2;
         bitDepth_ = 16;
@@ -437,7 +419,7 @@ void BaslerCamera::CopyToImageBuffer(CGrabResultPtr ptrGrabResult)
 		SetProperty( MM::g_Keyword_PixelType, g_PixelType_16bit);
 	
 	}
-	else if (IsByerFormat || ptrGrabResult->GetPixelType() == EPixelType::PixelType_RGB8packed )
+	else if (IsByerFormat || ptrGrabResult->GetPixelType() == PixelType_RGB8packed )
 	{
 		nComponents_ = 4;
         bitDepth_ = 8;
@@ -446,7 +428,7 @@ void BaslerCamera::CopyToImageBuffer(CGrabResultPtr ptrGrabResult)
 		converter->Convert(imgBuffer_,GetImageBufferSize(),ptrGrabResult);
 		SetProperty( MM::g_Keyword_PixelType, g_PixelType_8bitRGBA);	    
 	}
-	else if (ptrGrabResult->GetPixelType() == EPixelType::PixelType_BGR8packed  )
+	else if (ptrGrabResult->GetPixelType() == PixelType_BGR8packed  )
 	{
 		nComponents_ = 4;
         bitDepth_ = 8;
@@ -552,16 +534,16 @@ int BaslerCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 	xSize -= (xSize % width->GetInc());
 	ySize -= (ySize % height->GetInc());
 	if (xSize < width->GetMin()) {
-		xSize = width->GetMin();
+		xSize = (unsigned int) width->GetMin();
 	}
 	if (ySize < height->GetMin()) {
-		ySize = height->GetMin();
+		ySize = (unsigned int) height->GetMin();
 	}
 	if (x < offsetX->GetMin()) {
-		x = offsetX->GetMin();
+		x = (unsigned int) offsetX->GetMin();
 	}
 	if (y < offsetY->GetMin()) {
-		y = offsetY->GetMin();
+		y = (unsigned int) offsetY->GetMin();
 	}
 
 	width->SetValue(xSize);
@@ -580,10 +562,10 @@ int BaslerCamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& yS
 	const CIntegerPtr height = nodeMap_->GetNode("Height");
 	const CIntegerPtr offsetX = nodeMap_->GetNode("OffsetX");
 	const CIntegerPtr offsetY = nodeMap_->GetNode("OffsetY");
-	x = offsetX->GetValue();
-	y = offsetY->GetValue();
-	xSize = width->GetValue();
-	ySize = height->GetValue();
+	x = (unsigned int) offsetX->GetValue();
+	y = (unsigned int) offsetY->GetValue();
+	xSize = (unsigned int) width->GetValue();
+	ySize = (unsigned int) height->GetValue();
 	return DEVICE_OK;
 }
 
@@ -650,7 +632,7 @@ int BaslerCamera::SetBinning(int binFactor)
 	return DEVICE_UNSUPPORTED_COMMAND;
 }
 
-int BaslerCamera::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow){
+int BaslerCamera::StartSequenceAcquisition(long numImages, double /* interval_ms */, bool /* stopOnOverflow */){
 	int ret = GetCoreCallback()->PrepareForAcq(this);
 	if (ret != DEVICE_OK) {
 		return ret;
@@ -659,7 +641,7 @@ int BaslerCamera::StartSequenceAcquisition(long numImages, double interval_ms, b
 	return DEVICE_OK;
 }
 
-int BaslerCamera::StartSequenceAcquisition(double interval_ms) {
+int BaslerCamera::StartSequenceAcquisition(double /* interval_ms */) {
 	int ret = GetCoreCallback()->PrepareForAcq(this);
 	if (ret != DEVICE_OK) {
 		return ret;
@@ -840,8 +822,8 @@ void BaslerCamera::RGBPackedtoRGB(void* destbuffer,const CGrabResultPtr& ptrGrab
 	char* buffer = (char*)ptrGrabResult->GetBuffer();
 	unsigned int srcOffset = 0;
 	unsigned int dstOffset = 0;
-	int Payloadsize = ptrGrabResult->GetPayloadSize()/3;	
-	for(int i=0; i < Payloadsize; ++i)
+	size_t Payloadsize = ptrGrabResult->GetPayloadSize()/3;	
+	for(size_t i=0; i < Payloadsize; ++i)
 	{
 		memcpy((char*)destbuffer+dstOffset, buffer+srcOffset,3);
 		srcOffset += 3;
@@ -857,10 +839,10 @@ CircularBufferInserter::CircularBufferInserter(BaslerCamera* dev):
 dev_(dev)
 {}
 
-void CircularBufferInserter::OnImageGrabbed( CInstantCamera& camera, const CGrabResultPtr& ptrGrabResult)
+void CircularBufferInserter::OnImageGrabbed( CInstantCamera& /* camera */, const CGrabResultPtr& ptrGrabResult)
 {
 	
-   char label[MM::MaxStrLength];
+   // char label[MM::MaxStrLength];
  
    // Important:  metadata about the image are generated here:
    Metadata md;
@@ -881,7 +863,7 @@ void CircularBufferInserter::OnImageGrabbed( CInstantCamera& camera, const CGrab
 		{
 			IsByerFormat = true;
 		}
-		if(ptrGrabResult->GetPixelType() == EPixelType::PixelType_Mono8)
+		if(ptrGrabResult->GetPixelType() == PixelType_Mono8)
 		{
 
 		//copy to intermediate buffer
@@ -893,7 +875,7 @@ void CircularBufferInserter::OnImageGrabbed( CInstantCamera& camera, const CGrab
 			dev_->GetCoreCallback()->ClearImageBuffer(dev_);
 			}
 		}
-		else if( IsByerFormat || ptrGrabResult->GetPixelType() == EPixelType::PixelType_RGB8packed)
+		else if( IsByerFormat || ptrGrabResult->GetPixelType() == PixelType_RGB8packed)
 		{
 			CPylonImage image ;
 			dev_->converter->Convert(image,ptrGrabResult);
@@ -906,7 +888,7 @@ void CircularBufferInserter::OnImageGrabbed( CInstantCamera& camera, const CGrab
 				//if circular buffer overflows, just clear it and keep putting stuff in so live mode can continue
 				dev_->GetCoreCallback()->ClearImageBuffer(dev_);
 			}	
-		}else if(ptrGrabResult->GetPixelType() ==  EPixelType::PixelType_BGR8packed )
+		}else if(ptrGrabResult->GetPixelType() ==  PixelType_BGR8packed )
 		{
 			 dev_->RGBPackedtoRGB(dev_->Buffer4ContinuesShot,ptrGrabResult);
 			 //copy to intermediate buffer
