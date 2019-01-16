@@ -3823,7 +3823,7 @@ int CPCOCam::StartSequenceAcquisition(long numImages, double interval_ms, bool s
     nErr = SetupCamera(true, false);
   }
 
-  unsigned int uiMode = 0x10000 + 0x0010;//Avoid adding buffers, Preview, Single
+  unsigned int uiMode = 0x80000 + 0x10000 + 0x0010;// Preview with ext.signals, update all, record (preview)
   nErr = m_pCamera->PreStartCam(uiMode, 0, 0, 0);            // schaltet automatisch auf internen Trigger
   for(int j = 0; j < 4; j++)
     m_iLastBufferUsed[j] = -1;
@@ -3932,7 +3932,7 @@ int CPCOCam::SnapImage()
     //m_iNextBufferToUse[0] = 0;
     m_iNextBuffer = 0;
 
-    unsigned int uiMode = 0x80000 + 0x10000 + 0x0040 + 0x0010;//Avoid adding buffers, Preview, Single
+    unsigned int uiMode = 0x80000 + 0x10000 + 0x0040 + 0x0010;//Preview with ext.signals, update all, single, record (preview)
     if(m_bSoftwareTriggered)
       uiMode = 0x10000 + 0x0010;
       
