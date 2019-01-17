@@ -5,10 +5,14 @@ import boofcv.struct.image.GrayF32;
 import boofcv.struct.image.GrayU16;
 import boofcv.struct.image.GrayU8;
 import boofcv.struct.image.ImageGray;
+import georegression.struct.point.Point2D_I32;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import java.io.IOException;
+import org.micromanager.data.Coords;
+import org.micromanager.data.DataProvider;
 import org.micromanager.data.Image;
 
 /**
@@ -149,5 +153,36 @@ public final class BoofCVImageConverter {
       
       return ig;
    }
+   
+    /**
+    * Utility function.  Extracts region from a MM dataset and returns as 
+    * a BoofCV ImageGray.  Points to the same pixel data as the original
+    * 
+    * @param dp Micro-Manager Datasource
+    * @param cb Micro-Manager Coords Builder (for efficiency)
+    * @param frame Frame number from which we want the image data
+    * @param p point around which to build the ROI
+    * @param halfBoxSize Half the width and length of the ROI
+    * @return ImageGray Note that the pixels are not copied.
+    * 
+    * @throws IOException 
+    */
+   public static ImageGray subImage(final DataProvider dp, final Coords.Builder cb,
+           final int frame, final Point2D_I32 p, final int halfBoxSize) throws IOException {
+      Coords coord = cb.t(frame).build();
+      Image img = dp.getImage(coord);
+      
+      ImageGray ig = BoofCVImageConverter.mmToBoofCV(img, false);
+      if (p.getX() - halfBoxSize < 0 ||
+              p.getY() - halfBoxSize < 0 ||
+              p.getX() + halfBoxSize >= ig.getWidth() ||
+              p.getY() + halfBoxSize >= ig.getHeight()) {
+         return null; // TODO: we'll get stuck at the edge
+      }
+      return (ImageGray) ig.subimage((int) p.getX() - halfBoxSize, 
+              (int) p.getY() - halfBoxSize, (int) p.getX() + halfBoxSize, 
+              (int) p.getY() + halfBoxSize);
+   }
+   
    
 }

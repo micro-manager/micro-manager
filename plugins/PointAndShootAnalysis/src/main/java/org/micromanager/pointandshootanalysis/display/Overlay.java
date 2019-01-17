@@ -112,10 +112,10 @@ public class Overlay extends AbstractOverlay {
          for (ParticleData p : tracksIndexedByFrame_.get(frame)) {
             if (showMasksCheckBox_ != null && showMasksCheckBox_.isSelected()) {
                gTfm.setColor(maskColor_);
-               List<Point2D_I32> mask = p.getMaskIncludingBleach();
-               if (mask == null) {
-                  mask = p.getMask();
-               }
+               List<Point2D_I32> mask = p.getMask();
+             //  if (mask == null) {
+             //     mask = p.getMask();
+             //  }
                mask.forEach((point) -> {
                   gTfm.drawRect(point.x, point.y, 1, 1);
                   // Note: drawLine is much faster the g.draw(new Line2D.Float());

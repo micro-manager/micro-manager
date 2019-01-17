@@ -1,10 +1,33 @@
 
 package org.micromanager.pointandshootanalysis.data;
 
+import boofcv.alg.filter.binary.BinaryImageOps;
+import boofcv.alg.filter.binary.Contour;
+import boofcv.alg.filter.binary.GThresholdImageOps;
+import boofcv.alg.filter.blur.BlurImageOps;
+import boofcv.alg.misc.GImageStatistics;
+import boofcv.alg.misc.GPixelMath;
+import boofcv.core.image.ConvertImage;
+import boofcv.struct.ConnectRule;
+import boofcv.struct.image.GrayF32;
+import boofcv.struct.image.GrayS32;
+import boofcv.struct.image.GrayU16;
+import boofcv.struct.image.GrayU8;
+import boofcv.struct.image.ImageGray;
 import georegression.struct.point.Point2D_I32;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import org.micromanager.data.Coords;
+import org.micromanager.data.DataProvider;
+import static org.micromanager.pointandshootanalysis.PointAndShootAnalyzer.findMinPixel;
+import org.micromanager.pointandshootanalysis.algorithm.BinaryListOps;
+import org.micromanager.pointandshootanalysis.algorithm.CircleMask;
 import org.micromanager.pointandshootanalysis.algorithm.ContourStats;
+import org.micromanager.pointandshootanalysis.algorithm.ThresholdImageOps;
+import org.micromanager.pointandshootanalysis.algorithm.Utils;
 
 /**
  * Stores a binary mask for a particle
@@ -63,6 +86,11 @@ public class ParticleData {
       bleachSpot_ = bleachSpot;
    }
    
+   public ParticleData copy() {
+      return new ParticleData( this.mask_, this.bleachMask_, 
+              this.maskIncludingBleach_, this.centroid_, this.bleachSpot_);
+   }
+   
    public Point2D_I32 getCentroid() {
       if (centroid_ == null) {
          centroid_ = ContourStats.centroid(mask_);
@@ -88,6 +116,128 @@ public class ParticleData {
    
    public List<Point2D_I32> getMaskIncludingBleach() {
       return maskIncludingBleach_;
+   }
+   
+      /**
+    * Finds the centroid of the particle closest to the given input coordinates
+    * 
+    * @param dp Micro-Manager data source
+    * @param cb Micro-Manager Coords builder.  For efficiency only
+    * @param frame Frame number in which to look for the particle centroid
+    * @param p input xy position around which to look
+    * @param halfBoxSize Defines size of the Box in which the code looks for a particle
+    *        Box is p.x - halfBoxSize, p.y - halfBoxSize; p.x + halfBoxSize, p.y + halfBoxSize
+    * 
+    * @return particle (or null if not found)
+    * @throws IOException 
+    */
+   public static ParticleData centralParticle(final DataProvider dp, 
+           final Coords.Builder cb,
+           final int frame, 
+           final Point2D_I32 p,
+           final int halfBoxSize) throws IOException {
+
+      ImageGray sub = BoofCVImageConverter.subImage(dp, cb, frame, p, halfBoxSize);
+      GrayU8 mask = new GrayU8(sub.width, sub.height);
+      int threshold = (int) ThresholdImageOps.computeLi(sub, 
+              0.0, (double)sub.getImageType().getDataType().getMaxValue());
+      GThresholdImageOps.threshold(sub, mask, threshold, false);
+      
+      
+      // Remove small particles
+      mask = BinaryImageOps.erode4(mask, 1, null);
+      mask = BinaryImageOps.dilate4(mask, 1, null);
+      
+      // Fill hole caused by bleaching.  We could be more sophisticated and only
+      // do this when needed, but how do we find out?
+      // mask = BinaryImageOps.dilate8(mask, 2, null);
+      // mask = BinaryImageOps.erode8(mask, 2, null);
+      
+      
+      GrayS32 contourImg = new GrayS32(sub.width, sub.height);
+      List<Contour> contours = BinaryImageOps.contour(mask, ConnectRule.FOUR, contourImg);
+      List<List<Point2D_I32>> clusters = BinaryImageOps.labelToClusters(
+              contourImg, contours.size(), null);
+      List<ParticleData> particles = new ArrayList<>();
+      clusters.forEach((cluster) -> {
+         particles.add(new ParticleData(cluster, 
+                 new Point2D_I32(p.x - halfBoxSize, p.y - halfBoxSize)));
+      });
+      if (particles.isEmpty()) {
+         // TODO: not good, log
+         return null;
+      }
+      
+      return (ContourStats.nearestParticle(p, particles));
+     
+   }
+    
+   
+   public static ParticleData addBleachSpotToParticle(GrayF32 preBleach, 
+           GrayU16 current, ParticleData particle, Point2D_I32 offset, double maxDistance) {
+      final int particleSizeCutoff = 16;
+      // if particle is too small, simply assume that the bleachspot covers the
+      // whole particle
+      if (particle.mask_.size() < particleSizeCutoff) {
+         return new ParticleData(particle.getMask(), particle.getMask(),
+                     particle.getMask(), particle.getCentroid(), particle.getCentroid());
+      }
+      
+      GrayF32 fCurrent = new GrayF32(current.getWidth(), current.getHeight());
+      ConvertImage.convert((GrayU16) current, fCurrent);
+      GrayF32 dResult = new GrayF32(preBleach.width, preBleach.height);
+      GPixelMath.divide(fCurrent, preBleach, dResult);
+      GrayF32 gResult = new GrayF32(dResult.width, dResult.height);
+      BlurImageOps.gaussian(dResult, gResult, 3, -1, null);
+      Point2D_I32 minPixel = findMinPixel(gResult);
+      
+      if (Utils.distance(minPixel, new Point2D_I32(gResult.width / 2, gResult.height / 2)) 
+              < maxDistance) {
+         double mean = GImageStatistics.mean(gResult);
+         double value = gResult.get(minPixel.x, minPixel.y);
+         // TODO: evaluate this ratio and add other criteria to determine if this is
+         // really the bleach spot
+         if ( (value / mean) < 0.5) {
+            Point2D_I32 bleachPoint = 
+                    new Point2D_I32(minPixel.x + offset.x, minPixel.y + offset.y);
+            CircleMask cm = new CircleMask(3);
+            Set<Point2D_I32> bleachSet = new HashSet<>();
+            bleachSet.add(bleachPoint);
+            for (int x = 0; x < cm.getMask().length; x++) {
+               for (int y = 0; y < cm.getMask()[x].length; y++) {
+                  if (cm.getMask()[x][y]) {
+                     bleachSet.add(new Point2D_I32(bleachPoint.x + x, bleachPoint.y + y));
+                     bleachSet.add(new Point2D_I32(bleachPoint.x + x, bleachPoint.y - y));
+                     bleachSet.add(new Point2D_I32(bleachPoint.x - x, bleachPoint.y + y));
+                     bleachSet.add(new Point2D_I32(bleachPoint.x - x, bleachPoint.y - y));
+                  }
+               }
+            }
+            List<Point2D_I32> bleachMask = new ArrayList<>();
+            bleachSet.forEach((pixel) -> {
+               bleachMask.add(pixel);
+            });
+            //bleachMask = ParticleData.offset(bleachMask, offset, false);
+            List<Point2D_I32> mask = particle.getMask();
+            // remove bleached pixels from the mask
+            for (Point2D_I32 pixel : bleachMask) {
+               mask.remove(pixel);
+            }
+            List<Point2D_I32> maskIncludingBleach = BinaryListOps.setToList(
+                    BinaryListOps.combineSets(
+                            BinaryListOps.listToSet(mask), 
+                            BinaryListOps.listToSet(bleachMask)));
+            
+            
+            // TODO: fill holes in maskIncludingBleach            
+            Point2D_I32 newCentroid = ContourStats.centroid(maskIncludingBleach);
+            return new ParticleData(mask, bleachMask,
+                     maskIncludingBleach, newCentroid, particle.getBleachSpot());
+            
+         }
+      }
+      
+      return particle;
    }
    
    
