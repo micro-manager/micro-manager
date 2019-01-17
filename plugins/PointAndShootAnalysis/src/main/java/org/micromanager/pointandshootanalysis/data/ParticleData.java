@@ -86,9 +86,26 @@ public class ParticleData {
       bleachSpot_ = bleachSpot;
    }
    
-   public ParticleData copy() {
-      return new ParticleData( this.mask_, this.bleachMask_, 
-              this.maskIncludingBleach_, this.centroid_, this.bleachSpot_);
+   /**
+    * 
+    * @return 
+    */
+   public ParticleData deepCopy() {
+      return new ParticleData( 
+              this.mask_ != null ? new ArrayList<>(this.mask_) : null, 
+              this.bleachMask_ != null? new ArrayList<>(this.bleachMask_) : null, 
+              this.maskIncludingBleach_ != null ? new ArrayList<>(this.maskIncludingBleach_) : null, 
+              this.centroid_ != null ? new Point2D_I32(this.centroid_) : null, 
+              this.bleachSpot_ != null ? new Point2D_I32(this.bleachSpot_) : null);
+   }
+   
+    public ParticleData copy() {
+      return new ParticleData( 
+              this.mask_, 
+              this.bleachMask_, 
+              this.maskIncludingBleach_, 
+              this.centroid_, 
+              this.bleachSpot_);
    }
    
    public Point2D_I32 getCentroid() {
@@ -224,7 +241,9 @@ public class ParticleData {
             List<Point2D_I32> mask = particle.getMask();
             // remove bleached pixels from the mask
             for (Point2D_I32 pixel : bleachMask) {
-               mask.remove(pixel);
+               if (mask.contains(pixel)) {
+                  mask.remove(pixel);
+               }
             }
             List<Point2D_I32> maskIncludingBleach = BinaryListOps.setToList(
                     BinaryListOps.combineSets(

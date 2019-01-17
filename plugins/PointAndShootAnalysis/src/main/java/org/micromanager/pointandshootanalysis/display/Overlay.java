@@ -41,6 +41,7 @@ public class Overlay extends AbstractOverlay {
    // UI components
    private JPanel configUI_;
    private JCheckBox showMasksCheckBox_;
+   private JCheckBox showBleachMaskCheckBox_;
    
    public Overlay(List<Map<Integer, ParticleData>> tracks) {
       tracks_ = tracks;
@@ -69,15 +70,19 @@ public class Overlay extends AbstractOverlay {
       if (configUI_ == null) {
          
          showMasksCheckBox_ = new JCheckBox("Show masks");
-         showMasksCheckBox_.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               fireOverlayConfigurationChanged();
-            }
+         showMasksCheckBox_.addActionListener((ActionEvent e) -> {
+            fireOverlayConfigurationChanged();
+         });
+         
+         showBleachMaskCheckBox_ = new JCheckBox("Show Bleach");
+         showBleachMaskCheckBox_.addActionListener((ActionEvent e) -> {
+            fireOverlayConfigurationChanged();
          });
 
          configUI_ = new JPanel(new MigLayout(new LC().insets("4")));
-         configUI_.add(showMasksCheckBox_, new CC().wrap());
+         CC cc = new CC();
+         configUI_.add(showMasksCheckBox_);
+         configUI_.add(showBleachMaskCheckBox_, cc.wrap());
       }
       return configUI_;
    }
@@ -121,6 +126,10 @@ public class Overlay extends AbstractOverlay {
                   // Note: drawLine is much faster the g.draw(new Line2D.Float());
                   //gTfm.drawLine(point.x, point.y, point.x, point.y);
                });
+               
+                          
+            }
+            if (showBleachMaskCheckBox_ != null && showBleachMaskCheckBox_.isSelected()) {
                List<Point2D_I32> bleachMask = p.getBleachMask();
                if (bleachMask != null) {
                   gTfm.setColor(bleachColor_);
@@ -128,7 +137,6 @@ public class Overlay extends AbstractOverlay {
                      gTfm.drawRect(point.x, point.y, 1, 1);
                   });
                }
-                          
             }
             gTfm.setColor(colors[colorIndex]);
             colorIndex++;
