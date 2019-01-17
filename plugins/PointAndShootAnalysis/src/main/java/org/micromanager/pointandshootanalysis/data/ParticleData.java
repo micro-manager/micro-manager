@@ -138,6 +138,9 @@ public class ParticleData {
            final int halfBoxSize) throws IOException {
 
       ImageGray sub = BoofCVImageConverter.subImage(dp, cb, frame, p, halfBoxSize);
+      if (sub == null) {
+         return null;
+      }
       GrayU8 mask = new GrayU8(sub.width, sub.height);
       int threshold = (int) ThresholdImageOps.computeLi(sub, 
               0.0, (double)sub.getImageType().getDataType().getMaxValue());

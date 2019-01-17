@@ -24,7 +24,6 @@ import boofcv.alg.filter.binary.BinaryImageOps;
 import boofcv.alg.filter.binary.Contour;
 import boofcv.alg.filter.binary.GThresholdImageOps;
 import boofcv.alg.filter.blur.BlurImageOps;
-import boofcv.alg.misc.GImageStatistics;
 import boofcv.alg.misc.GPixelMath;
 import boofcv.core.image.ConvertImage;
 import boofcv.struct.ConnectRule;
@@ -50,12 +49,10 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -68,11 +65,8 @@ import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.pointandshootanalysis.algorithm.BinaryListOps;
-import org.micromanager.pointandshootanalysis.algorithm.CircleMask;
 import org.micromanager.pointandshootanalysis.algorithm.ContourStats;
 import org.micromanager.pointandshootanalysis.algorithm.MovementByCrossCorrelation;
-import org.micromanager.pointandshootanalysis.algorithm.ThresholdImageOps;
 import org.micromanager.pointandshootanalysis.algorithm.Utils;
 import org.micromanager.pointandshootanalysis.data.BoofCVImageConverter;
 import org.micromanager.pointandshootanalysis.data.PASData;
@@ -198,7 +192,7 @@ public class PointAndShootAnalyzer implements Runnable {
                found = true;
             }
          }
-         if (found) {
+         if (found && frameNrAndTime != null) {
             PASData.Builder pasB = PASData.builder();
             pasB.pasClicked(entryInstant).
                     framePasClicked(frameNrAndTime.getKey()).
