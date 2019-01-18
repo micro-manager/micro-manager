@@ -324,7 +324,7 @@ public class PointAndShootAnalyzer implements Runnable {
             for (int frame = 0; frame < bleachFrames.size(); frame++) {
                pasFrames[frame] = bleachFrames.get(frame) + findMinFrames.getStartFrame();
             }
-
+/*
             // find average intensity of frames before bleaching for later normalization
             double preBleachAverage = Utils.GetIntensity(
                     before.getProcessor().convertToFloatProcessor(),
@@ -361,14 +361,14 @@ public class PointAndShootAnalyzer implements Runnable {
                System.out.print(" " + val / preBleachAverage);
             });
             System.out.println();
-
+*/
             pasDataIt.set(pasEntry.copyBuilder().
                     pasActual(pasActual).
                     pasFrames(pasFrames).
                     build());
 
          }
-
+/*
          if (plotData.size() < 1) {
             studio_.logs().showMessage("No Point and Shoot events found");
             return;
@@ -383,6 +383,7 @@ public class PointAndShootAnalyzer implements Runnable {
          PlotUtils pu = new PlotUtils(studio_.profile().getSettings(this.getClass()));
          pu.plotDataN("Bleach Intensity Profile", plots, "Time (ms)",
                  "Normalized Intensity", showShapes, "", 1.3);
+*/
 
          // Track particle that received the bleach by local thresholding
          // First go backwards in time, then forward
@@ -442,6 +443,35 @@ public class PointAndShootAnalyzer implements Runnable {
                track.put(frame, nextParticle);
             }
             tracks.add(track);
+         }
+         
+         // find duplicate tracks (i.e. the same particle was bleached twice
+         // Algorithm: find the centroid of the first particle in the track.  
+         // If within a certain distance from the centroid of the first particle
+         // from another track, we'll assume this is one and the same and remove the track.
+         final double identityDistance = 5.0;
+         List<Map<Integer, ParticleData>> doubleTracks = new ArrayList<>();
+         for (int i = 0; i < tracks.size(); i++) {
+            Map<Integer, ParticleData> track = tracks.get(i);
+            if (!doubleTracks.contains(track)) {
+               ParticleData firstParticle = track.get(0);
+               if (firstParticle != null) {
+                  for (int j = 0; j < tracks.size(); j++) {
+                     if (j != i) {
+                        Map<Integer, ParticleData> otherTrack = tracks.get(j);
+                        ParticleData otherFirstParticle = otherTrack.get(0);
+                        if (otherFirstParticle != null
+                                && firstParticle.getCentroid().distance(
+                                        otherFirstParticle.getCentroid()) < identityDistance) {
+                           doubleTracks.add(otherTrack);
+                        }
+                     }
+                  }
+               }
+            }
+         }
+         for (Map<Integer, ParticleData> track : doubleTracks) {
+            tracks.remove(track);
          }
 
          if (activeDataViewer instanceof DisplayWindow) {
