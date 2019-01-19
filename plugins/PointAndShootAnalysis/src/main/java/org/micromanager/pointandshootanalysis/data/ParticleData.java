@@ -40,6 +40,9 @@ public class ParticleData {
    private List<Point2D_I32> maskIncludingBleach_;
    private Point2D_I32 centroid_;
    private Point2D_I32 bleachSpot_;
+   private Double maskAverage_;
+   private Double bleachMaskAverage_;
+   private Double maskIncludingBleachAverage_;
    
    /**
     * Applies the offset to each point in the list
@@ -72,8 +75,9 @@ public class ParticleData {
       mask_ = mask;
    }
    
-   public ParticleData(List<Point2D_I32> mask, Point2D_I32 offset) {
+   public ParticleData(List<Point2D_I32> mask, Point2D_I32 offset, Double avg) {
       mask_ = offset(mask, offset, true);
+      maskAverage_ = avg;
    }
    
    public ParticleData(List<Point2D_I32> mask, List<Point2D_I32> bleachMask,
@@ -135,13 +139,13 @@ public class ParticleData {
       return maskIncludingBleach_;
    }
    
-      /**
+   /**
     * Finds the centroid of the particle closest to the given input coordinates
     * 
     * @param dp Micro-Manager data source
     * @param cb Micro-Manager Coords builder.  For efficiency only
     * @param frame Frame number in which to look for the particle centroid
-    * @param p input xy position around which to look
+    * @param startCenter input xy position around which to look
     * @param halfBoxSize Defines size of the Box in which the code looks for a particle
     *        Box is p.x - halfBoxSize, p.y - halfBoxSize; p.x + halfBoxSize, p.y + halfBoxSize
     * 
@@ -151,10 +155,10 @@ public class ParticleData {
    public static ParticleData centralParticle(final DataProvider dp, 
            final Coords.Builder cb,
            final int frame, 
-           final Point2D_I32 p,
+           final Point2D_I32 startCenter,
            final int halfBoxSize) throws IOException {
 
-      ImageGray sub = BoofCVImageConverter.subImage(dp, cb, frame, p, halfBoxSize);
+      ImageGray sub = BoofCVImageConverter.subImage(dp, cb, frame, startCenter, halfBoxSize);
       if (sub == null) {
          return null;
       }
@@ -179,16 +183,23 @@ public class ParticleData {
       List<List<Point2D_I32>> clusters = BinaryImageOps.labelToClusters(
               contourImg, contours.size(), null);
       List<ParticleData> particles = new ArrayList<>();
+      GrayU16 originalImage = (GrayU16) sub;
       clusters.forEach((cluster) -> {
+         long sum = 0;
+         for (Point2D_I32 p : cluster) {
+            sum += originalImage.unsafe_get(p.x, p.y) & 0xffff;
+         }
+         double avg = sum / cluster.size();
          particles.add(new ParticleData(cluster, 
-                 new Point2D_I32(p.x - halfBoxSize, p.y - halfBoxSize)));
+                 new Point2D_I32(startCenter.x - halfBoxSize, startCenter.y - halfBoxSize),
+                 avg));
       });
       if (particles.isEmpty()) {
          // TODO: not good, log
          return null;
       }
       
-      return (ContourStats.nearestParticle(p, particles));
+      return (ContourStats.nearestParticle(startCenter, particles));
      
    }
     

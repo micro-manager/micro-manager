@@ -84,9 +84,10 @@ import org.micromanager.pointandshootanalysis.utils.ListUtils;
  */
 public class PointAndShootAnalyzer implements Runnable {
 
+   final static double DIST_UNCERTAINTY = 5.0; // in pixels
+   
    final private Studio studio_;
    final private PropertyMap settings_;
-   ;
    final Map<String, Point> coordinates_;
    final private static int MAXDISTANCE = 10; // max distance in pixels from the expected position
    // if more, we will reject the bleach spot
@@ -473,10 +474,76 @@ public class PointAndShootAnalyzer implements Runnable {
          for (Map<Integer, ParticleData> track : doubleTracks) {
             tracks.remove(track);
          }
-
+         
+         List<Map<Integer, ParticleData>> controlTracks = new ArrayList<>();
+         try {
+            cb = dataProvider.getAnyImage().getCoords().copyBuilder();
+            Coords ct0 = cb.t(0).build();
+            GrayU16 img0 = (GrayU16) BoofCVImageConverter.mmToBoofCV(
+                    dataProvider.getImage(ct0), false);
+            //GrayU16 img0Gauss = new GrayU16(img0.getWidth(), img0.getHeight());
+            //BlurImageOps.gaussian(img0, img0Gauss, 3, -1, null);
+            
+            int liThreshold = (int) GThresholdImageOps.computeLi(
+                    img0, 0, img0.getDataType().getMaxValue());
+            GrayU8 mask = new GrayU8(img0.getWidth(), img0.getHeight());
+            
+            // Remove small particles
+            mask = BinaryImageOps.erode4(mask, 1, null);
+            mask = BinaryImageOps.dilate4(mask, 1, null);
+      
+            GThresholdImageOps.threshold(img0, mask, liThreshold, false);
+            GrayS32 contourImg = new GrayS32(img0.getWidth(), img0.getHeight());
+            List<Contour> contours = 
+                    BinaryImageOps.contour(mask, ConnectRule.FOUR, contourImg);
+            List<List<Point2D_I32>> clusters = 
+                    BinaryImageOps.labelToClusters(contourImg, contours.size(), null); 
+            for (List<Point2D_I32> particle : clusters) {
+               Point2D_I32 centroid = ContourStats.centroid(particle);
+               boolean isBleachedParticle = false;
+               for (Map<Integer, ParticleData> track : tracks) {
+                  if (centroid.distance(track.get(0).getCentroid()) < DIST_UNCERTAINTY) {
+                     isBleachedParticle = true;
+                     continue;
+                  }
+               }
+               if (!isBleachedParticle) {
+                  Map<Integer, ParticleData> track = new TreeMap<>();
+                  // TODO: control track out of this particle
+                  System.out.println("Control particle found");
+                  Point2D_I32 currentPoint = centroid;
+                  int missing = 0;
+                  boolean bail = false;
+                  for (int frame = 0; frame < dataProvider.getAxisLength(Coords.T) && !bail; frame++) {
+                     ParticleData nextParticle = ParticleData.centralParticle(dataProvider, 
+                       cb, frame, currentPoint, halfROISize_);
+                     if (nextParticle != null && ( 
+                       Utils.distance(currentPoint, nextParticle.getCentroid()) < maxDistance )) {
+                        currentPoint = nextParticle.getCentroid();
+                        track.put(frame, nextParticle);
+                        missing = 0;
+                     } else {
+                        System.out.println("Before Missing particle");
+                        // TODO: increase counter, give up when too high
+                        missing++;
+                        if (missing > 10) {
+                           bail = true;
+                        }
+                     }
+                  }
+                  if (!bail) {
+                     controlTracks.add(track);
+                  }
+               }
+            }
+         } catch (IOException ioe) {}
+         
+         // TODO: get average intensity of control particles, indexed by frame 
+         
+         
          if (activeDataViewer instanceof DisplayWindow) {
             DisplayWindow dw = (DisplayWindow) activeDataViewer;
-            dw.addOverlay(new Overlay(tracks));
+            dw.addOverlay(new Overlay(tracks, controlTracks));
          }
 
       } catch (IOException ioe) {

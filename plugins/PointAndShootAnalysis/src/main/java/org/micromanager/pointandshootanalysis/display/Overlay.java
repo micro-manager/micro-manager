@@ -7,7 +7,6 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
@@ -32,18 +31,23 @@ import org.micromanager.pointandshootanalysis.data.ParticleData;
 public class Overlay extends AbstractOverlay {
    private final String TITLE = "Point and Shoot Overlay";
    private final List<Map<Integer, ParticleData>> tracks_;
+   private final List<Map<Integer, ParticleData>> controlTracks_;
    private final Map<Integer, List<ParticleData>> tracksIndexedByFrame_;
+   private final Map<Integer, List<ParticleData>> controlTracksIndexedByFrame_;
    private final int symbolLenght_ = 30;
    private final Color[] colors = {Color.RED, Color.BLUE, Color.GREEN, Color.ORANGE, Color.YELLOW, Color.CYAN, Color.MAGENTA};
    private final Color maskColor_ = new Color(255, 125, 10);
+   private final Color controlMaskColor_ = new Color (125, 255, 10);
    private final Color bleachColor_ = new Color(255, 5, 25);
    
    // UI components
    private JPanel configUI_;
    private JCheckBox showMasksCheckBox_;
-   private JCheckBox showBleachMaskCheckBox_;
+   private JCheckBox showBleachMasksCheckBox_;
+   private JCheckBox showControlMasksCheckBox_;
    
-   public Overlay(List<Map<Integer, ParticleData>> tracks) {
+   public Overlay(List<Map<Integer, ParticleData>> tracks, 
+           List<Map<Integer, ParticleData>> controlTracks) {
       tracks_ = tracks;
       // index tracks by frame for quick look up when we need it
       tracksIndexedByFrame_ = new TreeMap<>();
@@ -57,6 +61,20 @@ public class Overlay extends AbstractOverlay {
             tracksIndexedByFrame_.put(entry.getKey(), particlesInFrame);
          });
       });
+      
+      controlTracks_ = controlTracks;
+      controlTracksIndexedByFrame_ = new TreeMap<>();
+      controlTracks_.forEach( (track) -> {
+         track.entrySet().forEach((entry) -> {
+            List<ParticleData> particlesInFrame = controlTracksIndexedByFrame_.get(entry.getKey());
+            if (particlesInFrame == null) {
+               particlesInFrame = new ArrayList<>();
+            }
+            particlesInFrame.add(entry.getValue());
+            controlTracksIndexedByFrame_.put(entry.getKey(), particlesInFrame);
+         });
+      });
+      
       super.setVisible(true);
    }
    
@@ -74,15 +92,22 @@ public class Overlay extends AbstractOverlay {
             fireOverlayConfigurationChanged();
          });
          
-         showBleachMaskCheckBox_ = new JCheckBox("Show Bleach");
-         showBleachMaskCheckBox_.addActionListener((ActionEvent e) -> {
+         showBleachMasksCheckBox_ = new JCheckBox("Show Bleach");
+         showBleachMasksCheckBox_.addActionListener((ActionEvent e) -> {
             fireOverlayConfigurationChanged();
          });
+         
+         showControlMasksCheckBox_ = new JCheckBox("Show Controls");
+         showControlMasksCheckBox_.addActionListener((ActionEvent e) -> {
+            fireOverlayConfigurationChanged();
+         });
+         
 
          configUI_ = new JPanel(new MigLayout(new LC().insets("4")));
          CC cc = new CC();
          configUI_.add(showMasksCheckBox_);
-         configUI_.add(showBleachMaskCheckBox_, cc.wrap());
+         configUI_.add(showBleachMasksCheckBox_);
+         configUI_.add(showControlMasksCheckBox_, cc.wrap());
       }
       return configUI_;
    }
@@ -114,7 +139,22 @@ public class Overlay extends AbstractOverlay {
          gTfm.setStroke(new BasicStroke((float) zoomRatio));
          
          int colorIndex = 0;
+         
+         
+         if (showControlMasksCheckBox_ != null && showControlMasksCheckBox_.isSelected()) {
+            for (ParticleData p: controlTracksIndexedByFrame_.get(frame)) {
+               gTfm.setColor(controlMaskColor_);
+               List<Point2D_I32> mask = p.getMask();
+               mask.forEach((point) -> {
+                  gTfm.drawRect(point.x, point.y, 1, 1);
+                  // Note: drawLine is much faster the g.draw(new Line2D.Float());
+                  //gTfm.drawLine(point.x, point.y, point.x, point.y);
+               }); 
+            }
+         }
+         
          for (ParticleData p : tracksIndexedByFrame_.get(frame)) {
+            
             if (showMasksCheckBox_ != null && showMasksCheckBox_.isSelected()) {
                gTfm.setColor(maskColor_);
                List<Point2D_I32> mask = p.getMask();
@@ -125,11 +165,10 @@ public class Overlay extends AbstractOverlay {
                   gTfm.drawRect(point.x, point.y, 1, 1);
                   // Note: drawLine is much faster the g.draw(new Line2D.Float());
                   //gTfm.drawLine(point.x, point.y, point.x, point.y);
-               });
-               
-                          
+               });      
             }
-            if (showBleachMaskCheckBox_ != null && showBleachMaskCheckBox_.isSelected()) {
+            
+            if (showBleachMasksCheckBox_ != null && showBleachMasksCheckBox_.isSelected()) {
                List<Point2D_I32> bleachMask = p.getBleachMask();
                if (bleachMask != null) {
                   gTfm.setColor(bleachColor_);
