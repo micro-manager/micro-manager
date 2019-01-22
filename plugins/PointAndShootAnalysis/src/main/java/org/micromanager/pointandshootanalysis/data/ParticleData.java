@@ -80,14 +80,22 @@ public class ParticleData {
       maskAverage_ = avg;
    }
    
-   public ParticleData(List<Point2D_I32> mask, List<Point2D_I32> bleachMask,
-           List<Point2D_I32> maskIncludingBleach, Point2D_I32 centroid,
-           Point2D_I32 bleachSpot) {
+   private ParticleData(List<Point2D_I32> mask, 
+           List<Point2D_I32> bleachMask,
+           List<Point2D_I32> maskIncludingBleach, 
+           Point2D_I32 centroid,
+           Point2D_I32 bleachSpot,
+           double maskAverage,
+           double bleachMaskAverage,
+           double maskIncludingBleachAverage) {
       mask_ = mask;
       bleachMask_ = bleachMask;
       maskIncludingBleach_ = maskIncludingBleach;
       centroid_ = centroid;
       bleachSpot_ = bleachSpot;
+      maskAverage_ = maskAverage;
+      bleachMaskAverage_ = bleachMaskAverage;
+      maskIncludingBleachAverage_ = maskIncludingBleachAverage; 
    }
    
    /**
@@ -100,7 +108,10 @@ public class ParticleData {
               this.bleachMask_ != null? new ArrayList<>(this.bleachMask_) : null, 
               this.maskIncludingBleach_ != null ? new ArrayList<>(this.maskIncludingBleach_) : null, 
               this.centroid_ != null ? new Point2D_I32(this.centroid_) : null, 
-              this.bleachSpot_ != null ? new Point2D_I32(this.bleachSpot_) : null);
+              this.bleachSpot_ != null ? new Point2D_I32(this.bleachSpot_) : null,
+              this.maskAverage_ != null ? maskAverage_ : null,
+              this.bleachMaskAverage_ != null ? bleachMaskAverage_ : null,
+              this.maskIncludingBleachAverage_ != null ? maskIncludingBleachAverage_ : null);
    }
    
     public ParticleData copy() {
@@ -109,7 +120,10 @@ public class ParticleData {
               this.bleachMask_, 
               this.maskIncludingBleach_, 
               this.centroid_, 
-              this.bleachSpot_);
+              this.bleachSpot_,
+              this.maskAverage_,
+              this.bleachMaskAverage_,
+              this.maskIncludingBleachAverage_);
    }
    
    public Point2D_I32 getCentroid() {
@@ -137,6 +151,18 @@ public class ParticleData {
    
    public List<Point2D_I32> getMaskIncludingBleach() {
       return maskIncludingBleach_;
+   }
+   
+   public Double getMaskAvg() {
+      return maskAverage_;
+   }
+   
+   public Double getBleachMaskAvg() {
+      return bleachMaskAverage_;
+   }
+   
+   public Double getMaskIncludingBleachAvg() {
+      return maskIncludingBleachAverage_;
    }
    
    /**
@@ -185,11 +211,7 @@ public class ParticleData {
       List<ParticleData> particles = new ArrayList<>();
       GrayU16 originalImage = (GrayU16) sub;
       clusters.forEach((cluster) -> {
-         long sum = 0;
-         for (Point2D_I32 p : cluster) {
-            sum += originalImage.unsafe_get(p.x, p.y) & 0xffff;
-         }
-         double avg = sum / cluster.size();
+         double avg = averageIntensity(originalImage, cluster);
          particles.add(new ParticleData(cluster, 
                  new Point2D_I32(startCenter.x - halfBoxSize, startCenter.y - halfBoxSize),
                  avg));
@@ -210,8 +232,10 @@ public class ParticleData {
       // if particle is too small, simply assume that the bleachspot covers the
       // whole particle
       if (particle.mask_.size() < particleSizeCutoff) {
+         double avg = averageIntensity(current, particle.getMask());
          return new ParticleData(particle.getMask(), particle.getMask(),
-                     particle.getMask(), particle.getCentroid(), particle.getCentroid());
+                 particle.getMask(), particle.getCentroid(), 
+                 particle.getCentroid(), avg, avg, avg);
       }
       
       GrayF32 fCurrent = new GrayF32(current.getWidth(), current.getHeight());
@@ -260,12 +284,15 @@ public class ParticleData {
                     BinaryListOps.combineSets(
                             BinaryListOps.listToSet(mask), 
                             BinaryListOps.listToSet(bleachMask)));
-            
+            Double maskAvg = averageIntensity(current, mask);
+            Double bleachMaskAvg = averageIntensity(current, bleachMask);
+            Double maskIncludingBleachAvg = averageIntensity(current, maskIncludingBleach);
             
             // TODO: fill holes in maskIncludingBleach            
             Point2D_I32 newCentroid = ContourStats.centroid(maskIncludingBleach);
             return new ParticleData(mask, bleachMask,
-                     maskIncludingBleach, newCentroid, particle.getBleachSpot());
+                     maskIncludingBleach, newCentroid, particle.getBleachSpot(),
+                     maskAvg, bleachMaskAvg, maskIncludingBleachAvg);
             
          }
       }
@@ -273,5 +300,18 @@ public class ParticleData {
       return particle;
    }
    
+   
+   private static Double averageIntensity(GrayU16 originalImage, List<Point2D_I32> cluster) {
+      try {
+         long sum = 0;
+         for (Point2D_I32 p : cluster) {
+            sum += originalImage.unsafe_get(p.x, p.y) & 0xffff;
+         }
+         return ((double) sum / (double) cluster.size());
+      } catch (ArrayIndexOutOfBoundsException aie) {
+         System.out.println("");
+      }
+      return null;
+   }
    
 }
