@@ -85,9 +85,9 @@ public class ParticleData {
            List<Point2D_I32> maskIncludingBleach, 
            Point2D_I32 centroid,
            Point2D_I32 bleachSpot,
-           double maskAverage,
-           double bleachMaskAverage,
-           double maskIncludingBleachAverage) {
+           Double maskAverage,
+           Double bleachMaskAverage,
+           Double maskIncludingBleachAverage) {
       mask_ = mask;
       bleachMask_ = bleachMask;
       maskIncludingBleach_ = maskIncludingBleach;
@@ -211,7 +211,7 @@ public class ParticleData {
       List<ParticleData> particles = new ArrayList<>();
       GrayU16 originalImage = (GrayU16) sub;
       clusters.forEach((cluster) -> {
-         double avg = averageIntensity(originalImage, cluster);
+         double avg = averageIntensity(originalImage, cluster, null);
          particles.add(new ParticleData(cluster, 
                  new Point2D_I32(startCenter.x - halfBoxSize, startCenter.y - halfBoxSize),
                  avg));
@@ -225,14 +225,22 @@ public class ParticleData {
      
    }
     
-   
+   /**
+    * 
+    * @param preBleach
+    * @param current
+    * @param particle
+    * @param offset
+    * @param maxDistance
+    * @return 
+    */
    public static ParticleData addBleachSpotToParticle(GrayF32 preBleach, 
            GrayU16 current, ParticleData particle, Point2D_I32 offset, double maxDistance) {
       final int particleSizeCutoff = 16;
       // if particle is too small, simply assume that the bleachspot covers the
       // whole particle
       if (particle.mask_.size() < particleSizeCutoff) {
-         double avg = averageIntensity(current, particle.getMask());
+         Double avg = averageIntensity(current, particle.getMask(), offset);
          return new ParticleData(particle.getMask(), particle.getMask(),
                  particle.getMask(), particle.getCentroid(), 
                  particle.getCentroid(), avg, avg, avg);
@@ -284,9 +292,10 @@ public class ParticleData {
                     BinaryListOps.combineSets(
                             BinaryListOps.listToSet(mask), 
                             BinaryListOps.listToSet(bleachMask)));
-            Double maskAvg = averageIntensity(current, mask);
-            Double bleachMaskAvg = averageIntensity(current, bleachMask);
-            Double maskIncludingBleachAvg = averageIntensity(current, maskIncludingBleach);
+            Double maskAvg = averageIntensity(current, mask, offset);
+            Double bleachMaskAvg = averageIntensity(current, bleachMask, offset);
+            Double maskIncludingBleachAvg = averageIntensity(current, 
+                    maskIncludingBleach, offset);
             
             // TODO: fill holes in maskIncludingBleach            
             Point2D_I32 newCentroid = ContourStats.centroid(maskIncludingBleach);
@@ -301,15 +310,22 @@ public class ParticleData {
    }
    
    
-   private static Double averageIntensity(GrayU16 originalImage, List<Point2D_I32> cluster) {
+   private static Double averageIntensity(GrayU16 originalImage, 
+           List<Point2D_I32> cluster, Point2D_I32 offset) {
       try {
          long sum = 0;
-         for (Point2D_I32 p : cluster) {
-            sum += originalImage.unsafe_get(p.x, p.y) & 0xffff;
+         if (offset == null) {
+            for (Point2D_I32 p : cluster) {
+               sum += originalImage.unsafe_get(p.x, p.y) & 0xffff;
+            }
+         } else {
+            for (Point2D_I32 p : cluster) {
+               sum += originalImage.unsafe_get(p.x- offset.x, p.y- offset.y) & 0xffff;
+            }
          }
          return ((double) sum / (double) cluster.size());
       } catch (ArrayIndexOutOfBoundsException aie) {
-         System.out.println("");
+         System.out.println("Programming error");
       }
       return null;
    }

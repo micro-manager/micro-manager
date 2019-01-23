@@ -143,6 +143,15 @@ public class PointAndShootDialog extends MMDialog {
       });
       super.add(maxDistanceSpinner, "wrap");
       
+      super.add(new JLabel("Camera Offset"));
+      int offset = profileSettings_.getInteger(Terms.CAMERAOFFSET, 100);
+      final SpinnerNumberModel offsetModel = new SpinnerNumberModel(offset, 1, 10000, 10);
+      final JSpinner offsetSpinner = new JSpinner (offsetModel);
+      offsetSpinner.addChangeListener((ChangeEvent e) -> {
+         profileSettings_.putInteger(Terms.CAMERAOFFSET, (Integer) offsetSpinner.getValue());
+      });
+      super.add(offsetSpinner, "wrap");
+      
       JButton cancelButton = mcsButton(buttonSize, arialSmallFont);
       cancelButton.setText("Cancel");
       cancelButton.addActionListener((ActionEvent evt) -> {

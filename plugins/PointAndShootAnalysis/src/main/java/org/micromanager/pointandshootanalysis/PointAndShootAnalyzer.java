@@ -18,6 +18,7 @@
 //               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 package org.micromanager.pointandshootanalysis;
 
 import boofcv.alg.filter.binary.BinaryImageOps;
@@ -74,7 +75,6 @@ import org.micromanager.pointandshootanalysis.data.PASFrameSet;
 import org.micromanager.pointandshootanalysis.data.ParticleData;
 import org.micromanager.pointandshootanalysis.data.Terms;
 import org.micromanager.pointandshootanalysis.display.Overlay;
-import org.micromanager.pointandshootanalysis.plot.DataSeriesKey;
 import org.micromanager.pointandshootanalysis.plot.PlotUtils;
 import org.micromanager.pointandshootanalysis.utils.ListUtils;
 
@@ -204,7 +204,6 @@ public class PointAndShootAnalyzer implements Runnable {
       }
 
       // We have the bleach Coordinates as frame - x/y. Check with the actual images
-      List<XYSeries> plotData = new ArrayList<>();
       List<Map<Integer, ParticleData>> tracks = new ArrayList<>();
       try {
          int imgWidth = dataProvider.getAnyImage().getWidth();
@@ -432,13 +431,15 @@ public class PointAndShootAnalyzer implements Runnable {
                   }
                   System.out.println("After Missing particle");
                   // TODO: increase counter, give up when too high
-               } //else {
+               } 
                
                ImageGray current = BoofCVImageConverter.subImage(dataProvider, 
                         cb, frame, currentPoint, halfROISize_);
-               nextParticle = ParticleData.addBleachSpotToParticle(fPreBleach, (GrayU16) current, nextParticle, 
-                        new Point2D_I32(currentPoint.x - halfROISize_, currentPoint.y - halfROISize_), MAXDISTANCE );
-               //}
+               nextParticle = ParticleData.addBleachSpotToParticle(fPreBleach, 
+                       (GrayU16) current, 
+                       nextParticle, 
+                       new Point2D_I32(currentPoint.x - halfROISize_, currentPoint.y - halfROISize_), 
+                       MAXDISTANCE );
                previousParticle = nextParticle;
                currentPoint = nextParticle.getCentroid();
                track.put(frame, nextParticle);
@@ -536,10 +537,47 @@ public class PointAndShootAnalyzer implements Runnable {
                   }
                }
             }
+            
+            
          } catch (IOException ioe) {}
          
-         // TODO: get average intensity of control particles, indexed by frame 
+         // get average intensity of control particles, indexed by frame 
+         if (controlTracks.size() > 0) {
+            Map<Integer, Double> controlAvgIntensity = new HashMap<>();
+            for (int frame = 0; frame < dataProvider.getAxisLength(Coords.T); frame++) {
+               double sum = 0.0;
+               int n = 0;
+               for (Map<Integer, ParticleData> track : controlTracks) {
+                  // TODO: normalize by size??
+                  if (track.get(frame) != null && track.get(frame).getMaskAvg() != null) {
+                     sum += track.get(frame).getMaskAvg();
+                     n += 1;
+                  }
+               } 
+               controlAvgIntensity.put(frame, sum / n); 
+            }
+            
+            
+            List<XYSeries> plotData = new ArrayList<>();
+            XYSeries data = new XYSeries("Control Particles", false, false);
+            for (Map.Entry<Integer, Double> frameControlData : controlAvgIntensity.entrySet()) {
+                data.add( (frameTimeStamps.get(frameControlData.getKey()).toEpochMilli() - frameTimeStamps.get(0).toEpochMilli() ) / 1000.0, 
+                       frameControlData.getValue());
+            }
+            
+            plotData.add(data);
+            //data.setKey(new DataSeriesKey(intensityAnalysisFrames.getCentralFrame(), pasActual.x, pasActual.y));
+            boolean[] showShapes = new boolean[plotData.size()];
+            for (int i = 0; i < showShapes.length; i++) {
+               showShapes[i] = true;
+            }
+            
+            XYSeries[] plots = plotData.toArray(new XYSeries[plotData.size()]);
+            PlotUtils pu = new PlotUtils(studio_.profile().getSettings(this.getClass()));
+            pu.plotDataN("Control Intensity Profile", plots, "Time (s)",
+                 "Avg. Intensity", showShapes, "", null);
          
+         }
          
          if (activeDataViewer instanceof DisplayWindow) {
             DisplayWindow dw = (DisplayWindow) activeDataViewer;

@@ -1,3 +1,23 @@
+///////////////////////////////////////////////////////////////////////////////
+//FILE:          Overlay.java
+//PROJECT:       Micro-Manager  
+//SUBSYSTEM:     PointAndShootAnalyzer plugin
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Nico Stuurman
+//
+// COPYRIGHT:    University of California, San Francisco 2019
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 package org.micromanager.pointandshootanalysis.display;
 
@@ -35,7 +55,8 @@ public class Overlay extends AbstractOverlay {
    private final Map<Integer, List<ParticleData>> tracksIndexedByFrame_;
    private final Map<Integer, List<ParticleData>> controlTracksIndexedByFrame_;
    private final int symbolLenght_ = 30;
-   private final Color[] colors = {Color.RED, Color.BLUE, Color.GREEN, Color.ORANGE, Color.YELLOW, Color.CYAN, Color.MAGENTA};
+   private final Color[] colors = {Color.RED, Color.BLUE, Color.GREEN, 
+                        Color.ORANGE, Color.YELLOW, Color.CYAN, Color.MAGENTA};
    private final Color maskColor_ = new Color(255, 125, 10);
    private final Color controlMaskColor_ = new Color (125, 255, 10);
    private final Color bleachColor_ = new Color(255, 5, 25);
