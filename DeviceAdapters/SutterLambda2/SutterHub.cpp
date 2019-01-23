@@ -21,7 +21,7 @@
 // CVS:           $Id$
 //
 
-#include "SutterLambda2.h"
+#include "SutterHub.h"
 
 
 extern const char* g_HubName;
