@@ -233,10 +233,12 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
       ReportingUtils.logMessage("Setting value " + value + " at row " + row);
       if (col == propertyValueColumn_) {
          if (item.confInclude) {
+            setUpdating(true);
             setValueInCore(item, value);
             core_.updateSystemStateCache();
             refresh(true);
             gui_.app().refreshGUIFromCache();
+            setUpdating(false);
          }
       } else if (col == propertyUsedColumn_) {
          item.confInclude = ((Boolean) value);

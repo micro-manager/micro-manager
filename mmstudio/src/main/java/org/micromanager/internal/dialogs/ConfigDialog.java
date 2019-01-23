@@ -345,7 +345,11 @@ public abstract class ConfigDialog extends MMDialog {
 
    @Subscribe
    public void onPropertyChanged(PropertyChangedEvent event) {
-      data_.update(true);
+      // avoid re-executing a refresh because of callbacks while we are
+      // updating
+      if (!data_.updating()) {
+        data_.update(true);
+      }
    }
 
 }
