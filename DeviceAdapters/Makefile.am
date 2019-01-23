@@ -163,6 +163,7 @@ SUBDIRS = \
 	SmarActHCU-3D \
 	SpectralLMM5 \
 	SutterLambda \
+	SutterLambda2 \
 	SutterLambdaParallelArduino \
 	SutterStage \
 	Thorlabs \
