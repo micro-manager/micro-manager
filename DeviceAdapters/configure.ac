@@ -526,6 +526,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    UserDefinedSerial/unittest
    Utilities
    VariLC
+   VarispecLCTF
    Video4Linux
    Vincent
    Vortran

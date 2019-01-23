@@ -175,6 +175,7 @@ SUBDIRS = \
 	UserDefinedSerial \
 	Utilities \
 	VariLC \
+	VarispecLCTF \
 	Vincent \
 	Vortran \
 	WieneckeSinske \
