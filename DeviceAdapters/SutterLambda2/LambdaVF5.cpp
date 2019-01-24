@@ -26,7 +26,6 @@
 
 LambdaVF5::LambdaVF5(const char* name):
 	WheelBase(name, 0, true, "Lambda VF-5 Tunable Filter (Channel A)"),
-	mEnabled_(true), 
 	wv_(500),
 	uSteps_(1),
 	tiltSpeed_(3),
@@ -145,7 +144,7 @@ int LambdaVF5::onWavelength(MM::PropertyBase* pProp, MM::ActionType eAct) {
 			cmd.push_back(1);
 			std::vector<std::string> seq = pProp->GetSequence();
 			for (int i=0; i<3; i++) {
-				int wv = std::stoi(seq.at(0));
+				int wv = atoi(seq.at(0).c_str());
 				cmd.push_back((unsigned char) (wv));
 				cmd.push_back((unsigned char) (wv>>8));
 			}
@@ -154,7 +153,7 @@ int LambdaVF5::onWavelength(MM::PropertyBase* pProp, MM::ActionType eAct) {
 			cmd.push_back(1);
 			std::vector<std::string> seq = pProp->GetSequence();
 			for (int i=0; i<seq.size(); i++){
-				int wv = std::stoi(seq.at(i));
+				int wv = atoi(seq.at(i).c_str());
 				cmd.push_back((unsigned char) (wv));
 				cmd.push_back((unsigned char) (wv>>8));
 			}

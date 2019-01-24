@@ -73,10 +73,10 @@ public:
 	int SetCommand(const std::vector<unsigned char> command);
 private:
 	std::string port_;
-	std::string name_;
 	bool mEnabled_;
 	bool busy_;
 	bool initialized_;
+	std::string name_;
 	MMThreadLock lock_;
 	//Make comms thread safe
 	MMThreadLock& GetLock() { return lock_; };

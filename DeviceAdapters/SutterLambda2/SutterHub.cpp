@@ -292,7 +292,7 @@ int SutterHub::SetCommand(const std::vector<unsigned char> command, const std::v
 	}
 	for (int i=0; i<command.size(); i++) {
 		if (response[i] == command.at(i)) { //We have a match so far.
-			int a = 1; //This is just here so there's something to debug.
+			// int a = 1; //This is just here so there's something to debug.
 		}
 		else if (response[i] == alternateEcho.at(i)) {
 			LogMessage(("command " + CDeviceUtils::HexRep(command) +
