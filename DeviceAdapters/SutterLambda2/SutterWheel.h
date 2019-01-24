@@ -56,12 +56,11 @@ private:
 	int configureTTL( bool risingEdge, bool enabled, bool output, unsigned char channel);
 	long wv_;
 	long uSteps_;
-	bool mEnabled_;
 	long tiltSpeed_;
-	bool ttlOutEnabled_;
-	bool ttlOutRisingEdge_;
 	bool ttlInEnabled_;
 	bool ttlInRisingEdge_;
+	bool ttlOutEnabled_;
+	bool ttlOutRisingEdge_;
 	bool sequenceEvenlySpaced_;
 };
 

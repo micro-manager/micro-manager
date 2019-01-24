@@ -65,11 +65,11 @@ private:
    bool initialized_;
    unsigned numPos_;
    bool evenPositionsOnly_;
-   const char* description_;
    const unsigned id_;
    std::string name_;
    unsigned curPos_;
    bool open_;  
+   const char* description_;
    MM::MMTime delay_;
    MM::MMTime changedTime_;
    WheelBase& operator=(WheelBase& /*rhs*/) {assert(false); return *this;}
@@ -77,13 +77,13 @@ private:
 
 template<class U>
 WheelBase<U>::WheelBase(const char* name, unsigned id, bool evenPositionsOnly, const char* description) :
+	speed_(3),
 	initialized_(false),
 	numPos_(10),
+	evenPositionsOnly_(evenPositionsOnly),
 	id_(id),
 	name_(name),
 	curPos_(0),
-	speed_(3),
-	evenPositionsOnly_(evenPositionsOnly),
 	description_(description)
 {
 	assert(id == 0 || id == 1 || id == 2);
