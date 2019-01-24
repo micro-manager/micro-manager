@@ -22,6 +22,7 @@ package org.micromanager.pointandshootanalysis.data;
 
 import java.awt.Point;
 import java.time.Instant;
+import java.util.Map;
 
 /**
  * Note PAS is short for "Point And Shoot"
@@ -36,6 +37,7 @@ public class PASData {
    private final Point pasIntended_; 
    private final Point pasActual_;   
    private final int[] pasFrames_; 
+   private final Map<Integer, ParticleData> particleDataTrack_;
 
    public static class Builder {
 
@@ -45,19 +47,22 @@ public class PASData {
       private Point pasIntended_;
       private Point pasActual_;
       private int[] pasFrames_;
+      private Map<Integer, ParticleData> particleDataTrack_;
       
       private Builder copy(Instant pasClicked,
               Instant tsOfFrameBeforePas,
               int framePasClicked,
               Point pasIntended,
               Point pasActual,
-              int[] pasFrames) {
+              int[] pasFrames,
+              Map<Integer, ParticleData> particleData) {
          pasClicked_ = pasClicked;
          tsOfFrameBeforePas_ = tsOfFrameBeforePas;
          framePasClicked_ = framePasClicked;
          pasIntended_ = pasIntended;
          pasActual_ = pasActual;
          pasFrames_ = pasFrames;
+         particleDataTrack_ = particleData;
          return this;
       }
       
@@ -67,6 +72,10 @@ public class PASData {
       public Builder pasIntended(Point p) {pasIntended_ = p; return this;}
       public Builder pasActual(Point p) {pasActual_ = p; return this;}
       public Builder pasFrames(int[] pasFrames) { pasFrames_ = pasFrames; return this;}
+      public Builder particleDataTrack(Map<Integer, ParticleData> particleDataTrack) {
+         particleDataTrack_ = particleDataTrack;
+         return this;
+      }  
       
       public PASData build() {
          return new PASData(pasClicked_,
@@ -74,7 +83,8 @@ public class PASData {
                  framePasClicked_,
                  pasIntended_,
                  pasActual_,
-                 pasFrames_);
+                 pasFrames_,
+                 particleDataTrack_);
       }
 
    }
@@ -99,13 +109,15 @@ public class PASData {
            int framePasClicked,
            Point pasIntended,
            Point pasActual,
-           int[] pasFrames) {
+           int[] pasFrames,
+           Map<Integer, ParticleData> particleDataTrack) {
       pasClicked_ = pasClicked;
       tsOfFrameBeforePas_ = tsOfFrameBeforePas;
       framePasClicked_ = framePasClicked;
       pasIntended_ = pasIntended;
       pasActual_ = pasActual;
       pasFrames_ = pasFrames;
+      particleDataTrack_ = particleDataTrack;
    }
    
    public Instant pasClicked() {return pasClicked_;}
@@ -114,11 +126,12 @@ public class PASData {
    public Point pasIntended() {return pasIntended_;}
    public Point pasActual() { return pasActual_;}
    public int[] pasFrames() { return pasFrames_;}
+   public Map<Integer, ParticleData> particleDataTrack() { return particleDataTrack_;}
    
    public Builder copyBuilder() {
       Builder b = new Builder();
       b.copy (pasClicked_, tsOfFrameBeforePas_, framePasClicked_, pasIntended_,
-              pasActual_, pasFrames_);
+              pasActual_, pasFrames_, particleDataTrack_);
       return b;
    }
 

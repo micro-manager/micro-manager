@@ -115,10 +115,11 @@ public class PointAndShootAnalyzer implements Runnable {
 
       // Read variables provided by UI from profile
       String fileName = settings_.getString(Terms.LOCATIONSFILENAME, "");
-      int radius = settings_.getInteger(Terms.RADIUS, 3);
-      int nrFramesBefore = settings_.getInteger(Terms.NRFRAMESBEFORE, 2);
-      int nrFramesAfter = settings_.getInteger(Terms.NRFRAMESAFTER, 200);
-      int maxDistance = settings_.getInteger(Terms.MAXDISTANCE, 3);
+      final int radius = settings_.getInteger(Terms.RADIUS, 3);
+      final int nrFramesBefore = settings_.getInteger(Terms.NRFRAMESBEFORE, 2);
+      final int nrFramesAfter = settings_.getInteger(Terms.NRFRAMESAFTER, 200);
+      final int maxDistance = settings_.getInteger(Terms.MAXDISTANCE, 3);
+      final int cameraOffset = settings_.getInteger(Terms.CAMERAOFFSET, 100);
 
       File f = new File(fileName);
       if (!f.exists()) {
@@ -324,6 +325,12 @@ public class PointAndShootAnalyzer implements Runnable {
             for (int frame = 0; frame < bleachFrames.size(); frame++) {
                pasFrames[frame] = bleachFrames.get(frame) + findMinFrames.getStartFrame();
             }
+            
+            pasDataIt.set(pasEntry.copyBuilder().
+                    pasActual(pasActual).
+                    pasFrames(pasFrames).
+                    build());
+         }
 /*
             // find average intensity of frames before bleaching for later normalization
             double preBleachAverage = Utils.GetIntensity(
@@ -362,12 +369,7 @@ public class PointAndShootAnalyzer implements Runnable {
             });
             System.out.println();
 */
-            pasDataIt.set(pasEntry.copyBuilder().
-                    pasActual(pasActual).
-                    pasFrames(pasFrames).
-                    build());
 
-         }
 /*
          if (plotData.size() < 1) {
             studio_.logs().showMessage("No Point and Shoot events found");
@@ -445,6 +447,8 @@ public class PointAndShootAnalyzer implements Runnable {
                track.put(frame, nextParticle);
             }
             tracks.add(track);
+            pasDataIt.set(pasEntry.copyBuilder().particleDataTrack(track).
+                    build());
          }
          
          // find duplicate tracks (i.e. the same particle was bleached twice
@@ -474,8 +478,22 @@ public class PointAndShootAnalyzer implements Runnable {
          }
          for (Map<Integer, ParticleData> track : doubleTracks) {
             tracks.remove(track);
+            // TODO: remove pasData that contain this track
+            pasDataIt = pasData.listIterator();
+            PASData dataToBeRemoved = null;
+            while (pasDataIt.hasNext() && dataToBeRemoved == null) {
+               PASData next = pasDataIt.next();
+               if (next.particleDataTrack() ==  track) {
+                  dataToBeRemoved = next;
+               }
+            }
+            if (dataToBeRemoved != null) {
+               pasData.remove(dataToBeRemoved);
+            }
          }
          
+         // Find "control particle", i.e. particles that were not bleached
+         // and that serve as intensity controls
          List<Map<Integer, ParticleData>> controlTracks = new ArrayList<>();
          try {
             cb = dataProvider.getAnyImage().getCoords().copyBuilder();
@@ -541,8 +559,9 @@ public class PointAndShootAnalyzer implements Runnable {
             
          } catch (IOException ioe) {}
          
-         // get average intensity of control particles, indexed by frame 
+         
          if (controlTracks.size() > 0) {
+            // get average intensity of control particles, indexed by frame 
             Map<Integer, Double> controlAvgIntensity = new HashMap<>();
             for (int frame = 0; frame < dataProvider.getAxisLength(Coords.T); frame++) {
                double sum = 0.0;
@@ -554,30 +573,45 @@ public class PointAndShootAnalyzer implements Runnable {
                      n += 1;
                   }
                } 
-               controlAvgIntensity.put(frame, sum / n); 
+               controlAvgIntensity.put(frame, (sum / n) - cameraOffset ); 
             }
             
             
             List<XYSeries> plotData = new ArrayList<>();
-            XYSeries data = new XYSeries("Control Particles", false, false);
-            for (Map.Entry<Integer, Double> frameControlData : controlAvgIntensity.entrySet()) {
-                data.add( (frameTimeStamps.get(frameControlData.getKey()).toEpochMilli() - frameTimeStamps.get(0).toEpochMilli() ) / 1000.0, 
-                       frameControlData.getValue());
+            for (PASData d : pasData) {
+               List<Double> intensityData = new ArrayList<>();
+               // TODO: get intensities of bleach Spots and total particles
+               // out of the data structures, and plot them
             }
-            
+ /*           
+            List<Double> intensityData = new ArrayList<>();
+            for (int frame = intensityAnalysisFrames.getStartFrame();
+                    frame < intensityAnalysisFrames.getEndFrame(); frame++) {
+               Coords coord = cb.t(frame).build();
+               Image img = dataProvider.getImage(coord);
+               ImageProcessor iProc = studio_.data().getImageJConverter().createProcessor(img);
+               intensityData.add((double) Utils.GetIntensity(iProc.convertToFloatProcessor(),
+                       pasActual.x, pasActual.y, radius));
+            }
+
+            XYSeries data = new XYSeries("" + findMinFrames.getCentralFrame(), false, false);
+            for (int i = 0; i < intensityData.size(); i++) {
+               data.add(frameTimeStamps.get(intensityAnalysisFrames.getStartFrame() + i).toEpochMilli()
+                       - frameTimeStamps.get(intensityAnalysisFrames.getCentralFrame()).toEpochMilli(),
+                       intensityData.get(i) / preBleachAverage);
+            }
+            data.setKey(new DataSeriesKey(intensityAnalysisFrames.getCentralFrame(),
+                    pasActual.x, pasActual.y));
             plotData.add(data);
-            //data.setKey(new DataSeriesKey(intensityAnalysisFrames.getCentralFrame(), pasActual.x, pasActual.y));
-            boolean[] showShapes = new boolean[plotData.size()];
-            for (int i = 0; i < showShapes.length; i++) {
-               showShapes[i] = true;
-            }
+*/
             
-            XYSeries[] plots = plotData.toArray(new XYSeries[plotData.size()]);
-            PlotUtils pu = new PlotUtils(studio_.profile().getSettings(this.getClass()));
-            pu.plotDataN("Control Intensity Profile", plots, "Time (s)",
-                 "Avg. Intensity", showShapes, "", null);
+
+            plotControlParticleIntensities(controlAvgIntensity, frameTimeStamps);
+            
+            
          
          }
+         
          
          if (activeDataViewer instanceof DisplayWindow) {
             DisplayWindow dw = (DisplayWindow) activeDataViewer;
@@ -668,7 +702,29 @@ public class PointAndShootAnalyzer implements Runnable {
       }
    }
    
-   
+   private void plotControlParticleIntensities(final Map<Integer, Double> controlAvgIntensity,
+           final Map<Integer, Instant> frameTimeStamps) {
+      List<XYSeries> plotData = new ArrayList<>();
+      XYSeries data = new XYSeries("Control Particles", false, false);
+      
+      for (Map.Entry<Integer, Double> frameControlData : controlAvgIntensity.entrySet()) {
+         data.add((frameTimeStamps.get(frameControlData.getKey()).toEpochMilli() - 
+                     frameTimeStamps.get(0).toEpochMilli()) / 1000.0,
+                 frameControlData.getValue());
+      }
+
+      plotData.add(data);
+      boolean[] showShapes = new boolean[plotData.size()];
+      for (int i = 0; i < showShapes.length; i++) {
+         showShapes[i] = true;
+      }
+
+      XYSeries[] plots = plotData.toArray(new XYSeries[plotData.size()]);
+      PlotUtils pu = new PlotUtils(studio_.profile().getSettings(this.getClass()));
+      pu.plotDataN("Control Intensity Profile", plots, "Time (s)",
+              "Avg. Intensity", showShapes, "", null);
+   }
+ 
    
    
    private Point ccParticle(DataProvider dp, Coords.Builder cb,
