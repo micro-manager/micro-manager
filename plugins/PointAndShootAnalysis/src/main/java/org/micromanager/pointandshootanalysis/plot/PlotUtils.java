@@ -41,6 +41,7 @@ import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+import org.micromanager.pointandshootanalysis.display.WidgetSettings;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
@@ -116,7 +117,8 @@ public class PlotUtils {
     * @return Frame that displays the data
     */
    public Frame plotDataN(String title, XYSeries[] data, String xTitle,
-           String yTitle, boolean[] showShapes, String annotation, Double yLimit) {
+           String yTitle, boolean[] showShapes, String annotation, Double yLimit,
+           Color[] colors) {
 
       // JFreeChart code
       XYSeriesCollection dataset = new XYSeriesCollection();
@@ -168,25 +170,31 @@ public class PlotUtils {
          renderer.setSeriesLinesVisible(i, true);
       }
 
-      renderer.setSeriesPaint(0, Color.blue);
+      for (int i = 0; i < data.length; i++) {
+         int index = i % WidgetSettings.COLORS.length;
+         renderer.setSeriesPaint(i, WidgetSettings.COLORS[index]);
+      }
+      /*
+      //renderer.setSeriesPaint(0, Color.blue);
       Shape circle = new Ellipse2D.Float(-2.0f, -2.0f, 4.0f, 4.0f);
       renderer.setSeriesShape(0, circle, false);
 
       if (data.length > 1) {
-         renderer.setSeriesPaint(1, Color.red);
+         //renderer.setSeriesPaint(1, Color.red);
          Shape square = new Rectangle2D.Float(-2.0f, -2.0f, 4.0f, 4.0f);
          renderer.setSeriesShape(1, square, false);
       }
       if (data.length > 2) {
-         renderer.setSeriesPaint(2, Color.darkGray);
+         //renderer.setSeriesPaint(2, Color.darkGray);
          Shape rect = new Rectangle2D.Float(-2.0f, -1.0f, 4.0f, 2.0f);
          renderer.setSeriesShape(2, rect, false);
       }
       if (data.length > 3) {
-         renderer.setSeriesPaint(3, Color.magenta);
+         //renderer.setSeriesPaint(3, Color.magenta);
          Shape rect = new Rectangle2D.Float(-1.0f, -2.0f, 2.0f, 4.0f);
          renderer.setSeriesShape(3, rect, false);
       }
+      */
 
       for (int i = 0; i < data.length; i++) {
          if (showShapes.length > i && !showShapes[i]) {

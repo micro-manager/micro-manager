@@ -260,7 +260,7 @@ public class ParticleData {
          double value = gResult.get(minPixel.x, minPixel.y);
          // TODO: evaluate this ratio and add other criteria to determine if this is
          // really the bleach spot
-         if ( (value / mean) < 0.5) {
+         if ( (value / mean) < 0.625) {
             Point2D_I32 bleachPoint = 
                     new Point2D_I32(minPixel.x + offset.x, minPixel.y + offset.y);
             CircleMask cm = new CircleMask(3);

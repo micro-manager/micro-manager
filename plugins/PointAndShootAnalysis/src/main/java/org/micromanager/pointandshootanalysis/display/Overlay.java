@@ -55,8 +55,6 @@ public class Overlay extends AbstractOverlay {
    private final Map<Integer, List<ParticleData>> tracksIndexedByFrame_;
    private final Map<Integer, List<ParticleData>> controlTracksIndexedByFrame_;
    private final int symbolLenght_ = 30;
-   private final Color[] colors = {Color.RED, Color.BLUE, Color.GREEN, 
-                        Color.ORANGE, Color.YELLOW, Color.CYAN, Color.MAGENTA};
    private final Color maskColor_ = new Color(255, 125, 10);
    private final Color controlMaskColor_ = new Color (125, 255, 10);
    private final Color bleachColor_ = new Color(255, 5, 25);
@@ -198,9 +196,9 @@ public class Overlay extends AbstractOverlay {
                   });
                }
             }
-            gTfm.setColor(colors[colorIndex]);
+            gTfm.setColor(WidgetSettings.COLORS[colorIndex]);
             colorIndex++;
-            if (colorIndex >= colors.length) { 
+            if (colorIndex >= WidgetSettings.COLORS.length) { 
                colorIndex = 0; 
             }
             drawMarker1(gTfm, p.getCentroid(), halfLength, halfLength / 2);
