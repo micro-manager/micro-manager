@@ -77,7 +77,9 @@ public class ParticleData {
    
    public ParticleData(List<Point2D_I32> mask, Point2D_I32 offset, Double avg) {
       mask_ = offset(mask, offset, true);
+      maskIncludingBleach_ = mask_;
       maskAverage_ = avg;
+      maskIncludingBleachAverage_ = avg;
    }
    
    private ParticleData(List<Point2D_I32> mask, 
