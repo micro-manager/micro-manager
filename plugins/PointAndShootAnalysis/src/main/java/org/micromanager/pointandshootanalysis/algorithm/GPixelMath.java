@@ -35,6 +35,7 @@ public class GPixelMath {
    /**
 	 * Computes the minimum for each pixel across all bands in the {@link Planar} image.
 	 *
+    * @param <T>
 	 * @param input Planar image
 	 * @param output Gray scale image containing average pixel values
 	 */
@@ -61,9 +62,10 @@ public class GPixelMath {
 		}
 	}
    
-    /**
+   /**
 	 * Computes the maximum for each pixel across all bands in the {@link Planar} image.
 	 *
+    * @param <T>
 	 * @param input Planar image
 	 * @param output Gray scale image containing average pixel values
 	 */
@@ -90,4 +92,33 @@ public class GPixelMath {
 		}
 	}
    
+   /**
+	 * Computes the maximum for each pixel across all bands in the {@link Planar} image.
+	 *
+    * @param <T>
+	 * @param input Planar image
+	 * @param output Gray scale image containing average pixel values
+	 */
+	public static <T extends ImageGray<T>> void averageBand(Planar<T> input, T output) {
+
+		if( GrayU8.class == input.getBandType() ) {
+			PixelMath.averageBand((Planar<GrayU8>) input, (GrayU8) output);
+		} else if( GrayS8.class == input.getBandType() ) {
+			PixelMath.averageBand((Planar<GrayS8>) input, (GrayS8) output);
+		} else if( GrayU16.class == input.getBandType() ) {
+			PixelMath.averageBand((Planar<GrayU16>) input, (GrayU16) output);
+		} else if( GrayS16.class == input.getBandType() ) {
+			PixelMath.averageBand((Planar<GrayS16>) input, (GrayS16) output);
+		} else if( GrayS32.class == input.getBandType() ) {
+			PixelMath.averageBand((Planar<GrayS32>) input, (GrayS32) output);
+		} else if( GrayS64.class == input.getBandType() ) {
+			PixelMath.averageBand((Planar<GrayS64>) input, (GrayS64) output);
+		} else if( GrayF32.class == input.getBandType() ) {
+			PixelMath.averageBand((Planar<GrayF32>) input, (GrayF32) output);
+		} else if( GrayF64.class == input.getBandType() ) {
+			PixelMath.averageBand((Planar<GrayF64>) input, (GrayF64) output);
+		} else {
+			throw new IllegalArgumentException("Unknown image Type: "+input.getBandType().getSimpleName());
+		}
+	}
 }

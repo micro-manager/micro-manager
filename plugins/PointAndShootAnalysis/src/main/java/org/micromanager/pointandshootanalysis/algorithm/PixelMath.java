@@ -519,4 +519,237 @@ public class PixelMath {
 		}
 	}
    
+   
+   /**
+    * Computes the maximum for each pixel across all bands in the {@link Planar}
+    * image.
+    *
+    * @param input Planar image
+    * @param output Gray scale image containing average pixel values
+    */
+   public static void averageBand(Planar<GrayU8> input, GrayU8 output) {
+      final int h = input.getHeight();
+      final int w = input.getWidth();
+
+      GrayU8[] bands = input.bands;
+
+      for (int y = 0; y < h; y++) {
+         int indexInput = input.getStartIndex() + y * input.getStride();
+         int indexOutput = output.getStartIndex() + y * output.getStride();
+
+         int indexEnd = indexInput + w;
+         long sum;
+         for (; indexInput < indexEnd; indexInput++, indexOutput++) {
+            sum = 0;
+            for (int i = 0; i < bands.length; i++) {
+
+               sum += (bands[i].data[indexInput] & 0xFF);
+            }
+            output.data[indexOutput] = (byte) (sum / bands.length);
+         }
+      }
+   }
+
+   
+   /**
+	 * Computes the maximum for each pixel across all bands in the {@link Planar} image.
+	 * 
+	 * @param input Planar image
+	 * @param output Gray scale image containing average pixel values
+	 */
+	public static void averageBand(Planar<GrayS8> input , GrayS8 output ) {
+		final int h = input.getHeight();
+		final int w = input.getWidth();
+
+		GrayS8[] bands = input.bands;
+		
+		for (int y = 0; y < h; y++) {
+			int indexInput = input.getStartIndex() + y * input.getStride();
+			int indexOutput = output.getStartIndex() + y * output.getStride();
+
+			int indexEnd = indexInput+w;
+         long sum;
+			for (; indexInput < indexEnd; indexInput++, indexOutput++ ) {
+				sum = 0;
+				for( int i = 0; i < bands.length; i++ ) {
+					sum += bands[i].data[ indexInput ];
+				}
+				output.data[indexOutput] =  (byte) (sum / bands.length);
+			}
+		}
+	}
+   
+   /**
+	 * Computes the maximum for each pixel across all bands in the {@link Planar} image.
+	 * 
+	 * @param input Planar image
+	 * @param output Gray scale image containing average pixel values
+	 */
+	public static void averageBand(Planar<GrayU16> input , GrayU16 output ) {
+		final int h = input.getHeight();
+		final int w = input.getWidth();
+
+		GrayU16[] bands = input.bands;
+		
+		for (int y = 0; y < h; y++) {
+			int indexInput = input.getStartIndex() + y * input.getStride();
+			int indexOutput = output.getStartIndex() + y * output.getStride();
+
+			int indexEnd = indexInput+w;
+			// for(int x = 0; x < w; x++ ) {
+         long sum;
+			for (; indexInput < indexEnd; indexInput++, indexOutput++ ) {
+				sum = 0;
+				for( int i = 0; i < bands.length; i++ ) {
+					sum += (bands[i].data[ indexInput ] & 0xFFFF);
+				}
+				output.data[indexOutput] = (short) (sum / bands.length);
+			}
+		}
+	}
+
+   
+   /**
+	 * Computes the average for each pixel across all bands in the {@link Planar} image.
+	 * 
+	 * @param input Planar image
+	 * @param output Gray scale image containing average pixel values
+	 */
+	public static void averageBand(Planar<GrayS16> input , GrayS16 output ) {
+		final int h = input.getHeight();
+		final int w = input.getWidth();
+
+		GrayS16[] bands = input.bands;
+		
+		for (int y = 0; y < h; y++) {
+			int indexInput = input.getStartIndex() + y * input.getStride();
+			int indexOutput = output.getStartIndex() + y * output.getStride();
+
+			int indexEnd = indexInput+w;
+         long sum;
+			for (; indexInput < indexEnd; indexInput++, indexOutput++ ) {
+				sum = 0;
+				for( int i = 0; i < bands.length; i++ ) {
+					sum += bands[i].data[ indexInput ];
+				}
+				output.data[indexOutput] = (short) (sum / bands.length);
+			}
+		}
+	}
+   
+   /**
+	 * Computes the maximum for each pixel across all bands in the {@link Planar} image.
+	 * 
+	 * @param input Planar image
+	 * @param output Gray scale image containing average pixel values
+	 */
+	public static void averageBand(Planar<GrayS32> input , GrayS32 output ) {
+		final int h = input.getHeight();
+		final int w = input.getWidth();
+
+		GrayS32[] bands = input.bands;
+		
+		for (int y = 0; y < h; y++) {
+			int indexInput = input.getStartIndex() + y * input.getStride();
+			int indexOutput = output.getStartIndex() + y * output.getStride();
+
+			int indexEnd = indexInput+w;
+         long sum;
+			for (; indexInput < indexEnd; indexInput++, indexOutput++ ) {
+				sum = 0;
+				for( int i = 0; i < bands.length; i++ ) {
+               sum += bands[i].data[ indexInput ];
+            }
+				output.data[indexOutput] = (int) (sum / bands.length);
+			}
+		}
+	}
+
+   
+   /**
+	 * Computes the maximum for each pixel across all bands in the {@link Planar} image.
+	 * 
+	 * @param input Planar image
+	 * @param output Gray scale image containing average pixel values
+	 */
+	public static void averageBand(Planar<GrayS64> input , GrayS64 output ) {
+		final int h = input.getHeight();
+		final int w = input.getWidth();
+
+		GrayS64[] bands = input.bands;
+		
+		for (int y = 0; y < h; y++) {
+			int indexInput = input.getStartIndex() + y * input.getStride();
+			int indexOutput = output.getStartIndex() + y * output.getStride();
+
+			int indexEnd = indexInput+w;
+			double sum;
+			for (; indexInput < indexEnd; indexInput++, indexOutput++ ) {
+				sum = 0.0;
+				for( int i = 0; i < bands.length; i++ ) {
+               sum += bands[i].data[ indexInput ];
+				}
+				output.data[indexOutput] = (long) (sum / bands.length);
+			}
+		}
+	}
+
+   
+   /**
+	 * Computes the maximum for each pixel across all bands in the {@link Planar} image.
+	 * 
+	 * @param input Planar image
+	 * @param output Gray scale image containing average pixel values
+	 */
+	public static void averageBand(Planar<GrayF32> input , GrayF32 output ) {
+		final int h = input.getHeight();
+		final int w = input.getWidth();
+
+		GrayF32[] bands = input.bands;
+		
+		for (int y = 0; y < h; y++) {
+			int indexInput = input.getStartIndex() + y * input.getStride();
+			int indexOutput = output.getStartIndex() + y * output.getStride();
+
+			int indexEnd = indexInput+w;
+			double sum;
+			for (; indexInput < indexEnd; indexInput++, indexOutput++ ) {
+				sum = 0.0;
+				for( int i = 0; i < bands.length; i++ ) {
+               sum += bands[i].data[ indexInput ];
+				}
+				output.data[indexOutput] = (float) (sum / bands.length);
+			}
+		}
+	}
+   
+   /**
+	 * Computes the maximum for each pixel across all bands in the {@link Planar} image.
+	 * 
+	 * @param input Planar image
+	 * @param output Gray scale image containing minimum pixel values
+	 */
+	public static void averageBand(Planar<GrayF64> input , GrayF64 output ) {
+		final int h = input.getHeight();
+		final int w = input.getWidth();
+
+		GrayF64[] bands = input.bands;
+		
+		for (int y = 0; y < h; y++) {
+			int indexInput = input.getStartIndex() + y * input.getStride();
+			int indexOutput = output.getStartIndex() + y * output.getStride();
+
+			int indexEnd = indexInput+w;
+			double sum; 
+			for (; indexInput < indexEnd; indexInput++, indexOutput++ ) {
+				sum = 0.0;
+				for( int i = 0; i < bands.length; i++ ) {
+               sum += bands[i].data[ indexInput ];
+				}
+				output.data[indexOutput] = (double) (sum / bands.length);
+			}
+		}
+	}
+   
+   
 }
