@@ -374,7 +374,7 @@ public interface DataManager {
     * Return a list of the ProcessorConfigurators currently being used by the
     * application pipeline interface. If `includeDisabled` is false this only returns those configurators that are
     * currently enabled.
-    * @param boolean determines whether or not to include configurators that are not currently enabled.
+    * @param includeDisabled determines whether or not to include configurators that are not currently enabled.
     * @return An ordered list of ProcessorConfigurators.
     */
    List<ProcessorConfigurator> getApplicationPipelineConfigurators(boolean includeDisabled);
@@ -384,7 +384,7 @@ public interface DataManager {
     * Return a list of the ProcessorConfigurators currently being used by the
     * live pipeline interface. If `includeDisabled` is false this only returns those configurators that are
     * currently enabled.
-    * @param boolean determines whether or not to include configurators that are not currently enabled.
+    * @param includeDisabled determines whether or not to include configurators that are not currently enabled.
     * @return An ordered list of ProcessorConfigurators.
     */
     List<ProcessorConfigurator> getLivePipelineConfigurators(boolean includeDisabled);
@@ -442,7 +442,7 @@ public interface DataManager {
     * Sets whether or not the plugin at position `index` in the list is enabled
     * for the application pipeline.
     * @param index. an int determining which position in the list to check
-    * @param boolean of whether or not the plugin should be enabled.
+    * @param enabled of whether or not the plugin should be enabled.
     */
     void setApplicationPipelineStepEnabled(int index, boolean enabled);
     
@@ -458,7 +458,7 @@ public interface DataManager {
     * Sets whether or not the plugin at position `index` in the list is enabled
     * for the live pipeline.
     * @param index. an int determining which position in the list to check
-    * @param boolean of whether or not the plugin should be enabled.
+    * @param enabled of whether or not the plugin should be enabled.
     */
     void setLivePipelineStepEnabled(int index, boolean enabled);
     
