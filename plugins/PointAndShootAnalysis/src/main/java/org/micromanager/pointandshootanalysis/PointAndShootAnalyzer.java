@@ -32,7 +32,9 @@ import boofcv.struct.image.GrayF32;
 import boofcv.struct.image.GrayS32;
 import boofcv.struct.image.GrayU16;
 import boofcv.struct.image.GrayU8;
+import boofcv.struct.image.ImageBase;
 import boofcv.struct.image.ImageGray;
+import boofcv.struct.image.Planar;
 import georegression.struct.point.Point2D_I32;
 import georegression.struct.shapes.Rectangle2D_I32;
 import ij.ImagePlus;
@@ -219,6 +221,34 @@ public class PointAndShootAnalyzer implements Runnable {
          final int xMiddle = roiWidth_ / 2;
          final int yMiddle = roiHeight_ / 2;
          final Point2D_I32 middle = new Point2D_I32(xMiddle, yMiddle);
+         
+         // create a boofCV Planar that contains all of the MM data (no copy, backed by MM
+         Coords.Builder cbb = dataProvider.getAnyImage().getCoords().copyBuilder();
+         Planar bCVStack = new Planar(GrayU16.class, dataProvider.getAxisLength(Coords.T));
+         for (int frame = 0; frame < dataProvider.getAxisLength(Coords.T); frame++) {
+            bCVStack.setBand(frame, BoofCVImageConverter.mmToBoofCV(
+                    dataProvider.getImage(cbb.t(frame).build()), false) );
+         }
+         ListIterator<PASData> pasDataItt = pasData.listIterator();
+         while (pasDataItt.hasNext()) {
+            // define an ROI around the expected postion 
+            PASData pasEntry = pasDataItt.next();
+            int x0 = pasEntry.pasIntended().x - (int) (roiWidth_ / 2);
+            x0 = (x0 < 0) ? 0 : x0;
+            int x1 = (x0 + roiWidth_ > imgWidth) ? imgWidth - x0 : x0 + roiWidth_;
+            int y0 = pasEntry.pasIntended().y - (int) (roiWidth_ / 2);
+            y0 = y0 < 0 ? 0 : y0;
+            int y1 = (y0 + roiHeight_ > imgHeight) ? imgHeight - y0 : y0 + roiHeight_;
+            Planar subImage = bCVStack.subimage(x0, y0, x1, y1, null);
+            PASFrameSet findMinFrames = new PASFrameSet(
+                    pasEntry.framePasClicked() - findMinFramesBefore_,
+                    pasEntry.framePasClicked(),
+                    pasEntry.framePasClicked() + findMinFramesAfter_,
+                    dataProvider.getAxisLength(Coords.T));
+            GrayU16 before = new GrayU16(x1 - x0, y1 - y0);
+            GPixelMath.averageBand(subImage, before, findMinFrames.getStartFrame(), findMinFrames.getEndFrame() + 1);
+         }
+         
 
          ListIterator<PASData> pasDataIt = pasData.listIterator();
          while (pasDataIt.hasNext()) {
@@ -238,6 +268,8 @@ public class PointAndShootAnalyzer implements Runnable {
                     pasEntry.framePasClicked() + findMinFramesAfter_,
                     dataProvider.getAxisLength(Coords.T));
             Coords.Builder cb = dataProvider.getAnyImage().getCoords().copyBuilder();
+            
+            
             ImageStack subStack = new ImageStack(roiWidth_, roiHeight_);
             for (int frame = findMinFrames.getStartFrame();
                     frame < findMinFrames.getEndFrame();
