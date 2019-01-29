@@ -5,7 +5,6 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
-//import ij.gui.NewImage;
 import ij.process.ImageProcessor;
 
 import java.awt.Cursor;
@@ -69,6 +68,11 @@ public class DataAnalysisPanel extends ListeningJPanel {
    private final JCheckBox deskewAutoTest_;
    private final JButton exportButton_;
    
+   private final JPanel sliceOverviewPanel_;
+   private final JFormattedTextField yDownsample_;
+   private final JFormattedTextField spacingDownsample_;
+   private final JFormattedTextField sliceThickness_;
+   
    public static final String[] TRANSFORMOPTIONS = 
       {"None", "Rotate Right 90\u00B0", "Rotate Left 90\u00B0", "Rotate outward", "Rotate 180\u00B0"};
    public static final String[] EXPORTFORMATS = 
@@ -96,7 +100,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
       PanelUtils pu = new PanelUtils(prefs, props, devices);
       final DataAnalysisPanel dataAnalysisPanel = this;
             
-      int textFieldWidth = 35;
+      int textFieldWidth = 25;
 
       // start export sub-panel
       exportPanel_ = new JPanel(new MigLayout(
@@ -238,7 +242,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
       
       deskewPanel_.add(new JLabel("Deskew fudge factor:"));
       deskewFactor_ = pu.makeFloatEntryField(panelName_, 
-            Properties.Keys.PLUGIN_DESKEW_FACTOR.toString(), 1.0, 5);
+            Properties.Keys.PLUGIN_DESKEW_FACTOR.toString(), 1.0, 4);
       deskewPanel_.add(deskewFactor_, "wrap");
       
       deskewInvert_ = pu.makeCheckBox("Invert direction",
@@ -263,6 +267,160 @@ public class DataAnalysisPanel extends ListeningJPanel {
       deskewPanel_.add(deskewButton, "span 3, center, wrap");
       
       this.add(deskewPanel_);
+      
+      
+      // start slice overview sub-panel
+      sliceOverviewPanel_ = new JPanel(new MigLayout(
+              "",
+              "[right]4[center]",
+              "[]8[]"));
+      
+      sliceOverviewPanel_.setBorder(PanelUtils.makeTitledBorder("Slice Overview"));
+      
+      sliceOverviewPanel_.add(new JLabel("Y Downsample:"));
+      yDownsample_ = pu.makeFloatEntryField(panelName_, 
+            Properties.Keys.PLUGIN_Y_DOWNSAMPLE_FACTOR.toString(), 4.0, 4);
+      sliceOverviewPanel_.add(yDownsample_, "wrap");
+      
+      sliceOverviewPanel_.add(new JLabel("Spacing Downsample:"));
+      spacingDownsample_ = pu.makeFloatEntryField(panelName_, 
+            Properties.Keys.PLUGIN_SPACING_DOWNSAMPLE_FACTOR.toString(), 4.0, 4);
+      sliceOverviewPanel_.add(spacingDownsample_, "wrap");
+      
+      sliceOverviewPanel_.add(new JLabel("Fractional Thickness:"));
+      sliceThickness_ = pu.makeFloatEntryField(panelName_, 
+            Properties.Keys.PLUGIN_SLICE_THICKNESS_FACTOR.toString(), 0.1, 4);
+      sliceOverviewPanel_.add(sliceThickness_, "wrap");
+      
+      JButton testSliceOverview = new JButton("Test on Open Dataset");
+      testSliceOverview.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(final ActionEvent e) {
+            final double downSampleY = (Double) yDownsample_.getValue();
+            final double downSampleSpacing = (Double) spacingDownsample_.getValue();
+            final double thicknessFactor = (Double) sliceThickness_.getValue();
+            final int bitdepth = 16;
+            final int dir = -1;   // hardcode for now, this is like the deskew so we can decide +/- 1
+            final double compressX = Math.sqrt(2);  // compress X axis this much  // TODO make amenable to non-45 degree
+            final ImagePlus ip_orig = IJ.getImage();
+            final ImagePlus ip = ip_orig.duplicate();
+
+            // remove slices that we will never collect in real life
+            ij.plugin.StackReducer reduce = new ij.plugin.StackReducer();
+            reduce.reduceStack(ip, (int)Math.round(downSampleSpacing));
+            final int reducedNrSlices = ip.getNSlices();
+            
+            final int roiWidth = (int)Math.round(ip.getWidth()*thicknessFactor);
+            final int scaledWidth = (int)Math.round(roiWidth/downSampleY/compressX);  // can scale width by additional sqrt(2) if adjust spacing and doing max projection anyway
+            final int scaledHeight = (int)Math.round(ip.getHeight()/downSampleY);
+            final double zStepPx = ip.getCalibration().pixelDepth / ip.getCalibration().pixelWidth;
+            final double dx = zStepPx * getStageGeometricShiftFactor(true) * (Double) deskewFactor_.getValue() / downSampleY / compressX;
+            final int width_expansion = (int) Math.abs(Math.ceil(dx*(reducedNrSlices-1)));
+            final int totalWidth = scaledWidth + width_expansion;
+
+            // create a deskewed stack and then max project
+            // this isn't particularly memory efficient but is the easiest way to start
+            // it is a bit faster than doing the projection each step of the way which is more memory efficient
+            ImagePlus forProjector = IJ.createImage("Overview", totalWidth, scaledHeight, reducedNrSlices, bitdepth);
+            double xPosDouble = (dir < 0) ? (double)(totalWidth-scaledWidth) : 0.0;
+            for (int slice=1; slice<=reducedNrSlices; ++slice) {
+               ImageProcessor proc = ip.getStack().getProcessor(slice);
+               proc.setInterpolationMethod(ImageProcessor.BILINEAR);
+               // set ROI based on the thickness of the shown slice, for now it is centered in the sample's Z dimension
+               proc.setRoi(proc.getWidth()/2-roiWidth/2, 0, roiWidth, proc.getHeight());
+               ImageProcessor cropped = proc.crop();
+               ImageProcessor scaled = cropped.resize(scaledWidth, scaledHeight, true);
+               forProjector.setSlice(slice);
+               forProjector.getProcessor().insert(scaled, (int)Math.round(xPosDouble), 0);  // example at https://imagej.nih.gov/ij/developer/source/ij/plugin/MontageMaker.java.html suggests 0-indexed
+               xPosDouble += (dir*dx);
+            }
+            ij.plugin.ZProjector project = new ij.plugin.ZProjector();
+            project.setMethod(ij.plugin.ZProjector.MAX_METHOD);
+            project.setImage(forProjector);
+            project.doProjection();
+            forProjector.setProcessor(project.getProjection().getProcessor());
+            ImagePlus plus = new ImagePlus("scaled", forProjector.getProcessor());
+            ij.measure.Calibration cal = ip.getCalibration().copy();
+            cal.pixelWidth = cal.pixelWidth*downSampleY;
+            cal.pixelHeight = cal.pixelHeight*downSampleY;
+            plus.setCalibration(cal);
+            plus.show();
+
+//            // original way of doing the Z projection after adding every slice to save memory
+//            // could also think of implementing own max projection by comparing pixels one at a time           
+//            ImagePlus forProjector = IJ.createImage("Overview", totalWidth, scaledHeight, 2, bitdepth);
+//            ij.plugin.ZProjector project = new ij.plugin.ZProjector();
+//            project.setMethod(ij.plugin.ZProjector.MAX_METHOD);
+//            double xPosDouble = (dir < 0) ? (double)(totalWidth-scaledWidth) : 0.0;
+//            for (int slice=1; slice<=ip.getNSlices(); ++slice) {
+//               ImageProcessor proc = ip.getStack().getProcessor(slice);
+//               proc.setInterpolationMethod(ImageProcessor.BILINEAR);
+//               ImageProcessor scaled = proc.resize(scaledWidth, scaledHeight, true);
+//               forProjector.setSlice(2);
+//               forProjector.getProcessor().setBackgroundValue(0.0);
+//               forProjector.getProcessor().fill();
+//               forProjector.getProcessor().insert(scaled, (int)Math.round(xPosDouble), 0);  // example at https://imagej.nih.gov/ij/developer/source/ij/plugin/MontageMaker.java.html suggests 0-indexed
+//               xPosDouble += (dir*dx);
+//               project.setImage(forProjector);
+//               project.doProjection();
+//               forProjector.setSlice(1);
+//               forProjector.setProcessor(project.getProjection().getProcessor());
+//            }
+//            forProjector.setSlice(1);
+//            ImagePlus plus = new ImagePlus("scaled", forProjector.getProcessor());
+//            Calibration cal = ip.getCalibration().copy();
+//            cal.pixelWidth = cal.pixelWidth*downSampleY;
+//            cal.pixelHeight = cal.pixelHeight*downSampleY;
+//            plus.setCalibration(cal);
+//            plus.show();
+            
+            
+         }
+      });
+      sliceOverviewPanel_.add(testSliceOverview, "span 2, center, wrap");
+      
+      
+      this.add(sliceOverviewPanel_);
+      
+//    JButton testButton = new JButton("test");
+//    testButton.addActionListener(new ActionListener() {
+//       @Override
+//       public void actionPerformed(ActionEvent arg0) {
+//          final double downSampleY = 2.0;
+//          final int bitdepth = 16;
+//          final ImagePlus ip_orig = IJ.getImage();
+//          final int height = ip_orig.getHeight();
+//          final int width = ip_orig.getWidth();
+//          final int nrSlices = ip_orig.getNSlices();
+//          final double pixelSize = ip_orig.getCalibration().pixelWidth;
+//          final double zStepPx = ip_orig.getCalibration().pixelDepth / pixelSize;
+//          final double dx = zStepPx * getStageGeometricShiftFactor(true) * (Double) deskewFactor_.getValue();
+//          final int width_expansion = (int) Math.abs(Math.ceil(dx*(nrSlices-1)));
+//          
+//          final ImageStack stack = ImageStack.create((int)Math.round((width+width_expansion)/downSampleY),
+//                (int)Math.round(height/downSampleY), nrSlices, bitdepth);
+//          final ImagePlus plus = new ImagePlus("Overview", stack);
+//          plus.show();
+//          
+//          for (int i=0; i<nrSlices; ++i) {
+//             // set ROI and crop as appropriate
+//             ip_orig.setSlice(i);
+//             
+//             
+//          }
+          
+//          final ImagePlus ip2 = ip.duplicate();
+//          IJ.run(ip2, "Size...", "width=" + Math.round(width/(downSampleY*Math.sqrt(2))) + " height=" + Math.round(height/downSampleY) + " average interpolation=Bilinear");
+//          final int dir = -1;
+//          ij.plugin.CanvasResizer resize = new ij.plugin.CanvasResizer();
+//          ip2.setStack(resize.expandStack(ip2.getImageStack(), width + width_expansion, height, (dir < 0 ? width_expansion : 0), 0));
+//          ip2.show();
+//          // TODO finish
+//          
+//       }
+//    });
+//    this.add(testButton);
+      
       
 //      JButton testButton = new JButton("test");
 //      testButton.addActionListener(new ActionListener() {
@@ -387,7 +545,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
       return Math.tan(angle/180.0*Math.PI);
    }
    
-public void runDeskew(final ListeningJPanel caller) {
+   public void runDeskew(final ListeningJPanel caller) {
       
       /**
        * Worker thread to execute deskew.
@@ -506,6 +664,7 @@ public void runDeskew(final ListeningJPanel caller) {
                if (deskewInvert_.isSelected()) {
                   dir *= -1;
                }
+               
                final boolean interpolate = deskewInterpolate_.isSelected();
                ImagePlus i = channels[c];
                i.setStack(resize.expandStack(i.getImageStack(), width + width_expansion, height, (dir < 0 ? width_expansion : 0), 0));
@@ -513,9 +672,7 @@ public void runDeskew(final ListeningJPanel caller) {
                   for (int s=0; s<nrSlices; s++) {  // loop over slices in stack and shift each by an appropriate amount
                      i.setPositionWithoutUpdate(c+1, s+1, t+1);  // all 1-indexed
                      ImageProcessor proc = i.getProcessor();
-                     if (interpolate) {
-                        proc.setInterpolationMethod(ImageProcessor.BILINEAR);
-                     }
+                     proc.setInterpolationMethod(interpolate ? ImageProcessor.BILINEAR : ImageProcessor.NONE);
                      proc.translate(dx*s*dir, 0);
                      IJ.showProgress(++nrImagesProcessed, nrImages);
                   }
