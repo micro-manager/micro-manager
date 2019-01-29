@@ -46,6 +46,8 @@
 typedef std::map<std::string, mvIMPACT::acquire::Component> DeviceFeatureContainer;
 typedef std::set<std::string> StringSet;
 
+class MySequenceThread;
+
 //-----------------------------------------------------------------------------
 class mvIMPACT_Acquire_Device : public CCameraBase<mvIMPACT_Acquire_Device>
 //-----------------------------------------------------------------------------
