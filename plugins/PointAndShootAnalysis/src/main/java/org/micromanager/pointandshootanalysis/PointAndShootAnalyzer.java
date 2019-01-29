@@ -32,7 +32,6 @@ import boofcv.struct.image.GrayF32;
 import boofcv.struct.image.GrayS32;
 import boofcv.struct.image.GrayU16;
 import boofcv.struct.image.GrayU8;
-import boofcv.struct.image.ImageBase;
 import boofcv.struct.image.ImageGray;
 import boofcv.struct.image.Planar;
 import georegression.struct.point.Point2D_I32;
@@ -225,6 +224,9 @@ public class PointAndShootAnalyzer implements Runnable {
          // create a boofCV Planar that contains all of the MM data (no copy, backed by MM
          Coords.Builder cbb = dataProvider.getAnyImage().getCoords().copyBuilder();
          Planar bCVStack = new Planar(GrayU16.class, dataProvider.getAxisLength(Coords.T));
+         bCVStack.setWidth(imgWidth);
+         bCVStack.setHeight(imgHeight);
+         bCVStack.setStride(imgWidth);
          for (int frame = 0; frame < dataProvider.getAxisLength(Coords.T); frame++) {
             bCVStack.setBand(frame, BoofCVImageConverter.mmToBoofCV(
                     dataProvider.getImage(cbb.t(frame).build()), false) );
@@ -235,18 +237,73 @@ public class PointAndShootAnalyzer implements Runnable {
             PASData pasEntry = pasDataItt.next();
             int x0 = pasEntry.pasIntended().x - (int) (roiWidth_ / 2);
             x0 = (x0 < 0) ? 0 : x0;
-            int x1 = (x0 + roiWidth_ > imgWidth) ? imgWidth - x0 : x0 + roiWidth_;
+            int x1 = (x0 + roiWidth_ > imgWidth) ? imgWidth : x0 + roiWidth_;
             int y0 = pasEntry.pasIntended().y - (int) (roiWidth_ / 2);
             y0 = y0 < 0 ? 0 : y0;
-            int y1 = (y0 + roiHeight_ > imgHeight) ? imgHeight - y0 : y0 + roiHeight_;
-            Planar subImage = bCVStack.subimage(x0, y0, x1, y1, null);
+            int y1 = (y0 + roiHeight_ > imgHeight) ? imgHeight: y0 + roiHeight_;
+            Planar<GrayU16> subImage = bCVStack.subimage(x0, y0, x1, y1, null);
             PASFrameSet findMinFrames = new PASFrameSet(
                     pasEntry.framePasClicked() - findMinFramesBefore_,
                     pasEntry.framePasClicked(),
                     pasEntry.framePasClicked() + findMinFramesAfter_,
                     dataProvider.getAxisLength(Coords.T));
-            GrayU16 before = new GrayU16(x1 - x0, y1 - y0);
-            GPixelMath.averageBand(subImage, before, findMinFrames.getStartFrame(), findMinFrames.getEndFrame() + 1);
+            GrayU16 beforeCV = new GrayU16(x1 - x0, y1 - y0);
+            org.micromanager.pointandshootanalysis.algorithm.GPixelMath.averageBand(
+                  subImage, beforeCV, findMinFrames.getStartFrame(), findMinFrames.getEndFrame() + 1);
+            GrayU16 minBCV = new GrayU16(x1 - x0, y1 - y0);
+            org.micromanager.pointandshootanalysis.algorithm.GPixelMath.minimumBand(
+                  subImage, minBCV, findMinFrames.getStartFrame(), findMinFrames.getEndFrame() + 1);
+            GrayF32 dResult = new GrayF32(minBCV.width, minBCV.height);
+            GPixelMath.divide(minBCV, beforeCV, dResult);
+            GrayF32 gResult = new GrayF32(minBCV.width, minBCV.height);
+            BlurImageOps.gaussian(dResult, gResult, 3, -1, null);
+            
+             // Find the minimum and define this as the bleachPoint
+            //Point minPoint = findMinPixel(result.getProcessor());
+            Point2D_I32 minPoint = findMinPixel(gResult);
+            
+            System.out.println("Lowest Pixel position: " + minPoint.x + ", " + minPoint.y);
+            // check if this is within expected range
+            if (Utils.distance(minPoint, middle) > MAXDISTANCE) {
+               pasDataItt.remove();
+               continue;
+            }
+            // Store coordinates indicating where the bleach actually happened
+            // (in pixel coordinates of the original data)
+            Point pasActual = new Point(x0 + minPoint.x, y0 + minPoint.y);
+
+            // Calculate intensity in the subStack of a spot with diameter "radius"
+            // TODO: evalute background
+            // TODO: track spot
+            // TODO: analyze complete subStack, while tracking moving spots
+            // Estimate when the bleach actually happened by looking for frames
+            // that are much brighter than the average
+            // This is not always accurate
+            /*
+            List<Double> subStackIntensityData = new ArrayList<>();
+            for (int slice = 1; slice <= subStack.getSize(); slice++) {
+               ImageProcessor iProc = subStack.getProcessor(slice);
+               subStackIntensityData.add((double) Utils.GetIntensity(iProc.convertToFloatProcessor(),
+                       minPoint.x, minPoint.y, radius));
+            }
+            double avg = ListUtils.listAvg(subStackIntensityData);
+            double stdDev = ListUtils.listStdDev(subStackIntensityData, avg);
+            List<Integer> bleachFrames = new ArrayList<>();
+            for (int frame = 0; frame < subStackIntensityData.size(); frame++) {
+               if (subStackIntensityData.get(frame) > avg + 2 * stdDev) {
+                  bleachFrames.add(frame);
+               }
+            }
+            int[] pasFrames = new int[bleachFrames.size()];
+            for (int frame = 0; frame < bleachFrames.size(); frame++) {
+               pasFrames[frame] = bleachFrames.get(frame) + findMinFrames.getStartFrame();
+            }
+            
+            pasDataItt.set(pasEntry.copyBuilder().
+                    pasActual(pasActual).
+                    pasFrames(pasFrames).
+                    build());
+            */
          }
          
 

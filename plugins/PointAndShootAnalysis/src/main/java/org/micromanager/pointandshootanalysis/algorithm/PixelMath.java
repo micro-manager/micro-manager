@@ -641,7 +641,7 @@ public class PixelMath {
 				for( int i = startBand; i <= lastBand; i++ ) {
 					sum += bands[i].data[ indexInput ];
 				}
-				output.data[indexOutput] =  (byte) (lastBand + 1 - startBand);
+				output.data[indexOutput] =  (byte) (sum / (lastBand + 1 - startBand));
 			}
 		}
 	}
@@ -673,7 +673,7 @@ public class PixelMath {
 				for( int i = startBand; i <= lastBand; i++ ) {
 					sum += (bands[i].data[ indexInput ] & 0xFFFF);
 				}
-				output.data[indexOutput] = (short) (lastBand + 1 - startBand);
+				output.data[indexOutput] = (short) (sum / (lastBand + 1 - startBand));
 			}
 		}
 	}
@@ -705,7 +705,7 @@ public class PixelMath {
 				for( int i = startBand; i <= lastBand; i++ ) {
 					sum += bands[i].data[ indexInput ];
 				}
-				output.data[indexOutput] = (short) (lastBand + 1 - startBand);
+				output.data[indexOutput] = (short) (sum / (lastBand + 1 - startBand));
 			}
 		}
 	}
@@ -736,7 +736,7 @@ public class PixelMath {
 				for( int i = startBand; i <= lastBand; i++ ) {
                sum += bands[i].data[ indexInput ];
             }
-				output.data[indexOutput] = (int) (lastBand + 1 - startBand);
+				output.data[indexOutput] = (int) (sum / (lastBand + 1 - startBand));
 			}
 		}
 	}
@@ -768,7 +768,7 @@ public class PixelMath {
 				for( int i = startBand; i <= lastBand; i++ ) {
                sum += bands[i].data[ indexInput ];
 				}
-				output.data[indexOutput] = (long) (lastBand + 1 - startBand);
+				output.data[indexOutput] = (long) (sum / (lastBand + 1 - startBand));
 			}
 		}
 	}
@@ -800,7 +800,7 @@ public class PixelMath {
 				for( int i = startBand; i <= lastBand; i++ ) {
                sum += bands[i].data[ indexInput ];
 				}
-				output.data[indexOutput] = (float) (lastBand + 1 - startBand);
+				output.data[indexOutput] = (float) (sum / (lastBand + 1 - startBand));
 			}
 		}
 	}
@@ -831,7 +831,7 @@ public class PixelMath {
 				for( int i = startBand; i <= lastBand; i++ ) {
                sum += bands[i].data[ indexInput ];
 				}
-				output.data[indexOutput] = (double) (lastBand + 1 - startBand);
+				output.data[indexOutput] = (double) (sum / (lastBand + 1 - startBand));
 			}
 		}
 	}
