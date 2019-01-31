@@ -36,12 +36,7 @@ import boofcv.struct.image.ImageGray;
 import boofcv.struct.image.Planar;
 import georegression.struct.point.Point2D_I32;
 import georegression.struct.shapes.Rectangle2D_I32;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.plugin.ZProjector;
-import ij.process.ImageProcessor;
 import java.awt.Point;
-import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -68,7 +63,6 @@ import org.micromanager.data.Metadata;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.pointandshootanalysis.algorithm.ContourStats;
-import org.micromanager.pointandshootanalysis.algorithm.MovementByCrossCorrelation;
 import org.micromanager.pointandshootanalysis.algorithm.Utils;
 import org.micromanager.pointandshootanalysis.data.BoofCVImageConverter;
 import org.micromanager.pointandshootanalysis.data.PASData;
@@ -78,7 +72,6 @@ import org.micromanager.pointandshootanalysis.data.Terms;
 import org.micromanager.pointandshootanalysis.display.Overlay;
 import org.micromanager.pointandshootanalysis.display.WidgetSettings;
 import org.micromanager.pointandshootanalysis.plot.PlotUtils;
-import org.micromanager.pointandshootanalysis.utils.ListUtils;
 
 /**
  *
@@ -231,10 +224,10 @@ public class PointAndShootAnalyzer implements Runnable {
             bCVStack.setBand(frame, BoofCVImageConverter.mmToBoofCV(
                     dataProvider.getImage(cbb.t(frame).build()), false) );
          }
-         ListIterator<PASData> pasDataItt = pasData.listIterator();
-         while (pasDataItt.hasNext()) {
+         ListIterator<PASData> pasDataIt = pasData.listIterator();
+         while (pasDataIt.hasNext()) {
             // define an ROI around the expected postion 
-            PASData pasEntry = pasDataItt.next();
+            PASData pasEntry = pasDataIt.next();
             int x0 = pasEntry.pasIntended().x - (int) (roiWidth_ / 2);
             x0 = (x0 < 0) ? 0 : x0;
             int x1 = (x0 + roiWidth_ > imgWidth) ? imgWidth : x0 + roiWidth_;
@@ -263,54 +256,28 @@ public class PointAndShootAnalyzer implements Runnable {
             BlurImageOps.gaussian(dResult, gResult, 3, -1, null);
             
              // Find the minimum and define this as the bleachPoint
-            //Point minPoint = findMinPixel(result.getProcessor());
             Point2D_I32 minPoint = findMinPixel(gResult);
             
-            System.out.println("Lowest Pixel position: " + minPoint.x + ", " + minPoint.y);
+            //System.out.println("Lowest Pixel position: " + minPoint.x + ", " + minPoint.y);
             // check if this is within expected range
             if (Utils.distance(minPoint, middle) > MAXDISTANCE) {
-               pasDataItt.remove();
+               pasDataIt.remove();
                continue;
             }
             // Store coordinates indicating where the bleach actually happened
             // (in pixel coordinates of the original data)
             Point pasActual = new Point(x0 + minPoint.x, y0 + minPoint.y);
-
-            // Calculate intensity in the subStack of a spot with diameter "radius"
-            // TODO: evalute background
-            // TODO: track spot
-            // TODO: analyze complete subStack, while tracking moving spots
-            // Estimate when the bleach actually happened by looking for frames
-            // that are much brighter than the average
-            // This is not always accurate
-            /*
-            List<Double> subStackIntensityData = new ArrayList<>();
-            for (int slice = 1; slice <= subStack.getSize(); slice++) {
-               ImageProcessor iProc = subStack.getProcessor(slice);
-               subStackIntensityData.add((double) Utils.GetIntensity(iProc.convertToFloatProcessor(),
-                       minPoint.x, minPoint.y, radius));
-            }
-            double avg = ListUtils.listAvg(subStackIntensityData);
-            double stdDev = ListUtils.listStdDev(subStackIntensityData, avg);
-            List<Integer> bleachFrames = new ArrayList<>();
-            for (int frame = 0; frame < subStackIntensityData.size(); frame++) {
-               if (subStackIntensityData.get(frame) > avg + 2 * stdDev) {
-                  bleachFrames.add(frame);
-               }
-            }
-            int[] pasFrames = new int[bleachFrames.size()];
-            for (int frame = 0; frame < bleachFrames.size(); frame++) {
-               pasFrames[frame] = bleachFrames.get(frame) + findMinFrames.getStartFrame();
-            }
             
-            pasDataItt.set(pasEntry.copyBuilder().
+            System.out.println("BCV: " + findMinFrames.getCentralFrame() + ", " +
+                    pasActual.x + ", " + pasActual.y);
+
+            pasDataIt.set(pasEntry.copyBuilder().
                     pasActual(pasActual).
-                    pasFrames(pasFrames).
-                    build());
-            */
+                    pasFrames(null).
+                    build());         
          }
          
-
+/*
          ListIterator<PASData> pasDataIt = pasData.listIterator();
          while (pasDataIt.hasNext()) {
             // define an ROI around the expected postion 
@@ -384,7 +351,7 @@ public class PointAndShootAnalyzer implements Runnable {
             //Point minPoint = findMinPixel(result.getProcessor());
             Point2D_I32 minPoint = findMinPixel(gResult);
             
-            System.out.println("Lowest Pixel position: " + minPoint.x + ", " + minPoint.y);
+            //System.out.println("Lowest Pixel position: " + minPoint.x + ", " + minPoint.y);
             // check if this is within expected range
             if (Utils.distance(minPoint, middle) > MAXDISTANCE) {
                pasDataIt.remove();
@@ -394,6 +361,8 @@ public class PointAndShootAnalyzer implements Runnable {
             // (in pixel coordinates of the original data)
             Point pasActual = new Point(roiX + minPoint.x, roiY + minPoint.y);
 
+            System.out.println("IJ: " + findMinFrames.getCentralFrame() + ", " +
+                    pasActual.x + ", " + pasActual.y);
             // Calculate intensity in the subStack of a spot with diameter "radius"
             // TODO: evalute background
             // TODO: track spot
@@ -401,6 +370,7 @@ public class PointAndShootAnalyzer implements Runnable {
             // Estimate when the bleach actually happened by looking for frames
             // that are much brighter than the average
             // This is not always accurate
+            /
             List<Double> subStackIntensityData = new ArrayList<>();
             for (int slice = 1; slice <= subStack.getSize(); slice++) {
                ImageProcessor iProc = subStack.getProcessor(slice);
@@ -419,13 +389,14 @@ public class PointAndShootAnalyzer implements Runnable {
             for (int frame = 0; frame < bleachFrames.size(); frame++) {
                pasFrames[frame] = bleachFrames.get(frame) + findMinFrames.getStartFrame();
             }
+            /
             
             pasDataIt.set(pasEntry.copyBuilder().
                     pasActual(pasActual).
-                    pasFrames(pasFrames).
+                    pasFrames(null).
                     build());
          }
-
+*/
          // Track particle that received the bleach by local thresholding
          // First go backwards in time, then forward
          pasDataIt = pasData.listIterator();
@@ -449,7 +420,7 @@ public class PointAndShootAnalyzer implements Runnable {
                   currentPoint = nextParticle.getCentroid();
                   track.put(frame, nextParticle);
                } else {
-                  System.out.println("Before Missing particle");
+                 // System.out.println("Before Missing particle");
                   // TODO: increase counter, give up when too high
                }
             }
@@ -470,7 +441,7 @@ public class PointAndShootAnalyzer implements Runnable {
                   if (previousParticle != null) {
                      nextParticle = previousParticle.copy();
                   }
-                  System.out.println("After Missing particle");
+                  //System.out.println("After Missing particle");
                   // TODO: increase counter, give up when too high
                } 
                
@@ -676,7 +647,7 @@ public class PointAndShootAnalyzer implements Runnable {
     *
     * @param ip
     * @return
-    */
+    *
    public static Point findMinPixel(ImageProcessor ip) {
       Point p = new Point(0, 0);
       Float val = ip.getPixelValue(0, 0);
@@ -691,6 +662,7 @@ public class PointAndShootAnalyzer implements Runnable {
       }
       return p;
    }
+   */
    
    public static Point2D_I32 findMinPixel(GrayF32 img) {
       Point2D_I32 p = new Point2D_I32(0, 0);
@@ -824,7 +796,7 @@ public class PointAndShootAnalyzer implements Runnable {
    }
  
    
-   
+   /*
    private Point ccParticle(DataProvider dp, Coords.Builder cb,
            int frame1, int frame2, Point p) throws IOException {
       Coords coord = cb.t(frame1).build();
@@ -849,13 +821,14 @@ public class PointAndShootAnalyzer implements Runnable {
       Point2D.Double p2 = new Point2D.Double();
       mbdd.getJitter(iProc2, p2);
       return new Point(p.x + (int) p2.x - halfROISize_, p.y + (int) p2.y - halfROISize_);
-      /*
+      /
      NormalizedCrossCorrelation ncc = new NormalizedCrossCorrelation( 
              (ShortProcessor)  iProc);
      return ncc.correlate((ShortProcessor) iProc2, p, new Point(2,2));
-*/
+/
    
    }
+*/
    
    private Rectangle2D_I32 boundingBoxSize(DataProvider dp, Coords.Builder cb,
            int frame, Point2D_I32 p) throws IOException
