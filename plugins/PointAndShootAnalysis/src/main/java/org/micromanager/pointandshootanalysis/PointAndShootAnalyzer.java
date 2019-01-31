@@ -249,13 +249,17 @@ public class PointAndShootAnalyzer implements Runnable {
                     dataProvider.getAxisLength(Coords.T));
             GrayU16 beforeCV = new GrayU16(x1 - x0, y1 - y0);
             org.micromanager.pointandshootanalysis.algorithm.GPixelMath.averageBand(
-                  subImage, beforeCV, findMinFrames.getStartFrame(), findMinFrames.getEndFrame() + 1);
+                  subImage, beforeCV, findMinFrames.getStartFrame(), findMinFrames.getCentralFrame() + 1);
+            GrayF32 beforeCVF = new GrayF32(x1 - x0, y1 - y0);
+            ConvertImage.convert(beforeCV, beforeCVF);
             GrayU16 minBCV = new GrayU16(x1 - x0, y1 - y0);
             org.micromanager.pointandshootanalysis.algorithm.GPixelMath.minimumBand(
-                  subImage, minBCV, findMinFrames.getStartFrame(), findMinFrames.getEndFrame() + 1);
-            GrayF32 dResult = new GrayF32(minBCV.width, minBCV.height);
-            GPixelMath.divide(minBCV, beforeCV, dResult);
-            GrayF32 gResult = new GrayF32(minBCV.width, minBCV.height);
+                  subImage, minBCV, findMinFrames.getCentralFrame(), findMinFrames.getEndFrame() + 1);
+            GrayF32 minBCVF = new GrayF32(x1 - x0, y1 - y0);
+            ConvertImage.convert(minBCV, minBCVF);
+            GrayF32 dResult = new GrayF32(minBCVF.width, minBCVF.height);
+            GPixelMath.divide(minBCVF, beforeCVF, dResult);
+            GrayF32 gResult = new GrayF32(minBCVF.width, minBCVF.height);
             BlurImageOps.gaussian(dResult, gResult, 3, -1, null);
             
              // Find the minimum and define this as the bleachPoint
