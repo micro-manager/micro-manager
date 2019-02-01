@@ -198,7 +198,7 @@ public class PatternOverlay extends AbstractOverlay {
       CIRCLE("Circle") {
          @Override
          void draw(Graphics2D g, int patternSize, float width, float height) {
-            float r = 0.5f * patternSize * Math.min(width, height) / 100.0f;
+            float r = 0.5f * patternSize * Math.max(width, height) / 100.0f * (float)Math.sqrt(2);
             g.draw(new Ellipse2D.Float(0.5f * width - r, 0.5f * height - r,
                   2.0f * r, 2.0f * r));
          }
@@ -207,7 +207,7 @@ public class PatternOverlay extends AbstractOverlay {
          String getSizeString(int patternSize, double umPerImagePixel,
                float width, float height)
          {
-            float dImgPx = patternSize * Math.min(width, height) / 100.0f;
+            float dImgPx = patternSize * Math.max(width, height) / 100.0f * (float)Math.sqrt(2);
             if (Double.isNaN(umPerImagePixel)) {
                return String.format("Circle Diameter: %d px",
                      (int) Math.round(dImgPx));
