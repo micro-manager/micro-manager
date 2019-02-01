@@ -277,126 +277,6 @@ public class PointAndShootAnalyzer implements Runnable {
                     build());         
          }
          
-/*
-         ListIterator<PASData> pasDataIt = pasData.listIterator();
-         while (pasDataIt.hasNext()) {
-            // define an ROI around the expected postion 
-            PASData pasEntry = pasDataIt.next();
-            int roiX = pasEntry.pasIntended().x - (int) (roiWidth_ / 2);
-            roiX = (roiX < 0) ? 0 : roiX;
-            roiX = (roiX + roiWidth_ > imgWidth) ? imgWidth - roiWidth_ : roiX;
-            int roiY = pasEntry.pasIntended().y - (int) (roiWidth_ / 2);
-            roiY = roiY < 0 ? 0 : roiY;
-            roiY = (roiY + roiHeight_ > imgHeight) ? imgHeight - roiHeight_ : roiY;
-
-            // Make a substack with this ROI, starting findMinFramesBefore_ and ending findMinFramesAfter_
-            PASFrameSet findMinFrames = new PASFrameSet(
-                    pasEntry.framePasClicked() - findMinFramesBefore_,
-                    pasEntry.framePasClicked(),
-                    pasEntry.framePasClicked() + findMinFramesAfter_,
-                    dataProvider.getAxisLength(Coords.T));
-            Coords.Builder cb = dataProvider.getAnyImage().getCoords().copyBuilder();
-            
-            
-            ImageStack subStack = new ImageStack(roiWidth_, roiHeight_);
-            for (int frame = findMinFrames.getStartFrame();
-                    frame < findMinFrames.getEndFrame();
-                    frame++) {
-               Coords coord = cb.t(frame).build();
-               Image img = dataProvider.getImage(coord);
-               ImageProcessor iProc = studio_.data().getImageJConverter().createProcessor(img);
-               iProc.setRoi(roiX, roiY, roiWidth_, roiHeight_);
-               ImageProcessor crop = iProc.crop();
-               subStack.addSlice(crop);
-            }
-            ImagePlus imp = new ImagePlus("f: " + pasEntry.framePasClicked(), subStack);
-
-            // make an average projection of this substack
-            ZProjector zp = new ZProjector(imp);
-            zp.setMethod(ZProjector.AVG_METHOD);
-            zp.setStartSlice(1);
-            zp.setStopSlice(findMinFrames.getCentralFrame()
-                    - findMinFrames.getStartFrame());  // TODO: make sure this is always correct
-            zp.doProjection();
-            ImagePlus before = zp.getProjection();
-
-            // make a minimum projection of this substack
-            zp.setMethod(ZProjector.MIN_METHOD);
-            zp.setStartSlice(1);
-            zp.setStopSlice(imp.getNSlices());
-            zp.doProjection();
-            ImagePlus min = zp.getProjection();
-            
-            // Normalize (divide) the minimum projection with the average projection 
-            ImageGray minBCV = BoofCVImageConverter.convert(
-                    min.getProcessor().convertToFloatProcessor(), false);
-            ImageGray beforeCV = BoofCVImageConverter.convert(
-                    before.getProcessor().convertToFloatProcessor(), false);
-            GrayF32 dResult = new GrayF32(minBCV.width, minBCV.height);
-            GPixelMath.divide(minBCV, beforeCV, dResult);
-            GrayF32 gResult = new GrayF32(minBCV.width, minBCV.height);
-            BlurImageOps.gaussian(dResult, gResult, 3, -1, null);
-            
-            // ImageProcessor tmp = BoofCVImageConverter.convert(gResult, false);
-            // ImagePlus tTmp = new ImagePlus("BoofCV", tmp);
-            //tTmp.show();
-
-            // Normalize (divivde) the minimum projection with the average projection 
-            // ImageCalculator ic = new ImageCalculator();
-            // ImagePlus result = ic.run("Divide 32-bit", min, before);
-            // IJ.run(result, "Gaussian Blur...", "sigma=3");
-            //result.show();
-
-            // Find the minimum and define this as the bleachPoint
-            //Point minPoint = findMinPixel(result.getProcessor());
-            Point2D_I32 minPoint = findMinPixel(gResult);
-            
-            //System.out.println("Lowest Pixel position: " + minPoint.x + ", " + minPoint.y);
-            // check if this is within expected range
-            if (Utils.distance(minPoint, middle) > MAXDISTANCE) {
-               pasDataIt.remove();
-               continue;
-            }
-            // Store coordinates indicating where the bleach actually happened
-            // (in pixel coordinates of the original data)
-            Point pasActual = new Point(roiX + minPoint.x, roiY + minPoint.y);
-
-            System.out.println("IJ: " + findMinFrames.getCentralFrame() + ", " +
-                    pasActual.x + ", " + pasActual.y);
-            // Calculate intensity in the subStack of a spot with diameter "radius"
-            // TODO: evalute background
-            // TODO: track spot
-            // TODO: analyze complete subStack, while tracking moving spots
-            // Estimate when the bleach actually happened by looking for frames
-            // that are much brighter than the average
-            // This is not always accurate
-            /
-            List<Double> subStackIntensityData = new ArrayList<>();
-            for (int slice = 1; slice <= subStack.getSize(); slice++) {
-               ImageProcessor iProc = subStack.getProcessor(slice);
-               subStackIntensityData.add((double) Utils.GetIntensity(iProc.convertToFloatProcessor(),
-                       minPoint.x, minPoint.y, radius));
-            }
-            double avg = ListUtils.listAvg(subStackIntensityData);
-            double stdDev = ListUtils.listStdDev(subStackIntensityData, avg);
-            List<Integer> bleachFrames = new ArrayList<>();
-            for (int frame = 0; frame < subStackIntensityData.size(); frame++) {
-               if (subStackIntensityData.get(frame) > avg + 2 * stdDev) {
-                  bleachFrames.add(frame);
-               }
-            }
-            int[] pasFrames = new int[bleachFrames.size()];
-            for (int frame = 0; frame < bleachFrames.size(); frame++) {
-               pasFrames[frame] = bleachFrames.get(frame) + findMinFrames.getStartFrame();
-            }
-            /
-            
-            pasDataIt.set(pasEntry.copyBuilder().
-                    pasActual(pasActual).
-                    pasFrames(null).
-                    build());
-         }
-*/
          // Track particle that received the bleach by local thresholding
          // First go backwards in time, then forward
          pasDataIt = pasData.listIterator();
@@ -645,6 +525,7 @@ public class PointAndShootAnalyzer implements Runnable {
    /**
     * Convenience method to find the minimum pixel value in the given Processor
     *
+    * @param img
     * @param ip
     * @return
     *
@@ -664,6 +545,11 @@ public class PointAndShootAnalyzer implements Runnable {
    }
    */
    
+   /**
+    * 
+    * @param img image in which to look for minimum pixel
+    * @return 
+    */
    public static Point2D_I32 findMinPixel(GrayF32 img) {
       Point2D_I32 p = new Point2D_I32(0, 0);
       Float val = img.unsafe_get(0, 0);
