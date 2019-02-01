@@ -51,6 +51,8 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
+import javax.swing.JFormattedTextField;
+import java.text.NumberFormat;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import net.miginfocom.layout.CC;
@@ -337,6 +339,8 @@ public class PatternOverlay extends AbstractOverlay {
    private JPanel configUI_;
    private JComboBox patternTypeComboBox_;
    private JSlider patternSizeSlider_;
+   private JFormattedTextField patternSizeTextBox_;
+   private JLabel patternSizeLabel_;
    private JComboBox colorComboBox_;
    private JCheckBox showSizeCheckBox_;
 
@@ -424,6 +428,7 @@ public class PatternOverlay extends AbstractOverlay {
       try {
          patternTypeComboBox_.setSelectedItem(patternType_);
          patternSizeSlider_.setValue(patternSize_);
+         patternSizeTextBox_.setValue(patternSize_);
          colorComboBox_.setSelectedItem(color_);
          showSizeCheckBox_.setSelected(showSize_);
       }
@@ -464,7 +469,19 @@ public class PatternOverlay extends AbstractOverlay {
                return;
             }
             patternSize_ = patternSizeSlider_.getValue();
+            patternSizeTextBox_.setValue(patternSize_);
             fireOverlayConfigurationChanged();
+         }
+      });
+      
+      NumberFormat patternSizeTextFormat = NumberFormat.getInstance();
+      patternSizeTextBox_ = new JFormattedTextField(patternSizeTextFormat);
+      patternSizeTextBox_.setColumns(2);
+      patternSizeLabel_ = new JLabel("%");
+      patternSizeTextBox_.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+           patternSize_ = ((Long) patternSizeTextBox_.getValue()).intValue();
+           patternSizeSlider_.setValue(patternSize_);
          }
       });
 
@@ -487,6 +504,8 @@ public class PatternOverlay extends AbstractOverlay {
 
       configUI_.add(new JLabel("Pattern Size:"), new CC().split().gapAfter("rel"));
       configUI_.add(patternSizeSlider_, new CC().gapAfter("unrel"));
+      configUI_.add(patternSizeTextBox_, new CC().gapAfter("rel"));
+      configUI_.add(patternSizeLabel_, new CC().wrap());
       configUI_.add(showSizeCheckBox_, new CC().wrap());
    }
 }
