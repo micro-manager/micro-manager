@@ -517,6 +517,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    SutterStage
    Thorlabs
    ThorlabsDCxxxx
+   ThorlabsElliptecSlider
    ThorlabsFilterWheel
    ThorlabsSC10
    Tofra

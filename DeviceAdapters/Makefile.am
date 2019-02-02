@@ -1,4 +1,3 @@
-
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I ../m4
 
@@ -168,6 +167,7 @@ SUBDIRS = \
 	SutterStage \
 	Thorlabs \
 	ThorlabsDCxxxx \
+	ThorlabsElliptecSlider \
 	ThorlabsFilterWheel \
 	ThorlabsSC10 \
 	Tofra \
