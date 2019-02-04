@@ -582,7 +582,7 @@ public class PixelMath {
    
    
    /**
-    * Computes the maximum for each pixel across all bands in the {@link Planar}
+    * Computes the average for each pixel across all bands in the {@link Planar}
     * image.
     *
     * @param input Planar image
@@ -616,7 +616,7 @@ public class PixelMath {
 
    
    /**
-	 * Computes the maximum for each pixel across all bands in the {@link Planar} image.
+	 * Computes the average for each pixel across all bands in the {@link Planar} image.
 	 * 
 	 * @param input Planar image
 	 * @param output Gray scale image containing average pixel values
@@ -647,7 +647,7 @@ public class PixelMath {
 	}
    
    /**
-	 * Computes the maximum for each pixel across all bands in the {@link Planar} image.
+	 * Computes the average for each pixel across all bands in the {@link Planar} image.
 	 * 
 	 * @param input Planar image
 	 * @param output Gray scale image containing average pixel values
@@ -711,7 +711,7 @@ public class PixelMath {
 	}
    
    /**
-	 * Computes the maximum for each pixel across all bands in the {@link Planar} image.
+	 * Computes the average for each pixel across all bands in the {@link Planar} image.
 	 * 
 	 * @param input Planar image
 	 * @param output Gray scale image containing average pixel values
@@ -743,7 +743,7 @@ public class PixelMath {
 
    
    /**
-	 * Computes the maximum for each pixel across all bands in the {@link Planar} image.
+	 * Computes the average for each pixel across all bands in the {@link Planar} image.
 	 * 
 	 * @param input Planar image
 	 * @param output Gray scale image containing average pixel values
@@ -775,7 +775,7 @@ public class PixelMath {
 
    
    /**
-	 * Computes the maximum for each pixel across all bands in the {@link Planar} image.
+	 * Computes the average for each pixel across all bands in the {@link Planar} image.
 	 * 
 	 * @param input Planar image
 	 * @param output Gray scale image containing average pixel values
@@ -832,6 +832,341 @@ public class PixelMath {
                sum += bands[i].data[ indexInput ];
 				}
 				output.data[indexOutput] = (double) (sum / (lastBand + 1 - startBand));
+			}
+		}
+	}
+   
+   
+   /**
+    * Computes the standard deviation for each pixel across all bands in the {@link Planar}
+    * image.
+    *
+    * @param input Planar image - not modified
+    * @param output Gray scale image containing average pixel values - modified
+    * @param avg Input Gray scale image containing average image.  Can be null
+    * @param startBand First band to be included in the projection
+    * @param lastBand Last band to be included in the projection
+    */
+   public static void stdDevBand(Planar<GrayU8> input, GrayU8 output, GrayU8 avg, int startBand, int lastBand ) {
+      checkInput(input, startBand, lastBand);
+      final int h = input.getHeight();
+      final int w = input.getWidth();
+      
+      if (avg == null) {
+         avg = new GrayU8(w, h);
+         averageBand(input, avg, startBand, lastBand);
+      }
+      
+      GrayU8[] bands = input.bands;
+
+      for (int y = 0; y < h; y++) {
+         int indexInput = input.getStartIndex() + y * input.getStride();
+         int indexOutput = output.getStartIndex() + y * output.getStride();
+
+         int indexEnd = indexInput + w;
+         int numBands = lastBand + 1 - startBand;
+         long sum;
+         for (; indexInput < indexEnd; indexInput++, indexOutput++) {
+            sum = 0;
+            for (int i = startBand; i <= lastBand; i++) {
+               double diff = (bands[i].data[indexInput] & 0xFF) - (avg.data[indexInput] & 0xFF);
+               sum += diff * diff;
+            }
+            output.data[indexOutput] = (byte) Math.sqrt(sum /(numBands - 1));
+         }
+      }
+   }
+
+   
+   /**
+    * Computes the standard deviation for each pixel across all bands in the {@link Planar}
+    * image.
+    *
+    * @param input Planar image - not modified
+    * @param output Gray scale image containing average pixel values - modified
+    * @param avg Input Gray scale image containing average image.  Can be null
+    * @param startBand First band to be included in the projection
+    * @param lastBand Last band to be included in the projection
+    */
+	public static void stdDevBand(Planar<GrayS8> input , GrayS8 output, GrayS8 avg, int startBand, int lastBand ) {
+      checkInput(input, startBand, lastBand);
+		final int h = input.getHeight();
+		final int w = input.getWidth();
+
+		GrayS8[] bands = input.bands;
+      
+		if (avg == null) {
+         avg = new GrayS8(w, h);
+         averageBand(input, avg, startBand, lastBand);
+      }
+      
+		for (int y = 0; y < h; y++) {
+			int indexInput = input.getStartIndex() + y * input.getStride();
+			int indexOutput = output.getStartIndex() + y * output.getStride();
+
+			int indexEnd = indexInput+w;
+         int numBands = lastBand + 1 - startBand;
+         long sum;
+         double diff;
+			for (; indexInput < indexEnd; indexInput++, indexOutput++ ) {
+				sum = 0;
+				for( int i = startBand; i <= lastBand; i++ ) {
+               diff = (bands[i].data[indexInput]) - (avg.data[indexInput]);
+               sum += diff * diff;
+            }
+            output.data[indexOutput] = (byte) Math.sqrt(sum /(numBands - 1));
+         }
+		}
+	}
+   
+   /**
+    * Computes the standard deviation for each pixel across all bands in the {@link Planar}
+    * image.
+    *
+    * @param input Planar image - not modified
+    * @param output Gray scale image containing average pixel values - modified
+    * @param avg Input Gray scale image containing average image.  Can be null
+    * @param startBand First band to be included in the projection
+    * @param lastBand Last band to be included in the projection
+    */
+	public static void stdDevBand(Planar<GrayU16> input , GrayU16 output, GrayU16 avg, int startBand, int lastBand ) {
+      checkInput(input, startBand, lastBand);
+		final int h = input.getHeight();
+		final int w = input.getWidth();
+
+		GrayU16[] bands = input.bands;
+       
+		if (avg == null) {
+         avg = new GrayU16(w, h);
+         averageBand(input, avg, startBand, lastBand);
+      }
+		
+		for (int y = 0; y < h; y++) {
+			int indexInput = input.getStartIndex() + y * input.getStride();
+			int indexOutput = output.getStartIndex() + y * output.getStride();
+
+			int indexEnd = indexInput+w;
+			// for(int x = 0; x < w; x++ ) {
+         final int numBands = lastBand + 1 - startBand;
+         long sum;
+         double diff;
+			for (; indexInput < indexEnd; indexInput++, indexOutput++ ) {
+				sum = 0;
+				for( int i = startBand; i <= lastBand; i++ ) {
+               diff = (bands[i].data[ indexInput ] & 0xFFFF) - (avg.data[ indexInput ] & 0xFFFF);
+					sum += diff * diff;
+				}
+            output.data[indexOutput] = (short) Math.sqrt(sum /(numBands - 1));
+			}
+		}
+	}
+
+   
+   /**
+    * Computes the standard deviation for each pixel across all bands in the {@link Planar}
+    * image.
+    *
+    * @param input Planar image - not modified
+    * @param output Gray scale image containing average pixel values - modified
+    * @param avg Input Gray scale image containing average image.  Can be null
+    * @param startBand First band to be included in the projection
+    * @param lastBand Last band to be included in the projection
+    */
+	public static void stdDevBand(Planar<GrayS16> input , GrayS16 output, GrayS16 avg, int startBand, int lastBand ) {
+      checkInput(input, startBand, lastBand);
+		final int h = input.getHeight();
+		final int w = input.getWidth();
+
+		GrayS16[] bands = input.bands;
+       
+		if (avg == null) {
+         avg = new GrayS16(w, h);
+         averageBand(input, avg, startBand, lastBand);
+      }
+		
+      final int numBands = lastBand + 1 - startBand;
+		for (int y = 0; y < h; y++) {
+			int indexInput = input.getStartIndex() + y * input.getStride();
+			int indexOutput = output.getStartIndex() + y * output.getStride();
+
+			int indexEnd = indexInput+w;
+         long sum;
+         double diff;
+			for (; indexInput < indexEnd; indexInput++, indexOutput++ ) {
+				sum = 0;
+				for( int i = startBand; i <= lastBand; i++ ) {
+               diff = bands[i].data[ indexInput ] - avg.data[ indexInput ];
+					sum += diff * diff;
+				}
+            output.data[indexOutput] = (short) Math.sqrt(sum /(numBands - 1));
+			}
+		}
+	}
+   
+/**
+    * Computes the standard deviation for each pixel across all bands in the {@link Planar}
+    * image.
+    *
+    * @param input Planar image - not modified
+    * @param output Gray scale image containing average pixel values - modified
+    * @param avg Input Gray scale image containing average image.  Can be null
+    * @param startBand First band to be included in the projection
+    * @param lastBand Last band to be included in the projection
+    */
+	public static void stdDevBand(Planar<GrayS32> input , GrayS32 output, GrayS32 avg, int startBand, int lastBand ) {
+      checkInput(input, startBand, lastBand);
+		final int h = input.getHeight();
+		final int w = input.getWidth();
+
+		GrayS32[] bands = input.bands;
+       
+		if (avg == null) {
+         avg = new GrayS32(w, h);
+         averageBand(input, avg, startBand, lastBand);
+      }
+		
+      final int numBands = lastBand + 1 - startBand;
+      long sum;
+      double diff;
+		for (int y = 0; y < h; y++) {
+			int indexInput = input.getStartIndex() + y * input.getStride();
+			int indexOutput = output.getStartIndex() + y * output.getStride();
+
+			int indexEnd = indexInput+w;
+			for (; indexInput < indexEnd; indexInput++, indexOutput++ ) {
+				sum = 0;
+				for( int i = startBand; i <= lastBand; i++ ) {
+               diff = bands[i].data[ indexInput ] - avg.data[ indexInput ];
+               sum += diff * diff;
+            }
+				output.data[indexOutput] = (int) Math.sqrt(sum / (numBands - 1));
+			}
+		}
+	}
+
+   
+   /**
+    * Computes the standard deviation for each pixel across all bands in the {@link Planar}
+    * image.
+    *
+    * @param input Planar image - not modified
+    * @param output Gray scale image containing average pixel values - modified
+    * @param avg Input Gray scale image containing average image.  Can be null
+    * @param startBand First band to be included in the projection
+    * @param lastBand Last band to be included in the projection
+    */
+	public static void stdDevBand(Planar<GrayS64> input , GrayS64 output, GrayS64 avg, int startBand, int lastBand ) {
+      checkInput(input, startBand, lastBand);
+		final int h = input.getHeight();
+		final int w = input.getWidth();
+
+		GrayS64[] bands = input.bands;
+       
+		if (avg == null) {
+         avg = new GrayS64(w, h);
+         averageBand(input, avg, startBand, lastBand);
+      }
+		
+      double sum;
+      double diff;  
+      final int numBands = lastBand + 1 - startBand;
+		for (int y = 0; y < h; y++) {
+			int indexInput = input.getStartIndex() + y * input.getStride();
+			int indexOutput = output.getStartIndex() + y * output.getStride();
+
+			int indexEnd = indexInput+w;
+			for (; indexInput < indexEnd; indexInput++, indexOutput++ ) {
+				sum = 0.0;
+				for( int i = startBand; i <= lastBand; i++ ) {
+               diff = bands[i].data[ indexInput ] - avg.data[ indexInput ];
+               sum += diff * diff;
+				}
+				output.data[indexOutput] = (long) Math.sqrt(sum / (numBands - 1));
+			}
+		}
+	}
+
+   
+   /**
+    * Computes the standard deviation for each pixel across all bands in the {@link Planar}
+    * image.
+    *
+    * @param input Planar image - not modified
+    * @param output Gray scale image containing average pixel values - modified
+    * @param avg Input Gray scale image containing average image.  Can be null
+    * @param startBand First band to be included in the projection
+    * @param lastBand Last band to be included in the projection
+    */
+	public static void stdDevBand(Planar<GrayF32> input , GrayF32 output, GrayF32 avg, int startBand, int lastBand ) {
+      checkInput(input, startBand, lastBand);
+		final int h = input.getHeight();
+		final int w = input.getWidth();
+
+		GrayF32[] bands = input.bands;
+       
+		if (avg == null) {
+         avg = new GrayF32(w, h);
+         averageBand(input, avg, startBand, lastBand);
+      }
+		
+      double sum;
+      double diff;  
+      final int numBands = lastBand + 1 - startBand;
+		
+		for (int y = 0; y < h; y++) {
+			int indexInput = input.getStartIndex() + y * input.getStride();
+			int indexOutput = output.getStartIndex() + y * output.getStride();
+
+			int indexEnd = indexInput+w;
+			for (; indexInput < indexEnd; indexInput++, indexOutput++ ) {
+				sum = 0.0;
+				for( int i = startBand; i <= lastBand; i++ ) {
+               diff = bands[i].data[ indexInput ] - avg.data[ indexInput ];
+               sum += diff * diff;
+				}
+				output.data[indexOutput] = (float) Math.sqrt(sum / (numBands - 1));
+			}
+		}
+	}
+   
+   /**
+    * Computes the standard deviation for each pixel across all bands in the {@link Planar}
+    * image.
+    *
+    * @param input Planar image - not modified
+    * @param output Gray scale image containing average pixel values - modified
+    * @param avg Input Gray scale image containing average image.  Can be null
+    * @param startBand First band to be included in the projection
+    * @param lastBand Last band to be included in the projection
+    */
+	public static void stdDevBand(Planar<GrayF64> input , GrayF64 output, GrayF64 avg, int startBand, int lastBand ) {
+      checkInput(input, startBand, lastBand);
+		final int h = input.getHeight();
+		final int w = input.getWidth();
+
+		GrayF64[] bands = input.bands;
+       
+		if (avg == null) {
+         avg = new GrayF64(w, h);
+         averageBand(input, avg, startBand, lastBand);
+      }
+		
+      double sum;
+      double diff;  
+      final int numBands = lastBand + 1 - startBand;
+		
+		for (int y = 0; y < h; y++) {
+			int indexInput = input.getStartIndex() + y * input.getStride();
+			int indexOutput = output.getStartIndex() + y * output.getStride();
+
+			int indexEnd = indexInput+w;
+			for (; indexInput < indexEnd; indexInput++, indexOutput++ ) {
+				sum = 0.0;
+				for( int i = startBand; i <= lastBand; i++ ) {
+               diff = bands[i].data[ indexInput ] - avg.data[ indexInput ];
+               sum += diff * diff;
+				}
+				output.data[indexOutput] = (double) Math.sqrt(sum / (numBands - 1));
 			}
 		}
 	}
