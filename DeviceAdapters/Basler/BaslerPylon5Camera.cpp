@@ -5,7 +5,7 @@
 // DESCRIPTION:   Device Adapter for Basler Ace Camera
 //
 // Copyright 2018 Henry Pinkard
-// Copyright 2019 SMA extended for supporting Bayer, RGB formats
+// Copyright 2019 SMA extended for supporting Bayer,Mono12, Mono16 and  RGB formats
 //
 // Redistribution and use in source and binary forms, with or without modification, 
 // are permitted provided that the following conditions are met:
@@ -56,16 +56,18 @@ using namespace std;
 
 const char* g_BaslerCameraDeviceName = "BaslerAce";
 
-const char* g_PropertyChannel = "PropertyNAme";
-static const char* g_PixelType_8bit = "8bit";
-static const char* g_PixelType_16bit = "16bit";
-static const char* g_PixelType_10packedbit = "10bit";
-static const char* g_PixelType_12packedbit = "12bit";
+static const char* g_PropertyChannel = "PropertyNAme";
+static const char* g_PixelType_8bit = "8bit mono";
+static const char* g_PixelType_10bit = "10bit mono";
+static const char* g_PixelType_12bit = "12bit mono";
+static const char* g_PixelType_16bit = "16bit mono";
+static const char* g_PixelType_10packedbit = "10bit mono";
+static const char* g_PixelType_12packedbit = "12bit mono";
 
 
 static const char* g_PixelType_8bitRGBA = "8bitBGRA";
-const char* g_PixelType_8bitRGB =       "8bitRGB";
-const char* g_PixelType_8bitBGR =       "8bitBGR";
+static const  char* g_PixelType_8bitRGB = "8bitRGB";
+static const  char* g_PixelType_8bitBGR = "8bitBGR";
 
 
 
@@ -75,7 +77,7 @@ const char* g_PixelType_8bitBGR =       "8bitBGR";
 
 MODULE_API void InitializeModuleData()
 {
-   RegisterDevice(g_BaslerCameraDeviceName, MM::CameraDevice, "Basler Ace Camera");
+   RegisterDevice(g_BaslerCameraDeviceName, MM::CameraDevice, "Basler  Camera");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -170,9 +172,9 @@ int BaslerCamera::Initialize()
 		int ret = CreateProperty(MM::g_Keyword_Name, g_BaslerCameraDeviceName, MM::String, true);
 		if (DEVICE_OK != ret)
 			return ret;
-
+		
 		// Description
-		ret = CreateProperty(MM::g_Keyword_Description, "Basler Ace device adapter", MM::String, true);
+		ret = CreateProperty(MM::g_Keyword_Description, "Basler Camera device adapter", MM::String, true);
 		if (DEVICE_OK != ret)
 			return ret;
 
@@ -196,10 +198,25 @@ int BaslerCamera::Initialize()
 
 
 		//Exposure
-		CFloatPtr exposure( nodeMap_->GetNode( "ExposureTime"));
-		exposure_us_ = exposure->GetValue();
-		exposureMax_ = exposure->GetMax();
-		exposureMin_ = exposure->GetMin();
+		CFloatPtr exposure( nodeMap_->GetNode( "ExposureTime"));  
+		CFloatPtr ExposureTimeAbs( nodeMap_->GetNode( "ExposureTimeAbs")); 
+
+
+		if(IsAvailable(exposure))
+		{
+			// USB cameras
+			exposure_us_ = exposure->GetValue();
+			exposureMax_ = exposure->GetMax();
+			exposureMin_ = exposure->GetMin();
+		}
+		else if(IsAvailable(ExposureTimeAbs))
+		{   // GigE
+			exposure_us_ = ExposureTimeAbs->GetValue();
+			exposureMax_ = ExposureTimeAbs->GetMax();
+			exposureMin_ = ExposureTimeAbs->GetMin();
+		
+		}
+
 
 		//Pixel type
 		CPropertyAction *pAct = new CPropertyAction (this, &BaslerCamera::OnPixelType);
@@ -214,60 +231,91 @@ int BaslerCamera::Initialize()
 			pixelFormat->FromString("Mono8");
 			pixelType_ = "Mono8";	
 		}
-		//if (IsAvailable( pixelFormat->GetEntryByName( "Mono10"))) {
-		//	pixelTypeValues.push_back("Mono10");
-		//	pixelFormat->FromString("Mono10");
-		//	pixelType_ = "Mono10";
-		//}
-		//if (IsAvailable( pixelFormat->GetEntryByName( "Mono12"))) {
-		//	pixelTypeValues.push_back("Mono12");
-		//	pixelFormat->FromString("Mono12");
-		//	pixelType_ = "Mono12"; //default to using highest bit depth
-		//}
+		if (IsAvailable( pixelFormat->GetEntryByName( "Mono10"))) {
+			pixelTypeValues.push_back("Mono10");
+			pixelFormat->FromString("Mono10");
+			pixelType_ = "Mono10";
+		}
+		if (IsAvailable( pixelFormat->GetEntryByName( "Mono12"))) {
+			pixelTypeValues.push_back("Mono12");
+			pixelFormat->FromString("Mono12");
+			pixelType_ = "Mono12"; 
+		}
+		if (IsAvailable( pixelFormat->GetEntryByName( "Mono16"))) {
+			pixelTypeValues.push_back("Mono16");
+			pixelFormat->FromString("Mono16");
+			pixelType_ = "Mono16"; //default to using highest bit depth
+		}
 		if (IsAvailable( pixelFormat->GetEntryByName("BayerRG8"))) {
 			pixelTypeValues.push_back("BayerRG8");
 			pixelFormat->FromString("BayerRG8");
-			pixelType_ = "BayerRG8" ; //default to using highest bit depth		
+			pixelType_ = "BayerRG8" ; 	
 		}
 		if (IsAvailable( pixelFormat->GetEntryByName( "BayerBG8"))) {
 			pixelTypeValues.push_back("BayerBG8");
 			pixelFormat->FromString("BayerBG8");
-			pixelType_ = "BayerBG8" ; //default to using highest bit depth		
+			pixelType_ = "BayerBG8" ; 
 		}
 		if (IsAvailable( pixelFormat->GetEntryByName( "BGR8"))) {
 			pixelTypeValues.push_back("BGR8");
 			pixelFormat->FromString("BGR8");
-			pixelType_ = "BGR8" ; //default to using highest bit depth		
+			pixelType_ = "BGR8" ; 	
 		}
-		if (IsAvailable( pixelFormat->GetEntryByName( "RGB8"))) {
+		if (IsAvailable( pixelFormat->GetEntryByName("RGB8"))) {
 			pixelTypeValues.push_back("RGB8");
 			pixelFormat->FromString("RGB8");
-			pixelType_ = "RGB8" ; //default to using highest bit depth		
+			pixelType_ = "RGB8" ; 		
 		}
 
 		SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);
 
 		/////Gain//////
 		//Turn off auto gain
-		CEnumerationPtr gainAuto( nodeMap_->GetNode( "GainAuto"));
+		CEnumerationPtr gainAuto( nodeMap_->GetNode("GainAuto"));
 		if ( IsWritable( gainAuto)) {
 			gainAuto->FromString("Off");
 		}
 		//get gain limits and value
-		CFloatPtr gain( nodeMap_->GetNode( "Gain"));	 
-		gainMax_ = gain->GetMax();
-		gainMin_ = gain->GetMin();
-		gain_ = gain->GetValue();
+		CFloatPtr gain( nodeMap_->GetNode("Gain"));
+		CIntegerPtr GainRaw( nodeMap_->GetNode("GainRaw"));
+
+		if(IsAvailable(gain))
+		{
+			gainMax_ = gain->GetMax();
+			gainMin_ = gain->GetMin();
+			gain_ = gain->GetValue();
+		}else if (IsAvailable(GainRaw))
+		{
+			gainMax_ = (double)GainRaw->GetMax();
+			gainMin_ = (double)GainRaw->GetMin();
+			gain_ = (double)GainRaw->GetValue();
+		}
+
+
 		//make property
 		pAct = new CPropertyAction (this, &BaslerCamera::OnGain);
 		ret = CreateProperty(MM::g_Keyword_Gain, "1.0", MM::Float, false, pAct);
 		SetPropertyLimits(MM::g_Keyword_Gain, gainMin_, gainMax_);
 
 		/////Offset//////
-		CFloatPtr offset( nodeMap_->GetNode( "BlackLevel"));	 
-		offsetMax_ = offset->GetMax();
-		offsetMin_ = offset->GetMin();
-		offset_ = offset->GetValue();
+		CFloatPtr BlackLevel( nodeMap_->GetNode( "BlackLevel"));	
+		CIntegerPtr BlackLevelRaw( nodeMap_->GetNode( "BlackLevelRaw"));	
+
+		if(IsAvailable(BlackLevel))
+		{
+			offsetMax_ = BlackLevel->GetMax();
+			offsetMin_ = BlackLevel->GetMin();
+			offset_ = BlackLevel->GetValue();
+		
+		}
+		else if (IsAvailable(BlackLevelRaw))
+		{
+			offsetMax_ = (double) BlackLevelRaw->GetMax();
+			offsetMin_ = (double)BlackLevelRaw->GetMin();
+			offset_ = (double)BlackLevelRaw->GetValue();
+		}
+
+
 		//make property
 		pAct = new CPropertyAction (this, &BaslerCamera::OnOffset);
 		ret = CreateProperty(MM::g_Keyword_Offset, "1.0", MM::Float, false, pAct);
@@ -288,21 +336,26 @@ int BaslerCamera::Initialize()
 
 
 		////Shutter mode//////
-		pAct = new CPropertyAction (this, &BaslerCamera::OnShutterMode);
-		ret = CreateProperty("ShutterMode", "NA", MM::String, false, pAct);
-		vector<string> shutterVals;
+	
 		CEnumerationPtr shutterMode( nodeMap_->GetNode( "ShutterMode"));
-		if ( IsAvailable( shutterMode->GetEntryByName( "Global"))) {
-			shutterVals.push_back("Global");
-		}
-		if ( IsAvailable( shutterMode->GetEntryByName( "Rolling"))) {
-			shutterVals.push_back("Rolling");
-		}
-		if ( IsAvailable( shutterMode->GetEntryByName( "GlobalResetRelease"))) {
-			shutterVals.push_back("GlobalResetRelease");
-		}
-		SetAllowedValues("ShutterMode", shutterVals);
+		if(IsAvailable(shutterMode))
+		{
+			pAct = new CPropertyAction (this, &BaslerCamera::OnShutterMode);
+			ret = CreateProperty("ShutterMode", "NA", MM::String, false, pAct);
+			vector<string> shutterVals;
 
+		   if ( IsAvailable( shutterMode->GetEntryByName( "Global")))
+		   {
+				shutterVals.push_back("Global");
+		   }
+			if ( IsAvailable( shutterMode->GetEntryByName( "Rolling"))) {
+				shutterVals.push_back("Rolling");
+			}
+			if ( IsAvailable( shutterMode->GetEntryByName( "GlobalResetRelease"))) {
+				shutterVals.push_back("GlobalResetRelease");
+			}
+			SetAllowedValues("ShutterMode", shutterVals);	
+		}
 
 
 		//// binning
@@ -410,13 +463,13 @@ void BaslerCamera::CopyToImageBuffer(CGrabResultPtr ptrGrabResult)
 	else if (ptrGrabResult->GetPixelType() == PixelType_Mono10 ||
 	   ptrGrabResult->GetPixelType() == PixelType_Mono12 || ptrGrabResult->GetPixelType() == PixelType_Mono16)
 	{
-		 nComponents_ = 2;
-        bitDepth_ = 16;
-
+		/*nComponents_ = 1;
+        bitDepth_ = 12;	*/
+		long val = GetImageBufferSize();
 		//copy image buffer to a snap buffer allocated by device adapter
 		const void* buffer = ptrGrabResult->GetBuffer();
-		memcpy(imgBuffer_, buffer, GetImageBufferSize());
-		SetProperty( MM::g_Keyword_PixelType, g_PixelType_16bit);
+		memcpy(imgBuffer_, buffer, val);
+		//SetProperty( MM::g_Keyword_PixelType, g_PixelType_12bit);
 	
 	}
 	else if (IsByerFormat || ptrGrabResult->GetPixelType() == PixelType_RGB8packed )
@@ -470,21 +523,17 @@ unsigned BaslerCamera::GetImageHeight() const
 */
 unsigned BaslerCamera::GetImageBytesPerPixel() const
 {
+	char* subject ("Bayer");
+	std::size_t found = pixelType_.find(subject);
+
 	if (pixelType_ == "Mono8") {
 		return 1;
-	} else if (pixelType_ == "Mono10") {
+	} else if (pixelType_ == "Mono10" || pixelType_ == "Mono12" || pixelType_ == "Mono16") {
 		return 2;
-	} else if (pixelType_ == "Mono12" || pixelType_ == "Mono16" ) {
-		return 2;
-	}
-	else if (pixelType_ == "BayerRG8") {
+	} 
+	else if (found != std::string::npos || pixelType_ == "BGR8" || pixelType_ == "RGB8" ) {
 		return 4;
 	}
-	else if (pixelType_ == "BGR8" || pixelType_ == "RGB8" ) {
-		return 4;
-	}
-	
-
 	assert(0); //shouldn't happen
 	return 0;
 } 
@@ -494,14 +543,20 @@ unsigned BaslerCamera::GetImageBytesPerPixel() const
 */
 unsigned BaslerCamera::GetBitDepth() const
 {
+	char* subject ("Bayer");
+	std::size_t found = pixelType_.find(subject);
+
 	if (pixelType_ == "Mono8") {
 		return 8;
 	} else if (pixelType_ == "Mono10") {
 		return 10;
-	} else if (pixelType_ == "Mono12" || pixelType_ == "Mono16") {
+	} else if (pixelType_ == "Mono12" ) {
+		return 12;
+	}
+	else if (pixelType_ == "Mono16" ) {
 		return 16;
 	}
-	else if (pixelType_ == "BayerRG8" || pixelType_ == "BGR8" || pixelType_ == "RGB8") {	
+	else if (found != std::string::npos || pixelType_ == "BGR8" || pixelType_ == "RGB8") {	
 		return 8;
 	}
 	assert(0); //shoudlnt happen
@@ -711,9 +766,21 @@ int BaslerCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 		bitDepth_ = 8;
 		SetProperty(MM::g_Keyword_PixelType,g_PixelType_8bit);
 	}
-	if(pixelFormat->ToString().compare("Mono10") == 0 || pixelFormat->ToString().compare("Mono12") == 0 ||pixelFormat->ToString().compare("Mono16") == 0 )
+	if(pixelFormat->ToString().compare("Mono10") == 0 )
 	{
-		nComponents_ = 2;
+		nComponents_ = 1;
+		bitDepth_ = 10;
+		SetProperty(MM::g_Keyword_PixelType,g_PixelType_10bit);
+	}
+	if(pixelFormat->ToString().compare("Mono12") == 0 )
+	{
+		nComponents_ = 1;
+		bitDepth_ = 12;
+		SetProperty(MM::g_Keyword_PixelType,g_PixelType_12bit);
+	}
+	if(pixelFormat->ToString().compare("Mono16") == 0 )
+	{
+		nComponents_ = 1;
 		bitDepth_ = 16;
 		SetProperty(MM::g_Keyword_PixelType,g_PixelType_16bit);
 	}
@@ -777,6 +844,9 @@ int BaslerCamera::OnShutterMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int BaslerCamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+	CFloatPtr gain( nodeMap_->GetNode( "Gain"));
+	CIntegerPtr GainRaw( nodeMap_->GetNode( "GainRaw"));
+
 	if (eAct == MM::AfterSet) {
 		pProp->Get(gain_);
 		if (gain_ > gainMax_) {
@@ -785,18 +855,36 @@ int BaslerCamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 		if (gain_ < gainMin_) {
 			gain_ = gainMin_;
 		}
-		CFloatPtr gain( nodeMap_->GetNode( "Gain"));	 
-		gain->SetValue(gain_);
+		if(IsAvailable(gain))
+		{
+			gain->SetValue(gain_);
+		}
+		else if(IsAvailable(GainRaw))
+		{
+			GainRaw->SetValue((int64_t)(gain_));
+		}	
 	} else if (eAct == MM::BeforeGet) {
-		CFloatPtr gain( nodeMap_->GetNode( "Gain"));
-		gain_ = gain->GetValue();
-		pProp->Set(gain_);
+
+		if(IsAvailable(gain))
+		{
+			gain_ = gain->GetValue();
+			pProp->Set(gain_);
+		}
+		else if(IsAvailable(GainRaw))
+		{
+			gain_ = (double)GainRaw->GetValue();
+			pProp->Set(gain_);
+		}
 	}
 	return DEVICE_OK;
 }
 
 int BaslerCamera::OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+	
+	CFloatPtr offset( nodeMap_->GetNode( "BlackLevel"));
+	CFloatPtr offsetRaw( nodeMap_->GetNode( "BlackLevelRaw"));
+	
 	if (eAct == MM::AfterSet) {
 		pProp->Get(offset_);
 		if (offset_ > offsetMax_) {
@@ -805,12 +893,26 @@ int BaslerCamera::OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
 		if (offset_ < offsetMin_) {
 			offset_ = offsetMin_;
 		}
-		CFloatPtr offset( nodeMap_->GetNode( "BlackLevel"));	 
-		offset->SetValue(offset_);
+		if(IsAvailable(offset))
+		{
+			offset->SetValue(offset_);
+		}else if (IsAvailable(offsetRaw))
+		{
+			offsetRaw->SetValue(offset_);
+		}
+		
 	} else if (eAct == MM::BeforeGet) {
-		CFloatPtr offset( nodeMap_->GetNode( "BlackLevel"));
-		offset_ = offset->GetValue();
-		pProp->Set(offset_);
+		if(IsAvailable(offset))
+		{
+			offset_ = offset->GetValue();
+		    pProp->Set(offset_);
+		
+		}else if (IsAvailable(offsetRaw))
+		{
+			offset_ = offsetRaw->GetValue();
+		    pProp->Set(offset_);
+			
+		}
 	}
 	return DEVICE_OK;
 }
@@ -863,17 +965,19 @@ void CircularBufferInserter::OnImageGrabbed( CInstantCamera& /* camera */, const
 		{
 			IsByerFormat = true;
 		}
-		if(ptrGrabResult->GetPixelType() == PixelType_Mono8)
+		if(ptrGrabResult->GetPixelType() == PixelType_Mono8 || ptrGrabResult->GetPixelType() == PixelType_Mono12 ||
+		   ptrGrabResult->GetPixelType() == PixelType_Mono10 || ptrGrabResult->GetPixelType() == PixelType_Mono16
+		  )
 		{
 
-		//copy to intermediate buffer
-		int ret = dev_->GetCoreCallback()->InsertImage(dev_, (const unsigned char*) ptrGrabResult->GetBuffer(),
-			(unsigned) dev_->GetImageWidth(), (unsigned ) dev_->GetImageHeight(), 
-			(unsigned) dev_->GetImageBytesPerPixel(),1,md.Serialize().c_str(),FALSE);
-		if (ret == DEVICE_BUFFER_OVERFLOW) {
-			//if circular buffer overflows, just clear it and keep putting stuff in so live mode can continue
-			dev_->GetCoreCallback()->ClearImageBuffer(dev_);
-			}
+			//copy to intermediate buffer
+			int ret = dev_->GetCoreCallback()->InsertImage(dev_, (const unsigned char*) ptrGrabResult->GetBuffer(),
+				(unsigned) dev_->GetImageWidth(), (unsigned ) dev_->GetImageHeight(), 
+				(unsigned) dev_->GetImageBytesPerPixel(),1,md.Serialize().c_str(),FALSE);
+			if (ret == DEVICE_BUFFER_OVERFLOW) {
+				//if circular buffer overflows, just clear it and keep putting stuff in so live mode can continue
+				dev_->GetCoreCallback()->ClearImageBuffer(dev_);
+				}
 		}
 		else if( IsByerFormat || ptrGrabResult->GetPixelType() == PixelType_RGB8packed)
 		{
@@ -908,3 +1012,4 @@ void CircularBufferInserter::OnImageGrabbed( CInstantCamera& /* camera */, const
 
 	}
 }
+
