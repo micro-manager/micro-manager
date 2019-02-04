@@ -705,18 +705,18 @@ int XCiteExacte::OnGetOnTime(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      string buff;
+      char cBuff[8];
 	  bool on;
 	  GetOpen(on);
 	  if (on)
 	  {
-         buff = to_string(static_cast<long long> ((GetCurrentMMTime() - lastShutterTime_).getMsec() / 1000));
+		 sprintf(cBuff, "%d", (int) ((GetCurrentMMTime() - lastShutterTime_).getMsec() / 1000));
   	  }
 	  else
 	  {
-  	     buff = "0";
+  	    sprintf(cBuff, "%d", 0);
 	  }
-	  pProp->Set(buff.c_str());
+	  pProp->Set(cBuff);
    }
    return DEVICE_OK;
 }
