@@ -280,6 +280,10 @@ int XCiteExacte::Initialize()
    // Lamp hours ("field")
    pAct = new CPropertyAction(this, &XCiteExacte::OnGetLampHours);
    CreateProperty("Lamp-Hours", "Unknown", MM::String, true, pAct);
+   
+   // Time since lamp was turned on ("field")
+   pAct = new CPropertyAction(this, &XCiteExacte::OnGetOnTime);
+   CreateProperty("Lamp-On Time (s)", "Unknown", MM::String, true, pAct);
 
    // Unit status: Alarm State ("field")
    pAct = new CPropertyAction(this, &XCiteExacte::OnUnitStatusAlarmState);
@@ -680,7 +684,6 @@ int XCiteExacte::OnGetPowerFactor(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (0 != atoi(buff.c_str()))
          powerFactor_ = buff;
       LogMessage("XCiteExacte: Get Power Factor: " + powerFactor_);
-      SetProperty("Power-Factor", powerFactor_.c_str());
       pProp->Set(powerFactor_.c_str());
    }
    return DEVICE_OK;
@@ -693,8 +696,27 @@ int XCiteExacte::OnGetLampHours(MM::PropertyBase* pProp, MM::ActionType eAct)
       string buff;
       ExecuteCommand(cmdGetLampHours, NULL, 0, &buff);
       pProp->Set(buff.c_str());
-      SetProperty("Lamp-Hours", buff.c_str());
       LogMessage("XCiteExacte: Get Lamp Hours: " + buff);
+   }
+   return DEVICE_OK;
+}
+
+int XCiteExacte::OnGetOnTime(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      string buff;
+	  bool on;
+	  GetOpen(on);
+	  if (on)
+	  {
+         buff = to_string(static_cast<long long> ((GetCurrentMMTime() - lastShutterTime_).getMsec() / 1000));
+  	  }
+	  else
+	  {
+  	     buff = "0";
+	  }
+	  pProp->Set(buff.c_str());
    }
    return DEVICE_OK;
 }
