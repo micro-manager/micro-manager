@@ -6,6 +6,7 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
 import ij.process.ImageProcessor;
+import mmcorej.StrVector;
 
 import java.awt.Cursor;
 import java.awt.Insets;
@@ -19,10 +20,10 @@ import java.util.concurrent.ExecutionException;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
-import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SwingWorker;
 
@@ -30,11 +31,13 @@ import net.miginfocom.swing.MigLayout;
 
 import org.json.JSONObject;
 import org.micromanager.api.MMWindow;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.AcquisitionModes;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
+import org.micromanager.asidispim.Utils.DeviceUtils;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.asidispim.Utils.PanelUtils;
@@ -55,23 +58,25 @@ import org.micromanager.utils.NumberUtils;
  */
 @SuppressWarnings("serial")
 public class DataAnalysisPanel extends ListeningJPanel {
+   private final ScriptInterface gui_;
    private final Prefs prefs_;
    private final Properties props_;
+   private final Devices devices_;
    private final JPanel exportPanel_;
    private final JPanel deskewPanel_;
 //   private final JPanel otherPanel_;
    private final JTextField saveDestinationField_;
    private final JTextField baseNameField_;
-   private final JFormattedTextField deskewFactor_;
+   private final JSpinner deskewFactor_;
    private final JCheckBox deskewInvert_;
    private final JCheckBox deskewInterpolate_;
    private final JCheckBox deskewAutoTest_;
    private final JButton exportButton_;
    
    private final JPanel sliceOverviewPanel_;
-   private final JFormattedTextField yDownsample_;
-   private final JFormattedTextField spacingDownsample_;
-   private final JFormattedTextField sliceThickness_;
+   private final JSpinner yDownsample_;
+   private final JSpinner spacingDownsample_;
+   private final JSpinner sliceThickness_;
    
    public static final String[] TRANSFORMOPTIONS = 
       {"None", "Rotate Right 90\u00B0", "Rotate Left 90\u00B0", "Rotate outward", "Rotate 180\u00B0"};
@@ -89,14 +94,16 @@ public class DataAnalysisPanel extends ListeningJPanel {
     * @param props - Plugin-wide properties
     * @param devices - Plugin-wide devices
     */
-   public DataAnalysisPanel(Prefs prefs, Properties props, Devices devices) {    
+   public DataAnalysisPanel(final ScriptInterface gui, Prefs prefs, Properties props, Devices devices) {    
       super(MyStrings.PanelNames.DATAANALYSIS.toString(),
               new MigLayout(
               "",
               "[right]",
               "[]16[]"));
+      gui_ = gui;
       prefs_ = prefs;
       props_ = props;
+      devices_ = devices;
       PanelUtils pu = new PanelUtils(prefs, props, devices);
       final DataAnalysisPanel dataAnalysisPanel = this;
             
@@ -241,8 +248,8 @@ public class DataAnalysisPanel extends ListeningJPanel {
       deskewPanel_.setBorder(PanelUtils.makeTitledBorder("Deskew stage scanning data"));
       
       deskewPanel_.add(new JLabel("Deskew fudge factor:"));
-      deskewFactor_ = pu.makeFloatEntryField(panelName_, 
-            Properties.Keys.PLUGIN_DESKEW_FACTOR.toString(), 1.0, 4);
+      deskewFactor_ = pu.makeSpinnerFloat(0.1, 10.0, 1.0,
+            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_DESKEW_FACTOR, 1.0);
       deskewPanel_.add(deskewFactor_, "wrap");
       
       deskewInvert_ = pu.makeCheckBox("Invert direction",
@@ -272,36 +279,63 @@ public class DataAnalysisPanel extends ListeningJPanel {
       // start slice overview sub-panel
       sliceOverviewPanel_ = new JPanel(new MigLayout(
               "",
-              "[right]4[center]",
+              "[right]4[left]4[left]",
               "[]8[]"));
       
       sliceOverviewPanel_.setBorder(PanelUtils.makeTitledBorder("Slice Overview"));
       
-      sliceOverviewPanel_.add(new JLabel("Y Downsample:"));
-      yDownsample_ = pu.makeFloatEntryField(panelName_, 
-            Properties.Keys.PLUGIN_Y_DOWNSAMPLE_FACTOR.toString(), 4.0, 4);
+      sliceOverviewPanel_.add(new JLabel("Y Downsample:"), "span 2");
+      yDownsample_ = pu.makeSpinnerFloat(1.0, 10.0, 1.0,
+            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_OVERVIEW_Y_DOWNSAMPLE_FACTOR, 4.0);
       sliceOverviewPanel_.add(yDownsample_, "wrap");
       
-      sliceOverviewPanel_.add(new JLabel("Spacing Downsample:"));
-      spacingDownsample_ = pu.makeFloatEntryField(panelName_, 
-            Properties.Keys.PLUGIN_SPACING_DOWNSAMPLE_FACTOR.toString(), 4.0, 4);
+      sliceOverviewPanel_.add(new JLabel("Spacing Downsample:"), "span 2");
+      spacingDownsample_ = pu.makeSpinnerFloat(1.0, 10.0, 1.0, 
+            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_OVERVIEW_SPACING_DOWNSAMPLE_FACTOR, 4.0);
       sliceOverviewPanel_.add(spacingDownsample_, "wrap");
       
-      sliceOverviewPanel_.add(new JLabel("Fractional Thickness:"));
-      sliceThickness_ = pu.makeFloatEntryField(panelName_, 
-            Properties.Keys.PLUGIN_SLICE_THICKNESS_FACTOR.toString(), 0.1, 4);
+      sliceOverviewPanel_.add(new JLabel("Fractional Thickness:"), "span 2");
+      sliceThickness_ = pu.makeSpinnerFloat(0.01, 1.0, 0.1, 
+            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_OVERVIEW_SLICE_THICKNESS_FACTOR, 0.2);
       sliceOverviewPanel_.add(sliceThickness_, "wrap");
+      
+      // TODO: need to update combobox when the channel group changes
+      String channelGroup_  = props_.getPropValueString(Devices.Keys.PLUGIN,
+            Properties.Keys.PLUGIN_MULTICHANNEL_GROUP);
+      StrVector channels = gui_.getMMCore().getAvailableConfigs(channelGroup_);
+      final JComboBox channelSelect = pu.makeDropDownBox(channels.toArray(), 
+            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_OVERVIEW_CHANNEL, "");
+      // make sure to explicitly set it to something so pref gets written
+      channelSelect.setSelectedIndex(channelSelect.getSelectedIndex());
+      sliceOverviewPanel_.add(new JLabel("Channel: "));
+      sliceOverviewPanel_.add(channelSelect, "span 2, wrap");
+      
+      final String[] ab = {Devices.Sides.A.toString(), Devices.Sides.B.toString()};
+      JComboBox overviewSide = pu.makeDropDownBox(ab, Devices.Keys.PLUGIN,
+            Properties.Keys.PLUGIN_OVERVIEW_SIDE, Devices.Sides.A.toString());
+      sliceOverviewPanel_.add(new JLabel("Side: "));
+      sliceOverviewPanel_.add(overviewSide, "span 2, wrap");
       
       JButton testSliceOverview = new JButton("Test on Open Dataset");
       testSliceOverview.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(final ActionEvent e) {
-            final double downSampleY = (Double) yDownsample_.getValue();
-            final double downSampleSpacing = (Double) spacingDownsample_.getValue();
-            final double thicknessFactor = (Double) sliceThickness_.getValue();
+            final double downSampleY = PanelUtils.getSpinnerFloatValue(yDownsample_);
+            final double downSampleSpacing = PanelUtils.getSpinnerFloatValue(spacingDownsample_);
+            final double thicknessFactor = PanelUtils.getSpinnerFloatValue(sliceThickness_);
             final int bitdepth = 16;
-            final int dir = -1;   // hardcode for now, this is like the deskew so we can decide +/- 1
-            final double compressX = Math.sqrt(2);  // compress X axis this much  // TODO make amenable to non-45 degree
+            DeviceUtils du = new DeviceUtils(gui_, devices_, props_, prefs_);
+            int deskewSign = -1;
+            double compressX = Math.sqrt(2);
+            try {
+               final MMWindow mmW = new MMWindow(IJ.getImage());
+               final JSONObject metadata = mmW.getSummaryMetaData();
+               deskewSign = du.getDeskewSign(0, AcquisitionModes.getKeyFromString(metadata.getString("SPIMmode")),
+                     metadata.getString("NumberOfSides").equals("2"), !metadata.getString("FirstSide").equals("B"));
+               compressX = du.getStageTopViewCompressFactor(!metadata.getString("FirstSide").equals("B"));
+            } catch(Exception ex) {
+               // ignore errors
+            }
             final ImagePlus ip_orig = IJ.getImage();
             final ImagePlus ip = ip_orig.duplicate();
 
@@ -314,15 +348,15 @@ public class DataAnalysisPanel extends ListeningJPanel {
             final int scaledWidth = (int)Math.round(roiWidth/downSampleY/compressX);  // can scale width by additional sqrt(2) if adjust spacing and doing max projection anyway
             final int scaledHeight = (int)Math.round(ip.getHeight()/downSampleY);
             final double zStepPx = ip.getCalibration().pixelDepth / ip.getCalibration().pixelWidth;
-            final double dx = zStepPx * getStageGeometricShiftFactor(true) * (Double) deskewFactor_.getValue() / downSampleY / compressX;
+            final double dx = zStepPx * du.getStageGeometricShiftFactor(true) * PanelUtils.getSpinnerFloatValue(deskewFactor_) / downSampleY / compressX;
             final int width_expansion = (int) Math.abs(Math.ceil(dx*(reducedNrSlices-1)));
             final int totalWidth = scaledWidth + width_expansion;
 
             // create a deskewed stack and then max project
             // this isn't particularly memory efficient but is the easiest way to start
-            // it is a bit faster than doing the projection each step of the way which is more memory efficient
+            // it is a bit faster than doing the projection each step of the way
             ImagePlus forProjector = IJ.createImage("Overview", totalWidth, scaledHeight, reducedNrSlices, bitdepth);
-            double xPosDouble = (dir < 0) ? (double)(totalWidth-scaledWidth) : 0.0;
+            double xPosDouble = (deskewSign < 0) ? (double)(totalWidth-scaledWidth) : 0.0;
             for (int slice=1; slice<=reducedNrSlices; ++slice) {
                ImageProcessor proc = ip.getStack().getProcessor(slice);
                proc.setInterpolationMethod(ImageProcessor.BILINEAR);
@@ -332,7 +366,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
                ImageProcessor scaled = cropped.resize(scaledWidth, scaledHeight, true);
                forProjector.setSlice(slice);
                forProjector.getProcessor().insert(scaled, (int)Math.round(xPosDouble), 0);  // example at https://imagej.nih.gov/ij/developer/source/ij/plugin/MontageMaker.java.html suggests 0-indexed
-               xPosDouble += (dir*dx);
+               xPosDouble += (deskewSign*dx);
             }
             ij.plugin.ZProjector project = new ij.plugin.ZProjector();
             project.setMethod(ij.plugin.ZProjector.MAX_METHOD);
@@ -377,7 +411,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
             
          }
       });
-      sliceOverviewPanel_.add(testSliceOverview, "span 2, center, wrap");
+      sliceOverviewPanel_.add(testSliceOverview, "span 3, center, wrap");
       
       
       this.add(sliceOverviewPanel_);
@@ -527,24 +561,6 @@ public class DataAnalysisPanel extends ListeningJPanel {
    }
    
    
-   /***
-    * compute how far we need to shift each image for deskew relative to Z-step size (orthogonal to image) based on user-specified angle
-    * e.g. with diSPIM, angle is 45 degrees so factor is 1.0, for oSPIM the factor is tan(60 degrees) = sqrt(3), etc.
-    * if pathA is false then we compute based on Path B angle (assumed to be 90 degrees minus one specified for Path A)
-    * @param pathA true if using Path A
-    * @return factor, e.g. 1.0 for 45 degrees, sqrt(3) for 60 degrees, etc.
-    */
-   private double getStageGeometricShiftFactor(boolean pathA) {
-      double angle = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_ANGLE_PATHA);
-      if (angle < 1) {  // case when property not defined
-         angle = ASIdiSPIM.oSPIM ? 60.0 : 45.0; 
-      }
-      if (!pathA) {
-         angle = 90.0 - angle;
-      }
-      return Math.tan(angle/180.0*Math.PI);
-   }
-   
    public void runDeskew(final ListeningJPanel caller) {
       
       /**
@@ -613,7 +629,8 @@ public class DataAnalysisPanel extends ListeningJPanel {
                zStepPx = ip.getCalibration().pixelDepth / pixelSize;
             }
             
-            final double dx = zStepPx * getStageGeometricShiftFactor(firstSideIsA) * (Double) deskewFactor_.getValue();
+            DeviceUtils du = new DeviceUtils(gui_, devices_, props_, prefs_);
+            final double dx = zStepPx * du.getStageGeometricShiftFactor(firstSideIsA) * PanelUtils.getSpinnerFloatValue(deskewFactor_);
 
             final int nrChannels = ip.getNChannels();
             final int width = ip.getWidth();
@@ -639,32 +656,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
             int dir;
             int nrImagesProcessed = 0;
             for (int c=0; c<nrChannels; c++) {  // loop over channels
-               switch (acqMode) {
-               case STAGE_SCAN:
-                  if (twoSided) {
-                     dir = (c % 2) * 2 - 1;  // -1 for path A which are odd channels, 1 for path B
-                  } else {
-                     // single-sided is path A for all channels
-                     dir = -1;
-                  }
-                  // invert direction if we started with path B, regardless of single- or double-sided
-                  if (!firstSideIsA) {
-                     dir *= -1;
-                  }
-                  break;
-               case STAGE_SCAN_INTERLEAVED:
-               case STAGE_SCAN_UNIDIRECTIONAL:
-                  // always the same direction
-                  dir = -1;
-                  break;
-               default:
-                  // should never make it here
-                  throw new Exception("Can only deskew stage scanning data");
-               }
-               if (deskewInvert_.isSelected()) {
-                  dir *= -1;
-               }
-               
+               dir = du.getDeskewSign(c, acqMode, twoSided, firstSideIsA);
                final boolean interpolate = deskewInterpolate_.isSelected();
                ImagePlus i = channels[c];
                i.setStack(resize.expandStack(i.getImageStack(), width + width_expansion, height, (dir < 0 ? width_expansion : 0), 0));

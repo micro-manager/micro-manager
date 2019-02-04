@@ -31,6 +31,7 @@ import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Positions;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
+import org.micromanager.asidispim.Data.Devices.Sides;
 import org.micromanager.asidispim.Data.AcquisitionSettings;
 import org.micromanager.asidispim.Data.ChannelSpec;
 import org.micromanager.asidispim.Data.Joystick.Directions;
@@ -42,6 +43,7 @@ import org.micromanager.asidispim.Utils.PanelUtils;
 import org.micromanager.asidispim.Utils.SliceTiming;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.asidispim.Utils.ControllerUtils;
+import org.micromanager.asidispim.Utils.DeviceUtils;
 import org.micromanager.asidispim.Utils.AutofocusUtils;
 import org.micromanager.asidispim.Utils.MovementDetector;
 import org.micromanager.asidispim.Utils.MovementDetector.Method;
@@ -122,6 +124,8 @@ import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
 import ij.IJ;
+import ij.ImagePlus;
+import ij.process.ImageProcessor;
 
 import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
@@ -165,6 +169,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JSpinner acquisitionInterval_;
    private final JToggleButton buttonStart_;
    private final JButton buttonTestAcq_;
+   private final JButton buttonOverviewAcq_;
    private final JPanel volPanel_;
    private final JPanel sliceAdvancedPanel_;
    private final JPanel timepointPanel_;
@@ -318,7 +323,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                Properties.Keys.PLUGIN_NUM_SIDES, "1");
       }
       volPanel_.add(new JLabel("Number of sides:"));
-      String [] str12 = {"1", "2"};
+      final String [] str12 = {"1", "2"};
       numSides_ = pu.makeDropDownBox(str12, Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_NUM_SIDES, str12[1]);
       numSides_.addActionListener(recalculateTimingDisplayAL);
@@ -329,7 +334,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       volPanel_.add(numSides_, "wrap");
 
       volPanel_.add(new JLabel("First side:"));
-      String[] ab = {Devices.Sides.A.toString(), Devices.Sides.B.toString()};
+      final String[] ab = {Devices.Sides.A.toString(), Devices.Sides.B.toString()};
       if (!ASIdiSPIM.oSPIM) {
       } else {
          props_.setPropValue(Devices.Keys.PLUGIN,
@@ -788,7 +793,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // end duration report panel
       
-      buttonTestAcq_ = new JButton("Test Acquisition");
+      buttonTestAcq_ = new JButton("Test Acqusition");
       buttonTestAcq_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -798,6 +803,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       buttonStart_ = new JToggleButton();
       buttonStart_.setIconTextGap(6);
+      buttonStart_.setOpaque(true);
       buttonStart_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -810,7 +816,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       });
       updateStartButton();  // call once to initialize, isSelected() will be false
       
-      // make the size of the test button match the start button (easier on the eye)
+      // make the height of buttons match the start button (easier on the eye)
       Dimension sizeStart = buttonStart_.getPreferredSize();
       Dimension sizeTest = buttonTestAcq_.getPreferredSize();
       sizeTest.height = sizeStart.height;
@@ -1257,6 +1263,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 		}
       });
       
+      buttonOverviewAcq_ = new JButton("Run Overview Acquisition");
+      buttonOverviewAcq_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            runOverviewAcquisition();
+         }
+      });
+      
       gridFrame_ = new MMFrame();
       gridFrame_.setTitle("XYZ Grid");
       gridFrame_.loadPosition(100, 100);
@@ -1288,7 +1302,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       gridPanel_.add(gridZPanel_, "wrap");
       gridPanel_.add(gridXPanel_, "spany 2");
       gridPanel_.add(gridSettingsPanel_, "growx, wrap");
-      gridPanel_.add(computeGridButton_, "growx, growy");
+      gridPanel_.add(computeGridButton_, "growx, growy, wrap");
+      gridPanel_.add(buttonOverviewAcq_, "growx, center, span 2");
+      
       gridFrame_.pack();
       gridFrame_.setResizable(false);
 
@@ -2272,7 +2288,286 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       };
       
       (new Thread(runTestThread, "Run Test")).start();
+   }
+   
+   /**
+    * runs an overview acquisition that gets passed to other code to display as a 2D projection
+    */
+   public void runOverviewAcquisition() {
+      Runnable runOverviewThread = new Runnable() {
+         
+         @Override
+         public void run() {
 
+            // get settings that we will use
+            String camera = devices_.getMMDevice(Devices.Keys.CAMERAA);
+            Devices.Keys cameraDevice = Devices.Keys.CAMERAA;
+            boolean usingDemoCam = devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA).equals(Devices.Libraries.DEMOCAM);
+            final Devices.Sides side = 
+                  props_.getPropValueString(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_OVERVIEW_SIDE).equals("B")
+                  ? Devices.Sides.B : Devices.Sides.A;
+            if (side.equals(Devices.Sides.B)) {
+               camera = devices_.getMMDevice(Devices.Keys.CAMERAB);
+               cameraDevice = Devices.Keys.CAMERAB;
+               usingDemoCam = devices_.getMMDeviceLibrary(Devices.Keys.CAMERAB).equals(Devices.Libraries.DEMOCAM);
+            }
+            final String overviewChannel = props_.getPropValueString(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_OVERVIEW_CHANNEL);
+            if (!channelValid(overviewChannel)) {
+               MyDialogUtils.showError("Invalid channel selected for overview acquisition (Settings tab).");
+               return;
+            }
+            final double downsampleY = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_OVERVIEW_Y_DOWNSAMPLE_FACTOR);
+            final double downsampleSpacing = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_OVERVIEW_SPACING_DOWNSAMPLE_FACTOR);
+            final double thicknessFactor = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_OVERVIEW_SLICE_THICKNESS_FACTOR);
+            double deskewFactor = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_DESKEW_FACTOR);
+            if (deskewFactor == 0.0) {
+               deskewFactor = 1.0;
+            }
+            
+            // initialize stage scanning so we can restore state
+            Point2D.Double xyPosUm = new Point2D.Double();
+            float origXSpeed = 1f;  // don't want 0 in case something goes wrong
+            float origXAccel = 1f;  // don't want 0 in case something goes wrong
+            try {
+               xyPosUm = core_.getXYStagePosition(devices_.getMMDevice(Devices.Keys.XYSTAGE));
+               origXSpeed = props_.getPropValueFloat(Devices.Keys.XYSTAGE,
+                     Properties.Keys.STAGESCAN_MOTOR_SPEED);
+               origXAccel = props_.getPropValueFloat(Devices.Keys.XYSTAGE,
+                     Properties.Keys.STAGESCAN_MOTOR_ACCEL);
+            } catch (Exception ex) {
+               // do nothing
+            }
+
+            // if X speed is less than 0.2 mm/s then it probably wasn't restored to correct speed some other time
+            // we offer to set it to a more normal speed in that case, until the user declines and we stop asking
+            if (origXSpeed < 0.2 && resetXaxisSpeed_) {
+               resetXaxisSpeed_ = MyDialogUtils.getConfirmDialogResult(
+                     "Max speed of X axis is small, perhaps it was not correctly restored after stage scanning previously.  Do you want to set it to 1 mm/s now?",
+                     JOptionPane.YES_NO_OPTION);
+               // once the user selects "no" then resetXaxisSpeed_ will be false and stay false until plugin is launched again
+               if (resetXaxisSpeed_) {
+                  props_.setPropValue(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MOTOR_SPEED, 1f);
+                  origXSpeed = 1f;
+               }
+            }
+            
+            ReportingUtils.logDebugMessage("User requested start of overview diSPIM acquisition with side " + side.toString() + " selected.");
+
+            // start with current acquisition settings, then modify a few of them for the focus acquisition
+            AcquisitionSettings acqSettings = getCurrentAcquisitionSettings();
+            int nrImages = (int)Math.round(acqSettings.numSlices/downsampleSpacing);
+            acqSettings.isStageScanning = true;
+            acqSettings.hardwareTimepoints = false;
+            acqSettings.spimMode = AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL;
+            acqSettings.channelMode = MultichannelModes.Keys.NONE;
+            acqSettings.useChannels = false;
+            acqSettings.numChannels = 1;
+            acqSettings.numSlices = nrImages;
+            acqSettings.numTimepoints = 1;
+            acqSettings.timepointInterval = 1;
+            acqSettings.numSides = 1;
+            acqSettings.firstSideIsA = side.equals(Sides.A);
+            acqSettings.useTimepoints = false;
+            acqSettings.useMultiPositions = true;
+            acqSettings.stepSizeUm = Math.round(acqSettings.stepSizeUm*downsampleSpacing);
+
+            posUpdater_.pauseUpdates(true);
+            controller_.prepareControllerForAquisition(acqSettings);
+            zStepUm_ = controller_.getActualStepSizeUm();
+
+            // acquisition code below adapted from autofocus code (any bugs may have been copied)
+
+            boolean liveModeOriginally = false;
+            String originalCamera = gui_.getMMCore().getCameraDevice();
+            try {
+               liveModeOriginally = gui_.isLiveModeOn();
+               if (liveModeOriginally) {
+                  gui_.enableLiveMode(false);
+                  gui_.getMMCore().waitForDevice(originalCamera);
+               }
+
+               ASIdiSPIM.getFrame().setHardwareInUse(true);
+
+               // deal with shutter before starting acquisition
+               // needed despite core's handling because of DemoCamera
+               boolean autoShutter = gui_.getMMCore().getAutoShutter();
+               boolean shutterOpen = gui_.getMMCore().getShutterOpen();
+               if (autoShutter) {
+                  gui_.getMMCore().setAutoShutter(false);
+                  if (!shutterOpen) {
+                     gui_.getMMCore().setShutterOpen(true);
+                  }
+               }
+
+               gui_.getMMCore().setCameraDevice(camera);
+               gui_.getMMCore().initializeCircularBuffer();  // also does clearCircularBuffer()
+               cameras_.setCameraForAcquisition(cameraDevice, true);
+               prefs_.putFloat(MyStrings.PanelNames.SETTINGS.toString(),
+                     Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE_FIRST.toString(),
+                     (float)gui_.getMMCore().getExposure());
+               gui_.getMMCore().setExposure((double) acqSettings.sliceTiming.cameraExposure);
+               gui_.refreshGUIFromCache();
+               gui_.getMMCore().startSequenceAcquisition(camera, acqSettings.numSlices, 0, true);
+
+               boolean success = controller_.triggerControllerStartAcquisition(acqSettings.spimMode, acqSettings.firstSideIsA);
+               if (!success) {
+                  throw new ASIdiSPIMException("Failed to trigger controller");
+               }
+               
+               long startTime = System.currentTimeMillis();
+               long now = startTime;
+               long timeout = 5000;  // wait 5 seconds for first image to come
+               //timeout = Math.max(5000, Math.round(1.2*controller_.computeActualVolumeDuration(sliceTiming)));
+               while (gui_.getMMCore().getRemainingImageCount() == 0
+                     && (now - startTime < timeout)) {
+                  now = System.currentTimeMillis();
+                  Thread.sleep(5);
+               }
+               if (now - startTime >= timeout) {
+                  throw new ASIdiSPIMException("Camera did not send first image within a reasonable time");
+               }
+               
+               // get geometric factors
+               double compressX = Math.sqrt(2);
+               DeviceUtils du = new DeviceUtils(gui_, devices_, props_, prefs_);
+               int deskewSign = -1;
+               try {
+                  deskewSign = du.getDeskewSign(0, acqSettings.spimMode, acqSettings.numSides > 1, acqSettings.firstSideIsA);
+                  compressX = du.getStageTopViewCompressFactor(acqSettings.firstSideIsA);
+               } catch(Exception ex) {
+                  // ignore errors, stick with defaults
+               }
+
+               // create the image that we will display as the overview, with size determined by first image collected
+               // core should know correct image dimensions because we have set up camera already
+               final int imageWidth = (int)core_.getImageWidth();
+               final int imageHeight = (int)core_.getImageHeight();
+               final int imageBitDepth = (int)core_.getImageBitDepth();
+               final int roiWidth = (int)Math.round(imageWidth*thicknessFactor);
+               final int roiOffset = (int)((imageWidth-roiWidth)/2);
+               final int scaledWidth = (int)Math.round(roiWidth/downsampleY/compressX);  // can scale width by additional sqrt(2) if adjust spacing and doing max projection anyway
+               final int scaledHeight = (int)Math.round(imageHeight/downsampleY);
+               final double zStepPx = zStepUm_ / core_.getPixelSizeUm();
+               final double dx = zStepPx * du.getStageGeometricShiftFactor(true) * deskewFactor / downsampleY / compressX;
+               final int width_expansion = (int) Math.abs(Math.ceil(dx*(nrImages-1)));
+               final int totalWidth = scaledWidth + width_expansion;
+
+               ImagePlus forProjector = IJ.createImage("For Projector", totalWidth, scaledHeight, 2, imageBitDepth);
+               forProjector.setSlice(1);
+               forProjector.getProcessor().setBackgroundValue(0.0);
+               forProjector.getProcessor().fill();
+               forProjector.setSlice(2);
+               forProjector.getProcessor().setBackgroundValue(0.0);
+               forProjector.getProcessor().fill();
+               
+               ij.plugin.ZProjector project = new ij.plugin.ZProjector();
+               project.setMethod(ij.plugin.ZProjector.MAX_METHOD);
+               ImagePlus forDisplay = IJ.createImage("Overwiew", totalWidth, scaledHeight, 1, imageBitDepth);
+               forDisplay.getProcessor().setBackgroundValue(0.0);
+               forDisplay.getProcessor().fill();
+               
+               // get and process the incoming images
+               double xPosDouble = (deskewSign < 0) ? (double)(totalWidth-scaledWidth) : 0.0;
+               boolean done = false;
+               int counter = 0;
+               startTime = System.currentTimeMillis();
+               while ((gui_.getMMCore().getRemainingImageCount() > 0
+                     || gui_.getMMCore().isSequenceRunning(camera))
+                     && !done) {
+                  now = System.currentTimeMillis();
+                  if (gui_.getMMCore().getRemainingImageCount() > 0) {  // we have an image to grab
+                     TaggedImage timg = gui_.getMMCore().popNextTaggedImage();
+                     // reset our wait timer since we got an image
+                     startTime = System.currentTimeMillis();
+                     
+                     ImageProcessor ip = AutofocusUtils.makeProcessor(timg);
+                     ip.setInterpolationMethod(ImageProcessor.BILINEAR);
+                     ip.setRoi(roiOffset, 0, roiWidth, imageHeight);
+                     ImageProcessor cropped = ip.crop();
+                     ImageProcessor scaled = cropped.resize(scaledWidth, scaledHeight, true);
+                     forProjector.setSlice(2);
+                     forProjector.getProcessor().fill();
+                     forProjector.getProcessor().insert(scaled, (int)Math.round(xPosDouble), 0);  // example at https://imagej.nih.gov/ij/developer/source/ij/plugin/MontageMaker.java.html suggests pixel positions are 0-indexed
+                     project.setImage(forProjector);
+                     project.doProjection();
+                     forProjector.setSlice(1);
+                     ImageProcessor latest = project.getProjection().getProcessor();
+                     forProjector.setProcessor(latest);
+                     forDisplay.setProcessor(latest);
+                     forDisplay.show();
+                     
+                     xPosDouble += (deskewSign*dx);
+                     counter++;
+                     if (counter >= nrImages) {
+                        done = true;
+                     }
+                  }
+                  if (now - startTime > timeout) {
+                     // no images within a reasonable amount of time => exit
+                     throw new ASIdiSPIMException("No image arrived in 5 seconds");
+                  }
+               }
+
+               // if we are using demo camera then add some extra time to let controller finish
+               // since we got images without waiting for controller to actually send triggers
+               if (usingDemoCam) {
+                  Thread.sleep(1000);
+               }
+
+               // clean up shutter
+               gui_.getMMCore().setShutterOpen(shutterOpen);
+               gui_.getMMCore().setAutoShutter(autoShutter);
+
+            } catch (Exception ex) {
+               MyDialogUtils.showError("Error in overview acquisition " + ex.getMessage());
+            } finally {
+
+               ASIdiSPIM.getFrame().setHardwareInUse(false);
+
+               try {
+                  gui_.getMMCore().stopSequenceAcquisition(camera);
+                  gui_.getMMCore().setCameraDevice(originalCamera);
+
+                  controller_.cleanUpControllerAfterAcquisition(1, acqSettings.firstSideIsA, false);
+                  
+                  // if we did stage scanning restore its position and speed
+                  try {
+                     // make sure stage scanning state machine is stopped, otherwise setting speed/position won't take
+                     props_.setPropValue(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_STATE,
+                           Properties.Values.SPIM_IDLE);
+                     props_.setPropValue(Devices.Keys.XYSTAGE,
+                           Properties.Keys.STAGESCAN_MOTOR_SPEED, origXSpeed);
+                     props_.setPropValue(Devices.Keys.XYSTAGE,
+                           Properties.Keys.STAGESCAN_MOTOR_ACCEL, origXAccel);
+                     core_.setXYPosition(devices_.getMMDevice(Devices.Keys.XYSTAGE), 
+                           xyPosUm.x, xyPosUm.y);
+                  } catch (Exception ex) {
+                     MyDialogUtils.showError("Could not restore XY stage position after acquisition");
+                  }
+
+                  cameras_.setCameraForAcquisition(cameraDevice, false);
+                  gui_.getMMCore().setExposure(camera, prefs_.getFloat(MyStrings.PanelNames.SETTINGS.toString(),
+                        Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE_FIRST.toString(), 10f));
+                  gui_.refreshGUIFromCache();
+
+                  if (liveModeOriginally) {
+                     gui_.getMMCore().waitForDevice(camera);
+                     gui_.getMMCore().waitForDevice(originalCamera);
+                     gui_.enableLiveMode(true);
+                  }
+
+               } catch (Exception ex) {
+                  MyDialogUtils.showError("Error while restoring hardware state after overview image.");
+               }
+               finally {
+                  posUpdater_.pauseUpdates(false);
+               }
+            }
+
+         }
+      };
+      
+      (new Thread(runOverviewThread, "Run Overview")).start();
    }
 
    /**
@@ -2317,6 +2612,19 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    
    private Color getChannelColor(int channelIndex) {
       return (colors[channelIndex % colors.length]);
+   }
+   
+   private boolean channelValid(final String channel) {
+      // double-check that selected channel is valid if we are doing multi-channel
+      String channelGroup  = props_.getPropValueString(Devices.Keys.PLUGIN,
+            Properties.Keys.PLUGIN_MULTICHANNEL_GROUP);
+      StrVector channels = gui_.getMMCore().getAvailableConfigs(channelGroup);
+      for (String trythis : channels) {
+         if (trythis.equals(channel)) {
+            return true;
+            }
+         }
+      return false;
    }
    
    /**
@@ -2767,17 +3075,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                Properties.Keys.PLUGIN_AUTOFOCUS_CHANNEL);
          // double-check that selected channel is valid if we are doing multi-channel
          if (acqSettings.useChannels) {
-            String channelGroup  = props_.getPropValueString(Devices.Keys.PLUGIN,
-                  Properties.Keys.PLUGIN_MULTICHANNEL_GROUP);
-            StrVector channels = gui_.getMMCore().getAvailableConfigs(channelGroup);
-            boolean found = false;
-            for (String channel : channels) {
-               if (channel.equals(autofocusChannel)) {
-                  found = true;
-                  break;
-               }
-            }
-            if (!found) {
+            if (!channelValid(autofocusChannel)) {
                MyDialogUtils.showError("Invalid autofocus channel selected on autofocus tab.");
                return false;
             }
@@ -2795,17 +3093,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                  Properties.Keys.PLUGIN_AUTOFOCUS_CORRECTMOVEMENT_CHANNEL);
          // double-check that selected channel is valid if we are doing multi-channel
          if (acqSettings.useChannels) {
-            String channelGroup  = props_.getPropValueString(Devices.Keys.PLUGIN,
-                  Properties.Keys.PLUGIN_MULTICHANNEL_GROUP);
-            StrVector channels = gui_.getMMCore().getAvailableConfigs(channelGroup);
-            boolean found = false;
-            for (String channel : channels) {
-               if (channel.equals(correctMovementChannel)) {
-                  found = true;
-                  break;
-               }
-            }
-            if (!found) {
+            if (!channelValid(correctMovementChannel)) {
                MyDialogUtils.showError("Invalid movement correction channel selected on autofocus tab.");
                return false;
             }

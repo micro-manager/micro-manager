@@ -160,7 +160,7 @@ public class ASIdiSPIMFrame extends MMFrame
       
       // create the panels themselves
       // in some cases dependencies create required ordering
-      devicesPanel_ = new DevicesPanel(gui_, devices_, props_);
+      devicesPanel_ = new DevicesPanel(gui_, devices_, props_, prefs_);
       stagePosUpdater_ = new StagePositionUpdater(positions_, props_);  // needed for setup and navigation
       
       autofocus_ = new AutofocusUtils(gui_, devices_, props_, prefs_,
@@ -181,7 +181,7 @@ public class ASIdiSPIMFrame extends MMFrame
       navigationPanel_ = new NavigationPanel(gui_, devices_, props_, joystick_,
             positions_, prefs_, cameras_, stagePosUpdater_);
 
-      dataAnalysisPanel_ = new DataAnalysisPanel(prefs_, props_, devices_);
+      dataAnalysisPanel_ = new DataAnalysisPanel(gui_, prefs_, props_, devices_);
       autofocusPanel_ = new AutofocusPanel(gui_, devices_, props_, prefs_, autofocus_);
       cameraPanel_ = new CameraPanel(gui_, devices_, props_, prefs_, cameras_);
       settingsPanel_ = new SettingsPanel(gui_, devices_, props_, prefs_, stagePosUpdater_);

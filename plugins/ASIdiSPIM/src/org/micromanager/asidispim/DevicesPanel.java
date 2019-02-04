@@ -23,6 +23,7 @@ package org.micromanager.asidispim;
 
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.MyStrings;
+import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.DeviceUtils;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
@@ -58,7 +59,7 @@ public class DevicesPanel extends ListeningJPanel {
     * @param devices - instance of class that holds information about devices
     * @param props
     */
-   public DevicesPanel(ScriptInterface gui, Devices devices, Properties props) {
+   public DevicesPanel(ScriptInterface gui, Devices devices, Properties props, Prefs prefs) {
       super(MyStrings.PanelNames.DEVICES.toString(), 
             new MigLayout(
               "",
@@ -68,7 +69,7 @@ public class DevicesPanel extends ListeningJPanel {
       devices_ = devices;
       core_ = gui.getMMCore();
       
-      DeviceUtils du = new DeviceUtils(gui, devices, props);
+      DeviceUtils du = new DeviceUtils(gui, devices, props, prefs);
       
       // turn off listeners while we build the panel
       devices_.enableListeners(false);

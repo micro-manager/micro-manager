@@ -35,7 +35,11 @@ import mmcorej.CMMCore;
 import mmcorej.StrVector;
 
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.asidispim.ASIdiSPIM;
+import org.micromanager.asidispim.Data.AcquisitionModes;
 import org.micromanager.asidispim.Data.Devices;
+import org.micromanager.asidispim.Data.MyStrings;
+import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 
 /**
@@ -45,11 +49,13 @@ public class DeviceUtils {
    private final CMMCore core_;
    private final Devices devices_;
    private final Properties props_;
-   
-   public DeviceUtils(ScriptInterface gui, Devices devices, Properties props) {  // prefs needed?
+   private final Prefs prefs_;
+
+   public DeviceUtils(ScriptInterface gui, Devices devices, Properties props, Prefs prefs) {
       core_ = gui.getMMCore();
       devices_ = devices;
       props_ = props;
+      prefs_ = prefs;
    }
    
    /**
@@ -60,7 +66,6 @@ public class DeviceUtils {
       checkDeviceLibrary(devKey);
       checkFirmwareVersion(devKey);
    }
-   
 
    /**
     * checks firmware versions and gives any necessary warnings to user
@@ -318,6 +323,80 @@ public class DeviceUtils {
       deviceBox.setSelectedItem(devices_.getMMDevice(deviceName));  // selects whatever device was read in by prefs
       deviceBox.setMaximumSize(new Dimension(maximumWidth, 30));
       return deviceBox;
+   }
+   
+   /***
+    * compute how far we need to shift each image for deskew relative to Z-step size (orthogonal to image) based on user-specified angle
+    * e.g. with diSPIM, angle is 45 degrees so factor is 1.0, for oSPIM the factor is tan(60 degrees) = sqrt(3), etc.
+    * if pathA is false then we compute based on Path B angle (assumed to be 90 degrees minus one specified for Path A)
+    * @param pathA true if using Path A
+    * @return factor, e.g. 1.0 for 45 degrees, sqrt(3) for 60 degrees, etc.
+    */
+   public double getStageGeometricShiftFactor(boolean pathA) {
+      double angle = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_ANGLE_PATHA);
+      if (angle < 1) {  // case when property not defined
+         angle = ASIdiSPIM.oSPIM ? 60.0 : 45.0; 
+      }
+      if (!pathA) {
+         angle = 90.0 - angle;
+      }
+      return Math.tan(angle/180.0*Math.PI);
+   }
+   
+   /***
+    * Compute fractional size when viewed from above for overview image based on user-specified angle
+    * e.g. with diSPIM, angle is 45 degrees so factor is cos(45 degrees) = sqrt(2), for oSPIM would be cos(60 degrees) = 0.5, etc.
+    * if pathA is false then we compute based on Path B angle (assumed to be 90 degrees minus one specified for Path A)
+    * @param pathA true if using Path A
+    * @return factor, e.g. sqrt(2) for 45 degrees, 0.5 for 60 degrees, etc.
+    */
+   public double getStageTopViewCompressFactor(boolean pathA) {
+      double angle = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_ANGLE_PATHA);
+      if (angle < 1) {  // case when property not defined
+         angle = ASIdiSPIM.oSPIM ? 60.0 : 45.0; 
+      }
+      if (!pathA) {
+         angle = 90.0 - angle;
+      }
+      return Math.cos(angle/180.0*Math.PI);
+   }
+   
+   /**
+    * Compute sign of the deskew based on settings for that stack.  Here so code can be shared between panels.
+    * @param channelIndex
+    * @param acqMode
+    * @param twoSided
+    * @param firstSideIsA
+    * @return
+    */
+   public int getDeskewSign(int channelIndex, AcquisitionModes.Keys acqMode, boolean twoSided, boolean firstSideIsA) {
+      int sign;
+      switch (acqMode) {
+      case STAGE_SCAN:
+         if (twoSided) {
+            sign = (channelIndex % 2) * 2 - 1;  // -1 for path A which are odd channels, 1 for path B
+         } else {
+            // single-sided is path A for all channels
+            sign = -1;
+         }
+         // invert direction if we started with path B, regardless of single- or double-sided
+         if (!firstSideIsA) {
+            sign *= -1;
+         }
+         break;
+      case STAGE_SCAN_INTERLEAVED:
+      case STAGE_SCAN_UNIDIRECTIONAL:
+         // always the same direction
+         sign = -1;
+         break;
+      default:
+         sign = 1;
+      }
+      if (prefs_.getBoolean(MyStrings.PanelNames.DATAANALYSIS.toString(),
+            Properties.Keys.PLUGIN_DESKEW_INVERT, false)) {
+         sign *= -1;
+      }
+      return sign;
    }
    
 }
