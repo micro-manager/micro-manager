@@ -3334,6 +3334,9 @@ const unsigned char* CPCOCam::GetBuffer(int ibufnum)
 {
   int nErr = 0, iw, ih;
 
+  if(ibufnum < 0)
+    return NULL;
+
   m_pic = m_pCamera->GetBuffer(ibufnum);
 
   if(img_.Depth() == 2)
@@ -3954,7 +3957,10 @@ int CPCOCam::SnapImage()
   {
     if(m_bSoftwareTriggered == FALSE)
     {
-      m_pCamera->StopCam(&nErr);
+      int ilerr = 0;
+      m_pCamera->StopCam(&ilerr);
+      if(nErr == 0)
+        nErr = ilerr;
       m_bRecording = false;
     }
   }
