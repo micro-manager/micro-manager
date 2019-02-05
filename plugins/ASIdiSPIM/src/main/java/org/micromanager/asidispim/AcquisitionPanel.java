@@ -2365,9 +2365,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
             long extraMultiXYTimeout = 0;
             if (acqSettings.useMultiPositions) {
-                // give 10 extra seconds to arrive at intended XY position instead 
+                // give 20 extra seconds to arrive at intended XY position instead 
                 // of trying to get fancy about computing actual move time 
-                extraMultiXYTimeout = 10000;
+                extraMultiXYTimeout = 20000;
             }
 
             try {
