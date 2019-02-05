@@ -38,7 +38,7 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#define KAMLIBVERSION           251
+#define KAMLIBVERSION           252
 #pragma once
 
 #define WM_CHANGE_CAMERAVALUES WM_APP + 200
