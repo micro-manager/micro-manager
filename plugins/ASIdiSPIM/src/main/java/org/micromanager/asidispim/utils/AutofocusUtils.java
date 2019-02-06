@@ -423,7 +423,7 @@ public class AutofocusUtils {
                         timg.tags.put("ZPositionUm", piezoCenter);
                         Image img = gui_.data().convertTaggedImage(timg);
                         Coords coords = Coordinates.builder().
-                                z(counter).build();
+                                z(counter).t(0).c(0).p(0).build();
                         img = img.copyAtCoords(coords);
                         if (store != null) {
                            store.putImage(img);
