@@ -2299,6 +2299,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          @Override
          public void run() {
 
+            if (core_.getPixelSizeUm() < 1e-6) {  // can't compare equality directly with floating point values so call < 1e-9 is zero or negative
+               ReportingUtils.showError("Need to configure pixel size in Micro-Manager to use overview acquisition.");
+               return;
+            }
+            
+            if (ASIdiSPIM.getFrame().getHardwareInUse()) {
+               ReportingUtils.showError("Cannot run overview acquisition while another"
+                     + " autofocus or acquisition is ongoing.");
+               return;
+            }
+
             // get settings that we will use
             String camera = devices_.getMMDevice(Devices.Keys.CAMERAA);
             Devices.Keys cameraDevice = Devices.Keys.CAMERAA;
@@ -2417,7 +2428,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                long startTime = System.currentTimeMillis();
                long now = startTime;
                long timeout = 5000;  // wait 5 seconds for first image to come
-               //timeout = Math.max(5000, Math.round(1.2*controller_.computeActualVolumeDuration(sliceTiming)));
                while (gui_.getMMCore().getRemainingImageCount() == 0
                      && (now - startTime < timeout)) {
                   now = System.currentTimeMillis();
@@ -2438,16 +2448,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   // ignore errors, stick with defaults
                }
 
-               // create the image that we will display as the overview, with size determined by first image collected
+               // create the image that we will display as the overview
                // core should know correct image dimensions because we have set up camera already
                final int imageWidth = (int)core_.getImageWidth();
                final int imageHeight = (int)core_.getImageHeight();
                final int imageBitDepth = (int)core_.getImageBitDepth();
+               final double pixelSize = core_.getPixelSizeUm();
                final int roiWidth = (int)Math.round(imageWidth*thicknessFactor);
                final int roiOffset = (int)((imageWidth-roiWidth)/2);
                final int scaledWidth = (int)Math.round(roiWidth/downsampleY/compressX);  // can scale width by additional sqrt(2) if adjust spacing and doing max projection anyway
                final int scaledHeight = (int)Math.round(imageHeight/downsampleY);
-               final double zStepPx = zStepUm_ / core_.getPixelSizeUm();
+               final double zStepPx = zStepUm_ / pixelSize;
                final double dx = zStepPx * du.getStageGeometricShiftFactor(true) * deskewFactor / downsampleY / compressX;
                final int width_expansion = (int) Math.abs(Math.ceil(dx*(nrImages-1)));
                final int totalWidth = scaledWidth + width_expansion;
@@ -2465,6 +2476,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                ImagePlus forDisplay = IJ.createImage("Overwiew", totalWidth, scaledHeight, 1, imageBitDepth);
                forDisplay.getProcessor().setBackgroundValue(0.0);
                forDisplay.getProcessor().fill();
+               ij.measure.Calibration cal = forDisplay.getCalibration();
+               cal.pixelWidth = pixelSize * downsampleY;
+               cal.pixelHeight = pixelSize * downsampleY;
+               cal.setUnit("um");
                
                // get and process the incoming images
                double xPosDouble = (deskewSign < 0) ? (double)(totalWidth-scaledWidth) : 0.0;
