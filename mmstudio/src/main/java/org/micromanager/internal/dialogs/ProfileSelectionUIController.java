@@ -19,6 +19,7 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JComboBox;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JMenuItem;
@@ -47,6 +48,7 @@ public final class ProfileSelectionUIController
    private ChangeListener profileIndexListener_;
 
    private final JPanel panel_;
+   private final JCheckBox readOnlyCheckBox_ = new JCheckBox();
    private final JComboBox profileComboBox_ = new JComboBox();
    private final PopupButton gearButton_;
 
@@ -83,6 +85,7 @@ public final class ProfileSelectionUIController
 
       ret.profileComboBox_.addActionListener(ret);
       ret.gearButton_.addPopupButtonListener(ret);
+      ret.readOnlyCheckBox_.addActionListener(ret);
       for (JMenuItem item : ImmutableList.of(ret.gearMenuNewProfileItem_,
             ret.gearMenuDuplicateProfileItem_, ret.gearMenuRenameProfileItem_,
             ret.gearMenuDeleteProfileItem_)) {
@@ -126,10 +129,13 @@ public final class ProfileSelectionUIController
             new LC().fillX().insets("0").gridGap("0", "0")));
       panel_.add(profileComboBox_, new CC().growX().pushX());
       panel_.add(gearButton_, new CC().width("pref!").height("pref!"));
+      panel_.add(readOnlyCheckBox_);
 
       profileComboBox_.setToolTipText(
             "<html>Select the user profile for this session.<br />" +
                   "Settings and preferences are saved in each user profile.</html>");
+      readOnlyCheckBox_.setToolTipText(
+            "Prevent changes from being saved.");
       gearButton_.setToolTipText(
             "Manage user profiles");
    }
@@ -210,13 +216,26 @@ public final class ProfileSelectionUIController
       else if (event.getSource() == gearMenuDeleteProfileItem_) {
          handleDeleteProfile();
       }
+      else if (event.getSource() == readOnlyCheckBox_) {
+         handleReadOnlyAction();
+      }
    }
 
+   private void handleReadOnlyAction(){
+      UUID uuid = admin_.getUUIDOfCurrentProfile();
+      if (uuid != null) {
+          try {
+            admin_.setProfileReadOnly(readOnlyCheckBox_.isSelected());
+          } catch (IOException e) {}
+      }
+   }
+   
    private void handleProfileSelection() {
       try {
          UUID uuid = getSelectedProfileUUID();
          if (uuid != null) {
             admin_.setCurrentUserProfile(uuid);
+            readOnlyCheckBox_.setSelected(admin_.isProfileReadOnly());
          }
       }
       catch (IOException e) {
