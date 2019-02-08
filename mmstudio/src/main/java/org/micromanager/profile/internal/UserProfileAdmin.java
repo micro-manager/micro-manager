@@ -141,6 +141,21 @@ public final class UserProfileAdmin {
       }
       return profile.getSettings(UserProfileAdmin.class).getBoolean(READ_ONLY, false);
    }
+   
+   public void setProfileReadOnly(boolean readOnly) throws IOException {
+     UUID uuid = getUUIDOfCurrentProfile();
+     DefaultUserProfile uprofile = (DefaultUserProfile) getNonSavingProfile(uuid);
+     MutablePropertyMapView settings = uprofile.getSettings(UserProfileAdmin.class);
+     settings.putBoolean(READ_ONLY, readOnly);
+     Profile profile = Profile.fromSettings(uprofile.toPropertyMap());
+     for (IndexEntry entry : getIndex().getEntries()) {
+         if (entry.getUUID().equals(uuid)) {
+            final String filename = entry.getFilename();
+            profile.toPropertyMap().saveJSON(getModernFile(filename), true, true); //Force write the file even thought the profile may be set to readonly.
+            return;
+         }
+     }     
+   }
 
    /**
     * Migrate from the legacy profile format.
@@ -266,7 +281,7 @@ public final class UserProfileAdmin {
                      Profile profile;
                      profile = Profile.fromSettings(ret.toPropertyMap());
                      try {
-                        writeFile(filename, profile);
+                        writeFile(filename, profile, false);
                      }
                      catch (IOException e) {
                         if (errorHandler != null) {
@@ -338,7 +353,7 @@ public final class UserProfileAdmin {
          }
       }
       Profile profile = Profile.fromSettings(getProfileSettingsWithoutMigration(originalUUID));
-      writeFile(filename, profile);
+      writeFile(filename, profile, true);
 
       indexListeners_.fire().stateChanged(new ChangeEvent(this));
       return uuid;
@@ -480,8 +495,13 @@ public final class UserProfileAdmin {
       }
    }
 
-   private void writeFile(String filename, Profile profile) throws IOException {
-      if (isReadOnlyMode() || isProfileReadOnly()) {
+   private void writeFile(String filename, Profile profile, boolean ignoreProfileReadOnly) throws IOException {
+       boolean readOnly;
+       if (ignoreProfileReadOnly) {
+         readOnly = false;
+       } else
+         readOnly = isProfileReadOnly();
+      if (isReadOnlyMode() || readOnly) {
          virtualProfiles_.put(filename, profile);
          return;
       }
@@ -538,7 +558,7 @@ public final class UserProfileAdmin {
          try {
             PropertyMap legacyProfile = PropertyMaps.loadJSON(legacyFile);
             Profile modernProfile = Profile.fromSettings(migrateProfile(legacyProfile));
-            writeFile(filename, modernProfile);
+            writeFile(filename, modernProfile, true);
          } catch (IOException ignored) {
             // altough listed, this file does not exist.  Simply continue
          }
