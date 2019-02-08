@@ -19,7 +19,7 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JComboBox;
-import javax.swing.JCheckBox;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JMenuItem;
@@ -48,7 +48,6 @@ public final class ProfileSelectionUIController
    private ChangeListener profileIndexListener_;
 
    private final JPanel panel_;
-   private final JCheckBox readOnlyCheckBox_ = new JCheckBox();
    private final JComboBox profileComboBox_ = new JComboBox();
    private final PopupButton gearButton_;
 
@@ -60,7 +59,9 @@ public final class ProfileSelectionUIController
    private final JMenuItem gearMenuRenameProfileItem_ =
          new JMenuItem("Rename Profile...");
    private final JMenuItem gearMenuDeleteProfileItem_ =
-         new JMenuItem("Delete User Profile...");
+         new JMenuItem("Delete User Profile..."); 
+   private final JCheckBoxMenuItem gearMenuReadOnlyCheckBox_ = 
+         new JCheckBoxMenuItem("Profile Read Only");
 
    private static class ProfileComboItem {
       final UUID uuid_;
@@ -85,10 +86,9 @@ public final class ProfileSelectionUIController
 
       ret.profileComboBox_.addActionListener(ret);
       ret.gearButton_.addPopupButtonListener(ret);
-      ret.readOnlyCheckBox_.addActionListener(ret);
       for (JMenuItem item : ImmutableList.of(ret.gearMenuNewProfileItem_,
             ret.gearMenuDuplicateProfileItem_, ret.gearMenuRenameProfileItem_,
-            ret.gearMenuDeleteProfileItem_)) {
+            ret.gearMenuDeleteProfileItem_, ret.gearMenuReadOnlyCheckBox_)) {
          item.addActionListener(ret);
       }
 
@@ -119,6 +119,7 @@ public final class ProfileSelectionUIController
       gearMenu_.add(gearMenuDuplicateProfileItem_);
       gearMenu_.add(gearMenuRenameProfileItem_);
       gearMenu_.add(gearMenuDeleteProfileItem_);
+      gearMenu_.add(gearMenuReadOnlyCheckBox_);
 
       gearButton_ = PopupButton.create(
             IconLoader.getIcon("/org/micromanager/icons/gear.png"),
@@ -129,13 +130,9 @@ public final class ProfileSelectionUIController
             new LC().fillX().insets("0").gridGap("0", "0")));
       panel_.add(profileComboBox_, new CC().growX().pushX());
       panel_.add(gearButton_, new CC().width("pref!").height("pref!"));
-      panel_.add(readOnlyCheckBox_);
-
       profileComboBox_.setToolTipText(
             "<html>Select the user profile for this session.<br />" +
                   "Settings and preferences are saved in each user profile.</html>");
-      readOnlyCheckBox_.setToolTipText(
-            "Prevent changes from being saved.");
       gearButton_.setToolTipText(
             "Manage user profiles");
    }
@@ -216,7 +213,7 @@ public final class ProfileSelectionUIController
       else if (event.getSource() == gearMenuDeleteProfileItem_) {
          handleDeleteProfile();
       }
-      else if (event.getSource() == readOnlyCheckBox_) {
+      else if (event.getSource() == gearMenuReadOnlyCheckBox_) {
          handleReadOnlyAction();
       }
    }
@@ -225,7 +222,7 @@ public final class ProfileSelectionUIController
       UUID uuid = admin_.getUUIDOfCurrentProfile();
       if (uuid != null) {
           try {
-            admin_.setProfileReadOnly(readOnlyCheckBox_.isSelected());
+            admin_.setProfileReadOnly(gearMenuReadOnlyCheckBox_.isSelected());
           } catch (IOException e) {}
       }
    }
@@ -235,7 +232,7 @@ public final class ProfileSelectionUIController
          UUID uuid = getSelectedProfileUUID();
          if (uuid != null) {
             admin_.setCurrentUserProfile(uuid);
-            readOnlyCheckBox_.setSelected(admin_.isProfileReadOnly());
+            gearMenuReadOnlyCheckBox_.setSelected(admin_.isProfileReadOnly());
          }
       }
       catch (IOException e) {
