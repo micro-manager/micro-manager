@@ -38,6 +38,7 @@ import org.micromanager.internal.utils.ThreadFactoryFactory;
 import org.micromanager.profile.internal.UserProfileFileFormat.Index;
 import org.micromanager.profile.internal.UserProfileFileFormat.IndexEntry;
 import org.micromanager.profile.internal.UserProfileFileFormat.Profile;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  * Manage user profiles and their storage.
@@ -61,7 +62,8 @@ public final class UserProfileAdmin {
    private static final String DEFAULT_PROFILE_NAME = "Default User";
    private static final UUID DEFAULT_PROFILE_UUID =
          UUID.fromString("00000000-0000-0000-0000-000000000000");
-
+   
+   public static final String READ_ONLY = "ReadOnly";
 
    private final ProfileWriteLock writeLock_;
 
@@ -126,7 +128,19 @@ public final class UserProfileAdmin {
    }
 
    public boolean isReadOnlyMode() {
-      return writeLock_ == null;
+      if (writeLock_ == null) {
+          return true;
+      }
+      else {
+         UserProfile profile;
+         try {
+              profile = getNonSavingProfile(getUUIDOfCurrentProfile());
+         }
+         catch (IOException e) {
+              return true;
+         }
+         return profile.getSettings(UserProfileAdmin.class).getBoolean(READ_ONLY, false);
+      }
    }
 
    /**
@@ -241,6 +255,10 @@ public final class UserProfileAdmin {
             Profile profile = readFile(filename);
             final DefaultUserProfile ret = DefaultUserProfile.create(this,
                   uuid, profile.getSettings());
+            MutablePropertyMapView settings = ret.getSettings(UserProfileAdmin.class);
+            if (!settings.containsKey(READ_ONLY)) {
+               settings.putBoolean(READ_ONLY, false);
+            }
             ret.setFallbackProfile(getNonSavingGlobalProfile());
             if (autosaving) {
                ret.setSaver(ProfileSaver.create(ret, new Runnable() {
@@ -451,11 +469,9 @@ public final class UserProfileAdmin {
 
    private Profile readFile(String filename) throws IOException {
       // Try virtual first; if not found read actual
-      if (isReadOnlyMode()) {
-         Profile ret = virtualProfiles_.get(filename);
-         if (ret != null) {
-            return ret;
-         }
+      Profile ret = virtualProfiles_.get(filename);
+      if (ret != null) {
+         return ret;
       }
       try {
          return Profile.fromFilePmap(PropertyMaps.loadJSON(getModernFile(filename)));
