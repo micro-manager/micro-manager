@@ -128,19 +128,18 @@ public final class UserProfileAdmin {
    }
 
    public boolean isReadOnlyMode() {
-      if (writeLock_ == null) {
-          return true;
+      return writeLock_ == null;
+   }
+   
+   public boolean isProfileReadOnly() {
+      UserProfile profile;
+      try {
+         profile = getNonSavingProfile(getUUIDOfCurrentProfile());
       }
-      else {
-         UserProfile profile;
-         try {
-              profile = getNonSavingProfile(getUUIDOfCurrentProfile());
-         }
-         catch (IOException e) {
-              return true;
-         }
-         return profile.getSettings(UserProfileAdmin.class).getBoolean(READ_ONLY, false);
+      catch (IOException e) {
+         return true;
       }
+      return profile.getSettings(UserProfileAdmin.class).getBoolean(READ_ONLY, false);
    }
 
    /**
@@ -482,7 +481,7 @@ public final class UserProfileAdmin {
    }
 
    private void writeFile(String filename, Profile profile) throws IOException {
-      if (isReadOnlyMode()) {
+      if (isReadOnlyMode() || isProfileReadOnly()) {
          virtualProfiles_.put(filename, profile);
          return;
       }
