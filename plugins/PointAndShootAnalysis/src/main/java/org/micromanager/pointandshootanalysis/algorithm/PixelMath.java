@@ -23,6 +23,7 @@ import boofcv.struct.image.GrayU16;
 import boofcv.struct.image.GrayU8;
 import boofcv.struct.image.ImageGray;
 import boofcv.struct.image.Planar;
+import java.util.Arrays;
 
 /**
  * Collection of functions that could be part of boofcv.alg.misc.PixelMath
@@ -806,10 +807,10 @@ public class PixelMath {
 	}
    
    /**
-	 * Computes the maximum for each pixel across all bands in the {@link Planar} image.
+	 * Computes the average for each pixel across all bands in the {@link Planar} image.
 	 * 
 	 * @param input Planar image
-	 * @param output Gray scale image containing minimum pixel values
+	 * @param output Gray scale image containing average pixel values
     * @param startBand First band to be included in the projection
     * @param lastBand Last band to be included in the projection
 	 */
@@ -1170,6 +1171,302 @@ public class PixelMath {
 			}
 		}
 	}
+   
+    /**
+    * Computes the median for each pixel across all bands in the {@link Planar}
+    * image.
+    *
+    * @param input Planar image
+    * @param output Gray scale image containing median pixel values
+    * @param startBand First band to be included in the projection
+    * @param lastBand Last band to be included in the projection
+    */
+   public static void medianBand(Planar<GrayU8> input, GrayU8 output, int startBand, int lastBand ) {
+      checkInput(input, startBand, lastBand);
+      final int h = input.getHeight();
+      final int w = input.getWidth();
+
+      GrayU8[] bands = input.bands;
+      
+      byte[] valueArray = new byte[lastBand - startBand + 1];
+      for (int y = 0; y < h; y++) {
+         int indexInput = input.getStartIndex() + y * input.getStride();
+         int indexOutput = output.getStartIndex() + y * output.getStride();
+
+         int indexEnd = indexInput + w;
+         for (; indexInput < indexEnd; indexInput++, indexOutput++) {
+            for (int i = startBand; i <= lastBand; i++) {
+               valueArray[i] = bands[i].data[indexInput];
+            }
+            Arrays.sort(valueArray);
+            if (valueArray.length % 2 == 0) {
+               output.data[indexOutput] = (byte) ((valueArray[valueArray.length/2] & 0xFF+ 
+                        valueArray[valueArray.length/2 - 1] & 0xFF) /2);
+            } else {
+               output.data[indexOutput] = valueArray[valueArray.length/2];
+            }
+         }
+      }
+   }
+
+   
+   /**
+	 * Computes the median for each pixel across all bands in the {@link Planar} image.
+	 * 
+	 * @param input Planar image
+	 * @param output Gray scale image containing median pixel values
+    * @param startBand First band to be included in the projection
+    * @param lastBand Last band to be included in the projection
+	 */
+	public static void medianBand(Planar<GrayS8> input , GrayS8 output, int startBand, int lastBand ) {
+      checkInput(input, startBand, lastBand);
+		final int h = input.getHeight();
+		final int w = input.getWidth();
+
+		GrayS8[] bands = input.bands;
+		
+      byte[] valueArray = new byte[lastBand - startBand + 1];
+		for (int y = 0; y < h; y++) {
+			int indexInput = input.getStartIndex() + y * input.getStride();
+			int indexOutput = output.getStartIndex() + y * output.getStride();
+
+			int indexEnd = indexInput+w;
+			for (; indexInput < indexEnd; indexInput++, indexOutput++ ) {
+				for( int i = startBand; i <= lastBand; i++ ) {
+					valueArray[i] = bands[i].data[indexInput];
+            }
+            Arrays.sort(valueArray);
+            if (valueArray.length % 2 == 0) {
+               output.data[indexOutput] = (byte) ((valueArray[valueArray.length/2] + 
+                        valueArray[valueArray.length/2 - 1]) /2);
+            } else {
+               output.data[indexOutput] = valueArray[valueArray.length/2];
+            }
+			}
+		}
+	}
+   
+   /**
+	 * Computes the median for each pixel across all bands in the {@link Planar} image.
+	 * 
+	 * @param input Planar image
+	 * @param output Gray scale image containing median pixel values
+    * @param startBand First band to be included in the projection
+    * @param lastBand Last band to be included in the projection
+	 */
+	public static void medianBand(Planar<GrayU16> input , GrayU16 output, int startBand, int lastBand ) {
+      checkInput(input, startBand, lastBand);
+		final int h = input.getHeight();
+		final int w = input.getWidth();
+
+		GrayU16[] bands = input.bands;
+		
+      short[] valueArray = new short[lastBand - startBand + 1];
+		for (int y = 0; y < h; y++) {
+			int indexInput = input.getStartIndex() + y * input.getStride();
+			int indexOutput = output.getStartIndex() + y * output.getStride();
+
+			int indexEnd = indexInput+w;
+			for (; indexInput < indexEnd; indexInput++, indexOutput++ ) {
+				for( int i = startBand; i <= lastBand; i++ ) {
+               valueArray[i] = bands[i].data[ indexInput];
+				}
+            Arrays.sort(valueArray);
+            if (valueArray.length % 2 == 0) {
+               output.data[indexOutput] = (byte) ((valueArray[valueArray.length/2] & 0xFFFF + 
+                        valueArray[valueArray.length/2 - 1] & 0xFFFF) /2);
+            } else {
+               output.data[indexOutput] = valueArray[valueArray.length/2];
+            }
+			}
+		}
+	}
+
+   
+   /**
+	 * Computes the median for each pixel across all bands in the {@link Planar} image.
+	 * 
+	 * @param input Planar image
+	 * @param output Gray scale image containing median pixel values
+    * @param startBand First band to be included in the projection
+    * @param lastBand Last band to be included in the projection
+	 */
+	public static void medianBand(Planar<GrayS16> input , GrayS16 output, int startBand, int lastBand ) {
+      checkInput(input, startBand, lastBand);
+		final int h = input.getHeight();
+		final int w = input.getWidth();
+
+		GrayS16[] bands = input.bands;
+		
+      short[] valueArray = new short[lastBand - startBand + 1];
+		for (int y = 0; y < h; y++) {
+			int indexInput = input.getStartIndex() + y * input.getStride();
+			int indexOutput = output.getStartIndex() + y * output.getStride();
+
+			int indexEnd = indexInput+w;
+			for (; indexInput < indexEnd; indexInput++, indexOutput++ ) {
+				for( int i = startBand; i <= lastBand; i++ ) {
+					valueArray[i] = bands[i].data[indexInput];
+            }
+            Arrays.sort(valueArray);
+            if (valueArray.length % 2 == 0) {
+               output.data[indexOutput] = (byte) ((valueArray[valueArray.length/2] + 
+                        valueArray[valueArray.length/2 - 1]) /2);
+            } else {
+               output.data[indexOutput] = valueArray[valueArray.length/2];
+            }
+			}
+		}
+	}
+   
+   /**
+	 * Computes the median for each pixel across all bands in the {@link Planar} image.
+	 * 
+	 * @param input Planar image
+	 * @param output Gray scale image containing median pixel values
+    * @param startBand First band to be included in the projection
+    * @param lastBand Last band to be included in the projection
+	 */
+	public static void medianBand(Planar<GrayS32> input , GrayS32 output, int startBand, int lastBand ) {
+      checkInput(input, startBand, lastBand);
+		final int h = input.getHeight();
+		final int w = input.getWidth();
+
+		GrayS32[] bands = input.bands;
+		
+      int[] valueArray = new int[lastBand - startBand + 1];
+		for (int y = 0; y < h; y++) {
+			int indexInput = input.getStartIndex() + y * input.getStride();
+			int indexOutput = output.getStartIndex() + y * output.getStride();
+
+			int indexEnd = indexInput+w;
+			for (; indexInput < indexEnd; indexInput++, indexOutput++ ) {
+				for( int i = startBand; i <= lastBand; i++ ) {
+               valueArray[i] = bands[i].data[indexInput];
+            }
+            Arrays.sort(valueArray);
+            if (valueArray.length % 2 == 0) {
+               output.data[indexOutput] = (byte) ((valueArray[valueArray.length/2] + 
+                        valueArray[valueArray.length/2 - 1]) /2);
+            } else {
+               output.data[indexOutput] = valueArray[valueArray.length/2];
+            }
+			}
+		}
+	}
+
+   
+   /**
+	 * Computes the median for each pixel across all bands in the {@link Planar} image.
+	 * 
+	 * @param input Planar image
+	 * @param output Gray scale image containing median pixel values
+    * @param startBand First band to be included in the projection
+    * @param lastBand Last band to be included in the projection
+	 */
+	public static void medianBand(Planar<GrayS64> input , GrayS64 output, int startBand, int lastBand ) {
+      checkInput(input, startBand, lastBand);
+		final int h = input.getHeight();
+		final int w = input.getWidth();
+
+		GrayS64[] bands = input.bands;
+		
+      long[] valueArray = new long[lastBand - startBand + 1];
+		for (int y = 0; y < h; y++) {
+			int indexInput = input.getStartIndex() + y * input.getStride();
+			int indexOutput = output.getStartIndex() + y * output.getStride();
+
+			int indexEnd = indexInput+w;
+			double sum;
+			for (; indexInput < indexEnd; indexInput++, indexOutput++ ) {
+				sum = 0.0;
+				for( int i = startBand; i <= lastBand; i++ ) {
+               valueArray[i] = bands[i].data[indexInput];
+            }
+            Arrays.sort(valueArray);
+            if (valueArray.length % 2 == 0) {
+               output.data[indexOutput] = (byte) ((valueArray[valueArray.length/2] + 
+                        valueArray[valueArray.length/2 - 1]) /2);
+            } else {
+               output.data[indexOutput] = valueArray[valueArray.length/2];
+            }
+			}
+		}
+	}
+
+   
+   /**
+	 * Computes the median for each pixel across all bands in the {@link Planar} image.
+	 * 
+	 * @param input Planar image
+	 * @param output Gray scale image containing median pixel values
+    * @param startBand First band to be included in the projection
+    * @param lastBand Last band to be included in the projection
+	 */
+	public static void medianBand(Planar<GrayF32> input , GrayF32 output, int startBand, int lastBand ) {
+      checkInput(input, startBand, lastBand);
+		final int h = input.getHeight();
+		final int w = input.getWidth();
+
+		GrayF32[] bands = input.bands;
+		
+      float[] valueArray = new float[lastBand - startBand + 1];
+		for (int y = 0; y < h; y++) {
+			int indexInput = input.getStartIndex() + y * input.getStride();
+			int indexOutput = output.getStartIndex() + y * output.getStride();
+
+			int indexEnd = indexInput+w;
+			for (; indexInput < indexEnd; indexInput++, indexOutput++ ) {
+				for( int i = startBand; i <= lastBand; i++ ) {
+               valueArray[i] = bands[i].data[indexInput];
+            }
+            Arrays.sort(valueArray);
+            if (valueArray.length % 2 == 0) {
+               output.data[indexOutput] = (byte) ((valueArray[valueArray.length/2] + 
+                        valueArray[valueArray.length/2 - 1]) /2);
+            } else {
+               output.data[indexOutput] = valueArray[valueArray.length/2];
+            }
+			}
+		}
+	}
+   
+   /**
+	 * Computes the median for each pixel across all bands in the {@link Planar} image.
+	 * 
+	 * @param input Planar image
+	 * @param output Gray scale image containing median pixel values
+    * @param startBand First band to be included in the projection
+    * @param lastBand Last band to be included in the projection
+	 */
+	public static void medianBand(Planar<GrayF64> input , GrayF64 output, int startBand, int lastBand ) {
+      checkInput(input, startBand, lastBand);
+		final int h = input.getHeight();
+		final int w = input.getWidth();
+
+		GrayF64[] bands = input.bands;
+		
+      double[] valueArray = new double[lastBand - startBand + 1];
+		for (int y = 0; y < h; y++) {
+			int indexInput = input.getStartIndex() + y * input.getStride();
+			int indexOutput = output.getStartIndex() + y * output.getStride();
+
+			int indexEnd = indexInput+w;
+			for (; indexInput < indexEnd; indexInput++, indexOutput++ ) {
+				for( int i = startBand; i <= lastBand; i++ ) {
+               valueArray[i] = bands[i].data[indexInput];
+            }
+            Arrays.sort(valueArray);
+            if (valueArray.length % 2 == 0) {
+               output.data[indexOutput] = (byte) ((valueArray[valueArray.length/2] + 
+                        valueArray[valueArray.length/2 - 1]) /2);
+            } else {
+               output.data[indexOutput] = valueArray[valueArray.length/2];
+            }
+			}
+		}
+	}
+   
    
    
 }

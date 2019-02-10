@@ -162,6 +162,49 @@ public class GPixelMath {
 		}
 	}
    
+   
+    /**
+	 * Computes the median for each pixel across all bands in the {@link Planar} image.
+	 *
+    * @param <T>
+	 * @param input Planar image
+	 * @param output Gray scale image containing median pixel values
+	 */
+	public static <T extends ImageGray<T>> void medianBand(Planar<T> input, T output) {
+      medianBand(input, output, 0, input.getNumBands() - 1);
+   }
+   
+   /**
+	 * Computes the median for each pixel across the specified bands in the {@link Planar} image.
+	 *
+    * @param <T>
+	 * @param input Planar image
+	 * @param output Gray scale image containing median pixel values
+    * @param startBand First band to be considered
+    * @param lastBand Last band (inclusive) to be considered
+	 */
+	public static <T extends ImageGray<T>> void medianBand(Planar<T> input, T output, int startBand, int lastBand) {
+
+		if( GrayU8.class == input.getBandType() ) {
+			PixelMath.medianBand((Planar<GrayU8>) input, (GrayU8) output, startBand, lastBand);
+		} else if( GrayS8.class == input.getBandType() ) {
+			PixelMath.medianBand((Planar<GrayS8>) input, (GrayS8) output, startBand, lastBand);
+		} else if( GrayU16.class == input.getBandType() ) {
+			PixelMath.medianBand((Planar<GrayU16>) input, (GrayU16) output, startBand, lastBand);
+		} else if( GrayS16.class == input.getBandType() ) {
+			PixelMath.medianBand((Planar<GrayS16>) input, (GrayS16) output, startBand, lastBand);
+		} else if( GrayS32.class == input.getBandType() ) {
+			PixelMath.medianBand((Planar<GrayS32>) input, (GrayS32) output, startBand, lastBand);
+		} else if( GrayS64.class == input.getBandType() ) {
+			PixelMath.medianBand((Planar<GrayS64>) input, (GrayS64) output, startBand, lastBand);
+		} else if( GrayF32.class == input.getBandType() ) {
+			PixelMath.medianBand((Planar<GrayF32>) input, (GrayF32) output, startBand, lastBand);
+		} else if( GrayF64.class == input.getBandType() ) {
+			PixelMath.medianBand((Planar<GrayF64>) input, (GrayF64) output, startBand, lastBand);
+		} else {
+			throw new IllegalArgumentException("Unknown image Type: "+input.getBandType().getSimpleName());
+		}
+	}
 
    
    /**
@@ -180,8 +223,9 @@ public class GPixelMath {
 	 * Computes the standard deviation for each pixel across the specified bands in the {@link Planar} image.
 	 *
     * @param <T>
-	 * @param input Planar image
+	 * @param input Planar image - unchanged
 	 * @param output Gray scale image containing average pixel values
+    * @param avg Gray scali
     * @param startBand First band to be considered
     * @param lastBand Last band (inclusive) to be considered
 	 */
