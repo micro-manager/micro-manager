@@ -229,7 +229,7 @@ public class ShadingProcessor extends Processor {
                userData = userData.copy().putBoolean("Background-corrected", true).build();
             }
          } catch (ShadingException e) {
-            String msg = "Unable to subtract background";
+            String msg = "Unable to subtract background: " + e.getMessage();
             studio_.alerts().postAlert(MultiChannelShading.MENUNAME, 
                  ErrorSubtractingClass.class, msg);
          }
