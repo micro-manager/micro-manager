@@ -12,6 +12,7 @@
 
 #include "OnBoardHW.h"
 #include <cstdlib>
+#include <cstring>
 
 using namespace std;
 
@@ -122,3 +123,4 @@ void OnBoardHW::GetNominalPower(unsigned int slot, unsigned int nomPower) {
 		nomPower = sourceNominalPower_[slot-1];
 	}
 }
+>>>>>>> b15c21d74... OxxiusCombined: possible fix for Ubuntu compilation problem
