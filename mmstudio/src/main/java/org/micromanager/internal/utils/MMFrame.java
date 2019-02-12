@@ -52,12 +52,16 @@ public class MMFrame extends JFrame {
       super();
       profileKey_ = "";
       setupMenus();
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+        getClass().getResource("/org/micromanager/icons/microscope.gif")));
    }
 
    public MMFrame(String profileKeyForSavingBounds) {
       super();
       profileKey_ = profileKeyForSavingBounds;
       setupMenus();
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+        getClass().getResource("/org/micromanager/icons/microscope.gif")));
    }
 
    /**
@@ -71,6 +75,8 @@ public class MMFrame extends JFrame {
       if (usesMMMenus) {
          setupMenus();
       }
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+        getClass().getResource("/org/micromanager/icons/microscope.gif")));
    }
 
    /**
