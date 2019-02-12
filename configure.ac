@@ -1,4 +1,3 @@
-
 AC_PREREQ([2.64])
 AC_INIT([Micro-Manager], [1.4], [info@micro-manager.org])
 AC_CONFIG_MACRO_DIR([m4])
