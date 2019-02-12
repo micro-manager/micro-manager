@@ -21,19 +21,23 @@
 package org.micromanager.pointandshootanalysis.plot;
 
 
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import javax.swing.AbstractAction;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
-
+import net.miginfocom.swing.MigLayout;
 import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartFrame;
+import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.annotations.XYAnnotation;
 import org.jfree.chart.annotations.XYTextAnnotation;
@@ -70,19 +74,16 @@ public class PlotUtils {
     * use it to store window position and size
     */
    @SuppressWarnings("serial")
-   private class MyChartFrame extends ChartFrame {
+   private class MyChartFrame extends Frame {
       private final static String WINDOWPOSX = "PlotWindowPosX";
       private final static String WINDOWPOSY = "PlotWindowPosY";
       private final static String WINDOWWIDTH = "PlotWindowWidth";
       private final static String WINDOWHEIGHT = "PlotWindowHeight";
       private final String s_;
 
-      MyChartFrame(String s, JFreeChart jc) {
-         this(s, jc, false);
-      }
-
-      MyChartFrame(String s, JFreeChart jc, Boolean b) {
-         super(s, jc, b);
+      
+      MyChartFrame(String s) {
+         super(s);
          s_ = s;
          
          Point screenLoc = new Point();
@@ -197,21 +198,53 @@ public class PlotUtils {
       plot.getRangeAxis().setRange(minY, maxY);
 
       renderer.setUseFillPaint(true);
+      
+      ChartPanel chartPanel = new ChartPanel(chart);      
+      chartPanel.setMouseWheelEnabled(true);
 
       if (graphFrame_ == null)
-         graphFrame_ = new MyChartFrame(title, chart);
+         graphFrame_ = new MyChartFrame(title);
       else
-         graphFrame_.getChartPanel().setChart(chart);
-      graphFrame_.getChartPanel().setMouseWheelEnabled(true);
-      JPanel controlPanel = new JPanel();
+         graphFrame_.removeAll();
+      
+      final JPanel controlPanel = new JPanel();
+      controlPanel.setLayout(new MigLayout());
+      JButton allButton = new JButton("All");
+      allButton.addActionListener((ActionEvent e) -> {
+         for (Component c : controlPanel.getComponents()) {
+            if (c instanceof JCheckBox) {
+               JCheckBox j = (JCheckBox) c;
+               j.setSelected(true);
+            }
+         }
+      });
+      JButton noneButton = new JButton("None");
+      noneButton.addActionListener((ActionEvent e) -> {
+         for (Component c : controlPanel.getComponents()) {
+            if (c instanceof JCheckBox) {
+               JCheckBox j = (JCheckBox) c;
+               j.setSelected(false);
+            }
+         }
+      });
+      if (data.length > 5) {
+         controlPanel.add(allButton);
+         controlPanel.add(noneButton, "wrap");
+      }
       for (int i = 0; i < data.length; i++) {
-         JCheckBox jcb = new JCheckBox(new VisibleAction(renderer, i,
-                 (String) data[i].getKey()));
+         JCheckBox jcb = new JCheckBox((String) data[i].getKey());
          jcb.setSelected(true);
          renderer.setSeriesVisible(i, true);
-         controlPanel.add(jcb);
+         jcb.addItemListener(new VisibleAction(renderer, i));
+         int index = i % WidgetSettings.COLORS.length;
+         jcb.setForeground(WidgetSettings.COLORS[index]);
+         jcb.setBackground(Color.white);
+         String w =  (i + 1) % 5 == 0 ? "wrap" : "";
+         controlPanel.add(jcb, w);
       }
-      graphFrame_.add(controlPanel);
+      controlPanel.setBackground(chartPanel.getBackground());
+      graphFrame_.add(chartPanel, BorderLayout.CENTER);
+      graphFrame_.add(controlPanel, BorderLayout.SOUTH);
 
       graphFrame_.pack();
       final MyChartFrame privateFrame = graphFrame_;
@@ -240,19 +273,18 @@ public class PlotUtils {
       return output;
    }
    
-   private static class VisibleAction extends AbstractAction {
+   private static class VisibleAction implements ItemListener {
 
         private final XYItemRenderer renderer;
         private final int index;
 
-        public VisibleAction(XYItemRenderer renderer, int i, String s) {
-            super(s);
+        public VisibleAction(XYItemRenderer renderer, int i) {
             this.renderer = renderer;
             this.index = i;
         }
 
         @Override
-        public void actionPerformed(ActionEvent e) {
+        public void itemStateChanged(ItemEvent e) {
             renderer.setSeriesVisible(index, !renderer.getSeriesVisible(index));
         }
     }
