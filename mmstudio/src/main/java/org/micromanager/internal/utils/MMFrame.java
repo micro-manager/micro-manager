@@ -25,6 +25,7 @@ package org.micromanager.internal.utils;
 import java.awt.Frame;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import javax.swing.JFrame;
@@ -33,14 +34,17 @@ import org.micromanager.PropertyMaps;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.menus.MMMenuBar;
 import org.micromanager.propertymap.MutablePropertyMapView;
-
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowFocusListener;  
+import java.util.ArrayList;
 /**
  * Base class for Micro-Manager frame windows.
  * Saves and restores window size and position. 
  */
-public class MMFrame extends JFrame {
+public class MMFrame extends JFrame implements WindowFocusListener {
    private static final long serialVersionUID = 1L;
    private final String profileKey_;
+   private static ArrayList<MMFrame> applicationFrames = new ArrayList<MMFrame>();
 
    // MMFrame profile settings contain a key for each frame subtype (defined
    // by subclass), whose value is a property map containing these key(s):
@@ -54,6 +58,7 @@ public class MMFrame extends JFrame {
       setupMenus();
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
         getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      addWindowFocusListener(this);
    }
 
    public MMFrame(String profileKeyForSavingBounds) {
@@ -62,6 +67,7 @@ public class MMFrame extends JFrame {
       setupMenus();
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
         getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      addWindowFocusListener(this);
    }
 
    /**
@@ -77,6 +83,7 @@ public class MMFrame extends JFrame {
       }
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
         getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      addWindowFocusListener(this);
    }
 
    /**
@@ -196,7 +203,30 @@ public class MMFrame extends JFrame {
 
    @Override
    public void dispose() {
+      applicationFrames.remove(this);
       savePosition();
       super.dispose();
    }
+   
+   @Override
+   public void setVisible(boolean visible) {
+       //The static applicationFrames list keeps track of all the MMFrames that are visible.
+       if (visible) {
+           applicationFrames.add(this);
+       } else {
+           applicationFrames.remove(this);
+       }
+       super.setVisible(visible);
+   }
+   
+   @Override
+   public void windowGainedFocus(WindowEvent e) {
+       if (e.getOppositeWindow() == null) { //If the last selected windows was from a different application
+           for (MMFrame frame : applicationFrames) {
+               frame.toFront(); //Move all visible MMframes to the front
+           }
+       }
+   }
+   @Override
+   public void windowLostFocus(WindowEvent e) {}
 }
