@@ -68,11 +68,10 @@ import org.micromanager.internal.utils.EventBusExceptionLogger;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
 import org.micromanager.internal.utils.GUIUtils;
-import org.micromanager.internal.utils.MMDialog;
+import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.ReportingUtils;
 
-
-public final class PositionListDlg extends MMDialog implements MouseListener, ChangeListener {
+public final class PositionListDlg extends MMFrame implements MouseListener, ChangeListener {
    private static final long serialVersionUID = 1L;
    private String posListDir_;
    private File curFile_;
@@ -916,10 +915,10 @@ public final class PositionListDlg extends MMDialog implements MouseListener, Ch
       double [] x1;
       double [] y1;
       String deviceName;
-      MMDialog d;
+      MMFrame d;
       Thread otherThread;
 
-      public void setPara(Thread calThread, MMDialog d, String deviceName, double [] x1, double [] y1) {
+      public void setPara(Thread calThread, MMFrame d, String deviceName, double [] x1, double [] y1) {
          this.otherThread = calThread;
          this.d = d;
          this.deviceName = deviceName;
@@ -1036,10 +1035,10 @@ public final class PositionListDlg extends MMDialog implements MouseListener, Ch
       double [] x1;
       double [] y1;
       String deviceName;
-      MMDialog d;
+      MMFrame d;
       Thread stopThread;
 
-      public void setPara(Thread stopThread, MMDialog d, String deviceName, double [] x1, double [] y1) {
+      public void setPara(Thread stopThread, MMFrame d, String deviceName, double [] x1, double [] y1) {
          this.stopThread = stopThread;
          this.d = d;
          this.deviceName = deviceName;
@@ -1108,9 +1107,9 @@ public final class PositionListDlg extends MMDialog implements MouseListener, Ch
    } // End CalThread class
 
    class BackThread extends Thread {
-      MMDialog d;
+      MMFrame d;
 
-      public void setPara(MMDialog d) {
+      public void setPara(MMFrame d) {
          this.d = d;
       }     
       @Override
