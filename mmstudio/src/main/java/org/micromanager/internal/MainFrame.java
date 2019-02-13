@@ -163,8 +163,6 @@ public final class MainFrame extends MMFrame {
       DropTarget dropTarget = new DropTarget(this, new DragDropUtil(studio_));
 
       setExitStrategy(OptionsDlg.getShouldCloseOnExit());
-      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-               getClass().getResource("/org/micromanager/icons/microscope.gif")));
 
       super.setJMenuBar(MMMenuBar.createMenuBar(studio_));
 
