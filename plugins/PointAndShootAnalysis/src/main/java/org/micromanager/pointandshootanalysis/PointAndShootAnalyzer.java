@@ -72,6 +72,7 @@ import org.micromanager.pointandshootanalysis.data.Terms;
 import org.micromanager.pointandshootanalysis.display.Overlay;
 import org.micromanager.pointandshootanalysis.display.WidgetSettings;
 import org.micromanager.pointandshootanalysis.plot.PlotUtils;
+import org.micromanager.pointandshootanalysis.utils.ListUtils;
 
 /**
  *
@@ -247,7 +248,7 @@ public class PointAndShootAnalyzer implements Runnable {
             ConvertImage.convert(beforeCV, beforeCVF);
             GrayU16 minBCV = new GrayU16(x1 - x0, y1 - y0);
             org.micromanager.pointandshootanalysis.algorithm.GPixelMath.minimumBand(
-                  subImage, minBCV, findMinFrames.getCentralFrame(), findMinFrames.getEndFrame() + 1);
+                  subImage, minBCV, findMinFrames.getCentralFrame(), findMinFrames.getEndFrame());
             GrayF32 minBCVF = new GrayF32(x1 - x0, y1 - y0);
             ConvertImage.convert(minBCV, minBCVF);
             GrayF32 dResult = new GrayF32(minBCVF.width, minBCVF.height);
@@ -312,10 +313,17 @@ public class PointAndShootAnalyzer implements Runnable {
             GrayF32 fPreBleach = new GrayF32(preBleach.getWidth(), preBleach.getHeight());
             ConvertImage.convert(preBleach, fPreBleach);
             ParticleData previousParticle = null;
+            int bleachSpotsMissed = 0;
             for (int frame = pasEntry.framePasClicked() + 2;
                     frame < dataProvider.getAxisLength(Coords.T); frame++) {
                ParticleData nextParticle = ParticleData.centralParticle(dataProvider, 
                        cb, frame, currentPoint, halfROISize_);
+               
+               if (frame == 127) {
+                  Point2D_I32 centroid = nextParticle.getCentroid();
+                  System.out.println ("t: " + frame + ", x: " + centroid.x + ", y: " + centroid.y );
+                           
+               }
                if (nextParticle == null || ( 
                        Utils.distance(currentPoint, nextParticle.getCentroid()) > maxDistance )) {
                   if (previousParticle != null) {
@@ -325,13 +333,21 @@ public class PointAndShootAnalyzer implements Runnable {
                   // TODO: increase counter, give up when too high
                } 
                
-               ImageGray current = BoofCVImageConverter.subImage(dataProvider, 
-                        cb, frame, currentPoint, halfROISize_);
-               nextParticle = ParticleData.addBleachSpotToParticle(fPreBleach, 
-                       (GrayU16) current, 
-                       nextParticle, 
-                       new Point2D_I32(currentPoint.x - halfROISize_, currentPoint.y - halfROISize_), 
-                       MAXDISTANCE );
+               if (bleachSpotsMissed < 10) {
+                  ImageGray current = BoofCVImageConverter.subImage(dataProvider,
+                          cb, frame, currentPoint, halfROISize_);
+                  nextParticle = ParticleData.addBleachSpotToParticle(fPreBleach,
+                          (GrayU16) current,
+                          previousParticle,
+                          nextParticle,
+                          new Point2D_I32(currentPoint.x - halfROISize_, currentPoint.y - halfROISize_),
+                          MAXDISTANCE);
+                  if (nextParticle.getBleachSpot() == null) {
+                     bleachSpotsMissed += 1;
+                  } else {
+                     bleachSpotsMissed = 0;
+                  }
+               }
                previousParticle = nextParticle;
                currentPoint = nextParticle.getCentroid();
                track.put(frame, nextParticle);
@@ -407,7 +423,9 @@ public class PointAndShootAnalyzer implements Runnable {
             List<Contour> contours = 
                     BinaryImageOps.contour(mask, ConnectRule.FOUR, contourImg);
             List<List<Point2D_I32>> clusters = 
-                    BinaryImageOps.labelToClusters(contourImg, contours.size(), null); 
+                    BinaryImageOps.labelToClusters(contourImg, contours.size(), null);
+            // Remove particles that were bleached
+            List<List<Point2D_I32>> controlClusters = new ArrayList<>();
             for (List<Point2D_I32> particle : clusters) {
                Point2D_I32 centroid = ContourStats.centroid(particle);
                boolean isBleachedParticle = false;
@@ -417,35 +435,43 @@ public class PointAndShootAnalyzer implements Runnable {
                   }
                }
                if (!isBleachedParticle) {
-                  Map<Integer, ParticleData> track = new TreeMap<>();
-                  // TODO: control track out of this particle
-                  System.out.println("Control particle found");
-                  Point2D_I32 currentPoint = centroid;
-                  int missing = 0;
-                  boolean bail = false;
-                  for (int frame = 0; frame < dataProvider.getAxisLength(Coords.T) && !bail; frame++) {
-                     ParticleData nextParticle = ParticleData.centralParticle(dataProvider, 
-                       cb, frame, currentPoint, halfROISize_);
-                     if (nextParticle != null && ( 
-                       Utils.distance(currentPoint, nextParticle.getCentroid()) < maxDistance )) {
-                        currentPoint = nextParticle.getCentroid();
-                        track.put(frame, nextParticle);
-                        missing = 0;
-                     } else {
-                        System.out.println("Before Missing particle");
-                        // TODO: increase counter, give up when too high
-                        missing++;
-                        if (missing > 10) {
-                           bail = true;
-                        }
-                     }
-                  }
-                  if (!bail) {
-                     controlTracks.add(track);
-                  }
+                  controlClusters.add(particle);
                }
             }
-         } catch (IOException ioe) {}
+            
+            // only analyze the n largest clusters
+            // TODO: make n an input variable
+            controlClusters = ListUtils.getNLargestLists(controlClusters, 15);
+            for (List<Point2D_I32> particle : controlClusters) {
+               Point2D_I32 centroid = ContourStats.centroid(particle);
+               Map<Integer, ParticleData> track = new TreeMap<>();
+               Point2D_I32 currentPoint = centroid;
+               int missing = 0;
+               boolean bail = false;
+               for (int frame = 0; frame < dataProvider.getAxisLength(Coords.T) && !bail; frame++) {
+                  ParticleData nextParticle = ParticleData.centralParticle(dataProvider,
+                          cb, frame, currentPoint, halfROISize_);
+                  if (nextParticle != null && (Utils.distance(currentPoint, nextParticle.getCentroid()) < maxDistance)) {
+                     currentPoint = nextParticle.getCentroid();
+                     track.put(frame, nextParticle);
+                     missing = 0;
+                  } else {
+                     //System.out.println("Before Missing particle");
+                     // increase counter, give up when too high
+                     missing++;
+                     if (missing > 10) {
+                        bail = true;
+                     }
+                  }
+               }
+               if (!bail) {
+                  System.out.println("Control particle found");
+                  controlTracks.add(track);
+               }
+            }
+
+         } catch (IOException ioe) {
+         }
          
          
          if (controlTracks.size() > 0) {
@@ -754,10 +780,5 @@ public class PointAndShootAnalyzer implements Runnable {
       return boundingBox;      
       
    }
-   
-   
-
- 
-   
 
 }

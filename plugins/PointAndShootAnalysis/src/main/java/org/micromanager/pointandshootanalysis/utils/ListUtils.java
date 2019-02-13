@@ -38,6 +38,8 @@ package org.micromanager.pointandshootanalysis.utils;
 
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -177,6 +179,25 @@ public class ListUtils {
       double avg = listAvg(list);
       
       return listStdDev(list, avg);
+   }
+   
+   public static <T> List<List<T>> getNLargestLists(List<List<T>> input, int n) {
+      List<List<T>> out = new ArrayList<>();
+      Integer[] sizes = new Integer[input.size()];
+      for (int i = 0; i < input.size(); i++) {
+         sizes[i] = input.get(i).size();
+      }
+      Arrays.sort(sizes, Collections.reverseOrder());
+      int max = n < sizes.length ? n : sizes.length - 1;
+      if (max >= 0) {
+         int cutoffSize = sizes[max];
+         for (List<T> sample : input) {
+            if (sample.size() > cutoffSize) {
+               out.add(sample);
+            }
+         }
+      }
+      return out;
    }
    
    /**

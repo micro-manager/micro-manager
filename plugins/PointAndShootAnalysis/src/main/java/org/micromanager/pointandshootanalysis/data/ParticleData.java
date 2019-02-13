@@ -128,6 +128,11 @@ public class ParticleData {
               this.maskIncludingBleachAverage_);
    }
    
+   /**
+    * Lazy calculation of centroid.
+    * 
+    * @return Centroid of this particle 
+    */
    public Point2D_I32 getCentroid() {
       if (centroid_ == null) {
          centroid_ = ContourStats.centroid(mask_);
@@ -231,13 +236,16 @@ public class ParticleData {
     * 
     * @param preBleach
     * @param current
+    * @param previousParticle
     * @param particle
     * @param offset
     * @param maxDistance
     * @return 
     */
    public static ParticleData addBleachSpotToParticle(GrayF32 preBleach, 
-           GrayU16 current, ParticleData particle, Point2D_I32 offset, double maxDistance) {
+           GrayU16 current, ParticleData previousParticle, 
+           ParticleData particle, Point2D_I32 offset, double maxDistance) {
+      
       final int particleSizeCutoff = 16;
       // if particle is too small, simply assume that the bleachspot covers the
       // whole particle
@@ -248,6 +256,7 @@ public class ParticleData {
                  particle.getCentroid(), avg, avg, avg);
       }
       
+      // divide the current mask by the prebleach mask, blur, find the minimum pixel and hope it is the bleach spot
       GrayF32 fCurrent = new GrayF32(current.getWidth(), current.getHeight());
       ConvertImage.convert((GrayU16) current, fCurrent);
       GrayF32 dResult = new GrayF32(preBleach.width, preBleach.height);
@@ -255,6 +264,20 @@ public class ParticleData {
       GrayF32 gResult = new GrayF32(dResult.width, dResult.height);
       BlurImageOps.gaussian(dResult, gResult, 3, -1, null);
       Point2D_I32 minPixel = findMinPixel(gResult);
+            
+      if (previousParticle != null && previousParticle.getBleachSpot() != null) {
+         double distance = particle.getCentroid().distance(previousParticle.getCentroid());
+         distance = distance < 1.0 ? 1.0 : distance;
+         if (Utils.distance(minPixel, new Point2D_I32(previousParticle.getBleachSpot().getX() - offset.x, 
+               previousParticle.getBleachSpot().getY() - offset.y)) > 2 * distance) {
+            minPixel = new Point2D_I32(
+                    previousParticle.getBleachSpot().getX() + particle.getCentroid().getX() - 
+                            previousParticle.getCentroid().getX() - offset.x,
+                    previousParticle.getBleachSpot().getY() + particle.getCentroid().getY() - 
+                            previousParticle.getCentroid().getY() - offset.y
+            );
+         }
+      }
       
       if (Utils.distance(minPixel, new Point2D_I32(gResult.width / 2, gResult.height / 2)) 
               < maxDistance) {
@@ -262,7 +285,11 @@ public class ParticleData {
          double value = gResult.get(minPixel.x, minPixel.y);
          // TODO: evaluate this ratio and add other criteria to determine if this is
          // really the bleach spot
-         if ( (value / mean) < 0.625) {
+         boolean isRealBleach = (value / mean) < 0.625;
+         if (previousParticle != null && previousParticle.getMaskAvg() != null) {
+            isRealBleach = isRealBleach && (value / previousParticle.getMaskAvg()) < 0.9;
+         }
+         if (isRealBleach) {
             Point2D_I32 bleachPoint = 
                     new Point2D_I32(minPixel.x + offset.x, minPixel.y + offset.y);
             CircleMask cm = new CircleMask(3);
@@ -302,7 +329,7 @@ public class ParticleData {
             // TODO: fill holes in maskIncludingBleach            
             Point2D_I32 newCentroid = ContourStats.centroid(maskIncludingBleach);
             return new ParticleData(mask, bleachMask,
-                     maskIncludingBleach, newCentroid, particle.getBleachSpot(),
+                     maskIncludingBleach, newCentroid, bleachPoint,
                      maskAvg, bleachMaskAvg, maskIncludingBleachAvg);
             
          }
