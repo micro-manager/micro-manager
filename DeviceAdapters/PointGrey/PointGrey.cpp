@@ -824,7 +824,7 @@ const unsigned char* PointGrey::GetImageBuffer()
       return image_.GetData();
    } 
    else if (nComponents_ == 4) {
-      return RGBToRGBA( image_.GetData());
+      return RGBToBGRA(image_.GetData());
    }
    return 0;
 
@@ -1336,7 +1336,7 @@ int PointGrey::InsertImage(Image* pImg)
    const unsigned char* pData = pImg->GetData();
    if (b == 4) // RGB Image
    {
-      pData = RGBToRGBA(pImg->GetData());
+      pData = RGBToBGRA(pImg->GetData());
    }
    ret = GetCoreCallback()->InsertImage(this, pData, w, h, b, md.Serialize().c_str(), false);
 	if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)
@@ -2332,7 +2332,7 @@ int PointGrey::PowerCameraOn(const unsigned int timeoutMs)
    return DEVICE_OK;
 }
 
-const unsigned char* PointGrey::RGBToRGBA(const unsigned char* img)
+const unsigned char* PointGrey::RGBToBGRA(const unsigned char* img)
 {
    const unsigned long newImageSize = GetImageWidth() *
                                       GetImageHeight() *
