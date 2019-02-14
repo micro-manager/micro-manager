@@ -2348,6 +2348,7 @@ const unsigned char* PointGrey::RGBToBGRA(const unsigned char* img)
       imgBuf_[4 * i + 0] = img[3 * i + 2];
       imgBuf_[4 * i + 1] = img[3 * i + 1];
       imgBuf_[4 * i + 2] = img[3 * i + 0];
+      imgBuf_[4 * i + 3] = 0;
    }
    return imgBuf_;
 }
