@@ -19,7 +19,7 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id: PIGCSControllerCom.h,v 1.8, 2014-03-31 12:51:24Z, Steffen Rau$
+// CVS:           $Id: PIGCSControllerCom.h,v 1.17, 2018-10-05 05:58:53Z, Steffen Rau$
 //
 
 #ifndef _PI_GCS_CONTROLLER_H_
@@ -40,19 +40,23 @@ public:
    // ----------
    int Initialize();
    int Shutdown();
-  
+
    void SetFactor_UmToDefaultUnit(double dUmToDefaultUnit, bool bHideProperty = true);
 
    void CreateProperties();
 
    static const char* DeviceName_;
    static const char* UmToDefaultUnitName_;
+   static const char* ErrorCheckAfterMOV_;
+   static const char* SendCommand_;
    void GetName(char* pszName) const;
    bool Busy();
 
 
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnUmInDefaultUnit(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnErrorCheck(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSendCommand(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 
 	bool GCSCommandWithAnswer(const std::string command, std::vector<std::string>& answer, int nExpectedLines = -1);
@@ -68,7 +72,7 @@ private:
 	int OnJoystick1(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnJoystick2(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnJoystick3(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnJoystick4(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnJoystick4(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    std::string port_;
    int lastError_;
@@ -86,11 +90,13 @@ public:
 
 	int Connect();
 
+    virtual int SendGCSCommand (const std::string& command);
 	virtual bool qIDN(std::string& sIDN);
 	virtual bool INI(const std::string& axis);
 	virtual bool CST(const std::string& axis, const std::string& stagetype);
-	virtual bool SVO(const std::string& axis, BOOL svo);
-	virtual int GetError();
+    virtual bool SVO(const std::string& axis, BOOL svo);
+    virtual bool EAX(const std::string& axis, BOOL eax);
+    virtual int GetError();
 	virtual bool IsControllerReady( BOOL* );
 	virtual bool IsMoving(const std::string& axes, BOOL* );
 	virtual bool MOV(const std::string& axis, const double* target);
@@ -112,8 +118,9 @@ public:
    bool ONL(std::vector<int> outputChannels, std::vector<int> values);
 
 	virtual bool HasINI() {return hasINI_;}
-	virtual bool HasSVO() {return hasSVO_;}
-	virtual bool HasCST() {return hasCST_;}
+    virtual bool HasSVO() {return hasSVO_;}
+    virtual bool HasEAX() {return hasEAX_;}
+    virtual bool HasCST() {return hasCST_;}
 	virtual bool HasIsReferencing() {return false;}
 	virtual bool HasIsControllerReady() {return true;}
 	virtual bool HasIsMoving() {return true;}
@@ -132,8 +139,9 @@ private:
 	std::string ConvertToAxesStringWithSpaces(const std::string& axes) const;
    PIGCSControllerComDevice* deviceProxy_;
 	bool hasCST_;
-	bool hasSVO_;
-	bool hasINI_;
+    bool hasSVO_;
+    bool hasEAX_;
+    bool hasINI_;
 	bool hasJON_;
 	bool hasVEL_;
    bool has_qTPC_;

@@ -19,7 +19,7 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id: PIXYStage_DLL.cpp,v 1.15, 2014-03-31 12:51:24Z, Steffen Rau$
+// CVS:           $Id: PIXYStage_DLL.cpp,v 1.22, 2018-10-01 14:25:47Z, Steffen Rau$
 //
 
 #include "PIXYStage_DLL.h"
@@ -35,6 +35,10 @@ const char* g_PI_XYStageAxisYStageType = "Axis Y: Stage";
 const char* g_PI_XYStageAxisYHoming = "Axis Y: HomingMode";
 const char* g_PI_XYStageControllerName = "Controller Name";
 const char* g_PI_XYStageControllerNameYAxis = "Controller Name for Y axis";
+const char* g_PI_XYStageServoControl = "Servo control activated (SVO)";
+const char* g_PI_XYStageEnableAxes = "Axes enabled (EAX)";
+const char* g_PI_XYStageAlternativeHomingCommandXAxis = "Axis X: Alternative Homing Command";
+const char* g_PI_XYStageAlternativeHomingCommandYAxis = "Axis Y: Alternative Homing Command";
 
 
 // valid interface types: "PCI", "RS-232"
@@ -49,10 +53,10 @@ const char* g_PI_XYStageControllerNameYAxis = "Controller Name for Y axis";
 PIXYStage::PIXYStage()
     : CXYStageBase<PIXYStage>()
     , axisXName_("1")
-    , axisXStageType_("DEFAULT_STAGE")
+    , axisXStageType_("")
     , axisXHomingMode_("REF")
     , axisYName_("2")
-    , axisYStageType_("DEFAULT_STAGE")
+    , axisYStageType_("")
     , axisYHomingMode_("REF")
     , controllerName_("")
     , controllerNameYAxis_("")
@@ -62,6 +66,8 @@ PIXYStage::PIXYStage()
     , originX_(0.0)
     , originY_(0.0)
     , initialized_(false)
+    , servoControl_ (true)
+    , axesEnabled_ (true)
 {
    InitializeDefaultErrorMessages();
 
@@ -101,23 +107,23 @@ void PIXYStage::CreateProperties()
    // Axis X name
    pAct = new CPropertyAction (this, &PIXYStage::OnAxisXName);
    CreateProperty(g_PI_XYStageAxisXName, axisXName_.c_str(), MM::String, false, pAct, true);
-   
+
    // Axis X stage type
    pAct = new CPropertyAction (this, &PIXYStage::OnAxisXStageType);
    CreateProperty(g_PI_XYStageAxisXStageType, axisXStageType_.c_str(), MM::String, false, pAct, true);
-   
+
    // Axis X homing mode
    pAct = new CPropertyAction (this, &PIXYStage::OnAxisXHoming);
    CreateProperty(g_PI_XYStageAxisXHoming, axisXHomingMode_.c_str(), MM::String, false, pAct, true);
-   
+
    // Axis Y name
    pAct = new CPropertyAction (this, &PIXYStage::OnAxisYName);
    CreateProperty(g_PI_XYStageAxisYName, axisYName_.c_str(), MM::String, false, pAct, true);
-   
+
    // Axis Y stage type
    pAct = new CPropertyAction (this, &PIXYStage::OnAxisYStageType);
    CreateProperty(g_PI_XYStageAxisYStageType, axisYStageType_.c_str(), MM::String, false, pAct, true);
-   
+
    // Axis Y homing mode
    pAct = new CPropertyAction (this, &PIXYStage::OnAxisYHoming);
    CreateProperty(g_PI_XYStageAxisYHoming, axisYHomingMode_.c_str(), MM::String, false, pAct, true);
@@ -125,6 +131,21 @@ void PIXYStage::CreateProperties()
    // Controller name for Y axis
    pAct = new CPropertyAction (this, &PIXYStage::OnControllerNameYAxis);
    CreateProperty(g_PI_XYStageControllerNameYAxis, controllerNameYAxis_.c_str(), MM::String, false, pAct, true);
+
+   // servo control
+   pAct = new CPropertyAction (this, &PIXYStage::OnServoControl);
+   CreateProperty(g_PI_XYStageServoControl, "1", MM::Integer, false, pAct);
+
+   // enable axis
+   pAct = new CPropertyAction (this, &PIXYStage::OnEnableAxes);
+   CreateProperty(g_PI_XYStageEnableAxes, "1", MM::Integer, false, pAct);
+
+   pAct = new CPropertyAction (this, &PIXYStage::OnAlternativeHomingCommandXAxis);
+   CreateProperty(g_PI_XYStageAlternativeHomingCommandXAxis, "", MM::String, false, pAct, true);
+
+   pAct = new CPropertyAction (this, &PIXYStage::OnAlternativeHomingCommandYAxis);
+   CreateProperty(g_PI_XYStageAlternativeHomingCommandYAxis, "", MM::String, false, pAct, true);
+
 }
 
 PIXYStage::~PIXYStage()
@@ -238,7 +259,7 @@ int PIXYStage::SetPositionSteps(long x, long y)
 	double pos[2];
 	pos[0] = x * stepSize_um_ * ctrl_->umToDefaultUnit_;
 	pos[1] = y * stepSize_um_ * umToDefaultUnitYAxis;
-	
+
 	pos[0] += originX_;
 	pos[1] += originY_;
 	if (ctrlYAxis_ == NULL)
@@ -284,37 +305,67 @@ int PIXYStage::GetPositionSteps(long &x, long &y)
 	return DEVICE_OK;
 }
 
+int PIXYStage::HomeXAxis ()
+{
+    if (alternativeHomingCommandXAxis_.length () != 0)
+    {
+        return ctrl_->SendGCSCommand (alternativeHomingCommandXAxis_);
+    }
+    return ctrl_->Home (axisXName_, axisXHomingMode_);
+}
+
+int PIXYStage::HomeYAxis (PIController* ctrl)
+{
+    if (alternativeHomingCommandYAxis_.length () != 0)
+    {
+        return ctrl->SendGCSCommand (alternativeHomingCommandYAxis_);
+    }
+    return ctrl->Home (axisYName_, axisYHomingMode_);
+}
+
 int PIXYStage::Home()
 {
 	if (	(axisXHomingMode_ == axisYHomingMode_)
 		&&	(ctrlYAxis_ == NULL)
-		)
+        &&  (alternativeHomingCommandXAxis_.length() == 0)
+        &&  (alternativeHomingCommandYAxis_.length() == 0)
+        )
 	{
 		// same mode for both axes, both axes on same controller
 		int err = ctrl_->Home( ctrl_->MakeAxesString(axisXName_, axisYName_), axisXHomingMode_ );
-		if (err != DEVICE_OK)
-			return err;
-		return DEVICE_OK;
+        if (err != DEVICE_OK)
+        {
+            return err;
+        }
 	}
+    else
+    {
+        int ret = HomeXAxis ();
+        if (ret != DEVICE_OK)
+        {
+            return ret;
+        }
 
-	int ret = ctrl_->Home( axisXName_, axisXHomingMode_ );
-	if (ret != DEVICE_OK)
-		return ret;
+        while (Busy ()) {};
 
-	while( Busy() ) {};
+        ret = HomeYAxis (ctrlYAxis_ == NULL ? ctrl_ : ctrlYAxis_);
+        if (ret != DEVICE_OK)
+        {
+            return ret;
+        }
+    }
+    while (Busy ()) {};
 
-	if (ctrlYAxis_ == NULL)
-	{
-		ret = ctrl_->Home( axisYName_, axisYHomingMode_ );
-	}
-	else
-	{
-		ret = ctrlYAxis_->Home( axisYName_, axisYHomingMode_ );
-	}
-	if (ret != DEVICE_OK)
-		return ret;
-
-	return DEVICE_OK;
+    (void)ctrl_->SVO (axisXName_, TRUE);
+    if (ctrlYAxis_ == NULL)
+    {
+        (void)ctrl_->SVO (axisYName_, TRUE);
+    }
+    else
+    {
+        (void)ctrlYAxis_->SVO (axisYName_, TRUE);
+    }
+    return DEVICE_OK;
 }
 
 int PIXYStage::Stop()
@@ -536,4 +587,86 @@ int PIXYStage::OnYVelocity(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
 
    return DEVICE_OK;
+}
+
+int PIXYStage::OnServoControl(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set(long (servoControl_ ? 1 : 0));
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        long value;
+        pProp->Get(value);
+        servoControl_ = (value != 0);
+        if (!ctrl_->SVO (axisXName_, servoControl_ ? TRUE : FALSE))
+        {
+            return ctrl_->GetTranslatedError ();
+        }
+        PIController* ctrlY = ctrlYAxis_ ? ctrlYAxis_ : ctrl_;
+        if (!ctrlY->SVO (axisYName_, servoControl_ ? TRUE : FALSE))
+        {
+            return ctrlY->GetTranslatedError ();
+        }
+    }
+
+    return DEVICE_OK;
+}
+
+int PIXYStage::OnEnableAxes (MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set (long (axesEnabled_ ? 1 : 0));
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        long value;
+        pProp->Get (value);
+        axesEnabled_ = (value != 0);
+        if (!ctrl_->EAX (axisXName_, axesEnabled_ ? TRUE : FALSE))
+        {
+            return ctrl_->GetTranslatedError ();
+        }
+        PIController* ctrlY = ctrlYAxis_ ? ctrlYAxis_ : ctrl_;
+        if (!ctrlY->EAX (axisYName_, axesEnabled_ ? TRUE : FALSE))
+        {
+            return ctrlY->GetTranslatedError ();
+        }
+    }
+
+    return DEVICE_OK;
+}
+
+int PIXYStage::OnAlternativeHomingCommandXAxis(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set (alternativeHomingCommandXAxis_.c_str ());
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        std::string value;
+        pProp->Get(value);
+        alternativeHomingCommandXAxis_ = value;
+    }
+
+    return DEVICE_OK;
+}
+
+int PIXYStage::OnAlternativeHomingCommandYAxis(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set (alternativeHomingCommandYAxis_.c_str ());
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        std::string value;
+        pProp->Get(value);
+        alternativeHomingCommandYAxis_ = value;
+    }
+
+    return DEVICE_OK;
 }

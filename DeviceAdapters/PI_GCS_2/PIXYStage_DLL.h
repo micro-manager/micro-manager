@@ -19,7 +19,7 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id: PIXYStage_DLL.h,v 1.8, 2014-03-31 12:51:24Z, Steffen Rau$
+// CVS:           $Id: PIXYStage_DLL.h,v 1.13, 2018-10-01 14:25:47Z, Steffen Rau$
 //
 
 #ifndef _PI_XYSTAGE_DLL_H_
@@ -36,7 +36,7 @@ class PIXYStage : public CXYStageBase<PIXYStage>
 public:
    PIXYStage();
    ~PIXYStage();
-     
+
    // XYStage API
    bool Busy();
    void GetName(char* name) const;
@@ -69,12 +69,20 @@ public:
    int OnXVelocity(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnYVelocity(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnControllerNameYAxis(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnServoControl(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnEnableAxes(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnAlternativeHomingCommandXAxis(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnAlternativeHomingCommandYAxis(MM::PropertyBase* pProp, MM::ActionType eAct);
+
 
    int IsXYStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
 
 
 private:
    void CreateProperties();
+
+   int HomeXAxis ();
+   int HomeYAxis (PIController* ctrl);
 
    std::string axisXName_;
    std::string axisXStageType_;
@@ -92,6 +100,11 @@ private:
    double originX_;
    double originY_;
    bool initialized_;
+   bool servoControl_;
+   bool axesEnabled_;
+
+   std::string alternativeHomingCommandXAxis_;
+   std::string alternativeHomingCommandYAxis_;
 };
 
 
