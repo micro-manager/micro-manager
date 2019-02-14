@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
@@ -26,7 +27,6 @@ import static org.micromanager.pointandshootanalysis.PointAndShootAnalyzer.findM
 import org.micromanager.pointandshootanalysis.algorithm.BinaryListOps;
 import org.micromanager.pointandshootanalysis.algorithm.CircleMask;
 import org.micromanager.pointandshootanalysis.algorithm.ContourStats;
-import org.micromanager.pointandshootanalysis.algorithm.ThresholdImageOps;
 import org.micromanager.pointandshootanalysis.algorithm.Utils;
 
 /**
@@ -40,6 +40,7 @@ public class ParticleData {
    private List<Point2D_I32> maskIncludingBleach_;
    private Point2D_I32 centroid_;
    private Point2D_I32 bleachSpot_;
+   private final int threshold_;
    private Double maskAverage_;
    private Double bleachMaskAverage_;
    private Double maskIncludingBleachAverage_;
@@ -71,18 +72,21 @@ public class ParticleData {
       return output;
    }
    
-   public ParticleData(List<Point2D_I32> mask) {
+   public ParticleData(List<Point2D_I32> mask, int threshold) {
       mask_ = mask;
+      threshold_ = threshold;
    }
    
-   public ParticleData(List<Point2D_I32> mask, Point2D_I32 offset, Double avg) {
+   public ParticleData(List<Point2D_I32> mask, int threshold, Point2D_I32 offset,  Double avg) {
       mask_ = offset(mask, offset, true);
+      threshold_ = threshold;
       maskIncludingBleach_ = mask_;
       maskAverage_ = avg;
       maskIncludingBleachAverage_ = avg;
    }
    
    private ParticleData(List<Point2D_I32> mask, 
+           int threshold,
            List<Point2D_I32> bleachMask,
            List<Point2D_I32> maskIncludingBleach, 
            Point2D_I32 centroid,
@@ -91,6 +95,7 @@ public class ParticleData {
            Double bleachMaskAverage,
            Double maskIncludingBleachAverage) {
       mask_ = mask;
+      threshold_ = threshold;
       bleachMask_ = bleachMask;
       maskIncludingBleach_ = maskIncludingBleach;
       centroid_ = centroid;
@@ -107,6 +112,7 @@ public class ParticleData {
    public ParticleData deepCopy() {
       return new ParticleData( 
               this.mask_ != null ? new ArrayList<>(this.mask_) : null, 
+              threshold_,
               this.bleachMask_ != null? new ArrayList<>(this.bleachMask_) : null, 
               this.maskIncludingBleach_ != null ? new ArrayList<>(this.maskIncludingBleach_) : null, 
               this.centroid_ != null ? new Point2D_I32(this.centroid_) : null, 
@@ -119,6 +125,7 @@ public class ParticleData {
     public ParticleData copy() {
       return new ParticleData( 
               this.mask_, 
+              this.threshold_,
               this.bleachMask_, 
               this.maskIncludingBleach_, 
               this.centroid_, 
@@ -150,6 +157,10 @@ public class ParticleData {
    
    public List<Point2D_I32> getMask() {
       return mask_;
+   }
+   
+   public int getThreshold() {
+      return threshold_;
    }
    
    public List<Point2D_I32> getBleachMask() {
@@ -196,7 +207,7 @@ public class ParticleData {
          return null;
       }
       GrayU8 mask = new GrayU8(sub.width, sub.height);
-      int threshold = (int) ThresholdImageOps.computeLi(sub, 
+      int threshold = (int) GThresholdImageOps.computeLi(sub, 
               0.0, (double)sub.getImageType().getDataType().getMaxValue());
       GThresholdImageOps.threshold(sub, mask, threshold, false);
       
@@ -219,7 +230,7 @@ public class ParticleData {
       GrayU16 originalImage = (GrayU16) sub;
       clusters.forEach((cluster) -> {
          double avg = averageIntensity(originalImage, cluster, null);
-         particles.add(new ParticleData(cluster, 
+         particles.add(new ParticleData(cluster, threshold,
                  new Point2D_I32(startCenter.x - halfBoxSize, startCenter.y - halfBoxSize),
                  avg));
       });
@@ -236,24 +247,39 @@ public class ParticleData {
     * 
     * @param preBleach
     * @param current
-    * @param previousParticle
-    * @param particle
+    * @param track - track with ParticleData used to look back in time
+    *                Should not be modified!
+    * @param frame  - Frame that the code is currently working on
+    * @param particle - Particle for the current frame. BleachSpot will be added to it
+    * @param bleachSpotRadius - Radius for the bleachSpot
     * @param offset
     * @param maxDistance
     * @return 
     */
-   public static ParticleData addBleachSpotToParticle(GrayF32 preBleach, 
-           GrayU16 current, ParticleData previousParticle, 
-           ParticleData particle, Point2D_I32 offset, double maxDistance) {
+   public static ParticleData addBleachSpotToParticle(
+           GrayF32 preBleach, 
+           GrayU16 current, 
+           Map<Integer, ParticleData> track, 
+           int frame,
+           ParticleData particle, 
+           Point2D_I32 offset, 
+           int bleachSpotRadius, 
+           double maxDistance) {
       
       final int particleSizeCutoff = 16;
       // if particle is too small, simply assume that the bleachspot covers the
       // whole particle
       if (particle.mask_.size() < particleSizeCutoff) {
          Double avg = averageIntensity(current, particle.getMask(), offset);
-         return new ParticleData(particle.getMask(), particle.getMask(),
-                 particle.getMask(), particle.getCentroid(), 
-                 particle.getCentroid(), avg, avg, avg);
+         return new ParticleData(particle.getMask(), 
+                 particle.getThreshold(), 
+                 particle.getMask(),
+                 particle.getMask(), 
+                 particle.getCentroid(), 
+                 particle.getCentroid(), 
+                 avg, 
+                 avg, 
+                 avg);
       }
       
       // divide the current mask by the prebleach mask, blur, find the minimum pixel and hope it is the bleach spot
@@ -264,21 +290,37 @@ public class ParticleData {
       GrayF32 gResult = new GrayF32(dResult.width, dResult.height);
       BlurImageOps.gaussian(dResult, gResult, 3, -1, null);
       Point2D_I32 minPixel = findMinPixel(gResult);
-            
-      if (previousParticle != null && previousParticle.getBleachSpot() != null) {
-         double distance = particle.getCentroid().distance(previousParticle.getCentroid());
-         distance = distance < 1.0 ? 1.0 : distance;
-         if (Utils.distance(minPixel, new Point2D_I32(previousParticle.getBleachSpot().getX() - offset.x, 
-               previousParticle.getBleachSpot().getY() - offset.y)) > 2 * distance) {
-            minPixel = new Point2D_I32(
-                    previousParticle.getBleachSpot().getX() + particle.getCentroid().getX() - 
-                            previousParticle.getCentroid().getX() - offset.x,
-                    previousParticle.getBleachSpot().getY() + particle.getCentroid().getY() - 
-                            previousParticle.getCentroid().getY() - offset.y
-            );
+      
+      
+      
+      // Make sure that this is not an abberrant bleachSpot by checking the position
+      // of previou bleachspots.  If it moved too far away (normalized by the centroid
+      // of the particle) reposition to the original bleachspot position
+      int nrBack = 1;
+      ParticleData previousParticle = null;
+      boolean previousBleachFound = false;
+      while ( !previousBleachFound && 
+              nrBack < 10 && 
+              (frame - nrBack) > 0) {
+         previousParticle = track.get(frame - nrBack);
+         nrBack++;
+
+         if (previousParticle != null && previousParticle.getBleachSpot() != null) {
+            double distance = particle.getCentroid().distance(previousParticle.getCentroid());
+            distance = distance < 1.0 ? 1.0 : distance;
+            if (Utils.distance(minPixel, new Point2D_I32(previousParticle.getBleachSpot().getX() - offset.x,
+                    previousParticle.getBleachSpot().getY() - offset.y)) > 2 * distance) {
+               minPixel = new Point2D_I32(
+                       previousParticle.getBleachSpot().getX() + particle.getCentroid().getX()
+                       - previousParticle.getCentroid().getX() - offset.x,
+                       previousParticle.getBleachSpot().getY() + particle.getCentroid().getY()
+                       - previousParticle.getCentroid().getY() - offset.y
+               );
+            }
+            previousBleachFound = true;
          }
       }
-      
+
       if (Utils.distance(minPixel, new Point2D_I32(gResult.width / 2, gResult.height / 2)) 
               < maxDistance) {
          double mean = GImageStatistics.mean(gResult);
@@ -292,7 +334,7 @@ public class ParticleData {
          if (isRealBleach) {
             Point2D_I32 bleachPoint = 
                     new Point2D_I32(minPixel.x + offset.x, minPixel.y + offset.y);
-            CircleMask cm = new CircleMask(3);
+            CircleMask cm = new CircleMask(bleachSpotRadius);
             Set<Point2D_I32> bleachSet = new HashSet<>();
             bleachSet.add(bleachPoint);
             for (int x = 0; x < cm.getMask().length; x++) {
@@ -328,7 +370,7 @@ public class ParticleData {
             
             // TODO: fill holes in maskIncludingBleach            
             Point2D_I32 newCentroid = ContourStats.centroid(maskIncludingBleach);
-            return new ParticleData(mask, bleachMask,
+            return new ParticleData(mask, particle.getThreshold(), bleachMask,
                      maskIncludingBleach, newCentroid, bleachPoint,
                      maskAvg, bleachMaskAvg, maskIncludingBleachAvg);
             

@@ -111,7 +111,7 @@ public class PointAndShootAnalyzer implements Runnable {
 
       // Read variables provided by UI from profile
       String fileName = settings_.getString(Terms.LOCATIONSFILENAME, "");
-      final int radius = settings_.getInteger(Terms.RADIUS, 3);
+      final int bleachSpotRadius = settings_.getInteger(Terms.RADIUS, 3);
       final int nrFramesBefore = settings_.getInteger(Terms.NRFRAMESBEFORE, 2);
       final int nrFramesAfter = settings_.getInteger(Terms.NRFRAMESAFTER, 200);
       final int maxDistance = settings_.getInteger(Terms.MAXDISTANCE, 3);
@@ -333,14 +333,17 @@ public class PointAndShootAnalyzer implements Runnable {
                   // TODO: increase counter, give up when too high
                } 
                
-               if (bleachSpotsMissed < 10) {
+               if (bleachSpotsMissed < 5) {
                   ImageGray current = BoofCVImageConverter.subImage(dataProvider,
                           cb, frame, currentPoint, halfROISize_);
-                  nextParticle = ParticleData.addBleachSpotToParticle(fPreBleach,
+                  nextParticle = ParticleData.addBleachSpotToParticle(
+                          fPreBleach,
                           (GrayU16) current,
-                          previousParticle,
+                          track,
+                          frame,
                           nextParticle,
                           new Point2D_I32(currentPoint.x - halfROISize_, currentPoint.y - halfROISize_),
+                          bleachSpotRadius,
                           MAXDISTANCE);
                   if (nextParticle.getBleachSpot() == null) {
                      bleachSpotsMissed += 1;
