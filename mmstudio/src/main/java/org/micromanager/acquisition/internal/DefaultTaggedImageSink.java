@@ -26,9 +26,9 @@ import org.micromanager.internal.utils.ReportingUtils;
 public final class DefaultTaggedImageSink  {
 
    private final BlockingQueue<TaggedImage> imageProducingQueue_;
-   private Datastore store_;
-   private Pipeline pipeline_;
-   private AcquisitionEngine engine_;
+   private final Datastore store_;
+   private final Pipeline pipeline_;
+   private final AcquisitionEngine engine_;
 
    public DefaultTaggedImageSink(BlockingQueue<TaggedImage> queue,
          Pipeline pipeline, Datastore store, AcquisitionEngine engine) {
