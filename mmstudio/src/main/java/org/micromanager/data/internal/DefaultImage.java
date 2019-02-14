@@ -58,9 +58,12 @@ import org.micromanager.internal.utils.ReportingUtils;
 public final class DefaultImage implements Image {
    private static final String COORDS_TAG = "completeCoords";
 
-   private DefaultMetadata metadata_;
-   private Coords coords_;
-   private Buffer rawPixels_;
+   private final DefaultMetadata metadata_;
+   private final Coords coords_;
+
+
+   private final Buffer rawPixels_;
+
    // Width of the image, in pixels
    int pixelWidth_;
    // Height of the image, in pixels
@@ -156,10 +159,12 @@ public final class DefaultImage implements Image {
    public DefaultImage(Object pixels, int width, int height, int bytesPerPixel,
          int numComponents, Coords coords, Metadata metadata) 
          throws IllegalArgumentException {
-      metadata_ = (DefaultMetadata) metadata;
-      if (metadata_ == null) {
+      if (metadata == null) {
          // Don't allow images with null metadata.
          metadata_ = new DefaultMetadata.Builder().build();
+      }
+      else {
+         metadata_ = (DefaultMetadata) metadata;
       }
       coords_ = coords;
 
