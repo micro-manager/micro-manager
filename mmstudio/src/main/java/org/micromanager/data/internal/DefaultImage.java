@@ -61,7 +61,13 @@ public final class DefaultImage implements Image {
    private final DefaultMetadata metadata_;
    private final Coords coords_;
 
-
+   // A buffer containing the pixel data. For now, only the following formats
+   // are used:
+   // - 8-bit gray: a ByteBuffer containing unsigned bits
+   // - 16-bit gray: a ShortBuffer containing unsigned bits
+   // - RGB888: a ByteBuffer containing unsigned bits; 4 bytes per pixel with
+   //           sample order BGRA (A component not used)
+   // At this time, this RGB format matches what MMCore produces.
    private final Buffer rawPixels_;
 
    // Width of the image, in pixels
