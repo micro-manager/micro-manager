@@ -19,7 +19,7 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id: PIGCSControllerDLL.cpp,v 1.17, 2014-03-31 12:51:24Z, Steffen Rau$
+// CVS:           $Id: PIGCSControllerDLL.cpp,v 1.25, 2019-01-09 10:45:26Z, Steffen Rau$
 //
 
 #ifndef __APPLE__
@@ -39,6 +39,8 @@ const char* PIGCSControllerDLLDevice::DeviceName_ = "PI_GCSController_DLL";
 const char* PIGCSControllerDLLDevice::PropName_ = "DLL Name";
 const char* PIGCSControllerDLLDevice::PropInterfaceType_ = "Interface Type";
 const char* PIGCSControllerDLLDevice::PropInterfaceParameter_ = "Interface Parameter";
+const char* PIGCSControllerDLLDevice::UmToDefaultUnitName_ = "um in default unit";
+const char* PIGCSControllerDLLDevice::SendCommand_ = "Send command";
 
 struct ToUpper
 {
@@ -60,7 +62,7 @@ PIGCSControllerDLLDevice::PIGCSControllerDLLDevice()
     , bShowInterfaceProperties_(true)
 {
    InitializeDefaultErrorMessages();
-   
+
    SetErrorText(ERR_DLL_PI_DLL_NOT_FOUND, g_msg_DLL_NOT_FOUND);
    SetErrorText(ERR_DLL_PI_INVALID_INTERFACE_NAME, g_msg_INVALID_INTERFACE_NAME);
    SetErrorText(ERR_DLL_PI_INVALID_INTERFACE_PARAMETER, g_msg_INVALID_INTERFACE_PARAMETER);
@@ -106,6 +108,12 @@ void PIGCSControllerDLLDevice::CreateProperties()
    pAct = new CPropertyAction (this, &PIGCSControllerDLLDevice::OnDLLName);
    CreateProperty(PIGCSControllerDLLDevice::PropName_, dllName_.c_str(), MM::String, false, pAct, true);
 
+   pAct = new CPropertyAction (this, &PIGCSControllerDLLDevice::OnUmInDefaultUnit);
+   CreateProperty(PIGCSControllerDLLDevice::UmToDefaultUnitName_, "0.001", MM::Float, false, pAct, true);
+
+   pAct = new CPropertyAction (this, &PIGCSControllerDLLDevice::OnSendCommand);
+   CreateProperty(PIGCSControllerDLLDevice::SendCommand_, "", MM::String, false, pAct);
+
    CreateInterfaceProperties();
 
 }
@@ -134,7 +142,7 @@ void PIGCSControllerDLLDevice::CreateInterfaceProperties(void)
          interfaceParameterLabel = "ComPort ; Baudrate";
       }
    }
-   
+
    // Interface parameter
    if (interfaceParameterLabel.empty()) return;
 
@@ -149,7 +157,7 @@ int PIGCSControllerDLLDevice::Initialize()
 
 	char szLabel[MM::MaxStrLength];
 	GetLabel(szLabel);
-	ctrl_ = new PIGCSControllerDLL(szLabel, this, GetCoreCallback()); 
+	ctrl_ = new PIGCSControllerDLL(szLabel, this, GetCoreCallback());
 
    int ret = ctrl_->LoadDLL(dllName_);
    if (ret != DEVICE_OK)
@@ -158,6 +166,8 @@ int PIGCSControllerDLLDevice::Initialize()
       Shutdown();
 	  return ret;
    }
+
+   ctrl_->umToDefaultUnit_ = umToDefaultUnit_;
 
    ret = ctrl_->ConnectInterface(interfaceType_, interfaceParameter_);
    if (ret != DEVICE_OK)
@@ -230,6 +240,39 @@ int PIGCSControllerDLLDevice::OnDLLName(MM::PropertyBase* pProp, MM::ActionType 
    return DEVICE_OK;
 }
 
+int PIGCSControllerDLLDevice::OnUmInDefaultUnit(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set(umToDefaultUnit_);
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        pProp->Get(umToDefaultUnit_);
+    }
+
+    return DEVICE_OK;
+}
+
+int PIGCSControllerDLLDevice::OnSendCommand(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set("");
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        std::string command;
+        pProp->Get(command);
+        if (command.length () > 0)
+        {
+            return ctrl_->SendGCSCommand (command);
+        }
+    }
+
+    return DEVICE_OK;
+}
+
 int PIGCSControllerDLLDevice::OnInterfaceType(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
@@ -296,6 +339,7 @@ int PIGCSControllerDLLDevice::OnJoystick4(MM::PropertyBase* pProp, MM::ActionTyp
 
 PIGCSControllerDLL::PIGCSControllerDLL(const std::string& label, PIGCSControllerDLLDevice* proxy, MM::Core* logsink)
     : PIController(label)
+    , GcsCommandset_(NULL)
 	, ConnectRS232_(NULL)
 	, Connect_(NULL)
 	, IsConnected_(NULL)
@@ -308,6 +352,7 @@ PIGCSControllerDLL::PIGCSControllerDLL(const std::string& label, PIGCSController
 	, INI_(NULL)
 	, CST_(NULL)
 	, qCST_(NULL)
+    , EAX_(NULL)
 	, qFRF_(NULL)
 	, FRF_(NULL)
 	, FPL_(NULL)
@@ -322,7 +367,6 @@ PIGCSControllerDLL::PIGCSControllerDLL(const std::string& label, PIGCSController
 	, MOV_(NULL)
 	, STP_(NULL)
 	, SVO_(NULL)
-	, qSVO_(NULL)
 	, JON_(NULL)
 	, qJON_(NULL)
 	, VEL_(NULL)
@@ -341,7 +385,7 @@ PIGCSControllerDLL::~PIGCSControllerDLL()
 	CloseAndUnload();
 }
 
-   
+
 
 int PIGCSControllerDLL::LoadDLL(const std::string& dllName)
 {
@@ -398,6 +442,7 @@ int PIGCSControllerDLL::LoadDLL(const std::string& dllName)
         printf("load module failed\n");
         return ERR_DLL_PI_DLL_NOT_FOUND;
     }
+    GcsCommandset_ = (FP_GcsCommandset)LoadDLLFunc ("GcsCommandset");
     ConnectRS232_ = (FP_ConnectRS232)LoadDLLFunc("ConnectRS232");
     Connect_ = (FP_Connect)LoadDLLFunc("Connect");
     IsConnected_ = (FP_IsConnected)LoadDLLFunc("IsConnected");
@@ -407,9 +452,11 @@ int PIGCSControllerDLL::LoadDLL(const std::string& dllName)
     GetError_ = (FP_GetError)LoadDLLFunc("GetError");
     qIDN_ = (FP_qIDN)LoadDLLFunc("qIDN");
     qVER_ = (FP_qVER)LoadDLLFunc("qVER");
-    INI_ = (FP_INI)LoadDLLFunc("INI");
+    if (!gcs2_)
+    {
+        INI_ = (FP_INI)LoadDLLFunc("INI");
+    }
     CST_ = (FP_CST)LoadDLLFunc("CST");
-    qCST_ = (FP_qCST)LoadDLLFunc("qCST");
     qFRF_ = (FP_qFRF)LoadDLLFunc("qFRF");
     FRF_ = (FP_FRF)LoadDLLFunc("FRF");
     FPL_ = (FP_FPL)LoadDLLFunc("FPL");
@@ -424,7 +471,7 @@ int PIGCSControllerDLL::LoadDLL(const std::string& dllName)
     MOV_ = (FP_MOV)LoadDLLFunc("MOV");
     STP_ = (FP_STP)LoadDLLFunc("STP");
     SVO_ = (FP_SVO)LoadDLLFunc("SVO");
-    qSVO_ = (FP_qSVO)LoadDLLFunc("qSVO");
+    EAX_ = (FP_SVO)LoadDLLFunc("EAX");
     JON_ = (FP_JON)LoadDLLFunc("JON");
     qJON_ = (FP_qJON)LoadDLLFunc("qJON");
     qVEL_ = (FP_qVEL)LoadDLLFunc("qVEL");
@@ -453,6 +500,7 @@ void PIGCSControllerDLL::CloseAndUnload()
 
 	ID_ = -1;
 
+    GcsCommandset_ = NULL;
 	ConnectRS232_ = NULL;
 	Connect_ = NULL;
 	IsConnected_ = NULL;
@@ -480,7 +528,7 @@ void PIGCSControllerDLL::CloseAndUnload()
 	MOV_ = NULL;
 	STP_ = NULL;
 	SVO_ = NULL;
-	qSVO_ = NULL;
+    EAX_ = NULL;
 	JON_ = NULL;
 	qJON_ = NULL;
 	VEL_ = NULL;
@@ -626,6 +674,20 @@ std::string PIGCSControllerDLL::FindDeviceNameInUSBList(const char* szDevices, s
 	return "";
 }
 
+int PIGCSControllerDLL::SendGCSCommand (const std::string& command)
+{
+    if (!GcsCommandset_)
+    {
+        return DEVICE_ERR;
+    }
+    if (GcsCommandset_ (ID_, command.c_str ()) == FALSE)
+    {
+        return DEVICE_ERR;
+    }
+    return DEVICE_OK;
+}
+
+
 bool PIGCSControllerDLL::qIDN(std::string& sIDN)
 {
 	if (qIDN_ == NULL)
@@ -668,9 +730,16 @@ bool PIGCSControllerDLL::CST(const std::string& axis, const std::string& stagety
 
 bool PIGCSControllerDLL::SVO(const std::string& axis, BOOL svo)
 {
-	if (SVO_ == NULL)
-		return false;
-	return (SVO_(ID_, axis.c_str(), &svo) == TRUE);
+    if (SVO_ == NULL)
+        return false;
+    return (SVO_(ID_, axis.c_str(), &svo) == TRUE);
+};
+
+bool PIGCSControllerDLL::EAX(const std::string& axis, BOOL enableAxis)
+{
+    if (EAX_ == NULL)
+        return false;
+    return (EAX_(ID_, axis.c_str(), &enableAxis) == TRUE);
 };
 
 bool PIGCSControllerDLL::FRF(const std::string& axes)

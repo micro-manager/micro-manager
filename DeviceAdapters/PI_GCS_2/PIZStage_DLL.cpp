@@ -19,7 +19,7 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id: PIZStage_DLL.cpp,v 1.11, 2014-05-27 07:22:43Z, Steffen Rau$
+// CVS:           $Id: PIZStage_DLL.cpp,v 1.20, 2018-10-01 14:25:47Z, Steffen Rau$
 //
 
 #include "PIZStage_DLL.h"
@@ -32,6 +32,9 @@ const char* g_PI_ZStageInvertTravelRange = "Invert travel range";
 const char* g_PI_ZStageStageType = "Stage";
 const char* g_PI_ZStageStepSize = "StepSizeUm";
 const char* g_PI_ZStageControllerName = "Controller Name";
+const char* g_PI_ZStageServoControl = "Servo control activated (SVO)";
+const char* g_PI_ZStageEnableAxis = "Axis enabled (EAX)";
+const char* g_PI_ZStageAlternativeHomingCommand = "Alternative Homing Command";
 
 
 
@@ -45,7 +48,9 @@ PIZStage::PIZStage()
     , initialized_(false)
     , axisLimitUm_(500.0)
     , invertTravelRange_(false)
-    , stageType_("DEFAULT_STAGE")
+    , servoControl_(true)
+    , axisEnabled_ (true)
+    , stageType_("")
     , controllerName_("")
     , ctrl_(NULL)
 {
@@ -82,15 +87,15 @@ PIZStage::PIZStage()
    // Axis name
    pAct = new CPropertyAction (this, &PIZStage::OnAxisName);
    CreateProperty(g_PI_ZStageAxisName, axisName_.c_str(), MM::String, false, pAct, true);
-   
+
    // Axis stage type
    pAct = new CPropertyAction (this, &PIZStage::OnStageType);
    CreateProperty(g_PI_ZStageStageType, stageType_.c_str(), MM::String, false, pAct, true);
-   
+
    //// Axis homing mode
    //pAct = new CPropertyAction (this, &PIZStage::OnHoming);
    //CreateProperty(g_PI_ZStageHoming, homingMode_.c_str(), MM::String, false, pAct, true);
-   
+
    // axis limit in um
    pAct = new CPropertyAction (this, &PIZStage::OnAxisLimit);
    CreateProperty(g_PI_ZStageAxisLimitUm, "500.0", MM::Float, false, pAct, true);
@@ -103,6 +108,19 @@ PIZStage::PIZStage()
    pAct = new CPropertyAction (this, &PIZStage::OnPosition);
    CreateProperty(MM::g_Keyword_Position, "0.0", MM::Float, false, pAct);
    SetPropertyLimits(MM::g_Keyword_Position, 0.0/*-axisLimitUm_*/, axisLimitUm_);
+
+   // servo control
+   pAct = new CPropertyAction (this, &PIZStage::OnAxisServoControl);
+   CreateProperty(g_PI_ZStageServoControl, "1", MM::Integer, false, pAct);
+
+   // enable axis
+   pAct = new CPropertyAction (this, &PIZStage::OnEnableAxis);
+   CreateProperty(g_PI_ZStageEnableAxis, "1", MM::Integer, false, pAct);
+
+   // alternative homing command
+   pAct = new CPropertyAction (this, &PIZStage::OnAlternativeHomingCommand);
+   CreateProperty(g_PI_ZStageAlternativeHomingCommand, "", MM::String, false, pAct, true);
+
 
 }
 
@@ -142,7 +160,6 @@ int PIZStage::Initialize()
 	   return ret;
    }
 
-     // axis limits (assumed symmetrical)
    CPropertyAction* pAct = new CPropertyAction (this, &PIZStage::OnHoming);
    CreateProperty("HOMING", "", MM::String, false, pAct);
 
@@ -186,7 +203,7 @@ int PIZStage::GetPositionSteps(long& steps)
    steps = (long) ((pos / stepSizeUm_) + 0.5);
    return DEVICE_OK;
 }
-  
+
 int PIZStage::SetPositionUm(double pos)
 {
     if (NULL == ctrl_)
@@ -299,19 +316,76 @@ int PIZStage::OnAxisLimit(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int PIZStage::OnAxisTravelRange(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   if (eAct == MM::BeforeGet)
-   {
-      pProp->Set(long (invertTravelRange_ ? 1 : 0));
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      long value;
-      pProp->Get(value);
-      invertTravelRange_ = (value != 0);
-   }
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set(long (invertTravelRange_ ? 1 : 0));
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        long value;
+        pProp->Get(value);
+        invertTravelRange_ = (value != 0);
+    }
 
-   return DEVICE_OK;
+    return DEVICE_OK;
 }
+
+int PIZStage::OnAxisServoControl(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set(long (servoControl_ ? 1 : 0));
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        long value;
+        pProp->Get(value);
+        servoControl_ = (value != 0);
+        if (!ctrl_->SVO (axisName_, servoControl_ ? TRUE : FALSE))
+        {
+            return ctrl_->GetTranslatedError ();
+        }
+    }
+
+    return DEVICE_OK;
+}
+
+int PIZStage::OnEnableAxis(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set(long (axisEnabled_ ? 1 : 0));
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        long value;
+        pProp->Get(value);
+        axisEnabled_ = (value != 0);
+        if (!ctrl_->EAX (axisName_, axisEnabled_ ? TRUE : FALSE))
+        {
+            return ctrl_->GetTranslatedError ();
+        }
+    }
+
+    return DEVICE_OK;
+}
+
+int PIZStage::OnAlternativeHomingCommand(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set (alternativeHomingCommand_.c_str ());
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        std::string value;
+        pProp->Get(value);
+        alternativeHomingCommand_ = value;
+    }
+
+    return DEVICE_OK;
+}
+
 
 int PIZStage::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
@@ -372,11 +446,22 @@ int PIZStage::OnHoming(MM::PropertyBase* pProp, MM::ActionType eAct)
     }
     else if (eAct == MM::AfterSet)
     {
+        if (alternativeHomingCommand_.length () != 0)
+        {
+            return ctrl_->SendGCSCommand (alternativeHomingCommand_);
+        }
+
         std::string homingMode;
-        pProp->Get(homingMode);
-        int ret = ctrl_->Home( axisName_, homingMode );
+        pProp->Get (homingMode);
+        int ret = ctrl_->Home (axisName_, homingMode);
         if (ret != DEVICE_OK)
+        {
             return ret;
+        }
+        while (Busy ()) {};
+        (void)ctrl_->SVO (axisName_, TRUE);
+        return DEVICE_OK;
+
     }
 
     return DEVICE_OK;
