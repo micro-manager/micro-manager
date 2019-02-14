@@ -3442,10 +3442,10 @@ int CPCOCam::SetROI(unsigned uX, unsigned uY, unsigned uXSize, unsigned uYSize)
   }
   else
   {
-    m_nRoiXMin = (int) ceil(((double) uX));
-    m_nRoiYMin = (int) ceil(((double) uY));
-    m_nRoiXMax = (int) ceil((((double) uX + uXSize)) - 1);
-    m_nRoiYMax = (int) ceil((((double) uY + uYSize)) - 1);
+    m_nRoiXMin = (int) ceil(((double) uX + 1));
+    m_nRoiYMin = (int) ceil(((double) uY + 1));
+    m_nRoiXMax = (int) ceil((((double) uX + uXSize)));
+    m_nRoiYMax = (int) ceil((((double) uY + uYSize)));
   }
 
   if(m_nRoiXMin > m_nRoiXMax)
@@ -3687,8 +3687,8 @@ int CPCOCam::GetROI(unsigned& uX, unsigned& uY, unsigned& uXSize, unsigned& uYSi
   }
   else
   {
-    uX = m_nRoiXMin;
-    uY = m_nRoiYMin;
+    uX = m_nRoiXMin - 1;
+    uY = m_nRoiYMin - 1;
 
     uXSize = m_nRoiXMax - m_nRoiXMin + 1;
     uYSize = m_nRoiYMax - m_nRoiYMin + 1;
@@ -3981,6 +3981,7 @@ int CPCOCam::InsertImage()
   if(pcore != NULL)
   {
     int icurrent;
+
     for(int j = 0; j < 4; j++)
     {
       icurrent = m_iLastBufferUsed[j];

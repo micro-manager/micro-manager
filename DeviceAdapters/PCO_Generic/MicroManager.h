@@ -196,6 +196,7 @@ private:
     bool stop_;
     long numImages_;
     int m_svcWidth, m_svcHeight, m_svcBytePP;
+
   };
 
   SequenceThread* sthd_;
