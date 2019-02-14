@@ -24,8 +24,6 @@ import com.google.common.eventbus.Subscribe;
 import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.process.ColorProcessor;
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -37,6 +35,8 @@ import javax.swing.SwingUtilities;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
+import org.micromanager.data.ImageJConverter;
+import org.micromanager.data.internal.DefaultImageJConverter;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.HistogramData;
 import org.micromanager.display.NewDisplaySettingsEvent;
@@ -46,7 +46,6 @@ import org.micromanager.display.internal.events.DefaultPixelsSetEvent;
 import org.micromanager.display.internal.events.HistogramRecalcEvent;
 import org.micromanager.display.internal.events.HistogramRequestEvent;
 import org.micromanager.display.internal.link.ContrastEvent;
-import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -283,16 +282,9 @@ public final class CanvasUpdateQueue {
       // int array for ImageJ's consumption.
       if (plus.getProcessor() instanceof ColorProcessor
             && pixels instanceof byte[]) {
-         // Micro-Manager RGB images are currently RGB_ byte buffers.
-         // ImageJ RGB images are _RGB int buffers.
-         byte[] original = (byte[]) pixels;
-         byte[] reordered = new byte[original.length];
-         reordered[0] = 0;
-         System.arraycopy(original, 0, reordered, 1, original.length - 1);
-         int[] ijPixels = new int[original.length / 4];
-         IntBuffer ijBuffer = IntBuffer.wrap(ijPixels);
-         ijBuffer.put(ByteBuffer.wrap(reordered).asIntBuffer());
-         pixels = ijPixels;
+         ImageJConverter converter = DefaultImageJConverter.getInstance();
+         ColorProcessor cp = (ColorProcessor) converter.createProcessor(image);
+         pixels = cp.getPixels();
       }
       plus.getProcessor().setPixels(pixels);
 

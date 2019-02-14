@@ -661,9 +661,9 @@ public final class ChannelControlPanel extends JPanel implements CursorListener 
       }
       else {
          // Multi-component images default to RGB.
-         histogram_.setTraceStyle(false, 0, Color.RED);
+         histogram_.setTraceStyle(false, 0, Color.BLUE);
          histogram_.setTraceStyle(false, 1, Color.GREEN);
-         histogram_.setTraceStyle(false, 2, Color.BLUE);
+         histogram_.setTraceStyle(false, 2, Color.RED);
       }
    }
 

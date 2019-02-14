@@ -361,17 +361,20 @@ public final class DefaultImage implements Image {
    @Override
    public String getIntensityStringAt(int x, int y) {
       if (numComponents_ == 1) {
-         return String.format("%d", getIntensityAt(x, y));
+         return Long.toString(getIntensityAt(x, y));
       }
       else {
-         String result = "[";
-         for (int i = 0; i < numComponents_; ++i) {
+         StringBuilder sb = new StringBuilder();
+         sb.append("[");
+         // Assuming BGR_ samples here
+         for (int i = numComponents_ - 1; i >= 0; --i) {
+            sb.append(getComponentIntensityAt(x, y, i));
             if (i > 0) {
-               result += "/";
+               sb.append("/");
             }
-            result += String.format("%d", getComponentIntensityAt(x, y, i));
          }
-         return result + "]";
+         sb.append("]");
+         return sb.toString();
       }
    }
 

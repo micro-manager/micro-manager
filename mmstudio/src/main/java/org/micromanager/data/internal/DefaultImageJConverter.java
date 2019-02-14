@@ -26,7 +26,6 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.ImageJConverter;
@@ -58,16 +57,7 @@ public final class DefaultImageJConverter implements ImageJConverter {
       }
       if (bytesPerPixel == 4 && numComponents == 3) {
          if (pixels instanceof byte[]) {
-            // Micro-Manager RGB images are currently RGB_ byte buffers.
-            // ImageJ RGB images are _RGB int buffers.
-            byte[] original = (byte[]) pixels;
-            byte[] reordered = new byte[original.length];
-            reordered[0] = 0;
-            System.arraycopy(original, 0, reordered, 1, original.length - 1);
-            int[] ijPixels = new int[original.length / 4];
-            IntBuffer ijBuffer = IntBuffer.wrap(ijPixels);
-            ijBuffer.put(ByteBuffer.wrap(reordered).asIntBuffer());
-            pixels = ijPixels;
+            pixels = bgraToIjPixels((byte[]) pixels);
          }
          return new ColorProcessor(width, height, (int[]) pixels);
       }
@@ -128,7 +118,7 @@ public final class DefaultImageJConverter implements ImageJConverter {
       else if (processor instanceof ColorProcessor) {
          bytesPerPixel = 4;
          numComponents = 3;
-         pixels = convertRGBPixels((int[]) pixels);
+         pixels = ijToBgraPixels((int[]) pixels);
       }
       else {
          ReportingUtils.logError("Unrecognized processor type " + processor.getClass().getName());
@@ -137,15 +127,30 @@ public final class DefaultImageJConverter implements ImageJConverter {
             pixels, processor.getWidth(), processor.getHeight(),
             bytesPerPixel, numComponents, coords, metadata);
    }
-   
-   private static byte[] convertRGBPixels(int[] ijPixels) {
-      ByteBuffer buffer = ByteBuffer.allocate(ijPixels.length * 4);
-      buffer.asIntBuffer().put(ijPixels);
-      byte[] ijOrdered = buffer.array();
-      byte[] mmOrdered = new byte[ijOrdered.length];
-      System.arraycopy(ijOrdered, 1, mmOrdered, 0, ijOrdered.length - 1);
-      mmOrdered[mmOrdered.length - 1] = 0;
-      return mmOrdered;
+
+   private static int[] bgraToIjPixels(byte[] bgra) {
+      // Micro-Manager RGB images are currently BGR_ byte buffers.
+      // ImageJ RGB images are _RGB int buffers (big-endian).
+      int[] ijPixels = new int[bgra.length / 4];
+      for (int i = 0; i < ijPixels.length; ++i) {
+         ijPixels[i] =
+               ((bgra[4 * i + 0] & 0xff) << 0) | // B
+               ((bgra[4 * i + 1] & 0xff) << 8) | // G
+               ((bgra[4 * i + 2] & 0xff) << 16) | // R
+               ((bgra[4 * i + 3] & 0xff) << 24);  // A
+      }
+      return ijPixels;
+   }
+
+   private static byte[] ijToBgraPixels(int[] ijPixels) {
+      byte[] bgra = new byte[ijPixels.length * 4];
+      for (int i = 0; i < ijPixels.length; ++i) {
+         bgra[4 * i + 0] = (byte) ((ijPixels[i] >>  0) & 0xff); // B
+         bgra[4 * i + 1] = (byte) ((ijPixels[i] >>  8) & 0xff); // G
+         bgra[4 * i + 2] = (byte) ((ijPixels[i] >> 16) & 0xff); // R
+         bgra[4 * i + 3] = (byte) ((ijPixels[i] >> 24) & 0xff); // A
+      }
+      return bgra;
    }
 
    public static DefaultImageJConverter getInstance() {
