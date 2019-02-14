@@ -70,35 +70,18 @@ import org.micromanager.internal.utils.ReportingUtils;
  * functionality in the ScriptInterface
  */
 public final class MMAcquisition {
-   
-   /** 
-    * Final queue of images immediately prior to insertion into the ImageCache.
-    * Only used when running in asynchronous mode.
-    */
-   private BlockingQueue<TaggedImage> outputQueue_ = null;
-   private boolean isAsynchronous_ = false;
-   private int numFrames_ = 0;
-   private int numChannels_ = 0;
-   private int numSlices_ = 0;
-   private int numPositions_ = 0;
    protected String name_;
    protected int width_ = 0;
    protected int height_ = 0;
    protected int byteDepth_ = 1;
    protected int bitDepth_ = 8;    
    protected int multiCamNumCh_ = 1;
-   private boolean initialized_ = false;
-   private final String comment_ = "";
-   private String rootDirectory_;
    private Studio studio_;
    private DefaultDatastore store_;
    private Pipeline pipeline_;
    private DisplayWindow display_;
-   private final boolean virtual_;
    private AcquisitionEngine eng_;
    private final boolean show_;
-   private JSONObject summary_ = new JSONObject();
-   private final String NOTINITIALIZED = "Acquisition was not initialized";
 
    private int imagesReceived_ = 0;
    private int imagesExpected_ = 0;
@@ -108,7 +91,6 @@ public final class MMAcquisition {
          boolean diskCached, AcquisitionEngine eng, boolean show) {
       studio_ = studio;
       name_ = name;
-      virtual_ = diskCached;
       eng_ = eng;
       show_ = show;
       store_ = new DefaultDatastore();
