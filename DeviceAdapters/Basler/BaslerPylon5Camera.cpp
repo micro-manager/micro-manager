@@ -6,7 +6,7 @@
 //
 // Copyright 2018 Henry Pinkard
 // Copyright 2019 SMA extended for supporting Bayer,Mono12, Mono16 and  RGB formats
-//
+// Copyright 2019 SMA add binning support
 // Redistribution and use in source and binary forms, with or without modification, 
 // are permitted provided that the following conditions are met:
 //
@@ -191,6 +191,10 @@ int BaslerCamera::Initialize()
 		maxHeight_ = (unsigned int) height->GetMax();
 	#if (!_DEBUG)
 			ClearROI();// to be enabled for release
+	#else if(_Debug)
+		{
+			ReduceImageSize(800,800);
+		}
 	#endif
 
 		long bytes = (long) (height->GetValue() * width->GetValue() * 4) ;
@@ -361,10 +365,41 @@ int BaslerCamera::Initialize()
 		//// binning
 		pAct = new CPropertyAction (this, &BaslerCamera::OnBinning);
 		ret = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
+		SetPropertyLimits(MM::g_Keyword_Binning, 1, 1);
 		assert(ret == DEVICE_OK);
 
 		vector<string> binValues;
-		binValues.push_back("1");
+		
+
+		CIntegerPtr BinningHorizontal(nodeMap_->GetNode( "BinningHorizontal"));
+		CIntegerPtr BinningBinningVertical(nodeMap_->GetNode( "BinningVertical"));
+		
+		if(BinningHorizontal != NULL && BinningHorizontal != NULL && IsAvailable(BinningHorizontal) && IsAvailable(BinningHorizontal))
+		{
+			//assumed that BinningHorizontal and BinningVertical allow same steps
+			//GenApi::NodeList_t BinningsFactor;
+
+			int64_t min = BinningHorizontal->GetMin();
+			int64_t max = BinningHorizontal->GetMax();
+			SetPropertyLimits(MM::g_Keyword_Binning, (double)min,(double) max);
+
+			for(int x =1; x <= max;  x++)
+			{
+				std::ostringstream ss;
+				ss << x;
+				binValues.push_back(ss.str());
+			}	
+			
+			binningFactor_.assign(to_string (BinningHorizontal->GetValue()));	
+		}
+		else
+		{
+			binValues.push_back("1");
+			binningFactor_.assign("1");
+		}
+
+
+
 		ret = SetAllowedValues(MM::g_Keyword_Binning, binValues);
 		if (ret != DEVICE_OK)
 			return ret;
@@ -378,9 +413,10 @@ int BaslerCamera::Initialize()
 		//preparation for snaps
 		ResizeSnapBuffer();
 		//preparation for sequences
-		camera_->RegisterImageEventHandler( new CircularBufferInserter(this), RegistrationMode_Append, Cleanup_Delete);
-
-
+	
+		
+		//camera_->RegisterImageEventHandler( &ImageHandler_, RegistrationMode_Append, Cleanup_Delete);
+		
 		initialized_ = true;
 		return DEVICE_OK;	
 	}
@@ -426,8 +462,13 @@ int BaslerCamera::SnapImage()
 		if (!ptrGrabResult->GrabSucceeded()) {
 			return DEVICE_ERR;		
 		}
+		if(ptrGrabResult->GetPayloadSize() != GetImageBufferSize())
+		{// due to parameter change on  binning
+			ResizeSnapBuffer();
+		}
 
 		CopyToImageBuffer(ptrGrabResult);
+		
 
 		return DEVICE_OK;
 	}
@@ -456,7 +497,7 @@ void BaslerCamera::CopyToImageBuffer(CGrabResultPtr ptrGrabResult)
         bitDepth_ = 8;
 
 		//copy image buffer to a snap buffer allocated by device adapter
-		const void* buffer = ptrGrabResult->GetBuffer();
+		const void* buffer = ptrGrabResult->GetBuffer();	
 		memcpy(imgBuffer_, buffer, GetImageBufferSize());
 		SetProperty( MM::g_Keyword_PixelType, g_PixelType_8bit);
 	}
@@ -676,18 +717,22 @@ void BaslerCamera::SetExposure(double exp)
 */
 int BaslerCamera::GetBinning() const
 {
-	return 1;
+	return  std::stoi(binningFactor_);
 }
 
 int BaslerCamera::SetBinning(int binFactor)
 {
-	if (binFactor == 1) {
+	cout <<"SetBinning called\n";
+	if (binFactor > 1 && binFactor < 4) {
 		return DEVICE_OK;
 	}
 	return DEVICE_UNSUPPORTED_COMMAND;
 }
 
 int BaslerCamera::StartSequenceAcquisition(long numImages, double /* interval_ms */, bool /* stopOnOverflow */){
+
+	ImageHandler_ = new CircularBufferInserter(this);
+	camera_->RegisterImageEventHandler(ImageHandler_, RegistrationMode_Append, Cleanup_Delete);
 	int ret = GetCoreCallback()->PrepareForAcq(this);
 	if (ret != DEVICE_OK) {
 		return ret;
@@ -697,6 +742,8 @@ int BaslerCamera::StartSequenceAcquisition(long numImages, double /* interval_ms
 }
 
 int BaslerCamera::StartSequenceAcquisition(double /* interval_ms */) {
+	ImageHandler_ = new CircularBufferInserter(this);
+	camera_->RegisterImageEventHandler(ImageHandler_, RegistrationMode_Append, Cleanup_Delete);
 	int ret = GetCoreCallback()->PrepareForAcq(this);
 	if (ret != DEVICE_OK) {
 		return ret;
@@ -712,8 +759,10 @@ bool BaslerCamera::IsCapturing()
 
 int BaslerCamera::StopSequenceAcquisition()
 {
+	
 	camera_->StopGrabbing();
 	GetCoreCallback()->AcqFinished(this, 0);
+	camera_->DeregisterImageEventHandler(ImageHandler_);
 	return DEVICE_OK;
 }
 
@@ -724,6 +773,8 @@ int BaslerCamera::PrepareSequenceAcqusition()
 }
 
 void BaslerCamera::ResizeSnapBuffer() {
+
+
 	free(imgBuffer_);
 	long bytes = GetImageBufferSize() ;
 	imgBuffer_ = malloc(bytes);
@@ -734,8 +785,65 @@ void BaslerCamera::ResizeSnapBuffer() {
 ///////////////////////////////////////////////////////////////////////////////
 int BaslerCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	if (eAct == MM::BeforeGet) {
-		pProp->Set("1");
+	CIntegerPtr BinningHorizontal(nodeMap_->GetNode( "BinningHorizontal"));
+	CIntegerPtr BinningVertical(nodeMap_->GetNode( "BinningVertical"));
+
+	if (eAct == MM::AfterSet) 
+	{
+		bool Isgrabbing = camera_->IsGrabbing();
+		
+		if(BinningHorizontal != NULL && BinningHorizontal != NULL && IsAvailable(BinningHorizontal) && IsAvailable(BinningHorizontal))
+		{
+			try
+			{
+
+				if(Isgrabbing)
+				{
+					camera_->StopGrabbing();
+				}
+
+				pProp->Get(binningFactor_);
+				int64_t val = std::stoi(binningFactor_);
+				BinningHorizontal->SetValue(val);
+				BinningVertical->SetValue(val);	
+
+				if(Isgrabbing)
+				{
+					camera_->StartGrabbing();
+				}	
+				pProp->Set(binningFactor_.c_str());
+#if (_DEBUG)
+			    if(binningFactor_ == "1")
+				{
+					ReduceImageSize(800,800);
+				}
+#endif
+
+			}
+			catch (exception& e)
+			{
+				cout << e.what() << '\n';
+			}
+		}	
+	} 
+	else if (eAct == MM::BeforeGet) {
+
+		try{
+			if(BinningHorizontal != NULL && BinningHorizontal != NULL && IsAvailable(BinningHorizontal) && IsAvailable(BinningHorizontal))
+				{
+					binningFactor_ = to_string (BinningHorizontal->GetValue());
+					pProp->Set((long)BinningHorizontal->GetValue());
+		
+				}
+				else
+				{
+					 pProp->Set("1");
+				}		
+		}
+		catch (exception& e)
+		{
+		cout << e.what() << '\n';
+		}
 	}
 	return DEVICE_OK;
 }
@@ -872,8 +980,10 @@ int BaslerCamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 		}
 		else if(IsAvailable(GainRaw))
 		{
+			
 			gain_ = (double)GainRaw->GetValue();
 			pProp->Set(gain_);
+			cout << "Gain Raw set successfully" <<  gain_ <<endl;
 		}
 	}
 	return DEVICE_OK;
@@ -915,6 +1025,22 @@ int BaslerCamera::OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
 		}
 	}
 	return DEVICE_OK;
+}
+
+void BaslerCamera::ReduceImageSize(int64_t Width, int64_t Height)
+{
+	// This function is just for debug purpose
+	if(!camera_->IsOpen())
+	{
+		camera_->Open();
+	}	
+	// Get the camera nodeMap_ object.
+	nodeMap_ = &camera_->GetNodeMap();
+	const CIntegerPtr width = nodeMap_->GetNode("Width");
+	width->SetValue(Width);
+	const CIntegerPtr height = nodeMap_->GetNode("Height");
+	height->SetValue(Height);
+  
 }
 
 
@@ -972,7 +1098,7 @@ void CircularBufferInserter::OnImageGrabbed( CInstantCamera& /* camera */, const
 
 			//copy to intermediate buffer
 			int ret = dev_->GetCoreCallback()->InsertImage(dev_, (const unsigned char*) ptrGrabResult->GetBuffer(),
-				(unsigned) dev_->GetImageWidth(), (unsigned ) dev_->GetImageHeight(), 
+				(unsigned) ptrGrabResult->GetWidth(), (unsigned ) ptrGrabResult->GetHeight(), 
 				(unsigned) dev_->GetImageBytesPerPixel(),1,md.Serialize().c_str(),FALSE);
 			if (ret == DEVICE_BUFFER_OVERFLOW) {
 				//if circular buffer overflows, just clear it and keep putting stuff in so live mode can continue

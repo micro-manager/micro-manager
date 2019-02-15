@@ -51,7 +51,10 @@
 //////////////////////////////////////////////////////////////////////////////
 // Basler USB Ace camera class
 //////////////////////////////////////////////////////////////////////////////
+//Callback class for putting frames in circular buffer as they arrive
 
+
+class CircularBufferInserter;
 class BaslerCamera : public CCameraBase<BaslerCamera>  {
 public:
 	BaslerCamera();
@@ -83,6 +86,7 @@ public:
 	int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize); 
 	int GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize); 
 	int ClearROI();
+	void ReduceImageSize(int64_t Width, int64_t Height);
 	int GetBinning() const;
 	int SetBinning(int binSize);
 	int IsExposureSequenceable(bool& seq) const {seq = false; return DEVICE_OK;}
@@ -90,6 +94,8 @@ public:
 	int SetProperty(const char* name, const char* value);
 	void CopyToImageBuffer(CGrabResultPtr image);
 	CImageFormatConverter *converter;
+    CircularBufferInserter *ImageHandler_;
+	
 
 	/**
 	* Starts continuous acquisition.
@@ -118,7 +124,7 @@ public:
 private:
 
 	CInstantCamera *camera_;
-    
+   
 
     int nComponents_;
 	unsigned bitDepth_;
@@ -130,6 +136,7 @@ private:
 	double offset_, offsetMin_, offsetMax_;
 	
 	std::string pixelType_;
+	std::string binningFactor_;
 	std::string sensorReadoutMode_;
 	std::string shutterMode_;
 	void* imgBuffer_;
@@ -144,7 +151,7 @@ private:
 	void ResizeSnapBuffer();
 };
 
-//Callback class for putting frames in circular buffer as they arrive
+
 class CircularBufferInserter : public CImageEventHandler {
 private:
 	BaslerCamera* dev_;
