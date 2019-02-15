@@ -370,18 +370,13 @@ public class DeviceUtils {
     * @return
     */
    public int getDeskewSign(int channelIndex, AcquisitionModes.Keys acqMode, boolean twoSided, boolean firstSideIsA) {
-      int sign;
+      int sign;  // empirically should be -1 for 1st pass of stage (negative to positive coordinate) and +1 for reverse with ASI camera convention
       switch (acqMode) {
       case STAGE_SCAN:
          if (twoSided) {
-            sign = (channelIndex % 2) * 2 - 1;  // -1 for path A which are odd channels, 1 for path B
+            sign = (channelIndex % 2) * 2 - 1;  // -1 for first side, 1 for second side
          } else {
-            // single-sided is path A for all channels
             sign = -1;
-         }
-         // invert direction if we started with path B, regardless of single- or double-sided
-         if (!firstSideIsA) {
-            sign *= -1;
          }
          break;
       case STAGE_SCAN_INTERLEAVED:
