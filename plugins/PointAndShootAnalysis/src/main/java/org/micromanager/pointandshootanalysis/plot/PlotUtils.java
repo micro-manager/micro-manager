@@ -28,12 +28,14 @@ import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import net.miginfocom.swing.MigLayout;
 import org.jfree.chart.ChartFactory;
@@ -201,6 +203,7 @@ public class PlotUtils {
       
       ChartPanel chartPanel = new ChartPanel(chart);      
       chartPanel.setMouseWheelEnabled(true);
+      
 
       if (graphFrame_ == null)
          graphFrame_ = new MyChartFrame(title);
@@ -242,6 +245,16 @@ public class PlotUtils {
          String w =  (i + 1) % 5 == 0 ? "wrap" : "";
          controlPanel.add(jcb, w);
       }
+      JMenuItem menuItem = new JMenuItem("Analyze");
+      menuItem.addActionListener((ActionEvent e) -> {
+         for (int i = 0; i < data.length; i++) {
+            if (renderer.getSeriesVisible(i)) {
+               System.out.println("working on series: " + (String) data[i].getKey());
+            }
+         }
+      });
+      chartPanel.getPopupMenu().addSeparator();
+      chartPanel.getPopupMenu().add(menuItem);
       controlPanel.setBackground(chartPanel.getBackground());
       graphFrame_.add(chartPanel, BorderLayout.CENTER);
       graphFrame_.add(controlPanel, BorderLayout.SOUTH);
