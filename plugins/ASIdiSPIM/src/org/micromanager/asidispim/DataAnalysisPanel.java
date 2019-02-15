@@ -77,6 +77,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
    private final JSpinner yDownsample_;
    private final JSpinner spacingDownsample_;
    private final JSpinner sliceThickness_;
+   private final JCheckBox sliceOverviewOverwriteWindow_;
    
    public static final String[] TRANSFORMOPTIONS = 
       {"None", "Rotate Right 90\u00B0", "Rotate Left 90\u00B0", "Rotate outward", "Rotate 180\u00B0"};
@@ -252,7 +253,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_DESKEW_FACTOR, 1.0);
       deskewPanel_.add(deskewFactor_, "wrap");
       
-      deskewInvert_ = pu.makeCheckBox("Invert direction",
+      deskewInvert_ = pu.makeCheckBox("Invert direction (Shroff)",
             Properties.Keys.PLUGIN_DESKEW_INVERT, panelName_, false);
       deskewPanel_.add(deskewInvert_, "left, span 2, wrap");
         
@@ -282,16 +283,16 @@ public class DataAnalysisPanel extends ListeningJPanel {
               "[right]4[left]4[left]",
               "[]8[]"));
       
-      sliceOverviewPanel_.setBorder(PanelUtils.makeTitledBorder("Slice Overview"));
+      sliceOverviewPanel_.setBorder(PanelUtils.makeTitledBorder("Overview Acquisition"));
       
-      sliceOverviewPanel_.add(new JLabel("Y Downsample:"), "span 2");
+      sliceOverviewPanel_.add(new JLabel("XY Downsample:"), "span 2");
       yDownsample_ = pu.makeSpinnerFloat(1.0, 10.0, 1.0,
-            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_OVERVIEW_Y_DOWNSAMPLE_FACTOR, 4.0);
+            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_OVERVIEW_XY_DOWNSAMPLE_FACTOR, 4.0);
       sliceOverviewPanel_.add(yDownsample_, "wrap");
       
-      sliceOverviewPanel_.add(new JLabel("Spacing Downsample:"), "span 2");
+      sliceOverviewPanel_.add(new JLabel("Slice Downsample:"), "span 2");
       spacingDownsample_ = pu.makeSpinnerFloat(1.0, 10.0, 1.0, 
-            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_OVERVIEW_SPACING_DOWNSAMPLE_FACTOR, 4.0);
+            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_OVERVIEW_SLICE_DOWNSAMPLE_FACTOR, 4.0);
       sliceOverviewPanel_.add(spacingDownsample_, "wrap");
       
       sliceOverviewPanel_.add(new JLabel("Fractional Thickness:"), "span 2");
@@ -315,6 +316,10 @@ public class DataAnalysisPanel extends ListeningJPanel {
             Properties.Keys.PLUGIN_OVERVIEW_SIDE, Devices.Sides.A.toString());
       sliceOverviewPanel_.add(new JLabel("Side: "));
       sliceOverviewPanel_.add(overviewSide, "span 2, wrap");
+      
+      sliceOverviewOverwriteWindow_ = pu.makeCheckBox("Overwrite Window",
+            Properties.Keys.PLUGIN_OVERVIEW_OVERWRITE_WINDOW, panelName_, false);
+      sliceOverviewPanel_.add(sliceOverviewOverwriteWindow_, "left, span 2, wrap");
       
       JButton testSliceOverview = new JButton("Test on Open Dataset");
       testSliceOverview.addActionListener(new ActionListener() {
@@ -356,7 +361,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
             // this isn't particularly memory efficient but is the easiest way to start
             // it is a bit faster than doing the projection each step of the way
             ImagePlus forProjector = IJ.createImage("Overview", totalWidth, scaledHeight, reducedNrSlices, bitdepth);
-            double xPosDouble = (deskewSign < 0) ? (double)(totalWidth-scaledWidth) : 0.0;
+            double xPosDouble = (double)(totalWidth-scaledWidth);
             for (int slice=1; slice<=reducedNrSlices; ++slice) {
                ImageProcessor proc = ip.getStack().getProcessor(slice);
                proc.setInterpolationMethod(ImageProcessor.BILINEAR);
@@ -364,9 +369,15 @@ public class DataAnalysisPanel extends ListeningJPanel {
                proc.setRoi(proc.getWidth()/2-roiWidth/2, 0, roiWidth, proc.getHeight());
                ImageProcessor cropped = proc.crop();
                ImageProcessor scaled = cropped.resize(scaledWidth, scaledHeight, true);
+               // match sample orientation in physical space
+               if (deskewSign<0) {
+                  scaled.flipVertical();
+               } else {
+                  scaled.flipHorizontal();
+               }
                forProjector.setSlice(slice);
                forProjector.getProcessor().insert(scaled, (int)Math.round(xPosDouble), 0);  // example at https://imagej.nih.gov/ij/developer/source/ij/plugin/MontageMaker.java.html suggests 0-indexed
-               xPosDouble += (deskewSign*dx);
+               xPosDouble -= dx;
             }
             ij.plugin.ZProjector project = new ij.plugin.ZProjector();
             project.setMethod(ij.plugin.ZProjector.MAX_METHOD);

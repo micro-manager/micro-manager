@@ -886,11 +886,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             
       gridXPanel_.add(new JLabel("X start [um]:"));
       gridXStartField_ = pu.makeFloatEntryField(panelName_, "Grid_X_Start", -400, 5);
-      gridXStartField_.addActionListener(new ActionListener() {
-  		@Override
-  		public void actionPerformed(ActionEvent arg0) {
-  			updateGridXCount();
-  		}
+      gridXStartField_.addPropertyChangeListener("value", new PropertyChangeListener() {
+         @Override
+         public void propertyChange(PropertyChangeEvent evt) {
+            updateGridXCount();
+         }
       });
       gridXPanel_.add(gridXStartField_);
       JButton tmp_but = new JButton("Set");
@@ -906,12 +906,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       gridXPanel_.add(new JLabel("X stop [um]:"));
       gridXStopField_ = pu.makeFloatEntryField(panelName_, "Grid_X_Stop", 400, 5);
-      gridXStopField_.addActionListener(new ActionListener() {
-    		@Override
-      		public void actionPerformed(ActionEvent arg0) {
-      			updateGridXCount();
-      		}
-          });
+      gridXStopField_.addPropertyChangeListener("value", new PropertyChangeListener() {
+         @Override
+         public void propertyChange(PropertyChangeEvent evt) {
+            updateGridXCount();
+         }
+      });
       gridXPanel_.add(gridXStopField_);
       tmp_but = new JButton("Set");
       tmp_but.setBackground(Color.red);
@@ -926,12 +926,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
       gridXPanel_.add(new JLabel("X delta [um]:"));
       gridXDeltaField_ = pu.makeFloatEntryField(panelName_, "Grid_X_Delta", 3, 5);
-      gridXDeltaField_.addActionListener(new ActionListener() {
-    		@Override
-      		public void actionPerformed(ActionEvent arg0) {
-      			updateGridXCount();
-      		}
-          });
+      gridXDeltaField_.addPropertyChangeListener("value", new PropertyChangeListener() {
+         @Override
+         public void propertyChange(PropertyChangeEvent evt) {
+            updateGridXCount();
+         }
+      });
       gridXPanel_.add(gridXDeltaField_, "wrap");
 //      tmp_but = new JButton("Set");
 //      tmp_but.setBackground(Color.red);
@@ -974,11 +974,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             
       gridYPanel_.add(new JLabel("Y start [um]:"));
       gridYStartField_ = pu.makeFloatEntryField(panelName_, "Grid_Y_Start", -1200, 5);
-      gridYStartField_.addActionListener(new ActionListener() {
-  		@Override
-  		public void actionPerformed(ActionEvent arg0) {
-  			updateGridYCount();
-  		}
+      gridYStartField_.addPropertyChangeListener("value", new PropertyChangeListener() {
+         @Override
+         public void propertyChange(PropertyChangeEvent evt) {
+            updateGridYCount();
+         }
       });
       gridYPanel_.add(gridYStartField_);
       tmp_but = new JButton("Set");
@@ -994,12 +994,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       gridYPanel_.add(new JLabel("Y stop [um]:"));
       gridYStopField_ = pu.makeFloatEntryField(panelName_, "Grid_Y_Stop", 1200, 5);
-      gridYStopField_.addActionListener(new ActionListener() {
-    		@Override
-      		public void actionPerformed(ActionEvent arg0) {
-      			updateGridYCount();
-      		}
-          });
+      gridYStopField_.addPropertyChangeListener("value", new PropertyChangeListener() {
+         @Override
+         public void propertyChange(PropertyChangeEvent evt) {
+            updateGridYCount();
+         }
+      });
       gridYPanel_.add(gridYStopField_);
       tmp_but = new JButton("Set");
       tmp_but.setBackground(Color.red);
@@ -1014,12 +1014,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
       gridYPanel_.add(new JLabel("Y delta [um]:"));
       gridYDeltaField_ = pu.makeFloatEntryField(panelName_, "Grid_Y_Delta", 700, 5);
-      gridYDeltaField_.addActionListener(new ActionListener() {
-    		@Override
-      		public void actionPerformed(ActionEvent arg0) {
-      			updateGridYCount();
-      		}
-          });
+      gridYDeltaField_.addPropertyChangeListener("value", new PropertyChangeListener() {
+         @Override
+         public void propertyChange(PropertyChangeEvent evt) {
+            updateGridYCount();
+         }
+      });
       gridYPanel_.add(gridYDeltaField_);
       tmp_but = new JButton("Set");
       tmp_but.setBackground(Color.red);
@@ -1078,11 +1078,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       gridZPanel_.add(new JLabel("Z start [um]:"));
       gridZStartField_ = pu.makeFloatEntryField(panelName_, "Grid_Z_Start", 0, 5);
-      gridZStartField_.addActionListener(new ActionListener() {
-  		@Override
-  		public void actionPerformed(ActionEvent arg0) {
-  			updateGridZCount();
-  		}
+      gridZStartField_.addPropertyChangeListener("value", new PropertyChangeListener() {
+         @Override
+         public void propertyChange(PropertyChangeEvent evt) {
+            updateGridZCount();
+         }
       });
       gridZPanel_.add(gridZStartField_);
       tmp_but = new JButton("Set");
@@ -1098,12 +1098,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       gridZPanel_.add(new JLabel("Z stop [um]:"));
       gridZStopField_ = pu.makeFloatEntryField(panelName_, "Grid_Z_Stop", -800, 5);
-      gridZStopField_.addActionListener(new ActionListener() {
-    		@Override
-      		public void actionPerformed(ActionEvent arg0) {
-      			updateGridZCount();
-      		}
-          });
+      gridZStopField_.addPropertyChangeListener("value", new PropertyChangeListener() {
+         @Override
+         public void propertyChange(PropertyChangeEvent evt) {
+            updateGridZCount();
+         }
+      });
       gridZPanel_.add(gridZStopField_);
       tmp_but = new JButton("Set");
       tmp_but.setBackground(Color.red);
@@ -1118,12 +1118,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
       gridZPanel_.add(new JLabel("Z delta [um]:"));
       gridZDeltaField_ = pu.makeFloatEntryField(panelName_, "Grid_Z_Delta", 400, 5);
-      gridZDeltaField_.addActionListener(new ActionListener() {
-    		@Override
-      		public void actionPerformed(ActionEvent arg0) {
-      			updateGridZCount();
-      		}
-          });
+      gridZDeltaField_.addPropertyChangeListener("value", new PropertyChangeListener() {
+         @Override
+         public void propertyChange(PropertyChangeEvent evt) {
+            updateGridZCount();
+         }
+      });
       gridZPanel_.add(gridZDeltaField_);
       tmp_but = new JButton("Set");
       tmp_but.setBackground(Color.red);
@@ -1172,6 +1172,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       gridSettingsPanel_.add(clearYZGridCB_, "span 2");
       
       computeGridButton_ = new JButton("Compute grid");
+      computeGridButton_.setBackground(Color.green);
       computeGridButton_.addActionListener(new ActionListener() {
 		@Override
 		public void actionPerformed(ActionEvent arg0) {
@@ -1199,6 +1200,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 					if (!useY && !useZ) {
 						// move to X center if we aren't generating position list with it
 						positions_.setPosition(Devices.Keys.XYSTAGE, Directions.X, centerX);
+						core_.waitForDevice(devices_.getMMDevice(Devices.Keys.XYSTAGE));
 					}
 				} catch (Exception ex) {
 					// not sure what to do in case of error so ignore
@@ -1240,16 +1242,20 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 				for (int iZ=0; iZ<numZ; ++iZ) {
 					for (int iY=0; iY<numY; ++iY) {
 						MultiStagePosition msp = new MultiStagePosition();
-						StagePosition s = new StagePosition();
-						s.stageName = xy_device;
-						s.numAxes = 2;
-						s.x = centerX;
-						s.y = startY + iY * deltaY;
-						msp.add(s);
-						StagePosition s2 = new StagePosition();
-						s2.stageName = z_device;
-						s2.x = startZ + iZ * deltaZ;
-						msp.add(s2);
+						if (useY) {
+						   StagePosition s = new StagePosition();
+						   s.stageName = xy_device;
+						   s.numAxes = 2;
+						   s.x = centerX;
+						   s.y = startY + iY * deltaY;
+						   msp.add(s);
+						}
+						if (useZ) {
+						   StagePosition s2 = new StagePosition();
+						   s2.stageName = z_device;
+						   s2.x = startZ + iZ * deltaZ;
+						   msp.add(s2);
+						}
 						msp.setLabel("Pos_" + iZ + "_" + iY);
 						pl.addPosition(msp);
 					}			
@@ -1263,7 +1269,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 		}
       });
       
+      final JButton editPositionListButton2 = new JButton("Edit position list...");
+      editPositionListButton2.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            gui_.showXYPositionList();
+         }
+      });
+      
       buttonOverviewAcq_ = new JButton("Run Overview Acquisition");
+      buttonOverviewAcq_.setBackground(Color.green);
       buttonOverviewAcq_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -1281,6 +1296,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
               "[]8[]"));
       gridFrame_.add(gridPanel_);
       
+      // TODO fix this, not saving/restoring position as it should
       class GridFrameAdapter extends WindowAdapter {
          @Override
          public void windowClosing(WindowEvent e) {
@@ -1303,7 +1319,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       gridPanel_.add(gridXPanel_, "spany 2");
       gridPanel_.add(gridSettingsPanel_, "growx, wrap");
       gridPanel_.add(computeGridButton_, "growx, growy, wrap");
-      gridPanel_.add(buttonOverviewAcq_, "growx, center, span 2");
+      gridPanel_.add(buttonOverviewAcq_, "growx, center");
+      gridPanel_.add(editPositionListButton2, "growx, growy, wrap");
       
       gridFrame_.pack();
       gridFrame_.setResizable(false);
@@ -2323,17 +2340,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                usingDemoCam = devices_.getMMDeviceLibrary(Devices.Keys.CAMERAB).equals(Devices.Libraries.DEMOCAM);
             }
             final String overviewChannel = props_.getPropValueString(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_OVERVIEW_CHANNEL);
-            if (!channelValid(overviewChannel)) {
-               MyDialogUtils.showError("Invalid channel selected for overview acquisition (Settings tab).");
-               return;
-            }
-            final double downsampleY = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_OVERVIEW_Y_DOWNSAMPLE_FACTOR);
-            final double downsampleSpacing = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_OVERVIEW_SPACING_DOWNSAMPLE_FACTOR);
+            final double downsampleY = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_OVERVIEW_XY_DOWNSAMPLE_FACTOR);
+            final double downsampleSpacing = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_OVERVIEW_SLICE_DOWNSAMPLE_FACTOR);
             final double thicknessFactor = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_OVERVIEW_SLICE_THICKNESS_FACTOR);
             double deskewFactor = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_DESKEW_FACTOR);
             if (deskewFactor == 0.0) {
                deskewFactor = 1.0;
             }
+            final boolean overwriteWindow = prefs_.getBoolean(MyStrings.PanelNames.DATAANALYSIS.toString(),
+                  Properties.Keys.PLUGIN_OVERVIEW_OVERWRITE_WINDOW, false);
             
             // initialize stage scanning so we can restore state
             Point2D.Double xyPosUm = new Point2D.Double();
@@ -2365,26 +2380,35 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             ReportingUtils.logDebugMessage("User requested start of overview diSPIM acquisition with side " + side.toString() + " selected.");
 
             // start with current acquisition settings, then modify a few of them for the focus acquisition
-            AcquisitionSettings acqSettings = getCurrentAcquisitionSettings();
-            int nrImages = (int)Math.round(acqSettings.numSlices/downsampleSpacing);
-            acqSettings.isStageScanning = true;
-            acqSettings.hardwareTimepoints = false;
-            acqSettings.spimMode = AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL;
-            acqSettings.channelMode = MultichannelModes.Keys.NONE;
-            acqSettings.useChannels = false;
-            acqSettings.numChannels = 1;
-            acqSettings.numSlices = nrImages;
-            acqSettings.numTimepoints = 1;
-            acqSettings.timepointInterval = 1;
-            acqSettings.numSides = 1;
-            acqSettings.firstSideIsA = side.equals(Sides.A);
-            acqSettings.useTimepoints = false;
-            acqSettings.useMultiPositions = true;
-            acqSettings.stepSizeUm = Math.round(acqSettings.stepSizeUm*downsampleSpacing);
+            AcquisitionSettings acqSettingsTmp = getCurrentAcquisitionSettings();
+            int nrImages = (int)Math.round(acqSettingsTmp.numSlices/downsampleSpacing);
+            acqSettingsTmp.isStageScanning = true;
+            acqSettingsTmp.hardwareTimepoints = false;
+            acqSettingsTmp.spimMode = AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL;
+            acqSettingsTmp.channelMode = MultichannelModes.Keys.NONE;
+            acqSettingsTmp.numChannels = 1;
+            acqSettingsTmp.numSlices = nrImages;
+            acqSettingsTmp.numTimepoints = 1;
+            acqSettingsTmp.timepointInterval = 1;
+            acqSettingsTmp.numSides = 1;
+            acqSettingsTmp.firstSideIsA = side.equals(Sides.A);
+            acqSettingsTmp.useTimepoints = false;
+            acqSettingsTmp.useMultiPositions = true;
+            acqSettingsTmp.stepSizeUm *= downsampleSpacing;
+            
+            if (acqSettingsTmp.useChannels) {
+               if (!channelValid(overviewChannel)) {
+                  MyDialogUtils.showError("Invalid channel selected for overview acquisition (Data Analysis tab).");
+                  return;
+               }
+               acqSettingsTmp.useChannels = false;
+               multiChannelPanel_.selectChannel(overviewChannel);
+            }
 
             posUpdater_.pauseUpdates(true);
+            final AcquisitionSettings acqSettings = acqSettingsTmp;
             controller_.prepareControllerForAquisition(acqSettings);
-            zStepUm_ = controller_.getActualStepSizeUm();
+            final double zStepUm = controller_.getActualStepSizeUm();
 
             // acquisition code below adapted from autofocus code (any bugs may have been copied)
 
@@ -2409,7 +2433,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      gui_.getMMCore().setShutterOpen(true);
                   }
                }
-
+               
                gui_.getMMCore().setCameraDevice(camera);
                gui_.getMMCore().initializeCircularBuffer();  // also does clearCircularBuffer()
                cameras_.setCameraForAcquisition(cameraDevice, true);
@@ -2418,23 +2442,41 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      (float)gui_.getMMCore().getExposure());
                gui_.getMMCore().setExposure((double) acqSettings.sliceTiming.cameraExposure);
                gui_.refreshGUIFromCache();
-               gui_.getMMCore().startSequenceAcquisition(camera, acqSettings.numSlices, 0, true);
-
-               boolean success = controller_.triggerControllerStartAcquisition(acqSettings.spimMode, acqSettings.firstSideIsA);
-               if (!success) {
-                  throw new ASIdiSPIMException("Failed to trigger controller");
+               
+               // design decision to use the position list even if "Multiple positions (XY)" has been left unchecked
+               // maybe this is not a good idea, should revisit later
+               
+               boolean noPositions = false;  // will set to true in the case that there are no position list (just use current position)
+               int nrPositions = 0;
+               PositionList positionList = new PositionList();
+               positionList = gui_.getPositionList();
+               nrPositions = positionList.getNumberOfPositions();
+               if (nrPositions < 1) {
+                  noPositions = true;
+                  nrPositions = 1;
                }
                
-               long startTime = System.currentTimeMillis();
-               long now = startTime;
-               long timeout = 5000;  // wait 5 seconds for first image to come
-               while (gui_.getMMCore().getRemainingImageCount() == 0
-                     && (now - startTime < timeout)) {
-                  now = System.currentTimeMillis();
-                  Thread.sleep(5);
-               }
-               if (now - startTime >= timeout) {
-                  throw new ASIdiSPIMException("Camera did not send first image within a reasonable time");
+               // find bounding positions
+               double minX, minY, maxX, maxY;
+               if (noPositions) {
+                  Point2D.Double pos2D = core_.getXYStagePosition(devices_.getMMDevice(Devices.Keys.XYSTAGE));
+                  minX = pos2D.x;
+                  maxX = pos2D.x;
+                  minY = pos2D.y;
+                  maxY = pos2D.y;
+               } else {
+                  StagePosition p = positionList.getPosition(0).get(devices_.getMMDevice(Devices.Keys.XYSTAGE));
+                  minX = p.x;
+                  maxX = minX;
+                  minY = p.y;
+                  maxY = minY;
+                  for (int i=1; i<nrPositions; ++i) {
+                     p = positionList.getPosition(i).get(devices_.getMMDevice(Devices.Keys.XYSTAGE));
+                     minX = Math.min(p.x, minX);
+                     minY = Math.min(p.y, minY);
+                     maxX = Math.max(p.x, maxX);
+                     maxY = Math.max(p.y, maxY);
+                  }
                }
                
                // get geometric factors
@@ -2454,85 +2496,186 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                final int imageHeight = (int)core_.getImageHeight();
                final int imageBitDepth = (int)core_.getImageBitDepth();
                final double pixelSize = core_.getPixelSizeUm();
+               final double pixelScaled = pixelSize * downsampleY;
                final int roiWidth = (int)Math.round(imageWidth*thicknessFactor);
                final int roiOffset = (int)((imageWidth-roiWidth)/2);
-               final int scaledWidth = (int)Math.round(roiWidth/downsampleY/compressX);  // can scale width by additional sqrt(2) if adjust spacing and doing max projection anyway
+               final int scaledWidth = (int)Math.round(roiWidth/downsampleY/compressX);  // scale width by additional geometric factor b/c just doing max projection
                final int scaledHeight = (int)Math.round(imageHeight/downsampleY);
-               final double zStepPx = zStepUm_ / pixelSize;
+               final double zStepPx = zStepUm / pixelSize;
                final double dx = zStepPx * du.getStageGeometricShiftFactor(true) * deskewFactor / downsampleY / compressX;
+               if (dx < 1e-9) {
+                  throw new ASIdiSPIMException("Expected dx to be positive");
+               }
                final int width_expansion = (int) Math.abs(Math.ceil(dx*(nrImages-1)));
-               final int totalWidth = scaledWidth + width_expansion;
-
-               ImagePlus forProjector = IJ.createImage("For Projector", totalWidth, scaledHeight, 2, imageBitDepth);
-               forProjector.setSlice(1);
-               forProjector.getProcessor().setBackgroundValue(0.0);
-               forProjector.getProcessor().fill();
-               forProjector.setSlice(2);
-               forProjector.getProcessor().setBackgroundValue(0.0);
-               forProjector.getProcessor().fill();
+               final int extraWidth = noPositions ? 0 : (int)Math.ceil((maxX-minX)/pixelScaled);
+               final int extraHeight = noPositions ? 0 : (int)Math.ceil((maxY-minY)/pixelScaled);
+               final int totalWidth = scaledWidth + width_expansion + extraWidth;
+               final int totalHeight = scaledHeight + extraHeight;
                
+               final int idxAccumulator = 1;
+               final int idxNewImage = 2;
+               
+               ImagePlus forProjector = IJ.createImage("For Projector", totalWidth, totalHeight, idxNewImage, imageBitDepth);
+               forProjector.setSlice(idxAccumulator);
+               forProjector.getProcessor().setBackgroundValue(0.0);
+               forProjector.getProcessor().fill();
+               forProjector.setSlice(idxNewImage);
+               forProjector.getProcessor().setBackgroundValue(0.0);
+               forProjector.getProcessor().fill();
+
                ij.plugin.ZProjector project = new ij.plugin.ZProjector();
                project.setMethod(ij.plugin.ZProjector.MAX_METHOD);
-               ImagePlus forDisplay = IJ.createImage("Overwiew", totalWidth, scaledHeight, 1, imageBitDepth);
+               if (overwriteWindow) {
+                  // TODO finish this, doesn't seem to work to use IJ.selectWindow and then IJ.run("Close")
+               }
+               ImagePlus forDisplay = IJ.createImage("Overview", totalWidth, scaledHeight, 1, imageBitDepth);
                forDisplay.getProcessor().setBackgroundValue(0.0);
                forDisplay.getProcessor().fill();
                ij.measure.Calibration cal = forDisplay.getCalibration();
-               cal.pixelWidth = pixelSize * downsampleY;
-               cal.pixelHeight = pixelSize * downsampleY;
+               cal.pixelWidth = pixelScaled;
+               cal.pixelHeight = pixelScaled;
                cal.setUnit("um");
                
-               // get and process the incoming images
-               double xPosDouble = (deskewSign < 0) ? (double)(totalWidth-scaledWidth) : 0.0;
-               boolean done = false;
-               int counter = 0;
-               startTime = System.currentTimeMillis();
-               while ((gui_.getMMCore().getRemainingImageCount() > 0
-                     || gui_.getMMCore().isSequenceRunning(camera))
-                     && !done) {
-                  now = System.currentTimeMillis();
-                  if (gui_.getMMCore().getRemainingImageCount() > 0) {  // we have an image to grab
-                     TaggedImage timg = gui_.getMMCore().popNextTaggedImage();
-                     // reset our wait timer since we got an image
-                     startTime = System.currentTimeMillis();
-                     
-                     ImageProcessor ip = AutofocusUtils.makeProcessor(timg);
-                     ip.setInterpolationMethod(ImageProcessor.BILINEAR);
-                     ip.setRoi(roiOffset, 0, roiWidth, imageHeight);
-                     ImageProcessor cropped = ip.crop();
-                     ImageProcessor scaled = cropped.resize(scaledWidth, scaledHeight, true);
-                     forProjector.setSlice(2);
-                     forProjector.getProcessor().fill();
-                     forProjector.getProcessor().insert(scaled, (int)Math.round(xPosDouble), 0);  // example at https://imagej.nih.gov/ij/developer/source/ij/plugin/MontageMaker.java.html suggests pixel positions are 0-indexed
-                     project.setImage(forProjector);
-                     project.doProjection();
-                     forProjector.setSlice(1);
-                     ImageProcessor latest = project.getProjection().getProcessor();
-                     forProjector.setProcessor(latest);
-                     forDisplay.setProcessor(latest);
-                     forDisplay.show();
-                     
-                     xPosDouble += (deskewSign*dx);
-                     counter++;
-                     if (counter >= nrImages) {
-                        done = true;
+               // do acquisition looping over all positions
+               for (int positionNum = 0; positionNum < nrPositions; positionNum++) {
+                  numPositionsDone_ = positionNum + 1;
+                  updateAcquisitionStatus(AcquisitionStatus.ACQUIRING);
+//                     
+//                     // make sure user didn't stop things
+//                     if (cancelAcquisition_.get()) {
+//                        throw new IllegalMonitorStateException("User stopped the acquisition");
+//                     }
+//                     
+                  // want to move between positions move stage fast, so we 
+                  //   will clobber stage scanning setting so need to restore it
+                  float scanXSpeed = 1f;
+                  float scanXAccel = 1f;
+                  scanXSpeed = props_.getPropValueFloat(Devices.Keys.XYSTAGE,
+                        Properties.Keys.STAGESCAN_MOTOR_SPEED);
+                  props_.setPropValue(Devices.Keys.XYSTAGE,
+                        Properties.Keys.STAGESCAN_MOTOR_SPEED, origXSpeed);
+                  scanXAccel = props_.getPropValueFloat(Devices.Keys.XYSTAGE,
+                        Properties.Keys.STAGESCAN_MOTOR_ACCEL);
+                  props_.setPropValue(Devices.Keys.XYSTAGE,
+                        Properties.Keys.STAGESCAN_MOTOR_ACCEL, origXAccel);
+
+                  if (!noPositions) {
+                     final MultiStagePosition nextPosition = positionList.getPosition(positionNum);
+                     try {
+                        // blocking call; will wait for stages to move
+                        MultiStagePosition.goToPosition(nextPosition, core_);
+//                        core_.setXYPosition(nextPosition.getX(), nextPosition.getX());
+//                        core_.waitForDevice(label);
+                     } catch (Exception ex) {
+                        // ignore errors here, only log them.  Seems to happen if stage is undefined
+                        ReportingUtils.logError(ex, "Couldn't fully go to requested position");
                      }
                   }
-                  if (now - startTime > timeout) {
-                     // no images within a reasonable amount of time => exit
-                     throw new ASIdiSPIMException("No image arrived in 5 seconds");
+                  Point2D.Double pos2D = core_.getXYStagePosition(devices_.getMMDevice(Devices.Keys.XYSTAGE));  // read actual position
+
+                  // for stage scanning: restore speed and set up scan at new position 
+                  props_.setPropValue(Devices.Keys.XYSTAGE,
+                        Properties.Keys.STAGESCAN_MOTOR_SPEED, scanXSpeed);
+                  props_.setPropValue(Devices.Keys.XYSTAGE,
+                        Properties.Keys.STAGESCAN_MOTOR_ACCEL, scanXAccel);
+                  controller_.prepareStageScanForAcquisition(pos2D.x, pos2D.y);
+
+                  // wait any extra time the user requests
+                  Thread.sleep(Math.round(PanelUtils.getSpinnerFloatValue(positionDelay_)));
+
+                  gui_.getMMCore().startSequenceAcquisition(camera, acqSettings.numSlices, 0, true);
+                  boolean success = controller_.triggerControllerStartAcquisition(acqSettings.spimMode, acqSettings.firstSideIsA);
+                  if (!success) {
+                     throw new ASIdiSPIMException("Failed to trigger controller");
                   }
+
+                  long startTime = System.currentTimeMillis();
+                  long now = startTime;
+                  long timeout = 5000;  // wait 5 seconds for first image to come
+                  while (gui_.getMMCore().getRemainingImageCount() == 0
+                        && (now - startTime < timeout)) {
+                     now = System.currentTimeMillis();
+                     Thread.sleep(5);
+                  }
+                  if (now - startTime >= timeout) {
+                     throw new ASIdiSPIMException("Camera did not send first image within a reasonable time");
+                  }
+
+                  // get and process the incoming images
+                  double xPosPass = (double)(totalWidth-scaledWidth);
+                  boolean done = false;
+                  int counter = 0;
+                  startTime = System.currentTimeMillis();
+                  while ((gui_.getMMCore().getRemainingImageCount() > 0
+                        || gui_.getMMCore().isSequenceRunning(camera))
+                        && !done) {
+                     now = System.currentTimeMillis();
+                     if (gui_.getMMCore().getRemainingImageCount() > 0) {  // we have an image to grab
+                        TaggedImage timg = gui_.getMMCore().popNextTaggedImage();
+                        // reset our wait timer since we got an image
+                        startTime = System.currentTimeMillis();
+
+                        ImageProcessor ip = AutofocusUtils.makeProcessor(timg);
+                        ip.setInterpolationMethod(ImageProcessor.BILINEAR);
+                        ip.setRoi(roiOffset, 0, roiWidth, imageHeight);
+                        ImageProcessor cropped = ip.crop();
+                        ImageProcessor scaled = cropped.resize(scaledWidth, scaledHeight, true);
+                        // match sample orientation in physical space; neither ASI nor Shroff conventions match physical coordinates of XY stage but operation different in two cases
+                        if (deskewSign<0) {
+                           scaled.flipVertical();
+                        } else {
+                           scaled.flipHorizontal();
+                        }
+                        forProjector.setSlice(idxNewImage);
+                        forProjector.getProcessor().fill();
+                        double xPosInsert = xPosPass - (pos2D.x-minX)/pixelScaled;
+                        double yPosInsert = (pos2D.y-minY)/pixelScaled;
+                        forProjector.getProcessor().insert(scaled, (int)Math.round(xPosInsert), (int)Math.round(yPosInsert));  // example at https://imagej.nih.gov/ij/developer/source/ij/plugin/MontageMaker.java.html suggests pixel positions are 0-indexed
+                        project.setImage(forProjector);
+                        project.doProjection();
+                        forProjector.setSlice(idxAccumulator);
+                        ImageProcessor latest = project.getProjection().getProcessor();
+                        forProjector.setProcessor(latest);
+                        forDisplay.setProcessor(latest);
+                        forDisplay.show();
+
+                        xPosPass -= dx;
+                        counter++;
+                        if (counter >= nrImages) {
+                           done = true;
+                        }
+                     }
+                     if (now - startTime > timeout) {
+                        // no images within a reasonable amount of time => exit
+                        throw new ASIdiSPIMException("No image arrived in 5 seconds");
+                     }
+                  }
+
+                  // if we are using demo camera then add some extra time to let controller finish
+                  // since we got images without waiting for controller to actually send triggers
+                  if (usingDemoCam) {
+                     Thread.sleep(1000);
+                  }
+
+                  // clean up shutter
+                  gui_.getMMCore().setShutterOpen(shutterOpen);
+                  gui_.getMMCore().setAutoShutter(autoShutter);
+                  
+                  // make sure SPIM state machine on micromirror and SCAN of XY card are stopped (should normally be but sanity check)
+                  if ((acqSettings.numSides > 1) || acqSettings.firstSideIsA) {
+                     props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE,
+                           Properties.Values.SPIM_IDLE, true);
+                  }
+                  if ((acqSettings.numSides > 1) || !acqSettings.firstSideIsA) {
+                     props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SPIM_STATE,
+                           Properties.Values.SPIM_IDLE, true);
+                  }
+                  if (acqSettings.isStageScanning) {
+                     props_.setPropValue(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_STATE,
+                           Properties.Values.SPIM_IDLE);
+                  }
+
                }
-
-               // if we are using demo camera then add some extra time to let controller finish
-               // since we got images without waiting for controller to actually send triggers
-               if (usingDemoCam) {
-                  Thread.sleep(1000);
-               }
-
-               // clean up shutter
-               gui_.getMMCore().setShutterOpen(shutterOpen);
-               gui_.getMMCore().setAutoShutter(autoShutter);
-
             } catch (Exception ex) {
                MyDialogUtils.showError("Error in overview acquisition " + ex.getMessage());
             } finally {
@@ -2576,6 +2719,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                }
                finally {
                   posUpdater_.pauseUpdates(false);
+                  updateAcquisitionStatus(AcquisitionStatus.DONE);
                }
             }
 
