@@ -195,7 +195,8 @@ public class PointAndShootAnalyzer implements Runnable {
             pasB.pasClicked(entryInstant).
                     framePasClicked(frameNrAndTime.getKey()).
                     pasIntended(entry.getValue()).
-                    tsOfFrameBeforePas(frameNrAndTime.getValue());
+                    tsOfFrameBeforePas(frameNrAndTime.getValue()).
+                    dataSetName(dataProvider.getName());
             pasData.add(pasB.build());
          }
       }
@@ -271,8 +272,10 @@ public class PointAndShootAnalyzer implements Runnable {
             
             System.out.println("BCV: " + findMinFrames.getCentralFrame() + ", " +
                     pasActual.x + ", " + pasActual.y);
-
+            String id = "" + pasEntry.framePasClicked() + ": "
+                    + pasActual.x + ", " + pasActual.y;
             pasDataIt.set(pasEntry.copyBuilder().
+                    id(id).
                     pasActual(pasActual).
                     pasFrames(null).
                     build());         
@@ -638,9 +641,7 @@ public class PointAndShootAnalyzer implements Runnable {
       List<XYSeries> plotData = new ArrayList<>();
       for (PASData d : pasData) {
          if (d.particleDataTrack() != null) {
-            XYSeries data = new XYSeries("" + d.framePasClicked() + ": "
-                    + d.pasActual().x + ", " + d.pasActual().y,
-                    false, false);
+            XYSeries data = new XYSeries(d.id(), false, false);
             double preSum = 0.0;
             int count = 0;
             for (int frame = d.framePasClicked() - findMinFramesBefore_;

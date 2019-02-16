@@ -30,7 +30,8 @@ import java.util.Map;
  * @author nico
  */
 public class PASData {
-
+   private final String dataSetName_;
+   private final String id_;
    private final Instant pasClicked_; 
    private final Instant tsOfFrameBeforePas_;  
    private final int framePasClicked_; 
@@ -41,6 +42,8 @@ public class PASData {
 
    public static class Builder {
 
+      private String dataSetName_;
+      private String id_;
       private Instant pasClicked_;
       private Instant tsOfFrameBeforePas_;
       private int framePasClicked_;
@@ -66,6 +69,8 @@ public class PASData {
          return this;
       }
       
+      public Builder dataSetName(String n) {dataSetName_ = n; return this; }
+      public Builder id (String id) {id_ = id; return this;}
       public Builder pasClicked(Instant inst) { pasClicked_ = inst; return this; }
       public Builder tsOfFrameBeforePas(Instant inst) { tsOfFrameBeforePas_ = inst; return this;}
       public Builder framePasClicked(int f) { framePasClicked_ = f; return this;}
@@ -78,7 +83,10 @@ public class PASData {
       }  
       
       public PASData build() {
-         return new PASData(pasClicked_,
+         return new PASData(
+                 dataSetName_,
+                 id_,
+                 pasClicked_,
                  tsOfFrameBeforePas_,
                  framePasClicked_,
                  pasIntended_,
@@ -104,13 +112,18 @@ public class PASData {
     * @param pasFrames Frames during which the bleach laser was on
     *                         0-based (as in MM, unlike ImageJ)
     */
-   private PASData(Instant pasClicked,
+   private PASData(
+           String dataSetName,
+           String id,
+           Instant pasClicked,
            Instant tsOfFrameBeforePas,
            int framePasClicked,
            Point pasIntended,
            Point pasActual,
            int[] pasFrames,
            Map<Integer, ParticleData> particleDataTrack) {
+      dataSetName_ = dataSetName;
+      id_ = id;
       pasClicked_ = pasClicked;
       tsOfFrameBeforePas_ = tsOfFrameBeforePas;
       framePasClicked_ = framePasClicked;
@@ -119,14 +132,15 @@ public class PASData {
       pasFrames_ = pasFrames;
       particleDataTrack_ = particleDataTrack;
    }
-   
-   public Instant pasClicked() {return pasClicked_;}
-   public Instant tsOfFrameBeforePas() {return tsOfFrameBeforePas_;}
-   public int framePasClicked() {return framePasClicked_;}
-   public Point pasIntended() {return pasIntended_;}
-   public Point pasActual() { return pasActual_;}
-   public int[] pasFrames() { return pasFrames_;}
-   public Map<Integer, ParticleData> particleDataTrack() { return particleDataTrack_;}
+   public String dataSetName() { return dataSetName_; }
+   public String id() { return id_; }
+   public Instant pasClicked() { return pasClicked_; }
+   public Instant tsOfFrameBeforePas() { return tsOfFrameBeforePas_; }
+   public int framePasClicked() { return framePasClicked_; }
+   public Point pasIntended() { return pasIntended_; }
+   public Point pasActual() { return pasActual_; }
+   public int[] pasFrames() { return pasFrames_; }
+   public Map<Integer, ParticleData> particleDataTrack() { return particleDataTrack_; }
    
    public Builder copyBuilder() {
       Builder b = new Builder();
