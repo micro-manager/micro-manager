@@ -54,7 +54,7 @@ using namespace GenICam;
 
 using namespace std;
 
-const char* g_BaslerCameraDeviceName = "BaslerAce";
+const char* g_BaslerCameraDeviceName = "BaslerCamera";
 
 static const char* g_PropertyChannel = "PropertyNAme";
 static const char* g_PixelType_8bit = "8bit mono";
@@ -163,7 +163,10 @@ int BaslerCamera::Initialize()
 			// Before using any pylon methods, the pylon runtime must be initialized. 
 		PylonInitialize();
 		camera_ = new CInstantCamera(CTlFactory::GetInstance().CreateFirstDevice()); // returns a pointer to the device
+		stringstream ss;
+		ss <<"using camera " << camera_->GetDeviceInfo().GetFriendlyName();
 
+		AddToLog(ss.str());
 		// initialize the pylon image formatter.
 		converter = new CImageFormatConverter();
 		converter->OutputPixelFormat = PixelType_BGRA8packed;
@@ -181,6 +184,8 @@ int BaslerCamera::Initialize()
 		Pylon::String_t modelName = camera_->GetDeviceInfo().GetModelName();
 		//Get information about camera (e.g. height, width, byte depth)
 
+
+
 		//Call before reading/writing any parameters
 		camera_->Open();
 		// Get the camera nodeMap_ object.
@@ -189,13 +194,19 @@ int BaslerCamera::Initialize()
 		maxWidth_ = (unsigned int) width->GetMax();
 		const CIntegerPtr height = nodeMap_->GetNode("Height");
 		maxHeight_ = (unsigned int) height->GetMax();
+
 	#if (!_DEBUG)
 			ClearROI();// to be enabled for release
 	#else if(_Debug)
 		{
 			ReduceImageSize(800,800);
+			if(camera_->IsGigE())
+			{
+				CIntegerPtr(camera_->GetTLNodeMap().GetNode("HeartbeatTimeout"))->SetValue(6*1000);
+			}			
 		}
 	#endif
+
 
 		long bytes = (long) (height->GetValue() * width->GetValue() * 4) ;
 		Buffer4ContinuesShot = malloc(bytes);
@@ -230,11 +241,6 @@ int BaslerCamera::Initialize()
 		vector<string> pixelTypeValues;
 
 		CEnumerationPtr pixelFormat( nodeMap_->GetNode( "PixelFormat"));
-		if (IsAvailable( pixelFormat->GetEntryByName( "Mono8"))) {
-			pixelTypeValues.push_back("Mono8");
-			pixelFormat->FromString("Mono8");
-			pixelType_ = "Mono8";	
-		}
 		if (IsAvailable( pixelFormat->GetEntryByName( "Mono10"))) {
 			pixelTypeValues.push_back("Mono10");
 			pixelFormat->FromString("Mono10");
@@ -250,15 +256,10 @@ int BaslerCamera::Initialize()
 			pixelFormat->FromString("Mono16");
 			pixelType_ = "Mono16"; //default to using highest bit depth
 		}
-		if (IsAvailable( pixelFormat->GetEntryByName("BayerRG8"))) {
-			pixelTypeValues.push_back("BayerRG8");
-			pixelFormat->FromString("BayerRG8");
-			pixelType_ = "BayerRG8" ; 	
-		}
-		if (IsAvailable( pixelFormat->GetEntryByName( "BayerBG8"))) {
-			pixelTypeValues.push_back("BayerBG8");
-			pixelFormat->FromString("BayerBG8");
-			pixelType_ = "BayerBG8" ; 
+			if (IsAvailable( pixelFormat->GetEntryByName( "Mono8"))) {
+			pixelTypeValues.push_back("Mono8");
+			pixelFormat->FromString("Mono8");
+			pixelType_ = "Mono8";	
 		}
 		if (IsAvailable( pixelFormat->GetEntryByName( "BGR8"))) {
 			pixelTypeValues.push_back("BGR8");
@@ -270,7 +271,16 @@ int BaslerCamera::Initialize()
 			pixelFormat->FromString("RGB8");
 			pixelType_ = "RGB8" ; 		
 		}
-
+			if (IsAvailable( pixelFormat->GetEntryByName("BayerRG8"))) {
+			pixelTypeValues.push_back("BayerRG8");
+			pixelFormat->FromString("BayerRG8");
+			pixelType_ = "BayerRG8" ; 	
+		}
+		if (IsAvailable( pixelFormat->GetEntryByName( "BayerBG8"))) {
+			pixelTypeValues.push_back("BayerBG8");
+			pixelFormat->FromString("BayerBG8");
+			pixelType_ = "BayerBG8" ; 
+		}
 		SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);
 
 		/////Gain//////
@@ -339,6 +349,28 @@ int BaslerCamera::Initialize()
 		// SetAllowedValues("SensorReadoutMode", vals);
 
 
+		CEnumerationPtr LightSourcePreset( nodeMap_->GetNode( "LightSourcePreset"));
+		if(IsAvailable(LightSourcePreset))
+		{
+			pAct = new CPropertyAction (this, &BaslerCamera::OnLightSourcePreset);
+			ret = CreateProperty("LightSourcePreset", "NA", MM::String, false, pAct);
+			vector<string> LSPVals;
+			NodeList_t entries;
+			LSPVals.push_back("Off");
+			LightSourcePreset->GetEntries(entries);
+			for (NodeList_t::iterator it = entries.begin(); it != entries.end(); ++it)
+			{
+				CEnumEntryPtr pEnumEntry(*it);
+				string strValue = pEnumEntry->GetSymbolic().c_str();
+				if (IsAvailable(*it) && strValue != "Off")
+				{
+					LSPVals.push_back(strValue);
+				}
+			}
+			SetAllowedValues("LightSourcePreset",LSPVals);	
+		 }
+
+
 		////Shutter mode//////
 	
 		CEnumerationPtr shutterMode( nodeMap_->GetNode( "ShutterMode"));
@@ -361,7 +393,33 @@ int BaslerCamera::Initialize()
 			SetAllowedValues("ShutterMode", shutterVals);	
 		}
 
+		////DeviceLinkThroughputLimit for USB Camera//////
 
+		if(camera_->IsUsb())
+		{
+			CIntegerPtr DeviceLinkThroughputLimit( nodeMap_->GetNode( "DeviceLinkThroughputLimit"));
+			if(IsAvailable(DeviceLinkThroughputLimit))
+			{
+				int64_t val = DeviceLinkThroughputLimit->GetValue();
+				pAct = new CPropertyAction (this, &BaslerCamera::OnDeviceLinkThroughputLimit);
+				ret = CreateProperty("DeviceLinkThroughputLimit",to_string(val).c_str(), MM::Integer, false, pAct);
+				SetPropertyLimits("DeviceLinkThroughputLimit", (double)DeviceLinkThroughputLimit->GetMin(),(double) DeviceLinkThroughputLimit->GetMax());
+				assert(ret == DEVICE_OK);
+			}
+		}
+			////Inter packet delay for GigE Camera//////
+
+		if(camera_->IsGigE())
+		{
+			CIntegerPtr GevSCPD( nodeMap_->GetNode( "GevSCPD"));
+			if(IsAvailable(GevSCPD))
+			{
+				pAct = new CPropertyAction (this, &BaslerCamera::OnInterPacketDelay);
+				ret = CreateProperty("InterPacketDelay",to_string(GevSCPD->GetValue()).c_str(), MM::Integer, false, pAct);
+				SetPropertyLimits("InterPacketDelay", (double)GevSCPD->GetMin(),(double)GevSCPD->GetMax());
+				assert(ret == DEVICE_OK);
+			}
+		}
 		//// binning
 		pAct = new CPropertyAction (this, &BaslerCamera::OnBinning);
 		ret = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
@@ -369,7 +427,6 @@ int BaslerCamera::Initialize()
 		assert(ret == DEVICE_OK);
 
 		vector<string> binValues;
-		
 
 		CIntegerPtr BinningHorizontal(nodeMap_->GetNode( "BinningHorizontal"));
 		CIntegerPtr BinningBinningVertical(nodeMap_->GetNode( "BinningVertical"));
@@ -377,8 +434,6 @@ int BaslerCamera::Initialize()
 		if(BinningHorizontal != NULL && BinningHorizontal != NULL && IsAvailable(BinningHorizontal) && IsAvailable(BinningHorizontal))
 		{
 			//assumed that BinningHorizontal and BinningVertical allow same steps
-			//GenApi::NodeList_t BinningsFactor;
-
 			int64_t min = BinningHorizontal->GetMin();
 			int64_t max = BinningHorizontal->GetMax();
 			SetPropertyLimits(MM::g_Keyword_Binning, (double)min,(double) max);
@@ -388,8 +443,7 @@ int BaslerCamera::Initialize()
 				std::ostringstream ss;
 				ss << x;
 				binValues.push_back(ss.str());
-			}	
-			
+			}				
 			binningFactor_.assign(to_string (BinningHorizontal->GetValue()));	
 		}
 		else
@@ -397,12 +451,6 @@ int BaslerCamera::Initialize()
 			binValues.push_back("1");
 			binningFactor_.assign("1");
 		}
-
-
-
-		ret = SetAllowedValues(MM::g_Keyword_Binning, binValues);
-		if (ret != DEVICE_OK)
-			return ret;
 
 		// synchronize all properties
 		// --------------------------
@@ -412,11 +460,8 @@ int BaslerCamera::Initialize()
 
 		//preparation for snaps
 		ResizeSnapBuffer();
-		//preparation for sequences
-	
-		
-		//camera_->RegisterImageEventHandler( &ImageHandler_, RegistrationMode_Append, Cleanup_Delete);
-		
+		//preparation for sequences	
+		//camera_->RegisterImageEventHandler( &ImageHandler_, RegistrationMode_Append, Cleanup_Delete);	
 		initialized_ = true;
 		return DEVICE_OK;	
 	}
@@ -425,8 +470,6 @@ int BaslerCamera::Initialize()
 	   std::cerr << ex.what() << std::endl;
 	   throw;
 	}
-
-	
 }
 
 int BaslerCamera::SetProperty(const char* name, const char* value)
@@ -466,10 +509,7 @@ int BaslerCamera::SnapImage()
 		{// due to parameter change on  binning
 			ResizeSnapBuffer();
 		}
-
 		CopyToImageBuffer(ptrGrabResult);
-		
-
 		return DEVICE_OK;
 	}
 	catch (exception &ex)
@@ -530,13 +570,6 @@ void BaslerCamera::CopyToImageBuffer(CGrabResultPtr ptrGrabResult)
 		RGBPackedtoRGB(imgBuffer_,ptrGrabResult);
 			
 	}
-	/*else if (ptrGrabResult->GetPixelType() == EPixelType::PixelType_RGB8packed )   // for unknown reason MM changes the color channel
-	{
-		nComponents_ = 4;
-        bitDepth_ = 8;
-		SetProperty( MM::g_Keyword_PixelType, s_PixelType_8bitRGB);	
-		RGBPackedtoRGB(imgBuffer_,ptrGrabResult);		
-	}*/
 }
 
 /**
@@ -641,7 +674,6 @@ int BaslerCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 	if (y < offsetY->GetMin()) {
 		y = (unsigned int) offsetY->GetMin();
 	}
-
 	width->SetValue(xSize);
 	height->SetValue(ySize);
 	offsetX->SetValue(x);
@@ -709,7 +741,6 @@ void BaslerCamera::SetExposure(double exp)
 	    exposure->SetValue(exp);
 	    exposure_us_ = exp;
 	}
-
 }
 
 /**
@@ -759,7 +790,6 @@ bool BaslerCamera::IsCapturing()
 
 int BaslerCamera::StopSequenceAcquisition()
 {
-	
 	camera_->StopGrabbing();
 	GetCoreCallback()->AcqFinished(this, 0);
 	camera_->DeregisterImageEventHandler(ImageHandler_);
@@ -796,12 +826,10 @@ int BaslerCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 		{
 			try
 			{
-
 				if(Isgrabbing)
 				{
 					camera_->StopGrabbing();
 				}
-
 				pProp->Get(binningFactor_);
 				int64_t val = std::stoi(binningFactor_);
 				BinningHorizontal->SetValue(val);
@@ -818,11 +846,11 @@ int BaslerCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 					ReduceImageSize(800,800);
 				}
 #endif
-
 			}
 			catch (exception& e)
 			{
 				cout << e.what() << '\n';
+				LogMessage(e.what(),false);
 			}
 		}	
 	} 
@@ -832,8 +860,7 @@ int BaslerCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 			if(BinningHorizontal != NULL && BinningHorizontal != NULL && IsAvailable(BinningHorizontal) && IsAvailable(BinningHorizontal))
 				{
 					binningFactor_ = to_string (BinningHorizontal->GetValue());
-					pProp->Set((long)BinningHorizontal->GetValue());
-		
+					pProp->Set((long)BinningHorizontal->GetValue());	
 				}
 				else
 				{
@@ -864,7 +891,6 @@ int BaslerCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 		pixelType_.assign(pixelFormat->ToString().c_str());
 		pProp->Set(pixelType_.c_str());
 	}
-
     char* subject ("Bayer");
 	std::size_t found = pixelFormat->ToString().find(subject);
 		
@@ -892,8 +918,6 @@ int BaslerCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 		bitDepth_ = 16;
 		SetProperty(MM::g_Keyword_PixelType,g_PixelType_16bit);
 	}
-
-
 	else if (found != std::string::npos )
 	{
 		nComponents_ = 4;
@@ -912,8 +936,6 @@ int BaslerCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
         bitDepth_ = 8;	
 		SetProperty(MM::g_Keyword_PixelType,g_PixelType_8bitRGB);
 	}
-
-
 	return DEVICE_OK;
 }
 
@@ -934,6 +956,22 @@ int BaslerCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 //   return DEVICE_OK;
 //}
 
+int BaslerCamera::OnLightSourcePreset(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	string LightSourcePreset_;
+	if (eAct == MM::AfterSet) {
+		pProp->Get(LightSourcePreset_);
+		CEnumerationPtr LightSourcePreset( nodeMap_->GetNode( "LightSourcePreset"));
+		LightSourcePreset->FromString(LightSourcePreset_.c_str());
+	} else if (eAct == MM::BeforeGet) {
+		CEnumerationPtr LightSourcePreset( nodeMap_->GetNode( "LightSourcePreset"));
+		gcstring val = LightSourcePreset->ToString();
+		const char* s = val.c_str();
+		pProp->Set(s);
+	}
+	return DEVICE_OK;
+}
+
 int BaslerCamera::OnShutterMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	if (eAct == MM::AfterSet) {
@@ -946,6 +984,49 @@ int BaslerCamera::OnShutterMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 		const char* s = gc.c_str();
 		shutterMode_.assign(s);
 		pProp->Set(shutterMode_.c_str());
+	}
+	return DEVICE_OK;
+}
+
+int BaslerCamera::OnDeviceLinkThroughputLimit(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	CIntegerPtr DeviceLinkThroughputLimit( nodeMap_->GetNode( "DeviceLinkThroughputLimit"));
+	if(IsAvailable(DeviceLinkThroughputLimit))
+	{
+		if (eAct == MM::AfterSet && IsWritable(DeviceLinkThroughputLimit)) 
+		{   
+			long val ;
+			pProp->Get(val);
+			DeviceLinkThroughputLimit->SetValue(val);
+			DeviceLinkThroughputLimit_ = DeviceLinkThroughputLimit->GetValue();
+		}
+		else if (eAct == MM::BeforeGet)
+		{
+			DeviceLinkThroughputLimit_ = DeviceLinkThroughputLimit->GetValue();
+			pProp->Set(to_string(DeviceLinkThroughputLimit_).c_str());			
+		}
+	}
+
+	return DEVICE_OK;
+}
+
+int BaslerCamera::OnInterPacketDelay(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	CIntegerPtr GevSCPD( nodeMap_->GetNode( "GevSCPD"));
+	if(IsAvailable(GevSCPD))
+	{
+		if (eAct == MM::AfterSet && IsWritable(GevSCPD)) 
+		{   
+			long val ;
+			pProp->Get(val);
+			GevSCPD->SetValue(val);
+			InterPacketDelay_ = GevSCPD->GetValue();
+		}
+		else if (eAct == MM::BeforeGet)
+		{
+			InterPacketDelay_ = GevSCPD->GetValue();
+			pProp->Set(to_string(InterPacketDelay_).c_str());			
+		}
 	}
 	return DEVICE_OK;
 }
@@ -1020,8 +1101,7 @@ int BaslerCamera::OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
 		}else if (IsAvailable(offsetRaw))
 		{
 			offset_ = offsetRaw->GetValue();
-		    pProp->Set(offset_);
-			
+		    pProp->Set(offset_);			
 		}
 	}
 	return DEVICE_OK;
@@ -1036,11 +1116,18 @@ void BaslerCamera::ReduceImageSize(int64_t Width, int64_t Height)
 	}	
 	// Get the camera nodeMap_ object.
 	nodeMap_ = &camera_->GetNodeMap();
+	int64_t inc = 1;
 	const CIntegerPtr width = nodeMap_->GetNode("Width");
-	width->SetValue(Width);
+	if(width->GetMax() >= Width)
+	{   inc = width->GetInc();
+		width->SetValue(Width -(Width % inc));
+	}
 	const CIntegerPtr height = nodeMap_->GetNode("Height");
-	height->SetValue(Height);
-  
+	if(height->GetMax() >= Height)
+	{
+		inc = height->GetInc();
+		height->SetValue(Height - (Height % inc));
+	}  
 }
 
 
@@ -1056,12 +1143,14 @@ void BaslerCamera::RGBPackedtoRGB(void* destbuffer,const CGrabResultPtr& ptrGrab
 		memcpy((char*)destbuffer+dstOffset, buffer+srcOffset,3);
 		srcOffset += 3;
 		dstOffset += 4;
-	}
-	
+	}	
 }
 
 
-
+void BaslerCamera::AddToLog(std::string msg)
+{
+	LogMessage(msg,false);
+}
 
 CircularBufferInserter::CircularBufferInserter(BaslerCamera* dev):
 dev_(dev)
@@ -1133,9 +1222,9 @@ void CircularBufferInserter::OnImageGrabbed( CInstantCamera& /* camera */, const
 		}
 	} 
 	else
-	{
-		//TODO: error handling
-
+	{	
+		std::stringstream ss;
+		ss << "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription() << endl;	
+		dev_->AddToLog(ss.str());
 	}
 }
-
