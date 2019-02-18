@@ -317,9 +317,9 @@ public class DataAnalysisPanel extends ListeningJPanel {
       sliceOverviewPanel_.add(new JLabel("Side: "));
       sliceOverviewPanel_.add(overviewSide, "span 2, wrap");
       
-      sliceOverviewOverwriteWindow_ = pu.makeCheckBox("Overwrite Window",
-            Properties.Keys.PLUGIN_OVERVIEW_OVERWRITE_WINDOW, panelName_, false);
-      sliceOverviewPanel_.add(sliceOverviewOverwriteWindow_, "left, span 2, wrap");
+      sliceOverviewOverwriteWindow_ = pu.makeCheckBox("Overwrite window",
+            Properties.Keys.PLUGIN_OVERVIEW_OVERWRITE_WINDOW, panelName_, true);
+      sliceOverviewPanel_.add(sliceOverviewOverwriteWindow_, "left, span 3, wrap");
       
       JButton testSliceOverview = new JButton("Test on Open Dataset");
       testSliceOverview.addActionListener(new ActionListener() {

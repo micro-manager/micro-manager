@@ -2348,7 +2348,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                deskewFactor = 1.0;
             }
             final boolean overwriteWindow = prefs_.getBoolean(MyStrings.PanelNames.DATAANALYSIS.toString(),
-                  Properties.Keys.PLUGIN_OVERVIEW_OVERWRITE_WINDOW, false);
+                  Properties.Keys.PLUGIN_OVERVIEW_OVERWRITE_WINDOW, true);
             
             // initialize stage scanning so we can restore state
             Point2D.Double xyPosUm = new Point2D.Double();
@@ -2525,9 +2525,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
                ij.plugin.ZProjector project = new ij.plugin.ZProjector();
                project.setMethod(ij.plugin.ZProjector.MAX_METHOD);
-               if (overwriteWindow) {
-                  // TODO finish this, doesn't seem to work to use IJ.selectWindow and then IJ.run("Close")
-               }
+               
                ImagePlus forDisplay = IJ.createImage("Overview", totalWidth, scaledHeight, 1, imageBitDepth);
                forDisplay.getProcessor().setBackgroundValue(0.0);
                forDisplay.getProcessor().fill();
@@ -2535,6 +2533,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                cal.pixelWidth = pixelScaled;
                cal.pixelHeight = pixelScaled;
                cal.setUnit("um");
+               if (overwriteWindow) {
+                  java.awt.Window win = ij.WindowManager.getWindow("Overview");
+                  while (win != null) {
+                     ij.WindowManager.setWindow(win);
+                     IJ.run("Close");
+                     win = ij.WindowManager.getWindow("Overview");
+                  }
+               }
                
                // do acquisition looping over all positions
                for (int positionNum = 0; positionNum < nrPositions; positionNum++) {
