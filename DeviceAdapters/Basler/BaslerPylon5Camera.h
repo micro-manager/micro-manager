@@ -41,6 +41,7 @@
 #include <map>
 #include "ImageMetadata.h"
 #include "ImgBuffer.h"
+#include <iostream>
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
@@ -92,6 +93,7 @@ public:
 	int IsExposureSequenceable(bool& seq) const {seq = false; return DEVICE_OK;}
 	void RGBPackedtoRGB(void* destbuffer, const CGrabResultPtr& ptrGrabResult);
 	int SetProperty(const char* name, const char* value);
+	void AddToLog(std::string msg);
 	void CopyToImageBuffer(CGrabResultPtr image);
 	CImageFormatConverter *converter;
     CircularBufferInserter *ImageHandler_;
@@ -119,7 +121,10 @@ public:
 	int OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct);
 	// int OnSensorReadoutMode(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnShutterMode(MM::PropertyBase* pProp, MM::ActionType eAct);
-
+	int OnDeviceLinkThroughputLimit(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnInterPacketDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnLightSourcePreset(MM::PropertyBase* pProp, MM::ActionType eAct);
+	
 
 private:
 
@@ -134,6 +139,8 @@ private:
 	double exposure_us_, exposureMax_, exposureMin_;
 	double gain_, gainMax_, gainMin_;
 	double offset_, offsetMin_, offsetMax_;
+	int64_t DeviceLinkThroughputLimit_;
+	int64_t InterPacketDelay_;
 	
 	std::string pixelType_;
 	std::string binningFactor_;
@@ -147,8 +154,8 @@ private:
 
 	//MM::MMTime startTime_;
 
-
 	void ResizeSnapBuffer();
+	
 };
 
 
@@ -161,5 +168,4 @@ public:
 
 	virtual void OnImageGrabbed( CInstantCamera& camera, const CGrabResultPtr& ptrGrabResult);
 };
-
 
