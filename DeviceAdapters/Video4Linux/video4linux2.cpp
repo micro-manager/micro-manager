@@ -113,16 +113,16 @@ class PixelType {
 
     string GetPropertyValue() const { return m_propertyValue; }
     unsigned GetImageBytesPerPixel() const { return m_bytesPerPixel; }
-    unsigned GetBitDepth() const { return m_bitDepth; }
     unsigned GetNumberOfComponents() const { return m_numberOfComponents; }
+    unsigned GetBitDepth() const { return m_bitDepth; }
 
     virtual void convertV4l2ToOutput(
         State *state, unsigned char* in, unsigned char* output) const = 0;
   private:
     string m_propertyValue;
     unsigned m_bytesPerPixel;
-    unsigned m_bitDepth;
     unsigned m_numberOfComponents;
+    unsigned m_bitDepth;
 };
 
 class PixelType8Bit : public PixelType {
@@ -152,7 +152,7 @@ class PixelTypeYUYV : public PixelType {
     static string PROPERTY_VALUE;
 
     PixelTypeYUYV() :
-      PixelType(PROPERTY_VALUE, 4, 4, 16) {
+      PixelType(PROPERTY_VALUE, 4, 4, 8) {
       }
 
     virtual void convertV4l2ToOutput(
@@ -403,7 +403,7 @@ public:
 
       msg << "device path changed to " << devicePath;
       LogMessage(msg.str());
-      reinitializeDeviceIfRunning();
+      return reinitializeDeviceIfRunning();
     }
 
     return DEVICE_OK;
@@ -421,7 +421,7 @@ public:
 
       msg << "resolution changed to " << devicePath;
       LogMessage(msg.str());
-      reinitializeDeviceIfRunning();
+      return reinitializeDeviceIfRunning();
     }
 
     return DEVICE_OK;
@@ -670,9 +670,9 @@ private:
     int type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     if (-1 == tryIoctl(state->fd, VIDIOC_STREAMOFF, &type)) {
       ostringstream msg;
-      msg << "error setting streamoff: " << strerror(errno);
+      msg << "warning setting streamoff: " << strerror(errno);
       LogMessage(msg.str().c_str());
-      return false;
+      // not fatal
     }
   
     unsigned int i;
