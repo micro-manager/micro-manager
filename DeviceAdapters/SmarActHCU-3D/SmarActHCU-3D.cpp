@@ -3,7 +3,7 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   SmarAct HCU 3D stage, need special firmware 
+// DESCRIPTION:   SmarAct (H)CU-3D and (H)CU-1D stages, need special firmware 
 //
 // AUTHOR:        Joran Deschamps, EMBL, 2014 
 //				  joran.deschamps@embl.de 
@@ -24,8 +24,8 @@
 #include <iostream>
 #include <fstream>
 
-const char* g_XYStageDeviceName = "SmaractXY";
-const char* g_ZStageDeviceName = "SmaractZ";
+const char* g_XYStageDeviceName = "SmarAct 2D";
+const char* g_ZStageDeviceName = "SmarAct 1D";
 
 int busy_count = 0;
 
@@ -36,8 +36,8 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-	RegisterDevice(g_ZStageDeviceName, MM::StageDevice, "Smaract Z stage");
-	RegisterDevice(g_XYStageDeviceName, MM::XYStageDevice, "Smaract XY stage");
+	RegisterDevice(g_ZStageDeviceName, MM::StageDevice, "SmarAct 1D stage");
+	RegisterDevice(g_XYStageDeviceName, MM::XYStageDevice, "SmarAct 2D stage");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -164,7 +164,7 @@ XYStage::XYStage() :
 	CreateProperty(MM::g_Keyword_Name, g_XYStageDeviceName, MM::String, true);
 
 	// Description
-	CreateProperty(MM::g_Keyword_Description, "Smaract XYStage", MM::String, true);
+	CreateProperty(MM::g_Keyword_Description, "Smaract 2D Stage", MM::String, true);
 
 	// Port
 	CPropertyAction* pAct = new CPropertyAction (this, &XYStage::OnPort);
@@ -546,8 +546,6 @@ int XYStage::GetController(std::string* controller)
 		*controller = "SmarAct HCU-3D";
 	} else if(answer.find("SmarAct CU-3D") != std::string::npos){
 		*controller = "SmarAct CU-3D";
-	} else if(answer.find("SmarAct SCU-3D") != std::string::npos){
-		*controller = "SmarAct SCU-3D";
 	} else {
 		return ERR_IDENTIFICATION_FAIL; 
 	}
@@ -686,12 +684,12 @@ int XYStage::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
 ///////////////////////////////////////////////////////////////////////////////
 
 ZStage::ZStage() :
-   port_("Undefined"),
+    port_("Undefined"),
 	initialized_(false),
 	channelZ_(2),
 	answerTimeoutMs_(1000),
 	reverseZ_(1),
-	freqZ_(5000),
+	freqZ_(5000),		  
 	holdtime_(10),
 	id_(""),
 	controller_("")
@@ -714,7 +712,7 @@ ZStage::ZStage() :
 
 	// create pre-initialization properties
 	// ------------------------------------
-	CreateProperty("Z channel", "2", MM::Integer, false, 0, true);
+	CreateProperty("Z channel", "0", MM::Integer, false, 0, true);
 	AddAllowedValue("Z channel", "0");
 	AddAllowedValue("Z channel", "1");
 	AddAllowedValue("Z channel", "2");
@@ -727,7 +725,7 @@ ZStage::ZStage() :
 	CreateProperty(MM::g_Keyword_Name, g_ZStageDeviceName, MM::String, true);
 
 	// Description
-	CreateProperty(MM::g_Keyword_Description, "Smaract ZStage", MM::String, true);
+	CreateProperty(MM::g_Keyword_Description, "Smaract 1D Stage", MM::String, true);
 
 	// Port
 	CPropertyAction* pAct = new CPropertyAction (this, &ZStage::OnPort);
@@ -965,8 +963,10 @@ int ZStage::GetController(std::string* controller)
 		*controller = "SmarAct HCU-3D";
 	} else if(answer.find("SmarAct CU-3D") != std::string::npos){
 		*controller = "SmarAct CU-3D";
-	} else if(answer.find("SmarAct SCU-3D") != std::string::npos){
-		*controller = "SmarAct CU-3D";
+	} else if(answer.find("SmarAct HCU-1D") != std::string::npos){
+		*controller = "SmarAct HCU-1D";
+	} else if(answer.find("SmarAct CU-1D") != std::string::npos){
+		*controller = "SmarAct CU-1D";
 	} else {
 		return ERR_IDENTIFICATION_FAIL; 
 	}
