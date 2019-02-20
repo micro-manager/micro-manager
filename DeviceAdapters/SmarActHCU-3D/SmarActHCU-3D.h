@@ -3,7 +3,7 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   SmarAct HCU 3D stage, need special firmware 
+// DESCRIPTION:   SmarAct (H)CU-3D and (H)CU-1D stages, need special firmware
 //
 // AUTHOR:        Joran Deschamps, EMBL, 2014 
 //				  joran.deschamps@embl.de 
