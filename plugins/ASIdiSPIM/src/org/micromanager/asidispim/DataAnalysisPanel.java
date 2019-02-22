@@ -331,7 +331,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
             final int bitdepth = 16;
             DeviceUtils du = new DeviceUtils(gui_, devices_, props_, prefs_);
             int deskewSign = -1;
-            double compressX = Math.sqrt(2);
+            double compressX = Math.sqrt(0.5);
             try {
                final MMWindow mmW = new MMWindow(IJ.getImage());
                final JSONObject metadata = mmW.getSummaryMetaData();

@@ -247,6 +247,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JPanel gridSettingsPanel_;
    private final JCheckBox clearYZGridCB_;
    private final JButton computeGridButton_;
+   private ImagePlus overviewIP_;
+   private Point2D.Double overviewMin_;
+   private Point2D.Double overviewMax_;
+   private double overviewWidthExpansion_ = 0.0;
+   private double overviewDownsampleY_ = 1;
+   private double overviewPixelSize_ = 1;
+   private double overviewCompressX_ = 1;
    
    private static final int XYSTAGETIMEOUT = 20000;
    
@@ -2341,6 +2348,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             }
             final String overviewChannel = props_.getPropValueString(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_OVERVIEW_CHANNEL);
             final double downsampleY = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_OVERVIEW_XY_DOWNSAMPLE_FACTOR);
+            overviewDownsampleY_ = downsampleY;
             final double downsampleSpacing = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_OVERVIEW_SLICE_DOWNSAMPLE_FACTOR);
             final double thicknessFactor = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_OVERVIEW_SLICE_THICKNESS_FACTOR);
             double deskewFactor = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_DESKEW_FACTOR);
@@ -2379,7 +2387,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             
             ReportingUtils.logDebugMessage("User requested start of overview diSPIM acquisition with side " + side.toString() + " selected.");
 
-            // start with current acquisition settings, then modify a few of them for the focus acquisition
+            // start with current acquisition settings, then modify a few of them for the overview acquisition
             AcquisitionSettings acqSettingsTmp = getCurrentAcquisitionSettings();
             int nrImages = (int)Math.round(acqSettingsTmp.numSlices/downsampleSpacing);
             acqSettingsTmp.isStageScanning = true;
@@ -2410,7 +2418,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             controller_.prepareControllerForAquisition(acqSettings);
             final double zStepUm = controller_.getActualStepSizeUm();
 
-            // acquisition code below adapted from autofocus code (any bugs may have been copied)
+            // overview acquisition code below adapted from autofocus code (any bugs may have been copied)
 
             boolean liveModeOriginally = false;
             String originalCamera = gui_.getMMCore().getCameraDevice();
@@ -2478,9 +2486,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      maxY = Math.max(p.y, maxY);
                   }
                }
+               overviewMin_ = new Point2D.Double(minX, minY);
+               overviewMax_ = new Point2D.Double(maxX, maxY);
+               
                
                // get geometric factors
-               double compressX = Math.sqrt(2);
+               double compressX = Math.sqrt(0.5);  // factor between 0 and 1 (divide by this to replicate top view) 
                DeviceUtils du = new DeviceUtils(gui_, devices_, props_, prefs_);
                int deskewSign = -1;
                try {
@@ -2489,6 +2500,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                } catch(Exception ex) {
                   // ignore errors, stick with defaults
                }
+               overviewCompressX_ = compressX;
 
                // create the image that we will display as the overview
                // core should know correct image dimensions because we have set up camera already
@@ -2497,6 +2509,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                final int imageBitDepth = (int)core_.getImageBitDepth();
                final double pixelSize = core_.getPixelSizeUm();
                final double pixelScaled = pixelSize * downsampleY;
+               overviewPixelSize_ = pixelScaled;
                final int roiWidth = (int)Math.round(imageWidth*thicknessFactor);
                final int roiOffset = (int)((imageWidth-roiWidth)/2);
                final int scaledWidth = (int)Math.round(roiWidth/downsampleY/compressX);  // scale width by additional geometric factor b/c just doing max projection
@@ -2507,6 +2520,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   throw new ASIdiSPIMException("Expected dx to be positive");
                }
                final int width_expansion = (int) Math.abs(Math.ceil(dx*(nrImages-1)));
+               overviewWidthExpansion_ = width_expansion;
                final int extraWidth = noPositions ? 0 : (int)Math.ceil((maxX-minX)/pixelScaled);
                final int extraHeight = noPositions ? 0 : (int)Math.ceil((maxY-minY)/pixelScaled);
                final int totalWidth = scaledWidth + width_expansion + extraWidth;
@@ -2527,6 +2541,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                project.setMethod(ij.plugin.ZProjector.MAX_METHOD);
                
                ImagePlus forDisplay = IJ.createImage("Overview", totalWidth, scaledHeight, 1, imageBitDepth);
+               overviewIP_ = forDisplay;  // track latest displayed ImagePlus for use outside the acquisition 
                forDisplay.getProcessor().setBackgroundValue(0.0);
                forDisplay.getProcessor().fill();
                ij.measure.Calibration cal = forDisplay.getCalibration();
@@ -2597,7 +2612,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
                   long startTime = System.currentTimeMillis();
                   long now = startTime;
-                  long timeout = 5000;  // wait 5 seconds for first image to come
+                  long timeout = 20000;  // wait 20 seconds for first image to come, maybe have long move for stage
                   while (gui_.getMMCore().getRemainingImageCount() == 0
                         && (now - startTime < timeout)) {
                      now = System.currentTimeMillis();
@@ -2687,7 +2702,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             } finally {
 
                ASIdiSPIM.getFrame().setHardwareInUse(false);
-
+               
                try {
                   gui_.getMMCore().stopSequenceAcquisition(camera);
                   gui_.getMMCore().setCameraDevice(originalCamera);
@@ -4319,6 +4334,25 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
 
       return true;
+   }
+   
+   
+   /**
+    * Called whenever position updater has refreshed positions
+    */
+   @Override
+   public final void updateStagePositions() {
+      try {
+         // TODO finish
+         Rectangle camROI = core_.getROI();
+         int width = (int) Math.round(camROI.width*overviewCompressX_/overviewDownsampleY_);
+         int height =(int) Math.round(camROI.height/overviewDownsampleY_);
+         int x = (int) Math.round((overviewMax_.x - positions_.getCachedPosition(Devices.Keys.XYSTAGE, Directions.X)) / overviewPixelSize_ + overviewWidthExpansion_/2 - width/2);
+         int y = (int) Math.round((positions_.getCachedPosition(Devices.Keys.XYSTAGE, Directions.Y) - overviewMin_.y) / overviewPixelSize_);
+         overviewIP_.setRoi(x, y, width, height);
+      } catch (Exception ex) {
+         // do nothing
+      }
    }
 
    @Override

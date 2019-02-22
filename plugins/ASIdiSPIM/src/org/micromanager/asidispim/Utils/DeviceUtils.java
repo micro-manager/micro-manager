@@ -345,10 +345,10 @@ public class DeviceUtils {
    
    /***
     * Compute fractional size when viewed from above for overview image based on user-specified angle
-    * e.g. with diSPIM, angle is 45 degrees so factor is cos(45 degrees) = sqrt(2), for oSPIM would be cos(60 degrees) = 0.5, etc.
+    * e.g. with diSPIM, angle is 45 degrees so factor is cos(45 degrees) = 1/sqrt(2), for oSPIM would be cos(60 degrees) = 0.5, etc.
     * if pathA is false then we compute based on Path B angle (assumed to be 90 degrees minus one specified for Path A)
     * @param pathA true if using Path A
-    * @return factor, e.g. sqrt(2) for 45 degrees, 0.5 for 60 degrees, etc.
+    * @return factor, e.g. 1/sqrt(2) for 45 degrees, 0.5 for 60 degrees, etc.
     */
    public double getStageTopViewCompressFactor(boolean pathA) {
       double angle = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_ANGLE_PATHA);

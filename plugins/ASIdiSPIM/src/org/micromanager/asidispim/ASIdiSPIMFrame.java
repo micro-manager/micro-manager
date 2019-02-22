@@ -234,6 +234,7 @@ public class ASIdiSPIMFrame extends MMFrame
       }
       stagePosUpdater_.addPanel(navigationPanel_);
       stagePosUpdater_.addPanel(statusSubPanel_);
+      stagePosUpdater_.addPanel(acquisitionPanel_);
       
       piezoSleepPreventer_ = new PiezoSleepPreventer(gui_, devices_, props_);
 
