@@ -54,6 +54,8 @@ private:
    andor::IInteger* aoi_top_;
    andor::IInteger* aoi_left_;
    andor::IInteger* aoi_stride_;
+   andor::IInteger* sensor_width_;
+   andor::IInteger* sensor_height_;
    MM::Property* pbProp_;
    std::string customStr_;
 

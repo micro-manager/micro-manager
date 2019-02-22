@@ -1182,6 +1182,8 @@ int CAndorSDK3Camera::StopSequenceAcquisition()
       thd_->Stop();
       keep_trying_ = false;
       thd_->wait();
+	  //Restart in SW trigger ready to snap. Need to this outside Acquisition thread, after it has been deleted. 
+	  snapShotController_->poiseForSnapShot();
    }
 
    return DEVICE_OK;
@@ -1568,10 +1570,10 @@ int CAndorSDK3Camera::ThreadRun(void)
 
    if (got_image)
    {
-      bufferControl->Queue(return_buffer, buffer_size);
       timeStamp_ = GetTimeStamp(return_buffer);
       UnpackDataWithPadding(return_buffer);
       ret = InsertImage();
+	  bufferControl->Queue(return_buffer, buffer_size);
    }
 
    if (thd_->IsSuspended() )
@@ -1600,8 +1602,8 @@ void CAndorSDK3Camera::OnThreadExiting() throw()
    {
       LogMessage(g_Msg_SEQUENCE_ACQUISITION_THREAD_EXITING);
       GetCoreCallback() ? GetCoreCallback()->AcqFinished(this, 0) : DEVICE_OK;
-      //restart in SW trigger ready to snap
-      snapShotController_->poiseForSnapShot();
+      //moved to after acquisition thread has stopped and returned
+      //snapShotController_->poiseForSnapShot();
    }
    catch (ComException & e) {
       string s("[OnThreadExiting] ComException thrown: ");

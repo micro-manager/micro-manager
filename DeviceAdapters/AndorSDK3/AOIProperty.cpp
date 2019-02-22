@@ -18,6 +18,8 @@ TAOIProperty::TAOIProperty(const std::string & MM_name, ICallBackManager * callb
    aoi_width_ = callback->GetCameraDevice()->GetInteger(L"AOIWidth");
    aoi_top_ = callback->GetCameraDevice()->GetInteger(L"AOITop");
    aoi_left_ = callback->GetCameraDevice()->GetInteger(L"AOILeft");
+   sensor_width_ = callback->GetCameraDevice()->GetInteger(L"SensorWidth");
+   sensor_height_ = callback->GetCameraDevice()->GetInteger(L"SensorHeight");
 
    // Create the Micro-Manager property
    CPropertyAction * pAct = new CPropertyAction (this, &TAOIProperty::OnAOI);
@@ -70,24 +72,33 @@ TAOIProperty::~TAOIProperty()
    callback_->GetCameraDevice()->Release(aoi_left_);
    callback_->GetCameraDevice()->Release(aoi_top_);
    callback_->GetCameraDevice()->Release(aoi_stride_);
+   callback_->GetCameraDevice()->Release(sensor_width_);
+   callback_->GetCameraDevice()->Release(sensor_height_);
 }
 
 //Private
 void TAOIProperty::populateWidthMaps(bool fullAoiControl)
 {
+
    if (fullAoiControl)
    {
-      aoiWidthIndexMap_[2560] = 0;
+      AT_64 sensorWidth = sensor_width_->Get();
+      AT_64 sensorHeight = sensor_height_->Get();
+	  //"Full Image" will set to sensor width and height
+
+	  aoiWidthIndexMap_[sensorWidth] = 0;
+	  aoiWidthHeightMap_[sensorWidth] = sensorHeight;
+	  aoiWidthIndexMap_[2560] = 1;
       aoiWidthHeightMap_[2560] = 2160;
-      aoiWidthIndexMap_[2048] = 1;
+      aoiWidthIndexMap_[2048] = 2;
       aoiWidthHeightMap_[2048] = 2048;
-      aoiWidthIndexMap_[1920] = 2;
+      aoiWidthIndexMap_[1920] = 3;
       aoiWidthHeightMap_[1920] = 1080;
-      aoiWidthIndexMap_[1392] = 3;
+      aoiWidthIndexMap_[1392] = 4;
       aoiWidthHeightMap_[1392] = 1040;
-      aoiWidthIndexMap_[512] = 4;
+      aoiWidthIndexMap_[512] = 5;
       aoiWidthHeightMap_[512] = 512;
-      aoiWidthIndexMap_[128] = 5;
+      aoiWidthIndexMap_[128] = 6;
       aoiWidthHeightMap_[128] = 128;
    }
    else
@@ -119,12 +130,8 @@ void TAOIProperty::populateLeftTopVectors()
    leftX_.resize(aoiWidthIndexMap_.size(), 0);
    topY_.clear();
    topY_.resize(aoiWidthIndexMap_.size(), 0);
-   IInteger * sensorWidth = callback_->GetCameraDevice()->GetInteger(L"SensorWidth");
-   IInteger * sensorHeight = callback_->GetCameraDevice()->GetInteger(L"SensorHeight");
-   AT_64 i64_sensorWidth = sensorWidth->Get();
-   AT_64 i64_sensorHeight = sensorHeight->Get();
-   callback_->GetCameraDevice()->Release(sensorHeight);
-   callback_->GetCameraDevice()->Release(sensorWidth);
+   AT_64 i64_sensorWidth = sensor_width_->Get();
+   AT_64 i64_sensorHeight = sensor_height_->Get();
 
    TMapAOIIndexType::iterator iter = aoiWidthIndexMap_.begin();
    TMapAOIIndexType::iterator iterEnd = aoiWidthIndexMap_.end();
