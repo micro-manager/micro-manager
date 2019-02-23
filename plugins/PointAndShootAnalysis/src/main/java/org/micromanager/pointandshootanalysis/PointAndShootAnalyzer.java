@@ -640,7 +640,7 @@ public class PointAndShootAnalyzer implements Runnable {
            final Map<Integer, Instant> frameTimeStamps) {
       List<XYSeries> plotData = new ArrayList<>();
       for (PASData d : pasData) {
-         if (d.particleDataTrack() != null) {
+         if (d.particleDataTrack() != null && d.id() != null) {
             XYSeries data = new XYSeries(d.id(), false, false);
             double preSum = 0.0;
             int count = 0;

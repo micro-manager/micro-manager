@@ -28,16 +28,22 @@ import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.geom.Point2D;
+import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import net.miginfocom.swing.MigLayout;
+import org.ddogleg.optimization.FactoryOptimization;
+import org.ddogleg.optimization.UnconstrainedLeastSquares;
+import org.ddogleg.optimization.UtilOptimize;
+import org.ddogleg.optimization.functions.FunctionNtoM;
+import org.ejml.data.DMatrixRMaj;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -49,7 +55,9 @@ import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+import org.micromanager.pointandshootanalysis.algorithm.SingleExpRecoveryFunc;
 import org.micromanager.pointandshootanalysis.display.WidgetSettings;
+import org.micromanager.pointandshootanalysis.utils.Convert;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
@@ -250,6 +258,15 @@ public class PlotUtils {
          for (int i = 0; i < data.length; i++) {
             if (renderer.getSeriesVisible(i)) {
                System.out.println("working on series: " + (String) data[i].getKey());
+               // TODO: need to associate with input data, so that more info can be generated
+               List<Point2D> dataAsList = Convert.chartDataToPointList(data[i]);
+               FunctionNtoM func = new SingleExpRecoveryFunc(dataAsList);
+               UnconstrainedLeastSquares<DMatrixRMaj> optimizer = FactoryOptimization.cauchy(null);
+               optimizer.setFunction(func,null);
+               optimizer.initialize(new double[]{1.0,1.0},1e-12,1e-12);
+               UtilOptimize.process(optimizer,500);
+               double[] found = optimizer.getParameters();
+               System.out.println("A: " + found[0] + ", k: " + found[1]);
             }
          }
       });

@@ -52,13 +52,18 @@ public class PASData {
       private int[] pasFrames_;
       private Map<Integer, ParticleData> particleDataTrack_;
       
-      private Builder copy(Instant pasClicked,
+      private Builder copy(
+              String dataSetName,
+              String id,
+              Instant pasClicked,
               Instant tsOfFrameBeforePas,
               int framePasClicked,
               Point pasIntended,
               Point pasActual,
               int[] pasFrames,
               Map<Integer, ParticleData> particleData) {
+         dataSetName_ = dataSetName;
+         id_ = id;
          pasClicked_ = pasClicked;
          tsOfFrameBeforePas_ = tsOfFrameBeforePas;
          framePasClicked_ = framePasClicked;
@@ -144,7 +149,7 @@ public class PASData {
    
    public Builder copyBuilder() {
       Builder b = new Builder();
-      b.copy (pasClicked_, tsOfFrameBeforePas_, framePasClicked_, pasIntended_,
+      b.copy (dataSetName_, id_, pasClicked_, tsOfFrameBeforePas_, framePasClicked_, pasIntended_,
               pasActual_, pasFrames_, particleDataTrack_);
       return b;
    }
