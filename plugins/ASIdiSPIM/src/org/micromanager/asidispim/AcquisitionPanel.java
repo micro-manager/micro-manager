@@ -82,6 +82,7 @@ import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
+import javax.swing.SwingWorker;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.DefaultFormatter;
@@ -1289,6 +1290,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       buttonOverviewAcq_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
+            cancelAcquisition_.set(false);
+            acquisitionRequested_.set(true);
+            ASIdiSPIM.getFrame().gotoAcquisitionTab();
+            ASIdiSPIM.getFrame().tabsSetEnabled(false);
+            updateStartButton();
             runOverviewAcquisition();
          }
       });
@@ -2318,22 +2324,27 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * runs an overview acquisition that gets passed to other code to display as a 2D projection
     */
    public void runOverviewAcquisition() {
-      Runnable runOverviewThread = new Runnable() {
-         
+      
+      class OverviewTask extends SwingWorker<Void, Void> {
+
+         OverviewTask() {
+            // empty constructor for now 
+         };
+      
          @Override
-         public void run() {
+         protected Void doInBackground() throws Exception {
 
             if (core_.getPixelSizeUm() < 1e-6) {  // can't compare equality directly with floating point values so call < 1e-9 is zero or negative
                ReportingUtils.showError("Need to configure pixel size in Micro-Manager to use overview acquisition.");
-               return;
+               return null;
             }
             
             if (ASIdiSPIM.getFrame().getHardwareInUse()) {
                ReportingUtils.showError("Cannot run overview acquisition while another"
                      + " autofocus or acquisition is ongoing.");
-               return;
+               return null;
             }
-
+            
             // get settings that we will use
             String camera = devices_.getMMDevice(Devices.Keys.CAMERAA);
             Devices.Keys cameraDevice = Devices.Keys.CAMERAA;
@@ -2407,7 +2418,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             if (acqSettingsTmp.useChannels) {
                if (!channelValid(overviewChannel)) {
                   MyDialogUtils.showError("Invalid channel selected for overview acquisition (Data Analysis tab).");
-                  return;
+                  return null;
                }
                acqSettingsTmp.useChannels = false;
                multiChannelPanel_.selectChannel(overviewChannel);
@@ -2561,12 +2572,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                for (int positionNum = 0; positionNum < nrPositions; positionNum++) {
                   numPositionsDone_ = positionNum + 1;
                   updateAcquisitionStatus(AcquisitionStatus.ACQUIRING);
-//                     
-//                     // make sure user didn't stop things
-//                     if (cancelAcquisition_.get()) {
-//                        throw new IllegalMonitorStateException("User stopped the acquisition");
-//                     }
-//                     
+
+                  // make sure user didn't stop things
+                  if (cancelAcquisition_.get()) {
+                     throw new IllegalMonitorStateException("User stopped the acquisition");
+                  }
+
                   // want to move between positions move stage fast, so we 
                   //   will clobber stage scanning setting so need to restore it
                   float scanXSpeed = 1f;
@@ -2632,45 +2643,59 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         && !done) {
                      now = System.currentTimeMillis();
                      if (gui_.getMMCore().getRemainingImageCount() > 0) {  // we have an image to grab
+                        ReportingUtils.logError("about to get image");
                         TaggedImage timg = gui_.getMMCore().popNextTaggedImage();
+                        ReportingUtils.logError("got image");
                         // reset our wait timer since we got an image
                         startTime = System.currentTimeMillis();
 
                         ImageProcessor ip = AutofocusUtils.makeProcessor(timg);
                         ip.setInterpolationMethod(ImageProcessor.BILINEAR);
                         ip.setRoi(roiOffset, 0, roiWidth, imageHeight);
+                        ReportingUtils.logError("set ROI");
                         ImageProcessor cropped = ip.crop();
+                        ReportingUtils.logError("cropped");
                         ImageProcessor scaled = cropped.resize(scaledWidth, scaledHeight, true);
+                        ReportingUtils.logError("resized");
                         // match sample orientation in physical space; neither ASI nor Shroff conventions match physical coordinates of XY stage but operation different in two cases
                         if (deskewSign<0) {
                            scaled.flipVertical();
                         } else {
                            scaled.flipHorizontal();
                         }
+                        ReportingUtils.logError("flipped");
                         forProjector.setSlice(idxNewImage);
                         forProjector.getProcessor().fill();
+                        ReportingUtils.logError("filled");
                         double xPosInsert = xPosPass - (pos2D.x-minX)/pixelScaled;
                         double yPosInsert = (pos2D.y-minY)/pixelScaled;
                         forProjector.getProcessor().insert(scaled, (int)Math.round(xPosInsert), (int)Math.round(yPosInsert));  // example at https://imagej.nih.gov/ij/developer/source/ij/plugin/MontageMaker.java.html suggests pixel positions are 0-indexed
+                        ReportingUtils.logError("inserted");
                         project.setImage(forProjector);
                         project.doProjection();
+                        ReportingUtils.logError("did projection");
                         forProjector.setSlice(idxAccumulator);
                         ImageProcessor latest = project.getProjection().getProcessor();
                         forProjector.setProcessor(latest);
                         forDisplay.setProcessor(latest);
+                        ReportingUtils.logError("update processors");
                         forDisplay.show();
+                        ReportingUtils.logError("update image");
 
                         xPosPass -= dx;
                         counter++;
                         if (counter >= nrImages) {
                            done = true;
                         }
+                     } else { // no image ready yet
+                        done = cancelAcquisition_.get();
+                        Thread.sleep(1);
                      }
                      if (now - startTime > timeout) {
                         // no images within a reasonable amount of time => exit
                         throw new ASIdiSPIMException("No image arrived in 5 seconds");
                      }
-                  }
+                  }  // end loop getting images from one pass
 
                   // if we are using demo camera then add some extra time to let controller finish
                   // since we got images without waiting for controller to actually send triggers
@@ -2695,8 +2720,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      props_.setPropValue(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_STATE,
                            Properties.Values.SPIM_IDLE);
                   }
-
-               }
+                  
+               }// end loop over each position
+               
             } catch (Exception ex) {
                MyDialogUtils.showError("Error in overview acquisition " + ex.getMessage());
             } finally {
@@ -2743,11 +2769,24 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   updateAcquisitionStatus(AcquisitionStatus.DONE);
                }
             }
-
+            
+            return null;
          }
+      
+         @Override
+         public void done() {
+            acquisitionRequested_.set(false);
+            updateStartButton();
+            ASIdiSPIM.getFrame().tabsSetEnabled(true);
+         }
+      
       };
       
-      (new Thread(runOverviewThread, "Run Overview")).start();
+      // this is asynchronous case
+       (new OverviewTask()).execute();
+      
+//      OverviewTask task = new OverviewTask();
+//      task.execute();
    }
 
    /**

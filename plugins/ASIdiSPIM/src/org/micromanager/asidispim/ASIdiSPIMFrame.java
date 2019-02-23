@@ -132,6 +132,7 @@ public class ASIdiSPIMFrame extends MMFrame
    private final ListeningJTabbedPane tabbedPane_;
    private PiezoSleepPreventer piezoSleepPreventer_;
    private final LiveModeListener piezoSleepListener_;
+   private final int acquisitionTabIndex_;
    
    private final AtomicBoolean hardwareInUse_ = new AtomicBoolean(false);   // true if acquisition or autofocus running
    
@@ -204,6 +205,7 @@ public class ASIdiSPIMFrame extends MMFrame
          tabbedPane_.addLTab(setupPanelB_);      // tabIndex = 2
       }
       tabbedPane_.addLTab(acquisitionPanel_); // tabIndex = 3
+      acquisitionTabIndex_ = tabbedPane_.getTabCount() - 1;
       tabbedPane_.addLTab(dataAnalysisPanel_);// tabIndex = 4
       tabbedPane_.addLTab(devicesPanel_);     // tabIndex = 5
       final int deviceTabIndex = tabbedPane_.getTabCount() - 1;
@@ -327,6 +329,10 @@ public class ASIdiSPIMFrame extends MMFrame
    
    public void tabsSetEnabled(boolean enabled) {
       tabbedPane_.setEnabled(enabled);
+   }
+   
+   public void gotoAcquisitionTab() {
+      tabbedPane_.setSelectedIndex(acquisitionTabIndex_);
    }
    
    /**
