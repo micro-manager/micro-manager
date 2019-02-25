@@ -213,10 +213,11 @@ public class PlotUtils {
       chartPanel.setMouseWheelEnabled(true);
       
 
-      if (graphFrame_ == null)
+      if (graphFrame_ == null) {
          graphFrame_ = new MyChartFrame(title);
-      else
+      } else {
          graphFrame_.removeAll();
+      }
       
       final JPanel controlPanel = new JPanel();
       controlPanel.setLayout(new MigLayout());
@@ -260,13 +261,17 @@ public class PlotUtils {
                System.out.println("working on series: " + (String) data[i].getKey());
                // TODO: need to associate with input data, so that more info can be generated
                List<Point2D> dataAsList = Convert.chartDataToPointList(data[i]);
-               FunctionNtoM func = new SingleExpRecoveryFunc(dataAsList);
-               UnconstrainedLeastSquares<DMatrixRMaj> optimizer = FactoryOptimization.cauchy(null);
+               SingleExpRecoveryFunc func = new SingleExpRecoveryFunc(dataAsList);
+               UnconstrainedLeastSquares<DMatrixRMaj> optimizer = FactoryOptimization.levenbergMarquardt(null, true);
                optimizer.setFunction(func,null);
-               optimizer.initialize(new double[]{1.0,1.0},1e-12,1e-12);
-               UtilOptimize.process(optimizer,500);
+               //optimizer.setVerbose(System.out,0);
+               optimizer.initialize(new double[]{0.8, 380.0, 0.002},1e-12,1e-12);
+               UtilOptimize.process(optimizer,50);
                double[] found = optimizer.getParameters();
-               System.out.println("A: " + found[0] + ", k: " + found[1]);
+               double rSquared = func.getRSquared(found);
+               System.out.println("A: " + found[0] + ", b: "+ found[1]+", k: " + found[2]);
+               System.out.println("RSquared: " + rSquared);
+               
             }
          }
       });
