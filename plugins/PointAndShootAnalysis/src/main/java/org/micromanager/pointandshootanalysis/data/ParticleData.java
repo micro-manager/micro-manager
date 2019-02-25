@@ -35,15 +35,18 @@ import org.micromanager.pointandshootanalysis.algorithm.Utils;
  * @author nico
  */
 public class ParticleData {
-   private final List<Point2D_I32> mask_;
-   private List<Point2D_I32> bleachMask_;
-   private List<Point2D_I32> maskIncludingBleach_;
+   private final List<Point2D_I32> mask_; // mask for particle excluding bleach spot
+   private List<Point2D_I32> bleachMask_;  // mask for bleach spot
+   private List<Point2D_I32> maskIncludingBleach_; // mask for particle including bleachSpot
    private Point2D_I32 centroid_;
    private Point2D_I32 bleachSpot_;
    private final int threshold_;
    private Double maskAverage_;
+   private Double normalizedMaskAverage_;
    private Double bleachMaskAverage_;
+   private Double normalizedBleachMaskAverage_;
    private Double maskIncludingBleachAverage_;
+   private Double normalizedMaskIncludingBleachAverage_;
    
    /**
     * Applies the offset to each point in the list
@@ -105,6 +108,32 @@ public class ParticleData {
       maskIncludingBleachAverage_ = maskIncludingBleachAverage; 
    }
    
+    private ParticleData(List<Point2D_I32> mask, 
+           int threshold,
+           List<Point2D_I32> bleachMask,
+           List<Point2D_I32> maskIncludingBleach, 
+           Point2D_I32 centroid,
+           Point2D_I32 bleachSpot,
+           Double maskAverage,
+           Double normalizedMaskAverage,
+           Double bleachMaskAverage,
+           Double normalizedBleachMaskAverage,
+           Double maskIncludingBleachAverage,
+           Double normalizedMaskIncludingBleachAverage) {
+      mask_ = mask;
+      threshold_ = threshold;
+      bleachMask_ = bleachMask;
+      maskIncludingBleach_ = maskIncludingBleach;
+      centroid_ = centroid;
+      bleachSpot_ = bleachSpot;
+      maskAverage_ = maskAverage;
+      normalizedMaskAverage_ = normalizedMaskAverage;
+      bleachMaskAverage_ = bleachMaskAverage;
+      normalizedBleachMaskAverage_ = normalizedBleachMaskAverage;
+      maskIncludingBleachAverage_ = maskIncludingBleachAverage; 
+      normalizedMaskIncludingBleachAverage_ = normalizedMaskIncludingBleachAverage;
+   }
+   
    /**
     * 
     * @return 
@@ -118,8 +147,12 @@ public class ParticleData {
               this.centroid_ != null ? new Point2D_I32(this.centroid_) : null, 
               this.bleachSpot_ != null ? new Point2D_I32(this.bleachSpot_) : null,
               this.maskAverage_ != null ? maskAverage_ : null,
+              this.normalizedBleachMaskAverage_ != null ? normalizedBleachMaskAverage_ : null,
               this.bleachMaskAverage_ != null ? bleachMaskAverage_ : null,
-              this.maskIncludingBleachAverage_ != null ? maskIncludingBleachAverage_ : null);
+              this.normalizedBleachMaskAverage_ != null ? normalizedBleachMaskAverage_ : null,
+              this.maskIncludingBleachAverage_ != null ? maskIncludingBleachAverage_ : null,
+              this.normalizedMaskIncludingBleachAverage_ != null ? 
+                      normalizedMaskIncludingBleachAverage_ : null);
    }
    
     public ParticleData copy() {
@@ -131,8 +164,11 @@ public class ParticleData {
               this.centroid_, 
               this.bleachSpot_,
               this.maskAverage_,
+              this.normalizedBleachMaskAverage_,
               this.bleachMaskAverage_,
-              this.maskIncludingBleachAverage_);
+              this.normalizedBleachMaskAverage_,
+              this.maskIncludingBleachAverage_,
+              this.normalizedMaskIncludingBleachAverage_ );
    }
    
    /**
@@ -175,12 +211,24 @@ public class ParticleData {
       return maskAverage_;
    }
    
+   public Double getNormalizedMaskAvg() {
+      return normalizedMaskAverage_;
+   }
+   
    public Double getBleachMaskAvg() {
       return bleachMaskAverage_;
    }
    
+   public Double getNormalizedBleackMaskAvg() {
+      return normalizedBleachMaskAverage_;
+   }
+   
    public Double getMaskIncludingBleachAvg() {
       return maskIncludingBleachAverage_;
+   }
+   
+   public Double getNormalizedMaskIncludingBleachAvg() {
+      return normalizedMaskIncludingBleachAverage_;
    }
    
    /**
