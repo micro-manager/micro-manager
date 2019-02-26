@@ -424,6 +424,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VarispecLCTF", "DeviceAdapt
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorlabsElliptecSlider", "DeviceAdapters\ThorlabsElliptecSlider\ThorlabsElliptecSlider.vcxproj", "{715C6F65-57D3-462B-92BC-C4E99B2FFC2B}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SutterLambda2", "DeviceAdapters\SutterLambda2\SutterLambda2.vcxproj", "{27A3BEE1-1852-44CD-A271-46D667378699}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -2943,6 +2945,18 @@ Global
 		{715C6F65-57D3-462B-92BC-C4E99B2FFC2B}.Release|Win32.Build.0 = Release|Win32
 		{715C6F65-57D3-462B-92BC-C4E99B2FFC2B}.Release|x64.ActiveCfg = Release|x64
 		{715C6F65-57D3-462B-92BC-C4E99B2FFC2B}.Release|x64.Build.0 = Release|x64
+		{27A3BEE1-1852-44CD-A271-46D667378699}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
+		{27A3BEE1-1852-44CD-A271-46D667378699}.Debug|Mixed Platforms.Build.0 = Debug|x64
+		{27A3BEE1-1852-44CD-A271-46D667378699}.Debug|Win32.ActiveCfg = Debug|Win32
+		{27A3BEE1-1852-44CD-A271-46D667378699}.Debug|Win32.Build.0 = Debug|Win32
+		{27A3BEE1-1852-44CD-A271-46D667378699}.Debug|x64.ActiveCfg = Debug|x64
+		{27A3BEE1-1852-44CD-A271-46D667378699}.Debug|x64.Build.0 = Debug|x64
+		{27A3BEE1-1852-44CD-A271-46D667378699}.Release|Mixed Platforms.ActiveCfg = Release|x64
+		{27A3BEE1-1852-44CD-A271-46D667378699}.Release|Mixed Platforms.Build.0 = Release|x64
+		{27A3BEE1-1852-44CD-A271-46D667378699}.Release|Win32.ActiveCfg = Release|Win32
+		{27A3BEE1-1852-44CD-A271-46D667378699}.Release|Win32.Build.0 = Release|Win32
+		{27A3BEE1-1852-44CD-A271-46D667378699}.Release|x64.ActiveCfg = Release|x64
+		{27A3BEE1-1852-44CD-A271-46D667378699}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
