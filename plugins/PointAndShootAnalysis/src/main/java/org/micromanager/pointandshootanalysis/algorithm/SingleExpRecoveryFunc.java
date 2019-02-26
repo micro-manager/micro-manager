@@ -29,6 +29,23 @@ public class SingleExpRecoveryFunc extends PASFunction  {
       
       return a * (1 - Math.exp(-k * (x + b)));
    }
+   
+   @Override
+   public Double calculateX(double[] input, double y) {
+            if (input.length != getNumOfInputsN()) {
+         return null; // TODO: throw exception
+      }
+      double a = input[0];
+      double b = input[1];
+      double k = input[2];
+      
+      // x = (ln((y/A -1) / k ) -b
+      
+      double x = (Math.log((-y/a) + 1) / k) - b/k;
+      
+      return x;
+   }
+   
 
    /**
     *

@@ -36,7 +36,8 @@ public class DataExporter {
    final private List<PASData> data_;
    final private Map<Integer, Instant> frameTimeStamps_;
    
-   public DataExporter(Studio studio, List<PASData> data, Map<Integer, Instant> frameTimeStamps, Type type) {
+   public DataExporter(Studio studio, List<PASData> data, Map<Integer, 
+               Instant> frameTimeStamps, Type type) {
       studio_ = studio;
       data_ = data;
       frameTimeStamps_ = frameTimeStamps;
@@ -113,9 +114,13 @@ public class DataExporter {
       UtilOptimize.process(optimizer, 50);
       double[] found = optimizer.getParameters();
       double rSquared = func.getRSquared(found);
+      double yAtStart = func.calculate(found, frameTimeStamps_.get(startFrame).toEpochMilli()
+                          - frameTimeStamps_.get(d.framePasClicked()).toEpochMilli() );
+      double yHalf = (found[0] - yAtStart) / 2.0;
+      double tHalf = func.calculateX(found, yHalf);
       func.setParms(found);
       System.out.println("A: " + found[0] + ", b: " + found[1] + ", k: " + found[2]);
-      System.out.println("RSquared: " + rSquared);
+      System.out.println("RSquared: " + rSquared + ", t1/2: " + tHalf + " ms");
       
       return func;
    }

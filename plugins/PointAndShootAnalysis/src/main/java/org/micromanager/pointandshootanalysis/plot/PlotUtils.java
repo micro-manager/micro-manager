@@ -262,7 +262,7 @@ public class PlotUtils {
                dataExporter.plotFits(indices);
          }
       });
-      JMenuItem exportMenuItem = new JMenuItem("Export Raw");
+      JMenuItem exportMenuItem = new JMenuItem("Export Normalized");
       exportMenuItem.addActionListener((ActionEvent e) -> {
          List<Integer> indices = new ArrayList<>();
          for (int i = 0; i < data.length; i++) {

@@ -22,6 +22,8 @@ public abstract class PASFunction implements FunctionNtoM {
     */
    public abstract Double calculate(double[] input, double x);
    
+   public abstract Double calculateX(double[] input, double y);
+   
    public PASFunction(List<Point2D> data) {
       data_ = data;
    }
