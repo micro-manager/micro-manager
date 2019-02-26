@@ -41,7 +41,7 @@ public class SingleExpRecoveryFunc extends PASFunction  {
       
       // x = (ln((y/A -1) / k ) -b
       
-      double x = (Math.log((-y/a) + 1) / k) - b/k;
+      double x = - (Math.log(1 - (y/a)) / k) - b;
       
       return x;
    }
