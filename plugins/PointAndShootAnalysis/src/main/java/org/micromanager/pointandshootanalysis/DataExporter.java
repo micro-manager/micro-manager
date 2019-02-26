@@ -176,6 +176,7 @@ public class DataExporter {
       for (int index : indices) {
          PASData d = data_.get(index);
          if (d != null) {
+            try {
             export.append(d.dataSetName()).append("\t").append(d.id()).append("\t");
             double avgPSize = TrackInfoCalculator.avgParticleSize(d);
             export.append(avgPSize).append("\t");
@@ -184,6 +185,9 @@ public class DataExporter {
             export.append(fitData.parms()[0]).append("\t");  // A
             export.append(fitData.tHalf()).append("\t");
             export.append(fitData.rSquared()).append("\n");
+            } catch (java.lang.RuntimeException re) {
+               export.append("Fit Failure!\n");
+            }
          }
       }
       StringSelection selection = new StringSelection(export.toString());
