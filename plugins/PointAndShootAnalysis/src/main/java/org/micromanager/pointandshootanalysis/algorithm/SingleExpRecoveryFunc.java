@@ -2,22 +2,32 @@ package org.micromanager.pointandshootanalysis.algorithm;
 
 import java.awt.geom.Point2D;
 import java.util.List;
-import org.ddogleg.optimization.functions.FunctionNtoM;
 
 /**
  *
  * @author nico
  */
-public class SingleExpRecoveryFunc implements FunctionNtoM  {
+public class SingleExpRecoveryFunc extends PASFunction  {
 
-   List<Point2D> data_;
-
+   
    /**
     *
     * @param data actual observations. here a list of x-y values
     */
    public SingleExpRecoveryFunc(List<Point2D> data) {
-      this.data_ = data;
+      super(data);
+   }
+   
+   @Override
+   public Double calculate(double[] input, double x) {
+      if (input.length != getNumOfInputsN()) {
+         return null; // TODO: throw exception
+      }
+      double a = input[0];
+      double b = input[1];
+      double k = input[2];
+      
+      return a * (1 - Math.exp(-k * (x + b)));
    }
 
    /**
@@ -53,39 +63,6 @@ public class SingleExpRecoveryFunc implements FunctionNtoM  {
       return data_.size();
    }
    
-   public double getAverageOfObserved() {
-      double sum = 0.0;
-      for (Point2D o : data_) {
-         sum += o.getY();
-      }
-      return sum / data_.size();
-   }
-   
-   public double getSumOfSquares(Double mean) {
-      Double avg = mean;
-      if (avg == null) {
-         avg = getAverageOfObserved();
-      }
-      double sum = 0.0;
-      for (Point2D o : data_) {
-         sum += (o.getY() - avg) * (o.getY() - avg);
-      }
-      return sum;
-   }
-   
-   public double getSumOfSquaresOfResidual(double[] input) {
-      double[] output = new double[data_.size()];
-      process(input, output);
-      double sum = 0.0;
-      for (double o : output) {
-         sum += o * o;
-      }
-      return sum;
-   }
-   
-   public double getRSquared(double input[]) {
-      return 1.0 - getSumOfSquaresOfResidual(input) / getSumOfSquares(null);
-   }
    
 
 }

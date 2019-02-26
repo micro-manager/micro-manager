@@ -147,6 +147,67 @@ public class PASData {
    public int[] pasFrames() { return pasFrames_; }
    public Map<Integer, ParticleData> particleDataTrack() { return particleDataTrack_; }
    
+   
+   public void normalizeBleachSpotIntensities(
+           final int findMinFramesBefore,
+           final int cameraOffset,
+           final Map<Integer, Double> controlAvgIntensity
+   ) {
+      if (particleDataTrack() != null && id() != null) {
+         double preSum = 0.0;
+         int count = 0;
+         for (int frame = framePasClicked() - findMinFramesBefore;
+                 frame <= framePasClicked(); frame++) {
+            if (particleDataTrack().get(frame) != null
+                    && particleDataTrack().get(frame).getMaskAvg() != null) {
+               double value = particleDataTrack().get(frame).getMaskAvg() - cameraOffset;
+               double normalizedValue = value / controlAvgIntensity.get(frame);
+               preSum += normalizedValue;
+               count++;
+            }
+         }
+         double preBleachAvg = (preSum / count);
+         for (int frame = 0; frame < particleDataTrack().size(); frame++) {
+            if (particleDataTrack().get(frame).getBleachMaskAvg() != null) {
+               double value = particleDataTrack().get(frame).getBleachMaskAvg() - cameraOffset;
+               double normalizedValue = value / controlAvgIntensity.get(frame);
+               particleDataTrack().get(frame).setNormalizedBleachMaskAvg(
+                       normalizedValue / preBleachAvg);
+            }
+         }
+      }
+   }
+   
+   public void normalizeParticleIncludingBleachIntensities(
+           final int findMinFramesBefore,
+           final int cameraOffset,
+           final Map<Integer, Double> controlAvgIntensity
+   ) {
+      double preSum = 0.0;
+      int count = 0;
+
+      for (int frame = framePasClicked() - findMinFramesBefore;
+              frame <= framePasClicked(); frame++) {
+         if (particleDataTrack().get(frame) != null
+                 && particleDataTrack().get(frame).getMaskIncludingBleachAvg() != null) {
+            double value = particleDataTrack().get(frame).getMaskIncludingBleachAvg() - cameraOffset;
+            double normalizedValue = value / controlAvgIntensity.get(frame);
+            preSum += normalizedValue;
+            count++;
+         }
+      }
+      double preBleachAvg = (preSum / count);
+      for (int frame = 0; frame < particleDataTrack().size(); frame++) {
+         if (particleDataTrack().get(frame).getMaskIncludingBleachAvg() != null) {
+            double value = particleDataTrack().get(frame).getMaskIncludingBleachAvg() - cameraOffset;
+            double normalizedValue = value / controlAvgIntensity.get(frame);
+            particleDataTrack().get(frame).setNormalizedMaskIncludingBleachAvg(
+                    normalizedValue / preBleachAvg);
+         }
+      }
+   }
+   
+   
    public Builder copyBuilder() {
       Builder b = new Builder();
       b.copy (dataSetName_, id_, pasClicked_, tsOfFrameBeforePas_, framePasClicked_, pasIntended_,

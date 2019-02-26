@@ -114,7 +114,7 @@ public class PointAndShootDialog extends MMDialog {
       });
       super.add(radiusSpinner, "wrap");
       
-      JLabel nrFramesBeforeText = new JLabel("Nr. of Frames before");
+      JLabel nrFramesBeforeText = new JLabel("Frames before bleach (used to normalize)");
       super.add(nrFramesBeforeText);
       int nrFramesBefore = profileSettings_.getInteger(Terms.NRFRAMESBEFORE, 4);
       final SpinnerNumberModel beforeModel = new SpinnerNumberModel(nrFramesBefore, 1, 1000, 1);
@@ -123,7 +123,7 @@ public class PointAndShootDialog extends MMDialog {
          profileSettings_.putInteger(Terms.NRFRAMESBEFORE, (Integer) beforeSpinner.getValue());
       });
       super.add(beforeSpinner, "wrap");
-      
+      /*
       JLabel nrFramesAfterText = new JLabel("Nr. of Frames after");
       super.add(nrFramesAfterText);
       int nrFramesAfter = profileSettings_.getInteger(Terms.NRFRAMESAFTER, 40);
@@ -133,6 +133,7 @@ public class PointAndShootDialog extends MMDialog {
          profileSettings_.putInteger(Terms.NRFRAMESAFTER, (Integer) afterSpinner.getValue());
       });
       super.add(afterSpinner, "wrap");
+      */
       
       super.add(new JLabel("Max distance (pixels)"));
       int maxDistance = profileSettings_.getInteger(Terms.MAXDISTANCE, 3);

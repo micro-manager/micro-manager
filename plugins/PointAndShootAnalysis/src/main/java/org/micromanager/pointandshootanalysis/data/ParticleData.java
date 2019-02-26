@@ -215,12 +215,20 @@ public class ParticleData {
       return normalizedMaskAverage_;
    }
    
+   public void setNormalizedMaskAvg(double avg) {
+      normalizedMaskAverage_ = avg;
+   }
+   
    public Double getBleachMaskAvg() {
       return bleachMaskAverage_;
    }
    
-   public Double getNormalizedBleackMaskAvg() {
+   public Double getNormalizedBleachMaskAvg() {
       return normalizedBleachMaskAverage_;
+   }
+   
+   public void setNormalizedBleachMaskAvg(double avg) {
+      normalizedBleachMaskAverage_ = avg;
    }
    
    public Double getMaskIncludingBleachAvg() {
@@ -230,6 +238,11 @@ public class ParticleData {
    public Double getNormalizedMaskIncludingBleachAvg() {
       return normalizedMaskIncludingBleachAverage_;
    }
+   
+   public void setNormalizedMaskIncludingBleachAvg(double avg) {
+      normalizedMaskIncludingBleachAverage_ = avg;
+   }
+   
    
    /**
     * Finds the centroid of the particle closest to the given input coordinates

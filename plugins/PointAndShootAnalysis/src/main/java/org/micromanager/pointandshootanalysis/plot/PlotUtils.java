@@ -32,18 +32,13 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.geom.Point2D;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import net.miginfocom.swing.MigLayout;
-import org.ddogleg.optimization.FactoryOptimization;
-import org.ddogleg.optimization.UnconstrainedLeastSquares;
-import org.ddogleg.optimization.UtilOptimize;
-import org.ddogleg.optimization.functions.FunctionNtoM;
-import org.ejml.data.DMatrixRMaj;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -55,9 +50,8 @@ import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
-import org.micromanager.pointandshootanalysis.algorithm.SingleExpRecoveryFunc;
+import org.micromanager.pointandshootanalysis.DataExporter;
 import org.micromanager.pointandshootanalysis.display.WidgetSettings;
-import org.micromanager.pointandshootanalysis.utils.Convert;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
@@ -131,10 +125,12 @@ public class PlotUtils {
     * @param yLimit - make sure the Y axis does not ho higher than this
     *                - ignored when null
     * @param colors
+    * @param dataExporter - 
     * @return Frame that displays the data
     */
    public Frame plotData(String title, XYSeries[] data, String xTitle,
-           String yTitle, String annotation, Double yLimit, Color[] colors) {
+           String yTitle, String annotation, Double yLimit, Color[] colors, 
+           DataExporter dataExporter) {
 
       // JFreeChart code
       XYSeriesCollection dataset = new XYSeriesCollection();
@@ -254,29 +250,35 @@ public class PlotUtils {
          String w =  (i + 1) % 5 == 0 ? "wrap" : "";
          controlPanel.add(jcb, w);
       }
-      JMenuItem menuItem = new JMenuItem("Analyze");
-      menuItem.addActionListener((ActionEvent e) -> {
+      JMenuItem fitMenuItem = new JMenuItem("Show fit");
+      fitMenuItem.addActionListener((ActionEvent e) -> {
+         List<Integer> indices = new ArrayList<>();
          for (int i = 0; i < data.length; i++) {
             if (renderer.getSeriesVisible(i)) {
-               System.out.println("working on series: " + (String) data[i].getKey());
-               // TODO: need to associate with input data, so that more info can be generated
-               List<Point2D> dataAsList = Convert.chartDataToPointList(data[i]);
-               SingleExpRecoveryFunc func = new SingleExpRecoveryFunc(dataAsList);
-               UnconstrainedLeastSquares<DMatrixRMaj> optimizer = FactoryOptimization.levenbergMarquardt(null, true);
-               optimizer.setFunction(func,null);
-               //optimizer.setVerbose(System.out,0);
-               optimizer.initialize(new double[]{0.8, 380.0, 0.002},1e-12,1e-12);
-               UtilOptimize.process(optimizer,50);
-               double[] found = optimizer.getParameters();
-               double rSquared = func.getRSquared(found);
-               System.out.println("A: " + found[0] + ", b: "+ found[1]+", k: " + found[2]);
-               System.out.println("RSquared: " + rSquared);
-               
+               indices.add(i);
             }
          }
+            if (dataExporter != null) {
+               dataExporter.plotFits(indices);
+         }
       });
-      chartPanel.getPopupMenu().addSeparator();
-      chartPanel.getPopupMenu().add(menuItem);
+      JMenuItem exportMenuItem = new JMenuItem("Export Raw");
+      exportMenuItem.addActionListener((ActionEvent e) -> {
+         List<Integer> indices = new ArrayList<>();
+         for (int i = 0; i < data.length; i++) {
+            if (renderer.getSeriesVisible(i)) {
+               indices.add(i);
+            }
+         }
+            if (dataExporter != null) {
+               dataExporter.exportRaw(indices);
+         }
+      });
+      if (dataExporter != null) {
+         chartPanel.getPopupMenu().addSeparator();
+         chartPanel.getPopupMenu().add(fitMenuItem);
+         chartPanel.getPopupMenu().add(exportMenuItem);
+      }
       controlPanel.setBackground(chartPanel.getBackground());
       graphFrame_.add(chartPanel, BorderLayout.CENTER);
       graphFrame_.add(controlPanel, BorderLayout.SOUTH);

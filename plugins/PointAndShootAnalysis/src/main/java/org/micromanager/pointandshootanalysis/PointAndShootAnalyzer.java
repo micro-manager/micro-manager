@@ -88,7 +88,7 @@ public class PointAndShootAnalyzer implements Runnable {
    final private static int MAXDISTANCE = 10; // max distance in pixels from the expected position
    // if more, we will reject the bleach spot
    // may need to be changed by the user
-   final private int findMinFramesBefore_ = 5; // frames before user clicked PAS.  
+   //final private int findMinFramesBefore_ = 5; // frames before user clicked PAS.  
    //Used to find actual bleach spot and to normalize
    final private int findMinFramesAfter_ = 20;  // frames after used clicked PAS.  
    //Used to find actual bleach spot
@@ -112,8 +112,8 @@ public class PointAndShootAnalyzer implements Runnable {
       // Read variables provided by UI from profile
       String fileName = settings_.getString(Terms.LOCATIONSFILENAME, "");
       final int bleachSpotRadius = settings_.getInteger(Terms.RADIUS, 3);
-      final int nrFramesBefore = settings_.getInteger(Terms.NRFRAMESBEFORE, 2);
-      final int nrFramesAfter = settings_.getInteger(Terms.NRFRAMESAFTER, 200);
+      final int findMinFramesBefore = settings_.getInteger(Terms.NRFRAMESBEFORE, 2);
+      // final int nrFramesAfter = settings_.getInteger(Terms.NRFRAMESAFTER, 200);
       final int maxDistance = settings_.getInteger(Terms.MAXDISTANCE, 3);
       final int cameraOffset = settings_.getInteger(Terms.CAMERAOFFSET, 100);
 
@@ -238,7 +238,7 @@ public class PointAndShootAnalyzer implements Runnable {
             int y1 = (y0 + roiHeight_ > imgHeight) ? imgHeight: y0 + roiHeight_;
             Planar<GrayU16> subImage = bCVStack.subimage(x0, y0, x1, y1, null);
             PASFrameSet findMinFrames = new PASFrameSet(
-                    pasEntry.framePasClicked() - findMinFramesBefore_,
+                    pasEntry.framePasClicked() - findMinFramesBefore,
                     pasEntry.framePasClicked(),
                     pasEntry.framePasClicked() + findMinFramesAfter_,
                     dataProvider.getAxisLength(Coords.T));
@@ -496,22 +496,35 @@ public class PointAndShootAnalyzer implements Runnable {
                controlAvgIntensity.put(frame, (sum / n) - cameraOffset ); 
             }
             
+            // normalize the bleach spot intensities and store with the PASData->ParticleData
+            for (PASData d : pasData) {
+               d.normalizeBleachSpotIntensities(findMinFramesBefore, 
+                       cameraOffset, controlAvgIntensity);
+               d.normalizeParticleIncludingBleachIntensities(findMinFramesBefore, 
+                       cameraOffset, controlAvgIntensity);
+            }
+            
+            DataExporter bleachExporter = new DataExporter(studio_, pasData, 
+                    frameTimeStamps, DataExporter.Type.BLEACH);
+            DataExporter particleABExporter = new DataExporter(studio_, pasData, 
+                    frameTimeStamps, DataExporter.Type.PARTICLE_AND_BLEACH);
+            
                           
             // get intensities of bleach Spots and total particles
             // out of the data structures, and plot them
-            List<XYSeries> bleachPlotData = getNormalizedBleachSpotIntensities(
-                    pasData, cameraOffset, controlAvgIntensity, frameTimeStamps) ;
+            List<XYSeries> bleachPlotData = plottableNormalizedBleachSpotIntensities(
+                    pasData, frameTimeStamps) ;
             XYSeries[] plots = bleachPlotData.toArray(new XYSeries[bleachPlotData.size()]);
             PlotUtils pu = new PlotUtils(studio_.profile().getSettings(this.getClass()));
             pu.plotData("Bleach Intensity Profile", plots, "Time (ms)",
-                    "Normalized Intensity", "", 1.3, WidgetSettings.COLORS);
+                    "Normalized Intensity", "", 1.3, WidgetSettings.COLORS, bleachExporter);
       
-            List<XYSeries> particlePlotData = getNormalizedParticleIntensities(
-                  pasData, cameraOffset, controlAvgIntensity, frameTimeStamps);
+            List<XYSeries> particlePlotData = plottableNormalizedParticleIntensities(
+                  pasData, frameTimeStamps);
             XYSeries[] particlePlots = particlePlotData.toArray(new XYSeries[particlePlotData.size()]);            
             PlotUtils pu2 = new PlotUtils(studio_.profile().getSettings(this.getClass()));
             pu2.plotData("Particle Intensity Profile", particlePlots, "Time (ms)",
-                    "Normalized Intensity", "", 1.3, WidgetSettings.COLORS);
+                    "Normalized Intensity", "", 1.3, WidgetSettings.COLORS, particleABExporter);
       
 
             plotControlParticleIntensities(controlAvgIntensity, frameTimeStamps);
@@ -630,39 +643,30 @@ public class PointAndShootAnalyzer implements Runnable {
       XYSeries[] plots = plotData.toArray(new XYSeries[plotData.size()]);
       PlotUtils pu = new PlotUtils(studio_.profile().getSettings(this.getClass()));
       pu.plotData("Control Intensity Profile", plots, "Time (s)",
-              "Avg. Intensity", "", null, WidgetSettings.COLORS);
+              "Avg. Intensity", "", null, WidgetSettings.COLORS, null);
    }
    
-   
-   private List<XYSeries> getNormalizedBleachSpotIntensities(final List<PASData> pasData,
-           final int cameraOffset,
-           final Map<Integer, Double> controlAvgIntensity,
+   /**
+    * Should only be called after normalized Bleach Values have been calculated
+    * @param pasData
+    * @param cameraOffset
+    * @param controlAvgIntensity
+    * @param frameTimeStamps
+    * @return 
+    */
+   private List<XYSeries> plottableNormalizedBleachSpotIntensities(
+           final List<PASData> pasData,
            final Map<Integer, Instant> frameTimeStamps) {
       List<XYSeries> plotData = new ArrayList<>();
       for (PASData d : pasData) {
          if (d.particleDataTrack() != null && d.id() != null) {
             XYSeries data = new XYSeries(d.id(), false, false);
-            double preSum = 0.0;
-            int count = 0;
-            for (int frame = d.framePasClicked() - findMinFramesBefore_;
-                    frame <= d.framePasClicked(); frame++) {
-               if (d.particleDataTrack().get(frame) != null
-                       && d.particleDataTrack().get(frame).getMaskAvg() != null) {
-                  double value = d.particleDataTrack().get(frame).getMaskAvg() - cameraOffset;
-                  double normalizedValue = value / controlAvgIntensity.get(frame);
-                  preSum += normalizedValue;
-                  count++;
-               }
-            }
-            double preBleachAvg = (preSum / count);
             for (int frame = 0; frame < d.particleDataTrack().size(); frame++) {
-               if (d.particleDataTrack().get(frame).getBleachMaskAvg() != null) {
-                  double value = d.particleDataTrack().get(frame).getBleachMaskAvg() - cameraOffset;
-                  double normalizedValue = value / controlAvgIntensity.get(frame);
-                  double twiceNormalizedValue = normalizedValue / preBleachAvg;
+               Double normalizedBleachMaskAvg = d.particleDataTrack().get(frame).getNormalizedBleachMaskAvg();
+               if (normalizedBleachMaskAvg != null) {
                   data.add(frameTimeStamps.get(frame).toEpochMilli()
                           - frameTimeStamps.get(d.framePasClicked()).toEpochMilli(),
-                          twiceNormalizedValue);
+                          normalizedBleachMaskAvg);
                }
             }
             plotData.add(data);
@@ -672,9 +676,7 @@ public class PointAndShootAnalyzer implements Runnable {
    }
      
    
-   private List<XYSeries> getNormalizedParticleIntensities(final List<PASData> pasData,
-           final int cameraOffset,
-           final Map<Integer, Double> controlAvgIntensity,
+   private List<XYSeries> plottableNormalizedParticleIntensities(final List<PASData> pasData,
            final Map<Integer, Instant> frameTimeStamps) {
       List<XYSeries> plotData = new ArrayList<>();
       for (PASData d : pasData) {
@@ -682,27 +684,13 @@ public class PointAndShootAnalyzer implements Runnable {
             XYSeries data = new XYSeries("" + d.framePasClicked() + ": "
                     + d.pasActual().x + ", " + d.pasActual().y,
                     false, false);
-            double preSum = 0.0;
-            int count = 0;
-            for (int frame = d.framePasClicked() - findMinFramesBefore_;
-                    frame <= d.framePasClicked(); frame++) {
-               if (d.particleDataTrack().get(frame) != null
-                       && d.particleDataTrack().get(frame).getMaskIncludingBleachAvg() != null) {
-                  double value = d.particleDataTrack().get(frame).getMaskIncludingBleachAvg() - cameraOffset;
-                  double normalizedValue = value / controlAvgIntensity.get(frame);
-                  preSum += normalizedValue;
-                  count++;
-               }
-            }
-            double preBleachAvg = (preSum / count);
             for (int frame = 0; frame < d.particleDataTrack().size(); frame++) {
-               if (d.particleDataTrack().get(frame).getMaskIncludingBleachAvg() != null) {
-                  double value = d.particleDataTrack().get(frame).getMaskIncludingBleachAvg() - cameraOffset;
-                  double normalizedValue = value / controlAvgIntensity.get(frame);
-                  double twiceNormalizedValue = normalizedValue / preBleachAvg;
+               Double normalizedMaskIncludingBleachAvg = 
+                       d.particleDataTrack().get(frame).getNormalizedMaskIncludingBleachAvg();
+               if (normalizedMaskIncludingBleachAvg != null) {
                   data.add(frameTimeStamps.get(frame).toEpochMilli()
                           - frameTimeStamps.get(d.framePasClicked()).toEpochMilli(),
-                          twiceNormalizedValue);
+                          normalizedMaskIncludingBleachAvg);
                }
             }
             plotData.add(data);
