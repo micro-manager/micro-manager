@@ -63,7 +63,6 @@ import org.micromanager.data.Metadata;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.pointandshootanalysis.algorithm.ContourStats;
-import org.micromanager.pointandshootanalysis.algorithm.Utils;
 import org.micromanager.pointandshootanalysis.data.BoofCVImageConverter;
 import org.micromanager.pointandshootanalysis.data.PASData;
 import org.micromanager.pointandshootanalysis.data.PASFrameSet;
@@ -262,7 +261,8 @@ public class PointAndShootAnalyzer implements Runnable {
             
             //System.out.println("Lowest Pixel position: " + minPoint.x + ", " + minPoint.y);
             // check if this is within expected range
-            if (Utils.distance(minPoint, middle) > MAXDISTANCE) {
+            
+            if (minPoint.distance(middle) > MAXDISTANCE) {
                pasDataIt.remove();
                continue;
             }
@@ -300,7 +300,7 @@ public class PointAndShootAnalyzer implements Runnable {
                ParticleData nextParticle = ParticleData.centralParticle(dataProvider, 
                        cb, frame, currentPoint, halfROISize_);
                if (nextParticle != null && ( 
-                       Utils.distance(currentPoint, nextParticle.getCentroid()) < maxDistance )) {
+                       currentPoint.distance(nextParticle.getCentroid()) < maxDistance )) {
                   currentPoint = nextParticle.getCentroid();
                   track.put(frame, nextParticle);
                } else {
@@ -328,7 +328,7 @@ public class PointAndShootAnalyzer implements Runnable {
                            
                }
                if (nextParticle == null || ( 
-                       Utils.distance(currentPoint, nextParticle.getCentroid()) > maxDistance )) {
+                       currentPoint.distance(nextParticle.getCentroid()) > maxDistance )) {
                   if (previousParticle != null) {
                      nextParticle = previousParticle.copy();
                   }
@@ -457,7 +457,7 @@ public class PointAndShootAnalyzer implements Runnable {
                for (int frame = 0; frame < dataProvider.getAxisLength(Coords.T) && !bail; frame++) {
                   ParticleData nextParticle = ParticleData.centralParticle(dataProvider,
                           cb, frame, currentPoint, halfROISize_);
-                  if (nextParticle != null && (Utils.distance(currentPoint, nextParticle.getCentroid()) < maxDistance)) {
+                  if (nextParticle != null && (currentPoint.distance(nextParticle.getCentroid()) < maxDistance)) {
                      currentPoint = nextParticle.getCentroid();
                      track.put(frame, nextParticle);
                      missing = 0;

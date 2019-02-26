@@ -19,8 +19,10 @@ import org.jfree.data.xy.XYSeries;
 import org.micromanager.Studio;
 import org.micromanager.pointandshootanalysis.algorithm.PASFunction;
 import org.micromanager.pointandshootanalysis.algorithm.SingleExpRecoveryFunc;
+import org.micromanager.pointandshootanalysis.data.FitData;
 import org.micromanager.pointandshootanalysis.data.PASData;
 import org.micromanager.pointandshootanalysis.data.ParticleData;
+import org.micromanager.pointandshootanalysis.data.TrackInfoCalculator;
 import org.micromanager.pointandshootanalysis.display.WidgetSettings;
 import org.micromanager.pointandshootanalysis.plot.PlotUtils;
 
@@ -44,7 +46,7 @@ public class DataExporter {
       type_ = type;
    }
    
-   public PASFunction fit(int index, Type type) {
+   public FitData fit(int index, Type type) {
       PASData d = data_.get(index);
       if (d == null) {
          return null; // TODO: throw error?
@@ -123,8 +125,14 @@ public class DataExporter {
       func.setParms(found);
       System.out.println("A: " + found[0] + ", b: " + found[1] + ", k: " + found[2]);
       System.out.println("RSquared: " + rSquared + ", t1/2: " + tHalf + " ms");
+      FitData fitData = new FitData(dataAsList, 
+              SingleExpRecoveryFunc.class, 
+              type_, 
+              found, 
+              rSquared, 
+              tHalf);
       
-      return func;
+      return fitData;
    }
    
    public void exportRaw(List<Integer> indices) {
@@ -160,21 +168,45 @@ public class DataExporter {
       Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
       clipboard.setContents(selection, selection);
    }
+   
+   public void exportSummary(List<Integer> indices) {
+      StringBuilder export = new StringBuilder();
+      export.append("title\tID\tParticle Size\tBleach Spot k\t");
+      export.append("Bleach Spot yMax\tBleach Spot t1/2\tBleach Spot rSq\n");
+      for (int index : indices) {
+         PASData d = data_.get(index);
+         if (d != null) {
+            export.append(d.dataSetName()).append("\t").append(d.id()).append("\t");
+            double avgPSize = TrackInfoCalculator.avgParticleSize(d);
+            export.append(avgPSize).append("\t");
+            FitData fitData = fit(index, Type.BLEACH);
+            export.append(fitData.parms()[2]).append("\t");  // k
+            export.append(fitData.parms()[0]).append("\t");  // A
+            export.append(fitData.tHalf()).append("\t");
+            export.append(fitData.rSquared()).append("\n");
+         }
+      }
+      StringSelection selection = new StringSelection(export.toString());
+      Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+      clipboard.setContents(selection, selection);
+   }
 
    public void plotFits(List<Integer> indices) {
       List<XYSeries> xySeries = new ArrayList<>(2 * indices.size());
       for (int index : indices) {
-         PASFunction fitFunc = fit(index, type_);
+         FitData fitData = fit(index, type_);
+         // TODO: check which functions was used to fit and do the right one
+         PASFunction fitFunc = new SingleExpRecoveryFunc(fitData.data());
          XYSeries plotData = new XYSeries(data_.get(index).id(), false, false);
          for (Point2D d : fitFunc.getData()) {
             plotData.add(d.getX(), d.getY());
          }
          xySeries.add(plotData);
-         XYSeries fitData = new XYSeries("f" + data_.get(index).id(), false, false);
-         for (Point2D d : fitFunc.getFittedData(fitFunc.getParms())) {
-            fitData.add(d.getX(), d.getY());
+         XYSeries fittedXY = new XYSeries("f" + data_.get(index).id(), false, false);
+         for (Point2D d : fitFunc.getFittedData(fitData.parms())) {
+            fittedXY.add(d.getX(), d.getY());
          }
-         xySeries.add(fitData);
+         xySeries.add(fittedXY);
       }
       String title = null;
       switch(type_) {

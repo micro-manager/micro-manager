@@ -39,6 +39,7 @@ public class PASData {
    private final Point pasActual_;   
    private final int[] pasFrames_; 
    private final Map<Integer, ParticleData> particleDataTrack_;
+   private final FitData fitData_;
 
    public static class Builder {
 
@@ -51,6 +52,7 @@ public class PASData {
       private Point pasActual_;
       private int[] pasFrames_;
       private Map<Integer, ParticleData> particleDataTrack_;
+      private FitData fitData_;
       
       private Builder copy(
               String dataSetName,
@@ -61,7 +63,8 @@ public class PASData {
               Point pasIntended,
               Point pasActual,
               int[] pasFrames,
-              Map<Integer, ParticleData> particleData) {
+              Map<Integer, ParticleData> particleData,
+              FitData fitData) {
          dataSetName_ = dataSetName;
          id_ = id;
          pasClicked_ = pasClicked;
@@ -71,6 +74,7 @@ public class PASData {
          pasActual_ = pasActual;
          pasFrames_ = pasFrames;
          particleDataTrack_ = particleData;
+         fitData_ = fitData;
          return this;
       }
       
@@ -86,6 +90,7 @@ public class PASData {
          particleDataTrack_ = particleDataTrack;
          return this;
       }  
+      public Builder fitData(FitData fitData) { fitData_ = fitData; return this; }
       
       public PASData build() {
          return new PASData(
@@ -97,7 +102,8 @@ public class PASData {
                  pasIntended_,
                  pasActual_,
                  pasFrames_,
-                 particleDataTrack_);
+                 particleDataTrack_,
+                 fitData_);
       }
 
    }
@@ -126,7 +132,8 @@ public class PASData {
            Point pasIntended,
            Point pasActual,
            int[] pasFrames,
-           Map<Integer, ParticleData> particleDataTrack) {
+           Map<Integer, ParticleData> particleDataTrack,
+           FitData fitData) {
       dataSetName_ = dataSetName;
       id_ = id;
       pasClicked_ = pasClicked;
@@ -136,6 +143,7 @@ public class PASData {
       pasActual_ = pasActual;
       pasFrames_ = pasFrames;
       particleDataTrack_ = particleDataTrack;
+      fitData_ = fitData;
    }
    public String dataSetName() { return dataSetName_; }
    public String id() { return id_; }
@@ -146,6 +154,7 @@ public class PASData {
    public Point pasActual() { return pasActual_; }
    public int[] pasFrames() { return pasFrames_; }
    public Map<Integer, ParticleData> particleDataTrack() { return particleDataTrack_; }
+   public FitData fitData() { return fitData_; }
    
    
    public void normalizeBleachSpotIntensities(
@@ -211,7 +220,7 @@ public class PASData {
    public Builder copyBuilder() {
       Builder b = new Builder();
       b.copy (dataSetName_, id_, pasClicked_, tsOfFrameBeforePas_, framePasClicked_, pasIntended_,
-              pasActual_, pasFrames_, particleDataTrack_);
+              pasActual_, pasFrames_, particleDataTrack_, fitData_);
       return b;
    }
 

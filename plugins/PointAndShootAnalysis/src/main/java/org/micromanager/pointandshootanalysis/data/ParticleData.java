@@ -27,7 +27,6 @@ import static org.micromanager.pointandshootanalysis.PointAndShootAnalyzer.findM
 import org.micromanager.pointandshootanalysis.algorithm.BinaryListOps;
 import org.micromanager.pointandshootanalysis.algorithm.CircleMask;
 import org.micromanager.pointandshootanalysis.algorithm.ContourStats;
-import org.micromanager.pointandshootanalysis.algorithm.Utils;
 
 /**
  * Stores a binary mask for a particle
@@ -369,7 +368,7 @@ public class ParticleData {
          if (previousParticle != null && previousParticle.getBleachSpot() != null) {
             double distance = particle.getCentroid().distance(previousParticle.getCentroid());
             distance = distance < 1.0 ? 1.0 : distance;
-            if (Utils.distance(minPixel, new Point2D_I32(previousParticle.getBleachSpot().getX() - offset.x,
+            if (minPixel.distance(new Point2D_I32(previousParticle.getBleachSpot().getX() - offset.x,
                     previousParticle.getBleachSpot().getY() - offset.y)) > 2 * distance) {
                minPixel = new Point2D_I32(
                        previousParticle.getBleachSpot().getX() + particle.getCentroid().getX()
@@ -382,7 +381,7 @@ public class ParticleData {
          }
       }
 
-      if (Utils.distance(minPixel, new Point2D_I32(gResult.width / 2, gResult.height / 2)) 
+      if (minPixel.distance(new Point2D_I32(gResult.width / 2, gResult.height / 2)) 
               < maxDistance) {
          double mean = GImageStatistics.mean(gResult);
          double value = gResult.get(minPixel.x, minPixel.y);

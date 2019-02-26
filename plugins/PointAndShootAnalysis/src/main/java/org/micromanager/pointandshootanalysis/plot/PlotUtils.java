@@ -274,10 +274,23 @@ public class PlotUtils {
                dataExporter.exportRaw(indices);
          }
       });
+      JMenuItem exportSummaryMenuItem = new JMenuItem("Export Summary");
+      exportSummaryMenuItem.addActionListener((ActionEvent e) -> {
+         List<Integer> indices = new ArrayList<>();
+         for (int i = 0; i < data.length; i++) {
+            if (renderer.getSeriesVisible(i)) {
+               indices.add(i);
+            }
+         }
+            if (dataExporter != null) {
+               dataExporter.exportSummary(indices);
+         }
+      });
       if (dataExporter != null) {
          chartPanel.getPopupMenu().addSeparator();
          chartPanel.getPopupMenu().add(fitMenuItem);
          chartPanel.getPopupMenu().add(exportMenuItem);
+         chartPanel.getPopupMenu().add(exportSummaryMenuItem);
       }
       controlPanel.setBackground(chartPanel.getBackground());
       graphFrame_.add(chartPanel, BorderLayout.CENTER);
