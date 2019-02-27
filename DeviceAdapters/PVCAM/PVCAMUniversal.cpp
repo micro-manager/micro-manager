@@ -155,6 +155,12 @@ const char* g_Keyword_CircBufFrameCnt      = "CircularBufferFrameCount";
 const char* g_Keyword_CircBufSizeAuto      = "CircularBufferAutoSize";       // ON/OFF
 const char* g_Keyword_CircBufFrameRecovery = "CircularBufferFrameRecovery";  // ON/OFF
 const char* g_Keyword_CircBufEnabled       = "CircularBufferEnabled";        // ON/OFF
+const char* g_Keyword_ScanMode             = "ScanMode";
+const char* g_Keyword_ScanDirection        = "ScanDirection";
+const char* g_Keyword_ScanDirectionReset   = "ScanDirectionReset";
+const char* g_Keyword_ScanLineDelay        = "ScanLineDelay";
+const char* g_Keyword_ScanLineTime         = "ScanLineTime";
+const char* g_Keyword_ScanWidth            = "ScanWidth";
 #ifdef PVCAM_SMART_STREAMING_SUPPORTED
 const char* g_Keyword_SmartStreamingValues   = "SMARTStreamingValues[ms]";
 const char* g_Keyword_SmartStreamingEnable   = "SMARTStreamingEnabled";
@@ -266,6 +272,7 @@ Universal::Universal(short cameraId) :
     prmClearMode_(0),
     prmReadoutPort_(0),
     prmSpdTabIndex_(0),
+    prmBitDepth_(0),
     prmColorMode_(0),
     prmFrameBufSize_(0),
     prmRoiCount_(0),
@@ -351,6 +358,7 @@ Universal::~Universal()
     delete prmExposeOutMode_;
     delete prmClearCycles_;
     delete prmClearMode_;
+    delete prmBitDepth_;
     delete prmSpdTabIndex_;
     delete prmReadoutPort_;
     delete prmColorMode_;
@@ -479,10 +487,6 @@ int Universal::Initialize()
     nRet = initializeSpeedTable();
     if ( nRet != DEVICE_OK )
         return nRet;
-
-    // TODO: Remove the camCurrentSpeed_ and move port/speed/gain handling to applyAcqConfig()
-    acqCfgNew_.PortId = camCurrentSpeed_.portIndex;
-    acqCfgNew_.SpeedIndex = camCurrentSpeed_.spdIndex;
 
     /// --- DYNAMIC PROPERTIES
     /// are properties that may be updated by a camera or changed by the user during session.
@@ -907,6 +911,17 @@ int Universal::Initialize()
         SetAllowedValues(MM::g_Keyword_Gain, gainChoices);
     }
 
+    /// BIT DEPTH
+    /// Note that this can change depending on output port, speed and gain
+    prmBitDepth_ = new PvParam<int16>("PARAM_BIT_DEPTH", PARAM_BIT_DEPTH, this, true);
+
+    if (prmReadoutPort_->IsAvailable())
+        acqCfgNew_.PortId = prmReadoutPort_->Current();
+    if (prmSpdTabIndex_->IsAvailable())
+        acqCfgNew_.SpeedIndex = prmSpdTabIndex_->Current();
+    if (prmGainIndex_->IsAvailable())
+        acqCfgNew_.GainNum = prmGainIndex_->Current();
+
     /// EXPOSURE RESOLUTION
     // The PARAM_EXP_RES_INDEX is used to get and set the current exposure resolution (usec, msec, sec, ...)
     // The PARAM_EXP_RES is only used to enumerate the supported exposure resolutions and their string names
@@ -1169,6 +1184,109 @@ int Universal::Initialize()
         acqCfgNew_.AdcOffset = prmAdcOffset_->Current();
     }
 
+    prmScanMode_ = new PvEnumParam("PARAM_SCAN_MODE", PARAM_SCAN_MODE, this, true);
+    if (prmScanMode_->IsAvailable())
+    {
+        nRet = prmScanMode_->Reset(); // Reset to default because camera preserves previous settings.
+        if (nRet != DEVICE_OK)
+            return LogAdapterError(nRet, __LINE__, "Failed to reset PARAM_SCAN_MODE");
+
+        const std::vector<std::string>& enumStrings = prmScanMode_->GetEnumStrings();
+        const int32 cur = prmScanMode_->Current();
+        const std::string curStr = prmScanMode_->GetEnumString(cur);
+
+        pAct = new CPropertyAction(this, &Universal::OnScanMode);
+        nRet = CreateProperty(g_Keyword_ScanMode, curStr.c_str(), MM::String, prmScanMode_->IsReadOnly(), pAct);
+        if (nRet != DEVICE_OK)
+            return LogAdapterError(nRet, __LINE__, "Failed to create property for PARAM_SCAN_MODE");
+
+        for (size_t i = 0; i < enumStrings.size(); ++i)
+        {
+            AddAllowedValue(g_Keyword_ScanMode, enumStrings[i].c_str());
+        }
+
+        acqCfgNew_.ScanMode = cur;
+    }
+    prmScanDirection_ = new PvEnumParam("PARAM_SCAN_DIRECTION", PARAM_SCAN_DIRECTION, this, true);
+    if (prmScanDirection_->IsAvailable())
+    {
+        nRet = prmScanDirection_->Reset(); // Reset to default because camera preserves previous settings.
+        if (nRet != DEVICE_OK)
+            return LogAdapterError(nRet, __LINE__, "Failed to reset PARAM_SCAN_DIRECTION");
+
+        const std::vector<std::string>& enumStrings = prmScanDirection_->GetEnumStrings();
+        const int32 cur = prmScanDirection_->Current();
+        const std::string curStr = prmScanDirection_->GetEnumString(cur);
+
+        pAct = new CPropertyAction(this, &Universal::OnScanDirection);
+        nRet = CreateProperty(g_Keyword_ScanDirection, curStr.c_str(), MM::String, prmScanDirection_->IsReadOnly(), pAct);
+        if (nRet != DEVICE_OK)
+            return LogAdapterError(nRet, __LINE__, "Failed to create property for PARAM_SCAN_DIRECTION");
+
+        for (size_t i = 0; i < enumStrings.size(); ++i)
+        {
+            AddAllowedValue(g_Keyword_ScanDirection, enumStrings[i].c_str());
+        }
+
+        acqCfgNew_.ScanDirection = cur;
+    }
+    prmScanDirectionReset_ = new PvParam<rs_bool>( "PARAM_SCAN_DIRECTION_RESET", PARAM_SCAN_DIRECTION_RESET, this, true );
+    if (prmScanDirectionReset_->IsAvailable())
+    {
+        nRet = prmScanDirectionReset_->Reset(); // Reset to default because camera preserves previous settings.
+        if (nRet != DEVICE_OK)
+            return LogAdapterError(nRet, __LINE__, "Failed to reset PARAM_SCAN_DIRECTION_RESET");
+
+        pAct = new CPropertyAction (this, &Universal::OnScanDirectionReset);
+        const uns16 cur = prmScanDirectionReset_->Current();
+        nRet = CreateProperty(g_Keyword_ScanDirectionReset, (cur == TRUE) ? g_Keyword_Yes : g_Keyword_No,
+            MM::String, prmScanDirectionReset_->IsReadOnly(), pAct);
+        assert(nRet == DEVICE_OK);
+        AddAllowedValue(g_Keyword_ScanDirectionReset, g_Keyword_No);
+        AddAllowedValue(g_Keyword_ScanDirectionReset, g_Keyword_Yes);
+
+        acqCfgNew_.ScanDirectionReset = (cur == TRUE) ? true : false;
+    }
+    prmScanLineDelay_ = new PvParam<uns16>( "PARAM_SCAN_LINE_DELAY", PARAM_SCAN_LINE_DELAY, this, true );
+    if (prmScanLineDelay_->IsAvailable())
+    {
+        if (!prmScanLineDelay_->IsReadOnly())
+        {
+            nRet = prmScanLineDelay_->Reset();
+            if (nRet != DEVICE_OK)
+                return LogAdapterError(nRet, __LINE__, "Failed to reset PARAM_SCAN_LINE_DELAY");
+        }
+        pAct = new CPropertyAction(this, &Universal::OnScanLineDelay);
+        nRet = CreateProperty(g_Keyword_ScanLineDelay, CDeviceUtils::ConvertToString(prmScanLineDelay_->Current()), MM::Integer, false, pAct);
+        SetPropertyLimits(g_Keyword_ScanLineDelay, prmScanLineDelay_->Min(), prmScanLineDelay_->Max());
+
+        acqCfgNew_.ScanLineDelay = prmScanLineDelay_->Current();
+    }
+    prmScanLineTime_ = new PvParam<long64>( "PARAM_SCAN_LINE_TIME", PARAM_SCAN_LINE_TIME, this, true );
+    if (prmScanLineTime_->IsAvailable())
+    {
+        pAct = new CPropertyAction(this, &Universal::OnScanLineTime);
+        nRet = CreateProperty(g_Keyword_ScanLineTime, CDeviceUtils::ConvertToString((double)prmScanLineTime_->Current()), MM::Float, true, pAct);
+        //SetPropertyLimits(g_Keyword_ScanLineTime, (double)prmScanLineTime_->Min(), (double)prmScanLineTime_->Max());
+
+        //acqCfgNew_.ScanLineTime = prmScanLineTime_->Current();
+    }
+    prmScanWidth_ = new PvParam<uns16>( "PARAM_SCAN_WIDTH", PARAM_SCAN_WIDTH, this, true );
+    if (prmScanWidth_->IsAvailable())
+    {
+        if (!prmScanWidth_->IsReadOnly())
+        {
+            nRet = prmScanWidth_->Reset();
+            if (nRet != DEVICE_OK)
+                return LogAdapterError(nRet, __LINE__, "Failed to reset PARAM_SCAN_WIDTH");
+        }
+        pAct = new CPropertyAction(this, &Universal::OnScanWidth);
+        nRet = CreateProperty(g_Keyword_ScanWidth, CDeviceUtils::ConvertToString(prmScanWidth_->Current()), MM::Integer, false, pAct);
+        SetPropertyLimits(g_Keyword_ScanWidth, prmScanWidth_->Min(), prmScanWidth_->Max());
+
+        acqCfgNew_.ScanWidth = prmScanWidth_->Current();
+    }
+
     nRet = initializePostSetupParams();
     if (nRet != DEVICE_OK)
         return nRet;
@@ -1416,7 +1534,7 @@ long Universal::GetImageBufferSize() const
 
 unsigned Universal::GetBitDepth() const
 {
-    const unsigned int bitDepth = acqCfgCur_.ColorProcessingEnabled ? 8 : (unsigned)camCurrentSpeed_.bitDepth;
+    const unsigned int bitDepth = acqCfgCur_.ColorProcessingEnabled ? 8 : (unsigned)prmBitDepth_->Current();
     return bitDepth;
 }
 
@@ -1925,7 +2043,7 @@ int Universal::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
     if (eAct == MM::BeforeGet)
     {
         char buf[8];
-        snprintf(buf, 8, "%ubit", camCurrentSpeed_.bitDepth); // 12bit, 14bit, 16bit, ...
+        snprintf(buf, 8, "%ubit", prmBitDepth_->Current()); // 12bit, 14bit, 16bit, ...
         pProp->Set(buf);
     }
 
@@ -1942,9 +2060,6 @@ int Universal::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
         std::string gainStr;
         pProp->Get(gainStr); // Get the value MM is trying to set
 
-        if (IsCapturing())
-            StopSequenceAcquisition();
-
         // Convert the gain UI string to actual gain index and apply
         if (camCurrentSpeed_.gainNameMap.find(gainStr) == camCurrentSpeed_.gainNameMap.end())
         {
@@ -1954,15 +2069,17 @@ int Universal::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
         else
         {
             const int16 gainIdx = camCurrentSpeed_.gainNameMap.at(gainStr);
-            nRet = prmGainIndex_->SetAndApply(gainIdx);
+            acqCfgNew_.GainNum = gainIdx;
         }
 
         singleFrameModeReady_ = false;
+
+        return applyAcqConfig();
     }
     else if (eAct == MM::BeforeGet)
     {
         const std::string gainStr =
-            camCurrentSpeed_.gainNameMapReverse.at(prmGainIndex_->Current());
+            camCurrentSpeed_.gainNameMapReverse.at((int16)acqCfgCur_.GainNum);
         pProp->Set(gainStr.c_str());
     }
 
@@ -2114,6 +2231,117 @@ int Universal::OnAdcOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
         pProp->Get( val );
 
         acqCfgNew_.AdcOffset = val;
+        return applyAcqConfig();
+    }
+    return DEVICE_OK;
+}
+
+int Universal::OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    START_ONPROPERTY("Universal::OnScanMode", eAct);
+
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set(prmScanMode_->GetEnumString(acqCfgCur_.ScanMode).c_str());
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        string valStr;
+        pProp->Get(valStr);
+
+        acqCfgNew_.ScanMode = prmScanMode_->GetEnumValue(valStr);
+        return applyAcqConfig();
+    }
+    return DEVICE_OK;
+}
+
+int Universal::OnScanDirection(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    START_ONPROPERTY("Universal::OnScanDirection", eAct);
+
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set(prmScanDirection_->GetEnumString(acqCfgCur_.ScanDirection).c_str());
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        string valStr;
+        pProp->Get(valStr);
+
+        acqCfgNew_.ScanDirection = prmScanDirection_->GetEnumValue(valStr);
+        return applyAcqConfig();
+    }
+    return DEVICE_OK;
+}
+
+int Universal::OnScanDirectionReset(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    START_METHOD("Universal::OnScanDirectionReset");
+
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set(acqCfgCur_.ScanDirectionReset ? g_Keyword_Yes : g_Keyword_No);
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        string choice;
+        pProp->Get(choice);
+        acqCfgNew_.ScanDirectionReset = (choice.compare(g_Keyword_Yes) == 0);
+        return applyAcqConfig();
+    }
+
+    return DEVICE_OK;
+}
+int Universal::OnScanLineDelay(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    START_ONPROPERTY("Universal::OnScanLineDelay", eAct);
+
+    if (eAct == MM::BeforeGet)
+    {
+        // Handlers seems to be the only place where we can get access to the
+        // property. So write access need to be switched here.
+        const bool bReadOnly = prmScanLineDelay_->IsReadOnly();
+        static_cast<MM::Property*>(pProp)->SetReadOnly(bReadOnly);
+        pProp->Set((long)acqCfgCur_.ScanLineDelay);
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        long val;
+        pProp->Get( val );
+
+        acqCfgNew_.ScanLineDelay = val;
+        return applyAcqConfig();
+    }
+    return DEVICE_OK;
+}
+int Universal::OnScanLineTime(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    START_ONPROPERTY("Universal::OnScanLineTime", eAct);
+    if (eAct == MM::BeforeGet)
+    {
+        // The PARAM_SCAN_LINE_TIME returns value in nano-seconds
+        const long64 camVal = prmScanLineTime_->Current();
+        pProp->Set((double)camVal);
+    }
+    // Nothing to set, this is a read-only property
+    return DEVICE_OK;
+}
+int Universal::OnScanWidth(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    START_ONPROPERTY("Universal::OnScanWidth", eAct);
+
+    if (eAct == MM::BeforeGet)
+    {
+        const bool bReadOnly = prmScanWidth_->IsReadOnly();
+        static_cast<MM::Property*>(pProp)->SetReadOnly(bReadOnly);
+        pProp->Set((long)acqCfgCur_.ScanWidth);
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        long val;
+        pProp->Get( val );
+
+        acqCfgNew_.ScanWidth = val;
         return applyAcqConfig();
     }
     return DEVICE_OK;
@@ -3854,6 +4082,7 @@ int Universal::initializeSpeedTable()
             spdEntry.portIndex = portIndex;
             spdEntry.spdIndex = spdIndex;
             spdEntry.portDefaultSpdIdx = portDefaultSpdIdx;
+            int16 bitDepth = 0;
 
             if (pl_set_param(hPVCAM_, PARAM_SPDTAB_INDEX, (void_ptr)&spdEntry.spdIndex) != PV_OK)
                 return LogPvcamError(__LINE__, "pl_set_param PARAM_SPDTAB_INDEX" );
@@ -3865,9 +4094,9 @@ int Universal::initializeSpeedTable()
                 spdEntry.pixTime = MAX_PIX_TIME;
             }
             // Read the bit depth for this speed choice
-            if (pl_get_param(hPVCAM_, PARAM_BIT_DEPTH, ATTR_CURRENT, &spdEntry.bitDepth) != PV_OK )
+            if (pl_get_param(hPVCAM_, PARAM_BIT_DEPTH, ATTR_CURRENT, &bitDepth) != PV_OK )
             {
-                return LogPvcamError(__LINE__, "pl_get_param PARAM_GAIN_INDEX ATTR_CURRENT" );
+                return LogPvcamError(__LINE__, "pl_get_param PARAM_BIT_DEPTH ATTR_CURRENT" );
             }
             // Read the sensor color mask for the current speed
             rs_bool colorAvail = FALSE;
@@ -3963,6 +4192,18 @@ int Universal::initializeSpeedTable()
                     spdEntry.gainDef = spdEntry.gainMin;
                 }
 
+                // Reset the gain and re-read the bit depth. As some cameras may have different bit
+                // depths per gain we use the default one as a "common" depth that will be displayed
+                // next to the readout rate.
+                if (pl_set_param(hPVCAM_, PARAM_GAIN_INDEX, &spdEntry.gainDef) != PV_OK)
+                {
+                    return LogPvcamError(__LINE__, "pl_set_param PARAM_GAIN_INDEX" );
+                }
+                if (pl_get_param(hPVCAM_, PARAM_BIT_DEPTH, ATTR_CURRENT, &bitDepth) != PV_OK )
+                {
+                    return LogPvcamError(__LINE__, "pl_get_param PARAM_BIT_DEPTH ATTR_CURRENT" );
+                }
+
                 // Iterate all gains and read each gain name if supported. If not supported or
                 // if we cannot successfully retrieve the string we fall back to a simple
                 // string_value:value pair. (e.g. "1":1, "2":2, ...)
@@ -3999,7 +4240,18 @@ int Universal::initializeSpeedTable()
             // Save the string we will use in user interface for this choice
             stringstream tmp;
             // Convert the pix time to MHz and append bit depth
-            tmp << 1000.0f/spdEntry.pixTime << "MHz " << spdEntry.bitDepth << "bit";
+            // Note: Some camera models (BSI) may have different bit depths on the same speed
+            // (varying with gain selection). We should not really display the bit depth together
+            // with readout rate. The bit depth may change with camera configuration
+            // and it is displayed separately in the "PixelType" property. However, removing the "XXbit"
+            // postfix may break existing customer scripts and presets as the Speed would suddenly
+            // become "100MHz" instead of "100MHz 12bit" for example. And the string is used to
+            // set the property.
+            // Also TODO: We should make sure to not add duplicate entries, which may theoretically happen
+            // if the camera has two speeds with the same bit depth, e.g. "100MHz 12bit" and "100MHz 12bit".
+            // A proper way would be to add the speed index as: "0: 100MHz", "1: 100MHz", but again, this
+            // breaks the expected scheme.
+            tmp << 1000.0f/spdEntry.pixTime << "MHz " << bitDepth << "bit";
             spdEntry.spdString = tmp.str();
 
             camSpdTable_[portIndex][spdIndex] = spdEntry;
@@ -4625,7 +4877,7 @@ int Universal::postProcessSingleFrame(unsigned char** pOutBuf, unsigned char* pI
         debayer_.SetRGBScales(rgbScales);
         //debayer_.Process(colorImg_, img_, (unsigned)camCurrentSpeed_.bitDepth);
         debayer_.Process(*rgbImgBuf_, (unsigned short*)pixBuffer,
-            rgbImgBuf_->Width(), rgbImgBuf_->Height(), (unsigned)camCurrentSpeed_.bitDepth);
+            rgbImgBuf_->Width(), rgbImgBuf_->Height(), (unsigned)prmBitDepth_->Current());
         pixBuffer = rgbImgBuf_->GetPixelsRW();
     }
 
@@ -4830,6 +5082,36 @@ int Universal::postExpSetupInit(unsigned int frameSize)
         nRet = prmPreTriggerDelay_->Update();
         if (nRet != DEVICE_OK)
             return nRet;
+    }
+    if (prmScanLineTime_ != NULL && prmScanLineTime_->IsAvailable())
+    {
+        nRet = prmScanLineTime_->Update();
+        if (nRet != DEVICE_OK)
+            return nRet;
+    }
+    // One of the PARAM_SCAN_LINE_WIDTH and PARAM_SCAN_LINE_DELAY may become
+    // read-only depending on the PARAM_SCAN_MODE selection.
+    if (prmScanWidth_ != NULL && prmScanWidth_->IsAvailable())
+    {
+        nRet = prmScanWidth_->Update();
+        if (nRet != DEVICE_OK)
+            return nRet;
+        // This parameter is part of the settable config but in this case it might
+        // have been recalculated by the camera. Update both configs to refelct this
+        // and to not trigger an update.
+        acqCfgCur_.ScanWidth = prmScanWidth_->Current();
+        acqCfgNew_.ScanWidth = prmScanWidth_->Current();
+    }
+    if (prmScanLineDelay_ != NULL && prmScanLineDelay_->IsAvailable())
+    {
+        nRet = prmScanLineDelay_->Update();
+        if (nRet != DEVICE_OK)
+            return nRet;
+        // This parameter is part of the settable config but in this case it might
+        // have been recalculated by the camera. Update both configs to refelct this
+        // and to not trigger an update.
+        acqCfgCur_.ScanLineDelay = prmScanLineDelay_->Current();
+        acqCfgNew_.ScanLineDelay = prmScanLineDelay_->Current();
     }
 
     // This will update the CircularBufferFrameCount property in the Device/Property
@@ -5168,7 +5450,7 @@ int Universal::applyAcqConfig(bool forceSetup)
         bufferResizeRequired = true;
     }
 
-    bool speedReset = false;
+    bool portChanged = false; // Port change triggers speed change
     if (acqCfgNew_.PortId != acqCfgCur_.PortId)
     {
         configChanged = true;
@@ -5193,11 +5475,12 @@ int Universal::applyAcqConfig(bool forceSetup)
         acqCfgNew_.SpeedIndex = camSpdTable_[curPort][0].portDefaultSpdIdx;
 
         // Since Port has changed we need to reset the speed, which in turn resets gain
-        speedReset = true;
+        portChanged = true;
         bufferResizeRequired = true;
     }
 
-    if (acqCfgNew_.SpeedIndex != acqCfgCur_.SpeedIndex || speedReset)
+    bool speedChanged = false; // Speed change triggers gain change
+    if (acqCfgNew_.SpeedIndex != acqCfgCur_.SpeedIndex || portChanged)
     {
         configChanged = true;
         // TODO: This is not fully implemeneted, we still handle port/gain changes 
@@ -5235,13 +5518,9 @@ int Universal::applyAcqConfig(bool forceSetup)
         int16 curGain = prmGainIndex_->Current();
         if ( curGain < spd.gainMin || curGain > spd.gainMax )
             curGain = spd.gainDef; // The new speed does not support this gain index, so we reset it to the first available
-        // Re-apply the gain (fixes issues with some cameras that do not reset the gain themselves)
-        nRet = prmGainIndex_->SetAndApply(curGain);
-        if (nRet != DEVICE_OK)
-        {
-            acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
-            return nRet; // Error logged in SetAndApply()
-        }
+
+        // The new value will be applied below
+        acqCfgNew_.GainNum = curGain;
 
         // When speed changes the ADC offset may change as well, so update it
         nRet = prmAdcOffset_->Update();
@@ -5255,7 +5534,30 @@ int Universal::applyAcqConfig(bool forceSetup)
         // Set both configurations to the same value to avoid the setter to be called later.
         acqCfgNew_.AdcOffset = prmAdcOffset_->Current();
         acqCfgCur_.AdcOffset = prmAdcOffset_->Current();
+
+        speedChanged = true;
         // Speed may cause bit depth change, so buffer reallocation is recommended
+        bufferResizeRequired = true;
+    }
+
+    if ((acqCfgNew_.GainNum != acqCfgCur_.GainNum) || speedChanged)
+    {
+        configChanged = true;
+        nRet = prmGainIndex_->SetAndApply((int16)acqCfgNew_.GainNum);
+        if (nRet != DEVICE_OK)
+        {
+            acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
+            return nRet; // Error logged in SetAndApply()
+        }
+        // When gain changes the bit depth may change as well, so update it
+        nRet = prmBitDepth_->Update();
+        if (nRet != DEVICE_OK)
+        {
+            acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
+            return nRet; // Error logged in Update()
+        }
+
+        // Gain may cause bit depth change, so buffer reallocation is recommended
         bufferResizeRequired = true;
     }
 
@@ -5268,6 +5570,126 @@ int Universal::applyAcqConfig(bool forceSetup)
             acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
             return nRet; // Error logged in SetAndApply()
         }
+    }
+
+    if (acqCfgNew_.ScanMode != acqCfgCur_.ScanMode)
+    {
+        configChanged = true;
+        nRet = prmScanMode_->SetAndApply(acqCfgNew_.ScanMode);
+        if (nRet != DEVICE_OK)
+        {
+            acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
+            return nRet; // Error logged in SetAndApply()
+        }
+        // A change in ScanMode triggers write access to ScanLineDelay or ScanLineWidth parameters
+        // We need to reinitialize these two and update GUI accordingly
+        prmScanWidth_->Initialize();
+        if (nRet != DEVICE_OK)
+        {
+            acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
+            return nRet; // Error logged in SetAndApply()
+        }
+        nRet = prmScanWidth_->Update();
+        if (nRet != DEVICE_OK)
+        {
+            acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
+            return nRet; // Error logged in SetAndApply()
+        }
+        if (prmScanWidth_->IsReadOnly())
+        {
+            // Disable the property, we will make it read-only in the OnScanWidth()
+            SetPropertyLimits(g_Keyword_ScanWidth, 0, 0);
+        }
+        else
+        {
+            SetPropertyLimits(g_Keyword_ScanWidth, prmScanWidth_->Min(), prmScanWidth_->Max());
+        }
+        // Update both configs to not trigger an update
+        acqCfgCur_.ScanWidth = prmScanWidth_->Current();
+        acqCfgNew_.ScanWidth = prmScanWidth_->Current();
+
+        prmScanLineDelay_->Initialize();
+        if (nRet != DEVICE_OK)
+        {
+            acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
+            return nRet; // Error logged in SetAndApply()
+        }
+        nRet = prmScanLineDelay_->Update();
+        if (nRet != DEVICE_OK)
+        {
+            acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
+            return nRet; // Error logged in SetAndApply()
+        }
+
+        if (prmScanLineDelay_->IsReadOnly())
+        {
+            // Disable the property, we will make it read-only in the OnScanLineDelay()
+            SetPropertyLimits(g_Keyword_ScanLineDelay, 0, 0);
+        }
+        else
+        {
+            SetPropertyLimits(g_Keyword_ScanLineDelay, prmScanLineDelay_->Min(), prmScanLineDelay_->Max());
+        }
+        acqCfgCur_.ScanLineDelay = prmScanLineDelay_->Current();
+        acqCfgNew_.ScanLineDelay = prmScanLineDelay_->Current();
+    }
+    if (acqCfgNew_.ScanDirection != acqCfgCur_.ScanDirection)
+    {
+        configChanged = true;
+        nRet = prmScanDirection_->SetAndApply(acqCfgNew_.ScanDirection);
+        if (nRet != DEVICE_OK)
+        {
+            acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
+            return nRet; // Error logged in SetAndApply()
+        }
+    }
+    if (acqCfgNew_.ScanDirectionReset != acqCfgCur_.ScanDirectionReset)
+    {
+        configChanged = true;
+        nRet = prmScanDirectionReset_->SetAndApply(acqCfgNew_.ScanDirectionReset ? TRUE : FALSE);
+        if (nRet != DEVICE_OK)
+        {
+            acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
+            return nRet; // Error logged in SetAndApply()
+        }
+    }
+    if (acqCfgNew_.ScanLineDelay != acqCfgCur_.ScanLineDelay)
+    {
+        configChanged = true;
+        nRet = prmScanLineDelay_->SetAndApply((uns16)acqCfgNew_.ScanLineDelay);
+        if (nRet != DEVICE_OK)
+        {
+            acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
+            return nRet; // Error logged in SetAndApply()
+        }
+        // Depending on the ScanMode selection a change in ScanLineDelay triggers recalculation
+        // of the ScanWidth in the camera so we need to update the other paramter value.
+        prmScanWidth_->Update();
+        // Update both configs to not cause refresh because this change is not user triggered
+        acqCfgNew_.ScanWidth = prmScanWidth_->Current();
+        acqCfgCur_.ScanWidth = prmScanWidth_->Current();
+        // Change in ScanLineDelay may change the total ScanLineTime
+        if (prmScanLineTime_->IsAvailable())
+            prmScanLineTime_->Update();
+    }
+    if (acqCfgNew_.ScanWidth != acqCfgCur_.ScanWidth)
+    {
+        configChanged = true;
+        nRet = prmScanWidth_->SetAndApply((uns16)acqCfgNew_.ScanWidth);
+        if (nRet != DEVICE_OK)
+        {
+            acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
+            return nRet; // Error logged in SetAndApply()
+        }
+        // Depending on the ScanMode selection a change in ScanWidth triggers recalculation
+        // of the ScanLineDelay in the camera so we need to update the other paramter value.
+        prmScanLineDelay_->Update();
+        // Update both configs to not cause refresh because this change is not user triggered
+        acqCfgNew_.ScanLineDelay = prmScanLineDelay_->Current();
+        acqCfgCur_.ScanLineDelay = prmScanLineDelay_->Current();
+        // Change in ScanWidth may change the total ScanLineTime
+        if (prmScanLineTime_->IsAvailable())
+            prmScanLineTime_->Update();
     }
 
     if (acqCfgNew_.CircBufEnabled != acqCfgCur_.CircBufEnabled)

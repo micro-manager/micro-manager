@@ -123,6 +123,26 @@ public:
     */
     int AdcOffset;
     /**
+    * Scan Mode
+    */
+    int ScanMode;
+    /**
+    * Scan Direction
+    */
+    int ScanDirection;
+    /**
+    * Scan Direction Reset State (ON/OFF)
+    */
+    bool ScanDirectionReset;
+    /**
+    * Scan Line Delay
+    */
+    int ScanLineDelay;
+    /**
+    * Scan Line Width
+    */
+    int ScanWidth;
+    /**
     * Current port ID.
     */
     int PortId;
@@ -130,6 +150,10 @@ public:
     * Current speed index.
     */
     int SpeedIndex;
+    /**
+    * Current gain number.
+    */
+    int GainNum;
     /**
     * Whether to use circular buffer for live acquisition or not
     */
