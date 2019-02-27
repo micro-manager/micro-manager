@@ -315,7 +315,7 @@ int XYStageX::Initialize()
       return ERR_SCOPE_NOT_ACTIVE;
 
    // check if this Axis exists:
-   bool presentX=false, presentY=false;
+   // bool presentX=false, presentY=false;
    // TODO: check both stages
    //if (!(presentX && presentY))
    //   return ERR_MODULE_NOT_FOUND;
@@ -372,7 +372,7 @@ int XYStageX::GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax
    return DEVICE_OK;
 }
 
-int XYStageX::GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax) 
+int XYStageX::GetStepLimits(long& /*xMin*/, long& /*xMax*/, long& /*yMin*/, long& /*yMax*/) 
 {
    // TODO
    return DEVICE_OK;
