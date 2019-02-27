@@ -82,18 +82,14 @@ void TAOIProperty::populateWidthMaps(bool fullAoiControl)
 
    if (fullAoiControl)
    {
-      AT_64 sensorWidth = sensor_width_->Get();
-      AT_64 sensorHeight = sensor_height_->Get();
-	  //"Full Image" will set to sensor width and height
-
-	  aoiWidthIndexMap_[sensorWidth] = 0;
-	  aoiWidthHeightMap_[sensorWidth] = sensorHeight;
-	  aoiWidthIndexMap_[2560] = 1;
+      aoiWidthIndexMap_[2560] = 0;
       aoiWidthHeightMap_[2560] = 2160;
-      aoiWidthIndexMap_[2048] = 2;
+      aoiWidthIndexMap_[2048] = 1;
       aoiWidthHeightMap_[2048] = 2048;
-      aoiWidthIndexMap_[1920] = 3;
+      aoiWidthIndexMap_[1920] = 2;
       aoiWidthHeightMap_[1920] = 1080;
+      aoiWidthIndexMap_[1400] = 3;
+      aoiWidthHeightMap_[1400] = 1400;
       aoiWidthIndexMap_[1392] = 4;
       aoiWidthHeightMap_[1392] = 1040;
       aoiWidthIndexMap_[512] = 5;
