@@ -1,5 +1,5 @@
 Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual C++ Express 2010
+# Visual Studio 2010
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MMCore", "MMCore\MMCore.vcxproj", "{36571628-728C-4ACD-A47F-503BA91C5D43}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MMCoreJ_wrap", "MMCoreJ_wrap\MMCoreJ_wrap.vcxproj", "{EFA68887-8A97-49D7-BAB4-768E15A4E597}"
@@ -425,6 +425,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorlabsElliptecSlider", "DeviceAdapters\ThorlabsElliptecSlider\ThorlabsElliptecSlider.vcxproj", "{715C6F65-57D3-462B-92BC-C4E99B2FFC2B}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SutterLambda2", "DeviceAdapters\SutterLambda2\SutterLambda2.vcxproj", "{27A3BEE1-1852-44CD-A271-46D667378699}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ZeissAxioZoom", "DeviceAdapters\ZeissAxioZoom\ZeissAxioZoom.vcxproj", "{66015666-4FA4-4313-86A1-A4B44B608FD8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -2957,6 +2959,18 @@ Global
 		{27A3BEE1-1852-44CD-A271-46D667378699}.Release|Win32.Build.0 = Release|Win32
 		{27A3BEE1-1852-44CD-A271-46D667378699}.Release|x64.ActiveCfg = Release|x64
 		{27A3BEE1-1852-44CD-A271-46D667378699}.Release|x64.Build.0 = Release|x64
+		{66015666-4FA4-4313-86A1-A4B44B608FD8}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
+		{66015666-4FA4-4313-86A1-A4B44B608FD8}.Debug|Mixed Platforms.Build.0 = Debug|x64
+		{66015666-4FA4-4313-86A1-A4B44B608FD8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{66015666-4FA4-4313-86A1-A4B44B608FD8}.Debug|Win32.Build.0 = Debug|Win32
+		{66015666-4FA4-4313-86A1-A4B44B608FD8}.Debug|x64.ActiveCfg = Debug|x64
+		{66015666-4FA4-4313-86A1-A4B44B608FD8}.Debug|x64.Build.0 = Debug|x64
+		{66015666-4FA4-4313-86A1-A4B44B608FD8}.Release|Mixed Platforms.ActiveCfg = Release|x64
+		{66015666-4FA4-4313-86A1-A4B44B608FD8}.Release|Mixed Platforms.Build.0 = Release|x64
+		{66015666-4FA4-4313-86A1-A4B44B608FD8}.Release|Win32.ActiveCfg = Release|Win32
+		{66015666-4FA4-4313-86A1-A4B44B608FD8}.Release|Win32.Build.0 = Release|Win32
+		{66015666-4FA4-4313-86A1-A4B44B608FD8}.Release|x64.ActiveCfg = Release|x64
+		{66015666-4FA4-4313-86A1-A4B44B608FD8}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -127,20 +127,20 @@ ZeissMonitoringThread::~ZeissMonitoringThread()
  */
 void ZeissMonitoringThread::interpretMessageAZ(unsigned char* message)
 {
-   const int TARGET = 0;
+   //const int TARGET = 0;
    const int SOURCE = 1;
-   const int DATABYTES = 2;
+   //const int DATABYTES = 2;
    const int CLASS = 3;
    const int NUMBER = 4;
-   const int PROCID = 5;// data1
+   //const int PROCID = 5;// data1
    const int SUBID = 6; // data2
 
    if (message[SOURCE] == MOTOR_FOCUS)
    {
       const int DATA3 = 7;
-      const int DATA4 = 8;
-      const int DATA5 = 9;
-      const int DATA6 = 10;
+      //const int DATA4 = 8;
+      //const int DATA5 = 9;
+      //const int DATA6 = 10;
 
       if (message[CLASS] == 0x07) // EVENT
       {
@@ -176,11 +176,11 @@ void ZeissMonitoringThread::interpretMessageAZ(unsigned char* message)
 
    else if (message[SOURCE] == STAGEX || message[SOURCE] == STAGEY)
    {
-      const int DEV = 7; // data 3
+      // const int DEV = 7; // data 3
       const int DATA4 = 8;
-      const int DATA5 = 9;
-      const int DATA6 = 10;
-      const int DATA7 = 11;
+      // const int DATA5 = 9;
+      // const int DATA6 = 10;
+      // const int DATA7 = 11;
 
       bool stageX = message[SOURCE] == STAGEX ? true : false;
 
@@ -236,9 +236,9 @@ void ZeissMonitoringThread::interpretMessageAZ(unsigned char* message)
    else if (message[SOURCE] == OPTICS)
    {
       const int DATA3 = 7;
-      const int DATA4 = 8;
-      const int DATA5 = 9;
-      const int DATA6 = 10;
+      // const int DATA4 = 8;
+      // const int DATA5 = 9;
+      // const int DATA6 = 10;
 
       if (message[CLASS] == 0x07) // EVENT
       {
@@ -290,8 +290,8 @@ void ZeissMonitoringThread::interpretMessageAZ(unsigned char* message)
    {
       const int DEV = 7;
       const int DATA4 = 8;
-      const int DATA5 = 9;
-      const int DATA6 = 10;
+      // const int DATA5 = 9;
+      // const int DATA6 = 10;
 
       if (message[CLASS] == 0x07) // EVENT
       {
@@ -352,8 +352,8 @@ void ZeissMonitoringThread::interpretMessageAZ(unsigned char* message)
    {
       const int DEV = 7;
       const int DATA4 = 8;
-      const int DATA5 = 9;
-      const int DATA6 = 10;
+      // const int DATA5 = 9;
+      // const int DATA6 = 10;
 
       if (message[CLASS] == 0x07 && message[DEV] == 0x07) // EVENT
       {
