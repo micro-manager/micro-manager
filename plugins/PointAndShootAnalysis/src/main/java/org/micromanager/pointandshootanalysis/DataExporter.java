@@ -17,6 +17,7 @@ import org.ddogleg.optimization.UtilOptimize;
 import org.ejml.data.DMatrixRMaj;
 import org.jfree.data.xy.XYSeries;
 import org.micromanager.Studio;
+import org.micromanager.pointandshootanalysis.algorithm.LinearFunc;
 import org.micromanager.pointandshootanalysis.algorithm.PASFunction;
 import org.micromanager.pointandshootanalysis.algorithm.SingleExpRecoveryFunc;
 import org.micromanager.pointandshootanalysis.data.FitData;
@@ -46,7 +47,15 @@ public class DataExporter {
       type_ = type;
    }
    
-   public FitData fit(int index, Type type) {
+   /**
+    * 
+    * @param index
+    * @param type
+    * @param fitFunction
+    * @param msLimit
+    * @return 
+    */
+   public FitData fit(int index, Type type, Class fitFunction, Integer msLimit) {
       PASData d = data_.get(index);
       if (d == null) {
          return null; // TODO: throw error?
@@ -99,20 +108,32 @@ public class DataExporter {
                intensity = d.particleDataTrack().get(frame).getNormalizedMaskIncludingBleachAvg();
          }
          if (intensity != null) {
-            dataAsList.add(new Point2D.Double(
-                    frameTimeStamps_.get(frame).toEpochMilli()
-                          - frameTimeStamps_.get(d.framePasClicked()).toEpochMilli(),
-                    intensity) );
+            double ms = frameTimeStamps_.get(frame).toEpochMilli()
+                          - frameTimeStamps_.get(d.framePasClicked()).toEpochMilli();
+            if (msLimit == null || ms < msLimit) {
+               dataAsList.add( new Point2D.Double(ms, intensity) );
+            }
          }
       }
-      
-      SingleExpRecoveryFunc func = new SingleExpRecoveryFunc(dataAsList);
+      PASFunction func = null;
+      if (fitFunction == SingleExpRecoveryFunc.class) {
+         func = new SingleExpRecoveryFunc(dataAsList);
+      } else if (fitFunction == LinearFunc.class) {
+         func = new LinearFunc(dataAsList);
+      }
+      if (func == null) {
+         return null;
+      }
       UnconstrainedLeastSquares<DMatrixRMaj> optimizer = FactoryOptimization.levenbergMarquardt(null, true);
       optimizer.setFunction(func, null);
       //optimizer.setVerbose(System.out,0);
       double startTimeEstimate = frameTimeStamps_.get(startFrame).toEpochMilli() - 
               frameTimeStamps_.get(d.framePasClicked()).toEpochMilli();
-      optimizer.initialize(new double[]{0.8, startTimeEstimate, 0.002}, 1e-12, 1e-12);
+      if (fitFunction == SingleExpRecoveryFunc.class) {
+         optimizer.initialize(new double[]{0.8, startTimeEstimate, 0.002}, 1e-12, 1e-12);
+      } else if (fitFunction == LinearFunc.class) {
+         optimizer.initialize(new double[]{dataAsList.get(0).getY(), 0.001}, 1e-12, 1e-12);
+      }
       UtilOptimize.process(optimizer, 50);
       double[] found = optimizer.getParameters();
       double rSquared = func.getRSquared(found);
@@ -123,7 +144,10 @@ public class DataExporter {
       double yHalf = (found[0] - yAtStart) / 2.0 + yAtStart;
       double tHalf = func.calculateX(found, yHalf) - tAtStart;
       func.setParms(found);
-      System.out.println("A: " + found[0] + ", b: " + found[1] + ", k: " + found[2]);
+      System.out.println("A: " + found[0] + ", b: " + found[1]);
+      if (func.getParms().length > 2) {
+         System.out.println(", k: " + found[2]);
+      }
       System.out.println("RSquared: " + rSquared + ", t1/2: " + tHalf + " ms");
       FitData fitData = new FitData(dataAsList, 
               SingleExpRecoveryFunc.class, 
@@ -180,7 +204,7 @@ public class DataExporter {
             export.append(d.dataSetName()).append("\t").append(d.id()).append("\t");
             double avgPSize = TrackInfoCalculator.avgParticleSize(d);
             export.append(avgPSize).append("\t");
-            FitData fitData = fit(index, Type.BLEACH);
+            FitData fitData = fit(index, Type.BLEACH, SingleExpRecoveryFunc.class, null);
             export.append(fitData.parms()[2]).append("\t");  // k
             export.append(fitData.parms()[0]).append("\t");  // A
             export.append(fitData.tHalf()).append("\t");
@@ -198,19 +222,32 @@ public class DataExporter {
    public void plotFits(List<Integer> indices) {
       List<XYSeries> xySeries = new ArrayList<>(2 * indices.size());
       for (int index : indices) {
-         FitData fitData = fit(index, type_);
+         Class fitClass = SingleExpRecoveryFunc.class;
+         Integer msLimit = null;
+         if (type_ == Type.PARTICLE_AND_BLEACH) {
+            fitClass = LinearFunc.class;
+            msLimit = 5000;
+         }
+         FitData fitData = fit(index, type_, fitClass, msLimit);
          // TODO: check which functions was used to fit and do the right one
-         PASFunction fitFunc = new SingleExpRecoveryFunc(fitData.data());
-         XYSeries plotData = new XYSeries(data_.get(index).id(), false, false);
-         for (Point2D d : fitFunc.getData()) {
-            plotData.add(d.getX(), d.getY());
+         PASFunction fitFunc = null;
+         if (fitData.fitType() == SingleExpRecoveryFunc.class) {
+            fitFunc = new SingleExpRecoveryFunc(fitData.data());
+         } else if (fitData.fitType() == LinearFunc.class) {
+            fitFunc = new LinearFunc(fitData.data());
          }
-         xySeries.add(plotData);
-         XYSeries fittedXY = new XYSeries("f" + data_.get(index).id(), false, false);
-         for (Point2D d : fitFunc.getFittedData(fitData.parms())) {
-            fittedXY.add(d.getX(), d.getY());
+         if (fitFunc != null) {
+            XYSeries plotData = new XYSeries(data_.get(index).id(), false, false);
+            for (Point2D d : fitFunc.getData()) {
+               plotData.add(d.getX(), d.getY());
+            }
+            xySeries.add(plotData);
+            XYSeries fittedXY = new XYSeries("f" + data_.get(index).id(), false, false);
+            for (Point2D d : fitFunc.getFittedData(fitData.parms())) {
+               fittedXY.add(d.getX(), d.getY());
+            }
+            xySeries.add(fittedXY);
          }
-         xySeries.add(fittedXY);
       }
       String title = null;
       switch(type_) {
