@@ -231,8 +231,12 @@ int WheelBase<U>::Shutdown()
 template<class U>
 bool WheelBase<U>::SetWheelPosition(unsigned pos)
 {
+	if (evenPositionsOnly_) {
+		pos *= 2;
+	}
 	// build the respective command for the wheel
 	unsigned char upos = (unsigned char)pos;
+
 
 	std::vector<unsigned char> command;
 
