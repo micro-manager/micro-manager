@@ -119,7 +119,6 @@ typedef struct
 typedef struct
 {
     uns16 pixTime;         // Readout rate in ns
-    int16 bitDepth;        // Bit depth
     rs_bool gainAvail;     // Gain available
     int16   gainMin;       // Min gain index for this speed
     int16   gainMax;       // Max gain index for this speed
@@ -284,6 +283,30 @@ public: // Action handlers
     * Gets or sets the current ADC offset
     */
     int OnAdcOffset(MM::PropertyBase* pProp, MM::ActionType eAct);
+    /**
+    * Get or sets the current Scan Mode.
+    */
+    int OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+    /**
+    * Get or sets the current Scan Mode Direction.
+    */    
+    int OnScanDirection(MM::PropertyBase* pProp, MM::ActionType eAct);
+    /**
+    * Get or sets the current Scan Direction Reset mode (on/off).
+    */
+    int OnScanDirectionReset(MM::PropertyBase* pProp, MM::ActionType eAct);
+    /**
+    * Gets or sets the scan line delay.
+    */ 
+    int OnScanLineDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
+    /**
+    * Gets the current scan line time.
+    */
+    int OnScanLineTime(MM::PropertyBase* pProp, MM::ActionType eAct);
+    /**
+    * Gets or sets the current scan width
+    */
+    int OnScanWidth(MM::PropertyBase* pProp, MM::ActionType eAct);
     /**
     * Gets or sets the current Trigger Mode - i.e. Internal, Bulb, Edge, etc.
     */
@@ -797,6 +820,7 @@ private: // Static
     PvEnumParam*      prmClearMode_;
     PvEnumParam*      prmReadoutPort_;
     PvParam<int16>*   prmSpdTabIndex_;
+    PvParam<int16>*   prmBitDepth_;
     PvEnumParam*      prmColorMode_;
     PvParam<ulong64>* prmFrameBufSize_;
 
@@ -810,7 +834,13 @@ private: // Static
     PvParam<uns8>*    prmLastMuxedSignal_;
     PvEnumParam*      prmPMode_;
     PvParam<int16>*   prmAdcOffset_;
-
+    // Scan mode
+    PvEnumParam*      prmScanMode_;
+    PvEnumParam*      prmScanDirection_;
+    PvParam<rs_bool>* prmScanDirectionReset_;
+    PvParam<uns16>*   prmScanLineDelay_; // Available after pl_exp_setup_seq()/pl_exp_setup_cont()
+    PvParam<long64>*  prmScanLineTime_;
+    PvParam<uns16>*   prmScanWidth_;
     // These parameters become valid after calling pl_exp_setup_seq()/pl_exp_setup_cont()
     PvParam<uns32>*   prmReadoutTime_;      // (PARAM_READOUT_TIME)
     PvParam<long64>*  prmClearingTime_;     // (PARAM_CLEARING_TIME)

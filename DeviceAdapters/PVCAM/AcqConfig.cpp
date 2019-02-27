@@ -26,6 +26,7 @@ AcqConfig::AcqConfig() :
     AdcOffset(0),
     PortId(0),
     SpeedIndex(0),
+    GainNum(0),
     CircBufEnabled(true),
     CircBufSizeAuto(true),
     CallbacksEnabled(true),

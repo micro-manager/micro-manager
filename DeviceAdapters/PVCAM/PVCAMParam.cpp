@@ -226,6 +226,11 @@ int PvUniversalParam::Set(double aValue)
     }
 }
 
+int PvUniversalParam::Reset()
+{
+    return plSetParam(mValueDefault);
+}
+
 
 int PvUniversalParam::Read()
 {
@@ -343,6 +348,7 @@ int PvUniversalParam::initialize()
     {
         plGetParam( ATTR_MIN, mValueMin );
         plGetParam( ATTR_MAX, mValueMax );
+        plGetParam( ATTR_DEFAULT, mValueDefault );
     }
 
     return DEVICE_OK;
