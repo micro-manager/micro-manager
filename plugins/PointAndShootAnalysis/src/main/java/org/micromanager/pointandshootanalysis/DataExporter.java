@@ -78,7 +78,7 @@ public class DataExporter {
             case PARTICLE_AND_BLEACH:
                intensity = d.particleDataTrack().get(startFrame).getNormalizedMaskIncludingBleachAvg();
          }
-         if (intensity != null && intensity > startIntensity && intensity < 1.0) {
+         if (intensity != null && intensity > startIntensity && intensity < 0.95) {
             startFound = true;
          } else {
             startFrame++;
