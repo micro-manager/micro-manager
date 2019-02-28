@@ -150,7 +150,7 @@ public class DataExporter {
       }
       System.out.println("RSquared: " + rSquared + ", t1/2: " + tHalf + " ms");
       FitData fitData = new FitData(dataAsList, 
-              SingleExpRecoveryFunc.class, 
+              func.getClass(), 
               type_, 
               found, 
               rSquared, 
@@ -231,9 +231,9 @@ public class DataExporter {
          FitData fitData = fit(index, type_, fitClass, msLimit);
          // TODO: check which functions was used to fit and do the right one
          PASFunction fitFunc = null;
-         if (fitData.fitType() == SingleExpRecoveryFunc.class) {
+         if (fitClass == SingleExpRecoveryFunc.class) {
             fitFunc = new SingleExpRecoveryFunc(fitData.data());
-         } else if (fitData.fitType() == LinearFunc.class) {
+         } else if (fitClass == LinearFunc.class) {
             fitFunc = new LinearFunc(fitData.data());
          }
          if (fitFunc != null) {
