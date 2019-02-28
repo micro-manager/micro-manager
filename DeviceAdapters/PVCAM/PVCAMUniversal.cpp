@@ -1233,10 +1233,17 @@ int Universal::Initialize()
     prmScanDirectionReset_ = new PvParam<rs_bool>( "PARAM_SCAN_DIRECTION_RESET", PARAM_SCAN_DIRECTION_RESET, this, true );
     if (prmScanDirectionReset_->IsAvailable())
     {
+#if 0
         nRet = prmScanDirectionReset_->Reset(); // Reset to default because camera preserves previous settings.
         if (nRet != DEVICE_OK)
             return LogAdapterError(nRet, __LINE__, "Failed to reset PARAM_SCAN_DIRECTION_RESET");
-
+#else
+        // Workaround: The default scan direction reset is reported as FALSE => disabled but Photometrics
+        // recommends to keep it enabled by default.
+        nRet = prmScanDirectionReset_->SetAndApply(TRUE);
+        if (nRet != DEVICE_OK)
+            return LogAdapterError(nRet, __LINE__, "Failed to set PARAM_SCAN_DIRECTION_RESET to TRUE");
+#endif
         pAct = new CPropertyAction (this, &Universal::OnScanDirectionReset);
         const uns16 cur = prmScanDirectionReset_->Current();
         nRet = CreateProperty(g_Keyword_ScanDirectionReset, (cur == TRUE) ? g_Keyword_Yes : g_Keyword_No,
