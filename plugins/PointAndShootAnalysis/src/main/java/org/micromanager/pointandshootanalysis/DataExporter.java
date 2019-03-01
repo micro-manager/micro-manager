@@ -196,7 +196,8 @@ public class DataExporter {
    public void exportSummary(List<Integer> indices) {
       StringBuilder export = new StringBuilder();
       export.append("title\tID\tParticle Size\tBleach Spot k\t");
-      export.append("Bleach Spot yMax\tBleach Spot t1/2\tBleach Spot rSq\n");
+      export.append("Bleach Spot yMax\tBleach Spot t1/2\tBleach Spot rSq\t");
+      export.append("Particle k\tParticle y0\n");
       for (int index : indices) {
          PASData d = data_.get(index);
          if (d != null) {
@@ -208,7 +209,11 @@ public class DataExporter {
             export.append(fitData.parms()[2]).append("\t");  // k
             export.append(fitData.parms()[0]).append("\t");  // A
             export.append(fitData.tHalf()).append("\t");
-            export.append(fitData.rSquared()).append("\n");
+            export.append(fitData.rSquared()).append("\t");
+            FitData particleFitData = fit(index, Type.PARTICLE_AND_BLEACH, LinearFunc.class, null);
+            export.append(particleFitData.parms()[1]).append("\t"); // particle k
+            export.append(particleFitData.parms()[0]).append("\n"); // particle y0:w
+            
             } catch (java.lang.RuntimeException re) {
                export.append("Fit Failure!\n");
             }

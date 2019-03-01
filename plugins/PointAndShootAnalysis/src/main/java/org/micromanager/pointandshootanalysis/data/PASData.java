@@ -177,7 +177,8 @@ public class PASData {
          }
          double preBleachAvg = (preSum / count);
          for (int frame = 0; frame < particleDataTrack().size(); frame++) {
-            if (particleDataTrack().get(frame).getBleachMaskAvg() != null) {
+            if (particleDataTrack().get(frame) != null && 
+                    particleDataTrack().get(frame).getBleachMaskAvg() != null) {
                double value = particleDataTrack().get(frame).getBleachMaskAvg() - cameraOffset;
                double normalizedValue = value / controlAvgIntensity.get(frame);
                particleDataTrack().get(frame).setNormalizedBleachMaskAvg(
@@ -192,6 +193,10 @@ public class PASData {
            final int cameraOffset,
            final Map<Integer, Double> controlAvgIntensity
    ) {
+      if (particleDataTrack() == null) {
+         System.out.println("Particle track: " + id() + "had no data to be normalized");
+         return;
+      }
       double preSum = 0.0;
       int count = 0;
 
@@ -207,7 +212,8 @@ public class PASData {
       }
       double preBleachAvg = (preSum / count);
       for (int frame = 0; frame < particleDataTrack().size(); frame++) {
-         if (particleDataTrack().get(frame).getMaskIncludingBleachAvg() != null) {
+         if (particleDataTrack().get(frame) != null &&
+                 particleDataTrack().get(frame).getMaskIncludingBleachAvg() != null) {
             double value = particleDataTrack().get(frame).getMaskIncludingBleachAvg() - cameraOffset;
             double normalizedValue = value / controlAvgIntensity.get(frame);
             particleDataTrack().get(frame).setNormalizedMaskIncludingBleachAvg(

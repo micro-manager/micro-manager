@@ -436,8 +436,10 @@ public class PointAndShootAnalyzer implements Runnable {
                Point2D_I32 centroid = ContourStats.centroid(particle);
                boolean isBleachedParticle = false;
                for (Map<Integer, ParticleData> track : tracks) {
-                  if (centroid.distance(track.get(0).getCentroid()) < DIST_UNCERTAINTY) {
-                     isBleachedParticle = true;
+                  if (track.get(0) != null) {
+                     if (centroid.distance(track.get(0).getCentroid()) < DIST_UNCERTAINTY) {
+                        isBleachedParticle = true;
+                     }
                   }
                }
                if (!isBleachedParticle) {
@@ -496,31 +498,46 @@ public class PointAndShootAnalyzer implements Runnable {
                controlAvgIntensity.put(frame, (sum / n) - cameraOffset ); 
             }
             
-            // normalize the bleach spot intensities and store with the PASData->ParticleData
+            
+            // Remove PASData that have no particleDataTrack 
+            List<PASData> cleanedPASData = new ArrayList<>();
             for (PASData d : pasData) {
+               if (d.particleDataTrack() != null) {
+                  cleanedPASData.add(d);
+               }
+            }
+            
+            // normalize the bleach spot intensities and store with the PASData->ParticleData
+            for (PASData d : cleanedPASData) {
                d.normalizeBleachSpotIntensities(findMinFramesBefore, 
                        cameraOffset, controlAvgIntensity);
                d.normalizeParticleIncludingBleachIntensities(findMinFramesBefore, 
                        cameraOffset, controlAvgIntensity);
             }
             
-            DataExporter bleachExporter = new DataExporter(studio_, pasData, 
+            if (cleanedPASData.isEmpty()) {
+               // TODO: UI feedback
+               System.out.println("No bleaching events found");
+               return;
+            }
+            
+            DataExporter bleachExporter = new DataExporter(studio_, cleanedPASData, 
                     frameTimeStamps, DataExporter.Type.BLEACH);
-            DataExporter particleABExporter = new DataExporter(studio_, pasData, 
+            DataExporter particleABExporter = new DataExporter(studio_, cleanedPASData, 
                     frameTimeStamps, DataExporter.Type.PARTICLE_AND_BLEACH);
             
                           
             // get intensities of bleach Spots and total particles
             // out of the data structures, and plot them
             List<XYSeries> bleachPlotData = plottableNormalizedBleachSpotIntensities(
-                    pasData, frameTimeStamps) ;
+                    cleanedPASData, frameTimeStamps) ;
             XYSeries[] plots = bleachPlotData.toArray(new XYSeries[bleachPlotData.size()]);
             PlotUtils pu = new PlotUtils(studio_.profile().getSettings(this.getClass()));
             pu.plotData("Bleach Intensity Profile", plots, "Time (ms)",
                     "Normalized Intensity", "", 1.3, WidgetSettings.COLORS, bleachExporter);
       
             List<XYSeries> particlePlotData = plottableNormalizedParticleIntensities(
-                  pasData, frameTimeStamps);
+                  cleanedPASData, frameTimeStamps);
             XYSeries[] particlePlots = particlePlotData.toArray(new XYSeries[particlePlotData.size()]);            
             PlotUtils pu2 = new PlotUtils(studio_.profile().getSettings(this.getClass()));
             pu2.plotData("Particle Intensity Profile", particlePlots, "Time (ms)",
@@ -662,11 +679,13 @@ public class PointAndShootAnalyzer implements Runnable {
          if (d.particleDataTrack() != null && d.id() != null) {
             XYSeries data = new XYSeries(d.id(), false, false);
             for (int frame = 0; frame < d.particleDataTrack().size(); frame++) {
-               Double normalizedBleachMaskAvg = d.particleDataTrack().get(frame).getNormalizedBleachMaskAvg();
-               if (normalizedBleachMaskAvg != null) {
-                  data.add(frameTimeStamps.get(frame).toEpochMilli()
-                          - frameTimeStamps.get(d.framePasClicked()).toEpochMilli(),
-                          normalizedBleachMaskAvg);
+               if (d.particleDataTrack().get(frame) != null) {
+                  Double normalizedBleachMaskAvg = d.particleDataTrack().get(frame).getNormalizedBleachMaskAvg();
+                  if (normalizedBleachMaskAvg != null) {
+                     data.add(frameTimeStamps.get(frame).toEpochMilli()
+                             - frameTimeStamps.get(d.framePasClicked()).toEpochMilli(),
+                             normalizedBleachMaskAvg);
+                  }
                }
             }
             plotData.add(data);
@@ -685,12 +704,14 @@ public class PointAndShootAnalyzer implements Runnable {
                     + d.pasActual().x + ", " + d.pasActual().y,
                     false, false);
             for (int frame = 0; frame < d.particleDataTrack().size(); frame++) {
-               Double normalizedMaskIncludingBleachAvg = 
-                       d.particleDataTrack().get(frame).getNormalizedMaskIncludingBleachAvg();
-               if (normalizedMaskIncludingBleachAvg != null) {
-                  data.add(frameTimeStamps.get(frame).toEpochMilli()
-                          - frameTimeStamps.get(d.framePasClicked()).toEpochMilli(),
-                          normalizedMaskIncludingBleachAvg);
+               if (d.particleDataTrack().get(frame) != null) {
+                  Double normalizedMaskIncludingBleachAvg
+                          = d.particleDataTrack().get(frame).getNormalizedMaskIncludingBleachAvg();
+                  if (normalizedMaskIncludingBleachAvg != null) {
+                     data.add(frameTimeStamps.get(frame).toEpochMilli()
+                             - frameTimeStamps.get(d.framePasClicked()).toEpochMilli(),
+                             normalizedMaskIncludingBleachAvg);
+                  }
                }
             }
             plotData.add(data);

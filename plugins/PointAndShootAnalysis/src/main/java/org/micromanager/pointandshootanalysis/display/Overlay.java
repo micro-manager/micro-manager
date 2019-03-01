@@ -159,16 +159,17 @@ public class Overlay extends AbstractOverlay {
          
          int colorIndex = 0;
          
-         
          if (showControlMasksCheckBox_ != null && showControlMasksCheckBox_.isSelected()) {
-            for (ParticleData p: controlTracksIndexedByFrame_.get(frame)) {
-               gTfm.setColor(controlMaskColor_);
-               List<Point2D_I32> mask = p.getMask();
-               mask.forEach((point) -> {
-                  gTfm.drawRect(point.x, point.y, 1, 1);
-                  // Note: drawLine is much faster the g.draw(new Line2D.Float());
-                  //gTfm.drawLine(point.x, point.y, point.x, point.y);
-               }); 
+            if (controlTracksIndexedByFrame_.get(frame) != null) {
+               for (ParticleData p : controlTracksIndexedByFrame_.get(frame)) {
+                  gTfm.setColor(controlMaskColor_);
+                  List<Point2D_I32> mask = p.getMask();
+                  mask.forEach((point) -> {
+                     gTfm.drawRect(point.x, point.y, 1, 1);
+                     // Note: drawLine is much faster the g.draw(new Line2D.Float());
+                     //gTfm.drawLine(point.x, point.y, point.x, point.y);
+                  });
+               }
             }
          }
          
