@@ -2532,26 +2532,20 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                }
                final int width_expansion = (int) Math.abs(Math.ceil(dx*(nrImages-1)));
                overviewWidthExpansion_ = width_expansion;
-               final int extraWidth = noPositions ? 0 : (int)Math.ceil((maxX-minX)/pixelScaled);
-               final int extraHeight = noPositions ? 0 : (int)Math.ceil((maxY-minY)/pixelScaled);
+               final int extraWidth = (int)Math.ceil((maxX-minX)/pixelScaled);
+               final int extraHeight = (int)Math.ceil((maxY-minY)/pixelScaled);
                final int totalWidth = scaledWidth + width_expansion + extraWidth;
                final int totalHeight = scaledHeight + extraHeight;
                
-               final int idxAccumulator = 1;
+               final int idxAlready = 1;
                final int idxNewImage = 2;
                
-               ImagePlus forProjector = IJ.createImage("For Projector", totalWidth, totalHeight, idxNewImage, imageBitDepth);
-               forProjector.setSlice(idxAccumulator);
-               forProjector.getProcessor().setBackgroundValue(0.0);
-               forProjector.getProcessor().fill();
-               forProjector.setSlice(idxNewImage);
-               forProjector.getProcessor().setBackgroundValue(0.0);
-               forProjector.getProcessor().fill();
-
+               ImagePlus forProjector = IJ.createImage("For Projector", scaledWidth, scaledHeight, idxNewImage, imageBitDepth);
                ij.plugin.ZProjector project = new ij.plugin.ZProjector();
                project.setMethod(ij.plugin.ZProjector.MAX_METHOD);
+               project.setImage(forProjector);
                
-               ImagePlus forDisplay = IJ.createImage("Overview", totalWidth, scaledHeight, 1, imageBitDepth);
+               ImagePlus forDisplay = IJ.createImage("Overview", totalWidth, totalHeight, 1, imageBitDepth);
                overviewIP_ = forDisplay;  // track latest displayed ImagePlus for use outside the acquisition 
                forDisplay.getProcessor().setBackgroundValue(0.0);
                forDisplay.getProcessor().fill();
@@ -2651,24 +2645,27 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         ip.setInterpolationMethod(ImageProcessor.BILINEAR);
                         ip.setRoi(roiOffset, 0, roiWidth, imageHeight);
                         ImageProcessor cropped = ip.crop();
-                        ImageProcessor scaled = cropped.resize(scaledWidth, scaledHeight, true);
+                        ImageProcessor scaledCamera = cropped.resize(scaledWidth, scaledHeight, true);
                         // match sample orientation in physical space; neither ASI nor Shroff conventions match physical coordinates of XY stage but operation different in two cases
                         if (deskewSign<0) {
-                           scaled.flipVertical();
+                           scaledCamera.flipVertical();
                         } else {
-                           scaled.flipHorizontal();
+                           scaledCamera.flipHorizontal();
                         }
                         forProjector.setSlice(idxNewImage);
+                        forProjector.setProcessor(scaledCamera);
+                        int xPosInsert = (int) Math.round(xPosPass - (pos2D.x-minX)/pixelScaled);
+                        int yPosInsert = (int) Math.round((pos2D.y-minY)/pixelScaled);
+                        forDisplay.setRoi(xPosInsert, yPosInsert, scaledWidth, scaledHeight);
+                        forProjector.setSlice(idxAlready);
                         forProjector.getProcessor().fill();
-                        double xPosInsert = xPosPass - (pos2D.x-minX)/pixelScaled;
-                        double yPosInsert = (pos2D.y-minY)/pixelScaled;
-                        forProjector.getProcessor().insert(scaled, (int)Math.round(xPosInsert), (int)Math.round(yPosInsert));  // example at https://imagej.nih.gov/ij/developer/source/ij/plugin/MontageMaker.java.html suggests pixel positions are 0-indexed
-                        project.setImage(forProjector);
+                        ImagePlus croppedPrevious = forDisplay.duplicate();
+                        forProjector.setProcessor(croppedPrevious.getProcessor());  // duplicate will crop per ROI
                         project.doProjection();
-                        forProjector.setSlice(idxAccumulator);
-                        ImageProcessor latest = project.getProjection().getProcessor();
-                        forProjector.setProcessor(latest);
-                        forDisplay.setProcessor(latest);
+                        // insert doesn't seem to work in-place for some reason so create new ImageProcessor object
+                        ImageProcessor tmp = forDisplay.getProcessor().duplicate();
+                        tmp.insert(project.getProjection().getProcessor(), xPosInsert, yPosInsert);
+                        forDisplay.setProcessor(tmp);
                         forDisplay.show();
 
                         xPosPass -= dx;
