@@ -65,6 +65,7 @@
 
       <dependency org="org.boofcv" name="boofcv-ip" rev="0.33-SNAPSHOT"/>
       <dependency org="org.georegression" name="georegression" rev="0.19ns-SNAPSHOT"/>
+      <dependency org="org.ddogleg" name="ddogleg" rev="0.16-SNAPSHOT"/>
       <dependency org="org.ejml" name="core" rev="0.30"/>
 
 		<!-- Not in Maven yet (resolved in 3rdpartypublic/classext) -->

@@ -23,8 +23,8 @@
 		<chain name="resolver-chain" returnFirst="true">
 			<resolver ref="thirdpartypublic3d"/>
 			<resolver ref="central"/>
-			<resolver ref="imagej-net"/>
 			<resolver ref="nico"/>
+			<resolver ref="imagej-net"/>
 			<resolver ref="thirdpartypublic"/>
 			<resolver ref="thirdpartynonfree"/>
 			<resolver ref="thirdpartynonfree"/>
