@@ -25,7 +25,9 @@ import boofcv.alg.filter.binary.BinaryImageOps;
 import boofcv.alg.filter.binary.Contour;
 import boofcv.alg.filter.binary.GThresholdImageOps;
 import boofcv.alg.filter.blur.BlurImageOps;
+import boofcv.alg.misc.GImageBandMath;
 import boofcv.alg.misc.GPixelMath;
+import boofcv.concurrency.BoofConcurrency;
 import boofcv.core.image.ConvertImage;
 import boofcv.struct.ConnectRule;
 import boofcv.struct.image.GrayF32;
@@ -202,6 +204,8 @@ public class PointAndShootAnalyzer implements Runnable {
 
       // We have the bleach Coordinates as frame - x/y. Check with the actual images
       List<Map<Integer, ParticleData>> tracks = new ArrayList<>();
+      // Use multiple threads in BoofCV code:
+      BoofConcurrency.USE_CONCURRENT = true;
       try {
          int imgWidth = dataProvider.getAnyImage().getWidth();
          int imgHeight = dataProvider.getAnyImage().getHeight();
@@ -242,13 +246,13 @@ public class PointAndShootAnalyzer implements Runnable {
                     pasEntry.framePasClicked() + findMinFramesAfter_,
                     dataProvider.getAxisLength(Coords.T));
             GrayU16 beforeCV = new GrayU16(x1 - x0, y1 - y0);
-            org.micromanager.pointandshootanalysis.algorithm.GPixelMath.averageBand(
-                  subImage, beforeCV, findMinFrames.getStartFrame(), findMinFrames.getCentralFrame() + 1);
+            GImageBandMath.average(subImage, beforeCV, 
+                    findMinFrames.getStartFrame(), findMinFrames.getCentralFrame() + 1);
             GrayF32 beforeCVF = new GrayF32(x1 - x0, y1 - y0);
             ConvertImage.convert(beforeCV, beforeCVF);
             GrayU16 minBCV = new GrayU16(x1 - x0, y1 - y0);
-            org.micromanager.pointandshootanalysis.algorithm.GPixelMath.minimumBand(
-                  subImage, minBCV, findMinFrames.getCentralFrame(), findMinFrames.getEndFrame());
+            GImageBandMath.minimum(subImage, minBCV, 
+                    findMinFrames.getCentralFrame(), findMinFrames.getEndFrame());
             GrayF32 minBCVF = new GrayF32(x1 - x0, y1 - y0);
             ConvertImage.convert(minBCV, minBCVF);
             GrayF32 dResult = new GrayF32(minBCVF.width, minBCVF.height);
@@ -416,15 +420,14 @@ public class PointAndShootAnalyzer implements Runnable {
             //GrayU16 img0Gauss = new GrayU16(img0.getWidth(), img0.getHeight());
             //BlurImageOps.gaussian(img0, img0Gauss, 3, -1, null);
             
-            int liThreshold = (int) GThresholdImageOps.computeLi(
+            int otsuThreshold = (int) GThresholdImageOps.computeOtsu(
                     img0, 0, img0.getDataType().getMaxValue());
             GrayU8 mask = new GrayU8(img0.getWidth(), img0.getHeight());
-            
+      
+            GThresholdImageOps.threshold(img0, mask, otsuThreshold, false);
             // Remove small particles
             mask = BinaryImageOps.erode4(mask, 1, null);
             mask = BinaryImageOps.dilate4(mask, 1, null);
-      
-            GThresholdImageOps.threshold(img0, mask, liThreshold, false);
             GrayS32 contourImg = new GrayS32(img0.getWidth(), img0.getHeight());
             List<Contour> contours = 
                     BinaryImageOps.contour(mask, ConnectRule.FOUR, contourImg);
