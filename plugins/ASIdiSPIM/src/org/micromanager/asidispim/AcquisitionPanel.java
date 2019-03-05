@@ -1461,7 +1461,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private int updateGridXCount() {
 	   double range = ((Double)gridXStartField_.getValue()) - ((Double)gridXStopField_.getValue());
 	   double delta = ((Double)gridXDeltaField_.getValue());
-	   if (Math.signum(range) != Math.signum(delta)) {
+	   if (Math.signum(range) != Math.signum(delta) && 
+	         !MyNumberUtils.floatsEqual(Math.abs(range), 0.0)) {
 		   delta *= -1;
 		   gridXDeltaField_.setValue(delta);
 	   }
@@ -1473,7 +1474,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private int updateGridYCount() {
 	   double range = ((Double)gridYStartField_.getValue()) - ((Double)gridYStopField_.getValue());
 	   double delta = ((Double)gridYDeltaField_.getValue());
-	   if (Math.signum(range) != Math.signum(delta)) {
+	   if (Math.signum(range) != Math.signum(delta) && 
+	         !MyNumberUtils.floatsEqual(Math.abs(range), 0.0)) {
 		   delta *= -1;
 		   gridYDeltaField_.setValue(delta);
 	   }
@@ -1485,7 +1487,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private int updateGridZCount() {
 	   double range = ((Double)gridZStartField_.getValue()) - ((Double)gridZStopField_.getValue());
 	   double delta = ((Double)gridZDeltaField_.getValue());
-	   if (Math.signum(range) != Math.signum(delta)) {
+	   if (Math.signum(range) != Math.signum(delta) &&
+	         !MyNumberUtils.floatsEqual(Math.abs(range), 0.0)) {
 		   delta *= -1;
 		   gridZDeltaField_.setValue(delta);
 	   }
