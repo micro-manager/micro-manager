@@ -229,6 +229,7 @@ public class AutofocusUtils {
             
             // make sure we start with the beam on, but we will restore its state later
             // if the beam is off then we will get an erroneous value for the slice position
+            // TODO consider changing this; it leads to beam flash b/c prepareControllerForAquisition will turn it off again
             final boolean beamOff = props_.getPropValueString(galvoDevice, Properties.Keys.BEAM_ENABLED)
                   .equals(Properties.Values.NO.toString());
             props_.setPropValue(galvoDevice, Properties.Keys.BEAM_ENABLED, Properties.Values.YES);
