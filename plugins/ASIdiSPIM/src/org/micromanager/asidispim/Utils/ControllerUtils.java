@@ -465,8 +465,8 @@ public class ControllerUtils {
       props_.setPropValue(galvoDevice, Properties.Keys.SPIM_FIRSTSIDE,
             settings.firstSideIsA ? "A" : "B", skipScannerWarnings);
       
-      // get the piezo card ready; skip if no piezo specified
-      if (devices_.isValidMMDevice(piezoDevice)) {
+      // get the piezo card ready; skip if no piezo specified or is stage scanning
+      if (devices_.isValidMMDevice(piezoDevice) && !settings.isStageScanning) {
          // if mode SLICE_SCAN_ONLY we have computed slice movement as if we
          //   were moving the piezo but now make piezo stay still
          if (settings.spimMode.equals(AcquisitionModes.Keys.SLICE_SCAN_ONLY)) {
