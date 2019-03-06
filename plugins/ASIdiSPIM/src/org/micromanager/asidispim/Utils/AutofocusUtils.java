@@ -280,10 +280,14 @@ public class AutofocusUtils {
             double piezoPosition = originalPiezoPosition;
             double galvoPosition = originalGalvoPosition;
             if (!centerAtCurrentZ) {
-               positions_.setPosition(piezoDevice, piezoCenter);
-               piezoPosition = piezoCenter;
-               positions_.setPosition(galvoDevice, Directions.Y, galvoCenter);
-               galvoPosition = galvoCenter;
+               if (devices_.isValidMMDevice(piezoDevice)) {
+                  positions_.setPosition(piezoDevice, piezoCenter);
+                  piezoPosition = piezoCenter;
+               }
+               if (devices_.isValidMMDevice(galvoDevice)) {
+                  positions_.setPosition(galvoDevice, Directions.Y, galvoCenter);
+                  galvoPosition = galvoCenter;
+               }
             }
             
             double[] focusScores = new double[nrImages];
@@ -506,8 +510,12 @@ public class AutofocusUtils {
 
                   // move back to original position if needed
                   if (!centerAtCurrentZ) {
-                     positions_.setPosition(piezoDevice, originalPiezoPosition);
-                     positions_.setPosition(galvoDevice, Directions.Y, originalGalvoPosition);
+                     if (devices_.isValidMMDevice(piezoDevice)) {
+                        positions_.setPosition(piezoDevice, originalPiezoPosition);
+                     }
+                     if (devices_.isValidMMDevice(galvoDevice)) {
+                        positions_.setPosition(galvoDevice, Directions.Y, originalGalvoPosition);
+                     }
                   }
                   
                   // determine if it was "successful" which for now we define as
