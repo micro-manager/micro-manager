@@ -2520,7 +2520,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                // core should know correct image dimensions because we have set up camera already
                final int imageWidth = (int)core_.getImageWidth();
                final int imageHeight = (int)core_.getImageHeight();
-               final int imageBitDepth = (int)core_.getImageBitDepth();
                final double pixelSize = core_.getPixelSizeUm();
                final double pixelScaled = pixelSize * downsampleY;
                overviewPixelSize_ = pixelScaled;
@@ -2539,20 +2538,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                final int extraHeight = (int)Math.ceil((maxY-minY)/pixelScaled);
                final int totalWidth = scaledWidth + width_expansion + extraWidth;
                final int totalHeight = scaledHeight + extraHeight;
+               final int bitDepth = 16;
                
-               final int idxAlready = 1;
-               final int idxNewImage = 2;
-               
-               ImagePlus forProjector = IJ.createImage("For Projector", scaledWidth, scaledHeight, idxNewImage, imageBitDepth);
-               ij.plugin.ZProjector project = new ij.plugin.ZProjector();
-               project.setMethod(ij.plugin.ZProjector.MAX_METHOD);
-               project.setImage(forProjector);
-               
-               ImagePlus forDisplay = IJ.createImage("Overview", totalWidth, totalHeight, 1, imageBitDepth);
-               overviewIP_ = forDisplay;  // track latest displayed ImagePlus for use outside the acquisition 
-               forDisplay.getProcessor().setBackgroundValue(0.0);
-               forDisplay.getProcessor().fill();
-               ij.measure.Calibration cal = forDisplay.getCalibration();
+               ImagePlus overviewImagePlus = IJ.createImage("Overview", totalWidth, totalHeight, 1, bitDepth);  // hard-code to short (16-bit) pixels
+               overviewIP_ = overviewImagePlus;  // track latest displayed ImagePlus for use outside the acquisition 
+               overviewImagePlus.getProcessor().setBackgroundValue(0.0);
+               overviewImagePlus.getProcessor().fill();
+               ij.measure.Calibration cal = overviewImagePlus.getCalibration();
                cal.pixelWidth = pixelScaled;
                cal.pixelHeight = pixelScaled;
                cal.setUnit("um");
@@ -2564,6 +2556,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      win = ij.WindowManager.getWindow("Overview");
                   }
                }
+               overviewImagePlus.show();
                
                // do acquisition looping over all positions
                for (int positionNum = 0; positionNum < nrPositions; positionNum++) {
@@ -2593,8 +2586,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      try {
                         // blocking call; will wait for stages to move
                         MultiStagePosition.goToPosition(nextPosition, core_);
-//                        core_.setXYPosition(nextPosition.getX(), nextPosition.getX());
-//                        core_.waitForDevice(label);
                      } catch (Exception ex) {
                         // ignore errors here, only log them.  Seems to happen if stage is undefined
                         ReportingUtils.logError(ex, "Couldn't fully go to requested position");
@@ -2644,10 +2635,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         // reset our wait timer since we got an image
                         startTime = System.currentTimeMillis();
 
+                        // crop/scale/flip incoming camera image to make it match overview
                         ImageProcessor ip = AutofocusUtils.makeProcessor(timg);
                         ip.setInterpolationMethod(ImageProcessor.BILINEAR);
                         ip.setRoi(roiOffset, 0, roiWidth, imageHeight);
-                        ImageProcessor cropped = ip.crop();
+                        ImageProcessor cropped = ip.crop().convertToShort(false);
                         ImageProcessor scaledCamera = cropped.resize(scaledWidth, scaledHeight, true);
                         // match sample orientation in physical space; neither ASI nor Shroff conventions match physical coordinates of XY stage but operation different in two cases
                         if (deskewSign<0) {
@@ -2655,22 +2647,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         } else {
                            scaledCamera.flipHorizontal();
                         }
-                        forProjector.setSlice(idxNewImage);
-                        forProjector.setProcessor(scaledCamera);
+                        
+                        // figure out where in the overview we will add the incoming camera image data
                         int xPosInsert = (int) Math.round(xPosPass - (pos2D.x-minX)/pixelScaled);
                         int yPosInsert = (int) Math.round((pos2D.y-minY)/pixelScaled);
-                        forDisplay.setRoi(xPosInsert, yPosInsert, scaledWidth, scaledHeight);
-                        forProjector.setSlice(idxAlready);
-                        forProjector.getProcessor().fill();
-                        ImagePlus croppedPrevious = forDisplay.duplicate();
-                        forProjector.setProcessor(croppedPrevious.getProcessor());  // duplicate will crop per ROI
-                        project.doProjection();
-                        // insert doesn't seem to work in-place for some reason so create new ImageProcessor object
-                        ImageProcessor tmp = forDisplay.getProcessor().duplicate();
-                        tmp.insert(project.getProjection().getProcessor(), xPosInsert, yPosInsert);
-                        forDisplay.setProcessor(tmp);
-                        forDisplay.show();
 
+                        // "copy" the camera pixel data while keeping the maximum value for each pixel
+                        (overviewImagePlus.getProcessor()).copyBits(scaledCamera, xPosInsert, yPosInsert, ij.process.Blitter.MAX);
+                        
+                        // update the displayed overview image
+                        overviewImagePlus.setRoi(xPosInsert, yPosInsert, scaledWidth, scaledHeight);
+                        overviewImagePlus.updateAndDraw();
+                        
                         xPosPass -= dx;
                         counter++;
                         if (counter >= nrImages) {
@@ -2685,6 +2673,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         throw new ASIdiSPIMException("No image arrived in 5 seconds");
                      }
                   }  // end loop getting images from one pass
+                  
+                  // update the contrast at the end of each pass, using the whole image
+                  overviewImagePlus.deleteRoi();
+                  ij.plugin.ContrastEnhancer contrast = new ij.plugin.ContrastEnhancer();
+                  contrast.stretchHistogram(overviewImagePlus, 0.4);
+                  overviewImagePlus.updateAndRepaintWindow();
 
                   // if we are using demo camera then add some extra time to let controller finish
                   // since we got images without waiting for controller to actually send triggers
