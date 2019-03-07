@@ -176,6 +176,8 @@ const at_u32 MAX_IMAGES_PER_DMA = 64;
 const at_u32 MAX_CHARS_PER_DESCRIPTION = 64;
 const at_u32 MAX_CHARS_PER_OA_DESCRIPTION = 256;
 
+const at_u32 FRAME_BUFFER_SIZE = 40 * 1024 * 1024;
+
 // singleton instance
 AndorCamera* AndorCamera::instance_ = 0;
 unsigned int AndorCamera::refCount_ = 0;
@@ -750,7 +752,7 @@ int AndorCamera::GetListOfAvailableCameras()
       roi_.ySize = fullFrameY_;
 
       binSize_ = 1;
-      fullFrameBuffer_ = new short[fullFrameX_ * fullFrameY_];
+      fullFrameBuffer_ = new short[FRAME_BUFFER_SIZE];
 
       // setup image parameters
       // ----------------------
@@ -780,7 +782,7 @@ int AndorCamera::GetListOfAvailableCameras()
             return nRet;
       }
 
-	  PopulateBinningDropdown();
+      PopulateBinningDropdown();
 
       // pixel type
       if(!HasProperty(MM::g_Keyword_PixelType))
@@ -3951,9 +3953,7 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
    */
    int AcqSequenceThread::svc(void)
    {
-      at_32 series(0);
-      at_32 seriesInit(0);
-      unsigned ret;
+      unsigned int ret;
       std::ostringstream os;
 
       camera_->Log("Starting Andor svc\n");
@@ -3963,101 +3963,44 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
       at_u32 bytesPerPixel(0);
 
       camera_->CalculateAndSetupCameraImageBuffer(width, height, bytesPerPixel);
-
-      long timePrev = GetTickCount();
-      long imageWait = 0;
-
-      // wait for frames to start coming in
-      do
-      {
-         ret = camera_->GetCameraAcquisitionProgress(&series);
-         if (ret != DRV_SUCCESS)
-            return ret;
-
-         CDeviceUtils::SleepMs(waitTime_);
-
-      } while (series == seriesInit && !stop_);
       camera_->Log("Images appearing");
-
-      at_32 seriesPrev = 0;
+      
+      at_32 imageCountFirst(0), imageCountLast(0);
 
       do
       {
-         {
-            DriverGuard dg(camera_);
-            ret = GetTotalNumberImagesAcquired(&series);
-            //os.str("");
-            //os << "[svc] Thread GetTotalNumberImagesAcquired returned: " << ret << " Series number returned was: " << series << endl;
-            //camera_->Log(os.str().c_str());
-         }
-		
-		
-         if (ret == DRV_SUCCESS)
-         {
-            if (series > seriesPrev)
-            {
-               at_32 imageCountFirst, imageCountLast;
-               int returnc;
-               returnc = GetNumberNewImages(&imageCountFirst, &imageCountLast);
-               if (ret != DRV_SUCCESS)
-               {
-                  os.str("");
-                  os << "GetNumberNewImages PushImage error : " << ret << " first: " << imageCountFirst << " last: " << imageCountLast << endl;
-                  camera_->Log(os.str().c_str());
-                  return (int)ret;
-               }
-               // new frame arrived
-               int retCode = camera_->PushImage(width, height, bytesPerPixel, imageCountFirst, imageCountLast);
-               if (retCode != DEVICE_OK)
-               {
-                  os << "PushImage failed with error code " << retCode;
-                  camera_->Log(os.str().c_str());
-                  printf("%s\n", os.str().c_str());
-                  os.str("");
-                  //camera_->StopSequenceAcquisition();
-                  //return ret;
-               }
-
-               // report time elapsed since previous frame
-               //printf("Frame %d captured at %ld ms!\n", ++frameCounter, GetTickCount() - timePrev);
-			   
-               seriesPrev = series;
-               timePrev = GetTickCount();
-            } 
-            else 
-            {
-               imageWait = GetTickCount() - timePrev;
-               if (imageWait > imageTimeOut_) {
-                  os << "Time out reached at frame " << camera_->imageCounter_;
-                  camera_->LogMessage("Time out reached", true);
-                  printf("%s\n", os.str().c_str());
-                  os.str("");
-                  camera_->StopCameraAcquisition();
-                  return 0;
-               }
-            }
-            
-            CDeviceUtils::SleepMs(waitTime_);
-
-         }
-
-
+        ret = WaitForAcquisitionTimeOut(2000);
+        if (ret == DRV_SUCCESS)
+        {
+          ret = GetNumberNewImages(&imageCountFirst, &imageCountLast);
+          if (ret != DRV_SUCCESS)
+          {
+            os.str("");
+            os << "GetNumberNewImages PushImage error : " << ret << " first: " << imageCountFirst << " last: " << imageCountLast << endl;
+            camera_->Log(os.str().c_str());
+            return (int)ret;
+          }
+          // new frame arrived
+          int retCode = camera_->PushImage(width, height, bytesPerPixel,  imageCountFirst, imageCountLast);
+          if (retCode != DEVICE_OK)
+          {
+            os << "PushImage failed with error code " << retCode;
+            camera_->Log(os.str().c_str());
+            printf("%s\n", os.str().c_str());
+            os.str("");
+          }
+        } 
+        else 
+        {
+          os << "Time out reached at frame " << camera_->imageCounter_;
+          camera_->LogMessage("Time out reached", true);
+          printf("%s\n", os.str().c_str());
+          os.str("");
+          camera_->StopCameraAcquisition();
+          return 0;
+        }
       }
-
-      while (ret == DRV_SUCCESS && camera_->imageCounter_ < numImages_ && !stop_);
-      
-	   
-
-      if (ret != DRV_SUCCESS && series != 0)
-      {
-         camera_->StopCameraAcquisition();
-
-         os << "Error: " << ret;
-         printf("%s\n", os.str().c_str());
-         os.str("");
-		
-         return ret;
-      }
+      while ((imageCountLast < numImages_) && !stop_);
 
       if (stop_)
       {
@@ -4065,15 +4008,13 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
          return DEVICE_OK;
       }
 
-      if ((series-seriesInit) == numImages_)
+      if (imageCountLast != numImages_)
       {
          printf("Did not get the intended number of images\n");
          camera_->StopCameraAcquisition();
          return DEVICE_OK;
       }
 
-      os << "series: " << series << " seriesInit: " << seriesInit << " numImages: "<< numImages_;
-      printf("%s\n", os.str().c_str());
       camera_->LogMessage("Aquire Thread: We can get here if we are not fast enough", true);
       camera_->StopCameraAcquisition();
       return 3; // we can get here if we are not fast enough.  Report?  
@@ -4345,56 +4286,38 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
    * In case of error or if the sequence is finished StopSequenceAcquisition()
    * is called, which will raise the stop_ flag and cause the thread to exit.
    */
-   int AndorCamera::PushImage(at_u32 width, at_u32 height, at_u32 bytesPerPixel, at_32 imageCountFirst, at_32 imageCountLast)
+   int AndorCamera::PushImage(at_u32 width, at_u32 height, at_u32 bytesPerPixel, at_32& imageCountFirst, at_32& imageCountLast)
    {
       if (SRRFControl_->GetSRRFEnabled())
       {
          return PushImageWithSRRF(imageCountFirst, imageCountLast);
       }
-
-      at_u32 imagesPerDMA;
+      
       at_32 validFirst = 0, validLast = 0;
 
       {
          DriverGuard dg(this);
-         unsigned ret;
-         ret = GetImagesPerDMA(&imagesPerDMA);
 
-         long imagesAvailable = imageCountLast - imageCountFirst;
-
-         if( (unsigned long) imagesAvailable >= imagesPerDMA)
+         at_u32 maxFramesInBuffer = FRAME_BUFFER_SIZE / (width * height);
+         at_u32 imagesAvailable = imageCountLast - imageCountFirst + 1;
+         
+         if (imagesAvailable > maxFramesInBuffer)
          {
-            imagesAvailable = imagesPerDMA-1;
+            imagesAvailable = maxFramesInBuffer;
          }
 
-         if(stopOnOverflow_)
+         if (stopOnOverflow_)
          {
-            imageCountLast = imageCountFirst+imagesAvailable; //get oldest images
+            imageCountLast = imageCountFirst + imagesAvailable - 1; //get oldest images
          }
          else
          {
-            imageCountFirst = imageCountLast-imagesAvailable; //get newest images
+            imageCountFirst = imageCountLast - imagesAvailable + 1; //get newest images
          }
-
-         unsigned long imageBufferSizePixels = (imagesAvailable + 1)*width*height;
-         if (NeedToAllocateExtraBuffers(imageBufferSizePixels))
+         unsigned long imageBufferSizePixels = imagesAvailable * width * height;
+         int ret = GetImages16(imageCountFirst,imageCountLast, (WORD*) fullFrameBuffer_, imageBufferSizePixels, &validFirst, &validLast);
+         if (ret != DRV_SUCCESS) 
          {
-            delete[] fullFrameBuffer_;
-            fullFrameBuffer_ = new short[imageBufferSizePixels];
-         }
-
-         ret = GetImages16(imageCountFirst,imageCountLast, (WORD*) fullFrameBuffer_, imageBufferSizePixels, &validFirst, &validLast);
-         if (ret == DRV_NO_NEW_DATA) {
-           int status = 0;
-           ret = GetStatus (&status);
-           if (status == DRV_ACQUIRING) {
-             ret = WaitForAcquisition ();
-             if (ret != DRV_SUCCESS) {
-               return ret;
-             }
-           }
-         }
-         else if (ret != DRV_SUCCESS) {
            return ret;
          }
 
@@ -4403,46 +4326,51 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
       // process image
       // imageprocesssor now called from core
 
-     if(validLast > sequenceLength_) 
-            validLast = sequenceLength_; //don't push more images at the circular buffer than are in the sequence.  
+      if (validLast > sequenceLength_) 
+        validLast = sequenceLength_; //don't push more images at the circular buffer than are in the sequence.  
 
-      int retCode;
       short*  imagePtr = fullFrameBuffer_;
       for(int i=validFirst; i<=validLast; i++)
       {
-
-         // create metadata
-         char label[MM::MaxStrLength];
-         this->GetLabel(label);
-
-         Metadata md;
-         AddMetadataInfo(md);
-
-         imageCounter_++;
-
-         // This method inserts new image in the circular buffer (residing in MMCore)
-         retCode = GetCoreCallback()->InsertImage(this, (unsigned char*) imagePtr,
-            width,
-            height,
-            bytesPerPixel,
-            md.Serialize().c_str());
-
-         if (!stopOnOverflow_ && DEVICE_BUFFER_OVERFLOW == retCode)
-         {
-            // do not stop on overflow - just reset the buffer
-            GetCoreCallback()->ClearImageBuffer(this);
-            GetCoreCallback()->InsertImage(this, (unsigned char*) imagePtr,
-               width,
-               height,
-               bytesPerPixel,
-               md.Serialize().c_str(),
-               false);
-         }
-
-         imagePtr += width*height;
+        InsertImage(width, height, bytesPerPixel, (unsigned char*)imagePtr);
+        imagePtr += width*height;
       }
 
       return DEVICE_OK;
+   }
+
+   /*
+   * Inserts Image and MetaData into MMCore circular Buffer
+   */
+   int AndorCamera::InsertImage(at_u32 width, at_u32 height, at_u32 bytesPerPixel, unsigned char* imagePtr)
+   {
+     MMThreadGuard g(imgPixelsLock_);
+
+     int retCode;
+     Metadata md;
+     AddMetadataInfo(md);
+
+     imageCounter_++;
+
+     // This method inserts new image in the circular buffer (residing in MMCore)
+     retCode = GetCoreCallback()->InsertImage(this, imagePtr,
+       width,
+       height,
+       bytesPerPixel,
+       md.Serialize().c_str());
+
+     if (!stopOnOverflow_ && DEVICE_BUFFER_OVERFLOW == retCode)
+     {
+       // do not stop on overflow - just reset the buffer
+       GetCoreCallback()->ClearImageBuffer(this);
+       GetCoreCallback()->InsertImage(this, (unsigned char*)imagePtr,
+         width,
+         height,
+         bytesPerPixel,
+         md.Serialize().c_str(),
+         false);
+     }
+     return retCode;
    }
 
 

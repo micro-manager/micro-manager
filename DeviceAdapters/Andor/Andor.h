@@ -184,7 +184,8 @@ public:
 
    // custom interface for the thread
    void CalculateAndSetupCameraImageBuffer(at_u32 & width, at_u32 & height, at_u32 & bytesPerPixel);
-   int PushImage(at_u32 width, at_u32 height, at_u32 bytesPerPixel, at_32 imageCountFirst, at_32 imageCountLast);
+   int PushImage(at_u32 width, at_u32 height, at_u32 bytesPerPixel, at_32& imageCountFirst, at_32& imageCountLast);
+   int InsertImage(at_u32 width, at_u32 height, at_u32 bytesPerPixel, unsigned char* imagePtr);
    unsigned char * GetCameraImageBuffer() const { return pImgBuffer_; }
    void SetCameraImageBuffer(unsigned char * pBuffer) { pImgBuffer_ = pBuffer; }
 
@@ -245,7 +246,7 @@ private:
 
    long lSnapImageCnt_;
    std::vector<std::string> PreAmpGains_;
-   long currentGain_;   
+   long currentGain_;
 
    enum CROPMODE {
       OFF,
@@ -258,7 +259,7 @@ private:
    long currentCropHeight_;
    std::vector<std::string> VSpeeds_;
 
-
+   MMThreadLock imgPixelsLock_;
    double currentExpMS_;
 
    float ReadoutTime_, KeepCleanTime_;
