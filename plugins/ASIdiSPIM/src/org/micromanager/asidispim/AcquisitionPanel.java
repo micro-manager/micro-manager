@@ -2691,18 +2691,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   gui_.getMMCore().setAutoShutter(autoShutter);
                   
                   // make sure SPIM state machine on micromirror and SCAN of XY card are stopped (should normally be but sanity check)
-                  if ((acqSettings.numSides > 1) || acqSettings.firstSideIsA) {
-                     props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE,
-                           Properties.Values.SPIM_IDLE, true);
-                  }
-                  if ((acqSettings.numSides > 1) || !acqSettings.firstSideIsA) {
-                     props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SPIM_STATE,
-                           Properties.Values.SPIM_IDLE, true);
-                  }
-                  if (acqSettings.isStageScanning) {
-                     props_.setPropValue(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_STATE,
-                           Properties.Values.SPIM_IDLE);
-                  }
+                  stopSPIMStateMachines(acqSettings);
                   
                }// end loop over each position
                
@@ -4140,18 +4129,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                            }
 
                            // make sure SPIM state machine on micromirror and SCAN of XY card are stopped (should normally be but sanity check)
-                           if ((acqSettings.numSides > 1) || acqSettings.firstSideIsA) {
-                              props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE,
-                                    Properties.Values.SPIM_IDLE, true);
-                           }
-                           if ((acqSettings.numSides > 1) || !acqSettings.firstSideIsA) {
-                              props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SPIM_STATE,
-                                    Properties.Values.SPIM_IDLE, true);
-                           }
-                           if (acqSettings.isStageScanning) {
-                              props_.setPropValue(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_STATE,
-                                    Properties.Values.SPIM_IDLE);
-                           }
+                           stopSPIMStateMachines(acqSettings);
                         }
                      }
                   }
@@ -4358,6 +4336,41 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       return true;
    }
    
+   
+   private void stopSPIMStateMachines(AcquisitionSettings acqSettings) throws Exception {
+      
+      // stop micro-mirror cards
+      if ((acqSettings.numSides > 1) || acqSettings.firstSideIsA) {
+         props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE,
+               Properties.Values.SPIM_IDLE, true);
+      }
+      if ((acqSettings.numSides > 1) || !acqSettings.firstSideIsA) {
+         props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SPIM_STATE,
+               Properties.Values.SPIM_IDLE, true);
+      }
+      
+      if (acqSettings.isStageScanning) {
+         // give the stage scan 5 seconds to clean itself up, after which we stop it
+         // once all images come in there is still a time when stage is moving back to its start/center position
+         final int timeoutStageScanCleanupMs = 5000;
+         final long deadline = System.currentTimeMillis() + timeoutStageScanCleanupMs;
+         boolean done = false;
+         while (!done) {
+            done = (props_.getPropValueStringForceRefresh(Devices.Keys.XYSTAGE,
+                  Properties.Keys.STAGESCAN_STATE)).equals(Properties.Values.SPIM_IDLE.toString());
+            if (!done && (System.currentTimeMillis() > deadline)) {
+               // force-set to idle
+               props_.setPropValue(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_STATE,
+                     Properties.Values.SPIM_IDLE);
+               ReportingUtils.logError("Force-set XY stage scan to IDLE state.");
+               done = true;
+            }
+            if (!done) {
+               Thread.sleep(25);
+            }
+         }
+      }
+   }
    
    /**
     * Called whenever position updater has refreshed positions
