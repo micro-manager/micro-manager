@@ -8,7 +8,8 @@
 // COPYRIGHT:     University of California, Berkeley, 2016
 // LICENSE:       LGPL
 //
-// AUTHOR:        Henry Pinkard, hbp@berkeley.edu, 12/13/2016  
+// AUTHOR:        Henry Pinkard, hbp@berkeley.edu, 12/13/2016
+// AUTHOR:        Zack Phillips, zkphil@berkeley.edu, 3/1/2019
 //
 //
 
@@ -32,12 +33,14 @@
 #define ERR_COMMUNICATION 107
 #define ERR_NO_PORT_SET 108
 #define ERR_VERSION_MISMATCH 109
+#define COMMAND_TERMINATOR '\n'
+#define SERIAL_DELAY_MS 30
 
-class CLEDArrayVirtualShutter : public CShutterBase<CLEDArrayVirtualShutter>
+class LedArrayVirtualShutter : public CShutterBase<LedArrayVirtualShutter>
 {
 public:
-   CLEDArrayVirtualShutter();
-   ~CLEDArrayVirtualShutter();
+   LedArrayVirtualShutter();
+   ~LedArrayVirtualShutter();
   
    // Device API
    // ----------
@@ -60,11 +63,11 @@ private:
    bool initialized_;
 };
 
-class CLEDArray: public  CSLMBase<CLEDArray>
+class LedArray: public  CSLMBase<LedArray>
 {
 public:
-   CLEDArray();
-   ~CLEDArray();
+   LedArray();
+   ~LedArray();
   
    // MMDevice API
    // ------------
@@ -255,11 +258,11 @@ public:
       int OnShutterOpen(MM::PropertyBase* pPropt, MM::ActionType eAct);
 	  int OnAperture(MM::PropertyBase* pPropt, MM::ActionType eAct);	 
 	  int OnDistance(MM::PropertyBase* pPropt, MM::ActionType eAct);
-	  int OnType(MM::PropertyBase* pPropt, MM::ActionType eAct);
-	  int OnMinNA(MM::PropertyBase* pPropt, MM::ActionType eAct);
-	  int OnMaxNA(MM::PropertyBase* pPropt, MM::ActionType eAct);
+	  int OnPatternOrientation(MM::PropertyBase* pPropt, MM::ActionType eAct);
+	  int OnAnnulusWidth(MM::PropertyBase* pProp, MM::ActionType pAct);
 	  int OnLED(MM::PropertyBase* pPropt, MM::ActionType eAct);
 	  int OnReset(MM::PropertyBase* pPropt, MM::ActionType eAct);
+	  int OnCommand(MM::PropertyBase* pPropt, MM::ActionType eAct);
 
 private:
    
@@ -275,30 +278,38 @@ private:
 	bool IsPortAvailable() {return portAvailable_;}
 
 	long shutterOpen_, bf_, df_;
-	double numa_,minna_, maxna_, distMM_;
-	long red_, green_, blue_;
 	long lsingle_; // LED index
 	std::string lmult_;
-	std::string pattern_;
-	std::string type_;
-	std::string indices_;
+
+	std::string _pattern;
+	std::string _pattern_orientation;
+	std::string _led_indicies;
+	std::string _command;
+	std::string _serial_answer;
+	double numerical_aperture;
+	double annulus_width;
+	double array_distance_z;
+	long led_count;
+	long color_r, color_g, color_b;
+	double * * led_positions_cartesian;
 
 	// Action functions with LEDs:
-    int ColorUpdate(long redint, long greenint, long blueint);
-	int SLED(std::string index);
-	int MLED(std::string indices);
-	int DF();
-	int BF();
-	int DPC(std::string type);
-	int CDPC(long redint, long greenint, long blueint);
-	int Annul(double minna, double maxna);
-	int hAnnul(std::string type, double minna, double maxna);
-	int NumA(double numa);
-	int ArrayDist(double dist);
-	int Off();
+    int UpdateColor(long redint, long greenint, long blueint);
+	int DrawLedList(const char * led_list_char);
+	int DrawDpc(std::string type);
+	int DrawAnnulus(double minna, double maxna);
+	int DrawHalfAnnulus(std::string type, double minna, double maxna);
+	int SetNumericalAperture(double numa);
+	int SetArrayDistance(double dist);
+	int Clear();
 	int UpdatePattern();
 	int Reset();
 	int ReadResponse();
+	int GetDeviceParameters();
+	int SetMachineMode(bool mode);
+	int SendCommand(const char * command, bool get_response);
+	int GetResponse();
+	int SyncCurrentParameters();
 
 	unsigned char lastModVal_;
 	
