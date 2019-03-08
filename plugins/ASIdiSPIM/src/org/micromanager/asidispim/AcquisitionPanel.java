@@ -1182,99 +1182,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       computeGridButton_ = new JButton("Compute grid");
       computeGridButton_.setBackground(Color.green);
       computeGridButton_.addActionListener(new ActionListener() {
-		@Override
-		public void actionPerformed(ActionEvent arg0) {
-			final boolean useX = useXGridCB_.isSelected();
-			final boolean useY = useYGridCB_.isSelected();
-			final boolean useZ = useZGridCB_.isSelected();
-			final int numX = useX ? updateGridXCount() : 1;
-			final int numY = useY ? updateGridYCount() : 1;
-			final int numZ = useZ ? updateGridZCount() : 1;
-			double centerX = (((Double)gridXStartField_.getValue()) + ((Double)gridXStopField_.getValue()))/2;
-			double centerY = (((Double)gridYStartField_.getValue()) + ((Double)gridYStopField_.getValue()))/2;
-			double centerZ = (((Double)gridZStartField_.getValue()) + ((Double)gridZStopField_.getValue()))/2;
-			double deltaX = (Double)gridXDeltaField_.getValue();
-			double deltaY = (Double)gridYDeltaField_.getValue();
-			double deltaZ = (Double)gridZDeltaField_.getValue();
-			double startY = centerY - deltaY*(numY-1)/2;
-			double startZ = centerZ - deltaZ*(numZ-1)/2;
-			String xy_device = devices_.getMMDevice(Devices.Keys.XYSTAGE);
-			String z_device = devices_.getMMDevice(Devices.Keys.UPPERZDRIVE);
-			
-			if (useX) {
-				try {
-					setVolumeSliceStepSize(Math.abs(deltaX)/Math.sqrt(2));
-					setVolumeSlicesPerVolume(numX);
-					if (!useY && !useZ) {
-						// move to X center if we aren't generating position list with it
-						positions_.setPosition(Devices.Keys.XYSTAGE, Directions.X, centerX);
-						core_.waitForDevice(devices_.getMMDevice(Devices.Keys.XYSTAGE));
-					}
-				} catch (Exception ex) {
-					// not sure what to do in case of error so ignore
-				}
-			} else {
-				// use current X value as center; this was original behavior
-				centerX = positions_.getUpdatedPosition(Devices.Keys.XYSTAGE, Directions.X);
-			}
-			
-			// if we aren't using one axis, use the current position instead of GUI position
-			if (useY && !useZ) {
-			   startZ =  positions_.getUpdatedPosition(Devices.Keys.UPPERZDRIVE);
-			}
-         if (useZ && !useY) {
-            startY =  positions_.getUpdatedPosition(Devices.Keys.XYSTAGE, Directions.Y);
+         @Override
+         public void actionPerformed(ActionEvent arg0) {
+            computeGrid(true, true);
          }
-			
-			if (!useY && !useZ && !clearYZGridCB_.isSelected()) {
-				return;
-			}
-			
-			PositionList pl;
-			try {
-				pl = gui_.getPositionList();
-			} catch (MMScriptException e) {
-				pl = new PositionList();
-			}
-			boolean isPositionListEmpty = pl.getNumberOfPositions() == 0;
-			if (!isPositionListEmpty) {
-				boolean overwrite = MyDialogUtils.getConfirmDialogResult(
-						"Do you really want to overwrite the existing position list?",
-						JOptionPane.YES_NO_OPTION);
-				if (!overwrite) {
-					return;  // nothing to do
-				}
-			}
-			pl = new PositionList();
-			if (useY || useZ) {
-				for (int iZ=0; iZ<numZ; ++iZ) {
-					for (int iY=0; iY<numY; ++iY) {
-						MultiStagePosition msp = new MultiStagePosition();
-						if (useY) {
-						   StagePosition s = new StagePosition();
-						   s.stageName = xy_device;
-						   s.numAxes = 2;
-						   s.x = centerX;
-						   s.y = startY + iY * deltaY;
-						   msp.add(s);
-						}
-						if (useZ) {
-						   StagePosition s2 = new StagePosition();
-						   s2.stageName = z_device;
-						   s2.x = startZ + iZ * deltaZ;
-						   msp.add(s2);
-						}
-						msp.setLabel("Pos_" + iZ + "_" + iY);
-						pl.addPosition(msp);
-					}			
-				}
-			}
-			try {
-				gui_.setPositionList(pl);
-			} catch (MMScriptException ex) {
-				MyDialogUtils.showError(ex, "Couldn't overwrite position list with generated YZ grid");
-			}
-		}
       });
       
       final JButton editPositionListButton2 = new JButton("Edit position list...");
@@ -1290,6 +1201,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       buttonOverviewAcq_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
+            computeGrid(false, false);
             cancelAcquisition_.set(false);
             acquisitionRequested_.set(true);
             ASIdiSPIM.getFrame().gotoAcquisitionTab();
@@ -2465,7 +2377,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                gui_.getMMCore().setExposure((double) acqSettings.sliceTiming.cameraExposure);
                gui_.refreshGUIFromCache();
                
-               // design decision to use the position list even if "Multiple positions (XY)" has been left unchecked
+               // design decision to write the grid to the position list and use it even if "Multiple positions (XY)" has been left unchecked
                // maybe this is not a good idea, should revisit later
                
                boolean noPositions = false;  // will set to true in the case that there are no position list (just use current position)
@@ -4336,7 +4248,110 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       return true;
    }
    
+   /**
+    * Computes grid (position list as well as slices/spacing) based on current settings
+    * @param acqSettings
+    * @param doZgrid
+    * @throws Exception
+    */
+   private void computeGrid(boolean promptOnOverwrite, boolean doZgrid) {
+      final boolean useX = useXGridCB_.isSelected();
+      final boolean useY = useYGridCB_.isSelected();
+      final boolean useZ = useZGridCB_.isSelected() && doZgrid;
+      final int numX = useX ? updateGridXCount() : 1;
+      final int numY = useY ? updateGridYCount() : 1;
+      final int numZ = useZ ? updateGridZCount() : 1;
+      double centerX = (((Double)gridXStartField_.getValue()) + ((Double)gridXStopField_.getValue()))/2;
+      double centerY = (((Double)gridYStartField_.getValue()) + ((Double)gridYStopField_.getValue()))/2;
+      double centerZ = (((Double)gridZStartField_.getValue()) + ((Double)gridZStopField_.getValue()))/2;
+      double deltaX = (Double)gridXDeltaField_.getValue();
+      double deltaY = (Double)gridYDeltaField_.getValue();
+      double deltaZ = (Double)gridZDeltaField_.getValue();
+      double startY = centerY - deltaY*(numY-1)/2;
+      double startZ = centerZ - deltaZ*(numZ-1)/2;
+      String xy_device = devices_.getMMDevice(Devices.Keys.XYSTAGE);
+      String z_device = devices_.getMMDevice(Devices.Keys.UPPERZDRIVE);
+
+      if (useX) {
+         try {
+            setVolumeSliceStepSize(Math.abs(deltaX)/Math.sqrt(2));
+            setVolumeSlicesPerVolume(numX);
+            if (!useY && !useZ) {
+               // move to X center if we aren't generating position list with it
+               positions_.setPosition(Devices.Keys.XYSTAGE, Directions.X, centerX);
+               core_.waitForDevice(devices_.getMMDevice(Devices.Keys.XYSTAGE));
+            }
+         } catch (Exception ex) {
+            // not sure what to do in case of error so ignore
+         }
+      } else {
+         // use current X value as center; this was original behavior
+         centerX = positions_.getUpdatedPosition(Devices.Keys.XYSTAGE, Directions.X);
+      }
+
+      // if we aren't using one axis, use the current position instead of GUI position
+      if (useY && !useZ) {
+         startZ =  positions_.getUpdatedPosition(Devices.Keys.UPPERZDRIVE);
+      }
+      if (useZ && !useY) {
+         startY =  positions_.getUpdatedPosition(Devices.Keys.XYSTAGE, Directions.Y);
+      }
+
+      if (!useY && !useZ && !clearYZGridCB_.isSelected()) {
+         return;
+      }
+
+      PositionList pl;
+      try {
+         pl = gui_.getPositionList();
+      } catch (MMScriptException e) {
+         pl = new PositionList();
+      }
+      boolean isPositionListEmpty = pl.getNumberOfPositions() == 0;
+      if (!isPositionListEmpty && promptOnOverwrite) {
+         boolean overwrite = MyDialogUtils.getConfirmDialogResult(
+               "Do you really want to overwrite the existing position list?",
+               JOptionPane.YES_NO_OPTION);
+         if (!overwrite) {
+            return;  // nothing to do
+         }
+      }
+      pl = new PositionList();
+      if (useY || useZ) {
+         for (int iZ=0; iZ<numZ; ++iZ) {
+            for (int iY=0; iY<numY; ++iY) {
+               MultiStagePosition msp = new MultiStagePosition();
+               if (useY) {
+                  StagePosition s = new StagePosition();
+                  s.stageName = xy_device;
+                  s.numAxes = 2;
+                  s.x = centerX;
+                  s.y = startY + iY * deltaY;
+                  msp.add(s);
+               }
+               if (useZ) {
+                  StagePosition s2 = new StagePosition();
+                  s2.stageName = z_device;
+                  s2.x = startZ + iZ * deltaZ;
+                  msp.add(s2);
+               }
+               msp.setLabel("Pos_" + iZ + "_" + iY);
+               pl.addPosition(msp);
+            }        
+         }
+      }
+      try {
+         gui_.setPositionList(pl);
+      } catch (MMScriptException ex) {
+         MyDialogUtils.showError(ex, "Couldn't overwrite position list with generated YZ grid");
+      }
+   }
    
+   /**
+    * Make sure SPIM state machines are stopped, will wait for stage scan to finish
+    * @param acqSettings
+    * @throws Exception
+    */
    private void stopSPIMStateMachines(AcquisitionSettings acqSettings) throws Exception {
       
       // stop micro-mirror cards
@@ -4378,7 +4393,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    @Override
    public final void updateStagePositions() {
       try {
-         // TODO finish
          Rectangle camROI = core_.getROI();
          int width = (int) Math.round(camROI.width*overviewCompressX_/overviewDownsampleY_);
          int height =(int) Math.round(camROI.height/overviewDownsampleY_);
