@@ -1,3 +1,4 @@
+/*
 //////////////////////////////////////////////////////////////////////////////
 // FILE:          BAslerAce.cpp
 // SUBSYSTEM:     DeviceAdapters
@@ -32,10 +33,12 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH 
 // DAMAGE.
 
+sma : 02.03.2019 : Possible issue with Webcam solved. 
+sma : 03.03.2019 : add the parameter external trigger.Trigger is expected in Line1.
+sma : 07.03.2019 : add the parameter binning average / sum mode 
+*/
 
 #include <pylon/PylonIncludes.h>
-//#include <pylon/usb/PylonUsbIncludes.h>
-#include <pylon/usb/_BaslerUsbCameraParams.h>
 # include <pylon/PylonGUI.h>
 
 // Namespace for using pylon objects.
@@ -92,7 +95,6 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 	} 
 	// ...supplied name not recognized
 	return 0;
-
 }
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)
@@ -162,7 +164,43 @@ int BaslerCamera::Initialize()
 	{
 			// Before using any pylon methods, the pylon runtime must be initialized. 
 		PylonInitialize();
-		camera_ = new CInstantCamera(CTlFactory::GetInstance().CreateFirstDevice()); // returns a pointer to the device
+		 // Get the transport layer factory.
+        CTlFactory& tlFactory = CTlFactory::GetInstance();
+		initialized_= false;
+
+        // Get all attached devices and exit application if no device is found.
+        DeviceInfoList_t devices;
+        if ( tlFactory.EnumerateDevices(devices) == 0 )
+        {
+			AddToLog("No camera present.");
+            throw RUNTIME_EXCEPTION( "No camera present.");
+        }
+		
+		if(devices.size() == 1)
+		{
+			camera_ = new CInstantCamera(CTlFactory::GetInstance().CreateFirstDevice()); // returns a pointer to the device
+			initialized_ = true;
+		}
+		else
+		{
+			for (DeviceInfoList_t::iterator it = devices.begin(); it != devices.end(); ++it)
+			{
+				if(tlFactory.IsDeviceAccessible(*it))
+				{
+				  camera_ = new CInstantCamera(CTlFactory::GetInstance().CreateFirstDevice(*it));
+				  initialized_ = true;
+				  break;
+				}
+			}	
+		}
+
+		if(!initialized_)
+		{
+			AddToLog("No free camera  available.");
+            throw RUNTIME_EXCEPTION( "No camera available.");
+		}
+
+		
 		stringstream ss;
 		ss <<"using camera " << camera_->GetDeviceInfo().GetFriendlyName();
 
@@ -202,11 +240,10 @@ int BaslerCamera::Initialize()
 			ReduceImageSize(800,800);
 			if(camera_->IsGigE())
 			{
-				CIntegerPtr(camera_->GetTLNodeMap().GetNode("HeartbeatTimeout"))->SetValue(6*1000);
+				CIntegerPtr(camera_->GetTLNodeMap().GetNode("HeartbeatTimeout"))->SetValue(24*1000);
 			}			
 		}
 	#endif
-
 
 		long bytes = (long) (height->GetValue() * width->GetValue() * 4) ;
 		Buffer4ContinuesShot = malloc(bytes);
@@ -215,8 +252,6 @@ int BaslerCamera::Initialize()
 		//Exposure
 		CFloatPtr exposure( nodeMap_->GetNode( "ExposureTime"));  
 		CFloatPtr ExposureTimeAbs( nodeMap_->GetNode( "ExposureTimeAbs")); 
-
-
 		if(IsAvailable(exposure))
 		{
 			// USB cameras
@@ -350,7 +385,7 @@ int BaslerCamera::Initialize()
 
 
 		CEnumerationPtr LightSourcePreset( nodeMap_->GetNode( "LightSourcePreset"));
-		if(IsAvailable(LightSourcePreset))
+		if(LightSourcePreset != NULL && IsAvailable(LightSourcePreset))
 		{
 			pAct = new CPropertyAction (this, &BaslerCamera::OnLightSourcePreset);
 			ret = CreateProperty("LightSourcePreset", "NA", MM::String, false, pAct);
@@ -368,6 +403,18 @@ int BaslerCamera::Initialize()
 				}
 			}
 			SetAllowedValues("LightSourcePreset",LSPVals);	
+		 }
+
+		
+		CEnumerationPtr TriggerMode( nodeMap_->GetNode( "TriggerMode"));
+		if(IsAvailable(TriggerMode))
+		{
+			pAct = new CPropertyAction (this, &BaslerCamera::OnTriggerMode);
+			ret = CreateProperty("ExternalTrigger", "Off", MM::String, false, pAct);
+			vector<string> LSPVals;
+			LSPVals.push_back("Off");
+			LSPVals.push_back("On");
+			SetAllowedValues("ExternalTrigger",LSPVals);
 		 }
 
 
@@ -420,6 +467,8 @@ int BaslerCamera::Initialize()
 				assert(ret == DEVICE_OK);
 			}
 		}
+	
+
 		//// binning
 		pAct = new CPropertyAction (this, &BaslerCamera::OnBinning);
 		ret = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
@@ -429,9 +478,9 @@ int BaslerCamera::Initialize()
 		vector<string> binValues;
 
 		CIntegerPtr BinningHorizontal(nodeMap_->GetNode( "BinningHorizontal"));
-		CIntegerPtr BinningBinningVertical(nodeMap_->GetNode( "BinningVertical"));
+		CIntegerPtr BinningVertical(nodeMap_->GetNode( "BinningVertical"));
 		
-		if(BinningHorizontal != NULL && BinningHorizontal != NULL && IsAvailable(BinningHorizontal) && IsAvailable(BinningHorizontal))
+		if(IsAvailable(BinningHorizontal) && IsAvailable(BinningVertical))
 		{
 			//assumed that BinningHorizontal and BinningVertical allow same steps
 			int64_t min = BinningHorizontal->GetMin();
@@ -444,7 +493,8 @@ int BaslerCamera::Initialize()
 				ss << x;
 				binValues.push_back(ss.str());
 			}				
-			binningFactor_.assign(to_string (BinningHorizontal->GetValue()));	
+			binningFactor_.assign(to_string (BinningHorizontal->GetValue()));
+			CheckForBinningMode(pAct);
 		}
 		else
 		{
@@ -462,14 +512,48 @@ int BaslerCamera::Initialize()
 		ResizeSnapBuffer();
 		//preparation for sequences	
 		//camera_->RegisterImageEventHandler( &ImageHandler_, RegistrationMode_Append, Cleanup_Delete);	
-		initialized_ = true;
-		return DEVICE_OK;	
+		initialized_ = true;		
 	}
-	catch (exception &ex)
-	{		
-	   std::cerr << ex.what() << std::endl;
-	   throw;
-	}
+	catch (const GenericException &e)
+    {
+        // Error handling.
+		AddToLog(e.GetDescription());
+        cerr << "An exception occurred." << endl
+        << e.GetDescription() << endl;
+		return DEVICE_ERR;
+    }
+	return DEVICE_OK;	
+}
+
+int BaslerCamera::CheckForBinningMode(CPropertyAction *pAct)
+{
+	    // Binning Mode
+		INodeMap& nodeMap(camera_->GetNodeMap());
+		CEnumerationPtr BinningModeHorizontal(nodeMap.GetNode("BinningModeHorizontal"));		
+		CEnumerationPtr BinningModeVertical(nodeMap.GetNode("BinningModeVertical"));
+		if(IsAvailable(BinningModeVertical) && IsAvailable(BinningModeHorizontal))
+		{
+			pAct = new CPropertyAction (this, &BaslerCamera::OnBinningMode);
+			
+			vector<string> LSPVals;
+			NodeList_t entries;
+			// assumed BinningHorizontalMode & BinningVerticalMode same entries
+			BinningModeVertical->GetEntries(entries);
+			for (NodeList_t::iterator it = entries.begin(); it != entries.end(); ++it)
+			{
+				CEnumEntryPtr pEnumEntry(*it);	
+				if(it == entries.begin())
+				{
+				   int ret = CreateProperty("BinningMode", pEnumEntry->GetSymbolic().c_str(), MM::String, false, pAct);
+				   assert(ret == DEVICE_OK);
+				}
+				
+				LSPVals.push_back(pEnumEntry->GetSymbolic().c_str());							 			
+			}
+			SetAllowedValues("BinningMode",LSPVals);
+			return DEVICE_OK;
+		}
+		return DEVICE_CAN_NOT_SET_PROPERTY;
 }
 
 int BaslerCamera::SetProperty(const char* name, const char* value)
@@ -510,14 +594,16 @@ int BaslerCamera::SnapImage()
 			ResizeSnapBuffer();
 		}
 		CopyToImageBuffer(ptrGrabResult);
-		return DEVICE_OK;
-	}
-	catch (exception &ex)
-	{		
-	   std::cerr << ex.what() << std::endl;
-	   throw;
-	}
 	
+	}
+	catch (const GenericException &e)
+    {
+        // Error handling.
+		AddToLog(e.GetDescription());
+        cerr << "An exception occurred." << endl
+        << e.GetDescription() << endl;
+    }
+	return DEVICE_OK;
 }
 
 void BaslerCamera::CopyToImageBuffer(CGrabResultPtr ptrGrabResult)
@@ -550,14 +636,12 @@ void BaslerCamera::CopyToImageBuffer(CGrabResultPtr ptrGrabResult)
 		//copy image buffer to a snap buffer allocated by device adapter
 		const void* buffer = ptrGrabResult->GetBuffer();
 		memcpy(imgBuffer_, buffer, val);
-		//SetProperty( MM::g_Keyword_PixelType, g_PixelType_12bit);
-	
+		//SetProperty( MM::g_Keyword_PixelType, g_PixelType_12bit);	
 	}
 	else if (IsByerFormat || ptrGrabResult->GetPixelType() == PixelType_RGB8packed )
 	{
 		nComponents_ = 4;
         bitDepth_ = 8;
-
 		CPylonImage image;
 		converter->Convert(imgBuffer_,GetImageBufferSize(),ptrGrabResult);
 		SetProperty( MM::g_Keyword_PixelType, g_PixelType_8bitRGBA);	    
@@ -567,8 +651,7 @@ void BaslerCamera::CopyToImageBuffer(CGrabResultPtr ptrGrabResult)
 		nComponents_ = 4;
         bitDepth_ = 8;
 		SetProperty( MM::g_Keyword_PixelType, g_PixelType_8bitBGR);
-		RGBPackedtoRGB(imgBuffer_,ptrGrabResult);
-			
+		RGBPackedtoRGB(imgBuffer_,ptrGrabResult);			
 	}
 }
 
@@ -736,11 +819,18 @@ void BaslerCamera::SetExposure(double exp)
 	}
 	INodeMap& nodeMap_ = camera_->GetNodeMap();
 	CFloatPtr exposure( nodeMap_.GetNode( "ExposureTime"));
-	if(IsWritable(exposure))
+	CIntegerPtr ExposureTimeRaw(nodeMap_.GetNode( "ExposureTimeRaw"));
+	if(camera_->IsGigE() && IsWritable(ExposureTimeRaw))
 	{
-	    exposure->SetValue(exp);
+		ExposureTimeRaw->SetValue((int64_t)exp);
+		exposure_us_ = exp;
+	}
+	else if(camera_->IsUsb() && IsWritable(exposure))
+	{
+		exposure->SetValue(exp);
 	    exposure_us_ = exp;
 	}
+
 }
 
 /**
@@ -810,9 +900,59 @@ void BaslerCamera::ResizeSnapBuffer() {
 	imgBuffer_ = malloc(bytes);
 }
 
-///////////////////////////////////////////////////////////////////////////////
+
+
+
+//////
 // Action handlers
 ///////////////////////////////////////////////////////////////////////////////
+
+int BaslerCamera::OnBinningMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	CEnumerationPtr BinningModeHorizontal(nodeMap_->GetNode( "BinningModeHorizontal"));
+	CEnumerationPtr BinningModeVertical(nodeMap_->GetNode( "BinningModeVertical"));
+
+	if (eAct == MM::AfterSet) 
+	{	
+		if(IsAvailable(BinningModeVertical) && IsAvailable(BinningModeVertical))
+		{
+			try
+			{
+				string binningMode;
+				pProp->Get(binningMode);				
+				BinningModeHorizontal->FromString(binningMode.c_str());
+			    BinningModeHorizontal->FromString(binningMode.c_str());				
+
+			}
+			catch (const GenericException &e)
+			{
+				// Error handling.
+				AddToLog(e.GetDescription());
+				cerr << "An exception occurred." << endl
+				<< e.GetDescription() << endl;
+			}
+		}	
+	} 
+	else if (eAct == MM::BeforeGet)
+	{
+		try{
+				if(IsAvailable(BinningModeVertical) && IsAvailable(BinningModeVertical))
+				{
+					pProp->Set(BinningModeHorizontal->ToString());	
+				}				
+			}
+			catch (const GenericException &e)
+			{
+				// Error handling.
+				AddToLog(e.GetDescription());
+				cerr << "An exception occurred." << endl
+				<< e.GetDescription() << endl;
+			}
+	}
+	return DEVICE_OK;
+}
+
+
 int BaslerCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	CIntegerPtr BinningHorizontal(nodeMap_->GetNode( "BinningHorizontal"));
@@ -822,7 +962,7 @@ int BaslerCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 	{
 		bool Isgrabbing = camera_->IsGrabbing();
 		
-		if(BinningHorizontal != NULL && BinningHorizontal != NULL && IsAvailable(BinningHorizontal) && IsAvailable(BinningHorizontal))
+		if(IsAvailable(BinningHorizontal) && IsAvailable(BinningHorizontal))
 		{
 			try
 			{
@@ -834,7 +974,6 @@ int BaslerCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 				int64_t val = std::stoi(binningFactor_);
 				BinningHorizontal->SetValue(val);
 				BinningVertical->SetValue(val);	
-
 				if(Isgrabbing)
 				{
 					camera_->StartGrabbing();
@@ -847,17 +986,19 @@ int BaslerCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 				}
 #endif
 			}
-			catch (exception& e)
+			catch (const GenericException &e)
 			{
-				cout << e.what() << '\n';
-				LogMessage(e.what(),false);
+				// Error handling.
+				AddToLog(e.GetDescription());
+				cerr << "An exception occurred." << endl
+				<< e.GetDescription() << endl;
 			}
 		}	
 	} 
 	else if (eAct == MM::BeforeGet) {
 
 		try{
-			if(BinningHorizontal != NULL && BinningHorizontal != NULL && IsAvailable(BinningHorizontal) && IsAvailable(BinningHorizontal))
+			if(IsAvailable(BinningHorizontal) && IsAvailable(BinningHorizontal))
 				{
 					binningFactor_ = to_string (BinningHorizontal->GetValue());
 					pProp->Set((long)BinningHorizontal->GetValue());	
@@ -867,9 +1008,12 @@ int BaslerCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 					 pProp->Set("1");
 				}		
 		}
-		catch (exception& e)
+		catch (const GenericException &e)
 		{
-		cout << e.what() << '\n';
+			// Error handling.
+			AddToLog(e.GetDescription());
+			cerr << "An exception occurred." << endl
+			<< e.GetDescription() << endl;
 		}
 	}
 	return DEVICE_OK;
@@ -882,6 +1026,12 @@ unsigned  BaslerCamera::GetNumberOfComponents() const
 
 int BaslerCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+	bool isGrabing = camera_->IsGrabbing();
+	if(isGrabing)
+	{
+		camera_->StopGrabbing();
+	}
+
 	CEnumerationPtr pixelFormat( nodeMap_->GetNode( "PixelFormat"));
 
 	if (eAct == MM::AfterSet) {
@@ -936,6 +1086,10 @@ int BaslerCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
         bitDepth_ = 8;	
 		SetProperty(MM::g_Keyword_PixelType,g_PixelType_8bitRGB);
 	}
+	if(isGrabing)
+	{
+		camera_->StartGrabbing();
+	}
 	return DEVICE_OK;
 }
 
@@ -955,6 +1109,80 @@ int BaslerCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 //	}
 //   return DEVICE_OK;
 //}
+
+int BaslerCamera::OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	try
+	{
+		string TriggerMode_;
+		CEnumerationPtr TriggerMode( nodeMap_->GetNode( "TriggerMode"));
+		CEnumerationPtr TriggerSelector( nodeMap_->GetNode( "TriggerSelector"));
+	
+		if(TriggerMode != NULL && TriggerSelector != NULL && IsAvailable(TriggerMode)  && IsAvailable(TriggerSelector))
+		{
+			if (eAct == MM::AfterSet)
+			{
+					pProp->Get(TriggerMode_);	
+					TriggerMode->FromString(TriggerMode_.c_str());
+					
+					if(TriggerMode_.compare("On") == 0 && TriggerSelector != NULL && IsAvailable(TriggerSelector))
+					{
+						TriggerSelector->FromString("FrameStart");
+						if(IsWritable(TriggerMode))
+						{
+							TriggerMode->FromString("On");
+						}			
+					}
+					else if( TriggerMode_.compare("Off") == 0 && TriggerSelector != NULL && IsAvailable(TriggerSelector))
+					{
+						TriggerSelector->FromString("FrameStart");
+						TriggerMode->FromString("Off");
+						if(camera_->IsGigE())
+						{
+							TriggerSelector->FromString("AcquisitionStart");
+							TriggerMode->FromString("Off");
+					
+						} else if (camera_->IsUsb())
+						{
+							TriggerSelector->FromString("FrameBurstStart");
+							TriggerMode->FromString("Off");				
+						}
+					}
+					if(TriggerMode != NULL && IsAvailable(TriggerMode))
+					{
+						pProp->Set(TriggerMode->ToString().c_str());
+					}
+
+				} else if (eAct == MM::BeforeGet)
+				{					
+					// assumed user uses the trigger Line1 for externally triggering the camera.
+					// if any one wants to use the GPIO of the camera, then we need to allow to set this camera parameter separately
+					if(TriggerSelector != NULL && IsAvailable(TriggerSelector))
+					{
+						TriggerSelector->FromString("FrameStart");
+					}			
+					if(TriggerMode != NULL && IsAvailable(TriggerMode))
+					{
+						pProp->Set(TriggerMode->ToString().c_str());
+					}
+					CEnumerationPtr TriggerSource( nodeMap_->GetNode("TriggerSource"));
+					if(TriggerSource != NULL && IsAvailable(TriggerSource))
+					{
+						TriggerSource->FromString("Line1");
+					}			
+				}
+		}		
+	}
+	catch (const GenericException &e)
+    {
+        // Error handling.
+		AddToLog(e.GetDescription());
+		cout << "An exception occurred." << endl << e.GetDescription() << endl;
+        cerr << "An exception occurred." << endl
+        << e.GetDescription() << endl;
+    }
+	return DEVICE_OK;
+}
 
 int BaslerCamera::OnLightSourcePreset(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
