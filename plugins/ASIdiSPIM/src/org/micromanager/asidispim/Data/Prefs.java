@@ -69,6 +69,7 @@ public class Prefs {
       ENABLE_BEAM_SETTINGS("EnableBeamSettings"),
       CHANNEL_USE_CHANNEL("ColorUse"),
       CHANNEL_CONFIG("ColorConfig"),
+      CHANNEL_OFFSET("ColorOffset"),
       NRCHANNELROWS("nrChannels"),
       AUTOFOCUSFITFUNCTION("AutofocusFitFunction"),
       NONE("None");

@@ -255,6 +255,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private double overviewDownsampleY_ = 1;
    private double overviewPixelSize_ = 1;
    private double overviewCompressX_ = 1;
+   private double extraChannelOffset_ = 0.0;
    
    private static final int XYSTAGETIMEOUT = 20000;
    
@@ -1196,7 +1197,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       });
       
-      buttonOverviewAcq_ = new JButton("Run Overview Acquisition");
+      buttonOverviewAcq_ = new JButton("Run overview acquisition!");
       buttonOverviewAcq_.setBackground(Color.green);
       buttonOverviewAcq_.addActionListener(new ActionListener() {
          @Override
@@ -2341,7 +2342,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
             posUpdater_.pauseUpdates(true);
             final AcquisitionSettings acqSettings = acqSettingsTmp;
-            controller_.prepareControllerForAquisition(acqSettings);
+            controller_.prepareControllerForAquisition(acqSettings, extraChannelOffset_);
             final double zStepUm = controller_.getActualStepSizeUm();
 
             // overview acquisition code below adapted from autofocus code (any bugs may have been copied)
@@ -2943,6 +2944,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       int nrSlicesSoftware = acqSettings.numSlices;
       String originalChannelConfig = "";
       boolean changeChannelPerVolumeSoftware = false;
+      extraChannelOffset_ = 0.0;
       if (acqSettings.useChannels) {
          if (acqSettings.numChannels < 1) {
             MyDialogUtils.showError("\"Channels\" is checked, but no channels are selected");
@@ -2954,6 +2956,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          case VOLUME:
             changeChannelPerVolumeSoftware = true;
             multiChannelPanel_.initializeChannelCycle();
+            // will update extraChannelOffset_ later
             break;
          case VOLUME_HW:
          case SLICE_HW:
@@ -3312,7 +3315,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // Set up controller SPIM parameters (including from Setup panel settings)
       // want to do this, even with demo cameras, so we can test everything else
       if (!acqSettings.usePathPresets) {  // special case with path presets handled later
-         if (!controller_.prepareControllerForAquisition(acqSettings)) {
+         if (!controller_.prepareControllerForAquisition(acqSettings, extraChannelOffset_)) {
             posUpdater_.pauseUpdates(false);
             return false;
          }
@@ -3652,7 +3655,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         updateCalibrationOffset(Devices.Sides.B, score);
                      }
                      // Restore settings of the controller
-                     controller_.prepareControllerForAquisition(acqSettings);
+                     controller_.prepareControllerForAquisition(acqSettings, extraChannelOffset_);
                      if (acqSettings.useChannels && acqSettings.channelMode != MultichannelModes.Keys.VOLUME) {
                         controller_.setupHardwareChannelSwitching(acqSettings);
                      }
@@ -3743,7 +3746,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                  AcquisitionSettings acqSettingsOneSide = new AcquisitionSettings(acqSettings);
                                  acqSettingsOneSide.numSides = 1;
                                  acqSettingsOneSide.firstSideIsA = currentSideA;
-                                 controller_.prepareControllerForAquisition(acqSettingsOneSide);
+                                 controller_.prepareControllerForAquisition(acqSettingsOneSide, extraChannelOffset_);
                               }
                               
                               // make sure appropriate path preset is applied
@@ -3771,7 +3774,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
                            // deal with channel if needed (hardware channel switching doesn't happen here)
                            if (changeChannelPerVolumeSoftware) {
-                              multiChannelPanel_.selectNextChannel();
+                              double newOffset = multiChannelPanel_.selectNextChannel();
+                              if (!MyNumberUtils.floatsEqual(newOffset, extraChannelOffset_)) { 
+                                 extraChannelOffset_ = newOffset;
+                                 // it is overkill to prepare everything again, but want to keep all the existing logic around slice position
+                                 controller_.prepareControllerForAquisition(acqSettings, extraChannelOffset_);
+                              }
                            }
 
                            // special case: single-sided piezo acquisition risks illumination piezo sleeping
@@ -4244,6 +4252,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       if (nonfatalError) {
          MyDialogUtils.showError("Missed some images during acquisition, see core log for details");
       }
+      
+      extraChannelOffset_ = 0.0;
 
       return true;
    }

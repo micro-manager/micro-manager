@@ -28,12 +28,13 @@ package org.micromanager.asidispim.Data;
  */
 public class ChannelSpec {
    public static final String DEFAULT_CHANNEL_GROUP = "Channel";
-   public static final double Version = 0.1;
+   public static final double Version = 0.2;
 
    // fields that are used
    public boolean useChannel_; // whether or not to use this group
    public String group_; // configuration group
    public String config_; // Configuration setting name
+   public double offset_; // channel-specific offset (used in some acquisition modes)
    
    // not used yet but may be useful in future
    //   public double exposure = 10.0; // ms
@@ -41,16 +42,18 @@ public class ChannelSpec {
    //   public Color color = Color.gray;
 
    
-   public ChannelSpec(boolean useChannel, String group, String config) {
+   public ChannelSpec(boolean useChannel, String group, String config, double offset) {
       this.useChannel_ = useChannel;
       this.group_ = group;
       this.config_ = config;
+      this.offset_ = offset;
    }
    
    public ChannelSpec(ChannelSpec orig) {
       this.useChannel_ = orig.useChannel_;
       this.group_ = orig.group_;
       this.config_ = orig.config_;
+      this.offset_ = orig.offset_;
    }
    
 }

@@ -228,8 +228,11 @@ public class MultiChannelSubPanel extends ListeningJPanel {
               ChannelTableModel.columnIndex_useChannel);
       TableColumn column_config = channelTable.getColumnModel().getColumn(
               ChannelTableModel.columnIndex_config);
+      TableColumn column_offset = channelTable.getColumnModel().getColumn(
+            ChannelTableModel.columnIndex_offset);
       column_useChannel.setPreferredWidth(40);
-      column_config.setPreferredWidth(155);
+      column_config.setPreferredWidth(105);
+      column_offset.setPreferredWidth(50);
       column_useChannel.setCellRenderer(new UseChannelTableCellRenderer());
       column_config.setCellRenderer(new DisplayDisabledTableCellRenderer());
       column_config.setCellEditor(new ChannelConfigEditor(channelGroup_, core_));
@@ -433,14 +436,16 @@ public class MultiChannelSubPanel extends ListeningJPanel {
    /**
     * Takes care of actually selecting next channel in table.
     * Called by acquisition code.  Blocks until devices ready.
+    * Returns the value of the channel-specific offset.
     */
-   public void selectNextChannel() {
+   public double selectNextChannel() {
       ChannelSpec channel = usedChannels_[nextChannelIndex_];
       selectChannel(channel.config_);
       nextChannelIndex_++;
       if (nextChannelIndex_ == usedChannels_.length) {
          nextChannelIndex_ = 0;
       }
+      return channel.offset_;
    }
    
    /**

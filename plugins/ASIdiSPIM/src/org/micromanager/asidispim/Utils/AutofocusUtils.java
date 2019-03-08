@@ -258,7 +258,7 @@ public class AutofocusUtils {
             acqSettings.centerAtCurrentZ = centerAtCurrentZ;
             acqSettings.stepSizeUm = piezoStepSize;
 
-            controller_.prepareControllerForAquisition(acqSettings);
+            controller_.prepareControllerForAquisition(acqSettings, 0.0);
             
             final float calibrationRate = prefs_.getFloat(
                      MyStrings.PanelNames.SETUP.toString() + side.toString(), 

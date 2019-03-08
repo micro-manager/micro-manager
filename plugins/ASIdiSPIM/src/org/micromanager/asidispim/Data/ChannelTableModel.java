@@ -41,9 +41,10 @@ import org.micromanager.utils.ReportingUtils;
  */
 @SuppressWarnings("serial")
 public class ChannelTableModel extends AbstractTableModel {
-   public static final String[] columnNames = {"Use?", "Preset"};
+   public static final String[] columnNames = {"Use?", "Preset", "Offset"};
    public static final int columnIndex_useChannel = 0;
    public static final int columnIndex_config = 1;
+   public static final int columnIndex_offset = 2;
    private final ArrayList<ChannelSpec> channels_;
    private final Prefs prefs_;
    private final String prefNode_;
@@ -77,11 +78,10 @@ public class ChannelTableModel extends AbstractTableModel {
    public final void addChannel(String channelGroup) {
       String prefKey = prefNode_ + "_" + channelGroup + "_" + channels_.size();
       addNewChannel(new ChannelSpec(
-               prefs_.getBoolean(prefKey, 
-                       Prefs.Keys.CHANNEL_USE_CHANNEL, false),
+               prefs_.getBoolean(prefKey, Prefs.Keys.CHANNEL_USE_CHANNEL, false),
                channelGroup,
-               prefs_.getString(prefKey, 
-                       Prefs.Keys.CHANNEL_CONFIG, "") )) ;
+               prefs_.getString(prefKey, Prefs.Keys.CHANNEL_CONFIG, ""),
+               (double)prefs_.getFloat(prefKey, Prefs.Keys.CHANNEL_OFFSET, 0.0f) ));
       prefs_.putInt(prefNode_ + "_" + channelGroup, Prefs.Keys.NRCHANNELROWS, 
               channels_.size());
    }
@@ -141,6 +141,13 @@ public class ChannelTableModel extends AbstractTableModel {
             prefs_.putString(prefNode, Prefs.Keys.CHANNEL_CONFIG, val);
          }
          break;
+      case columnIndex_offset:
+         if (value instanceof Double) {
+            Double val = (Double) value;
+            channel.offset_ = val;
+            prefs_.putFloat(prefNode, Prefs.Keys.CHANNEL_OFFSET, val.floatValue());
+         }
+         break;
       }
       fireTableCellUpdated(rowIndex, columnIndex);
    }
@@ -153,6 +160,8 @@ public class ChannelTableModel extends AbstractTableModel {
          return channel.useChannel_;
       case columnIndex_config:
          return channel.config_;
+      case columnIndex_offset:
+         return channel.offset_;
       default: 
          ReportingUtils.logError("ColorTableModel getValuAt() didn't match");
          return null;
@@ -163,6 +172,7 @@ public class ChannelTableModel extends AbstractTableModel {
       String prefNode = prefNode_ + "_" + channel.group_ + "_" + channels_.size();
       prefs_.putBoolean(prefNode, Prefs.Keys.CHANNEL_USE_CHANNEL, channel.useChannel_);
       prefs_.putString(prefNode, Prefs.Keys.CHANNEL_CONFIG, channel.config_);
+      prefs_.putFloat(prefNode, Prefs.Keys.CHANNEL_OFFSET, (float) channel.offset_);
       prefs_.putInt(prefNode_ + "_" + channel.group_, Prefs.Keys.NRCHANNELROWS, 
               channels_.size());
       channels_.add(channel);

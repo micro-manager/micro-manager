@@ -98,10 +98,10 @@ public class ControllerUtils {
    * (except for final trigger).
    * 
    * @param settings
-   * 
+   * @param extraOffset 
    * @return false if there was some error that should abort acquisition
    */
-   public boolean prepareControllerForAquisition(final AcquisitionSettings settings) {
+   public boolean prepareControllerForAquisition(final AcquisitionSettings settings, double extraOffset) {
       // turn off beam and scan on both sides (they are turned off by SPIM state machine anyway)
       // also ensures that properties match reality at end of acquisition
       // SPIM state machine restores position of beam at end of SPIM state machine, now it
@@ -121,7 +121,7 @@ public class ControllerUtils {
       //   case where MM devices reside on different controller cards
       if ((settings.numSides > 1) || settings.firstSideIsA) {
          boolean success = prepareControllerForAquisition_Side(
-            Devices.Sides.A, settings);
+            Devices.Sides.A, settings, extraOffset);
          if (!success) {
             return false;
          }
@@ -129,7 +129,7 @@ public class ControllerUtils {
       
       if ((settings.numSides > 1) || !settings.firstSideIsA) {
          boolean success = prepareControllerForAquisition_Side(
-               Devices.Sides.B, settings);
+               Devices.Sides.B, settings, extraOffset);
             if (!success) {
                return false;
             }
@@ -309,7 +309,8 @@ public class ControllerUtils {
     */
    private boolean prepareControllerForAquisition_Side(
          final Devices.Sides side, 
-         final AcquisitionSettings settings
+         final AcquisitionSettings settings,
+         final double extraOffset
          ) {
 
       Devices.Keys galvoDevice = Devices.getSideSpecificKey(Devices.Keys.GALVOA, side);
@@ -416,7 +417,7 @@ public class ControllerUtils {
                " cannot be zero. Re-do calibration on Setup tab.");
          return false;
       }
-      float sliceOffset = prefs_.getFloat(
+      float sliceOffset = (float)extraOffset + prefs_.getFloat(
             MyStrings.PanelNames.SETUP.toString() + side.toString(), 
             Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET, 0);
       float sliceAmplitude = piezoAmplitude / sliceRate;
