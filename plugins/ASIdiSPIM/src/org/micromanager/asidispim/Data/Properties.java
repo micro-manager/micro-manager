@@ -289,6 +289,7 @@ public class Properties {
       PLUGIN_PATH_CONFIG_B("PathConfigB"),
       PLUGIN_USE_PATH_GROUP_ACQ("UsePathGroupAcquisition"),
       PLUGIN_SHOW_EPI_CB("ShowEpiBeamSheetCB"),
+      REFRESH_PROPERTY_VALUES("RefreshPropertyValues"),
       ;
       private final String text;
       private final boolean forceSet;
@@ -726,6 +727,24 @@ public class Properties {
     */
    public String getPropValueString(Devices.Keys device, Properties.Keys name) {
       return getPropValue(device, name);
+   }
+   
+   /**
+    * returns a string value for the specified property (assumes the caller knows the property contains an string)
+    * Ignores missing device or property, returning empty string.  Forces going to the hardware by setting property
+    * "RefreshPropertyValues" to be "Yes".
+    * @param device enum key for device 
+    * @param name enum key for property 
+    * @return
+    */
+   public String getPropValueStringForceRefresh(Devices.Keys device, Properties.Keys name) {
+      String refreshVal = getPropValue(device, Properties.Keys.REFRESH_PROPERTY_VALUES);
+      if (refreshVal.equals(Properties.Values.NO.toString())) {
+         setPropValue(device, Properties.Keys.REFRESH_PROPERTY_VALUES, Properties.Values.YES);
+      }
+      String valString = getPropValue(device, name);
+      setPropValue(device, Properties.Keys.REFRESH_PROPERTY_VALUES, refreshVal);
+      return valString;
    }
    
    /**
