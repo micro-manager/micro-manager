@@ -93,6 +93,7 @@ public:
 	int IsExposureSequenceable(bool& seq) const {seq = false; return DEVICE_OK;}
 	void RGBPackedtoRGB(void* destbuffer, const CGrabResultPtr& ptrGrabResult);
 	int SetProperty(const char* name, const char* value);
+	int BaslerCamera::CheckForBinningMode(CPropertyAction *pAct);
 	void AddToLog(std::string msg);
 	void CopyToImageBuffer(CGrabResultPtr image);
 	CImageFormatConverter *converter;
@@ -116,6 +117,7 @@ public:
 	// action interface
 	// ----------------
 	int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnBinningMode(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -124,6 +126,7 @@ public:
 	int OnDeviceLinkThroughputLimit(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnInterPacketDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnLightSourcePreset(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct);
 	
 
 private:
