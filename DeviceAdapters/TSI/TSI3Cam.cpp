@@ -63,7 +63,8 @@ Tsi3Cam::Tsi3Cam() :
    camHandle(nullptr),
    acquiringSequence(false),
    acquiringFrame(false),
-   maxExposureMs(10000)
+   maxExposureMs(10000),
+	color(false)
 {
    // set default error messages
    InitializeDefaultErrorMessages();
@@ -177,8 +178,31 @@ int Tsi3Cam::Initialize()
    fullFrame.xBin = 1;
    fullFrame.yBin = 1;
    ResetImageBuffer();
+
    tl_camera_get_sensor_pixel_size_bytes(camHandle, &fullFrame.pixDepth);
    tl_camera_get_bit_depth(camHandle, &fullFrame.bitDepth);
+
+	// obtain sensor type
+	TL_CAMERA_SENSOR_TYPE sensorType;
+	if (tl_camera_get_camera_sensor_type(camHandle, &sensorType))
+		return ERR_INTERNAL_ERROR;
+
+	if (sensorType == TL_CAMERA_SENSOR_TYPE_BAYER)
+	{
+		if (fullFrame.pixDepth != 16)
+			return ERR_INTERNAL_ERROR; // color processor supports onlly 16 -> 48 conversion
+		int r = InitializeColorProcessor();
+		if (r != DEVICE_OK)
+		{
+			LogMessage("Failed to initialize color processor");
+			return ERR_INTERNAL_ERROR;
+		}
+		color = true;
+	}
+	else if (sensorType == TL_CAMERA_SENSOR_TYPE_MONOCHROME)
+		color = false;
+	else
+		return ERR_INTERNAL_ERROR;
 
    long long exp_min = 0, exp_max = 0;
    if (tl_camera_get_exposure_time_range(camHandle, &exp_min, &exp_max))
@@ -285,6 +309,9 @@ int Tsi3Cam::Shutdown()
 
    StopCamera();
 
+	if (color)
+		ShutdownColorProcessor();
+
    if (tl_camera_close_camera(camHandle))
       LogMessage("TSI Camera SDK3 close failed!");
 
@@ -325,11 +352,14 @@ const unsigned char* Tsi3Cam::GetImageBuffer(unsigned /* chNum */)
 
 const unsigned int* Tsi3Cam::GetImageBufferAsRGB32()
 {
-   return nullptr;
+   return reinterpret_cast<const unsigned int*>(GetImageBuffer());
 }
 unsigned Tsi3Cam::GetNumberOfComponents() const
 {
-   return 1;
+	if (color)
+		return 4;
+	else
+		return 1;
 }
 
 unsigned Tsi3Cam::GetNumberOfChannels() const
@@ -536,10 +566,13 @@ int Tsi3Cam::ResizeImageBuffer()
    tl_camera_get_image_height(camHandle, &h);
    tl_camera_get_sensor_pixel_size_bytes(camHandle, &d);
 
+	if (color)
+		d = 4; // RGB32 format
+
    img.Resize(w, h, d);
    ostringstream os;
-   os << "TSI3 resized to: " << img.Width() << " X " << img.Height() << ", camera: " << w << "X" << h;
-   LogMessage(os.str().c_str());
+   os << "TSI3 resized to: " << img.Width() << " X " << img.Height() << ", camera: " << w << "X" << h << ", color=" << color;
+   LogMessage(os.str().c_str(), true);
 
    return DEVICE_OK;
 }
@@ -614,23 +647,37 @@ void Tsi3Cam::frame_available_callback(void* /*sender*/, unsigned short* image_b
    
    if (instance->acquiringFrame)
    {
-      // ONLY GRAYSCALE SUPPORTED
-      // we are not supporting color or 8-bit pixels
+		if (instance->color)
+		{
+			// COLOR
+			instance->img.Resize(img_width, img_height, 4);
+			instance->ColorProcess16to32(image_buffer, instance->img.GetPixelsRW(), img_width, img_height);
+		}
+		else
+		{
+			// MONOCHROME
+			// reformat image buffer
+			instance->img.Resize(img_width, img_height, instance->fullFrame.pixDepth);
+			memcpy(instance->img.GetPixelsRW(), image_buffer, instance->fullFrame.pixDepth * img_height * img_width);
+		}
 
-      // reformat image buffer
-      instance->img.Resize(img_width, img_height, instance->fullFrame.pixDepth);
-
-      memcpy(instance->img.GetPixelsRW(), image_buffer, instance->fullFrame.pixDepth * img_height * img_width);
       InterlockedExchange(&instance->acquiringFrame, 0);
    }
    else if (instance->acquiringSequence)
    {
-      // ONLY GRAYSCALE SUPPORTED
-      // we are not supporting color or 8-bit pixels
-
-      // reformat image buffer
-      instance->img.Resize(img_width, img_height, instance->fullFrame.pixDepth);
-      memcpy(instance->img.GetPixelsRW(), image_buffer, instance->fullFrame.pixDepth * img_height * img_width);
+		if (instance->color)
+		{
+			// COLOR
+			instance->img.Resize(img_width, img_height, 4);
+			instance->ColorProcess16to32(image_buffer, instance->img.GetPixelsRW(), img_width, img_height);
+		}
+		else
+		{
+			// MONOCHROME
+			// reformat image buffer
+			instance->img.Resize(img_width, img_height, instance->fullFrame.pixDepth);
+			memcpy(instance->img.GetPixelsRW(), image_buffer, instance->fullFrame.pixDepth * img_height * img_width);
+		}
       int ret = instance->InsertImage();
       if (ret != DEVICE_OK)
       {
@@ -668,5 +715,3 @@ void Tsi3Cam::ResetImageBuffer()
    ResizeImageBuffer();
 
 }
-
-
