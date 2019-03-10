@@ -541,7 +541,7 @@ int TsiCam::SnapImage()
    if (color)
    {
       MM::MMTime start = GetCurrentMMTime();
-      MM::MMTime timeout(TSI_MAX_EXPOSURE_MS / 1000, 0); // upper limit on the exposure
+      MM::MMTime timeout((long)(TSI_MAX_EXPOSURE_MS / 1000), 0L); // upper limit on the exposure
       int err(TSI_NO_ERROR);
 
       bool computeWhiteBalanceCoefficients = false;
@@ -590,7 +590,7 @@ int TsiCam::SnapImage()
    {
       // grayscale image snap
       MM::MMTime start = GetCurrentMMTime();
-      MM::MMTime timeout(TSI_MAX_EXPOSURE_MS / 1000, 0); // upper limit on the exposure
+      MM::MMTime timeout((long)(TSI_MAX_EXPOSURE_MS / 1000), 0L); // upper limit on the exposure
       TsiImage* tsiImg = 0;
       do
       {
