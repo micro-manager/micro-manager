@@ -113,19 +113,19 @@ int Tsi3Cam::Initialize()
 
    char camera_ids[maxSdkStringLength];
 
-   if (tl_camera_set_camera_connect_callback(camera_connect_callback, nullptr))
-   {
-      return ERR_INTERNAL_ERROR;
-   }
+   //if (tl_camera_set_camera_connect_callback(camera_connect_callback, nullptr))
+   //{
+   //   return ERR_INTERNAL_ERROR;
+   //}
 
-   if (tl_camera_set_camera_disconnect_callback(camera_disconnect_callback, nullptr))
-   {
-      return ERR_INTERNAL_ERROR;
-   }
+   //if (tl_camera_set_camera_disconnect_callback(camera_disconnect_callback, nullptr))
+   //{
+   //   return ERR_INTERNAL_ERROR;
+   //}
 
    if (tl_camera_discover_available_cameras(camera_ids, maxSdkStringLength))
    {
-      return ERR_TSI_CAMERA_NOT_FOUND;
+	   return ERR_TSI_CAMERA_NOT_FOUND;
    }
 
    // pull out the first camera in the list
@@ -167,12 +167,14 @@ int Tsi3Cam::Initialize()
    assert(ret == DEVICE_OK);
 
    // obtain full frame parameters and reset the frame
-   int minWidth, minHeight;
-   if (tl_camera_get_image_width_range(camHandle, &minWidth, &fullFrame.xPixels))
+   int minWidth, minHeight, width, height;
+   if (tl_camera_get_image_width_range(camHandle, &minWidth, &width))
       return ERR_INTERNAL_ERROR;
-   if (tl_camera_get_image_height_range(camHandle, &minHeight, &fullFrame.yPixels))
+   if (tl_camera_get_image_height_range(camHandle, &minHeight, &height))
       return ERR_INTERNAL_ERROR;
    
+   fullFrame.xPixels = width;
+   fullFrame.yPixels = height;
    fullFrame.xOrigin = 0;
    fullFrame.yOrigin = 0;
    fullFrame.xBin = 1;
@@ -189,8 +191,13 @@ int Tsi3Cam::Initialize()
 
 	if (sensorType == TL_CAMERA_SENSOR_TYPE_BAYER)
 	{
-		if (fullFrame.pixDepth != 16)
+		if (fullFrame.pixDepth != 2)
+		{
+			ostringstream os;
+			os << "Color camera: unsupported pixel depth " << fullFrame.pixDepth;
+			LogMessage("Color camera: unsupported pixel depth");
 			return ERR_INTERNAL_ERROR; // color processor supports onlly 16 -> 48 conversion
+		}
 		int r = InitializeColorProcessor();
 		if (r != DEVICE_OK)
 		{
@@ -397,7 +404,7 @@ int Tsi3Cam::SnapImage()
          return ERR_TRIGGER_FAILED;
    }
 
-   // grayscale image snap
+   // image snap
    MM::MMTime start = GetCurrentMMTime();
    MM::MMTime timeout((long)(maxExposureMs / 1000.0) + 1000L, 0); // we are setting the upper limit on exposure
 
@@ -423,7 +430,7 @@ int Tsi3Cam::SnapImage()
 
 unsigned Tsi3Cam::GetBitDepth() const
 {
-   return (unsigned)fullFrame.bitDepth;
+   return color ? 8 : (unsigned)fullFrame.bitDepth;
 }
 
 int Tsi3Cam::GetBinning() const
