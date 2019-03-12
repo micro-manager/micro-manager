@@ -56,6 +56,8 @@ TL_COLOR_TRANSFORM_48_TO_24 tl_color_transform_48_to_24(0);
 TL_COLOR_TRANSFORM_48_TO_32 tl_color_transform_48_to_32(0);
 TL_COLOR_DESTROY_COLOR_PROCESSOR tl_color_destroy_color_processor(0);
 TL_COLOR_PROCESSING_MODULE_TERMINATE tl_color_processing_module_terminate(0);
+TL_COLOR_FILTER_ARRAY_PHASE g_cfaPhase(TL_COLOR_FILTER_ARRAY_PHASE_BAYER_BLUE);
+
 
 double sRGBCompand(double colorPixelIntensity)
 {
@@ -74,7 +76,6 @@ void sRGB_companding_LUT(int bit_depth, int* lut)
 
 int Tsi3Cam::ColorProcess16to32(unsigned short* monoBuf, unsigned char* colorBuf, int mono_image_width, int mono_image_height)
 {
-
 	// process
 	// Allocate a temporary buffer (3x larger than the monochrome buffer) to hold the demosaic (only) data.
 	unsigned short* demosaic_color_buffer = new unsigned short[mono_image_width * mono_image_height * 3];
@@ -84,7 +85,7 @@ int Tsi3Cam::ColorProcess16to32(unsigned short* monoBuf, unsigned char* colorBuf
 												, mono_image_height
 												, 0
 												, 0
-												, TL_COLOR_FILTER_ARRAY_PHASE_BAYER_BLUE
+												, g_cfaPhase
 												, TL_COLOR_FORMAT_BGR_PLANAR
 												, TL_COLOR_FILTER_TYPE_BAYER
 												, 14
@@ -101,7 +102,8 @@ int Tsi3Cam::ColorProcess16to32(unsigned short* monoBuf, unsigned char* colorBuf
 	}
 
 	// Create a color processor instance.
-	void* color_processor_inst = tl_color_create_color_processor(14, 14); // 14-bit image data if (!color_processor_inst)
+	void* color_processor_inst = tl_color_create_color_processor(14, 14); // 14-bit image data
+	if (!color_processor_inst)
 	{
 		delete[](demosaic_color_buffer);
 		tl_demosaic_module_terminate();
@@ -157,7 +159,7 @@ int Tsi3Cam::ColorProcess16to32(unsigned short* monoBuf, unsigned char* colorBuf
 int Tsi3Cam::InitializeColorProcessor()
 {
 	// Load the demosaic module.
-	HMODULE demosaic_module_handle = ::LoadLibrary("thorlabs_tsi_demosaic.dll");
+	demosaic_module_handle = ::LoadLibrary("thorlabs_tsi_demosaic.dll");
 	if (!demosaic_module_handle)
 	{
 		LogMessage("Failed to open the demosaic library!");
@@ -165,7 +167,7 @@ int Tsi3Cam::InitializeColorProcessor()
 	}
 
 	// Map handles to the demosaic module exported functions.
-	TL_DEMOSAIC_MODULE_INITIALIZE tl_demosaic_module_initialize = reinterpret_cast <TL_DEMOSAIC_MODULE_INITIALIZE> (::GetProcAddress(demosaic_module_handle, "tl_demosaic_module_initialize"));
+	tl_demosaic_module_initialize = reinterpret_cast <TL_DEMOSAIC_MODULE_INITIALIZE> (::GetProcAddress(demosaic_module_handle, "tl_demosaic_module_initialize"));
 	if (!tl_demosaic_module_initialize)
 	{
 		LogMessage(dllLoadErr);
@@ -173,7 +175,7 @@ int Tsi3Cam::InitializeColorProcessor()
 		return ERR_INTERNAL_ERROR;
 	}
 
-	TL_DEMOSAIC_TRANSFORM_16_TO_48 tl_demosaic_transform_16_to_48 = reinterpret_cast <TL_DEMOSAIC_TRANSFORM_16_TO_48> (::GetProcAddress(demosaic_module_handle, "tl_demosaic_transform_16_to_48"));
+	tl_demosaic_transform_16_to_48 = reinterpret_cast <TL_DEMOSAIC_TRANSFORM_16_TO_48> (::GetProcAddress(demosaic_module_handle, "tl_demosaic_transform_16_to_48"));
 	if (!tl_demosaic_transform_16_to_48)
 	{
 		LogMessage(dllLoadErr);
@@ -181,7 +183,7 @@ int Tsi3Cam::InitializeColorProcessor()
 		return ERR_INTERNAL_ERROR;
 	}
 
-	TL_DEMOSAIC_MODULE_TERMINATE tl_demosaic_module_terminate = reinterpret_cast <TL_DEMOSAIC_MODULE_TERMINATE> (::GetProcAddress(demosaic_module_handle, "tl_demosaic_module_terminate"));
+	tl_demosaic_module_terminate = reinterpret_cast <TL_DEMOSAIC_MODULE_TERMINATE> (::GetProcAddress(demosaic_module_handle, "tl_demosaic_module_terminate"));
 	if (!tl_demosaic_module_terminate)
 	{
 		LogMessage(dllLoadErr);
@@ -189,7 +191,7 @@ int Tsi3Cam::InitializeColorProcessor()
 		return ERR_INTERNAL_ERROR;
 	}
 
-	HMODULE cc_module_handle = ::LoadLibrary("thorlabs_tsi_color_processing.dll");
+	cc_module_handle = ::LoadLibrary("thorlabs_tsi_color_processing.dll");
 	if (!cc_module_handle)
 	{
 		LogMessage("Failed to open the color processing library!");
@@ -197,7 +199,7 @@ int Tsi3Cam::InitializeColorProcessor()
 		return ERR_INTERNAL_ERROR;
 	}
 
-	TL_COLOR_PROCESSING_MODULE_INITIALIZE tl_color_processing_module_initialize =reinterpret_cast <TL_COLOR_PROCESSING_MODULE_INITIALIZE> (::GetProcAddress(cc_module_handle, "tl_color_processing_module_initialize"));
+	tl_color_processing_module_initialize =reinterpret_cast <TL_COLOR_PROCESSING_MODULE_INITIALIZE> (::GetProcAddress(cc_module_handle, "tl_color_processing_module_initialize"));
 	if (!tl_color_processing_module_initialize)
 	{
 		LogMessage(dllLoadErr);
@@ -206,7 +208,7 @@ int Tsi3Cam::InitializeColorProcessor()
 		return ERR_INTERNAL_ERROR;
 	}
 
-	TL_COLOR_CREATE_COLOR_PROCESSOR tl_color_create_color_processor = reinterpret_cast <TL_COLOR_CREATE_COLOR_PROCESSOR> (::GetProcAddress(cc_module_handle, "tl_color_create_color_processor"));
+	tl_color_create_color_processor = reinterpret_cast <TL_COLOR_CREATE_COLOR_PROCESSOR> (::GetProcAddress(cc_module_handle, "tl_color_create_color_processor"));
 	if (!tl_color_create_color_processor)
 	{
 		LogMessage(dllLoadErr);
@@ -215,7 +217,7 @@ int Tsi3Cam::InitializeColorProcessor()
 		return ERR_INTERNAL_ERROR;
 	}
 
-	TL_COLOR_GET_BLUE_INPUT_LUT tl_color_get_blue_input_LUT = reinterpret_cast <TL_COLOR_GET_BLUE_INPUT_LUT> (::GetProcAddress(cc_module_handle, "tl_color_get_blue_input_LUT"));
+	tl_color_get_blue_input_LUT = reinterpret_cast <TL_COLOR_GET_BLUE_INPUT_LUT> (::GetProcAddress(cc_module_handle, "tl_color_get_blue_input_LUT"));
 	if (!tl_color_get_blue_input_LUT)
 	{
 		LogMessage(dllLoadErr);
@@ -224,7 +226,7 @@ int Tsi3Cam::InitializeColorProcessor()
 		return ERR_INTERNAL_ERROR;
 	}
 
-	TL_COLOR_GET_GREEN_INPUT_LUT tl_color_get_green_input_LUT = reinterpret_cast <TL_COLOR_GET_GREEN_INPUT_LUT> (::GetProcAddress(cc_module_handle, "tl_color_get_green_input_LUT"));
+	tl_color_get_green_input_LUT = reinterpret_cast <TL_COLOR_GET_GREEN_INPUT_LUT> (::GetProcAddress(cc_module_handle, "tl_color_get_green_input_LUT"));
 	if (!tl_color_get_green_input_LUT)
 	{
 		LogMessage(dllLoadErr);
@@ -233,7 +235,7 @@ int Tsi3Cam::InitializeColorProcessor()
 		return ERR_INTERNAL_ERROR;
 	}
 
-	TL_COLOR_GET_RED_INPUT_LUT tl_color_get_red_input_LUT = reinterpret_cast <TL_COLOR_GET_RED_INPUT_LUT> (::GetProcAddress(cc_module_handle, "tl_color_get_red_input_LUT"));
+	tl_color_get_red_input_LUT = reinterpret_cast <TL_COLOR_GET_RED_INPUT_LUT> (::GetProcAddress(cc_module_handle, "tl_color_get_red_input_LUT"));
 	if (!tl_color_get_red_input_LUT)
 	{
 		LogMessage(dllLoadErr);
@@ -242,7 +244,7 @@ int Tsi3Cam::InitializeColorProcessor()
 		return ERR_INTERNAL_ERROR;
 	}
 
-	TL_COLOR_ENABLE_INPUT_LUTS tl_color_enable_input_LUTs = reinterpret_cast <TL_COLOR_ENABLE_INPUT_LUTS> (::GetProcAddress(cc_module_handle, "tl_color_enable_input_LUTs"));
+	tl_color_enable_input_LUTs = reinterpret_cast <TL_COLOR_ENABLE_INPUT_LUTS> (::GetProcAddress(cc_module_handle, "tl_color_enable_input_LUTs"));
 	if (!tl_color_enable_input_LUTs)
 	{
 		LogMessage(dllLoadErr);
@@ -251,7 +253,7 @@ int Tsi3Cam::InitializeColorProcessor()
 		return ERR_INTERNAL_ERROR;
 	}
 
-	TL_COLOR_APPEND_MATRIX tl_color_append_matrix = reinterpret_cast <TL_COLOR_APPEND_MATRIX> (::GetProcAddress(cc_module_handle, "tl_color_append_matrix"));
+	tl_color_append_matrix = reinterpret_cast <TL_COLOR_APPEND_MATRIX> (::GetProcAddress(cc_module_handle, "tl_color_append_matrix"));
 	if (!tl_color_append_matrix)
 	{
 		LogMessage(dllLoadErr);
@@ -260,7 +262,7 @@ int Tsi3Cam::InitializeColorProcessor()
 		return ERR_INTERNAL_ERROR;
 	}
 
-	TL_COLOR_CLEAR_MATRIX tl_color_clear_matrix = reinterpret_cast <TL_COLOR_CLEAR_MATRIX> (::GetProcAddress(cc_module_handle, "tl_color_clear_matrix"));
+	tl_color_clear_matrix = reinterpret_cast <TL_COLOR_CLEAR_MATRIX> (::GetProcAddress(cc_module_handle, "tl_color_clear_matrix"));
 	if (!tl_color_clear_matrix)
 	{
 		LogMessage(dllLoadErr);
@@ -269,7 +271,7 @@ int Tsi3Cam::InitializeColorProcessor()
 		return ERR_INTERNAL_ERROR;
 	}
 
-	TL_COLOR_GET_BLUE_OUTPUT_LUT tl_color_get_blue_output_LUT = reinterpret_cast <TL_COLOR_GET_BLUE_OUTPUT_LUT> (::GetProcAddress(cc_module_handle, "tl_color_get_blue_output_LUT"));
+	tl_color_get_blue_output_LUT = reinterpret_cast <TL_COLOR_GET_BLUE_OUTPUT_LUT> (::GetProcAddress(cc_module_handle, "tl_color_get_blue_output_LUT"));
 	if (!tl_color_get_blue_output_LUT)
 	{
 		LogMessage(dllLoadErr);
@@ -278,7 +280,7 @@ int Tsi3Cam::InitializeColorProcessor()
 		return ERR_INTERNAL_ERROR;
 	}
 
-	TL_COLOR_GET_GREEN_OUTPUT_LUT tl_color_get_green_output_LUT = reinterpret_cast <TL_COLOR_GET_GREEN_OUTPUT_LUT> (::GetProcAddress(cc_module_handle, "tl_color_get_green_output_LUT"));
+	tl_color_get_green_output_LUT = reinterpret_cast <TL_COLOR_GET_GREEN_OUTPUT_LUT> (::GetProcAddress(cc_module_handle, "tl_color_get_green_output_LUT"));
 	if (!tl_color_get_green_output_LUT)
 	{
 		LogMessage(dllLoadErr);
@@ -287,7 +289,7 @@ int Tsi3Cam::InitializeColorProcessor()
 		return ERR_INTERNAL_ERROR;
 	}
 
-	TL_COLOR_GET_RED_OUTPUT_LUT tl_color_get_red_output_LUT = reinterpret_cast <TL_COLOR_GET_RED_OUTPUT_LUT> (::GetProcAddress(cc_module_handle, "tl_color_get_red_output_LUT"));
+	tl_color_get_red_output_LUT = reinterpret_cast <TL_COLOR_GET_RED_OUTPUT_LUT> (::GetProcAddress(cc_module_handle, "tl_color_get_red_output_LUT"));
 	if (!tl_color_get_red_output_LUT)
 	{
 		LogMessage(dllLoadErr);
@@ -296,7 +298,7 @@ int Tsi3Cam::InitializeColorProcessor()
 		return ERR_INTERNAL_ERROR;
 	}
 
-	TL_COLOR_ENABLE_OUTPUT_LUTS tl_color_enable_output_LUTs = reinterpret_cast <TL_COLOR_ENABLE_OUTPUT_LUTS> (::GetProcAddress(cc_module_handle, "tl_color_enable_output_LUTs"));
+	tl_color_enable_output_LUTs = reinterpret_cast <TL_COLOR_ENABLE_OUTPUT_LUTS> (::GetProcAddress(cc_module_handle, "tl_color_enable_output_LUTs"));
 	if (!tl_color_enable_output_LUTs)
 	{
 		LogMessage(dllLoadErr);
@@ -305,7 +307,7 @@ int Tsi3Cam::InitializeColorProcessor()
 		return ERR_INTERNAL_ERROR;
 	}
 
-	TL_COLOR_TRANSFORM_48_TO_48 tl_color_transform_48_to_48 = reinterpret_cast <TL_COLOR_TRANSFORM_48_TO_48> (::GetProcAddress(cc_module_handle, "tl_color_transform_48_to_48"));
+	tl_color_transform_48_to_48 = reinterpret_cast <TL_COLOR_TRANSFORM_48_TO_48> (::GetProcAddress(cc_module_handle, "tl_color_transform_48_to_48"));
 	if (!tl_color_transform_48_to_48)
 	{
 		LogMessage(dllLoadErr);
@@ -314,7 +316,7 @@ int Tsi3Cam::InitializeColorProcessor()
 		return ERR_INTERNAL_ERROR;
 	}
 
-	TL_COLOR_TRANSFORM_48_TO_24 tl_color_transform_48_to_24 = reinterpret_cast <TL_COLOR_TRANSFORM_48_TO_24> (::GetProcAddress(cc_module_handle, "tl_color_transform_48_to_24"));
+	tl_color_transform_48_to_24 = reinterpret_cast <TL_COLOR_TRANSFORM_48_TO_24> (::GetProcAddress(cc_module_handle, "tl_color_transform_48_to_24"));
 	if (!tl_color_transform_48_to_24)
 	{
 		LogMessage(dllLoadErr);
@@ -323,7 +325,7 @@ int Tsi3Cam::InitializeColorProcessor()
 		return ERR_INTERNAL_ERROR;
 	}
 
-	TL_COLOR_TRANSFORM_48_TO_32 tl_color_transform_48_to_32 = reinterpret_cast <TL_COLOR_TRANSFORM_48_TO_32> (::GetProcAddress(cc_module_handle, "tl_color_transform_48_to_32"));
+	tl_color_transform_48_to_32 = reinterpret_cast <TL_COLOR_TRANSFORM_48_TO_32> (::GetProcAddress(cc_module_handle, "tl_color_transform_48_to_32"));
 	if (!tl_color_transform_48_to_32)
 	{
 		LogMessage(dllLoadErr);
@@ -332,7 +334,7 @@ int Tsi3Cam::InitializeColorProcessor()
 		return ERR_INTERNAL_ERROR;
 	}
 
-	TL_COLOR_DESTROY_COLOR_PROCESSOR tl_color_destroy_color_processor = reinterpret_cast <TL_COLOR_DESTROY_COLOR_PROCESSOR> (::GetProcAddress(cc_module_handle, "tl_color_destroy_color_processor"));
+	tl_color_destroy_color_processor = reinterpret_cast <TL_COLOR_DESTROY_COLOR_PROCESSOR> (::GetProcAddress(cc_module_handle, "tl_color_destroy_color_processor"));
 	if (!tl_color_destroy_color_processor)
 	{
 		LogMessage(dllLoadErr);
@@ -341,7 +343,7 @@ int Tsi3Cam::InitializeColorProcessor()
 		return ERR_INTERNAL_ERROR;
 	}
 
-	TL_COLOR_PROCESSING_MODULE_TERMINATE tl_color_processing_module_terminate = reinterpret_cast <TL_COLOR_PROCESSING_MODULE_TERMINATE> (::GetProcAddress(cc_module_handle, "tl_color_processing_module_terminate"));
+	tl_color_processing_module_terminate = reinterpret_cast <TL_COLOR_PROCESSING_MODULE_TERMINATE> (::GetProcAddress(cc_module_handle, "tl_color_processing_module_terminate"));
 	if (!tl_color_processing_module_terminate)
 	{
 		LogMessage(dllLoadErr);
@@ -351,6 +353,8 @@ int Tsi3Cam::InitializeColorProcessor()
 	}
 
 	// initialize
+	tl_camera_get_color_filter_array_phase(camHandle, &g_cfaPhase);
+
 	if (tl_demosaic_module_initialize() != TL_COLOR_NO_ERROR)
 	{
 		LogMessage("Failed to initialize demosaic module");
