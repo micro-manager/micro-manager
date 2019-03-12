@@ -267,7 +267,7 @@ public class ParticleData {
          return null;
       }
       GrayU8 mask = new GrayU8(sub.width, sub.height);
-      int threshold = (int) GThresholdImageOps.computeLi(sub, 
+      int threshold = (int) GThresholdImageOps.computeOtsu(sub, 
               0.0, (double)sub.getImageType().getDataType().getMaxValue());
       GThresholdImageOps.threshold(sub, mask, threshold, false);
       
