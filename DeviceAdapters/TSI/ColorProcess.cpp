@@ -81,8 +81,9 @@ void sRGB_companding_LUT(int bit_depth, int* lut)
 
 /**
  * Process monochrome image obtained from Bayer mask sensor with demosaic and color transformation
- * @param monoBuf - sensor image, assumed to be 2 bytes per pixel and 14-bit dynamic range
+ * @param monoBuf - sensor image, assumed to be 2 bytes per pixel with bit-depth defined with bitDepth parameter
  * @param colorBuf - output color image 32-bit RGBA format
+ * @param bitDepth - bit depth of the input image, valid values 8-16
  * @return - error code
  */
 int Tsi3Cam::ColorProcess16to32(unsigned short* monoBuf, unsigned char* colorBuf, int mono_image_width, int mono_image_height, int bitDepth)
@@ -121,6 +122,7 @@ int Tsi3Cam::ColorProcess16to32(unsigned short* monoBuf, unsigned char* colorBuf
 		tl_color_processing_module_terminate();
 		::FreeLibrary(cc_module_handle);
 		::FreeLibrary(demosaic_module_handle);
+		return ERR_INTERNAL_ERROR;
 	}
 	
 	// configure sRGB output color space
@@ -157,6 +159,7 @@ int Tsi3Cam::ColorProcess16to32(unsigned short* monoBuf, unsigned char* colorBuf
 		tl_color_processing_module_terminate();
 		::FreeLibrary(cc_module_handle);
 		::FreeLibrary(demosaic_module_handle);
+		return ERR_INTERNAL_ERROR;
 	}
 
 	tl_color_destroy_color_processor(color_processor_inst);
