@@ -396,6 +396,19 @@ function mmJars = GetMMJars(pathToMM)
       jarName = fullfile(jarPath, jarFile.name);
       k = k + 1; mmJars{k} = jarName;
    end
+   
+   jarPath = fullfile(pathToMM, 'mmplugins');
+   for jarFile = dir(fullfile(jarPath, '*.jar'))'
+      jarName = fullfile(jarPath, jarFile.name);
+      k = k + 1; mmJars{k} = jarName;
+   end
+   
+   jarPath = fullfile(pathToMM, 'mmautofocus');
+   for jarFile = dir(fullfile(jarPath, '*.jar'))'
+      jarName = fullfile(jarPath, jarFile.name);
+      k = k + 1; mmJars{k} = jarName;
+   end
+   
 
    mmJars = mmJars';
 end
