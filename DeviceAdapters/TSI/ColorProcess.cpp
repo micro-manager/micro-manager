@@ -34,10 +34,12 @@
 
 const char* dllLoadErr = "Error loading color processing functions from the dll";
 
+// dynamically loaded functions from Thorlabs dlls
 HMODULE demosaic_module_handle(0);
 TL_DEMOSAIC_MODULE_INITIALIZE tl_demosaic_module_initialize(0);
 TL_DEMOSAIC_TRANSFORM_16_TO_48 tl_demosaic_transform_16_to_48(0);
 TL_DEMOSAIC_MODULE_TERMINATE tl_demosaic_module_terminate(0);
+
 HMODULE cc_module_handle(0);
 TL_COLOR_PROCESSING_MODULE_INITIALIZE tl_color_processing_module_initialize(0);
 TL_COLOR_CREATE_COLOR_PROCESSOR tl_color_create_color_processor(0);
@@ -56,9 +58,12 @@ TL_COLOR_TRANSFORM_48_TO_24 tl_color_transform_48_to_24(0);
 TL_COLOR_TRANSFORM_48_TO_32 tl_color_transform_48_to_32(0);
 TL_COLOR_DESTROY_COLOR_PROCESSOR tl_color_destroy_color_processor(0);
 TL_COLOR_PROCESSING_MODULE_TERMINATE tl_color_processing_module_terminate(0);
+
 TL_COLOR_FILTER_ARRAY_PHASE g_cfaPhase(TL_COLOR_FILTER_ARRAY_PHASE_BAYER_BLUE);
 
-
+/////////////////////////////////////////////////////////////////////////////////////////
+// Local utility functions for color processing
+/////////////////////////////////////////////////////////////////////////////////////////
 double sRGBCompand(double colorPixelIntensity)
 {
 	const double expFactor = 1 / 2.4;
@@ -74,7 +79,13 @@ void sRGB_companding_LUT(int bit_depth, int* lut)
 		lut[i] = static_cast <unsigned short> (sRGBCompand(static_cast <double> (i) / dMaxValue) * dMaxValue);
 }
 
-int Tsi3Cam::ColorProcess16to32(unsigned short* monoBuf, unsigned char* colorBuf, int mono_image_width, int mono_image_height)
+/**
+ * Process monochrome image obtained from Bayer mask sensor with demosaic and color transformation
+ * @param monoBuf - sensor image, assumed to be 2 bytes per pixel and 14-bit dynamic range
+ * @param colorBuf - output color image 32-bit RGBA format
+ * @return - error code
+ */
+int Tsi3Cam::ColorProcess16to32(unsigned short* monoBuf, unsigned char* colorBuf, int mono_image_width, int mono_image_height, int bitDepth)
 {
 	// process
 	// Allocate a temporary buffer (3x larger than the monochrome buffer) to hold the demosaic (only) data.
@@ -88,7 +99,7 @@ int Tsi3Cam::ColorProcess16to32(unsigned short* monoBuf, unsigned char* colorBuf
 												, g_cfaPhase
 												, TL_COLOR_FORMAT_BGR_PLANAR
 												, TL_COLOR_FILTER_TYPE_BAYER
-												, 14
+												, bitDepth
 												, monoBuf
 												, demosaic_color_buffer) != TL_COLOR_NO_ERROR)
 	{
@@ -102,7 +113,7 @@ int Tsi3Cam::ColorProcess16to32(unsigned short* monoBuf, unsigned char* colorBuf
 	}
 
 	// Create a color processor instance.
-	void* color_processor_inst = tl_color_create_color_processor(14, 14); // 14-bit image data
+	void* color_processor_inst = tl_color_create_color_processor(bitDepth, bitDepth);
 	if (!color_processor_inst)
 	{
 		delete[](demosaic_color_buffer);
@@ -119,9 +130,9 @@ int Tsi3Cam::ColorProcess16to32(unsigned short* monoBuf, unsigned char* colorBuf
 	tl_color_append_matrix (color_processor_inst, merged_camera_correction_sRGB_matrix);
 
 	// Use the output LUTs to configure the sRGB nonlinear (companding) function.
-	sRGB_companding_LUT(14, tl_color_get_blue_output_LUT(color_processor_inst));
-	sRGB_companding_LUT(14, tl_color_get_green_output_LUT(color_processor_inst));
-	sRGB_companding_LUT(14, tl_color_get_red_output_LUT(color_processor_inst));
+	sRGB_companding_LUT(bitDepth, tl_color_get_blue_output_LUT(color_processor_inst));
+	sRGB_companding_LUT(bitDepth, tl_color_get_green_output_LUT(color_processor_inst));
+	sRGB_companding_LUT(bitDepth, tl_color_get_red_output_LUT(color_processor_inst));
 	
 	// Color process the demosaic color frame.
 
@@ -129,11 +140,11 @@ int Tsi3Cam::ColorProcess16to32(unsigned short* monoBuf, unsigned char* colorBuf
 											, demosaic_color_buffer // input buffer
 											, TL_COLOR_FORMAT_BGR_PLANAR
 											, 0
-											, 1 << 14
+											, 1 << bitDepth
 											, 0
-											, 1 << 14
+											, 1 << bitDepth
 											, 0
-											, 1 << 14
+											, 1 << bitDepth
 											, 0
 											, 0
 											, 0
@@ -156,6 +167,11 @@ int Tsi3Cam::ColorProcess16to32(unsigned short* monoBuf, unsigned char* colorBuf
 	return DEVICE_OK;
 }
 
+/**
+ * Initializes color processing pipeline. Should be called only once each time application starts.
+ * Requires shutdown routine on application exit.
+ * @return - error code
+ */
 int Tsi3Cam::InitializeColorProcessor()
 {
 	// Load the demosaic module.
@@ -352,7 +368,8 @@ int Tsi3Cam::InitializeColorProcessor()
 		return ERR_INTERNAL_ERROR;
 	}
 
-	// initialize
+	// call initialize functions
+
 	tl_camera_get_color_filter_array_phase(camHandle, &g_cfaPhase);
 
 	if (tl_demosaic_module_initialize() != TL_COLOR_NO_ERROR)
@@ -374,6 +391,9 @@ int Tsi3Cam::InitializeColorProcessor()
 	return DEVICE_OK;
 }
 
+/**
+ * Tears down color processor and releases associated handles
+ */
 int Tsi3Cam::ShutdownColorProcessor()
 {
 	// Terminate the color processing module
