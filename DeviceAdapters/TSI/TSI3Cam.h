@@ -136,8 +136,8 @@ private:
    void ResetImageBuffer();
    bool StopCamera();
    bool StartCamera(int frames);
-	int ColorProcess16to32(unsigned short* monoBuffer, unsigned char* colorBuffer, int width, int height);
-	int ColorProcess16to64(unsigned short* monoBuffer, unsigned char* colorBuffer, int width, int height);
+	int ColorProcess16to32(unsigned short* monoBuffer, unsigned char* colorBuffer, int width, int height, int bitDepth);
+	int ColorProcess16to64(unsigned short* monoBuffer, unsigned char* colorBuffer, int width, int height, int bitDepth);
 	int InitializeColorProcessor();
 	int ShutdownColorProcessor();
 

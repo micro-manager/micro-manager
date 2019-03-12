@@ -652,45 +652,30 @@ void Tsi3Cam::frame_available_callback(void* /*sender*/, unsigned short* image_b
       << frame_count << ", buffer: " << instance->img.Width() << "X" << instance->img.Height();
    instance->LogMessage(os.str().c_str());
    
+	if (instance->color)
+	{
+		// COLOR
+		instance->img.Resize(img_width, img_height, 4);
+		instance->ColorProcess16to32(image_buffer, instance->img.GetPixelsRW(), img_width, img_height, instance->fullFrame.bitDepth);
+	}
+	else
+	{
+		// MONOCHROME
+		instance->img.Resize(img_width, img_height, instance->fullFrame.pixDepth);
+		memcpy(instance->img.GetPixelsRW(), image_buffer, instance->fullFrame.pixDepth * img_height * img_width);
+	}
+
    if (instance->acquiringFrame)
    {
-		if (instance->color)
-		{
-			// COLOR
-			instance->img.Resize(img_width, img_height, 4);
-			instance->ColorProcess16to32(image_buffer, instance->img.GetPixelsRW(), img_width, img_height);
-		}
-		else
-		{
-			// MONOCHROME
-			// reformat image buffer
-			instance->img.Resize(img_width, img_height, instance->fullFrame.pixDepth);
-			memcpy(instance->img.GetPixelsRW(), image_buffer, instance->fullFrame.pixDepth * img_height * img_width);
-		}
-
       InterlockedExchange(&instance->acquiringFrame, 0);
    }
    else if (instance->acquiringSequence)
    {
-		if (instance->color)
-		{
-			// COLOR
-			instance->img.Resize(img_width, img_height, 4);
-			instance->ColorProcess16to32(image_buffer, instance->img.GetPixelsRW(), img_width, img_height);
-		}
-		else
-		{
-			// MONOCHROME
-			// reformat image buffer
-			instance->img.Resize(img_width, img_height, instance->fullFrame.pixDepth);
-			memcpy(instance->img.GetPixelsRW(), image_buffer, instance->fullFrame.pixDepth * img_height * img_width);
-		}
       int ret = instance->InsertImage();
       if (ret != DEVICE_OK)
       {
          ostringstream osErr;
          osErr << "Insert image failed: " << ret;
-
       }
    }
    else
