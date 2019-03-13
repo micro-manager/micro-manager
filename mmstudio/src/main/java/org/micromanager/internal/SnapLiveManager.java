@@ -24,9 +24,10 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.UUID;
+import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -71,7 +72,6 @@ import org.micromanager.internal.utils.performance.PerformanceMonitor;
 import org.micromanager.internal.utils.performance.gui.PerformanceMonitorUI;
 import org.micromanager.quickaccess.internal.QuickAccessFactory;
 import org.micromanager.display.DisplayWindowControlsFactory;
-import org.micromanager.display.internal.DefaultChannelDisplaySettings;
 import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 import org.micromanager.internal.menus.MMMenuBar;
 import org.micromanager.internal.navigation.UiMovesStageManager;
@@ -108,8 +108,7 @@ public final class SnapLiveManager extends DataViewerListener
    private boolean shouldForceReset_ = true;
    private boolean amStartingSequenceAcquisition_ = false;
 
-   private final List<DefaultImage> lastImageForEachChannel_ =
-         new ArrayList<DefaultImage>();
+   private final List<DefaultImage> lastImageForEachChannel_ = new ArrayList<>();
 
    private final ScheduledExecutorService scheduler_ =
          Executors.newSingleThreadScheduledExecutor(
@@ -139,14 +138,14 @@ public final class SnapLiveManager extends DataViewerListener
       private int height_;
       private int numComponents_;
       private int bytesPerPixel_;
-      private Long imageNumber_;
+      final private Map<Integer, Long> imageNumber_ = new HashMap<Integer, Long>();
       
 
       public int getWidth() { return width_; }
       public int getHeight() { return height_; }
       public int getNumComponents() { return numComponents_; }
       public int getBytesPerPixel() { return bytesPerPixel_; }
-      public Long getImageNr() { return imageNumber_; }
+      public Long getImageNr(int ch) { return imageNumber_.get(ch); }
       public void setImageInfo (final int width, final int height, 
               final int numComponents, final int bytesPerPixel) {
          width_ = width;
@@ -154,7 +153,7 @@ public final class SnapLiveManager extends DataViewerListener
          numComponents_ = numComponents;
          bytesPerPixel_ = bytesPerPixel;
       }
-      public void setImageNumber(Long imageNumber) { imageNumber_ = imageNumber; }
+      public void setImageNumber(int ch, Long imageNumber) { imageNumber_.put(ch, imageNumber); }
       
          
    }
@@ -265,7 +264,9 @@ public final class SnapLiveManager extends DataViewerListener
       
       synchronized (displayInfoLock_) {
          if (displayInfo_ != null) {
-            displayInfo_.setImageNumber(new Long(0));
+             for (int c = 0; c < numCameraChannels_; c++) {
+                displayInfo_.setImageNumber(c, new Long(0));
+             }
          }
       }
 
@@ -413,41 +414,40 @@ public final class SnapLiveManager extends DataViewerListener
             Coords newCoords = image.getCoords().copyBuilder()
                .t(0)
                .c(imageChannel).build();
-            // Generate a new UUID for the image, so that our histogram
-            // update code realizes this is a new image.
-            Metadata newMetadata = image.getMetadata().copyBuilderWithNewUUID()
-                    .build();
-            final Image newImage = image.copyWith(newCoords, newMetadata);
+              // Generate a new UUID for the image, so that our histogram
+              // update code realizes this is a new image.
+              Metadata newMetadata = image.getMetadata().copyBuilderWithNewUUID()
+                      .build();
+              final Image newImage = image.copyWith(newCoords, newMetadata);
 
-            channelsSet.add(imageChannel);
-            if (channelsSet.size() == numCameraChannels_) {
-               try {
+              try {
                   SwingUtilities.invokeAndWait(new Runnable() {
-                     @Override
-                     public void run() {
-                        synchronized (SnapLiveManager.this) {
-                           if (scheduledGrab_ == null
-                                   || liveModeStartCount_ != liveModeCount) {
-                              throw new CancellationException();
-                           }
-                        }
-                        displayImage(newImage);
-                     }
+                      @Override
+                      public void run() {
+                          synchronized (SnapLiveManager.this) {
+                              if (scheduledGrab_ == null
+                                      || liveModeStartCount_ != liveModeCount) {
+                                  throw new CancellationException();
+                              }
+                          }
+                          displayImage(newImage);
+                      }
                   });
 
-               } catch (InterruptedException unexpected) {
+              } catch (InterruptedException unexpected) {
                   Thread.currentThread().interrupt();
-               } catch (InvocationTargetException e) {
+              } catch (InvocationTargetException e) {
                   if (e.getCause() instanceof CancellationException) {
-                     return;
+                      return;
                   }
                   throw new RuntimeException(e.getCause());
-               }
-
-               // Got every channel.
-               break;
-            }
-         }
+              }
+              channelsSet.add(imageChannel);
+              if (channelsSet.size() == numCameraChannels_) {
+                  // Got every channel.
+                  break;
+              }
+          }
       }
       catch (JSONException e) {
          ReportingUtils.logError(e, "Exception in image grabber thread.");
@@ -532,7 +532,7 @@ public final class SnapLiveManager extends DataViewerListener
       /* TODO
       UiMovesStageManager.getInstance().activate((DisplayController) display);
       */
-      ArrayList<Component> controls = new ArrayList<Component>();
+      ArrayList<Component> controls = new ArrayList<>();
       Insets zeroInsets = new Insets(0, 0, 0, 0);
       Dimension buttonSize = new Dimension(90, 28);
 
@@ -621,7 +621,7 @@ public final class SnapLiveManager extends DataViewerListener
             ReportingUtils.logError(e, "Error getting current channel");
          }
          for (int i = 0; i < numCameraChannels_; ++i) {
-            String name = makeChannelName(curChannel, i);
+            String name = makeChannelName(curChannel, core_.getCameraChannelName(i));
             if (channelNames == null ||
                   i >= channelNames.size() ||
                   !name.equals(channelNames.get(i)))
@@ -654,7 +654,7 @@ public final class SnapLiveManager extends DataViewerListener
             // we need to recreate everything.
             shouldReset = true;
          } else if (displayInfo_ != null) {
-            Long prevSeqNr = displayInfo_.imageNumber_;
+            Long prevSeqNr = displayInfo_.getImageNr(newImageChannel);
             Long newSeqNr = newImage.getMetadata().getImageNumber();
             if (prevSeqNr != null && newSeqNr != null) {
                if (prevSeqNr >= newSeqNr) {
@@ -691,7 +691,7 @@ public final class SnapLiveManager extends DataViewerListener
             displayInfo_.setImageInfo(newImage.getWidth(),
                     newImage.getHeight(), newImage.getNumComponents(),
                     newImage.getBytesPerPixel()) ;
-            displayInfo_.setImageNumber(newImage.getMetadata().getImageNumber());
+            displayInfo_.setImageNumber(newImageChannel, newImage.getMetadata().getImageNumber());
             
             if (lastImageForEachChannel_.size() > newImageChannel) {
                lastImageForEachChannel_.set(newImageChannel, newImage);
@@ -753,7 +753,7 @@ public final class SnapLiveManager extends DataViewerListener
          String channel = core_.getCurrentConfig(core_.getChannelGroup());
          String[] channelNames = new String[numCameraChannels_];
          for (int i = 0; i < numCameraChannels_; ++i) {
-            channelNames[i] = makeChannelName(channel, i);
+            channelNames[i] = makeChannelName(channel, core_.getCameraChannelName(i));
          }
          try {
             store_.setSummaryMetadata(store_.getSummaryMetadata().copy()
@@ -777,10 +777,10 @@ public final class SnapLiveManager extends DataViewerListener
    /**
     * Make a name up for the given channel/camera number combination.
     */
-   private String makeChannelName(String channel, int cameraIndex) {
+   private String makeChannelName(String channel, String cameraChannelName) {
       String result = channel;
       if (numCameraChannels_ > 1) {
-         result = result + " " + cameraIndex;
+         result = result + " " + cameraChannelName;
       }
       return result;
    }
@@ -794,7 +794,7 @@ public final class SnapLiveManager extends DataViewerListener
          // Just return the most recent images.
          // BUG: In theory this could transiently contain nulls
          synchronized (lastImageForEachChannel_) {
-            return new ArrayList<Image>(lastImageForEachChannel_);
+            return new ArrayList<>(lastImageForEachChannel_);
          }
       }
       try {
