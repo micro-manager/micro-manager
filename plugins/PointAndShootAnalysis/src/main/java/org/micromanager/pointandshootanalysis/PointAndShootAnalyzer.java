@@ -308,6 +308,7 @@ public class PointAndShootAnalyzer implements Runnable {
                   currentPoint = nextParticle.getCentroid();
                   track.put(frame, nextParticle);
                } else {
+                  track.put(frame, null);
                  // System.out.println("Before Missing particle");
                   // TODO: increase counter, give up when too high
                }
@@ -333,6 +334,7 @@ public class PointAndShootAnalyzer implements Runnable {
                }
                if (nextParticle == null || ( 
                        currentPoint.distance(nextParticle.getCentroid()) > maxDistance )) {
+                  track.put(frame, null);
                   if (previousParticle != null) {
                      nextParticle = previousParticle.copy();
                   }

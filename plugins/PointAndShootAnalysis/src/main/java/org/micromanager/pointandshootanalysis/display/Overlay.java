@@ -172,39 +172,44 @@ public class Overlay extends AbstractOverlay {
                }
             }
          }
-         
+
          for (ParticleData p : tracksIndexedByFrame_.get(frame)) {
-            
-            if (showMasksCheckBox_ != null && showMasksCheckBox_.isSelected()) {
-               gTfm.setColor(maskColor_);
-               List<Point2D_I32> mask = p.getMask();
-             //  if (mask == null) {
-             //     mask = p.getMask();
-             //  }
-               mask.forEach((point) -> {
-                  gTfm.drawRect(point.x, point.y, 1, 1);
-                  // Note: drawLine is much faster the g.draw(new Line2D.Float());
-                  //gTfm.drawLine(point.x, point.y, point.x, point.y);
-               });      
-            }
-            
-            if (showBleachMasksCheckBox_ != null && showBleachMasksCheckBox_.isSelected()) {
-               List<Point2D_I32> bleachMask = p.getBleachMask();
-               if (bleachMask != null) {
-                  gTfm.setColor(bleachColor_);
-                  bleachMask.forEach((point) -> {
+            if (p != null) {
+               if (showMasksCheckBox_ != null && showMasksCheckBox_.isSelected()) {
+                  gTfm.setColor(maskColor_);
+                  List<Point2D_I32> mask = p.getMask();
+                  //  if (mask == null) {
+                  //     mask = p.getMask();
+                  //  }
+                  mask.forEach((point) -> {
                      gTfm.drawRect(point.x, point.y, 1, 1);
+                     // Note: drawLine is much faster the g.draw(new Line2D.Float());
+                     //gTfm.drawLine(point.x, point.y, point.x, point.y);
                   });
                }
+
+               if (showBleachMasksCheckBox_ != null && showBleachMasksCheckBox_.isSelected()) {
+                  List<Point2D_I32> bleachMask = p.getBleachMask();
+                  if (bleachMask != null) {
+                     gTfm.setColor(bleachColor_);
+                     bleachMask.forEach((point) -> {
+                        gTfm.drawRect(point.x, point.y, 1, 1);
+                     });
+                  }
+               }
+               gTfm.setColor(WidgetSettings.COLORS[colorIndex]);
+               
+               drawMarker1(gTfm, p.getCentroid(), halfLength, halfLength / 2);
+               if (p.getBleachSpot() != null) {
+                  //   drawCross(gTfm, p.getBleachSpot(), halfLength / 2);
+               }
             }
-            gTfm.setColor(WidgetSettings.COLORS[colorIndex]);
+            // change the color outside of the null check, so that null particles
+            // do not change the color with which we draw the next particle
+            //  All this is a bit ugly...
             colorIndex++;
-            if (colorIndex >= WidgetSettings.COLORS.length) { 
-               colorIndex = 0; 
-            }
-            drawMarker1(gTfm, p.getCentroid(), halfLength, halfLength / 2);
-            if (p.getBleachSpot() != null) {
-            //   drawCross(gTfm, p.getBleachSpot(), halfLength / 2);
+            if (colorIndex >= WidgetSettings.COLORS.length) {
+               colorIndex = 0;
             }
          }
       }
