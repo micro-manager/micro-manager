@@ -384,8 +384,8 @@ public final class SnapLiveManager extends DataViewerListener
          // setups, one camera could be generating images faster than the
          // other(s). Of course, 2x isn't guaranteed to be enough here, either,
          // but it's what we've historically used.
-         HashSet<Integer> channelsSet = new HashSet<Integer>();
-         for (int c = 0; c < 2 * numCameraChannels_; ++c) {
+         HashSet<Integer> channelsSet = new HashSet<>();
+         for (int c = 0; c < 6 * numCameraChannels_; ++c) {
             TaggedImage tagged;
             try {
                tagged = core_.getNBeforeLastTaggedImage(c);
@@ -407,42 +407,43 @@ public final class SnapLiveManager extends DataViewerListener
                continue;
             }
             DefaultImage image = new DefaultImage(tagged);
-            Long seqNr = image.getMetadata().getImageNumber();
+            final Long seqNr = image.getMetadata().getImageNumber();
             perfMon_.sample("Image missing ImageNumber (%)",
                   seqNr == null ? 100.0 : 0.0);
-            Coords newCoords = image.getCoords().copy()
-               .time(0)
-               .channel(imageChannel).build();
+            Coords newCoords = image.getCoords().copyBuilder()
+               .t(0)
+               .c(imageChannel).build();
             // Generate a new UUID for the image, so that our histogram
             // update code realizes this is a new image.
-            Metadata newMetadata = image.getMetadata().copy()
-               .uuid(UUID.randomUUID()).build();
+            Metadata newMetadata = image.getMetadata().copyBuilderWithNewUUID()
+                    .build();
             final Image newImage = image.copyWith(newCoords, newMetadata);
-            try {
-               SwingUtilities.invokeAndWait(new Runnable() {
-                  @Override
-                  public void run() {
-                     synchronized (SnapLiveManager.this) {
-                        if (scheduledGrab_ == null ||
-                              liveModeStartCount_ != liveModeCount) {
-                           throw new CancellationException();
-                        }
-                     }
-                     displayImage(newImage);
-                  }
-               });
-            }
-            catch (InterruptedException unexpected) {
-               Thread.currentThread().interrupt();
-            }
-            catch (InvocationTargetException e) {
-               if (e.getCause() instanceof CancellationException) {
-                  return;
-               }
-               throw new RuntimeException(e.getCause());
-            }
+
             channelsSet.add(imageChannel);
             if (channelsSet.size() == numCameraChannels_) {
+               try {
+                  SwingUtilities.invokeAndWait(new Runnable() {
+                     @Override
+                     public void run() {
+                        synchronized (SnapLiveManager.this) {
+                           if (scheduledGrab_ == null
+                                   || liveModeStartCount_ != liveModeCount) {
+                              throw new CancellationException();
+                           }
+                        }
+                        displayImage(newImage);
+                     }
+                  });
+
+               } catch (InterruptedException unexpected) {
+                  Thread.currentThread().interrupt();
+               } catch (InvocationTargetException e) {
+                  if (e.getCause() instanceof CancellationException) {
+                     return;
+                  }
+                  throw new RuntimeException(e.getCause());
+               }
+
                // Got every channel.
                break;
             }
