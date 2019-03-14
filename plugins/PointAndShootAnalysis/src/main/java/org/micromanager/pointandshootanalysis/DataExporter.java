@@ -39,6 +39,8 @@ public class DataExporter {
    final private List<PASData> data_;
    final private Map<Integer, Instant> frameTimeStamps_;
    
+   final static private Integer MSLIMIT = 5000;
+   
    public DataExporter(Studio studio, List<PASData> data, Map<Integer, 
                Instant> frameTimeStamps, Type type) {
       studio_ = studio;
@@ -210,7 +212,7 @@ public class DataExporter {
             export.append(fitData.parms()[0]).append("\t");  // A
             export.append(fitData.tHalf()).append("\t");
             export.append(fitData.rSquared()).append("\t");
-            FitData particleFitData = fit(index, Type.PARTICLE_AND_BLEACH, LinearFunc.class, null);
+            FitData particleFitData = fit(index, Type.PARTICLE_AND_BLEACH, LinearFunc.class, MSLIMIT);
             export.append(particleFitData.parms()[1]).append("\t"); // particle k
             export.append(particleFitData.parms()[0]).append("\n"); // particle y0:w
             
@@ -231,7 +233,7 @@ public class DataExporter {
          Integer msLimit = null;
          if (type_ == Type.PARTICLE_AND_BLEACH) {
             fitClass = LinearFunc.class;
-            msLimit = 5000;
+            msLimit = MSLIMIT;
          }
          FitData fitData = fit(index, type_, fitClass, msLimit);
          // TODO: check which functions was used to fit and do the right one
