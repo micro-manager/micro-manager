@@ -326,15 +326,16 @@ public class ParticleData {
            int bleachSpotRadius, 
            double maxDistance) {
       
-      final int particleSizeCutoff = 16;
-      // if particle is too small, simply assume that the bleachspot covers the
+      final int particleSizeCutoff = 96;
+      // if particle is too small, draw the bleach spot at the centroid
       // whole particle
       if (particle.mask_.size() < particleSizeCutoff) {
-         Double avg = averageIntensity(current, particle.getMask(), offset);
+         List<Point2D_I32> bleachMask = getBleachMask(particle.getCentroid(), bleachSpotRadius);
+         Double avg = averageIntensity(current, bleachMask, offset);
          return new ParticleData(particle.getMask(), 
                  particle.getThreshold(), 
-                 particle.getMask(),
-                 particle.getMask(), 
+                 bleachMask,
+                 bleachMask, 
                  particle.getCentroid(), 
                  particle.getCentroid(), 
                  avg, 
@@ -394,23 +395,8 @@ public class ParticleData {
          if (isRealBleach) {
             Point2D_I32 bleachPoint = 
                     new Point2D_I32(minPixel.x + offset.x, minPixel.y + offset.y);
-            CircleMask cm = new CircleMask(bleachSpotRadius);
-            Set<Point2D_I32> bleachSet = new HashSet<>();
-            bleachSet.add(bleachPoint);
-            for (int x = 0; x < cm.getMask().length; x++) {
-               for (int y = 0; y < cm.getMask()[x].length; y++) {
-                  if (cm.getMask()[x][y]) {
-                     bleachSet.add(new Point2D_I32(bleachPoint.x + x, bleachPoint.y + y));
-                     bleachSet.add(new Point2D_I32(bleachPoint.x + x, bleachPoint.y - y));
-                     bleachSet.add(new Point2D_I32(bleachPoint.x - x, bleachPoint.y + y));
-                     bleachSet.add(new Point2D_I32(bleachPoint.x - x, bleachPoint.y - y));
-                  }
-               }
-            }
-            List<Point2D_I32> bleachMask = new ArrayList<>();
-            bleachSet.forEach((pixel) -> {
-               bleachMask.add(pixel);
-            });
+            List<Point2D_I32> bleachMask = getBleachMask(bleachPoint, bleachSpotRadius);
+            
             //bleachMask = ParticleData.offset(bleachMask, offset, false);
             List<Point2D_I32> mask = particle.getMask();
             // remove bleached pixels from the mask
@@ -440,6 +426,29 @@ public class ParticleData {
       return particle;
    }
    
+   
+   private static List<Point2D_I32> getBleachMask(Point2D_I32 center, int radius) {
+      CircleMask cm = new CircleMask(radius);
+      Set<Point2D_I32> bleachSet = new HashSet<>();
+      bleachSet.add(center);
+      for (int x = 0; x < cm.getMask().length; x++) {
+         for (int y = 0; y < cm.getMask()[x].length; y++) {
+            if (cm.getMask()[x][y]) {
+               bleachSet.add(new Point2D_I32(center.x + x, center.y + y));
+               bleachSet.add(new Point2D_I32(center.x + x, center.y - y));
+               bleachSet.add(new Point2D_I32(center.x - x, center.y + y));
+               bleachSet.add(new Point2D_I32(center.x - x, center.y - y));
+            }
+         }
+      }
+      List<Point2D_I32> bleachMask = new ArrayList<>();
+      bleachSet.forEach((pixel) -> {
+         bleachMask.add(pixel);
+      });
+
+      return bleachMask;
+   }
+
    
    private static Double averageIntensity(GrayU16 originalImage, 
            List<Point2D_I32> cluster, Point2D_I32 offset) {
