@@ -176,13 +176,6 @@ int CScanner::Initialize()
       GetProperty(g_ScannerUpperLimYPropertyName, shutterY_);
    }
 
-   // mode, currently just changes between internal and external input
-   pAct = new CPropertyAction (this, &CScanner::OnMode);
-   CreateProperty(g_ScannerInputModePropertyName, "0", MM::String, false, pAct);
-   AddAllowedValue(g_ScannerInputModePropertyName, g_ScannerMode_internal);
-   AddAllowedValue(g_ScannerInputModePropertyName, g_ScannerMode_external);
-   UpdateProperty(g_ScannerInputModePropertyName);
-
    // filter cut-off frequency
    // decided to implement separately for X and Y axes so can have one fast and other slow
    pAct = new CPropertyAction (this, &CScanner::OnCutoffFreqX);
@@ -364,6 +357,30 @@ int CScanner::Initialize()
    // get build info so we can add optional properties
    build_info_type build;
    RETURN_ON_MM_ERROR( hub_->GetBuildInfo(addressChar_, build) );
+
+   if (hub_->IsDefinePresent(build, "DAC_4CH"))  // special galvo firmware with analog outputs
+   {
+      // output mode
+      pAct = new CPropertyAction (this, &CScanner::OnOutputMode);
+      CreateProperty(g_ScannerOutputModePropertyName, "0", MM::String, false, pAct);
+      AddAllowedValue(g_ScannerOutputModePropertyName, g_DACOutputMode_0);
+      AddAllowedValue(g_ScannerOutputModePropertyName, g_DACOutputMode_1);
+      AddAllowedValue(g_ScannerOutputModePropertyName, g_DACOutputMode_2);
+      AddAllowedValue(g_ScannerOutputModePropertyName, g_DACOutputMode_4);
+      AddAllowedValue(g_ScannerOutputModePropertyName, g_DACOutputMode_5);
+      AddAllowedValue(g_ScannerOutputModePropertyName, g_DACOutputMode_6);
+      AddAllowedValue(g_ScannerOutputModePropertyName, g_DACOutputMode_7);
+      UpdateProperty(g_ScannerOutputModePropertyName);
+   }
+   else  // original MEMS scanner firmware
+   {
+      // input mode, currently just changes between internal and external input
+      pAct = new CPropertyAction (this, &CScanner::OnInputMode);
+      CreateProperty(g_ScannerInputModePropertyName, "0", MM::String, false, pAct);
+      AddAllowedValue(g_ScannerInputModePropertyName, g_ScannerMode_internal);
+      AddAllowedValue(g_ScannerInputModePropertyName, g_ScannerMode_external);
+      UpdateProperty(g_ScannerInputModePropertyName);
+   }
 
    // add phototargeting (MM_TARGET) properties if supported
    if (build.vAxesProps[0] & BIT3)
@@ -1244,7 +1261,61 @@ int CScanner::OnUpperLimY(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int CScanner::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CScanner::OnOutputMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+// assume X axis's mode is for both, and then set mode for both axes together just like XYStage properties
+{
+   ostringstream command; command.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      ostringstream response; response.str("");
+      command << "PM " << axisLetterX_ << "?";
+      response << axisLetterX_ << "=";
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      bool success = 0;
+      switch (tmp)
+      {
+      case 0: success = pProp->Set(g_DACOutputMode_0); break;
+      case 1: success = pProp->Set(g_DACOutputMode_1); break;
+      case 2: success = pProp->Set(g_DACOutputMode_2); break;
+      case 4: success = pProp->Set(g_DACOutputMode_4); break;
+      case 5: success = pProp->Set(g_DACOutputMode_5); break;
+      case 6: success = pProp->Set(g_DACOutputMode_6); break;
+      case 7: success = pProp->Set(g_DACOutputMode_7); break;
+      default: success = 0;                        break;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_DACOutputMode_0) == 0)
+         tmp = 0;
+      else if (tmpstr.compare(g_DACOutputMode_1) == 0)
+         tmp = 1;
+      else if (tmpstr.compare(g_DACOutputMode_2) == 0)
+         tmp = 2;
+      else if (tmpstr.compare(g_DACOutputMode_4) == 0)
+         tmp = 4;
+      else if (tmpstr.compare(g_DACOutputMode_5) == 0)
+         tmp = 5;
+      else if (tmpstr.compare(g_DACOutputMode_6) == 0)
+         tmp = 6;
+      else if (tmpstr.compare(g_DACOutputMode_7) == 0)
+         tmp = 7;
+      else
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      command << "PM " << axisLetterX_ << "=" << tmp << " " << axisLetterY_ << "=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CScanner::OnInputMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 // assume X axis's mode is for both, and then set mode for both axes together just like XYStage properties
 {
    ostringstream command; command.str("");
