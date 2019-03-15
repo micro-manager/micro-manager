@@ -217,7 +217,7 @@ public class DataExporter {
             export.append(particleFitData.parms()[0]).append("\n"); // particle y0:w
             
             } catch (java.lang.RuntimeException re) {
-               export.append("Fit Failure!\n");
+               export.append("Export Failure!\n");
             }
          }
       }

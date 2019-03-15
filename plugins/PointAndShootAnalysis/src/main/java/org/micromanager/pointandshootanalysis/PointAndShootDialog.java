@@ -35,6 +35,7 @@ import javax.swing.JLabel;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import net.miginfocom.swing.MigLayout;
@@ -55,6 +56,9 @@ public class PointAndShootDialog extends MMDialog {
    private final Studio studio_;
    private final MutablePropertyMapView profileSettings_;
    private boolean wasDisposed_;
+   private final JLabel statusString_;
+   private final JLabel progressString_;
+   
    
    
    PointAndShootDialog(Studio studio) {
@@ -161,7 +165,7 @@ public class PointAndShootDialog extends MMDialog {
       super.add(cancelButton, "span 2, split 2, tag cancel");
       
       JButton okButton = mcsButton(buttonSize, arialSmallFont);
-      okButton.setText("OK");
+      okButton.setText("Execute");
       okButton.addActionListener((ActionEvent evt) -> {
          DataViewer activeDataViewer = studio_.displays().getActiveDataViewer();
          if (activeDataViewer == null) {
@@ -180,13 +184,18 @@ public class PointAndShootDialog extends MMDialog {
          }
          profileSettings_.putString(Terms.LOCATIONSFILENAME, fileName);
          Thread analysisThread = new Thread(new PointAndShootAnalyzer(studio,
-                 profileSettings_.toPropertyMap()));
+                 profileSettings_.toPropertyMap(), this));
          analysisThread.start();
-         ourDialog.dispose();
+         //ourDialog.dispose();
       });
       super.add(okButton, "tag ok, wrap");
       
+      statusString_ = new JLabel("Inactive...");
+      super.add(statusString_, "wrap");
       
+      progressString_ = new JLabel(" 0%");
+      super.add(progressString_);   
+            
       DragDropListener dragDropListener = new DragDropListener(locationsField);
       new DropTarget(this, dragDropListener);
       new DropTarget(locationsField, dragDropListener);
@@ -204,8 +213,27 @@ public class PointAndShootDialog extends MMDialog {
       wasDisposed_ = true;
    }
    
+   public void setStatus(String status) {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(() -> {
+            setStatus(status);
+         });
+      }
+      statusString_.setText(status);
+   }
    
-   public final JButton mcsButton(Dimension buttonSize, Font font) {
+   public void setProgress(double progress) {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(() -> {
+            setProgress(progress);
+         });
+      }
+      int p = (int) (progress * 100.0);
+      progressString_.setText(" " + p + "%");
+   }
+   
+   
+   private JButton mcsButton(Dimension buttonSize, Font font) {
       JButton button = new JButton();
       button.setPreferredSize(buttonSize);
       button.setMinimumSize(buttonSize);

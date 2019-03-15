@@ -18,8 +18,10 @@ public class TrackInfoCalculator {
       int counter = 0;
       Set<Map.Entry<Integer, ParticleData>> entrySet = pasData.particleDataTrack().entrySet();
       for (Map.Entry<Integer, ParticleData> e : entrySet) {
-         sum += e.getValue().getMaskIncludingBleach().size();
-         counter++;
+         if (e != null && e.getValue() != null && e.getValue().getMaskIncludingBleach() != null) {
+            sum += e.getValue().getMaskIncludingBleach().size();
+            counter++;
+         }
       }
       return sum / counter;
    }

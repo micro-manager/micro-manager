@@ -4,6 +4,7 @@ package org.micromanager.pointandshootanalysis.data;
 import boofcv.alg.filter.binary.BinaryImageOps;
 import boofcv.alg.filter.binary.Contour;
 import boofcv.alg.filter.binary.GThresholdImageOps;
+import static boofcv.alg.filter.binary.GThresholdImageOps.computeEntropy;
 import boofcv.alg.filter.blur.BlurImageOps;
 import boofcv.alg.misc.GImageStatistics;
 import boofcv.alg.misc.GPixelMath;
@@ -266,11 +267,10 @@ public class ParticleData {
       if (sub == null) {
          return null;
       }
-      GrayU8 mask = new GrayU8(sub.width, sub.height);
-      int threshold = (int) GThresholdImageOps.computeEntropy(sub, 
-              GImageStatistics.min(sub), GImageStatistics.max(sub));
+      GrayU8 mask = new GrayU8(sub.width, sub.height);      
+            
+      int threshold = BoofCVUtils.compressedMaxEntropyThreshold(sub, 256);
       GThresholdImageOps.threshold(sub, mask, threshold, false);
-      
       
       // Remove small particles
       mask = BinaryImageOps.erode4(mask, 1, null);

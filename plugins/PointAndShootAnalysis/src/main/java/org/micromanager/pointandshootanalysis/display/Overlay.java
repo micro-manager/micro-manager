@@ -50,7 +50,6 @@ import org.micromanager.pointandshootanalysis.data.ParticleData;
  */
 public class Overlay extends AbstractOverlay {
    private final String TITLE = "Point and Shoot Overlay";
-   private final List<Map<Integer, ParticleData>> tracks_;
    private final List<Map<Integer, ParticleData>> controlTracks_;
    private final Map<Integer, List<ParticleData>> tracksIndexedByFrame_;
    private final Map<Integer, List<ParticleData>> controlTracksIndexedByFrame_;
@@ -65,21 +64,10 @@ public class Overlay extends AbstractOverlay {
    private JCheckBox showBleachMasksCheckBox_;
    private JCheckBox showControlMasksCheckBox_;
    
-   public Overlay(List<Map<Integer, ParticleData>> tracks, 
+   public Overlay(Map<Integer, List<ParticleData>> tracksIndexedByFrame, 
            List<Map<Integer, ParticleData>> controlTracks) {
-      tracks_ = tracks;
       // index tracks by frame for quick look up when we need it
-      tracksIndexedByFrame_ = new TreeMap<>();
-      tracks_.forEach( (track) -> {
-         track.entrySet().forEach((entry) -> {
-            List<ParticleData> particlesInFrame = tracksIndexedByFrame_.get(entry.getKey());
-            if (particlesInFrame == null) {
-               particlesInFrame = new ArrayList<>();
-            }
-            particlesInFrame.add(entry.getValue());
-            tracksIndexedByFrame_.put(entry.getKey(), particlesInFrame);
-         });
-      });
+      tracksIndexedByFrame_ = tracksIndexedByFrame;
       
       controlTracks_ = controlTracks;
       controlTracksIndexedByFrame_ = new TreeMap<>();
