@@ -72,7 +72,8 @@ public:
    int OnLowerLimY            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnUpperLimX            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnUpperLimY            (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnMode                 (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnInputMode            (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnOutputMode           (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCutoffFreqX          (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCutoffFreqY          (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAttenuateTravelX     (MM::PropertyBase* pProp, MM::ActionType eAct);

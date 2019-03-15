@@ -261,6 +261,7 @@ const char* const g_JoystickSlowSpeedYPropertyName = "JoystickSlowSpeedY";
 const char* const g_JoystickSelectXPropertyName = "JoystickInputX";
 const char* const g_JoystickSelectYPropertyName = "JoystickInputY";
 const char* const g_ScannerInputModePropertyName = "InputMode";
+const char* const g_ScannerOutputModePropertyName = "OutputMode";
 const char* const g_ScannerCutoffFilterXPropertyName = "FilterFreqX(kHz)";
 const char* const g_ScannerCutoffFilterYPropertyName = "FilterFreqY(kHz)";
 const char* const g_ScannerAttenuateXPropertyName = "AttenuateX(0..1)";
@@ -394,7 +395,6 @@ const char* const g_FastCirclesRatePropertyName = "FastCirclesRate(Hz)";
 const char* const g_FastCirclesAsymmetryPropertyName = "FastCirclesAsymmetry";
 const char* const g_FastCirclesStatePropertyName = "FastCirclesState";
 const char* const g_RestartState = "Restart";
-
 
 // LED property names
 const char* const g_LEDIntensityPropertyName = "LED Intensity(%)";
@@ -611,6 +611,14 @@ const char* const g_SATTLPol_1 = "active low";
 // micromirror input modes
 const char* const g_ScannerMode_external = "external input";
 const char* const g_ScannerMode_internal = "internal input";
+// TGDAC output modes
+const char* const g_DACOutputMode_0 = "0V to 2V";
+const char* const g_DACOutputMode_1 = "0V to 4V";
+const char* const g_DACOutputMode_2 = "0V to 10V";
+const char* const g_DACOutputMode_4 = "-1V to 1V";
+const char* const g_DACOutputMode_5 = "-2V to 2V";
+const char* const g_DACOutputMode_6 = "-5V to 5V";
+const char* const g_DACOutputMode_7 = "-10V to 10V";
 // piezo control modes
 const char* const g_AdeptMode_0 = "0 - internal input closed-loop";
 const char* const g_AdeptMode_1 = "1 - external input closed-loop";
