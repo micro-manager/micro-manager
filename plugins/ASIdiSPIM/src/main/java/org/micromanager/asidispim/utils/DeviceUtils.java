@@ -196,7 +196,13 @@ public class DeviceUtils {
       case GALVOA:
       case GALVOB:
          if (deviceLibrary == Devices.Libraries.ASITIGER) {
-            checkPropertyValueEquals(key, Properties.Keys.INPUT_MODE, Properties.Values.INTERNAL_INPUT);
+            if (devices_.hasProperty(key, Properties.Keys.INPUT_MODE)) {
+               // standard micro-mirror drive electronics needs to be set to internal control
+               checkPropertyValueEquals(key, Properties.Keys.INPUT_MODE, Properties.Values.INTERNAL_INPUT);
+            } else {
+               // TGGALVO firmware
+               checkPropertyExists(key, Properties.Keys.OUTPUT_MODE);
+            }
             // PLogic use in the plugin assumes "laser + side" output mode
             if (devices_.isValidMMDevice(Devices.Keys.PLOGIC)) {
                checkPropertyValueEquals(key, Properties.Keys.LASER_OUTPUT_MODE, Properties.Values.LASER_SHUTTER_SIDE);

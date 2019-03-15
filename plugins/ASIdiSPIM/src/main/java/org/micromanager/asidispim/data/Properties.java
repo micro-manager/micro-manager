@@ -117,6 +117,7 @@ public class Properties {
       BEAM_ENABLED("BeamEnabled", false),
       SAVE_CARD_SETTINGS("SaveCardSettings"),
       INPUT_MODE("InputMode"),
+      OUTPUT_MODE("OutputMode"),
       PIEZO_MODE("PiezoMode"),
       SET_HOME_HERE("SetHomeToCurrentPosition"),
       HOME_POSITION("HomePosition(mm)"),
