@@ -39,7 +39,7 @@ public class DataExporter {
    final private List<PASData> data_;
    final private Map<Integer, Instant> frameTimeStamps_;
    
-   final static private Integer MSLIMIT = 5000;
+   final static private Integer MSLIMIT = 2000;
    
    public DataExporter(Studio studio, List<PASData> data, Map<Integer, 
                Instant> frameTimeStamps, Type type) {
@@ -64,58 +64,58 @@ public class DataExporter {
       }
       // look for the first datapoint where intensity went up
       // consider that to be the first bleach point
-      boolean startFound = false;
-      boolean endReached = false;
       int startFrame = d.framePasClicked();
       double startIntensity = Double.MAX_VALUE;
-      while (!startFound && !endReached) {
-         Double intensity = null;
-         switch(type) {
-            case BLEACH: 
-               intensity = d.particleDataTrack().get(startFrame).getNormalizedBleachMaskAvg();
-               break;
-            case PARTICLE:
-               intensity = d.particleDataTrack().get(startFrame).getNormalizedMaskAvg();
-               break;
-            case PARTICLE_AND_BLEACH:
-               intensity = d.particleDataTrack().get(startFrame).getNormalizedMaskIncludingBleachAvg();
-         }
-         if (intensity != null && intensity > startIntensity && intensity < 0.95) {
-            startFound = true;
-         } else {
-            startFrame++;
-            if (startFrame >= frameTimeStamps_.size()) {
-               endReached = true;
+      // search for the frame with the minimum intensity in the n frames 
+      // after the bleach was reported.  Note that n is hard coded for now
+      // n should be expressed in seconds (or ms) and be provided by the user
+      final int n = 25;
+      for (int frame = d.framePasClicked(); frame < d.framePasClicked() + n
+              && frame < frameTimeStamps_.size(); frame++) {
+         if (d.particleDataTrack().get(frame) != null) {
+            Double intensity = null;
+            switch (type) {
+               case BLEACH:
+                  intensity = d.particleDataTrack().get(frame).getNormalizedBleachMaskAvg();
+                  break;
+               case PARTICLE:
+                  intensity = d.particleDataTrack().get(frame).getNormalizedMaskAvg();
+                  break;
+               case PARTICLE_AND_BLEACH:
+                  intensity = d.particleDataTrack().get(frame).getNormalizedMaskIncludingBleachAvg();
             }
-            if (intensity != null) {
+            if (intensity != null && intensity < startIntensity) {
                startIntensity = intensity;
+               startFrame = frame;
             }
          }
-      }
-      if (endReached) {
-         return null; // TODO: report?
       }
       
       List<Point2D> dataAsList = new ArrayList<>();
       for (int frame = startFrame; frame < frameTimeStamps_.size(); frame++) {
          Double intensity = null;
-         switch(type) {
-            case BLEACH: 
-               intensity = d.particleDataTrack().get(frame).getNormalizedBleachMaskAvg();
-               break;
-            case PARTICLE:
-               intensity = d.particleDataTrack().get(frame).getNormalizedMaskAvg();
-               break;
-            case PARTICLE_AND_BLEACH:
-               intensity = d.particleDataTrack().get(frame).getNormalizedMaskIncludingBleachAvg();
-         }
-         if (intensity != null) {
-            double ms = frameTimeStamps_.get(frame).toEpochMilli()
-                          - frameTimeStamps_.get(d.framePasClicked()).toEpochMilli();
-            if (msLimit == null || ms < msLimit) {
-               dataAsList.add( new Point2D.Double(ms, intensity) );
+         if (d.particleDataTrack().get(frame) != null) {
+            switch (type) {
+               case BLEACH:
+                  intensity = d.particleDataTrack().get(frame).getNormalizedBleachMaskAvg();
+                  break;
+               case PARTICLE:
+                  intensity = d.particleDataTrack().get(frame).getNormalizedMaskAvg();
+                  break;
+               case PARTICLE_AND_BLEACH:
+                  intensity = d.particleDataTrack().get(frame).getNormalizedMaskIncludingBleachAvg();
+            }
+            if (intensity != null) {
+               double ms = frameTimeStamps_.get(frame).toEpochMilli()
+                       - frameTimeStamps_.get(d.framePasClicked()).toEpochMilli();
+               if (msLimit == null || ms < msLimit) {
+                  dataAsList.add(new Point2D.Double(ms, intensity));
+               }
             }
          }
+      }
+      if (dataAsList.size() < 3) { 
+         return null;
       }
       PASFunction func = null;
       if (fitFunction == SingleExpRecoveryFunc.class) {
@@ -237,23 +237,25 @@ public class DataExporter {
          }
          FitData fitData = fit(index, type_, fitClass, msLimit);
          // TODO: check which functions was used to fit and do the right one
-         PASFunction fitFunc = null;
-         if (fitClass == SingleExpRecoveryFunc.class) {
-            fitFunc = new SingleExpRecoveryFunc(fitData.data());
-         } else if (fitClass == LinearFunc.class) {
-            fitFunc = new LinearFunc(fitData.data());
-         }
-         if (fitFunc != null) {
-            XYSeries plotData = new XYSeries(data_.get(index).id(), false, false);
-            for (Point2D d : fitFunc.getData()) {
-               plotData.add(d.getX(), d.getY());
+         if (fitData != null) {
+            PASFunction fitFunc = null;
+            if (fitClass == SingleExpRecoveryFunc.class) {
+               fitFunc = new SingleExpRecoveryFunc(fitData.data());
+            } else if (fitClass == LinearFunc.class) {
+               fitFunc = new LinearFunc(fitData.data());
             }
-            xySeries.add(plotData);
-            XYSeries fittedXY = new XYSeries("f" + data_.get(index).id(), false, false);
-            for (Point2D d : fitFunc.getFittedData(fitData.parms())) {
-               fittedXY.add(d.getX(), d.getY());
+            if (fitFunc != null) {
+               XYSeries plotData = new XYSeries(data_.get(index).id(), false, false);
+               for (Point2D d : fitFunc.getData()) {
+                  plotData.add(d.getX(), d.getY());
+               }
+               xySeries.add(plotData);
+               XYSeries fittedXY = new XYSeries("f" + data_.get(index).id(), false, false);
+               for (Point2D d : fitFunc.getFittedData(fitData.parms())) {
+                  fittedXY.add(d.getX(), d.getY());
+               }
+               xySeries.add(fittedXY);
             }
-            xySeries.add(fittedXY);
          }
       }
       String title = null;
@@ -263,7 +265,7 @@ public class DataExporter {
          case PARTICLE_AND_BLEACH: title = "Fit of Particle (+Bleach)"; break;
       }
       PlotUtils pu = new PlotUtils(studio_.profile().getSettings(this.getClass()));
-            pu.plotData(title, 
+      pu.plotData(title, 
                     xySeries.toArray(new XYSeries[xySeries.size()]),
                     "Time (ms)",
                     "Normalized Intensity", "", 

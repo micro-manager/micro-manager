@@ -175,14 +175,16 @@ public class PASData {
                count++;
             }
          }
-         double preBleachAvg = (preSum / count);
-         for (int frame = 0; frame < particleDataTrack().size(); frame++) {
-            if (particleDataTrack().get(frame) != null && 
-                    particleDataTrack().get(frame).getBleachMaskAvg() != null) {
-               double value = particleDataTrack().get(frame).getBleachMaskAvg() - cameraOffset;
-               double normalizedValue = value / controlAvgIntensity.get(frame);
-               particleDataTrack().get(frame).setNormalizedBleachMaskAvg(
-                       normalizedValue / preBleachAvg);
+         if (count > 0.0 && preSum > 0.0) {  // prevent divisions by zero
+            double preBleachAvg = (preSum / count);
+            for (int frame = 0; frame < particleDataTrack().size(); frame++) {
+               if (particleDataTrack().get(frame) != null
+                       && particleDataTrack().get(frame).getBleachMaskAvg() != null) {
+                  double value = particleDataTrack().get(frame).getBleachMaskAvg() - cameraOffset;
+                  double normalizedValue = value / controlAvgIntensity.get(frame);
+                  particleDataTrack().get(frame).setNormalizedBleachMaskAvg(
+                          normalizedValue / preBleachAvg);
+               }
             }
          }
       }

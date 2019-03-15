@@ -520,17 +520,16 @@ public class PointAndShootAnalyzer implements Runnable {
                        cameraOffset, controlAvgIntensity);
             }
             
+            cleanedPASData = removeEmptryParticleTracks(cleanedPASData);
+            
+                        
             if (cleanedPASData.isEmpty()) {
                // TODO: UI feedback
                System.out.println("No bleaching events found");
                return;
             }
-            
-            DataExporter bleachExporter = new DataExporter(studio_, cleanedPASData, 
-                    frameTimeStamps, DataExporter.Type.BLEACH);
-            DataExporter particleABExporter = new DataExporter(studio_, cleanedPASData, 
-                    frameTimeStamps, DataExporter.Type.PARTICLE_AND_BLEACH);
-            
+
+           
                           
             // get intensities of bleach Spots and total particles
             // out of the data structures, and plot them
@@ -538,6 +537,8 @@ public class PointAndShootAnalyzer implements Runnable {
                     cleanedPASData, frameTimeStamps) ;
             XYSeries[] plots = bleachPlotData.toArray(new XYSeries[bleachPlotData.size()]);
             PlotUtils pu = new PlotUtils(studio_.profile().getSettings(this.getClass()));
+            DataExporter bleachExporter = new DataExporter(studio_, cleanedPASData, 
+                    frameTimeStamps, DataExporter.Type.BLEACH);
             pu.plotData("Bleach Intensity Profile", plots, "Time (ms)",
                     "Normalized Intensity", "", 1.3, WidgetSettings.COLORS, bleachExporter);
       
@@ -545,6 +546,8 @@ public class PointAndShootAnalyzer implements Runnable {
                   cleanedPASData, frameTimeStamps);
             XYSeries[] particlePlots = particlePlotData.toArray(new XYSeries[particlePlotData.size()]);            
             PlotUtils pu2 = new PlotUtils(studio_.profile().getSettings(this.getClass()));
+            DataExporter particleABExporter = new DataExporter(studio_, cleanedPASData, 
+                    frameTimeStamps, DataExporter.Type.PARTICLE_AND_BLEACH);
             pu2.plotData("Particle Intensity Profile", particlePlots, "Time (ms)",
                     "Normalized Intensity", "", 1.3, WidgetSettings.COLORS, particleABExporter);
       
@@ -668,6 +671,37 @@ public class PointAndShootAnalyzer implements Runnable {
               "Avg. Intensity", "", null, WidgetSettings.COLORS, null);
    }
    
+   private List<PASData> removeEmptryParticleTracks(final List<PASData> input) {
+      final List<PASData> output = new ArrayList<>();
+      for (PASData d : input) {
+         if (d.particleDataTrack() != null && d.id() != null) {
+            boolean add = false;
+            int bleachCounter = 0;
+            int particleCounter = 0;
+            for (int frame = 0; frame < d.particleDataTrack().size(); frame++) {
+               if (d.particleDataTrack().get(frame) != null) {
+                  Double normalizedBleachMaskAvg = d.particleDataTrack().get(frame).getNormalizedBleachMaskAvg();
+                  if (normalizedBleachMaskAvg != null && normalizedBleachMaskAvg != Double.NaN) {
+                     bleachCounter++;
+                  }
+                  Double normalizedMaskIncludingBleachAvg
+                          = d.particleDataTrack().get(frame).getNormalizedMaskIncludingBleachAvg();
+                  if (normalizedMaskIncludingBleachAvg != null && normalizedMaskIncludingBleachAvg != Double.NaN) {
+                     particleCounter++;
+                  }
+               }
+               if (bleachCounter > 10 && particleCounter > 10) {
+                  add = true;
+               }
+            }
+            if (add) {
+               output.add(d);
+            }
+         }
+      }
+      return output;
+   }
+   
    /**
     * Should only be called after normalized Bleach Values have been calculated
     * @param pasData
@@ -686,14 +720,16 @@ public class PointAndShootAnalyzer implements Runnable {
             for (int frame = 0; frame < d.particleDataTrack().size(); frame++) {
                if (d.particleDataTrack().get(frame) != null) {
                   Double normalizedBleachMaskAvg = d.particleDataTrack().get(frame).getNormalizedBleachMaskAvg();
-                  if (normalizedBleachMaskAvg != null) {
+                  if (normalizedBleachMaskAvg != null && normalizedBleachMaskAvg != Double.NaN) {
                      data.add(frameTimeStamps.get(frame).toEpochMilli()
                              - frameTimeStamps.get(d.framePasClicked()).toEpochMilli(),
                              normalizedBleachMaskAvg);
                   }
                }
             }
-            plotData.add(data);
+            if (data.getItemCount() > 10) {
+               plotData.add(data);
+            }
          }
       }
       return plotData;
@@ -712,14 +748,16 @@ public class PointAndShootAnalyzer implements Runnable {
                if (d.particleDataTrack().get(frame) != null) {
                   Double normalizedMaskIncludingBleachAvg
                           = d.particleDataTrack().get(frame).getNormalizedMaskIncludingBleachAvg();
-                  if (normalizedMaskIncludingBleachAvg != null) {
+                  if (normalizedMaskIncludingBleachAvg != null && normalizedMaskIncludingBleachAvg != Double.NaN) {
                      data.add(frameTimeStamps.get(frame).toEpochMilli()
                              - frameTimeStamps.get(d.framePasClicked()).toEpochMilli(),
                              normalizedMaskIncludingBleachAvg);
                   }
                }
             }
-            plotData.add(data);
+            if (data.getItemCount() > 10) {
+               plotData.add(data);
+            }
          }
       }
       return plotData;
