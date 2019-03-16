@@ -21,6 +21,7 @@
 
 package org.micromanager.events.internal;
 
+import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import mmcorej.MMEventCallback;
 import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
@@ -37,6 +38,7 @@ import org.micromanager.events.XYStagePositionChangedEvent;
 /**
  * Callback to update Java layer when a change happens in the MMCore. This
  * posts events on the EventManager's event bus.
+ * Callbacks are all issued on the EDT to avoid deadlock
  */
 public final class CoreEventCallback extends MMEventCallback {
 
@@ -57,50 +59,115 @@ public final class CoreEventCallback extends MMEventCallback {
       // TODO: remove test once acquisition engine is fully multithreaded
       if (engine_ != null && engine_.isAcquisitionRunning()) {
          core_.logMessage("Notification from MMCore ignored because acquisition is running!", true);
+      } else if (ignorePropertyChanges_) {
+         core_.logMessage("Notification from MMCore ignored since the system is still loading", true);
       } else {
-         if (ignorePropertyChanges_) {
-            core_.logMessage("Notification from MMCore ignored since the system is still loading", true);
+         core_.logMessage("Notification from MMCore!", true);
+         core_.updateSystemStateCache();
+         // see OnPropertyChanged for reasons to run this on the EDT
+         if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(new Runnable() {
+               @Override
+               public void run() {
+                  DefaultEventManager.getInstance().post(
+                          new PropertiesChangedEvent());
+               }
+            });
          } else {
-            core_.updateSystemStateCache();
             DefaultEventManager.getInstance().post(
-                  new PropertiesChangedEvent());
-            core_.logMessage("Notification from MMCore!", true);
+                    new PropertiesChangedEvent());
          }
       }
    }
 
    @Override
    public void onPropertyChanged(String deviceName, String propName, String propValue) {
-      core_.logMessage("Notification for Device: " + deviceName + " Property: " +
-            propName + " changed to value: " + propValue, true);
-      DefaultEventManager.getInstance().post(
-            new PropertyChangedEvent(deviceName, propName, propValue));
+      core_.logMessage("Notification for Device: " + deviceName + " Property: "
+              + propName + " changed to value: " + propValue, true);
+      // Not running this on the EDT causes rare deadlocks, for instance:
+      // user stops or starts live mode while a callback is received will
+      // result in deadlock.  Hopefully, always running this on the EDT
+      // will fix this, as its main purpose is providing user feedback.
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               DefaultEventManager.getInstance().post(
+                       new PropertyChangedEvent(deviceName, propName, propValue));
+            }
+         });
+      } else {
+         DefaultEventManager.getInstance().post(
+                 new PropertyChangedEvent(deviceName, propName, propValue));
+      }
    }
 
    @Override
    public void onConfigGroupChanged(String groupName, String newConfig) {
-      DefaultEventManager.getInstance().post(
-            new ConfigGroupChangedEvent(groupName, newConfig));
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               DefaultEventManager.getInstance().post(
+                       new ConfigGroupChangedEvent(groupName, newConfig));
+            }
+         });
+      } else {
+         DefaultEventManager.getInstance().post(
+                 new ConfigGroupChangedEvent(groupName, newConfig));
+      }
    }
-   
+
    @Override
    public void onSystemConfigurationLoaded() {
-      DefaultEventManager.getInstance().post(
-            new SystemConfigurationLoadedEvent());
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               DefaultEventManager.getInstance().post(
+                       new SystemConfigurationLoadedEvent());
+            }
+         });
+      } else {
+         DefaultEventManager.getInstance().post(
+                 new SystemConfigurationLoadedEvent());
+      }
    }
 
    @Override
    public void onPixelSizeChanged(double newPixelSizeUm) {
-      DefaultEventManager.getInstance().post(
-            new PixelSizeChangedEvent(newPixelSizeUm));
+      // see OnPropertyChanged for reasons to run this on the EDT
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               DefaultEventManager.getInstance().post(
+                       new PixelSizeChangedEvent(newPixelSizeUm));
+            }
+         });
+      } else {
+         DefaultEventManager.getInstance().post(
+                 new PixelSizeChangedEvent(newPixelSizeUm));
+      }
    }
 
    @Override
    public void onStagePositionChanged(String deviceName, double pos) {
       // TODO: this check should be in the core, not the java layer!
       if (deviceName.equals(core_.getFocusDevice())) {
-         DefaultEventManager.getInstance().post(
-               new StagePositionChangedEvent(deviceName, pos));
+         // see OnPropertyChanged for reasons to run this on the EDT
+         if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(new Runnable() {
+               @Override
+               public void run() {
+                  DefaultEventManager.getInstance().post(
+                          new StagePositionChangedEvent(deviceName, pos));
+               }
+            });
+         } else {
+            DefaultEventManager.getInstance().post(
+                    new StagePositionChangedEvent(deviceName, pos));
+         }
       }
    }
 
@@ -108,21 +175,54 @@ public final class CoreEventCallback extends MMEventCallback {
    public void onXYStagePositionChanged(String deviceName, double xPos, double yPos) {
       // TODO: this check should be in the core, not the java layer!
       if (deviceName.equals(core_.getXYStageDevice())) {
-         DefaultEventManager.getInstance().post(
-               new XYStagePositionChangedEvent(deviceName, xPos, yPos));
+         // see OnPropertyChanged for reasons to run this on the EDT
+         if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(new Runnable() {
+               @Override
+               public void run() {
+                  DefaultEventManager.getInstance().post(
+                          new XYStagePositionChangedEvent(deviceName, xPos, yPos));
+               }
+            });
+         } else {
+            DefaultEventManager.getInstance().post(
+                    new XYStagePositionChangedEvent(deviceName, xPos, yPos));
+         }
       }
    }
 
    @Override
    public void onExposureChanged(String deviceName, double exposure) {
-      DefaultEventManager.getInstance().post(
-            new ExposureChangedEvent(deviceName, exposure));
+      // see OnPropertyChanged for reasons to run this on the EDT
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               DefaultEventManager.getInstance().post(
+                       new ExposureChangedEvent(deviceName, exposure));
+            }
+         });
+      } else {
+         DefaultEventManager.getInstance().post(
+                 new ExposureChangedEvent(deviceName, exposure));
+      }
    }
 
    @Override
    public void onSLMExposureChanged(String deviceName, double exposure) {
-      DefaultEventManager.getInstance().post(
-            new SLMExposureChangedEvent(deviceName, exposure));
+      // see OnPropertyChanged for reasons to run this on the EDT
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               DefaultEventManager.getInstance().post(
+                       new SLMExposureChangedEvent(deviceName, exposure));
+            }
+         });
+      } else {
+         DefaultEventManager.getInstance().post(
+                 new SLMExposureChangedEvent(deviceName, exposure));
+      }
    }
 
    public void setIgnoring(boolean isIgnoring) {
