@@ -22,14 +22,14 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
    public boolean disabled = false;
    public String groupName_;
    public String presetName_;
-   public ShowFlags flags_;
-   public Studio gui_;
-   public boolean showUnused_;
+   private ShowFlags flags_;
+   private Studio studio_;
+   private boolean showUnused_;
    protected boolean showReadOnly_;
    String[] columnNames_ = new String[3];
-   public ArrayList<PropertyItem> propList_ = new ArrayList<PropertyItem>(); 
+   public List<PropertyItem> propList_ = new ArrayList<>(); 
        // The table data is stored in here.
-   public ArrayList<PropertyItem> propListVisible_ = new ArrayList<PropertyItem>(); 
+   public List<PropertyItem> propListVisible_ = new ArrayList<>(); 
       // The table data is stored in here.
    protected CMMCore core_ = null;
    Configuration groupData_[];
@@ -41,7 +41,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
    private final boolean isPixelSizeConfig_;
 
    public static class Builder {
-      private CMMCore core_;
+      private Studio studio_;
       private String groupName_;
       private String presetName_;
       private int propertyValueColumn_;
@@ -51,8 +51,8 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
       private boolean allowChangesOnlyWhenUsed_;
       private boolean isPixelSizeConfig_;
       
-      public Builder(final CMMCore core) {
-         core_ = core;
+      public Builder(final Studio studio) {
+         studio_ = studio;
       }
       
       public Builder groupName(final String groupName) {
@@ -109,7 +109,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
     * constructor.  This code can likely be cleaned up with investment of time
     * to think everything through a bit better.
     *
-    * @param core
+    * @param studio
     * @param groupName - Name of group to be edited.  Irrelevant for PixelSize editor
     * @param presetName
     * @param PropertyValueColumn # (zero-based) of "Value" column
@@ -126,11 +126,12 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
     *                a standard config.  Pixel config-specific calls to the core
     *                will be used.
     */
-   protected PropertyTableData(CMMCore core, String groupName, String presetName,
+   protected PropertyTableData(Studio studio, String groupName, String presetName,
            int PropertyValueColumn, int PropertyUsedColumn, boolean groupOnly,
            boolean allowChangingProperties, boolean allowChangesOnlyWhenUsed,
            boolean isPixelSizeConfig) {
-      core_ = core;
+      studio_ = studio;
+      core_ = studio_.core();
       groupName_ = groupName;
       presetName_ = presetName;
       propertyNameColumn_ = 0;
@@ -143,7 +144,8 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
    }
    
    protected PropertyTableData(Builder b) {
-      core_ = b.core_;
+      studio_ = b.studio_;
+      core_ = studio_.core();
       groupName_ = b.groupName_;
       presetName_ = b.presetName_;
       propertyValueColumn_ = b.propertyValueColumn_;
@@ -154,7 +156,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
       isPixelSizeConfig_ = b.isPixelSizeConfig_;
    }
 
-   public ArrayList<PropertyItem> getProperties() {
+   public List<PropertyItem> getProperties() {
       return propList_;
    }
 
@@ -237,7 +239,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
             setValueInCore(item, value);
             core_.updateSystemStateCache();
             refresh(true);
-            gui_.app().refreshGUIFromCache();
+            studio_.app().refreshGUIFromCache();
             setUpdating(false);
          }
       } else if (col == propertyUsedColumn_) {
@@ -314,7 +316,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
 
       Configuration cfg;
 
-      gui_.live().setSuspended(true);
+      studio_.live().setSuspended(true);
       try {
          if (isPixelSizeConfig_) {
             if (core_.isPixelSizeConfigDefined(presetName)) {
@@ -373,7 +375,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
       } catch (Exception e) {
          handleException(e);
       } finally {
-         gui_.live().setSuspended(false);
+         studio_.live().setSuspended(false);
       }
 
       this.fireTableStructureChanged();
@@ -449,7 +451,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
    }
 
    public void setGUI(Studio gui) {
-      gui_ = gui;
+      studio_ = gui;
    }
 
    public void setFlags(ShowFlags flags) {
@@ -458,10 +460,6 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
 
    public void setShowUnused(boolean showUnused) {
       showUnused_ = showUnused;
-   }
-
-   public ArrayList<PropertyItem> getPropList() {
-      return propList_;
    }
 
    public void setUpdating(boolean updating) {

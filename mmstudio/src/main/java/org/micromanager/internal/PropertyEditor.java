@@ -31,7 +31,6 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import javax.swing.ImageIcon;
@@ -95,10 +94,9 @@ public final class PropertyEditor extends MMFrame {
 
    private void createTable() {
       data_ = new PropertyEditorTableData(
-            core_, "", "", 1, 2, getContentPane());
-      data_.gui_ = studio_;
-      data_.flags_ = flags_;
-      data_.showUnused_ = true;
+            studio_, "", "", 1, 2, getContentPane());
+      data_.setFlags(flags_);
+      data_.setShowUnused(true);
       data_.setColumnNames("Property", "Value", "");
 
       table_ = new DaytimeNighttime.Table();
@@ -143,11 +141,8 @@ public final class PropertyEditor extends MMFrame {
             "split 2, aligny top, gapbottom 10");
       
       refreshButton.setFont(defaultFont);
-      refreshButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            refresh();
-         }
+      refreshButton.addActionListener((ActionEvent e) -> {
+         refresh();
       });
       add(refreshButton, "width 100!, center, wrap");
 
@@ -159,9 +154,8 @@ public final class PropertyEditor extends MMFrame {
    }
 
    protected void refresh() {
-      data_.gui_ = studio_;
-      data_.flags_ = flags_;
-      data_.showUnused_ = true;
+      data_.setFlags(flags_);
+      data_.setShowUnused(true);
       data_.refresh(false);
    }
 
@@ -193,10 +187,10 @@ public final class PropertyEditor extends MMFrame {
    }
 
     public final class PropertyEditorTableData extends PropertyTableData {
-      public PropertyEditorTableData(CMMCore core, String groupName, String presetName,
+      public PropertyEditorTableData(Studio studio, String groupName, String presetName,
          int PropertyValueColumn, int PropertyUsedColumn, Component parentComponent) {
 
-         super(core, groupName, presetName, PropertyValueColumn, 
+         super(studio, groupName, presetName, PropertyValueColumn, 
                  PropertyUsedColumn, false, true, false, false);
       }
 

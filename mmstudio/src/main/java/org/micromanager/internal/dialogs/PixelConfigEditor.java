@@ -59,7 +59,7 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
       scrollPaneTop_ = 140;
       numColumns_ = 3;
       numRowsBeforeFilters_ = 2;
-      PropertyTableData.Builder ptdb = new PropertyTableData.Builder(core_);
+      PropertyTableData.Builder ptdb = new PropertyTableData.Builder(parent.getStudio());
       data_ = ptdb.groupName(groupName_).presetName(presetName_).propertyValueColumn(2).
               propertyUsedColumn(1).groupOnly(false).allowChangingProperties(true).allowChangesOnlyWhenUsed(true).isPixelSizeConfig(true).build();
       super.initializeData();
@@ -93,7 +93,7 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
 
       // Check that at least one property has been selected.
       int itemsIncludedCount = 0;
-      for (PropertyItem item : data_.getPropList()) {
+      for (PropertyItem item : data_.getProperties()) {
          if (item.confInclude) {
             itemsIncludedCount++;
          }
@@ -119,7 +119,7 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
       try {
          core_.definePixelSizeConfig(newName);
 
-         for (PropertyItem item : data_.getPropList()) {
+         for (PropertyItem item : data_.getProperties()) {
             if (item.confInclude) {
                core_.definePixelSizeConfig(newName, item.device, item.name, item.getValueInCoreFormat());              
             }

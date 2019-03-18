@@ -35,8 +35,8 @@ public final class PresetEditor extends ConfigDialog {
 
    private static final long serialVersionUID = 8281144157746745260L;
 
-   public PresetEditor(String groupName, String presetName, Studio gui, CMMCore core, boolean newItem) {
-      super(groupName, presetName, gui, core, newItem);
+   public PresetEditor(String groupName, String presetName, Studio studio, CMMCore core, boolean newItem) {
+      super(groupName, presetName, studio, core, newItem);
       instructionsText_ = "Specify property values for this preset:";
       nameFieldLabelText_ = "Preset name:";
       initName_ = presetName_;
@@ -45,7 +45,7 @@ public final class PresetEditor extends ConfigDialog {
       showFlagsPanelVisible_ = false;
       scrollPaneTop_ = 70;
       numColumns_= 2;
-      PropertyTableData.Builder ptdb = new PropertyTableData.Builder(core_);
+      PropertyTableData.Builder ptdb = new PropertyTableData.Builder(studio);
       data_ = ptdb.groupName(groupName_).presetName(presetName_).propertyValueColumn(1).
               propertyUsedColumn(2).groupOnly(true).allowChangingProperties(true).allowChangesOnlyWhenUsed(true).isPixelSizeConfig(false).build();
       initializeData();
@@ -89,7 +89,7 @@ public final class PresetEditor extends ConfigDialog {
             same = true;
             if (newItem_ || ! cfgs.get(j).contentEquals(initName)) {
                otherPreset = core_.getConfigData(groupName_, cfgs.get(j));
-               for (PropertyItem item:data_.getPropList()) {
+               for (PropertyItem item:data_.getProperties()) {
                   if (item.confInclude)
                      if (otherPreset.isPropertyIncluded(item.device, item.name))
                         if (! item.getValueInCoreFormat().contentEquals(otherPreset.getSetting(item.device, item.name).getPropertyValue()) )
@@ -117,7 +117,7 @@ public final class PresetEditor extends ConfigDialog {
       }
 
       // Define the preset.   
-      for (PropertyItem item_ : data_.getPropList()) {
+      for (PropertyItem item_ : data_.getProperties()) {
          if (item_.confInclude) {
             try {
                core_.defineConfig(groupName_, newName, item_.device, item_.name, item_.getValueInCoreFormat());

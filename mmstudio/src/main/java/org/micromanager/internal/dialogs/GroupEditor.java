@@ -22,6 +22,7 @@ package org.micromanager.internal.dialogs;
 import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -44,8 +45,8 @@ public final class GroupEditor extends ConfigDialog {
    private static final long serialVersionUID = 8281144157746745260L;
    private static final String DISPLAY_SHUTTER_WARNING = "Warn user before saving a config group that includes shutter state.";
 
-   public GroupEditor(String groupName, String presetName, Studio gui, CMMCore core, boolean newItem) {
-      super(groupName, presetName, gui, core, newItem);
+   public GroupEditor(String groupName, String presetName, Studio studio, CMMCore core, boolean newItem) {
+      super(groupName, presetName, studio, core, newItem);
       instructionsText_ = "Specify properties in this configuration group:";
       nameFieldLabelText_ = "Group name:";
       initName_ = groupName_;
@@ -54,7 +55,7 @@ public final class GroupEditor extends ConfigDialog {
       showFlagsPanelVisible_ = true;
       scrollPaneTop_ = 140;
       numColumns_ = 3;
-      PropertyTableData.Builder ptdb = new PropertyTableData.Builder(core_);
+      PropertyTableData.Builder ptdb = new PropertyTableData.Builder(studio);
       data_ = ptdb.groupName(groupName).presetName(presetName).propertyValueColumn(2).
               propertyUsedColumn(1).groupOnly(false).allowChangingProperties(false).allowChangesOnlyWhenUsed(false).isPixelSizeConfig(false).build();
       initializeData();
@@ -69,8 +70,8 @@ public final class GroupEditor extends ConfigDialog {
       String newName = nameField_.getText();
 
       // Examine the group, checking for shutter state properties.
-      ArrayList<PropertyItem> shutters = new ArrayList<PropertyItem>();
-      for (PropertyItem item : data_.getPropList()) {
+      List<PropertyItem> shutters = new ArrayList<>();
+      for (PropertyItem item : data_.getProperties()) {
          try {
             if (item.confInclude && item.name.contentEquals("State") &&
                   core_.getDeviceType(item.device) == DeviceType.ShutterDevice) {
@@ -141,7 +142,7 @@ public final class GroupEditor extends ConfigDialog {
 
       // Check that at least one property has been selected.
       int itemsIncludedCount = 0;
-      for (PropertyItem item : data_.getPropList()) {
+      for (PropertyItem item : data_.getProperties()) {
          if (item.confInclude) {
             itemsIncludedCount++;
          }
@@ -180,7 +181,7 @@ public final class GroupEditor extends ConfigDialog {
                   same = true;
 
                   second = core_.getConfigData(initName, cfgs.get(j));
-                  for (PropertyItem item : data_.getPropList()) {
+                  for (PropertyItem item : data_.getProperties()) {
                      if (item.confInclude) {
                         if (first.isPropertyIncluded(item.device, item.name) && second.isPropertyIncluded(item.device, item.name)) {
                            if (!first.getSetting(item.device, item.name).getPropertyValue().contentEquals(second.getSetting(item.device, item.name).getPropertyValue())) {
@@ -214,7 +215,7 @@ public final class GroupEditor extends ConfigDialog {
          try {
             core_.defineConfigGroup(newName);
 
-            for (PropertyItem item : data_.getPropList()) {
+            for (PropertyItem item : data_.getProperties()) {
                if (item.confInclude) {
                   if (itemsIncludedCount == 1 && item.allowed.length > 0) {
                      /* ensure sorting of the property value list: */
@@ -267,7 +268,7 @@ public final class GroupEditor extends ConfigDialog {
             // Get a configuration with the full list of properties.
             unionCfg = core_.getConfigGroupState(newName);
 
-            for (PropertyItem item : data_.getPropList()) {
+            for (PropertyItem item : data_.getProperties()) {
                if (!item.confInclude && unionCfg.isPropertyIncluded(item.device, item.name)) {
                   // If some presets have this property when they shouldn't, delete it.
                   for (int i = 0; i < cfgs.size(); i++) {

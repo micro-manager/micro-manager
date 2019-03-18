@@ -24,7 +24,6 @@ package org.micromanager.internal.utils;
 import java.awt.Font;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -51,11 +50,11 @@ public final class ShowFlagsPanel extends JPanel {
    private JCheckBox showOtherCheckBox_;
    private JTextField searchFilterText_;
    private JCheckBox showReadonlyCheckBox_;
-   private Configuration initialCfg_;
+   private final Configuration initialCfg_;
 
-   private ShowFlags flags_;
-   private PropertyTableData data_;
-   private CMMCore core_;
+   private final ShowFlags flags_;
+   private final PropertyTableData data_;
+   private final CMMCore core_;
 
    public ShowFlagsPanel(PropertyTableData data, ShowFlags flags, CMMCore core, Configuration initialCfg) {
       data_ = data;
@@ -77,76 +76,60 @@ public final class ShowFlagsPanel extends JPanel {
       
       JButton showAllTypesButton = new JButton("All");
       showAllTypesButton.setFont(font);
-      showAllTypesButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            selectAllTypes(true);
-         }
+      showAllTypesButton.addActionListener((ActionEvent arg0) -> {
+         selectAllTypes(true);
       });
       deviceTypePanel.add(showAllTypesButton, "growx, split 2, gapbottom 3");
       
       JButton showNoTypesButton = new JButton("None");
       showNoTypesButton.setFont(font);
-      showNoTypesButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            selectAllTypes(false);
-         }
+      showNoTypesButton.addActionListener((ActionEvent arg0) -> {
+         selectAllTypes(false);
       });
       deviceTypePanel.add(showNoTypesButton, "growx, wrap");
       
       showCamerasCheckBox_ = new JCheckBox("cameras");
       showCamerasCheckBox_.setFont(font);
-      showCamerasCheckBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            flags_.cameras_ = showCamerasCheckBox_.isSelected();
-            data_.updateRowVisibility(flags_);
-         }
+      showCamerasCheckBox_.addActionListener((ActionEvent arg0) -> {
+         flags_.cameras_ = showCamerasCheckBox_.isSelected();
+         data_.setFlags(flags_);
+         data_.refresh(true);
       });
       deviceTypePanel.add(showCamerasCheckBox_, "wrap");
 
       showShuttersCheckBox_ = new JCheckBox("shutters");
       showShuttersCheckBox_.setFont(font);
-      showShuttersCheckBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            flags_.shutters_ = showShuttersCheckBox_.isSelected();
-            data_.updateRowVisibility(flags_);
-         }
+      showShuttersCheckBox_.addActionListener((ActionEvent arg0) -> {
+         flags_.shutters_ = showShuttersCheckBox_.isSelected();
+         data_.setFlags(flags_);
+         data_.refresh(true);
       });
       deviceTypePanel.add(showShuttersCheckBox_, "wrap");
 
       showStagesCheckBox_ = new JCheckBox("stages");
       showStagesCheckBox_.setFont(font);
-      showStagesCheckBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            flags_.stages_ = showStagesCheckBox_.isSelected();
-            data_.updateRowVisibility(flags_);
-         }
+      showStagesCheckBox_.addActionListener((ActionEvent arg0) -> {
+         flags_.stages_ = showStagesCheckBox_.isSelected();
+         data_.setFlags(flags_);
+         data_.refresh(true);
       });
       deviceTypePanel.add(showStagesCheckBox_, "wrap");
 
       showStateDevicesCheckBox_ = new JCheckBox("wheels, turrets, etc.");
       showStateDevicesCheckBox_.setFont(font);
-      showStateDevicesCheckBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            flags_.state_ = showStateDevicesCheckBox_.isSelected();
-            data_.updateRowVisibility(flags_);
-         }
+      showStateDevicesCheckBox_.addActionListener((ActionEvent arg0) -> {
+         flags_.state_ = showStateDevicesCheckBox_.isSelected();
+         data_.setFlags(flags_);
+         data_.refresh(true);
       });
       deviceTypePanel.add(showStateDevicesCheckBox_, "wrap");
 
       showOtherCheckBox_ = new JCheckBox("other devices");
       showOtherCheckBox_.setFont(font);
-      showOtherCheckBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            flags_.other_ = showOtherCheckBox_.isSelected();
-            data_.updateRowVisibility(flags_);
-         }
+      showOtherCheckBox_.addActionListener((ActionEvent arg0) -> {
+         flags_.other_ = showOtherCheckBox_.isSelected();
+         data_.setFlags(flags_);
+         data_.refresh(true);
       });
       deviceTypePanel.add(showOtherCheckBox_, "wrap");
       
@@ -161,9 +144,11 @@ public final class ShowFlagsPanel extends JPanel {
          public void changedUpdate(DocumentEvent e) {
             updateSearchFilter();
          }
+         @Override
          public void insertUpdate(DocumentEvent e) {
             updateSearchFilter();
          }
+         @Override
          public void removeUpdate(DocumentEvent e) {
             updateSearchFilter();
          }
@@ -172,11 +157,8 @@ public final class ShowFlagsPanel extends JPanel {
       JButton clearFilterButton = new JButton("Clear");
       clearFilterButton.setFont(font);
       clearFilterButton.setMargin(new Insets(3,6,3,6));
-      clearFilterButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            searchFilterText_.setText("");
-         }
+      clearFilterButton.addActionListener((ActionEvent e) -> {
+         searchFilterText_.setText("");
       });
       add(clearFilterButton, "gapbottom 10, growy, aligny center, wrap");
       
@@ -185,14 +167,11 @@ public final class ShowFlagsPanel extends JPanel {
       
       showReadonlyCheckBox_ = new JCheckBox("Show read-only");
       showReadonlyCheckBox_.setFont(font);
-      showReadonlyCheckBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            // show/hide read-only properties
-            data_.setShowReadOnly(showReadonlyCheckBox_.isSelected());
-            data_.update(false);
-            data_.fireTableStructureChanged();
-          }
+      showReadonlyCheckBox_.addActionListener((ActionEvent e) -> {
+         // show/hide read-only properties
+         data_.setShowReadOnly(showReadonlyCheckBox_.isSelected());
+         data_.update(false);
+         data_.fireTableStructureChanged();
       });
       propertyTypePanel.add(showReadonlyCheckBox_, "wrap");
 
@@ -210,7 +189,8 @@ public final class ShowFlagsPanel extends JPanel {
       flags_.state_ = all;
       showOtherCheckBox_.setSelected(all);
       flags_.other_ = all;
-      data_.updateRowVisibility(flags_);
+      data_.setFlags(flags_);
+      data_.refresh(true);
    }
    
    private void updateSearchFilter() {
@@ -250,7 +230,7 @@ public final class ShowFlagsPanel extends JPanel {
                showStateDevicesCheckBox_.setSelected(true);
             } else {
                showOtherCheckBox_.setSelected(true);
-               flags_.other_ = true;;
+               flags_.other_ = true;
             }
          }
       } catch (Exception e) {

@@ -69,7 +69,7 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
          gui.logs().showError(ex, "Failed to set this Pixel Size configuration");
       }
       
-      PropertyTableData.Builder ptdb = new PropertyTableData.Builder(core_);
+      PropertyTableData.Builder ptdb = new PropertyTableData.Builder(parent.getStudio());
       data_ = ptdb.groupName(groupName_).presetName(presetName_).propertyValueColumn(1).
               propertyUsedColumn(2).groupOnly(true).allowChangingProperties(true).
               allowChangesOnlyWhenUsed(true).isPixelSizeConfig(true).build();
@@ -105,7 +105,7 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
 
       // Check that at least one property has been selected.
       int itemsIncludedCount = 0;
-      for (PropertyItem item : data_.getPropList()) {
+      for (PropertyItem item : data_.getProperties()) {
          if (item.confInclude) {
             itemsIncludedCount++;
          }
@@ -134,7 +134,7 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
 
          core_.definePixelSizeConfig(newName);
 
-         for (PropertyItem item : data_.getPropList()) {
+         for (PropertyItem item : data_.getProperties()) {
             if (item.confInclude) {
                core_.definePixelSizeConfig(newName, item.device, item.name, item.getValueInCoreFormat());              
             }
