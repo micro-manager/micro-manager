@@ -249,6 +249,7 @@ EmCCDGainHigh_(0),
 EMSwitch_(true),
 minTemp_(0),
 ThermoSteady_(0),
+cameraBuffer_(nullptr),
 lSnapImageCnt_(0),
 currentGain_(-1),
 ReadoutTime_(50),
@@ -4264,7 +4265,11 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
 
       seqThread_->Stop();
       seqThread_->wait();
-      delete cameraBuffer_;
+      if (cameraBuffer_ != nullptr) 
+      {
+         delete cameraBuffer_;
+         cameraBuffer_ = nullptr;
+      }
 
       if (!temporary)
       {
