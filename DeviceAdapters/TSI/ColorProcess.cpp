@@ -135,6 +135,9 @@ int Tsi3Cam::ColorProcess16to32(unsigned short* monoBuf, unsigned char* colorBuf
 	sRGB_companding_LUT(bitDepth, tl_color_get_blue_output_LUT(color_processor_inst));
 	sRGB_companding_LUT(bitDepth, tl_color_get_green_output_LUT(color_processor_inst));
 	sRGB_companding_LUT(bitDepth, tl_color_get_red_output_LUT(color_processor_inst));
+
+	// enable luts
+	tl_color_enable_output_LUTs (color_processor_inst, 1, 1, 1);
 	
 	// Color process the demosaic color frame.
 
@@ -142,11 +145,11 @@ int Tsi3Cam::ColorProcess16to32(unsigned short* monoBuf, unsigned char* colorBuf
 											, demosaic_color_buffer // input buffer
 											, TL_COLOR_FORMAT_BGR_PLANAR
 											, 0
-											, 1 << bitDepth
+											, (1 << bitDepth) - 1
 											, 0
-											, 1 << bitDepth
+											, (1 << bitDepth) - 1
 											, 0
-											, 1 << bitDepth
+											, (1 << bitDepth) - 1
 											, 0
 											, 0
 											, 0
