@@ -493,7 +493,10 @@ int CoreCallback::OnPropertyChanged(const MM::Device* device, const char* propNa
          {
             Configuration config = 
                core_->getConfigData((*it).c_str(), (*itc).c_str());
-            if (config.isPropertyIncluded(label, propName)) {
+            // only callback when there is more than 1 property in a group
+            // This is needed, since the UI treats groups with one 
+            // property differently, whereas the core does not....
+            if (config.size() > 1 && config.isPropertyIncluded(label, propName)) {
                found = true;
                // If we are part of this configuration, notify that it 
                // was changed. Get the new config from cache rather 
