@@ -382,7 +382,7 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
 
    @Override
    public List<MultiStagePosition> getStagePositionList() {
-      List<MultiStagePosition> ret = new ArrayList<MultiStagePosition>();
+      List<MultiStagePosition> ret = new ArrayList<>();
       List<PropertyMap> msps = pmap_.getPropertyMapList(STAGE_POSITIONS.key());
       for (PropertyMap mspPmap : msps) {
          ret.add(MultiStagePosition.fromPropertyMap(mspPmap));

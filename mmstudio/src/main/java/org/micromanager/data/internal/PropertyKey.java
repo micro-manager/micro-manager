@@ -802,6 +802,7 @@ public enum PropertyKey {
                      build());
             }
          }
+         dest.putPropertyMapList(key, devPositions);
       }
    },
 

@@ -410,7 +410,7 @@ public final class MultiStagePosition {
    }
 
    /**
-    * Generates a multistagePosition from the given PorpertyMap
+    * Generates a multistagePosition from the given PropertyMap
     * @param pmap PropertyMap 
     * @return MultiStagePosition
     */
