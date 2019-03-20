@@ -18,17 +18,27 @@
 //               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 package org.micromanager.pointandshootanalysis;
 
-import ij.IJ;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.plugin.ImageCalculator;
-import ij.plugin.ZProjector;
-import ij.process.ImageProcessor;
-import ij.process.ShortProcessor;
+import boofcv.alg.filter.binary.BinaryImageOps;
+import boofcv.alg.filter.binary.Contour;
+import boofcv.alg.filter.binary.GThresholdImageOps;
+import boofcv.alg.filter.blur.BlurImageOps;
+import boofcv.alg.misc.GImageBandMath;
+import boofcv.alg.misc.GPixelMath;
+import boofcv.concurrency.BoofConcurrency;
+import boofcv.core.image.ConvertImage;
+import boofcv.struct.ConnectRule;
+import boofcv.struct.image.GrayF32;
+import boofcv.struct.image.GrayS32;
+import boofcv.struct.image.GrayU16;
+import boofcv.struct.image.GrayU8;
+import boofcv.struct.image.ImageGray;
+import boofcv.struct.image.Planar;
+import georegression.struct.point.Point2D_I32;
+import georegression.struct.shapes.Rectangle2D_I32;
 import java.awt.Point;
-import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -54,13 +64,15 @@ import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.pointandshootanalysis.algorithm.MovementByCrossCorrelation;
-import org.micromanager.pointandshootanalysis.algorithm.Utils;
+import org.micromanager.pointandshootanalysis.algorithm.ContourStats;
+import org.micromanager.pointandshootanalysis.data.BoofCVImageConverter;
+import org.micromanager.pointandshootanalysis.data.BoofCVUtils;
 import org.micromanager.pointandshootanalysis.data.PASData;
 import org.micromanager.pointandshootanalysis.data.PASFrameSet;
+import org.micromanager.pointandshootanalysis.data.ParticleData;
 import org.micromanager.pointandshootanalysis.data.Terms;
 import org.micromanager.pointandshootanalysis.display.Overlay;
-import org.micromanager.pointandshootanalysis.plot.DataSeriesKey;
+import org.micromanager.pointandshootanalysis.display.WidgetSettings;
 import org.micromanager.pointandshootanalysis.plot.PlotUtils;
 import org.micromanager.pointandshootanalysis.utils.ListUtils;
 
@@ -70,39 +82,44 @@ import org.micromanager.pointandshootanalysis.utils.ListUtils;
  */
 public class PointAndShootAnalyzer implements Runnable {
 
+   final static double DIST_UNCERTAINTY = 5.0; // in pixels
+   
    final private Studio studio_;
+   final private PointAndShootDialog psd_;
    final private PropertyMap settings_;
-   ;
    final Map<String, Point> coordinates_;
-   final private int roiWidth_ = 50;  // may need to changed by user
-   final private int roiHeight_ = 50;  // may need to changed by user
-   final private int maxDistance_ = 10; // max distance in pixels from the expected position
+   final private static int MAXDISTANCE = 10; // max distance in pixels from the expected position
    // if more, we will reject the bleach spot
-   // may need to be changed buy the user
-   final private int findMinFramesBefore_ = 5; // frames before user clicked PAS.  
+   // may need to be changed by the user
+   //final private int findMinFramesBefore_ = 5; // frames before user clicked PAS.  
    //Used to find actual bleach spot and to normalize
    final private int findMinFramesAfter_ = 20;  // frames after used clicked PAS.  
    //Used to find actual bleach spot
-   final private int fftSize_ = 64;
-   final private int halfFFTSize_ = fftSize_ / 2;
+   final private int roiSize_ = 64;  // keep at factor of 2 to enable FFT 
+   final private int halfROISize_ = roiSize_ / 2;
+   final private int roiWidth_ = roiSize_;  // may need to changed by user
+   final private int roiHeight_ = roiSize_;  // may need to changed by user
 
-   public PointAndShootAnalyzer(Studio studio, PropertyMap settings) {
+   public PointAndShootAnalyzer(Studio studio, PropertyMap settings, PointAndShootDialog psd) {
       studio_ = studio;
       settings_ = settings;
-      coordinates_ = new HashMap<String, Point>();
+      psd_ = psd;
+      coordinates_ = new HashMap<>();
    }
 
    @Override
    public void run() {
 
-      final Map<Instant, Point> datedCoordinates = new TreeMap<Instant, Point>();
-      final Map<Integer, Instant> frameTimeStamps = new TreeMap<Integer, Instant>();
+      final Map<Instant, Point> datedCoordinates = new TreeMap<>();
+      final Map<Integer, Instant> frameTimeStamps = new TreeMap<>();
 
       // Read variables provided by UI from profile
       String fileName = settings_.getString(Terms.LOCATIONSFILENAME, "");
-      int radius = settings_.getInteger(Terms.RADIUS, 3);
-      int nrFramesBefore = settings_.getInteger(Terms.NRFRAMESBEFORE, 2);
-      int nrFramesAfter = settings_.getInteger(Terms.NRFRAMESAFTER, 200);
+      final int bleachSpotRadius = settings_.getInteger(Terms.RADIUS, 3);
+      final int findMinFramesBefore = settings_.getInteger(Terms.NRFRAMESBEFORE, 2);
+      // final int nrFramesAfter = settings_.getInteger(Terms.NRFRAMESAFTER, 200);
+      final int maxDistance = settings_.getInteger(Terms.MAXDISTANCE, 3);
+      final int cameraOffset = settings_.getInteger(Terms.CAMERAOFFSET, 100);
 
       File f = new File(fileName);
       if (!f.exists()) {
@@ -137,7 +154,7 @@ public class PointAndShootAnalyzer implements Runnable {
          return;
       }
 
-      final List<PASData> pasData = new ArrayList<PASData>(datedCoordinates.size());
+      final List<PASData> pasData = new ArrayList<>(datedCoordinates.size());
 
       // Store TimeStamps from images into frameTimeStamps
       final DataProvider dataProvider = activeDataViewer.getDataProvider();
@@ -177,19 +194,21 @@ public class PointAndShootAnalyzer implements Runnable {
                found = true;
             }
          }
-         if (found) {
+         if (found && frameNrAndTime != null) {
             PASData.Builder pasB = PASData.builder();
             pasB.pasClicked(entryInstant).
                     framePasClicked(frameNrAndTime.getKey()).
                     pasIntended(entry.getValue()).
-                    tsOfFrameBeforePas(frameNrAndTime.getValue());
+                    tsOfFrameBeforePas(frameNrAndTime.getValue()).
+                    dataSetName(dataProvider.getName());
             pasData.add(pasB.build());
          }
       }
 
       // We have the bleach Coordinates as frame - x/y. Check with the actual images
-      List<XYSeries> plotData = new ArrayList<XYSeries>();
-      List<Map<Integer, Point>> tracks = new ArrayList<Map<Integer, Point>>();
+      List<Map<Integer, ParticleData>> tracks = new ArrayList<>();
+      // Use multiple threads in BoofCV code:
+      BoofConcurrency.USE_CONCURRENT = true;
       try {
          int imgWidth = dataProvider.getAnyImage().getWidth();
          int imgHeight = dataProvider.getAnyImage().getHeight();
@@ -201,190 +220,381 @@ public class PointAndShootAnalyzer implements Runnable {
          }
          final int xMiddle = roiWidth_ / 2;
          final int yMiddle = roiHeight_ / 2;
-
+         final Point2D_I32 middle = new Point2D_I32(xMiddle, yMiddle);
+         
+         // create a boofCV Planar that contains all of the MM data (no copy, backed by MM
+         Coords.Builder cbb = dataProvider.getAnyImage().getCoords().copyBuilder();
+         Planar bCVStack = new Planar(GrayU16.class, dataProvider.getAxisLength(Coords.T));
+         bCVStack.setWidth(imgWidth);
+         bCVStack.setHeight(imgHeight);
+         bCVStack.setStride(imgWidth);
+         for (int frame = 0; frame < dataProvider.getAxisLength(Coords.T); frame++) {
+            bCVStack.setBand(frame, BoofCVImageConverter.mmToBoofCV(
+                    dataProvider.getImage(cbb.t(frame).build()), false) );
+         }
          ListIterator<PASData> pasDataIt = pasData.listIterator();
          while (pasDataIt.hasNext()) {
             // define an ROI around the expected postion 
             PASData pasEntry = pasDataIt.next();
-            int roiX = pasEntry.pasIntended().x - (int) (roiWidth_ / 2);
-            roiX = (roiX < 0) ? 0 : roiX;
-            roiX = (roiX + roiWidth_ > imgWidth) ? imgWidth - roiWidth_ : roiX;
-            int roiY = pasEntry.pasIntended().y - (int) (roiWidth_ / 2);
-            roiY = roiY < 0 ? 0 : roiY;
-            roiY = (roiY + roiHeight_ > imgHeight) ? imgHeight - roiHeight_ : roiY;
-
-            // Make a substack with this ROI, starting findMinFramesBefore_ and ending findMinFramesAfter_
+            int x0 = pasEntry.pasIntended().x - (int) (roiWidth_ / 2);
+            x0 = (x0 < 0) ? 0 : x0;
+            int x1 = (x0 + roiWidth_ > imgWidth) ? imgWidth : x0 + roiWidth_;
+            int y0 = pasEntry.pasIntended().y - (int) (roiWidth_ / 2);
+            y0 = y0 < 0 ? 0 : y0;
+            int y1 = (y0 + roiHeight_ > imgHeight) ? imgHeight: y0 + roiHeight_;
+            Planar<GrayU16> subImage = bCVStack.subimage(x0, y0, x1, y1, null);
             PASFrameSet findMinFrames = new PASFrameSet(
-                    pasEntry.framePasClicked() - findMinFramesBefore_,
+                    pasEntry.framePasClicked() - findMinFramesBefore,
                     pasEntry.framePasClicked(),
                     pasEntry.framePasClicked() + findMinFramesAfter_,
                     dataProvider.getAxisLength(Coords.T));
-            Coords.Builder cb = dataProvider.getAnyImage().getCoords().copyBuilder();
-            ImageStack subStack = new ImageStack(roiWidth_, roiHeight_);
-            for (int frame = findMinFrames.getStartFrame();
-                    frame < findMinFrames.getEndFrame();
-                    frame++) {
-               Coords coord = cb.t(frame).build();
-               Image img = dataProvider.getImage(coord);
-               ImageProcessor iProc = studio_.data().getImageJConverter().createProcessor(img);
-               iProc.setRoi(roiX, roiY, roiWidth_, roiHeight_);
-               ImageProcessor crop = iProc.crop();
-               subStack.addSlice(crop);
-            }
-            ImagePlus imp = new ImagePlus("f: " + pasEntry.framePasClicked(), subStack);
-
-            // make an average projection of this substack
-            ZProjector zp = new ZProjector(imp);
-            zp.setMethod(ZProjector.AVG_METHOD);
-            zp.setStartSlice(1);
-            zp.setStopSlice(findMinFrames.getCentralFrame()
-                    - findMinFrames.getStartFrame());  // TODO: make sure this is always correct
-            zp.doProjection();
-            ImagePlus before = zp.getProjection();
-
-            // make a minimum projection of this substack
-            zp.setMethod(ZProjector.MIN_METHOD);
-            zp.setStartSlice(1);
-            zp.setStopSlice(imp.getNSlices());
-            zp.doProjection();
-            ImagePlus min = zp.getProjection();
-
-            // Normalize (divivde) the minimum projection with the average projection 
-            ImageCalculator ic = new ImageCalculator();
-            ImagePlus result = ic.run("Divide 32-bit", min, before);
-            IJ.run(result, "Gaussian Blur...", "sigma=3");
-            // result.show();
-
-            // Find the minimum and define this as the bleachPoint
-            Point minPoint = findMinPixel(result.getProcessor());
-            System.out.println("Lowest Pixel position: " + minPoint.x + ", " + minPoint.y);
+            GrayU16 beforeCV = new GrayU16(x1 - x0, y1 - y0);
+            GImageBandMath.average(subImage, beforeCV, 
+                    findMinFrames.getStartFrame(), findMinFrames.getCentralFrame() + 1);
+            GrayF32 beforeCVF = new GrayF32(x1 - x0, y1 - y0);
+            ConvertImage.convert(beforeCV, beforeCVF);
+            GrayU16 minBCV = new GrayU16(x1 - x0, y1 - y0);
+            GImageBandMath.minimum(subImage, minBCV, 
+                    findMinFrames.getCentralFrame(), findMinFrames.getEndFrame());
+            GrayF32 minBCVF = new GrayF32(x1 - x0, y1 - y0);
+            ConvertImage.convert(minBCV, minBCVF);
+            GrayF32 dResult = new GrayF32(minBCVF.width, minBCVF.height);
+            GPixelMath.divide(minBCVF, beforeCVF, dResult);
+            GrayF32 gResult = new GrayF32(minBCVF.width, minBCVF.height);
+            BlurImageOps.gaussian(dResult, gResult, 3, -1, null);
+            
+             // Find the minimum and define this as the bleachPoint
+            Point2D_I32 minPoint = findMinPixel(gResult);
+            
+            //System.out.println("Lowest Pixel position: " + minPoint.x + ", " + minPoint.y);
             // check if this is within expected range
-            if (minPoint.x < xMiddle - maxDistance_
-                    || minPoint.x > xMiddle + maxDistance_
-                    || minPoint.y < yMiddle - maxDistance_
-                    || minPoint.y > yMiddle + maxDistance_) {
+            
+            if (minPoint.distance(middle) > MAXDISTANCE) {
                pasDataIt.remove();
                continue;
             }
             // Store coordinates indicating where the bleach actually happened
             // (in pixel coordinates of the original data)
-            Point pasActual = new Point(roiX + minPoint.x, roiY + minPoint.y);
-
-            // Calculate intensity in the subStack of a spot with diameter "radius"
-            // TODO: evalute background
-            // TODO: track spot
-            // TODO: analyze complete subStack, while tracking moving spots
-            // Estimate when the bleach actually happened by looking for frames
-            // that are much brighter than the average
-            // This is not always accurate
-            List<Double> subStackIntensityData = new ArrayList<Double>();
-            for (int slice = 1; slice <= subStack.getSize(); slice++) {
-               ImageProcessor iProc = subStack.getProcessor(slice);
-               subStackIntensityData.add((double) Utils.GetIntensity(iProc.convertToFloatProcessor(),
-                       minPoint.x, minPoint.y, radius));
-            }
-            double avg = ListUtils.listAvg(subStackIntensityData);
-            double stdDev = ListUtils.listStdDev(subStackIntensityData, avg);
-            List<Integer> bleachFrames = new ArrayList<Integer>();
-            for (int frame = 0; frame < subStackIntensityData.size(); frame++) {
-               if (subStackIntensityData.get(frame) > avg + 2 * stdDev) {
-                  bleachFrames.add(frame);
-               }
-            }
-            int[] pasFrames = new int[bleachFrames.size()];
-            for (int frame = 0; frame < bleachFrames.size(); frame++) {
-               pasFrames[frame] = bleachFrames.get(frame) + findMinFrames.getStartFrame();
-            }
-
-            // find average intensity of frames before bleaching for later normalization
-            double preBleachAverage = Utils.GetIntensity(
-                    before.getProcessor().convertToFloatProcessor(),
-                    minPoint.x, minPoint.y, radius);
-
-            // Get intensity data from the complete desired range of the stack
-            PASFrameSet intensityAnalysisFrames = new PASFrameSet(
-                    pasEntry.framePasClicked() - nrFramesBefore,
-                    pasEntry.framePasClicked(),
-                    pasEntry.framePasClicked() + nrFramesAfter,
-                    dataProvider.getAxisLength(Coords.T));
-
-            List<Double> intensityData = new ArrayList<Double>();
-            for (int frame = intensityAnalysisFrames.getStartFrame();
-                    frame < intensityAnalysisFrames.getEndFrame(); frame++) {
-               Coords coord = cb.t(frame).build();
-               Image img = dataProvider.getImage(coord);
-               ImageProcessor iProc = studio_.data().getImageJConverter().createProcessor(img);
-               intensityData.add((double) Utils.GetIntensity(iProc.convertToFloatProcessor(),
-                       pasActual.x, pasActual.y, radius));
-            }
-
-            XYSeries data = new XYSeries("" + findMinFrames.getCentralFrame(), false, false);
-            for (int i = 0; i < intensityData.size(); i++) {
-               data.add(frameTimeStamps.get(intensityAnalysisFrames.getStartFrame() + i).toEpochMilli()
-                       - frameTimeStamps.get(intensityAnalysisFrames.getCentralFrame()).toEpochMilli(),
-                       intensityData.get(i) / preBleachAverage);
-            }
-            data.setKey(new DataSeriesKey(intensityAnalysisFrames.getCentralFrame(),
-                    pasActual.x, pasActual.y));
-            plotData.add(data);
-
-            for (Double val : subStackIntensityData) {
-               System.out.print(" " + val / preBleachAverage);
-            }
-            System.out.println();
-
+            Point pasActual = new Point(x0 + minPoint.x, y0 + minPoint.y);
+            String id = "" + pasEntry.framePasClicked() + ": "
+                    + pasActual.x + ", " + pasActual.y;
             pasDataIt.set(pasEntry.copyBuilder().
+                    id(id).
                     pasActual(pasActual).
-                    pasFrames(pasFrames).
-                    build());
-
+                    pasFrames(null).
+                    build());         
          }
-
-         if (plotData.size() < 1) {
-            studio_.logs().showMessage("No Point and Shoot events found");
-            return;
-         }
-
-         XYSeries[] plots = plotData.toArray(new XYSeries[plotData.size()]);
-         boolean[] showShapes = new boolean[plotData.size()];
-         for (int i = 0; i < showShapes.length; i++) {
-            showShapes[i] = true;
-         }
-
-         PlotUtils pu = new PlotUtils(studio_.profile().getSettings(this.getClass()));
-         pu.plotDataN("Bleach Intensity Profile", plots, "Time (ms)",
-                 "Normalized Intensity", showShapes, "", 1.3);
-
-         // Track particle that received the bleach by cross-correlation
+         psd_.setStatus("Found " + pasData.size()  + " bleach events, now tracking...");
+         
+         // Track particle that received the bleach by local thresholding
          // First go backwards in time, then forward
          pasDataIt = pasData.listIterator();
          Coords.Builder cb = dataProvider.getAnyImage().getCoords().copyBuilder();
+         int count = 0;
          while (pasDataIt.hasNext()) {
-            // define an ROI around the expected postion 
             PASData pasEntry = pasDataIt.next();
-            Map<Integer, Point> track = new TreeMap<Integer, Point>();
-            Point current = new Point(pasEntry.pasActual().x, pasEntry.pasActual().y);
-            track.put(pasEntry.framePasClicked() + 2, current);
-            for (int frame = pasEntry.framePasClicked() + 2;
-                    frame > 1; frame--) {
-               current = centerOfCentralParticle(dataProvider, cb, frame, current);
-               current = ccParticle(dataProvider, cb, frame, frame - 1, current);
-               track.put(frame - 1, current);
+            Map<Integer, ParticleData> track = new TreeMap<>();
+            Point2D_I32 bleachPoint = new Point2D_I32(pasEntry.pasActual().x, pasEntry.pasActual().y);
+            ParticleData firstParticle = ParticleData.centralParticle(dataProvider, cb, 
+                    pasEntry.framePasClicked() + 1, bleachPoint, halfROISize_);
+            if (firstParticle == null) {
+               continue;
+            }
+            Point2D_I32 currentPoint = firstParticle.getCentroid().copy();
+            for (int frame = pasEntry.framePasClicked() + 1;
+                    frame >= 0; frame--) {
+               ParticleData nextParticle = ParticleData.centralParticle(dataProvider, 
+                       cb, frame, currentPoint, halfROISize_);
+               if (nextParticle != null && ( 
+                       currentPoint.distance(nextParticle.getCentroid()) < maxDistance )) {
+                  currentPoint = nextParticle.getCentroid();
+                  track.put(frame, nextParticle);
+               } else {
+                  track.put(frame, null);
+                 // System.out.println("Before Missing particle");
+                  // TODO: increase counter, give up when too high
+               }
             }
 
-            current = new Point(pasEntry.pasActual().x, pasEntry.pasActual().y);
+            // now go forward in time
+            currentPoint = firstParticle.getCentroid().copy();
+            GrayU16 preBleach = (GrayU16) BoofCVImageConverter.subImage(dataProvider, cb, 
+                    pasEntry.framePasClicked() + 1, currentPoint, halfROISize_);
+            if (preBleach == null) {
+               continue;
+            }
+            GrayF32 fPreBleach = new GrayF32(preBleach.getWidth(), preBleach.getHeight());
+            ConvertImage.convert(preBleach, fPreBleach);
+            ParticleData previousParticle = null;
+            int bleachSpotsMissed = 0;
             for (int frame = pasEntry.framePasClicked() + 2;
-                    frame < dataProvider.getAxisLength(Coords.T) - 1; frame++) {
-               current = ccParticle(dataProvider, cb, frame, frame + 1, current);
-               track.put(frame + 1, current);
+                    frame < dataProvider.getAxisLength(Coords.T); frame++) {
+               ParticleData nextParticle = ParticleData.centralParticle(dataProvider, 
+                       cb, frame, currentPoint, halfROISize_);
+               if (nextParticle == null || ( 
+                       currentPoint.distance(nextParticle.getCentroid()) > maxDistance )) {
+                  track.put(frame, null);
+                  if (previousParticle != null) {
+                     nextParticle = previousParticle.copy();
+                  }
+                  //System.out.println("After Missing particle");
+                  // TODO: increase counter, give up when too high
+               } 
+               
+               if (bleachSpotsMissed < 5) {
+                  ImageGray current = BoofCVImageConverter.subImage(dataProvider,
+                          cb, frame, currentPoint, halfROISize_);
+                  nextParticle = ParticleData.addBleachSpotToParticle(
+                          fPreBleach,
+                          (GrayU16) current,
+                          track,
+                          frame,
+                          nextParticle,
+                          new Point2D_I32(currentPoint.x - halfROISize_, currentPoint.y - halfROISize_),
+                          bleachSpotRadius,
+                          MAXDISTANCE);
+                  if (nextParticle.getBleachSpot() == null) {
+                     bleachSpotsMissed += 1;
+                  } else {
+                     bleachSpotsMissed = 0;
+                  }
+               }
+               previousParticle = nextParticle;
+               currentPoint = nextParticle.getCentroid();
+               track.put(frame, nextParticle);
             }
             tracks.add(track);
+            pasDataIt.set(pasEntry.copyBuilder().particleDataTrack(track).
+                    build());
+            psd_.setProgress((double) ++count / (double) pasData.size());
+         }
+         
+         // find duplicate tracks (i.e. the same particle was bleached twice
+         // Algorithm: find the centroid of the first particle in the track.  
+         // If within a certain distance from the centroid of the first particle
+         // from another track, we'll assume this is one and the same and remove the track.
+         final double identityDistance = 5.0;
+         List<Map<Integer, ParticleData>> doubleTracks = new ArrayList<>();
+         for (int i = 0; i < tracks.size(); i++) {
+            Map<Integer, ParticleData> track = tracks.get(i);
+            if (!doubleTracks.contains(track)) {
+               ParticleData firstParticle = track.get(0);
+               if (firstParticle != null) {
+                  for (int j = 0; j < tracks.size(); j++) {
+                     if (j != i) {
+                        Map<Integer, ParticleData> otherTrack = tracks.get(j);
+                        ParticleData otherFirstParticle = otherTrack.get(0);
+                        if (otherFirstParticle != null
+                                && firstParticle.getCentroid().distance(
+                                        otherFirstParticle.getCentroid()) < identityDistance) {
+                           doubleTracks.add(otherTrack);
+                        }
+                     }
+                  }
+               }
+            }
+         }
+         // remove the duplicates that were found
+         for (Map<Integer, ParticleData> track : doubleTracks) {
+            tracks.remove(track);
+            // also remove pasData that contain this track
+            pasDataIt = pasData.listIterator();
+            PASData dataToBeRemoved = null;
+            while (pasDataIt.hasNext() && dataToBeRemoved == null) {
+               PASData next = pasDataIt.next();
+               if (next.particleDataTrack() ==  track) {
+                  dataToBeRemoved = next;
+               }
+            }
+            if (dataToBeRemoved != null) {
+               pasData.remove(dataToBeRemoved);
+            }
+         }
+         
+         if (tracks.isEmpty()) {
+            psd_.setStatus("No bleached particles found");
+            psd_.setProgress(1.0);
+            return;
          }
 
+         // index tracks by frame:
+         Map<Integer, List<ParticleData>> tracksIndexedByFrame = new TreeMap<>();
+         tracks.forEach((track) -> {
+            track.entrySet().forEach((entry) -> {
+               List<ParticleData> particlesInFrame = tracksIndexedByFrame.get(entry.getKey());
+               if (particlesInFrame == null) {
+                  particlesInFrame = new ArrayList<>();
+               }
+               particlesInFrame.add(entry.getValue());
+               tracksIndexedByFrame.put(entry.getKey(), particlesInFrame);
+            });
+         });
+
+         // Find "control particle", i.e. particles that were not bleached
+         // and that serve as intensity controls
+         psd_.setStatus("Looking for control particles...");
+         psd_.setProgress(0.0);
+         List<Map<Integer, ParticleData>> controlTracks = new ArrayList<>();
+         try {
+            cb = dataProvider.getAnyImage().getCoords().copyBuilder();
+            Coords ct0 = cb.t(0).build();
+            GrayU16 img0 = (GrayU16) BoofCVImageConverter.mmToBoofCV(
+                    dataProvider.getImage(ct0), false);
+            //GrayU16 img0Gauss = new GrayU16(img0.getWidth(), img0.getHeight());
+            //BlurImageOps.gaussian(img0, img0Gauss, 3, -1, null);
+            
+            //int otsuThreshold = (int) GThresholdImageOps.computeOtsu(
+            //        img0, 0, img0.getDataType().getMaxValue());
+            int entropyThreshold =  BoofCVUtils.compressedMaxEntropyThreshold(img0, 256);
+            GrayU8 mask = new GrayU8(img0.getWidth(), img0.getHeight());
+      
+            GThresholdImageOps.threshold(img0, mask, entropyThreshold, false);
+            // Remove small particles
+            mask = BinaryImageOps.erode4(mask, 1, null);
+            mask = BinaryImageOps.dilate4(mask, 1, null);
+            GrayS32 contourImg = new GrayS32(img0.getWidth(), img0.getHeight());
+            List<Contour> contours = 
+                    BinaryImageOps.contour(mask, ConnectRule.FOUR, contourImg);
+            List<List<Point2D_I32>> clusters = 
+                    BinaryImageOps.labelToClusters(contourImg, contours.size(), null);
+            // Remove particles that were bleached
+            List<List<Point2D_I32>> controlClusters = new ArrayList<>();
+            for (List<Point2D_I32> particle : clusters) {
+               Point2D_I32 centroid = ContourStats.centroid(particle);
+               boolean isBleachedParticle = false;
+               for (Map<Integer, ParticleData> track : tracks) {
+                  if (track.get(0) != null) {
+                     if (centroid.distance(track.get(0).getCentroid()) < DIST_UNCERTAINTY) {
+                        isBleachedParticle = true;
+                     }
+                  }
+               }
+               if (!isBleachedParticle) {
+                  controlClusters.add(particle);
+               }
+            }
+            
+            // only analyze the n largest clusters
+            // TODO: make n an input variable
+            final int nrLargestClusters = 15;
+            count = 0;
+            controlClusters = ListUtils.getNLargestLists(controlClusters, nrLargestClusters);
+            for (List<Point2D_I32> particle : controlClusters) {
+               Point2D_I32 centroid = ContourStats.centroid(particle);
+               Map<Integer, ParticleData> track = new TreeMap<>();
+               Point2D_I32 currentPoint = centroid;
+               int missing = 0;
+               boolean bail = false;
+               for (int frame = 0; frame < dataProvider.getAxisLength(Coords.T) && !bail; frame++) {
+                  ParticleData nextParticle = ParticleData.centralParticle(dataProvider,
+                          cb, frame, currentPoint, halfROISize_);
+                  if (nextParticle != null && (currentPoint.distance(nextParticle.getCentroid()) < maxDistance)) {
+                     currentPoint = nextParticle.getCentroid();
+                     track.put(frame, nextParticle);
+                     missing = 0;
+                     // TODO: Check whether it is now the same as one of the bleached particles
+                     // and bail if so...
+                     for (ParticleData p : tracksIndexedByFrame.get(frame)) {
+                        if (p != null && p.getCentroid() != null && 
+                                p.getCentroid().distance(currentPoint) < maxDistance) {
+                           bail = true;
+                        }
+                     }
+                  } else {
+                     // increase counter, give up when too high
+                     missing++;
+                     if (missing > 10) {
+                        bail = true;
+                     }
+                  }
+               }
+               if (!bail) {
+                  controlTracks.add(track);
+               }
+               psd_.setProgress( (double) ++count / (double) nrLargestClusters);
+            }
+
+         } catch (IOException ioe) {
+         }
+         
+         
+         if (controlTracks.size() > 0) {
+            // get average intensity of control particles, indexed by frame 
+            Map<Integer, Double> controlAvgIntensity = new HashMap<>();
+            for (int frame = 0; frame < dataProvider.getAxisLength(Coords.T); frame++) {
+               double sum = 0.0;
+               int n = 0;
+               for (Map<Integer, ParticleData> track : controlTracks) {
+                  // TODO: normalize by size??
+                  if (track.get(frame) != null && track.get(frame).getMaskAvg() != null) {
+                     sum += track.get(frame).getMaskAvg();
+                     n += 1;
+                  }
+               } 
+               controlAvgIntensity.put(frame, (sum / n) - cameraOffset ); 
+            }
+                        
+            // Remove PASData that have no particleDataTrack 
+            List<PASData> cleanedPASData = new ArrayList<>();
+            for (PASData d : pasData) {
+               if (d.particleDataTrack() != null) {
+                  cleanedPASData.add(d);
+               }
+            }
+            
+            // normalize the bleach spot intensities and store with the PASData->ParticleData
+            for (PASData d : cleanedPASData) {
+               d.normalizeBleachSpotIntensities(findMinFramesBefore, 
+                       cameraOffset, controlAvgIntensity);
+               d.normalizeParticleIncludingBleachIntensities(findMinFramesBefore, 
+                       cameraOffset, controlAvgIntensity);
+            }
+            
+            cleanedPASData = removeEmptryParticleTracks(cleanedPASData);
+            
+                        
+            if (cleanedPASData.isEmpty()) {
+               // TODO: UI feedback
+               psd_.setStatus("No bleaching events found");
+               psd_.setProgress(0.0);
+               return;
+            }
+                          
+            // get intensities of bleach Spots and total particles
+            // out of the data structures, and plot them
+            List<XYSeries> bleachPlotData = plottableNormalizedBleachSpotIntensities(
+                    cleanedPASData, frameTimeStamps) ;
+            XYSeries[] plots = bleachPlotData.toArray(new XYSeries[bleachPlotData.size()]);
+            PlotUtils pu = new PlotUtils(studio_.profile().getSettings(this.getClass()));
+            DataExporter bleachExporter = new DataExporter(studio_, cleanedPASData, 
+                    frameTimeStamps, DataExporter.Type.BLEACH);
+            pu.plotData("Bleach Intensity Profile", plots, "Time (ms)",
+                    "Normalized Intensity", "", 1.3, WidgetSettings.COLORS, bleachExporter);
+      
+            List<XYSeries> particlePlotData = plottableNormalizedParticleIntensities(
+                  cleanedPASData, frameTimeStamps);
+            XYSeries[] particlePlots = particlePlotData.toArray(new XYSeries[particlePlotData.size()]);            
+            PlotUtils pu2 = new PlotUtils(studio_.profile().getSettings(this.getClass()));
+            DataExporter particleABExporter = new DataExporter(studio_, cleanedPASData, 
+                    frameTimeStamps, DataExporter.Type.PARTICLE_AND_BLEACH);
+            pu2.plotData("Particle Intensity Profile", particlePlots, "Time (ms)",
+                    "Normalized Intensity", "", 1.3, WidgetSettings.COLORS, particleABExporter);
+
+            plotControlParticleIntensities(controlAvgIntensity, frameTimeStamps);
+            
+         } else {
+            psd_.setStatus("No usable control particles found");
+            psd_.setProgress(0.0);
+         }
+         
+         
          if (activeDataViewer instanceof DisplayWindow) {
             DisplayWindow dw = (DisplayWindow) activeDataViewer;
-            dw.addOverlay(new Overlay(tracks));
+            dw.addOverlay(new Overlay(tracksIndexedByFrame, controlTracks));
          }
+         
+         psd_.setStatus("Inactive...");
+         psd_.setProgress(0.0);
 
       } catch (IOException ioe) {
          studio_.logs().showError("Error while reading image data");
@@ -401,11 +611,11 @@ public class PointAndShootAnalyzer implements Runnable {
     * @return Instant representing the provided timeStamp in the current
     * timezone
     */
-   public static Instant dateStringToInstant(String timeStampString) {
+   public static Instant dateStringToInstant(final String timeStampString) {
       String subSeconds = timeStampString.substring(timeStampString.lastIndexOf(".") + 1);
-      timeStampString = timeStampString.substring(0, timeStampString.lastIndexOf("."));
-      timeStampString = timeStampString.replace(" ", "T");
-      LocalDateTime ldt = LocalDateTime.parse(timeStampString);
+      String tmpTimeStampString = timeStampString.substring(0, timeStampString.lastIndexOf("."));
+      tmpTimeStampString = tmpTimeStampString.replace(" ", "T");
+      LocalDateTime ldt = LocalDateTime.parse(tmpTimeStampString);
       ZonedDateTime zdt = ldt.atZone(ZoneId.systemDefault());
       Instant instant = zdt.toInstant();
       if (subSeconds.length() == 3) {
@@ -419,9 +629,10 @@ public class PointAndShootAnalyzer implements Runnable {
    /**
     * Convenience method to find the minimum pixel value in the given Processor
     *
+    * @param img
     * @param ip
     * @return
-    */
+    *
    public static Point findMinPixel(ImageProcessor ip) {
       Point p = new Point(0, 0);
       Float val = ip.getPixelValue(0, 0);
@@ -436,64 +647,33 @@ public class PointAndShootAnalyzer implements Runnable {
       }
       return p;
    }
-
-   private Point ccParticle(DataProvider dp, Coords.Builder cb,
-           int frame1, int frame2, Point p) throws IOException {
-      Coords coord = cb.t(frame1).build();
-      Image img = dp.getImage(coord);
-      ImageProcessor iProc = studio_.data().getImageJConverter().createProcessor(img);
-      iProc.setRoi((int) p.getX() - halfFFTSize_, (int) p.getY() - halfFFTSize_, fftSize_, fftSize_);
-      iProc = iProc.crop();
-      // check ROI out of bounds!
-      if (iProc.getWidth() != fftSize_ || iProc.getHeight() != fftSize_) {
-         return p;  // TODO: log/show this problem?
-      }
-      Coords coord2 = cb.t(frame2).build();
-      Image img2 = dp.getImage(coord2);
-      ImageProcessor iProc2 = studio_.data().getImageJConverter().createProcessor(img2);
-      iProc2.setRoi((int) p.getX() - halfFFTSize_, (int) p.getY() - halfFFTSize_, fftSize_, fftSize_);
-      iProc2 = iProc2.crop();
-      // check ROI out of bounds
-      if (iProc2.getWidth() != fftSize_ || iProc2.getHeight() != fftSize_) {
-         return p;  // TODO: log/show this problem?
-      }
-      MovementByCrossCorrelation mbdd = new MovementByCrossCorrelation(iProc);
-      Point2D.Double p2 = new Point2D.Double();
-      mbdd.getJitter(iProc2, p2);
-      return new Point(p.x + (int) p2.x - halfFFTSize_, p.y + (int) p2.y - halfFFTSize_);
-      /*
-     NormalizedCrossCorrelation ncc = new NormalizedCrossCorrelation( 
-             (ShortProcessor)  iProc);
-     return ncc.correlate((ShortProcessor) iProc2, p, new Point(2,2));
-*/
+   */
    
-   }
-   
-    private Point centerOfCentralParticle(DataProvider dp, Coords.Builder cb,
-           int frame, Point p) throws IOException {
-      Coords coord = cb.t(frame).build();
-      Image img = dp.getImage(coord);
-      ImageProcessor iProc = studio_.data().getImageJConverter().createProcessor(img);
-      iProc.setRoi((int) p.getX() - halfFFTSize_, (int) p.getY() - halfFFTSize_, fftSize_, fftSize_);
-      iProc = iProc.crop();
-      // check ROI out of bounds!
-      if (iProc.getWidth() != fftSize_ || iProc.getHeight() != fftSize_) {
-         return p;  // TODO: log/show this problem?
+   /**
+    * 
+    * @param img image in which to look for minimum pixel
+    * @return 
+    */
+   public static Point2D_I32 findMinPixel(GrayF32 img) {
+      Point2D_I32 p = new Point2D_I32(0, 0);
+      Float val = img.unsafe_get(0, 0);
+      for (int x = 0; x < img.getWidth(); x++) {
+         for (int y = 0; y < img.getHeight(); y++) {
+            if (img.unsafe_get(x, y) < val) {
+               p.x = x;
+               p.y = y;
+               val = img.unsafe_get(x, y);
+            }
+         }
       }
-      ImagePlus test = new ImagePlus("tmp", iProc);
-      // test.show();
-      IJ.run(test, "Convert to Mask", "method=Huang background=Dark");
-      IJ.run(test, "Set Measurements...", "area centroid center redirect=None decimal=4");
-      IJ.run(test, "Analyze Particles...", "size=0-10000 pixel show=Nothing add slice"); 
-      IJ.run(test, "Measure", "");
-   
       return p;
-     
- 
    }
+
+ 
+
+
 
    private class pointAndShootParser implements Consumer<String> {
-
       @Override
       public void accept(String t) {
          String[] parts = t.split("\t");
@@ -505,6 +685,190 @@ public class PointAndShootAnalyzer implements Runnable {
                             Integer.parseInt(parts[2])));
          }
       }
+   }
+   
+   private void plotControlParticleIntensities(final Map<Integer, Double> controlAvgIntensity,
+           final Map<Integer, Instant> frameTimeStamps) {
+      List<XYSeries> plotData = new ArrayList<>();
+      XYSeries data = new XYSeries("Control Particles", false, false);
+      
+      for (Map.Entry<Integer, Double> frameControlData : controlAvgIntensity.entrySet()) {
+         data.add((frameTimeStamps.get(frameControlData.getKey()).toEpochMilli() - 
+                     frameTimeStamps.get(0).toEpochMilli()) / 1000.0,
+                 frameControlData.getValue());
+      }
+
+      plotData.add(data);
+      XYSeries[] plots = plotData.toArray(new XYSeries[plotData.size()]);
+      PlotUtils pu = new PlotUtils(studio_.profile().getSettings(this.getClass()));
+      pu.plotData("Control Intensity Profile", plots, "Time (s)",
+              "Avg. Intensity", "", null, WidgetSettings.COLORS, null);
+   }
+   
+   private List<PASData> removeEmptryParticleTracks(final List<PASData> input) {
+      final List<PASData> output = new ArrayList<>();
+      for (PASData d : input) {
+         if (d.particleDataTrack() != null && d.id() != null) {
+            boolean add = false;
+            int bleachCounter = 0;
+            int particleCounter = 0;
+            for (int frame = 0; frame < d.particleDataTrack().size(); frame++) {
+               if (d.particleDataTrack().get(frame) != null) {
+                  Double normalizedBleachMaskAvg = d.particleDataTrack().get(frame).getNormalizedBleachMaskAvg();
+                  if (normalizedBleachMaskAvg != null && normalizedBleachMaskAvg != Double.NaN) {
+                     bleachCounter++;
+                  }
+                  Double normalizedMaskIncludingBleachAvg
+                          = d.particleDataTrack().get(frame).getNormalizedMaskIncludingBleachAvg();
+                  if (normalizedMaskIncludingBleachAvg != null && normalizedMaskIncludingBleachAvg != Double.NaN) {
+                     particleCounter++;
+                  }
+               }
+               if (bleachCounter > 10 && particleCounter > 10) {
+                  add = true;
+               }
+            }
+            if (add) {
+               output.add(d);
+            }
+         }
+      }
+      return output;
+   }
+   
+   /**
+    * Should only be called after normalized Bleach Values have been calculated
+    * @param pasData
+    * @param cameraOffset
+    * @param controlAvgIntensity
+    * @param frameTimeStamps
+    * @return 
+    */
+   private List<XYSeries> plottableNormalizedBleachSpotIntensities(
+           final List<PASData> pasData,
+           final Map<Integer, Instant> frameTimeStamps) {
+      List<XYSeries> plotData = new ArrayList<>();
+      for (PASData d : pasData) {
+         if (d.particleDataTrack() != null && d.id() != null) {
+            XYSeries data = new XYSeries(d.id(), false, false);
+            for (int frame = 0; frame < d.particleDataTrack().size(); frame++) {
+               if (d.particleDataTrack().get(frame) != null) {
+                  Double normalizedBleachMaskAvg = d.particleDataTrack().get(frame).getNormalizedBleachMaskAvg();
+                  if (normalizedBleachMaskAvg != null && normalizedBleachMaskAvg != Double.NaN) {
+                     data.add(frameTimeStamps.get(frame).toEpochMilli()
+                             - frameTimeStamps.get(d.framePasClicked()).toEpochMilli(),
+                             normalizedBleachMaskAvg);
+                  }
+               }
+            }
+            if (data.getItemCount() > 10) {
+               plotData.add(data);
+            }
+         }
+      }
+      return plotData;
+   }
+     
+   
+   private List<XYSeries> plottableNormalizedParticleIntensities(final List<PASData> pasData,
+           final Map<Integer, Instant> frameTimeStamps) {
+      List<XYSeries> plotData = new ArrayList<>();
+      for (PASData d : pasData) {
+         if (d.particleDataTrack() != null) {
+            XYSeries data = new XYSeries("" + d.framePasClicked() + ": "
+                    + d.pasActual().x + ", " + d.pasActual().y,
+                    false, false);
+            for (int frame = 0; frame < d.particleDataTrack().size(); frame++) {
+               if (d.particleDataTrack().get(frame) != null) {
+                  Double normalizedMaskIncludingBleachAvg
+                          = d.particleDataTrack().get(frame).getNormalizedMaskIncludingBleachAvg();
+                  if (normalizedMaskIncludingBleachAvg != null && normalizedMaskIncludingBleachAvg != Double.NaN) {
+                     data.add(frameTimeStamps.get(frame).toEpochMilli()
+                             - frameTimeStamps.get(d.framePasClicked()).toEpochMilli(),
+                             normalizedMaskIncludingBleachAvg);
+                  }
+               }
+            }
+            if (data.getItemCount() > 10) {
+               plotData.add(data);
+            }
+         }
+      }
+      return plotData;
+   }
+ 
+   
+   /*
+   private Point ccParticle(DataProvider dp, Coords.Builder cb,
+           int frame1, int frame2, Point p) throws IOException {
+      Coords coord = cb.t(frame1).build();
+      Image img = dp.getImage(coord);
+      ImageProcessor iProc = studio_.data().getImageJConverter().createProcessor(img);
+      iProc.setRoi((int) p.getX() - halfROISize_, (int) p.getY() - halfROISize_, roiSize_, roiSize_);
+      iProc = iProc.crop();
+      // check ROI out of bounds!
+      if (iProc.getWidth() != roiSize_ || iProc.getHeight() != roiSize_) {
+         return p;  // TODO: log/show this problem?
+      }
+      Coords coord2 = cb.t(frame2).build();
+      Image img2 = dp.getImage(coord2);
+      ImageProcessor iProc2 = studio_.data().getImageJConverter().createProcessor(img2);
+      iProc2.setRoi((int) p.getX() - halfROISize_, (int) p.getY() - halfROISize_, roiSize_, roiSize_);
+      iProc2 = iProc2.crop();
+      // check ROI out of bounds
+      if (iProc2.getWidth() != roiSize_ || iProc2.getHeight() != roiSize_) {
+         return p;  // TODO: log/show this problem?
+      }
+      MovementByCrossCorrelation mbdd = new MovementByCrossCorrelation(iProc);
+      Point2D.Double p2 = new Point2D.Double();
+      mbdd.getJitter(iProc2, p2);
+      return new Point(p.x + (int) p2.x - halfROISize_, p.y + (int) p2.y - halfROISize_);
+      /
+     NormalizedCrossCorrelation ncc = new NormalizedCrossCorrelation( 
+             (ShortProcessor)  iProc);
+     return ncc.correlate((ShortProcessor) iProc2, p, new Point(2,2));
+/
+   
+   }
+*/
+   
+   private Rectangle2D_I32 boundingBoxSize(DataProvider dp, Coords.Builder cb,
+           int frame, Point2D_I32 p) throws IOException
+   {
+      Coords coord = cb.t(frame).build();
+      Image img = dp.getImage(coord);
+      
+      ImageGray ig = BoofCVImageConverter.mmToBoofCV(img, false);
+      if (p.getX() - halfROISize_ < 0 ||
+              p.getY() - halfROISize_ < 0 ||
+              p.getX() + halfROISize_ >= ig.getWidth() ||
+              p.getY() + halfROISize_ >= ig.getHeight()) {
+         return null; // TODO: we'll get stuck at the edge
+      }
+      ImageGray sub = (ImageGray) ig.subimage((int) p.getX() - halfROISize_, 
+              (int) p.getY() - halfROISize_, (int) p.getX() + halfROISize_, 
+              (int) p.getY() + halfROISize_);
+      int threshold =  GThresholdImageOps.computeOtsu2(sub, 
+              0, (int)sub.getImageType().getDataType().getMaxValue());
+      GrayU8 mask = new GrayU8(sub.width, sub.height);
+      GThresholdImageOps.threshold(sub, mask, threshold, false);
+      GrayS32 contourImg = new GrayS32(sub.width, sub.height);
+      List<Contour> contours = BinaryImageOps.contour(mask, ConnectRule.FOUR, contourImg);
+      
+      List<List<Point2D_I32>> clusters = BinaryImageOps.labelToClusters(contourImg, contours.size(), null);
+
+      Map<Point2D_I32, List<Point2D_I32>> centroidedClusters = 
+              new HashMap<>();
+      clusters.forEach((cluster) -> {
+         centroidedClusters.put(ContourStats.centroid(cluster), cluster);
+      });
+      Point2D_I32 nearestPoint = ContourStats.nearestPoint(p, centroidedClusters.keySet());
+      Rectangle2D_I32 boundingBox = null;
+      if (nearestPoint != null) {
+         boundingBox = ContourStats.boundingBox(centroidedClusters.get(nearestPoint));
+      }
+      return boundingBox;      
+      
    }
 
 }

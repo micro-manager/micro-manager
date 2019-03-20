@@ -33,8 +33,8 @@ public class PASFrameSet {
            final int endFrame, final int nrFrames) {
       startFrame_ = startFrame < 0 ? 0 : startFrame;
       centralFrame_ = centralFrame;
-      endFrame_ = endFrame > nrFrames
-                    ? nrFrames : endFrame;
+      endFrame_ = endFrame >= nrFrames
+                    ? nrFrames - 1 : endFrame;
    }
    
    public int getStartFrame() { return startFrame_; }

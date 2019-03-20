@@ -21,26 +21,37 @@
 package org.micromanager.pointandshootanalysis.plot;
 
 
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Point;
-import java.awt.Shape;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Rectangle2D;
-
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import net.miginfocom.swing.MigLayout;
 import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartFrame;
+import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.annotations.XYAnnotation;
 import org.jfree.chart.annotations.XYTextAnnotation;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+import org.micromanager.pointandshootanalysis.DataExporter;
+import org.micromanager.pointandshootanalysis.display.WidgetSettings;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
@@ -53,10 +64,7 @@ import org.micromanager.propertymap.MutablePropertyMapView;
  * @author nico
  */
 public class PlotUtils {
-   public final String WINDOWPOSX = "PlotWindowPosX";
-   public final String WINDOWPOSY = "PlotWindowPosY";
-   public final String WINDOWWIDTH = "PlotWindowWidth";
-   public final String WINDOWHEIGHT = "PlotWindowHeight";
+   private static int windowOffset_ = 100;
    MyChartFrame graphFrame_;
    
    private final MutablePropertyMapView prefs_;
@@ -70,21 +78,25 @@ public class PlotUtils {
     * use it to store window position and size
     */
    @SuppressWarnings("serial")
-   class MyChartFrame extends ChartFrame {
+   private class MyChartFrame extends Frame {
+      private final static String WINDOWPOSX = "PlotWindowPosX";
+      private final static String WINDOWPOSY = "PlotWindowPosY";
+      private final static String WINDOWWIDTH = "PlotWindowWidth";
+      private final static String WINDOWHEIGHT = "PlotWindowHeight";
+      private final String s_;
 
-      MyChartFrame(String s, JFreeChart jc) {
-         this(s, jc, false);
-      }
-
-      MyChartFrame(String s, JFreeChart jc, Boolean b) {
-         super(s, jc, b);
-
+      
+      MyChartFrame(String s) {
+         super(s);
+         s_ = s;
+         
          Point screenLoc = new Point();
-         screenLoc.x = prefs_.getInteger(WINDOWPOSX, 100);
-         screenLoc.y = prefs_.getInteger(WINDOWPOSY, 100);
+         screenLoc.x = prefs_.getInteger(WINDOWPOSX + s_, windowOffset_);
+         screenLoc.y = prefs_.getInteger(WINDOWPOSY + s_, windowOffset_);
+         windowOffset_ += 10;
          Dimension windowSize = new Dimension();
-         windowSize.width = prefs_.getInteger(WINDOWWIDTH, 300);
-         windowSize.height = prefs_.getInteger(WINDOWHEIGHT, 400);
+         windowSize.width = prefs_.getInteger(WINDOWWIDTH + s_, 300);
+         windowSize.height = prefs_.getInteger(WINDOWHEIGHT + s_, 400);
          super.setLocation(screenLoc.x, screenLoc.y);
          super.setSize(windowSize);
       }
@@ -92,10 +104,10 @@ public class PlotUtils {
       @Override
       public void dispose() {
          // store window position and size to prefs
-         prefs_.putInteger(WINDOWPOSX, getX());
-         prefs_.putInteger(WINDOWPOSY, getY());
-         prefs_.putInteger(WINDOWWIDTH,getWidth());
-         prefs_.putInteger(WINDOWHEIGHT, getHeight());
+         prefs_.putInteger(WINDOWPOSX + s_, getX());
+         prefs_.putInteger(WINDOWPOSY + s_, getY());
+         prefs_.putInteger(WINDOWWIDTH + s_,getWidth());
+         prefs_.putInteger(WINDOWHEIGHT + s_, getHeight());
          super.dispose();
       }
    }
@@ -109,14 +121,16 @@ public class PlotUtils {
     * @param data array with data series to be plotted
     * @param xTitle Title of the X axis
     * @param yTitle Title of the Y axis
-    * @param showShapes whether or not to draw shapes at the data points
     * @param annotation to be shown in plot
     * @param yLimit - make sure the Y axis does not ho higher than this
     *                - ignored when null
+    * @param colors
+    * @param dataExporter - 
     * @return Frame that displays the data
     */
-   public Frame plotDataN(String title, XYSeries[] data, String xTitle,
-           String yTitle, boolean[] showShapes, String annotation, Double yLimit) {
+   public Frame plotData(String title, XYSeries[] data, String xTitle,
+           String yTitle, String annotation, Double yLimit, Color[] colors, 
+           DataExporter dataExporter) {
 
       // JFreeChart code
       XYSeriesCollection dataset = new XYSeriesCollection();
@@ -160,6 +174,11 @@ public class PlotUtils {
       plot.setBackgroundPaint(Color.white);
       plot.setRangeGridlinePaint(Color.lightGray);
 
+      boolean[] showShapes = new boolean[data.length];
+      for (int i = 0; i < showShapes.length; i++) {
+         showShapes[i] = true;
+      }
+
       XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
       renderer.setBaseShapesVisible(true);
 
@@ -168,26 +187,10 @@ public class PlotUtils {
          renderer.setSeriesLinesVisible(i, true);
       }
 
-      renderer.setSeriesPaint(0, Color.blue);
-      Shape circle = new Ellipse2D.Float(-2.0f, -2.0f, 4.0f, 4.0f);
-      renderer.setSeriesShape(0, circle, false);
-
-      if (data.length > 1) {
-         renderer.setSeriesPaint(1, Color.red);
-         Shape square = new Rectangle2D.Float(-2.0f, -2.0f, 4.0f, 4.0f);
-         renderer.setSeriesShape(1, square, false);
+      for (int i = 0; i < data.length; i++) {
+         int index = i % WidgetSettings.COLORS.length;
+         renderer.setSeriesPaint(i, WidgetSettings.COLORS[index]);
       }
-      if (data.length > 2) {
-         renderer.setSeriesPaint(2, Color.darkGray);
-         Shape rect = new Rectangle2D.Float(-2.0f, -1.0f, 4.0f, 2.0f);
-         renderer.setSeriesShape(2, rect, false);
-      }
-      if (data.length > 3) {
-         renderer.setSeriesPaint(3, Color.magenta);
-         Shape rect = new Rectangle2D.Float(-1.0f, -2.0f, 2.0f, 4.0f);
-         renderer.setSeriesShape(3, rect, false);
-      }
-
       for (int i = 0; i < data.length; i++) {
          if (showShapes.length > i && !showShapes[i]) {
             renderer.setSeriesShapesVisible(i, false);
@@ -201,12 +204,98 @@ public class PlotUtils {
       plot.getRangeAxis().setRange(minY, maxY);
 
       renderer.setUseFillPaint(true);
+      
+      ChartPanel chartPanel = new ChartPanel(chart);      
+      chartPanel.setMouseWheelEnabled(true);
+      
 
-      if (graphFrame_ == null)
-         graphFrame_ = new MyChartFrame(title, chart);
-      else
-         graphFrame_.getChartPanel().setChart(chart);
-      graphFrame_.getChartPanel().setMouseWheelEnabled(true);
+      if (graphFrame_ == null) {
+         graphFrame_ = new MyChartFrame(title);
+      } else {
+         graphFrame_.removeAll();
+      }
+      
+      final JPanel controlPanel = new JPanel();
+      controlPanel.setLayout(new MigLayout());
+      JButton allButton = new JButton("All");
+      allButton.addActionListener((ActionEvent e) -> {
+         for (Component c : controlPanel.getComponents()) {
+            if (c instanceof JCheckBox) {
+               JCheckBox j = (JCheckBox) c;
+               j.setSelected(true);
+            }
+         }
+      });
+      JButton noneButton = new JButton("None");
+      noneButton.addActionListener((ActionEvent e) -> {
+         for (Component c : controlPanel.getComponents()) {
+            if (c instanceof JCheckBox) {
+               JCheckBox j = (JCheckBox) c;
+               j.setSelected(false);
+            }
+         }
+      });
+      if (data.length > 5) {
+         controlPanel.add(allButton);
+         controlPanel.add(noneButton, "wrap");
+      }
+      for (int i = 0; i < data.length; i++) {
+         JCheckBox jcb = new JCheckBox((String) data[i].getKey());
+         jcb.setSelected(true);
+         renderer.setSeriesVisible(i, true);
+         jcb.addItemListener(new VisibleAction(renderer, i));
+         int index = i % WidgetSettings.COLORS.length;
+         jcb.setForeground(WidgetSettings.COLORS[index]);
+         jcb.setBackground(Color.white);
+         String w =  (i + 1) % 5 == 0 ? "wrap" : "";
+         controlPanel.add(jcb, w);
+      }
+      JMenuItem fitMenuItem = new JMenuItem("Show fit");
+      fitMenuItem.addActionListener((ActionEvent e) -> {
+         List<Integer> indices = new ArrayList<>();
+         for (int i = 0; i < data.length; i++) {
+            if (renderer.getSeriesVisible(i)) {
+               indices.add(i);
+            }
+         }
+            if (dataExporter != null) {
+               dataExporter.plotFits(indices);
+         }
+      });
+      JMenuItem exportMenuItem = new JMenuItem("Export Normalized");
+      exportMenuItem.addActionListener((ActionEvent e) -> {
+         List<Integer> indices = new ArrayList<>();
+         for (int i = 0; i < data.length; i++) {
+            if (renderer.getSeriesVisible(i)) {
+               indices.add(i);
+            }
+         }
+            if (dataExporter != null) {
+               dataExporter.exportRaw(indices);
+         }
+      });
+      JMenuItem exportSummaryMenuItem = new JMenuItem("Export Summary");
+      exportSummaryMenuItem.addActionListener((ActionEvent e) -> {
+         List<Integer> indices = new ArrayList<>();
+         for (int i = 0; i < data.length; i++) {
+            if (renderer.getSeriesVisible(i)) {
+               indices.add(i);
+            }
+         }
+            if (dataExporter != null) {
+               dataExporter.exportSummary(indices);
+         }
+      });
+      if (dataExporter != null) {
+         chartPanel.getPopupMenu().addSeparator();
+         chartPanel.getPopupMenu().add(fitMenuItem);
+         chartPanel.getPopupMenu().add(exportMenuItem);
+         chartPanel.getPopupMenu().add(exportSummaryMenuItem);
+      }
+      controlPanel.setBackground(chartPanel.getBackground());
+      graphFrame_.add(chartPanel, BorderLayout.CENTER);
+      graphFrame_.add(controlPanel, BorderLayout.SOUTH);
+
       graphFrame_.pack();
       final MyChartFrame privateFrame = graphFrame_;
       graphFrame_.addWindowListener(new WindowAdapter() {
@@ -233,4 +322,20 @@ public class PlotUtils {
       }
       return output;
    }
+   
+   private static class VisibleAction implements ItemListener {
+
+        private final XYItemRenderer renderer;
+        private final int index;
+
+        public VisibleAction(XYItemRenderer renderer, int i) {
+            this.renderer = renderer;
+            this.index = i;
+        }
+
+        @Override
+        public void itemStateChanged(ItemEvent e) {
+            renderer.setSeriesVisible(index, !renderer.getSeriesVisible(index));
+        }
+    }
 }

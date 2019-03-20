@@ -27,7 +27,6 @@ import java.awt.Font;
 import java.awt.Insets;
 import java.awt.dnd.DropTarget;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -36,9 +35,9 @@ import javax.swing.JLabel;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.display.DataViewer;
@@ -57,6 +56,9 @@ public class PointAndShootDialog extends MMDialog {
    private final Studio studio_;
    private final MutablePropertyMapView profileSettings_;
    private boolean wasDisposed_;
+   private final JLabel statusString_;
+   private final JLabel progressString_;
+   
    
    
    PointAndShootDialog(Studio studio) {
@@ -95,15 +97,12 @@ public class PointAndShootDialog extends MMDialog {
 
       final JButton locationsFieldButton =  mcsButton(smallButtonSize, arialSmallFont);
       locationsFieldButton.setText("...");
-      locationsFieldButton.addActionListener(new java.awt.event.ActionListener() {
-         @Override
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            File f = FileDialogs.openFile(ourDialog, "Locations File",
-                    new FileDialogs.FileType("MMProjector", "Locations File",
-                            locationsField.getText(), true, Terms.FILESUFFIXES));
-            if (f != null) {
-               locationsField.setText(f.getAbsolutePath());
-            }
+      locationsFieldButton.addActionListener((ActionEvent evt) -> {
+         File f = FileDialogs.openFile(ourDialog, "Locations File",
+                 new FileDialogs.FileType("MMProjector", "Locations File",
+                         locationsField.getText(), true, Terms.FILESUFFIXES));
+         if (f != null) {
+            locationsField.setText(f.getAbsolutePath());
          }
       });
       super.add(locationsFieldButton, "wrap");
@@ -114,81 +113,89 @@ public class PointAndShootDialog extends MMDialog {
       int radius = profileSettings_.getInteger(Terms.RADIUS, 3);
       final SpinnerNumberModel sModel = new SpinnerNumberModel(radius, 1, 20, 1);
       final JSpinner radiusSpinner = new JSpinner (sModel);
-      radiusSpinner.addChangeListener(new ChangeListener(){
-         @Override
-         public void stateChanged(ChangeEvent e) {
-            profileSettings_.putInteger(Terms.RADIUS, (Integer) radiusSpinner.getValue());
-         }
+      radiusSpinner.addChangeListener((ChangeEvent e) -> {
+         profileSettings_.putInteger(Terms.RADIUS, (Integer) radiusSpinner.getValue());
       });
       super.add(radiusSpinner, "wrap");
       
-      JLabel nrFramesBeforeText = new JLabel("Nr. of Frames before");
+      JLabel nrFramesBeforeText = new JLabel("Frames before bleach (used to normalize)");
       super.add(nrFramesBeforeText);
-      
       int nrFramesBefore = profileSettings_.getInteger(Terms.NRFRAMESBEFORE, 4);
       final SpinnerNumberModel beforeModel = new SpinnerNumberModel(nrFramesBefore, 1, 1000, 1);
       final JSpinner beforeSpinner = new JSpinner (beforeModel);
-      beforeSpinner.addChangeListener(new ChangeListener(){
-         @Override
-         public void stateChanged(ChangeEvent e) {
-            profileSettings_.putInteger(Terms.NRFRAMESBEFORE, (Integer) beforeSpinner.getValue());
-         }
+      beforeSpinner.addChangeListener((ChangeEvent e) -> {
+         profileSettings_.putInteger(Terms.NRFRAMESBEFORE, (Integer) beforeSpinner.getValue());
       });
       super.add(beforeSpinner, "wrap");
-      
+      /*
       JLabel nrFramesAfterText = new JLabel("Nr. of Frames after");
       super.add(nrFramesAfterText);
-      
       int nrFramesAfter = profileSettings_.getInteger(Terms.NRFRAMESAFTER, 40);
       final SpinnerNumberModel afterModel = new SpinnerNumberModel(nrFramesAfter, 1, 1000, 1);
       final JSpinner afterSpinner = new JSpinner (afterModel);
-      afterSpinner.addChangeListener(new ChangeListener(){
-         @Override
-         public void stateChanged(ChangeEvent e) {
-            profileSettings_.putInteger(Terms.NRFRAMESAFTER, (Integer) afterSpinner.getValue());
-         }
+      afterSpinner.addChangeListener((ChangeEvent e) -> {
+         profileSettings_.putInteger(Terms.NRFRAMESAFTER, (Integer) afterSpinner.getValue());
       });
       super.add(afterSpinner, "wrap");
+      */
+      
+      super.add(new JLabel("Max distance (pixels)"));
+      int maxDistance = profileSettings_.getInteger(Terms.MAXDISTANCE, 3);
+      final SpinnerNumberModel maxDistanceModel = new SpinnerNumberModel(maxDistance, 1, 100, 1);
+      final JSpinner maxDistanceSpinner = new JSpinner (maxDistanceModel);
+      maxDistanceSpinner.addChangeListener((ChangeEvent e) -> {
+         profileSettings_.putInteger(Terms.MAXDISTANCE, (Integer) maxDistanceSpinner.getValue());
+      });
+      super.add(maxDistanceSpinner, "wrap");
+      
+      super.add(new JLabel("Camera Offset"));
+      int offset = profileSettings_.getInteger(Terms.CAMERAOFFSET, 100);
+      final SpinnerNumberModel offsetModel = new SpinnerNumberModel(offset, 1, 10000, 10);
+      final JSpinner offsetSpinner = new JSpinner (offsetModel);
+      offsetSpinner.addChangeListener((ChangeEvent e) -> {
+         profileSettings_.putInteger(Terms.CAMERAOFFSET, (Integer) offsetSpinner.getValue());
+      });
+      super.add(offsetSpinner, "wrap");
       
       JButton cancelButton = mcsButton(buttonSize, arialSmallFont);
       cancelButton.setText("Cancel");
-      cancelButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent evt) {
-            ourDialog.dispose();
-         }
+      cancelButton.addActionListener((ActionEvent evt) -> {
+         ourDialog.dispose();
       });
       super.add(cancelButton, "span 2, split 2, tag cancel");
       
       JButton okButton = mcsButton(buttonSize, arialSmallFont);
-      okButton.setText("OK");
-      okButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent evt) {
-            DataViewer activeDataViewer = studio_.displays().getActiveDataViewer();
-            if (activeDataViewer == null) {
-               studio_.logs().showError("Please open image data first");
-               return;
-            }
-            String fileName = locationsField.getText();
-            File f = new File(fileName);
-            if (!f.exists()) {
-               studio_.logs().showError("File " + f.getName() + " does not exist");
-               return;
-            }
-            if (!f.canRead()) {
-               studio_.logs().showError("File " + f.getName() + " is not readable");
-               return;
-            }
-            profileSettings_.putString(Terms.LOCATIONSFILENAME, fileName);
-            Thread analysisThread = new Thread(new PointAndShootAnalyzer(studio, 
-                    profileSettings_.toPropertyMap()));
-            analysisThread.start();
-            ourDialog.dispose();
+      okButton.setText("Execute");
+      okButton.addActionListener((ActionEvent evt) -> {
+         DataViewer activeDataViewer = studio_.displays().getActiveDataViewer();
+         if (activeDataViewer == null) {
+            studio_.logs().showError("Please open image data first");
+            return;
          }
+         String fileName = locationsField.getText();
+         File f = new File(fileName);
+         if (!f.exists()) {
+            studio_.logs().showError("File " + f.getName() + " does not exist");
+            return;
+         }
+         if (!f.canRead()) {
+            studio_.logs().showError("File " + f.getName() + " is not readable");
+            return;
+         }
+         profileSettings_.putString(Terms.LOCATIONSFILENAME, fileName);
+         Thread analysisThread = new Thread(new PointAndShootAnalyzer(studio,
+                 profileSettings_.toPropertyMap(), this));
+         analysisThread.start();
+         //ourDialog.dispose();
       });
       super.add(okButton, "tag ok, wrap");
       
+      statusString_ = new JLabel("Inactive...");
+      super.add(statusString_, "wrap");
+      
+      progressString_ = new JLabel(" 0%");
+      super.add(progressString_);   
+            
       DragDropListener dragDropListener = new DragDropListener(locationsField);
       new DropTarget(this, dragDropListener);
       new DropTarget(locationsField, dragDropListener);
@@ -206,8 +213,27 @@ public class PointAndShootDialog extends MMDialog {
       wasDisposed_ = true;
    }
    
+   public void setStatus(String status) {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(() -> {
+            setStatus(status);
+         });
+      }
+      statusString_.setText(status);
+   }
    
-   public final JButton mcsButton(Dimension buttonSize, Font font) {
+   public void setProgress(double progress) {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(() -> {
+            setProgress(progress);
+         });
+      }
+      int p = (int) (progress * 100.0);
+      progressString_.setText(" " + p + "%");
+   }
+   
+   
+   private JButton mcsButton(Dimension buttonSize, Font font) {
       JButton button = new JButton();
       button.setPreferredSize(buttonSize);
       button.setMinimumSize(buttonSize);
