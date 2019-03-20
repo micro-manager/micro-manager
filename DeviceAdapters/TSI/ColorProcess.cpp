@@ -118,6 +118,7 @@ int Tsi3Cam::ColorProcess16to32(unsigned short* monoBuf, unsigned char* colorBuf
 	
 	// configure sRGB output color space
 	float chromatic_adaptation_matrix[9] = { 1.0f, 0.0f, 0.0f, 0.0f, 1.37f, 0.0f, 0.0f, 0.0f, 2.79f };
+	tl_camera_get_default_white_balance_matrix(camHandle, chromatic_adaptation_matrix);
 	float merged_camera_correction_sRGB_matrix[9] = { 1.25477f, -0.15359f, -0.10118f, -0.07011f, 1.13723f, -0.06713f, 0.0f, -0.26641f, 1.26641f };
 	tl_camera_get_color_correction_matrix(camHandle, merged_camera_correction_sRGB_matrix);
 	tl_color_append_matrix (color_processor_inst, chromatic_adaptation_matrix);
