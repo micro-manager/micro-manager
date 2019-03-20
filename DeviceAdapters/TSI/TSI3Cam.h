@@ -144,6 +144,7 @@ private:
    static void frame_available_callback(void* sender, unsigned short* image_buffer, int frame_count, unsigned char* metadata, int metadata_size_in_bytes, void* context);
 
    ImgBuffer img;
+	std::vector<unsigned short> demosaicBuffer;
    bool initialized;
    bool stopOnOverflow;
    void* camHandle;
