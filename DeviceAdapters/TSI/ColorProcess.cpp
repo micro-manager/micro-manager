@@ -89,8 +89,8 @@ void sRGB_companding_LUT(int bit_depth, int* lut)
 int Tsi3Cam::ColorProcess16to32(unsigned short* monoBuf, unsigned char* colorBuf, int mono_image_width, int mono_image_height, int bitDepth)
 {
 	// process
-	// Allocate a temporary buffer (3x larger than the monochrome buffer) to hold the demosaic (only) data.
-	unsigned short* demosaic_color_buffer = new unsigned short[mono_image_width * mono_image_height * 3];
+	// resize temp buffer (3x larger than the monochrome buffer) to hold the demosaic (only) data.
+	demosaicBuffer.resize(mono_image_width * mono_image_height * 3);
 
 	// Demosaic the monochrome image data.
 	if (tl_demosaic_transform_16_to_48(mono_image_width
@@ -102,14 +102,9 @@ int Tsi3Cam::ColorProcess16to32(unsigned short* monoBuf, unsigned char* colorBuf
 												, TL_COLOR_FILTER_TYPE_BAYER
 												, bitDepth
 												, monoBuf
-												, demosaic_color_buffer) != TL_COLOR_NO_ERROR)
+												, &demosaicBuffer[0]) != TL_COLOR_NO_ERROR)
 	{
 		LogMessage("Failed to demosaic the monochrome image!"); 
-		delete[](demosaic_color_buffer);
-		tl_demosaic_module_terminate();
-		tl_color_processing_module_terminate();
-		::FreeLibrary(cc_module_handle);
-		::FreeLibrary(demosaic_module_handle);
 		return ERR_INTERNAL_ERROR;
 	}
 
@@ -117,17 +112,14 @@ int Tsi3Cam::ColorProcess16to32(unsigned short* monoBuf, unsigned char* colorBuf
 	void* color_processor_inst = tl_color_create_color_processor(bitDepth, bitDepth);
 	if (!color_processor_inst)
 	{
-		delete[](demosaic_color_buffer);
-		tl_demosaic_module_terminate();
-		tl_color_processing_module_terminate();
-		::FreeLibrary(cc_module_handle);
-		::FreeLibrary(demosaic_module_handle);
+		LogMessage("Failed to create color processor!"); 
 		return ERR_INTERNAL_ERROR;
 	}
 	
 	// configure sRGB output color space
 	float chromatic_adaptation_matrix[9] = { 1.0f, 0.0f, 0.0f, 0.0f, 1.37f, 0.0f, 0.0f, 0.0f, 2.79f };
 	float merged_camera_correction_sRGB_matrix[9] = { 1.25477f, -0.15359f, -0.10118f, -0.07011f, 1.13723f, -0.06713f, 0.0f, -0.26641f, 1.26641f };
+	tl_camera_get_color_correction_matrix(camHandle, merged_camera_correction_sRGB_matrix);
 	tl_color_append_matrix (color_processor_inst, chromatic_adaptation_matrix);
 	tl_color_append_matrix (color_processor_inst, merged_camera_correction_sRGB_matrix);
 
@@ -140,9 +132,8 @@ int Tsi3Cam::ColorProcess16to32(unsigned short* monoBuf, unsigned char* colorBuf
 	tl_color_enable_output_LUTs (color_processor_inst, 1, 1, 1);
 	
 	// Color process the demosaic color frame.
-
 	if (tl_color_transform_48_to_32(color_processor_inst
-											, demosaic_color_buffer // input buffer
+											, &demosaicBuffer[0] // input buffer
 											, TL_COLOR_FORMAT_BGR_PLANAR
 											, 0
 											, (1 << bitDepth) - 1
@@ -150,25 +141,18 @@ int Tsi3Cam::ColorProcess16to32(unsigned short* monoBuf, unsigned char* colorBuf
 											, (1 << bitDepth) - 1
 											, 0
 											, (1 << bitDepth) - 1
-											, 0
-											, 0
-											, 0
+											, 8 - bitDepth
+											, 8 - bitDepth
+											, 8 - bitDepth
 											, colorBuf
 											, TL_COLOR_FORMAT_BGR_PIXEL
 											, mono_image_width * mono_image_height) != TL_COLOR_NO_ERROR)
 	{
-		delete[](demosaic_color_buffer);
-		tl_demosaic_module_terminate();
-		tl_color_processing_module_terminate();
-		::FreeLibrary(cc_module_handle);
-		::FreeLibrary(demosaic_module_handle);
+		LogMessage("Color transform failed!"); 
 		return ERR_INTERNAL_ERROR;
 	}
 
 	tl_color_destroy_color_processor(color_processor_inst);
-
-	// Clean up.
-	delete[](demosaic_color_buffer);
 		
 	return DEVICE_OK;
 }
@@ -409,6 +393,7 @@ int Tsi3Cam::ShutdownColorProcessor()
 	tl_demosaic_module_terminate();
 
 	::FreeLibrary(cc_module_handle);
+	::FreeLibrary(demosaic_module_handle);
 	return DEVICE_OK;
 }
 
