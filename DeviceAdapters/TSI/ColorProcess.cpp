@@ -61,6 +61,8 @@ TL_COLOR_PROCESSING_MODULE_TERMINATE tl_color_processing_module_terminate(0);
 
 TL_COLOR_FILTER_ARRAY_PHASE g_cfaPhase(TL_COLOR_FILTER_ARRAY_PHASE_BAYER_BLUE);
 
+void* color_processor_inst(0);
+
 /////////////////////////////////////////////////////////////////////////////////////////
 // Local utility functions for color processing
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -86,7 +88,7 @@ void sRGB_companding_LUT(int bit_depth, int* lut)
  * @param bitDepth - bit depth of the input image, valid values 8-16
  * @return - error code
  */
-int Tsi3Cam::ColorProcess16to32(unsigned short* monoBuf, unsigned char* colorBuf, int mono_image_width, int mono_image_height, int bitDepth)
+int Tsi3Cam::ColorProcess16to32(unsigned short* monoBuf, unsigned char* colorBuf, int mono_image_width, int mono_image_height)
 {
 	// process
 	// resize temp buffer (3x larger than the monochrome buffer) to hold the demosaic (only) data.
@@ -100,51 +102,27 @@ int Tsi3Cam::ColorProcess16to32(unsigned short* monoBuf, unsigned char* colorBuf
 												, g_cfaPhase
 												, TL_COLOR_FORMAT_BGR_PLANAR
 												, TL_COLOR_FILTER_TYPE_BAYER
-												, bitDepth
+												, fullFrame.bitDepth
 												, monoBuf
 												, &demosaicBuffer[0]) != TL_COLOR_NO_ERROR)
 	{
 		LogMessage("Failed to demosaic the monochrome image!"); 
 		return ERR_INTERNAL_ERROR;
 	}
-
-	// Create a color processor instance.
-	void* color_processor_inst = tl_color_create_color_processor(bitDepth, bitDepth);
-	if (!color_processor_inst)
-	{
-		LogMessage("Failed to create color processor!"); 
-		return ERR_INTERNAL_ERROR;
-	}
-	
-	// configure sRGB output color space
-	float chromatic_adaptation_matrix[9] = { 1.0f, 0.0f, 0.0f, 0.0f, 1.37f, 0.0f, 0.0f, 0.0f, 2.79f };
-	tl_camera_get_default_white_balance_matrix(camHandle, chromatic_adaptation_matrix);
-	float merged_camera_correction_sRGB_matrix[9] = { 1.25477f, -0.15359f, -0.10118f, -0.07011f, 1.13723f, -0.06713f, 0.0f, -0.26641f, 1.26641f };
-	tl_camera_get_color_correction_matrix(camHandle, merged_camera_correction_sRGB_matrix);
-	tl_color_append_matrix (color_processor_inst, chromatic_adaptation_matrix);
-	tl_color_append_matrix (color_processor_inst, merged_camera_correction_sRGB_matrix);
-
-	// Use the output LUTs to configure the sRGB nonlinear (companding) function.
-	sRGB_companding_LUT(bitDepth, tl_color_get_blue_output_LUT(color_processor_inst));
-	sRGB_companding_LUT(bitDepth, tl_color_get_green_output_LUT(color_processor_inst));
-	sRGB_companding_LUT(bitDepth, tl_color_get_red_output_LUT(color_processor_inst));
-
-	// enable luts
-	tl_color_enable_output_LUTs (color_processor_inst, 1, 1, 1);
 	
 	// Color process the demosaic color frame.
 	if (tl_color_transform_48_to_32(color_processor_inst
 											, &demosaicBuffer[0] // input buffer
 											, TL_COLOR_FORMAT_BGR_PLANAR
 											, 0
-											, (1 << bitDepth) - 1
+											, (1 << fullFrame.bitDepth) - 1
 											, 0
-											, (1 << bitDepth) - 1
+											, (1 << fullFrame.bitDepth) - 1
 											, 0
-											, (1 << bitDepth) - 1
-											, 8 - bitDepth
-											, 8 - bitDepth
-											, 8 - bitDepth
+											, (1 << fullFrame.bitDepth) - 1
+											, 8 - fullFrame.bitDepth
+											, 8 - fullFrame.bitDepth
+											, 8 - fullFrame.bitDepth
 											, colorBuf
 											, TL_COLOR_FORMAT_BGR_PIXEL
 											, mono_image_width * mono_image_height) != TL_COLOR_NO_ERROR)
@@ -152,9 +130,7 @@ int Tsi3Cam::ColorProcess16to32(unsigned short* monoBuf, unsigned char* colorBuf
 		LogMessage("Color transform failed!"); 
 		return ERR_INTERNAL_ERROR;
 	}
-
-	tl_color_destroy_color_processor(color_processor_inst);
-		
+	
 	return DEVICE_OK;
 }
 
@@ -379,6 +355,29 @@ int Tsi3Cam::InitializeColorProcessor()
 		return ERR_INTERNAL_ERROR;
 	}
 
+	color_processor_inst = tl_color_create_color_processor(fullFrame.bitDepth, fullFrame.bitDepth);
+	if (!color_processor_inst)
+	{
+		LogMessage("Failed to create color processor!"); 
+		return ERR_INTERNAL_ERROR;
+	}
+	
+	// configure sRGB output color space
+	float chromatic_adaptation_matrix[9] = { 1.0f, 0.0f, 0.0f, 0.0f, 1.37f, 0.0f, 0.0f, 0.0f, 2.79f };
+	tl_camera_get_default_white_balance_matrix(camHandle, chromatic_adaptation_matrix);
+	float merged_camera_correction_sRGB_matrix[9] = { 1.25477f, -0.15359f, -0.10118f, -0.07011f, 1.13723f, -0.06713f, 0.0f, -0.26641f, 1.26641f };
+	tl_camera_get_color_correction_matrix(camHandle, merged_camera_correction_sRGB_matrix);
+	tl_color_append_matrix (color_processor_inst, chromatic_adaptation_matrix);
+	tl_color_append_matrix (color_processor_inst, merged_camera_correction_sRGB_matrix);
+
+	// Use the output LUTs to configure the sRGB nonlinear (companding) function.
+	sRGB_companding_LUT(fullFrame.bitDepth, tl_color_get_blue_output_LUT(color_processor_inst));
+	sRGB_companding_LUT(fullFrame.bitDepth, tl_color_get_green_output_LUT(color_processor_inst));
+	sRGB_companding_LUT(fullFrame.bitDepth, tl_color_get_red_output_LUT(color_processor_inst));
+
+	// enable luts
+	tl_color_enable_output_LUTs (color_processor_inst, 1, 1, 1);
+
 	return DEVICE_OK;
 }
 
@@ -387,6 +386,9 @@ int Tsi3Cam::InitializeColorProcessor()
  */
 int Tsi3Cam::ShutdownColorProcessor()
 {
+	// destroy color processor
+	tl_color_destroy_color_processor(color_processor_inst);
+
 	// Terminate the color processing module
 	tl_color_processing_module_terminate();
 

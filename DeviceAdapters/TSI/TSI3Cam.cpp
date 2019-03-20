@@ -656,7 +656,7 @@ void Tsi3Cam::frame_available_callback(void* /*sender*/, unsigned short* image_b
 	{
 		// COLOR
 		instance->img.Resize(img_width, img_height, 4);
-		instance->ColorProcess16to32(image_buffer, instance->img.GetPixelsRW(), img_width, img_height, instance->fullFrame.bitDepth);
+		instance->ColorProcess16to32(image_buffer, instance->img.GetPixelsRW(), img_width, img_height);
 	}
 	else
 	{
