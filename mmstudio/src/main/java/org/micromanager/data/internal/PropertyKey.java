@@ -802,7 +802,7 @@ public enum PropertyKey {
                      build());
             }
          }
-         dest.putPropertyMapList(key, devPositions);
+         dest.putPropertyMapList(MULTI_STAGE_POSITION__DEVICE_POSITIONS.key(), devPositions);
       }
    },
 
