@@ -228,10 +228,17 @@ public enum PropertyKey {
       public boolean extractFromGsonObject(JsonObject jo, PropertyMap.Builder dest) {
          // hack: we should be able to rely on the tag "Camera" in the json data
          // however, the acquisition engine regularly inserts an empty value
-         // causing use of an empty string.  The Core-Camera property is set
-         // correctly.  
+         // causing use of an empty string.  The Core-Camera property is sometimes
+         // set correctly (but not when collecting images from two cameras
+         // running sequences.
+         
          // TODO: investigate why the acquisition engine inserts an empty string 
-         // fix it, then revert the two ifs below
+         // fix it, then remove the second if below
+         
+         if (super.extractFromGsonObject(jo, dest) && 
+                 !dest.build().getString(key(), "").isEmpty()) {
+            return true;
+         }
          if (jo.has("Core-Camera")) {
             JsonElement je = jo.get("Core-Camera");
             try {
@@ -240,9 +247,6 @@ public enum PropertyKey {
             } catch (UnsupportedOperationException uoe) {
                 // we get this with data saved in 2.0-beta
             }
-         }
-         if (super.extractFromGsonObject(jo, dest)) {
-            return true;
          }
          return false;
       }      
