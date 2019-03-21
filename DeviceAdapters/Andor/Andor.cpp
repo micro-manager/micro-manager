@@ -3970,14 +3970,16 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
 
       do
       {
-        ret = WaitForAcquisitionTimeOut(2000);
+        Sleep(25);
+        ret = WaitForAcquisitionTimeOut(imageTimeOut_);
         if (ret == DRV_SUCCESS)
         {
+          DriverGuard dg(camera_);
           ret = GetNumberNewImages(&imageCountFirst, &imageCountLast);
           if (ret != DRV_SUCCESS)
           {
             os.str("");
-            os << "GetNumberNewImages PushImage error : " << ret << " first: " << imageCountFirst << " last: " << imageCountLast << endl;
+            os << "GetNumberNewImages error : " << ret << " first: " << imageCountFirst << " last: " << imageCountLast << endl;
             camera_->Log(os.str().c_str());
             return (int)ret;
           }
