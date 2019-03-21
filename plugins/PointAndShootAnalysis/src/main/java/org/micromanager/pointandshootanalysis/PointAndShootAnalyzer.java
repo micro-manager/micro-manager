@@ -344,15 +344,17 @@ public class PointAndShootAnalyzer implements Runnable {
                if (bleachSpotsMissed < 5) {
                   ImageGray current = BoofCVImageConverter.subImage(dataProvider,
                           cb, frame, currentPoint, halfROISize_);
-                  nextParticle = ParticleData.addBleachSpotToParticle(
-                          fPreBleach,
-                          (GrayU16) current,
-                          track,
-                          frame,
-                          nextParticle,
-                          new Point2D_I32(currentPoint.x - halfROISize_, currentPoint.y - halfROISize_),
-                          bleachSpotRadius,
-                          MAXDISTANCE);
+                  if (current != null) {
+                     nextParticle = ParticleData.addBleachSpotToParticle(
+                             fPreBleach,
+                             (GrayU16) current,
+                             track,
+                             frame,
+                             nextParticle,
+                             new Point2D_I32(currentPoint.x - halfROISize_, currentPoint.y - halfROISize_),
+                             bleachSpotRadius,
+                             MAXDISTANCE);
+                  }
                   if (nextParticle.getBleachSpot() == null) {
                      bleachSpotsMissed += 1;
                   } else {

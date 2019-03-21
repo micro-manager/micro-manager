@@ -179,6 +179,21 @@ public final class BoofCVImageConverter {
               p.getY() + halfBoxSize >= ig.getHeight()) {
          return null; // TODO: we'll get stuck at the edge
       }
+      /* this has very strange consequences...
+            if (p.getX() - halfBoxSize < 0) {
+         p.set(halfBoxSize, p.getY());
+      }
+      if (p.getY() - halfBoxSize < 0) {
+         p.set(p.getX(), halfBoxSize);
+      }
+      if (p.getX() + halfBoxSize >= ig.getWidth()) {
+         p.set(ig.getWidth() - halfBoxSize - 1, p.getY());
+      }
+      if (p.getY() + halfBoxSize >= ig.getHeight()) {
+         p.set(p.getX(), ig.getHeight() - halfBoxSize -1);
+         //return null; // TODO: we'll get stuck at the edge
+      }
+      */
       return (ImageGray) ig.subimage((int) p.getX() - halfBoxSize, 
               (int) p.getY() - halfBoxSize, (int) p.getX() + halfBoxSize, 
               (int) p.getY() + halfBoxSize);
