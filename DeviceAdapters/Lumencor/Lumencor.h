@@ -83,7 +83,7 @@ private:
 	std::vector<std::string> channels;
 	std::map<std::string, int> channelLookup;
 	bool shutterState;
-	std::vector<bool> channelStates;
+	std::vector<bool> channelStates; // cache for channel states
 
 	int RetrieveError(void* engine);
 	int ZeroAll();

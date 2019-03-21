@@ -99,10 +99,11 @@ LightEngine::LightEngine() :
 	models.push_back("SPECTRA7");
 	models.push_back("SPECTRAX");
 	models.push_back("LUMA");
+	model = models[0];
 
    pAct = new CPropertyAction(this, &LightEngine::OnModel);
-   CreateProperty(g_Prop_Model, models[0].c_str(), MM::String, false, pAct, true);
-	this->SetAllowedValues(g_Prop_Model, models);
+   CreateProperty(g_Prop_Model, model.c_str(), MM::String, false, pAct, true);
+	SetAllowedValues(g_Prop_Model, models);
 }                                                                            
                                                                              
 LightEngine::~LightEngine()                                                            
@@ -423,20 +424,19 @@ int LightEngine::OnChannelEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       long enable;
       pProp->Get(enable);
-		int ret = lum_setChannel(engine, channelIdx, enable == 0 ? false : true);
-      if (ret != LUM_OK)
-			return RetrieveError(engine);
+		if (shutterState)
+		{
+			// apply command to light engine if shutter is open
+			int ret = lum_setChannel(engine, channelIdx, enable == 0 ? false : true);
+			if (ret != LUM_OK)
+				return RetrieveError(engine);
+		}
 
 		channelStates[channelIdx] = enable == 0 ? false : true;
    }
    if (eAct == MM::BeforeGet)
    {
-      lum_bool enable;
-      int ret = lum_getChannel(engine, channelIdx, &enable);
-      if (ret != DEVICE_OK)
-         RetrieveError(engine);
-
-      pProp->Set(enable == lum_true ? 1L : 0L);
+      pProp->Set(channelStates[channelIdx] ? 1L : 0L);
    }
    return DEVICE_OK;
 }
