@@ -392,7 +392,9 @@
                     (MultiStagePosition.
                       (core getXYStageDevice) x y
                       (core getFocusDevice) z)
-                    (.setLabel label))))
+                      (.setDefaultXYStage (core getXYStageDevice))
+                      (.setDefaultZStage (core getFocusDevice))
+                      (.setLabel label))))
   ([label x y z]
     (add-msp (.getPositionList gui) label x y z)))
 
