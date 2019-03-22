@@ -10,6 +10,7 @@ import com.google.common.collect.Lists;
 import com.google.common.html.HtmlEscapers;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
@@ -412,6 +413,18 @@ public enum PropertyKey {
          return ja;
       }
    },
+   
+   DEVICE("Device", MultiStagePosition.class) {
+      @Override
+      protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
+         dest.putString(key(), je.getAsString());
+      }
+
+      @Override
+      protected JsonElement convertToGson(PropertyMap pmap) {
+         return new JsonPrimitive(pmap.getString(key(), null));
+      }
+   },
 
    DIRECTORY("Directory", SummaryMetadata.class) {
       @Override
@@ -677,7 +690,10 @@ public enum PropertyKey {
 
       @Override
       protected JsonElement convertToGson(PropertyMap pmap) {
-         return new JsonPrimitive(pmap.getString(key(), null));
+         if (pmap.containsKey(key())) {
+            return new JsonPrimitive(pmap.getString(key(), null));
+         }
+         return null;
       }
    },
 
@@ -698,6 +714,13 @@ public enum PropertyKey {
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putString(key(), je.getAsString());
       }
+      @Override
+      protected JsonElement convertToGson(PropertyMap pMap) {
+         if (pMap.containsKey(key())) {
+            return new JsonPrimitive(pMap.getString(key(), null));
+         }
+         return null;
+      }
    },
 
    MULTI_STAGE_POSITION__DEFAULT_XY_STAGE("DefaultXYStage", "DEFAULT_XY_STAGE", "defaultXYStage",
@@ -705,6 +728,13 @@ public enum PropertyKey {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putString(key(), je.getAsString());
+      }
+      @Override
+      protected JsonElement convertToGson(PropertyMap pMap) {
+         if (pMap.containsKey(key())) {
+            return new JsonPrimitive(pMap.getString(key(), null));
+         }
+         return null;
       }
    },
 
@@ -714,6 +744,13 @@ public enum PropertyKey {
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putString(key(), je.getAsString());
       }
+      @Override
+      protected JsonElement convertToGson(PropertyMap pMap) {
+         if (pMap.containsKey(key())) {
+            return new JsonPrimitive(pMap.getString(key(), null));
+         }
+         return null;
+      }
    },
 
    MULTI_STAGE_POSITION__GRID_ROW("GridRow", "GRID_ROW", "gridRow", "GridRowIndex",
@@ -722,6 +759,13 @@ public enum PropertyKey {
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putInteger(key(), je.getAsInt());
       }
+      @Override
+      protected JsonElement convertToGson(PropertyMap pMap) {
+         if (pMap.containsKey(key())) {
+            return new JsonPrimitive(pMap.getInteger(key(), -1));
+         }
+         return null;
+      }
    },
 
    MULTI_STAGE_POSITION__GRID_COLUMN("GridCol", "GRID_COL", "gridCol", "GridColumnIndex",
@@ -729,6 +773,13 @@ public enum PropertyKey {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putInteger(key(), je.getAsInt());
+      }
+      @Override
+      protected JsonElement convertToGson(PropertyMap pMap) {
+         if (pMap.containsKey(key())) {
+            return new JsonPrimitive(pMap.getInteger(key(), -1));
+         }
+         return null;
       }
    },
 
@@ -745,8 +796,28 @@ public enum PropertyKey {
             dest.putPropertyMap(key(), MM1JSONSerializer.fromGson(je));
          }
       }
+      @Override
+      protected JsonElement convertToGson(PropertyMap pMap) {
+         // TODO: Figure out what this is supposed to do (I don't even know
+         // if multistageposition properties are ever used by anything
+         // It is utterly unclear how to perform this translation, but 
+         // returning null bombs saving of stage positions...
+            return JsonNull.INSTANCE;
+         }
    },
 
+   /**
+    * It is unclear what is meant with this key.
+    * Positions in the positionlist are multi stage positions.  These have Label,
+    * DefaultXYSTage, DefaultZStage, GridRow , GridCol, and DevicePositions fields.
+    * So, it seems this keyword catches the DevicePositions field within Multi_Stage_Positions
+    * However, the code in here refers to NonPropertyMapJSONFormats.multiStagePosition()
+    * which goes through all of the fields listed above
+    * So, handling of the DevicePositions field is a complete hack, as it 
+    * is unclear from the original design what the intention was, and this whole
+    * construction going back and forth between different encodings still gives me
+    * headaches even after having stared at it for way too many days....
+    */
    MULTI_STAGE_POSITION__DEVICE_POSITIONS("DevicePositions", "DEVICES", "subpositions", "DeviceCoordinatesUm",
          MultiStagePosition.class) {
       @Override
@@ -803,6 +874,31 @@ public enum PropertyKey {
             }
          }
          dest.putPropertyMapList(MULTI_STAGE_POSITION__DEVICE_POSITIONS.key(), devPositions);
+      }
+      
+      @Override
+      protected JsonElement convertToGson(PropertyMap pMap) {
+         if (pMap.containsPropertyMapList(key())) {
+            JsonArray ja = new JsonArray();
+            for (PropertyMap msp : pMap.getPropertyMapList(key())) {
+               JsonObject entry = new JsonObject();
+               if (msp.containsString(DEVICE.key())) {
+                  entry.add(DEVICE.key(), new JsonPrimitive(msp.getString(DEVICE.key(), "")));
+               }
+               if (msp.containsDoubleList(POSITION_UM.key())) {
+                  JsonArray positions = new JsonArray();
+                  double[] posValues = msp.getDoubleList(POSITION_UM.key());
+                  for (double posVal : posValues) {
+                     positions.add(new JsonPrimitive(posVal));
+                  }
+                  entry.add(POSITION_UM.key(), positions);
+               }
+               ja.add(entry);
+            }
+            return ja;
+         }
+
+         return null;
       }
    },
 
@@ -932,6 +1028,29 @@ public enum PropertyKey {
       @Override
       protected JsonElement convertToGson(PropertyMap pmap) {
          return new JsonPrimitive(pmap.getString(key(), null));
+      }
+   },
+   
+   POSITION_UM("Position_um", MultiStagePosition.class) {
+      @Override
+      protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
+         List<Double> positions = Lists.newArrayList();
+         for (JsonElement e : je.getAsJsonArray()) {
+            positions.add(e.getAsDouble());
+         }
+         dest.putDoubleList(key(), positions);
+      }
+
+      @Override
+      protected JsonElement convertToGson(PropertyMap pmap) {
+         if (!pmap.containsKey(key())) {
+            return null;
+         }
+         JsonArray ja = new JsonArray();
+         for (double positions : pmap.getDoubleList(key())) {
+            ja.add(new JsonPrimitive(positions));
+         }
+         return ja;
       }
    },
 

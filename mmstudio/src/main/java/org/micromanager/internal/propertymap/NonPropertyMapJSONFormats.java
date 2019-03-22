@@ -228,9 +228,9 @@ public abstract class NonPropertyMapJSONFormats {
             try {
                key.storeInGsonObject(pmap, jo);
             } catch (NullPointerException npe) {
-               //MMStudio.getInstance().logs().logError(npe, "Key: " + key);
+               MMStudio.getInstance().logs().logError(npe, "Key: " + key);
             } catch (UnsupportedOperationException uoe) {
-               //MMStudio.getInstance().logs().logError(uoe, "Key: " + key);
+               MMStudio.getInstance().logs().logError(uoe, "Key: " + key);
             }
          
          }
