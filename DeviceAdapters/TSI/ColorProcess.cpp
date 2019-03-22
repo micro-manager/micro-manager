@@ -387,16 +387,28 @@ int Tsi3Cam::InitializeColorProcessor()
 int Tsi3Cam::ShutdownColorProcessor()
 {
 	// destroy color processor
-	tl_color_destroy_color_processor(color_processor_inst);
+	if (color_processor_inst)
+	{
+		tl_color_destroy_color_processor(color_processor_inst);
+		color_processor_inst = 0;
+	}
 
 	// Terminate the color processing module
-	tl_color_processing_module_terminate();
+	if (cc_module_handle)
+	{
+		tl_color_processing_module_terminate();
+		::FreeLibrary(cc_module_handle);
+		cc_module_handle = 0;
+	}
 
 	// terminate demoisaic module
-	tl_demosaic_module_terminate();
+	if (demosaic_module_handle)
+	{
+		tl_demosaic_module_terminate();
+		::FreeLibrary(demosaic_module_handle);
+		demosaic_module_handle = 0;
+	}
 
-	::FreeLibrary(cc_module_handle);
-	::FreeLibrary(demosaic_module_handle);
 	return DEVICE_OK;
 }
 
