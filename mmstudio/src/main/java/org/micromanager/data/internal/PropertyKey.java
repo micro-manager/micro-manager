@@ -15,6 +15,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import java.awt.Rectangle;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -292,7 +293,10 @@ public enum PropertyKey {
 
       @Override
       protected JsonElement convertToGson(PropertyMap pmap) {
-         return new JsonPrimitive(pmap.getString(key(), null));
+         if (pmap.containsString(key())) {
+            return new JsonPrimitive(pmap.getString(key(), null));
+         }
+         return JsonNull.INSTANCE;
       }
    },
 
@@ -387,7 +391,10 @@ public enum PropertyKey {
 
       @Override
       protected JsonElement convertToGson(PropertyMap pmap) {
-         return new JsonPrimitive(pmap.getString(key(), null));
+         if (pmap.containsString(key())) {
+            return new JsonPrimitive(pmap.getString(key(), null));
+         }
+         return JsonNull.INSTANCE;
       }
    },
 
@@ -434,7 +441,10 @@ public enum PropertyKey {
 
       @Override
       protected JsonElement convertToGson(PropertyMap pmap) {
-         return new JsonPrimitive(pmap.getString(key(), null));
+         if (pmap.containsString(key())) {
+            return new JsonPrimitive(pmap.getString(key(), null));
+         }
+         return JsonNull.INSTANCE;
       }
    },
 
@@ -805,6 +815,18 @@ public enum PropertyKey {
             return JsonNull.INSTANCE;
          }
    },
+   
+   MULTI_STAGE_POSITION__DEVICE("Device", MultiStagePosition.class) {
+      @Override
+      protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
+         dest.putString(key(), je.getAsString());
+      }
+
+      @Override
+      protected JsonElement convertToGson(PropertyMap pmap) {
+         return new JsonPrimitive(pmap.getString(key(), null));
+      }
+   },
 
    /**
     * It is unclear what is meant with this key.
@@ -831,30 +853,36 @@ public enum PropertyKey {
             for (JsonElement e : je.getAsJsonArray()) {
                JsonObject jo = e.getAsJsonObject();
                PropertyMap msp =
-                     NonPropertyMapJSONFormats.multiStagePosition().
+                     NonPropertyMapJSONFormats.multiStageDevicePosition().
                      fromGson(jo);
                
                if (msp.size() == 0) { // this may be an old format stage position
                   msp = NonPropertyMapJSONFormats.oldStagePosition().fromGson(jo);
                }
-
-               int n = msp.getInteger(STAGE_POSITION__NUMAXES.key(), 0);
-               if (n < 1 || n > 3) {
-                  throw new JsonParseException(
-                        "Unexpected number of stage axes in stage position record");
-               }
-               double[] coords = new double[n];
-               for (int i = 0; i < n; ++i) {
-                  coords[i] = msp.getDouble(ImmutableList.of(
-                        STAGE_POSITION__COORD1_UM.key(),
-                        STAGE_POSITION__COORD2_UM.key(),
-                        STAGE_POSITION__COORD3_UM.key()).get(i), Double.NaN);
-               }
-               devPositions.add(PropertyMaps.builder().
-                     putString(STAGE_POSITION__DEVICE.key(),
-                           msp.getString(STAGE_POSITION__DEVICE.key(), null)).
-                     putDoubleList(STAGE_POSITION__POSITION_UM.key(), coords).
-                     build());
+               
+               if (!msp.containsInteger(STAGE_POSITION__NUMAXES.key())) 
+               {  // "modern" (or also "old"?  who knows...) format that has just the name
+                  // and coordinates for whatever axes the device has
+                  devPositions.add(msp);
+               } else { // old format with 3 values
+                  int n = msp.getInteger(STAGE_POSITION__NUMAXES.key(), 0);
+                  if (n < 1 || n > 3) {
+                     throw new JsonParseException(
+                             "Unexpected number of stage axes in stage position record");
+                  }
+                  double[] coords = new double[n];
+                  for (int i = 0; i < n; ++i) {
+                     coords[i] = msp.getDouble(ImmutableList.of(
+                             STAGE_POSITION__COORD1_UM.key(),
+                             STAGE_POSITION__COORD2_UM.key(),
+                             STAGE_POSITION__COORD3_UM.key()).get(i), Double.NaN);
+                  }
+                  devPositions.add(PropertyMaps.builder().
+                          putString(STAGE_POSITION__DEVICE.key(),
+                                  msp.getString(STAGE_POSITION__DEVICE.key(), null)).
+                          putDoubleList(STAGE_POSITION__POSITION_UM.key(), coords).
+                          build());
+               } 
             }
          }
          // MM 1.x stored JSON object with keys = stage names; values = arrays,
@@ -880,25 +908,12 @@ public enum PropertyKey {
       protected JsonElement convertToGson(PropertyMap pMap) {
          if (pMap.containsPropertyMapList(key())) {
             JsonArray ja = new JsonArray();
-            for (PropertyMap msp : pMap.getPropertyMapList(key())) {
-               JsonObject entry = new JsonObject();
-               if (msp.containsString(DEVICE.key())) {
-                  entry.add(DEVICE.key(), new JsonPrimitive(msp.getString(DEVICE.key(), "")));
-               }
-               if (msp.containsDoubleList(POSITION_UM.key())) {
-                  JsonArray positions = new JsonArray();
-                  double[] posValues = msp.getDoubleList(POSITION_UM.key());
-                  for (double posVal : posValues) {
-                     positions.add(new JsonPrimitive(posVal));
-                  }
-                  entry.add(POSITION_UM.key(), positions);
-               }
-               ja.add(entry);
+            for (PropertyMap pm : pMap.getPropertyMapList(key())) {
+               ja.add(NonPropertyMapJSONFormats.multiStageDevicePosition().toGson(pm));
             }
             return ja;
          }
-
-         return null;
+         return JsonNull.INSTANCE;  // Todo: log?
       }
    },
 
@@ -1078,7 +1093,10 @@ public enum PropertyKey {
 
       @Override
       protected JsonElement convertToGson(PropertyMap pmap) {
-         return new JsonPrimitive(pmap.getString(key(), null));
+         if (pmap.containsString(key())) {
+            return new JsonPrimitive(pmap.getString(key(), null));
+         }
+         return JsonNull.INSTANCE;
       }
    },
 
@@ -1327,6 +1345,13 @@ public enum PropertyKey {
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putString(key(), je.getAsString());
       }
+      @Override
+      public JsonElement convertToGson(PropertyMap source) {
+         if (!source.containsString(key())) {
+            return null;
+         }
+         return new JsonPrimitive(source.getString(key(), null));
+      }
    },
 
    STAGE_POSITION__NUMAXES("NumberOfAxes", "AXES", "numAxes", StagePosition.class) {
@@ -1344,6 +1369,17 @@ public enum PropertyKey {
             coords.add(e.getAsDouble());
          }
          dest.putDoubleList(key(), coords);
+      }
+      @Override
+      protected JsonElement convertToGson(PropertyMap source) {
+         if (!source.containsDoubleList((key()))) {
+            return JsonNull.INSTANCE;
+         }
+         JsonArray ja = new JsonArray();
+         for (Double d : source.getDoubleList(key(), new ArrayList<>())) {
+            ja.add(new JsonPrimitive(d));
+         }
+         return ja;
       }
    },
 
@@ -1380,7 +1416,10 @@ public enum PropertyKey {
 
       @Override
       protected JsonElement convertToGson(PropertyMap pmap) {
-         return new JsonPrimitive(pmap.getString(key(), null));
+         if (pmap.containsString(key())) {
+            return new JsonPrimitive(pmap.getString(key(), null));
+         }
+         return JsonNull.INSTANCE;
       }
    },
 
@@ -1439,7 +1478,7 @@ public enum PropertyKey {
          // keys as user data, excluding known standard keys and scope data
          // keys (to the extent possible).
 
-         Set<String> scopeDataKeys = new HashSet<String>();
+         Set<String> scopeDataKeys = new HashSet<>();
          PropertyMap.Builder tmp = PropertyMaps.builder();
          if (SCOPE_DATA_KEYS.extractFromGsonObject(jo, tmp)) {
             scopeDataKeys.addAll(tmp.build().getStringList(SCOPE_DATA_KEYS.key()));
