@@ -54,7 +54,11 @@ CXYStage::CXYStage(const char* name) :
    axisLetterY_(g_EmptyAxisLetterStr),    // value determined by extended name
    advancedPropsEnabled_(false),
    speedTruth_(false),
-   lastSpeedX_(1.0)
+   lastSpeedX_(1.0),
+   ring_buffer_supported_(false),
+   ring_buffer_capacity_(0),
+   ttl_trigger_supported_(false),
+   ttl_trigger_enabled_(false)
 {
    if (IsExtendedName(name))  // only set up these properties if we have the required information in the name
    {
@@ -304,6 +308,62 @@ int CXYStage::Initialize()
    build_info_type build;
    RETURN_ON_MM_ERROR( hub_->GetBuildInfo(addressChar_, build) );
    speedTruth_ = hub_->IsDefinePresent(build, "SPEED TRUTH");
+
+   // add ring buffer properties if supported (starting version 2.81)
+   if (FirmwareVersionAtLeast(2.81) && (build.vAxesProps[0] & BIT1))
+   {
+      // get the number of ring buffer positions from the BU X output
+      string rb_define = hub_->GetDefineString(build, "RING BUFFER");
+
+      ring_buffer_capacity_ = 0;
+      if (rb_define.size() > 12)
+      {
+         ring_buffer_capacity_ = atol(rb_define.substr(11).c_str());
+      }
+
+      if (ring_buffer_capacity_ != 0)
+      {
+         ring_buffer_supported_ = true;
+
+         pAct = new CPropertyAction (this, &CXYStage::OnRBMode);
+         CreateProperty(g_RB_ModePropertyName, g_RB_OnePoint_1, MM::String, false, pAct);
+         AddAllowedValue(g_RB_ModePropertyName, g_RB_OnePoint_1);
+         AddAllowedValue(g_RB_ModePropertyName, g_RB_PlayOnce_2);
+         AddAllowedValue(g_RB_ModePropertyName, g_RB_PlayRepeat_3);
+         UpdateProperty(g_RB_ModePropertyName);
+
+         pAct = new CPropertyAction (this, &CXYStage::OnRBDelayBetweenPoints);
+         CreateProperty(g_RB_DelayPropertyName, "0", MM::Integer, false, pAct);
+         UpdateProperty(g_RB_DelayPropertyName);
+
+         // "do it" property to do TTL trigger via serial
+         pAct = new CPropertyAction (this, &CXYStage::OnRBTrigger);
+         CreateProperty(g_RB_TriggerPropertyName, g_IdleState, MM::String, false, pAct);
+         AddAllowedValue(g_RB_TriggerPropertyName, g_IdleState, 0);
+         AddAllowedValue(g_RB_TriggerPropertyName, g_DoItState, 1);
+         AddAllowedValue(g_RB_TriggerPropertyName, g_DoneState, 2);
+         UpdateProperty(g_RB_TriggerPropertyName);
+
+         pAct = new CPropertyAction (this, &CXYStage::OnRBRunning);
+         CreateProperty(g_RB_AutoplayRunningPropertyName, g_NoState, MM::String, false, pAct);
+         AddAllowedValue(g_RB_AutoplayRunningPropertyName, g_NoState);
+         AddAllowedValue(g_RB_AutoplayRunningPropertyName, g_YesState);
+         UpdateProperty(g_RB_AutoplayRunningPropertyName);
+
+         pAct = new CPropertyAction (this, &CXYStage::OnUseSequence);
+         CreateProperty(g_UseSequencePropertyName, g_NoState, MM::String, false, pAct);
+         AddAllowedValue(g_UseSequencePropertyName, g_NoState);
+         AddAllowedValue(g_UseSequencePropertyName, g_YesState);
+         ttl_trigger_enabled_ = false;
+      }
+
+   }
+
+   if (FirmwareVersionAtLeast(3.09) && (hub_->IsDefinePresent(build, "IN0_INT"))
+         && ring_buffer_supported_)
+   {
+      ttl_trigger_supported_ = true;
+   }
 
    // add SCAN properties if supported
    if (build.vAxesProps[0] & BIT2)
@@ -586,13 +646,91 @@ int CXYStage::SetHome()
    }
 }
 
-int CXYStage::Move (double vx, double vy)
+int CXYStage::StopXYStageSequence()
+// disables TTL triggering; doesn't actually stop anything already happening on controller
 {
-ostringstream command; command.str("");
-command << "VE " << axisLetterX_ << "=" << vx <<" "<< axisLetterY_ << "=" << vy ;
-return hub_->QueryCommandVerify(command.str(), ":A") ;
-
+   ostringstream command; command.str("");
+   if (!ttl_trigger_supported_)
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+   command << addressChar_ << "TTL X=0";  // switch off TTL triggering
+   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+   return DEVICE_OK;
 }
+
+int CXYStage::StartXYStageSequence()
+// enables TTL triggering; doesn't actually start anything going on controller
+{
+   ostringstream command; command.str("");
+   if (!ttl_trigger_supported_)
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+   // ensure that ringbuffer pointer points to first entry
+   // for now leave the axis_byte unchanged (hopefully default)
+   // for now leave mode (RM F) unchanged; would normally be set to 1 and is done in OnRBMode = property "RingBufferMode"
+   command << addressChar_ << "RM Z=0";
+   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+
+   command.str("");
+   command << addressChar_ << "TTL X=1";  // switch on TTL triggering
+   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+   return DEVICE_OK;
+}
+
+int CXYStage::SendXYStageSequence()
+{
+   ostringstream command; command.str("");
+   if (!ttl_trigger_supported_)
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+   command << addressChar_ << "RM X=0"; // clear ring buffer
+   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+   for (unsigned i=0; i< sequenceX_.size(); i++)  // send new points
+   {
+      command.str("");
+      command << "LD " << axisLetterX_ << "=" << sequenceX_[i]*unitMultX_ << " " << axisLetterY_ << "=" << sequenceY_[i]*unitMultY_;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+   }
+
+   return DEVICE_OK;
+}
+
+int CXYStage::ClearXYStageSequence()
+{
+   ostringstream command; command.str("");
+   if (!ttl_trigger_supported_)
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+   sequenceX_.clear();
+   sequenceY_.clear();
+   command << addressChar_ << "RM X=0";  // clear ring buffer
+   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+   return DEVICE_OK;
+}
+
+int CXYStage::AddToXYStageSequence(double positionX, double positionY)
+{
+   if (!ttl_trigger_supported_)
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+   sequenceX_.push_back(positionX);
+   sequenceY_.push_back(positionY);
+   return DEVICE_OK;
+}
+
+
+int CXYStage::Move(double vx, double vy)
+{
+   ostringstream command; command.str("");
+   command << "VE " << axisLetterX_ << "=" << vx <<" "<< axisLetterY_ << "=" << vy ;
+   return hub_->QueryCommandVerify(command.str(), ":A") ;
+}
+
 
 ////////////////
 // action handlers
@@ -1867,6 +2005,162 @@ int CXYStage::OnScanOvershootDistance(MM::PropertyBase* pProp, MM::ActionType eA
    }
    return DEVICE_OK;
 }
+
+int CXYStage::OnRBMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   string pseudoAxisChar = FirmwareVersionAtLeast(2.89) ? "F" : "X";
+   long tmp;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "RM " << pseudoAxisChar << "?";
+      response << ":A " << pseudoAxisChar << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()) );
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (tmp >= 128)
+      {
+         tmp -= 128;  // remove the "running now" code if present
+      }
+      bool success;
+      switch ( tmp )
+      {
+         case 1: success = pProp->Set(g_RB_OnePoint_1); break;
+         case 2: success = pProp->Set(g_RB_PlayOnce_2); break;
+         case 3: success = pProp->Set(g_RB_PlayRepeat_3); break;
+         default: success = false;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      if (hub_->UpdatingSharedProperties())
+         return DEVICE_OK;
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_RB_OnePoint_1) == 0)
+         tmp = 1;
+      else if (tmpstr.compare(g_RB_PlayOnce_2) == 0)
+         tmp = 2;
+      else if (tmpstr.compare(g_RB_PlayRepeat_3) == 0)
+         tmp = 3;
+      else
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      command << addressChar_ << "RM " << pseudoAxisChar << "=" << tmp;
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), tmpstr.c_str()) );
+   }
+   return DEVICE_OK;
+}
+
+int CXYStage::OnRBTrigger(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   if (eAct == MM::BeforeGet) {
+      pProp->Set(g_IdleState);
+   }
+   else  if (eAct == MM::AfterSet) {
+      if (hub_->UpdatingSharedProperties())
+         return DEVICE_OK;
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_DoItState) == 0)
+      {
+         command << addressChar_ << "RM";
+         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+         pProp->Set(g_DoneState);
+         command.str(""); command << g_DoneState;
+         RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
+      }
+   }
+   return DEVICE_OK;
+}
+
+int CXYStage::OnRBRunning(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   string pseudoAxisChar = FirmwareVersionAtLeast(2.89) ? "F" : "X";
+   long tmp = 0;
+   static bool justSet;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_ && !justSet)
+         return DEVICE_OK;
+      command << addressChar_ << "RM " << pseudoAxisChar << "?";
+      response << ":A " << pseudoAxisChar << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()) );
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      bool success;
+      if (tmp >= 128)
+      {
+         success = pProp->Set(g_YesState);
+      }
+      else
+      {
+         success = pProp->Set(g_NoState);
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      justSet = false;
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      justSet = true;
+      return OnRBRunning(pProp, MM::BeforeGet);
+      // TODO determine how to handle this with shared properties since ring buffer is per-card and not per-axis
+      // the reason this property exists (and why it's not a read-only property) are a bit hazy as of mid-2017
+   }
+   return DEVICE_OK;
+}
+
+int CXYStage::OnRBDelayBetweenPoints(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "RT Z?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      if (hub_->UpdatingSharedProperties())
+         return DEVICE_OK;
+      pProp->Get(tmp);
+      command << addressChar_ << "RT Z=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      command.str(""); command << tmp;
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
+   }
+   return DEVICE_OK;
+}
+
+int CXYStage::OnUseSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   if (eAct == MM::BeforeGet)
+   {
+      if (ttl_trigger_enabled_)
+         pProp->Set(g_YesState);
+      else
+         pProp->Set(g_NoState);
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      ttl_trigger_enabled_ = (ttl_trigger_supported_ && (tmpstr.compare(g_YesState) == 0));
+      return OnUseSequence(pProp, MM::BeforeGet);  // refresh value
+   }
+   return DEVICE_OK;
+}
+
 
 int CXYStage::OnVectorGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter)
 {
