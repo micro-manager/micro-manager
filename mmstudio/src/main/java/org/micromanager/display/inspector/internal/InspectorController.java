@@ -81,12 +81,12 @@ public final class InspectorController
    private JComboBox viewerComboBox_;
    private Object viewerComboBoxSelection_;
    private JButton viewerToFrontButton_;
+   private DataViewer viewer_;
 
    private AttachmentStrategy attachmentStrategy_ =
          new NullAttachmentStrategy();
 
-   private final List<SectionInfo> sections_ =
-         new ArrayList<SectionInfo>();
+   private final List<SectionInfo> sections_ = new ArrayList<>();
 
    private final EventBus eventBus_ = new EventBus(EventBusExceptionLogger.getInstance());
 
@@ -461,13 +461,15 @@ public final class InspectorController
    }
 
    private void attachToDataViewer(DataViewer viewer) {
-      // TODO Record viewer and do nothing if same as current
       if (viewer == null || viewer.isClosed()) {
          detachFromDataViewer(); // Just in case
          return;
       }
-      frame_.setTitle(String.format("Inspect \"%s\"", viewer.getName()));
-      showPanelsForDataViewer(viewer);
+      if (viewer != viewer_) {
+         frame_.setTitle(String.format("Inspect \"%s\"", viewer.getName()));
+         showPanelsForDataViewer(viewer);
+         viewer_ = viewer;
+      }
    }
 
    private void detachFromDataViewer() {
