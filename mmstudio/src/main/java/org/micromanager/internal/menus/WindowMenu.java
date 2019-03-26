@@ -7,7 +7,6 @@ import java.util.List;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
-import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.event.DataViewerAddedEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
@@ -37,7 +36,7 @@ public class WindowMenu {
       String name = e.getDataViewer().getName();
       // check whether or not we have this window already
       for (JMenuItem mItem : menuItems_) {
-         if (mItem.getName().equals(name)) {
+         if (mItem.getText().equals(name)) {
             return;
          }
       }
@@ -54,7 +53,7 @@ public class WindowMenu {
    public void onEvent(DataViewerWillCloseEvent e) {   
       String name = e.getDataViewer().getName();
       for (JMenuItem mItem : menuItems_) {
-         if (mItem.getName().equals(name)) {
+         if (mItem.getText().equals(name)) {
             windowMenu_.remove(mItem);
             menuItems_.remove(mItem);
             return;

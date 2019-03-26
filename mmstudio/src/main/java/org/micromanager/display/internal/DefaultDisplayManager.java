@@ -74,6 +74,12 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    // monitor on 'this'.
    private final HashMap<DataProvider, ArrayList<DisplayWindow>> providerToDisplays_;
 
+   // TODO: the DataViewerCollection generates events that are being reposted
+   // by the DefaultDisplayManager.  Why this indirection?
+   // The DataViewerCollection is made available to the InspectorController
+   // but nothing else.  I would "couple"  the DataViewerCollection directly
+   // rather than through an eventbus, and let the InspectorController
+   // use the eventbus from the DefaultDisplayManager...
    private final DataViewerCollection viewers_ = DataViewerCollection.create();
 
    private final WeakHashMap<DataViewer, Boolean> haveAutoCreatedInspector_ =
@@ -93,7 +99,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
 
       viewers_.registerForEvents(this);
    }
-
+   
    @Override
    public Datastore show(Image image) {
       Datastore result = studio_.data().createRAMDatastore();

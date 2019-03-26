@@ -35,16 +35,15 @@ import org.micromanager.internal.utils.MustCallOnEDT;
 public class DataViewerCollection implements EventPublisher {
    // Viewers known to this manager
    // Access: only on EDT
-   private final Set<DataViewer> viewers_ = new HashSet<DataViewer>();
+   private final Set<DataViewer> viewers_ = new HashSet<>();
 
    // Viewers in most-recently-activated order. The first element is the
    // currently active (or at least, front-most) viewer.
    // Invariant: elements are unique
    // Invariant: elements are in viewers_
    // Access: only onEDT
-   private final Deque<DataViewer> showingViewers_ =
-         new ArrayDeque<DataViewer>();
-
+   private final Deque<DataViewer> showingViewers_ =  new ArrayDeque<>();
+   
    private final EventBus eventBus_ = new EventBus(EventBusExceptionLogger.getInstance());
 
    public static DataViewerCollection create() {
@@ -53,6 +52,7 @@ public class DataViewerCollection implements EventPublisher {
 
    private DataViewerCollection() {
    }
+   
 
    @MustCallOnEDT
    public boolean hasDataViewer(DataViewer viewer) {
@@ -93,7 +93,7 @@ public class DataViewerCollection implements EventPublisher {
 
    @MustCallOnEDT
    public List<DataViewer> getAllDataViewers() {
-      return new ArrayList<DataViewer>(viewers_);
+      return new ArrayList<>(viewers_);
    }
 
    @MustCallOnEDT
@@ -150,4 +150,5 @@ public class DataViewerCollection implements EventPublisher {
    public void unregisterForEvents(Object recipient) {
       eventBus_.unregister(recipient);
    }
+   
 }

@@ -221,12 +221,17 @@ public class MMFrame extends JFrame implements WindowFocusListener {
    
    @Override
    public void windowGainedFocus(WindowEvent e) {
-       if (e.getOppositeWindow() == null) { //If the last selected windows was from a different application
-           for (MMFrame frame : applicationFrames) {
+      if (JavaUtils.isWindows()) { // On WIndows, selecting a frame does not automatically
+         // bring all other frames to the forefront, so do it here
+         if (e.getOppositeWindow() == null) { //If the last selected windows was from a different application
+            for (MMFrame frame : applicationFrames) {
                frame.toFront(); //Move all visible MMframes to the front
-           }
-       }
+            }
+            this.toFront(); // make sure that this window ends up on top
+         }
+      }
    }
+
    @Override
    public void windowLostFocus(WindowEvent e) {}
 }
