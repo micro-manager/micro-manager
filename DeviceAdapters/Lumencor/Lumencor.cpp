@@ -357,7 +357,7 @@ int LightEngine::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 // *****************************************************************************
-// Color Value Change Handlers
+// Property handlers
 // *****************************************************************************
 
 int LightEngine::OnChannelIntensity(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -467,11 +467,12 @@ int LightEngine::TurnAllOff()
 	if (ret != LUM_OK)
 		return RetrieveError(engine);
 
-	// do not update channel cache
-	shutterState = false;
+	// we do not update channel state cache because this is a virtual shutter operation 
+	shutterState = false; // signals that shutter is now closed
 	return DEVICE_OK;
 }
 
+// set all intensities to 0
 int LightEngine::ZeroAll()
 {
 	vector<int> ints;
@@ -483,7 +484,6 @@ int LightEngine::ZeroAll()
 }
 
 // simulates "open shutter" command by appling states that were in effect when shutter was closed
-//
 int LightEngine::ApplyStates()
 {
 	vector<lum_bool> states;
@@ -491,7 +491,7 @@ int LightEngine::ApplyStates()
 	int ret = lum_setMultipleChannels(engine, &states[0], (int)channels.size());
 	if (ret != LUM_OK)
 		return RetrieveError(engine);
-	shutterState = true;
+	shutterState = true; // signals that shutter is now open
 
 	return DEVICE_OK;
 }
