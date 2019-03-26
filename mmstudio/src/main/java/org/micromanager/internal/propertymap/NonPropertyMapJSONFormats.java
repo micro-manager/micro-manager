@@ -31,6 +31,8 @@ public abstract class NonPropertyMapJSONFormats {
          new PositionListFormat();
    private static final NonPropertyMapJSONFormats MSP_INSTANCE =
          new MultiStagePositionFormat();
+   private static final NonPropertyMapJSONFormats MSDP_Instance =
+           new MultiStageDevicePositionFormat();
    private static final NonPropertyMapJSONFormats OLD_MSP_INSTANCE =
            new StagePosition();
    private static final NonPropertyMapJSONFormats COORDS_INSTANCE =
@@ -52,6 +54,10 @@ public abstract class NonPropertyMapJSONFormats {
 
    public static NonPropertyMapJSONFormats multiStagePosition() {
       return MSP_INSTANCE;
+   }
+   
+   public static NonPropertyMapJSONFormats multiStageDevicePosition() {
+      return MSDP_Instance;
    }
    
    public static NonPropertyMapJSONFormats oldStagePosition() {
@@ -222,15 +228,14 @@ public abstract class NonPropertyMapJSONFormats {
                PIXEL_TYPE, // compat
                WIDTH, // compat
                HEIGHT, // compat
-               USER_DATA,
-               DISPLAY_SETTINGS))
+               USER_DATA))
          {
             try {
                key.storeInGsonObject(pmap, jo);
             } catch (NullPointerException npe) {
-               //MMStudio.getInstance().logs().logError(npe, "Key: " + key);
+               MMStudio.getInstance().logs().logError(npe, "Key: " + key);
             } catch (UnsupportedOperationException uoe) {
-               //MMStudio.getInstance().logs().logError(uoe, "Key: " + key);
+               MMStudio.getInstance().logs().logError(uoe, "Key: " + key);
             }
          
          }
@@ -296,6 +301,31 @@ public abstract class NonPropertyMapJSONFormats {
       }
    }
 
+   private static final class MultiStageDevicePositionFormat extends NonPropertyMapJSONFormats {
+      @Override
+      public PropertyMap fromGson(JsonElement je) {
+         PropertyMap.Builder builder = PropertyMaps.builder();
+         for (PropertyKey key : ImmutableList.of(
+               STAGE_POSITION__DEVICE,
+               STAGE_POSITION__POSITION_UM))
+         {
+            key.extractFromGsonObject(je.getAsJsonObject(), builder);
+         }
+         return builder.build();
+      }
+
+      @Override
+      public void addToGson(JsonObject jo, PropertyMap pmap) {
+         for (PropertyKey key : ImmutableList.of(
+               STAGE_POSITION__DEVICE,
+               STAGE_POSITION__POSITION_UM))
+         {
+            key.storeInGsonObject(pmap, jo);
+         }
+      }
+   }
+   
+   
    /**
     * The problematic x-y-z-as-first-and-second-axes format.
     */

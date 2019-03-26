@@ -895,6 +895,8 @@
             :let [label (.getLabel msp)
                   grid-row (.getGridRow msp)
                   grid-col (.getGridColumn msp)
+                  default-xy (.getDefaultXYStage msp)
+                  default-z(.getDefaultZStage msp)
                   device-positions (:axes (MultiStagePosition-to-map msp))]]
         (let [json-positions (JSONObject.
                                (into {}
@@ -903,6 +905,8 @@
           (JSONObject. {"Label" label
                         "GridRowIndex" grid-row
                         "GridColumnIndex" grid-col
+                        "DefaultXYStage" default-xy
+                        "DefaultZStage" default-z
                         "DeviceCoordinatesUm" json-positions}))))))
 
 (defn generate-axis-order [settings]
