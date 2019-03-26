@@ -15,8 +15,8 @@ import org.micromanager.internal.utils.ReportingUtils;
  * Responsible for handling the Help Menu and its associated logic.
  */
 public final class HelpMenu {
-   private MMStudio studio_;
-   private CMMCore core_;
+   private final MMStudio studio_;
+   private final CMMCore core_;
 
    public HelpMenu(MMStudio studio, JMenuBar menuBar) {
       studio_ = studio;

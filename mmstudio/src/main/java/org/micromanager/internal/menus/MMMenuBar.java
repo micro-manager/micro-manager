@@ -33,6 +33,7 @@ public final class MMMenuBar extends JMenuBar {
       toolsMenu_ = new ToolsMenu(studio, result);
       new ConfigMenu(studio, result);
       ((DefaultPluginManager) studio.plugins()).createPluginMenu(result);
+      new WindowMenu(studio, result);
       new HelpMenu(studio, result);
       return result;
    }
