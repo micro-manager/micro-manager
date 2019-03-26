@@ -32,7 +32,7 @@ public class WindowMenu {
       studio_.displays().registerForEvents(this);
    }
    
-      @Subscribe
+   @Subscribe
    public void onEvent(DataViewerAddedEvent e) {
       String name = e.getDataViewer().getName();
       // check whether or not we have this window already

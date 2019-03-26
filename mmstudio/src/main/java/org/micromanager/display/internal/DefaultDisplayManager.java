@@ -57,6 +57,7 @@ import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.EventBusExceptionLogger;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.display.DisplayWindowControlsFactory;
+import org.micromanager.display.internal.event.DataViewerAddedEvent;
 import org.micromanager.display.internal.link.LinkManager;
 import org.micromanager.display.internal.link.internal.DefaultLinkManager;
 
@@ -506,6 +507,11 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
       eventBus_.post(e);
    }
 
+   @Subscribe
+   public void onEvent(DataViewerAddedEvent e) {
+      eventBus_.post(e);
+   }
+   
    @Subscribe
    public void onEvent(DataViewerDidBecomeInvisibleEvent e) {
       eventBus_.post(e);
