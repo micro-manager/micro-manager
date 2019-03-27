@@ -36,7 +36,12 @@
 sma : 02.03.2019 : Possible issue with Webcam solved. 
 sma : 03.03.2019 : add the parameter external trigger.Trigger is expected in Line1.
 sma : 07.03.2019 : add the parameter binning average / sum mode 
+sma : 25.03.2019 : Pylon version has been changed to 5.2.0 and it check now for specific pylon version
+				   before call PylonInitialize();
+				   parameter Auto exposure and  auto gain are available.
 */
+
+
 
 #include <pylon/PylonIncludes.h>
 # include <pylon/PylonGUI.h>
@@ -77,6 +82,9 @@ static const  char* g_PixelType_8bitBGR = "8bitBGR";
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
 ///////////////////////////////////////////////////////////////////////////////
+
+
+
 
 MODULE_API void InitializeModuleData()
 {
@@ -145,6 +153,46 @@ BaslerCamera::~BaslerCamera()
 }
 
 /**
+check if needed pylon version is installed on the target system
+**/
+bool BaslerCamera::IsNeededPylonVersionExists()
+{ 
+  	string msg = "Found Pylon SDK :  ";
+	LPCWSTR PYLON_BASE_DLL(L"PylonBase_v5_2.dll");
+	bool m_PylonRuntimeIsValid = true;
+	HINSTANCE hDll = NULL;
+    if((hDll = LoadLibrary(PYLON_BASE_DLL)) != NULL)
+    {
+		//check runtime version OK
+        VersionInfo currentVersion;
+        VersionInfo minVersion( PYLON_VERSION_MAJOR, PYLON_VERSION_MINOR, 0);
+        VersionInfo maxVersion( PYLON_VERSION_MAJOR, PYLON_VERSION_MINOR, 99);
+		if ( currentVersion < minVersion || currentVersion > maxVersion )
+        {			
+			msg = "unmatched Pylon version found ";
+			msg.append (currentVersion.getVersionString());			
+			AddToLog(msg) ;
+			AddToLog ("Please install pylon sdk 5.2");
+			m_PylonRuntimeIsValid = false;
+		}
+		else
+		{
+			msg.append (currentVersion.getVersionString());			
+		    AddToLog(msg) ;
+		}
+		
+        FreeLibrary( hDll);
+	}
+	else
+	{
+	   AddToLog("Pylon SDK 5.2 not found on the system");
+	   m_PylonRuntimeIsValid = false;
+	}
+	
+    return m_PylonRuntimeIsValid;
+}
+
+/**
 * Obtains device name.
 */
 void BaslerCamera::GetName(char* name) const
@@ -162,7 +210,12 @@ int BaslerCamera::Initialize()
 
 	try
 	{
-			// Before using any pylon methods, the pylon runtime must be initialized. 
+		if(!IsNeededPylonVersionExists())
+		{
+			return DEVICE_ERR;
+		}
+				
+		// Before using any pylon methods, the pylon runtime must be initialized. 
 		PylonInitialize();
 		 // Get the transport layer factory.
         CTlFactory& tlFactory = CTlFactory::GetInstance();
@@ -318,12 +371,60 @@ int BaslerCamera::Initialize()
 		}
 		SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);
 
-		/////Gain//////
-		//Turn off auto gain
+		/////AutoGain//////
 		CEnumerationPtr gainAuto( nodeMap_->GetNode("GainAuto"));
-		if ( IsWritable( gainAuto)) {
-			gainAuto->FromString("Off");
+		if (IsWritable( gainAuto)) 
+		{			
+		
+			if(gainAuto != NULL && IsAvailable(gainAuto))
+			{
+				pAct = new CPropertyAction (this, &BaslerCamera::OnAutoGain);
+				ret = CreateProperty("GainAuto", "NA", MM::String, false, pAct);
+				vector<string> LSPVals;
+				NodeList_t entries;
+				LSPVals.push_back("Off");
+				gainAuto->GetEntries(entries);
+				for (NodeList_t::iterator it = entries.begin(); it != entries.end(); ++it)
+				{
+					CEnumEntryPtr pEnumEntry(*it);
+					string strValue = pEnumEntry->GetSymbolic().c_str();
+					if (IsAvailable(*it) && strValue != "Off")
+					{
+						LSPVals.push_back(strValue);
+					}
+				}
+				SetAllowedValues("GainAuto",LSPVals);	
+			 }
 		}
+			/////AutoExposure//////
+		CEnumerationPtr ExposureAuto( nodeMap_->GetNode("ExposureAuto"));
+		if (IsWritable( ExposureAuto)) 
+		{			
+		
+			if(ExposureAuto != NULL && IsAvailable(ExposureAuto))
+			{
+				pAct = new CPropertyAction (this, &BaslerCamera::OnAutoExpore);
+				ret = CreateProperty("ExposureAuto", "NA", MM::String, false, pAct);
+				vector<string> LSPVals;
+				NodeList_t entries;
+				LSPVals.push_back("Off");
+				ExposureAuto->GetEntries(entries);
+				for (NodeList_t::iterator it = entries.begin(); it != entries.end(); ++it)
+				{
+					CEnumEntryPtr pEnumEntry(*it);
+					string strValue = pEnumEntry->GetSymbolic().c_str();
+					if (IsAvailable(*it) && strValue != "Off")
+					{
+						LSPVals.push_back(strValue);
+					}
+				}
+				SetAllowedValues("ExposureAuto",LSPVals);	
+			 }
+		}
+
+
+
+
 		//get gain limits and value
 		CFloatPtr gain( nodeMap_->GetNode("Gain"));
 		CIntegerPtr GainRaw( nodeMap_->GetNode("GainRaw"));
@@ -524,6 +625,9 @@ int BaslerCamera::Initialize()
     }
 	return DEVICE_OK;	
 }
+
+
+
 
 int BaslerCamera::CheckForBinningMode(CPropertyAction *pAct)
 {
@@ -1183,6 +1287,39 @@ int BaslerCamera::OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct)
     }
 	return DEVICE_OK;
 }
+
+int BaslerCamera::OnAutoGain(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	string GainAuto_;
+	if (eAct == MM::AfterSet) {
+		pProp->Get(GainAuto_);
+		CEnumerationPtr GainAuto( nodeMap_->GetNode( "GainAuto"));
+		GainAuto->FromString(GainAuto_.c_str());
+	} else if (eAct == MM::BeforeGet) {
+		CEnumerationPtr GainAuto( nodeMap_->GetNode( "GainAuto"));
+		gcstring val = GainAuto->ToString();
+		const char* s = val.c_str();
+		pProp->Set(s);
+	}
+	return DEVICE_OK;
+}
+int BaslerCamera::OnAutoExpore(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	string ExposureAuto_;
+	if (eAct == MM::AfterSet) {
+		pProp->Get(ExposureAuto_);
+		CEnumerationPtr ExposureAuto( nodeMap_->GetNode( "ExposureAuto"));
+		ExposureAuto->FromString(ExposureAuto_.c_str());
+	} else if (eAct == MM::BeforeGet) {
+		CEnumerationPtr ExposureAuto( nodeMap_->GetNode( "ExposureAuto"));
+		gcstring val = ExposureAuto->ToString();
+		const char* s = val.c_str();
+		pProp->Set(s);
+	}
+	return DEVICE_OK;
+}
+
+
 
 int BaslerCamera::OnLightSourcePreset(MM::PropertyBase* pProp, MM::ActionType eAct)
 {

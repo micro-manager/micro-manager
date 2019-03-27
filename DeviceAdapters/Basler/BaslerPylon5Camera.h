@@ -43,6 +43,11 @@
 #include "ImgBuffer.h"
 #include <iostream>
 
+
+
+
+
+
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
 //
@@ -68,6 +73,7 @@ public:
 
 	void GetName(char* name) const;      
 	bool Busy() {return false;}
+	bool IsNeededPylonVersionExists();
 
 	// MMCamera API
 	// ------------
@@ -127,6 +133,8 @@ public:
 	int OnInterPacketDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnLightSourcePreset(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnAutoGain(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnAutoExpore(MM::PropertyBase* pProp, MM::ActionType eAct);
 	
 
 private:
