@@ -22,6 +22,7 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 #include <algorithm>
+#include <math.h>
 
 #ifdef WIN32
    #define WIN32_LEAN_AND_MEAN
@@ -29,12 +30,13 @@
    #define snprintf _snprintf 
 #endif
 
-const char* g_Keyword_DeviceName = "LED-Array";
-const char* g_Keyword_DeviceNameVirtualShutter = "LED-Array-Vitrual-Shutter";
+const char* g_Keyword_DeviceName = "Illuminate-Led-Array";
+const char* g_Keyword_DeviceNameVirtualShutter = "Illuminate-Led-Array-Virtual-Shutter";
 
-const char * g_Keyword_Red = "IntensityRed";  //Global intensity with a maximum of 65535
-const char * g_Keyword_Green = "IntensityGreen";  //Global intensity with a maximum of 65535
-const char * g_Keyword_Blue = "IntensityBlue";  //Global intensity with a maximum of 65535
+const char * g_Keyword_Red = "ColorRed";      // Global intensity with a maximum of 255
+const char * g_Keyword_Green = "ColorGreen";  // Global intensity with a maximum of 255
+const char * g_Keyword_Blue = "ColorBlue";    // Global intensity with a maximum of 255
+const char * g_Keyword_Brightness = "Brightness";
 const char * g_Keyword_NumericalAp = "NumericalAperture"; // Setting the numerical aperture
 const char * g_Keyword_SetArrayDistanceMM = "ArrayDistance"; 
 const char * g_Keyword_Pattern = "IlluminationPattern";
@@ -71,12 +73,12 @@ int LedArray::Initialize()
 	pixels_ = new unsigned char[width_*height_];
 
 	// Name
-	int ret = CreateProperty(MM::g_Keyword_Name, g_Keyword_DeviceName, MM::String, true);
+	int ret = CreateProperty(MM::g_Keyword_Name, g_Keyword_DeviceName, MM::String, false);
 	if (DEVICE_OK != ret)
 		return ret;
 
 	// Description
-	ret = CreateProperty(MM::g_Keyword_Description, "LED Array", MM::String, true);
+	ret = CreateProperty(MM::g_Keyword_Description, "LED Array", MM::String, false);
 	assert(DEVICE_OK == ret);
 
 	// Most Recent Serial Response
@@ -106,6 +108,7 @@ int LedArray::Initialize()
 	AddAllowedValue(g_Keyword_Pattern, "Darkfield");
 	AddAllowedValue(g_Keyword_Pattern, "DPC");
 	AddAllowedValue(g_Keyword_Pattern, "Color DPC");
+	AddAllowedValue(g_Keyword_Pattern, "Color Darkfield");
 	AddAllowedValue(g_Keyword_Pattern, "Manual LED Indices");
 	AddAllowedValue(g_Keyword_Pattern, "Annulus");
 	AddAllowedValue(g_Keyword_Pattern, "Half Annulus");
@@ -128,35 +131,37 @@ int LedArray::Initialize()
 	CPropertyAction* pActled = new CPropertyAction(this, &LedArray::OnLED);
 	CreateProperty(g_Keyword_LedList, "0.1.2.3.4", MM::String, false, pActled);
 
-	// Red Color Slider
-	CPropertyAction* pActr = new CPropertyAction(this, &LedArray::OnRed);
-	CreateProperty(g_Keyword_Red, std::to_string((long long)color_r).c_str(), MM::Float, false, pActr);
-	SetPropertyLimits(g_Keyword_Red, 0, 255);
+	// Device MAC address
+	CreateProperty(g_Keyword_MacAddress, "None", MM::String, false);
 
-	// Green Color Slider
-	CPropertyAction* pActg = new CPropertyAction(this, &LedArray::OnGreen);
-	CreateProperty(g_Keyword_Green, std::to_string((long long)color_g).c_str(), MM::Float, false, pActg);
-	SetPropertyLimits(g_Keyword_Green, 0, 255);
+	// Device name
+	CreateProperty(g_Keyword_LedArrayType, "None", MM::String, false);
 
-	// Blue Color Slider
-	CPropertyAction* pActb = new CPropertyAction(this, &LedArray::OnBlue);
-	CreateProperty(g_Keyword_Blue, std::to_string((long long)color_b).c_str(), MM::Float, false, pActb);
-	SetPropertyLimits(g_Keyword_Blue, 0, 255);
+	// Parse trigger input count
+	CreateProperty(g_Keyword_TriggerInputCount, "-1", MM::Integer, false);
 
-	// NA Property
-	CPropertyAction* pActap = new CPropertyAction(this, &LedArray::OnAperture);
-	CreateProperty(g_Keyword_NumericalAp, std::to_string((long double)numerical_aperture).c_str(), MM::Float, false, pActap);
+	// Parse trigger output count
+	CreateProperty(g_Keyword_TriggerOutputCount, "-1", MM::Integer, false);
 
-	// LED Array Distance
-	CPropertyAction* pActap2 = new CPropertyAction(this, &LedArray::OnDistance);
-	CreateProperty(g_Keyword_SetArrayDistanceMM, std::to_string((long double)array_distance_z).c_str(), MM::Float, false, pActap2);
+	// Parse part number
+	CreateProperty(g_Keyword_PartNumber, "-1", MM::Integer, false);
 
-	// LED Count
-	CreateProperty(g_Keyword_LedCount, std::to_string((long long)led_count).c_str(), MM::Integer, true);
+	// Parse serial number
+	CreateProperty(g_Keyword_SerialNumber, "-1", MM::Integer, false);
 
-	// LED Positions
-	//CPropertyAction* pActap2 = new CPropertyAction(this, &LedArray::OnDistance);
-	CreateProperty(g_Keyword_LedPositions, "", MM::String, false);	
+	// Parse bit depth
+	CreateProperty(g_Keyword_NativeBitDepth, "-1", MM::Integer, false);
+
+	// Parse color channel count
+	CreateProperty(g_Keyword_ColorChannelCount, "-1", MM::Integer, false);
+
+	// Parse interface version
+	CreateProperty(g_Keyword_InterfaceVersion, "-1.0", MM::Float, false);
+
+	// Brightness slider
+	CPropertyAction* pActr = new CPropertyAction(this, &LedArray::OnBrightness);
+	CreateProperty(g_Keyword_Brightness, std::to_string((long long)brightness).c_str(), MM::Float, false, pActr);
+	SetPropertyLimits(g_Keyword_Brightness, 0, 255);
 
 	// Check that we have a controller:
 	PurgeComPort(port_.c_str());
@@ -167,23 +172,47 @@ int LedArray::Initialize()
 	// Get Device Parameters
 	GetDeviceParameters();
 
-	// Sync Current Parameters
-	SyncCurrentParameters();
+	// Create color sliders if array is color
+	if (array_is_color)
+	{
+		// Red Color Slider
+		CPropertyAction* pActr = new CPropertyAction(this, &LedArray::OnRed);
+		CreateProperty(g_Keyword_Red, std::to_string((long long)color_r).c_str(), MM::Float, false, pActr);
+		SetPropertyLimits(g_Keyword_Red, 0, 255);
 
-	// Get LED Positions
-	SendCommand("pledpos.0.10", true);
-	
-	// Set Properties based on JSON output
-	rapidjson::Document d;
-	d.Parse(_serial_answer.c_str());
-	assert(d.IsObject());    // Document is a JSON value represents the root of DOM. Root can be either an object or array.
+		// Green Color Slider
+		CPropertyAction* pActg = new CPropertyAction(this, &LedArray::OnGreen);
+		CreateProperty(g_Keyword_Green, std::to_string((long long)color_g).c_str(), MM::Float, false, pActg);
+		SetPropertyLimits(g_Keyword_Green, 0, 255);
+
+		// Blue Color Slider
+		CPropertyAction* pActb = new CPropertyAction(this, &LedArray::OnBlue);
+		CreateProperty(g_Keyword_Blue, std::to_string((long long)color_b).c_str(), MM::Float, false, pActb);
+		SetPropertyLimits(g_Keyword_Blue, 0, 255);
+	}
+
+	// NA Property
+	CPropertyAction* pActap = new CPropertyAction(this, &LedArray::OnAperture);
+	CreateProperty(g_Keyword_NumericalAp, std::to_string((long double)numerical_aperture).c_str(), MM::Float, false, pActap);
+
+	// LED Array Distance
+	CPropertyAction* pActap2 = new CPropertyAction(this, &LedArray::OnDistance);
+	CreateProperty(g_Keyword_SetArrayDistanceMM, std::to_string((long double)array_distance_z).c_str(), MM::Float, false, pActap2);
+
+	// LED Count
+	CreateProperty(g_Keyword_LedCount, std::to_string((long long)led_count).c_str(), MM::Integer, false);
+
+	// LED Positions
+	//CPropertyAction* pActap2 = new CPropertyAction(this, &LedArray::OnDistance);
+	//CreateProperty(g_Keyword_LedPositions, "", MM::String, false);	
+
+	// Sync Current Parameters
+	SyncState();
 
 	// Generate LED position array
-	led_positions_cartesian = new double * [led_count];
-	for (uint16_t i = 0; i < led_count; i++)
-		led_positions_cartesian[i] = new double[3];
 
-	//SetProperty(g_Keyword_LedPositions, std::to_string((long double) d["led_position_list_cartesian"]["0"].GetFloat()).c_str());
+	// Read LED Positions
+	//ReadLedPositions();
 
 	// Reset the LED array
 	Reset();
@@ -234,7 +263,7 @@ int LedArray::GetResponse()
 		return DEVICE_OK;
 }
 
-int LedArray::SyncCurrentParameters()
+int LedArray::SyncState()
 {
 
 	// Get current NA
@@ -247,42 +276,62 @@ int LedArray::SyncCurrentParameters()
 	std::string sad_str("DZ.");
 	array_distance_z = (float)atoi(_serial_answer.substr(_serial_answer.find(sad_str) + sad_str.length(), _serial_answer.length() - sad_str.length()).c_str());
 
-	// Get color intensities
-	SendCommand("sc", true);
+	// Get Current Color
+	if (array_is_color)
+	{
+		// Get color intensities
+		SendCommand("sc", true);
 
-	// Vector of string to save tokens 
-	std::vector <std::string> color_values;
+		// Vector of string to save tokens 
+		std::vector <std::string> color_values;
 
-	// stringstream class check1 
-	std::stringstream check1(_serial_answer);
-	std::string intermediate;
+		// stringstream class check1 
+		std::stringstream check1(_serial_answer);
+		std::string intermediate;
 
-	// Tokenizing w.r.t. space ' ' 
-	while (getline(check1, intermediate, '.'))
-		color_values.push_back(intermediate);
+		// Tokenizing w.r.t. space ' ' 
+		while (getline(check1, intermediate, '.'))
+			color_values.push_back(intermediate);
 
-	// Remove first value (the SC)
-	color_values.erase(color_values.begin());
+		if (color_values.size() > 0)
+		{
+			// Remove first value (the SC)
+			color_values.erase(color_values.begin());
 
-	// Assign current color values
-	color_r = atof(color_values.at(0).c_str());
-	color_g = atof(color_values.at(1).c_str());
-	color_b = atof(color_values.at(2).c_str());
+			if (color_channel_count == 3)
+			{
+				// Assign current color values
+				color_r = atof(color_values.at(0).c_str());
+				color_g = atof(color_values.at(1).c_str());
+				color_b = atof(color_values.at(2).c_str());
 
-	// Red:
-	SetProperty(g_Keyword_Red, std::to_string((long long)color_r).c_str());
+				// Red:
+				SetProperty(g_Keyword_Red, std::to_string((long long)color_r).c_str());
 
-	// Green:
-	SetProperty(g_Keyword_Green, std::to_string((long long)color_g).c_str());
+				// Green:
+				SetProperty(g_Keyword_Green, std::to_string((long long)color_g).c_str());
 
-	// Blue:
-	SetProperty(g_Keyword_Blue, std::to_string((long long)color_b).c_str());
+				// Blue:
+				SetProperty(g_Keyword_Blue, std::to_string((long long)color_b).c_str());
+			}
+		}
+	}
+
+	// Get current brightness
+	SendCommand("sb", true);
+	std::string brightness_str("SB.");
+	brightness = (long) atoi(_serial_answer.substr(_serial_answer.find(brightness_str) + brightness_str.length(), _serial_answer.length() - brightness_str.length()).c_str());
+
+	// Set brightness:
+	SetProperty(g_Keyword_Brightness, std::to_string((long long)brightness).c_str());
 
 	// Set Numerical Aperture:
 	SetProperty(g_Keyword_NumericalAp, std::to_string((long double)numerical_aperture).c_str());
 
 	//Set Array Dist:
 	SetProperty(g_Keyword_SetArrayDistanceMM, std::to_string((long double)array_distance_z).c_str());
+
+	return DEVICE_OK;
 }
 
 int LedArray::SetMachineMode(bool mode)
@@ -324,71 +373,179 @@ int LedArray::GetDeviceParameters()
 	// Set Properties based on JSON output
 	rapidjson::Document d;
 	d.Parse(_serial_answer.c_str());
-	assert(d.IsObject());    // Document is a JSON value represents the root of DOM. Root can be either an object or array.
 
-	// Update Read-only property [TODO: Make work!]
-	rapidjson::Value& s = d["device_name"];
-
-	// Get properties from json and set as read-only properties
-	if (d.HasMember("mac_address"))
-		CreateProperty(g_Keyword_MacAddress, d["mac_address"].GetString(), MM::String, true);
-
-	// Parse device name
-	if (d.HasMember("device_name"))
-		CreateProperty(g_Keyword_LedArrayType, d["device_name"].GetString(), MM::String, true);
-
-	// Parse LED count
-	if (d.HasMember("led_count"))
+	// Parse json if it is valid
+	if (d.IsObject())
 	{
-		led_count = d["led_count"].GetUint64();
-		SetProperty(g_Keyword_LedCount, std::to_string((long long)led_count).c_str());
+
+		// Get properties from json and set as read-only properties
+		if (d.HasMember("mac_address"))
+			SetProperty(g_Keyword_MacAddress, d["mac_address"].GetString());
+
+		// Parse device name
+		if (d.HasMember("device_name"))
+			SetProperty(g_Keyword_LedArrayType, d["device_name"].GetString());
+
+		// Parse LED count
+		if (d.HasMember("led_count"))
+		{
+			led_count = d["led_count"].GetUint64();
+			SetProperty(g_Keyword_LedCount, std::to_string((long long)led_count).c_str());
+		}
+
+		// Parse trigger input count
+		if (d.HasMember("trigger_input_count"))
+		{
+			trigger_input_count = (int)d["trigger_input_count"].GetUint64();
+			SetProperty(g_Keyword_TriggerInputCount, std::to_string((long long)trigger_input_count).c_str());
+		}
+
+		// Parse trigger output count
+		if (d.HasMember("trigger_output_count"))
+		{
+			trigger_output_count = (int)d["trigger_output_count"].GetUint64();
+			SetProperty(g_Keyword_TriggerOutputCount, std::to_string((long long)trigger_output_count).c_str());
+		}
+
+		// Parse part number
+		if (d.HasMember("part_number"))
+		{
+			part_number = (int)d["part_number"].GetUint64();
+			SetProperty(g_Keyword_PartNumber, std::to_string((long long)part_number).c_str());
+		}
+
+		// Parse serial number
+		if (d.HasMember("serial_number"))
+		{
+			serial_number = (int)d["serial_number"].GetUint64();
+			SetProperty(g_Keyword_SerialNumber, std::to_string((long long)serial_number).c_str());
+		}
+
+		// Parse bit depth
+		if (d.HasMember("bit_depth"))
+		{	
+			bit_depth = (int) d["bit_depth"].GetUint64();
+			SetProperty(g_Keyword_NativeBitDepth, std::to_string((long long)bit_depth).c_str());
+		}
+
+		// Parse color channel count
+		if (d.HasMember("color_channel_count"))
+		{	
+			color_channel_count = (int)d["color_channel_count"].GetUint64();
+
+			// Set color flag
+			array_is_color = color_channel_count > 1;
+
+			// Update property
+			SetProperty(g_Keyword_ColorChannelCount, std::to_string((long long) color_channel_count).c_str());
+		}
+
+		// Parse interface version
+		if (d.HasMember("interface_version"))
+		{
+			interface_version = d["interface_version"].GetFloat();
+			SetProperty(g_Keyword_InterfaceVersion, std::to_string((long double)interface_version).c_str());
+		}
+
+		// Parse color channels
+		if (d.HasMember("color_channel_center_wavelengths"))
+		{
+			// Parse red channel
+			if (d["color_channel_center_wavelengths"].HasMember("r"))
+				CreateProperty(g_Keyword_WavelengthRed, std::to_string((long double)d["color_channel_center_wavelengths"]["r"].GetDouble()).c_str(), MM::String, false);
+
+			// Parse green channel
+			if (d["color_channel_center_wavelengths"].HasMember("g"))
+				CreateProperty(g_Keyword_WavelengthGreen, std::to_string((long double)d["color_channel_center_wavelengths"]["g"].GetDouble()).c_str(), MM::String, false);
+
+			// Parse blue channel
+			if (d["color_channel_center_wavelengths"].HasMember("b"))
+				CreateProperty(g_Keyword_WavelengthBlue, std::to_string((long double)d["color_channel_center_wavelengths"]["b"].GetDouble()).c_str(), MM::String, false);
+		}
+
+		// Return
+		return DEVICE_OK;
+	}
+	else
+		return DEVICE_ERR;
+
+}
+
+int LedArray::ReadLedPositions()
+{
+
+	// Initialize array
+	led_positions_cartesian = new double * [led_count];
+	for (uint16_t i = 0; i < led_count; i++)
+	{
+		led_positions_cartesian[i] = new double[3];
+		led_positions_cartesian[i][0] = 0.0;
+		led_positions_cartesian[i][1] = 0.0;
+		led_positions_cartesian[i][2] = 0.0;
 	}
 
-	// Parse trigger input count
-	if (d.HasMember("trigger_input_count"))
-		CreateProperty(g_Keyword_TriggerInputCount, std::to_string((long long)d["trigger_input_count"].GetUint64()).c_str(), MM::Integer, true);
-
-	// Parse trigger output count
-	if (d.HasMember("trigger_output_count"))
-		CreateProperty(g_Keyword_TriggerOutputCount, std::to_string((long long)d["trigger_output_count"].GetUint64()).c_str(), MM::Integer, true);
-
-	// Parse part number
-	if (d.HasMember("part_number"))
-		CreateProperty(g_Keyword_PartNumber, std::to_string((long long)d["part_number"].GetUint64()).c_str(), MM::Integer, true);
-
-	// Parse serial number
-	if (d.HasMember("serial_number"))
-		CreateProperty(g_Keyword_SerialNumber, std::to_string((long long)d["serial_number"].GetUint64()).c_str(), MM::Integer, true);
-
-	// Parse bit depth
-	if (d.HasMember("bit_depth"))
-		CreateProperty(g_Keyword_NativeBitDepth, std::to_string((long long)d["bit_depth"].GetUint64()).c_str(), MM::Integer, true);
-
-	// Parse color channel count
-	if (d.HasMember("color_channel_count"))
-		CreateProperty(g_Keyword_ColorChannelCount, std::to_string((long long)d["color_channel_count"].GetUint64()).c_str(), MM::Integer, true);
-
-	// Parse interface version
-	if (d.HasMember("interface_version"))
-		CreateProperty(g_Keyword_InterfaceVersion, std::to_string((long double)d["interface_version"].GetFloat()).c_str(), MM::Float, true);
-
-	// Parse color channels
-	if (d.HasMember("color_channel_center_wavelengths"))
+	uint16_t led_positions_read = 0;
+	uint16_t led_batch_size = 10;
+	uint16_t led_batch_count = ceil((double)led_count / (double)led_batch_size);
+	for (uint16_t batch_index = 0; batch_index < led_batch_count; batch_index++)
 	{
-		// Parse red channel
-		if (d["color_channel_center_wavelengths"].HasMember("r"))
-			CreateProperty(g_Keyword_WavelengthRed, std::to_string((long double)d["color_channel_center_wavelengths"]["r"].GetDouble()).c_str(), MM::String, true);
+		// Send command
+		char buffer[20];
+		sprintf(buffer, "pledpos.%d.%d", batch_index * led_batch_size, (batch_index + 1) * led_batch_size);
+		SendCommand(buffer, true);
 
-		// Parse green channel
-		if (d["color_channel_center_wavelengths"].HasMember("g"))
-			CreateProperty(g_Keyword_WavelengthRed, std::to_string((long double)d["color_channel_center_wavelengths"]["g"].GetDouble()).c_str(), MM::String, true);
+		// Parse response as json
+		rapidjson::Document d;
+		d.Parse(_serial_answer.c_str());
 
-		// Parse blue channel
-		if (d["color_channel_center_wavelengths"].HasMember("b"))
-			CreateProperty(g_Keyword_WavelengthRed, std::to_string((long double)d["color_channel_center_wavelengths"]["b"].GetDouble()).c_str(), MM::String, true);
+		if (d.IsObject())
+		{
+			// Parse LED indicies
+			for (uint16_t led_index = batch_index * led_batch_size; led_index < min((batch_index + 1) * led_batch_size, led_count); led_index++)
+			{
+				led_positions_cartesian[led_index][0] = d["led_position_list_cartesian"][std::to_string((long long)led_index).c_str()][0].GetFloat();
+				led_positions_cartesian[led_index][1] = d["led_position_list_cartesian"][std::to_string((long long)led_index).c_str()][1].GetFloat();
+				led_positions_cartesian[led_index][2] = d["led_position_list_cartesian"][std::to_string((long long)led_index).c_str()][2].GetFloat();
+				led_positions_read += 1;
+			}
+		}
 	}
 
-	// Return
+	// Set Property to json positions
+	std::string json_str;
+	json_str += std::string("{\"led_position_list_cartesian\": {");
+	for (uint16_t i = 0; i < led_count; i++)
+	{
+		// Set tag to LED number
+		json_str += std::string("\"");
+		json_str += std::to_string((long long)i);
+		json_str += std::string("\": {");
+
+		// Add x
+		json_str += std::string("\"x\":");
+		json_str += std::to_string((long double)led_positions_cartesian[i][0]);
+		json_str += std::string(",");
+
+		// Add y
+		json_str += std::string("\"y\":");
+		json_str += std::to_string((long double)led_positions_cartesian[i][0]);
+		json_str += std::string(",");
+
+		// Add z
+		json_str += std::string("\"z\":");
+		json_str += std::to_string((long double)led_positions_cartesian[i][0]);
+		json_str += std::string("}");
+
+		if (i < (led_count - 1))
+			json_str += std::string(",");
+	}
+
+	// Get json
+	json_str += std::string("}");
+	
+	// Set json string to property
+	SetProperty(g_Keyword_LedPositions, json_str.c_str());
+
 	return DEVICE_OK;
 }
 
@@ -406,12 +563,12 @@ int LedArrayVirtualShutter::Initialize()
    // -----------------
 
    // Name
-   int ret = CreateProperty(MM::g_Keyword_Name, g_Keyword_DeviceNameVirtualShutter, MM::String, true);
+   int ret = CreateProperty(MM::g_Keyword_Name, g_Keyword_DeviceNameVirtualShutter, MM::String, false);
    if (DEVICE_OK != ret)
       return ret;
 
    // Description
-   ret = CreateProperty(MM::g_Keyword_Description, "Virtual dual shutter for turning LED Array on and off", MM::String, true);
+   ret = CreateProperty(MM::g_Keyword_Description, "Virtual dual shutter for turning LED Array on and off", MM::String, false);
    if (DEVICE_OK != ret)
       return ret;
 
@@ -595,6 +752,20 @@ int LedArray::DisplayImage() {
 		}
 	}
 	indices.erase(indices.end()-1);
+
+	return DEVICE_OK;
+}
+
+int LedArray::SetBrightness(long brightness)
+{
+	// Initialize Command
+	std::string command("sb.");
+
+	// Append Red
+	command += std::to_string((long long)brightness);
+
+	// Send Command
+	SendCommand(command.c_str(), true);
 
 	return DEVICE_OK;
 }
@@ -795,6 +966,12 @@ int LedArray::UpdatePattern(){
 		  UpdateColor(color_r, color_g, color_b);
 		  SendCommand("cdpc", true);
 	  }
+	  else if (strcmp(_pattern.c_str(), "Color Darkfield") == 0)
+	  {
+		  SetNumericalAperture(numerical_aperture);
+		  UpdateColor(color_r, color_g, color_b);
+		  SendCommand("cdf", true);
+	  }
 	  else if(_pattern == "Manual LED Indices"){
 		  if (_led_indicies.size() > 0){
 			UpdateColor(color_r, color_g, color_b);
@@ -952,6 +1129,20 @@ int LedArray::OnAnnulusWidth(MM::PropertyBase* pProp, MM::ActionType pAct)
 	  return UpdatePattern();
    }
    return DEVICE_OK;
+}
+
+int LedArray::OnBrightness(MM::PropertyBase* pProp, MM::ActionType pAct)
+{
+	if (pAct == MM::BeforeGet)
+	{
+		pProp->Set(brightness);
+	}
+	else if (pAct == MM::AfterSet)
+	{
+		pProp->Get(brightness);
+		SetBrightness(brightness);
+	}
+	return DEVICE_OK;
 }
 
 int LedArray::OnRed(MM::PropertyBase* pProp, MM::ActionType pAct)
