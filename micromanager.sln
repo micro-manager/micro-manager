@@ -430,6 +430,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ZeissAxioZoom", "DeviceAdap
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Lumencor", "DeviceAdapters\Lumencor\Lumencor.vcxproj", "{1D7C5EE9-360A-4ECD-A732-16A57D05CA2C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IlluminateLEDArray", "DeviceAdapters\IlluminateLEDArray\LEDArray.vcxproj", "{FE81C0DA-B042-4ACA-B0CF-B9ABEB687FB8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -2985,6 +2987,19 @@ Global
 		{1D7C5EE9-360A-4ECD-A732-16A57D05CA2C}.Release|Win32.Build.0 = Release|Win32
 		{1D7C5EE9-360A-4ECD-A732-16A57D05CA2C}.Release|x64.ActiveCfg = Release|x64
 		{1D7C5EE9-360A-4ECD-A732-16A57D05CA2C}.Release|x64.Build.0 = Release|x64
+
+		{FE81C0DA-B042-4ACA-B0CF-B9ABEB687FB8}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
+		{FE81C0DA-B042-4ACA-B0CF-B9ABEB687FB8}.Debug|Mixed Platforms.Build.0 = Debug|x64
+		{FE81C0DA-B042-4ACA-B0CF-B9ABEB687FB8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{FE81C0DA-B042-4ACA-B0CF-B9ABEB687FB8 .Debug|Win32.Build.0 = Debug|Win32
+		{FE81C0DA-B042-4ACA-B0CF-B9ABEB687FB8}.Debug|x64.ActiveCfg = Debug|x64
+		{FE81C0DA-B042-4ACA-B0CF-B9ABEB687FB8}.Debug|x64.Build.0 = Debug|x64
+		{FE81C0DA-B042-4ACA-B0CF-B9ABEB687FB8}.Release|Mixed Platforms.ActiveCfg = Release|x64
+		{FE81C0DA-B042-4ACA-B0CF-B9ABEB687FB8}.Release|Mixed Platforms.Build.0 = Release|x64
+		{FE81C0DA-B042-4ACA-B0CF-B9ABEB687FB8}.Release|Win32.ActiveCfg = Release|Win32
+		{FE81C0DA-B042-4ACA-B0CF-B9ABEB687FB8}.Release|Win32.Build.0 = Release|Win32
+		{FE81C0DA-B042-4ACA-B0CF-B9ABEB687FB8}.Release|x64.ActiveCfg = Release|x64
+		{FE81C0DA-B042-4ACA-B0CF-B9ABEB687FB8}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
