@@ -49,6 +49,7 @@ import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
 public class SummaryMetadataInspectorPanelController extends AbstractInspectorPanelController {
    private final JPanel panel_ = new JPanel();
    private DataProvider dataProvider_;
+   private static boolean expanded_ = false;
 
    private WeakReference<SummaryMetadata> previousMetadataRef_ =
          new WeakReference<SummaryMetadata>(null);
@@ -141,11 +142,15 @@ public class SummaryMetadataInspectorPanelController extends AbstractInspectorPa
    public boolean isVerticallyResizableByUser() {
       return true;
    }
-      
+        
+   @Override
+   public void setExpanded(boolean state) {
+      expanded_ = state;
+   }
+   
    @Override
    public boolean initiallyExpand() {
-      return false;
-      // TODO: remember last setting and restore
+      return expanded_;
    }
 
    private void updateSummaryMetadata(SummaryMetadata summaryMetadata) {

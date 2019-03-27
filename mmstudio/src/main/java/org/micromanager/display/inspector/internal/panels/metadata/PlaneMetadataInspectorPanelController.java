@@ -54,6 +54,8 @@ public final class PlaneMetadataInspectorPanelController extends AbstractInspect
 
    // Access: guarded by monitor on this
    private boolean displayChangedValuesOnly_;
+   
+   private static boolean expanded_;
 
    // Access: from background executor only; list must not be modified once set
    private TreeMap<String, String> data_ = new TreeMap<String, String>();
@@ -212,9 +214,13 @@ public final class PlaneMetadataInspectorPanelController extends AbstractInspect
    }
    
    @Override
+   public void setExpanded(boolean state) {
+      expanded_ = state;
+   }
+   
+   @Override
    public boolean initiallyExpand() {
-      return false;
-      // TODO: remember last setting and restore
+      return expanded_;
    }
    
    private void updateMetadata(Metadata metadata, boolean evenIfUnchanged) {

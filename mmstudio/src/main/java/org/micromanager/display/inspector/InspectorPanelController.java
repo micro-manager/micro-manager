@@ -23,6 +23,7 @@ public interface InspectorPanelController {
    void detachDataViewer();
    boolean isVerticallyResizableByUser();
    boolean initiallyExpand();
+   public void setExpanded(boolean status);
    
    
 }

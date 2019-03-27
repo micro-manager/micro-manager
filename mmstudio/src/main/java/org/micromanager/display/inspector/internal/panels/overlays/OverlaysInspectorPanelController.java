@@ -49,6 +49,8 @@ public final class OverlaysInspectorPanelController
    private final JPopupMenu addOverlayMenu_;
 
    private final JPanel configsPanel_;
+   
+   private static boolean expanded_ = false;
 
    // These two lists are kept colinear
    private final List<Overlay> overlays_ =
@@ -189,11 +191,15 @@ public final class OverlaysInspectorPanelController
    public JPanel getPanel() {
       return panel_;
    }
-
+  
+   @Override
+   public void setExpanded(boolean state) {
+      expanded_ = state;
+   }
+   
    @Override
    public boolean initiallyExpand() {
-      return false;
-      // TODO: remember last setting and restore
+      return expanded_;
    }
 
    @Subscribe

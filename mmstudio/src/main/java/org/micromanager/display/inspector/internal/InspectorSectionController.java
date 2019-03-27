@@ -47,14 +47,14 @@ final class InspectorSectionController implements InspectorPanelListener {
 
    public static InspectorSectionController create(
          InspectorController inspectorController,
-         InspectorPanelController panelController, boolean initiallyVisible)
+         InspectorPanelController panelController)
    {
       return new InspectorSectionController(
-            inspectorController, panelController, initiallyVisible);
+            inspectorController, panelController);
    }
 
    private InspectorSectionController(InspectorController inspectorController,
-         InspectorPanelController panelController, boolean initiallyExpanded)
+         InspectorPanelController panelController)
    {
       inspectorController_ = inspectorController;
       panelController_ = panelController;
@@ -65,7 +65,7 @@ final class InspectorSectionController implements InspectorPanelListener {
             new LC().fillX().insets("0").gridGap("0", "0")));
 
       headerLabel_ = new JLabel(panelController.getTitle(),
-            UIManager.getIcon(initiallyExpanded ?
+            UIManager.getIcon(panelController.initiallyExpand() ?
                   "Tree.expandedIcon" : "Tree.collapsedIcon"),
             SwingConstants.LEFT);
       // Ignore day/night settings for the label text, since the background
@@ -82,7 +82,8 @@ final class InspectorSectionController implements InspectorPanelListener {
             }
          });
       }
-      gearButton_.setVisible(initiallyExpanded && panelController_.getGearMenu() != null);
+      gearButton_.setVisible(panelController.initiallyExpand()
+              && panelController_.getGearMenu() != null);
 
       headerPanel_.add(headerLabel_, new CC().growX().pushX());
       headerPanel_.add(gearButton_, new CC().hideMode(2));
@@ -99,7 +100,7 @@ final class InspectorSectionController implements InspectorPanelListener {
       panel_ = new JPanel(new MigLayout(
             new LC().fill().insets("0").gridGap("0", "0")));
       panel_.add(headerPanel_, new CC().growX().pushX().wrap());
-      if (initiallyExpanded) {
+      if (panelController.initiallyExpand()) {
          panel_.add(contentPanel_, new CC().grow().push());
       }
       panel_.validate();
@@ -137,6 +138,7 @@ final class InspectorSectionController implements InspectorPanelListener {
       else {
          panel_.remove(contentPanel_);
       }
+      panelController_.setExpanded(expanded);
 
       inspectorController_.inspectorSectionDidChangeHeight(this);
    }

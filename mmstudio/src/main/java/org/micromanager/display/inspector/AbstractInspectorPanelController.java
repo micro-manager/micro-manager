@@ -111,4 +111,5 @@ public abstract class AbstractInspectorPanelController
     */
    @Override
    public abstract boolean isVerticallyResizableByUser();
+
 }

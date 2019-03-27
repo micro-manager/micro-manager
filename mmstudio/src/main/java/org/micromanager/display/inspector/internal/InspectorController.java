@@ -311,8 +311,7 @@ public final class InspectorController
                   InspectorPanelController panelController
                           = plugin.createPanelController();
                   InspectorSectionController section
-                          = InspectorSectionController.create(this, panelController,
-                                  panelController.initiallyExpand());
+                          = InspectorSectionController.create(this, panelController);
                   panelController.addInspectorPanelListener(section);
                   locatedSection = new SectionInfo(panelController, section, plugin);
                }

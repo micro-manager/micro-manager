@@ -44,6 +44,7 @@ public final class CommentsInspectorPanelController
    private boolean summaryCommentEdited_;
    private boolean planeCommentEdited_;
    private boolean programmaticallySettingText_ = false;
+   private static boolean expanded_ = false;
 
    public static AbstractInspectorPanelController create() {
       CommentsInspectorPanelController instance =
@@ -157,9 +158,13 @@ public final class CommentsInspectorPanelController
    }
    
    @Override
+   public void setExpanded(boolean status) {
+      expanded_ = status;
+   }
+   
+   @Override
    public boolean initiallyExpand() {
-      return false;
-      // TODO: remember last setting and restore
+      return expanded_;
    }
 
    private void saveSummaryComments() {

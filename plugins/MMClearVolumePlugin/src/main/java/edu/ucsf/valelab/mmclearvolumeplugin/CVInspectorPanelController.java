@@ -55,14 +55,12 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
    static public final int YAXIS = 1;
    static public final int ZAXIS = 2;
    
-   
-   //private final Studio studio_;
+
    private RangeSlider xSlider_, ySlider_, zSlider_;
    private ScrollerPanel sp_;
    private boolean animating_ = false;
    
-   //private final String USE_FOR_ALL = "Use for all";
-   //private final AtomicBoolean attachToNew_ = new AtomicBoolean(false);
+   private static boolean expanded_ = true;
    private final CVVideoRecorder recorder_;
    
    public CVInspectorPanelController() {
@@ -318,10 +316,15 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
    public JPanel getPanel() {
       return panel_;
    }
-      
+   
+   @Override
+   public void setExpanded (boolean state) {
+      expanded_ = state;
+   }
+   
    @Override
    public boolean initiallyExpand() {
-      return true;
+      return expanded_;
    }
 
 }

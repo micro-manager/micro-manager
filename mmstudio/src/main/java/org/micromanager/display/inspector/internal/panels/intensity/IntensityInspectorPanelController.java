@@ -61,6 +61,8 @@ public class IntensityInspectorPanelController
    private static final String CUSTOM = "Custom";
    
    private final JPanel panel_ = new JPanel();
+   
+   private static boolean expanded_ = true;
 
    private final JPopupMenu gearMenu_ = new JPopupMenu();
    private final JMenu gearMenuPaletteSubMenu_ =
@@ -510,10 +512,16 @@ public class IntensityInspectorPanelController
    public boolean isVerticallyResizableByUser() {
       return true;
    }
+   
+   
+   @Override
+   public void setExpanded(boolean status) {
+      expanded_ = status;
+   }
        
    @Override
    public boolean initiallyExpand() {
-      return true;
+      return expanded_;
    }
 
    @Subscribe
