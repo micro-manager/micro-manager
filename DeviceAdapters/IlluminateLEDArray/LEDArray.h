@@ -263,6 +263,7 @@ public:
 	  int OnLED(MM::PropertyBase* pPropt, MM::ActionType eAct);
 	  int OnReset(MM::PropertyBase* pPropt, MM::ActionType eAct);
 	  int OnCommand(MM::PropertyBase* pPropt, MM::ActionType eAct);
+	  int OnBrightness(MM::PropertyBase* pPropt, MM::ActionType eAct);
 
 private:
    
@@ -289,12 +290,18 @@ private:
 	double numerical_aperture;
 	double annulus_width;
 	double array_distance_z;
+	double interface_version;
 	long led_count;
-	long color_r, color_g, color_b;
+	int color_channel_count, bit_depth;
+	int trigger_input_count, trigger_output_count;
+	int part_number, serial_number;
+	long color_r, color_g, color_b, brightness;
 	double * * led_positions_cartesian;
+	bool array_is_color;
 
 	// Action functions with LEDs:
     int UpdateColor(long redint, long greenint, long blueint);
+	int SetBrightness(long brightness);
 	int DrawLedList(const char * led_list_char);
 	int DrawDpc(std::string type);
 	int DrawAnnulus(double minna, double maxna);
@@ -309,7 +316,8 @@ private:
 	int SetMachineMode(bool mode);
 	int SendCommand(const char * command, bool get_response);
 	int GetResponse();
-	int SyncCurrentParameters();
+	int SyncState();
+	int ReadLedPositions();
 
 	unsigned char lastModVal_;
 	
