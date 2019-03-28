@@ -20,7 +20,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{FE81C0DA-B042-4ACA-B0CF-B9ABEB687FB8}</ProjectGuid>
-    <RootNamespace>Arduino</RootNamespace>
+    <RootNamespace>IlluminateLedArray</RootNamespace>
     <ProjectName>IlluminateLedArray</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -111,12 +111,6 @@
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
     </Link>
-    <PostBuildEvent>
-      <Message>
-      </Message>
-      <Command>copy "$(TargetPath)" "C:\Program Files\Micro-Manager-1.4"
-copy "$(TargetPath)" "C:\Program Files\Micro-Manager-2.0beta"</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -152,12 +146,6 @@ copy "$(TargetPath)" "C:\Program Files\Micro-Manager-2.0beta"</Command>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
     </Link>
-    <PostBuildEvent>
-      <Message>
-      </Message>
-      <Command>copy "$(TargetPath)" "C:\Program Files\Micro-Manager-1.4"
-copy "$(TargetPath)" "C:\Program Files\Micro-Manager-2.0beta"</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="LEDArray.cpp" />
