@@ -1,0 +1,146 @@
+/**
+ * Script to overlay data obtained at different positions / magnifications / images sizes
+ * Primary application is to overlay data obtained with TIRF and confocal
+ * (using different side port and cameras), but hopefully able to do more than just that
+ * 
+ * Copyright Regents of the University of California 
+ * 
+ * Nico Stuurman, March 2019
+ * 
+ */
+
+
+
+
+import org.micromanager.data.Coordinates;
+import org.micromanager.data.DataProvider;
+import org.micromanager.data.internal.DefaultImage;
+
+import boofcv.struct.image.ImageGray;
+import boofcv.struct.image.GrayU8;
+import boofcv.struct.image.GrayU16;
+import boofcv.alg.misc.GImageMiscOps;
+
+displays = mm.displays().getAllDataViewers();
+
+if (displays.size() != 2) {
+	mm.scripter().message("This scripts is stupid and can only work with 2 open images");
+	return;
+}
+
+// calculate size of new image
+data1 = displays.get(0).getDataProvider();
+data2 = displays.get(1).getDataProvider();
+zoom = displays.get(0).getDisplaySettings().getZoomRatio();
+if (displays.get(1).getDisplaySettings().getZoomRatio() < zoom) { 
+	zoom = displays.get(1).getDisplaySettings().getZoomRatio(); 
+}
+
+smd1 = data1.getSummaryMetadata();
+smd2 = data2.getSummaryMetadata();
+stageP1 = smd1.getStagePositionList();
+stageP2 = smd2.getStagePositionList();
+maxCoords1 = data1.getMaxIndices();
+maxCoord2 = data2.getMaxIndices();
+
+img1 = data1.getAnyImage();
+img2 = data2.getAnyImage();
+imgMD1 = img1.getMetadata();
+imgMD2 = img2.getMetadata();
+pSize1 = imgMD1.getPixelSizeUm();
+pSize2 = imgMD2.getPixelSizeUm();
+smallestPSize = pSize1;
+if (pSize2 < smallestPSize) { smallestPSize = pSize2; }
+
+bytesPerPixel = img1.getBytesPerPixel();
+if (img2.getBytesPerPixel() != bytesPerPixel) {
+	mm.scripter().message("Images differ in bytes per pixel");
+	return;
+}
+
+DataProvider[] datas = {data1, data2};
+
+
+// TODO: take stage orientation into account.
+// Basically needs the affine transform in the metadata
+
+cb = Coordinates.builder().t(0).c(0).p(0).z(0);
+// need to initialize these parameters with something sensible
+xMinUm = img1.getMetadata().getXPositionUm() - (0.5 * img1.getWidth() * pSize1);
+yMinUm = img1.getMetadata().getYPositionUm() - (0.5 * img1.getHeight() * pSize1);
+xMaxUm = img1.getMetadata().getXPositionUm() + (0.5 * img1.getWidth() * pSize1);
+yMaxUm = img1.getMetadata().getXPositionUm() + (0.5 * img1.getHeight() * pSize1);
+
+for (data : datas ) {
+	for (int p = 0; p <= data.getMaxIndices().getP(); p++) {
+		img = data.getImage(cb.p(p).build());
+		pSize = img.getMetadata().getPixelSizeUm();
+		tmp = img.getMetadata().getXPositionUm() - (0.5 * img.getWidth() * pSize);
+		if (tmp < xMinUm) { xMinUm = tmp; }
+		tmp = img.getMetadata().getYPositionUm() - (0.5 * img.getHeight() * pSize);
+		if (tmp < yMinUm) { yMinUm = tmp; }
+		tmp = img.getMetadata().getXPositionUm() + (0.5 * img.getWidth() * pSize);
+		if (tmp > xMaxUm) { xMaxUm = tmp; }
+		tmp = img.getMetadata().getYPositionUm() + (0.5 * img.getHeight() * pSize);
+		if (tmp > yMaxUm) { yMaxUm = tmp; }
+	}
+}
+//mm.scripter().message("xMinUm: " + xMinUm + ", yMinUm: " + yMinUm);
+
+widthUm = xMaxUm - xMinUm;
+heightUm = yMaxUm - yMinUm;
+centerXUm = xMin + (widthUm / 2.0);
+centerYUm = yMin + (heightUm / 2.0);
+
+widthPixels = (int) (widthUm / smallestPSize);
+heightPixels = (int) (heightUm / smallestPSize);
+//mm.scripter().message("widthPixels: " + widthPixels + ", heightPixels: " + heightPixels);
+
+
+
+targetStore = mm.data().createRAMDatastore();
+
+int c = 0;
+for (data: datas) {
+	ImageGray newImgBoof, oldImgBoof;
+	newMetadataB  = data.getImage(cb.build()).getMetadata().
+				copyBuilderWithNewUUID().pixelSizeUm(smallestPSize);
+	if (bytesPerPixel == 1) {
+		newImgBoof = new GrayU8(widthPixels, heightPixels);
+	} else { // bytesPerPixel == 2
+		newImgBoof = new GrayU16 (widthpixels, heightPixels);
+	}
+	for (int p = 0; p <= data.getMaxIndices().getP(); p++) {
+		img = data.getImage(cb.p(p).build());
+		pSize = img.getMetadata().getPixelSizeUm();
+		tmpXMinUm = img.getMetadata().getXPositionUm() - (0.5 * img.getWidth() * pSize);
+		tmpYMinUm = img.getMetadata().getYPositionUm() - (0.5 * img.getHeight() * pSize);
+		xMinPixel = (int) ((tmpXMinUm - xMinUm) / smallestPSize);
+		yMinPixel = (int) ((tmpYMinUm - yMinUm) / smallestPSize);
+		//mm.scripter().message("c: " + c + ", p:" + p + ", xMinPixel: " + xMinPixel + ", yminPixel: " + yMinPixel);
+		if (bytesPerPixel == 1) {
+			oldImgBoof = new GrayU8(img.getWidth(), img.getHeight());
+		} else { // bytesPerPixel == 2
+			oldImgBoof = new GrayU16 (img.getWidth(), img.getHeight());
+		}
+		oldImgBoof.setData(img.getRawPixels());
+		GImageMiscOps.copy(0, 0, xMinPixel, yMinPixel, img.getWidth(), img.getHeight(),
+					oldImgBoof, newImgBoof);
+	}	
+	newImage = new DefaultImage(newImgBoof.getData(), widthPixels, heightPixels, 
+				bytesPerPixel, 1, cb.p(0).c(c).build(), 
+				newMetadataB.build());
+	targetStore.putImage(newImage);
+	c++;	
+}
+
+disp = mm.displays().createDisplay(targetStore);
+dispSettings = disp.getDisplaySettings();
+dpb = dispSettings.copyBuilder();
+newDP = dpb.zoomRatio(zoom).colorModeComposite().
+	channel(0, dispSettings.getChannelSettings(0).copyBuilder().colorGreen().build()).
+	channel(1, dispSettings.getChannelSettings(1).copyBuilder().colorRed().build()).
+	build();
+disp.compareAndSetDisplaySettings(dispSettings, newDP);
+mm.displays().manage(targetStore);
+targetStore.freeze();
