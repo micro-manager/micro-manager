@@ -2,12 +2,12 @@
 	<import file="../../buildscripts/deviceadapter.xml"/>
 
 	<target name="install-Win32">
-		<copy todir="${mm.dll.installdir}" file="{mm.basedir}/../3rdparty/Lumencor/LumencorAPI/bin_Win32/LightEngineAPI.dll"/>
-		<copy todir="${mm.dll.installdir}" file="{mm.basedir}/../3rdparty/Lumencor/LumencorAPI/bin_Win32/LumencorDLL32.dll"/>
+		<copy todir="${mm.dll.installdir}" file="${mm.basedir}/../3rdparty/Lumencor/LumencorAPI/bin_Win32/LightEngineAPI.dll"/>
+		<copy todir="${mm.dll.installdir}" file="${mm.basedir}/../3rdparty/Lumencor/LumencorAPI/bin_Win32/LumencorDLL32.dll"/>
 	</target>
 
 	<target name="install-x64">
-		<copy todir="${mm.dll.installdir}" file="{mm.basedir}/../3rdparty/Lumencor/LumencorAPI/bin_x64/LightEngineAPI.dll"/>
-		<copy todir="${mm.dll.installdir}" file="{mm.basedir}/../3rdparty/Lumencor/LumencorAPI/bin_x64/LumencorDLL32.dll"/>
+		<copy todir="${mm.dll.installdir}" file="${mm.basedir}/../3rdparty/Lumencor/LumencorAPI/bin_x64/LightEngineAPI.dll"/>
+		<copy todir="${mm.dll.installdir}" file="${mm.basedir}/../3rdparty/Lumencor/LumencorAPI/bin_x64/LumencorDLL64.dll"/>
 	</target>
 </project>
