@@ -99,10 +99,6 @@
       <AdditionalLibraryDirectories>../../../3rdparty/Lumencor/LumencorAPI/lib_$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>LightEngineAPI.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
-    <PostBuildEvent>
-      <Command>copy ..\..\..\3rdparty\Lumencor\LumencorAPI\bin_$(Platform)\LightEngineAPI.dll $(SolutionDir)stage\$(Configuration)\$(Platform)\LightEngineAPI.dll
-copy ..\..\..\3rdparty\Lumencor\LumencorAPI\bin_$(Platform)\LumencorDLL32.dll $(SolutionDir)stage\$(Configuration)\$(Platform)\LumencorDLL32.dll</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Midl>
@@ -126,10 +122,6 @@ copy ..\..\..\3rdparty\Lumencor\LumencorAPI\bin_$(Platform)\LumencorDLL32.dll $(
       <AdditionalLibraryDirectories>../../../3rdparty/Lumencor/LumencorAPI/lib_$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>LightEngineAPI.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
-    <PostBuildEvent>
-      <Command>copy ..\..\..\3rdparty\Lumencor\LumencorAPI\bin_$(Platform)\LightEngineAPI.dll $(SolutionDir)stage\$(Configuration)\$(Platform)\
-copy ..\..\..\3rdparty\Lumencor\LumencorAPI\bin_$(Platform)\LumencorDLL64.dll $(SolutionDir)stage\$(Configuration)\$(Platform)\</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -149,10 +141,6 @@ copy ..\..\..\3rdparty\Lumencor\LumencorAPI\bin_$(Platform)\LumencorDLL64.dll $(
       <AdditionalLibraryDirectories>../../../3rdparty/Lumencor/LumencorAPI/lib_$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>LightEngineAPI.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
-    <PostBuildEvent>
-      <Command>copy ..\..\..\3rdparty\Lumencor\LumencorAPI\bin_$(Platform)\LightEngineAPI.dll $(SolutionDir)stage\$(Configuration)\$(Platform)\
-copy ..\..\..\3rdparty\Lumencor\LumencorAPI\bin_$(Platform)\LumencorDLL32.dll $(SolutionDir)stage\$(Configuration)\$(Platform)\</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Midl>
@@ -175,10 +163,6 @@ copy ..\..\..\3rdparty\Lumencor\LumencorAPI\bin_$(Platform)\LumencorDLL32.dll $(
       <AdditionalLibraryDirectories>../../../3rdparty/Lumencor/LumencorAPI/lib_$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>LightEngineAPI.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
-    <PostBuildEvent>
-      <Command>copy ..\..\..\3rdparty\Lumencor\LumencorAPI\bin_$(Platform)\LightEngineAPI.dll $(SolutionDir)stage\$(Configuration)\$(Platform)\
-copy ..\..\..\3rdparty\Lumencor\LumencorAPI\bin_$(Platform)\LumencorDLL64.dll $(SolutionDir)stage\$(Configuration)\$(Platform)\</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Lumencor.cpp" />
