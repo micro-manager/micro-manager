@@ -357,21 +357,21 @@ public final class MultipageTiffReader {
          //if data has been intentionally overwritten, this gives the most current version
          DefaultCoords.Builder builder = new DefaultCoords.Builder();
          builder.channel(channel)
-               .z(slice)
-               .time(frame)
-               .stagePosition(position);
+                 .z(slice)
+                 .time(frame)
+                 .stagePosition(position);
          coordsToOffset_.put(builder.build(), imageOffset);
       }
    }
 
    private IFDData readIFD(long byteOffset) throws IOException {
-      ByteBuffer buff = readIntoBuffer(byteOffset,2);
+      ByteBuffer buff = readIntoBuffer(byteOffset, 2);
       int numEntries = buff.getChar(0);
 
-      ByteBuffer entries = readIntoBuffer(byteOffset + 2, numEntries*12 + 4).order(byteOrder_);
+      ByteBuffer entries = readIntoBuffer(byteOffset + 2, numEntries * 12 + 4).order(byteOrder_);
       IFDData data = new IFDData();
       for (int i = 0; i < numEntries; i++) {
-         IFDEntry entry = readDirectoryEntry(i*12, entries);
+         IFDEntry entry = readDirectoryEntry(i * 12, entries);
          if (entry.tag == MM_METADATA) {
             data.mdOffset = entry.value;
             data.mdLength = entry.count;
@@ -379,14 +379,14 @@ public final class MultipageTiffReader {
             data.pixelOffset = entry.value;
          } else if (entry.tag == STRIP_BYTE_COUNTS) {
             data.bytesPerImage = entry.value;
-         } 
+         }
       }
-      data.nextIFD = unsignInt(entries.getInt(numEntries*12));
-      data.nextIFDOffsetLocation = byteOffset + 2 + numEntries*12;
-      if (data.pixelOffset == 0 || data.bytesPerImage == 0 ||
-            data.mdOffset == 0 || data.mdLength == 0) {
-         throw new IOException("Failed to read image from file at offset " +
-               byteOffset);
+      data.nextIFD = unsignInt(entries.getInt(numEntries * 12));
+      data.nextIFDOffsetLocation = byteOffset + 2 + numEntries * 12;
+      if (data.pixelOffset == 0 || data.bytesPerImage == 0
+              || data.mdOffset == 0 || data.mdLength == 0) {
+         throw new IOException("Failed to read image from file at offset "
+                 + byteOffset);
       }
       //ReportingUtils.logError("At " + byteOffset + " read data " + data);
       return data;
@@ -402,7 +402,7 @@ public final class MultipageTiffReader {
    }
 
    private Image readImage(IFDData data) throws IOException {
-      ByteBuffer pixelBuffer = ByteBuffer.allocate( (int) data.bytesPerImage).order(byteOrder_);
+      ByteBuffer pixelBuffer = ByteBuffer.allocate((int) data.bytesPerImage).order(byteOrder_);
       ByteBuffer mdBuffer = ByteBuffer.allocate((int) data.mdLength).order(byteOrder_);
       fileChannel_.read(pixelBuffer, data.pixelOffset);
       fileChannel_.read(mdBuffer, data.mdOffset);
@@ -413,73 +413,77 @@ public final class MultipageTiffReader {
       reader.setLenient(true);
       JsonElement mdGson = parser.parse(reader);
 
-      PropertyMap formatPmap = NonPropertyMapJSONFormats.imageFormat().
-            fromGson(mdGson);
-      Coords coords = DefaultCoords.fromPropertyMap(
-            NonPropertyMapJSONFormats.coords().fromGson(mdGson));
-      Metadata metadata = DefaultMetadata.fromPropertyMap(
-            NonPropertyMapJSONFormats.metadata().fromGson(mdGson));
+      try {
+         PropertyMap formatPmap = NonPropertyMapJSONFormats.imageFormat().
+                 fromGson(mdGson);
+         Coords coords = DefaultCoords.fromPropertyMap(
+                 NonPropertyMapJSONFormats.coords().fromGson(mdGson));
+         Metadata metadata = DefaultMetadata.fromPropertyMap(
+                 NonPropertyMapJSONFormats.metadata().fromGson(mdGson));
 
-      // Usually we get the width, height, and pixel type from the image (plane)
-      // metadata. If it's not there, we use the values found in the summary
-      // metadata.
-
-      int width = formatPmap.getInteger(PropertyKey.WIDTH.key(), 0);
-      int height = formatPmap.getInteger(PropertyKey.HEIGHT.key(), 0);
-      if (width < 1 || height < 1) {
-         width = imageFormatReadFromSummary_.getInteger(PropertyKey.WIDTH.key(), 0);
-         height = imageFormatReadFromSummary_.getInteger(PropertyKey.HEIGHT.key(), 0);
+         // Usually we get the width, height, and pixel type from the image (plane)
+         // metadata. If it's not there, we use the values found in the summary
+         // metadata.
+         int width = formatPmap.getInteger(PropertyKey.WIDTH.key(), 0);
+         int height = formatPmap.getInteger(PropertyKey.HEIGHT.key(), 0);
          if (width < 1 || height < 1) {
-            // TODO We should probably try the IFD before giving up
-            throw new IOException("Cannot find image width and height");
+            width = imageFormatReadFromSummary_.getInteger(PropertyKey.WIDTH.key(), 0);
+            height = imageFormatReadFromSummary_.getInteger(PropertyKey.HEIGHT.key(), 0);
+            if (width < 1 || height < 1) {
+               // TODO We should probably try the IFD before giving up
+               throw new IOException("Cannot find image width and height");
+            }
+            formatPmap = formatPmap.copyBuilder().
+                    putInteger(PropertyKey.WIDTH.key(), width).
+                    putInteger(PropertyKey.HEIGHT.key(), height).
+                    build();
          }
-         formatPmap = formatPmap.copyBuilder().
-               putInteger(PropertyKey.WIDTH.key(), width).
-               putInteger(PropertyKey.HEIGHT.key(), height).
-               build();
-      }
 
-      PixelType pixelType = formatPmap.getStringAsEnum(
-            PropertyKey.PIXEL_TYPE.key(), PixelType.class, null);
-      if (pixelType == null) {
-         pixelType = imageFormatReadFromSummary_.getStringAsEnum(
-               PropertyKey.PIXEL_TYPE.key(), PixelType.class, null);
+         PixelType pixelType = formatPmap.getStringAsEnum(
+                 PropertyKey.PIXEL_TYPE.key(), PixelType.class, null);
          if (pixelType == null) {
-            // TODO We should probably try the IFD before giving up
-            throw new IOException("Cannot find image width and height");
+            pixelType = imageFormatReadFromSummary_.getStringAsEnum(
+                    PropertyKey.PIXEL_TYPE.key(), PixelType.class, null);
+            if (pixelType == null) {
+               // TODO We should probably try the IFD before giving up
+               throw new IOException("Cannot find image width and height");
+            }
+            formatPmap = formatPmap.copyBuilder().putEnumAsString(
+                    PropertyKey.PIXEL_TYPE.key(), pixelType).build();
          }
-         formatPmap = formatPmap.copyBuilder().putEnumAsString(
-               PropertyKey.PIXEL_TYPE.key(), pixelType).build();
-      }
 
-      // TODO We should avoid converting to Java array and back, instead using
-      // a nio buffer directly as the Image storage (even better if memory
-      // mapped).
-
-      switch (pixelType) {
-         case GRAY8:
-            return new DefaultImage(pixelBuffer.array(), formatPmap,
-                  coords, metadata);
-         case GRAY16:
-            short[] pixels16 = new short[pixelBuffer.capacity() / 2];
-            for (int i = 0; i < pixels16.length; i++ ) {
-               pixels16[i] = pixelBuffer.getShort(i * 2);
-            }
-            return new DefaultImage(pixels16, formatPmap, coords, metadata);
-         case RGB32:
-            byte[] pixelsARGB = new byte[(int) (4 * data.bytesPerImage / 3)];
-            int i = 0;
-            for (byte b : pixelBuffer.array()) {
-               pixelsARGB[i] = b;
-               i++;
-               if ((i + 1) % 4 == 0) {
-                  pixelsARGB[i] = 0;
-                  i++;
+         // TODO We should avoid converting to Java array and back, instead using
+         // a nio buffer directly as the Image storage (even better if memory
+         // mapped).
+         switch (pixelType) {
+            case GRAY8:
+               return new DefaultImage(pixelBuffer.array(), formatPmap,
+                       coords, metadata);
+            case GRAY16:
+               short[] pixels16 = new short[pixelBuffer.capacity() / 2];
+               for (int i = 0; i < pixels16.length; i++) {
+                  pixels16[i] = pixelBuffer.getShort(i * 2);
                }
-            }
-            return new DefaultImage(pixelsARGB, formatPmap, coords, metadata);
-         default:
-            throw new IOException("Unknown pixel type: " + pixelType.name());
+               return new DefaultImage(pixels16, formatPmap, coords, metadata);
+            case RGB32:
+               byte[] pixelsARGB = new byte[(int) (4 * data.bytesPerImage / 3)];
+               int i = 0;
+               for (byte b : pixelBuffer.array()) {
+                  pixelsARGB[i] = b;
+                  i++;
+                  if ((i + 1) % 4 == 0) {
+                     pixelsARGB[i] = 0;
+                     i++;
+                  }
+               }
+               return new DefaultImage(pixelsARGB, formatPmap, coords, metadata);
+            default:
+               throw new IOException("Unknown pixel type: " + pixelType.name());
+         }
+      } catch (IllegalStateException ise) {
+
+         // can be thrown when meatadata are bad, todo: report
+         return null;
       }
    }
 
