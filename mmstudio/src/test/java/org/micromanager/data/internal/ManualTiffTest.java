@@ -31,6 +31,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
@@ -85,11 +86,12 @@ public class ManualTiffTest {
             new MultiStagePosition("some xy stage", 24.3, 43.2, "some z stage", 1.01),
             new MultiStagePosition("some other xy stage", 99.8, 88.9, "some other z stage", 2.02)
          })
-         .userData((new DefaultPropertyMap.Builder()).putString("Ha ha I'm some user data", "and I'm the value").putInt("I'm a number", 42).build());
+         .userData((PropertyMaps.builder()).putString("Ha ha I'm some user data", "and I'm the value").
+                 putInteger("I'm a number", 42).build());
       SUMMARIES.put(ALPHA2_PATH, summary.build());
 
       DefaultCoords.Builder imageCoords = new DefaultCoords.Builder();
-      imageCoords.channel(0).stagePosition(0).time(0).z(0);
+      imageCoords.c(0).p(0).t(0).z(0);
       DefaultMetadata.Builder imageMetadata = new DefaultMetadata.Builder();
       imageMetadata.binning(1).bitDepth(16)
          .positionName("Pos0").pixelSizeUm(1.0)
@@ -106,7 +108,7 @@ public class ManualTiffTest {
          // data entry. We do not fail the test if the data we look at has
          // more information than what we look for, only for missing data
          // or mismatches.
-         .scopeData((new DefaultPropertyMap.Builder())
+         .scopeData((PropertyMaps.builder())
                .putString("Objective-Name", "DObjective")
                .putString("Path-HubID", "DHub")
                .putString("Core-Focus", "Z")
@@ -116,16 +118,16 @@ public class ManualTiffTest {
                .putString("Camera-TestProperty1", "0.0000")
                .putString("Shutter-State", "0")
                .putString("Camera-Exposure", "10.0000").build())
-         .userData((new DefaultPropertyMap.Builder())
-               .putStringArray("Stooges",
+         .userData((PropertyMaps.builder())
+               .putStringList("Stooges",
                   new String[] {"Larry", "Moe", "Curly"})
-               .putIntArray("randoms", new Integer[] {42, 17})
+               .putIntegerList("randoms", 42, 17)
                .putLong("fixed", new Long(4867))
-               .putLongArray("also fixed", new Long[] {new Long(48), new Long(67)})
+               .putLongList("also fixed", new Long(48), new Long(67))
                .putDouble("random/100", .42)
-               .putDoubleArray("a key", new Double[] {59.44, 44.59})
+               .putDoubleList("a key", 59.44, 44.59)
                .putBoolean("data entry is fun", false)
-               .putBooleanArray("have some bools", new Boolean[] {true, false, false, true}).build())
+               .putBooleanList("have some bools", true, false, false, true).build())
          .uuid(new UUID(42, 17))
          .xPositionUm(new Double(128)).yPositionUm(new Double(256))
          .zPositionUm(new Double(512));

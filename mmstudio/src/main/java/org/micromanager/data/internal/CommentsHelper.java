@@ -22,6 +22,7 @@ package org.micromanager.data.internal;
 
 import java.io.IOException;
 import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.data.Annotation;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
@@ -39,6 +40,9 @@ public final class CommentsHelper {
    /**
     * Returns the summary comment for the specified Datastore, or "" if it
     * does not exist.
+    * @param store Datastore from where to retrieve the comment
+    * @return comment text
+    * @throws java.io.IOException
     */
    public static String getSummaryComment(Datastore store) throws IOException {
       if (!store.hasAnnotation(COMMENTS_FILE)) {
@@ -49,12 +53,15 @@ public final class CommentsHelper {
 
    /**
     * Write a new summary comment for the given Datastore.
+    * @param store Datastore to whic to add the summary comment
+    * @param comment text to be added to the metadata
+    * @throws java.io.IOException
     */
    public static void setSummaryComment(Datastore store, String comment) throws IOException {
       Annotation annotation = store.getAnnotation(COMMENTS_FILE);
       PropertyMap prop = annotation.getGeneralAnnotation();
       if (prop == null) {
-         prop = new DefaultPropertyMap.Builder().build();
+         prop = PropertyMaps.builder().build();
       }
       prop = prop.copy().putString(COMMENTS_KEY, comment).build();
       annotation.setGeneralAnnotation(prop);
@@ -62,7 +69,11 @@ public final class CommentsHelper {
 
    /**
     * Returns the comment for the specified Image in the specified Datastore,
-    * or "" if it does not exist.
+    * or empty string if it does not exist.
+    * @param store Datastore 
+    * @param coords
+    * @return 
+    * @throws java.io.IOException
     */
    public static String getImageComment(Datastore store, Coords coords) throws IOException {
       if (!store.hasAnnotation(COMMENTS_FILE)) {
@@ -78,15 +89,19 @@ public final class CommentsHelper {
 
    /**
     * Write a new image comment for the given Datastore.
+    * @param store Datastore that will receive the comment
+    * @param coords Specifies which image will receive the comment
+    * @param comment Text to add to the image
+    * @throws java.io.IOException
     */
    public static void setImageComment(Datastore store, Coords coords,
          String comment) throws IOException {
       Annotation annotation = store.getAnnotation(COMMENTS_FILE);
       PropertyMap prop = annotation.getImageAnnotation(coords);
       if (prop == null) {
-         prop = new DefaultPropertyMap.Builder().build();
+         prop = PropertyMaps.builder().build();
       }
-      prop = prop.copy().putString(COMMENTS_KEY, comment).build();
+      prop = prop.copyBuilder().putString(COMMENTS_KEY, comment).build();
       annotation.setImageAnnotation(coords, prop);
    }
 
@@ -97,6 +112,9 @@ public final class CommentsHelper {
 
    /**
     * Return true if there's a comments annotation.
+    * @param store
+    * @return true if there's a comments annotation
+    * @throws java.io.IOException
     */
    public static boolean hasAnnotation(Datastore store) throws IOException {
       return store.hasAnnotation(COMMENTS_FILE);
@@ -104,6 +122,8 @@ public final class CommentsHelper {
 
    /**
     * Create a new comments annotation.
+    * @param store
+    * @throws java.io.IOException
     */
    public static void createAnnotation(Datastore store) throws IOException {
       //store.createNewAnnotation(COMMENTS_FILE       // throw new UnsupportedOperationException("TODO");
