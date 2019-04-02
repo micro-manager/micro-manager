@@ -69,7 +69,7 @@ cb = Coordinates.builder().t(0).c(0).p(0).z(0);
 xMinUm = img1.getMetadata().getXPositionUm() - (0.5 * img1.getWidth() * pSize1);
 yMinUm = img1.getMetadata().getYPositionUm() - (0.5 * img1.getHeight() * pSize1);
 xMaxUm = img1.getMetadata().getXPositionUm() + (0.5 * img1.getWidth() * pSize1);
-yMaxUm = img1.getMetadata().getXPositionUm() + (0.5 * img1.getHeight() * pSize1);
+yMaxUm = img1.getMetadata().getYPositionUm() + (0.5 * img1.getHeight() * pSize1);
 
 for (data : datas ) {
 	for (int p = 0; p <= data.getMaxIndices().getP(); p++) {
@@ -89,11 +89,11 @@ for (data : datas ) {
 
 widthUm = xMaxUm - xMinUm;
 heightUm = yMaxUm - yMinUm;
-centerXUm = xMin + (widthUm / 2.0);
-centerYUm = yMin + (heightUm / 2.0);
+centerXUm = xMinUm + (widthUm / 2.0);
+centerYUm = yMinUm + (heightUm / 2.0);
 
-widthPixels = (int) (widthUm / smallestPSize);
-heightPixels = (int) (heightUm / smallestPSize);
+widthPixels = (int) (widthUm / smallestPSize) + 1;
+heightPixels = (int) (heightUm / smallestPSize) + 1;
 //mm.scripter().message("widthPixels: " + widthPixels + ", heightPixels: " + heightPixels);
 
 
@@ -102,19 +102,22 @@ targetStore = mm.data().createRAMDatastore();
 
 int c = 0;
 for (data: datas) {
+	cb.t(0).c(0).p(0).z(0);
 	ImageGray newImgBoof, oldImgBoof;
 	newMetadataB  = data.getImage(cb.build()).getMetadata().
 				copyBuilderWithNewUUID().pixelSizeUm(smallestPSize);
 	if (bytesPerPixel == 1) {
 		newImgBoof = new GrayU8(widthPixels, heightPixels);
 	} else { // bytesPerPixel == 2
-		newImgBoof = new GrayU16 (widthpixels, heightPixels);
+		newImgBoof = new GrayU16 (widthPixels, heightPixels);
 	}
 	for (int p = 0; p <= data.getMaxIndices().getP(); p++) {
 		img = data.getImage(cb.p(p).build());
 		pSize = img.getMetadata().getPixelSizeUm();
 		tmpXMinUm = img.getMetadata().getXPositionUm() - (0.5 * img.getWidth() * pSize);
 		tmpYMinUm = img.getMetadata().getYPositionUm() - (0.5 * img.getHeight() * pSize);
+		
+		mm.scripter().message("" + tmpXMinUm + ", " + xMinUm + ", " + smallestPSize);
 		xMinPixel = (int) ((tmpXMinUm - xMinUm) / smallestPSize);
 		yMinPixel = (int) ((tmpYMinUm - yMinUm) / smallestPSize);
 		//mm.scripter().message("c: " + c + ", p:" + p + ", xMinPixel: " + xMinPixel + ", yminPixel: " + yMinPixel);
@@ -124,6 +127,7 @@ for (data: datas) {
 			oldImgBoof = new GrayU16 (img.getWidth(), img.getHeight());
 		}
 		oldImgBoof.setData(img.getRawPixels());
+		mm.scripter().message("" + xMinPixel + ", " + yMinPixel);
 		GImageMiscOps.copy(0, 0, xMinPixel, yMinPixel, img.getWidth(), img.getHeight(),
 					oldImgBoof, newImgBoof);
 	}	
