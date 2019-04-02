@@ -251,7 +251,7 @@ public final class MMImageCanvas extends ImageCanvas
       // ImageJ's implementation sets the dest size, source rect, and zoom in
       // different orders depending on current state, so cannot be fixed.
       // We implement our own zoom in.
-      parent_.mm2ijZoomIn(); // TODO Take into account mouse position
+      parent_.mm2ijZoomIn(centerScreenX, centerScreenY); // TODO Take into account mouse position
    }
 
    @Override

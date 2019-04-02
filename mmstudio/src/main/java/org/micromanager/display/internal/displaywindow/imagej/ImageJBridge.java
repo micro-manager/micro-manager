@@ -742,10 +742,50 @@ public final class ImageJBridge {
       canvas_.setSize(newIdealCanvasSize);
       canvas_.repaint();
    }
+   
+   @MustCallOnEDT
+   public void mm2ijSetZoom(double factor, int centerScreenX, int centerScreenY) {
+      double originalFactor = getIJZoom();
+      if (factor == originalFactor) {
+         return;
+      }
+
+      // We need to manually adjust the source rect of the ImageCanvas's view
+      // port. This requires knowledge of the size of the canvas _after_ the
+      // zoom has changed -- information we don't yet have. However, we
+      // separate the zooming from the later window (and canvas) size
+      // adjustment, so here we only need to compute the _ideal_ canvas size
+      // after the zoom. If done right (all on the EDT), the window size
+      // adjustment should happen before any repaint occurs.
+      Dimension newIdealCanvasSize =
+            computeIdealCanvasSizeAfterZoom(factor, originalFactor,
+                  getMMWidth(), getMMHeight(),
+                  canvas_.getSize().width, canvas_.getSize().height);
+
+      // Center the new source rect where the precious source rect was, to the
+      // extent it fits in the image
+      Rectangle newSourceRect = computeSourceRect(factor,
+              centerScreenX / originalFactor, centerScreenY / originalFactor,
+            getMMWidth(), getMMHeight(),
+            (int) Math.min(canvas_.getPreferredSize().getWidth(), newIdealCanvasSize.width), 
+            (int) Math.min(canvas_.getPreferredSize().getHeight(), newIdealCanvasSize.height) );
+
+      // Make sure to update zoom and source rect before setting size, since
+      // setSize necessarily must "fix" the source rect.
+      canvas_.setMagnification(factor);
+      canvas_.setSourceRect(newSourceRect);
+      canvas_.setSize(newIdealCanvasSize);
+      canvas_.repaint();
+   }
 
    @MustCallOnEDT
    public void mm2ijZoomIn() {
       mm2ijSetZoom(ImageCanvas.getHigherZoomLevel(getIJZoom()));
+   }
+   
+   @MustCallOnEDT
+   public void mm2ijZoomIn(int centerX, int centerY) {
+      mm2ijSetZoom(ImageCanvas.getHigherZoomLevel(getIJZoom()), centerX, centerY);
    }
 
    @MustCallOnEDT
@@ -793,12 +833,24 @@ public final class ImageJBridge {
       }
       return ret;
    }
-
+   
    // dst width and height must not be larger than image
    private static Rectangle computeSourceRect(double zoomRatio,
          int imageWidth, int imageHeight,
          int dstWidth, int dstHeight,
          Rectangle oldSourceRect)
+   {
+      double centerX = oldSourceRect.x + 0.5 * oldSourceRect.width;
+      double centerY = oldSourceRect.y + 0.5 * oldSourceRect.height;
+      return computeSourceRect(zoomRatio, centerX, centerY, 
+               imageWidth, imageHeight, dstWidth, dstHeight);
+   }
+
+   // dst width and height must not be larger than image
+   private static Rectangle computeSourceRect(double zoomRatio,
+         double centerX, double centerY,
+         int imageWidth, int imageHeight,
+         int dstWidth, int dstHeight)
    {
       Rectangle ret = new Rectangle();
 
@@ -809,8 +861,6 @@ public final class ImageJBridge {
             (int) Math.ceil((dstWidth + 1) / zoomRatio));
       ret.height = Math.min(imageHeight,
             (int) Math.ceil((dstHeight + 1) / zoomRatio));
-      double centerX = oldSourceRect.x + 0.5 * oldSourceRect.width;
-      double centerY = oldSourceRect.y + 0.5 * oldSourceRect.height;
       ret.x = (int) Math.round(centerX - 0.5 * ret.width);
       ret.y = (int) Math.round(centerY - 0.5 * ret.height);
 
@@ -822,10 +872,10 @@ public final class ImageJBridge {
          ret.y = 0;
       }
       if (ret.x + ret.width > imageWidth) {
-         ret.x -= imageWidth - ret.width;
+         ret.x = imageWidth - ret.width;
       }
       if (ret.y + ret.height > imageHeight) {
-         ret.y -= imageHeight - ret.height;
+         ret.y = imageHeight - ret.height;
       }
 
       return ret;
