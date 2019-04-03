@@ -27,7 +27,6 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
-import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.scijava.InstantiableException;
 import org.scijava.plugin.DefaultPluginFinder;
@@ -41,7 +40,7 @@ public final class PluginFinder {
     * Just a passthrough to the actual recursive method.
     */
    private static ArrayList<String> findPaths(String root, String extension) {
-      ArrayList<String> result = new ArrayList<String>();
+      ArrayList<String> result = new ArrayList<>();
       // Short-circuit if we're called with a non-directory.
       if (!(new File(root).isDirectory())) {
          if (root.endsWith(extension)) {
@@ -72,7 +71,7 @@ public final class PluginFinder {
     * a list of the corresponding annotated classes.
     */
    public static List<Class> findPlugins(String root) {
-      ArrayList<Class> result = new ArrayList<Class>();
+      ArrayList<Class> result = new ArrayList<>();
       for (String jarPath : findPaths(root, ".jar")) {
          URL jarURL;
          try {
@@ -93,8 +92,14 @@ public final class PluginFinder {
          // try/catch ensures that any failure to load a single jar won't
          // cause the entire process of loading plugins to fail.
          try {
+            // Load plugins again using the system class loader 
+            // rather than a local one, so that all code can see each other
+            // This makes it much easier to share code between plugin
+            // at the expense of possible class path clashes
             PluginClassLoader loader = new PluginClassLoader(jarURL,
-                   MMStudio.getInstance().getClass().getClassLoader());
+                   java.lang.ClassLoader.getSystemClassLoader());
+            //PluginClassLoader loader = new PluginClassLoader(jarURL,
+            //       MMStudio.getInstance().getClass().getClassLoader());
             loader.setBlockInheritedResources(true);
             result.addAll(findPluginsWithLoader(loader));
             loader.setBlockInheritedResources(false);
@@ -107,7 +112,7 @@ public final class PluginFinder {
    }
 
    public static List<Class> findPluginsWithLoader(ClassLoader loader) {
-      ArrayList<Class> result = new ArrayList<Class>();
+      ArrayList<Class> result = new ArrayList<>();
       DefaultPluginFinder finder = new DefaultPluginFinder(loader);
       PluginIndex index = new PluginIndex(finder);
       index.discover();
