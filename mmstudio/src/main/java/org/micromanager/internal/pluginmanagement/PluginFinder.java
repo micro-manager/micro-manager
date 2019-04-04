@@ -27,6 +27,7 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.scijava.InstantiableException;
 import org.scijava.plugin.DefaultPluginFinder;
@@ -96,10 +97,12 @@ public final class PluginFinder {
             // rather than a local one, so that all code can see each other
             // This makes it much easier to share code between plugin
             // at the expense of possible class path clashes
+            // This seems to not work (hard to test in IDE because it uses its 
+            // own classloader, so reverting to the old - bad - situation.
+            // PluginClassLoader loader = new PluginClassLoader(jarURL,
+            //       java.lang.ClassLoader.getSystemClassLoader());
             PluginClassLoader loader = new PluginClassLoader(jarURL,
-                   java.lang.ClassLoader.getSystemClassLoader());
-            //PluginClassLoader loader = new PluginClassLoader(jarURL,
-            //       MMStudio.getInstance().getClass().getClassLoader());
+                   MMStudio.getInstance().getClass().getClassLoader());
             loader.setBlockInheritedResources(true);
             result.addAll(findPluginsWithLoader(loader));
             loader.setBlockInheritedResources(false);
