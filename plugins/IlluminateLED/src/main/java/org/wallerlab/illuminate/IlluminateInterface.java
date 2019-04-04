@@ -1,38 +1,34 @@
-/**
- * BSD 3-Clause License
-
-Copyright (c) 2019, Zack Phillips
+/*
+Copyright (c) 2019, Regents of the University of California
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name of the <organization> nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
 
-* Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
-
-* Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
-
-* Neither the name of the copyright holder nor the names of its
-  contributors may be used to endorse or promote products derived from
-  this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL REGENTS OF THE UNIVERSITY OF CALIFORNIA BE LIABLE 
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 package org.wallerlab.illuminate;
 
 import java.awt.Color;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -133,10 +129,10 @@ import org.json.JSONObject;
             }
             
             // Set LED indicies property
-            mmCore.setProperty(deviceName, "ArbitraryLedList", led_indicies);
+            mmCore.setProperty(deviceName, "ManualLedList", led_indicies);
             
             // Set command
-            mmCore.setProperty(deviceName, "IlluminationPattern", "Manual LED Indices");
+            mmCore.setProperty(deviceName, "IlluminationPattern", "Manual LED Indicies");
         }
 
         public void fillArray() throws Exception {
@@ -165,30 +161,31 @@ import org.json.JSONObject;
             else
             {
                 // Store Intensity
-                mmCore.setProperty(deviceName, "ColorRed", colorR);
-                mmCore.setProperty(deviceName, "ColorGreen", colorG);
-                mmCore.setProperty(deviceName, "ColorBlue", colorB);
+                mmCore.setProperty(deviceName, "ColorBalanceRed", colorR);
+                mmCore.setProperty(deviceName, "ColorBalanceGreen", colorG);
+                mmCore.setProperty(deviceName, "ColorBalanceBlue", colorB);
             }
         }
         
-        public float getNa() throws Exception
+        public double getNa() throws Exception
         {
-            return Float.parseFloat(mmCore.getProperty(deviceName, "NumericalAperture"));
+            return (double)Math.round(Float.parseFloat(mmCore.getProperty(deviceName, "NumericalAperture")) * 100d) / 100d;
         }
         
-        public void setNa(float new_na) throws Exception
+        public void setNa(double new_na) throws Exception
         {
+            System.out.println(new_na);
             mmCore.setProperty(deviceName, "NumericalAperture", String.valueOf(new_na));
         }
         
         public float getArrayDistance() throws Exception
         {
-            return Float.parseFloat(mmCore.getProperty(deviceName, "ArrayDistance"));
+            return Float.parseFloat(mmCore.getProperty(deviceName, "ArrayDistanceFromSample"));
         }
         
         public void setArrayDistance(float new_array_distance) throws Exception
         {
-            mmCore.setProperty(deviceName, "ArrayDistance", String.valueOf(new_array_distance));
+            mmCore.setProperty(deviceName, "ArrayDistanceFromSample", String.valueOf(new_array_distance));
         }
         
         public void sendCommand(String command) throws Exception
@@ -243,7 +240,7 @@ import org.json.JSONObject;
                     led_position_list[led_index][0] = led_json.getDouble(0);
                     led_position_list[led_index][1] = led_json.getDouble(1);
                 }
-                System.out.println("Parsed " + String.valueOf(batch_index) + " of " + String.valueOf(led_batch_count) + " batches of LEDs.");
+                System.out.println("Parsed " + String.valueOf(batch_index) + " of " + String.valueOf(led_batch_count) + " batches of LED positions.");
             }
         }
         
@@ -287,4 +284,3 @@ import org.json.JSONObject;
             return led_values;
         }
     }
-

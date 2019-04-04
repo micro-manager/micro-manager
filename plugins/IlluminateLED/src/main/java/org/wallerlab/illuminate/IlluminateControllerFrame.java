@@ -1,35 +1,29 @@
-/**
- * BSD 3-Clause License
-
-Copyright (c) 2019, Zack Phillips
+/*
+Copyright (c) 2019, Regents of the University of California
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name of the <organization> nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
 
-* Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
-
-* Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
-
-* Neither the name of the copyright holder nor the names of its
-  contributors may be used to endorse or promote products derived from
-  this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL REGENTS OF THE UNIVERSITY OF CALIFORNIA BE LIABLE 
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 package org.wallerlab.illuminate;
 
 import java.awt.BorderLayout;
@@ -50,18 +44,26 @@ import javax.swing.JPanel;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import org.json.*;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.io.IOUtils;
 import javax.swing.JButton;
 import javax.swing.JColorChooser;
 import javax.swing.SwingUtilities;
 import javax.swing.colorchooser.AbstractColorChooserPanel;
 import javax.swing.event.ChangeEvent;
+import java.net.URL;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 import mmcorej.CMMCore;
 
 public class IlluminateControllerFrame {
@@ -136,7 +138,7 @@ public class IlluminateControllerFrame {
         private final Color initialColor = new Color(200, 200, 200);
         boolean[] ledMask;
         
-        private final JLabel commandLabel = new JLabel("Command:");
+        private JLabel commandLabel = new JLabel("Command:");
         private JTextField setNaTextField = new JTextField(10);
         private JTextField setArrayDistTextField = new JTextField(10);
 
@@ -322,7 +324,7 @@ public class IlluminateControllerFrame {
                         double na = Double.parseDouble(setNaTextField.getText());
                         if (na <= 1.0 & na > 0.0) {
                             try {
-                                lInterface.sendCommand("na." + Integer.toString((int) Math.round(na * 100.0)));
+                                lInterface.setNa(na);
                             } catch (Exception ex) {
                                 Logger.getLogger(IlluminateControllerFrame.class.getName()).log(Level.SEVERE, null, ex);
                             }
@@ -879,8 +881,8 @@ public class IlluminateControllerFrame {
 
         private JColorButton(String label) {
             super(label);
-            super.setContentAreaFilled(false);
-            super.setFocusPainted(false);
+            setContentAreaFilled(false);
+            setFocusPainted(false);
             selectedColor = Color.BLACK;
         }
 
@@ -918,7 +920,7 @@ public class IlluminateControllerFrame {
     public class ledPlot extends JPanel {
 
         private double[][] ledCoords;
-        private final int[][] ledValues_8bit;
+        private int[][] ledValues_8bit;
         private boolean[] ledMask;
         private double minX, minY, maxX, maxY;
         private int ledUsedCount;
@@ -1042,4 +1044,3 @@ public class IlluminateControllerFrame {
 
     }
 }
-
