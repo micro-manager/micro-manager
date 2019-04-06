@@ -93,14 +93,6 @@ public final class PluginFinder {
          // try/catch ensures that any failure to load a single jar won't
          // cause the entire process of loading plugins to fail.
          try {
-            // Load plugins again using the system class loader 
-            // rather than a local one, so that all code can see each other
-            // This makes it much easier to share code between plugin
-            // at the expense of possible class path clashes
-            // This seems to not work (hard to test in IDE because it uses its 
-            // own classloader, so reverting to the old - bad - situation.
-            // PluginClassLoader loader = new PluginClassLoader(jarURL,
-            //       java.lang.ClassLoader.getSystemClassLoader());
             PluginClassLoader loader = new PluginClassLoader(jarURL,
                    MMStudio.getInstance().getClass().getClassLoader());
             loader.setBlockInheritedResources(true);
