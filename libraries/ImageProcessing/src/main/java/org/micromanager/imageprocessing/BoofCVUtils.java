@@ -1,5 +1,5 @@
 
-package org.micromanager.pointandshootanalysis.data;
+package org.micromanager.imageprocessing;
 
 import static boofcv.alg.filter.binary.GThresholdImageOps.computeEntropy;
 import boofcv.alg.misc.GImageStatistics;
@@ -47,7 +47,7 @@ public class BoofCVUtils {
     * @param histogramRange
     * @return 
     */
-   public static int compressedMaxEntropyThreshold(ImageGray img, int histogramRange) {
+   public static int compressedMaxEntropyThreshold(ImageGray<? extends ImageGray<?>> img, int histogramRange) {
       
       double minValue = GImageStatistics.min(img);
       double maxValue = GImageStatistics.max(img);

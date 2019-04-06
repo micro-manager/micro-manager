@@ -1,5 +1,5 @@
 
-package org.micromanager.pointandshootanalysis.data;
+package org.micromanager.imageprocessing;
 
 import boofcv.struct.image.GrayF32;
 import boofcv.struct.image.GrayU16;
@@ -27,12 +27,16 @@ public final class BoofCVImageConverter {
    // TODO: Metadata; may need to make a class that inherits from ImageGray 
    // and adds metadata field 
    
-   public static ImageGray mmToBoofCV(Image image) {
+   // Note: Types for ImageGray are not optimal.  Ideally, it would specify
+   // the types that are actually handled (currently GrayU8 and GrayU16)
+   // However, I can not figure out how to do that
+   
+   public static ImageGray<? extends ImageGray<?>> mmToBoofCV(Image image) {
       return mmToBoofCV(image, true);
    } 
    
-   public static ImageGray mmToBoofCV(Image image, boolean copy) {
-      ImageGray outImage;
+   public static ImageGray<? extends ImageGray<?>> mmToBoofCV(Image image, boolean copy) {
+      ImageGray<? extends ImageGray<?>> outImage;
       switch (image.getBytesPerPixel()){
          case 1 : 
             GrayU8 tmp8Image = new GrayU8(); 
@@ -79,7 +83,7 @@ public final class BoofCVImageConverter {
     *             the BoofCV image's pixels will be handed to the ImageProcerros
     * @return     ImageJ ImageProcessor
     */
-   public static ImageProcessor convert(ImageGray imgG, boolean copy) {
+   public static ImageProcessor convert(ImageGray<? extends ImageGray<?>> imgG, boolean copy) {
       ImageProcessor ip = null;
       if (imgG instanceof GrayU8) {
          if (copy) {
@@ -118,8 +122,8 @@ public final class BoofCVImageConverter {
     * @return 
     */
    
-   public static ImageGray convert (ImageProcessor ip, boolean copy) {
-      ImageGray ig = null;
+   public static ImageGray<? extends ImageGray<?>> convert (ImageProcessor ip, boolean copy) {
+      ImageGray<? extends ImageGray<?>> ig = null;
       if (ip instanceof ByteProcessor) {
          GrayU8 tmp8Image = new GrayU8(); //ip.getWidth(), ip.getHeight());
          if (copy) {
@@ -167,12 +171,16 @@ public final class BoofCVImageConverter {
     * 
     * @throws IOException 
     */
-   public static ImageGray subImage(final DataProvider dp, final Coords.Builder cb,
-           final int frame, final Point2D_I32 p, final int halfBoxSize) throws IOException {
+   public static ImageGray<? extends ImageGray<?>> subImage(
+           final DataProvider dp, 
+           final Coords.Builder cb,
+           final int frame, 
+           final Point2D_I32 p, 
+           final int halfBoxSize) throws IOException {
       Coords coord = cb.t(frame).build();
       Image img = dp.getImage(coord);
       
-      ImageGray ig = BoofCVImageConverter.mmToBoofCV(img, false);
+      ImageGray<? extends ImageGray<?>> ig = BoofCVImageConverter.mmToBoofCV(img, false);
       if (p.getX() - halfBoxSize < 0 ||
               p.getY() - halfBoxSize < 0 ||
               p.getX() + halfBoxSize >= ig.getWidth() ||
@@ -194,9 +202,11 @@ public final class BoofCVImageConverter {
          //return null; // TODO: we'll get stuck at the edge
       }
       */
-      return (ImageGray) ig.subimage((int) p.getX() - halfBoxSize, 
-              (int) p.getY() - halfBoxSize, (int) p.getX() + halfBoxSize, 
-              (int) p.getY() + halfBoxSize);
+      return (ImageGray<? extends ImageGray<?>>) ig.subimage(
+               p.getX() - halfBoxSize, 
+               p.getY() - halfBoxSize,  
+               p.getX() + halfBoxSize, 
+               p.getY() + halfBoxSize);
    }
    
    
