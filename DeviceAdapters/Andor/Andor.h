@@ -231,6 +231,7 @@ private:
    bool initialized_;
    bool snapInProgress_;
    bool sequenceRunning_;
+   bool Live_;
    long imageCounter_;
    MM::MMTime startTime_;
    MM::MMTime startSRRFImageTime_;
