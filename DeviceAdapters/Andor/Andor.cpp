@@ -1397,7 +1397,7 @@ int AndorCamera::GetListOfAvailableCameras()
       nRet = UpdateStatus();
       if (nRet != DEVICE_OK)
          return nRet;
-
+      
       initialized_ = true;
 
       if (biCamFeaturesSupported_)
@@ -3970,27 +3970,36 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
 
       do
       {
-        Sleep(25);
-        ret = WaitForAcquisitionTimeOut(imageTimeOut_);
-        if (ret == DRV_SUCCESS)
         {
           DriverGuard dg(camera_);
-          ret = GetNumberNewImages(&imageCountFirst, &imageCountLast);
-          if (ret != DRV_SUCCESS)
+          ret = WaitForAcquisitionByHandleTimeOut(camera_->myCameraID_, imageTimeOut_);
+          if (ret == DRV_SUCCESS)
           {
-            os.str("");
-            os << "GetNumberNewImages error : " << ret << " first: " << imageCountFirst << " last: " << imageCountLast << endl;
-            camera_->Log(os.str().c_str());
-            return (int)ret;
+            ret = GetNumberNewImages(&imageCountFirst, &imageCountLast);
+            if (ret != DRV_SUCCESS)
+            {
+              os.str("");
+              os << "GetNumberNewImages error : " << ret << " first: " << imageCountFirst << " last: " << imageCountLast << endl;
+              camera_->Log(os.str().c_str());
+              return (int)ret;
+            }
           }
+        }
+        if (ret == DRV_SUCCESS)
+        {
           // new frame arrived
-          int retCode = camera_->PushImage(width, height, bytesPerPixel,  imageCountFirst, imageCountLast);
+          int retCode = camera_->PushImage(width, height, bytesPerPixel, (camera_->Live_)? imageCountLast:imageCountFirst, imageCountLast);
           if (retCode != DEVICE_OK)
           {
             os << "PushImage failed with error code " << retCode;
             camera_->Log(os.str().c_str());
             printf("%s\n", os.str().c_str());
             os.str("");
+          }
+
+          if (camera_->Live_) {
+            DriverGuard dg(camera_);
+            SendSoftwareTrigger();
           }
         } 
         else 
@@ -4084,12 +4093,23 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
            return (int)ret;
 
       }
-      
+
       LogMessage("Setting Trigger Mode", true);
+      int trigMode = iCurrentTriggerMode_;
+      if (kineticSeries) {
+        if (SOFTWARE == iCurrentTriggerMode_) {
+          trigMode = INTERNAL;
+        }
+      }
+      else {
+        if (INTERNAL == iCurrentTriggerMode_) {
+          trigMode = SOFTWARE;
+        }
+      }
       int ret0;
-      ret0 = ApplyTriggerMode(SOFTWARE == iCurrentTriggerMode_ ? INTERNAL : iCurrentTriggerMode_);
-      if(DRV_SUCCESS!=ret0)
-         return ret0;
+      ret0 = ApplyTriggerMode(trigMode);
+      if (DRV_SUCCESS != ret0)
+        return ret0;
 
       if (interval_ms > 0 && SRRFControl_->GetSRRFEnabled())
       {
@@ -4183,6 +4203,10 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
          startSRRFImageTime_ = GetCurrentMMTime();
          seqThread_->Start();
          sequenceRunning_ = true;
+         Live_ = (LONG_MAX == sequenceLength_);
+         if (Live_) {
+           SendSoftwareTrigger();
+         }
       }
 
       return DEVICE_OK;
@@ -4235,6 +4259,7 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
          }
 
          sequenceRunning_ = false;
+         Live_ = false;
 
          UpdateSnapTriggerMode();
       }
@@ -4339,8 +4364,8 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
       short*  imagePtr = fullFrameBuffer_;
       for(int i=validFirst; i<=validLast; i++)
       {
-        InsertImage(width, height, bytesPerPixel, (unsigned char*)imagePtr);
-        imagePtr += width*height;
+        MMThreadGuard g(imgPixelsLock_);
+        InsertImage(width, height, bytesPerPixel, (unsigned char*)(imagePtr + (i - validFirst) * width * height));
       }
 
       return DEVICE_OK;
