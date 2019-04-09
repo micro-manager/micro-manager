@@ -230,9 +230,9 @@ public class MultiChannelSubPanel extends ListeningJPanel {
               ChannelTableModel.columnIndex_config);
       TableColumn column_offset = channelTable.getColumnModel().getColumn(
             ChannelTableModel.columnIndex_offset);
-      column_useChannel.setPreferredWidth(40);
-      column_config.setPreferredWidth(105);
-      column_offset.setPreferredWidth(50);
+      column_useChannel.setPreferredWidth(35);
+      column_config.setPreferredWidth(100);
+      column_offset.setPreferredWidth(45);
       column_useChannel.setCellRenderer(new UseChannelTableCellRenderer());
       column_config.setCellRenderer(new DisplayDisabledTableCellRenderer());
       column_config.setCellEditor(new ChannelConfigEditor(channelGroup_, core_));
@@ -380,6 +380,37 @@ public class MultiChannelSubPanel extends ListeningJPanel {
    }
    
    /**
+    * @return array of channels that in the GUI table even if they aren't being used.
+    * Returns them in order that they are in the table.  Doesn't handle duplicates.
+    */
+   public ChannelSpec[] getAllChannels() {
+      return channelTableModel_.getAllChannels();
+   }
+   
+   /**
+    * @param channel
+    * @return true if the channel is a valid config/preset of the channel group
+    */
+   public boolean isChannelValid(final String channel) {
+      // double-check that selected channel is valid if we are doing multi-channel
+      String [] channels = getAvailableChannels();
+      for (String trythis : channels) {
+         if (trythis.equals(channel)) {
+            return true;
+            }
+         }
+      return false;
+   }
+   
+   /**
+    * @param channel
+    * @return offset corresponding to named channel
+    */
+   public double getChannelOffset(String channel) {
+      return channelTableModel_.getChannelOffset(channel);
+   }
+   
+   /**
     * @return MultichannelModes.Keys.NONE if channels are disabled, or actual 
     * selection otherwise
     */
@@ -412,7 +443,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
    }
    
    /**
-    * call before starting to cycle through channels using selectNextChannel()
+    * call before starting to cycle through channels using selectNextChannelAndGetOffset()
     */
    public void initializeChannelCycle() {
       usedChannels_  = channelTableModel_.getUsedChannels();
@@ -438,9 +469,10 @@ public class MultiChannelSubPanel extends ListeningJPanel {
     * Called by acquisition code.  Blocks until devices ready.
     * Returns the value of the channel-specific offset.
     */
-   public double selectNextChannel() {
+   public double selectNextChannelAndGetOffset() {
       ChannelSpec channel = usedChannels_[nextChannelIndex_];
       selectChannel(channel.config_);
+      // increment pointer for use next time
       nextChannelIndex_++;
       if (nextChannelIndex_ == usedChannels_.length) {
          nextChannelIndex_ = 0;

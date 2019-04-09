@@ -342,6 +342,12 @@ public interface ASIdiSPIMInterface extends Remote {
     * @param enabled
     */
    public void setChannelEnabled(String channel, boolean enabled) throws ASIdiSPIMException, RemoteException;
+   
+   /**
+    * Get the focus offset in microns associated with the specified channel
+    * @param channel
+    */
+   public double getChannelOffset(String channel) throws ASIdiSPIMException, RemoteException;
 
    /**
     * @return the channel change mode, VOLUME for (software) volume-by-volume,

@@ -843,9 +843,16 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             double currentScanner = positions_.getUpdatedPosition(micromirrorDeviceKey_,
                   Directions.Y);
             double currentPiezo = positions_.getUpdatedPosition(piezoImagingDeviceKey_);
-            double newOffset = currentPiezo - rate * currentScanner;
+            double channelOffset = 0.0;
+            try {
+               channelOffset = ASIdiSPIM.getFrame().getAcquisitionPanel().getChannelOffset();
+            } catch (Exception ex) {
+               // do nothing
+            }
+            double newOffset = currentPiezo - rate * currentScanner - channelOffset;
             offsetField_.setValue((Double) newOffset);
-            ReportingUtils.logMessage("updated offset for side " + side_ + "; new value is " + newOffset);
+            ReportingUtils.logMessage("updated offset for side " + side_ + "; new value is " + newOffset +
+                  " (with channel offset of " + channelOffset + ")");
          }
       } catch (Exception ex) {
          MyDialogUtils.showError(ex);
@@ -860,9 +867,10 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
     */
    public void updateCalibrationOffset(AutofocusUtils.FocusResult score) {
       double rate = (Double) rateField_.getValue();
-      double newOffset = score.piezoPosition_ - rate * score.galvoPosition_;         
+      double newOffset = score.piezoPosition_ - rate * score.galvoPosition_ - score.channelOffset_;         
       offsetField_.setValue((Double) newOffset);
-      ReportingUtils.logMessage("autofocus updated offset for side " + side_ + "; new value is " + newOffset);
+      ReportingUtils.logMessage("autofocus updated offset for side " + side_ + "; new value is " + newOffset +
+            " (with channel offset of " + score.channelOffset_ + ")");
    }
 
    /**
@@ -900,7 +908,13 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    private double computeGalvoFromPiezo(double piezoPos) {
       double offset = (Double) offsetField_.getValue();
       double rate = (Double) rateField_.getValue();
-      return ((piezoPos - offset)/rate);
+      double channelOffset = 0.0;
+      try {
+         channelOffset = ASIdiSPIM.getFrame().getAcquisitionPanel().getChannelOffset();
+      } catch (Exception ex) {
+         // do nothing
+      }
+      return ((piezoPos - (offset + channelOffset))/rate);
    }
    
   /**

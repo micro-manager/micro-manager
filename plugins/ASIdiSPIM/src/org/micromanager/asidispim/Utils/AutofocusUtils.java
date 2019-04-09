@@ -88,7 +88,7 @@ public class AutofocusUtils {
       posUpdater_ = stagePosUpdater;
       positions_ = positions;
       controller_ = controller;
-      lastFocusResult_ = new FocusResult(false, 0.0, 0.0, 0.0, 0.0);
+      lastFocusResult_ = new FocusResult(false, 0.0, 0.0, 0.0, 0.0, 0.0);
       
    }
 
@@ -98,13 +98,16 @@ public class AutofocusUtils {
       public final double piezoPosition_;
       public final double offsetDelta_;
       public final double rSquared_;
+      public final double channelOffset_;
       
-      public FocusResult(boolean focusSuccess, double galvoPosition, double piezoPosition, double offsetDelta, double rSquared) {
+      public FocusResult(boolean focusSuccess, double galvoPosition, double piezoPosition,
+            double offsetDelta, double rSquared, double channelOffset) {
          focusSuccess_ = focusSuccess;
          galvoPosition_ = galvoPosition;
          piezoPosition_ = piezoPosition;
          offsetDelta_ = offsetDelta;  // amount in um that the offset will shift, could be positive or negative
          rSquared_ = rSquared;
+         channelOffset_ = channelOffset;
       }
    }
    
@@ -257,8 +260,11 @@ public class AutofocusUtils {
             acqSettings.spimMode = isPiezoScan ? AcquisitionModes.Keys.PIEZO_SCAN_ONLY : AcquisitionModes.Keys.SLICE_SCAN_ONLY;
             acqSettings.centerAtCurrentZ = centerAtCurrentZ;
             acqSettings.stepSizeUm = piezoStepSize;
-
-            controller_.prepareControllerForAquisition(acqSettings, 0.0);
+            
+            final String currentChannelConfig = gui_.getMMCore().getCurrentConfigFromCache(acqSettings.channelGroup);
+            final double channelOffset = ASIdiSPIM.getFrame().getAcquisitionPanel().getChannelOffset(currentChannelConfig);
+            
+            controller_.prepareControllerForAquisition(acqSettings, channelOffset);
             
             final float calibrationRate = prefs_.getFloat(
                      MyStrings.PanelNames.SETUP.toString() + side.toString(), 
@@ -267,7 +273,7 @@ public class AutofocusUtils {
                      MyStrings.PanelNames.SETUP.toString() + side.toString(),
                      Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET, 0);
             final double galvoStepSize = isPiezoScan ? 0 : piezoStepSize / calibrationRate;
-            final double galvoCenter = (piezoCenter - calibrationOffset) / calibrationRate;
+            final double galvoCenter = (piezoCenter - channelOffset - calibrationOffset) / calibrationRate;
             final double galvoRange = (nrImages - 1) * galvoStepSize;
             final double piezoRange = (nrImages - 1) * piezoStepSize;
             final double galvoStart = galvoCenter - 0.5 * galvoRange;
@@ -481,7 +487,7 @@ public class AutofocusUtils {
 
                // set result to be a dummy value for now; we will overwrite it later
                //  unless we encounter an exception in the meantime
-               lastFocusResult_ = new FocusResult(false, galvoPosition, piezoPosition, 0.0, 0.0);
+               lastFocusResult_ = new FocusResult(false, galvoPosition, piezoPosition, 0.0, 0.0, channelOffset);
                
                try {
                   caller.setCursor(Cursor.getDefaultCursor());
@@ -533,7 +539,7 @@ public class AutofocusUtils {
                            && bestPiezoPosition > Math.min(end1, end2)
                            && bestPiezoPosition < Math.max(end1, end2));
                      double focusDelta = piezoCenter-bestPiezoPosition;
-                     lastFocusResult_ = new FocusResult(focusSuccess, galvoPosition, bestPiezoPosition, focusDelta, r2);
+                     lastFocusResult_ = new FocusResult(focusSuccess, galvoPosition, bestPiezoPosition, focusDelta, r2, channelOffset);
                   } else { // slice scan
                      final double end1 = galvoStart + 0.1*galvoRange;
                      final double end2 = galvoStart + 0.9*galvoRange;
@@ -541,7 +547,7 @@ public class AutofocusUtils {
                            && bestGalvoPosition > Math.min(end1, end2)
                            && bestGalvoPosition < Math.max(end1, end2));
                      double focusDelta = (galvoCenter-bestGalvoPosition) * calibrationRate;
-                     lastFocusResult_ = new FocusResult(focusSuccess, bestGalvoPosition, piezoPosition, focusDelta, r2);
+                     lastFocusResult_ = new FocusResult(focusSuccess, bestGalvoPosition, piezoPosition, focusDelta, r2, channelOffset);
                   }
                   
                   // if we are in Setup panel, move to either the best-focus position (if found)
@@ -588,7 +594,7 @@ public class AutofocusUtils {
             }
             ReportingUtils.logMessage("finished autofocus: " + (lastFocusResult_.focusSuccess_ ? "successful" : "not successful")
                + " with galvo position " + lastFocusResult_.galvoPosition_ + " and piezo position " + lastFocusResult_.piezoPosition_
-               + " and R^2 value of " + lastFocusResult_.rSquared_);
+               + " and R^2 value of " + lastFocusResult_.rSquared_ + " and channel offset of " + lastFocusResult_.channelOffset_);
             return lastFocusResult_;
          }
 
@@ -621,7 +627,7 @@ public class AutofocusUtils {
       }
       
       // we can only return a bogus score 
-      return new FocusResult(false, 0.0, 0.0, 0.0, 0.0);
+      return new FocusResult(false, 0.0, 0.0, 0.0, 0.0, 0.0);
    }
 
    public static ImageProcessor makeProcessor(TaggedImage taggedImage)

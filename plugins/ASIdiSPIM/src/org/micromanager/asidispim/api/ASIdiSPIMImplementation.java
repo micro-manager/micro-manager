@@ -339,6 +339,11 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    }
    
    @Override
+   public double getChannelOffset(String channel) throws ASIdiSPIMException, RemoteException {
+      return getAcquisitionPanel().getChannelOffset(channel);
+   }
+   
+   @Override
    public org.micromanager.asidispim.Data.MultichannelModes.Keys getChannelChangeMode() throws ASIdiSPIMException, RemoteException {
       // @deprecated out of laziness, can add if needed
       throw new UnsupportedOperationException();

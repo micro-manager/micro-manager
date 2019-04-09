@@ -93,15 +93,39 @@ public class ControllerUtils {
    }
    
    /**
+    * call special version which will only set the slice offset and not refresh everything else
+    * @param settings
+    * @param channelOffset
+    * @return
+    */
+   public boolean prepareControllerForAquisitionOffsetOnly(final AcquisitionSettings settings, double channelOffset) {
+      if ((settings.numSides > 1) || settings.firstSideIsA) {
+         boolean success = prepareControllerForAquisition_Side(
+               Devices.Sides.A, settings, channelOffset, true);
+            if (!success) {
+               return false;
+            }
+      }
+      if ((settings.numSides > 1) || !settings.firstSideIsA) {
+         boolean success = prepareControllerForAquisition_Side(
+               Devices.Sides.B, settings, channelOffset, true);
+            if (!success) {
+               return false;
+            }
+      }
+      return true;
+   }
+   
+   /**
    * Sets all the controller's properties according to volume settings
    * and otherwise gets controller all ready for acquisition
    * (except for final trigger).
    * 
    * @param settings
-   * @param extraOffset 
+   * @param channelOffset 
    * @return false if there was some error that should abort acquisition
    */
-   public boolean prepareControllerForAquisition(final AcquisitionSettings settings, double extraOffset) {
+   public boolean prepareControllerForAquisition(final AcquisitionSettings settings, double channelOffset) {
       // turn off beam and scan on both sides (they are turned off by SPIM state machine anyway)
       // also ensures that properties match reality at end of acquisition
       // SPIM state machine restores position of beam at end of SPIM state machine, now it
@@ -121,7 +145,7 @@ public class ControllerUtils {
       //   case where MM devices reside on different controller cards
       if ((settings.numSides > 1) || settings.firstSideIsA) {
          boolean success = prepareControllerForAquisition_Side(
-            Devices.Sides.A, settings, extraOffset);
+            Devices.Sides.A, settings, channelOffset, false);
          if (!success) {
             return false;
          }
@@ -129,7 +153,7 @@ public class ControllerUtils {
       
       if ((settings.numSides > 1) || !settings.firstSideIsA) {
          boolean success = prepareControllerForAquisition_Side(
-               Devices.Sides.B, settings, extraOffset);
+               Devices.Sides.B, settings, channelOffset, false);
             if (!success) {
                return false;
             }
@@ -223,6 +247,9 @@ public class ControllerUtils {
       props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET, 
             Properties.Values.PLOGIC_PRESET_3, true);
       
+      ReportingUtils.logMessage("Finished preparing controller for acquisition with offset " + channelOffset +
+            " with mode " + settings.spimMode.toString() + " and settings " + settings.toString());
+      
       return true;
    }
    
@@ -310,7 +337,8 @@ public class ControllerUtils {
    private boolean prepareControllerForAquisition_Side(
          final Devices.Sides side, 
          final AcquisitionSettings settings,
-         final double extraOffset
+         final double channelOffset,
+         final boolean offsetOnly
          ) {
 
       Devices.Keys galvoDevice = Devices.getSideSpecificKey(Devices.Keys.GALVOA, side);
@@ -319,52 +347,56 @@ public class ControllerUtils {
       
       boolean skipScannerWarnings = getSkipScannerWarnings(galvoDevice);
       
-      Properties.Keys widthProp = (side == Devices.Sides.A) ?
-            Properties.Keys.PLUGIN_SHEET_WIDTH_A : Properties.Keys.PLUGIN_SHEET_WIDTH_B;
-      Properties.Keys offsetProp = (side == Devices.Sides.A) ?
-            Properties.Keys.PLUGIN_SHEET_OFFSET_A : Properties.Keys.PLUGIN_SHEET_OFFSET_B;
+      if (!offsetOnly) {
+
+         Properties.Keys widthProp = (side == Devices.Sides.A) ?
+               Properties.Keys.PLUGIN_SHEET_WIDTH_A : Properties.Keys.PLUGIN_SHEET_WIDTH_B;
+         Properties.Keys offsetProp = (side == Devices.Sides.A) ?
+               Properties.Keys.PLUGIN_SHEET_OFFSET_A : Properties.Keys.PLUGIN_SHEET_OFFSET_B;
+
+         // save sheet width and offset which may get clobbered
+         props_.setPropValue(Devices.Keys.PLUGIN, widthProp, 
+               props_.getPropValueFloat(galvoDevice, Properties.Keys.SA_AMPLITUDE_X_DEG), skipScannerWarnings);
+         props_.setPropValue(Devices.Keys.PLUGIN, offsetProp, 
+               props_.getPropValueFloat(galvoDevice, Properties.Keys.SA_OFFSET_X_DEG), skipScannerWarnings);
+
+         // if we are changing color slice by slice then set controller to do multiple slices per piezo move
+         // otherwise just set to 1 slice per piezo move
+         int numSlicesPerPiezo = 1;
+         if (settings.useChannels && settings.channelMode == MultichannelModes.Keys.SLICE_HW) {
+            numSlicesPerPiezo = settings.numChannels;
+         }
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_SLICES_PER_PIEZO,
+               numSlicesPerPiezo, skipScannerWarnings);
+
+         // set controller to do multiple volumes per start trigger if we are doing
+         //   multiple channels with  hardware switching of channel volume by volume
+         // otherwise (no channels, software switching, slice by slice HW switching)
+         //   just do one volume per start trigger
+         int numVolumesPerTrigger = 1;
+         if (settings.useChannels && settings.channelMode == MultichannelModes.Keys.VOLUME_HW) {
+            numVolumesPerTrigger = settings.numChannels;
+         }
+         // can either trigger controller once for all the timepoints and
+         //  have the number of repeats pre-programmed (hardware timing)
+         //  or let plugin send trigger for each time point (software timing)
+         float delayRepeats = 0f;
+         if (settings.hardwareTimepoints && settings.useTimepoints) {
+            float volumeDurationMs = (float) ASIdiSPIM.getFrame().getAcquisitionPanel().computeActualVolumeDuration(settings);
+            float volumeIntervalMs = (float) settings.timepointInterval * 1000f;
+            delayRepeats = volumeIntervalMs - volumeDurationMs;
+            numVolumesPerTrigger = settings.numTimepoints;
+         }
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_DELAY_REPEATS, delayRepeats, skipScannerWarnings);
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_REPEATS, numVolumesPerTrigger, skipScannerWarnings);
+
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_DELAY_SIDE,
+               settings.isStageScanning ? 0 : // minimal delay on micro-mirror card for stage scanning (can't actually be less than 2ms but this will get as small as possible)
+                  props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_DELAY_BEFORE_SIDE),  // this is usual behavior
+                  skipScannerWarnings);
       
-      // save sheet width and offset which may get clobbered
-      props_.setPropValue(Devices.Keys.PLUGIN, widthProp, 
-            props_.getPropValueFloat(galvoDevice, Properties.Keys.SA_AMPLITUDE_X_DEG), skipScannerWarnings);
-      props_.setPropValue(Devices.Keys.PLUGIN, offsetProp, 
-            props_.getPropValueFloat(galvoDevice, Properties.Keys.SA_OFFSET_X_DEG), skipScannerWarnings);
+      } // end if (!offsetOnly)
       
-      // if we are changing color slice by slice then set controller to do multiple slices per piezo move
-      // otherwise just set to 1 slice per piezo move
-      int numSlicesPerPiezo = 1;
-      if (settings.useChannels && settings.channelMode == MultichannelModes.Keys.SLICE_HW) {
-         numSlicesPerPiezo = settings.numChannels;
-      }
-      props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_SLICES_PER_PIEZO,
-            numSlicesPerPiezo, skipScannerWarnings);
-      
-      // set controller to do multiple volumes per start trigger if we are doing
-      //   multiple channels with  hardware switching of channel volume by volume
-      // otherwise (no channels, software switching, slice by slice HW switching)
-      //   just do one volume per start trigger
-      int numVolumesPerTrigger = 1;
-      if (settings.useChannels && settings.channelMode == MultichannelModes.Keys.VOLUME_HW) {
-         numVolumesPerTrigger = settings.numChannels;
-      }
-      // can either trigger controller once for all the timepoints and
-      //  have the number of repeats pre-programmed (hardware timing)
-      //  or let plugin send trigger for each time point (software timing)
-      float delayRepeats = 0f;
-      if (settings.hardwareTimepoints && settings.useTimepoints) {
-         float volumeDurationMs = (float) ASIdiSPIM.getFrame().getAcquisitionPanel().computeActualVolumeDuration(settings);
-         float volumeIntervalMs = (float) settings.timepointInterval * 1000f;
-         delayRepeats = volumeIntervalMs - volumeDurationMs;
-         numVolumesPerTrigger = settings.numTimepoints;
-      }
-      props_.setPropValue(galvoDevice, Properties.Keys.SPIM_DELAY_REPEATS, delayRepeats, skipScannerWarnings);
-      props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_REPEATS, numVolumesPerTrigger, skipScannerWarnings);
-      
-      props_.setPropValue(galvoDevice, Properties.Keys.SPIM_DELAY_SIDE,
-            settings.isStageScanning ? 0 : // minimal delay on micro-mirror card for stage scanning (can't actually be less than 2ms but this will get as small as possible)
-               props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_DELAY_BEFORE_SIDE),  // this is usual behavior
-            skipScannerWarnings);
-            
       // figure out the piezo parameters
       float piezoCenter;
       if (settings.isStageScanning && devices_.isValidMMDevice(piezoDevice)) {
@@ -379,8 +411,8 @@ public class ControllerUtils {
             piezoCenter = prefs_.getFloat(
                   MyStrings.PanelNames.SETUP.toString() + side.toString(), 
                   Properties.Keys.PLUGIN_PIEZO_CENTER_POS, 0.0f);
-            }
          }
+      }
 
       // if we set piezoAmplitude to 0 here then sliceAmplitude will also be 0
       float piezoAmplitude;
@@ -394,7 +426,7 @@ public class ControllerUtils {
       default:
          piezoAmplitude = (settings.numSlices - 1) * settings.stepSizeUm;
       }
-      
+
       // use this instead of settings.numSlices from here on out because
       // we modify it if we are taking "extra slice" for synchronous/overlap
       int numSlices = settings.numSlices;
@@ -417,7 +449,7 @@ public class ControllerUtils {
                " cannot be zero. Re-do calibration on Setup tab.");
          return false;
       }
-      float sliceOffset = (float)extraOffset + prefs_.getFloat(
+      float sliceOffset = (float)channelOffset + prefs_.getFloat(
             MyStrings.PanelNames.SETUP.toString() + side.toString(), 
             Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET, 0);
       float sliceAmplitude = piezoAmplitude / sliceRate;
@@ -438,124 +470,131 @@ public class ControllerUtils {
       sliceAmplitude = MyNumberUtils.roundFloatToPlace(sliceAmplitude, 4);
       sliceCenter = MyNumberUtils.roundFloatToPlace(sliceCenter, 4);
       
-      // only do alternating scan directions if the user is using advanced timing
-      //    and user has option enabled on the advanced timing panel
-      final boolean oppositeDirections = prefs_.getBoolean(
-            MyStrings.PanelNames.ACQUSITION.toString(),
-            Properties.Keys.PREFS_ADVANCED_SLICE_TIMING, false)
-            && prefs_.getBoolean(
-            MyStrings.PanelNames.ACQUSITION.toString(),  
-            Properties.Keys.PREFS_SCAN_OPPOSITE_DIRECTIONS, false);
-      if (oppositeDirections) {
-         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_ALTERTATE_DIRECTIONS, 
-               Properties.Values.YES, skipScannerWarnings);
+      if (offsetOnly) {
+         props_.setPropValue(galvoDevice, Properties.Keys.SA_OFFSET_Y_DEG,
+               sliceCenter, skipScannerWarnings);
       } else {
-         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_ALTERTATE_DIRECTIONS, 
-               Properties.Values.NO, skipScannerWarnings);
-      }
-      props_.setPropValue(galvoDevice, Properties.Keys.SPIM_DURATION_SCAN,
-            settings.sliceTiming.scanPeriod, skipScannerWarnings);
-      props_.setPropValue(galvoDevice, Properties.Keys.SA_AMPLITUDE_Y_DEG,
-            sliceAmplitude, skipScannerWarnings);
-      props_.setPropValue(galvoDevice, Properties.Keys.SA_OFFSET_Y_DEG,
-            sliceCenter, skipScannerWarnings);
-      props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_SLICES,
-            numSlices, skipScannerWarnings);
-      props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_SIDES,
-            settings.numSides, skipScannerWarnings);
-      props_.setPropValue(galvoDevice, Properties.Keys.SPIM_FIRSTSIDE,
-            settings.firstSideIsA ? "A" : "B", skipScannerWarnings);
-      
-      // get the piezo card ready; skip if no piezo specified or is stage scanning
-      if (devices_.isValidMMDevice(piezoDevice) && !settings.isStageScanning) {
-         // if mode SLICE_SCAN_ONLY we have computed slice movement as if we
-         //   were moving the piezo but now make piezo stay still
-         if (settings.spimMode.equals(AcquisitionModes.Keys.SLICE_SCAN_ONLY)) {
-            // if we artificially shifted centers due to extra trigger and only moving piezo
-            // then move galvo center back to where it would have been
-            if (cameraMode == CameraModes.Keys.OVERLAP) {
-               piezoCenter -= piezoAmplitude/(2*(numSlices-1));
-            }
-            piezoAmplitude = 0.0f;
-         }
-         
-         float piezoMin = props_.getPropValueFloat(piezoDevice, Properties.Keys.LOWER_LIMIT)*1000;
-         float piezoMax = props_.getPropValueFloat(piezoDevice, Properties.Keys.UPPER_LIMIT)*1000;
-         
-         if (MyNumberUtils.outsideRange(piezoCenter - piezoAmplitude/2, piezoMin, piezoMax) ||
-               MyNumberUtils.outsideRange(piezoCenter + piezoAmplitude/2, piezoMin, piezoMax)) {
-            MyDialogUtils.showError("Imaging piezo for side " + side.toString() + 
-                  " would travel outside the piezo limits during acquisition.");
-            return false;
-         }
-         
-         // round to nearest 0.001 micron, which is approximately the DAC resolution
-         piezoAmplitude = MyNumberUtils.roundFloatToPlace(piezoAmplitude, 3);
-         piezoCenter = MyNumberUtils.roundFloatToPlace(piezoCenter, 3);
-         props_.setPropValue(piezoDevice,
-               Properties.Keys.SA_AMPLITUDE, piezoAmplitude);
-         props_.setPropValue(piezoDevice,
-               Properties.Keys.SA_OFFSET, piezoCenter);
-         props_.setPropValue(piezoDevice,
-               Properties.Keys.SPIM_NUM_SLICES, numSlices);
-         props_.setPropValue(piezoDevice,
-               Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED);
-      }
-      
-      // TODO figure out what we should do with piezo illumination/center position during stage scan
-      
-      // set up stage scan parameters if necessary
-      if (settings.isStageScanning) {
-         // TODO update UI to hide image center control for stage scanning
-         // for interleaved stage scanning there will never be "home" pulse and for normal stage scanning
-         //   the first side piezo will never get moved into position either so do both manually (for
-         //   simplicity ignore fact that one of two is unnecessary for two-sided normal stage scan acquisition)
-         try {
-            if (devices_.isValidMMDevice(piezoDevice)) {
-               core_.home(devices_.getMMDevice(piezoDevice));
-            }
-         } catch (Exception e) {
-            ReportingUtils.showError(e, "Could not move piezo to home");
-         }
-      }
-         
-      final boolean isInterleaved = (settings.isStageScanning && 
-            settings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED);
-      
-      // even though we have moved piezos to home position let's still tell firmware
-      //    not to move piezos anywhere (i.e. maybe setting "home disable" to true doesn't have any really effect)
-      if (isInterleaved) {
-         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_PIEZO_HOME_DISABLE,
-               Properties.Values.YES, skipScannerWarnings);
-      } else {
-         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_PIEZO_HOME_DISABLE,
-               Properties.Values.NO, skipScannerWarnings);
-      }
 
-      // set interleaved sides flag low unless we are doing interleaved stage scan
-      if (isInterleaved) {
-         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_INTERLEAVE_SIDES,
-               Properties.Values.YES, skipScannerWarnings); // make sure to check for errors
-      } else {
-         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_INTERLEAVE_SIDES,
-               Properties.Values.NO, true);  // ignore errors b/c older firmware won't have it
-      }
-      
-      // send sheet width/offset
-      float sheetWidth = getSheetWidth(settings.cameraMode, cameraDevice, side);
-      float sheetOffset = getSheetOffset(settings.cameraMode, side);
-      if (settings.cameraMode == CameraModes.Keys.LIGHT_SHEET) {
-         // adjust sheet width and offset to account for settle time where scan is going but we aren't imaging yet
-         final float settleTime = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SCAN_SETTLE);
-         // infer the main scan time (during imaging) from the laser duration
-         final float readoutTime = settings.sliceTiming.laserDuration - 0.25f;  // -0.25 is for scanLaserBufferTime
-         // offset should be decreased by half of the distance traveled during settle time (instead of re-extracting slope use existing sheetWidth/readoutTime)
-         sheetOffset -= (sheetWidth * settleTime/readoutTime)/2;
-         // width should be increased by ratio (1 + settle_fraction) 
-         sheetWidth += (sheetWidth * settleTime/readoutTime);
-      }
-      props_.setPropValue(galvoDevice, Properties.Keys.SA_AMPLITUDE_X_DEG, sheetWidth);
-      props_.setPropValue(galvoDevice, Properties.Keys.SA_OFFSET_X_DEG, sheetOffset);
+         // only do alternating scan directions if the user is using advanced timing
+         //    and user has option enabled on the advanced timing panel
+         final boolean oppositeDirections = prefs_.getBoolean(
+               MyStrings.PanelNames.ACQUSITION.toString(),
+               Properties.Keys.PREFS_ADVANCED_SLICE_TIMING, false)
+               && prefs_.getBoolean(
+                     MyStrings.PanelNames.ACQUSITION.toString(),  
+                     Properties.Keys.PREFS_SCAN_OPPOSITE_DIRECTIONS, false);
+         if (oppositeDirections) {
+            props_.setPropValue(galvoDevice, Properties.Keys.SPIM_ALTERTATE_DIRECTIONS, 
+                  Properties.Values.YES, skipScannerWarnings);
+         } else {
+            props_.setPropValue(galvoDevice, Properties.Keys.SPIM_ALTERTATE_DIRECTIONS, 
+                  Properties.Values.NO, skipScannerWarnings);
+         }
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_DURATION_SCAN,
+               settings.sliceTiming.scanPeriod, skipScannerWarnings);
+         props_.setPropValue(galvoDevice, Properties.Keys.SA_AMPLITUDE_Y_DEG,
+               sliceAmplitude, skipScannerWarnings);
+         props_.setPropValue(galvoDevice, Properties.Keys.SA_OFFSET_Y_DEG,
+               sliceCenter, skipScannerWarnings);
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_SLICES,
+               numSlices, skipScannerWarnings);
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_SIDES,
+               settings.numSides, skipScannerWarnings);
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_FIRSTSIDE,
+               settings.firstSideIsA ? "A" : "B", skipScannerWarnings);
+
+         // get the piezo card ready; skip if no piezo specified or is stage scanning
+         if (devices_.isValidMMDevice(piezoDevice) && !settings.isStageScanning) {
+            // if mode SLICE_SCAN_ONLY we have computed slice movement as if we
+            //   were moving the piezo but now make piezo stay still
+            if (settings.spimMode.equals(AcquisitionModes.Keys.SLICE_SCAN_ONLY)) {
+               // if we artificially shifted centers due to extra trigger and only moving piezo
+               // then move galvo center back to where it would have been
+               if (cameraMode == CameraModes.Keys.OVERLAP) {
+                  piezoCenter -= piezoAmplitude/(2*(numSlices-1));
+               }
+               piezoAmplitude = 0.0f;
+            }
+
+            float piezoMin = props_.getPropValueFloat(piezoDevice, Properties.Keys.LOWER_LIMIT)*1000;
+            float piezoMax = props_.getPropValueFloat(piezoDevice, Properties.Keys.UPPER_LIMIT)*1000;
+
+            if (MyNumberUtils.outsideRange(piezoCenter - piezoAmplitude/2, piezoMin, piezoMax) ||
+                  MyNumberUtils.outsideRange(piezoCenter + piezoAmplitude/2, piezoMin, piezoMax)) {
+               MyDialogUtils.showError("Imaging piezo for side " + side.toString() + 
+                     " would travel outside the piezo limits during acquisition.");
+               return false;
+            }
+
+            // round to nearest 0.001 micron, which is approximately the DAC resolution
+            piezoAmplitude = MyNumberUtils.roundFloatToPlace(piezoAmplitude, 3);
+            piezoCenter = MyNumberUtils.roundFloatToPlace(piezoCenter, 3);
+            props_.setPropValue(piezoDevice,
+                  Properties.Keys.SA_AMPLITUDE, piezoAmplitude);
+            props_.setPropValue(piezoDevice,
+                  Properties.Keys.SA_OFFSET, piezoCenter);
+            props_.setPropValue(piezoDevice,
+                  Properties.Keys.SPIM_NUM_SLICES, numSlices);
+            props_.setPropValue(piezoDevice,
+                  Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED);
+         }
+
+         // TODO figure out what we should do with piezo illumination/center position during stage scan
+
+         // set up stage scan parameters if necessary
+         if (settings.isStageScanning) {
+            // TODO update UI to hide image center control for stage scanning
+            // for interleaved stage scanning there will never be "home" pulse and for normal stage scanning
+            //   the first side piezo will never get moved into position either so do both manually (for
+            //   simplicity ignore fact that one of two is unnecessary for two-sided normal stage scan acquisition)
+            try {
+               if (devices_.isValidMMDevice(piezoDevice)) {
+                  core_.home(devices_.getMMDevice(piezoDevice));
+               }
+            } catch (Exception e) {
+               ReportingUtils.showError(e, "Could not move piezo to home");
+            }
+         }
+
+         final boolean isInterleaved = (settings.isStageScanning && 
+               settings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED);
+
+         // even though we have moved piezos to home position let's still tell firmware
+         //    not to move piezos anywhere (i.e. maybe setting "home disable" to true doesn't have any really effect)
+         if (isInterleaved) {
+            props_.setPropValue(galvoDevice, Properties.Keys.SPIM_PIEZO_HOME_DISABLE,
+                  Properties.Values.YES, skipScannerWarnings);
+         } else {
+            props_.setPropValue(galvoDevice, Properties.Keys.SPIM_PIEZO_HOME_DISABLE,
+                  Properties.Values.NO, skipScannerWarnings);
+         }
+
+         // set interleaved sides flag low unless we are doing interleaved stage scan
+         if (isInterleaved) {
+            props_.setPropValue(galvoDevice, Properties.Keys.SPIM_INTERLEAVE_SIDES,
+                  Properties.Values.YES, skipScannerWarnings); // make sure to check for errors
+         } else {
+            props_.setPropValue(galvoDevice, Properties.Keys.SPIM_INTERLEAVE_SIDES,
+                  Properties.Values.NO, true);  // ignore errors b/c older firmware won't have it
+         }
+
+         // send sheet width/offset
+         float sheetWidth = getSheetWidth(settings.cameraMode, cameraDevice, side);
+         float sheetOffset = getSheetOffset(settings.cameraMode, side);
+         if (settings.cameraMode == CameraModes.Keys.LIGHT_SHEET) {
+            // adjust sheet width and offset to account for settle time where scan is going but we aren't imaging yet
+            final float settleTime = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SCAN_SETTLE);
+            // infer the main scan time (during imaging) from the laser duration
+            final float readoutTime = settings.sliceTiming.laserDuration - 0.25f;  // -0.25 is for scanLaserBufferTime
+            // offset should be decreased by half of the distance traveled during settle time (instead of re-extracting slope use existing sheetWidth/readoutTime)
+            sheetOffset -= (sheetWidth * settleTime/readoutTime)/2;
+            // width should be increased by ratio (1 + settle_fraction) 
+            sheetWidth += (sheetWidth * settleTime/readoutTime);
+         }
+         props_.setPropValue(galvoDevice, Properties.Keys.SA_AMPLITUDE_X_DEG, sheetWidth);
+         props_.setPropValue(galvoDevice, Properties.Keys.SA_OFFSET_X_DEG, sheetOffset);
+
+      } // end else (offsetOnly == true)
       
       return true;
    }
@@ -594,6 +633,8 @@ public class ControllerUtils {
             return false;
          }
       }
+      
+      ReportingUtils.logMessage("Finished controller cleanup after acquisition");
       
       return true;
    }

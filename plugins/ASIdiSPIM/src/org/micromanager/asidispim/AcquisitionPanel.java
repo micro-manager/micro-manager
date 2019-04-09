@@ -2332,7 +2332,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             acqSettingsTmp.stepSizeUm *= downsampleSpacing;
             
             if (acqSettingsTmp.useChannels) {
-               if (!channelValid(overviewChannel)) {
+               if (!multiChannelPanel_.isChannelValid(overviewChannel)) {
                   MyDialogUtils.showError("Invalid channel selected for overview acquisition (Data Analysis tab).");
                   return null;
                }
@@ -2718,19 +2718,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       return (colors[channelIndex % colors.length]);
    }
    
-   private boolean channelValid(final String channel) {
-      // double-check that selected channel is valid if we are doing multi-channel
-      String channelGroup  = props_.getPropValueString(Devices.Keys.PLUGIN,
-            Properties.Keys.PLUGIN_MULTICHANNEL_GROUP);
-      StrVector channels = gui_.getMMCore().getAvailableConfigs(channelGroup);
-      for (String trythis : channels) {
-         if (trythis.equals(channel)) {
-            return true;
-            }
-         }
-      return false;
-   }
-   
    /**
     * Actually runs the acquisition; does the dirty work of setting
     * up the controller, the circular buffer, starting the cameras,
@@ -2893,7 +2880,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             MyDialogUtils.showError("Camera trigger mode set to " + getSPIMCameraMode().toString() + " but camera A doesn't support it.");
             return false;
          }
-         // Hamamatsu only supports light sheet mode with USB cameras.  Tt seems due to static architecture of getValidModeKeys
+         // Hamamatsu only supports light sheet mode with CameraLink cameras.  It seems due to static architecture of getValidModeKeys
          //   there is no good way to tell earlier that light sheet mode isn't supported.  I don't like this but don't see another option.
          if (camLib == Devices.Libraries.HAMCAM && props_.getPropValueString(camKey, Properties.Keys.CAMERA_BUS).equals(Properties.Values.USB3)) {
             if (getSPIMCameraMode() == CameraModes.Keys.LIGHT_SHEET) {
@@ -2944,7 +2931,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       int nrSlicesSoftware = acqSettings.numSlices;
       String originalChannelConfig = "";
       boolean changeChannelPerVolumeSoftware = false;
-      extraChannelOffset_ = 0.0;
+      boolean changeChannelPerVolumeDoneFirst = false;
+      extraChannelOffset_ = getChannelOffset();
       if (acqSettings.useChannels) {
          if (acqSettings.numChannels < 1) {
             MyDialogUtils.showError("\"Channels\" is checked, but no channels are selected");
@@ -2955,15 +2943,19 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          switch (acqSettings.channelMode) {
          case VOLUME:
             changeChannelPerVolumeSoftware = true;
+            changeChannelPerVolumeDoneFirst = true;
             multiChannelPanel_.initializeChannelCycle();
-            // will update extraChannelOffset_ later
+            extraChannelOffset_ = multiChannelPanel_.selectNextChannelAndGetOffset();
+            // actually do channel selection later on
             break;
          case VOLUME_HW:
          case SLICE_HW:
             if (acqSettings.numChannels == 1) {  // only 1 channel selected so don't have to really use hardware switching
                multiChannelPanel_.initializeChannelCycle();
-               multiChannelPanel_.selectNextChannel();
+               extraChannelOffset_ = multiChannelPanel_.selectNextChannelAndGetOffset();
             } else {  // we have at least 2 channels
+               // intentionally leave extraChannelOffset_ untouched so that it can be specified by user by choosing a preset
+               //   for the channel in the main Micro-Manager window
                boolean success = controller_.setupHardwareChannelSwitching(acqSettings);
                if (!success) {
                   MyDialogUtils.showError("Couldn't set up slice hardware channel switching.");
@@ -3181,7 +3173,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                Properties.Keys.PLUGIN_AUTOFOCUS_CHANNEL);
          // double-check that selected channel is valid if we are doing multi-channel
          if (acqSettings.useChannels) {
-            if (!channelValid(autofocusChannel)) {
+            if (!multiChannelPanel_.isChannelValid(autofocusChannel)) {
                MyDialogUtils.showError("Invalid autofocus channel selected on autofocus tab.");
                return false;
             }
@@ -3199,7 +3191,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                  Properties.Keys.PLUGIN_AUTOFOCUS_CORRECTMOVEMENT_CHANNEL);
          // double-check that selected channel is valid if we are doing multi-channel
          if (acqSettings.useChannels) {
-            if (!channelValid(correctMovementChannel)) {
+            if (!multiChannelPanel_.isChannelValid(correctMovementChannel)) {
                MyDialogUtils.showError("Invalid movement correction channel selected on autofocus tab.");
                return false;
             }
@@ -3774,11 +3766,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
                            // deal with channel if needed (hardware channel switching doesn't happen here)
                            if (changeChannelPerVolumeSoftware) {
-                              double newOffset = multiChannelPanel_.selectNextChannel();
-                              if (!MyNumberUtils.floatsEqual(newOffset, extraChannelOffset_)) { 
-                                 extraChannelOffset_ = newOffset;
-                                 // it is overkill to prepare everything again, but want to keep all the existing logic around slice position
-                                 controller_.prepareControllerForAquisition(acqSettings, extraChannelOffset_);
+                              if (changeChannelPerVolumeDoneFirst) {
+                                 // skip selecting next channel the very first time only
+                                 changeChannelPerVolumeDoneFirst = false;
+                              } else {
+                                 double newOffset = multiChannelPanel_.selectNextChannelAndGetOffset();
+                                 if (!MyNumberUtils.floatsEqual(newOffset, extraChannelOffset_)) { 
+                                    extraChannelOffset_ = newOffset;
+                                    controller_.prepareControllerForAquisitionOffsetOnly(acqSettings, extraChannelOffset_);
+                                 }
                               }
                            }
 
@@ -4795,6 +4791,19 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
    public void setChannelEnabled(String channel, boolean enabled) {
      multiChannelPanel_.setChannelEnabled(channel, enabled);
+   }
+
+   public double getChannelOffset(String channel) {
+      return multiChannelPanel_.getChannelOffset(channel);
+   }
+   
+   public double getChannelOffset() {
+      try {
+         final String currentChannelConfig = gui_.getMMCore().getCurrentConfigFromCache(multiChannelPanel_.getChannelGroup());
+         return getChannelOffset(currentChannelConfig);
+      } catch (Exception ex) {
+         return 0.0;
+      }
    }
 
    // getNumSides() already existed

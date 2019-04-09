@@ -192,6 +192,32 @@ public class ChannelTableModel extends AbstractTableModel {
       }
       return result.toArray(new ChannelSpec[0]);
    }
+   
+   /**
+    * Returns array of channels that in the GUI table even if they aren't being used.
+    * Returns them in order that they are in the table.  Doesn't handle duplicates.
+    * @return 
+    */
+   public ChannelSpec[] getAllChannels() {
+      List<ChannelSpec> result = new ArrayList<ChannelSpec>();
+      for (ChannelSpec ch : channels_) {
+            result.add(ch);
+      }
+      return result.toArray(new ChannelSpec[0]);
+   }
+   
+   /**
+    * @param channel
+    * @return offset corresponding to named channel
+    */
+   public double getChannelOffset(String channel) {
+      for (ChannelSpec ch : channels_) {
+         if (ch.config_.equals(channel)) {
+            return ch.offset_;
+         }
+      }
+      return 0.0;
+   }
 
 }
 
