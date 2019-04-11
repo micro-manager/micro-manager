@@ -462,7 +462,7 @@ public:
    int Fire(double deltaT);
 
    // action interface
-   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   //int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnChannel(MM::PropertyBase* pProp, MM::ActionType eAct);
