@@ -126,9 +126,24 @@ int JAICamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 	return DEVICE_OK;
 }
 
-int JAICamera::OnFps(MM::PropertyBase* pProp, MM::ActionType eAct)
+int JAICamera::OnFrameRate(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	if (eAct == MM::BeforeGet)
+	if (eAct == MM::AfterSet)
+	{
+		double val(1.0);
+		pProp->Get(val);
+		PvResult pvr = genParams->SetFloatValue("AcquisitionFrameRate", val);
+		if (!pvr.IsOK())
+			return processPvError(pvr);
+
+		// adjust exposure limits
+		double expMinUs, expMaxUs;
+		pvr = genParams->GetFloatRange("ExposureTime", expMinUs, expMaxUs);
+		if (!pvr.IsOK())
+			return processPvError(pvr);
+		SetPropertyLimits(MM::g_Keyword_Exposure, expMinUs / 1000, expMaxUs / 1000);
+	}
+	else if (eAct == MM::BeforeGet)
 	{
 		double fps;
 		PvResult pvr = genParams->GetFloatValue("AcquisitionFrameRate", fps);

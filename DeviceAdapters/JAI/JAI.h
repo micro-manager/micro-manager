@@ -45,16 +45,12 @@
 #include <map>
 
 static const char* g_DeviceJAICam = "JAICamera";
-static const char* g_ReadoutRate = "ReadoutRate";
 static const char* g_Gain = "Gain";
-static const char* g_NumberOfTaps = "Taps";
-static const char* g_ColorFilterArray = "SensorArray";
 static const char* g_WhiteBalance = "WhiteBalance";
-static const char* g_TriggerMode = "TriggerMode";
-static const char* g_TriggerPolarity = "TriggerPolarity";
 static const char* g_Temperature = "Temperature";
 static const char* g_TestPattern = "TestPattern";
 static const char* g_Gamma = "Gamma";
+static const char* g_FrameRate = "FrameRateHz"; 
 
 static const char* g_Set = "SetNow";
 static const char* g_Off = "Off";
@@ -192,7 +188,7 @@ public:
    int OnTestPattern(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTemperatureSetPoint(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnFps(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFrameRate(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTriggerPolarity(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
