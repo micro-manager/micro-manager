@@ -247,25 +247,32 @@ int JAICamera::Initialize()
 	if (!pvr.IsOK())
 		return processPvError(pvr);
 
-	// EXPOSURE
-	double expUs;
-	pvr = genParams->GetFloatValue("ExposureTime", expUs);
+	// FRAME RATE
+	CPropertyAction *pAct = new CPropertyAction(this, &JAICamera::OnFrameRate);
+	CreateProperty(g_FrameRate, "0", MM::Float, false, pAct);
+
+	double frMinHz, frMaxHz;
+	pvr = genParams->GetFloatRange("AcquisitionFrameRate", frMinHz, frMaxHz);
 	if (!pvr.IsOK())
 		return processPvError(pvr);
 
+	SetPropertyLimits(g_FrameRate, frMinHz, frMaxHz);
+
+	// EXPOSURE
 	double expMinUs, expMaxUs;
 	pvr = genParams->GetFloatRange("ExposureTime", expMinUs, expMaxUs);
 	if (!pvr.IsOK())
 		return processPvError(pvr);
 
-	CPropertyAction *pAct = new CPropertyAction(this, &JAICamera::OnExposure);
+	double expUs;
+	pvr = genParams->GetFloatValue("ExposureTime", expUs);
+	if (!pvr.IsOK())
+		return processPvError(pvr);
+
+	pAct = new CPropertyAction(this, &JAICamera::OnExposure);
 	int ret = CreateProperty(MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString(expUs), MM::Float, false, pAct);
 	SetPropertyLimits(MM::g_Keyword_Exposure, expMinUs / 1000, expMaxUs / 1000);
 	assert(ret == DEVICE_OK);
-
-	// FRAME RATE
-	pAct = new CPropertyAction(this, &JAICamera::OnFps);
-	CreateProperty("Fps", "0", MM::Float, true, pAct);
 
 	// BINNING
 	pAct = new CPropertyAction(this, &JAICamera::OnBinning);
@@ -860,24 +867,24 @@ void JAICamera::convert_BGR12P_RGBA64(const uint8_t * src, uint8_t * dest, unsig
 	{
 		int pixPtrR = i * 36 / 8;
 		int bitPtrR = i * 36 % 8;
-		uint16_t* bufR = (uint16_t*)(src + pixPtrR);
-		*bufR = *bufR << bitPtrR;
-		*bufR = *bufR >> 4;
-		*((uint16_t*)(dest + i*byteDepth)) = *bufR; // R
+		uint16_t* buf = (uint16_t*)(src + pixPtrR);
+		uint16_t r = *buf << bitPtrR;
+		r = r >> 4;
+		*((uint16_t*)(dest + i*byteDepth)) = r; // R
 
 		int pixPtrG = (i * 36 + 12) / 8;
 		int bitPtrG = (i * 36 + 12) % 8;
-		uint16_t* bufG = (uint16_t*)(src + pixPtrG);
-		*bufG = *bufG << bitPtrG;
-		*bufG = *bufG >> 4;
-		*((uint16_t*)(dest + i*byteDepth + 2)) = *bufG; // G
+		buf = (uint16_t*)(src + pixPtrG);
+		uint16_t g = *buf << bitPtrG;
+		g = g >> 4;
+		*((uint16_t*)(dest + i*byteDepth + 2)) = g; // G
 
 		int pixPtrB = (i * 36 + 24) / 8;
 		int bitPtrB = (i * 36 + 24) % 8;
-		uint16_t* bufB = (uint16_t*)(src + pixPtrB);
-		*bufB = *bufB << bitPtrB;
-		*bufB = *bufB >> 4;
-		*((uint16_t*)(dest + i*byteDepth + 4)) = *bufB; // B
+		buf = (uint16_t*)(src + pixPtrB);
+		uint16_t b = *buf << bitPtrB;
+		b = b >> 4;
+		*((uint16_t*)(dest + i*byteDepth + 4)) = b; // B
 
 		*((uint16_t*)(dest + i*byteDepth + 6)) = 0; // alpha
 	}
@@ -1149,3 +1156,6 @@ int AcqSequenceThread::processPvError(PvResult pvr, std::shared_ptr<PvStream>& s
 	InterlockedExchange(&moduleInstance->acquiring, 0);
 	return 1;
 }
+
+
+
