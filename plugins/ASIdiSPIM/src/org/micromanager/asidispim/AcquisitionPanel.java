@@ -1151,7 +1151,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     		  if (width > 4100 || width < 4 || pixelSize < 1e-6) {
     			  return;
     		  }
-    		  double delta = width*pixelSize/Math.sqrt(2);
+    		  double delta = width*pixelSize/Math.sqrt(2);  // TODO account for non-45 degree angle
     		  double overlap = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_GRID_OVERLAP_PERCENT); 
     		  delta *= (1-overlap/100);
     		  gridZDeltaField_.setValue((double)Math.round(delta));
@@ -2278,6 +2278,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             overviewDownsampleY_ = downsampleY;
             final double downsampleSpacing = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_OVERVIEW_SLICE_DOWNSAMPLE_FACTOR);
             final double thicknessFactor = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_OVERVIEW_SLICE_THICKNESS_FACTOR);
+            final double positionFactorUser = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_OVERVIEW_SLICE_POSITION_FACTOR);
+            final double positionFactor;
+            // make sure position offset doesn't make ROI run off of image on either end
+            if (positionFactorUser + thicknessFactor/2 > 1.0) {
+               positionFactor = 1.0 - thicknessFactor/2;
+            } else if (positionFactorUser - thicknessFactor/2 < 0.0) {
+               positionFactor = thicknessFactor/2;
+            } else {
+               positionFactor = positionFactorUser;
+            }
             double deskewFactor = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_DESKEW_FACTOR);
             if (deskewFactor == 0.0) {
                deskewFactor = 1.0;
@@ -2423,7 +2433,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                int deskewSign = -1;
                try {
                   deskewSign = du.getDeskewSign(0, acqSettings.spimMode, acqSettings.numSides > 1, acqSettings.firstSideIsA);
-                  compressX = du.getStageTopViewCompressFactor(acqSettings.firstSideIsA);
+                  compressX = du.getStageTopViewCompressFactor(acqSettings.firstSideIsA);  // check logic that uses this below; correct empirically for 45 degrees but use doesn't make full sense to me
                } catch(Exception ex) {
                   // ignore errors, stick with defaults
                }
@@ -2437,7 +2447,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                final double pixelScaled = pixelSize * downsampleY;
                overviewPixelSize_ = pixelScaled;
                final int roiWidth = (int)Math.round(imageWidth*thicknessFactor);
-               final int roiOffset = (int)((imageWidth-roiWidth)/2);
+               final int roiOffset = (int)(positionFactor*imageWidth - roiWidth/2);
                final int scaledWidth = (int)Math.round(roiWidth/downsampleY/compressX);  // scale width by additional geometric factor b/c just doing max projection
                final int scaledHeight = (int)Math.round(imageHeight/downsampleY);
                final double zStepPx = zStepUm / pixelSize;

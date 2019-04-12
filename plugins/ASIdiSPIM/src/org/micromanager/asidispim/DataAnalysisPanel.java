@@ -77,6 +77,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
    private final JSpinner yDownsample_;
    private final JSpinner spacingDownsample_;
    private final JSpinner sliceThickness_;
+   private final JSpinner slicePosition_;
    private final JCheckBox sliceOverviewOverwriteWindow_;
    
    public static final String[] TRANSFORMOPTIONS = 
@@ -285,20 +286,25 @@ public class DataAnalysisPanel extends ListeningJPanel {
       
       sliceOverviewPanel_.setBorder(PanelUtils.makeTitledBorder("Overview Acquisition"));
       
-      sliceOverviewPanel_.add(new JLabel("XY Downsample:"), "span 2");
+      sliceOverviewPanel_.add(new JLabel("XY downsample:"), "span 2");
       yDownsample_ = pu.makeSpinnerFloat(1.0, 10.0, 1.0,
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_OVERVIEW_XY_DOWNSAMPLE_FACTOR, 4.0);
       sliceOverviewPanel_.add(yDownsample_, "wrap");
       
-      sliceOverviewPanel_.add(new JLabel("Slice Downsample:"), "span 2");
+      sliceOverviewPanel_.add(new JLabel("Slice downsample:"), "span 2");
       spacingDownsample_ = pu.makeSpinnerFloat(1.0, 10.0, 1.0, 
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_OVERVIEW_SLICE_DOWNSAMPLE_FACTOR, 4.0);
       sliceOverviewPanel_.add(spacingDownsample_, "wrap");
       
-      sliceOverviewPanel_.add(new JLabel("Fractional Thickness:"), "span 2");
+      sliceOverviewPanel_.add(new JLabel("Fractional Z thickness:"), "span 2");
       sliceThickness_ = pu.makeSpinnerFloat(0.01, 1.0, 0.1, 
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_OVERVIEW_SLICE_THICKNESS_FACTOR, 0.2);
       sliceOverviewPanel_.add(sliceThickness_, "wrap");
+      
+      sliceOverviewPanel_.add(new JLabel("Fractional Z position:"), "span 2");
+      slicePosition_ = pu.makeSpinnerFloat(0.01, 1.0, 0.1, 
+            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_OVERVIEW_SLICE_POSITION_FACTOR, 0.5);
+      sliceOverviewPanel_.add(slicePosition_, "wrap");
       
       // TODO: need to update combobox when the channel group changes
       String channelGroup_  = props_.getPropValueString(Devices.Keys.PLUGIN,
@@ -328,6 +334,16 @@ public class DataAnalysisPanel extends ListeningJPanel {
             final double downSampleY = PanelUtils.getSpinnerFloatValue(yDownsample_);
             final double downSampleSpacing = PanelUtils.getSpinnerFloatValue(spacingDownsample_);
             final double thicknessFactor = PanelUtils.getSpinnerFloatValue(sliceThickness_);
+            final double positionFactorUser = PanelUtils.getSpinnerFloatValue(slicePosition_);
+            final double positionFactor;
+            // make sure position offset doesn't make ROI run off of image on either end
+            if (positionFactorUser + thicknessFactor/2 > 1.0) {
+               positionFactor = 1.0 - thicknessFactor/2;
+            } else if (positionFactorUser - thicknessFactor/2 < 0.0) {
+               positionFactor = thicknessFactor/2;
+            } else {
+               positionFactor = positionFactorUser;
+            }
             final int bitdepth = 16;
             DeviceUtils du = new DeviceUtils(gui_, devices_, props_, prefs_);
             int deskewSign = -1;
@@ -350,6 +366,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
             final int reducedNrSlices = ip.getNSlices();
             
             final int roiWidth = (int)Math.round(ip.getWidth()*thicknessFactor);
+            final int roiOffset = (int)(positionFactor*ip.getWidth() - roiWidth/2);
             final int scaledWidth = (int)Math.round(roiWidth/downSampleY/compressX);  // can scale width by additional sqrt(2) if adjust spacing and doing max projection anyway
             final int scaledHeight = (int)Math.round(ip.getHeight()/downSampleY);
             final double zStepPx = ip.getCalibration().pixelDepth / ip.getCalibration().pixelWidth;
@@ -366,7 +383,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
                ImageProcessor proc = ip.getStack().getProcessor(slice);
                proc.setInterpolationMethod(ImageProcessor.BILINEAR);
                // set ROI based on the thickness of the shown slice, for now it is centered in the sample's Z dimension
-               proc.setRoi(proc.getWidth()/2-roiWidth/2, 0, roiWidth, proc.getHeight());
+               proc.setRoi(roiOffset, 0, roiWidth, proc.getHeight());
                ImageProcessor cropped = proc.crop();
                ImageProcessor scaled = cropped.resize(scaledWidth, scaledHeight, true);
                // match sample orientation in physical space

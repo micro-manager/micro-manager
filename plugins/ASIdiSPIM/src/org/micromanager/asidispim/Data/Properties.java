@@ -269,6 +269,7 @@ public class Properties {
       PLUGIN_OVERVIEW_XY_DOWNSAMPLE_FACTOR("OverviewYDownsampleFactor"),
       PLUGIN_OVERVIEW_SLICE_DOWNSAMPLE_FACTOR("OverviewSpacingDownsampleFactor"),
       PLUGIN_OVERVIEW_SLICE_THICKNESS_FACTOR("OverviewSliceThicknessFactor"),
+      PLUGIN_OVERVIEW_SLICE_POSITION_FACTOR("OverviewSlicePositionFactor"),
       PLUGIN_OVERVIEW_CHANNEL("OverviewChannel"),
       PLUGIN_OVERVIEW_SIDE("OverviewSide"),
       PLUGIN_OVERVIEW_OVERWRITE_WINDOW("OverviewOverwriteWindow"),
