@@ -16,10 +16,23 @@ import org.micromanager.data.Coordinates;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.internal.DefaultImage;
 
+import boofcv.abst.distort.FDistort;
+import boofcv.struct.border.BorderType;
 import boofcv.struct.image.ImageGray;
 import boofcv.struct.image.GrayU8;
 import boofcv.struct.image.GrayU16;
+import boofcv.struct.image.GrayS32;
 import boofcv.alg.misc.GImageMiscOps;
+import boofcv.alg.misc.PixelMath;
+import boofcv.core.image.ConvertImage;
+
+import georegression.struct.affine.Affine2D_F64;
+
+double[] sN = new double[] {-0.84119, 0.04472, -0.04494, -0.8398};
+double[] hN = new double[] {-0.0915, 0.64327, -0.6434, -0.01928};
+
+hamAff = new Affine2D_F64(hN[0], hN[1], hN[2], hN[3], 0.0, 0.0);
+hamAffI = hamAff.invert(hamAff);
 
 displays = mm.displays().getAllDataViewers();
 
@@ -96,6 +109,11 @@ widthPixels = (int) (widthUm / smallestPSize) + 1;
 heightPixels = (int) (heightUm / smallestPSize) + 1;
 //mm.scripter().message("widthPixels: " + widthPixels + ", heightPixels: " + heightPixels);
 
+// Not sure why, but it looks like the image will end up at the origin
+// rather then the center unless we set this translation to the center
+// of the target image.   TODO: get this number dynamically
+hamAffI.tx = widthPixels / 2.0;;
+hamAffI.ty = heightPixels / 2.0;
 
 
 targetStore = mm.data().createRAMDatastore();
@@ -103,21 +121,26 @@ targetStore = mm.data().createRAMDatastore();
 int c = 0;
 for (data: datas) {
 	cb.t(0).c(0).p(0).z(0);
-	ImageGray newImgBoof, oldImgBoof;
+	ImageGray newImgBoof, oldImgBoof, tmpImgBoof, tmp2ImgBoof;
 	newMetadataB  = data.getImage(cb.build()).getMetadata().
 				copyBuilderWithNewUUID().pixelSizeUm(smallestPSize);
 	if (bytesPerPixel == 1) {
 		newImgBoof = new GrayU8(widthPixels, heightPixels);
+		tmpImgBoof = new GrayU8(widthPixels, heightPixels);
+		tmp2ImgBoof = new GrayU16(widthPixels, heightPixels);
 	} else { // bytesPerPixel == 2
 		newImgBoof = new GrayU16 (widthPixels, heightPixels);
+		tmpImgBoof = new GrayU16 (widthPixels, heightPixels);		
+		tmp2ImgBoof = new GrayS32(widthPixels, heightPixels);
 	}
-	for (int p = 0; p <= data.getMaxIndices().getP(); p++) {
+	if (data.getMaxIndices().getP() <= 1) {
+		p = 0;
 		img = data.getImage(cb.p(p).build());
 		pSize = img.getMetadata().getPixelSizeUm();
 		tmpXMinUm = img.getMetadata().getXPositionUm() - (0.5 * img.getWidth() * pSize);
 		tmpYMinUm = img.getMetadata().getYPositionUm() - (0.5 * img.getHeight() * pSize);
 		
-		mm.scripter().message("" + tmpXMinUm + ", " + xMinUm + ", " + smallestPSize);
+		//mm.scripter().message("" + tmpXMinUm + ", " + xMinUm + ", " + smallestPSize);
 		xMinPixel = (int) ((tmpXMinUm - xMinUm) / smallestPSize);
 		yMinPixel = (int) ((tmpYMinUm - yMinUm) / smallestPSize);
 		//mm.scripter().message("c: " + c + ", p:" + p + ", xMinPixel: " + xMinPixel + ", yminPixel: " + yMinPixel);
@@ -130,7 +153,39 @@ for (data: datas) {
 		mm.scripter().message("" + xMinPixel + ", " + yMinPixel);
 		GImageMiscOps.copy(0, 0, xMinPixel, yMinPixel, img.getWidth(), img.getHeight(),
 					oldImgBoof, newImgBoof);
-	}	
+	} else { // p > 1	
+		for (int p = 0; p <= data.getMaxIndices().getP(); p++) {
+			img = data.getImage(cb.p(p).build());
+			if (bytesPerPixel == 1) {
+				oldImgBoof = new GrayU8(img.getWidth(), img.getHeight());
+			} else { // bytesPerPixel == 2
+				oldImgBoof = new GrayU16 (img.getWidth(), img.getHeight());
+			}
+			oldImgBoof.setData(img.getRawPixels());
+			diffX = centerXUm - img.getMetadata().getXPositionUm();
+			diffY = centerYUm - img.getMetadata().getYPositionUm();
+			mm.scripter().message("x: " + centerXUm + ", " + img.getMetadata().getXPositionUm() + ", " + diffX);	
+			mm.scripter().message("y: " + centerYUm + ", " + img.getMetadata().getYPositionUm() + ", " + diffY);
+			constX = -125.0;
+			constY = -215.0;
+			
+			aff = new Affine2D_F64(sN[0], sN[1], sN[2], sN[3], -(diffX + constX), -(diffY + constY));
+					//centerXUm - img.getMetadata().getXPositionUm(),.0
+					//centerYUm - img.getMetadata().getYPositionUm());
+
+		   aff = aff.concat(hamAffI, null);
+		   fd = new FDistort();
+		   fd.input(oldImgBoof);
+		   fd.output(tmpImgBoof);
+		   fd.affine(aff);
+		   fd.interpNN();
+		   fd.border(BorderType.ZERO);
+		   fd.apply();
+		   PixelMath.add(newImgBoof, tmpImgBoof, tmp2ImgBoof);
+		   newImgBoof = ConvertImage.convert(tmp2ImgBoof, newImgBoof);
+		   
+		}
+	}
 	newImage = new DefaultImage(newImgBoof.getData(), widthPixels, heightPixels, 
 				bytesPerPixel, 1, cb.p(0).c(c).build(), 
 				newMetadataB.build());
