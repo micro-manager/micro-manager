@@ -42,6 +42,7 @@
 #include <iomanip>
 
 using namespace std;
+bool Tsi3Cam::globalColorInitialized = false;
 
 
 void camera_connect_callback(char* /* cameraSerialNumber */, enum TL_CAMERA_USB_PORT_TYPE /* usb_bus_speed */, void* /* context */)
@@ -61,10 +62,13 @@ Tsi3Cam::Tsi3Cam() :
    triggerPolarity(TL_CAMERA_TRIGGER_POLARITY_ACTIVE_HIGH),
    operationMode(TL_CAMERA_OPERATION_MODE_SOFTWARE_TRIGGERED),
    camHandle(nullptr),
+   colorProcessor(nullptr),
    acquiringSequence(false),
    acquiringFrame(false),
    maxExposureMs(10000),
-	color(false)
+   color(false),
+	whiteBalance(false),
+	whiteBalancePending(0L)
 {
    // set default error messages
    InitializeDefaultErrorMessages();
@@ -198,6 +202,12 @@ int Tsi3Cam::Initialize()
 			LogMessage("Color camera: unsupported pixel depth");
 			return ERR_INTERNAL_ERROR; // color processor supports onlly 16 -> 48 conversion
 		}
+		
+		if (tl_camera_get_color_filter_array_phase(camHandle, &cfaPhase))
+		{
+			return ERR_INTERNAL_ERROR;
+		}
+
 		int r = InitializeColorProcessor();
 		if (r != DEVICE_OK)
 		{
@@ -205,6 +215,14 @@ int Tsi3Cam::Initialize()
 			return ERR_INTERNAL_ERROR;
 		}
 		color = true;
+
+		// create white balance property
+      CPropertyAction *pAct = new CPropertyAction(this, &Tsi3Cam::OnWhiteBalance);
+      ret = CreateProperty(g_WhiteBalance, g_Off, MM::String, false, pAct);
+      AddAllowedValue(g_WhiteBalance, g_Off);
+      AddAllowedValue(g_WhiteBalance, g_Set);
+      AddAllowedValue(g_WhiteBalance, g_On);
+
 	}
 	else if (sensorType == TL_CAMERA_SENSOR_TYPE_MONOCHROME)
 		color = false;
@@ -654,6 +672,70 @@ void Tsi3Cam::frame_available_callback(void* /*sender*/, unsigned short* image_b
    
 	if (instance->color)
 	{
+		if (instance->whiteBalancePending)
+		{
+			// we enter this block only if the user requested WB
+
+			// create white balance color processor
+			int ret = instance->ShutdownColorProcessor();
+			if (ret != DEVICE_OK)
+			{
+				ostringstream osErr;
+				osErr << "ShutdownColorProcessor failed: " << ret;
+				instance->LogMessage(osErr.str());
+				return; // this is fatal error
+			}
+			ret = instance->InitializeColorProcessor(true); // wb pipeline
+			if (ret != DEVICE_OK)
+			{
+				ostringstream osErr;
+				osErr << "InitializeColorProcessor failed: " << ret;
+				instance->LogMessage(osErr.str());
+				return; // fatal error, can't continue
+			}
+
+			// debayer the frame and obtain temporary color image that will be used for computing wb and then discarded
+			vector<unsigned short> colorBuf(img_width * img_height * 3);
+			ret = instance->ColorProcess16to48WB(image_buffer, &colorBuf[0], img_width, img_height);
+			if (ret != DEVICE_OK)
+			{
+				ostringstream osErr;
+				osErr << "ColorProcess16to48WB failed: " << ret;
+				instance->LogMessage(osErr.str());
+			}
+
+			// now compute wb scaling from the 48-bit rgb image
+			double rSum(0.0);
+			double gSum(0.0);
+			double bSum(0.0);
+			for (int i=0; i<colorBuf.size() / 3; i++)
+			{
+				rSum += colorBuf[i*3 + 2];
+				gSum += colorBuf[i*3 + 1];
+				bSum += colorBuf[i*3];
+			}
+
+			double lumin = 0.2126 * rSum + 0.7152 * gSum + 0.0722 * bSum;
+			double redScaler = rSum != 0 ? lumin / rSum : 1.0;
+			double greenScaler = gSum != 0 ? lumin / gSum : 1.0;
+			double blueScaler = bSum != 0 ? lumin / bSum : 1.0;
+
+			ostringstream osWb;
+			osWb << "White Balance parameters: rScale=" << redScaler << ", gScale=" << greenScaler << ", bScale=" << blueScaler;
+			instance->LogMessage(osWb.str());
+
+			// modify pipeline to use wb transformation
+			ret = instance->ApplyWhiteBalance(redScaler, greenScaler, blueScaler);
+			if (ret != DEVICE_OK)
+			{
+				ostringstream osErr;
+				osErr << "ApplyWhiteBalance failed: " << ret;
+				instance->LogMessage(osErr.str());
+			}
+
+			InterlockedExchange(&instance->whiteBalancePending, 0); // clear wb pending flag
+		}
+
 		// COLOR
 		instance->img.Resize(img_width, img_height, 4);
 		instance->ColorProcess16to32(image_buffer, instance->img.GetPixelsRW(), img_width, img_height);
@@ -676,6 +758,7 @@ void Tsi3Cam::frame_available_callback(void* /*sender*/, unsigned short* image_b
       {
          ostringstream osErr;
          osErr << "Insert image failed: " << ret;
+			instance->LogMessage(osErr.str());
       }
    }
    else

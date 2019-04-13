@@ -274,3 +274,33 @@ int Tsi3Cam::OnHotPixThreshold( MM::PropertyBase* pProp, MM::ActionType eAct )
    }
    return DEVICE_OK;
 }
+
+int Tsi3Cam::OnWhiteBalance(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::AfterSet)
+   {
+      string val;
+      pProp->Get(val);
+      if (val.compare(g_Off) == 0)
+      {
+         ClearWhiteBalance();
+      }
+      else if (val.compare(g_On) == 0)
+      {
+         if (!whiteBalance)
+            return SetWhiteBalance();
+      }
+      else if (val.compare(g_Set) == 0)
+      {
+         return SetWhiteBalance();
+      }
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      if (whiteBalance)
+         pProp->Set(g_On);
+      else
+         pProp->Set(g_Off);
+   }
+   return DEVICE_OK;
+}
