@@ -130,6 +130,7 @@ public:
    int OnEEP(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnHotPixEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnHotPixThreshold(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnWhiteBalance(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int ResizeImageBuffer();
@@ -137,23 +138,32 @@ private:
    bool StopCamera();
    bool StartCamera(int frames);
 	int ColorProcess16to32(unsigned short* monoBuffer, unsigned char* colorBuffer, int width, int height);
-	int InitializeColorProcessor();
+	int ColorProcess16to48WB(unsigned short* monoBuffer, unsigned short* colorBuffer, int width, int height);
+	int InitializeColorProcessor(bool wb=false);
 	int ShutdownColorProcessor();
+	int ClearWhiteBalance();
+	int SetWhiteBalance();
+	int ApplyWhiteBalance(double redScaler, double greenScaler, double blueScaler);
 
    static void frame_available_callback(void* sender, unsigned short* image_buffer, int frame_count, unsigned char* metadata, int metadata_size_in_bytes, void* context);
 
    ImgBuffer img;
 	std::vector<unsigned short> demosaicBuffer;
    bool initialized;
+	static bool globalColorInitialized;
    bool stopOnOverflow;
    void* camHandle;
+   void* colorProcessor;
    long acquiringSequence;
    long acquiringFrame;
    double maxExposureMs;
-	bool color;
+   bool color;
+	bool whiteBalance;
+	LONG whiteBalancePending;
 
    Tsi3RoiBin fullFrame;
 
    TL_CAMERA_OPERATION_MODE operationMode;
    TL_CAMERA_TRIGGER_POLARITY triggerPolarity;
+	TL_COLOR_FILTER_ARRAY_PHASE cfaPhase;
 };

@@ -35,12 +35,12 @@
 const char* dllLoadErr = "Error loading color processing functions from the dll";
 
 // dynamically loaded functions from Thorlabs dlls
-HMODULE demosaic_module_handle(0);
+HMODULE g_demosaicModuleHandle(0);
 TL_DEMOSAIC_MODULE_INITIALIZE tl_demosaic_module_initialize(0);
 TL_DEMOSAIC_TRANSFORM_16_TO_48 tl_demosaic_transform_16_to_48(0);
 TL_DEMOSAIC_MODULE_TERMINATE tl_demosaic_module_terminate(0);
 
-HMODULE cc_module_handle(0);
+HMODULE g_colorModuleHandle(0);
 TL_COLOR_PROCESSING_MODULE_INITIALIZE tl_color_processing_module_initialize(0);
 TL_COLOR_CREATE_COLOR_PROCESSOR tl_color_create_color_processor(0);
 TL_COLOR_GET_BLUE_INPUT_LUT tl_color_get_blue_input_LUT(0);
@@ -58,10 +58,6 @@ TL_COLOR_TRANSFORM_48_TO_24 tl_color_transform_48_to_24(0);
 TL_COLOR_TRANSFORM_48_TO_32 tl_color_transform_48_to_32(0);
 TL_COLOR_DESTROY_COLOR_PROCESSOR tl_color_destroy_color_processor(0);
 TL_COLOR_PROCESSING_MODULE_TERMINATE tl_color_processing_module_terminate(0);
-
-TL_COLOR_FILTER_ARRAY_PHASE g_cfaPhase(TL_COLOR_FILTER_ARRAY_PHASE_BAYER_BLUE);
-
-void* color_processor_inst(0);
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Local utility functions for color processing
@@ -99,7 +95,7 @@ int Tsi3Cam::ColorProcess16to32(unsigned short* monoBuf, unsigned char* colorBuf
 												, mono_image_height
 												, 0
 												, 0
-												, g_cfaPhase
+												, cfaPhase
 												, TL_COLOR_FORMAT_BGR_PLANAR
 												, TL_COLOR_FILTER_TYPE_BAYER
 												, fullFrame.bitDepth
@@ -111,7 +107,7 @@ int Tsi3Cam::ColorProcess16to32(unsigned short* monoBuf, unsigned char* colorBuf
 	}
 	
 	// Color process the demosaic color frame.
-	if (tl_color_transform_48_to_32(color_processor_inst
+	if (tl_color_transform_48_to_32(colorProcessor
 											, &demosaicBuffer[0] // input buffer
 											, TL_COLOR_FORMAT_BGR_PLANAR
 											, 0
@@ -135,228 +131,285 @@ int Tsi3Cam::ColorProcess16to32(unsigned short* monoBuf, unsigned char* colorBuf
 }
 
 /**
+ * Process monochrome image obtained from Bayer mask sensor with demosaic and color transformation
+ * @param monoBuf - sensor image, assumed to be 2 bytes per pixel with bit-depth defined with bitDepth parameter
+ * @param colorBuf - output color image 48-bit RGB format
+ * @param bitDepth - bit depth of the input image, valid values 8-16
+ * @return - error code
+ */
+int Tsi3Cam::ColorProcess16to48WB(unsigned short* monoBuf, unsigned short* colorBuf, int mono_image_width, int mono_image_height)
+{
+	// process
+	// resize temp buffer (3x larger than the monochrome buffer) to hold the demosaic (only) data.
+	demosaicBuffer.resize(mono_image_width * mono_image_height * 3);
+
+	// Demosaic the monochrome image data.
+	if (tl_demosaic_transform_16_to_48(mono_image_width
+												, mono_image_height
+												, 0
+												, 0
+												, cfaPhase
+												, TL_COLOR_FORMAT_BGR_PLANAR
+												, TL_COLOR_FILTER_TYPE_BAYER
+												, fullFrame.bitDepth
+												, monoBuf
+												, &demosaicBuffer[0]) != TL_COLOR_NO_ERROR)
+	{
+		LogMessage("Failed to demosaic the monochrome image!"); 
+		return ERR_INTERNAL_ERROR;
+	}
+	
+	// Color process the demosaic color frame.
+	if (tl_color_transform_48_to_48(colorProcessor
+											, &demosaicBuffer[0] // input buffer
+											, TL_COLOR_FORMAT_BGR_PLANAR
+											, 0
+											, (1 << fullFrame.bitDepth) - 1
+											, 0
+											, (1 << fullFrame.bitDepth) - 1
+											, 0
+											, (1 << fullFrame.bitDepth) - 1
+											, 0
+											, 0
+											, 0
+											, colorBuf
+											, TL_COLOR_FORMAT_BGR_PIXEL
+											, mono_image_width * mono_image_height) != TL_COLOR_NO_ERROR)
+	{
+		LogMessage("Color transform failed!"); 
+		return ERR_INTERNAL_ERROR;
+	}
+	
+	return DEVICE_OK;
+}
+
+
+/**
  * Initializes color processing pipeline. Should be called only once each time application starts.
  * Requires shutdown routine on application exit.
  * @return - error code
  */
-int Tsi3Cam::InitializeColorProcessor()
+int Tsi3Cam::InitializeColorProcessor(bool wb/*=false*/)
 {
-	// Load the demosaic module.
-	demosaic_module_handle = ::LoadLibrary("thorlabs_tsi_demosaic.dll");
-	if (!demosaic_module_handle)
+	if (!globalColorInitialized)
 	{
-		LogMessage("Failed to open the demosaic library!");
-		return ERR_INTERNAL_ERROR;
-	}
+		// Load the demosaic module.
+		g_demosaicModuleHandle = ::LoadLibrary("thorlabs_tsi_demosaic.dll");
+		if (!g_demosaicModuleHandle)
+		{
+			LogMessage("Failed to open the demosaic library!");
+			return ERR_INTERNAL_ERROR;
+		}
+	
+		// Map handles to the demosaic module exported functions.
+		tl_demosaic_module_initialize = reinterpret_cast <TL_DEMOSAIC_MODULE_INITIALIZE> (::GetProcAddress(g_demosaicModuleHandle, "tl_demosaic_module_initialize"));
+		if (!tl_demosaic_module_initialize)
+		{
+			LogMessage(dllLoadErr);
+			::FreeLibrary(g_demosaicModuleHandle);
+			return ERR_INTERNAL_ERROR;
+		}
+	
+		tl_demosaic_transform_16_to_48 = reinterpret_cast <TL_DEMOSAIC_TRANSFORM_16_TO_48> (::GetProcAddress(g_demosaicModuleHandle, "tl_demosaic_transform_16_to_48"));
+		if (!tl_demosaic_transform_16_to_48)
+		{
+			LogMessage(dllLoadErr);
+			::FreeLibrary(g_demosaicModuleHandle);
+			return ERR_INTERNAL_ERROR;
+		}
+	
+		tl_demosaic_module_terminate = reinterpret_cast <TL_DEMOSAIC_MODULE_TERMINATE> (::GetProcAddress(g_demosaicModuleHandle, "tl_demosaic_module_terminate"));
+		if (!tl_demosaic_module_terminate)
+		{
+			LogMessage(dllLoadErr);
+			::FreeLibrary(g_demosaicModuleHandle);
+			return ERR_INTERNAL_ERROR;
+		}
+	
+		g_colorModuleHandle = ::LoadLibrary("thorlabs_tsi_color_processing.dll");
+		if (!g_colorModuleHandle)
+		{
+			LogMessage("Failed to open the color processing library!");
+			::FreeLibrary(g_demosaicModuleHandle);
+			return ERR_INTERNAL_ERROR;
+		}
+	
+		tl_color_processing_module_initialize =reinterpret_cast <TL_COLOR_PROCESSING_MODULE_INITIALIZE> (::GetProcAddress(g_colorModuleHandle, "tl_color_processing_module_initialize"));
+		if (!tl_color_processing_module_initialize)
+		{
+			LogMessage(dllLoadErr);
+			::FreeLibrary(g_demosaicModuleHandle);
+			::FreeLibrary(g_colorModuleHandle);
+			return ERR_INTERNAL_ERROR;
+		}
+	
+		tl_color_create_color_processor = reinterpret_cast <TL_COLOR_CREATE_COLOR_PROCESSOR> (::GetProcAddress(g_colorModuleHandle, "tl_color_create_color_processor"));
+		if (!tl_color_create_color_processor)
+		{
+			LogMessage(dllLoadErr);
+			::FreeLibrary(g_demosaicModuleHandle);
+			::FreeLibrary(g_colorModuleHandle);
+			return ERR_INTERNAL_ERROR;
+		}
+	
+		tl_color_get_blue_input_LUT = reinterpret_cast <TL_COLOR_GET_BLUE_INPUT_LUT> (::GetProcAddress(g_colorModuleHandle, "tl_color_get_blue_input_LUT"));
+		if (!tl_color_get_blue_input_LUT)
+		{
+			LogMessage(dllLoadErr);
+			::FreeLibrary(g_demosaicModuleHandle);
+			::FreeLibrary(g_colorModuleHandle);
+			return ERR_INTERNAL_ERROR;
+		}
+	
+		tl_color_get_green_input_LUT = reinterpret_cast <TL_COLOR_GET_GREEN_INPUT_LUT> (::GetProcAddress(g_colorModuleHandle, "tl_color_get_green_input_LUT"));
+		if (!tl_color_get_green_input_LUT)
+		{
+			LogMessage(dllLoadErr);
+			::FreeLibrary(g_demosaicModuleHandle);
+			::FreeLibrary(g_colorModuleHandle);
+			return ERR_INTERNAL_ERROR;
+		}
+	
+		tl_color_get_red_input_LUT = reinterpret_cast <TL_COLOR_GET_RED_INPUT_LUT> (::GetProcAddress(g_colorModuleHandle, "tl_color_get_red_input_LUT"));
+		if (!tl_color_get_red_input_LUT)
+		{
+			LogMessage(dllLoadErr);
+			::FreeLibrary(g_demosaicModuleHandle);
+			::FreeLibrary(g_colorModuleHandle);
+			return ERR_INTERNAL_ERROR;
+		}
+	
+		tl_color_enable_input_LUTs = reinterpret_cast <TL_COLOR_ENABLE_INPUT_LUTS> (::GetProcAddress(g_colorModuleHandle, "tl_color_enable_input_LUTs"));
+		if (!tl_color_enable_input_LUTs)
+		{
+			LogMessage(dllLoadErr);
+			::FreeLibrary(g_demosaicModuleHandle);
+			::FreeLibrary(g_colorModuleHandle);
+			return ERR_INTERNAL_ERROR;
+		}
+	
+		tl_color_append_matrix = reinterpret_cast <TL_COLOR_APPEND_MATRIX> (::GetProcAddress(g_colorModuleHandle, "tl_color_append_matrix"));
+		if (!tl_color_append_matrix)
+		{
+			LogMessage(dllLoadErr);
+			::FreeLibrary(g_demosaicModuleHandle);
+			::FreeLibrary(g_colorModuleHandle);
+			return ERR_INTERNAL_ERROR;
+		}
+	
+		tl_color_clear_matrix = reinterpret_cast <TL_COLOR_CLEAR_MATRIX> (::GetProcAddress(g_colorModuleHandle, "tl_color_clear_matrix"));
+		if (!tl_color_clear_matrix)
+		{
+			LogMessage(dllLoadErr);
+			::FreeLibrary(g_demosaicModuleHandle);
+			::FreeLibrary(g_colorModuleHandle);
+			return ERR_INTERNAL_ERROR;
+		}
+	
+		tl_color_get_blue_output_LUT = reinterpret_cast <TL_COLOR_GET_BLUE_OUTPUT_LUT> (::GetProcAddress(g_colorModuleHandle, "tl_color_get_blue_output_LUT"));
+		if (!tl_color_get_blue_output_LUT)
+		{
+			LogMessage(dllLoadErr);
+			::FreeLibrary(g_demosaicModuleHandle);
+			::FreeLibrary(g_colorModuleHandle);
+			return ERR_INTERNAL_ERROR;
+		}
+	
+		tl_color_get_green_output_LUT = reinterpret_cast <TL_COLOR_GET_GREEN_OUTPUT_LUT> (::GetProcAddress(g_colorModuleHandle, "tl_color_get_green_output_LUT"));
+		if (!tl_color_get_green_output_LUT)
+		{
+			LogMessage(dllLoadErr);
+			::FreeLibrary(g_demosaicModuleHandle);
+			::FreeLibrary(g_colorModuleHandle);
+			return ERR_INTERNAL_ERROR;
+		}
+	
+		tl_color_get_red_output_LUT = reinterpret_cast <TL_COLOR_GET_RED_OUTPUT_LUT> (::GetProcAddress(g_colorModuleHandle, "tl_color_get_red_output_LUT"));
+		if (!tl_color_get_red_output_LUT)
+		{
+			LogMessage(dllLoadErr);
+			::FreeLibrary(g_demosaicModuleHandle);
+			::FreeLibrary(g_colorModuleHandle);
+			return ERR_INTERNAL_ERROR;
+		}
+	
+		tl_color_enable_output_LUTs = reinterpret_cast <TL_COLOR_ENABLE_OUTPUT_LUTS> (::GetProcAddress(g_colorModuleHandle, "tl_color_enable_output_LUTs"));
+		if (!tl_color_enable_output_LUTs)
+		{
+			LogMessage(dllLoadErr);
+			::FreeLibrary(g_demosaicModuleHandle);
+			::FreeLibrary(g_colorModuleHandle);
+			return ERR_INTERNAL_ERROR;
+		}
+	
+		tl_color_transform_48_to_48 = reinterpret_cast <TL_COLOR_TRANSFORM_48_TO_48> (::GetProcAddress(g_colorModuleHandle, "tl_color_transform_48_to_48"));
+		if (!tl_color_transform_48_to_48)
+		{
+			LogMessage(dllLoadErr);
+			::FreeLibrary(g_demosaicModuleHandle);
+			::FreeLibrary(g_colorModuleHandle);
+			return ERR_INTERNAL_ERROR;
+		}
+	
+		tl_color_transform_48_to_24 = reinterpret_cast <TL_COLOR_TRANSFORM_48_TO_24> (::GetProcAddress(g_colorModuleHandle, "tl_color_transform_48_to_24"));
+		if (!tl_color_transform_48_to_24)
+		{
+			LogMessage(dllLoadErr);
+			::FreeLibrary(g_demosaicModuleHandle);
+			::FreeLibrary(g_colorModuleHandle);
+			return ERR_INTERNAL_ERROR;
+		}
+	
+		tl_color_transform_48_to_32 = reinterpret_cast <TL_COLOR_TRANSFORM_48_TO_32> (::GetProcAddress(g_colorModuleHandle, "tl_color_transform_48_to_32"));
+		if (!tl_color_transform_48_to_32)
+		{
+			LogMessage(dllLoadErr);
+			::FreeLibrary(g_demosaicModuleHandle);
+			::FreeLibrary(g_colorModuleHandle);
+			return ERR_INTERNAL_ERROR;
+		}
+	
+		tl_color_destroy_color_processor = reinterpret_cast <TL_COLOR_DESTROY_COLOR_PROCESSOR> (::GetProcAddress(g_colorModuleHandle, "tl_color_destroy_color_processor"));
+		if (!tl_color_destroy_color_processor)
+		{
+			LogMessage(dllLoadErr);
+			::FreeLibrary(g_demosaicModuleHandle);
+			::FreeLibrary(g_colorModuleHandle);
+			return ERR_INTERNAL_ERROR;
+		}
+	
+		tl_color_processing_module_terminate = reinterpret_cast <TL_COLOR_PROCESSING_MODULE_TERMINATE> (::GetProcAddress(g_colorModuleHandle, "tl_color_processing_module_terminate"));
+		if (!tl_color_processing_module_terminate)
+		{
+			LogMessage(dllLoadErr);
+			::FreeLibrary(g_demosaicModuleHandle);
+			::FreeLibrary(g_colorModuleHandle);
+			return ERR_INTERNAL_ERROR;
+		}
 
-	// Map handles to the demosaic module exported functions.
-	tl_demosaic_module_initialize = reinterpret_cast <TL_DEMOSAIC_MODULE_INITIALIZE> (::GetProcAddress(demosaic_module_handle, "tl_demosaic_module_initialize"));
-	if (!tl_demosaic_module_initialize)
-	{
-		LogMessage(dllLoadErr);
-		::FreeLibrary(demosaic_module_handle);
-		return ERR_INTERNAL_ERROR;
-	}
+		if (tl_demosaic_module_initialize() != TL_COLOR_NO_ERROR)
+		{
+			LogMessage("Failed to initialize demosaic module");
+			::FreeLibrary(g_demosaicModuleHandle);
+			::FreeLibrary(g_colorModuleHandle);
+			return ERR_INTERNAL_ERROR;
+		}
 
-	tl_demosaic_transform_16_to_48 = reinterpret_cast <TL_DEMOSAIC_TRANSFORM_16_TO_48> (::GetProcAddress(demosaic_module_handle, "tl_demosaic_transform_16_to_48"));
-	if (!tl_demosaic_transform_16_to_48)
-	{
-		LogMessage(dllLoadErr);
-		::FreeLibrary(demosaic_module_handle);
-		return ERR_INTERNAL_ERROR;
-	}
+		if (tl_color_processing_module_initialize() != TL_COLOR_NO_ERROR)
+		{
+			LogMessage("Failed to initialize color processing module");
+			::FreeLibrary(g_demosaicModuleHandle);
+			::FreeLibrary(g_colorModuleHandle);
+			return ERR_INTERNAL_ERROR;
+		}
 
-	tl_demosaic_module_terminate = reinterpret_cast <TL_DEMOSAIC_MODULE_TERMINATE> (::GetProcAddress(demosaic_module_handle, "tl_demosaic_module_terminate"));
-	if (!tl_demosaic_module_terminate)
-	{
-		LogMessage(dllLoadErr);
-		::FreeLibrary(demosaic_module_handle);
-		return ERR_INTERNAL_ERROR;
-	}
-
-	cc_module_handle = ::LoadLibrary("thorlabs_tsi_color_processing.dll");
-	if (!cc_module_handle)
-	{
-		LogMessage("Failed to open the color processing library!");
-		::FreeLibrary(demosaic_module_handle);
-		return ERR_INTERNAL_ERROR;
-	}
-
-	tl_color_processing_module_initialize =reinterpret_cast <TL_COLOR_PROCESSING_MODULE_INITIALIZE> (::GetProcAddress(cc_module_handle, "tl_color_processing_module_initialize"));
-	if (!tl_color_processing_module_initialize)
-	{
-		LogMessage(dllLoadErr);
-		::FreeLibrary(demosaic_module_handle);
-		::FreeLibrary(cc_module_handle);
-		return ERR_INTERNAL_ERROR;
-	}
-
-	tl_color_create_color_processor = reinterpret_cast <TL_COLOR_CREATE_COLOR_PROCESSOR> (::GetProcAddress(cc_module_handle, "tl_color_create_color_processor"));
-	if (!tl_color_create_color_processor)
-	{
-		LogMessage(dllLoadErr);
-		::FreeLibrary(demosaic_module_handle);
-		::FreeLibrary(cc_module_handle);
-		return ERR_INTERNAL_ERROR;
-	}
-
-	tl_color_get_blue_input_LUT = reinterpret_cast <TL_COLOR_GET_BLUE_INPUT_LUT> (::GetProcAddress(cc_module_handle, "tl_color_get_blue_input_LUT"));
-	if (!tl_color_get_blue_input_LUT)
-	{
-		LogMessage(dllLoadErr);
-		::FreeLibrary(demosaic_module_handle);
-		::FreeLibrary(cc_module_handle);
-		return ERR_INTERNAL_ERROR;
-	}
-
-	tl_color_get_green_input_LUT = reinterpret_cast <TL_COLOR_GET_GREEN_INPUT_LUT> (::GetProcAddress(cc_module_handle, "tl_color_get_green_input_LUT"));
-	if (!tl_color_get_green_input_LUT)
-	{
-		LogMessage(dllLoadErr);
-		::FreeLibrary(demosaic_module_handle);
-		::FreeLibrary(cc_module_handle);
-		return ERR_INTERNAL_ERROR;
-	}
-
-	tl_color_get_red_input_LUT = reinterpret_cast <TL_COLOR_GET_RED_INPUT_LUT> (::GetProcAddress(cc_module_handle, "tl_color_get_red_input_LUT"));
-	if (!tl_color_get_red_input_LUT)
-	{
-		LogMessage(dllLoadErr);
-		::FreeLibrary(demosaic_module_handle);
-		::FreeLibrary(cc_module_handle);
-		return ERR_INTERNAL_ERROR;
-	}
-
-	tl_color_enable_input_LUTs = reinterpret_cast <TL_COLOR_ENABLE_INPUT_LUTS> (::GetProcAddress(cc_module_handle, "tl_color_enable_input_LUTs"));
-	if (!tl_color_enable_input_LUTs)
-	{
-		LogMessage(dllLoadErr);
-		::FreeLibrary(demosaic_module_handle);
-		::FreeLibrary(cc_module_handle);
-		return ERR_INTERNAL_ERROR;
-	}
-
-	tl_color_append_matrix = reinterpret_cast <TL_COLOR_APPEND_MATRIX> (::GetProcAddress(cc_module_handle, "tl_color_append_matrix"));
-	if (!tl_color_append_matrix)
-	{
-		LogMessage(dllLoadErr);
-		::FreeLibrary(demosaic_module_handle);
-		::FreeLibrary(cc_module_handle);
-		return ERR_INTERNAL_ERROR;
-	}
-
-	tl_color_clear_matrix = reinterpret_cast <TL_COLOR_CLEAR_MATRIX> (::GetProcAddress(cc_module_handle, "tl_color_clear_matrix"));
-	if (!tl_color_clear_matrix)
-	{
-		LogMessage(dllLoadErr);
-		::FreeLibrary(demosaic_module_handle);
-		::FreeLibrary(cc_module_handle);
-		return ERR_INTERNAL_ERROR;
-	}
-
-	tl_color_get_blue_output_LUT = reinterpret_cast <TL_COLOR_GET_BLUE_OUTPUT_LUT> (::GetProcAddress(cc_module_handle, "tl_color_get_blue_output_LUT"));
-	if (!tl_color_get_blue_output_LUT)
-	{
-		LogMessage(dllLoadErr);
-		::FreeLibrary(demosaic_module_handle);
-		::FreeLibrary(cc_module_handle);
-		return ERR_INTERNAL_ERROR;
-	}
-
-	tl_color_get_green_output_LUT = reinterpret_cast <TL_COLOR_GET_GREEN_OUTPUT_LUT> (::GetProcAddress(cc_module_handle, "tl_color_get_green_output_LUT"));
-	if (!tl_color_get_green_output_LUT)
-	{
-		LogMessage(dllLoadErr);
-		::FreeLibrary(demosaic_module_handle);
-		::FreeLibrary(cc_module_handle);
-		return ERR_INTERNAL_ERROR;
-	}
-
-	tl_color_get_red_output_LUT = reinterpret_cast <TL_COLOR_GET_RED_OUTPUT_LUT> (::GetProcAddress(cc_module_handle, "tl_color_get_red_output_LUT"));
-	if (!tl_color_get_red_output_LUT)
-	{
-		LogMessage(dllLoadErr);
-		::FreeLibrary(demosaic_module_handle);
-		::FreeLibrary(cc_module_handle);
-		return ERR_INTERNAL_ERROR;
-	}
-
-	tl_color_enable_output_LUTs = reinterpret_cast <TL_COLOR_ENABLE_OUTPUT_LUTS> (::GetProcAddress(cc_module_handle, "tl_color_enable_output_LUTs"));
-	if (!tl_color_enable_output_LUTs)
-	{
-		LogMessage(dllLoadErr);
-		::FreeLibrary(demosaic_module_handle);
-		::FreeLibrary(cc_module_handle);
-		return ERR_INTERNAL_ERROR;
-	}
-
-	tl_color_transform_48_to_48 = reinterpret_cast <TL_COLOR_TRANSFORM_48_TO_48> (::GetProcAddress(cc_module_handle, "tl_color_transform_48_to_48"));
-	if (!tl_color_transform_48_to_48)
-	{
-		LogMessage(dllLoadErr);
-		::FreeLibrary(demosaic_module_handle);
-		::FreeLibrary(cc_module_handle);
-		return ERR_INTERNAL_ERROR;
-	}
-
-	tl_color_transform_48_to_24 = reinterpret_cast <TL_COLOR_TRANSFORM_48_TO_24> (::GetProcAddress(cc_module_handle, "tl_color_transform_48_to_24"));
-	if (!tl_color_transform_48_to_24)
-	{
-		LogMessage(dllLoadErr);
-		::FreeLibrary(demosaic_module_handle);
-		::FreeLibrary(cc_module_handle);
-		return ERR_INTERNAL_ERROR;
-	}
-
-	tl_color_transform_48_to_32 = reinterpret_cast <TL_COLOR_TRANSFORM_48_TO_32> (::GetProcAddress(cc_module_handle, "tl_color_transform_48_to_32"));
-	if (!tl_color_transform_48_to_32)
-	{
-		LogMessage(dllLoadErr);
-		::FreeLibrary(demosaic_module_handle);
-		::FreeLibrary(cc_module_handle);
-		return ERR_INTERNAL_ERROR;
-	}
-
-	tl_color_destroy_color_processor = reinterpret_cast <TL_COLOR_DESTROY_COLOR_PROCESSOR> (::GetProcAddress(cc_module_handle, "tl_color_destroy_color_processor"));
-	if (!tl_color_destroy_color_processor)
-	{
-		LogMessage(dllLoadErr);
-		::FreeLibrary(demosaic_module_handle);
-		::FreeLibrary(cc_module_handle);
-		return ERR_INTERNAL_ERROR;
-	}
-
-	tl_color_processing_module_terminate = reinterpret_cast <TL_COLOR_PROCESSING_MODULE_TERMINATE> (::GetProcAddress(cc_module_handle, "tl_color_processing_module_terminate"));
-	if (!tl_color_processing_module_terminate)
-	{
-		LogMessage(dllLoadErr);
-		::FreeLibrary(demosaic_module_handle);
-		::FreeLibrary(cc_module_handle);
-		return ERR_INTERNAL_ERROR;
+		globalColorInitialized = true;
 	}
 
 	// call initialize functions
 
-	tl_camera_get_color_filter_array_phase(camHandle, &g_cfaPhase);
-
-	if (tl_demosaic_module_initialize() != TL_COLOR_NO_ERROR)
-	{
-		LogMessage("Failed to initialize demosaic module");
-		::FreeLibrary(demosaic_module_handle);
-		::FreeLibrary(cc_module_handle);
-		return ERR_INTERNAL_ERROR;
-	}
-
-	if (tl_color_processing_module_initialize() != TL_COLOR_NO_ERROR)
-	{
-		LogMessage("Failed to initialize color processing module");
-		::FreeLibrary(demosaic_module_handle);
-		::FreeLibrary(cc_module_handle);
-		return ERR_INTERNAL_ERROR;
-	}
-
-	color_processor_inst = tl_color_create_color_processor(fullFrame.bitDepth, fullFrame.bitDepth);
-	if (!color_processor_inst)
+	colorProcessor = tl_color_create_color_processor(fullFrame.bitDepth, fullFrame.bitDepth);
+	if (!colorProcessor)
 	{
 		LogMessage("Failed to create color processor!"); 
 		return ERR_INTERNAL_ERROR;
@@ -365,18 +418,20 @@ int Tsi3Cam::InitializeColorProcessor()
 	// configure sRGB output color space
 	float chromatic_adaptation_matrix[9] = { 1.0f, 0.0f, 0.0f, 0.0f, 1.37f, 0.0f, 0.0f, 0.0f, 2.79f };
 	tl_camera_get_default_white_balance_matrix(camHandle, chromatic_adaptation_matrix);
+
 	float merged_camera_correction_sRGB_matrix[9] = { 1.25477f, -0.15359f, -0.10118f, -0.07011f, 1.13723f, -0.06713f, 0.0f, -0.26641f, 1.26641f };
 	tl_camera_get_color_correction_matrix(camHandle, merged_camera_correction_sRGB_matrix);
-	tl_color_append_matrix (color_processor_inst, chromatic_adaptation_matrix);
-	tl_color_append_matrix (color_processor_inst, merged_camera_correction_sRGB_matrix);
+	tl_color_append_matrix (colorProcessor, chromatic_adaptation_matrix);
+	tl_color_append_matrix (colorProcessor, merged_camera_correction_sRGB_matrix);
 
 	// Use the output LUTs to configure the sRGB nonlinear (companding) function.
-	sRGB_companding_LUT(fullFrame.bitDepth, tl_color_get_blue_output_LUT(color_processor_inst));
-	sRGB_companding_LUT(fullFrame.bitDepth, tl_color_get_green_output_LUT(color_processor_inst));
-	sRGB_companding_LUT(fullFrame.bitDepth, tl_color_get_red_output_LUT(color_processor_inst));
+	sRGB_companding_LUT(fullFrame.bitDepth, tl_color_get_blue_output_LUT(colorProcessor));
+	sRGB_companding_LUT(fullFrame.bitDepth, tl_color_get_green_output_LUT(colorProcessor));
+	sRGB_companding_LUT(fullFrame.bitDepth, tl_color_get_red_output_LUT(colorProcessor));
 
-	// enable luts
-	tl_color_enable_output_LUTs (color_processor_inst, 1, 1, 1);
+	// enable luts if not wb
+	if (!wb)
+		tl_color_enable_output_LUTs (colorProcessor, 1, 1, 1);
 
 	return DEVICE_OK;
 }
@@ -387,29 +442,78 @@ int Tsi3Cam::InitializeColorProcessor()
 int Tsi3Cam::ShutdownColorProcessor()
 {
 	// destroy color processor
-	if (color_processor_inst)
+	if (colorProcessor)
 	{
-		tl_color_destroy_color_processor(color_processor_inst);
-		color_processor_inst = 0;
+		tl_color_destroy_color_processor(colorProcessor);
+		colorProcessor = 0;
 	}
 
 	// Terminate the color processing module
-	if (cc_module_handle)
+	if (globalColorInitialized)
 	{
-		tl_color_processing_module_terminate();
-		::FreeLibrary(cc_module_handle);
-		cc_module_handle = 0;
-	}
+		if (g_colorModuleHandle)
+		{
+			tl_color_processing_module_terminate();
+			::FreeLibrary(g_colorModuleHandle);
+			g_colorModuleHandle = 0;
+		}
 
-	// terminate demoisaic module
-	if (demosaic_module_handle)
-	{
-		tl_demosaic_module_terminate();
-		::FreeLibrary(demosaic_module_handle);
-		demosaic_module_handle = 0;
+		// terminate demoisaic module
+		if (g_demosaicModuleHandle)
+		{
+			tl_demosaic_module_terminate();
+			::FreeLibrary(g_demosaicModuleHandle);
+			g_demosaicModuleHandle = 0;
+		}
+
+		globalColorInitialized = false;
 	}
 
 	return DEVICE_OK;
 }
+
+int Tsi3Cam::SetWhiteBalance()
+{
+   if (!color)
+      return DEVICE_OK;
+
+   InterlockedExchange(&whiteBalancePending, 1);
+   whiteBalance = true;
+
+   return DEVICE_OK;
+}
+
+int Tsi3Cam::ClearWhiteBalance()
+{
+	InterlockedExchange(&whiteBalancePending, 0);
+   ShutdownColorProcessor();
+	int ret = InitializeColorProcessor(false);
+   whiteBalance = false;
+	return ret;
+}
+
+int Tsi3Cam::ApplyWhiteBalance(double redScaler, double greenScaler, double blueScaler)
+{
+	// reset current color matrix
+	if (!tl_color_clear_matrix(colorProcessor))
+		return ERR_INTERNAL_ERROR;
+
+	// apply wb scaling
+	float grey_world_balance_matrix [9] = { (float)redScaler, 0.0f, 0.0f, 0.0f, (float)greenScaler, 0.0f, 0.0f, 0.0f, (float)blueScaler };
+	if (!tl_color_append_matrix (colorProcessor, grey_world_balance_matrix))
+		return ERR_INTERNAL_ERROR;
+
+	if (!tl_color_append_matrix(colorProcessor, grey_world_balance_matrix))
+		return ERR_INTERNAL_ERROR;
+
+	float merged_camera_correction_sRGB_matrix[9] = { 1.25477f, -0.15359f, -0.10118f, -0.07011f, 1.13723f, -0.06713f, 0.0f, -0.26641f, 1.26641f };
+	tl_camera_get_color_correction_matrix(camHandle, merged_camera_correction_sRGB_matrix);
+	if (!tl_color_append_matrix(colorProcessor, merged_camera_correction_sRGB_matrix))
+		return ERR_INTERNAL_ERROR;
+
+	return DEVICE_OK;
+}
+
+
 
 
