@@ -146,6 +146,7 @@ private:
 
    int OnConfigGroupChanged(const char* groupName, const char* newConfigName);
    int OnPixelSizeChanged(double newPixelSizeUm);
+   int OnPixelSizeAffineChanged(std::vector<double> newPixelSizeAffine);
 };
 
 #endif // _CORECALLBACK_H_

@@ -58,6 +58,11 @@ public:
       std::cout << "onPixelSizeChanged() " << newPixelSizeUm << std::endl;
    }
 
+   virtual void onPixelSizeAffineChanged(std::vector<double> newPixelSizeAffine)
+   {
+      std::cout << "onPixelSizeAffineChanged() " << std::endl;
+   }
+
    virtual void onStagePositionChanged(char* name, double pos)
    {
       std::cout << "onStagePositionChanged()" << name << " " << pos  << "\n"; 
