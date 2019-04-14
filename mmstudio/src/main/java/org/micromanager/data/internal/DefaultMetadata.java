@@ -305,7 +305,7 @@ public final class DefaultMetadata implements Metadata {
    
    @Override
    public String getPositionName(String defaultPosName) {
-      return pmap_.getString(defaultPosName, defaultPosName);
+      return pmap_.getString(POSITION_NAME.key(), defaultPosName);
    }
    
 
