@@ -664,7 +664,7 @@
       DoubleVector aff = getPixelSizeAffine(true);
       if (aff.size() == 6)  {
          for (int i = 0; i < 5; i++) {
-            pa += aff.get(i) + "-";
+            pa += aff.get(i) + ";";
          }
          pa += aff.get(5);
       }
