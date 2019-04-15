@@ -18,7 +18,7 @@
   (:use
     [org.micromanager.mm :only
      [ChannelSpec-to-map MultiStagePosition-to-map attempt-all core
-      data-object-to-map do-when double-vector get-camera-roi get-pixel-size-affine
+      data-object-to-map do-when double-vector get-camera-roi 
       get-current-time-str get-msp get-msp-z-position get-pixel-type
       get-property get-property-value get-system-config-cached gui json-to-data
       load-mm log map-config mmc rekey set-msp-z-position store-mmcore
@@ -680,7 +680,7 @@
            :binning (core getProperty (core getCameraDevice) "Binning")
            :bit-depth (core getImageBitDepth)
            :pixel-size-um (core getPixelSizeUm)
-           :pixel-size-affine (get-pixel-size-affine)
+           :pixel-size-affine (core getPixelSizeAffineAsString)
            :pixel-type (get-pixel-type)
            )))
 
@@ -956,7 +956,7 @@
       "KeepShutterOpenSlices" (:keep-shutter-open-slices settings)
       "MicroManagerVersion" (if gui (.getVersion gui) "N/A")
       "PixelSize_um" (core getPixelSizeUm)
-      "PixelSizeAffine" (JSONArray. (get-pixel-size-affine))
+      "PixelSizeAffine" (core getPixelSizeAffineAsString)
       "PixelType" (get-pixel-type)
       "Positions" (max 1 (count (:positions settings)))
       "Prefix" (if (:save settings) (:prefix settings) "")

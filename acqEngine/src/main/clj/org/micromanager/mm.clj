@@ -292,13 +292,6 @@
     (core getROI (nth r 0) (nth r 1) (nth r 2) (nth r 3))
     (vec (flatten (map seq r)))))
 
-(defn get-pixel-size-affine
-  "Returns a vector containing the camera-stage affine transform"
-  []
-  (let [r (repeatedly 6 #(double-array 6))]
-    (core getPixelSizeAffine true (nth r 0) (nth r 1) (nth r 2) (nth r 3) (nth r 4) () nth r 5)
-    (vec (flatten (map seq r)))))
-
 (defn parse-core-metadata
   "Reads the metadata from a core Metadata object into a map."
   [^Metadata m]
