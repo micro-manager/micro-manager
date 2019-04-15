@@ -659,18 +659,6 @@
       return roi;
    }
 
-   private String getPixelSizeAffineAsString() throws java.lang.Exception {
-      String pa = "";
-      DoubleVector aff = getPixelSizeAffine(true);
-      if (aff.size() == 6)  {
-         for (int i = 0; i < 5; i++) {
-            pa += aff.get(i) + ";";
-         }
-         pa += aff.get(5);
-      }
-      return pa;
-   }
-
    private String getPixelType() {
       int depth = (int) getBytesPerPixel();
       int numComponents = (int) getNumberOfComponents();
@@ -859,6 +847,23 @@
          heights.add(r.height);
       }
       setMultiROI(xs, ys, widths, heights);
+   }
+
+   /**
+    * Convenience function.  Retuns affine transform as a String
+    * Used in this class and by the acquisition engine 
+    * (rather than duplicating this code there
+    */
+   public String getPixelSizeAffineAsString() throws java.lang.Exception {
+      String pa = "";
+      DoubleVector aff = getPixelSizeAffine(true);
+      if (aff.size() == 6)  {
+         for (int i = 0; i < 5; i++) {
+            pa += aff.get(i) + ";";
+         }
+         pa += aff.get(5);
+      }
+      return pa;
    }
 
    /* 
