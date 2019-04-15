@@ -22,11 +22,14 @@
 package org.micromanager.internal;
 
 import com.google.common.eventbus.Subscribe;
+import java.awt.geom.AffineTransform;
 import mmcorej.CMMCore;
+import org.micromanager.events.PixelSizeAffineChangedEvent;
 import org.micromanager.events.PixelSizeChangedEvent;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
 import org.micromanager.events.internal.DefaultEventManager;
+import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TextUtils;
 
@@ -40,6 +43,7 @@ class StaticInfo {
    static public long bytesPerPixel_;
    static public long imageBitDepth_;
    static public double pixSizeUm_;
+   static public AffineTransform affineTransform_;
    static public double zPos_;
    static public double x_;
    static public double y_;
@@ -96,6 +100,12 @@ class StaticInfo {
       pixSizeUm_ = event.getNewPixelSizeUm();
       updateInfoDisplay();
    }
+   
+   @Subscribe
+   public void onPixelSizeAffineChanged(PixelSizeAffineChangedEvent event) {
+      affineTransform_ = event.getNewPixelSizeAffine();
+      // we are not displaying the affine transform...
+   }
 
    @Subscribe
    public void onStagePositionChanged(StagePositionChangedEvent event) {
@@ -133,6 +143,7 @@ class StaticInfo {
          bytesPerPixel_ = core_.getBytesPerPixel();
          imageBitDepth_ = core_.getImageBitDepth();
          pixSizeUm_ = core_.getPixelSizeUm();
+         affineTransform_ = AffineUtils.doubleToAffine(core_.getPixelSizeAffine());
          zPos_ = zPos;
          x_ = x[0];
          y_ = y[0];
@@ -177,5 +188,9 @@ class StaticInfo {
 
    public double getPixelSizeUm() {
       return pixSizeUm_;
+   }
+   
+   public AffineTransform getPixelSizeAffine() {
+      return affineTransform_;
    }
 }

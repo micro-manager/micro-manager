@@ -23,10 +23,12 @@ package org.micromanager.events.internal;
 
 import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
+import mmcorej.DoubleVector;
 import mmcorej.MMEventCallback;
 import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
 import org.micromanager.events.ConfigGroupChangedEvent;
 import org.micromanager.events.ExposureChangedEvent;
+import org.micromanager.events.PixelSizeAffineChangedEvent;
 import org.micromanager.events.PixelSizeChangedEvent;
 import org.micromanager.events.PropertiesChangedEvent;
 import org.micromanager.events.PropertyChangedEvent;
@@ -34,6 +36,7 @@ import org.micromanager.events.SLMExposureChangedEvent;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.SystemConfigurationLoadedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
+import org.micromanager.internal.utils.AffineUtils;
 
 /**
  * Callback to update Java layer when a change happens in the MMCore. This
@@ -148,6 +151,25 @@ public final class CoreEventCallback extends MMEventCallback {
       } else {
          DefaultEventManager.getInstance().post(
                  new PixelSizeChangedEvent(newPixelSizeUm));
+      }
+   }
+   
+   @Override
+   public void onPixelSizeAffineChanged(DoubleVector newPixelSizeAffine) {
+      // see OnPropertyChanged for reasons to run this on the EDT
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               DefaultEventManager.getInstance().post(
+                       new PixelSizeAffineChangedEvent(
+                               AffineUtils.doubleToAffine(newPixelSizeAffine)));
+            }
+         });
+      } else {
+         DefaultEventManager.getInstance().post(
+                       new PixelSizeAffineChangedEvent(
+                               AffineUtils.doubleToAffine(newPixelSizeAffine)));
       }
    }
 

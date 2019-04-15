@@ -1772,6 +1772,10 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    public double getCachedPixelSizeUm() {
       return staticInfo_.getPixelSizeUm();
    }
+   
+   public AffineTransform getCachedPixelSizeAffine() {
+      return staticInfo_.getPixelSizeAffine();
+   }
 
    public static boolean getShouldDeleteOldCoreLogs() {
       return UserProfileStaticInterface.getInstance().getBoolean(MMStudio.class,

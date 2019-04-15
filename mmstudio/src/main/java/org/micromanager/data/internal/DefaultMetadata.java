@@ -21,6 +21,7 @@
 package org.micromanager.data.internal;
 
 import java.awt.Rectangle;
+import java.awt.geom.AffineTransform;
 import java.util.UUID;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
@@ -123,6 +124,12 @@ public final class DefaultMetadata implements Metadata {
       @Override
       public Builder pixelSizeUm(Double pixelSizeUm) {
          b_.putDouble(PIXEL_SIZE_UM.key(), pixelSizeUm);
+         return this;
+      }
+      
+      @Override 
+      public Builder pixelSizeAffine(AffineTransform aff) {
+         b_.putAffineTransform(PIXEL_SIZE_AFFINE.key(), aff);
          return this;
       }
 
@@ -331,6 +338,11 @@ public final class DefaultMetadata implements Metadata {
    public Double getPixelSizeUm() {
       return pmap_.containsKey(PIXEL_SIZE_UM.key()) ?
             pmap_.getDouble(PIXEL_SIZE_UM.key(), Double.NaN) : null;
+   }
+   
+   @Override
+   public AffineTransform getPixelSizeAffine() {
+      return pmap_.getAffineTransform(PIXEL_SIZE_AFFINE.key(), null);
    }
 
    @Override

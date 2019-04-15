@@ -21,6 +21,7 @@
 package org.micromanager.data;
 
 import java.awt.Rectangle;
+import java.awt.geom.AffineTransform;
 import java.util.UUID;
 import org.micromanager.PropertyMap;
 
@@ -50,6 +51,7 @@ public interface Metadata {
       @Override Builder imageNumber(Long imageNumber);
       @Override Builder pixelAspect(Double pixelAspect);
       @Override Builder pixelSizeUm(Double pixelSizeUm);
+      @Override Builder pixelSizeAffine(AffineTransform aff);
       @Override Builder positionName(String positionName);
       @Override Builder receivedTime(String receivedTime);
       /** Same as {@link #roi}. Use {@code roi} in new code. */
@@ -102,6 +104,7 @@ public interface Metadata {
       MetadataBuilder imageNumber(Long imageNumber);
       MetadataBuilder pixelAspect(Double pixelAspect);
       MetadataBuilder pixelSizeUm(Double pixelSizeUm);
+      MetadataBuilder pixelSizeAffine(AffineTransform aff);
       MetadataBuilder positionName(String positionName);
       MetadataBuilder receivedTime(String receivedTime);
       MetadataBuilder ROI(Rectangle ROI);
@@ -198,6 +201,13 @@ public interface Metadata {
     * @return Sample pixel size in microns 
     */
    Double getPixelSizeUm();
+   
+   /**
+    * Geometric relation between stage movement (in microns) and pixels
+    * @return Affine transform describing geometric relation between stage
+    * movement (in microns) and camera (in pixels)
+    */
+   AffineTransform getPixelSizeAffine();
    
    /** 
     * The X stage position of the sample for this image 
