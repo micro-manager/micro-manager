@@ -144,6 +144,7 @@ private:
 	int ClearWhiteBalance();
 	int SetWhiteBalance();
 	int ApplyWhiteBalance(double redScaler, double greenScaler, double blueScaler);
+	void EnableColorOutputLUTs();
 
    static void frame_available_callback(void* sender, unsigned short* image_buffer, int frame_count, unsigned char* metadata, int metadata_size_in_bytes, void* context);
 

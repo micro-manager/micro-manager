@@ -734,6 +734,9 @@ void Tsi3Cam::frame_available_callback(void* /*sender*/, unsigned short* image_b
 			}
 
 			InterlockedExchange(&instance->whiteBalancePending, 0); // clear wb pending flag
+
+			// re enable LUTs that were disabled by the color processor init
+			instance->EnableColorOutputLUTs();
 		}
 
 		// COLOR
