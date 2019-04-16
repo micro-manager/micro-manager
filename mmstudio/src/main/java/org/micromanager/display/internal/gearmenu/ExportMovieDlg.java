@@ -39,7 +39,6 @@ import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
@@ -100,8 +99,7 @@ public final class ExportMovieDlg extends MMDialog {
          super(new MigLayout("flowx"));
          super.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
          store_ = display.getDataProvider();
-         List<String> axes = new ArrayList<String>(
-               parent.getNonZeroAxes());
+         List<String> axes = new ArrayList<>(parent.getNonZeroAxes());
          Collections.sort(axes);
          axisSelector_ = new JComboBox(axes.toArray(new String[] {}));
          axisSelector_.addActionListener(new ActionListener() {
@@ -121,7 +119,7 @@ public final class ExportMovieDlg extends MMDialog {
             public void stateChanged(ChangeEvent e) {
                // Ensure that the end point can't go below the start point.
                int newMin = (Integer) minSpinner_.getValue();
-               maxModel_.setMinimum(newMin + 1);
+               maxModel_.setMinimum(newMin);
             }
          });
          maxSpinner_ = new JSpinner();
@@ -130,7 +128,7 @@ public final class ExportMovieDlg extends MMDialog {
             public void stateChanged(ChangeEvent e) {
                // Ensure that the start point can't come after the end point.
                int newMax = (Integer) maxSpinner_.getValue();
-               minModel_.setMaximum(newMax - 1);
+               minModel_.setMaximum(newMax);
             }
          });
 
@@ -183,8 +181,8 @@ public final class ExportMovieDlg extends MMDialog {
          if (minModel_ == null) {
             // Create the spinner models now.
             // Remember our indices here are 1-indexed.
-            minModel_ = new SpinnerNumberModel(1, 1, axisLen - 1, 1);
-            maxModel_ = new SpinnerNumberModel(axisLen, 2, axisLen, 1);
+            minModel_ = new SpinnerNumberModel(1, 1, axisLen, 1);
+            maxModel_ = new SpinnerNumberModel(axisLen, 1, axisLen, 1);
             minSpinner_.setModel(minModel_);
             maxSpinner_.setModel(maxModel_);
          }
@@ -423,7 +421,7 @@ public final class ExportMovieDlg extends MMDialog {
     * @return 
     */
    public AxisPanel createAxisPanel() {
-      HashSet<String> axes = new HashSet<String>(getNonZeroAxes());
+      HashSet<String> axes = new HashSet<>(getNonZeroAxes());
       for (AxisPanel panel : axisPanels_) {
          axes.remove(panel.getAxis());
       }
@@ -462,7 +460,7 @@ public final class ExportMovieDlg extends MMDialog {
     */
    public void deleteFollowing(AxisPanel last) {
       boolean shouldRemove = false;
-      HashSet<AxisPanel> defuncts = new HashSet<AxisPanel>();
+      HashSet<AxisPanel> defuncts = new HashSet<>();
       for (AxisPanel panel : axisPanels_) {
          if (shouldRemove) {
             defuncts.add(panel);
@@ -495,7 +493,7 @@ public final class ExportMovieDlg extends MMDialog {
     * @return 
     */
    public ArrayList<String> getNonZeroAxes() {
-      ArrayList<String> result = new ArrayList<String>();
+      ArrayList<String> result = new ArrayList<>();
       for (String axis : provider_.getAxes()) {
          // Channel axis is only available when in non-composite display modes.
          if (provider_.getMaxIndices().getIndex(axis) > 0 &&
