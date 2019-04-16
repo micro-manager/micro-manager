@@ -44,8 +44,7 @@
 #define STRING2(x) #x
 #define STRING(x) STRING2(x)
 #pragma message ("*****************************************************************************************")
-#pragma message ("* Please upgrade Kamlib library to current version!")
-#pragma message ("* Copy the content of the pco_generic.zip file to the correct library/include folder.")
+#pragma message ("* Kamlib library and header version mismatch!")
 #pragma message ("* Current kamblib version:" STRING(KAMLIBVERSION))
 #pragma message ("*    This kamblib version:" STRING(KAMLIBVERSION_MM))
 #pragma message ("*****************************************************************************************")
