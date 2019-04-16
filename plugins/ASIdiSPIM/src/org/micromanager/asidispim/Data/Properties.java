@@ -250,6 +250,7 @@ public class Properties {
       PLUGIN_AUTOFOCUS_WINDOW_WIDTH("AutofocusWindowWidth"),
       PLUGIN_AUTOFOCUS_WINDOW_HEIGHT("AutofocusWIndowHeight"),
       PLUGIN_AUTOFOCUS_ACQBEFORESTART("AutofocusDoBeforeACQStart"),
+      PLUGIN_AUTOFOCUS_EVERY_STAGE_PASS("AutofocusDoEveryStagePass"),
       PLUGIN_AUTOFOCUS_EACHNIMAGES("AutofocusEachNTimePoints"),
       PLUGIN_AUTOFOCUS_MAXOFFSETCHANGE("AutofocusMaxOffsetChange"),  // during acquisition
       PLUGIN_AUTOFOCUS_MAXOFFSETCHANGE_SETUP("AutofocusMaxOffsetChangeSetup"),

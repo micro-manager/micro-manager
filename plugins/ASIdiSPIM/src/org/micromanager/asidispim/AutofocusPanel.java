@@ -167,10 +167,15 @@ public class AutofocusPanel extends ListeningJPanel{
       acqOptionsPanel.setBorder(PanelUtils.makeTitledBorder(
               "Autofocus Options During Acquisition"));
       
+      // whether or not to run autofocus for every stage pass
+      final JCheckBox stagePassCheckBox = pu.makeCheckBox("Autofocus every stage pass",
+              Properties.Keys.PLUGIN_AUTOFOCUS_EVERY_STAGE_PASS, panelName_, false);     
+      acqOptionsPanel.add(stagePassCheckBox, "left, span 3, wrap");
+      
       // whether or not to run autofocus at the start of the acquisition
       final JCheckBox beforeStartCheckBox = pu.makeCheckBox("Autofocus before starting acquisition",
               Properties.Keys.PLUGIN_AUTOFOCUS_ACQBEFORESTART, panelName_, false);     
-      acqOptionsPanel.add(beforeStartCheckBox, "center, span 3, wrap");
+      acqOptionsPanel.add(beforeStartCheckBox, "left, span 3, wrap");
       
       // autofocus every nth image
       acqOptionsPanel.add(new JLabel("Autofocus every "));

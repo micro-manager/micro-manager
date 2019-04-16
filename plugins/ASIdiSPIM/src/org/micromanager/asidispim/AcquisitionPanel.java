@@ -3097,6 +3097,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                return false;
             }
          }
+         if (acqSettings.usePathPresets && 
+        		 prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(), 
+        		 Properties.Keys.PLUGIN_AUTOFOCUS_EVERY_STAGE_PASS, false)) {
+             MyDialogUtils.showError("Cannot use path presets with autofocus every stage pass.");
+             return false;
+         }
       }
       
       double sliceDuration = acqSettings.sliceTiming.sliceDuration;
@@ -3171,12 +3177,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       
       // Autofocus settings; only used if acqSettings.useAutofocus is true
+      boolean autofocusEveryStagePass = false;
       boolean autofocusAtT0 = false;
       int autofocusEachNFrames = 10;
       String autofocusChannel = "";
       if (acqSettings.useAutofocus) {
          autofocusAtT0 = prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(), 
                Properties.Keys.PLUGIN_AUTOFOCUS_ACQBEFORESTART, false);
+         autofocusEveryStagePass = prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(), 
+        		 Properties.Keys.PLUGIN_AUTOFOCUS_EVERY_STAGE_PASS, false);
          autofocusEachNFrames = props_.getPropValueInteger(Devices.Keys.PLUGIN, 
                Properties.Keys.PLUGIN_AUTOFOCUS_EACHNIMAGES);
          autofocusChannel = props_.getPropValueString(Devices.Keys.PLUGIN,
@@ -3661,8 +3670,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      if (acqSettings.useChannels && acqSettings.channelMode != MultichannelModes.Keys.VOLUME) {
                         controller_.setupHardwareChannelSwitching(acqSettings);
                      }
-                     // make sure circular buffer is cleared
-                     core_.clearCircularBuffer();
                   }
                }
 
@@ -3726,20 +3733,37 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   // usually just once, but will be the number of channels if we have
                   //  multiple channels and aren't using PLogic to change between them
                   // if we are using path presets then trigger controller for each side and do that in "outer loop"
+                  //   (i.e. the channels will run subsequent to each other, then switch sides and run through them again
                   for (int outerLoop = 0; outerLoop < nrOuterLoop; ++outerLoop) {
                      for (int channelNum = 0; channelNum < nrChannelsSoftware; channelNum++) {
                         try {
                            // flag that we are using the cameras/controller
                            ASIdiSPIM.getFrame().setHardwareInUse(true);
                            
+                           // deal with channel if needed (hardware channel switching doesn't happen here)
+                           if (changeChannelPerVolumeSoftware) {
+                              if (changeChannelPerVolumeDoneFirst) {
+                                 // skip selecting next channel the very first time only
+                                 changeChannelPerVolumeDoneFirst = false;
+                              } else {
+                                 double newOffset = multiChannelPanel_.selectNextChannelAndGetOffset();
+                                 if (!MyNumberUtils.floatsEqual(newOffset, extraChannelOffset_)) { 
+                                    extraChannelOffset_ = newOffset;
+                                    controller_.prepareControllerForAquisitionOffsetOnly(acqSettings, extraChannelOffset_);
+                                 }
+                              }
+                           }
+                           
                            // deal with side-specific preset if needed
                            // have to trigger the controller once for each side in this special case
                            // "outer loop" is sides, inner loop is channels
                            boolean pathPresetsFirst = true;
+                           boolean currentSideA = firstSideA;
+                           Devices.Sides currentSide = currentSideA ? Devices.Sides.A : Devices.Sides.B;
                            if (acqSettings.usePathPresets) {
-                              boolean currentSideA = firstSideA;
                               if (outerLoop > 0) {
                                  currentSideA = !currentSideA;
+                                 currentSide = currentSideA ? Devices.Sides.A : Devices.Sides.B;
                                  pathPresetsFirst = false;
                               }
                               // for 2-sided acquisition with path presets we run 2 single-sided acquisitions
@@ -3752,9 +3776,50 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                               }
                               
                               // make sure appropriate path preset is applied
-                              controller_.setPathPreset(currentSideA ? Devices.Sides.A : Devices.Sides.B);
+                              controller_.setPathPreset(currentSide);
                            }
 
+                           // special case: single-sided piezo acquisition risks illumination piezo sleeping
+                           // prevent this from happening by sending relative move of 0 like we do in live mode before each trigger
+                           // NB: this won't help for hardware-timed timepoints
+                           final Devices.Keys piezoIllumKey = firstSideA ? Devices.Keys.PIEZOB : Devices.Keys.PIEZOA;
+                           if (!twoSided && props_.getPropValueInteger(piezoIllumKey, Properties.Keys.AUTO_SLEEP_DELAY) > 0) {
+                              core_.setRelativePosition(devices_.getMMDevice(piezoIllumKey), 0);
+                           }
+                           
+                           // special case: if we are doing autofocus every stage pass do it now (after setting channel)
+                           // Note that we have previously made sure that we aren't doing this with usePathPresets 
+                           //    set to true (I think it would be possible but add significant complexity to this code) 
+                           if (acqSettings.isStageScanning && autofocusEveryStagePass) {
+                              ASIdiSPIM.getFrame().setHardwareInUse(false);
+                              if (sideActiveA) {
+                                 if (acqSettings.usePathPresets) {
+                                    controller_.setPathPreset(Devices.Sides.A);
+                                    // blocks until all devices done
+                                 }
+                                 AutofocusUtils.FocusResult score = autofocus_.runFocus(
+                                       this, Devices.Sides.A, false,
+                                       sliceTiming_, false);
+                                 updateCalibrationOffset(Devices.Sides.A, score);
+                              }
+                              if (sideActiveB) {
+                                 if (acqSettings.usePathPresets) {
+                                    controller_.setPathPreset(Devices.Sides.B);
+                                    // blocks until all devices done
+                                 }
+                                 AutofocusUtils.FocusResult score = autofocus_.runFocus(
+                                       this, Devices.Sides.B, false,
+                                       sliceTiming_, false);
+                                 updateCalibrationOffset(Devices.Sides.B, score);
+                              }
+                              // Restore settings of the controller
+                              controller_.prepareControllerForAquisition(acqSettings, extraChannelOffset_);
+                              if (acqSettings.useChannels && acqSettings.channelMode != MultichannelModes.Keys.VOLUME) {
+                                 controller_.setupHardwareChannelSwitching(acqSettings);
+                              }
+                              ASIdiSPIM.getFrame().setHardwareInUse(true);
+                           }
+                           
                            // deal with shutter before starting acquisition
                            shutterOpen = core_.getShutterOpen();
                            if (autoShutter) {
@@ -3773,29 +3838,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                  core_.startSequenceAcquisition(secondCamera, nrSlicesSoftware, 0, true);
                               }
                            }
-
-                           // deal with channel if needed (hardware channel switching doesn't happen here)
-                           if (changeChannelPerVolumeSoftware) {
-                              if (changeChannelPerVolumeDoneFirst) {
-                                 // skip selecting next channel the very first time only
-                                 changeChannelPerVolumeDoneFirst = false;
-                              } else {
-                                 double newOffset = multiChannelPanel_.selectNextChannelAndGetOffset();
-                                 if (!MyNumberUtils.floatsEqual(newOffset, extraChannelOffset_)) { 
-                                    extraChannelOffset_ = newOffset;
-                                    controller_.prepareControllerForAquisitionOffsetOnly(acqSettings, extraChannelOffset_);
-                                 }
-                              }
-                           }
-
-                           // special case: single-sided piezo acquisition risks illumination piezo sleeping
-                           // prevent this from happening by sending relative move of 0 like we do in live mode before each trigger
-                           // NB: this won't help for hardware-timed timepoints
-                           final Devices.Keys piezoIllumKey = firstSideA ? Devices.Keys.PIEZOB : Devices.Keys.PIEZOA;
-                           if (!twoSided && props_.getPropValueInteger(piezoIllumKey, Properties.Keys.AUTO_SLEEP_DELAY) > 0) {
-                              core_.setRelativePosition(devices_.getMMDevice(piezoIllumKey), 0);
-                           }
-
+                           
                            // trigger the state machine on the controller
                            // do this even with demo cameras to test everything else
                            boolean success = controller_.triggerControllerStartAcquisition(spimMode, firstSideA);

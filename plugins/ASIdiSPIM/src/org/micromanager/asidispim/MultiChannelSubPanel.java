@@ -467,6 +467,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
    /**
     * Takes care of actually selecting next channel in table.
     * Called by acquisition code.  Blocks until devices ready.
+    * Will "wrap" around to start of list after reaching the end.
     * Returns the value of the channel-specific offset.
     */
    public double selectNextChannelAndGetOffset() {

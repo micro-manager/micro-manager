@@ -482,15 +482,18 @@ public class AutofocusUtils {
             } catch (Exception ex) {
                throw new ASIdiSPIMException(ex);
             } finally {
-               
+            	
                ASIdiSPIM.getFrame().setHardwareInUse(false);
-
+               
                // set result to be a dummy value for now; we will overwrite it later
                //  unless we encounter an exception in the meantime
                lastFocusResult_ = new FocusResult(false, galvoPosition, piezoPosition, 0.0, 0.0, channelOffset);
                
                try {
                   caller.setCursor(Cursor.getDefaultCursor());
+                  
+                  // make sure circular buffer is cleared
+                  gui_.getMMCore().clearCircularBuffer();
 
                   gui_.getMMCore().stopSequenceAcquisition(camera);
                   gui_.getMMCore().setCameraDevice(originalCamera);
