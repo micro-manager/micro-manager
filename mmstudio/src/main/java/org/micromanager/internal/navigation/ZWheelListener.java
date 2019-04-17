@@ -75,7 +75,11 @@ public final class ZWheelListener  {
 
    /**
     * Receives mouseWheel events from the display manager and moves the z stage
-    *
+    * The ZStage is moved using an executor service. To avoid piling up
+    * movement requests, requests are only submitted when the previous
+    * task was done.  Requested movements are remembered and added 
+    * to the latest request.
+    * 
     * @param e DisplayMouseWheelEvent containing a MouseWheel event
     */
    @Subscribe
@@ -103,6 +107,7 @@ public final class ZWheelListener  {
             zStageMover_.setPosition(zStage, moveUm);
             future_ = executorService_.submit(zStageMover_);
          } else {
+            // moveMemory_ is added to the requested movement in the zStageMover
             moveMemory_.addAndGet(moveUm);
          }
       }
