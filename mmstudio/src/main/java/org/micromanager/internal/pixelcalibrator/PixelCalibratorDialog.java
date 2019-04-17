@@ -28,6 +28,7 @@ import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -64,6 +65,7 @@ public class PixelCalibratorDialog extends MMFrame {
    private JComboBox methodComboBox_;
    private JButton startButton_;
    private JButton stopButton_;
+   private JCheckBox debug_;
 
     /** 
      * The  PixelCalibratorDialog executes an automated calibration of 
@@ -150,14 +152,17 @@ public class PixelCalibratorDialog extends MMFrame {
             stopCalibration();
          }
       });
-
+      
+      debug_ = new JCheckBox("debug");
+      debug_.setSelected(false);
 
       getContentPane().setLayout(new MigLayout());
       super.add(explanationLabel_, "span 2, wrap");
       super.add(methodLabel);
       super.add(methodComboBox_, "wrap");
       super.add(safeTravelLabel);
-      super.add(safeTravelRadiusComboBox_, "wrap");
+      super.add(safeTravelRadiusComboBox_);
+      super.add(debug_, "wrap");
       super.add(startButton_, "split 2");
       super.add(stopButton_);
       super.add(calibrationProgressBar_, "wrap");
@@ -296,6 +301,9 @@ public class PixelCalibratorDialog extends MMFrame {
    public double safeTravelRadius() {
       return Double.parseDouble(
                     safeTravelRadiusComboBox_.getSelectedItem().toString());
+   }
+   public boolean debugMode() {
+      return debug_.isSelected();
    }
    
    public void update() {

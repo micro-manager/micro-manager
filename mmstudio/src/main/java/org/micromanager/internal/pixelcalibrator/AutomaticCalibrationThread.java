@@ -65,6 +65,7 @@ public class AutomaticCalibrationThread extends CalibrationThread {
    private int w;
    private int h;
    private int side_small;
+   private int index_;
 
    private class CalibrationFailedException extends Exception {
 
@@ -112,26 +113,37 @@ public class AutomaticCalibrationThread extends CalibrationThread {
       FHT h2 = new FHT(proc2);
       h1.transform();
       h2.transform();
-      FHT result = h1.conjugateMultiply(h2);
-      result.inverseTransform();
-      result.swapQuadrants();
-      result.resetMinAndMax();
+      //Conjugate multiplication in the frequency domain is equivalent to 
+      // correlation in the space domain
+      FHT result = h1.conjugateMultiply(h2);   
+      result.inverseTransform(); //Transform back to space domain.
+      result.swapQuadrants(); //This needs to be done after transforming. to get back to the original.
+      result.resetMinAndMax(); //This is just to scale the contrast when displayed.
       return result;
    }
 
    // Measures the displacement between two images by cross-correlating, 
    // and then finding the maximum value.
-   // Accurate to one pixel only.
+   // Accurate to one pixel only.  ???  Seems accurate to 0.1 pixel...
 
    private Point2D.Double measureDisplacement(ImageProcessor proc1, 
            ImageProcessor proc2, boolean display) {
+      final int boxSize = 64;  // increasing the box size will make finding the 
+                              // procedure more robust with respect to errors
+      final int halfBoxSize = boxSize / 2;
       ImageProcessor result = crossCorrelate(proc1, proc2);
       ImageProcessor resultCenter = getSubImage(result, 
-              result.getWidth() / 2 - 8, result.getHeight() / 2 - 8, 16, 16);
+              result.getWidth() / 2 - halfBoxSize, 
+              result.getHeight() / 2 - halfBoxSize, 
+              boxSize, 
+              boxSize);
       resultCenter.setInterpolationMethod(ImageProcessor.BICUBIC);
       ImageProcessor resultCenterScaled = resultCenter.resize(
               resultCenter.getWidth() * 10);
-      ImagePlus img = new ImagePlus("", resultCenterScaled);
+      ImagePlus img = new ImagePlus("Cal" + index_, resultCenterScaled);
+      index_++;
+      // TODO: use a (Gaussian?) fit rather than finding the maximum
+      // doing so may even make it unnecessary to blow up the box 10 fold
       Point p = ImageUtils.findMaxPixel(img);
       Point d = new Point(p.x - img.getWidth() / 2, p.y - img.getHeight() / 2);
       Point2D.Double d2 = new Point2D.Double(d.x / 10., d.y / 10.);
@@ -166,6 +178,8 @@ public class AutomaticCalibrationThread extends CalibrationThread {
             }
             core_.setXYPosition(x, y);
             core_.waitForDevice(core_.getXYStageDevice());
+            core_.sleep(100); // even though the stage should no longer move,
+                              // let the system calm down...
             core_.snapImage();
             TaggedImage image = core_.getTaggedImage();
             studio_.live().displayImage(studio_.data().convertTaggedImage(image));
@@ -236,7 +250,7 @@ public class AutomaticCalibrationThread extends CalibrationThread {
          d.x *= 2;
          d.y *= 2;
 
-         d = measureDisplacement(x+dx, y+dy, d, false, simulate);
+         d = measureDisplacement(x+dx, y+dy, d, dialog_.debugMode(), simulate);
          incrementProgress();
       }
       Point2D.Double stagePos;
@@ -313,7 +327,7 @@ public class AutomaticCalibrationThread extends CalibrationThread {
    {
       Point2D.Double c1d = new Point2D.Double(c1.x, c1.y);
       Point2D.Double s1 = (Point2D.Double) firstApprox.transform(c1d, null);
-      Point2D.Double c2 = measureDisplacement(s1.x, s1.y, c1d, false, simulate);
+      Point2D.Double c2 = measureDisplacement(s1.x, s1.y, c1d, dialog_.debugMode(), simulate);
       Point2D.Double s2;
       try {
          s2 = core_.getXYStagePosition();
@@ -331,8 +345,9 @@ public class AutomaticCalibrationThread extends CalibrationThread {
       throws InterruptedException, CalibrationFailedException
    {
       pointPairs_.clear();
-      int ax = w/2 - side_small/2;
-      int ay = h/2 - side_small/2;
+      int ax = w/2 - side_small; // used to be side_small / 2, but it works better
+                                 // to stay a bit away from the extreme corners
+      int ay = h/2 - side_small;
 
       measureCorner(firstApprox, new Point(-ax,-ay), simulate);
       measureCorner(firstApprox, new Point(-ax,ay), simulate);
@@ -365,6 +380,7 @@ public class AutomaticCalibrationThread extends CalibrationThread {
       catch (Exception e) {
          throw new CalibrationFailedException(e.getMessage());
       }
+      index_ = 0;
       final AffineTransform firstApprox = getFirstApprox(simulation);
       setProgress(20);
       final AffineTransform secondApprox = getSecondApprox(firstApprox, simulation);
