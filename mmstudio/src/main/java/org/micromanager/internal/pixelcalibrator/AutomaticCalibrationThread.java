@@ -21,9 +21,12 @@
 
 package org.micromanager.internal.pixelcalibrator;
 
+import boofcv.alg.misc.PixelMath;
+import boofcv.core.image.GConvertImage;
+import boofcv.struct.image.GrayF32;
+import boofcv.struct.image.ImageGray;
 import ij.IJ;
 import ij.ImagePlus;
-import ij.process.FHT;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import java.awt.Point;
@@ -38,10 +41,12 @@ import mmcorej.MMCoreJ;
 import mmcorej.TaggedImage;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.Studio;
+import org.micromanager.imageprocessing.BoofCVImageConverter;
 import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 import org.micromanager.internal.utils.MathFunctions;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.imageanalysis.AnalysisWindows2D;
 
 /**
  *
@@ -57,6 +62,8 @@ public class AutomaticCalibrationThread extends CalibrationThread {
 
    private DisplayWindow liveWin_;
    private ImageProcessor referenceImage_;
+   private GrayF32 windowImage_; // normalized window used for apodization
+   private final boolean useWindow_ = true;
    
    private Point2D.Double xy0_;
 
@@ -108,28 +115,7 @@ public class AutomaticCalibrationThread extends CalibrationThread {
 
    private ImageProcessor theSlide = null;
 
-   public static ImageProcessor crossCorrelate(ImageProcessor proc1, ImageProcessor proc2) {
-      // normalize by subtracting the mean
-      // not sure if this actually helps....
-      proc1 = proc1.convertToFloatProcessor();
-      double mean1 = proc1.getStatistics().mean;
-      proc1.min(mean1);
-      proc2 = proc2.convertToFloatProcessor();
-      double mean2 = proc2.getStatistics().mean;
-      proc2.min(mean2);
-      FHT h1 = new FHT(proc1);
-      FHT h2 = new FHT(proc2);
-      h1.transform();
-      h2.transform();
-      //Conjugate multiplication in the frequency domain is equivalent to 
-      // correlation in the space domain
-      FHT result = h1.conjugateMultiply(h2);   
-      result.inverseTransform(); //Transform back to space domain.
-      result.swapQuadrants(); //This needs to be done after transforming. to get back to the original.
-      result.resetMinAndMax(); //This is just to scale the contrast when displayed.
-      return result;
-   }
-
+   
    // Measures the displacement between two images by cross-correlating, 
    // and then finding the maximum value.
    // Accurate to one pixel only.  ???  Seems accurate to 0.1 pixel...
@@ -139,7 +125,7 @@ public class AutomaticCalibrationThread extends CalibrationThread {
       final int boxSize = 64;  // increasing the box size will make finding the 
                               // procedure more robust with respect to errors
       final int halfBoxSize = boxSize / 2;
-      ImageProcessor result = crossCorrelate(proc1, proc2);
+      ImageProcessor result = ImageUtils.crossCorrelate(proc1, proc2);
       ImageProcessor resultCenter = getSubImage(result, 
               result.getWidth() / 2 - halfBoxSize, 
               result.getHeight() / 2 - halfBoxSize, 
@@ -224,6 +210,9 @@ public class AutomaticCalibrationThread extends CalibrationThread {
               side_small, side_small);
       ImageProcessor foundImage = getSubImage(snap,
               guessRect.x, guessRect.y, guessRect.width, guessRect.height);
+      if (useWindow_) {
+         foundImage = multiply(foundImage, windowImage_);
+      }
       overlay_.set(guessRect);
       Point2D.Double dChange = measureDisplacement(referenceImage_,
               foundImage, display);
@@ -273,6 +262,16 @@ public class AutomaticCalibrationThread extends CalibrationThread {
       return stagePos;
 
    }
+   
+   public static ImageProcessor multiply(ImageProcessor input, GrayF32 input2) {
+      // TODO: check input and output sizes
+      ImageGray inputBoofCV = BoofCVImageConverter.convert(input, false);
+      GrayF32 floatInputAsBoofCV = new GrayF32(input.getWidth(), input.getHeight());
+      GConvertImage.convert(inputBoofCV, floatInputAsBoofCV);
+      GrayF32 outputBoofCV = new GrayF32(input.getWidth(), input.getHeight());
+      PixelMath.multiply(input2, floatInputAsBoofCV, outputBoofCV);
+      return BoofCVImageConverter.convert(outputBoofCV, false);
+   }
 
    private int smallestPowerOf2LessThanOrEqualTo(int x) {
       return 1 << ((int) Math.floor(Math.log(x)/Math.log(2)));
@@ -310,9 +309,17 @@ public class AutomaticCalibrationThread extends CalibrationThread {
       int w_small = smallestPowerOf2LessThanOrEqualTo(w/4);
       int h_small = smallestPowerOf2LessThanOrEqualTo(h/4);
       side_small = Math.min(w_small, h_small);
-
       referenceImage_ = getSubImage(baseImage, (-side_small/2+w/2),
               (-side_small/2+h/2),side_small,side_small);
+      
+      if (useWindow_) {
+         float[] windowPixels = AnalysisWindows2D.hanWindow1DA(side_small);
+         windowImage_ = new GrayF32();
+         windowImage_.setData(windowPixels);
+         windowImage_.reshape(side_small, side_small);
+         referenceImage_ = multiply(referenceImage_, windowImage_);
+      }
+
 
       pointPairs_.clear();
       pointPairs_.put(new Point2D.Double(0.,0.),new Point2D.Double(x,y));
@@ -322,6 +329,9 @@ public class AutomaticCalibrationThread extends CalibrationThread {
       // we started from after having called runSearch().
       referenceImage_ = getSubImage(baseImage, (-side_small/2+w/2),
             (-side_small/2+h/2),side_small,side_small);
+      if (useWindow_) {  
+         referenceImage_ = multiply(referenceImage_, windowImage_);
+      }
 
       runSearch(0,0.1,simulate);
 

@@ -3,6 +3,7 @@ package org.micromanager.internal.utils.imageanalysis;
 import ij.ImagePlus;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
+import ij.process.FHT;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
@@ -652,7 +653,29 @@ public final class ImageUtils {
       }
    }
    
+   /**
+    * Executes ImageJ-based Fourier space cross-correlation
+    * This should have the exact same result as the ImageJ FFT > FD Math > Correlate
+    * command
+    * @param proc1 input pixels of first image
+    * @param proc2 input pixels of second image
+    * @return imageProcessor containing a real space image of the cross-correlation landscape
+    */
    
+   public static ImageProcessor crossCorrelate(ImageProcessor proc1, ImageProcessor proc2) {
+      FHT h1 = new FHT(proc1);
+      FHT h2 = new FHT(proc2);
+      h1.transform();
+      h2.transform();
+      // Conjugate multiplication in the frequency domain is equivalent to 
+      // correlation in the space domain
+      FHT result = h1.conjugateMultiply(h2);   
+      result.inverseTransform(); //Transform back to space domain.
+      result.swapQuadrants(); //This needs to be done after transforming. to get back to the original.
+      result.resetMinAndMax(); //This is just to scale the contrast when displayed.
+      return result;
+   }
+
 
 }
 
