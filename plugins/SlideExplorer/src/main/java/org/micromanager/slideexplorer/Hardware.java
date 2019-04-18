@@ -6,7 +6,7 @@ import java.awt.geom.Point2D;
 import ij.process.ImageProcessor;
 import java.util.List;
 
-import org.micromanager.internal.utils.ImageUtils;
+import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 
 import mmcorej.CMMCore;
 import org.micromanager.Studio;

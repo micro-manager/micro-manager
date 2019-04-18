@@ -14,7 +14,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 
 import org.micromanager.slideexplorer.Hub.ModeManager;
-import org.micromanager.internal.utils.ImageUtils;
+import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public class Display {

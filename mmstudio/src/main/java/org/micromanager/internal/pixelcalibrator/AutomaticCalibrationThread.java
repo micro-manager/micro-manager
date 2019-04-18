@@ -38,7 +38,7 @@ import mmcorej.MMCoreJ;
 import mmcorej.TaggedImage;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.Studio;
-import org.micromanager.internal.utils.ImageUtils;
+import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 import org.micromanager.internal.utils.MathFunctions;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -65,7 +65,7 @@ public class AutomaticCalibrationThread extends CalibrationThread {
    private int w;
    private int h;
    private int side_small;
-   private int index_;
+   private static int index_;
 
    private class CalibrationFailedException extends Exception {
 
@@ -108,7 +108,7 @@ public class AutomaticCalibrationThread extends CalibrationThread {
 
    private ImageProcessor theSlide = null;
 
-   private ImageProcessor crossCorrelate(ImageProcessor proc1, ImageProcessor proc2) {
+   public static ImageProcessor crossCorrelate(ImageProcessor proc1, ImageProcessor proc2) {
       // normalize by subtracting the mean
       // not sure if this actually helps....
       proc1 = proc1.convertToFloatProcessor();
@@ -134,7 +134,7 @@ public class AutomaticCalibrationThread extends CalibrationThread {
    // and then finding the maximum value.
    // Accurate to one pixel only.  ???  Seems accurate to 0.1 pixel...
 
-   private Point2D.Double measureDisplacement(ImageProcessor proc1, 
+   public static Point2D.Double measureDisplacement(ImageProcessor proc1, 
            ImageProcessor proc2, boolean display) {
       final int boxSize = 64;  // increasing the box size will make finding the 
                               // procedure more robust with respect to errors
@@ -161,7 +161,7 @@ public class AutomaticCalibrationThread extends CalibrationThread {
       return d2;
    }
 
-   private ImageProcessor getSubImage(ImageProcessor proc, int x, int y, int w, int h) {
+   public static ImageProcessor getSubImage(ImageProcessor proc, int x, int y, int w, int h) {
       FloatProcessor proc2 = new FloatProcessor(w, h);
       proc2.insert(proc,-x,-y);
       return proc2;

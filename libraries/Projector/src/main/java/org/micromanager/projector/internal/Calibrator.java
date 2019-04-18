@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.micromanager.Studio;
-import org.micromanager.internal.utils.ImageUtils;
+import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 import org.micromanager.internal.utils.MathFunctions;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.projector.ProjectionDevice;

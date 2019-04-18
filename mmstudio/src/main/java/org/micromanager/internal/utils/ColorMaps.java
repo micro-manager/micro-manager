@@ -20,6 +20,7 @@
 
 package org.micromanager.internal.utils;
 
+import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 import net.imglib2.display.ColorTable8;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.interpolation.LinearInterpolator;

@@ -1,4 +1,4 @@
-package org.micromanager.internal.utils;
+package org.micromanager.internal.utils.imageanalysis;
 
 import ij.ImagePlus;
 import ij.process.ByteProcessor;
@@ -14,6 +14,9 @@ import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.internal.utils.MDUtils;
+import org.micromanager.internal.utils.MMException;
+import org.micromanager.internal.utils.ReportingUtils;
 
 public final class ImageUtils {
 
@@ -649,12 +652,8 @@ public final class ImageUtils {
       }
    }
    
-   /*
-   * A utility testing method for displaying an image.
-   */
-   private static void show(String title, ImageProcessor proc) {
-      new ImagePlus(title, proc).show();
-   }
+   
+
 }
 
 

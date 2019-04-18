@@ -60,7 +60,7 @@ import org.micromanager.display.internal.RememberedChannelSettings;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.propertymap.MM1JSONSerializer;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
-import org.micromanager.internal.utils.ImageUtils;
+import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public final class MultipageTiffWriter {

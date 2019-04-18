@@ -1,5 +1,6 @@
 package org.micromanager.internal.utils;
 
+import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 import static org.junit.Assert.*;
 import org.junit.Test;
 

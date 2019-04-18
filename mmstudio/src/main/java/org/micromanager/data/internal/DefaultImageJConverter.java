@@ -29,7 +29,7 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.ImageJConverter;
 import org.micromanager.data.Metadata;
-import org.micromanager.internal.utils.ImageUtils;
+import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public final class DefaultImageJConverter implements ImageJConverter {
