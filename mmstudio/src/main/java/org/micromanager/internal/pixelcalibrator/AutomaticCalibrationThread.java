@@ -109,6 +109,14 @@ public class AutomaticCalibrationThread extends CalibrationThread {
    private ImageProcessor theSlide = null;
 
    private ImageProcessor crossCorrelate(ImageProcessor proc1, ImageProcessor proc2) {
+      // normalize by subtracting the mean
+      // not sure if this actually helps....
+      proc1 = proc1.convertToFloatProcessor();
+      double mean1 = proc1.getStatistics().mean;
+      proc1.min(mean1);
+      proc2 = proc2.convertToFloatProcessor();
+      double mean2 = proc2.getStatistics().mean;
+      proc2.min(mean2);
       FHT h1 = new FHT(proc1);
       FHT h2 = new FHT(proc2);
       h1.transform();
@@ -354,8 +362,9 @@ public class AutomaticCalibrationThread extends CalibrationThread {
       measureCorner(firstApprox, new Point(ax,ay), simulate);
       measureCorner(firstApprox, new Point(ax,-ay), simulate);
       try {
+         // pointpairs, max error in pixels, max error in microns
          return MathFunctions.generateAffineTransformFromPointPairs(
-                 pointPairs_, 2.0, Double.MAX_VALUE);
+                 pointPairs_, 5.0, Double.MAX_VALUE);
       } catch (Exception ex) {
          ReportingUtils.logError(ex.getMessage());
       }
