@@ -495,26 +495,11 @@ int Tsi3Cam::ClearWhiteBalance()
 	return ret;
 }
 
+/**
+ * Applies precomputed gains for rgb WB correction to color pipeline
+ */
 int Tsi3Cam::ApplyWhiteBalance(double redScaler, double greenScaler, double blueScaler)
 {
-	/*
-	// reset current color matrix
-	if (!tl_color_clear_matrix(colorProcessor))
-		return ERR_INTERNAL_ERROR;
-
-	// apply wb scaling
-	float grey_world_balance_matrix [9] = { (float)redScaler, 0.0f, 0.0f, 0.0f, (float)greenScaler, 0.0f, 0.0f, 0.0f, (float)blueScaler };
-	if (!tl_color_append_matrix (colorProcessor, grey_world_balance_matrix))
-		return ERR_INTERNAL_ERROR;
-
-	if (!tl_color_append_matrix(colorProcessor, grey_world_balance_matrix))
-		return ERR_INTERNAL_ERROR;
-
-	float merged_camera_correction_sRGB_matrix[9] = { 1.25477f, -0.15359f, -0.10118f, -0.07011f, 1.13723f, -0.06713f, 0.0f, -0.26641f, 1.26641f };
-	tl_camera_get_color_correction_matrix(camHandle, merged_camera_correction_sRGB_matrix);
-	if (!tl_color_append_matrix(colorProcessor, merged_camera_correction_sRGB_matrix))
-		return ERR_INTERNAL_ERROR;
-	*/
 	// reset current color matrix
 	tl_color_clear_matrix(colorProcessor);
 
@@ -529,6 +514,9 @@ int Tsi3Cam::ApplyWhiteBalance(double redScaler, double greenScaler, double blue
 	return DEVICE_OK;
 }
 
+/**
+ * Enables output lookup tables
+ */
 void Tsi3Cam::EnableColorOutputLUTs()
 {
     tl_color_enable_output_LUTs (colorProcessor, 1, 1, 1);
