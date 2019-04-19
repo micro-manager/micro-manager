@@ -220,9 +220,22 @@ int JAICamera::OnWhiteBalance(MM::PropertyBase* pProp, MM::ActionType eAct)
 		long data;
 		pProp->Get(val);
 		GetPropertyData(g_WhiteBalance, val.c_str(), data);
-		PvResult pvr = genParams->SetEnumValue(pvCmd, data);
-		if (!pvr.IsOK())
-			return processPvError(pvr);
+
+		if (data == 1)
+		{
+			// special handling for "once" option
+			// request white balance adjustment on next sequence acquisition
+			InterlockedExchange(&whiteBalancePending, 1L);
+		}
+		else
+		{
+			PvResult pvr = genParams->SetEnumValue(pvCmd, data);
+			if (!pvr.IsOK())
+				return processPvError(pvr);
+			ostringstream os;
+			os << "Set " << g_WhiteBalance << " : " << val << " = " << data;
+			LogMessage(os.str());
+		}
 	}
 	else if (eAct == MM::BeforeGet)
 	{
