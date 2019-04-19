@@ -22,12 +22,10 @@
 package org.micromanager.internal.pixelcalibrator;
 
 import boofcv.alg.misc.GImageStatistics;
-import boofcv.alg.misc.GPixelMath;
 import boofcv.alg.misc.PixelMath;
 import boofcv.core.image.GConvertImage;
 import boofcv.struct.image.GrayF32;
 import boofcv.struct.image.GrayU16;
-import boofcv.struct.image.ImageGray;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.process.FloatProcessor;
@@ -44,7 +42,7 @@ import mmcorej.MMCoreJ;
 import mmcorej.TaggedImage;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.Studio;
-import org.micromanager.imageprocessing.BoofCVImageConverter;
+import org.micromanager.internal.utils.imageanalysis.BoofCVImageConverter;
 import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 import org.micromanager.internal.utils.MathFunctions;
 import org.micromanager.internal.utils.NumberUtils;
@@ -64,7 +62,7 @@ public class AutomaticCalibrationThread extends CalibrationThread {
    private DisplayWindow liveWin_;
    private ImageProcessor referenceImage_;
    private GrayF32 windowImage_; // normalized window used for apodization
-   private final boolean useWindow_ = true;
+   private final boolean useWindow_ = false;
    
    private Point2D.Double xy0_;
 
