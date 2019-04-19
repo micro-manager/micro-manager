@@ -74,7 +74,8 @@ JAICamera::JAICamera() :
 	camera(0),
 	genParams(0),
 	bitDepth(8),
-	pixelSize(4)
+	pixelSize(4),
+	whiteBalancePending(0)
 {
    // set default error messages
    InitializeDefaultErrorMessages();
@@ -242,6 +243,15 @@ int JAICamera::Initialize()
 	os << "Version=" << devVer.GetAscii() << ", Firmware=" << fwVer.GetAscii() << ", Fpga=" << fpgaVer.GetAscii();
 	LogMessage(os.str());
 
+	// reset to factory defaults
+	pvr = genParams->SetEnumValue("UserSetSelector", 0);
+	if (!pvr.IsOK())
+		return processPvError(pvr);
+
+	pvr = genParams->ExecuteCommand("UserSetLoad");
+		if (!pvr.IsOK())
+		return processPvError(pvr);
+
 	// set timed exposure mode
 	pvr = genParams->SetEnumValue("ExposureMode", 1);
 	if (!pvr.IsOK())
@@ -316,6 +326,10 @@ int JAICamera::Initialize()
 			int64_t val;
 			entry->GetValue(val);
 			AddAllowedValue(g_WhiteBalance, name.GetAscii(), (long)val);
+
+			ostringstream osWB;
+			osWB << g_WhiteBalance << " : " << name.GetAscii() << "=" << val;
+			LogMessage(osWB.str());
 		}
 	}
 
@@ -995,7 +1009,7 @@ int AcqSequenceThread::svc (void)
    InterlockedExchange(&moduleInstance->acquiring, 1);
 
 	// setup continuous acquisition
-		// set single frame mode
+	// set single frame mode
 	PvResult pvr = moduleInstance->genParams->SetEnumValue("AcquisitionMode", "Continuous");
 	if (!pvr.IsOK())
 		return pvr.GetCode();
@@ -1047,6 +1061,23 @@ int AcqSequenceThread::svc (void)
 	if (pvr.IsFailure())
 	{
 		return processPvError(pvr, camStream);
+	}
+
+	if (moduleInstance->whiteBalancePending)
+	{
+		PvResult pvr = moduleInstance->genParams->SetEnumValue("BalanceWhiteAuto", 1);
+		ostringstream os;
+		if (!pvr.IsOK())
+		{
+			os << "PvError=" << pvr.GetCode() << ", Description: " << pvr.GetDescription().GetAscii();
+			
+		}
+		else
+		{
+			os << "White Balance set";
+		}
+		moduleInstance->LogMessage(os.str());
+		InterlockedExchange(&moduleInstance->whiteBalancePending, 0L); // clear wb pending flag
 	}
 
    unsigned count = 0;

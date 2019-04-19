@@ -208,6 +208,7 @@ private:
    long acquiring;
 	int bitDepth;
 	int pixelSize;
+	LONG whiteBalancePending;
 
 	PvDevice* camera;
 	PvGenParameterArray* genParams;
