@@ -58,8 +58,6 @@ public class AutomaticCalibrationThread extends CalibrationThread {
    private final PixelCalibratorDialog dialog_;
    private final RectangleOverlay overlay_;
    
-   private Map<Point2D.Double, Point2D.Double> pointPairs_;
-
    private DisplayWindow liveWin_;
    private ImageProcessor referenceImage_;
    private GrayF32 windowImage_; // normalized window used for apodization
@@ -73,6 +71,17 @@ public class AutomaticCalibrationThread extends CalibrationThread {
    private int h;
    private int side_small;
    private static int index_;
+   
+   private class PointPair {
+      private final Point2D.Double p1_;
+      private final Point2D.Double p2_;
+      public PointPair(Point2D.Double p1, Point2D.Double p2) {
+         p1_ = p1;
+         p2_ = p2;
+      }
+      public Point2D.Double getFirst() { return p1_;}
+      public Point2D.Double getSecond() { return p2_;}   
+   }
 
    private class CalibrationFailedException extends Exception {
 
@@ -221,7 +230,7 @@ public class AutomaticCalibrationThread extends CalibrationThread {
 
 
 
-   private Point2D.Double runSearch(final double dxi, final double dyi, 
+   private PointPair runSearch(final double dxi, final double dyi, 
            final boolean simulate)
       throws InterruptedException, CalibrationFailedException
    {
@@ -258,8 +267,7 @@ public class AutomaticCalibrationThread extends CalibrationThread {
          stagePos = null;
          throw new CalibrationFailedException(ex.getMessage());
       }
-      pointPairs_.put(new Point2D.Double(d.x, d.y),stagePos);
-      return stagePos;
+      return new PointPair(new Point2D.Double(d.x, d.y),stagePos);
 
    }
    
@@ -321,9 +329,11 @@ public class AutomaticCalibrationThread extends CalibrationThread {
       }
 
 
-      pointPairs_.clear();
-      pointPairs_.put(new Point2D.Double(0.,0.),new Point2D.Double(x,y));
-      runSearch(0.1,0,simulate);
+      Map<Point2D.Double, Point2D.Double> pointPairs = new HashMap<>();
+      pointPairs.put(new Point2D.Double(0.,0.),new Point2D.Double(x,y));
+      PointPair pp = runSearch(0.1,0,simulate);
+      pointPairs.put(pp.getFirst(), pp.getSecond());
+      
 
       // Re-acquire the reference image, since we may not be exactly where 
       // we started from after having called runSearch().
@@ -333,13 +343,14 @@ public class AutomaticCalibrationThread extends CalibrationThread {
          referenceImage_ = multiply(referenceImage_, windowImage_);
       }
 
-      runSearch(0,0.1,simulate);
-
-      return MathFunctions.generateAffineTransformFromPointPairs(pointPairs_);
+      pp = runSearch(0,0.1,simulate);
+      pointPairs.put(pp.getFirst(), pp.getSecond());
+      
+      return MathFunctions.generateAffineTransformFromPointPairs(pointPairs);
    }
    
 
-   private void measureCorner(final AffineTransform firstApprox, final Point c1, 
+   private PointPair measureCorner(final AffineTransform firstApprox, final Point c1, 
            final boolean simulate)
       throws InterruptedException, CalibrationFailedException
    {
@@ -353,8 +364,9 @@ public class AutomaticCalibrationThread extends CalibrationThread {
          ReportingUtils.logError(ex);
          throw new CalibrationFailedException(ex.getMessage());
       }
-      pointPairs_.put(new Point2D.Double(c2.x, c2.y), s2);
       incrementProgress();
+      
+      return new PointPair(new Point2D.Double(c2.x, c2.y), s2);
    }
    
 
@@ -362,19 +374,23 @@ public class AutomaticCalibrationThread extends CalibrationThread {
            final boolean simulate)
       throws InterruptedException, CalibrationFailedException
    {
-      pointPairs_.clear();
+      Map<Point2D.Double, Point2D.Double> pointPairs = new HashMap<>();
       int ax = w/2 - side_small; // used to be side_small / 2, but it works better
                                  // to stay a bit away from the extreme corners
       int ay = h/2 - side_small;
 
-      measureCorner(firstApprox, new Point(-ax,-ay), simulate);
-      measureCorner(firstApprox, new Point(-ax,ay), simulate);
-      measureCorner(firstApprox, new Point(ax,ay), simulate);
-      measureCorner(firstApprox, new Point(ax,-ay), simulate);
+      PointPair pp = measureCorner(firstApprox, new Point(-ax,-ay), simulate);
+      pointPairs.put(pp.getFirst(), pp.getSecond());
+      pp = measureCorner(firstApprox, new Point(-ax,ay), simulate);
+      pointPairs.put(pp.getFirst(), pp.getSecond());
+      pp = measureCorner(firstApprox, new Point(ax,ay), simulate);
+      pointPairs.put(pp.getFirst(), pp.getSecond());
+      pp = measureCorner(firstApprox, new Point(ax,-ay), simulate);
+      pointPairs.put(pp.getFirst(), pp.getSecond());
       try {
          // pointpairs, max error in pixels, max error in microns
          return MathFunctions.generateAffineTransformFromPointPairs(
-                 pointPairs_, 5.0, Double.MAX_VALUE);
+                 pointPairs, 5.0, Double.MAX_VALUE);
       } catch (Exception ex) {
          ReportingUtils.logError(ex.getMessage());
       }
@@ -392,7 +408,6 @@ public class AutomaticCalibrationThread extends CalibrationThread {
    private AffineTransform runCalibration(boolean simulation)
       throws InterruptedException, CalibrationFailedException
    {
-      pointPairs_ = new HashMap<Point2D.Double, Point2D.Double>();
       try {
           xy0_ = core_.getXYStagePosition();
       }
