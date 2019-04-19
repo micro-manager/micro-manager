@@ -1,7 +1,6 @@
 
 package org.micromanager.internal.utils.imageanalysis;
 
-import org.micromanager.imageprocessing.*;
 import boofcv.struct.image.GrayF32;
 import boofcv.struct.image.GrayU16;
 import boofcv.struct.image.GrayU8;
