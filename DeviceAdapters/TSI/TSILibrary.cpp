@@ -112,12 +112,38 @@ bool isTsiSDKAvailable()
 
    // test loading one function
    TSI_CREATE_SDK tsi_create_sdk = (TSI_CREATE_SDK)GetProcAddress(libHandle, "tsi_create_sdk");
-   if(tsi_create_sdk == 0)
+	TSI_DESTROY_SDK tsi_destroy_sdk = (TSI_DESTROY_SDK)GetProcAddress(libHandle, "tsi_destroy_sdk");   
+	
+	if(tsi_create_sdk == 0 || tsi_destroy_sdk == 0)
    {
       FreeLibrary(libHandle);
       return false;
    }
 
+   TsiCam::tsiSdk = tsi_create_sdk();
+	if (TsiCam::tsiSdk == 0)
+   {
+      FreeLibrary(libHandle);
+      return false;
+   }
+
+   if (!TsiCam::tsiSdk->Open())
+	{
+		tsi_destroy_sdk(TsiCam::tsiSdk);
+		TsiCam::tsiSdk = 0;
+		FreeLibrary(libHandle);
+		return false;
+	}
+
+	bool outcome = true;
+	int numCameras = TsiCam::tsiSdk->GetNumberOfCameras();
+   if (numCameras == 0)
+      outcome = false;
+
+	TsiCam::tsiSdk->Close();	
+	tsi_destroy_sdk(TsiCam::tsiSdk);
+   TsiCam::tsiSdk = 0;
+
    FreeLibrary(libHandle);
-   return true;
+   return outcome;
 }
