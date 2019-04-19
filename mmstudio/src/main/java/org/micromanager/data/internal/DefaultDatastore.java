@@ -202,6 +202,10 @@ public class DefaultDatastore implements Datastore {
       if (isFrozen_) {
          throw new DatastoreFrozenException();
       }
+      if (image == null) {
+         // TODO: log? throw exception?  just crashing is not an option...
+         return;
+      }
       if (hasImage(image.getCoords())) {
          throw new DatastoreRewriteException();
       }
