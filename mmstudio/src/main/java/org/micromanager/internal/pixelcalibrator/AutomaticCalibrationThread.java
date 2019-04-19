@@ -21,9 +21,12 @@
 
 package org.micromanager.internal.pixelcalibrator;
 
+import boofcv.alg.misc.GImageStatistics;
+import boofcv.alg.misc.GPixelMath;
 import boofcv.alg.misc.PixelMath;
 import boofcv.core.image.GConvertImage;
 import boofcv.struct.image.GrayF32;
+import boofcv.struct.image.GrayU16;
 import boofcv.struct.image.ImageGray;
 import ij.IJ;
 import ij.ImagePlus;
@@ -219,10 +222,17 @@ public class AutomaticCalibrationThread extends CalibrationThread {
               side_small, side_small);
       ImageProcessor foundImage = getSubImage(snap,
               guessRect.x, guessRect.y, guessRect.width, guessRect.height);
+      foundImage = subtractMinimum(foundImage);
       if (useWindow_) {
          foundImage = multiply(foundImage, windowImage_);
       }
       overlay_.set(guessRect);
+      /*
+      ImagePlus tmp = new ImagePlus("reference", referenceImage_);
+      tmp.show();
+      ImagePlus tmp2 = new ImagePlus("found", foundImage);
+      tmp2.show();
+      */
       Point2D.Double dChange = measureDisplacement(referenceImage_,
               foundImage, display);
       return new Point2D.Double(d.x + dChange.x, d.y + dChange.y);
@@ -273,12 +283,20 @@ public class AutomaticCalibrationThread extends CalibrationThread {
    
    public static ImageProcessor multiply(ImageProcessor input, GrayF32 input2) {
       // TODO: check input and output sizes
-      ImageGray inputBoofCV = BoofCVImageConverter.convert(input, false);
       GrayF32 floatInputAsBoofCV = new GrayF32(input.getWidth(), input.getHeight());
-      GConvertImage.convert(inputBoofCV, floatInputAsBoofCV);
+      GConvertImage.convert( BoofCVImageConverter.convert(input, false), floatInputAsBoofCV);
       GrayF32 outputBoofCV = new GrayF32(input.getWidth(), input.getHeight());
       PixelMath.multiply(input2, floatInputAsBoofCV, outputBoofCV);
       return BoofCVImageConverter.convert(outputBoofCV, false);
+   }
+   
+   public static ImageProcessor subtractMinimum(ImageProcessor input) {
+      GrayU16 shortInputAsBoofCV = new GrayU16(input.getWidth(), input.getHeight());
+      GConvertImage.convert( BoofCVImageConverter.convert(input, false), shortInputAsBoofCV);      
+      double min =   GImageStatistics.min(shortInputAsBoofCV);
+      GrayU16 resultAsBoofCV = new GrayU16(input.getWidth(), input.getHeight());
+      PixelMath.minus(shortInputAsBoofCV, (int)min, resultAsBoofCV);
+      return BoofCVImageConverter.convert(resultAsBoofCV, false);
    }
 
    private int smallestPowerOf2LessThanOrEqualTo(int x) {
@@ -319,6 +337,7 @@ public class AutomaticCalibrationThread extends CalibrationThread {
       side_small = Math.min(w_small, h_small);
       referenceImage_ = getSubImage(baseImage, (-side_small/2+w/2),
               (-side_small/2+h/2),side_small,side_small);
+      referenceImage_ = subtractMinimum(referenceImage_);
       
       if (useWindow_) {
          float[] windowPixels = AnalysisWindows2D.hanWindow1DA(side_small);
@@ -339,6 +358,7 @@ public class AutomaticCalibrationThread extends CalibrationThread {
       // we started from after having called runSearch().
       referenceImage_ = getSubImage(baseImage, (-side_small/2+w/2),
             (-side_small/2+h/2),side_small,side_small);
+      referenceImage_ = subtractMinimum(referenceImage_);
       if (useWindow_) {  
          referenceImage_ = multiply(referenceImage_, windowImage_);
       }
