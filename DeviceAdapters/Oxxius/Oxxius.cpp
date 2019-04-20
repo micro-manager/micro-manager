@@ -4,16 +4,25 @@
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   Controls Oxxius lasers through a serial port
-// COPYRIGHT:     Oxxius SA, 2013
+// COPYRIGHT:     Oxxius S.A., 2013-2019
 // LICENSE:       LGPL
-// AUTHOR:        Julien Beaurepaire
+// AUTHOR:        Julien Beaurepaire, Tristan Martinez
 //
 
 #include "Oxxius.h"
 
+// Alias code used to simplify the usual function call and susequent error code checking.
+#define RETURN_ON_MM_ERROR( result ) do { \
+   int return_value = (result); \
+   if (return_value != DEVICE_OK) { \
+      return return_value; \
+   } \
+} while (0)
 
-const char* g_DeviceOxxLBXLDName = "Oxxius LBX-LD";
-const char* g_DeviceOxxLBXDPSSName = "Oxxius LBX-DPSS";
+
+
+const char* g_DeviceLaserBoxxName = "Oxxius LaserBoxx LBX or LMX or LCX";
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -21,22 +30,15 @@ const char* g_DeviceOxxLBXDPSSName = "Oxxius LBX-DPSS";
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   RegisterDevice(g_DeviceOxxLBXLDName, MM::GenericDevice, "Oxxius LBX-LD Laser Controller");
-   RegisterDevice(g_DeviceOxxLBXDPSSName, MM::GenericDevice, "Oxxius LBX-DPSS Laser Controller");
+	RegisterDevice(g_DeviceLaserBoxxName, MM::ShutterDevice, "LaserBoxx laser source");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
 {
-    if (deviceName == 0)
-	   return 0;
-
-    if (strcmp(deviceName, g_DeviceOxxLBXLDName) == 0)
-    {
-	   return new OxxLBXLD;
-    }else if(strcmp(deviceName, g_DeviceOxxLBXDPSSName) == 0)
-	{
-		return new OxxLBXDPSS;
-	}
+	if (deviceName == 0)
+		return 0;
+	if(strcmp(deviceName, g_DeviceLaserBoxxName) == 0)
+		return new LaserBoxx;
 
     return 0;
 }
@@ -49,157 +51,172 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 ///////////////////////////////////////////////////////////////////////////////
 // Oxxius LBX DPSS
 ///////////////////////////////////////////////////////////////////////////////
-OxxLBXDPSS::OxxLBXDPSS() :
-   port_("Undefined"),
-   initialized_(false),
-   busy_(false)
+LaserBoxx::LaserBoxx() :
+	port_("Undefined"),
+	initialized_(false),
+	busy_(false)
 {
-     InitializeDefaultErrorMessages();
-     SetErrorText(ERR_PORT_CHANGE_FORBIDDEN, "You can't change the port after device has been initialized.");
+	InitializeDefaultErrorMessages();
+	SetErrorText(ERR_PORT_CHANGE_FORBIDDEN, "Port cannot be changed once after device has been initialized.");
 
-     // Name
-     CreateProperty(MM::g_Keyword_Name, g_DeviceOxxLBXDPSSName, MM::String, true);
+	// Name
+	CreateProperty(MM::g_Keyword_Name, g_DeviceLaserBoxxName, MM::String, true);
 
-     // Description
-     CreateProperty(MM::g_Keyword_Description, "Oxxius Laser Controller", MM::String, true);
+	// Description
+	CreateProperty(MM::g_Keyword_Description, "Oxxius LaserBoxx Controller", MM::String, true);
 
-     // Port
-     CPropertyAction* pAct = new CPropertyAction (this, &OxxLBXDPSS::OnPort);
-     CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
+	// Port
+	CPropertyAction* pAct = new CPropertyAction (this, &LaserBoxx::OnPort);
+	CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
 
+	// Initialize private data
+	powerSP_ = 0.0;
+	currentSP_ = 0.0;
+    emissionStatus_  = "";
+    alarm_ = "";
+	modeControl_ = "";
+    serialNumber_ = "";
+    softVersion_ = "";
+	model_ = "";
 }
 
-OxxLBXDPSS::~OxxLBXDPSS()
+LaserBoxx::~LaserBoxx()
 {
      Shutdown();
 }
 
 
-
-
-void OxxLBXDPSS::GetName(char* Name) const
+void LaserBoxx::GetName(char* Name) const
 {
-     CDeviceUtils::CopyLimitedString(Name, g_DeviceOxxLBXDPSSName);
+     CDeviceUtils::CopyLimitedString(Name, g_DeviceLaserBoxxName);
 }
 
 
-int OxxLBXDPSS::Initialize()
+int LaserBoxx::Initialize()
 {
-	 CPropertyAction* pAct = new CPropertyAction (this, &OxxLBXDPSS::OnSerialNumber);
-     int nRet = CreateProperty("Serial Number", "0", MM::String, true, pAct);    
-     if (DEVICE_OK != nRet)
-          return nRet;
+	if (!initialized_) {
+		// Determines the model, between LBX, LCX and LMX
+		std::string command,answer;
+		command = "inf?";
+
+		RETURN_ON_MM_ERROR( SendAndReceive(command,answer) );
+
+		std::string::size_type Pos = answer.find_first_of("-", 0);
+		model_ = answer.substr( 0,Pos);
+		Pos = answer.find_first_of("-", Pos+1);
+		nominalPower_ = atof( answer.substr( Pos+1,std::string::npos).c_str() );
+
+//		GetCoreCallback()->LogMessage(this, model_.c_str(), false);
+
+
+		CPropertyAction* pAct = new CPropertyAction (this, &LaserBoxx::OnSerialNumber);
+		RETURN_ON_MM_ERROR( CreateProperty("Serial number", "0", MM::String, true, pAct) );
 	 
-	 pAct = new CPropertyAction (this, &OxxLBXDPSS::OnVersion);
-     nRet = CreateProperty("Soft Version", "0", MM::String, true, pAct);    
-     if (DEVICE_OK != nRet)
-          return nRet;
+		pAct = new CPropertyAction (this, &LaserBoxx::OnSWVersion);
+		RETURN_ON_MM_ERROR( CreateProperty("Software version", "0", MM::String, true, pAct) );
+     
+		pAct = new CPropertyAction (this, &LaserBoxx::OnModel);
+		RETURN_ON_MM_ERROR( CreateProperty("Model", "L.X-000", MM::String, true, pAct) );
 
-	 CPropertyActionEx* pActEx = new CPropertyActionEx (this, &OxxLBXDPSS::OnPowerSP, 0);
-     nRet = CreateProperty("PowerSetPoint (%)", "0.00", MM::Float, false, pActEx);
-     if (DEVICE_OK != nRet)
-          return nRet;
-	 SetPropertyLimits("PowerSetPoint (%)", 0, 100);
-	 
+		pAct = new CPropertyAction (this, &LaserBoxx::OnLaserStatus);
+		RETURN_ON_MM_ERROR( CreateProperty("Laser status", "Off", MM::String, true, pAct) );
 
-	 pAct = new CPropertyAction (this, &OxxLBXDPSS::OnPower);
-	 nRet = CreateProperty("Power", "0.00", MM::Float, true, pAct);    
-     if (DEVICE_OK != nRet)
-          return nRet;
-
-	 pAct = new CPropertyAction (this, &OxxLBXDPSS::OnLaserOnOff);
-     nRet = CreateProperty("Laser", "Off", MM::String, false, pAct);    
-	 if (DEVICE_OK != nRet)
-          return nRet;
-
-     std::vector<std::string> commands;
-     commands.push_back("Off");
-     commands.push_back("On");
-     SetAllowedValues("Laser", commands);
-
-	 pAct = new CPropertyAction (this, &OxxLBXDPSS::OnHours);
-	 nRet = CreateProperty("Hours", "0.00", MM::Float, true, pAct);    
-     if (DEVICE_OK != nRet)
-          return nRet;
+		pAct = new CPropertyAction (this, &LaserBoxx::OnEmissionOnOff);
+		RETURN_ON_MM_ERROR( CreateProperty("Emission", "Off", MM::String, false, pAct) );
+		std::vector<std::string> allowedValuesOffOn;
+		allowedValuesOffOn.push_back("Off");
+		allowedValuesOffOn.push_back("On");
+		SetAllowedValues("Emission", allowedValuesOffOn);
   
-     pAct = new CPropertyAction (this, &OxxLBXDPSS::OnFault);
-     nRet = CreateProperty("Fault", "No Fault", MM::String, true, pAct);    
-     if (DEVICE_OK != nRet)
-          return nRet;
-
-     
-
-	 pAct = new CPropertyAction (this, &OxxLBXDPSS::OnWaveLength);
-	 nRet = CreateProperty("Wavelength", "0.00", MM::String, true, pAct);    
-     if (DEVICE_OK != nRet)
-          return nRet;
-
-	 pAct = new CPropertyAction (this, &OxxLBXDPSS::OnBaseTemp);
-     nRet = CreateProperty("Base Temperature", "0.00", MM::Float, true, pAct);    
-     if (DEVICE_OK != nRet)
-          return nRet;
-	 pAct = new CPropertyAction (this, &OxxLBXDPSS::OnControllerTemp);
-     nRet = CreateProperty("Controller Temperature", "0.00", MM::Float, true, pAct);    
-     if (DEVICE_OK != nRet)
-          return nRet;
-
-     pAct = new CPropertyAction (this, &OxxLBXDPSS::OnLaserStatus);
-     nRet = CreateProperty("LaserStatus", "Off", MM::String, true, pAct);    
-     if (DEVICE_OK != nRet)
-          return nRet;
+		pAct = new CPropertyAction (this, &LaserBoxx::OnAlarm);
+		RETURN_ON_MM_ERROR( CreateProperty("Alarm", "No Alarm", MM::String, true, pAct) );
 	 
-     nRet = UpdateStatus();
-     if (nRet != DEVICE_OK)
-          return nRet;
-
-     
-     initialized_ = true;
-     return DEVICE_OK;
-}
-
-
-
-
-
-
-
-int OxxLBXDPSS::Shutdown()
-{
-   if (initialized_)
-   {
-      LaserOnOff(false);
-	 initialized_ = false;
+		pAct = new CPropertyAction (this, &LaserBoxx::OnInterlocked);
+		RETURN_ON_MM_ERROR( CreateProperty("OnInterlock", "Open", MM::String, true, pAct) );
 	 
-   }
-   return DEVICE_OK;
-}
+		pAct = new CPropertyAction (this, &LaserBoxx::OnControlMode);
+		RETURN_ON_MM_ERROR( CreateProperty("Control mode", "APC", MM::String, false, pAct) );
+		std::vector<std::string> allowedValuesCont;
+		allowedValuesCont.push_back("APC");
+		allowedValuesCont.push_back("ACC");
+		SetAllowedValues("Control mode", allowedValuesCont);
 
-bool OxxLBXDPSS::Busy()
-{
-   return busy_;
-}
+		pAct = new CPropertyAction (this, &LaserBoxx::OnPower);
+		RETURN_ON_MM_ERROR( CreateProperty("Monitored power (mW)", "0.00", MM::Float, true, pAct) );
 
-int OxxLBXDPSS::LaserOnOff(int onoff)
-{
-     std::string answer;
-     std::ostringstream command;
+		CPropertyActionEx* pActExP = new CPropertyActionEx (this, &LaserBoxx::OnPowerSP, 0);
+		RETURN_ON_MM_ERROR( CreateProperty("Power set point (%)", "0.00", MM::Float, false, pActExP) );
+		SetPropertyLimits("Power set point (%)", 0, 110);
 
-     if (onoff == 0) 
-     {
-          command << "dl 0";
-          laserOn_ = "Off";
-     }
-     else if (onoff == 1) 
-     {
-          command << "dl 1";
-          laserOn_ = "On";
-     }
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\n");
-     if (ret != DEVICE_OK) return ret;
-     ret = GetSerialAnswer(port_.c_str(), "\n\r", answer);
-     if (ret != DEVICE_OK) return ret;
+		pAct = new CPropertyAction (this, &LaserBoxx::OnCurrent);
+		RETURN_ON_MM_ERROR( CreateProperty("Monitored current (mA)", "0.00", MM::Float, true, pAct) );
+
+		CPropertyActionEx* pActExC = new CPropertyActionEx (this, &LaserBoxx::OnCurrentSP, 0);
+		RETURN_ON_MM_ERROR( CreateProperty("Current set point (%)", "0.00", MM::Float, false, pActExC) );
+		SetPropertyLimits("Current set point (%)", 0, 125);
+
+		pAct = new CPropertyAction (this, &LaserBoxx::OnSleep);
+		RETURN_ON_MM_ERROR( CreateProperty("Sleep mode", "Off", MM::String, false, pAct) );
+		std::vector<std::string> allowedValuesSle;
+		allowedValuesSle.push_back("Sleep");
+		allowedValuesSle.push_back("Ready");
+		SetAllowedValues("Sleep mode", allowedValuesSle);
+ 	
+		pAct = new CPropertyAction (this, &LaserBoxx::OnAnalogMod);
+		RETURN_ON_MM_ERROR( CreateProperty("Analog modulation", "Off", MM::String, false, pAct) );
+		pAct = new CPropertyAction (this, &LaserBoxx::OnDigitalMod);
+		RETURN_ON_MM_ERROR( CreateProperty("Digital modulation", "Off", MM::String, false, pAct) );
+		SetAllowedValues("Analog modulation", allowedValuesOffOn);
+		SetAllowedValues("Digital modulation", allowedValuesOffOn);
+  
+		pAct = new CPropertyAction (this, &LaserBoxx::OnHours);
+		RETURN_ON_MM_ERROR( CreateProperty("Emission time (hours)", "0.00", MM::Float, true, pAct) );
+
+		pAct = new CPropertyAction (this, &LaserBoxx::OnBaseTemp);
+		RETURN_ON_MM_ERROR( CreateProperty("Base temperature", "0.00", MM::Float, true, pAct) );
+
+/*		pAct = new CPropertyAction (this, &LaserBoxx::OnControllerTemp);
+		RETURN_ON_MM_ERROR( CreateProperty("Controller temperature", "0.00", MM::Float, true, pAct) );
+*/	 
+		RETURN_ON_MM_ERROR( UpdateStatus() );
      
-	 return DEVICE_OK;
+		initialized_ = true;
+	}
+	return DEVICE_OK;
+}
+
+
+int LaserBoxx::Shutdown()
+{
+	if (initialized_) {
+		EmissionOnOff(0);		// Turns off the emssion on "Shutdown"
+		initialized_ = false;
+	}
+	return DEVICE_OK;
+}
+
+
+bool LaserBoxx::Busy()
+{
+	return busy_;
+}
+
+
+int LaserBoxx::EmissionOnOff(int onoff)
+{
+	std::string command, answer;
+
+	if (onoff == 0) {
+		command = "dl 0";
+		emissionStatus_ = "Off";
+	}
+	else if (onoff == 1) {
+		command = "dl 1";
+		emissionStatus_ = "On";
+	}
+	RETURN_ON_MM_ERROR( SendAndReceive(command,answer) );
+
+	return DEVICE_OK;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -207,938 +224,503 @@ int OxxLBXDPSS::LaserOnOff(int onoff)
 ///////////////////////////////////////////////////////////////////////////////
 
 
-int OxxLBXDPSS::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
+int LaserBoxx::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-     if (eAct == MM::BeforeGet)
-     {
-		 
-          pProp->Set(port_.c_str());
-		  
-     }
-     else if (eAct == MM::AfterSet)
-     {
-          if (initialized_)
-          {
-               // revert
-               pProp->Set(port_.c_str());
-               return ERR_PORT_CHANGE_FORBIDDEN;
-          }
-
-          pProp->Get(port_);
-     }
-
-     return DEVICE_OK;
-}
-
-
-int OxxLBXDPSS::OnSerialNumber(MM::PropertyBase* pProp, MM::ActionType)
-{
-     std::ostringstream command;
-	 std::string answer;
-     command << "hid?";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\n");
-     if (ret != DEVICE_OK) return ret;
-	 
-     ret = GetSerialAnswer(port_.c_str(), "\n\r", answer);
-     if (ret != DEVICE_OK) return ret;
-	 
-     pProp->Set(answer.c_str());
-     
-     return DEVICE_OK;
-}
-
-int OxxLBXDPSS::OnPowerSP(MM::PropertyBase* pProp, MM::ActionType eAct, long )
-{
-	std::string answer;
-	std::ostringstream command;
-
-     if (eAct == MM::BeforeGet)
-     {
-          
-          command << "ip";
-          int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\n");
-          if (ret != DEVICE_OK) 
-			  return ret;
-          ret = GetSerialAnswer(port_.c_str(), "\n\r", answer);
-          if (ret != DEVICE_OK) 
-			  return ret;
-		  pProp->Set(atof(answer.c_str()));
-     }
-     else if (eAct == MM::AfterSet)
-     {
-          
-          
-          
-          pProp->Get(powerSP_);
-          command << "ip " << powerSP_;
-          int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\n");
-          if (ret != DEVICE_OK) return ret;
-          ret = GetSerialAnswer(port_.c_str(), "\n\r", answer);
-          if (ret != DEVICE_OK) return ret;
-          
-     }
-
-   return DEVICE_OK;
-}
-
-
-
-int OxxLBXDPSS::OnPower(MM::PropertyBase* pProp, MM::ActionType )
-{
-     std::string answer;
-     std::ostringstream command;
-               
-     command << "ip?";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\n");
-     if (ret != DEVICE_OK) return ret;
-     ret = GetSerialAnswer(port_.c_str(), "\n\r", answer);
-     if (ret != DEVICE_OK) return ret;
-     pProp->Set(atof(answer.c_str()));
-     
-     return DEVICE_OK;
-}
-
-int OxxLBXDPSS::OnLaserOnOff(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-
-     std::ostringstream command;
-     std::string answer; 
-     laserOn_ = "Undefined";
-     if (eAct == MM::BeforeGet)
-     {
-          command << "dl?";
-          int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\n");
-          if (ret != DEVICE_OK) return ret;
-          ret = GetSerialAnswer(port_.c_str(), "\n\r", answer);
-          if (ret != DEVICE_OK) return ret;
-          
-		  if (answer.compare("Laser off") == 0) 
-               laserOn_ = "Off";
-          else if (answer.compare("Laser alarm") == 0) 
-               laserOn_ = "Off";
-		  else
-				laserOn_ = "On";
-          
-
-          pProp->Set(laserOn_.c_str());
-     }
-     else if (eAct == MM::AfterSet)
-     { 
-          pProp->Get(answer);
-          if (answer == "Off") 
-          {
-               LaserOnOff(false);
-          }
-          else 
-          {
-               LaserOnOff(true);
-          }
-		  CDeviceUtils::SleepMs(500);
-     }
-     return DEVICE_OK;
-}
-int OxxLBXDPSS::OnHours(MM::PropertyBase* pProp, MM::ActionType )
-{
-     std::string answer;
-	 std::ostringstream command;
-
-     command << "tm?";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\n");
-     if (ret != DEVICE_OK) return ret;
-     ret = GetSerialAnswer(port_.c_str(), "\n\r", answer);
-     if (ret != DEVICE_OK) return ret;
-     std::string::size_type Pos1 = answer.find_first_of("= ", 0)+2;
-	 std::string::size_type Pos2 = answer.find_first_of(" hrs", 0);
-
-	 pProp->Set(atof(answer.substr(Pos1,Pos2-Pos1).c_str()));
-
-     return DEVICE_OK;
-}
-
-
-
-
-int OxxLBXDPSS::OnFault(MM::PropertyBase* pProp, MM::ActionType )
-{
-
-     std::ostringstream command;
-     std::string answer;
-     
-     command << "al?";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\n");
-     if (ret != DEVICE_OK) return ret;
-     ret = GetSerialAnswer(port_.c_str(), "\n\r", fault_);
-     if (ret != DEVICE_OK) return ret;
-     
-     pProp->Set(fault_.c_str());
-
-     return DEVICE_OK;
-}
-
-int OxxLBXDPSS::OnBaseTemp(MM::PropertyBase* pProp, MM::ActionType )
-{
-     std::string answer;
-     std::ostringstream command;
-               
-     command << "bt?";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\n");
-     if (ret != DEVICE_OK) return ret;
-     ret = GetSerialAnswer(port_.c_str(), "\n\r", answer);
-     if (ret != DEVICE_OK) return ret;
-	 std::string::size_type Pos = answer.find_first_of(" C", 0);
-     pProp->Set(atof(answer.substr(0,Pos).c_str()));
-     
-     return DEVICE_OK;
-}
-int OxxLBXDPSS::OnControllerTemp(MM::PropertyBase* pProp, MM::ActionType )
-{
-     std::string answer;
-     std::ostringstream command;
-               
-     command << "et?";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\n");
-     if (ret != DEVICE_OK) return ret;
-     ret = GetSerialAnswer(port_.c_str(), "\n\r", answer);
-     if (ret != DEVICE_OK) return ret;
-	 std::string::size_type Pos = answer.find_first_of(" C", 0);
-	 pProp->Set(atof(answer.substr(0,Pos).c_str()));
-     
-     return DEVICE_OK;
-}
-
-
-
-
-
-int OxxLBXDPSS::OnWaveLength(MM::PropertyBase* pProp, MM::ActionType)
-{
-     std::ostringstream command;
-	 std::string answer;
-     command << "inf?";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\n");
-     if (ret != DEVICE_OK) return ret;
-	 
-     ret = GetSerialAnswer(port_.c_str(), "\n\r", answer);
-     if (ret != DEVICE_OK) return ret;
-
-	 std::string::size_type Pos = answer.find_first_of("-", 0)+1;
-	 answer = answer.substr(Pos,std::string::npos);
-	 Pos = answer.find_first_of("-", 0);
-	 waveLength_ = answer.substr( 0,Pos);
-     pProp->Set(waveLength_.c_str());
-     
-     return DEVICE_OK;
-}
-int OxxLBXDPSS::OnVersion(MM::PropertyBase* pProp, MM::ActionType)
-{
-     std::ostringstream command;
-
-     command << "ve?";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\n");
-     if (ret != DEVICE_OK) return ret;
-	 
-     ret = GetSerialAnswer(port_.c_str(), "\n\r", softVersion_);
-     if (ret != DEVICE_OK) return ret;
-     
-     pProp->Set(softVersion_.c_str());
-     
-     return DEVICE_OK;
-}
-
-
-
-int OxxLBXDPSS::OnLaserStatus(MM::PropertyBase* pProp, MM::ActionType )
-{
-	 std::ostringstream command;
-     std::string answer;
-     
-     command << "dl?";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\n");
-     if (ret != DEVICE_OK) return ret;
-     ret = GetSerialAnswer(port_.c_str(), "\n\r", laserStatus_);
-     if (ret != DEVICE_OK) return ret;
-     
-
-     pProp->Set(laserStatus_.c_str());
-
-     return DEVICE_OK;
-}
-
-
-
-OxxLBXLD::OxxLBXLD() :
-   port_("Undefined"),
-   initialized_(false),
-   busy_(false)
-{
-     InitializeDefaultErrorMessages();
-     SetErrorText(ERR_PORT_CHANGE_FORBIDDEN, "You can't change the port after device has been initialized.");
-
-     // Name
-     CreateProperty(MM::g_Keyword_Name, g_DeviceOxxLBXLDName, MM::String, true);
-
-     // Description
-     CreateProperty(MM::g_Keyword_Description, "Oxxius Laser Controller", MM::String, true);
-
-     // Port
-     CPropertyAction* pAct = new CPropertyAction (this, &OxxLBXLD::OnPort);
-     CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
-
-}
-
-OxxLBXLD::~OxxLBXLD()
-{
-     Shutdown();
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Oxxius LBX Laser diode
-///////////////////////////////////////////////////////////////////////////////
-
-void OxxLBXLD::GetName(char* Name) const
-{
-     CDeviceUtils::CopyLimitedString(Name, g_DeviceOxxLBXLDName);
-}
-
-
-int OxxLBXLD::Initialize()
-{
-	 CPropertyAction* pAct = new CPropertyAction (this, &OxxLBXLD::OnVersion);
-     int nRet = CreateProperty("Soft Version", "0", MM::String, true, pAct);    
-     if (DEVICE_OK != nRet)
-          return nRet;
-
-	 CPropertyActionEx* pActEx = new CPropertyActionEx (this, &OxxLBXLD::OnPowerSP, 0);
-     nRet = CreateProperty("PowerSetPoint", "0.00", MM::Float, false, pActEx);
-     if (DEVICE_OK != nRet)
-          return nRet;
-
-	 
-
-	 pAct = new CPropertyAction (this, &OxxLBXLD::OnPower);
-	 nRet = CreateProperty("Power", "0.00", MM::Float, true, pAct);    
-     if (DEVICE_OK != nRet)
-          return nRet;
-
-	 pAct = new CPropertyAction (this, &OxxLBXLD::OnCurrentSP);
-     nRet = CreateProperty("CurrentSetPoint", "0.00", MM::Float, false, pAct);    
-     if (DEVICE_OK != nRet)
-          return nRet;
-
-     pAct = new CPropertyAction (this, &OxxLBXLD::OnCurrent);
-     nRet = CreateProperty("Current", "0.00", MM::Float, true, pAct);    
-     if (DEVICE_OK != nRet)
-          return nRet;
-
-	 pAct = new CPropertyAction (this, &OxxLBXLD::OnLaserOnOff);
-     nRet = CreateProperty("Laser", "Off", MM::String, false, pAct);    
-	 if (DEVICE_OK != nRet)
-          return nRet;
-
-     std::vector<std::string> commands;
-     commands.push_back("Off");
-     commands.push_back("On");
-     SetAllowedValues("Laser", commands);
-
-	 pAct = new CPropertyAction (this, &OxxLBXLD::OnHours);
-	 nRet = CreateProperty("Hours", "0.00", MM::Float, true, pAct);    
-     if (DEVICE_OK != nRet)
-          return nRet;
-     
-     pAct = new CPropertyAction (this, &OxxLBXLD::OnInterlock);
-     nRet = CreateProperty("Interlock", "Interlock Open", MM::String, true, pAct);    
-     if (DEVICE_OK != nRet)
-          return nRet;
-
-     pAct = new CPropertyAction (this, &OxxLBXLD::OnFault);
-     nRet = CreateProperty("Fault", "No Fault", MM::String, true, pAct);    
-     if (DEVICE_OK != nRet)
-          return nRet;
-
-     pAct = new CPropertyAction (this, &OxxLBXLD::OnSerialNumber);
-     nRet = CreateProperty("Serial Number", "0", MM::String, true, pAct);    
-     if (DEVICE_OK != nRet)
-          return nRet;
-
-	 pAct = new CPropertyAction (this, &OxxLBXLD::OnWaveLength);
-	 nRet = CreateProperty("Wavelength", "0.00", MM::String, true, pAct);    
-     if (DEVICE_OK != nRet)
-          return nRet;
-
-	 pAct = new CPropertyAction (this, &OxxLBXLD::OnMaxPower);
-	 nRet = CreateProperty("Max Power", "0.00", MM::Float, true, pAct);    
-     if (DEVICE_OK != nRet)
-          return nRet;
-
-	 pAct = new CPropertyAction (this, &OxxLBXLD::OnMaxCurrent);
-	 nRet = CreateProperty("Max Current", "0.00", MM::Float, true, pAct);    
-     if (DEVICE_OK != nRet)
-          return nRet;
-     
-	 
-
-	 pAct = new CPropertyAction (this, &OxxLBXLD::OnBaseTemp);
-     nRet = CreateProperty("Base Temperature", "0.00", MM::Float, true, pAct);    
-     if (DEVICE_OK != nRet)
-          return nRet;
-
-	 pAct = new CPropertyAction (this, &OxxLBXLD::OnControlMode);
-     nRet = CreateProperty("Control mode", "APC", MM::String, false, pAct);    
-	 if (DEVICE_OK != nRet)
-          return nRet;
-	 commands.clear();
-     commands.push_back("APC");
-     commands.push_back("ACC");
-     SetAllowedValues("Control mode", commands);
-
-	 pAct = new CPropertyAction (this, &OxxLBXLD::OnAnalogMod);
-     nRet = CreateProperty("Analog mod", "Disable", MM::String, false, pAct);    
-	 if (DEVICE_OK != nRet)
-          return nRet;
-	 commands.clear();
-     commands.push_back("Enable");
-     commands.push_back("Disable");
-	 SetAllowedValues("Analog mod", commands);
-	 
-
-
-     
-	 
-	 pAct = new CPropertyAction (this, &OxxLBXLD::OnDigitalMod);
-     nRet = CreateProperty("Digital mod", "Off", MM::String, false, pAct);    
-	 if (DEVICE_OK != nRet)
-          return nRet;
-	 SetAllowedValues("Digital mod", commands);
-
-	 
-     pAct = new CPropertyAction (this, &OxxLBXLD::OnLaserStatus);
-     nRet = CreateProperty("LaserStatus", "Off", MM::String, true, pAct);    
-     if (DEVICE_OK != nRet)
-          return nRet;
-	 
-
-   
-     nRet = UpdateStatus();
-     if (nRet != DEVICE_OK)
-          return nRet;
-
-     //LaserOnOff(false);
-
-     initialized_ = true;
-     return DEVICE_OK;
-}
-
-
-
-
-
-
-
-int OxxLBXLD::Shutdown()
-{
-   if (initialized_)
-   {
-      LaserOnOff(false);
-	 initialized_ = false;
-	 
-   }
-   return DEVICE_OK;
-}
-
-bool OxxLBXLD::Busy()
-{
-   return busy_;
-}
-
-int OxxLBXLD::LaserOnOff(int onoff)
-{
-     std::string answer;
-     std::ostringstream command;
-
-     if (onoff == 0) 
-     {
-          command << "l 0";
-          laserOn_ = "Off";
-     }
-     else if (onoff == 1) 
-     {
-          command << "l 1";
-          laserOn_ = "On";
-     }
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-     if (ret != DEVICE_OK) return ret;
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-     if (ret != DEVICE_OK) return ret;
-     
-	 return DEVICE_OK;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Action handlers
-///////////////////////////////////////////////////////////////////////////////
-
-
-int OxxLBXLD::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-     if (eAct == MM::BeforeGet)
-     {
-		 
-          pProp->Set(port_.c_str());
-		  
-     }
-     else if (eAct == MM::AfterSet)
-     {
-          if (initialized_)
-          {
-               // revert
-               pProp->Set(port_.c_str());
-               return ERR_PORT_CHANGE_FORBIDDEN;
-          }
-
-          pProp->Get(port_);
-     }
-
-     return DEVICE_OK;
-}
-
-int OxxLBXLD::OnPowerSP(MM::PropertyBase* pProp, MM::ActionType eAct, long /*index*/)
-{
-	std::string answer;
-	std::ostringstream command;
-
-     if (eAct == MM::BeforeGet)
-     {
-          //pProp->Set(powerSP_);
-          command << "?sp";
-          int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-          if (ret != DEVICE_OK) 
-			  return ret;
-          ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-          if (ret != DEVICE_OK) 
-			  return ret;
-		  pProp->Set(atof(answer.c_str()));
-     }
-     else if (eAct == MM::AfterSet)
-     {
-          
-          
-          
-          pProp->Get(powerSP_);
-          command << "p " << powerSP_;
-          int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-          if (ret != DEVICE_OK) return ret;
-          ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-          if (ret != DEVICE_OK) return ret;
-          
-     }
-
-   return DEVICE_OK;
-}
-int OxxLBXLD::OnCurrentSP(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-	 std::string answer;
-     std::ostringstream command;
-          
-     if (eAct == MM::BeforeGet)
-     {
-          //pProp->Set(currentSP_);
-		  command << "?sc";
-          int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-          if (ret != DEVICE_OK) 
-			  return ret;
-          ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-          if (ret != DEVICE_OK) 
-			  return ret;
-		  pProp->Set(atof(answer.c_str()));
-     }
-     else if (eAct == MM::AfterSet)
-     {
-          
-          pProp->Get(currentSP_);
-          command << "c " << currentSP_;
-          int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-          if (ret != DEVICE_OK) return ret;
-          ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-          if (ret != DEVICE_OK) return ret;
-          
-     }
-
-   return DEVICE_OK;
-}
-
-int OxxLBXLD::OnControlMode(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-	std::string answer;
-	std::ostringstream command;
-
-     if (eAct == MM::BeforeGet)
-     {
-          //pProp->Set(powerSP_);
-          command << "?APC";
-          int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-          if (ret != DEVICE_OK) 
-			  return ret;
-          ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-          if (ret != DEVICE_OK) 
-			  return ret;
-		  if (answer.at(0) == '0') 
-			  controlMode_ = "ACC";
-		 else if (answer.at(0) == '1') 
-			  controlMode_ = "APC";
-		  pProp->Set(controlMode_.c_str());
-     }
-     else if (eAct == MM::AfterSet)
-     {
-          
-          
-          
-          pProp->Get(controlMode_);
-		  if(controlMode_.compare("APC")==0) 
-			command << "APC 1";
-		  else
-			command << "ACC 1";
-          int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-          if (ret != DEVICE_OK) return ret;
-          ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-          if (ret != DEVICE_OK) return ret;
-          
-     }
-
-   return DEVICE_OK;
-}
-int OxxLBXLD::OnAnalogMod(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-	std::string answer;
-	std::ostringstream command;
-
-     if (eAct == MM::BeforeGet)
-     {
-          
-          command << "?AM";
-          int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-          if (ret != DEVICE_OK) 
-			  return ret;
-          ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-          if (ret != DEVICE_OK) 
-			  return ret;
-		  if (answer.at(0) == '0') 
-			  analogMod_ = "Disable";
-		 else if (answer.at(0) == '1') 
-			  analogMod_ = "Enable";
-		  pProp->Set(analogMod_.c_str());
-     }
-     else if (eAct == MM::AfterSet)
-     {
-          pProp->Get(analogMod_);
-		  if(analogMod_.compare("Enable")==0) 
-			command << "AM 1";
-		  else
-			command << "AM 0";
-          int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-          if (ret != DEVICE_OK) return ret;
-          ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-          if (ret != DEVICE_OK) return ret;
-          
-     }
+	if (eAct == MM::BeforeGet) {
+		pProp->Set(port_.c_str());
+	} else if (eAct == MM::AfterSet) {
+		if (initialized_) {
+			// revert
+			pProp->Set(port_.c_str());
+			return ERR_PORT_CHANGE_FORBIDDEN;
+		}
+		pProp->Get(port_);
+	}
 	return DEVICE_OK;
 }
 
 
-int OxxLBXLD::OnDigitalMod(MM::PropertyBase* pProp, MM::ActionType eAct)
+int LaserBoxx::OnSerialNumber(MM::PropertyBase* pProp, MM::ActionType)
 {
-	std::string answer;
-	std::ostringstream command;
+	std::string command, answer;
+	command = "hid?";
 
-     if (eAct == MM::BeforeGet)
-     {
-          
-          command << "?TTL";
-          int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-          if (ret != DEVICE_OK) 
-			  return ret;
-          ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-          if (ret != DEVICE_OK) 
-			  return ret;
-		  if (answer.at(0) == '0') 
-			  digitalMod_ = "Disable";
-		 else if (answer.at(0) == '1') 
-			  digitalMod_ = "Enable";
-		  pProp->Set(digitalMod_.c_str());
-     }
-     else if (eAct == MM::AfterSet)
-     {
-          pProp->Get(digitalMod_);
-		  if(digitalMod_.compare("Enable")==0) 
-			command << "TTL 1";
-		  else
-			command << "TTL 0";
-          int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-          if (ret != DEVICE_OK) return ret;
-          ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-          if (ret != DEVICE_OK) return ret;
-          
-     }
+	RETURN_ON_MM_ERROR( SendAndReceive(command,answer) );
+	pProp->Set(answer.c_str());
+     
 	return DEVICE_OK;
 }
 
-int OxxLBXLD::OnPower(MM::PropertyBase* pProp, MM::ActionType )
-{
-     std::string answer;
-     std::ostringstream command;
-               
-     command << "?p";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-     if (ret != DEVICE_OK) return ret;
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-     if (ret != DEVICE_OK) return ret;
-     pProp->Set(atof(answer.c_str()));
-     
-     return DEVICE_OK;
-}
-int OxxLBXLD::OnCurrent(MM::PropertyBase* pProp, MM::ActionType )
-{
-     std::string answer;
-     std::ostringstream command;
-               
-     command << "?c";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-     if (ret != DEVICE_OK) return ret;
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-     if (ret != DEVICE_OK) return ret;
-     pProp->Set(atof(answer.c_str()));
-     
-     return DEVICE_OK;
-}
-int OxxLBXLD::OnLaserOnOff(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
 
-     std::ostringstream command;
-     std::string answer; 
-     laserOn_ = "Undefined";
-     if (eAct == MM::BeforeGet)
-     {
-          command << "?l";
-          int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-          if (ret != DEVICE_OK) return ret;
-          ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-          if (ret != DEVICE_OK) return ret;
-          //fprintf(stderr,"Oxxius::LaserOnOff() %s\n",answer.c_str());
+int LaserBoxx::OnSWVersion(MM::PropertyBase* pProp, MM::ActionType)
+{
+	std::string command;
+	command = "?sv";
 
-          if (answer.at(0) == '0') 
-               laserOn_ = "Off";
-          else if (answer.at(0) == '1') 
-               laserOn_ = "On";
+	RETURN_ON_MM_ERROR( SendAndReceive(command,softVersion_) );
+	pProp->Set(softVersion_.c_str());
+     
+	return DEVICE_OK;
+}
+
+
+int LaserBoxx::OnModel(MM::PropertyBase* pProp, MM::ActionType)
+{
+ 	std::string command, answer;
+	command = "inf?";
+
+	RETURN_ON_MM_ERROR( SendAndReceive(command,answer) );
+
+	std::string::size_type Pos = answer.find_first_of("-", 0) + 1;
+	Pos = answer.find_first_of("-", Pos);
+
+	pProp->Set(answer.substr(0,Pos).c_str());
+
+	return DEVICE_OK;
+}
+
+
+int LaserBoxx::OnLaserStatus(MM::PropertyBase* pProp, MM::ActionType )
+{
+	int currentStatus = 0;
+	std::string laserStatus = "";
+	
+	RETURN_ON_MM_ERROR( GetStatus(currentStatus) );
+
+	switch(currentStatus) {
+		case 1 : laserStatus = "Warm-up phase";
+			break;
+		case 2 : laserStatus = "Stand-by for emission";
+			break;
+		case 3 : laserStatus = "Emission is on";
+			break;
+		case 4 : laserStatus = "Alarm raised";
+			break;
+		case 5 : laserStatus = "Internal error raised";
+			break;
+		case 6 : laserStatus = "Sleep mode";
+			break;
+		case 7 : laserStatus = "Searching for SLM point";
+			break;
+		default	 : return DEVICE_UNKNOWN_POSITION;
+	}
+	pProp->Set(laserStatus.c_str());
+
+	return DEVICE_OK;
+}
+
+
+int LaserBoxx::OnEmissionOnOff(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	std::string command, answer; 
+	emissionStatus_ = "Undefined";
+
+	if (eAct == MM::BeforeGet) {
+		int currentStatus = 0;
+		RETURN_ON_MM_ERROR( GetStatus(currentStatus) );
+
+		if ( (currentStatus == 1) || (currentStatus == 3) || (currentStatus == 7) )
+			emissionStatus_ = "On";
+		else
+			emissionStatus_ = "Off";
           
+		pProp->Set(emissionStatus_.c_str());
 
-          pProp->Set(laserOn_.c_str());
-     }
-     else if (eAct == MM::AfterSet)
-     { 
-          pProp->Get(answer);
-          if (answer == "Off") 
-          {
-               LaserOnOff(false);
-          }
-          else 
-          {
-               LaserOnOff(true);
-          }
-
-     }
-     return DEVICE_OK;
-}
-int OxxLBXLD::OnHours(MM::PropertyBase* pProp, MM::ActionType )
-{
-     std::string answer;
-	 std::ostringstream command;
-
-     command << "?hh";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-     if (ret != DEVICE_OK) return ret;
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-     if (ret != DEVICE_OK) return ret;
-     
-     pProp->Set(atof(answer.c_str()));
-
-     return DEVICE_OK;
+	} else if (eAct == MM::AfterSet) { 
+		pProp->Get(answer);
+		
+		if (answer == "Off") 
+			EmissionOnOff(false);
+		else 
+			EmissionOnOff(true);
+	
+		CDeviceUtils::SleepMs(500);
+	}
+	return DEVICE_OK;
 }
 
-int OxxLBXLD::OnSerialNumber(MM::PropertyBase* pProp, MM::ActionType)
+
+
+int LaserBoxx::OnAlarm(MM::PropertyBase* pProp, MM::ActionType )
 {
-     std::ostringstream command;
-	 std::string answer;
-     command << "?hid";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-     if (ret != DEVICE_OK) return ret;
-	 
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-     if (ret != DEVICE_OK) return ret;
-
-	 std::string::size_type Pos = answer.find_first_of(',', 0);
-		 //.find_first_not_of(delimiters, 0);
-	 serialNumber_ = answer.substr(0,Pos);
-     pProp->Set(serialNumber_.c_str());
+	std::string command, answer;
+	int currentAlarm = 0;
      
-     return DEVICE_OK;
-}
-int OxxLBXLD::OnInterlock(MM::PropertyBase* pProp, MM::ActionType )
-{
+	command = "?f";
+    RETURN_ON_MM_ERROR( SendAndReceive(command,answer) );
 
-    std::ostringstream command;
-    std::string answer;
+	currentAlarm = atoi(answer.c_str());
 
-     command << "?int";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-     if (ret != DEVICE_OK) return ret;
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-     if (ret != DEVICE_OK) return ret;
-     
-     if (answer.at(0) == '0') 
-          interlock_ = "Interlock Open";
-     else if (answer.at(0) == '1') 
-          interlock_ = "Interlock Closed";
+	switch(currentAlarm) {
+		case 0 : alarm_ = "No alarm";
+			break;
+		case 1 : alarm_ = "Out-of-bounds current";
+			break;
+		case 2 : alarm_ = "Out-of-bounds power";
+			break;
+		case 3 : alarm_ = "Out-of-bounds supply voltage";
+			break;
+		case 4 : alarm_ = "Out-of-bounds inner temperature";
+			break;
+		case 5 : alarm_ = "Out-of-bounds laser head temperature";
+			break;
+		case 7 : alarm_ = "Interlock circuit open";
+			break;
+		case 8 : alarm_ = "Manual reset";
+			break;
+		default	 : return DEVICE_UNKNOWN_POSITION;
+	}
 
-     pProp->Set(interlock_.c_str());
-   
-     return DEVICE_OK;
+
+	pProp->Set(alarm_.c_str());
+
+	return DEVICE_OK;
 }
 
-int OxxLBXLD::OnFault(MM::PropertyBase* pProp, MM::ActionType )
+
+
+int LaserBoxx::OnInterlocked(MM::PropertyBase* pProp, MM::ActionType )
 {
-
-     std::ostringstream command;
-     std::string answer;
+	std::string command, answer, interlockStatus;
      
-     command << "?f";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-     if (ret != DEVICE_OK) return ret;
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-     if (ret != DEVICE_OK) return ret;
-     
-     if (answer.at(0) == '0') 
-          fault_ = "No Fault";
-     else if (answer.at(0) == '1') 
-          fault_ = "Diode current";
-     else if (answer.at(0) == '3') 
-          fault_ = "Laser power";
-     else if (answer.at(0) == '4') 
-          fault_ = "Diode temperature";
-	 else if (answer.at(0) == '5') 
-          fault_ = "Base temperature";
-	 else if (answer.at(0) == '4') 
-          fault_ = "Warning end of life";
+	command = "?int";
+    RETURN_ON_MM_ERROR( SendAndReceive(command,answer) );
 
-     pProp->Set(fault_.c_str());
+	if( answer.compare("1") == 0)
+				interlockStatus = "Closed";
+			else
+				interlockStatus = "Open";
 
-     return DEVICE_OK;
+	pProp->Set(interlockStatus.c_str());
+
+	return DEVICE_OK;
 }
 
-int OxxLBXLD::OnBaseTemp(MM::PropertyBase* pProp, MM::ActionType )
+
+int LaserBoxx::OnControlMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-     std::string answer;
-     std::ostringstream command;
+	std::string command, query, answer, newMode;
+	std::ostringstream newCommand;
+
+	if (eAct == MM::BeforeGet) {
+		if( model_.compare("LBX") == 0) {
+			command = "?acc";
+			RETURN_ON_MM_ERROR( SendAndReceive(command,answer) );
+
+			if( answer.compare("1") == 0)
+				modeControl_ = "ACC";
+			else
+				modeControl_ = "APC";
+		} else {
+			modeControl_ = "APC";
+		}
+		pProp->Set(modeControl_.c_str());
+	}
+	else if (eAct == MM::AfterSet) {
+		
+		pProp->Get(newMode);
+		if( (model_.compare("LBX") == 0) && (modeControl_.compare(newMode) != 0) ) {
+
+			EmissionOnOff(0);		// Turns the emission off before changing the control mode
+
+			if( newMode.compare("ACC") == 0)
+				query = "1";
+			else
+				query = "0";
+			newCommand << "acc " << query;
+			command = newCommand.str();
+
+			RETURN_ON_MM_ERROR( SendAndReceive(command,answer) );
+		}
+	}
+	return DEVICE_OK;
+}
+
+
+
+int LaserBoxx::OnPower(MM::PropertyBase* pProp, MM::ActionType )
+{
+	std::string command, answer;
                
-     command << "?bt";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-     if (ret != DEVICE_OK) return ret;
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-     if (ret != DEVICE_OK) return ret;
-     pProp->Set(atof(answer.c_str()));
+	command = "?p";
+	RETURN_ON_MM_ERROR( SendAndReceive(command,answer) );
+	pProp->Set(atof(answer.c_str()));
      
-     return DEVICE_OK;
+	return DEVICE_OK;
 }
 
-int OxxLBXLD::OnMaxCurrent(MM::PropertyBase* pProp, MM::ActionType )
+
+int LaserBoxx::OnPowerSP(MM::PropertyBase* pProp, MM::ActionType eAct, long )
 {
-     std::string answer;
-     std::ostringstream command;
+	std::string command, answer;
+	std::ostringstream newCommand;
+
+	if (eAct == MM::BeforeGet) {
+		if( model_.compare("LBX") == 0) {
+			command = "?sp";
+			RETURN_ON_MM_ERROR( SendAndReceive(command,answer) );
+			pProp->Set( 100 * atof(answer.c_str()) / nominalPower_ );
+		}
+		else {  // assuming "LCX"
+			command = "ip";
+			RETURN_ON_MM_ERROR( SendAndReceive(command,answer) );
+			answer = answer.substr( 0, std::string::npos-1);
+			pProp->Set( atof(answer.c_str()) );
+		}
+	}
+	else if (eAct == MM::AfterSet) {
+          
+		pProp->Get(powerSP_);
+		if( model_.compare("LBX") == 0)
+			newCommand << "p " << ( nominalPower_ * powerSP_ / 100 );
+		else
+			newCommand << "ip " << powerSP_ ;
+
+		command = newCommand.str();
+
+		RETURN_ON_MM_ERROR( SendAndReceive(command,answer) );
+	}
+
+	return DEVICE_OK;
+}
+
+
+
+int LaserBoxx::OnCurrent(MM::PropertyBase* pProp, MM::ActionType )
+{
+	if( model_.compare("LMX") != 0) {
+		std::string command, answer;
                
-     command << "?maxlc";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-     if (ret != DEVICE_OK) return ret;
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-     if (ret != DEVICE_OK) return ret;
-     pProp->Set(atof(answer.c_str()));
-     SetPropertyLimits("CurrentSetPoint", 0, maxCurrent_);
-     return DEVICE_OK;
+		command = "?c";
+		RETURN_ON_MM_ERROR( SendAndReceive(command,answer) );
+
+		pProp->Set(atof(answer.c_str()));
+	}
+	return DEVICE_OK;
 }
-int OxxLBXLD::OnMaxPower(MM::PropertyBase* pProp, MM::ActionType )
+
+
+
+int LaserBoxx::OnCurrentSP(MM::PropertyBase* pProp, MM::ActionType eAct, long )
 {
-     std::string answer;
-     std::ostringstream command;
+	std::string command, answer;
+	std::ostringstream newCommand;
+
+	if (eAct == MM::BeforeGet) {
+		if( model_.compare("LBX") == 0) {
+			command = "?sc";
+			RETURN_ON_MM_ERROR( SendAndReceive(command,answer) );
+
+			pProp->Set(atof(answer.c_str()));
+		} else {
+			pProp->Set(0.0);
+		}
+	}
+	else if (eAct == MM::AfterSet) {
+		if( model_.compare("LBX") == 0) {
+			pProp->Get(currentSP_);
+			newCommand << "c " << currentSP_;
+			command = newCommand.str();
+
+			RETURN_ON_MM_ERROR( SendAndReceive(command,answer) );
+		}
+	}
+	return DEVICE_OK;
+}
+
+
+int LaserBoxx::OnSleep(MM::PropertyBase* pProp, MM::ActionType eAct )
+{
+	std::string command, query, answer, Smod;
+	std::ostringstream newCommand;
+
+	if (eAct == MM::BeforeGet) {
+		if( model_.compare("LMX") != 0) {
+			command = "?t";
+			RETURN_ON_MM_ERROR( SendAndReceive(command,answer) );
+
+			if( answer.compare("0") == 0)
+				pProp->Set("Sleep");
+			else
+				pProp->Set("Ready");
+		} else {
+			pProp->Set("Ready");
+		}
+	}
+	else if (eAct == MM::AfterSet) {
+		if( model_.compare("LMX") != 0) {
+
+			pProp->Get(Smod);
+			if( Smod.compare("Sleep") == 0)
+				query = "0";
+			else
+				query = "1";
+			newCommand << "t " << query;
+			command = newCommand.str();
+
+			RETURN_ON_MM_ERROR( SendAndReceive(command,answer) );
+		} else {
+			// do nothing for LMX
+		}
+	}
+	return DEVICE_OK;
+}
+
+
+int LaserBoxx::OnAnalogMod(MM::PropertyBase* pProp, MM::ActionType eAct )
+{
+	std::string command, query, answer, Amod;
+	std::ostringstream newCommand;
+
+	if (eAct == MM::BeforeGet) {
+		if( model_.compare("LBX") == 0) {
+			command = "?am";
+			RETURN_ON_MM_ERROR( SendAndReceive(command,answer) );
+	
+			if( answer.compare("1") == 0)
+				pProp->Set("On");
+			else
+				pProp->Set("Off");
+		} else {
+			pProp->Set("Off");
+		}
+	}
+	else if (eAct == MM::AfterSet) {
+		if( model_.compare("LBX") == 0) {
+
+			pProp->Get(Amod);
+			if( Amod.compare("On") == 0)
+				query = "1";
+			else
+				query = "0";
+			newCommand << "am " << query;
+			command = newCommand.str();
+
+			RETURN_ON_MM_ERROR( SendAndReceive(command,answer) );
+		} else {
+			// do nothing for LMX or LCX
+		}
+	}
+	return DEVICE_OK;
+}
+
+
+int LaserBoxx::OnDigitalMod(MM::PropertyBase* pProp, MM::ActionType eAct )
+{
+	std::string command, query, answer, Dmod;
+	std::ostringstream newCommand;
+
+	if (eAct == MM::BeforeGet) {
+		if( model_.compare("LBX") == 0) {
+			command = "?ttl";
+			RETURN_ON_MM_ERROR( SendAndReceive(command,answer) );
+
+			if( answer.compare("1") == 0)
+				pProp->Set("On");
+			else
+				pProp->Set("Off");
+		} else {
+			pProp->Set("Off");
+		}
+	}
+	else if (eAct == MM::AfterSet) {
+		if( model_.compare("LBX") == 0) {
+
+			pProp->Get(Dmod);
+			if( Dmod.compare("On") == 0)
+				query = "1";
+			else
+				query = "0";
+			newCommand << "ttl " << query;
+			command = newCommand.str();
+
+			RETURN_ON_MM_ERROR( SendAndReceive(command,answer) );
+		} else {
+			// do nothing for LMX or LCX
+		}
+	}
+	return DEVICE_OK;
+}
+
+
+int LaserBoxx::OnHours(MM::PropertyBase* pProp, MM::ActionType )
+{
+	std::string command, answer;
                
-     command << "?maxlp";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-     if (ret != DEVICE_OK) return ret;
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-     if (ret != DEVICE_OK) return ret;
-     pProp->Set(atof(answer.c_str()));
-     SetPropertyLimits("PowerSetPoint", 0, maxPower_);  // milliWatts
-     return DEVICE_OK;
+	command = "?hh";
+	RETURN_ON_MM_ERROR( SendAndReceive(command,answer) );
+
+	pProp->Set( atof(answer.c_str()) );
+
+	return DEVICE_OK;
 }
 
 
-int OxxLBXLD::OnWaveLength(MM::PropertyBase* pProp, MM::ActionType)
+int LaserBoxx::OnBaseTemp(MM::PropertyBase* pProp, MM::ActionType )
 {
-     std::ostringstream command;
-	 std::string answer;
-     command << "?hid";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-     if (ret != DEVICE_OK) return ret;
-	 
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-     if (ret != DEVICE_OK) return ret;
+	std::string command, answer;
+               
+	command = "?bt";
+	RETURN_ON_MM_ERROR( SendAndReceive(command,answer) );
 
-	 std::string::size_type Pos = answer.find_first_of(',', 0);
-		 
-	 waveLength_ = answer.substr(Pos+1,std::string::npos);
-     pProp->Set(waveLength_.c_str());
+	pProp->Set( atof(answer.c_str()) );
      
-     return DEVICE_OK;
-}
-int OxxLBXLD::OnVersion(MM::PropertyBase* pProp, MM::ActionType)
-{
-     std::ostringstream command;
-
-     command << "?sv";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-     if (ret != DEVICE_OK) return ret;
-	 
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", softVersion_);
-     if (ret != DEVICE_OK) return ret;
-     
-     pProp->Set(softVersion_.c_str());
-     
-     return DEVICE_OK;
+	return DEVICE_OK;
 }
 
+//********************
+// Shutter API
+//********************
 
-
-int OxxLBXLD::OnLaserStatus(MM::PropertyBase* pProp, MM::ActionType )
+int LaserBoxx::SetOpen(bool open)
 {
-	 std::ostringstream command;
-     std::string answer;
-     
-     command << "?sta";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-     if (ret != DEVICE_OK) return ret;
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-     if (ret != DEVICE_OK) return ret;
-     
-     if (answer.at(0) == '1') 
-          laserStatus_ = "Warm Up";
-     else if (answer.at(0) == '2') 
-          laserStatus_ = "Standby";
-     else if (answer.at(0) == '3') 
-          laserStatus_ = "Laser ON";
-     else if (answer.at(0) == '4') 
-          laserStatus_ = "Error";
-	 else if (answer.at(0) == '5') 
-          laserStatus_ = "Alarm";
-	 else if (answer.at(0) == '4') 
-          laserStatus_ = "Sleep";
+    return EmissionOnOff((int) open);
+}
 
-     pProp->Set(laserStatus_.c_str());
+int LaserBoxx::GetOpen(bool& open)
+{
+    int state;
+    RETURN_ON_MM_ERROR( GetStatus(state) );
+    
+    if ( (state==1) || (state==3) || (state==7) )
+        open = true;
+    else
+		open = false;
+    
+    return DEVICE_OK;
+}
 
-     return DEVICE_OK;
+// Laser is ON for deltaT milliseconds
+int LaserBoxx::Fire(double deltaT)
+{
+	SetOpen(true);
+	CDeviceUtils::SleepMs((long)(deltaT));
+	SetOpen(false);
+    return DEVICE_OK;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Generic--purpose, private methods
+///////////////////////////////////////////////////////////////////////////////
+
+int LaserBoxx::GetStatus(int &status)
+{
+	std::string command,answer;
+               
+	command = "?sta";
+	RETURN_ON_MM_ERROR( SendAndReceive(command,answer) );
+
+	status = atoi(answer.c_str());
+     
+	return DEVICE_OK;
+}
+
+
+int LaserBoxx::SendAndReceive(std::string& command, std::string& answer)
+{
+	RETURN_ON_MM_ERROR( SendSerialCommand(port_.c_str(), command.c_str(), "\n") );
+	RETURN_ON_MM_ERROR( GetSerialAnswer(port_.c_str(), "\r\n", answer) );
+     
+	return DEVICE_OK;
 }
