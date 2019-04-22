@@ -28,11 +28,13 @@ import boofcv.core.image.ConvertImage;
 
 import georegression.struct.affine.Affine2D_F64;
 
-double[] sN = new double[] {-0.84119, 0.04472, -0.04494, -0.8398};
-double[] hN = new double[] {-0.0915, 0.64327, -0.6434, -0.01928};
+//double[] sN = new double[] {-0.84119, 0.04472, -0.04494, -0.8398};
+//double[] hN = new double[] {-0.0915, 0.64327, -0.6434, -0.01928};
 
-hamAff = new Affine2D_F64(hN[0], hN[1], hN[2], hN[3], 0.0, 0.0);
-hamAffI = hamAff.invert(hamAff);
+//hamAff = new Affine2D_F64(hN[0], hN[1], hN[2], hN[3], 0.0, 0.0);
+
+constX = 0.0;
+constY = 0.0;
 
 displays = mm.displays().getAllDataViewers();
 
@@ -62,8 +64,22 @@ imgMD1 = img1.getMetadata();
 imgMD2 = img2.getMetadata();
 pSize1 = imgMD1.getPixelSizeUm();
 pSize2 = imgMD2.getPixelSizeUm();
+aff1 = imgMD1.getPixelSizeAffine();
+aff2 = imgMD2.getPixelSizeAffine();
 smallestPSize = pSize1;
-if (pSize2 < smallestPSize) { smallestPSize = pSize2; }
+ha = aff1;
+ca = aff2;
+if (data2.getMaxIndices().getP() == 0) {
+	ha = aff2;
+	ca = aff1;
+}
+hamAff = new Affine2D_F64(ha.getScaleX(), ha.getShearY(), ha.getShearX(), ha.getScaleY(), 0.0, 0.0);
+hamAff = hamAff.invert(hamAff);
+confocalAff = new Affine2D_F64(ca.getScaleX(), ca.getShearY(), ca.getShearX(), ca.getScaleY(), 0.0, 0.0);
+
+if (pSize2 < smallestPSize) { 
+	smallestPSize = pSize2; 
+}
 
 bytesPerPixel = img1.getBytesPerPixel();
 if (img2.getBytesPerPixel() != bytesPerPixel) {
@@ -112,8 +128,8 @@ heightPixels = (int) (heightUm / smallestPSize) + 1;
 // Not sure why, but it looks like the image will end up at the origin
 // rather then the center unless we set this translation to the center
 // of the target image.   TODO: get this number dynamically
-hamAffI.tx = widthPixels / 2.0;;
-hamAffI.ty = heightPixels / 2.0;
+hamAff.tx = widthPixels / 2.0;;
+hamAff.ty = heightPixels / 2.0;
 
 
 targetStore = mm.data().createRAMDatastore();
@@ -166,14 +182,16 @@ for (data: datas) {
 			diffY = centerYUm - img.getMetadata().getYPositionUm();
 			mm.scripter().message("x: " + centerXUm + ", " + img.getMetadata().getXPositionUm() + ", " + diffX);	
 			mm.scripter().message("y: " + centerYUm + ", " + img.getMetadata().getYPositionUm() + ", " + diffY);
-			constX = -125.0;
-			constY = -215.0;
+
 			
-			aff = new Affine2D_F64(sN[0], sN[1], sN[2], sN[3], -(diffX + constX), -(diffY + constY));
+			aff = confocalAff.copy();
+			
+			aff.tx = -(diffX + constX);
+			aff.ty = -(diffY + constY);
 					//centerXUm - img.getMetadata().getXPositionUm(),.0
 					//centerYUm - img.getMetadata().getYPositionUm());
 
-		   aff = aff.concat(hamAffI, null);
+		   aff = aff.concat(hamAff, null);
 		   fd = new FDistort();
 		   fd.input(oldImgBoof);
 		   fd.output(tmpImgBoof);
