@@ -28,13 +28,9 @@ import boofcv.core.image.ConvertImage;
 
 import georegression.struct.affine.Affine2D_F64;
 
-//double[] sN = new double[] {-0.84119, 0.04472, -0.04494, -0.8398};
-//double[] hN = new double[] {-0.0915, 0.64327, -0.6434, -0.01928};
 
-//hamAff = new Affine2D_F64(hN[0], hN[1], hN[2], hN[3], 0.0, 0.0);
-
-constX = 0.0;
-constY = 0.0;
+constX = -350.0;  // displacement between the two datasets in terms of pixels of the largest image
+constY = 200.0;
 
 displays = mm.displays().getAllDataViewers();
 
@@ -73,9 +69,9 @@ if (data2.getMaxIndices().getP() == 0) {
 	ha = aff2;
 	ca = aff1;
 }
-hamAff = new Affine2D_F64(ha.getScaleX(), ha.getShearY(), ha.getShearX(), ha.getScaleY(), 0.0, 0.0);
-hamAff = hamAff.invert(hamAff);
-confocalAff = new Affine2D_F64(ca.getScaleX(), ca.getShearY(), ca.getShearX(), ca.getScaleY(), 0.0, 0.0);
+hamAff = new Affine2D_F64(ha.getScaleX(), ha.getShearX(), ha.getShearY(), ha.getScaleY(), 0.0, 0.0);
+hamAffI = hamAff.invert(null);
+confocalAff = new Affine2D_F64(ca.getScaleX(), ca.getShearX(), ca.getShearY(), ca.getScaleY(), 0.0, 0.0);
 
 if (pSize2 < smallestPSize) { 
 	smallestPSize = pSize2; 
@@ -128,9 +124,9 @@ heightPixels = (int) (heightUm / smallestPSize) + 1;
 // Not sure why, but it looks like the image will end up at the origin
 // rather then the center unless we set this translation to the center
 // of the target image.   TODO: get this number dynamically
-hamAff.tx = widthPixels / 2.0;;
-hamAff.ty = heightPixels / 2.0;
 
+hamAffI.tx = widthPixels / 2.0 + constX;
+hamAffI.ty = heightPixels / 2.0 + constY;
 
 targetStore = mm.data().createRAMDatastore();
 
@@ -186,12 +182,12 @@ for (data: datas) {
 			
 			aff = confocalAff.copy();
 			
-			aff.tx = -(diffX + constX);
-			aff.ty = -(diffY + constY);
+			aff.tx = -(diffX);
+			aff.ty = -(diffY);
 					//centerXUm - img.getMetadata().getXPositionUm(),.0
 					//centerYUm - img.getMetadata().getYPositionUm());
 
-		   aff = aff.concat(hamAff, null);
+		   aff = aff.concat(hamAffI, null);
 		   fd = new FDistort();
 		   fd.input(oldImgBoof);
 		   fd.output(tmpImgBoof);
