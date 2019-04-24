@@ -39,7 +39,6 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
-import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.data.DataProvider;
@@ -53,10 +52,8 @@ import org.micromanager.propertymap.MutablePropertyMapView;
  * @author nico
  */
 public class AssembleDataForm extends MMDialog {
-   private final MMDialog mcsPluginWindow;
    private final Studio studio_;
    private final MutablePropertyMapView profileSettings_;
-   private final CMMCore mmc_;
    
    private boolean wasDisposed_ = false;
    private String statusMessage_;
@@ -82,7 +79,6 @@ public class AssembleDataForm extends MMDialog {
       studio_ = studio;
       profileSettings_ = 
               studio_.profile().getSettings(AssembleDataForm.class);
-      mmc_ = studio_.getCMMCore();
       super.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
       super.addWindowListener(new WindowAdapter() {
          @Override
@@ -95,7 +91,6 @@ public class AssembleDataForm extends MMDialog {
       buttonSize_ = new Dimension(70, 21);
 
       
-      mcsPluginWindow = this;
       super.setLayout(new MigLayout("flowx, fill, insets 8"));
       super.setTitle(AssembleData.MENUNAME);
 
@@ -180,6 +175,9 @@ public class AssembleDataForm extends MMDialog {
             dp2 = dv.getDataProvider();
          }
       }
+      int xOffset = profileSettings_.getInteger(XOFFSET, 0);
+      int yOffset = profileSettings_.getInteger(YOFFSET, 0);
+      AssembleDataTest.test(studio_, dp1, dp2, xOffset, yOffset);
       
       
    }
