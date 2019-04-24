@@ -4,6 +4,7 @@ package org.micromanager.internal.utils.imageanalysis;
 import boofcv.struct.image.GrayF32;
 import boofcv.struct.image.GrayU16;
 import boofcv.struct.image.GrayU8;
+import boofcv.struct.image.ImageDataType;
 import boofcv.struct.image.ImageGray;
 import georegression.struct.point.Point2D_I32;
 import ij.process.ByteProcessor;
@@ -14,6 +15,8 @@ import java.io.IOException;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Image;
+import org.micromanager.data.Metadata;
+import org.micromanager.data.internal.DefaultImage;
 
 /**
  * Collection of static functions that convert between ImageJ, Micro-Manager,
@@ -72,6 +75,47 @@ public final class BoofCVImageConverter {
       
       return outImage;
    }
+   
+   /**
+    * Converts a boofCV image into a MM image
+    * Currently only supports GrayU8 and GrayU16, returns null for other types
+    * @param input input boofCV
+    * @param c     Coords that will be added to the image  
+    * @param md    Metadata to be added to the image
+    * @return     MM image
+    */
+   public static Image boofCVToMM (ImageGray<? extends ImageGray<?>> input, Coords c, Metadata md) {
+      return boofCVToMM(input, true, c, md);
+   } 
+   
+      /**
+    * Converts a boofCV image into a MM image
+    * Currently only supports GrayU8 and GrayU16, returns null for other types
+    * @param input input boofCV
+    * @param copy  if true a copy of the pixel data will be used, when false,
+    *                pixels will be shared between boofCV image and MM image
+    * @param c     Coords that will be added to the image  
+    * @param md    Metadata to be added to the image
+    * @return     MM image
+    */
+   public static Image boofCVToMM (ImageGray<? extends ImageGray<?>> input, boolean copy, Coords c, Metadata md) {
+      Image output = null;
+      if (input.getDataType().equals(ImageDataType.U8)) {
+         GrayU8 in8 = (GrayU8) input;
+         Object pixels = copy ? in8.getData().clone() : in8.getData();
+         output = new DefaultImage(pixels, input.getWidth(), input.getHeight(), 1, 1, c, md);
+      } 
+      if (input.getDataType().equals(ImageDataType.U16)) {
+         GrayU16 in16 = (GrayU16) input;
+         Object pixels = copy ? in16.getData().clone() : in16.getData();
+         output = new DefaultImage(pixels, input.getWidth(), input.getHeight(), 2, 1, c, md);
+      } else {
+         // Todo: throw exception?  return null for now
+      }
+      
+      return output;
+   } 
+   
    
    /**
     * Converts a BoofCV image into an ImageJ ImageProcessor
