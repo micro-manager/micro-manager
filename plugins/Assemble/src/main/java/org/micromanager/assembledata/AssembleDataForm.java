@@ -68,6 +68,8 @@ public class AssembleDataForm extends MMDialog {
    private final String DATAVIEWER2 = "DataViewer2";
    private final String XOFFSET = "XOffset";
    private final String YOFFSET = "YOffset";
+   private final int DEFAULTX = -350;
+   private final int DEFAULTY = 200;
    
      
     /**
@@ -120,7 +122,7 @@ public class AssembleDataForm extends MMDialog {
     
       JLabel xOffsetLabel = new JLabel("X Offset (pixels)");
       super.add(xOffsetLabel);
-      int xOffset = profileSettings_.getInteger(XOFFSET, -350);
+      int xOffset = profileSettings_.getInteger(XOFFSET, DEFAULTX);
       final SpinnerNumberModel xModel = new SpinnerNumberModel(xOffset, -1000, 1000, 1);
       final JSpinner xSpinner = new JSpinner (xModel);
       xSpinner.addChangeListener((ChangeEvent e) -> {
@@ -130,7 +132,7 @@ public class AssembleDataForm extends MMDialog {
             
       JLabel yOffsetLabel = new JLabel("YOffset (pixels)");
       super.add(yOffsetLabel);
-      int yOffset = profileSettings_.getInteger(YOFFSET, 200);
+      int yOffset = profileSettings_.getInteger(YOFFSET, DEFAULTY);
       final SpinnerNumberModel yModel = new SpinnerNumberModel(yOffset, -1000, 1000, 1);
       final JSpinner ySpinner = new JSpinner (yModel);
       ySpinner.addChangeListener((ChangeEvent e) -> {
@@ -144,12 +146,22 @@ public class AssembleDataForm extends MMDialog {
                  "https://micro-manager.org/wiki/AssembleData")).start();
       });
       super.add (helpButton, "span 2, split 4");
+      
+      // TODO: add listeners and make refresh automatic
+      final JButton refreshButton = new JButton("Refresh");
+      refreshButton.addActionListener( (ActionEvent e) -> {
+         setupDataViewerBox(dataSet1Box_, DATAVIEWER1);
+         setupDataViewerBox(dataSet2Box_, DATAVIEWER1);
+      });
+      super.add(refreshButton);
                  
       final JButton testButton =  new JButton("Test");
       testButton.addActionListener((ActionEvent e) -> {
          runTest();
       });
       super.add(testButton);
+      
+      
 
       
       statusLabel_ = new JLabel(" ");
@@ -165,19 +177,19 @@ public class AssembleDataForm extends MMDialog {
    private void runTest() {
       String dataViewerName1 = profileSettings_.getString(DATAVIEWER1,"");
       String dataViewerName2 = profileSettings_.getString(DATAVIEWER2,"");
-      DataProvider dp1 = null;
-      DataProvider dp2 = null;
+      DataViewer dv1 = null;
+      DataViewer dv2 = null;
       for (DataViewer dv : studio_.displays().getAllDataViewers()) {
          if (dv.getName().equals(dataViewerName1)) {
-            dp1 = dv.getDataProvider();
+            dv1 = dv;
          }
          if (dv.getName().equals(dataViewerName2)) {
-            dp2 = dv.getDataProvider();
+            dv2 = dv;
          }
       }
-      int xOffset = profileSettings_.getInteger(XOFFSET, 0);
-      int yOffset = profileSettings_.getInteger(YOFFSET, 0);
-      AssembleDataTest.test(studio_, dp1, dp2, xOffset, yOffset);
+      int xOffset = profileSettings_.getInteger(XOFFSET, DEFAULTX);
+      int yOffset = profileSettings_.getInteger(YOFFSET, DEFAULTY);
+      AssembleDataTest.test(studio_, dv1, dv2, xOffset, yOffset);
       
       
    }

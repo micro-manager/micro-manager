@@ -22,6 +22,7 @@ import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.utils.imageanalysis.BoofCVImageConverter;
@@ -32,9 +33,15 @@ import org.micromanager.internal.utils.imageanalysis.BoofCVImageConverter;
  */
 public class AssembleDataTest {
    
-   public static void test(Studio studio, DataProvider dp1, DataProvider dp2,
+   public static void test(Studio studio, DataViewer dv1, DataViewer dv2,
            int xOffset, int yOffset) {
       
+      DataProvider dp1 = dv1.getDataProvider();
+      DataProvider dp2 = dv2.getDataProvider();
+      double zoom = dv1.getDisplaySettings().getZoomRatio();
+      if (dv2.getDisplaySettings().getZoomRatio() < zoom) { 
+         zoom = dv2.getDisplaySettings().getZoomRatio(); 
+      }
       try {
          SummaryMetadata smd1 = dp1.getSummaryMetadata();
          SummaryMetadata smd2 = dp2.getSummaryMetadata();
@@ -74,10 +81,8 @@ public class AssembleDataTest {
          
          DataProvider[] datas = {dp1, dp2};
 
-// TODO: take stage orientation into account.
-// Basically needs the affine transform in the metadata
          Coords.Builder cb = Coordinates.builder().t(0).c(0).p(0).z(0);
-// need to initialize these parameters with something sensible
+         // need to initialize these parameters with something sensible
          double xMinUm = img1.getMetadata().getXPositionUm() - (0.5 * img1.getWidth() * pSize1);
          double yMinUm = img1.getMetadata().getYPositionUm() - (0.5 * img1.getHeight() * pSize1);
          double xMaxUm = img1.getMetadata().getXPositionUm() + (0.5 * img1.getWidth() * pSize1);
@@ -192,7 +197,7 @@ public class AssembleDataTest {
                   
                }
             }
-            Image newImage = BoofCVImageConverter.boofCVToMM(tmpImgBoof,
+            Image newImage = BoofCVImageConverter.boofCVToMM(newImgBoof,
                     cb.p(0).c(c).build(), newMetadataB.build());
             targetStore.putImage(newImage);
             c++;
@@ -202,7 +207,7 @@ public class AssembleDataTest {
          DisplaySettings dispSettings = disp.getDisplaySettings();
          DisplaySettings.Builder dpb = dispSettings.copyBuilder();
          
-         DisplaySettings newDP = dpb.colorModeComposite().
+         DisplaySettings newDP = dpb.zoomRatio(zoom).colorModeComposite().
                  channel(0, dispSettings.getChannelSettings(0).copyBuilder().colorGreen().build()).
                  channel(1, dispSettings.getChannelSettings(1).copyBuilder().colorRed().build()).
                  build();
