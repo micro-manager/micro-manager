@@ -12,8 +12,6 @@ import boofcv.struct.image.ImageGray;
 import georegression.struct.affine.Affine2D_F64;
 import java.awt.geom.AffineTransform;
 import java.io.IOException;
-import java.util.List;
-import org.micromanager.MultiStagePosition;
 import org.micromanager.Studio;
 import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
@@ -21,7 +19,6 @@ import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
-import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
@@ -38,17 +35,8 @@ public class AssembleDataTest {
       
       DataProvider dp1 = dv1.getDataProvider();
       DataProvider dp2 = dv2.getDataProvider();
-      double zoom = dv1.getDisplaySettings().getZoomRatio();
-      if (dv2.getDisplaySettings().getZoomRatio() < zoom) { 
-         zoom = dv2.getDisplaySettings().getZoomRatio(); 
-      }
+
       try {
-         SummaryMetadata smd1 = dp1.getSummaryMetadata();
-         SummaryMetadata smd2 = dp2.getSummaryMetadata();
-         List<MultiStagePosition> stageP1 = smd1.getStagePositionList();
-         List<MultiStagePosition> stageP2 = smd2.getStagePositionList();
-         Coords maxCoords1 = dp2.getMaxIndices();
-         Coords maxCoord2 = dp2.getMaxIndices();
          
          Image img1 = dp1.getAnyImage();
          Image img2 = dp2.getAnyImage();
@@ -58,7 +46,7 @@ public class AssembleDataTest {
          double pSize2 = imgMD2.getPixelSizeUm();
          AffineTransform aff1 = imgMD1.getPixelSizeAffine();
          AffineTransform aff2 = imgMD2.getPixelSizeAffine();
-         double smallestPSize = pSize1;
+         double basePixelSize = pSize1;
          AffineTransform ha = aff1;
          AffineTransform ca = aff2;
          if (dp2.getMaxIndices().getP() == 0) {
@@ -69,8 +57,8 @@ public class AssembleDataTest {
          Affine2D_F64 hamAffI = hamAff.invert(null);
          Affine2D_F64 confocalAff = new Affine2D_F64(ca.getScaleX(), ca.getShearX(), ca.getShearY(), ca.getScaleY(), 0.0, 0.0);
          
-         if (pSize2 < smallestPSize) {
-            smallestPSize = pSize2;
+         if (pSize2 < basePixelSize) {
+            basePixelSize = pSize2;
          }
          
          int bytesPerPixel = img1.getBytesPerPixel();
@@ -116,8 +104,8 @@ public class AssembleDataTest {
          double centerXUm = xMinUm + (widthUm / 2.0);
          double centerYUm = yMinUm + (heightUm / 2.0);
          
-         int widthPixels = (int) (widthUm / smallestPSize) + 1;
-         int heightPixels = (int) (heightUm / smallestPSize) + 1;
+         int widthPixels = (int) (widthUm / basePixelSize) + 1;
+         int heightPixels = (int) (heightUm / basePixelSize) + 1;
 
          // Not sure why, but it looks like the image will end up at the origin
          // rather then the center unless we set this translation to the center
@@ -132,7 +120,7 @@ public class AssembleDataTest {
             cb.t(0).c(0).p(0).z(0);
             ImageGray newImgBoof, oldImgBoof, tmpImgBoof, tmp2ImgBoof;
             Metadata.Builder newMetadataB = data.getImage(cb.build()).getMetadata().
-                    copyBuilderWithNewUUID().pixelSizeUm(smallestPSize);
+                    copyBuilderWithNewUUID().pixelSizeUm(basePixelSize);
             if (bytesPerPixel == 1) {
                newImgBoof = new GrayU8(widthPixels, heightPixels);
                tmpImgBoof = new GrayU8(widthPixels, heightPixels);
@@ -149,8 +137,8 @@ public class AssembleDataTest {
                double tmpXMinUm = img.getMetadata().getXPositionUm() - (0.5 * img.getWidth() * pSize);
                double tmpYMinUm = img.getMetadata().getYPositionUm() - (0.5 * img.getHeight() * pSize);
                
-               int xMinPixel = (int) ((tmpXMinUm - xMinUm) / smallestPSize);
-               int yMinPixel = (int) ((tmpYMinUm - yMinUm) / smallestPSize);
+               int xMinPixel = (int) ((tmpXMinUm - xMinUm) / basePixelSize);
+               int yMinPixel = (int) ((tmpYMinUm - yMinUm) / basePixelSize);
                if (bytesPerPixel == 1) {
                   GrayU8 tmp = new GrayU8(img.getWidth(), img.getHeight());
                   tmp.setData((byte[]) img.getRawPixels());
@@ -207,7 +195,8 @@ public class AssembleDataTest {
          DisplaySettings dispSettings = disp.getDisplaySettings();
          DisplaySettings.Builder dpb = dispSettings.copyBuilder();
          
-         DisplaySettings newDP = dpb.zoomRatio(zoom).colorModeComposite().
+         DisplaySettings newDP = dpb.zoomRatio(
+                 AssembleDataUtils.getSmallestZoom(dv1, dv2)).colorModeComposite().
                  channel(0, dispSettings.getChannelSettings(0).copyBuilder().colorGreen().build()).
                  channel(1, dispSettings.getChannelSettings(1).copyBuilder().colorRed().build()).
                  build();
