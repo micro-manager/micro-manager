@@ -276,7 +276,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       // start 2-point calibration frame
       // this frame is separate from main plugin window
       
-      slopeCalibrationFrame_ = new MMFrame();
+      slopeCalibrationFrame_ = new MMFrame("diSPIM_Slope_Calibration");
       slopeCalibrationFrame_.setTitle("Slope and Offset Calibration");
       slopeCalibrationFrame_.loadPosition(100, 100);
       

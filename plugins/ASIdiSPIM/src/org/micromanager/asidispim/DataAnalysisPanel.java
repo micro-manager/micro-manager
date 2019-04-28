@@ -278,6 +278,8 @@ public class DataAnalysisPanel extends ListeningJPanel {
       this.add(deskewPanel_);
       
       
+      // TODO move these settings to the XYZ grid window
+      
       // start slice overview sub-panel
       sliceOverviewPanel_ = new JPanel(new MigLayout(
               "",

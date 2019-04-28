@@ -224,6 +224,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    double xPositionUm_;  // hold onto local copy so we don't have to keep querying
    double yPositionUm_;  // hold onto local copy so we don't have to keep querying
    double zPositionUm_;  // hold onto local copy so we don't have to keep querying
+   private final JPanel planarCorrectionPanel_;
+   private final JCheckBox enablePlanarCorrectionCB_;
+   private final JFormattedTextField planarSlopeXField_;
+   private final JFormattedTextField planarSlopeYField_;
+   private final JFormattedTextField planarOffsetZField_;
    private final JButton gridButton_; 
    private final MMFrame gridFrame_;
    private final JPanel gridPanel_;
@@ -484,7 +489,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // visibility of this frame is controlled from advancedTiming checkbox
       // this frame is separate from main plugin window
       
-      sliceFrameAdvanced_ = new MMFrame();
+      sliceFrameAdvanced_ = new MMFrame("diSPIM_Advanced_Timing");
       sliceFrameAdvanced_.setTitle("Advanced timing");
       sliceFrameAdvanced_.loadPosition(100, 100);
 
@@ -1197,6 +1202,67 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       });
       
+      
+      planarCorrectionPanel_ = new JPanel(new MigLayout(
+            "",
+            "[right]10[center]10[center]",
+            "[]8[]"));
+      planarCorrectionPanel_.setBorder(PanelUtils.makeTitledBorder("Planar Correction"));
+      
+      enablePlanarCorrectionCB_ = pu.makeCheckBox("Enable planar correction",
+            Properties.Keys.PLUGIN_PLANAR_ENABLED, panelName_, false);
+      planarCorrectionPanel_.add(enablePlanarCorrectionCB_, "left, span 3, wrap");
+      
+      planarCorrectionPanel_.add(new JLabel("X slope [\u00B5m/mm]"));
+      planarSlopeXField_ = pu.makeFloatEntryField(panelName_, 
+            Properties.Keys.PLUGIN_PLANAR_SLOPE_X.toString(), 0, 5);
+      planarCorrectionPanel_.add(planarSlopeXField_);
+      JButton zeroXSlope = new JButton("Set 0");
+      zeroXSlope.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            planarSlopeXField_.setValue((Double)0.0);
+         }
+      });
+      planarCorrectionPanel_.add(zeroXSlope, "growx, wrap");
+      
+      planarCorrectionPanel_.add(new JLabel("Y slope [\u00B5m/mm]"));
+      planarSlopeYField_ = pu.makeFloatEntryField(panelName_, 
+            Properties.Keys.PLUGIN_PLANAR_SLOPE_Y.toString(), 0, 5);
+      planarCorrectionPanel_.add(planarSlopeYField_);
+      JButton zeroYSlope = new JButton("Set 0");
+      zeroYSlope.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            planarSlopeYField_.setValue((Double)0.0);
+         }
+      });
+      planarCorrectionPanel_.add(zeroYSlope, "growx, wrap");
+      
+      planarCorrectionPanel_.add(new JLabel("Z offset [\u00B5m/mm]"));
+      planarOffsetZField_ = pu.makeFloatEntryField(panelName_, 
+            Properties.Keys.PLUGIN_PLANAR_OFFSET_Z.toString(), 0, 5);
+      planarCorrectionPanel_.add(planarOffsetZField_);
+      
+      JButton setOffsetButton = new JButton("Set here");
+      setOffsetButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent arg0) {
+            planarOffsetZField_.setValue((Double)positions_.getUpdatedPosition(Devices.Keys.UPPERZDRIVE));
+         }
+      });
+      planarCorrectionPanel_.add(setOffsetButton, "wrap");
+      
+      JButton computePlanarCorrection = new JButton("Compute correction from position list");
+      computePlanarCorrection.setBackground(Color.green);
+      computePlanarCorrection.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            // TODO implement
+         }
+      });
+      planarCorrectionPanel_.add(computePlanarCorrection, "span 3, growx");
+      
       buttonOverviewAcq_ = new JButton("Run overview acquisition!");
       buttonOverviewAcq_.setBackground(Color.green);
       buttonOverviewAcq_.addActionListener(new ActionListener() {
@@ -1212,22 +1278,21 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       });
       
-      gridFrame_ = new MMFrame();
+      gridFrame_ = new MMFrame("diSPIM_XYZ_grid");
       gridFrame_.setTitle("XYZ Grid");
       gridFrame_.loadPosition(100, 100);
 
       gridPanel_ = new JPanel(new MigLayout(
               "",
-              "[right]10[center]",
-              "[]8[]"));
+              "[]4[]4[]",
+              "[]8[]0"));
       gridFrame_.add(gridPanel_);
       
-      // TODO fix this, not saving/restoring position as it should
       class GridFrameAdapter extends WindowAdapter {
          @Override
          public void windowClosing(WindowEvent e) {
-        	 gridButton_.setSelected(false);
-        	 gridFrame_.savePosition();
+            gridButton_.setSelected(false);
+            gridFrame_.savePosition();
          }
       }
       
@@ -1236,22 +1301,41 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       gridButton_.addActionListener(new ActionListener() {
           @Override
           public void actionPerformed(ActionEvent e) {
+             gridButton_.setSelected(true);
          	 gridFrame_.setVisible(true);
           }
       });
       
-      gridPanel_.add(gridYPanel_);
-      gridPanel_.add(gridZPanel_, "wrap");
-      gridPanel_.add(gridXPanel_, "spany 2");
-      gridPanel_.add(gridSettingsPanel_, "growx, wrap");
-      gridPanel_.add(computeGridButton_, "growx, growy, wrap");
-      gridPanel_.add(buttonOverviewAcq_, "growx, center");
-      gridPanel_.add(editPositionListButton2, "growx, growy, wrap");
+      JPanel leftCol = new JPanel(new MigLayout(
+            "flowy",
+            "",
+            "0[]8[]0"));
+      leftCol.add(gridYPanel_);
+      leftCol.add(gridXPanel_);
       
+      JPanel midCol = new JPanel(new MigLayout(
+            "flowy",
+            "",
+            "0[]8[]8[]8[]0"));
+      midCol.add(gridZPanel_, "growx");
+      midCol.add(gridSettingsPanel_, "growx");
+      midCol.add(computeGridButton_, "growx, growy");
+      midCol.add(editPositionListButton2, "growx");
+      
+      JPanel rightCol = new JPanel(new MigLayout(
+            "flowy",
+            "",
+            "[]8[]"));
+      rightCol.add(buttonOverviewAcq_, "growx, growy");
+      rightCol.add(planarCorrectionPanel_);
+      
+      gridPanel_.add(leftCol);
+      gridPanel_.add(midCol);
+      gridPanel_.add(rightCol);
       gridFrame_.pack();
       gridFrame_.setResizable(false);
 
-      // end YZ grid frame
+      // end XYZ grid frame
 
       
       positionPanel.add(new JLabel("Post-move delay [ms]:"));

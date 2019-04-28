@@ -293,6 +293,10 @@ public class Properties {
       PLUGIN_USE_PATH_GROUP_ACQ("UsePathGroupAcquisition"),
       PLUGIN_SHOW_EPI_CB("ShowEpiBeamSheetCB"),
       REFRESH_PROPERTY_VALUES("RefreshPropertyValues"),
+      PLUGIN_PLANAR_ENABLED("PlanarCorrectionEnable"),
+      PLUGIN_PLANAR_SLOPE_X("PlanarCorrectionSlopeX"),
+      PLUGIN_PLANAR_SLOPE_Y("PlanarCorrectionSlopeY"),
+      PLUGIN_PLANAR_OFFSET_Z("PlanarCorrectionOffsetZ")
       ;
       private final String text;
       private final boolean forceSet;
