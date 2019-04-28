@@ -39,12 +39,14 @@ sma : 07.03.2019 : add the parameter binning average / sum mode
 sma : 25.03.2019 : Pylon version has been changed to 5.2.0 and it check now for specific pylon version
 				   before call PylonInitialize();
 				   parameter Auto exposure and  auto gain are available.
+				   
+sma : 28.04.2019 Take some changes to be able to compile in Linux
 */
 
 
 
 #include <pylon/PylonIncludes.h>
-# include <pylon/PylonGUI.h>
+
 
 // Namespace for using pylon objects.
 using namespace Pylon;
@@ -57,6 +59,24 @@ using namespace GenICam;
 #include "ModuleInterface.h"
 #include "DeviceUtils.h"
 #include <vector>
+
+
+#ifdef PYLON_LINUX_BUILD
+ typedef int BOOL;
+ #define TRUE 1
+ #define FALSE 0 
+
+ #ifndef _LINUX_STDDEF_H
+ #define _LINUX_STDDEF_H
+
+ #undef NULL
+ #if defined(__cplusplus)
+ #define NULL 0
+ #else
+ #define NULL ((void *)0)
+ #endif
+ #endif
+#endif
 
 
 
@@ -136,13 +156,10 @@ CCameraBase<BaslerCamera> (),
 	initialized_(false)
 
 {
-
-
 	// call the base class method to set-up default error codes/messages
 	InitializeDefaultErrorMessages();
 
 	//pre-init properties
-
 }
 
 BaslerCamera::~BaslerCamera()
@@ -150,46 +167,6 @@ BaslerCamera::~BaslerCamera()
 	if(imgBuffer_ != NULL)
 		free(imgBuffer_);
 	free(Buffer4ContinuesShot);
-}
-
-/**
-check if needed pylon version is installed on the target system
-**/
-bool BaslerCamera::IsNeededPylonVersionExists()
-{ 
-  	string msg = "Found Pylon SDK :  ";
-	LPCWSTR PYLON_BASE_DLL(L"PylonBase_v5_2.dll");
-	bool m_PylonRuntimeIsValid = true;
-	HINSTANCE hDll = NULL;
-    if((hDll = LoadLibrary(PYLON_BASE_DLL)) != NULL)
-    {
-		//check runtime version OK
-        VersionInfo currentVersion;
-        VersionInfo minVersion( PYLON_VERSION_MAJOR, PYLON_VERSION_MINOR, 0);
-        VersionInfo maxVersion( PYLON_VERSION_MAJOR, PYLON_VERSION_MINOR, 99);
-		if ( currentVersion < minVersion || currentVersion > maxVersion )
-        {			
-			msg = "unmatched Pylon version found ";
-			msg.append (currentVersion.getVersionString());			
-			AddToLog(msg) ;
-			AddToLog ("Please install pylon sdk 5.2");
-			m_PylonRuntimeIsValid = false;
-		}
-		else
-		{
-			msg.append (currentVersion.getVersionString());			
-		    AddToLog(msg) ;
-		}
-		
-        FreeLibrary( hDll);
-	}
-	else
-	{
-	   AddToLog("Pylon SDK 5.2 not found on the system");
-	   m_PylonRuntimeIsValid = false;
-	}
-	
-    return m_PylonRuntimeIsValid;
 }
 
 /**
@@ -209,12 +186,7 @@ int BaslerCamera::Initialize()
 		return DEVICE_OK;
 
 	try
-	{
-		if(!IsNeededPylonVersionExists())
-		{
-			return DEVICE_ERR;
-		}
-				
+	{			
 		// Before using any pylon methods, the pylon runtime must be initialized. 
 		PylonInitialize();
 		 // Get the transport layer factory.
@@ -285,7 +257,7 @@ int BaslerCamera::Initialize()
 		maxWidth_ = (unsigned int) width->GetMax();
 		const CIntegerPtr height = nodeMap_->GetNode("Height");
 		maxHeight_ = (unsigned int) height->GetMax();
-
+/*
 	#if (!_DEBUG)
 			ClearROI();// to be enabled for release
 	#else if(_Debug)
@@ -297,6 +269,7 @@ int BaslerCamera::Initialize()
 			}			
 		}
 	#endif
+	*/
 
 		long bytes = (long) (height->GetValue() * width->GetValue() * 4) ;
 		Buffer4ContinuesShot = malloc(bytes);
@@ -659,12 +632,13 @@ int BaslerCamera::CheckForBinningMode(CPropertyAction *pAct)
 		}
 		return DEVICE_CAN_NOT_SET_PROPERTY;
 }
+/*
 
 int BaslerCamera::SetProperty(const char* name, const char* value)
 {
 	int nRet = __super::SetProperty( name, value );
 	return nRet;
-}
+} /*
 
 /**
 * Shuts down (unloads) the device.
@@ -712,7 +686,7 @@ int BaslerCamera::SnapImage()
 
 void BaslerCamera::CopyToImageBuffer(CGrabResultPtr ptrGrabResult)
 {
-	char* subject ("Bayer");
+	const char* subject ("Bayer");
 	bool IsByerFormat = false;
 	string currentPixelFormat = Pylon::CPixelTypeMapper::GetNameByPixelType(ptrGrabResult->GetPixelType()) ;
 	std::size_t found = currentPixelFormat.find(subject);
@@ -784,7 +758,7 @@ unsigned BaslerCamera::GetImageHeight() const
 */
 unsigned BaslerCamera::GetImageBytesPerPixel() const
 {
-	char* subject ("Bayer");
+	const char* subject ("Bayer");
 	std::size_t found = pixelType_.find(subject);
 
 	if (pixelType_ == "Mono8") {
@@ -804,7 +778,7 @@ unsigned BaslerCamera::GetImageBytesPerPixel() const
 */
 unsigned BaslerCamera::GetBitDepth() const
 {
-	char* subject ("Bayer");
+	const char* subject ("Bayer");
 	std::size_t found = pixelType_.find(subject);
 
 	if (pixelType_ == "Mono8") {
@@ -1145,7 +1119,7 @@ int BaslerCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 		pixelType_.assign(pixelFormat->ToString().c_str());
 		pProp->Set(pixelType_.c_str());
 	}
-    char* subject ("Bayer");
+    const char* subject ("Bayer");
 	std::size_t found = pixelFormat->ToString().find(subject);
 		
 	if(pixelFormat->ToString().compare("Mono8") == 0 )
@@ -1537,7 +1511,7 @@ void CircularBufferInserter::OnImageGrabbed( CInstantCamera& /* camera */, const
 	// Image grabbed successfully?
 	if (ptrGrabResult->GrabSucceeded())
 	{
-		char* subject ("Bayer");
+		const char* subject ("Bayer");
 		bool IsByerFormat = false;
 		string currentPixelFormat = Pylon::CPixelTypeMapper::GetNameByPixelType(ptrGrabResult->GetPixelType()) ;
 		std::size_t found = currentPixelFormat.find(subject);

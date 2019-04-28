@@ -48,6 +48,7 @@
 
 
 
+
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
 //
@@ -98,8 +99,8 @@ public:
 	int SetBinning(int binSize);
 	int IsExposureSequenceable(bool& seq) const {seq = false; return DEVICE_OK;}
 	void RGBPackedtoRGB(void* destbuffer, const CGrabResultPtr& ptrGrabResult);
-	int SetProperty(const char* name, const char* value);
-	int BaslerCamera::CheckForBinningMode(CPropertyAction *pAct);
+	//int SetProperty(const char* name, const char* value);
+	int CheckForBinningMode(CPropertyAction *pAct);
 	void AddToLog(std::string msg);
 	void CopyToImageBuffer(CGrabResultPtr image);
 	CImageFormatConverter *converter;
