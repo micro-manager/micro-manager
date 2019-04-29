@@ -68,6 +68,7 @@ SUBDIRS = \
 	$(ANDOR) \
 	$(ANDORLASERCOMBINER) \
 	$(ANDORSDK3) \
+	$(BASLER) \
 	$(DC1394) \
 	$(FAKECAMERA) \
 	$(HIDMANAGER) \
@@ -95,7 +96,6 @@ SUBDIRS = \
 	Aladdin \
 	Aquinas \
 	Arduino \
-	Basler \
 	BlueboxOptics_niji \
 	CARVII \
 	ChuoSeiki_MD5000 \

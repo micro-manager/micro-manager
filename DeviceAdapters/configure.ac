@@ -292,20 +292,11 @@ fi
 # BaslerPylon
 AC_MSG_CHECKING(for Basler)
 AM_CONDITIONAL([BUILD_BASLER],[test -f "/opt/pylon5/include/pylon/PylonIncludes.h"])
-AM_COND_IF([BUILD_BASLER],
-[  
-   # BaslerPylon Version check
-   AM_CONDITIONAL([PYLON64],[test -d "/opt/pylon5/lib64"])
-   AC_MSG_NOTICE(Basler SDK found)
+if test -f "/opt/pylon5/include/pylon/PylonIncludes.h"; then
    AC_MSG_RESULT([found])
-],
-[
-   AC_MSG_NOTICE(Basler SDK not found)
+else 
    AC_MSG_RESULT([not found])
-])
-
-
-
+fi
 
 
 # ITC on linux 
