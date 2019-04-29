@@ -10,6 +10,9 @@ endif
 if BUILD_ANDORSDK3
    ANDORSDK3 = AndorSDK3
 endif
+if BUILD_BASLER
+   BASLER = Basler
+endif
 if BUILD_DC1394
    DC1394 = dc1394
 endif
@@ -92,6 +95,7 @@ SUBDIRS = \
 	Aladdin \
 	Aquinas \
 	Arduino \
+	Basler \
 	BlueboxOptics_niji \
 	CARVII \
 	ChuoSeiki_MD5000 \
