@@ -655,7 +655,7 @@ public final class ImageUtils {
    
    /**
     * Executes ImageJ-based Fourier space cross-correlation
-    * This should have the exact same result as the ImageJ FFT > FD Math > Correlate
+    * This should have the exact same result as the ImageJ FFT - FD Math - Correlate
     * command
     * @param proc1 input pixels of first image
     * @param proc2 input pixels of second image
