@@ -99,7 +99,6 @@ import com.google.gson.GsonBuilder;
 import com.swtdesigner.SwingResourceManager;
 
 import mmcorej.CMMCore;
-import mmcorej.StrVector;
 import mmcorej.TaggedImage;
 
 import org.micromanager.api.MultiStagePosition;
@@ -1258,7 +1257,55 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       computePlanarCorrection.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            // TODO implement
+            final PositionList positionList;
+            try {
+               positionList = gui_.getPositionList();
+               final int nrPositions = positionList.getNumberOfPositions();
+               if (nrPositions < 3) {
+                  ReportingUtils.showError("Must have at least 3 positions to compute planar correction");
+                  return;
+               }
+               // compute best-fit plane by using matrix pseudo-inverse as described at https://math.stackexchange.com/a/2306029
+               org.apache.commons.math.linear.Array2DRowRealMatrix matA = new org.apache.commons.math.linear.Array2DRowRealMatrix(nrPositions, 3);
+               org.apache.commons.math.linear.Array2DRowRealMatrix matB = new org.apache.commons.math.linear.Array2DRowRealMatrix(nrPositions, 1);
+               // compute center position to subtract off, this supposedly helps avoid singularities/numerical inaccuracies in matrix math
+               double xTotal = 0.0;
+               double yTotal = 0.0;
+               double zTotal = 0.0;
+               for (int row = 0; row < nrPositions; ++row) {
+                  MultiStagePosition pos = positionList.getPosition(row);
+                  xTotal += pos.getX();
+                  yTotal += pos.getY();
+                  zTotal += pos.getZ();
+               }
+               final double xCenter = xTotal/nrPositions;
+               final double yCenter = yTotal/nrPositions;
+               final double zCenter = zTotal/nrPositions;
+               // form the matrixes
+               for (int row = 0; row < nrPositions; ++row) {
+                  MultiStagePosition pos = positionList.getPosition(row);
+                  matA.setRow(row, new double[]{pos.getX()-xCenter, pos.getY()-yCenter, 1.0});
+                  matB.setRow(row, new double[]{pos.getZ()-zCenter});
+               }
+               // compute the pseudoinverse and multiply by Z vector to give coefficients [a, b, c]
+               //  such that a*x(n) + b*y(n) + c = z(n) is the best possible fix to the provided points
+               // pseudoinverse computed as ((A*trans(A))^-1)*trans(A) per https://math.stackexchange.com/a/2306029
+               org.apache.commons.math.linear.RealMatrix matA_trans = matA.transpose();
+               org.apache.commons.math.linear.RealMatrix matA_square = matA_trans.multiply(matA);
+               org.apache.commons.math.linear.RealMatrix matA_square_inv = new org.apache.commons.math.linear.LUDecompositionImpl(matA_square).getSolver().getInverse();
+               org.apache.commons.math.linear.RealMatrix matA_pseudo_inv = matA_square_inv.multiply(matA_trans);
+               org.apache.commons.math.linear.RealMatrix matX = matA_pseudo_inv.multiply(matB);
+               double a = matX.getEntry(0, 0);
+               double b = matX.getEntry(1, 0);
+               // now correct the offset c for the center position that we subtracted off
+               double c = matX.getEntry(2, 0) + zCenter - a*xCenter - b*yCenter;
+               planarSlopeXField_.setValue((Double)(1000*a));
+               planarSlopeYField_.setValue((Double)(1000*b));
+               planarOffsetZField_.setValue((Double)c);
+            } catch (Exception ex) {
+               ReportingUtils.showError("Could not compute planar correction from position list");
+               ReportingUtils.logError(ex.getStackTrace().toString());
+            }
          }
       });
       planarCorrectionPanel_.add(computePlanarCorrection, "span 3, growx");
