@@ -435,7 +435,6 @@ m4_define([device_adapter_dirs], [m4_strip([
    AndorSDK3
    Aquinas
    Arduino
-   Basler
    BlueboxOptics_niji
    CARVII
    ChuoSeiki_MD5000
