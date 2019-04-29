@@ -50,6 +50,7 @@ public:
    int OnPLogicMode           (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSetShutterChannel    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPLogicOutputState    (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPLogicOutputStateUpper(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFrontpanelOutputState(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBackplaneOutputState (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTriggerSource        (MM::PropertyBase* pProp, MM::ActionType eAct);

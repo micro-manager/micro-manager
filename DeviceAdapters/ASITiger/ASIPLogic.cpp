@@ -116,6 +116,13 @@ int CPLogic::Initialize()
    CreateProperty(g_PLogicOutputStatePropertyName, "0", MM::Integer, true, pAct);
    UpdateProperty(g_PLogicOutputStatePropertyName);
 
+   // reports the output state of the upper part of the logic cell array as unsigned integer
+   if (numCells_ > 16) {
+      pAct = new CPropertyAction (this, &CPLogic::OnPLogicOutputStateUpper);
+      CreateProperty(g_PLogicOutputStateUpperPropertyName, "0", MM::Integer, true, pAct);
+      UpdateProperty(g_PLogicOutputStateUpperPropertyName);
+   }
+
    // reports the output state of the BNCs as unsigned integer
    pAct = new CPropertyAction (this, &CPLogic::OnFrontpanelOutputState);
    CreateProperty(g_FrontpanelOutputStatePropertyName, "0", MM::Integer, true, pAct);
@@ -372,6 +379,22 @@ int CPLogic::OnPLogicOutputState(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       // always read
       command << addressChar_ << "RDADC Z?";
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition2(val) );
+      if (!pProp->Set((long)val))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   return DEVICE_OK;
+}
+
+int CPLogic::OnPLogicOutputStateUpper(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   unsigned int val;
+   ostringstream command; command.str("");
+   if (eAct == MM::BeforeGet || eAct == MM::AfterSet)
+   {
+      // always read
+      command << addressChar_ << "RDADC F?";
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition2(val) );
       if (!pProp->Set((long)val))

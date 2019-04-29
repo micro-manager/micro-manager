@@ -408,6 +408,7 @@ const char* const g_NumPositionsPropertyName = "NumPositions";
 const char* const g_NumLogicCellsPropertyName = "NumLogicCells";
 const char* const g_PLogicModePropertyName = "PLogicMode";
 const char* const g_PLogicOutputStatePropertyName = "PLogicOutputState";
+const char* const g_PLogicOutputStateUpperPropertyName = "PLogicOutputStateUpper";
 const char* const g_FrontpanelOutputStatePropertyName = "FrontpanelOutputState";
 const char* const g_BackplaneOutputStatePropertyName = "BackplaneOutputState";
 const char* const g_PointerPositionPropertyName = "PointerPosition";
