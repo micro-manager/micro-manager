@@ -62,7 +62,7 @@ import org.micromanager.Studio;
 import org.micromanager.events.AutofocusPluginShouldInitializeEvent;
 
 import org.micromanager.internal.utils.AutofocusBase;
-import org.micromanager.internal.utils.ImageUtils;
+import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.NumberUtils;
@@ -178,9 +178,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
          show = getPropertyValue(SHOW_IMAGES);
          scoringMethod = getPropertyValue(SCORING_METHOD);
 
-      } catch (MMException ex) {
-         studio_.logs().logError(ex);
-      } catch (ParseException ex) {
+      } catch (MMException | ParseException ex) {
          studio_.logs().logError(ex);
       }
    }
@@ -249,15 +247,11 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
  }
    
    private double runAutofocusAlgorithm() throws Exception {
-      UnivariateFunction scoreFun = new UnivariateFunction() {
-
-         @Override
-         public double value(double d) throws LocalException {
-            try {
-               return measureFocusScore(d);
-            } catch (Exception e) {
-               throw new LocalException(d, e);
-            }
+      UnivariateFunction scoreFun = (double d) -> {
+         try {
+            return measureFocusScore(d);
+         } catch (Exception e) {
+            throw new LocalException(d, e);
          }
       };
       
@@ -342,18 +336,12 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
             final TaggedImage img1 = core.getTaggedImage();
             img = img1;
             if (show.contentEquals("Yes")) {
-               SwingUtilities.invokeLater(new Runnable() {
-
-                  @Override
-                  public void run() {
-                     try {
-                        studio_.live().displayImage(studio_.data().convertTaggedImage(img1));
-                     }
-                     catch (JSONException e) {
-                        studio_.logs().showError(e);
-                     } catch (IllegalArgumentException e) {
-                        studio_.logs().showError(e);
-                     }
+               SwingUtilities.invokeLater(() -> {
+                  try {
+                     studio_.live().displayImage(studio_.data().convertTaggedImage(img1));
+                  }
+                  catch (JSONException | IllegalArgumentException e) {
+                     studio_.logs().showError(e);
                   }
                });
             }
