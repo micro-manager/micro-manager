@@ -41,7 +41,6 @@ import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
-import org.micromanager.data.DataProvider;
 import org.micromanager.display.DataViewer;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.utils.MMDialog;
@@ -161,6 +160,12 @@ public class AssembleDataForm extends MMDialog {
       });
       super.add(testButton);
       
+      final JButton assembleButton =  new JButton("Assemble");
+      assembleButton.addActionListener((ActionEvent e) -> {
+         assemble();
+      });
+      super.add(assembleButton);
+      
       
 
       
@@ -189,9 +194,25 @@ public class AssembleDataForm extends MMDialog {
       }
       int xOffset = profileSettings_.getInteger(XOFFSET, DEFAULTX);
       int yOffset = profileSettings_.getInteger(YOFFSET, DEFAULTY);
-      AssembleDataTest.test(studio_, dv1, dv2, xOffset, yOffset);
-      
-      
+      AssembleDataTest.test(studio_, dv1, dv2, xOffset, yOffset);      
+   }
+   
+   private void assemble() {
+      String dataViewerName1 = profileSettings_.getString(DATAVIEWER1,"");
+      String dataViewerName2 = profileSettings_.getString(DATAVIEWER2,"");
+      DataViewer dv1 = null;
+      DataViewer dv2 = null;
+      for (DataViewer dv : studio_.displays().getAllDataViewers()) {
+         if (dv.getName().equals(dataViewerName1)) {
+            dv1 = dv;
+         }
+         if (dv.getName().equals(dataViewerName2)) {
+            dv2 = dv;
+         }
+      }
+      int xOffset = profileSettings_.getInteger(XOFFSET, DEFAULTX);
+      int yOffset = profileSettings_.getInteger(YOFFSET, DEFAULTY);
+      AssembleDataWorker.run(studio_, dv1, dv2, xOffset, yOffset);    
    }
   
    public void showGUI() {

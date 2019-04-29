@@ -30,4 +30,16 @@ public class AssembleDataUtils {
       }
       return null;
    }
+   
+   public static DataProvider multiPositionData(DataProvider dp1, DataProvider dp2) {
+      Coords maxCoords1 = dp1.getMaxIndices();
+      Coords maxCoords2 = dp2.getMaxIndices();
+      
+      if (maxCoords1.getP() <= 1 && maxCoords2.getP() > 1) {
+         return dp2;
+      } else if (maxCoords2.getP() <= 1 && maxCoords1.getP() > 1) {
+         return dp1;
+      }
+      return null;
+   }
 }

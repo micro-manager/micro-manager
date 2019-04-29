@@ -6,11 +6,13 @@ import boofcv.struct.image.GrayU16;
 import boofcv.struct.image.GrayU8;
 import boofcv.struct.image.ImageDataType;
 import boofcv.struct.image.ImageGray;
+import georegression.struct.affine.Affine2D_F64;
 import georegression.struct.point.Point2D_I32;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import java.awt.geom.AffineTransform;
 import java.io.IOException;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
@@ -253,5 +255,13 @@ public final class BoofCVImageConverter {
                p.getY() + halfBoxSize);
    }
    
+   /**
+    * Converts a Java affine transform into a Georegression Affine transform
+    * @param in
+    * @return 
+    */
+   public static Affine2D_F64 convertAff(AffineTransform in) {
+      return new Affine2D_F64(in.getScaleX(), in.getShearX(), in.getShearY(), in.getScaleY(), 0.0, 0.0);
+   }
    
 }

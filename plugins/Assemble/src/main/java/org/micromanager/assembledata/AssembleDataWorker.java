@@ -1,3 +1,4 @@
+
 package org.micromanager.assembledata;
 
 import boofcv.abst.distort.FDistort;
@@ -5,9 +6,9 @@ import boofcv.alg.misc.GImageMiscOps;
 import boofcv.alg.misc.GPixelMath;
 import boofcv.core.image.GConvertImage;
 import boofcv.struct.border.BorderType;
+import boofcv.struct.image.GrayS32;
 import boofcv.struct.image.GrayU16;
 import boofcv.struct.image.GrayU8;
-import boofcv.struct.image.GrayS32;
 import boofcv.struct.image.ImageGray;
 import georegression.struct.affine.Affine2D_F64;
 import java.awt.geom.AffineTransform;
@@ -28,9 +29,9 @@ import org.micromanager.internal.utils.imageanalysis.BoofCVImageConverter;
  *
  * @author nico
  */
-public class AssembleDataTest {
+public class AssembleDataWorker {
    
-   public static void test(Studio studio, DataViewer dv1, DataViewer dv2,
+    public static void run(Studio studio, DataViewer dv1, DataViewer dv2,
            int xOffset, int yOffset) {
       
       DataProvider dp1 = dv1.getDataProvider();
@@ -111,7 +112,6 @@ public class AssembleDataTest {
          
          Datastore targetStore = studio.data().createRAMDatastore();
 
-         int c = 0;
          //for (DataProvider data : datas) {
          cb.t(0).c(0).p(0).z(0);
          ImageGray newImgBoof, oldImgBoof, tmpImgBoof, tmp2ImgBoof;
@@ -126,72 +126,88 @@ public class AssembleDataTest {
          }
 
          // single position data
-         cb.t(0).c(0).p(0).z(0);
-         Metadata.Builder newMetadataB = spd.getImage(cb.build()).getMetadata().
-                 copyBuilderWithNewUUID().pixelSizeUm(basePixelSize);
-         int p = 0;
-         Image img = spd.getImage(cb.p(p).build());
-         double pSize = img.getMetadata().getPixelSizeUm();
-         double tmpXMinUm = img.getMetadata().getXPositionUm() - (0.5 * img.getWidth() * pSize);
-         double tmpYMinUm = img.getMetadata().getYPositionUm() - (0.5 * img.getHeight() * pSize);
+         for (int c = 0; c < spd.getAxisLength(Coords.C); c++) {
+            for (int t = 0; t < spd.getAxisLength(Coords.T); t++) {
+               cb.t(t).c(c).p(0).z(0);
+               Image img = spd.getImage(cb.p(0).build());
+               if (img != null) {
+                  Metadata.Builder newMetadataB = img.getMetadata().
+                       copyBuilderWithNewUUID().pixelSizeUm(basePixelSize);
+                  double pSize = img.getMetadata().getPixelSizeUm();
+                  double tmpXMinUm = img.getMetadata().getXPositionUm() - (0.5 * img.getWidth() * pSize);
+                  double tmpYMinUm = img.getMetadata().getYPositionUm() - (0.5 * img.getHeight() * pSize);
 
-         int xMinPixel = (int) ((tmpXMinUm - xMinUm) / basePixelSize);
-         int yMinPixel = (int) ((tmpYMinUm - yMinUm) / basePixelSize);
-         if (bytesPerPixel == 1) {
-            GrayU8 tmp = new GrayU8(img.getWidth(), img.getHeight());
-            tmp.setData((byte[]) img.getRawPixels());
-            oldImgBoof = tmp;
-         } else { // bytesPerPixel == 2
-            GrayU16 tmp = new GrayU16(img.getWidth(), img.getHeight());
-            tmp.setData((short[]) img.getRawPixels());
-            oldImgBoof = tmp;
+                  int xMinPixel = (int) ((tmpXMinUm - xMinUm) / basePixelSize);
+                  int yMinPixel = (int) ((tmpYMinUm - yMinUm) / basePixelSize);
+                  if (bytesPerPixel == 1) {
+                     GrayU8 tmp = new GrayU8(img.getWidth(), img.getHeight());
+                     tmp.setData((byte[]) img.getRawPixels());
+                     oldImgBoof = tmp;
+                  } else { // bytesPerPixel == 2
+                     GrayU16 tmp = new GrayU16(img.getWidth(), img.getHeight());
+                     tmp.setData((short[]) img.getRawPixels());
+                     oldImgBoof = tmp;
+                  }
+                  GImageMiscOps.copy(0, 0, xMinPixel, yMinPixel, img.getWidth(), img.getHeight(),
+                          oldImgBoof, newImgBoof);
+                  Image newImage = BoofCVImageConverter.boofCVToMM(newImgBoof,
+                          cb.p(0).c(c).t(t).build(), newMetadataB.build());
+                  targetStore.putImage(newImage);
+                  GImageMiscOps.fill(newImgBoof, 0.0);
+               }
+            }
          }
-         GImageMiscOps.copy(0, 0, xMinPixel, yMinPixel, img.getWidth(), img.getHeight(),
-                 oldImgBoof, newImgBoof);
-         Image newImage = BoofCVImageConverter.boofCVToMM(newImgBoof,
-                 cb.p(0).c(0).build(), newMetadataB.build());
-         targetStore.putImage(newImage);
-         
-         GImageMiscOps.fill(newImgBoof, 0.0);
          
          // multi position data
-         for (p = 0; p <= mpd.getMaxIndices().getP(); p++) {
-            img = mpd.getImage(cb.p(p).build());
-            if (bytesPerPixel == 1) {
-               GrayU8 tmp = new GrayU8(img.getWidth(), img.getHeight());
-               tmp.setData((byte[]) img.getRawPixels());
-               oldImgBoof = tmp;
-            } else { // bytesPerPixel == 2
-               GrayU16 tmp = new GrayU16(img.getWidth(), img.getHeight());
-               tmp.setData((short[]) img.getRawPixels());
-               oldImgBoof = tmp;
+         for (int c = 0; c < mpd.getAxisLength(Coords.C); c++) {
+            for (int t = 0; t < mpd.getAxisLength(Coords.T); t++) {
+               Metadata.Builder newMetadataB = null;
+               for (int p = 0; p <= mpd.getMaxIndices().getP(); p++) {
+                  Image img = mpd.getImage(cb.c(c).t(t).p(p).build());
+                  if (img != null) {
+                     newMetadataB = img.getMetadata().
+                             copyBuilderWithNewUUID().pixelSizeUm(basePixelSize);
+                     if (bytesPerPixel == 1) {
+                        GrayU8 tmp = new GrayU8(img.getWidth(), img.getHeight());
+                        tmp.setData((byte[]) img.getRawPixels());
+                        oldImgBoof = tmp;
+                     } else { // bytesPerPixel == 2
+                        GrayU16 tmp = new GrayU16(img.getWidth(), img.getHeight());
+                        tmp.setData((short[]) img.getRawPixels());
+                        oldImgBoof = tmp;
+                     }
+                     double diffX = centerXUm - img.getMetadata().getXPositionUm();
+                     double diffY = centerYUm - img.getMetadata().getYPositionUm();
+
+                     Affine2D_F64 aff = multiPositionAf64.copy();
+
+                     aff.tx = -(diffX);
+                     aff.ty = -(diffY);
+                     //centerXUm - img.getMetadata().getXPositionUm(),.0
+                     //centerYUm - img.getMetadata().getYPositionUm());
+
+                     aff = aff.concat(singlePositionAf64I, null);
+                     FDistort fd = new FDistort();
+                     fd.input(oldImgBoof);
+                     fd.output(tmpImgBoof);
+                     fd.affine(aff);
+                     fd.interpNN();
+                     fd.border(BorderType.ZERO);
+                     fd.apply();
+                     GPixelMath.add(newImgBoof, tmpImgBoof, tmp2ImgBoof);
+                     GConvertImage.convert(tmp2ImgBoof, newImgBoof);
+                  }
+               }
+               if (newMetadataB != null) {
+                  Image newImage = BoofCVImageConverter.boofCVToMM(newImgBoof,
+                          cb.p(0).c(c + spd.getAxisLength(Coords.C)).build(), newMetadataB.build());
+                  targetStore.putImage(newImage);
+                  GImageMiscOps.fill(newImgBoof, 0.0);
+               }
             }
-            double diffX = centerXUm - img.getMetadata().getXPositionUm();
-            double diffY = centerYUm - img.getMetadata().getYPositionUm();
-
-            Affine2D_F64 aff = multiPositionAf64.copy();
-
-            aff.tx = -(diffX);
-            aff.ty = -(diffY);
-            //centerXUm - img.getMetadata().getXPositionUm(),.0
-            //centerYUm - img.getMetadata().getYPositionUm());
-
-            aff = aff.concat(singlePositionAf64I, null);
-            FDistort fd = new FDistort();
-            fd.input(oldImgBoof);
-            fd.output(tmpImgBoof);
-            fd.affine(aff);
-            fd.interpNN();
-            fd.border(BorderType.ZERO);
-            fd.apply();
-            GPixelMath.add(newImgBoof, tmpImgBoof, tmp2ImgBoof);
-            GConvertImage.convert(tmp2ImgBoof, newImgBoof);
-
          }
 
-         newImage = BoofCVImageConverter.boofCVToMM(newImgBoof,
-                 cb.p(0).c(1).build(), newMetadataB.build());
-         targetStore.putImage(newImage);
+         
          
          
          DisplayWindow disp = studio.displays().createDisplay(targetStore);
@@ -210,4 +226,5 @@ public class AssembleDataTest {
          studio.logs().showError(io2);
       }
    }
+   
 }
