@@ -31,7 +31,17 @@ import org.micromanager.internal.utils.imageanalysis.BoofCVImageConverter;
  */
 public class AssembleDataWorker {
    
-    public static void run(Studio studio, DataViewer dv1, DataViewer dv2,
+    public static void run(Studio studio, AssembleDataForm form, DataViewer dv1, DataViewer dv2,
+           int xOffset, int yOffset) {
+       Runnable t = () -> {
+          execute ( studio,  form, dv1,  dv2, xOffset,  yOffset);
+       };
+       Thread assembleThread = new Thread(t);
+       assembleThread.start();
+       
+    }
+    
+    public static void execute (Studio studio, AssembleDataForm form, DataViewer dv1, DataViewer dv2,
            int xOffset, int yOffset) {
       
       DataProvider dp1 = dv1.getDataProvider();
@@ -126,19 +136,24 @@ public class AssembleDataWorker {
          }
 
          // single position data
-         for (int c = 0; c < spd.getAxisLength(Coords.C); c++) {
-            for (int t = 0; t < spd.getAxisLength(Coords.T); t++) {
+         
+         for (int t = 0; t < spd.getAxisLength(Coords.T); t++) {
+            for (int c = 0; c < spd.getAxisLength(Coords.C); c++) {
                cb.t(t).c(c).p(0).z(0);
                Image img = spd.getImage(cb.p(0).build());
                if (img != null) {
                   Metadata.Builder newMetadataB = img.getMetadata().
                        copyBuilderWithNewUUID().pixelSizeUm(basePixelSize);
+                  /*
+                  TODO: use stage position informatoin to correct for inaccuracies
+                  this will currently cause errors in the GImageMiscOps.copy step
                   double pSize = img.getMetadata().getPixelSizeUm();
                   double tmpXMinUm = img.getMetadata().getXPositionUm() - (0.5 * img.getWidth() * pSize);
                   double tmpYMinUm = img.getMetadata().getYPositionUm() - (0.5 * img.getHeight() * pSize);
 
                   int xMinPixel = (int) ((tmpXMinUm - xMinUm) / basePixelSize);
                   int yMinPixel = (int) ((tmpYMinUm - yMinUm) / basePixelSize);
+                  */
                   if (bytesPerPixel == 1) {
                      GrayU8 tmp = new GrayU8(img.getWidth(), img.getHeight());
                      tmp.setData((byte[]) img.getRawPixels());
@@ -148,7 +163,9 @@ public class AssembleDataWorker {
                      tmp.setData((short[]) img.getRawPixels());
                      oldImgBoof = tmp;
                   }
-                  GImageMiscOps.copy(0, 0, xMinPixel, yMinPixel, img.getWidth(), img.getHeight(),
+                  //GImageMiscOps.copy(0, 0, xMinPixel, yMinPixel, img.getWidth(), img.getHeight(),
+                  //        oldImgBoof, newImgBoof);
+                  GImageMiscOps.copy(0, 0, 0, 0, img.getWidth(), img.getHeight(),
                           oldImgBoof, newImgBoof);
                   Image newImage = BoofCVImageConverter.boofCVToMM(newImgBoof,
                           cb.p(0).c(c).t(t).build(), newMetadataB.build());
@@ -156,11 +173,14 @@ public class AssembleDataWorker {
                   GImageMiscOps.fill(newImgBoof, 0.0);
                }
             }
+            int progress = (int) (50.0 * t / spd.getAxisLength(Coords.T));
+            form.setStatus(" " + progress + "%");
          }
          
          // multi position data
-         for (int c = 0; c < mpd.getAxisLength(Coords.C); c++) {
-            for (int t = 0; t < mpd.getAxisLength(Coords.T); t++) {
+         
+         for (int t = 0; t < mpd.getAxisLength(Coords.T); t++) {
+            for (int c = 0; c < mpd.getAxisLength(Coords.C); c++) {
                Metadata.Builder newMetadataB = null;
                for (int p = 0; p <= mpd.getMaxIndices().getP(); p++) {
                   Image img = mpd.getImage(cb.c(c).t(t).p(p).build());
@@ -205,10 +225,9 @@ public class AssembleDataWorker {
                   GImageMiscOps.fill(newImgBoof, 0.0);
                }
             }
+            int progress = (int) (50.0 + 50.0 * t / spd.getAxisLength(Coords.T));
+            form.setStatus(" " + progress + "%");
          }
-
-         
-         
          
          DisplayWindow disp = studio.displays().createDisplay(targetStore);
          DisplaySettings dispSettings = disp.getDisplaySettings();
@@ -222,6 +241,7 @@ public class AssembleDataWorker {
          disp.compareAndSetDisplaySettings(dispSettings, newDP);
          studio.displays().manage(targetStore);
          targetStore.freeze();
+         form.setStatus("Done...");
       } catch (IOException io2) {
          studio.logs().showError(io2);
       }

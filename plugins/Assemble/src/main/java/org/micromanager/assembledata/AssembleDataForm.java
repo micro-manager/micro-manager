@@ -26,6 +26,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.List;
@@ -42,6 +43,8 @@ import javax.swing.event.ChangeEvent;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.display.DataViewer;
+import org.micromanager.display.internal.event.DataViewerAddedEvent;
+import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.propertymap.MutablePropertyMapView;
@@ -102,20 +105,18 @@ public class AssembleDataForm extends MMDialog {
       
       dataSet1Box_ = new JComboBox();
       setupDataViewerBox(dataSet1Box_, DATAVIEWER1);
+      /*
       dataSet1Box_.addActionListener((java.awt.event.ActionEvent evt) -> {
          profileSettings_.putString(DATAVIEWER1, (String) 
                  dataSet1Box_.getSelectedItem());
       });
+      */
       super.add(new JLabel("First Data Set:"));
       super.add(dataSet1Box_, "wrap");
       
       
       dataSet2Box_ = new JComboBox();
       setupDataViewerBox(dataSet2Box_, DATAVIEWER2);
-      dataSet2Box_.addActionListener((java.awt.event.ActionEvent evt) -> {
-         profileSettings_.putString(DATAVIEWER2, (String) 
-                 dataSet2Box_.getSelectedItem());
-      });
       super.add(new JLabel("Second Data Set:"));
       super.add(dataSet2Box_, "wrap");
     
@@ -147,12 +148,14 @@ public class AssembleDataForm extends MMDialog {
       super.add (helpButton, "span 2, split 4");
       
       // TODO: add listeners and make refresh automatic
+      /*
       final JButton refreshButton = new JButton("Refresh");
       refreshButton.addActionListener( (ActionEvent e) -> {
          setupDataViewerBox(dataSet1Box_, DATAVIEWER1);
          setupDataViewerBox(dataSet2Box_, DATAVIEWER1);
       });
       super.add(refreshButton);
+*/
                  
       final JButton testButton =  new JButton("Test");
       testButton.addActionListener((ActionEvent e) -> {
@@ -164,10 +167,7 @@ public class AssembleDataForm extends MMDialog {
       assembleButton.addActionListener((ActionEvent e) -> {
          assemble();
       });
-      super.add(assembleButton);
-      
-      
-
+      super.add(assembleButton, "wrap");
       
       statusLabel_ = new JLabel(" ");
       super.add(statusLabel_, "span 3, wrap");
@@ -177,6 +177,7 @@ public class AssembleDataForm extends MMDialog {
       super.toFront();
       
       studio_.events().registerForEvents(this);
+      studio_.displays().registerForEvents(this);
    }
    
    private void runTest() {
@@ -191,6 +192,14 @@ public class AssembleDataForm extends MMDialog {
          if (dv.getName().equals(dataViewerName2)) {
             dv2 = dv;
          }
+      }
+      if (dv1 == null || dv2 == null) {
+         studio_.logs().showError("One or both data sets are empty");
+         return;
+      }
+      if (dv1.equals(dv2)) {
+         studio_.logs().showError("Data Sets are the same");
+         return;
       }
       int xOffset = profileSettings_.getInteger(XOFFSET, DEFAULTX);
       int yOffset = profileSettings_.getInteger(YOFFSET, DEFAULTY);
@@ -209,10 +218,18 @@ public class AssembleDataForm extends MMDialog {
          if (dv.getName().equals(dataViewerName2)) {
             dv2 = dv;
          }
+      }     
+      if (dv1 == null || dv2 == null) {
+         studio_.logs().showError("One or both data sets are empty");
+         return;
+      }
+      if (dv1.equals(dv2)) {
+         studio_.logs().showError("Data Sets are the same");
+         return;
       }
       int xOffset = profileSettings_.getInteger(XOFFSET, DEFAULTX);
       int yOffset = profileSettings_.getInteger(YOFFSET, DEFAULTY);
-      AssembleDataWorker.run(studio_, dv1, dv2, xOffset, yOffset);    
+      AssembleDataWorker.run(studio_, this, dv1, dv2, xOffset, yOffset);    
    }
   
    public void showGUI() {
@@ -222,6 +239,8 @@ public class AssembleDataForm extends MMDialog {
    @Override
    public void dispose() {
       wasDisposed_ = true;
+      studio_.events().unregisterForEvents(this);
+      studio_.displays().unregisterForEvents(this);
       super.dispose();
    }
    
@@ -250,16 +269,25 @@ public class AssembleDataForm extends MMDialog {
    }
    
    private void setupDataViewerBox(final JComboBox<String> box, final String key) {
+      String dataViewerf = profileSettings_.getString(key, "");
       List<DataViewer> allDataViewers = studio_.displays().getAllDataViewers();
       String[] dataViewers = new String[allDataViewers.size()];
       for (int i = 0; i < allDataViewers.size(); i++) {
          dataViewers[i] = allDataViewers.get(i).getName();
+      }
+      for (ActionListener al : box.getActionListeners()) {
+         box.removeActionListener(al);
       }
       box.setModel(new DefaultComboBoxModel<>(
               dataViewers));
       String dataViewer = profileSettings_.getString(key, "");
       box.setSelectedItem(dataViewer);
       profileSettings_.putString(key, (String)box.getSelectedItem());
+      box.addActionListener((java.awt.event.ActionEvent evt) -> {
+         profileSettings_.putString(key, (String) 
+                 box.getSelectedItem());
+      });
+      super.pack();
    }
    
    public synchronized void setStatus(final String status) {
@@ -283,5 +311,28 @@ public class AssembleDataForm extends MMDialog {
    public void closeRequested( ShutdownCommencingEvent sce){
       this.dispose();
    }
+   
+   private void setupDataViewerBoxes() {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(() -> {
+            setupDataViewerBoxes();
+         });
+      }
+      setupDataViewerBox(dataSet1Box_, DATAVIEWER1);
+      setupDataViewerBox(dataSet2Box_, DATAVIEWER2);
+   }
+   
+ 
+   @Subscribe
+   public void onWindowAddedEvent(DataViewerAddedEvent e) {
+      setupDataViewerBoxes();
+   }
+   
+   
+   @Subscribe
+   public void onWindowClosingEvent(DataViewerWillCloseEvent e) { 
+      setupDataViewerBoxes();
+   }
+   
     
 }
