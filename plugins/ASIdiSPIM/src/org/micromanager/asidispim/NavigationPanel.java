@@ -182,7 +182,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       navPanel.add(deltaXField);
       navPanel.add(makeIncrementButton(Devices.Keys.XYSTAGE, Directions.X, deltaXField, "+", 1));
       navPanel.add(makeMoveToOriginButton(Devices.Keys.XYSTAGE, Directions.X));
-      navPanel.add(makeSetOriginHereButton(Devices.Keys.XYSTAGE, Directions.X), "skip 1, wrap");
+      navPanel.add(makeSetOriginHereButton(Devices.Keys.XYSTAGE, Directions.X, true), "skip 1, wrap");
       
       navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.XYSTAGE, Directions.Y) + ":"));
       yPositionLabel_ = new JLabel("");
@@ -193,7 +193,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       navPanel.add(deltaYField);
       navPanel.add(makeIncrementButton(Devices.Keys.XYSTAGE, Directions.Y, deltaYField, "+", 1));
       navPanel.add(makeMoveToOriginButton(Devices.Keys.XYSTAGE, Directions.Y));
-      navPanel.add(makeSetOriginHereButton(Devices.Keys.XYSTAGE, Directions.Y), "skip 1, wrap");
+      navPanel.add(makeSetOriginHereButton(Devices.Keys.XYSTAGE, Directions.Y, true), "skip 1, wrap");
       
       navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.LOWERZDRIVE) + ":"));
       lowerZPositionLabel_ = new JLabel("");
@@ -245,7 +245,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       } else {
          navPanel.add(syncFtoZ);
       }
-      navPanel.add(makeSetOriginHereButton(Devices.Keys.UPPERZDRIVE, Directions.NONE), "wrap");
+      navPanel.add(makeSetOriginHereButton(Devices.Keys.UPPERZDRIVE, Directions.NONE, true), "wrap");
       
       upperHPositionLabel_ = new JLabel("");
       if (!ASIdiSPIM.oSPIM) {
@@ -413,7 +413,22 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
     * @return
     */
    private JButton makeSetOriginHereButton(Devices.Keys key, 
-           Joystick.Directions dir) {
+         Joystick.Directions dir) {
+      return makeSetOriginHereButton(key, dir, false);
+   }
+   
+   /**
+    * Creates a button which set the origin to the current position in specified axis.
+    * Somewhat inefficient implementation because actionPerformed()
+    * handles all the cases every call instead of having the constructor
+    * sort through cases and attaching variants of the actionPerformed() listener
+    * @param key
+    * @param dir
+    * @param warnPlanarCorrection whether to include warning about planar correction
+    * @return
+    */
+   private JButton makeSetOriginHereButton(Devices.Keys key, 
+           Joystick.Directions dir, final boolean warnPlanarCorrection) {
       class zeroButtonActionListener implements ActionListener {
          private final Devices.Keys key_;
          private final Joystick.Directions dir_;
@@ -421,7 +436,9 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
          @Override
          public void actionPerformed(ActionEvent e) {
             if (MyDialogUtils.getConfirmDialogResult(
-                  "This will change the coordinate system.  Are you sure you want to proceed?",
+                  ("This will change the coordinate system" +
+                        (warnPlanarCorrection ? " and will affect planar correction if it is enabled." : ".") +
+                        "  Are you sure you want to proceed?"),
                   JOptionPane.OK_CANCEL_OPTION)) {
                positions_.setOrigin(key_, dir_);
             }

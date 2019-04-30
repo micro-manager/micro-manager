@@ -4578,20 +4578,51 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
    
    /**
-    * Called whenever position updater has refreshed positions
+    * Calculate the Z position corresponding to the (x, y) point according to the planar correction values.
+    * @param x
+    * @param y
+    * @return
+    */
+   private double getPlanarZ(double x, double y) {
+      double xSlope = (Double) planarSlopeXField_.getValue()/1000;
+      double ySlope = (Double) planarSlopeYField_.getValue()/1000;
+      double zOffset = (Double) planarOffsetZField_.getValue();
+      return (x*xSlope + y*ySlope + zOffset);
+   }
+   
+   /**
+    * Sets the current Z position (SPIM head height) according to the planar correction but only
+    * if planar correction is enabled.
+    * @param x
+    * @param y
+    */
+   public void setPlanarZ(double x, double y) {
+      if (prefs_.getBoolean(panelName_, Properties.Keys.PLUGIN_PLANAR_ENABLED, false)) {
+         double zPos = getPlanarZ(x, y);
+         positions_.setPosition(Devices.Keys.UPPERZDRIVE, zPos);
+      }
+   }
+   
+   /**
+    * Called whenever position updater has refreshed positions, even when this tab isn't active.
     */
    @Override
    public final void updateStagePositions() {
+      double xPos = positions_.getCachedPosition(Devices.Keys.XYSTAGE, Directions.X);
+      double yPos = positions_.getCachedPosition(Devices.Keys.XYSTAGE, Directions.Y);
+      // update overview display
       try {
          Rectangle camROI = core_.getROI();
          int width = (int) Math.round(camROI.width*overviewCompressX_/overviewDownsampleY_);
          int height =(int) Math.round(camROI.height/overviewDownsampleY_);
-         int x = (int) Math.round((overviewMax_.x - positions_.getCachedPosition(Devices.Keys.XYSTAGE, Directions.X)) / overviewPixelSize_ + overviewWidthExpansion_/2 - width/2);
-         int y = (int) Math.round((positions_.getCachedPosition(Devices.Keys.XYSTAGE, Directions.Y) - overviewMin_.y) / overviewPixelSize_);
+         int x = (int) Math.round((overviewMax_.x - xPos) / overviewPixelSize_ + overviewWidthExpansion_/2 - width/2);
+         int y = (int) Math.round((yPos - overviewMin_.y) / overviewPixelSize_);
          overviewIP_.setRoi(x, y, width, height);
       } catch (Exception ex) {
          // do nothing
       }
+      // update Z position for planar correction
+      setPlanarZ(xPos, yPos);
    }
 
    @Override
