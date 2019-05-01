@@ -269,7 +269,6 @@ public class AssembleDataForm extends MMDialog {
    }
    
    private void setupDataViewerBox(final JComboBox<String> box, final String key) {
-      String dataViewerf = profileSettings_.getString(key, "");
       List<DataViewer> allDataViewers = studio_.displays().getAllDataViewers();
       String[] dataViewers = new String[allDataViewers.size()];
       for (int i = 0; i < allDataViewers.size(); i++) {
