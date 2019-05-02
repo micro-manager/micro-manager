@@ -507,6 +507,11 @@ int JAICamera::GetChannelName(unsigned channel, char* name)
  */
 int JAICamera::SnapImage()
 {
+	if (whiteBalancePending)
+	{
+		LogMessage("WB Once Pending in SnapImage() will be ignored, WB will be applied on the next Live acqisition frame");
+	}
+
 	// set single frame mode
 	PvResult pvr = genParams->SetEnumValue("AcquisitionMode", "SingleFrame");
 	if (!pvr.IsOK())
@@ -1065,19 +1070,51 @@ int AcqSequenceThread::svc (void)
 
 	if (moduleInstance->whiteBalancePending)
 	{
-		PvResult pvr = moduleInstance->genParams->SetEnumValue("BalanceWhiteAuto", 1);
-		ostringstream os;
-		if (!pvr.IsOK())
+		// Acquire first image, which will be used only for WB and then discarded
+		PvBuffer* pvBuf(0);
+		PvResult pvrOp;
+		pvr = camStream->RetrieveBuffer(&pvBuf, &pvrOp, 4000);
+		if (pvr.IsOK())
 		{
-			os << "PvError=" << pvr.GetCode() << ", Description: " << pvr.GetDescription().GetAscii();
-			
+			if (pvrOp.IsFailure())
+			{
+				ostringstream os;
+				os << "WB Once Pending: PvError=" << pvr.GetCode() << ", Description: " << pvr.GetDescription().GetAscii();
+			}
+
+			PvImage* pvImg = pvBuf->GetImage();
+
+			if (!moduleInstance->verifyPvFormat(pvImg))
+			{
+				ostringstream os;
+				os << "WB Once Pending: image format verification failed";
+				return 1;
+			}
 		}
 		else
 		{
-			os << "White Balance set";
+			// attempt to grab WB image unsuccessful
+			ostringstream os;
+			os << "WB Once Pending: PvError=" << pvr.GetCode() << ", Description: " << pvr.GetDescription().GetAscii();
 		}
-		moduleInstance->LogMessage(os.str());
+
+		PvResult pvr = moduleInstance->genParams->SetEnumValue("BalanceWhiteAuto", 1);
+		if (!pvr.IsOK())
+		{
+			ostringstream os;
+			os << "WB Once Pending: PvError=" << pvr.GetCode() << ", Description: " << pvr.GetDescription().GetAscii();
+			moduleInstance->LogMessage(os.str());
+		}
+		else
+		{
+			ostringstream os;
+			os << "WB Once Pending: White Balance set based on the current image";
+			moduleInstance->LogMessage(os.str());
+		}
+
 		InterlockedExchange(&moduleInstance->whiteBalancePending, 0L); // clear wb pending flag
+		ostringstream os;
+		os << "WB Once Pending flag cleared";
 	}
 
    unsigned count = 0;

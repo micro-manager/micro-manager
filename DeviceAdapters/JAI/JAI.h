@@ -209,6 +209,7 @@ private:
 	int bitDepth;
 	int pixelSize;
 	LONG whiteBalancePending;
+	std::string wbPendingOption;
 
 	PvDevice* camera;
 	PvGenParameterArray* genParams;

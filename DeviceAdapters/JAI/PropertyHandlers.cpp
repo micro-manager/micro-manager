@@ -225,7 +225,11 @@ int JAICamera::OnWhiteBalance(MM::PropertyBase* pProp, MM::ActionType eAct)
 		{
 			// special handling for "once" option
 			// request white balance adjustment on next sequence acquisition
+			ostringstream os;
+			os << "WB Once set to PENDING status, will apply on the next frame";
+			LogMessage(os.str());
 			InterlockedExchange(&whiteBalancePending, 1L);
+			wbPendingOption = val;
 		}
 		else
 		{
@@ -239,11 +243,18 @@ int JAICamera::OnWhiteBalance(MM::PropertyBase* pProp, MM::ActionType eAct)
 	}
 	else if (eAct == MM::BeforeGet)
 	{
-		PvString val;
-		PvResult pvr = genParams->GetEnumValue(pvCmd, val);
-		if (!pvr.IsOK())
-			return processPvError(pvr);
-		pProp->Set(val.GetAscii());
+		if (whiteBalancePending)
+		{
+			pProp->Set(wbPendingOption.c_str());
+		}
+		else
+		{
+			PvString val;
+			PvResult pvr = genParams->GetEnumValue(pvCmd, val);
+			if (!pvr.IsOK())
+				return processPvError(pvr);
+			pProp->Set(val.GetAscii());
+		}
 	}
 	return DEVICE_OK;
 }
