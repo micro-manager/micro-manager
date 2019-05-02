@@ -82,7 +82,8 @@ private:
    unsigned int numCells_;
    unsigned int currentPosition_;  // cached value of current position
 //   static const int NUM_CELLS = 16;
-   bool useAsdiSPIMShutter_;
+   bool useAsdiSPIMShutter_;  // super-set of useAs4ChShutter_
+   bool useAs4ChShutter_;
    bool shutterOpen_;
    bool advancedPropsEnabled_;
    bool editCellUpdates_;
