@@ -39,14 +39,19 @@
 #define COMMAND_TERMINATOR '\n'
 #define SERIAL_DELAY_MS 30
 
-const char* g_Keyword_DeviceName = "Illuminate-Led-Array";
-//const char* g_Keyword_DeviceNameVirtualShutter = "Illuminate-Led-Array-Virtual-Shutter";
+//For virtual shutter
+const char* g_Keyword_DeviceNameVirtualShutter = "IlluminateLedArrayVirtualShutter";
+const char* g_Keyword_LEDArrayNameForShutter = "NameOfLEDArrayThatShutterControls";
+
+
+const char* g_Keyword_DeviceName = "IlluminateLedArray";
 
 const char * g_Keyword_ColorBalanceRed = "ColorBalanceRed";      // Global intensity with a maximum of 255
 const char * g_Keyword_ColorBalanceGreen = "ColorBalanceGreen";  // Global intensity with a maximum of 255
 const char * g_Keyword_ColorBalanceBlue = "ColorBalanceBlue";    // Global intensity with a maximum of 255
 const char * g_Keyword_Brightness = "Brightness";
-const char * g_Keyword_NumericalAperture = "NumericalAperture"; // Setting the numerical aperture
+const char * g_Keyword_ObjectiveNumericalAperture = "ObjectiveNumericalAperture"; // Setting the numerical aperture
+const char * g_Keyword_AnnulusNumericalAperture = "AnnulusNumericalApertureMin"; // Setting the numerical aperture
 const char * g_Keyword_SetArrayDistanceMM = "ArrayDistanceFromSample";
 const char * g_Keyword_Pattern = "IlluminationPattern";
 const char * g_Keyword_PatternOrientation = "IlluminationPatternOrientation";
@@ -109,73 +114,41 @@ public:
    void GetName(char *) const;
 
       // SLM API
-      /**
-       * Load the image into the SLM device adapter.
-       */
+
       int SetImage(unsigned char * pixels);
 
-      /**
-      * Load a 32-bit image into the SLM device adapter.
-      */
       int SetImage(unsigned int *) {
 		return DEVICE_UNSUPPORTED_COMMAND;	
 	  }
 
-      /**
-       * Command the SLM to display the loaded image.
-       */
       int DisplayImage();
 
-      /**
-       * Command the SLM to display one 8-bit intensity.
-       */
       int SetPixelsTo(unsigned char);
 
-      /**
-       * Command the SLM to display one 32-bit color.
-       */
        int SetPixelsTo(unsigned char, unsigned char, unsigned char) {
 	   		return DEVICE_UNSUPPORTED_COMMAND;	
 	   }
 
-      /**
-       * Command the SLM to turn off after a specified interval.
-       */
       int SetExposure(double) {
 		  		return DEVICE_UNSUPPORTED_COMMAND;	
 	  }
 
-      /**
-       * Find out the exposure interval of an SLM.
-       */
        double GetExposure() {
 	 		return DEVICE_UNSUPPORTED_COMMAND;	
 	   }
 
-      /**
-       * Get the SLM width in pixels.
-       */
        unsigned GetWidth() {
 		return width_;
 	   }
 
-      /**
-       * Get the SLM height in pixels.
-       */
       virtual unsigned GetHeight() {
 		return height_;
 	  }
 
-      /**
-       * Get the SLM number of components (colors).
-       */
       unsigned GetNumberOfComponents() {
 		return 1;
 	  }
 
-      /**
-       * Get the SLM number of bytes per pixel.
-       */
       unsigned GetBytesPerPixel() {
 		return 1;
 	  }
@@ -287,7 +260,8 @@ public:
 	  int OnColorBalanceGreen(MM::PropertyBase* pPropt, MM::ActionType eAct);
 	  int OnColorBalanceBlue(MM::PropertyBase* pPropt, MM::ActionType eAct);
       int OnShutterOpen(MM::PropertyBase* pPropt, MM::ActionType eAct);
-	  int OnAperture(MM::PropertyBase* pPropt, MM::ActionType eAct);	 
+	  int OnObjectiveAperture(MM::PropertyBase* pPropt, MM::ActionType eAct);	 
+	  int OnPatternAperture(MM::PropertyBase* pPropt, MM::ActionType eAct);
 	  int OnDistance(MM::PropertyBase* pPropt, MM::ActionType eAct);
 	  int OnPatternOrientation(MM::PropertyBase* pPropt, MM::ActionType eAct);
 	  int OnAnnulusWidth(MM::PropertyBase* pProp, MM::ActionType pAct);
@@ -295,6 +269,10 @@ public:
 	  int OnReset(MM::PropertyBase* pPropt, MM::ActionType eAct);
 	  int OnCommand(MM::PropertyBase* pPropt, MM::ActionType eAct);
 	  int OnBrightness(MM::PropertyBase* pPropt, MM::ActionType eAct);
+
+
+	  int SetShutter(boolean open);
+	  bool GetShutter();
 
 private:
    
@@ -309,7 +287,7 @@ private:
 		  unsigned char* pixels_;
 	bool IsPortAvailable() {return portAvailable_;}
 
-	long shutterOpen_, bf_, df_;
+	long shutterOpen_;
 	long lsingle_; // LED index
 	std::string lmult_;
 
@@ -318,7 +296,8 @@ private:
 	std::string _led_indicies;
 	std::string _command;
 	std::string _serial_answer;
-	double numerical_aperture;
+	double objective_numerical_aperture;
+	double annulus_numerical_aperture;
 	double annulus_width;
 	double array_distance_z;
 	double interface_version;
@@ -359,7 +338,7 @@ private:
 };
 
 
-/*
+
 class LedArrayVirtualShutter : public CShutterBase<LedArrayVirtualShutter>
 {
 public:
@@ -379,13 +358,13 @@ public:
    int GetOpen(bool& open);
    int Fire (double) { return DEVICE_UNSUPPORTED_COMMAND;}
 
+   int OnDeviceName(MM::PropertyBase* pPropt, MM::ActionType eAct);
+
 private:
-   std::vector<std::string> availableDAs_;
-   std::string DADeviceName1_;
-   std::string DADeviceName2_;
-   MM::SignalIO* DADevice1_;
    bool initialized_;
+   std::string ledArrayName_;
+   LedArray* ledArray_;
 };
-*/
+
 
 #endif 
