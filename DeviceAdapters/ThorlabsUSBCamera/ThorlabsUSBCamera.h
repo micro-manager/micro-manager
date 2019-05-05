@@ -132,6 +132,7 @@ private:
    int cameraBufId;        // buffer id, required by the SDK
    double Exposure_;
    double HardwareGain_;
+   double FPS_;
 };
 
 class MySequenceThread : public MMDeviceThreadBase

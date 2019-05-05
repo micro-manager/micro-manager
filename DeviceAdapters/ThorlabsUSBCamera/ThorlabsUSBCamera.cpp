@@ -177,6 +177,11 @@ int ThorlabsUSBCam::Initialize()
    if (nRet != IS_SUCCESS)
       return nRet;
 
+   // Set to Software Trigger
+   nRet = is_SetExternalTrigger(camHandle_, IS_SET_TRIGGER_SOFTWARE);
+   if (nRet != IS_SUCCESS)
+	   return nRet;
+
    roiX_=0;
    roiY_=0;
    roiWidth_ = sensorInfo.nMaxWidth;
@@ -275,8 +280,26 @@ int ThorlabsUSBCam::Initialize()
    minClockstr << minClock;
    SetProperty(g_propPixelClock, minClockstr.str().c_str());
 
+   // FPS
+   double fpsRange[3];
+   ZeroMemory(fpsRange, sizeof(fpsRange));
+   nRet = is_GetFrameTimeRange(camHandle_, &fpsRange[0], &fpsRange[1], &fpsRange[2]);
+   if (nRet != IS_SUCCESS)
+	   return nRet;
+
+   double minFPS = 1 / fpsRange[1];
+   double maxFPS = 1 / fpsRange[0];
+   
    pAct = new CPropertyAction(this, &ThorlabsUSBCam::OnFPS);
-   CreateProperty(g_propFPS, "0.0", MM::Float, true, pAct);
+   CreateProperty(g_propFPS, "2.0", MM::Float, false, pAct);
+   SetPropertyLimits(g_propFPS, (float)minFPS, (float)maxFPS); 
+   
+   nRet = is_GetFramesPerSecond(camHandle_, &FPS_);
+   SetProperty(g_propFPS, "2.0");
+  
+   //Old code
+   //pAct = new CPropertyAction(this, &ThorlabsUSBCam::OnFPS);
+   //CreateProperty(g_propFPS, "0.0", MM::Float, true, pAct);
 
    // synchronize all properties
    // --------------------------
@@ -947,9 +970,20 @@ int ThorlabsUSBCam::OnPixelClock(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (ret != IS_SUCCESS)
          return ret;
 
+	  // Refresh the FPS range
+	  double fpsRange[3];
+	  ZeroMemory(fpsRange, sizeof(fpsRange));
+	  int nRet = is_GetFrameTimeRange(camHandle_, &fpsRange[0], &fpsRange[1], &fpsRange[2]);
+	  if (nRet != IS_SUCCESS)
+		  return nRet;
+	  
+	  double minFPS = 1 / fpsRange[1];
+	  double maxFPS = 1 / fpsRange[0];
+	  SetPropertyLimits(g_propFPS, (float)minFPS, (float)maxFPS);
+
       // refresh the exposure range
       double expRange[3] = {0.0, 0.0, 0.0};
-      int nRet = is_Exposure(camHandle_, IS_EXPOSURE_CMD_GET_FINE_INCREMENT_RANGE, (void*)expRange, sizeof(expRange));
+      nRet = is_Exposure(camHandle_, IS_EXPOSURE_CMD_GET_FINE_INCREMENT_RANGE, (void*)expRange, sizeof(expRange));
       bool available = nRet == IS_NOT_SUPPORTED ? false : true; // is this feature available?
       if (nRet != IS_SUCCESS && available)
          return nRet;
@@ -961,10 +995,40 @@ int ThorlabsUSBCam::OnPixelClock(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int ThorlabsUSBCam::OnFPS(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   if (eAct == MM::BeforeGet)
-		pProp->Set(framesPerSecond);
+	if (eAct == MM::BeforeGet)
+	{
+		/* double curFPS;
+		int ret = is_GetFramesPerSecond(camHandle_, &curFPS);
+		if (ret != IS_SUCCESS)
+			return ret;
+		pProp->Set(curFPS); */
 
+		pProp->Set(FPS_);
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		double value;
+		pProp->Get(value);
+		
+		if (value != FPS_) {
+			FPS_ = value;
+			double newFPS;
+			int ret1 = is_SetFrameRate(camHandle_, FPS_, &newFPS);
+			if (ret1 != IS_SUCCESS)
+				return ret1;
+
+			// refresh the exposure range
+			double expRange[3] = { 0.0, 0.0, 0.0 };
+			int nRet = is_Exposure(camHandle_, IS_EXPOSURE_CMD_GET_FINE_INCREMENT_RANGE, (void*)expRange, sizeof(expRange));
+			bool available = nRet == IS_NOT_SUPPORTED ? false : true; // is this feature available?
+			if (nRet != IS_SUCCESS && available)
+				return nRet;
+			if (available)
+				SetPropertyLimits(MM::g_Keyword_Exposure, expRange[0], expRange[1]);
+		}
+	}
 	return DEVICE_OK;
+
 }
 
 
