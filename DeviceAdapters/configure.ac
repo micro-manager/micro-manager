@@ -298,6 +298,16 @@ else
    AC_MSG_RESULT([not found])
 fi
 
+# BaslerPylon Version check
+AM_CONDITIONAL([PYLON64],[test -d "/opt/pylon5/lib64"])
+AM_COND_IF([PYLON64],
+[  
+   AC_MSG_NOTICE(Basler SDK in 64bit  found)
+   AC_MSG_RESULT([found])
+],
+[
+   AC_MSG_RESULT([not found])
+])
 
 # ITC on linux 
 AC_MSG_CHECKING(for ITC)
@@ -435,6 +445,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    AndorSDK3
    Aquinas
    Arduino
+   Basler
    BlueboxOptics_niji
    CARVII
    ChuoSeiki_MD5000
