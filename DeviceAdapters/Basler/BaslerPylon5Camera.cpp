@@ -41,6 +41,7 @@ sma : 25.03.2019 : Pylon version has been changed to 5.2.0 and it check now for 
 				   parameter Auto exposure and  auto gain are available.
 				   
 sma : 28.04.2019 Take some changes to be able to compile in Linux
+sma : 04.05.2019  Bugfix in 12bit image format and add parameter Sendsor Width and Height
 */
 
 
@@ -252,24 +253,45 @@ int BaslerCamera::Initialize()
 		//Call before reading/writing any parameters
 		camera_->Open();
 		// Get the camera nodeMap_ object.
+
+		//Sensor size
 		nodeMap_ = &camera_->GetNodeMap();
 		const CIntegerPtr width = nodeMap_->GetNode("Width");
 		maxWidth_ = (unsigned int) width->GetMax();
 		const CIntegerPtr height = nodeMap_->GetNode("Height");
 		maxHeight_ = (unsigned int) height->GetMax();
-/*
+
+
+		if(IsAvailable(width))
+		{
+			CPropertyAction *pAct = new CPropertyAction (this, &BaslerCamera::OnWidth);
+			ret = CreateProperty("SensorWidth",to_string(width->GetValue()).c_str(), MM::Integer, false, pAct);
+			SetPropertyLimits("SensorWidth", (double)width->GetMin(),(double)width->GetMax());
+			assert(ret == DEVICE_OK);
+		}
+		if(IsAvailable(height))
+		{
+			CPropertyAction *pAct = new CPropertyAction (this, &BaslerCamera::OnHeight);
+			ret = CreateProperty("SensorHeight",to_string(height->GetValue()).c_str(), MM::Integer, false, pAct);
+			SetPropertyLimits("SensorHeight", (double)height->GetMin(),(double)height->GetMax());
+			assert(ret == DEVICE_OK);
+		}
+
+		//end of Sensor size
+
+
 	#if (!_DEBUG)
 			ClearROI();// to be enabled for release
-	#else if(_Debug)
+	#else 
 		{
-			ReduceImageSize(800,800);
+			ReduceImageSize(200,200);
 			if(camera_->IsGigE())
 			{
 				CIntegerPtr(camera_->GetTLNodeMap().GetNode("HeartbeatTimeout"))->SetValue(24*1000);
 			}			
 		}
 	#endif
-	*/
+	
 
 		long bytes = (long) (height->GetValue() * width->GetValue() * 4) ;
 		Buffer4ContinuesShot = malloc(bytes);
@@ -667,7 +689,7 @@ int BaslerCamera::SnapImage()
 		if (!ptrGrabResult->GrabSucceeded()) {
 			return DEVICE_ERR;		
 		}
-		if(ptrGrabResult->GetPayloadSize() != GetImageBufferSize())
+		if(ptrGrabResult->GetPayloadSize() != imgBufferSize_)
 		{// due to parameter change on  binning
 			ResizeSnapBuffer();
 		}
@@ -705,22 +727,17 @@ void BaslerCamera::CopyToImageBuffer(CGrabResultPtr ptrGrabResult)
 		memcpy(imgBuffer_, buffer, GetImageBufferSize());
 		SetProperty( MM::g_Keyword_PixelType, g_PixelType_8bit);
 	}
-	else if (ptrGrabResult->GetPixelType() == PixelType_Mono10 ||
-	   ptrGrabResult->GetPixelType() == PixelType_Mono12 || ptrGrabResult->GetPixelType() == PixelType_Mono16)
-	{
-		/*nComponents_ = 1;
-        bitDepth_ = 12;	*/
-		long val = GetImageBufferSize();
+	else if (ptrGrabResult->GetPixelType() == PixelType_Mono16 || ptrGrabResult->GetPixelType() == PixelType_Mono10 || ptrGrabResult->GetPixelType() == PixelType_Mono12)
+	{			
 		//copy image buffer to a snap buffer allocated by device adapter
-		const void* buffer = ptrGrabResult->GetBuffer();
-		memcpy(imgBuffer_, buffer, val);
-		//SetProperty( MM::g_Keyword_PixelType, g_PixelType_12bit);	
+		void* buffer = ptrGrabResult->GetBuffer();
+		memcpy(imgBuffer_, buffer, ptrGrabResult->GetPayloadSize());
+		SetProperty( MM::g_Keyword_PixelType, g_PixelType_12bit);	
 	}
 	else if (IsByerFormat || ptrGrabResult->GetPixelType() == PixelType_RGB8packed )
 	{
 		nComponents_ = 4;
         bitDepth_ = 8;
-		CPylonImage image;
 		converter->Convert(imgBuffer_,GetImageBufferSize(),ptrGrabResult);
 		SetProperty( MM::g_Keyword_PixelType, g_PixelType_8bitRGBA);	    
 	}
@@ -976,6 +993,7 @@ void BaslerCamera::ResizeSnapBuffer() {
 	free(imgBuffer_);
 	long bytes = GetImageBufferSize() ;
 	imgBuffer_ = malloc(bytes);
+	imgBufferSize_ = bytes;
 }
 
 
@@ -1029,6 +1047,115 @@ int BaslerCamera::OnBinningMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 	}
 	return DEVICE_OK;
 }
+int BaslerCamera::OnHeight(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	CIntegerPtr Height(nodeMap_->GetNode("Height"));
+	std::string strval;
+	if (eAct == MM::AfterSet) 
+	{
+		bool Isgrabbing = camera_->IsGrabbing();
+		
+		if(IsAvailable(Height))
+		{
+			try
+			{
+				if(Isgrabbing)
+				{
+					camera_->StopGrabbing();
+				}
+				pProp->Get(strval);
+				int64_t val = std::stoi(strval);
+				int64_t inc = Height->GetInc();
+				Height->SetValue(val - (val % inc));
+				if(Isgrabbing)
+				{
+					camera_->StartGrabbing();
+				}	
+			}
+			catch (const GenericException &e)
+			{
+				// Error handling.
+				AddToLog(e.GetDescription());
+				cerr << "An exception occurred." << endl
+				<< e.GetDescription() << endl;
+			}
+		}	
+	} 
+	else if (eAct == MM::BeforeGet) {
+
+		try{
+			if(IsAvailable(Height) )
+				{
+					binningFactor_ = to_string (Height->GetValue());
+					pProp->Set((long)Height->GetValue());	
+				}	
+		}
+		catch (const GenericException &e)
+		{
+			// Error handling.
+			AddToLog(e.GetDescription());
+			cerr << "An exception occurred." << endl
+			<< e.GetDescription() << endl;
+		}
+	}
+	return DEVICE_OK;
+}
+
+int BaslerCamera::OnWidth(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	CIntegerPtr Width(nodeMap_->GetNode( "Width"));
+	std::string strval;
+	if (eAct == MM::AfterSet) 
+	{
+		bool Isgrabbing = camera_->IsGrabbing();
+		
+		if(IsAvailable(Width))
+		{
+			try
+			{
+				if(Isgrabbing)
+				{
+					camera_->StopGrabbing();
+				}
+				pProp->Get(strval);
+				int64_t val = std::stoi(strval);
+				int64_t inc = Width->GetInc();
+				Width->SetValue(val - (val % inc));
+				if(Isgrabbing)
+				{
+					camera_->StartGrabbing();
+				}	
+				//pProp->Set(Width->GetValue());
+
+			}
+			catch (const GenericException &e)
+			{
+				// Error handling.
+				AddToLog(e.GetDescription());
+				cerr << "An exception occurred." << endl
+				<< e.GetDescription() << endl;
+			}
+		}	
+	} 
+	else if (eAct == MM::BeforeGet) {
+
+		try{
+			if(IsAvailable(Width) )
+				{
+					binningFactor_ = to_string (Width->GetValue());
+					pProp->Set((long)Width->GetValue());	
+				}	
+		}
+		catch (const GenericException &e)
+		{
+			// Error handling.
+			AddToLog(e.GetDescription());
+			cerr << "An exception occurred." << endl
+			<< e.GetDescription() << endl;
+		}
+	}
+	return DEVICE_OK;
+}
 
 
 int BaslerCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -1057,12 +1184,6 @@ int BaslerCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 					camera_->StartGrabbing();
 				}	
 				pProp->Set(binningFactor_.c_str());
-#if (_DEBUG)
-			    if(binningFactor_ == "1")
-				{
-					ReduceImageSize(800,800);
-				}
-#endif
 			}
 			catch (const GenericException &e)
 			{
@@ -1127,6 +1248,7 @@ int BaslerCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 		nComponents_ = 1;
 		bitDepth_ = 8;
 		SetProperty(MM::g_Keyword_PixelType,g_PixelType_8bit);
+
 	}
 	if(pixelFormat->ToString().compare("Mono10") == 0 )
 	{

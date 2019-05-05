@@ -123,6 +123,9 @@ public:
 
 	// action interface
 	// ----------------
+	int OnWidth(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnHeight(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnHeigth(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnBinningMode(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -159,6 +162,7 @@ private:
 	std::string sensorReadoutMode_;
 	std::string shutterMode_;
 	void* imgBuffer_;
+	long imgBufferSize_;
 	ImgBuffer img_;
 	INodeMap* nodeMap_;
 
