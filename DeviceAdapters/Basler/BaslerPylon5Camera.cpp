@@ -41,7 +41,8 @@ sma : 25.03.2019 : Pylon version has been changed to 5.2.0 and it check now for 
 				   parameter Auto exposure and  auto gain are available.
 				   
 sma : 28.04.2019 Take some changes to be able to compile in Linux
-sma : 04.05.2019  Bugfix in 12bit image format and add parameter Sendsor Width and Height
+sma : 04.05.2019 Bugfix in 12bit image format and add parameter Sendsor Width and Height
+sma : 06.05.2019 Improvement in Gain range handling. In some camera model the gain range is depends on selected pixel format.
 */
 
 
@@ -416,9 +417,6 @@ int BaslerCamera::Initialize()
 				SetAllowedValues("ExposureAuto",LSPVals);	
 			 }
 		}
-
-
-
 
 		//get gain limits and value
 		CFloatPtr gain( nodeMap_->GetNode("Gain"));
@@ -1494,40 +1492,77 @@ int BaslerCamera::OnInterPacketDelay(MM::PropertyBase* pProp, MM::ActionType eAc
 
 int BaslerCamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	CFloatPtr gain( nodeMap_->GetNode( "Gain"));
-	CIntegerPtr GainRaw( nodeMap_->GetNode( "GainRaw"));
+	try
+	{
+		CFloatPtr gain( nodeMap_->GetNode( "Gain"));
+		CIntegerPtr GainRaw( nodeMap_->GetNode( "GainRaw"));
 
-	if (eAct == MM::AfterSet) {
-		pProp->Get(gain_);
-		if (gain_ > gainMax_) {
-			gain_ = gainMax_;
-		}
-		if (gain_ < gainMin_) {
-			gain_ = gainMin_;
-		}
-		if(IsAvailable(gain))
-		{
-			gain->SetValue(gain_);
-		}
-		else if(IsAvailable(GainRaw))
-		{
-			GainRaw->SetValue((int64_t)(gain_));
-		}	
-	} else if (eAct == MM::BeforeGet) {
 
-		if(IsAvailable(gain))
-		{
-			gain_ = gain->GetValue();
-			pProp->Set(gain_);
-		}
-		else if(IsAvailable(GainRaw))
-		{
-			
-			gain_ = (double)GainRaw->GetValue();
-			pProp->Set(gain_);
-			cout << "Gain Raw set successfully" <<  gain_ <<endl;
+		if (eAct == MM::AfterSet) {
+			pProp->Get(gain_);
+			if (gain_ > gainMax_) {
+				gain_ = gainMax_;
+			}
+			if (gain_ < gainMin_) {
+				gain_ = gainMin_;
+			}
+			if(IsAvailable(gain))
+			{
+				// the range gain depends on Pixel format sometimes.
+				if(gain->GetMin() <= gain_ && gain->GetMax() >= gain_)
+				{
+					gain->SetValue(gain_);
+				}
+				else
+				{
+				    AddToLog("gain value out of range");				
+					gainMax_ = gain->GetMax();
+					gainMin_ = gain->GetMin();
+					gain_ = gain->GetValue();
+					SetPropertyLimits(MM::g_Keyword_Gain, gainMin_, gainMax_);
+					pProp->Set(gain_);
+				}			
+			}
+			else if(IsAvailable(GainRaw))
+			{
+				// the range gain depends on Pixel format sometimes.
+				if(GainRaw->GetMin() <= gain_ && GainRaw->GetMax() >= gain_)
+				{
+					GainRaw->SetValue((int64_t)(gain_));
+				}
+				else
+				{
+					AddToLog("gain value out of range");				
+					gainMax_ = gain->GetMax();
+					gainMin_ = gain->GetMin();
+					gain_ = gain->GetValue();
+					SetPropertyLimits(MM::g_Keyword_Gain, gainMin_, gainMax_);	
+					pProp->Set(gain_);
+				}				
+			}	
+		} else if (eAct == MM::BeforeGet) {
+
+			if(IsAvailable(gain))
+			{
+				gain_ = gain->GetValue();
+				pProp->Set(gain_);
+			}
+			else if(IsAvailable(GainRaw))
+			{		
+				gain_ = (double)GainRaw->GetValue();
+				pProp->Set(gain_);
+				cout << "Gain Raw set successfully" <<  gain_ <<endl;
+			}
 		}
 	}
+	catch (const GenericException &e)
+    {
+        // Error handling.
+		AddToLog(e.GetDescription());
+        cerr << "An exception occurred." << endl
+        << e.GetDescription() << endl;
+		return DEVICE_ERR;
+    }
 	return DEVICE_OK;
 }
 
