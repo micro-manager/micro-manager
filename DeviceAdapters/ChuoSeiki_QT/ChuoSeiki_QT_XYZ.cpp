@@ -210,7 +210,7 @@ MM::DeviceDetectionStatus ChuoSeikiXYStage::DetectDevice(void)
 			{
 				int ret = this->ConfirmComm();
 				if (DEVICE_OK == ret) break;	// if OK, break
-				else Sleep(10);					// else sleep and retry
+            else CDeviceUtils::SleepMs(10);					// else sleep and retry
 
 				// if failed for all 5 times
 				if (DEVICE_OK != ret && i == 4) 	LogMessageCode(ret, true);
@@ -492,7 +492,7 @@ int ChuoSeikiXYStage::GetPositionSteps(long& x, long& y)
 
 	for (int i = 0; i < 10; i++)
 	{
-		PurgeComPort();
+		PurgeComPort(portName_XY.c_str());
 
 		command << "Q:" << controllerAxisX_ << "0" << controllerAxisY_ << "0";		// request positions and states
 		ret = SendSerialCommand(portName_XY.c_str(), command.str().c_str(), "\r\n");
@@ -500,7 +500,7 @@ int ChuoSeikiXYStage::GetPositionSteps(long& x, long& y)
 		if (ret != DEVICE_OK && ret != 14)
 			return ret;
 
-		Sleep(100);		// sleep 100ms for reading position
+		CDeviceUtils::SleepMs(100);		// sleep 100ms for reading position
 
 		ret = GetSerialAnswer(portName_XY.c_str(), "\r\n", answer);
 		if (ret != DEVICE_OK && ret != 14)
@@ -509,7 +509,7 @@ int ChuoSeikiXYStage::GetPositionSteps(long& x, long& y)
 		if (answer.length() > 20)					// answer format: (+ or -)(8 digits)(stage A state keyword)(,)(+ or -)(8 digits)(stage B state keyword)
 		{
 			if ((answer.substr(9, 1) == "D") || (answer.substr(20, 1) == "D")) {
-				Sleep(20);
+				CDeviceUtils::SleepMs(20);
 				continue;		// if stage is running, repeat
 			}
 			else if (answer.substr(9, 1) == "H" || answer.substr(20, 1) == "H")	{
@@ -527,9 +527,11 @@ int ChuoSeikiXYStage::GetPositionSteps(long& x, long& y)
 			return ERR_CONTROLER_8;
 		}
 
-		Sleep(20);
+		CDeviceUtils::SleepMs(20);
 		// if answer is wrong, try again, max 10 times
 	}
+   // should be unreachable, but better safe then sorry
+   return ERR_CONTROLER_8;
 }
 
 
@@ -1019,7 +1021,7 @@ MM::DeviceDetectionStatus ChuoSeikiZStage::DetectDevice(void)
 			{
 				int ret = this->ConfirmComm();
 				if (DEVICE_OK == ret) break;	// if OK, break
-				else Sleep(10);					// else sleep and retry
+				else CDeviceUtils::SleepMs(10);					// else sleep and retry
 
 				// if failed for all 5 times
 				if (DEVICE_OK != ret && i == 4) 	LogMessageCode(ret, true);
@@ -1252,14 +1254,14 @@ int ChuoSeikiZStage::GetPositionSteps(long& z)
 
 	for (int i = 0; i < 10; i++)
 	{
-		PurgeComPort();
+		PurgeComPort(portName_Z.c_str());
 
 		command << "Q:" << controllerAxisZ_ << "0";
 		ret = SendSerialCommand(portName_Z.c_str(), command.str().c_str(), "\r\n");
 		command.str("");
 		if (ret != DEVICE_OK && ret != 14)
 			return ret;
-		Sleep(20);
+		CDeviceUtils::SleepMs(20);
 		ret = GetSerialAnswer(portName_Z.c_str(), "\r\n", answer);
 		if (ret != DEVICE_OK && ret != 14)
 			return ret;
@@ -1267,7 +1269,7 @@ int ChuoSeikiZStage::GetPositionSteps(long& z)
 		if (answer.length() > 8)				// answer format: (+ or -)(8 digits)(stage state keyword)
 		{
 			if (answer.substr(9, 1) == "D")	{
-				Sleep(20);
+				CDeviceUtils::SleepMs(20);
 				continue;		// retry request position reading
 			}
 			else if (answer.substr(9, 1) == "H")	{
@@ -1284,9 +1286,11 @@ int ChuoSeikiZStage::GetPositionSteps(long& z)
 			return ERR_CONTROLER_8;
 		}
 
-		Sleep(20);
+		CDeviceUtils::SleepMs(20);
 		// if answer is wrong, try again, max 10 times
 	}
+   // should be unreachable, but better safe then sorry
+   return ERR_CONTROLER_8;
 }
 
 

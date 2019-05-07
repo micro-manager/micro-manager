@@ -112,10 +112,10 @@ int clearPort(MM::Device& device, MM::Core& core, const char* port)
 MD_SingleStage::MD_SingleStage():
 
 transmissionDelay_		(10), 
-initializationStatus_	(false),
 stepSize_um_			(1),
 speed_step_				(1000),	//pps
 accelTime_pattern_		(2),
+initializationStatus_	(false),
 answerTimeoutMs_		(20)		// answer time out is 100ms
 
 {
@@ -795,13 +795,13 @@ int MD_SingleStage::OnAutofocus(MM::PropertyBase* pProp, MM::ActionType eAct)
 //-----------------------------------------------------------------------------
 MD_TwoStages::MD_TwoStages() :
 
-initializationStatus_	(false),
 stepSize_umX_			(1),
 stepSize_umY_			(1),
 speed_stepX_			(1000),	//pps
 speed_stepY_			(1000),	//pps
 accelTime_patternX_		(2),	// pattern 1-4
 accelTime_patternY_		(2),	// pattern 1-4
+initializationStatus_	(false),
 answerTimeoutMs_		(20)	// answer timeout is 100ms
 
 {
