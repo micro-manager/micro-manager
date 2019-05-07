@@ -152,6 +152,8 @@ private:
 	std::vector<char> inventoryDeviceIDs_;
 
 // control variables
+   bool initialized_;
+
 	bool bHomeing;
 	bool bLimitStop;
 
@@ -179,8 +181,6 @@ private:
 	double posY_um_;
 	bool busy_;
 	MM::TimeoutMs* timeOutTimer_;
-
-	bool initialized_;
 
 	std::string controllerAxisX_;
 	std::string controllerAxisY_;
