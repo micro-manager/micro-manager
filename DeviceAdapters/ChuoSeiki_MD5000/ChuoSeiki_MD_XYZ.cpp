@@ -239,7 +239,6 @@ int MD_SingleStage::ConfirmVersion()
 {
 	int ret;
 
-	int ret;
 	for (int i = 0; i < 5; i++)
 	{
 		PurgeComPort(portName_1S.c_str());
