@@ -110,12 +110,11 @@ int clearPort(MM::Device& device, MM::Core& core, const char* port)
 //-----------------------------------------------------------------------------
 
 MD_SingleStage::MD_SingleStage():
-
+initializationStatus_	(false),
 transmissionDelay_		(10), 
 stepSize_um_			(1),
 speed_step_				(1000),	//pps
 accelTime_pattern_		(2),
-initializationStatus_	(false),
 answerTimeoutMs_		(20)		// answer time out is 100ms
 
 {
@@ -127,7 +126,7 @@ answerTimeoutMs_		(20)		// answer time out is 100ms
 	SetErrorText(ERR_NO_ANSWER,				"No answer from the controller.  Is it connected?");
 	SetErrorText(ERR_PORT_CHANGE_FORBIDDEN, "Can't change port");
 	SetErrorText(ERR_UNRECOGNIZED_ANSWER,	"Can't recognize answer");
-	SetErrorText(ERR_NO_CONTROLLER,			"No controller");
+	SetErrorText(ERR_NO_CONTROLLER,			"Controller Communication Error");
 	SetErrorText(ERR_HOMING,				"Home search failed");
 	SetErrorText(ERR_TIMEOUT,				"Time out");
 
@@ -217,10 +216,8 @@ MM::DeviceDetectionStatus MD_SingleStage::DetectDevice(void)
 			// check version
 			int ret =  this->ConfirmVersion();
 			if (ret != DEVICE_OK && ret != 14)
-			{
-#ifdef _DEBUG			
+			{		
 				LogMessageCode(ret, true);
-#endif
 			}
 			else
 				 // to succeed must reach here....
@@ -241,22 +238,35 @@ MM::DeviceDetectionStatus MD_SingleStage::DetectDevice(void)
 int MD_SingleStage::ConfirmVersion()
 {
 	int ret;
-	// clear comport
-	PurgeComPort(portName_1S.c_str());
-	std::string version;
-	// send command to check controller version
-	ret =  ExecuteCommand("RVR");
-	if (ret!= DEVICE_OK) 
-		return ret;
-	// read serial com, read in 20ms, end when timeouts
-	ret =  ReadMessage(version);
-	if (ret != DEVICE_OK && ret != 14) 
-		return ret;
-	
-	if (version.substr(0,3) != "RVR" ||version == "" ) 
-		return ERR_UNRECOGNIZED_ANSWER;
+
+	int ret;
+	for (int i = 0; i < 5; i++)
+	{
+		PurgeComPort(portName_1S.c_str());
+		std::string version;
+
+		ret = ExecuteCommand("RVR");
+		if (ret != DEVICE_OK)
+			return ret;
+
+		ret = ReadMessage(version);
+		if (ret != DEVICE_OK && ret != 14)
+			return ret;
+
+		if (version.substr(0, 9).compare("RVR") == 0) break;
+		else if (version.substr(0, 9).compare("RVR") != 0 || version == "")
+		{
+			if (i >= 4) return ERR_NO_CONTROLLER;
+			else {
+				CDeviceUtils::SleepMs(10);					// else sleep and retry
+				continue;
+			}
+		}
+	}
+	return DEVICE_OK;
 
 	return DEVICE_OK;
+
 }
 
 int MD_SingleStage::Initialize()
@@ -794,41 +804,42 @@ int MD_SingleStage::OnAutofocus(MM::PropertyBase* pProp, MM::ActionType eAct)
 //........... Class2: Two stages controller....................................
 //-----------------------------------------------------------------------------
 MD_TwoStages::MD_TwoStages() :
-
+initializationStatus_	(false),
 stepSize_umX_			(1),
 stepSize_umY_			(1),
 speed_stepX_			(1000),	//pps
 speed_stepY_			(1000),	//pps
 accelTime_patternX_		(2),	// pattern 1-4
 accelTime_patternY_		(2),	// pattern 1-4
-initializationStatus_	(false),
 answerTimeoutMs_		(20)	// answer timeout is 100ms
-
 {
 	InitializeDefaultErrorMessages();
 
 	// custom error messages:
 	SetErrorText(ERR_DEBUG, "debug");		// for debug
 
-	SetErrorText(ERR_UNRECOGNIZED_ANSWER,	"Can't recognize answer");
-	SetErrorText(ERR_HOMING,				"Home search failed");
-	SetErrorText(ERR_TIMEOUT,				"Time out");
+	SetErrorText(ERR_NO_ANSWER, "No answer from the controller.  Is it connected?");
+	SetErrorText(ERR_PORT_CHANGE_FORBIDDEN, "Can't change port");
+	SetErrorText(ERR_UNRECOGNIZED_ANSWER, "Can't recognize answer");
+	SetErrorText(ERR_NO_CONTROLLER, "Controller Communication Error");
+	SetErrorText(ERR_HOMING, "Home search failed");
+	SetErrorText(ERR_TIMEOUT, "Time out");
 
-	SetErrorText(ERR_02_OPERATION_REFUSED_BY_PROGRAM_STOP,		"The operation is refused due to program stop");
-	SetErrorText(ERR_03_NOT_ACCEPT_COMMAND,						"The command execution cannot be accepted");
-	SetErrorText(ERR_04_OPERATION_REFUSED_BY_MOTOR_ROTATION,	"The operation is refused due to motor rotation");
-	SetErrorText(ERR_06_PARAMETER_ERROR,						"Parameter error");
-	SetErrorText(ERR_07_OPERATION_REFUSED_BY_MOTOR_STOP,		"The operation is refused due to motor stop");
-	SetErrorText(ERR_08_OPERATION_REFUSED_BY_PROGRAM_RUNNING,	"The operation is refused due to program running");
-	SetErrorText(ERR_0B_FAIL_TO_READ_DATA,						"Failed to read Data");
-	SetErrorText(ERR_0C_CANT_FIND_REGISTERED_PROGRAM,			"The registered program cannot be found");
-	SetErrorText(ERR_0D_NO_RESPONSE,							"No response");
-	SetErrorText(ERR_0E_SPEED_CAN_NOT_SET_DURING_ACCEL,			"Speed cannot be set during motor rotation in S-curve accel/decel");
-	SetErrorText(ERR_0F_MOTOR_EXCITATION_OFF,					"Motor excitation off");
-	SetErrorText(ERR_50_STEP_OUT_ERROR,							"Step out error occurs");
-	SetErrorText(ERR_51_STOP_SIGNAL_INPUT,						"Stop signal is being inputted");
-	SetErrorText(ERR_52_STOP_SIGNAL_INPUT,						"Stop signal is being inputted");
-	SetErrorText(ERR_53_NOT_CONSTANT_MODE_IN_SPEED_SETTING,		"Mode is not Constant in Speed setting in interpolation driving");
+	SetErrorText(ERR_02_OPERATION_REFUSED_BY_PROGRAM_STOP, "The operation is refused due to program stop");
+	SetErrorText(ERR_03_NOT_ACCEPT_COMMAND, "The command execution cannot be accepted");
+	SetErrorText(ERR_04_OPERATION_REFUSED_BY_MOTOR_ROTATION, "The operation is refused due to motor rotation");
+	SetErrorText(ERR_06_PARAMETER_ERROR, "Parameter error");
+	SetErrorText(ERR_07_OPERATION_REFUSED_BY_MOTOR_STOP, "The operation is refused due to motor stop");
+	SetErrorText(ERR_08_OPERATION_REFUSED_BY_PROGRAM_RUNNING, "The operation is refused due to program running");
+	SetErrorText(ERR_0B_FAIL_TO_READ_DATA, "Failed to read Data");
+	SetErrorText(ERR_0C_CANT_FIND_REGISTERED_PROGRAM, "The registered program cannot be found");
+	SetErrorText(ERR_0D_NO_RESPONSE, "No response");
+	SetErrorText(ERR_0E_SPEED_CAN_NOT_SET_DURING_ACCEL, "Speed cannot be set during motor rotation in S-curve accel/decel");
+	SetErrorText(ERR_0F_MOTOR_EXCITATION_OFF, "Motor excitation off");
+	SetErrorText(ERR_50_STEP_OUT_ERROR, "Step out error occurs");
+	SetErrorText(ERR_51_STOP_SIGNAL_INPUT, "Stop signal is being inputted");
+	SetErrorText(ERR_52_STOP_SIGNAL_INPUT, "Stop signal is being inputted");
+	SetErrorText(ERR_53_NOT_CONSTANT_MODE_IN_SPEED_SETTING, "Mode is not Constant in Speed setting in interpolation driving");
 
 	// Name, read-only (RO)
 	CreateProperty(MM::g_Keyword_Name, g_ChuoSeikiTwoStagesDeviceName, MM::String, true);
@@ -925,20 +936,29 @@ MM::DeviceDetectionStatus MD_TwoStages::DetectDevice(void)
 int MD_TwoStages::ConfirmVersion()
 {
 	int ret;
-	PurgeComPort(portName_2S.c_str());
-	std::string version;
+	for (int i = 0; i < 5; i++)
+	{
+		PurgeComPort(portName_2S.c_str());
+		std::string version;
 
-	ret =  ExecuteCommand("RVR");
-	if (ret!= DEVICE_OK) 
-		return ret;
-	
-	ret =  ReadMessage(version);
-	if (ret != DEVICE_OK && ret != 14) 
-		return ret;
-	
-	if (version.substr(0,3) != "RVR" ||version == "" ) 
-		return ERR_UNRECOGNIZED_ANSWER;
+		ret = ExecuteCommand("RVR");
+		if (ret != DEVICE_OK)
+			return ret;
 
+		ret = ReadMessage(version);
+		if (ret != DEVICE_OK && ret != 14)
+			return ret;
+
+		if (version.substr(0, 9).compare("RVR") == 0) break;
+		else if (version.substr(0, 9).compare("RVR") != 0 || version == "")
+		{
+			if (i >= 4) return ERR_NO_CONTROLLER;
+			else {
+				CDeviceUtils::SleepMs(10);					// else sleep and retry
+				continue;
+			}
+		}
+	}
 	return DEVICE_OK;
 }
 
