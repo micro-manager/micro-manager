@@ -133,24 +133,24 @@ accelTimeY_			(100)
 	InitializeDefaultErrorMessages();  // default error messages
 	
 	// define custom error messages
-	SetErrorText (ERR_PORT_CHANGE_FORBIDDEN,"Can't change serial port!"	);
-	SetErrorText (ERR_UNRECOGNIZED_ANSWER,	"Unrecognized answer!");
-	SetErrorText (ERR_NO_ANSWER,			"No response!");
-	SetErrorText (ERR_NO_CONTROLLER,		"Please add the ChuoSeiki Controller device first!");
-	SetErrorText (ERR_HOMING,				"Homing error! Please clear error using control pad!");
-	SetErrorText (ERR_TIMEOUT,				"Timeout error!");
-//	SetErrorText (ERR_DEVICE_CHECK, "Error During Confirm Device Version! Please ReStart and Retry!");
+	SetErrorText(ERR_PORT_CHANGE_FORBIDDEN, "Can't change serial port!");
+	SetErrorText(ERR_UNRECOGNIZED_ANSWER, "Unrecognized answer!");
+	SetErrorText(ERR_NO_ANSWER, "No response!");
+	SetErrorText(ERR_NO_CONTROLLER, "Please connect the ChuoSeiki Controller then add device adapter!");
+	SetErrorText(ERR_HOMING, "Homing error! Please clear error using control pad!");
+	SetErrorText(ERR_TIMEOUT, "Timeout error!");
+	//	SetErrorText(ERR_DEVICE_CHECK, "Error During Confirm Device Version! Please ReStart and Retry!");
 
-	SetErrorText(ERR_CONTROLER_0,	"Not In Command Recive Mode!");
-	SetErrorText(ERR_CONTROLER_1,	"Command Syntax Error!");
-	SetErrorText(ERR_CONTROLER_2,	"Error: Overflow Value/Read Only Parameter!");
-	SetErrorText(ERR_CONTROLER_3,	"Command Set Axis Error/Mode Setting Error!");
-	SetErrorText(ERR_CONTROLER_4,	"Command Char Over!");
-	SetErrorText(ERR_CONTROLER_5,	"Stop Command Sent To Stopped Stage!");
-	SetErrorText(ERR_CONTROLER_6,	"Limit Detected!");
-	SetErrorText(ERR_CONTROLER_7,	"Emergency Stop Detected!");
-	SetErrorText(ERR_CONTROLER_8,	"Com Error/Driver Error!");
-	SetErrorText(ERR_CONTROLER_9,	"Other Errors!");
+	SetErrorText(ERR_CONTROLER_0, "Not In Command Recive Mode!");
+	SetErrorText(ERR_CONTROLER_1, "Command Syntax Error!");
+	SetErrorText(ERR_CONTROLER_2, "Error: Overflow Value/Read Only Parameter!");
+	SetErrorText(ERR_CONTROLER_3, "Command Set Axis Error/Mode Setting Error!");
+	SetErrorText(ERR_CONTROLER_4, "Command Char Over!");
+	SetErrorText(ERR_CONTROLER_5, "Stop Command Sent To Stopped Stage!");
+	SetErrorText(ERR_CONTROLER_6, "Limit Detected!");
+	SetErrorText(ERR_CONTROLER_7, "Emergency Stop Detected!");
+	SetErrorText(ERR_CONTROLER_8, "Com Error/Driver Error!");
+	SetErrorText(ERR_CONTROLER_9, "Other Errors!");
 
 
 	// Name, read-only (RO)
@@ -205,15 +205,10 @@ MM::DeviceDetectionStatus ChuoSeikiXYStage::DetectDevice(void)
 			// set port parameters
 			device->Initialize();
 			// check version
-			int ret = 0;
-			for (int i = 0; i < 5; i++)
+			int ret = this->ConfirmComm();
+			if (ret != DEVICE_OK && ret != 14)
 			{
-				int ret = this->ConfirmComm();
-				if (DEVICE_OK == ret) break;	// if OK, break
-            else CDeviceUtils::SleepMs(10);					// else sleep and retry
-
-				// if failed for all 5 times
-				if (DEVICE_OK != ret && i == 4) 	LogMessageCode(ret, true);
+				LogMessageCode(ret, true);
 			}
 
 			// to succeed must reach here....			
@@ -237,6 +232,8 @@ int ChuoSeikiXYStage::ConfirmComm()
 	int ret;
 	string answer;
 
+	for (int i = 0; i < 5; i++)
+	{
 		PurgeComPort(portName_XY.c_str());
 		ret = SendSerialCommand(portName_XY.c_str(), "?:CHUOSEIKI", "\r\n");		// it will return the phase after "?:"
 		if (ret != DEVICE_OK && ret != 14) 	return ret;
@@ -244,13 +241,16 @@ int ChuoSeikiXYStage::ConfirmComm()
 		ret = GetSerialAnswer(portName_XY.c_str(), "\r\n", answer);
 		if (ret != DEVICE_OK && ret != 14) 	return ret;
 
-		if (answer.substr(0, 9).compare("CHUOSEIKI") < 0) return ERR_CONTROLER_8;
+		if (answer.substr(0, 9).compare("CHUOSEIKI") == 0) break;
+		else if (answer.substr(0, 9).compare("CHUOSEIKI") != 0 && i >=4) return ERR_CONTROLER_8;
+		else CDeviceUtils::SleepMs(10);					// else sleep and retry
+	}
 
-		ret = SendSerialCommand(portName_XY.c_str(), "X:1", "\r\n");  // request feedback "\r\n" after send control command
-		if (ret != DEVICE_OK && ret != 14) 	return ret;
+	ret = SendSerialCommand(portName_XY.c_str(), "X:1", "\r\n");  // request feedback "\r\n" after send control command
+	if (ret != DEVICE_OK && ret != 14) 	return ret;
 
-		ret = GetSerialAnswer(portName_XY.c_str(), "\r\n", answer);
-		if(ret != DEVICE_OK && ret != 14) 	return ret;
+	ret = GetSerialAnswer(portName_XY.c_str(), "\r\n", answer);
+	if(ret != DEVICE_OK && ret != 14) 	return ret;
 
 	return DEVICE_OK;
 }
@@ -317,6 +317,10 @@ int ChuoSeikiXYStage::Initialize()
 	bLimitStop = false;
 
 	ret = UpdateStatus();
+	if (ret != DEVICE_OK && ret != 14)
+		return ret;
+
+	ret = ConfirmComm();
 	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
@@ -490,7 +494,7 @@ int ChuoSeikiXYStage::GetPositionSteps(long& x, long& y)
 	int ret = 0;
 	string answer;
 
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < 5; i++)
 	{
 		PurgeComPort(portName_XY.c_str());
 
@@ -508,6 +512,11 @@ int ChuoSeikiXYStage::GetPositionSteps(long& x, long& y)
 
 		if (answer.length() > 20)					// answer format: (+ or -)(8 digits)(stage A state keyword)(,)(+ or -)(8 digits)(stage B state keyword)
 		{
+			x = std::atol(answer.substr(0, 9).c_str());
+			y = std::atol(answer.substr(11, 9).c_str());
+			posX_um_ = x * stepSize_umX_;
+			posY_um_ = y * stepSize_umY_;
+
 			if ((answer.substr(9, 1) == "D") || (answer.substr(20, 1) == "D")) {
 				CDeviceUtils::SleepMs(20);
 				continue;		// if stage is running, repeat
@@ -516,14 +525,10 @@ int ChuoSeikiXYStage::GetPositionSteps(long& x, long& y)
 				return ERR_HOMING;
 			}
 			else	{
-				x = std::atol(answer.substr(0, 9).c_str());
-				y = std::atol(answer.substr(11, 9).c_str());
-				posX_um_ = x * stepSize_umX_;
-				posY_um_ = y * stepSize_umY_;
 				return DEVICE_OK;
 			}
 		}
-		else if (i == 9){
+		else if (i >= 4){
 			return ERR_CONTROLER_8;
 		}
 
@@ -937,7 +942,7 @@ initialized_		(false)
 	SetErrorText (ERR_PORT_CHANGE_FORBIDDEN,"Can't change serial port!"	);
 	SetErrorText (ERR_UNRECOGNIZED_ANSWER,	"Unrecognized answer!");
 	SetErrorText (ERR_NO_ANSWER,			"No response!");
-	SetErrorText (ERR_NO_CONTROLLER,		"Please add the ChuoSeiki Controller device first!");
+	SetErrorText (ERR_NO_CONTROLLER,		"Please connect the ChuoSeiki Controller then add device adapter!");
 	SetErrorText (ERR_HOMING,				"Homing error! Please clear error using control pad!");
 	SetErrorText (ERR_TIMEOUT,				"Timeout error!");
 //	SetErrorText(ERR_DEVICE_CHECK, "Error During Confirm Device Version! Please ReStart and Retry!");
@@ -1016,16 +1021,10 @@ MM::DeviceDetectionStatus ChuoSeikiZStage::DetectDevice(void)
 			// set port parameters
 			zdevice->Initialize();
 			// check version
-			int ret = 0;
-			for (int i = 0; i < 5; i++)
+			int ret = this->ConfirmComm();
+			if (ret != DEVICE_OK && ret != 14)
 			{
-				int ret = this->ConfirmComm();
-				if (DEVICE_OK == ret) break;	// if OK, break
-				else CDeviceUtils::SleepMs(10);					// else sleep and retry
-
-				// if failed for all 5 times
-				if (DEVICE_OK != ret && i == 4) 	LogMessageCode(ret, true);
-
+				LogMessageCode(ret, true);
 			}
 
 			// to succeed must reach here....			
@@ -1048,16 +1047,19 @@ int ChuoSeikiZStage::ConfirmComm()
 	int ret;
 	string answer;
 
-	PurgeComPort(portName_Z.c_str());
-	ret= SendSerialCommand(portName_Z.c_str(), "?:CHUOSEIKI", "\r\n");
-	if (ret!= DEVICE_OK && ret != 14)
-		return ret;
-	//Sleep (50);
-	ret= GetSerialAnswer(portName_Z.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK && ret != 14) 
-		return ret;
+	for (int i = 0; i < 5; i++)
+	{
+		PurgeComPort(portName_Z.c_str());
+		ret = SendSerialCommand(portName_Z.c_str(), "?:CHUOSEIKI", "\r\n");		// it will return the phase after "?:"
+		if (ret != DEVICE_OK && ret != 14) 	return ret;
 
-	if (answer.substr(0, 9).compare("CHUOSEIKI") < 0) return ERR_CONTROLER_8;
+		ret = GetSerialAnswer(portName_Z.c_str(), "\r\n", answer);
+		if (ret != DEVICE_OK && ret != 14) 	return ret;
+
+		if (answer.substr(0, 9).compare("CHUOSEIKI") == 0) break;
+		else if (answer.substr(0, 9).compare("CHUOSEIKI") != 0 && i >=4) return ERR_CONTROLER_8;
+		else CDeviceUtils::SleepMs(10);					// else sleep and retry
+	}
 
 	ret = SendSerialCommand(portName_Z.c_str(), "X:1", "\r\n");  // request feedback "\r\n" after each command
 	if (ret != DEVICE_OK && ret != 14)
@@ -1102,6 +1104,10 @@ int ChuoSeikiZStage::Initialize()
 	bLimitStop = false;
 
 	ret = UpdateStatus();
+	if (ret != DEVICE_OK && ret != 14)
+		return ret;
+
+	ret = ConfirmComm();
 	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
@@ -1252,7 +1258,7 @@ int ChuoSeikiZStage::GetPositionSteps(long& z)
 	string answer;
 	ostringstream command;
 
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < 5; i++)
 	{
 		PurgeComPort(portName_Z.c_str());
 
@@ -1268,6 +1274,9 @@ int ChuoSeikiZStage::GetPositionSteps(long& z)
 
 		if (answer.length() > 8)				// answer format: (+ or -)(8 digits)(stage state keyword)
 		{
+			z = std::atol(answer.substr(0, 9).c_str());
+			posZ_um_ = z * stepSize_umZ_;
+
 			if (answer.substr(9, 1) == "D")	{
 				CDeviceUtils::SleepMs(20);
 				continue;		// retry request position reading
@@ -1276,12 +1285,10 @@ int ChuoSeikiZStage::GetPositionSteps(long& z)
 				return ERR_HOMING;		// home-error
 			}
 			else	{
-				z = std::atol(answer.substr(0, 9).c_str());
-				posZ_um_ = z * stepSize_umZ_;
 				return DEVICE_OK;
 			}
 		}
-		else if (i == 9)
+		else if (i >= 4)
 		{
 			return ERR_CONTROLER_8;
 		}
