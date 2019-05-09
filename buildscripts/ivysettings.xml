@@ -3,7 +3,7 @@
 
 	<resolvers>
 		<ibiblio name="central" m2compatible="true"/>
-		<ibiblio name="imagej-net" m2compatible="true" root="http://maven.imagej.net/content/groups/public"/>
+		<ibiblio name="scijava-org" m2compatible="true" root="http://maven.scijava.org/content/groups/public"/>
 
 		<filesystem name="thirdpartypublic">
 			<artifact pattern="${ivy.settings.dir}/../../3rdpartypublic/classext/[artifact].[ext]"/>
@@ -15,7 +15,7 @@
 
 		<chain name="resolver-chain">
 			<resolver ref="central"/>
-			<resolver ref="imagej-net"/>
+			<resolver ref="scijava-org"/>
 			<resolver ref="thirdpartypublic"/>
 			<resolver ref="thirdpartynonfree"/>
 		</chain>
