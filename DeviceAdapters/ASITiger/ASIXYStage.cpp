@@ -106,7 +106,8 @@ int CXYStage::Initialize()
    command << g_XYStageDeviceDescription << " Xaxis=" << axisLetterX_ << " Yaxis=" << axisLetterY_ << " HexAddr=" << addressString_;
    CreateProperty(MM::g_Keyword_Description, command.str().c_str(), MM::String, true);
 
-   // max motor speed - read only property
+   // max motor speed - read only property; do this way instead of via to-be-created properties to minimize serial
+   //   traffic with updating speed based on speedTruth_ (and seems to do a better job of preserving decimal points)
    double maxSpeedX = getMaxSpeed(axisLetterX_);
    command.str("");
    command << maxSpeedX;
@@ -307,7 +308,16 @@ int CXYStage::Initialize()
    // get build info so we can add optional properties
    build_info_type build;
    RETURN_ON_MM_ERROR( hub_->GetBuildInfo(addressChar_, build) );
-   speedTruth_ = hub_->IsDefinePresent(build, "SPEED TRUTH");
+
+   // populate speedTruth_, which is whether the controller will tell us the actual speed
+   if (FirmwareVersionAtLeast(3.27))
+   {
+      speedTruth_ = ! hub_->IsDefinePresent(build, "SPEED UNTRUTH");
+   }
+   else  // before v3.27
+   {
+      speedTruth_ = hub_->IsDefinePresent(build, "SPEED TRUTH");
+   }
 
    // add ring buffer properties if supported (starting version 2.81)
    if (FirmwareVersionAtLeast(2.81) && (build.vAxesProps[0] & BIT1))
@@ -928,6 +938,11 @@ int CXYStage::OnSpeedGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, strin
       if (speedTruth_) {
          refreshOverride_ = true;
          return OnSpeedGeneric(pProp, MM::BeforeGet, axisLetter);
+      }
+      else if (axisLetter.compare(axisLetterX_) == 0)
+      {
+         lastSpeedX_ = tmp;
+         RETURN_ON_MM_ERROR( SetProperty(g_MotorSpeedXMicronsPerSecPropertyName, "1") );  // set to a dummy value, will read from lastSpeedX_ variable
       }
    }
    return DEVICE_OK;
