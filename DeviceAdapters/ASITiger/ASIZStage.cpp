@@ -47,6 +47,8 @@ CZStage::CZStage(const char* name) :
    stepSizeUm_(g_StageMinStepSize),    // we'll use 1 nm as our smallest possible step size, this is somewhat arbitrary and doesn't change during the program
    axisLetter_(g_EmptyAxisLetterStr),   // value determined by extended name
    advancedPropsEnabled_(false),
+   speedTruth_(false),
+   lastSpeed_(1.0),
    ring_buffer_supported_(false),
    ring_buffer_capacity_(0),
    ttl_trigger_supported_(false),
@@ -91,7 +93,8 @@ int CZStage::Initialize()
    command << g_ZStageDeviceDescription << " Axis=" << axisLetter_ << " HexAddr=" << addressString_;
    CreateProperty(MM::g_Keyword_Description, command.str().c_str(), MM::String, true);
 
-   // max motor speed - read only property
+   // max motor speed - read only property; do this way instead of via to-be-created properties to minimize serial
+   //   traffic with updating speed based on speedTruth_ (and seems to do a better job of preserving decimal points)
    command.str("");
    command << "S " << axisLetter_ << "?";
    RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
@@ -133,6 +136,8 @@ int CZStage::Initialize()
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsDone);
 
    // Motor speed (S)
+   pAct = new CPropertyAction (this, &CZStage::OnSpeedMicronsPerSec);  // allow reading actual speed at higher precision by using different units
+   CreateProperty(g_MotorSpeedMicronsPerSecPropertyName , "1000", MM::Float, true, pAct);  // read-only property updated when speed is set
    pAct = new CPropertyAction (this, &CZStage::OnSpeed);
    CreateProperty(g_MotorSpeedPropertyName, "1", MM::Float, false, pAct);
    SetPropertyLimits(g_MotorSpeedPropertyName, 0, maxSpeed);
@@ -250,6 +255,16 @@ int CZStage::Initialize()
    // get build info so we can add optional properties
    build_info_type build;
    RETURN_ON_MM_ERROR( hub_->GetBuildInfo(addressChar_, build) );
+
+   // populate speedTruth_, which is whether the controller will tell us the actual speed
+   if (FirmwareVersionAtLeast(3.27))
+   {
+      speedTruth_ = ! hub_->IsDefinePresent(build, "SPEED UNTRUTH");
+   }
+   else  // before v3.27
+   {
+      speedTruth_ = hub_->IsDefinePresent(build, "SPEED TRUTH");
+   }
 
    // add single-axis properties if supported
    // (single-axis support existed prior pre-2.8 firmware, but now we have easier way to tell if it's present using axis properties
@@ -695,6 +710,16 @@ int CZStage::OnWaitTime(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int CZStage::OnSpeedMicronsPerSec(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet || eAct == MM::AfterSet)
+   {
+      if (!pProp->Set(lastSpeed_*1000))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   return DEVICE_OK;
+}
+
 int CZStage::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
@@ -702,19 +727,31 @@ int CZStage::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
-      if (!refreshProps_ && initialized_)
+      if (!refreshProps_ && initialized_ && !refreshOverride_)
          return DEVICE_OK;
+      refreshOverride_ = false;
       command << "S " << axisLetter_ << "?";
       response << ":A " << axisLetter_ << "=";
-      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()) );
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
+      lastSpeed_ = tmp;
+      RETURN_ON_MM_ERROR( SetProperty(g_MotorSpeedMicronsPerSecPropertyName, "1") );  // set to a dummy value, will read from lastSpeed_ variable
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
       command << "S " << axisLetter_ << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      if (speedTruth_) {
+         refreshOverride_ = true;
+         return OnSpeed(pProp, MM::BeforeGet);
+      }
+      else
+      {
+         lastSpeed_ = tmp;
+         RETURN_ON_MM_ERROR( SetProperty(g_MotorSpeedMicronsPerSecPropertyName, "1") );  // set to a dummy value, will read from lastSpeedX_ variable
+      }
    }
    return DEVICE_OK;
 }
@@ -1109,7 +1146,7 @@ int CZStage::OnJoystickFastSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (hub_->UpdatingSharedProperties())
          return DEVICE_OK;
       pProp->Get(tmp);
-	  char joystickMirror[MM::MaxStrLength];
+      char joystickMirror[MM::MaxStrLength];
       RETURN_ON_MM_ERROR ( GetProperty(g_JoystickMirrorPropertyName, joystickMirror) );
       if (strcmp(joystickMirror, g_YesState) == 0)
          command << addressChar_ << "JS X=-" << tmp;
@@ -1146,7 +1183,7 @@ int CZStage::OnJoystickSlowSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (hub_->UpdatingSharedProperties())
          return DEVICE_OK;
       pProp->Get(tmp);
-	  char joystickMirror[MM::MaxStrLength];
+      char joystickMirror[MM::MaxStrLength];
       RETURN_ON_MM_ERROR ( GetProperty(g_JoystickMirrorPropertyName, joystickMirror) );
       if (strcmp(joystickMirror, g_YesState) == 0)
          command << addressChar_ << "JS Y=-" << tmp;
