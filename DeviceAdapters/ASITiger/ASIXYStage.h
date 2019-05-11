@@ -87,6 +87,7 @@ public:
    int OnNrExtraMoveReps      (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSpeedGeneric         (MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter);
    int OnSpeedXMicronsPerSec  (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSpeedYMicronsPerSec  (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSpeedX               (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnSpeedGeneric(pProp, eAct, axisLetterX_); }
    int OnSpeedY               (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnSpeedGeneric(pProp, eAct, axisLetterY_); }
    int OnBacklashGeneric      (MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter);
@@ -164,6 +165,7 @@ private:
    bool advancedPropsEnabled_;
    bool speedTruth_;
    double lastSpeedX_;
+   double lastSpeedY_;
    bool ring_buffer_supported_;
    long ring_buffer_capacity_;
    bool ttl_trigger_supported_;
@@ -173,7 +175,7 @@ private:
 
    // private helper functions
    int OnSaveJoystickSettings();
-   double getMaxSpeed(string axisLetter);
+   int getMinMaxSpeed(string axisLetter, double& minSpeed, double& maxSpeed);
 };
 
 #endif //_ASIXYStage_H_

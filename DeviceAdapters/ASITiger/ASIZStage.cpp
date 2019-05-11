@@ -93,7 +93,7 @@ int CZStage::Initialize()
    command << g_ZStageDeviceDescription << " Axis=" << axisLetter_ << " HexAddr=" << addressString_;
    CreateProperty(MM::g_Keyword_Description, command.str().c_str(), MM::String, true);
 
-   // max motor speed - read only property; do this way instead of via to-be-created properties to minimize serial
+   // min and max motor speeds - read only properties; do this way instead of via to-be-created properties to minimize serial
    //   traffic with updating speed based on speedTruth_ (and seems to do a better job of preserving decimal points)
    command.str("");
    command << "S " << axisLetter_ << "?";
@@ -107,11 +107,20 @@ int CZStage::Initialize()
    double maxSpeed;
    RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(maxSpeed) );
    command2.str("");
+   command2 << "S " << axisLetter_ << "=0.000001";
+   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command2.str(), ":A")); // set too low
+   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));  // read actual min
+   double minSpeed;
+   RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(minSpeed) );
+   command2.str("");
    command2 << "S " << axisLetter_ << "=" << origSpeed;
    RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command2.str(), ":A")); // restore
    command2.str("");
    command2 << maxSpeed;
    CreateProperty(g_MaxMotorSpeedPropertyName, command2.str().c_str(), MM::Float, true);
+   command2.str("");
+   command2 << minSpeed;
+   CreateProperty(g_MinMotorSpeedPropertyName, command2.str().c_str(), MM::Float, true);
 
    // now for properties that are read-write, mostly parameters that set aspects of stage behavior
    // parameters exposed for user to set easily: SL, SU, PC, E, S, AC, WT, MA, JS X=, JS Y=, JS mirror
@@ -140,7 +149,7 @@ int CZStage::Initialize()
    CreateProperty(g_MotorSpeedMicronsPerSecPropertyName , "1000", MM::Float, true, pAct);  // read-only property updated when speed is set
    pAct = new CPropertyAction (this, &CZStage::OnSpeed);
    CreateProperty(g_MotorSpeedPropertyName, "1", MM::Float, false, pAct);
-   SetPropertyLimits(g_MotorSpeedPropertyName, 0, maxSpeed);
+   SetPropertyLimits(g_MotorSpeedPropertyName, minSpeed, maxSpeed);
    UpdateProperty(g_MotorSpeedPropertyName);
 
    // drift error (E)
