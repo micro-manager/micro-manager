@@ -55,6 +55,7 @@ CXYStage::CXYStage(const char* name) :
    advancedPropsEnabled_(false),
    speedTruth_(false),
    lastSpeedX_(1.0),
+   lastSpeedY_(1.0),
    ring_buffer_supported_(false),
    ring_buffer_capacity_(0),
    ttl_trigger_supported_(false),
@@ -108,11 +109,19 @@ int CXYStage::Initialize()
 
    // max motor speed - read only property; do this way instead of via to-be-created properties to minimize serial
    //   traffic with updating speed based on speedTruth_ (and seems to do a better job of preserving decimal points)
-   double maxSpeedX = getMaxSpeed(axisLetterX_);
+   double minSpeedX, maxSpeedX;
+   RETURN_ON_MM_ERROR ( getMinMaxSpeed(axisLetterX_, minSpeedX, maxSpeedX) );
+   double minSpeedY, maxSpeedY;
+   RETURN_ON_MM_ERROR ( getMinMaxSpeed(axisLetterY_, minSpeedY, maxSpeedY) );
+   command.str("");
+   command << minSpeedX;
+   CreateProperty(g_MinMotorSpeedXPropertyName, command.str().c_str(), MM::Float, true);
    command.str("");
    command << maxSpeedX;
    CreateProperty(g_MaxMotorSpeedXPropertyName, command.str().c_str(), MM::Float, true);
-   double maxSpeedY = getMaxSpeed(axisLetterY_);
+   command.str("");
+   command << minSpeedY;
+   CreateProperty(g_MinMotorSpeedYPropertyName, command.str().c_str(), MM::Float, true);
    command.str("");
    command << maxSpeedY;
    CreateProperty(g_MaxMotorSpeedYPropertyName, command.str().c_str(), MM::Float, true);
@@ -145,13 +154,15 @@ int CXYStage::Initialize()
    // Motor speed (S) for X and Y
    pAct = new CPropertyAction (this, &CXYStage::OnSpeedXMicronsPerSec);  // allow reading actual speed at higher precision by using different units
    CreateProperty(g_MotorSpeedXMicronsPerSecPropertyName , "1000", MM::Float, true, pAct);  // read-only property updated when X speed is set
+   pAct = new CPropertyAction (this, &CXYStage::OnSpeedYMicronsPerSec);  // allow reading actual speed at higher precision by using different units
+   CreateProperty(g_MotorSpeedYMicronsPerSecPropertyName , "1000", MM::Float, true, pAct);  // read-only property updated when Y speed is set
    pAct = new CPropertyAction (this, &CXYStage::OnSpeedX);
    CreateProperty(g_MotorSpeedXPropertyName, "1", MM::Float, false, pAct);
-   SetPropertyLimits(g_MotorSpeedXPropertyName, 0, maxSpeedX);
+   SetPropertyLimits(g_MotorSpeedXPropertyName, minSpeedX, maxSpeedX);
    UpdateProperty(g_MotorSpeedXPropertyName);
    pAct = new CPropertyAction (this, &CXYStage::OnSpeedY);
    CreateProperty(g_MotorSpeedYPropertyName, "1", MM::Float, false, pAct);
-   SetPropertyLimits(g_MotorSpeedYPropertyName, 0, maxSpeedY);
+   SetPropertyLimits(g_MotorSpeedYPropertyName, minSpeedY, maxSpeedY);
    UpdateProperty(g_MotorSpeedYPropertyName);
 
    // Backlash (B) for X and Y
@@ -452,9 +463,8 @@ int CXYStage::Initialize()
    return DEVICE_OK;
 }
 
-double CXYStage::getMaxSpeed(string axisLetter)
+int CXYStage::getMinMaxSpeed(string axisLetter, double& minSpeed, double& maxSpeed)
 {
-   double maxSpeed;
    ostringstream command;
    command << "S " << axisLetter << "?";
    RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
@@ -466,9 +476,14 @@ double CXYStage::getMaxSpeed(string axisLetter)
    RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));  // read actual max
    RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(maxSpeed) );
    command2.str("");
+   command2 << "S " << axisLetter << "=0.000001";
+   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command2.str(), ":A")); // set too low
+   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));  // read actual min
+   RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(minSpeed) );
+   command2.str("");
    command2 << "S " << axisLetter << "=" << origSpeed;
    RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command2.str(), ":A")); // restore
-   return maxSpeed;
+   return DEVICE_OK;
 }
 
 int CXYStage::GetPositionSteps(long& x, long& y)
@@ -910,6 +925,16 @@ int CXYStage::OnSpeedXMicronsPerSec(MM::PropertyBase* pProp, MM::ActionType eAct
    return DEVICE_OK;
 }
 
+int CXYStage::OnSpeedYMicronsPerSec(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet || eAct == MM::AfterSet)
+   {
+      if (!pProp->Set(lastSpeedY_*1000))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   return DEVICE_OK;
+}
+
 int CXYStage::OnSpeedGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter)
 {
    ostringstream command; command.str("");
@@ -930,6 +955,11 @@ int CXYStage::OnSpeedGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, strin
          lastSpeedX_ = tmp;
          RETURN_ON_MM_ERROR( SetProperty(g_MotorSpeedXMicronsPerSecPropertyName, "1") );  // set to a dummy value, will read from lastSpeedX_ variable
       }
+      else
+      {
+         lastSpeedY_ = tmp;
+         RETURN_ON_MM_ERROR( SetProperty(g_MotorSpeedYMicronsPerSecPropertyName, "1") );  // set to a dummy value, will read from lastSpeedX_ variable
+      }
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
@@ -939,10 +969,18 @@ int CXYStage::OnSpeedGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, strin
          refreshOverride_ = true;
          return OnSpeedGeneric(pProp, MM::BeforeGet, axisLetter);
       }
-      else if (axisLetter.compare(axisLetterX_) == 0)
+      else
       {
-         lastSpeedX_ = tmp;
-         RETURN_ON_MM_ERROR( SetProperty(g_MotorSpeedXMicronsPerSecPropertyName, "1") );  // set to a dummy value, will read from lastSpeedX_ variable
+         if (axisLetter.compare(axisLetterX_) == 0)
+         {
+            lastSpeedX_ = tmp;
+            RETURN_ON_MM_ERROR( SetProperty(g_MotorSpeedXMicronsPerSecPropertyName, "1") );  // set to a dummy value, will read from lastSpeedX_ variable
+         }
+         else
+         {
+            lastSpeedY_ = tmp;
+            RETURN_ON_MM_ERROR( SetProperty(g_MotorSpeedYMicronsPerSecPropertyName, "1") );  // set to a dummy value, will read from lastSpeedX_ variable
+         }
       }
    }
    return DEVICE_OK;
