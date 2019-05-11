@@ -3,7 +3,7 @@
 
 	<resolvers>
 		<ibiblio name="central" m2compatible="true"/>
-		<ibiblio name="scijava-org" m2compatible="true" root="http://maven.scijava.org/content/groups/public"/>
+		<ibiblio name="scijava-org" m2compatible="true" root="https://maven.scijava.org/content/groups/public"/>
 
 		<filesystem name="thirdpartypublic">
 			<artifact pattern="${ivy.settings.dir}/../../3rdpartypublic/classext/[artifact].[ext]"/>
