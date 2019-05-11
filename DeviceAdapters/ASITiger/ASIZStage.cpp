@@ -119,7 +119,7 @@ int CZStage::Initialize()
    command2 << maxSpeed;
    CreateProperty(g_MaxMotorSpeedPropertyName, command2.str().c_str(), MM::Float, true);
    command2.str("");
-   command2 << minSpeed;
+   command2 << (minSpeed*1000);
    CreateProperty(g_MinMotorSpeedPropertyName, command2.str().c_str(), MM::Float, true);
 
    // now for properties that are read-write, mostly parameters that set aspects of stage behavior

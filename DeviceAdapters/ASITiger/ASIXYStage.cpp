@@ -114,13 +114,13 @@ int CXYStage::Initialize()
    double minSpeedY, maxSpeedY;
    RETURN_ON_MM_ERROR ( getMinMaxSpeed(axisLetterY_, minSpeedY, maxSpeedY) );
    command.str("");
-   command << minSpeedX;
+   command << (minSpeedX*1000);
    CreateProperty(g_MinMotorSpeedXPropertyName, command.str().c_str(), MM::Float, true);
    command.str("");
    command << maxSpeedX;
    CreateProperty(g_MaxMotorSpeedXPropertyName, command.str().c_str(), MM::Float, true);
    command.str("");
-   command << minSpeedY;
+   command << (minSpeedY*1000);
    CreateProperty(g_MinMotorSpeedYPropertyName, command.str().c_str(), MM::Float, true);
    command.str("");
    command << maxSpeedY;
