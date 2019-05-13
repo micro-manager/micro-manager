@@ -559,6 +559,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    XCiteXT600
    XLight
    Xcite
+   YodnE600
    Yokogawa
    Zaber
    ZeissCAN

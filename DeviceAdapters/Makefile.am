@@ -189,6 +189,8 @@ SUBDIRS = \
 	XCiteXT600 \
 	XLight \
 	Xcite \
+	PI \
+	YodnE600 \
 	Yokogawa \
 	Zaber \
 	ZeissCAN \
