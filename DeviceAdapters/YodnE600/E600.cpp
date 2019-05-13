@@ -3,7 +3,7 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   E600 light source controller adapter
+// DESCRIPTION:   Yodn E600 light source controller adapter
 // COPYRIGHT:     
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
@@ -16,7 +16,7 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-// AUTHOR:        
+// AUTHOR:        BJI MBQ (mbaoqi@outlook.com)
 ///////////////////////////////////////////////////////////////////////////////
 #include "E600.h"
 

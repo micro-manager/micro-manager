@@ -4,7 +4,7 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   E600 light source controller adapter constant variable definitions.
+// DESCRIPTION:   Yodn E600 light source controller adapter constant variable definitions.
 // COPYRIGHT:     
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
@@ -17,7 +17,7 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-// AUTHOR:        
+// AUTHOR:        BJI MBQ (mbaoqi@outlook.com)
 ///////////////////////////////////////////////////////////////////////////////
 #ifndef E600DEFS_H
 #define E600DEFS_H
