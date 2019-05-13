@@ -238,7 +238,6 @@ MM::DeviceDetectionStatus MD_SingleStage::DetectDevice(void)
 int MD_SingleStage::ConfirmVersion()
 {
 	int ret;
-
 	for (int i = 0; i < 5; i++)
 	{
 		PurgeComPort(portName_1S.c_str());
@@ -252,20 +251,21 @@ int MD_SingleStage::ConfirmVersion()
 		if (ret != DEVICE_OK && ret != 14)
 			return ret;
 
-		if (version.substr(0, 9).compare("RVR") == 0) break;
+		if (version.substr(0, 9).compare("RVR") == 0) {
+			break;
+		}
 		else if (version.substr(0, 9).compare("RVR") != 0 || version == "")
 		{
-			if (i >= 4) return ERR_NO_CONTROLLER;
+			if (i >= 4) {
+				return ERR_NO_CONTROLLER;
+			}
 			else {
 				CDeviceUtils::SleepMs(10);					// else sleep and retry
-				continue;
+			//	continue;
 			}
 		}
 	}
 	return DEVICE_OK;
-
-	return DEVICE_OK;
-
 }
 
 int MD_SingleStage::Initialize()
@@ -911,10 +911,8 @@ MM::DeviceDetectionStatus MD_TwoStages::DetectDevice(void)
 			// check version
 			int ret = this->ConfirmVersion();
 			if (ret != DEVICE_OK && ret != 14)
-			{
-#ifdef _DEBUG			
+			{	
 				LogMessageCode(ret, true);
-#endif
 			}
 			else
 				// to succeed must reach here....
@@ -948,13 +946,17 @@ int MD_TwoStages::ConfirmVersion()
 		if (ret != DEVICE_OK && ret != 14)
 			return ret;
 
-		if (version.substr(0, 9).compare("RVR") == 0) break;
+		if (version.substr(0, 9).compare("RVR") == 0) {
+			break;
+		}
 		else if (version.substr(0, 9).compare("RVR") != 0 || version == "")
 		{
-			if (i >= 4) return ERR_NO_CONTROLLER;
+			if (i >= 4) {
+				return ERR_NO_CONTROLLER; 
+			}
 			else {
 				CDeviceUtils::SleepMs(10);					// else sleep and retry
-				continue;
+			//	continue;
 			}
 		}
 	}
