@@ -53,7 +53,6 @@ const char* g_ChuoSeikiXYStageDeviceName = "ChuoSeiki_QT 2-Axis";
 // single axis stage
 const char* g_ChuoSeikiZStageDeviceName = "ChuoSeiki_QT 1-Axis";
 
-
 const char* g_ChuoSeikiController = "ChuoSeiki QT Controller";
 const char* g_ChuoSeiki_Controller_Axis = "ChuoSeikiAxisName";
 
@@ -210,9 +209,10 @@ MM::DeviceDetectionStatus ChuoSeikiXYStage::DetectDevice(void)
 			{
 				LogMessageCode(ret, true);
 			}
+			else
+				// to succeed must reach here....			
+				result = MM::CanCommunicate;
 
-			// to succeed must reach here....			
-			if (DEVICE_OK == ret)		result = MM::CanCommunicate;
 			// device shutdown, return default answertimeout	
 			device->Shutdown();
 			 // always restore the AnswerTimeout to the default
@@ -241,9 +241,15 @@ int ChuoSeikiXYStage::ConfirmComm()
 		ret = GetSerialAnswer(portName_XY.c_str(), "\r\n", answer);
 		if (ret != DEVICE_OK && ret != 14) 	return ret;
 
-		if (answer.substr(0, 9).compare("CHUOSEIKI") == 0) break;
-		else if (answer.substr(0, 9).compare("CHUOSEIKI") != 0 && i >=4) return ERR_CONTROLER_8;
-		else CDeviceUtils::SleepMs(10);					// else sleep and retry
+		if (answer.substr(0, 9).compare("CHUOSEIKI") == 0) {
+			break;
+		}
+		else if (answer.substr(0, 9).compare("CHUOSEIKI") != 0 && i >= 4) {
+			return ERR_CONTROLER_8;
+		}
+		else {
+			CDeviceUtils::SleepMs(10);					// else sleep and retry
+		}
 	}
 
 	ret = SendSerialCommand(portName_XY.c_str(), "X:1", "\r\n");  // request feedback "\r\n" after send control command
@@ -533,7 +539,7 @@ int ChuoSeikiXYStage::GetPositionSteps(long& x, long& y)
 		}
 
 		CDeviceUtils::SleepMs(20);
-		// if answer is wrong, try again, max 10 times
+		// if answer is wrong, try again, max 5 times
 	}
    // should be unreachable, but better safe then sorry
    return ERR_CONTROLER_8;
@@ -1026,9 +1032,9 @@ MM::DeviceDetectionStatus ChuoSeikiZStage::DetectDevice(void)
 			{
 				LogMessageCode(ret, true);
 			}
-
+			else
 			// to succeed must reach here....			
-			if (DEVICE_OK == ret)		result = MM::CanCommunicate;
+				result = MM::CanCommunicate;
 			// device shutdown, return default answertimeout	
 			zdevice->Shutdown();
 			 // always restore the AnswerTimeout to the default
@@ -1051,14 +1057,22 @@ int ChuoSeikiZStage::ConfirmComm()
 	{
 		PurgeComPort(portName_Z.c_str());
 		ret = SendSerialCommand(portName_Z.c_str(), "?:CHUOSEIKI", "\r\n");		// it will return the phase after "?:"
-		if (ret != DEVICE_OK && ret != 14) 	return ret;
+		if (ret != DEVICE_OK && ret != 14) 	
+			return ret;
 
 		ret = GetSerialAnswer(portName_Z.c_str(), "\r\n", answer);
-		if (ret != DEVICE_OK && ret != 14) 	return ret;
+		if (ret != DEVICE_OK && ret != 14) 	
+			return ret;
 
-		if (answer.substr(0, 9).compare("CHUOSEIKI") == 0) break;
-		else if (answer.substr(0, 9).compare("CHUOSEIKI") != 0 && i >=4) return ERR_CONTROLER_8;
-		else CDeviceUtils::SleepMs(10);					// else sleep and retry
+		if (answer.substr(0, 9).compare("CHUOSEIKI") == 0) {
+			break;
+		}
+		else if (answer.substr(0, 9).compare("CHUOSEIKI") != 0 && i >= 4) {
+			return ERR_CONTROLER_8;
+		}
+		else {
+			CDeviceUtils::SleepMs(10);					// else sleep and retry
+		}
 	}
 
 	ret = SendSerialCommand(portName_Z.c_str(), "X:1", "\r\n");  // request feedback "\r\n" after each command
