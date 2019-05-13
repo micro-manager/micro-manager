@@ -77,7 +77,6 @@ E600Controller::E600Controller(const char* name) :
 	initialized_(false),
 	isDisconnect_(false),
 	name_(name),
-	busy_(false),
 	error_(0),
 	changedTime_(0.0),
 	mThread_(0)
@@ -155,7 +154,7 @@ int E600Controller::Initialize()
 	{
 		pAct = new CPropertyActionEx(this, &E600Controller::OnChannelIntensity, i);
 		intensityName = g_Keyword_Intensity;
-		intensityName = intensityName + " CH" + std::to_string(i + 1);
+		intensityName = intensityName + " CH" + IToString(i + 1);
 		CreateProperty(intensityName.c_str(), "0", MM::Integer, false, pAct);
 		SetPropertyLimits(intensityName.c_str(), 0, 100);
 	}
@@ -174,7 +173,7 @@ int E600Controller::Initialize()
 	{
 		pAct = new CPropertyActionEx(this, &E600Controller::OnChannelTemperature, i);
 		temperature = g_Keyword_Temperature;
-		temperature = temperature + " CH" + std::to_string(i + 1) + "(Deg.C)";
+		temperature = temperature + " CH" + IToString(i + 1) + "(Deg.C)";
 		CreateProperty(temperature.c_str(), "0", MM::Integer, true, pAct);
 	}
 
@@ -184,7 +183,7 @@ int E600Controller::Initialize()
 	{
 		pAct = new CPropertyActionEx(this, &E600Controller::OnChannelUse, i);
 		use = g_Keyword_Use;
-		use = use + " CH" + std::to_string(i + 1);
+		use = use + " CH" + IToString(i + 1);
 		CreateProperty(use.c_str(), "0", MM::Integer, false, pAct);
 
 		std::vector<std::string> switchValues;
@@ -199,7 +198,7 @@ int E600Controller::Initialize()
 	{
 		pAct = new CPropertyActionEx(this, &E600Controller::OnChannelUseTime, i);
 		useTime = g_Keyword_UseTime;
-		useTime = useTime + " CH" + std::to_string(i + 1);
+		useTime = useTime + " CH" + IToString(i + 1);
 		CreateProperty(useTime.c_str(), "0", MM::Integer, true, pAct);
 	}
 
@@ -634,8 +633,14 @@ int E600Controller::Fire(double deltaT)
 	return HandleErrors();
 }
 
+std::string E600Controller::IToString(int in)
+{
+   std::ostringstream stream;
+   stream << in;
+   return stream.str();
+}
+
 PollingThread::PollingThread(E600Controller& aController) :
-	state_(0),
 	aController_(aController)
 {
 
@@ -651,7 +656,7 @@ int PollingThread::svc()
 {
 	while (!stop_)
 	{
-		int ret = aController_.Update();
+		aController_.Update();
 		CDeviceUtils::SleepMs(100);
 	}
 

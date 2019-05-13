@@ -92,7 +92,6 @@ private:
 	bool isDisconnect_;
 	bool initialized_;
 	std::string name_;
-	bool busy_;
 	int error_;
 	MM::MMTime changedTime_;
 	std::string port_;
@@ -110,7 +109,8 @@ private:
 	long SetTemperatureTransform(const long in);
 	void SetErrorCodeStr(const unsigned char errorCode, std::string &str);
 	void Purge();
-	 int HandleErrors();
+	int HandleErrors();
+   std::string IToString(int in);
 
 	E600Controller& operator=(E600Controller &) { assert(false); return *this; }
 };
@@ -136,7 +136,6 @@ public:
 	
 
 private:
-	long state_;
 	E600Controller& aController_;
 	bool stop_;
 };
