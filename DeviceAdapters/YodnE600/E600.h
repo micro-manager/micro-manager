@@ -19,10 +19,6 @@
 //
 // AUTHOR:        BJI MBQ (mbaoqi@outlook.com)
 ///////////////////////////////////////////////////////////////////////////////
-#ifndef WIN32
-#define WIN32
-#endif
-
 #ifndef E600_H
 #define E600_H
 

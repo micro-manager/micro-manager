@@ -18,11 +18,12 @@
 //
 // AUTHOR:        BJI MBQ (mbaoqi@outlook.com)
 ///////////////////////////////////////////////////////////////////////////////
-#include "E600.h"
 
 #ifdef WIN32
 #include <windows.h>
 #endif
+
+#include "E600.h"
 
 // Include micro-manager header files.
 #include "../../MMDevice/MMDevice.h"
@@ -227,8 +228,8 @@ int E600Controller::Update()
 	lampState_ = resLampSate[2];
 
 	// Update lamp channel inensity values.
-	data[0] = { 0x56 };
-	data[1] = { 0x01 };
+	data[0] = 0x56;
+	data[1] = 0x01;
 	unsigned char result[3] = { 0, 0, 0 };
 	for (int i = 0; i < 3; i++)
 	{
@@ -515,7 +516,7 @@ int E600Controller::ReadData(unsigned char *data, unsigned int size)
 		ret = ReadFromComPort(port_.c_str(), data, size, num);
 		if (num == 0)
 		{
-			Sleep(1);
+         CDeviceUtils::SleepMs(1);
 			read_count++;
 			if (read_count > max_read_count) // Check serial device disconnect or not.
 			{
