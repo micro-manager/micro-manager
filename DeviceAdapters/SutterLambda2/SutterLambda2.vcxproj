@@ -168,7 +168,9 @@
     <ClCompile Include="SutterLambda2.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="SutterLambda2.h" />
+    <ClInclude Include="SutterHub.h" />
+    <ClInclude Include="SutterShutter.h" />
+    <ClInclude Include="SutterWheel.h" />
     <ClInclude Include="WheelBase.h" />
   </ItemGroup>
   <ItemGroup>
