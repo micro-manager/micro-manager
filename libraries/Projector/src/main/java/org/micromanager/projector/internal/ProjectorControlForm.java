@@ -1583,10 +1583,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       setupTab.add(new JLabel("Delay(ms):"), "span 2, split 2");
       setupTab.add(delayField_, "wmin 30, w 50!, wrap");
       
-      setupTab.add(new JLabel("Phototargeting channel:"), "span 3, split 2, w 180!");
+      setupTab.add(new JLabel("Phototargeting shutter:"), "span 3, split 2, w 180!");
       setupTab.add(shutterComboBox_, "wmin 130, wrap");
       
-      setupTab.add(new JLabel("Phototargeting shutter:"), "span 3, split 2, w 180!");
+      setupTab.add(new JLabel("Phototargeting channel:"), "span 3, split 2, w 180!");
       setupTab.add(channelComboBox_, "wmin 130, wrap");   
 
       mainTabbedPane.addTab("Setup", setupTab);
