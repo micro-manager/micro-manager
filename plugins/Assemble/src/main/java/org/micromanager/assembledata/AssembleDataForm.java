@@ -159,13 +159,13 @@ public class AssembleDataForm extends MMDialog {
                  
       final JButton testButton =  new JButton("Test");
       testButton.addActionListener((ActionEvent e) -> {
-         runTest();
+         assemble(true);
       });
       super.add(testButton);
       
       final JButton assembleButton =  new JButton("Assemble");
       assembleButton.addActionListener((ActionEvent e) -> {
-         assemble();
+         assemble(false);
       });
       super.add(assembleButton, "wrap");
       
@@ -179,34 +179,8 @@ public class AssembleDataForm extends MMDialog {
       studio_.events().registerForEvents(this);
       studio_.displays().registerForEvents(this);
    }
-   
-   private void runTest() {
-      String dataViewerName1 = profileSettings_.getString(DATAVIEWER1,"");
-      String dataViewerName2 = profileSettings_.getString(DATAVIEWER2,"");
-      DataViewer dv1 = null;
-      DataViewer dv2 = null;
-      for (DataViewer dv : studio_.displays().getAllDataViewers()) {
-         if (dv.getName().equals(dataViewerName1)) {
-            dv1 = dv;
-         }
-         if (dv.getName().equals(dataViewerName2)) {
-            dv2 = dv;
-         }
-      }
-      if (dv1 == null || dv2 == null) {
-         studio_.logs().showError("One or both data sets are empty");
-         return;
-      }
-      if (dv1.equals(dv2)) {
-         studio_.logs().showError("Data Sets are the same");
-         return;
-      }
-      int xOffset = profileSettings_.getInteger(XOFFSET, DEFAULTX);
-      int yOffset = profileSettings_.getInteger(YOFFSET, DEFAULTY);
-      AssembleDataTest.test(studio_, dv1, dv2, xOffset, yOffset);      
-   }
-   
-   private void assemble() {
+      
+   private void assemble(boolean test) {
       String dataViewerName1 = profileSettings_.getString(DATAVIEWER1,"");
       String dataViewerName2 = profileSettings_.getString(DATAVIEWER2,"");
       DataViewer dv1 = null;
@@ -229,7 +203,7 @@ public class AssembleDataForm extends MMDialog {
       }
       int xOffset = profileSettings_.getInteger(XOFFSET, DEFAULTX);
       int yOffset = profileSettings_.getInteger(YOFFSET, DEFAULTY);
-      AssembleDataWorker.run(studio_, this, dv1, dv2, xOffset, yOffset);    
+      AssembleDataWorker.run(studio_, this, dv1, dv2, xOffset, yOffset, test);    
    }
   
    public void showGUI() {

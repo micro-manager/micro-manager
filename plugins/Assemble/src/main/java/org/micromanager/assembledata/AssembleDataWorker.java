@@ -32,9 +32,9 @@ import org.micromanager.internal.utils.imageanalysis.BoofCVImageConverter;
 public class AssembleDataWorker {
    
     public static void run(Studio studio, AssembleDataForm form, DataViewer dv1, DataViewer dv2,
-           int xOffset, int yOffset) {
+           int xOffset, int yOffset, boolean test) {
        Runnable t = () -> {
-          execute ( studio,  form, dv1,  dv2, xOffset,  yOffset);
+          execute ( studio,  form, dv1,  dv2, xOffset,  yOffset, test);
        };
        Thread assembleThread = new Thread(t);
        assembleThread.start();
@@ -42,7 +42,7 @@ public class AssembleDataWorker {
     }
     
     public static void execute (Studio studio, AssembleDataForm form, DataViewer dv1, DataViewer dv2,
-           int xOffset, int yOffset) {
+           int xOffset, int yOffset, boolean test) {
       
       DataProvider dp1 = dv1.getDataProvider();
       DataProvider dp2 = dv2.getDataProvider();
@@ -136,9 +136,10 @@ public class AssembleDataWorker {
          }
 
          // single position data
-         
-         for (int t = 0; t < spd.getAxisLength(Coords.T); t++) {
-            for (int c = 0; c < spd.getAxisLength(Coords.C); c++) {
+         final int spdTLength = test ? 1 :  spd.getAxisLength(Coords.T);
+         final int spdCLength = test ? 1 : spd.getAxisLength(Coords.C);
+         for (int t = 0; t < spdTLength; t++) {
+            for (int c = 0; c < spdCLength; c++) {
                cb.t(t).c(c).p(0).z(0);
                Image img = spd.getImage(cb.p(0).build());
                if (img != null) {
@@ -178,9 +179,10 @@ public class AssembleDataWorker {
          }
          
          // multi position data
-         
-         for (int t = 0; t < mpd.getAxisLength(Coords.T); t++) {
-            for (int c = 0; c < mpd.getAxisLength(Coords.C); c++) {
+         final int mpdTLength = test ? 1 : mpd.getAxisLength(Coords.T);
+         final int mpdCLenghth = test ? 1 : mpd.getAxisLength(Coords.C);
+         for (int t = 0; t < mpdTLength; t++) {
+            for (int c = 0; c < mpdCLenghth; c++) {
                Metadata.Builder newMetadataB = null;
                for (int p = 0; p <= mpd.getMaxIndices().getP(); p++) {
                   Image img = mpd.getImage(cb.c(c).t(t).p(p).build());
@@ -220,12 +222,12 @@ public class AssembleDataWorker {
                }
                if (newMetadataB != null) {
                   Image newImage = BoofCVImageConverter.boofCVToMM(newImgBoof,
-                          cb.p(0).c(c + spd.getAxisLength(Coords.C)).build(), newMetadataB.build());
+                          cb.p(0).c(c + spdCLength).build(), newMetadataB.build());
                   targetStore.putImage(newImage);
                   GImageMiscOps.fill(newImgBoof, 0.0);
                }
             }
-            int progress = (int) (50.0 + 50.0 * t / spd.getAxisLength(Coords.T));
+            int progress = (int) (50.0 + 50.0 * t / spdTLength);
             form.setStatus(" " + progress + "%");
          }
          
