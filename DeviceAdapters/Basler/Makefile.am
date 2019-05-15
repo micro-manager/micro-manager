@@ -21,7 +21,7 @@ AM_CXXFLAGS=$(MMDEVAPI_CXXFLAGS) $(CPPFLAGS)
 
 deviceadapter_LTLIBRARIES=libmmgr_dal_BaslerCamera.la
 libmmgr_dal_BaslerCamera_la_CPPFLAGS=$(CPPFLAGS) $(PYLONCPPFLAGS)
-libmmgr_dal_BaslerCamera_la_SOURCES=BaslerPylon5CameraLinux.cpp BaslerPylon5CameraLinux.h
+libmmgr_dal_BaslerCamera_la_SOURCES=BaslerPylon5Camera.cpp BaslerPylon5Camera.h
 libmmgr_dal_BaslerCamera_la_LIBADD=$(MMDEVAPI_LIBADD) $(PYLONLDLIBS)
 libmmgr_dal_BaslerCamera_la_LDFLAGS=$(MMDEVAPI_LDFLAGS) $(PYLONLDLIBS) $(PYLONLDFLAGS)
 
