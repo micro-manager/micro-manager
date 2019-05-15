@@ -1,5 +1,6 @@
 #pragma warning(push)
 #pragma warning(disable : 4482)
+#pragma warning(disable : 4251) // Note: need to have a C++ interface, i.e., compiler versions need to match!
 
 #include "SpinnakerCamera.h"
 #include "../../MMDevice/ModuleInterface.h"
@@ -921,6 +922,7 @@ unsigned SpinnakerCamera::GetImageBytesPerPixel() const
 	case SPKR::PixelSize_Bpp96:
 		return 12;
 	}
+   return 0;
 }
 
 unsigned SpinnakerCamera::GetBitDepth() const
@@ -958,6 +960,7 @@ unsigned SpinnakerCamera::GetBitDepth() const
 	case SPKR::PixelSize_Bpp96:
 		return 96;
 	}
+   return 0;
 }
 
 long SpinnakerCamera::GetImageBufferSize() const
