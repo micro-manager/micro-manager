@@ -3630,12 +3630,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // These metadata have to be added after initialization, 
             // otherwise they will not be shown?!
             gui_.setAcquisitionProperty(acqName, "NumberOfSides", 
-                    NumberUtils.doubleToDisplayString(acqSettings.numSides));
+                    NumberUtils.doubleToCoreString(acqSettings.numSides));
             gui_.setAcquisitionProperty(acqName, "FirstSide", acqSettings.firstSideIsA ? "A" : "B");
             gui_.setAcquisitionProperty(acqName, "SlicePeriod_ms", 
                   actualSlicePeriodLabel_.getText());
             gui_.setAcquisitionProperty(acqName, "LaserExposure_ms",
-                  NumberUtils.doubleToDisplayString(acqSettings.desiredLightExposure));
+                  NumberUtils.doubleToCoreString(acqSettings.desiredLightExposure));
             gui_.setAcquisitionProperty(acqName, "VolumeDuration",
                     actualVolumeDurationLabel_.getText());
             gui_.setAcquisitionProperty(acqName, "SPIMmode", spimMode.toString()); 
@@ -3652,7 +3652,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.setAcquisitionProperty(acqName, "SeparateTimepoints", 
                   acqSettings.separateTimepoints ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
             gui_.setAcquisitionProperty(acqName, "CameraMode", acqSettings.cameraMode.toString()); 
-            gui_.setAcquisitionProperty(acqName, "z-step_um", NumberUtils.doubleToDisplayString(zStepUm_));
+            gui_.setAcquisitionProperty(acqName, "z-step_um", NumberUtils.doubleToCoreString(zStepUm_));
             // Properties for use by MultiViewRegistration plugin
             // Format is: x_y_z, set to 1 if we should rotate around this axis.
             gui_.setAcquisitionProperty(acqName, "MVRotationAxis", "0_1_0");
