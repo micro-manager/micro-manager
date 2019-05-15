@@ -1,3 +1,6 @@
+#pragma warning(push)
+#pragma warning(disable : 4482)
+
 #include "SpinnakerCamera.h"
 #include "../../MMDevice/ModuleInterface.h"
 #include <vector>
@@ -56,7 +59,7 @@ std::vector<CamNameAndSN> GetSpinnakeerCameraNamesAndSNs()
 	auto system = SPKR::System::GetInstance();
 	auto camList = system->GetCameras();
 
-	for (int i = 0; i < camList.GetSize(); i++)
+	for (unsigned int i = 0; i < camList.GetSize(); i++)
 	{
 		CamNameAndSN camInfo;
 
@@ -180,7 +183,7 @@ int SpinnakerCamera::Initialize()
 		return SPKR_ERROR;
 	}
 
-	for (int i = 0; i < camList.GetSize(); i++)
+	for (unsigned int i = 0; i < camList.GetSize(); i++)
 	{
 		auto &nm = camList.GetByIndex(i)
 			->GetTLDeviceNodeMap();
@@ -331,7 +334,7 @@ int SpinnakerCamera::Initialize()
 			auto max = std::min(BH->GetMax(), BV->GetMax());
 			auto min = std::max(BH->GetMin(), BV->GetMin());
 
-			for (int i = min; i <= max; i++)
+			for (int64_t i = min; i <= max; i++)
 			{
 				std::stringstream ss;
 				ss << i;
@@ -496,6 +499,7 @@ int SpinnakerCamera::SnapImage()
 	return DEVICE_OK;
 }
 
+
 void SpinnakerCamera::CreatePropertyFromFloat(const std::string& name, GENAPI::IFloat & camProp, int(SpinnakerCamera::* fpt)(MM::PropertyBase *pProp, MM::ActionType eAct))
 {
 	auto accessMode = camProp.GetAccessMode();
@@ -651,7 +655,7 @@ int SpinnakerCamera::OnBoolPropertyChanged(GENAPI::IBoolean & camProp, MM::Prope
 			long val;
 			pProp->Get(val);
 
-			camProp.SetValue(val);
+			camProp.SetValue( val != 0);
 		}
 		catch (SPKR::Exception &ex)
 		{
@@ -661,6 +665,7 @@ int SpinnakerCamera::OnBoolPropertyChanged(GENAPI::IBoolean & camProp, MM::Prope
 	}
 	return DEVICE_OK;
 }
+
 
 int SpinnakerCamera::OnLineEnumPropertyChanged(std::string name, MM::PropertyBase * pProp, MM::ActionType eAct, long lineNum)
 {
@@ -775,7 +780,7 @@ int SpinnakerCamera::OnLineBoolPropertyChanged(std::string name, MM::PropertyBas
 
 			if (isNodeAvailable<NAM_WRITE>(bPtr))
 			{
-				bPtr->SetValue(val);
+				bPtr->SetValue(val != 0);
 			}
 			else
 			{
@@ -793,7 +798,7 @@ int SpinnakerCamera::OnLineBoolPropertyChanged(std::string name, MM::PropertyBas
 	return DEVICE_OK;
 }
 
-void SpinnakerCamera::Unpack12Bit(int packedSize, int width, int height, bool flip)
+void SpinnakerCamera::Unpack12Bit( size_t width, size_t height, bool flip)
 {
 	uint16_t *unpacked = new uint16_t[width*height];
 	uint8_t *packed = m_imageBuff;
@@ -825,8 +830,6 @@ void SpinnakerCamera::Unpack12Bit(int packedSize, int width, int height, bool fl
 const unsigned char * SpinnakerCamera::GetImageBuffer()
 {
 	MMThreadGuard g(m_pixelLock);
-	int bpp = this->GetBitDepth();
-	bool success = false;
 	try
 	{
 		if (!m_imagePtr->IsIncomplete())
@@ -844,9 +847,9 @@ const unsigned char * SpinnakerCamera::GetImageBuffer()
 				std::memcpy(m_imageBuff, m_imagePtr->GetData(), m_imagePtr->GetBufferSize());
 
 				if (m_imagePtr->GetPixelFormat() == SPKR::PixelFormat_Mono12p)
-					Unpack12Bit(m_imagePtr->GetBufferSize(), m_imagePtr->GetWidth(), m_imagePtr->GetHeight(), false);
+					Unpack12Bit(m_imagePtr->GetWidth(), m_imagePtr->GetHeight(), false);
 				else if (m_imagePtr->GetPixelFormat() == SPKR::PixelFormat_Mono12Packed)
-					Unpack12Bit(m_imagePtr->GetBufferSize(), m_imagePtr->GetWidth(), m_imagePtr->GetHeight(), true);
+					Unpack12Bit( m_imagePtr->GetWidth(), m_imagePtr->GetHeight(), true);
 			}
 			else
 			{
@@ -883,12 +886,12 @@ const unsigned char * SpinnakerCamera::GetImageBuffer()
 
 unsigned SpinnakerCamera::GetImageWidth() const
 {
-	return m_cam->Width.GetValue();
+	return (unsigned) m_cam->Width.GetValue();
 }
 
 unsigned SpinnakerCamera::GetImageHeight() const
 {
-	return m_cam->Height.GetValue();
+	return (unsigned) m_cam->Height.GetValue();
 }
 
 unsigned SpinnakerCamera::GetImageBytesPerPixel() const
@@ -959,7 +962,7 @@ unsigned SpinnakerCamera::GetBitDepth() const
 
 long SpinnakerCamera::GetImageBufferSize() const
 {
-	return m_cam->Width.GetValue()*m_cam->Height.GetValue()*this->GetImageBytesPerPixel();
+	return (long) (m_cam->Width.GetValue() * m_cam->Height.GetValue() * this->GetImageBytesPerPixel());
 }
 
 double SpinnakerCamera::GetExposure() const
@@ -985,15 +988,15 @@ int SpinnakerCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySi
 	try
 	{
 		//Force offsets to be multiples of 2
-		x -= (m_cam->OffsetX.GetInc() - ((x - m_cam->OffsetX.GetMin()) % m_cam->OffsetX.GetInc()));
-		y -= (m_cam->OffsetY.GetInc() - ((y - m_cam->OffsetY.GetMin()) % m_cam->OffsetY.GetInc()));
+		x -= (unsigned) ( (m_cam->OffsetX.GetInc() - ((x - m_cam->OffsetX.GetMin()) % m_cam->OffsetX.GetInc())));
+		y -= (unsigned) ( (m_cam->OffsetY.GetInc() - ((y - m_cam->OffsetY.GetMin()) % m_cam->OffsetY.GetInc())));
 
 		// Force width and height to be multiple of 8
-		xSize += (m_cam->Width.GetInc() - ((xSize - m_cam->Width.GetMin()) % m_cam->Width.GetInc()));
-		ySize += (m_cam->Height.GetInc() - ((ySize - m_cam->Height.GetMin()) % m_cam->Height.GetInc()));
+		xSize += (unsigned) ((m_cam->Width.GetInc() - ((xSize - m_cam->Width.GetMin()) % m_cam->Width.GetInc())));
+		ySize += (unsigned) ((m_cam->Height.GetInc() - ((ySize - m_cam->Height.GetMin()) % m_cam->Height.GetInc())));
 
-		xSize = min(xSize, m_cam->Width.GetMax());
-		ySize = min(ySize, m_cam->Height.GetMax());
+		xSize = (unsigned) (min(xSize, m_cam->Width.GetMax()));
+		ySize = (unsigned) (min(ySize, m_cam->Height.GetMax()));
 
 		m_cam->Width.SetValue(xSize);
 		m_cam->Height.SetValue(ySize);
@@ -1011,10 +1014,10 @@ int SpinnakerCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySi
 
 int SpinnakerCamera::GetROI(unsigned & x, unsigned & y, unsigned & xSize, unsigned & ySize)
 {
-	x = m_cam->OffsetX.GetValue();
-	y = m_cam->OffsetY.GetValue();
-	xSize = m_cam->Width.GetValue();
-	ySize = m_cam->Height.GetValue();
+	x = (unsigned) m_cam->OffsetX.GetValue();
+	y = (unsigned) m_cam->OffsetY.GetValue();
+	xSize = (unsigned) m_cam->Width.GetValue();
+	ySize = (unsigned) m_cam->Height.GetValue();
 	return DEVICE_OK;
 }
 
@@ -1044,7 +1047,7 @@ int SpinnakerCamera::GetBinning() const
 	return DEVICE_OK;
 }
 
-int SpinnakerCamera::SetBinning(int binSize) //I don't think I actually use this function...
+int SpinnakerCamera::SetBinning(int /*binSize*/) //I don't think I actually use this function...
 {
 	/*try
 	{
@@ -1094,7 +1097,7 @@ int SpinnakerCamera::OnFrameRateEnabled(MM::PropertyBase * pProp, MM::ActionType
 
 			try
 			{
-				AFRCE->SetValue((bool)value);
+				AFRCE->SetValue(value != 0);
 			}
 			catch (SPKR::Exception &ex)
 			{
@@ -1486,9 +1489,9 @@ int SpinnakerCamera::MoveImageToCircularBuffer()
 			{
 				std::memcpy(m_imageBuff, ip->GetData(), ip->GetBufferSize());
 				if (ip->GetPixelFormat() == SPKR::PixelFormat_Mono12p)
-					Unpack12Bit(ip->GetBufferSize(), ip->GetWidth(), ip->GetHeight(), false);
+					Unpack12Bit(ip->GetWidth(), ip->GetHeight(), false);
 				else if (ip->GetPixelFormat() == SPKR::PixelFormat_Mono12Packed)
-					Unpack12Bit(ip->GetBufferSize(), ip->GetWidth(), ip->GetHeight(), true);
+					Unpack12Bit(ip->GetWidth(), ip->GetHeight(), true);
 			}
 			else
 			{
@@ -1642,3 +1645,5 @@ int SpinnakerAcquisitionThread::svc(void) throw()
 	return DEVICE_OK;
 }
 
+
+#pragma warning(pop)

@@ -1,7 +1,7 @@
 #ifndef _SPINNAKER_CAMERA_H_
 #define _SPINNAKER_CAMERA_H_
 
-#include "../../3rdparty/Spinnaker/include/Spinnaker.h"
+#include "../../../3rdparty/Point Grey Research/Spinnaker/1.20.0.15/include/Spinnaker.h"
 #include "../../MMDevice/DeviceBase.h"
 #include "../../MMDevice/ImgBuffer.h"
 #include "../../MMDevice/DeviceThreads.h"
@@ -150,8 +150,9 @@ private:
 		MM::ActionType eAct,
 		long lineNum);
 
-	void Unpack12Bit(int packedSize, int width, int height, bool flip);
-
+	void Unpack12Bit(size_t width, size_t height, bool flip);
+#pragma warning(push)
+#pragma warning(disable : 4482)
 	std::string EAccessName(GENAPI::EAccessMode accessMode) {
 		switch (accessMode) {
 		case GENAPI::EAccessMode::NA:
@@ -168,6 +169,7 @@ private:
 			return "Unknown";
 		}
 	}
+  #pragma warning(pop)
 	
 
 	GENICAM::gcstring m_SN;
@@ -288,7 +290,7 @@ inline int SpinnakerCamera::OnEnumPropertyChanged(GENAPI::IEnumerationT<enumType
 
 			pProp->Set(camProp.GetCurrentEntry()->GetSymbolic());
 		}
-		catch (SPKR::Exception &ex)
+		catch (SPKR::Exception /*&ex */)
 		{
 			//SetErrorText(SPKR_ERROR, ("Could not read " + pProp->GetName() + "! " + std::string(ex.what())).c_str());
 			//return SPKR_ERROR;
