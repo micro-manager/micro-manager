@@ -92,7 +92,9 @@ public class Devices {
    public static enum Keys {
       NONE, CORE, PLUGIN,
       CAMERAA, CAMERAB, MULTICAMERA, CAMERALOWER, CAMERAPREVIOUS, 
-      PIEZOA, PIEZOB, GALVOA, GALVOB, XYSTAGE, LOWERZDRIVE, UPPERZDRIVE,
+      PIEZOA, PIEZOB, GALVOA, GALVOB, XYSTAGE,
+      LOWERZDRIVE,  // inverted microscope if present
+      UPPERZDRIVE,  // determines sample position relative to imaging objectives, for FTP system would be FTP Z
       // SOURCE_SPIM, SOURCE_LOWER,
       PLOGIC,
       TIGERCOMM,

@@ -26,6 +26,7 @@ import java.awt.geom.Point2D;
 
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
+import mmcorej.DoubleVector;
 
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.ASIdiSPIM;
@@ -57,6 +58,7 @@ public class ControllerUtils {
    final CMMCore core_;
    double scanDistance_;   // cached value from last call to prepareControllerForAquisition()
    double actualStepSizeUm_;  // cached value from last call to prepareControllerForAquisition()
+   boolean zSpeedZero_;  // cached value from last call to prepareStageScanForAcquisition()
    
    public ControllerUtils(ScriptInterface gui, final Properties props, 
            final Prefs prefs, final Devices devices, final Positions positions, final Cameras cameras) {
@@ -69,26 +71,99 @@ public class ControllerUtils {
       core_ = gui_.getMMCore();
       scanDistance_ = 0;
       actualStepSizeUm_ = 0;
+      zSpeedZero_ = true;
    }
    
    /**
     * Stage scan needs to be setup at each XY position, so call this method.
     * This method assumes that prepareControllerForAquisition() has been called already
-    *    to initialize scanDistance_.
+    *    to initialize scanDistance_.  We always scan X in positive-going direction.
     * @param x center x position in um
     * @param y y position in um
     * @return false if there was some error that should abort acquisition 
     */
    public boolean prepareStageScanForAcquisition(double x, double y) {
       final Devices.Keys xyDevice = Devices.Keys.XYSTAGE;
-      props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_FAST_START,
-            (float)((x - scanDistance_/2) / 1000d));
-      props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_FAST_STOP,
-            (float)((x + scanDistance_/2) / 1000d));
-      props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SLOW_START,
-            (float)(y / 1000d));
-      props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SLOW_STOP,
-            (float)(y / 1000d));
+      final double xStartUm = x - (scanDistance_/2);
+      final double xStopUm = x + (scanDistance_/2);
+      props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_FAST_START, (float)(xStartUm/1000d));
+      props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_FAST_STOP, (float)(xStopUm/1000d));
+      props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SLOW_START, (float)(y/1000d));
+      props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SLOW_STOP, (float)(y/1000d));
+      zSpeedZero_ = true;  // will turn false if we are doing planar correction
+      
+      // handle setting up planar correction if needed
+      if (prefs_.getBoolean(MyStrings.PanelNames.ACQUSITION.toString(), Properties.Keys.PLUGIN_PLANAR_ENABLED, false)) {
+         final float xSpeed = props_.getPropValueFloat(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED_X_MICRONS)/1000f;  // in mm/sec = controller units
+         final float xSlope = prefs_.getFloat(MyStrings.PanelNames.ACQUSITION.toString(), 
+               Properties.Keys.PLUGIN_PLANAR_SLOPE_X, 0.0f) / 1000f;  // could be negative!
+         final Devices.Keys zDevice = Devices.Keys.UPPERZDRIVE;
+         
+         // Z speed is simply ratio of X speed based on slope = partial derivative dZ/dX of plane equation
+         // calculate ideal speed, then implement as best we can on the controller
+         final float zSpeedIdeal = xSpeed*Math.abs(xSlope);  // in mm/sec = controller units
+         final float zSpeedMin = props_.getPropValueFloat(zDevice, Properties.Keys.STAGESCAN_MIN_MOTOR_SPEED_Z)/1000f;  // will return 0 if we don't know min
+         final float zSpeedRequested;
+         if (zSpeedIdeal < (zSpeedMin/2)) {  // too slow for controller to handle so just make it 0 = no correction
+            zSpeedRequested = 0.0f;
+         } else {
+            zSpeedRequested = zSpeedIdeal;
+            zSpeedZero_ = false;
+         }
+         
+         // compute actual speed and handle case where we are making planar correction move
+         final float zSpeedActual;
+         if (zSpeedZero_) {
+            zSpeedActual = 0.0f;
+         } else {
+            float origSpeed = props_.getPropValueFloat(zDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED_Z);
+            // we actually have a non-zero speed for the Z axis to move during acquisition
+            props_.setPropValue(zDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, zSpeedRequested);
+            if (props_.hasProperty(zDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED_MICRONS_Z)) {
+               zSpeedActual = props_.getPropValueFloat(zDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED_MICRONS_Z)/1000f;
+            } else {
+               zSpeedActual = zSpeedRequested;  // if we have older firmware the we can't read back actual speed
+            }
+
+            // set Z for start position taking into account the actual speed (so that if the
+            //    speed isn't quite right we split the error on both sides)
+            final double zCenter = getPlanarZ(x, y);
+            final double zOffset = Math.signum(xSlope)*(zSpeedActual / xSpeed * scanDistance_/2);
+            final float zStart = (float)(zCenter - zOffset);
+            final float zStop = (float)(zCenter + zOffset);
+            
+            // move Z to correct position now, even before scan, with original speed
+            props_.setPropValue(zDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, origSpeed);
+            positions_.setPosition(zDevice, zStart);
+            try {
+               core_.waitForDevice(devices_.getMMDevice(zDevice));
+            } catch (Exception e1) {
+               e1.printStackTrace();
+            }
+            props_.setPropValue(zDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, zSpeedRequested);  // results in zSpeedActual
+            props_.setPropValue(Devices.Keys.PLUGIN, Properties.Keys.STAGESCAN_Z_START, zStart);
+            props_.setPropValue(Devices.Keys.PLUGIN, Properties.Keys.STAGESCAN_Z_STOP, zStop);
+
+            // load the ring buffer with (only) the end position and configure to be TTL triggered by the XY stage sync
+            props_.setPropValue(Devices.Keys.UPPERZDRIVE, Properties.Keys.TTLINPUT_MODE, Properties.Values.TTLINPUT_MODE_NEXT_RB);
+            DoubleVector positionSequence = new DoubleVector();
+            positionSequence.add(zStop);
+            try {
+               core_.loadStageSequence(devices_.getMMDevice(Devices.Keys.UPPERZDRIVE), positionSequence);
+            } catch (Exception e) {
+               e.printStackTrace();
+            }
+            
+            // configure PLC output #3 to be the sync signal from XY stage (maybe in future this could be wired on backpanel
+            //   but for now requires connecting BNC from PLC #3 to TTLin trigger of Z axis card
+            final Devices.Keys plcDevice = Devices.Keys.PLOGIC;
+            final int PLOGIC_OUTPUT_3_ADDR = 35;
+            final int PLOGIC_XYSTAGE_SYNC_ADDR = 46;
+            props_.setPropValue(plcDevice, Properties.Keys.PLOGIC_POINTER_POSITION, PLOGIC_OUTPUT_3_ADDR);
+            props_.setPropValue(plcDevice, Properties.Keys.PLOGIC_EDIT_CELL_CONFIG, PLOGIC_XYSTAGE_SYNC_ADDR);
+         }
+      }
+      
       return true;
    }
    
@@ -192,26 +267,26 @@ public class ControllerUtils {
          final Devices.Keys xyDevice = Devices.Keys.XYSTAGE;
          
          final double requestedMotorSpeed = computeScanSpeed(settings);
-         final double maxMotorSpeed = props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MAX_MOTOR_SPEED);
+         final double maxMotorSpeed = props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MAX_MOTOR_SPEED_X);
          if (requestedMotorSpeed > maxMotorSpeed*0.8) {  // trying to go near max speed smooth scanning will be compromised
             MyDialogUtils.showError("Required stage speed is too fast, please reduce step size or increase sample exposure.");
             return false;
          }
-         if (requestedMotorSpeed < maxMotorSpeed*0.0005) {  // 1/2000 of the max speed is approximate place where smooth scanning breaks down (speed quantum is ~1/12000 max speed); this also prevents setting to 0 which the controller rejects
+         if (requestedMotorSpeed < maxMotorSpeed/2000) {  // 1/2000 of the max speed is approximate place where smooth scanning breaks down (speed quantum is ~1/12000 max speed); this also prevents setting to 0 which the controller rejects
             MyDialogUtils.showError("Required stage speed is too slow, please increase step size or decrease sample exposure.");
             return false;
          }
-         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED, (float)requestedMotorSpeed);
+         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED_X, (float)requestedMotorSpeed);
          
          // ask for the actual speed and calculate the actual step size
-         final double actualMotorSpeed = props_.getPropValueFloat(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED_MICRONS)/1000;
+         final double actualMotorSpeed = props_.getPropValueFloat(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED_X_MICRONS)/1000;
          actualStepSizeUm_ = settings.stepSizeUm * (actualMotorSpeed / requestedMotorSpeed);
          
          // cache how far we scan each pass for later use
          scanDistance_ = settings.numSlices * actualStepSizeUm_ * getStageGeometricSpeedFactor(settings.firstSideIsA);
          
          // set the acceleration to a reasonable value for the (usually very slow) scan speed
-         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_MOTOR_ACCEL, (float)computeScanAcceleration(actualMotorSpeed));
+         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_MOTOR_ACCEL_X, (float)computeScanAcceleration(actualMotorSpeed));
          
          if (!settings.useMultiPositions) {
             // use current position as center position for stage scanning
@@ -304,7 +379,7 @@ public class ControllerUtils {
     * @return
     */
    public double computeScanAcceleration(double motorSpeed) {
-      final double maxMotorSpeed = props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MAX_MOTOR_SPEED);
+      final double maxMotorSpeed = props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MAX_MOTOR_SPEED_X);
       final double accelFactor = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_ACCEL_FACTOR);
       return (10 + 100 * (motorSpeed / maxMotorSpeed) ) * accelFactor;
    }
@@ -632,6 +707,12 @@ public class ControllerUtils {
          if (!success) {
             return false;
          }
+      }
+      
+      // clean up planar correction if needed
+      if (!zSpeedZero_) {
+         props_.setPropValue(Devices.Keys.UPPERZDRIVE, Properties.Keys.TTLINPUT_MODE, Properties.Values.TTLINPUT_MODE_NONE);
+         zSpeedZero_ = true;
       }
       
       ReportingUtils.logMessage("Finished controller cleanup after acquisition");
@@ -985,6 +1066,55 @@ public class ControllerUtils {
       } catch (Exception e) {
          ReportingUtils.showError("Couldn't set the path config " + preset + " of group " + group);
       }
+   }
+   
+   /**
+    * Calculate the Z position corresponding to the (x, y) point according to the planar correction values.
+    * @param x
+    * @param y
+    * @return
+    */
+   public double getPlanarZ(double x, double y) {
+      float xSlope = prefs_.getFloat(MyStrings.PanelNames.ACQUSITION.toString(), 
+            Properties.Keys.PLUGIN_PLANAR_SLOPE_X, 0.0f) / 1000;
+      float ySlope = prefs_.getFloat(MyStrings.PanelNames.ACQUSITION.toString(), 
+            Properties.Keys.PLUGIN_PLANAR_SLOPE_Y, 0.0f) / 1000;
+      float zOffset = prefs_.getFloat(MyStrings.PanelNames.ACQUSITION.toString(), 
+            Properties.Keys.PLUGIN_PLANAR_OFFSET_Z, 0.0f);
+      return (x*xSlope + y*ySlope + zOffset);
+   }
+   
+   /**
+    * Sets the current Z position (SPIM head height) according to the planar correction but only
+    * if planar correction is enabled, move is between 1um and 100um.  Uses specified (x,y) coordinate.
+    * @param x
+    * @param y
+    */
+   public void setPlanarZ(double x, double y) {
+      if (prefs_.getBoolean(MyStrings.PanelNames.ACQUSITION.toString(), Properties.Keys.PLUGIN_PLANAR_ENABLED, false)) {
+         final double zPosTarget = getPlanarZ(x, y);
+         // if we are more than 0.8um off from where we should be then initiate move to ideal position (this normally includes backlash move)
+         final double MAX_PLANAR_CORRECTION_ERROR = 1.0;
+         final double MAX_PLANAR_CORRECTION_MOVE = 100.0;
+         final double zPosCurrent = positions_.getCachedPosition(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE);
+         final double distance = Math.abs(zPosTarget-zPosCurrent);
+         if ( distance > MAX_PLANAR_CORRECTION_ERROR && distance < MAX_PLANAR_CORRECTION_MOVE ) {
+            positions_.setPosition(Devices.Keys.UPPERZDRIVE, zPosTarget);
+         }
+      }
+   }
+   
+   /**
+    * Sets the current Z position (SPIM head height) according to the planar correction but only
+    * if planar correction is enabled.  Uses current (x,y) coordinate after querying.
+    * @param x
+    * @param y
+    */
+   public void setPlanarZ() {
+      positions_.getUpdatedPosition(Devices.Keys.XYSTAGE);
+      double xPos = positions_.getCachedPosition(Devices.Keys.XYSTAGE, Joystick.Directions.X);
+      double yPos = positions_.getCachedPosition(Devices.Keys.XYSTAGE, Joystick.Directions.Y);
+      setPlanarZ(xPos, yPos);
    }
 
 }

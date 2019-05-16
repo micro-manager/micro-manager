@@ -141,11 +141,17 @@ public class Properties {
       STAGESCAN_SLOW_START("ScanSlowAxisStartPosition(mm)", false),
       STAGESCAN_SLOW_STOP("ScanSlowAxisStopPosition(mm)", false),
       STAGESCAN_SETTLING_TIME("ScanSettlingTime(ms)", false),
-      STAGESCAN_MOTOR_SPEED("MotorSpeedX-S(mm/s)", false),
-      STAGESCAN_MOTOR_SPEED_MICRONS("MotorSpeedX(um/s)"),
-      STAGESCAN_MAX_MOTOR_SPEED("MotorSpeedMaximumX(mm/s)", false),
-      STAGESCAN_MOTOR_ACCEL("AccelerationX-AC(ms)", false),
+      STAGESCAN_MOTOR_SPEED_X("MotorSpeedX-S(mm/s)", false),
+      STAGESCAN_MOTOR_SPEED_X_MICRONS("MotorSpeedX(um/s)"),
+      STAGESCAN_MAX_MOTOR_SPEED_X("MotorSpeedMaximumX(mm/s)", false),
+      STAGESCAN_MOTOR_ACCEL_X("AccelerationX-AC(ms)", false),
       STAGESCAN_OVERSHOOT_DIST("ScanOvershootDistance(um)", false),
+      STAGESCAN_MOTOR_SPEED_Z("MotorSpeed-S(mm/s)", false),
+      STAGESCAN_MOTOR_SPEED_MICRONS_Z("MotorSpeed(um/s)"),
+      STAGESCAN_MIN_MOTOR_SPEED_Z("MotorSpeedMinimum(um/s)"),
+      STAGESCAN_Z_START("ZAxisStartPosition(um)"),
+      STAGESCAN_Z_STOP("ZAxisStopPosition(um)"),
+      TTLINPUT_MODE("TTLInputMode"),
       BINNING("Binning"),
       TRIGGER_SOURCE("TRIGGER SOURCE"),   // for Hamamatsu
       TRIGGER_POLARITY("TriggerPolarity"),// for Hamamatsu
@@ -326,6 +332,9 @@ public class Properties {
       JS_Y("3 - joystick Y"),
       JS_RIGHT_WHEEL("22 - right wheel"),
       JS_LEFT_WHEEL("23 - left wheel"),
+      TTLINPUT_MODE_NONE("0 - none"),
+      TTLINPUT_MODE_NEXT_RB("1 - next ring buffer position"),
+      TTLINPUT_MODE_REPRELMOV("2 - repeat relative move"),
       SPIM_ARMED("Armed"),
       SPIM_RUNNING("Running"),  // also used for stage scan
       SPIM_IDLE("Idle"),        // also used for stage scan

@@ -30,6 +30,7 @@ import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Joystick;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Positions;
+import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
@@ -46,9 +47,11 @@ public final class StatusSubPanel extends ListeningJPanel {
    
    private final Devices devices_;
    private final Properties props_;
+   private final Prefs prefs_;
    private final Positions positions_;
    private final StagePositionUpdater stagePosUpdater_; 
    
+   private final ColorSquare planarCorrection_;
    private final ColorSquare galvoA_;
    private final ColorSquare galvoB_;
    private final ColorSquare piezoA_;
@@ -57,7 +60,7 @@ public final class StatusSubPanel extends ListeningJPanel {
    /**
     * 
     */
-   public StatusSubPanel(Devices devices, Properties props, Positions positions,
+   public StatusSubPanel(Devices devices, Properties props, Prefs prefs, Positions positions,
          StagePositionUpdater stagePosUpdater) {
       super (MyStrings.PanelNames.STATUS_SUBPANEL.toString(),
             new MigLayout(
@@ -67,9 +70,16 @@ public final class StatusSubPanel extends ListeningJPanel {
       
       devices_ = devices;
       props_ = props;
+      prefs_ = prefs;
       positions_ = positions;
       stagePosUpdater_ = stagePosUpdater;
       
+      planarCorrection_ = new ColorSquare();
+      add(planarCorrection_);
+      add(new JLabel("Planar C"), "wrap");
+      planarCorrection_.setToolTipText("Black = off; Gray = no device; Green = on;");
+      updatePlanarCorrectionSquare();
+
       galvoA_ = new ColorSquare();
       add(galvoA_);
       add(new JLabel("Scan A"), "wrap");
@@ -177,6 +187,17 @@ public final class StatusSubPanel extends ListeningJPanel {
       return;
    }
    
+   // I wish there was a more elegant way to handle updating this, would ideally have some sort of notification mechanism
+   //   instead of having to poll the preference value whenever we are updating stage positions
+   private void updatePlanarCorrectionSquare() {
+      boolean enabled = prefs_.getBoolean(MyStrings.PanelNames.ACQUSITION.toString(), Properties.Keys.PLUGIN_PLANAR_ENABLED, false);
+      if (enabled) {
+         planarCorrection_.setColor(Color.GREEN);
+      } else {
+         planarCorrection_.setColor(Color.BLACK);
+      }
+   }
+   
 
    /**
     * Called whenever position updater has new information for us
@@ -187,6 +208,7 @@ public final class StatusSubPanel extends ListeningJPanel {
       updateGalvoSquare(Devices.Keys.GALVOB, galvoB_);
       updatePiezoSquare(Devices.Keys.PIEZOA, piezoA_);
       updatePiezoSquare(Devices.Keys.PIEZOB, piezoB_);
+      updatePlanarCorrectionSquare();
    }
    
    /**

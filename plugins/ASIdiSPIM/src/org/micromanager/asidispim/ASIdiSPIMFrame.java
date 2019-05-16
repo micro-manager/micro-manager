@@ -188,7 +188,7 @@ public class ASIdiSPIMFrame extends MMFrame
       settingsPanel_ = new SettingsPanel(gui_, devices_, props_, prefs_, stagePosUpdater_);
       stagePosUpdater_.oneTimeUpdate();  // needed for NavigationPanel
       helpPanel_ = new HelpPanel();
-      statusSubPanel_ = new StatusSubPanel(devices_, props_, positions_, stagePosUpdater_);
+      statusSubPanel_ = new StatusSubPanel(devices_, props_, prefs_, positions_, stagePosUpdater_);
       
       // now add tabs to GUI
       // all added tabs must be of type ListeningJPanel
