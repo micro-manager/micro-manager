@@ -1222,6 +1222,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             Properties.Keys.PLUGIN_PLANAR_SLOPE_X.toString(), 0, 5);
       planarCorrectionPanel_.add(planarSlopeXField_);
       JButton zeroXSlope = new JButton("Set 0");
+      zeroXSlope.setBackground(Color.red);
       zeroXSlope.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -1235,6 +1236,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             Properties.Keys.PLUGIN_PLANAR_SLOPE_Y.toString(), 0, 5);
       planarCorrectionPanel_.add(planarSlopeYField_);
       JButton zeroYSlope = new JButton("Set 0");
+      zeroYSlope.setBackground(Color.red);
       zeroYSlope.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -1247,8 +1249,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       planarOffsetZField_ = pu.makeFloatEntryField(panelName_, 
             Properties.Keys.PLUGIN_PLANAR_OFFSET_Z.toString(), 0, 5);
       planarCorrectionPanel_.add(planarOffsetZField_);
-      
       JButton setOffsetButton = new JButton("Set here");
+      setOffsetButton.setBackground(Color.red);
       setOffsetButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
