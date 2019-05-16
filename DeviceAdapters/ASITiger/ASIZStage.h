@@ -118,7 +118,8 @@ public:
    int OnRBRunning            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnUseSequence          (MM::PropertyBase* pProp, MM::ActionType eAct);
    //Others
-   int OnVector				  (MM::PropertyBase* pProp, MM::ActionType eAct);	
+   int OnVector               (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnTTLInputMode         (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    double unitMult_;

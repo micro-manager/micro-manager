@@ -183,14 +183,14 @@ const char* const g_StageWaitTimePropertyName = "WaitTime(ms)";
 const char* const g_NrExtraMoveRepsPropertyName = "ExtraMoveRepetitions";
 const char* const g_MotorSpeedPropertyName = "MotorSpeed-S(mm/s)";
 const char* const g_MotorSpeedXPropertyName = "MotorSpeedX-S(mm/s)";
+const char* const g_MotorSpeedYPropertyName = "MotorSpeedY-S(mm/s)";
+const char* const g_MotorSpeedMicronsPerSecPropertyName = "MotorSpeed(um/s)";
 const char* const g_MotorSpeedXMicronsPerSecPropertyName = "MotorSpeedX(um/s)";
 const char* const g_MotorSpeedYMicronsPerSecPropertyName = "MotorSpeedY(um/s)";
-const char* const g_MotorSpeedMicronsPerSecPropertyName = "MotorSpeed(um/s)";
-const char* const g_MotorSpeedYPropertyName = "MotorSpeedY-S(mm/s)";
 const char* const g_MaxMotorSpeedPropertyName = "MotorSpeedMaximum(mm/s)";
-const char* const g_MinMotorSpeedPropertyName = "MotorSpeedMinimum(um/s)";
 const char* const g_MaxMotorSpeedXPropertyName = "MotorSpeedMaximumX(mm/s)";
 const char* const g_MaxMotorSpeedYPropertyName = "MotorSpeedMaximumY(mm/s)";
+const char* const g_MinMotorSpeedPropertyName = "MotorSpeedMinimum(um/s)";
 const char* const g_MinMotorSpeedXPropertyName = "MotorSpeedMinimumX(um/s)";
 const char* const g_MinMotorSpeedYPropertyName = "MotorSpeedMinimumY(um/s)";
 const char* const g_BacklashPropertyName = "Backlash-B(um)";
@@ -237,8 +237,10 @@ const char* const g_WheelMirrorPropertyName = "WheelReverse";
 const char* const g_VectorPropertyName = "VectorMove-VE(mm/s)";
 const char* const g_VectorXPropertyName = "VectorMoveX-VE(mm/s)";
 const char* const g_VectorYPropertyName = "VectorMoveY-VE(mm/s)";
-const char* const g_TTLinName = "TTLinMode";
-const char* const g_TTLoutName = "TTLoutMode";
+const char* const g_TTLinName = "TTLinMode";  // for integer-valued property
+const char* const g_TTLoutName = "TTLoutMode";// for integer-valued property
+const char* const g_TTLInputModeName = "TTLInputMode";  // for string-valued property
+const char* const g_TTLOutputModeName = "TTLOutputMode";// for string-valued property
 // Z stage property names
 const char* const g_StepSizePropertyName = "StepSize(um)";
 const char* const g_LowerLimPropertyName =  "LowerLim(mm)";
@@ -556,6 +558,11 @@ const char* const g_ScanPatternRaster = "Raster";
 const char* const g_ScanPatternSerpentine = "Serpentine";
 const char g_ScanPatternRasterCode = '0';
 const char g_ScanPatternSerpentineCode = '1';
+// TTL modes
+const char* const g_TTLInputMode_0 = "0 - none";
+const char* const g_TTLInputMode_1 = "1 - next ring buffer position";
+const char* const g_TTLInputMode_2 = "2 - repeat relative move";
+const char* const g_TTLInputMode_7 = "7 - next array position";
 
 // property descriptions for enums
 // serial terminators for hub

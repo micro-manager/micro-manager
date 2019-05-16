@@ -369,6 +369,17 @@ int CZStage::Initialize()
          && ring_buffer_supported_)
    {
       ttl_trigger_supported_ = true;
+
+      // Vik implemented a similar property for tuneable lens as integer-valued, but this is string-valued with slightly different name
+      // would be nice if property handler automatically parsed things so you could use either string or integer from script one but this appears impossible
+      pAct = new CPropertyAction (this, &CZStage::OnTTLInputMode);
+      CreateProperty(g_TTLInputModeName, g_TTLInputMode_0, MM::String, false, pAct);
+      AddAllowedValue(g_TTLInputModeName, g_TTLInputMode_0, 0);
+      AddAllowedValue(g_TTLInputModeName, g_TTLInputMode_1, 1);
+      AddAllowedValue(g_TTLInputModeName, g_TTLInputMode_2, 2);
+      AddAllowedValue(g_TTLInputModeName, g_TTLInputMode_7, 7);
+      UpdateProperty(g_TTLInputModeName);
+
    }
 
    //VectorMove
@@ -2044,6 +2055,40 @@ int CZStage::OnVector(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(tmp);
       command << "VE " << axisLetter_ << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      // will make stage report busy which can lead to timeout errors
+   }
+   return DEVICE_OK;
+}
+
+int CZStage::OnTTLInputMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp;
+   if (eAct == MM::BeforeGet) {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "TTL X?";
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), axisLetter_) );
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      bool success = 0;
+      switch (tmp) {
+         case 0: success = pProp->Set(g_TTLInputMode_0); break;
+         case 1: success = pProp->Set(g_TTLInputMode_1); break;
+         case 2: success = pProp->Set(g_TTLInputMode_2); break;
+         case 7: success = pProp->Set(g_TTLInputMode_7); break;
+         default: success=0;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   } else if (eAct == MM::AfterSet) {
+      if (hub_->UpdatingSharedProperties())
+         return DEVICE_OK;
+      RETURN_ON_MM_ERROR ( GetCurrentPropertyData(pProp->GetName().c_str(), tmp) );
+      command << addressChar_ << "TTL X=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+      string tmpstr;
+      pProp->Get(tmpstr);
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), tmpstr.c_str()) );
    }
    return DEVICE_OK;
 }
