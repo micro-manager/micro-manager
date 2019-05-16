@@ -400,7 +400,7 @@ int CPLogic::OnSetShutterChannel(MM::PropertyBase* pProp, MM::ActionType eAct)
    } else if (eAct == MM::AfterSet) {
       ostringstream command; command.str("");
       long tmp;
-      RETURN_ON_MM_ERROR ( GetCurrentPropertyData(g_SetChannelPropertyName, tmp) );
+      RETURN_ON_MM_ERROR ( GetCurrentPropertyData(pProp->GetName().c_str(), tmp) );
       if (tmp < 0) return DEVICE_OK;  // no preset and other "signaling" preset codes are negative
       command << addressChar_ << "CCA X=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
@@ -496,7 +496,7 @@ int CPLogic::OnTriggerSource(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (!success)
          return DEVICE_INVALID_PROPERTY_VALUE;
    } else if (eAct == MM::AfterSet) {
-      RETURN_ON_MM_ERROR ( GetCurrentPropertyData(g_TriggerSourcePropertyName, tmp) );
+      RETURN_ON_MM_ERROR ( GetCurrentPropertyData(pProp->GetName().c_str(), tmp) );
       command << "PM " << axisLetter_ << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
    }
@@ -602,7 +602,7 @@ int CPLogic::OnEditCellType(MM::PropertyBase* pProp, MM::ActionType eAct)
          return OnCellType(pProp, eAct, (long)currentPosition_);
       } else if (eAct == MM::AfterSet) {
          long tmp;
-         RETURN_ON_MM_ERROR ( GetCurrentPropertyData(g_EditCellTypePropertyName, tmp) );
+         RETURN_ON_MM_ERROR ( GetCurrentPropertyData(pProp->GetName().c_str(), tmp) );
          command << addressChar_ << "CCA Y=" << tmp;
          RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
          RETURN_ON_MM_ERROR ( RefreshEditCellPropertyValues() );
@@ -1074,7 +1074,7 @@ int CPLogic::OnSetCardPreset(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (!initialized_)
          pProp->Set(g_PresetCodeNone);
    } else if (eAct == MM::AfterSet) {
-      RETURN_ON_MM_ERROR ( GetCurrentPropertyData(g_SetCardPresetPropertyName, tmp) );
+      RETURN_ON_MM_ERROR ( GetCurrentPropertyData(pProp->GetName().c_str(), tmp) );
       if (tmp < 0) return DEVICE_OK;  // g_PresetCodeNone and other "signaling" preset codes are negative
       command << addressChar_ << "CCA X=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
