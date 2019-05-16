@@ -135,7 +135,6 @@ private:
    bool initialized_;
    std::string deviceName_;
    MM::MMTime sequenceStartTime_;
-   MM::MMTime sequenceStartTimeStamp_;
    long imageCounter_;
    bool stopOnOverflow_;
    long desiredNumImages_;
