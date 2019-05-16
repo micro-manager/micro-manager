@@ -1,5 +1,6 @@
 package org.micromanager.internal.utils.imageanalysis;
 
+import boofcv.struct.image.ImageGray;
 import ij.ImagePlus;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
@@ -663,6 +664,14 @@ public final class ImageUtils {
     */
    
    public static ImageProcessor crossCorrelate(ImageProcessor proc1, ImageProcessor proc2) {
+      /*
+      ImageGray<? extends ImageGray<?>> bc1 = BoofCVImageConverter.convert(proc1, false);
+      ImageGray<? extends ImageGray<?>> bc2 = BoofCVImageConverter.convert(proc2, false);
+      bc1 = ImagePadder.padPreibisch(bc1);
+      bc2 = ImagePadder.padPreibisch(bc2);
+      proc1 = BoofCVImageConverter.convert(bc1, false);
+      proc2 = BoofCVImageConverter.convert(bc2, false);
+      */
       FHT h1 = new FHT(proc1);
       FHT h2 = new FHT(proc2);
       h1.transform();
