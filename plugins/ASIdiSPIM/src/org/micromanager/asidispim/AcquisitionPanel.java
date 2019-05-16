@@ -4257,10 +4257,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                               }
 
                               // if we are using demo camera then add some extra time to let controller finish
-                              // since we got images without waiting for controller to actually send triggers
                               if (usingDemoCam) {
                                  Thread.sleep(200);  // for serial communication overhead
-                                 Thread.sleep((long)volumeDuration/nrChannelsSoftware);  // estimate the time per channel, not ideal in case of software channel switching
                                  if (acqSettings.isStageScanning) {
                                     Thread.sleep(1000 + extraStageScanTimeout);  // extra 1 second plus ramp time for stage scanning 
                                  }
