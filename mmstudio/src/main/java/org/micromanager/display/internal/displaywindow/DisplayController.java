@@ -106,7 +106,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    // Not final but set only upon creation
    private AnimationController<Coords> animationController_;
 
-   private final Set<String> playbackAxes_ = new HashSet<String>();
+   private final Set<String> playbackAxes_ = new HashSet<>();
 
    private final StatsComputeQueue computeQueue_ = StatsComputeQueue.create();
    private static final long MIN_REPAINT_PERIOD_NS = Math.round(1e9 / 60.0);
@@ -121,10 +121,10 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    private final Object selectionLock_ = new Object();
    private BoundsRectAndMask selection_ = BoundsRectAndMask.unselected();
 
-   private final List<Overlay> overlays_ = new ArrayList<Overlay>();
+   private final List<Overlay> overlays_ = new ArrayList<>();
    
    private final TreeMap<Integer, DataViewerListener> listeners_ = 
-           new TreeMap<Integer, DataViewerListener>();
+           new TreeMap<>();
 
    // A way to know from a non-EDT thread that the display has definitely
    // closed (may not be true for a short period after closing)
@@ -842,29 +842,19 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       // any ongoing playback animation. Actual display of new images happens
       // upon receiving callbacks via the AnimationController.Listener
       // interface.
-      Coords currentlyDisplayedCoords = null;
-      if (displayedImages_ != null) {
-         int nrImages = displayedImages_.getRequest().getNumberOfImages();
-         if (nrImages > 0) {
-            // TODO: handle case where number of Images is > 
-            currentlyDisplayedCoords
-                    = displayedImages_.getRequest().getImage(0).getCoords();
-         }
-      }
       animationController_.newDataPosition(event.getImage().getCoords());
    }
 
 
-   //
-   //
-   //
 
-   // A coalescent runnable to avoid excessively frequent update of the data
-   // coords range in the UI
+   /**
+    * A coalescent runnable to avoid excessively frequent update of the data
+    * coords range in the UI
+    */
    private class ExpandDisplayRangeCoalescentRunnable
          implements CoalescentRunnable
    {
-      private final List<Coords> coords_ = new ArrayList<Coords>();
+      private final List<Coords> coords_ = new ArrayList<>();
 
       ExpandDisplayRangeCoalescentRunnable(Coords coords) {
          coords_.add(coords);

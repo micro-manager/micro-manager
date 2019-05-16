@@ -52,7 +52,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.BorderFactory;
@@ -68,7 +67,6 @@ import javax.swing.JToggleButton;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -150,6 +148,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
    private JLabel imageInfoLabel_;
    private JLabel newImageIndicator_;
    private JLabel fpsLabel_;
+   private JLabel cameraFpsLabel_;
    private JLabel infoLabel_;
    private PopupButton playbackFpsButton_;
    private JSpinner playbackFpsSpinner_;
@@ -159,13 +158,13 @@ public final class DisplayUIController implements Closeable, WindowListener,
    // We need to look up in both directions, and don't need the efficiency of
    // a map for the small number of elements, so use lists of pairs.
    private final List<Map.Entry<String, JToggleButton>> axisAnimationButtons_ =
-         new ArrayList<Map.Entry<String, JToggleButton>>();
+         new ArrayList<>();
    private final List<Map.Entry<String, PopupButton>> axisPositionButtons_ =
-         new ArrayList<Map.Entry<String, PopupButton>>();
+         new ArrayList<>();
    private final List<Map.Entry<String, PopupButton>> axisLinkButtons_ =
-         new ArrayList<Map.Entry<String, PopupButton>>();
+         new ArrayList<>();
    private final List<Map.Entry<String, JButton>> axisLockButtons_ = 
-           new ArrayList<Map.Entry<String, JButton>>();
+           new ArrayList<>();
 
    private static final Icon PLAY_ICON = IconLoader.getIcon(
          "/org/micromanager/icons/play.png");
@@ -185,10 +184,11 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
    // Data display state of the UI (which may lag behind the display
    // controller's notion of what's current)
-   private final List<String> displayedAxes_ = new ArrayList<String>();
-   private final List<Integer> displayedAxisLengths_ = new ArrayList<Integer>();
+   private final List<String> displayedAxes_ = new ArrayList<>();
+   private final List<Integer> displayedAxisLengths_ = new ArrayList<>();
    private ImagesAndStats displayedImages_;
    private Double cachedPixelSize_ = -1.0;
+   private boolean isPreview_ = false;
 
    private BoundsRectAndMask lastSeenSelection_;
 
@@ -208,9 +208,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
          new AtomicBoolean(false);
    private final AtomicReference<TimeIntervalRunningQuantile>
          displayIntervalEstimator_ =
-         new AtomicReference<TimeIntervalRunningQuantile>(
-               TimeIntervalRunningQuantile.create(
-                     DISPLAY_INTERVAL_SMOOTH_N_SAMPLES));
+         new AtomicReference<>( TimeIntervalRunningQuantile.create(
+                     DISPLAY_INTERVAL_SMOOTH_N_SAMPLES) );
    private long fpsDisplayedTimeNs_;
 
    private final CoalescentEDTRunnablePool runnablePool_ =
@@ -422,11 +421,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
       fullScreenButton_ = new JButton();
       fullScreenButton_.setFont(GUIUtils.buttonFont);
-      fullScreenButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            setFullScreenMode(!isFullScreenMode());
-         }
+      fullScreenButton_.addActionListener((ActionEvent e) -> {
+         setFullScreenMode(!isFullScreenMode());
       });
       setFullScreenMode(isFullScreenMode()); // Sync button state
       buttonPanel.add(fullScreenButton_);
@@ -434,11 +430,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
       zoomInButton_ = new JButton(
             IconLoader.getIcon("/org/micromanager/icons/zoom_in.png"));
       zoomInButton_.setToolTipText("Zoom in");
-      zoomInButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            zoomIn();
-         }
+      zoomInButton_.addActionListener((ActionEvent e) -> {
+         zoomIn();
       });
       zoomInButton_.setEnabled(false); // No canvas yet
       buttonPanel.add(zoomInButton_);
@@ -446,11 +439,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
       zoomOutButton_ = new JButton(
             IconLoader.getIcon("/org/micromanager/icons/zoom_out.png"));
       zoomOutButton_.setToolTipText("Zoom out");
-      zoomOutButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            zoomOut();
-         }
+      zoomOutButton_.addActionListener((ActionEvent e) -> {
+         zoomOut();
       });
       zoomOutButton_.setEnabled(false); // No canvas yet
       buttonPanel.add(zoomOutButton_);
@@ -480,11 +470,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
           
       SpinnerModel fpsModel = new FpsSpinnerNumberModel(10.0, 1.0, 1000.0);
       playbackFpsSpinner_ = new JSpinner(fpsModel);
-      playbackFpsSpinner_.addChangeListener(new ChangeListener() {
-         @Override
-         public void stateChanged(ChangeEvent e) {
-            handlePlaybackFpsSpinner(e);
-         }
+      playbackFpsSpinner_.addChangeListener((ChangeEvent e) -> {
+         handlePlaybackFpsSpinner(e);
       });
       playbackFpsButton_ = PopupButton.create("", playbackFpsSpinner_);
       playbackFpsButton_.setFont(playbackFpsButton_.getFont().deriveFont(10.0f));
@@ -496,11 +483,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
       playbackFpsButton_.setMaximumSize(fpsButtonSize);
       playbackFpsButton_.setPreferredSize(fpsButtonSize);
       playbackFpsButton_.setMargin(buttonInsets_);
-      playbackFpsButton_.addPopupButtonListener(new PopupButton.Listener() {
-         @Override
-         public void popupButtonWillShowPopup(PopupButton button) {
-            playbackFpsSpinner_.setValue(displayController_.getPlaybackSpeedFps());
-         }
+      playbackFpsButton_.addPopupButtonListener((PopupButton button) -> {
+         playbackFpsSpinner_.setValue(displayController_.getPlaybackSpeedFps());
       });
       setPlaybackFpsIndicator(displayController_.getPlaybackSpeedFps());
       playbackFpsButton_.setVisible(false);
@@ -544,6 +528,9 @@ public final class DisplayUIController implements Closeable, WindowListener,
       fpsLabel_ = new JLabel(" ");
       fpsLabel_.setFont(fpsLabel_.getFont().deriveFont(10.0f));
       tmp2Panel.add(fpsLabel_, new CC());
+      cameraFpsLabel_ = new JLabel(" ");
+      cameraFpsLabel_.setFont(fpsLabel_.getFont().deriveFont(10.0f));
+      tmp2Panel.add(cameraFpsLabel_, new CC());
       panel.add(tmp2Panel, new CC().growX());
       // TODO Avoid static studio
       panel.add(new SaveButton(MMStudio.getInstance(), displayController_));
@@ -802,7 +789,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       } 
       
       if (firstTime) {
-         // We need to set the displaySettings after the ijBride was created
+         // We need to set the displaySettings after the ijBridge was created
          // (in the setupDisplayUI function), and after the display range
          // has been expanded to include all Coords in the "images"
          // If we do not do so, only one channel will be shown
@@ -1048,7 +1035,9 @@ public final class DisplayUIController implements Closeable, WindowListener,
    }
 
    void setNewImageIndicator(boolean show) {
-      newImageIndicator_.setVisible(show);
+      // NS: I am not sure what this means to the user in the snap/live window,
+      // and it takes up space, so don't show in preview windows
+      newImageIndicator_.setVisible(show && !isPreview_);
    }
 
    private void updateAxisPositionIndicator(final String axis, 
@@ -1166,6 +1155,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
    private void setTitle(JFrame frame) {
       StringBuilder sb = new StringBuilder();
       sb.append(displayController_.getName());
+      isPreview_ = isPreview(displayController_.getName());
       if (ijBridge_ != null) {
               sb.append(" (").
               append(NumberUtils.doubleToDisplayString(ijBridge_.getIJZoom() * 100)).
@@ -1175,6 +1165,10 @@ public final class DisplayUIController implements Closeable, WindowListener,
       }
       // TODO: add save status, and listen for changes
       frame.setTitle(sb.toString());
+   }
+   
+   private boolean isPreview(String title) {
+      return  title.startsWith("Preview") ? true : false;
    }
 
    public void zoomIn() {
@@ -1441,11 +1435,11 @@ public final class DisplayUIController implements Closeable, WindowListener,
                   displayIntervalEstimator_.get().getQuantile(0.5));
          }
          perfMon_.sample("Display interval 25th percentile",
-               displayIntervalEstimator_.get().getQuantile(0.25));
+                 displayIntervalEstimator_.get().getQuantile(0.25));
          perfMon_.sample("Display interval 50th percentile",
-               displayIntervalEstimator_.get().getQuantile(0.5));
+                 displayIntervalEstimator_.get().getQuantile(0.5));
          perfMon_.sample("Display interval 75th percentile",
-               displayIntervalEstimator_.get().getQuantile(0.75));
+                 displayIntervalEstimator_.get().getQuantile(0.75));
          showFPS();
       }
    }
@@ -1483,7 +1477,38 @@ public final class DisplayUIController implements Closeable, WindowListener,
       lastAnimationIntervalAdjustmentNs_ = System.nanoTime();
    }
 
+   /**
+    * NS, 20190515: 
+    * Display fps is confusing to the user.  It is unclear what it means.
+    * It also can easily be confused with Playback fps and camera fps, 
+    * which are more useful messages.
+    * I leave the code here for future use, but no longer call it
+    * Showing camera fps instead.  Display fps is set by the user, and the code
+    * should make sure that it is correct.
+    */
    private void showFPS() {
+      // Show camera FPS, only in the preview window (otherwise, what does the number mean?)
+      if (isPreview_) {
+         List<Image> displayedImages = getDisplayedImages();
+         if (displayedImages != null && displayedImages.size() > 0) {
+            Metadata metadata = displayedImages.get(0).getMetadata();
+            Long nr = metadata.getImageNumber();
+            double ms = metadata.getElapsedTimeMs(-1.0);
+            if (nr != null && ms > 0.0) {
+               double fps = (nr * 1000.0) / ms;
+               if (fps < 2.0) {
+                  cameraFpsLabel_.setText(String.format(
+                          "Camera: %.3g fps", fps));
+               } else {
+                  cameraFpsLabel_.setText(String.format(
+                          "Camera: %d fps", (int) fps));
+               }
+            } else {
+               cameraFpsLabel_.setText(" ");
+            }
+         }
+      }
+      /*
       long nowNs = System.nanoTime();
       if (nowNs - fpsDisplayedTimeNs_ < 1000000 * FPS_DISPLAY_UPDATE_INTERVAL_MS) {
          if (perfMon_ != null) {
@@ -1509,7 +1534,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       if (perfMon_ != null) {
          perfMon_.sampleTimeInterval("FPS indicator updated");
       }
-
+      
       scheduledExecutor_.schedule(new Runnable() {
          @Override
          public void run() {
@@ -1528,6 +1553,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
             });
          }
       }, FPS_DISPLAY_DURATION_MS, TimeUnit.MILLISECONDS);
+      */
    }
 
    public double getDisplayIntervalQuantile(double q) {
