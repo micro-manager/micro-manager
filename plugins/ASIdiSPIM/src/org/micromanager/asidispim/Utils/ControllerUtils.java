@@ -86,82 +86,96 @@ public class ControllerUtils {
       final Devices.Keys xyDevice = Devices.Keys.XYSTAGE;
       final double xStartUm = x - (scanDistance_/2);
       final double xStopUm = x + (scanDistance_/2);
+      props_.setPropValue(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_CENTER_X_POSITION, (float)(x));
+      props_.setPropValue(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_Y_POSITION, (float)(y));
       props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_FAST_START, (float)(xStartUm/1000d));
       props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_FAST_STOP, (float)(xStopUm/1000d));
       props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SLOW_START, (float)(y/1000d));
       props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SLOW_STOP, (float)(y/1000d));
       zSpeedZero_ = true;  // will turn false if we are doing planar correction
+
+      return preparePlanarCorrectionForAcquisition();
+   }
+   
+   /**
+    * 
+    * @return
+    */
+   public boolean preparePlanarCorrectionForAcquisition() {
+      
+      if (!prefs_.getBoolean(MyStrings.PanelNames.ACQUSITION.toString(), Properties.Keys.PLUGIN_PLANAR_ENABLED, false)) {
+         return true;  // nothing to do
+      }
       
       // handle setting up planar correction if needed
-      if (prefs_.getBoolean(MyStrings.PanelNames.ACQUSITION.toString(), Properties.Keys.PLUGIN_PLANAR_ENABLED, false)) {
-         final float xSpeed = props_.getPropValueFloat(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED_X_MICRONS)/1000f;  // in mm/sec = controller units
-         final float xSlope = prefs_.getFloat(MyStrings.PanelNames.ACQUSITION.toString(), 
-               Properties.Keys.PLUGIN_PLANAR_SLOPE_X, 0.0f) / 1000f;  // could be negative!
-         final Devices.Keys zDevice = Devices.Keys.UPPERZDRIVE;
-         
-         // Z speed is simply ratio of X speed based on slope = partial derivative dZ/dX of plane equation
-         // calculate ideal speed, then implement as best we can on the controller
-         final float zSpeedIdeal = xSpeed*Math.abs(xSlope);  // in mm/sec = controller units
-         final float zSpeedMin = props_.getPropValueFloat(zDevice, Properties.Keys.STAGESCAN_MIN_MOTOR_SPEED_Z)/1000f;  // will return 0 if we don't know min
-         final float zSpeedRequested;
-         if (zSpeedIdeal < (zSpeedMin/2)) {  // too slow for controller to handle so just make it 0 = no correction
-            zSpeedRequested = 0.0f;
-         } else {
-            zSpeedRequested = zSpeedIdeal;
-            zSpeedZero_ = false;
-         }
-         
-         // compute actual speed and handle case where we are making planar correction move
-         final float zSpeedActual;
-         if (zSpeedZero_) {
-            zSpeedActual = 0.0f;
-         } else {
-            float origSpeed = props_.getPropValueFloat(zDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED_Z);
-            // we actually have a non-zero speed for the Z axis to move during acquisition
-            props_.setPropValue(zDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, zSpeedRequested);
-            if (props_.hasProperty(zDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED_MICRONS_Z)) {
-               zSpeedActual = props_.getPropValueFloat(zDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED_MICRONS_Z)/1000f;
-            } else {
-               zSpeedActual = zSpeedRequested;  // if we have older firmware the we can't read back actual speed
-            }
+      final float xSpeed = props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MOTOR_SPEED_X_MICRONS)/1000f;  // in mm/sec = controller units
+      final float xSlope = prefs_.getFloat(MyStrings.PanelNames.ACQUSITION.toString(), 
+            Properties.Keys.PLUGIN_PLANAR_SLOPE_X, 0.0f) / 1000f;  // could be negative!
+      final Devices.Keys zDevice = Devices.Keys.UPPERZDRIVE;
 
-            // set Z for start position taking into account the actual speed (so that if the
-            //    speed isn't quite right we split the error on both sides)
-            final double zCenter = getPlanarZ(x, y);
-            final double zOffset = Math.signum(xSlope)*(zSpeedActual / xSpeed * scanDistance_/2);
-            final float zStart = (float)(zCenter - zOffset);
-            final float zStop = (float)(zCenter + zOffset);
-            
-            // move Z to correct position now, even before scan, with original speed
-            props_.setPropValue(zDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, origSpeed);
-            positions_.setPosition(zDevice, zStart);
-            try {
-               core_.waitForDevice(devices_.getMMDevice(zDevice));
-            } catch (Exception e1) {
-               e1.printStackTrace();
-            }
-            props_.setPropValue(zDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, zSpeedRequested);  // results in zSpeedActual
-            props_.setPropValue(Devices.Keys.PLUGIN, Properties.Keys.STAGESCAN_Z_START, zStart);
-            props_.setPropValue(Devices.Keys.PLUGIN, Properties.Keys.STAGESCAN_Z_STOP, zStop);
+      // Z speed is simply ratio of X speed based on slope = partial derivative dZ/dX of plane equation
+      // calculate ideal speed, then implement as best we can on the controller
+      final float zSpeedIdeal = xSpeed*Math.abs(xSlope);  // in mm/sec = controller units
+      final float zSpeedMin = props_.getPropValueFloat(zDevice, Properties.Keys.STAGESCAN_MIN_MOTOR_SPEED_Z)/1000f;  // will return 0 if we don't know min
+      final float zSpeedRequested;
+      if (zSpeedIdeal < (zSpeedMin/2)) {  // too slow for controller to handle so just make it 0 = no correction
+         zSpeedRequested = 0.0f;
+      } else {
+         zSpeedRequested = zSpeedIdeal;
+         zSpeedZero_ = false;
+      }
 
-            // load the ring buffer with (only) the end position and configure to be TTL triggered by the XY stage sync
-            props_.setPropValue(Devices.Keys.UPPERZDRIVE, Properties.Keys.TTLINPUT_MODE, Properties.Values.TTLINPUT_MODE_NEXT_RB);
-            DoubleVector positionSequence = new DoubleVector();
-            positionSequence.add(zStop);
-            try {
-               core_.loadStageSequence(devices_.getMMDevice(Devices.Keys.UPPERZDRIVE), positionSequence);
-            } catch (Exception e) {
-               e.printStackTrace();
-            }
-            
-            // configure PLC output #3 to be the sync signal from XY stage (maybe in future this could be wired on backpanel
-            //   but for now requires connecting BNC from PLC #3 to TTLin trigger of Z axis card
-            final Devices.Keys plcDevice = Devices.Keys.PLOGIC;
-            final int PLOGIC_OUTPUT_3_ADDR = 35;
-            final int PLOGIC_XYSTAGE_SYNC_ADDR = 46;
-            props_.setPropValue(plcDevice, Properties.Keys.PLOGIC_POINTER_POSITION, PLOGIC_OUTPUT_3_ADDR);
-            props_.setPropValue(plcDevice, Properties.Keys.PLOGIC_EDIT_CELL_CONFIG, PLOGIC_XYSTAGE_SYNC_ADDR);
+      // compute actual speed and handle case where we are making planar correction move
+      final float zSpeedActual;
+      if (zSpeedZero_) {
+         zSpeedActual = 0.0f;
+      } else {
+         float origSpeed = props_.getPropValueFloat(zDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED_Z);
+         // we actually have a non-zero speed for the Z axis to move during acquisition
+         props_.setPropValue(zDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, zSpeedRequested);
+         if (props_.hasProperty(zDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED_MICRONS_Z)) {
+            zSpeedActual = props_.getPropValueFloat(zDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED_MICRONS_Z)/1000f;
+         } else {
+            zSpeedActual = zSpeedRequested;  // if we have older firmware the we can't read back actual speed
          }
+
+         // set Z for start position taking into account the actual speed (so that if the
+         //    speed isn't quite right we split the error on both sides)
+         final double xCenter = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_CENTER_X_POSITION);
+         final double yCenter = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_Y_POSITION);
+         final double zCenter = getPlanarZ(xCenter, yCenter);
+         final double zOffset = Math.signum(xSlope)*(zSpeedActual / xSpeed * scanDistance_/2);
+         final float zStart = (float)(zCenter - zOffset);
+         final float zStop = (float)(zCenter + zOffset);
+
+         // move Z to correct position now, even before scan, with original speed
+         props_.setPropValue(zDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, origSpeed);
+         positions_.setPosition(zDevice, zStart);
+         try {
+            core_.waitForDevice(devices_.getMMDevice(zDevice));
+         } catch (Exception e1) {
+            e1.printStackTrace();
+         }
+         props_.setPropValue(zDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, zSpeedRequested);  // results in zSpeedActual
+         props_.setPropValue(Devices.Keys.PLUGIN, Properties.Keys.STAGESCAN_Z_START, zStart);
+
+         // load the ring buffer with (only) the end position and configure to be TTL triggered by the XY stage sync
+         props_.setPropValue(Devices.Keys.UPPERZDRIVE, Properties.Keys.TTLINPUT_MODE, Properties.Values.TTLINPUT_MODE_NEXT_RB);
+         DoubleVector positionSequence = new DoubleVector();
+         positionSequence.add(zStop);
+         try {
+            core_.loadStageSequence(devices_.getMMDevice(Devices.Keys.UPPERZDRIVE), positionSequence);
+         } catch (Exception e) {
+            e.printStackTrace();
+         }
+
+         // configure PLC output #3 to be the sync signal from XY stage (maybe in future this could be wired on backpanel
+         //   but for now requires connecting BNC from PLC #3 to TTLin trigger of Z axis card
+         final Devices.Keys plcDevice = Devices.Keys.PLOGIC;
+         final int PLOGIC_OUTPUT_3_ADDR = 35;
+         final int PLOGIC_XYSTAGE_SYNC_ADDR = 46;
+         props_.setPropValue(plcDevice, Properties.Keys.PLOGIC_POINTER_POSITION, PLOGIC_OUTPUT_3_ADDR);
+         props_.setPropValue(plcDevice, Properties.Keys.PLOGIC_EDIT_CELL_CONFIG, PLOGIC_XYSTAGE_SYNC_ADDR);
       }
       
       return true;

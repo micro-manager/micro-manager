@@ -2776,6 +2776,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   gui_.getMMCore().setShutterOpen(shutterOpen);
                   gui_.getMMCore().setAutoShutter(autoShutter);
                   
+                  // cleanup planar correction move if any
+                  props_.setPropValue(Devices.Keys.UPPERZDRIVE, Properties.Keys.TTLINPUT_MODE, Properties.Values.TTLINPUT_MODE_NONE);
+                  props_.setPropValue(Devices.Keys.UPPERZDRIVE, Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, origZSpeed);
+                  
                   // make sure SPIM state machine on micromirror and SCAN of XY card are stopped (should normally be but sanity check)
                   stopSPIMStateMachines(acqSettings);
                   
@@ -3889,6 +3893,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      final MultiStagePosition nextPosition = positionList.getPosition(positionNum);
                      
                      // blocking call; will wait for stages to move
+                     // NB: assume planar correction is handled by marked Z position; this seems better
+                     //   than making it impossible for user to select different Z positions e.g. for YZ grid
                      MultiStagePosition.goToPosition(nextPosition, core_);
                      
                      // for stage scanning: restore speed and set up scan at new position 
@@ -3928,7 +3934,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                            ASIdiSPIM.getFrame().setHardwareInUse(true);
                            
                            // deal with channel if needed (hardware channel switching doesn't happen here)
-                           if (changeChannelPerVolumeSoftware) {
+                           if (changeChannelPerVolumeSoftware) {  // if we are changing channel every volume
                               if (changeChannelPerVolumeDoneFirst) {
                                  // skip selecting next channel the very first time only
                                  changeChannelPerVolumeDoneFirst = false;
@@ -3938,6 +3944,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                     extraChannelOffset_ = newOffset;
                                     controller_.prepareControllerForAquisitionOffsetOnly(acqSettings, extraChannelOffset_);
                                  }
+                              }
+                              
+                              if (acqSettings.isStageScanning) {
+                                 controller_.preparePlanarCorrectionForAcquisition();
                               }
                            }
                            
@@ -4256,7 +4266,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                  }
                               }
 
-
                            } catch (InterruptedException iex) {
                               MyDialogUtils.showError(iex);
                            }
@@ -4283,7 +4292,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                            if ((twoSided || acqBothCameras) && core_.isSequenceRunning(secondCamera)) {
                               core_.stopSequenceAcquisition(secondCamera);
                            }
-
+                           
+                           // cleanup planar correction move if any
+                           props_.setPropValue(Devices.Keys.UPPERZDRIVE, Properties.Keys.TTLINPUT_MODE, Properties.Values.TTLINPUT_MODE_NONE);
+                           props_.setPropValue(Devices.Keys.UPPERZDRIVE, Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, origZSpeed);
+                           
                            // make sure SPIM state machine on micromirror and SCAN of XY card are stopped (should normally be but sanity check)
                            stopSPIMStateMachines(acqSettings);
                         }
@@ -4448,8 +4461,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   Properties.Keys.STAGESCAN_MOTOR_SPEED_X, origXSpeed);
             props_.setPropValue(Devices.Keys.XYSTAGE,
                   Properties.Keys.STAGESCAN_MOTOR_ACCEL_X, origXAccel);
-            props_.setPropValue(Devices.Keys.UPPERZDRIVE,
-                  Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, origZSpeed);
             core_.setXYPosition(devices_.getMMDevice(Devices.Keys.XYSTAGE), 
                   xyPosUm.x, xyPosUm.y);
          } catch (Exception ex) {

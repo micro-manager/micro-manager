@@ -150,7 +150,6 @@ public class Properties {
       STAGESCAN_MOTOR_SPEED_MICRONS_Z("MotorSpeed(um/s)"),
       STAGESCAN_MIN_MOTOR_SPEED_Z("MotorSpeedMinimum(um/s)"),
       STAGESCAN_Z_START("ZAxisStartPosition(um)"),
-      STAGESCAN_Z_STOP("ZAxisStopPosition(um)"),
       TTLINPUT_MODE("TTLInputMode"),
       BINNING("Binning"),
       TRIGGER_SOURCE("TRIGGER SOURCE"),   // for Hamamatsu
@@ -282,6 +281,8 @@ public class Properties {
       PLUGIN_OVERVIEW_OVERWRITE_WINDOW("OverviewOverwriteWindow"),
       PLUGIN_STAGESCAN_ACCEL_FACTOR("StageScanAccelerationFactor"),
       PLUGIN_STAGESCAN_ANGLE_PATHA("StageScanAnglePathA"),
+      PLUGIN_STAGESCAN_CENTER_X_POSITION("StageCenterXPosition"),
+      PLUGIN_STAGESCAN_Y_POSITION("StageScanYPosition"),
       PLUGIN_LS_SCAN_RESET("LightSheetScanReset"),
       PLUGIN_LS_SCAN_SETTLE("LightSheetScanSettle"),
       PLUGIN_LS_SHUTTER_WIDTH("LightSheetShutterWidth"),
