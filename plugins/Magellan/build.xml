@@ -1,4 +1,5 @@
 <project name="Magellan" default="jar">
+
 	<!-- A bit of a hack to skip building Magellan when non-free
 	     dependencies are not available -->
 	<include file="../../buildscripts/buildprops.xml"/>
