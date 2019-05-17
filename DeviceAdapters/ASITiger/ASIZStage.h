@@ -133,6 +133,7 @@ private:
    bool ttl_trigger_supported_;
    bool ttl_trigger_enabled_;
    std::vector<double> sequence_;
+   unsigned int axisIndex_;
 
    // private helper functions
    int OnSaveJoystickSettings();

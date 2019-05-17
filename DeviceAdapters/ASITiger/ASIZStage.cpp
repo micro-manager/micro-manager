@@ -52,7 +52,8 @@ CZStage::CZStage(const char* name) :
    ring_buffer_supported_(false),
    ring_buffer_capacity_(0),
    ttl_trigger_supported_(false),
-   ttl_trigger_enabled_(false)
+   ttl_trigger_enabled_(false),
+   axisIndex_(0)
 {
    if (IsExtendedName(name))  // only set up these properties if we have the required information in the name
    {
@@ -121,6 +122,10 @@ int CZStage::Initialize()
    command2.str("");
    command2 << (minSpeed*1000);
    CreateProperty(g_MinMotorSpeedPropertyName, command2.str().c_str(), MM::Float, true);
+
+   command.str(""); command << "Z2B " << axisLetter_ << "?";
+   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(axisIndex_) );
 
    // now for properties that are read-write, mostly parameters that set aspects of stage behavior
    // parameters exposed for user to set easily: SL, SU, PC, E, S, AC, WT, MA, JS X=, JS Y=, JS mirror
@@ -550,6 +555,12 @@ int CZStage::SendStageSequence()
       command << "LD " << axisLetter_ << "=" << sequence_[i]*unitMult_;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
    }
+
+   // turn off ring buffer on all other axes; this will be the right thing 90% of the time
+   unsigned int mask = 1 << axisIndex_;
+   command.str("");
+   command << addressChar_ << "RM Y=" << mask;
+   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
 
    return DEVICE_OK;
 }
