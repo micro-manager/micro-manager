@@ -98,6 +98,15 @@ public class ChannelSpec {
         }
         return channelColors;
     }
+      
+      
+   public Color[] getAllChannelColors() {
+        Color[] channelColors = new Color[channels_.size()];
+        for (int i = 0; i < channelColors.length; i++) {
+            channelColors[i] = channels_.get(i).color_;
+        }
+        return channelColors;
+    }
 
     public int getNumChannels() {
         return channels_.size();
@@ -136,4 +145,5 @@ public class ChannelSpec {
       }
       return names;
    }
+
 }
