@@ -35,7 +35,7 @@ public class MagellanServer {
    }
 
    public MagellanServer() throws IOException {
-      int port = 8080;
+      int port = 4827;
       socket_ = new ServerSocket(port);
       executor_.submit(listen());
    }

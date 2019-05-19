@@ -3,9 +3,10 @@ import sys
 import numpy as np
 import time
 
-def initialize(host='localhost', port=8080):
+def initialize(host='localhost', port=4827):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((host, port))
+    return sock
 
 def sendMessage(sock, data):
     if type(data) == str:
