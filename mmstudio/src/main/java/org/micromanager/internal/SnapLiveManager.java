@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -656,8 +657,13 @@ public final class SnapLiveManager extends DataViewerListener
          } else if (displayInfo_ != null) {
             Long prevSeqNr = displayInfo_.getImageNr(newImageChannel);
             Long newSeqNr = newImage.getMetadata().getImageNumber();
+            // NS, 05-20-2019: This code rejected images when their seqNr is lower than the 
+            // previous seq nr.  However, this results in live mode display
+            // stopping to update when the circular buffer is reset!
+            // Very bad, especially for cameras with large frames
+            // for now, we will only reject when the sequence nr is identical to the prvious one.
             if (prevSeqNr != null && newSeqNr != null) {
-               if (prevSeqNr >= newSeqNr) {
+               if (Objects.equals(prevSeqNr, newSeqNr)) {
                   perfMon_.sample(
                           "Image rejected based on ImageNumber (%)", 100.0);
                   return; // Already displayed this image
