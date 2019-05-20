@@ -57,11 +57,10 @@ public final class CopyToImageJItem implements DisplayGearMenuPlugin, SciJavaPlu
       
       DataProvider dp = display.getDataProvider();
       Coords displayPosition = display.getDisplayPosition();
-      int position = displayPosition.getP();
+      int p = displayPosition.getP();
       
       ImagePlus iPlus = null;
       Image image = null;
-      int p = 0; // TODO: set to the p seen in the viewer
       if (dp.getNumImages() == 1) {
          try {
             image = dp.getAnyImage();
@@ -105,6 +104,8 @@ public final class CopyToImageJItem implements DisplayGearMenuPlugin, SciJavaPlu
       }
       if (iPlus != null) {
          iPlus.show();
+         // display.getZoom throws an unsupported exception!
+         // iPlus.getCanvas().setMagnification(display.getZoom());
       }
       
       
