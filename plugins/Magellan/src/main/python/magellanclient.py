@@ -20,7 +20,7 @@ def sendMessage(sock, data):
 def recieveMessage(sock):
     message_length_bytes = sock.recv(4)
     message_length = int.from_bytes(message_length_bytes, sys.byteorder, signed=True)
-    if message_length > 0:
+    if message_length == -1:
         #decode the message and take action
         pass
 
@@ -31,7 +31,7 @@ def communicate(sock, message):
 sock = initialize()
 
 
-test_img = np.random.randint(0, 65535, (2048, 2048), dtype=np.uint16)
+test_img = np.random.randint(0, 65535, (1024, 1024, 50), dtype=np.uint16)
 
 
 

@@ -59,11 +59,14 @@ public class MagellanServer {
                      ByteStreams.readFully(inStream_, message);
                      parseMessage(message);
                      //send back an answer
+                     //TODO: maybe build a queue of message to send?
                      if (false) {
                         //nothing to send for now
                      } else {
                         //send a message alerting that there's nothing to send
-                        outStream_.write(new byte[]{0, 0, 0, 0}, 0, 4);
+                        ByteBuffer buffer = ByteBuffer.allocate(4);                        
+                        buffer.order(ByteOrder.nativeOrder()).asIntBuffer().put(-1);
+                        outStream_.write(buffer.array(), 0, 4);
                         outStream_.flush();
                      }
                   }
