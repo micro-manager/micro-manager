@@ -473,7 +473,7 @@ public class GUI extends javax.swing.JFrame {
          cuboidVolumeButton_ActionPerformed(null);
       } else if (settings.spaceMode_ == MagellanGUIAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
          volumeBetweenSurfacesButton_.setSelected(true);
-         volumeBetweenFootprintCombo_ActionPerformed(null);
+         volumeBetweenSurfacesButton_ActionPerformed(null);
       } else if (settings.spaceMode_ == MagellanGUIAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
          withinDistanceFromSurfacesButton_.setSelected(true);
          withinDistanceFromSurfacesButton_ActionPerformed(null);
