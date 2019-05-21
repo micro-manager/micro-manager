@@ -89,15 +89,15 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
    protected JButton listButton_;
    private JSpinner afSkipInterval_;
-   private JComboBox acqOrderBox_;
+   private JComboBox<AcqOrderMode> acqOrderBox_;
    private JTextArea acquisitionOrderText_;
-   private JComboBox channelGroupCombo_;
+   private JComboBox<String> channelGroupCombo_;
    private JTextArea commentTextArea_;
-   private JComboBox zValCombo_;
+   private JComboBox<String> zValCombo_;
    private JTextField nameField_;
    private JTextField rootField_;
    private JTextArea summaryTextArea_;
-   private JComboBox timeUnitCombo_;
+   private JComboBox<String> timeUnitCombo_;
    private JFormattedTextField interval_;
    private JFormattedTextField zStep_;
    private JFormattedTextField zTop_;
@@ -309,8 +309,8 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       interval_.addPropertyChangeListener("value", this);
       defaultTimesPanel_.add(interval_);
 
-      timeUnitCombo_ = new JComboBox();
-      timeUnitCombo_.setModel(new DefaultComboBoxModel(new String[]{"ms", "s", "min"}));
+      timeUnitCombo_ = new JComboBox<String>();
+      timeUnitCombo_.setModel(new DefaultComboBoxModel<String>(new String[]{"ms", "s", "min"}));
       timeUnitCombo_.setFont(DEFAULT_FONT);
       // We shove this thing to the left a bit so that it takes up the same
       // vertical space as the spinner for the number of timepoints.
@@ -457,7 +457,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       addUnits.run();
       slicesPanel_.add(new JLabel(""), "wrap");
 
-      zValCombo_ = new JComboBox(new String[] {RELATIVE_Z, ABSOLUTE_Z});
+      zValCombo_ = new JComboBox<>(new String[] {RELATIVE_Z, ABSOLUTE_Z});
       zValCombo_.setFont(DEFAULT_FONT);
       zValCombo_.addActionListener(new ActionListener() {
          @Override
@@ -494,7 +494,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       acquisitionOrderPanel_ = createLabelPanel("Acquisition Order");
       acquisitionOrderPanel_.setLayout(
             new MigLayout(PANEL_CONSTRAINT + ", flowy"));
-      acqOrderBox_ = new JComboBox();
+      acqOrderBox_ = new JComboBox<>();
       acqOrderBox_.setFont(new Font("", Font.PLAIN, 10));
       acquisitionOrderPanel_.add(acqOrderBox_, "alignx center");
       acquisitionOrderText_ = new JTextArea(3, 25);
@@ -581,7 +581,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       channelsLabel.setFont(DEFAULT_FONT);
       channelsPanel_.add(channelsLabel, "split, alignx label");
 
-      channelGroupCombo_ = new JComboBox();
+      channelGroupCombo_ = new JComboBox<>();
       channelGroupCombo_.setFont(new Font("", Font.PLAIN, 10));
       updateGroupsCombo();
       channelGroupCombo_.addActionListener(new ActionListener() {
@@ -1157,7 +1157,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    public final void updateGroupsCombo() {
       String groups[] = acqEng_.getAvailableGroups();
       if (groups.length != 0) {
-         channelGroupCombo_.setModel(new DefaultComboBoxModel(groups));
+         channelGroupCombo_.setModel(new DefaultComboBoxModel<String>(groups));
          if (!inArray(acqEng_.getChannelGroup(), groups)) {
             acqEng_.setChannelGroup(acqEng_.getFirstConfigGroup());
          }

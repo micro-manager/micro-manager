@@ -115,7 +115,7 @@ public final class SnapLiveManager extends DataViewerListener
          Executors.newSingleThreadScheduledExecutor(
                ThreadFactoryFactory.createThreadFactory("SnapLiveManager"));
    // Guarded by monitor on this
-   private ScheduledFuture scheduledGrab_;
+   private ScheduledFuture<?> scheduledGrab_;
    // Counter for live acquisitions started, needed to synchronize across
    // a stopped and rapidly restarted run of live mode.
    // Guarded by monitor on this
@@ -272,7 +272,7 @@ public final class SnapLiveManager extends DataViewerListener
       }
 
       if (display_ != null) {
-         ((DisplayController) display_).resetDisplayIntervalEstimate();
+         display_.resetDisplayIntervalEstimate();
       }
 
       synchronized (this) {
@@ -298,9 +298,8 @@ public final class SnapLiveManager extends DataViewerListener
                double displayIntervalLowQuantileMs;
                if (display_ != null) {
                   displayIntervalLowQuantileMs =
-                        ((DisplayController) display_).
-                              getDisplayIntervalQuantile(
-                                    DISPLAY_INTERVAL_ESTIMATE_Q);
+                        display_.getDisplayIntervalQuantile(
+                              DISPLAY_INTERVAL_ESTIMATE_Q);
                }
                else {
                   displayIntervalLowQuantileMs = 0.0;
@@ -762,8 +761,8 @@ public final class SnapLiveManager extends DataViewerListener
             channelNames[i] = makeChannelName(channel, core_.getCameraChannelName(i));
          }
          try {
-            store_.setSummaryMetadata(store_.getSummaryMetadata().copy()
-                  .channelNames(channelNames).build());
+            store_.setSummaryMetadata(store_.getSummaryMetadata().copyBuilder()
+                    .channelNames(channelNames).build());
          }
          catch (DatastoreFrozenException e) {
             ReportingUtils.logError(e,
@@ -807,7 +806,7 @@ public final class SnapLiveManager extends DataViewerListener
          List<Image> images = studio_.acquisitions().snap();
          if (shouldDisplay) {
             if (display_ != null) {
-               ((DisplayController) display_).resetDisplayIntervalEstimate();
+               display_.resetDisplayIntervalEstimate();
             }
             for (Image image : images) {
                displayImage(image);
