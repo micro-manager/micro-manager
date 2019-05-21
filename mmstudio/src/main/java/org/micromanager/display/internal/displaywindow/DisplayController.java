@@ -956,7 +956,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    @Override
    public double getZoom() {
-      throw new UnsupportedOperationException();
+      return getDisplaySettings().getZoomRatio();
    }
 
    @Override

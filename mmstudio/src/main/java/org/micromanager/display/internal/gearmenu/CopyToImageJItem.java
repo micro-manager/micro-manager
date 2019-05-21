@@ -20,10 +20,13 @@
 
 package org.micromanager.display.internal.gearmenu;
 
+import ij.CompositeImage;
+import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.measure.Calibration;
 import ij.process.ImageProcessor;
+import ij.process.LUT;
 import java.io.IOException;
 import org.micromanager.Studio;
 import org.micromanager.data.Coordinates;
@@ -70,6 +73,15 @@ public final class CopyToImageJItem implements DisplayGearMenuPlugin, SciJavaPlu
          } catch (IOException ex) {
             // TODO: report error
          }
+         if (setProps && iPlus != null && image != null) {
+            setCalibration(iPlus, dp, image);
+         }
+         if (iPlus != null) {
+            iPlus.show();            
+            iPlus.getCanvas().setMagnification(display.getZoom());
+            iPlus.getCanvas().setSize((int) (iPlus.getWidth() * display.getZoom()), 
+                   (int) (iPlus.getHeight() * display.getZoom()));
+         }
       } else if (dp.getNumImages() > 1) {
          try {
             ImageStack imgStack = new ImageStack(dp.getAnyImage().getWidth(), 
@@ -88,27 +100,55 @@ public final class CopyToImageJItem implements DisplayGearMenuPlugin, SciJavaPlu
             iPlus.setOpenAsHyperStack(true);
             iPlus.setStack(imgStack, dp.getMaxIndices().getC() + 1, 
                     dp.getMaxIndices().getZ() + 1, dp.getMaxIndices().getT() + 1);
+            
+            int displayMode;
+            switch (display.getDisplaySettings().getColorMode()) {
+               case COLOR: { displayMode = IJ.COLOR; break; }
+               case COMPOSITE: { displayMode = IJ.COMPOSITE; break; }
+               case GRAYSCALE: { displayMode = IJ.GRAYSCALE; break; }
+               default: { displayMode = IJ.GRAYSCALE; break; }
+            }
+            iPlus.setDisplayMode(displayMode);  
+            CompositeImage ci = new CompositeImage(iPlus, displayMode);
+            ci.setTitle(dp.getName() + "-ij");
+            for (int c = 0; c <= dp.getMaxIndices().getC(); c++) {
+               ci.setChannelLut(
+                       LUT.createLutFromColor(display.getDisplaySettings().getChannelColor(c)),
+                       c + 1);
+            }
+            if (setProps && image != null) {
+               setCalibration(ci, dp, image);
+            }
+            ci.show();
+            // display.getZoom throws an unsupported exception!
+            // ci.getCanvas().setMagnification(display.getZoom());
+           
          } catch (IOException ex) {
             // TODO: report
          }
          
       }
-      if (setProps && iPlus != null && image != null) {
-         Calibration cal = new Calibration(iPlus);
-         cal.pixelWidth = image.getMetadata().getPixelSizeUm();
-         cal.pixelHeight = image.getMetadata().getPixelSizeUm();
-         cal.pixelDepth = dp.getSummaryMetadata().getZStepUm();
-         cal.frameInterval = dp.getSummaryMetadata().getWaitInterval() / 1000.0;  // MM in ms, IJ in s
-         cal.setUnit("micron");
-         iPlus.setCalibration(cal);
-      }
-      if (iPlus != null) {
-         iPlus.show();
-         // display.getZoom throws an unsupported exception!
-         // iPlus.getCanvas().setMagnification(display.getZoom());
-      }
       
       
+   }
+   
+   private void setCalibration(ImagePlus iPlus, DataProvider dp, Image image) {
+      Calibration cal = new Calibration(iPlus);
+      Double pSize = image.getMetadata().getPixelSizeUm();
+      if (pSize != null) {
+         cal.pixelWidth = pSize;
+         cal.pixelHeight = pSize;
+      }
+      Double zStep = dp.getSummaryMetadata().getZStepUm();
+      if (zStep != null) {
+         cal.pixelDepth = zStep;
+      }
+      Double waitInterval = dp.getSummaryMetadata().getWaitInterval();
+      if (waitInterval != null) {
+         cal.frameInterval = waitInterval / 1000.0;  // MM in ms, IJ in s
+      }
+      cal.setUnit("micron");
+      iPlus.setCalibration(cal);
    }
 
    @Override
