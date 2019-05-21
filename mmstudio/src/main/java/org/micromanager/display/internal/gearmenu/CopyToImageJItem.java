@@ -77,10 +77,11 @@ public final class CopyToImageJItem implements DisplayGearMenuPlugin, SciJavaPlu
             setCalibration(iPlus, dp, image);
          }
          if (iPlus != null) {
-            iPlus.show();            
+            iPlus.show();   
+            /* I can not figure out how to set zoom programmatically...
             iPlus.getCanvas().setMagnification(display.getZoom());
-            iPlus.getCanvas().setSize((int) (iPlus.getWidth() * display.getZoom()), 
-                   (int) (iPlus.getHeight() * display.getZoom()));
+            iPlus.getWindow().pack();
+            */
          }
       } else if (dp.getNumImages() > 1) {
          try {
@@ -120,8 +121,7 @@ public final class CopyToImageJItem implements DisplayGearMenuPlugin, SciJavaPlu
                setCalibration(ci, dp, image);
             }
             ci.show();
-            // display.getZoom throws an unsupported exception!
-            // ci.getCanvas().setMagnification(display.getZoom());
+            // would like to also copy the zoom....
            
          } catch (IOException ex) {
             // TODO: report
