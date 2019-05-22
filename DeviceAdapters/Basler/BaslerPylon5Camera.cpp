@@ -43,6 +43,7 @@ sma : 25.03.2019 : Pylon version has been changed to 5.2.0 and it check now for 
 sma : 28.04.2019 Take some changes to be able to compile in Linux
 sma : 04.05.2019 Bugfix in 12bit image format and add parameter Sendsor Width and Height
 sma : 06.05.2019 Improvement in Gain range handling. In some camera model the gain range is depends on selected pixel format.
+sma : 22.05.2019 prepaired for Mac build
 */
 
 
@@ -63,7 +64,7 @@ using namespace GenICam;
 #include <vector>
 
 
-#ifdef PYLON_LINUX_BUILD
+#ifdef PYLON_UNIX_BUILD
  typedef int BOOL;
  #define TRUE 1
  #define FALSE 0 
@@ -79,7 +80,6 @@ using namespace GenICam;
  #endif
  #endif
 #endif
-
 
 
 using namespace std;
