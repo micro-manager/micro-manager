@@ -64,6 +64,7 @@
 
 
       <dependency org="org.boofcv" name="boofcv-ip" rev="0.33.1"/>
+      <dependency org="org.boofcv" name="boofcv-geo" rev="0.33.1"/>
       <dependency org="org.georegression" name="georegression" rev="0.19"/>
       <dependency org="org.ddogleg" name="ddogleg" rev="0.16"/>
       <dependency org="org.ejml" name="core" rev="0.30"/>
