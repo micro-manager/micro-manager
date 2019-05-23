@@ -222,8 +222,10 @@ int VarispecLCTF::Initialize()
 
    // empty the Rx serial buffer before sending command
    int ret = PurgeComPort(port_.c_str());
-   if (ret != DEVICE_OK)
-      return ret;
+   if (ret != DEVICE_OK) { 
+       LogMessage("VarispecLCTF: Failed on Purge");
+	   return ret;
+   }
 
    // Name
    ret = CreateProperty(MM::g_Keyword_Name, g_ControllerName, MM::String, true);
@@ -259,6 +261,7 @@ int VarispecLCTF::Initialize()
          }
       }
       else if (ret != DEVICE_OK) {
+		  LogMessage("VarispecLCTF: Failed on getStatus");
          return ret;
       }
       else { //Device is ok
@@ -270,12 +273,16 @@ int VarispecLCTF::Initialize()
    std::string ans;
    ret = sendCmd("V?", ans);   //The serial number response also contains the tuning range of the device
    std::vector<double> nums = getNumbersFromMessage(ans);   //This will be in the format (revision level, shortest wavelength, longest wavelength, serial number).
-   if (ret != DEVICE_OK)
-      return ret;
+   if (ret != DEVICE_OK){
+		LogMessage("VarispecLCTF: Failed on Get Version");
+	   return ret;
+   }
    pAct = new CPropertyAction(this, &VarispecLCTF::OnWavelength);
    ret = CreateProperty("Wavelength", DoubleToString(wavelength_).c_str(), MM::Float, false, pAct);
-   if (ret != DEVICE_OK)
+   if (ret != DEVICE_OK) {
+	   LogMessage("VarispecLCTF: Failed on Wavelength Property");
       return ret;
+   }
    SetPropertyLimits("Wavelength", nums.at(1), nums.at(2));
 
    // Delay
