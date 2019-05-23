@@ -138,6 +138,7 @@ public final class DefaultImageExporter implements ImageExporter {
 
    private BufferedImage currentImage_ = null;
    private Graphics currentGraphics_ = null;
+   private Coords lastDrawnCoords_ = null;
 
    public DefaultImageExporter() {
       // Initialize to true so that waitForCompletion returns immediately.
@@ -203,12 +204,20 @@ public final class DefaultImageExporter implements ImageExporter {
          DisplayController dc = (DisplayController) event.getDataViewer();
          try {
             if (dc.getUIController().getIJImageCanvas().getGraphics() != currentGraphics_) {
+               // On some machines (Stefan's Mac for instance!), the same image
+               // gets drawn twice, resulting in duplication of some images
+               // Keep the Coords of the last drawn image, and make sure that  
+               // the current image is differnt.
+               if (lastDrawnCoords_ != null && lastDrawnCoords_.equals(event.getPrimaryImage().getCoords())) {
+                  return;
+               }
+               lastDrawnCoords_ = event.getPrimaryImage().getCoords();
                // We now know that the correct image is visible on the canvas, so
                // have it paint that image to our own Graphics object. This is
                // inefficient (having to paint the same image twice), but
                // unfortunately there's no way (so far as I'm aware) to get an
                // Image from a component except by painting.
-               // HACK: the getCanvas() and paintImageWithGraphics methods aren't
+               // The getCanvas() and paintImageWithGraphics methods aren't
                // exposed in DisplayWindow; hence why we need display_ to be
                // DefaultDisplayWindow.
                Dimension canvasSize = dc.getUIController().getIJImageCanvas().getSize();
