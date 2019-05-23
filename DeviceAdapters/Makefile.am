@@ -10,7 +10,10 @@ endif
 if BUILD_ANDORSDK3
    ANDORSDK3 = AndorSDK3
 endif
-if BUILD_BASLER
+if BUILD_BASLER_LINUX
+   BASLER = Basler
+endif
+if BUILD_BASLER_MAC
    BASLER = Basler
 endif
 if BUILD_DC1394
