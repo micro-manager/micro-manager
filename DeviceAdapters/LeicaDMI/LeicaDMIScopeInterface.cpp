@@ -218,15 +218,11 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
       command.str("");
    }
 
-   // Suppress event reporting for AFC
-   if (scopeModel_->IsDeviceAvailable(g_AFC)) {
-      command << g_AFC << "003 0 0 0 0 0 0 0 0 0";
-      ret = GetAnswer(device, core, command.str().c_str(), answer);
-      if (ret != DEVICE_OK)
-         return ret;
-      command.str("");
-   }
-
+   // AFC needs to stop talking on shutdown, so split out this code in a function
+   ret = StopAFCReporting(device, core);
+   if (ret != DEVICE_OK)
+      return ret;
+   //
    // Suppress event reporting for Fast Filter Wheel
    if (scopeModel_->IsDeviceAvailable(g_Fast_Filter_Wheel)) {
       command << g_Fast_Filter_Wheel << "003 0 0";
@@ -2165,6 +2161,19 @@ int LeicaScopeInterface::SetAFCLEDIntensity(MM::Device &device, MM::Core &core, 
 		return ret;	
 	return DEVICE_OK;
 }
+
+// Suppress event reporting for AFC
+int LeicaScopeInterface::StopAFCReporting(MM::Device &device, MM::Core &core)
+{
+   std::ostringstream command;
+   std::string answer;
+   if (scopeModel_->IsDeviceAvailable(g_AFC)) {
+      command << g_AFC << "003 0 0 0 0 0 0 0 0 0";
+      return GetAnswer(device, core, command.str().c_str(), answer);
+   }
+   return DEVICE_OK;
+}
+
 /*
 int LeicaScopeInterface::IsContinuousAutoFocusLocked(MM::Device &device, MM::Core &core, bool & locked)
 {
