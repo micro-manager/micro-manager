@@ -202,6 +202,10 @@ LeicaScope::LeicaScope() :
 LeicaScope::~LeicaScope() 
 {
    if (g_ScopeInterface.monitoringThread_ != 0) {
+      // 2019-05-24: Mailing list reports that AFC messages prevent 
+      // re-loading config files.  this should be evaluated more
+      // thoroughly, but for now stop AFC reporting here
+      g_ScopeInterface.StopAFCReporting(*this, *GetCoreCallback());
       g_ScopeInterface.monitoringThread_->Stop();
       g_ScopeInterface.monitoringThread_->wait();
       delete g_ScopeInterface.monitoringThread_;
