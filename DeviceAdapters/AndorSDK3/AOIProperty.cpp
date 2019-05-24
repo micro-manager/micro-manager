@@ -92,9 +92,11 @@ void TAOIProperty::populateWidthMaps(bool fullAoiControl)
       aoiWidthHeightMap_[1400] = 1400;
       aoiWidthIndexMap_[1392] = 4;
       aoiWidthHeightMap_[1392] = 1040;
-      aoiWidthIndexMap_[512] = 5;
+	  aoiWidthIndexMap_[1024] = 5;
+      aoiWidthHeightMap_[1024] = 1024;
+      aoiWidthIndexMap_[512] = 6;
       aoiWidthHeightMap_[512] = 512;
-      aoiWidthIndexMap_[128] = 6;
+      aoiWidthIndexMap_[128] = 7;
       aoiWidthHeightMap_[128] = 128;
    }
    else
