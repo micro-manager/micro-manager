@@ -1,5 +1,5 @@
-# sma 25.05.2019 
-# File Version  2.10
+# sma 26.05.2019 
+# File Version  2.11
 
 
 PYLONLDFLAGS =
@@ -14,11 +14,11 @@ deviceadapter_LTLIBRARIES=libmmgr_dal_BaslerCamera.la
 if BUILD_BASLER_LINUX
    PYLON_ROOT=/opt/pylon5
 
-    if PYLON64
-     PYLONLDFLAGS +=-Wl,--enable-new-dtags -Wl,-rpath,$(PYLON_ROOT)/lib64,-L$(PYLON_ROOT)/lib64
-   else
-    PYLONLDFLAGS +=-Wl,--enable-new-dtags -Wl,-rpath,$(PYLON_ROOT)/lib,-L$(PYLON_ROOT)/lib
-   endif
+if PYLON64
+   PYLONLDFLAGS +=-Wl,--enable-new-dtags -Wl,-rpath,$(PYLON_ROOT)/lib64,-L$(PYLON_ROOT)/lib64
+else
+   PYLONLDFLAGS +=-Wl,--enable-new-dtags -Wl,-rpath,$(PYLON_ROOT)/lib,-L$(PYLON_ROOT)/lib
+endif
     
    PYLONCPPFLAGS +=-I$(PYLON_ROOT)/include
    PYLONLDLIBS =-lpylonbase -lpylonutility -lGenApi_gcc_v3_1_Basler_pylon -lGCBase_gcc_v3_1_Basler_pylon
