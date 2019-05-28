@@ -1,0 +1,7 @@
+clear();
+
+import org.micromanager.Studio;
+import org.micromanager.internal.MMStudio;
+
+mm = (Studio) MMStudio.getInstance();
+mmc = mm.getCore();
