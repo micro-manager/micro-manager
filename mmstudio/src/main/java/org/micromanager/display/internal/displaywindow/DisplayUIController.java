@@ -1014,6 +1014,17 @@ public final class DisplayUIController implements Closeable, WindowListener,
          long min = stats.getComponentStats(0).getAutoscaleMinForQuantile(q);
          long max = Math.min(Integer.MAX_VALUE,
                stats.getComponentStats(0).getAutoscaleMaxForQuantile(q));
+         // NS 2019-05-29: This should not be done here, but in IntegerComponentsStas
+         // however, I do not understand that code enough to touch it....
+         // This at least fixes the display somewhat (showing black for 
+         // a saturated image is really, really bad!)
+         if (min == max) {
+            if (max == 0) {
+               max++;
+            } else {
+               min--;
+            }
+         }
          ijBridge_.mm2ijSetIntensityScaling(i, (int) min, (int) max);
          } else {
             ReportingUtils.logError("DisplayUICOntroller: Received request to " +
