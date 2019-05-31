@@ -38,9 +38,7 @@ import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.Window;
-import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -49,8 +47,6 @@ import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyVetoException;
-import java.beans.VetoableChangeListener;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
@@ -88,7 +84,6 @@ import javax.swing.JToggleButton;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.text.DefaultFormatter;
 
 import mmcorej.CMMCore;
@@ -170,11 +165,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       initComponents();
 
       // Make sure that the POint and Shoot code listens to the correct window
-      Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
-         @Override
-         public void eventDispatched(AWTEvent e) {
-            enablePointAndShootMode(pointAndShooteModeOn_.get());
-         }
+      Toolkit.getDefaultToolkit().addAWTEventListener((AWTEvent e) -> {
+         enablePointAndShootMode(pointAndShooteModeOn_.get());
       }, AWTEvent.WINDOW_EVENT_MASK);
       
       isSLM_ = dev_ instanceof SLM;
@@ -525,35 +517,32 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       // restart this thread if it is not running?
       if (pointAndShootThread_ == null || !pointAndShootThread_.isAlive()) {
          pointAndShootThread_ = new Thread(
-                 new Runnable() {
-            @Override
-            public void run() {
-               while (true) {
-                  PointAndShootInfo psi;
-                  try {
-                     psi = pointAndShootQueue_.take();
-                     if (psi.isStopped()) {
-                        return;
-                     }
-                     try {
-                        if (psi.getDevice() != null) {
-                           ProjectorActions.displaySpot(
-                                   psi.getDevice(),
-                                   psi.getDevPoint().x,
-                                   psi.getDevPoint().y);
-                        }
-                        projectorControlExecution_.returnShutter(
-                                targetingShutter_, psi.getOriginalShutterState());
-                        projectorControlExecution_.returnChannel(psi.getOriginalConfig());
-                        logPoint(psi.getCanvasPoint());
-                     } catch (Exception e) {
-                        ReportingUtils.showError(e);
-                     }
-                  } catch (InterruptedException ex) {
-                     ReportingUtils.showError(ex);
-                  }
-               }
-            }
+                 () -> {
+                    while (true) {
+                       PointAndShootInfo psi;
+                       try {
+                          psi = pointAndShootQueue_.take();
+                          if (psi.isStopped()) {
+                             return;
+                          }
+                          try {
+                             if (psi.getDevice() != null) {
+                                ProjectorActions.displaySpot(
+                                        psi.getDevice(),
+                                        psi.getDevPoint().x,
+                                        psi.getDevPoint().y);
+                             }
+                             projectorControlExecution_.returnShutter(
+                                     targetingShutter_, psi.getOriginalShutterState());
+                             projectorControlExecution_.returnChannel(psi.getOriginalConfig());
+                             logPoint(psi.getCanvasPoint());
+                          } catch (Exception e) {
+                             ReportingUtils.showError(e);
+                          }
+                       } catch (InterruptedException ex) {
+                          ReportingUtils.showError(ex);
+                       }
+                    }
          });
          pointAndShootThread_.start();
       }
@@ -963,12 +952,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                   projectorControlExecution_.phototargetROIsRunnable(threadName, 
                           dev_, targetingChannel_, targetingShutter_));
          } else {
-            final Callable<Boolean> mdaRunning = new Callable<Boolean>() {
-               @Override
-               public Boolean call() throws Exception {
-                  return studio_.acquisitions().isAcquisitionRunning();
-               }
-            };
+            final Callable<Boolean> mdaRunning = studio_.acquisitions()::isAcquisitionRunning;
             final String threadName = "Asynchronous phototargeting of ROIs";
             projectorControlExecution_.attachRoisToMDA(1, false, 0,
                   new Thread(
@@ -1118,34 +1102,25 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       setResizable(false);
 
       onButton_.setText("On");
-      onButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent evt) {
-            setOnState(true);
-            updatePointAndShoot(false);
-         }
+      onButton_.addActionListener((ActionEvent evt) -> {
+         setOnState(true);
+         updatePointAndShoot(false);
       });
 
-      mainTabbedPane.addChangeListener(new ChangeListener() {
-         @Override
-         public void stateChanged(ChangeEvent evt) {
-            updatePointAndShoot(false);
-         }
+      mainTabbedPane.addChangeListener((ChangeEvent evt) -> {
+         updatePointAndShoot(false);
       });
 
       pointAndShootOnButton.setText("On");
       pointAndShootOnButton.setMaximumSize(new Dimension(75, 23));
       pointAndShootOnButton.setMinimumSize(new Dimension(75, 23));
       pointAndShootOnButton.setPreferredSize(new Dimension(75, 23));
-      pointAndShootOnButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent evt) {
-            setOnState(false);
-            try {
-               updatePointAndShoot(true);
-            } catch (RuntimeException e) {
-               ReportingUtils.showError(e);
-            }
+      pointAndShootOnButton.addActionListener((ActionEvent evt) -> {
+         setOnState(false);
+         try {
+            updatePointAndShoot(true);
+         } catch (RuntimeException e) {
+            ReportingUtils.showError(e);
          }
       });
 
@@ -1170,24 +1145,21 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       });
 
       clearLogDirButton.setText("Clear Log Directory");
-      clearLogDirButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent evt) {
-            if (logFileWriter_ != null) {
-               try {
-                  logFileWriter_.flush();
-                  logFileWriter_.close();
-               } catch (IOException ioe) {
-               } finally {
-                  logFileWriter_ = null;
-               }
+      clearLogDirButton.addActionListener((ActionEvent evt) -> {
+         if (logFileWriter_ != null) {
+            try {
+               logFileWriter_.flush();
+               logFileWriter_.close();
+            } catch (IOException ioe) {
+            } finally {
+               logFileWriter_ = null;
             }
-            String logDirectory = logDirectoryTextField_.getText();
-            File logDir = new File(logDirectory);
-            if (logDir.isDirectory()) {
-               for (File logFile : logDir.listFiles()) {
-                  logFile.delete();
-               }
+         }
+         String logDirectory = logDirectoryTextField_.getText();
+         File logDir = new File(logDirectory);
+         if (logDir.isDirectory()) {
+            for (File logFile : logDir.listFiles()) {
+               logFile.delete();
             }
          }
       });
@@ -1228,15 +1200,12 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       setRoiButton.setText("Set ROI(s)");
       setRoiButton.setToolTipText(
               "Specify an ROI you wish to be phototargeted by using the ImageJ ROI tools (point, rectangle, oval, polygon). Then press Set ROI(s) to send the ROIs to the phototargeting device. To initiate phototargeting, press Go!");
-      setRoiButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent evt) {
-            try {
-               sendCurrentImageWindowRois();
-               updateROISettings();
-            } catch (RuntimeException e) {
-               ReportingUtils.showError(e);
-            }
+      setRoiButton.addActionListener((ActionEvent evt) -> {
+         try {
+            sendCurrentImageWindowRois();
+            updateROISettings();
+         } catch (RuntimeException e) {
+            ReportingUtils.showError(e);
          }
       });
 
@@ -1255,21 +1224,15 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       roiLoopSpinner_.setValue(settings_.getInteger(Terms.NRROIREPETITIONS, 1));
 
       useInMDAcheckBox.setText("Run ROIs in Multi-Dimensional Acquisition");
-      useInMDAcheckBox.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent evt) {
-            updateROISettings();
-         }
+      useInMDAcheckBox.addActionListener((ActionEvent evt) -> {
+         updateROISettings();
       });
 
       roiStatusLabel_.setText("No ROIs submitted yet");
 
       roiManagerButton.setText("ROI Manager >>");
-      roiManagerButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent evt) {
-            Utils.showRoiManager();
-         }
+      roiManagerButton.addActionListener((ActionEvent evt) -> {
+         Utils.showRoiManager();
       });
 
       sequencingButton_.setText("Sequencing...");
@@ -1285,19 +1248,13 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       });
 
       repeatCheckBoxTime_.setText("Repeat every");
-      repeatCheckBoxTime_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent evt) {
-            updateROISettings();
-         }
+      repeatCheckBoxTime_.addActionListener((ActionEvent evt) -> {
+         updateROISettings();
       });
 
       repeatEveryFrameSpinner_.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
-      repeatEveryIntervalSpinner_.addChangeListener(new ChangeListener() {
-         @Override
-         public void stateChanged(ChangeEvent evt) {
-            updateROISettings();
-         }
+      repeatEveryIntervalSpinner_.addChangeListener((ChangeEvent evt) -> {
+         updateROISettings();
       });
 
       repeatEveryIntervalUnitLabel_.setText("seconds");
@@ -1365,71 +1322,53 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       mainTabbedPane.addTab("ROIs", roisTab);
 
       calibrateButton_.setText("Calibrate!");
-      calibrateButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent evt) {
-            try {
-               boolean running = isCalibrating();
-               if (running) {
-                  stopCalibration();
-                  calibrateButton_.setText("Calibrate");
-               } else {
-                  runCalibration();
-                  calibrateButton_.setText("Stop calibration");
-               }
-            } catch (Exception e) {
-               ReportingUtils.showError(e);
+      calibrateButton_.addActionListener((ActionEvent evt) -> {
+         try {
+            boolean running = isCalibrating();
+            if (running) {
+               stopCalibration();
+               calibrateButton_.setText("Calibrate");
+            } else {
+               runCalibration();
+               calibrateButton_.setText("Stop calibration");
             }
+         } catch (Exception e) {
+            ReportingUtils.showError(e);
          }
       });
 
       allPixelsButton_.setText("All Pixels");
-      allPixelsButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent evt) {
-            dev_.activateAllPixels();
-         }
+      allPixelsButton_.addActionListener((ActionEvent evt) -> {
+         dev_.activateAllPixels();
       });
 
       centerButton.setText("Center spot");
-      centerButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent evt) {
-            setOnState(false);
-            ProjectorActions.displayCenterSpot(dev_);
-         }
+      centerButton.addActionListener((ActionEvent evt) -> {
+         setOnState(false);
+         ProjectorActions.displayCenterSpot(dev_);
       });
 
       channelComboBox_.setModel(new DefaultComboBoxModel(
               new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-      channelComboBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent evt) {
-            final String channel = (String) channelComboBox_.getSelectedItem();
-            setTargetingChannel(channel);
-            settings_.putString(Terms.PTCHANNEL, channel);
-         }
+      channelComboBox_.addActionListener((ActionEvent evt) -> {
+         final String channel = (String) channelComboBox_.getSelectedItem();
+         setTargetingChannel(channel);
+         settings_.putString(Terms.PTCHANNEL, channel);
       });
 
       shutterComboBox_.setModel(new DefaultComboBoxModel(
               new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-      shutterComboBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent evt) {
-            final String shutter = (String) shutterComboBox_.getSelectedItem();
-            setTargetingShutter(shutter);
-            settings_.putString(Terms.PTSHUTTER, shutter);
-         }
+      shutterComboBox_.addActionListener((ActionEvent evt) -> {
+         final String shutter = (String) shutterComboBox_.getSelectedItem();
+         setTargetingShutter(shutter);
+         settings_.putString(Terms.PTSHUTTER, shutter);
       });
 
       delayField_.setText("0");
 
       checkerBoardButton_.setText("CheckerBoard");
-      checkerBoardButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent evt) {
-            dev_.showCheckerBoard(16, 16);
-         }
+      checkerBoardButton_.addActionListener((ActionEvent evt) -> {
+         dev_.showCheckerBoard(16, 16);
       });
       
       setupTab.setLayout(new MigLayout("", "", "[40]"));
@@ -1452,28 +1391,19 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
 
       offButton_.setText("Off");
       offButton_.setSelected(true);
-      offButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent evt) {
-            setOnState(false);
-         }
+      offButton_.addActionListener((ActionEvent evt) -> {
+         setOnState(false);
       });
 
       pointAndShootIntervalSpinner_.setModel(new SpinnerNumberModel(500, 1, 1000000000, 1));
       pointAndShootIntervalSpinner_.setMaximumSize(new Dimension(75, 20));
       pointAndShootIntervalSpinner_.setMinimumSize(new Dimension(75, 20));
       pointAndShootIntervalSpinner_.setPreferredSize(new Dimension(75, 20));
-      pointAndShootIntervalSpinner_.addChangeListener(new ChangeListener() {
-         @Override
-         public void stateChanged(ChangeEvent evt) {
-            updateExposure();
-         }
+      pointAndShootIntervalSpinner_.addChangeListener((ChangeEvent evt) -> {
+         updateExposure();
       });
-      pointAndShootIntervalSpinner_.addVetoableChangeListener(new VetoableChangeListener() {
-         @Override
-         public void vetoableChange(PropertyChangeEvent evt)throws PropertyVetoException {
-             updateExposure();
-         }
+      pointAndShootIntervalSpinner_.addVetoableChangeListener((PropertyChangeEvent evt) -> {
+         updateExposure();
       });
       pointAndShootIntervalSpinner_.setValue(settings_.getDouble(Terms.EXPOSURE, 0.0));
       
