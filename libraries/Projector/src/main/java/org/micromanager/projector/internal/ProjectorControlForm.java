@@ -101,7 +101,6 @@ import org.micromanager.Studio;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Image;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
 import org.micromanager.events.SLMExposureChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
@@ -110,7 +109,6 @@ import org.micromanager.internal.utils.FileDialogs.FileType;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 import org.micromanager.projector.internal.devices.SLM;
-import org.micromanager.projector.internal.devices.Galvo;
 import org.micromanager.projector.ProjectionDevice;
 import org.micromanager.projector.ProjectorActions;
 
@@ -124,6 +122,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 */
 public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private static ProjectorControlForm formSingleton_;
+   private final ProjectorControlExecution projectorControlExecution_;
    private final ProjectionDevice dev_;
    private final MouseListener pointAndShootMouseListener_;
    private final AtomicBoolean pointAndShooteModeOn_ = new AtomicBoolean(false);
@@ -163,8 +162,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       settings_ = studio_.profile().getSettings(this.getClass());
       dev_ = ProjectorActions.getProjectionDevice(studio_);
       mapping_ = Mapping.loadMapping(core_, dev_, settings_);
-      pointAndShootQueue_ = new LinkedBlockingQueue<PointAndShootInfo>();
+      pointAndShootQueue_ = new LinkedBlockingQueue<>();
       pointAndShootMouseListener_ = createPointAndShootMouseListenerInstance();
+      projectorControlExecution_ = new ProjectorControlExecution(studio_);
       
       // Create GUI
       initComponents();
@@ -253,6 +253,14 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       return formSingleton_;
    }
    
+   /**
+    * The ProjectorControlExecution object carries out the "business" side 
+    * of the projector. Use it for scripting, etc..
+    * @return 
+    */
+   public ProjectorControlExecution exec() {
+      return projectorControlExecution_;
+   }
    
    // ## Methods for handling targeting channel and shutter
    
@@ -323,80 +331,43 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    /**
     * Sets the Channel Group to the targeting channel, if it exists.
     * @return the channel group in effect before calling this function
+    * @deprecated - Use ProjectorControlExecution.prepareChannel() instead
     */
+   @Deprecated
    public Configuration prepareChannel() {
-      Configuration originalConfig = null;
-      String channelGroup = core_.getChannelGroup();
-      try {
-         if (targetingChannel_ != null && targetingChannel_.length() > 0) {
-            originalConfig = core_.getConfigGroupState(channelGroup);
-            if (!originalConfig.isConfigurationIncluded(core_.getConfigData(channelGroup, targetingChannel_))) {
-               if (studio_.acquisitions().isAcquisitionRunning()) {
-                  studio_.acquisitions().setPause(true);
-               }
-               core_.setConfig(channelGroup, targetingChannel_);
-            }
-         }
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-      }
-      return originalConfig;
+      return projectorControlExecution_.prepareChannel(targetingChannel_);
    }
    
    /**
     * Should be called with the value returned by prepareChannel.
     * Returns Channel Group to its original settings, if needed.
     * @param originalConfig Configuration to return to
+    * @deprecated - Use ProjectorControlExecution.returnChannel() instead
     */
+   @Deprecated
    public void returnChannel(Configuration originalConfig) {
-      if (originalConfig != null) {
-         try {
-            core_.setSystemState(originalConfig);
-            if (studio_.acquisitions().isAcquisitionRunning() && studio_.acquisitions().isPaused()) {
-               studio_.acquisitions().setPause(false);
-            }
-         } catch (Exception ex) {
-            ReportingUtils.logError(ex);
-         }
-      }
+      projectorControlExecution_.returnChannel(originalConfig);
    }
    
    /**
     * Opens the targeting shutter, if it has been specified.
     * @return true if it was already open
+    * @deprecated - Use ProjectorControlExecution.prepareShutter() instead
     */
+   @Deprecated
    public boolean prepareShutter() {
-      try {
-         if (targetingShutter_ != null && targetingShutter_.length() > 0) {
-            boolean originallyOpen = core_.getShutterOpen(targetingShutter_);
-            if (!originallyOpen) {
-               core_.setShutterOpen(targetingShutter_, true);
-               core_.waitForDevice(targetingShutter_);
-            }
-            return originallyOpen;
-         }
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-      }
-      return true; // by default, say it was already open
+      return projectorControlExecution_.prepareShutter(targetingShutter_);
    }
 
    /**
     * Closes a targeting shutter if it exists and if it was originally closed.
     * Should be called with the value returned by prepareShutter.
     * @param originallyOpen - whether or not the shutter was originally open
+    * @deprecated - Use ProjectorControlExecution.returnShutter() instead
     */
+   @Deprecated
    public void returnShutter(boolean originallyOpen) {
-      try {
-         if (targetingShutter_ != null &&
-               (targetingShutter_.length() > 0) &&
-               !originallyOpen) {
-            core_.setShutterOpen(targetingShutter_, false);
-            core_.waitForDevice(targetingShutter_);
-         }
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-      }
+      projectorControlExecution_.returnShutter(targetingShutter_, originallyOpen);
    }
    
    // ## Simple methods for device control.
@@ -477,7 +448,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
            Point pOffscreen) {
       boolean isImageMirrored = false;
       int imageWidth = 0;
-      DataProvider dp = getDataProvider(canvas);
+      DataProvider dp = projectorControlExecution_.getDataProvider(canvas);
       if (dp != null) {
          try {
             Image lastImage = dp.getImage(dp.getMaxIndices());
@@ -571,8 +542,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                                    psi.getDevPoint().x,
                                    psi.getDevPoint().y);
                         }
-                        returnShutter(psi.getOriginalShutterState());
-                        returnChannel(psi.getOriginalConfig());
+                        projectorControlExecution_.returnShutter(
+                                targetingShutter_, psi.getOriginalShutterState());
+                        projectorControlExecution_.returnChannel(psi.getOriginalConfig());
                         logPoint(psi.getCanvasPoint());
                      } catch (Exception e) {
                         ReportingUtils.showError(e);
@@ -671,30 +643,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                  "Failed to open write to Projector log file");
       }
    }
-   
-   /**
-    * Ugly internal stuff to see if this IJ IMageCanvas is the MM active window
-    * @param canvas
-    * @return 
-    */   
-   private DataProvider getDataProvider(ImageCanvas canvas) {
-      if (canvas == null) {
-         return null;
-      }
-      List<DisplayWindow> dws = studio_.displays().getAllImageWindows();
-      if (dws != null) {
-         for (DisplayWindow dw : dws) {
-            if (dw instanceof DisplayController) {
-               if ( ((DisplayController) dw).getUIController().
-                       getIJImageCanvas().equals(canvas)) {
-                  return dw.getDataProvider();
-               }
-            }
-         }
-      }
-      return null;
-   }
-   
+  
+
    // ## Manipulating ROIs
    
   
@@ -798,26 +748,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    // ## Saving, sending, and running ROIs.
      
 
-   
-   // Save ROIs in the acquisition path, if it exists.
-   private void recordPolygons() {
-      if (studio_.acquisitions().isAcquisitionRunning()) {
-         // TODO: The MM2.0 refactor broke this code by removing the below
-         // method.
-//         String location = studio_.compat().getAcquisitionPath();
-//         if (location != null) {
-//            try {
-//               File f = new File(location, "ProjectorROIs.zip");
-//               if (!f.exists()) {
-//                  saveROIs(f, individualRois_);
-//               }
-//            } catch (Exception ex) {
-//               ReportingUtils.logError(ex);
-//            }
-//         }
-      }
-   }
-   
+
    /**
     * Upload current Window's ROIs, transformed, to the phototargeting device.
     * Polygons store camera coordinates in integers, and we use 
@@ -866,20 +797,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    /**
     * Illuminate the polygons ROIs that have been previously uploaded to
     * phototargeter.
+    * @deprecated Use {@link ProjectorControlExecution#exposeRois(org.micromanager.projector.ProjectionDevice, java.lang.String, java.lang.String) } instead
     */
    public void runRois() {
-      boolean isGalvo = dev_ instanceof Galvo;
-      if (isGalvo) {
-         Configuration originalConfig = prepareChannel();
-         boolean originalShutterState = prepareShutter();
-         dev_.runPolygons();
-         returnShutter(originalShutterState);
-         returnChannel(originalConfig);
-         recordPolygons();
-      } else {
-         dev_.runPolygons();
-         recordPolygons();
-      }
+      projectorControlExecution_.exposeRois(dev_, targetingChannel_, targetingShutter_);
    }
 
    // ## Attach/detach MDA
@@ -892,24 +813,13 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * @param repeat
     * @param frameRepeatInveral
     * @param runPolygons
+    * @deprecated - User ProjectorControlExecution.attachRoisToMDA instead
    */
+   @Deprecated
    public void attachRoisToMDA(int firstFrame, boolean repeat, 
            int frameRepeatInveral, Runnable runPolygons) {
-      studio_.acquisitions().clearRunnables();
-      if (repeat) {
-         for (int i = firstFrame; i < studio_.acquisitions().getAcquisitionSettings().numFrames * 10; i += frameRepeatInveral) {
-            studio_.acquisitions().attachRunnable(i, -1, 0, 0, runPolygons);
-         }
-      } else {
-         studio_.acquisitions().attachRunnable(firstFrame, -1, 0, 0, runPolygons);
-      }
-   }
-
-   /**
-    * Remove the attached ROIs from the multi-dimensional acquisition.
-    */
-   public void removeFromMDA() {
-      studio_.acquisitions().clearRunnables();
+      projectorControlExecution_.attachRoisToMDA(
+              firstFrame, true, frameRepeatInveral, runPolygons);
    }
   
    // ## GUI
@@ -949,6 +859,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    }
    
    // Generates a runnable that runs the selected ROIs.
+   /*
    private Runnable phototargetROIsRunnable(final String runnableName) {
       return new Runnable() {
          @Override
@@ -961,6 +872,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          }
       };
    }
+   */
    
 
    
@@ -968,37 +880,17 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * Runs runnable starting at firstTimeMs after this function is called, and
     * then, if repeat is true, every intervalTimeMs thereafter until
     * shouldContinue.call() returns false.
+    * @deprecated - Use the {@link ProjectorControlExecution#runAtIntervals(long, boolean, long, java.lang.Runnable, java.util.concurrent.Callable)} method instead
     */
-   @SuppressWarnings("AssignmentToMethodParameter")
    private Runnable runAtIntervals(final long firstTimeMs, 
            boolean repeat,
            final long intervalTimeMs, 
            final Runnable runnable, 
            final Callable<Boolean> shouldContinue) {
-      // protect from actions that have bad consequences
-      if (intervalTimeMs == 0) {
-         repeat = false;
-      }
-      final boolean rep = repeat;
-      return new Runnable() {
-         @Override
-         public void run() {
-            try {
-               final long startTime = System.currentTimeMillis() + firstTimeMs;
-               int reps = 0;
-               while (shouldContinue.call()) {
-                  Utils.sleepUntil(startTime + reps * intervalTimeMs);
-                  runnable.run();
-                  ++reps;
-                  if (!rep) {
-                     break;
-                  }
-               }
-            } catch (Exception ex) {
-               ReportingUtils.logError(ex);
-            }
-         }
-      };
+      
+      return projectorControlExecution_.runAtIntervals(firstTimeMs, true, 
+              intervalTimeMs, runnable, shouldContinue);
+      
    }
    
    public void setNrRepetitions(int nr) {
@@ -1062,12 +954,14 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       boolean synchronous = attachToMdaTabbedPane_.getSelectedComponent() == syncRoiPanel_;
 
       if (useInMDAcheckBox.isSelected()) {
-         removeFromMDA();
+         studio_.acquisitions().clearRunnables();
          if (synchronous) {
-            attachRoisToMDA(getSpinnerIntegerValue(startFrameSpinner_) - 1,
+            final String threadName = "Synchronous phototargeting of ROIs";
+            projectorControlExecution_.attachRoisToMDA(getSpinnerIntegerValue(startFrameSpinner_) - 1,
                   repeatCheckBox_.isSelected(),
                   getSpinnerIntegerValue(repeatEveryFrameSpinner_),
-                  phototargetROIsRunnable("Synchronous phototargeting of ROIs"));
+                  projectorControlExecution_.phototargetROIsRunnable(threadName, 
+                          dev_, targetingChannel_, targetingShutter_));
          } else {
             final Callable<Boolean> mdaRunning = new Callable<Boolean>() {
                @Override
@@ -1075,16 +969,19 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                   return studio_.acquisitions().isAcquisitionRunning();
                }
             };
-            attachRoisToMDA(1, false, 0,
+            final String threadName = "Asynchronous phototargeting of ROIs";
+            projectorControlExecution_.attachRoisToMDA(1, false, 0,
                   new Thread(
-                        runAtIntervals((long) (1000. * getSpinnerDoubleValue(startTimeSpinner_)),
+                        projectorControlExecution_.runAtIntervals(
+                                (long) (1000. * getSpinnerDoubleValue(startTimeSpinner_)),
                         repeatCheckBoxTime_.isSelected(),
                         (long) (1000 * getSpinnerDoubleValue(repeatEveryIntervalSpinner_)),
-                        phototargetROIsRunnable("Asynchronous phototargeting of ROIs"),
+                        projectorControlExecution_.phototargetROIsRunnable(threadName,
+                                dev_, targetingChannel_, targetingShutter_),
                         mdaRunning)));
          }
       } else {
-         removeFromMDA();
+         studio_.acquisitions().clearRunnables();
       }
    }
     
@@ -1099,12 +996,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    // Method called if the phototargeting device has turned on or off.
    @Override
    public void stateChanged(final boolean onState) {
-      SwingUtilities.invokeLater(new Runnable() {
-         @Override
-         public void run() {
-            onButton_.setSelected(onState);
-            offButton_.setSelected(!onState);
-         }
+      SwingUtilities.invokeLater(() -> {
+         onButton_.setSelected(onState);
+         offButton_.setSelected(!onState);
       });
    }
    
@@ -1257,27 +1151,21 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
 
       pointAndShootOffButton_.setText("Off");
       pointAndShootOffButton_.setPreferredSize(new Dimension(75, 23));
-      pointAndShootOffButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent evt) {
-            updatePointAndShoot(false);
-         }
+      pointAndShootOffButton_.addActionListener((ActionEvent evt) -> {
+         updatePointAndShoot(false);
       });
 
       phototargetInstructionsLabel.setText(
               "(To phototarget, Shift + click on the image, use ImageJ hand-tool)");
 
       logDirectoryChooserButton.setText("...");
-      logDirectoryChooserButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent evt) {
-            File openDir = FileDialogs.openDir(ProjectorControlForm.getSingleton(),
-                    "Select location for Files logging Point and Shoot locations",
-                    PROJECTOR_LOG_FILE);
-            if (openDir != null) {
-               logDirectoryTextField_.setText(openDir.getAbsolutePath());
-               settings_.putString(Terms.LOGDIRECTORY, openDir.getAbsolutePath());
-            }
+      logDirectoryChooserButton.addActionListener((ActionEvent evt) -> {
+         File openDir = FileDialogs.openDir(ProjectorControlForm.getSingleton(),
+                 "Select location for Files logging Point and Shoot locations",
+                 PROJECTOR_LOG_FILE);
+         if (openDir != null) {
+            logDirectoryTextField_.setText(openDir.getAbsolutePath());
+            settings_.putString(Terms.LOGDIRECTORY, openDir.getAbsolutePath());
          }
       });
 
@@ -1305,18 +1193,14 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       });
       
       openLogDirButton.setText("Open Log Directory");
-      openLogDirButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent evt) {
-            if (logDirectoryTextField_.getText() != null) {
-               try {
+      openLogDirButton.addActionListener((ActionEvent evt) -> {
+         if (logDirectoryTextField_.getText() != null) {
+            try {
                Desktop.getDesktop().open(
                        new File(logDirectoryTextField_.getText()));
-               } catch (IOException ioe) {
-                  studio_.logs().showMessage("Invalid directory");
-               }
+            } catch (IOException ioe) {
+               studio_.logs().showMessage("Invalid directory");
             }
-            
          }
       });
 
@@ -1357,26 +1241,16 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       });
 
       runROIsNowButton_.setText("Run ROIs now!");
-      runROIsNowButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent evt) {
-            new Thread(
-                    new Runnable() {
-               @Override
-               public void run() {
-                  phototargetROIsRunnable("Asynchronous phototargeting of ROIs").run();
-               }
-            }
-            ).start();
-         }
+      runROIsNowButton_.addActionListener((ActionEvent evt) -> {
+         new Thread(() -> {
+            projectorControlExecution_.exposeRois(
+                    dev_, targetingChannel_, targetingShutter_);
+         }).start();
       });
 
       roiLoopSpinner_.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
-      roiLoopSpinner_.addChangeListener(new ChangeListener() {
-         @Override
-         public void stateChanged(ChangeEvent evt) {
-            updateROISettings();
-         }
+      roiLoopSpinner_.addChangeListener((ChangeEvent evt) -> {
+         updateROISettings();
       });
       roiLoopSpinner_.setValue(settings_.getInteger(Terms.NRROIREPETITIONS, 1));
 
@@ -1399,21 +1273,15 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       });
 
       sequencingButton_.setText("Sequencing...");
-      sequencingButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent evt) {
-            showMosaicSequencingWindow();
-         }
+      sequencingButton_.addActionListener((ActionEvent evt) -> {
+         showMosaicSequencingWindow();
       });
 
       startTimeLabel_.setText("Start Time");
 
       startFrameSpinner_.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
-      startTimeSpinner_.addChangeListener(new ChangeListener() {
-         @Override
-         public void stateChanged(ChangeEvent evt) {
-            updateROISettings();
-         }
+      startTimeSpinner_.addChangeListener((ChangeEvent evt) -> {
+         updateROISettings();
       });
 
       repeatCheckBoxTime_.setText("Repeat every");
@@ -1452,27 +1320,18 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       startFrameLabel_.setText("Start Frame");
       repeatEveryFrameUnitLabel_.setText("frames");
       repeatCheckBox_.setText("Repeat every");
-      repeatCheckBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent evt) {
-            updateROISettings();
-         }
+      repeatCheckBox_.addActionListener((ActionEvent evt) -> {
+         updateROISettings();
       });
 
       startFrameSpinner_.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
-      startFrameSpinner_.addChangeListener(new ChangeListener() {
-         @Override
-         public void stateChanged(ChangeEvent evt) {
-            updateROISettings();
-         }
+      startFrameSpinner_.addChangeListener((ChangeEvent evt) -> {
+         updateROISettings();
       });
 
       repeatEveryFrameSpinner_.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
-      repeatEveryFrameSpinner_.addChangeListener(new ChangeListener() {
-         @Override
-         public void stateChanged(ChangeEvent evt) {
-            updateROISettings();
-         }
+      repeatEveryFrameSpinner_.addChangeListener((ChangeEvent evt) -> {
+         updateROISettings();
       });
 
       syncRoiPanel_.setLayout(new MigLayout());
