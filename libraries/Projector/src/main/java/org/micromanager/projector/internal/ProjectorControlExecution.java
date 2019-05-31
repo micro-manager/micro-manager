@@ -4,6 +4,9 @@ package org.micromanager.projector.internal;
 import ij.gui.ImageCanvas;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import mmcorej.Configuration;
 import org.micromanager.Studio;
 import org.micromanager.data.DataProvider;
@@ -32,14 +35,16 @@ public class ProjectorControlExecution {
     * thereafter again every frameRepeatInterval frames.
     * @param firstFrame
     * @param repeat
-    * @param frameRepeatInveral
+    * @param frameRepeatInterval
     * @param runPolygons
    */
    public void attachRoisToMDA(int firstFrame, boolean repeat, 
-           int frameRepeatInveral, Runnable runPolygons) {
+           int frameRepeatInterval, Runnable runPolygons) {
       studio_.acquisitions().clearRunnables();
       if (repeat) {
-         for (int i = firstFrame; i < studio_.acquisitions().getAcquisitionSettings().numFrames * 10; i += frameRepeatInveral) {
+         for (int i = firstFrame; 
+                 i < studio_.acquisitions().getAcquisitionSettings().numFrames * 10; 
+                 i += frameRepeatInterval) {
             studio_.acquisitions().attachRunnable(i, -1, 0, 0, runPolygons);
          }
       } else {
@@ -206,19 +211,43 @@ public class ProjectorControlExecution {
     */
    @SuppressWarnings("AssignmentToMethodParameter")
    Runnable runAtIntervals(final long firstTimeMs, 
-           boolean repeat,
+           final boolean repeat,
            final long intervalTimeMs, 
-           final Runnable runnable, 
+           final Runnable exposeROIs, 
            final Callable<Boolean> shouldContinue) {
       
       // protect from actions that have bad consequences
-      if (intervalTimeMs == 0) {
-         repeat = false;
-      }
-      final boolean rep = repeat;
+      final boolean doRepeat = (intervalTimeMs == 0) ? false : repeat;
       return new Runnable() {
          @Override
          public void run() {
+            ScheduledExecutorService executor
+                    = Executors.newSingleThreadScheduledExecutor();
+            
+            Runnable periodicTask = new Runnable() {
+               @Override
+               public void run() {
+                  try {
+                  if (!shouldContinue.call()) {
+                     executor.shutdown();
+                  } else {
+                     exposeROIs.run();
+                  }
+                  } catch (Exception ex) {
+                     // call to Acq Engine failed
+                     executor.shutdown();
+                  }
+               }
+            };
+            if (doRepeat) {
+               executor.scheduleAtFixedRate(periodicTask, firstTimeMs, intervalTimeMs, TimeUnit.MILLISECONDS);
+            } else {
+               executor.schedule(periodicTask, firstTimeMs, TimeUnit.MILLISECONDS);
+            }
+         }
+      };
+   }
+   /*
             try {
                final long startTime = System.currentTimeMillis() + firstTimeMs;
                int reps = 0;
@@ -236,6 +265,7 @@ public class ProjectorControlExecution {
          }
       };
    }
+   */
    
    
    

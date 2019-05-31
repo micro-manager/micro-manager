@@ -788,6 +788,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * phototargeter.
     * @deprecated Use {@link ProjectorControlExecution#exposeRois(org.micromanager.projector.ProjectionDevice, java.lang.String, java.lang.String) } instead
     */
+   @Deprecated
    public void runRois() {
       projectorControlExecution_.exposeRois(dev_, targetingChannel_, targetingShutter_);
    }
@@ -912,7 +913,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       roiLoopLabel_.setEnabled(roisSubmitted);
       roiLoopSpinner_.setEnabled(!isSLM_ && roisSubmitted);
       roiLoopTimesLabel_.setEnabled(!isSLM_ && roisSubmitted);
-      runROIsNowButton_.setEnabled(roisSubmitted);
+      exposeROIsButton_.setEnabled(roisSubmitted);
       useInMDAcheckBox.setEnabled(roisSubmitted);
       
       int nrRepetitions = 0;
@@ -1058,7 +1059,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       roiLoopLabel_ = new JLabel();
       roiLoopTimesLabel_ = new JLabel();
       setRoiButton = new JButton();
-      runROIsNowButton_ = new JButton();
+      exposeROIsButton_ = new JButton();
       roiLoopSpinner_ = new JSpinner();
       useInMDAcheckBox = new JCheckBox();
       roiStatusLabel_ = new JLabel();
@@ -1209,8 +1210,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          }
       });
 
-      runROIsNowButton_.setText("Run ROIs now!");
-      runROIsNowButton_.addActionListener((ActionEvent evt) -> {
+      exposeROIsButton_.setText("Expose ROIs now!");
+      exposeROIsButton_.addActionListener((ActionEvent evt) -> {
          new Thread(() -> {
             projectorControlExecution_.exposeRois(
                     dev_, targetingChannel_, targetingShutter_);
@@ -1314,7 +1315,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       roisTab.add(roiLoopSpinner_, "wmin 60, wmax 60");
       roisTab.add(roiLoopTimesLabel_, "wrap");
       
-      roisTab.add(runROIsNowButton_, "align center");
+      roisTab.add(exposeROIsButton_, "align center");
       roisTab.add(useInMDAcheckBox, "wrap");
       
       roisTab.add(attachToMdaTabbedPane_, "skip 1, wrap");
@@ -1446,7 +1447,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private javax.swing.JSpinner roiLoopSpinner_;
    private javax.swing.JLabel roiLoopTimesLabel_;
    private javax.swing.JLabel roiStatusLabel_;
-   private javax.swing.JButton runROIsNowButton_;
+   private javax.swing.JButton exposeROIsButton_;
    private javax.swing.JButton sequencingButton_;
    private javax.swing.JButton setRoiButton;
    private javax.swing.JComboBox shutterComboBox_;

@@ -90,17 +90,18 @@ public class Galvo implements ProjectionDevice {
                try {
                   return mmc_.getGalvoXRange(galvo_);
                } catch (Exception ex) {
-                  return 0.0;
+                  return null;
                }
             }
          }).get();
-         if (result == 0) {
+         if (result == null) {
+            result = 0.0;
             app_.logs().logError("Unable to get galvo width");
          }
          return result;
       } catch (InterruptedException | ExecutionException ex) {
          app_.logs().logError("Unable to get galvo width");
-         return 0;
+         return 0.0;
       }
    }
    
@@ -114,17 +115,18 @@ public class Galvo implements ProjectionDevice {
                try {
                   return mmc_.getGalvoYRange(galvo_);
                } catch (Exception ex) {
-                  return 0.0;
+                  return null;
                }
             }
          }).get();
-         if (result == 0) {
+         if (result == null) {
+            result = 0.0;
             app_.logs().logError("Unable to get galvo height");
          }
          return result;
       } catch (InterruptedException | ExecutionException ex) {
          app_.logs().logError("Unable to get galvo height");
-         return 0;
+         return 0.0;
       }
    }
    
@@ -138,17 +140,18 @@ public class Galvo implements ProjectionDevice {
                try {
                   return mmc_.getGalvoXMinimum(galvo_);
                } catch (Exception ex) {
-                  return 0.0;
+                  return null;
                }
             }
          }).get();
-         if (result == 0) {
+         if (result == null) {
+            result = 0.0;
             app_.logs().logError("Unable to get galvo X minimum");
          }
          return result;
       } catch (InterruptedException | ExecutionException ex) {
          app_.logs().logError("Unable to get galvo X minimum");
-         return 0;
+         return 0.0;
       }
    }
    
@@ -162,11 +165,12 @@ public class Galvo implements ProjectionDevice {
                try {
                   return mmc_.getGalvoYMinimum(galvo_);
                } catch (Exception ex) {
-                  return 0.0;
+                  return null;
                }
             }
          }).get();
-         if (result == 0) {
+         if (result == null) {
+            result = 0.0;
             app_.logs().logError("Unable to get galvo Y minimum");
          }
          return result;
