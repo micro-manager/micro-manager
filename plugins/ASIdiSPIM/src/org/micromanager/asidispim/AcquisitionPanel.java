@@ -2809,7 +2809,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      props_.setPropValue(Devices.Keys.XYSTAGE,
                            Properties.Keys.STAGESCAN_MOTOR_ACCEL_X, origXAccel);
                      props_.setPropValue(Devices.Keys.UPPERZDRIVE,
-                           Properties.Keys.STAGESCAN_MOTOR_SPEED_X, origZSpeed);
+                           Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, origZSpeed);
                      core_.setXYPosition(devices_.getMMDevice(Devices.Keys.XYSTAGE), 
                            xyPosUm.x, xyPosUm.y);
                   } catch (Exception ex) {
