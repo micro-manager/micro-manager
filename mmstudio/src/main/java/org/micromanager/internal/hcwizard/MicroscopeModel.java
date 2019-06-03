@@ -33,6 +33,7 @@ import java.util.Enumeration;
 import java.util.GregorianCalendar;
 import java.util.Hashtable;
 import java.util.Vector;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
@@ -1534,8 +1535,12 @@ public final class MicroscopeModel {
    /**
     * This method attempts to initialize all devices in a model, simulating what
     * MMCore does upon loading configuration file
+    * @param core_
+    * @param amLoading Flag used to synchoinize with Loading Devices GUI elemnt
+    *                   Since we may display a dialog in this function, we need
+    *                   a way to get rid of the Loading Devices message
     */
-   public void initializeModel(CMMCore core_) {
+   public void initializeModel(CMMCore core_, AtomicBoolean amLoading) {
 
       // apply pre-init props and initialize com ports
       for (String key : comPortInUse_.keySet()) {
@@ -1569,7 +1574,7 @@ public final class MicroscopeModel {
       }
       
       // initialize hubs first
-      for (Device d : new ArrayList<Device>(devices_)) {
+      for (Device d : new ArrayList<>(devices_)) {
          if (d.isHub() && !d.isInitialized()) {
             try {
                core_.initializeDevice(d.getName());
@@ -1577,6 +1582,7 @@ public final class MicroscopeModel {
                d.setInitialized(true);
                d.discoverPeripherals(core_);
             } catch (Exception e) {
+               amLoading.set(false);
                int sel = JOptionPane.showConfirmDialog(null, e.getMessage() + "\nRemove device " + d.getName() + " from the list?", 
                      "Initialization Error", JOptionPane.YES_NO_OPTION);
 
@@ -1594,7 +1600,7 @@ public final class MicroscopeModel {
       }
       
       // then remaining devices
-      for (Device d : new ArrayList<Device>(devices_)) {
+      for (Device d : new ArrayList<>(devices_)) {
          if (!d.isInitialized() && !d.isCore()) {
             try { 
                String parentHub = d.getParentHub();
@@ -1604,7 +1610,8 @@ public final class MicroscopeModel {
                core_.initializeDevice(d.getName());
                d.loadDataFromHardware(core_);
                d.setInitialized(true);
-            } catch (Exception e) {
+            } catch (Exception e) {               
+               amLoading.set(false);
                int sel = JOptionPane.showConfirmDialog(null, e.getMessage() + "\nRemove device " + d.getName() + " from the list?", 
                      "Initialization Error", JOptionPane.YES_NO_OPTION);
 
