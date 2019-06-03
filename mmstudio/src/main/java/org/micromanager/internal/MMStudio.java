@@ -1277,7 +1277,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
          waitDlg.closeDialog(); // Prevent from obscuring error alert
          ReportingUtils.showError(err,
-               "Failed to load hardware configuation",
+               "Failed to load hardware configuration",
                null);
          result = false;
       } finally {
