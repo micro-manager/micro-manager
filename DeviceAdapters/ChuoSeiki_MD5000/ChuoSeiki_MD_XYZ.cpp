@@ -111,7 +111,7 @@ int clearPort(MM::Device& device, MM::Core& core, const char* port)
 
 MD_SingleStage::MD_SingleStage():
 initializationStatus_	(false),
-transmissionDelay_		(10), 
+//transmissionDelay_		(10), 
 stepSize_um_			(1),
 speed_step_				(1000),	//pps
 accelTime_pattern_		(2),
@@ -158,6 +158,9 @@ answerTimeoutMs_		(20)		// answer time out is 100ms
 
 	// Select axis name to control, default is X, if using MD5230D it can be X or Y
 	controllerAxis_ = "X";
+	// Controller Axis
+	pActType = new CPropertyAction(this, &MD_SingleStage::OnControllerAxis);
+	CreateProperty(g_ChuoSeiki_Controller_Axis, "X", MM::String, false, pActType, true);
 
 	AddAllowedValue(g_ChuoSeiki_Controller_Axis, "X");
 	AddAllowedValue(g_ChuoSeiki_Controller_Axis, "Y");
@@ -206,7 +209,7 @@ MM::DeviceDetectionStatus MD_SingleStage::DetectDevice(void)
 			// device specific default communication parameters
 			GetCoreCallback()->SetDeviceProperty(portName_1S.c_str(), MM::g_Keyword_BaudRate,	"115200");
 			GetCoreCallback()->SetDeviceProperty(portName_1S.c_str(), MM::g_Keyword_StopBits,	"1"		);
-			GetCoreCallback()->SetDeviceProperty(portName_1S.c_str(), "AnswerTimeout",			"20.0"	);
+			GetCoreCallback()->SetDeviceProperty(portName_1S.c_str(), "AnswerTimeout",			"100.0"	);
 			GetCoreCallback()->SetDeviceProperty(portName_1S.c_str(), "DelayBetweenCharsMs",	"0.0"	);
 
 			// get portname for 1 stage controller
@@ -215,13 +218,13 @@ MM::DeviceDetectionStatus MD_SingleStage::DetectDevice(void)
 			device->Initialize();
 			// check version
 			int ret =  this->ConfirmVersion();
-			if (ret != DEVICE_OK && ret != 14)
-			{		
+			if (ret != DEVICE_OK && ret != 14) 
+			{	
 				LogMessageCode(ret, true);
 			}
 			else
 				 // to succeed must reach here....
-				result = MM::CanCommunicate;
+			result = MM::CanCommunicate;
 			// device shutdown, return default answertimeout	
 			device->Shutdown();
 			 // always restore the AnswerTimeout to the default
@@ -230,7 +233,7 @@ MM::DeviceDetectionStatus MD_SingleStage::DetectDevice(void)
 	}
 	catch(...) 
 	{
-		LogMessage("Exception in DetectDevice!",false);
+		LogMessage("Exception in DetectDevice!", true);
 	}
 	return result;
 }
@@ -238,10 +241,15 @@ MM::DeviceDetectionStatus MD_SingleStage::DetectDevice(void)
 int MD_SingleStage::ConfirmVersion()
 {
 	int ret;
+
 	for (int i = 0; i < 5; i++)
 	{
 		PurgeComPort(portName_1S.c_str());
 		std::string version;
+
+		ret = ExecuteCommand("DLM C");
+		if (ret != DEVICE_OK)
+			return ret;
 
 		ret = ExecuteCommand("RVR");
 		if (ret != DEVICE_OK)
@@ -251,17 +259,13 @@ int MD_SingleStage::ConfirmVersion()
 		if (ret != DEVICE_OK && ret != 14)
 			return ret;
 
-		if (version.substr(0, 9).compare("RVR") == 0) {
-			break;
-		}
-		else if (version.substr(0, 9).compare("RVR") != 0 || version == "")
+		if (version.length() >3 && version.substr(0, 3).compare("RVR") == 0) break;
+		else
 		{
-			if (i >= 4) {
-				return ERR_NO_CONTROLLER;
-			}
+			if (i >= 4) return ERR_NO_CONTROLLER;
 			else {
 				CDeviceUtils::SleepMs(10);					// else sleep and retry
-			//	continue;
+				continue;
 			}
 		}
 	}
@@ -270,8 +274,8 @@ int MD_SingleStage::ConfirmVersion()
 
 int MD_SingleStage::Initialize()
 {	
-	ostringstream command;
-	string answer;
+	std::ostringstream command;
+	std::string answer;
 	int ret = 0;
 
 // Create new properties when select group or preset
@@ -294,15 +298,14 @@ int MD_SingleStage::Initialize()
    if (ret != DEVICE_OK && ret != 14)
       return ret;
    
+   ret = ConfirmVersion();
+   if (ret != DEVICE_OK && ret != 14)
+	   return ret;
+
    ret = UpdateStatus();
    if (ret != DEVICE_OK && ret != 14)
       return ret;
 	
-// check version
-   ret = ConfirmVersion();
-      if (ret != DEVICE_OK && ret != 14)
-      return ret;
-
 	initializationStatus_ = true;
 	return DEVICE_OK;
 }
@@ -328,8 +331,8 @@ void MD_SingleStage::QueryPeripheralInventory()
 
 bool MD_SingleStage::Busy()
 {
-	ostringstream command;
-	string answer;
+	std::ostringstream command;
+	std::string answer;
 	int ret = 0;
 
 	command << "RDR";
@@ -341,10 +344,12 @@ bool MD_SingleStage::Busy()
 	if (ret != DEVICE_OK && ret != 14)		
 		return true;	
 
-	if(answer.substr(0, 3) == "RDR")
+	if(answer.length() > 4 && answer.substr(0, 3) == "RDR")
 	{
-		if( (answer.substr(6, 1) == "1") || (answer.substr(22, 1) == "1") )
-		return true;
+		if (answer.substr(6, 1) == "1")
+			return true;
+		if (answer.length() > 22 && answer.substr(22, 1) == "1")
+			return true;
 	}
 	return false;
 }
@@ -368,15 +373,15 @@ int MD_SingleStage::WaitForBusy(long waitTime)
 int MD_SingleStage::ConfirmAnswer(std::string answer)				// check controller error code, there are 3 type of error code format
 {
 	std::string errorCode ("00");							
-	if (answer.length() == 8)					//		eg: "ERS X 00"
+	if (answer.length() >= 8)					//		eg: "ERS X 00"
 		errorCode = answer.substr(6,2);	
 
-	if (answer.length() == 16)					//		eg: "ERS X 00ERS Y 00"
+	if (answer.length() >= 16)					//		eg: "ERS X 00ERS Y 00"
 	{
 		errorCode = answer.substr(6,2);
 		if (errorCode == "00")	errorCode = answer.substr(14,2);
 	}
-	if (answer.length()==6)						//			eg: "ABB 00"
+	if (answer.length()>=6)						//			eg: "ABB 00"
 		errorCode = answer.substr(4,2);
 
 		if (errorCode == "00") return DEVICE_OK;
@@ -423,8 +428,8 @@ int MD_SingleStage::GetPositionUm(double& positionUm)
 int MD_SingleStage::SetPositionSteps(long steps)
 {
 	int ret = 0;
-	ostringstream command;
-	string answer;
+	std::ostringstream command;
+	std::string answer;
 
 	command << "ABA "<< controllerAxis_ << " " << steps;
 	ret =  ExecuteCommand(command.str().c_str());
@@ -454,8 +459,8 @@ int MD_SingleStage::SetPositionSteps(long steps)
 int MD_SingleStage::SetRelativePositionSteps(long steps)
 {
 	int ret = 0;
-	ostringstream command;
-	string answer;
+	std::ostringstream command;
+	std::string answer;
 
 	command << "ICA "<< controllerAxis_ << " " << steps;
 	
@@ -486,25 +491,48 @@ int MD_SingleStage::SetRelativePositionSteps(long steps)
 int MD_SingleStage::GetPositionSteps(long& steps)
 {
 	int ret = 0;
-	ostringstream command;
-	string answer;
-	
-	command << "RLP X";
+	std::ostringstream command;
+	std::string answer;
 
-	ret =  ExecuteCommand(command.str().c_str());
-	if (ret != DEVICE_OK && ret != 14)		return ret;
+	for (int i = 0; i < 5; i++)
+	{
+		PurgeComPort(portName_1S.c_str());
 
-	ret =  ReadMessage (answer);
-	if (ret != DEVICE_OK && ret != 14)		return ret;	
+		command << "RLP";
 
-	std::string RLP;
-	std::string xTerm;
+		ret = ExecuteCommand(command.str().c_str());
+		if (ret != DEVICE_OK && ret != 14)		return ret;
 
-	std::istringstream streamAnswer(answer);
-	streamAnswer >> RLP >> xTerm >> steps;
+		ret = ReadMessage(answer);
+		if (ret != DEVICE_OK && ret != 14)		return ret;
 
-	position_um_ = steps * stepSize_um_;
+		if (answer.length() > 4 && answer.substr(0, 3).compare("RLP") == 0)
+		{
+			std::istringstream streamAnswer(answer.c_str());
+			std::string rlpTerm;		// for "RLP"
+			std::string xTerm;			// for "X"
+			std::string yTerm;			// for ",Y"
+			long xpos;
+			long ypos;
 
+			if (controllerAxis_.compare("X") == 0)
+			{
+				streamAnswer >> rlpTerm >> xTerm >> xpos;
+				steps = xpos;
+			}
+			else if (controllerAxis_.compare("Y") == 0) 
+			{
+				streamAnswer >> rlpTerm >> xTerm >> xpos >> yTerm >> ypos; // cut the answer into parts, take x, y value
+				steps = ypos;
+			}
+
+			position_um_ = steps * stepSize_um_;
+			break;
+		}
+		else if (i >= 4)
+			return ERR_0B_FAIL_TO_READ_DATA;
+
+	}
 	return DEVICE_OK;
 }
 
@@ -521,14 +549,17 @@ int MD_SingleStage::ExecuteCommand(const string& cmd)
 	int ret;
 	PurgeComPort(portName_1S.c_str());
  
-	ret =  SendSerialCommand(portName_1S.c_str(), cmd.c_str(), "");
+	ret =  SendSerialCommand(portName_1S.c_str(), cmd.c_str(), "\r\n");
 	if (ret!= DEVICE_OK) 
 		return ret; 
-	
+ CDeviceUtils::SleepMs (10);
 	return DEVICE_OK;
 }
 
+
+//********************************************* this function use with non-delimiter MD5000 version **************
 // private: read response from serial port, reading end when timeout
+/*************************************************************************************************************
 int MD_SingleStage::ReadMessage(std::string& sMessage)
 {
     // block/wait for acknowledge, or until we time out;
@@ -538,7 +569,7 @@ int MD_SingleStage::ReadMessage(std::string& sMessage)
     unsigned long read = 0;
     unsigned long startTime = GetClockTicksUs();	// return in micro second
 
-    ostringstream osMessage;
+  std::  ostringstream osMessage;
     int ret = DEVICE_OK;
     bool bRead = false;
     bool bTimeout = false; 
@@ -563,31 +594,44 @@ int MD_SingleStage::ReadMessage(std::string& sMessage)
     }
 
 	sMessage = (char*) answer;
-/*/
-    for (unsigned long index = 0; index < read; index++)
-    {
-        sMessage[index] = answer[index];
-		if (sAnswer[index] == Term) break;		// if using terminator
-    }
-/*/
+////
+//    for (unsigned long index = 0; index < read; index++)    {
+//        sMessage[index] = answer[index];
+//		if (sAnswer[index] == Term) break;		// if using terminator
+//   }
+
     return DEVICE_OK;
 }
 
-/*/		// Autofocus funtions, MD500 does not support this function.
+
+******************************************** this function use with have-delimiter MD5000 version ****************
+int MD_SingleStage::ReadMessage(std::string& sMessage)
+{
+	int ret = GetSerialAnswer(portName_1S.c_str(), "\r\n", sMessage);
+	if (ret != DEVICE_OK && ret != 14)
+		return ret;
+
+	else 
+		return DEVICE_OK;
+}
+*********************************************************************************************************************/
+
+/*
+// Autofocus funtions, MD500 does not support this function.
 int MD_SingleStage::Autofocus(long param)
 {
 	// format the command
-	ostringstream cmd;
+	std::ostringstream cmd;
 //	cmd << "AF Z=";			command for auto focus stage??
 	cmd << param ;
 
-	string answer;
+	std::string answer;
 	int ret = ExecuteCommand(cmd.str(), answer);
 	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
-	istringstream is(answer);
-	string outcome;
+	std::istringstream is(answer);
+	std::string outcome;
 	is >> outcome;
 
 //	if (outcome.compare(":A") == 0)			//command for auto focus ??
@@ -598,7 +642,7 @@ int MD_SingleStage::Autofocus(long param)
 	is >> code;
 	return code;
 }
-/*/
+*/
 
 
 //////////////////
@@ -630,7 +674,7 @@ int MD_SingleStage::OnConfigPort_1S(MM::PropertyBase* pProp, MM::ActionType pAct
    }
    else if (pAct == MM::AfterSet)
    {
-      string request;
+	   std::string request;
       pProp->Get(request);
       if (request == "GetInfo")
       {
@@ -650,13 +694,13 @@ int MD_SingleStage::OnResetPort_1S(MM::PropertyBase* pProp, MM::ActionType pAct)
    }
    else if (pAct == MM::AfterSet)
    {
-      string request;
+	   std::string request;
       pProp->Get(request);
       if (request == "Reset")
       {
          // Send the Reset Command
          const char* cmd = "RST";
-         int ret = SendSerialCommand(portName_1S.c_str(), cmd, "");
+         int ret = SendSerialCommand(portName_1S.c_str(), cmd, "\r\n");
          CDeviceUtils::SleepMs (10);
 		 if (ret !=DEVICE_OK)
             return ret;
@@ -692,8 +736,8 @@ int MD_SingleStage::OnSpeed(MM::PropertyBase* pPropBase, MM::ActionType eActType
 		pPropBase->Get(speed_step_);
 	}
 	// set moving speed
-	ostringstream command;
-	string answer;
+	std::ostringstream command;
+	std::string answer;
 	int ret = 0;
 
 	speed_mm_ = speed_step_ *stepSize_um_ /1000;
@@ -728,8 +772,8 @@ int MD_SingleStage::OnAccelTime(MM::PropertyBase* pPropBase, MM::ActionType eAct
 		pPropBase->Get(accelTime_pattern_);
 	}
 // set accelaration time
-	ostringstream command;
-	string answer;
+	std::ostringstream command;
+	std::string answer;
 	int ret = 0;
 	
 	command << "SAP " << controllerAxis_ << " " << accelTime_pattern_;
@@ -770,7 +814,7 @@ int MD_SingleStage::OnControllerAxis(MM::PropertyBase* pProp, MM::ActionType eAc
 	}
 	else if (eAct == MM::AfterSet)
 	{
-		string axis;
+		std::string axis;
 		pProp->Get(axis);
 		if (axis == "X" || axis == "Y")
 			controllerAxis_ = axis;
@@ -901,7 +945,7 @@ MM::DeviceDetectionStatus MD_TwoStages::DetectDevice(void)
 			// device specific default communication parameters
 			GetCoreCallback()->SetDeviceProperty(portName_2S.c_str(), MM::g_Keyword_BaudRate, "115200");
 			GetCoreCallback()->SetDeviceProperty(portName_2S.c_str(), MM::g_Keyword_StopBits, "1");
-			GetCoreCallback()->SetDeviceProperty(portName_2S.c_str(), "AnswerTimeout", "20.0");
+			GetCoreCallback()->SetDeviceProperty(portName_2S.c_str(), "AnswerTimeout", "100.0");
 			GetCoreCallback()->SetDeviceProperty(portName_2S.c_str(), "DelayBetweenCharsMs", "0.0");
 
 			// get portname for 1 stage controller
@@ -911,8 +955,10 @@ MM::DeviceDetectionStatus MD_TwoStages::DetectDevice(void)
 			// check version
 			int ret = this->ConfirmVersion();
 			if (ret != DEVICE_OK && ret != 14)
-			{	
+			{
+#ifdef _DEBUG			
 				LogMessageCode(ret, true);
+#endif
 			}
 			else
 				// to succeed must reach here....
@@ -938,6 +984,10 @@ int MD_TwoStages::ConfirmVersion()
 		PurgeComPort(portName_2S.c_str());
 		std::string version;
 
+		ret = ExecuteCommand("DLM C");
+		if (ret != DEVICE_OK)
+			return ret;
+
 		ret = ExecuteCommand("RVR");
 		if (ret != DEVICE_OK)
 			return ret;
@@ -946,17 +996,13 @@ int MD_TwoStages::ConfirmVersion()
 		if (ret != DEVICE_OK && ret != 14)
 			return ret;
 
-		if (version.substr(0, 9).compare("RVR") == 0) {
-			break;
-		}
-		else if (version.substr(0, 9).compare("RVR") != 0 || version == "")
+		if  (version.length() > 3 && version.substr(0, 3).compare("RVR") == 0) break;
+		else
 		{
-			if (i >= 4) {
-				return ERR_NO_CONTROLLER; 
-			}
+			if (i >= 4) return ERR_NO_CONTROLLER;
 			else {
 				CDeviceUtils::SleepMs(10);					// else sleep and retry
-			//	continue;
+				continue;
 			}
 		}
 	}
@@ -966,8 +1012,6 @@ int MD_TwoStages::ConfirmVersion()
 int MD_TwoStages::Initialize()
 {
 	int ret = 0;
-
-// Create new properties when select group or preset
 
 	// Step size X
 	CPropertyAction* pAct = new CPropertyAction (this, &MD_TwoStages::OnStepSizeX);
@@ -1005,13 +1049,13 @@ int MD_TwoStages::Initialize()
 	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
-	ret =  UpdateStatus();
+	// confirm version
+	ret = ConfirmVersion();
 	if (ret != DEVICE_OK && ret != 14)
 		return ret;
+	// Create new properties when select group or preset
 
-// confirm version
-
-	ret =  ConfirmVersion();
+	ret =  UpdateStatus();
 	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
@@ -1031,8 +1075,8 @@ int MD_TwoStages::Shutdown()
 
 bool MD_TwoStages::Busy()
 {
-	ostringstream command;
-	string answer;
+	std::ostringstream command;
+	std::string answer;
 	int ret = 0;
 
 	command << "RDR";
@@ -1045,9 +1089,11 @@ bool MD_TwoStages::Busy()
 	if (ret != DEVICE_OK && ret != 14)		
 		return false;
 
-	if(answer.substr(0, 3) == "RDR")
+	if(answer.length() > 4 && answer.substr(0, 3) == "RDR")
 	{
-		if( (answer.substr(6, 1) == "1") || (answer.substr(22, 1) == "1") )
+		if (answer.substr(6, 1) == "1")
+			return true;
+		if (answer.length() > 22 && answer.substr(22, 1) == "1")
 			return true;
 	}
 	command.str("");
@@ -1073,15 +1119,15 @@ int MD_TwoStages::WaitForBusy(long waitTime)
 int MD_TwoStages::ConfirmAnswer(std::string answer)		// check controller error code, there are 3 type of error code format
 {
 	std::string errorCode ("00");						
-	if (answer.length() == 8)							//		eg: "ERS X 00"
+	if (answer.length() >= 8)							//		eg: "ERS X 00"
 		errorCode = answer.substr(6,2);	
 
-	if (answer.length() == 16)							//		eg: "ERS X 00ERS Y 00"
+	if (answer.length() >= 16)							//		eg: "ERS X 00ERS Y 00"
 	{
 		errorCode = answer.substr(6,2);
 		if (errorCode == "00")	errorCode = answer.substr(14,2);
 	}
-	if (answer.length()==6)								//			eg: "ABB 00"
+	if (answer.length()>=6)								//			eg: "ABB 00"
 		errorCode = answer.substr(4,2);
 
 		if (errorCode == "00") return DEVICE_OK;
@@ -1108,8 +1154,8 @@ int MD_TwoStages::ConfirmAnswer(std::string answer)		// check controller error c
 int MD_TwoStages::SetPositionSteps(long x, long y)
 {
 	int ret = 0;
-	ostringstream command;
-	string answer;
+	std::ostringstream command;
+	std::string answer;
 
 	if(bOnHome == true)
 	{
@@ -1158,9 +1204,9 @@ int MD_TwoStages::SetPositionSteps(long x, long y)
 
 int MD_TwoStages::SetRelativePositionSteps(long x, long y)
 {
-	ostringstream command;
+	std::ostringstream command;
 	int ret;
-	string answer;
+	std::string answer;
 
 	position_umX_ = x * stepSize_umX_;
 	position_umY_ = y * stepSize_umY_;
@@ -1188,30 +1234,37 @@ int MD_TwoStages::SetRelativePositionSteps(long x, long y)
 
 int MD_TwoStages::GetPositionSteps(long& xValue, long& yValue)
 {
-	ostringstream command;
+	std::ostringstream command;
 	int ret = 0;
 	std::string answer;
 
-	command << "RLP";
-	ret =  ExecuteCommand(command.str().c_str());
-	if (ret != DEVICE_OK && ret != 14)		return ret;	
-	ret =  ReadMessage(answer);
-	if (ret != DEVICE_OK && ret != 14)		return ret;
 
-	// if (answer.length()<1) return ERR_0B_FAIL_TO_READ_DATA;
-	// return position format: "RLP X -1234,Y 5678"
+	for (int i = 0; i < 5; i++)
+	{
+		PurgeComPort(portName_2S.c_str());
 
-	std::istringstream streamAnswer(answer.c_str());
+		command << "RLP";
+		ret = ExecuteCommand(command.str().c_str());
+		if (ret != DEVICE_OK && ret != 14)		return ret;
+		ret = ReadMessage(answer);
+		if (ret != DEVICE_OK && ret != 14)		return ret;
 
-	std::string RLP;		
-	std::string xTerm;
-	std::string yTerm;
+		// return position format: "RLP X -1234,Y 5678"
+		if (answer.length() > 4 && answer.substr(0, 3).compare("RLP") == 0)
+		{
+			std::istringstream streamAnswer(answer.c_str());
+			std::string rlpTerm;		// for "RLP"
+			std::string xTerm;			// for "X"
+			std::string yTerm;			// for ",Y"
+			streamAnswer >> rlpTerm >> xTerm >> xValue >> yTerm >> yValue;			// cut the answer into parts, take x, y value
 
-	streamAnswer >> RLP >> xTerm >> xValue >> yTerm >> yValue;			// cut the answer into parts, take x, y value
-	
-	position_umX_ = xValue * stepSize_umX_;
-	position_umY_ = yValue * stepSize_umY_;
-
+			position_umX_ = xValue * stepSize_umX_;
+			position_umY_ = yValue * stepSize_umY_;
+			break;
+		}
+		else if (i >= 4)
+			return ERR_0B_FAIL_TO_READ_DATA;
+	}
 	return DEVICE_OK;
 }
 
@@ -1224,9 +1277,9 @@ int MD_TwoStages::SetOrigin()
 
 int MD_TwoStages::Home()
 {
-	ostringstream command;
+	std::ostringstream command;
 	int ret = 0;
-	string answer("");
+	std::string answer("");
 
 	command << "HMB X,Y";				// 2 axes home search
 	
@@ -1259,9 +1312,9 @@ int MD_TwoStages::Home()
 
 int MD_TwoStages::Stop()
 {
-	ostringstream command;
+	std::ostringstream command;
 	int ret;
-	string answer;
+	std::string answer;
 
 	command << "SST X,Y";				// 2 axes decelation stop
 	
@@ -1284,14 +1337,15 @@ int MD_TwoStages::ExecuteCommand(const string& cmd)
 	int ret;
 	PurgeComPort(portName_2S.c_str());
  
-	ret =  SendSerialCommand(portName_2S.c_str(), cmd.c_str(), "");
-//	Sleep (10);
+	ret =  SendSerialCommand(portName_2S.c_str(), cmd.c_str(), "\r\n");
+	CDeviceUtils::SleepMs(10);
 	if (ret!= DEVICE_OK) 
 		return ret; 
 	
 	return DEVICE_OK;
 }
 
+/*	********************************************* this function use with non-delimiter MD5000 version ****************
 int MD_TwoStages::ReadMessage(std::string& sMessage)
 {
     // block/wait for acknowledge, or until we time out;
@@ -1301,7 +1355,7 @@ int MD_TwoStages::ReadMessage(std::string& sMessage)
     unsigned long read = 0;
     unsigned long startTime = GetClockTicksUs();	// return in micro second
 
-    ostringstream osMessage;
+    std::ostringstream osMessage;
     int ret = DEVICE_OK;
     bool bRead = false;
     bool bTimeout = false; 
@@ -1330,7 +1384,18 @@ int MD_TwoStages::ReadMessage(std::string& sMessage)
 
     return DEVICE_OK;
 }
+*/
 
+//********************************************* this function use with have-delimiter MD5000 version ****************
+int MD_TwoStages::ReadMessage(std::string& sMessage)
+{
+	int ret = GetSerialAnswer(portName_2S.c_str(), "\r\n", sMessage);
+	if (ret != DEVICE_OK && ret != 14)
+		return ret;
+
+	else
+		return DEVICE_OK;
+}
 
 ///////////////////
 // Action handlers
@@ -1358,7 +1423,7 @@ int MD_TwoStages::OnConfigPort_2S(MM::PropertyBase* pProp, MM::ActionType pAct)
 
    else if (pAct == MM::AfterSet)
    {
-      string request;
+	  std::string request;
       pProp->Get(request);
       if (request == "GetInfo")
       {
@@ -1377,13 +1442,13 @@ int MD_TwoStages::OnResetPort_2S(MM::PropertyBase* pProp, MM::ActionType pAct)
 
    else if (pAct == MM::AfterSet)
    {
-      string request;
+	   std::string request;
       pProp->Get(request);
       if (request == "Reset")
       {
          // Send the Reset Command
          const char* cmd = "RST";
-         int ret = SendSerialCommand(portName_2S.c_str(), cmd, "");
+         int ret = SendSerialCommand(portName_2S.c_str(), cmd, "\r\n");
          CDeviceUtils::SleepMs (10);
 		 if (ret !=DEVICE_OK)
             return ret;
@@ -1420,8 +1485,8 @@ int MD_TwoStages::OnStepSizeY(MM::PropertyBase* pPropBase, MM::ActionType eActTy
 
 int MD_TwoStages::OnSpeedX(MM::PropertyBase* pPropBase, MM::ActionType eActType)
 {
-	ostringstream command;
-	string answer;
+	std::ostringstream command;
+	std::string answer;
 	int ret = 0;
 	
 	if (eActType == MM::BeforeGet)
@@ -1450,8 +1515,8 @@ int MD_TwoStages::OnSpeedX(MM::PropertyBase* pPropBase, MM::ActionType eActType)
 
 int MD_TwoStages::OnAccelTimeX(MM::PropertyBase* pPropBase, MM::ActionType eActType)
 {
-	ostringstream command;
-	string answer;
+	std::ostringstream command;
+	std::string answer;
 	int ret = 0;
 
 	if (eActType == MM::BeforeGet)
@@ -1473,9 +1538,8 @@ int MD_TwoStages::OnAccelTimeX(MM::PropertyBase* pPropBase, MM::ActionType eActT
 
 int MD_TwoStages::OnSpeedY(MM::PropertyBase* pPropBase, MM::ActionType eActType)
 {
-	
-	ostringstream command;
-	string answer;
+	std::ostringstream command;
+	std::string answer;
 	int ret = 0;
 
 	if (eActType == MM::BeforeGet)
@@ -1504,8 +1568,8 @@ int MD_TwoStages::OnSpeedY(MM::PropertyBase* pPropBase, MM::ActionType eActType)
 
 int MD_TwoStages::OnAccelTimeY(MM::PropertyBase* pPropBase, MM::ActionType eActType)
 {
-	ostringstream command;
-	string answer;
+	std::ostringstream command;
+	std::string answer;
 	int ret = 0;
 
 	if (eActType == MM::BeforeGet)
