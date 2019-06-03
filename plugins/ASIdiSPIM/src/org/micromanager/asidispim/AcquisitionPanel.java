@@ -1310,7 +1310,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                planarSlopeYField_.setValue((Double)(1000*b));
                planarOffsetZField_.setValue((Double)c);
             } catch (Exception ex) {
-               ReportingUtils.showError("Could not compute planar correction from position list");
+               ReportingUtils.showError("Could not compute planar correction from position list.  Make sure the points specify a plane.");
                ReportingUtils.logError(ex.getStackTrace().toString());
             }
          }
