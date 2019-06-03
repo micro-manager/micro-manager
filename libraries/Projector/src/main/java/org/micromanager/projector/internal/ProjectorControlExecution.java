@@ -1,6 +1,7 @@
 
 package org.micromanager.projector.internal;
 
+import com.google.common.eventbus.Subscribe;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.ImageCanvas;
@@ -22,8 +23,11 @@ import java.util.zip.ZipOutputStream;
 import mmcorej.Configuration;
 import org.micromanager.Studio;
 import org.micromanager.data.DataProvider;
+import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.displaywindow.DisplayController;
+import org.micromanager.events.AcquisitionEndedEvent;
+import org.micromanager.events.AcquisitionStartedEvent;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.projector.ProjectionDevice;
 import org.micromanager.projector.internal.devices.Galvo;
@@ -35,6 +39,8 @@ import org.micromanager.projector.internal.devices.Galvo;
 public class ProjectorControlExecution {
    
    private final Studio studio_;
+   
+   private Datastore store_;
    
    public ProjectorControlExecution (final Studio studio) {
       studio_ = studio;
@@ -156,9 +162,10 @@ public class ProjectorControlExecution {
     * @param dev_
     * @param targetingChannel
     * @param targetingShutter
+    * @param rois Rois as they appear on the camera.  Only used to records with the images
     */
    public void exposeRois(final ProjectionDevice dev_, final String targetingChannel, 
-           final String targetingShutter) {
+           final String targetingShutter, Roi[] rois) {
       if (dev_ == null) {
          return;
       }
@@ -169,11 +176,22 @@ public class ProjectorControlExecution {
          dev_.runPolygons();
          returnShutter(targetingShutter, originalShutterState);
          returnChannel(originalConfig);
-         //recordPolygons();
+         recordPolygons(rois);
       } else {
          dev_.runPolygons();
-         //recordPolygons();
+         recordPolygons(rois);
       }
+   }
+   
+   @Subscribe
+   public void onAcquisitionStart(AcquisitionStartedEvent ae) {
+      store_ = ae.getDatastore();
+   }
+   
+      
+   @Subscribe
+   public void onAcquisitionEnd(AcquisitionEndedEvent ae) {
+      store_ = null;
    }
    
       
@@ -181,7 +199,7 @@ public class ProjectorControlExecution {
    private void recordPolygons(Roi[] individualRois_) {
       if (studio_.acquisitions().isAcquisitionRunning()) {
          if (studio_.acquisitions().getAcquisitionSettings().save) {
-            String location = studio_.acquisitions().getAcquisitionSettings().root;
+            String location = store_ == null ? null : store_.getSavePath();
             if (location != null) {
                try {
                   File f = new File(location, "ProjectorROIs.zip");
@@ -269,11 +287,11 @@ public class ProjectorControlExecution {
    // Generates a runnable that runs the selected ROIs.
    Runnable phototargetROIsRunnable(final String runnableName, 
            final ProjectionDevice dev, final String targetingChannel, 
-           final String targetingShutter) {
+           final String targetingShutter, Roi[] rois) {
       return new Runnable() {
          @Override
          public void run() {
-            exposeRois(dev, targetingChannel, targetingShutter);
+            exposeRois(dev, targetingChannel, targetingShutter, rois);
          }
          @Override
          public String toString() {
@@ -298,32 +316,25 @@ public class ProjectorControlExecution {
       
       // protect from actions that have bad consequences
       final boolean doRepeat = (intervalTimeMs == 0) ? false : repeat;
-      return new Runnable() {
-         @Override
-         public void run() {
-            ScheduledExecutorService executor
-                    = Executors.newSingleThreadScheduledExecutor();
-            
-            Runnable periodicTask = new Runnable() {
-               @Override
-               public void run() {
-                  try {
-                  if (!shouldContinue.call()) {
-                     executor.shutdown();
-                  } else {
-                     exposeROIs.run();
-                  }
-                  } catch (Exception ex) {
-                     // call to Acq Engine failed
-                     executor.shutdown();
-                  }
+      return () -> {
+         ScheduledExecutorService executor
+                 = Executors.newSingleThreadScheduledExecutor();
+         Runnable periodicTask = () -> {
+            try {
+               if (!shouldContinue.call()) {
+                  executor.shutdown();
+               } else {
+                  exposeROIs.run();
                }
-            };
-            if (doRepeat) {
-               executor.scheduleAtFixedRate(periodicTask, firstTimeMs, intervalTimeMs, TimeUnit.MILLISECONDS);
-            } else {
-               executor.schedule(periodicTask, firstTimeMs, TimeUnit.MILLISECONDS);
+            } catch (Exception ex) {
+               // call to Acq Engine failed
+               executor.shutdown();
             }
+         };
+         if (doRepeat) {
+            executor.scheduleAtFixedRate(periodicTask, firstTimeMs, intervalTimeMs, TimeUnit.MILLISECONDS);
+         } else {
+            executor.schedule(periodicTask, firstTimeMs, TimeUnit.MILLISECONDS);
          }
       };
    }

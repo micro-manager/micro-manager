@@ -79,7 +79,7 @@ public abstract class ProjectorActions {
    
    
     /**
-    * Illuminate a spot at position x,y.
+    * Displays a spot at position x,y.
     * @param dev ProjectionDevice to be used
     * @param x coordinate of ProjectionDevice
     * @param y coordinate of ProjectionDevice

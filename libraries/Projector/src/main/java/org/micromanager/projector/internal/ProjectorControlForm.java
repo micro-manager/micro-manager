@@ -190,6 +190,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       pointAndShootQueue_ = new LinkedBlockingQueue<>();
       pointAndShootMouseListener_ = createPointAndShootMouseListenerInstance();
       projectorControlExecution_ = new ProjectorControlExecution(studio_);
+      studio_.events().registerForEvents(projectorControlExecution_);
       
       // Create GUI
       initComponents();
@@ -732,7 +733,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     */
    @Deprecated
    public void runRois() {
-      projectorControlExecution_.exposeRois(dev_, targetingChannel_, targetingShutter_);
+      projectorControlExecution_.exposeRois(dev_, targetingChannel_, targetingShutter_, individualRois_);
    }
 
    // ## Attach/detach MDA
@@ -789,24 +790,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       pointAndShootOffButton_.setSelected(!turnedOn);
       enablePointAndShootMode(turnedOn);
    }
-   
-   // Generates a runnable that runs the selected ROIs.
-   /*
-   private Runnable phototargetROIsRunnable(final String runnableName) {
-      return new Runnable() {
-         @Override
-         public void run() {
-            runRois();
-         }
-         @Override
-         public String toString() {
-            return runnableName;
-         }
-      };
-   }
-   */
-   
-
+  
    
    /**
     * Runs runnable starting at firstTimeMs after this function is called, and
@@ -893,7 +877,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                   repeatCheckBox_.isSelected(),
                   getSpinnerIntegerValue(repeatEveryFrameSpinner_),
                   projectorControlExecution_.phototargetROIsRunnable(threadName, 
-                          dev_, targetingChannel_, targetingShutter_));
+                          dev_, targetingChannel_, targetingShutter_, individualRois_));
          } else {
             final Callable<Boolean> mdaRunning = studio_.acquisitions()::isAcquisitionRunning;
             final String threadName = "Asynchronous phototargeting of ROIs";
@@ -904,7 +888,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                         repeatCheckBoxTime_.isSelected(),
                         (long) (1000 * getSpinnerDoubleValue(repeatEveryIntervalSpinner_)),
                         projectorControlExecution_.phototargetROIsRunnable(threadName,
-                                dev_, targetingChannel_, targetingShutter_),
+                                dev_, targetingChannel_, targetingShutter_, individualRois_),
                         mdaRunning)));
          }
       } else {
@@ -956,6 +940,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    {
       formSingleton_ = null;
       disposing_ = true;
+      studio_.events().unregisterForEvents(projectorControlExecution_);
       if (pointAndShootThread_ != null && pointAndShootThread_.isAlive()) {
          pointAndShootQueue_.add(
                  new PointAndShootInfo.Builder().stop().build());
@@ -1156,7 +1141,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       exposeROIsButton_.addActionListener((ActionEvent evt) -> {
          new Thread(() -> {
             projectorControlExecution_.exposeRois(
-                    dev_, targetingChannel_, targetingShutter_);
+                    dev_, targetingChannel_, targetingShutter_, individualRois_);
          }).start();
       });
 
