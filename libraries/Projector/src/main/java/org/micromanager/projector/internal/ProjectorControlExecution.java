@@ -1,12 +1,24 @@
 
 package org.micromanager.projector.internal;
 
+import ij.IJ;
+import ij.ImagePlus;
 import ij.gui.ImageCanvas;
+import ij.gui.Roi;
+import ij.io.RoiEncoder;
+import java.awt.Rectangle;
+import java.io.BufferedOutputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import mmcorej.Configuration;
 import org.micromanager.Studio;
 import org.micromanager.data.DataProvider;
@@ -157,32 +169,101 @@ public class ProjectorControlExecution {
          dev_.runPolygons();
          returnShutter(targetingShutter, originalShutterState);
          returnChannel(originalConfig);
-         recordPolygons();
+         //recordPolygons();
       } else {
          dev_.runPolygons();
-         recordPolygons();
+         //recordPolygons();
       }
    }
    
       
    // Save ROIs in the acquisition path, if it exists.
-   private void recordPolygons() {
+   private void recordPolygons(Roi[] individualRois_) {
       if (studio_.acquisitions().isAcquisitionRunning()) {
-         // TODO: The MM2.0 refactor broke this code by removing the below
-         // method.
-//         String location = studio_.compat().getAcquisitionPath();
-//         if (location != null) {
-//            try {
-//               File f = new File(location, "ProjectorROIs.zip");
-//               if (!f.exists()) {
-//                  saveROIs(f, individualRois_);
-//               }
-//            } catch (Exception ex) {
-//               ReportingUtils.logError(ex);
-//            }
-//         }
+         if (studio_.acquisitions().getAcquisitionSettings().save) {
+            String location = studio_.acquisitions().getAcquisitionSettings().root;
+            if (location != null) {
+               try {
+                  File f = new File(location, "ProjectorROIs.zip");
+                  if (!f.exists()) {
+                     saveROIs(f, individualRois_);
+                  }
+               } catch (Exception ex) {
+                  ReportingUtils.logError(ex);
+               }
+            }
+         }
       }
    }
+   
+      /**
+    * Save a list of ROIs to a given path.
+    */
+   private static void saveROIs(File path, Roi[] rois) {
+      try {
+         ImagePlus imgp = IJ.getImage();
+         ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(path));
+         try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(zos))) {
+            RoiEncoder re = new RoiEncoder(out);
+            for (Roi roi : rois) {
+               String label = getROILabel(imgp, roi, 0);
+               if (!label.endsWith(".roi")) {
+                  label += ".roi";
+               }
+               zos.putNextEntry(new ZipEntry(label));
+               re.write(roi);
+               out.flush();
+            }
+         }
+      } catch (IOException e) {
+         ReportingUtils.logError(e);
+      }
+   }
+   
+   /**
+    * Gets the label of an ROI with the given index n. Borrowed from ImageJ.
+    */
+   private static String getROILabel(ImagePlus imp, Roi roi, int n) {
+      Rectangle r = roi.getBounds();
+      int xc = r.x + r.width / 2;
+      int yc = r.y + r.height / 2;
+      if (n >= 0) {
+         xc = yc;
+         yc = n;
+      }
+      if (xc < 0) {
+         xc = 0;
+      }
+      if (yc < 0) {
+         yc = 0;
+      }
+      int digits = 4;
+      String xs = "" + xc;
+      if (xs.length() > digits) {
+         digits = xs.length();
+      }
+      String ys = "" + yc;
+      if (ys.length() > digits) {
+         digits = ys.length();
+      }
+      if (digits == 4 && imp != null && imp.getStackSize() >= 10000) {
+         digits = 5;
+      }
+      xs = "000000" + xc;
+      ys = "000000" + yc;
+      String label = ys.substring(ys.length() - digits) + "-" + xs.substring(xs.length() - digits);
+      if (imp != null && imp.getStackSize() > 1) {
+         int slice = roi.getPosition();
+         if (slice == 0) {
+            slice = imp.getCurrentSlice();
+         }
+         String zs = "000000" + slice;
+         label = zs.substring(zs.length() - digits) + "-" + label;
+         roi.setPosition(slice);
+      }
+      return label;
+   }
+     
    
    
    // Generates a runnable that runs the selected ROIs.
@@ -209,7 +290,6 @@ public class ProjectorControlExecution {
     * then, if repeat is true, every intervalTimeMs thereafter until
     * shouldContinue.call() returns false.
     */
-   @SuppressWarnings("AssignmentToMethodParameter")
    Runnable runAtIntervals(final long firstTimeMs, 
            final boolean repeat,
            final long intervalTimeMs, 
@@ -247,26 +327,7 @@ public class ProjectorControlExecution {
          }
       };
    }
-   /*
-            try {
-               final long startTime = System.currentTimeMillis() + firstTimeMs;
-               int reps = 0;
-               while (shouldContinue.call()) {
-                  Utils.sleepUntil(startTime + reps * intervalTimeMs);
-                  runnable.run();
-                  ++reps;
-                  if (!rep) {
-                     break;
-                  }
-               }
-            } catch (Exception ex) {
-               ReportingUtils.logError(ex);
-            }
-         }
-      };
-   }
-   */
-   
+     
    
    
    /**

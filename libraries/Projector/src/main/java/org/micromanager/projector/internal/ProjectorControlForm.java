@@ -26,7 +26,6 @@ import ij.WindowManager;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.gui.Roi;
-import ij.io.RoiEncoder;
 import ij.plugin.frame.RoiManager;
 import ij.process.FloatPolygon;
 
@@ -35,7 +34,6 @@ import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Polygon;
-import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
@@ -48,9 +46,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -68,8 +64,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -147,6 +141,42 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    public static final FileType PROJECTOR_LOG_FILE = new FileType("PROJECTOR_LOG_FILE",
       "Projector Log File", "./MyProjector.log", true, "log");
   
+   
+    // GUI element variables declaration 
+   private javax.swing.JButton allPixelsButton_;
+   private javax.swing.JTabbedPane attachToMdaTabbedPane_;
+   private javax.swing.JButton calibrateButton_;
+   private javax.swing.JComboBox channelComboBox_;
+   private javax.swing.JButton checkerBoardButton_;
+   private javax.swing.JTextField delayField_;
+   private javax.swing.JTextField logDirectoryTextField_;
+   private javax.swing.JButton offButton_;
+   private javax.swing.JButton onButton_;
+   private javax.swing.JLabel phototargetInstructionsLabel;
+   private javax.swing.JSpinner pointAndShootIntervalSpinner_;
+   private javax.swing.JToggleButton pointAndShootOffButton_;
+   private javax.swing.JToggleButton pointAndShootOnButton;
+   private javax.swing.JCheckBox repeatCheckBox_;
+   private javax.swing.JCheckBox repeatCheckBoxTime_;
+   private javax.swing.JSpinner repeatEveryFrameSpinner_;
+   private javax.swing.JLabel repeatEveryFrameUnitLabel_;
+   private javax.swing.JSpinner repeatEveryIntervalSpinner_;
+   private javax.swing.JLabel repeatEveryIntervalUnitLabel_;
+   private javax.swing.JLabel roiLoopLabel_;
+   private javax.swing.JSpinner roiLoopSpinner_;
+   private javax.swing.JLabel roiLoopTimesLabel_;
+   private javax.swing.JLabel roiStatusLabel_;
+   private javax.swing.JButton exposeROIsButton_;
+   private javax.swing.JButton sequencingButton_;
+   private javax.swing.JButton setRoiButton;
+   private javax.swing.JComboBox shutterComboBox_;
+   private javax.swing.JLabel startFrameLabel_;
+   private javax.swing.JSpinner startFrameSpinner_;
+   private javax.swing.JLabel startTimeLabel_;
+   private javax.swing.JSpinner startTimeSpinner_;
+   private javax.swing.JLabel startTimeUnitLabel_;
+   private javax.swing.JPanel syncRoiPanel_;
+   private javax.swing.JCheckBox useInMDAcheckBox;
    
     /**
     * Constructor. Creates the main window for the Projector plugin.
@@ -303,8 +333,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    void setTargetingChannel(String channelName) {
       targetingChannel_ = channelName;
        if (channelName != null) {
-          studio_.profile().getSettings(this.getClass()).putString(
-                  "channel", channelName);
+          settings_.putString("channel", channelName);
        }
    }
    
@@ -315,8 +344,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    void setTargetingShutter(String shutterName) {
       targetingShutter_ = shutterName;
       if (shutterName != null) {
-         studio_.profile().getSettings(this.getClass()).putString(
-                 "shutter", shutterName);
+         settings_.putString("shutter", shutterName);
       }
    }
    
@@ -362,22 +390,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       projectorControlExecution_.returnShutter(targetingShutter_, originallyOpen);
    }
    
-   // ## Simple methods for device control.
-     
-   
-   
-   /** 
-    * Turns the projection device on or off.
-    * @param onState on=true
-    */
-   private void setOnState(boolean onState) {
-      if (onState) {
-         dev_.turnOn();
-      } else {
-         dev_.turnOff();
-      }
-   }
-      
+ 
    /**
     * Runs the full calibration. First
     * generates a linear mapping (a first approximation) and then generates
@@ -409,7 +422,6 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
             calibrator_ = null;
          }
       }.start();
-
    }
    
    /**
@@ -516,33 +528,31 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       pointAndShooteModeOn_.set(on);
       // restart this thread if it is not running?
       if (pointAndShootThread_ == null || !pointAndShootThread_.isAlive()) {
-         pointAndShootThread_ = new Thread(
-                 () -> {
-                    while (true) {
-                       PointAndShootInfo psi;
-                       try {
-                          psi = pointAndShootQueue_.take();
-                          if (psi.isStopped()) {
-                             return;
-                          }
-                          try {
-                             if (psi.getDevice() != null) {
-                                ProjectorActions.displaySpot(
-                                        psi.getDevice(),
-                                        psi.getDevPoint().x,
-                                        psi.getDevPoint().y);
-                             }
-                             projectorControlExecution_.returnShutter(
-                                     targetingShutter_, psi.getOriginalShutterState());
-                             projectorControlExecution_.returnChannel(psi.getOriginalConfig());
-                             logPoint(psi.getCanvasPoint());
-                          } catch (Exception e) {
-                             ReportingUtils.showError(e);
-                          }
-                       } catch (InterruptedException ex) {
-                          ReportingUtils.showError(ex);
-                       }
-                    }
+         pointAndShootThread_ = new Thread(() -> {
+            while (true) {
+               try {
+                  PointAndShootInfo psi = pointAndShootQueue_.take();
+                  if (psi.isStopped()) {
+                     return;
+                  }
+                  try {
+                     if (psi.getDevice() != null) {
+                        ProjectorActions.displaySpot(
+                                psi.getDevice(),
+                                psi.getDevPoint().x,
+                                psi.getDevPoint().y);
+                     }
+                     projectorControlExecution_.returnShutter(
+                             targetingShutter_, psi.getOriginalShutterState());
+                     projectorControlExecution_.returnChannel(psi.getOriginalConfig());
+                     logPoint(psi.getCanvasPoint());
+                  } catch (Exception e) {
+                     ReportingUtils.showError(e);
+                  }
+               } catch (InterruptedException ex) {
+                  ReportingUtils.showError(ex);
+               }
+            }
          });
          pointAndShootThread_.start();
       }
@@ -637,75 +647,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    // ## Manipulating ROIs
    
   
-  
-   /**
-    * Gets the label of an ROI with the given index n. Borrowed from ImageJ.
-    */
-   private static String getROILabel(ImagePlus imp, Roi roi, int n) {
-      Rectangle r = roi.getBounds();
-      int xc = r.x + r.width / 2;
-      int yc = r.y + r.height / 2;
-      if (n >= 0) {
-         xc = yc;
-         yc = n;
-      }
-      if (xc < 0) {
-         xc = 0;
-      }
-      if (yc < 0) {
-         yc = 0;
-      }
-      int digits = 4;
-      String xs = "" + xc;
-      if (xs.length() > digits) {
-         digits = xs.length();
-      }
-      String ys = "" + yc;
-      if (ys.length() > digits) {
-         digits = ys.length();
-      }
-      if (digits == 4 && imp != null && imp.getStackSize() >= 10000) {
-         digits = 5;
-      }
-      xs = "000000" + xc;
-      ys = "000000" + yc;
-      String label = ys.substring(ys.length() - digits) + "-" + xs.substring(xs.length() - digits);
-      if (imp != null && imp.getStackSize() > 1) {
-         int slice = roi.getPosition();
-         if (slice == 0) {
-            slice = imp.getCurrentSlice();
-         }
-         String zs = "000000" + slice;
-         label = zs.substring(zs.length() - digits) + "-" + label;
-         roi.setPosition(slice);
-      }
-      return label;
-   }
      
-   /**
-    * Save a list of ROIs to a given path.
-    */
-   private static void saveROIs(File path, Roi[] rois) {
-      try {
-         ImagePlus imgp = IJ.getImage();
-         ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(path));
-         try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(zos))) {
-            RoiEncoder re = new RoiEncoder(out);
-            for (Roi roi : rois) {
-               String label = getROILabel(imgp, roi, 0);
-               if (!label.endsWith(".roi")) {
-                  label += ".roi";
-               }
-               zos.putNextEntry(new ZipEntry(label));
-               re.write(roi);
-               out.flush();
-            }
-         }
-      } catch (IOException e) {
-         ReportingUtils.logError(e);
-      }
-   }
-   
    // Returns the current ROIs for a given ImageWindow. If selectedOnly
    // is true, then returns only those ROIs selected in the ROI Manager.
    // If no ROIs are selected, then all ROIs are returned.
@@ -1104,7 +1046,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
 
       onButton_.setText("On");
       onButton_.addActionListener((ActionEvent evt) -> {
-         setOnState(true);
+         dev_.turnOn();
          updatePointAndShoot(false);
       });
 
@@ -1117,7 +1059,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       pointAndShootOnButton.setMinimumSize(new Dimension(75, 23));
       pointAndShootOnButton.setPreferredSize(new Dimension(75, 23));
       pointAndShootOnButton.addActionListener((ActionEvent evt) -> {
-         setOnState(false);
+         dev_.turnOff();
          try {
             updatePointAndShoot(true);
          } catch (RuntimeException e) {
@@ -1345,7 +1287,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
 
       centerButton.setText("Center spot");
       centerButton.addActionListener((ActionEvent evt) -> {
-         setOnState(false);
+         dev_.turnOff();
          ProjectorActions.displayCenterSpot(dev_);
       });
 
@@ -1393,7 +1335,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       offButton_.setText("Off");
       offButton_.setSelected(true);
       offButton_.addActionListener((ActionEvent evt) -> {
-         setOnState(false);
+         dev_.turnOff();
       });
 
       pointAndShootIntervalSpinner_.setModel(new SpinnerNumberModel(500, 1, 1000000000, 1));
@@ -1421,42 +1363,5 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     
       pack();
    }
-
-
-   // Variables declaration 
-   private javax.swing.JButton allPixelsButton_;
-   private javax.swing.JTabbedPane attachToMdaTabbedPane_;
-   private javax.swing.JButton calibrateButton_;
-   private javax.swing.JComboBox channelComboBox_;
-   private javax.swing.JButton checkerBoardButton_;
-   private javax.swing.JTextField delayField_;
-   private javax.swing.JTextField logDirectoryTextField_;
-   private javax.swing.JButton offButton_;
-   private javax.swing.JButton onButton_;
-   private javax.swing.JLabel phototargetInstructionsLabel;
-   private javax.swing.JSpinner pointAndShootIntervalSpinner_;
-   private javax.swing.JToggleButton pointAndShootOffButton_;
-   private javax.swing.JToggleButton pointAndShootOnButton;
-   private javax.swing.JCheckBox repeatCheckBox_;
-   private javax.swing.JCheckBox repeatCheckBoxTime_;
-   private javax.swing.JSpinner repeatEveryFrameSpinner_;
-   private javax.swing.JLabel repeatEveryFrameUnitLabel_;
-   private javax.swing.JSpinner repeatEveryIntervalSpinner_;
-   private javax.swing.JLabel repeatEveryIntervalUnitLabel_;
-   private javax.swing.JLabel roiLoopLabel_;
-   private javax.swing.JSpinner roiLoopSpinner_;
-   private javax.swing.JLabel roiLoopTimesLabel_;
-   private javax.swing.JLabel roiStatusLabel_;
-   private javax.swing.JButton exposeROIsButton_;
-   private javax.swing.JButton sequencingButton_;
-   private javax.swing.JButton setRoiButton;
-   private javax.swing.JComboBox shutterComboBox_;
-   private javax.swing.JLabel startFrameLabel_;
-   private javax.swing.JSpinner startFrameSpinner_;
-   private javax.swing.JLabel startTimeLabel_;
-   private javax.swing.JSpinner startTimeSpinner_;
-   private javax.swing.JLabel startTimeUnitLabel_;
-   private javax.swing.JPanel syncRoiPanel_;
-   private javax.swing.JCheckBox useInMDAcheckBox;
 
 }
