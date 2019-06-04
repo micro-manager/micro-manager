@@ -603,8 +603,9 @@ int MD_SingleStage::ReadMessage(std::string& sMessage)
     return DEVICE_OK;
 }
 
+*/
 
-******************************************** this function use with have-delimiter MD5000 version ****************
+//******************************************** this function use with have-delimiter MD5000 version ****************
 int MD_SingleStage::ReadMessage(std::string& sMessage)
 {
 	int ret = GetSerialAnswer(portName_1S.c_str(), "\r\n", sMessage);
@@ -614,7 +615,7 @@ int MD_SingleStage::ReadMessage(std::string& sMessage)
 	else 
 		return DEVICE_OK;
 }
-*********************************************************************************************************************/
+//*********************************************************************************************************************/
 
 /*
 // Autofocus funtions, MD500 does not support this function.
