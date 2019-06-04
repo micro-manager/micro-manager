@@ -18,7 +18,7 @@ import mmcorej.CMMCore;
 import org.micromanager.Studio;
 import org.micromanager.propertymap.MutablePropertyMapView;
 import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.projector.internal.Mapping;
+import org.micromanager.projector.internal.MappingStorage;
 import org.micromanager.projector.internal.ProjectorControlForm;
 import org.micromanager.projector.internal.Utils;
 import org.micromanager.projector.internal.devices.Galvo;
@@ -61,7 +61,7 @@ public abstract class ProjectorActions {
             ProjectionDevice dev) {
       MutablePropertyMapView settings = app.profile().getSettings(
               ProjectorControlForm.class);
-      return Mapping.loadMapping(app.core(), dev, settings);
+      return MappingStorage.loadMapping(app.core(), dev, settings);
    }
    
     /**

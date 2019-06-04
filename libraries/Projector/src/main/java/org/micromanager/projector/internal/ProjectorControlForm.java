@@ -186,7 +186,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       core_ = app.getCMMCore();
       settings_ = studio_.profile().getSettings(this.getClass());
       dev_ = ProjectorActions.getProjectionDevice(studio_);
-      mapping_ = Mapping.loadMapping(core_, dev_, settings_);
+      mapping_ = MappingStorage.loadMapping(core_, dev_, settings_);
       pointAndShootQueue_ = new LinkedBlockingQueue<>();
       pointAndShootMouseListener_ = createPointAndShootMouseListenerInstance();
       projectorControlExecution_ = new ProjectorControlExecution(studio_);
@@ -415,7 +415,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                success = false;
             }
             if (success) {
-               mapping_ = Mapping.loadMapping(core_, dev_, settings_);
+               mapping_ = MappingStorage.loadMapping(core_, dev_, settings_);
             }
             JOptionPane.showMessageDialog(IJ.getImage().getWindow(), "Calibration "
                        + (success ? "finished." : "canceled."));
@@ -497,7 +497,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                   Point pOff = new Point(canvas.offScreenX(p.x), canvas.offScreenY(p.y));
                   final Point pOffScreen = mirrorIfNecessary(canvas, pOff);
                   final Point2D.Double devP = ProjectorActions.transformPoint(
-                          Mapping.loadMapping(core_, dev_, settings_),
+                          MappingStorage.loadMapping(core_, dev_, settings_),
                           new Point2D.Double(pOffScreen.x, pOffScreen.y));
                   final Configuration originalConfig = prepareChannel();
                   final boolean originalShutterState = prepareShutter();

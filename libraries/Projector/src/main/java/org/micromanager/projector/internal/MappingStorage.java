@@ -15,7 +15,7 @@ import org.micromanager.propertymap.MutablePropertyMapView;
  *
  * @author nico
  */
-public class Mapping {
+public class MappingStorage {
    
    private final static String MAP_NR_ENTRIES = "NrEntries";
    private final static String MAP_POLYGON_MAP = "polygonMap-";
@@ -46,7 +46,7 @@ public class Mapping {
     * maps each polygon cell to an AffineTransform.
     */
    static void saveMapping(CMMCore core, ProjectionDevice dev, 
-           MutablePropertyMapView settings, HashMap<Polygon, AffineTransform> mapping) {
+           MutablePropertyMapView settings, Map<Polygon, AffineTransform> mapping) {
       settings.putPropertyMap(getCalibrationKey(core, dev),
                mapToPropertyMap(mapping));
    }

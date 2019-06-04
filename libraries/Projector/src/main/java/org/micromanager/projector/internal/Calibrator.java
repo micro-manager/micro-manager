@@ -12,6 +12,7 @@ import java.awt.Polygon;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -20,9 +21,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.micromanager.Studio;
+import org.micromanager.data.Image;
 import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 import org.micromanager.internal.utils.MathFunctions;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.projector.Mapping;
 import org.micromanager.projector.ProjectionDevice;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
@@ -199,7 +202,7 @@ public class Calibrator {
     * Cells with suspect measured corner positions are discarded.
     * A mapping of cell polygon to AffineTransform is generated. 
     */
-   private Map<Polygon, AffineTransform> generateNonlinearMapping() {
+   private Mapping generateNonlinearMapping() {
       
       // get the affine transform near the center spot
       final AffineTransform firstApproxAffine = generateLinearMapping();
@@ -271,8 +274,7 @@ public class Calibrator {
 
       // now make a grid of (square) polygons (in camera's coordinate system)
       // and generate an affine transform for each of these square regions
-      Map<Polygon, AffineTransform> bigMap
-            = new HashMap<Polygon, AffineTransform>();
+      Map<Polygon, AffineTransform> bigMap = new HashMap<>();
       for (int i = 0; i <= nGrid - 1; ++i) {
          for (int j = 0; j <= nGrid - 1; ++j) {
             Polygon poly = new Polygon();
@@ -281,8 +283,7 @@ public class Calibrator {
             Utils.addVertex(poly, Utils.toIntPoint(camPoint[i + 1][j + 1]));
             Utils.addVertex(poly, Utils.toIntPoint(camPoint[i + 1][j]));
 
-            Map<Point2D.Double, Point2D.Double> map
-                  = new HashMap<Point2D.Double, Point2D.Double>();
+            Map<Point2D.Double, Point2D.Double> map = new HashMap<>();
             map.put(camPoint[i][j], slmPoint[i][j]);
             map.put(camPoint[i][j + 1], slmPoint[i][j + 1]);
             map.put(camPoint[i + 1][j], slmPoint[i + 1][j]);
@@ -299,7 +300,10 @@ public class Calibrator {
             }
          }
       }
-      return bigMap;
+      
+      Mapping.Builder mb = new Mapping.Builder();
+      mb.setMap(bigMap).setWidth(core_.getImageWidth()).setHeight(core_.getImageHeight()); // TODO: binning!
+      return mb.build();
    }
 
    /**
@@ -318,15 +322,17 @@ public class Calibrator {
             try {
                isRunning_.set(true);
                if (app_.live().getDisplay() == null) {
-                  app_.live().snap(true);
-                  // wait for the display to appear (is there a better method?)
+                   app_.live().snap(true);
+                  // wait for the display to appear 
+                  // It would be better to get the DisplayDidShowImageEvent 
+                  // from the displayController (which itself can be retrieved
+                  // using the NewDisplayEvent)
                   Thread.sleep(1000);
                }
                Roi originalROI = IJ.getImage().getRoi();
 
                // do the heavy lifting of generating the local affine transform map
-               HashMap<Polygon, AffineTransform> mapping
-                       = (HashMap<Polygon, AffineTransform>) generateNonlinearMapping();
+              Mapping mapping = generateNonlinearMapping();
 
                dev_.turnOff();
                try {
@@ -338,7 +344,9 @@ public class Calibrator {
                // save local affine transform map to preferences
                // TODO allow different mappings to be stored for different channels (e.g. objective magnification)
                if (!stopRequested_.get()) {
-                  Mapping.saveMapping(core_, dev_, settings_, mapping);
+                  List<Image> snap = app_.live().snap(false);
+                  snap.get(0).getHeight(); snap.get(0).getMetadata().getBinning();
+                  MappingStorage.saveMapping(core_, dev_, settings_, mapping.getMap());
                }
                IJ.getImage().setRoi(originalROI);
             } catch (HeadlessException e) {
