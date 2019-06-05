@@ -26,6 +26,7 @@ import ij.WindowManager;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.gui.Roi;
+import ij.gui.Toolbar;
 import ij.plugin.frame.RoiManager;
 import ij.process.FloatPolygon;
 
@@ -194,7 +195,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       // Create GUI
       initComponents();
 
-      // Make sure that the POint and Shoot code listens to the correct window
+      // Make sure that the Point and Shoot code listens to the correct window
       Toolkit.getDefaultToolkit().addAWTEventListener((AWTEvent e) -> {
          enablePointAndShootMode(pointAndShooteModeOn_.get());
       }, AWTEvent.WINDOW_EVENT_MASK);
@@ -1072,6 +1073,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          dev_.turnOff();
          try {
             updatePointAndShoot(true);
+            IJ.setTool(Toolbar.HAND);
          } catch (RuntimeException e) {
             ReportingUtils.showError(e);
          }
