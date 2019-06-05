@@ -33,7 +33,7 @@ import java.awt.AWTEvent;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Point;
-import java.awt.Polygon;
+import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
@@ -42,7 +42,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 
@@ -57,7 +56,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -104,6 +102,7 @@ import org.micromanager.projector.ProjectorActions;
 // TODO should not depend on internal code.
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.projector.Mapping;
 
 /**
  * The main window for the Projector plugin. Contains logic for calibration,
@@ -123,7 +122,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private final MutablePropertyMapView settings_;
    private final boolean isSLM_;
    private Roi[] individualRois_ = {};
-   private Map<Polygon, AffineTransform> mapping_ = null;
+   private Mapping mapping_ = null;
    private String targetingChannel_;
    private MosaicSequencingFrame mosaicSequencingFrame_;
    private String targetingShutter_;
@@ -186,7 +185,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       core_ = app.getCMMCore();
       settings_ = studio_.profile().getSettings(this.getClass());
       dev_ = ProjectorActions.getProjectionDevice(studio_);
-      mapping_ = MappingStorage.loadMapping(core_, dev_, settings_);
+      mapping_ = MappingStorage.loadMapping(core_, dev_, settings_.toPropertyMap());
       pointAndShootQueue_ = new LinkedBlockingQueue<>();
       pointAndShootMouseListener_ = createPointAndShootMouseListenerInstance();
       projectorControlExecution_ = new ProjectorControlExecution(studio_);
@@ -415,7 +414,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                success = false;
             }
             if (success) {
-               mapping_ = MappingStorage.loadMapping(core_, dev_, settings_);
+               mapping_ = MappingStorage.loadMapping(core_, dev_, settings_.toPropertyMap());
             }
             JOptionPane.showMessageDialog(IJ.getImage().getWindow(), "Calibration "
                        + (success ? "finished." : "canceled."));
@@ -496,11 +495,21 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                   final ImageCanvas canvas = (ImageCanvas) e.getSource();
                   Point pOff = new Point(canvas.offScreenX(p.x), canvas.offScreenY(p.y));
                   final Point pOffScreen = mirrorIfNecessary(canvas, pOff);
+                  Integer binning = null;
+                  Rectangle roi = null;
+                  try {
+                     binning = Integer.parseInt(core_.getProperty(core_.getCameraDevice(), "Binning"));
+                     roi = core_.getROI();
+                  } catch (Exception ex) {
+                     studio_.logs().logError(ex);
+                  }
                   final Point2D.Double devP = ProjectorActions.transformPoint(
-                          MappingStorage.loadMapping(core_, dev_, settings_),
-                          new Point2D.Double(pOffScreen.x, pOffScreen.y));
-                  final Configuration originalConfig = prepareChannel();
-                  final boolean originalShutterState = prepareShutter();
+                          MappingStorage.loadMapping(core_, dev_, settings_.toPropertyMap()),
+                          new Point2D.Double(pOffScreen.x, pOffScreen.y), roi, binning);
+                  final Configuration originalConfig
+                          =     projectorControlExecution_.prepareChannel(targetingChannel_);
+                  final boolean originalShutterState = 
+                          projectorControlExecution_.prepareShutter(targetingShutter_);
                   PointAndShootInfo.Builder psiBuilder = new PointAndShootInfo.Builder();
                   PointAndShootInfo psi = psiBuilder.projectionDevice(dev_).
                           devPoint(devP).
@@ -699,12 +708,20 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       if (rois.length == 0) {
          throw new RuntimeException("Please first draw the desired phototargeting ROIs.");
       }
+      Integer binning = null;
+      Rectangle roi = null;
+      try {
+         binning = Integer.parseInt(core_.getProperty(core_.getCameraDevice(), "Binning"));
+         roi = core_.getROI();
+      } catch (Exception ex) {
+         studio_.logs().logError(ex);
+      }
       List<FloatPolygon> transformedRois = ProjectorActions.transformROIs(
-              rois, mapping_);
+              rois, mapping_, roi, binning);
       dev_.loadRois(transformedRois);
       individualRois_ = rois;
    }
-   
+
 
    public void setROIs(Roi[] rois) {
       if (mapping_ == null) {
@@ -720,8 +737,16 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
       ImagePlus imgp = window.getImagePlus();
       */
+      Integer binning = null;
+      Rectangle roi = null;
+      try {
+         binning = Integer.parseInt(core_.getProperty(core_.getCameraDevice(), "Binning"));
+         roi = core_.getROI();
+      } catch (Exception ex) {
+         studio_.logs().logError(ex);
+      }
       List<FloatPolygon> transformedRois = ProjectorActions.transformROIs(
-              rois, mapping_);
+              rois, mapping_, roi, binning);
       dev_.loadRois(transformedRois);
       individualRois_ = rois;
    }
@@ -966,7 +991,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       return dev_;
    }
    
-   public Map<Polygon, AffineTransform> getMapping() {
+   public Mapping getMapping() {
       return mapping_;
    }
    

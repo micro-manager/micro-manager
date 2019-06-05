@@ -176,11 +176,10 @@ public class ProjectorControlExecution {
          dev_.runPolygons();
          returnShutter(targetingShutter, originalShutterState);
          returnChannel(originalConfig);
-         recordPolygons(rois);
       } else {
          dev_.runPolygons();
-         recordPolygons(rois);
       }
+      recordPolygons(rois);
    }
    
    @Subscribe

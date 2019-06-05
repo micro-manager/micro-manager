@@ -171,8 +171,7 @@ public class Calibrator {
       double centerX = dev_.getXRange() / 2 + dev_.getXMinimum();
       double centerY = dev_.getYRange() / 2 + dev_.getYMinimum();
       double spacing = Math.min(dev_.getXRange(), dev_.getYRange() ) / 30;  // user 3% of galvo/SLM range
-      Map<Point2D.Double, Point2D.Double> spotMap
-            = new HashMap<Point2D.Double, Point2D.Double>();
+      Map<Point2D.Double, Point2D.Double> spotMap = new HashMap<>();
 
       measureAndAddToSpotMap(spotMap, new Point2D.Double(centerX, centerY));
       measureAndAddToSpotMap(spotMap, new Point2D.Double(centerX, centerY + spacing));
@@ -300,10 +299,16 @@ public class Calibrator {
             }
          }
       }
-      
-      Mapping.Builder mb = new Mapping.Builder();
-      mb.setMap(bigMap).setWidth(core_.getImageWidth()).setHeight(core_.getImageHeight()); // TODO: binning!
-      return mb.build();
+      try {
+         Mapping.Builder mb = new Mapping.Builder();
+         // amazing that there is no API call for binning!
+         String binningAsString = core_.getProperty(core_.getCameraDevice(), "Binning");
+         int binning = Integer.parseInt(binningAsString);
+         mb.setMap(bigMap).setApproximateTransform(firstApproxAffine).setROI(core_.getROI()).setBinning(binning);
+         return mb.build();
+      } catch (Exception ex) {
+         return null;
+      }
    }
 
    /**
@@ -346,14 +351,14 @@ public class Calibrator {
                if (!stopRequested_.get()) {
                   List<Image> snap = app_.live().snap(false);
                   snap.get(0).getHeight(); snap.get(0).getMetadata().getBinning();
-                  MappingStorage.saveMapping(core_, dev_, settings_, mapping.getMap());
+                  MappingStorage.saveMapping(core_, dev_, settings_, mapping);
                }
                IJ.getImage().setRoi(originalROI);
             } catch (HeadlessException e) {
                ReportingUtils.showError(e);
             } catch (RuntimeException e) {
                ReportingUtils.showError(e);
-            } catch (Exception ex) {
+            } catch (InterruptedException ex) {
                ReportingUtils.logError(ex);
             } finally {
                app_.live().setSuspended(false);

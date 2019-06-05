@@ -8,11 +8,9 @@ import ij.gui.Roi;
 import ij.process.FloatPolygon;
 import java.awt.Polygon;
 import java.awt.Rectangle;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import mmcorej.CMMCore;
 import org.micromanager.Studio;
@@ -57,11 +55,11 @@ public abstract class ProjectorActions {
     * @param dev
     * @return
     */
-   public static Map<Polygon, AffineTransform> loadMapping(Studio app, 
+   public static Mapping loadMapping(Studio app, 
             ProjectionDevice dev) {
       MutablePropertyMapView settings = app.profile().getSettings(
               ProjectorControlForm.class);
-      return MappingStorage.loadMapping(app.core(), dev, settings);
+      return MappingStorage.loadMapping(app.core(), dev, settings.toPropertyMap());
    }
    
     /**
@@ -105,23 +103,28 @@ public abstract class ProjectorActions {
     * Returns ROIs, transformed by the current mapping.
     * @param rois Array of ImageJ Rois to be converted
     * @param mapping 
+    * @param cameraROI current ROI of the camera.  Will be ignored when null
+    * @param cameraBinning current binning of the camera.  Assumed to be 1 when null
     * @return list of Rois converted into Polygons
     * 
     */
    public static List<FloatPolygon> transformROIs(Roi[] rois, 
-           Map<Polygon, AffineTransform> mapping) {
-      return ProjectorActions.transformRoiPolygons(roisAsPolygons(rois), mapping);
+           Mapping mapping, Rectangle cameraROI, Integer cameraBinning) {
+      return ProjectorActions.transformRoiPolygons(roisAsPolygons(rois), mapping, 
+              cameraROI, cameraBinning);
    }
    
     /**
     * Transform the Roi polygons with the given nonlinear mapping.
     * @param roiPolygons
     * @param mapping
+    * @param cameraROI current ROI of the camera.  Will be ignored when null
+    * @param cameraBinning current binning of the camera.  Assumed to be 1 when null
     * @return 
     */
    public static List<FloatPolygon> transformRoiPolygons( 
-           Polygon[] roiPolygons, Map<Polygon, AffineTransform> mapping) {
-      ArrayList<FloatPolygon> transformedROIs = new ArrayList<FloatPolygon>();
+           Polygon[] roiPolygons, Mapping mapping, Rectangle cameraROI, Integer cameraBinning) {
+      ArrayList<FloatPolygon> transformedROIs = new ArrayList<>();
       for (Polygon roiPolygon : roiPolygons) {
          FloatPolygon targeterPolygon = new FloatPolygon();
          try {
@@ -130,7 +133,7 @@ public abstract class ProjectorActions {
                Point2D.Double imagePoint = new Point2D.Double(
                        roiPolygon.xpoints[i], roiPolygon.ypoints[i]);
                // targeterPoint = transformAndMirrorPoint(mapping, imagePoint);
-               targeterPoint = transformPoint(mapping, imagePoint);
+               targeterPoint = transformPoint(mapping, imagePoint, cameraROI, cameraBinning);
                if (targeterPoint == null) {
                   throw new Exception();
                }
@@ -156,7 +159,7 @@ public abstract class ProjectorActions {
    */
    public static Polygon[] roisAsPolygons(Roi[] rois) {
       Roi[] cleanROIs = homogenizeROIs(rois);
-      List<Polygon> roiPolygons = new ArrayList<Polygon>();
+      List<Polygon> roiPolygons = new ArrayList<>();
       for (Roi roi : cleanROIs) {
          roiPolygons.add(asPolygon(roi));
       }
@@ -166,20 +169,27 @@ public abstract class ProjectorActions {
    
    /**
     * Transform a point in camera coordinates to projector coordinates, 
-    * given the mapping, which is a Map of polygon cells to AffineTransforms.
+    * given the mapping, which contains a Map of polygon cells to AffineTransforms.
     * @param mapping Map of cells (quadrants) on the camera image, that 
     *    each contain the affineTransform appropriate to that cell
     * @param pt Point to be transformed from camera to projector coordinates 
+    * @param cameraROI - current ROI of the camera
+    * @param cameraBinning - current binning of the camera
     * @return Point in projector coordinates
    */
-   public static Point2D.Double transformPoint(Map<Polygon, AffineTransform> mapping, 
-           Point2D.Double pt) {
-      Set<Polygon> set = mapping.keySet();
+   public static Point2D.Double transformPoint(Mapping mapping, 
+           Point2D.Double pt, Rectangle cameraROI, Integer cameraBinning) {
+      if (cameraROI != null) {
+         if (cameraBinning == null) { cameraBinning = 1; }
+         pt.x = (pt.x + cameraROI.x) * (cameraBinning / mapping.getBinning()); 
+         pt.y = (pt.y + cameraROI.y) * (cameraBinning / mapping.getBinning());
+      }
+      Set<Polygon> set = mapping.getMap().keySet();
       // First find out if the given point is inside a cell, and if so,
       // transform it with that cell's AffineTransform.
       for (Polygon poly : set) {
          if (poly.contains(pt)) {
-            return (Point2D.Double) mapping.get(poly).transform(pt, null);
+            return (Point2D.Double) mapping.getMap().get(poly).transform(pt, null);
          }
       }
       // The point isn't inside any cell, so search for the closest cell
@@ -196,11 +206,12 @@ public abstract class ProjectorActions {
       if (bestPoly == null) {
          throw new RuntimeException("Unable to map point to device.");
       }
-      return (Point2D.Double) mapping.get(bestPoly).transform(pt, null);
+      return (Point2D.Double) mapping.getMap().get(bestPoly).transform(pt, null);
    }
    
-   public static void transformAndSetMask(Map<Polygon, AffineTransform> mapping, 
-           ProjectionDevice dev, byte[] inputImage, int width, int height) {
+   public static void transformAndSetMask(Mapping mapping, 
+           ProjectionDevice dev, byte[] inputImage, int width, int height, 
+           Rectangle cameraROI, Integer cameraBinning) {
       if (! (dev instanceof SLM) ) {
          ReportingUtils.logError("ProjectorActions: ProjectionsDevice is not an SLM");
          return;
@@ -216,7 +227,8 @@ public abstract class ProjectorActions {
       for (int x = 0; x < width; x++) {
          for (int y = 0; y < height; y++) {
             if (inputImage[x + y * width] != 0) {
-               Point2D.Double rp = transformPoint(mapping, new Point2D.Double(x, y));
+               Point2D.Double rp = transformPoint(mapping, 
+                       new Point2D.Double(x, y), cameraROI, cameraBinning);
                int xt = (int) rp.x;
                int yt = (int) rp.y;
                if (0 <= xt && xt < slmWidth && 0 <= yt && yt < slmHeight) {
@@ -244,7 +256,7 @@ public abstract class ProjectorActions {
    
     // We can't handle Ellipse Rois and compound PointRois directly.
    private static Roi[] homogenizeROIs(Roi[] rois) {
-      List<Roi> roiList = new ArrayList<Roi>();
+      List<Roi> roiList = new ArrayList<>();
       for (Roi roi : rois) {
          switch (roi.getType()) {
             case Roi.POINT:

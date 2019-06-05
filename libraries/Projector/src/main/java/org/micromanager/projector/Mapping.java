@@ -2,6 +2,7 @@
 package org.micromanager.projector;
 
 import java.awt.Polygon;
+import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.util.Map;
 
@@ -14,24 +15,29 @@ import java.util.Map;
  * @author Nico
  */
 public class Mapping {
+    // Multiple Affine Transforms, each applicable within the Polygon that is its key
     private final Map<Polygon, AffineTransform> transformMap_;
-    private final long cameraWidth_;
-    private final long cameraHeight_;
+    // Global Affine Transform for the whole image.  This is less precise than the transformMap_
+    private final AffineTransform approximateTransform_;  
+    // ROI of the camera when the mapping was generated
+    private final Rectangle cameraROI_;
+    // Binning of the camera when the mapping was generated
     private final int cameraBinning_;
     
-    private Mapping(Map<Polygon, AffineTransform> transformMap, long cameraWidth,
-            long cameraHeight, int cameraBinning) {
+    private Mapping(Map<Polygon, AffineTransform> transformMap, 
+            AffineTransform approximateTransform, Rectangle cameraROI,
+            int cameraBinning) {
         transformMap_ = transformMap;
-        cameraWidth_ = cameraWidth;
-        cameraHeight_ = cameraHeight;
+        approximateTransform_ = approximateTransform;
+        cameraROI_ = cameraROI;
         cameraBinning_ = cameraBinning;
     }
     
     public static class Builder {
 
         private Map<Polygon, AffineTransform> transformMap_;
-        private long cameraWidth_;
-        private long cameraHeight_;
+        private AffineTransform approximateTransform_;
+        private Rectangle cameraROI_;
         private int cameraBinning_ = 1;
 
         public Builder() {        }
@@ -39,12 +45,12 @@ public class Mapping {
             transformMap_ = transformMap;
             return this;
         }
-        public Builder setWidth(final long cameraWidth) {
-            cameraWidth_ = cameraWidth;
-            return this;
+        public Builder setApproximateTransform(AffineTransform transform) {
+           approximateTransform_ = transform;
+           return this;
         }
-        public Builder setHeight(final long cameraHeight) {
-            cameraHeight_ = cameraHeight;
+        public Builder setROI(final Rectangle cameraROI) {
+            cameraROI_ = cameraROI;
             return this;
         }
         public Builder setBinning(final int cameraBinning) {
@@ -52,18 +58,18 @@ public class Mapping {
             return this;
         }
         public Mapping build() {
-            return new Mapping(transformMap_, cameraWidth_, cameraHeight_, cameraBinning_);
+            return new Mapping(transformMap_, approximateTransform_, cameraROI_, cameraBinning_);
         }
     }
     
     public Map<Polygon, AffineTransform> getMap() {
         return transformMap_;
     }
-    public long getCameraWidth() {
-        return cameraWidth_;
+    public AffineTransform getApproximateTransform() {
+       return approximateTransform_;
     }
-    public long getCameraHeight() {
-        return cameraHeight_;
+    public Rectangle getCameraROI() {
+        return cameraROI_;
     }
     public int getBinning() {
         return cameraBinning_;
