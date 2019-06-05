@@ -4438,24 +4438,30 @@ int DemoGalvo::ChangePixels(ImgBuffer& img)
  * used when calibration took place. Let's assume 1x binning and full frame 
  * (and hope that is the same full frame as the camera is set to now).
  * Note: ImgBuffer is not really needed as an input
+ * Returns point in coordinates suitable for the given ImgBuffer
+ * assuming that it has the ROI and binning as we get from the camera
  */
 Point DemoGalvo::GalvoToCameraPoint(PointD galvoPoint, ImgBuffer& img)
 {
-   unsigned width = img.Width();
-   unsigned height = img.Height();
+   long width = img.Width();
+   long height = img.Height();
+   int binning = 1;
+   unsigned x = 0, y = 0, xSize, ySize;
    if (demoCamera_ != 0) 
    {
-      width = demoCamera_->GetImageWidth();
-      height = demoCamera_->GetImageHeight();
+      width = demoCamera_->GetCCDXSize();
+      height = demoCamera_->GetCCDYSize();
+      binning = demoCamera_->GetBinning();
+      // Note: ROI is in units of binned pixels
+      demoCamera_->GetROI(x, y, xSize, ySize);
    }
+   // Get the position on the unbinned, full CCD
    int xPos = (int) ((double) offsetX_ + (double) (galvoPoint.x / vMaxX_) * 
                                  ((double) width - (double) offsetX_) );
    int yPos = (int) ((double) offsetY_ + (double) (galvoPoint.y / vMaxY_) * 
                                  ((double) height - (double) offsetY_));
-   // correct for ROI
-   unsigned x, y, xSize, ySize;
-   demoCamera_->GetROI(x, y, xSize, ySize);
-   return Point(xPos - x, yPos - y);
+
+   return Point( (xPos/binning) - x, (yPos/binning) -y);
 }
 
 /**
