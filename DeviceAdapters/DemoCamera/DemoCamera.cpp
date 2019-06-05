@@ -4079,6 +4079,7 @@ int DemoAutoFocus::Initialize()
 ///////////////////////////////////////////////////////////
 // DemoGalvo
 DemoGalvo::DemoGalvo() :
+   demoCamera_(0),
    pfExpirationTime_(0),
    initialized_(false),
    busy_(false),
@@ -4151,8 +4152,8 @@ int DemoGalvo::Initialize()
             MM::Hub* cHub = GetCoreCallback()->GetParentHub(camera);
             if (cHub == pHub)
             {
-               CDemoCamera* demoCamera = (CDemoCamera*) camera;
-               demoCamera->RegisterImgManipulatorCallBack(this);
+               demoCamera_ = (CDemoCamera*) camera;
+               demoCamera_->RegisterImgManipulatorCallBack(this);
                LogMessage("DemoGalvo registered as callback");
                break;
             }
@@ -4433,14 +4434,28 @@ int DemoGalvo::ChangePixels(ImgBuffer& img)
 
 /**
  * Function that converts between the Galvo and Camera coordinate system
+ * There is a bit of a conundrum, since we do not know what ROI and binning were
+ * used when calibration took place. Let's assume 1x binning and full frame 
+ * (and hope that is the same full frame as the camera is set to now).
+ * Note: ImgBuffer is not really needed as an input
  */
 Point DemoGalvo::GalvoToCameraPoint(PointD galvoPoint, ImgBuffer& img)
 {
+   unsigned width = img.Width();
+   unsigned height = img.Height();
+   if (demoCamera_ != 0) 
+   {
+      width = demoCamera_->GetImageWidth();
+      height = demoCamera_->GetImageHeight();
+   }
    int xPos = (int) ((double) offsetX_ + (double) (galvoPoint.x / vMaxX_) * 
-                                 ((double) img.Width() - (double) offsetX_) );
+                                 ((double) width - (double) offsetX_) );
    int yPos = (int) ((double) offsetY_ + (double) (galvoPoint.y / vMaxY_) * 
-                                 ((double) img.Height() - (double) offsetY_));
-   return Point(xPos, yPos);
+                                 ((double) height - (double) offsetY_));
+   // correct for ROI
+   unsigned x, y, xSize, ySize;
+   demoCamera_->GetROI(x, y, xSize, ySize);
+   return Point(xPos - x, yPos - y);
 }
 
 /**
