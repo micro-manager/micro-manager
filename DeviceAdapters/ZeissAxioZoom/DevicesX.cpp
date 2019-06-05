@@ -903,37 +903,28 @@ int FluoTube::Initialize()
 
    // set property list
    // ----------------
-   // Shutter
-   CPropertyAction* pAct = new CPropertyAction(this, &FluoTube::OnShutter);
-   int ret = CreateProperty("Shutter", "1", MM::Integer, false, pAct);
-   if (ret != DEVICE_OK)
-      return ret;
-   AddAllowedValue("Shutter", "1"); // Closed
-   AddAllowedValue("Shutter", "2"); // Open
 
    // State
    // -----
-   pAct = new CPropertyAction (this, &FluoTube::OnState);
-   ret = CreateIntegerProperty(MM::g_Keyword_State, 1, false, pAct);
+   CPropertyAction* pAct = new CPropertyAction (this, &FluoTube::OnState);
+   int ret = CreateIntegerProperty(MM::g_Keyword_State, 0, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
-   AddAllowedValue(MM::g_Keyword_State, "1");
-   AddAllowedValue(MM::g_Keyword_State, "2");
-   AddAllowedValue(MM::g_Keyword_State, "3");
-   AddAllowedValue(MM::g_Keyword_State, "4");
+	AddAllowedValue(MM::g_Keyword_State, "0"); // Closed
+   AddAllowedValue(MM::g_Keyword_State, "1"); // Open
 
-   // Label
-   // -----
-   pAct = new CPropertyAction (this, &CStateBase::OnLabel);
-   ret = CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct);
+   // Position
+	// --------
+   pAct = new CPropertyAction(this, &FluoTube::OnPosition);
+   ret = CreateProperty(g_Property_Position, "1", MM::Integer, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
-   SetPositionLabel(1, "Position-1");
-   SetPositionLabel(2, "Position-2");
-   SetPositionLabel(3, "Position-3");
-   SetPositionLabel(4, "Position-4");
+   AddAllowedValue(g_Property_Position, "1");
+   AddAllowedValue(g_Property_Position, "2");
+   AddAllowedValue(g_Property_Position, "3");
+   AddAllowedValue(g_Property_Position, "4");
 
    ret = UpdateStatus();
    if (ret!= DEVICE_OK)
@@ -958,6 +949,19 @@ int FluoTube::Shutdown()
    if (initialized_)
       initialized_ = false;
    return DEVICE_OK;
+}
+
+int FluoTube::SetOpen(bool open)
+{
+   return SetProperty(MM::g_Keyword_State, (open ? "1" : "0"));
+} 
+
+int FluoTube::GetOpen(bool& open)
+{
+	long state = 0;
+	int ret = GetProperty(MM::g_Keyword_State, state);
+	open = state == 1 ? true : false;
+	return ret;
 }
 
 int FluoTube::GetPositionDirect(unsigned short& pos)
@@ -1019,7 +1023,6 @@ int FluoTube::GetStatusDirect(unsigned short& pos)
 
    return GetPosition(pos);
 }
-
 
 int FluoTube::GetPosition(unsigned short& position)
 {
@@ -1130,7 +1133,7 @@ int FluoTube::GetShutterPos(unsigned short& p)
 }
 
 
-int FluoTube::OnShutter(MM::PropertyBase* pProp, MM::ActionType eAct)
+int FluoTube::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)   {
       unsigned short pos;
@@ -1157,7 +1160,7 @@ int FluoTube::OnShutter(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;                                          
 }
 
-int FluoTube::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
+int FluoTube::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)   {
       unsigned short pos;
