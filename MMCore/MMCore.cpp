@@ -234,6 +234,9 @@ void CMMCore::enableDebugLog(bool enable)
          mm::logging::LogLevelInfo);
 }
 
+/**
+ * Indicates if logging of debug messages is enabled
+ */
 bool CMMCore::debugLogEnabled()
 {
    return (logManager_->GetPrimaryLogLevel() < mm::logging::LogLevelInfo);
@@ -248,6 +251,9 @@ void CMMCore::enableStderrLog(bool enable)
    logManager_->SetUseStdErr(enable);
 }
 
+/**
+ * Indicates whether logging output goes to stdErr
+ */
 bool CMMCore::stderrLogEnabled()
 {
    return logManager_->IsUsingStdErr();
@@ -893,6 +899,13 @@ void CMMCore::initializeAllDevices() throw (CMMError)
    updateCoreProperties();
 }
 
+/**
+ * Updates CoreProperties (currently all Core properties are 
+ * devices types) with the loaded hardware.
+ * After this call, each of the Core-Device properties 
+ * will be populated with the currently loaded devices 
+ * of that type
+ */
 void CMMCore::updateCoreProperties() throw (CMMError)
 {
    updateCoreProperty(MM::g_Keyword_CoreCamera, MM::CameraDevice);
@@ -2085,6 +2098,12 @@ bool CMMCore::isStageSequenceable(const char* label) throw (CMMError)
    return isSequenceable;
 }
 
+/**
+ * Queries if the stage can be used in a linear sequence
+ * A linear sequence is defined by a stepsize and number of slices
+ * @param label   the stage device label
+ * @return   true if the stage supports linear sequences
+ */
 bool CMMCore::isStageLinearSequenceable(const char* label) throw (CMMError)
 {
    boost::shared_ptr<StageInstance> pStage =
@@ -2185,6 +2204,15 @@ void CMMCore::loadStageSequence(const char* label, std::vector<double> positionS
       throw CMMError(getDeviceErrorText(ret, pStage));
 }
 
+/**
+ * Loads a linear sequence (defined by stepsize and nr. of steps) into
+ * the device.  Why was it not called loadStageLinearSequence???
+ * @param label   Name of the stage device
+ * @param dZ_um   Step size between slices in microns
+ * @param nSlices    Number of slices fo ethis sequence
+ *                   Presumably the sequence will repeat after this
+ *                   number of TTLs was received
+ */
 void CMMCore::setStageLinearSequence(const char* label, double dZ_um, int nSlices) throw (CMMError)
 {
    if (nSlices < 0)
@@ -3010,6 +3038,11 @@ void* CMMCore::popNextImage() throw (CMMError)
       throw CMMError(getCoreErrorText(MMERR_CircularBufferEmpty).c_str(), MMERR_CircularBufferEmpty);
 }
 
+/**
+ * Gets and removes the next image (and metadata) from the circular buffer
+ * channel indicates which cameraChannel image should be retrieved.
+ * slice has not been implement and should always be 0
+ */
 void* CMMCore::popNextImageMD(unsigned channel, unsigned slice, Metadata& md) throw (CMMError)
 {
    // Slices have never been implemented on the device interface side
@@ -3026,6 +3059,9 @@ void* CMMCore::popNextImageMD(unsigned channel, unsigned slice, Metadata& md) th
       throw CMMError(getCoreErrorText(MMERR_CircularBufferEmpty).c_str(), MMERR_CircularBufferEmpty);
 }
 
+/**
+ * Gets and removes the next image (and metadata) from the circular buffer
+ */
 void* CMMCore::popNextImageMD(Metadata& md) throw (CMMError)
 {
    return popNextImageMD(0, 0, md);
@@ -3090,6 +3126,9 @@ void CMMCore::setCircularBufferMemoryFootprint(unsigned sizeMB ///< n megabytes
       throw CMMError(getCoreErrorText(MMERR_OutOfMemory).c_str(), MMERR_OutOfMemory);
 }
 
+/**
+ * Returns the size of the Circular Buffer in MB
+ */
 unsigned CMMCore::getCircularBufferMemoryFootprint()
 {
    if (cbuf_)
@@ -3099,6 +3138,9 @@ unsigned CMMCore::getCircularBufferMemoryFootprint()
    return 0;
 }
 
+/**
+ * Returns number ofimages available in the Circular Buffer
+ */
 long CMMCore::getRemainingImageCount()
 {
    if (cbuf_)
@@ -3108,6 +3150,9 @@ long CMMCore::getRemainingImageCount()
    return 0;
 }
 
+/**
+ * Returns the total number of images that can be stored in the buffer
+ */
 long CMMCore::getBufferTotalCapacity()
 {
    if (cbuf_)
@@ -3117,6 +3162,11 @@ long CMMCore::getBufferTotalCapacity()
    return 0;
 }
 
+
+/**
+ * Returns the number of images that can be added to the buffer
+ * without overflowing
+ */
 long CMMCore::getBufferFreeCapacity()
 {
    if (cbuf_)
@@ -3126,6 +3176,9 @@ long CMMCore::getBufferFreeCapacity()
    return 0;
 }
 
+/**
+ * Indicates whether the circular buffer is overflowed
+ */
 bool CMMCore::isBufferOverflowed() const
 {
    return cbuf_->Overflow();
@@ -4043,6 +4096,9 @@ unsigned CMMCore::getNumberOfCameraChannels()
    return camera->GetNumberOfChannels();
 }
 
+/**
+ * Returns the name of the requested channel as known by the default camera
+ */
 string CMMCore::getCameraChannelName(unsigned int channelNr)
 {
    boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
@@ -5788,6 +5844,10 @@ void CMMCore::displaySLMImage(const char* deviceLabel) throw (CMMError)
    }
 }
 
+/**
+ * For SLM devices with build-in light source (such as projectors)
+ * this will set the exposure time, but not (yet) start the illumination
+ */
 void CMMCore::setSLMExposure(const char* deviceLabel, double exposure_ms) throw (CMMError)
 {
    boost::shared_ptr<SLMInstance> pSLM =
@@ -5802,6 +5862,9 @@ void CMMCore::setSLMExposure(const char* deviceLabel, double exposure_ms) throw 
    }
 }
 
+/**
+ * Returns the exposure time that will be used by the SLM for illumination
+ */
 double CMMCore::getSLMExposure(const char* deviceLabel) throw (CMMError)
 {
    boost::shared_ptr<SLMInstance> pSLM =
@@ -5812,6 +5875,11 @@ double CMMCore::getSLMExposure(const char* deviceLabel) throw (CMMError)
 }
 
 
+/**
+ * Returns the width (in "pixels") of the SLM
+ *
+ * @param deviceLabel name of the SLM
+ */
 unsigned CMMCore::getSLMWidth(const char* deviceLabel)
 {
    boost::shared_ptr<SLMInstance> pSLM =
@@ -5821,6 +5889,12 @@ unsigned CMMCore::getSLMWidth(const char* deviceLabel)
    return pSLM->GetWidth();
 }
 
+
+/**
+ * Returns the height (in "pixels") of the SLM
+ *
+ * @param deviceLabel name of the SLM
+ */
 unsigned CMMCore::getSLMHeight(const char* deviceLabel)
 {
    boost::shared_ptr<SLMInstance> pSLM =
@@ -5830,6 +5904,12 @@ unsigned CMMCore::getSLMHeight(const char* deviceLabel)
    return pSLM->GetHeight();
 }
 
+/**
+ * Returns the number of components (usually these depict colors) of the SLM
+ * For instance, an RGB projector will return 3, but a grey scale SLM returns 1
+ *
+ * @param deviceLabel name of the SLM
+ */
 unsigned CMMCore::getSLMNumberOfComponents(const char* deviceLabel)
 {
    boost::shared_ptr<SLMInstance> pSLM =
@@ -5839,6 +5919,11 @@ unsigned CMMCore::getSLMNumberOfComponents(const char* deviceLabel)
    return pSLM->GetNumberOfComponents();
 }
 
+/**
+ * Returns the number of bytes per SLM pixel
+ *
+ * @param deviceLabel name of the SLM
+ */
 unsigned CMMCore::getSLMBytesPerPixel(const char* deviceLabel)
 {
    boost::shared_ptr<SLMInstance> pSLM =
@@ -5848,6 +5933,12 @@ unsigned CMMCore::getSLMBytesPerPixel(const char* deviceLabel)
    return pSLM->GetBytesPerPixel();
 }
 
+/**
+ * For SLMs that support sequences, returns the maximum 
+ * length of the sequence that can be uploaded to the device
+ *
+ * @param deviceLabel name of the SLM
+ */
 long CMMCore::getSLMSequenceMaxLength(const char* deviceLabel)
 {
    boost::shared_ptr<SLMInstance> pSLM =
@@ -5861,6 +5952,11 @@ long CMMCore::getSLMSequenceMaxLength(const char* deviceLabel)
    return numEvents;
 }
 
+/**
+ * Starts the sequence previously uploaded to the SLM
+ *
+ * @param deviceLabel name of the SLM
+ */
 void CMMCore::startSLMSequence(const char* deviceLabel) throw (CMMError)
 {
    boost::shared_ptr<SLMInstance> pSLM =
@@ -5872,6 +5968,11 @@ void CMMCore::startSLMSequence(const char* deviceLabel) throw (CMMError)
       throw CMMError(getDeviceErrorText(ret, pSLM));
 }
 
+/**
+ * Stops the SLM sequence if previously started
+ *
+ * @param deviceLabel name of the SLM
+ */
 void CMMCore::stopSLMSequence(const char* deviceLabel) throw (CMMError)
 {
    boost::shared_ptr<SLMInstance> pSLM =
@@ -5883,6 +5984,12 @@ void CMMCore::stopSLMSequence(const char* deviceLabel) throw (CMMError)
       throw CMMError(getDeviceErrorText(ret, pSLM));
 }
 
+/**
+ * Load a sequence of images into the SLM
+ *
+ * @param deviceLabel name of the SLM
+ * @param imagesequence pointers to the images to be used in the sequence
+ */
 void CMMCore::loadSLMSequence(const char* deviceLabel, std::vector<unsigned char *> imageSequence) throw (CMMError)
 {
    boost::shared_ptr<SLMInstance> pSLM =
@@ -7328,6 +7435,9 @@ string CMMCore::getDeviceErrorText(int deviceCode, boost::shared_ptr<DeviceInsta
       device->GetErrorText(deviceCode) + " (" + ToString(deviceCode) + ")";
 }
 
+/**
+ * Returns a pre-defined error test with the given error code
+ */
 string CMMCore::getCoreErrorText(int code) const
 {
    // core info
