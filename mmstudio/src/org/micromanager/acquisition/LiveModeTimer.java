@@ -378,7 +378,7 @@ public class LiveModeTimer {
     */
    private synchronized boolean setImageNumber(long imageNumber)
    {
-      if (imageNumber > imageNumber_) {
+      if (imageNumber != imageNumber_) {
          imageNumber_ = imageNumber;
          return true;
       }
