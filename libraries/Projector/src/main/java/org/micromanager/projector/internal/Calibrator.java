@@ -303,7 +303,8 @@ public class Calibrator {
          Mapping.Builder mb = new Mapping.Builder();
          // amazing that there is no API call for binning!
          String binningAsString = core_.getProperty(core_.getCameraDevice(), "Binning");
-         int binning = Integer.parseInt(binningAsString);
+         // Hamamatsu reports 1x1.  I wish there was an api call for binning
+         int binning = Integer.parseInt(binningAsString.substring(0, 1));
          mb.setMap(bigMap).setApproximateTransform(firstApproxAffine).setROI(core_.getROI()).setBinning(binning);
          return mb.build();
       } catch (Exception ex) {
