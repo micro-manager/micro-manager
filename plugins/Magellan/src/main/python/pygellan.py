@@ -161,15 +161,18 @@ class MagellanMultipageTiffReader:
             raise Exception('Unknown pixel type')
         return np.reshape(pixels, [self.height, self.width])
 
-    def read_metadata(self, offset, length):
-        return json.loads(self._read(offset, offset + length))
+    def read_metadata(self, channel_index, z_index, t_index, pos_index):
+        ifd_offset = self.index_tree[channel_index][z_index][t_index][pos_index]
+        ifd_data = self._read_ifd(ifd_offset)
+        metadata = json.loads(self._read(ifd_data['md_offset'], ifd_data['md_offset'] + ifd_data['md_length']))
+        return metadata
 
     def read_image(self, channel_index, z_index, t_index, pos_index, read_metadata=False):
         ifd_offset = self.index_tree[channel_index][z_index][t_index][pos_index]
         ifd_data = self._read_ifd(ifd_offset)
         image = self._read_pixels(ifd_data['pixel_offset'], ifd_data['bytes_per_image'])
         if read_metadata:
-            metadata = self.read_metadata(ifd_data['md_offset'], ifd_data['md_length'])
+            metadata = json.loads(self._read(ifd_data['md_offset'], ifd_data['md_offset'] + ifd_data['md_length']))
             return image, metadata
         return image
 
@@ -205,6 +208,12 @@ class MagellanResolutionLevel:
         # determine which reader contains the image
         reader = self.reader_tree[channel_index][z_index][t_index][pos_index]
         return reader.read_image(channel_index, z_index, t_index, pos_index, read_metadata)
+
+    def read_metadata(self, channel_index=0, z_index=0, t_index=0, pos_index=0):
+        # determine which reader contains the image
+        reader = self.reader_tree[channel_index][z_index][t_index][pos_index]
+        return reader.read_metadata(channel_index, z_index, t_index, pos_index)
+
 
     def close(self):
         for reader in self.reader_list:
@@ -312,6 +321,23 @@ class MagellanDataset:
             channel_index = self._channel_name_to_index(channel_name)
         res_level = self.res_levels[downsample_factor]
         return res_level.read_image(channel_index, z_index, t_index, pos_index, read_metadata)
+
+    def read_metadata(self, channel_name=None, channel_index=0, z_index=0, t_index=0, pos_index=0, read_metadata=False,
+                   downsample_factor=1):
+        """
+        Read metadata only. Faster than using read_image to retireve metadata
+        :param channel_name: Overrides channel index if supplied
+        :param channel_index:
+        :param z_index:
+        :param t_index:
+        :param pos_index:
+        :param downsample_factor: 1 is full resolution, lower resolutions are powers of 2 if available
+        :return: metadata as dict
+        """
+        if channel_name is not None:
+            channel_index = self._channel_name_to_index(channel_name)
+        res_level = self.res_levels[downsample_factor]
+        return res_level.read_metadata(channel_index, z_index, t_index, pos_index)
 
     def close(self):
         for res_level in self.res_levels:

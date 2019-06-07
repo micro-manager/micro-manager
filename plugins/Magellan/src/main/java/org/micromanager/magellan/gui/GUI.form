@@ -28,7 +28,7 @@
     <AuxValue name="FormSettings_listenerGenerationStyle" type="java.lang.Integer" value="0"/>
     <AuxValue name="FormSettings_variablesLocal" type="java.lang.Boolean" value="false"/>
     <AuxValue name="FormSettings_variablesModifier" type="java.lang.Integer" value="2"/>
-    <AuxValue name="designerSize" type="java.awt.Dimension" value="-84,-19,0,5,115,114,0,18,106,97,118,97,46,97,119,116,46,68,105,109,101,110,115,105,111,110,65,-114,-39,-41,-84,95,68,20,2,0,2,73,0,6,104,101,105,103,104,116,73,0,5,119,105,100,116,104,120,112,0,0,2,111,0,0,3,35"/>
+    <AuxValue name="designerSize" type="java.awt.Dimension" value="-84,-19,0,5,115,114,0,18,106,97,118,97,46,97,119,116,46,68,105,109,101,110,115,105,111,110,65,-114,-39,-41,-84,95,68,20,2,0,2,73,0,6,104,101,105,103,104,116,73,0,5,119,105,100,116,104,120,112,0,0,2,-109,0,0,3,30"/>
   </AuxValues>
 
   <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBoxLayout"/>
@@ -92,7 +92,7 @@
                                       <Group type="102" alignment="0" attributes="0">
                                           <Component id="exploreSavingNameLabel_" min="-2" max="-2" attributes="0"/>
                                           <EmptySpace min="-2" max="-2" attributes="0"/>
-                                          <Component id="exploreSavingNameTextField_" pref="640" max="32767" attributes="0"/>
+                                          <Component id="exploreSavingNameTextField_" pref="635" max="32767" attributes="0"/>
                                       </Group>
                                       <Group type="102" alignment="0" attributes="0">
                                           <Group type="103" groupAlignment="0" attributes="0">
@@ -279,7 +279,7 @@
                               <EmptySpace max="32767" attributes="0"/>
                           </Group>
                           <Group type="102" alignment="0" attributes="0">
-                              <Component id="jScrollPane2" pref="755" max="32767" attributes="0"/>
+                              <Component id="jScrollPane2" pref="750" max="32767" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                           </Group>
                       </Group>
@@ -288,7 +288,7 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace min="-2" pref="20" max="-2" attributes="0"/>
-                              <Component id="jScrollPane2" pref="280" max="32767" attributes="0"/>
+                              <Component id="jScrollPane2" pref="316" max="32767" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="deleteSelectedRegionButton_" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -405,7 +405,7 @@
                                       <Component id="moveAcqDownButton_" alignment="3" min="-2" max="-2" attributes="0"/>
                                   </Group>
                               </Group>
-                              <Component id="multipleAcqScrollPane_" alignment="0" pref="107" max="32767" attributes="0"/>
+                              <Component id="multipleAcqScrollPane_" alignment="0" pref="157" max="32767" attributes="0"/>
                           </Group>
                           <EmptySpace min="-2" max="-2" attributes="0"/>
                           <Component id="acqTabbedPane_" min="-2" pref="282" max="-2" attributes="0"/>
@@ -474,9 +474,9 @@
                                       <Component id="acqOverlapPercentSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
                                       <Component id="tileOverlapPercentLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                                   </Group>
-                                  <EmptySpace max="32767" attributes="0"/>
+                                  <EmptySpace pref="14" max="32767" attributes="0"/>
                                   <Component id="controls2DOr3D_" min="-2" pref="200" max="-2" attributes="0"/>
-                                  <EmptySpace max="32767" attributes="0"/>
+                                  <EmptySpace pref="15" max="32767" attributes="0"/>
                               </Group>
                           </Group>
                         </DimensionLayout>
@@ -519,18 +519,12 @@
                               <Layout>
                                 <DimensionLayout dim="0">
                                   <Group type="103" groupAlignment="0" attributes="0">
-                                      <Group type="102" alignment="0" attributes="0">
-                                          <Component id="panel2D_" min="-2" max="-2" attributes="0"/>
-                                          <EmptySpace min="0" pref="264" max="32767" attributes="0"/>
-                                      </Group>
+                                      <Component id="panel2D_" alignment="0" max="32767" attributes="0"/>
                                   </Group>
                                 </DimensionLayout>
                                 <DimensionLayout dim="1">
                                   <Group type="103" groupAlignment="0" attributes="0">
-                                      <Group type="102" alignment="0" attributes="0">
-                                          <Component id="panel2D_" min="-2" max="-2" attributes="0"/>
-                                          <EmptySpace min="0" pref="91" max="32767" attributes="0"/>
-                                      </Group>
+                                      <Component id="panel2D_" alignment="0" max="32767" attributes="0"/>
                                   </Group>
                                 </DimensionLayout>
                               </Layout>
@@ -543,48 +537,61 @@
                                           <Group type="102" attributes="0">
                                               <Group type="103" groupAlignment="0" attributes="0">
                                                   <Group type="102" alignment="0" attributes="0">
+                                                      <EmptySpace max="-2" attributes="0"/>
                                                       <Component id="useCollectionPlaneButton_" min="-2" max="-2" attributes="0"/>
-                                                      <Group type="103" groupAlignment="0" attributes="0">
-                                                          <Group type="102" attributes="0">
-                                                              <EmptySpace min="-2" pref="36" max="-2" attributes="0"/>
-                                                              <Component id="collectionPlaneLabel_" min="-2" max="-2" attributes="0"/>
-                                                          </Group>
-                                                          <Group type="102" alignment="0" attributes="0">
-                                                              <EmptySpace max="-2" attributes="0"/>
-                                                              <Component id="collectionPlaneCombo_" min="-2" pref="238" max="-2" attributes="0"/>
-                                                          </Group>
-                                                      </Group>
                                                   </Group>
-                                                  <Component id="noCollectionPlaneButton_" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                  <Group type="102" alignment="0" attributes="0">
+                                                      <EmptySpace min="-2" pref="250" max="-2" attributes="0"/>
+                                                      <Component id="collectionPlaneLabel_" min="-2" max="-2" attributes="0"/>
+                                                  </Group>
                                                   <Group type="102" attributes="0">
                                                       <EmptySpace max="-2" attributes="0"/>
                                                       <Component id="footprin2DLabel_" min="-2" max="-2" attributes="0"/>
+                                                  </Group>
+                                                  <Group type="103" alignment="0" groupAlignment="1" attributes="0">
+                                                      <Component id="footprint2DComboBox_" alignment="1" min="-2" pref="232" max="-2" attributes="0"/>
+                                                      <Component id="collectionPlaneCombo_" alignment="0" min="-2" pref="238" max="-2" attributes="0"/>
+                                                  </Group>
+                                                  <Group type="102" alignment="0" attributes="0">
                                                       <EmptySpace max="-2" attributes="0"/>
-                                                      <Component id="footprint2DComboBox_" min="-2" pref="241" max="-2" attributes="0"/>
+                                                      <Component id="noCollectionPlaneButton_" min="-2" pref="189" max="-2" attributes="0"/>
                                                   </Group>
                                               </Group>
-                                              <EmptySpace pref="18" max="32767" attributes="0"/>
+                                              <EmptySpace max="-2" attributes="0"/>
+                                              <Group type="103" groupAlignment="0" attributes="0">
+                                                  <Component id="labelDiagram2DSurface_" min="-2" max="-2" attributes="0"/>
+                                                  <Component id="labelDiagram2dSimple_" min="-2" max="-2" attributes="0"/>
+                                              </Group>
+                                              <EmptySpace pref="105" max="32767" attributes="0"/>
                                           </Group>
                                       </Group>
                                     </DimensionLayout>
                                     <DimensionLayout dim="1">
                                       <Group type="103" groupAlignment="0" attributes="0">
-                                          <Group type="102" alignment="0" attributes="0">
+                                          <Group type="102" attributes="0">
                                               <EmptySpace max="-2" attributes="0"/>
-                                              <Group type="103" groupAlignment="3" attributes="0">
-                                                  <Component id="footprin2DLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                                  <Component id="footprint2DComboBox_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                              <Group type="103" groupAlignment="0" attributes="0">
+                                                  <Group type="102" alignment="0" attributes="0">
+                                                      <Component id="footprin2DLabel_" min="-2" max="-2" attributes="0"/>
+                                                      <EmptySpace max="-2" attributes="0"/>
+                                                      <Component id="footprint2DComboBox_" min="-2" max="-2" attributes="0"/>
+                                                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                                                      <Component id="noCollectionPlaneButton_" min="-2" max="-2" attributes="0"/>
+                                                      <EmptySpace max="-2" attributes="0"/>
+                                                      <Component id="collectionPlaneLabel_" min="-2" max="-2" attributes="0"/>
+                                                      <EmptySpace pref="23" max="32767" attributes="0"/>
+                                                      <Component id="useCollectionPlaneButton_" min="-2" max="-2" attributes="0"/>
+                                                      <EmptySpace max="-2" attributes="0"/>
+                                                      <Component id="collectionPlaneCombo_" min="-2" max="-2" attributes="0"/>
+                                                      <EmptySpace min="-2" pref="14" max="-2" attributes="0"/>
+                                                  </Group>
+                                                  <Group type="102" alignment="1" attributes="0">
+                                                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                                                      <Component id="labelDiagram2dSimple_" min="-2" max="-2" attributes="0"/>
+                                                      <EmptySpace max="-2" attributes="0"/>
+                                                      <Component id="labelDiagram2DSurface_" min="-2" max="-2" attributes="0"/>
+                                                  </Group>
                                               </Group>
-                                              <EmptySpace max="-2" attributes="0"/>
-                                              <Component id="noCollectionPlaneButton_" min="-2" max="-2" attributes="0"/>
-                                              <EmptySpace max="-2" attributes="0"/>
-                                              <Group type="103" groupAlignment="3" attributes="0">
-                                                  <Component id="useCollectionPlaneButton_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                                  <Component id="collectionPlaneCombo_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                              </Group>
-                                              <EmptySpace max="-2" attributes="0"/>
-                                              <Component id="collectionPlaneLabel_" min="-2" max="-2" attributes="0"/>
-                                              <EmptySpace pref="8" max="32767" attributes="0"/>
                                           </Group>
                                       </Group>
                                     </DimensionLayout>
@@ -647,6 +654,30 @@
                                       <Events>
                                         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="useCollectionPlaneButton_ActionPerformed"/>
                                       </Events>
+                                    </Component>
+                                    <Component class="javax.swing.JLabel" name="labelDiagram2dSimple_">
+                                      <Properties>
+                                        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                                          <Image iconType="3" name="/org/micromanager/magellan/2dsimple.png"/>
+                                        </Property>
+                                        <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+                                          <Border info="org.netbeans.modules.form.compat2.border.LineBorderInfo">
+                                            <LineBorder thickness="4"/>
+                                          </Border>
+                                        </Property>
+                                      </Properties>
+                                    </Component>
+                                    <Component class="javax.swing.JLabel" name="labelDiagram2DSurface_">
+                                      <Properties>
+                                        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                                          <Image iconType="3" name="/org/micromanager/magellan/2dsurface.png"/>
+                                        </Property>
+                                        <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+                                          <Border info="org.netbeans.modules.form.compat2.border.LineBorderInfo">
+                                            <LineBorder thickness="4"/>
+                                          </Border>
+                                        </Property>
+                                      </Properties>
                                     </Component>
                                   </SubComponents>
                                 </Container>
@@ -784,31 +815,39 @@
                                                           </Group>
                                                       </Group>
                                                   </Group>
-                                                  <EmptySpace pref="388" max="32767" attributes="0"/>
+                                                  <EmptySpace max="-2" attributes="0"/>
+                                                  <Component id="labelDiagram3dSimple_" min="-2" max="-2" attributes="0"/>
+                                                  <EmptySpace pref="126" max="32767" attributes="0"/>
                                               </Group>
                                           </Group>
                                         </DimensionLayout>
                                         <DimensionLayout dim="1">
                                           <Group type="103" groupAlignment="0" attributes="0">
-                                              <Group type="102" alignment="0" attributes="0">
+                                              <Group type="102" attributes="0">
                                                   <EmptySpace max="-2" attributes="0"/>
-                                                  <Group type="103" groupAlignment="3" attributes="0">
-                                                      <Component id="zStartLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                                                      <Component id="zStartSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                                      <Component id="setCurrentZStartButton_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                  <Group type="103" groupAlignment="0" attributes="0">
+                                                      <Group type="102" attributes="0">
+                                                          <Group type="103" groupAlignment="3" attributes="0">
+                                                              <Component id="zStartLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                              <Component id="zStartSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                              <Component id="setCurrentZStartButton_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                          </Group>
+                                                          <EmptySpace max="-2" attributes="0"/>
+                                                          <Group type="103" groupAlignment="3" attributes="0">
+                                                              <Component id="zEndLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                              <Component id="zEndSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                              <Component id="setCurrentZEndButton_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                          </Group>
+                                                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                                          <Group type="103" groupAlignment="3" attributes="0">
+                                                              <Component id="jLabel2" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                              <Component id="simpleZStackFootprintCombo_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                          </Group>
+                                                          <EmptySpace min="0" pref="10" max="32767" attributes="0"/>
+                                                      </Group>
+                                                      <Component id="labelDiagram3dSimple_" alignment="0" pref="0" max="32767" attributes="0"/>
                                                   </Group>
                                                   <EmptySpace max="-2" attributes="0"/>
-                                                  <Group type="103" groupAlignment="3" attributes="0">
-                                                      <Component id="zEndLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                                                      <Component id="zEndSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                                      <Component id="setCurrentZEndButton_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                                  </Group>
-                                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                                  <Group type="103" groupAlignment="3" attributes="0">
-                                                      <Component id="jLabel2" alignment="3" min="-2" max="-2" attributes="0"/>
-                                                      <Component id="simpleZStackFootprintCombo_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                                  </Group>
-                                                  <EmptySpace pref="20" max="32767" attributes="0"/>
                                               </Group>
                                           </Group>
                                         </DimensionLayout>
@@ -899,6 +938,20 @@
                                             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="setCurrentZEndButton_ActionPerformed"/>
                                           </Events>
                                         </Component>
+                                        <Component class="javax.swing.JLabel" name="labelDiagram3dSimple_">
+                                          <Properties>
+                                            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                                              <Image iconType="3" name="/org/micromanager/magellan/3dsimple.png"/>
+                                            </Property>
+                                            <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+                                              <Border info="org.netbeans.modules.form.compat2.border.LineBorderInfo">
+                                                <LineBorder roundedCorners="true" thickness="4">
+                                                  <Color PropertyName="color" blue="0" green="80" red="0" type="rgb"/>
+                                                </LineBorder>
+                                              </Border>
+                                            </Property>
+                                          </Properties>
+                                        </Component>
                                       </SubComponents>
                                     </Container>
                                     <Container class="javax.swing.JPanel" name="volumeBetweenZPanel_">
@@ -941,7 +994,9 @@
                                                           <Component id="volumeBetweenFootprintCombo_" min="-2" max="-2" attributes="0"/>
                                                       </Group>
                                                   </Group>
-                                                  <EmptySpace pref="368" max="32767" attributes="0"/>
+                                                  <EmptySpace max="-2" attributes="0"/>
+                                                  <Component id="labelDiagram3d2Surface_" min="-2" max="-2" attributes="0"/>
+                                                  <EmptySpace pref="124" max="32767" attributes="0"/>
                                               </Group>
                                           </Group>
                                         </DimensionLayout>
@@ -967,6 +1022,11 @@
                                                       <Component id="volumeBetweenFootprintCombo_" alignment="3" min="-2" max="-2" attributes="0"/>
                                                   </Group>
                                                   <EmptySpace min="0" pref="26" max="32767" attributes="0"/>
+                                              </Group>
+                                              <Group type="102" alignment="0" attributes="0">
+                                                  <EmptySpace max="-2" attributes="0"/>
+                                                  <Component id="labelDiagram3d2Surface_" pref="0" max="32767" attributes="0"/>
+                                                  <EmptySpace max="-2" attributes="0"/>
                                               </Group>
                                           </Group>
                                         </DimensionLayout>
@@ -1074,6 +1134,20 @@
                                             <Property name="text" type="java.lang.String" value="&lt;html&gt;&amp;mu;m below&lt;/html&gt;"/>
                                           </Properties>
                                         </Component>
+                                        <Component class="javax.swing.JLabel" name="labelDiagram3d2Surface_">
+                                          <Properties>
+                                            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                                              <Image iconType="3" name="/org/micromanager/magellan/3d2surface.png"/>
+                                            </Property>
+                                            <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+                                              <Border info="org.netbeans.modules.form.compat2.border.LineBorderInfo">
+                                                <LineBorder roundedCorners="true" thickness="4">
+                                                  <Color PropertyName="color" blue="0" green="80" red="0" type="rgb"/>
+                                                </LineBorder>
+                                              </Border>
+                                            </Property>
+                                          </Properties>
+                                        </Component>
                                       </SubComponents>
                                     </Container>
                                     <Container class="javax.swing.JPanel" name="fixedDistanceZPanel_">
@@ -1089,7 +1163,7 @@
                                               <Group type="102" attributes="0">
                                                   <EmptySpace max="-2" attributes="0"/>
                                                   <Group type="103" groupAlignment="0" attributes="0">
-                                                      <Group type="102" attributes="0">
+                                                      <Group type="102" alignment="0" attributes="0">
                                                           <Group type="103" groupAlignment="0" attributes="0">
                                                               <Group type="102" alignment="1" attributes="0">
                                                                   <Component id="distanceAboveSurfaceLabel_" min="-2" max="-2" attributes="0"/>
@@ -1108,24 +1182,23 @@
                                                               <Component id="umAboveLabel_" min="-2" max="-2" attributes="0"/>
                                                               <Component id="umBelowLabel_" min="-2" max="-2" attributes="0"/>
                                                           </Group>
-                                                          <EmptySpace max="32767" attributes="0"/>
                                                       </Group>
-                                                      <Group type="102" attributes="0">
-                                                          <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                                                              <Group type="102" attributes="0">
-                                                                  <Component id="jLabel12" min="-2" max="-2" attributes="0"/>
-                                                                  <EmptySpace max="-2" attributes="0"/>
-                                                                  <Component id="withinDistanceFromFootprintCombo_" min="-2" pref="161" max="-2" attributes="0"/>
-                                                              </Group>
-                                                              <Group type="102" alignment="0" attributes="0">
-                                                                  <Component id="fixedSurfaceLabel_" min="-2" max="-2" attributes="0"/>
-                                                                  <EmptySpace max="-2" attributes="0"/>
-                                                                  <Component id="fixedDistanceSurfaceComboBox_" max="32767" attributes="0"/>
-                                                              </Group>
+                                                      <Group type="103" alignment="0" groupAlignment="0" max="-2" attributes="0">
+                                                          <Group type="102" attributes="0">
+                                                              <Component id="jLabel12" min="-2" max="-2" attributes="0"/>
+                                                              <EmptySpace max="-2" attributes="0"/>
+                                                              <Component id="withinDistanceFromFootprintCombo_" min="-2" pref="161" max="-2" attributes="0"/>
                                                           </Group>
-                                                          <EmptySpace min="0" pref="400" max="32767" attributes="0"/>
+                                                          <Group type="102" alignment="0" attributes="0">
+                                                              <Component id="fixedSurfaceLabel_" min="-2" max="-2" attributes="0"/>
+                                                              <EmptySpace max="-2" attributes="0"/>
+                                                              <Component id="fixedDistanceSurfaceComboBox_" max="32767" attributes="0"/>
+                                                          </Group>
                                                       </Group>
                                                   </Group>
+                                                  <EmptySpace min="-2" pref="15" max="-2" attributes="0"/>
+                                                  <Component id="labelDiagram3dSurface_" min="-2" pref="274" max="-2" attributes="0"/>
+                                                  <EmptySpace min="0" pref="144" max="32767" attributes="0"/>
                                               </Group>
                                           </Group>
                                         </DimensionLayout>
@@ -1154,6 +1227,11 @@
                                                       <Component id="withinDistanceFromFootprintCombo_" alignment="3" min="-2" max="-2" attributes="0"/>
                                                   </Group>
                                                   <EmptySpace min="0" pref="6" max="32767" attributes="0"/>
+                                              </Group>
+                                              <Group type="102" alignment="0" attributes="0">
+                                                  <EmptySpace max="-2" attributes="0"/>
+                                                  <Component id="labelDiagram3dSurface_" pref="0" max="32767" attributes="0"/>
+                                                  <EmptySpace max="-2" attributes="0"/>
                                               </Group>
                                           </Group>
                                         </DimensionLayout>
@@ -1265,6 +1343,20 @@
                                             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="withinDistanceFromFootprintCombo_ActionPerformed"/>
                                           </Events>
                                         </Component>
+                                        <Component class="javax.swing.JLabel" name="labelDiagram3dSurface_">
+                                          <Properties>
+                                            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                                              <Image iconType="3" name="/org/micromanager/magellan/3dsurface.png"/>
+                                            </Property>
+                                            <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+                                              <Border info="org.netbeans.modules.form.compat2.border.LineBorderInfo">
+                                                <LineBorder roundedCorners="true" thickness="4">
+                                                  <Color PropertyName="color" blue="0" green="80" red="0" type="rgb"/>
+                                                </LineBorder>
+                                              </Border>
+                                            </Property>
+                                          </Properties>
+                                        </Component>
                                       </SubComponents>
                                     </Container>
                                   </SubComponents>
@@ -1361,7 +1453,7 @@
                       <Layout>
                         <DimensionLayout dim="0">
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="jScrollPane1" pref="743" max="32767" attributes="0"/>
+                              <Component id="jScrollPane1" pref="776" max="32767" attributes="0"/>
                               <Group type="102" attributes="0">
                                   <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
@@ -1378,7 +1470,7 @@
                                       <Component id="ChannelGroupCombo_" alignment="3" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="jScrollPane1" pref="203" max="32767" attributes="0"/>
+                                  <Component id="jScrollPane1" pref="224" max="32767" attributes="0"/>
                               </Group>
                           </Group>
                         </DimensionLayout>
@@ -1446,7 +1538,7 @@
                                       <Component id="timePointsPanel_" min="-2" max="-2" attributes="0"/>
                                       <Component id="timePointsCheckBox_" min="-2" max="-2" attributes="0"/>
                                   </Group>
-                                  <EmptySpace pref="499" max="32767" attributes="0"/>
+                                  <EmptySpace pref="532" max="32767" attributes="0"/>
                               </Group>
                           </Group>
                         </DimensionLayout>
@@ -1457,7 +1549,7 @@
                                   <Component id="timePointsCheckBox_" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="timePointsPanel_" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace pref="118" max="32767" attributes="0"/>
+                                  <EmptySpace pref="141" max="32767" attributes="0"/>
                               </Group>
                           </Group>
                         </DimensionLayout>

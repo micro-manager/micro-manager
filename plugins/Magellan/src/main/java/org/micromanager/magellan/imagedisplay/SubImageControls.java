@@ -388,6 +388,16 @@ public class SubImageControls extends Panel {
       
       //now that new scroll bar position have been set, tell display to update itself
       display_.updateDisplay(true);
+      //update the explore highlight things
+      if (acq_ instanceof ExploreAcquisition) {
+         //convert slice index to explore scrollbar index       
+         ((ColorableScrollbarUI) zTopScrollbar_.getUI()).setHighlightedIndices(sliceIndex_ + ((ExploreAcquisition) acq_).getMinSliceIndex(),
+                 ((ExploreAcquisition) acq_).getMinSliceIndex(), ((ExploreAcquisition) acq_).getMaxSliceIndex());
+         ((ColorableScrollbarUI) zBottomScrollbar_.getUI()).setHighlightedIndices(sliceIndex_ + ((ExploreAcquisition) acq_).getMinSliceIndex(),
+                 ((ExploreAcquisition) acq_).getMinSliceIndex(), ((ExploreAcquisition) acq_).getMaxSliceIndex());
+         this.repaint();
+      }
+
    }
 
    public int getDisplayedSlice() {

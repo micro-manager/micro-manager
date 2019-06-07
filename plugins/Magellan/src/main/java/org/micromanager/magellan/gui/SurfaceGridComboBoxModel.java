@@ -17,7 +17,6 @@
 
 package org.micromanager.magellan.gui;
 
-import com.jogamp.nativewindow.SurfaceUpdatedListener;
 import javax.swing.DefaultComboBoxModel;
 import org.micromanager.magellan.surfacesandregions.SurfaceGridListener;
 import org.micromanager.magellan.surfacesandregions.SurfaceGridManager;

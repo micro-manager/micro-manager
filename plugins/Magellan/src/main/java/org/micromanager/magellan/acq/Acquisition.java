@@ -300,7 +300,7 @@ public abstract class Acquisition {
 
    private JSONObject makeSummaryMD(String prefix) {
       //num channels is camera channels * acquisitionChannels
-      int numChannels = this.getNumChannels();
+      int numChannels = this instanceof ExploreAcquisition ? channels_.getNumChannels() : channels_.getNumActiveChannels();
 
       CMMCore core = Magellan.getCore();
       JSONObject summary = new JSONObject();
@@ -339,8 +339,9 @@ public abstract class Acquisition {
       MD.setAffineTransformString(summary, AffineUtils.transformToString(at));
       JSONArray chNames = new JSONArray();
       JSONArray chColors = new JSONArray();
-      String[] names = this.getChannelNames();
-      Color[] colors = this.getChannelColors();
+      //ignore inactive channels, except on an explore acquisition
+      String[] names = this.getChannelNames(!(this instanceof ExploreAcquisition));
+      Color[] colors = this.getChannelColors(!(this instanceof ExploreAcquisition));
       for (int i = 0; i < numChannels; i++) {
          chNames.put(names[i]);
          chColors.put(colors[i].getRGB());
@@ -461,16 +462,6 @@ public abstract class Acquisition {
       return (int) Math.round((z - zOrigin_) / zStep_) - minSliceIndex_;
    }
 
-   /**
-    * Return the maximum number of possible channels for the acquisition, not
-    * all of which are neccessarily active
-    *
-    * @return
-    */
-   public int getNumChannels() {
-      return channels_.getNumActiveChannels();
-   }
-
    public ChannelSpec getChannels() {
       return channels_;
    }
@@ -536,12 +527,12 @@ public abstract class Acquisition {
       paused_ = !paused_;
    }
 
-   public String[] getChannelNames() {
-      return channels_.getActiveChannelNames();
+   public String[] getChannelNames(boolean activeOnly) {
+      return activeOnly ? channels_.getActiveChannelNames() : channels_.getAllChannelNames();
    }
 
-   public Color[] getChannelColors() {
-      return channels_.getActiveChannelColors();
+   public Color[] getChannelColors(boolean activeOnly) {
+      return activeOnly ? channels_.getActiveChannelColors() : channels_.getAllChannelColors();
    }
 
    private static String getCurrentDateAndTime() {
