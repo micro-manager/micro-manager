@@ -45,7 +45,7 @@
                           <Component id="bottomPanel_" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
-                      <Component id="exploreAcqTabbedPane_" alignment="0" pref="792" max="32767" attributes="0"/>
+                      <Component id="exploreAcqTabbedPane_" alignment="0" max="32767" attributes="0"/>
                       <Component id="topPanel_" alignment="0" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -56,7 +56,7 @@
               <Group type="102" alignment="1" attributes="0">
                   <Component id="topPanel_" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
-                  <Component id="exploreAcqTabbedPane_" pref="543" max="32767" attributes="0"/>
+                  <Component id="exploreAcqTabbedPane_" max="32767" attributes="0"/>
                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
                   <Component id="bottomPanel_" min="-2" max="-2" attributes="0"/>
                   <EmptySpace min="-2" max="-2" attributes="0"/>
@@ -368,7 +368,7 @@
                               <Component id="runAcqPanel_" alignment="0" max="32767" attributes="0"/>
                               <Group type="102" alignment="0" attributes="0">
                                   <Group type="103" groupAlignment="1" attributes="0">
-                                      <Component id="acqTabbedPane_" alignment="0" pref="778" max="32767" attributes="0"/>
+                                      <Component id="acqTabbedPane_" alignment="0" max="32767" attributes="0"/>
                                       <Group type="102" attributes="0">
                                           <Component id="multipleAcqScrollPane_" max="32767" attributes="0"/>
                                           <EmptySpace min="-2" max="-2" attributes="0"/>
@@ -445,7 +445,7 @@
                                   <Group type="103" groupAlignment="0" attributes="0">
                                       <Group type="102" alignment="0" attributes="0">
                                           <EmptySpace max="-2" attributes="0"/>
-                                          <Component id="controls2DOr3D_" pref="764" max="32767" attributes="0"/>
+                                          <Component id="controls2DOr3D_" max="32767" attributes="0"/>
                                       </Group>
                                       <Group type="102" attributes="0">
                                           <Component id="button3D_" min="-2" max="-2" attributes="0"/>
@@ -701,7 +701,7 @@
                                           <Component id="withinDistanceFromSurfacesButton_" min="-2" max="-2" attributes="0"/>
                                           <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                                       </Group>
-                                      <Component id="acq3DSubtypePanel_" alignment="0" pref="764" max="32767" attributes="0"/>
+                                      <Component id="acq3DSubtypePanel_" alignment="0" max="32767" attributes="0"/>
                                       <Group type="102" alignment="0" attributes="0">
                                           <EmptySpace max="-2" attributes="0"/>
                                           <Component id="zStepLabel_" min="-2" max="-2" attributes="0"/>

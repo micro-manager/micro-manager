@@ -273,11 +273,11 @@ public class DisplayOverlayer {
             //draw single highlighted tile under mouse
             Point coords = zoomableStack_.getTileIndicesFromDisplayedPixel(display_.getCurrentMouseLocation().x, display_.getCurrentMouseLocation().y);
             highlightTilesOnOverlay(overlay, coords.y, coords.y, coords.x, coords.x, TRANSPARENT_BLUE); //highligth single tile
-         } else {
+         } else if (!expAcq.anythingAcquired()) {
 
-//            String[] text = {"Explore mode controls:", "", "Left click or left click and drag to select tiles",
-//               "Left click again to confirm", "Right click and drag to pan", "+/- keys or mouse wheel to zoom in/out"};
-//            addTextBox(text, overlay);
+            String[] text = {"Explore mode controls:", "", "Left click or left click and drag to select tiles",
+               "Left click again to confirm", "Right click and drag to pan", "+/- keys or mouse wheel to zoom in/out"};
+            addTextBox(text, overlay);
          }
          //always draw tiles waiting to be acquired
          LinkedBlockingQueue<ExploreAcquisition.ExploreTileWaitingToAcquire> tiles
