@@ -16,7 +16,10 @@
 	<target name="copy-files" depends="mm.javabuild.copy-files"
 		unless="mm.java.disable.build">
 		<copy todir="${intdir}">
-			<fileset dir="${srcdir}" includes="**/*.png"/>
+         <fileset dir="${rscdir}">
+            <include name="**/*.png"/>
+            <include name="**/*.png"/>
+         </fileset>
 		</copy>
 	</target>
 </project>
