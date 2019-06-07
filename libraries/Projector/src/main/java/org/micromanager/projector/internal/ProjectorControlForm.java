@@ -499,9 +499,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                   Integer binning = null;
                   Rectangle roi = null;
                   try {
-                       // Hamamatsu reports 1x1.  I wish there was an api call for binning
-                     binning = Integer.parseInt(core_.getProperty(core_.getCameraDevice(), "Binning")
-                             .substring(0, 1));
+                     binning = Utils.getBinning(core_);
                      roi = core_.getROI();
                   } catch (Exception ex) {
                      studio_.logs().logError(ex);
@@ -714,7 +712,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       Integer binning = null;
       Rectangle roi = null;
       try {
-         binning = Integer.parseInt(core_.getProperty(core_.getCameraDevice(), "Binning"));
+         binning = Utils.getBinning(core_);
          roi = core_.getROI();
       } catch (Exception ex) {
          studio_.logs().logError(ex);
@@ -743,7 +741,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       Integer binning = null;
       Rectangle roi = null;
       try {
-         binning = Integer.parseInt(core_.getProperty(core_.getCameraDevice(), "Binning"));
+         binning = Utils.getBinning(core_);
          roi = core_.getROI();
       } catch (Exception ex) {
          studio_.logs().logError(ex);
