@@ -2783,8 +2783,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   gui_.getMMCore().setAutoShutter(autoShutter);
                   
                   // cleanup planar correction move if any
-                  props_.setPropValue(Devices.Keys.UPPERZDRIVE, Properties.Keys.TTLINPUT_MODE, Properties.Values.TTLINPUT_MODE_NONE);
-                  props_.setPropValue(Devices.Keys.UPPERZDRIVE, Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, origZSpeed);
+                  props_.setPropValue(Devices.Keys.UPPERZDRIVE, Properties.Keys.TTLINPUT_MODE, Properties.Values.TTLINPUT_MODE_NONE, true);
+                  props_.setPropValue(Devices.Keys.UPPERZDRIVE, Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, origZSpeed, true);
                   
                   // make sure SPIM state machine on micromirror and SCAN of XY card are stopped (should normally be but sanity check)
                   stopSPIMStateMachines(acqSettings);
@@ -4534,8 +4534,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                            }
                            
                            // cleanup planar correction move if any
-                           props_.setPropValue(Devices.Keys.UPPERZDRIVE, Properties.Keys.TTLINPUT_MODE, Properties.Values.TTLINPUT_MODE_NONE);
-                           props_.setPropValue(Devices.Keys.UPPERZDRIVE, Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, origZSpeed);
+                           props_.setPropValue(Devices.Keys.UPPERZDRIVE, Properties.Keys.TTLINPUT_MODE, Properties.Values.TTLINPUT_MODE_NONE, true);
+                           props_.setPropValue(Devices.Keys.UPPERZDRIVE, Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, origZSpeed, true);
                            
                            // make sure SPIM state machine on micromirror and SCAN of XY card are stopped (should normally be but sanity check)
                            stopSPIMStateMachines(acqSettings);
