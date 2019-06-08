@@ -92,6 +92,7 @@ public class Devices {
    public static enum Keys {
       NONE, CORE, PLUGIN,
       CAMERAA, CAMERAB, MULTICAMERA, CAMERALOWER, CAMERAPREVIOUS, 
+      CAMERA_A1, CAMERA_A2, CAMERA_A3, CAMERA_A4,  // only used for single-sided simultaneous mode 
       PIEZOA, PIEZOB, GALVOA, GALVOB, XYSTAGE,
       LOWERZDRIVE,  // inverted microscope if present
       UPPERZDRIVE,  // determines sample position relative to imaging objectives, for FTP system would be FTP Z
@@ -120,6 +121,8 @@ public class Devices {
    public final static Set<Devices.Keys> SPIM_CAMERAS = 
          ASIdiSPIM.oSPIM ? EnumSet.of(Devices.Keys.CAMERAA) :  
             EnumSet.of(Devices.Keys.CAMERAA, Devices.Keys.CAMERAB);
+      public final static Set<Devices.Keys> SPIM_CAMERAS_SIMULT = 
+            EnumSet.of(Devices.Keys.CAMERA_A1, Devices.Keys.CAMERA_A2, Devices.Keys.CAMERA_A2, Devices.Keys.CAMERA_A4);
 
 
    public static enum Libraries {
@@ -693,6 +696,14 @@ public class Devices {
          return new DeviceData(key, "Camera", Sides.A, true);
       case CAMERAB:
          return new DeviceData(key, "Camera", Sides.B, true);
+      case CAMERA_A1:
+         return new DeviceData(key, "Camera A1", Sides.A, true);
+      case CAMERA_A2:
+         return new DeviceData(key, "Camera A2", Sides.A, true);
+      case CAMERA_A3:
+         return new DeviceData(key, "Camera A3", Sides.A, true);
+      case CAMERA_A4:
+         return new DeviceData(key, "Camera A4", Sides.A, true);
       case CAMERALOWER:
          return new DeviceData(key, "Lower Camera", Sides.NONE,
                true);
@@ -771,6 +782,10 @@ public class Devices {
       deviceInfo_.put(Keys.NONE, getDefaultDeviceData(Keys.NONE));
       deviceInfo_.put(Keys.CAMERAA, getDefaultDeviceData(Keys.CAMERAA));
       deviceInfo_.put(Keys.CAMERAB, getDefaultDeviceData(Keys.CAMERAB));
+      deviceInfo_.put(Keys.CAMERA_A1, getDefaultDeviceData(Keys.CAMERA_A1));
+      deviceInfo_.put(Keys.CAMERA_A2, getDefaultDeviceData(Keys.CAMERA_A2));
+      deviceInfo_.put(Keys.CAMERA_A3, getDefaultDeviceData(Keys.CAMERA_A3));
+      deviceInfo_.put(Keys.CAMERA_A4, getDefaultDeviceData(Keys.CAMERA_A4));
       deviceInfo_.put(Keys.CAMERALOWER, getDefaultDeviceData(Keys.CAMERALOWER));
       deviceInfo_.put(Keys.MULTICAMERA, getDefaultDeviceData(Keys.MULTICAMERA));
       deviceInfo_.put(Keys.PIEZOA, getDefaultDeviceData(Keys.PIEZOA));

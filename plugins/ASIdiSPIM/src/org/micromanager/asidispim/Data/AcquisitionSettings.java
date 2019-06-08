@@ -66,6 +66,7 @@ public class AcquisitionSettings {
       this.hardwareTimepoints = orig.hardwareTimepoints;
       this.separateTimepoints = orig.separateTimepoints;
       this.usePathPresets = orig.usePathPresets;
+      this.numSimultCameras = orig.numSimultCameras;
    }
 
    // piezo scanning, vibration, stage scanning, i.e. what is 
@@ -156,5 +157,9 @@ public class AcquisitionSettings {
    
    // true if we have side-specific presets that we set during acquisition
    public boolean usePathPresets;
+   
+   // non-zero if using simultaneous cameras (path A only, up to 4 separate cameras)
+   // similar but different from doing reflective imaging (both cameras) because this is only on path A
+   public int numSimultCameras;
    
 }

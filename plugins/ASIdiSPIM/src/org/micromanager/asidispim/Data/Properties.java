@@ -231,6 +231,8 @@ public class Properties {
       PLUGIN_CAMERA_MODE("CameraMode"),
       PLUGIN_CAMERA_LIVE_EXPOSURE_FIRST("CameraLiveExposureMs_First"),  // used internally to save/restore live exposure time
       PLUGIN_CAMERA_LIVE_EXPOSURE_SECOND("CameraLiveExposureMs_Second"),  // used internally to save/restore live exposure time
+      PLUGIN_CAMERA_LIVE_EXPOSURE_THIRD("CameraLiveExposureMs_Third"),  // used internally to save/restore live exposure time
+      PLUGIN_CAMERA_LIVE_EXPOSURE_FOURTH("CameraLiveExposureMs_Fourth"),  // used internally to save/restore live exposure time
       PLUGIN_SHEET_WIDTH_A("SheetWidthOrig_A"),  // used internally to save/restore sheet width when acquisition changes it
       PLUGIN_SHEET_WIDTH_B("SheetWidthOrig_B"),  // used internally to save/restore sheet width when acquisition changes it
       PLUGIN_SHEET_OFFSET_A("SheetOffsetOrig_A"),  // used internally to save/restore sheet offset when acquisition changes it
@@ -303,7 +305,9 @@ public class Properties {
       PLUGIN_PLANAR_ENABLED("PlanarCorrectionEnable"),
       PLUGIN_PLANAR_SLOPE_X("PlanarCorrectionSlopeX"),
       PLUGIN_PLANAR_SLOPE_Y("PlanarCorrectionSlopeY"),
-      PLUGIN_PLANAR_OFFSET_Z("PlanarCorrectionOffsetZ")
+      PLUGIN_PLANAR_OFFSET_Z("PlanarCorrectionOffsetZ"),
+      PLUGIN_USE_SIMULT_CAMERAS("UseSimultaneousCameras"),
+      PLUGIN_NUM_SIMULT_CAMERAS("NumSimultaneousCameras"),
       ;
       private final String text;
       private final boolean forceSet;

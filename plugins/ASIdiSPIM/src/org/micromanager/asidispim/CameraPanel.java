@@ -24,14 +24,17 @@ import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Set;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
 
 import net.miginfocom.swing.MigLayout;
@@ -40,9 +43,11 @@ import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.CameraModes;
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
+import org.micromanager.asidispim.Data.Devices.Keys;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
+import org.micromanager.asidispim.Utils.DeviceUtils;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.PanelUtils;
 
@@ -193,10 +198,42 @@ public class CameraPanel extends ListeningJPanel{
       
       // end camera trigger mode subpanel
       
+      
+      // start simultaneous cameras subpanel
+      
+      final JPanel simultaneousCamerasPanel = new JPanel(new MigLayout(
+            "",
+            "[]16[]16[]",
+            "[]8[]"));
+      final int MAX_NUMBER_SIMULT_CAMERAS = 4;
+      final int maxSelectorWidth = 110;
+      simultaneousCamerasPanel.setBorder(PanelUtils.makeTitledBorder("Simultaneous Cameras"));
+      JCheckBox useSimultCameras = pu.makeCheckBox("Use simultaneous cameras on Path A", Properties.Keys.PLUGIN_USE_SIMULT_CAMERAS, panelName_, false);
+      useSimultCameras.setToolTipText("Currently only works with single-sided (path A) configurations"); 
+      simultaneousCamerasPanel.add(useSimultCameras, "span 3, wrap");
+      JSpinner numCameras = pu.makeSpinnerInteger(1, MAX_NUMBER_SIMULT_CAMERAS, Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_NUM_SIMULT_CAMERAS, 1);
+      simultaneousCamerasPanel.add(new JLabel("Num simultaneous cameras:"), "span 2");
+      simultaneousCamerasPanel.add(numCameras, "wrap");
+      DeviceUtils du = new DeviceUtils(gui, devices, props, prefs);
+      simultaneousCamerasPanel.add(new JLabel("Camera #1:"));
+      simultaneousCamerasPanel.add(du.makeSingleCameraDeviceBox(Devices.Keys.CAMERA_A1, maxSelectorWidth), "growx, span 2, wrap");
+      simultaneousCamerasPanel.add(new JLabel("Camera #2:"));
+      simultaneousCamerasPanel.add(du.makeSingleCameraDeviceBox(Devices.Keys.CAMERA_A2, maxSelectorWidth), "growx, span 2, wrap");
+      simultaneousCamerasPanel.add(new JLabel("Camera #3:"));
+      simultaneousCamerasPanel.add(du.makeSingleCameraDeviceBox(Devices.Keys.CAMERA_A3, maxSelectorWidth), "growx, span 2, wrap");
+      simultaneousCamerasPanel.add(new JLabel("Camera #4:"));
+      simultaneousCamerasPanel.add(du.makeSingleCameraDeviceBox(Devices.Keys.CAMERA_A4, maxSelectorWidth), "growx, span 2, wrap");
+      
+      // 
+      
+      
+      // end simultaneous cameras subpanel
+      
 
       // construct the main panel
       add(roiPanel);
-      add(triggerPanel, "growx, wrap");
+      add(triggerPanel);
+      add(simultaneousCamerasPanel, "wrap");
    }//constructor
    
    
@@ -239,7 +276,10 @@ public class CameraPanel extends ListeningJPanel{
    }
 
    private void setSPIMCameraROI(RoiPresets roi) {
-      for (Devices.Keys devKey : Devices.SPIM_CAMERAS) {
+      Set<Devices.Keys> camList = prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+            Properties.Keys.PLUGIN_USE_SIMULT_CAMERAS, false) ?
+                  Devices.SPIM_CAMERAS_SIMULT : Devices.SPIM_CAMERAS;
+      for (Devices.Keys devKey : camList) {
          cameras_.setCameraROI(devKey, roi);
       }
    }
