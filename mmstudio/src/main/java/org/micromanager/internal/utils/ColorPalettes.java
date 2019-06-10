@@ -289,7 +289,7 @@ public final class ColorPalettes {
       plot.setBackgroundPaint(Color.WHITE);
       plot.setRangeGridlinePaint(Color.LIGHT_GRAY);
       XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
-      renderer.setBaseShapesVisible(true);
+      renderer.setDefaultShapesVisible(true);
       renderer.setSeriesPaint(0, Color.BLACK);
       renderer.setSeriesFillPaint(0, Color.WHITE);
       renderer.setSeriesLinesVisible(0, true);
