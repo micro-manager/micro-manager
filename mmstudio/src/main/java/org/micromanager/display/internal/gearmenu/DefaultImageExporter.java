@@ -32,6 +32,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
@@ -39,6 +40,7 @@ import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
+import org.micromanager.data.Image;
 import org.micromanager.display.DisplayDidShowImageEvent;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.ImageExporter;
@@ -313,9 +315,15 @@ public final class DefaultImageExporter implements ImageExporter {
       if (display_ == null) {
          throw new IllegalArgumentException("No display has been set");
       }
-      ArrayList<Coords> coords = new ArrayList<Coords>();
+      ArrayList<Coords> coords = new ArrayList<>();
+      List<Image> displayedImages = display_.getDisplayedImages();
+      if (displayedImages.isEmpty()) {
+         // TODO: fill in missing images
+         // we are probably on a missing image
+         return coords;
+      }
       outerLoop_.selectImageCoords(
-            display_.getDisplayedImages().get(0).getCoords(), coords);
+            displayedImages.get(0).getCoords(), coords);
       if (coords.isEmpty()) {
          // Nothing to do.
          return coords;
