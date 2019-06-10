@@ -4352,7 +4352,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                     }
                                     int channelIndex_tmp;
                                     if (acqSimultSideA) {
-                                       channelIndex_tmp = cameraIndex;
+                                       channelIndex_tmp = cameraIndex;  // for acqSimultSideA channelIndex always equals cameraIndex
                                     } else {
                                        switch (acqSettings.channelMode) {
                                        case NONE:
@@ -4390,11 +4390,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                     final int channelIndex = channelIndex_tmp;
 
                                     final int actualTimePoint;
+                                    int actualFrameNr = 0;
                                     if (acqSimultSideA) {
                                        if (acqSettings.channelMode == MultichannelModes.Keys.SLICE_HW) {
                                           actualTimePoint = cameraImageNr[cameraIndex] % acqSettings.numChannels;  // want modulo arithmetic
+                                          actualFrameNr = cameraImageNr[cameraIndex] / acqSettings.numChannels;    // want quotient only
                                        } else {
                                           actualTimePoint = channelNum;
+                                          actualFrameNr = cameraImageNr[cameraIndex];
                                        }
                                     } else if (acqSettings.hardwareTimepoints) {
                                        actualTimePoint = tpNumber[channelIndex];
@@ -4407,13 +4410,21 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                     // note that hardwareTimepoints and separateTimepoints can never both be true
 
                                     // add image to acquisition
-                                    if (spimMode == AcquisitionModes.Keys.NO_SCAN && !acqSettings.separateTimepoints) {
+                                    if (acqSimultSideA) {
+                                       addImageToAcquisition(acq_,
+                                             actualTimePoint, channelIndex,
+                                             actualFrameNr, positionNum,
+                                             now - acqStart, timg, bq);
+                                        // ReportingUtils.logError("wrote image from camera index " + channelIndex + " to timepoint " + actualTimePoint + " in frame " + actualFrameNr);
+                                    } else if (spimMode == AcquisitionModes.Keys.NO_SCAN && !acqSettings.separateTimepoints) {
                                        // create time series for no scan
                                        addImageToAcquisition(acq_,
-                                             channelImageNr[channelIndex], channelIndex, actualTimePoint, 
+                                             channelImageNr[channelIndex],
+                                             channelIndex, actualTimePoint, 
                                              positionNum, now - acqStart, timg, bq);
                                     } else { // standard, create Z-stacks
-                                       addImageToAcquisition(acq_, actualTimePoint, channelIndex,
+                                       addImageToAcquisition(acq_,
+                                             actualTimePoint, channelIndex,
                                              channelImageNr[channelIndex], positionNum,
                                              now - acqStart, timg, bq);
                                     }
