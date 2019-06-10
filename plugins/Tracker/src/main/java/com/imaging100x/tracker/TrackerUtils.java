@@ -47,7 +47,7 @@ public class TrackerUtils {
       plot.setBackgroundPaint(Color.white);
       plot.setRangeGridlinePaint(Color.lightGray);
       XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
-      renderer.setBaseShapesVisible(true);
+      renderer.setDefaultShapesVisible(true);
       renderer.setSeriesPaint(0, Color.black);
       renderer.setSeriesFillPaint(0, Color.white);
       renderer.setSeriesLinesVisible(0, true);
