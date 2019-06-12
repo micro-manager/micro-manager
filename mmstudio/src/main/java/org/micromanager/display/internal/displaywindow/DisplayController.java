@@ -533,7 +533,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
       // Always compute stats for all channels
       Coords channellessPos = position.hasAxis(Coords.CHANNEL) ?
-            position.copy().removeAxis(Coords.CHANNEL).build() :
+            position.copyBuilder().removeAxis(Coords.CHANNEL).build() :
             position;
       List<Image> images;
       try {
