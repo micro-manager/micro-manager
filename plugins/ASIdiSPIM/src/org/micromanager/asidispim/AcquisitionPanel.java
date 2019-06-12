@@ -3530,12 +3530,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             if (camActiveA3) {
                prefs_.putFloat(MyStrings.PanelNames.SETTINGS.toString(),
                      Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE_THIRD.toString(),
-                     (float)core_.getExposure(devices_.getMMDevice(Devices.Keys.CAMERA_A2)));
+                     (float)core_.getExposure(devices_.getMMDevice(Devices.Keys.CAMERA_A3)));
             }
             if (camActiveA4) {
                prefs_.putFloat(MyStrings.PanelNames.SETTINGS.toString(),
                      Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE_FOURTH.toString(),
-                     (float)core_.getExposure(devices_.getMMDevice(Devices.Keys.CAMERA_A2)));
+                     (float)core_.getExposure(devices_.getMMDevice(Devices.Keys.CAMERA_A4)));
             }
          } else {
             prefs_.putFloat(MyStrings.PanelNames.SETTINGS.toString(),
@@ -3752,8 +3752,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             }
             
             if (acqSimultSideA) {
-               gui_.openAcquisition(acqName, rootDir, acqSettings.numChannels, numMMChannels,
-                     acqSettings.numSlices, nrPositions, true, save);
+               gui_.openAcquisition(acqName, rootDir, 1, numMMChannels,
+                     acqSettings.numSlices*acqSettings.numChannels, nrPositions, true, save);
+//               gui_.openAcquisition(acqName, rootDir, acqSettings.numChannels, numMMChannels,
+//                     acqSettings.numSlices, nrPositions, true, save);
             } else if (spimMode == AcquisitionModes.Keys.NO_SCAN && !acqSettings.separateTimepoints) {
                // swap nrFrames and numSlices
                gui_.openAcquisition(acqName, rootDir, acqSettings.numSlices, numMMChannels,
@@ -3892,6 +3894,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.setAcquisitionProperty(acqName, "SPIMtype", ASIdiSPIM.oSPIM ? "oSPIM" : "diSPIM");
             gui_.setAcquisitionProperty(acqName, "AcquisitionName", acqName);
             gui_.setAcquisitionProperty(acqName, "Prefix", acqName);
+            gui_.setAcquisitionProperty(acqName, MMTags.Summary.SLICES_FIRST, Boolean.TRUE.toString());  // whether slices are inner loop compared to channel; not sure why but Nico had this set to true forever so leaving it
+            gui_.setAcquisitionProperty(acqName, MMTags.Summary.TIME_FIRST, Boolean.FALSE.toString()); 
+                  //Boolean.toString(acqSimultSideA));   // whether timepoints are inner loop compared to position; false for all diSPIM use cases except simultaneous on PathA where we use timepoints as "channels"
                       
             // get circular buffer ready
             // do once here but not per-trigger; need to ensure ROI changes registered
@@ -4097,6 +4102,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   // if we are using path presets then trigger controller for each side and do that in "outer loop"
                   //   (i.e. the channels will run subsequent to each other, then switch sides and run through them again
                   for (int outerLoop = 0; outerLoop < nrOuterLoop; ++outerLoop) {
+                     
+                     // counters we use to file images into the right spot
+                     int[] channelImageNr = new int[4*acqSettings.numChannels];  // keep track of how many frames we have received for each MM "channel"
+                     int[] cameraImageNr = new int[4];       // keep track of how many images we have received from the camera
+                     int[] tpNumber = new int[2*acqSettings.numChannels];  // keep track of which timepoint we are on for hardware timepoints
+                     
                      for (int channelNum = 0; channelNum < nrChannelsSoftware; channelNum++) {
                         try {
                            // flag that we are using the cameras/controller
@@ -4250,9 +4261,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                            }
 
                            // grab all the images from the cameras, put them into the acquisition
-                           int[] channelImageNr = new int[4*acqSettings.numChannels];  // keep track of how many frames we have received for each MM "channel"
-                           int[] cameraImageNr = new int[4];       // keep track of how many images we have received from the camera
-                           int[] tpNumber = new int[2*acqSettings.numChannels];  // keep track of which timepoint we are on for hardware timepoints
                            int imagesToSkip = 0;  // hardware timepoints have to drop spurious images with overlap mode
                            final boolean checkForSkips = acqSettings.hardwareTimepoints && (acqSettings.cameraMode == CameraModes.Keys.OVERLAP);
                            boolean done = false;
@@ -4392,13 +4400,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                     final int actualTimePoint;
                                     int actualFrameNr = 0;
                                     if (acqSimultSideA) {
-                                       if (acqSettings.channelMode == MultichannelModes.Keys.SLICE_HW) {
-                                          actualTimePoint = cameraImageNr[cameraIndex] % acqSettings.numChannels;  // want modulo arithmetic
-                                          actualFrameNr = cameraImageNr[cameraIndex] / acqSettings.numChannels;    // want quotient only
-                                       } else {
+                                       // somehow was slow writing/saving datasets when using both timepoint and channel axes
+                                       // so for now at least fall back on filing all images from same camera into a single "dataset channel" even for different channels
+                                       // anothen approach which I didn't try would be to create a separate acquisition for each camera and file images in the appropriate one
+//                                       if (acqSettings.channelMode == MultichannelModes.Keys.SLICE_HW) {
+//                                          actualTimePoint = cameraImageNr[cameraIndex] % acqSettings.numChannels;  // want modulo arithmetic
+//                                          actualFrameNr = cameraImageNr[cameraIndex] / acqSettings.numChannels;    // want quotient only
+//                                       } else {
                                           actualTimePoint = channelNum;
                                           actualFrameNr = cameraImageNr[cameraIndex];
-                                       }
+//                                       }
                                     } else if (acqSettings.hardwareTimepoints) {
                                        actualTimePoint = tpNumber[channelIndex];
                                     } else if (acqSettings.separateTimepoints) {
@@ -4550,6 +4561,21 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                            
                            // make sure SPIM state machine on micromirror and SCAN of XY card are stopped (should normally be but sanity check)
                            stopSPIMStateMachines(acqSettings);
+                           
+                           // write message with final results of our counters for debugging 
+                           String msg = "Finished acquisition (controller trigger cycle) with counters at Channels: ";
+                           for (int i=0; i<4*acqSettings.numChannels; ++i) {
+                              msg += channelImageNr[i] + ", ";
+                           }
+                           msg += ",   Cameras: ";
+                           for (int i=0; i<4; ++i) {
+                              msg += cameraImageNr[i] + ", ";
+                           }
+                           msg += ",   TimePoints: ";
+                           for (int i=0; i<2*acqSettings.numChannels; ++i) {
+                              msg += tpNumber[i] + ", ";
+                           }
+                           ReportingUtils.logError(msg);
                         }
                      }
                   }
@@ -5136,6 +5162,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          tags.put("SPIM_Position_Y", yPositionUm_);
          tags.put("SPIM_Position_Z", zPositionUm_);  // NB this is SPIM head position, not position in stack
   
+         // these lines should no longer be required
          if (!tags.has(MMTags.Summary.SLICES_FIRST) && !tags.has(MMTags.Summary.TIME_FIRST)) {
             // add default setting
             tags.put(MMTags.Summary.SLICES_FIRST, true);
