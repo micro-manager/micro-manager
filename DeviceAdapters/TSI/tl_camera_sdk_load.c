@@ -1,3 +1,4 @@
+#pragma warning( disable : 4055)
 #include "tl_camera_sdk.h"
 
 #ifndef THORLABS_TSI_BUILD_DLL
@@ -66,7 +67,7 @@ TL_CAMERA_GET_SERIAL_NUMBER_STRING_LENGTH_RANGE tl_camera_get_serial_number_stri
 TL_CAMERA_GET_IS_LED_ON tl_camera_get_is_led_on;
 TL_CAMERA_SET_IS_LED_ON tl_camera_set_is_led_on;
 TL_CAMERA_GET_USB_PORT_TYPE tl_camera_get_usb_port_type;
-TL_CAMERA_GET_COMMUNICATION_INTERFACE tl_camera_get_communication_Interface;
+TL_CAMERA_GET_COMMUNICATION_INTERFACE tl_camera_get_communication_interface;
 TL_CAMERA_GET_EEP_STATUS tl_camera_get_eep_status;
 TL_CAMERA_SET_IS_EEP_ENABLED tl_camera_set_is_eep_enabled;
 TL_CAMERA_GET_BINY tl_camera_get_biny;
@@ -90,6 +91,7 @@ TL_CAMERA_GET_PENDING_FRAME_OR_NULL tl_camera_get_pending_frame_or_null;
 TL_CAMERA_ARM tl_camera_arm;
 TL_CAMERA_ISSUE_SOFTWARE_TRIGGER tl_camera_issue_software_trigger;
 TL_CAMERA_DISARM tl_camera_disarm;
+TL_CAMERA_GET_POLAR_PHASE tl_camera_get_polar_phase;
 
 typedef void* (*TL_GET_FUNCTION) (char*);
 typedef void(*TL_MODULE_INITIALIZE)();
@@ -189,7 +191,7 @@ static void init_camera_sdk_function_pointers()
 	tl_camera_get_is_led_on = 0;
 	tl_camera_set_is_led_on = 0;
 	tl_camera_get_usb_port_type = 0;
-	tl_camera_get_communication_Interface = 0;
+	tl_camera_get_communication_interface = 0;
 	tl_camera_get_eep_status = 0;
 	tl_camera_set_is_eep_enabled = 0;
 	tl_camera_get_biny = 0;
@@ -200,7 +202,6 @@ static void init_camera_sdk_function_pointers()
 	tl_camera_get_black_level = 0;
 	tl_camera_set_black_level = 0;
 	tl_camera_get_black_level_range = 0;
-	tl_camera_get_exposure_time_range = 0;
 	tl_camera_get_sensor_readout_time = 0;
 	tl_camera_get_image_width = 0;
 	tl_camera_get_image_height = 0;
@@ -212,6 +213,7 @@ static void init_camera_sdk_function_pointers()
 	tl_camera_arm = 0;
 	tl_camera_issue_software_trigger = 0;
 	tl_camera_disarm = 0;
+	tl_camera_get_polar_phase = 0;
 }
 
 static int init_error_cleanup()
@@ -259,7 +261,7 @@ int tl_camera_sdk_dll_initialize(void)
 	// Platform specific code to get a handle to the SDK kernel module.
 #ifdef _WIN32
 	kernel_obj = LoadLibraryA("thorlabs_unified_sdk_kernel.dll");
-	int lastError = GetLastError();
+//	int lastError = GetLastError();
 	if (!kernel_obj)
 	{
 		return (init_error_cleanup());
@@ -427,6 +429,12 @@ int tl_camera_sdk_dll_initialize(void)
 
 	tl_camera_set_trigger_polarity = (TL_CAMERA_SET_TRIGGER_POLARITY)get_module_function(sdk_handle, "tl_camera_set_trigger_polarity");
 	if (!tl_camera_set_trigger_polarity)
+	{
+		return (init_error_cleanup());
+	}
+
+	tl_camera_get_polar_phase = (TL_CAMERA_GET_POLAR_PHASE)get_module_function(sdk_handle, "tl_camera_get_polar_phase");
+	if (!tl_camera_get_polar_phase)
 	{
 		return (init_error_cleanup());
 	}
@@ -731,8 +739,8 @@ int tl_camera_sdk_dll_initialize(void)
 		return (init_error_cleanup());
 	}
 
-	tl_camera_get_communication_Interface = (TL_CAMERA_GET_COMMUNICATION_INTERFACE)get_module_function(sdk_handle, "tl_camera_get_communication_Interface");
-	if (!tl_camera_get_communication_Interface)
+	tl_camera_get_communication_interface = (TL_CAMERA_GET_COMMUNICATION_INTERFACE)get_module_function(sdk_handle, "tl_camera_get_communication_interface");
+	if (!tl_camera_get_communication_interface)
 	{
 		return (init_error_cleanup());
 	}
@@ -793,12 +801,6 @@ int tl_camera_sdk_dll_initialize(void)
 
 	tl_camera_get_biny_range = (TL_CAMERA_GET_BINY_RANGE)get_module_function(sdk_handle, "tl_camera_get_biny_range");
 	if (!tl_camera_get_biny_range)
-	{
-		return (init_error_cleanup());
-	}
-
-	tl_camera_get_exposure_time_range = (TL_CAMERA_GET_EXPOSURE_TIME_RANGE)get_module_function(sdk_handle, "tl_camera_get_exposure_time_range");
-	if (!tl_camera_get_exposure_time_range)
 	{
 		return (init_error_cleanup());
 	}
