@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
+import mmcorej.DeviceType;
 import mmcorej.DoubleVector;
 import mmcorej.MMCoreJ;
 import mmcorej.PropertySetting;
@@ -564,7 +565,7 @@ public final class MicroscopeModel {
                devices_.add(dev);
             } else if (tokens[0].contentEquals(new StringBuffer()
                   .append(MMCoreJ.getG_CFGCommand_Property()))) {
-
+                  
                // -------------------------------------------------------------
                // "PropertyItem" command
                // -------------------------------------------------------------
@@ -722,6 +723,8 @@ public final class MicroscopeModel {
                Device dev = findDevice(tokens[1]);
                if (dev != null) {
                   dev.setFocusDirection(Integer.parseInt(tokens[2]));
+                  //Set type manually or else focus direction wont get resaved
+                  dev.setTypeByInt(DeviceType.StageDevice.swigValue());
                }
             } else if (tokens[0].contentEquals(new StringBuffer().append(MMCoreJ.getG_CFGCommand_ParentID()))) {
                if (tokens.length != 3) {
