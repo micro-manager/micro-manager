@@ -56,6 +56,7 @@ TL_COLOR_ENABLE_OUTPUT_LUTS tl_color_enable_output_LUTs(0);
 TL_COLOR_TRANSFORM_48_TO_48 tl_color_transform_48_to_48(0);
 TL_COLOR_TRANSFORM_48_TO_24 tl_color_transform_48_to_24(0);
 TL_COLOR_TRANSFORM_48_TO_32 tl_color_transform_48_to_32(0);
+TL_COLOR_TRANSFORM_48_TO_64 tl_color_transform_48_to_64(0);
 TL_COLOR_DESTROY_COLOR_PROCESSOR tl_color_destroy_color_processor(0);
 TL_COLOR_PROCESSING_MODULE_TERMINATE tl_color_processing_module_terminate(0);
 
@@ -368,7 +369,16 @@ int Tsi3Cam::InitializeColorProcessor(bool wb/*=false*/)
 			::FreeLibrary(g_colorModuleHandle);
 			return ERR_INTERNAL_ERROR;
 		}
-	
+
+		tl_color_transform_48_to_64 = reinterpret_cast <TL_COLOR_TRANSFORM_48_TO_64> (::GetProcAddress(g_colorModuleHandle, "tl_color_transform_48_to_64"));
+      if (!tl_color_transform_48_to_64)
+      {
+			LogMessage(dllLoadErr);
+         ::FreeLibrary(g_demosaicModuleHandle);
+         ::FreeLibrary(g_colorModuleHandle);
+         return ERR_INTERNAL_ERROR;
+      }
+
 		tl_color_destroy_color_processor = reinterpret_cast <TL_COLOR_DESTROY_COLOR_PROCESSOR> (::GetProcAddress(g_colorModuleHandle, "tl_color_destroy_color_processor"));
 		if (!tl_color_destroy_color_processor)
 		{
