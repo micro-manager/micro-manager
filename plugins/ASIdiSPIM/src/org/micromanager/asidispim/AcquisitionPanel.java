@@ -4402,12 +4402,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                     if (acqSimultSideA) {
                                        // somehow was slow writing/saving datasets when using both timepoint and channel axes
                                        // so for now at least fall back on filing all images from same camera into a single "dataset channel" even for different channels
-                                       // anothen approach which I didn't try would be to create a separate acquisition for each camera and file images in the appropriate one
+                                       // another approach which I didn't try would be to create a separate acquisition for each camera and file images in the appropriate one
 //                                       if (acqSettings.channelMode == MultichannelModes.Keys.SLICE_HW) {
 //                                          actualTimePoint = cameraImageNr[cameraIndex] % acqSettings.numChannels;  // want modulo arithmetic
 //                                          actualFrameNr = cameraImageNr[cameraIndex] / acqSettings.numChannels;    // want quotient only
 //                                       } else {
-                                          actualTimePoint = channelNum;
+                                          actualTimePoint = 0;
                                           actualFrameNr = cameraImageNr[cameraIndex];
 //                                       }
                                     } else if (acqSettings.hardwareTimepoints) {
