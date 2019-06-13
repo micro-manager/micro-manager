@@ -284,7 +284,7 @@ int Tsi3Cam::Initialize()
    //ret = CreateProperty(g_Temperature, "0", MM::Integer, true, pAct);
 
    //tl_camera_get_is_eep_supported create EEP On/Off property
-	bool eepSupported(false);
+	int eepSupported(0);
 	tl_camera_get_is_eep_supported(camHandle, &eepSupported);
 	if (eepSupported)
 	{

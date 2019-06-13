@@ -30,10 +30,10 @@
     <ClCompile Include="TSILibrary.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="tl_camera_sdk_load.cpp">
+    <ClCompile Include="ColorProcess.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ColorProcess.cpp">
+    <ClCompile Include="tl_camera_sdk_load.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
