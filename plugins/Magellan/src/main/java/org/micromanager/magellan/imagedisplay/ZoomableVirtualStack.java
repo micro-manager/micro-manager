@@ -200,13 +200,15 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
          mouseLocation = new Point(displayImageWidth_ / 2, displayImageHeight_ / 2);
       }
 
-      if (!acquisition_.anythingAcquired()) {
+      if (acquisition_ != null && !acquisition_.anythingAcquired()) {
          return; //dont want to zoom when theres not reference
       }
       
-      //If we haven't already gotten to this low of a resolution, create it
-      acquisition_.addResolutionsUpTo(resolutionIndex_ + numLevels);
-
+      
+      if (acquisition_ != null) {
+         //If we haven't already gotten to this low of a resolution, create it
+         acquisition_.addResolutionsUpTo(resolutionIndex_ + numLevels);
+      }
 
       int previousDSFactor = (int) Math.pow(2, resolutionIndex_);
       //keep cursor in same location relative to full res data for fast zooming/unzooming
