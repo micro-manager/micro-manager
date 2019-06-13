@@ -20,7 +20,7 @@
 
 		<dependency org="com.fifesoft" name="rsyntaxtextarea" rev="2.6.1"/>
 		<dependency org="com.google.code.gson" name="gson" rev="2.2.4"/>
-		<dependency org="com.google.guava" name="guava" rev="21.0"/>
+		<dependency org="com.google.guava" name="guava" rev="17.0"/>
 		<dependency org="com.google.protobuf" name="protobuf-java" rev="2.6.1"/><!-- transitive dep of TSFProto -->
 		<dependency org="com.miglayout" name="miglayout-swing" rev="4.2"/>
 		<dependency org="net.imglib2" name="imglib2" rev="5.6.3"/>
