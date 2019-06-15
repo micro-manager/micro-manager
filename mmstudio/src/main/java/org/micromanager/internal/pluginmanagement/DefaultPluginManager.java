@@ -154,6 +154,9 @@ public final class DefaultPluginManager implements PluginManager {
          catch (IllegalAccessException e) {
             ReportingUtils.logError(e, "Access exception instantiating plugin class " + pluginClass);
          }
+         catch (NoClassDefFoundError e) {
+            ReportingUtils.logError(e, "Dependency not found for plugin class " + pluginClass);            
+         }
       }
    }
 
