@@ -170,9 +170,9 @@ int Tsi3Cam::ColorProcess16to64(unsigned short* monoBuf, unsigned char* colorBuf
 											, (1 << fullFrame.bitDepth) - 1
 											, 0
 											, (1 << fullFrame.bitDepth) - 1
-											, 8 - fullFrame.bitDepth
-											, 8 - fullFrame.bitDepth
-											, 8 - fullFrame.bitDepth
+											, 0
+											, 0
+											, 0
 											, reinterpret_cast<unsigned short*>(colorBuf)
 											, TL_COLOR_FORMAT_BGR_PIXEL
 											, mono_image_width * mono_image_height) != TL_COLOR_NO_ERROR)
