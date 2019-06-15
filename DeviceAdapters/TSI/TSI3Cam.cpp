@@ -68,7 +68,9 @@ Tsi3Cam::Tsi3Cam() :
    maxExposureMs(10000),
    color(false),
 	whiteBalance(false),
-	whiteBalancePending(0L)
+	whiteBalancePending(0L),
+	pixelSize(4),
+	bitDepth(8)
 {
    // set default error messages
    InitializeDefaultErrorMessages();
@@ -222,6 +224,19 @@ int Tsi3Cam::Initialize()
       AddAllowedValue(g_WhiteBalance, g_Off);
       AddAllowedValue(g_WhiteBalance, g_Set);
       AddAllowedValue(g_WhiteBalance, g_On);
+
+		pAct = new CPropertyAction (this, &Tsi3Cam::OnPixelType);
+		pixelSize = 4; // 32bitRGB
+		ret = CreateStringProperty(MM::g_Keyword_PixelType, g_PixelType_32bitRGB, false, pAct);
+		assert(ret == DEVICE_OK);
+
+		vector<string> pixelTypeValues;
+		pixelTypeValues.push_back(g_PixelType_32bitRGB);
+		pixelTypeValues.push_back(g_PixelType_64bitRGB);
+
+		ret = SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);
+		if (ret != DEVICE_OK)
+			return ret;
 
 	}
 	else if (sensorType == TL_CAMERA_SENSOR_TYPE_MONOCHROME)
@@ -448,7 +463,7 @@ int Tsi3Cam::SnapImage()
 
 unsigned Tsi3Cam::GetBitDepth() const
 {
-   return color ? 8 : (unsigned)fullFrame.bitDepth;
+   return color ? bitDepth : (unsigned)fullFrame.bitDepth;
 }
 
 int Tsi3Cam::GetBinning() const
@@ -592,7 +607,7 @@ int Tsi3Cam::ResizeImageBuffer()
    tl_camera_get_sensor_pixel_size_bytes(camHandle, &d);
 
 	if (color)
-		d = 4; // RGB32 format
+		d = pixelSize;
 
    img.Resize(w, h, d);
    ostringstream os;
@@ -740,8 +755,14 @@ void Tsi3Cam::frame_available_callback(void* /*sender*/, unsigned short* image_b
 		}
 
 		// COLOR
-		instance->img.Resize(img_width, img_height, 4);
-		instance->ColorProcess16to32(image_buffer, instance->img.GetPixelsRW(), img_width, img_height);
+		instance->img.Resize(img_width, img_height, instance->pixelSize);
+		if (instance->pixelSize == 4)
+			instance->ColorProcess16to32(image_buffer, instance->img.GetPixelsRW(), img_width, img_height);
+		else if (instance->pixelSize == 8)
+			instance->ColorProcess16to64(image_buffer, instance->img.GetPixelsRW(), img_width, img_height);
+		else
+			assert(!"Unsupported pixel type");
+
 	}
 	else
 	{

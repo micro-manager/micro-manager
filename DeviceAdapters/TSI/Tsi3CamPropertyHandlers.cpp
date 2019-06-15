@@ -304,3 +304,37 @@ int Tsi3Cam::OnWhiteBalance(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    return DEVICE_OK;
 }
+
+int Tsi3Cam::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::AfterSet)
+	{
+      if(IsCapturing())
+         return DEVICE_CAMERA_BUSY_ACQUIRING;
+
+      string pixelType;
+      pProp->Get(pixelType);
+      if ( pixelType.compare(g_PixelType_32bitRGB) == 0)
+      {
+         pixelSize = 4;
+         bitDepth = 8;
+      }
+      else if ( pixelType.compare(g_PixelType_64bitRGB) == 0)
+      {
+			pixelSize = 8;
+         bitDepth = 12;
+		}
+		return ResizeImageBuffer();
+	}
+	else if (eAct == MM::BeforeGet)
+	{
+		if (pixelSize == 4)
+			pProp->Set(g_PixelType_32bitRGB);
+		else if(pixelSize == 8)
+			pProp->Set(g_PixelType_64bitRGB);
+		else
+			assert(!"Unsupported pixel type");
+
+	}
+	return DEVICE_OK;
+}

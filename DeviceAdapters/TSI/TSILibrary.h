@@ -70,7 +70,8 @@ static const char* g_HardwareEdge = "HardwareStandard";
 static const char* g_HardwareDuration = "HardwareBulb";
 static const char* g_Positive = "Positive";
 static const char* g_Negative = "Negative";
-
+static const char* g_PixelType_32bitRGB = "RGBA32";
+static const char* g_PixelType_64bitRGB = "RGBA64";
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
