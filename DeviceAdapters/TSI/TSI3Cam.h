@@ -131,6 +131,7 @@ public:
    int OnHotPixEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnHotPixThreshold(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnWhiteBalance(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int ResizeImageBuffer();
@@ -139,6 +140,7 @@ private:
    bool StartCamera(int frames);
 	int ColorProcess16to32(unsigned short* monoBuffer, unsigned char* colorBuffer, int width, int height);
 	int ColorProcess16to48WB(unsigned short* monoBuffer, unsigned short* colorBuffer, int width, int height);
+	int ColorProcess16to64(unsigned short* monoBuffer, unsigned char* colorBuffer, int width, int height);
 	int InitializeColorProcessor(bool wb=false);
 	int ShutdownColorProcessor();
 	int ClearWhiteBalance();
@@ -160,6 +162,8 @@ private:
    double maxExposureMs;
    bool color;
 	bool whiteBalance;
+	int pixelSize;
+	int bitDepth;
 	LONG whiteBalancePending;
 
    Tsi3RoiBin fullFrame;

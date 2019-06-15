@@ -134,6 +134,59 @@ int Tsi3Cam::ColorProcess16to32(unsigned short* monoBuf, unsigned char* colorBuf
 /**
  * Process monochrome image obtained from Bayer mask sensor with demosaic and color transformation
  * @param monoBuf - sensor image, assumed to be 2 bytes per pixel with bit-depth defined with bitDepth parameter
+ * @param colorBuf - output color image 64-bit RGBA format
+ * @param bitDepth - bit depth of the input image, valid values 8-16
+ * @return - error code
+ */
+int Tsi3Cam::ColorProcess16to64(unsigned short* monoBuf, unsigned char* colorBuf, int mono_image_width, int mono_image_height)
+{
+	// process
+	// resize temp buffer (3x larger than the monochrome buffer) to hold the demosaic (only) data.
+	demosaicBuffer.resize(mono_image_width * mono_image_height * 3);
+
+	// Demosaic the monochrome image data.
+	if (tl_demosaic_transform_16_to_48(mono_image_width
+												, mono_image_height
+												, 0
+												, 0
+												, cfaPhase
+												, TL_COLOR_FORMAT_BGR_PLANAR
+												, TL_COLOR_FILTER_TYPE_BAYER
+												, fullFrame.bitDepth
+												, monoBuf
+												, &demosaicBuffer[0]) != TL_COLOR_NO_ERROR)
+	{
+		LogMessage("Failed to demosaic the monochrome image!"); 
+		return ERR_INTERNAL_ERROR;
+	}
+	
+	// Color process the demosaic color frame.
+	if (tl_color_transform_48_to_64(colorProcessor
+											, &demosaicBuffer[0] // input buffer
+											, TL_COLOR_FORMAT_BGR_PLANAR
+											, 0
+											, (1 << fullFrame.bitDepth) - 1
+											, 0
+											, (1 << fullFrame.bitDepth) - 1
+											, 0
+											, (1 << fullFrame.bitDepth) - 1
+											, 8 - fullFrame.bitDepth
+											, 8 - fullFrame.bitDepth
+											, 8 - fullFrame.bitDepth
+											, reinterpret_cast<unsigned short*>(colorBuf)
+											, TL_COLOR_FORMAT_BGR_PIXEL
+											, mono_image_width * mono_image_height) != TL_COLOR_NO_ERROR)
+	{
+		LogMessage("Color transform failed!"); 
+		return ERR_INTERNAL_ERROR;
+	}
+	
+	return DEVICE_OK;
+}
+
+/**
+ * Process monochrome image obtained from Bayer mask sensor with demosaic and color transformation
+ * @param monoBuf - sensor image, assumed to be 2 bytes per pixel with bit-depth defined with bitDepth parameter
  * @param colorBuf - output color image 48-bit RGB format
  * @param bitDepth - bit depth of the input image, valid values 8-16
  * @return - error code
