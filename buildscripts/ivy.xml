@@ -31,7 +31,7 @@
 		<dependency org="org.apache.commons" name="commons-lang3" rev="3.5"/>
 		<dependency org="org.apache.commons" name="commons-math" rev="2.2"/>
 		<dependency org="org.apache.commons" name="commons-math3" rev="3.6.1"/>
-		<dependency org="org.clojure" name="clojure" rev="1.8.0"/>
+		<dependency org="org.clojure" name="clojure" rev="1.3.0"/>
 		<dependency org="org.clojure" name="core.cache" rev="0.6.2"/>
 		<dependency org="org.clojure" name="core.memoize" rev="0.5.2"/>
 		<dependency org="org.clojure" name="data.json" rev="0.1.1"/>
