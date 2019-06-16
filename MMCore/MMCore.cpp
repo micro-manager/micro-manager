@@ -106,7 +106,7 @@ using namespace std;
  * (Keep the 3 numbers on one line to make it easier to look at diffs when
  * merging/rebasing.)
  */
-const int MMCore_versionMajor = 8, MMCore_versionMinor = 8, MMCore_versionPatch = 1;
+const int MMCore_versionMajor = 9, MMCore_versionMinor = 0, MMCore_versionPatch = 0;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -5880,7 +5880,7 @@ double CMMCore::getSLMExposure(const char* deviceLabel) throw (CMMError)
  *
  * @param deviceLabel name of the SLM
  */
-unsigned CMMCore::getSLMWidth(const char* deviceLabel)
+unsigned CMMCore::getSLMWidth(const char* deviceLabel) throw (CMMError)
 {
    boost::shared_ptr<SLMInstance> pSLM =
       deviceManager_->GetDeviceOfType<SLMInstance>(deviceLabel);
@@ -5895,7 +5895,7 @@ unsigned CMMCore::getSLMWidth(const char* deviceLabel)
  *
  * @param deviceLabel name of the SLM
  */
-unsigned CMMCore::getSLMHeight(const char* deviceLabel)
+unsigned CMMCore::getSLMHeight(const char* deviceLabel) throw (CMMError)
 {
    boost::shared_ptr<SLMInstance> pSLM =
       deviceManager_->GetDeviceOfType<SLMInstance>(deviceLabel);
@@ -5910,7 +5910,7 @@ unsigned CMMCore::getSLMHeight(const char* deviceLabel)
  *
  * @param deviceLabel name of the SLM
  */
-unsigned CMMCore::getSLMNumberOfComponents(const char* deviceLabel)
+unsigned CMMCore::getSLMNumberOfComponents(const char* deviceLabel) throw (CMMError)
 {
    boost::shared_ptr<SLMInstance> pSLM =
       deviceManager_->GetDeviceOfType<SLMInstance>(deviceLabel);
@@ -5924,7 +5924,7 @@ unsigned CMMCore::getSLMNumberOfComponents(const char* deviceLabel)
  *
  * @param deviceLabel name of the SLM
  */
-unsigned CMMCore::getSLMBytesPerPixel(const char* deviceLabel)
+unsigned CMMCore::getSLMBytesPerPixel(const char* deviceLabel) throw (CMMError)
 {
    boost::shared_ptr<SLMInstance> pSLM =
       deviceManager_->GetDeviceOfType<SLMInstance>(deviceLabel);
@@ -5939,7 +5939,7 @@ unsigned CMMCore::getSLMBytesPerPixel(const char* deviceLabel)
  *
  * @param deviceLabel name of the SLM
  */
-long CMMCore::getSLMSequenceMaxLength(const char* deviceLabel)
+long CMMCore::getSLMSequenceMaxLength(const char* deviceLabel) throw (CMMError)
 {
    boost::shared_ptr<SLMInstance> pSLM =
       deviceManager_->GetDeviceOfType<SLMInstance>(deviceLabel);

@@ -569,8 +569,8 @@ public:
    void setSLMExposure(const char* slmLabel, double exposure_ms)
       throw (CMMError);
    double getSLMExposure(const char* slmLabel) throw (CMMError);
-   unsigned getSLMWidth(const char* slmLabel);
-   unsigned getSLMHeight(const char* slmLabel);
+   unsigned getSLMWidth(const char* slmLabel) throw (CMMError);
+   unsigned getSLMHeight(const char* slmLabel) throw (CMMError);
    unsigned getSLMNumberOfComponents(const char* slmLabel);
    unsigned getSLMBytesPerPixel(const char* slmLabel);
 
