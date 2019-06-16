@@ -571,10 +571,10 @@ public:
    double getSLMExposure(const char* slmLabel) throw (CMMError);
    unsigned getSLMWidth(const char* slmLabel) throw (CMMError);
    unsigned getSLMHeight(const char* slmLabel) throw (CMMError);
-   unsigned getSLMNumberOfComponents(const char* slmLabel);
-   unsigned getSLMBytesPerPixel(const char* slmLabel);
+   unsigned getSLMNumberOfComponents(const char* slmLabel) throw (CMMError);
+   unsigned getSLMBytesPerPixel(const char* slmLabel) throw (CMMError);
 
-   long getSLMSequenceMaxLength(const char* slmLabel);
+   long getSLMSequenceMaxLength(const char* slmLabel) throw (CMMError);
    void startSLMSequence(const char* slmLabel) throw (CMMError);
    void stopSLMSequence(const char* slmLabel) throw (CMMError);
    void loadSLMSequence(const char* slmLabel,
