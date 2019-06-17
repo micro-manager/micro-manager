@@ -152,6 +152,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private DefaultQuickAccessManager quickAccess_;
    private DefaultAlertManager alertManager_;
    private DefaultEventManager eventManager_;
+   private UserProfileStaticInterface userProfileManager_;
    
    // MMcore
    private CMMCore core_;
@@ -242,9 +243,9 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          ReportingUtils.showError(ex, 
                "Failed to load the MMCoreJ_wrap native library");
       }
-
-      initializeLogging(core_);
+      
       initializeVariousManagers();
+      initializeLogging(core_);
       // We need to be subscribed to the global event bus for plugin loading
       events().registerForEvents(this);
 
@@ -281,14 +282,14 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       ttManager.setInitialDelay(TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS);
 
 
-      UserProfileAdmin profileAdmin = UserProfileStaticInterface.getAdmin();
+      UserProfileAdmin profileAdmin = userProfileManager_.getAdmin();
       UUID profileUUID = profileAdmin.getUUIDOfDefaultProfile();
       try {
          if (StartupSettings.create(profileAdmin.getNonSavingProfile(profileUUID)).
                shouldSkipUserInteractionWithSplashScreen()) {
             List<String> recentConfigs = HardwareConfigurationManager.
                   getRecentlyUsedConfigFilesFromProfile(
-                        UserProfileStaticInterface.getInstance());
+                        profile());
             sysConfigFile_ = recentConfigs.isEmpty() ? null : recentConfigs.get(0);
          }
          else {
@@ -434,6 +435,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // The tools menu depends on the Quick-Access Manager.
       quickAccess_ = new DefaultQuickAccessManager(studio_);
       
+      userProfileManager_ = new UserProfileStaticInterface();
       alertManager_ = new DefaultAlertManager(studio_);
 
       engine_ = new AcquisitionWrapperEngine();
@@ -1186,7 +1188,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          }
       }
       try {
-         UserProfileStaticInterface.shutdown();
+         userProfileManager_.shutdown();
       }
       catch (InterruptedException notExpected) {
          Thread.currentThread().interrupt();
@@ -1198,12 +1200,12 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
 
       try {
-         ((DefaultUserProfile) UserProfileStaticInterface.getInstance()).close();
+         ((DefaultUserProfile) profile()).close();
       }
       catch (InterruptedException notUsedByUs) {
          Thread.currentThread().interrupt();
       }
-      UserProfileStaticInterface.getAdmin().shutdownAutosaves();
+      userProfileManager_.getAdmin().shutdownAutosaves();
 
       boolean shouldCloseWholeApp = OptionsDlg.getShouldCloseOnExit();
       if (shouldCloseWholeApp && !quitInitiatedByImageJ) {
@@ -1279,7 +1281,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
             core_.waitForSystem();
             coreCallback_.setIgnoring(true);
             HardwareConfigurationManager.
-                  create(UserProfileStaticInterface.getInstance(), core_).
+                  create(profile(), core_).
                   loadHardwareConfiguration(sysConfigFile_);
             coreCallback_.setIgnoring(false);
             GUIUtils.preventDisplayAdapterChangeExceptions();
@@ -1571,11 +1573,15 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    @Override
    public UserProfile profile() {
-      return UserProfileStaticInterface.getInstance();
+      return userProfileManager_.getProfile();
    }
    @Override
    public UserProfile getUserProfile() {
       return profile();
+   }
+   
+   public UserProfileAdmin profileAdmin() {
+       return userProfileManager_.getAdmin();
    }
 
    @Override
@@ -1721,7 +1727,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    @Override
    public AffineTransform getCameraTransform(String config) {
       // Try the modern way first
-      Double[] params = UserProfileStaticInterface.getInstance().getDoubleArray(
+      Double[] params = profile().getDoubleArray(
             MMStudio.class, AFFINE_TRANSFORM + config, null);
       if (params != null && params.length == 6) {
          double[] unboxed = new double[6];
@@ -1732,7 +1738,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
 
       // The early 2.0-beta way of storing as a serialized object.
-      PropertyMap studioSettings = UserProfileStaticInterface.getInstance().
+      PropertyMap studioSettings = profile().
             getSettings(MMStudio.class).toPropertyMap();
       AffineTransform result = (AffineTransform)
          ((DefaultPropertyMap) studioSettings).getLegacySerializedObject(
@@ -1763,7 +1769,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       for (int i = 0; i < 6; ++i) {
          boxed[i] = params[i];
       }
-      UserProfileStaticInterface.getInstance().setDoubleArray(MMStudio.class, AFFINE_TRANSFORM + config, boxed);
+      profile().setDoubleArray(MMStudio.class, AFFINE_TRANSFORM + config, boxed);
    }
 
    public double getCachedXPosition() {
@@ -1790,35 +1796,35 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       return staticInfo_.getPixelSizeAffine();
    }
 
-   public static boolean getShouldDeleteOldCoreLogs() {
-      return UserProfileStaticInterface.getInstance().getBoolean(MMStudio.class,
+   public boolean getShouldDeleteOldCoreLogs() {
+      return profile().getBoolean(MMStudio.class,
             SHOULD_DELETE_OLD_CORE_LOGS, false);
    }
 
-   public static void setShouldDeleteOldCoreLogs(boolean shouldDelete) {
-      UserProfileStaticInterface.getInstance().setBoolean(MMStudio.class,
+   public void setShouldDeleteOldCoreLogs(boolean shouldDelete) {
+      profile().setBoolean(MMStudio.class,
             SHOULD_DELETE_OLD_CORE_LOGS, shouldDelete);
    }
 
-   public static int getCoreLogLifetimeDays() {
-      return UserProfileStaticInterface.getInstance().getInt(MMStudio.class,
+   public int getCoreLogLifetimeDays() {
+      return profile().getInt(MMStudio.class,
             CORE_LOG_LIFETIME_DAYS, 7);
    }
 
-   public static void setCoreLogLifetimeDays(int days) {
-      UserProfileStaticInterface.getInstance().setInt(MMStudio.class,
+   public void setCoreLogLifetimeDays(int days) {
+      profile().setInt(MMStudio.class,
             CORE_LOG_LIFETIME_DAYS, days);
    }
 
-   public static int getCircularBufferSize() {
+   public int getCircularBufferSize() {
       // Default to more MB for 64-bit systems.
       int defaultVal = System.getProperty("sun.arch.data.model", "32").equals("64") ? 250 : 25;
-      return UserProfileStaticInterface.getInstance().getInt(MMStudio.class,
+      return profile().getInt(MMStudio.class,
             CIRCULAR_BUFFER_SIZE, defaultVal);
    }
 
-   public static void setCircularBufferSize(int newSize) {
-      UserProfileStaticInterface.getInstance().setInt(MMStudio.class,
+   public void setCircularBufferSize(int newSize) {
+      profile().setInt(MMStudio.class,
             CIRCULAR_BUFFER_SIZE, newSize);
    }
 }
