@@ -82,8 +82,8 @@ public class MosaicSequencingFrame extends MMFrame {
    private final Studio gui_;
    private final String mosaicName_;
    private final SLM mosaicDevice_;
-   private final int mosaicWidth_;
-   private final int mosaicHeight_;
+   private int mosaicWidth_ = 0;
+   private int mosaicHeight_ = 0;
    private final ProjectorControlForm projectorControlForm_;
    private final DefaultTableModel sequenceTableModel_;
    private final Vector<String> headerNames = new Vector<String>(Arrays.asList(         
@@ -784,8 +784,12 @@ public class MosaicSequencingFrame extends MMFrame {
       mosaicDevice_ = mosaicDevice;
       // Get the first available Mosaic device for now.
       mosaicName_ = getMosaicDevices(core_).get(0);
-      mosaicWidth_ = (int) core_.getSLMWidth(mosaicName_);
-      mosaicHeight_ = (int) core.getSLMHeight(mosaicName_);
+      try {
+         mosaicWidth_ = (int) core_.getSLMWidth(mosaicName_);
+         mosaicHeight_ = (int) core.getSLMHeight(mosaicName_);
+      } catch (Exception ex) {
+         // TODO: handle correctly
+      }
       sequenceTableModel_ = (DefaultTableModel) sequenceTable_.getModel();
       intensityNames_ = generateIntensityNames();
       // The mosaic executor service makes sure everything happens
