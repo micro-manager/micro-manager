@@ -246,7 +246,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       initializeLogging(core_);
 
       // We need to be subscribed to the global event bus for plugin loading
-      DefaultEventManager.getInstance().registerForEvents(this);
+      events().registerForEvents(this);
 
       // Start loading plugins in the background
       pluginManager_ = new DefaultPluginManager(studio_);
@@ -319,7 +319,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       org.micromanager.internal.diagnostics.gui.ProblemReportController.startIfInterruptedOnExit();
 
       // This entity is a class property to avoid garbage collection.
-      coreCallback_ = new CoreEventCallback(core_, engine_);
+      coreCallback_ = new CoreEventCallback(studio_, engine_);
 
       // Load hardware configuration
       // Note that this also initializes Autofocus plugins.
@@ -359,7 +359,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
       // Now create and show the main window
       frame_ = new MainFrame(this, core_, snapLiveManager_);
-      staticInfo_ = new StaticInfo(core_, frame_);
+      staticInfo_ = new StaticInfo(studio_, frame_);
       frame_.toFront();
       frame_.setVisible(true);
       ReportingUtils.SetContainingFrame(frame_);
@@ -432,6 +432,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       quickAccess_ = new DefaultQuickAccessManager(studio_);
       
       alertManager_ = new DefaultAlertManager(studio_);
+      
+      eventManager_ = new DefaultEventManager();
 
       engine_ = new AcquisitionWrapperEngine();
       engine_.setParentGUI(this);
@@ -1627,7 +1629,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    @Override
    public EventManager events() {
-      return eventManager_.getInstance();
+      return eventManager_;
    }
 
    @Override

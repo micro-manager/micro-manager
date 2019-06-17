@@ -60,7 +60,7 @@ public final class UiMovesStageManager {
       ZWheelListener wheelListener = null;
       //KeyAdapter keyListener = null;
       if (MMMenuBar.getToolsMenu().getMouseMovesStage()) {
-         dragListener = new CenterAndDragListener(studio_.core(), executorService_);
+         dragListener = new CenterAndDragListener(studio_, executorService_);
          display.registerForEvents(dragListener);
          wheelListener = new ZWheelListener(studio_, executorService_);
          display.registerForEvents(wheelListener);
