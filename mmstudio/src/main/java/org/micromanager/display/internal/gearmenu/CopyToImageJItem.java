@@ -67,7 +67,7 @@ public final class CopyToImageJItem implements DisplayGearMenuPlugin, SciJavaPlu
       if (dp.getNumImages() == 1) {
          try {
             image = dp.getAnyImage();
-            ImageProcessor iProc = DefaultImageJConverter.getInstance().createProcessor(image, copy);
+            ImageProcessor iProc = DefaultImageJConverter.createProcessor(image, copy);
             iPlus = new ImagePlus(dp.getName() + "-ij", iProc);
             
          } catch (IOException ex) {
@@ -92,7 +92,7 @@ public final class CopyToImageJItem implements DisplayGearMenuPlugin, SciJavaPlu
                for (int z = 0; z <= dp.getMaxIndices().getZ(); z++) {
                   for (int c = 0; c <= dp.getMaxIndices().getC(); c++) {
                      image = dp.getImage(cb.c(c).t(t).z(z).build());
-                     ImageProcessor iProc = DefaultImageJConverter.getInstance().createProcessor(image, copy);
+                     ImageProcessor iProc = DefaultImageJConverter.createProcessor(image, copy);
                      imgStack.addSlice(iProc);
                   }
                }

@@ -67,21 +67,13 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
    public static final String ICON_COLOR = "RGB color int for color swatches";
 
    private static final String SAVED_CONFIG = "Saved configuration for quick access windows";
-   private static DefaultQuickAccessManager staticInstance_;
-   /**
-    * Create the manager, a static singleton.
-    * @param studio The Micro-Manager Studio instance
-    */
-   public static void createManager(Studio studio) {
-      staticInstance_ = new DefaultQuickAccessManager(studio);
-      studio.events().registerForEvents(staticInstance_);
-   }
 
    private final Studio studio_;
    private final ArrayList<QuickAccessFrame> knownPanels_;
 
    private DefaultQuickAccessManager(Studio studio) {
       studio_ = studio;
+      studio.events().registerForEvents(this);
       knownPanels_ = new ArrayList<QuickAccessFrame>();
    }
 
@@ -261,10 +253,10 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
    /**
     * Prompt the user to delete the specified panel.
     */
-   public static void promptToDelete(JFrame panel) {
+   public void promptToDelete(JFrame panel) {
       if (!(panel instanceof QuickAccessFrame)) {
          // This should never happen.
-         staticInstance_.studio_.logs().logError(
+         studio_.logs().logError(
                "Asked to delete JFrame that isn't a QuickAccessFrame.");
       }
       if (JOptionPane.showConfirmDialog(panel,
@@ -282,8 +274,8 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
     * @param base Proposed new title for this frame
     * @return Unique title
     */
-   public static String getUniqueTitle(QuickAccessFrame panel, String base) {
-      for (QuickAccessFrame alt : staticInstance_.knownPanels_) {
+   public String getUniqueTitle(QuickAccessFrame panel, String base) {
+      for (QuickAccessFrame alt : knownPanels_) {
          if (alt != panel) {
             if (base.equals(alt.getTitle())) {
                // Only need to modify if the names are equal
@@ -313,20 +305,16 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
    /**
     * Create a new, empty panel.
     */
-   public static void createNewPanel() {
-      staticInstance_.addPanel(new JSONObject());
+   public void createNewPanel() {
+      addPanel(new JSONObject());
    }
 
    /**
     * Remove an existing panel.
     * @param panel The panel to be removed
     */
-   public static void deletePanel(QuickAccessFrame panel) {
-      staticInstance_.knownPanels_.remove(panel);
-      staticInstance_.studio_.events().post(new QuickAccessPanelEvent());
-   }
-
-   public static QuickAccessManager getInstance() {
-      return staticInstance_;
+   public void deletePanel(QuickAccessFrame panel) {
+      knownPanels_.remove(panel);
+      studio_.events().post(new QuickAccessPanelEvent());
    }
 }

@@ -66,7 +66,6 @@ import org.micromanager.display.internal.link.internal.DefaultLinkManager;
 public final class DefaultDisplayManager extends DataViewerListener implements DisplayManager {
    private static final String[] CLOSE_OPTIONS = new String[] {
          "Cancel", "Prompt for each", "Close without save prompt"};
-   private static DefaultDisplayManager staticInstance_;
 
    private final MMStudio studio_;
 
@@ -95,8 +94,6 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
       studio_ = studio;
       providerToDisplays_ = new HashMap<DataProvider, ArrayList<DisplayWindow>>();
       studio_.events().registerForEvents(this);
-      staticInstance_ = this;
-
       viewers_.registerForEvents(this);
    }
    
