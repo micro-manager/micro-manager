@@ -10,12 +10,10 @@ import java.awt.event.ItemEvent;
 import java.awt.Panel;
 import java.awt.Point;
 import java.awt.Polygon;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import mmcorej.CMMCore;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -38,7 +36,7 @@ public class Utils {
 
    public static List<Polygon> FloatToNormalPolygon(List<FloatPolygon> floatPolygons) {
       // manually copy from FloatPolygon to Polygon
-      List<Polygon> roiPolygons = new ArrayList<Polygon>();
+      List<Polygon> roiPolygons = new ArrayList<>();
       for (FloatPolygon fp : floatPolygons) {
          Polygon p = new Polygon();
          for (int i = 0; i < fp.npoints; i++) {
@@ -51,9 +49,24 @@ public class Utils {
    }
    
     /**
+     * Since the core does not have an api call to detect binning, we need to
+     * interpret a property. This is a bit ugly...
+     * @param core Micro-Manager core instance
+     * @return Integer represnting binning.  Unbinned is 1, 2x2 binning = 2, etc..
+     * @throws java.lang.Exception Core will throw an exception, a parse error is also possible
+     */
+    public static Integer getBinning(CMMCore core) throws Exception {
+        // Hamamatsu reports 1x1.  I wish there was an api call for binning
+        return Integer.parseInt(core.getProperty(core.getCameraDevice(), "Binning")
+                .substring(0, 1));
+    }
+
+    /**
     * Simple utility methods for points
     *
     * Adds a point to an existing polygon.
+     * @param polygon   Existing polygon
+     * @param p         Point to be added
     */
    public static void addVertex(Polygon polygon, Point p) {
       polygon.addPoint(p.x, p.y);
@@ -61,6 +74,8 @@ public class Utils {
    
    /**
     * Returns the vertices of the given polygon as a series of points.
+     * @param polygon   Existing Polygon
+     * @return          Vertices  of the polygon
     */
    public static Point[] getVertices(Polygon polygon) {
       Point vertices[] = new Point[polygon.npoints];
