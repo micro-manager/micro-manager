@@ -22,16 +22,16 @@ import org.micromanager.profile.internal.UserProfileAdmin;
  * @author Mark A. Tsuchida
  */
 @Deprecated
-public final class UserProfileStaticInterface {
+public final class UserProfileManager {
    private UserProfileAdmin admin_;
    private DefaultUserProfile profile_;
 
-   public UserProfileStaticInterface() {
+   public UserProfileManager() {
       admin_ = UserProfileAdmin.create();
       admin_.addCurrentProfileChangeListener(new ChangeListener() {
          @Override
          public void stateChanged(ChangeEvent e) {
-            synchronized (UserProfileStaticInterface.class) {
+            synchronized (UserProfileManager.class) {
                if (profile_ != null) {
                   try {
                      profile_.close();
@@ -56,7 +56,7 @@ public final class UserProfileStaticInterface {
    }
 
    public UserProfile getProfile() {
-      synchronized (UserProfileStaticInterface.class) {
+      synchronized (UserProfileManager.class) {
          if (profile_ == null) {
             try {
                profile_ = (DefaultUserProfile) admin_.getAutosavingProfile(
@@ -78,7 +78,7 @@ public final class UserProfileStaticInterface {
    }
 
    public void shutdown() throws InterruptedException {
-      synchronized (UserProfileStaticInterface.class) {
+      synchronized (UserProfileManager.class) {
          if (profile_ != null) {
             profile_.close();
             profile_ = null;

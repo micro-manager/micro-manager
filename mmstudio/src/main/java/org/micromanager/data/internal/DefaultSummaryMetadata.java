@@ -35,7 +35,6 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.SummaryMetadata;
 import static org.micromanager.data.internal.PropertyKey.*;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.utils.UserProfileStaticInterface;
 
 public final class DefaultSummaryMetadata implements SummaryMetadata {
    /**

@@ -55,7 +55,6 @@ import org.micromanager.internal.utils.AcqOrderMode;
 import org.micromanager.internal.utils.ColorEditor;
 import org.micromanager.internal.utils.ColorRenderer;
 import org.micromanager.internal.utils.DaytimeNighttime;
-import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
 import org.micromanager.internal.utils.GUIUtils;

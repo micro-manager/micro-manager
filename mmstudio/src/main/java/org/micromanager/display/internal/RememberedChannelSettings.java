@@ -27,7 +27,6 @@ import org.micromanager.UserProfile;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.internal.utils.ColorPalettes;
-import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.internal.MMStudio;
 
 /**

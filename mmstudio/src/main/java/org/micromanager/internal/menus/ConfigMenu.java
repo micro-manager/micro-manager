@@ -18,7 +18,6 @@ import org.micromanager.internal.hcwizard.ConfigWizard;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.profile.internal.gui.HardwareConfigurationManager;
 
 public final class ConfigMenu {

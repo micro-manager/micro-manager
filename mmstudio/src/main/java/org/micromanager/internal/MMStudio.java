@@ -103,7 +103,7 @@ import org.micromanager.internal.propertymap.DefaultPropertyMap;
 import org.micromanager.internal.script.ScriptPanel;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.DefaultAutofocusManager;
-import org.micromanager.internal.utils.UserProfileStaticInterface;
+import org.micromanager.internal.utils.UserProfileManager;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -152,7 +152,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private DefaultQuickAccessManager quickAccess_;
    private DefaultAlertManager alertManager_;
    private DefaultEventManager eventManager_;
-   private UserProfileStaticInterface userProfileManager_;
+   private UserProfileManager userProfileManager_;
    
    // MMcore
    private CMMCore core_;
@@ -435,7 +435,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // The tools menu depends on the Quick-Access Manager.
       quickAccess_ = new DefaultQuickAccessManager(studio_);
       
-      userProfileManager_ = new UserProfileStaticInterface();
+      userProfileManager_ = new UserProfileManager();
       alertManager_ = new DefaultAlertManager(studio_);
 
       engine_ = new AcquisitionWrapperEngine();

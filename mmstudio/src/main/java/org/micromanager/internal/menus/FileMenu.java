@@ -17,7 +17,6 @@ import org.micromanager.data.internal.SciFIODataProvider;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.FileDialogs;
-import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 

@@ -36,7 +36,6 @@ import mmcorej.StrVector;
 import org.micromanager.Studio;
 import org.micromanager.internal.dialogs.PresetEditor;
 import org.micromanager.internal.utils.DaytimeNighttime;
-import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.StateGroupCellRenderer;
