@@ -14,6 +14,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import mmcorej.CMMCore;
 import org.micromanager.alerts.internal.AlertsWindow;
+import org.micromanager.alerts.internal.DefaultAlertManager;
 import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.dialogs.OptionsDlg;
@@ -81,7 +82,7 @@ public final class ToolsMenu {
                new Runnable() {
                   @Override
                   public void run() {
-                     AlertsWindow.show(studio_);
+                     ((DefaultAlertManager) studio_.alerts()).alertsWindow().show();
                   }
                },
                "bell.png");
@@ -168,7 +169,7 @@ public final class ToolsMenu {
             new Runnable() {
                @Override
                public void run() {
-                  DefaultQuickAccessManager.createNewPanel();
+                  ((DefaultQuickAccessManager) studio_.quickAccess()).createNewPanel();
                }
             });
 
@@ -183,7 +184,7 @@ public final class ToolsMenu {
                new Runnable() {
                   @Override
                   public void run() {
-                     DefaultQuickAccessManager.promptToDelete(
+                     ((DefaultQuickAccessManager) studio_.quickAccess()).promptToDelete(
                         titleToFrame.get(title));
                   }
                });

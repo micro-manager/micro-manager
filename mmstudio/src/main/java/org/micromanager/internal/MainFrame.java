@@ -63,6 +63,7 @@ import org.micromanager.acquisition.internal.AcquisitionSelector;
 import org.micromanager.alerts.internal.AlertClearedEvent;
 import org.micromanager.alerts.internal.AlertUpdatedEvent;
 import org.micromanager.alerts.internal.AlertsWindow;
+import org.micromanager.alerts.internal.DefaultAlertManager;
 import org.micromanager.alerts.internal.DefaultAlert;
 import org.micromanager.alerts.internal.NoAlertsAvailableEvent;
 import org.micromanager.events.ChannelExposureEvent;
@@ -441,7 +442,7 @@ public final class MainFrame extends MMFrame {
             new Runnable() {
                @Override
                public void run() {
-                  AlertsWindow.show(studio_);
+                  ((DefaultAlertManager) studio_.alerts()).alertsWindow().show();
                }
             });
       alertButton_.setVisible(false);

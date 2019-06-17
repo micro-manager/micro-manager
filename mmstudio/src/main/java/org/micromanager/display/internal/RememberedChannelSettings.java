@@ -28,6 +28,7 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.UserProfileStaticInterface;
+import org.micromanager.internal.MMStudio;
 
 /**
  * This container class stores histogram and color settings for a specific
@@ -189,7 +190,7 @@ public final class RememberedChannelSettings {
          String name = summary.getSafeChannelName(i);
          RememberedChannelSettings channel = loadSettings(name, group,
                Color.WHITE, null, null, null);
-         newSettings[i] = DefaultDisplayManager.getInstance()
+         newSettings[i] = MMStudio.getInstance().displays()
             .getContrastSettings(channel.getHistogramMins(),
                   channel.getHistogramMaxes(), null, null);
       }

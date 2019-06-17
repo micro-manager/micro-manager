@@ -74,6 +74,7 @@ import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.data.DataProviderHasNewNameEvent;
 import org.micromanager.data.Datastore;
 import org.micromanager.display.internal.link.internal.DefaultLinkManager;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -1104,7 +1105,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    @Override
    public DisplayWindow duplicate() {
-      DisplayWindow dup = DefaultDisplayManager.getInstance().createDisplay(dataProvider_);
+      DisplayWindow dup = MMStudio.getInstance().displays().createDisplay(dataProvider_);
       dup.setDisplaySettings(this.getDisplaySettings());
       return dup;
    }

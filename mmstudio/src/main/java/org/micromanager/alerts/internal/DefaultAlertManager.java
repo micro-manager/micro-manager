@@ -26,7 +26,6 @@ import org.micromanager.Studio;
 import org.micromanager.alerts.Alert;
 import org.micromanager.alerts.AlertManager;
 import org.micromanager.alerts.UpdatableAlert;
-import org.micromanager.internal.MMStudio;
 
 public final class DefaultAlertManager implements AlertManager {
    private final Studio studio_;
@@ -74,5 +73,9 @@ public final class DefaultAlertManager implements AlertManager {
       // TODO: this potentially replaces an existing alert.
       titleToCustomAlert_.put(title, alert);
       return alert;
+   }
+   
+   public AlertsWindow alertsWindow() {
+       return alertsWindow_;
    }
 }

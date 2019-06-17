@@ -173,7 +173,7 @@ public final class QuickAccessFrame extends JFrame {
    private void loadConfig(JSONObject config) {
       if (config.length() == 0) {
          // Empty config; create a default (i.e. empty) window.
-         setTitle(DefaultQuickAccessManager.getUniqueTitle(this,DEFAULT_TITLE));
+         setTitle(((DefaultQuickAccessManager) studio_.quickAccess()).getUniqueTitle(this,DEFAULT_TITLE));
          super.setBounds(100, 100, 100, 100);
          super.pack();
          setVisible(true);
@@ -182,7 +182,7 @@ public final class QuickAccessFrame extends JFrame {
       try {
          numCols_ = config.getInt("numCols");
          numRows_ = config.getInt("numRows");
-         setTitle(DefaultQuickAccessManager.getUniqueTitle(this, 
+         setTitle(((DefaultQuickAccessManager) studio_.quickAccess()).getUniqueTitle(this, 
                   config.optString("title", DEFAULT_TITLE)));
          configurePanel_.updateSpinners(numCols_, numRows_);
          JSONArray cells = config.getJSONArray("cells");
@@ -464,7 +464,7 @@ public final class QuickAccessFrame extends JFrame {
     * Update the title of this window according to the provided string.
     */
    private String updateTitle(String title) {
-      String newTitle = DefaultQuickAccessManager.getUniqueTitle(this, title);
+      String newTitle = ((DefaultQuickAccessManager) studio_.quickAccess()).getUniqueTitle(this, title);
       setTitle(newTitle);
       // This is mostly to let the Tools menu know it needs to regenerate its
       // submenu for the quick access panels.
