@@ -174,7 +174,7 @@ public final class MainFrame extends MMFrame {
       super.pack();
       super.setMinimumSize(super.getSize());
       resetPosition();
-      DefaultEventManager.getInstance().registerForEvents(this);
+      studio_.events().registerForEvents(this);
    }
 
    private void setupWindowHandlers() {

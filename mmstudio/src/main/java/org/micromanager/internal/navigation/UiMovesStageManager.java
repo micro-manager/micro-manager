@@ -38,12 +38,12 @@ public final class UiMovesStageManager {
    private final HashMap<DisplayController, CenterAndDragListener> displayToDragListener_;
    private final HashMap<DisplayController, ZWheelListener> displayToWheelListener_;
    //private final HashMap<DisplayController, KeyAdapter> displayToKeyListener_;
-   private final CMMCore core_;
+   private final Studio studio_;
    private final ExecutorService executorService_; // all stage movements will
              // go through this thread
 
-   public UiMovesStageManager(Studio studio, CMMCore core) {
-      core_ = core;
+   public UiMovesStageManager(Studio studio) {
+      studio_ = studio;
       executorService_ = Executors.newSingleThreadExecutor();
       displayToDragListener_ = new HashMap<DisplayController, CenterAndDragListener>();
       displayToWheelListener_ = new HashMap<DisplayController, ZWheelListener>();
@@ -60,9 +60,9 @@ public final class UiMovesStageManager {
       ZWheelListener wheelListener = null;
       //KeyAdapter keyListener = null;
       if (MMMenuBar.getToolsMenu().getMouseMovesStage()) {
-         dragListener = new CenterAndDragListener(core_, executorService_);
+         dragListener = new CenterAndDragListener(studio_.core(), executorService_);
          display.registerForEvents(dragListener);
-         wheelListener = new ZWheelListener(core_, executorService_);
+         wheelListener = new ZWheelListener(studio_, executorService_);
          display.registerForEvents(wheelListener);
          //keyListener = new StageShortcutListener();
       }

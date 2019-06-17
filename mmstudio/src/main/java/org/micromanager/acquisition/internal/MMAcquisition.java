@@ -228,7 +228,7 @@ public final class MMAcquisition extends DataViewerListener {
          setProgressText();
       }
       store_.registerForEvents(this);
-      DefaultEventManager.getInstance().registerForEvents(this);
+      studio_.events().registerForEvents(this);
   }
 
    private String createAcqDirectory(String root, String prefix) throws Exception {
@@ -297,7 +297,7 @@ public final class MMAcquisition extends DataViewerListener {
       public static SubscribedButton makeButton(final Studio studio,
             final ImageIcon icon, final DisplayWindow display) {
          SubscribedButton result = new SubscribedButton(studio, icon);
-         DefaultEventManager.getInstance().registerForEvents(result);
+         studio.events().registerForEvents(result);
          display.registerForEvents(result);
          return result;
       }
@@ -398,7 +398,7 @@ public final class MMAcquisition extends DataViewerListener {
                studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
       }
       display_.removeListener(this);
-      DefaultEventManager.getInstance().unregisterForEvents(this);
+      studio_.events().unregisterForEvents(this);
       new Thread(new Runnable() {
          @Override
          public void run() {

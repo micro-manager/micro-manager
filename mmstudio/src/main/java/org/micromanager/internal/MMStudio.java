@@ -151,7 +151,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private Album albumInstance_;
    private DefaultQuickAccessManager quickAccess_;
    private DefaultAlertManager alertManager_;
-
+   private DefaultEventManager eventManager_;
+   
    // MMcore
    private CMMCore core_;
    private AcquisitionWrapperEngine engine_;
@@ -1626,7 +1627,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    @Override
    public EventManager events() {
-      return DefaultEventManager.getInstance();
+      return eventManager_.getInstance();
    }
 
    @Override

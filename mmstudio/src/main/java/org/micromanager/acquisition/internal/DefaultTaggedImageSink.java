@@ -10,7 +10,7 @@ import org.micromanager.data.Pipeline;
 import org.micromanager.data.PipelineErrorException;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.events.internal.DefaultAcquisitionEndedEvent;
-import org.micromanager.events.internal.DefaultEventManager;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -84,7 +84,7 @@ public final class DefaultTaggedImageSink  {
                ReportingUtils.logError(ex2);
             } finally {
                pipeline_.halt();
-               DefaultEventManager.getInstance().post(
+               MMStudio.getInstance().events().post(
                      new DefaultAcquisitionEndedEvent(store_, engine_));
             }
             long t2 = System.currentTimeMillis();

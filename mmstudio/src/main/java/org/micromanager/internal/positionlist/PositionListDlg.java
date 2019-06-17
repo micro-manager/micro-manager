@@ -428,7 +428,7 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
       add(closeButton, "wrap");
 
       // Register to be informed when the current stage position changes.
-      DefaultEventManager.getInstance().registerForEvents(this);
+      studio_.events().registerForEvents(this);
       refreshCurrentPosition();
    }
    

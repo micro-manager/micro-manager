@@ -24,7 +24,7 @@ import com.google.common.eventbus.Subscribe;
 import com.google.common.util.concurrent.AtomicDouble;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import mmcorej.CMMCore;
+import org.micromanager.Studio;
 import org.micromanager.display.internal.event.DisplayMouseWheelEvent;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.internal.DefaultEventManager;
@@ -34,15 +34,15 @@ import org.micromanager.internal.utils.ReportingUtils;
 */
 public final class ZWheelListener  {
    private static final double MOVE_INCREMENT = 0.20;
-   private final CMMCore core_;
+   private final Studio studio_;
    private final ExecutorService executorService_;
    private final ZStageMover zStageMover_;
    private final AtomicDouble moveMemory_;
    private Future<?> future_;
 
-   public ZWheelListener(final CMMCore core, 
+   public ZWheelListener(final Studio studio, 
          final ExecutorService executorService) {
-      core_ = core;
+      studio_ = studio;
       executorService_ = executorService;
       zStageMover_ = new ZStageMover();
       moveMemory_ = new AtomicDouble(0.0);
@@ -63,9 +63,9 @@ public final class ZWheelListener  {
          // Move the stage
         try {
            pos_ += moveMemory_.getAndSet(0.0);
-           core_.setRelativePosition(stage_, pos_);
-           double z = core_.getPosition(stage_);
-           DefaultEventManager.getInstance().post(
+           studio_.core().setRelativePosition(stage_, pos_);
+           double z = studio_.core().getPosition(stage_);
+           studio_.events().post(
                    new StagePositionChangedEvent(stage_, z));
         } catch (Exception ex) {
            ReportingUtils.showError(ex);
@@ -86,13 +86,13 @@ public final class ZWheelListener  {
    public void mouseWheelMoved(DisplayMouseWheelEvent e) {
       synchronized (this) {
          // Get needed info from core
-         String zStage = core_.getFocusDevice();
+         String zStage = studio_.core().getFocusDevice();
          if (zStage == null || zStage.equals("")) {
             return;
          }
 
          double moveIncrement = MOVE_INCREMENT;
-         double pixSizeUm = core_.getPixelSizeUm(true);
+         double pixSizeUm = studio_.core().getPixelSizeUm(true);
          if (pixSizeUm > 0.0) {
             moveIncrement = 2 * pixSizeUm;
          }

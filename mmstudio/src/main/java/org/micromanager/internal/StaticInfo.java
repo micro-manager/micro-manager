@@ -24,6 +24,7 @@ package org.micromanager.internal;
 import com.google.common.eventbus.Subscribe;
 import java.awt.geom.AffineTransform;
 import mmcorej.CMMCore;
+import org.micromanager.Studio;
 import org.micromanager.events.PixelSizeAffineChangedEvent;
 import org.micromanager.events.PixelSizeChangedEvent;
 import org.micromanager.events.StagePositionChangedEvent;
@@ -53,14 +54,16 @@ class StaticInfo {
    static public String xyStageLabel_ = "";
    static public String zStageLabel_ = "";
 
+   static private Studio studio_;
    static private CMMCore core_;
    static private MainFrame frame_;
 
    @SuppressWarnings("LeakingThisInConstructor")
-   public StaticInfo(CMMCore core, MainFrame frame) {
-      core_ = core;
+   public StaticInfo(Studio studio, MainFrame frame) {
+      studio_ = studio;
+      core_ = studio.core();
       frame_ = frame;
-      DefaultEventManager.getInstance().registerForEvents(this);
+      studio_.events().registerForEvents(this);
    }
 
    public void updateXYPos(double x, double y) {

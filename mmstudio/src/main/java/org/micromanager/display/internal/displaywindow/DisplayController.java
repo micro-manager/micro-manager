@@ -289,7 +289,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       // windowClosing() -> requestToClose())
 
       // Start receiving events
-      DefaultEventManager.getInstance().registerForEvents(this);
+      MMStudio.getInstance().events().registerForEvents(this);
       dataProvider_.registerForEvents(this);
    }
 
@@ -1057,7 +1057,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          // TODO: report exception
       }
       animationController_.shutdown();
-      DefaultEventManager.getInstance().unregisterForEvents(this);
+      
+      MMStudio.getInstance().events().unregisterForEvents(this);
       dataProvider_.unregisterForEvents(this);
       // need to set the flag before closing the UIController,
       // otherwise we wil re-enter this function and write bad
