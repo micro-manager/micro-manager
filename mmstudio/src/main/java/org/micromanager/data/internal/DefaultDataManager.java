@@ -63,9 +63,10 @@ public final class DefaultDataManager implements DataManager {
    private static final String CANCEL_OPTION = "Cancel";
    private static final String CONTINUE_OPTION = "Continue";
    private static final String VIRTUAL_OPTION = "Use Virtual";
-   private static final DefaultDataManager STATICINSTANCE;
-   static {
-      STATICINSTANCE = new DefaultDataManager();
+   private DefaultImageJConverter ijConverter_;
+   
+   public DefaultDataManager() {
+       ijConverter_ = DefaultImageJConverter();
    }
 
    @Override
@@ -398,15 +399,11 @@ public final class DefaultDataManager implements DataManager {
 
    @Override
    public ImageJConverter ij() {
-      return DefaultImageJConverter.getInstance();
+      return ijConverter_;
    }
 
    @Override
    public ImageJConverter getImageJConverter() {
       return ij();
-   }
-
-   public static DataManager getInstance() {
-      return STATICINSTANCE;
    }
 }
