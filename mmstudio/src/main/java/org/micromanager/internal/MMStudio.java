@@ -149,6 +149,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private String sysConfigFile_;
    private ShutterManager shutterManager_;
    private Album albumInstance_;
+   private DefaultQuickAccessManager quickAccess_;
+   private DefaultAlertManager alertManager_;
 
    // MMcore
    private CMMCore core_;
@@ -426,7 +428,9 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       albumInstance_ = DefaultAlbum();
 
       // The tools menu depends on the Quick-Access Manager.
-      DefaultQuickAccessManager.createManager(studio_);
+      quickAccess_ = DefaultQuickAccessManager(studio_);
+      
+      alertManager_ = DefaultAlertManager(studio_);
 
       engine_ = new AcquisitionWrapperEngine();
       engine_.setParentGUI(this);
@@ -1642,7 +1646,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    @Override
    public QuickAccessManager quickAccess() {
-      return DefaultQuickAccessManager.getInstance();
+      return quickAccess_;
    }
 
    @Override
@@ -1702,7 +1706,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    @Override
    public AlertManager alerts() {
-      return DefaultAlertManager.getInstance();
+      return alertManager_;
    }
 
    @Override
