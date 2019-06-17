@@ -143,15 +143,15 @@ public final class ToolsMenu {
               new Runnable() {
          @Override
          public void run() {
-            final int oldBufsize = MMStudio.getCircularBufferSize();
+            final int oldBufsize = MMStudio.getInstance().getCircularBufferSize();
 
             OptionsDlg dlg = new OptionsDlg(core_, studio_);
             dlg.setVisible(true);
             // adjust memory footprint if necessary
-            if (oldBufsize != MMStudio.getCircularBufferSize()) {
+            if (oldBufsize != MMStudio.getInstance().getCircularBufferSize()) {
                try {
                   core_.setCircularBufferMemoryFootprint(
-                     MMStudio.getCircularBufferSize());
+                     MMStudio.getInstance().getCircularBufferSize());
                } catch (Exception exc) {
                   ReportingUtils.showError(exc);
                }

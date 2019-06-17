@@ -133,7 +133,7 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
    public PositionListDlg(CMMCore core, Studio gui,
                      PositionList posList, AcqControlDlg acd) {
       super("position list");
-      final UserProfile profile = UserProfileStaticInterface.getInstance();
+      final UserProfile profile = gui.profile();
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent arg0) {

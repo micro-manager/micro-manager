@@ -23,10 +23,10 @@ import org.micromanager.profile.internal.UserProfileAdmin;
  */
 @Deprecated
 public final class UserProfileStaticInterface {
-   private static final UserProfileAdmin admin_;
-   private static DefaultUserProfile profile_;
+   private UserProfileAdmin admin_;
+   private DefaultUserProfile profile_;
 
-   static {
+   public UserProfileStaticInterface() {
       admin_ = UserProfileAdmin.create();
       admin_.addCurrentProfileChangeListener(new ChangeListener() {
          @Override
@@ -51,11 +51,11 @@ public final class UserProfileStaticInterface {
       ReportingUtils.logError(e, "Error saving user profile");
    }
 
-   public static UserProfileAdmin getAdmin() {
+   public UserProfileAdmin getAdmin() {
       return admin_;
    }
 
-   public static UserProfile getInstance() {
+   public UserProfile getProfile() {
       synchronized (UserProfileStaticInterface.class) {
          if (profile_ == null) {
             try {
@@ -77,7 +77,7 @@ public final class UserProfileStaticInterface {
       }
    }
 
-   public static void shutdown() throws InterruptedException {
+   public void shutdown() throws InterruptedException {
       synchronized (UserProfileStaticInterface.class) {
          if (profile_ != null) {
             profile_.close();

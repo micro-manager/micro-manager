@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.WeakHashMap;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
@@ -352,8 +353,8 @@ public final class WindowPositioning {
          }
 
          Rectangle bounds = window.getBounds();
-         MutablePropertyMapView settings = UserProfileStaticInterface.
-               getInstance().getSettings(getClass());
+         MutablePropertyMapView settings = MMStudio.getInstance()
+          .profile().getSettings(getClass());
          PropertyMap classPmap = settings.getPropertyMap(
                positioningClass_.getCanonicalName(),
                PropertyMaps.emptyPropertyMap());
@@ -382,7 +383,7 @@ public final class WindowPositioning {
       }
 
       private void restoreGeometry() {
-         PropertyMap pmap = UserProfileStaticInterface.getInstance().
+         PropertyMap pmap = MMStudio.getInstance().profile().
                getSettings(getClass()).
                getPropertyMap(positioningClass_.getCanonicalName(),
                      PropertyMaps.emptyPropertyMap()).

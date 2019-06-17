@@ -37,7 +37,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.UIManager;
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.internal.utils.UserProfileStaticInterface;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -74,7 +74,7 @@ public final class IJVersionCheckDlg extends JDialog {
     * future.
     */
    private static boolean getHasOptedOut() {
-      return UserProfileStaticInterface.getInstance().getBoolean(
+      return MMStudio.getInstance().profile().getBoolean(
             IJVersionCheckDlg.class, HAS_OPTED_OUT, false);
    }
 
@@ -82,7 +82,7 @@ public final class IJVersionCheckDlg extends JDialog {
     * Set whether or not the user wants to see these errors in future.
     */
    private static void setHasOptedOut(boolean hasOptedOut) {
-      UserProfileStaticInterface.getInstance().setBoolean(
+      MMStudio.getInstance().profile().setBoolean(
             IJVersionCheckDlg.class, HAS_OPTED_OUT, hasOptedOut);
    }
 

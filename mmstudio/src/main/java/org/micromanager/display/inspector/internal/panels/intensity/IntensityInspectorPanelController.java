@@ -45,7 +45,7 @@ import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.MustCallOnEDT;
 import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.internal.utils.UserProfileStaticInterface;
+import org.micromanager.internal.MMStudio;
 
 /**
  *
@@ -149,7 +149,7 @@ public class IntensityInspectorPanelController
                handleColorPalette(colorMenuMap_.get(key).getColorPalette());
                colorMenuMap_.get(key).getCheckBox().setSelected(true);
                // record in profile - even though we do not (yet) use this value
-               UserProfileStaticInterface.getInstance().getSettings(
+               MMStudio.getInstance().profile().getSettings(
                      IntensityInspectorPanelController.class).putString(
                              COLOR_PALETTE, key);
             }
@@ -166,7 +166,7 @@ public class IntensityInspectorPanelController
       histogramMenuMap_.put("1 Hz", 1.0);
       histogramMenuMap_.put("0.5 Hz", 0.5);
       histogramMenuMap_.put("Never", 0.0);
-      final String defaultUpdateFrequency = UserProfileStaticInterface.getInstance().getSettings(
+      final String defaultUpdateFrequency = MMStudio.getInstance().profile().getSettings(
               IntensityInspectorPanelController.class).getString(HISTOGRAM_UPDATE_FREQUENCY, "5 Hz");
       final List<JCheckBoxMenuItem> histogramMenuItems = new LinkedList<JCheckBoxMenuItem>();
       for (final String hKey : histogramMenuMap_.keySet()) {
@@ -187,7 +187,7 @@ public class IntensityInspectorPanelController
                }
                handleHistogramUpdateRate(histogramMenuMap_.get(jbmi.getText()));
                jbmi.setSelected(true);
-               UserProfileStaticInterface.getInstance().getSettings(
+               MMStudio.getInstance().profile().getSettings(
                        IntensityInspectorPanelController.class).putString(
                                HISTOGRAM_UPDATE_FREQUENCY, jbmi.getText());
             }
@@ -486,7 +486,7 @@ public class IntensityInspectorPanelController
                   viewer_.getDataProvider().getAxisLength(Coords.CHANNEL));
             newDisplaySettings(viewer_.getDisplaySettings());
             updateImageStats(((ImageStatsPublisher) viewer_).getCurrentImagesAndStats());
-            String updateRate = UserProfileStaticInterface.getInstance().
+            String updateRate = MMStudio.getInstance().profile().
                     getSettings(IntensityInspectorPanelController.class).
                            getString(HISTOGRAM_UPDATE_FREQUENCY, "1 Hz");
             if (histogramMenuMap_.get(updateRate) != null) {

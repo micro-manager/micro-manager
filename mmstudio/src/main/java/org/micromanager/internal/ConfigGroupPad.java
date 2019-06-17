@@ -82,7 +82,7 @@ public final class ConfigGroupPad extends JScrollPane {
       table_.addColumn(new TableColumn(0,200,new StateGroupCellRenderer(),null));
       table_.addColumn(new TableColumn(1,200,new StatePresetCellRenderer(), new StatePresetCellEditor()));
       
-      int colWidth = UserProfileStaticInterface.getInstance().getInt(
+      int colWidth = MMStudio.getInstance().profile().getInt(
             this.getClass(), COLUMN_WIDTH , 0);
       if (colWidth > 0) {
          table_.getColumnModel().getColumn(0).setPreferredWidth(colWidth);
@@ -91,7 +91,7 @@ public final class ConfigGroupPad extends JScrollPane {
    
    public void saveSettings() {
       if (table_ != null) {
-           UserProfileStaticInterface.getInstance().setInt(this.getClass(),
+           MMStudio.getInstance().profile().setInt(this.getClass(),
                  COLUMN_WIDTH, table_.getColumnModel().getColumn(0).getWidth());
       }
    }

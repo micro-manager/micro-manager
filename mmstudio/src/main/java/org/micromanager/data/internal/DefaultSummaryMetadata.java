@@ -51,7 +51,7 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
 
    // TODO This shouldn't live here. Move to DataManager.
    public static SummaryMetadata getStandardSummaryMetadata() {
-      UserProfile profile = UserProfileStaticInterface.getInstance();
+      UserProfile profile = MMStudio.getInstance().profile();
 
       Builder b = new Builder().
             userName(System.getProperty("user.name")).

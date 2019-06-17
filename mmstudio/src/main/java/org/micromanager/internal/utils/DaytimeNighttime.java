@@ -33,6 +33,7 @@ import javax.swing.plaf.ColorUIResource;
 import javax.swing.table.TableModel;
 import org.micromanager.ApplicationSkin;
 import org.micromanager.ApplicationSkin.SkinMode;
+import org.micromanager.internal.MMStudio;
 
 /*
  * This class controls the colors of the user interface
@@ -232,7 +233,7 @@ public final class DaytimeNighttime implements ApplicationSkin {
     * @param mode new default background mode
     */
    private void storeSkin(SkinMode mode) {
-      UserProfileStaticInterface.getInstance().getSettings(
+      MMStudio.getInstance().profile().getSettings(
               DaytimeNighttime.class).putString(
             BACKGROUND_MODE, mode.getDesc());
    }
@@ -243,7 +244,7 @@ public final class DaytimeNighttime implements ApplicationSkin {
     */
    @Override
    public SkinMode getSkin() {
-      return SkinMode.fromString(UserProfileStaticInterface.getInstance().
+      return SkinMode.fromString(MMStudio.getInstance().profile().
               getSettings(DaytimeNighttime.class).getString(
             BACKGROUND_MODE, SkinMode.NIGHT.getDesc()));
    }

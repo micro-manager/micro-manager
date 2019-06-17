@@ -53,7 +53,7 @@ import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.ImageExporter;
 import org.micromanager.internal.utils.FileDialogs;
-import org.micromanager.internal.utils.UserProfileStaticInterface;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -517,7 +517,7 @@ public final class ExportMovieDlg extends MMDialog {
     * Get the default mode the user wants to use for exporting movies.
     */
    private static String getDefaultExportFormat() {
-      return UserProfileStaticInterface.getInstance().
+      return MMStudio.getInstance().profile().
               getSettings(ExportMovieDlg.class).
               getString(DEFAULT_EXPORT_FORMAT, FORMAT_PNG);
    }
@@ -526,7 +526,7 @@ public final class ExportMovieDlg extends MMDialog {
     * Set the default mode to use for exporting movies.
     */
    private static void setDefaultExportFormat(String format) {
-      UserProfileStaticInterface.getInstance().getSettings(ExportMovieDlg.class).
+      MMStudio.getInstance().profile().getSettings(ExportMovieDlg.class).
               putString(DEFAULT_EXPORT_FORMAT, format);
    }
 
@@ -534,7 +534,7 @@ public final class ExportMovieDlg extends MMDialog {
     * Get the default filename prefix.
     */
    private static String getDefaultPrefix() {
-      return UserProfileStaticInterface.getInstance().
+      return MMStudio.getInstance().profile().
               getSettings(ExportMovieDlg.class).
               getString(DEFAULT_FILENAME_PREFIX, "exported");
    }
@@ -543,19 +543,19 @@ public final class ExportMovieDlg extends MMDialog {
     * Set a new default filename prefix.
     */
    private static void setDefaultPrefix(String prefix) {
-      UserProfileStaticInterface.getInstance().
+      MMStudio.getInstance().profile().
               getSettings(ExportMovieDlg.class).
               putString(DEFAULT_FILENAME_PREFIX, prefix);
    }
    
    private static int getJPEGQuality() {
-      return UserProfileStaticInterface.getInstance().
+      return MMStudio.getInstance().profile().
               getSettings(ExportMovieDlg.class).
               getInteger(JPEG_QUALITY, 90);
    }
    
    private static void setJPEGQuality(int quality) {
-      UserProfileStaticInterface.getInstance().
+      MMStudio.getInstance().profile().
               getSettings(ExportMovieDlg.class).
               putInteger(JPEG_QUALITY, quality);
    }

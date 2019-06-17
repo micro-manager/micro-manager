@@ -197,7 +197,7 @@ public final class ConfigMenu {
 
       for (final String configFile : HardwareConfigurationManager.
             getRecentlyUsedConfigFilesFromProfile(
-                  UserProfileStaticInterface.getInstance())) {
+                  MMStudio.getInstance().profile())) {
          if (configFile.equals(studio_.getSysConfigFile()) ||
                seenConfigs.contains(configFile)) {
             continue;

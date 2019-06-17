@@ -104,7 +104,7 @@ public final class RememberedChannelSettings {
     */
    public void saveToProfile() {
       synchronized(PROFILELOCK) {
-         UserProfile profile = UserProfileStaticInterface.getInstance();
+         UserProfile profile = MMStudio.getInstance().profile();
          String ourKey = genKey(channelName_, channelGroup_);
          if (color_ != null) {
             profile.setInt(RememberedChannelSettings.class,
@@ -136,7 +136,7 @@ public final class RememberedChannelSettings {
       // Don't try to do this when someone else is (potentially) modifying the
       // profile.
       synchronized(PROFILELOCK) {
-         UserProfile profile = UserProfileStaticInterface.getInstance();
+         UserProfile profile = MMStudio.getInstance().profile();
          String key = genKey(channelName, channelGroup);
          defaultColor = new Color(profile.getInt(
                   RememberedChannelSettings.class, key + ":" + COLOR,
@@ -160,7 +160,7 @@ public final class RememberedChannelSettings {
    public static Color getColorForChannel(String channelName,
          String channelGroup, Color defaultColor) {
       synchronized(PROFILELOCK) {
-         UserProfile profile = UserProfileStaticInterface.getInstance();
+         UserProfile profile = MMStudio.getInstance().profile();
          String key = genKey(channelName, channelGroup);
          Integer rgb = profile.getSettings(RememberedChannelSettings.class).
                  getInteger(key + ":" + COLOR, -1);

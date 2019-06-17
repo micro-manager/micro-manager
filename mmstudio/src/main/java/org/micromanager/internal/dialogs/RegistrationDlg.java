@@ -47,7 +47,7 @@ import javax.swing.JTextField;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.UserProfile;
 import org.micromanager.internal.utils.DaytimeNighttime;
-import org.micromanager.internal.utils.UserProfileStaticInterface;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.profile.internal.LegacyMM1Preferences;
 
@@ -147,7 +147,7 @@ public final class RegistrationDlg extends JDialog {
                   BufferedReader br;
 
                   // save registration information to profile
-                  UserProfile profile = UserProfileStaticInterface.getInstance();
+                  UserProfile profile = MMStudio.getInstance().profile();
                   profile.setString(RegistrationDlg.class, REGISTRATION_NAME,
                      name_.getText());
                   profile.setString(RegistrationDlg.class, REGISTRATION_INST,
@@ -243,7 +243,7 @@ public final class RegistrationDlg extends JDialog {
    }
 
    private int incrementRegistrationAttempts() {
-      UserProfile profile = UserProfileStaticInterface.getInstance();
+      UserProfile profile = MMStudio.getInstance().profile();
       int attempts = getNumRegistrationAttempts() + 1;
       profile.setInt(RegistrationDlg.class, REGISTRATION_ATTEMPTS, attempts);
       return attempts;
@@ -251,7 +251,7 @@ public final class RegistrationDlg extends JDialog {
 
    public static boolean getHaveRegistered() {
       // HACK: if there's no entry, we also check the 1.4 Preferences.
-      Boolean result = UserProfileStaticInterface.getInstance().getBoolean(
+      Boolean result = MMStudio.getInstance().profile().getBoolean(
             RegistrationDlg.class, HAVE_REGISTERED, null);
       if (result != null) {
          return result;
@@ -283,22 +283,22 @@ public final class RegistrationDlg extends JDialog {
    }
 
    public static void setHaveRegistered(boolean haveRegistered) {
-      UserProfileStaticInterface.getInstance().setBoolean(
+      MMStudio.getInstance().profile().setBoolean(
             RegistrationDlg.class, HAVE_REGISTERED, haveRegistered);
    }
 
    public static boolean getShouldNeverRegister() {
-      return UserProfileStaticInterface.getInstance().getBoolean(
+      return MMStudio.getInstance().profile().getBoolean(
             RegistrationDlg.class, SHOULD_NEVER_REGISTER, false);
    }
 
    public static void setShouldNeverRegister(boolean haveRegistered) {
-      UserProfileStaticInterface.getInstance().setBoolean(
+      MMStudio.getInstance().profile().setBoolean(
             RegistrationDlg.class, SHOULD_NEVER_REGISTER, haveRegistered);
    }
 
    private static int getNumRegistrationAttempts() {
-      return UserProfileStaticInterface.getInstance().getInt(
+      return MMStudio.getInstance().profile().getInt(
             RegistrationDlg.class, REGISTRATION_ATTEMPTS, 0);
    }
 }

@@ -141,16 +141,16 @@ public final class OptionsDlg extends MMDialog {
 
       final JCheckBox deleteLogCheckBox = new JCheckBox();
       deleteLogCheckBox.setText("Delete log files after");
-      deleteLogCheckBox.setSelected(MMStudio.getShouldDeleteOldCoreLogs());
+      deleteLogCheckBox.setSelected(MMStudio.getInstance().getShouldDeleteOldCoreLogs());
       deleteLogCheckBox.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            MMStudio.setShouldDeleteOldCoreLogs(deleteLogCheckBox.isSelected());
+            MMStudio.getInstance().setShouldDeleteOldCoreLogs(deleteLogCheckBox.isSelected());
          }
       });
 
       logDeleteDaysField_ =
-         new JTextField(Integer.toString(MMStudio.getCoreLogLifetimeDays()), 2);
+         new JTextField(Integer.toString(MMStudio.getInstance().getCoreLogLifetimeDays()), 2);
 
       final JButton deleteLogFilesButton = new JButton();
       deleteLogFilesButton.setText("Delete Log Files Now");
@@ -211,7 +211,7 @@ public final class OptionsDlg extends MMDialog {
       });
 
       bufSizeField_ = new JTextField(
-            Integer.toString(MMStudio.getCircularBufferSize()), 5);
+            Integer.toString(MMStudio.getInstance().getCircularBufferSize()), 5);
 
       String[] options = new String[SkinMode.values().length];
       for (int i = 0; i < SkinMode.values().length; ++i) {
@@ -366,8 +366,8 @@ public final class OptionsDlg extends MMDialog {
          return;
       }
 
-      MMStudio.setCircularBufferSize(seqBufSize);
-      MMStudio.setCoreLogLifetimeDays(deleteLogDays);
+      MMStudio.getInstance().setCircularBufferSize(seqBufSize);
+      MMStudio.getInstance().setCoreLogLifetimeDays(deleteLogDays);
 
       ScriptPanel.setStartupScript(startupScriptFile_.getText());
       parent_.app().makeActive();
@@ -375,22 +375,22 @@ public final class OptionsDlg extends MMDialog {
    }
 
    public static boolean getIsDebugLogEnabled() {
-      return UserProfileStaticInterface.getInstance().getBoolean(OptionsDlg.class,
+      return MMStudio.getInstance().profile().getBoolean(OptionsDlg.class,
             IS_DEBUG_LOG_ENABLED, false);
    }
 
    public static void setIsDebugLogEnabled(boolean isEnabled) {
-      UserProfileStaticInterface.getInstance().setBoolean(OptionsDlg.class,
+      MMStudio.getInstance().profile().setBoolean(OptionsDlg.class,
             IS_DEBUG_LOG_ENABLED, isEnabled);
    }
 
    public static boolean getShouldCloseOnExit() {
-      return UserProfileStaticInterface.getInstance().getBoolean(OptionsDlg.class,
+      return MMStudio.getInstance().profile().getBoolean(OptionsDlg.class,
             SHOULD_CLOSE_ON_EXIT, true);
    }
 
    public static void setShouldCloseOnExit(boolean shouldClose) {
-      UserProfileStaticInterface.getInstance().setBoolean(OptionsDlg.class,
+      MMStudio.getInstance().profile().setBoolean(OptionsDlg.class,
             SHOULD_CLOSE_ON_EXIT, shouldClose);
    }
 }

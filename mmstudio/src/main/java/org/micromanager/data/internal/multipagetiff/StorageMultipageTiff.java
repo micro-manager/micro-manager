@@ -50,7 +50,7 @@ import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
-import org.micromanager.internal.utils.UserProfileStaticInterface;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.ProgressBar;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -756,24 +756,24 @@ public final class StorageMultipageTiff implements Storage {
    }
 
    public static boolean getShouldGenerateMetadataFile() {
-      return UserProfileStaticInterface.getInstance().getBoolean(
+      return MMStudio.getInstance().profile().getBoolean(
             StorageMultipageTiff.class, SHOULD_GENERATE_METADATA_FILE, false);
    }
 
    public static void setShouldGenerateMetadataFile(boolean shouldGen) {
-      UserProfileStaticInterface.getInstance().setBoolean(
+      MMStudio.getInstance().profile().setBoolean(
             StorageMultipageTiff.class,
             SHOULD_GENERATE_METADATA_FILE, shouldGen);
    }
 
    public static boolean getShouldSplitPositions() {
-      return UserProfileStaticInterface.getInstance().getBoolean(
+      return MMStudio.getInstance().profile().getBoolean(
             StorageMultipageTiff.class,
             SHOULD_USE_SEPARATE_FILES_FOR_POSITIONS, true);
    }
 
    public static void setShouldSplitPositions(boolean shouldSplit) {
-      UserProfileStaticInterface.getInstance().setBoolean(
+      MMStudio.getInstance().profile().setBoolean(
             StorageMultipageTiff.class,
             SHOULD_USE_SEPARATE_FILES_FOR_POSITIONS, shouldSplit);
    }

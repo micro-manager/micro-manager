@@ -2085,14 +2085,14 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
    public static Double getChannelExposure(String channelGroup,
          String channel, double defaultVal) {
-      return UserProfileStaticInterface.getInstance().getSettings(
+      return MMStudio.getInstance().profile().getSettings(
             AcqControlDlg.class).getDouble(
                     "Exposure_" + channelGroup + "_" + channel,defaultVal);
    }
 
    public static void storeChannelExposure(String channelGroup,
          String channel, double exposure) {
-      UserProfileStaticInterface.getInstance().getSettings( 
+      MMStudio.getInstance().profile().getSettings( 
               AcqControlDlg.class).putDouble(
             "Exposure_" + channelGroup + "_" + channel, exposure);
    }
@@ -2116,22 +2116,22 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    }
 
    public static boolean getShouldSyncExposure() {
-      return UserProfileStaticInterface.getInstance().getSettings(
+      return MMStudio.getInstance().profile().getSettings(
               AcqControlDlg.class).getBoolean(SHOULD_SYNC_EXPOSURE, true);
    }
 
    public static void setShouldSyncExposure(boolean shouldSync) {
-      UserProfileStaticInterface.getInstance().getSettings(AcqControlDlg.class).
+      MMStudio.getInstance().profile().getSettings(AcqControlDlg.class).
             putBoolean(SHOULD_SYNC_EXPOSURE, shouldSync);
    }
 
    public static boolean getShouldHideMDADisplay() {
-      return UserProfileStaticInterface.getInstance().getSettings(AcqControlDlg.class).
+      return MMStudio.getInstance().profile().getSettings(AcqControlDlg.class).
             getBoolean(SHOULD_HIDE_DISPLAY, false);
    }
 
    public static void setShouldHideMDADisplay(boolean shouldHide) {
-      UserProfileStaticInterface.getInstance().getSettings(AcqControlDlg.class).
+      MMStudio.getInstance().profile().getSettings(AcqControlDlg.class).
               putBoolean(SHOULD_HIDE_DISPLAY, shouldHide);
    }
 

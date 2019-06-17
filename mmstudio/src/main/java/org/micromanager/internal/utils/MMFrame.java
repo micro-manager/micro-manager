@@ -71,7 +71,7 @@ public class MMFrame extends JFrame implements WindowFocusListener {
    public MMFrame(String profileKeyForSavingBounds, boolean usesMMMenus) {
       super();
       settings_ =
-            UserProfileStaticInterface.getInstance().getSettings(getClass());
+            MMStudio.getInstance().profile().getSettings(getClass());
       profileKey_ = profileKeyForSavingBounds;
       if (usesMMMenus) {
          setupMenus();

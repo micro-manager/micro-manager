@@ -13,6 +13,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.micromanager.UserProfile;
+import org.micromanager.internal.MMStudio;
 
 /**
  *
@@ -43,7 +44,7 @@ public final class HotKeys {
       int type;
       int guiCommand;
       File file;
-      UserProfile profile = UserProfileStaticInterface.getInstance();
+      UserProfile profile = MMStudio.getInstance().profile();
       do {
          key = profile.getInt(HotKeys.class, KEY + j, STOP);
          if (key != STOP) {
@@ -69,7 +70,7 @@ public final class HotKeys {
    public void saveSettings() {
       Iterator it = keys_.entrySet().iterator();
       int i = 0;
-      UserProfile profile = UserProfileStaticInterface.getInstance();
+      UserProfile profile = MMStudio.getInstance().profile();
       while (it.hasNext()) {
          Map.Entry pairs = (Map.Entry) it.next();
          profile.setInt(HotKeys.class, KEY + i,

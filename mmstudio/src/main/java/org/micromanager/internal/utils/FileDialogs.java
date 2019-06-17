@@ -23,6 +23,7 @@ import java.io.File;
 import javax.swing.JFileChooser;
 import org.micromanager.ApplicationSkin.SkinMode;
 import org.micromanager.UserProfile;
+import org.micromanager.internal.MMStudio;
 
 public final class FileDialogs {
 
@@ -199,7 +200,7 @@ public final class FileDialogs {
    }
 
    public static void storePath(FileType type, File path) {
-      UserProfile profile = UserProfileStaticInterface.getInstance();
+      UserProfile profile = MMStudio.getInstance().profile();
       profile.getSettings(FileDialogs.class).putString(type.name,
             path.getAbsolutePath());
    }
@@ -217,7 +218,7 @@ public final class FileDialogs {
    }
 
    public static String getSuggestedFile(FileType type) {
-      return UserProfileStaticInterface.getInstance().getSettings(
+      return MMStudio.getInstance().profile().getSettings(
             FileDialogs.class).getString(type.name, type.defaultFileName);
    }
 }
