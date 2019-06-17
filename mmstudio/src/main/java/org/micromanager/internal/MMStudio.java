@@ -244,12 +244,10 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
 
       initializeLogging(core_);
-
+      initializeVariousManagers();
       // We need to be subscribed to the global event bus for plugin loading
       events().registerForEvents(this);
 
-      // Start loading plugins in the background
-      pluginManager_ = new DefaultPluginManager(studio_);
       // Start loading acqEngine in the background
       prepAcquisitionEngine();
 
@@ -355,7 +353,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          }
       }
 
-      initializeVariousManagers();
 
       // Now create and show the main window
       frame_ = new MainFrame(this, core_, snapLiveManager_);
@@ -421,7 +418,13 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // The UiMovesStageManager manages itself; don't need to retain a
       // reference to it.
       // new UiMovesStageManager(this, core_);
-
+      
+      // Start loading plugins in the background
+      pluginManager_ = new DefaultPluginManager(studio_);
+      
+      //Lots of places use this. instantiate it first.
+      eventManager_ = new DefaultEventManager();
+      
       snapLiveManager_ = new SnapLiveManager(this, core_);
       events().registerForEvents(snapLiveManager_);
 
@@ -432,8 +435,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       quickAccess_ = new DefaultQuickAccessManager(studio_);
       
       alertManager_ = new DefaultAlertManager(studio_);
-      
-      eventManager_ = new DefaultEventManager();
 
       engine_ = new AcquisitionWrapperEngine();
       engine_.setParentGUI(this);
