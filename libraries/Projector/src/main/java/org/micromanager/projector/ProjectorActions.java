@@ -180,9 +180,12 @@ public abstract class ProjectorActions {
    public static Point2D.Double transformPoint(Mapping mapping, 
            Point2D.Double pt, Rectangle cameraROI, Integer cameraBinning) {
       if (cameraROI != null) {
-         if (cameraBinning == null) { cameraBinning = 1; }
-         pt.x = (pt.x + cameraROI.x) * (cameraBinning / mapping.getBinning()); 
-         pt.y = (pt.y + cameraROI.y) * (cameraBinning / mapping.getBinning());
+         if (cameraBinning == null) { 
+            cameraBinning = 1; 
+         }
+         double factor = (double) cameraBinning / (double) mapping.getBinning();
+         pt.x = (pt.x + cameraROI.x) * factor; 
+         pt.y = (pt.y + cameraROI.y) * factor;
       }
       Set<Polygon> set = mapping.getMap().keySet();
       // First find out if the given point is inside a cell, and if so,
