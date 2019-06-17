@@ -63,10 +63,10 @@ public final class DefaultDataManager implements DataManager {
    private static final String CANCEL_OPTION = "Cancel";
    private static final String CONTINUE_OPTION = "Continue";
    private static final String VIRTUAL_OPTION = "Use Virtual";
-   private DefaultImageJConverter ijConverter_;
+   private ImageJConverter ijConverter_;
    
    public DefaultDataManager() {
-       ijConverter_ = DefaultImageJConverter();
+       ijConverter_ = new DefaultImageJConverter();
    }
 
    @Override

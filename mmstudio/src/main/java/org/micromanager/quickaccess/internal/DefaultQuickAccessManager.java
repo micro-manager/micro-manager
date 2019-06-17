@@ -71,7 +71,7 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
    private final Studio studio_;
    private final ArrayList<QuickAccessFrame> knownPanels_;
 
-   private DefaultQuickAccessManager(Studio studio) {
+   public DefaultQuickAccessManager(Studio studio) {
       studio_ = studio;
       studio.events().registerForEvents(this);
       knownPanels_ = new ArrayList<QuickAccessFrame>();

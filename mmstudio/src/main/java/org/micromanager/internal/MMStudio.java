@@ -424,13 +424,13 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       snapLiveManager_ = new SnapLiveManager(this, core_);
       events().registerForEvents(snapLiveManager_);
 
-      shutterManager_ = DefaultShutterManager(studio_);
-      albumInstance_ = DefaultAlbum();
+      shutterManager_ = new DefaultShutterManager(studio_);
+      albumInstance_ = new DefaultAlbum();
 
       // The tools menu depends on the Quick-Access Manager.
-      quickAccess_ = DefaultQuickAccessManager(studio_);
+      quickAccess_ = new DefaultQuickAccessManager(studio_);
       
-      alertManager_ = DefaultAlertManager(studio_);
+      alertManager_ = new DefaultAlertManager(studio_);
 
       engine_ = new AcquisitionWrapperEngine();
       engine_.setParentGUI(this);

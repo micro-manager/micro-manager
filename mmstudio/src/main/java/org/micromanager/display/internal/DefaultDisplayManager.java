@@ -530,11 +530,6 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
       eventBus_.post(e);
    }
 
-   @Deprecated
-   public static DefaultDisplayManager getInstance() {
-      return staticInstance_;
-   }
-
    @Override
    public void registerForEvents(Object recipient) {
       eventBus_.register(recipient);

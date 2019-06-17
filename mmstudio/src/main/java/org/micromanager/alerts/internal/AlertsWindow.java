@@ -55,7 +55,7 @@ public final class AlertsWindow extends MMFrame {
    private final JPanel alertsPanel_ = new JPanel(new MigLayout("insets 0, fill, flowy"));
    private boolean shouldShowOnMessage_ = true;
 
-   private AlertsWindow(Studio studio) {
+   public AlertsWindow(Studio studio) {
       super("Messages");
       studio_ = studio;
       studio.events().registerForEvents(this);

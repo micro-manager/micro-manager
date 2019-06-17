@@ -36,9 +36,9 @@ public final class DefaultAlertManager implements AlertManager {
            new HashMap<String, DefaultAlert>();
    private AlertsWindow alertsWindow_;
 
-   private DefaultAlertManager(Studio studio) {
+   public DefaultAlertManager(Studio studio) {
       studio_ = studio;
-      alertsWindow_ = AlertsWindow(studio_);
+      alertsWindow_ = new AlertsWindow(studio_);
    }
 
    @Override
