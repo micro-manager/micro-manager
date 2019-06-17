@@ -72,6 +72,7 @@ import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TextUtils;
+import org.micromanager.projector.Mapping;
 import org.micromanager.projector.ProjectorActions;
 
 // The Mosaic Sequencing Window is for use with Andor's Mosaic3 device adapter.
@@ -484,9 +485,17 @@ public class MosaicSequencingFrame extends MMFrame {
    // Get a list of SequenceEvents by extracting information from the sequenceTable_.
    private ArrayList<SequenceEvent> getSequenceEvents() {
       final ImagePlus snapLiveImage = gui_.live().getDisplay().getImagePlus();
-      Map<Polygon, AffineTransform> mapping = projectorControlForm_.getMapping();
+      Mapping mapping = projectorControlForm_.getMapping();
+      Integer binning = null;
+      Rectangle roi = null;
+      try {
+         binning = Integer.parseInt(core_.getProperty(core_.getCameraDevice(), "Binning"));
+         roi = core_.getROI();
+      } catch (Exception ex) {
+         gui_.logs().logError(ex);
+      }
       List<FloatPolygon> availableFloatRoiPolygons = 
-              ProjectorActions.transformROIs(getRois(), mapping);
+              ProjectorActions.transformROIs(getRois(), mapping, roi, binning);
       List<Polygon> availableRoiPolygons = Utils.FloatToNormalPolygon(
               availableFloatRoiPolygons);
       ArrayList<SequenceEvent> events = new ArrayList<SequenceEvent>();
