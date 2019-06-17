@@ -78,8 +78,8 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    private final ScriptInterface gui_;
    private final String mosaicName_;
    private final SLM mosaicDevice_;
-   private final int mosaicWidth_;
-   private final int mosaicHeight_;
+   private int mosaicWidth_ = 0;
+   private int mosaicHeight_ = 0;
    private final ProjectorControlForm projectorControlForm_;
    private final DefaultTableModel sequenceTableModel_;
    private final Vector<String> headerNames = new Vector<String>(Arrays.asList(         
@@ -774,8 +774,16 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       mosaicDevice_ = mosaicDevice;
       // Get the first available Mosaic device for now.
       mosaicName_ = getMosaicDevices(core_).get(0);
-      mosaicWidth_ = (int) core_.getSLMWidth(mosaicName_);
-      mosaicHeight_ = (int) core.getSLMHeight(mosaicName_);
+      // NS 6-2019: this is very dangerous.  No checks on whether the mosaic 
+      // actually exists.  The core now throws and exception if there is no
+      // device with this name (as it should have done all along)
+      // To contibue existing behavior, continue even after Exception
+      try {
+         mosaicWidth_ = (int) core_.getSLMWidth(mosaicName_);
+         mosaicHeight_ = (int) core.getSLMHeight(mosaicName_);
+      } catch (Exception ex) {
+         // TODO: handle this properly, even though we are in the constructor
+      }
       sequenceTableModel_ = (DefaultTableModel) sequenceTable_.getModel();
       intensityNames_ = generateIntensityNames();
       // The mosaic executor service makes sure everything happens
