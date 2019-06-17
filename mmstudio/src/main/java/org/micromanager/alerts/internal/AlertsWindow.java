@@ -46,69 +46,6 @@ import org.micromanager.internal.utils.MMFrame;
 
 
 public final class AlertsWindow extends MMFrame {
-   /**
-    * Display the AlertsWindow, creating it if necessary.
-    */
-   public void show() {
-      if (!isVisible()) {
-         // both of the following methods bring focus to the Alerts Window,
-         // which is highly annoying while working on something else.
-         // At the risk of making it harder to notice new alerts, I prefer 
-         // to call these only when the window is not yet visible.
-         setVisible(true);
-         toFront();
-      }
-   }
-
-   /**
-    * Display the AlertsWindow, if the given alert is not muted.
-    * @param alert  Alert to be shown
-    */
-   public void showWindowUnlessMuted(DefaultAlert alert) {
-      if (isMuted(alert) || !shouldShowOnMessage_) {
-         return;
-      }
-      show();
-   }
-
-   /**
-    * Create a simple alert with a text message.
-    * @param title  Title of the alert
-    * @param text   Text of the alert
-    * @return       Alert
-    */
-   public DefaultAlert addUpdatableAlert(String title, String text) {
-      DefaultAlert alert = new DefaultAlert(this, title, new JLabel(text));
-      showWindowUnlessMuted(alert);
-      addAlert(alert);
-      return alert;
-   }
-
-   /**
-    * Create a custom alert with any contents
-    * @param title  Title of the alert
-    * @param contents Content to be added to the alert
-    * @return 
-    */
-   public DefaultAlert addCustomAlert(String title, JComponent contents) {
-      DefaultAlert alert = new DefaultAlert(this, title, contents);
-      showWindowUnlessMuted(alert);
-      addAlert(alert);
-      return alert;
-   }
-
-   /**
-    * Create an alert that can contain multiple categories of messages.
-    * @param title  Title of the alert
-    * @return   Categorized alert
-    */
-   public CategorizedAlert addCategorizedAlert(String title) {
-      CategorizedAlert alert = CategorizedAlert.createAlert(this, title);
-      showWindowUnlessMuted(alert);
-      addAlert(alert);
-      return alert;
-   }
-
    private static final String NO_ALERTS_MSG = "There are no messages at this time.";
    private static final String SHOULD_SHOW_WINDOW = "Show the Messages window when a message is received";
 
@@ -195,6 +132,70 @@ public final class AlertsWindow extends MMFrame {
       super.pack();
    }
 
+      /**
+    * Display the AlertsWindow, creating it if necessary.
+    */
+   @Override
+   public void show() {
+      if (!isVisible()) {
+         // both of the following methods bring focus to the Alerts Window,
+         // which is highly annoying while working on something else.
+         // At the risk of making it harder to notice new alerts, I prefer 
+         // to call these only when the window is not yet visible.
+         setVisible(true);
+         toFront();
+      }
+   }
+
+   /**
+    * Display the AlertsWindow, if the given alert is not muted.
+    * @param alert  Alert to be shown
+    */
+   public void showWindowUnlessMuted(DefaultAlert alert) {
+      if (isMuted(alert) || !shouldShowOnMessage_) {
+         return;
+      }
+      show();
+   }
+
+   /**
+    * Create a simple alert with a text message.
+    * @param title  Title of the alert
+    * @param text   Text of the alert
+    * @return       Alert
+    */
+   public DefaultAlert addUpdatableAlert(String title, String text) {
+      DefaultAlert alert = new DefaultAlert(this, title, new JLabel(text));
+      showWindowUnlessMuted(alert);
+      addAlert(alert);
+      return alert;
+   }
+
+   /**
+    * Create a custom alert with any contents
+    * @param title  Title of the alert
+    * @param contents Content to be added to the alert
+    * @return 
+    */
+   public DefaultAlert addCustomAlert(String title, JComponent contents) {
+      DefaultAlert alert = new DefaultAlert(this, title, contents);
+      showWindowUnlessMuted(alert);
+      addAlert(alert);
+      return alert;
+   }
+
+   /**
+    * Create an alert that can contain multiple categories of messages.
+    * @param title  Title of the alert
+    * @return   Categorized alert
+    */
+   public CategorizedAlert addCategorizedAlert(String title) {
+      CategorizedAlert alert = CategorizedAlert.createAlert(this, title);
+      showWindowUnlessMuted(alert);
+      addAlert(alert);
+      return alert;
+   }
+   
    public void addAlert(DefaultAlert alert) {
       if (allAlerts_.isEmpty()) {
          // Remove the "there are no alerts" label.
