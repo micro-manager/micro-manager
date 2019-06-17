@@ -29,25 +29,21 @@ import org.micromanager.alerts.UpdatableAlert;
 import org.micromanager.internal.MMStudio;
 
 public final class DefaultAlertManager implements AlertManager {
-
-   private static final DefaultAlertManager staticInstance_;
-   static {
-      staticInstance_ = new DefaultAlertManager(MMStudio.getInstance());
-   }
-
    private final Studio studio_;
    private final HashMap<String, CategorizedAlert> titleToCategorizedAlert_ = 
            new HashMap<String, CategorizedAlert>();
    private final HashMap<String, DefaultAlert> titleToCustomAlert_ = 
            new HashMap<String, DefaultAlert>();
+   private AlertsWindow alertsWindow_;
 
    private DefaultAlertManager(Studio studio) {
       studio_ = studio;
+      alertsWindow_ = AlertsWindow(studio_);
    }
 
    @Override
    public UpdatableAlert postUpdatableAlert(String title, String text) {
-      return AlertsWindow.addUpdatableAlert(studio_, title, text);
+      return alertsWindow_.addUpdatableAlert(title, text);
    }
 
    @Override
@@ -59,10 +55,10 @@ public final class DefaultAlertManager implements AlertManager {
       }
       else {
          // Make a new Alert to hold messages.
-         alert = AlertsWindow.addCategorizedAlert(studio_, title);
+         alert = alertsWindow_.addCategorizedAlert(title);
          titleToCategorizedAlert_.put(title, alert);
       }
-      AlertsWindow.showWindowUnlessMuted(studio_, alert);
+      alertsWindow_.showWindowUnlessMuted(alert);
       alert.addText(category, text);
       return alert;
    }
@@ -74,13 +70,9 @@ public final class DefaultAlertManager implements AlertManager {
          // Already have this alert.
          return titleToCustomAlert_.get(title);
       }
-      DefaultAlert alert = AlertsWindow.addCustomAlert(studio_, title, contents);
+      DefaultAlert alert = alertsWindow_.addCustomAlert(title, contents);
       // TODO: this potentially replaces an existing alert.
       titleToCustomAlert_.put(title, alert);
       return alert;
-   }
-
-   public static DefaultAlertManager getInstance() {
-      return staticInstance_;
    }
 }
