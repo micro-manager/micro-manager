@@ -45,6 +45,7 @@ import javax.swing.UnsupportedLookAndFeelException;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 import org.micromanager.Album;
+import org.micromanager.internal.DefaultAlbum;
 import org.micromanager.Application;
 import org.micromanager.ApplicationSkin;
 import org.micromanager.AutofocusManager;
@@ -56,6 +57,7 @@ import org.micromanager.PositionListManager;
 import org.micromanager.PropertyMap;
 import org.micromanager.ScriptController;
 import org.micromanager.ShutterManager;
+import org.micromanager.internal.DefaultShutterManager;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 import org.micromanager.acquisition.AcquisitionManager;
@@ -145,6 +147,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private SnapLiveManager snapLiveManager_;
    private DefaultAutofocusManager afMgr_;
    private String sysConfigFile_;
+   private ShutterManager shutterManager_;
+   private Album albumInstance_;
 
    // MMcore
    private CMMCore core_;
@@ -418,7 +422,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       snapLiveManager_ = new SnapLiveManager(this, core_);
       events().registerForEvents(snapLiveManager_);
 
-      DefaultShutterManager.instantiate(studio_);
+      shutterManager_ = DefaultShutterManager(studio_);
+      albumInstance_ = DefaultAlbum();
 
       // The tools menu depends on the Quick-Access Manager.
       DefaultQuickAccessManager.createManager(studio_);
@@ -1607,7 +1612,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    @Override
    public Album album() {
-      return DefaultAlbum.getInstance();
+      return albumInstance_;
    }
 
    @Override
@@ -1647,7 +1652,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    @Override
    public ShutterManager shutter() {
-      return DefaultShutterManager.getInstance();
+      return shutterManager_;
    }
 
    @Override

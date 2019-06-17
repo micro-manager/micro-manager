@@ -33,18 +33,6 @@ import org.micromanager.events.internal.DefaultShutterEvent;
 import org.micromanager.events.internal.ShutterDevicesEvent;
 
 public final class DefaultShutterManager implements ShutterManager {
-
-   private static DefaultShutterManager staticInstance_;
-
-   public static void instantiate(Studio studio) {
-      staticInstance_ = new DefaultShutterManager(studio);
-      studio.events().registerForEvents(staticInstance_);
-   }
-
-   public static ShutterManager getInstance() {
-      return staticInstance_;
-   }
-
    private Studio studio_;
    private ArrayList<String> shutters_;
    private boolean isAutoShutter_ = false;
@@ -52,6 +40,7 @@ public final class DefaultShutterManager implements ShutterManager {
 
    public DefaultShutterManager(Studio studio) {
       studio_ = studio;
+      studio.events().registerForEvents(this);
    }
 
    /**

@@ -37,11 +37,6 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public final class DefaultAlbum implements Album {
-   private static final DefaultAlbum STATIC_INSTANCE;
-   static {
-      STATIC_INSTANCE = new DefaultAlbum();
-   }
-
    private Datastore store_;
    private Integer curTime_ = null;
    private Pipeline pipeline_;
@@ -169,9 +164,5 @@ public final class DefaultAlbum implements Album {
          result = result || tmp;
       }
       return result;
-   }
-
-   public static DefaultAlbum getInstance() {
-      return STATIC_INSTANCE;
    }
 }
