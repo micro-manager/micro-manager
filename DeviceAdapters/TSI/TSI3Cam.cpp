@@ -269,12 +269,21 @@ int Tsi3Cam::Initialize()
    assert(ret == DEVICE_OK);
 
    vector<string> binValues;
-   for (int bin=1; bin<=binMax; bin++)
-   {
-      ostringstream os;
-      os << bin;
-      binValues.push_back(os.str());
-   }
+	if (color)
+	{
+		// color cameras do not support binning
+		binValues.push_back(string("1"));
+	}
+	else
+	{
+		// all other cameras do
+		for (int bin=1; bin<=binMax; bin++)
+		{
+			ostringstream os;
+			os << bin;
+			binValues.push_back(os.str());
+		}
+	}
   
    ret = SetAllowedValues(MM::g_Keyword_Binning, binValues);
    assert(ret == DEVICE_OK);
