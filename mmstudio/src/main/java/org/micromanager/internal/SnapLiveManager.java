@@ -567,7 +567,7 @@ public final class SnapLiveManager extends DataViewerListener
             for (int i = 0; i < store_.getAxisLength(Coords.CHANNEL); ++i) {
                builder.channel(i);
                try {
-                  DefaultAlbum.getInstance().addImages(store_.getImagesMatching(
+                  studio_.album().addImages(store_.getImagesMatching(
                         builder.build()));
                   hadChannels = true;
                }
@@ -577,7 +577,7 @@ public final class SnapLiveManager extends DataViewerListener
             }
             try {
                if (!hadChannels) {
-                  DefaultAlbum.getInstance().addImages(store_.getImagesMatching(
+                  studio_.album().addImages(store_.getImagesMatching(
                         Coordinates.builder().build()));
                }
             }
