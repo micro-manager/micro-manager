@@ -135,8 +135,7 @@ public final class AlertsWindow extends MMFrame {
       /**
     * Display the AlertsWindow, creating it if necessary.
     */
-   @Override
-   public void show() {
+   public void showWithoutFocus() {
       if (!isVisible()) {
          // both of the following methods bring focus to the Alerts Window,
          // which is highly annoying while working on something else.
@@ -155,7 +154,7 @@ public final class AlertsWindow extends MMFrame {
       if (isMuted(alert) || !shouldShowOnMessage_) {
          return;
       }
-      show();
+      showWithoutFocus();
    }
 
    /**

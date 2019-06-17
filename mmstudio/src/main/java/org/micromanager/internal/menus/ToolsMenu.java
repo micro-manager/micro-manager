@@ -82,7 +82,7 @@ public final class ToolsMenu {
                new Runnable() {
                   @Override
                   public void run() {
-                     ((DefaultAlertManager) studio_.alerts()).alertsWindow().show();
+                     ((DefaultAlertManager) studio_.alerts()).alertsWindow().showWithoutFocus();
                   }
                },
                "bell.png");

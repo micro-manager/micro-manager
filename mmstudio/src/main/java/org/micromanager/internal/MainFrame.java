@@ -442,7 +442,7 @@ public final class MainFrame extends MMFrame {
             new Runnable() {
                @Override
                public void run() {
-                  ((DefaultAlertManager) studio_.alerts()).alertsWindow().show();
+                  ((DefaultAlertManager) studio_.alerts()).alertsWindow().showWithoutFocus();
                }
             });
       alertButton_.setVisible(false);
