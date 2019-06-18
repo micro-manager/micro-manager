@@ -25,6 +25,7 @@ import java.awt.Component;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
+import org.micromanager.Studio;
 
 /**
  *
@@ -33,9 +34,16 @@ import javax.swing.table.TableCellRenderer;
 public final class PropertyNameCellRenderer implements TableCellRenderer {
 
     PropertyItem item_;
+    private final Studio studio_;
+    
+    public PropertyNameCellRenderer(Studio studio) {
+       super();
+       studio_ = studio;
+    }
 
     @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int rowIndex, int column) {
+    public Component getTableCellRendererComponent(JTable table, Object value, 
+            boolean isSelected, boolean hasFocus, int rowIndex, int column) {
        MMPropertyTableModel data = (MMPropertyTableModel) table.getModel();
        item_ = data.getPropertyItem(rowIndex);
        JLabel lab = new JLabel();
@@ -44,11 +52,11 @@ public final class PropertyNameCellRenderer implements TableCellRenderer {
        lab.setText((String) value);
 
        if (item_.readOnly) {
-           lab.setBackground(DaytimeNighttime.getInstance().getDisabledBackgroundColor());
-           lab.setForeground(DaytimeNighttime.getInstance().getDisabledTextColor());
+           lab.setBackground(studio_.app().skin().getDisabledBackgroundColor());
+           lab.setForeground(studio_.app().skin().getDisabledTextColor());
         } else {
-           lab.setBackground(DaytimeNighttime.getInstance().getBackgroundColor());
-           lab.setForeground(DaytimeNighttime.getInstance().getEnabledTextColor());
+           lab.setBackground(studio_.app().skin().getBackgroundColor());
+           lab.setForeground(studio_.app().skin().getEnabledTextColor());
         }    
         return lab;
     }

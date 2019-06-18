@@ -360,7 +360,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
 
       // display dialog and load selected
       if (peripherals.size() > 0) {
-         PeripheralSetupDlg dlgp = new PeripheralSetupDlg(model_, core_, dev.getName(), peripherals);
+         PeripheralSetupDlg dlgp = new PeripheralSetupDlg(model_, studio_.core(), dev.getName(), peripherals);
          dlgp.setVisible(true);
          Device sel[] = dlgp.getSelectedPeripherals();
          for (int i=0; i<sel.length; i++) {
@@ -374,7 +374,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
                // offer to edit pre-init properties
                String props[] = sel[i].getPreInitProperties();
                if (props.length > 0) {
-                  DeviceSetupDlg dlgProps = new DeviceSetupDlg(model_, core_, sel[i]);
+                  DeviceSetupDlg dlgProps = new DeviceSetupDlg(model_, studio_, sel[i]);
                   if (!sel[i].isInitialized()) {
                      core_.unloadDevice(sel[i].getName());
                      model_.removeDevice(sel[i].getName());
@@ -408,7 +408,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
          // TODO Auto-generated catch block
          e.printStackTrace();
       }
-      DeviceSetupDlg dlg = new DeviceSetupDlg(model_, core_, dev);
+      DeviceSetupDlg dlg = new DeviceSetupDlg(model_, studio_, dev);
       model_.setModified(true);
       
       if (!dev.isInitialized()) {
@@ -579,10 +579,12 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
        return true;
     }
 
+   @Override
    public void loadSettings() {
       
    }
    
+   @Override
    public void saveSettings() {
       
    }
@@ -591,6 +593,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
    /**
     * Handler for list selection events in our device table
     */
+   @Override
    public void valueChanged(ListSelectionEvent e) {
       int row = deviceTable_.getSelectedRow();
       if (row < 0) {
@@ -622,6 +625,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
       removeButton.setEnabled(!dev.isCore());
    }
 
+   @Override
    public void valueChanged(TreeSelectionEvent event) {
 
       // update URL for library documentation
@@ -663,12 +667,12 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
             String descr = userData[2].toString();
 
             // load new device
-            String label = new String(adapterName);
+            String label = adapterName;
             Device d = model_.findDevice(label);
             int retries = 0;
             while (d != null) {
                retries++;
-               label = new String(adapterName + "-" + retries);
+               label = adapterName + "-" + retries;
                d = model_.findDevice(label);
             }
 
@@ -684,7 +688,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
             }
 
             // open device setup dialog
-            DeviceSetupDlg dlg = new DeviceSetupDlg(model_, core_, dev);
+            DeviceSetupDlg dlg = new DeviceSetupDlg(model_, studio_, dev);
 
             if (!dev.isInitialized()) {
                // user canceled or things did not work out
@@ -703,7 +707,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
             if (dev.isHub() && !dev.getName().equals("Core")) {
 
                String installed[] = dev.getPeripherals();
-               Vector<Device> peripherals = new Vector<Device>();
+               Vector<Device> peripherals = new Vector<>();
 
                for (int i = 0; i < installed.length; i++) {
                   try {
@@ -733,7 +737,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
                         // offer to edit pre-init properties
                         String props[] = sel[i].getPreInitProperties();
                         if (props.length > 0) {
-                           DeviceSetupDlg dlgProps = new DeviceSetupDlg(model_, core_, sel[i]);
+                           DeviceSetupDlg dlgProps = new DeviceSetupDlg(model_, studio_, sel[i]);
                            if (!sel[i].isInitialized()) {
                               core_.unloadDevice(sel[i].getName());
                               model_.removeDevice(sel[i].getName());

@@ -51,6 +51,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 import org.micromanager.internal.MMStudio;
 
@@ -74,7 +75,7 @@ public final class AutofocusPropertyEditor extends MMDialog {
    private final JButton btnClose;
    private JComboBox methodCombo_;
    
-   public AutofocusPropertyEditor(DefaultAutofocusManager afmgr) {
+   public AutofocusPropertyEditor(Studio studio, DefaultAutofocusManager afmgr) {
       super("autofocus property editor");
       afMgr_ = afmgr;
       setModal(false);
@@ -84,7 +85,7 @@ public final class AutofocusPropertyEditor extends MMDialog {
       table_.setModel(data_);
      
       cellEditor_ = new PropertyCellEditor();
-      PropertyCellRenderer renderer = new PropertyCellRenderer();
+      PropertyCellRenderer renderer = new PropertyCellRenderer(studio);
      
       for (int k=0; k < data_.getColumnCount(); k++) {
          TableColumn column = new TableColumn(k, 200, renderer, cellEditor_);
@@ -527,6 +528,12 @@ public final class AutofocusPropertyEditor extends MMDialog {
       // This method is called each time a cell in a column
       // using this renderer needs to be rendered.
       PropertyItem item_;
+      Studio studio_;
+      
+      public PropertyCellRenderer(Studio studio) {
+         super();
+         studio_ = studio;
+      }
       
       @Override
       public Component getTableCellRendererComponent(JTable table, Object value,
@@ -574,11 +581,11 @@ public final class AutofocusPropertyEditor extends MMDialog {
          }
          
          if (item_.readOnly) {
-            comp.setBackground(DaytimeNighttime.getInstance().getDisabledBackgroundColor());
-            comp.setForeground(DaytimeNighttime.getInstance().getDisabledTextColor());
+            comp.setBackground(studio_.app().skin().getDisabledBackgroundColor());
+            comp.setForeground(studio_.app().skin().getDisabledTextColor());
          } else {
-            comp.setBackground(DaytimeNighttime.getInstance().getBackgroundColor());
-            comp.setForeground(DaytimeNighttime.getInstance().getEnabledTextColor());
+            comp.setBackground(studio_.app().skin().getBackgroundColor());
+            comp.setForeground(studio_.app().skin().getEnabledTextColor());
          }         
          return comp;
       }
@@ -588,9 +595,7 @@ public final class AutofocusPropertyEditor extends MMDialog {
       public void revalidate() {}
       protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {}
       public void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {}
-      public PropertyCellRenderer() {
-         super();
-      }
+
    }
 }
 

@@ -5,17 +5,19 @@ import java.awt.Font;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
-import org.micromanager.internal.utils.DaytimeNighttime;
+import org.micromanager.Studio;
 
 /**
  * Renders the first row of the position list table
  */
 class FirstRowRenderer extends JLabel implements TableCellRenderer {
    private static final long serialVersionUID = 1L;
+   private final Studio studio_;
 
-   public FirstRowRenderer(Font font) {
-      setFont(font);
-      setOpaque(true);
+   public FirstRowRenderer(Studio studio, Font font) {
+      studio_ = studio;
+      super.setFont(font);
+      super.setOpaque(true);
    }
 
    @Override
@@ -26,8 +28,8 @@ class FirstRowRenderer extends JLabel implements TableCellRenderer {
       setText((String) text);
       // HACK: use the "disabled" color for this row to differentiate it from
       // other rows.
-      setBackground(DaytimeNighttime.getInstance().getDisabledBackgroundColor());
-      setForeground(DaytimeNighttime.getInstance().getEnabledTextColor());
+      setBackground(studio_.app().skin().getDisabledBackgroundColor());
+      setForeground(studio_.app().skin().getEnabledTextColor());
       return this;
    }
 }

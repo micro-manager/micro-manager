@@ -28,10 +28,8 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.HeadlessException;
 import java.awt.Insets;
-import java.awt.SystemColor;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,9 +45,8 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.Studio;
 import org.micromanager.UserProfile;
-import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.profile.internal.LegacyMM1Preferences;
 
@@ -65,22 +62,26 @@ public final class RegistrationDlg extends JDialog {
 
    /**
     * Display the registration dialog, if the user has not registered and not
-    * opted out of registering.
+    * opted out of registering. 
+    * @param studio Uses studio.app().skin() and studio.profile(), so make sure 
+    * those are initialized before calling this function
     */
-   public static void showIfNecessary() {
-      if (getHaveRegistered() || getShouldNeverRegister()) {
+   public static void showIfNecessary(Studio studio) {
+      if (getHaveRegistered(studio) || getShouldNeverRegister(studio)) {
          return;
       }
-      new RegistrationDlg().setVisible(true);
+      new RegistrationDlg(studio).setVisible(true);
    }
    
     /**
     * Display the registration dialog, 
     * For debugging purposes only
+    * @param studio Uses studio.app().skin() and studio.profile(), so make sure 
+    * those are initialized before calling this function
     */
-   public static void showRegistration() {
+   public static void showRegistration(Studio studio) {
       
-      new RegistrationDlg().setVisible(true);
+      new RegistrationDlg(studio).setVisible(true);
    }
    
 
@@ -88,13 +89,17 @@ public final class RegistrationDlg extends JDialog {
    private JTextField email_;
    private JTextField inst_;
    private JTextField name_;
+   private final Studio studio_;
 
    /**
     * Dialog to collect registration data from the user.
+    * @param studio Uses studio.app().skin() and studio.profile(), so make sure 
+    * those are initialized before instantiating this class
     */
-   public RegistrationDlg() {
+   public RegistrationDlg(Studio studio) {
       super();
 
+      studio_ = studio;
       incrementRegistrationAttempts();
 
       super.setModal(true);
@@ -108,11 +113,11 @@ public final class RegistrationDlg extends JDialog {
       welcomeTextArea_.setMargin(new Insets(10, 10, 10, 10));
       welcomeTextArea_.setLineWrap(true);
       welcomeTextArea_.setBackground(new Color(
-               DaytimeNighttime.getInstance().getDisabledBackgroundColor().getRGB()));
+               studio_.app().skin().getDisabledBackgroundColor().getRGB()));
       welcomeTextArea_.setFocusable(false);
       welcomeTextArea_.setEditable(false);
       welcomeTextArea_.setFont(new Font("Arial", Font.PLAIN, 12));
-      welcomeTextArea_.setForeground(DaytimeNighttime.getInstance().getDisabledTextColor());
+      welcomeTextArea_.setForeground(studio_.app().skin().getDisabledTextColor());
       welcomeTextArea_.setWrapStyleWord(true);
       welcomeTextArea_.setText("Welcome to Micro-Manager.\n\n" +
             "Please take a minute to let us know that you are using this " +
@@ -143,103 +148,81 @@ public final class RegistrationDlg extends JDialog {
 
       final JButton okButton = new JButton();
       okButton.setFont(new Font("", Font.BOLD, 12));
-      okButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            if (name_.getText().length() == 0 ||
-               email_.getText().length() == 0) {
-               JOptionPane.showMessageDialog(RegistrationDlg.this, "Name and email fields can't be empty.");
-            }
-            else {
-               try {
-                  URL url;
-                  InputStream is;
-                  BufferedReader br;
-
-                  // save registration information to profile
-                  UserProfile profile = MMStudio.getInstance().profile();
-                  profile.setString(RegistrationDlg.class, REGISTRATION_NAME,
-                     name_.getText());
-                  profile.setString(RegistrationDlg.class, REGISTRATION_INST,
-                     inst_.getText());
-
-                  // replace special characters to properly format the command string
-                  String name = name_.getText().replaceAll("[ \t]", "%20");
-                  name = name.replaceAll("[&]", "%20and%20");
-                  String inst = inst_.getText().replaceAll("[ \t]", "%20");
-                  inst = inst.replaceAll("[&]", "%20and%20");
-                  String email = email_.getText().replaceAll("[ \t]", "%20");
-                  email = email.replaceAll("[&]", "%20and%20");
-
-                  String regText = "http://valelab.ucsf.edu/micro-manager-registration.php?Name=" + name +
-                  "&Institute=" + inst + "&email=" + email;
-
-                  url = new URL(regText);
-                  is = url.openStream();
-                  br = new BufferedReader(new InputStreamReader(is));
-                  String response = br.readLine();
-                  if (response.compareTo("SUCCESS") != 0) {
-                     JOptionPane.showMessageDialog(RegistrationDlg.this, "Registration did not succeed. You will be prompted again next time.");
-                     dispose();
-                     return;
-                  }
-
-               }
-               catch (java.net.UnknownHostException e) {
-                  ReportingUtils.showError(e, "Registration did not succeed. You are probably not connected to the Internet.\n" +
-                                                "You will be prompted again next time you start.");
-               }
-               catch (MalformedURLException e) {
-                  ReportingUtils.showError(e);
-               }
-               catch (IOException e) {
-                  ReportingUtils.showError(e);
-               }
-               catch (SecurityException e) {
-                  ReportingUtils.showError(e,
-                        "\nThe program failed to save registration status.\n" +
-                        "Most likely you are not logged in with administrator privileges.\n" +
-                  "Please try registering again using the administrator's account.");
-
-               }
-               catch (HeadlessException e) {
-                  ReportingUtils.logError(e);
-               }
-               finally {
+      okButton.addActionListener((ActionEvent arg0) -> {
+         if (name_.getText().length() == 0 ||
+                 email_.getText().length() == 0) {
+            JOptionPane.showMessageDialog(RegistrationDlg.this, "Name and email fields can't be empty.");
+         } else {
+            try {
+               URL url;
+               InputStream is;
+               BufferedReader br;
+               // save registration information to profile
+               UserProfile profile = studio_.profile();
+               profile.setString(RegistrationDlg.class, REGISTRATION_NAME,
+                       name_.getText());
+               profile.setString(RegistrationDlg.class, REGISTRATION_INST,
+                       inst_.getText());
+               // replace special characters to properly format the command string
+               String name1 = name_.getText().replaceAll("[ \t]", "%20");
+               name1 = name1.replaceAll("[&]", "%20and%20");
+               String inst = inst_.getText().replaceAll("[ \t]", "%20");
+               inst = inst.replaceAll("[&]", "%20and%20");
+               String email = email_.getText().replaceAll("[ \t]", "%20");
+               email = email.replaceAll("[&]", "%20and%20");
+               String regText = "http://valelab.ucsf.edu/micro-manager-registration.php?Name=" + name1 + "&Institute=" + inst + "&email=" + email;
+               url = new URL(regText);
+               is = url.openStream();
+               br = new BufferedReader(new InputStreamReader(is));
+               String response = br.readLine();
+               if (response.compareTo("SUCCESS") != 0) {
+                  JOptionPane.showMessageDialog(RegistrationDlg.this, "Registration did not succeed. You will be prompted again next time.");
                   dispose();
+                  return;
                }
-               // save to profile
-               setHaveRegistered(true);
+            }catch (java.net.UnknownHostException e) {
+               ReportingUtils.showError(e, "Registration did not succeed. You are probably not connected to the Internet.\n" +
+                       "You will be prompted again next time you start.");
+            }catch (MalformedURLException e) {
+               ReportingUtils.showError(e);
+            }catch (IOException e) {
+               ReportingUtils.showError(e);
+            }catch (SecurityException e) {
+               ReportingUtils.showError(e,
+                       "\nThe program failed to save registration status.\n" +
+                               "Most likely you are not logged in with administrator privileges.\n" +
+                               "Please try registering again using the administrator's account.");
+               
+            }catch (HeadlessException e) {
+               ReportingUtils.logError(e);
+            } finally {
+               dispose();
             }
+            // save to profile
+            setHaveRegistered(studio_, true);
          }
       });
       okButton.setText("OK");
       contents.add(okButton, "split 3, span, alignx center");
 
       final JButton skipButton = new JButton();
-      skipButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            JOptionPane.showMessageDialog(RegistrationDlg.this, "You choose to postpone registration.\n" +
-                  "This prompt will appear again next time you start the application.");
-            setShouldNeverRegister(false);
-            dispose();
-         }
+      skipButton.addActionListener((ActionEvent arg0) -> {
+         JOptionPane.showMessageDialog(RegistrationDlg.this, "You choose to postpone registration.\n" +
+                 "This prompt will appear again next time you start the application.");
+         setShouldNeverRegister(studio_, false);
+         dispose();
       });
       skipButton.setText("Later");
       contents.add(skipButton);
 
       // Don't show "never" button the first time
-      if (getNumRegistrationAttempts() > 1) {
+      if (getNumRegistrationAttempts(studio_) > 1) {
          final JButton neverButton = new JButton();
-         neverButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent arg0) {
-               JOptionPane.showMessageDialog(RegistrationDlg.this, "You have chosen never to register. \n" +
-                     "If you change your mind in the future, please\nchoose the \"Register\" option in the Help menu.");
-               setShouldNeverRegister(true);
-               dispose();
-            }
+         neverButton.addActionListener((ActionEvent arg0) -> {
+            JOptionPane.showMessageDialog(RegistrationDlg.this, "You have chosen never to register. \n" +
+                    "If you change your mind in the future, please\nchoose the \"Register\" option in the Help menu.");
+            setShouldNeverRegister(studio_, true);
+            dispose();
          });
          neverButton.setText("Never");
          contents.add(neverButton);
@@ -253,15 +236,15 @@ public final class RegistrationDlg extends JDialog {
    }
 
    private int incrementRegistrationAttempts() {
-      UserProfile profile = MMStudio.getInstance().profile();
-      int attempts = getNumRegistrationAttempts() + 1;
+      UserProfile profile = studio_.profile();
+      int attempts = getNumRegistrationAttempts(studio_) + 1;
       profile.setInt(RegistrationDlg.class, REGISTRATION_ATTEMPTS, attempts);
       return attempts;
    }
 
-   public static boolean getHaveRegistered() {
+   public static boolean getHaveRegistered(Studio studio) {
       // HACK: if there's no entry, we also check the 1.4 Preferences.
-      Boolean result = MMStudio.getInstance().profile().getBoolean(
+      Boolean result = studio.profile().getBoolean(
             RegistrationDlg.class, HAVE_REGISTERED, null);
       if (result != null) {
          return result;
@@ -270,21 +253,21 @@ public final class RegistrationDlg extends JDialog {
       Preferences system = LegacyMM1Preferences.getSystemRoot();
       if (user != null) {
          if (user.getBoolean("registered", false)) {
-            setHaveRegistered(true);
+            setHaveRegistered(studio, true);
             return true;
          }
          else if (user.getBoolean("reg_never", false)) {
-            setShouldNeverRegister(true);
+            setShouldNeverRegister(studio, true);
             return true;
          }
       }
       if (system != null) {
          if (system.getBoolean("registered", false)) {
-            setHaveRegistered(true);
+            setHaveRegistered(studio, true);
             return true;
          }
          else if (system.getBoolean("reg_never", false)) {
-            setShouldNeverRegister(true);
+            setShouldNeverRegister(studio,true);
             return true;
          }
       }
@@ -292,23 +275,23 @@ public final class RegistrationDlg extends JDialog {
       return false;
    }
 
-   public static void setHaveRegistered(boolean haveRegistered) {
-      MMStudio.getInstance().profile().setBoolean(
-            RegistrationDlg.class, HAVE_REGISTERED, haveRegistered);
+   public static void setHaveRegistered(Studio studio, boolean haveRegistered) {
+      studio.profile().getSettings(RegistrationDlg.class).
+              putBoolean(HAVE_REGISTERED, haveRegistered);
    }
 
-   public static boolean getShouldNeverRegister() {
-      return MMStudio.getInstance().profile().getBoolean(
-            RegistrationDlg.class, SHOULD_NEVER_REGISTER, false);
+   public static boolean getShouldNeverRegister(Studio studio) {
+      return studio.profile().getSettings(RegistrationDlg.class).
+              getBoolean(SHOULD_NEVER_REGISTER, false);
    }
 
-   public static void setShouldNeverRegister(boolean haveRegistered) {
-      MMStudio.getInstance().profile().setBoolean(
-            RegistrationDlg.class, SHOULD_NEVER_REGISTER, haveRegistered);
+   public static void setShouldNeverRegister(Studio studio, boolean haveRegistered) {
+      studio.profile().getSettings(RegistrationDlg.class).
+              putBoolean(SHOULD_NEVER_REGISTER, haveRegistered);
    }
 
-   private static int getNumRegistrationAttempts() {
-      return MMStudio.getInstance().profile().getInt(
-            RegistrationDlg.class, REGISTRATION_ATTEMPTS, 0);
+   private static int getNumRegistrationAttempts(Studio studio) {
+      return studio.profile().getSettings(RegistrationDlg.class).
+              getInteger(REGISTRATION_ATTEMPTS, 0);
    }
 }

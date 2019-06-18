@@ -117,4 +117,17 @@ public interface ApplicationSkin {
     * @return current color for disabled text.
     */
    public Color getDisabledTextColor();
+   
+   /**
+    * If the specified mode is not currently active, then we switch to that
+    * mode without updating the UI. Useful if a component must be generated
+    * with a nonstandard look-and-feel.
+    * @param mode SkinMode to switch to (but without updating the UI)
+    */
+   public void suspendToMode(SkinMode mode);
+   
+   /**
+    * Restores the mode that was active before suspendToMode was called.
+    */
+   public void resume();
 }

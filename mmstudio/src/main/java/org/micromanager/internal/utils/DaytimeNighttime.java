@@ -33,7 +33,7 @@ import javax.swing.plaf.ColorUIResource;
 import javax.swing.table.TableModel;
 import org.micromanager.ApplicationSkin;
 import org.micromanager.ApplicationSkin.SkinMode;
-import org.micromanager.internal.MMStudio;
+import org.micromanager.Studio;
 
 /*
  * This class controls the colors of the user interface
@@ -109,27 +109,36 @@ public final class DaytimeNighttime implements ApplicationSkin {
 
    // Mode we were in before suspendToMode() was called.
    private SkinMode suspendedMode_ = null;
+   
+   // only the UserProfile is used.  This class could depend on UserProfile
+   // instead, but it is unclear to me if the UserProfile can change while 
+   // the application executes, so better to always request the pointer that 
+   // Studio has
+   private final Studio studio_;
 
-   private static DaytimeNighttime staticInstance_;
-   static {
-      staticInstance_ = new DaytimeNighttime();
+   public static DaytimeNighttime create(Studio studio)
+   {
+      DaytimeNighttime skin = new DaytimeNighttime(studio);
+      skin.loadStoredSkin();
+      return skin;
    }
 
-   private DaytimeNighttime() {
+   private DaytimeNighttime(Studio studio) {
+      studio_ = studio;
       // Possible: make UI to let user set these colors
-      background_ = new HashMap<SkinMode, ColorUIResource>();
+      background_ = new HashMap<>();
       background_.put(SkinMode.DAY,
             new ColorUIResource(java.awt.SystemColor.control));
       background_.put(SkinMode.NIGHT,
             new ColorUIResource(new Color(64, 64, 64)));
 
-      disabledBackground_ = new HashMap<SkinMode, ColorUIResource>();
+      disabledBackground_ = new HashMap<>();
       disabledBackground_.put(SkinMode.DAY,
             new ColorUIResource(Color.LIGHT_GRAY));
       disabledBackground_.put(SkinMode.NIGHT,
             new ColorUIResource(new Color(32, 32, 32)));
 
-      lightBackground_ = new HashMap<SkinMode, ColorUIResource>();
+      lightBackground_ = new HashMap<>();
       lightBackground_.put(SkinMode.DAY,
             new ColorUIResource(java.awt.SystemColor.control));
       // 37.5% gray; dodging both the OSX checkmark (25% gray) and disabled
@@ -137,19 +146,19 @@ public final class DaytimeNighttime implements ApplicationSkin {
       lightBackground_.put(SkinMode.NIGHT,
             new ColorUIResource(new Color(96, 96, 96)));
 
-      padBackground_ = new HashMap<SkinMode, ColorUIResource>();
+      padBackground_ = new HashMap<>();
       padBackground_.put(SkinMode.DAY,
             new ColorUIResource(Color.white));
       padBackground_.put(SkinMode.NIGHT,
             new ColorUIResource(java.awt.SystemColor.control));
 
-      enabledTextColor_ = new HashMap<SkinMode, ColorUIResource>();
+      enabledTextColor_ = new HashMap<>();
       enabledTextColor_.put(SkinMode.DAY,
             new ColorUIResource(20, 20, 20));
       enabledTextColor_.put(SkinMode.NIGHT,
             new ColorUIResource(200, 200, 200));
 
-      disabledTextColor_ = new HashMap<SkinMode, ColorUIResource>();
+      disabledTextColor_ = new HashMap<>();
       disabledTextColor_.put(SkinMode.DAY,
             new ColorUIResource(100, 100, 100));
       disabledTextColor_.put(SkinMode.NIGHT,
@@ -191,13 +200,10 @@ public final class DaytimeNighttime implements ApplicationSkin {
          UIManager.put(key + ".disabledText", disabledTextColor_.get(mode));
       }
       if (shouldUpdateUI) {
-         SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-               // Update existing components.
-               for (Window w : Window.getWindows()) {
-                  SwingUtilities.updateComponentTreeUI(w);
-               }
+         SwingUtilities.invokeLater(() -> {
+            // Update existing components.
+            for (Window w : Window.getWindows()) {
+               SwingUtilities.updateComponentTreeUI(w);
             }
          });
       }
@@ -207,7 +213,9 @@ public final class DaytimeNighttime implements ApplicationSkin {
     * If the specified mode is not currently active, then we switch to that
     * mode without updating the UI. Useful if a component must be generated
     * with a nonstandard look-and-feel.
+    * @param mode SkinMode to switch to (but without updating the UI)
     */
+   @Override
    public void suspendToMode(SkinMode mode) {
       suspendedMode_ = getSkin();
       if (suspendedMode_.equals(mode)) {
@@ -221,6 +229,7 @@ public final class DaytimeNighttime implements ApplicationSkin {
    /**
     * Restores the mode that was active before suspendToMode was called.
     */
+   @Override
    public void resume() {
       if (suspendedMode_ != null) {
          setMode(suspendedMode_, false);
@@ -233,7 +242,7 @@ public final class DaytimeNighttime implements ApplicationSkin {
     * @param mode new default background mode
     */
    private void storeSkin(SkinMode mode) {
-      MMStudio.getInstance().profile().getSettings(
+      studio_.profile().getSettings(
               DaytimeNighttime.class).putString(
             BACKGROUND_MODE, mode.getDesc());
    }
@@ -244,7 +253,7 @@ public final class DaytimeNighttime implements ApplicationSkin {
     */
    @Override
    public SkinMode getSkin() {
-      return SkinMode.fromString(MMStudio.getInstance().profile().
+      return SkinMode.fromString(studio_.profile().
               getSettings(DaytimeNighttime.class).getString(
             BACKGROUND_MODE, SkinMode.NIGHT.getDesc()));
    }
@@ -299,10 +308,6 @@ public final class DaytimeNighttime implements ApplicationSkin {
    @Override
    public Color getDisabledTextColor() {
       return disabledTextColor_.get(getSkin());
-   }
-
-   public static DaytimeNighttime getInstance() {
-      return staticInstance_;
    }
 
    /**

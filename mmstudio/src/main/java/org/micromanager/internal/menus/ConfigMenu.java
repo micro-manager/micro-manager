@@ -163,7 +163,7 @@ public final class ConfigMenu {
          MainFrame frame = MMStudio.getFrame();
          try {
             frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            cfg = new ConfigWizard(core_, studio_.getSysConfigFile());
+            cfg = new ConfigWizard(studio_, studio_.getSysConfigFile());
          } finally {
             frame.setCursor(Cursor.getDefaultCursor());
             waiter.setVisible(false);

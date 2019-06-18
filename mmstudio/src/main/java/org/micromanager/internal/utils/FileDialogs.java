@@ -21,6 +21,7 @@ import java.awt.Frame;
 import java.awt.Window;
 import java.io.File;
 import javax.swing.JFileChooser;
+import org.micromanager.ApplicationSkin;
 import org.micromanager.ApplicationSkin.SkinMode;
 import org.micromanager.UserProfile;
 import org.micromanager.internal.MMStudio;
@@ -100,7 +101,8 @@ public final class FileDialogs {
                     boolean selectDirectories, boolean load,
                     final String fileDescription,
                     final String[] fileSuffixes,
-                    boolean suggestFileName) {
+                    boolean suggestFileName,
+                    ApplicationSkin skin) {
       File selectedFile = null;
       GeneralFileFilter filter = new GeneralFileFilter(fileDescription, fileSuffixes);
 
@@ -154,7 +156,7 @@ public final class FileDialogs {
          // the "night" UI. So we temporarily force the "Daytime" look and
          // feel, without redrawing the entire program UI, just for as long as
          // it takes us to create this chooser.
-         DaytimeNighttime.getInstance().suspendToMode(SkinMode.DAY);
+         skin.suspendToMode(SkinMode.DAY);
          JFileChooser fc = new JFileChooser();
          if (startFile != null) {
             if ((!load && suggestFileName) || startFile.isDirectory()) {
@@ -163,7 +165,7 @@ public final class FileDialogs {
                fc.setSelectedFile(startFile.getParentFile());
             }
          }
-         DaytimeNighttime.getInstance().resume();
+         skin.resume();
          fc.setDialogTitle(title);
          if (selectDirectories) {
             fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
@@ -185,14 +187,14 @@ public final class FileDialogs {
    }
 
    private static File promptForFile(Window parent, String title,
-         FileType type, boolean selectDirectories, boolean load) {
+         FileType type, boolean selectDirectories, boolean load, ApplicationSkin skin) {
       String startFile = getSuggestedFile(type);
       File startDir = null;
       if (startFile != null) {
          startDir = new File(startFile);
       }
       File result = promptForFile(parent, title, startDir, selectDirectories,
-            load, type.description, type.suffixes, type.suggestFileOnSave);
+            load, type.description, type.suffixes, type.suggestFileOnSave, skin);
       if (result != null) {
          storePath(type, result);
       }
@@ -206,15 +208,15 @@ public final class FileDialogs {
    }
 
    public static File openFile(Window parent, String title, FileType type) {
-      return promptForFile(parent, title, type, false, true);
+      return promptForFile(parent, title, type, false, true, MMStudio.getInstance().app().skin());
    }
 
    public static File openDir(Window parent, String title, FileType type) {
-      return promptForFile(parent, title, type, true, true);
+      return promptForFile(parent, title, type, true, true, MMStudio.getInstance().app().skin());
    }
 
    public static File save(Window parent, String title, FileType type) {
-      return promptForFile(parent, title, type, false, false);
+      return promptForFile(parent, title, type, false, false, MMStudio.getInstance().app().skin());
    }
 
    public static String getSuggestedFile(FileType type) {

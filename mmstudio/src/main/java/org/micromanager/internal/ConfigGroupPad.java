@@ -51,6 +51,7 @@ import org.micromanager.internal.utils.StatePresetCellRenderer;
 public final class ConfigGroupPad extends JScrollPane {
 
    private static final long serialVersionUID = 1L;
+   private final Studio studio_;
    private JTable table_;
    private StateTableData data_;
    private Studio parentGUI_;
@@ -59,8 +60,9 @@ public final class ConfigGroupPad extends JScrollPane {
    public String groupName_ = "";
 
    
-   public ConfigGroupPad() {
+   public ConfigGroupPad(Studio studio) {
       super();
+      studio_ = studio;
    }
 
    private void handleException (Exception e) {
@@ -78,11 +80,13 @@ public final class ConfigGroupPad extends JScrollPane {
       table_.setModel(data_);
 
 
-      table_.addColumn(new TableColumn(0,200,new StateGroupCellRenderer(),null));
-      table_.addColumn(new TableColumn(1,200,new StatePresetCellRenderer(), new StatePresetCellEditor()));
+      table_.addColumn(new TableColumn(0, 200, 
+              new StateGroupCellRenderer(studio_), null));
+      table_.addColumn(new TableColumn(1, 200, 
+              new StatePresetCellRenderer(studio_), new StatePresetCellEditor()));
       
-      int colWidth = MMStudio.getInstance().profile().getInt(
-            this.getClass(), COLUMN_WIDTH , 0);
+      int colWidth = studio_.profile().getSettings(this.getClass()).
+              getInteger(COLUMN_WIDTH , 0);
       if (colWidth > 0) {
          table_.getColumnModel().getColumn(0).setPreferredWidth(colWidth);
       }
@@ -90,7 +94,7 @@ public final class ConfigGroupPad extends JScrollPane {
    
    public void saveSettings() {
       if (table_ != null) {
-           MMStudio.getInstance().profile().setInt(this.getClass(),
+           studio_.profile().getSettings(this.getClass()).putInteger(
                  COLUMN_WIDTH, table_.getColumnModel().getColumn(0).getWidth());
       }
    }
@@ -158,7 +162,7 @@ public final class ConfigGroupPad extends JScrollPane {
             "Group",
             "Preset"
       };
-      ArrayList<StateItem> groupList_ = new ArrayList<StateItem>();
+      ArrayList<StateItem> groupList_ = new ArrayList<>();
       private CMMCore core_ = null;
 
       public StateTableData(CMMCore core) {
@@ -182,11 +186,13 @@ public final class ConfigGroupPad extends JScrollPane {
 
       @Override
       public Object getValueAt(int row, int col) {
-         StateItem item = groupList_.get(row);
-         if (col == 0) {
-            return item.group;
-         } else if (col == 1) {
-            return item.config;
+         if (row < groupList_.size()) {
+            StateItem item = groupList_.get(row);
+            if (col == 0) {
+               return item.group;
+            } else if (col == 1) {
+               return item.config;
+            }
          }
          return null;
       }
@@ -262,7 +268,7 @@ public final class ConfigGroupPad extends JScrollPane {
          try {
             ReportingUtils.logMessage("Rebuilding config group table");
             StrVector groups = core_.getAvailableConfigGroups();
-            HashMap<String, String> oldGroupHash = new HashMap<String, String>();
+            HashMap<String, String> oldGroupHash = new HashMap<>();
             for (StateItem group : groupList_) {
                oldGroupHash.put(group.group, group.config);
             }

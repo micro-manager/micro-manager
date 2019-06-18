@@ -139,6 +139,9 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private PropertyEditor propertyBrowser_;
    private CalibrationListDlg calibrationListDlg_;
    private AcqControlDlg acqControlWin_;
+   
+   
+   // Managers
    private AcquisitionManager acquisitionManager_;
    private DataManager dataManager_;
    private DisplayManager displayManager_;
@@ -151,11 +154,12 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private DefaultQuickAccessManager quickAccess_;
    private DefaultAlertManager alertManager_;
    private DefaultEventManager eventManager_;
+   private ApplicationSkin daytimeNighttimeManager_;
    private UserProfileManager userProfileManager_;
    
    // MMcore
    private CMMCore core_;
-   private AcquisitionWrapperEngine engine_;
+   private AcquisitionWrapperEngine acqEngine_;
    private PositionList posList_;
    private PositionListDlg posListDlg_;
    private boolean isProgramRunning_;
@@ -223,6 +227,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // preventing subsequent instantiation. This is not ideal but
       // intentional, because we do not currently have a way to cleanly exit a
       // partial initialization.
+      
       // TODO Management of the singleton instance has not been done in a clean
       // manner. In fact, there should be an API method to instantiate Studio,
       // rather than calling the constructor directly.
@@ -243,15 +248,65 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
                "Failed to load the MMCoreJ_wrap native library");
       }
       
-      initializeVariousManagers();
+      // Start up multiple managers.  
+      
+      userProfileManager_ = new UserProfileManager();       
+      
+      // Essential GUI settings in preparation of the intro dialog
+      daytimeNighttimeManager_ = DaytimeNighttime.create(studio_);
+      
+      // Start loading plugins in the background
+      pluginManager_ = new DefaultPluginManager(studio_);
+      
+      //Lots of places use this. instantiate it first.
+      eventManager_ = new DefaultEventManager();
+      
+      snapLiveManager_ = new SnapLiveManager(this, core_);
+      events().registerForEvents(snapLiveManager_);
+
+      shutterManager_ = new DefaultShutterManager(studio_);
+      albumInstance_ = new DefaultAlbum();
+
+      // The tools menu depends on the Quick-Access Manager.
+      quickAccess_ = new DefaultQuickAccessManager(studio_);    
+
+      acqEngine_ = new AcquisitionWrapperEngine();
+      acqEngine_.setParentGUI(this);
+      acqEngine_.setZStageDevice(core_.getFocusDevice());
+
+      dataManager_ = new DefaultDataManager();
+      displayManager_ = new DefaultDisplayManager(this);
+      events().registerForEvents(displayManager_);
+
+      alertManager_ = new DefaultAlertManager(studio_);
+      
+      afMgr_ = new DefaultAutofocusManager(studio_);
+      afMgr_.refresh();
+      String afDevice = profile().getString(MMStudio.class, AUTOFOCUS_DEVICE, "");
+      if (afMgr_.hasDevice(afDevice)) {
+         afMgr_.setAutofocusMethodByName(afDevice);
+      }
+
+      posList_ = new PositionList();
+      acqEngine_.setPositionList(posList_);
+
+      // Load (but do no show) the scriptPanel
+      createScriptPanel();
+      scriptPanel_.getScriptsFromPrefs();
+
+      // Ditto with the image pipeline panel.
+      createPipelineFrame();
+      
+      // Tell Core to start logging
       initializeLogging(core_);
+      
       // We need to be subscribed to the global event bus for plugin loading
       events().registerForEvents(this);
 
       // Start loading acqEngine in the background
       prepAcquisitionEngine();
 
-      RegistrationDlg.showIfNecessary();
+      RegistrationDlg.showIfNecessary(this);
       
       // We wait for plugin loading to finish now, since IntroPlugins may be
       // needed to display the intro dialog. Fortunately, plugin loading is
@@ -314,7 +369,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       org.micromanager.internal.diagnostics.gui.ProblemReportController.startIfInterruptedOnExit();
 
       // This entity is a class property to avoid garbage collection.
-      coreCallback_ = new CoreEventCallback(studio_, engine_);
+      coreCallback_ = new CoreEventCallback(studio_, acqEngine_);
 
       // Load hardware configuration
       // Note that this also initializes Autofocus plugins.
@@ -331,9 +386,9 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // Create Multi-D window here but do not show it.
       // This window needs to be created in order to properly set the 
       // "ChannelGroup" based on the Multi-D parameters
-      acqControlWin_ = new AcqControlDlg(engine_, studio_);
+      acqControlWin_ = new AcqControlDlg(acqEngine_, studio_);
 
-      acquisitionManager_ = new DefaultAcquisitionManager(this, engine_,
+      acquisitionManager_ = new DefaultAcquisitionManager(this, acqEngine_,
             acqControlWin_);
 
       try {
@@ -418,56 +473,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // enable only when debug logging is turned on (from the GUI).
       UIMonitor.enable(OptionsDlg.getIsDebugLogEnabled());
    }
-
-   private void initializeVariousManagers() {      
-      userProfileManager_ = new UserProfileManager();              
-      // Essential GUI settings in preparation of the intro dialog
-      DaytimeNighttime.getInstance().loadStoredSkin();
-      
-      // Start loading plugins in the background
-      pluginManager_ = new DefaultPluginManager(studio_);
-      
-      //Lots of places use this. instantiate it first.
-      eventManager_ = new DefaultEventManager();
-      
-      snapLiveManager_ = new SnapLiveManager(this, core_);
-      events().registerForEvents(snapLiveManager_);
-
-      shutterManager_ = new DefaultShutterManager(studio_);
-      albumInstance_ = new DefaultAlbum();
-
-      // The tools menu depends on the Quick-Access Manager.
-      quickAccess_ = new DefaultQuickAccessManager(studio_);    
-
-      engine_ = new AcquisitionWrapperEngine();
-      engine_.setParentGUI(this);
-      engine_.setZStageDevice(core_.getFocusDevice());
-
-      dataManager_ = new DefaultDataManager();
-      displayManager_ = new DefaultDisplayManager(this);
-      events().registerForEvents(displayManager_);
-
-      alertManager_ = new DefaultAlertManager(studio_);
-      
-      afMgr_ = new DefaultAutofocusManager(studio_);
-      afMgr_.refresh();
-      String afDevice = profile().getString(MMStudio.class, AUTOFOCUS_DEVICE, "");
-      if (afMgr_.hasDevice(afDevice)) {
-         afMgr_.setAutofocusMethodByName(afDevice);
-      }
-
-      posList_ = new PositionList();
-      engine_.setPositionList(posList_);
-
-      // Load (but do no show) the scriptPanel
-      createScriptPanel();
-      scriptPanel_.getScriptsFromPrefs();
-
-      // Ditto with the image pipeline panel.
-      createPipelineFrame();
-
-   }
-
+  
    public void showPipelineFrame() {
       pipelineFrame_.setVisible(true);
    }
@@ -970,8 +976,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       try {
          if (staticInfo_ != null) {
             staticInfo_.refreshValues();
-            if (engine_ != null) {
-               engine_.setZStageDevice(StaticInfo.zStageLabel_);  
+            if (acqEngine_ != null) {
+               acqEngine_.setZStageDevice(StaticInfo.zStageLabel_);  
             }
          }
 
@@ -1113,8 +1119,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          afMgr_.closeOptionsDialog();
       }
       
-      if (engine_ != null) {
-         engine_.shutdown();
+      if (acqEngine_ != null) {
+         acqEngine_.shutdown();
       }
 
       synchronized (shutdownLock_) {
@@ -1310,7 +1316,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    public void openAcqControlDialog() {
       try {
          if (acqControlWin_ == null) {
-            acqControlWin_ = new AcqControlDlg(engine_, studio_);
+            acqControlWin_ = new AcqControlDlg(acqEngine_, studio_);
          }
          if (acqControlWin_.isActive()) {
             acqControlWin_.setTopPosition();
@@ -1467,8 +1473,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
             if (posListDlg_ != null) {
                posListDlg_.setPositionList(posList_);
             }
-            if (engine_ != null) {
-               engine_.setPositionList(posList_);
+            if (acqEngine_ != null) {
+               acqEngine_.setPositionList(posList_);
             }
             if (acqControlWin_ != null) {
                acqControlWin_.updateGUIContents();
@@ -1493,7 +1499,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    }
 
    public AcquisitionWrapperEngine getAcquisitionEngine() {
-      return engine_;
+      return acqEngine_;
    }
 
    public CMMCore getCore() {
@@ -1537,7 +1543,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    }
 
    public void setAcquisitionEngine(AcquisitionWrapperEngine eng) {
-      engine_ = eng;
+      acqEngine_ = eng;
    }
 
    @Override
@@ -1703,7 +1709,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    @Override
    public ApplicationSkin skin() {
-      return DaytimeNighttime.getInstance();
+      return daytimeNighttimeManager_;
    }
 
    @Override

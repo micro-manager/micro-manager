@@ -54,6 +54,7 @@ import javax.swing.WindowConstants;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.HttpUtils;
@@ -75,6 +76,7 @@ public final class ConfigWizard extends MMDialog {
    private int curPage_ = 0;
    private MicroscopeModel microModel_;
    private final CMMCore core_;
+   private final Studio studio_;
    private JLabel titleLabel_;
    private final String defaultPath_;
 
@@ -83,10 +85,13 @@ public final class ConfigWizard extends MMDialog {
 
    /**
     * Create the application
+    * @param studio Current Studio instance
+    * @param defFile
     */
-   public ConfigWizard(CMMCore core, String defFile) {
+   public ConfigWizard(Studio studio, String defFile) {
       super("hardware configuration wizard");
-      core_ = core;
+      studio_ = studio;
+      core_ = studio_.core();
       defaultPath_ = defFile;
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       setModal(true);
@@ -144,7 +149,7 @@ public final class ConfigWizard extends MMDialog {
 
       // Create microscope model used by pages.
       microModel_ = new MicroscopeModel();
-      microModel_.setSendConfiguration(MMStudio.getInstance().profile().getBoolean(
+      microModel_.setSendConfiguration(studio_.profile().getBoolean(
               ConfigWizard.class, CFG_OKAY_TO_SEND, true));
       microModel_.loadAvailableDeviceList(core_);
       microModel_.setFileName(defaultPath_);
@@ -161,7 +166,7 @@ public final class ConfigWizard extends MMDialog {
       pages_[pageNumber++] = new FinishPage();
       for (int i = 0; i < pages_.length; i++) {
          try {
-            pages_[i].setModel(microModel_, core_);
+            pages_[i].setModel(microModel_, studio_);
             pages_[i].loadSettings();
             pages_[i].setTitle("Step " + (i + 1) + " of " + pages_.length + ": " + pages_[i].getTitle());
             pages_[i].setParentDialog(this);
@@ -383,7 +388,7 @@ public final class ConfigWizard extends MMDialog {
          }
       }
 
-      MMStudio.getInstance().profile().setBoolean(
+      studio_.profile().setBoolean(
            ConfigWizard.class, CFG_OKAY_TO_SEND,
            microModel_.getSendConfiguration());
 

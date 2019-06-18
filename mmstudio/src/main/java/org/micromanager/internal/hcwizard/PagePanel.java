@@ -29,6 +29,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import mmcorej.CMMCore;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -39,6 +40,7 @@ public abstract class PagePanel extends JPanel{
    private static final Font HELP_FONT = new Font("Arial", Font.PLAIN, 14);
    protected MicroscopeModel model_;
    protected CMMCore core_;
+   protected Studio studio_;
    protected String title_;
    protected Dialog parent_;
 
@@ -49,9 +51,10 @@ public abstract class PagePanel extends JPanel{
       title_ = new String();
    }
 
-   public void setModel(MicroscopeModel model, CMMCore core) {
+   public void setModel(MicroscopeModel model, Studio studio) {
       model_ = model;
-      core_ = core;
+      studio_ = studio;
+      core_ = studio_.core();
    }
 
    public void setTitle(String txt) {

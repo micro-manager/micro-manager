@@ -5,6 +5,7 @@ import java.text.ParseException;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
+import org.micromanager.Studio;
 
 public class PropertyValueCellRenderer implements TableCellRenderer {
    // This method is called each time a cell in a column
@@ -12,15 +13,11 @@ public class PropertyValueCellRenderer implements TableCellRenderer {
 
    PropertyItem item_;
    JLabel lab_ = new JLabel();
-   private boolean disable_;
+   private final Studio studio_;
 
-   public PropertyValueCellRenderer(boolean disable) {
+   public PropertyValueCellRenderer(Studio studio) {
       super();
-      disable_ = disable;
-   }
-
-   public PropertyValueCellRenderer() {
-      this(false);
+      studio_ = studio;
    }
 
    @Override
@@ -55,17 +52,17 @@ public class PropertyValueCellRenderer implements TableCellRenderer {
       }
 
       if (item_.readOnly) {
-         comp.setBackground(DaytimeNighttime.getInstance().getDisabledBackgroundColor());
-         comp.setForeground(DaytimeNighttime.getInstance().getDisabledTextColor());
+         comp.setBackground(studio_.app().skin().getDisabledBackgroundColor());
+         comp.setForeground(studio_.app().skin().getDisabledTextColor());
       } else {
-         comp.setBackground(DaytimeNighttime.getInstance().getBackgroundColor());
-         comp.setForeground(DaytimeNighttime.getInstance().getEnabledTextColor());
+         comp.setBackground(studio_.app().skin().getBackgroundColor());
+         comp.setForeground(studio_.app().skin().getEnabledTextColor());
       }
 
       if (!table.isCellEditable(rowIndex, colIndex)) {
          comp.setEnabled(false);
          // For legibility's sake, we always use the "enabled" color.
-         comp.setForeground(DaytimeNighttime.getInstance().getEnabledTextColor());
+         comp.setForeground(studio_.app().skin().getEnabledTextColor());
       } else {
          comp.setEnabled(true);
       }

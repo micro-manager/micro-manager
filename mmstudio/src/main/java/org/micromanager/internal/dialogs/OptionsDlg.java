@@ -39,12 +39,10 @@ import org.micromanager.ApplicationSkin.SkinMode;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
-import org.micromanager.display.inspector.internal.InspectorController;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.StartupSettings;
 import org.micromanager.internal.logging.LogFileManager;
 import org.micromanager.internal.script.ScriptPanel;
-import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -65,20 +63,20 @@ public final class OptionsDlg extends MMDialog {
    private final JComboBox comboDisplayBackground_;
 
    private CMMCore core_;
-   private Studio parent_;
+   private Studio studio_;
    private final UserProfile profile_;
 
    /**
     * Create the dialog
     * @param core - The Micro-Manager Core object
-    * @param parent - MMStudio api 
+    * @param studio - MMStudio api 
     */
-   public OptionsDlg(CMMCore core, Studio parent) {
+   public OptionsDlg(CMMCore core, Studio studio) {
       super("global micro-manager options");
-      parent_ = parent;
+      studio_ = studio;
       core_ = core;
 
-      profile_ = parent.profile();
+      profile_ = studio.profile();
       final StartupSettings startupSettings = StartupSettings.create(profile_);
 
       super.setResizable(false);
@@ -200,9 +198,9 @@ public final class OptionsDlg extends MMDialog {
             }
             // Clear everything except whether or not this user has
             // registered.
-            boolean haveRegistered = RegistrationDlg.getHaveRegistered();
+            boolean haveRegistered = RegistrationDlg.getHaveRegistered(studio_);
             profile_.clearSettingsForAllClasses();
-            RegistrationDlg.setHaveRegistered(haveRegistered);
+            RegistrationDlg.setHaveRegistered(studio_, haveRegistered);
             // Rather than updating all the GUI elements, let's just close
             // the dialog.
             dispose();
@@ -218,7 +216,7 @@ public final class OptionsDlg extends MMDialog {
       }
       comboDisplayBackground_ = new JComboBox(options);
       comboDisplayBackground_.setMaximumRowCount(2);
-      comboDisplayBackground_.setSelectedItem(DaytimeNighttime.getInstance().getSkin().getDesc());
+      comboDisplayBackground_.setSelectedItem(studio_.app().skin().getSkin().getDesc());
       comboDisplayBackground_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -348,7 +346,7 @@ public final class OptionsDlg extends MMDialog {
    private void changeBackground() {
       String background = (String) comboDisplayBackground_.getSelectedItem();
 
-      parent_.app().skin().setSkin(SkinMode.fromString(background));
+      studio_.app().skin().setSkin(SkinMode.fromString(background));
    }
 
    private void closeRequested() {
@@ -369,7 +367,7 @@ public final class OptionsDlg extends MMDialog {
       MMStudio.getInstance().setCoreLogLifetimeDays(deleteLogDays);
 
       ScriptPanel.setStartupScript(startupScriptFile_.getText());
-      parent_.app().makeActive();
+      studio_.app().makeActive();
       dispose();
    }
 

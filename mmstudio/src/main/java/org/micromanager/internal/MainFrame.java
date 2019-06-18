@@ -28,7 +28,6 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
-import java.awt.Toolkit;
 import java.awt.dnd.DropTarget;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -62,7 +61,6 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.acquisition.internal.AcquisitionSelector;
 import org.micromanager.alerts.internal.AlertClearedEvent;
 import org.micromanager.alerts.internal.AlertUpdatedEvent;
-import org.micromanager.alerts.internal.AlertsWindow;
 import org.micromanager.alerts.internal.DefaultAlertManager;
 import org.micromanager.alerts.internal.DefaultAlert;
 import org.micromanager.alerts.internal.NoAlertsAvailableEvent;
@@ -71,7 +69,6 @@ import org.micromanager.events.ConfigGroupChangedEvent;
 import org.micromanager.events.GUIRefreshEvent;
 import org.micromanager.events.StartupCompleteEvent;
 import org.micromanager.events.internal.ChannelGroupEvent;
-import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 import org.micromanager.events.internal.ShutterDevicesEvent;
 import org.micromanager.internal.dialogs.OptionsDlg;
@@ -360,7 +357,7 @@ public final class MainFrame extends MMFrame {
       subPanel.add(saveConfigButton_,
             "pushy 0, gapleft push, alignx right, w 88!, h 20!");
 
-      configPad_ = new ConfigGroupPad();
+      configPad_ = new ConfigGroupPad(studio_);
       configPadButtonPanel_ = new ConfigPadButtonPanel();
       configPadButtonPanel_.setConfigPad(configPad_);
       configPadButtonPanel_.setGUI(studio_);

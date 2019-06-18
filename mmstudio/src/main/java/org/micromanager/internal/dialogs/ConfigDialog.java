@@ -292,14 +292,16 @@ public abstract class ConfigDialog extends MMDialog {
 
         if (numColumns_ == 3) {
             table_.addColumn(new TableColumn(0, 200, 
-                    new PropertyNameCellRenderer(), null));
+                    new PropertyNameCellRenderer(studio_), null));
             table_.addColumn(new TableColumn(1, 75, 
-                    new PropertyUsageCellRenderer(), new PropertyUsageCellEditor()));
+                    new PropertyUsageCellRenderer(studio_), new PropertyUsageCellEditor()));
             table_.addColumn(new TableColumn(2, 200, 
-                    new PropertyValueCellRenderer(true), new PropertyValueCellEditor(true)));
+                    new PropertyValueCellRenderer(studio_), new PropertyValueCellEditor(true)));
         } else if (numColumns_ == 2) {
-            table_.addColumn(new TableColumn(0, 200, new PropertyNameCellRenderer(), null));
-            table_.addColumn(new TableColumn(1, 200, new PropertyValueCellRenderer(false), new PropertyValueCellEditor(false)));
+            table_.addColumn(new TableColumn(0, 200, 
+                    new PropertyNameCellRenderer(studio_), null));
+            table_.addColumn(new TableColumn(1, 200, 
+                    new PropertyValueCellRenderer(studio_), new PropertyValueCellEditor(false)));
         }
 
    }

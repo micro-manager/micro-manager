@@ -47,6 +47,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.ApplicationSkin;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
@@ -222,6 +223,7 @@ public final class ExportMovieDlg extends MMDialog {
       }
    }
 
+   private final ApplicationSkin skin_;
    private final DisplayWindow display_;
    private final DataProvider provider_;
    private final ArrayList<AxisPanel> axisPanels_;
@@ -236,8 +238,10 @@ public final class ExportMovieDlg extends MMDialog {
     * Show the dialog.
     * @param display display showing the data to be exported
     */
-   public ExportMovieDlg(DisplayWindow display) {
+   public ExportMovieDlg(ApplicationSkin skin, DisplayWindow display) {
       super();
+      skin_ = skin;
+      
       // position the export dialog over the center of the display:
       Window dw = display.getWindow();
       int centerX = dw.getX() + dw.getWidth() / 2;
@@ -376,7 +380,8 @@ public final class ExportMovieDlg extends MMDialog {
                     true,
                     "",
                     fss,
-                    false);
+                    false,
+                    skin_);
          if (outputDir == null) {
             return;
          }

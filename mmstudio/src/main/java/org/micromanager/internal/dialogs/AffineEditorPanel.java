@@ -3,7 +3,6 @@ package org.micromanager.internal.dialogs;
 
 import java.awt.Component;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
 import java.text.NumberFormat;
 import javax.swing.BorderFactory;
@@ -78,38 +77,29 @@ public class AffineEditorPanel extends JPanel {
       super.add(table);
       
       JButton calcButton = new JButton("Calculate");
-      calcButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            AffineTransform javaAtf = AffineUtils.doubleToAffine(AffineUtils.noTransform());
-            double scale = pixelSizeProvider_.getPixelSize();
-            javaAtf.scale(scale, scale);
-            atm_.setAffineTransform(AffineUtils.affineToDouble(javaAtf));
-         }
+      calcButton.addActionListener((ActionEvent e) -> {
+         AffineTransform javaAtf = AffineUtils.doubleToAffine(AffineUtils.noTransform());
+         double scale = pixelSizeProvider_.getPixelSize();
+         javaAtf.scale(scale, scale);
+         atm_.setAffineTransform(AffineUtils.affineToDouble(javaAtf));
       });
       super.add(calcButton, "flowy, split 3, center, width 90!");
       
       JButton measureButton = new JButton ("Measure");
-      measureButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            if (pcd_ == null) {
-               pcd_ = new PixelCalibratorDialog(studio_, pixelSizeProvider_);
-               studio_.events().registerForEvents(pcd_);
-            } else {
-               pcd_.setVisible(true);
-               pcd_.toFront();
-            }
+      measureButton.addActionListener((ActionEvent e) -> {
+         if (pcd_ == null) {
+            pcd_ = new PixelCalibratorDialog(studio_, pixelSizeProvider_);
+            studio_.events().registerForEvents(pcd_);
+         } else {
+            pcd_.setVisible(true);
+            pcd_.toFront();
          }
       });
       super.add(measureButton, "center, width 90!");
       
       JButton resetButton = new JButton ("Reset");
-      resetButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            atm_.setAffineTransform(originalAffineTransform);
-         }
+      resetButton.addActionListener((ActionEvent e) -> {
+         atm_.setAffineTransform(originalAffineTransform);
       });
       super.add(resetButton, "center, width 90!");
       
@@ -167,11 +157,11 @@ public class AffineEditorPanel extends JPanel {
 
          if (rowIndex == 2) {
             comp.setEnabled(false);
-            comp.setBackground(DaytimeNighttime.getInstance().getDisabledBackgroundColor());
-            comp.setForeground(DaytimeNighttime.getInstance().getEnabledTextColor());
+            comp.setBackground(studio_.app().skin().getDisabledBackgroundColor());
+            comp.setForeground(studio_.app().skin().getEnabledTextColor());
          } else {
-            comp.setBackground(DaytimeNighttime.getInstance().getBackgroundColor());
-            comp.setForeground(DaytimeNighttime.getInstance().getEnabledTextColor());
+            comp.setBackground(studio_.app().skin().getBackgroundColor());
+            comp.setForeground(studio_.app().skin().getEnabledTextColor());
             comp.setEnabled(true);
          }
 
