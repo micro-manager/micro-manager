@@ -39,6 +39,7 @@ import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.internal.MMStudio;
 
 /**
  * This class tests reading and writing TIFFs from manual acquisitions.
@@ -182,7 +183,7 @@ public class ManualTiffTest {
    // Tests proper loading of a stored singleplane TIFF file.
    @Test
    public void testSinglePlaneTIFFLoad() {
-      DefaultDataManager manager = new DefaultDataManager();
+      DefaultDataManager manager = new DefaultDataManager(MMStudio.getInstance());
       for (String path : SUMMARIES.keySet()) {
          try {
             Datastore data = manager.loadData(path, true);
@@ -200,7 +201,7 @@ public class ManualTiffTest {
    // and image metadata used by the testSinglePlaneTIFFLoad() method.
    @Test
    public void testMultipageTIFFSaveLoad() {
-      DefaultDataManager manager = new DefaultDataManager();
+      DefaultDataManager manager = new DefaultDataManager(MMStudio.getInstance());
       Datastore store = manager.createRAMDatastore();
       // Manufacture an Image.
       short[] pixels = new short[16*24];

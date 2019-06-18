@@ -55,7 +55,6 @@ import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
-import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.HttpUtils;
 import org.micromanager.internal.utils.MMDialog;
@@ -123,25 +122,20 @@ public final class ConfigWizard extends MMDialog {
       add(pagePanel_, "width 700!, height 600!, span, wrap");
 
       backButton_ = new JButton();
-      backButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            setPage(curPage_ - 1);
-         }
+      backButton_.addActionListener((ActionEvent arg0) -> {
+         setPage(curPage_ - 1);
       });
       backButton_.setText("< Back");
       add(backButton_, "span, split, alignx right");
 
       nextButton_ = new JButton("Next >");
-      nextButton_.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent arg0) {
-            if (curPage_ == pages_.length - 1) {
-               // call the last page's exit
-               pages_[curPage_].exitPage(true);
-               onCloseWindow();
-            } else {
-               setPage(curPage_ + 1);
-            }
+      nextButton_.addActionListener((ActionEvent arg0) -> {
+         if (curPage_ == pages_.length - 1) {
+            // call the last page's exit
+            pages_[curPage_].exitPage(true);
+            onCloseWindow();
+         } else {
+            setPage(curPage_ + 1);
          }
       });
 
@@ -185,11 +179,8 @@ public final class ConfigWizard extends MMDialog {
       // Only invoke from off the EDT, so that pages may do heavy work without
       // hanging the UI.
       if (SwingUtilities.isEventDispatchThread()) {
-         new Thread(new Runnable() {
-            @Override
-            public void run() {
-               setPage(i);
-            }
+         new Thread(() -> {
+            setPage(i);
          }).start();
          return;
       }
@@ -235,7 +226,7 @@ public final class ConfigWizard extends MMDialog {
       String returnValue = "";
       try {
          HttpUtils httpu = new HttpUtils();
-         List<File> list = new ArrayList<File>();
+         List<File> list = new ArrayList<>();
          File conff = new File(this.getFileName());
          if (conff.exists()) {
 
@@ -287,19 +278,19 @@ public final class ConfigWizard extends MMDialog {
             }
             try{
                reader.close();
-            }catch(Exception e){
+            } catch(IOException e) {
                ReportingUtils.logError(e);
             }
             try {
-            writer.close();
-            }catch(Exception e){
+               writer.close();
+            } catch(IOException e) {
                ReportingUtils.logError(e);
             }
             try {
 
                URL url = new URL("http://valelab.ucsf.edu/~MM/upload_file.php");
 
-               List<File> flist = new ArrayList<File>();
+               List<File> flist = new ArrayList<>();
                flist.add(fileToSend);
                // for each of a colleciton of files to send...
                for (Object o0 : flist) {

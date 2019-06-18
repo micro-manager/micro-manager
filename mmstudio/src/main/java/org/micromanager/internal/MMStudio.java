@@ -171,7 +171,10 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private org.micromanager.internal.utils.HotKeys hotKeys_;
 
    // Our instance
+   // TODO: make this non-static
    private static MMStudio studio_;
+   // Our menubar
+   private MMMenuBar mmMenuBar_;
    // Our primary window.
    private static MainFrame frame_;
    // Callback
@@ -419,7 +422,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
 
       // Now create and show the main window
-      frame_ = new MainFrame(this, core_, snapLiveManager_);
+      mmMenuBar_ = MMMenuBar.createMenuBar(studio_);
+      frame_ = new MainFrame(this, core_);
       staticInfo_ = new StaticInfo(studio_, frame_);
       frame_.toFront();
       frame_.setVisible(true);
@@ -745,6 +749,10 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    public JFrame getMainWindow() {
       return frame_;
    }
+   
+   public MMMenuBar getMMMenubar() {
+      return mmMenuBar_;
+   }
 
    public void promptToSaveConfigPresets() {
       File f = FileDialogs.save(frame_,
@@ -883,7 +891,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       isClickToMoveEnabled_ = isEnabled;
       if (isEnabled) {
          IJ.setTool(Toolbar.HAND);
-         MMMenuBar.getToolsMenu().setMouseMovesStage(isEnabled);
+         mmMenuBar_.getToolsMenu().setMouseMovesStage(isEnabled);
       }
       events().post(new MouseMovesStageStateChangeEvent(isEnabled));
    }

@@ -20,28 +20,37 @@ import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.pluginmanagement.DefaultPluginManager;
 
 /**
- * This class is the standard Micro-Manager menu bar.
- * TODO: make all this non-static
+ * This class is the standard Micro-Manager menu bar
  */
 public final class MMMenuBar extends JMenuBar {
-   private static FileMenu fileMenu_;
-   private static ToolsMenu toolsMenu_;
+   private FileMenu fileMenu_;
+   private ToolsMenu toolsMenu_;
+   private final MMStudio mmStudio_;
    
-   public static MMMenuBar createMenuBar(MMStudio studio) {
-      MMMenuBar result = new MMMenuBar();
-      fileMenu_ = new FileMenu(studio, result);
-      toolsMenu_ = new ToolsMenu(studio, result);
-      new ConfigMenu(studio, result);
-      ((DefaultPluginManager) studio.plugins()).createPluginMenu(result);
-      new WindowMenu(studio, result);
-      new HelpMenu(studio, result);
-      return result;
+   public static MMMenuBar createMenuBar(MMStudio mmStudio) {
+      MMMenuBar result = new MMMenuBar(mmStudio);
+      result.createSubMenus();
+      return result;      
    }
-   public static FileMenu getFileMenu() {
+   
+   private MMMenuBar(MMStudio mmStudio) {
+      mmStudio_ = mmStudio;
+   }
+   
+   private void createSubMenus() {
+      fileMenu_ = new FileMenu(mmStudio_, this);
+      toolsMenu_ = new ToolsMenu(mmStudio_, this);
+      new ConfigMenu(mmStudio_, this);
+      ((DefaultPluginManager) mmStudio_.plugins()).createPluginMenu(this);
+      new WindowMenu(mmStudio_, this);
+      new HelpMenu(mmStudio_, this);
+   }
+   
+   public FileMenu getFileMenu() {
       return fileMenu_;
    } 
    
-   public static ToolsMenu getToolsMenu() {
+   public ToolsMenu getToolsMenu() {
       return toolsMenu_;
    }
 }

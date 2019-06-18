@@ -491,7 +491,7 @@ public final class SnapLiveManager extends DataViewerListener
       display_.registerForEvents(this);
       display_.addListener(this, 1);
       display_.setCustomTitle(TITLE);
-      if (MMMenuBar.getToolsMenu().getMouseMovesStage() && display_ != null) {
+      if (((MMStudio) studio_).getMMMenubar().getToolsMenu().getMouseMovesStage() && display_ != null) {
          clickToMoveManager_.activate(display_);
       }
       
