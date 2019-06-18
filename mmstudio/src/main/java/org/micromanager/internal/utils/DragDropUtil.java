@@ -33,7 +33,6 @@ import java.io.File;
 import java.io.IOException;
 import org.micromanager.Studio;
 import org.micromanager.data.Datastore;
-import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.menus.FileMenu;
 import org.micromanager.internal.menus.MMMenuBar;
 

@@ -428,7 +428,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
       // We wait until after showing the main window to enable hot keys
       hotKeys_ = new org.micromanager.internal.utils.HotKeys();
-      hotKeys_.loadSettings();
+      hotKeys_.loadSettings(userProfileManager_.getProfile());
       // zWheelListener_ = new ZWheelListener(core_, studio_);
       // getEventManager().registerForEvents(zWheelListener_);
       // TODO snapLiveManager_.addLiveModeListener(zWheelListener_);
@@ -1191,7 +1191,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       saveSettings();
       try {
          frame_.getConfigPad().saveSettings();
-         hotKeys_.saveSettings();
+         hotKeys_.saveSettings(userProfileManager_.getProfile());
       } catch (NullPointerException e) {
          if (core_ != null) {
             ReportingUtils.logError(e);
