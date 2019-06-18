@@ -37,6 +37,7 @@ import java.util.WeakHashMap;
 import javax.swing.JOptionPane;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
+import org.micromanager.Studio;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
@@ -53,7 +54,7 @@ import org.micromanager.display.inspector.internal.InspectorCollection;
 import org.micromanager.display.inspector.internal.InspectorController;
 import org.micromanager.events.DatastoreClosingEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
-import org.micromanager.internal.MMStudio;
+//import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.EventBusExceptionLogger;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.display.DisplayWindowControlsFactory;
@@ -67,7 +68,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    private static final String[] CLOSE_OPTIONS = new String[] {
          "Cancel", "Prompt for each", "Close without save prompt"};
 
-   private final MMStudio studio_;
+   private final Studio studio_;
 
    // Map from "managed" dataproviders to attached displays. Synchronized by
    // monitor on 'this'.
@@ -90,10 +91,9 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
 
    private final EventBus eventBus_ = new EventBus(EventBusExceptionLogger.getInstance());
 
-   public DefaultDisplayManager(MMStudio studio) {
+   public DefaultDisplayManager(Studio studio) {
       studio_ = studio;
       providerToDisplays_ = new HashMap<DataProvider, ArrayList<DisplayWindow>>();
-      studio_.events().registerForEvents(this);
       viewers_.registerForEvents(this);
    }
    
