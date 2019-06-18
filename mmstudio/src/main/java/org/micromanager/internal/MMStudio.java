@@ -45,7 +45,6 @@ import javax.swing.UnsupportedLookAndFeelException;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 import org.micromanager.Album;
-import org.micromanager.internal.DefaultAlbum;
 import org.micromanager.Application;
 import org.micromanager.ApplicationSkin;
 import org.micromanager.AutofocusManager;
@@ -57,7 +56,6 @@ import org.micromanager.PositionListManager;
 import org.micromanager.PropertyMap;
 import org.micromanager.ScriptController;
 import org.micromanager.ShutterManager;
-import org.micromanager.internal.DefaultShutterManager;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 import org.micromanager.acquisition.AcquisitionManager;
@@ -382,7 +380,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       executeStartupScript();
 
       updateGUI(true);
-
+      
       // Give plugins a chance to initialize their state
       events().post(new StartupCompleteEvent());
    }
@@ -436,7 +434,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       quickAccess_ = new DefaultQuickAccessManager(studio_);
       
       userProfileManager_ = new UserProfileManager();
-      alertManager_ = new DefaultAlertManager(studio_);
 
       engine_ = new AcquisitionWrapperEngine();
       engine_.setParentGUI(this);
@@ -445,6 +442,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       dataManager_ = new DefaultDataManager();
       displayManager_ = new DefaultDisplayManager(this);
 
+      alertManager_ = new DefaultAlertManager(studio_);
+      
       afMgr_ = new DefaultAutofocusManager(studio_);
       afMgr_.refresh();
       String afDevice = profile().getString(MMStudio.class, AUTOFOCUS_DEVICE, "");
