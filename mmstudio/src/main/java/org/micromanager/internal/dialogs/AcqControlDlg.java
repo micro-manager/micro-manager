@@ -907,15 +907,15 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       studio_ = gui;
       profile_ = studio_.getUserProfile();
 
-      setIconImage(Toolkit.getDefaultToolkit().getImage(
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
               MMStudio.class.getResource(
             "/org/micromanager/icons/microscope.gif")));
       
-      setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+      super.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
       numberFormat_ = NumberFormat.getNumberInstance();
 
-      addWindowListener(new WindowAdapter() {
+      super.addWindowListener(new WindowAdapter() {
 
          @Override
          public void windowClosing(final WindowEvent e) {
@@ -925,8 +925,8 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       acqEng_ = acqEng;
       acqEng.addSettingsListener(this);
 
-      setTitle("Multi-Dimensional Acquisition");
-      setLayout(new MigLayout("fill, flowy, gap 2, insets 6",
+      super.setTitle("Multi-Dimensional Acquisition");
+      super.setLayout(new MigLayout("fill, flowy, gap 2, insets 6",
                "[grow, fill]",
                "[][grow][][]"));
 
@@ -966,10 +966,10 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       topPanel.add(topMiddlePanel);
       topPanel.add(topRightPanel);
 
-      add(topPanel, "grow");
-      add(createChannelsPanel(), "grow");
-      add(createSavePanel(), "growx");
-      add(createCommentsPanel(), "growx");
+      super.add(topPanel, "grow");
+      super.add(createChannelsPanel(), "grow");
+      super.add(createSavePanel(), "growx");
+      super.add(createCommentsPanel(), "growx");
 
 
       // add update event listeners
@@ -1003,11 +1003,11 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
       createToolTips();
 
-      pack();
-      Dimension size = getPreferredSize();
+      super.pack();
+      Dimension size = super.getPreferredSize();
       size.height += 10; // Compensate for inaccurate size given by Apple Java 6
-      setMinimumSize(size);
-      this.loadAndRestorePosition(100, 100, size.width, size.height);
+      super.setMinimumSize(size);
+      super.loadAndRestorePosition(100, 100, size.width, size.height);
 
       studio_.events().registerForEvents(this);
    }
@@ -1547,8 +1547,9 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
    // Returns false if user chooses to cancel.
    private boolean warnIfMemoryMayNotBeSufficient() {
-      if (savePanel_.isSelected())
-         return true; 
+      if (savePanel_.isSelected()) {
+         return true;
+      } 
 
       long acqTotalBytes = estimateMemoryUsage();
       if (acqTotalBytes < 0) {
