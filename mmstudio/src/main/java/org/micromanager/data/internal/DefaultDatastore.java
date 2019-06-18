@@ -399,7 +399,7 @@ public class DefaultDatastore implements Datastore {
          ReportingUtils.logError("Unrecognized file format filter " +
                filter.getDescription());
       }
-      setPreferredSaveMode(mode);
+      setPreferredSaveMode(mmStudio_, mode);
       save(mode, file.getAbsolutePath());
       return true;
    }
@@ -521,18 +521,23 @@ public class DefaultDatastore implements Datastore {
       }
    }
 
-   public static void setPreferredSaveMode(Datastore.SaveMode mode) {
+   public static void setPreferredSaveMode(Studio studio, Datastore.SaveMode mode) {
       String modeStr = "";
-      if (mode == Datastore.SaveMode.MULTIPAGE_TIFF) {
-         modeStr = MULTIPAGE_TIFF;
-      }
-      else if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
-         modeStr = SINGLEPLANE_TIFF_SERIES;
-      }
-      else {
+      if (null == mode) {
          ReportingUtils.logError("Unrecognized save mode " + mode);
       }
-      MMStudio.getInstance().profile().getSettings(DefaultDatastore.class).
+      else switch (mode) {
+         case MULTIPAGE_TIFF:
+            modeStr = MULTIPAGE_TIFF;
+            break;
+         case SINGLEPLANE_TIFF_SERIES:
+            modeStr = SINGLEPLANE_TIFF_SERIES;
+            break;
+         default:
+            ReportingUtils.logError("Unrecognized save mode " + mode);
+            break;
+      }
+      studio.profile().getSettings(DefaultDatastore.class).
               putString(PREFERRED_SAVE_FORMAT, modeStr);
    }
 }

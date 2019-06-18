@@ -354,7 +354,7 @@ public final class WindowPositioning {
 
          Rectangle bounds = window.getBounds();
          MutablePropertyMapView settings = MMStudio.getInstance()
-          .profile().getSettings(getClass());
+                                             .profile().getSettings(getClass());
          PropertyMap classPmap = settings.getPropertyMap(
                positioningClass_.getCanonicalName(),
                PropertyMaps.emptyPropertyMap());

@@ -72,7 +72,6 @@ import org.micromanager.internal.utils.performance.gui.PerformanceMonitorUI;
 import org.micromanager.quickaccess.internal.QuickAccessFactory;
 import org.micromanager.display.DisplayWindowControlsFactory;
 import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
-import org.micromanager.internal.menus.MMMenuBar;
 import org.micromanager.internal.navigation.UiMovesStageManager;
 
 /**
@@ -94,7 +93,7 @@ public final class SnapLiveManager extends DataViewerListener
    // skipped.
    private static final double DISPLAY_INTERVAL_ESTIMATE_Q = 0.25;
 
-   private final Studio studio_;
+   private final MMStudio mmStudio_;
    private final CMMCore core_;
    private final UiMovesStageManager clickToMoveManager_;
    private DisplayController display_;
@@ -158,11 +157,11 @@ public final class SnapLiveManager extends DataViewerListener
    }
    
    
-   public SnapLiveManager(Studio studio, CMMCore core) {
-      studio_ = studio;
+   public SnapLiveManager(MMStudio mmStudio, CMMCore core) {
+      mmStudio_ = mmStudio;
       core_ = core;
-      clickToMoveManager_ = new UiMovesStageManager(studio_);
-      studio_.events().registerForEvents(clickToMoveManager_);
+      clickToMoveManager_ = new UiMovesStageManager(mmStudio_);
+      mmStudio_.events().registerForEvents(clickToMoveManager_);
       displayInfoLock_ = new Object();
    }
 
@@ -181,7 +180,7 @@ public final class SnapLiveManager extends DataViewerListener
          else {
             stopLiveMode();
          }
-         studio_.events().post(new DefaultLiveModeEvent(isLiveOn_));
+         mmStudio_.events().post(new DefaultLiveModeEvent(isLiveOn_));
       }
    }
 
@@ -226,7 +225,7 @@ public final class SnapLiveManager extends DataViewerListener
          // join the grabber thread when stopLiveMode is called in a few lines.
          // Hence we use this sentinel value to check if we are actually
          // supposed to be starting live mode.
-         studio_.logs().logDebugMessage("Skipping startLiveMode as startContinuousSequenceAcquisition is in process");
+         mmStudio_.logs().logDebugMessage("Skipping startLiveMode as startContinuousSequenceAcquisition is in process");
          return;
       }
 
@@ -256,7 +255,7 @@ public final class SnapLiveManager extends DataViewerListener
          exposureMs = core_.getExposure();
       }
       catch (Exception e) {
-         studio_.logs().showError(e, "Unable to determine exposure time");
+         mmStudio_.logs().showError(e, "Unable to determine exposure time");
          return;
       }
       final String camName = core_.getCameraDevice();
@@ -349,7 +348,7 @@ public final class SnapLiveManager extends DataViewerListener
          // callback, then we can end up trying to start live mode when we're
          // already "in" startLiveMode somewhere above us in the call stack.
          // See similar comment/block in startLiveMode(), above.
-         studio_.logs().logDebugMessage("Skipping stopLiveMode as startContinuousSequenceAcquisition is in process");
+         mmStudio_.logs().logDebugMessage("Skipping stopLiveMode as startContinuousSequenceAcquisition is in process");
          return;
       }
 
@@ -465,11 +464,11 @@ public final class SnapLiveManager extends DataViewerListener
          // Note that unlike in most situations, we do *not* ask the
          // DataManager to track this Datastore for us.
          // TODO: remove MMStudio cast
-         store_ = new DefaultRewritableDatastore( (MMStudio) studio_);
+         store_ = new DefaultRewritableDatastore(mmStudio_);
          store_.setStorage(new StorageRAM(store_));
          store_.setName("Snap/Live");
          // Use a synchronous pipeline for live mode.
-         pipeline_ = studio_.data().copyLivePipeline(store_, true);
+         pipeline_ = mmStudio_.data().copyLivePipeline(store_, true);
       }
    }
 
@@ -479,19 +478,18 @@ public final class SnapLiveManager extends DataViewerListener
       display_ = new DisplayController.Builder(store_).
             controlsFactory(controlsFactory).
             shouldShow(true).build();
-      DisplaySettings ds = DefaultDisplaySettings.restoreFromProfile(
-              studio_.profile(), PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key() );
+      DisplaySettings ds = DefaultDisplaySettings.restoreFromProfile(mmStudio_.profile(), PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key() );
       if (ds == null) {
          ds = DefaultDisplaySettings.builder().colorMode(
                  DisplaySettings.ColorMode.GRAYSCALE).build();
       }
       display_.setDisplaySettings(ds);
-      studio_.displays().addViewer(display_);
+      mmStudio_.displays().addViewer(display_);
 
       display_.registerForEvents(this);
       display_.addListener(this, 1);
       display_.setCustomTitle(TITLE);
-      if (((MMStudio) studio_).getMMMenubar().getToolsMenu().getMouseMovesStage() && display_ != null) {
+      if (mmStudio_.getMMMenubar().getToolsMenu().getMouseMovesStage() && display_ != null) {
          clickToMoveManager_.activate(display_);
       }
       
@@ -528,15 +526,13 @@ public final class SnapLiveManager extends DataViewerListener
       Insets zeroInsets = new Insets(0, 0, 0, 0);
       Dimension buttonSize = new Dimension(90, 28);
 
-      JComponent snapButton = QuickAccessFactory.makeGUI(
-            studio_.plugins().getQuickAccessPlugins().get(
+      JComponent snapButton = QuickAccessFactory.makeGUI(mmStudio_.plugins().getQuickAccessPlugins().get(
                "org.micromanager.quickaccess.internal.controls.SnapButton"));
       snapButton.setPreferredSize(buttonSize);
       snapButton.setMinimumSize(buttonSize);
       controls.add(snapButton);
 
-      JComponent liveButton = QuickAccessFactory.makeGUI(
-            studio_.plugins().getQuickAccessPlugins().get(
+      JComponent liveButton = QuickAccessFactory.makeGUI(mmStudio_.plugins().getQuickAccessPlugins().get(
                "org.micromanager.quickaccess.internal.controls.LiveButton"));
       liveButton.setPreferredSize(buttonSize);
       liveButton.setMinimumSize(buttonSize);
@@ -557,7 +553,7 @@ public final class SnapLiveManager extends DataViewerListener
          for (int i = 0; i < store_.getAxisLength(Coords.CHANNEL); ++i) {
             builder.channel(i);
             try {
-               studio_.album().addImages(store_.getImagesMatching(
+               mmStudio_.album().addImages(store_.getImagesMatching(
                        builder.build()));
                hadChannels = true;
             }
@@ -567,7 +563,7 @@ public final class SnapLiveManager extends DataViewerListener
          }
          try {
             if (!hadChannels) {
-               studio_.album().addImages(store_.getImagesMatching(
+               mmStudio_.album().addImages(store_.getImagesMatching(
                        Coordinates.builder().build()));
             }
          }
@@ -620,7 +616,7 @@ public final class SnapLiveManager extends DataViewerListener
 
       try {
          DefaultImage newImage = new DefaultImage(image, image.getCoords(),
-               studio_.acquisitions().generateMetadata(image, true));
+               mmStudio_.acquisitions().generateMetadata(image, true));
 
          int newImageChannel = newImage.getCoords().getChannel();
          /*
@@ -699,11 +695,11 @@ public final class SnapLiveManager extends DataViewerListener
             } catch (DatastoreRewriteException e) {
                // This should never happen, because we use an erasable
                // Datastore.
-               studio_.logs().showError(e,
+               mmStudio_.logs().showError(e,
                        "Unable to insert image into pipeline; this should never happen.");
             } catch (PipelineErrorException e) {
                // Notify the user, and halt live.
-               studio_.logs().showError(e,
+               mmStudio_.logs().showError(e,
                        "An error occurred while processing images.");
                stopLiveMode();
                pipeline_.clearExceptions();
@@ -718,7 +714,7 @@ public final class SnapLiveManager extends DataViewerListener
       }
       catch (Exception e) {
          // Error getting metadata from the system state cache.
-         studio_.logs().logError(e, "Error drawing image in snap/live view");
+         mmStudio_.logs().logError(e, "Error drawing image in snap/live view");
       }
    }
 
@@ -789,7 +785,7 @@ public final class SnapLiveManager extends DataViewerListener
          }
       }
       try {
-         List<Image> images = studio_.acquisitions().snap();
+         List<Image> images = mmStudio_.acquisitions().snap();
          if (shouldDisplay) {
             if (display_ != null) {
                display_.resetDisplayIntervalEstimate();
@@ -838,8 +834,7 @@ public final class SnapLiveManager extends DataViewerListener
 
    private void saveDisplaySettings() {
       if (display_.getDisplaySettings() instanceof DefaultDisplaySettings) {
-         ((DefaultDisplaySettings) display_.getDisplaySettings()).saveToProfile(
-                 studio_.profile(), PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key());
+         ((DefaultDisplaySettings) display_.getDisplaySettings()).saveToProfile(mmStudio_.profile(), PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key());
       }
    }
 

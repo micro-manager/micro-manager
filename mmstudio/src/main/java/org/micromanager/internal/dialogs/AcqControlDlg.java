@@ -112,7 +112,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    private JButton acquireButton_;
    private JButton setBottomButton_;
    private JButton setTopButton_;
-   private final MMStudio studio_;
+   private final MMStudio mmStudio_;
    private final NumberFormat numberFormat_;
    private JLabel namePrefixLabel_;
    private JLabel saveTypeLabel_;
@@ -181,7 +181,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    private boolean disableGUItoSettings_ = false;
 
    public final void createChannelTable() {
-      model_ = new ChannelTableModel(studio_, acqEng_);
+      model_ = new ChannelTableModel(mmStudio_, acqEng_);
       model_.addTableModelListener(model_);
 
       channelTable_ = new DaytimeNighttime.Table() {
@@ -365,7 +365,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       listButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            studio_.app().showPositionList();
+            mmStudio_.app().showPositionList();
          }
       });
 
@@ -590,8 +590,8 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
             if (acqEng_.setChannelGroup(newGroup)) {
                model_.cleanUpConfigurationList();
-               if (studio_.getAutofocusManager() != null) {
-                  studio_.getAutofocusManager().refresh();
+               if (mmStudio_.getAutofocusManager() != null) {
+                  mmStudio_.getAutofocusManager().refresh();
                }
             } else {
                updateGroupsCombo();
@@ -712,7 +712,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
             saveSettings();
             saveAcqSettings();
             AcqControlDlg.this.dispose();
-            studio_.app().makeActive();
+            mmStudio_.app().makeActive();
          }
       });
       return closeButton;
@@ -817,7 +817,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       singleButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            DefaultDatastore.setPreferredSaveMode(
+            DefaultDatastore.setPreferredSaveMode(mmStudio_, 
                Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
          }
       });
@@ -828,7 +828,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       multiButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            DefaultDatastore.setPreferredSaveMode(
+            DefaultDatastore.setPreferredSaveMode(mmStudio_,
                Datastore.SaveMode.MULTIPAGE_TIFF);
          }
       });
@@ -899,13 +899,13 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
     * Acquisition control dialog box.
     * Specification of all parameters required for the acquisition.
     * @param acqEng - acquisition engine
-    * @param gui - ScriptINterface
+    * @param mmStudio - ScriptINterface
     */
-   public AcqControlDlg(AcquisitionWrapperEngine acqEng, MMStudio gui) {
+   public AcqControlDlg(AcquisitionWrapperEngine acqEng, MMStudio mmStudio) {
       super("acquisition configuration dialog");
 
-      studio_ = gui;
-      profile_ = studio_.getUserProfile();
+      mmStudio_ = mmStudio;
+      profile_ = mmStudio_.getUserProfile();
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
               MMStudio.class.getResource(
@@ -1009,7 +1009,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       super.setMinimumSize(size);
       super.loadAndRestorePosition(100, 100, size.width, size.height);
 
-      studio_.events().registerForEvents(this);
+      mmStudio_.events().registerForEvents(this);
    }
 
    /** 
@@ -1069,15 +1069,15 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       // of the main exposure time.
       if (getShouldSyncExposure()) {
          try {
-            String channelGroup = studio_.core().getChannelGroup();
-            String channel = studio_.core().getCurrentConfig(channelGroup);
+            String channelGroup = mmStudio_.core().getChannelGroup();
+            String channel = mmStudio_.core().getCurrentConfig(channelGroup);
             double exposure = getChannelExposureTime(
                   channelGroup, channel, 10.0);
-            studio_.app().setChannelExposureTime(channelGroup, channel,
+            mmStudio_.app().setChannelExposureTime(channelGroup, channel,
                   exposure);
          }
          catch (Exception e) {
-            studio_.logs().logError(e, "Error getting channel exposure time");
+            mmStudio_.logs().logError(e, "Error getting channel exposure time");
          }
       }
    }
@@ -1103,7 +1103,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    }
 
    protected void afOptions() {
-      studio_.app().showAutofocusDialog();
+      mmStudio_.app().showAutofocusDialog();
    }
 
    public boolean inArray(String member, String[] group) {
@@ -1116,7 +1116,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    }
    
    public final void updateSavingTypeButtons() {
-      Datastore.SaveMode mode = studio_.data().getPreferredSaveMode();
+      Datastore.SaveMode mode = mmStudio_.data().getPreferredSaveMode();
       if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
          singleButton_.setSelected(true);
       }
@@ -1144,9 +1144,9 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       } catch (Throwable t) {
          ReportingUtils.logError(t, "in dispose");
       }
-      if (null != studio_) {
+      if (null != mmStudio_) {
          try {
-            studio_.app().makeActive();
+            mmStudio_.app().makeActive();
          } catch (Throwable t) {
             ReportingUtils.logError(t, "in makeActive");
          }
@@ -1343,11 +1343,11 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
       // Save preferred save mode.
       if (singleButton_.isSelected()) {
-         DefaultDatastore.setPreferredSaveMode(
+         DefaultDatastore.setPreferredSaveMode(mmStudio_, 
             Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
       }
       else if (multiButton_.isSelected()) {
-         DefaultDatastore.setPreferredSaveMode(
+         DefaultDatastore.setPreferredSaveMode(mmStudio_, 
             Datastore.SaveMode.MULTIPAGE_TIFF);
       }
       else {
@@ -1421,7 +1421,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
    public void loadAcqSettingsFromFile(String path) throws IOException {
       acqFile_ = new File(path);
-      final SequenceSettings settings = studio_.acquisitions().loadSequenceSettings(path);
+      final SequenceSettings settings = mmStudio_.acquisitions().loadSequenceSettings(path);
       try {
          GUIUtils.invokeAndWait(new Runnable() {
             @Override
@@ -1430,7 +1430,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
                updateGUIContents();
                acqDir_ = acqFile_.getParent();
                if (acqDir_ != null) {
-                  studio_.profile().getSettings(this.getClass()).putString(
+                  mmStudio_.profile().getSettings(this.getClass()).putString(
                      ACQ_FILE_DIR, acqDir_);
                }
             }
@@ -1450,7 +1450,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       if (file != null) {
          try {
             SequenceSettings settings = acqEng_.getSequenceSettings();
-            studio_.acquisitions().saveSequenceSettings(settings,
+            mmStudio_.acquisitions().saveSequenceSettings(settings,
                   file.getAbsolutePath());
          }
          catch (IOException e) {
@@ -1493,7 +1493,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
               (Math.abs(zTop - zBottom) /  zStep))));
       int numPositions = 1;
       try {
-         numPositions = Math.max(1, studio_.positions().getPositionList().getNumberOfPositions());
+         numPositions = Math.max(1, mmStudio_.positions().getPositionList().getNumberOfPositions());
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
       }
@@ -1953,7 +1953,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
    private void showCustomTimesDialog() {
       if (customTimesWindow == null) {
-         customTimesWindow = new CustomTimesDialog(acqEng_,studio_);
+         customTimesWindow = new CustomTimesDialog(acqEng_,mmStudio_);
       }
       customTimesWindow.setVisible(true);
    }
