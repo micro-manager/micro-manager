@@ -256,9 +256,10 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       daytimeNighttimeManager_ = DaytimeNighttime.create(studio_);
       
       // Start loading plugins in the background
+      // Note: plugin constructors should not expect a fully constructed Studio!
       pluginManager_ = new DefaultPluginManager(studio_);
       
-      //Lots of places use this. instantiate it first.
+      // Lots of places use this. instantiate it first.
       eventManager_ = new DefaultEventManager();
       
       snapLiveManager_ = new SnapLiveManager(this, core_);
@@ -725,6 +726,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    public static MMStudio getInstance() {
       return studio_;
    }
+   
 
    /**
     * Returns singleton instance of MainFrame.

@@ -9,6 +9,7 @@ import org.micromanager.data.Datastore;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.PipelineErrorException;
 import org.micromanager.data.internal.DefaultImage;
+import org.micromanager.events.EventManager;
 import org.micromanager.events.internal.DefaultAcquisitionEndedEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -29,13 +30,18 @@ public final class DefaultTaggedImageSink  {
    private final Datastore store_;
    private final Pipeline pipeline_;
    private final AcquisitionEngine engine_;
+   private final EventManager studioEvents_;
 
    public DefaultTaggedImageSink(BlockingQueue<TaggedImage> queue,
-         Pipeline pipeline, Datastore store, AcquisitionEngine engine) {
+         Pipeline pipeline, 
+         Datastore store, 
+         AcquisitionEngine engine, 
+         EventManager studioEvents) {
       imageProducingQueue_ = queue;
       pipeline_ = pipeline;
       store_ = store;
       engine_ = engine;
+      studioEvents_ = studioEvents;
    }
 
    public void start() {
@@ -84,7 +90,7 @@ public final class DefaultTaggedImageSink  {
                ReportingUtils.logError(ex2);
             } finally {
                pipeline_.halt();
-               MMStudio.getInstance().events().post(
+               studioEvents_.post(
                      new DefaultAcquisitionEndedEvent(store_, engine_));
             }
             long t2 = System.currentTimeMillis();
