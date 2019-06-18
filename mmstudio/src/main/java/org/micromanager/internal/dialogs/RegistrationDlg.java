@@ -26,7 +26,9 @@ package org.micromanager.internal.dialogs;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.HeadlessException;
 import java.awt.Insets;
+import java.awt.SystemColor;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -46,8 +48,8 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.UserProfile;
-import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.profile.internal.LegacyMM1Preferences;
 
@@ -71,6 +73,16 @@ public final class RegistrationDlg extends JDialog {
       }
       new RegistrationDlg().setVisible(true);
    }
+   
+    /**
+    * Display the registration dialog, 
+    * For debugging purposes only
+    */
+   public static void showRegistration() {
+      
+      new RegistrationDlg().setVisible(true);
+   }
+   
 
    private JTextArea welcomeTextArea_;
    private JTextField email_;
@@ -85,24 +97,22 @@ public final class RegistrationDlg extends JDialog {
 
       incrementRegistrationAttempts();
 
-      setModal(true);
-      setUndecorated(true);
-      setTitle("Micro-Manager Registration");
-      setLayout(new MigLayout());
+      super.setModal(true);
+      super.setUndecorated(true);
+      super.setTitle("Micro-Manager Registration");
+      super.setLayout(new MigLayout());
 
       JPanel contents = new JPanel(new MigLayout("flowx"));
       welcomeTextArea_ = new JTextArea();
       welcomeTextArea_.setColumns(40);
       welcomeTextArea_.setMargin(new Insets(10, 10, 10, 10));
       welcomeTextArea_.setLineWrap(true);
-      // HACK: convert to Color, because the ColorUIResource that
-      // DaytimeNighttime returns here gets overridden as soon as setVisible()
-      // is called, for unknown reasons.
       welcomeTextArea_.setBackground(new Color(
-            DaytimeNighttime.getInstance().getDisabledBackgroundColor().getRGB()));
+               DaytimeNighttime.getInstance().getDisabledBackgroundColor().getRGB()));
       welcomeTextArea_.setFocusable(false);
       welcomeTextArea_.setEditable(false);
       welcomeTextArea_.setFont(new Font("Arial", Font.PLAIN, 12));
+      welcomeTextArea_.setForeground(DaytimeNighttime.getInstance().getDisabledTextColor());
       welcomeTextArea_.setWrapStyleWord(true);
       welcomeTextArea_.setText("Welcome to Micro-Manager.\n\n" +
             "Please take a minute to let us know that you are using this " +
@@ -192,7 +202,7 @@ public final class RegistrationDlg extends JDialog {
                   "Please try registering again using the administrator's account.");
 
                }
-               catch (Exception e) {
+               catch (HeadlessException e) {
                   ReportingUtils.logError(e);
                }
                finally {
@@ -235,11 +245,11 @@ public final class RegistrationDlg extends JDialog {
          contents.add(neverButton);
       }
 
-      getContentPane().add(contents);
-      pack();
-      Dimension winSize = getSize();
+      super.getContentPane().add(contents);
+      super.pack();
+      Dimension winSize = super.getSize();
       Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-      setLocation(screenSize.width/2 - (winSize.width/2), screenSize.height/2 - (winSize.height/2));
+      super.setLocation(screenSize.width/2 - (winSize.width/2), screenSize.height/2 - (winSize.height/2));
    }
 
    private int incrementRegistrationAttempts() {
