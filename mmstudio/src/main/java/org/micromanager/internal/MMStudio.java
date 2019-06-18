@@ -275,9 +275,15 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       acqEngine_.setParentGUI(this);
       acqEngine_.setZStageDevice(core_.getFocusDevice());
 
-      dataManager_ = new DefaultDataManager();
+      
+      // DisplayManager needs to be created before Pipelineframe
       displayManager_ = new DefaultDisplayManager(this);
-      events().registerForEvents(displayManager_);
+      
+      // Load, but do not show, image pipeline panel.
+      // Note: pipelineFrame is used in the dataManager, however, pipelineFrame 
+      // needs the dataManager.  Let's hope for the best....
+      dataManager_ = new DefaultDataManager(studio_);
+      createPipelineFrame();
 
       alertManager_ = new DefaultAlertManager(studio_);
       
@@ -294,9 +300,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // Load (but do no show) the scriptPanel
       createScriptPanel();
       scriptPanel_.getScriptsFromPrefs();
-
-      // Ditto with the image pipeline panel.
-      createPipelineFrame();
       
       // Tell Core to start logging
       initializeLogging(core_);
@@ -434,7 +437,9 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
       // Switch error reporting back on TODO See above where it's turned off
       ReportingUtils.showErrorOn(true);
-
+      
+      events().registerForEvents(displayManager_);
+      
       // Tell the GUI to reflect the hardware configuration. (The config was
       // loaded before creating the GUI, so we need to reissue the event.)
       events().post(new SystemConfigurationLoadedEvent());
@@ -722,7 +727,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    /**
     * Returns singleton instance of MMStudio
     * @return singleton instance of MMStudio
-    */
+   */ 
    public static MMStudio getInstance() {
       return studio_;
    }
