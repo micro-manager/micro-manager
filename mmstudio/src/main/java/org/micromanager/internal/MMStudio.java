@@ -84,6 +84,7 @@ import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 import org.micromanager.internal.diagnostics.EDTHangLogger;
+import org.micromanager.internal.diagnostics.ThreadExceptionLogger;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.dialogs.CalibrationListDlg;
 import org.micromanager.internal.dialogs.IJVersionCheckDlg;
@@ -231,7 +232,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       studio_ = this;
       isProgramRunning_ = true;
 
-      org.micromanager.internal.diagnostics.ThreadExceptionLogger.setUp();
+      ThreadExceptionLogger.setUp();
 
       // The Core is created as early as possible, so that we can make use of
       // the CoreLog (and also to fail early if the MMCoreJ is not available)
@@ -251,7 +252,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       prepAcquisitionEngine();
 
       RegistrationDlg.showIfNecessary();
-
+      
       // We wait for plugin loading to finish now, since IntroPlugins may be
       // needed to display the intro dialog. Fortunately, plugin loading is
       // fast in 2.0 (it used to be very slow in 1.4, so we loaded plugins in
@@ -271,9 +272,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       else {
          ReportingUtils.logMessage("Finished waiting for plugins to load");
       }
-
-      // Essential GUI settings in preparation of the intro dialog
-      DaytimeNighttime.getInstance().loadStoredSkin();
 
       ToolTipManager ttManager = ToolTipManager.sharedInstance();
       ttManager.setDismissDelay(TOOLTIP_DISPLAY_DURATION_MILLISECONDS);
@@ -329,6 +327,14 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
             ReportingUtils.showErrorOn(false);
          }
       }
+      
+      // Create Multi-D window here but do not show it.
+      // This window needs to be created in order to properly set the 
+      // "ChannelGroup" based on the Multi-D parameters
+      acqControlWin_ = new AcqControlDlg(engine_, studio_);
+
+      acquisitionManager_ = new DefaultAcquisitionManager(this, engine_,
+            acqControlWin_);
 
       try {
          core_.setCircularBufferMemoryFootprint(getCircularBufferSize());
@@ -413,10 +419,10 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       UIMonitor.enable(OptionsDlg.getIsDebugLogEnabled());
    }
 
-   private void initializeVariousManagers() {
-      // The UiMovesStageManager manages itself; don't need to retain a
-      // reference to it.
-      // new UiMovesStageManager(this, core_);
+   private void initializeVariousManagers() {      
+      userProfileManager_ = new UserProfileManager();              
+      // Essential GUI settings in preparation of the intro dialog
+      DaytimeNighttime.getInstance().loadStoredSkin();
       
       // Start loading plugins in the background
       pluginManager_ = new DefaultPluginManager(studio_);
@@ -431,9 +437,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       albumInstance_ = new DefaultAlbum();
 
       // The tools menu depends on the Quick-Access Manager.
-      quickAccess_ = new DefaultQuickAccessManager(studio_);
-      
-      userProfileManager_ = new UserProfileManager();
+      quickAccess_ = new DefaultQuickAccessManager(studio_);    
 
       engine_ = new AcquisitionWrapperEngine();
       engine_.setParentGUI(this);
@@ -441,6 +445,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
       dataManager_ = new DefaultDataManager();
       displayManager_ = new DefaultDisplayManager(this);
+      events().registerForEvents(displayManager_);
 
       alertManager_ = new DefaultAlertManager(studio_);
       
@@ -461,13 +466,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // Ditto with the image pipeline panel.
       createPipelineFrame();
 
-      // Create Multi-D window here but do not show it.
-      // This window needs to be created in order to properly set the 
-      // "ChannelGroup" based on the Multi-D parameters
-      acqControlWin_ = new AcqControlDlg(engine_, studio_);
-
-      acquisitionManager_ = new DefaultAcquisitionManager(this, engine_,
-            acqControlWin_);
    }
 
    public void showPipelineFrame() {
