@@ -30,11 +30,16 @@ import org.micromanager.data.RewritableDatastore;
 import org.micromanager.data.RewritableStorage;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
 public final class DefaultRewritableDatastore extends DefaultDatastore implements RewritableDatastore {
 
+   public DefaultRewritableDatastore(MMStudio mmStudio) {
+      super(mmStudio);
+   }
+   
    @Override
    public void setStorage(Storage storage) {
       if (!(storage instanceof RewritableStorage)) {

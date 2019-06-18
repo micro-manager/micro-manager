@@ -84,7 +84,7 @@ public final class DefaultDataManager implements DataManager {
 
    @Override
    public Datastore createRAMDatastore() {
-      Datastore result = new DefaultDatastore();
+      Datastore result = new DefaultDatastore(mmStudio_);
       result.setStorage(new StorageRAM(result));
       return result;
    }
@@ -96,7 +96,7 @@ public final class DefaultDataManager implements DataManager {
 
    @Override
    public RewritableDatastore createRewritableRAMDatastore() {
-      RewritableDatastore result = new DefaultRewritableDatastore();
+      RewritableDatastore result = new DefaultRewritableDatastore(mmStudio_);
       result.setStorage(new StorageRAM(result));
       return result;
    }
@@ -111,7 +111,7 @@ public final class DefaultDataManager implements DataManager {
    public Datastore createMultipageTIFFDatastore(String directory,
          boolean shouldGenerateSeparateMetadata, boolean shouldSplitPositions)
          throws IOException {
-      DefaultDatastore result = new DefaultDatastore();
+      DefaultDatastore result = new DefaultDatastore(mmStudio_);
       result.setStorage(new StorageMultipageTiff(null, result, directory, true,
                shouldGenerateSeparateMetadata, shouldSplitPositions));
       return result;
@@ -126,7 +126,7 @@ public final class DefaultDataManager implements DataManager {
 
    @Override
    public Datastore createSinglePlaneTIFFSeriesDatastore(String directory) throws IOException {
-      DefaultDatastore result = new DefaultDatastore();
+      DefaultDatastore result = new DefaultDatastore(mmStudio_);
       result.setStorage(new StorageSinglePlaneTiffSeries(result, directory,
             true));
       return result;
@@ -194,7 +194,7 @@ public final class DefaultDataManager implements DataManager {
       if (!dirFile.isDirectory()) {
          directory = dirFile.getParent();
       }
-      DefaultDatastore result = new DefaultDatastore();
+      DefaultDatastore result = new DefaultDatastore(mmStudio_);
       // TODO: future additional file formats will need to be handled here.
       // For now we just choose between StorageMultipageTiff and
       // StorageSinglePlaneTiffSeries.
@@ -264,7 +264,7 @@ public final class DefaultDataManager implements DataManager {
 
    @Override
    public Datastore.SaveMode getPreferredSaveMode() {
-      return DefaultDatastore.getPreferredSaveMode();
+      return DefaultDatastore.getPreferredSaveMode(mmStudio_);
    }
 
    @Override

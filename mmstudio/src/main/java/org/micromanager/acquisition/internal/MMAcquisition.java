@@ -25,7 +25,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -60,7 +59,6 @@ import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.events.AcquisitionEndedEvent;
-import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -103,7 +101,8 @@ public final class MMAcquisition extends DataViewerListener {
       studio_ = studio;
       eng_ = eng;
       show_ = show;
-      store_ = new DefaultDatastore();
+      // TODO: get rid of MMStudo cast
+      store_ = new DefaultDatastore((MMStudio) studio);
       pipeline_ = studio_.data().copyApplicationPipeline(store_, false);
       try {
          if (summaryMetadata.has("Directory") && summaryMetadata.get("Directory").toString().length() > 0) {
@@ -112,7 +111,7 @@ public final class MMAcquisition extends DataViewerListener {
                String acqDirectory = createAcqDirectory(summaryMetadata.getString("Directory"), summaryMetadata.getString("Prefix"));
                summaryMetadata.put("Prefix", acqDirectory);
                String acqPath = summaryMetadata.getString("Directory") + File.separator + acqDirectory;
-               store_.setStorage(getAppropriateStorage(store_, acqPath, true));
+               store_.setStorage(getAppropriateStorage(studio_, store_, acqPath, true));
             } catch (Exception e) {
                ReportingUtils.showError(e, "Unable to create directory for saving images.");
                eng.stop(true);
@@ -141,10 +140,12 @@ public final class MMAcquisition extends DataViewerListener {
 
       try {
          // Compatibility hack: serialize to JSON, then parse as summary metadata JSON format
-         SummaryMetadata summary = DefaultSummaryMetadata.fromPropertyMap(
-                 NonPropertyMapJSONFormats.summaryMetadata().fromJSON(
-                         summaryMetadata.toString()));
-         pipeline_.insertSummaryMetadata(summary);
+         if (summaryMetadata != null) {
+            SummaryMetadata summary = DefaultSummaryMetadata.fromPropertyMap(
+                    NonPropertyMapJSONFormats.summaryMetadata().fromJSON(
+                            summaryMetadata.toString()));
+            pipeline_.insertSummaryMetadata(summary);
+         }
       }
       catch (DatastoreFrozenException e) {
          ReportingUtils.logError(e, "Datastore is frozen; can't set summary metadata");
@@ -328,7 +329,7 @@ public final class MMAcquisition extends DataViewerListener {
       return new DisplayWindowControlsFactory() {
          @Override
          public List<Component> makeControls(final DisplayWindow display) {
-            ArrayList<Component> result = new ArrayList<Component>();
+            ArrayList<Component> result = new ArrayList<>();
             JButton abortButton = SubscribedButton.makeButton(studio_,
                   new ImageIcon(
                      getClass().getResource("/org/micromanager/icons/cancel.png")),
@@ -339,11 +340,8 @@ public final class MMAcquisition extends DataViewerListener {
             abortButton.setMaximumSize(new Dimension(30, 28));
             abortButton.setMinimumSize(new Dimension(30, 28));
             abortButton.setPreferredSize(new Dimension(30, 28));
-            abortButton.addActionListener(new ActionListener() {
-               @Override
-               public void actionPerformed(ActionEvent e) {
-                  eng_.abortRequest();
-               }
+            abortButton.addActionListener((ActionEvent e) -> {
+               eng_.abortRequest();
             });
             result.add(abortButton);
 
@@ -358,18 +356,15 @@ public final class MMAcquisition extends DataViewerListener {
             pauseButton.setMaximumSize(new Dimension(30, 28));
             pauseButton.setMinimumSize(new Dimension(30, 28));
             pauseButton.setPreferredSize(new Dimension(30, 28));
-            pauseButton.addActionListener(new ActionListener() {
-               @Override
-               public void actionPerformed(ActionEvent e) {
-                  eng_.setPause(!eng_.isPaused());
-                  // Switch the icon depending on if the acquisition is paused.
-                  Icon icon = pauseButton.getIcon();
-                  if (icon == pauseIcon) {
-                     pauseButton.setIcon(playIcon);
-                  }
-                  else {
-                     pauseButton.setIcon(pauseIcon);
-                  }
+            pauseButton.addActionListener((ActionEvent e) -> {
+               eng_.setPause(!eng_.isPaused());
+               // Switch the icon depending on if the acquisition is paused.
+               Icon icon = pauseButton.getIcon();
+               if (icon == pauseIcon) {
+                  pauseButton.setIcon(playIcon);
+               }
+               else {
+                  pauseButton.setIcon(pauseIcon);
                }
             });
             result.add(pauseButton);
@@ -399,18 +394,15 @@ public final class MMAcquisition extends DataViewerListener {
       }
       display_.removeListener(this);
       studio_.events().unregisterForEvents(this);
-      new Thread(new Runnable() {
-         @Override
-         public void run() {
-            try {
-               Thread.sleep(5000);
-            }
-            catch (InterruptedException e) {
-               // This should never happen.
-               studio_.logs().logError("Interrupted while waiting to dismiss alert");
-            }
-            alert_.dismiss();
+      new Thread(() -> {
+         try {
+            Thread.sleep(5000);
          }
+         catch (InterruptedException e) {
+            // This should never happen.
+            studio_.logs().logError("Interrupted while waiting to dismiss alert");
+         }
+         alert_.dismiss();
       }).start();
    }
 
@@ -434,9 +426,11 @@ public final class MMAcquisition extends DataViewerListener {
       }
    }
 
-   private static Storage getAppropriateStorage(final DefaultDatastore store,
-           final String path, final boolean isNew) throws IOException {
-      Datastore.SaveMode mode = DefaultDatastore.getPreferredSaveMode();
+   private static Storage getAppropriateStorage(final Studio studio, 
+           final DefaultDatastore store,
+           final String path, 
+           final boolean isNew) throws IOException {
+      Datastore.SaveMode mode = DefaultDatastore.getPreferredSaveMode(studio);
       if (null != mode) {
          switch (mode) {
             case SINGLEPLANE_TIFF_SERIES:

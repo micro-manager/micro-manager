@@ -20,7 +20,6 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -62,7 +61,6 @@ import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.displaywindow.DisplayController;
-import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.events.internal.DefaultLiveModeEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.utils.GUIUtils;
@@ -139,7 +137,7 @@ public final class SnapLiveManager extends DataViewerListener
       private int height_;
       private int numComponents_;
       private int bytesPerPixel_;
-      final private Map<Integer, Long> imageNumber_ = new HashMap<Integer, Long>();
+      final private Map<Integer, Long> imageNumber_ = new HashMap<>();
       
 
       public int getWidth() { return width_; }
@@ -421,17 +419,14 @@ public final class SnapLiveManager extends DataViewerListener
               final Image newImage = image.copyWith(newCoords, newMetadata);
 
               try {
-                  SwingUtilities.invokeAndWait(new Runnable() {
-                      @Override
-                      public void run() {
-                          synchronized (SnapLiveManager.this) {
-                              if (scheduledGrab_ == null
-                                      || liveModeStartCount_ != liveModeCount) {
-                                  throw new CancellationException();
-                              }
-                          }
-                          displayImage(newImage);
-                      }
+                  SwingUtilities.invokeAndWait(() -> {
+                     synchronized (SnapLiveManager.this) {
+                        if (scheduledGrab_ == null
+                                || liveModeStartCount_ != liveModeCount) {
+                           throw new CancellationException();
+                        }
+                     }
+                     displayImage(newImage);
                   });
 
               } catch (InterruptedException unexpected) {
@@ -469,7 +464,8 @@ public final class SnapLiveManager extends DataViewerListener
          }
          // Note that unlike in most situations, we do *not* ask the
          // DataManager to track this Datastore for us.
-         store_ = new DefaultRewritableDatastore();
+         // TODO: remove MMStudio cast
+         store_ = new DefaultRewritableDatastore( (MMStudio) studio_);
          store_.setStorage(new StorageRAM(store_));
          store_.setName("Snap/Live");
          // Use a synchronous pipeline for live mode.
@@ -478,12 +474,8 @@ public final class SnapLiveManager extends DataViewerListener
    }
 
    private void createDisplay() {
-      DisplayWindowControlsFactory controlsFactory = new DisplayWindowControlsFactory() {
-         @Override
-         public List<Component> makeControls(DisplayWindow display) {
-            return createControls();
-         }
-      };
+      DisplayWindowControlsFactory controlsFactory = 
+              (DisplayWindow display) -> createControls();
       display_ = new DisplayController.Builder(store_).
             controlsFactory(controlsFactory).
             shouldShow(true).build();
@@ -558,32 +550,29 @@ public final class SnapLiveManager extends DataViewerListener
       toAlbumButton.setMinimumSize(buttonSize);
       toAlbumButton.setFont(GUIUtils.buttonFont);
       toAlbumButton.setMargin(zeroInsets);
-      toAlbumButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent event) {
-            // Send all images at current channel to the album.
-            Coords.CoordsBuilder builder = Coordinates.builder();
-            boolean hadChannels = false;
-            for (int i = 0; i < store_.getAxisLength(Coords.CHANNEL); ++i) {
-               builder.channel(i);
-               try {
-                  studio_.album().addImages(store_.getImagesMatching(
-                        builder.build()));
-                  hadChannels = true;
-               }
-               catch (IOException e) {
-                  ReportingUtils.showError(e, "There was an error grabbing the images");
-               }
-            }
+      toAlbumButton.addActionListener((ActionEvent event) -> {
+         // Send all images at current channel to the album.
+         Coords.CoordsBuilder builder = Coordinates.builder();
+         boolean hadChannels = false;
+         for (int i = 0; i < store_.getAxisLength(Coords.CHANNEL); ++i) {
+            builder.channel(i);
             try {
-               if (!hadChannels) {
-                  studio_.album().addImages(store_.getImagesMatching(
-                        Coordinates.builder().build()));
-               }
+               studio_.album().addImages(store_.getImagesMatching(
+                       builder.build()));
+               hadChannels = true;
             }
             catch (IOException e) {
-               ReportingUtils.showError(e, "There was an error grabbing the image");
+               ReportingUtils.showError(e, "There was an error grabbing the images");
             }
+         }
+         try {
+            if (!hadChannels) {
+               studio_.album().addImages(store_.getImagesMatching(
+                       Coordinates.builder().build()));
+            }
+         }
+         catch (IOException e) {
+            ReportingUtils.showError(e, "There was an error grabbing the image");
          }
       });
       controls.add(toAlbumButton);
@@ -601,11 +590,8 @@ public final class SnapLiveManager extends DataViewerListener
    public void displayImage(final Image image) {
 
       if (!SwingUtilities.isEventDispatchThread()) {
-         SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-               displayImage(image);
-            }
+         SwingUtilities.invokeLater(() -> {
+            displayImage(image);
          });
          return;
       }

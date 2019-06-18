@@ -29,6 +29,7 @@ import java.util.List;
 import javax.swing.JFileChooser;
 import javax.swing.ProgressMonitor;
 import javax.swing.filechooser.FileFilter;
+import org.micromanager.Studio;
 import org.micromanager.data.Annotation;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
@@ -38,7 +39,6 @@ import org.micromanager.data.Image;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
-import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.UserCancelledException;
 import org.micromanager.internal.utils.FileDialogs;
@@ -74,17 +74,20 @@ public class DefaultDatastore implements Datastore {
          SINGLEPLANE_TIFF_SERIES);
    private static final FileFilter MULTIPAGEFILTER = new SaveFileFilter(
          MULTIPAGE_TIFF);
-
    private static final String PREFERRED_SAVE_FORMAT = "default format for saving data";
+   
    protected Storage storage_ = null;
    protected String name_ = "Untitled";
-   protected HashMap<String, DefaultAnnotation> annotations_ = new HashMap<String, DefaultAnnotation>();
+   protected HashMap<String, DefaultAnnotation> annotations_ = new HashMap<>();
    protected PrioritizedEventBus bus_;
    protected boolean isFrozen_ = false;
+   protected final MMStudio mmStudio_;
+   
    private String savePath_ = null;
    private boolean haveSetSummary_ = false;
 
-   public DefaultDatastore() {
+   public DefaultDatastore(MMStudio mmStudio) {
+      mmStudio_ = mmStudio;
       bus_ = new PrioritizedEventBus();
    }
 
@@ -341,7 +344,7 @@ public class DefaultDatastore implements Datastore {
    @Override
    public void close() throws IOException {
       freeze();
-      MMStudio.getInstance().events().post(
+      mmStudio_.events().post(
             new DefaultDatastoreClosingEvent(this));
       if (storage_ != null) {
          storage_.close();
@@ -367,7 +370,7 @@ public class DefaultDatastore implements Datastore {
       chooser.setAcceptAllFileFilterUsed(false);
       chooser.addChoosableFileFilter(SINGLEPLANEFILTER);
       chooser.addChoosableFileFilter(MULTIPAGEFILTER);
-      if (getPreferredSaveMode().equals(Datastore.SaveMode.MULTIPAGE_TIFF)) {
+      if (getPreferredSaveMode(mmStudio_).equals(Datastore.SaveMode.MULTIPAGE_TIFF)) {
          chooser.setFileFilter(MULTIPAGEFILTER);
       }
       else {
@@ -419,7 +422,7 @@ public class DefaultDatastore implements Datastore {
          summary = summary.copyBuilder().intendedDimensions(builder.build()).build();
       }
 
-      DefaultDatastore duplicate = new DefaultDatastore();
+      DefaultDatastore duplicate = new DefaultDatastore(mmStudio_);
 
       Storage saver;
       if (mode == Datastore.SaveMode.MULTIPAGE_TIFF) {
@@ -450,7 +453,7 @@ public class DefaultDatastore implements Datastore {
       // z and channel as well), since FileSet.writeImage() assumes that
       // timepoints are written sequentially and can potentially cause
       // invalid metadata if they are not.
-      ArrayList<Coords> tmp = new ArrayList<Coords>();
+      ArrayList<Coords> tmp = new ArrayList<>();
       for (Coords coords : getUnorderedImageCoords()) {
          tmp.add(coords);
       }
@@ -502,8 +505,8 @@ public class DefaultDatastore implements Datastore {
       return -1;
    }
 
-   public static Datastore.SaveMode getPreferredSaveMode() {
-      String modeStr = MMStudio.getInstance().profile().getSettings(
+   public static Datastore.SaveMode getPreferredSaveMode(Studio studio) {
+      String modeStr = studio.profile().getSettings(
             DefaultDatastore.class).getString(
                   PREFERRED_SAVE_FORMAT, MULTIPAGE_TIFF);
       if (modeStr.equals(MULTIPAGE_TIFF)) {
