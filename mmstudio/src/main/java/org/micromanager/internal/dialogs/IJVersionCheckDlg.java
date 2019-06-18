@@ -27,7 +27,6 @@ import ij.ImageJ;
 import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import javax.swing.JButton;
@@ -37,7 +36,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.UIManager;
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.internal.MMStudio;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -47,50 +46,53 @@ import org.micromanager.internal.utils.ReportingUtils;
  * Micro-Manager.
  */
 public final class IJVersionCheckDlg extends JDialog {
-   private static final String HAS_OPTED_OUT = "user has opted out of receiving warnings about compatibility with the version of ImageJ they are using";
+   private static final String HAS_OPTED_OUT = 
+           "user has opted out of receiving warnings about compatibility with the version of ImageJ they are using";
    private static final ArrayList<String> ALLOWED_VERSIONS = new ArrayList<String>(
-         Arrays.asList(new String[] {"1.51s"}));;
+         Arrays.asList(new String[] {"1.51s"}));
 
    /**
     * Show the warning dialog, if applicable and user has not opted out.
+    * @param studio
     */
-   public static void execute() {
+   public static void execute(Studio studio) {
       if (ALLOWED_VERSIONS.contains(ImageJ.VERSION)) {
          // This version is okay.
          return;
       }
       ReportingUtils.logError("ImageJ version " + ImageJ.VERSION +
             " not guaranteed compatible with this version of Micro-Manager ");
-      if (getHasOptedOut()) {
+      if (getHasOptedOut(studio)) {
          // User doesn't care.
          return;
       }
 
-      new IJVersionCheckDlg(ImageJ.VERSION);
+      new IJVersionCheckDlg(studio, ImageJ.VERSION);
    }
 
    /**
-    * Returns true iff the user has opted out of receiving these errors in
+    * Returns true if the user has opted out of receiving these errors in
     * future.
     */
-   private static boolean getHasOptedOut() {
-      return MMStudio.getInstance().profile().getBoolean(
-            IJVersionCheckDlg.class, HAS_OPTED_OUT, false);
+   private static boolean getHasOptedOut(Studio studio) {
+      return studio.profile().getSettings(IJVersionCheckDlg.class).
+              getBoolean(HAS_OPTED_OUT, false);
    }
 
    /**
     * Set whether or not the user wants to see these errors in future.
     */
-   private static void setHasOptedOut(boolean hasOptedOut) {
-      MMStudio.getInstance().profile().setBoolean(
-            IJVersionCheckDlg.class, HAS_OPTED_OUT, hasOptedOut);
+   private static void setHasOptedOut(Studio studio, boolean hasOptedOut) {
+      studio.profile().getSettings(IJVersionCheckDlg.class).
+              putBoolean(HAS_OPTED_OUT, hasOptedOut);
    }
 
    /**
     * Show the dialog.
+    * @param studio
     * @param badVersion - User's version.  
     */
-   public IJVersionCheckDlg(String badVersion) {
+   public IJVersionCheckDlg(Studio studio, String badVersion) {
       super();
       setName("ImageJ Version Check");
       setModal(true);
@@ -120,20 +122,14 @@ public final class IJVersionCheckDlg extends JDialog {
       contents.add(warning);
 
       final JCheckBox optOut = new JCheckBox("Don't remind me again");
-      optOut.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            setHasOptedOut(optOut.isSelected());
-         }
+      optOut.addActionListener((ActionEvent e) -> {
+         setHasOptedOut(studio, optOut.isSelected());
       });
       contents.add(optOut);
 
       JButton okay = new JButton("OK");
-      okay.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            dispose();
-         }
+      okay.addActionListener((ActionEvent e) -> {
+         dispose();
       });
       contents.add(okay, "align right");
       getContentPane().add(contents);

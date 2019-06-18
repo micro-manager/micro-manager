@@ -11,7 +11,6 @@ import org.micromanager.data.PipelineErrorException;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.events.EventManager;
 import org.micromanager.events.internal.DefaultAcquisitionEndedEvent;
-import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
