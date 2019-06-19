@@ -36,6 +36,9 @@
     <ClCompile Include="tl_camera_sdk_load.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PolarizationProcess.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TSICam.h">

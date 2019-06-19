@@ -89,6 +89,7 @@ static const char* g_PixelType_64bitRGB = "RGBA64";
 #define ERR_TEMPERATURE_FAILED            16020
 #define ERR_EEP_FAILED                    16021
 #define ERR_HOT_PIXEL_FAILED              16022
+#define ERR_UNSUPPORTED_SENSOR			  16023
 
 //////////////////////////////////////////////////////////////////////////////
 // Region of Interest

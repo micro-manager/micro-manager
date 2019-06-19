@@ -43,6 +43,7 @@
 
 using namespace std;
 bool Tsi3Cam::globalColorInitialized = false;
+bool Tsi3Cam::globalPolarizationInitialized = false;
 
 
 void camera_connect_callback(char* /* cameraSerialNumber */, enum TL_CAMERA_USB_PORT_TYPE /* usb_bus_speed */, void* /* context */)
@@ -63,10 +64,12 @@ Tsi3Cam::Tsi3Cam() :
    operationMode(TL_CAMERA_OPERATION_MODE_SOFTWARE_TRIGGERED),
    camHandle(nullptr),
    colorProcessor(nullptr),
+	polarizationProcessor(nullptr),
    acquiringSequence(false),
    acquiringFrame(false),
    maxExposureMs(10000),
    color(false),
+	polarized(false),
 	whiteBalance(false),
 	whiteBalancePending(0L),
 	pixelSize(4),
@@ -217,13 +220,14 @@ int Tsi3Cam::Initialize()
 			return ERR_INTERNAL_ERROR;
 		}
 		color = true;
+		polarized = false;
 
 		// create white balance property
-      CPropertyAction *pAct = new CPropertyAction(this, &Tsi3Cam::OnWhiteBalance);
-      ret = CreateProperty(g_WhiteBalance, g_Off, MM::String, false, pAct);
-      AddAllowedValue(g_WhiteBalance, g_Off);
-      AddAllowedValue(g_WhiteBalance, g_Set);
-      AddAllowedValue(g_WhiteBalance, g_On);
+		CPropertyAction *pAct = new CPropertyAction(this, &Tsi3Cam::OnWhiteBalance);
+		ret = CreateProperty(g_WhiteBalance, g_Off, MM::String, false, pAct);
+		AddAllowedValue(g_WhiteBalance, g_Off);
+		AddAllowedValue(g_WhiteBalance, g_Set);
+		AddAllowedValue(g_WhiteBalance, g_On);
 
 		pAct = new CPropertyAction (this, &Tsi3Cam::OnPixelType);
 		pixelSize = 4; // 32bitRGB
@@ -240,9 +244,23 @@ int Tsi3Cam::Initialize()
 
 	}
 	else if (sensorType == TL_CAMERA_SENSOR_TYPE_MONOCHROME)
+	{
 		color = false;
+		polarized = false;
+	}
+	else if (sensorType == TL_CAMERA_SENSOR_TYPE_MONOCHROME_POLARIZED)
+	{
+		int r = InitializePolarizationProcessor();
+		if (r != DEVICE_OK)
+		{
+			LogMessage("Failed to initialize polarization processor");
+			return ERR_INTERNAL_ERROR;
+		}
+		color = false;
+		polarized = true;
+	}
 	else
-		return ERR_INTERNAL_ERROR;
+		return ERR_UNSUPPORTED_SENSOR;
 
    long long exp_min = 0, exp_max = 0;
    if (tl_camera_get_exposure_time_range(camHandle, &exp_min, &exp_max))
@@ -360,6 +378,9 @@ int Tsi3Cam::Shutdown()
 
 	if (color)
 		ShutdownColorProcessor();
+
+	if (polarized)
+		ShutdownPolarizationProcessor();
 
    if (tl_camera_close_camera(camHandle))
       LogMessage("TSI Camera SDK3 close failed!");
@@ -620,7 +641,7 @@ int Tsi3Cam::ResizeImageBuffer()
 
    img.Resize(w, h, d);
    ostringstream os;
-   os << "TSI3 resized to: " << img.Width() << " X " << img.Height() << ", camera: " << w << "X" << h << ", color=" << color;
+   os << "TSI3 resized to: " << img.Width() << " X " << img.Height() << ", camera: " << w << "X" << h << ", color=" << color << ", polarized=" << polarized;
    LogMessage(os.str().c_str(), true);
 
    return DEVICE_OK;
@@ -772,6 +793,12 @@ void Tsi3Cam::frame_available_callback(void* /*sender*/, unsigned short* image_b
 		else
 			assert(!"Unsupported pixel type");
 
+	}
+	if (instance->polarized)
+	{
+		// Polarization
+		instance->img.Resize(img_width, img_height, instance->fullFrame.pixDepth);
+		instance->PolarizationIntensity(image_buffer, instance->img.GetPixelsRW(), img_width, img_height);
 	}
 	else
 	{
