@@ -68,6 +68,8 @@ struct Tsi3RoiBin
    }
 };
 
+static const char* dllLoadErr = "Error loading color processing functions from the dll";
+
 //////////////////////////////////////////////////////////////////////////////
 // Implementation of the MMDevice and MMCamera interfaces
 // for all TSI SDK 3 api compatible cameras
@@ -142,7 +144,10 @@ private:
 	int ColorProcess16to48WB(unsigned short* monoBuffer, unsigned short* colorBuffer, int width, int height);
 	int ColorProcess16to64(unsigned short* monoBuffer, unsigned char* colorBuffer, int width, int height);
 	int InitializeColorProcessor(bool wb=false);
+	int InitializePolarizationProcessor();
+	int PolarizationIntensity(unsigned short* monoBuffer, unsigned char* outBuffer, int width, int height);
 	int ShutdownColorProcessor();
+	int ShutdownPolarizationProcessor();
 	int ClearWhiteBalance();
 	int SetWhiteBalance();
 	int ApplyWhiteBalance(double redScaler, double greenScaler, double blueScaler);
@@ -152,15 +157,19 @@ private:
 
    ImgBuffer img;
 	std::vector<unsigned short> demosaicBuffer;
+	std::vector<unsigned short> intensityBuffer;
    bool initialized;
 	static bool globalColorInitialized;
+	static bool globalPolarizationInitialized;
    bool stopOnOverflow;
    void* camHandle;
    void* colorProcessor;
+	void* polarizationProcessor;
    long acquiringSequence;
    long acquiringFrame;
    double maxExposureMs;
    bool color;
+   bool polarized;
 	bool whiteBalance;
 	int pixelSize;
 	int bitDepth;

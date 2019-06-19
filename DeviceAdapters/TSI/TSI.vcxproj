@@ -157,6 +157,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ColorProcess.cpp" />
+    <ClCompile Include="PolarizationProcess.cpp" />
     <ClCompile Include="tl_camera_sdk_load.c" />
     <ClCompile Include="TSI3Cam.cpp" />
     <ClCompile Include="Tsi3CamPropertyHandlers.cpp" />

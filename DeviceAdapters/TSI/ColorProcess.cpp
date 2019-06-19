@@ -31,8 +31,8 @@
 #include "tl_color_processing.h"
 #include "tl_color_error.h"
 #include "tl_color_enum.h"
-
-const char* dllLoadErr = "Error loading color processing functions from the dll";
+#include "tl_polarization_processor.h"
+#include "tl_polarization_processor_error.h"
 
 // dynamically loaded functions from Thorlabs dlls
 HMODULE g_demosaicModuleHandle(0);
