@@ -92,19 +92,19 @@ public class ImagePlusInfo extends ImagePlus{
                        super.getWidth() *  super.getHeight());
             clBuffer.readFrom( ByteBuffer.wrap(
                  (byte[]) super.getProcessor().getPixels()), 
-                 false); 
+                 true); 
          } else if (super.getProcessor() instanceof ShortProcessor) {
             clBuffer = cclContext.createBuffer(NativeTypeEnum.UnsignedShort, 
                        super.getWidth() *  super.getHeight());
             clBuffer.readFrom( ShortBuffer.wrap(
                  (short[]) super.getProcessor().getPixels()), 
-                 false); 
+                 true); 
          } else if (super.getProcessor() instanceof FloatProcessor) {
             clBuffer = cclContext.createBuffer(NativeTypeEnum.Float, 
                        super.getWidth() *  super.getHeight());
             clBuffer.readFrom( FloatBuffer.wrap(
                     (float[]) super.getProcessor().getPixels()), 
-                    false);
+                    true);
          }
 
          // TODO: other pixel types...
