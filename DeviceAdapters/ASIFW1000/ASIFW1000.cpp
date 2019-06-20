@@ -394,6 +394,7 @@ int FilterWheel::Initialize()
    pAct = new CPropertyAction (this, &FilterWheel::OnSpeedSetting);
    CreateProperty("SpeedSetting", "0", MM::Integer, false, pAct);
    SetPropertyLimits("SpeedSetting", 0, 9);
+   UpdateProperty("SpeedSetting");
 
    // property to allow sending arbitrary serial commands and receiving response
    pAct = new CPropertyAction (this, &FilterWheel::OnSerialCommand);
@@ -495,20 +496,22 @@ int FilterWheel::OnSpeedSetting(MM::PropertyBase* pProp, MM::ActionType eAct)
    long speed = 0;  // use long type so pProp->Set and pProp->Get work correctly
    int ret = DEVICE_OK;
    if (eAct == MM::BeforeGet)
-      {
-         ret = g_hub.GetFilterWheelSpeed(*this, *GetCoreCallback(), wheelNr_, speed);
-         if (ret != DEVICE_OK)
-            return ret;
-         pProp->Set(speed);
-      }
-      else if (eAct == MM::AfterSet)
-      {
-         pProp->Get(speed);
-         ret = g_hub.SetFilterWheelSpeed(*this, *GetCoreCallback(), wheelNr_, speed);
-         if (ret != DEVICE_OK)
-            return ret;
-      }
-      return DEVICE_OK;
+   {
+      if (initialized_)
+         return DEVICE_OK;  // assume it will only change via this property after initialization
+      ret = g_hub.GetFilterWheelSpeed(*this, *GetCoreCallback(), wheelNr_, speed);
+      if (ret != DEVICE_OK)
+         return ret;
+      pProp->Set(speed);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(speed);
+      ret = g_hub.SetFilterWheelSpeed(*this, *GetCoreCallback(), wheelNr_, speed);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+   return DEVICE_OK;
 }
 
 int FilterWheel::OnSerialCommand(MM::PropertyBase* pProp, MM::ActionType eAct)
