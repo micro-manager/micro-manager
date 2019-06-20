@@ -21,6 +21,7 @@
 //                of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 //
 // AUTHOR:        Nico Stuurman (nico@cmp.ucsf.edu) based on code by Nenad Amodaj, April 2007
+//                additions by Jon Daniels (ASI) June 2019
 //
 
 #ifndef _ASIFW1000_H_
@@ -136,6 +137,9 @@ public:
    // ----------------                                                       
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);                
    int OnWheelNr(MM::PropertyBase* pProp, MM::ActionType eAct);                
+   int OnSpeedSetting(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSerialCommand(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSerialResponse(MM::PropertyBase* pProp, MM::ActionType eAct);
                                                                              
 private:                                                                     
    bool open_;
@@ -144,6 +148,7 @@ private:
    long  pos_;
    int wheelNr_;
    int numPos_;
+   std::string manualSerialAnswer_; // last answer received when the SerialCommand property was used
 };
 
 

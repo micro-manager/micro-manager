@@ -25,12 +25,8 @@
 //
 // AUTHOR:        Nico Stuurman (based on code by Nenad Amodaj), nico@cmp.ucsf.edu, April 2007
 //                automatic device detection by Karl Hoover
+//                additions by Jon Daniels (ASI) June 2019
 //
-
-#ifdef WIN32
-   //#include <windows.h>
-   #define snprintf _snprintf 
-#endif
 
 #include "ASIFW1000.h"
 #include "ASIFW1000Hub.h"
@@ -393,7 +389,20 @@ int FilterWheel::Initialize()
 
    ret = UpdateStatus();
    if (ret != DEVICE_OK) 
-      return ret; 
+      return ret;
+
+   pAct = new CPropertyAction (this, &FilterWheel::OnSpeedSetting);
+   CreateProperty("SpeedSetting", "0", MM::Integer, false, pAct);
+   SetPropertyLimits("SpeedSetting", 0, 9);
+
+   // property to allow sending arbitrary serial commands and receiving response
+   pAct = new CPropertyAction (this, &FilterWheel::OnSerialCommand);
+   CreateProperty("SerialCommand", "", MM::String, false, pAct);
+
+   // this is only changed programmatically, never by user
+   // contains last response to the OnSerialCommand action
+   pAct = new CPropertyAction (this, &FilterWheel::OnSerialResponse);
+   CreateProperty("SerialResponse", "", MM::String, true, pAct);
 
    initialized_ = true;
 
@@ -480,6 +489,61 @@ int FilterWheel::OnWheelNr(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    return DEVICE_OK;
 }
+
+int FilterWheel::OnSpeedSetting(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   long speed = 0;  // use long type so pProp->Set and pProp->Get work correctly
+   int ret = DEVICE_OK;
+   if (eAct == MM::BeforeGet)
+      {
+         ret = g_hub.GetFilterWheelSpeed(*this, *GetCoreCallback(), wheelNr_, speed);
+         if (ret != DEVICE_OK)
+            return ret;
+         pProp->Set(speed);
+      }
+      else if (eAct == MM::AfterSet)
+      {
+         pProp->Get(speed);
+         ret = g_hub.SetFilterWheelSpeed(*this, *GetCoreCallback(), wheelNr_, speed);
+         if (ret != DEVICE_OK)
+            return ret;
+      }
+      return DEVICE_OK;
+}
+
+int FilterWheel::OnSerialCommand(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      // do nothing
+   }
+   else if (eAct == MM::AfterSet) {
+      static std::string last_command_via_property;
+      std::string tmpstr;
+      pProp->Get(tmpstr);
+      // only send the command if it has been updated
+      if (tmpstr.compare(last_command_via_property) != 0)
+      {
+         last_command_via_property = tmpstr;
+         int ret = g_hub.SendFilterWheelCommand(*this, *GetCoreCallback(), wheelNr_, tmpstr, manualSerialAnswer_);
+         if (ret != DEVICE_OK)
+            return ret;
+      }
+   }
+   return DEVICE_OK;
+}
+
+int FilterWheel::OnSerialResponse(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet || eAct == MM::AfterSet)
+   {
+      // always read
+      if (!pProp->Set(manualSerialAnswer_.c_str()))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   return DEVICE_OK;
+}
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
