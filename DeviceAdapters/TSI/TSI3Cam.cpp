@@ -73,7 +73,8 @@ Tsi3Cam::Tsi3Cam() :
 	whiteBalance(false),
 	whiteBalancePending(0L),
 	pixelSize(4),
-	bitDepth(8)
+	bitDepth(8),
+	polarImageType(Intensity)
 {
    // set default error messages
    InitializeDefaultErrorMessages();
@@ -250,12 +251,34 @@ int Tsi3Cam::Initialize()
 	}
 	else if (sensorType == TL_CAMERA_SENSOR_TYPE_MONOCHROME_POLARIZED)
 	{
+		if (tl_camera_get_polar_phase(camHandle, &polarPhase))
+		{
+			return ERR_INTERNAL_ERROR;
+		}
+
 		int r = InitializePolarizationProcessor();
 		if (r != DEVICE_OK)
 		{
 			LogMessage("Failed to initialize polarization processor");
 			return ERR_INTERNAL_ERROR;
 		}
+
+		CPropertyAction *pAct = new CPropertyAction (this, &Tsi3Cam::OnPolarImageType);
+		ret = CreateStringProperty(g_PolarImageType, g_PolarImageType_Intensity, false, pAct);
+		assert(ret == DEVICE_OK);
+
+		polarImageType = Intensity;
+
+		vector<string> pixelTypeValues;
+		pixelTypeValues.push_back(g_PolarImageType_Intensity);
+		pixelTypeValues.push_back(g_PolarImageType_Raw);
+		pixelTypeValues.push_back(g_PolarImageType_Azimuth);
+		pixelTypeValues.push_back(g_PolarImageType_DoLP);
+
+		ret = SetAllowedValues(g_PolarImageType, pixelTypeValues);
+		if (ret != DEVICE_OK)
+			return ret;
+
 		color = false;
 		polarized = true;
 	}
@@ -494,11 +517,12 @@ int Tsi3Cam::SnapImage()
 unsigned Tsi3Cam::GetBitDepth() const
 {
 	if (color)
-		return bitDepth;
-	else if (polarized)
-		return 16;
+		return bitDepth; // color camera
+	
+	if (polarized)
+		return 12; // polarized camera
 	else
-		fullFrame.bitDepth;
+		return fullFrame.bitDepth; // monochrome camera
 }
 
 int Tsi3Cam::GetBinning() const
@@ -803,7 +827,7 @@ void Tsi3Cam::frame_available_callback(void* /*sender*/, unsigned short* image_b
 	{
 		// Polarization
 		instance->img.Resize(img_width, img_height, instance->fullFrame.pixDepth);
-		instance->PolarizationIntensity(image_buffer, instance->img.GetPixelsRW(), img_width, img_height);
+		instance->TransformPolarizationImage(image_buffer, instance->img.GetPixelsRW(), img_width, img_height, instance->polarImageType);
 	}
 	else
 	{

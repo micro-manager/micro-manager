@@ -338,3 +338,47 @@ int Tsi3Cam::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 	}
 	return DEVICE_OK;
 }
+
+int Tsi3Cam::OnPolarImageType(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::AfterSet)
+	{
+      if(IsCapturing())
+         return DEVICE_CAMERA_BUSY_ACQUIRING;
+
+      string polarType;
+      pProp->Get(polarType);
+      if (polarType.compare(g_PolarImageType_Intensity) == 0)
+      {
+         polarImageType = Intensity;
+      }
+      else if (polarType.compare(g_PolarImageType_Raw) == 0)
+      {
+			polarImageType = Raw;
+		}
+      else if (polarType.compare(g_PolarImageType_Azimuth) == 0)
+      {
+			polarImageType = Azimuth;
+		}
+      else if (polarType.compare(g_PolarImageType_DoLP) == 0)
+      {
+			polarImageType = DoLP;
+		}
+		return ResizeImageBuffer();
+	}
+	else if (eAct == MM::BeforeGet)
+	{
+		if (polarImageType == Intensity)
+			pProp->Set(g_PolarImageType_Intensity);
+		else if(polarImageType == Raw)
+			pProp->Set(g_PolarImageType_Raw);
+		else if(polarImageType == Azimuth)
+			pProp->Set(g_PolarImageType_Azimuth);
+		else if(polarImageType == Raw)
+			pProp->Set(g_PolarImageType_DoLP);
+		else
+			assert(!"Unsupported pixel type");
+
+	}
+	return DEVICE_OK;
+}
