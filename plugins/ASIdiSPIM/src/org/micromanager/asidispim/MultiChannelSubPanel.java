@@ -489,10 +489,12 @@ public class MultiChannelSubPanel extends ListeningJPanel {
     * @see MultiChannelSubPanel#setConfig(String)
     */
    public String getCurrentConfig() {
+      String group = "";
       try {
-         return core_.getCurrentConfigFromCache(channelGroup_.getSelectedItem().toString());
+         group = channelGroup_.getSelectedItem().toString();
+         return core_.getCurrentConfigFromCache(group);
       } catch (Exception e) {
-         ReportingUtils.logError("Failed to get current configuration");
+         ReportingUtils.logError("Failed to get current configuration for " + group);
       }
       return null;
    }
@@ -503,10 +505,12 @@ public class MultiChannelSubPanel extends ListeningJPanel {
     * @see MultiChannelSubPanel#getCurrentConfig()
     */
    public void setConfig(String config) {
+      String group = "";
       try {
-         core_.setConfig(channelGroup_.getSelectedItem().toString(), config);
+         group = channelGroup_.getSelectedItem().toString();
+         core_.setConfig(group, config);
       } catch (Exception e) {
-         ReportingUtils.logError(e, "Failed to set config.");
+         ReportingUtils.logError(e, "Failed to set config + " + group + " to value " + config);
       }
    }
    
