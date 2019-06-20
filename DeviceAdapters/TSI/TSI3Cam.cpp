@@ -493,7 +493,12 @@ int Tsi3Cam::SnapImage()
 
 unsigned Tsi3Cam::GetBitDepth() const
 {
-   return color ? bitDepth : (unsigned)fullFrame.bitDepth;
+	if (color)
+		return bitDepth;
+	else if (polarized)
+		return 16;
+	else
+		fullFrame.bitDepth;
 }
 
 int Tsi3Cam::GetBinning() const
