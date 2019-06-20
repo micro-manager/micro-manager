@@ -6,7 +6,7 @@
 // DESCRIPTION:   ASIFW1000 hub module. Required for operation of all 
 //                ASIFW1000 devices
 //                
-// AUTHOR:        Nico Stuurman, nico@cmp.ucsf.edu 02/03/2007
+// AUTHOR:        Nico Stuurman, nico@cmp.ucsf.edu 02/03/2007; additions by Jon Daniels (ASI) June 2019
 // BASED ON:      TEHub.cpp by Nenad Amodaj
 //
 // COPYRIGHT:     University of California, San Francisco, 2006
@@ -292,6 +292,64 @@ int ASIFW1000Hub::FilterWheelBusy(MM::Device& device, MM::Core& core, bool& busy
    return DEVICE_OK;
 }
 
+int ASIFW1000Hub::SetFilterWheelSpeed(MM::Device& device, MM::Core& core, int wheelNr, long speed)
+{
+   if (wheelNr != activeWheel_)
+      // TODO: error checking
+      SetCurrentWheel(device, core, wheelNr);
+
+   const char* command = "SV ";
+   ostringstream os;
+   os << command <<  speed;
+
+   // send command
+   int ret = ExecuteCommand(device, core, os.str().c_str());
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // devices echos command and returns position
+   ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\n\r");
+   if (ret != DEVICE_OK)
+      return ret;
+
+   int posread = rcvBuf_[strlen(rcvBuf_)-1] - '0';
+   if ( speed != posread)
+      return ERR_SETTING_WHEEL;
+
+   return DEVICE_OK;
+}
+
+int ASIFW1000Hub::GetFilterWheelSpeed(MM::Device& device, MM::Core& core, int wheelNr, long& speed)
+{
+   if (wheelNr != activeWheel_)
+      SetCurrentWheel(device, core, wheelNr);
+
+   //ClearAllRcvBuf(device, core);
+   int ret = ExecuteCommand(device, core, "SV");
+   ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\n\r");
+   if (ret != DEVICE_OK)
+      return ret;
+   // TODO: error checking
+   speed = rcvBuf_[strlen(rcvBuf_)-1] - '0';
+
+   return DEVICE_OK;
+}
+
+int ASIFW1000Hub::SendFilterWheelCommand(MM::Device& device, MM::Core& core, int wheelNr, std::string command, std::string& response)
+{
+   if (wheelNr != activeWheel_)
+      SetCurrentWheel(device, core, wheelNr);
+
+   ClearAllRcvBuf(device, core);
+   int ret = ExecuteCommand(device, core, command.c_str());
+   ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\n\r");
+   if (ret != DEVICE_OK)
+      return ret;
+
+   response = rcvBuf_;
+
+   return DEVICE_OK;
+}
 
 
 
