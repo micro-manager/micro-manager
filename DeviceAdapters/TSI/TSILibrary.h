@@ -58,6 +58,7 @@ static const char* g_TemperatureSetPoint = "TemperatureSetPointC";
 static const char* g_EEP = "EEP";
 static const char* g_HotPixThreshold = "HotPixelThreshold";
 static const char* g_HotPix = "HotPixel";
+static const char* g_PolarImageType = "ImageType";
 
 
 static const char* g_Set = "SetNow";
@@ -72,6 +73,10 @@ static const char* g_Positive = "Positive";
 static const char* g_Negative = "Negative";
 static const char* g_PixelType_32bitRGB = "RGBA32";
 static const char* g_PixelType_64bitRGB = "RGBA64";
+static const char* g_PolarImageType_Raw = "Raw";
+static const char* g_PolarImageType_Intensity = "Intensity";
+static const char* g_PolarImageType_Azimuth = "Azimuth";
+static const char* g_PolarImageType_DoLP = "DoLP";
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes

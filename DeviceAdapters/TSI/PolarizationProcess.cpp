@@ -175,31 +175,36 @@ int Tsi3Cam::ShutdownPolarizationProcessor()
  * @param monoBuf - sensor image, assumed to be 2 bytes per pixel with bit-depth defined with bitDepth parameter
  * @param outBuf - output monochrome image
  * @param bitDepth - bit depth of the input image, valid values 8-16
+ * @param imgType - polarization image type
  * @return - error code
  */
-int Tsi3Cam::PolarizationIntensity(unsigned short* monoBuf, unsigned char* colorBuf, int mono_image_width, int mono_image_height)
+int Tsi3Cam::TransformPolarizationImage(unsigned short* monoBuf, unsigned char* outBuf, int mono_image_width, int mono_image_height, PolarImageType imgType)
 {
-	// process
-	intensityBuffer.resize(mono_image_width * mono_image_height);
-
-	if (tl_polarization_processor_transform(	polarizationProcessor,
-															TL_POLARIZATION_PROCESSOR_POLAR_PHASE_0_DEGREES,
-															monoBuf,
-															0,
-															0,
-															mono_image_width,
-															mono_image_height,
-															fullFrame.bitDepth,
-															65535,
-															nullptr,
-														   reinterpret_cast<unsigned short*>(colorBuf),
-															nullptr,
-															nullptr,
-															nullptr,
-															nullptr) != TL_POLARIZATION_PROCESSOR_ERROR_NONE)
+	if (imgType == Raw)
 	{
-		LogMessage("Failed to process polarization image!"); 
-		return ERR_INTERNAL_ERROR;
+		memcpy(outBuf, monoBuf, mono_image_width * mono_image_height * sizeof(unsigned short));
+	}
+	else
+	{
+		if (tl_polarization_processor_transform(	polarizationProcessor,
+																polarPhase,
+																monoBuf,
+																0,
+																0,
+																mono_image_width,
+																mono_image_height,
+																fullFrame.bitDepth,
+																4095,
+																nullptr,
+															   imgType == Intensity ? reinterpret_cast<unsigned short*>(outBuf) : nullptr,
+																nullptr,
+																nullptr,
+																imgType == Azimuth ? reinterpret_cast<unsigned short*>(outBuf) : nullptr,
+																imgType == DoLP ? reinterpret_cast<unsigned short*>(outBuf) : nullptr) != TL_POLARIZATION_PROCESSOR_ERROR_NONE)
+		{
+			LogMessage("Failed to process polarization image!"); 
+			return ERR_INTERNAL_ERROR;
+		}
 	}
 	
 	return DEVICE_OK;
