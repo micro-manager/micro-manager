@@ -227,8 +227,9 @@ public class DeviceUtils {
          if (deviceLibrary == Devices.Libraries.ASITIGER) {
             // would like to do below line but we need to change pre-init value and reload config
             // checkPropertyValueEquals(key, Properties.Keys.PLOGIC_MODE, Properties.Values.DISPIM_SHUTTER);
-            if (!props_.getPropValueString(key, Properties.Keys.PLOGIC_MODE)
-                  .equals(Properties.Values.DISPIM_SHUTTER.toString())) {
+            String mode = props_.getPropValueString(key, Properties.Keys.PLOGIC_MODE);
+            if (! (mode.equals(Properties.Values.DISPIM_SHUTTER.toString())
+                  || mode.equals(Properties.Values.SHUTTER_7CHANNEL.toString()) )) {  // we assume the user knows what he/she is doing in this corner case
                MyDialogUtils.showError("Device " + devices_.getMMDevice(key)
                      + ": need to set pre-initialization property PLogicMode to "
                      + "diSPIM Shutter (use Hardware Config Wizard, then edit device "
@@ -365,6 +366,17 @@ public class DeviceUtils {
          angle = 90.0 - angle;
       }
       return Math.cos(angle/180.0*Math.PI);
+   }
+   
+   /***
+    * compute how far we need to move the stage relative to the Z-step size (orthogonal to image) based on user-specified angle
+    * e.g. with diSPIM, angle is 45 degrees so go 1/cos(45deg) = 1.41x faster, with oSPIM, angle is 60 degrees so go 1/cos(60deg) = 2x faster
+    * if pathA is false then we compute based on Path B angle (assumed to be 90 degrees minus one specified for Path A)
+    * @param pathA true if using Path A
+    * @return factor, e.g. 1.41 for 45 degrees, 2 for 60 degrees, etc.
+    */
+   public double getStageGeometricSpeedFactor(boolean pathA) {
+      return 1/(getStageTopViewCompressFactor(pathA));
    }
    
    /**

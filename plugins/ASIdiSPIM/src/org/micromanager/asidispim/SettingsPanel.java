@@ -107,7 +107,7 @@ public class SettingsPanel extends ListeningJPanel {
       final JPanel guiPanel = new JPanel(new MigLayout(
             "",
             "[right]16[center]",
-            "[]8[]"));
+            "[]5[]"));
       guiPanel.setBorder(PanelUtils.makeTitledBorder("GUI"));
       
       final JCheckBox activeTimerCheckBox = pu.makeCheckBox("Update axis positions continually",
@@ -127,7 +127,7 @@ public class SettingsPanel extends ListeningJPanel {
       //   it is not called by setSelected unless there is a change in the value
       activeTimerCheckBox.doClick();
       activeTimerCheckBox.doClick();
-      guiPanel.add(activeTimerCheckBox, "center, span 2, wrap");
+      guiPanel.add(activeTimerCheckBox, "left, span 2, wrap");
       
       guiPanel.add(new JLabel("Position refresh interval (s):"));
       final JSpinner positionRefreshInterval = pu.makeSpinnerFloat(0.5, 1000, 0.5,
@@ -146,7 +146,12 @@ public class SettingsPanel extends ListeningJPanel {
       
       final JCheckBox ignoreScannerMissing = pu.makeCheckBox("Ignore missing scanner (for debug)",
             Properties.Keys.PREFS_IGNORE_MISSING_SCANNER, panelName_, false);
-      guiPanel.add(ignoreScannerMissing, "center, span 2, wrap");
+      guiPanel.add(ignoreScannerMissing, "left, span 2, wrap");
+      
+      final JCheckBox sampleOnZStage = pu.makeCheckBox("Sample on Z stage",
+            Properties.Keys.PREFS_SAMPLE_ON_ZSTAGE, panelName_, false);
+      guiPanel.add(sampleOnZStage, "left, span 2");
+      
       
       // end GUI subpanel
       

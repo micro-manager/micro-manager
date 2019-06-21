@@ -84,6 +84,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
    private final JLabel xPositionLabel_;
    private final JLabel yPositionLabel_;
    private final JLabel lowerZPositionLabel_;
+   private final JLabel xSupPositionLabel_;
    private final JLabel upperZPositionLabel_;
    private final JLabel upperHPositionLabel_;
    private final JLabel piezoAPositionLabel_;
@@ -155,14 +156,28 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
          }
       });
 
-      loadPanel.add(new JLabel("Load Sample"), "wrap");
-      loadPanel.add(headUpGo, "wrap");
-      headUpPosition_ = pu.makeFloatEntryField(panelName_, "HeadUpPosition", 25000, 5);
-      headDownPosition_ = pu.makeFloatEntryField(panelName_, "HeadDownPosition", 1000, 5);
-      loadPanel.add(headUpPosition_, "wrap");
-      loadPanel.add(headDownPosition_, "wrap");
-      loadPanel.add(headDownGo, "wrap");
-      loadPanel.add(new JLabel("Start Hunting"));
+      boolean sampleOnZ = prefs_.getBoolean(
+            MyStrings.PanelNames.SETTINGS.toString(),  
+            Properties.Keys.PREFS_SAMPLE_ON_ZSTAGE, false);
+      if (sampleOnZ) {
+         loadPanel.add(new JLabel("Start Hunting"), "wrap");
+         loadPanel.add(headUpGo, "wrap");
+         headUpPosition_ = pu.makeFloatEntryField(panelName_, "HeadUpPosition", 1000, 5);
+         headDownPosition_ = pu.makeFloatEntryField(panelName_, "HeadDownPosition", 25000, 5);
+         loadPanel.add(headUpPosition_, "wrap");
+         loadPanel.add(headDownPosition_, "wrap");
+         loadPanel.add(headDownGo, "wrap");
+         loadPanel.add(new JLabel("Load Sample"));
+      } else {
+         loadPanel.add(new JLabel("Load Sample"), "wrap");
+         loadPanel.add(headUpGo, "wrap");
+         headUpPosition_ = pu.makeFloatEntryField(panelName_, "HeadUpPosition", 25000, 5);
+         headDownPosition_ = pu.makeFloatEntryField(panelName_, "HeadDownPosition", 1000, 5);
+         loadPanel.add(headUpPosition_, "wrap");
+         loadPanel.add(headDownPosition_, "wrap");
+         loadPanel.add(headDownGo, "wrap");
+         loadPanel.add(new JLabel("Start Hunting"));
+      }
       
       final int positionWidth = 60;
       
@@ -195,57 +210,73 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       navPanel.add(makeMoveToOriginButton(Devices.Keys.XYSTAGE, Directions.Y));
       navPanel.add(makeSetOriginHereButton(Devices.Keys.XYSTAGE, Directions.Y, true), "skip 1, wrap");
       
-      navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.LOWERZDRIVE) + ":"));
       lowerZPositionLabel_ = new JLabel("");
-      navPanel.add(lowerZPositionLabel_);
-      navPanel.add(pu.makeSetPositionField(Devices.Keys.LOWERZDRIVE, Directions.NONE, positions_));
-      JFormattedTextField deltaZField = pu.makeFloatEntryField(panelName_, "DeltaZ", 10.0, 3);
-      navPanel.add(makeIncrementButton(Devices.Keys.LOWERZDRIVE, Directions.NONE, deltaZField, "-", -1));
-      navPanel.add(deltaZField);
-      navPanel.add(makeIncrementButton(Devices.Keys.LOWERZDRIVE, Directions.NONE, deltaZField, "+", 1));
-      navPanel.add(makeMoveToOriginButton(Devices.Keys.LOWERZDRIVE, Directions.NONE));
-      JButton syncZtoF = new JButton("Sync");
-      syncZtoF.setMargin(new Insets(4,8,4,8));
-      syncZtoF.setToolTipText("Move lower Z position to match SPIM head height");
-      syncZtoF.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            double upperPosition = positions_.getUpdatedPosition(Devices.Keys.UPPERZDRIVE);
-            positions_.setPosition(Devices.Keys.LOWERZDRIVE, -upperPosition);
+      if (devices_.isValidMMDevice(Devices.Keys.LOWERZDRIVE)) {
+         navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.LOWERZDRIVE) + ":"));
+         navPanel.add(lowerZPositionLabel_);
+         navPanel.add(pu.makeSetPositionField(Devices.Keys.LOWERZDRIVE, Directions.NONE, positions_));
+         JFormattedTextField deltaZField = pu.makeFloatEntryField(panelName_, "DeltaZ", 10.0, 3);
+         navPanel.add(makeIncrementButton(Devices.Keys.LOWERZDRIVE, Directions.NONE, deltaZField, "-", -1));
+         navPanel.add(deltaZField);
+         navPanel.add(makeIncrementButton(Devices.Keys.LOWERZDRIVE, Directions.NONE, deltaZField, "+", 1));
+         navPanel.add(makeMoveToOriginButton(Devices.Keys.LOWERZDRIVE, Directions.NONE));
+         JButton syncZtoF = new JButton("Sync");
+         syncZtoF.setMargin(new Insets(4,8,4,8));
+         syncZtoF.setToolTipText("Move lower Z position to match SPIM head height");
+         syncZtoF.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               double upperPosition = positions_.getUpdatedPosition(Devices.Keys.UPPERZDRIVE);
+               positions_.setPosition(Devices.Keys.LOWERZDRIVE, -upperPosition);
+            }
+         });
+         if (ASIdiSPIM.oSPIM || !devices_.isValidMMDevice(Devices.Keys.UPPERZDRIVE)) {
+            navPanel.add(new JLabel(""));
+         } else {
+            navPanel.add(syncZtoF);
          }
-      });
-      if (ASIdiSPIM.oSPIM) {
-         navPanel.add(new JLabel(""));
-      } else {
-         navPanel.add(syncZtoF);
+         navPanel.add(makeSetOriginHereButton(Devices.Keys.LOWERZDRIVE, Directions.NONE), "wrap");
       }
-      navPanel.add(makeSetOriginHereButton(Devices.Keys.LOWERZDRIVE, Directions.NONE), "wrap");
       
-      navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.UPPERZDRIVE) + ":"));
-      upperZPositionLabel_ = new JLabel("");
-      navPanel.add(upperZPositionLabel_);
-      navPanel.add(pu.makeSetPositionField(Devices.Keys.UPPERZDRIVE, Directions.NONE, positions_));
-      JFormattedTextField deltaFField = pu.makeFloatEntryField(panelName_, "DeltaF", 10.0, 3);
-      navPanel.add(makeIncrementButton(Devices.Keys.UPPERZDRIVE, Directions.NONE, deltaFField, "-", -1));
-      navPanel.add(deltaFField);
-      navPanel.add(makeIncrementButton(Devices.Keys.UPPERZDRIVE, Directions.NONE, deltaFField, "+", 1));
-      navPanel.add(makeMoveToOriginButton(Devices.Keys.UPPERZDRIVE, Directions.NONE));
-      JButton syncFtoZ = new JButton("Sync");
-      syncFtoZ.setMargin(new Insets(4,8,4,8));
-      syncFtoZ.setToolTipText("Move SPIM head height to match lower Z position");
-      syncFtoZ.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            double lowerPosition = positions_.getUpdatedPosition(Devices.Keys.LOWERZDRIVE);
-            positions_.setPosition(Devices.Keys.UPPERZDRIVE, -lowerPosition);
-         }
-      });
-      if (ASIdiSPIM.oSPIM) {
-         navPanel.add(new JLabel(""));
-      } else {
-         navPanel.add(syncFtoZ);
+      xSupPositionLabel_ = new JLabel("");
+      if (devices_.isValidMMDevice(Devices.Keys.SUPPLEMENTAL_X)) {
+         navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.SUPPLEMENTAL_X) + ":"));
+         navPanel.add(xSupPositionLabel_);
+         navPanel.add(pu.makeSetPositionField(Devices.Keys.SUPPLEMENTAL_X, Directions.NONE, positions_));
+         JFormattedTextField deltaXSupField = pu.makeFloatEntryField(panelName_, "DeltaXSup", 10.0, 3);
+         navPanel.add(makeIncrementButton(Devices.Keys.SUPPLEMENTAL_X, Directions.NONE, deltaXSupField, "-", -1));
+         navPanel.add(deltaXSupField);
+         navPanel.add(makeIncrementButton(Devices.Keys.SUPPLEMENTAL_X, Directions.NONE, deltaXSupField, "+", 1));
+         navPanel.add(makeMoveToOriginButton(Devices.Keys.SUPPLEMENTAL_X, Directions.NONE), "wrap");
       }
-      navPanel.add(makeSetOriginHereButton(Devices.Keys.UPPERZDRIVE, Directions.NONE, true), "wrap");
+      
+      upperZPositionLabel_ = new JLabel("");
+      if (devices_.isValidMMDevice(Devices.Keys.UPPERZDRIVE)) {
+         navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.UPPERZDRIVE) + ":"));
+         navPanel.add(upperZPositionLabel_);
+         navPanel.add(pu.makeSetPositionField(Devices.Keys.UPPERZDRIVE, Directions.NONE, positions_));
+         JFormattedTextField deltaFField = pu.makeFloatEntryField(panelName_, "DeltaF", 10.0, 3);
+         navPanel.add(makeIncrementButton(Devices.Keys.UPPERZDRIVE, Directions.NONE, deltaFField, "-", -1));
+         navPanel.add(deltaFField);
+         navPanel.add(makeIncrementButton(Devices.Keys.UPPERZDRIVE, Directions.NONE, deltaFField, "+", 1));
+         navPanel.add(makeMoveToOriginButton(Devices.Keys.UPPERZDRIVE, Directions.NONE));
+         JButton syncFtoZ = new JButton("Sync");
+         syncFtoZ.setMargin(new Insets(4,8,4,8));
+         syncFtoZ.setToolTipText("Move SPIM head height to match lower Z position");
+         syncFtoZ.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               double lowerPosition = positions_.getUpdatedPosition(Devices.Keys.LOWERZDRIVE);
+               positions_.setPosition(Devices.Keys.UPPERZDRIVE, -lowerPosition);
+            }
+         });
+         if (ASIdiSPIM.oSPIM || !devices_.isValidMMDevice(Devices.Keys.LOWERZDRIVE)) {
+            navPanel.add(new JLabel(""));
+         } else {
+            navPanel.add(syncFtoZ);
+         }
+         navPanel.add(makeSetOriginHereButton(Devices.Keys.UPPERZDRIVE, Directions.NONE, true), "wrap");
+      }
       
       upperHPositionLabel_ = new JLabel("");
       if (!ASIdiSPIM.oSPIM) {
@@ -263,17 +294,19 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       }
       
       piezoAPositionLabel_ = new JLabel("");
-      navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.PIEZOA) + ":"));
-      navPanel.add(piezoAPositionLabel_);
-      JFormattedTextField deltaPField = pu.makeFloatEntryField(panelName_, "DeltaP", 5.0, 3);
-      navPanel.add(pu.makeSetPositionField(Devices.Keys.PIEZOA, Directions.NONE, positions_));
-      navPanel.add(makeIncrementButton(Devices.Keys.PIEZOA, Directions.NONE, deltaPField, "-", -1));
-      navPanel.add(deltaPField);
-      navPanel.add(makeIncrementButton(Devices.Keys.PIEZOA, Directions.NONE, deltaPField, "+", 1));
-      navPanel.add(makeMoveToOriginButton(Devices.Keys.PIEZOA, Directions.NONE), "wrap");
+      if (devices_.isValidMMDevice(Devices.Keys.PIEZOA)) {
+         navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.PIEZOA) + ":"));
+         navPanel.add(piezoAPositionLabel_);
+         JFormattedTextField deltaPField = pu.makeFloatEntryField(panelName_, "DeltaP", 5.0, 3);
+         navPanel.add(pu.makeSetPositionField(Devices.Keys.PIEZOA, Directions.NONE, positions_));
+         navPanel.add(makeIncrementButton(Devices.Keys.PIEZOA, Directions.NONE, deltaPField, "-", -1));
+         navPanel.add(deltaPField);
+         navPanel.add(makeIncrementButton(Devices.Keys.PIEZOA, Directions.NONE, deltaPField, "+", 1));
+         navPanel.add(makeMoveToOriginButton(Devices.Keys.PIEZOA, Directions.NONE), "wrap");
+      }
       
       piezoBPositionLabel_ = new JLabel("");
-      if (!ASIdiSPIM.oSPIM) {
+      if (!ASIdiSPIM.oSPIM && devices_.isValidMMDevice(Devices.Keys.PIEZOB)) {
          navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.PIEZOB) + ":"));
          navPanel.add(piezoBPositionLabel_);
          navPanel.add(pu.makeSetPositionField(Devices.Keys.PIEZOB, Directions.NONE, positions_));
@@ -307,7 +340,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       navPanel.add(makeIncrementButton(Devices.Keys.GALVOA, Directions.Y, deltaBField, "+", 1));
       navPanel.add(makeMoveToOriginButton(Devices.Keys.GALVOA, Directions.Y), "wrap");
       
-      if (!ASIdiSPIM.oSPIM) {
+      if (!ASIdiSPIM.oSPIM && devices_.isValidMMDevice(Devices.Keys.GALVOB)) {
          navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.GALVOB, Directions.X) + ":"));
          navPanel.add(galvoBxPositionLabel_);
          navPanel.add(pu.makeSetPositionField(Devices.Keys.GALVOB, Directions.X, positions_));
@@ -534,6 +567,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
    public final void updateStagePositions() {
       xPositionLabel_.setText(positions_.getPositionString(Devices.Keys.XYSTAGE, Directions.X));   
       yPositionLabel_.setText(positions_.getPositionString(Devices.Keys.XYSTAGE, Directions.Y));
+      xSupPositionLabel_.setText(positions_.getPositionString(Devices.Keys.SUPPLEMENTAL_X));   
       lowerZPositionLabel_.setText(positions_.getPositionString(Devices.Keys.LOWERZDRIVE));
       upperZPositionLabel_.setText(positions_.getPositionString(Devices.Keys.UPPERZDRIVE));
       upperHPositionLabel_.setText(positions_.getPositionString(Devices.Keys.UPPERHDRIVE));
@@ -552,6 +586,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
    public final void stoppedStagePositions() {
       xPositionLabel_.setText("");
       yPositionLabel_.setText("");
+      xSupPositionLabel_.setText("");
       lowerZPositionLabel_.setText("");
       upperZPositionLabel_.setText("");
       upperHPositionLabel_.setText("");

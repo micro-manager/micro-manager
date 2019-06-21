@@ -96,6 +96,7 @@ public class Devices {
       PIEZOA, PIEZOB, GALVOA, GALVOB, XYSTAGE,
       LOWERZDRIVE,  // inverted microscope if present
       UPPERZDRIVE,  // determines sample position relative to imaging objectives, for FTP system would be FTP Z
+      SUPPLEMENTAL_X,      // extra X drive, e.g. for scanning with 
       // SOURCE_SPIM, SOURCE_LOWER,
       PLOGIC,
       TIGERCOMM,
@@ -108,7 +109,7 @@ public class Devices {
    
    public final static Set<Devices.Keys> STAGES1D = EnumSet.of(
          Devices.Keys.LOWERZDRIVE, Devices.Keys.UPPERZDRIVE, Devices.Keys.UPPERHDRIVE,
-         Devices.Keys.PIEZOA, Devices.Keys.PIEZOB);
+         Devices.Keys.PIEZOA, Devices.Keys.PIEZOB, Devices.Keys.SUPPLEMENTAL_X);
    public final static Set<Devices.Keys> PIEZOS = EnumSet.of(
          Devices.Keys.PIEZOA, Devices.Keys.PIEZOB);
    public final static Set<Devices.Keys> STAGES2D = EnumSet.of(
@@ -121,7 +122,7 @@ public class Devices {
    public final static Set<Devices.Keys> SPIM_CAMERAS = 
          ASIdiSPIM.oSPIM ? EnumSet.of(Devices.Keys.CAMERAA) :  
             EnumSet.of(Devices.Keys.CAMERAA, Devices.Keys.CAMERAB);
-      public final static Set<Devices.Keys> SPIM_CAMERAS_SIMULT = 
+   public final static Set<Devices.Keys> SPIM_CAMERAS_SIMULT = 
             EnumSet.of(Devices.Keys.CAMERA_A1, Devices.Keys.CAMERA_A2, Devices.Keys.CAMERA_A2, Devices.Keys.CAMERA_A4);
 
 
@@ -135,6 +136,7 @@ public class Devices {
       PVCAM("PVCAM"),
       DEMOCAM("DemoCamera"),
       UTILITIES("Utilities"),
+      PI_GCS_2("PI_GCS_2"),  // PI stage
       UNKNOWN("Unknown") // if the device is valid but not one we know about
       ;
       private final String text;
@@ -724,11 +726,11 @@ public class Devices {
          return new DeviceData(key, "Lower Z Height", Sides.NONE,
                true);
       case UPPERZDRIVE:
-         return new DeviceData(key, "SPIM Head Height",
-               Sides.NONE, true);
+         return new DeviceData(key, "SPIM Head Height", Sides.NONE, true);
       case UPPERHDRIVE:
-         return new DeviceData(key, "SPIM Head Horzntl",
-               Sides.NONE, true);
+         return new DeviceData(key, "SPIM Head Horzntl", Sides.NONE, true);
+      case SUPPLEMENTAL_X:
+         return new DeviceData(key, "Supplemental X", Sides.NONE, true);
          // case ASGALVOA: return new DeviceData(Keys.ASGALVOA,
          // "Anti-striping Micromirror", Sides.A, true);
          // case ASGALVOB: return new DeviceData(Keys.ASGALVOB,
@@ -799,6 +801,7 @@ public class Devices {
       deviceInfo_.put(Keys.SHUTTERLOWER, getDefaultDeviceData(Keys.SHUTTERLOWER));
       deviceInfo_.put(Keys.TIGERCOMM, getDefaultDeviceData(Keys.TIGERCOMM));
       deviceInfo_.put(Keys.UPPERHDRIVE, getDefaultDeviceData(Keys.UPPERHDRIVE));
+      deviceInfo_.put(Keys.SUPPLEMENTAL_X, getDefaultDeviceData(Keys.SUPPLEMENTAL_X));
       // deviceInfo_.put(Keys.SOURCE_SPIM,  getDefaultDeviceData(Keys.SOURCE_SPIM));
       // deviceInfo_.put(Keys.SOURCE_LOWER,  getDefaultDeviceData(Keys.SOURCE_LOWER));
       // deviceInfo_.put(Keys.ASGALVOA, getDefaultDeviceData(Keys.ASGALVOA));

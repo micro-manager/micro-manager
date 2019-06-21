@@ -269,7 +269,13 @@ public class CameraModes {
       private List<Keys> getValidModeKeys() {
          List<Keys> keyList = CameraModes.getValidModeKeys(devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA));
          List<Keys> keyListB = CameraModes.getValidModeKeys(devices_.getMMDeviceLibrary(Devices.Keys.CAMERAB));
+         List<Keys> keyListC = CameraModes.getValidModeKeys(devices_.getMMDeviceLibrary(Devices.Keys.CAMERA_A1));
          for (Keys k : keyListB) {
+            if (!keyList.contains(k)) {
+               keyList.add(k);
+            }
+         }
+         for (Keys k : keyListC) {
             if (!keyList.contains(k)) {
                keyList.add(k);
             }

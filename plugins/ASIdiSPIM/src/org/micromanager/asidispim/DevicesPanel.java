@@ -65,7 +65,7 @@ public class DevicesPanel extends ListeningJPanel {
               "",
               "[right]15[center, " + maxSelectorWidth + "!]16[center, "
               + maxSelectorWidth + "!]8[]8[]",
-              "8[]12[]0"));
+              "8[]10[]0"));
       devices_ = devices;
       core_ = gui.getMMCore();
       
@@ -78,6 +78,11 @@ public class DevicesPanel extends ListeningJPanel {
       final JComboBox boxXY_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.XYStageDevice,
             Devices.Keys.XYSTAGE, maxSelectorWidth*2); 
       add(boxXY_, "span 2, center, wrap");
+
+      add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.SUPPLEMENTAL_X) + ":"));
+      final JComboBox boxSupX_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
+            Devices.Keys.SUPPLEMENTAL_X, maxSelectorWidth*2); 
+      add(boxSupX_, "span 2, center, wrap");
       
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.LOWERZDRIVE) + ":"));
       final JComboBox boxLowerZ_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
@@ -160,7 +165,7 @@ public class DevicesPanel extends ListeningJPanel {
       
       add(new JLabel("Note: plugin must be restarted for some changes to take full effect."), "span 3");
 
-      add(new JSeparator(JSeparator.VERTICAL), "growy, cell 3 0 1 11");
+      add(new JSeparator(JSeparator.VERTICAL), "growy, cell 3 0 1 13");
       
       JLabel imgLabel = new JLabel(new ImageIcon(getClass().getResource("/org/micromanager/asidispim/icons/diSPIM.png")));
       add(imgLabel, "cell 4 0 1 11");

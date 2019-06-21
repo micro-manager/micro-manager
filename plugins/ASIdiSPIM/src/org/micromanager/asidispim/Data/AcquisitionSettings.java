@@ -40,6 +40,7 @@ public class AcquisitionSettings {
    public AcquisitionSettings(AcquisitionSettings orig) {
       this.spimMode = orig.spimMode;
       this.isStageScanning = orig.isStageScanning;
+      this.isStageStepping = orig.isStageStepping;
       this.useTimepoints = orig.useTimepoints;
       this.numTimepoints = orig.numTimepoints;
       this.timepointInterval = orig.timepointInterval;
@@ -75,6 +76,9 @@ public class AcquisitionSettings {
    
    // true iff using stage scanning (for convenience b/c have this in spimMode)
    public boolean isStageScanning;
+   
+   // true iff using stage stepping (for convenience b/c have this in spimMode)
+   public boolean isStageStepping;
    
    // whether or not we use time points
    public boolean useTimepoints;

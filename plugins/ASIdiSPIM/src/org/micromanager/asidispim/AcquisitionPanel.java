@@ -1156,7 +1156,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     		  if (width > 4100 || width < 4 || pixelSize < 1e-6) {
     			  return;
     		  }
-    		  double delta = width*pixelSize/Math.sqrt(2);  // TODO account for non-45 degree angle
+    		  DeviceUtils du = new DeviceUtils(gui_, devices_, props_, prefs_);
+    		  double delta = width*pixelSize/du.getStageGeometricSpeedFactor(true);  // base stage delta on PathA 
     		  double overlap = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_GRID_OVERLAP_PERCENT); 
     		  delta *= (1-overlap/100);
     		  gridZDeltaField_.setValue((double)Math.round(delta));
@@ -1683,6 +1684,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       acqSettings.isStageScanning = (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN
             || acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED
             || acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL);
+      acqSettings.isStageStepping = (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL);
       acqSettings.useTimepoints = useTimepointsCB_.isSelected();
       acqSettings.numTimepoints = getNumTimepoints();
       acqSettings.timepointInterval = getTimepointInterval();
@@ -2018,10 +2020,19 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @return
     */
    private double getStageRetraceDuration(AcquisitionSettings acqSettings) {
-      final double retraceSpeed = 0.67f*props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MAX_MOTOR_SPEED_X);  // retrace speed set to 67% of max speed in firmware
+      final double retraceSpeed;
+      if (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL) {
+         if (devices_.getMMDeviceLibrary(Devices.Keys.SUPPLEMENTAL_X) == Devices.Libraries.PI_GCS_2) {
+            retraceSpeed = props_.getPropValueFloat(Devices.Keys.SUPPLEMENTAL_X, Properties.Keys.VELOCITY);
+         } else {
+            retraceSpeed = 1;  // wild-guess default
+         }
+      } else {
+         retraceSpeed = 0.67f*props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MAX_MOTOR_SPEED_X);  // retrace speed set to 67% of max speed in firmware
+      }
       final double speedFactor = ASIdiSPIM.oSPIM ? (2 / Math.sqrt(3.)) : Math.sqrt(2.);
       final double scanDistance = acqSettings.numSlices * acqSettings.stepSizeUm * speedFactor;
-      final double accelerationX = controller_.computeScanAcceleration(
+      final double accelerationX = controller_.computeScanAcceleration(  // not really applicable for non-ASI hardware but just leave as simple case
             controller_.computeScanSpeed(acqSettings)) + 1;  // extra 1 for rounding up that often happens in controller
       final double retraceDuration = scanDistance/retraceSpeed + accelerationX*2;
       ReportingUtils.logDebugMessage("stage retrace duration is " + retraceDuration + " milliseconds");
@@ -2046,7 +2057,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // stackDuration is per-side, per-channel, per-position
       
       final double stackDuration = numCameraTriggers * acqSettings.sliceTiming.sliceDuration;
-      if (acqSettings.isStageScanning) {
+      if (acqSettings.isStageScanning || acqSettings.isStageStepping) {
          final double rampDuration = getStageRampDuration(acqSettings);
          final double retraceTime = getStageRetraceDuration(acqSettings);
          // TODO double-check these calculations below, at least they are better than before ;-)
@@ -2062,7 +2073,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   return retraceTime + (numSides * ((rampDuration * 2) + stackDuration) * numChannels);
                }
             }
-         } else if (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL) {
+         } else if (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL
+               || acqSettings.spimMode == AcquisitionModes.Keys.STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL) {
             if (channelMode == MultichannelModes.Keys.SLICE_HW) {
                return ((rampDuration * 2) + (stackDuration * numChannels) + retraceTime) * numSides;
             } else {  // "normal" stage scan with volume channel switching
@@ -2237,12 +2249,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private boolean checkCamerasAssigned(boolean showWarnings) {
       String firstCamera, secondCamera;
       final boolean firstSideA = isFirstSideA();
-      if (firstSideA) {
-         firstCamera = devices_.getMMDevice(Devices.Keys.CAMERAA);
-         secondCamera = devices_.getMMDevice(Devices.Keys.CAMERAB);
+      if (prefs_.getBoolean(MyStrings.PanelNames.CAMERAS.toString(),
+            Properties.Keys.PLUGIN_USE_SIMULT_CAMERAS, false)) { 
+         firstCamera = devices_.getMMDevice(Devices.Keys.CAMERA_A1);
+         secondCamera = devices_.getMMDevice(Devices.Keys.CAMERA_A2);
       } else {
-         firstCamera = devices_.getMMDevice(Devices.Keys.CAMERAB);
-         secondCamera = devices_.getMMDevice(Devices.Keys.CAMERAA);
+         if (firstSideA) {
+            firstCamera = devices_.getMMDevice(Devices.Keys.CAMERAA);
+            secondCamera = devices_.getMMDevice(Devices.Keys.CAMERAB);  // might be null for single-sided
+         } else {
+            firstCamera = devices_.getMMDevice(Devices.Keys.CAMERAB);
+            secondCamera = devices_.getMMDevice(Devices.Keys.CAMERAA);
+         }
       }
       if (firstCamera == null) {
          if (showWarnings) {
@@ -2328,6 +2346,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       case SLICE_SCAN_ONLY:
       case STAGE_SCAN_INTERLEAVED:
       case STAGE_SCAN_UNIDIRECTIONAL:
+      case STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL:
       case NO_SCAN:
          return false;
       case PIEZO_SCAN_ONLY:
@@ -2366,7 +2385,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // deskew automatically if we were supposed to
             AcquisitionModes.Keys spimMode = getAcquisitionMode();
             if (spimMode == AcquisitionModes.Keys.STAGE_SCAN || spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED
-                    || spimMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL) {
+                    || spimMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL
+                    || spimMode == AcquisitionModes.Keys.STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL) {
                if (prefs_.getBoolean(MyStrings.PanelNames.DATAANALYSIS.toString(),
                        Properties.Keys.PLUGIN_DESKEW_AUTO_TEST, false)) {
                   ASIdiSPIM.getFrame().getDataAnalysisPanel().runDeskew(acquisitionPanel_);
@@ -2485,6 +2505,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             AcquisitionSettings acqSettingsTmp = getCurrentAcquisitionSettings();
             int nrImages = (int)Math.round(acqSettingsTmp.numSlices/downsampleSpacing);
             acqSettingsTmp.isStageScanning = true;
+            acqSettingsTmp.isStageStepping = false;
             acqSettingsTmp.hardwareTimepoints = false;
             acqSettingsTmp.spimMode = AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL;
             acqSettingsTmp.channelMode = MultichannelModes.Keys.NONE;
@@ -2690,7 +2711,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         Properties.Keys.STAGESCAN_MOTOR_ACCEL_X, scanXAccel);
                   props_.setPropValue(Devices.Keys.UPPERZDRIVE,
                         Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, scanZSpeed);
-                  controller_.prepareStageScanForAcquisition(pos2D.x, pos2D.y);
+                  if (acqSettings.isStageStepping) {
+                     controller_.prepareStageStepForAcquisition(acqSettings.spimMode);
+                  } else {
+                     controller_.prepareStageScanForAcquisition(pos2D.x, pos2D.y);
+                  }
 
                   // wait any extra time the user requests
                   Thread.sleep(Math.round(PanelUtils.getSpinnerFloatValue(positionDelay_)));
@@ -3713,7 +3738,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
          
          long extraStageScanTimeout = 0;
-         if (acqSettings.isStageScanning) {
+         if (acqSettings.isStageScanning || acqSettings.isStageStepping) {
             // approximately compute the extra time to wait for stack to begin (ramp up time)
             //   by getting the volume duration and subtracting the acquisition duration and then dividing by two
             extraStageScanTimeout = (long) Math.ceil(computeActualVolumeDuration(acqSettings)
@@ -3841,7 +3866,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                }
             }
 
-            zStepUm_ = acqSettings.isStageScanning
+            zStepUm_ = (acqSettings.isStageScanning || acqSettings.isStageStepping)
                   ? controller_.getActualStepSizeUm()  // computed step size, accounting for quantization of controller
                   : acqSettings.stepSizeUm;  // should be same as PanelUtils.getSpinnerFloatValue(stepSize_)
             
@@ -4082,6 +4107,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                               Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, scanZSpeed);
                         StagePosition pos = nextPosition.get(devices_.getMMDevice(Devices.Keys.XYSTAGE));  // get ideal position from position list, not current position
                         controller_.prepareStageScanForAcquisition(pos.x, pos.y);
+                     } else if (acqSettings.isStageStepping) {
+                        controller_.prepareStageStepForAcquisition(acqSettings.spimMode);
                      }
                      
                      refreshXYZPositions();
@@ -4269,7 +4296,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                            if (acqSettings.isStageScanning) {  // for stage scanning have to allow extra time for turn-around
                               timeout2 += (2*(long)Math.ceil(getStageRampDuration(acqSettings)));  // ramp up and then down
                               timeout2 += 5000;   // ample extra time for turn-around (e.g. antibacklash move in Y), interestingly 500ms extra seems insufficient for reasons I don't understand yet so just pad this for now  // TODO figure out why turn-aronud is taking so long
-                              if (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL) {
+                              if (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL
+                                    || acqSettings.spimMode == AcquisitionModes.Keys.STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL) {
                                  timeout2 += (long)Math.ceil(getStageRetraceDuration(acqSettings));  // in unidirectional case also need to rewind
                               }
                            }
@@ -4868,7 +4896,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
       if (useX) {
          try {
-            setVolumeSliceStepSize(Math.abs(deltaX)/Math.sqrt(2));
+            DeviceUtils du = new DeviceUtils(gui_, devices_, props_, prefs_);
+            setVolumeSliceStepSize(Math.abs(deltaX)/du.getStageGeometricSpeedFactor(true));
             setVolumeSlicesPerVolume(numX);
             if (!useY && !useZ) {
                // move to X center if we aren't generating position list with it

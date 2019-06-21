@@ -54,6 +54,7 @@ public class AcquisitionModes {
       STAGE_SCAN(      "Stage scan", 4),  // path A and B scanning opposite directions
       STAGE_SCAN_INTERLEAVED("Stage scan interleaved", 5),
       STAGE_SCAN_UNIDIRECTIONAL("Stage scan unidirectional", 7),
+      STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL("Stage step supplemental", 8),
       SLICE_SCAN_ONLY( "Slice scan only (unusual)", 2),
       PIEZO_SCAN_ONLY("Piezo scan only (unusual)", 6),
       NONE(            "None", 0);
@@ -174,7 +175,7 @@ public class AcquisitionModes {
       /**
        * Returns whatever acquisition modes are available based on devices
        * and installed firmware.  Can be expanded.
-       * Decided to show all options and decide later whether they are doable with the
+       * Decided to show all options and decide later whether they are do-able with the
        * existing firmware/hardware, that way the end user at least knows such features exist 
        * @return
        */
@@ -182,9 +183,15 @@ public class AcquisitionModes {
          List<Keys> keyList = new ArrayList<Keys>();
          keyList.add(Keys.PIEZO_SLICE_SCAN);
          keyList.add(Keys.NO_SCAN);
-         keyList.add(Keys.STAGE_SCAN);
-         keyList.add(Keys.STAGE_SCAN_INTERLEAVED);
-         keyList.add(Keys.STAGE_SCAN_UNIDIRECTIONAL);
+         if (devices_.isValidMMDevice(Devices.Keys.XYSTAGE)
+               && devices_.getMMDeviceLibrary(Devices.Keys.XYSTAGE) == Devices.Libraries.ASITIGER) {
+            keyList.add(Keys.STAGE_SCAN);
+            keyList.add(Keys.STAGE_SCAN_INTERLEAVED);
+            keyList.add(Keys.STAGE_SCAN_UNIDIRECTIONAL);
+         }
+         if (devices_.isValidMMDevice(Devices.Keys.SUPPLEMENTAL_X)) {
+            keyList.add(Keys.STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL);
+         }
          keyList.add(Keys.SLICE_SCAN_ONLY);
          keyList.add(Keys.PIEZO_SCAN_ONLY);
          return keyList;
