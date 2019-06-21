@@ -60,7 +60,6 @@ import org.micromanager.magellan.acq.AcquisitionsManager;
 import org.micromanager.magellan.acq.ExploreAcquisition;
 import org.micromanager.magellan.channels.ColorEditor;
 import org.micromanager.magellan.channels.ColorRenderer;
-import org.micromanager.magellan.coordinates.AffineGUI;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.ExactlyOneRowSelectionModel;
 import org.micromanager.magellan.misc.GlobalSettings;
@@ -1982,7 +1981,6 @@ public class GUI extends javax.swing.JFrame {
    }//GEN-LAST:event_exploreSavingNameTextField_ActionPerformed
 
    private void calinrateTilingButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_calinrateTilingButton_ActionPerformed
-      new AffineGUI();
    }//GEN-LAST:event_calinrateTilingButton_ActionPerformed
 
    private void openDatasetButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openDatasetButton_ActionPerformed

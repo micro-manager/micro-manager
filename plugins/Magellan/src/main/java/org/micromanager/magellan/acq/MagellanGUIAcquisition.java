@@ -23,7 +23,7 @@ import java.util.Iterator;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import org.micromanager.magellan.coordinates.AffineUtils;
+import org.micromanager.magellan.coordinates.MagellanAffineUtils;
 import org.micromanager.magellan.coordinates.XYStagePosition;
 import org.micromanager.magellan.json.JSONArray;
 import org.micromanager.magellan.main.Magellan;
@@ -360,7 +360,7 @@ public class MagellanGUIAcquisition extends Acquisition {
             int tileHeightMinusOverlap = fullTileHeight - this.getOverlapY();
             Point2D.Double currentStagePos = Magellan.getCore().getXYStagePosition(xyStage_);
             positions_.add(new XYStagePosition(currentStagePos, tileWidthMinusOverlap, tileHeightMinusOverlap, fullTileWidth, fullTileHeight, 0, 0,
-                    AffineUtils.getAffineTransform(Magellan.getCore().getCurrentPixelSizeConfig(),
+                    MagellanAffineUtils.getAffineTransform(Magellan.getCore().getCurrentPixelSizeConfig(),
                             currentStagePos.x, currentStagePos.y)));
          }
       } catch (Exception e) {

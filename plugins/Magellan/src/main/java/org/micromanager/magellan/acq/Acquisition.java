@@ -37,7 +37,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.micromanager.magellan.channels.ChannelSpec;
-import org.micromanager.magellan.coordinates.AffineUtils;
+import org.micromanager.magellan.coordinates.MagellanAffineUtils;
 import org.micromanager.magellan.coordinates.PositionManager;
 import org.micromanager.magellan.coordinates.XYStagePosition;
 import org.micromanager.magellan.json.JSONArray;
@@ -330,13 +330,13 @@ public abstract class Acquisition {
          Log.log("couldn't get affine transform");
          throw new RuntimeException();
       }
-      AffineTransform at = AffineUtils.getAffineTransform(pixelSizeConfig, 0, 0);
+      AffineTransform at = MagellanAffineUtils.getAffineTransform(pixelSizeConfig, 0, 0);
       if (at == null) {
          Log.log("No affine transform found for pixel size config: " + pixelSizeConfig
                  + "\nUse \"Calibrate\" button on main Magellan window to configure\n\n");
          throw new RuntimeException();
       }
-      MD.setAffineTransformString(summary, AffineUtils.transformToString(at));
+      MD.setAffineTransformString(summary, MagellanAffineUtils.transformToString(at));
       JSONArray chNames = new JSONArray();
       JSONArray chColors = new JSONArray();
       //ignore inactive channels, except on an explore acquisition

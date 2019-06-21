@@ -31,7 +31,7 @@ import java.util.prefs.Preferences;
 import javax.swing.filechooser.FileSystemView;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.magellan.coordinates.AffineUtils;
+import org.micromanager.magellan.coordinates.MagellanAffineUtils;
 import org.micromanager.magellan.main.Magellan;
 
 /**
@@ -55,23 +55,23 @@ public class GlobalSettings {
       singleton_ = this;
       prefs_ = prefs;
 
-      //Demo mode 
-      try {
-         String s = ((MMStudio)Magellan.getStudio()).getSysConfigFile();
-         if (s.endsWith("MagellanDemo.cfg")) {
-            //generate a dummy affine transformation for current pixel size config
-            String psConfig = Magellan.getCore().getCurrentPixelSizeConfig();
-            AffineTransform demoTransform = new AffineTransform(new double[]{1, 0, 0, 1});
-            AffineUtils.storeAffineTransform(psConfig, demoTransform);
-            //Set stage to the middle of the demo sample
-            Magellan.getCore().setXYPosition(700, 700);
-            demoMode_ = true;
-            new DemoModeImageData();
-         }
-      } catch (Exception e) {
-          Log.log("Couldn't initialize Demo mode");
-      }
-      
+//      //Demo mode 
+//      try {
+//         String s = ((MMStudio)Magellan.getStudio()).getSysConfigFile();
+//         if (s.endsWith("MagellanDemo.cfg")) {
+//            //generate a dummy affine transformation for current pixel size config
+//            String psConfig = Magellan.getCore().getCurrentPixelSizeConfig();
+//            AffineTransform demoTransform = new AffineTransform(new double[]{1, 0, 0, 1});
+//            MagellanAffineUtils.storeAffineTransform(psConfig, demoTransform);
+//            //Set stage to the middle of the demo sample
+//            Magellan.getCore().setXYPosition(700, 700);
+//            demoMode_ = true;
+//            new DemoModeImageData();
+//         }
+//      } catch (Exception e) {
+//          Log.log("Couldn't initialize Demo mode");
+//      }
+//      
       //load channel offsets
         try {
             for (int i = 0; i < 6; i++) {
