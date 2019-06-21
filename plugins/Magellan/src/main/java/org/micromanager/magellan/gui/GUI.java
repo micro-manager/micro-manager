@@ -42,14 +42,11 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.font.TextAttribute;
-import java.awt.geom.AffineTransform;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Map;
 import javax.swing.BorderFactory;
-import javax.swing.DefaultCellEditor;
 import javax.swing.JOptionPane;
-import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import org.micromanager.magellan.acq.AcqDurationEstimator;
@@ -67,8 +64,6 @@ import org.micromanager.magellan.misc.JavaUtils;
 import org.micromanager.magellan.misc.LoadedAcquisitionData;
 import org.micromanager.magellan.misc.Log;
 import org.micromanager.magellan.surfacesandregions.SurfaceGridManager;
-import org.micromanager.internal.MMStudio;
-import org.micromanager.magellan.coordinates.MagellanAffineUtils;
 
 /**
  *
@@ -82,7 +77,6 @@ public class GUI extends javax.swing.JFrame {
    private static final Color LIGHT_GREEN = new Color(0, 200, 0);
    private static final Color DEFAULT_RADIO_BUTTON_TEXT_COLOR = new JRadioButton().getForeground();
 
-   private MagellanEngine eng_;
    private AcqDurationEstimator acqDurationEstimator_;
    private Preferences prefs_;
    private SurfaceGridManager manager_ = new SurfaceGridManager();
@@ -102,7 +96,7 @@ public class GUI extends javax.swing.JFrame {
       settings_ = new GlobalSettings(prefs_);
       this.setTitle("Micro-Magellan " + version);
       acqDurationEstimator_ = new AcqDurationEstimator();
-      eng_ = new MagellanEngine(Magellan.getCore(), acqDurationEstimator_);
+      new MagellanEngine(Magellan.getCore(), acqDurationEstimator_);
       multiAcqManager_ = new AcquisitionsManager(this);
       initComponents();
       moreInitialization();
@@ -110,32 +104,6 @@ public class GUI extends javax.swing.JFrame {
       addGlobalSettingsListeners();
       storeAcqSettings_ = true;
       storeCurrentAcqSettings();
-      if (GlobalSettings.getInstance().firstMagellanOpening()) {
-         new StartupHelpWindow();
-      } else {
-         //check if affine unknow
-         boolean affineKnown = false;
-         try {
-            String pix = Magellan.getCore().getCurrentPixelSizeConfig();
-            //Get affine transform from prefs
-            Preferences prefs1 = Preferences.userNodeForPackage(MMStudio.class);
-            affineKnown = MagellanAffineUtils.getAffineTransform(pix, 0, 0) != null;
-         } catch (Exception e) {
-            
-         }
-         boolean polarityKnown = false;
-         try {
-            String zName = Magellan.getCore().getFocusDevice();
-            polarityKnown = Magellan.getCore().getFocusDirection(zName) != 0;
-         } catch (Exception e) {
-            
-         }
-         if (!polarityKnown) {
-            new StartupHelpWindow(1);
-         } else if (!affineKnown) {
-            new StartupHelpWindow(2);
-         }
-      }
    }
 
    public static GUI getInstance() {
@@ -686,8 +654,6 @@ public class GUI extends javax.swing.JFrame {
       bottomPanel_ = new javax.swing.JPanel();
       userGuideLink_ = new javax.swing.JLabel();
       citeLink_ = new javax.swing.JLabel();
-      helpButton_ = new javax.swing.JButton();
-      calinrateTilingButton_ = new javax.swing.JButton();
       bugReportLink_ = new javax.swing.JLabel();
       topPanel_ = new javax.swing.JPanel();
       exploreSavingDirLabel_ = new javax.swing.JLabel();
@@ -788,7 +754,7 @@ public class GUI extends javax.swing.JFrame {
          surfaceAndGridsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(surfaceAndGridsPanel_Layout.createSequentialGroup()
             .addGap(20, 20, 20)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 316, Short.MAX_VALUE)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 324, Short.MAX_VALUE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addGroup(surfaceAndGridsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                .addComponent(deleteSelectedRegionButton_)
@@ -1754,7 +1720,7 @@ public class GUI extends javax.swing.JFrame {
                   .addGroup(acqPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                      .addComponent(moveAcqUpButton_)
                      .addComponent(moveAcqDownButton_)))
-               .addComponent(multipleAcqScrollPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 157, Short.MAX_VALUE))
+               .addComponent(multipleAcqScrollPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE))
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addComponent(acqTabbedPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 282, javax.swing.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1771,23 +1737,6 @@ public class GUI extends javax.swing.JFrame {
       citeLink_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
       citeLink_.setForeground(new java.awt.Color(153, 204, 255));
       citeLink_.setText("Cite Micro-Magellan");
-
-      helpButton_.setBackground(new java.awt.Color(200, 255, 200));
-      helpButton_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-      helpButton_.setText("Setup");
-      helpButton_.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            helpButton_ActionPerformed(evt);
-         }
-      });
-
-      calinrateTilingButton_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-      calinrateTilingButton_.setText("Calibrate tiling");
-      calinrateTilingButton_.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            calinrateTilingButton_ActionPerformed(evt);
-         }
-      });
 
       bugReportLink_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
       bugReportLink_.setForeground(new java.awt.Color(153, 204, 255));
@@ -1814,11 +1763,7 @@ public class GUI extends javax.swing.JFrame {
       bottomPanel_Layout.setHorizontalGroup(
          bottomPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(bottomPanel_Layout.createSequentialGroup()
-            .addContainerGap()
-            .addComponent(helpButton_)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(calinrateTilingButton_)
-            .addGap(53, 53, 53)
+            .addGap(248, 248, 248)
             .addComponent(userGuideLink_)
             .addGap(66, 66, 66)
             .addComponent(citeLink_)
@@ -1829,10 +1774,8 @@ public class GUI extends javax.swing.JFrame {
       bottomPanel_Layout.setVerticalGroup(
          bottomPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(bottomPanel_Layout.createSequentialGroup()
-            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addContainerGap(14, Short.MAX_VALUE)
             .addGroup(bottomPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(calinrateTilingButton_)
-               .addComponent(helpButton_)
                .addComponent(citeLink_)
                .addComponent(userGuideLink_)
                .addComponent(bugReportLink_)))
@@ -1981,9 +1924,6 @@ public class GUI extends javax.swing.JFrame {
    private void exploreSavingNameTextField_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exploreSavingNameTextField_ActionPerformed
    }//GEN-LAST:event_exploreSavingNameTextField_ActionPerformed
 
-   private void calinrateTilingButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_calinrateTilingButton_ActionPerformed
-   }//GEN-LAST:event_calinrateTilingButton_ActionPerformed
-
    private void openDatasetButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openDatasetButton_ActionPerformed
       File selectedFile = null;
       if (JavaUtils.isMac()) {
@@ -2018,10 +1958,6 @@ public class GUI extends javax.swing.JFrame {
       }).start();
 
    }//GEN-LAST:event_openDatasetButton_ActionPerformed
-
-   private void helpButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_helpButton_ActionPerformed
-      new StartupHelpWindow();
-   }//GEN-LAST:event_helpButton_ActionPerformed
 
    private void moveAcqDownButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_moveAcqDownButton_ActionPerformed
       int move = multiAcqManager_.moveDown(multipleAcqTable_.getSelectedRow());
@@ -2237,7 +2173,6 @@ public class GUI extends javax.swing.JFrame {
    private javax.swing.JLabel bugReportLink_;
    private javax.swing.JRadioButton button2D_;
    private javax.swing.JRadioButton button3D_;
-   private javax.swing.JButton calinrateTilingButton_;
    private javax.swing.JLabel channelGroupLabel_;
    private javax.swing.JTable channelsTable_;
    private javax.swing.JLabel citeLink_;
@@ -2272,7 +2207,6 @@ public class GUI extends javax.swing.JFrame {
    private javax.swing.JComboBox footprint2DComboBox_;
    private javax.swing.JLabel freeDiskSpaceLabel_;
    private javax.swing.JTextField globalSavingDirTextField_;
-   private javax.swing.JButton helpButton_;
    private javax.swing.JLabel jLabel12;
    private javax.swing.JLabel jLabel2;
    private javax.swing.JLabel jLabel3;
