@@ -107,7 +107,7 @@ public class StartupHelpWindow extends javax.swing.JFrame {
             String pix = Magellan.getCore().getCurrentPixelSizeConfig();
             //Get affine transform from prefs
             Preferences prefs = Preferences.userNodeForPackage(MMStudio.class);
-            known = GlobalSettings.getObjectFromPrefs(prefs, "affine_transform_" + pix, (AffineTransform) null) != null;
+            known = MagellanAffineUtils.getAffineTransform(pix, 0, 0) != null;
          } catch (Exception e) {
             
          }

@@ -68,6 +68,7 @@ import org.micromanager.magellan.misc.LoadedAcquisitionData;
 import org.micromanager.magellan.misc.Log;
 import org.micromanager.magellan.surfacesandregions.SurfaceGridManager;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.magellan.coordinates.MagellanAffineUtils;
 
 /**
  *
@@ -118,7 +119,7 @@ public class GUI extends javax.swing.JFrame {
             String pix = Magellan.getCore().getCurrentPixelSizeConfig();
             //Get affine transform from prefs
             Preferences prefs1 = Preferences.userNodeForPackage(MMStudio.class);
-            affineKnown = GlobalSettings.getObjectFromPrefs(prefs1, "affine_transform_" + pix, (AffineTransform) null) != null;
+            affineKnown = MagellanAffineUtils.getAffineTransform(pix, 0, 0) != null;
          } catch (Exception e) {
             
          }
