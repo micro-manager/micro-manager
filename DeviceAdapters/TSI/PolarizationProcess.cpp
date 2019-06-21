@@ -194,7 +194,7 @@ int Tsi3Cam::TransformPolarizationImage(unsigned short* monoBuf, unsigned char* 
 																mono_image_width,
 																mono_image_height,
 																fullFrame.bitDepth,
-																4095,
+																65535, //4095,
 																nullptr,
 															   imgType == Intensity ? reinterpret_cast<unsigned short*>(outBuf) : nullptr,
 																nullptr,
