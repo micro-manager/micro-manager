@@ -16,7 +16,7 @@
 //
 package org.micromanager.magellan.acq;
 
-import org.micromanager.magellan.coordinates.AffineUtils;
+import org.micromanager.magellan.coordinates.MagellanAffineUtils;
 import org.micromanager.magellan.coordinates.PositionManager;
 import org.micromanager.magellan.coordinates.XYStagePosition;
 import java.awt.Point;
@@ -205,7 +205,7 @@ public class MultiResMultipageTiffStorage {
       tileHeight_ = fullResTileHeightIncludingOverlap_ - yOverlap_;
       pixelSizeZ_ = MD.getZStepUm(summaryMD_);
       pixelSizeXY_ = MD.getPixelSizeUm(summaryMD_);
-      affine_ = AffineUtils.stringToTransform(MD.getAffineTransformString(summaryMD_));
+      affine_ = MagellanAffineUtils.stringToTransform(MD.getAffineTransformString(summaryMD_));
    }
 
    public int getByteDepth() {

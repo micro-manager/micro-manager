@@ -17,7 +17,7 @@
 package org.micromanager.magellan.surfacesandregions;
 
 import org.micromanager.magellan.acq.MagellanGUIAcquisitionSettings;
-import org.micromanager.magellan.coordinates.AffineUtils;
+import org.micromanager.magellan.coordinates.MagellanAffineUtils;
 import org.micromanager.magellan.coordinates.XYStagePosition;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
@@ -82,7 +82,7 @@ public class MultiPosGrid extends XYFootprint {
    @Override
    public ArrayList<XYStagePosition> getXYPositionsNoUpdate() {
       try {
-         AffineTransform transform = AffineUtils.getAffineTransform(Magellan.getCore().getCurrentPixelSizeConfig(), center_.x, center_.y);
+         AffineTransform transform = MagellanAffineUtils.getAffineTransform(Magellan.getCore().getCurrentPixelSizeConfig(), center_.x, center_.y);
          ArrayList<XYStagePosition> positions = new ArrayList<XYStagePosition>();
          int fullTileWidth = (int) Magellan.getCore().getImageWidth();
          int fullTileHeight = (int) Magellan.getCore().getImageHeight();
@@ -95,7 +95,7 @@ public class MultiPosGrid extends XYFootprint {
                Point2D.Double pixelPos = new Point2D.Double(xPixelOffset, yPixelOffset);
                Point2D.Double stagePos = new Point2D.Double();
                transform.transform(pixelPos, stagePos);
-               AffineTransform posTransform = AffineUtils.getAffineTransform(pixelSizeConfig_, stagePos.x, stagePos.y);
+               AffineTransform posTransform = MagellanAffineUtils.getAffineTransform(pixelSizeConfig_, stagePos.x, stagePos.y);
                positions.add(new XYStagePosition(stagePos, tileWidthMinusOverlap, tileHeightMinusOverlap,
                        fullTileWidth, fullTileHeight, row, col, posTransform));
             }
@@ -110,7 +110,7 @@ public class MultiPosGrid extends XYFootprint {
    @Override
    public ArrayList<XYStagePosition> getXYPositions(double tileOverlapPercent) {
       try {
-         AffineTransform transform = AffineUtils.getAffineTransform(Magellan.getCore().getCurrentPixelSizeConfig(), center_.x, center_.y);
+         AffineTransform transform = MagellanAffineUtils.getAffineTransform(Magellan.getCore().getCurrentPixelSizeConfig(), center_.x, center_.y);
          ArrayList<XYStagePosition> positions = new ArrayList<XYStagePosition>();
          int fullTileWidth = (int) Magellan.getCore().getImageWidth();
          int fullTileHeight = (int) Magellan.getCore().getImageHeight();
@@ -126,7 +126,7 @@ public class MultiPosGrid extends XYFootprint {
                         Point2D.Double pixelPos = new Point2D.Double(xPixelOffset, yPixelOffset);
                         Point2D.Double stagePos = new Point2D.Double();
                         transform.transform(pixelPos, stagePos);
-                        AffineTransform posTransform = AffineUtils.getAffineTransform(pixelSizeConfig_, stagePos.x, stagePos.y);
+                        AffineTransform posTransform = MagellanAffineUtils.getAffineTransform(pixelSizeConfig_, stagePos.x, stagePos.y);
                         positions.add(new XYStagePosition(stagePos, tileWidthMinusOverlap, tileHeightMinusOverlap,
                                 fullTileWidth, fullTileHeight, row, col, posTransform));
                     }
@@ -136,7 +136,7 @@ public class MultiPosGrid extends XYFootprint {
                         Point2D.Double pixelPos = new Point2D.Double(xPixelOffset, yPixelOffset);
                         Point2D.Double stagePos = new Point2D.Double();
                         transform.transform(pixelPos, stagePos);
-                        AffineTransform posTransform = AffineUtils.getAffineTransform(pixelSizeConfig_, stagePos.x, stagePos.y);
+                        AffineTransform posTransform = MagellanAffineUtils.getAffineTransform(pixelSizeConfig_, stagePos.x, stagePos.y);
                         positions.add(new XYStagePosition(stagePos, tileWidthMinusOverlap, tileHeightMinusOverlap,
                                 fullTileWidth, fullTileHeight, row, col, posTransform));
                     }
