@@ -520,7 +520,10 @@ unsigned Tsi3Cam::GetBitDepth() const
 		return bitDepth; // color camera
 	
 	if (polarized)
-		return 12; // polarized camera
+		if (polarImageType == Raw)
+			return 12;
+		else
+			return 16;
 	else
 		return fullFrame.bitDepth; // monochrome camera
 }
