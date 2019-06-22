@@ -558,7 +558,7 @@ public class DisplayWindowControls extends Panel implements SurfaceGridListener 
 
       zPosLabel_.setText("Display Z position: ");
 
-      acquireAtCurrentButton_.setText("Acquire current");
+      acquireAtCurrentButton_.setText("Acquire tile here");
       acquireAtCurrentButton_.setToolTipText("Acquire an image at the current hardware position");
       acquireAtCurrentButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -578,39 +578,43 @@ public class DisplayWindowControls extends Panel implements SurfaceGridListener 
       jPanel1.setLayout(jPanel1Layout);
       jPanel1Layout.setHorizontalGroup(
          jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGap(0, 0, Short.MAX_VALUE)
+         .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+            .addContainerGap()
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+               .addComponent(elapsedTimeLabel_)
+               .addComponent(zPosLabel_))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 281, Short.MAX_VALUE)
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+               .addComponent(acquireAtCurrentButton_)
+               .addComponent(exploreButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addGap(101, 101, 101))
          .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                .addContainerGap()
-               .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                  .addGroup(jPanel1Layout.createSequentialGroup()
-                     .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addGroup(jPanel1Layout.createSequentialGroup()
-                           .addComponent(showInFolderButton_)
-                           .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                           .addComponent(abortButton_))
-                        .addComponent(elapsedTimeLabel_))
-                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                     .addComponent(pauseButton_)
-                     .addGap(18, 18, 18)
-                     .addComponent(fpsLabel_)
-                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                     .addComponent(animationFPSSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel1Layout.createSequentialGroup()
-                           .addGap(18, 18, 18)
-                           .addComponent(showNewImagesCheckBox_))
-                        .addGroup(jPanel1Layout.createSequentialGroup()
-                           .addGap(6, 6, 6)
-                           .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                              .addComponent(acquireAtCurrentButton_)
-                              .addComponent(exploreButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE)))))
-                  .addComponent(zPosLabel_))
+               .addComponent(showInFolderButton_)
+               .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+               .addComponent(abortButton_)
+               .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+               .addComponent(pauseButton_)
+               .addGap(18, 18, 18)
+               .addComponent(fpsLabel_)
+               .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+               .addComponent(animationFPSSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
+               .addGap(18, 18, 18)
+               .addComponent(showNewImagesCheckBox_)
                .addContainerGap(90, Short.MAX_VALUE)))
       );
       jPanel1Layout.setVerticalGroup(
          jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGap(0, 120, Short.MAX_VALUE)
+         .addGroup(jPanel1Layout.createSequentialGroup()
+            .addContainerGap(39, Short.MAX_VALUE)
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+               .addComponent(exploreButton_)
+               .addComponent(elapsedTimeLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+               .addComponent(acquireAtCurrentButton_)
+               .addComponent(zPosLabel_)))
          .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                .addContainerGap()
@@ -623,15 +627,7 @@ public class DisplayWindowControls extends Panel implements SurfaceGridListener 
                      .addComponent(fpsLabel_)
                      .addComponent(animationFPSSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                      .addComponent(showNewImagesCheckBox_)))
-               .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-               .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                  .addComponent(exploreButton_)
-                  .addComponent(elapsedTimeLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE))
-               .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-               .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                  .addComponent(zPosLabel_)
-                  .addComponent(acquireAtCurrentButton_))
-               .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+               .addContainerGap(71, Short.MAX_VALUE)))
       );
 
       javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -641,7 +637,7 @@ public class DisplayWindowControls extends Panel implements SurfaceGridListener 
          .addGroup(layout.createSequentialGroup()
             .addContainerGap()
             .addComponent(tabbedPane_))
-         .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+         .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
