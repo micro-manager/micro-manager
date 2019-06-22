@@ -140,7 +140,7 @@ public class Cameras {
       if (camera == Devices.Keys.CAMERAA
             || camera == Devices.Keys.CAMERAB
             || camera == Devices.Keys.MULTICAMERA) {
-         shutter = Devices.Keys.PLOGIC;
+         shutter = Devices.Keys.PLOGIC_LASER;
       }
       if (camera == Devices.Keys.CAMERALOWER) {
          shutter = Devices.Keys.SHUTTERLOWER;
