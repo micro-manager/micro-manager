@@ -352,16 +352,17 @@ public class MagellanGUIAcquisition extends Acquisition {
          } else if (settings_.spaceMode_ == MagellanGUIAcquisitionSettings.REGION_2D) {
             positions_ = settings_.footprint_.getXYPositions(settings_.tileOverlap_);
          } else {
+             throw new RuntimeException("No space settings specified");
             //no space mode, use current stage positon
-            positions_ = new ArrayList<XYStagePosition>();
-            int fullTileWidth = (int) Magellan.getCore().getImageWidth();
-            int fullTileHeight = (int) Magellan.getCore().getImageHeight();
-            int tileWidthMinusOverlap = fullTileWidth - this.getOverlapX();
-            int tileHeightMinusOverlap = fullTileHeight - this.getOverlapY();
-            Point2D.Double currentStagePos = Magellan.getCore().getXYStagePosition(xyStage_);
-            positions_.add(new XYStagePosition(currentStagePos, tileWidthMinusOverlap, tileHeightMinusOverlap, fullTileWidth, fullTileHeight, 0, 0,
-                    MagellanAffineUtils.getAffineTransform(Magellan.getCore().getCurrentPixelSizeConfig(),
-                            currentStagePos.x, currentStagePos.y)));
+//            positions_ = new ArrayList<XYStagePosition>();
+//            int fullTileWidth = (int) Magellan.getCore().getImageWidth();
+//            int fullTileHeight = (int) Magellan.getCore().getImageHeight();
+//            int tileWidthMinusOverlap = fullTileWidth - this.getOverlapX();
+//            int tileHeightMinusOverlap = fullTileHeight - this.getOverlapY();
+//            Point2D.Double currentStagePos = Magellan.getCore().getXYStagePosition(xyStage_);
+//            positions_.add(new XYStagePosition(currentStagePos, tileWidthMinusOverlap, tileHeightMinusOverlap, fullTileWidth, fullTileHeight, 0, 0,
+//                    MagellanAffineUtils.getAffineTransform(Magellan.getCore().getCurrentPixelSizeConfig(),
+//                            currentStagePos.x, currentStagePos.y)));
          }
       } catch (Exception e) {
          Log.log("Problem with Acquisition's XY positions. Check acquisition settings");

@@ -32,6 +32,8 @@ import java.util.ArrayList;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import org.micromanager.magellan.coordinates.AffineUndefinedException;
+import org.micromanager.magellan.coordinates.MagellanAffineUtils;
 import org.micromanager.magellan.imagedisplay.DisplayWindowSurfaceGridTableModel;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.JavaUtils;
@@ -139,7 +141,10 @@ public class SurfaceGridManager {
    }
    
    public SurfaceInterpolator addNewSurface() {
-      SurfaceInterpolator s = new SurfaceInterpolatorSimple(Magellan.getCore().getXYStageDevice(), Magellan.getCore().getFocusDevice());
+      if (!MagellanAffineUtils.isAffineTransformDefined()) {
+          throw new AffineUndefinedException();
+      }
+       SurfaceInterpolator s = new SurfaceInterpolatorSimple(Magellan.getCore().getXYStageDevice(), Magellan.getCore().getFocusDevice());
       surfaces_.add(s);
       for (SurfaceGridListener l : listeners_) {
             l.SurfaceOrGridCreated(s);
@@ -148,7 +153,10 @@ public class SurfaceGridManager {
    }
    
    public MultiPosGrid addNewGrid(int rows, int cols, Point2D.Double center) {
-      MultiPosGrid grid = new MultiPosGrid(this, Magellan.getCore().getXYStageDevice(), rows, cols, center);
+      if (!MagellanAffineUtils.isAffineTransformDefined()) {
+          throw new AffineUndefinedException();
+      }     
+       MultiPosGrid grid = new MultiPosGrid(this, Magellan.getCore().getXYStageDevice(), rows, cols, center);
       grids_.add(grid);
       for (SurfaceGridListener l : listeners_) {
             l.SurfaceOrGridCreated(grid);
