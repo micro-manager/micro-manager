@@ -276,7 +276,7 @@ public class CameraPanel extends ListeningJPanel{
    }
 
    private void setSPIMCameraROI(RoiPresets roi) {
-      Set<Devices.Keys> camList = prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+      Set<Devices.Keys> camList = prefs_.getBoolean(MyStrings.PanelNames.CAMERAS.toString(),
             Properties.Keys.PLUGIN_USE_SIMULT_CAMERAS, false) ?
                   Devices.SPIM_CAMERAS_SIMULT : Devices.SPIM_CAMERAS;
       for (Devices.Keys devKey : camList) {

@@ -123,7 +123,7 @@ public class Devices {
          ASIdiSPIM.oSPIM ? EnumSet.of(Devices.Keys.CAMERAA) :  
             EnumSet.of(Devices.Keys.CAMERAA, Devices.Keys.CAMERAB);
    public final static Set<Devices.Keys> SPIM_CAMERAS_SIMULT = 
-            EnumSet.of(Devices.Keys.CAMERA_A1, Devices.Keys.CAMERA_A2, Devices.Keys.CAMERA_A2, Devices.Keys.CAMERA_A4);
+            EnumSet.of(Devices.Keys.CAMERA_A1, Devices.Keys.CAMERA_A2, Devices.Keys.CAMERA_A3, Devices.Keys.CAMERA_A4);
 
 
    public static enum Libraries {
