@@ -22,6 +22,9 @@ package org.micromanager.magellan.coordinates;
  */
 import java.awt.geom.AffineTransform;
 import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import mmcorej.DoubleVector;
 import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.NumberUtils;
@@ -37,6 +40,9 @@ public class MagellanAffineUtils {
    }
 
    public static AffineTransform stringToTransform(String s) {
+       if (s.equals("Undefined")) {
+           return null;
+       }
       double[] mat = new double[4];
       String[] vals = s.split("_");
       for (int i = 0; i < 4; i++) {
@@ -45,9 +51,23 @@ public class MagellanAffineUtils {
       return new AffineTransform(mat);
    }
  
-   public static AffineTransform getAffineTransform(String pixelSizeConfig, double xCenter, double yCenter) {
+   public static boolean isAffineTransformDefined() {
+       try {
+           DoubleVector v = Magellan.getCore().getPixelSizeAffine(true);
+           for (int i = 0; i < v.size(); i++) {
+               if (v.get(i) != 0.0) {
+                   return true;
+               }
+           }
+           return false;
+       } catch (Exception ex) {
+           throw new RuntimeException(ex);
+       }
+   }
+   
+   public static AffineTransform getAffineTransform(double xCenter, double yCenter) {
       try {
-         AffineTransform transform = AffineUtils.doubleToAffine(Magellan.getCore().getPixelSizeAffine(true));
+         AffineTransform transform = AffineUtils.doubleToAffine(Magellan.getCore().getPixelSizeAffineByID(Magellan.getCore().getCurrentPixelSizeConfig()));
          //set map origin to current stage position
          double[] matrix = new double[6];
          transform.getMatrix(matrix);

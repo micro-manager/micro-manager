@@ -254,11 +254,14 @@ public class PixelCalibratorDialog extends MMFrame {
       }
 
       double pixelSize = AffineUtils.deducePixelSize(result);
-
+      double[] measurements = AffineUtils.affineToMeasurements(result);
+//      xScale, yScale, rotationDeg, shear
       int response = JOptionPane.showConfirmDialog(this,
-            String.format("Affine transform parameters: XScale=%.4f YScale=%.4f XShear=%.4f YShear=%.4f\n",                     
-                    result.getScaleX(), result.getScaleY(), 
-                    result.getShearX(), result.getShearY()) + 
+            String.format("Affine transform parameters: XScale=%.4f YScale=%.4f Rotation (degrees)=%.2f Shear=%.4f\n",                     
+                    measurements[0], measurements[1], 
+                    measurements[2], measurements[3]) + 
+            "<html>If this is a correct result, Xscale and YScale should have absoulte value of roughly the number of &#956;m/pixel,</html>\n" +
+                    "rotation should give the angle between the corrdinate system of the camera and the stage, and the shear\nvalue shoud be very small.\n\n" +
             "<html>The Pixel Calibrator plugin measured a pixel size of " + 
                     pixelSize + " &#956;m.<br>" + 
                     "Do you wish to copy these to your pixel calibration settings?</html>",

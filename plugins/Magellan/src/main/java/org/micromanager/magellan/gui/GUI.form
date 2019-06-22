@@ -45,7 +45,7 @@
                           <Component id="bottomPanel_" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
-                      <Component id="exploreAcqTabbedPane_" alignment="0" max="32767" attributes="0"/>
+                      <Component id="exploreAcqTabbedPane_" alignment="0" pref="788" max="32767" attributes="0"/>
                       <Component id="topPanel_" alignment="0" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -372,15 +372,16 @@
                                       <Group type="102" attributes="0">
                                           <Component id="multipleAcqScrollPane_" max="32767" attributes="0"/>
                                           <EmptySpace min="-2" max="-2" attributes="0"/>
-                                          <Group type="103" groupAlignment="1" max="-2" attributes="0">
-                                              <Component id="moveAcqUpButton_" alignment="0" pref="0" max="32767" attributes="0"/>
-                                              <Component id="addAcqButton_" min="-2" pref="43" max="-2" attributes="0"/>
-                                          </Group>
-                                          <EmptySpace min="-2" max="-2" attributes="0"/>
                                           <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                                              <Component id="removeAcqButton_" min="-2" pref="40" max="-2" attributes="0"/>
-                                              <Component id="moveAcqDownButton_" min="-2" pref="40" max="-2" attributes="0"/>
+                                              <Component id="addAcqButton_" max="32767" attributes="0"/>
+                                              <Component id="moveAcqUpButton_" pref="0" max="32767" attributes="0"/>
                                           </Group>
+                                          <EmptySpace min="-2" pref="12" max="-2" attributes="0"/>
+                                          <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                                              <Component id="removeAcqButton_" pref="40" max="32767" attributes="0"/>
+                                              <Component id="moveAcqDownButton_" pref="0" max="32767" attributes="0"/>
+                                          </Group>
+                                          <EmptySpace min="-2" pref="9" max="-2" attributes="0"/>
                                       </Group>
                                   </Group>
                                   <EmptySpace min="-2" max="-2" attributes="0"/>
@@ -400,12 +401,13 @@
                                       <Component id="removeAcqButton_" alignment="3" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Group type="103" groupAlignment="3" attributes="0">
-                                      <Component id="moveAcqUpButton_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="moveAcqDownButton_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="0" attributes="0">
+                                      <Component id="moveAcqUpButton_" min="-2" max="-2" attributes="0"/>
+                                      <Component id="moveAcqDownButton_" min="-2" max="-2" attributes="0"/>
                                   </Group>
+                                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                               </Group>
-                              <Component id="multipleAcqScrollPane_" alignment="0" pref="165" max="32767" attributes="0"/>
+                              <Component id="multipleAcqScrollPane_" alignment="0" pref="140" max="32767" attributes="0"/>
                           </Group>
                           <EmptySpace min="-2" max="-2" attributes="0"/>
                           <Component id="acqTabbedPane_" min="-2" pref="282" max="-2" attributes="0"/>
@@ -1707,7 +1709,9 @@
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                       <Font name="Tahoma" size="14" style="0"/>
                     </Property>
-                    <Property name="text" type="java.lang.String" value="&#x2b07;"/>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/org/micromanager/magellan/arrow_down.png"/>
+                    </Property>
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="moveAcqDownButton_ActionPerformed"/>
@@ -1718,7 +1722,9 @@
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                       <Font name="Tahoma" size="14" style="0"/>
                     </Property>
-                    <Property name="text" type="java.lang.String" value="&#x2b06;"/>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/org/micromanager/magellan/arrow_up.png"/>
+                    </Property>
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="moveAcqUpButton_ActionPerformed"/>
@@ -1754,7 +1760,7 @@
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="estDurationLabel_" max="32767" attributes="0"/>
+                                  <Component id="estDurationLabel_" pref="299" max="32767" attributes="0"/>
                                   <Component id="estSizeLabel_" max="32767" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
@@ -1817,13 +1823,12 @@
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
-                      <EmptySpace min="-2" pref="248" max="-2" attributes="0"/>
                       <Component id="userGuideLink_" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="66" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="128" max="-2" attributes="0"/>
                       <Component id="citeLink_" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="32767" attributes="0"/>
                       <Component id="bugReportLink_" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="27" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="150" max="-2" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
