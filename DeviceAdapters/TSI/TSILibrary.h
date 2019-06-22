@@ -77,6 +77,7 @@ static const char* g_PolarImageType_Raw = "Raw";
 static const char* g_PolarImageType_Intensity = "Intensity";
 static const char* g_PolarImageType_Azimuth = "Azimuth";
 static const char* g_PolarImageType_DoLP = "DoLP";
+static const char* g_PolarImageType_Quad = "Quad";
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes

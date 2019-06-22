@@ -364,6 +364,12 @@ int Tsi3Cam::OnPolarImageType(MM::PropertyBase* pProp, MM::ActionType eAct)
       {
 			polarImageType = DoLP;
 		}
+		else if (polarType.compare(g_PolarImageType_Quad) == 0)
+      {
+			polarImageType = Quad;
+		}
+		else
+			assert(!"Unsupported pixel type");
 		return ResizeImageBuffer();
 	}
 	else if (eAct == MM::BeforeGet)
@@ -376,6 +382,8 @@ int Tsi3Cam::OnPolarImageType(MM::PropertyBase* pProp, MM::ActionType eAct)
 			pProp->Set(g_PolarImageType_Azimuth);
 		else if(polarImageType == Raw)
 			pProp->Set(g_PolarImageType_DoLP);
+		else if(polarImageType == Quad)
+			pProp->Set(g_PolarImageType_Quad);
 		else
 			assert(!"Unsupported pixel type");
 
