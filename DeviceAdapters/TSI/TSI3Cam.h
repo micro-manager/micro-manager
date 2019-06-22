@@ -73,7 +73,8 @@ enum PolarImageType
 	Intensity = 0,
 	Raw,
 	Azimuth,
-	DoLP
+	DoLP,
+	Quad
 };
 
 static const char* dllLoadErr = "Error loading color processing functions from the dll";
@@ -155,6 +156,7 @@ private:
 	int InitializeColorProcessor(bool wb=false);
 	int InitializePolarizationProcessor();
 	int TransformPolarizationImage(unsigned short* monoBuffer, unsigned char* outBuffer, int width, int height, PolarImageType imgType);
+	static void SeparateQuadViewAngles(int polarPhase, unsigned short* sourceImage, unsigned short* destImage, int sourceWidth, int sourceHeight);
 	int ShutdownColorProcessor();
 	int ShutdownPolarizationProcessor();
 	int ClearWhiteBalance();

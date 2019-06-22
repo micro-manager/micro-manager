@@ -274,6 +274,7 @@ int Tsi3Cam::Initialize()
 		pixelTypeValues.push_back(g_PolarImageType_Raw);
 		pixelTypeValues.push_back(g_PolarImageType_Azimuth);
 		pixelTypeValues.push_back(g_PolarImageType_DoLP);
+		pixelTypeValues.push_back(g_PolarImageType_Quad);
 
 		ret = SetAllowedValues(g_PolarImageType, pixelTypeValues);
 		if (ret != DEVICE_OK)
@@ -520,7 +521,7 @@ unsigned Tsi3Cam::GetBitDepth() const
 		return bitDepth; // color camera
 	
 	if (polarized)
-		if (polarImageType == Raw)
+		if (polarImageType == Raw || polarImageType == Quad)
 			return 12;
 		else
 			return 16;
