@@ -357,6 +357,7 @@ public class Properties {
       PLOGIC_TRIGGER_MMIRROR("1 - Micro-mirror card"),
       PLOGIC_PRESET_2("2 - cell 1 low"),
       PLOGIC_PRESET_3("3 - cell 1 high"),
+      PLOGIC_PRESET_12("12 - cell 10 = (TTL1 AND cell 8)"),
       PLOGIC_PRESET_14("14 - diSPIM TTL"),
       PLOGIC_PRESET_COUNT_1("22 - no counter"),
       PLOGIC_PRESET_COUNT_2("21 - mod2 counter"),

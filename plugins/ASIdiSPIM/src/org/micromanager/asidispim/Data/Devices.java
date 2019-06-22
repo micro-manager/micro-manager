@@ -98,7 +98,7 @@ public class Devices {
       UPPERZDRIVE,  // determines sample position relative to imaging objectives, for FTP system would be FTP Z
       SUPPLEMENTAL_X,      // extra X drive, e.g. for scanning with 
       // SOURCE_SPIM, SOURCE_LOWER,
-      PLOGIC,
+      PLOGIC, PLOGIC_LASER,
       TIGERCOMM,
       UPPERHDRIVE, // horizontal drive for oSPIM head
       SHUTTERLOWER,  // shutter to be used with lower camera
@@ -471,6 +471,16 @@ public class Devices {
    }
 
    /**
+    * 
+    * @return true if there are different devices for the main (camera) PLogic and the laser PLogic card
+    */
+   public boolean isDifferentPLogic() {
+      return (getMMDevice(Devices.Keys.PLOGIC) != null
+            && getMMDevice(Devices.Keys.PLOGIC_LASER) != null
+            && getMMDevice(Devices.Keys.PLOGIC) != getMMDevice(Devices.Keys.PLOGIC_LASER));
+   }
+
+   /**
     * @param key from Devices.Keys
     * @return string used to describe device, e.g. "MicroMirror A" or "XY Stage"
     */
@@ -740,7 +750,9 @@ public class Devices {
       // case SOURCE_LOWER:
       //   return new DeviceData(key, "Lower Light Source", Sides.NONE, true);
       case PLOGIC:
-         return new DeviceData(key, "PLogic Card", Sides.NONE, true);
+         return new DeviceData(key, "PLogic Camera", Sides.NONE, true);
+      case PLOGIC_LASER:
+         return new DeviceData(key, "PLogic Laser", Sides.NONE, true);
       case TIGERCOMM:
          return new DeviceData(key, "TigerComm", Sides.NONE, false);
       case SHUTTERLOWER:
@@ -798,6 +810,7 @@ public class Devices {
       deviceInfo_.put(Keys.LOWERZDRIVE, getDefaultDeviceData(Keys.LOWERZDRIVE));
       deviceInfo_.put(Keys.UPPERZDRIVE, getDefaultDeviceData(Keys.UPPERZDRIVE));
       deviceInfo_.put(Keys.PLOGIC, getDefaultDeviceData(Keys.PLOGIC));
+      deviceInfo_.put(Keys.PLOGIC_LASER, getDefaultDeviceData(Keys.PLOGIC_LASER));
       deviceInfo_.put(Keys.SHUTTERLOWER, getDefaultDeviceData(Keys.SHUTTERLOWER));
       deviceInfo_.put(Keys.TIGERCOMM, getDefaultDeviceData(Keys.TIGERCOMM));
       deviceInfo_.put(Keys.UPPERHDRIVE, getDefaultDeviceData(Keys.UPPERHDRIVE));

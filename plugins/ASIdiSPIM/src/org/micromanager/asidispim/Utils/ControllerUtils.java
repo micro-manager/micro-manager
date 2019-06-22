@@ -61,12 +61,13 @@ public class ControllerUtils {
    boolean zSpeedZero_;  // cached value from last call to prepareStageScanForAcquisition()
    
    final int triggerStepDurationTics = 10;  // 2.5ms with 0.25ms tics
-   final int invertAddress = 64;
-   final int edgeAddress = 128;
-   final int counterLSBAddress = 3;
-   final int counterMSBAddress = 4;
-   final int triggerStepEdgeCell = 6;
-   final int triggerStepPulseCell = 7;
+   final int invertAddr = 64;
+   final int edgeAddr = 128;
+   final int acquisitionFlagAddr = 1;
+   final int counterLSBAddr = 3;
+   final int counterMSBAddr = 4;
+   final int triggerStepEdgeAddr = 6;
+   final int triggerStepPulseAddr = 7;
    final int triggerStepOutputAddr = 40;
    final int laserTriggerAddress = 10;  // this should be set to (42 || 8) = (TTL1 || manual laser on)
    
@@ -290,6 +291,12 @@ public class ControllerUtils {
                return false;
             }
       }
+      
+      // make sure set to use TTL signal from backplane in case PLOGIC_LASER is set to PLogicMode different from diSPIM shutter
+      if (devices_.isDifferentPLogic()) {
+         props_.setPropValue(new Devices.Keys[]{Devices.Keys.PLOGIC, Devices.Keys.PLOGIC_LASER},
+               Properties.Keys.PLOGIC_PRESET, Properties.Values.PLOGIC_PRESET_12, true);
+      }
 
       // set up stage scan parameters if necessary
       if (settings.isStageStepping) {  // stepping with other stage
@@ -299,23 +306,23 @@ public class ControllerUtils {
             scanDistance_ = settings.numSlices * actualStepSizeUm_ * du.getStageGeometricSpeedFactor(settings.firstSideIsA);
             
             // cell 2 will be rising edge whenever laser on goes low
-            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET,
-                  Properties.Values.PLOGIC_PRESET_CLOCK_LASER);
+            props_.setPropValue(new Devices.Keys[]{Devices.Keys.PLOGIC, Devices.Keys.PLOGIC_LASER},
+                  Properties.Keys.PLOGIC_PRESET, Properties.Values.PLOGIC_PRESET_CLOCK_LASER, true);
             
             // cells 6 and 7 used to make a 10ms pulse out whenever clock goes to 0
-            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_POINTER_POSITION, triggerStepEdgeCell);
-            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_TYPE, Properties.Values.PLOGIC_AND2);
-            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_1, counterLSBAddress + invertAddress + edgeAddress);
-            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_2, counterMSBAddress + invertAddress + edgeAddress);
-            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_POINTER_POSITION, triggerStepPulseCell);
-            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_TYPE, Properties.Values.PLOGIC_ONESHOT_NRT);
-            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_CONFIG, triggerStepDurationTics);
-            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_1, triggerStepEdgeCell);
-            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_2, invertAddress);
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_POINTER_POSITION, triggerStepEdgeAddr);
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_TYPE, Properties.Values.PLOGIC_AND2);
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_1, counterLSBAddr + invertAddr + edgeAddr);
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_2, counterMSBAddr + invertAddr + edgeAddr);
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_POINTER_POSITION, triggerStepPulseAddr);
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_TYPE, Properties.Values.PLOGIC_ONESHOT_NRT);
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_CONFIG, triggerStepDurationTics);
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_1, triggerStepEdgeAddr);
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_2, invertAddr);
             
             // set output #8 to be the pulse
-            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_POINTER_POSITION, triggerStepOutputAddr);
-            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_CONFIG, triggerStepPulseCell);
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_POINTER_POSITION, triggerStepOutputAddr);
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_CONFIG, triggerStepPulseAddr);
             
             prepareStageStepForAcquisition(settings.spimMode);
          }
@@ -392,8 +399,8 @@ public class ControllerUtils {
       }
 
       // sets PLogic "acquisition running" flag
-      props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET, 
-            Properties.Values.PLOGIC_PRESET_3, true);
+      props_.setPropValue(new Devices.Keys[]{Devices.Keys.PLOGIC, Devices.Keys.PLOGIC_LASER},
+            Properties.Keys.PLOGIC_PRESET,Properties.Values.PLOGIC_PRESET_3, true);
       
       ReportingUtils.logMessage("Finished preparing controller for acquisition with offset " + channelOffset +
             " with mode " + settings.spimMode.toString() + " and settings " + settings.toString());
@@ -748,8 +755,8 @@ public class ControllerUtils {
       // this only happens after images have all been received (or timeout occurred)
 
       // clear "acquisition running" flag on PLC
-      props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET, 
-            Properties.Values.PLOGIC_PRESET_2, true);
+      props_.setPropValue(new Devices.Keys[]{Devices.Keys.PLOGIC, Devices.Keys.PLOGIC_LASER},
+            Properties.Keys.PLOGIC_PRESET, Properties.Values.PLOGIC_PRESET_2, true);
       
       if ((numSides > 1) || firstSideIsA) {
          boolean success = cleanUpControllerAfterAcquisition_Side(
@@ -829,7 +836,7 @@ public class ControllerUtils {
     */
    public boolean setupHardwareChannelSwitching(final AcquisitionSettings settings) {
       
-      if (!devices_.isValidMMDevice(Devices.Keys.PLOGIC)) {
+      if (!devices_.isValidMMDevice(Devices.Keys.PLOGIC_LASER)) {
          MyDialogUtils.showError("PLogic card required for hardware switching");
          return false;
       }
@@ -846,15 +853,15 @@ public class ControllerUtils {
       // set up clock for counters
       switch (channelMode) {
       case SLICE_HW:
-         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET,
+         props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_PRESET,
                Properties.Values.PLOGIC_PRESET_CLOCK_LASER);
          break;
       case VOLUME_HW:
          if (settings.firstSideIsA) {
-            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET,
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_PRESET,
                   Properties.Values.PLOGIC_PRESET_CLOCK_SIDE_AFIRST);
          } else {
-            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET,
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_PRESET,
                   Properties.Values.PLOGIC_PRESET_CLOCK_SIDE_BFIRST);
          }
          break;
@@ -866,19 +873,19 @@ public class ControllerUtils {
       // set up hardware counter
       switch (settings.numChannels) {
       case 1:
-         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET,
+         props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_PRESET,
                Properties.Values.PLOGIC_PRESET_COUNT_1);
       break;
       case 2:
-         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET,
+         props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_PRESET,
                Properties.Values.PLOGIC_PRESET_COUNT_2);
          break;
       case 3:
-         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET,
+         props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_PRESET,
                Properties.Values.PLOGIC_PRESET_COUNT_3);
          break;
       case 4:
-         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET,
+         props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_PRESET,
                Properties.Values.PLOGIC_PRESET_COUNT_4);
          break;
       default:
@@ -887,22 +894,29 @@ public class ControllerUtils {
       }
       
       // speed things up by turning off updates, will restore value later
-      String editCellUpdates = props_.getPropValueString(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES);
+      String editCellUpdates = props_.getPropValueString(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES);
       if (!editCellUpdates.equals(Properties.Values.NO.toString())) {
-         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES, Properties.Values.NO);
+         props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES, Properties.Values.NO);
       }
       
-      if (props_.getPropValueString(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_MODE).
-            equals(Properties.Values.SHUTTER_7CHANNEL.toString())) {  // special 7-channel case
+      // make sure the counters get reset on the acquisition start flag
+      props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_POINTER_POSITION, counterLSBAddr);
+      props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_3, acquisitionFlagAddr + edgeAddr);
+      props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_POINTER_POSITION, counterMSBAddr);
+      props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_3, acquisitionFlagAddr + edgeAddr);
+      
+      if (props_.getPropValueString(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_MODE).
+            equals(Properties.Values.SHUTTER_7CHANNEL.toString())) {
+         // special 7-channel case
          
          // make sure cells 17-24 are controlling BNCs 1-8
-         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET,
+         props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_PRESET,
                Properties.Values.PLOGIC_PRESET_BNC1_8_ON_17_24);
          
          // now set cells 17-24 so they reflect the counter state used to track state as well as the global laser trigger
          for (int laserNum = 1; laserNum < 8; ++laserNum) {
-            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_POINTER_POSITION, laserNum + 16);
-            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_TYPE, Properties.Values.PLOGIC_LUT3);
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_POINTER_POSITION, laserNum + 16);
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_TYPE, Properties.Values.PLOGIC_LUT3);
             int lutValue = 0;
             // populate a 3-input lookup table with the combinations of lasers present
             // the LUT "MSB" is the laserTrigger, then the counter MSB, then the counter LSB
@@ -911,19 +925,19 @@ public class ControllerUtils {
                   lutValue += Math.pow(2, channelNum + 4);  // LUT adds 2^(code in decimal) for each setting, but trigger is MSB of this code
                }
             }
-            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_CONFIG, lutValue);
-            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_1, counterLSBAddress);
-            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_2, counterMSBAddress);
-            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_3, laserTriggerAddress);
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_CONFIG, lutValue);
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_1, counterLSBAddr);
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_2, counterMSBAddr);
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_3, laserTriggerAddress);
          }
 
       } else { // original 4-channel case
 
          // initialize cells 13-16 which control BNCs 5-8
          for (int cellNum=13; cellNum<=16; cellNum++) {
-            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_POINTER_POSITION, cellNum);
-            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_TYPE, Properties.Values.PLOGIC_AND4);
-            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_2, laserTriggerAddress);
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_POINTER_POSITION, cellNum);
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_TYPE, Properties.Values.PLOGIC_AND4);
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_2, laserTriggerAddress);
             // note that PLC diSPIM assumes "laser + side" output mode is selected for micro-mirror card
          }
 
@@ -935,20 +949,20 @@ public class ControllerUtils {
             // TODO handle case where we have multiple simultaneous outputs, e.g. outputs 6/7 together
             if (outputNum<5) {  // check for error in getPLogicOutputFromChannel()
                // restore update setting
-               props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES, editCellUpdates);
+               props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES, editCellUpdates);
                return false;  // already displayed error
             }
             // make sure we don't have multiple Micro-Manager channels using same hardware channel
             if (hardwareChannelUsed[outputNum-5]) {
                // restore update setting
-               props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES, editCellUpdates);
+               props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES, editCellUpdates);
                MyDialogUtils.showError("Multiple channels cannot use same laser for PLogic triggering");
                return false;
             } else {
                hardwareChannelUsed[outputNum-5] = true;
             }
-            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_POINTER_POSITION, outputNum + 8);
-            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_1, invertAddress);  // enable this AND4
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_POINTER_POSITION, outputNum + 8);
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_1, invertAddr);  // enable this AND4
             // if we are doing per-volume switching with side B first then counter will start at 1 instead of 0
             // the following lines account for this by incrementing the channel number "match" by 1 in this special case 
             int adjustedChannelNum = channelNum;
@@ -958,20 +972,20 @@ public class ControllerUtils {
             // map the channel number to the equivalent addresses for the AND4
             // inputs should be either 3 (for LSB high) or 67 (for LSB low)
             //                     and 4 (for MSB high) or 68 (for MSB low)
-            final int in3 = (adjustedChannelNum & 0x01) > 0 ? counterLSBAddress : counterLSBAddress + invertAddress;
-            final int in4 = (adjustedChannelNum & 0x02) > 0 ? counterMSBAddress : counterMSBAddress + invertAddress; 
-            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_3, in3);
-            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_4, in4);
+            final int in3 = (adjustedChannelNum & 0x01) > 0 ? counterLSBAddr : counterLSBAddr + invertAddr;
+            final int in4 = (adjustedChannelNum & 0x02) > 0 ? counterMSBAddr : counterMSBAddr + invertAddr; 
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_3, in3);
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_4, in4);
          }
 
          // make sure cells 13-16 are controlling BNCs 5-8
-         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET,
+         props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_PRESET,
                Properties.Values.PLOGIC_PRESET_BNC5_8_ON_13_16);
       }
       
       // restore update setting
       if (!editCellUpdates.equals(Properties.Values.NO.toString())) {
-         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES, editCellUpdates);
+         props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES, editCellUpdates);
       }
       
       return true;
@@ -1023,11 +1037,11 @@ public class ControllerUtils {
       try {
          Configuration configData = core_.getConfigData(
                  channelGroup, channel.config_);
-         if (!configData.isPropertyIncluded(devices_.getMMDevice(Devices.Keys.PLOGIC), Properties.Keys.PLOGIC_OUTPUT_CHANNEL.toString())) {
+         if (!configData.isPropertyIncluded(devices_.getMMDevice(Devices.Keys.PLOGIC_LASER), Properties.Keys.PLOGIC_OUTPUT_CHANNEL.toString())) {
             MyDialogUtils.showError("Must include PLogic \"OutputChannel\" in preset for hardware switching");
             return 0;
          }
-         String setting = configData.getSetting(devices_.getMMDevice(Devices.Keys.PLOGIC), Properties.Keys.PLOGIC_OUTPUT_CHANNEL.toString()).getPropertyValue();
+         String setting = configData.getSetting(devices_.getMMDevice(Devices.Keys.PLOGIC_LASER), Properties.Keys.PLOGIC_OUTPUT_CHANNEL.toString()).getPropertyValue();
          if (setting.equals(Properties.Values.PLOGIC_CHANNEL_BNC5.toString())) {
             return 5;
          } else if (setting.equals(Properties.Values.PLOGIC_CHANNEL_BNC6.toString())) {
@@ -1054,11 +1068,11 @@ public class ControllerUtils {
       try {
          Configuration configData = core_.getConfigData(
                channelGroup, channel.config_);
-         if (!configData.isPropertyIncluded(devices_.getMMDevice(Devices.Keys.PLOGIC), Properties.Keys.PLOGIC_OUTPUT_CHANNEL.toString())) {
+         if (!configData.isPropertyIncluded(devices_.getMMDevice(Devices.Keys.PLOGIC_LASER), Properties.Keys.PLOGIC_OUTPUT_CHANNEL.toString())) {
             MyDialogUtils.showError("Must include PLogic \"OutputChannel\" in preset for hardware switching");
             return false;
          }
-         String setting = configData.getSetting(devices_.getMMDevice(Devices.Keys.PLOGIC), Properties.Keys.PLOGIC_OUTPUT_CHANNEL.toString()).getPropertyValue();
+         String setting = configData.getSetting(devices_.getMMDevice(Devices.Keys.PLOGIC_LASER), Properties.Keys.PLOGIC_OUTPUT_CHANNEL.toString()).getPropertyValue();
          return setting.contains(String.valueOf(laserNum));
       } catch (Exception e) {
          MyDialogUtils.showError(e, "Could not get PLogic output from channel");

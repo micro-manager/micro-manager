@@ -5046,7 +5046,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
               Properties.Values.DO_SSZ, true);
       props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.SAVE_CARD_SETTINGS,
             Properties.Values.DO_SSZ, true);
-
+      if (devices_.isDifferentPLogic()) {
+         props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.SAVE_CARD_SETTINGS,
+               Properties.Values.DO_SSZ, true);
+      }
    }
 
    /**

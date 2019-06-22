@@ -115,6 +115,7 @@ public class DeviceUtils {
             }
             break;
          case PLOGIC:
+         case PLOGIC_LASER:
             if (firmwareVersion < 3.089) {
                MyDialogUtils.showError("Device " + devices_.getMMDevice(key)
                      + ": PLogic firmware is old; some features may not work."
@@ -228,8 +229,7 @@ public class DeviceUtils {
             // would like to do below line but we need to change pre-init value and reload config
             // checkPropertyValueEquals(key, Properties.Keys.PLOGIC_MODE, Properties.Values.DISPIM_SHUTTER);
             String mode = props_.getPropValueString(key, Properties.Keys.PLOGIC_MODE);
-            if (! (mode.equals(Properties.Values.DISPIM_SHUTTER.toString())
-                  || mode.equals(Properties.Values.SHUTTER_7CHANNEL.toString()) )) {  // we assume the user knows what he/she is doing in this corner case
+            if (! mode.equals(Properties.Values.DISPIM_SHUTTER.toString())) {
                MyDialogUtils.showError("Device " + devices_.getMMDevice(key)
                      + ": need to set pre-initialization property PLogicMode to "
                      + "diSPIM Shutter (use Hardware Config Wizard, then edit device "
@@ -244,7 +244,20 @@ public class DeviceUtils {
                }
             }
          } else {
-            MyDialogUtils.showError("Plugin doesn't support shutter devices other than ASITiger");
+            MyDialogUtils.showError("Plugin doesn't support PLogic devices other than ASITiger");
+         }
+         break;
+      case PLOGIC_LASER:
+         if (deviceLibrary == Devices.Libraries.ASITIGER) {
+            checkPropertyValueEquals(key, Properties.Keys.PLOGIC_TRIGGER_SOURCE, Properties.Values.PLOGIC_TRIGGER_MMIRROR);
+            // PLogic use in the plugin assumes "laser + side" output mode
+            for (Devices.Keys galvoKey : Devices.GALVOS) {
+               if (devices_.isValidMMDevice(galvoKey)) {
+                  checkPropertyValueEquals(galvoKey, Properties.Keys.LASER_OUTPUT_MODE, Properties.Values.LASER_SHUTTER_SIDE);   
+               }
+            }
+         } else {
+            MyDialogUtils.showError("Plugin doesn't support PLogic supplemental devices other than ASITiger");
          }
          break;
       default:

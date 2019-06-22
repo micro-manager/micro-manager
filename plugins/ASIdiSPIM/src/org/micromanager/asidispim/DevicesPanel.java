@@ -65,7 +65,7 @@ public class DevicesPanel extends ListeningJPanel {
               "",
               "[right]15[center, " + maxSelectorWidth + "!]16[center, "
               + maxSelectorWidth + "!]8[]8[]",
-              "8[]10[]0"));
+              "8[]8[]0"));
       devices_ = devices;
       core_ = gui.getMMCore();
       
@@ -107,6 +107,26 @@ public class DevicesPanel extends ListeningJPanel {
       final JComboBox boxPLogic_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.ShutterDevice,
             Devices.Keys.PLOGIC, maxSelectorWidth*2);
       add(boxPLogic_, "span 2, center, wrap");
+      
+      add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.PLOGIC_LASER) + ":"));
+      final JComboBox boxPLogicLaser_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.ShutterDevice,
+            Devices.Keys.PLOGIC_LASER, maxSelectorWidth*2);
+      add(boxPLogicLaser_, "span 2, center, wrap");
+      
+      // if the PLogic laser device isn't specified then make it equal to the main PLogic device
+      String selectedPLogicLaser = "";
+      boolean foundPLogicLaser = false; 
+      try {
+         selectedPLogicLaser = boxPLogicLaser_.getSelectedItem().toString();
+         if (selectedPLogicLaser != null && selectedPLogicLaser != "") {
+            foundPLogicLaser = true; 
+         }
+      } catch (Exception ex) {
+         // do nothing
+      }
+      if (!foundPLogicLaser) {
+         boxPLogicLaser_.setSelectedItem(boxPLogic_.getSelectedItem());
+      }
       
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.CAMERALOWER) + ":"));
       final JComboBox boxLowerCam_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERALOWER,
@@ -168,7 +188,7 @@ public class DevicesPanel extends ListeningJPanel {
       add(new JSeparator(JSeparator.VERTICAL), "growy, cell 3 0 1 13");
       
       JLabel imgLabel = new JLabel(new ImageIcon(getClass().getResource("/org/micromanager/asidispim/icons/diSPIM.png")));
-      add(imgLabel, "cell 4 0 1 11");
+      add(imgLabel, "cell 4 0 1 13");
       
       // look for devices that we don't have selectors for
       // in this case we also don't try to read device names from preferences

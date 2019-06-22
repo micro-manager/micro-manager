@@ -460,7 +460,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
          core_.waitForConfig(channelGroup_.getSelectedItem().toString(), channel);
       } catch (Exception e) {
          MyDialogUtils.showError(e, "Couldn't select preset " + channel +
-               "of channel group " + channelGroup_.getSelectedItem().toString());
+               " of channel group " + channelGroup_.getSelectedItem().toString());
       }
    }
    

@@ -170,8 +170,8 @@ public class MultichannelModes {
          List<Keys> keyList = new ArrayList<Keys>();
          keyList.add(Keys.VOLUME);
          // PLogic required for hardware switching
-         if (devices_.isValidMMDevice(Devices.Keys.PLOGIC) &&
-               props_.getPropValueFloat(Devices.Keys.PLOGIC, Properties.Keys.FIRMWARE_VERSION) > 3.069) {
+         if (devices_.isValidMMDevice(Devices.Keys.PLOGIC_LASER) &&
+               props_.getPropValueFloat(Devices.Keys.PLOGIC_LASER, Properties.Keys.FIRMWARE_VERSION) > 3.069) {
             keyList.add(Keys.VOLUME_HW);
             keyList.add(Keys.SLICE_HW);
          }

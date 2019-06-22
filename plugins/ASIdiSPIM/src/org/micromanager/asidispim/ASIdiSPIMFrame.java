@@ -286,6 +286,7 @@ public class ASIdiSPIMFrame extends MMFrame
 
       // if devices panel unpopulated then show that
       if ( devices_.getMMDevice(Devices.Keys.XYSTAGE) == null
+            && devices_.getMMDevice(Devices.Keys.SUPPLEMENTAL_X) == null 
             && devices_.getMMDevice(Devices.Keys.UPPERZDRIVE) == null 
             && devices_.getMMDevice(Devices.Keys.LOWERZDRIVE) == null 
             && devices_.getMMDevice(Devices.Keys.CAMERAA) == null 
@@ -294,7 +295,8 @@ public class ASIdiSPIMFrame extends MMFrame
             && devices_.getMMDevice(Devices.Keys.PIEZOB) == null 
             && devices_.getMMDevice(Devices.Keys.GALVOA) == null 
             && devices_.getMMDevice(Devices.Keys.GALVOB) == null 
-            && devices_.getMMDevice(Devices.Keys.PLOGIC) == null ) {
+            && devices_.getMMDevice(Devices.Keys.PLOGIC) == null
+            && devices_.getMMDevice(Devices.Keys.PLOGIC_LASER) == null ) {
          tabbedPane_.setSelectedIndex(deviceTabIndex);
       }
       
