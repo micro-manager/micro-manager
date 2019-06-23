@@ -175,10 +175,6 @@ public class CameraPanel extends ListeningJPanel{
          }
       });
       
-      // set the ROI when we first launch the plugin
-      final int prefCode = prefs_.getInt(roiPrefNode, roiPrefKey, 0);
-      setSPIMCameraROI(getRoiPresetFromCode(prefCode));
-      
       // end ROI subpanel
       
       
@@ -234,6 +230,11 @@ public class CameraPanel extends ListeningJPanel{
       add(roiPanel);
       add(triggerPanel);
       add(simultaneousCamerasPanel, "wrap");
+      
+      // set the ROI when we first launch the plugin
+      final int prefCode = prefs_.getInt(roiPrefNode, roiPrefKey, 0);
+      setSPIMCameraROI(getRoiPresetFromCode(prefCode));
+      
    }//constructor
    
    
