@@ -16,7 +16,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import javax.swing.JComponent;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
@@ -25,6 +24,7 @@ import javax.swing.SwingConstants;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.Studio;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.inspector.AbstractInspectorPanelController;
@@ -32,7 +32,6 @@ import org.micromanager.display.internal.event.DisplayWindowDidAddOverlayEvent;
 import org.micromanager.display.internal.event.DisplayWindowDidRemoveOverlayEvent;
 import org.micromanager.display.overlay.Overlay;
 import org.micromanager.display.overlay.OverlayPlugin;
-import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.PopupButton;
 import org.scijava.plugin.Plugin;
 
@@ -60,13 +59,13 @@ public final class OverlaysInspectorPanelController
 
    private DisplayWindow viewer_;
 
-   public static OverlaysInspectorPanelController create() {
-      return new OverlaysInspectorPanelController();
+   public static OverlaysInspectorPanelController create(Studio studio) {
+      return new OverlaysInspectorPanelController(studio);
    }
 
-   private OverlaysInspectorPanelController() {
+   private OverlaysInspectorPanelController(Studio studio) {
       List<OverlayPlugin> plugins = new ArrayList<OverlayPlugin>(
-            MMStudio.getInstance().plugins().getOverlayPlugins().values());
+            studio.plugins().getOverlayPlugins().values());
       Collections.sort(plugins, new Comparator<OverlayPlugin>() {
          @Override
          public int compare(OverlayPlugin o1, OverlayPlugin o2) {

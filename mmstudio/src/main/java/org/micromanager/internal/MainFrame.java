@@ -73,7 +73,6 @@ import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 import org.micromanager.events.internal.ShutterDevicesEvent;
 import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.StageControlFrame;
-import org.micromanager.internal.menus.MMMenuBar;
 import org.micromanager.internal.utils.DragDropUtil;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMFrame;
@@ -158,7 +157,7 @@ public final class MainFrame extends MMFrame {
       KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(mmKD);
       DropTarget dropTarget = new DropTarget(this, new DragDropUtil(mmStudio_));
 
-      setExitStrategy(OptionsDlg.getShouldCloseOnExit());
+      setExitStrategy(OptionsDlg.getShouldCloseOnExit(mmStudio_));
 
       super.setJMenuBar(mmStudio.getMMMenubar());
 
@@ -633,8 +632,9 @@ public final class MainFrame extends MMFrame {
       return subPanel;
    }
 
-   public void setConfigText(String configFile) {
+   public void setConfigText(String inputConfigFileName) {
       // Recognize and specially treat empty config files.
+      String configFile = inputConfigFileName;
       if (configFile == null || configFile.equals("")) {
          configFile = "(none)";
       }

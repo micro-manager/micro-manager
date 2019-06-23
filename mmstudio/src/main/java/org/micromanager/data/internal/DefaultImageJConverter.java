@@ -25,15 +25,21 @@ import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.ImageJConverter;
 import org.micromanager.data.Metadata;
 import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.internal.MMStudio;
 
 public final class DefaultImageJConverter implements ImageJConverter {
+   private final Studio studio_;
+   
+   public DefaultImageJConverter(Studio studio) {
+      studio_ = studio;
+   }
+   
    // Our API does not expose the original pixels so the caller cannot modify
    // the image buffer.
    @Override
@@ -118,7 +124,7 @@ public final class DefaultImageJConverter implements ImageJConverter {
       else {
          ReportingUtils.logError("Unrecognized processor type " + processor.getClass().getName());
       }
-      return MMStudio.getInstance().data().createImage(
+      return studio_.data().createImage(
             processor.getPixels(), processor.getWidth(), processor.getHeight(),
             bytesPerPixel, numComponents, coords, metadata);
    }

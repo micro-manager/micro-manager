@@ -5,6 +5,7 @@
  */
 package org.micromanager.display.inspector.internal.panels.comments;
 
+import org.micromanager.Studio;
 import org.micromanager.data.Datastore;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.inspector.InspectorPanelController;
@@ -28,7 +29,7 @@ public final class CommentsInspectorPanelPlugin implements InspectorPanelPlugin 
    }
 
    @Override
-   public InspectorPanelController createPanelController() {
+   public InspectorPanelController createPanelController(Studio studio) {
       return CommentsInspectorPanelController.create();
    }
 }

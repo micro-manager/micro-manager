@@ -73,6 +73,7 @@ import javax.swing.event.ChangeListener;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
@@ -101,7 +102,6 @@ import org.micromanager.display.internal.event.DisplayMouseEvent;
 import org.micromanager.display.internal.event.DisplayMouseWheelEvent;
 import org.micromanager.display.internal.gearmenu.GearButton;
 import org.micromanager.display.overlay.Overlay;
-import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -121,6 +121,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 public final class DisplayUIController implements Closeable, WindowListener,
       MDScrollBarPanel.Listener
 {
+   private final Studio studio_;
    private final DisplayController displayController_;
    private final AnimationController animationController_;
 
@@ -222,11 +223,12 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
 
    @MustCallOnEDT
-   static DisplayUIController create(DisplayController parent,
+   static DisplayUIController create(Studio studio, 
+         DisplayController parent,
          DisplayWindowControlsFactory controlsFactory,
          AnimationController animationController)
    {
-      DisplayUIController instance = new DisplayUIController(parent,
+      DisplayUIController instance = new DisplayUIController(studio, parent,
             controlsFactory, animationController);
       parent.registerForEvents(instance);
       instance.frame_.addWindowListener(instance);
@@ -234,10 +236,12 @@ public final class DisplayUIController implements Closeable, WindowListener,
    }
 
    @MustCallOnEDT
-   private DisplayUIController(DisplayController parent,
+   private DisplayUIController(Studio studio, 
+         DisplayController parent,
          DisplayWindowControlsFactory controlsFactory,
          AnimationController animationController)
    {
+      studio_ = studio;
       displayController_ = parent;
       animationController_ = animationController;
       controlsFactory_ = controlsFactory;
@@ -533,8 +537,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
       tmp2Panel.add(cameraFpsLabel_, new CC());
       panel.add(tmp2Panel, new CC().growX());
       // TODO Avoid static studio
-      panel.add(new SaveButton(MMStudio.getInstance(), displayController_));
-      panel.add(new GearButton(displayController_, MMStudio.getInstance()));
+      panel.add(new SaveButton(studio_, displayController_));
+      panel.add(new GearButton(displayController_, studio_));
       
       // automatic calculation of minimum size of bottom panel
       // can be misleading because no minimum size for the scrollbars is included.
@@ -1179,7 +1183,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
    }
    
    private boolean isPreview(String title) {
-      return  title.startsWith("Preview") ? true : false;
+      return  title.startsWith("Preview");
    }
 
    public void zoomIn() {

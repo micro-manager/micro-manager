@@ -41,6 +41,7 @@ import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.EventPublisher;
+import org.micromanager.Studio;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.DataViewerCollection;
@@ -50,7 +51,6 @@ import org.micromanager.display.internal.event.DataViewerDidBecomeInvisibleEvent
 import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.display.internal.event.InspectorDidCloseEvent;
-import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.EventBusExceptionLogger;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMFrame;
@@ -73,6 +73,7 @@ public final class InspectorController
    private static final String FRONTMOST_VIEWER_ITEM = "Frontmost Window";
 
    private final DataViewerCollection viewerCollection_;
+   private final Studio studio_;
 
    private JFrame frame_;
    private JPanel headerPanel_;
@@ -124,16 +125,17 @@ public final class InspectorController
       }
    }
 
-   public static InspectorController create(DataViewerCollection viewers) {
-      InspectorController instance = new InspectorController(viewers);
+   public static InspectorController create(Studio studio, DataViewerCollection viewers) {
+      InspectorController instance = new InspectorController(studio, viewers);
       instance.makeUI();
       viewers.registerForEvents(instance);
       instance.updateDataViewerChooser();
-      MMStudio.getInstance().events().registerForEvents(instance);
+      studio.events().registerForEvents(instance);
       return instance;
    }
 
-   private InspectorController(DataViewerCollection viewers) {
+   private InspectorController(Studio studio, DataViewerCollection viewers) {
+      studio_ = studio;
       viewerCollection_ = viewers;
    }
 
@@ -288,7 +290,7 @@ public final class InspectorController
       
       if (viewer != null && !viewer.isClosed()) {
          List<InspectorPanelPlugin> plugins = new ArrayList<InspectorPanelPlugin>(
-               MMStudio.getInstance().plugins().getInspectorPlugins().values());
+               studio_.plugins().getInspectorPlugins().values());
          Collections.sort(plugins, new Comparator<InspectorPanelPlugin>() {
             @Override
             public int compare(InspectorPanelPlugin o1, InspectorPanelPlugin o2) {
@@ -309,7 +311,7 @@ public final class InspectorController
                }
                if (locatedSection == null) {
                   InspectorPanelController panelController
-                          = plugin.createPanelController();
+                          = plugin.createPanelController(studio_);
                   InspectorSectionController section
                           = InspectorSectionController.create(this, panelController);
                   panelController.addInspectorPanelListener(section);

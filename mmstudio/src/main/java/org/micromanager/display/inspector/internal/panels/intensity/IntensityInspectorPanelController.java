@@ -29,6 +29,7 @@ import net.miginfocom.layout.AC;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.DataViewer;
@@ -60,6 +61,7 @@ public class IntensityInspectorPanelController
    private static final String RGBCMYW = "RGBCMYW";
    private static final String CUSTOM = "Custom";
    
+   private final Studio studio_;
    private final JPanel panel_ = new JPanel();
    
    private static boolean expanded_ = true;
@@ -106,11 +108,12 @@ public class IntensityInspectorPanelController
    private final CoalescentEDTRunnablePool runnablePool_ =
          CoalescentEDTRunnablePool.create();
 
-   public static IntensityInspectorPanelController create() {
-      return new IntensityInspectorPanelController();
+   public static IntensityInspectorPanelController create(Studio studio) {
+      return new IntensityInspectorPanelController(studio);
    }
 
-   private IntensityInspectorPanelController() {
+   private IntensityInspectorPanelController(Studio studio) {
+      studio_ = studio;
       setUpGearMenu();
       setUpGeneralControlPanel();
       setUpChannelHistogramsPanel(0);
@@ -149,7 +152,7 @@ public class IntensityInspectorPanelController
                handleColorPalette(colorMenuMap_.get(key).getColorPalette());
                colorMenuMap_.get(key).getCheckBox().setSelected(true);
                // record in profile - even though we do not (yet) use this value
-               MMStudio.getInstance().profile().getSettings(
+               studio_.profile().getSettings(
                      IntensityInspectorPanelController.class).putString(
                              COLOR_PALETTE, key);
             }
@@ -166,7 +169,7 @@ public class IntensityInspectorPanelController
       histogramMenuMap_.put("1 Hz", 1.0);
       histogramMenuMap_.put("0.5 Hz", 0.5);
       histogramMenuMap_.put("Never", 0.0);
-      final String defaultUpdateFrequency = MMStudio.getInstance().profile().getSettings(
+      final String defaultUpdateFrequency = studio_.profile().getSettings(
               IntensityInspectorPanelController.class).getString(HISTOGRAM_UPDATE_FREQUENCY, "5 Hz");
       final List<JCheckBoxMenuItem> histogramMenuItems = new LinkedList<JCheckBoxMenuItem>();
       for (final String hKey : histogramMenuMap_.keySet()) {
@@ -187,7 +190,7 @@ public class IntensityInspectorPanelController
                }
                handleHistogramUpdateRate(histogramMenuMap_.get(jbmi.getText()));
                jbmi.setSelected(true);
-               MMStudio.getInstance().profile().getSettings(
+               studio_.profile().getSettings(
                        IntensityInspectorPanelController.class).putString(
                                HISTOGRAM_UPDATE_FREQUENCY, jbmi.getText());
             }
@@ -486,7 +489,7 @@ public class IntensityInspectorPanelController
                   viewer_.getDataProvider().getAxisLength(Coords.CHANNEL));
             newDisplaySettings(viewer_.getDisplaySettings());
             updateImageStats(((ImageStatsPublisher) viewer_).getCurrentImagesAndStats());
-            String updateRate = MMStudio.getInstance().profile().
+            String updateRate = studio_.profile().
                     getSettings(IntensityInspectorPanelController.class).
                            getString(HISTOGRAM_UPDATE_FREQUENCY, "1 Hz");
             if (histogramMenuMap_.get(updateRate) != null) {

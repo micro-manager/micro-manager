@@ -40,7 +40,6 @@ import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.Studio;
 import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DatastoreFrozenException;
@@ -477,7 +476,7 @@ public final class SnapLiveManager extends DataViewerListener
               (DisplayWindow display) -> createControls();
       display_ = new DisplayController.Builder(store_).
             controlsFactory(controlsFactory).
-            shouldShow(true).build();
+            shouldShow(true).build(mmStudio_);
       DisplaySettings ds = DefaultDisplaySettings.restoreFromProfile(mmStudio_.profile(), PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key() );
       if (ds == null) {
          ds = DefaultDisplaySettings.builder().colorMode(

@@ -1,6 +1,7 @@
 
 package org.micromanager.display.inspector.internal.panels.intensity;
 
+import org.micromanager.Studio;
 import org.micromanager.display.DataViewer;
 import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
@@ -23,7 +24,7 @@ public class IntensityInspectorPanelPlugin implements InspectorPanelPlugin {
    }
 
    @Override
-   public InspectorPanelController createPanelController() {
-      return IntensityInspectorPanelController.create();
+   public InspectorPanelController createPanelController(Studio studio) {
+      return IntensityInspectorPanelController.create(studio);
    }
 }

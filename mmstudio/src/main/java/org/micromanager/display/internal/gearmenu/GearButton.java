@@ -93,7 +93,7 @@ public final class GearButton extends JButton {
       }
 
       final JButton staticThis = this;
-      addMouseListener(new MouseInputAdapter() {
+      super.addMouseListener(new MouseInputAdapter() {
          @Override
          public void mousePressed(MouseEvent e) {
             menu_.show(staticThis, e.getX(), e.getY());
@@ -102,7 +102,7 @@ public final class GearButton extends JButton {
 
       // This icon adapted from the public domain icon at
       // https://openclipart.org/detail/35533/tango-emblem-system
-      setIcon(IconLoader.getIcon(
+      super.setIcon(IconLoader.getIcon(
                "/org/micromanager/icons/gear.png"));
    }
 }

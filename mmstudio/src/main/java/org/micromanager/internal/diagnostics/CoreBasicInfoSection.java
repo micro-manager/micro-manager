@@ -12,8 +12,10 @@
 package org.micromanager.internal.diagnostics;
 
 class CoreBasicInfoSection implements SystemInfo.SystemInfoSection {
+   @Override
    public String getTitle() { return "Core information"; }
 
+   @Override
    public String getReport() {
       mmcorej.CMMCore c = org.micromanager.internal.MMStudio.getInstance().getCMMCore();
 

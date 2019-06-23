@@ -63,20 +63,20 @@ public final class OptionsDlg extends MMDialog {
    private final JComboBox comboDisplayBackground_;
 
    private CMMCore core_;
-   private Studio studio_;
+   private MMStudio mmStudio_;
    private final UserProfile profile_;
 
    /**
     * Create the dialog
     * @param core - The Micro-Manager Core object
-    * @param studio - MMStudio api 
+    * @param mmStudio - MMStudio object (including Studio implementation) 
     */
-   public OptionsDlg(CMMCore core, Studio studio) {
+   public OptionsDlg(CMMCore core, MMStudio mmStudio) {
       super("global micro-manager options");
-      studio_ = studio;
+      mmStudio_ = mmStudio;
       core_ = core;
 
-      profile_ = studio.profile();
+      profile_ = mmStudio.profile();
       final StartupSettings startupSettings = StartupSettings.create(profile_);
 
       super.setResizable(false);
@@ -97,12 +97,12 @@ public final class OptionsDlg extends MMDialog {
       final JCheckBox debugLogEnabledCheckBox = new JCheckBox();
       debugLogEnabledCheckBox.setText("Enable debug logging");
       debugLogEnabledCheckBox.setToolTipText("Enable verbose logging for troubleshooting and debugging");
-      debugLogEnabledCheckBox.setSelected(getIsDebugLogEnabled());
+      debugLogEnabledCheckBox.setSelected(getIsDebugLogEnabled(mmStudio_));
       debugLogEnabledCheckBox.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(final ActionEvent e) {
             boolean isEnabled = debugLogEnabledCheckBox.isSelected();
-            setIsDebugLogEnabled(isEnabled);
+            setIsDebugLogEnabled(mmStudio_, isEnabled);
             core_.enableDebugLog(isEnabled);
             UIMonitor.enable(isEnabled);
          }
@@ -138,16 +138,16 @@ public final class OptionsDlg extends MMDialog {
 
       final JCheckBox deleteLogCheckBox = new JCheckBox();
       deleteLogCheckBox.setText("Delete log files after");
-      deleteLogCheckBox.setSelected(MMStudio.getInstance().getShouldDeleteOldCoreLogs());
+      deleteLogCheckBox.setSelected(mmStudio_.getShouldDeleteOldCoreLogs());
       deleteLogCheckBox.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            MMStudio.getInstance().setShouldDeleteOldCoreLogs(deleteLogCheckBox.isSelected());
+            mmStudio_.setShouldDeleteOldCoreLogs(deleteLogCheckBox.isSelected());
          }
       });
 
       logDeleteDaysField_ =
-         new JTextField(Integer.toString(MMStudio.getInstance().getCoreLogLifetimeDays()), 2);
+         new JTextField(Integer.toString(mmStudio_.getCoreLogLifetimeDays()), 2);
 
       final JButton deleteLogFilesButton = new JButton();
       deleteLogFilesButton.setText("Delete Log Files Now");
@@ -198,9 +198,9 @@ public final class OptionsDlg extends MMDialog {
             }
             // Clear everything except whether or not this user has
             // registered.
-            boolean haveRegistered = RegistrationDlg.getHaveRegistered(studio_);
+            boolean haveRegistered = RegistrationDlg.getHaveRegistered(mmStudio_);
             profile_.clearSettingsForAllClasses();
-            RegistrationDlg.setHaveRegistered(studio_, haveRegistered);
+            RegistrationDlg.setHaveRegistered(mmStudio_, haveRegistered);
             // Rather than updating all the GUI elements, let's just close
             // the dialog.
             dispose();
@@ -208,7 +208,7 @@ public final class OptionsDlg extends MMDialog {
       });
 
       bufSizeField_ = new JTextField(
-            Integer.toString(MMStudio.getInstance().getCircularBufferSize()), 5);
+            Integer.toString(mmStudio_.getCircularBufferSize()), 5);
 
       String[] options = new String[SkinMode.values().length];
       for (int i = 0; i < SkinMode.values().length; ++i) {
@@ -216,7 +216,7 @@ public final class OptionsDlg extends MMDialog {
       }
       comboDisplayBackground_ = new JComboBox(options);
       comboDisplayBackground_.setMaximumRowCount(2);
-      comboDisplayBackground_.setSelectedItem(studio_.app().skin().getSkin().getDesc());
+      comboDisplayBackground_.setSelectedItem(mmStudio_.app().skin().getSkin().getDesc());
       comboDisplayBackground_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -228,12 +228,12 @@ public final class OptionsDlg extends MMDialog {
 
       final JCheckBox closeOnExitCheckBox = new JCheckBox();
       closeOnExitCheckBox.setText("Close app when quitting MM");
-      closeOnExitCheckBox.setSelected(getShouldCloseOnExit());
+      closeOnExitCheckBox.setSelected(getShouldCloseOnExit(mmStudio_));
       closeOnExitCheckBox.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
             boolean shouldClose = closeOnExitCheckBox.isSelected();
-            setShouldCloseOnExit(shouldClose);
+            setShouldCloseOnExit(mmStudio_, shouldClose);
             MMStudio.getFrame().setExitStrategy(shouldClose);
          }
       });
@@ -346,7 +346,7 @@ public final class OptionsDlg extends MMDialog {
    private void changeBackground() {
       String background = (String) comboDisplayBackground_.getSelectedItem();
 
-      studio_.app().skin().setSkin(SkinMode.fromString(background));
+      mmStudio_.app().skin().setSkin(SkinMode.fromString(background));
    }
 
    private void closeRequested() {
@@ -363,31 +363,31 @@ public final class OptionsDlg extends MMDialog {
          return;
       }
 
-      MMStudio.getInstance().setCircularBufferSize(seqBufSize);
-      MMStudio.getInstance().setCoreLogLifetimeDays(deleteLogDays);
+      mmStudio_.setCircularBufferSize(seqBufSize);
+      mmStudio_.setCoreLogLifetimeDays(deleteLogDays);
 
       ScriptPanel.setStartupScript(startupScriptFile_.getText());
-      studio_.app().makeActive();
+      mmStudio_.app().makeActive();
       dispose();
    }
 
-   public static boolean getIsDebugLogEnabled() {
-      return MMStudio.getInstance().profile().getBoolean(OptionsDlg.class,
+   public static boolean getIsDebugLogEnabled(Studio studio) {
+      return studio.profile().getBoolean(OptionsDlg.class,
             IS_DEBUG_LOG_ENABLED, false);
    }
 
-   public static void setIsDebugLogEnabled(boolean isEnabled) {
-      MMStudio.getInstance().profile().setBoolean(OptionsDlg.class,
+   public static void setIsDebugLogEnabled(Studio studio, boolean isEnabled) {
+      studio.profile().setBoolean(OptionsDlg.class,
             IS_DEBUG_LOG_ENABLED, isEnabled);
    }
 
-   public static boolean getShouldCloseOnExit() {
-      return MMStudio.getInstance().profile().getBoolean(OptionsDlg.class,
+   public static boolean getShouldCloseOnExit(Studio studio) {
+      return studio.profile().getBoolean(OptionsDlg.class,
             SHOULD_CLOSE_ON_EXIT, true);
    }
 
-   public static void setShouldCloseOnExit(boolean shouldClose) {
-      MMStudio.getInstance().profile().setBoolean(OptionsDlg.class,
+   public static void setShouldCloseOnExit(Studio studio, boolean shouldClose) {
+      studio.profile().setBoolean(OptionsDlg.class,
             SHOULD_CLOSE_ON_EXIT, shouldClose);
    }
 }

@@ -1536,7 +1536,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
          }
       }
 
-      CMMCore core = MMStudio.getInstance().getCore();
+      CMMCore core = mmStudio_.getCore();
       long byteDepth = core.getBytesPerPixel();
       long width = core.getImageWidth();
       long height = core.getImageHeight();

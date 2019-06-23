@@ -64,12 +64,12 @@ public final class DefaultDataManager implements DataManager {
    private static final String CONTINUE_OPTION = "Continue";
    private static final String VIRTUAL_OPTION = "Use Virtual";
    
-   private final MMStudio mmStudio_;
+   private final MMStudio studio_;
    private final ImageJConverter ijConverter_;
    
    public DefaultDataManager(MMStudio studio) {
-      mmStudio_ = studio;
-      ijConverter_ = new DefaultImageJConverter();
+      studio_ = studio;
+      ijConverter_ = new DefaultImageJConverter(studio);
    }
 
    @Override
@@ -84,7 +84,7 @@ public final class DefaultDataManager implements DataManager {
 
    @Override
    public Datastore createRAMDatastore() {
-      Datastore result = new DefaultDatastore(mmStudio_);
+      Datastore result = new DefaultDatastore(studio_);
       result.setStorage(new StorageRAM(result));
       return result;
    }
@@ -96,7 +96,7 @@ public final class DefaultDataManager implements DataManager {
 
    @Override
    public RewritableDatastore createRewritableRAMDatastore() {
-      RewritableDatastore result = new DefaultRewritableDatastore(mmStudio_);
+      RewritableDatastore result = new DefaultRewritableDatastore(studio_);
       result.setStorage(new StorageRAM(result));
       return result;
    }
@@ -111,7 +111,7 @@ public final class DefaultDataManager implements DataManager {
    public Datastore createMultipageTIFFDatastore(String directory,
          boolean shouldGenerateSeparateMetadata, boolean shouldSplitPositions)
          throws IOException {
-      DefaultDatastore result = new DefaultDatastore(mmStudio_);
+      DefaultDatastore result = new DefaultDatastore(studio_);
       result.setStorage(new StorageMultipageTiff(null, result, directory, true,
                shouldGenerateSeparateMetadata, shouldSplitPositions));
       return result;
@@ -126,7 +126,7 @@ public final class DefaultDataManager implements DataManager {
 
    @Override
    public Datastore createSinglePlaneTIFFSeriesDatastore(String directory) throws IOException {
-      DefaultDatastore result = new DefaultDatastore(mmStudio_);
+      DefaultDatastore result = new DefaultDatastore(studio_);
       result.setStorage(new StorageSinglePlaneTiffSeries(result, directory,
             true));
       return result;
@@ -194,7 +194,7 @@ public final class DefaultDataManager implements DataManager {
       if (!dirFile.isDirectory()) {
          directory = dirFile.getParent();
       }
-      DefaultDatastore result = new DefaultDatastore(mmStudio_);
+      DefaultDatastore result = new DefaultDatastore(studio_);
       // TODO: future additional file formats will need to be handled here.
       // For now we just choose between StorageMultipageTiff and
       // StorageSinglePlaneTiffSeries.
@@ -264,7 +264,7 @@ public final class DefaultDataManager implements DataManager {
 
    @Override
    public Datastore.SaveMode getPreferredSaveMode() {
-      return DefaultDatastore.getPreferredSaveMode(mmStudio_);
+      return DefaultDatastore.getPreferredSaveMode(studio_);
    }
 
    @Override
@@ -319,52 +319,50 @@ public final class DefaultDataManager implements DataManager {
    @Override
    public Pipeline copyApplicationPipeline(Datastore store,
          boolean isSynchronous) {
-      return createPipeline(
-            mmStudio_.getPipelineFrame().getPipelineFactories(),
+      return createPipeline(studio_.getPipelineFrame().getPipelineFactories(),
             store, isSynchronous);
    }
 
    @Override
    public Pipeline copyLivePipeline(Datastore store, boolean isSynchronous) {
-      return createPipeline(
-            mmStudio_.getPipelineFrame().getLivePipelineFactories(),
+      return createPipeline(studio_.getPipelineFrame().getLivePipelineFactories(),
             store, isSynchronous);
    }
 
    @Override
    public List<ProcessorConfigurator> getApplicationPipelineConfigurators(boolean includeDisabled) {
        if (includeDisabled) {
-        return mmStudio_.getPipelineFrame().getPipelineConfigurators();
+        return studio_.getPipelineFrame().getPipelineConfigurators();
        } else {
-           return mmStudio_.getPipelineFrame().getEnabledPipelineConfigurators();
+           return studio_.getPipelineFrame().getEnabledPipelineConfigurators();
        }
    }
    
      @Override
     public List<ProcessorConfigurator> getLivePipelineConfigurators(boolean includeDisabled) {
         if (includeDisabled) {
-            return mmStudio_.getPipelineFrame().getPipelineConfigurators();
+            return studio_.getPipelineFrame().getPipelineConfigurators();
         } else {
-           return mmStudio_.getPipelineFrame().getEnabledLivePipelineConfigurators();
+           return studio_.getPipelineFrame().getEnabledLivePipelineConfigurators();
         }
     }
     
 
    @Override
    public void clearPipeline() {
-      mmStudio_.getPipelineFrame().clearPipeline();
+      studio_.getPipelineFrame().clearPipeline();
    }
 
    @Override
    public void addAndConfigureProcessor(ProcessorPlugin plugin) {
-      mmStudio_.getPipelineFrame().addAndConfigureProcessor(
+      studio_.getPipelineFrame().addAndConfigureProcessor(
             plugin);
    }
 
    @Override
    public void addConfiguredProcessor(ProcessorConfigurator config,
          ProcessorPlugin plugin) {
-      mmStudio_.getPipelineFrame().addConfiguredProcessor(config, plugin);
+      studio_.getPipelineFrame().addConfiguredProcessor(config, plugin);
    }
 
    @Override
@@ -377,27 +375,27 @@ public final class DefaultDataManager implements DataManager {
 
     @Override
     public boolean isApplicationPipelineStepEnabled(int index) {
-        return mmStudio_.getPipelineFrame().getConfiguratorEnabled(index);
+        return studio_.getPipelineFrame().getConfiguratorEnabled(index);
     }
     
     @Override
     public void setApplicationPipelineStepEnabled(int index, boolean enabled) {
-        mmStudio_.getPipelineFrame().setConfiguratorEnabled(index, enabled);
+        studio_.getPipelineFrame().setConfiguratorEnabled(index, enabled);
     }
     
     @Override
     public boolean isLivePipelineStepEnabled(int index) {
-        return mmStudio_.getPipelineFrame().getConfiguratorEnabledLive(index);
+        return studio_.getPipelineFrame().getConfiguratorEnabledLive(index);
     }
     
     @Override
     public void setLivePipelineStepEnabled(int index, boolean enabled) {
-        mmStudio_.getPipelineFrame().setConfiguratorEnabledLive(index, enabled);
+        studio_.getPipelineFrame().setConfiguratorEnabledLive(index, enabled);
     }
 
    @Override
    public void notifyPipelineChanged() {
-      mmStudio_.events().post(new NewPipelineEvent());
+      studio_.events().post(new NewPipelineEvent());
    }
 
    @Override

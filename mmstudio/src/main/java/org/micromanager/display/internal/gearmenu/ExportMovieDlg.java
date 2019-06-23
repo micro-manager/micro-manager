@@ -48,13 +48,13 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.ApplicationSkin;
+import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.ImageExporter;
 import org.micromanager.internal.utils.FileDialogs;
-import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -223,6 +223,7 @@ public final class ExportMovieDlg extends MMDialog {
       }
    }
 
+   private final Studio studio_;
    private final ApplicationSkin skin_;
    private final DisplayWindow display_;
    private final DataProvider provider_;
@@ -236,11 +237,13 @@ public final class ExportMovieDlg extends MMDialog {
 
    /**
     * Show the dialog.
+    * @param studio
     * @param display display showing the data to be exported
     */
-   public ExportMovieDlg(ApplicationSkin skin, DisplayWindow display) {
+   public ExportMovieDlg(Studio studio, DisplayWindow display) {
       super();
-      skin_ = skin;
+      studio_ = studio;
+      skin_ = studio.app().getApplicationSkin();
       
       // position the export dialog over the center of the display:
       Window dw = display.getWindow();
@@ -521,8 +524,8 @@ public final class ExportMovieDlg extends MMDialog {
    /**
     * Get the default mode the user wants to use for exporting movies.
     */
-   private static String getDefaultExportFormat() {
-      return MMStudio.getInstance().profile().
+   private String getDefaultExportFormat() {
+      return studio_.profile().
               getSettings(ExportMovieDlg.class).
               getString(DEFAULT_EXPORT_FORMAT, FORMAT_PNG);
    }
@@ -530,38 +533,34 @@ public final class ExportMovieDlg extends MMDialog {
    /**
     * Set the default mode to use for exporting movies.
     */
-   private static void setDefaultExportFormat(String format) {
-      MMStudio.getInstance().profile().getSettings(ExportMovieDlg.class).
+   private void setDefaultExportFormat(String format) {
+      studio_.profile().getSettings(ExportMovieDlg.class).
               putString(DEFAULT_EXPORT_FORMAT, format);
    }
 
    /**
     * Get the default filename prefix.
     */
-   private static String getDefaultPrefix() {
-      return MMStudio.getInstance().profile().
-              getSettings(ExportMovieDlg.class).
+   private String getDefaultPrefix() {
+      return studio_.profile().getSettings(ExportMovieDlg.class).
               getString(DEFAULT_FILENAME_PREFIX, "exported");
    }
 
    /**
     * Set a new default filename prefix.
     */
-   private static void setDefaultPrefix(String prefix) {
-      MMStudio.getInstance().profile().
-              getSettings(ExportMovieDlg.class).
+   private void setDefaultPrefix(String prefix) {
+      studio_.profile().getSettings(ExportMovieDlg.class).
               putString(DEFAULT_FILENAME_PREFIX, prefix);
    }
    
-   private static int getJPEGQuality() {
-      return MMStudio.getInstance().profile().
-              getSettings(ExportMovieDlg.class).
+   private int getJPEGQuality() {
+      return studio_.profile().getSettings(ExportMovieDlg.class).
               getInteger(JPEG_QUALITY, 90);
    }
    
-   private static void setJPEGQuality(int quality) {
-      MMStudio.getInstance().profile().
-              getSettings(ExportMovieDlg.class).
+   private void setJPEGQuality(int quality) {
+      studio_.profile().getSettings(ExportMovieDlg.class).
               putInteger(JPEG_QUALITY, quality);
    }
 }

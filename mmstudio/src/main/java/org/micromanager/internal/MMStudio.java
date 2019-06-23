@@ -369,7 +369,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
 
       // Profile may have been switched in Intro Dialog, so reflect its setting
-      core_.enableDebugLog(OptionsDlg.getIsDebugLogEnabled());
+      core_.enableDebugLog(OptionsDlg.getIsDebugLogEnabled(studio_));
 
       IJVersionCheckDlg.execute(studio_);
 
@@ -458,7 +458,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    private void initializeLogging(CMMCore core) {
       core.enableStderrLog(true);
-      core.enableDebugLog(OptionsDlg.getIsDebugLogEnabled());
+      core.enableDebugLog(OptionsDlg.getIsDebugLogEnabled(studio_));
       ReportingUtils.setCore(core);
 
       // Set up logging to CoreLog file
@@ -481,7 +481,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // Although our general rule is to perform identical logging regardless
       // of the current log level, we make an exception for UIMonitor, which we
       // enable only when debug logging is turned on (from the GUI).
-      UIMonitor.enable(OptionsDlg.getIsDebugLogEnabled());
+      UIMonitor.enable(OptionsDlg.getIsDebugLogEnabled(studio_));
    }
   
    public void showPipelineFrame() {
@@ -731,11 +731,10 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    /**
     * Returns singleton instance of MMStudio
     * @return singleton instance of MMStudio
-   */ 
+   */
    public static MMStudio getInstance() {
       return studio_;
    }
-   
 
    /**
     * Returns singleton instance of MainFrame.
@@ -1225,7 +1224,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
       userProfileManager_.getAdmin().shutdownAutosaves();
 
-      boolean shouldCloseWholeApp = OptionsDlg.getShouldCloseOnExit();
+      boolean shouldCloseWholeApp = OptionsDlg.getShouldCloseOnExit(studio_);
       if (shouldCloseWholeApp && !quitInitiatedByImageJ) {
          if (wasStartedAsImageJPlugin_) {
             // Let ImageJ do the quitting

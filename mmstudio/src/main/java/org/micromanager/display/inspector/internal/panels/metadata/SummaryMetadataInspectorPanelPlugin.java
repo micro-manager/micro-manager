@@ -13,6 +13,7 @@
 
 package org.micromanager.display.inspector.internal.panels.metadata;
 
+import org.micromanager.Studio;
 import org.micromanager.display.DataViewer;
 import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
@@ -35,7 +36,7 @@ public class SummaryMetadataInspectorPanelPlugin implements InspectorPanelPlugin
    }
 
    @Override
-   public InspectorPanelController createPanelController() {
+   public InspectorPanelController createPanelController(Studio studio) {
       return SummaryMetadataInspectorPanelController.create();
    }
 }

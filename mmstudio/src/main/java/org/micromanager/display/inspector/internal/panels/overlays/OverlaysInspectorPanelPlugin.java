@@ -5,6 +5,7 @@
  */
 package org.micromanager.display.inspector.internal.panels.overlays;
 
+import org.micromanager.Studio;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.inspector.InspectorPanelController;
@@ -27,7 +28,7 @@ public final class OverlaysInspectorPanelPlugin implements InspectorPanelPlugin 
    }
 
    @Override
-   public InspectorPanelController createPanelController() {
-      return OverlaysInspectorPanelController.create();
+   public InspectorPanelController createPanelController(Studio studio) {
+      return OverlaysInspectorPanelController.create(studio);
    }
 }

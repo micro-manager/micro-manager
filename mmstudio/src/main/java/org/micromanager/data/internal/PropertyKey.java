@@ -37,10 +37,10 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.propertymap.MM1JSONSerializer;
 import org.micromanager.internal.propertymap.PropertyMapJSONSerializer;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Keys that appear in the JSON-formatted metadata (and a few other pieces of
@@ -618,7 +618,7 @@ public enum PropertyKey {
                // NS: not sure how to handle this.  Can we be sure only to 
                // receive the correct keys?  I see no straight forward way 
                // to copy other properties
-               MMStudio.getInstance().logs().showError("Found weird key in Intended dimensions: " + key);
+               ReportingUtils.showError("Found weird key in Intended dimensions: " + key);
             }
          }
          dest.putPropertyMap(key(), builder.build());
