@@ -293,9 +293,15 @@ public class ControllerUtils {
       }
       
       // make sure set to use TTL signal from backplane in case PLOGIC_LASER is set to PLogicMode different from diSPIM shutter
-      if (devices_.isDifferentPLogic()) {
-         props_.setPropValue(new Devices.Keys[]{Devices.Keys.PLOGIC, Devices.Keys.PLOGIC_LASER},
-               Properties.Keys.PLOGIC_PRESET, Properties.Values.PLOGIC_PRESET_12, true);
+      props_.setPropValue(new Devices.Keys[]{Devices.Keys.PLOGIC, Devices.Keys.PLOGIC_LASER},
+            Properties.Keys.PLOGIC_PRESET, Properties.Values.PLOGIC_PRESET_12, true);
+      
+      // make sure shutter is set to the PLOGIC_LASER device
+      // this see
+      try {
+         core_.setShutterDevice(devices_.getMMDevice(Devices.Keys.PLOGIC_LASER));
+      } catch (Exception e) {
+         e.printStackTrace();
       }
 
       // set up stage scan parameters if necessary
@@ -309,15 +315,15 @@ public class ControllerUtils {
             props_.setPropValue(new Devices.Keys[]{Devices.Keys.PLOGIC, Devices.Keys.PLOGIC_LASER},
                   Properties.Keys.PLOGIC_PRESET, Properties.Values.PLOGIC_PRESET_CLOCK_LASER, true);
             
-            // cells 6 and 7 used to make a 10ms pulse out whenever clock goes to 0
+            // cells 6 and 7 used to make a 10ms pulse out whenever counter rolls back to 0
             props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_POINTER_POSITION, triggerStepEdgeAddr);
             props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_TYPE, Properties.Values.PLOGIC_AND2);
-            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_1, counterLSBAddr + invertAddr + edgeAddr);
-            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_2, counterMSBAddr + invertAddr + edgeAddr);
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_1, counterLSBAddr + invertAddr);
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_2, counterMSBAddr + invertAddr);
             props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_POINTER_POSITION, triggerStepPulseAddr);
             props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_TYPE, Properties.Values.PLOGIC_ONESHOT_NRT);
             props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_CONFIG, triggerStepDurationTics);
-            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_1, triggerStepEdgeAddr);
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_1, triggerStepEdgeAddr + edgeAddr);
             props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_2, invertAddr);
             
             // set output #8 to be the pulse
@@ -900,10 +906,14 @@ public class ControllerUtils {
       }
       
       // make sure the counters get reset on the acquisition start flag
-      props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_POINTER_POSITION, counterLSBAddr);
-      props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_3, acquisitionFlagAddr + edgeAddr);
-      props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_POINTER_POSITION, counterMSBAddr);
-      props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_3, acquisitionFlagAddr + edgeAddr);
+      // turns out we can only do this for 2-counter and 4-counter implemented with D-flops
+      // TODO figure out alternative for 3-position counter
+      if (settings.numChannels != 3) {
+         props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_POINTER_POSITION, counterLSBAddr);
+         props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_3, acquisitionFlagAddr + edgeAddr);
+         props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_POINTER_POSITION, counterMSBAddr);
+         props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_3, acquisitionFlagAddr + edgeAddr);
+      }
       
       if (props_.getPropValueString(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_MODE).
             equals(Properties.Values.SHUTTER_7CHANNEL.toString())) {
