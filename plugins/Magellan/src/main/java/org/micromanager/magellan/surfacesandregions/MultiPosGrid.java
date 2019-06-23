@@ -17,7 +17,7 @@
 package org.micromanager.magellan.surfacesandregions;
 
 import org.micromanager.magellan.acq.MagellanGUIAcquisitionSettings;
-import org.micromanager.magellan.coordinates.AffineUtils;
+import org.micromanager.magellan.coordinates.MagellanAffineUtils;
 import org.micromanager.magellan.coordinates.XYStagePosition;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
@@ -39,18 +39,12 @@ public class MultiPosGrid extends XYFootprint {
    private final RegionFactory<Euclidean2D> regionFacotry_ = new RegionFactory<Euclidean2D>();
    private volatile Point2D.Double center_; //stored in stage space
    private volatile int overlapX_, overlapY_, rows_, cols_;
-   private String pixelSizeConfig_;
 
    public MultiPosGrid(SurfaceGridManager manager, String xyDevice, int r, int c, Point2D.Double center) {
       super(xyDevice);
       name_ = manager_.getNewGridName();
 
       center_ = center;
-      try {
-         pixelSizeConfig_ = Magellan.getCore().getCurrentPixelSizeConfig();
-      } catch (Exception ex) {
-         Log.log("couldnt get pixel size config");
-      }
       updateParams(r, c);
    }
 
@@ -82,7 +76,7 @@ public class MultiPosGrid extends XYFootprint {
    @Override
    public ArrayList<XYStagePosition> getXYPositionsNoUpdate() {
       try {
-         AffineTransform transform = AffineUtils.getAffineTransform(Magellan.getCore().getCurrentPixelSizeConfig(), center_.x, center_.y);
+         AffineTransform transform = MagellanAffineUtils.getAffineTransform(center_.x, center_.y);
          ArrayList<XYStagePosition> positions = new ArrayList<XYStagePosition>();
          int fullTileWidth = (int) Magellan.getCore().getImageWidth();
          int fullTileHeight = (int) Magellan.getCore().getImageHeight();
@@ -95,7 +89,7 @@ public class MultiPosGrid extends XYFootprint {
                Point2D.Double pixelPos = new Point2D.Double(xPixelOffset, yPixelOffset);
                Point2D.Double stagePos = new Point2D.Double();
                transform.transform(pixelPos, stagePos);
-               AffineTransform posTransform = AffineUtils.getAffineTransform(pixelSizeConfig_, stagePos.x, stagePos.y);
+               AffineTransform posTransform = MagellanAffineUtils.getAffineTransform(stagePos.x, stagePos.y);
                positions.add(new XYStagePosition(stagePos, tileWidthMinusOverlap, tileHeightMinusOverlap,
                        fullTileWidth, fullTileHeight, row, col, posTransform));
             }
@@ -110,7 +104,7 @@ public class MultiPosGrid extends XYFootprint {
    @Override
    public ArrayList<XYStagePosition> getXYPositions(double tileOverlapPercent) {
       try {
-         AffineTransform transform = AffineUtils.getAffineTransform(Magellan.getCore().getCurrentPixelSizeConfig(), center_.x, center_.y);
+         AffineTransform transform = MagellanAffineUtils.getAffineTransform( center_.x, center_.y);
          ArrayList<XYStagePosition> positions = new ArrayList<XYStagePosition>();
          int fullTileWidth = (int) Magellan.getCore().getImageWidth();
          int fullTileHeight = (int) Magellan.getCore().getImageHeight();
@@ -126,7 +120,7 @@ public class MultiPosGrid extends XYFootprint {
                         Point2D.Double pixelPos = new Point2D.Double(xPixelOffset, yPixelOffset);
                         Point2D.Double stagePos = new Point2D.Double();
                         transform.transform(pixelPos, stagePos);
-                        AffineTransform posTransform = AffineUtils.getAffineTransform(pixelSizeConfig_, stagePos.x, stagePos.y);
+                        AffineTransform posTransform = MagellanAffineUtils.getAffineTransform(stagePos.x, stagePos.y);
                         positions.add(new XYStagePosition(stagePos, tileWidthMinusOverlap, tileHeightMinusOverlap,
                                 fullTileWidth, fullTileHeight, row, col, posTransform));
                     }
@@ -136,7 +130,7 @@ public class MultiPosGrid extends XYFootprint {
                         Point2D.Double pixelPos = new Point2D.Double(xPixelOffset, yPixelOffset);
                         Point2D.Double stagePos = new Point2D.Double();
                         transform.transform(pixelPos, stagePos);
-                        AffineTransform posTransform = AffineUtils.getAffineTransform(pixelSizeConfig_, stagePos.x, stagePos.y);
+                        AffineTransform posTransform = MagellanAffineUtils.getAffineTransform( stagePos.x, stagePos.y);
                         positions.add(new XYStagePosition(stagePos, tileWidthMinusOverlap, tileHeightMinusOverlap,
                                 fullTileWidth, fullTileHeight, row, col, posTransform));
                     }
