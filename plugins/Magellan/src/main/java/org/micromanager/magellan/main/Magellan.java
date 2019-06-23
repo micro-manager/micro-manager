@@ -45,7 +45,7 @@ public class Magellan implements MenuPlugin, SciJavaPlugin{
    
    public Magellan() {
       try {
-      bridge_ = new ZMQServer();
+      bridge_ = new ZMQServer(4827);
       } catch (Exception e) {
          //ignore for now
       }
