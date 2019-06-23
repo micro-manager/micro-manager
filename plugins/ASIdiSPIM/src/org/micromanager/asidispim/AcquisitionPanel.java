@@ -2826,7 +2826,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   gui_.getMMCore().stopSequenceAcquisition(camera);
                   gui_.getMMCore().setCameraDevice(originalCamera);
 
-                  controller_.cleanUpControllerAfterAcquisition(1, acqSettings.firstSideIsA, false);
+                  controller_.cleanUpControllerAfterAcquisition(acqSettings, false);
                   
                   // if we did stage scanning restore its position and speed
                   try {
@@ -3369,6 +3369,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
         		 Properties.Keys.PLUGIN_AUTOFOCUS_EVERY_STAGE_PASS, false)) {
              MyDialogUtils.showError("Cannot use path presets with autofocus every stage pass.");
              return false;
+         }
+      }
+      
+      if (acqSettings.isStageStepping) {
+         if (!acqSettings.useChannels || acqSettings.numChannels < 2 || acqSettings.channelMode != MultichannelModes.Keys.SLICE_HW) {
+            MyDialogUtils.showError("Stage step supplemental acquisition can only be used for multiple channels with changing "
+                  + "channels every slice. Pester the developer to extend this functionality to single channel and/or volume switching.");
+            return false;
          }
       }
       
@@ -4786,7 +4794,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // want to do this, even with demo cameras, so we can test everything else
       // TODO figure out if we really want to return piezos to 0 position (maybe center position,
       //   maybe not at all since we move when we switch to setup tab, something else??)
-      controller_.cleanUpControllerAfterAcquisition(acqSettings.numSides, acqSettings.firstSideIsA, true);
+      controller_.cleanUpControllerAfterAcquisition(acqSettings, true);
       
       // if we did stage scanning restore its position and speed
       if (acqSettings.isStageScanning) {

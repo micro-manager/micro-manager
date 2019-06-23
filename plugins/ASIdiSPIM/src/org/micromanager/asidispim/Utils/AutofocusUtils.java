@@ -502,7 +502,7 @@ public class AutofocusUtils {
                      gui_.closeAcquisition(acqName);
                   }
 
-                  controller_.cleanUpControllerAfterAcquisition(1, acqSettings.firstSideIsA, false);
+                  controller_.cleanUpControllerAfterAcquisition(acqSettings, false);
                   
                   if (runAsynchronously) {
                      // when run from Setup panels then put things back to live mode settings, but not if run during acquisition

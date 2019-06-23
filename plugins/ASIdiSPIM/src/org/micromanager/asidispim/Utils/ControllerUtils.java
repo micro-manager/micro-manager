@@ -61,6 +61,7 @@ public class ControllerUtils {
    boolean zSpeedZero_;  // cached value from last call to prepareStageScanForAcquisition()
    
    final int triggerStepDurationTics = 10;  // 2.5ms with 0.25ms tics
+   final int zeroAddr = 0;
    final int invertAddr = 64;
    final int edgeAddr = 128;
    final int acquisitionFlagAddr = 1;
@@ -753,8 +754,7 @@ public class ControllerUtils {
     * @return false if there is a fatal error, true if successful
     */
    public boolean cleanUpControllerAfterAcquisition(
-         final int numSides,
-         final boolean firstSideIsA,
+         final AcquisitionSettings settings,
          final boolean centerPiezos
          ) {
       
@@ -764,19 +764,25 @@ public class ControllerUtils {
       props_.setPropValue(new Devices.Keys[]{Devices.Keys.PLOGIC, Devices.Keys.PLOGIC_LASER},
             Properties.Keys.PLOGIC_PRESET, Properties.Values.PLOGIC_PRESET_2, true);
       
-      if ((numSides > 1) || firstSideIsA) {
+      if ((settings.numSides > 1) || settings.firstSideIsA) {
          boolean success = cleanUpControllerAfterAcquisition_Side(
                Devices.Sides.A, centerPiezos, 0.0f);
          if (!success) {
             return false;
          }
       }
-      if ((numSides > 1) || !firstSideIsA) {
+      if ((settings.numSides > 1) || !settings.firstSideIsA) {
          boolean success = cleanUpControllerAfterAcquisition_Side(
                Devices.Sides.B, centerPiezos, 0.0f);
          if (!success) {
             return false;
          }
+      }
+      
+      // prevent more pulses on #8 if we are using stepping
+      if (settings.isStageStepping) {
+         props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_POINTER_POSITION, triggerStepOutputAddr);
+         props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_CONFIG, zeroAddr);
       }
       
       // clean up planar correction if needed
