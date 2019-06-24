@@ -63,9 +63,9 @@ public class AffineUtils {
    }
    
     /**
-     * Convert affine to transform to the more interpretable meaurements of rotation, scale, and shear
-     * @param atf
-     * @return 
+     * Convert affine transform to human-interpretable measurements of rotation, scale, and shear
+     * @param transform - input affine transform
+     * @return {xScale, yScale, rotationDeg, shear}
      */
    public static double[] affineToMeasurements(AffineTransform transform) {
        try {
