@@ -22,8 +22,6 @@ package org.micromanager.internal.utils;
 
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.DoubleVector;
 import org.apache.commons.math.util.MathUtils;
 
