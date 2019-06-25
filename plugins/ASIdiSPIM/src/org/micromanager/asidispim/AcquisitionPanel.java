@@ -3633,6 +3633,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // initialize stage scanning so we can restore state
       Point2D.Double xyPosUm = new Point2D.Double();
+      double xSupPosUm = 0.0;
       float origXSpeed = 1f;  // don't want 0 in case something goes wrong
       float origXAccel = 1f;  // don't want 0 in case something goes wrong
       float origZSpeed = 1f;  // don't want 0 in case something goes wrong
@@ -3674,6 +3675,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                props_.setPropValue(Devices.Keys.UPPERZDRIVE, Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, 1f);
                origZSpeed = 1f;
             }
+         }
+      }
+      
+      if (acqSettings.isStageStepping) {
+         try {
+            xSupPosUm = core_.getPosition(devices_.getMMDevice(Devices.Keys.SUPPLEMENTAL_X));
+         } catch (Exception e) {
+            MyDialogUtils.showError("Could not get supplemental X stage position for stage step initialization");
+            posUpdater_.pauseUpdates(false);
+            return false;
          }
       }
       
@@ -4811,6 +4822,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          } catch (Exception ex) {
             MyDialogUtils.showError("Could not restore XY stage position after acquisition");
          }
+      }
+      
+      if (acqSettings.isStageStepping) {
+         positions_.setPosition(Devices.Keys.SUPPLEMENTAL_X, xSupPosUm);
       }
       
       updateAcquisitionStatus(AcquisitionStatus.DONE);
