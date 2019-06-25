@@ -1,4 +1,4 @@
-package org.micromanager.magellan.socketbridge;
+package org.micromanager.magellan.api;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -17,16 +17,16 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
-import org.micromanager.magellan.json.JSONArray;
-import org.micromanager.magellan.json.JSONException;
-import org.micromanager.magellan.json.JSONObject;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.Log;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
-public class ZMQServer {
+public abstract class ZMQServer {
 
    private static final ByteOrder BYTE_ORDER = ByteOrder.BIG_ENDIAN;
    public final static Map<Class<?>, Class<?>> primitiveClassMap_ = new HashMap<Class<?>, Class<?>>();
@@ -46,14 +46,16 @@ public class ZMQServer {
       Long.TYPE, Integer.TYPE, Float.TYPE, Double.TYPE, Boolean.TYPE,
       byte[].class, double[].class, int[].class, TaggedImage.class};
 
-   private ZContext context_;
-   private ExecutorService coreExecutor_;
+   private static ZContext context_;
+   private ExecutorService executor_;
 
-   public ZMQServer(int port) {
-      context_ = new ZContext();
-      coreExecutor_ = Executors.newSingleThreadExecutor(
-              (Runnable r) -> new Thread(r, "ZMQ Core Executor thread"));
-      coreExecutor_.submit(runCommandExecutor(port));
+   public ZMQServer(int port, String name) {
+      if (context_ == null) {
+         context_ = new ZContext();
+      }
+      executor_ = Executors.newSingleThreadExecutor(
+              (Runnable r) -> new Thread(r, "ZMQ Server " + name));
+      executor_.submit(runCommandExecutor(port));
 
    }
 
@@ -72,8 +74,8 @@ public class ZMQServer {
                } catch (Exception e) {
                   try {
                      JSONObject json = new JSONObject();
-                     json.put("Type", "Exception");
-                     json.put("Message", e.getMessage());
+                     json.put("reply", "Exception");
+                     json.put("message", e.getMessage());
                      reply = json.toString().getBytes();
                      e.printStackTrace();
                      Log.log(e.getMessage());
@@ -88,44 +90,38 @@ public class ZMQServer {
       };
    }
 
-   private byte[] parseAndExecuteCommand(String message) throws JSONException, NoSuchMethodException, IllegalAccessException {
-      JSONObject json = new JSONObject(message);
-      if (json.getString("command").equals("send-CMMCore-api")) {
-         Class coreClass = Magellan.getCore().getClass();
-         return parseAPI(coreClass);
-      } else if (json.getString("command").equals("run-method")) {
-         String methodName = json.getString("name");
+   protected abstract byte[] parseAndExecuteCommand(String message) throws Exception;
+   
+   protected byte[] runMethod(JSONObject json) throws NoSuchMethodException, IllegalAccessException, JSONException {
+      String methodName = json.getString("name");
 
-         Class[] argClasses = new Class[json.getJSONArray("arguments").length()];
-         Object[] argVals = new Object[json.getJSONArray("arguments").length()];
-         for (int i = 0; i < argVals.length; i++) {
-            //Converts onpbjects to primitives
-            Class c = json.getJSONArray("arguments").get(i).getClass();
-            if (primitiveClassMap_.containsKey(c)) {
-               c = primitiveClassMap_.get(c);
-            }
-            argClasses[i] = c;
-            argVals[i] = json.getJSONArray("arguments").get(i);
+      Class[] argClasses = new Class[json.getJSONArray("arguments").length()];
+      Object[] argVals = new Object[json.getJSONArray("arguments").length()];
+      for (int i = 0; i < argVals.length; i++) {
+         //Converts onpbjects to primitives
+         Class c = json.getJSONArray("arguments").get(i).getClass();
+         if (primitiveClassMap_.containsKey(c)) {
+            c = primitiveClassMap_.get(c);
          }
-
-         Method method = CMMCore.class.getMethod(methodName, argClasses);
-         Object result = null;
-         try {
-            result = method.invoke(Magellan.getCore(), argVals);
-         } catch (InvocationTargetException ex) {
-            Log.log(ex);
-         }
-         return serialize(result);
-      } else {
-         throw new RuntimeException("Unknown Command");
+         argClasses[i] = c;
+         argVals[i] = json.getJSONArray("arguments").get(i);
       }
+
+      Method method = CMMCore.class.getMethod(methodName, argClasses);
+      Object result = null;
+      try {
+         result = method.invoke(Magellan.getCore(), argVals);
+      } catch (InvocationTargetException ex) {
+         Log.log(ex);
+      }
+      return serialize(result);
    }
 
    /**
     * Serialize the object in some way that the client will know how to
     * deserialize
     */
-   private byte[] serialize(Object o) {
+   protected byte[] serialize(Object o) {
       try {
          JSONObject json = new JSONObject();
          if (o instanceof String) {
@@ -167,7 +163,7 @@ public class ZMQServer {
       throw new RuntimeException("Object type serialization not defined");
    }
 
-   private String encodeArray(Object array) {
+   protected String encodeArray(Object array) {
       byte[] byteArray = null;
       if (array instanceof byte[]) {
          byteArray = (byte[]) array;
@@ -219,7 +215,7 @@ public class ZMQServer {
     * @return
     * @throws JSONException
     */
-   private static byte[] parseAPI(Class clazz) throws JSONException {
+   protected static byte[] parseAPI(Class clazz) throws JSONException {
       //Collect all methods whose return types and arguments we know how to translate, and put them in a JSON array describing them
       Predicate<Method> methodFilter = (Method t) -> {
          return isValidMethod(t);

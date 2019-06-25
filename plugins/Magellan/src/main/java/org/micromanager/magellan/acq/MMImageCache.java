@@ -25,9 +25,10 @@ import java.awt.Color;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import org.micromanager.magellan.json.JSONArray;
-import org.micromanager.magellan.json.JSONException;
-import org.micromanager.magellan.json.JSONObject;
+import mmcorej.TaggedImage;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.Log;
 import org.micromanager.magellan.misc.MD;
@@ -86,7 +87,7 @@ public class MMImageCache {
       display_ = null;
    }
 
-   public void putImage(final MagellanTaggedImage taggedImg) {
+   public void putImage(final TaggedImage taggedImg) {
       imageStorage_.putImage(taggedImg);
       //let the display know theres a new image in town
       listenerExecutor_.submit(new Runnable() {
@@ -98,7 +99,7 @@ public class MMImageCache {
 
    }
 
-   public MagellanTaggedImage getImage(int channel, int slice, int frame, int position) {
+   public TaggedImage getImage(int channel, int slice, int frame, int position) {
       return imageStorage_.getImage(channel, slice, frame, position);
    }
 

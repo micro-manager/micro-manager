@@ -40,12 +40,13 @@ import org.micromanager.magellan.channels.ChannelSpec;
 import org.micromanager.magellan.coordinates.MagellanAffineUtils;
 import org.micromanager.magellan.coordinates.PositionManager;
 import org.micromanager.magellan.coordinates.XYStagePosition;
-import org.micromanager.magellan.json.JSONArray;
-import org.micromanager.magellan.json.JSONObject;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.Log;
 import org.micromanager.magellan.misc.MD;
 import mmcorej.CMMCore;
+import mmcorej.TaggedImage;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
  * Abstract class that manages a generic acquisition. Subclassed into specific
@@ -209,11 +210,11 @@ public abstract class Acquisition {
     * Called by acquisition engine to save an image, returns a future that can
     * be gotten once that image has made it onto the disk
     */
-   Future saveImage(MagellanTaggedImage image) {
+   Future saveImage(TaggedImage image) {
       //The saving executor is essentially doing the work of making the image pyramid, while there
       //is a seperate internal executor in MultiResMultipageTiffStorage that does all the writing
       return savingExecutor_.submit(() -> {
-         if (MagellanTaggedImage.isAcquisitionFinishedImage(image)) {
+         if (image.tags == null && image.pix == null) {
             eventGenerator_.shutdown();
             savingExecutor_.shutdown();
             //Dont wait for it to shutdown because it is the one executing this code

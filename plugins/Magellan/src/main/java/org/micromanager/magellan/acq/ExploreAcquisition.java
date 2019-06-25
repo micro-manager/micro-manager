@@ -26,10 +26,10 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.micromanager.magellan.imagedisplay.SubImageControls;
-import org.micromanager.magellan.json.JSONArray;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.Log;
 import mmcorej.CMMCore;
+import org.json.JSONArray;
 
 /**
  * A single time point acquisition that can dynamically expand in X,Y, and Z
@@ -218,7 +218,6 @@ public class ExploreAcquisition extends Acquisition {
    protected JSONArray createInitialPositionList() {
       try {
          //create empty position list that gets filled in as tiles are explored
-         CMMCore core = Magellan.getCore();
          JSONArray pList = new JSONArray();
          return pList;
       } catch (Exception e) {

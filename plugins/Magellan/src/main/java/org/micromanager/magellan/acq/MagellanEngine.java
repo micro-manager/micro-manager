@@ -31,8 +31,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
 import org.micromanager.magellan.channels.ChannelSetting;
-import org.micromanager.magellan.json.JSONException;
-import org.micromanager.magellan.json.JSONObject;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.Log;
 import mmcorej.CMMCore;
@@ -130,7 +128,7 @@ public class MagellanEngine {
       }
       if (event.isAcquisitionFinishedEvent()) {
          //signal to MagellanTaggedImageSink to finish saving thread and mark acquisition as finished
-         return event.acquisition_.saveImage(MagellanTaggedImage.createAcquisitionFinishedImage());
+         return event.acquisition_.saveImage(new TaggedImage(null, null));
       } else {
          updateHardware(event);
          return acquireImage(event);
@@ -157,7 +155,7 @@ public class MagellanEngine {
          event.acquisition_.setStartTime_ms(currentTime);
       }
 
-      ArrayList<MagellanTaggedImage> images = new ArrayList<MagellanTaggedImage>();
+      ArrayList<TaggedImage> images = new ArrayList<TaggedImage>();
       for (int c = 0; c < core_.getNumberOfCameraChannels(); c++) {
          TaggedImage ti = null;
          try {
@@ -165,10 +163,9 @@ public class MagellanEngine {
          } catch (Exception ex) {
             throw new HardwareControlException(ex.getMessage());
          }
-         MagellanTaggedImage img = convertTaggedImage(ti);
-         event.acquisition_.addImageMetadata(img.tags, event, event.timeIndex_, c, currentTime - event.acquisition_.getStartTime_ms(),
+         event.acquisition_.addImageMetadata(ti.tags, event, event.timeIndex_, c, currentTime - event.acquisition_.getStartTime_ms(),
                  event.acquisition_.channels_.getActiveChannelSetting(event.channelIndex_).exposure_);
-         images.add(img);
+         images.add(ti);
       }
 
       //send to storage
@@ -346,16 +343,6 @@ public class MagellanEngine {
       Calendar calobj = Calendar.getInstance();
       return df.format(calobj.getTime());
    }
-
-   private static MagellanTaggedImage convertTaggedImage(TaggedImage img) {
-      try {
-         return new MagellanTaggedImage(img.pix, new JSONObject(img.tags.toString()));
-      } catch (JSONException ex) {
-         Log.log("Couldn't convert JSON metadata");
-         throw new RuntimeException();
-      }
-   }
-
 }
 
 class HardwareControlException extends RuntimeException {

@@ -25,7 +25,8 @@ import java.util.prefs.Preferences;
 import mmcorej.CMMCore;
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
-import org.micromanager.magellan.socketbridge.ZMQServer;
+import org.micromanager.magellan.api.ZMQMasterServer;
+import org.micromanager.magellan.api.ZMQServer;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
@@ -41,13 +42,14 @@ public class Magellan implements MenuPlugin, SciJavaPlugin{
    private static Preferences prefs_;
    private static Studio mmAPI_;
    private static GUI gui_;
-   private ZMQServer bridge_;
+   private ZMQMasterServer bridge_;
    
    public Magellan() {
       try {
-      bridge_ = new ZMQServer(4827);
+      bridge_ = new ZMQMasterServer();
       } catch (Exception e) {
-         //ignore for now
+         e.printStackTrace();
+   //ignore for now
       }
       
    }
