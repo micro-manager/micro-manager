@@ -405,8 +405,9 @@ bool LDI::getAvailableWavelengths()
 			auto wavelength = std::stoi(token);
 			if (wavelength < 9990)
 				m_availableWavelengths.push_back(wavelength);
-		} catch (std::exception& ex) { }
+		} catch (std::exception& /* ex */) { }
 	}
+   return true;
 }
 
 int LDI::Ret_LDI_Error(const std::string& err)

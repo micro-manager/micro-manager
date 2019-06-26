@@ -12,16 +12,16 @@ public:
 	LDI();
 	//~LDI();
 
-	virtual int Initialize() override;
-	virtual int Shutdown() override;
+	virtual int Initialize();
+	virtual int Shutdown();
 
-	virtual void GetName(char * name) const override;
+	virtual void GetName(char * name) const;
 
-	virtual int SetOpen(bool open = true) override;
-	virtual int GetOpen(bool & open) override;
+	virtual int SetOpen(bool open = true);
+	virtual int GetOpen(bool & open);
 
-	virtual bool Busy() override { return m_busy; }
-	virtual int Fire(double deltaT) override { return DEVICE_UNSUPPORTED_COMMAND; }
+	virtual bool Busy() { return m_busy; }
+	virtual int Fire(double /* deltaT */) { return DEVICE_UNSUPPORTED_COMMAND; }
 
 
 	int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
