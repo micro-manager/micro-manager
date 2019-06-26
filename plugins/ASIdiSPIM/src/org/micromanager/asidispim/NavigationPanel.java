@@ -127,6 +127,10 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       core_ = gui_.getMMCore();
       PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
       
+      boolean hideSetZero = prefs_.getBoolean(
+            MyStrings.PanelNames.SETTINGS.toString(),  
+            Properties.Keys.PREFS_HIDE_SET_ZERO, false);
+      
       JPanel loadPanel = new JPanel(new MigLayout(
             "",
             "[center]",
@@ -197,7 +201,11 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       navPanel.add(deltaXField);
       navPanel.add(makeIncrementButton(Devices.Keys.XYSTAGE, Directions.X, deltaXField, "+", 1));
       navPanel.add(makeMoveToOriginButton(Devices.Keys.XYSTAGE, Directions.X));
-      navPanel.add(makeSetOriginHereButton(Devices.Keys.XYSTAGE, Directions.X, true), "skip 1, wrap");
+      if (!hideSetZero) {
+         navPanel.add(makeSetOriginHereButton(Devices.Keys.XYSTAGE, Directions.X, true), "skip 1, wrap");
+      } else {
+         navPanel.add(new JLabel(""), "wrap");
+      }
       
       navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.XYSTAGE, Directions.Y) + ":"));
       yPositionLabel_ = new JLabel("");
@@ -208,7 +216,11 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       navPanel.add(deltaYField);
       navPanel.add(makeIncrementButton(Devices.Keys.XYSTAGE, Directions.Y, deltaYField, "+", 1));
       navPanel.add(makeMoveToOriginButton(Devices.Keys.XYSTAGE, Directions.Y));
-      navPanel.add(makeSetOriginHereButton(Devices.Keys.XYSTAGE, Directions.Y, true), "skip 1, wrap");
+      if (!hideSetZero) {
+         navPanel.add(makeSetOriginHereButton(Devices.Keys.XYSTAGE, Directions.Y, true), "skip 1, wrap");
+      } else {
+         navPanel.add(new JLabel(""), "wrap");
+      }
       
       lowerZPositionLabel_ = new JLabel("");
       if (devices_.isValidMMDevice(Devices.Keys.LOWERZDRIVE)) {
@@ -235,7 +247,11 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
          } else {
             navPanel.add(syncZtoF);
          }
-         navPanel.add(makeSetOriginHereButton(Devices.Keys.LOWERZDRIVE, Directions.NONE), "wrap");
+         if (!hideSetZero) {
+            navPanel.add(makeSetOriginHereButton(Devices.Keys.LOWERZDRIVE, Directions.NONE), "wrap");
+         } else {
+            navPanel.add(new JLabel(""), "wrap");
+         }
       }
       
       xSupPositionLabel_ = new JLabel("");
@@ -275,7 +291,11 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
          } else {
             navPanel.add(syncFtoZ);
          }
-         navPanel.add(makeSetOriginHereButton(Devices.Keys.UPPERZDRIVE, Directions.NONE, true), "wrap");
+         if (!hideSetZero) {
+            navPanel.add(makeSetOriginHereButton(Devices.Keys.UPPERZDRIVE, Directions.NONE, true), "wrap");
+         } else {
+            navPanel.add(new JLabel(""), "wrap");
+         }
       }
       
       upperHPositionLabel_ = new JLabel("");
@@ -290,7 +310,11 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
          navPanel.add(makeIncrementButton(Devices.Keys.UPPERHDRIVE, Directions.NONE, deltaGField, "+", 1));
          navPanel.add(makeMoveToOriginButton(Devices.Keys.UPPERHDRIVE, Directions.NONE));
          navPanel.add(new JLabel(""));  // occupies sync space
-         navPanel.add(makeSetOriginHereButton(Devices.Keys.UPPERHDRIVE, Directions.NONE), "wrap");
+         if (!hideSetZero) {
+            navPanel.add(makeSetOriginHereButton(Devices.Keys.UPPERHDRIVE, Directions.NONE), "wrap");
+         } else {
+            navPanel.add(new JLabel(""), "wrap");
+         }
       }
       
       piezoAPositionLabel_ = new JLabel("");

@@ -150,8 +150,11 @@ public class SettingsPanel extends ListeningJPanel {
       
       final JCheckBox sampleOnZStage = pu.makeCheckBox("Sample on Z stage",
             Properties.Keys.PREFS_SAMPLE_ON_ZSTAGE, panelName_, false);
-      guiPanel.add(sampleOnZStage, "left, span 2");
-      
+      guiPanel.add(sampleOnZStage, "left, span 2, wrap");
+
+      final JCheckBox hideSetZero = pu.makeCheckBox("Hide navigation \"Set 0\" buttons",
+            Properties.Keys.PREFS_HIDE_SET_ZERO, panelName_, false);
+      guiPanel.add(hideSetZero, "left, span 2");
       
       // end GUI subpanel
       
@@ -160,7 +163,7 @@ public class SettingsPanel extends ListeningJPanel {
       final JPanel scannerPanel = new JPanel(new MigLayout(
             "",
             "[right]16[center]",
-            "[]8[]"));
+            "[]5[]"));
       scannerPanel.setBorder(PanelUtils.makeTitledBorder("Scanner"));
 
       scannerPanel.add(new JLabel("Filter freq, sheet axis [kHz]:"));
@@ -198,7 +201,7 @@ public class SettingsPanel extends ListeningJPanel {
       final JPanel acqusitionPanel = new JPanel(new MigLayout(
             "",
             "[left]",
-            "[]8[]"));
+            "[]5[]"));
       acqusitionPanel.setBorder(PanelUtils.makeTitledBorder("Acquisition"));
 
       final JCheckBox acqSettingsWrite = pu.makeCheckBox("Write file with acquisition settings",
@@ -217,7 +220,7 @@ public class SettingsPanel extends ListeningJPanel {
       final JPanel testAcqPanel = new JPanel(new MigLayout(
             "",
             "[right]16[center]",
-            "[]8[]"));
+            "[]5[]"));
       testAcqPanel.setBorder(PanelUtils.makeTitledBorder("Test Acquisition"));
       
       final JCheckBox testAcqSave = pu.makeCheckBox("Save test acquisition as raw data",
@@ -268,7 +271,7 @@ public class SettingsPanel extends ListeningJPanel {
       final JPanel stageScanPanel = new JPanel(new MigLayout(
             "",
             "[right]16[center]",
-            "[]8[]"));
+            "[]5[]"));
       stageScanPanel.setBorder(PanelUtils.makeTitledBorder("Stage scanning"));
       
       // TODO create method to determine this instead of separate code here and in AcquisitionPanel
@@ -304,7 +307,7 @@ public class SettingsPanel extends ListeningJPanel {
       final JPanel setupPanel = new JPanel(new MigLayout(
             "",
             "[right]16[left]",
-            "[]8[]"));
+            "[]5[]"));
       setupPanel.setBorder(PanelUtils.makeTitledBorder("Setup Panels"));
       
       final JCheckBox showEpiBeamSheetCB = pu.makeCheckBox("Show epi beam/sheet controls after relaunch",
@@ -354,7 +357,7 @@ public class SettingsPanel extends ListeningJPanel {
       final JPanel imageJPanel = new JPanel(new MigLayout(
             "",
             "[right]16[center]",
-            "[]0[]"));
+            "[]4[]"));
       imageJPanel.setBorder(PanelUtils.makeTitledBorder("ImageJ"));
       
       final JCheckBox useToolset = pu.makeCheckBox("Load diSPIM toolset on launch",
@@ -372,15 +375,15 @@ public class SettingsPanel extends ListeningJPanel {
       JPanel leftColumnPanel = new JPanel(new MigLayout(
             "flowy",
             "0[]0",
-            "0[]10[]10[]0"));
+            "0[]6[]6[]0"));
       JPanel middleColumnPanel = new JPanel(new MigLayout(
             "flowy",
             "0[]0",
-            "0[]10[]0"));
+            "0[]6[]0"));
       JPanel rightColumnPanel = new JPanel(new MigLayout(
             "flowy",
             "0[]0",
-            "0[]10[]0"));
+            "0[]6[]0"));
     
       leftColumnPanel.add(guiPanel, "growx");
       leftColumnPanel.add(testAcqPanel, "growx");

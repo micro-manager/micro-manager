@@ -245,6 +245,7 @@ public class Properties {
       PREFS_SCAN_OPPOSITE_DIRECTIONS("ScanOppositeDirections"),
       PREFS_IGNORE_MISSING_SCANNER("IgnoreMissingScanner"),
       PREFS_SAMPLE_ON_ZSTAGE("SampleOnZStage"),
+      PREFS_HIDE_SET_ZERO("HideSetZero"),
       PREFS_USE_MULTICHANNEL("UseMultiChannel"),
       PLUGIN_MULTICHANNEL_GROUP("ChannelGroup"),
       PLUGIN_MULTICHANNEL_MODE("MultiChannelMode"),
