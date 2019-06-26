@@ -436,6 +436,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "YodnE600", "DeviceAdapters\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Spinnaker", "DeviceAdapters\Spinnaker\SpinnakerCamera.vcxproj", "{F0E26FF0-5A6E-4B20-8467-2EA2A7E128E3}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "89NorthLDI", "DeviceAdapters\89NorthLDI\89North_LDI.vcxproj", "{986A17F0-C03C-41E5-B27F-5D46CC3361A2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -3027,6 +3029,18 @@ Global
       {F0E26FF0-5A6E-4B20-8467-2EA2A7E128E3}.Release|Win32.Build.0 = Release|Win32
       {F0E26FF0-5A6E-4B20-8467-2EA2A7E128E3}.Release|x64.ActiveCfg = Release|x64
       {F0E26FF0-5A6E-4B20-8467-2EA2A7E128E3}.Release|x64.Build.0 = Release|x64
+      {986A17F0-C03C-41E5-B27F-5D46CC3361A2}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
+      {986A17F0-C03C-41E5-B27F-5D46CC3361A2}.Debug|Mixed Platforms.Build.0 = Debug|x64
+      {986A17F0-C03C-41E5-B27F-5D46CC3361A2}.Debug|Win32.ActiveCfg = Debug|Win32
+      {986A17F0-C03C-41E5-B27F-5D46CC3361A2}.Debug|Win32.Build.0 = Debug|Win32
+      {986A17F0-C03C-41E5-B27F-5D46CC3361A2}.Debug|x64.ActiveCfg = Debug|x64
+      {986A17F0-C03C-41E5-B27F-5D46CC3361A2}.Debug|x64.Build.0 = Debug|x64
+      {986A17F0-C03C-41E5-B27F-5D46CC3361A2}.Release|Mixed Platforms.ActiveCfg = Release|x64
+      {986A17F0-C03C-41E5-B27F-5D46CC3361A2}.Release|Mixed Platforms.Build.0 = Release|x64
+      {986A17F0-C03C-41E5-B27F-5D46CC3361A2}.Release|Win32.ActiveCfg = Release|Win32
+      {986A17F0-C03C-41E5-B27F-5D46CC3361A2}.Release|Win32.Build.0 = Release|Win32
+      {986A17F0-C03C-41E5-B27F-5D46CC3361A2}.Release|x64.ActiveCfg = Release|x64
+      {986A17F0-C03C-41E5-B27F-5D46CC3361A2}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
