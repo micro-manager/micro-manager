@@ -929,8 +929,9 @@ public class ControllerUtils {
          props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_PRESET,
                Properties.Values.PLOGIC_PRESET_BNC1_8_ON_17_24);
          
-         // now set cells 17-24 so they reflect the counter state used to track state as well as the global laser trigger
-         for (int laserNum = 1; laserNum < 8; ++laserNum) {
+         // now set cells 17-22 so they reflect the counter state used to track state as well as the global laser trigger
+         // NB that this only uses 6 lasers (we need 2 free BNCs, BNC#7 for FW trigger and BNC#8 for supplemental X trigger
+         for (int laserNum = 1; laserNum < 7; ++laserNum) {
             props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_POINTER_POSITION, laserNum + 16);
             props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_TYPE, Properties.Values.PLOGIC_LUT3);
             int lutValue = 0;
