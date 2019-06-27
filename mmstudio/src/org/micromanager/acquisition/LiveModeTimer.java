@@ -498,6 +498,10 @@ public class LiveModeTimer {
                               throw e;
                            }
                         }
+                        if (!core_.isSequenceRunning()) {
+                            ReportingUtils.logDebugMessage("MultiCam Live mode exiting since sequence is not running");
+                            return;  // 
+                        }
                         // if we time out, have the function throw the error so that we can exit
                         if (System.currentTimeMillis() > 20 * fpsInterval_ + start) {
                            ti = core_.getNBeforeLastTaggedImage(i);
