@@ -68,6 +68,7 @@ function S = StartMMStudio(varargin)
 
    flag = '';  % '-setup', '-undosetup', or '' (indicating 'run' mode)
    pathToMM = '';
+   autoStartProfile = []
    argsOk = true;
 
    for k = 1:nargin
@@ -78,6 +79,8 @@ function S = StartMMStudio(varargin)
          else
             argsOk = false;
          end
+	  elseif strcmp(arg(1:8), '-profile')
+		autoStartProfile = strtrim(arg(9:end));
       elseif arg(1) == '-'  % bad flag
          argsOk = false;
       else
@@ -113,7 +116,7 @@ function S = StartMMStudio(varargin)
    elseif strcmp(flag, '-undosetup')
       S = UndoMMClasspath(pathToMM);
    else
-      S = DoStartMMStudio(pathToMM);
+      S = DoStartMMStudio(pathToMM, autoStartProfile);
    end
 end
 
@@ -151,14 +154,14 @@ function status = UndoMMClasspath(pathToMM)
 end
 
 
-function studio = DoStartMMStudio(pathToMM)
+function studio = DoStartMMStudio(pathToMM, autoStartProfile)
    pathsOk = CheckMMClasspath(pathToMM);
    if ~pathsOk
       disp('Classpath must be set up; see help(''StartMMStudio'')');
       studio = [];
       return
    end
-   studio = CreateMMStudio(pathToMM);
+   studio = CreateMMStudio(pathToMM, autoStartProfile);
 end
 
 
@@ -364,7 +367,7 @@ function changed = RemoveMMClasspath(pathToMM)
 end
 
 
-function studio = CreateMMStudio(pathToMM)
+function studio = CreateMMStudio(pathToMM, autoStartProfile)
    % Instantiates MMStudio, assuming the classpath is correct
 
    java.lang.System.setProperty('org.micromanager.plugin.path', ...
@@ -373,8 +376,11 @@ function studio = CreateMMStudio(pathToMM)
          fullfile(pathToMM, 'mmautofocus'));
 
    % TODO We could do some health checks on MMCoreJ here
-
-   studio = org.micromanager.internal.MMStudio(false);
+	if isempty(autoStartProfile)
+		studio = org.micromanager.internal.MMStudio(false);
+	else
+		studio = org.micromanager.internal.MMStudio(false, autoStartProfile);
+	end
 end
 
 
