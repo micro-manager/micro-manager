@@ -39,6 +39,7 @@ using namespace std;
 
 const char* g_ASIFW1000Hub = "ASIFWController";
 const char* g_ASIFW1000FilterWheel = "ASIFilterWheel";
+const char* g_ASIFW1000FilterWheelSA = "ASIFilterWheelSA";
 const char* g_ASIFW1000FilterWheelNr = "ASIFilterWheelNumber";
 const char* g_ASIFW1000Shutter = "ASIShutter";
 const char* g_ASIFW1000ShutterNr = "ASIShutterNumber";
@@ -54,7 +55,8 @@ ASIFW1000Hub g_hub;
 MODULE_API void InitializeModuleData()
 {
    RegisterDevice(g_ASIFW1000Hub, MM::GenericDevice, "ASIFW1000 Controller");
-   RegisterDevice(g_ASIFW1000FilterWheel, MM::StateDevice, "ASI FilterWheel");   
+   RegisterDevice(g_ASIFW1000FilterWheel, MM::StateDevice, "ASI FilterWheel");
+   RegisterDevice(g_ASIFW1000FilterWheelSA, MM::StateDevice, "ASI FilterWheel SA");
    RegisterDevice(g_ASIFW1000Shutter, MM::ShutterDevice, "ASI Shutter"); 
 }
 
@@ -70,6 +72,10 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    else if (strcmp(deviceName, g_ASIFW1000FilterWheel) == 0 )
    {
       return new FilterWheel();
+   }
+   else if (strcmp(deviceName, g_ASIFW1000FilterWheelSA) == 0 )
+   {
+      return new FilterWheelSA();
    }
    else if (strcmp(deviceName, g_ASIFW1000Shutter) == 0 )
    {
@@ -537,6 +543,327 @@ int FilterWheel::OnSerialCommand(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 int FilterWheel::OnSerialResponse(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet || eAct == MM::AfterSet)
+   {
+      // always read
+      if (!pProp->Set(manualSerialAnswer_.c_str()))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   return DEVICE_OK;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// ASIFW1000 FilterWheel SA
+// includes port in filterwheel so you can use 2 controllers
+// original implementation has hub but uses global variable so only one controller possible
+///////////////////////////////////////////////////////////////////////////////
+FilterWheelSA::FilterWheelSA () :
+   port_("Undefined"),
+   initialized_ (false),
+   name_ (g_ASIFW1000FilterWheelSA),
+   pos_ (0),
+   wheelNr_ (0),
+   numPos_ (6),
+   serialAnswer_(""),
+   serialCommand_(""),
+   manualSerialAnswer_("")
+{
+   InitializeDefaultErrorMessages();
+
+   // Todo: Add custom messages
+   //
+   // create pre-initialization properties
+   // ------------------------------------
+
+   // FilterWheel Nr (0 or 1)
+   CPropertyAction* pAct = new CPropertyAction (this, &FilterWheelSA::OnWheelNr);
+   CreateProperty(g_ASIFW1000FilterWheelNr, "0", MM::Integer, false, pAct, true);
+   AddAllowedValue(g_ASIFW1000FilterWheelNr, "0");
+   AddAllowedValue(g_ASIFW1000FilterWheelNr, "1");
+   UpdateProperty(g_ASIFW1000FilterWheelNr);
+
+   // Port
+   pAct = new CPropertyAction (this, &FilterWheelSA::OnPort);
+   CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
+
+}
+
+int FilterWheelSA::ClearComPort(void)
+{
+   return PurgeComPort(port_.c_str());
+}
+
+int FilterWheelSA::QueryCommand(const char *command)
+{
+   MMThreadGuard g(threadLock_);
+   RETURN_ON_MM_ERROR ( ClearComPort() );
+   RETURN_ON_MM_ERROR ( SendSerialCommand(port_.c_str(), command, "\r") );
+   serialCommand_ = command;
+   RETURN_ON_MM_ERROR ( GetSerialAnswer(port_.c_str(), g_SerialTerminatorFW, serialAnswer_) );
+   return DEVICE_OK;
+}
+
+int FilterWheelSA::QueryCommandVerify(const char *command, const char *expectedReplyPrefix)
+{
+   RETURN_ON_MM_ERROR ( QueryCommand(command) );
+   // if doesn't match expected prefix, then look for ASI error code
+   size_t len = strlen(expectedReplyPrefix);
+   if (serialAnswer_.length() < len ||
+         serialAnswer_.substr(0, len).compare(expectedReplyPrefix) != 0)
+   {
+      return ERR_UNEXPECTED_ANSWER;
+   }
+   return DEVICE_OK;
+}
+
+int FilterWheelSA::ParseAnswerAfterPosition(unsigned int pos, int &val)
+{
+   // specify position as 3 to parse skipping the first 3 characters, e.g. for ":A 45.1"
+   if (pos >= serialAnswer_.length())
+   {
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   val = atoi(serialAnswer_.substr(pos).c_str());
+   return DEVICE_OK;
+}
+
+int FilterWheelSA::SelectWheel()
+{
+   ostringstream command; command.str("");
+   command << "FW" << wheelNr_;
+   return QueryCommandVerify(command.str(), command.str());
+}
+
+FilterWheelSA::~FilterWheelSA ()
+{
+   Shutdown();
+}
+
+void FilterWheelSA::GetName(char* name) const
+{
+   assert(name_.length() < CDeviceUtils::GetMaxStringLength());
+   CDeviceUtils::CopyLimitedString(name, name_.c_str());
+}
+
+int FilterWheelSA::Initialize()
+{
+   ostringstream command;
+
+   // Name
+   CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
+
+   // Description
+   CreateProperty(MM::g_Keyword_Description, "ASIFW1000 FilterWheel SA", MM::String, true);
+
+   // make sure we are on correct wheel
+   SelectWheel();
+
+   // figure out number of positions
+   RETURN_ON_MM_ERROR ( QueryCommandVerify("NF", "NF") );
+   RETURN_ON_MM_ERROR ( ParseAnswerAfterPosition(3, numPos_) );
+   command.str("");
+   command << numPos_;
+   CreateProperty("NumPositions", command.str().c_str(), MM::Integer, true);
+
+   // Get current position
+   RETURN_ON_MM_ERROR ( QueryCommandVerify("MP", "MP ") );
+   RETURN_ON_MM_ERROR ( ParseAnswerAfterPosition(3, pos_) );
+
+   // State
+   CPropertyAction* pAct = new CPropertyAction (this, &FilterWheelSA::OnState);
+   CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+
+   // add allowed values to the special state/position property for state devices
+   pAct = new CPropertyAction (this, &FilterWheelSA::OnState);
+   CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+   for (int i=0; i<numPos_; i++)
+   {
+      command.str("");
+      command << i;
+      AddAllowedValue(MM::g_Keyword_State, command.str().c_str());
+   }
+
+   // add default labels for the states
+   pAct = new CPropertyAction (this, &FilterWheelSA::OnLabel);
+   CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct);
+   for (int i=0; i<numPos_; i++)
+   {
+      command.str("");
+      command << "Position-" << i+1;
+      SetPositionLabel(i, command.str().c_str());
+   }
+
+   pAct = new CPropertyAction (this, &FilterWheelSA::OnSpeedSetting);
+   CreateProperty("SpeedSetting", "0", MM::Integer, false, pAct);
+   SetPropertyLimits("SpeedSetting", 0, 9);
+   UpdateProperty("SpeedSetting");
+
+   // property to allow sending arbitrary serial commands and receiving response
+   pAct = new CPropertyAction (this, &FilterWheelSA::OnSerialCommand);
+   CreateProperty("SerialCommand", "", MM::String, false, pAct);
+
+   // this is only changed programmatically, never by user
+   // contains last response to the OnSerialCommand action
+   pAct = new CPropertyAction (this, &FilterWheelSA::OnSerialResponse);
+   CreateProperty("SerialResponse", "", MM::String, true, pAct);
+
+   initialized_ = true;
+
+   return DEVICE_OK;
+}
+
+bool FilterWheelSA::Busy()
+{
+   int ret;
+   ret = SelectWheel();
+   if (ret != DEVICE_OK)
+      return false;
+
+   ret = SendSerialCommand(port_.c_str(), "?", "\r");
+   if (ret != DEVICE_OK)
+      return false;
+
+   // response is unterminated so only get 1st character
+   unsigned long read = 0;
+   char readChar[10];
+   MM::TimeoutMs timerOut(GetCurrentMMTime(), 200 );
+   while (read == 0 && ( !timerOut.expired(GetCurrentMMTime()) ) )
+   {
+      ret = ReadFromComPort(port_.c_str(), (unsigned char*)readChar, 1, read);
+   }
+
+   // say we are done only if we get code 0, even though 1 and 2 are technically OK but then we have to deal with
+   //   possibility of e.g. returning 12
+   return readChar[0] != '0';
+}
+
+int FilterWheelSA::Shutdown()
+{
+   if (initialized_)
+   {
+      initialized_ = false;
+   }
+   return DEVICE_OK;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Action handlers
+///////////////////////////////////////////////////////////////////////////////
+
+/*
+ * Sets the Serial Port to be used.
+ * Should be called before initialization
+ */
+int FilterWheelSA::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(port_.c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      if (initialized_)
+      {
+         // revert
+         pProp->Set(port_.c_str());
+         //return ERR_PORT_CHANGE_FORBIDDEN;
+      }
+
+      pProp->Get(port_);
+      g_hub.SetPort(port_.c_str());
+   }
+   return DEVICE_OK;
+}
+
+
+int FilterWheelSA::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set((long)pos_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long pos;
+      pProp->Get(pos);
+      RETURN_ON_MM_ERROR ( SelectWheel() );
+      command << "MP" << pos;
+      RETURN_ON_MM_ERROR ( QueryCommandVerify(command.str(), "MP") );
+      pos_ = (int)pos;
+   }
+   return DEVICE_OK;
+}
+
+int FilterWheelSA::OnWheelNr(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      // return wheel nr
+      pProp->Set((long)wheelNr_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      if (initialized_)
+         return ERR_CANNOT_CHANGE_PROPERTY;
+      long pos;
+      pProp->Get(pos);
+      if (pos==0 || pos==1)
+         wheelNr_ = (int)pos;
+   }
+   return DEVICE_OK;
+}
+
+int FilterWheelSA::OnSpeedSetting(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp = 0;
+   int tmp_int = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (initialized_)
+         return DEVICE_OK;  // assume it will only change via this property after initialization
+      RETURN_ON_MM_ERROR ( SelectWheel() );
+      RETURN_ON_MM_ERROR ( QueryCommand("SV") );
+      RETURN_ON_MM_ERROR ( ParseAnswerAfterPosition(3, tmp_int) );
+      if (!pProp->Set((long)tmp_int))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(tmp);
+      command << "SV " << tmp;
+      ostringstream response; response.str("");
+      response << "SV " << tmp;  // echoed in reverse order
+      RETURN_ON_MM_ERROR ( SelectWheel() );
+      RETURN_ON_MM_ERROR ( QueryCommandVerify(command.str(), response.str()) );
+   }
+   return DEVICE_OK;
+}
+
+int FilterWheelSA::OnSerialCommand(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      // do nothing
+   }
+   else if (eAct == MM::AfterSet) {
+      static std::string last_command_via_property;
+      std::string tmpstr;
+      pProp->Get(tmpstr);
+      RETURN_ON_MM_ERROR ( SelectWheel() );
+      // only send the command if it has been updated
+      if (tmpstr.compare(last_command_via_property) != 0)
+      {
+         last_command_via_property = tmpstr;
+         RETURN_ON_MM_ERROR( QueryCommand(tmpstr));
+      }
+   }
+   return DEVICE_OK;
+}
+
+int FilterWheelSA::OnSerialResponse(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet || eAct == MM::AfterSet)
    {

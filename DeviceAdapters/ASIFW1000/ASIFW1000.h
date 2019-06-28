@@ -28,6 +28,7 @@
 #define _ASIFW1000_H_
 
 #include "../../MMDevice/DeviceBase.h"
+#include "../../MMDevice/DeviceThreads.h"
 #include <string>
 #include <map>
 
@@ -59,6 +60,16 @@
 #define ERR_SHUTTER_NOT_FOUND       11007
 #define ERR_UNEXPECTED_ANSWER       11008
 
+
+// Use the name 'return_value' that is unlikely to appear within 'result'.
+#define RETURN_ON_MM_ERROR( result ) do { \
+   int return_value = (result); \
+   if (return_value != DEVICE_OK) { \
+      return return_value; \
+   } \
+} while (0)
+
+const char* const g_SerialTerminatorFW = "\n\r";
 
 class Hub : public CGenericBase<Hub>
 {
@@ -149,6 +160,55 @@ private:
    int wheelNr_;
    int numPos_;
    std::string manualSerialAnswer_; // last answer received when the SerialCommand property was used
+};
+
+class FilterWheelSA : public CStateDeviceBase<FilterWheelSA>
+{
+public:
+   FilterWheelSA();
+   ~FilterWheelSA();
+
+   // MMDevice API
+   // ------------
+   int Initialize();
+   int Shutdown();
+
+   void GetName(char* pszName) const;
+   bool Busy();
+   unsigned long GetNumberOfPositions()const {return numPos_;}
+   unsigned long GetWheelNr() const {return wheelNr_;}
+
+   // action interface
+   // ----------------
+   int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnWheelNr(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSpeedSetting(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSerialCommand(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSerialResponse(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   std::string port_;
+   bool initialized_;
+   std::string name_;
+   int pos_;
+   int wheelNr_;
+   int numPos_;
+   std::string serialAnswer_;
+   std::string serialCommand_;     // the last command sent, or can be set for calling commands without args
+   std::string manualSerialAnswer_; // last answer received when the SerialCommand property was used
+   MMThreadLock threadLock_;  // used to lock thread during serial transaction
+
+   int ClearComPort();
+   int QueryCommand(const char *command);
+   int QueryCommand(const std::string &command)
+         { return QueryCommand(command.c_str()); }
+   int QueryCommandVerify(const char *command, const char *expectedReplyPrefix);
+   int QueryCommandVerify(const std::string &command, const std::string &expectedReplyPrefix)
+         { return QueryCommandVerify(command.c_str(), expectedReplyPrefix.c_str()); }
+   int ParseAnswerAfterPosition(unsigned int pos, int &val);
+   int SelectWheel();
+
 };
 
 
