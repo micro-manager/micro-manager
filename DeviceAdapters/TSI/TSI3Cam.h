@@ -185,6 +185,7 @@ private:
 	int pixelSize;
 	int bitDepth;
 	LONG whiteBalancePending;
+	std::string sdkPath;
 
    Tsi3RoiBin fullFrame;
 

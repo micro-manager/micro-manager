@@ -155,7 +155,9 @@ int TsiCam::Initialize()
    if (g_tsiDllHandle == 0)
    {
       // load TSL dll and create api handle
-      g_tsiDllHandle = LoadLibrary("tsi_sdk.dll");
+		string sdkPath = getSDKPath();
+		sdkPath += "tsi_sdk.dll";
+      g_tsiDllHandle = LoadLibrary(sdkPath.c_str());
       if (g_tsiDllHandle)
       {
          TSI_CREATE_SDK tsi_create_sdk = (TSI_CREATE_SDK)GetProcAddress(g_tsiDllHandle, "tsi_create_sdk");

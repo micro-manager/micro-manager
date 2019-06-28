@@ -248,7 +248,8 @@ int Tsi3Cam::InitializeColorProcessor(bool wb/*=false*/)
 	if (!globalColorInitialized)
 	{
 		// Load the demosaic module.
-		g_demosaicModuleHandle = ::LoadLibrary("thorlabs_tsi_demosaic.dll");
+		std::string demosaicPath = sdkPath + "thorlabs_tsi_demosaic.dll";
+		g_demosaicModuleHandle = ::LoadLibrary(demosaicPath.c_str());
 		if (!g_demosaicModuleHandle)
 		{
 			LogMessage("Failed to open the demosaic library!");
@@ -280,7 +281,8 @@ int Tsi3Cam::InitializeColorProcessor(bool wb/*=false*/)
 			return ERR_INTERNAL_ERROR;
 		}
 	
-		g_colorModuleHandle = ::LoadLibrary("thorlabs_tsi_color_processing.dll");
+		std::string colorPath = sdkPath + "thorlabs_tsi_color_processing.dll";
+		g_colorModuleHandle = ::LoadLibrary(colorPath.c_str());
 		if (!g_colorModuleHandle)
 		{
 			LogMessage("Failed to open the color processing library!");
