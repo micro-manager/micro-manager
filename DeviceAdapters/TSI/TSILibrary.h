@@ -116,6 +116,7 @@ struct ROI {
 
 bool isTsiSDKAvailable();
 bool isTsiSDK3Available();
+std::string getSDKPath();
 
 
 

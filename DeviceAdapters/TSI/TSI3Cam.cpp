@@ -90,6 +90,9 @@ Tsi3Cam::Tsi3Cam() :
 
    // this identifies which camera we want to access
    CreateProperty(MM::g_Keyword_CameraID, "0", MM::Integer, false, 0, true);
+
+	// obtain path for loading DLLs
+	sdkPath = getSDKPath();
 }
 
 Tsi3Cam::~Tsi3Cam()
@@ -107,11 +110,15 @@ void Tsi3Cam::GetName(char* name) const
 
 int Tsi3Cam::Initialize()
 {
+
 	LogMessage("Initializing TSI3 camera...");
+	LogMessage("TSI SDK path: " + sdkPath);
 	
 	const int maxSdkStringLength = 1024;
+	string kernelPath(sdkPath);
+	kernelPath += "thorlabs_unified_sdk_kernel.dll";
 
-   if (tl_camera_sdk_dll_initialize())
+   if (tl_camera_sdk_dll_initialize(kernelPath.c_str()))
    {
       return ERR_TSI_DLL_LOAD_FAILED;
    }

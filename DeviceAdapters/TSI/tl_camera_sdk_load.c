@@ -254,13 +254,14 @@ static int init_error_cleanup()
 /// <returns>
 ///     1 for error, 0 for success
 /// </returns>
-int tl_camera_sdk_dll_initialize(void)
+int tl_camera_sdk_dll_initialize(const char* sdk_path)
 {
 	init_camera_sdk_function_pointers();
 
 	// Platform specific code to get a handle to the SDK kernel module.
 #ifdef _WIN32
-	kernel_obj = LoadLibraryA("thorlabs_unified_sdk_kernel.dll");
+	// "thorlabs_unified_sdk_kernel.dll");
+	kernel_obj = LoadLibraryA(sdk_path);
 //	int lastError = GetLastError();
 	if (!kernel_obj)
 	{

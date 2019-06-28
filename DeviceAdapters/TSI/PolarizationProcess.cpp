@@ -53,8 +53,9 @@ int Tsi3Cam::InitializePolarizationProcessor()
 {
 	if (!globalPolarizationInitialized)
 	{
-		// Load the demosaic module.
-		g_polarizationModuleHandle = ::LoadLibrary("thorlabs_tsi_polarization_processor.dll");
+		// Load the polarization module.
+		std::string polarPath = sdkPath + "thorlabs_tsi_polarization_processor.dll";
+		g_polarizationModuleHandle = ::LoadLibrary(polarPath.c_str());
 		if (!g_polarizationModuleHandle)
 		{
 			LogMessage("Failed to open the polarization library!");
