@@ -4,13 +4,16 @@
 // SUBSYSTEM:  DeviceAdapters
 //-----------------------------------------------------------------------------
 // DESCRIPTION:
-// Zeiss CAN29 bus controller, see Zeiss CAN29 bus documentation
+// Zeiss Axio Zoom adapter, based on Zeiss CAN29 bus controller,
+// see Zeiss CAN29 bus documentation
 //                
 // AUTHOR: Nico Stuurman, 6/18/2007 - 
 //         Nenad Amodaj, 2015
+//			  Maxime Deforet, 2019
 //
 // COPYRIGHT:     University of California, San Francisco, 2007, 2008, 2009
 //                Exploratorium, 2015
+//						Maxime Deforet, 2019
 //
 // LICENSE:       Please note: This code could only be developed thanks to information 
 //                provided by Zeiss under a non-disclosure agreement.  Subsequently, 
@@ -264,6 +267,8 @@ class OpticsUnitModel
       int GetZoomLevel(ZeissUShort& level);
       int GetAperture(ZeissByte& a);
       int SetAperture(ZeissByte a);
+	  int SetPositionObj(ZeissUShort p);
+      int GetPositionObj(ZeissUShort& p);
       int GetBusy(bool& busy);
       int GetInitialized(bool& init);
       void MakeBusy();
@@ -274,6 +279,7 @@ class OpticsUnitModel
       static MMThreadLock ouLock_;
       ZeissUShort zoomLevel;
       ZeissByte aperture;
+	  ZeissUShort positionObj;
       ZeissUByte state;
       bool waitingForAnswer;
 };   
@@ -665,6 +671,7 @@ public:
    // ----------------
    int OnZoomLevel(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAperture(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPositionObj(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int GetZoomLevelDirect(long& level);
@@ -673,6 +680,9 @@ private:
    int GetApertureDirect(long& a);
    int GetAperture(long& a);
    int SetAperture(long a);
+   
+   int GetPositionObj(unsigned short& pos);
+   int GetPositionObjDirect(unsigned short& pos);
 
    bool busy;
    bool initialized;

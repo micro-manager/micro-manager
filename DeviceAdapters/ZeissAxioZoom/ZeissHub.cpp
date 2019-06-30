@@ -166,7 +166,7 @@ int ZeissHub::Initialize(MM::Device& device, MM::Core& core)
       os.str("");
    }
 
-   // get stage Y status info
+   // get stage Y status info789
    it = find(canNodes_.begin(), canNodes_.end(), STAGEY);
    if (it != canNodes_.end()) {
       GetStageInfo(device, core, STAGEY);
