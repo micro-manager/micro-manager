@@ -72,7 +72,7 @@ MODULE_API void InitializeModuleData()
    RegisterDevice(g_ZeissMotorFocus, MM::StageDevice, "Motor Focus");
    RegisterDevice(g_ZeissXYStage, MM::XYStageDevice, "XYStage");
    RegisterDevice(g_ZeissOpticsUnit, MM::GenericDevice, "OpticsUnit");
-   RegisterDevice(g_ZeissFluoTube, MM::StateDevice, "FluoTube");
+   RegisterDevice(g_ZeissFluoTube, MM::ShutterDevice, "Reflector"); 
    RegisterDevice(g_ZeissDL450, MM::StateDevice, "DL450");
 }
 

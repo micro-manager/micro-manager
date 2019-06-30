@@ -189,6 +189,20 @@ int OpticsUnitModel::SetAperture(ZeissByte a)
    return DEVICE_OK;
 }
 
+int OpticsUnitModel::GetPositionObj(ZeissUShort& a) 
+{
+   MMThreadGuard(this->ouLock_); 
+   a = positionObj;
+   return DEVICE_OK;
+}
+
+int OpticsUnitModel::SetPositionObj(ZeissUShort a) 
+{
+   MMThreadGuard(this->ouLock_); 
+   positionObj = a;
+   return DEVICE_OK;
+}
+
 int OpticsUnitModel::GetBusy(bool& busy)
 {
    MMThreadGuard(this->ouLock_);
