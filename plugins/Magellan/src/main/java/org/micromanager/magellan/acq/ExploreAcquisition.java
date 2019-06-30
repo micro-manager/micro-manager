@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -28,8 +29,8 @@ import java.util.stream.Stream;
 import org.micromanager.magellan.imagedisplay.SubImageControls;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.Log;
-import mmcorej.CMMCore;
 import org.json.JSONArray;
+import org.micromanager.magellan.channels.ChannelSpec;
 
 /**
  * A single time point acquisition that can dynamically expand in X,Y, and Z
@@ -41,7 +42,8 @@ public class ExploreAcquisition extends Acquisition {
    private volatile double zTop_, zBottom_;
    //Map with slice index as keys used to get rid of duplicate events
    private ConcurrentHashMap<Integer, LinkedBlockingQueue<ExploreTileWaitingToAcquire>> queuedTileEvents_ = new ConcurrentHashMap<Integer, LinkedBlockingQueue<ExploreTileWaitingToAcquire>>();
-
+   private ArrayList<Future> submittedStreams_ = new ArrayList<Future>();
+   
    public ExploreAcquisition(ExploreAcqSettings settings) {
       super(settings.zStep_, settings.channels_);
       try {
@@ -70,6 +72,44 @@ public class ExploreAcquisition extends Acquisition {
    public void abort() {
       queuedTileEvents_.clear();
       super.abort();
+   }
+   
+   //Override the default acquisition channels function because explore acquisitions use all channels instead of active channels
+   @Override
+   protected Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels(ChannelSpec channels) {
+      return (AcquisitionEvent event) -> {
+         return new Iterator<AcquisitionEvent>() {
+            int channelIndex_ = 0;
+
+            @Override
+            public boolean hasNext() {
+               while (channelIndex_ < channels.getNumChannels() && (!channels.getChannelSetting(channelIndex_).uniqueEvent_ ||
+                       !channels.getChannelSetting(channelIndex_).use_)) {
+                  channelIndex_++;
+                  if (channelIndex_ >= channels.getNumChannels()) {
+                     return false;
+                  }
+               }
+               return channelIndex_ < channels.getNumChannels();
+            }
+
+            @Override
+            public AcquisitionEvent next() {
+               AcquisitionEvent channelEvent = event.copy();
+               while (channelIndex_ < channels.getNumChannels() && (!channels.getChannelSetting(channelIndex_).uniqueEvent_ ||
+                       !channels.getChannelSetting(channelIndex_).use_)) {
+                  channelIndex_++;
+                  if (channelIndex_ >= channels.getNumChannels()) {
+                     throw new RuntimeException("No valid channels remianing");
+                  }
+               }               
+               channelEvent.channelIndex_ = channelIndex_;
+               channelEvent.zPosition_ += channels.getChannelSetting(channelIndex_).offset_;
+               channelIndex_++;
+               return channelEvent;
+            }
+         };
+      };
    }
 
    public void acquireTileAtCurrentLocation(final SubImageControls controls) {
@@ -127,7 +167,9 @@ public class ExploreAcquisition extends Acquisition {
               = new ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>>();
       acqFunctions.add(positions(posIndices, posManager_.getPositionList()));
       acqFunctions.add(zStack(minZIndex, maxZIndex + 1));
-      acqFunctions.add(channels(channels_));
+      if (!channels_.getChannelSetting(0).group_.equals("")) {
+         acqFunctions.add(channels(channels_));
+      }      
 
       Stream<AcquisitionEvent> eventStream = makeEventStream(acqFunctions);
       eventStream = eventStream.map(monitorSliceIndices());
@@ -139,28 +181,28 @@ public class ExploreAcquisition extends Acquisition {
       Stream<AcquisitionEvent> newStream = eventList.stream();
       //Add a function that removes from queue of waiting tiles after each one is done
       newStream = newStream.map((AcquisitionEvent e) -> {
-         queuedTileEvents_.get(e.sliceIndex_).remove(new ExploreTileWaitingToAcquire(e.xyPosition_.getGridRow(), e.xyPosition_.getGridCol(),
-                 e.sliceIndex_, e.channelIndex_));
+         queuedTileEvents_.get(e.zIndex_).remove(new ExploreTileWaitingToAcquire(e.xyPosition_.getGridRow(), e.xyPosition_.getGridCol(),
+                 e.zIndex_, e.channelIndex_));
          return e;
       });
 
-      submitEventStream(newStream);
+      MagellanEngine.getInstance().submitEventStream(newStream, this);
    }
 
    private Predicate<AcquisitionEvent> filterExistingEventsAndDisplayQueuedTiles() {
       return (AcquisitionEvent event) -> {
          try {
             //add tile tile to list waiting to acquire for drawing purposes
-            if (!queuedTileEvents_.containsKey(event.sliceIndex_)) {
-               queuedTileEvents_.put(event.sliceIndex_, new LinkedBlockingQueue<ExploreTileWaitingToAcquire>());
+            if (!queuedTileEvents_.containsKey(event.zIndex_)) {
+               queuedTileEvents_.put(event.zIndex_, new LinkedBlockingQueue<ExploreTileWaitingToAcquire>());
             }
 
             ExploreTileWaitingToAcquire tile = new ExploreTileWaitingToAcquire(event.xyPosition_.getGridRow(),
-                    event.xyPosition_.getGridCol(), event.sliceIndex_, event.channelIndex_);
-            if (queuedTileEvents_.get(event.sliceIndex_).contains(tile)) {
+                    event.xyPosition_.getGridCol(), event.zIndex_, event.channelIndex_);
+            if (queuedTileEvents_.get(event.zIndex_).contains(tile)) {
                return false; //This tile is already waiting to be acquired
             }
-            queuedTileEvents_.get(event.sliceIndex_).put(tile);
+            queuedTileEvents_.get(event.zIndex_).put(tile);
             return true;
          } catch (InterruptedException ex) {
             throw new RuntimeException(ex);
@@ -223,6 +265,26 @@ public class ExploreAcquisition extends Acquisition {
       } catch (Exception e) {
          Log.log("Couldn't create initial position list", true);
          return null;
+      }
+   }
+
+   @Override
+   protected void shutdownEvents() {
+      for (Future f : submittedStreams_) {
+         f.cancel(true);
+      }
+   }
+
+   @Override
+   public void waitForShutdown() {
+       for (Future f : submittedStreams_) {
+         while (!f.isDone()) {
+            try {
+               Thread.sleep(5);
+            } catch (InterruptedException ex) {
+               Log.log("Interrupt while waiting for finish");
+            }
+         }
       }
    }
 

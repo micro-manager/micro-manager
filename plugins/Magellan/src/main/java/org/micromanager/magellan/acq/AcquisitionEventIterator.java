@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.micromanager.magellan.acq;
 
 import java.util.Iterator;
@@ -11,7 +6,8 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
- *
+ * Takes a list of iterators representing levels of a tree, and provides a lazy iterator over the leaves
+ * of the tree
  * @author henrypinkard
  */
 public class AcquisitionEventIterator implements Iterator<AcquisitionEvent> {

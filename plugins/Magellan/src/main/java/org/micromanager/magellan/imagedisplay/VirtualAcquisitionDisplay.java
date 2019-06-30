@@ -153,6 +153,7 @@ public abstract class VirtualAcquisitionDisplay {
 //               }
                try {
                   tags = acquiredTagsQueue_.take();
+//                  System.out.println("image tags take time " + (System.currentTimeMillis() % 10000));
                } catch (InterruptedException ex) {
                   // Interrupted while waiting for the queue to be 
                   // populated. 
@@ -161,13 +162,12 @@ public abstract class VirtualAcquisitionDisplay {
                      return;
                   }
                }
-
                if (hyperImage_ != null && hyperImage_.getCanvas() != null) {
+
                   // Wait for the canvas to be available. If we don't do this,
                   // then our framerate tanks, possibly because of repaint
                   // events piling up in the EDT. It's hard to tell. 
-                  while (CanvasPaintPending.isMyPaintPending(
-                          hyperImage_.getCanvas(), imageReceivedObject_)) {
+                  while (CanvasPaintPending.isMyPaintPending(hyperImage_.getCanvas(), imageReceivedObject_)) {
                      try {
                         Thread.sleep(10);
                      } catch (InterruptedException e) {
@@ -177,12 +177,14 @@ public abstract class VirtualAcquisitionDisplay {
                         }
                      }
                   }
+
                   CanvasPaintPending.setPaintPending(hyperImage_.getCanvas(), imageReceivedObject_);
                }
+
                imageAcquiredDisplayUpdate(tags);
             } // End while loop
          }
-      });
+      }, "Virtual acquisition display thread");
       displayThread_.start();
    }
 

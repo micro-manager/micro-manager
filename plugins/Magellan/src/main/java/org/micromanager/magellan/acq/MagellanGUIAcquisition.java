@@ -18,13 +18,14 @@ package org.micromanager.magellan.acq;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.awt.geom.Point2D;
 import java.util.Iterator;
+import java.util.concurrent.Future;
 import java.util.function.Function;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.json.JSONArray;
-import org.micromanager.magellan.coordinates.MagellanAffineUtils;
 import org.micromanager.magellan.coordinates.XYStagePosition;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.Log;
@@ -38,9 +39,9 @@ public class MagellanGUIAcquisition extends Acquisition {
 
    final private MagellanGUIAcquisitionSettings settings_;
    //executor service to wait for next execution
-   private final boolean towardsSampleIsPositive_;
    private long lastTPEventStartTime_ = -1;
    private List<XYStagePosition> positions_;
+   private Future acqFuture_;
 
    /**
     * Acquisition with fixed XY positions (although they can potentially all be
@@ -57,25 +58,12 @@ public class MagellanGUIAcquisition extends Acquisition {
    public MagellanGUIAcquisition(MagellanGUIAcquisitionSettings settings) {
       super(settings.zStep_, settings.channels_);
       settings_ = settings;
-      try {
-         int dir = Magellan.getCore().getFocusDirection(zStage_);
-         if (dir > 0) {
-            towardsSampleIsPositive_ = true;
-         } else if (dir < 0) {
-            towardsSampleIsPositive_ = false;
-         } else {
-            throw new Exception();
-         }
-      } catch (Exception e) {
-         Log.log("Couldn't get focus direction of Z drive. Configre using Tools--Hardware Configuration Wizard");
-         throw new RuntimeException();
-      }
       createXYPositions();
       initialize(settings.dir_, settings.name_, settings.tileOverlap_);
 
       //Submit a generating stream to get this acquisition going
       Stream<AcquisitionEvent> acqEventStream = magellanGUIAcqEventStream();
-      submitEventStream(acqEventStream);
+      acqFuture_ = MagellanEngine.getInstance().submitEventStream(acqEventStream, this);
    }
 
    /**
@@ -102,7 +90,7 @@ public class MagellanGUIAcquisition extends Acquisition {
       ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>> acqFunctions
               = new ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>>();
       //Define where slice index 0 will be
-      zOrigin_ = getZTopCoordinate();
+      zOrigin_ = getZTopCoordinate(settings_.spaceMode_, settings_, zStageHasLimits_, zStageLowerLimit_, zStageUpperLimit_, zStage_);
       boolean surfaceGuided2D = settings_.spaceMode_ == MagellanGUIAcquisitionSettings.REGION_2D && settings_.useCollectionPlane_;
 
       acqFunctions.add(timelapse());
@@ -142,8 +130,8 @@ public class MagellanGUIAcquisition extends Acquisition {
 
    private Function<AcquisitionEvent, AcquisitionEvent> monitorSliceIndices() {
       return (AcquisitionEvent event) -> {
-         maxSliceIndex_ = Math.max(maxSliceIndex_, event.sliceIndex_);
-         minSliceIndex_ = Math.min(minSliceIndex_, event.sliceIndex_);
+         maxSliceIndex_ = Math.max(maxSliceIndex_, event.zIndex_);
+         minSliceIndex_ = Math.min(minSliceIndex_, event.zIndex_);
          return event;
       };
    }
@@ -169,7 +157,7 @@ public class MagellanGUIAcquisition extends Acquisition {
                double interval_ms = settings_.timePointInterval_ * (settings_.timeIntervalUnit_ == 1 ? 1000 : (settings_.timeIntervalUnit_ == 2 ? 60000 : 1));
                AcquisitionEvent timePointEvent = event.copy();
 
-               timePointEvent.miniumumStartTime_ = lastTPEventStartTime_ + (long) interval_ms;
+               timePointEvent.miniumumStartTime_ = interval_ms == 0 ? 0 : lastTPEventStartTime_ + (long) interval_ms;
                timePointEvent.timeIndex_ = frameIndex_;
                if (frameIndex_ == 0) {
                   lastTPEventStartTime_ = System.currentTimeMillis();
@@ -190,7 +178,8 @@ public class MagellanGUIAcquisition extends Acquisition {
    protected Function<AcquisitionEvent, Iterator<AcquisitionEvent>> MagellanZStack() {
       return (AcquisitionEvent event) -> {
          return new Iterator<AcquisitionEvent>() {
-            private int sliceIndex_ = (int) Math.round((getZTopCoordinate() - zOrigin_) / zStep_);
+            private int sliceIndex_ = (int) Math.round((getZTopCoordinate(settings_.spaceMode_, settings_,
+                    zStageHasLimits_, zStageLowerLimit_, zStageUpperLimit_, zStage_) - zOrigin_) / zStep_);
 
             @Override
             public boolean hasNext() {
@@ -210,7 +199,7 @@ public class MagellanGUIAcquisition extends Acquisition {
                   zPos = zOrigin_ + sliceIndex_ * zStep_;
                }
                AcquisitionEvent sliceEvent = event.copy();
-               sliceEvent.sliceIndex_ = sliceIndex_;
+               sliceEvent.zIndex_ = sliceIndex_;
                //Do plus equals here in case z positions have been modified by another function (e.g. channel specific focal offsets)
                sliceEvent.zPosition_ += zPos;
                sliceIndex_++;
@@ -233,7 +222,7 @@ public class MagellanGUIAcquisition extends Acquisition {
             zPos = settings_.collectionPlane_.getExtrapolatedValue(event.xyPosition_.getCenter().x, event.xyPosition_.getCenter().y);
          }
          event.zPosition_ += zPos;
-         event.sliceIndex_ = 0; //Make these all 0 for the purposes of the display even though they may be in very differnet locations
+         event.zIndex_ = 0; //Make these all 0 for the purposes of the display even though they may be in very differnet locations
          return Stream.of(event).iterator();
       };
 
@@ -287,12 +276,31 @@ public class MagellanGUIAcquisition extends Acquisition {
       }
    }
 
-   private double getZTopCoordinate() {
-      return getZTopCoordinate(settings_.spaceMode_, settings_, towardsSampleIsPositive_, zStageHasLimits_, zStageLowerLimit_, zStageUpperLimit_, zStage_);
-   }
+//           
 
-   public static double getZTopCoordinate(int spaceMode, MagellanGUIAcquisitionSettings settings, boolean towardsSampleIsPositive,
+
+   public static double getZTopCoordinate(int spaceMode, MagellanGUIAcquisitionSettings settings,
            boolean zStageHasLimits, double zStageLowerLimit, double zStageUpperLimit, String zStage) {
+      boolean towardsSampleIsPositive = true;
+      if (spaceMode == MagellanGUIAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK ||
+              spaceMode == MagellanGUIAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
+         int dir = 0;
+         try {
+            dir = Magellan.getCore().getFocusDirection(Magellan.getCore().getFocusDevice());
+         } catch (Exception ex) {
+            Log.log("Couldnt get focus direction from  core");
+            throw new RuntimeException();
+         }
+         if (dir > 0) {
+            towardsSampleIsPositive = true;
+         } else if (dir < 0) {
+            towardsSampleIsPositive = false;
+         } else {
+            Log.log("Couldn't get focus direction of Z drive. Configre using \"Devices--Hardware Configuration Wizard\"");
+            throw new RuntimeException("Focus direction undefined");
+         }
+      }
+      
       if (spaceMode == MagellanGUIAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
          Point3d[] interpPoints = settings.fixedSurface_.getPoints();
          if (towardsSampleIsPositive) {
@@ -377,6 +385,22 @@ public class MagellanGUIAcquisition extends Acquisition {
          pList.put(xyPos.getMMPosition());
       }
       return pList;
+   }
+
+   @Override
+   protected void shutdownEvents() {
+      acqFuture_.cancel(true);
+   }
+
+   @Override
+   public void waitForShutdown() {
+      while (!acqFuture_.isDone()) {
+         try {
+            Thread.sleep(5);
+         } catch (InterruptedException ex) {
+            Log.log("Interrupted while waiting to cancel");
+         }
+      }
    }
 
 }

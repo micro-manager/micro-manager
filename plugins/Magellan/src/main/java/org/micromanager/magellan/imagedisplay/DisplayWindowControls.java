@@ -76,9 +76,9 @@ public class DisplayWindowControls extends Panel implements SurfaceGridListener 
          //start in explore
          tabbedPane_.setSelectedIndex(0);
       } else {
-         tabbedPane_.remove(0); //remove explore tab
+         tabbedPane_.remove(3); //remove explore tab
          acquireAtCurrentButton_.setVisible(false);
-         tabbedPane_.setSelectedIndex(1); //statr on contrst
+         tabbedPane_.setSelectedIndex(0); //statr on contrst
       }
 
       //exactly one surface or grid selected at all times

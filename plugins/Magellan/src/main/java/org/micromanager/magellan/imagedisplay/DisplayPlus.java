@@ -22,7 +22,7 @@ package org.micromanager.magellan.imagedisplay;
  */
 import org.micromanager.magellan.acq.Acquisition;
 import org.micromanager.magellan.acq.ExploreAcquisition;
-import org.micromanager.magellan.acq.MultiResMultipageTiffStorage;
+import org.micromanager.magellan.datasaving.MultiResMultipageTiffStorage;
 import com.google.common.eventbus.Subscribe;
 import ij.CompositeImage;
 import ij.IJ;
@@ -295,7 +295,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements SurfaceGri
       redrawPixelsExecutor_.shutdownNow();
       //make sure acquisition is done before allowing imagestorage to close
       if (acq_ != null){ 
-         acq_.waitUntilClosed();
+         acq_.waitForShutdown();
       } 
       super.onWindowClose(event);
    }

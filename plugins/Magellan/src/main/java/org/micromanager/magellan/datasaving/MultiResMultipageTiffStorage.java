@@ -14,7 +14,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.magellan.acq;
+package org.micromanager.magellan.datasaving;
 
 import org.micromanager.magellan.coordinates.MagellanAffineUtils;
 import org.micromanager.magellan.coordinates.PositionManager;
@@ -887,7 +887,7 @@ public class MultiResMultipageTiffStorage {
       return posManager_.getFullResPositionIndexFromStageCoords(xPos, yPos);
    }
 
-   PositionManager getPosManager() {
+   public PositionManager getPosManager() {
       return posManager_;
    }
 

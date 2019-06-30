@@ -19,7 +19,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.magellan.acq;
+package org.micromanager.magellan.datasaving;
 
 import org.micromanager.magellan.imagedisplay.DisplaySettings;
 import java.io.File;

@@ -24,7 +24,7 @@ import org.micromanager.magellan.acq.Acquisition;
 import org.micromanager.magellan.acq.ExploreAcquisition;
 import org.micromanager.magellan.acq.MagellanGUIAcquisition;
 import org.micromanager.magellan.acq.MMImageCache;
-import org.micromanager.magellan.acq.MultiResMultipageTiffStorage;
+import org.micromanager.magellan.datasaving.MultiResMultipageTiffStorage;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.util.Set;
@@ -422,10 +422,6 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
       return acquisition_.getDisplaySliceIndexFromZCoordinate(zPos);
    }
 
-   public JSONObject getLatestMetadata() {
-      return latestMetadata_;
-   }
-
    //this method is called to get the tagged image for display purposes only
    //return the zoomed or downsampled image here for fast performance
    @Override
@@ -441,7 +437,8 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
       }
       TaggedImage img = multiResStorage_.getImageForDisplay(channel, slice, frame, resolutionIndex_,
               xView_, yView_, displayImageWidth_, displayImageHeight_);
-      latestMetadata_ = img.tags;
+//      latestMetadata_ = img.tags;
+      disp_.setCurrentMetadata(img.tags);
       return img;
    }
 

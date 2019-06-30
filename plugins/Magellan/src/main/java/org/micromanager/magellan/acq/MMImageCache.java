@@ -19,6 +19,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 package org.micromanager.magellan.acq;
 
+import org.micromanager.magellan.datasaving.MultiResMultipageTiffStorage;
 import ij.CompositeImage;
 import org.micromanager.magellan.imagedisplay.DisplayPlus;
 import java.awt.Color;
