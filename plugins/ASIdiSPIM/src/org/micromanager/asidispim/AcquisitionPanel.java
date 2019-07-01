@@ -4527,10 +4527,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                     done = cancelAcquisition_.get();
                                     Thread.sleep(1);
                                     if (now - last >= timeout2) {
-                                       ReportingUtils.logError("First cam seq: " + core_.isSequenceRunning(firstCamera) +
-                                             ((twoSided || acqBothCameras) ? ("   Second cam seq: " + core_.isSequenceRunning(secondCamera)) : "") +
-                                             "   nrSlicesSoftware: " + nrSlicesSoftware +
-                                             "   total images: " + totalImages);
+                                       if (acqSimultSideA) {
+                                          ReportingUtils.logError("First cam seq: " + ((cameraA1 != null) ? core_.isSequenceRunning(cameraA1) : "not used"));
+                                          ReportingUtils.logError("Second cam seq: " + ((cameraA2 != null) ? core_.isSequenceRunning(cameraA2) : "not used"));
+                                          ReportingUtils.logError("Third cam seq: " + ((cameraA3 != null) ? core_.isSequenceRunning(cameraA3) : "not used"));
+                                          ReportingUtils.logError("Fourth cam seq: " + ((cameraA4 != null) ? core_.isSequenceRunning(cameraA4) : "not used"));
+                                       } else {
+                                          ReportingUtils.logError("First cam seq: " + core_.isSequenceRunning(firstCamera) +
+                                                ((twoSided || acqBothCameras) ? ("   Second cam seq: " + core_.isSequenceRunning(secondCamera)) : "") +
+                                                "   nrSlicesSoftware: " + nrSlicesSoftware +
+                                                "   total images: " + totalImages);
+                                       }
                                        ReportingUtils.logError("Camera did not send all expected images within" +
                                              " a reasonable period for timepoint " + numTimePointsDone_ + "and "
                                              + "position " + numPositionsDone_ + " .  Continuing anyway.");
