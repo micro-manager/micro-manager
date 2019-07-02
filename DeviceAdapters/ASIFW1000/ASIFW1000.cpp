@@ -630,9 +630,21 @@ int FilterWheelSA::ParseAnswerAfterPosition(unsigned int pos, int &val)
 
 int FilterWheelSA::SelectWheel()
 {
+   bool done = false;
+   int nrTriesLeft = 3;
    ostringstream command; command.str("");
    command << "FW" << wheelNr_;
-   return QueryCommandVerify(command.str(), command.str());
+   while (!done && nrTriesLeft > 0)
+   {
+      RETURN_ON_MM_ERROR ( QueryCommandVerify(command.str(), command.str()) );
+      char lastChar = serialAnswer_.at(serialAnswer_.length()-1);
+      done = lastChar!='R' && ((lastChar-'0') == wheelNr_);
+      nrTriesLeft--;
+   }
+   if (done)
+      return DEVICE_OK;
+   else
+      return ERR_UNRECOGNIZED_ANSWER;
 }
 
 FilterWheelSA::~FilterWheelSA ()
@@ -720,20 +732,23 @@ bool FilterWheelSA::Busy()
    if (ret != DEVICE_OK)
       return false;
 
+   ret = ClearComPort();
+   if (ret != DEVICE_OK)
+      return false;
    ret = SendSerialCommand(port_.c_str(), "?", "\r");
    if (ret != DEVICE_OK)
       return false;
 
    // response is unterminated so only get 1st character
    unsigned long read = 0;
-   char readChar[10];
+   char readChar[1];
    MM::TimeoutMs timerOut(GetCurrentMMTime(), 200 );
-   while (read == 0 && ( !timerOut.expired(GetCurrentMMTime()) ) )
+   while (ret == DEVICE_OK && read == 0 && ( !timerOut.expired(GetCurrentMMTime()) ) )
    {
       ret = ReadFromComPort(port_.c_str(), (unsigned char*)readChar, 1, read);
    }
 
-   // say we are done only if we get code 0, even though 1 and 2 are technically OK but then we have to deal with
+   // say we are not busy only if we get code 0, even though 1 and 2 are technically OK but then we have to deal with
    //   possibility of e.g. returning 12
    return readChar[0] != '0';
 }
