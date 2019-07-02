@@ -632,13 +632,17 @@ int FilterWheelSA::SelectWheel()
 {
    bool done = false;
    int nrTriesLeft = 3;
+   int ret;
    ostringstream command; command.str("");
    command << "FW" << wheelNr_;
    while (!done && nrTriesLeft > 0)
    {
-      RETURN_ON_MM_ERROR ( QueryCommandVerify(command.str(), command.str()) );
-      char lastChar = serialAnswer_.at(serialAnswer_.length()-1);
-      done = lastChar!='R' && ((lastChar-'0') == wheelNr_);
+      ret = QueryCommandVerify(command.str(), "FW");
+      if (ret == DEVICE_OK)
+      {
+         char lastChar = serialAnswer_.at(serialAnswer_.length()-1);
+         done = lastChar!='R' && ((lastChar-'0') == wheelNr_);
+      }
       nrTriesLeft--;
    }
    if (done)
@@ -849,10 +853,8 @@ int FilterWheelSA::OnSpeedSetting(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       pProp->Get(tmp);
       command << "SV " << tmp;
-      ostringstream response; response.str("");
-      response << "SV " << tmp;  // echoed in reverse order
       RETURN_ON_MM_ERROR ( SelectWheel() );
-      RETURN_ON_MM_ERROR ( QueryCommandVerify(command.str(), response.str()) );
+      RETURN_ON_MM_ERROR ( QueryCommandVerify(command.str(), command.str()) );
    }
    return DEVICE_OK;
 }
