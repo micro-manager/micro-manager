@@ -93,7 +93,7 @@ public final class IntroDlg extends JDialog {
             studio.plugins().getIntroPlugins();
       if (plugins.size() > 0) {
          // Take the alphabetically first intro plugin we see.
-         ArrayList<String> names = new ArrayList<String>(plugins.keySet());
+         ArrayList<String> names = new ArrayList<>(plugins.keySet());
          Collections.sort(names);
          plugin_ = plugins.get(names.get(0));
          if (plugins.size() > 1) {

@@ -98,43 +98,42 @@ public final class OptionsDlg extends MMDialog {
       debugLogEnabledCheckBox.setText("Enable debug logging");
       debugLogEnabledCheckBox.setToolTipText("Enable verbose logging for troubleshooting and debugging");
       debugLogEnabledCheckBox.setSelected(getIsDebugLogEnabled(mmStudio_));
-      debugLogEnabledCheckBox.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(final ActionEvent e) {
-            boolean isEnabled = debugLogEnabledCheckBox.isSelected();
-            setIsDebugLogEnabled(mmStudio_, isEnabled);
-            core_.enableDebugLog(isEnabled);
-            UIMonitor.enable(isEnabled);
-         }
+      debugLogEnabledCheckBox.addActionListener((final ActionEvent e) -> {
+         boolean isEnabled = debugLogEnabledCheckBox.isSelected();
+         setIsDebugLogEnabled(mmStudio_, isEnabled);
+         core_.enableDebugLog(isEnabled);
+         UIMonitor.enable(isEnabled);
       });
 
       final JCheckBox askForConfigFileCheckBox = new JCheckBox();
-      askForConfigFileCheckBox.setText("Ask for config file at startup");
-      askForConfigFileCheckBox.setSelected(!startupSettings.shouldSkipConfigSelectionAtStartup());
-      askForConfigFileCheckBox.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            startupSettings.setSkipConfigSelectionAtStartup(
-                  !askForConfigFileCheckBox.isSelected());
-         }
-      });
-
+      
       final JCheckBox alwaysUseDefaultProfileCheckBox = new JCheckBox(
             "Always use the default user profile");
-      alwaysUseDefaultProfileCheckBox.setToolTipText("Always use the default user profile; no prompt will be displayed to select a profile at startup.");
-      alwaysUseDefaultProfileCheckBox.setSelected(startupSettings.shouldSkipProfileSelectionAtStartup());
+      alwaysUseDefaultProfileCheckBox.setToolTipText(
+              "Always use the default user profile; no prompt will be displayed to select a profile at startup.");
+      alwaysUseDefaultProfileCheckBox.setSelected(
+              startupSettings.shouldSkipProfileSelectionAtStartup());
       alwaysUseDefaultProfileCheckBox.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             boolean checked = alwaysUseDefaultProfileCheckBox.isSelected();
             startupSettings.setSkipProfileSelectionAtStartup(checked);
-            askForConfigFileCheckBox.setEnabled(!checked);
-            if (checked) {
-               askForConfigFileCheckBox.setSelected(true);
-               startupSettings.setSkipConfigSelectionAtStartup(true);
-            }
+            askForConfigFileCheckBox.setSelected(checked);
+            startupSettings.setSkipConfigSelectionAtStartup(checked);
          }
       });
+
+      // Slaving the "use default profile" setting.  
+      // There is no logic in the splashcreen to do anything useful when only one
+      // of these two is selected
+      askForConfigFileCheckBox.setText("Ask for config file at startup");
+      askForConfigFileCheckBox.setSelected(!startupSettings.shouldSkipConfigSelectionAtStartup());
+      askForConfigFileCheckBox.addActionListener((ActionEvent arg0) -> {
+         startupSettings.setSkipConfigSelectionAtStartup(
+                 !askForConfigFileCheckBox.isSelected());
+      });
+      askForConfigFileCheckBox.setSelected(alwaysUseDefaultProfileCheckBox.isSelected());
+      askForConfigFileCheckBox.setEnabled(false);
 
       final JCheckBox deleteLogCheckBox = new JCheckBox();
       deleteLogCheckBox.setText("Delete log files after");
@@ -312,6 +311,8 @@ public final class OptionsDlg extends MMDialog {
 
       super.add(alwaysUseDefaultProfileCheckBox, "wrap");
       super.add(askForConfigFileCheckBox, "wrap");
+      
+      super.add(new JSeparator(), "wrap");
 
       super.add(new JLabel("Startup Script:"), "split 2, grow 0, gapright related");
       super.add(startupScriptFile_, "wrap");
