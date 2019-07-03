@@ -785,6 +785,16 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
       getDataAnalysisPanel().runExport();
    }
    
+   @Override
+   public void attachRunnable(Runnable runnable, RunnableType type) throws ASIdiSPIMException, RemoteException {
+      getAcquisitionPanel().attachRunnable(runnable, type);
+   }
+
+   @Override
+   public void clearAllRunnables() throws ASIdiSPIMException, RemoteException{
+      getAcquisitionPanel().clearAllRunnables();      
+   }
+   
    
    //** Private methods.  Only for internal use **//
 

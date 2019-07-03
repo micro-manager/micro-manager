@@ -818,4 +818,14 @@ public interface ASIdiSPIMInterface extends Remote {
     * equivalent to clicking "Export" button on data analysis tab
     */
    public void doExportData() throws ASIdiSPIMException, RemoteException;
+   
+   /**
+    * attach runnables to diSPIM acquisition 
+    */
+   public void attachRunnable(Runnable runnable, RunnableType type) throws ASIdiSPIMException, RemoteException;
+   
+   /**
+    * clears all runnables attached to diSPIM acquisition
+    */
+   public void clearAllRunnables() throws ASIdiSPIMException, RemoteException;
 }

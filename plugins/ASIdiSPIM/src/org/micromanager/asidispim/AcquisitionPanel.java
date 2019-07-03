@@ -48,6 +48,7 @@ import org.micromanager.asidispim.Utils.AutofocusUtils;
 import org.micromanager.asidispim.Utils.MovementDetector;
 import org.micromanager.asidispim.Utils.MovementDetector.Method;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
+import org.micromanager.asidispim.api.RunnableType;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -68,6 +69,8 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.text.ParseException;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -261,6 +264,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private double overviewPixelSize_ = 1;
    private double overviewCompressX_ = 1;
    private double extraChannelOffset_ = 0.0;
+   private final List<Runnable> runnablesStartTimepoint_;
+   private final List<Runnable> runnablesEndTimepoint_;
+   private final List<Runnable> runnablesStartPosition_;
+   private final List<Runnable> runnablesEndPosition_;
    
    private static final int XYSTAGETIMEOUT = 20000;
    
@@ -297,6 +304,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       channelNames_ = null;
       resetXaxisSpeed_ = true;
       acquisitionPanel_ = this;
+      
+      runnablesStartTimepoint_ = new ArrayList<Runnable>();
+      runnablesEndTimepoint_ = new ArrayList<Runnable>();
+      runnablesStartPosition_ = new ArrayList<Runnable>();
+      runnablesEndPosition_ = new ArrayList<Runnable>();
       
       PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
       
@@ -3734,6 +3746,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             repeatdelay = repeatStart + acqNum * timepointIntervalMs - repeatNow;
          }
          
+         // TODO consider increasing the max number of images in the queue to e.g. 25
          BlockingQueue<TaggedImage> bq = new LinkedBlockingQueue<TaggedImage>(10);
          
          // try to close last acquisition viewer if there could be one open (only in single acquisition per timepoint mode)
@@ -4028,13 +4041,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   acqNow = System.currentTimeMillis();
                   delay = acqStart + trigNum * timepointIntervalMs - acqNow;
                }
-
+               
                // check for stop button before each time point
                if (cancelAcquisition_.get()) {
                   throw new IllegalMonitorStateException("User stopped the acquisition");
                }
                
                int timePoint = acqSettings.separateTimepoints ? acqNum : trigNum ;
+               
+               // execute any start-timepoint runnables
+               for (Runnable r : runnablesStartTimepoint_) {
+                  r.run();
+               }
                
                // this is where we autofocus if requested
                if (acqSettings.useAutofocus) {
@@ -4081,6 +4099,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                for (int positionNum = 0; positionNum < nrPositions; positionNum++) {
                   numPositionsDone_ = positionNum + 1;
                   updateAcquisitionStatus(AcquisitionStatus.ACQUIRING);
+                  
+                  // execute any start-position runnables
+                  for (Runnable r : runnablesStartPosition_) {
+                     r.run();
+                  }
+                  
                   if (acqSettings.useMultiPositions) {
                      
                      // make sure user didn't stop things
@@ -4142,7 +4166,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      nrOuterLoop = 2;
                   }
                   
-                  // loop over all the times we trigger the controller
+                  // loop over all the times we trigger the controller for each position
                   // usually just once, but will be the number of channels if we have
                   //  multiple channels and aren't using PLogic to change between them
                   // if we are using path presets then trigger controller for each side and do that in "outer loop"
@@ -4630,8 +4654,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                               msg += tpNumber[i] + ", ";
                            }
                            ReportingUtils.logError(msg);
-                        }
-                     }
+                        }// end finally cleanup statement
+                     }// end loop over software channels
+                  }// end outer loop of times we trigger controller
+                  
+                  // execute any end-position runnables
+                  for (Runnable r : runnablesEndPosition_) {
+                     r.run();
                   }
                   
                   if (acqSettings.useMovementCorrection && 
@@ -4679,7 +4708,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
                      }
                   }
+               }//end loop over positions
+               
+               // execute any end-timepoint runnables
+               for (Runnable r : runnablesEndTimepoint_) {
+                  r.run();
                }
+               
                if (acqSettings.hardwareTimepoints) {
                   break;
                }
@@ -5562,6 +5597,30 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
    public double getEstimatedAcquisitionDuration() {
       return computeActualTimeLapseDuration();
+   }
+
+   public void attachRunnable(Runnable runnable, RunnableType type) {
+      switch (type) {
+      case TIMEPOINT_START:
+         runnablesStartTimepoint_.add(runnable);
+         break;
+      case TIMEPOINT_END:
+         runnablesEndTimepoint_.add(runnable);
+         break;
+      case POSITION_START:
+         runnablesStartPosition_.add(runnable);
+         break;
+      case POSITION_END:
+         runnablesEndPosition_.add(runnable);
+         break;
+      }
+   }
+
+   public void clearAllRunnables() {
+      runnablesStartTimepoint_.clear();
+      runnablesEndTimepoint_.clear();
+      runnablesStartPosition_.clear();
+      runnablesEndPosition_.clear();
    }
    
 
