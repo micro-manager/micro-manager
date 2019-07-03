@@ -530,6 +530,10 @@ int FilterWheel::OnSerialCommand(MM::PropertyBase* pProp, MM::ActionType eAct)
       static std::string last_command_via_property;
       std::string tmpstr;
       pProp->Get(tmpstr);
+      if (tmpstr.compare("") != 0) {
+         last_command_via_property = tmpstr;
+         return DEVICE_OK;
+      }
       // only send the command if it has been updated
       if (tmpstr.compare(last_command_via_property) != 0)
       {
@@ -672,6 +676,9 @@ int FilterWheelSA::Initialize()
    // Description
    CreateProperty(MM::g_Keyword_Description, "ASIFW1000 FilterWheel SA", MM::String, true);
 
+   // turn off prompt characters
+   RETURN_ON_MM_ERROR ( QueryCommandVerify("VB 6", "VB 6") );
+
    // make sure we are on correct wheel
    SelectWheel();
 
@@ -739,7 +746,7 @@ bool FilterWheelSA::Busy()
    ret = ClearComPort();
    if (ret != DEVICE_OK)
       return false;
-   ret = SendSerialCommand(port_.c_str(), "?", "\r");
+   ret = SendSerialCommand(port_.c_str(), "?", "");  // note no CR
    if (ret != DEVICE_OK)
       return false;
 
@@ -869,10 +876,14 @@ int FilterWheelSA::OnSerialCommand(MM::PropertyBase* pProp, MM::ActionType eAct)
       static std::string last_command_via_property;
       std::string tmpstr;
       pProp->Get(tmpstr);
-      RETURN_ON_MM_ERROR ( SelectWheel() );
+      if (tmpstr.length() == 0) {
+         last_command_via_property = tmpstr;
+         return DEVICE_OK;
+      }
       // only send the command if it has been updated
       if (tmpstr.compare(last_command_via_property) != 0)
       {
+         RETURN_ON_MM_ERROR ( SelectWheel() );
          last_command_via_property = tmpstr;
          RETURN_ON_MM_ERROR( QueryCommand(tmpstr));
       }
