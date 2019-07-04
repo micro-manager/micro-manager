@@ -137,9 +137,9 @@ public final class BeamSubPanel extends ListeningJPanel {
          } else {
             // if epi checkbox is hidden then make sure to turn off epi beam
             if (beamBBox_.isSelected()) {
-               beamBBox_.setSelected(false);
+               beamBBox_.setSelected(true);
                beamBBox_.doClick();
-               beamBBox_.doClick();
+               beamBBox_.setEnabled(false);
             }
          }
       }
@@ -212,13 +212,13 @@ public final class BeamSubPanel extends ListeningJPanel {
                Properties.Keys.BEAM_ENABLED, Properties.Values.YES, Properties.Values.NO,
                updateOnTab_.isSelected());
       }
-      if (updateOnTab_.isSelected() &&
+      if ((updateOnTab_.isSelected() || !beamBBox_.isEnabled()) &&
             props_.getPropValueString(deviceB, Properties.Keys.BEAM_ENABLED)
             .equals(Properties.Values.YES.toString()) &&
-            !beamBBox_.isSelected()) {
+            (!beamBBox_.isSelected() || !beamBBox_.isEnabled()) ) {  // extra logic b/c when not enabled then should always be off
          syncPropertyAndCheckBox(beamBBox_, deviceB, 
                Properties.Keys.BEAM_ENABLED, Properties.Values.YES, Properties.Values.NO,
-               updateOnTab_.isSelected());
+               (updateOnTab_.isSelected() || !beamBBox_.isEnabled()));
       }
       
       // do whatever other adjustments are needed
