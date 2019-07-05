@@ -143,12 +143,11 @@ public final class BeamSubPanel extends ListeningJPanel {
                pu.checkboxInitByTwoClicks(sheetBBox_);
             }
          } else {
-            // if epi checkbox is hidden then make sure to turn off epi beam
+            // if epi checkbox is hidden then make sure to turn off epi beam and then disable (hidden) control
             if (beamBBox_.isSelected()) {
-               beamBBox_.setSelected(true);
                beamBBox_.doClick();
-               beamBBox_.setEnabled(false);
             }
+            beamBBox_.setEnabled(false);
          }
       }
       
