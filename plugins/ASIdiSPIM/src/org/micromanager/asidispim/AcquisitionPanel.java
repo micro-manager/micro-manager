@@ -3746,8 +3746,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             repeatdelay = repeatStart + acqNum * timepointIntervalMs - repeatNow;
          }
          
-         // TODO consider increasing the max number of images in the queue to e.g. 25
-         BlockingQueue<TaggedImage> bq = new LinkedBlockingQueue<TaggedImage>(10);
+         BlockingQueue<TaggedImage> bq = new LinkedBlockingQueue<TaggedImage>(40);  // increased from original 10
          
          // try to close last acquisition viewer if there could be one open (only in single acquisition per timepoint mode)
          if (acqSettings.separateTimepoints && (acq_!=null) && !cancelAcquisition_.get()) {
