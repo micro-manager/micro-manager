@@ -553,6 +553,7 @@ public class PanelUtils {
     * Constructs JCheckBox tied to "usual" property and also stored in preferences.
     * Uses a separate "prefKey" so that the same property name with different devices
     * can be distinguished.  Specify property values for checked/unchecked state.
+    * NB in many cases should be followed by call to checkboxInitByTwoClicks() to call action listeners.
     * @param label the GUI label
     * @param offValue the value of the property when not checked
     * @param onValue the value of the property when checked
@@ -622,6 +623,17 @@ public class PanelUtils {
       jc.addItemListener(l);
       devices_.addListener(l);
       return jc;
+   }
+   
+   /**
+    * Convenience method for clicking checkbox twice to make sure action handler has been called
+    * (setSelected doesn't call action handler I think). Might be better to use ItemListener
+    * but I think there was a reason why this wasn't done. 
+    * @param cb
+    */
+   public void checkboxInitByTwoClicks(JCheckBox cb) {
+      cb.doClick();
+      cb.doClick();
    }
    
    

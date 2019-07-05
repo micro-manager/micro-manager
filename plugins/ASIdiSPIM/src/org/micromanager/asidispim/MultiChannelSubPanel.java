@@ -304,8 +304,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
          } 
       });
       // initialize GUI for muli-channel enabled checkbox
-      useChannelsCB_.doClick();
-      useChannelsCB_.doClick();
+      pu.checkboxInitByTwoClicks(useChannelsCB_);
       
    }// constructor
    

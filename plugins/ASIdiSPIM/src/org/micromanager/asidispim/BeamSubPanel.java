@@ -117,22 +117,30 @@ public final class BeamSubPanel extends ListeningJPanel {
       if (noSide) {  // Navigation panel
             add(new JLabel("Path A:"));
             add(beamABox_);
+            pu.checkboxInitByTwoClicks(beamABox_);
             add(sheetABox_, "wrap");
+            pu.checkboxInitByTwoClicks(sheetABox_);
             if (!ASIdiSPIM.oSPIM) {
                add(new JLabel("Path B:"));
                add(beamBBox_);
+               pu.checkboxInitByTwoClicks(beamBBox_);
                add(sheetBBox_, "wrap");         
+               pu.checkboxInitByTwoClicks(sheetBBox_);
             }
       } else {  // Setup panel
          add(new JLabel("Excitation:"));
          add(beamABox_);
+         pu.checkboxInitByTwoClicks(beamABox_);
          add(sheetABox_, "wrap");
+         pu.checkboxInitByTwoClicks(sheetABox_);
          if (prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
                Properties.Keys.PLUGIN_SHOW_EPI_CB, false)) {
             if (!ASIdiSPIM.oSPIM) {
                add(new JLabel("Epi side:"));
                add(beamBBox_);
-               add(sheetBBox_, "wrap");   
+               pu.checkboxInitByTwoClicks(beamBBox_);
+               add(sheetBBox_, "wrap");
+               pu.checkboxInitByTwoClicks(sheetBBox_);
             }
          } else {
             // if epi checkbox is hidden then make sure to turn off epi beam
