@@ -43,7 +43,6 @@ import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.CameraModes;
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.Devices.Keys;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
