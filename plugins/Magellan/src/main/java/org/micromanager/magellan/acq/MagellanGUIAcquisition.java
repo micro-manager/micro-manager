@@ -21,8 +21,6 @@ import java.util.List;
 import java.util.Iterator;
 import java.util.concurrent.Future;
 import java.util.function.Function;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.json.JSONArray;
@@ -37,11 +35,11 @@ import org.micromanager.magellan.surfacesandregions.Point3d;
  */
 public class MagellanGUIAcquisition extends Acquisition {
 
-   final private MagellanGUIAcquisitionSettings settings_;
+   final public MagellanGUIAcquisitionSettings settings_;
    //executor service to wait for next execution
    private long lastTPEventStartTime_ = -1;
    private List<XYStagePosition> positions_;
-   private Future acqFuture_;
+   private Future acqFuture_, acqFinishedFuture_;
 
    /**
     * Acquisition with fixed XY positions (although they can potentially all be
@@ -56,29 +54,22 @@ public class MagellanGUIAcquisition extends Acquisition {
     * @throws java.lang.Exception
     */
    public MagellanGUIAcquisition(MagellanGUIAcquisitionSettings settings) {
-      super(settings.zStep_, settings.channels_);
+      super();
       settings_ = settings;
-      createXYPositions();
-      initialize(settings.dir_, settings.name_, settings.tileOverlap_);
+   }
 
+   public void start() {
+      createXYPositions();
+      initialize(settings_.dir_, settings_.name_, settings_.tileOverlap_, settings_.zStep_, settings_.channels_);
       //Submit a generating stream to get this acquisition going
       Stream<AcquisitionEvent> acqEventStream = magellanGUIAcqEventStream();
       acqFuture_ = MagellanEngine.getInstance().submitEventStream(acqEventStream, this);
-   }
-
-   /**
-    *
-    * @return true if finished normally, false if aborted
-    */
-   public boolean waitForCompletion() {
-      while (!finished_) {
-         try {
-            Thread.sleep(10);
-         } catch (InterruptedException ex) {
-            //Doesnt matter, should still finish eventually if everything works right
+      acqFinishedFuture_ = MagellanEngine.getInstance().submitToEventExecutor(new Runnable() {
+         @Override
+         public void run() {
+            MagellanEngine.getInstance().finishAcquisition(MagellanGUIAcquisition.this);
          }
-      }
-      return !aborted_;
+      });
    }
 
    /**
@@ -109,8 +100,6 @@ public class MagellanGUIAcquisition extends Acquisition {
       }
       Stream<AcquisitionEvent> eventStream = makeEventStream(acqFunctions);
       eventStream = eventStream.map(monitorSliceIndices());
-      //create event to signal finished
-      eventStream = Stream.concat(eventStream, Stream.of(AcquisitionEvent.createAcquisitionFinishedEvent(this)));
       return eventStream;
    }
 
@@ -277,13 +266,11 @@ public class MagellanGUIAcquisition extends Acquisition {
    }
 
 //           
-
-
    public static double getZTopCoordinate(int spaceMode, MagellanGUIAcquisitionSettings settings,
            boolean zStageHasLimits, double zStageLowerLimit, double zStageUpperLimit, String zStage) {
       boolean towardsSampleIsPositive = true;
-      if (spaceMode == MagellanGUIAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK ||
-              spaceMode == MagellanGUIAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
+      if (spaceMode == MagellanGUIAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK
+              || spaceMode == MagellanGUIAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
          int dir = 0;
          try {
             dir = Magellan.getCore().getFocusDirection(Magellan.getCore().getFocusDevice());
@@ -300,7 +287,7 @@ public class MagellanGUIAcquisition extends Acquisition {
             throw new RuntimeException("Focus direction undefined");
          }
       }
-      
+
       if (spaceMode == MagellanGUIAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
          Point3d[] interpPoints = settings.fixedSurface_.getPoints();
          if (towardsSampleIsPositive) {
@@ -360,7 +347,7 @@ public class MagellanGUIAcquisition extends Acquisition {
          } else if (settings_.spaceMode_ == MagellanGUIAcquisitionSettings.REGION_2D) {
             positions_ = settings_.footprint_.getXYPositions(settings_.tileOverlap_);
          } else {
-             throw new RuntimeException("No space settings specified");
+            throw new RuntimeException("No space settings specified");
             //no space mode, use current stage positon
 //            positions_ = new ArrayList<XYStagePosition>();
 //            int fullTileWidth = (int) Magellan.getCore().getImageWidth();
@@ -393,14 +380,15 @@ public class MagellanGUIAcquisition extends Acquisition {
    }
 
    @Override
-   public void waitForShutdown() {
-      while (!acqFuture_.isDone()) {
+   public boolean waitForCompletion() {
+      while (!acqFuture_.isDone() && !acqFinishedFuture_.isDone()) {
          try {
             Thread.sleep(5);
          } catch (InterruptedException ex) {
             Log.log("Interrupted while waiting to cancel");
          }
       }
-   }
+      return !aborted_;
 
+   }
 }

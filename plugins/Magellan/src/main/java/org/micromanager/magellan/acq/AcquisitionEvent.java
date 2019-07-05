@@ -18,15 +18,17 @@ package org.micromanager.magellan.acq;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.magellan.coordinates.XYStagePosition;
-import org.micromanager.magellan.main.Magellan;
 
 /**
  * Information about the acquisition of a single image
  */
 public class AcquisitionEvent {
+
 
    enum SpecialFlag {
       AcqusitionFinished,
@@ -40,9 +42,56 @@ public class AcquisitionEvent {
    public XYStagePosition xyPosition_;
    public List<AcquisitionEvent> sequence_ = null;
    public boolean xySequenced_ = false, zSequenced_ = false, exposureSequenced_ = false, channelSequenced_ = false;
-
+   public AcquisitionRunnable beforeHardwareHook_ = null, afterHardwareHook_ = null, afterImageSavedHook_ = null;
+   
    private SpecialFlag specialFlag_;
 
+   public JSONObject toJSON() {
+      try {
+         JSONObject json = new JSONObject();
+         json.put("acquisition-name", acquisition_.getUUID());
+         json.put("time-index", timeIndex_);
+         json.put("channel-index", channelIndex_);
+         json.put("z-index", zIndex_);
+         json.put("position-index", positionIndex_);
+         
+         json.put("z-position", zPosition_);
+         return json;
+      } catch (JSONException ex) {
+        throw new RuntimeException(ex);
+      }
+   }
+   
+   public static AcquisitionEvent fromJSON(JSONObject json, Acquisition acq) {
+      AcquisitionEvent event = new AcquisitionEvent(acq);
+      try {
+         event.zPosition_ = json.getDouble("z-position");
+      } catch (JSONException ex) {
+         throw new RuntimeException("Z position undefined");
+      }
+      try {
+         event.zIndex_ = json.getInt("z-index");
+      } catch (JSONException ex) {
+         event.zIndex_ = 0;
+      }
+      try {
+         event.positionIndex_ = json.getInt("position-index");
+      } catch (JSONException ex) {
+         event.positionIndex_ = 0;
+      }
+      try {
+         event.timeIndex_ = json.getInt("time-index");
+      } catch (JSONException ex) {
+         event.timeIndex_ = 0;
+      }
+      try {
+         event.channelIndex_ = json.getInt("channel-index");
+      } catch (JSONException ex) {
+         event.channelIndex_ = 0;
+      }
+      return event;
+   }
+   
    public AcquisitionEvent(List<AcquisitionEvent> sequence) {
       sequence_ = new ArrayList<>();
       sequence_.addAll(sequence);

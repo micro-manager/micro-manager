@@ -295,7 +295,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements SurfaceGri
       redrawPixelsExecutor_.shutdownNow();
       //make sure acquisition is done before allowing imagestorage to close
       if (acq_ != null){ 
-         acq_.waitForShutdown();
+         acq_.waitForCompletion();
       } 
       super.onWindowClose(event);
    }

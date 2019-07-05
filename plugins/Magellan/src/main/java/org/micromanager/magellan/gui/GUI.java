@@ -54,7 +54,7 @@ import org.micromanager.magellan.acq.AcqDurationEstimator;
 import org.micromanager.magellan.acq.ExploreAcqSettings;
 import org.micromanager.magellan.acq.MagellanGUIAcquisitionSettings;
 import org.micromanager.magellan.acq.MagellanEngine;
-import org.micromanager.magellan.acq.AcquisitionsManager;
+import org.micromanager.magellan.acq.MagellanAcquisitionsManager;
 import org.micromanager.magellan.acq.ExploreAcquisition;
 import org.micromanager.magellan.channels.ColorEditor;
 import org.micromanager.magellan.channels.ColorRenderer;
@@ -82,7 +82,7 @@ public class GUI extends javax.swing.JFrame {
    private AcqDurationEstimator acqDurationEstimator_;
    private Preferences prefs_;
    private SurfaceGridManager manager_ = new SurfaceGridManager();
-   private AcquisitionsManager multiAcqManager_;
+   private MagellanAcquisitionsManager multiAcqManager_;
    private GlobalSettings settings_;
    private boolean storeAcqSettings_ = true;
    private int multiAcqSelectedIndex_ = 0;
@@ -99,7 +99,7 @@ public class GUI extends javax.swing.JFrame {
       this.setTitle("Micro-Magellan " + version);
       acqDurationEstimator_ = new AcqDurationEstimator();
       new MagellanEngine(Magellan.getCore(), acqDurationEstimator_);
-      multiAcqManager_ = new AcquisitionsManager(this);
+      multiAcqManager_ = new MagellanAcquisitionsManager(this);
       initComponents();
       moreInitialization();
       this.setVisible(true);
@@ -361,7 +361,7 @@ public class GUI extends javax.swing.JFrame {
       MagellanGUIAcquisitionSettings settings = multiAcqManager_.getAcquisitionSettings(multiAcqSelectedIndex_);
       //saving
       settings.dir_ = globalSavingDirTextField_.getText();
-      settings.name_ = multiAcqManager_.getAcquisitionName(multiAcqSelectedIndex_);
+      settings.name_ = multiAcqManager_.getAcquisitionSettingsName(multiAcqSelectedIndex_);
       //time
       settings.timeEnabled_ = timePointsCheckBox_.isSelected();
       if (settings.timeEnabled_) {
@@ -1905,6 +1905,7 @@ public class GUI extends javax.swing.JFrame {
             }
         }
       exploreAcq_ = new ExploreAcquisition(settings);
+      exploreAcq_.start();
    }//GEN-LAST:event_newExploreWindowButton_ActionPerformed
 
    private void exploreZStepSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_exploreZStepSpinner_StateChanged

@@ -35,12 +35,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.micromanager.magellan.channels.ChannelSetting;
-import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.Log;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
@@ -190,6 +186,10 @@ public class MagellanEngine {
       }
    }
    
+   public Future submitToEventExecutor(Runnable r) {
+      return eventGeneratorExecutor_.submit(r);
+   }
+   
    /**
     * Submit a stream of events which will get lazily processed and combined
     * into sequence events as needed
@@ -252,6 +252,15 @@ public class MagellanEngine {
                            eventQueue_.add(event);
                         }
                         Future saveFuture = executeAcquisitionEvent(sequenceEvent);
+                        if (sequenceEvent.afterImageSavedHook_ != null) {
+                           try {
+                              saveFuture.get();
+                           } catch (InterruptedException | ExecutionException ex) {
+                              throw new RuntimeException(ex);
+                           } 
+                           sequenceEvent.afterImageSavedHook_.run(sequenceEvent);
+                           return null;
+                        }
                         return saveFuture;
                      }
                   } catch (InterruptedException e) {
@@ -316,7 +325,13 @@ public class MagellanEngine {
             }
          });
       } else {
+         if (event.beforeHardwareHook_ != null) {
+            event.beforeHardwareHook_.run(event);
+         }
          updateHardware(event);
+         if (event.afterHardwareHook_ != null) {
+            event.afterHardwareHook_.run(event);
+         }
          Future lastImageSavedFuture = acquireImages(event);
          //pause here while hardware is doing stuff
          while (core_.isSequenceRunning()) {

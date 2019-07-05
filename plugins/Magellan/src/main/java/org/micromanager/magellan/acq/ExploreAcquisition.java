@@ -43,9 +43,15 @@ public class ExploreAcquisition extends Acquisition {
    //Map with slice index as keys used to get rid of duplicate events
    private ConcurrentHashMap<Integer, LinkedBlockingQueue<ExploreTileWaitingToAcquire>> queuedTileEvents_ = new ConcurrentHashMap<Integer, LinkedBlockingQueue<ExploreTileWaitingToAcquire>>();
    private ArrayList<Future> submittedStreams_ = new ArrayList<Future>();
+   private final ExploreAcqSettings settings_;
    
    public ExploreAcquisition(ExploreAcqSettings settings) {
-      super(settings.zStep_, settings.channels_);
+      super();
+      settings_ = settings;
+      initialize(settings.dir_, settings.name_, settings.tileOverlap_, settings.zStep_, settings.channels_);
+   }
+
+   public void start() {
       try {
          //start at current z position
          zTop_ = Magellan.getCore().getPosition(zStage_);
@@ -55,8 +61,6 @@ public class ExploreAcquisition extends Acquisition {
          Log.log("Couldn't get focus device position", true);
          throw new RuntimeException();
       }
-      initialize(settings.dir_, settings.name_, settings.tileOverlap_);
-
    }
 
    /**
@@ -73,7 +77,7 @@ public class ExploreAcquisition extends Acquisition {
       queuedTileEvents_.clear();
       super.abort();
    }
-   
+
    //Override the default acquisition channels function because explore acquisitions use all channels instead of active channels
    @Override
    protected Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels(ChannelSpec channels) {
@@ -83,8 +87,8 @@ public class ExploreAcquisition extends Acquisition {
 
             @Override
             public boolean hasNext() {
-               while (channelIndex_ < channels.getNumChannels() && (!channels.getChannelSetting(channelIndex_).uniqueEvent_ ||
-                       !channels.getChannelSetting(channelIndex_).use_)) {
+               while (channelIndex_ < channels.getNumChannels() && (!channels.getChannelSetting(channelIndex_).uniqueEvent_
+                       || !channels.getChannelSetting(channelIndex_).use_)) {
                   channelIndex_++;
                   if (channelIndex_ >= channels.getNumChannels()) {
                      return false;
@@ -96,13 +100,13 @@ public class ExploreAcquisition extends Acquisition {
             @Override
             public AcquisitionEvent next() {
                AcquisitionEvent channelEvent = event.copy();
-               while (channelIndex_ < channels.getNumChannels() && (!channels.getChannelSetting(channelIndex_).uniqueEvent_ ||
-                       !channels.getChannelSetting(channelIndex_).use_)) {
+               while (channelIndex_ < channels.getNumChannels() && (!channels.getChannelSetting(channelIndex_).uniqueEvent_
+                       || !channels.getChannelSetting(channelIndex_).use_)) {
                   channelIndex_++;
                   if (channelIndex_ >= channels.getNumChannels()) {
                      throw new RuntimeException("No valid channels remianing");
                   }
-               }               
+               }
                channelEvent.channelIndex_ = channelIndex_;
                channelEvent.zPosition_ += channels.getChannelSetting(channelIndex_).offset_;
                channelIndex_++;
@@ -129,8 +133,8 @@ public class ExploreAcquisition extends Acquisition {
       int posIndex = posManager_.getFullResPositionIndexFromStageCoords(xPos, yPos);
       controls.setZLimitSliderValues(sliceIndex);
 
-      submitEvents(new int[]{(int)posManager_.getXYPosition(posIndex).getGridRow()}, 
-              new int[]{(int)posManager_.getXYPosition(posIndex).getGridCol()}, sliceIndex, sliceIndex);
+      submitEvents(new int[]{(int) posManager_.getXYPosition(posIndex).getGridRow()},
+              new int[]{(int) posManager_.getXYPosition(posIndex).getGridCol()}, sliceIndex, sliceIndex);
    }
 
    public void acquireTiles(final int r1, final int c1, final int r2, final int c2) {
@@ -169,11 +173,11 @@ public class ExploreAcquisition extends Acquisition {
       acqFunctions.add(zStack(minZIndex, maxZIndex + 1));
       if (!channels_.getChannelSetting(0).group_.equals("")) {
          acqFunctions.add(channels(channels_));
-      }      
+      }
 
       Stream<AcquisitionEvent> eventStream = makeEventStream(acqFunctions);
       eventStream = eventStream.map(monitorSliceIndices());
-     
+
       //Get rid of duplicates, send to acquisition engine 
       eventStream = eventStream.filter(filterExistingEventsAndDisplayQueuedTiles());
       //Do a terminal operation now, so that tiles explore tiles waiting to collect can be shown
@@ -276,8 +280,8 @@ public class ExploreAcquisition extends Acquisition {
    }
 
    @Override
-   public void waitForShutdown() {
-       for (Future f : submittedStreams_) {
+   public boolean waitForCompletion() {
+      for (Future f : submittedStreams_) {
          while (!f.isDone()) {
             try {
                Thread.sleep(5);
@@ -286,6 +290,7 @@ public class ExploreAcquisition extends Acquisition {
             }
          }
       }
+      return true;
    }
 
    //slice and row/col index of an acquisition event in the queue

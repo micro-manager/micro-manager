@@ -23,19 +23,13 @@ import java.awt.geom.AffineTransform;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.micromanager.magellan.channels.ChannelSpec;
@@ -49,14 +43,15 @@ import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.micromanager.magellan.api.MagellanAcquisitionAPI;
 
 /**
  * Abstract class that manages a generic acquisition. Subclassed into specific
  * types of acquisition
  */
-public abstract class Acquisition {
+public abstract class Acquisition implements MagellanAcquisitionAPI {
 
-   protected final double zStep_;
+   protected double zStep_;
    protected double zOrigin_;
    protected volatile int minSliceIndex_ = 0, maxSliceIndex_ = 0;
    protected String xyStage_, zStage_;
@@ -76,8 +71,13 @@ public abstract class Acquisition {
    protected volatile boolean aborted_ = false;
    private MultiResMultipageTiffStorage storage_;
    private DisplayPlus display_;
+   private String UUID_;
 
-   public Acquisition(double zStep, ChannelSpec channels) {
+   public Acquisition() {
+      UUID_ = UUID.randomUUID().toString();
+   }
+
+   protected void initialize(String dir, String name, double overlapPercent, double zStep, ChannelSpec channels) {        
       eng_ = MagellanEngine.getInstance();
       xyStage_ = Magellan.getCore().getXYStageDevice();
       zStage_ = Magellan.getCore().getFocusDevice();
@@ -97,9 +97,6 @@ public abstract class Acquisition {
          Log.log("Problem communicating with core to get Z stage limits");
       }
       zStep_ = zStep;
-   }
-
-   protected void initialize(String dir, String name, double overlapPercent) {
       overlapX_ = (int) (Magellan.getCore().getImageWidth() * overlapPercent / 100);
       overlapY_ = (int) (Magellan.getCore().getImageHeight() * overlapPercent / 100);
       summaryMetadata_ = makeSummaryMD(name);
@@ -112,9 +109,11 @@ public abstract class Acquisition {
       display_ = new DisplayPlus(imageCache_, this, summaryMetadata_, storage_);
    }
    
+   public abstract void start();
+   
    protected abstract void shutdownEvents();
    
-   public abstract void waitForShutdown();
+   public abstract boolean waitForCompletion();
 
 
    /**
@@ -122,9 +121,10 @@ public abstract class Acquisition {
     */
    void saveImage(TaggedImage image) {
       if (image.tags == null && image.pix == null) {
-         waitForShutdown();
-         imageCache_.finished();
-         finished_ = true;
+         if (!finished_) {
+            imageCache_.finished();
+            finished_ = true;
+         }
       } else {
          //this method doesnt return until all images have been writtent to disk
          imageCache_.putImage(image);
@@ -147,9 +147,11 @@ public abstract class Acquisition {
                Acquisition.this.togglePaused();
             }
             shutdownEvents();
-            waitForShutdown();
+            waitForCompletion();
             //signal acquisition engine to start finishing process and wait for its completion
-            eng_.finishAcquisition(Acquisition.this);       
+            if (Acquisition.this instanceof ExploreAcquisition) { //Magellan GUI acquisition already has a trailing finishing event
+               eng_.finishAcquisition(Acquisition.this);       
+            }
          }
       }, "Aborting thread").start();
    }
@@ -434,5 +436,9 @@ public abstract class Acquisition {
             display_.updateDisplay(true);
          }
       });
+   }
+
+   public String getUUID() {
+      return UUID_;
    }
 }

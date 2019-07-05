@@ -1,14 +1,8 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.micromanager.magellan.api;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import static org.micromanager.magellan.api.ZMQServer.parseAPI;
-import org.micromanager.magellan.main.Magellan;
+import org.zeromq.SocketType;
 
 /**
  *
@@ -17,9 +11,12 @@ import org.micromanager.magellan.main.Magellan;
 public class ZMQMasterServer extends ZMQServer {
    
    private ZMQCoreServer coreServer_ = null;
+   private ZMQMagellanServer magellanServer_ = null;
+   private ZMQMagellanAcquisitionServer magellanAcqServer_ = null;
+
    
    public ZMQMasterServer() {
-      super(4827, "master");
+      super(4827, "master", SocketType.REP);
    }
    
    protected byte[] parseAndExecuteCommand(String message) throws JSONException, NoSuchMethodException, IllegalAccessException {
@@ -31,6 +28,16 @@ public class ZMQMasterServer extends ZMQServer {
       } else if (json.getString("command").equals("start-core")) { 
          if (coreServer_ == null) {
             coreServer_ = new ZMQCoreServer();
+         }
+         JSONObject reply = new JSONObject();
+         reply.put("reply", "success");
+         return reply.toString().getBytes();
+      } else if (json.getString("command").equals("start-magellan")) { 
+         if (magellanServer_ == null) {
+            magellanServer_ = new ZMQMagellanServer();
+         }
+         if (magellanAcqServer_ == null) {
+            magellanAcqServer_ = new ZMQMagellanAcquisitionServer();
          }
          JSONObject reply = new JSONObject();
          reply.put("reply", "success");

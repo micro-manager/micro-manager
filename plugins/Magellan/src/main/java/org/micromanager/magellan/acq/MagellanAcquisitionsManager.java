@@ -22,9 +22,8 @@ import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JOptionPane;
+import org.micromanager.magellan.api.MagellanAcquisitionAPI;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.Log;
 
@@ -32,40 +31,46 @@ import org.micromanager.magellan.misc.Log;
  *
  * @author Henry
  */
-public class AcquisitionsManager {
+public class MagellanAcquisitionsManager {
 
-   private ArrayList<MagellanGUIAcquisitionSettings> acqSettingsList_ = new ArrayList<MagellanGUIAcquisitionSettings>();
+   private static MagellanAcquisitionsManager singleton_;
 
+   private ArrayList<Acquisition> acqList_ = new ArrayList<Acquisition>();
    private String[] acqStatus_;
    private GUI gui_;
-   private volatile MagellanGUIAcquisition currentAcq_;
+   private volatile Acquisition currentAcq_;
    private volatile int currentAcqIndex_;
    private ExecutorService acqManageExecuterService_;
    ArrayList<Future> acqFutures_;
 
-   public AcquisitionsManager(GUI gui) {
+   public MagellanAcquisitionsManager(GUI gui) {
+      singleton_ = this;
       gui_ = gui;
-      acqSettingsList_.add(new MagellanGUIAcquisitionSettings());
+      acqList_.add(new MagellanGUIAcquisition(new MagellanGUIAcquisitionSettings()));
       acqManageExecuterService_ = Executors.newSingleThreadScheduledExecutor((Runnable r) -> new Thread(r, "Acquisition manager thread"));
    }
 
-   public MagellanGUIAcquisitionSettings getAcquisitionSettings(int index) {
-      if (index < acqSettingsList_.size()) {
-         return acqSettingsList_.get(index);
+   public static MagellanAcquisitionsManager getInstance() {
+      return singleton_;
+   }
+
+   public Acquisition getAcquisition(int index) {
+      if (index < acqList_.size()) {
+         return acqList_.get(index);
       }
       return null;
    }
 
    public int getNumberOfAcquisitions() {
-      return acqSettingsList_.size();
+      return acqList_.size();
    }
 
-   public String getAcquisitionName(int index) {
-      return acqSettingsList_.get(index).name_;
+   public String getAcquisitionSettingsName(int index) {
+      return ((MagellanGUIAcquisition) acqList_.get(index)).settings_.name_;
    }
 
    public String setAcquisitionName(int index, String newName) {
-      return acqSettingsList_.get(index).name_ = newName;
+      return ((MagellanGUIAcquisition) acqList_.get(index)).settings_.name_ = newName;
    }
 
    /**
@@ -77,33 +82,39 @@ public class AcquisitionsManager {
          //nothing to do
          return 0;
       } else {
-         acqSettingsList_.add(index - 1, acqSettingsList_.remove(index));
+         acqList_.add(index - 1, acqList_.remove(index));
          return -1;
       }
    }
 
    public int moveDown(int index) {
       acqStatus_ = null;
-      if (index == acqSettingsList_.size() - 1) {
+      if (index == acqList_.size() - 1) {
          //nothing to do
          return 0;
       } else {
-         acqSettingsList_.add(index + 1, acqSettingsList_.remove(index));
+         acqList_.add(index + 1, acqList_.remove(index));
          return 1;
       }
    }
 
-   public void addNew() {
+   public MagellanAcquisitionAPI addNew() {
       acqStatus_ = null;
-      acqSettingsList_.add(new MagellanGUIAcquisitionSettings());
+      Acquisition acq = new MagellanGUIAcquisition(new MagellanGUIAcquisitionSettings());
+      acqList_.add(acq);
+      gui_.acquisitionSettingsChanged();
+      return acq;
    }
 
    public void remove(int index) {
       acqStatus_ = null;
       //must always have at least one acquisition
-      if (index != -1 && acqSettingsList_.size() > 1) {
-         acqSettingsList_.remove(index);
+      if (index != -1 && acqList_.size() > 1) {
+         acqList_.remove(index);
+      } else {
+         throw new RuntimeException("At least one acquistiion must exist");
       }
+      gui_.acquisitionSettingsChanged();
    }
 
    public void abort() {
@@ -127,47 +138,53 @@ public class AcquisitionsManager {
    }
 
    public void runAllAcquisitions() {
-      for (MagellanGUIAcquisitionSettings settings : acqSettingsList_) {
+      for (Acquisition acq : acqList_) {
          try {
-            validateSettings(settings);
+            validateSettings(((MagellanGUIAcquisition) acq).settings_);
          } catch (Exception ex) {
-           JOptionPane.showMessageDialog(gui_, "Problem with acquisition settings: \n" + ex.getMessage());
-           return;
+            JOptionPane.showMessageDialog(gui_, "Problem with acquisition settings: \n" + ex.getMessage());
+            return;
          }
       }
-      
+
       //submit initialization events
       acqManageExecuterService_.submit(() -> {
          //TODO: once an API, disable adding and deleting of acquisitions here or just copy the list 
          gui_.enableMultiAcquisitionControls(false); //disallow changes while running
-         acqStatus_ = new String[acqSettingsList_.size()];
+         acqStatus_ = new String[acqList_.size()];
          Arrays.fill(acqStatus_, "Waiting");
          gui_.repaint();
       });
 
-      //submit acquisition events
-      acqFutures_ = new ArrayList<Future>();
-      for (int acqIndex = 0; acqIndex < acqSettingsList_.size(); acqIndex++) {
-         final int index = acqIndex;
-         MagellanGUIAcquisitionSettings settings = acqSettingsList_.get(index);
-         acqFutures_.add(acqManageExecuterService_.submit(() -> {
-            acqStatus_[index] = "Running";
-            gui_.acquisitionRunning(true);
-            try {
-               currentAcq_ = new MagellanGUIAcquisition(settings);
-               currentAcqIndex_ = index;
-               boolean aborted = !currentAcq_.waitForCompletion();
-               acqStatus_[index] = aborted ? "Aborted" : "Complete";
-            } catch (Exception e) {
-               acqStatus_[index] = "Error";
-               e.printStackTrace();
-               Log.log(e);
-            }
-            gui_.acquisitionRunning(false);
-            gui_.acquisitionSettingsChanged(); //so that the available disk space label updates
-            gui_.repaint();
-         }));
-      }
+      //submit acquisitions
+      acqManageExecuterService_.submit(() -> {
+         acqFutures_ = new ArrayList<Future>();
+         for (int acqIndex = 0; acqIndex < acqList_.size(); acqIndex++) {
+            final int index = acqIndex;
+            Acquisition acq = acqList_.get(index);
+            acqFutures_.add(acqManageExecuterService_.submit(() -> {
+               acqStatus_[index] = "Running";
+               gui_.acquisitionRunning(true);
+               try {
+                  currentAcq_ = acq;
+                  currentAcq_.start();
+                  currentAcqIndex_ = index;
+                  boolean aborted = !currentAcq_.waitForCompletion();
+                  //replace with new object so it can be run again
+                  MagellanGUIAcquisition done = (MagellanGUIAcquisition) acqList_.remove(index);
+                  acqList_.add(index, new MagellanGUIAcquisition(done.settings_));
+                  acqStatus_[index] = aborted ? "Aborted" : "Complete";
+               } catch (Exception e) {
+                  acqStatus_[index] = "Error";
+                  e.printStackTrace();
+                  Log.log(e);
+               }
+               gui_.acquisitionRunning(false);
+               gui_.acquisitionSettingsChanged(); //so that the available disk space label updates
+               gui_.repaint();
+            }));
+         }
+      });
       //submit finishing events
       acqManageExecuterService_.submit(() -> {
          //run acquisitions
@@ -182,15 +199,15 @@ public class AcquisitionsManager {
       return acqStatus_[index];
    }
 
-   public void markAsAborted(MagellanGUIAcquisitionSettings settings) {
+   public void markAsAborted(MagellanGUIAcquisition acq) {
       if (acqStatus_ != null) {
-         acqStatus_[acqSettingsList_.indexOf(settings)] = "Aborted";
+         acqStatus_[acqList_.indexOf(acq)] = "Aborted";
          gui_.repaint();
       }
    }
 
    public String getAcquisitionDescription(int index) {
-      return acqSettingsList_.get(index).toString();
+      return acqList_.get(index).toString();
    }
 
    private void validateSettings(MagellanGUIAcquisitionSettings settings) throws Exception {
@@ -242,6 +259,19 @@ public class AcquisitionsManager {
 //           Log.log("Error: no channels selected for " + settings.name_);
 //           throw new Exception();
 //       }
+   }
+
+   public MagellanGUIAcquisitionSettings getAcquisitionSettings(int index) {
+      return ((MagellanGUIAcquisition) acqList_.get(index)).settings_;
+   }
+
+   public MagellanAcquisitionAPI getAcquisitionByUUID(String uuid) {
+      for (Acquisition acq : acqList_) {
+         if (acq.getUUID().equals(uuid)) {
+            return acq;
+         }
+      }
+      throw new RuntimeException("Couldn't find acquisition with this UUID. Was it deleted?");
    }
 
 }
