@@ -4051,7 +4051,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                
                // execute any start-timepoint runnables
                for (Runnable r : runnablesStartTimepoint_) {
-                  r.run();
+                  try {
+                     r.run();
+                  } catch(Exception ex) {
+                     ReportingUtils.logError("runnable threw exception: " + r.toString());
+                  }
                }
                
                // this is where we autofocus if requested
@@ -4102,7 +4106,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   
                   // execute any start-position runnables
                   for (Runnable r : runnablesStartPosition_) {
-                     r.run();
+                     try {
+                        r.run();
+                     } catch(Exception ex) {
+                        ReportingUtils.logError("runnable threw exception: " + r.toString());
+                     }
                   }
                   
                   if (acqSettings.useMultiPositions) {
@@ -4324,6 +4332,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                               String msg = "Camera did not send first image within a reasonable time.\n";
                               if (acqSettings.isStageScanning) {
                                  msg += "Make sure jumpers are correct on XY card and also micro-micromirror card.";
+                                 ReportingUtils.logError("Stage speed is" + props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MOTOR_SPEED_X));
+                                 positions_.getUpdatedPosition(Devices.Keys.XYSTAGE, Directions.X);
                               } else {
                                  msg += "Make sure camera trigger cables are connected properly.";
                               }
@@ -4563,7 +4573,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                                 "   total images: " + totalImages);
                                        }
                                        ReportingUtils.logError("Camera did not send all expected images within" +
-                                             " a reasonable period for timepoint " + numTimePointsDone_ + "and "
+                                             " a reasonable period for timepoint " + numTimePointsDone_ + " and "
                                              + "position " + numPositionsDone_ + " .  Continuing anyway.");
                                        nonfatalError = true;
                                        done = true;
@@ -4660,7 +4670,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   
                   // execute any end-position runnables
                   for (Runnable r : runnablesEndPosition_) {
-                     r.run();
+                     try {
+                        r.run();
+                     } catch(Exception ex) {
+                        ReportingUtils.logError("runnable threw exception: " + r.toString());
+                     }
                   }
                   
                   if (acqSettings.useMovementCorrection && 
@@ -4712,7 +4726,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                
                // execute any end-timepoint runnables
                for (Runnable r : runnablesEndTimepoint_) {
-                  r.run();
+                  try {
+                     r.run();
+                  } catch(Exception ex) {
+                     ReportingUtils.logError("runnable threw exception: " + r.toString());
+                  }
                }
                
                if (acqSettings.hardwareTimepoints) {
@@ -5060,16 +5078,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          boolean done = false;
          while (!done) {
             done = (props_.getPropValueStringForceRefresh(Devices.Keys.XYSTAGE,
-                  Properties.Keys.STAGESCAN_STATE)).equals(Properties.Values.SPIM_IDLE.toString());
+                  Properties.Keys.STAGESCAN_STATE)).equals(Properties.Values.SPIM_IDLE.toString());            
             if (!done && (System.currentTimeMillis() > deadline)) {
                // force-set to idle
                props_.setPropValue(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_STATE,
                      Properties.Values.SPIM_IDLE);
-               ReportingUtils.logError("Force-set XY stage scan to IDLE state.");
+               ReportingUtils.logError("Force-set XY stage scan to IDLE state with stage speed "
+                     + props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MOTOR_SPEED_X) + ".");
                done = true;
             }
             if (!done) {
                Thread.sleep(25);
+               positions_.getUpdatedPosition(Devices.Keys.XYSTAGE, Directions.X);  // query position to debug
             }
          }
       }
