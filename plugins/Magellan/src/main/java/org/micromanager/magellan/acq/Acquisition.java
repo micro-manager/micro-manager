@@ -77,7 +77,7 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
       UUID_ = UUID.randomUUID().toString();
    }
 
-   protected void initialize(String dir, String name, double overlapPercent, double zStep, ChannelSpec channels) {        
+   protected void initialize(String dir, String name, double overlapPercent, double zStep, ChannelSpec channels) {
       eng_ = MagellanEngine.getInstance();
       xyStage_ = Magellan.getCore().getXYStageDevice();
       zStage_ = Magellan.getCore().getFocusDevice();
@@ -108,16 +108,16 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
       imageCache_.setSummaryMetadata(summaryMetadata_);
       display_ = new DisplayPlus(imageCache_, this, summaryMetadata_, storage_);
    }
-   
+
    public abstract void start();
-   
+
    protected abstract void shutdownEvents();
-   
+
    public abstract boolean waitForCompletion();
 
-
    /**
-    * Called by acquisition engine to save an image, shoudn't return until it as been written to disk
+    * Called by acquisition engine to save an image, shoudn't return until it as
+    * been written to disk
     */
    void saveImage(TaggedImage image) {
       if (image.tags == null && image.pix == null) {
@@ -150,19 +150,24 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
             waitForCompletion();
             //signal acquisition engine to start finishing process and wait for its completion
             if (Acquisition.this instanceof ExploreAcquisition) { //Magellan GUI acquisition already has a trailing finishing event
-               eng_.finishAcquisition(Acquisition.this);       
+               eng_.finishAcquisition(Acquisition.this);
             }
          }
       }, "Aborting thread").start();
    }
-   
-      public static void addImageMetadata(JSONObject tags, AcquisitionEvent event, int timeIndex,
+
+   public static void addImageMetadata(JSONObject tags, AcquisitionEvent event, int timeIndex,
            int camChannelIndex, long elapsed_ms, double exposure) {
       //add tags
       try {
-         long gridRow = event.xyPosition_.getGridRow();
-         long gridCol = event.xyPosition_.getGridCol();
-         MD.setPositionName(tags, "Grid_" + gridRow+ "_" + gridCol);
+         long gridRow = 0, gridCol = 0;
+         if (event.xyPosition_ != null) {
+            gridRow = event.xyPosition_.getGridRow();
+            gridCol = event.xyPosition_.getGridCol();
+            MD.setStageX(tags, event.xyPosition_.getCenter().x);
+            MD.setStageY(tags, event.xyPosition_.getCenter().y);
+         }
+         MD.setPositionName(tags, "Grid_" + gridRow + "_" + gridCol);
          MD.setPositionIndex(tags, event.positionIndex_);
          MD.setSliceIndex(tags, event.zIndex_);
          MD.setFrameIndex(tags, timeIndex);
@@ -173,8 +178,7 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
          MD.setExposure(tags, exposure);
          MD.setGridRow(tags, gridRow);
          MD.setGridCol(tags, gridCol);
-         MD.setStageX(tags, event.xyPosition_.getCenter().x);
-         MD.setStageY(tags, event.xyPosition_.getCenter().y);
+
          //add data about surface
          //right now this only works for fixed distance from the surface
          if ((event.acquisition_ instanceof MagellanGUIAcquisition)
@@ -183,6 +187,7 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
             MD.setSurfacePoints(tags, ((MagellanGUIAcquisition) event.acquisition_).getFixedSurfacePoints());
          }
       } catch (Exception e) {
+         e.printStackTrace();
          Log.log("Problem adding image metadata");
          throw new RuntimeException();
       }
@@ -214,10 +219,10 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
       MD.setExploreAcq(summary, this instanceof ExploreAcquisition);
       //affine transform
       if (MagellanAffineUtils.isAffineTransformDefined()) {
-        AffineTransform at = MagellanAffineUtils.getAffineTransform(0, 0);
-        MD.setAffineTransformString(summary, MagellanAffineUtils.transformToString(at));
+         AffineTransform at = MagellanAffineUtils.getAffineTransform(0, 0);
+         MD.setAffineTransformString(summary, MagellanAffineUtils.transformToString(at));
       } else {
-        MD.setAffineTransformString(summary, "Undefined");
+         MD.setAffineTransformString(summary, "Undefined");
       }
       JSONArray chNames = new JSONArray();
       JSONArray chColors = new JSONArray();
@@ -310,11 +315,15 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
            int[] positionIndices, List<XYStagePosition> positions) {
       return (AcquisitionEvent event) -> {
          Stream.Builder<AcquisitionEvent> builder = Stream.builder();
-         for (int index = 0; index < positionIndices.length; index++) {
-            AcquisitionEvent posEvent = event.copy();
-            posEvent.positionIndex_ = positionIndices[index];
-            posEvent.xyPosition_ = positions.get(posEvent.positionIndex_);
-            builder.accept(posEvent);
+         if (positions == null) {
+            builder.accept(event);
+         } else {
+            for (int index = 0; index < positionIndices.length; index++) {
+               AcquisitionEvent posEvent = event.copy();
+               posEvent.positionIndex_ = positionIndices[index];
+               posEvent.xyPosition_ = positions.get(posEvent.positionIndex_);
+               builder.accept(posEvent);
+            }
          }
          return builder.build().iterator();
       };
@@ -413,15 +422,16 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
    public JSONObject getSummaryMetadata() {
       return summaryMetadata_;
    }
-   
+
    public boolean anythingAcquired() {
       return !storage_.imageKeys().isEmpty();
    }
 
    /**
-    * Used to tell the multiresoltuion storage to create more downsampled levels for higher zoom
-    * Explore acquisitions use this
-    * @param index 
+    * Used to tell the multiresoltuion storage to create more downsampled levels
+    * for higher zoom Explore acquisitions use this
+    *
+    * @param index
     */
    public void addResolutionsUpTo(int index) {
       MagellanEngine.getInstance().runOnSavingThread(new Runnable() {

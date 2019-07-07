@@ -35,6 +35,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.micromanager.magellan.channels.ChannelSetting;
 import org.micromanager.magellan.misc.Log;
@@ -180,16 +181,18 @@ public class MagellanEngine {
       try {
          Future f = executeAcquisitionEvent(AcquisitionEvent.createAcquisitionFinishedEvent(acq));
          f.get();
+      } catch (NullPointerException e) {
+         System.out.println();
       } catch (ExecutionException | InterruptedException ex) {
          ex.printStackTrace();
          Log.log("Exception while waiting for acquisition finish");
       }
    }
-   
+
    public Future submitToEventExecutor(Runnable r) {
       return eventGeneratorExecutor_.submit(r);
    }
-   
+
    /**
     * Submit a stream of events which will get lazily processed and combined
     * into sequence events as needed
@@ -209,6 +212,7 @@ public class MagellanEngine {
                   try {
                      Thread.sleep(5);
                   } catch (InterruptedException ex) {
+                     Log.log(ex);
                      throw new RuntimeException(ex);
                   }
                }
@@ -224,6 +228,7 @@ public class MagellanEngine {
                   try {
                      Thread.sleep(2);
                   } catch (InterruptedException ex) {
+                     ex.printStackTrace();
                      throw new RuntimeException(ex); //must have beeen aborted
                   }
                }
@@ -257,7 +262,7 @@ public class MagellanEngine {
                               saveFuture.get();
                            } catch (InterruptedException | ExecutionException ex) {
                               throw new RuntimeException(ex);
-                           } 
+                           }
                            sequenceEvent.afterImageSavedHook_.run(sequenceEvent);
                            return null;
                         }
@@ -287,6 +292,8 @@ public class MagellanEngine {
                return null;
             } catch (InterruptedException | ExecutionException ex) {
                t.cancel(true); //interrupt current event, which is especially important if it is an acquisition waiting event
+               Log.log(ex);
+               ex.printStackTrace();
                throw new RuntimeException(ex);
             }
          });
@@ -297,6 +304,8 @@ public class MagellanEngine {
                   t.get();
                }
             } catch (InterruptedException | ExecutionException ex) {
+               ex.printStackTrace();
+               Log.log(ex);
                throw new RuntimeException(ex);
             }
          });
@@ -391,9 +400,9 @@ public class MagellanEngine {
                   }
                }
                event.acquisition_.addImageMetadata(ti.tags, event, event.timeIndex_, c, currentTime - event.acquisition_.getStartTime_ms(),
-                       event.acquisition_ instanceof ExploreAcquisition ? 
-                               event.acquisition_.channels_.getChannelSetting(event.channelIndex_).exposure_ :
-                               event.acquisition_.channels_.getActiveChannelSetting(event.channelIndex_).exposure_);
+                       event.acquisition_ instanceof ExploreAcquisition
+                               ? event.acquisition_.channels_.getChannelSetting(event.channelIndex_).exposure_
+                               : event.acquisition_.channels_.getActiveChannelSetting(event.channelIndex_).exposure_);
                images.add(ti);
             }
 
@@ -403,11 +412,11 @@ public class MagellanEngine {
             }
             //keep track of how long it takes to acquire an image for acquisition duration estimation
             try {
-               
+
                acqDurationEstiamtor_.storeImageAcquisitionTime(
-                       event.acquisition_ instanceof ExploreAcquisition ?
-                               event.acquisition_.channels_.getChannelSetting(event.channelIndex_).exposure_ :
-                               event.acquisition_.channels_.getActiveChannelSetting(event.channelIndex_).exposure_, System.currentTimeMillis() - startTime);
+                       event.acquisition_ instanceof ExploreAcquisition
+                               ? event.acquisition_.channels_.getChannelSetting(event.channelIndex_).exposure_
+                               : event.acquisition_.channels_.getActiveChannelSetting(event.channelIndex_).exposure_, System.currentTimeMillis() - startTime);
             } catch (Exception ex) {
                Log.log(ex);
             }
@@ -507,39 +516,41 @@ public class MagellanEngine {
       acqDurationEstiamtor_.storeZMoveTime(System.currentTimeMillis() - startTime);
 
       /////////////////////////////XY Stage////////////////////////////////////////////////////
-      startTime = System.currentTimeMillis();
-      loopHardwareCommandRetries(new Runnable() {
-         @Override
-         public void run() {
-            try {
-               if (event.xySequenced_) {
-                  core_.startXYStageSequence(xyStage);
-               } else if (lastEvent_ == null || event.positionIndex_ != lastEvent_.positionIndex_) {
-                  //wait for it to not be busy (is this even needed?)   
-                  while (core_.deviceBusy(xyStage)) {
-                     Thread.sleep(1);
+      if (event.xyPosition_ != null) {
+         startTime = System.currentTimeMillis();
+         loopHardwareCommandRetries(new Runnable() {
+            @Override
+            public void run() {
+               try {
+                  if (event.xySequenced_) {
+                     core_.startXYStageSequence(xyStage);
+                  } else if (lastEvent_ == null || event.positionIndex_ != lastEvent_.positionIndex_) {
+                     //wait for it to not be busy (is this even needed?)   
+                     while (core_.deviceBusy(xyStage)) {
+                        Thread.sleep(1);
+                     }
+                     //Move XY
+                     core_.setXYPosition(xyStage, event.xyPosition_.getCenter().x, event.xyPosition_.getCenter().y);
+                     //wait for move to finish
+                     while (core_.deviceBusy(xyStage)) {
+                        Thread.sleep(1);
+                     }
                   }
-                  //Move XY
-                  core_.setXYPosition(xyStage, event.xyPosition_.getCenter().x, event.xyPosition_.getCenter().y);
-                  //wait for move to finish
-                  while (core_.deviceBusy(xyStage)) {
-                     Thread.sleep(1);
-                  }
+               } catch (Exception ex) {
+                  ex.printStackTrace();
+                  throw new HardwareControlException(ex.getMessage());
                }
-            } catch (Exception ex) {
-               throw new HardwareControlException(ex.getMessage());
-            }
 
-         }
-      }, "Moving XY stage");
-      acqDurationEstiamtor_.storeXYMoveTime(System.currentTimeMillis() - startTime);
-      
+            }
+         }, "Moving XY stage");
+         acqDurationEstiamtor_.storeXYMoveTime(System.currentTimeMillis() - startTime);
+      }
       /////////////////////////////Channels//////////////////////////////////////////////////
       startTime = System.currentTimeMillis();
       loopHardwareCommandRetries(new Runnable() {
          @Override
          public void run() {
-            try {               
+            try {
                if (event.channelSequenced_) {
                   //Channels
                   String group = event.acquisition_.channels_.getActiveChannelSetting(0).group_;
@@ -585,18 +596,18 @@ public class MagellanEngine {
                if (event.exposureSequenced_) {
                   core_.startExposureSequence(core_.getCameraDevice());
                } else if (event.acquisition_.channels_ != null && event.acquisition_.channels_.getNumActiveChannels() != 0
-                       && (lastEvent_ == null || lastEvent_.acquisition_ != event.acquisition_ ||
-                       ( (lastEvent_.acquisition_ instanceof ExploreAcquisition) ? 
-                       (lastEvent_.acquisition_.channels_.getChannelSetting(lastEvent_.channelIndex_).exposure_
-                       != event.acquisition_.channels_.getChannelSetting(event.channelIndex_).exposure_)  : 
-                       (lastEvent_.acquisition_.channels_.getActiveChannelSetting(lastEvent_.channelIndex_).exposure_
-                       != event.acquisition_.channels_.getActiveChannelSetting(event.channelIndex_).exposure_)) )) {
+                       && (lastEvent_ == null || lastEvent_.acquisition_ != event.acquisition_
+                       || ((lastEvent_.acquisition_ instanceof ExploreAcquisition)
+                               ? (lastEvent_.acquisition_.channels_.getChannelSetting(lastEvent_.channelIndex_).exposure_
+                               != event.acquisition_.channels_.getChannelSetting(event.channelIndex_).exposure_)
+                               : (lastEvent_.acquisition_.channels_.getActiveChannelSetting(lastEvent_.channelIndex_).exposure_
+                               != event.acquisition_.channels_.getActiveChannelSetting(event.channelIndex_).exposure_)))) {
                   if (event.acquisition_ instanceof ExploreAcquisition) {
                      core_.setExposure(event.acquisition_.channels_.getChannelSetting(event.channelIndex_).exposure_);
                   } else {
                      core_.setExposure(event.acquisition_.channels_.getActiveChannelSetting(event.channelIndex_).exposure_);
                   }
-                  
+
                }
             } catch (Exception ex) {
                throw new HardwareControlException(ex.getMessage());

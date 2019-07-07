@@ -29,8 +29,10 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
  */
 public class SurfaceGridComboBoxModel extends DefaultComboBoxModel implements SurfaceGridListener {
    
+   private static final String DEFAULT_NAME = "(Current field of view)";
+   
    private SurfaceGridManager manager_;
-   private Object selectedItem_ = null;
+   private Object selectedItem_;
    private final boolean surfacesOnly_, gridsOnly_;
 
    public SurfaceGridComboBoxModel(boolean surfacesOnly, boolean gridsOnly)  {
@@ -58,11 +60,16 @@ public class SurfaceGridComboBoxModel extends DefaultComboBoxModel implements Su
       if (gridsOnly_) {
          return manager_.getNumberOfGrids();
       }
-      return manager_.getNumberOfGrids() + manager_.getNumberOfSurfaces(); 
+      return Math.max(1, manager_.getNumberOfGrids() + manager_.getNumberOfSurfaces()); 
    }
 
    @Override
    public Object getElementAt(int index) {
+      //default to current location
+      if (!surfacesOnly_ && manager_.getNumberOfSurfaces() == 0 && manager_.getNumberOfGrids() == 0) {
+         return DEFAULT_NAME;
+      }
+      
       if (index == -1) {
          return null;
       }     

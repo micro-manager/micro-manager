@@ -213,16 +213,9 @@ public class MagellanAcquisitionsManager {
    private void validateSettings(MagellanGUIAcquisitionSettings settings) throws Exception {
       //space
       //non null surface
-      if ((settings.spaceMode_ == MagellanGUIAcquisitionSettings.REGION_2D || settings.spaceMode_ == MagellanGUIAcquisitionSettings.CUBOID_Z_STACK)
-              && settings.footprint_ == null) {
-         throw new Exception("Error: No surface or region selected for " + settings.name_);
-      }
       if (settings.spaceMode_ == MagellanGUIAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK && settings.fixedSurface_ == null) {
          Log.log("Error: No surface selected for " + settings.name_, true);
          throw new Exception();
-      }
-      if (settings.spaceMode_ == MagellanGUIAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK && settings.footprint_ == null) {
-         throw new Exception("Error: No xy footprint selected for " + settings.name_);
       }
       if (settings.spaceMode_ == MagellanGUIAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK
               && (settings.topSurface_ == null || settings.bottomSurface_ == null)) {
@@ -230,6 +223,7 @@ public class MagellanAcquisitionsManager {
       }
       //correct coordinate devices--XY
       if ((settings.spaceMode_ == MagellanGUIAcquisitionSettings.REGION_2D || settings.spaceMode_ == MagellanGUIAcquisitionSettings.CUBOID_Z_STACK)
+              && settings.footprint_ != null 
               && !settings.footprint_.getXYDevice().equals(Magellan.getCore().getXYStageDevice())) {
          throw new Exception("Error: XY device for surface/grid does match XY device in MM core in " + settings.name_);
       }
