@@ -16,6 +16,7 @@
 //
 package org.micromanager.magellan.acq;
 
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Iterator;
@@ -24,6 +25,7 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.json.JSONArray;
+import org.micromanager.magellan.coordinates.MagellanAffineUtils;
 import org.micromanager.magellan.coordinates.XYStagePosition;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.Log;
@@ -57,17 +59,30 @@ public class MagellanGUIAcquisition extends Acquisition {
       super();
       settings_ = settings;
    }
+   
+   @Override
+   public String toString() {
+      return settings_.toString();
+   }
 
    public void start() {
+      if (finished_) {
+         throw new RuntimeException("Cannot start acquistion since it has already been run. "
+                 + " Try refreshing acquisition list or creating new acquisition");
+      }
       createXYPositions();
       initialize(settings_.dir_, settings_.name_, settings_.tileOverlap_, settings_.zStep_, settings_.channels_);
       //Submit a generating stream to get this acquisition going
       Stream<AcquisitionEvent> acqEventStream = magellanGUIAcqEventStream();
       acqFuture_ = MagellanEngine.getInstance().submitEventStream(acqEventStream, this);
+      //This event is how the acquisition will end, whether through aborting (which cancels everything undone in the previous event)
+      //or through running its natural course
       acqFinishedFuture_ = MagellanEngine.getInstance().submitToEventExecutor(new Runnable() {
          @Override
-         public void run() {
+         public void run() {            
             MagellanEngine.getInstance().finishAcquisition(MagellanGUIAcquisition.this);
+            //let the acquisition manager know so it can create a new acqusiition with these settings for the GUI/API to interact with
+            MagellanAcquisitionsManager.getInstance().acquisitionFinished(MagellanGUIAcquisition.this);
          }
       });
    }
@@ -85,7 +100,7 @@ public class MagellanGUIAcquisition extends Acquisition {
       boolean surfaceGuided2D = settings_.spaceMode_ == MagellanGUIAcquisitionSettings.REGION_2D && settings_.useCollectionPlane_;
 
       acqFunctions.add(timelapse());
-      acqFunctions.add(positions(IntStream.range(0, positions_.size()).toArray(), positions_));
+      acqFunctions.add(positions(IntStream.range(0, positions_ == null ? 1 : positions_.size()).toArray(), positions_));
       if (settings_.spaceMode_ == MagellanGUIAcquisitionSettings.REGION_2D) {
          acqFunctions.add(channels(settings_.channels_));
       } else if (surfaceGuided2D) {
@@ -338,28 +353,28 @@ public class MagellanGUIAcquisition extends Acquisition {
       try {
          //get XY positions
          if (settings_.spaceMode_ == MagellanGUIAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
-            positions_ = settings_.footprint_.getXYPositions(settings_.tileOverlap_);
+            positions_ = settings_.footprint_ == null ? null : settings_.footprint_.getXYPositions(settings_.tileOverlap_);
          } else if (settings_.spaceMode_ == MagellanGUIAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
             positions_ = settings_.useTopOrBottomFootprint_ == MagellanGUIAcquisitionSettings.FOOTPRINT_FROM_TOP
                     ? settings_.topSurface_.getXYPositions(settings_.tileOverlap_) : settings_.bottomSurface_.getXYPositions(settings_.tileOverlap_);
          } else if (settings_.spaceMode_ == MagellanGUIAcquisitionSettings.CUBOID_Z_STACK) {
-            positions_ = settings_.footprint_.getXYPositions(settings_.tileOverlap_);
+            positions_ = settings_.footprint_ == null ? null : settings_.footprint_.getXYPositions(settings_.tileOverlap_);
          } else if (settings_.spaceMode_ == MagellanGUIAcquisitionSettings.REGION_2D) {
-            positions_ = settings_.footprint_.getXYPositions(settings_.tileOverlap_);
-         } else {
-            throw new RuntimeException("No space settings specified");
-            //no space mode, use current stage positon
-//            positions_ = new ArrayList<XYStagePosition>();
-//            int fullTileWidth = (int) Magellan.getCore().getImageWidth();
-//            int fullTileHeight = (int) Magellan.getCore().getImageHeight();
-//            int tileWidthMinusOverlap = fullTileWidth - this.getOverlapX();
-//            int tileHeightMinusOverlap = fullTileHeight - this.getOverlapY();
-//            Point2D.Double currentStagePos = Magellan.getCore().getXYStagePosition(xyStage_);
-//            positions_.add(new XYStagePosition(currentStagePos, tileWidthMinusOverlap, tileHeightMinusOverlap, fullTileWidth, fullTileHeight, 0, 0,
-//                    MagellanAffineUtils.getAffineTransform(Magellan.getCore().getCurrentPixelSizeConfig(),
-//                            currentStagePos.x, currentStagePos.y)));
+            positions_ = settings_.footprint_ == null ? null : settings_.footprint_.getXYPositions(settings_.tileOverlap_);
+         } 
+         if (positions_ == null) {
+            positions_ = new ArrayList<XYStagePosition>();
+            int fullTileWidth = (int) Magellan.getCore().getImageWidth();
+            int fullTileHeight = (int) Magellan.getCore().getImageHeight();
+            int tileWidthMinusOverlap = fullTileWidth - this.getOverlapX();
+            int tileHeightMinusOverlap = fullTileHeight - this.getOverlapY();
+            positions_.add(new XYStagePosition(new Point2D.Double(Magellan.getCore().getXPosition(), Magellan.getCore().getYPosition()), 
+                    tileWidthMinusOverlap, tileHeightMinusOverlap, 
+                    fullTileWidth, fullTileHeight, 0, 0, MagellanAffineUtils.getAffineTransform(
+                            Magellan.getCore().getXPosition(), Magellan.getCore().getXPosition())));
          }
       } catch (Exception e) {
+         e.printStackTrace();
          Log.log("Problem with Acquisition's XY positions. Check acquisition settings");
          throw new RuntimeException();
       }
@@ -367,6 +382,9 @@ public class MagellanGUIAcquisition extends Acquisition {
 
    @Override
    protected JSONArray createInitialPositionList() {
+      if (positions_ == null) {
+         return null;
+      }
       JSONArray pList = new JSONArray();
       for (XYStagePosition xyPos : positions_) {
          pList.put(xyPos.getMMPosition());

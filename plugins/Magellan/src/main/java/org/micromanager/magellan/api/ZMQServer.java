@@ -40,8 +40,8 @@ public abstract class ZMQServer extends ZMQSocketWrapper {
                } catch (Exception e) {
                   try {
                      JSONObject json = new JSONObject();
-                     json.put("reply", "Exception");
-                     json.put("message", e.getMessage());
+                     json.put("type", "exception");
+                     json.put("value", e.getMessage());
                      reply = json.toString().getBytes();
                      e.printStackTrace();
                      Log.log(e.getMessage());

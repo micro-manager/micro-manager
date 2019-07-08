@@ -10,6 +10,8 @@ public interface MagellanAcquisitionAPI {
    
    public boolean waitForCompletion();
    
+   public void abort();
+   
    
    
 }
