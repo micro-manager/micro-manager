@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -218,6 +219,18 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
     */
    @SuppressWarnings("LeakingThisInConstructor")
    public MMStudio(boolean startAsImageJPlugin) {
+       this(startAsImageJPlugin, null);
+   }
+   
+   /**
+    * MMStudio constructor
+    * @param startAsImageJPlugin Indicates if we're running from "within"
+    * ImageJ, which governs our behavior when we are closed.
+    * @param profileNameAutoStart The name of a user profile. This profile and
+    * its most recently used hardware configuration will be to automatically loaded. 
+    */
+   @SuppressWarnings("LeakingThisInConstructor")
+   public MMStudio(boolean startAsImageJPlugin, String profileNameAutoStart) {
       wasStartedAsImageJPlugin_ = startAsImageJPlugin;
 
       // TODO Of course it is crazy to do all of the following in the
@@ -343,7 +356,21 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       UserProfileAdmin profileAdmin = userProfileManager_.getAdmin();
       UUID profileUUID = profileAdmin.getUUIDOfDefaultProfile();
       try {
-         if (StartupSettings.create(profileAdmin.getNonSavingProfile(profileUUID)).
+          if (profileNameAutoStart != null) {
+            for (Map.Entry<UUID,String> entry : profileAdmin.getProfileUUIDsAndNames().entrySet()){
+                String name = entry.getValue();
+                if (name.equals(profileNameAutoStart)){
+                    UserProfile profile = profileAdmin.getNonSavingProfile(entry.getKey());
+                    profileAdmin.setCurrentUserProfile(entry.getKey());
+                    sysConfigFile_ = HardwareConfigurationManager.getRecentlyUsedConfigFilesFromProfile(profile).get(0);
+                    break;
+                }
+            }
+            if (sysConfigFile_ == null) {
+                ReportingUtils.showMessage("A hardware configuration for a profile matching name: " + profileNameAutoStart + " could not be found");
+            }
+          }
+          else if (StartupSettings.create(profileAdmin.getNonSavingProfile(profileUUID)).
                shouldSkipUserInteractionWithSplashScreen()) {
             List<String> recentConfigs = HardwareConfigurationManager.
                   getRecentlyUsedConfigFilesFromProfile(
