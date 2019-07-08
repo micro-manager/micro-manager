@@ -108,7 +108,7 @@ public:
 
    unsigned GetImageWidth() const {return img.Width();}
    unsigned GetImageHeight() const {return img.Height();}
-   unsigned GetImageBytesPerPixel() const {return img.Depth();} 
+   unsigned GetImageBytesPerPixel() const;
    long GetImageBufferSize() const;
    unsigned GetBitDepth() const;
    int GetBinning() const;
