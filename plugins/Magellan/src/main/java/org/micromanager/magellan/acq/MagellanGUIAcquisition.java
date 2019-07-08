@@ -66,15 +66,23 @@ public class MagellanGUIAcquisition extends Acquisition {
    }
 
    public void start() {
+      if (finished_) {
+         throw new RuntimeException("Cannot start acquistion since it has already been run. "
+                 + " Try refreshing acquisition list or creating new acquisition");
+      }
       createXYPositions();
       initialize(settings_.dir_, settings_.name_, settings_.tileOverlap_, settings_.zStep_, settings_.channels_);
       //Submit a generating stream to get this acquisition going
       Stream<AcquisitionEvent> acqEventStream = magellanGUIAcqEventStream();
       acqFuture_ = MagellanEngine.getInstance().submitEventStream(acqEventStream, this);
+      //This event is how the acquisition will end, whether through aborting (which cancels everything undone in the previous event)
+      //or through running its natural course
       acqFinishedFuture_ = MagellanEngine.getInstance().submitToEventExecutor(new Runnable() {
          @Override
          public void run() {            
             MagellanEngine.getInstance().finishAcquisition(MagellanGUIAcquisition.this);
+            //let the acquisition manager know so it can create a new acqusiition with these settings for the GUI/API to interact with
+            MagellanAcquisitionsManager.getInstance().acquisitionFinished(MagellanGUIAcquisition.this);
          }
       });
    }

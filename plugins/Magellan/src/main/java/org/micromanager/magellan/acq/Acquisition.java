@@ -122,8 +122,8 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
    void saveImage(TaggedImage image) {
       if (image.tags == null && image.pix == null) {
          if (!finished_) {
-            imageCache_.finished();
             finished_ = true;
+            imageCache_.finished();
          }
       } else {
          //this method doesnt return until all images have been writtent to disk
@@ -147,11 +147,11 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
                Acquisition.this.togglePaused();
             }
             shutdownEvents();
-            waitForCompletion();
             //signal acquisition engine to start finishing process and wait for its completion
             if (Acquisition.this instanceof ExploreAcquisition) { //Magellan GUI acquisition already has a trailing finishing event
                eng_.finishAcquisition(Acquisition.this);
             }
+            waitForCompletion();
          }
       }, "Aborting thread").start();
    }

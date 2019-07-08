@@ -20,7 +20,7 @@ public class ZMQMagellanAcquisitionServer extends ZMQServer {
    protected byte[] parseAndExecuteCommand(String message) throws JSONException, NoSuchMethodException, IllegalAccessException {
       JSONObject json = new JSONObject(message);
       if (json.getString("command").equals("send-MagellanAcquisitionAPI-api")) {
-         return parseAPI(Magellan.getAPI().getAcquisitions().get(0).getClass());
+         return parseAPI(MagellanAcquisitionAPI.class);
       } else if (json.getString("command").equals("run-method")) {
          String uuid = json.getString("UUID");
          MagellanAcquisitionAPI acq = MagellanAcquisitionsManager.getInstance().getAcquisitionByUUID(uuid);

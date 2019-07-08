@@ -19,9 +19,11 @@ package org.micromanager.magellan.acq;
 import org.micromanager.magellan.gui.GUI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 import javax.swing.JOptionPane;
 import org.micromanager.magellan.api.MagellanAcquisitionAPI;
 import org.micromanager.magellan.main.Magellan;
@@ -35,7 +37,7 @@ public class MagellanAcquisitionsManager {
 
    private static MagellanAcquisitionsManager singleton_;
 
-   private ArrayList<Acquisition> acqList_ = new ArrayList<Acquisition>();
+   private CopyOnWriteArrayList<Acquisition> acqList_ = new CopyOnWriteArrayList<Acquisition>();
    private String[] acqStatus_;
    private GUI gui_;
    private volatile Acquisition currentAcq_;
@@ -170,9 +172,6 @@ public class MagellanAcquisitionsManager {
                   currentAcq_.start();
                   currentAcqIndex_ = index;
                   boolean aborted = !currentAcq_.waitForCompletion();
-                  //replace with new object so it can be run again
-                  MagellanGUIAcquisition done = (MagellanGUIAcquisition) acqList_.remove(index);
-                  acqList_.add(index, new MagellanGUIAcquisition(done.settings_));
                   acqStatus_[index] = aborted ? "Aborted" : "Complete";
                } catch (Exception e) {
                   acqStatus_[index] = "Error";
@@ -265,7 +264,14 @@ public class MagellanAcquisitionsManager {
             return acq;
          }
       }
-      throw new RuntimeException("Couldn't find acquisition with this UUID. Was it deleted?");
+      throw new RuntimeException("Acquisition not found. Need to create a new acquisition or refresh available ones?");
+   }
+
+   void acquisitionFinished(MagellanGUIAcquisition acq) {
+      //replace with new object so it can be run again
+      int index = acqList_.indexOf(acq);
+      MagellanGUIAcquisition done = (MagellanGUIAcquisition) acqList_.remove(index);
+      acqList_.add(index, new MagellanGUIAcquisition(done.settings_));
    }
 
 }

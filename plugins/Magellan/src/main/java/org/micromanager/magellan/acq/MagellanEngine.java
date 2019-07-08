@@ -179,10 +179,17 @@ public class MagellanEngine {
 
    public void finishAcquisition(Acquisition acq) {
       try {
-         Future f = executeAcquisitionEvent(AcquisitionEvent.createAcquisitionFinishedEvent(acq));
-         f.get();
+         Future<Future> f = acqExecutor_.submit(new Callable<Future>() {
+            @Override
+            public Future call() throws InterruptedException {
+               return executeAcquisitionEvent(AcquisitionEvent.createAcquisitionFinishedEvent(acq));
+            }
+         });
+         Future savingDone = f.get();
+         savingDone.get();
       } catch (NullPointerException e) {
-         System.out.println();
+         Log.log(e);
+         throw new RuntimeException();
       } catch (ExecutionException | InterruptedException ex) {
          ex.printStackTrace();
          Log.log("Exception while waiting for acquisition finish");
@@ -276,7 +283,9 @@ public class MagellanEngine {
                            Log.log("exception while tryign to stop sequence acquistion");
                         }
                      }
-                     return null;
+                     //forget any acquisition events on abort
+                     eventQueue_.clear();
+                     throw new RuntimeException("Acquisition canceled");
                   }
                }
             });
@@ -290,8 +299,13 @@ public class MagellanEngine {
                   return t.get();
                }
                return null;
-            } catch (InterruptedException | ExecutionException ex) {
+            } catch (InterruptedException e) {
+               //Acquisition aborted
                t.cancel(true); //interrupt current event, which is especially important if it is an acquisition waiting event
+               //this exception is needed to make everything stop
+               throw new RuntimeException("Acquisition cancelled");
+            } catch (ExecutionException ex) {
+               t.cancel(true); //interrupt current event. Neccessary?
                Log.log(ex);
                ex.printStackTrace();
                throw new RuntimeException(ex);
