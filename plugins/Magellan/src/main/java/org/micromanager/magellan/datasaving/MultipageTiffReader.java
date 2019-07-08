@@ -19,7 +19,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.magellan.acq;
+package org.micromanager.magellan.datasaving;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -32,9 +32,10 @@ import java.nio.channels.FileChannel;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import org.micromanager.magellan.json.JSONArray;
-import org.micromanager.magellan.json.JSONException;
-import org.micromanager.magellan.json.JSONObject;
+import mmcorej.TaggedImage;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.micromanager.magellan.misc.Log;
 import org.micromanager.magellan.misc.MD;
 
@@ -207,7 +208,7 @@ public class MultipageTiffReader {
       return displayAndComments_;
    }
    
-   public MagellanTaggedImage readImage(String label) {
+   public TaggedImage readImage(String label) {
       if (indexMap_.containsKey(label)) {
          if (fileChannel_ == null) {
             Log.log("Attempted to read image on FileChannel that is null", false); //can happen on acquiition abort
@@ -217,7 +218,7 @@ public class MultipageTiffReader {
             long byteOffset = indexMap_.get(label);
             
             IFDData data = readIFD(byteOffset);
-            return readMagellanTaggedImage(data);
+            return readTaggedImage(data);
          } catch (IOException ex) {
             Log.log(ex);
             return null;
@@ -344,7 +345,7 @@ public class MultipageTiffReader {
       }
    }
    
-   private MagellanTaggedImage readMagellanTaggedImage(IFDData data) throws IOException {
+   private TaggedImage readTaggedImage(IFDData data) throws IOException {
       ByteBuffer pixelBuffer = ByteBuffer.allocate( (int) data.bytesPerImage).order(byteOrder_);
       ByteBuffer mdBuffer = ByteBuffer.allocate((int) data.mdLength).order(byteOrder_);
       fileChannel_.read(pixelBuffer, data.pixelOffset);
@@ -373,7 +374,7 @@ public class MultipageTiffReader {
                   i++;
                }
             }
-            return new MagellanTaggedImage(pixels, md);
+            return new TaggedImage(pixels, md);
          } else {
              short[] pixels = new short[(int) (2 * (data.bytesPerImage/3))];
             int i = 0;           
@@ -385,17 +386,17 @@ public class MultipageTiffReader {
                   i++;
                }
             }
-            return new MagellanTaggedImage(pixels, md);
+            return new TaggedImage(pixels, md);
          }
       } else {
          if (byteDepth_ == 1) {
-            return new MagellanTaggedImage(pixelBuffer.array(), md);
+            return new TaggedImage(pixelBuffer.array(), md);
          } else {
             short[] pix = new short[pixelBuffer.capacity()/2];
             for (int i = 0; i < pix.length; i++ ) {
                pix[i] = pixelBuffer.getShort(i*2);
             }
-            return new MagellanTaggedImage(pix, md);
+            return new TaggedImage(pix, md);
          }
       }
    }

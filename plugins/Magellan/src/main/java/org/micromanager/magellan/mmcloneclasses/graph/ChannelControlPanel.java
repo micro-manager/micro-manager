@@ -34,8 +34,6 @@ import org.micromanager.magellan.mmcloneclasses.graph.HistogramPanel.CursorListe
 import org.micromanager.magellan.imagedisplay.MMCompositeImage;
 import org.micromanager.magellan.imagedisplay.DisplayPlus;
 import org.micromanager.magellan.imagedisplay.VirtualAcquisitionDisplay;
-import org.micromanager.magellan.json.JSONArray;
-import org.micromanager.magellan.json.JSONObject;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.GlobalSettings;
 import org.micromanager.magellan.misc.HistogramUtils;
@@ -43,6 +41,8 @@ import org.micromanager.magellan.misc.JavaUtils;
 import org.micromanager.magellan.misc.Log;
 import org.micromanager.magellan.misc.MD;
 import mmcorej.CMMCore;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
  * Draws one histogram of the Multi-Channel control panel

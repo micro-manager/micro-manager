@@ -24,7 +24,7 @@ import java.util.Random;
 import java.util.function.Function;
 import java.util.function.IntUnaryOperator;
 import java.util.stream.IntStream;
-import org.micromanager.magellan.acq.MultiResMultipageTiffStorage;
+import org.micromanager.magellan.datasaving.MultiResMultipageTiffStorage;
 
 /**
  *

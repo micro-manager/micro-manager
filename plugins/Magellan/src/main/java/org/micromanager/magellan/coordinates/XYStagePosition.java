@@ -19,11 +19,11 @@ package org.micromanager.magellan.coordinates;
 
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
-import org.micromanager.magellan.json.JSONArray;
-import org.micromanager.magellan.json.JSONObject;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.Log;
 import mmcorej.CMMCore;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
  * Immutable object representing single XY stage position

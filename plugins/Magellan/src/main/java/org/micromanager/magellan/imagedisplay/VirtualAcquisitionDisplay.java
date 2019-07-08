@@ -37,10 +37,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
+import mmcorej.TaggedImage;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.micromanager.magellan.acq.MMImageCache;
-import org.micromanager.magellan.acq.MagellanTaggedImage;
-import org.micromanager.magellan.json.JSONException;
-import org.micromanager.magellan.json.JSONObject;
 import org.micromanager.magellan.misc.JavaUtils;
 import org.micromanager.magellan.misc.Log;
 import org.micromanager.magellan.misc.MD;
@@ -153,6 +153,7 @@ public abstract class VirtualAcquisitionDisplay {
 //               }
                try {
                   tags = acquiredTagsQueue_.take();
+//                  System.out.println("image tags take time " + (System.currentTimeMillis() % 10000));
                } catch (InterruptedException ex) {
                   // Interrupted while waiting for the queue to be 
                   // populated. 
@@ -161,13 +162,12 @@ public abstract class VirtualAcquisitionDisplay {
                      return;
                   }
                }
-
                if (hyperImage_ != null && hyperImage_.getCanvas() != null) {
+
                   // Wait for the canvas to be available. If we don't do this,
                   // then our framerate tanks, possibly because of repaint
                   // events piling up in the EDT. It's hard to tell. 
-                  while (CanvasPaintPending.isMyPaintPending(
-                          hyperImage_.getCanvas(), imageReceivedObject_)) {
+                  while (CanvasPaintPending.isMyPaintPending(hyperImage_.getCanvas(), imageReceivedObject_)) {
                      try {
                         Thread.sleep(10);
                      } catch (InterruptedException e) {
@@ -177,12 +177,14 @@ public abstract class VirtualAcquisitionDisplay {
                         }
                      }
                   }
+
                   CanvasPaintPending.setPaintPending(hyperImage_.getCanvas(), imageReceivedObject_);
                }
+
                imageAcquiredDisplayUpdate(tags);
             } // End while loop
          }
-      });
+      }, "Virtual acquisition display thread");
       displayThread_.start();
    }
 
@@ -237,7 +239,7 @@ public abstract class VirtualAcquisitionDisplay {
    /**
     * Used to enable scrollbar movement image showing events
     */
-   public void imageReceived(final MagellanTaggedImage magellanTaggedImage) {
+   public void imageReceived(final TaggedImage magellanTaggedImage) {
       if (magellanTaggedImage != null) {
          try {
             acquiredTagsQueue_.put(magellanTaggedImage.tags);

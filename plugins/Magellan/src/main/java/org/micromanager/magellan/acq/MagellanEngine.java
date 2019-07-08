@@ -27,40 +27,48 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Stream;
 import org.micromanager.magellan.channels.ChannelSetting;
-import org.micromanager.magellan.json.JSONException;
-import org.micromanager.magellan.json.JSONObject;
-import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.Log;
 import mmcorej.CMMCore;
+import mmcorej.Configuration;
+import mmcorej.DoubleVector;
+import mmcorej.PropertySetting;
+import mmcorej.StrVector;
 import mmcorej.TaggedImage;
 
 /**
- * Desired characteristics: 
- * 1) Lazy evaluation of acquisition events (in case
+ * Desired characteristics: 1) Lazy evaluation of acquisition events (in case
  * the number is enourmous, so they can be processed as acq is running). Also so
  * that acquisition settings can be changed during acquisition, and the
- * acquisition will adapt. 
- * 2) The ability to monitor the progress of certain
+ * acquisition will adapt. 2) The ability to monitor the progress of certain
  * parts of acq event (as its acquired, when it reaches disk, if there was an
- * exception along the way) 
- * 3) black box optimization of acquisition events, so sequence acquisitions 
- * can run super fast without caller having to worry about the details
+ * exception along the way) 3) black box optimization of acquisition events, so
+ * sequence acquisitions can run super fast without caller having to worry about
+ * the details
  *
  */
 public class MagellanEngine {
 
-
+   private static final int MAX_QUEUED_IMAGES_FOR_WRITE = 20;
    private static final int HARDWARE_ERROR_RETRIES = 6;
    private static final int DELAY_BETWEEN_RETRIES_MS = 5;
    private static CMMCore core_;
    private static MagellanEngine singleton_;
    private AcquisitionEvent lastEvent_ = null;
    private final ExecutorService acqExecutor_;
+   private final ThreadPoolExecutor savingExecutor_;
    private AcqDurationEstimator acqDurationEstiamtor_; //get information about how much time different hardware moves take
+   private LinkedList<AcquisitionEvent> eventQueue_ = new LinkedList<AcquisitionEvent>();
+   private ExecutorService eventGeneratorExecutor_;
 
    public MagellanEngine(CMMCore core, AcqDurationEstimator acqDurationEstiamtor) {
       singleton_ = this;
@@ -69,51 +77,231 @@ public class MagellanEngine {
       acqExecutor_ = Executors.newSingleThreadExecutor(r -> {
          return new Thread(r, "Magellan Acquisition Engine Thread");
       });
+      savingExecutor_ = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(),
+              (Runnable r) -> new Thread(r, "Magellan engine image saving thread"));
+      eventGeneratorExecutor_ = Executors.newSingleThreadExecutor((Runnable r) -> new Thread(r, "Magellan engine vent generator"));
+      //subclasses are resonsible for submitting event streams to begin acquisiton
    }
 
    public static MagellanEngine getInstance() {
       return singleton_;
    }
 
-   /**
-    * Modify the first acquisition event in the list to do an entire sequence
-    */
-   private boolean accumulate(LinkedList<AcquisitionEvent> accumulator, AcquisitionEvent event) {
-      //For now, every event is different
-      accumulator.clear();
-      return true;
-      //TODO: if they can be merged, add to accumulator, modify the first one in the list as needed, and return false
+   void runOnSavingThread(Runnable r) {
+      savingExecutor_.submit(r);
+   }
+
+   private int getNumImagesWaitingToSave() {
+      return savingExecutor_.getQueue().size();
    }
 
    /**
+    * Check if two events can be sequenced into one
     *
-    * Submit a stream of acquisition events for acquisition.
-    *
-    *
+    * @param e1
+    * @param e2
     * @return
     */
-   public Stream<Future<Future>> mapToAcquisition(Stream<AcquisitionEvent> eventStream) {
+   private static boolean isSequencable(AcquisitionEvent e1, AcquisitionEvent e2, int newSeqLength) {
+      try {
+         if (e2.isAcquisitionSequenceEndEvent() || e2.isAcquisitionFinishedEvent()) {
+            return false;
+         }
 
-      //Lazily optimize the stream of events for sequence acquisition
-      //this might be a bit against the rules of streams because technically it has a side effect...
-      LinkedList<AcquisitionEvent> accumulator = new LinkedList<AcquisitionEvent>();
-      eventStream = eventStream.filter((AcquisitionEvent t) -> {
-         return accumulate(accumulator, t);
-      });
+         //check all properties in channel
+         if (e1.channelIndex_ != e2.channelIndex_) {
+            //check all properties in the channel
+            String group = e1.acquisition_.channels_.getChannelSetting(0).group_;
 
-      //TODO: some processing to make things optimized when sequenceable hardware is present
-      //Lazily map the optimized acquisition events to a stream of futures
-      Stream<Future<Future>> futureStream = eventStream.map((AcquisitionEvent event) -> {
-         Future<Future> imageAcquiredFuture = acqExecutor_.submit(new Callable() {
+            Configuration config1 = core_.getConfigData(group,
+                    e1.acquisition_.channels_.getChannelSetting(e1.channelIndex_).config_);
+            for (int i = 0; i < config1.size(); i++) {
+               PropertySetting ps = config1.getSetting(i);
+               String deviceName = ps.getDeviceLabel();
+               String propName = ps.getPropertyName();
+               if (!core_.isPropertySequenceable(deviceName, propName)) {
+                  return false;
+               }
+               if (core_.getPropertySequenceMaxLength(deviceName, propName) < newSeqLength) {
+                  return false;
+               }
+            }
+
+         }
+         //check all properties in z stage
+         //TODO: linear sequence?
+         if (e1.zPosition_ != e2.zPosition_) {
+            if (!core_.isStageSequenceable(core_.getFocusDevice())) {
+               return false;
+            }
+            if (core_.getStageSequenceMaxLength(core_.getFocusDevice()) > newSeqLength) {
+               return false;
+            }
+         }
+         //xy stage
+         if (e1.xyPosition_ != e2.xyPosition_) {
+            if (!core_.isXYStageSequenceable(core_.getXYStageDevice())) {
+               return false;
+            }
+            if (core_.getXYStageSequenceMaxLength(core_.getXYStageDevice()) > newSeqLength) {
+               return false;
+            }
+         }
+         //camera
+         if (!core_.isExposureSequenceable(core_.getCameraDevice())) {
+            return false;
+         }
+         if (core_.getExposureSequenceMaxLength(core_.getCameraDevice()) > newSeqLength) {
+            return false;
+         }
+         //timelapse
+         if (e1.timeIndex_ != e2.timeIndex_) {
+            if (e1.miniumumStartTime_ != e2.miniumumStartTime_) {
+               return false;
+            }
+         }
+         return true;
+      } catch (Exception ex) {
+         Log.log("Problem getting channel config for sequencing");
+         Log.log(ex);
+      } finally {
+         return false;
+      }
+   }
+
+   private AcquisitionEvent mergeSequenceEvent(List<AcquisitionEvent> eventList) {
+      if (eventList.size() == 1) {
+         return eventList.get(0);
+      }
+      return new AcquisitionEvent(eventList);
+   }
+
+   public void finishAcquisition(Acquisition acq) {
+      try {
+         Future f = executeAcquisitionEvent(AcquisitionEvent.createAcquisitionFinishedEvent(acq));
+         f.get();
+      } catch (ExecutionException | InterruptedException ex) {
+         ex.printStackTrace();
+         Log.log("Exception while waiting for acquisition finish");
+      }
+   }
+   
+   public Future submitToEventExecutor(Runnable r) {
+      return eventGeneratorExecutor_.submit(r);
+   }
+   
+   /**
+    * Submit a stream of events which will get lazily processed and combined
+    * into sequence events as needed
+    *
+    * @param eventStream
+    * @return
+    */
+   public Future submitEventStream(Stream<AcquisitionEvent> eventStream, Acquisition acq) {
+      return eventGeneratorExecutor_.submit(() -> {
+         Stream<AcquisitionEvent> streamWithEnd = Stream.concat(eventStream, Stream.of(AcquisitionEvent.createAcquisitionSequenceEndEvent(acq)));
+
+         //Wait around while pause is engaged
+         Stream<AcquisitionEvent> streamWithPause = streamWithEnd.map(new Function<AcquisitionEvent, AcquisitionEvent>() {
             @Override
-            public Object call() throws Exception {
-               return executeAcquisitionEvent(event);
+            public AcquisitionEvent apply(AcquisitionEvent t) {
+               while (t.acquisition_.isPaused()) {
+                  try {
+                     Thread.sleep(5);
+                  } catch (InterruptedException ex) {
+                     throw new RuntimeException(ex);
+                  }
+               }
+               return t;
             }
          });
-         return imageAcquiredFuture;
-      });
 
-      return futureStream;
+         //Make sure events can't be submitted to the engine way faster than images can be written to disk
+         Stream<AcquisitionEvent> rateLimitedStream = streamWithPause.map(new Function<AcquisitionEvent, AcquisitionEvent>() {
+            @Override
+            public AcquisitionEvent apply(AcquisitionEvent t) {
+               while (MagellanEngine.getInstance().getNumImagesWaitingToSave() > MAX_QUEUED_IMAGES_FOR_WRITE) {
+                  try {
+                     Thread.sleep(2);
+                  } catch (InterruptedException ex) {
+                     throw new RuntimeException(ex); //must have beeen aborted
+                  }
+               }
+               return t;
+            }
+         });
+
+         //Lazily map the optimized acquisition events to a stream of futures
+         Stream<Future<Future>> eventProcessedFutureStream = rateLimitedStream.map((AcquisitionEvent event) -> {
+            Future<Future> imageAcquiredFuture = acqExecutor_.submit(new Callable() {
+               @Override
+               public Future<Future> call() {
+                  try {
+                     if (eventQueue_.isEmpty() && !event.isAcquisitionSequenceEndEvent()) {
+                        eventQueue_.add(event);
+                        return null;
+                     } else if (isSequencable(eventQueue_.getLast(), event, eventQueue_.size() + 1)) {
+                        eventQueue_.add(event); //keep building up events to sequence                     
+                        return null;
+                     } else {
+                        // merge the sequence of events to one and send it out
+                        AcquisitionEvent sequenceEvent = mergeSequenceEvent(eventQueue_);
+                        eventQueue_.clear();
+                        //Add in the start of the new sequence
+                        if (!event.isAcquisitionSequenceEndEvent()) {
+                           eventQueue_.add(event);
+                        }
+                        Future saveFuture = executeAcquisitionEvent(sequenceEvent);
+                        if (sequenceEvent.afterImageSavedHook_ != null) {
+                           try {
+                              saveFuture.get();
+                           } catch (InterruptedException | ExecutionException ex) {
+                              throw new RuntimeException(ex);
+                           } 
+                           sequenceEvent.afterImageSavedHook_.run(sequenceEvent);
+                           return null;
+                        }
+                        return saveFuture;
+                     }
+                  } catch (InterruptedException e) {
+                     if (core_.isSequenceRunning()) {
+                        try {
+                           core_.stopSequenceAcquisition();
+                        } catch (Exception ex) {
+                           Log.log("exception while tryign to stop sequence acquistion");
+                        }
+                     }
+                     return null;
+                  }
+               }
+            });
+            return imageAcquiredFuture;
+         });
+
+         //lazily iterate through them
+         Stream<Future> imageSavedFutureStream = eventProcessedFutureStream.map((Future<Future> t) -> {
+            try {
+               if (t != null) {
+                  return t.get();
+               }
+               return null;
+            } catch (InterruptedException | ExecutionException ex) {
+               t.cancel(true); //interrupt current event, which is especially important if it is an acquisition waiting event
+               throw new RuntimeException(ex);
+            }
+         });
+         //Iterate through and make sure images get saved 
+         imageSavedFutureStream.forEach((Future t) -> {
+            try {
+               if (t != null) { //null if it was combined as part of a sequence
+                  t.get();
+               }
+            } catch (InterruptedException | ExecutionException ex) {
+               throw new RuntimeException(ex);
+            }
+         });
+
+      });
    }
 
    /**
@@ -130,20 +318,48 @@ public class MagellanEngine {
       }
       if (event.isAcquisitionFinishedEvent()) {
          //signal to MagellanTaggedImageSink to finish saving thread and mark acquisition as finished
-         return event.acquisition_.saveImage(MagellanTaggedImage.createAcquisitionFinishedImage());
+         return savingExecutor_.submit(new Runnable() {
+            @Override
+            public void run() {
+               event.acquisition_.saveImage(new TaggedImage(null, null));
+            }
+         });
       } else {
+         if (event.beforeHardwareHook_ != null) {
+            event.beforeHardwareHook_.run(event);
+         }
          updateHardware(event);
-         return acquireImage(event);
+         if (event.afterHardwareHook_ != null) {
+            event.afterHardwareHook_.run(event);
+         }
+         Future lastImageSavedFuture = acquireImages(event);
+         //pause here while hardware is doing stuff
+         while (core_.isSequenceRunning()) {
+            Thread.sleep(2);
+         }
+         return lastImageSavedFuture;
       }
    }
 
-   private Future acquireImage(final AcquisitionEvent event) throws InterruptedException, HardwareControlException {
+   /**
+    * Acquire 1 or more images in a sequence and signal for them to be saved.
+    *
+    * @param event
+    * @return a Future that can be gotten when the last image in the sequence is
+    * saved
+    * @throws InterruptedException
+    * @throws HardwareControlException
+    */
+   private Future acquireImages(final AcquisitionEvent event) throws InterruptedException, HardwareControlException {
+
       double startTime = System.currentTimeMillis();
       loopHardwareCommandRetries(new Runnable() {
          @Override
          public void run() {
             try {
-               Magellan.getCore().snapImage();
+//               Magellan.getCore().snapImage();
+
+               core_.startSequenceAcquisition(1, 0, false);
             } catch (Exception ex) {
                throw new HardwareControlException(ex.getMessage());
             }
@@ -157,173 +373,241 @@ public class MagellanEngine {
          event.acquisition_.setStartTime_ms(currentTime);
       }
 
-      ArrayList<MagellanTaggedImage> images = new ArrayList<MagellanTaggedImage>();
-      for (int c = 0; c < core_.getNumberOfCameraChannels(); c++) {
-         TaggedImage ti = null;
-         try {
-            ti = core_.getTaggedImage(c);
-         } catch (Exception ex) {
-            throw new HardwareControlException(ex.getMessage());
-         }
-         MagellanTaggedImage img = convertTaggedImage(ti);
-         event.acquisition_.addImageMetadata(img.tags, event, event.timeIndex_, c, currentTime - event.acquisition_.getStartTime_ms(),
-                 event.acquisition_.channels_.getActiveChannelSetting(event.channelIndex_).exposure_);
-         images.add(img);
-      }
+      // Submit a task to asynchronously get all images from the core and save them
+      return savingExecutor_.submit(() -> {
+         ArrayList<TaggedImage> images = new ArrayList<TaggedImage>();
+         for (int i = 0; i < (event.sequence_ == null ? 1 : event.sequence_.size()); i++) {
+            for (int c = 0; c < core_.getNumberOfCameraChannels(); c++) {
+               TaggedImage ti = null;
+               while (ti == null) {
+                  try {
+                     ti = core_.popNextTaggedImage(c);
+                  } catch (Exception ex) {
+                     try {
+                        Thread.sleep(1);
+                     } catch (InterruptedException ex1) {
+                        Log.log("Unexpected interrupt on image savigng thread");
+                     }
+                  }
+               }
+               event.acquisition_.addImageMetadata(ti.tags, event, event.timeIndex_, c, currentTime - event.acquisition_.getStartTime_ms(),
+                       event.acquisition_ instanceof ExploreAcquisition ? 
+                               event.acquisition_.channels_.getChannelSetting(event.channelIndex_).exposure_ :
+                               event.acquisition_.channels_.getActiveChannelSetting(event.channelIndex_).exposure_);
+               images.add(ti);
+            }
 
-      //send to storage
-      Future imageSavedFuture = null;
-      for (int c = 0; c < images.size(); c++) {
-         imageSavedFuture = event.acquisition_.saveImage(images.get(c));
-      }
-      //keep track of how long it takes to acquire an image for acquisition duration estimation
-      try {
-         acqDurationEstiamtor_.storeImageAcquisitionTime(
-                 event.acquisition_.channels_.getActiveChannelSetting(event.channelIndex_).exposure_, System.currentTimeMillis() - startTime);
-      } catch (Exception ex) {
-         Log.log(ex);
-      }
-      //Return the last image, which should not allow result to be gotten until all previous ones have been saved
-      return imageSavedFuture;
+            //send to storage
+            for (int c = 0; c < images.size(); c++) {
+               event.acquisition_.saveImage(images.get(c));
+            }
+            //keep track of how long it takes to acquire an image for acquisition duration estimation
+            try {
+               
+               acqDurationEstiamtor_.storeImageAcquisitionTime(
+                       event.acquisition_ instanceof ExploreAcquisition ?
+                               event.acquisition_.channels_.getChannelSetting(event.channelIndex_).exposure_ :
+                               event.acquisition_.channels_.getActiveChannelSetting(event.channelIndex_).exposure_, System.currentTimeMillis() - startTime);
+            } catch (Exception ex) {
+               Log.log(ex);
+            }
+         }
+      });
    }
 
    private void updateHardware(final AcquisitionEvent event) throws InterruptedException, HardwareControlException {
+      //Get the hardware specific to this acquisition
+      final String xyStage = event.acquisition_.getXYStageName();
+      final String zStage = event.acquisition_.getZStageName();
+      //prepare sequences if applicable
+      if (event.sequence_ != null) {
+         try {
+            DoubleVector zSequence = new DoubleVector();
+            DoubleVector xSequence = new DoubleVector();
+            DoubleVector ySequence = new DoubleVector();
+            DoubleVector exposureSequence_ms = new DoubleVector();
+            String group = event.sequence_.get(0).acquisition_.channels_.getActiveChannelSetting(0).group_;
+            Configuration config = core_.getConfigData(group, event.sequence_.get(0).acquisition_.channels_.
+                    getActiveChannelSetting(event.sequence_.get(0).channelIndex_).config_);
+            LinkedList<StrVector> propSequences = new LinkedList<StrVector>();
+            for (AcquisitionEvent e : event.sequence_) {
+               zSequence.add(event.zPosition_);
+               xSequence.add(event.xyPosition_.getCenter().x);
+               ySequence.add(event.xyPosition_.getCenter().y);
+               exposureSequence_ms.add(event.acquisition_.channels_.getActiveChannelSetting(event.channelIndex_).exposure_);
+               //et sequences for all channel properties
+               for (int i = 0; i < config.size(); i++) {
+                  PropertySetting ps = config.getSetting(i);
+                  String deviceName = ps.getDeviceLabel();
+                  String propName = ps.getPropertyName();
+                  if (e == event.sequence_.get(0)) { //first property
+                     propSequences.add(new StrVector());
+                  }
+                  Configuration channelPresetConfig = core_.getConfigData(group,
+                          event.acquisition_.channels_.getActiveChannelSetting(event.channelIndex_).config_);
+                  String propValue = channelPresetConfig.getSetting(deviceName, propName).getPropertyValue();
+                  propSequences.get(i).add(propValue);
+               }
+            }
+            //Now have built up all the sequences, apply them
+            if (event.exposureSequenced_) {
+               core_.loadExposureSequence(core_.getCameraDevice(), exposureSequence_ms);
+            }
+            if (event.xySequenced_) {
+               core_.loadXYStageSequence(xyStage, xSequence, ySequence);
+            }
+            if (event.zSequenced_) {
+               core_.loadStageSequence(zStage, zSequence);
+            }
+            if (event.channelSequenced_) {
+               for (int i = 0; i < config.size(); i++) {
+                  PropertySetting ps = config.getSetting(i);
+                  String deviceName = ps.getDeviceLabel();
+                  String propName = ps.getPropertyName();
+                  core_.loadPropertySequence(deviceName, propName, propSequences.get(i));
+               }
+            }
+            core_.prepareSequenceAcquisition(core_.getCameraDevice());
+
+         } catch (Exception ex) {
+            throw new HardwareControlException(ex.getMessage());
+         }
+      }
+
       //compare to last event to see what needs to change
       if (lastEvent_ != null && lastEvent_.acquisition_ != event.acquisition_) {
          lastEvent_ = null; //update all hardware if switching to a new acquisition
       }
-      //Get the hardware specific to this acquisition
-      final String xyStage = event.acquisition_.getXYStageName();
-      final String zStage = event.acquisition_.getZStageName();
-
-      //move Z before XY 
-      /////////////////////////////Z stage/////////////////////////////
-      if (lastEvent_ == null || event.zPosition_ != lastEvent_.zPosition_ || event.positionIndex_ != lastEvent_.positionIndex_) {
-         double startTime = System.currentTimeMillis();
-         //wait for it to not be busy (is this even needed?)
-         loopHardwareCommandRetries(new Runnable() {
-            @Override
-            public void run() {
-               try {
+      /////////////////////////////Z stage////////////////////////////////////////////
+      double startTime = System.currentTimeMillis();
+      loopHardwareCommandRetries(new Runnable() {
+         @Override
+         public void run() {
+            try {
+               if (event.zSequenced_) {
+                  core_.startStageSequence(zStage);
+               } else if (lastEvent_ == null || event.zPosition_ != lastEvent_.zPosition_ || event.positionIndex_ != lastEvent_.positionIndex_) {
+                  //wait for it to not be busy (is this even needed?)   
                   while (core_.deviceBusy(zStage)) {
                      Thread.sleep(1);
                   }
-               } catch (Exception ex) {
-                  throw new HardwareControlException(ex.getMessage());
-               }
-            }
-         }, "waiting for Z stage to not be busy");
-         //move Z stage
-         loopHardwareCommandRetries(new Runnable() {
-            @Override
-            public void run() {
-               try {
+                  //Move Z
                   core_.setPosition(zStage, event.zPosition_);
-               } catch (Exception ex) {
-                  throw new HardwareControlException(ex.getMessage());
-               }
-            }
-         }, "move Z device");
-         //wait for it to not be busy (is this even needed?)
-         loopHardwareCommandRetries(new Runnable() {
-            @Override
-            public void run() {
-               try {
+                  //wait for move to finish
                   while (core_.deviceBusy(zStage)) {
                      Thread.sleep(1);
                   }
-               } catch (Exception ex) {
-                  throw new HardwareControlException(ex.getMessage());
                }
+            } catch (Exception ex) {
+               throw new HardwareControlException(ex.getMessage());
             }
-         }, "waiting for Z stage to not be busy");
-         try {
-            acqDurationEstiamtor_.storeZMoveTime(System.currentTimeMillis() - startTime);
-         } catch (Exception ex) {
-            Log.log(ex);
-         }
-      }
 
-      /////////////////////////////XY Stage/////////////////////////////
-      if (lastEvent_ == null || event.positionIndex_ != lastEvent_.positionIndex_) {
-         double startTime = System.currentTimeMillis();
-         //wait for it to not be busy (is this even needed??)
-         loopHardwareCommandRetries(new Runnable() {
-            @Override
-            public void run() {
-               try {
+         }
+      }, "Moving Z device");
+      acqDurationEstiamtor_.storeZMoveTime(System.currentTimeMillis() - startTime);
+
+      /////////////////////////////XY Stage////////////////////////////////////////////////////
+      startTime = System.currentTimeMillis();
+      loopHardwareCommandRetries(new Runnable() {
+         @Override
+         public void run() {
+            try {
+               if (event.xySequenced_) {
+                  core_.startXYStageSequence(xyStage);
+               } else if (lastEvent_ == null || event.positionIndex_ != lastEvent_.positionIndex_) {
+                  //wait for it to not be busy (is this even needed?)   
                   while (core_.deviceBusy(xyStage)) {
                      Thread.sleep(1);
                   }
-               } catch (Exception ex) {
-                  throw new HardwareControlException(ex.getMessage());
-               }
-            }
-         }, "waiting for XY stage to not be busy");
-         //move to new position
-         loopHardwareCommandRetries(new Runnable() {
-            @Override
-            public void run() {
-               try {
+                  //Move XY
                   core_.setXYPosition(xyStage, event.xyPosition_.getCenter().x, event.xyPosition_.getCenter().y);
-               } catch (Exception ex) {
-                  throw new HardwareControlException(ex.getMessage());
-               }
-            }
-         }, "moving XY stage");
-         //wait for it to not be busy (is this even needed??)
-         loopHardwareCommandRetries(new Runnable() {
-            @Override
-            public void run() {
-               try {
+                  //wait for move to finish
                   while (core_.deviceBusy(xyStage)) {
                      Thread.sleep(1);
                   }
-               } catch (Exception ex) {
-                  throw new HardwareControlException(ex.getMessage());
                }
+            } catch (Exception ex) {
+               throw new HardwareControlException(ex.getMessage());
             }
-         }, "waiting for XY stage to not be busy");
-         try {
-            acqDurationEstiamtor_.storeXYMoveTime(System.currentTimeMillis() - startTime);
-         } catch (Exception ex) {
-            Log.log(ex);
-         }
-      }
 
-      /////////////////////////////Channels/////////////////////////////
-      if (lastEvent_ == null || event.channelIndex_ != lastEvent_.channelIndex_
-              && event.acquisition_.channels_ != null && event.acquisition_.channels_.getNumActiveChannels() != 0) {
-         double startTime = System.currentTimeMillis();
-         try {
-            final ChannelSetting setting = event.acquisition_.channels_.getActiveChannelSetting(event.channelIndex_);
-            if (setting.use_ && setting.config_ != null) {
-               loopHardwareCommandRetries(new Runnable() {
-                  @Override
-                  public void run() {
-                     try {
-                        //set exposure
-                        core_.setExposure(setting.exposure_);
-                        //set other channel props
-                        core_.setConfig(setting.group_, setting.config_);
-                        core_.waitForConfig(setting.group_, setting.config_);
-                     } catch (Exception ex) {
-                        throw new HardwareControlException(ex.getMessage());
-                     }
+         }
+      }, "Moving XY stage");
+      acqDurationEstiamtor_.storeXYMoveTime(System.currentTimeMillis() - startTime);
+      
+      /////////////////////////////Channels//////////////////////////////////////////////////
+      startTime = System.currentTimeMillis();
+      loopHardwareCommandRetries(new Runnable() {
+         @Override
+         public void run() {
+            try {               
+               if (event.channelSequenced_) {
+                  //Channels
+                  String group = event.acquisition_.channels_.getActiveChannelSetting(0).group_;
+                  Configuration config = core_.getConfigData(group,
+                          event.acquisition_.channels_.getActiveChannelSetting(event.channelIndex_).config_);
+                  for (int i = 0; i < config.size(); i++) {
+                     PropertySetting ps = config.getSetting(i);
+                     String deviceName = ps.getDeviceLabel();
+                     String propName = ps.getPropertyName();
+                     core_.startPropertySequence(deviceName, propName);
                   }
-               }, "Set channel group");
+               } else if (lastEvent_ == null || event.channelIndex_ != lastEvent_.channelIndex_ && event.acquisition_.channels_
+                       != null && event.acquisition_.channels_.getNumActiveChannels() != 0) {
+                  final ChannelSetting setting;
+                  if (event.acquisition_ instanceof ExploreAcquisition) {
+                     //inactive channels are present in explore acquisitons
+                     setting = event.acquisition_.channels_.getChannelSetting(event.channelIndex_);
+                  } else {
+                     setting = event.acquisition_.channels_.getActiveChannelSetting(event.channelIndex_);
+                  }
+                  if (setting.use_ && setting.config_ != null) {
+                     //set exposure
+                     core_.setExposure(setting.exposure_);
+                     //set other channel props
+                     core_.setConfig(setting.group_, setting.config_);
+                     core_.waitForConfig(setting.group_, setting.config_);
+                  }
+               }
+            } catch (Exception ex) {
+               throw new HardwareControlException(ex.getMessage());
             }
 
-         } catch (Exception ex) {
-            Log.log("Couldn't change channel group");
          }
-         try {
-            acqDurationEstiamtor_.storeChannelSwitchTime(System.currentTimeMillis() - startTime);
-         } catch (Exception ex) {
-            Log.log(ex);
+      }, "Changing channels");
+      acqDurationEstiamtor_.storeChannelSwitchTime(System.currentTimeMillis() - startTime);
+
+      /////////////////////////////Camera exposure//////////////////////////////////////////////
+      startTime = System.currentTimeMillis();
+      loopHardwareCommandRetries(new Runnable() {
+         @Override
+         public void run() {
+            try {
+               if (event.exposureSequenced_) {
+                  core_.startExposureSequence(core_.getCameraDevice());
+               } else if (event.acquisition_.channels_ != null && event.acquisition_.channels_.getNumActiveChannels() != 0
+                       && (lastEvent_ == null || lastEvent_.acquisition_ != event.acquisition_ ||
+                       ( (lastEvent_.acquisition_ instanceof ExploreAcquisition) ? 
+                       (lastEvent_.acquisition_.channels_.getChannelSetting(lastEvent_.channelIndex_).exposure_
+                       != event.acquisition_.channels_.getChannelSetting(event.channelIndex_).exposure_)  : 
+                       (lastEvent_.acquisition_.channels_.getActiveChannelSetting(lastEvent_.channelIndex_).exposure_
+                       != event.acquisition_.channels_.getActiveChannelSetting(event.channelIndex_).exposure_)) )) {
+                  if (event.acquisition_ instanceof ExploreAcquisition) {
+                     core_.setExposure(event.acquisition_.channels_.getChannelSetting(event.channelIndex_).exposure_);
+                  } else {
+                     core_.setExposure(event.acquisition_.channels_.getActiveChannelSetting(event.channelIndex_).exposure_);
+                  }
+                  
+               }
+            } catch (Exception ex) {
+               throw new HardwareControlException(ex.getMessage());
+            }
+
          }
-      }
-      lastEvent_ = event;
+      }, "Changing exposure");
+
+      //keep track of last event to know what state the hardware was in without having to query it
+      lastEvent_ = event.sequence_ == null ? event : event.sequence_.get(event.sequence_.size() - 1);
+
    }
 
    private void loopHardwareCommandRetries(Runnable r, String commandName) throws InterruptedException, HardwareControlException {
@@ -345,17 +629,8 @@ public class MagellanEngine {
       DateFormat df = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
       Calendar calobj = Calendar.getInstance();
       return df.format(calobj.getTime());
-   }
 
-   private static MagellanTaggedImage convertTaggedImage(TaggedImage img) {
-      try {
-         return new MagellanTaggedImage(img.pix, new JSONObject(img.tags.toString()));
-      } catch (JSONException ex) {
-         Log.log("Couldn't convert JSON metadata");
-         throw new RuntimeException();
-      }
    }
-
 }
 
 class HardwareControlException extends RuntimeException {

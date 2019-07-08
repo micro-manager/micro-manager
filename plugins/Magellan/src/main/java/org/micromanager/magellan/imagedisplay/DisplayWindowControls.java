@@ -23,8 +23,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import org.json.JSONObject;
 import org.micromanager.magellan.coordinates.NoPositionsDefinedYetException;
-import org.micromanager.magellan.json.JSONObject;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.ExactlyOneRowSelectionModel;
 import org.micromanager.magellan.misc.MD;
@@ -76,9 +76,9 @@ public class DisplayWindowControls extends Panel implements SurfaceGridListener 
          //start in explore
          tabbedPane_.setSelectedIndex(0);
       } else {
-         tabbedPane_.remove(0); //remove explore tab
+         tabbedPane_.remove(3); //remove explore tab
          acquireAtCurrentButton_.setVisible(false);
-         tabbedPane_.setSelectedIndex(1); //statr on contrst
+         tabbedPane_.setSelectedIndex(0); //statr on contrst
       }
 
       //exactly one surface or grid selected at all times

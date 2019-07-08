@@ -25,41 +25,48 @@ import java.util.prefs.Preferences;
 import mmcorej.CMMCore;
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
-import org.micromanager.magellan.socketbridge.ZMQServer;
+import org.micromanager.magellan.api.MagellanAPI;
+import org.micromanager.magellan.api.ZMQMasterServer;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
-
 @Plugin(type = MenuPlugin.class)
-public class Magellan implements MenuPlugin, SciJavaPlugin{
+public class Magellan implements MenuPlugin, SciJavaPlugin {
 
    private static final String VERSION = "2.0.0";
-           
+
    public static final String menuName = "Micro-Magellan";
    public static final String tooltipDescription = "High throughout, automated micrscopy for slidescanning or volumetric imaging";
 
    private static Preferences prefs_;
    private static Studio mmAPI_;
    private static GUI gui_;
-   private ZMQServer bridge_;
-   
+   private ZMQMasterServer bridge_;
+   private static MagellanAPI api_;
+
    public Magellan() {
       try {
-      bridge_ = new ZMQServer(4827);
+         bridge_ = new ZMQMasterServer();
+         api_ = new MagellanAPI();
       } catch (Exception e) {
+         e.printStackTrace();
          //ignore for now
       }
-      
+
    }
    
+   public static MagellanAPI getAPI() {
+      return api_;
+   }
+
    public static Preferences getPrefs() {
       return prefs_;
    }
-   
+
    public static Studio getStudio() {
       return mmAPI_;
    }
-   
+
 //   public static String getConfigFileName() {
 //      try {
 //         return mmAPI_.getInstance().getSysConfigFile();
@@ -68,7 +75,6 @@ public class Magellan implements MenuPlugin, SciJavaPlugin{
 //         return "";
 //      }    
 //   }
-
    @Override
    public String getSubMenu() {
       return "";
@@ -87,7 +93,7 @@ public class Magellan implements MenuPlugin, SciJavaPlugin{
    @Override
    public void setContext(Studio studio) {
       mmAPI_ = studio;
-       
+
    }
 
    @Override
@@ -109,7 +115,7 @@ public class Magellan implements MenuPlugin, SciJavaPlugin{
    public String getCopyright() {
       return "Copyright Henry Pinkard 2014-2016";
    }
-   
+
    public static CMMCore getCore() {
       return mmAPI_.core();
    }

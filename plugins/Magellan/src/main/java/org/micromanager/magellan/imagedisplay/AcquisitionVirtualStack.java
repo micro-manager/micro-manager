@@ -18,7 +18,6 @@
 package org.micromanager.magellan.imagedisplay;
 
 import org.micromanager.magellan.acq.MMImageCache;
-import org.micromanager.magellan.acq.MagellanTaggedImage;
 import ij.ImagePlus;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
@@ -26,7 +25,8 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import java.awt.image.ColorModel;
-import org.micromanager.magellan.json.JSONObject;
+import mmcorej.TaggedImage;
+import org.json.JSONObject;
 import org.micromanager.magellan.misc.Log;
 import org.micromanager.magellan.misc.MD;
 
@@ -70,7 +70,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    }
 
    
-   private MagellanTaggedImage getMagellanTaggedImage(int flatIndex) {
+   private TaggedImage getMagellanTaggedImage(int flatIndex) {
       int[] pos;
       // If we don't have the ImagePlus yet, then we need to assume
       // we are on the very first image.
@@ -90,7 +90,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    //This method is the ultimate source of tagged images/metadata to update the display, but has no
    //relevance to image data on disk. It is protected so that this class can be overriden and a differnet image
    //used for display compared to the the underlying data
-   protected MagellanTaggedImage getMagellanTaggedImage(int chanIndex, int slice, int frame) {
+   protected TaggedImage getMagellanTaggedImage(int chanIndex, int slice, int frame) {
       int nSlices;
       ImagePlus imagePlus = vad_.getImagePlus();
       if (imagePlus == null) {
@@ -99,7 +99,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
          nSlices = imagePlus.getNSlices();
       }
       try {
-         MagellanTaggedImage img;
+         TaggedImage img;
          img = imageCache_.getImage(chanIndex, slice, frame, positionIndex_);
          int backIndex = slice - 1, forwardIndex = slice + 1;
          int frameSearchIndex = frame;
@@ -147,7 +147,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    //since alternate images are filled in when some are missing (for example, when a z stack is not collecte din one channel
    //or when frames are skipped)
    public JSONObject getImageTags(int flatIndex) {
-      MagellanTaggedImage img = getMagellanTaggedImage(flatIndex);
+      TaggedImage img = getMagellanTaggedImage(flatIndex);
       if (img == null) {
          return null;
       }
@@ -158,7 +158,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    @Override
    public Object getPixels(int flatIndex) {
       Object pixels = null;
-      MagellanTaggedImage image = getMagellanTaggedImage(flatIndex);
+      TaggedImage image = getMagellanTaggedImage(flatIndex);
       if (image == null || image.pix == null) {
          pixels = makeProcessor(type_, width_, height_).getPixels();
       } else if (image != null && image.tags == null) {
@@ -206,7 +206,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
 
    @Override
    public String getSliceLabel(int n) {
-      MagellanTaggedImage img = getMagellanTaggedImage(n);
+      TaggedImage img = getMagellanTaggedImage(n);
       if (img == null) {
          return "";
       }

@@ -18,7 +18,7 @@
 package org.micromanager.magellan.gui;
 
 import javax.swing.table.AbstractTableModel;
-import org.micromanager.magellan.acq.AcquisitionsManager;
+import org.micromanager.magellan.acq.MagellanAcquisitionsManager;
 
 /**
  *
@@ -27,10 +27,10 @@ import org.micromanager.magellan.acq.AcquisitionsManager;
 public class MultipleAcquisitionTableModel extends AbstractTableModel {
 
    private static final String[] COLUMNS = {"Name","Description","Status"};
-   private AcquisitionsManager manager_;
+   private MagellanAcquisitionsManager manager_;
    private GUI gui_;
    
-   public MultipleAcquisitionTableModel(AcquisitionsManager manager, GUI gui) {
+   public MultipleAcquisitionTableModel(MagellanAcquisitionsManager manager, GUI gui) {
       super();
       manager_ = manager;
       gui_ = gui;
@@ -55,7 +55,7 @@ public class MultipleAcquisitionTableModel extends AbstractTableModel {
    @Override
    public Object getValueAt(int rowIndex, int columnIndex) {
       if (columnIndex == 0) {
-         return manager_.getAcquisitionName(rowIndex);
+         return manager_.getAcquisitionSettingsName(rowIndex);
       } else if (columnIndex == 1) {
          return manager_.getAcquisitionDescription(rowIndex);
       } else {

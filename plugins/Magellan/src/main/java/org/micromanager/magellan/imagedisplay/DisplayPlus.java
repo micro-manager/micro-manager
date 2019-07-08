@@ -22,7 +22,7 @@ package org.micromanager.magellan.imagedisplay;
  */
 import org.micromanager.magellan.acq.Acquisition;
 import org.micromanager.magellan.acq.ExploreAcquisition;
-import org.micromanager.magellan.acq.MultiResMultipageTiffStorage;
+import org.micromanager.magellan.datasaving.MultiResMultipageTiffStorage;
 import com.google.common.eventbus.Subscribe;
 import ij.CompositeImage;
 import ij.IJ;
@@ -46,7 +46,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.micromanager.magellan.json.JSONObject;
+import org.json.JSONObject;
 import org.micromanager.magellan.misc.JavaUtils;
 import org.micromanager.magellan.misc.Log;
 import org.micromanager.magellan.misc.LongPoint;
@@ -295,7 +295,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements SurfaceGri
       redrawPixelsExecutor_.shutdownNow();
       //make sure acquisition is done before allowing imagestorage to close
       if (acq_ != null){ 
-         acq_.waitUntilClosed();
+         acq_.waitForCompletion();
       } 
       super.onWindowClose(event);
    }

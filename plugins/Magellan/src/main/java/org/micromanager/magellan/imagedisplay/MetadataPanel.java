@@ -8,8 +8,8 @@ package org.micromanager.magellan.imagedisplay;
 import ij.ImagePlus;
 import java.util.Timer;
 import java.util.TimerTask;
+import org.json.JSONObject;
 import org.micromanager.magellan.acq.MMImageCache;
-import org.micromanager.magellan.json.JSONObject;
 
 /**
  *

@@ -16,6 +16,7 @@
 //
 package org.micromanager.magellan.acq;
 
+import org.micromanager.magellan.datasaving.MultiResMultipageTiffStorage;
 import org.micromanager.magellan.imagedisplay.DisplayPlus;
 import java.awt.Color;
 import java.awt.geom.AffineTransform;
@@ -26,13 +27,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -40,22 +36,22 @@ import org.micromanager.magellan.channels.ChannelSpec;
 import org.micromanager.magellan.coordinates.MagellanAffineUtils;
 import org.micromanager.magellan.coordinates.PositionManager;
 import org.micromanager.magellan.coordinates.XYStagePosition;
-import org.micromanager.magellan.json.JSONArray;
-import org.micromanager.magellan.json.JSONObject;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.Log;
 import org.micromanager.magellan.misc.MD;
 import mmcorej.CMMCore;
+import mmcorej.TaggedImage;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.micromanager.magellan.api.MagellanAcquisitionAPI;
 
 /**
  * Abstract class that manages a generic acquisition. Subclassed into specific
  * types of acquisition
  */
-public abstract class Acquisition {
+public abstract class Acquisition implements MagellanAcquisitionAPI {
 
-   private static final int MAX_QUEUED_IMAGES_FOR_WRITE = 20;
-
-   protected final double zStep_;
+   protected double zStep_;
    protected double zOrigin_;
    protected volatile int minSliceIndex_ = 0, maxSliceIndex_ = 0;
    protected String xyStage_, zStage_;
@@ -70,15 +66,18 @@ public abstract class Acquisition {
    private volatile boolean paused_ = false;
    protected ChannelSpec channels_;
    private MMImageCache imageCache_;
-   private ThreadPoolExecutor savingExecutor_;
-   private ExecutorService eventGenerator_;
    protected PositionManager posManager_;
    private MagellanEngine eng_;
    protected volatile boolean aborted_ = false;
    private MultiResMultipageTiffStorage storage_;
    private DisplayPlus display_;
+   private String UUID_;
 
-   public Acquisition(double zStep, ChannelSpec channels) {
+   public Acquisition() {
+      UUID_ = UUID.randomUUID().toString();
+   }
+
+   protected void initialize(String dir, String name, double overlapPercent, double zStep, ChannelSpec channels) {        
       eng_ = MagellanEngine.getInstance();
       xyStage_ = Magellan.getCore().getXYStageDevice();
       zStage_ = Magellan.getCore().getFocusDevice();
@@ -98,9 +97,6 @@ public abstract class Acquisition {
          Log.log("Problem communicating with core to get Z stage limits");
       }
       zStep_ = zStep;
-   }
-
-   protected void initialize(String dir, String name, double overlapPercent) {
       overlapX_ = (int) (Magellan.getCore().getImageWidth() * overlapPercent / 100);
       overlapY_ = (int) (Magellan.getCore().getImageHeight() * overlapPercent / 100);
       summaryMetadata_ = makeSummaryMD(name);
@@ -111,119 +107,28 @@ public abstract class Acquisition {
       imageCache_ = new MMImageCache(storage_);
       imageCache_.setSummaryMetadata(summaryMetadata_);
       display_ = new DisplayPlus(imageCache_, this, summaryMetadata_, storage_);
-      savingExecutor_ = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(),
-              (Runnable r) -> new Thread(r, name_ + ": Saving executor"));
-      eventGenerator_ = Executors.newSingleThreadExecutor((Runnable r) -> new Thread(r, name_ + ": Event generator"));
-      //subclasses are resonsible for submitting event streams to begin acquisiton
    }
+   
+   public abstract void start();
+   
+   protected abstract void shutdownEvents();
+   
+   public abstract boolean waitForCompletion();
+
 
    /**
-    * Called by acquisition subclasses to communicate with acquisition engine
-    * returns a Future that can be gotten once the last image has written to
-    * disk
-    *
-    * @param eventStream
-    * @return
+    * Called by acquisition engine to save an image, shoudn't return until it as been written to disk
     */
-   protected void submitEventStream(Stream<AcquisitionEvent> eventStream) {
-      eventGenerator_.submit(() -> {
-         //Submit stream to acqusition event for execution, getting a stream of Future<Future>
-         //This won't actually do anything until the terminal operation on the stream has taken place
-
-         Stream<Future<Future>> eventFutureStream = eng_.mapToAcquisition(eventStream);
-
-         //Make sure events can't be submitted to the engine way faster than images can be written to disk
-         eventFutureStream = eventFutureStream.map(new Function<Future<Future>, Future<Future>>() {
-            @Override
-            public Future<Future> apply(Future<Future> t) {
-//               int queuedSavingImages = savingExecutor_.getQueue().size();
-               while (savingExecutor_.getQueue().size() > MAX_QUEUED_IMAGES_FOR_WRITE) {
-                  try {
-                     Thread.sleep(2);
-                  } catch (InterruptedException ex) {
-                     throw new RuntimeException(ex); //must have beeen aborted
-                  }
-               }
-               return t;
-            }
-         });
-
-         //Wait around while pause is engaged
-         eventFutureStream = eventFutureStream.map(new Function<Future<Future>, Future<Future>>() {
-            @Override
-            public Future<Future> apply(Future<Future> t) {
-               while (paused_) {
-                  try {
-                     Thread.sleep(5);
-                  } catch (InterruptedException ex) {
-                     throw new RuntimeException(ex);
-                  }
-               }
-               return t;
-            }
-         });
-
-         //lazily iterate through them
-         Stream<Future> imageSavedFutureStream = eventFutureStream.map((Future<Future> t) -> {
-            try {
-               return t.get();
-            } catch (InterruptedException | ExecutionException ex) {
-               t.cancel(true); //interrupt current event, which is especially important if it is an acquisition waiting event
-               throw new RuntimeException(ex);
-            }
-         });
-         //Iterate through and make sure images get saved 
-         imageSavedFutureStream.forEach((Future t) -> {
-            try {
-               t.get();
-            } catch (InterruptedException | ExecutionException ex) {
-               throw new RuntimeException(ex);
-            }
-         });
-      });
-   }
-
-   /**
-    * Function for lazy conversion a stream of acquisition events to another
-    * stream by applying a event2stream function to each element of the
-    * inputStream
-    *
-    * @return
-    */
-   protected Function<Stream<AcquisitionEvent>, Stream<AcquisitionEvent>> stream2Stream(
-           Function<AcquisitionEvent, Stream<AcquisitionEvent>> event2StreamFunction) {
-      return (Stream<AcquisitionEvent> inputStream) -> {
-         //make a stream builder
-         Stream.Builder<AcquisitionEvent> builder = Stream.builder();
-         //apply the function to each element of the input stream, then send the resulting streams
-         //to the builder
-         inputStream.spliterator().forEachRemaining((AcquisitionEvent t) -> {
-            Stream<AcquisitionEvent> subStream = event2StreamFunction.apply(t);
-            subStream.spliterator().forEachRemaining(builder);
-         });
-         return builder.build();
-      };
-   }
-
-   /**
-    * Called by acquisition engine to save an image, returns a future that can
-    * be gotten once that image has made it onto the disk
-    */
-   Future saveImage(MagellanTaggedImage image) {
-      //The saving executor is essentially doing the work of making the image pyramid, while there
-      //is a seperate internal executor in MultiResMultipageTiffStorage that does all the writing
-      return savingExecutor_.submit(() -> {
-         if (MagellanTaggedImage.isAcquisitionFinishedImage(image)) {
-            eventGenerator_.shutdown();
-            savingExecutor_.shutdown();
-            //Dont wait for it to shutdown because it is the one executing this code
+   void saveImage(TaggedImage image) {
+      if (image.tags == null && image.pix == null) {
+         if (!finished_) {
             imageCache_.finished();
             finished_ = true;
-         } else {
-            //this method doesnt return until all images have been writtent to disk
-            imageCache_.putImage(image);
          }
-      });
+      } else {
+         //this method doesnt return until all images have been writtent to disk
+         imageCache_.putImage(image);
+      }
    }
 
    protected abstract JSONArray createInitialPositionList();
@@ -238,29 +143,14 @@ public abstract class Acquisition {
                return;
             }
             aborted_ = true;
-//            if (Acquisition.this.isPaused()) {
-//               Acquisition.this.togglePaused();
-//            }
-            eventGenerator_.shutdownNow();
-            try {
-               //wait for it to exit
-               while (!eventGenerator_.awaitTermination(5, TimeUnit.MILLISECONDS)) {
-               }
-            } catch (InterruptedException ex) {
-               Log.log("Unexpected interrupt while trying to abort acquisition", true);
-               //shouldn't happen
+            if (Acquisition.this.isPaused()) {
+               Acquisition.this.togglePaused();
             }
-
-            //signal acquisition engine to start finishing process
-            Future<Future> endAcqFuture = eng_.mapToAcquisition(Stream.of(AcquisitionEvent.createAcquisitionFinishedEvent(Acquisition.this))).findFirst().get();
-            Future imageSaverDoneFuture;
-            try {
-               imageSaverDoneFuture = endAcqFuture.get();
-               imageSaverDoneFuture.get();
-            } catch (InterruptedException ex) {
-               Log.log("aborting acquisition interrupted");
-            } catch (ExecutionException ex) {
-               Log.log("Exception encountered when trying to end acquisition");
+            shutdownEvents();
+            waitForCompletion();
+            //signal acquisition engine to start finishing process and wait for its completion
+            if (Acquisition.this instanceof ExploreAcquisition) { //Magellan GUI acquisition already has a trailing finishing event
+               eng_.finishAcquisition(Acquisition.this);       
             }
          }
       }, "Aborting thread").start();
@@ -274,7 +164,7 @@ public abstract class Acquisition {
          long gridCol = event.xyPosition_.getGridCol();
          MD.setPositionName(tags, "Grid_" + gridRow+ "_" + gridCol);
          MD.setPositionIndex(tags, event.positionIndex_);
-         MD.setSliceIndex(tags, event.sliceIndex_);
+         MD.setSliceIndex(tags, event.zIndex_);
          MD.setFrameIndex(tags, timeIndex);
          MD.setChannelIndex(tags, event.channelIndex_ + camChannelIndex);
          MD.setZPositionUm(tags, event.zPosition_);
@@ -406,7 +296,7 @@ public abstract class Acquisition {
             public AcquisitionEvent next() {
                double zPos = sliceIndex_ * zStep_ + zOrigin_;
                AcquisitionEvent sliceEvent = event.copy();
-               sliceEvent.sliceIndex_ = sliceIndex_;
+               sliceEvent.zIndex_ = sliceIndex_;
                //Do plus equals here in case z positions have been modified by another function (e.g. channel specific focal offsets)
                sliceEvent.zPosition_ += zPos;
                sliceIndex_++;
@@ -490,19 +380,6 @@ public abstract class Acquisition {
       return overlapY_;
    }
 
-   public void waitUntilClosed() {
-      try {
-         //wait for it to exit
-         while (!eventGenerator_.awaitTermination(5, TimeUnit.MILLISECONDS)) {
-         }
-         while (!savingExecutor_.awaitTermination(5, TimeUnit.MILLISECONDS)) {
-         }
-      } catch (InterruptedException ex) {
-         Log.log("Unexpected interrupt while trying to abort acquisition", true);
-         //shouldn't happen
-      }
-   }
-
    public String getName() {
       return name_;
    }
@@ -547,7 +424,7 @@ public abstract class Acquisition {
     * @param index 
     */
    public void addResolutionsUpTo(int index) {
-      savingExecutor_.submit(new Runnable() {
+      MagellanEngine.getInstance().runOnSavingThread(new Runnable() {
          @Override
          public void run() {
             try {
@@ -559,5 +436,9 @@ public abstract class Acquisition {
             display_.updateDisplay(true);
          }
       });
+   }
+
+   public String getUUID() {
+      return UUID_;
    }
 }

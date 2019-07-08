@@ -19,10 +19,9 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.magellan.acq;
+package org.micromanager.magellan.datasaving;
 
 import ij.IJ;
-import ij.ImageJ;
 import ij.io.TiffDecoder;
 import ij.process.LUT;
 import java.awt.Color;
@@ -35,21 +34,17 @@ import java.nio.ByteOrder;
 import java.nio.CharBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.micromanager.magellan.json.JSONArray;
-import org.micromanager.magellan.json.JSONException;
-import org.micromanager.magellan.json.JSONObject;
+import mmcorej.TaggedImage;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.micromanager.magellan.misc.Log;
 import org.micromanager.magellan.misc.MD;
 
@@ -361,7 +356,7 @@ public class MultipageTiffWriter {
       return true;
    }
 
-   public boolean hasSpaceToWrite(MagellanTaggedImage img) {
+   public boolean hasSpaceToWrite(TaggedImage img) {
       int mdLength = img.tags.toString().length();
       int IFDSize = ENTRIES_PER_IFD * 12 + 4 + 16;
       //5 MB extra padding...just to be safe...
@@ -379,7 +374,7 @@ public class MultipageTiffWriter {
       return raFile_ == null;
    }
 
-   public Future writeImage(MagellanTaggedImage img) throws IOException {
+   public Future writeImage(TaggedImage img) throws IOException {
       long offset = filePosition_;
       boolean shiftByByte = writeIFD(img);
       addToIndexMap(MD.getLabel(img.tags), offset);
@@ -465,7 +460,7 @@ public class MultipageTiffWriter {
         return writingDone;
     }
 
-   private boolean writeIFD(MagellanTaggedImage img) throws IOException {
+   private boolean writeIFD(TaggedImage img) throws IOException {
       char numEntries = ((firstIFD_ ? ENTRIES_PER_IFD + 4 : ENTRIES_PER_IFD));
       if (img.tags.has("Summary")) {
          img.tags.remove("Summary");

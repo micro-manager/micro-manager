@@ -1,4 +1,4 @@
-package org.micromanager.magellan.socketbridge;
+package org.micromanager.magellan.api;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -10,23 +10,22 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
-import org.micromanager.magellan.json.JSONArray;
-import org.micromanager.magellan.json.JSONException;
-import org.micromanager.magellan.json.JSONObject;
-import org.micromanager.magellan.main.Magellan;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.micromanager.magellan.acq.Acquisition;
 import org.micromanager.magellan.misc.Log;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
-public class ZMQServer {
+//Base class that wraps a ZMQ socket and implmenets type conversions as well as the impicit 
+//JSON message syntax
+public abstract class ZMQSocketWrapper {
 
    private static final ByteOrder BYTE_ORDER = ByteOrder.BIG_ENDIAN;
    public final static Map<Class<?>, Class<?>> primitiveClassMap_ = new HashMap<Class<?>, Class<?>>();
@@ -44,130 +43,154 @@ public class ZMQServer {
 
    private static Class[] SERIALIZABLE_CLASSES = new Class[]{String.class, Void.TYPE, Short.TYPE,
       Long.TYPE, Integer.TYPE, Float.TYPE, Double.TYPE, Boolean.TYPE,
-      byte[].class, double[].class, int[].class, TaggedImage.class};
+      byte[].class, double[].class, int[].class, TaggedImage.class, MagellanAcquisitionAPI.class,
+      List.class};
 
-   private ZContext context_;
-   private ExecutorService coreExecutor_;
+   protected static ZContext context_;
+   protected SocketType type_;
+   protected ZMQ.Socket socket_;
+   protected String name_;
 
-   public ZMQServer(int port) {
-      context_ = new ZContext();
-      coreExecutor_ = Executors.newSingleThreadExecutor(
-              (Runnable r) -> new Thread(r, "ZMQ Core Executor thread"));
-      coreExecutor_.submit(runCommandExecutor(port));
-
-   }
-
-   private Runnable runCommandExecutor(final int port) {
-      return new Runnable() {
-         @Override
-         public void run() {
-            ZMQ.Socket sock = context_.createSocket(SocketType.REP);
-            sock.bind("tcp://127.0.0.1:" + port);
-
-            while (true) {
-               String message = sock.recvStr();
-               byte[] reply = null;
-               try {
-                  reply = parseAndExecuteCommand(message);
-               } catch (Exception e) {
-                  try {
-                     JSONObject json = new JSONObject();
-                     json.put("Type", "Exception");
-                     json.put("Message", e.getMessage());
-                     reply = json.toString().getBytes();
-                     e.printStackTrace();
-                     Log.log(e.getMessage());
-                  } catch (JSONException ex) {
-                     //This wont happen
-                  }
-               }
-               sock.send(reply);
-
-            }
-         }
-      };
-   }
-
-   private byte[] parseAndExecuteCommand(String message) throws JSONException, NoSuchMethodException, IllegalAccessException {
-      JSONObject json = new JSONObject(message);
-      if (json.getString("command").equals("send-CMMCore-api")) {
-         Class coreClass = Magellan.getCore().getClass();
-         return parseAPI(coreClass);
-      } else if (json.getString("command").equals("run-method")) {
-         String methodName = json.getString("name");
-
-         Class[] argClasses = new Class[json.getJSONArray("arguments").length()];
-         Object[] argVals = new Object[json.getJSONArray("arguments").length()];
-         for (int i = 0; i < argVals.length; i++) {
-            //Converts onpbjects to primitives
-            Class c = json.getJSONArray("arguments").get(i).getClass();
-            if (primitiveClassMap_.containsKey(c)) {
-               c = primitiveClassMap_.get(c);
-            }
-            argClasses[i] = c;
-            argVals[i] = json.getJSONArray("arguments").get(i);
-         }
-
-         Method method = CMMCore.class.getMethod(methodName, argClasses);
-         Object result = null;
-         try {
-            result = method.invoke(Magellan.getCore(), argVals);
-         } catch (InvocationTargetException ex) {
-            Log.log(ex);
-         }
-         return serialize(result);
-      } else {
-         throw new RuntimeException("Unknown Command");
+   public ZMQSocketWrapper(int port, String name, SocketType type) {
+      type_ = type;
+      name_ = name;
+      if (context_ == null) {
+         context_ = new ZContext();
       }
+      initialize(port);
+   }
+   
+   protected abstract void initialize(int port);
+
+   /**
+    * send a command from a Java client to a python server and wait on response
+    */
+   protected Object sendRequest(String request) {
+      socket_.send(request);
+      byte[] reply = socket_.recv();
+      return deserialize(reply);
    }
 
+   protected abstract byte[] parseAndExecuteCommand(String message) throws Exception;
+
+   protected byte[] runMethod(Object obj,  JSONObject json) throws NoSuchMethodException, IllegalAccessException, JSONException {
+      String methodName = json.getString("name");
+
+      Class[] argClasses = new Class[json.getJSONArray("arguments").length()];
+      Object[] argVals = new Object[json.getJSONArray("arguments").length()];
+      for (int i = 0; i < argVals.length; i++) {
+         //Converts onpbjects to primitives
+         Class c = json.getJSONArray("arguments").get(i).getClass();
+         if (primitiveClassMap_.containsKey(c)) {
+            c = primitiveClassMap_.get(c);
+         }
+         argClasses[i] = c;
+         argVals[i] = json.getJSONArray("arguments").get(i);
+      }
+
+      Method method = obj.getClass().getMethod(methodName, argClasses);
+      Object result = null;
+      try {
+         result = method.invoke(obj, argVals);
+      } catch (InvocationTargetException ex) {
+         result = ex.getCause();
+         Log.log(ex);
+         
+      }
+
+      JSONObject serialized = new JSONObject();
+      serialize(result, serialized);
+      return serialized.toString().getBytes();
+   }
+
+   
+   protected Object deserialize(byte[] message) {
+      String s = new String(message);
+     
+      JSONObject json = null;
+      try {
+         json = new JSONObject(s);
+      } catch (JSONException ex) {
+         throw new RuntimeException("Problem turning message into JSON. Message was: " + s);
+      }
+      try {
+         String type = json.getString("type");
+         String value = json.getString("value");
+         //TODO: decode values
+         if (type.equals("object")) {
+            String clazz = json.getString("class");
+         } else if (type.equals("primitive")) {
+           
+         }
+         return null;
+         //TODO: return exception maybe?
+      } catch (JSONException ex) {
+         throw new RuntimeException("Message missing command field");
+      }
+      
+   }
+   
    /**
     * Serialize the object in some way that the client will know how to
     * deserialize
     */
-   private byte[] serialize(Object o) {
+   protected void serialize(Object o, JSONObject json) {
       try {
-         JSONObject json = new JSONObject();
-         if (o instanceof String) {
-            return ((String) o).getBytes();
+         if (o instanceof Exception) {
+            json.put("type", "exception");
+            json.put("value", ((Exception) o).getMessage());
+         } else if (o instanceof String) {
+            json.put("type", "string");
+            json.put("value", o);
          } else if (o == null) {
-            json.put("Type", "None");
+            json.put("type", "none");
          } else if (o.getClass().equals(Long.class) || o.getClass().equals(Short.class)
                  || o.getClass().equals(Integer.class) || o.getClass().equals(Float.class)
                  || o.getClass().equals(Double.class) || o.getClass().equals(Boolean.class)) {
-            json.put("Type", "Primitive");
-            json.put("Value", o);
+            json.put("type", "primitive");
+            json.put("value", o);
          } else if (o.getClass().equals(TaggedImage.class)) {
-            json.put("Type", "Object");
-            json.put("Class", "TaggedImage");
-            json.put("Value", new JSONObject());
-            json.getJSONObject("Value").put("PixelType", (((TaggedImage) o).pix instanceof byte[]) ? "uint8" : "uint16");
-            json.getJSONObject("Value").put("tags", ((TaggedImage) o).tags);
-            json.getJSONObject("Value").put("pix", encodeArray(((TaggedImage) o).pix));
+            json.put("type", "object");
+            json.put("class", "TaggedImage");
+            json.put("value", new JSONObject());
+            json.getJSONObject("value").put("pixel-type", (((TaggedImage) o).pix instanceof byte[]) ? "uint8" : "uint16");
+            json.getJSONObject("value").put("tags", ((TaggedImage) o).tags);
+            json.getJSONObject("value").put("pix", encodeArray(((TaggedImage) o).pix));
          } else if (o.getClass().equals(byte[].class)) {
-            json.put("Type", "ByteArray");
-            json.put("Value", encodeArray(o));
+            json.put("type", "byte-array");
+            json.put("value", encodeArray(o));
          } else if (o.getClass().equals(double[].class)) {
-            json.put("Type", "DoubleArray");
-            json.put("Value", encodeArray(o));
+            json.put("type", "double-array");
+            json.put("value", encodeArray(o));
          } else if (o.getClass().equals(int[].class)) {
-            json.put("Type", "IntArray");
-            json.put("Value", encodeArray(o));
+            json.put("type", "int-array");
+            json.put("value", encodeArray(o));
          } else if (o.getClass().equals(float[].class)) {
-            json.put("Type", "FloatArray");
-            json.put("Value", encodeArray(o));
+            json.put("type", "float-array");
+            json.put("value", encodeArray(o));
+         } else if (o instanceof MagellanAcquisitionAPI) {                
+            json.put("type", "object");
+            json.put("class", "MagellanAcquisitionAPI");
+            json.put("value", new JSONObject());
+            json.getJSONObject("value").put("UUID", ((Acquisition) o).getUUID());
+         } else if (Stream.of(o.getClass().getInterfaces()).anyMatch((Class t) -> t.equals(List.class))) {                
+            json.put("type", "list");
+            json.put("value", new JSONArray());
+            for (Object element : (List) o) {
+               JSONObject e = new JSONObject();
+               json.getJSONArray("value").put(e);
+               serialize(element, e);
+            }
          } else {
             throw new RuntimeException("Unrecognized class return type");
          }
-         return json.toString().getBytes();
       } catch (JSONException e) {
          e.printStackTrace();
          Log.log(e);
       }
-      throw new RuntimeException("Object type serialization not defined");
    }
 
-   private String encodeArray(Object array) {
+   protected String encodeArray(Object array) {
       byte[] byteArray = null;
       if (array instanceof byte[]) {
          byteArray = (byte[]) array;
@@ -219,7 +242,7 @@ public class ZMQServer {
     * @return
     * @throws JSONException
     */
-   private static byte[] parseAPI(Class clazz) throws JSONException {
+   protected static byte[] parseAPI(Class clazz) throws JSONException {
       //Collect all methods whose return types and arguments we know how to translate, and put them in a JSON array describing them
       Predicate<Method> methodFilter = (Method t) -> {
          return isValidMethod(t);

@@ -155,17 +155,6 @@ public class AcqDurationEstimator {
          public void run() {
             try {
 
-               int dir = Magellan.getCore().getFocusDirection(Magellan.getCore().getFocusDevice());
-               boolean towardsSampleIsPositive;
-               if (dir > 0) {
-                  towardsSampleIsPositive = true;
-               } else if (dir < 0) {
-                  towardsSampleIsPositive = false;
-               } else {
-                  GUI.updateEstiamtedDurationLabel("Error: focus direction undefined");
-                  return;
-               }
-
                double imageTime = estimateImageAcquisitionTime(Magellan.getCore().getExposure());
                checkForInterrupt();
                double xyMoveTime = averageList(xyMoveTimeList_);
@@ -178,7 +167,7 @@ public class AcqDurationEstimator {
                List<XYStagePosition> positions = getXYPositions(settings);
                long numImagesAcquired = 0, xyMoves = 0, zMoves = 0, channelSwitches = 0, numImages = 0;
                double zOrigin = MagellanGUIAcquisition.getZTopCoordinate(settings.spaceMode_,
-                       settings, towardsSampleIsPositive, false, 0, 0, Magellan.getCore().getFocusDevice());
+                       settings, false, 0, 0, Magellan.getCore().getFocusDevice());
                for (XYStagePosition pos : positions) {
                   int sliceIndex = 0;
                   if (!MagellanGUIAcquisition.isImagingVolumeUndefinedAtPosition(settings.spaceMode_, settings, pos)) {

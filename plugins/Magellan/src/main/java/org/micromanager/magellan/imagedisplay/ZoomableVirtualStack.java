@@ -24,17 +24,13 @@ import org.micromanager.magellan.acq.Acquisition;
 import org.micromanager.magellan.acq.ExploreAcquisition;
 import org.micromanager.magellan.acq.MagellanGUIAcquisition;
 import org.micromanager.magellan.acq.MMImageCache;
-import org.micromanager.magellan.acq.MagellanTaggedImage;
-import org.micromanager.magellan.acq.MultiResMultipageTiffStorage;
+import org.micromanager.magellan.datasaving.MultiResMultipageTiffStorage;
 import java.awt.Dimension;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
-import org.micromanager.magellan.json.JSONObject;
+import mmcorej.TaggedImage;
+import org.json.JSONObject;
 import org.micromanager.magellan.misc.LongPoint;
 
 /**
@@ -426,14 +422,10 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
       return acquisition_.getDisplaySliceIndexFromZCoordinate(zPos);
    }
 
-   public JSONObject getLatestMetadata() {
-      return latestMetadata_;
-   }
-
    //this method is called to get the tagged image for display purposes only
    //return the zoomed or downsampled image here for fast performance
    @Override
-   protected MagellanTaggedImage getMagellanTaggedImage(int channel, int slice, int frame) {
+   protected TaggedImage getMagellanTaggedImage(int channel, int slice, int frame) {
       //tags and images ultimately get split apart from this function, so it is okay
       //to alter image size and not change tags to reflect that
 
@@ -443,9 +435,10 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
       } else if (acquisition_ == null) {
          slice += disp_.getStorage().getMinSliceIndexOpenedDataset();
       }
-      MagellanTaggedImage img = multiResStorage_.getImageForDisplay(channel, slice, frame, resolutionIndex_,
+      TaggedImage img = multiResStorage_.getImageForDisplay(channel, slice, frame, resolutionIndex_,
               xView_, yView_, displayImageWidth_, displayImageHeight_);
-      latestMetadata_ = img.tags;
+//      latestMetadata_ = img.tags;
+      disp_.setCurrentMetadata(img.tags);
       return img;
    }
 

@@ -17,8 +17,8 @@
 package org.micromanager.magellan.imagedisplay;
 
 import java.awt.Color;
-import org.micromanager.magellan.json.JSONArray;
-import org.micromanager.magellan.json.JSONObject;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.micromanager.magellan.misc.MD;
 
 
