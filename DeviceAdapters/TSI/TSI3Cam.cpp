@@ -229,6 +229,7 @@ int Tsi3Cam::Initialize()
 		}
 		color = true;
 		polarized = false;
+		pixelSize = 4; // 32bitRGB
 
 		// create white balance property
 		CPropertyAction *pAct = new CPropertyAction(this, &Tsi3Cam::OnWhiteBalance);
@@ -238,7 +239,7 @@ int Tsi3Cam::Initialize()
 		AddAllowedValue(g_WhiteBalance, g_On);
 
 		pAct = new CPropertyAction (this, &Tsi3Cam::OnPixelType);
-		pixelSize = 4; // 32bitRGB
+
 		ret = CreateStringProperty(MM::g_Keyword_PixelType, g_PixelType_32bitRGB, false, pAct);
 		assert(ret == DEVICE_OK);
 
@@ -255,6 +256,7 @@ int Tsi3Cam::Initialize()
 	{
 		color = false;
 		polarized = false;
+		pixelSize = 2;
 	}
 	else if (sensorType == TL_CAMERA_SENSOR_TYPE_MONOCHROME_POLARIZED)
 	{
@@ -289,6 +291,7 @@ int Tsi3Cam::Initialize()
 
 		color = false;
 		polarized = true;
+		pixelSize = 2;
 	}
 	else
 		return ERR_UNSUPPORTED_SENSOR;
@@ -457,22 +460,35 @@ const unsigned int* Tsi3Cam::GetImageBufferAsRGB32()
 }
 unsigned Tsi3Cam::GetNumberOfComponents() const
 {
+	int numComp = 0;
+
 	if (color)
-		return 4;
+		numComp = 4;
 	else
-		return 1;
+		numComp = 1;
+
+	//ostringstream os;
+	//os << "GetNumberOfComponents->" << numComp;
+	//LogMessage(os.str(), true);
+	return numComp;
 }
 
 unsigned Tsi3Cam::GetNumberOfChannels() const
 {
-   // TODO: multichannel
    return 1;
 }
 
+unsigned Tsi3Cam::GetImageBytesPerPixel() const
+{
+	//ostringstream os;
+	//os << "GetImageBytesPerPixel->" << img.Depth();
+	//LogMessage(os.str(), true);
+	return img.Depth();
+} 
+
+
 int Tsi3Cam::GetChannelName(unsigned channel, char* name)
 {
-   // TODO: multichannel
-
    if (channel != 0)
       return ERR_INVALID_CHANNEL_INDEX;
    
@@ -681,7 +697,7 @@ int Tsi3Cam::ResizeImageBuffer()
 
    img.Resize(w, h, d);
    ostringstream os;
-   os << "TSI3 resized to: " << img.Width() << " X " << img.Height() << ", camera: " << w << "X" << h << ", color=" << color << ", polarized=" << polarized;
+   os << "TSI3 resized to: " << img.Width() << " X " << img.Height() << " X " << d << ", camera: " << w << "X" << h << ", color=" << color << ", polarized=" << polarized;
    LogMessage(os.str().c_str(), true);
 
    return DEVICE_OK;
@@ -834,7 +850,7 @@ void Tsi3Cam::frame_available_callback(void* /*sender*/, unsigned short* image_b
 			assert(!"Unsupported pixel type");
 
 	}
-	if (instance->polarized)
+	else if (instance->polarized)
 	{
 		// Polarization
 		instance->img.Resize(img_width, img_height, instance->fullFrame.pixDepth);
