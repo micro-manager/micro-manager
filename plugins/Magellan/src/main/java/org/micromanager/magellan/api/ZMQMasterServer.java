@@ -2,6 +2,7 @@ package org.micromanager.magellan.api;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.magellan.main.Magellan;
 import org.zeromq.SocketType;
 
 /**
@@ -24,6 +25,7 @@ public class ZMQMasterServer extends ZMQServer {
       if (json.getString("command").equals("connect-master")) {
          JSONObject reply = new JSONObject();
          reply.put("reply", "success");
+         reply.put("version", Magellan.VERSION);
          return reply.toString().getBytes();
       } else if (json.getString("command").equals("start-core")) { 
          if (coreServer_ == null) {
