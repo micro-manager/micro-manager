@@ -912,56 +912,56 @@ int AndorCamera::GetListOfAvailableCameras()
          }
          VCVoltages_.clear();
          if(ui_swVersion >= 292) {
-	         for (int i = 0; i < numVCVoltages; i++)
-	         {
-		         char VCAmp[10];
-		         ret = GetVSAmplitudeString(i, VCAmp);
+           for (int i = 0; i < numVCVoltages; i++)
+           {
+             char VCAmp[10];
+             ret = GetVSAmplitudeString(i, VCAmp);
 
-		         if (ret != DRV_SUCCESS) {
-			        numVCVoltages = 0;
-			        ostringstream eMsg;
-			        eMsg << "Andor driver returned error code: " << ret << " to GetVSAmplitudeString";
-			        LogMessage(eMsg.str().c_str(), true);
-		         }
-		         else
-		         {
-			         VCVoltages_.push_back(VCAmp);
-		         }
-	         }
+             if (ret != DRV_SUCCESS) {
+              numVCVoltages = 0;
+              ostringstream eMsg;
+              eMsg << "Andor driver returned error code: " << ret << " to GetVSAmplitudeString";
+              LogMessage(eMsg.str().c_str(), true);
+             }
+             else
+             {
+               VCVoltages_.push_back(VCAmp);
+             }
+           }
          }
          else {
-	         if(numVCVoltages>5)
-		        numVCVoltages = 5;
-	         switch(numVCVoltages)
-	         {
-	         case 1:
-		        VCVoltages_.push_back("Normal");
-		        break;
-	         case 2:
-		        VCVoltages_.push_back("Normal");
-		        VCVoltages_.push_back("+1");
-		        break;
-	         case 3:
-		        VCVoltages_.push_back("Normal");
-		        VCVoltages_.push_back("+1");
-		        VCVoltages_.push_back("+2");
-		        break;
-	         case 4:
-		        VCVoltages_.push_back("Normal");
-		        VCVoltages_.push_back("+1");
-		        VCVoltages_.push_back("+2");
-		        VCVoltages_.push_back("+3");
-		        break;
-	         case 5:
-		        VCVoltages_.push_back("Normal");
-		        VCVoltages_.push_back("+1");
-		        VCVoltages_.push_back("+2");
-		        VCVoltages_.push_back("+3");
-		        VCVoltages_.push_back("+4");
-		        break;
-	         default:
-		        VCVoltages_.push_back("Normal");
-	         }
+           if(numVCVoltages>5)
+            numVCVoltages = 5;
+           switch(numVCVoltages)
+           {
+           case 1:
+            VCVoltages_.push_back("Normal");
+            break;
+           case 2:
+            VCVoltages_.push_back("Normal");
+            VCVoltages_.push_back("+1");
+            break;
+           case 3:
+            VCVoltages_.push_back("Normal");
+            VCVoltages_.push_back("+1");
+            VCVoltages_.push_back("+2");
+            break;
+           case 4:
+            VCVoltages_.push_back("Normal");
+            VCVoltages_.push_back("+1");
+            VCVoltages_.push_back("+2");
+            VCVoltages_.push_back("+3");
+            break;
+           case 5:
+            VCVoltages_.push_back("Normal");
+            VCVoltages_.push_back("+1");
+            VCVoltages_.push_back("+2");
+            VCVoltages_.push_back("+3");
+            VCVoltages_.push_back("+4");
+            break;
+           default:
+            VCVoltages_.push_back("Normal");
+           }
          }
          if (numVCVoltages>=1)
          {
@@ -2104,63 +2104,62 @@ int AndorCamera::GetListOfAvailableCameras()
    /**
    * Set camera "regular" gain.
    */
-   int AndorCamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
-   {
-	   
-      if (eAct == MM::AfterSet)
-      {
-         long gain;
-         pProp->Get(gain);
+  int AndorCamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
+  {
+    if (eAct == MM::AfterSet)
+    {
+      long gain;
+      pProp->Get(gain);
 
-		 if (!EMSwitch_) {
-			currentGain_ = gain;
-			return DEVICE_OK;
-		 }
-		 if(gain == currentGain_)
-			return DEVICE_OK;
-
-         bool acquiring = sequenceRunning_;
-         if (acquiring)
-            StopSequenceAcquisition(true);
-		 
-		 {
-			 DriverGuard dg(this);
-
-			 if (sequenceRunning_)
-				return ERR_BUSY_ACQUIRING;
-
-			 if (gain!=0 && gain < (long) EmCCDGainLow_ ) 
-				gain = (long)EmCCDGainLow_;
-			 if (gain > (long) EmCCDGainHigh_ ) 
-				gain = (long)EmCCDGainHigh_;
-			 pProp->Set(gain);
-
-			 //added to use RTA
-			 if(!(iCurrentTriggerMode_ == SOFTWARE))
-				SetToIdle();
-
-			 unsigned ret = SetEMCCDGain((int)gain);
-			 if (DRV_SUCCESS != ret)
-				return (int)ret;
-			 currentGain_ = gain;
-
-          int retCode = UpdatePreampGains();
-          if (DRV_SUCCESS != retCode)
-             return retCode;
-
-			 if (acquiring)
-				StartSequenceAcquisition(sequenceLength_ - imageCounter_, intervalMs_, stopOnOverflow_);
-
-			 PrepareSnap();
-		 }
+      if (!EMSwitch_) {
+        currentGain_ = gain;
+        return DEVICE_OK;
       }
-      else if (eAct == MM::BeforeGet)
+      if(gain == currentGain_)
+        return DEVICE_OK;
+
+      bool acquiring = sequenceRunning_;
+      if (acquiring)
+        StopSequenceAcquisition(true);
+     
       {
-		  DriverGuard dg(this); //not even sure this is needed
-         pProp->Set(currentGain_);
+        DriverGuard dg(this);
+
+        if (sequenceRunning_)
+          return ERR_BUSY_ACQUIRING;
+
+        if (gain!=0 && gain < (long) EmCCDGainLow_ ) 
+          gain = (long)EmCCDGainLow_;
+        if (gain > (long) EmCCDGainHigh_ ) 
+          gain = (long)EmCCDGainHigh_;
+        pProp->Set(gain);
+
+        //added to use RTA
+        if(!(iCurrentTriggerMode_ == SOFTWARE))
+          SetToIdle();
+
+        unsigned ret = SetEMCCDGain((int)gain);
+        if (DRV_SUCCESS != ret)
+          return (int)ret;
+        currentGain_ = gain;
+
+        int retCode = UpdatePreampGains();
+        if (DRV_SUCCESS != retCode)
+          return retCode;
+
+        if (acquiring)
+          StartSequenceAcquisition(sequenceLength_ - imageCounter_, intervalMs_, stopOnOverflow_);
+
+        PrepareSnap();
       }
-      return DEVICE_OK;
-   }
+    }
+    else if (eAct == MM::BeforeGet)
+    {
+      DriverGuard dg(this); //not even sure this is needed
+      pProp->Set(currentGain_);
+    }
+    return DEVICE_OK;
+  }
 
    /**
    * Set camera "regular" gain.
@@ -2235,40 +2234,35 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::OnSelectTrigger(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
-      
       if (eAct == MM::AfterSet)
       {
-         bool acquiring = sequenceRunning_;
-         if (acquiring)
-            StopSequenceAcquisition(true);
+        bool acquiring = sequenceRunning_;
+        if (acquiring)
+           StopSequenceAcquisition(true);
          
-         DriverGuard dg(this); //moved driver guard to here to allow AcqSequenceThread to terminate properly
+        DriverGuard dg(this); //moved driver guard to here to allow AcqSequenceThread to terminate properly
 
-         if (sequenceRunning_)
-            return ERR_BUSY_ACQUIRING;
+        if (sequenceRunning_)
+          return ERR_BUSY_ACQUIRING;
 
-         std::string trigger;
-         pProp->Get(trigger);
-         if(trigger == strCurrentTriggerMode_)
-            return DEVICE_OK;
+        std::string trigger;
+        pProp->Get(trigger);
+        if(trigger == strCurrentTriggerMode_)
+          return DEVICE_OK;
 
-         SetToIdle();
+        SetToIdle();
 
+        iCurrentTriggerMode_= GetTriggerModeInt(trigger);
+        strCurrentTriggerMode_ = trigger;
 
-         iCurrentTriggerMode_= GetTriggerModeInt(trigger);
-         strCurrentTriggerMode_ = trigger;
-         
-
-
-
-	
-		  if (acquiring)
-			StartSequenceAcquisition(sequenceLength_ - imageCounter_, intervalMs_, stopOnOverflow_);
-	      else
-	      {
-			UpdateSnapTriggerMode();
-			PrepareSnap();
-	      }
+        if (acquiring) {
+          StartSequenceAcquisition(sequenceLength_ - imageCounter_, intervalMs_, stopOnOverflow_);
+        }
+        else
+        {
+          UpdateSnapTriggerMode();
+          PrepareSnap();
+        }
 
       }
       else if (eAct == MM::BeforeGet)
@@ -4101,7 +4095,7 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
           trigMode = INTERNAL;
         }
       }
-      else {
+      else if (IsTriggerModeAvailable(SOFTWARE) == DRV_SUCCESS) {
         if (INTERNAL == iCurrentTriggerMode_) {
           trigMode = SOFTWARE;
         }
@@ -5182,7 +5176,7 @@ unsigned int AndorCamera::PopulateROIDropdownFVB()
    {
       DriverGuard dg(this);
       triggerModesIMAGE_.clear();  
-	  triggerModesFVB_.clear();
+      triggerModesFVB_.clear();
       unsigned int retVal = DRV_SUCCESS;
       if(caps->ulTriggerModes & AC_TRIGGERMODE_INTERNAL)
       { 
@@ -5192,7 +5186,7 @@ unsigned int AndorCamera::PopulateROIDropdownFVB()
             return retVal;
          }
       }
-	  if(caps->ulTriggerModes & AC_TRIGGERMODE_CONTINUOUS)
+      if(caps->ulTriggerModes & AC_TRIGGERMODE_CONTINUOUS)
       {
          retVal = AddTriggerProperty(SOFTWARE);
          if (retVal != DRV_SUCCESS)
@@ -5462,10 +5456,13 @@ unsigned int AndorCamera::PopulateROIDropdownFVB()
          actualMode = EXTERNAL;
       }
 
-	  if(SOFTWARE==actualMode)
-	  {
-         acqMode = 5;  // run till abort used in software trigger
-	  }
+      if (IsTriggerModeAvailable(SOFTWARE) == DRV_SUCCESS)
+      {
+        if (SOFTWARE == actualMode)
+        {
+          acqMode = 5;  // run till abort used in software trigger
+        }
+      }
 
       ret = ApplyTriggerMode(actualMode);
       if(DRV_SUCCESS != ret)
