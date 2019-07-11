@@ -1207,8 +1207,8 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       settings.putBoolean(ACQ_ENABLE_MULTI_POSITION, acqEng_.isMultiPositionEnabled());
       settings.putInteger(ACQ_Z_VALUES, zVals_);
       settings.putBoolean(ACQ_SAVE_FILES, savePanel_.isSelected());
-      settings.putString(ACQ_DIR_NAME, nameField_.getText());
-      settings.putString(ACQ_ROOT_NAME, rootField_.getText());
+      settings.putString(ACQ_DIR_NAME, nameField_.getText().trim());
+      settings.putString(ACQ_ROOT_NAME, rootField_.getText().trim());
 
       settings.putInteger(ACQ_ORDER_MODE, acqEng_.getAcqOrderMode());
 
@@ -1288,8 +1288,8 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
               "Please choose a directory root for image data",
               FileDialogs.MM_DATA_SET);
       if (result != null) {
-         rootField_.setText(result.getAbsolutePath());
-         acqEng_.setRootName(result.getAbsolutePath());
+         rootField_.setText(result.getAbsolutePath().trim());
+         acqEng_.setRootName(result.getAbsolutePath().trim());
       }
    }
 
@@ -1764,8 +1764,8 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       acqEng_.setSaveFiles(savePanel_.isSelected());    
       // avoid dangerous characters in the name that will be used as a directory name
       String name = nameField_.getText().replaceAll("[/\\*!':]", "-");
-      acqEng_.setDirName(name);
-      acqEng_.setRootName(rootField_.getText());
+      acqEng_.setDirName(name.trim());
+      acqEng_.setRootName(rootField_.getText().trim());
 
       // update summary
 
