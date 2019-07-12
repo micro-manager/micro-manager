@@ -114,6 +114,11 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    }
    
    @Override
+   public AcquisitionStatus getAcquisitionStatus()  throws ASIdiSPIMException, RemoteException {
+      return getAcquisitionPanel().getAcquisitionStatus();
+   }
+   
+   @Override
    public void stopAcquisition() throws ASIdiSPIMException, RemoteException {
       getAcquisitionPanel().stopAcquisition();
    }

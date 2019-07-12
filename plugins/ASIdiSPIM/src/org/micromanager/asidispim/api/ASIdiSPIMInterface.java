@@ -82,6 +82,17 @@ public interface ASIdiSPIMInterface extends Remote {
    public ij.ImagePlus runAcquisitionBlocking(double x, double y, double f) throws ASIdiSPIMException, RemoteException; 
    
    /**
+    * Returns the status of the current or last acquisition.
+    * AcquisitionStatus.DONE means complete with no error
+    * AcquisitionStatus.FATAL_ERROR means didn't run because of a fatal error
+    * AcquisitionStatus.NON_FATAL_ERROR means attempted to run but encountered a non-fatal error
+    * @return
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
+    */
+   public AcquisitionStatus getAcquisitionStatus()  throws ASIdiSPIMException, RemoteException;
+   
+   /**
     * Stops an acquisition, if one is currently running.  Also cancels a 
     *   requested acquisition that is not yet running.
     * @see ASIdiSPIMInterface#runAcquisition()

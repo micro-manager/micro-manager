@@ -197,6 +197,7 @@ public class Properties {
       PLUGIN_TESTACQ_SAVE("TestAcquisitionSave"),
       PLUGIN_WRITE_ACQ_SETTINGS_FILE("WriteAcquisitionSettingsFile"),
       PLUGIN_ACQUIRE_BOTH_CAMERAS_SIMULT("AcquireBothCamerasSimult"),
+      PLUGIN_ACQUIRE_FAIL_QUIETLY("AcquireFailQuietly"),
       PLUGIN_USE_TOOLSET("UseImageJToolset"),
       PREFS_SAVE_WHILE_ACQUIRING("SaveWhileAcquiring"),
       PREFS_HIDE_WHILE_ACQUIRING("HideWhileAcquiring"),

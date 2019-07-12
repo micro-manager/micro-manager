@@ -211,6 +211,10 @@ public class SettingsPanel extends ListeningJPanel {
       final JCheckBox acqBothCamerasSimult = pu.makeCheckBox("Acquire from both cameras simultaneously",
             Properties.Keys.PLUGIN_ACQUIRE_BOTH_CAMERAS_SIMULT, panelName_, false);
       acqusitionPanel.add(acqBothCamerasSimult, "wrap");
+
+      final JCheckBox acqFailQuietly = pu.makeCheckBox("Acquisition failures are quiet",
+            Properties.Keys.PLUGIN_ACQUIRE_FAIL_QUIETLY, panelName_, false);
+      acqusitionPanel.add(acqFailQuietly, "wrap");
       
       // end acquisiton panel
       

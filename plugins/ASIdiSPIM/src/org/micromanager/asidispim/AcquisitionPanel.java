@@ -49,6 +49,7 @@ import org.micromanager.asidispim.Utils.MovementDetector;
 import org.micromanager.asidispim.Utils.MovementDetector.Method;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.asidispim.api.RunnableType;
+import org.micromanager.asidispim.api.AcquisitionStatus;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -212,6 +213,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             Color.PINK, Color.CYAN, Color.YELLOW, Color.ORANGE};
    private String lastAcquisitionPath_;
    private String lastAcquisitionName_;
+   private AcquisitionStatus acquisitionStatus_;
    private MMAcquisition acq_;
    private String[] channelNames_;
    private int nrRepeats_;  // how many separate acquisitions to perform
@@ -300,6 +302,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       sliceTiming_ = new SliceTiming();
       lastAcquisitionPath_ = "";
       lastAcquisitionName_ = "";
+      acquisitionStatus_ = AcquisitionStatus.NONE;
       acq_ = null;
       channelNames_ = null;
       resetXaxisSpeed_ = true;
@@ -2291,16 +2294,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       return true;
    }
    
-   /**
-    * used for updateAcquisitionStatus() calls 
-    */
-   private static enum AcquisitionStatus {
-      NONE,
-      ACQUIRING,
-      WAITING,
-      DONE,
-   }
-   
    private void updateAcquisitionStatus(AcquisitionStatus phase) {
       updateAcquisitionStatus(phase, 0);
    }
@@ -2345,10 +2338,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                + NumberUtils.intToDisplayString(numPositionsDone_)
                + " positions";
          break;
+      case NON_FATAL_ERROR:
+         text = "Non-fatal error.  Finished with "
+               + NumberUtils.intToDisplayString(numTimePointsDone_)
+               + " time points and "
+               + NumberUtils.intToDisplayString(numPositionsDone_)
+               + " positions";
+         break;
       default:
          break;   
       }
       acquisitionStatusLabel_.setText(text);
+      acquisitionStatus_ = phase;
    }
    
    private boolean requiresPiezos(AcquisitionModes.Keys mode) {
@@ -2387,8 +2388,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             cancelAcquisition_.set(false);
             acquisitionRequested_.set(true);
             updateStartButton();
-            boolean success = runAcquisitionPrivate(true, side);
-            if (!success) {
+            AcquisitionStatus success = runAcquisitionPrivate(true, side);
+            if (success == AcquisitionStatus.FATAL_ERROR) {
                ReportingUtils.logError("Fatal error running test diSPIM acquisition.");
             }
             acquisitionRequested_.set(false);
@@ -2695,10 +2696,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         Properties.Keys.STAGESCAN_MOTOR_ACCEL_X);
                   props_.setPropValue(Devices.Keys.XYSTAGE,
                         Properties.Keys.STAGESCAN_MOTOR_ACCEL_X, origXAccel);
-                  scanZSpeed = props_.getPropValueFloat(Devices.Keys.UPPERZDRIVE,
-                        Properties.Keys.STAGESCAN_MOTOR_SPEED_Z);
-                  props_.setPropValue(Devices.Keys.UPPERZDRIVE,
-                        Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, origZSpeed);
+                  if (devices_.isValidMMDevice(Devices.Keys.UPPERZDRIVE)) {
+                     scanZSpeed = props_.getPropValueFloat(Devices.Keys.UPPERZDRIVE,
+                           Properties.Keys.STAGESCAN_MOTOR_SPEED_Z);
+                     props_.setPropValue(Devices.Keys.UPPERZDRIVE,
+                           Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, origZSpeed);
+                  }
 
                   final Point2D.Double pos2D;
                   if (noPositions) {
@@ -2721,8 +2724,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         Properties.Keys.STAGESCAN_MOTOR_SPEED_X, scanXSpeed);
                   props_.setPropValue(Devices.Keys.XYSTAGE,
                         Properties.Keys.STAGESCAN_MOTOR_ACCEL_X, scanXAccel);
-                  props_.setPropValue(Devices.Keys.UPPERZDRIVE,
-                        Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, scanZSpeed);
+                  if (devices_.isValidMMDevice(Devices.Keys.UPPERZDRIVE)) {
+                     props_.setPropValue(Devices.Keys.UPPERZDRIVE,
+                           Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, scanZSpeed);
+                  }
                   if (acqSettings.isStageStepping) {
                      controller_.prepareStageStepForAcquisition(acqSettings.spimMode);
                   } else {
@@ -2820,8 +2825,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   gui_.getMMCore().setAutoShutter(autoShutter);
                   
                   // cleanup planar correction move if any
-                  props_.setPropValue(Devices.Keys.UPPERZDRIVE, Properties.Keys.TTLINPUT_MODE, Properties.Values.TTLINPUT_MODE_NONE, true);
-                  props_.setPropValue(Devices.Keys.UPPERZDRIVE, Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, origZSpeed, true);
+                  if (devices_.isValidMMDevice(Devices.Keys.UPPERZDRIVE)) {
+                     props_.setPropValue(Devices.Keys.UPPERZDRIVE, Properties.Keys.TTLINPUT_MODE, Properties.Values.TTLINPUT_MODE_NONE, true);
+                     props_.setPropValue(Devices.Keys.UPPERZDRIVE, Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, origZSpeed, true);
+                  }
                   
                   // make sure SPIM state machine on micromirror and SCAN of XY card are stopped (should normally be but sanity check)
                   stopSPIMStateMachines(acqSettings);
@@ -2849,8 +2856,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                            Properties.Keys.STAGESCAN_MOTOR_SPEED_X, origXSpeed);
                      props_.setPropValue(Devices.Keys.XYSTAGE,
                            Properties.Keys.STAGESCAN_MOTOR_ACCEL_X, origXAccel);
-                     props_.setPropValue(Devices.Keys.UPPERZDRIVE,
-                           Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, origZSpeed);
+                     if (devices_.isValidMMDevice(Devices.Keys.UPPERZDRIVE)) {
+                        props_.setPropValue(Devices.Keys.UPPERZDRIVE,
+                              Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, origZSpeed);
+                     }
                      core_.setXYPosition(devices_.getMMDevice(Devices.Keys.XYSTAGE), 
                            xyPosUm.x, xyPosUm.y);
                   } catch (Exception ex) {
@@ -2923,8 +2932,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             acquisitionRequested_.set(true);
             ASIdiSPIM.getFrame().tabsSetEnabled(false);
             updateStartButton();
-            boolean success = runAcquisitionPrivate(false, Devices.Sides.NONE);
-            if (!success) {
+            AcquisitionStatus success = runAcquisitionPrivate(false, Devices.Sides.NONE);
+            if (success == AcquisitionStatus.FATAL_ERROR) {
                ReportingUtils.logError("Fatal error running diSPIM acquisition.");
             }
             acquisitionRequested_.set(false);
@@ -2946,19 +2955,19 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * grabbing the images and putting them into the acquisition, etc.
     * @param testAcq true if running test acquisition only (see runTestAcquisition() javadoc)
     * @param testAcqSide only applies to test acquisition, passthrough from runTestAcquisition() 
-    * @return true if ran without any fatal errors.
+    * @return true if ran without any fatal errors.  If non-fatal error is encountered you can check 
     */
-   private boolean runAcquisitionPrivate(boolean testAcq, Devices.Sides testAcqSide) {
+   private AcquisitionStatus runAcquisitionPrivate(boolean testAcq, Devices.Sides testAcqSide) {
       
       // sanity check, shouldn't call this unless we aren't running an acquisition
       if (gui_.isAcquisitionRunning()) {
          MyDialogUtils.showError("An acquisition is already running");
-         return false;
+         return AcquisitionStatus.FATAL_ERROR;
       }
       
       if (ASIdiSPIM.getFrame().getHardwareInUse()) {
          MyDialogUtils.showError("Hardware is being used by something else (maybe autofocus?)");
-         return false;
+         return AcquisitionStatus.FATAL_ERROR;
       }
       
       boolean liveModeOriginally = gui_.isLiveModeOn();
@@ -2973,7 +2982,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       if (!sliceTiming_.valid) {
          MyDialogUtils.showError("Error in calculating the slice timing; is the camera mode set correctly?");
-         return false;
+         return AcquisitionStatus.FATAL_ERROR;
       }
       
       AcquisitionSettings acqSettingsOrig = getCurrentAcquisitionSettings();
@@ -2981,7 +2990,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       if (acqSettingsOrig.cameraMode == CameraModes.Keys.LIGHT_SHEET
             && core_.getPixelSizeUm() < 1e-6) {  // can't compare equality directly with floating point values so call < 1e-9 is zero or negative
          ReportingUtils.showError("Need to configure pixel size in Micro-Manager to use light sheet mode.");
-         return false;
+         return AcquisitionStatus.FATAL_ERROR;
       }
       
       // if a test acquisition then only run single timpoint, no autofocus
@@ -3040,19 +3049,19 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       if (acqSettingsOrig.numSimultCameras > 0) {
          if (!acqSettingsOrig.firstSideIsA || acqSettingsOrig.numSides != 1) {
             MyDialogUtils.showError("Using simultaneous cameras requires single-sided (Path A) acquisition.");
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
          }
          if (acqSettingsOrig.useTimepoints) {
             // not fundamentally impossible (except hardware timepoints), but because we file the channels in the
             //     timepoint index of acquisition to work-around restriction of displaying only 8 channels
             MyDialogUtils.showError("Cannot use time points with simultaneous cameras on PathA");
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
          }
          if (acqSettingsOrig.hardwareTimepoints) {
             // currently this situation can never occur but leave check here just in case we find other way around
             //    8-channel display limit
             MyDialogUtils.showError("Cannot use hardware time points with simultaneous cameras on PathA");
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
          }
       }
       
@@ -3117,53 +3126,53 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       if (camActiveA) {
          if (!verifyCamera(Devices.Keys.CAMERAA))
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
       }
       
       if (camActiveB) {
          if (!verifyCamera(Devices.Keys.CAMERAB))
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
       }
       
       if (camActiveA1) {
          if (!verifyCamera(Devices.Keys.CAMERA_A1))
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
       }
       
       if (camActiveA2) {
          if (!verifyCamera(Devices.Keys.CAMERA_A2))
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
       }
       
       if (camActiveA3) {
          if (!verifyCamera(Devices.Keys.CAMERA_A3))
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
       }
       
       if (camActiveA4) {
          if (!verifyCamera(Devices.Keys.CAMERA_A4))
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
       }
       
       if (sideActiveA) {
          if (!devices_.isValidMMDevice(Devices.Keys.GALVOA)) {
             MyDialogUtils.showError("Using side A but no scanner specified for that side.");
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
          }
          if (requiresPiezos(acqSettings.spimMode) && !devices_.isValidMMDevice(Devices.Keys.PIEZOA)) {
             MyDialogUtils.showError("Using side A and acquisition mode requires piezos but no piezo specified for that side.");
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
          }
       }
       
       if (sideActiveB) {
          if (!devices_.isValidMMDevice(Devices.Keys.GALVOB)) {
             MyDialogUtils.showError("Using side B but no scanner specified for that side.");
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
          }
          if (requiresPiezos(acqSettings.spimMode) && !devices_.isValidMMDevice(Devices.Keys.PIEZOB)) {
             MyDialogUtils.showError("Using side B and acquisition mode requires piezos but no piezo specified for that side.");
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
          }
       }
       
@@ -3190,27 +3199,27 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          cameraA1 = devices_.getMMDevice(Devices.Keys.CAMERA_A1);
          if (cameraA1 == null) {
             MyDialogUtils.showError("Trying to use undefinied simultaneous camera #1");
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
          }
          if (camActiveA2) {
             cameraA2 = devices_.getMMDevice(Devices.Keys.CAMERA_A2);
             if (cameraA2 == null) {
                MyDialogUtils.showError("Trying to use undefinied simultaneous camera #2");
-               return false;
+               return AcquisitionStatus.FATAL_ERROR;
             }
          }
          if (camActiveA3) {
             cameraA3 = devices_.getMMDevice(Devices.Keys.CAMERA_A3);
             if (cameraA3 == null) {
                MyDialogUtils.showError("Trying to use undefinied simultaneous camera #3");
-               return false;
+               return AcquisitionStatus.FATAL_ERROR;
             }
          }
          if (camActiveA4) {
             cameraA4 = devices_.getMMDevice(Devices.Keys.CAMERA_A4);
             if (cameraA4 == null) {
                MyDialogUtils.showError("Trying to use undefinied simultaneous camera #4");
-               return false;
+               return AcquisitionStatus.FATAL_ERROR;
             }
          }
       }
@@ -3225,7 +3234,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       if (acqSettings.useChannels) {
          if (acqSettings.numChannels < 1) {
             MyDialogUtils.showError("\"Channels\" is checked, but no channels are selected");
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
          }
          // get current channel so that we can restore it, then set channel appropriately
          originalChannelConfig = multiChannelPanel_.getCurrentConfig();
@@ -3248,7 +3257,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                boolean success = controller_.setupHardwareChannelSwitching(acqSettings);
                if (!success) {
                   MyDialogUtils.showError("Couldn't set up slice hardware channel switching.");
-                  return false;
+                  return AcquisitionStatus.FATAL_ERROR;
                }
                nrChannelsSoftware = 1;
                nrSlicesSoftware = acqSettings.numSlices * acqSettings.numChannels;
@@ -3256,7 +3265,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             break;
          default:
             MyDialogUtils.showError("Unsupported multichannel mode \"" + acqSettings.channelMode.toString() + "\"");
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
          }
       }
       if (twoSided && acqBothCameras) {
@@ -3297,13 +3306,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
          if (nrPositions < 1) {
             MyDialogUtils.showError("\"Positions\" is checked, but no positions are in position list");
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
          }
       }
       
       // make sure we have cameras selected
       if (!checkCamerasAssigned(true)) {
-         return false;
+         return AcquisitionStatus.FATAL_ERROR;
       }
       
       final float cameraReadoutTime = computeCameraReadoutTime();
@@ -3323,7 +3332,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             }
          } catch (Exception ex) {
             MyDialogUtils.showError("Could not create directory for saving acquisition data.");
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
          }
       }
       
@@ -3331,13 +3340,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          // because separate timepoints closes windows when done, force the user to save data to disk to avoid confusion
          if (!save) {
             MyDialogUtils.showError("For separate timepoints, \"Save while acquiring\" must be enabled.");
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
          }
          // for separate timepoints, make sure the directory is empty to make sure naming pattern is "clean"
          // this is an arbitrary choice to avoid confusion later on when looking at file names
          if (dir.list().length > 0) {
             MyDialogUtils.showError("For separate timepoints the saving directory must be empty.");
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
          }
       }
       
@@ -3364,23 +3373,23 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          if (!devices_.isTigerDevice(Devices.Keys.XYSTAGE)
               || !props_.hasProperty(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_NUMLINES)) {
             MyDialogUtils.showError("Must have stage with scan-enabled firmware for stage scanning.");
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
          }
          if (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED) {
             if (acqSettings.numSides < 2) {
                MyDialogUtils.showError("Interleaved stage scan requires two sides.");
-               return false;
+               return AcquisitionStatus.FATAL_ERROR;
             }
             if (acqSettings.usePathPresets) {
                MyDialogUtils.showError("Cannot use path presets with interleaved stage scan");
-               return false;
+               return AcquisitionStatus.FATAL_ERROR;
             }
          }
          if (acqSettings.usePathPresets && 
         		 prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(), 
         		 Properties.Keys.PLUGIN_AUTOFOCUS_EVERY_STAGE_PASS, false)) {
              MyDialogUtils.showError("Cannot use path presets with autofocus every stage pass.");
-             return false;
+             return AcquisitionStatus.FATAL_ERROR;
          }
       }
       
@@ -3388,7 +3397,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          if (!acqSettings.useChannels || acqSettings.numChannels < 2 || acqSettings.channelMode != MultichannelModes.Keys.SLICE_HW) {
             MyDialogUtils.showError("Stage step supplemental acquisition can only be used for multiple channels with changing "
                   + "channels every slice. Pester the developer to extend this functionality to single channel and/or volume switching.");
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
          }
       }
       
@@ -3401,7 +3410,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                " readout time of " + cameraReadoutTime + "\n" + 
                "This will result in dropped frames. " +
                "Please change input");
-         return false;
+         return AcquisitionStatus.FATAL_ERROR;
       }
       
       // if we want to do hardware timepoints make sure there's not a problem
@@ -3412,38 +3421,38 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // TODO this seems a severe limitation, maybe this could be changed in the future via firmware change
             MyDialogUtils.showError("Cannot use hardware time points (small time point interval)"
                   + " with hardware channel switching volume-by-volume.");
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
          }
          if (acqSettings.isStageScanning) {
             // stage scanning needs to be triggered for each time point
             MyDialogUtils.showError("Cannot use hardware time points (small time point interval)"
                   + " with stage scanning.");
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
          }
          if (acqSettings.separateTimepoints) {
             MyDialogUtils.showError("Cannot use hardware time points (small time point interval)"
                   + " with separate viewers/file for each time point.");
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
          }
          if (acqSettings.useAutofocus) {
             MyDialogUtils.showError("Cannot use hardware time points (small time point interval)"
                   + " with autofocus during acquisition.");
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
          }
          if (acqSettings.useMovementCorrection) {
              MyDialogUtils.showError("Cannot use hardware time points (small time point interval)"
                   + " with movement correction during acquisition.");
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
          }
          if (acqSettings.useChannels && acqSettings.channelMode == MultichannelModes.Keys.VOLUME) {
             MyDialogUtils.showError("Cannot use hardware time points (small time point interval)"
                   + " with software channels (need to use PLogic channel switching).");
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
          }
          if (spimMode == AcquisitionModes.Keys.NO_SCAN) {
             MyDialogUtils.showError("Cannot do hardware time points when no scan mode is used."
                   + " Use the number of slices to set the number of images to acquire.");
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
          }
       }
       
@@ -3451,7 +3460,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             && acqSettings.numSides < 2) {
          MyDialogUtils.showError("Cannot do PLogic channel switching of volume when only one"
                + " side is selected. Pester the developers if you need this.");
-         return false;
+         return AcquisitionStatus.FATAL_ERROR;
       }
       
       // make sure we aren't trying to collect timepoints faster than we can
@@ -3459,7 +3468,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          if (timepointIntervalMs < volumeDuration) {
             MyDialogUtils.showError("Time point interval shorter than" +
                   " the time to collect a single volume.\n");
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
          }
       }
       
@@ -3481,7 +3490,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          if (acqSettings.useChannels) {
             if (!multiChannelPanel_.isChannelValid(autofocusChannel)) {
                MyDialogUtils.showError("Invalid autofocus channel selected on autofocus tab.");
-               return false;
+               return AcquisitionStatus.FATAL_ERROR;
             }
          }
       }
@@ -3499,7 +3508,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          if (acqSettings.useChannels) {
             if (!multiChannelPanel_.isChannelValid(correctMovementChannel)) {
                MyDialogUtils.showError("Invalid movement correction channel selected on autofocus tab.");
-               return false;
+               return AcquisitionStatus.FATAL_ERROR;
             }
          }
       }
@@ -3521,7 +3530,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                  || roi_3.width != roi_4.width || roi_3.height != roi_4.height
                   ) {
                MyDialogUtils.showError("All cameras' ROI height and width must be equal because of Micro-Manager's circular buffer");
-               return false;
+               return AcquisitionStatus.FATAL_ERROR;
             }
          } catch (Exception ex) {
             MyDialogUtils.showError(ex, "Problem getting camera ROIs");
@@ -3532,7 +3541,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             Rectangle roi_2 = core_.getROI(secondCamera);
             if (roi_1.width != roi_2.width || roi_1.height != roi_2.height) {
                MyDialogUtils.showError("Two cameras' ROI height and width must be equal because of Micro-Manager's circular buffer");
-               return false;
+               return AcquisitionStatus.FATAL_ERROR;
             }
          } catch (Exception ex) {
             MyDialogUtils.showError(ex, "Problem getting camera ROIs");
@@ -3636,7 +3645,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          core_.clearCircularBuffer();
       } catch (Exception ex) {
          MyDialogUtils.showError(ex, "Error emptying out the circular buffer");
-         return false;
+         return AcquisitionStatus.FATAL_ERROR;
       }
       
       // stop the serial traffic for position updates during acquisition
@@ -3656,12 +3665,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   Properties.Keys.STAGESCAN_MOTOR_SPEED_X);
             origXAccel = props_.getPropValueFloat(Devices.Keys.XYSTAGE,
                   Properties.Keys.STAGESCAN_MOTOR_ACCEL_X);
-            origZSpeed = props_.getPropValueFloat(Devices.Keys.UPPERZDRIVE,
-                  Properties.Keys.STAGESCAN_MOTOR_SPEED_Z);
+            if (devices_.isValidMMDevice(Devices.Keys.UPPERZDRIVE)) {
+               origZSpeed = props_.getPropValueFloat(Devices.Keys.UPPERZDRIVE,
+                     Properties.Keys.STAGESCAN_MOTOR_SPEED_Z);
+            }
          } catch (Exception ex) {
             MyDialogUtils.showError("Could not get XY stage position, speed, or acceleration for stage scan initialization");
             posUpdater_.pauseUpdates(false);
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
          }
          
          // if X speed is less than 0.2 mm/s then it probably wasn't restored to correct speed some other time
@@ -3696,7 +3707,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          } catch (Exception e) {
             MyDialogUtils.showError("Could not get supplemental X stage position for stage step initialization");
             posUpdater_.pauseUpdates(false);
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
          }
       }
       
@@ -3715,7 +3726,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       if (!acqSettings.usePathPresets) {  // special case with path presets handled later
          if (!controller_.prepareControllerForAquisition(acqSettings, extraChannelOffset_)) {
             posUpdater_.pauseUpdates(false);
-            return false;
+            return AcquisitionStatus.FATAL_ERROR;
          }
       }
       
@@ -3747,6 +3758,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
          
          BlockingQueue<TaggedImage> bq = new LinkedBlockingQueue<TaggedImage>(40);  // increased from original 10
+         ImageCache imageCache = null;
          
          // try to close last acquisition viewer if there could be one open (only in single acquisition per timepoint mode)
          if (acqSettings.separateTimepoints && (acq_!=null) && !cancelAcquisition_.get()) {
@@ -3893,7 +3905,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                }
                if (cmChannelNumber == -1) {
                   MyDialogUtils.showError("The channel selected for movement correction on the auitofocus tab was not found in this acquisition");
-                  return false;
+                  return AcquisitionStatus.FATAL_ERROR;
                }
             }
 
@@ -3963,7 +3975,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             acq_ = gui_.getAcquisition(acqName);
             
             // Dive into MM internals since script interface does not support pipelines
-            ImageCache imageCache = acq_.getImageCache();
+            imageCache = acq_.getImageCache();
             vad = acq_.getAcquisitionWindow();
             imageCache.addImageCacheListener(vad);
             
@@ -4133,10 +4145,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                               Properties.Keys.STAGESCAN_MOTOR_ACCEL_X);
                         props_.setPropValue(Devices.Keys.XYSTAGE,
                               Properties.Keys.STAGESCAN_MOTOR_ACCEL_X, origXAccel);
-                        scanZSpeed = props_.getPropValueFloat(Devices.Keys.UPPERZDRIVE,
-                              Properties.Keys.STAGESCAN_MOTOR_SPEED_Z);
-                        props_.setPropValue(Devices.Keys.UPPERZDRIVE,
-                              Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, origZSpeed);
+                        if (devices_.isValidMMDevice(Devices.Keys.UPPERZDRIVE)) {
+                           scanZSpeed = props_.getPropValueFloat(Devices.Keys.UPPERZDRIVE,
+                                 Properties.Keys.STAGESCAN_MOTOR_SPEED_Z);
+                           props_.setPropValue(Devices.Keys.UPPERZDRIVE,
+                                 Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, origZSpeed);
+                        }
                      }
                      
                      final MultiStagePosition nextPosition = positionList.getPosition(positionNum);
@@ -4153,8 +4167,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                               Properties.Keys.STAGESCAN_MOTOR_SPEED_X, scanXSpeed);
                         props_.setPropValue(Devices.Keys.XYSTAGE,
                               Properties.Keys.STAGESCAN_MOTOR_ACCEL_X, scanXAccel);
-                        props_.setPropValue(Devices.Keys.UPPERZDRIVE,
-                              Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, scanZSpeed);
+                        if (devices_.isValidMMDevice(Devices.Keys.UPPERZDRIVE)) {
+                           props_.setPropValue(Devices.Keys.UPPERZDRIVE,
+                                 Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, scanZSpeed);
+                        }
                         StagePosition pos = nextPosition.get(devices_.getMMDevice(Devices.Keys.XYSTAGE));  // get ideal position from position list, not current position
                         controller_.prepareStageScanForAcquisition(pos.x, pos.y);
                      } else if (acqSettings.isStageStepping) {
@@ -4606,6 +4622,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                            MyDialogUtils.showError(ex);
                         } finally {
                            // cleanup at the end of each time we trigger the controller
+                           // NB the acquisition is still open
 
                            ASIdiSPIM.getFrame().setHardwareInUse(false);
 
@@ -4769,6 +4786,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                ReportingUtils.logMessage("diSPIM plugin acquisition " + acqName + 
                      " took: " + (System.currentTimeMillis() - acqButtonStart) + "ms");
                
+               waitForBlockingQueue(imageCache);
+               
 //               while(gui_.isAcquisitionRunning()) {
 //            	   Thread.sleep(10);
 //            	   ReportingUtils.logMessage("waiting for acquisition to finish.");
@@ -4918,12 +4937,20 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       
       if (nonfatalError) {
-         MyDialogUtils.showError("Missed some images during acquisition, see core log for details");
+         acquisitionStatus_ = AcquisitionStatus.NON_FATAL_ERROR;
+         if (prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+            Properties.Keys.PLUGIN_ACQUIRE_FAIL_QUIETLY, false)) {
+            ReportingUtils.logError("Missed some images during acquisition, see core log for details");
+         } else {
+            MyDialogUtils.showError("Missed some images during acquisition, see core log for details");
+         }
+      } else {
+         
       }
       
       extraChannelOffset_ = 0.0;
 
-      return true;
+      return AcquisitionStatus.DONE;
    }
    
    /**
@@ -5094,6 +5121,22 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
    }
    
+   /**
+    * Waits for imageCache to be marked finished which means file saving is done.
+    * Times out after 5 seconds of waiting.
+    * @param cache
+    * @throws Exception
+    */
+   private void waitForBlockingQueue(ImageCache cache) throws Exception {
+      final int timeoutBlockingQueue = 35000;
+      final long deadline = System.currentTimeMillis() + timeoutBlockingQueue; 
+      boolean done = false;
+      while (!done) {
+         done = cache.isFinished();
+         done = done || (System.currentTimeMillis() > deadline);
+         Thread.sleep(25);
+      }
+   }
 
    /**
     * Called whenever position updater has refreshed positions, even when this tab isn't active.
@@ -5342,6 +5385,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       if (isAcquisitionRequested()) {
          cancelAcquisition_.set(true);
       }
+   }
+   
+   public AcquisitionStatus getAcquisitionStatus() {
+      return acquisitionStatus_;
    }
    
    /**
@@ -5641,7 +5688,5 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       runnablesStartPosition_.clear();
       runnablesEndPosition_.clear();
    }
-   
-
    
 }
