@@ -2294,6 +2294,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       return true;
    }
    
+   /**
+    * Utility method to update status text in GUI according to the current phase of acquisition
+    * @param phase
+    */
    private void updateAcquisitionStatus(AcquisitionStatus phase) {
       updateAcquisitionStatus(phase, 0);
    }
@@ -4183,6 +4187,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      Thread.sleep(Math.round(PanelUtils.getSpinnerFloatValue(positionDelay_)));
                   }
                   
+                  // figure out how many images so we can compare we expect total
+                  final int nrCameras;
+                  if (acqSettings.numSimultCameras > 0) {
+                     nrCameras = acqSettings.numSimultCameras;
+                  } else if (twoSided || acqBothCameras) {
+                     nrCameras = 2;
+                  } else {
+                     nrCameras = 1;
+                  }
+                  final int expectedNrImages = nrSlicesSoftware * nrCameras;
+                  int totalImages = 0;
+                  
                   int nrOuterLoop = 1;
                   if (acqSettings.usePathPresets && acqSettings.numSides > 1) {
                      // with path presets we have to trigger controller once for each side so double the number of triggers for double-sided
@@ -4360,7 +4376,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                            final boolean checkForSkips = acqSettings.hardwareTimepoints && (acqSettings.cameraMode == CameraModes.Keys.OVERLAP);
                            boolean done = false;
                            long timeout2 = Math.max(1000, Math.round(5*sliceDuration));
-                           int totalImages = 0;
+                           totalImages = 0;
                            if (acqSettings.isStageScanning) {  // for stage scanning have to allow extra time for turn-around
                               timeout2 += (2*(long)Math.ceil(getStageRampDuration(acqSettings)));  // ramp up and then down
                               timeout2 += 5000;   // ample extra time for turn-around (e.g. antibacklash move in Y), interestingly 500ms extra seems insufficient for reasons I don't understand yet so just pad this for now  // TODO figure out why turn-aronud is taking so long
@@ -4659,9 +4675,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                               }
                            }
                            
+                           if (expectedNrImages != totalImages) {
+                              ReportingUtils.logError("Expected " + expectedNrImages + " total, but only received " + totalImages);
+                              nonfatalError = true;
+                           }
+                           
                            // cleanup planar correction move if any
-                           props_.setPropValue(Devices.Keys.UPPERZDRIVE, Properties.Keys.TTLINPUT_MODE, Properties.Values.TTLINPUT_MODE_NONE, true);
-                           props_.setPropValue(Devices.Keys.UPPERZDRIVE, Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, origZSpeed, true);
+                           if (devices_.isValidMMDevice(Devices.Keys.UPPERZDRIVE)) {
+                              props_.setPropValue(Devices.Keys.UPPERZDRIVE, Properties.Keys.TTLINPUT_MODE, Properties.Values.TTLINPUT_MODE_NONE, true);
+                              props_.setPropValue(Devices.Keys.UPPERZDRIVE, Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, origZSpeed, true);
+                           }
                            
                            // make sure SPIM state machine on micromirror and SCAN of XY card are stopped (should normally be but sanity check)
                            stopSPIMStateMachines(acqSettings);
@@ -4944,8 +4967,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          } else {
             MyDialogUtils.showError("Missed some images during acquisition, see core log for details");
          }
-      } else {
-         
       }
       
       extraChannelOffset_ = 0.0;
