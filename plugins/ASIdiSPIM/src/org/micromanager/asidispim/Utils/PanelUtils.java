@@ -949,6 +949,7 @@ public class PanelUtils {
       for (Component comp : container.getComponents()) {
          comp.setEnabled(enabled);
       }
+      container.repaint();
    }
    
    /**
