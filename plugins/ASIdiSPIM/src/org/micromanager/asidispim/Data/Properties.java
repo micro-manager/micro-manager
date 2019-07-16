@@ -181,6 +181,8 @@ public class Properties {
       PVCAM_POST_TIME("Timing-PostTriggerDelayNs"),  // for PVCAM
       PVCAM_PRE_TIME("Timing-PreTriggerDelayNs"),    // for PVCAM
       PVCAM_CHIPNAME("ChipName"),                    // for PVCAM
+      SEND_COMMAND("Send command"),        // for PI stage
+      CONTROLLER_NAME("Controller Name"),  // for PI stage
       FIRMWARE_VERSION("FirmwareVersion"),
       CAMERA("Camera"),
       CORE_TIMEOUT_MS("TimeoutMs"),
@@ -459,6 +461,38 @@ public class Properties {
       return false;
    }
    
+   /**
+    * writes string property value to the device adapter using a core call
+    * @param Micro-Manager device name (different from others using device key)
+    * @param name enum key for property 
+    * @param strVal value in string form, sent to core using setProperty()
+    * @param ignoreError false (default) will do error checking, true means ignores non-existing property
+    */
+   public void setPropValueDirect(String mmDevice, Properties.Keys name, String strVal, boolean ignoreError) {
+      try {
+         core_.setProperty(mmDevice, name.toString(), strVal);
+      } catch (Exception ex) {
+         if (ignoreError) {
+            // log to file but nothing else
+            ReportingUtils.logMessage("Device " + mmDevice + 
+                  " does not have property: " + name.toString());
+         } else {
+            MyDialogUtils.showError(ex, "Error setting string property " + 
+                  name.toString() + " to " + strVal + " in device " + mmDevice);
+         }
+      }
+   }
+   
+   /**
+    * writes string property value to the device adapter using a core call
+    * @param Micro-Manager device name (different from others using device key)
+    * @param name enum key for property 
+    * @param strVal value in string form, sent to core using setProperty()
+    * @param ignoreError false (default) will do error checking, true means ignores non-existing property
+    */
+   public void setPropValueDirect(String mmDevice, Properties.Keys name, String strVal) {
+      setPropValueDirect(mmDevice, name, strVal, false); 
+   }
    
    /**
     * writes string property value to the device adapter using a core call
@@ -488,11 +522,9 @@ public class Properties {
                         " does not have property: " + name.toString());
                }
                // do nothing if ignoreError set and we didn't find the device at all
-            }
-            else {
+            } else {
                MyDialogUtils.showError(ex, "Error setting string property " + 
-                     name.toString() + " to " + strVal + " in device "
-                     + mmDevice);
+                     name.toString() + " to " + strVal + " in device " + mmDevice);
             }
          }
       }

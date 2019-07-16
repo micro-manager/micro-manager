@@ -305,10 +305,34 @@ public class ControllerUtils {
          e.printStackTrace();
       }
 
-      // set up stage scan parameters if necessary
+      // set up stage step/scan parameters if necessary
       if (settings.isStageStepping) {  // stepping with other stage
          if (settings.spimMode == AcquisitionModes.Keys.STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL) {
             actualStepSizeUm_ = settings.stepSizeUm;
+            
+            // send macro to PI stage
+            if (devices_.getMMDeviceLibrary(Devices.Keys.SUPPLEMENTAL_X) == Devices.Libraries.PI_GCS_2) {
+               final String controllerDeviceName = props_.getPropValueString(Devices.Keys.SUPPLEMENTAL_X, Properties.Keys.CONTROLLER_NAME);
+               final String MACRO_NAME = "TRIGMM";
+               final String distanceStr = Double.toString(actualStepSizeUm_/1000);  // distance specified in mm
+               final String[] macroText = {
+                     "MAC BEG " + MACRO_NAME  ,  // define new macro
+                     "WAC DIO? 1 = 1"         ,  // wait for digital input #1 to go high
+                     "MVR 1 " + distanceStr   ,  // move requested distance
+                     "WAC DIO? 1 = 0"         ,  // wait for digital input #1 to go low
+                     "MAC START " + MACRO_NAME,  // restart the macro
+                     "MAC END"                ,  // end definition
+               };
+               
+               try {
+                  for (String s : macroText) {
+                     props_.setPropValueDirect(controllerDeviceName, Properties.Keys.SEND_COMMAND, s);
+                  }
+               } catch (Exception e) {
+                  MyDialogUtils.showError("Could not send macro to PI controller.");
+               }
+            }
+            
             DeviceUtils du = new DeviceUtils(gui_, devices_, props_, prefs_);
             scanDistance_ = settings.numSlices * actualStepSizeUm_ * du.getStageGeometricSpeedFactor(settings.firstSideIsA);
             
