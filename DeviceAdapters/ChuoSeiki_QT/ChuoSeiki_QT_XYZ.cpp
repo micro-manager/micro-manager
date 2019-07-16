@@ -489,6 +489,21 @@ int ChuoSeikiXYStage::SetRelativePositionSteps(long x, long y)
 	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
+	// added on 20190712, wait until the move completed, 
+	//it is not realy necessary, but just put in for prevention
+	/*
+	double distance_umX = x * stepSize_umX_;
+	double distance_umY = y * stepSize_umX_;
+	long timeX	= (long) (distance_umX / speedHigh_mmX_);
+	long timeY	= (long) (distance_umY / speedHigh_mmY_);
+
+	long timeOut = timeX;
+	if(timeX < timeY)	
+		timeOut  = timeY;
+
+	WaitForBusy(timeOut);
+	*/
+
 	return DEVICE_OK;
 
 }
@@ -516,6 +531,13 @@ int ChuoSeikiXYStage::GetPositionSteps(long& x, long& y)
 		if (ret != DEVICE_OK && ret != 14)
 			return ret;
 
+		/*if (answer.length() <= 20)
+		{
+			ret = ConfirmAnswer(answer);
+			if (ret != DEVICE_OK && ret != 14)
+			return ret;
+		}*/
+
 		if (answer.length() > 20)					// answer format: (+ or -)(8 digits)(stage A state keyword)(,)(+ or -)(8 digits)(stage B state keyword)
 		{
 			x = std::atol(answer.substr(0, 9).c_str());
@@ -535,14 +557,14 @@ int ChuoSeikiXYStage::GetPositionSteps(long& x, long& y)
 			}
 		}
 		else if (i >= 4){
-			return ERR_CONTROLER_8;
+				return DEVICE_OK; //return ERR_CONTROLER_8; 20190712 fix error of reading position after using set origin
 		}
 
 		CDeviceUtils::SleepMs(20);
 		// if answer is wrong, try again, max 5 times
 	}
    // should be unreachable, but better safe then sorry
-   return ERR_CONTROLER_8;
+	return DEVICE_OK; //return ERR_CONTROLER_8; 20190712 fix error of reading position after using set origin
 }
 
 
@@ -566,11 +588,12 @@ int ChuoSeikiXYStage::Home()
 	if (ret != DEVICE_OK && ret != 14) 
 		return ret;
 
+	//WaitForBusy(2000);
+
 	ret = GetSerialAnswer(portName_XY.c_str(), "\r\n", answer);
 	if (ret != DEVICE_OK && ret != 14) 
 		return ret;
-
-
+	
 	ret = ConfirmAnswer(answer);
 	if (ret != DEVICE_OK && ret != 14)
 		return ret;
@@ -1304,14 +1327,14 @@ int ChuoSeikiZStage::GetPositionSteps(long& z)
 		}
 		else if (i >= 4)
 		{
-			return ERR_CONTROLER_8;
+			return DEVICE_OK; //return ERR_CONTROLER_8; 20190712 fix error of reading position after using set origin
 		}
 
 		CDeviceUtils::SleepMs(20);
 		// if answer is wrong, try again, max 10 times
 	}
    // should be unreachable, but better safe then sorry
-   return ERR_CONTROLER_8;
+ 	return DEVICE_OK; //return ERR_CONTROLER_8; 20190712 fix error of reading position after using set origin
 }
 
 
