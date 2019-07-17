@@ -87,7 +87,6 @@ public class MMImageCache {
 
    public void close() {
       imageStorage_.close();
-      System.out.println("Closong");
       display_ = null;
    }
 

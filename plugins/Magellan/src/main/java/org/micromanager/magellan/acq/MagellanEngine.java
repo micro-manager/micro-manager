@@ -336,7 +336,12 @@ public class MagellanEngine {
     */
    private Future executeAcquisitionEvent(final AcquisitionEvent event) throws InterruptedException {
       while (System.currentTimeMillis() < event.miniumumStartTime_) {
-         Thread.sleep(1);
+         try {
+            Thread.sleep(1);
+         } catch (InterruptedException e) {
+            //Abort while waiting for next time point
+            return null;
+         }      
       }
       if (event.isAcquisitionFinishedEvent()) {
          //signal to MagellanTaggedImageSink to finish saving thread and mark acquisition as finished
