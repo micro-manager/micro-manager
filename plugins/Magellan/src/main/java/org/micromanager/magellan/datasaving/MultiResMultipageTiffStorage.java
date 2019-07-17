@@ -36,6 +36,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import mmcorej.TaggedImage;
@@ -624,7 +626,9 @@ public class MultiResMultipageTiffStorage {
                long gridCol = posManager_.getGridCol(fullResPositionIndex, resolutionIndex);
                MD.setPositionName(tags, "Grid_" + gridRow + "_" + gridCol);
                MD.setPositionIndex(tags, posManager_.getLowResPositionIndex(fullResPositionIndex, resolutionIndex));
-               writeFinishedList.add(lowResStorages_.get(resolutionIndex).putImage(new TaggedImage(currentLevelPix, tags)));
+               Future f = lowResStorages_.get(resolutionIndex).putImage(new TaggedImage(currentLevelPix, tags));
+               //need to make sure this one gets written before others can be overwritten
+               f.get();
             } else {
                //Image already exists, only overwrite pixels to include new tiles
                writeFinishedList.addAll(lowResStorages_.get(resolutionIndex).overwritePixels(currentLevelPix,

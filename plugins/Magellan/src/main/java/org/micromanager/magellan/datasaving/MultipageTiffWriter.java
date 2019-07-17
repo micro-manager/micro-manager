@@ -109,6 +109,7 @@ public class MultipageTiffWriter {
    private long ijMetadataTagPosition_;
    //Reader associated with this file
    private MultipageTiffReader reader_;
+   private final String filename_;
 
    public MultipageTiffWriter(String directory, String filename,
            JSONObject summaryMD, TaggedImageStorageMultipageTiff mpTiffStorage,
@@ -116,7 +117,7 @@ public class MultipageTiffWriter {
       masterMPTiffStorage_ = mpTiffStorage;
       reader_ = new MultipageTiffReader(summaryMD);
       File f = new File(directory + "/" + filename);
-
+      filename_ = directory + "/" + filename;
       processSummaryMD(summaryMD);
 
       //This is an overestimate of file size because file gets truncated at end
@@ -377,8 +378,8 @@ public class MultipageTiffWriter {
    public Future writeImage(TaggedImage img) throws IOException {
       long offset = filePosition_;
       boolean shiftByByte = writeIFD(img);
-      addToIndexMap(MD.getLabel(img.tags), offset);
       Future f = writeBuffers();
+      addToIndexMap(MD.getLabel(img.tags), offset);
       //Make IFDs start on word
       if (shiftByByte) {
          f = executeWritingTask(new Runnable() {
@@ -398,7 +399,6 @@ public class MultipageTiffWriter {
    private void addToIndexMap(String label, long offset) {
       //If a duplicate label is received, forget about the previous one
       //this allows overwriting of images without loss of data
-      indexMap_.put(label, offset);
       ByteBuffer buffer = allocateByteBuffer(20);
       String[] indices = label.split("_");
       for (int i = 0; i < 4; i++) {
@@ -407,6 +407,7 @@ public class MultipageTiffWriter {
       buffer.putInt(16, new Long(offset).intValue());
       fileChannelWrite(buffer, indexMapPosition_);
       indexMapPosition_ += 20;
+      indexMap_.put(label, offset);
    }
 
    private Future writeBuffers() throws IOException {
@@ -452,7 +453,9 @@ public class MultipageTiffWriter {
             }
         }
         if (pixelOffset == -1 || bytesPerImage == -1) {
-            IJ.log("Problem writing downsampled display data\n But full resolution data is unaffected");
+            IJ.log("Problem writing downsampled display data for file" + filename_ 
+                    + "\n But full resolution data is unaffected");
+            System.out.println(position);
             throw new RuntimeException();
         }
         ByteBuffer pixBuff = getPixelBuffer(pixels);
