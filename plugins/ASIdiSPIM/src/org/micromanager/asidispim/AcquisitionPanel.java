@@ -4046,11 +4046,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                }
             }
             
-            if (true) {
-               acquisitionStatus_ = AcquisitionStatus.FATAL_ERROR;
-               throw new Exception("testing 123");
-            }
-            
             // make sure the PI stage isn't busy still; if so then assume it's a hard error
             if (devices_.isValidMMDevice(Devices.Keys.SUPPLEMENTAL_X) &&
                   devices_.getMMDeviceLibrary(Devices.Keys.SUPPLEMENTAL_X) == Devices.Libraries.PI_GCS_2) {
