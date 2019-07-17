@@ -57,7 +57,9 @@ public class MMImageCache {
    }
 
    public void finished() {
-      imageStorage_.finishedWriting();
+      if (!imageStorage_.isFinished()) {
+         imageStorage_.finishedWriting();
+      }
       String path = getDiskLocation();
       display_.imagingFinished(path);
       listenerExecutor_.shutdown();
@@ -85,6 +87,7 @@ public class MMImageCache {
 
    public void close() {
       imageStorage_.close();
+      System.out.println("Closong");
       display_ = null;
    }
 
