@@ -3755,7 +3755,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             try {
                Thread.sleep(sleepTime);
             } catch (InterruptedException e) {
-               ReportingUtils.showError(e);
+               if (prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+                     Properties.Keys.PLUGIN_ACQUIRE_FAIL_QUIETLY, false)) {
+                  ReportingUtils.logError(e); 
+               } else {
+                  ReportingUtils.showError(e);
+               }
             }
             repeatNow = System.currentTimeMillis();
             repeatdelay = repeatStart + acqNum * timepointIntervalMs - repeatNow;
@@ -4033,7 +4038,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             try {
                core_.waitForSystem();
             } catch (Exception e) {
-               ReportingUtils.logError("error waiting for system");
+               if (prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+                     Properties.Keys.PLUGIN_ACQUIRE_FAIL_QUIETLY, false)) {
+                  ReportingUtils.logError(e);
+               } else {
+                  ReportingUtils.logError("error waiting for system");
+               }
+            }
+            
+            if (true) {
+               acquisitionStatus_ = AcquisitionStatus.FATAL_ERROR;
+               throw new Exception("testing 123");
             }
             
             // make sure the PI stage isn't busy still; if so then assume it's a hard error
@@ -4636,7 +4651,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                               }
 
                            } catch (InterruptedException iex) {
-                              MyDialogUtils.showError(iex);
+                              if (prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+                                    Properties.Keys.PLUGIN_ACQUIRE_FAIL_QUIETLY, false)) {
+                                 ReportingUtils.logError(iex);
+                              } else {
+                                 MyDialogUtils.showError(iex);
+                              }
                            }
 
                            if (acqSettings.hardwareTimepoints) {
@@ -4644,7 +4664,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                            }
 
                         } catch (Exception ex) {
-                           MyDialogUtils.showError(ex);
+                           if (prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+                                 Properties.Keys.PLUGIN_ACQUIRE_FAIL_QUIETLY, false)) {
+                              ReportingUtils.logError(ex);
+                           } else {
+                              MyDialogUtils.showError(ex);
+                           }
                         } finally {
                            // cleanup at the end of each time we trigger the controller
                            // NB the acquisition is still open
@@ -4789,9 +4814,19 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // do nothing, the acquisition was simply halted during its operation
             // will log error message during finally clause
          } catch (MMScriptException mex) {
-            MyDialogUtils.showError(mex);
+            if (prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+                  Properties.Keys.PLUGIN_ACQUIRE_FAIL_QUIETLY, false)) {
+               ReportingUtils.logError(mex);
+            } else {
+               MyDialogUtils.showError(mex);
+            }
          } catch (Exception ex) {
-            MyDialogUtils.showError(ex);
+            if (prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+                  Properties.Keys.PLUGIN_ACQUIRE_FAIL_QUIETLY, false)) {
+               ReportingUtils.logError(ex);
+            } else {
+               MyDialogUtils.showError(ex);
+            }
          } finally {  // end of this acquisition (could be about to restart if separate viewers)
             try {
                // restore original window listeners
@@ -4839,13 +4874,23 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      writer.flush();
                      writer.close();
                   } catch (Exception ex) {
-                     MyDialogUtils.showError(ex, "Could not save acquisition settings to file as requested to path " + path);
+                     if (prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+                           Properties.Keys.PLUGIN_ACQUIRE_FAIL_QUIETLY, false)) {
+                        ReportingUtils.logError(ex);
+                     } else {
+                        MyDialogUtils.showError(ex, "Could not save acquisition settings to file as requested to path " + path);
+                     }
                   }
                }
                
             } catch (Exception ex) {
                // exception while stopping sequence acquisition, not sure what to do...
-               MyDialogUtils.showError(ex, "Problem while finishing acquisition");
+               if (prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+                     Properties.Keys.PLUGIN_ACQUIRE_FAIL_QUIETLY, false)) {
+                  ReportingUtils.logError(ex); 
+               } else {
+                  MyDialogUtils.showError(ex, "Problem while finishing acquisition");
+               }
             }
          }
 
@@ -4903,7 +4948,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
          gui_.refreshGUIFromCache();
       } catch (Exception ex) {
-         MyDialogUtils.showError("Could not restore exposure after acquisition");
+         if (prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+               Properties.Keys.PLUGIN_ACQUIRE_FAIL_QUIETLY, false)) {
+            ReportingUtils.logError(ex); 
+         } else {
+            MyDialogUtils.showError("Could not restore exposure after acquisition");
+         }
       }
       
       // reset channel to original if we clobbered it
@@ -4930,7 +4980,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             core_.setXYPosition(devices_.getMMDevice(Devices.Keys.XYSTAGE), 
                   xyPosUm.x, xyPosUm.y);
          } catch (Exception ex) {
-            MyDialogUtils.showError("Could not restore XY stage position after acquisition");
+            if (prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+                  Properties.Keys.PLUGIN_ACQUIRE_FAIL_QUIETLY, false)) {
+               ReportingUtils.logError(ex);
+            } else {
+               MyDialogUtils.showError("Could not restore XY stage position after acquisition");
+            }
          }
       }
       
@@ -4951,7 +5006,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             IJ.saveAs(acq_.getAcquisitionWindow().getImagePlus(), "raw", path);
             // TODO consider generating a short metadata file to assist in interpretation
          } catch (Exception ex) {
-            MyDialogUtils.showError("Could not save raw data from test acquisition to path " + path);
+            if (prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+                  Properties.Keys.PLUGIN_ACQUIRE_FAIL_QUIETLY, false)) {
+               ReportingUtils.logError(ex);
+            } else {
+               MyDialogUtils.showError("Could not save raw data from test acquisition to path " + path);
+            }
          }
       }
       
@@ -4963,7 +5023,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       try {
          core_.setCameraDevice(originalCamera);
       } catch (Exception ex) {
-         MyDialogUtils.showError("Could not restore camera after acquisition");
+         if (prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+               Properties.Keys.PLUGIN_ACQUIRE_FAIL_QUIETLY, false)) {
+            ReportingUtils.logError(ex);
+         } else {
+            MyDialogUtils.showError("Could not restore camera after acquisition");
+         }
       }
       
       if (liveModeOriginally) {
