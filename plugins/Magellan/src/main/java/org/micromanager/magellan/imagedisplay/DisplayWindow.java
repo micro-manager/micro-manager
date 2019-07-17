@@ -283,7 +283,7 @@ public class DisplayWindow extends StackWindow {
             double heightRatio = disp_.getFullResHeight() / (double) canvasPanel_.getSize().height;
             int viewResIndex = (int) Math.max(0, Math.ceil(Math.log(Math.max(widthRatio, heightRatio)) / Math.log(2)));
             //set max res index so that min dimension doesn't shrink below 64-128 pixels
-            int maxResIndex = (int) Math.ceil(Math.log((Math.min(disp_.getFullResWidth(), disp_.getFullResHeight())
+            int maxResIndex = (int) Math.ceil(Math.log((Math.max(disp_.getFullResWidth(), disp_.getFullResHeight())
                     / MINIMUM_CANVAS_DIMENSION)) / Math.log(2));
             ((ZoomableVirtualStack) disp_.getHyperImage().getStack()).initializeUpToRes(viewResIndex, maxResIndex);
             //resize to the biggest it can be in current window with correct aspect ration                

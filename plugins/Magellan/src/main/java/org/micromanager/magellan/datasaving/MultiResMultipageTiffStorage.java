@@ -675,6 +675,12 @@ public class MultiResMultipageTiffStorage {
          List<Future> writeFinishedList = new ArrayList<Future>();
          //write to full res storage as normal (i.e. with overlap pixels present)
          writeFinishedList.add(fullResStorage_.putImage(MagellanTaggedImage));
+         //check if maximum resolution level needs to be updated based on full size of image
+         long fullResPixelWidth = getNumCols() * getTileWidth();
+         long fullResPixelHeight = getNumRows() * getTileHeight();
+         int maxResIndex = (int) Math.ceil(Math.log((Math.max(fullResPixelWidth, fullResPixelHeight)
+                    / 200)) / Math.log(2));
+          addResolutionsUpTo(maxResIndex);
          writeFinishedList.addAll(addToLowResStorage(MagellanTaggedImage, 0, MD.getPositionIndex(MagellanTaggedImage.tags)));
          for (Future f : writeFinishedList) {
             f.get();
