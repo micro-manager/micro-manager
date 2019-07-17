@@ -154,7 +154,11 @@ public class ExploreAcquisition extends Acquisition {
          int[] newPositionCols = new int[(row2 - row1 + 1) * (col2 - col1 + 1)];
          for (int r = row1; r <= row2; r++) {
             for (int c = col1; c <= col2; c++) {
-               int i = (r - row1) + (1 + row2 - row1) * (c - col1);
+               int relativeRow = (r - row1);
+               int relativeCol = (c - col1);
+               int numRows = (1 + row2 - row1);
+               int i = ((relativeCol % 2 == 0) ? relativeRow : (numRows - relativeRow - 1)) + numRows * relativeCol;
+//               int i = (r - row1) + (1 + row2 - row1) * (c - col1);
                newPositionRows[i] = r;
                newPositionCols[i] = c;
             }
