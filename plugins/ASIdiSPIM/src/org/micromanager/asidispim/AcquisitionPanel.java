@@ -4035,6 +4035,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             } catch (Exception e) {
                ReportingUtils.logError("error waiting for system");
             }
+            
+            // make sure the PI stage isn't busy still; if so then assume it's a hard error
+            if (devices_.isValidMMDevice(Devices.Keys.SUPPLEMENTAL_X) &&
+                  devices_.getMMDeviceLibrary(Devices.Keys.SUPPLEMENTAL_X) == Devices.Libraries.PI_GCS_2) {
+               if (core_.deviceBusy(devices_.getMMDevice(Devices.Keys.SUPPLEMENTAL_X))) {
+                  acquisitionStatus_ = AcquisitionStatus.FATAL_ERROR;
+                  throw new Exception("PI stage reporting busy; force-quit acquisition");
+               }
+            }
 
             // Loop over all the times we trigger the controller's acquisition
             //  (although if multi-channel with volume switching is selected there
@@ -4929,7 +4938,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          positions_.setPosition(Devices.Keys.SUPPLEMENTAL_X, xSupPosUm);
       }
       
-      updateAcquisitionStatus(AcquisitionStatus.DONE);
+      if (acquisitionStatus_ != AcquisitionStatus.FATAL_ERROR) {
+         updateAcquisitionStatus(AcquisitionStatus.DONE);
+      }
       posUpdater_.pauseUpdates(false);
       if (testAcq && prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
             Properties.Keys.PLUGIN_TESTACQ_SAVE, false)) {
@@ -4971,7 +4982,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       extraChannelOffset_ = 0.0;
 
-      return AcquisitionStatus.DONE;
+      return AcquisitionStatus.DONE;  // TODO should we return acquisitionStatus_ instead?
    }
    
    /**
