@@ -309,12 +309,15 @@ public class ControllerUtils {
       if (settings.isStageStepping) {  // stepping with other stage
          if (settings.spimMode == AcquisitionModes.Keys.STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL) {
             actualStepSizeUm_ = settings.stepSizeUm;
+            DeviceUtils du = new DeviceUtils(gui_, devices_, props_, prefs_);
+            final double stepDistance = actualStepSizeUm_ * du.getStageGeometricSpeedFactor(settings.firstSideIsA);
+            scanDistance_ = settings.numSlices * stepDistance;
             
             // send macro to PI stage
             if (devices_.getMMDeviceLibrary(Devices.Keys.SUPPLEMENTAL_X) == Devices.Libraries.PI_GCS_2) {
                final String controllerDeviceName = props_.getPropValueString(Devices.Keys.SUPPLEMENTAL_X, Properties.Keys.CONTROLLER_NAME);
                final String MACRO_NAME = "TRIGMM";
-               final String distanceStr = Double.toString(actualStepSizeUm_/1000);  // distance specified in mm
+               final String distanceStr = Double.toString(stepDistance /1000);  // distance specified in mm
                final String[] macroText = {
                      "MAC BEG " + MACRO_NAME  ,  // define new macro
                      "WAC DIO? 1 = 1"         ,  // wait for digital input #1 to go high
@@ -333,8 +336,6 @@ public class ControllerUtils {
                }
             }
             
-            DeviceUtils du = new DeviceUtils(gui_, devices_, props_, prefs_);
-            scanDistance_ = settings.numSlices * actualStepSizeUm_ * du.getStageGeometricSpeedFactor(settings.firstSideIsA);
             
             // cell 2 will be rising edge whenever laser on goes low
             props_.setPropValue(new Devices.Keys[]{Devices.Keys.PLOGIC, Devices.Keys.PLOGIC_LASER},
