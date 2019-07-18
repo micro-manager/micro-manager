@@ -40,7 +40,9 @@ public class PropertyValueCellRenderer implements TableCellRenderer {
             slider.setLimits(item_.lowerLimit, item_.upperLimit);
          }
          try {
-            slider.setText((String) value);
+            if (value != null) {
+               slider.setText((String) value);
+            }
          } catch (ParseException ex) {
             ReportingUtils.logError(ex);
          }
