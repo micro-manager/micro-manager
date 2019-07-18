@@ -56,9 +56,11 @@ public class ControllerUtils {
    final Positions positions_;
    final Cameras cameras_;
    final CMMCore core_;
-   double scanDistance_;   // cached value from last call to prepareControllerForAquisition()
+   double scanDistance_;   // in microns; cached value from last call to prepareControllerForAquisition()
    double actualStepSizeUm_;  // cached value from last call to prepareControllerForAquisition()
    boolean zSpeedZero_;  // cached value from last call to prepareStageScanForAcquisition()
+   String lastDistanceStr_;  // cached value from last call to prepareControllerForAquisition() 
+   String lastPosStr_;       // cached value from last call to prepareControllerForAquisition()
    
    final int triggerStepDurationTics = 10;  // 2.5ms with 0.25ms tics
    final int zeroAddr = 0;
@@ -69,7 +71,8 @@ public class ControllerUtils {
    final int counterMSBAddr = 4;
    final int triggerStepEdgeAddr = 6;
    final int triggerStepPulseAddr = 7;
-   final int triggerStepOutputAddr = 40;
+   final int triggerStepOutputAddr = 40;  // BNC #8
+   final int triggerInAddr = 35;  // BNC #3
    final int laserTriggerAddress = 10;  // this should be set to (42 || 8) = (TTL1 || manual laser on)
    
    public ControllerUtils(ScriptInterface gui, final Properties props, 
@@ -84,12 +87,15 @@ public class ControllerUtils {
       scanDistance_ = 0;
       actualStepSizeUm_ = 0;
       zSpeedZero_ = true;
+      lastDistanceStr_ = "";
+      lastPosStr_ = "";
    }
    
    /**
     * Stage stepping needs to be setup at each (motorized) XY position, so call this method.
     * This method assumes that prepareControllerForAquisition() has been called already
     *    to initialize scanDistance_.  We always step supplemental X in positive-going direction.
+    *  Moves supplemental stage to starting position.
     * @param x center x position in um
     * @param y y position in um
     * @return false if there was some error that should abort acquisition 
@@ -111,22 +117,33 @@ public class ControllerUtils {
     * Stage scan needs to be setup at each XY position, so call this method.
     * This method assumes that prepareControllerForAquisition() has been called already
     *    to initialize scanDistance_.  We always scan X in positive-going direction.
+    * For supplemental scan this moves stage to starting position too.
     * @param x center x position in um
     * @param y y position in um
     * @return false if there was some error that should abort acquisition 
     */
-   public boolean prepareStageScanForAcquisition(double x, double y) {
-      final Devices.Keys xyDevice = Devices.Keys.XYSTAGE;
-      final double xStartUm = x - (scanDistance_/2);
-      final double xStopUm = x + (scanDistance_/2);
+   public boolean prepareStageScanForAcquisition(double x, double y, AcquisitionModes.Keys spimMode) {
       props_.setPropValue(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_CENTER_X_POSITION, (float)(x));
       props_.setPropValue(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_Y_POSITION, (float)(y));
-      props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_FAST_START, (float)(xStartUm/1000d));
-      props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_FAST_STOP, (float)(xStopUm/1000d));
-      props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SLOW_START, (float)(y/1000d));
-      props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SLOW_STOP, (float)(y/1000d));
-      zSpeedZero_ = true;  // will turn false if we are doing planar correction
+      
+      if (spimMode == AcquisitionModes.Keys.STAGE_SCAN_SUPPLEMENTAL_UNIDIRECTIONAL) {
+         positions_.setPosition(Devices.Keys.SUPPLEMENTAL_X, -1*(scanDistance_/2) - getSupplementalStageOvershoot());
+         try {
+            core_.waitForDevice(devices_.getMMDevice(Devices.Keys.SUPPLEMENTAL_X));
+         } catch (Exception e) {
+            e.printStackTrace();
+         }
+      } else {
+         final Devices.Keys xyDevice = Devices.Keys.XYSTAGE;
+         final double xStartUm = x - (scanDistance_/2);
+         final double xStopUm = x + (scanDistance_/2);
+         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_FAST_START, (float)(xStartUm/1000d));
+         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_FAST_STOP, (float)(xStopUm/1000d));
+         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SLOW_START, (float)(y/1000d));
+         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SLOW_STOP, (float)(y/1000d));
+      }
 
+      zSpeedZero_ = true;  // will turn false if we are doing planar correction
       return preparePlanarCorrectionForAcquisition();
    }
    
@@ -298,7 +315,6 @@ public class ControllerUtils {
             Properties.Keys.PLOGIC_PRESET, Properties.Values.PLOGIC_PRESET_12, true);
       
       // make sure shutter is set to the PLOGIC_LASER device
-      // this see
       try {
          core_.setShutterDevice(devices_.getMMDevice(Devices.Keys.PLOGIC_LASER));
       } catch (Exception e) {
@@ -306,27 +322,36 @@ public class ControllerUtils {
       }
 
       // set up stage step/scan parameters if necessary
-      if (settings.isStageStepping) {  // stepping with other stage
+      final String controllerDeviceName = props_.getPropValueString(Devices.Keys.SUPPLEMENTAL_X, Properties.Keys.CONTROLLER_NAME);
+      if (settings.isStageStepping) {  // currently only with non-ASI stage
          if (settings.spimMode == AcquisitionModes.Keys.STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL) {
             actualStepSizeUm_ = settings.stepSizeUm;
             DeviceUtils du = new DeviceUtils(gui_, devices_, props_, prefs_);
             final double stepDistance = actualStepSizeUm_ * du.getStageGeometricSpeedFactor(settings.firstSideIsA);
             scanDistance_ = settings.numSlices * stepDistance;
             
-            // send macro to PI stage
+            // dynamically generate macro and then send to PI controller
             if (devices_.getMMDeviceLibrary(Devices.Keys.SUPPLEMENTAL_X) == Devices.Libraries.PI_GCS_2) {
-               final String controllerDeviceName = props_.getPropValueString(Devices.Keys.SUPPLEMENTAL_X, Properties.Keys.CONTROLLER_NAME);
+               final String distanceStr = Double.toString(stepDistance/1000);  // distance specified in mm
+               final String[] macroText;
                final String MACRO_NAME = "TRIGMM";
-               final String distanceStr = Double.toString(stepDistance /1000);  // distance specified in mm
-               final String[] macroText = {
-                     "MAC BEG " + MACRO_NAME  ,  // define new macro
-                     "WAC DIO? 1 = 1"         ,  // wait for digital input #1 to go high
-                     "MVR 1 " + distanceStr   ,  // move requested distance
-                     "WAC DIO? 1 = 0"         ,  // wait for digital input #1 to go low
-                     "MAC START " + MACRO_NAME,  // restart the macro
-                     "MAC END"                ,  // end definition
-               };
+               if (lastDistanceStr_.equals(distanceStr)) {
+                  // just start the existing macro if it hasn't changed
+                  macroText = new String[] { "MAC START " + MACRO_NAME };
+               } else {
+                  // have to send an updated macro
+                  lastDistanceStr_ = distanceStr;
+                  macroText = new String[] {
+                        "MAC BEG " + MACRO_NAME  ,  // define new macro
+                        "WAC DIO? 1 = 1"         ,  // wait for digital input #1 to go high
+                        "MVR 1 " + distanceStr   ,  // increment target position by requested distance
+                        "WAC DIO? 1 = 0"         ,  // wait for digital input #1 to go low
+                        "MAC START " + MACRO_NAME,  // restart the macro looking for next trigger
+                        "MAC END"                ,  // end definition
+                  };
+               }
                
+               // actually send macro over serial
                try {
                   for (String s : macroText) {
                      props_.setPropValueDirect(controllerDeviceName, Properties.Keys.SEND_COMMAND, s);
@@ -334,8 +359,11 @@ public class ControllerUtils {
                } catch (Exception e) {
                   MyDialogUtils.showError("Could not send macro to PI controller.");
                }
+            } else {
+               MyDialogUtils.showError("Supplemental stage " + devices_.getMMDevice(Devices.Keys.SUPPLEMENTAL_X).toString()
+                     + " is not supported for stage stepping.");
+               return false;
             }
-            
             
             // cell 2 will be rising edge whenever laser on goes low
             props_.setPropValue(new Devices.Keys[]{Devices.Keys.PLOGIC, Devices.Keys.PLOGIC_LASER},
@@ -358,47 +386,109 @@ public class ControllerUtils {
             
             prepareStageStepForAcquisition(settings.spimMode);
          }
-      } else if (settings.isStageScanning) {  // scanning with ASI stage
-         // algorithm is as follows:
-         // use the # of slices and slice spacing that the user specifies
-         // because the XY stage is 45 degrees from the objectives have to move it sqrt(2) * slice step size
-         // for now use the current X position as the start of acquisition and always start in positive X direction
-         // for now always do serpentine scan with 2 passes at the same Y location, one pass each direction over the sample
-         // => total scan distance = # slices * slice step size * sqrt(2)
-         //    scan start position = current X position
-         //    scan stop position = scan start position + total distance
-         //    slow axis start = current Y position
-         //    slow axis stop = current Y position
-         //    X motor speed = slice step size * sqrt(2) / slice duration
-         //    number of scans = number of sides (1 or 2)
-         //    scan mode = serpentine for 2-sided non-interleaved, raster otherwise (need to revisit for 2D stage scanning)
-         //    X acceleration time = use whatever current setting is
-         //    scan settling time = delay before side
-         final boolean isInterleaved = (settings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED);
+      } else if (settings.isStageScanning) {  
+         final double actualMotorSpeed;
          final Devices.Keys xyDevice = Devices.Keys.XYSTAGE;
+         
+         // figure out the speed we should be going according to slice period, slice spacing, geometry, etc.
+         final double requestedMotorSpeed = computeScanSpeed(settings);  // in mm/sec
+         
+         if (settings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_SUPPLEMENTAL_UNIDIRECTIONAL) {  // scanning with non-ASI stage
+            if (devices_.getMMDeviceLibrary(Devices.Keys.SUPPLEMENTAL_X) == Devices.Libraries.PI_GCS_2) {
+               final Devices.Keys piDevice = Devices.Keys.SUPPLEMENTAL_X;               
+               props_.setPropValue(piDevice, Properties.Keys.VELOCITY, (float)requestedMotorSpeed);
+               actualMotorSpeed = props_.getPropValueFloat(piDevice, Properties.Keys.VELOCITY);
+               
+               // dynamically generate macro and then send it to PI controller
+               final String posStr = Double.toString(-1*scanDistance_/2/1000);  // position specified in mm
+               final String[] macroText;
+               final String MACRO_NAME = "SCANTRIG";
+               if (lastPosStr_.equals(posStr)) {
+                  // just start the existing macro if it hasn't changed
+                  macroText = new String[] { "MAC START " + MACRO_NAME };
+               } else {
+                  lastPosStr_ = posStr;
+                  macroText = new String[] {
+                        "MAC BEG " + MACRO_NAME  ,  // define new macro
+                        "DIO 2 = 0"              ,  // set digital output #2 to go low
+                        "WAC POS? 1 = " + posStr ,  // wait for requested start position to be reached
+                        "DIO 2 = 1"              ,  // set digital output #2 to go high
+                        "DEL 10"                 ,  // wait 10ms
+                        "DIO 2 = 0"              ,  // set digital output #2 to go low
+                        "MAC END"                ,  // end definition
+                  };
+               }
+               
+               // actually send macro over serial
+               try {
+                  for (String s : macroText) {
+                     props_.setPropValueDirect(controllerDeviceName, Properties.Keys.SEND_COMMAND, s);
+                  }
+               } catch (Exception e) {
+                  MyDialogUtils.showError("Could not send macro to PI controller.");
+               }
+            } else {
+               MyDialogUtils.showError("Supplemental stage " + devices_.getMMDevice(Devices.Keys.SUPPLEMENTAL_X).toString()
+                     + " is not supported for stage scanning.");
+               return false;
+            }
+            
+            // configure input #3 as an input trigger
+            // TODO finish this bit of code to set up PLC appropriately
+            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_POINTER_POSITION, triggerInAddr);
+            
+         } else {    // scanning with ASI stage
+            // algorithm is as follows:
+            // use the # of slices and slice spacing that the user specifies
+            // because the XY stage is 45 degrees from the objectives have to move it sqrt(2) * slice step size
+            // for now use the current X position as the start of acquisition and always start in positive X direction
+            // for now always do serpentine scan with 2 passes at the same Y location, one pass each direction over the sample
+            // => total scan distance = # slices * slice step size * sqrt(2)
+            //    scan start position = current X position
+            //    scan stop position = scan start position + total distance
+            //    slow axis start = current Y position
+            //    slow axis stop = current Y position
+            //    X motor speed = slice step size * sqrt(2) / slice duration
+            //    number of scans = number of sides (1 or 2)
+            //    scan mode = serpentine for 2-sided non-interleaved, raster otherwise (need to revisit for 2D stage scanning)
+            //    X acceleration time = use whatever current setting is
+            //    scan settling time = delay before side
+            final boolean isInterleaved = (settings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED);
 
-         final double requestedMotorSpeed = computeScanSpeed(settings);
-         final double maxMotorSpeed = props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MAX_MOTOR_SPEED_X);
-         if (requestedMotorSpeed > maxMotorSpeed*0.8) {  // trying to go near max speed smooth scanning will be compromised
-            MyDialogUtils.showError("Required stage speed is too fast, please reduce step size or increase sample exposure.");
-            return false;
-         }
-         if (requestedMotorSpeed < maxMotorSpeed/2000) {  // 1/2000 of the max speed is approximate place where smooth scanning breaks down (speed quantum is ~1/12000 max speed); this also prevents setting to 0 which the controller rejects
-            MyDialogUtils.showError("Required stage speed is too slow, please increase step size or decrease sample exposure.");
-            return false;
-         }
-         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED_X, (float)requestedMotorSpeed);
+            final double maxMotorSpeed = props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MAX_MOTOR_SPEED_X);
+            if (requestedMotorSpeed > maxMotorSpeed*0.8) {  // trying to go near max speed smooth scanning will be compromised
+               MyDialogUtils.showError("Required stage speed is too fast, please reduce step size or increase sample exposure.");
+               return false;
+            }
+            if (requestedMotorSpeed < maxMotorSpeed/2000) {  // 1/2000 of the max speed is approximate place where smooth scanning breaks down (speed quantum is ~1/12000 max speed); this also prevents setting to 0 which the controller rejects
+               MyDialogUtils.showError("Required stage speed is too slow, please increase step size or decrease sample exposure.");
+               return false;
+            }
+            props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED_X, (float)requestedMotorSpeed);
 
-         // ask for the actual speed and calculate the actual step size
-         final double actualMotorSpeed = props_.getPropValueFloat(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED_X_MICRONS)/1000;
-         actualStepSizeUm_ = settings.stepSizeUm * (actualMotorSpeed / requestedMotorSpeed);
+            // ask for the actual speed to calculate the actual step size
+            actualMotorSpeed = props_.getPropValueFloat(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED_X_MICRONS)/1000;
+            
+            // set the acceleration to a reasonable value for the (usually very slow) scan speed
+            props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_MOTOR_ACCEL_X, (float)computeScanAcceleration(actualMotorSpeed));
+            
+            // set the scan pattern and number of scans appropriately
+            int numLines = settings.numSides;
+            if (isInterleaved) {
+               numLines = 1;  // assure in acquisition code that we can't have single-sided interleaved
+            }
+            numLines *= (settings.numChannels / computeScanChannelsPerPass(settings));
+            props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_NUMLINES, numLines);
+            props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_PATTERN,
+                  ((settings.spimMode == AcquisitionModes.Keys.STAGE_SCAN) && (settings.numSides == 2)
+                        ? Properties.Values.SERPENTINE : Properties.Values.RASTER));
+            props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SETTLING_TIME, settings.delayBeforeSide);
+         }
 
          // cache how far we scan each pass for later use
          DeviceUtils du = new DeviceUtils(gui_, devices_, props_, prefs_);
+         actualStepSizeUm_ = settings.stepSizeUm * (actualMotorSpeed / requestedMotorSpeed);
          scanDistance_ = settings.numSlices * actualStepSizeUm_ * du.getStageGeometricSpeedFactor(settings.firstSideIsA);
-
-         // set the acceleration to a reasonable value for the (usually very slow) scan speed
-         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_MOTOR_ACCEL_X, (float)computeScanAcceleration(actualMotorSpeed));
 
          if (!settings.useMultiPositions) {
             // use current position as center position for stage scanning
@@ -410,21 +500,8 @@ public class ControllerUtils {
                MyDialogUtils.showError("Could not get XY stage position for stage scan initialization");
                return false;
             }
-            prepareStageScanForAcquisition(posUm.x, posUm.y);
+            prepareStageScanForAcquisition(posUm.x, posUm.y, settings.spimMode);
          }
-
-         // set the scan pattern and number of scans appropriately
-         int numLines = settings.numSides;
-         if (isInterleaved) {
-            numLines = 1;  // assure in acquisition code that we can't have single-sided interleaved
-         }
-         numLines *= (settings.numChannels / computeScanChannelsPerPass(settings));
-         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_NUMLINES, numLines);
-         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_PATTERN,
-               ((settings.spimMode == AcquisitionModes.Keys.STAGE_SCAN) && (settings.numSides == 2)
-                     ? Properties.Values.SERPENTINE : Properties.Values.RASTER));
-         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SETTLING_TIME, settings.delayBeforeSide);
-
          // TODO handle other multichannel modes with stage scanning (what does this mean??)
       } else {
          scanDistance_ = 0;
@@ -592,6 +669,7 @@ public class ControllerUtils {
       case STAGE_SCAN_INTERLEAVED:
       case STAGE_SCAN_UNIDIRECTIONAL:
       case STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL:
+      case STAGE_SCAN_SUPPLEMENTAL_UNIDIRECTIONAL:
          piezoAmplitude = 0.0f;
          break;
       default:
@@ -1034,6 +1112,19 @@ public class ControllerUtils {
    }
    
    /**
+    * Returns the overshoot distance in microns for the supplemental stage (positive number).  Assumes stage speed already set for slow scanning.
+    * @return
+    */
+   private double getSupplementalStageOvershoot() {
+      if (devices_.getMMDeviceLibrary(Devices.Keys.SUPPLEMENTAL_X) == Devices.Libraries.PI_GCS_2) {
+         float velMillimeters = props_.getPropValueFloat(Devices.Keys.SUPPLEMENTAL_X, Properties.Keys.VELOCITY);
+         final float overshootTime = 1.0f;  // 1 second of ramp time
+         return (velMillimeters*overshootTime/1000);
+      }
+      return 0.0;
+   }
+   
+   /**
     * Triggers the Tiger controller
     * @param spimMode
     * @param isFirstSideA
@@ -1052,6 +1143,12 @@ public class ControllerUtils {
                Properties.Values.SPIM_ARMED);
          props_.setPropValue(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_STATE,
                Properties.Values.SPIM_RUNNING);
+         break;
+      case STAGE_SCAN_SUPPLEMENTAL_UNIDIRECTIONAL:
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_STATE,
+               Properties.Values.SPIM_ARMED);
+         double stopPosition = (scanDistance_ / 2) + getSupplementalStageOvershoot();
+         positions_.setPosition(Devices.Keys.SUPPLEMENTAL_X, stopPosition);
          break;
       case STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL:  // not synchronizing this with anything
       case PIEZO_SLICE_SCAN:

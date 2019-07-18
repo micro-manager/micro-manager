@@ -218,6 +218,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private String[] channelNames_;
    private int nrRepeats_;  // how many separate acquisitions to perform
    private boolean resetXaxisSpeed_;
+   private boolean resetXSupaxisSpeed_;
    private boolean resetZaxisSpeed_;
    private final AcquisitionPanel acquisitionPanel_;
    private final JComponent[] simpleTimingComponents_;
@@ -306,6 +307,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       acq_ = null;
       channelNames_ = null;
       resetXaxisSpeed_ = true;
+      resetXSupaxisSpeed_ = true;
+      resetZaxisSpeed_ = true;
       acquisitionPanel_ = this;
       
       runnablesStartTimepoint_ = new ArrayList<Runnable>();
@@ -1698,7 +1701,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       acqSettings.spimMode = getAcquisitionMode();
       acqSettings.isStageScanning = (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN
             || acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED
-            || acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL);
+            || acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL
+            || acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_SUPPLEMENTAL_UNIDIRECTIONAL);
       acqSettings.isStageStepping = (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL);
       acqSettings.useTimepoints = useTimepointsCB_.isSelected();
       acqSettings.numTimepoints = getNumTimepoints();
@@ -2036,7 +2040,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     */
    private double getStageRetraceDuration(AcquisitionSettings acqSettings) {
       final double retraceSpeed;
-      if (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL) {
+      if (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL
+            || acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_SUPPLEMENTAL_UNIDIRECTIONAL) {
          if (devices_.getMMDeviceLibrary(Devices.Keys.SUPPLEMENTAL_X) == Devices.Libraries.PI_GCS_2) {
             retraceSpeed = props_.getPropValueFloat(Devices.Keys.SUPPLEMENTAL_X, Properties.Keys.VELOCITY);
          } else {
@@ -2045,7 +2050,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       } else {
          retraceSpeed = 0.67f*props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MAX_MOTOR_SPEED_X);  // retrace speed set to 67% of max speed in firmware
       }
-      final double speedFactor = ASIdiSPIM.oSPIM ? (2 / Math.sqrt(3.)) : Math.sqrt(2.);
+      final DeviceUtils du = new DeviceUtils(gui_, devices_, props_, prefs_);
+      final double speedFactor = du.getStageGeometricSpeedFactor(acqSettings.firstSideIsA);
       final double scanDistance = acqSettings.numSlices * acqSettings.stepSizeUm * speedFactor;
       final double accelerationX = controller_.computeScanAcceleration(  // not really applicable for non-ASI hardware but just leave as simple case
             controller_.computeScanSpeed(acqSettings)) + 1;  // extra 1 for rounding up that often happens in controller
@@ -2089,7 +2095,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                }
             }
          } else if (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL
-               || acqSettings.spimMode == AcquisitionModes.Keys.STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL) {
+               || acqSettings.spimMode == AcquisitionModes.Keys.STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL
+               || acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_SUPPLEMENTAL_UNIDIRECTIONAL) {
             if (channelMode == MultichannelModes.Keys.SLICE_HW) {
                return ((rampDuration * 2) + (stackDuration * numChannels) + retraceTime) * numSides;
             } else {  // "normal" stage scan with volume channel switching
@@ -2364,6 +2371,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       case STAGE_SCAN_INTERLEAVED:
       case STAGE_SCAN_UNIDIRECTIONAL:
       case STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL:
+      case STAGE_SCAN_SUPPLEMENTAL_UNIDIRECTIONAL:
       case NO_SCAN:
          return false;
       case PIEZO_SCAN_ONLY:
@@ -2403,7 +2411,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             AcquisitionModes.Keys spimMode = getAcquisitionMode();
             if (spimMode == AcquisitionModes.Keys.STAGE_SCAN || spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED
                     || spimMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL
-                    || spimMode == AcquisitionModes.Keys.STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL) {
+                    || spimMode == AcquisitionModes.Keys.STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL
+                    || spimMode == AcquisitionModes.Keys.STAGE_SCAN_SUPPLEMENTAL_UNIDIRECTIONAL
+                    ) {
                if (prefs_.getBoolean(MyStrings.PanelNames.DATAANALYSIS.toString(),
                        Properties.Keys.PLUGIN_DESKEW_AUTO_TEST, false)) {
                   ASIdiSPIM.getFrame().getDataAnalysisPanel().runDeskew(acquisitionPanel_);
@@ -2485,8 +2495,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      Properties.Keys.STAGESCAN_MOTOR_SPEED_X);
                origXAccel = props_.getPropValueFloat(Devices.Keys.XYSTAGE,
                      Properties.Keys.STAGESCAN_MOTOR_ACCEL_X);
-               origZSpeed = props_.getPropValueFloat(Devices.Keys.UPPERZDRIVE,
-                     Properties.Keys.STAGESCAN_MOTOR_SPEED_Z);
+               if (devices_.isValidMMDevice(Devices.Keys.UPPERZDRIVE)) {
+                  origZSpeed = props_.getPropValueFloat(Devices.Keys.UPPERZDRIVE,
+                        Properties.Keys.STAGESCAN_MOTOR_SPEED_Z);
+               }
             } catch (Exception ex) {
                // do nothing
             }
@@ -2732,11 +2744,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      props_.setPropValue(Devices.Keys.UPPERZDRIVE,
                            Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, scanZSpeed);
                   }
-                  if (acqSettings.isStageStepping) {
-                     controller_.prepareStageStepForAcquisition(acqSettings.spimMode);
-                  } else {
-                     controller_.prepareStageScanForAcquisition(pos2D.x, pos2D.y);
-                  }
+                  
+                  // this always gets called for overview
+                  controller_.prepareStageScanForAcquisition(pos2D.x, pos2D.y, acqSettings.spimMode);
 
                   // wait any extra time the user requests
                   Thread.sleep(Math.round(PanelUtils.getSpinnerFloatValue(positionDelay_)));
@@ -3661,6 +3671,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       double xSupPosUm = 0.0;
       float origXSpeed = 1f;  // don't want 0 in case something goes wrong
       float origXAccel = 1f;  // don't want 0 in case something goes wrong
+      float origXSupSpeed = 1f;  // don't want 0 in case something goes wrong
       float origZSpeed = 1f;  // don't want 0 in case something goes wrong
       if (acqSettings.isStageScanning) {
          try {
@@ -3669,6 +3680,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   Properties.Keys.STAGESCAN_MOTOR_SPEED_X);
             origXAccel = props_.getPropValueFloat(Devices.Keys.XYSTAGE,
                   Properties.Keys.STAGESCAN_MOTOR_ACCEL_X);
+            if (devices_.isValidMMDevice(Devices.Keys.SUPPLEMENTAL_X)) {
+               origXSupSpeed = props_.getPropValueFloat(Devices.Keys.SUPPLEMENTAL_X,
+                     Properties.Keys.VELOCITY);
+            }
             if (devices_.isValidMMDevice(Devices.Keys.UPPERZDRIVE)) {
                origZSpeed = props_.getPropValueFloat(Devices.Keys.UPPERZDRIVE,
                      Properties.Keys.STAGESCAN_MOTOR_SPEED_Z);
@@ -3689,6 +3704,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             if (resetXaxisSpeed_) {
                props_.setPropValue(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MOTOR_SPEED_X, 1f);
                origXSpeed = 1f;
+            }
+         }
+         // if X supplemental speed is less than 0.2 mm/s then it probably wasn't restored to correct speed some other time
+         // we offer to set it to a more normal speed in that case, until the user declines and we stop asking
+         if (origXSupSpeed < 0.2 && resetXSupaxisSpeed_) {
+            resetXSupaxisSpeed_ = MyDialogUtils.getConfirmDialogResult(
+                  "Max speed of supplemental X axis is small, perhaps it was not correctly restored after stage scanning previously.  Do you want to set it to 1 mm/s now?",
+                  JOptionPane.YES_NO_OPTION);
+            // once the user selects "no" then resetXSupaxisSpeed_ will be false and stay false until plugin is launched again
+            if (resetXSupaxisSpeed_) {
+               props_.setPropValue(Devices.Keys.SUPPLEMENTAL_X, Properties.Keys.VELOCITY, 1f);
+               origXSupSpeed = 1f;
             }
          }
          // if Z speed is less than 0.2 mm/s then it probably wasn't restored to correct speed some other time
@@ -4158,6 +4185,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      //   will clobber stage scanning setting so need to restore it
                      float scanXSpeed = 1f;
                      float scanXAccel = 1f;
+                     float scanXSupSpeed = 1f;
                      float scanZSpeed = 1f;
                      if (acqSettings.isStageScanning) {
                         scanXSpeed = props_.getPropValueFloat(Devices.Keys.XYSTAGE,
@@ -4168,6 +4196,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                               Properties.Keys.STAGESCAN_MOTOR_ACCEL_X);
                         props_.setPropValue(Devices.Keys.XYSTAGE,
                               Properties.Keys.STAGESCAN_MOTOR_ACCEL_X, origXAccel);
+                        if (devices_.isValidMMDevice(Devices.Keys.SUPPLEMENTAL_X)) {
+                           scanXSupSpeed = props_.getPropValueFloat(Devices.Keys.SUPPLEMENTAL_X,
+                                 Properties.Keys.VELOCITY);
+                           props_.setPropValue(Devices.Keys.SUPPLEMENTAL_X,
+                                 Properties.Keys.VELOCITY, origXSupSpeed);
+                        }
                         if (devices_.isValidMMDevice(Devices.Keys.UPPERZDRIVE)) {
                            scanZSpeed = props_.getPropValueFloat(Devices.Keys.UPPERZDRIVE,
                                  Properties.Keys.STAGESCAN_MOTOR_SPEED_Z);
@@ -4186,16 +4220,20 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      // for stage scanning: restore speed and set up scan at new position 
                      // non-multi-position situation is handled in prepareControllerForAquisition instead
                      if (acqSettings.isStageScanning) {
+                        StagePosition pos = nextPosition.get(devices_.getMMDevice(Devices.Keys.XYSTAGE));  // get ideal position from position list, not current position
+                        controller_.prepareStageScanForAcquisition(pos.x, pos.y, acqSettings.spimMode);
                         props_.setPropValue(Devices.Keys.XYSTAGE,
                               Properties.Keys.STAGESCAN_MOTOR_SPEED_X, scanXSpeed);
                         props_.setPropValue(Devices.Keys.XYSTAGE,
                               Properties.Keys.STAGESCAN_MOTOR_ACCEL_X, scanXAccel);
+                        if (devices_.isValidMMDevice(Devices.Keys.SUPPLEMENTAL_X)) {
+                           props_.setPropValue(Devices.Keys.SUPPLEMENTAL_X,
+                                 Properties.Keys.VELOCITY, scanXSupSpeed);
+                        }
                         if (devices_.isValidMMDevice(Devices.Keys.UPPERZDRIVE)) {
                            props_.setPropValue(Devices.Keys.UPPERZDRIVE,
                                  Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, scanZSpeed);
                         }
-                        StagePosition pos = nextPosition.get(devices_.getMMDevice(Devices.Keys.XYSTAGE));  // get ideal position from position list, not current position
-                        controller_.prepareStageScanForAcquisition(pos.x, pos.y);
                      } else if (acqSettings.isStageStepping) {
                         controller_.prepareStageStepForAcquisition(acqSettings.spimMode);
                      }
@@ -4400,7 +4438,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                               timeout2 += (2*(long)Math.ceil(getStageRampDuration(acqSettings)));  // ramp up and then down
                               timeout2 += 5000;   // ample extra time for turn-around (e.g. antibacklash move in Y), interestingly 500ms extra seems insufficient for reasons I don't understand yet so just pad this for now  // TODO figure out why turn-aronud is taking so long
                               if (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL
-                                    || acqSettings.spimMode == AcquisitionModes.Keys.STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL) {
+                                    || acqSettings.spimMode == AcquisitionModes.Keys.STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL
+                                    || acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_SUPPLEMENTAL_UNIDIRECTIONAL) {
                                  timeout2 += (long)Math.ceil(getStageRetraceDuration(acqSettings));  // in unidirectional case also need to rewind
                               }
                            }

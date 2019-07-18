@@ -151,7 +151,6 @@ public class Properties {
       STAGESCAN_MIN_MOTOR_SPEED_Z("MotorSpeedMinimum(um/s)"),
       STAGESCAN_Z_START("ZAxisStartPosition(um)"),
       TTLINPUT_MODE("TTLInputMode"),
-      VELOCITY("Velocity"),
       BINNING("Binning"),
       TRIGGER_SOURCE("TRIGGER SOURCE"),   // for Hamamatsu
       TRIGGER_POLARITY("TriggerPolarity"),// for Hamamatsu
@@ -183,6 +182,7 @@ public class Properties {
       PVCAM_CHIPNAME("ChipName"),                    // for PVCAM
       SEND_COMMAND("Send command"),        // for PI stage
       CONTROLLER_NAME("Controller Name"),  // for PI stage
+      VELOCITY("Velocity"),                // for PI stage
       FIRMWARE_VERSION("FirmwareVersion"),
       CAMERA("Camera"),
       CORE_TIMEOUT_MS("TimeoutMs"),

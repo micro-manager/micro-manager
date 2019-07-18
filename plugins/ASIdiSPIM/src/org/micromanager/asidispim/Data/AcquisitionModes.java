@@ -55,6 +55,7 @@ public class AcquisitionModes {
       STAGE_SCAN_INTERLEAVED("Stage scan interleaved", 5),
       STAGE_SCAN_UNIDIRECTIONAL("Stage scan unidirectional", 7),
       STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL("Stage step supplemental", 8),
+      STAGE_SCAN_SUPPLEMENTAL_UNIDIRECTIONAL("Stage scan supplemental", 9),
       SLICE_SCAN_ONLY( "Slice scan only (unusual)", 2),
       PIEZO_SCAN_ONLY("Piezo scan only (unusual)", 6),
       NONE(            "None", 0);
@@ -191,6 +192,7 @@ public class AcquisitionModes {
          }
          if (devices_.isValidMMDevice(Devices.Keys.SUPPLEMENTAL_X)) {
             keyList.add(Keys.STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL);
+            //keyList.add(Keys.STAGE_SCAN_SUPPLEMENTAL_UNIDIRECTIONAL); // TODO add back in once code is finished
          }
          keyList.add(Keys.SLICE_SCAN_ONLY);
          keyList.add(Keys.PIEZO_SCAN_ONLY);
