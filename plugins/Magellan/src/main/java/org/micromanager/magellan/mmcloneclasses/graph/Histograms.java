@@ -21,8 +21,6 @@
 //
 package org.micromanager.magellan.mmcloneclasses.graph;
 
-import org.micromanager.magellan.acq.MMImageCache;
-
 
 /**
  * Interface for histograms, which control Image contrast and can optionally
@@ -86,11 +84,8 @@ public interface Histograms  {
     */
    public void autoscaleAllChannels() ;
 
-   /*
-    * Initializes all channel controls.
-    */
-   public void setupChannelControls(MMImageCache cache, ContrastPanel cp);
-
    public int getNumberOfChannels();
+   
+   public void prepareForClose();
 
 }

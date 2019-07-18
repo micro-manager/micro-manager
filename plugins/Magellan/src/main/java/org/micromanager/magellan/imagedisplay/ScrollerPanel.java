@@ -190,6 +190,7 @@ public class ScrollerPanel extends Panel {
       if (snapBackTimer_ != null) {
          snapBackTimer_.cancel();
       }
+      bus_.unregister(this);
    }
 
    /**

@@ -36,6 +36,10 @@ public class ContrastPanelMagellanAdapter extends ContrastPanel {
       imageChangedUpdate();
    }
    
+   public void prepareForClose() {
+      histograms_.prepareForClose();
+   }
+   
    public Histograms getHistograms() {
       return histograms_;
    }

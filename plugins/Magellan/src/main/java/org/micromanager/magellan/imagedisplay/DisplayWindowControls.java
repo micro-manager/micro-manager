@@ -225,6 +225,7 @@ public class DisplayWindowControls extends Panel implements SurfaceGridListener 
       if (acq_ instanceof ExploreAcquisition) {
          ((SimpleChannelTableModel) channelsTable_.getModel()).shutdown();
       }
+      cpMagellan_.prepareForClose();
    }
 
    private MultiPosGrid createNewGrid() {

@@ -836,7 +836,10 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
    }
 
    @Override
-   public void setupChannelControls(MMImageCache cache, ContrastPanel cp) {
+   public void prepareForClose() {
+      //nothing to do
    }
+
+
 
 }
