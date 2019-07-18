@@ -32,13 +32,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.magellan.acq.MMImageCache;
 import org.micromanager.magellan.misc.JavaUtils;
@@ -78,18 +74,17 @@ public abstract class VirtualAcquisitionDisplay {
    // This boolean is used to tell the display thread to stop what it's doing.
    private final AtomicBoolean shouldStopDisplayThread_ = new AtomicBoolean(false);
 
-   private ImagePlus hyperImage_;
+   private MMCompositeImage mmCompositeImage_;
    protected SubImageControls subImageControls_;
    public AcquisitionVirtualStack virtualStack_;
    private DisplayWindowControls dwc_;
    private boolean contrastInitialized_ = false; //used for autostretching on window opening
    private String channelGroup_ = "none";
    private final Object imageReceivedObject_ = new Object();
-   private int numGrayChannels_;
    protected ImageCanvas canvas_;
    private static HashMap<String, HistogramSettings> contrastSettings_ = new HashMap<String, HistogramSettings>();
    private LinkedBlockingQueue<JSONObject> acquiredTagsQueue_ = new LinkedBlockingQueue<JSONObject>();
-
+   private int maxChannelIndex_ = 0;
    private EventBus bus_;
 
 //   @Subscribe
@@ -110,8 +105,6 @@ public abstract class VirtualAcquisitionDisplay {
    public VirtualAcquisitionDisplay(MMImageCache imageCache, String name, JSONObject summaryMD) {
       try {
          numComponents_ = Math.max(MD.getNumberOfComponents(summaryMD), 1);
-         int numChannels = Math.max(summaryMD.getInt("Channels"), 1);
-         numGrayChannels_ = numComponents_ * numChannels;
       } catch (Exception ex) {
          Log.log("Couldn't read summary md");
       }
@@ -162,12 +155,12 @@ public abstract class VirtualAcquisitionDisplay {
                      return;
                   }
                }
-               if (hyperImage_ != null && hyperImage_.getCanvas() != null) {
+               if (mmCompositeImage_ != null && mmCompositeImage_.getCanvas() != null) {
 
                   // Wait for the canvas to be available. If we don't do this,
                   // then our framerate tanks, possibly because of repaint
                   // events piling up in the EDT. It's hard to tell. 
-                  while (CanvasPaintPending.isMyPaintPending(hyperImage_.getCanvas(), imageReceivedObject_)) {
+                  while (CanvasPaintPending.isMyPaintPending(mmCompositeImage_.getCanvas(), imageReceivedObject_)) {
                      try {
                         Thread.sleep(10);
                      } catch (InterruptedException e) {
@@ -178,7 +171,7 @@ public abstract class VirtualAcquisitionDisplay {
                      }
                   }
 
-                  CanvasPaintPending.setPaintPending(hyperImage_.getCanvas(), imageReceivedObject_);
+                  CanvasPaintPending.setPaintPending(mmCompositeImage_.getCanvas(), imageReceivedObject_);
                }
 
                imageAcquiredDisplayUpdate(tags);
@@ -206,28 +199,18 @@ public abstract class VirtualAcquisitionDisplay {
     * getSummaryMetadata()), and set up our controls and view window.
     */
    private void startup(AcquisitionVirtualStack virtualStack) {
-
-      JSONObject summaryMetadata = getSummaryMetadata();
       int numFrames = 1;
-      int numChannels = 1;
-      int numGrayChannels;
-
-      try {
-         numFrames = 1;
-
-         numChannels = Math.max(summaryMetadata.getInt("Channels"), 1);
-      } catch (JSONException e) {
-         Log.log(e);
-      }
-      numGrayChannels = numComponents_ * numChannels;
-
       virtualStack_ = virtualStack;
 
       //always say numslices is 1...it inevitably gets changed anyway
-      hyperImage_ = createHyperImage(createMMImagePlus(virtualStack_), numGrayChannels, 1, numFrames);
-      canvas_ = hyperImage_.getCanvas();
+      mmCompositeImage_ = createHyperImage(createMMImagePlus(virtualStack_), 1, numFrames);
+      canvas_ = mmCompositeImage_.getCanvas();
 
+      try {
       applyPixelSizeCalibration();
+      } catch (Exception e) {
+         e.printStackTrace();
+      }
 
       createWindows();
       windowToFront();
@@ -282,17 +265,17 @@ public abstract class VirtualAcquisitionDisplay {
 
    protected abstract void applyPixelSizeCalibration();
 
-   public ImagePlus getHyperImage() {
-      return hyperImage_;
+   public MMCompositeImage getHyperImage() {
+      return mmCompositeImage_;
    }
 
    public int getStackSize() {
-      if (hyperImage_ == null) {
+      if (mmCompositeImage_ == null) {
          return -1;
       }
-      int s = hyperImage_.getNSlices();
-      int c = hyperImage_.getNChannels();
-      int f = hyperImage_.getNFrames();
+      int s = mmCompositeImage_.getNSlices();
+      int c = mmCompositeImage_.getNChannels();
+      int f = mmCompositeImage_.getNFrames();
       if ((s > 1 && c > 1) || (c > 1 && f > 1) || (f > 1 && s > 1)) {
          return s * c * f;
       }
@@ -301,11 +284,11 @@ public abstract class VirtualAcquisitionDisplay {
 
    public void updateAndDraw(boolean force) {
       imageChangedUpdate();
-      if (hyperImage_ != null && hyperImage_.isVisible()) {
-         if (hyperImage_ instanceof MMCompositeImage) {
-            ((MMCompositeImage) hyperImage_).updateAndDraw(force);
+      if (mmCompositeImage_ != null && mmCompositeImage_.isVisible()) {
+         if (mmCompositeImage_ instanceof MMCompositeImage) {
+            ((MMCompositeImage) mmCompositeImage_).updateAndDraw(force);
          } else {
-            hyperImage_.updateAndDraw();
+            mmCompositeImage_.updateAndDraw();
          }
       }
    }
@@ -313,10 +296,10 @@ public abstract class VirtualAcquisitionDisplay {
    protected abstract void updateWindowTitleAndStatus();
 
    private void windowToFront() {
-      if (hyperImage_ == null || hyperImage_.getWindow() == null) {
+      if (mmCompositeImage_ == null || mmCompositeImage_.getWindow() == null) {
          return;
       }
-      hyperImage_.getWindow().toFront();
+      mmCompositeImage_.getWindow().toFront();
    }
 
    private void imageAcquiredDisplayUpdate(final JSONObject tags) {
@@ -333,7 +316,7 @@ public abstract class VirtualAcquisitionDisplay {
                return;
             }
 
-            if (hyperImage_ == null) {
+            if (mmCompositeImage_ == null) {
                startup(null);
             }
 
@@ -398,9 +381,9 @@ public abstract class VirtualAcquisitionDisplay {
    }
 
    public void setSliceIndex(int i) {
-      final int f = hyperImage_.getFrame();
-      final int c = hyperImage_.getChannel();
-      hyperImage_.setPosition(c, i + 1, f);
+      final int f = mmCompositeImage_.getFrame();
+      final int c = mmCompositeImage_.getChannel();
+      mmCompositeImage_.setPosition(c, i + 1, f);
    }
 
    /**
@@ -430,23 +413,17 @@ public abstract class VirtualAcquisitionDisplay {
       return img;
    }
 
-   final public ImagePlus createHyperImage(MMImagePlus mmIP, int channels, int slices, int frames) {
-      final ImagePlus hyperImage;
-      mmIP.setNChannelsUnverified(channels);
+   final public MMCompositeImage createHyperImage(MMImagePlus mmIP, int slices, int frames) {
+      mmIP.setNChannelsUnverified(2);
       mmIP.setNFramesUnverified(frames);
       mmIP.setNSlicesUnverified(slices);
-      if (channels > 1) {
-         hyperImage = new MMCompositeImage(mmIP, imageCache_.getDisplayMode(), title_, bus_);
-         hyperImage.setOpenAsHyperStack(true);
-      } else {
-         hyperImage = mmIP;
-         mmIP.setOpenAsHyperStack(true);
-      }
+      final MMCompositeImage hyperImage = new MMCompositeImage(mmIP, imageCache_.getDisplayMode(), title_, bus_);
+      hyperImage.setOpenAsHyperStack(true);
       return hyperImage;
    }
 
    private void createWindows() {
-      DisplayWindow win = new DisplayWindow(hyperImage_, bus_, (DisplayPlus) this);
+      DisplayWindow win = new DisplayWindow(mmCompositeImage_, bus_, (DisplayPlus) this);
       subImageControls_ = win.getSubImageControls();
       imageChangedUpdate();
    }
@@ -457,6 +434,7 @@ public abstract class VirtualAcquisitionDisplay {
 
    @Subscribe
    public void onWindowClose(DisplayWindow.RequestToCloseEvent event) {
+//      bus_.unregister(this); //Dont do this bc Display pluus does it
       // Go ahead with closing.
       amClosing_ = true;
       // Tell our display thread to stop what it's doing.
@@ -473,7 +451,7 @@ public abstract class VirtualAcquisitionDisplay {
       // We could equivalently do this in the display thread, but it has
       // multiple exit points depending on what it was doing when we
       // interrupted it.
-      CanvasPaintPending.removeAllPaintPending(hyperImage_.getCanvas());
+      CanvasPaintPending.removeAllPaintPending(mmCompositeImage_.getCanvas());
       imageCache_.finished();
 
       // Shut down our controls.
@@ -487,17 +465,8 @@ public abstract class VirtualAcquisitionDisplay {
       DisplayWindow window = event.window_;
       window.forceClosed();
    }
-
-   public int getNumSlices() {
-      return hyperImage_ == null ? 1 : ((IMMImagePlus) hyperImage_).getNSlicesUnverified();
-   }
-
-   public int getNumFrames() {
-      return ((IMMImagePlus) hyperImage_).getNFramesUnverified();
-   }
-
    public ImagePlus getImagePlus() {
-      return hyperImage_;
+      return mmCompositeImage_;
    }
 
    public MMImageCache getImageCache() {
@@ -540,15 +509,11 @@ public abstract class VirtualAcquisitionDisplay {
    //allowing manipulation of displayed images without changing underlying data
    //should probably be reconfigured to work through some sort of interface in the future
    protected void show(final AcquisitionVirtualStack virtualStack) {
-      if (hyperImage_ == null) {
+      if (mmCompositeImage_ == null) {
          startup(virtualStack);
       }
-      hyperImage_.show();
-      hyperImage_.getWindow().toFront();
-   }
-
-   public int getNumChannels() {
-      return hyperImage_ == null ? numGrayChannels_ : ((IMMImagePlus) hyperImage_).getNChannelsUnverified();
+      mmCompositeImage_.show();
+      mmCompositeImage_.getWindow().toFront();
    }
 
    /*
@@ -558,7 +523,7 @@ public abstract class VirtualAcquisitionDisplay {
      is the active window
     */
    private void imageChangedUpdate() {
-      if (hyperImage_ != null) {
+      if (mmCompositeImage_ != null) {
          applyPixelSizeCalibration();
       }
       if (dwc_ != null) {
@@ -572,8 +537,8 @@ public abstract class VirtualAcquisitionDisplay {
     * remain unchanges
     */
    public void drawWithoutUpdate() {
-      if (hyperImage_ != null) {
-         ((IMMImagePlus) hyperImage_).drawWithoutUpdate();
+      if (mmCompositeImage_ != null) {
+         ((IMMImagePlus) mmCompositeImage_).drawWithoutUpdate();
       }
    }
 

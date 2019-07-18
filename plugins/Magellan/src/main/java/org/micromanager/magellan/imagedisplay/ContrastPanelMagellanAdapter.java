@@ -5,11 +5,9 @@
  */
 package org.micromanager.magellan.imagedisplay;
 
-import java.awt.Graphics;
 import org.micromanager.magellan.mmcloneclasses.graph.ContrastPanel;
 import org.micromanager.magellan.mmcloneclasses.graph.Histograms;
 import org.micromanager.magellan.mmcloneclasses.graph.MultiChannelHistograms;
-import org.micromanager.magellan.mmcloneclasses.graph.SingleChannelHistogram;
 
 /**
  *
@@ -27,11 +25,7 @@ public class ContrastPanelMagellanAdapter extends ContrastPanel {
    public void initialize(DisplayPlus display) {
       //setup for use with a single display
       currentDisplay_ = display;
-      if (currentDisplay_.getNumChannels() == 1) {
-         histograms_ = new SingleChannelHistogram(currentDisplay_, this);
-      } else {
-         histograms_ = new MultiChannelHistograms(currentDisplay_, this);
-      }
+      histograms_ = new MultiChannelHistograms(currentDisplay_, this);
       displayChanged(currentDisplay_, histograms_);
       imageChangedUpdate();
    }

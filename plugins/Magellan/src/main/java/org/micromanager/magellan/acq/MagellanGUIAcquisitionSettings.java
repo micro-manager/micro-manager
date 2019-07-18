@@ -129,9 +129,15 @@ public class MagellanGUIAcquisitionSettings  {
       } else {
          s += "2D along surface";
       }
-      int numC = channels_.getNumActiveChannels();
-      if (numC > 1) {
-         s += " " + numC + " channels";
+      
+      int nChannels = 1;
+      String chName = channels_.nextActiveChannel(null);
+      while (chName != null) {
+         nChannels++;
+         chName = channels_.nextActiveChannel(chName);
+      }
+      if (nChannels > 1) {
+         s += " " + nChannels + " channels";
       }
       if (timeEnabled_) {
          s += " " + numTimePoints_ + " time points";

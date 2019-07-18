@@ -54,7 +54,6 @@ public final class TaggedImageStorageMultipageTiff {
     private boolean separateMetadataFile_;
     private boolean splitByXYPosition_ = false;
     private volatile boolean finished_ = false;
-    private int numChannels_;
     private boolean fastStorageMode_;
     private int lastAcquiredPosition_ = 0;
     private String summaryMetadataString_ = null;
@@ -112,17 +111,10 @@ public final class TaggedImageStorageMultipageTiff {
         } catch (Exception ex) {
             Log.log(ex);
         }
-        if (newDataSet_) {
-            try {
-                numChannels_ = MD.getNumChannels(summaryMetadata_);
-            } catch (Exception ex) {
-                Log.log("Error estimating total number of image planes", true);
-            }
-        }
     }
 
     public int getNumChannels() {
-        return newDataSet_ ? numChannels_ : maxChannelIndex_ + 1;
+        return maxChannelIndex_ + 1;
     }
 
     public ThreadPoolExecutor getWritingExecutor() {
@@ -239,6 +231,7 @@ public final class TaggedImageStorageMultipageTiff {
         // There is a data race if the MagellanTaggedImage is modified by other code, but
         // that would be a bad thing to do anyway (will break the writer) and is
         // considered forbidden.
+        maxChannelIndex_ = Math.max(maxChannelIndex_, Integer.parseInt(label.split("_")[0]));
         writePendingImages_.put(label, MagellanTaggedImage);
         Future f = startWritingTask(label, MagellanTaggedImage);
 
@@ -465,10 +458,6 @@ public final class TaggedImageStorageMultipageTiff {
 
         public String getCurrentFilename() {
             return currentTiffFilename_;
-        }
-
-        public boolean hasSpaceForFullOMEXML(int mdLength) {
-            return tiffWriters_.getLast().hasSpaceForFullOMEMetadata(mdLength);
         }
 
         public void finished() throws IOException, ExecutionException, InterruptedException {

@@ -78,43 +78,43 @@ public class ExploreAcquisition extends Acquisition {
       super.abort();
    }
 
-   //Override the default acquisition channels function because explore acquisitions use all channels instead of active channels
-   @Override
-   protected Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels(ChannelSpec channels) {
-      return (AcquisitionEvent event) -> {
-         return new Iterator<AcquisitionEvent>() {
-            int channelIndex_ = 0;
-
-            @Override
-            public boolean hasNext() {
-               while (channelIndex_ < channels.getNumChannels() && (!channels.getChannelSetting(channelIndex_).uniqueEvent_
-                       || !channels.getChannelSetting(channelIndex_).use_)) {
-                  channelIndex_++;
-                  if (channelIndex_ >= channels.getNumChannels()) {
-                     return false;
-                  }
-               }
-               return channelIndex_ < channels.getNumChannels();
-            }
-
-            @Override
-            public AcquisitionEvent next() {
-               AcquisitionEvent channelEvent = event.copy();
-               while (channelIndex_ < channels.getNumChannels() && (!channels.getChannelSetting(channelIndex_).uniqueEvent_
-                       || !channels.getChannelSetting(channelIndex_).use_)) {
-                  channelIndex_++;
-                  if (channelIndex_ >= channels.getNumChannels()) {
-                     throw new RuntimeException("No valid channels remianing");
-                  }
-               }
-               channelEvent.channelIndex_ = channelIndex_;
-               channelEvent.zPosition_ += channels.getChannelSetting(channelIndex_).offset_;
-               channelIndex_++;
-               return channelEvent;
-            }
-         };
-      };
-   }
+//   //Override the default acquisition channels function because explore acquisitions use all channels instead of active channels
+//   @Override
+//   protected Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels(ChannelSpec channels) {
+//      return (AcquisitionEvent event) -> {
+//         return new Iterator<AcquisitionEvent>() {
+//            int channelIndex_ = 0;
+//
+//            @Override
+//            public boolean hasNext() {
+//               while (channelIndex_ < channels.getNumChannels() && (!channels.getChannelSetting(channelIndex_).uniqueEvent_
+//                       || !channels.getChannelSetting(channelIndex_).use_)) {
+//                  channelIndex_++;
+//                  if (channelIndex_ >= channels.getNumChannels()) {
+//                     return false;
+//                  }
+//               }
+//               return channelIndex_ < channels.getNumChannels();
+//            }
+//
+//            @Override
+//            public AcquisitionEvent next() {
+//               AcquisitionEvent channelEvent = event.copy();
+//               while (channelIndex_ < channels.getNumChannels() && (!channels.getChannelSetting(channelIndex_).uniqueEvent_
+//                       || !channels.getChannelSetting(channelIndex_).use_)) {
+//                  channelIndex_++;
+//                  if (channelIndex_ >= channels.getNumChannels()) {
+//                     throw new RuntimeException("No valid channels remianing");
+//                  }
+//               }
+//               channelEvent.channelIndex_ = channelIndex_;
+//               channelEvent.zPosition_ += channels.getChannelSetting(channelIndex_).offset_;
+//               channelIndex_++;
+//               return channelEvent;
+//            }
+//         };
+//      };
+//   }
 
    public void acquireTileAtCurrentLocation(final SubImageControls controls) {
       double xPos, yPos, zPos;
@@ -175,7 +175,7 @@ public class ExploreAcquisition extends Acquisition {
               = new ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>>();
       acqFunctions.add(positions(posIndices, posManager_.getPositionList()));
       acqFunctions.add(zStack(minZIndex, maxZIndex + 1));
-      if (!channels_.getChannelSetting(0).group_.equals("")) {
+      if (!channels_.getChannelGroup().equals("")) {
          acqFunctions.add(channels(channels_));
       }
 
@@ -190,7 +190,7 @@ public class ExploreAcquisition extends Acquisition {
       //Add a function that removes from queue of waiting tiles after each one is done
       newStream = newStream.map((AcquisitionEvent e) -> {
          queuedTileEvents_.get(e.zIndex_).remove(new ExploreTileWaitingToAcquire(e.xyPosition_.getGridRow(), e.xyPosition_.getGridCol(),
-                 e.zIndex_, e.channelIndex_));
+                 e.zIndex_, e.channelName_));
          return e;
       });
 
@@ -206,7 +206,7 @@ public class ExploreAcquisition extends Acquisition {
             }
 
             ExploreTileWaitingToAcquire tile = new ExploreTileWaitingToAcquire(event.xyPosition_.getGridRow(),
-                    event.xyPosition_.getGridCol(), event.zIndex_, event.channelIndex_);
+                    event.xyPosition_.getGridCol(), event.zIndex_, event.channelName_);
             if (queuedTileEvents_.get(event.zIndex_).contains(tile)) {
                return false; //This tile is already waiting to be acquired
             }
@@ -300,19 +300,20 @@ public class ExploreAcquisition extends Acquisition {
    //slice and row/col index of an acquisition event in the queue
    public class ExploreTileWaitingToAcquire {
 
-      public long row, col, sliceIndex, channelIndex;
+      public long row, col, sliceIndex;
+      public String channelName;
 
-      public ExploreTileWaitingToAcquire(long r, long c, int z, int ch) {
+      public ExploreTileWaitingToAcquire(long r, long c, int z, String ch) {
          row = r;
          col = c;
          sliceIndex = z;
-         channelIndex = ch;
+         channelName = ch;
       }
 
       @Override
       public boolean equals(Object other) {
          return ((ExploreTileWaitingToAcquire) other).col == col && ((ExploreTileWaitingToAcquire) other).row == row
-                 && ((ExploreTileWaitingToAcquire) other).sliceIndex == sliceIndex && ((ExploreTileWaitingToAcquire) other).channelIndex == channelIndex;
+                 && ((ExploreTileWaitingToAcquire) other).sliceIndex == sliceIndex && ((ExploreTileWaitingToAcquire) other).channelName.equals( channelName);
       }
 
    }

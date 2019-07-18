@@ -95,7 +95,6 @@ public class MultipageTiffWriter {
    private long indexMapPosition_; //current position of the dynamically written index map
    private long indexMapFirstEntry_; // mark position of first entry so that number of entries can be written at end
    private int bufferPosition_;
-   private int numChannels_ = 1;
    private ConcurrentHashMap<String, Long> indexMap_;
    private long nextIFDOffsetLocation_ = -1;
    private boolean rgb_ = false;
@@ -347,23 +346,13 @@ public class MultipageTiffWriter {
       return f;
    }
 
-   public boolean hasSpaceForFullOMEMetadata(int length) {
-      //5 MB extra padding..just to be safe
-      int extraPadding = 5000000;
-      long size = length + SPACE_FOR_COMMENTS + numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL + extraPadding + filePosition_;
-      if (size >= MAX_FILE_SIZE) {
-         return false;
-      }
-      return true;
-   }
-
    public boolean hasSpaceToWrite(TaggedImage img) {
       int mdLength = img.tags.toString().length();
       int IFDSize = ENTRIES_PER_IFD * 12 + 4 + 16;
       //5 MB extra padding...just to be safe...
       int extraPadding = 5000000;
       long size = mdLength + IFDSize + bytesPerImagePixels_ + SPACE_FOR_COMMENTS
-              + numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL + extraPadding + filePosition_;
+              + masterMPTiffStorage_.getNumChannels() * DISPLAY_SETTINGS_BYTES_PER_CHANNEL + extraPadding + filePosition_;
 
       if (size >= MAX_FILE_SIZE) {
          return false;
@@ -616,9 +605,6 @@ public class MultipageTiffWriter {
 
    private void processSummaryMD(JSONObject summaryMD) {
       rgb_ = MD.isRGB(summaryMD);
-      numChannels_ = MD.getNumChannels(summaryMD);
-//      numFrames_ = MD.getNumFrames(summaryMD);
-//      numSlices_ = MD.getNumSlices(summaryMD);
       imageWidth_ = MD.getWidth(summaryMD);
       imageHeight_ = MD.getHeight(summaryMD);
       String pixelType = MD.getPixelType(summaryMD);
@@ -833,7 +819,7 @@ public class MultipageTiffWriter {
       } catch (JSONException ex) {
          displaySettings = new JSONArray();
       }
-      int numReservedBytes = numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL;
+      int numReservedBytes = masterMPTiffStorage_.getNumChannels() * DISPLAY_SETTINGS_BYTES_PER_CHANNEL;
       ByteBuffer header = allocateByteBuffer(8);
       ByteBuffer buffer = ByteBuffer.wrap(getBytesFromString(displaySettings.toString()));
       header.putInt(0, DISPLAY_SETTINGS_HEADER);

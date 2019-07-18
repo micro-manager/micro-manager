@@ -447,34 +447,34 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     * checks to error on the side of not saving the preference
     */
    private void saveColorPreference(MMImageCache cache, int color) {
-      CMMCore core = Magellan.getCore();
-      JSONObject summary = cache.getSummaryMetadata();
-      if (core == null || summary == null) {
-         return;
-      }
-      int numMultiCamChannels = (int) core.getNumberOfCameraChannels();
-      int numDataChannels;
-      JSONArray dataNames;
-      String[] cameraNames = new String[numMultiCamChannels];
-      try {
-         numDataChannels = MD.getNumChannels(summary);
-         dataNames = summary.getJSONArray("ChNames");
-         for (int i = 0; i < numMultiCamChannels; i++) {
-            cameraNames[i] = core.getCameraChannelName(i);
-         }
-
-         if (numMultiCamChannels > 1 && numDataChannels == numMultiCamChannels
-                 && cameraNames.length == dataNames.length()) {
-            for (int h = 0; h < cameraNames.length; h++) {
-               if (!cameraNames[h].equals(dataNames.getString(h))) {
-                  return;
-               }
-            }
-            GlobalSettings.getInstance().storeIntInPrefs("Color_Camera_" + cameraNames[channelIndex_], color);
-         }
-      } catch (Exception ex) {
-
-      }
+//      CMMCore core = Magellan.getCore();
+//      JSONObject summary = cache.getSummaryMetadata();
+//      if (core == null || summary == null) {
+//         return;
+//      }
+//      int numMultiCamChannels = (int) core.getNumberOfCameraChannels();
+//      int numDataChannels;
+//      JSONArray dataNames;
+//      String[] cameraNames = new String[numMultiCamChannels];
+//      try {
+//         numDataChannels = MD.getNumChannels(summary);
+//         dataNames = summary.getJSONArray("ChNames");
+//         for (int i = 0; i < numMultiCamChannels; i++) {
+//            cameraNames[i] = core.getCameraChannelName(i);
+//         }
+//
+//         if (numMultiCamChannels > 1 && numDataChannels == numMultiCamChannels
+//                 && cameraNames.length == dataNames.length()) {
+//            for (int h = 0; h < cameraNames.length; h++) {
+//               if (!cameraNames[h].equals(dataNames.getString(h))) {
+//                  return;
+//               }
+//            }
+//            GlobalSettings.getInstance().storeIntInPrefs("Color_Camera_" + cameraNames[channelIndex_], color);
+//         }
+//      } catch (Exception ex) {
+//
+//      }
    }
 
    private void channelNameCheckboxAction() {

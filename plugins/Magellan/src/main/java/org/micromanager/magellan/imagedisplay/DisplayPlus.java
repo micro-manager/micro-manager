@@ -108,8 +108,8 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements SurfaceGri
       //add in customized zoomable acquisition virtual stack
       try {
          //looks like nSlicess only really matters during display startup
-         int nSlices = MD.getNumChannels(summaryMD) * (MD.isRGB32(summaryMD) ? 3 : 1) ;
-
+//         int nSlices = MD.getNumChannels(summaryMD) * (MD.isRGB32(summaryMD) ? 3 : 1) ;
+         int nSlices = 2;
 
          if (exploreAcq_) {
             mode_ = EXPLORE;

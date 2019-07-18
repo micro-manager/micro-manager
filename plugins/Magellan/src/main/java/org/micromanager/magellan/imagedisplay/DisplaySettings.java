@@ -43,7 +43,9 @@ public class DisplaySettings {
          // names. 
          numDisplayChannels = chNames.length();
       } else {
-         numDisplayChannels = MD.getNumChannels(summaryMetadata);
+//         numDisplayChannels = MD.getNumChannels(summaryMetadata);
+         numDisplayChannels = 1;
+         //TODO
          if (MD.isRGB(summaryMetadata)) {
             numDisplayChannels *= 3;
          }
