@@ -28,9 +28,9 @@ public class DisplayWindowSurfaceGridTableModel extends AbstractTableModel imple
    private volatile HashMap<XYFootprint, Boolean> showSurfaceOrGridMap = new HashMap<XYFootprint, Boolean>();
 
    private SurfaceGridManager manager_ = SurfaceGridManager.getInstance();
-   private DisplayPlus display_;
+   private MagellanDisplay display_;
    
-   public DisplayWindowSurfaceGridTableModel(DisplayPlus disp) {
+   public DisplayWindowSurfaceGridTableModel(MagellanDisplay disp) {
       display_ = disp;
       manager_.registerSurfaceGridListener(this);
       for (int i = 0; i < manager_.getNumberOfGrids() + manager_.getNumberOfSurfaces(); i++) {

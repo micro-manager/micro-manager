@@ -95,7 +95,6 @@ public class MultipageTiffWriter {
    private long indexMapPosition_; //current position of the dynamically written index map
    private long indexMapFirstEntry_; // mark position of first entry so that number of entries can be written at end
    private int bufferPosition_;
-   private int numChannels_ = 1;
    private ConcurrentHashMap<String, Long> indexMap_;
    private long nextIFDOffsetLocation_ = -1;
    private boolean rgb_ = false;
@@ -109,14 +108,17 @@ public class MultipageTiffWriter {
    private long ijMetadataTagPosition_;
    //Reader associated with this file
    private MultipageTiffReader reader_;
+   private final String filename_;
+   private final boolean displayStorer_;
 
    public MultipageTiffWriter(String directory, String filename,
            JSONObject summaryMD, TaggedImageStorageMultipageTiff mpTiffStorage,
-           boolean splitByPositions, ThreadPoolExecutor writingExecutor) throws IOException {
+           boolean splitByPositions, ThreadPoolExecutor writingExecutor, boolean displayStorer) throws IOException {
+      displayStorer_ = displayStorer;
       masterMPTiffStorage_ = mpTiffStorage;
       reader_ = new MultipageTiffReader(summaryMD);
       File f = new File(directory + "/" + filename);
-
+      filename_ = directory + "/" + filename;
       processSummaryMD(summaryMD);
 
       //This is an overestimate of file size because file gets truncated at end
@@ -319,20 +321,9 @@ public class MultipageTiffWriter {
     * future that returns when its done, if you care
     */
    public Future close() throws IOException, InterruptedException, ExecutionException {
-      String summaryComment = "";
-      try {
-         JSONObject comments = masterMPTiffStorage_.getDisplayAndComments().getJSONObject("Comments");
-         if (comments.has("Summary") && !comments.isNull("Summary")) {
-            summaryComment = comments.getString("Summary");
-         }
-      } catch (Exception e) {
-         Log.log("Could't get acquisition summary comment from displayAndComments", true);
+      if (displayStorer_) {
+         writeDisplaySettings(masterMPTiffStorage_.getDisplaySettings());
       }
-//      writeImageJMetadata( numChannels_, summaryComment);
-
-//      writeImageDescription(getIJDescriptionString(), ijDescriptionTagPosition_); 
-      writeDisplaySettings();
-  //    writeComments();
 
       Future f = executeWritingTask(new Runnable() {
          @Override
@@ -346,23 +337,13 @@ public class MultipageTiffWriter {
       return f;
    }
 
-   public boolean hasSpaceForFullOMEMetadata(int length) {
-      //5 MB extra padding..just to be safe
-      int extraPadding = 5000000;
-      long size = length + SPACE_FOR_COMMENTS + numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL + extraPadding + filePosition_;
-      if (size >= MAX_FILE_SIZE) {
-         return false;
-      }
-      return true;
-   }
-
    public boolean hasSpaceToWrite(TaggedImage img) {
       int mdLength = img.tags.toString().length();
       int IFDSize = ENTRIES_PER_IFD * 12 + 4 + 16;
       //5 MB extra padding...just to be safe...
       int extraPadding = 5000000;
       long size = mdLength + IFDSize + bytesPerImagePixels_ + SPACE_FOR_COMMENTS
-              + numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL + extraPadding + filePosition_;
+              + masterMPTiffStorage_.getNumChannels() * DISPLAY_SETTINGS_BYTES_PER_CHANNEL + extraPadding + filePosition_;
 
       if (size >= MAX_FILE_SIZE) {
          return false;
@@ -377,8 +358,8 @@ public class MultipageTiffWriter {
    public Future writeImage(TaggedImage img) throws IOException {
       long offset = filePosition_;
       boolean shiftByByte = writeIFD(img);
-      addToIndexMap(MD.getLabel(img.tags), offset);
       Future f = writeBuffers();
+      addToIndexMap(MD.getLabel(img.tags), offset);
       //Make IFDs start on word
       if (shiftByByte) {
          f = executeWritingTask(new Runnable() {
@@ -398,7 +379,6 @@ public class MultipageTiffWriter {
    private void addToIndexMap(String label, long offset) {
       //If a duplicate label is received, forget about the previous one
       //this allows overwriting of images without loss of data
-      indexMap_.put(label, offset);
       ByteBuffer buffer = allocateByteBuffer(20);
       String[] indices = label.split("_");
       for (int i = 0; i < 4; i++) {
@@ -407,6 +387,7 @@ public class MultipageTiffWriter {
       buffer.putInt(16, new Long(offset).intValue());
       fileChannelWrite(buffer, indexMapPosition_);
       indexMapPosition_ += 20;
+      indexMap_.put(label, offset);
    }
 
    private Future writeBuffers() throws IOException {
@@ -452,7 +433,9 @@ public class MultipageTiffWriter {
             }
         }
         if (pixelOffset == -1 || bytesPerImage == -1) {
-            IJ.log("Problem writing downsampled display data\n But full resolution data is unaffected");
+            IJ.log("Problem writing downsampled display data for file" + filename_ 
+                    + "\n But full resolution data is unaffected");
+            System.out.println(position);
             throw new RuntimeException();
         }
         ByteBuffer pixBuff = getPixelBuffer(pixels);
@@ -613,9 +596,6 @@ public class MultipageTiffWriter {
 
    private void processSummaryMD(JSONObject summaryMD) {
       rgb_ = MD.isRGB(summaryMD);
-      numChannels_ = MD.getNumChannels(summaryMD);
-//      numFrames_ = MD.getNumFrames(summaryMD);
-//      numSlices_ = MD.getNumSlices(summaryMD);
       imageWidth_ = MD.getWidth(summaryMD);
       imageHeight_ = MD.getHeight(summaryMD);
       String pixelType = MD.getPixelType(summaryMD);
@@ -653,142 +633,6 @@ public class MultipageTiffWriter {
       zStepUm_ = MD.getZStepUm(summaryMD);
    }
 
-   /**
-    * writes channel LUTs and display ranges for composite mode Could also be
-    * expanded to write ROIs, file info, slice labels, and overlays
-    */
-   private void writeImageJMetadata(int numChannels, String summaryComment) throws IOException {
-      String infoString = masterMPTiffStorage_.getSummaryMetadataString();
-      if (summaryComment != null && summaryComment.length() > 0) {
-         infoString = "Acquisition comments: \n" + summaryComment + "\n\n\n" + infoString;
-      }
-      char[] infoChars = infoString.toCharArray();
-      int infoSize = 2 * infoChars.length;
-
-      //size entry (4 bytes) + 4 bytes file info size + 4 bytes for channel display 
-      //ranges length + 4 bytes per channel LUT
-      int mdByteCountsBufferSize = 4 + 4 + 4 + 4 * numChannels;
-      int bufferPosition = 0;
-
-      ByteBuffer mdByteCountsBuffer = allocateByteBuffer(mdByteCountsBufferSize);
-
-      //nTypes is number actually written among: fileInfo, slice labels, display ranges, channel LUTS,
-      //slice labels, ROI, overlay, and # of extra metadata entries
-      int nTypes = 3; //file info, display ranges, and channel LUTs
-      int mdBufferSize = 4 + nTypes * 8;
-
-      //Header size: 4 bytes for magic number + 8 bytes for label (int) and count (int) of each type
-      mdByteCountsBuffer.putInt(bufferPosition, 4 + nTypes * 8);
-      bufferPosition += 4;
-
-      //2 bytes per a character of file info
-      mdByteCountsBuffer.putInt(bufferPosition, infoSize);
-      bufferPosition += 4;
-      mdBufferSize += infoSize;
-
-      //display ranges written as array of doubles (min, max, min, max, etc)
-      mdByteCountsBuffer.putInt(bufferPosition, numChannels * 2 * 8);
-      bufferPosition += 4;
-      mdBufferSize += numChannels * 2 * 8;
-
-      for (int i = 0; i < numChannels; i++) {
-         //768 bytes per LUT
-         mdByteCountsBuffer.putInt(bufferPosition, 768);
-         bufferPosition += 4;
-         mdBufferSize += 768;
-      }
-
-      //Header (1) File info (1) display ranges (1) LUTS (1 per channel)
-      int numMDEntries = 3 + numChannels;
-      ByteBuffer ifdCountAndValueBuffer = allocateByteBuffer(8);
-      ifdCountAndValueBuffer.putInt(0, numMDEntries);
-      ifdCountAndValueBuffer.putInt(4, (int) filePosition_);
-      fileChannelWrite(ifdCountAndValueBuffer, ijMetadataCountsTagPosition_ + 4);
-
-      fileChannelWrite(mdByteCountsBuffer, filePosition_);
-      filePosition_ += mdByteCountsBufferSize;
-
-      //Write metadata types and counts
-      ByteBuffer mdBuffer = allocateByteBuffer(mdBufferSize);
-      bufferPosition = 0;
-
-      //All the ints declared below are non public field in TiffDecoder
-      final int ijMagicNumber = 0x494a494a;
-      mdBuffer.putInt(bufferPosition, ijMagicNumber);
-      bufferPosition += 4;
-
-      //Write ints for each IJ metadata field and its count
-      final int fileInfo = 0x696e666f;
-      mdBuffer.putInt(bufferPosition, fileInfo);
-      bufferPosition += 4;
-      mdBuffer.putInt(bufferPosition, 1);
-      bufferPosition += 4;
-
-      final int displayRanges = 0x72616e67;
-      mdBuffer.putInt(bufferPosition, displayRanges);
-      bufferPosition += 4;
-      mdBuffer.putInt(bufferPosition, 1);
-      bufferPosition += 4;
-
-      final int luts = 0x6c757473;
-      mdBuffer.putInt(bufferPosition, luts);
-      bufferPosition += 4;
-      mdBuffer.putInt(bufferPosition, numChannels);
-      bufferPosition += 4;
-
-      //write actual metadata
-      //FileInfo
-      for (char c : infoChars) {
-         mdBuffer.putChar(bufferPosition, c);
-         bufferPosition += 2;
-      }
-      try {
-         JSONArray channels = masterMPTiffStorage_.getDisplayAndComments().getJSONArray("Channels");
-         JSONObject channelSetting;
-         for (int i = 0; i < numChannels; i++) {
-            channelSetting = channels.getJSONObject(i);
-            //Display Ranges: For each channel, write min then max
-            mdBuffer.putDouble(bufferPosition, channelSetting.getInt("Min"));
-            bufferPosition += 8;
-            mdBuffer.putDouble(bufferPosition, channelSetting.getInt("Max"));
-            bufferPosition += 8;
-         }
-
-         //LUTs
-         for (int i = 0; i < numChannels; i++) {
-            channelSetting = channels.getJSONObject(i);
-            LUT lut = makeLUT(new Color(channelSetting.getInt("Color")), channelSetting.getDouble("Gamma"));
-            for (byte b : lut.getBytes()) {
-               mdBuffer.put(bufferPosition, b);
-               bufferPosition++;
-            }
-         }
-      } catch (JSONException ex) {
-         Log.log("Problem with displayAndComments: Couldn't write ImageJ display settings as a result", true);
-      }
-
-      ifdCountAndValueBuffer = allocateByteBuffer(8);
-      ifdCountAndValueBuffer.putInt(0, mdBufferSize);
-      ifdCountAndValueBuffer.putInt(4, (int) filePosition_);
-      fileChannelWrite(ifdCountAndValueBuffer, ijMetadataTagPosition_ + 4);
-
-      fileChannelWrite(mdBuffer, filePosition_);
-      filePosition_ += mdBufferSize;
-   }
-
-   private void writeImageDescription(String value, long imageDescriptionTagOffset) throws IOException {
-      //write first image IFD
-      ByteBuffer ifdCountAndValueBuffer = allocateByteBuffer(8);
-      ifdCountAndValueBuffer.putInt(0, value.length());
-      ifdCountAndValueBuffer.putInt(4, (int) filePosition_);
-      fileChannelWrite(ifdCountAndValueBuffer, imageDescriptionTagOffset + 4);
-
-      //write String
-      ByteBuffer buffer = ByteBuffer.wrap(getBytesFromString(value));
-      fileChannelWrite(buffer, filePosition_);
-      filePosition_ += buffer.capacity();
-   }
-
    private byte[] getBytesFromString(String s) {
       try {
          return s.getBytes("UTF-8");
@@ -805,32 +649,8 @@ public class MultipageTiffWriter {
       finished.get();
    }
 
-   private void writeComments() throws IOException {
-      //Write 4 byte header, 4 byte number of bytes
-      JSONObject comments = new JSONObject();
-      byte[] commentsBytes = getBytesFromString(comments.toString());
-      ByteBuffer header = allocateByteBuffer(8);
-      header.putInt(0, COMMENTS_HEADER);
-      header.putInt(4, commentsBytes.length);
-      ByteBuffer buffer = ByteBuffer.wrap(commentsBytes);
-      fileChannelWrite(header, filePosition_);
-      fileChannelWrite(buffer, filePosition_ + 8);
-
-      ByteBuffer offsetHeader = allocateByteBuffer(8);
-      offsetHeader.putInt(0, COMMENTS_OFFSET_HEADER);
-      offsetHeader.putInt(4, (int) filePosition_);
-      fileChannelWrite(offsetHeader, 24);
-      filePosition_ += 8 + commentsBytes.length;
-   }
-
-   private void writeDisplaySettings() throws IOException, InterruptedException, ExecutionException {
-      JSONArray displaySettings;
-      try {
-         displaySettings = masterMPTiffStorage_.getDisplayAndComments().getJSONArray("Channels");
-      } catch (JSONException ex) {
-         displaySettings = new JSONArray();
-      }
-      int numReservedBytes = numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL;
+   private void writeDisplaySettings(JSONObject displaySettings) throws IOException, InterruptedException, ExecutionException {
+      int numReservedBytes = masterMPTiffStorage_.getNumChannels() * DISPLAY_SETTINGS_BYTES_PER_CHANNEL;
       ByteBuffer header = allocateByteBuffer(8);
       ByteBuffer buffer = ByteBuffer.wrap(getBytesFromString(displaySettings.toString()));
       header.putInt(0, DISPLAY_SETTINGS_HEADER);

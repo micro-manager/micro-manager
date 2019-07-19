@@ -35,7 +35,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 import org.micromanager.magellan.channels.ChannelSetting;
 import org.micromanager.magellan.misc.Log;
@@ -110,12 +111,12 @@ public class MagellanEngine {
          }
 
          //check all properties in channel
-         if (e1.channelIndex_ != e2.channelIndex_) {
+         if (e1.channelName_ != null && e2.channelName_ != null && !e1.channelName_.equals(e2.channelName_)) {
             //check all properties in the channel
-            String group = e1.acquisition_.channels_.getChannelSetting(0).group_;
+            String group = e1.acquisition_.channels_.getChannelGroup();
 
             Configuration config1 = core_.getConfigData(group,
-                    e1.acquisition_.channels_.getChannelSetting(e1.channelIndex_).config_);
+                    e1.acquisition_.channels_.getChannelSetting(e1.channelName_).config_);
             for (int i = 0; i < config1.size(); i++) {
                PropertySetting ps = config1.getSetting(i);
                String deviceName = ps.getDeviceLabel();
@@ -337,7 +338,12 @@ public class MagellanEngine {
     */
    private Future executeAcquisitionEvent(final AcquisitionEvent event) throws InterruptedException {
       while (System.currentTimeMillis() < event.miniumumStartTime_) {
-         Thread.sleep(1);
+         try {
+            Thread.sleep(1);
+         } catch (InterruptedException e) {
+            //Abort while waiting for next time point
+            return null;
+         }
       }
       if (event.isAcquisitionFinishedEvent()) {
          //signal to MagellanTaggedImageSink to finish saving thread and mark acquisition as finished
@@ -400,6 +406,12 @@ public class MagellanEngine {
       return savingExecutor_.submit(() -> {
          ArrayList<TaggedImage> images = new ArrayList<TaggedImage>();
          for (int i = 0; i < (event.sequence_ == null ? 1 : event.sequence_.size()); i++) {
+            double exposure;
+            try {
+               exposure = event.acquisition_.channels_ == null ? core_.getExposure() : event.acquisition_.channels_.getChannelSetting(event.channelName_).exposure_;
+            } catch (Exception ex) {
+               throw new RuntimeException("Couldnt get exposure form core");
+            }
             for (int c = 0; c < core_.getNumberOfCameraChannels(); c++) {
                TaggedImage ti = null;
                while (ti == null) {
@@ -413,10 +425,9 @@ public class MagellanEngine {
                      }
                   }
                }
+              
                event.acquisition_.addImageMetadata(ti.tags, event, event.timeIndex_, c, currentTime - event.acquisition_.getStartTime_ms(),
-                       event.acquisition_ instanceof ExploreAcquisition
-                               ? event.acquisition_.channels_.getChannelSetting(event.channelIndex_).exposure_
-                               : event.acquisition_.channels_.getActiveChannelSetting(event.channelIndex_).exposure_);
+                          exposure, core_.getNumberOfCameraChannels() > 1);
                images.add(ti);
             }
 
@@ -426,11 +437,9 @@ public class MagellanEngine {
             }
             //keep track of how long it takes to acquire an image for acquisition duration estimation
             try {
-
+                  
                acqDurationEstiamtor_.storeImageAcquisitionTime(
-                       event.acquisition_ instanceof ExploreAcquisition
-                               ? event.acquisition_.channels_.getChannelSetting(event.channelIndex_).exposure_
-                               : event.acquisition_.channels_.getActiveChannelSetting(event.channelIndex_).exposure_, System.currentTimeMillis() - startTime);
+                        exposure, System.currentTimeMillis() - startTime);
             } catch (Exception ex) {
                Log.log(ex);
             }
@@ -449,15 +458,14 @@ public class MagellanEngine {
             DoubleVector xSequence = new DoubleVector();
             DoubleVector ySequence = new DoubleVector();
             DoubleVector exposureSequence_ms = new DoubleVector();
-            String group = event.sequence_.get(0).acquisition_.channels_.getActiveChannelSetting(0).group_;
-            Configuration config = core_.getConfigData(group, event.sequence_.get(0).acquisition_.channels_.
-                    getActiveChannelSetting(event.sequence_.get(0).channelIndex_).config_);
+            String group = event.sequence_.get(0).acquisition_.channels_.getChannelSetting(event.channelName_).group_;
+            Configuration config = core_.getConfigData(group, event.sequence_.get(0).acquisition_.channels_.getConfigName(0));
             LinkedList<StrVector> propSequences = new LinkedList<StrVector>();
             for (AcquisitionEvent e : event.sequence_) {
                zSequence.add(event.zPosition_);
                xSequence.add(event.xyPosition_.getCenter().x);
                ySequence.add(event.xyPosition_.getCenter().y);
-               exposureSequence_ms.add(event.acquisition_.channels_.getActiveChannelSetting(event.channelIndex_).exposure_);
+               exposureSequence_ms.add(event.acquisition_.channels_.getChannelSetting(event.channelName_).exposure_);
                //et sequences for all channel properties
                for (int i = 0; i < config.size(); i++) {
                   PropertySetting ps = config.getSetting(i);
@@ -467,7 +475,7 @@ public class MagellanEngine {
                      propSequences.add(new StrVector());
                   }
                   Configuration channelPresetConfig = core_.getConfigData(group,
-                          event.acquisition_.channels_.getActiveChannelSetting(event.channelIndex_).config_);
+                          event.acquisition_.channels_.getChannelSetting(event.channelName_).config_);
                   String propValue = channelPresetConfig.getSetting(deviceName, propName).getPropertyValue();
                   propSequences.get(i).add(propValue);
                }
@@ -567,24 +575,19 @@ public class MagellanEngine {
             try {
                if (event.channelSequenced_) {
                   //Channels
-                  String group = event.acquisition_.channels_.getActiveChannelSetting(0).group_;
+                  String group = event.acquisition_.channels_.getChannelSetting(event.channelName_).group_;
                   Configuration config = core_.getConfigData(group,
-                          event.acquisition_.channels_.getActiveChannelSetting(event.channelIndex_).config_);
+                          event.acquisition_.channels_.getChannelSetting(event.channelName_).config_);
                   for (int i = 0; i < config.size(); i++) {
                      PropertySetting ps = config.getSetting(i);
                      String deviceName = ps.getDeviceLabel();
                      String propName = ps.getPropertyName();
                      core_.startPropertySequence(deviceName, propName);
                   }
-               } else if (lastEvent_ == null || event.channelIndex_ != lastEvent_.channelIndex_ && event.acquisition_.channels_
-                       != null && event.acquisition_.channels_.getNumActiveChannels() != 0) {
-                  final ChannelSetting setting;
-                  if (event.acquisition_ instanceof ExploreAcquisition) {
-                     //inactive channels are present in explore acquisitons
-                     setting = event.acquisition_.channels_.getChannelSetting(event.channelIndex_);
-                  } else {
-                     setting = event.acquisition_.channels_.getActiveChannelSetting(event.channelIndex_);
-                  }
+               } else if (event.acquisition_.channels_ != null && (lastEvent_ == null || 
+                       event.channelName_ != null && lastEvent_.channelName_ != null
+                       && !event.channelName_.equals(lastEvent_.channelName_) && event.acquisition_.channels_ != null)) {
+                  final ChannelSetting setting = event.acquisition_.channels_.getChannelSetting(event.channelName_);
                   if (setting.use_ && setting.config_ != null) {
                      //set exposure
                      core_.setExposure(setting.exposure_);
@@ -594,6 +597,7 @@ public class MagellanEngine {
                   }
                }
             } catch (Exception ex) {
+               ex.printStackTrace();
                throw new HardwareControlException(ex.getMessage());
             }
 
@@ -609,19 +613,11 @@ public class MagellanEngine {
             try {
                if (event.exposureSequenced_) {
                   core_.startExposureSequence(core_.getCameraDevice());
-               } else if (event.acquisition_.channels_ != null && event.acquisition_.channels_.getNumActiveChannels() != 0
+               } else if (event.acquisition_.channels_ != null
                        && (lastEvent_ == null || lastEvent_.acquisition_ != event.acquisition_
-                       || ((lastEvent_.acquisition_ instanceof ExploreAcquisition)
-                               ? (lastEvent_.acquisition_.channels_.getChannelSetting(lastEvent_.channelIndex_).exposure_
-                               != event.acquisition_.channels_.getChannelSetting(event.channelIndex_).exposure_)
-                               : (lastEvent_.acquisition_.channels_.getActiveChannelSetting(lastEvent_.channelIndex_).exposure_
-                               != event.acquisition_.channels_.getActiveChannelSetting(event.channelIndex_).exposure_)))) {
-                  if (event.acquisition_ instanceof ExploreAcquisition) {
-                     core_.setExposure(event.acquisition_.channels_.getChannelSetting(event.channelIndex_).exposure_);
-                  } else {
-                     core_.setExposure(event.acquisition_.channels_.getActiveChannelSetting(event.channelIndex_).exposure_);
-                  }
-
+                       || ((lastEvent_.acquisition_.channels_.getChannelSetting(lastEvent_.channelName_).exposure_
+                       != event.acquisition_.channels_.getChannelSetting(event.channelName_).exposure_)))) {
+                  core_.setExposure(event.acquisition_.channels_.getChannelSetting(event.channelName_).exposure_);
                }
             } catch (Exception ex) {
                throw new HardwareControlException(ex.getMessage());

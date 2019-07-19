@@ -70,7 +70,7 @@ public class DisplayOverlayer {
    private static final Color TRANSPARENT_BLUE = new Color(0, 0, 255, 100);
    private static final Color TRANSPARENT_GREEN = new Color(0, 255, 0, 100);
    private static final Color TRANSPARENT_MAGENTA = new Color(255, 0, 255, 100);
-   private final DisplayPlus display_;
+   private final MagellanDisplay display_;
    private final Acquisition acq_;
    private volatile boolean showSurface_ = true, showConvexHull_ = true, showXYFootprint_ = true;
    private ZoomableVirtualStack zoomableStack_;
@@ -79,7 +79,7 @@ public class DisplayOverlayer {
    private ExecutorService taskExecutor_, overlayMakerExecutor_;
    private Future currentTask_;
 
-   public DisplayOverlayer(DisplayPlus display, Acquisition acq, int tileWidth, int tileHeight, ZoomableVirtualStack stack) {
+   public DisplayOverlayer(MagellanDisplay display, Acquisition acq, int tileWidth, int tileHeight, ZoomableVirtualStack stack) {
       display_ = display;
       tileWidth_ = tileWidth;
       tileHeight_ = tileHeight;
@@ -190,12 +190,12 @@ public class DisplayOverlayer {
          //determine appropriate overlay
          int mode = display_.getMode();
          Overlay overlay = createBackgroundOverlay();
-         if (mode == DisplayPlus.EXPLORE) {
+         if (mode == MagellanDisplay.EXPLORE) {
             addExploreToOverlay(overlay);
             return overlay;
-         } else if (mode == DisplayPlus.NONE) {
+         } else if (mode == MagellanDisplay.NONE) {
             return overlay;
-         } else if (mode == DisplayPlus.SURFACE_AND_GRID) {
+         } else if (mode == MagellanDisplay.SURFACE_AND_GRID) {
             //Add in the easier to render parts of all surfaces and grids
             ArrayList<XYFootprint> sAndg = getSurfacesAndGridsInDrawOrder();
             if (sAndg.isEmpty()) {
@@ -426,7 +426,7 @@ public class DisplayOverlayer {
    }
 
    private void renderDetailedSurfaceOverlay() throws InterruptedException {
-      if (display_.getMode() != DisplayPlus.SURFACE_AND_GRID || !showSurface_) {
+      if (display_.getMode() != MagellanDisplay.SURFACE_AND_GRID || !showSurface_) {
          return;
       }
       //start out with 10 interpolation points across the whole image 

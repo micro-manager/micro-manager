@@ -17,9 +17,9 @@
 
 package org.micromanager.magellan.misc;
 
-import org.micromanager.magellan.acq.MMImageCache;
+import org.micromanager.magellan.acq.MagellanImageCache;
 import org.micromanager.magellan.datasaving.MultiResMultipageTiffStorage;
-import org.micromanager.magellan.imagedisplay.DisplayPlus;
+import org.micromanager.magellan.imagedisplay.MagellanDisplay;
 import java.io.IOException;
 import org.micromanager.magellan.misc.Log;
 
@@ -31,9 +31,9 @@ public class LoadedAcquisitionData {
    public LoadedAcquisitionData(String dir) {
       try {
          MultiResMultipageTiffStorage storage = new MultiResMultipageTiffStorage(dir);
-         MMImageCache imageCache = new MMImageCache(storage);
+         MagellanImageCache imageCache = new MagellanImageCache(storage);
          imageCache.setSummaryMetadata(storage.getSummaryMetadata());
-         new DisplayPlus(imageCache, null, storage.getSummaryMetadata(), storage);
+         new MagellanDisplay(imageCache, null, storage.getSummaryMetadata(), storage, storage.getDisplaySettings());
       } catch (IOException ex) {
          Log.log("Couldn't open acquisition", true);
       }

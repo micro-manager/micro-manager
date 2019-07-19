@@ -23,7 +23,7 @@ package org.micromanager.magellan.imagedisplay;
 import org.micromanager.magellan.acq.Acquisition;
 import org.micromanager.magellan.acq.ExploreAcquisition;
 import org.micromanager.magellan.acq.MagellanGUIAcquisition;
-import org.micromanager.magellan.acq.MMImageCache;
+import org.micromanager.magellan.acq.MagellanImageCache;
 import org.micromanager.magellan.datasaving.MultiResMultipageTiffStorage;
 import java.awt.Dimension;
 import java.awt.Point;
@@ -44,7 +44,7 @@ import org.micromanager.magellan.misc.LongPoint;
 public class ZoomableVirtualStack extends AcquisitionVirtualStack {
 
    final private int nSlices_;
-   final private MMImageCache imageCache_;
+   final private MagellanImageCache imageCache_;
    private volatile int resolutionIndex_ = 0;
    private volatile int displayImageWidth_, displayImageHeight_;
    private volatile long xView_ = 0, yView_ = 0;  //top left pixel of view in current res
@@ -53,16 +53,16 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
    final private Acquisition acquisition_;
    private final boolean boundedImage_;
    private final long xMax_, yMax_, xMin_, yMin_;
-   final private DisplayPlus disp_;
+   final private MagellanDisplay disp_;
    private volatile JSONObject latestMetadata_;
 
-   public ZoomableVirtualStack(int type, int width, int height, MMImageCache imageCache,
+   public ZoomableVirtualStack(int type, int width, int height, MagellanImageCache imageCache,
            int nSlices, VirtualAcquisitionDisplay vad, MultiResMultipageTiffStorage multiResStorage,
            Acquisition acq) {
       super(width, height, type, null, imageCache, nSlices, vad, multiResStorage.isRGB());
       imageCache_ = imageCache;
       nSlices_ = nSlices;
-      disp_ = (DisplayPlus) vad;
+      disp_ = (MagellanDisplay) vad;
       multiResStorage_ = multiResStorage;
       //display image could conceivably be bigger than a single FOV, but not smaller
       if (width < 1 || height < 1) {

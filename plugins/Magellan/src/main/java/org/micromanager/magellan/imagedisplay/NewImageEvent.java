@@ -24,9 +24,13 @@ import java.util.HashMap;
 public class NewImageEvent {
 
    private HashMap<String, Integer> axisToPosition_;
-   public NewImageEvent(HashMap<String, Integer> axisToPosition) {
+   public final String channelName_;
+   
+   public NewImageEvent(HashMap<String, Integer> axisToPosition, String channelName) {
       axisToPosition_ = axisToPosition;
+      channelName_ = channelName;
    }
+   
    /**
     * Return the "position" this image has along the specified axis, or 0 if
     * we don't know.

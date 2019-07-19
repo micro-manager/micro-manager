@@ -17,13 +17,16 @@
 package org.micromanager.magellan.acq;
 
 import org.micromanager.magellan.datasaving.MultiResMultipageTiffStorage;
-import org.micromanager.magellan.imagedisplay.DisplayPlus;
+import org.micromanager.magellan.imagedisplay.MagellanDisplay;
 import java.awt.Color;
 import java.awt.geom.AffineTransform;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -32,7 +35,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-import org.micromanager.magellan.channels.ChannelSpec;
+import org.micromanager.magellan.channels.MagellanChannelSpec;
 import org.micromanager.magellan.coordinates.MagellanAffineUtils;
 import org.micromanager.magellan.coordinates.PositionManager;
 import org.micromanager.magellan.coordinates.XYStagePosition;
@@ -44,6 +47,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.micromanager.magellan.api.MagellanAcquisitionAPI;
+import org.micromanager.magellan.imagedisplay.DisplaySettings;
 
 /**
  * Abstract class that manages a generic acquisition. Subclassed into specific
@@ -64,20 +68,22 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
    private long startTime_ms_ = -1;
    private int overlapX_, overlapY_;
    private volatile boolean paused_ = false;
-   protected ChannelSpec channels_;
-   private MMImageCache imageCache_;
+   protected MagellanChannelSpec channels_;
+   private MagellanImageCache imageCache_;
    protected PositionManager posManager_;
    private MagellanEngine eng_;
    protected volatile boolean aborted_ = false;
    private MultiResMultipageTiffStorage storage_;
-   private DisplayPlus display_;
+   private MagellanDisplay display_;
    private String UUID_;
+   //map generated at runtime of channel names to channel indices
+   private HashMap<String, Integer> channelIndices_ = new HashMap<String, Integer>(); 
 
    public Acquisition() {
       UUID_ = UUID.randomUUID().toString();
    }
 
-   protected void initialize(String dir, String name, double overlapPercent, double zStep, ChannelSpec channels) {
+   protected void initialize(String dir, String name, double overlapPercent, double zStep, MagellanChannelSpec channels) {
       eng_ = MagellanEngine.getInstance();
       xyStage_ = Magellan.getCore().getXYStageDevice();
       zStage_ = Magellan.getCore().getFocusDevice();
@@ -104,11 +110,13 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
       posManager_ = storage_.getPosManager();
       //storage class has determined unique acq name, so it can now be stored
       name_ = storage_.getUniqueAcqName();
-      imageCache_ = new MMImageCache(storage_);
+      imageCache_ = new MagellanImageCache(storage_);
       imageCache_.setSummaryMetadata(summaryMetadata_);
-      display_ = new DisplayPlus(imageCache_, this, summaryMetadata_, storage_);
+      JSONObject displaySettings = DisplaySettings.getDefaultDisplaySettings(channels, summaryMetadata_);
+      storage_.setDisplaySettings(displaySettings);
+      display_ = new MagellanDisplay(imageCache_, this, summaryMetadata_, storage_, displaySettings);
    }
-
+   
    public abstract void start();
 
    protected abstract void shutdownEvents();
@@ -156,8 +164,19 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
       }, "Aborting thread").start();
    }
 
-   public static void addImageMetadata(JSONObject tags, AcquisitionEvent event, int timeIndex,
-           int camChannelIndex, long elapsed_ms, double exposure) {
+   private int getChannelIndex(String channelName) {
+      if (!channelIndices_.containsKey(channelName)) {
+
+         List<Integer> indices = new LinkedList<Integer>(channelIndices_.values());
+         indices.add(0, -1);
+         int maxIndex = indices.stream().mapToInt(v -> v).max().getAsInt();
+         channelIndices_.put(channelName, maxIndex + 1);
+      }
+      return channelIndices_.get(channelName);
+   }
+   
+   public void addImageMetadata(JSONObject tags, AcquisitionEvent event, int timeIndex,
+           int camChannelIndex, long elapsed_ms, double exposure, boolean multicamera) {
       //add tags
       try {
          long gridRow = 0, gridCol = 0;
@@ -171,7 +190,14 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
          MD.setPositionIndex(tags, event.positionIndex_);
          MD.setSliceIndex(tags, event.zIndex_);
          MD.setFrameIndex(tags, timeIndex);
-         MD.setChannelIndex(tags, event.channelIndex_ + camChannelIndex);
+        String channelName = event.channelName_;
+        if (multicamera) {
+           channelName += "_" + Magellan.getCore().getCameraChannelName(camChannelIndex);
+        }
+        //infer channel index at runtime
+        int cIndex = getChannelIndex(event.channelName_);
+        MD.setChannelIndex(tags, cIndex + camChannelIndex);
+         MD.setChannelName(tags, channelName);
          MD.setZPositionUm(tags, event.zPosition_);
          MD.setElapsedTimeMs(tags, elapsed_ms);
          MD.setImageTime(tags, (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss -")).format(Calendar.getInstance().getTime()));
@@ -195,13 +221,10 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
 
    private JSONObject makeSummaryMD(String prefix) {
       //num channels is camera channels * acquisitionChannels
-      int numChannels = this instanceof ExploreAcquisition ? channels_.getNumChannels() : channels_.getNumActiveChannels();
 
       CMMCore core = Magellan.getCore();
       JSONObject summary = new JSONObject();
       MD.setAcqDate(summary, getCurrentDateAndTime());
-      //Actual number of channels is equal or less than this field
-      MD.setNumChannels(summary, numChannels);
 
       MD.setZCTOrder(summary, false);
       MD.setPixelTypeFromByteDepth(summary, (int) Magellan.getCore().getBytesPerPixel());
@@ -224,17 +247,6 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
       } else {
          MD.setAffineTransformString(summary, "Undefined");
       }
-      JSONArray chNames = new JSONArray();
-      JSONArray chColors = new JSONArray();
-      //ignore inactive channels, except on an explore acquisition
-      String[] names = this.getChannelNames(!(this instanceof ExploreAcquisition));
-      Color[] colors = this.getChannelColors(!(this instanceof ExploreAcquisition));
-      for (int i = 0; i < numChannels; i++) {
-         chNames.put(names[i]);
-         chColors.put(colors[i].getRGB());
-      }
-      MD.setChannelNames(summary, chNames);
-      MD.setChannelColors(summary, chColors);
       try {
          MD.setCoreXY(summary, Magellan.getCore().getXYStageDevice());
          MD.setCoreFocus(summary, Magellan.getCore().getFocusDevice());
@@ -258,28 +270,25 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
       return targetStream;
    }
 
-   protected Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels(ChannelSpec channels) {
+   protected Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels(MagellanChannelSpec channels) {
       return (AcquisitionEvent event) -> {
          return new Iterator<AcquisitionEvent>() {
-            int channelIndex_ = 0;
+            String channelName_ = null;
 
             @Override
             public boolean hasNext() {
-               while (channelIndex_ < channels.getNumActiveChannels() && !channels.getActiveChannelSetting(channelIndex_).uniqueEvent_) {
-                  channelIndex_++;
-                  if (channelIndex_ >= channels.getNumActiveChannels()) {
-                     return false;
-                  }
+               if (channels.nextActiveChannel(channelName_) != null) {
+                  return true;
                }
-               return channelIndex_ < channels.getNumActiveChannels();
+               return false;
             }
 
             @Override
             public AcquisitionEvent next() {
                AcquisitionEvent channelEvent = event.copy();
-               channelEvent.channelIndex_ = channelIndex_;
-               channelEvent.zPosition_ += channels.getActiveChannelSetting(channelIndex_).offset_;
-               channelIndex_++;
+               channelName_ = channels.nextActiveChannel(channelName_);
+               channelEvent.channelName_ = channelName_;
+               channelEvent.zPosition_ += channels.getChannelSetting(channelName_).offset_;
                return channelEvent;
             }
          };
@@ -353,7 +362,7 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
       return (int) Math.round((z - zOrigin_) / zStep_) - minSliceIndex_;
    }
 
-   public ChannelSpec getChannels() {
+   public MagellanChannelSpec getChannels() {
       return channels_;
    }
 
@@ -403,14 +412,6 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
 
    public void togglePaused() {
       paused_ = !paused_;
-   }
-
-   public String[] getChannelNames(boolean activeOnly) {
-      return activeOnly ? channels_.getActiveChannelNames() : channels_.getAllChannelNames();
-   }
-
-   public Color[] getChannelColors(boolean activeOnly) {
-      return activeOnly ? channels_.getActiveChannelColors() : channels_.getAllChannelColors();
    }
 
    private static String getCurrentDateAndTime() {

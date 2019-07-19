@@ -20,6 +20,9 @@ package org.micromanager.magellan.surfacesandregions;
 import org.micromanager.magellan.coordinates.XYStagePosition;
 import java.util.ArrayList;
 import java.util.List;
+import org.micromanager.MultiStagePosition;
+import org.micromanager.StagePosition;
+import org.micromanager.magellan.main.Magellan;
 
 /**
  * Superclass for Surfaces and Grids
@@ -35,6 +38,17 @@ public abstract class XYFootprint {
       xyString_ = xyDevice;
    }
    
+   public void exportToMicroManager() {
+      List<XYStagePosition> list = getXYPositionsNoUpdate();
+      for (XYStagePosition xy : list) {
+         MultiStagePosition mPos = new MultiStagePosition();
+         mPos.setLabel(name_ + "-" + xy.getName());
+         StagePosition pos = new StagePosition();
+         mPos.add(pos);
+         pos.set2DPosition(xy.getXYDevice(), xy.getCenter().x, xy.getCenter().y);
+         Magellan.getStudio().positions().getPositionList().addPosition(mPos);
+      }
+   }
    
    /**
     * @param tileOverlapPercent
@@ -42,7 +56,7 @@ public abstract class XYFootprint {
     */
     public abstract List<XYStagePosition> getXYPositions(double tileOverlapPercent) throws InterruptedException;
 
-    public abstract List<XYStagePosition> getXYPositionsNoUpdate() throws InterruptedException;
+    public abstract List<XYStagePosition> getXYPositionsNoUpdate();
     
     /**
      * @return true if there is any intersection between footprint and position

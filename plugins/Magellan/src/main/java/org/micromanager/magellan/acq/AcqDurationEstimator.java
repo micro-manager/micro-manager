@@ -165,7 +165,7 @@ public class AcqDurationEstimator {
                checkForInterrupt();
 
                List<XYStagePosition> positions = getXYPositions(settings);
-               long numImagesAcquired = 0, xyMoves = 0, zMoves = 0, channelSwitches = 0, numImages = 0;
+               long numImagesAcquired = 0, xyMoves = 0, zMoves = 0, channelSwitches = -1, numImages = 0;
                double zOrigin = MagellanGUIAcquisition.getZTopCoordinate(settings.spaceMode_,
                        settings, false, 0, 0, Magellan.getCore().getFocusDevice());
                for (XYStagePosition pos : positions) {
@@ -198,19 +198,18 @@ public class AcqDurationEstimator {
                         continue; //position is above imaging volume or range of focus device
                      }
 
-                     numImages += settings.channels_.getNumActiveChannels();
                      numImagesAcquired++;
-                     if (settings.channels_.getNumActiveChannels() > 1) {
-                        for (int channelIndex = 0; channelIndex < settings.channels_.getNumActiveChannels(); channelIndex++) {
-                           if (!settings.channels_.getActiveChannelSetting(channelIndex).uniqueEvent_) {
+                     String channelName = settings.channels_.nextActiveChannel(null);
+                     while (channelName != null) {
+                        channelName = settings.channels_.nextActiveChannel(null);
+                        if (!settings.channels_.getChannelSetting(channelName).uniqueEvent_) {
                               continue;
                            }
-                           channelSwitches++;
-                           if (channelIndex > 0) {
-                              numImagesAcquired++;
-                           }
-                        }
+                        channelSwitches++;
+                        numImagesAcquired++;
                      }
+        
+                     
                      sliceIndex++;
                      zMoves++;
                   } //slice loop finish

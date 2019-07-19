@@ -51,6 +51,7 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.magellan.acq.AcqDurationEstimator;
+import org.micromanager.magellan.acq.Acquisition;
 import org.micromanager.magellan.acq.ExploreAcqSettings;
 import org.micromanager.magellan.acq.MagellanGUIAcquisitionSettings;
 import org.micromanager.magellan.acq.MagellanEngine;
@@ -130,7 +131,7 @@ public class GUI extends javax.swing.JFrame {
          }
       });
    }
-   
+
    public static void updateEstiamtedDurationLabel(final String text) {
       SwingUtilities.invokeLater(new Runnable() {
          @Override
@@ -139,11 +140,11 @@ public class GUI extends javax.swing.JFrame {
          }
       });
    }
-   
+
    private void updateAvailableDiskSpaceLabel() {
-      double mb = (new File(settings_.getStoredSavingDirectory()).getUsableSpace()) / 1024.0 /1024.0;
+      double mb = (new File(settings_.getStoredSavingDirectory()).getUsableSpace()) / 1024.0 / 1024.0;
       if (mb < 1024) {
-         freeDiskSpaceLabel_.setText("Free disk space: " + ((int)mb) + " MB" );
+         freeDiskSpaceLabel_.setText("Free disk space: " + ((int) mb) + " MB");
       } else {
          double gb = mb / 1024.0;
          freeDiskSpaceLabel_.setText("Free disk space: " + String.format("%.1f", gb) + " GB");
@@ -199,7 +200,7 @@ public class GUI extends javax.swing.JFrame {
             }).start();
          }
       });
-      
+
       //add link to g report
       bugReportLink_.addMouseListener(new MouseAdapter() {
          @Override
@@ -208,7 +209,7 @@ public class GUI extends javax.swing.JFrame {
                @Override
                public void run() {
                   try {
-                     ij.plugin.BrowserLauncher.openURL("https://github.com/henrypinkard/Micro-Magellan/issues/");
+                     ij.plugin.BrowserLauncher.openURL("https://github.com/henrypinkard/micro-manager/issues");
                   } catch (IOException ex) {
                      Log.log("couldn't open citation link");
                   }
@@ -222,7 +223,7 @@ public class GUI extends javax.swing.JFrame {
       multipleAcqTable_.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
          @Override
          public void valueChanged(ListSelectionEvent e) {
-            if (e.getValueIsAdjusting()) {  
+            if (e.getValueIsAdjusting()) {
                return;
                //action occurs second time this method is called, after the table gains focus
             }
@@ -239,8 +240,8 @@ public class GUI extends javax.swing.JFrame {
       multipleAcqTable_.getColumnModel().getColumn(2).setMaxWidth(100); //status column
 
       channelsTable_.getColumnModel().getColumn(0).setMaxWidth(30); //Acitve checkbox column
-      
-        surfacesAndGridsTable_.getColumnModel().getColumn(0).setMaxWidth(120); //type column
+
+      surfacesAndGridsTable_.getColumnModel().getColumn(0).setMaxWidth(120); //type column
 
       //set color renderer for channel table
       for (int col = 1; col < channelsTable_.getColumnModel().getColumnCount(); col++) {
@@ -287,7 +288,7 @@ public class GUI extends javax.swing.JFrame {
             settings_.storeIntInPrefs(PREF_SIZE_HEIGHT, GUI.this.getHeight());
          }
       });
-      
+
       //set XY footprint combos to default
       footprint2DComboBox_.setSelectedIndex(0);
       simpleZStackFootprintCombo_.setSelectedIndex(0);
@@ -318,14 +319,14 @@ public class GUI extends javax.swing.JFrame {
          acqTabbedPane_.setTabComponentAt(2, l2);
          acqTabbedPane_.revalidate();
       }
-      
+
       if (exploreAcqTabbedPane_.getTabCount() == 2) {
          JLabel l = new JLabel("Explore");
          l.setForeground(exploreAcqTabbedPane_.getSelectedIndex() == 0 ? LIGHT_GREEN : Color.black);
          l.setFont(exploreAcqTabbedPane_.getComponent(0).getFont().deriveFont(
                  exploreAcqTabbedPane_.getSelectedIndex() == 0 ? Font.BOLD : Font.PLAIN));
          exploreAcqTabbedPane_.setTabComponentAt(0, l);
-         
+
          JLabel l1 = new JLabel("Acquisition(s)");
          l1.setForeground(exploreAcqTabbedPane_.getSelectedIndex() == 1 ? LIGHT_GREEN : Color.black);
          l1.setFont(exploreAcqTabbedPane_.getComponent(1).getFont().deriveFont(
@@ -342,11 +343,11 @@ public class GUI extends javax.swing.JFrame {
       colorAndBoldButton(cuboidVolumeButton_);
       colorAndBoldButton(noCollectionPlaneButton_);
       colorAndBoldButton(useCollectionPlaneButton_);
-      
+
       labelDiagram2dSimple_.setBorder(BorderFactory.createLineBorder(
               noCollectionPlaneButton_.isSelected() ? DARK_GREEN : Color.BLACK, 4, true));
       labelDiagram2DSurface_.setBorder(BorderFactory.createLineBorder(
-              useCollectionPlaneButton_.isSelected() ? DARK_GREEN : Color.BLACK, 4, true));  
+              useCollectionPlaneButton_.isSelected() ? DARK_GREEN : Color.BLACK, 4, true));
    }
 
    private void enableAndChangeFonts() {
@@ -410,7 +411,7 @@ public class GUI extends javax.swing.JFrame {
       } else {
          settings.spaceMode_ = MagellanGUIAcquisitionSettings.NO_SPACE; //This isnt a thing anymore...
       }
-      
+
       //channels
       settings.channelGroup_ = (String) ChannelGroupCombo_.getSelectedItem();
 
@@ -418,7 +419,7 @@ public class GUI extends javax.swing.JFrame {
       multipleAcqTable_.repaint();
 
       acqDurationEstimator_.calcAcqDuration(getActiveAcquisitionSettings());
-      
+
    }
 
    private void populateAcqControls() {
@@ -519,7 +520,7 @@ public class GUI extends javax.swing.JFrame {
       removeAcqButton_.setEnabled(enable);
       moveAcqDownButton_.setEnabled(enable);
       moveAcqUpButton_.setEnabled(enable);
-      runAcqButton_.setText(enable ? "Run acquisition(s)" : "Abort acquisiton(s)"); 
+      runAcqButton_.setText(enable ? "Run acquisition(s)" : "Abort acquisiton(s)");
       repaint();
       acquisitionRunning_ = !enable;
    }
@@ -571,6 +572,8 @@ public class GUI extends javax.swing.JFrame {
       deleteSelectedRegionButton_ = new javax.swing.JButton();
       jScrollPane2 = new javax.swing.JScrollPane();
       surfacesAndGridsTable_ = new javax.swing.JTable();
+      jButton2 = new javax.swing.JButton();
+      jButton3 = new javax.swing.JButton();
       surfacesAndGrdisLabel_ = new javax.swing.JLabel();
       acqPanel = new javax.swing.JPanel();
       acqTabbedPane_ = new javax.swing.JTabbedPane();
@@ -639,6 +642,8 @@ public class GUI extends javax.swing.JFrame {
       channelsTable_ = new javax.swing.JTable();
       jLabel3 = new javax.swing.JLabel();
       ChannelGroupCombo_ = new javax.swing.JComboBox();
+      jButton1 = new javax.swing.JButton();
+      syncExposuresButton_ = new javax.swing.JButton();
       timePointsTab_ = new javax.swing.JPanel();
       timePointsPanel_ = new javax.swing.JPanel();
       timeIntevalUnitCombo_ = new javax.swing.JComboBox();
@@ -742,6 +747,20 @@ public class GUI extends javax.swing.JFrame {
       surfacesAndGridsTable_.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
       jScrollPane2.setViewportView(surfacesAndGridsTable_);
 
+      jButton2.setText("Export selected to micro-manager");
+      jButton2.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            jButton2ActionPerformed(evt);
+         }
+      });
+
+      jButton3.setText("Export all");
+      jButton3.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            jButton3ActionPerformed(evt);
+         }
+      });
+
       javax.swing.GroupLayout surfaceAndGridsPanel_Layout = new javax.swing.GroupLayout(surfaceAndGridsPanel_);
       surfaceAndGridsPanel_.setLayout(surfaceAndGridsPanel_Layout);
       surfaceAndGridsPanel_Layout.setHorizontalGroup(
@@ -751,6 +770,10 @@ public class GUI extends javax.swing.JFrame {
             .addComponent(deleteSelectedRegionButton_)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addComponent(deleteAllRegionsButton_)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(jButton2)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(jButton3)
             .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
          .addGroup(surfaceAndGridsPanel_Layout.createSequentialGroup()
             .addComponent(jScrollPane2)
@@ -764,7 +787,9 @@ public class GUI extends javax.swing.JFrame {
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addGroup(surfaceAndGridsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                .addComponent(deleteSelectedRegionButton_)
-               .addComponent(deleteAllRegionsButton_))
+               .addComponent(deleteAllRegionsButton_)
+               .addComponent(jButton2)
+               .addComponent(jButton3))
             .addContainerGap())
       );
 
@@ -1487,15 +1512,35 @@ public class GUI extends javax.swing.JFrame {
          }
       });
 
+      jButton1.setText("Select all");
+      jButton1.setToolTipText("Select or deselect all channels");
+      jButton1.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            jButton1ActionPerformed(evt);
+         }
+      });
+
+      syncExposuresButton_.setText("Sync exposures");
+      syncExposuresButton_.setToolTipText("Make all exposures equal to the top channel exposures");
+      syncExposuresButton_.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            syncExposuresButton_ActionPerformed(evt);
+         }
+      });
+
       javax.swing.GroupLayout ChannelsTab_Layout = new javax.swing.GroupLayout(ChannelsTab_);
       ChannelsTab_.setLayout(ChannelsTab_Layout);
       ChannelsTab_Layout.setHorizontalGroup(
          ChannelsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 776, Short.MAX_VALUE)
+         .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 775, Short.MAX_VALUE)
          .addGroup(ChannelsTab_Layout.createSequentialGroup()
             .addComponent(jLabel3)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addComponent(ChannelGroupCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, 171, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGap(35, 35, 35)
+            .addComponent(jButton1)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(syncExposuresButton_)
             .addGap(0, 0, Short.MAX_VALUE))
       );
       ChannelsTab_Layout.setVerticalGroup(
@@ -1503,9 +1548,11 @@ public class GUI extends javax.swing.JFrame {
          .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, ChannelsTab_Layout.createSequentialGroup()
             .addGroup(ChannelsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                .addComponent(jLabel3)
-               .addComponent(ChannelGroupCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+               .addComponent(ChannelGroupCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+               .addComponent(jButton1)
+               .addComponent(syncExposuresButton_))
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 224, Short.MAX_VALUE))
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 219, Short.MAX_VALUE))
       );
 
       acqTabbedPane_.addTab("Channels", ChannelsTab_);
@@ -1890,24 +1937,24 @@ public class GUI extends javax.swing.JFrame {
    }//GEN-LAST:event_runAcqButton_ActionPerformed
 
    private void newExploreWindowButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newExploreWindowButton_ActionPerformed
-       if (!MagellanAffineUtils.isAffineTransformDefined()) {
-           ReportingUtils.showError("XY Stage and Camera are not calibrated to each other."
-                   + " \nOpen \"Devices--Pixel size calibration\" and set up Affine transform");
-           throw new RuntimeException();
-       }
-       ExploreAcqSettings settings = new ExploreAcqSettings(
+      if (!MagellanAffineUtils.isAffineTransformDefined()) {
+         ReportingUtils.showError("XY Stage and Camera are not calibrated to each other."
+                 + " \nOpen \"Devices--Pixel size calibration\" and set up Affine transform");
+         throw new RuntimeException();
+      }
+      ExploreAcqSettings settings = new ExploreAcqSettings(
               ((Number) exploreZStepSpinner_.getValue()).doubleValue(), (Double) exploreTileOverlapSpinner_.getValue(),
               globalSavingDirTextField_.getText(), exploreSavingNameTextField_.getText(), (String) exploreChannelGroupCombo_.getSelectedItem());
       //check for abort of existing explore acquisition
-       //abort existing explore acq if needed
-        if (exploreAcq_ != null && !exploreAcq_.isFinished()) {
-            int result = JOptionPane.showConfirmDialog(null, "Finish exisiting explore acquisition?", "Finish Current Explore Acquisition", JOptionPane.OK_CANCEL_OPTION);
-            if (result == JOptionPane.OK_OPTION) {
-                exploreAcq_.abort();
-            } else {
-                return;
-            }
-        }
+      //abort existing explore acq if needed
+      if (exploreAcq_ != null && !exploreAcq_.isFinished()) {
+         int result = JOptionPane.showConfirmDialog(null, "Finish exisiting explore acquisition?", "Finish Current Explore Acquisition", JOptionPane.OK_CANCEL_OPTION);
+         if (result == JOptionPane.OK_OPTION) {
+            exploreAcq_.abort();
+         } else {
+            return;
+         }
+      }
       exploreAcq_ = new ExploreAcquisition(settings);
       exploreAcq_.start();
    }//GEN-LAST:event_newExploreWindowButton_ActionPerformed
@@ -1987,7 +2034,7 @@ public class GUI extends javax.swing.JFrame {
    private void removeAcqButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeAcqButton_ActionPerformed
       multiAcqManager_.remove(multipleAcqTable_.getSelectedRow());
       if (multiAcqSelectedIndex_ == multiAcqManager_.getNumberOfAcquisitions()) {
-         multiAcqSelectedIndex_--; 
+         multiAcqSelectedIndex_--;
          multipleAcqTable_.getSelectionModel().setSelectionInterval(multiAcqSelectedIndex_, multiAcqSelectedIndex_);
       }
       acquisitionSettingsChanged();
@@ -2168,6 +2215,30 @@ public class GUI extends javax.swing.JFrame {
       refreshBoldedText();
    }//GEN-LAST:event_exploreAcqTabbedPane_StateChanged
 
+   private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+      multiAcqManager_.getAcquisition(multiAcqSelectedIndex_).getChannels().setUseOnAll(
+              !multiAcqManager_.getAcquisition(multiAcqSelectedIndex_).getChannels().getChannelListSetting(0).use_);
+      ((SimpleChannelTableModel) channelsTable_.getModel()).fireTableDataChanged();
+   }//GEN-LAST:event_jButton1ActionPerformed
+
+   private void syncExposuresButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_syncExposuresButton_ActionPerformed
+      multiAcqManager_.getAcquisition(multiAcqSelectedIndex_).getChannels().synchronizeExposures();
+      ((SimpleChannelTableModel) channelsTable_.getModel()).fireTableDataChanged();
+   }//GEN-LAST:event_syncExposuresButton_ActionPerformed
+
+   private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+      int index = surfacesAndGridsTable_.getSelectedRow();
+      if (index != -1) {
+         SurfaceGridManager.getInstance().getSurfaceOrGrid(index).exportToMicroManager();
+      }
+   }//GEN-LAST:event_jButton2ActionPerformed
+
+   private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+      for (int index = 0; index < SurfaceGridManager.getInstance().getNumberOfSurfaces() + SurfaceGridManager.getInstance().getNumberOfGrids(); index++) {
+         SurfaceGridManager.getInstance().getSurfaceOrGrid(index).exportToMicroManager();
+      }
+   }//GEN-LAST:event_jButton3ActionPerformed
+
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JComboBox ChannelGroupCombo_;
    private javax.swing.JPanel ChannelsTab_;
@@ -2220,6 +2291,9 @@ public class GUI extends javax.swing.JFrame {
    private javax.swing.JComboBox footprint2DComboBox_;
    private javax.swing.JLabel freeDiskSpaceLabel_;
    private javax.swing.JTextField globalSavingDirTextField_;
+   private javax.swing.JButton jButton1;
+   private javax.swing.JButton jButton2;
+   private javax.swing.JButton jButton3;
    private javax.swing.JLabel jLabel12;
    private javax.swing.JLabel jLabel2;
    private javax.swing.JLabel jLabel3;
@@ -2255,6 +2329,7 @@ public class GUI extends javax.swing.JFrame {
    private javax.swing.JPanel surfaceAndGridsPanel_;
    private javax.swing.JLabel surfacesAndGrdisLabel_;
    private javax.swing.JTable surfacesAndGridsTable_;
+   private javax.swing.JButton syncExposuresButton_;
    private javax.swing.JLabel tileOverlapPercentLabel_;
    private javax.swing.JLabel timeIntervalLabel_;
    private javax.swing.JSpinner timeIntervalSpinner_;

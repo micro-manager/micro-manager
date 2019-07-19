@@ -294,6 +294,24 @@ public class MD {
          throw new RuntimeException();
       }
    }
+   
+    public static String getChannelName(JSONObject map)  {
+      try {
+         return map.getString(CHANNEL_NAME);
+      } catch (JSONException ex) {
+                  Log.log("Missing channel index tag");
+         throw new RuntimeException();
+      }
+   }
+
+   public static void setChannelName(JSONObject map, String channelName)  {
+      try {
+         map.put(CHANNEL_NAME, channelName);
+      } catch (JSONException ex) {
+                  Log.log("Couldn't set channel index");
+         throw new RuntimeException();
+      }
+   }
 
    public static int getFrameIndex(JSONObject map) {
       try {
@@ -572,23 +590,6 @@ public class MD {
       } catch (JSONException ex) {
          Log.log("couldnt set numSlices");
          throw new RuntimeException();
-      }
-   }
-
-   public static int getNumChannels(JSONObject tags)   {
-      try {
-         return Math.max(1, tags.getInt(NUM_CHANNELS));
-      } catch (JSONException ex) {
-        Log.log("Num channels tag missiing");
-        throw new RuntimeException();
-      }
-   }
-   
-   public static void setNumChannels(JSONObject tags, int numC) {
-      try {
-         tags.put(NUM_CHANNELS, numC);
-      } catch (JSONException ex) {
-         Log.log("couldnt set numChannels");
       }
    }
 

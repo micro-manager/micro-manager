@@ -29,10 +29,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.prefs.Preferences;
 import javax.swing.*;
-import org.micromanager.magellan.acq.MMImageCache;
+import org.micromanager.magellan.acq.MagellanImageCache;
 import org.micromanager.magellan.mmcloneclasses.graph.HistogramPanel.CursorListener;
 import org.micromanager.magellan.imagedisplay.MMCompositeImage;
-import org.micromanager.magellan.imagedisplay.DisplayPlus;
+import org.micromanager.magellan.imagedisplay.MagellanDisplay;
 import org.micromanager.magellan.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.GlobalSettings;
@@ -46,22 +46,19 @@ import org.json.JSONObject;
 
 /**
  * Draws one histogram of the Multi-Channel control panel
- * 
- * 
+ *
+ *
  */
-
-
 public class ChannelControlPanel extends JPanel implements CursorListener {
 
    private static final Dimension CONTROLS_SIZE = new Dimension(130, 150);
-   public static final Dimension MINIMUM_SIZE = new Dimension(400,CONTROLS_SIZE.height);
-   
+   public static final Dimension MINIMUM_SIZE = new Dimension(400, CONTROLS_SIZE.height);
+
    private static final int NUM_BINS = 256;
    private final int channelIndex_;
    private HistogramPanel hp_;
    private MultiChannelHistograms mcHistograms_;
-   private VirtualAcquisitionDisplay display_;
-   private MMImageCache cache_;
+   private MagellanDisplay display_;
    private CompositeImage img_;
    private JButton autoButton_;
    private JButton zoomInButton_;
@@ -88,20 +85,19 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    final private int maxIntensity_;
    final private int bitDepth_;
    private Color color_;
-   private String name_;
    private HistogramControlsState histControlState_;
    private ContrastPanel contrastPanel_;
+   private final String channelName_;
 
-   public ChannelControlPanel(int channelIndex, MultiChannelHistograms mcHistograms, VirtualAcquisitionDisplay disp,
-           ContrastPanel contrastPanel) {
+   public ChannelControlPanel(int channelIndex, MultiChannelHistograms mcHistograms, MagellanDisplay disp,
+           ContrastPanel contrastPanel, String name, Color color, int bitDepth) {
+      channelName_ = name;
       histControlState_ = contrastPanel.getHistogramControlsState();
       contrastPanel_ = contrastPanel;
       display_ = disp;
       img_ = (CompositeImage) disp.getHyperImage();
-      cache_ = disp.getImageCache(); 
-      color_ = cache_.getChannelColor(channelIndex);
-      name_ = cache_.getChannelName(channelIndex);
-      bitDepth_ = cache_.getBitDepth();
+      color_ = color;
+      bitDepth_ = bitDepth;
       maxIntensity_ = (int) Math.pow(2, bitDepth_) - 1;
       histMax_ = maxIntensity_ + 1;
       binSize_ = histMax_ / NUM_BINS;
@@ -109,7 +105,17 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       mcHistograms_ = mcHistograms;
       channelIndex_ = channelIndex;
       initComponents();
-      loadDisplaySettings(cache_);
+      //initialize display settings
+      contrastMax_ = (int) (Math.pow(2, bitDepth) - 1);
+      contrastMin_ = 0;
+      gamma_ = 1.0;
+      int histMax = contrastMax_;
+      if (histMax != -1) {
+         int index = (int) (Math.ceil(Math.log(histMax) / Math.log(2)) - 3);
+         histRangeComboBox_.setSelectedIndex(index);
+      }
+//      mcHistograms_.setDisplayMode(cache.getDisplayMode());
+
       updateHistogram();
    }
 
@@ -169,7 +175,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       });
 
-      channelNameCheckbox_.setText(name_);
+      channelNameCheckbox_.setText(channelName_);
       channelNameCheckbox_.setToolTipText("Show/hide this channel in the multi-dimensional viewer");
       channelNameCheckbox_.addActionListener(new java.awt.event.ActionListener() {
 
@@ -184,11 +190,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       histogramPanelHolder_.setPreferredSize(new java.awt.Dimension(0, 100));
       histogramPanelHolder_.setLayout(new BorderLayout());
 
-
       minMaxLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       minMaxLabel_.setText("Min:   Max:");
-
-
 
       histRangeComboBox_ = new JComboBox();
       histRangeComboBox_.setFont(new Font("", Font.PLAIN, 10));
@@ -203,14 +206,33 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       });
       histRangeComboBox_.setModel(new DefaultComboBoxModel(new String[]{
-                 "Camera Depth", "4bit (0-15)", "5bit (0-31)", "6bit (0-63)", "7bit (0-127)", 
-                 "8bit (0-255)", "9bit (0-511)", "10bit (0-1023)", "11bit (0-2047)", 
-                 "12bit (0-4095)", "13bit (0-8191)", "14bit (0-16383)", "15bit (0-32767)", "16bit (0-65535)"}));
+         "Camera Depth", "4bit (0-15)", "5bit (0-31)", "6bit (0-63)", "7bit (0-127)",
+         "8bit (0-255)", "9bit (0-511)", "10bit (0-1023)", "11bit (0-2047)",
+         "12bit (0-4095)", "13bit (0-8191)", "14bit (0-16383)", "15bit (0-32767)", "16bit (0-65535)"}));
 
       zoomInButton_ = new JButton();
-      zoomInButton_.setIcon(SwingResourceManager.getIcon( "/org/micromanager/magellan/zoom_in.png"));
+//      zoomInButton_.setIcon(SwingResourceManager.getIcon( "/org/micromanager/magellan/zoom_in.png"));
+      zoomInButton_.setText("Zoom in");
+      zoomInButton_.setFont(zoomInButton_.getFont().deriveFont((float) 9));
+      zoomInButton_.setName("Zoom in on histogram");
+      zoomInButton_.setText("+");
+      zoomInButton_.setToolTipText("Zoom in on histogram");
+      zoomInButton_.setMargin(new java.awt.Insets(2, 4, 2, 4));
+      zoomInButton_.setPreferredSize(new java.awt.Dimension(40, 30));
+
       zoomOutButton_ = new JButton();
-      zoomOutButton_.setIcon(SwingResourceManager.getIcon("/org/micromanager/magellan/zonom_out.png"));   
+//      zoomOutButton_.setIcon(SwingResourceManager.getIcon("/org/micromanager/magellan/zonom_out.png"));   
+      zoomOutButton_.setText("Zoom out");
+      zoomOutButton_.setFont(zoomOutButton_.getFont().deriveFont((float) 9));
+      zoomOutButton_.setName("Zoom out on histogram");
+      zoomOutButton_.setText("-");
+      zoomOutButton_.setToolTipText("Zoom out on histogram");
+      zoomOutButton_.setMargin(new java.awt.Insets(2, 4, 2, 4));
+      zoomOutButton_.setPreferredSize(new java.awt.Dimension(40, 30));
+
+      zoomInButton_.setMaximumSize(new Dimension(22, 22));
+      zoomOutButton_.setMaximumSize(new Dimension(22, 22));
+
       zoomInButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -224,17 +246,15 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       });
 
-      
-      
       this.setMinimumSize(MINIMUM_SIZE);
       this.setPreferredSize(MINIMUM_SIZE);
-      
+
       hp_ = addHistogramPanel();
 
-      this.setLayout(new BorderLayout());     
-      controlsHolderPanel_ = new JPanel(new BorderLayout());    
+      this.setLayout(new BorderLayout());
+      controlsHolderPanel_ = new JPanel(new BorderLayout());
       controlsHolderPanel_.setPreferredSize(CONTROLS_SIZE);
-      
+
       controls_ = new JPanel();
       this.add(controlsHolderPanel_, BorderLayout.LINE_START);
       this.add(histogramPanelHolder_, BorderLayout.CENTER);
@@ -242,9 +262,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       controlsHolderPanel_.add(controls_, BorderLayout.PAGE_START);
       GridBagLayout gbl = new GridBagLayout();
       controls_.setLayout(gbl);
-      
 
-      JLabel histRangeLabel = new JLabel("Hist. range:");
+      JLabel histRangeLabel = new JLabel("Range:");
       histRangeLabel.setFont(new Font("Lucida Grande", 0, 11));
 
       GridBagConstraints gbc = new GridBagConstraints();
@@ -255,11 +274,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       gbc.weighty = 1;
       gbc.anchor = GridBagConstraints.LINE_START;
       gbc.fill = GridBagConstraints.HORIZONTAL;
-      controls_.add(channelNameCheckbox_, gbc);      
-      
+      controls_.add(channelNameCheckbox_, gbc);
+
       fullButton_.setPreferredSize(new Dimension(45, 20));
       autoButton_.setPreferredSize(new Dimension(45, 20));
-      colorPickerLabel_.setPreferredSize(new Dimension(18,18));
+      colorPickerLabel_.setPreferredSize(new Dimension(18, 18));
       FlowLayout flow = new FlowLayout();
       flow.setHgap(4);
       flow.setVgap(0);
@@ -268,9 +287,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       line2.add(fullButton_);
       line2.add(autoButton_);
       line2.add(colorPickerLabel_);
-      line2.setPreferredSize(new Dimension(CONTROLS_SIZE.width,20));
-      
-      
+      line2.setPreferredSize(new Dimension(CONTROLS_SIZE.width, 20));
+
       gbc = new GridBagConstraints();
       gbc.gridx = 0;
       gbc.gridy = 1;
@@ -278,35 +296,48 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       gbc.weighty = 1;
       gbc.gridwidth = 5;
       gbc.anchor = GridBagConstraints.LINE_START;
-      controls_.add(line2,gbc);
-      
+      controls_.add(line2, gbc);
+
+      JPanel line3 = new JPanel(flow);
+      line3.setPreferredSize(CONTROLS_SIZE);
+      line3.add(histRangeLabel);
+      line3.add(zoomInButton_);
+      line3.add(zoomOutButton_);
+      line3.setPreferredSize(new Dimension(CONTROLS_SIZE.width, 20));
+
       gbc = new GridBagConstraints();
       gbc.gridx = 0;
       gbc.gridy = 2;
       gbc.weightx = 1;
       gbc.weighty = 1;
-      gbc.gridwidth = 3;
+      gbc.gridwidth = 5;
       gbc.anchor = GridBagConstraints.LINE_START;
-      controls_.add(histRangeLabel, gbc);
+      controls_.add(line3, gbc);
 
-      zoomInButton_.setPreferredSize(new Dimension(22, 22));
-      zoomOutButton_.setPreferredSize(new Dimension(22, 22));
-      gbc = new GridBagConstraints();
-      gbc.gridx = 4;
-      gbc.gridy = 2;
-      gbc.weightx = 0;
-      gbc.weighty = 1;
-      gbc.gridwidth = 1;
-      controls_.add(zoomInButton_, gbc);
-
-      gbc = new GridBagConstraints();
-      gbc.gridx = 3;
-      gbc.gridy = 2;
-      gbc.weightx = 0;
-      gbc.weighty = 1;
-      gbc.gridwidth = 1;
-      controls_.add(zoomOutButton_, gbc);
-
+//      gbc = new GridBagConstraints();
+//      gbc.gridx = 0;
+//      gbc.gridy = 2;
+//      gbc.weightx = 1;
+//      gbc.weighty = 1;
+//      gbc.gridwidth = 1;
+//      gbc.anchor = GridBagConstraints.LINE_START;
+//      controls_.add(histRangeLabel, gbc);
+//
+//      gbc = new GridBagConstraints();
+//      gbc.gridx = 1;
+//      gbc.gridy = 2;
+//      gbc.weightx = 0;
+//      gbc.weighty = 1;
+//      gbc.gridwidth = 1;
+//      controls_.add(zoomInButton_, gbc);
+//
+//      gbc = new GridBagConstraints();
+//      gbc.gridx = 2;
+//      gbc.gridy = 2;
+//      gbc.weightx = 0;
+//      gbc.weighty = 1;
+//      gbc.gridwidth = 1;
+//      controls_.add(zoomOutButton_, gbc);
       gbc = new GridBagConstraints();
       gbc.gridx = 0;
       gbc.gridy = 3;
@@ -330,15 +361,14 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       controls_.setPreferredSize(controls_.getMinimumSize());
    }
 
-   
    public void setDisplayComboIndex(int index) {
       histRangeComboBox_.setSelectedIndex(index);
    }
-   
+
    public int getDisplayComboIndex() {
       return histRangeComboBox_.getSelectedIndex();
    }
-   
+
    private void zoomInAction() {
       int selected = histRangeComboBox_.getSelectedIndex();
       if (selected == 0) {
@@ -349,7 +379,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
       histRangeComboBox_.setSelectedIndex(selected);
    }
-   
+
    private void zoomOutAction() {
       int selected = histRangeComboBox_.getSelectedIndex();
       if (selected == 0) {
@@ -358,9 +388,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       if (selected < histRangeComboBox_.getModel().getSize() - 1) {
          selected++;
       }
-      histRangeComboBox_.setSelectedIndex(selected);  
+      histRangeComboBox_.setSelectedIndex(selected);
    }
-   
+
    public void displayComboAction() {
       int bits = histRangeComboBox_.getSelectedIndex() + 3;
       if (bits == 3) {
@@ -373,12 +403,12 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       updateHistogram();
       calcAndDisplayHistAndStats(true);
       storeDisplaySettings();
-      
+
    }
 
    private void updateHistogram() {
-      hp_.setCursorText(contrastMin_ +"", contrastMax_ + "");
-      hp_.setCursors(contrastMin_ / binSize_, (contrastMax_+1) / binSize_, gamma_);
+      hp_.setCursorText(contrastMin_ + "", contrastMax_ + "");
+      hp_.setCursors(contrastMin_ / binSize_, (contrastMax_ + 1) / binSize_, gamma_);
       hp_.repaint();
    }
 
@@ -398,23 +428,22 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void colorPickerLabelMouseClicked() {
-      //Can only edit color in this way if there is an active window
-      //so it is ok to get image cache in this way
-      String name = "selected";
-      if (cache_.getChannelName(channelIndex_) != null) {
-         name = cache_.getChannelName(channelIndex_);
-      }
       Color newColor = JColorChooser.showDialog(this, "Choose a color for the "
-              + name + " channel", cache_.getChannelColor(channelIndex_));
+              + channelName_ + " channel", color_);
       if (newColor != null) {
-         cache_.setChannelColor(channelIndex_, newColor.getRGB());
+         color_ = newColor;
       }
-      updateChannelNameAndColorFromCache();
-
-      //if multicamera, save color
-      if (newColor != null) {
-         saveColorPreference(cache_, newColor.getRGB());
+      colorPickerLabel_.setBackground(color_);
+      hp_.setTraceStyle(true, color_);
+      String name = channelName_;
+      if (channelName_.length() > 11) {
+         name = name.substring(0, 9) + "...";
       }
+      channelNameCheckbox_.setText(name);
+      calcAndDisplayHistAndStats(true);
+      mcHistograms_.applyLUTToImage();
+      display_.drawWithoutUpdate();
+      this.repaint();
    }
 
    /*
@@ -422,35 +451,35 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     * we cannot check for this directly from metadata,this performs a series of
     * checks to error on the side of not saving the preference
     */
-   private void saveColorPreference(MMImageCache cache, int color) {
-      CMMCore core = Magellan.getCore();
-      JSONObject summary = cache.getSummaryMetadata();
-      if (core == null || summary == null) {
-         return;
-      }
-      int numMultiCamChannels = (int) core.getNumberOfCameraChannels();
-      int numDataChannels;
-      JSONArray dataNames;
-      String[] cameraNames = new String[numMultiCamChannels];
-      try {
-         numDataChannels = MD.getNumChannels(summary);
-         dataNames = summary.getJSONArray("ChNames");
-         for (int i = 0; i < numMultiCamChannels; i++) {
-            cameraNames[i] = core.getCameraChannelName(i);
-         }
-
-         if (numMultiCamChannels > 1 && numDataChannels == numMultiCamChannels
-                 && cameraNames.length == dataNames.length()) {
-            for (int h = 0; h < cameraNames.length; h++) {
-               if (!cameraNames[h].equals(dataNames.getString(h))) {
-                  return;
-               }
-            }
-            GlobalSettings.getInstance().storeIntInPrefs("Color_Camera_" + cameraNames[channelIndex_], color);
-         }
-      } catch (Exception ex) {
-         
-      }
+   private void saveColorPreference(MagellanImageCache cache, int color) {
+//      CMMCore core = Magellan.getCore();
+//      JSONObject summary = cache.getSummaryMetadata();
+//      if (core == null || summary == null) {
+//         return;
+//      }
+//      int numMultiCamChannels = (int) core.getNumberOfCameraChannels();
+//      int numDataChannels;
+//      JSONArray dataNames;
+//      String[] cameraNames = new String[numMultiCamChannels];
+//      try {
+//         numDataChannels = MD.getNumChannels(summary);
+//         dataNames = summary.getJSONArray("ChNames");
+//         for (int i = 0; i < numMultiCamChannels; i++) {
+//            cameraNames[i] = core.getCameraChannelName(i);
+//         }
+//
+//         if (numMultiCamChannels > 1 && numDataChannels == numMultiCamChannels
+//                 && cameraNames.length == dataNames.length()) {
+//            for (int h = 0; h < cameraNames.length; h++) {
+//               if (!cameraNames[h].equals(dataNames.getString(h))) {
+//                  return;
+//               }
+//            }
+//            GlobalSettings.getInstance().storeIntInPrefs("Color_Camera_" + cameraNames[channelIndex_], color);
+//         }
+//      } catch (Exception ex) {
+//
+//      }
    }
 
    private void channelNameCheckboxAction() {
@@ -465,7 +494,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       } else {
          img_.getActiveChannels()[channelIndex_] = channelNameCheckbox_.isSelected();
       }
-        
+
       img_.getActiveChannels()[channelIndex_] = channelNameCheckbox_.isSelected();
       img_.updateAndDraw();
    }
@@ -480,11 +509,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       contrastMin_ = pixelMin_;
       contrastMax_ = pixelMax_;
       if (pixelMin_ == pixelMax_) {
-          if (pixelMax_ > 0) {
-              contrastMin_--;
-          } else {
-              contrastMax_++;
-          }
+         if (pixelMax_ > 0) {
+            contrastMin_--;
+         } else {
+            contrastMax_++;
+         }
       }
       if (histControlState_.ignoreOutliers) {
          if (contrastMin_ < minAfterRejectingOutliers_) {
@@ -496,29 +525,13 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             contrastMax_ = maxAfterRejectingOutliers_;
          }
          if (contrastMax_ <= contrastMin_) {
-             if (contrastMax_ > 0) {
-                 contrastMin_ = contrastMax_ - 1;
-             } else {
-                 contrastMax_ = contrastMin_ + 1;
-             }
+            if (contrastMax_ > 0) {
+               contrastMin_ = contrastMax_ - 1;
+            } else {
+               contrastMax_ = contrastMin_ + 1;
+            }
          }
       }
-   }
-
-
-   private void loadDisplaySettings(MMImageCache cache) {
-      contrastMax_ =  cache.getChannelMax(channelIndex_);
-      if (contrastMax_ < 0 || contrastMax_ > maxIntensity_) {
-         contrastMax_ = maxIntensity_;
-      }
-      contrastMin_ = cache.getChannelMin(channelIndex_);
-      gamma_ = cache.getChannelGamma(channelIndex_);
-      int histMax = cache.getChannelHistogramMax(channelIndex_);
-      if (histMax != -1) {
-         int index = (int) (Math.ceil(Math.log(histMax)/Math.log(2)) - 3);
-         histRangeComboBox_.setSelectedIndex(index);
-      }     
-//      mcHistograms_.setDisplayMode(cache.getDisplayMode());
    }
 
    private HistogramPanel addHistogramPanel() {
@@ -534,26 +547,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       };
       hp.setMargins(12, 12);
-      hp.setTraceStyle(true, color_);         
+      hp.setTraceStyle(true, color_);
       hp.setToolTipText("Click and drag curve to adjust gamma");
       histogramPanelHolder_.add(hp, BorderLayout.CENTER);
       hp.addCursorListener(this);
       return hp;
-   }
-
-   public void updateChannelNameAndColorFromCache() {
-      color_ = cache_.getChannelColor(channelIndex_);
-      colorPickerLabel_.setBackground(color_);
-      hp_.setTraceStyle(true, color_);
-      String name = cache_.getChannelName(channelIndex_);
-      if (name.length() > 11) {
-         name = name.substring(0, 9) + "...";
-      }
-      channelNameCheckbox_.setText(name);
-      calcAndDisplayHistAndStats(true);
-      mcHistograms_.applyLUTToImage();
-      display_.drawWithoutUpdate();
-      this.repaint();
    }
 
    public int getContrastMin() {
@@ -580,9 +578,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
          @Override
          public void run() {
-            Color color = cache_.getChannelColor(channelIndex_);
 
-            LUT lut = makeLUT(color, gamma_);
+            LUT lut = makeLUT(color_, gamma_);
             lut.min = contrastMin_;
             lut.max = contrastMax_;
             //uses lut.min and lut.max to set min and max of precessor
@@ -619,20 +616,20 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          SwingUtilities.invokeLater(run);
       }
    }
-   
+
    private void storeDisplaySettings() {
       int histMax = histRangeComboBox_.getSelectedIndex() == 0 ? -1 : histMax_;
-      display_.storeChannelHistogramSettings(channelIndex_, contrastMin_, contrastMax_,
-              gamma_, histMax,((MMCompositeImage) img_).getMode());
+      display_.storeChannelHistogramSettings(channelName_, contrastMin_, contrastMax_,
+              gamma_, histMax, ((MMCompositeImage) img_).getMode());
    }
-   
+
    public int getChannelIndex() {
       return channelIndex_;
    }
 
    /**
     * @param drawHist - set true if hist and stats calculated successfully
-    * 
+    *
     */
    public void calcAndDisplayHistAndStats(boolean drawHist) {
       if (img_ == null || img_.getProcessor() == null) {
@@ -646,7 +643,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       } else {
          MMCompositeImage ci = (MMCompositeImage) img_;
-         int flatIndex = 1 + channelIndex_ + (((DisplayPlus)display_).getVisibleSliceIndex()) * ci.getNChannelsUnverified()
+         int flatIndex = 1 + channelIndex_ + (((MagellanDisplay) display_).getVisibleSliceIndex()) * ci.getNChannelsUnverified()
                  + (img_.getFrame() - 1) * ci.getNSlicesUnverified() * ci.getNChannelsUnverified();
          ip = img_.getStack().getProcessor(flatIndex);
 
@@ -664,8 +661,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             drawHist = false;
          }
       }
-      
-      if (ip == null ) {
+
+      if (ip == null) {
          return;
       }
 
@@ -680,7 +677,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          maxAfterRejectingOutliers_ = rawHistogram.length;
          // specified percent of pixels are ignored in the automatic contrast setting
          int totalPoints = imgHeight * imgWidth;
-         HistogramUtils hu = new HistogramUtils(rawHistogram, totalPoints, 0.01*histControlState_.percentToIgnore);
+         HistogramUtils hu = new HistogramUtils(rawHistogram, totalPoints, 0.01 * histControlState_.percentToIgnore);
          minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
          maxAfterRejectingOutliers_ = hu.getMaxAfterRejectingOutliers();
       }
@@ -712,12 +709,12 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
       //Make sure max has correct value is hist display mode isnt auto
       if (histRangeComboBox_.getSelectedIndex() != -1) {
-         pixelMin_ = rawHistogram.length-1;
-         for (int i = rawHistogram.length-1; i > 0; i--) {
-            if (rawHistogram[i] > 0 && i > pixelMax_ ) {
+         pixelMin_ = rawHistogram.length - 1;
+         for (int i = rawHistogram.length - 1; i > 0; i--) {
+            if (rawHistogram[i] > 0 && i > pixelMax_) {
                pixelMax_ = i;
             }
-            if (rawHistogram[i] > 0 && i < pixelMin_ ) {
+            if (rawHistogram[i] > 0 && i < pixelMin_) {
                pixelMin_ = i;
             }
          }
@@ -732,7 +729,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       }
 
-      
       if (drawHist) {
          hp_.setVisible(true);
          //Draw histogram and stats
@@ -743,15 +739,15 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
          minMaxLabel_.setText("Min: " + pixelMin_ + "   " + "Max: " + pixelMax_);
       } else {
-          hp_.setVisible(false);        
+         hp_.setVisible(false);
       }
-      
+
    }
-   
+
    public void contrastMaxInput(int max) {
       contrastPanel_.disableAutostretch();
       contrastMax_ = max;
-      if (contrastMax_ > maxIntensity_ ) {
+      if (contrastMax_ > maxIntensity_) {
          contrastMax_ = maxIntensity_;
       }
       if (contrastMax_ < 0) {
@@ -762,14 +758,15 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
       applyLUT();
    }
-   
+
    @Override
-   public void contrastMinInput(int min) {    
+   public void contrastMinInput(int min) {
       contrastPanel_.disableAutostretch();
       contrastMin_ = min;
-      if (contrastMin_ >= maxIntensity_)
-          contrastMin_ = maxIntensity_ - 1;
-      if(contrastMin_ < 0 ) {
+      if (contrastMin_ >= maxIntensity_) {
+         contrastMin_ = maxIntensity_ - 1;
+      }
+      if (contrastMin_ < 0) {
          contrastMin_ = 0;
       }
       if (contrastMax_ < contrastMin_) {
@@ -781,8 +778,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    public void onLeftCursor(double pos) {
       contrastPanel_.disableAutostretch();
       contrastMin_ = (int) (Math.max(0, pos) * binSize_);
-      if (contrastMin_ >= maxIntensity_)
-          contrastMin_ = maxIntensity_ - 1;
+      if (contrastMin_ >= maxIntensity_) {
+         contrastMin_ = maxIntensity_ - 1;
+      }
       if (contrastMax_ < contrastMin_) {
          contrastMax_ = contrastMin_ + 1;
       }
@@ -822,26 +820,26 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          display_.drawWithoutUpdate();
       }
    }
-   
-      public static LUT makeLUT(Color color, double gamma) {
+
+   public static LUT makeLUT(Color color, double gamma) {
       int r = color.getRed();
       int g = color.getGreen();
       int b = color.getBlue();
 
       int size = 256;
-      byte [] rs = new byte[size];
-      byte [] gs = new byte[size];
-      byte [] bs = new byte[size];
+      byte[] rs = new byte[size];
+      byte[] gs = new byte[size];
+      byte[] bs = new byte[size];
 
       double xn;
       double yn;
-      for (int x=0;x<size;++x) {
-         xn = x / (double) (size-1);
+      for (int x = 0; x < size; ++x) {
+         xn = x / (double) (size - 1);
          yn = Math.pow(xn, gamma);
          rs[x] = (byte) (yn * r);
          gs[x] = (byte) (yn * g);
          bs[x] = (byte) (yn * b);
       }
-      return new LUT(8,size,rs,gs,bs);
+      return new LUT(8, size, rs, gs, bs);
    }
 }

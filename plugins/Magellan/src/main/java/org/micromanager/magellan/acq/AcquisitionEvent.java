@@ -18,8 +18,6 @@ package org.micromanager.magellan.acq;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.magellan.coordinates.XYStagePosition;
@@ -36,7 +34,8 @@ public class AcquisitionEvent {
    };
 
    public Acquisition acquisition_;
-   public int timeIndex_, zIndex_, channelIndex_, positionIndex_;
+   public int timeIndex_, zIndex_, positionIndex_;
+   public String channelName_ = "";
    public long miniumumStartTime_; //For pausing between time points
    public double zPosition_;
    public XYStagePosition xyPosition_;
@@ -51,7 +50,7 @@ public class AcquisitionEvent {
          JSONObject json = new JSONObject();
          json.put("acquisition-name", acquisition_.getUUID());
          json.put("time-index", timeIndex_);
-         json.put("channel-index", channelIndex_);
+         json.put("channel-index", channelName_);
          json.put("z-index", zIndex_);
          json.put("position-index", positionIndex_);
          
@@ -85,9 +84,9 @@ public class AcquisitionEvent {
          event.timeIndex_ = 0;
       }
       try {
-         event.channelIndex_ = json.getInt("channel-index");
+         event.channelName_.equals(json.getString("channel-name"));
       } catch (JSONException ex) {
-         event.channelIndex_ = 0;
+         event.channelName_ = null;
       }
       return event;
    }
@@ -98,8 +97,8 @@ public class AcquisitionEvent {
       //figure out which if any of xy, z, exposure, and channels are sequenced
       double z = sequence_.get(0).zPosition_;
       XYStagePosition xy = sequence_.get(0).xyPosition_;
-      double exposure = sequence_.get(0).acquisition_.channels_.getActiveChannelSetting(0).exposure_;
-      String config = sequence_.get(0).acquisition_.channels_.getActiveChannelSetting(0).config_;
+      double exposure = sequence_.get(0).acquisition_.channels_.getChannelSetting(sequence.get(0).channelName_).exposure_;
+      String config = sequence_.get(0).acquisition_.channels_.getChannelSetting(sequence.get(0).channelName_).config_;
       for (int i = 1; i < sequence_.size(); i++) {
          if (sequence_.get(i).zPosition_ != z) {
             zSequenced_ = true;
@@ -107,10 +106,10 @@ public class AcquisitionEvent {
          if (!sequence_.get(i).xyPosition_.getCenter().equals(xy.getCenter())) {
             xySequenced_ = true;
          }
-         if (exposure != sequence_.get(i).acquisition_.channels_.getActiveChannelSetting(i).exposure_) {
+         if (exposure != sequence_.get(i).acquisition_.channels_.getChannelSetting(sequence.get(0).channelName_).exposure_) {
             exposureSequenced_ = true;
          }
-         if (!config.equals(sequence_.get(i).acquisition_.channels_.getActiveChannelSetting(i).config_)) {
+         if (!config.equals(sequence_.get(i).acquisition_.channels_.getChannelSetting(sequence.get(0).channelName_).config_)) {
             channelSequenced_ = true;
          }
       }
@@ -125,7 +124,7 @@ public class AcquisitionEvent {
    public AcquisitionEvent copy() {
       AcquisitionEvent e = new AcquisitionEvent(this.acquisition_);
       e.timeIndex_ = timeIndex_;
-      e.channelIndex_ = channelIndex_;
+      e.channelName_ = channelName_;
       e.zIndex_ = zIndex_;
       e.positionIndex_ = positionIndex_;
       e.zPosition_ = zPosition_;
@@ -161,6 +160,6 @@ public class AcquisitionEvent {
       }
 
       return "P: " + positionIndex_ + "\tT: " + timeIndex_ + "\tZ: "
-              + zIndex_ + "\tC: " + channelIndex_ + "\tPos: " + xyPosition_;
+              + zIndex_ + "\tC: " + channelName_ + "\tPos: " + xyPosition_;
    }
 }

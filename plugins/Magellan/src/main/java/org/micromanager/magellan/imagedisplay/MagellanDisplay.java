@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.concurrent.ThreadFactory;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import org.micromanager.magellan.acq.MMImageCache;
+import org.micromanager.magellan.acq.MagellanImageCache;
 import ij.measure.Calibration;
 import java.io.File;
 import java.util.concurrent.ExecutionException;
@@ -46,7 +46,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.magellan.acq.MagellanGUIAcquisition;
 import org.micromanager.magellan.misc.JavaUtils;
 import org.micromanager.magellan.misc.Log;
 import org.micromanager.magellan.misc.LongPoint;
@@ -57,7 +61,7 @@ import org.micromanager.magellan.surfacesandregions.SurfaceGridManager;
 import org.micromanager.magellan.surfacesandregions.SurfaceInterpolator;
 import org.micromanager.magellan.surfacesandregions.XYFootprint;
 
-public class DisplayPlus extends VirtualAcquisitionDisplay implements SurfaceGridListener {
+public class MagellanDisplay extends VirtualAcquisitionDisplay implements SurfaceGridListener {
 
    private static final int MOUSE_WHEEL_ZOOM_INTERVAL_MS = 100;
    private static final int DELETE_SURF_POINT_PIXEL_TOLERANCE = 10;
@@ -79,9 +83,10 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements SurfaceGri
    private MultiResMultipageTiffStorage multiResStorage_;
    private DisplayWindowControls dwc_;
    private volatile JSONObject currentMetadata_;
+   private JSONObject displaySettings_;
    
-   public DisplayPlus(final MMImageCache stitchedCache, final Acquisition acq, JSONObject summaryMD,
-           MultiResMultipageTiffStorage multiResStorage) {
+   public MagellanDisplay(final MagellanImageCache stitchedCache, final Acquisition acq, JSONObject summaryMD,
+           MultiResMultipageTiffStorage multiResStorage, JSONObject displaySettings) {
       super(stitchedCache, acq != null ? acq.getName() : new File(multiResStorage.getDiskLocation()).getName(), summaryMD);      
       tileWidth_ = multiResStorage.getTileWidth();
       tileHeight_ = multiResStorage.getTileHeight();
@@ -89,12 +94,14 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements SurfaceGri
 
       exploreAcq_ = acq instanceof ExploreAcquisition;
 
+      displaySettings_ = displaySettings;
+      
       //create redraw pixels executor
       redrawPixelsExecutor_ = Executors.newSingleThreadExecutor(new ThreadFactory() {
 
          @Override
          public Thread newThread(Runnable r) {
-            return new Thread(r, DisplayPlus.this.getTitle() + ": Pixel update thread ");
+            return new Thread(r, MagellanDisplay.this.getTitle() + ": Pixel update thread ");
          }
       });
 
@@ -108,8 +115,8 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements SurfaceGri
       //add in customized zoomable acquisition virtual stack
       try {
          //looks like nSlicess only really matters during display startup
-         int nSlices = MD.getNumChannels(summaryMD) * (MD.isRGB32(summaryMD) ? 3 : 1) ;
-
+//         int nSlices = MD.getNumChannels(summaryMD) * (MD.isRGB32(summaryMD) ? 3 : 1) ;
+         int nSlices = 2;
 
          if (exploreAcq_) {
             mode_ = EXPLORE;
@@ -304,7 +311,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements SurfaceGri
       overlayer_.setSurfaceDisplayParams(surf, footprint);
       overlayer_.redrawOverlay();
    }
-
+   
    public int getMode() {
       return mode_;
    }
@@ -350,7 +357,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements SurfaceGri
               dwc_.isCurrentlyEditableSurfaceGridVisible()) {
          SurfaceInterpolator currentSurface = (SurfaceInterpolator) this.getCurrentEditableSurfaceOrGrid();
          if (SwingUtilities.isRightMouseButton(e) && !mouseDragging_) {
-            double z = zoomableStack_.getZCoordinateOfDisplayedSlice(DisplayPlus.this.getVisibleSliceIndex());
+            double z = zoomableStack_.getZCoordinateOfDisplayedSlice(MagellanDisplay.this.getVisibleSliceIndex());
             if (e.isShiftDown()) {
                //delete all points at slice
                currentSurface.deletePointsWithinZRange(Math.min(z - acq_.getZStep()/2, z + acq_.getZStep()/2),
@@ -650,6 +657,22 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements SurfaceGri
       return currentMetadata_;
    }
 
+   public JSONObject getDisplaySettings() {
+      return displaySettings_;
+   }
+
+   public void storeChannelHistogramSettings(String channelName_, int contrastMin_, int contrastMax_, double gamma_, int histMax, int mode) {
+      try {
+         displaySettings_.getJSONObject(channelName_).put("ContrastMin", contrastMin_);
+         displaySettings_.getJSONObject(channelName_).put("ContrastMax", contrastMax_);
+         displaySettings_.getJSONObject(channelName_).put("Gamma", gamma_);
+         displaySettings_.getJSONObject(channelName_).put("HistMax", histMax);
+         displaySettings_.getJSONObject(channelName_).put("Mode", mode);
+      } catch (JSONException ex) {
+         Log.log("Problem sotring display settings");
+      }
+   }
+
    private class UpdatePixelsAndOverlayRunnable implements RunnableFuture {
 
       private volatile boolean cancel_ = false;
@@ -670,15 +693,15 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements SurfaceGri
             public void run() {
                //Make sure correct pixels are set...think this is redundant when showing acquired 
                //images, but needed for zooming and panning
-               if (!DisplayPlus.this.getHyperImage().isComposite()) {
+               if (!MagellanDisplay.this.getHyperImage().isComposite()) {
                   //monochrome images
-                  Object pixels = zoomableStack_.getPixels(DisplayPlus.this.getHyperImage().getCurrentSlice());
-                  DisplayPlus.this.getHyperImage().getProcessor().setPixels(pixels);
+                  Object pixels = zoomableStack_.getPixels(MagellanDisplay.this.getHyperImage().getCurrentSlice());
+                  MagellanDisplay.this.getHyperImage().getProcessor().setPixels(pixels);
                } else {
-                  CompositeImage ci = (CompositeImage) DisplayPlus.this.getHyperImage();
+                  CompositeImage ci = (CompositeImage) MagellanDisplay.this.getHyperImage();
                   if (ci.getMode() == CompositeImage.COMPOSITE) {
                      //in case number of pixels has changed, update channel processors wih this call
-                     ((MMCompositeImage) DisplayPlus.this.getHyperImage()).updateImage();
+                     ((MMCompositeImage) MagellanDisplay.this.getHyperImage()).updateImage();
                      //now make sure each channel processor has pixels correctly
                      for (int i = 0; i < ((MMCompositeImage) ci).getNChannelsUnverified(); i++) {
                         //Dont need to set pixels if processor is null because it will get them from stack automatically  
@@ -692,7 +715,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements SurfaceGri
                      done_ = true;
                      return;
                   }
-                  Object pixels = zoomableStack_.getPixels(DisplayPlus.this.getHyperImage().getCurrentSlice());
+                  Object pixels = zoomableStack_.getPixels(MagellanDisplay.this.getHyperImage().getCurrentSlice());
                   if (pixels != null) {
                      ci.getProcessor().setPixels(pixels);
                   }
@@ -702,7 +725,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements SurfaceGri
                   return;
                }
                //update window title
-               DisplayPlus.this.getHyperImage().getWindow().repaint();
+               MagellanDisplay.this.getHyperImage().getWindow().repaint();
                //always draw overlay when pixels need to be updated. This call will interrupt itself if need be     
                drawOverlay();
 
@@ -710,7 +733,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements SurfaceGri
                   done_ = true;
                   return;
                }
-               DisplayPlus.this.updateAndDraw(forcePaint_);
+               MagellanDisplay.this.updateAndDraw(forcePaint_);
                done_ = true;
             }
          });

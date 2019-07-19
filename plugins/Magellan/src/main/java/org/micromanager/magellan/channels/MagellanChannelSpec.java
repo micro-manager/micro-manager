@@ -1,22 +1,42 @@
 package org.micromanager.magellan.channels;
 
-import java.awt.Color;
 import java.util.ArrayList;
-import org.micromanager.magellan.demo.DemoModeImageData;
+import java.util.LinkedList;
+import java.util.List;
 import org.micromanager.magellan.main.Magellan;
-import org.micromanager.magellan.misc.GlobalSettings;
 import mmcorej.StrVector;
 
 /**
  * Class to encapsulate a bunch of ChannelsSettings. Should be owned by a specific acquisition settings object 
  * @author Henry
  */
-public class ChannelSpec {
+public class MagellanChannelSpec {
     
     private ArrayList<ChannelSetting> channels_;
     
-    public ChannelSpec(String channelGroup) {
+    public List<String> getChannelNames() {
+       LinkedList<String> names = new LinkedList<String>();
+       for (ChannelSetting c : channels_) {
+          names.add(c.name_);
+       }
+       return names;
+    }
+    
+    public MagellanChannelSpec(String channelGroup) {
         updateChannelGroup(channelGroup);
+    }
+    
+    public ChannelSetting getChannelSetting(String name) {
+       if (name == null) {
+          //no channels, just a placeholder, return the default
+          return channels_.get(0);
+       }
+       for (ChannelSetting c : channels_) {
+          if (c.name_.equals(name)) {
+             return c;
+          }
+       }
+       throw new RuntimeException("channel with name " + name + " not found");
     }
     
     public void updateChannelGroup(String channelGroup) {
@@ -67,66 +87,22 @@ public class ChannelSpec {
       return false;
     }
     
-    public int getNumActiveChannels() {
-         int count = 0;
-        for (ChannelSetting c : channels_) {
-            count += c.use_ ? 1 : 0;
-        }
-        return count; 
-    }
-    
-    public String[] getActiveChannelNames() {
-        String[] channelNames = new String[getNumActiveChannels()];
-        for (int i = 0; i < channelNames.length; i++) {
-            channelNames[i] = getActiveChannelSetting(i).name_;
-        }
-        return channelNames;
-    }
-    
-      public String[] getAllChannelNames() {
-        String[] channelNames = new String[channels_.size()];
-        for (int i = 0; i < channelNames.length; i++) {
-            channelNames[i] = channels_.get(i).name_;
-        }
-        return channelNames;
-    }
-    
-      public Color[] getActiveChannelColors() {
-        Color[] channelColors = new Color[getNumActiveChannels()];
-        for (int i = 0; i < channelColors.length; i++) {
-            channelColors[i] = getActiveChannelSetting(i).color_;
-        }
-        return channelColors;
-    }
-      
-      
-   public Color[] getAllChannelColors() {
-        Color[] channelColors = new Color[channels_.size()];
-        for (int i = 0; i < channelColors.length; i++) {
-            channelColors[i] = channels_.get(i).color_;
-        }
-        return channelColors;
-    }
+//    public int getNumActiveChannels() {
+//         int count = 0;
+//        for (ChannelSetting c : channels_) {
+//            count += c.use_ ? 1 : 0;
+//        }
+//        return count; 
+//    }
 
     public int getNumChannels() {
         return channels_.size();
     }
     
-    public ChannelSetting getActiveChannelSetting(int i) {
-        for (ChannelSetting c : channels_) {
-            if (i == 0 && c.use_) {
-                return c;
-            }
-            if (c.use_) {
-                i--;
-            }
-        }
-        throw new RuntimeException();
-    }
-    
-    public ChannelSetting getChannelSetting(int i) {
-        return channels_.get(i);
-    }
+    //for use with tables of channels in the GUI but not in acquisition
+   public ChannelSetting getChannelListSetting(int i) {
+      return channels_.get(i);
+   }
     
     public void storeCurrentSettingsInPrefs() {        
       for (ChannelSetting c : channels_) {
@@ -145,5 +121,33 @@ public class ChannelSpec {
       }
       return names;
    }
+
+   public String getConfigName(int index) {
+      return channels_.get(index).config_;
+   }
+
+   public String getChannelGroup() {
+      return channels_.get(0).group_;
+   }
+
+   public String nextActiveChannel(String channelName) {
+      if (channelName == null) {
+         for (ChannelSetting c : channels_) {
+            if (c.use_ && c.uniqueEvent_) {
+               return c.name_;
+            }
+         }
+         return null;
+      }
+      ChannelSetting current = getChannelSetting(channelName);
+      int currentInd = channels_.indexOf(current);
+      for (int i = currentInd + 1; i < channels_.size(); i++) {
+         if (channels_.get(i).use_ && channels_.get(i).uniqueEvent_) {
+            return channels_.get(i).name_;
+         }
+      }
+      return null;
+   }
+
 
 }

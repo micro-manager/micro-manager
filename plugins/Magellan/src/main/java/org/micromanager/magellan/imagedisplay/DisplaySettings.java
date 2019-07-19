@@ -17,70 +17,49 @@
 package org.micromanager.magellan.imagedisplay;
 
 import java.awt.Color;
-import org.json.JSONArray;
+import java.util.ArrayList;
+import java.util.List;
+import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.magellan.channels.MagellanChannelSpec;
 import org.micromanager.magellan.misc.MD;
-
 
 public class DisplaySettings {
 
-   public static JSONObject getDisplaySettingsFromSummary(JSONObject summaryMetadata) throws Exception {
-      JSONObject displaySettings = new JSONObject();
+   public static JSONObject getDefaultDisplaySettings(MagellanChannelSpec channels, JSONObject summaryMD) {
+      int bitDepth = 16;
+      if (summaryMD.has("BitDepth")) {
+         bitDepth = MD.getBitDepth(summaryMD);
+      } else if (summaryMD.has("PixelType")) {
+         if (MD.isGRAY8(summaryMD) || MD.isRGB32(summaryMD)) {
+            bitDepth = 8;
+         }
+      }
 
-      //create empty display and comments object  
-      JSONArray channels = new JSONArray();            
-      JSONObject comments = new JSONObject();
-      displaySettings.put("Channels", channels);  
-      String summary = "";
-      comments.put("Summary", summary);
-      displaySettings.put("Comments", comments);
-      
-      int numDisplayChannels;
-      JSONArray chColors = null, chMaxes = null, chMins = null, chNames = null;
-      if (summaryMetadata.has("ChNames")) {
-         chNames = MD.getJSONArrayMember(summaryMetadata, "ChNames");
-         // HACK: derive the number of channels from the number of channel
-         // names. 
-         numDisplayChannels = chNames.length();
+      JSONObject dispSettings = new JSONObject();
+      List<String> channelNames = new ArrayList<String>();
+      if (channels != null) {
+         channelNames.addAll(channels.getChannelNames());
       } else {
-         numDisplayChannels = MD.getNumChannels(summaryMetadata);
-         if (MD.isRGB(summaryMetadata)) {
-            numDisplayChannels *= 3;
-         }
+         channelNames.add("");
       }
-      if (summaryMetadata.has("ChColors")) {
-          chColors = MD.getJSONArrayMember(summaryMetadata, "ChColors");
-      } 
-      if (summaryMetadata.has("ChContrastMin")) {
-         chMins = MD.getJSONArrayMember(summaryMetadata, "ChContrastMin");
-      } 
-      if ( summaryMetadata.has("ChContrastMax")) {
-         chMaxes = MD.getJSONArrayMember(summaryMetadata, "ChContrastMax");
-      }      
-      
-      for (int k = 0; k < numDisplayChannels; ++k) {
-         String name = chNames != null ? chNames.getString(k) :"channel " + k;
-         int color = (chColors != null && k < chColors.length()) ? 
-                 chColors.getInt(k) : Color.white.getRGB();
-         int min = (chMins != null && chMins.length() > k) ? chMins.getInt(k) : 0;
-         int bitDepth = 16;
-         if (summaryMetadata.has("BitDepth")) {
-            bitDepth = MD.getBitDepth(summaryMetadata);
-         } else if (summaryMetadata.has("PixelType")) {
-            if (MD.isGRAY8(summaryMetadata) || MD.isRGB32(summaryMetadata)) {
-               bitDepth = 8;
-            }
-         }
-         int max = (chMaxes != null && chMaxes.length() > k) ? chMaxes.getInt(k) : (int) (Math.pow(2, bitDepth) - 1);
-         JSONObject channelObject = new JSONObject();
-         channelObject.put("Color", color);
-         channelObject.put("Name", name);
-         channelObject.put("Gamma", 1.0);
-         channelObject.put("Min", min);
-         channelObject.put("Max", max);
-         channels.put(channelObject);
-      }
-      return displaySettings;
-   }
-}
+      for (String cName : channelNames) {
+         try {
+            JSONObject channelDisp = new JSONObject();
+            channelDisp.put("Color", cName.equals("") ? Color.white : channels.getChannelSetting(cName).color_.getRGB());
+            channelDisp.put("BitDepth", bitDepth);
+//         channelObject.put("Name", name);
+//         channelObject.put("Gamma", 1.0);
+//         channelObject.put("Min", min);
+//         channelObject.put("Max", max);
 
+            dispSettings.put(cName, channelDisp);
+         } catch (JSONException ex) {
+            //this wont happen
+            throw new RuntimeException(ex);
+         }
+      }
+      return dispSettings;
+   }
+
+}

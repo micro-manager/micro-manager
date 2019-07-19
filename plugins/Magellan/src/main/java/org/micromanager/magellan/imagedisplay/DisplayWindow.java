@@ -53,7 +53,7 @@ public class DisplayWindow extends StackWindow {
    private SubImageControls subImageControls_;
    private final JToggleButton arrowButton_;
    private Acquisition acq_;
-   private DisplayPlus disp_;
+   private MagellanDisplay disp_;
    private JPanel nonImagePanel_, controlsAndContrastPanel_;
    private volatile boolean saveWindowResize_ = false;
    private ContrastPanelMagellanAdapter contrastPanelMagellan_;
@@ -92,7 +92,7 @@ public class DisplayWindow extends StackWindow {
       }
    };
 
-   public DisplayWindow(final ImagePlus plus, final EventBus bus, DisplayPlus disp) {
+   public DisplayWindow(final ImagePlus plus, final EventBus bus, MagellanDisplay disp) {
       super(plus);
       acq_ = disp.getAcquisition();
       disp_ = disp;
@@ -283,7 +283,7 @@ public class DisplayWindow extends StackWindow {
             double heightRatio = disp_.getFullResHeight() / (double) canvasPanel_.getSize().height;
             int viewResIndex = (int) Math.max(0, Math.ceil(Math.log(Math.max(widthRatio, heightRatio)) / Math.log(2)));
             //set max res index so that min dimension doesn't shrink below 64-128 pixels
-            int maxResIndex = (int) Math.ceil(Math.log((Math.min(disp_.getFullResWidth(), disp_.getFullResHeight())
+            int maxResIndex = (int) Math.ceil(Math.log((Math.max(disp_.getFullResWidth(), disp_.getFullResHeight())
                     / MINIMUM_CANVAS_DIMENSION)) / Math.log(2));
             ((ZoomableVirtualStack) disp_.getHyperImage().getStack()).initializeUpToRes(viewResIndex, maxResIndex);
             //resize to the biggest it can be in current window with correct aspect ration                
@@ -303,6 +303,10 @@ public class DisplayWindow extends StackWindow {
       }
    }
 
+   public int getNumChannels() {
+      return dwControls_.getNumChannels();
+   }
+   
    /**
     * When shrinking with arrow: -remove controls and shrink window by the size
     * of controls
@@ -587,6 +591,10 @@ public class DisplayWindow extends StackWindow {
       return subImageControls_;
    }
 
+   public DisplayWindowControls getDisplayWindowControls() {
+      return dwControls_;
+   }
+   
    @Override
    public boolean close() {
       windowClosing(null);

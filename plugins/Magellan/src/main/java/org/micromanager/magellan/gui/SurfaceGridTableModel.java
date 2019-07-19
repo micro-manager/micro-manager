@@ -65,35 +65,29 @@ public class SurfaceGridTableModel extends AbstractTableModel implements Surface
          } catch (Exception ex) {
             Log.log("Name already taken by existing Surface/Grid", true);
          }
-      } 
+      }
    }
 
    @Override
    public Object getValueAt(int rowIndex, int columnIndex) {
 //         private final String[] COLUMNS = {"Type", "Name", "XY padding (um)", "Z Device", "# Positions",
 //      "# Rows", "# Cols", "Width (um)", "Height (um)"};
-         
+
       XYFootprint surfaceOrGird = manager_.getSurfaceOrGrid(rowIndex);
       if (columnIndex == 0) {
-         return manager_.getSurfaceOrGrid(rowIndex) instanceof SurfaceInterpolator ? "Surface"  : "Grid";
-      } else if (columnIndex == 1) {         
+         return manager_.getSurfaceOrGrid(rowIndex) instanceof SurfaceInterpolator ? "Surface" : "Grid";
+      } else if (columnIndex == 1) {
          return manager_.getSurfaceOrGrid(rowIndex).getName();
-      }  else if (columnIndex == 2) {
+      } else if (columnIndex == 2) {
          if (manager_.getSurfaceOrGrid(rowIndex) instanceof MultiPosGrid) {
             return "N/A";
          }
          return ((SurfaceInterpolator) manager_.getSurfaceOrGrid(rowIndex)).getZDevice();
       } else {
-         try {
-            XYFootprint object = manager_.getSurfaceOrGrid(rowIndex);
-            List<XYStagePosition> positions = object.getXYPositionsNoUpdate();
-            return  positions != null ? positions.size() : 0; 
-         } catch (InterruptedException ex) {
-            Log.log(ex);
-            return null;
-         }
-
-      } 
+         XYFootprint object = manager_.getSurfaceOrGrid(rowIndex);
+         List<XYStagePosition> positions = object.getXYPositionsNoUpdate();
+         return positions != null ? positions.size() : 0;
+      }
    }
 
    @Override

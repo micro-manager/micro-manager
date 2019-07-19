@@ -62,7 +62,7 @@ public class MultiResMultipageTiffStorage {
    private TaggedImageStorageMultipageTiff fullResStorage_;
    private TreeMap<Integer, TaggedImageStorageMultipageTiff> lowResStorages_; //map of resolution index to storage instance
    private String directory_;
-   private JSONObject summaryMD_;
+   private JSONObject summaryMD_, displaySettings_;
    private int xOverlap_, yOverlap_;
    private int fullResTileWidthIncludingOverlap_, fullResTileHeightIncludingOverlap_;
    private int tileWidth_, tileHeight_; //Indpendent of zoom level because tile sizes stay the same--which means overlap is cut off
@@ -85,7 +85,7 @@ public class MultiResMultipageTiffStorage {
       finished_ = true;
       String fullResDir = dir + (dir.endsWith(File.separator) ? "" : File.separator) + FULL_RES_SUFFIX;
       //create fullResStorage
-      fullResStorage_ = new TaggedImageStorageMultipageTiff(fullResDir, false, null, null);
+      fullResStorage_ = new TaggedImageStorageMultipageTiff(fullResDir, false, null, null, this);
       summaryMD_ = fullResStorage_.getSummaryMetadata();
       processSummaryMetadata();
       lowResStorages_ = new TreeMap<Integer, TaggedImageStorageMultipageTiff>();
@@ -97,7 +97,7 @@ public class MultiResMultipageTiffStorage {
          if (!new File(dsDir).exists()) {
             break;
          }
-         lowResStorages_.put(resIndex, new TaggedImageStorageMultipageTiff(dsDir, false, null, null));
+         lowResStorages_.put(resIndex, new TaggedImageStorageMultipageTiff(dsDir, false, null, null, this));
          resIndex++;
       }
 
@@ -117,7 +117,8 @@ public class MultiResMultipageTiffStorage {
          }
          JSONArray pList = new JSONArray();
          for (XYStagePosition xyPos : positions.values()) {
-            pList.put(xyPos.getMMPosition(MD.getCoreXY(summaryMD_)));
+//            pList.put(xyPos.getMMPosition(MD.getCoreXY(summaryMD_)));
+            pList.put(xyPos.getMMPosition());
          }
          posManager_ = new PositionManager(affine_, summaryMD_, tileWidth_, tileHeight_, tileWidth_, tileHeight_,
                  xOverlap_, xOverlap_, pList, lowResStorages_.size());
@@ -167,13 +168,17 @@ public class MultiResMultipageTiffStorage {
       }
       try {
          //Create full Res storage
-         fullResStorage_ = new TaggedImageStorageMultipageTiff(fullResDir, true, summaryMetadata, writingExecutor_);
+         fullResStorage_ = new TaggedImageStorageMultipageTiff(fullResDir, true, summaryMetadata, writingExecutor_, this);
       } catch (IOException ex) {
          Log.log("couldn't create Full res storage", true);
       }
       lowResStorages_ = new TreeMap<Integer, TaggedImageStorageMultipageTiff>();
    }
 
+   public void setDisplaySettings(JSONObject displaySettings) {
+      displaySettings_ = displaySettings;
+   }
+   
    public static JSONObject readSummaryMetadata(String dir) throws IOException {
       String fullResDir = dir + (dir.endsWith(File.separator) ? "" : File.separator) + FULL_RES_SUFFIX;
       return TaggedImageStorageMultipageTiff.readSummaryMD(fullResDir);
@@ -624,7 +629,9 @@ public class MultiResMultipageTiffStorage {
                long gridCol = posManager_.getGridCol(fullResPositionIndex, resolutionIndex);
                MD.setPositionName(tags, "Grid_" + gridRow + "_" + gridCol);
                MD.setPositionIndex(tags, posManager_.getLowResPositionIndex(fullResPositionIndex, resolutionIndex));
-               writeFinishedList.add(lowResStorages_.get(resolutionIndex).putImage(new TaggedImage(currentLevelPix, tags)));
+               Future f = lowResStorages_.get(resolutionIndex).putImage(new TaggedImage(currentLevelPix, tags));
+               //need to make sure this one gets written before others can be overwritten
+               f.get();
             } else {
                //Image already exists, only overwrite pixels to include new tiles
                writeFinishedList.addAll(lowResStorages_.get(resolutionIndex).overwritePixels(currentLevelPix,
@@ -656,7 +663,7 @@ public class MultiResMultipageTiffStorage {
          //reset dimensions so that overlap not included
          MD.setWidth(smd, tileWidth_);
          MD.setHeight(smd, tileHeight_);
-         TaggedImageStorageMultipageTiff storage = new TaggedImageStorageMultipageTiff(dsDir, true, smd, writingExecutor_);
+         TaggedImageStorageMultipageTiff storage = new TaggedImageStorageMultipageTiff(dsDir, true, smd, writingExecutor_, this);
          lowResStorages_.put(resIndex, storage);
       } catch (Exception ex) {
          Log.log("Couldnt create downsampled storage");
@@ -671,6 +678,12 @@ public class MultiResMultipageTiffStorage {
          List<Future> writeFinishedList = new ArrayList<Future>();
          //write to full res storage as normal (i.e. with overlap pixels present)
          writeFinishedList.add(fullResStorage_.putImage(MagellanTaggedImage));
+         //check if maximum resolution level needs to be updated based on full size of image
+         long fullResPixelWidth = getNumCols() * getTileWidth();
+         long fullResPixelHeight = getNumRows() * getTileHeight();
+         int maxResIndex = (int) Math.ceil(Math.log((Math.max(fullResPixelWidth, fullResPixelHeight)
+                    / 200)) / Math.log(2));
+          addResolutionsUpTo(maxResIndex);
          writeFinishedList.addAll(addToLowResStorage(MagellanTaggedImage, 0, MD.getPositionIndex(MagellanTaggedImage.tags)));
          for (Future f : writeFinishedList) {
             f.get();
@@ -739,12 +752,8 @@ public class MultiResMultipageTiffStorage {
       return fullResStorage_.getSummaryMetadata();
    }
 
-   public void setDisplayAndComments(JSONObject settings) {
-      fullResStorage_.setDisplayAndComments(settings);
-   }
-
-   public JSONObject getDisplayAndComments() {
-      return fullResStorage_.getDisplayAndComments();
+   public JSONObject getDisplaySettings() {
+      return displaySettings_;
    }
 
    public void close() {
@@ -809,10 +818,6 @@ public class MultiResMultipageTiffStorage {
          sum += s.getDataSetSize();
       }
       return sum;
-   }
-
-   public void writeDisplaySettings() {
-      //who cares
    }
 
    //Copied from MMAcquisition

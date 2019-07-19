@@ -17,7 +17,7 @@
 package org.micromanager.magellan.acq;
 
 import java.util.prefs.Preferences;
-import org.micromanager.magellan.channels.ChannelSpec;
+import org.micromanager.magellan.channels.MagellanChannelSpec;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.surfacesandregions.SurfaceInterpolator;
 import org.micromanager.magellan.surfacesandregions.XYFootprint;
@@ -26,7 +26,7 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
  *
  * @author Henry
  */
-public class MagellanGUIAcquisitionSettings  {
+public class MagellanGUIAcquisitionSettings {
    
    public static final String PREF_PREFIX = "Fixed area acquisition ";
 
@@ -61,7 +61,7 @@ public class MagellanGUIAcquisitionSettings  {
    
    //channels
    public volatile String channelGroup_;
-   public volatile ChannelSpec channels_ ;
+   public volatile MagellanChannelSpec channels_ ;
 
    public MagellanGUIAcquisitionSettings() {
       Preferences prefs = Magellan.getPrefs();
@@ -85,7 +85,7 @@ public class MagellanGUIAcquisitionSettings  {
       //channels
       channelGroup_ = prefs.get(PREF_PREFIX + "CHANNELGROUP", "");
       //This creates a new Object of channelSpecs that is "Owned" by the accquisition
-      channels_ = new ChannelSpec(channelGroup_); 
+      channels_ = new MagellanChannelSpec(channelGroup_); 
    }
    
    public static double getStoredTileOverlapPercentage() {
@@ -129,9 +129,15 @@ public class MagellanGUIAcquisitionSettings  {
       } else {
          s += "2D along surface";
       }
-      int numC = channels_.getNumActiveChannels();
-      if (numC > 1) {
-         s += " " + numC + " channels";
+      
+      int nChannels = 1;
+      String chName = channels_.nextActiveChannel(null);
+      while (chName != null) {
+         nChannels++;
+         chName = channels_.nextActiveChannel(chName);
+      }
+      if (nChannels > 1) {
+         s += " " + nChannels + " channels";
       }
       if (timeEnabled_) {
          s += " " + numTimePoints_ + " time points";

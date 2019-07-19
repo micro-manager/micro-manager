@@ -17,7 +17,7 @@
 
 package org.micromanager.magellan.imagedisplay;
 
-import org.micromanager.magellan.acq.MMImageCache;
+import org.micromanager.magellan.acq.MagellanImageCache;
 import ij.ImagePlus;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
@@ -36,7 +36,7 @@ import org.micromanager.magellan.misc.MD;
  */
 public class AcquisitionVirtualStack extends ij.VirtualStack {
 
-   final private MMImageCache imageCache_;
+   final private MagellanImageCache imageCache_;
    final protected VirtualAcquisitionDisplay vad_;
    final protected int width_, height_, type_;
    private final int nSlices_;
@@ -44,7 +44,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    private boolean rgb_;
 
    public AcquisitionVirtualStack(int width, int height, int type,
-           ColorModel cm, MMImageCache imageCache, int nSlices,
+           ColorModel cm, MagellanImageCache imageCache, int nSlices,
            VirtualAcquisitionDisplay acq, boolean rgb) {
       super(width, height, cm, "");
       imageCache_ = imageCache;

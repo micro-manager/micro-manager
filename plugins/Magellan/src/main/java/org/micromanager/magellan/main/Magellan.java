@@ -33,7 +33,7 @@ import org.scijava.plugin.SciJavaPlugin;
 @Plugin(type = MenuPlugin.class)
 public class Magellan implements MenuPlugin, SciJavaPlugin {
 
-   private static final String VERSION = "2.0.0";
+   public static final String VERSION = "2.1.0";
 
    public static final String menuName = "Micro-Magellan";
    public static final String tooltipDescription = "High throughout, automated micrscopy for slidescanning or volumetric imaging";
@@ -41,13 +41,17 @@ public class Magellan implements MenuPlugin, SciJavaPlugin {
    private static Preferences prefs_;
    private static Studio mmAPI_;
    private static GUI gui_;
-   private ZMQMasterServer bridge_;
+   private static ZMQMasterServer bridge_;
    private static MagellanAPI api_;
 
    public Magellan() {
       try {
-         bridge_ = new ZMQMasterServer();
-         api_ = new MagellanAPI();
+         if (bridge_ == null) {
+            bridge_ = new ZMQMasterServer();
+         }
+         if (api_ == null) {
+            api_ = new MagellanAPI();
+         }
       } catch (Exception e) {
          e.printStackTrace();
          //ignore for now
