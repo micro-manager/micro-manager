@@ -1,10 +1,13 @@
 <project name="MMCoreJ" basedir="." default="jar">
 	<include file="../buildscripts/buildprops.xml"/>
 	<property name="srcdir" value="${mm.swig.javasrcdir}"/>
-	<property name="json.srcdir" value="${mm.basedir}/mmstudio/src/main/java"/>
 	<property name="package" value="mmcorej"/>
 
 	<import file="../buildscripts/javabuild.xml"/>
+
+   <path id="project.classpath">
+      <fileset dir="${mm.ivy.lib.dir}/compile" includes="json*.jar"/>
+   </path>
 
 	<!-- Override mm.javabuild.compile -->
 	<target name="compile" depends="prepare" description="Compile Java sources">
@@ -13,9 +16,7 @@
 		<copy todir="${srcdir}/${package}" file="TaggedImage.java"/>
 
 		<mm-javac destdir="${intdir}">
-			<src path="${json.srcdir}"/>
-			<include name="org/json/**"/>
-
+         <classpath refid="project.classpath"/>
 			<src path="${srcdir}"/>
 			<include name="${package}/**"/>
 		</mm-javac>
