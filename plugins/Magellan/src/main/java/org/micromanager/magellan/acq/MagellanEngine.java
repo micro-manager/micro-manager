@@ -35,6 +35,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 import org.micromanager.magellan.channels.ChannelSetting;
 import org.micromanager.magellan.misc.Log;
@@ -404,6 +406,12 @@ public class MagellanEngine {
       return savingExecutor_.submit(() -> {
          ArrayList<TaggedImage> images = new ArrayList<TaggedImage>();
          for (int i = 0; i < (event.sequence_ == null ? 1 : event.sequence_.size()); i++) {
+            double exposure;
+            try {
+               exposure = event.acquisition_.channels_ == null ? core_.getExposure() : event.acquisition_.channels_.getChannelSetting(event.channelName_).exposure_;
+            } catch (Exception ex) {
+               throw new RuntimeException("Couldnt get exposure form core");
+            }
             for (int c = 0; c < core_.getNumberOfCameraChannels(); c++) {
                TaggedImage ti = null;
                while (ti == null) {
@@ -417,9 +425,9 @@ public class MagellanEngine {
                      }
                   }
                }
+              
                event.acquisition_.addImageMetadata(ti.tags, event, event.timeIndex_, c, currentTime - event.acquisition_.getStartTime_ms(),
-                       event.acquisition_.channels_.getChannelSetting(event.channelName_).exposure_,
-                       core_.getNumberOfCameraChannels() > 1);
+                          exposure, core_.getNumberOfCameraChannels() > 1);
                images.add(ti);
             }
 
@@ -429,9 +437,9 @@ public class MagellanEngine {
             }
             //keep track of how long it takes to acquire an image for acquisition duration estimation
             try {
-
+                  
                acqDurationEstiamtor_.storeImageAcquisitionTime(
-                       event.acquisition_.channels_.getChannelSetting(event.channelName_).exposure_, System.currentTimeMillis() - startTime);
+                        exposure, System.currentTimeMillis() - startTime);
             } catch (Exception ex) {
                Log.log(ex);
             }
@@ -576,9 +584,9 @@ public class MagellanEngine {
                      String propName = ps.getPropertyName();
                      core_.startPropertySequence(deviceName, propName);
                   }
-               } else if (lastEvent_ == null || event.channelName_ != null && lastEvent_.channelName_ != null
-                       && !event.channelName_.equals(lastEvent_.channelName_) && event.acquisition_.channels_
-                       != null) {
+               } else if (event.acquisition_.channels_ != null && (lastEvent_ == null || 
+                       event.channelName_ != null && lastEvent_.channelName_ != null
+                       && !event.channelName_.equals(lastEvent_.channelName_) && event.acquisition_.channels_ != null)) {
                   final ChannelSetting setting = event.acquisition_.channels_.getChannelSetting(event.channelName_);
                   if (setting.use_ && setting.config_ != null) {
                      //set exposure

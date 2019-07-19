@@ -117,7 +117,8 @@ public class MultiResMultipageTiffStorage {
          }
          JSONArray pList = new JSONArray();
          for (XYStagePosition xyPos : positions.values()) {
-            pList.put(xyPos.getMMPosition(MD.getCoreXY(summaryMD_)));
+//            pList.put(xyPos.getMMPosition(MD.getCoreXY(summaryMD_)));
+            pList.put(xyPos.getMMPosition());
          }
          posManager_ = new PositionManager(affine_, summaryMD_, tileWidth_, tileHeight_, tileWidth_, tileHeight_,
                  xOverlap_, xOverlap_, pList, lowResStorages_.size());

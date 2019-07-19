@@ -30,7 +30,6 @@ import org.micromanager.magellan.imagedisplay.SubImageControls;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.Log;
 import org.json.JSONArray;
-import org.micromanager.magellan.channels.MagellanChannelSpec;
 
 /**
  * A single time point acquisition that can dynamically expand in X,Y, and Z
@@ -77,44 +76,6 @@ public class ExploreAcquisition extends Acquisition {
       queuedTileEvents_.clear();
       super.abort();
    }
-
-//   //Override the default acquisition channels function because explore acquisitions use all channels instead of active channels
-//   @Override
-//   protected Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels(ChannelSpec channels) {
-//      return (AcquisitionEvent event) -> {
-//         return new Iterator<AcquisitionEvent>() {
-//            int channelIndex_ = 0;
-//
-//            @Override
-//            public boolean hasNext() {
-//               while (channelIndex_ < channels.getNumChannels() && (!channels.getChannelSetting(channelIndex_).uniqueEvent_
-//                       || !channels.getChannelSetting(channelIndex_).use_)) {
-//                  channelIndex_++;
-//                  if (channelIndex_ >= channels.getNumChannels()) {
-//                     return false;
-//                  }
-//               }
-//               return channelIndex_ < channels.getNumChannels();
-//            }
-//
-//            @Override
-//            public AcquisitionEvent next() {
-//               AcquisitionEvent channelEvent = event.copy();
-//               while (channelIndex_ < channels.getNumChannels() && (!channels.getChannelSetting(channelIndex_).uniqueEvent_
-//                       || !channels.getChannelSetting(channelIndex_).use_)) {
-//                  channelIndex_++;
-//                  if (channelIndex_ >= channels.getNumChannels()) {
-//                     throw new RuntimeException("No valid channels remianing");
-//                  }
-//               }
-//               channelEvent.channelIndex_ = channelIndex_;
-//               channelEvent.zPosition_ += channels.getChannelSetting(channelIndex_).offset_;
-//               channelIndex_++;
-//               return channelEvent;
-//            }
-//         };
-//      };
-//   }
 
    public void acquireTileAtCurrentLocation(final SubImageControls controls) {
       double xPos, yPos, zPos;
@@ -175,7 +136,7 @@ public class ExploreAcquisition extends Acquisition {
               = new ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>>();
       acqFunctions.add(positions(posIndices, posManager_.getPositionList()));
       acqFunctions.add(zStack(minZIndex, maxZIndex + 1));
-      if (!channels_.getChannelGroup().equals("")) {
+      if (channels_ != null) {
          acqFunctions.add(channels(channels_));
       }
 

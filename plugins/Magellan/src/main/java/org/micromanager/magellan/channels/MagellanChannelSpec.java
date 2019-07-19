@@ -1,12 +1,9 @@
 package org.micromanager.magellan.channels;
 
-import java.awt.Color;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import org.micromanager.magellan.demo.DemoModeImageData;
 import org.micromanager.magellan.main.Magellan;
-import org.micromanager.magellan.misc.GlobalSettings;
 import mmcorej.StrVector;
 
 /**

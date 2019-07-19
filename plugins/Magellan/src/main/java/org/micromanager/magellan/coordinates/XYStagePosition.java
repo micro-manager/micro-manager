@@ -36,6 +36,7 @@ public class XYStagePosition {
    private final Point2D.Double[] displayedTileCorners_;
    private final Point2D.Double[] fullTileCorners_;
    private final long gridRow_, gridCol_;
+   private final String xyName_;
    
    /**
     * for opening prevously acquired data
@@ -47,6 +48,7 @@ public class XYStagePosition {
       gridRow_ = row;
       displayedTileCorners_ = null;
       fullTileCorners_ = null;
+      xyName_ = null;
    }
 
    /**
@@ -81,6 +83,7 @@ public class XYStagePosition {
 
       gridCol_ = col;
       gridRow_ = row;
+      xyName_ = Magellan.getCore().getXYStageDevice();
    }
    
    public long getGridRow() {
@@ -107,17 +110,17 @@ public class XYStagePosition {
       return label_;
    }
    
-   public JSONObject getMMPosition() {
-      return getMMPosition(Magellan.getCore().getXYStageDevice());
+   public String getXYDevice() {
+      return xyName_;
    }
    
-   public JSONObject getMMPosition(String xyStageName) {
+   public JSONObject getMMPosition() {
       try {
          JSONObject coordinates = new JSONObject();
          JSONArray xy = new JSONArray();
          xy.put(center_.x);
          xy.put(center_.y);
-         coordinates.put(xyStageName, xy);
+         coordinates.put(xyName_, xy);
          JSONObject pos = new JSONObject();
          pos.put("DeviceCoordinatesUm", coordinates);
          pos.put("GridColumnIndex", gridCol_);

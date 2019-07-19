@@ -29,7 +29,6 @@ public class ExploreAcqSettings  {
    private static final String EXPLORE_DIR_PREF = "Explore acq dir";
    private static final String EXPLORE_Z_STEP = "Explore acq zStep";
    private static final String EXPLORE_TILE_OVERLAP = "Explore tile overlap";
-   private static final String EXPLORE_RANK = "Explore rank";
 
    
    public final double zStep_;
@@ -44,7 +43,11 @@ public class ExploreAcqSettings  {
       name_ = name;   
       tileOverlap_ = overlapPercent;
       //channels is all available channels for group
-      channels_ = new MagellanChannelSpec(channelGroup);
+      if (channelGroup.equals("")) {
+         channels_ = null;
+      } else {
+         channels_ = new MagellanChannelSpec(channelGroup);
+      }
       
       //now that explore acquisition is being run, store values
       GlobalSettings.getInstance().storeStringInPrefs(EXPLORE_DIR_PREF, dir);

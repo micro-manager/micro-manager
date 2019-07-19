@@ -35,7 +35,7 @@ public class AcquisitionEvent {
 
    public Acquisition acquisition_;
    public int timeIndex_, zIndex_, positionIndex_;
-   public String channelName_;
+   public String channelName_ = "";
    public long miniumumStartTime_; //For pausing between time points
    public double zPosition_;
    public XYStagePosition xyPosition_;

@@ -73,9 +73,13 @@ public class DisplayWindowControls extends Panel implements SurfaceGridListener 
          DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
          renderer.setHorizontalAlignment(SwingConstants.LEFT); // left justify
          channelsTable_.getColumnModel().getColumn(2).setCellRenderer(renderer);
+         channelsTable_.getColumnModel().getColumn(0).setMaxWidth(30); //Acitve checkbox column
+
          //start in explore
          tabbedPane_.setSelectedIndex(0);
-      } else {
+      } 
+      
+      if (!(acq_ instanceof ExploreAcquisition) || acq_.getChannels() == null) {
          tabbedPane_.remove(3); //remove explore tab
          acquireAtCurrentButton_.setVisible(false);
          tabbedPane_.setSelectedIndex(0); //statr on contrst
@@ -99,17 +103,17 @@ public class DisplayWindowControls extends Panel implements SurfaceGridListener 
       //So it is initialized correctly when surfaces are already present
       updateSurfaceGridSelection();
       updateMode();
-      
-      if (!(acq_ instanceof ExploreAcquisition )) {
-        exploreButton_.setVisible(false);
-        acquireAtCurrentButton_.setVisible(false);
-      } 
+
+      if (!(acq_ instanceof ExploreAcquisition)) {
+         exploreButton_.setVisible(false);
+         acquireAtCurrentButton_.setVisible(false);
+      }
    }
 
    public int getNumChannels() {
       return cpMagellan_.getNumChannels();
    }
-   
+
    private void updateSurfaceGridSelection() {
       selectedSurfaceGridIndex_ = surfaceGridTable_.getSelectedRow();
       //if last in list is removed, update the selected index
@@ -132,7 +136,7 @@ public class DisplayWindowControls extends Panel implements SurfaceGridListener 
       }
       display_.drawOverlay();
    }
-   
+
    private void updateMode() {
       if (acq_ instanceof ExploreAcquisition && exploreButton_.isSelected()) {
          display_.setMode(MagellanDisplay.EXPLORE);
@@ -144,6 +148,7 @@ public class DisplayWindowControls extends Panel implements SurfaceGridListener 
          display_.setMode(MagellanDisplay.NONE);
       }
    }
+
    /**
     * Called just before image redrawn
     */
@@ -305,6 +310,8 @@ public class DisplayWindowControls extends Panel implements SurfaceGridListener 
       explorePanel_ = new javax.swing.JPanel();
       jScrollPane1 = new javax.swing.JScrollPane();
       channelsTable_ = new javax.swing.JTable();
+      selectUseAllButton_ = new javax.swing.JButton();
+      syncExposuresButton_ = new javax.swing.JButton();
       jPanel1 = new javax.swing.JPanel();
       showInFolderButton_ = new javax.swing.JButton();
       abortButton_ = new javax.swing.JButton();
@@ -334,7 +341,7 @@ public class DisplayWindowControls extends Panel implements SurfaceGridListener 
          contrastPanelPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(contrastPanelPanel_Layout.createSequentialGroup()
             .addContainerGap()
-            .addComponent(cpMagellan_, javax.swing.GroupLayout.DEFAULT_SIZE, 406, Short.MAX_VALUE))
+            .addComponent(cpMagellan_, javax.swing.GroupLayout.DEFAULT_SIZE, 412, Short.MAX_VALUE))
       );
 
       tabbedPane_.addTab("Contrast", contrastPanelPanel_);
@@ -479,7 +486,7 @@ public class DisplayWindowControls extends Panel implements SurfaceGridListener 
                   .addContainerGap()
                   .addComponent(surfaceGridSpecificControlsPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)))
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 356, Short.MAX_VALUE))
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 362, Short.MAX_VALUE))
       );
 
       tabbedPane_.addTab("Surfaces and Grids", surfaceGridPanel_);
@@ -502,17 +509,42 @@ public class DisplayWindowControls extends Panel implements SurfaceGridListener 
       channelsTable_.setModel(acq_ != null ? new SimpleChannelTableModel(acq_.getChannels(),false) : new DefaultTableModel());
       jScrollPane1.setViewportView(channelsTable_);
 
+      selectUseAllButton_.setText("Select all");
+      selectUseAllButton_.setToolTipText("Select or deselect all channels");
+      selectUseAllButton_.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            selectUseAllButton_ActionPerformed(evt);
+         }
+      });
+
+      syncExposuresButton_.setText("Sync exposures");
+      syncExposuresButton_.setToolTipText("Make all exposures equal to the top channel exposures");
+      syncExposuresButton_.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            syncExposuresButton_ActionPerformed(evt);
+         }
+      });
+
       javax.swing.GroupLayout explorePanel_Layout = new javax.swing.GroupLayout(explorePanel_);
       explorePanel_.setLayout(explorePanel_Layout);
       explorePanel_Layout.setHorizontalGroup(
          explorePanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 636, Short.MAX_VALUE)
+         .addComponent(jScrollPane1)
+         .addGroup(explorePanel_Layout.createSequentialGroup()
+            .addContainerGap()
+            .addComponent(selectUseAllButton_)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(syncExposuresButton_)
+            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
       );
       explorePanel_Layout.setVerticalGroup(
          explorePanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, explorePanel_Layout.createSequentialGroup()
-            .addContainerGap()
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 406, Short.MAX_VALUE))
+            .addGroup(explorePanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+               .addComponent(selectUseAllButton_)
+               .addComponent(syncExposuresButton_))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 380, Short.MAX_VALUE))
       );
 
       tabbedPane_.addTab("Channels", explorePanel_);
@@ -649,8 +681,7 @@ public class DisplayWindowControls extends Panel implements SurfaceGridListener 
          .addGroup(layout.createSequentialGroup()
             .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(tabbedPane_)
-            .addContainerGap())
+            .addComponent(tabbedPane_))
       );
 
       tabbedPane_.getAccessibleContext().setAccessibleName("Status");
@@ -683,7 +714,7 @@ public class DisplayWindowControls extends Panel implements SurfaceGridListener 
    private void tabbedPane_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tabbedPane_StateChanged
 
       if (acq_ instanceof ExploreAcquisition && exploreButton_.isSelected() && tabbedPane_.getSelectedIndex() == 1) {
-            exploreButton_.setSelected(false);
+         exploreButton_.setSelected(false);
       } else if (acq_ instanceof ExploreAcquisition && !exploreButton_.isSelected() && tabbedPane_.getSelectedIndex() != 1) {
          exploreButton_.setSelected(true);
       }
@@ -721,7 +752,7 @@ public class DisplayWindowControls extends Panel implements SurfaceGridListener 
        acq_.togglePaused();
        pauseButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource(
                acq_.isPaused() ? "/org/micromanager/magellan/play.png" : "/org/micromanager/magellan/pause.png")));
-      repaint();
+       repaint();
     }//GEN-LAST:event_pauseButton_ActionPerformed
 
     private void abortButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_abortButton_ActionPerformed
@@ -744,6 +775,16 @@ public class DisplayWindowControls extends Panel implements SurfaceGridListener 
       }
       updateMode();
    }//GEN-LAST:event_exploreButton_ActionPerformed
+
+   private void selectUseAllButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectUseAllButton_ActionPerformed
+      acq_.getChannels().setUseOnAll(!acq_.getChannels().getChannelListSetting(0).use_);
+      ((SimpleChannelTableModel)channelsTable_.getModel()).fireTableDataChanged();
+   }//GEN-LAST:event_selectUseAllButton_ActionPerformed
+
+   private void syncExposuresButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_syncExposuresButton_ActionPerformed
+      acq_.getChannels().synchronizeExposures();
+      ((SimpleChannelTableModel)channelsTable_.getModel()).fireTableDataChanged();
+   }//GEN-LAST:event_syncExposuresButton_ActionPerformed
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JButton abortButton_;
@@ -771,6 +812,7 @@ public class DisplayWindowControls extends Panel implements SurfaceGridListener 
    private javax.swing.JButton newGridButton_;
    private javax.swing.JButton newSurfaceButton_;
    private javax.swing.JButton pauseButton_;
+   private javax.swing.JButton selectUseAllButton_;
    private javax.swing.JButton showInFolderButton_;
    private javax.swing.JCheckBox showInterpCheckBox_;
    private javax.swing.JCheckBox showNewImagesCheckBox_;
@@ -779,6 +821,7 @@ public class DisplayWindowControls extends Panel implements SurfaceGridListener 
    private javax.swing.JPanel surfaceGridPanel_;
    private javax.swing.JPanel surfaceGridSpecificControlsPanel_;
    private javax.swing.JTable surfaceGridTable_;
+   private javax.swing.JButton syncExposuresButton_;
    private javax.swing.JTabbedPane tabbedPane_;
    private javax.swing.JLabel zPosLabel_;
    // End of variables declaration//GEN-END:variables

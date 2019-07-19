@@ -16,6 +16,9 @@
 //
 package org.micromanager.magellan.imagedisplay;
 
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.List;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.magellan.channels.MagellanChannelSpec;
@@ -34,10 +37,16 @@ public class DisplaySettings {
       }
 
       JSONObject dispSettings = new JSONObject();
-      for (String cName : channels.getChannelNames()) {
+      List<String> channelNames = new ArrayList<String>();
+      if (channels != null) {
+         channelNames.addAll(channels.getChannelNames());
+      } else {
+         channelNames.add("");
+      }
+      for (String cName : channelNames) {
          try {
             JSONObject channelDisp = new JSONObject();
-            channelDisp.put("Color", channels.getChannelSetting(cName).color_.getRGB());
+            channelDisp.put("Color", cName.equals("") ? Color.white : channels.getChannelSetting(cName).color_.getRGB());
             channelDisp.put("BitDepth", bitDepth);
 //         channelObject.put("Name", name);
 //         channelObject.put("Gamma", 1.0);
