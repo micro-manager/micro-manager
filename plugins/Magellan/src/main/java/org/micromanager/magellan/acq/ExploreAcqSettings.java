@@ -16,16 +16,14 @@
 //
 package org.micromanager.magellan.acq;
 
-import org.micromanager.magellan.channels.ChannelSetting;
-import java.util.ArrayList;
-import org.micromanager.magellan.channels.ChannelSpec;
+import org.micromanager.magellan.channels.MagellanChannelSpec;
 import org.micromanager.magellan.misc.GlobalSettings;
 
 /**
  * Container for settings specific to explore acquisition
  * @author Henry
  */
-public class ExploreAcqSettings {
+public class ExploreAcqSettings  {
    
    private static final String EXPLORE_NAME_PREF = "Explore acq name";
    private static final String EXPLORE_DIR_PREF = "Explore acq dir";
@@ -38,7 +36,7 @@ public class ExploreAcqSettings {
    public final String dir_, name_;
    public final double tileOverlap_;
 
-   public final ChannelSpec channels_;
+   public final MagellanChannelSpec channels_;
 
    public ExploreAcqSettings(double zStep, double overlapPercent, String dir, String name, String channelGroup) {
       zStep_ = zStep;
@@ -46,7 +44,7 @@ public class ExploreAcqSettings {
       name_ = name;   
       tileOverlap_ = overlapPercent;
       //channels is all available channels for group
-      channels_ = new ChannelSpec(channelGroup);
+      channels_ = new MagellanChannelSpec(channelGroup);
       
       //now that explore acquisition is being run, store values
       GlobalSettings.getInstance().storeStringInPrefs(EXPLORE_DIR_PREF, dir);
@@ -67,6 +65,6 @@ public class ExploreAcqSettings {
       return GlobalSettings.getInstance().getDoubleInPrefs(EXPLORE_TILE_OVERLAP, 0);
    }
 
-   
 
+   
 }

@@ -48,13 +48,11 @@ import org.micromanager.magellan.misc.ProgressBar;
 public final class TaggedImageStorageMultipageTiff {
 
     private JSONObject summaryMetadata_;
-    private JSONObject displayAndComments_;
     private boolean newDataSet_;
     private String directory_;
     private boolean separateMetadataFile_;
     private boolean splitByXYPosition_ = false;
     private volatile boolean finished_ = false;
-    private boolean fastStorageMode_;
     private int lastAcquiredPosition_ = 0;
     private String summaryMetadataString_ = null;
     private ThreadPoolExecutor writingExecutor_;
@@ -70,11 +68,12 @@ public final class TaggedImageStorageMultipageTiff {
     //Map of image labels to file 
     private HashMap<String, MultipageTiffReader> tiffReadersByLabel_;
     private static boolean showProgressBars_ = true;
-
+    private MultiResMultipageTiffStorage masterMultiResStorage_;
+    
     public TaggedImageStorageMultipageTiff(String dir, boolean newDataSet, JSONObject summaryMetadata,
-            ThreadPoolExecutor writingExecutor) throws IOException {
-        writingExecutor_ = writingExecutor;
-        fastStorageMode_ = true;
+            ThreadPoolExecutor writingExecutor, MultiResMultipageTiffStorage masterMultiRes) throws IOException {
+       masterMultiResStorage_ = masterMultiRes; 
+       writingExecutor_ = writingExecutor;
         separateMetadataFile_ = false;
         splitByXYPosition_ = false;
 
@@ -103,14 +102,6 @@ public final class TaggedImageStorageMultipageTiff {
             }
         }
         throw new IOException("Couldn't find a vlid TIFF to read metadata from");
-    }
-
-    private void processSummaryMD() {
-        try {
-            displayAndComments_ = DisplaySettings.getDisplaySettingsFromSummary(summaryMetadata_);
-        } catch (Exception ex) {
-            Log.log(ex);
-        }
     }
 
     public int getNumChannels() {
@@ -143,7 +134,7 @@ public final class TaggedImageStorageMultipageTiff {
             if (f.getName().endsWith(".tif") || f.getName().endsWith(".TIF")) {
                 try {
                     //this is where fixing dataset code occurs
-                    reader = new MultipageTiffReader(f);
+                    reader = new MultipageTiffReader(f);                   
                     Set<String> labels = reader.getIndexKeys();
                     for (String label : labels) {
                         tiffReadersByLabel_.put(label, reader);
@@ -151,6 +142,9 @@ public final class TaggedImageStorageMultipageTiff {
                         maxSliceIndex_ = Math.max(maxSliceIndex_, Integer.parseInt(label.split("_")[1]));
                         minSliceIndex_ = Math.min(minSliceIndex_, Integer.parseInt(label.split("_")[1]));
                         maxFrameIndex_ = Math.max(maxFrameIndex_, Integer.parseInt(label.split("_")[2]));
+                    }
+                    if (reader.getDisplaySettings() != null) {
+                       masterMultiResStorage_.setDisplaySettings(reader.getDisplaySettings());
                     }
                 } catch (IOException ex) {
                     ex.printStackTrace();
@@ -168,7 +162,6 @@ public final class TaggedImageStorageMultipageTiff {
 
         if (reader != null) {
             setSummaryMetadata(reader.getSummaryMetadata(), true);
-            displayAndComments_ = reader.getDisplayAndComments();
         }
         if (showProgressBars_) {
             progressBar.setProgress(1);
@@ -347,8 +340,6 @@ public final class TaggedImageStorageMultipageTiff {
         summaryMetadataString_ = null;
         if (summaryMetadata_ != null) {
             summaryMetadataString_ = md.toString();
-            boolean slicesFirst = summaryMetadata_.optBoolean("SlicesFirst", true);
-            boolean timeFirst = summaryMetadata_.optBoolean("TimeFirst", false);
             HashMap<String, MultipageTiffReader> oldImageMap = tiffReadersByLabel_;
             tiffReadersByLabel_ = new HashMap<String, MultipageTiffReader>();
             if (showProgress && showProgressBars_) {
@@ -366,9 +357,6 @@ public final class TaggedImageStorageMultipageTiff {
                 tiffReadersByLabel_.putAll(oldImageMap);
             }
 
-            if (summaryMetadata_ != null && summaryMetadata_.length() > 0) {
-                processSummaryMD();
-            }
         }
     }
 
@@ -378,14 +366,6 @@ public final class TaggedImageStorageMultipageTiff {
 
     public JSONObject getSummaryMetadata() {
         return summaryMetadata_;
-    }
-
-    public JSONObject getDisplayAndComments() {
-        return displayAndComments_;
-    }
-
-    public void setDisplayAndComments(JSONObject settings) {
-        displayAndComments_ = settings;
     }
 
     public String getDiskLocation() {
@@ -416,6 +396,10 @@ public final class TaggedImageStorageMultipageTiff {
 //      return expectedImageOrder_;
     }
 
+   public JSONObject getDisplaySettings() {
+      return masterMultiResStorage_.getDisplaySettings();
+   }
+
     //Class encapsulating a single File (or series of files)
     //Default is one file series per xy posititon
     private class FileSet {
@@ -441,7 +425,7 @@ public final class TaggedImageStorageMultipageTiff {
             currentTiffFilename_ = baseFilename_ + ".tif";
             currentTiffUUID_ = "urn:uuid:" + UUID.randomUUID().toString();
             //make first writer
-            tiffWriters_.add(new MultipageTiffWriter(directory_, currentTiffFilename_, summaryMetadata_, mpt, splitByXYPosition_, writingExecutor_));
+            tiffWriters_.add(new MultipageTiffWriter(directory_, currentTiffFilename_, summaryMetadata_, mpt, splitByXYPosition_, writingExecutor_, true));
 
             try {
                 if (separateMetadataFile_) {
@@ -512,7 +496,7 @@ public final class TaggedImageStorageMultipageTiff {
 
                 currentTiffFilename_ = baseFilename_ + "_" + tiffWriters_.size() + ".tif";
                 currentTiffUUID_ = "urn:uuid:" + UUID.randomUUID().toString();
-                tiffWriters_.add(new MultipageTiffWriter(directory_, currentTiffFilename_, summaryMetadata_, mpTiff_, splitByXYPosition_, writingExecutor_));
+                tiffWriters_.add(new MultipageTiffWriter(directory_, currentTiffFilename_, summaryMetadata_, mpTiff_, splitByXYPosition_, writingExecutor_, false));
             }
 
             //Add filename to image tags

@@ -9,7 +9,7 @@ import ij.ImagePlus;
 import java.util.Timer;
 import java.util.TimerTask;
 import org.json.JSONObject;
-import org.micromanager.magellan.acq.MMImageCache;
+import org.micromanager.magellan.acq.MagellanImageCache;
 
 /**
  *
@@ -39,7 +39,7 @@ public class MetadataPanel extends javax.swing.JPanel {
       updateTimer_ = null;
    }
 
-   public void initialize(DisplayPlus display) {
+   public void initialize(MagellanDisplay display) {
       //setup for use with a single display
       currentDisplay_ = display;
       imageChangedUpdate(null);
@@ -49,7 +49,7 @@ public class MetadataPanel extends javax.swing.JPanel {
       summaryMetadata_ = metadata;
    }
 
-   private MMImageCache getCache(ImagePlus imgp) {
+   private MagellanImageCache getCache(ImagePlus imgp) {
       if (VirtualAcquisitionDisplay.getDisplay(imgp) != null) {
          return VirtualAcquisitionDisplay.getDisplay(imgp).imageCache_;
       } else {

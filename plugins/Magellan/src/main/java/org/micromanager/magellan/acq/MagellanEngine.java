@@ -341,7 +341,7 @@ public class MagellanEngine {
          } catch (InterruptedException e) {
             //Abort while waiting for next time point
             return null;
-         }      
+         }
       }
       if (event.isAcquisitionFinishedEvent()) {
          //signal to MagellanTaggedImageSink to finish saving thread and mark acquisition as finished
@@ -418,8 +418,8 @@ public class MagellanEngine {
                   }
                }
                event.acquisition_.addImageMetadata(ti.tags, event, event.timeIndex_, c, currentTime - event.acquisition_.getStartTime_ms(),
-                                             event.acquisition_.channels_.getChannelSetting(event.channelName_).exposure_, 
-                                             core_.getNumberOfCameraChannels() > 1);
+                       event.acquisition_.channels_.getChannelSetting(event.channelName_).exposure_,
+                       core_.getNumberOfCameraChannels() > 1);
                images.add(ti);
             }
 
@@ -431,8 +431,7 @@ public class MagellanEngine {
             try {
 
                acqDurationEstiamtor_.storeImageAcquisitionTime(
-                                event.acquisition_.channels_.getChannelSetting(event.channelName_).exposure_
-                               , System.currentTimeMillis() - startTime);
+                       event.acquisition_.channels_.getChannelSetting(event.channelName_).exposure_, System.currentTimeMillis() - startTime);
             } catch (Exception ex) {
                Log.log(ex);
             }
@@ -577,9 +576,9 @@ public class MagellanEngine {
                      String propName = ps.getPropertyName();
                      core_.startPropertySequence(deviceName, propName);
                   }
-               } else if (lastEvent_ == null || (event.channelName_ == null ^ lastEvent_.channelName_ == null) ||
-                       !event.channelName_.equals(lastEvent_.channelName_) && event.acquisition_.channels_
-                       != null ) {
+               } else if (lastEvent_ == null || event.channelName_ != null && lastEvent_.channelName_ != null
+                       && !event.channelName_.equals(lastEvent_.channelName_) && event.acquisition_.channels_
+                       != null) {
                   final ChannelSetting setting = event.acquisition_.channels_.getChannelSetting(event.channelName_);
                   if (setting.use_ && setting.config_ != null) {
                      //set exposure
@@ -590,6 +589,7 @@ public class MagellanEngine {
                   }
                }
             } catch (Exception ex) {
+               ex.printStackTrace();
                throw new HardwareControlException(ex.getMessage());
             }
 
@@ -605,17 +605,11 @@ public class MagellanEngine {
             try {
                if (event.exposureSequenced_) {
                   core_.startExposureSequence(core_.getCameraDevice());
-               } else if (event.acquisition_.channels_ != null 
+               } else if (event.acquisition_.channels_ != null
                        && (lastEvent_ == null || lastEvent_.acquisition_ != event.acquisition_
                        || ((lastEvent_.acquisition_.channels_.getChannelSetting(lastEvent_.channelName_).exposure_
-                               != event.acquisition_.channels_.getChannelSetting(event.channelName_).exposure_)
-                               ))) {
-                  if (event.acquisition_ instanceof ExploreAcquisition) {
-                     core_.setExposure(event.acquisition_.channels_.getChannelSetting(event.channelName_).exposure_);
-                  } else {
-                     core_.setExposure(event.acquisition_.channels_.getChannelSetting(event.channelName_).exposure_);
-                  }
-
+                       != event.acquisition_.channels_.getChannelSetting(event.channelName_).exposure_)))) {
+                  core_.setExposure(event.acquisition_.channels_.getChannelSetting(event.channelName_).exposure_);
                }
             } catch (Exception ex) {
                throw new HardwareControlException(ex.getMessage());

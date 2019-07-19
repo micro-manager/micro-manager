@@ -58,7 +58,7 @@ public class MultipageTiffReader {
    private RandomAccessFile raFile_;
    private FileChannel fileChannel_;
       
-   private JSONObject displayAndComments_;
+   private JSONObject displaySettings_;
    private JSONObject summaryMetadata_;
    private int byteDepth_ = 0;
    private boolean rgb_;
@@ -69,7 +69,6 @@ public class MultipageTiffReader {
     * This constructor is used for a file that is currently being written
     */
    public MultipageTiffReader(JSONObject summaryMD) {
-      displayAndComments_ = new JSONObject();
       summaryMetadata_ = summaryMD;
       byteOrder_ = MultipageTiffWriter.BYTE_ORDER;
       getRGBAndByteDepth(summaryMD);
@@ -109,7 +108,7 @@ public class MultipageTiffReader {
     * This constructor is used for opening datasets that have already been saved
     */
    public MultipageTiffReader(File file) throws IOException {
-      displayAndComments_ = new JSONObject();
+      displaySettings_ = null;
       file_ = file;
       try {
          createFileChannel(file_);
@@ -124,10 +123,9 @@ public class MultipageTiffReader {
          Log.log(e);
       }
       try {
-         displayAndComments_.put("Channels", readDisplaySettings());
-         displayAndComments_.put("Comments", new JSONObject());
+         displaySettings_ = readDisplaySettings();
       } catch (Exception ex) {
-         Log.log("Problem with JSON Representation of DisplayAndComments", true);
+         Log.log("Problem with JSON Representation of Display settings", true);
       }
 
       if (summaryMetadata_ != null) {
@@ -204,8 +202,8 @@ public class MultipageTiffReader {
       return summaryMetadata_;
    }
    
-   public JSONObject getDisplayAndComments() {
-      return displayAndComments_;
+   public JSONObject getDisplaySettings() {
+      return displaySettings_;
    }
    
    public TaggedImage readImage(String label) {
@@ -259,7 +257,7 @@ public class MultipageTiffReader {
       }
    }
 
-   private JSONArray readDisplaySettings() {
+   private JSONObject readDisplaySettings() {
       try {
          long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.DISPLAY_SETTINGS_OFFSET_HEADER,16);
           ByteBuffer header = readIntoBuffer(offset, 8);
@@ -268,9 +266,9 @@ public class MultipageTiffReader {
              return null;
           }
           ByteBuffer buffer = readIntoBuffer(offset + 8, header.getInt(4));
-         return new JSONArray(getString(buffer));
+         return new JSONObject(getString(buffer));
       } catch (Exception ex) {
-         Log.log("Can't find display settings in file: " + file_.getName(), false);
+         //Ignore since display settings will only be in one file
          return null;
       }
    }

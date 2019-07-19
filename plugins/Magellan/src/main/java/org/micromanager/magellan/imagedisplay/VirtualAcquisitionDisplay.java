@@ -24,6 +24,7 @@ package org.micromanager.magellan.imagedisplay;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.ImageCanvas;
@@ -36,7 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
-import org.micromanager.magellan.acq.MMImageCache;
+import org.micromanager.magellan.acq.MagellanImageCache;
 import org.micromanager.magellan.misc.JavaUtils;
 import org.micromanager.magellan.misc.Log;
 import org.micromanager.magellan.misc.MD;
@@ -64,7 +65,7 @@ public abstract class VirtualAcquisitionDisplay {
    }
 
    private static final int ANIMATION_AND_LOCK_RESTART_DELAY = 800;
-   final MMImageCache imageCache_;
+   final MagellanImageCache imageCache_;
    private boolean amClosing_ = false;
    // First component of text displayed in our title bar.
    protected String title_;
@@ -75,14 +76,13 @@ public abstract class VirtualAcquisitionDisplay {
    private final AtomicBoolean shouldStopDisplayThread_ = new AtomicBoolean(false);
 
    private MMCompositeImage mmCompositeImage_;
+   protected DisplayWindowControls dispWindControls_;
    protected SubImageControls subImageControls_;
    public AcquisitionVirtualStack virtualStack_;
-   private DisplayWindowControls dwc_;
    private boolean contrastInitialized_ = false; //used for autostretching on window opening
    private String channelGroup_ = "none";
    private final Object imageReceivedObject_ = new Object();
    protected ImageCanvas canvas_;
-   private static HashMap<String, HistogramSettings> contrastSettings_ = new HashMap<String, HistogramSettings>();
    private LinkedBlockingQueue<JSONObject> acquiredTagsQueue_ = new LinkedBlockingQueue<JSONObject>();
    private int maxChannelIndex_ = 0;
    private EventBus bus_;
@@ -102,7 +102,7 @@ public abstract class VirtualAcquisitionDisplay {
     * @param name
     * @param shouldUseNameAsTitle
     */
-   public VirtualAcquisitionDisplay(MMImageCache imageCache, String name, JSONObject summaryMD) {
+   public VirtualAcquisitionDisplay(MagellanImageCache imageCache, String name, JSONObject summaryMD) {
       try {
          numComponents_ = Math.max(MD.getNumberOfComponents(summaryMD), 1);
       } catch (Exception ex) {
@@ -119,7 +119,7 @@ public abstract class VirtualAcquisitionDisplay {
    }
 
    public void setControls(DisplayWindowControls dwc) {
-      dwc_ = dwc;
+      dispWindControls_ = dwc;
    }
 
    /**
@@ -186,6 +186,13 @@ public abstract class VirtualAcquisitionDisplay {
       return bus_;
    }
 
+   public int getNumChannels() {
+      if (dispWindControls_ == null) {
+         return 0;
+      }
+      return dispWindControls_.getNumChannels();
+   }
+   
    // Prepare for a drawing event.
    @Subscribe
    public void onDraw(DrawEvent event) {
@@ -330,54 +337,19 @@ public abstract class VirtualAcquisitionDisplay {
             axisToPosition.put("channel", rgbToGrayChannel(channel));
             axisToPosition.put("position", position);
             axisToPosition.put("time", frame);
-            if (((DisplayPlus) VirtualAcquisitionDisplay.this).getAcquisition() != null) {
+            if (((MagellanDisplay) VirtualAcquisitionDisplay.this).getAcquisition() != null) {
                //intercept event and edit slice index
                //make slice index >= 0 for viewer   
-               axisToPosition.put("z", slice - (((DisplayPlus) VirtualAcquisitionDisplay.this).getAcquisition()).getMinSliceIndex());
-            } else if (((DisplayPlus) VirtualAcquisitionDisplay.this).getAcquisition() == null) {
-               axisToPosition.put("z", slice - ((DisplayPlus) VirtualAcquisitionDisplay.this).getStorage().getMinSliceIndexOpenedDataset());
+               axisToPosition.put("z", slice - (((MagellanDisplay) VirtualAcquisitionDisplay.this).getAcquisition()).getMinSliceIndex());
+            } else if (((MagellanDisplay) VirtualAcquisitionDisplay.this).getAcquisition() == null) {
+               axisToPosition.put("z", slice - ((MagellanDisplay) VirtualAcquisitionDisplay.this).getStorage().getMinSliceIndexOpenedDataset());
             }
 
-            bus_.post(new NewImageEvent(axisToPosition));
-            ((DisplayPlus) VirtualAcquisitionDisplay.this).updateDisplay(true);
+            bus_.post(new NewImageEvent(axisToPosition, MD.getChannelName(tags)));
+            ((MagellanDisplay) VirtualAcquisitionDisplay.this).updateDisplay(true);
          }
       });
 
-   }
-
-   private void initializeContrast() {
-      if (contrastInitialized_) {
-         return;
-      }
-      int numChannels = imageCache_.getNumDisplayChannels();
-      Histograms histograms = dwc_.getContrastPanelMagellan().getHistograms();
-      for (int channel = 0; channel < numChannels; channel++) {
-         String id = channelGroup_ + "-" + imageCache_.getChannelName(channel);
-         HistogramSettings settings = contrastSettings_.get(id);
-         if (settings != null) {
-            histograms.setChannelContrast(channel, settings.min_, settings.max_, settings.gamma_);
-            histograms.setChannelHistogramDisplayMax(channel, settings.histMax_);
-            if (histograms instanceof MultiChannelHistograms) {
-               ((MultiChannelHistograms) histograms).setDisplayMode(settings.displayMode_);
-            }
-         }
-      }
-      histograms.applyLUTToImage();
-      contrastInitialized_ = true;
-   }
-
-   public void storeChannelHistogramSettings(int channelIndex, int min, int max,
-           double gamma, int histMax, int displayMode) {
-      if (!contrastInitialized_) {
-         return; //don't erroneously initialize contrast
-      }
-      // store for this dataset
-      if (imageCache_.getDisplayAndComments() != null) {
-         imageCache_.storeChannelDisplaySettings(channelIndex, min, max, gamma, histMax, displayMode);
-         //store global preference for channel contrast settings
-         String channelID = channelGroup_ + "-" + imageCache_.getChannelName(channelIndex);
-         contrastSettings_.put(channelID, new HistogramSettings(min, max, gamma, histMax, displayMode));
-      }
    }
 
    public void setSliceIndex(int i) {
@@ -417,13 +389,14 @@ public abstract class VirtualAcquisitionDisplay {
       mmIP.setNChannelsUnverified(2);
       mmIP.setNFramesUnverified(frames);
       mmIP.setNSlicesUnverified(slices);
-      final MMCompositeImage hyperImage = new MMCompositeImage(mmIP, imageCache_.getDisplayMode(), title_, bus_);
+      final MMCompositeImage hyperImage = new MMCompositeImage(mmIP, CompositeImage.COMPOSITE, title_, bus_);
       hyperImage.setOpenAsHyperStack(true);
       return hyperImage;
    }
 
    private void createWindows() {
-      DisplayWindow win = new DisplayWindow(mmCompositeImage_, bus_, (DisplayPlus) this);
+      DisplayWindow win = new DisplayWindow(mmCompositeImage_, bus_, (MagellanDisplay) this);
+      dispWindControls_ = win.getDisplayWindowControls();
       subImageControls_ = win.getSubImageControls();
       imageChangedUpdate();
    }
@@ -469,7 +442,7 @@ public abstract class VirtualAcquisitionDisplay {
       return mmCompositeImage_;
    }
 
-   public MMImageCache getImageCache() {
+   public MagellanImageCache getImageCache() {
       return imageCache_;
    }
 
@@ -496,7 +469,7 @@ public abstract class VirtualAcquisitionDisplay {
    }
 
    public boolean isDiskCached() {
-      MMImageCache imageCache = imageCache_;
+      MagellanImageCache imageCache = imageCache_;
       if (imageCache == null) {
          return false;
       } else {
@@ -526,8 +499,8 @@ public abstract class VirtualAcquisitionDisplay {
       if (mmCompositeImage_ != null) {
          applyPixelSizeCalibration();
       }
-      if (dwc_ != null) {
-         dwc_.imageChangedUpdate(((DisplayPlus) this).getCurrentMetadata());
+      if (dispWindControls_ != null) {
+         dispWindControls_.imageChangedUpdate(((MagellanDisplay) this).getCurrentMetadata());
       }
    }
 
@@ -541,5 +514,4 @@ public abstract class VirtualAcquisitionDisplay {
          ((IMMImagePlus) mmCompositeImage_).drawWithoutUpdate();
       }
    }
-
 }

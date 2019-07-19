@@ -43,7 +43,7 @@ public class DisplayWindowControls extends Panel implements SurfaceGridListener 
    private static final Color LIGHT_BLUE = new Color(200, 200, 255);
 
    private EventBus bus_;
-   private DisplayPlus display_;
+   private MagellanDisplay display_;
    private SurfaceGridManager manager_ = SurfaceGridManager.getInstance();
    private Acquisition acq_;
    private volatile int selectedSurfaceGridIndex_ = -1;
@@ -51,7 +51,7 @@ public class DisplayWindowControls extends Panel implements SurfaceGridListener 
    /**
     * Creates new form DisplayWindowControls
     */
-   public DisplayWindowControls(DisplayPlus disp, EventBus bus, Acquisition acq) {
+   public DisplayWindowControls(MagellanDisplay disp, EventBus bus, Acquisition acq) {
 
       bus_ = bus;
       display_ = disp;
@@ -106,6 +106,10 @@ public class DisplayWindowControls extends Panel implements SurfaceGridListener 
       } 
    }
 
+   public int getNumChannels() {
+      return cpMagellan_.getNumChannels();
+   }
+   
    private void updateSurfaceGridSelection() {
       selectedSurfaceGridIndex_ = surfaceGridTable_.getSelectedRow();
       //if last in list is removed, update the selected index
@@ -131,13 +135,13 @@ public class DisplayWindowControls extends Panel implements SurfaceGridListener 
    
    private void updateMode() {
       if (acq_ instanceof ExploreAcquisition && exploreButton_.isSelected()) {
-         display_.setMode(DisplayPlus.EXPLORE);
+         display_.setMode(MagellanDisplay.EXPLORE);
          return;
       }
       if (tabbedPane_.getSelectedIndex() == 1) {
-         display_.setMode(DisplayPlus.SURFACE_AND_GRID);
+         display_.setMode(MagellanDisplay.SURFACE_AND_GRID);
       } else {
-         display_.setMode(DisplayPlus.NONE);
+         display_.setMode(MagellanDisplay.NONE);
       }
    }
    /**

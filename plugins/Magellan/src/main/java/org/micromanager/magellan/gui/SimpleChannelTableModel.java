@@ -21,7 +21,7 @@ import java.awt.Color;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
-import org.micromanager.magellan.channels.ChannelSpec;
+import org.micromanager.magellan.channels.MagellanChannelSpec;
 import org.micromanager.magellan.main.Magellan;
 import mmcorej.CMMCore;
 
@@ -31,7 +31,7 @@ import mmcorej.CMMCore;
  */
 public class SimpleChannelTableModel extends AbstractTableModel implements TableModelListener {
 
-   private ChannelSpec channels_;
+   private MagellanChannelSpec channels_;
    private final CMMCore core_;
    private final boolean exploreTable_;
    private boolean selectAll_ = true;
@@ -42,7 +42,7 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
       "Z-offset (um)",
       "Color",};
 
-   public SimpleChannelTableModel(ChannelSpec channels, boolean showColor) {
+   public SimpleChannelTableModel(MagellanChannelSpec channels, boolean showColor) {
       exploreTable_ = !showColor;
       core_ = Magellan.getCore();
       channels_ = channels;
@@ -76,7 +76,7 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
       }
    }
 
-   public void setChannels(ChannelSpec channels) {
+   public void setChannels(MagellanChannelSpec channels) {
       channels_ = channels;
    }
 

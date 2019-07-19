@@ -5,6 +5,7 @@
  */
 package org.micromanager.magellan.imagedisplay;
 
+import javax.swing.JScrollPane;
 import org.micromanager.magellan.mmcloneclasses.graph.ContrastPanel;
 import org.micromanager.magellan.mmcloneclasses.graph.Histograms;
 import org.micromanager.magellan.mmcloneclasses.graph.MultiChannelHistograms;
@@ -15,19 +16,27 @@ import org.micromanager.magellan.mmcloneclasses.graph.MultiChannelHistograms;
  */
 public class ContrastPanelMagellanAdapter extends ContrastPanel {
    
-   private VirtualAcquisitionDisplay currentDisplay_;
-   private Histograms histograms_;
+   private MagellanDisplay currentDisplay_;
+   private MultiChannelHistograms histograms_;
    
    public ContrastPanelMagellanAdapter() {
       super();
    }
    
-   public void initialize(DisplayPlus display) {
+   public void initialize(MagellanDisplay display) {
       //setup for use with a single display
       currentDisplay_ = display;
-      histograms_ = new MultiChannelHistograms(currentDisplay_, this);
+      histograms_ = new MultiChannelHistograms(currentDisplay_, this, display.getDisplaySettings());
       displayChanged(currentDisplay_, histograms_);
       imageChangedUpdate();
+   }
+   
+   public int getNumChannels() {
+      return histograms_.getNumChannels();
+   }
+   
+   public JScrollPane getContrastPanelScrollPane() {
+      return histDisplayScrollPane_;
    }
    
    public void prepareForClose() {

@@ -17,7 +17,7 @@
 package org.micromanager.magellan.acq;
 
 import org.micromanager.magellan.datasaving.MultiResMultipageTiffStorage;
-import org.micromanager.magellan.imagedisplay.DisplayPlus;
+import org.micromanager.magellan.imagedisplay.MagellanDisplay;
 import java.awt.Color;
 import java.awt.geom.AffineTransform;
 import java.text.DateFormat;
@@ -35,7 +35,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-import org.micromanager.magellan.channels.ChannelSpec;
+import org.micromanager.magellan.channels.MagellanChannelSpec;
 import org.micromanager.magellan.coordinates.MagellanAffineUtils;
 import org.micromanager.magellan.coordinates.PositionManager;
 import org.micromanager.magellan.coordinates.XYStagePosition;
@@ -47,6 +47,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.micromanager.magellan.api.MagellanAcquisitionAPI;
+import org.micromanager.magellan.imagedisplay.DisplaySettings;
 
 /**
  * Abstract class that manages a generic acquisition. Subclassed into specific
@@ -67,13 +68,13 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
    private long startTime_ms_ = -1;
    private int overlapX_, overlapY_;
    private volatile boolean paused_ = false;
-   protected ChannelSpec channels_;
-   private MMImageCache imageCache_;
+   protected MagellanChannelSpec channels_;
+   private MagellanImageCache imageCache_;
    protected PositionManager posManager_;
    private MagellanEngine eng_;
    protected volatile boolean aborted_ = false;
    private MultiResMultipageTiffStorage storage_;
-   private DisplayPlus display_;
+   private MagellanDisplay display_;
    private String UUID_;
    //map generated at runtime of channel names to channel indices
    private HashMap<String, Integer> channelIndices_ = new HashMap<String, Integer>(); 
@@ -82,7 +83,7 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
       UUID_ = UUID.randomUUID().toString();
    }
 
-   protected void initialize(String dir, String name, double overlapPercent, double zStep, ChannelSpec channels) {
+   protected void initialize(String dir, String name, double overlapPercent, double zStep, MagellanChannelSpec channels) {
       eng_ = MagellanEngine.getInstance();
       xyStage_ = Magellan.getCore().getXYStageDevice();
       zStage_ = Magellan.getCore().getFocusDevice();
@@ -109,11 +110,13 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
       posManager_ = storage_.getPosManager();
       //storage class has determined unique acq name, so it can now be stored
       name_ = storage_.getUniqueAcqName();
-      imageCache_ = new MMImageCache(storage_);
+      imageCache_ = new MagellanImageCache(storage_);
       imageCache_.setSummaryMetadata(summaryMetadata_);
-      display_ = new DisplayPlus(imageCache_, this, summaryMetadata_, storage_);
+      JSONObject displaySettings = DisplaySettings.getDefaultDisplaySettings(channels, summaryMetadata_);
+      storage_.setDisplaySettings(displaySettings);
+      display_ = new MagellanDisplay(imageCache_, this, summaryMetadata_, storage_, displaySettings);
    }
-
+   
    public abstract void start();
 
    protected abstract void shutdownEvents();
@@ -267,7 +270,7 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
       return targetStream;
    }
 
-   protected Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels(ChannelSpec channels) {
+   protected Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels(MagellanChannelSpec channels) {
       return (AcquisitionEvent event) -> {
          return new Iterator<AcquisitionEvent>() {
             String channelName_ = null;
@@ -359,7 +362,7 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
       return (int) Math.round((z - zOrigin_) / zStep_) - minSliceIndex_;
    }
 
-   public ChannelSpec getChannels() {
+   public MagellanChannelSpec getChannels() {
       return channels_;
    }
 

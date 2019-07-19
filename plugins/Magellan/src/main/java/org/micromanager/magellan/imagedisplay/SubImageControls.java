@@ -55,7 +55,7 @@ public class SubImageControls extends Panel {
    private final static int DEFAULT_FPS = 7;
    private static final DecimalFormat TWO_DECIMAL_FORMAT = new DecimalFormat("0.00");
    private EventBus bus_;
-   private DisplayPlus display_;
+   private MagellanDisplay display_;
    private ScrollerPanel scrollerPanel_;
    private JPanel sliderPanel_;
    private JScrollBar zTopScrollbar_, zBottomScrollbar_;
@@ -66,7 +66,7 @@ public class SubImageControls extends Panel {
    //thread safe fields for currently displaye dimage
    private volatile int sliceIndex_ = 0, frameIndex_ = 0, channelIndex_ = 0;
 
-   public SubImageControls(DisplayPlus disp, EventBus bus, Acquisition acq) {
+   public SubImageControls(MagellanDisplay disp, EventBus bus, Acquisition acq) {
       super(new FlowLayout(FlowLayout.LEADING));
       bus_ = bus;
       display_ = disp;

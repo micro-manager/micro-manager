@@ -2,6 +2,8 @@ package org.micromanager.magellan.channels;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import org.micromanager.magellan.demo.DemoModeImageData;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.GlobalSettings;
@@ -11,15 +13,27 @@ import mmcorej.StrVector;
  * Class to encapsulate a bunch of ChannelsSettings. Should be owned by a specific acquisition settings object 
  * @author Henry
  */
-public class ChannelSpec {
+public class MagellanChannelSpec {
     
     private ArrayList<ChannelSetting> channels_;
     
-    public ChannelSpec(String channelGroup) {
+    public List<String> getChannelNames() {
+       LinkedList<String> names = new LinkedList<String>();
+       for (ChannelSetting c : channels_) {
+          names.add(c.name_);
+       }
+       return names;
+    }
+    
+    public MagellanChannelSpec(String channelGroup) {
         updateChannelGroup(channelGroup);
     }
     
     public ChannelSetting getChannelSetting(String name) {
+       if (name == null) {
+          //no channels, just a placeholder, return the default
+          return channels_.get(0);
+       }
        for (ChannelSetting c : channels_) {
           if (c.name_.equals(name)) {
              return c;

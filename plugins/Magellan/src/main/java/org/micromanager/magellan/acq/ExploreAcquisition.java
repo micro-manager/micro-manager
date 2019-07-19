@@ -30,7 +30,7 @@ import org.micromanager.magellan.imagedisplay.SubImageControls;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.Log;
 import org.json.JSONArray;
-import org.micromanager.magellan.channels.ChannelSpec;
+import org.micromanager.magellan.channels.MagellanChannelSpec;
 
 /**
  * A single time point acquisition that can dynamically expand in X,Y, and Z
@@ -43,7 +43,7 @@ public class ExploreAcquisition extends Acquisition {
    //Map with slice index as keys used to get rid of duplicate events
    private ConcurrentHashMap<Integer, LinkedBlockingQueue<ExploreTileWaitingToAcquire>> queuedTileEvents_ = new ConcurrentHashMap<Integer, LinkedBlockingQueue<ExploreTileWaitingToAcquire>>();
    private ArrayList<Future> submittedStreams_ = new ArrayList<Future>();
-   private final ExploreAcqSettings settings_;
+   public final ExploreAcqSettings settings_;
    
    public ExploreAcquisition(ExploreAcqSettings settings) {
       super();
@@ -301,7 +301,7 @@ public class ExploreAcquisition extends Acquisition {
    public class ExploreTileWaitingToAcquire {
 
       public long row, col, sliceIndex;
-      public String channelName;
+      public String channelName = null;
 
       public ExploreTileWaitingToAcquire(long r, long c, int z, String ch) {
          row = r;
@@ -312,8 +312,15 @@ public class ExploreAcquisition extends Acquisition {
 
       @Override
       public boolean equals(Object other) {
-         return ((ExploreTileWaitingToAcquire) other).col == col && ((ExploreTileWaitingToAcquire) other).row == row
-                 && ((ExploreTileWaitingToAcquire) other).sliceIndex == sliceIndex && ((ExploreTileWaitingToAcquire) other).channelName.equals( channelName);
+         String otherChannel = ((ExploreTileWaitingToAcquire) other).channelName;
+         if( ((ExploreTileWaitingToAcquire) other).col == col && ((ExploreTileWaitingToAcquire) other).row == row
+                 && ((ExploreTileWaitingToAcquire) other).sliceIndex == sliceIndex ) {
+            if (otherChannel == null && channelName == null) {
+               return true;
+            } 
+            return otherChannel.equals(channelName);            
+         }
+         return false;                 
       }
 
    }

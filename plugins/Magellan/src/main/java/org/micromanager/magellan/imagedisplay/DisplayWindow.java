@@ -53,7 +53,7 @@ public class DisplayWindow extends StackWindow {
    private SubImageControls subImageControls_;
    private final JToggleButton arrowButton_;
    private Acquisition acq_;
-   private DisplayPlus disp_;
+   private MagellanDisplay disp_;
    private JPanel nonImagePanel_, controlsAndContrastPanel_;
    private volatile boolean saveWindowResize_ = false;
    private ContrastPanelMagellanAdapter contrastPanelMagellan_;
@@ -92,7 +92,7 @@ public class DisplayWindow extends StackWindow {
       }
    };
 
-   public DisplayWindow(final ImagePlus plus, final EventBus bus, DisplayPlus disp) {
+   public DisplayWindow(final ImagePlus plus, final EventBus bus, MagellanDisplay disp) {
       super(plus);
       acq_ = disp.getAcquisition();
       disp_ = disp;
@@ -303,6 +303,10 @@ public class DisplayWindow extends StackWindow {
       }
    }
 
+   public int getNumChannels() {
+      return dwControls_.getNumChannels();
+   }
+   
    /**
     * When shrinking with arrow: -remove controls and shrink window by the size
     * of controls
@@ -587,6 +591,10 @@ public class DisplayWindow extends StackWindow {
       return subImageControls_;
    }
 
+   public DisplayWindowControls getDisplayWindowControls() {
+      return dwControls_;
+   }
+   
    @Override
    public boolean close() {
       windowClosing(null);
