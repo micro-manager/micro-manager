@@ -41,14 +41,14 @@ public class XYStagePosition {
    /**
     * for opening prevously acquired data
     */
-   public XYStagePosition(Point2D.Double stagePosCenter, long row, long col) {
+   public XYStagePosition(Point2D.Double stagePosCenter, long row, long col, String xyStageName) {
       label_ = "Grid_" + col + "_" + row;
       center_ = stagePosCenter;
       gridCol_ = col;
       gridRow_ = row;
       displayedTileCorners_ = null;
       fullTileCorners_ = null;
-      xyName_ = null;
+      xyName_ = xyStageName;
    }
 
    /**
@@ -57,7 +57,7 @@ public class XYStagePosition {
     */
    public XYStagePosition(Point2D.Double stagePosCenter, int displayTileWidth, int displayTileHeight, 
            int fullTileWidth, int fullTileHeight, long row, long col, AffineTransform transform) {
-      
+       
       label_ = "Grid_" + col + "_" + row;
       center_ = stagePosCenter;
       //coreners of displayed tiles (tiles - overlap)

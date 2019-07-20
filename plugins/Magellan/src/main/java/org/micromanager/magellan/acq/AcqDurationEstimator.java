@@ -270,7 +270,7 @@ public class AcqDurationEstimator {
          list = settings.footprint_.getXYPositionsNoUpdate();
       } else {
          list = new ArrayList<XYStagePosition>();
-         list.add(new XYStagePosition(new Point2D.Double(), 0, 0));
+         list.add(new XYStagePosition(new Point2D.Double(), 0, 0, ""));
       }
       return list;
    }
