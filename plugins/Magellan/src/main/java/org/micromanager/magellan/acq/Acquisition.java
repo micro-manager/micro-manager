@@ -83,11 +83,10 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
       UUID_ = UUID.randomUUID().toString();
    }
 
-   protected void initialize(String dir, String name, double overlapPercent, double zStep, MagellanChannelSpec channels) {
+   protected void initialize(String dir, String name, double overlapPercent, double zStep) {
       eng_ = MagellanEngine.getInstance();
       xyStage_ = Magellan.getCore().getXYStageDevice();
       zStage_ = Magellan.getCore().getFocusDevice();
-      channels_ = channels;
       //"postion" is not generic name..and as of right now there is now way of getting generic z positions
       //from a z deviec in MM
       String positionName = "Position";
@@ -112,7 +111,7 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
       name_ = storage_.getUniqueAcqName();
       imageCache_ = new MagellanImageCache(storage_);
       imageCache_.setSummaryMetadata(summaryMetadata_);
-      JSONObject displaySettings = DisplaySettings.getDefaultDisplaySettings(channels, summaryMetadata_);
+      JSONObject displaySettings = DisplaySettings.getDefaultDisplaySettings(channels_, summaryMetadata_);
       storage_.setDisplaySettings(displaySettings);
       display_ = new MagellanDisplay(imageCache_, this, summaryMetadata_, storage_, displaySettings);
    }
@@ -197,7 +196,7 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
         //infer channel index at runtime
         int cIndex = getChannelIndex(event.channelName_);
         MD.setChannelIndex(tags, cIndex + camChannelIndex);
-         MD.setChannelName(tags, channelName);
+         MD.setChannelName(tags, channelName == null ? "" : channelName);
          MD.setZPositionUm(tags, event.zPosition_);
          MD.setElapsedTimeMs(tags, elapsed_ms);
          MD.setImageTime(tags, (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss -")).format(Calendar.getInstance().getTime()));

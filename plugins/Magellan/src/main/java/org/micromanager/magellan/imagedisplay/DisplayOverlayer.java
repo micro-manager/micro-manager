@@ -261,6 +261,8 @@ public class DisplayOverlayer {
                     Math.max(display_.getExploreEndTile().y, display_.getExploreStartTile().y),
                     Math.min(display_.getExploreEndTile().x, display_.getExploreStartTile().x),
                     Math.max(display_.getExploreEndTile().x, display_.getExploreStartTile().x), TRANSPARENT_MAGENTA);
+            addTextBox(new String[]{"Left click again to confirm acquire", "Right click to cancel"}, overlay);
+            
          } else if (display_.getMouseDragStartPointLeft() != null) {
             //highlight multiple tiles when mouse dragging    
             Point mouseLoc = display_.getCurrentMouseLocation();
@@ -405,15 +407,11 @@ public class DisplayOverlayer {
             throw new InterruptedException();
          }
          Point2D.Double[] corners = pos.getDisplayedTileCorners();
-         LongPoint corner1 = display_.imageCoordsFromStageCoords(corners[0].x, corners[0].y);
-         LongPoint corner2 = display_.imageCoordsFromStageCoords(corners[1].x, corners[1].y);
-         LongPoint corner3 = display_.imageCoordsFromStageCoords(corners[2].x, corners[2].y);
-         LongPoint corner4 = display_.imageCoordsFromStageCoords(corners[3].x, corners[3].y);
          //add lines connecting 4 corners
-         Line l1 = new Line(corner1.x_, corner1.y_, corner2.x_, corner2.y_);
-         Line l2 = new Line(corner2.x_, corner2.y_, corner3.x_, corner3.y_);
-         Line l3 = new Line(corner3.x_, corner3.y_, corner4.x_, corner4.y_);
-         Line l4 = new Line(corner4.x_, corner4.y_, corner1.x_, corner1.y_);
+         Line l1 = new Line(corners[0].x, corners[0].y, corners[1].x, corners[1].y);
+         Line l2 = new Line(corners[1].x, corners[1].y, corners[2].x, corners[2].y);
+         Line l3 = new Line(corners[2].x, corners[2].y, corners[3].x, corners[3].y);
+         Line l4 = new Line(corners[3].x, corners[3].y, corners[0].x, corners[0].y);
          l1.setStrokeColor(getSurfaceGridLineColor(surface));
          l2.setStrokeColor(getSurfaceGridLineColor(surface));
          l3.setStrokeColor(getSurfaceGridLineColor(surface));

@@ -38,10 +38,12 @@ public class DisplaySettings {
 
       JSONObject dispSettings = new JSONObject();
       List<String> channelNames = new ArrayList<String>();
-      if (channels != null) {
-         channelNames.addAll(channels.getChannelNames());
+      if (channels == null || channels.getNumChannels() == 0) {
+         
+          channelNames.add("");
+          
       } else {
-         channelNames.add("");
+        channelNames.addAll(channels.getChannelNames());
       }
       for (String cName : channelNames) {
          try {
