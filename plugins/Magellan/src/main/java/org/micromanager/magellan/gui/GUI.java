@@ -67,6 +67,7 @@ import org.micromanager.magellan.misc.JavaUtils;
 import org.micromanager.magellan.misc.LoadedAcquisitionData;
 import org.micromanager.magellan.misc.Log;
 import org.micromanager.magellan.surfacesandregions.SurfaceGridManager;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  *
@@ -81,7 +82,7 @@ public class GUI extends javax.swing.JFrame {
    private static final Color DEFAULT_RADIO_BUTTON_TEXT_COLOR = new JRadioButton().getForeground();
 
    private AcqDurationEstimator acqDurationEstimator_;
-   private Preferences prefs_;
+   private MutablePropertyMapView prefs_;
    private SurfaceGridManager manager_ = new SurfaceGridManager();
    private MagellanAcquisitionsManager multiAcqManager_;
    private GlobalSettings settings_;
@@ -92,11 +93,11 @@ public class GUI extends javax.swing.JFrame {
    private ExploreAcquisition exploreAcq_;
    private volatile boolean acquisitionRunning_ = false;
 
-   public GUI(Preferences prefs, String version) {
+   public GUI( String version) {
       singleton_ = this;
       storeAcqSettings_ = false; // dont store during intialization
-      prefs_ = prefs;
-      settings_ = new GlobalSettings(prefs_);
+      prefs_ = Magellan.getStudio().profile().getSettings(GUI.class);
+      settings_ = new GlobalSettings();
       this.setTitle("Micro-Magellan " + version);
       acqDurationEstimator_ = new AcqDurationEstimator();
       new MagellanEngine(Magellan.getCore(), acqDurationEstimator_);

@@ -30,6 +30,7 @@ import java.text.DecimalFormat;
 import java.util.Comparator;
 import java.util.prefs.Preferences;
 import javax.swing.*;
+import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.Log;
 import org.micromanager.magellan.mmcloneclasses.graph.ContrastPanel;
 
@@ -580,7 +581,7 @@ public class DisplayWindow extends StackWindow {
    private void initializePrefs() {
       if (displayPrefs_ == null) {
          try {
-            displayPrefs_ = Preferences.userNodeForPackage(getClass());
+            displayPrefs_ = Magellan.getPrefs();
          } catch (Exception e) {
             Log.log(e);
          }

@@ -24,15 +24,15 @@ package org.micromanager.magellan.mmcloneclasses.graph;
 import ij.CompositeImage;
 import org.micromanager.magellan.imagedisplay.DisplayOverlayer;
 import org.micromanager.magellan.imagedisplay.MMScaleBar;
-import org.micromanager.magellan.imagedisplay.VirtualAcquisitionDisplay;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.util.prefs.Preferences;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.micromanager.magellan.imagedisplay.MagellanDisplay;
+import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.Log;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  *
@@ -60,7 +60,7 @@ public class ContrastPanel extends JPanel {
    private JComboBox sizeBarColorComboBox_;
    private JCheckBox syncChannelsCheckBox_;
    private JLabel displayModeLabel_;
-   private Preferences prefs_;
+   private MutablePropertyMapView  prefs_;
    private Histograms currentHistograms_;
    private MagellanDisplay currentDisplay_;
    private HistogramControlsState histControlsState_;
@@ -72,7 +72,7 @@ public class ContrastPanel extends JPanel {
 
    public ContrastPanel() {
       initializeGUI();
-      prefs_ = Preferences.userNodeForPackage(this.getClass());
+      prefs_ = Magellan.getStudio().profile().getSettings(ContrastPanel.class);
       initializeHistogramDisplayArea();
    }
 

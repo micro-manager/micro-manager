@@ -38,7 +38,6 @@ public class Magellan implements MenuPlugin, SciJavaPlugin {
    public static final String menuName = "Micro-Magellan";
    public static final String tooltipDescription = "High throughout, automated micrscopy for slidescanning or volumetric imaging";
 
-   private static Preferences prefs_;
    private static Studio mmAPI_;
    private static GUI gui_;
    private static ZMQMasterServer bridge_;
@@ -63,10 +62,6 @@ public class Magellan implements MenuPlugin, SciJavaPlugin {
       return api_;
    }
 
-   public static Preferences getPrefs() {
-      return prefs_;
-   }
-
    public static Studio getStudio() {
       return mmAPI_;
    }
@@ -87,8 +82,7 @@ public class Magellan implements MenuPlugin, SciJavaPlugin {
    @Override
    public void onPluginSelected() {
       if (gui_ == null) {
-         prefs_ = Preferences.userNodeForPackage(Magellan.class);
-         gui_ = new GUI(prefs_, VERSION);
+         gui_ = new GUI(VERSION);
       } else {
          gui_.setVisible(true);
       }
@@ -97,7 +91,6 @@ public class Magellan implements MenuPlugin, SciJavaPlugin {
    @Override
    public void setContext(Studio studio) {
       mmAPI_ = studio;
-
    }
 
    @Override

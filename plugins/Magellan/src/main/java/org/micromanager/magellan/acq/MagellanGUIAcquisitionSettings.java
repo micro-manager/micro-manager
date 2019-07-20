@@ -18,9 +18,11 @@ package org.micromanager.magellan.acq;
 
 import java.util.prefs.Preferences;
 import org.micromanager.magellan.channels.MagellanChannelSpec;
+import org.micromanager.magellan.gui.GUI;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.surfacesandregions.SurfaceInterpolator;
 import org.micromanager.magellan.surfacesandregions.XYFootprint;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  *
@@ -64,12 +66,12 @@ public class MagellanGUIAcquisitionSettings {
    public volatile MagellanChannelSpec channels_ ;
 
    public MagellanGUIAcquisitionSettings() {
-      Preferences prefs = Magellan.getPrefs();
-      name_ = prefs.get(PREF_PREFIX + "NAME", "Untitled");
+      MutablePropertyMapView prefs = Magellan.getStudio().profile().getSettings(MagellanGUIAcquisitionSettings.class);
+      name_ = prefs.getString(PREF_PREFIX + "NAME", "Untitled");
       timeEnabled_ = prefs.getBoolean(PREF_PREFIX + "TE", false);
       timePointInterval_ = prefs.getDouble(PREF_PREFIX + "TPI", 0);
-      numTimePoints_ = prefs.getInt(PREF_PREFIX + "NTP", 1);
-      timeIntervalUnit_ = prefs.getInt(PREF_PREFIX + "TPIU", 0);
+      numTimePoints_ = prefs.getInteger(PREF_PREFIX + "NTP", 1);
+      timeIntervalUnit_ = prefs.getInteger(PREF_PREFIX + "TPIU", 0);
       //space
       useCollectionPlane_ = prefs.getBoolean(PREF_PREFIX +"USECOLLECTIONPLANE", false);
       channelsAtEverySlice_ = prefs.getBoolean(PREF_PREFIX +"ACQORDER", true);
@@ -80,25 +82,26 @@ public class MagellanGUIAcquisitionSettings {
       distanceAboveFixedSurface_ = prefs.getDouble(PREF_PREFIX + "ZDISTABOVEFIXED", 0);
       distanceBelowBottomSurface_ = prefs.getDouble(PREF_PREFIX + "ZDISTBELOWBOTTOM", 0);
       distanceAboveTopSurface_ = prefs.getDouble(PREF_PREFIX + "ZDISTABOVETOP", 0);
-      spaceMode_ = prefs.getInt(PREF_PREFIX + "SPACEMODE", 0);
+      spaceMode_ = prefs.getInteger(PREF_PREFIX + "SPACEMODE", 0);
       tileOverlap_ = prefs.getDouble(PREF_PREFIX + "TILEOVERLAP", 5);
       //channels
-      channelGroup_ = prefs.get(PREF_PREFIX + "CHANNELGROUP", "");
+      channelGroup_ = prefs.getString(PREF_PREFIX + "CHANNELGROUP", "");
       //This creates a new Object of channelSpecs that is "Owned" by the accquisition
       channels_ = new MagellanChannelSpec(channelGroup_); 
    }
    
    public static double getStoredTileOverlapPercentage() {
-      return Magellan.getPrefs().getDouble(PREF_PREFIX + "TILEOVERLAP", 5);
+      MutablePropertyMapView prefs = Magellan.getStudio().profile().getSettings(MagellanGUIAcquisitionSettings.class);
+      return prefs.getDouble(PREF_PREFIX + "TILEOVERLAP", 5);
    }
    
    public void storePreferedValues() {
-      Preferences prefs = Magellan.getPrefs();
-      prefs.put(PREF_PREFIX + "NAME", name_);
+      MutablePropertyMapView prefs = Magellan.getStudio().profile().getSettings(MagellanGUIAcquisitionSettings.class);
+      prefs.putString(PREF_PREFIX + "NAME", name_);
       prefs.putBoolean(PREF_PREFIX + "TE", timeEnabled_);
       prefs.putDouble(PREF_PREFIX + "TPI", timePointInterval_);
-      prefs.putInt(PREF_PREFIX + "NTP", numTimePoints_);
-      prefs.putInt(PREF_PREFIX + "TPIU", timeIntervalUnit_);
+      prefs.putInteger(PREF_PREFIX + "NTP", numTimePoints_);
+      prefs.putInteger(PREF_PREFIX + "TPIU", timeIntervalUnit_);
       //space
       prefs.putBoolean(PREF_PREFIX +"USECOLLECTIONPLANE", useCollectionPlane_);
       prefs.putDouble(PREF_PREFIX + "ZSTEP", zStep_);
@@ -108,11 +111,11 @@ public class MagellanGUIAcquisitionSettings {
       prefs.putDouble(PREF_PREFIX + "ZDISTABOVEFIXED", distanceAboveFixedSurface_);
       prefs.putDouble(PREF_PREFIX + "ZDISTBELOWBOTTOM", distanceBelowBottomSurface_);
       prefs.putDouble(PREF_PREFIX + "ZDISTABOVETOP", distanceAboveTopSurface_);
-      prefs.putInt(PREF_PREFIX + "SPACEMODE", spaceMode_);
+      prefs.putInteger(PREF_PREFIX + "SPACEMODE", spaceMode_);
       prefs.putDouble(PREF_PREFIX + "TILEOVERLAP", tileOverlap_);
       prefs.putBoolean(PREF_PREFIX + "ACQORDER", channelsAtEverySlice_);
       //channels
-      prefs.put(PREF_PREFIX + "CHANNELGROUP", channelGroup_);
+      prefs.putString(PREF_PREFIX + "CHANNELGROUP", channelGroup_);
       //Individual channel settings sotred in ChannelUtils
    }
    

@@ -27,7 +27,7 @@ import org.micromanager.magellan.main.Magellan;
 public class Log {
    
    public static void log(String message) {
-      log(message, true);
+      Magellan.getStudio().logs().showError(message);
    }
 
    public static void log(String message, boolean show) {
@@ -37,12 +37,12 @@ public class Log {
         //running outside of MM, ignore
      }
        if (show) {
-          IJ.log(message);
+          Magellan.getStudio().logs().showError(message);
        }
    }
 
    public static void log(Exception e) {
-      log(e, true);
+      Magellan.getStudio().logs().showError(e);
    }
 
    public static void log(Exception e, boolean show) {
@@ -54,8 +54,7 @@ public class Log {
          //running outside of MM, ignore
       }
       if (show) {
-         IJ.log(e.toString());
-         IJ.log(getStackTraceAsString(e));
+         Magellan.getStudio().logs().showError(e);
       }
    }
    
