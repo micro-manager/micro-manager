@@ -408,7 +408,8 @@ public class MagellanEngine {
          for (int i = 0; i < (event.sequence_ == null ? 1 : event.sequence_.size()); i++) {
             double exposure;
             try {
-               exposure = event.acquisition_.channels_ == null ? core_.getExposure() : event.acquisition_.channels_.getChannelSetting(event.channelName_).exposure_;
+               exposure = event.acquisition_.channels_ == null || event.acquisition_.channels_.getNumChannels() == 0
+                       ? core_.getExposure() : event.acquisition_.channels_.getChannelSetting(event.channelName_).exposure_;
             } catch (Exception ex) {
                throw new RuntimeException("Couldnt get exposure form core");
             }
@@ -584,7 +585,7 @@ public class MagellanEngine {
                      String propName = ps.getPropertyName();
                      core_.startPropertySequence(deviceName, propName);
                   }
-               } else if (event.acquisition_.channels_ != null && (lastEvent_ == null || 
+               } else if (event.acquisition_.channels_ != null && event.acquisition_.channels_.getNumChannels() != 0 && (lastEvent_ == null || 
                        event.channelName_ != null && lastEvent_.channelName_ != null
                        && !event.channelName_.equals(lastEvent_.channelName_) && event.acquisition_.channels_ != null)) {
                   final ChannelSetting setting = event.acquisition_.channels_.getChannelSetting(event.channelName_);
@@ -613,7 +614,7 @@ public class MagellanEngine {
             try {
                if (event.exposureSequenced_) {
                   core_.startExposureSequence(core_.getCameraDevice());
-               } else if (event.acquisition_.channels_ != null
+               } else if (event.acquisition_.channels_ != null && event.acquisition_.channels_.getNumChannels() != 0
                        && (lastEvent_ == null || lastEvent_.acquisition_ != event.acquisition_
                        || ((lastEvent_.acquisition_.channels_.getChannelSetting(lastEvent_.channelName_).exposure_
                        != event.acquisition_.channels_.getChannelSetting(event.channelName_).exposure_)))) {

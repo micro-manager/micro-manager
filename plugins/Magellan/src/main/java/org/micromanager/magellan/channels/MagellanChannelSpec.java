@@ -77,23 +77,6 @@ public class MagellanChannelSpec {
             c.exposure_ = e;
         }
     }
-    
-    public boolean anyActive() {
-        for (ChannelSetting c : channels_) {
-         if (c.use_) {
-            return true;
-         }
-      }
-      return false;
-    }
-    
-//    public int getNumActiveChannels() {
-//         int count = 0;
-//        for (ChannelSetting c : channels_) {
-//            count += c.use_ ? 1 : 0;
-//        }
-//        return count; 
-//    }
 
     public int getNumChannels() {
         return channels_.size();
@@ -112,7 +95,7 @@ public class MagellanChannelSpec {
     
     private static String[] getChannelConfigs(String channelGroup) {
       if (channelGroup == null || channelGroup.equals("")) {
-         return new String[]{"Default"};
+         return new String[]{};
       }
       StrVector configs = Magellan.getCore().getAvailableConfigs(channelGroup);
       String[] names = new String[(int) configs.size()];

@@ -17,9 +17,6 @@
 
 package org.micromanager.magellan.misc;
 
-import java.awt.geom.AffineTransform;
-import org.micromanager.magellan.demo.DemoModeImageData;
-import org.micromanager.magellan.gui.GUI;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
@@ -29,10 +26,9 @@ import java.util.ArrayList;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import javax.swing.filechooser.FileSystemView;
-import org.micromanager.Studio;
-import org.micromanager.internal.MMStudio;
-import org.micromanager.magellan.coordinates.MagellanAffineUtils;
+import org.micromanager.magellan.gui.GUI;
 import org.micromanager.magellan.main.Magellan;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  *
@@ -46,14 +42,15 @@ public class GlobalSettings {
    private static final String CHANNEL_OFFSET_PREFIX = "CHANNEL_OFFSET_";
    
    private static GlobalSettings singleton_;
-   Preferences prefs_;
+   MutablePropertyMapView prefs_;
    private boolean demoMode_ = false;
    private boolean afBetweenAcqs_ = false;
    private int[] chOffsets_ = new int[8];
 
-   public GlobalSettings(Preferences prefs) {
+   public GlobalSettings() {
       singleton_ = this;
-      prefs_ = prefs;
+            prefs_ = Magellan.getStudio().profile().getSettings(GlobalSettings.class);
+
 
 //      //Demo mode 
 //      try {
@@ -75,7 +72,7 @@ public class GlobalSettings {
       //load channel offsets
         try {
             for (int i = 0; i < 6; i++) {
-                chOffsets_[i] = prefs_.getInt(CHANNEL_OFFSET_PREFIX + Magellan.getCore().getCurrentPixelSizeConfig() + i, 0);
+                chOffsets_[i] = prefs_.getInteger(CHANNEL_OFFSET_PREFIX + Magellan.getCore().getCurrentPixelSizeConfig() + i, 0);
             }
         } catch (Exception ex) {
             Log.log("couldnt get pixel size config",true);
@@ -97,19 +94,19 @@ public class GlobalSettings {
    }
    
     public void storeIntInPrefs(String key, Integer value) {
-       prefs_.putInt(key, value);
+       prefs_.putInteger(key, value);
    }
    
    public int getIntInPrefs(String key, int defualtVal) {
-       return prefs_.getInt(key, defualtVal);
+       return prefs_.getInteger(key, defualtVal);
    }
    
    public void storeStringInPrefs(String key, String value) {
-       prefs_.put(key, value);
+       prefs_.putString(key, value);
    }
    
    public String getStringInPrefs(String key, String defaultValue) {
-       return prefs_.get(key, defaultValue);
+       return prefs_.getString(key, defaultValue);
    }
    
    public void storeDoubleInPrefs(String key, double d) {
@@ -125,11 +122,11 @@ public class GlobalSettings {
    }
    
    public void storeSavingDirectory(String dir) {
-      prefs_.put(SAVING_DIR, dir);
+      prefs_.putString(SAVING_DIR, dir);
    }
    
    public String getStoredSavingDirectory() {
-      return prefs_.get(SAVING_DIR, FileSystemView.getFileSystemView().getHomeDirectory().getAbsolutePath());
+      return prefs_.getString(SAVING_DIR, FileSystemView.getFileSystemView().getHomeDirectory().getAbsolutePath());
    }
    
     public boolean getAutofocusBetweenSerialAcqusitions() {
@@ -171,7 +168,7 @@ public class GlobalSettings {
       }
    }
    
-    public Preferences getGlobalPrefernces() {
+    public MutablePropertyMapView getGlobalPrefernces() {
        return prefs_;
     }
 
@@ -184,7 +181,7 @@ public class GlobalSettings {
         byte[] serialBytes = new byte[0];
         int totalLength = 0;
         try {
-            for (String chunkKey:prefs.node(key).keys()) {
+            for (String chunkKey: prefs.node(key).keys()) {
                 byte[] chunk = prefs.node(key).getByteArray(chunkKey, new byte[0]);
                 chunks.add(chunk);
                 totalLength += chunk.length;

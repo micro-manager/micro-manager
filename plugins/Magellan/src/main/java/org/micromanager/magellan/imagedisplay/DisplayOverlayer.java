@@ -261,6 +261,8 @@ public class DisplayOverlayer {
                     Math.max(display_.getExploreEndTile().y, display_.getExploreStartTile().y),
                     Math.min(display_.getExploreEndTile().x, display_.getExploreStartTile().x),
                     Math.max(display_.getExploreEndTile().x, display_.getExploreStartTile().x), TRANSPARENT_MAGENTA);
+            addTextBox(new String[]{"Left click again to confirm acquire", "Right click to cancel"}, overlay);
+            
          } else if (display_.getMouseDragStartPointLeft() != null) {
             //highlight multiple tiles when mouse dragging    
             Point mouseLoc = display_.getCurrentMouseLocation();

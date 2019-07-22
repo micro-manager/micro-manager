@@ -31,6 +31,9 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.prefs.Preferences;
 import javax.swing.JFrame;
+import org.micromanager.magellan.gui.GUI;
+import org.micromanager.magellan.main.Magellan;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 
 /**
@@ -39,7 +42,7 @@ import javax.swing.JFrame;
  */
 public class MMFrame extends JFrame {
    private static final long serialVersionUID = 1L;
-   private Preferences prefs_;
+   private MutablePropertyMapView prefs_;
    private final String prefPrefix_;
    private static final String WINDOW_X = "frame_x";
    private static final String WINDOW_Y = "frame_y";
@@ -59,7 +62,7 @@ public class MMFrame extends JFrame {
    }
    
       private void finishConstructor() {
-      prefs_ = Preferences.userNodeForPackage(this.getClass());
+            prefs_ = Magellan.getStudio().profile().getSettings(MMFrame.class);
    }
 
    /**
@@ -71,12 +74,12 @@ public class MMFrame extends JFrame {
     * @param y new WINDOW_Y position if current value isn't valid
     */
    private void ensureSafeWindowPosition(int x, int y) {
-      int prefX = prefs_.getInt(prefPrefix_ + WINDOW_X, 0);
-      int prefY = prefs_.getInt(prefPrefix_ + WINDOW_Y, 0);
+      int prefX = prefs_.getInteger(prefPrefix_ + WINDOW_X, 0);
+      int prefY = prefs_.getInteger(prefPrefix_ + WINDOW_Y, 0);
       if (getGraphicsConfigurationContaining(prefX, prefY) == null) {
          // only reach this code if the pref coordinates are off screen
-         prefs_.putInt(prefPrefix_ + WINDOW_X, x);
-         prefs_.putInt(prefPrefix_ + WINDOW_Y, y);
+         prefs_.putInteger(prefPrefix_ + WINDOW_X, x);
+         prefs_.putInteger(prefPrefix_ + WINDOW_Y, y);
       }
    }
 
@@ -85,10 +88,10 @@ public class MMFrame extends JFrame {
          return;
 
       ensureSafeWindowPosition(x, y);
-      setBounds(prefs_.getInt(prefPrefix_ + WINDOW_X, x),
-                prefs_.getInt(prefPrefix_ + WINDOW_Y, y),
-                prefs_.getInt(prefPrefix_ + WINDOW_WIDTH, width),
-                prefs_.getInt(prefPrefix_ + WINDOW_HEIGHT, height));
+      setBounds(prefs_.getInteger(prefPrefix_ + WINDOW_X, x),
+                prefs_.getInteger(prefPrefix_ + WINDOW_Y, y),
+                prefs_.getInteger(prefPrefix_ + WINDOW_WIDTH, width),
+                prefs_.getInteger(prefPrefix_ + WINDOW_HEIGHT, height));
    }
 
    public void loadPosition(int x, int y) {
@@ -96,8 +99,8 @@ public class MMFrame extends JFrame {
          return;
       
       ensureSafeWindowPosition(x, y);
-      setBounds(prefs_.getInt(prefPrefix_ + WINDOW_X, x),
-                prefs_.getInt(prefPrefix_ + WINDOW_Y, y),
+      setBounds(prefs_.getInteger(prefPrefix_ + WINDOW_X, x),
+                prefs_.getInteger(prefPrefix_ + WINDOW_Y, y),
                 getWidth(),
                 getHeight());
    }
@@ -151,10 +154,10 @@ public class MMFrame extends JFrame {
       Rectangle r = getBounds();
       
       // save window position
-      prefs_.putInt(prefPrefix_ + WINDOW_X, r.x);
-      prefs_.putInt(prefPrefix_ + WINDOW_Y, r.y);
-      prefs_.putInt(prefPrefix_ + WINDOW_WIDTH, r.width);
-      prefs_.putInt(prefPrefix_ + WINDOW_HEIGHT, r.height);
+      prefs_.putInteger(prefPrefix_ + WINDOW_X, r.x);
+      prefs_.putInteger(prefPrefix_ + WINDOW_Y, r.y);
+      prefs_.putInteger(prefPrefix_ + WINDOW_WIDTH, r.width);
+      prefs_.putInteger(prefPrefix_ + WINDOW_HEIGHT, r.height);
    }
    
          
@@ -165,11 +168,11 @@ public class MMFrame extends JFrame {
    }
    
    
-   public Preferences getPrefsNode() {
+   public MutablePropertyMapView getPrefsNode() {
       return prefs_;
    }
    
-   public void setPrefsNode(Preferences prefs) {
+   public void setPrefsNode(MutablePropertyMapView prefs) {
       prefs_ = prefs;
    }
 

@@ -30,8 +30,10 @@ import java.text.DecimalFormat;
 import java.util.Comparator;
 import java.util.prefs.Preferences;
 import javax.swing.*;
+import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.Log;
 import org.micromanager.magellan.mmcloneclasses.graph.ContrastPanel;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  * This class is the Frame that handles image viewing: it contains the canvas
@@ -63,7 +65,7 @@ public class DisplayWindow extends StackWindow {
    // store window location in Java Preferences
    private static final int DEFAULTPOSX = 300;
    private static final int DEFAULTPOSY = 100;
-   private static Preferences displayPrefs_;
+   private static MutablePropertyMapView displayPrefs_;
    private static final String EXPLOREWINDOWPOSX = "ExploreWindowPosX";
    private static final String EXPLOREWINDOWPOSY = "ExploreWindowPosY";
    private static final String FIXEDWINDOWPOSX = "FixedWindowPosX";
@@ -81,11 +83,11 @@ public class DisplayWindow extends StackWindow {
       public RequestToCloseEvent(DisplayWindow window) {
          if (displayPrefs_ != null && acq_ != null) {
             if (acq_ instanceof ExploreAcquisition) {
-               displayPrefs_.putInt(EXPLOREWINDOWPOSX, window.getLocation().x);
-               displayPrefs_.putInt(EXPLOREWINDOWPOSY, window.getLocation().y);
+               displayPrefs_.putInteger(EXPLOREWINDOWPOSX, window.getLocation().x);
+               displayPrefs_.putInteger(EXPLOREWINDOWPOSY, window.getLocation().y);
             } else {
-               displayPrefs_.putInt(EXPLOREWINDOWPOSX, window.getLocation().x);
-               displayPrefs_.putInt(EXPLOREWINDOWPOSY, window.getLocation().y);
+               displayPrefs_.putInteger(EXPLOREWINDOWPOSX, window.getLocation().x);
+               displayPrefs_.putInteger(EXPLOREWINDOWPOSY, window.getLocation().y);
             }
          }
          window_ = window;
@@ -113,11 +115,11 @@ public class DisplayWindow extends StackWindow {
       int posX = DEFAULTPOSX, posY = DEFAULTPOSY;
       if (displayPrefs_ != null) {
          if (acq_ instanceof ExploreAcquisition) {
-            posX = displayPrefs_.getInt(EXPLOREWINDOWPOSX, DEFAULTPOSX);
-            posY = displayPrefs_.getInt(EXPLOREWINDOWPOSY, DEFAULTPOSY);
+            posX = displayPrefs_.getInteger(EXPLOREWINDOWPOSX, DEFAULTPOSX);
+            posY = displayPrefs_.getInteger(EXPLOREWINDOWPOSY, DEFAULTPOSY);
          } else {
-            posX = displayPrefs_.getInt(FIXEDWINDOWPOSX, DEFAULTPOSX);
-            posY = displayPrefs_.getInt(FIXEDWINDOWPOSY, DEFAULTPOSY);
+            posX = displayPrefs_.getInteger(FIXEDWINDOWPOSX, DEFAULTPOSX);
+            posY = displayPrefs_.getInteger(FIXEDWINDOWPOSY, DEFAULTPOSY);
          }
       }
       setLocation(posX, posY);
@@ -208,11 +210,11 @@ public class DisplayWindow extends StackWindow {
       //Set window size based on saved prefs for each type of acquisition
 
       if (disp.getAcquisition() instanceof ExploreAcquisition) {
-         this.setSize(new Dimension(displayPrefs_.getInt(WINDOWSIZEX_EXPLORE, width),
-                 displayPrefs_.getInt(WINDOWSIZEY_EXPLORE, height)));
+         this.setSize(new Dimension(displayPrefs_.getInteger(WINDOWSIZEX_EXPLORE, width),
+                 displayPrefs_.getInteger(WINDOWSIZEY_EXPLORE, height)));
       } else {
-         this.setSize(new Dimension(displayPrefs_.getInt(WINDOWSIZEX_FIXED, width),
-                 displayPrefs_.getInt(WINDOWSIZEY_FIXED, height)));
+         this.setSize(new Dimension(displayPrefs_.getInteger(WINDOWSIZEX_FIXED, width),
+                 displayPrefs_.getInteger(WINDOWSIZEY_FIXED, height)));
       }
       contrastPanelMagellan_.initialize(disp);
       mdPanelMagellan_.initialize(disp);
@@ -378,16 +380,16 @@ public class DisplayWindow extends StackWindow {
 
                //store fixed acq size, but only if this call comes from user resizing the window
                if (saveWindowResize_) {
-                  displayPrefs_.putInt(WINDOWSIZEX_FIXED, Math.max(MINIMUM_SAVED_WINDOW_DIMENSION, DisplayWindow.this.getSize().width));
-                  displayPrefs_.putInt(WINDOWSIZEY_FIXED, Math.max(MINIMUM_SAVED_WINDOW_DIMENSION, DisplayWindow.this.getSize().height));
+                  displayPrefs_.putInteger(WINDOWSIZEX_FIXED, Math.max(MINIMUM_SAVED_WINDOW_DIMENSION, DisplayWindow.this.getSize().width));
+                  displayPrefs_.putInteger(WINDOWSIZEY_FIXED, Math.max(MINIMUM_SAVED_WINDOW_DIMENSION, DisplayWindow.this.getSize().height));
                }
                saveWindowResize_ = true;
             } else //Explore acq, resize to use all available space
             {
                if (fitCanvasToWindow()) {
                   //store explore acquisition size if resize successful    
-                  displayPrefs_.putInt(WINDOWSIZEX_EXPLORE, Math.max(MINIMUM_SAVED_WINDOW_DIMENSION, DisplayWindow.this.getSize().width));
-                  displayPrefs_.putInt(WINDOWSIZEY_EXPLORE, Math.max(MINIMUM_SAVED_WINDOW_DIMENSION, DisplayWindow.this.getSize().height));
+                  displayPrefs_.putInteger(WINDOWSIZEX_EXPLORE, Math.max(MINIMUM_SAVED_WINDOW_DIMENSION, DisplayWindow.this.getSize().width));
+                  displayPrefs_.putInteger(WINDOWSIZEY_EXPLORE, Math.max(MINIMUM_SAVED_WINDOW_DIMENSION, DisplayWindow.this.getSize().height));
                }
             }
             disp_.drawOverlay();
@@ -580,7 +582,7 @@ public class DisplayWindow extends StackWindow {
    private void initializePrefs() {
       if (displayPrefs_ == null) {
          try {
-            displayPrefs_ = Preferences.userNodeForPackage(getClass());
+            displayPrefs_ = Magellan.getStudio().profile().getSettings(DisplayWindow.class);
          } catch (Exception e) {
             Log.log(e);
          }

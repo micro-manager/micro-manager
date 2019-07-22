@@ -58,8 +58,9 @@ public class MagellanGUIAcquisition extends Acquisition {
    public MagellanGUIAcquisition(MagellanGUIAcquisitionSettings settings) {
       super();
       settings_ = settings;
+      channels_ = settings.channels_;
    }
-   
+
    @Override
    public String toString() {
       return settings_.toString();
@@ -71,7 +72,7 @@ public class MagellanGUIAcquisition extends Acquisition {
                  + " Try refreshing acquisition list or creating new acquisition");
       }
       createXYPositions();
-      initialize(settings_.dir_, settings_.name_, settings_.tileOverlap_, settings_.zStep_, settings_.channels_);
+      initialize(settings_.dir_, settings_.name_, settings_.tileOverlap_, settings_.zStep_);
       //Submit a generating stream to get this acquisition going
       Stream<AcquisitionEvent> acqEventStream = magellanGUIAcqEventStream();
       acqFuture_ = MagellanEngine.getInstance().submitEventStream(acqEventStream, this);
@@ -79,7 +80,7 @@ public class MagellanGUIAcquisition extends Acquisition {
       //or through running its natural course
       acqFinishedFuture_ = MagellanEngine.getInstance().submitToEventExecutor(new Runnable() {
          @Override
-         public void run() {            
+         public void run() {
             MagellanEngine.getInstance().finishAcquisition(MagellanGUIAcquisition.this);
             //let the acquisition manager know so it can create a new acqusiition with these settings for the GUI/API to interact with
             MagellanAcquisitionsManager.getInstance().acquisitionFinished(MagellanGUIAcquisition.this);
@@ -102,15 +103,24 @@ public class MagellanGUIAcquisition extends Acquisition {
       acqFunctions.add(timelapse());
       acqFunctions.add(positions(IntStream.range(0, positions_ == null ? 1 : positions_.size()).toArray(), positions_));
       if (settings_.spaceMode_ == MagellanGUIAcquisitionSettings.REGION_2D) {
-         acqFunctions.add(channels(settings_.channels_));
+         if (settings_.channels_.getNumChannels() != 0) {
+            acqFunctions.add(channels(settings_.channels_));
+         }
       } else if (surfaceGuided2D) {
          acqFunctions.add(surfaceGuided2D());
-         acqFunctions.add(channels(settings_.channels_));
+         if (settings_.channels_.getNumChannels() != 0) {
+
+            acqFunctions.add(channels(settings_.channels_));
+         }
       } else if (settings_.channelsAtEverySlice_) {
          acqFunctions.add(MagellanZStack());
-         acqFunctions.add(channels(settings_.channels_));
+         if (settings_.channels_.getNumChannels() != 0) {
+            acqFunctions.add(channels(settings_.channels_));
+         }
       } else {
-         acqFunctions.add(channels(settings_.channels_));
+         if (settings_.channels_.getNumChannels() != 0) {
+            acqFunctions.add(channels(settings_.channels_));
+         }
          acqFunctions.add(MagellanZStack());
       }
       Stream<AcquisitionEvent> eventStream = makeEventStream(acqFunctions);
@@ -361,15 +371,15 @@ public class MagellanGUIAcquisition extends Acquisition {
             positions_ = settings_.footprint_ == null ? null : settings_.footprint_.getXYPositions(settings_.tileOverlap_);
          } else if (settings_.spaceMode_ == MagellanGUIAcquisitionSettings.REGION_2D) {
             positions_ = settings_.footprint_ == null ? null : settings_.footprint_.getXYPositions(settings_.tileOverlap_);
-         } 
+         }
          if (positions_ == null) {
             positions_ = new ArrayList<XYStagePosition>();
             int fullTileWidth = (int) Magellan.getCore().getImageWidth();
             int fullTileHeight = (int) Magellan.getCore().getImageHeight();
             int tileWidthMinusOverlap = fullTileWidth - this.getOverlapX();
             int tileHeightMinusOverlap = fullTileHeight - this.getOverlapY();
-            positions_.add(new XYStagePosition(new Point2D.Double(Magellan.getCore().getXPosition(), Magellan.getCore().getYPosition()), 
-                    tileWidthMinusOverlap, tileHeightMinusOverlap, 
+            positions_.add(new XYStagePosition(new Point2D.Double(Magellan.getCore().getXPosition(), Magellan.getCore().getYPosition()),
+                    tileWidthMinusOverlap, tileHeightMinusOverlap,
                     fullTileWidth, fullTileHeight, 0, 0, MagellanAffineUtils.getAffineTransform(
                             Magellan.getCore().getXPosition(), Magellan.getCore().getXPosition())));
          }

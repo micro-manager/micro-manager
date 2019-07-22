@@ -47,7 +47,8 @@ public class ExploreAcquisition extends Acquisition {
    public ExploreAcquisition(ExploreAcqSettings settings) {
       super();
       settings_ = settings;
-      initialize(settings.dir_, settings.name_, settings.tileOverlap_, settings.zStep_, settings.channels_);
+      channels_ = settings.channels_;
+      initialize(settings.dir_, settings.name_, settings.tileOverlap_, settings.zStep_);
    }
 
    public void start() {

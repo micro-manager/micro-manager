@@ -25,6 +25,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
+import java.util.prefs.Preferences;
 import org.apache.commons.math3.analysis.interpolation.LinearInterpolator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 import org.micromanager.magellan.coordinates.XYStagePosition;
@@ -54,11 +55,12 @@ public class AcqDurationEstimator {
          }
       });
 
+      Preferences prefs = Preferences.userNodeForPackage(AcqDurationEstimator.class);
       //populate with one from preferences
-      exposureMap_ = GlobalSettings.getObjectFromPrefs(GlobalSettings.getInstance().getGlobalPrefernces(), EXPOSURE_KEY, new TreeMap<Double, LinkedList<Double>>());
-      xyMoveTimeList_ = GlobalSettings.getObjectFromPrefs(GlobalSettings.getInstance().getGlobalPrefernces(), XY_KEY, new LinkedList<Double>());
-      zStepMoveTimeList_ = GlobalSettings.getObjectFromPrefs(GlobalSettings.getInstance().getGlobalPrefernces(), Z_KEY, new LinkedList<Double>());
-      channelSwitchTimeList_ = GlobalSettings.getObjectFromPrefs(GlobalSettings.getInstance().getGlobalPrefernces(), CHANNEL_KEY, new LinkedList<Double>());
+      exposureMap_ = GlobalSettings.getObjectFromPrefs(prefs, EXPOSURE_KEY, new TreeMap<Double, LinkedList<Double>>());
+      xyMoveTimeList_ = GlobalSettings.getObjectFromPrefs(prefs, XY_KEY, new LinkedList<Double>());
+      zStepMoveTimeList_ = GlobalSettings.getObjectFromPrefs(prefs, Z_KEY, new LinkedList<Double>());
+      channelSwitchTimeList_ = GlobalSettings.getObjectFromPrefs(prefs, CHANNEL_KEY, new LinkedList<Double>());
 
    }
 
@@ -241,11 +243,13 @@ public class AcqDurationEstimator {
                GUI.updateEstiamtedDurationLabel("Estimated duration: " + h + ":" + m + ":" + s + " (H:M:S)");
                GUI.updateEstiamtedSizeLabel(sizeLabel);
 
+               Preferences prefs = Preferences.userNodeForPackage(AcqDurationEstimator.class);
+
                //store
-               GlobalSettings.putObjectInPrefs(GlobalSettings.getInstance().getGlobalPrefernces(), EXPOSURE_KEY, exposureMap_);
-               GlobalSettings.putObjectInPrefs(GlobalSettings.getInstance().getGlobalPrefernces(), XY_KEY, xyMoveTimeList_);
-               GlobalSettings.putObjectInPrefs(GlobalSettings.getInstance().getGlobalPrefernces(), Z_KEY, zStepMoveTimeList_);
-               GlobalSettings.putObjectInPrefs(GlobalSettings.getInstance().getGlobalPrefernces(), CHANNEL_KEY, channelSwitchTimeList_);
+               GlobalSettings.putObjectInPrefs(prefs, EXPOSURE_KEY, exposureMap_);
+               GlobalSettings.putObjectInPrefs(prefs, XY_KEY, xyMoveTimeList_);
+               GlobalSettings.putObjectInPrefs(prefs, Z_KEY, zStepMoveTimeList_);
+               GlobalSettings.putObjectInPrefs(prefs, CHANNEL_KEY, channelSwitchTimeList_);
 
             } catch (InterruptedException ex) {
                return; //Interrupted, return with no result
@@ -270,7 +274,7 @@ public class AcqDurationEstimator {
          list = settings.footprint_.getXYPositionsNoUpdate();
       } else {
          list = new ArrayList<XYStagePosition>();
-         list.add(new XYStagePosition(new Point2D.Double(), 0, 0));
+         list.add(new XYStagePosition(new Point2D.Double(), 0, 0, ""));
       }
       return list;
    }

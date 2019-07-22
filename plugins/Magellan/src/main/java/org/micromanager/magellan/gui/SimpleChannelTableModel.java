@@ -66,10 +66,6 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
       Magellan.getStudio().getEventManager().unregisterForEvents(this);
    }
 
-   public boolean anyChannelsActive() {
-      return channels_ == null ? false : channels_.anyActive();
-   }
-
    public void setChannelGroup(String group) {
       if (channels_ != null) {
          channels_.updateChannelGroup(group);

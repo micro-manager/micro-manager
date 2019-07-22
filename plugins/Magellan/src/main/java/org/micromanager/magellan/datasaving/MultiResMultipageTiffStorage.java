@@ -97,6 +97,7 @@ public class MultiResMultipageTiffStorage {
          if (!new File(dsDir).exists()) {
             break;
          }
+         maxResolutionLevel_ = resIndex;
          lowResStorages_.put(resIndex, new TaggedImageStorageMultipageTiff(dsDir, false, null, null, this));
          resIndex++;
       }
@@ -112,7 +113,7 @@ public class MultiResMultipageTiffStorage {
                //read rowIndex, colIndex, stageX, stageY from per image metadata
                JSONObject md = fullResStorage_.getImageTags(indices[0], indices[1], indices[2], indices[3]);
                positions.put(posIndex, new XYStagePosition(new Point2D.Double(MD.getStageX(md), MD.getStageY(md)),
-                       MD.getGridRow(md), MD.getGridCol(md)));
+                       MD.getGridRow(md), MD.getGridCol(md), MD.getCoreXY(md)));
             }
          }
          JSONArray pList = new JSONArray();
