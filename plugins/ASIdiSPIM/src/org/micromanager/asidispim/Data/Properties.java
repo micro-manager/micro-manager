@@ -307,6 +307,8 @@ public class Properties {
       PLUGIN_PATH_CONFIG_B("PathConfigB"),
       PLUGIN_USE_PATH_GROUP_ACQ("UsePathGroupAcquisition"),
       PLUGIN_SHOW_EPI_CB("ShowEpiBeamSheetCB"),
+      PLUGIN_SCAN_FROM_START_POSITION("ScanFromStartPosition"),
+      PLUGIN_SCAN_NEGATIVE_DIRECTION("ScanNegativeDirection"),
       REFRESH_PROPERTY_VALUES("RefreshPropertyValues"),
       PLUGIN_PLANAR_ENABLED("PlanarCorrectionEnable"),
       PLUGIN_PLANAR_SLOPE_X("PlanarCorrectionSlopeX"),

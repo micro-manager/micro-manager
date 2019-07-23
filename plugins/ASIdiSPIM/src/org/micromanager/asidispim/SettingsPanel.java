@@ -291,6 +291,12 @@ public class SettingsPanel extends ListeningJPanel {
                   Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_OVERSHOOT_DIST, 0);
             stageScanPanel.add(scanOvershootDistance, "wrap");
          }
+         final JCheckBox scanFromStart = pu.makeCheckBox("Scan from current position instead of center",
+               Properties.Keys.PLUGIN_SCAN_FROM_START_POSITION, panelName_, false);
+         stageScanPanel.add(scanFromStart, "span 2, wrap, alignx left");
+         final JCheckBox scanNegativeDirection = pu.makeCheckBox("Scan negative direction",
+               Properties.Keys.PLUGIN_SCAN_NEGATIVE_DIRECTION, panelName_, false);
+         stageScanPanel.add(scanNegativeDirection, "span 2, wrap, alignx left");
          stageScanPanel.add(new JLabel("Path A stage/objective angle [\u00B0]:"));
          final JSpinner stageAnglePathA = pu.makeSpinnerFloat(1, 89, 1,
                Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_ANGLE_PATHA,

@@ -123,6 +123,8 @@ public class ControllerUtils {
     * @return false if there was some error that should abort acquisition 
     */
    public boolean prepareStageScanForAcquisition(double x, double y, AcquisitionModes.Keys spimMode) {
+      final boolean scanFromStart = prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(), Properties.Keys.PLUGIN_SCAN_FROM_START_POSITION, false);
+      final boolean scanNegative = prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(), Properties.Keys.PLUGIN_SCAN_NEGATIVE_DIRECTION, false);
       props_.setPropValue(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_CENTER_X_POSITION, (float)(x));
       props_.setPropValue(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_Y_POSITION, (float)(y));
       
@@ -135,8 +137,24 @@ public class ControllerUtils {
          }
       } else {
          final Devices.Keys xyDevice = Devices.Keys.XYSTAGE;
-         final double xStartUm = x - (scanDistance_/2);
-         final double xStopUm = x + (scanDistance_/2);
+         final double xStartUm, xStopUm;
+         if (scanFromStart) {
+            if (scanNegative) {
+               xStartUm = x;
+               xStopUm = x - scanDistance_;
+            } else {
+               xStartUm = x;
+               xStopUm = x + scanDistance_;
+            }
+         } else { // centered
+            if (scanNegative) {
+               xStartUm = x + (scanDistance_/2);
+               xStopUm = x - (scanDistance_/2);
+            } else {  // the original implementation
+               xStartUm = x - (scanDistance_/2);
+               xStopUm = x + (scanDistance_/2);
+            }
+         }
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_FAST_START, (float)(xStartUm/1000d));
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_FAST_STOP, (float)(xStopUm/1000d));
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SLOW_START, (float)(y/1000d));
