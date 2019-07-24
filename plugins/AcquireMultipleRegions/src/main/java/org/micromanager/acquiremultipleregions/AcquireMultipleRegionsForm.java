@@ -260,7 +260,12 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
                 //gui_.positions().setPositionList(currRegion.tileGrid(getXFieldSize(), getYFieldSize(), axisList_, zGenType_));   
                 
                 double overlap = Double.parseDouble(overlapText.getText());
-                double pixelSizeUm = mmc_.getPixelSizeUm();                   
+                double pixelSizeUm = mmc_.getPixelSizeUm();
+                if (pixelSizeUm == 0.0) {
+                    gui_.logs().showError("Pixel Size is 0. Must set pixel size.");
+                    statusText.setText("Pixel Size is 0. Must set pixel size.");
+                    return;
+                }
                 gui_.positions().setPositionList(
                     tileCreator_.createTiles(
                         overlap,
