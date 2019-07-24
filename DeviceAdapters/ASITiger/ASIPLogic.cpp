@@ -243,6 +243,7 @@ int CPLogic::Initialize()
    CreateProperty(g_RefreshPropValsPropertyName, g_NoState, MM::String, false, pAct);
    AddAllowedValue(g_RefreshPropValsPropertyName, g_NoState);
    AddAllowedValue(g_RefreshPropValsPropertyName, g_YesState);
+//   AddAllowedValue(g_RefreshPropValsPropertyName, g_OneTimeState);
 
    // save settings to controller if requested
    pAct = new CPropertyAction (this, &CPLogic::OnSaveCardSettings);
@@ -272,6 +273,9 @@ int CPLogic::Initialize()
    AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode13, 13);
    AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode14, 14);
    AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode15, 15);
+   AddAllowedValue(g_EditCellTypePropertyName, g_IOTypeCode0, 100);
+   AddAllowedValue(g_EditCellTypePropertyName, g_IOTypeCode1, 101);
+   AddAllowedValue(g_EditCellTypePropertyName, g_IOTypeCode2, 102);
    UpdateProperty(g_EditCellTypePropertyName);
 
    // edit config at current pointer
@@ -293,7 +297,7 @@ int CPLogic::Initialize()
    CreateProperty(g_EditCellInput4PropertyName, "0", MM::Integer, false, pAct);
    UpdateProperty(g_EditCellInput4PropertyName);
 
-   // refresh properties from controller every time; default is false = no refresh (speeds things up by not redoing so much serial comm)
+   // refresh properties from controller every time; default is true = refresh for just selected cell
    pAct = new CPropertyAction (this, &CPLogic::OnEditCellUpdates);
    CreateProperty(g_EditCellUpdateAutomaticallyPropertyName, g_YesState, MM::String, false, pAct);
    AddAllowedValue(g_EditCellUpdateAutomaticallyPropertyName, g_NoState);
@@ -367,6 +371,7 @@ int CPLogic::Initialize()
       // sets up 4 lasers triggered by cell 10
       SetProperty(g_SetCardPresetPropertyName, g_PresetCode12);
 
+      // make it ignore the TTL backplane signal usually from the micro-mirror card
       if (FirmwareVersionAtLeast(3.27)) {
          SetProperty(g_SetCardPresetPropertyName, g_PresetCode36);
       } else {
@@ -614,6 +619,11 @@ int CPLogic::OnRefreshProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(tmpstr);
       if (tmpstr.compare(g_YesState) == 0)
          refreshProps_ = true;
+//      else if (tmpstr.compare(g_OneTimeState))
+//      {
+//         SetProperty(g_RefreshPropValsPropertyName, g_YesState);
+//         SetProperty(g_RefreshPropValsPropertyName, g_NoState);
+//      }
       else
          refreshProps_ = false;
    }
@@ -638,8 +648,7 @@ int CPLogic::RefreshEditCellPropertyValues()
    } else if (editCellUpdates_ && currentPosition_>=PLOGIC_PHYSICAL_IO_START_ADDRESS
          && currentPosition_<=PLOGIC_PHYSICAL_IO_END_ADDRESS) {
       // if position is an I/O
-      // CellType overlaps with the IOType, but different list of possibilities so
-      //    let's not worry about that for now
+      UpdateProperty(g_EditCellTypePropertyName);  // this is I/O type but encoded in a different string that we
       UpdateProperty(g_EditCellConfigPropertyName);  // this is the source address
    }
 
@@ -651,18 +660,28 @@ int CPLogic::RefreshEditCellPropertyValues()
 
 int CPLogic::OnEditCellType(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+   // NB: works for I/O addresses but will have incorrect strings
    ostringstream command; command.str("");
-   if(currentPosition_ <= numCells_) {
+   if(currentPosition_ <= numCells_                                 // normal cells
+         || (currentPosition_ >= PLOGIC_FRONTPANEL_START_ADDRESS && currentPosition_ <= PLOGIC_BACKPLANE_END_ADDRESS)) {   // or I/O addresses
       if (eAct == MM::BeforeGet) {
          return OnCellType(pProp, eAct, (long)currentPosition_);
       } else if (eAct == MM::AfterSet) {
          long tmp;
          RETURN_ON_MM_ERROR ( GetCurrentPropertyData(pProp->GetName().c_str(), tmp) );
+         if (currentPosition_ >= PLOGIC_FRONTPANEL_START_ADDRESS && currentPosition_ <= PLOGIC_BACKPLANE_END_ADDRESS) {
+            if (tmp >= 100) {
+               tmp -= 100;
+            } else {
+               return DEVICE_INVALID_PROPERTY_VALUE;
+            }
+         } else if (tmp >= 100) {
+            return DEVICE_INVALID_PROPERTY_VALUE;
+         }
          command << addressChar_ << "CCA Y=" << tmp;
          RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
          RETURN_ON_MM_ERROR ( RefreshEditCellPropertyValues() );
       }
-
    }
    return DEVICE_OK;
 }
@@ -904,7 +923,14 @@ int CPLogic::OnCellType(MM::PropertyBase* pProp, MM::ActionType eAct, long index
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       bool success = 0;
-      switch (tmp) {
+      if (currentPosition_ > numCells_) {
+         switch (tmp) {
+         case 0: success = pProp->Set(g_IOTypeCode0); break;
+         case 1: success = pProp->Set(g_IOTypeCode1); break;
+         case 2: success = pProp->Set(g_IOTypeCode2); break;
+         }
+      } else {
+         switch (tmp) {
          case 0: success = pProp->Set(g_CellTypeCode0); break;
          case 1: success = pProp->Set(g_CellTypeCode1); break;
          case 2: success = pProp->Set(g_CellTypeCode2); break;
@@ -922,6 +948,7 @@ int CPLogic::OnCellType(MM::PropertyBase* pProp, MM::ActionType eAct, long index
          case 14:success = pProp->Set(g_CellTypeCode14); break;
          case 15:success = pProp->Set(g_CellTypeCode15); break;
          default: success=0;
+         }
       }
       if (!success)
          return DEVICE_INVALID_PROPERTY_VALUE;
