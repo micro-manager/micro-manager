@@ -451,9 +451,12 @@ public class ControllerUtils {
                return false;
             }
             
-            // configure input #3 as an input trigger
-            // TODO finish this bit of code to set up PLC appropriately
+            // configure input #3 as an input; should be connected in real world to PI digital output #2
             props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_POINTER_POSITION, triggerInAddr);
+            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_TYPE, Properties.Values.PLOGIC_IO_INPUT);
+            
+            // set backplane signal 
+            
             
          } else {    // scanning with ASI stage
             // algorithm is as follows:
@@ -501,6 +504,11 @@ public class ControllerUtils {
                   ((settings.spimMode == AcquisitionModes.Keys.STAGE_SCAN) && (settings.numSides == 2)
                         ? Properties.Values.SERPENTINE : Properties.Values.RASTER));
             props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SETTLING_TIME, settings.delayBeforeSide);
+            
+            if (props_.getPropValueString(xyDevice, Properties.Keys.XYSTAGE_X_POLARITY).equals(Properties.Values.REVERSED)) {
+               MyDialogUtils.showError("Stage scanning requires X axis polarity set to normal");
+               return false;
+            }
          }
 
          // cache how far we scan each pass for later use
