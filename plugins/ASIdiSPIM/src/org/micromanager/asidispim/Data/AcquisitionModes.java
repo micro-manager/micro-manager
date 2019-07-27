@@ -192,7 +192,7 @@ public class AcquisitionModes {
          }
          if (devices_.isValidMMDevice(Devices.Keys.SUPPLEMENTAL_X)) {
             keyList.add(Keys.STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL);
-            //keyList.add(Keys.STAGE_SCAN_SUPPLEMENTAL_UNIDIRECTIONAL); // TODO add back in once code is finished
+            keyList.add(Keys.STAGE_SCAN_SUPPLEMENTAL_UNIDIRECTIONAL);
          }
          keyList.add(Keys.SLICE_SCAN_ONLY);
          keyList.add(Keys.PIEZO_SCAN_ONLY);

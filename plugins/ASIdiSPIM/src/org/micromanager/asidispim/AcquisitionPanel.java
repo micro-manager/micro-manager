@@ -3681,8 +3681,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             origXAccel = props_.getPropValueFloat(Devices.Keys.XYSTAGE,
                   Properties.Keys.STAGESCAN_MOTOR_ACCEL_X);
             if (devices_.isValidMMDevice(Devices.Keys.SUPPLEMENTAL_X)) {
-               origXSupSpeed = props_.getPropValueFloat(Devices.Keys.SUPPLEMENTAL_X,
-                     Properties.Keys.VELOCITY);
+               if (devices_.getMMDeviceLibrary(Devices.Keys.SUPPLEMENTAL_X) == Devices.Libraries.PI_GCS_2) {
+                  origXSupSpeed = props_.getPropValueFloat(Devices.Keys.SUPPLEMENTAL_X, Properties.Keys.VELOCITY);
+               }
             }
             if (devices_.isValidMMDevice(Devices.Keys.UPPERZDRIVE)) {
                origZSpeed = props_.getPropValueFloat(Devices.Keys.UPPERZDRIVE,

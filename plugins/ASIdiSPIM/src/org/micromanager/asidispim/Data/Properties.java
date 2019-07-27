@@ -384,6 +384,8 @@ public class Properties {
       PLOGIC_AND4("10 - 4-input AND"),
       PLOGIC_ONESHOT_NRT("14 - one shot (NRT)"),
       PLOGIC_IO_INPUT("0 - input"),
+      PLOGIC_IO_OUT_OPENDRAIN("1 - output (open drain)"),
+      PLOGIC_IO_OUT_PUSHPULL("2 - output (push pull)"),
       RASTER("Raster"),
       SERPENTINE("Serpentine"),
       REVERSED("Reversed"),

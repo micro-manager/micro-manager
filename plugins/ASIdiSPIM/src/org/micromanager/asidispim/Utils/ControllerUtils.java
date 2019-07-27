@@ -73,6 +73,7 @@ public class ControllerUtils {
    final int triggerStepPulseAddr = 7;
    final int triggerStepOutputAddr = 40;  // BNC #8
    final int triggerInAddr = 35;  // BNC #3
+   final int triggerSPIMAddr = 46;  // backplane signal, same as XY card's TTL output
    final int laserTriggerAddress = 10;  // this should be set to (42 || 8) = (TTL1 || manual laser on)
    
    public ControllerUtils(ScriptInterface gui, final Properties props, 
@@ -455,7 +456,14 @@ public class ControllerUtils {
             props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_POINTER_POSITION, triggerInAddr);
             props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_TYPE, Properties.Values.PLOGIC_IO_INPUT);
             
-            // set backplane signal 
+            // set backplane signal
+            // NB: for proper operation the jumper from the XY card should be removed so it isn't contending for the same wire
+            //   (the PLC can be pull-down but the XY card is push-pull)
+            // choose to do push-pull here for modicum of safety if the jumper isn't removed
+            // just pass through PI TTL signal directly onto backplane; don't do one-shot or debounce or anything
+            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_POINTER_POSITION, triggerSPIMAddr);
+            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_TYPE, Properties.Values.PLOGIC_IO_OUT_OPENDRAIN);
+            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_CONFIG, triggerInAddr);
             
             
          } else {    // scanning with ASI stage
@@ -505,7 +513,7 @@ public class ControllerUtils {
                         ? Properties.Values.SERPENTINE : Properties.Values.RASTER));
             props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SETTLING_TIME, settings.delayBeforeSide);
             
-            if (props_.getPropValueString(xyDevice, Properties.Keys.XYSTAGE_X_POLARITY).equals(Properties.Values.REVERSED)) {
+            if (!props_.getPropValueString(xyDevice, Properties.Keys.XYSTAGE_X_POLARITY).equals(Properties.Values.NORMAL.toString())) {
                MyDialogUtils.showError("Stage scanning requires X axis polarity set to normal");
                return false;
             }
