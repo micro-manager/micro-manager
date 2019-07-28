@@ -922,6 +922,14 @@ public class ControllerUtils {
          props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_CONFIG, zeroAddr);
       }
       
+      // if we co-opted the backplane for triggering for stage scann supplemental, then release it
+      if (settings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_SUPPLEMENTAL_UNIDIRECTIONAL
+            && devices_.getMMDeviceLibrary(Devices.Keys.SUPPLEMENTAL_X) == Devices.Libraries.PI_GCS_2) {
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_POINTER_POSITION, triggerSPIMAddr);
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_TYPE, Properties.Values.PLOGIC_IO_INPUT);
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_CONFIG, triggerInAddr);
+      }
+      
       // clean up planar correction if needed
       if (!zSpeedZero_) {
          props_.setPropValue(Devices.Keys.UPPERZDRIVE, Properties.Keys.TTLINPUT_MODE, Properties.Values.TTLINPUT_MODE_NONE);
