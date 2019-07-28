@@ -4201,7 +4201,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                            scanXSupSpeed = props_.getPropValueFloat(Devices.Keys.SUPPLEMENTAL_X,
                                  Properties.Keys.VELOCITY);
                            props_.setPropValue(Devices.Keys.SUPPLEMENTAL_X,
-                                 Properties.Keys.VELOCITY, origXSupSpeed);
+                                 Properties.Keys.VELOCITY, origXSupSpeed, true);
                         }
                         if (devices_.isValidMMDevice(Devices.Keys.UPPERZDRIVE)) {
                            scanZSpeed = props_.getPropValueFloat(Devices.Keys.UPPERZDRIVE,
@@ -4229,7 +4229,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                               Properties.Keys.STAGESCAN_MOTOR_ACCEL_X, scanXAccel);
                         if (devices_.isValidMMDevice(Devices.Keys.SUPPLEMENTAL_X)) {
                            props_.setPropValue(Devices.Keys.SUPPLEMENTAL_X,
-                                 Properties.Keys.VELOCITY, scanXSupSpeed);
+                                 Properties.Keys.VELOCITY, scanXSupSpeed, true);
                         }
                         if (devices_.isValidMMDevice(Devices.Keys.UPPERZDRIVE)) {
                            props_.setPropValue(Devices.Keys.UPPERZDRIVE,
