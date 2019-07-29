@@ -363,7 +363,7 @@ public class ControllerUtils {
                   macroText = new String[] {
                         "MAC BEG " + MACRO_NAME  ,  // define new macro
                         "WAC DIO? 1 = 1"         ,  // wait for digital input #1 to go high
-                        "MVR 1 " + distanceStr.substring(8)   ,  // increment target position by requested distance
+                        "MVR 1 " + distanceStr.substring(0, 8)   ,  // increment target position by requested distance
                         "WAC DIO? 1 = 0"         ,  // wait for digital input #1 to go low
                         "MAC START " + MACRO_NAME,  // restart the macro looking for next trigger
                         "MAC END"                ,  // end definition
@@ -436,7 +436,7 @@ public class ControllerUtils {
                   macroText = new String[] {
                         "MAC BEG " + MACRO_NAME  ,  // define new macro
                         "DIO 2 0"              ,  // set digital output #2 to go low
-                        "WAC POS? 1 = " + posStr.substring(8) ,  // wait for requested start position to be reached
+                        "WAC POS? 1 = " + posStr.substring(0, 8) ,  // wait for requested start position to be reached
                         "DIO 2 1"              ,  // set digital output #2 to go high
                         "DEL 10"                 ,  // wait 10ms
                         "DIO 2 0"              ,  // set digital output #2 to go low
