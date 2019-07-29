@@ -413,7 +413,7 @@ public class ControllerUtils {
                scanDistance_ = settings.numSlices * stepDistance;
                
                // for this mode only, scanDistance_ will include ramp up/down distance of some startup time hard-coded as rampTimeMs
-               final double rampDistanceUm = requestedMotorSpeed*rampTimeMs*1000;
+               final double rampDistanceUm = requestedMotorSpeed*rampTimeMs;
                scanDistance_ = scanDistance_ + 2*rampDistanceUm;
                
                // move to start position before we change velocity to scan value
