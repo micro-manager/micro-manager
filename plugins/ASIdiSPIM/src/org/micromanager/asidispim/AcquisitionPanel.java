@@ -2021,14 +2021,28 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
    
    /**
+    * gets the acceleration used during scanning, or 0.0 if supplemental stage is being used
+    * @param acqSettings
+    * @return
+    */
+   private double getScanStageAcceleration(AcquisitionSettings acqSettings) {
+      if (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL
+            || acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_SUPPLEMENTAL_UNIDIRECTIONAL) {
+         return 0.0;
+      } else {
+         return controller_.computeScanAcceleration(
+               controller_.computeScanSpeed(acqSettings)) + 1;  // extra 1 for rounding up that often happens in controller
+      }
+   }
+   
+   /**
     * calculate the total ramp time for stage scan in units of milliseconds (includes both acceleration and settling time
     *   given by "delay before side" setting)
     * @param acqSettings
     * @return
     */
    private double getStageRampDuration(AcquisitionSettings acqSettings) {
-      final double accelerationX = controller_.computeScanAcceleration(
-            controller_.computeScanSpeed(acqSettings)) + 1;  // extra 1 for rounding up that often happens in controller
+      final double accelerationX = getScanStageAcceleration(acqSettings);
       ReportingUtils.logDebugMessage("stage ramp duration is " + (acqSettings.delayBeforeSide + accelerationX) + " milliseconds");
       return acqSettings.delayBeforeSide + accelerationX;
    }
@@ -2053,8 +2067,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       final DeviceUtils du = new DeviceUtils(gui_, devices_, props_, prefs_);
       final double speedFactor = du.getStageGeometricSpeedFactor(acqSettings.firstSideIsA);
       final double scanDistance = acqSettings.numSlices * acqSettings.stepSizeUm * speedFactor;
-      final double accelerationX = controller_.computeScanAcceleration(  // not really applicable for non-ASI hardware but just leave as simple case
-            controller_.computeScanSpeed(acqSettings)) + 1;  // extra 1 for rounding up that often happens in controller
+      final double accelerationX = getScanStageAcceleration(acqSettings);
       final double retraceDuration = scanDistance/retraceSpeed + accelerationX*2;
       ReportingUtils.logDebugMessage("stage retrace duration is " + retraceDuration + " milliseconds");
       return retraceDuration;

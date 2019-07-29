@@ -405,7 +405,7 @@ public class ControllerUtils {
          if (settings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_SUPPLEMENTAL_UNIDIRECTIONAL) {  // scanning with non-ASI stage
             if (devices_.getMMDeviceLibrary(Devices.Keys.SUPPLEMENTAL_X) == Devices.Libraries.PI_GCS_2) {
                final Devices.Keys piDevice = Devices.Keys.SUPPLEMENTAL_X;
-               final int rampTimeMs = 100;
+               final int rampTimeMs = Math.round(settings.delayBeforeSide);
                
                actualStepSizeUm_ = settings.stepSizeUm;
                DeviceUtils du = new DeviceUtils(gui_, devices_, props_, prefs_);
