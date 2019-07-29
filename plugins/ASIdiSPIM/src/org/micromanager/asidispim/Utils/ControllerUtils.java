@@ -419,6 +419,11 @@ public class ControllerUtils {
                props_.setPropValue(piDevice, Properties.Keys.VELOCITY, (float)requestedMotorSpeed);
                actualMotorSpeed = props_.getPropValueFloat(piDevice, Properties.Keys.VELOCITY);
                
+               actualStepSizeUm_ = settings.stepSizeUm;
+               DeviceUtils du = new DeviceUtils(gui_, devices_, props_, prefs_);
+               final double stepDistance = actualStepSizeUm_ * du.getStageGeometricSpeedFactor(settings.firstSideIsA);
+               scanDistance_ = settings.numSlices * stepDistance;
+               
                // dynamically generate macro and then send it to PI controller
                final String posStr = Double.toString(-1*scanDistance_/2/1000);  // position specified in mm
                final String[] macroText;
