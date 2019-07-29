@@ -4236,7 +4236,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                  Properties.Keys.STAGESCAN_MOTOR_SPEED_Z, scanZSpeed);
                         }
                      } else if (acqSettings.isStageStepping) {
-                        controller_.prepareStageStepForAcquisition(acqSettings.spimMode);
+                        controller_.moveSupplementalToStartPosition();
                      }
                      
                      refreshXYZPositions();
@@ -4421,7 +4421,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                               String msg = "Camera did not send first image within a reasonable time.\n";
                               if (acqSettings.isStageScanning) {
                                  msg += "Make sure jumpers are correct on XY card and also micro-micromirror card.";
-                                 ReportingUtils.logError("Stage speed is" + props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MOTOR_SPEED_X));
+                                 ReportingUtils.logError("Stage speed is " + props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MOTOR_SPEED_X));
                                  positions_.getUpdatedPosition(Devices.Keys.XYSTAGE, Directions.X);
                               } else {
                                  msg += "Make sure camera trigger cables are connected properly.";

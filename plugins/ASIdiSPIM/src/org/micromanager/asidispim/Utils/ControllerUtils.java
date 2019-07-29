@@ -61,6 +61,7 @@ public class ControllerUtils {
    boolean zSpeedZero_;  // cached value from last call to prepareStageScanForAcquisition()
    String lastDistanceStr_;  // cached value from last call to prepareControllerForAquisition() 
    String lastPosStr_;       // cached value from last call to prepareControllerForAquisition()
+   double supOrigSpeed_;
    
    final int triggerStepDurationTics = 10;  // 2.5ms with 0.25ms tics
    final int zeroAddr = 0;
@@ -75,6 +76,8 @@ public class ControllerUtils {
    final int triggerInAddr = 35;  // BNC #3
    final int triggerSPIMAddr = 46;  // backplane signal, same as XY card's TTL output
    final int laserTriggerAddress = 10;  // this should be set to (42 || 8) = (TTL1 || manual laser on)
+   final String MACRO_NAME_STEP = "STEPTRIG";
+   final String MACRO_NAME_SCAN = "SCANTRIG";
    
    public ControllerUtils(ScriptInterface gui, final Properties props, 
            final Prefs prefs, final Devices devices, final Positions positions, final Cameras cameras) {
@@ -93,25 +96,18 @@ public class ControllerUtils {
    }
    
    /**
-    * Stage stepping needs to be setup at each (motorized) XY position, so call this method.
+    * Moves supplemental stage to initial position with 0 as center.  Blocking call.
     * This method assumes that prepareControllerForAquisition() has been called already
-    *    to initialize scanDistance_.  We always step supplemental X in positive-going direction.
-    *  Moves supplemental stage to starting position.
-    * @param x center x position in um
-    * @param y y position in um
-    * @return false if there was some error that should abort acquisition 
+    *    to initialize scanDistance_.  We always move supplemental X in positive-going direction
+    *    so this method moves to negative position.
     */
-   public boolean prepareStageStepForAcquisition(AcquisitionModes.Keys spimMode) {
-      final double xStartUm = -1 * (scanDistance_/2);
-      if (spimMode == AcquisitionModes.Keys.STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL) {
-         positions_.setPosition(Devices.Keys.SUPPLEMENTAL_X, xStartUm);
-         try {
-            core_.waitForDevice(devices_.getMMDevice(Devices.Keys.SUPPLEMENTAL_X));
-         } catch (Exception e) {
-            e.printStackTrace();
-         }
+   public void moveSupplementalToStartPosition() {
+      positions_.setPosition(Devices.Keys.SUPPLEMENTAL_X, -1/2*scanDistance_);
+      try {
+         core_.waitForDevice(devices_.getMMDevice(Devices.Keys.SUPPLEMENTAL_X));
+      } catch (Exception e) {
+         e.printStackTrace();
       }
-      return true;
    }
    
    /**
@@ -130,12 +126,7 @@ public class ControllerUtils {
       props_.setPropValue(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_Y_POSITION, (float)(y));
       
       if (spimMode == AcquisitionModes.Keys.STAGE_SCAN_SUPPLEMENTAL_UNIDIRECTIONAL) {
-         positions_.setPosition(Devices.Keys.SUPPLEMENTAL_X, -1*(scanDistance_/2) - getSupplementalStageOvershoot());
-         try {
-            core_.waitForDevice(devices_.getMMDevice(Devices.Keys.SUPPLEMENTAL_X));
-         } catch (Exception e) {
-            e.printStackTrace();
-         }
+         moveSupplementalToStartPosition();
       } else {
          final Devices.Keys xyDevice = Devices.Keys.XYSTAGE;
          final double xStartUm, xStopUm;
@@ -351,23 +342,21 @@ public class ControllerUtils {
             
             // dynamically generate macro and then send to PI controller
             if (devices_.getMMDeviceLibrary(Devices.Keys.SUPPLEMENTAL_X) == Devices.Libraries.PI_GCS_2) {
-               final String distanceStr = Double.toString(stepDistance/1000);  // distance specified in mm
+               final String distanceStr = Double.toString(stepDistance/1000).substring(0, 10);  // distance specified in mm
                final String[] macroText;
-               final String MACRO_NAME = "TRIGMM";
                if (lastDistanceStr_.equals(distanceStr)) {
                   // just start the existing macro if it hasn't changed
-                  macroText = new String[] { "MAC START " + MACRO_NAME };
+                  macroText = new String[] { "MAC START " + MACRO_NAME_STEP };
                } else {
                   // have to send an updated macro
                   lastDistanceStr_ = distanceStr;
                   macroText = new String[] {
-                        "MAC BEG " + MACRO_NAME  ,  // define new macro
-                        "WAC DIO? 1 = 1"         ,  // wait for digital input #1 to go high
-                        "MVR 1 " + distanceStr.substring(0, 8)   ,  // increment target position by requested distance
-                        "WAC DIO? 1 = 0"         ,  // wait for digital input #1 to go low
-                        "MAC START " + MACRO_NAME,  // restart the macro looking for next trigger
-                        "MAC END"                ,  // end definition
-                        "MAC START " + MACRO_NAME,  // start macro
+                        "MAC BEG " + MACRO_NAME_STEP  ,  // define new macro
+                        "WAC DIO? 1 = 1"              ,  // wait for digital input #1 to go high
+                        "MVR 1 " + distanceStr        ,  // increment target position by requested distance
+                        "WAC DIO? 1 = 0"              ,  // wait for digital input #1 to go low
+                        "MAC START " + MACRO_NAME_STEP,  // restart the macro looking for next trigger
+                        "MAC END"                     ,  // end definition
                   };
                }
                
@@ -404,7 +393,7 @@ public class ControllerUtils {
             props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_POINTER_POSITION, triggerStepOutputAddr);
             props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_CONFIG, triggerStepPulseAddr);
             
-            prepareStageStepForAcquisition(settings.spimMode);
+            moveSupplementalToStartPosition();
          }
       } else if (settings.isStageScanning) {  
          final double actualMotorSpeed;
@@ -415,33 +404,44 @@ public class ControllerUtils {
          
          if (settings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_SUPPLEMENTAL_UNIDIRECTIONAL) {  // scanning with non-ASI stage
             if (devices_.getMMDeviceLibrary(Devices.Keys.SUPPLEMENTAL_X) == Devices.Libraries.PI_GCS_2) {
-               final Devices.Keys piDevice = Devices.Keys.SUPPLEMENTAL_X;               
-               props_.setPropValue(piDevice, Properties.Keys.VELOCITY, (float)requestedMotorSpeed);
-               actualMotorSpeed = props_.getPropValueFloat(piDevice, Properties.Keys.VELOCITY);
+               final Devices.Keys piDevice = Devices.Keys.SUPPLEMENTAL_X;
+               final int rampTimeMs = 100;
                
                actualStepSizeUm_ = settings.stepSizeUm;
                DeviceUtils du = new DeviceUtils(gui_, devices_, props_, prefs_);
                final double stepDistance = actualStepSizeUm_ * du.getStageGeometricSpeedFactor(settings.firstSideIsA);
                scanDistance_ = settings.numSlices * stepDistance;
                
+               // for this mode only, scanDistance_ will include ramp up/down distance of some startup time hard-coded as rampTimeMs
+               final double rampDistanceUm = requestedMotorSpeed*rampTimeMs*1000;
+               scanDistance_ = scanDistance_ + 2*rampDistanceUm;
+               
+               // move to start position before we change velocity to scan value
+               // remember original velocity so we can restore it in cleanUpControllerAfterAcquisition()
+               supOrigSpeed_ = props_.getPropValueFloat(piDevice, Properties.Keys.VELOCITY);
+               moveSupplementalToStartPosition();
+               
+               // change velocity to scan value
+               props_.setPropValue(piDevice, Properties.Keys.VELOCITY, (float)requestedMotorSpeed);
+               actualMotorSpeed = props_.getPropValueFloat(piDevice, Properties.Keys.VELOCITY);
+               
                // dynamically generate macro and then send it to PI controller
-               final String posStr = Double.toString(-1*scanDistance_/2/1000);  // position specified in mm
+               final String endPosStr = Double.toString(scanDistance_/2/1000.0).substring(0, 10);  // position specified in mm
                final String[] macroText;
-               final String MACRO_NAME = "SCANTRIG";
-               if (lastPosStr_.equals(posStr)) {
+               if (lastPosStr_.equals(endPosStr)) {
                   // just start the existing macro if it hasn't changed
-                  macroText = new String[] { "MAC START " + MACRO_NAME };
+                  macroText = new String[] { "MAC START " + MACRO_NAME_SCAN };
                } else {
-                  lastPosStr_ = posStr;
+                  lastPosStr_ = endPosStr;
                   macroText = new String[] {
-                        "MAC BEG " + MACRO_NAME  ,  // define new macro
-                        "DIO 2 0"              ,  // set digital output #2 to go low
-                        "WAC POS? 1 = " + posStr.substring(0, 8) ,  // wait for requested start position to be reached
-                        "DIO 2 1"              ,  // set digital output #2 to go high
-                        "DEL 10"                 ,  // wait 10ms
-                        "DIO 2 0"              ,  // set digital output #2 to go low
-                        "MAC END"                ,  // end definition
-                        "MAC START " + MACRO_NAME,  // start macro
+                        "MAC BEG " + MACRO_NAME_SCAN  ,  // define new macro
+                        "DIO 2 0"                     ,  // set digital output #2 to go low
+                        "MOV 1 " + endPosStr          ,  // initiate move to end position
+                        "DEL " + rampTimeMs           ,  // wait for the ramp time we added
+                        "DIO 2 1"                     ,  // set digital output #2 to go high
+                        "DEL 100"                     ,  // wait 100ms (long for troubleshooting, ASI controller triggered on rising edge)
+                        "DIO 2 0"                     ,  // set digital output #2 to go low again
+                        "MAC END"                     ,  // end definition
                   };
                }
                
@@ -922,19 +922,25 @@ public class ControllerUtils {
             return false;
          }
       }
-      
-      // prevent more pulses on #8 if we are using stepping
+
+      // special cleanup for start/stop or stepping mode
       if (settings.isStageStepping) {
+         // prevent more pulses on #8 if we are using stepping
          props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_POINTER_POSITION, triggerStepOutputAddr);
          props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_CONFIG, zeroAddr);
       }
-      
-      // if we co-opted the backplane for triggering for stage scann supplemental, then release it
+
+      // special cleanup for PI stage in scan mode
       if (settings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_SUPPLEMENTAL_UNIDIRECTIONAL
             && devices_.getMMDeviceLibrary(Devices.Keys.SUPPLEMENTAL_X) == Devices.Libraries.PI_GCS_2) {
+         // if we co-opted the backplane for triggering for stage scan supplemental, then release it
          props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_POINTER_POSITION, triggerSPIMAddr);
          props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_TYPE, Properties.Values.PLOGIC_IO_INPUT);
          props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_CONFIG, triggerInAddr);
+         // also set velocity back to original value
+         props_.setPropValue(Devices.Keys.SUPPLEMENTAL_X, Properties.Keys.VELOCITY, (float)supOrigSpeed_);
+         // finally go back to start position
+         moveSupplementalToStartPosition();
       }
       
       // clean up planar correction if needed
@@ -1161,19 +1167,6 @@ public class ControllerUtils {
    }
    
    /**
-    * Returns the overshoot distance in microns for the supplemental stage (positive number).  Assumes stage speed already set for slow scanning.
-    * @return
-    */
-   private double getSupplementalStageOvershoot() {
-      if (devices_.getMMDeviceLibrary(Devices.Keys.SUPPLEMENTAL_X) == Devices.Libraries.PI_GCS_2) {
-         float velMillimeters = props_.getPropValueFloat(Devices.Keys.SUPPLEMENTAL_X, Properties.Keys.VELOCITY);
-         final float overshootTime = 1.0f;  // 1 second of ramp time
-         return (velMillimeters*overshootTime/1000);
-      }
-      return 0.0;
-   }
-   
-   /**
     * Triggers the Tiger controller
     * @param spimMode
     * @param isFirstSideA
@@ -1188,16 +1181,14 @@ public class ControllerUtils {
       case STAGE_SCAN_UNIDIRECTIONAL:
          // for stage scan we send trigger to stage card, which sends
          //    hardware trigger to the micro-mirror card
-         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_STATE,
-               Properties.Values.SPIM_ARMED);
-         props_.setPropValue(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_STATE,
-               Properties.Values.SPIM_RUNNING);
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED);
+         props_.setPropValue(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_STATE, Properties.Values.SPIM_RUNNING);
          break;
       case STAGE_SCAN_SUPPLEMENTAL_UNIDIRECTIONAL:
-         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_STATE,
-               Properties.Values.SPIM_ARMED);
-         double stopPosition = (scanDistance_ / 2) + getSupplementalStageOvershoot();
-         positions_.setPosition(Devices.Keys.SUPPLEMENTAL_X, stopPosition);
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED);
+         // initiate macro loaded onto controller in prepareControllerForAquisition()
+         final String controllerDeviceName = props_.getPropValueString(Devices.Keys.SUPPLEMENTAL_X, Properties.Keys.CONTROLLER_NAME);
+         props_.setPropValueDirect(controllerDeviceName, Properties.Keys.SEND_COMMAND, "MAC START " + MACRO_NAME_SCAN);
          break;
       case STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL:  // not synchronizing this with anything
       case PIEZO_SLICE_SCAN:
