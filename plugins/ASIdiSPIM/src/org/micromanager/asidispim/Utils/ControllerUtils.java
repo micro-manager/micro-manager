@@ -102,7 +102,7 @@ public class ControllerUtils {
     *    so this method moves to negative position.
     */
    public void moveSupplementalToStartPosition() {
-      positions_.setPosition(Devices.Keys.SUPPLEMENTAL_X, -1/2*scanDistance_);
+      positions_.setPosition(Devices.Keys.SUPPLEMENTAL_X, scanDistance_/-2d);
       try {
          core_.waitForDevice(devices_.getMMDevice(Devices.Keys.SUPPLEMENTAL_X));
       } catch (Exception e) {
