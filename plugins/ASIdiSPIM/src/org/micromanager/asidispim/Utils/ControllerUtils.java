@@ -428,10 +428,8 @@ public class ControllerUtils {
                // dynamically generate macro and then send it to PI controller
                final String endPosStr = Double.toString(scanDistance_/2/1000.0).substring(0, 10);  // position specified in mm
                final String[] macroText;
-               if (lastPosStr_.equals(endPosStr)) {
-                  // just start the existing macro if it hasn't changed
-                  macroText = new String[] { "MAC START " + MACRO_NAME_SCAN };
-               } else {
+               if (!lastPosStr_.equals(endPosStr)) {
+                  // only send macro if it has changed
                   lastPosStr_ = endPosStr;
                   macroText = new String[] {
                         "MAC BEG " + MACRO_NAME_SCAN  ,  // define new macro
@@ -443,15 +441,15 @@ public class ControllerUtils {
                         "DIO 2 0"                     ,  // set digital output #2 to go low again
                         "MAC END"                     ,  // end definition
                   };
-               }
-               
-               // actually send macro over serial
-               try {
-                  for (String s : macroText) {
-                     props_.setPropValueDirect(controllerDeviceName, Properties.Keys.SEND_COMMAND, s);
+
+                  // actually send macro over serial
+                  try {
+                     for (String s : macroText) {
+                        props_.setPropValueDirect(controllerDeviceName, Properties.Keys.SEND_COMMAND, s);
+                     }
+                  } catch (Exception e) {
+                     MyDialogUtils.showError("Could not send macro to PI controller.");
                   }
-               } catch (Exception e) {
-                  MyDialogUtils.showError("Could not send macro to PI controller.");
                }
             } else {
                MyDialogUtils.showError("Supplemental stage " + devices_.getMMDevice(Devices.Keys.SUPPLEMENTAL_X).toString()
