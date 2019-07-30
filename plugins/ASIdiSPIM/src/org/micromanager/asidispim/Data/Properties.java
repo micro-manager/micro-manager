@@ -158,14 +158,15 @@ public class Properties {
       TRIGGER_ACTIVE("TRIGGER ACTIVE"),   // for Hamamatsu
       READOUTTIME("ReadoutTime"),         // for Hamamatsu
       SENSOR_MODE("SENSOR MODE"),         // for Hamamatsu
-      SCAN_MODE("ScanMode"),              // for Hamamatsu, 1 = slow scan, 2 = fast scan
+      SCAN_MODE("ScanMode"),              // for Hamamatsu, for Flash4: 1 = slow scan, 2 = fast scan, for Fusion 1 = slow scan, 2 = standard scan, 3 = fast scan
       CAMERA_BUS("Camera Bus"),           // for Hamamatsu interface type, USB3 or ??
+      //CAMERA_NAME("CameraName"),          // for Hamamatsu interface type, begins with C14440 for Fusion, begins with C11440 for Flash4 (last few characters are specific model/version I think) 
       TRIGGER_MODE_PCO("Triggermode"),         // for PCO
       PIXEL_RATE("PixelRate"),                 // for PCO
       CAMERA_TYPE("CameraType"),               // for PCO
       LINE_TIME("Line Time [us]"),             // for PCO
       TRIGGER_MODE("TriggerMode"),             // for Andor Zyla, PVCAM
-      CAMERA_NAME("CameraName"),               // for Andor Zyla
+      CAMERA_NAME("CameraName"),               // for Andor Zyla (and Hamamatsu)
       PIXEL_READOUT_RATE("PixelReadoutRate"),  // for Andor Zyla
       ANDOR_OVERLAP("Overlap"),                // for Andor Zyla
       SENSOR_READOUT_MODE("LightScanPlus-SensorReadoutMode"), // for Andor Zyla

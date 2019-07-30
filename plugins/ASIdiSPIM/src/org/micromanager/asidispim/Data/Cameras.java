@@ -409,7 +409,12 @@ public class Cameras {
    private boolean isSlowReadout(Devices.Keys camKey) {
       switch(devices_.getMMDeviceLibrary(camKey)) {
       case HAMCAM:
-         return props_.getPropValueString(camKey, Properties.Keys.SCAN_MODE).equals("1");
+         if (props_.getPropValueString(camKey, Properties.Keys.CAMERA_NAME).startsWith("C14440")) {  // Fusion
+            // Fusion has 3 readout speeds but code architecture is only set up for fast/slow :(
+            return !props_.getPropValueString(camKey, Properties.Keys.SCAN_MODE).equals("3");
+         } else {
+            return props_.getPropValueString(camKey, Properties.Keys.SCAN_MODE).equals("1");
+         }
       case PCOCAM:
          return props_.getPropValueString(camKey, Properties.Keys.PIXEL_RATE).equals("slow scan");
       case ANDORCAM:
