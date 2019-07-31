@@ -99,6 +99,7 @@ SUBDIRS = \
 	Aladdin \
 	Aquinas \
 	Arduino \
+	Arduino32bitBoards \
 	BlueboxOptics_niji \
 	CARVII \
 	ChuoSeiki_MD5000 \
