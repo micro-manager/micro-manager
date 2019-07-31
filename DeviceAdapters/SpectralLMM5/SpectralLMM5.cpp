@@ -176,21 +176,26 @@ int LMM5Hub::Initialize()
                std::ostringstream os;
                os << "Max FLICR for line " << i << " is: " << lines[i].maxFLICR;
                LogMessage(os.str().c_str());
-               // ad FLICR/PWM property
-               CPropertyActionEx *pEx = new CPropertyActionEx(this, &LMM5Hub::OnFlicr, (long) i);
-               std::ostringstream fPropName;
-               fPropName << "PWM (%) " << lines[i].name;
-               ret = CreateProperty(fPropName.str().c_str(), "1.0", MM::String, false, pEx);
-               if (ret != DEVICE_OK)
-                  return ret;
-               // populate with presets
-               uint16_t val = 1;
-               while (val <= lines[i].maxFLICR) 
+               if (lines[i].maxFLICR == 0) 
                {
-                  std::string valStr;
-                  IntToPerc(val, valStr);
-                  AddAllowedValue(fPropName.str().c_str(), valStr.c_str());
-                  val = val * 10;
+                  lines[i].flicrAvailable = false;
+               } else {
+               // ad FLICR/PWM property
+                  CPropertyActionEx *pEx = new CPropertyActionEx(this, &LMM5Hub::OnFlicr, (long) i);
+                  std::ostringstream fPropName;
+                  fPropName << "PWM (%) " << lines[i].name;
+                  ret = CreateProperty(fPropName.str().c_str(), "1.0", MM::String, false, pEx);
+                  if (ret != DEVICE_OK)
+                     return ret;
+                  // populate with presets
+                  uint16_t val = 1;
+                  while (val <= lines[i].maxFLICR) 
+                  {
+                     std::string valStr;
+                     IntToPerc(val, valStr);
+                     AddAllowedValue(fPropName.str().c_str(), valStr.c_str());
+                     val = val * 10;
+                  }
                }
             }
          }
