@@ -539,6 +539,12 @@ int SpectralLMM5Interface::GetFLICRValue(MM::Device& device, MM::Core& core, lon
    if ( read < answerLen)
       return ERR_UNEXPECTED_ANSWER;
 
+   if (answer[0] == 0xFF) // error, seen in early FLICR capable firmware
+   {
+      value = 0;
+      return DEVICE_OK;
+   }
+
    if (answer[0] != 0X52 || answer[1] != 0x10 || answer[2] != 0x01)
       return ERR_UNEXPECTED_ANSWER;
 
