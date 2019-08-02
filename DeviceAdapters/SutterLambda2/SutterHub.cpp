@@ -255,12 +255,12 @@ int SutterHub::OnMotorsEnabled(MM::PropertyBase* pProp, MM::ActionType eAct) {
 // write 1, 2, or 3 char. command to equipment
 // ensure the command completed by waiting for \r
 // pass response back in argument
-int SutterHub::SetCommand(const std::vector<unsigned char> command, const std::vector<unsigned char> alternateEcho, std::vector<unsigned char>& Response) {
+int SutterHub::SetCommand(const std::vector<unsigned char> command, const std::vector<unsigned char> alternateEcho, std::vector<unsigned char>& Response, unsigned long minimumExpectedChars) {
 	busy_ = true;
 	MMThreadGuard myLock(GetLock());
 	PurgeComPort(port_.c_str());
 	// start time of entire transaction
-	MM::MMTime commandStartTime = GetCurrentMMTime();
+	//MM::MMTime commandStartTime = GetCurrentMMTime();
 	// write command to the port
 	int ret = WriteToComPort(port_.c_str(), &command[0], (unsigned long)command.size());
 	if (ret != DEVICE_OK) {return ret;}
@@ -316,7 +316,7 @@ int SutterHub::SetCommand(const std::vector<unsigned char> command, const std::v
 		ret = ReadFromComPort(port_.c_str(), tempResponse, 100, readThisTime);
 		if (ret != DEVICE_OK) {return ret;}
 		for (int i=0; i<readThisTime; i++) {
-			if (tempResponse[i] == '\r') {
+			if ((tempResponse[i] == '\r') && (read >= minimumExpectedChars)) { // '\r' is used to terminate a response, however sometimes the data of a response can contain a '\r'. For this reason we use the `minimumExpectedChars` to avoid terminating too soon.
 				commandTerminated = true;
 				break;
 			}
@@ -340,9 +340,13 @@ int SutterHub::SetCommand(const std::vector<unsigned char> command, const std::v
 
 int SutterHub::SetCommand(const std::vector<unsigned char> command, const std::vector<unsigned char> altEcho){
 	std::vector<unsigned char> response;
-	return SetCommand(command, altEcho, response);
+	return SetCommand(command, altEcho, response, 0);
 }
 
 int SutterHub::SetCommand(const std::vector<unsigned char> command) {
 	return SetCommand(command,command);
+}
+
+int SutterHub::SetCommand(const std::vector<unsigned char> command, const std::vector<unsigned char> altEcho, std::vector<unsigned char>& response){
+	return SetCommand(command, altEcho, response, 0);
 }

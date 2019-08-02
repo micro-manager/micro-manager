@@ -93,7 +93,7 @@ int LambdaVF5::onWavelength(MM::PropertyBase* pProp, MM::ActionType eAct) {
 		std::vector<unsigned char> cmd;
 		std::vector<unsigned char> response;
 		cmd.push_back(0xDB);
-		int ret = hub_->SetCommand(cmd, cmd, response);
+		int ret = hub_->SetCommand(cmd, cmd, response, 9); // The expected response is `1xx2xx3xx` where the numbers indicate the channel number and the x's are bytes indicating the wavelength for that channel. Sometimes the x's can be a carriage return which would cause the function to think that the response is terminated. For this reason we much tell the function that there is a minimum response length of 9 bytes.
 		if (ret != DEVICE_OK) { return ret;}
 		if (response.at(0) != 0x01) { //The first byte indicates which channel the response is for. if it isn't 0x01 (channel A) we have a problem.
 			return DEVICE_ERR;
@@ -130,6 +130,8 @@ int LambdaVF5::onWavelength(MM::PropertyBase* pProp, MM::ActionType eAct) {
 		return DEVICE_OK;
 	}
 	else if (eAct == MM::StartSequence) {
+		int ret = resetSequenceIndex(1); //Start from the beginning of the sequence
+		if (ret != DEVICE_OK) { return ret; }
 		return SetProperty("TTL In", "Enabled");
 	
 	}
@@ -149,6 +151,9 @@ int LambdaVF5::onWavelength(MM::PropertyBase* pProp, MM::ActionType eAct) {
 				cmd.push_back((unsigned char) (wv>>8));
 			}
 		} else {
+			//Any misteps here will cause weirdness and require a hardware restart.
+			//Commands with less than 100 wavelengths must be followed by a 16bit 0 to terminate the sequence (0x00 0x00)
+			//If a command has 100 wavelengths then it must not have any termination character following it.
 			cmd.push_back(0xF2);
 			cmd.push_back(1);
 			std::vector<std::string> seq = pProp->GetSequence();
@@ -157,8 +162,10 @@ int LambdaVF5::onWavelength(MM::PropertyBase* pProp, MM::ActionType eAct) {
 				cmd.push_back((unsigned char) (wv));
 				cmd.push_back((unsigned char) (wv>>8));
 			}
-			cmd.push_back(0);	//Terminate the sequence loading command.
-			cmd.push_back(0);
+			if (seq.size() < 100) {
+				cmd.push_back(0);	//Terminate the sequence loading command.
+				cmd.push_back(0);
+			}
 		}
 		return hub_->SetCommand(cmd);
 	}
@@ -363,4 +370,13 @@ int LambdaVF5::onSequenceType(MM::PropertyBase* pProp, MM::ActionType eAct) {
 		return DEVICE_OK;
 	}
    return MM_CODE_ERR;
+}
+
+int LambdaVF5::resetSequenceIndex(unsigned char channel) {
+	//This function resets the current index in the TTL sequence that the Lambda 10 is at. This is the only reliable way to go back to the beginning of a sequence.
+	std::vector<unsigned char> cmd;
+	cmd.push_back(0xFA);
+	cmd.push_back(0xC0);
+	cmd.push_back(channel);
+	return hub_->SetCommand(cmd);
 }
