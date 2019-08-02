@@ -1320,7 +1320,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
 
       try {
-         if (sysConfigFile_.length() > 0) {
+         if (sysConfigFile_ != null && sysConfigFile_.length() > 0) {
             GUIUtils.preventDisplayAdapterChangeExceptions();
             core_.waitForSystem();
             coreCallback_.setIgnoring(true);
@@ -1330,6 +1330,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
             coreCallback_.setIgnoring(false);
             GUIUtils.preventDisplayAdapterChangeExceptions();
             events().post(new AutofocusPluginShouldInitializeEvent());
+            FileDialogs.storePath(FileDialogs.MM_CONFIG_FILE, new File(sysConfigFile_));
          }
       } catch (final Exception err) {
          GUIUtils.preventDisplayAdapterChangeExceptions();
@@ -1348,8 +1349,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
 
       initializeGUI();
-
-      FileDialogs.storePath(FileDialogs.MM_CONFIG_FILE, new File(sysConfigFile_));
 
       return result;
    }
