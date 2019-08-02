@@ -68,6 +68,7 @@ public:
 	
 	int GetControllerType(std::string& type, std::string& id);
 	int GetStatus(std::vector<unsigned char>& status);
+	int SetCommand(const std::vector<unsigned char> command, const std::vector<unsigned char> alternateEcho, std::vector<unsigned char>& response, unsigned long minimumExpectedChars);
 	int SetCommand(const std::vector<unsigned char> command, const std::vector<unsigned char> alternateEcho, std::vector<unsigned char>& response);
 	int SetCommand(const std::vector<unsigned char> command, const std::vector<unsigned char> altEcho);
 	int SetCommand(const std::vector<unsigned char> command);
