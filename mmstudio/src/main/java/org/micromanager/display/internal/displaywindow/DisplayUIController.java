@@ -690,7 +690,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          });
          // TODO: Right-click menu
          // lockButton.setComponentPopupMenu(new JPopupMenu());
-         axisLockButtons_.add(new AbstractMap.SimpleEntry<String, JButton>(
+         axisLockButtons_.add(new AbstractMap.SimpleEntry<>(
                axis, lockButton));
       }
       
@@ -826,6 +826,13 @@ public final class DisplayUIController implements Closeable, WindowListener,
       repaintScheduledForNewImages_.set(true);
    }
 
+   /**
+    * Creates the string in the bottom of the viewer showing the time, z-height,
+    * channel and position the image shown was taken
+    * 
+    * @param images
+    * @return 
+    */
    private String getImageInfoLabel(ImagesAndStats images) {
       StringBuilder sb = new StringBuilder();
       // feeble and ugly way of getting the correct metadata
@@ -854,6 +861,20 @@ public final class DisplayUIController implements Closeable, WindowListener,
                   double elapsedTimeMs = metadata.getElapsedTimeMs(-1.0);
                   if (elapsedTimeMs < 0) {
                      sb.append(" t=").append(nominalCoords.getT()).append(" ");
+                  } else if (elapsedTimeMs > 3600000) {
+                     int hrs = (int) (elapsedTimeMs / 60000);
+                     sb.append(NumberUtils.doubleToDisplayString(hrs, 0)).
+                             append(".").
+                             append(NumberUtils.doubleToDisplayString(
+                                     (elapsedTimeMs % (hrs * 3600000)) / 60000.0, 0)).
+                             append("hr ");
+                  } else if (elapsedTimeMs > 60000) {
+                     int mins = (int) (elapsedTimeMs / 60000); 
+                     sb.append(NumberUtils.doubleToDisplayString(mins, 0)).
+                             append(".").
+                             append(NumberUtils.doubleToDisplayString(
+                                     (elapsedTimeMs % (mins * 60000)) / 1000.0, 0)).
+                             append("min ");
                   } else if (elapsedTimeMs > 10000) {
                      sb.append(NumberUtils.doubleToDisplayString(
                              (elapsedTimeMs / 1000), 1)).append("s ");
@@ -1677,6 +1698,21 @@ public final class DisplayUIController implements Closeable, WindowListener,
       return "Unknown pixelType";
    }
   
+   /**
+    * Generates the info string in the top right of the viewer
+    * showing:
+    * - x-y size in microns
+    * - x-y size in pixels
+    * - pixelType
+    * - Size in k/MB
+    * 
+    * This function is only called when the viewer is created or when the pixel
+    * size changes
+    * 
+    * 
+    * @param images
+    * @return 
+    */
    public String getInfoString(ImagesAndStats images) {
       StringBuilder infoStringB = new StringBuilder();
       Double pixelSize;
@@ -1703,7 +1739,9 @@ public final class DisplayUIController implements Closeable, WindowListener,
               append("\u00B5").append("m  ");
 
       infoStringB.append(getImageWidth()).append("x").append(getImageHeight());
-      infoStringB.append("px  ").append(this.getPixelType()).append(" ");
+      infoStringB.append("px  ");
+      
+      infoStringB.append(this.getPixelType()).append(" ");
 
       if (nrBytes / 1000 < 1000) {
          infoStringB.append((int) nrBytes / 1024).append("KB");
