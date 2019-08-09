@@ -862,16 +862,16 @@ public final class DisplayUIController implements Closeable, WindowListener,
                   if (elapsedTimeMs < 0) {
                      sb.append(" t=").append(nominalCoords.getT()).append(" ");
                   } else if (elapsedTimeMs > 3600000) {
-                     int hrs = (int) (elapsedTimeMs / 60000);
+                     int hrs = (int) (elapsedTimeMs / 3600000);
                      sb.append(NumberUtils.doubleToDisplayString(hrs, 0)).
-                             append(".").
-                             append(NumberUtils.doubleToDisplayString(
+                            append(":").
+                            append(NumberUtils.doubleToDisplayString(
                                      (elapsedTimeMs % (hrs * 3600000)) / 60000.0, 0)).
                              append("hr ");
                   } else if (elapsedTimeMs > 60000) {
                      int mins = (int) (elapsedTimeMs / 60000); 
                      sb.append(NumberUtils.doubleToDisplayString(mins, 0)).
-                             append(".").
+                             append(":").
                              append(NumberUtils.doubleToDisplayString(
                                      (elapsedTimeMs % (mins * 60000)) / 1000.0, 0)).
                              append("min ");
