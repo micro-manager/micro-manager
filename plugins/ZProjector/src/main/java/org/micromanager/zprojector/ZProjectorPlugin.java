@@ -40,6 +40,7 @@ import org.scijava.plugin.SciJavaPlugin;
 @Plugin(type = DisplayGearMenuPlugin.class)
 public class ZProjectorPlugin implements DisplayGearMenuPlugin, SciJavaPlugin {
    public static final String MENUNAME = "Z Project...";
+   public static final String AXISKEY = "AxisKey";
    private Studio studio_;
 
    @Override
@@ -50,7 +51,8 @@ public class ZProjectorPlugin implements DisplayGearMenuPlugin, SciJavaPlugin {
    @Override
    public void onPluginSelected(DisplayWindow display) {
       // no need to hold on to the instance, we just want to create the frame
-      ZProjectorPluginExecutor ourFrame = new ZProjectorPluginExecutor(studio_, display);
+      ZProjectorPluginFrame ourFrame = new ZProjectorPluginFrame(studio_, display);
+      //ZProjectorPluginExecutor ourFrame = new ZProjectorPluginExecutor(studio_, display);
    }
 
    @Override

@@ -24,6 +24,7 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.plugin.ZProjector;
 import ij.process.ImageProcessor;
+import java.util.List;
 import javax.swing.SwingWorker;
 import org.micromanager.Studio;
 import org.micromanager.data.Coordinates;
@@ -45,9 +46,11 @@ import org.micromanager.display.DisplayWindow;
 public class ZProjectorPluginExecutor {
 
    private final Studio studio_;
+   private final DisplayWindow window_;
 
    public ZProjectorPluginExecutor(Studio studio, DisplayWindow window) {
       studio_ = studio;
+      window_ = window;
 
       // Not sure if this is needed, be safe for now
       DataProvider dp = window.getDataProvider();
@@ -55,24 +58,25 @@ public class ZProjectorPluginExecutor {
          if (!((Datastore) dp).isFrozen()) {
             studio_.logs().showMessage("Can not Z-Project ongoing acquisitions",
                     window.getWindow());
-            return;
          }
       }
       
       // TODO: provide UI to other projection methods and z-ranges
-      project(window, window.getName() + "Z-Projection", ZProjector.MAX_METHOD);
+      //project(window, window.getName() + "Z-Projection", ZProjector.MAX_METHOD);
 
    }
 
    /**
     * Performs the actual creation of a new image with reduced content
     *
-    * @param theWindow - original window to be copied
     * @param newName - name for the copy
+    * @param axis
+    * @param firstFrame
+    * @param lastFrame
     * @param projectionMethod ZProjector method
     */
-   public final void project(final DisplayWindow theWindow,
-           final String newName, final int projectionMethod) {
+   public final void project(final String newName, final String axis, 
+           final int firstFrame, final int lastFrame, final int projectionMethod) {
 
       class ZProjectTask extends SwingWorker<Void, Void> {
 
@@ -85,7 +89,7 @@ public class ZProjectorPluginExecutor {
             // TODO: provide options for disk-backed datastores
             Datastore newStore = studio_.data().createRAMDatastore();
 
-            DataProvider oldStore = theWindow.getDataProvider();
+            DataProvider oldStore = window_.getDataProvider();
             Coords oldSizeCoord = oldStore.getMaxIndices();
             CoordsBuilder newSizeCoordsBuilder = oldSizeCoord.copyBuilder();
             newSizeCoordsBuilder.z(1);
@@ -95,19 +99,26 @@ public class ZProjectorPluginExecutor {
                     .intendedDimensions(newSizeCoordsBuilder.build())
                     .build();
             Coords.CoordsBuilder cb = Coordinates.builder();
+            // HACK: Micro-Manager deals very poorly with Coords that are 
+            // absent, so included axes lengths set to 0 (even though that is 
+            // physically impossible)
+            cb.time(1).channel(1).stagePosition(1).z(1);
             try {
                newStore.setSummaryMetadata(metadata);
                DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
                copyDisplay.setCustomTitle(newName);
                copyDisplay.setDisplaySettings(
-                       theWindow.getDisplaySettings().copyBuilder().build());
+                       window_.getDisplaySettings().copyBuilder().build());
                studio_.displays().manage(newStore);
-               // HACK: Micro-Manager deals very poorly with Coords that are 
-               // absent, so included axes lengths set to 0 (even though that is 
-               // physically impossible)
+               
+               List<String> axes = oldStore.getAxes();
+               for (String axis : axes) {
+                  
+               }
                int nrPos = Math.max(oldStore.getAxisLength(Coords.STAGE_POSITION), 1);
                int nrT = Math.max(oldStore.getAxisLength(Coords.T), 1);
                int nrC = Math.max (oldStore.getAxisLength(Coords.CHANNEL), 1);
+               int nrZ = Math.max(oldStore.getAxisLength(Coords.Z), 1);
                for (int p = 0; p < nrPos; p++) {
                   for (int t = 0; t < nrT; t++) {
                      for (int c = 0; c < nrC; c++) {
