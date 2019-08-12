@@ -24,7 +24,6 @@ package org.micromanager.zprojector;
 import ij.plugin.ZProjector;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -40,7 +39,6 @@ import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.text.DefaultFormatter;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
@@ -88,12 +86,13 @@ public class ZProjectorPluginFrame extends MMDialog {
       
       List<String> axes = ourProvider_.getAxes();
       ButtonGroup bg = new ButtonGroup();
+      
       // Note: MM uses 0-based indices in the code, but 1-based indices
       // for the UI.  To avoid confusion, this storage of the desired
       // limits for each axis is 0-based, and translation to 1-based is made
       // in the UI code
-      final Map<String, Integer> mins = new HashMap<String, Integer>();
-      final Map<String, Integer> maxes = new HashMap<String, Integer>();
+      final Map<String, Integer> mins = new HashMap<>();
+      final Map<String, Integer> maxes = new HashMap<>();
 
       if (axes.size() > 0) {
          super.add(new JLabel(" "));
@@ -119,21 +118,18 @@ public class ZProjectorPluginFrame extends MMDialog {
                JFormattedTextField field = (JFormattedTextField) minSpinner.getEditor().getComponent(0);
                DefaultFormatter formatter = (DefaultFormatter) field.getFormatter();
                formatter.setCommitsOnValidEdit(true);
-               minSpinner.addChangeListener(new ChangeListener() {
-                  @Override
-                  public void stateChanged(ChangeEvent ce) {
-                     // check to stay below max, this could be annoying at times
-                     if ((Integer) minSpinner.getValue() > maxes.get(axis) + 1) {
-                        minSpinner.setValue(maxes.get(axis) + 1);
-                     }
-                     mins.put(axis, (Integer) minSpinner.getValue() - 1);
-                     try {
-                        Coords coord = ourWindow_.getDisplayedImages().get(0).getCoords();
-                        coord = coord.copyBuilder().index(axis, mins.get(axis)).build();
-                        ourWindow_.setDisplayPosition(coord);
-                     } catch (IOException ioe) {
-                        ReportingUtils.logError(ioe, "IOException in DuplicatorPlugin");
-                     }
+               minSpinner.addChangeListener((ChangeEvent ce) -> {
+                  // check to stay below max, this could be annoying at times
+                  if ((Integer) minSpinner.getValue() > maxes.get(axis) + 1) {
+                     minSpinner.setValue(maxes.get(axis) + 1);
+                  }
+                  mins.put(axis, (Integer) minSpinner.getValue() - 1);
+                  try {
+                     Coords coord = ourWindow_.getDisplayedImages().get(0).getCoords();
+                     coord = coord.copyBuilder().index(axis, mins.get(axis)).build();
+                     ourWindow_.setDisplayPosition(coord);
+                  } catch (IOException ioe) {
+                     ReportingUtils.logError(ioe, "IOException in DuplicatorPlugin");
                   }
                });
                super.add(minSpinner, "wmin 60");
@@ -145,21 +141,18 @@ public class ZProjectorPluginFrame extends MMDialog {
                field = (JFormattedTextField) maxSpinner.getEditor().getComponent(0);
                formatter = (DefaultFormatter) field.getFormatter();
                formatter.setCommitsOnValidEdit(true);
-               maxSpinner.addChangeListener(new ChangeListener() {
-                  @Override
-                  public void stateChanged(ChangeEvent ce) {
-                     // check to stay above min
-                     if ((Integer) maxSpinner.getValue() < mins.get(axis) + 1) {
-                        maxSpinner.setValue(mins.get(axis) + 1);
-                     }
-                     maxes.put(axis, (Integer) maxSpinner.getValue() - 1);
-                     try {
-                        Coords coord = ourWindow_.getDisplayedImages().get(0).getCoords();
-                        coord = coord.copyBuilder().index(axis, maxes.get(axis)).build();
-                        ourWindow_.setDisplayPosition(coord);
-                     } catch (IOException ioe) {
-                        ReportingUtils.logError(ioe, "IOException in DuplcatorPlugin");
-                     }
+               maxSpinner.addChangeListener((ChangeEvent ce) -> {
+                  // check to stay above min
+                  if ((Integer) maxSpinner.getValue() < mins.get(axis) + 1) {
+                     maxSpinner.setValue(mins.get(axis) + 1);
+                  }
+                  maxes.put(axis, (Integer) maxSpinner.getValue() - 1);
+                  try {
+                     Coords coord = ourWindow_.getDisplayedImages().get(0).getCoords();
+                     coord = coord.copyBuilder().index(axis, maxes.get(axis)).build();
+                     ourWindow_.setDisplayPosition(coord);
+                  } catch (IOException ioe) {
+                     ReportingUtils.logError(ioe, "IOException in DuplcatorPlugin");
                   }
                });
                super.add(maxSpinner, "wmin 60, wrap");
@@ -167,19 +160,15 @@ public class ZProjectorPluginFrame extends MMDialog {
                minSpinner.setEnabled(false);
                maxSpinner.setEnabled(false);
                
-               axisRB.addChangeListener(new ChangeListener() {
-                  @Override
-                  public void stateChanged(ChangeEvent ce) {
-                     if (axisRB.isSelected()) {
-                        minSpinner.setEnabled(true);
-                        maxSpinner.setEnabled(true);
-                        settings_.putString(ZProjectorPlugin.AXISKEY, axis);
-                     } else {                        
-                        minSpinner.setEnabled(false);
-                        maxSpinner.setEnabled(false);
-                     }
+               axisRB.addChangeListener((ChangeEvent ce) -> {
+                  if (axisRB.isSelected()) {
+                     minSpinner.setEnabled(true);
+                     maxSpinner.setEnabled(true);
+                     settings_.putString(ZProjectorPlugin.AXISKEY, axis);
+                  } else {
+                     minSpinner.setEnabled(false);
+                     maxSpinner.setEnabled(false);
                   }
-               
                });
                
                axisRB.setSelected(axis.equals(settings_.getString(ZProjectorPlugin.AXISKEY, null)));
@@ -196,12 +185,9 @@ public class ZProjectorPluginFrame extends MMDialog {
       final String[] projectionMethods = new String[] {"Max", "Min", "Avg"};
       final JComboBox methodBox = new JComboBox(projectionMethods);
       methodBox.setSelectedItem(settings_.getString(ZProjectorPlugin.PROJECTION_METHOD, "Max"));
-      methodBox.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            settings_.putString(ZProjectorPlugin.PROJECTION_METHOD, 
-                    (String) methodBox.getSelectedItem());
-         }
+      methodBox.addActionListener((ActionEvent e) -> {
+         settings_.putString(ZProjectorPlugin.PROJECTION_METHOD,
+                 (String) methodBox.getSelectedItem());
       });
       super.add(new JLabel("method"));
       super.add(methodBox, "span2, grow, wrap");
@@ -211,45 +197,39 @@ public class ZProjectorPluginFrame extends MMDialog {
       super.add(nameField, "span2, grow, wrap");
       
       JButton OKButton = new JButton("OK");
-      OKButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent ae) {
-            String axis = bg.getSelection().getActionCommand();
-            ZProjectorPluginExecutor zp = new ZProjectorPluginExecutor(studio_, ourWindow_);
-            int projectionMethod = ZProjector.MAX_METHOD;
-            if (null != (String) methodBox.getSelectedItem()) {
-               switch ((String) methodBox.getSelectedItem()) {
-                  case "Max":
-                     projectionMethod = ZProjector.MAX_METHOD;
-                     break;
-                  case "Min":
-                     projectionMethod = ZProjector.MIN_METHOD;
-                     break;
-                  case "Avg":
-                     projectionMethod = ZProjector.AVG_METHOD;
-                     break;
-                  case "Median":
-                     projectionMethod = ZProjector.MEDIAN_METHOD;
-                     break;
-                  case "Std.Dev":
-                     projectionMethod = ZProjector.SD_METHOD;
-                     break;
-                  default:
-                     break;
-               }
+      OKButton.addActionListener((ActionEvent ae) -> {
+         String axis = bg.getSelection().getActionCommand();
+         ZProjectorPluginExecutor zp = new ZProjectorPluginExecutor(studio_, ourWindow_);
+         int projectionMethod = ZProjector.MAX_METHOD;
+         if (null != (String) methodBox.getSelectedItem()) {
+            switch ((String) methodBox.getSelectedItem()) {
+               case "Max":
+                  projectionMethod = ZProjector.MAX_METHOD;
+                  break;
+               case "Min":
+                  projectionMethod = ZProjector.MIN_METHOD;
+                  break;
+               case "Avg":
+                  projectionMethod = ZProjector.AVG_METHOD;
+                  break;
+               case "Median":
+                  projectionMethod = ZProjector.MEDIAN_METHOD;
+                  break;
+               case "Std.Dev":
+                  projectionMethod = ZProjector.SD_METHOD;
+                  break;
+               default:
+                  break;
             }
-            zp.project(nameField.getText(), axis, mins.get(axis), maxes.get(axis), projectionMethod);
-            cpFrame.dispose();
          }
+         zp.project(nameField.getText(), axis, mins.get(axis), maxes.get(axis), projectionMethod);
+         cpFrame.dispose();
       });
       super.add(OKButton, "span 3, split 2, tag ok, wmin button");
       
       JButton CancelButton = new JButton("Cancel");
-      CancelButton.addActionListener(new ActionListener(){
-         @Override
-         public void actionPerformed(ActionEvent ae) {
-            cpFrame.dispose();
-         }
+      CancelButton.addActionListener((ActionEvent ae) -> {
+         cpFrame.dispose();
       });
       super.add(CancelButton, "tag cancel, wrap");     
       
@@ -266,7 +246,4 @@ public class ZProjectorPluginFrame extends MMDialog {
       
    }
    
-
-   
 }
-

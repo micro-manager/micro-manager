@@ -6,7 +6,7 @@
 //
 // AUTHOR:       Nico Stuurman
 //
-// COPYRIGHT:    Regents of the University of California 2017
+// COPYRIGHT:    Regents of the University of California 2017-2019
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -31,7 +31,9 @@ import org.scijava.plugin.SciJavaPlugin;
 
 
 /**
- * Plugin that copies (parts of) Micro-Manager datasets to a new datastore
+ * Plugin that projects Micro-Manager datasets along a selected axis 
+ * Usually, this is a projection along the z-axis (but others such as t, can 
+ * be useful as well)
  * @author nico
  */
 
@@ -67,7 +69,7 @@ public class ZProjectorPlugin implements DisplayGearMenuPlugin, SciJavaPlugin {
 
    @Override
    public String getHelpText() {
-      return "Generates a ZProjection of a Micro-Manager datasets";
+      return "Generates a Projection of a Micro-Manager datasets along the selected axis";
    }
 
    @Override

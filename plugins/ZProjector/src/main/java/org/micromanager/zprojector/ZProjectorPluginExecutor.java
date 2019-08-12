@@ -18,6 +18,7 @@
 //               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 package org.micromanager.zprojector;
 
 import ij.ImagePlus;
@@ -125,6 +126,21 @@ public class ZProjectorPluginExecutor {
       (new ZProjectTask()).execute();
    }
    
+   
+   /**
+    * Recursively figures out which projections need to be performed
+    * It does so by taking the first remaining axes, cycle through all positions
+    * in that axes, and calling this function (without including that axis).
+    * 
+    * @param newStore Datastore to put the new projected images into
+    * @param remainingAxes List with axes to look at
+    * @param cbp      Coordinates build set to the correct position
+    * @param projectionAxis   Axis that needs to be projected
+    * @param min       lowest frame number to be included in the projection
+    * @param max        highest frame number to be included in the projection
+    * @param projectionMethod Projection method (as an ImageJ ZProjector int)
+    * @throws IOException 
+    */
    private void findAllProjections(Datastore newStore, List<String> remainingAxes, 
            Coords.CoordsBuilder cbp, String projectionAxis, int min, int max, 
            int projectionMethod) throws IOException {
@@ -142,6 +158,17 @@ public class ZProjectorPluginExecutor {
       }
    }
    
+   /**
+    * Does the actual projection
+    * 
+    * @param newStore Datastore to put the new projected images into
+    * @param cbp      Coordinates build set to the correct position
+    * @param projectionAxis   Axis that needs to be projected
+    * @param min       lowest frame number to be included in the projection
+    * @param max        hightst frame number to be included in the projection
+    * @param projectionMethod Projection method (as an ImageJ ZProjector int)
+    * @throws IOException 
+    */
    private void executeProjection(Datastore newStore, Coords.CoordsBuilder cbp, 
            String projectionAxis, int min, int max, int projectionMethod) 
            throws IOException {
