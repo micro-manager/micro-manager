@@ -378,6 +378,9 @@ public class IntensityInspectorPanelController
 
       DisplaySettings oldSettings, newSettings;
       do {
+         if (viewer_ == null) {
+            return;
+         }
          oldSettings = viewer_.getDisplaySettings();
          if (oldSettings.getColorMode() == mode) {
             return;
