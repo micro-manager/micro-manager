@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          ZProjectorPLuginFrame.java
+//FILE:          ZProjectorPluginFrame.java
 //PROJECT:       Micro-Manager 
-//SUBSYSTEM:     Cropper plugin
+//SUBSYSTEM:     Projection plugin
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Nico Stuurman

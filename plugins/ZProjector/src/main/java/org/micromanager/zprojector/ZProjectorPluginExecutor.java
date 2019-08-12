@@ -1,12 +1,12 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          ZProjectorPluginFrame.java
+//FILE:          ZProjectorPluginExecutor.java
 //PROJECT:       Micro-Manager 
 //SUBSYSTEM:     ZProjector plugin
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Nico Stuurman
 //
-// COPYRIGHT:    Regents of the University of California 2017
+// COPYRIGHT:    Regents of the University of California 2019
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -24,6 +24,8 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.plugin.ZProjector;
 import ij.process.ImageProcessor;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.SwingWorker;
 import org.micromanager.Studio;
@@ -47,15 +49,16 @@ public class ZProjectorPluginExecutor {
 
    private final Studio studio_;
    private final DisplayWindow window_;
+   private final DataProvider oldStore_;
 
    public ZProjectorPluginExecutor(Studio studio, DisplayWindow window) {
       studio_ = studio;
       window_ = window;
 
       // Not sure if this is needed, be safe for now
-      DataProvider dp = window.getDataProvider();
-      if (dp instanceof Datastore) {
-         if (!((Datastore) dp).isFrozen()) {
+      oldStore_ = window.getDataProvider();
+      if (oldStore_ instanceof Datastore) {
+         if (!((Datastore) oldStore_).isFrozen()) {
             studio_.logs().showMessage("Can not Z-Project ongoing acquisitions",
                     window.getWindow());
          }
@@ -70,12 +73,12 @@ public class ZProjectorPluginExecutor {
     * Performs the actual creation of a new image with reduced content
     *
     * @param newName - name for the copy
-    * @param axis
+    * @param projectionAxis
     * @param firstFrame
     * @param lastFrame
     * @param projectionMethod ZProjector method
     */
-   public final void project(final String newName, final String axis, 
+   public final void project(final String newName, final String projectionAxis, 
            final int firstFrame, final int lastFrame, final int projectionMethod) {
 
       class ZProjectTask extends SwingWorker<Void, Void> {
@@ -89,11 +92,10 @@ public class ZProjectorPluginExecutor {
             // TODO: provide options for disk-backed datastores
             Datastore newStore = studio_.data().createRAMDatastore();
 
-            DataProvider oldStore = window_.getDataProvider();
-            Coords oldSizeCoord = oldStore.getMaxIndices();
+            Coords oldSizeCoord = oldStore_.getMaxIndices();
             CoordsBuilder newSizeCoordsBuilder = oldSizeCoord.copyBuilder();
             newSizeCoordsBuilder.z(1);
-            SummaryMetadata metadata = oldStore.getSummaryMetadata();
+            SummaryMetadata metadata = oldStore_.getSummaryMetadata();
 
             metadata = metadata.copyBuilder()
                     .intendedDimensions(newSizeCoordsBuilder.build())
@@ -111,41 +113,11 @@ public class ZProjectorPluginExecutor {
                        window_.getDisplaySettings().copyBuilder().build());
                studio_.displays().manage(newStore);
                
-               List<String> axes = oldStore.getAxes();
-               for (String axis : axes) {
-                  
-               }
-               int nrPos = Math.max(oldStore.getAxisLength(Coords.STAGE_POSITION), 1);
-               int nrT = Math.max(oldStore.getAxisLength(Coords.T), 1);
-               int nrC = Math.max (oldStore.getAxisLength(Coords.CHANNEL), 1);
-               int nrZ = Math.max(oldStore.getAxisLength(Coords.Z), 1);
-               for (int p = 0; p < nrPos; p++) {
-                  for (int t = 0; t < nrT; t++) {
-                     for (int c = 0; c < nrC; c++) {
-                        Coords.CoordsBuilder cbz = cb.stagePosition(p).time(t).channel(c);
-                        Image tmpImg = oldStore.getImage(cbz.z(0).build());
-                        ImageStack stack = new ImageStack(
-                                tmpImg.getWidth(), tmpImg.getHeight());
-                        Metadata imgMetadata = tmpImg.getMetadata();
-                        for (int z = 0; z < oldStore.getAxisLength(Coords.Z); z++) {
-                           Image img = oldStore.getImage(cbz.z(z).build());
-                           ImageProcessor ip
-                                   = studio_.data().getImageJConverter().createProcessor(img);
-                           stack.addSlice(ip);
-                        }
-                        ImagePlus tmp = new ImagePlus("tmp", stack);
-                        ZProjector zp = new ZProjector(tmp);
-                        zp.setMethod(projectionMethod);
-                        zp.doProjection();
-                        ImagePlus projection = zp.getProjection();
-                        Image outImg = studio_.data().getImageJConverter().createImage(
-                                projection.getProcessor(), cbz.z(0).build(),
-                                imgMetadata.copyBuilderWithNewUUID().build());
-                        newStore.putImage(outImg);
-                     }
-                  }
-               }
-
+               List<String> axes = oldStore_.getAxes();
+               axes.remove(projectionAxis);
+               findAllProjections( newStore, axes, cb, projectionAxis, 
+                       firstFrame, lastFrame,  projectionMethod);
+               
             } catch (DatastoreFrozenException ex) {
                studio_.logs().showError("Can not add data to frozen datastore");
             } catch (DatastoreRewriteException ex) {
@@ -164,4 +136,47 @@ public class ZProjectorPluginExecutor {
 
       (new ZProjectTask()).execute();
    }
+   
+   private void findAllProjections(Datastore newStore, List<String> remainingAxes, 
+           Coords.CoordsBuilder cbp, String projectionAxis, int min, int max, 
+           int projectionMethod) throws IOException {
+      String currentAxis = remainingAxes.get(0);
+      List<String> rcAxes = new ArrayList(remainingAxes);
+      rcAxes.remove(currentAxis);
+      for (int i = 0; i < oldStore_.getAxisLength(currentAxis); i++) {
+         cbp.index(currentAxis, i);
+         if (rcAxes.isEmpty()) {
+            executeProjection(newStore, cbp, projectionAxis, min, max, projectionMethod);
+         } else {
+            findAllProjections(newStore, rcAxes, cbp, projectionAxis,
+                    min, max, projectionMethod);
+         }
+      }
+   }
+   
+   private void executeProjection(Datastore newStore, Coords.CoordsBuilder cbp, 
+           String projectionAxis, int min, int max, int projectionMethod) 
+           throws IOException {
+      cbp.index(projectionAxis, min);
+      Image tmpImg = oldStore_.getImage(cbp.build());
+      ImageStack stack = new ImageStack(
+               tmpImg.getWidth(), tmpImg.getHeight());
+      Metadata imgMetadata = tmpImg.getMetadata();
+      for (int i = min; i <= max; i++) {
+         Image img = oldStore_.getImage(cbp.index(projectionAxis, i).build());
+         ImageProcessor ip
+            = studio_.data().getImageJConverter().createProcessor(img);
+         stack.addSlice(ip);
+      }
+      ImagePlus tmp = new ImagePlus("tmp", stack);
+      ZProjector zp = new ZProjector(tmp);
+      zp.setMethod(projectionMethod);
+      zp.doProjection();
+      ImagePlus projection = zp.getProjection();
+      Image outImg = studio_.data().getImageJConverter().createImage(
+            projection.getProcessor(), cbp.index(projectionAxis, 0).build(),
+                  imgMetadata.copyBuilderWithNewUUID().build());
+      newStore.putImage(outImg);
+   }
+   
 }
