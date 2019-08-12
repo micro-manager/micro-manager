@@ -34,13 +34,14 @@ import org.scijava.plugin.SciJavaPlugin;
  * Plugin that copies (parts of) Micro-Manager datasets to a new datastore
  * @author nico
  */
-// replace with:
-//@plugin(type=MenuPlugin.class)
+
 // to make the code show up in the gearmenu when running under Netbeans
 @Plugin(type = DisplayGearMenuPlugin.class)
 public class ZProjectorPlugin implements DisplayGearMenuPlugin, SciJavaPlugin {
-   public static final String MENUNAME = "Z Project...";
+   public static final String MENUNAME = "Project...";
    public static final String AXISKEY = "AxisKey";
+   public static final String PROJECTION_METHOD = "ProjectionMethod";
+   
    private Studio studio_;
 
    @Override
@@ -52,7 +53,6 @@ public class ZProjectorPlugin implements DisplayGearMenuPlugin, SciJavaPlugin {
    public void onPluginSelected(DisplayWindow display) {
       // no need to hold on to the instance, we just want to create the frame
       ZProjectorPluginFrame ourFrame = new ZProjectorPluginFrame(studio_, display);
-      //ZProjectorPluginExecutor ourFrame = new ZProjectorPluginExecutor(studio_, display);
    }
 
    @Override
@@ -72,12 +72,12 @@ public class ZProjectorPlugin implements DisplayGearMenuPlugin, SciJavaPlugin {
 
    @Override
    public String getVersion() {
-      return "Version 0.1-beta";
+      return "Version 0.2";
    }
 
    @Override
    public String getCopyright() {
-      return "Regents of the University of California, 2017";
+      return "Regents of the University of California, 2017-2019";
    }
 
 

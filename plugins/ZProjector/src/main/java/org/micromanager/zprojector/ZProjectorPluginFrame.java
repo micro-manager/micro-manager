@@ -25,13 +25,13 @@ import ij.plugin.ZProjector;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JRadioButton;
@@ -46,6 +46,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
+import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -71,10 +72,18 @@ public class ZProjectorPluginFrame extends MMDialog {
       ourWindow_ = window;
       ourProvider_ = ourWindow_.getDataProvider();
 
+      // Not sure if this is needed, be safe for now
+      if (ourProvider_ instanceof Datastore) {
+         if (!((Datastore) ourProvider_).isFrozen()) {
+            studio_.logs().showMessage("Can not Project ongoing acquisitions",
+                    window.getWindow());
+            return;
+         }
+      }
+      
       
       super.setLayout(new MigLayout("flowx, fill, insets 8"));
-      File file = new File(window.getName());
-      String shortName = file.getName();
+      String shortName = ourProvider_.getName();
       super.setTitle(ZProjectorPlugin.MENUNAME + shortName);
       
       List<String> axes = ourProvider_.getAxes();
@@ -181,6 +190,21 @@ public class ZProjectorPluginFrame extends MMDialog {
       if (settings_.getString(ZProjectorPlugin.AXISKEY, null) == null) {
          bg.getElements().nextElement().setSelected(true);
       }    
+      
+      // Note: Median and Std.Dev. yield 32-bit images
+      // Those would need to be converted to 16-bit to be shown...
+      final String[] projectionMethods = new String[] {"Max", "Min", "Avg"};
+      final JComboBox methodBox = new JComboBox(projectionMethods);
+      methodBox.setSelectedItem(settings_.getString(ZProjectorPlugin.PROJECTION_METHOD, "Max"));
+      methodBox.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            settings_.putString(ZProjectorPlugin.PROJECTION_METHOD, 
+                    (String) methodBox.getSelectedItem());
+         }
+      });
+      super.add(new JLabel("method"));
+      super.add(methodBox, "span2, grow, wrap");
 
       super.add(new JLabel("name"));
       final JTextField nameField = new JTextField(shortName);
@@ -192,7 +216,29 @@ public class ZProjectorPluginFrame extends MMDialog {
          public void actionPerformed(ActionEvent ae) {
             String axis = bg.getSelection().getActionCommand();
             ZProjectorPluginExecutor zp = new ZProjectorPluginExecutor(studio_, ourWindow_);
-            zp.project(nameField.getText(), axis, mins.get(axis), maxes.get(axis), ZProjector.MAX_METHOD);
+            int projectionMethod = ZProjector.MAX_METHOD;
+            if (null != (String) methodBox.getSelectedItem()) {
+               switch ((String) methodBox.getSelectedItem()) {
+                  case "Max":
+                     projectionMethod = ZProjector.MAX_METHOD;
+                     break;
+                  case "Min":
+                     projectionMethod = ZProjector.MIN_METHOD;
+                     break;
+                  case "Avg":
+                     projectionMethod = ZProjector.AVG_METHOD;
+                     break;
+                  case "Median":
+                     projectionMethod = ZProjector.MEDIAN_METHOD;
+                     break;
+                  case "Std.Dev":
+                     projectionMethod = ZProjector.SD_METHOD;
+                     break;
+                  default:
+                     break;
+               }
+            }
+            zp.project(nameField.getText(), axis, mins.get(axis), maxes.get(axis), projectionMethod);
             cpFrame.dispose();
          }
       });

@@ -54,19 +54,7 @@ public class ZProjectorPluginExecutor {
    public ZProjectorPluginExecutor(Studio studio, DisplayWindow window) {
       studio_ = studio;
       window_ = window;
-
-      // Not sure if this is needed, be safe for now
-      oldStore_ = window.getDataProvider();
-      if (oldStore_ instanceof Datastore) {
-         if (!((Datastore) oldStore_).isFrozen()) {
-            studio_.logs().showMessage("Can not Z-Project ongoing acquisitions",
-                    window.getWindow());
-         }
-      }
-      
-      // TODO: provide UI to other projection methods and z-ranges
-      //project(window, window.getName() + "Z-Projection", ZProjector.MAX_METHOD);
-
+      oldStore_ = window.getDataProvider();      
    }
 
    /**
