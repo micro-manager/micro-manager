@@ -107,11 +107,13 @@ public class DuplicatorExecutor extends SwingWorker <Void, Void> {
       }
       newSizeCoordsBuilder.channel(channelNames.size());
       String[] axes = {Coords.P, Coords.T, Coords.Z};
-      for (String axis : axes) {
+      float  nrToBeCopied = 1;
+      for (String axis : oldStore.getAxes()) {
          if (mins_.containsKey(axis)) {
             int min = mins_.get(axis);
             int max = maxes_.get(axis);
             newSizeCoordsBuilder.index(axis, max - min);
+            nrToBeCopied *= (max - min + 1);
          }
       }
 
@@ -123,6 +125,7 @@ public class DuplicatorExecutor extends SwingWorker <Void, Void> {
          newStore.setSummaryMetadata(metadata);
 
          Iterable<Coords> unorderedImageCoords = oldStore.getUnorderedImageCoords();
+         int nrCopied = 0;
          for (Coords oldCoord : unorderedImageCoords) {
             boolean copy = true;
             for (String axis : oldCoord.getAxes()) {
@@ -168,6 +171,12 @@ public class DuplicatorExecutor extends SwingWorker <Void, Void> {
                   }
                }
                newStore.putImage(newImgShallow);
+               nrCopied++;
+               try {
+               setProgress( (int) ( nrCopied / nrToBeCopied * 100.0) );
+               } catch (IllegalArgumentException iae) {
+                  System.out.println ("Value was: " + (int) (nrCopied / nrToBeCopied * 100.0));
+               }
                
             }
          }
@@ -191,11 +200,11 @@ public class DuplicatorExecutor extends SwingWorker <Void, Void> {
       return null;
    }
    
-    @Override
-         public void done() {
-
-         }
-         
+   @Override
+   public void done() {
+      setProgress(100);
+   }
+    
          
    
    

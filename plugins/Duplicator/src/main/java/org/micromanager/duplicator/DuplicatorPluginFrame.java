@@ -25,8 +25,6 @@ import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -153,12 +151,15 @@ public class DuplicatorPluginFrame extends MMDialog {
                     studio_, ourWindow_, nameField.getText(), mins, maxes);
             final ProgressBar pb = new ProgressBar (ourWindow_.getWindow(),
                     "Duplicating..", 0, 100);
-            de.doInBackground();
             de.addPropertyChangeListener((PropertyChangeEvent evt) -> {
                if ("progress".equals(evt.getPropertyName())) {
                   pb.setProgress((Integer) evt.getNewValue());
+                  if ((Integer) evt.getNewValue() == 100 ) {
+                     pb.setVisible(false);
+                  } 
                }
-            });
+            });            
+            de.doInBackground();
          }
       });
       super.add(OKButton, "span 3, split 2, tag ok, wmin button");
@@ -181,17 +182,5 @@ public class DuplicatorPluginFrame extends MMDialog {
       
       
    }
-   
-
-   public void duplicate(final DisplayWindow theWindow, 
-           final String newName, 
-           final Map<String, Integer> mins,
-           final Map<String, Integer> maxes) {
-      
-      DuplicatorExecutor de = new DuplicatorExecutor(studio_, theWindow, newName, mins, maxes);
-      de.doInBackground();
-      
      
-   }
-   
 }
