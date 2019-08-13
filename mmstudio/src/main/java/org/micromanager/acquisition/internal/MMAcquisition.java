@@ -33,6 +33,7 @@ import java.util.regex.Pattern;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.Timer;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -95,6 +96,9 @@ public final class MMAcquisition extends DataViewerListener {
    private int imagesReceived_ = 0;
    private int imagesExpected_ = 0;
    private UpdatableAlert alert_;
+   private UpdatableAlert nextImageAlert_;
+   
+   private Timer nextFrameAlertGenerator_;
 
    @SuppressWarnings("LeakingThisInConstructor")
    public MMAcquisition(Studio studio, JSONObject summaryMetadata,
@@ -236,6 +240,17 @@ public final class MMAcquisition extends DataViewerListener {
       }
       store_.registerForEvents(this);
       studio_.events().registerForEvents(this);
+      
+      // start thread reporting when next frame will be taken
+      if (eng.getFrameIntervalMs()> 5000) {
+         nextFrameAlertGenerator_ = new Timer(1000, (ActionEvent e) -> {
+            if (eng.isAcquisitionRunning()) {
+               setNextImageAlert(eng);
+            }
+         });
+         nextFrameAlertGenerator_.setInitialDelay(3000);
+         nextFrameAlertGenerator_.start();
+      }
   }
 
    private String createAcqDirectory(String root, String prefix) throws Exception {
@@ -380,6 +395,12 @@ public final class MMAcquisition extends DataViewerListener {
   
    @Subscribe
    public void onAcquisitionEnded(AcquisitionEndedEvent event) {
+      if (nextFrameAlertGenerator_ != null) {
+         nextFrameAlertGenerator_.stop();
+         if (nextImageAlert_ != null) {
+            nextImageAlert_.dismiss();
+         }
+      }
       try {
          store_.freeze();
       }
@@ -430,12 +451,27 @@ public final class MMAcquisition extends DataViewerListener {
          int numDigits = (int) (Math.log10(imagesExpected_) + 1);
          String format = "%0" + numDigits + "d";
          if (alert_ != null) {
+            if (nextFrameAlertGenerator_ != null && nextFrameAlertGenerator_.isRunning()) {
+               nextFrameAlertGenerator_.restart();
+            }
             alert_.setText(String.format(
                     "Received " + format + " of %d images",
                     imagesReceived_, imagesExpected_));
          }
       } else if (alert_ != null) {
          alert_.setText("No images expected.");
+      }
+   }
+   
+   private void setNextImageAlert(AcquisitionEngine eng) {
+      if (imagesExpected_ > 0) {
+         int s = (int) ( (eng.getNextWakeTime() - System.nanoTime() / 1000000.0) / 1000.0);
+         String text = "Next frame in " + s + " sec";
+         if (nextImageAlert_ == null) {
+            nextImageAlert_ = studio_.alerts().postUpdatableAlert("Acquisition", text);
+         } else {
+            nextImageAlert_.setText(text);
+         }
       }
    }
 
