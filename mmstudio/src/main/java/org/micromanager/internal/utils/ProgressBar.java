@@ -33,6 +33,8 @@ import javax.swing.JProgressBar;
 
 public final class ProgressBar extends JPanel {
    private static final long serialVersionUID = 1L;
+   private final long delayTimeMs = 3000;
+   private final long startTimeMs;
    private final JProgressBar progressBar;
    private final JFrame frame;
 
@@ -47,7 +49,7 @@ public final class ProgressBar extends JPanel {
       progressBar.setValue(0);
       JPanel panel = new JPanel(new BorderLayout());
       panel.add(progressBar, BorderLayout.CENTER);
-      add(panel, BorderLayout.CENTER);
+      super.add(panel, BorderLayout.CENTER);
       panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
       JComponent newContentPane = panel;
@@ -55,10 +57,15 @@ public final class ProgressBar extends JPanel {
       frame.setContentPane(newContentPane);
 
       frame.setLocationRelativeTo(parent);
-      frame.setVisible(true);
+      startTimeMs = System.currentTimeMillis();
    }
 
    public void setProgress(int progress) {
+      if (!frame.isVisible()) {
+         if (System.currentTimeMillis() - startTimeMs > delayTimeMs) {
+            frame.setVisible(true);
+         }
+      }
       progressBar.setValue(progress);
       progressBar.repaint();
    }
