@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          CropperPluginFrame.java
+//FILE:          DuplicatorPluginFrame.java
 //PROJECT:       Micro-Manager 
 //SUBSYSTEM:     Cropper plugin
 //-----------------------------------------------------------------------------
@@ -21,17 +21,13 @@
 
 package org.micromanager.duplicator;
 
-import ij.ImagePlus;
-import ij.gui.Roi;
-import ij.process.ByteProcessor;
-import ij.process.ImageProcessor;
-import ij.process.ShortProcessor;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,20 +39,14 @@ import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.text.DefaultFormatter;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
-import org.micromanager.data.Coords.CoordsBuilder;
 import org.micromanager.data.DataProvider;
-import org.micromanager.data.Datastore;
-import org.micromanager.data.DatastoreFrozenException;
-import org.micromanager.data.DatastoreRewriteException;
-import org.micromanager.data.Image;
-import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.utils.MMDialog;
+import org.micromanager.internal.utils.ProgressBar;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -79,8 +69,7 @@ public class DuplicatorPluginFrame extends MMDialog {
 
       
       super.setLayout(new MigLayout("flowx, fill, insets 8"));
-      File file = new File(window.getName());
-      String shortName = file.getName();
+      String shortName = ourProvider_.getName();
       super.setTitle(DuplicatorPlugin.MENUNAME + shortName);
       
       List<String> axes = ourProvider_.getAxes();
@@ -88,8 +77,8 @@ public class DuplicatorPluginFrame extends MMDialog {
       // for the UI.  To avoid confusion, this storage of the desired
       // limits for each axis is 0-based, and translation to 1-based is made
       // in the UI code
-      final Map<String, Integer> mins = new HashMap<String, Integer>();
-      final Map<String, Integer> maxes = new HashMap<String, Integer>();
+      final Map<String, Integer> mins = new HashMap<>();
+      final Map<String, Integer> maxes = new HashMap<>();
 
       if (axes.size() > 0) {
          super.add(new JLabel(" "));
@@ -109,21 +98,18 @@ public class DuplicatorPluginFrame extends MMDialog {
                JFormattedTextField field = (JFormattedTextField) minSpinner.getEditor().getComponent(0);
                DefaultFormatter formatter = (DefaultFormatter) field.getFormatter();
                formatter.setCommitsOnValidEdit(true);
-               minSpinner.addChangeListener(new ChangeListener() {
-                  @Override
-                  public void stateChanged(ChangeEvent ce) {
-                     // check to stay below max, this could be annoying at times
-                     if ((Integer) minSpinner.getValue() > maxes.get(axis) + 1) {
-                        minSpinner.setValue(maxes.get(axis) + 1);
-                     }
-                     mins.put(axis, (Integer) minSpinner.getValue() - 1);
-                     try {
-                        Coords coord = ourWindow_.getDisplayedImages().get(0).getCoords();
-                        coord = coord.copyBuilder().index(axis, mins.get(axis)).build();
-                        ourWindow_.setDisplayPosition(coord);
-                     } catch (IOException ioe) {
-                        ReportingUtils.logError(ioe, "IOException in DuplicatorPlugin");
-                     }
+               minSpinner.addChangeListener((ChangeEvent ce) -> {
+                  // check to stay below max, this could be annoying at times
+                  if ((Integer) minSpinner.getValue() > maxes.get(axis) + 1) {
+                     minSpinner.setValue(maxes.get(axis) + 1);
+                  }
+                  mins.put(axis, (Integer) minSpinner.getValue() - 1);
+                  try {
+                     Coords coord = ourWindow_.getDisplayedImages().get(0).getCoords();
+                     coord = coord.copyBuilder().index(axis, mins.get(axis)).build();
+                     ourWindow_.setDisplayPosition(coord);
+                  } catch (IOException ioe) {
+                     ReportingUtils.logError(ioe, "IOException in DuplicatorPlugin");
                   }
                });
                super.add(minSpinner, "wmin 60");
@@ -135,21 +121,18 @@ public class DuplicatorPluginFrame extends MMDialog {
                field = (JFormattedTextField) maxSpinner.getEditor().getComponent(0);
                formatter = (DefaultFormatter) field.getFormatter();
                formatter.setCommitsOnValidEdit(true);
-               maxSpinner.addChangeListener(new ChangeListener() {
-                  @Override
-                  public void stateChanged(ChangeEvent ce) {
-                     // check to stay above min
-                     if ((Integer) maxSpinner.getValue() < mins.get(axis) + 1) {
-                        maxSpinner.setValue(mins.get(axis) + 1);
-                     }
-                     maxes.put(axis, (Integer) maxSpinner.getValue() - 1);
-                     try {
-                        Coords coord = ourWindow_.getDisplayedImages().get(0).getCoords();
-                        coord = coord.copyBuilder().index(axis, maxes.get(axis)).build();
-                        ourWindow_.setDisplayPosition(coord);
-                     } catch (IOException ioe) {
-                        ReportingUtils.logError(ioe, "IOException in DuplcatorPlugin");
-                     }
+               maxSpinner.addChangeListener((ChangeEvent ce) -> {
+                  // check to stay above min
+                  if ((Integer) maxSpinner.getValue() < mins.get(axis) + 1) {
+                     maxSpinner.setValue(mins.get(axis) + 1);
+                  }
+                  maxes.put(axis, (Integer) maxSpinner.getValue() - 1);
+                  try {
+                     Coords coord = ourWindow_.getDisplayedImages().get(0).getCoords();
+                     coord = coord.copyBuilder().index(axis, maxes.get(axis)).build();
+                     ourWindow_.setDisplayPosition(coord);
+                  } catch (IOException ioe) {
+                     ReportingUtils.logError(ioe, "IOException in DuplcatorPlugin");
                   }
                });
                super.add(maxSpinner, "wmin 60, wrap");
@@ -165,18 +148,24 @@ public class DuplicatorPluginFrame extends MMDialog {
       OKButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent ae) {
-            duplicate(ourWindow_, nameField.getText(), mins, maxes);
             cpFrame.dispose();
+            DuplicatorExecutor de = new DuplicatorExecutor(
+                    studio_, ourWindow_, nameField.getText(), mins, maxes);
+            final ProgressBar pb = new ProgressBar (ourWindow_.getWindow(),
+                    "Duplicating..", 0, 100);
+            de.doInBackground();
+            de.addPropertyChangeListener((PropertyChangeEvent evt) -> {
+               if ("progress".equals(evt.getPropertyName())) {
+                  pb.setProgress((Integer) evt.getNewValue());
+               }
+            });
          }
       });
       super.add(OKButton, "span 3, split 2, tag ok, wmin button");
       
       JButton CancelButton = new JButton("Cancel");
-      CancelButton.addActionListener(new ActionListener(){
-         @Override
-         public void actionPerformed(ActionEvent ae) {
-            cpFrame.dispose();
-         }
+      CancelButton.addActionListener((ActionEvent ae) -> {
+         cpFrame.dispose();
       });
       super.add(CancelButton, "tag cancel, wrap");     
       
@@ -193,132 +182,16 @@ public class DuplicatorPluginFrame extends MMDialog {
       
    }
    
-   /**
-    * Performs the actual creation of a new image with reduced content
-    * 
-    * @param theWindow - original window to be copied
-    * @param newName - name for the copy
-    * @param mins - Map with new (or unchanged) minima for the given axis
-    * @param maxes - Map with new (or unchanged) maxima for the given axis
-    */
+
    public void duplicate(final DisplayWindow theWindow, 
            final String newName, 
            final Map<String, Integer> mins,
            final Map<String, Integer> maxes) {
       
-      // TODO: provide options for disk-backed datastores
-      Datastore newStore = studio_.data().createRAMDatastore();
+      DuplicatorExecutor de = new DuplicatorExecutor(studio_, theWindow, newName, mins, maxes);
+      de.doInBackground();
       
-      
-      DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
-      copyDisplay.setCustomTitle(newName);
-      copyDisplay.setDisplaySettings(
-              theWindow.getDisplaySettings().copyBuilder().build());
-      
-      // TODO: use Overlays instead
-      Roi roi = theWindow.getImagePlus().getRoi();
-      
-      DataProvider oldStore = theWindow.getDataProvider();
-      Coords oldSizeCoord = oldStore.getMaxIndices();
-      CoordsBuilder newSizeCoordsBuilder = oldSizeCoord.copyBuilder();
-      SummaryMetadata metadata = oldStore.getSummaryMetadata();
-      List<String> channelNames = metadata.getChannelNameList();
-      if (mins.containsKey(Coords.CHANNEL)) {
-         int min = mins.get(Coords.CHANNEL);
-         int max = maxes.get(Coords.CHANNEL);
-         List<String> chNameList = new ArrayList<String>();
-         for (int index = min; index <= max; index++) {
-            if (channelNames == null || index >= channelNames.size()) {
-               chNameList.add("channel " + index);
-            } else {
-               chNameList.add(channelNames.get(index));
-            }  
-         }
-         channelNames = chNameList;
-      }
-      newSizeCoordsBuilder.channel(channelNames.size());
-      String[] axes = {Coords.P, Coords.T, Coords.Z};
-      for (String axis : axes) {
-         if (mins.containsKey(axis)) {
-            int min = mins.get(axis);
-            int max = maxes.get(axis);
-            newSizeCoordsBuilder.index(axis, max - min);
-         }
-      }
-
-      metadata = metadata.copyBuilder()
-              .channelNames(channelNames)
-              .intendedDimensions(newSizeCoordsBuilder.build())
-              .build();
-      try {
-         newStore.setSummaryMetadata(metadata);
-
-         Iterable<Coords> unorderedImageCoords = oldStore.getUnorderedImageCoords();
-         for (Coords oldCoord : unorderedImageCoords) {
-            boolean copy = true;
-            for (String axis : oldCoord.getAxes()) {
-               if (mins.containsKey(axis) && maxes.containsKey(axis)) {
-                  if (oldCoord.getIndex(axis) < (mins.get(axis))) {
-                     copy = false;
-                  }
-                  if (oldCoord.getIndex(axis) > maxes.get(axis)) {
-                     copy = false;
-                  }
-               }
-            }
-            if (copy) {
-               CoordsBuilder newCoordBuilder = oldCoord.copyBuilder();
-               for (String axis : oldCoord.getAxes()) {
-                  if (mins.containsKey(axis)) {
-                     newCoordBuilder.index(axis, oldCoord.getIndex(axis) - mins.get(axis) );
-                  }
-               }
-               Image img = oldStore.getImage(oldCoord);
-               Coords newCoords = newCoordBuilder.build();
-               Image newImgShallow = img.copyAtCoords(newCoords);
-               if (roi != null) {
-                  ImageProcessor ip = null;
-                  if (img.getImageJPixelType() == ImagePlus.GRAY8) {
-                     ip = new ByteProcessor(
-                          img.getWidth(), img.getHeight(), (byte[]) img.getRawPixels());
-                  } else 
-                     if (img.getImageJPixelType() == ImagePlus.GRAY16) {
-                        ip = new ShortProcessor(
-                        img.getWidth(), img.getHeight() );
-                        ip.setPixels((short[]) img.getRawPixels());
-                  }
-                  if (ip != null) {
-                     ip.setRoi(roi);
-                     ImageProcessor copyIp = ip.crop();
-                     newImgShallow = studio_.data().createImage(copyIp.getPixels(), 
-                             copyIp.getWidth(), copyIp.getHeight(), 
-                             img.getBytesPerPixel(), img.getNumComponents(), 
-                             newCoords, newImgShallow.getMetadata());
-                  } else {
-                     throw new DuplicatorException("Unsupported pixel type.  Can only copy 8 or 16 bit images.");
-                  }
-               }
-               newStore.putImage(newImgShallow);
-               
-            }
-         }
-
-      } catch (DatastoreFrozenException ex) {
-         studio_.logs().showError("Can not add data to frozen datastore");
-      } catch (DatastoreRewriteException ex) {
-         studio_.logs().showError("Can not overwrite data");
-      } catch (DuplicatorException ex) {
-         studio_.logs().showError(ex.getMessage());
-      } catch (IOException ioe) {
-         studio_.logs().showError(ioe, "IOException in Duplicator plugin");
-      }
-      
-      try {
-         newStore.freeze();
-      } catch (IOException ioe) {
-         studio_.logs().showError(ioe, "IOException freezing store in Duplicator plugin");
-      }
-      studio_.displays().manage(newStore);
+     
    }
    
 }
