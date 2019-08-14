@@ -158,8 +158,8 @@ public class DuplicatorPluginFrame extends MMDialog {
                      pb.setVisible(false);
                   } 
                }
-            });            
-            de.doInBackground();
+            });  
+            de.execute();
          }
       });
       super.add(OKButton, "span 3, split 2, tag ok, wmin button");

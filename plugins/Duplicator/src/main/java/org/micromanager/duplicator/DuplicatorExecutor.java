@@ -203,6 +203,7 @@ public class DuplicatorExecutor extends SwingWorker <Void, Void> {
    @Override
    public void done() {
       setProgress(100);
+      studio_.alerts().postAlert("Finished duplicating", this.getClass(), newName_);
    }
     
          
