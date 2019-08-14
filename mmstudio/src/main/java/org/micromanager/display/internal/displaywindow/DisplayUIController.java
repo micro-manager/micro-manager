@@ -536,7 +536,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       cameraFpsLabel_.setFont(fpsLabel_.getFont().deriveFont(10.0f));
       tmp2Panel.add(cameraFpsLabel_, new CC());
       panel.add(tmp2Panel, new CC().growX());
-      // TODO Avoid static studio
+      
       panel.add(new SaveButton(studio_, displayController_));
       panel.add(new GearButton(displayController_, studio_));
       

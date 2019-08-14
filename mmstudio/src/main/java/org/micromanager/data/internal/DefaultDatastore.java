@@ -21,11 +21,13 @@
 package org.micromanager.data.internal;
 
 import java.awt.Component;
+import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.swing.JFileChooser;
 import javax.swing.ProgressMonitor;
 import javax.swing.filechooser.FileFilter;
@@ -43,6 +45,7 @@ import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.UserCancelledException;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.PrioritizedEventBus;
+import org.micromanager.internal.utils.ProgressBar;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
@@ -78,7 +81,7 @@ public class DefaultDatastore implements Datastore {
    
    protected Storage storage_ = null;
    protected String name_ = "Untitled";
-   protected HashMap<String, DefaultAnnotation> annotations_ = new HashMap<>();
+   protected Map<String, DefaultAnnotation> annotations_ = new HashMap<>();
    protected PrioritizedEventBus bus_;
    protected boolean isFrozen_ = false;
    protected final MMStudio mmStudio_;
@@ -400,10 +403,34 @@ public class DefaultDatastore implements Datastore {
                filter.getDescription());
       }
       setPreferredSaveMode(mmStudio_, mode);
-      save(mode, file.getAbsolutePath());
+      DefaultDataSaver ds = new DefaultDataSaver(mmStudio_, this, mode,
+              file.getAbsolutePath());
+      final ProgressBar pb = new ProgressBar(parent,"Saving..", 0, 100);
+      ds.addPropertyChangeListener((PropertyChangeEvent evt) -> {
+         if ("progress".equals(evt.getPropertyName())) {
+            pb.setProgress((Integer) evt.getNewValue());
+            if ((Integer) evt.getNewValue() == 100) {
+               pb.setVisible(false);
+            }
+         }
+      });
+
+      ds.execute();
+      //save(mode, file.getAbsolutePath());
       return true;
    }
 
+
+   /**
+    * Synchronous file saving.
+    * 
+    * Note: this code is only here to fulfill API requirements
+    * It is not used by our internal code
+    * 
+    * @param mode
+    * @param path
+    * @throws IOException 
+    */
    // TODO: re-use existing file-based storage if possible/relevant (i.e.
    // if our current Storage is a file-based Storage).
    @Override
@@ -495,6 +522,10 @@ public class DefaultDatastore implements Datastore {
       for (DefaultAnnotation annotation : annotations_.values()) {
          annotation.save();
       }
+   }
+   
+   protected Map<String, DefaultAnnotation> getAnnotations() {
+      return annotations_;
    }
 
    @Override
