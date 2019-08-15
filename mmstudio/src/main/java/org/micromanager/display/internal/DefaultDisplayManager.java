@@ -54,7 +54,6 @@ import org.micromanager.display.inspector.internal.InspectorCollection;
 import org.micromanager.display.inspector.internal.InspectorController;
 import org.micromanager.events.DatastoreClosingEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
-//import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.EventBusExceptionLogger;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.display.DisplayWindowControlsFactory;
@@ -83,7 +82,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    private final DataViewerCollection viewers_ = DataViewerCollection.create();
 
    private final WeakHashMap<DataViewer, Boolean> haveAutoCreatedInspector_ =
-         new WeakHashMap<DataViewer, Boolean>();
+         new WeakHashMap<>();
 
    private final InspectorCollection inspectors_ = InspectorCollection.create();
 
@@ -93,7 +92,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
 
    public DefaultDisplayManager(Studio studio) {
       studio_ = studio;
-      providerToDisplays_ = new HashMap<DataProvider, ArrayList<DisplayWindow>>();
+      providerToDisplays_ = new HashMap<>();
       viewers_.registerForEvents(this);
    }
    
@@ -112,14 +111,14 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
 
    @Override
    public synchronized List<DataProvider> getManagedDataProviders() {
-      return new ArrayList<DataProvider>(providerToDisplays_.keySet());
+      return new ArrayList<>(providerToDisplays_.keySet());
    }
 
    @Override
    public synchronized void manage(DataProvider store) {
       // Iterate over all display windows, find those associated with this
       // datastore, and manually associate them now.
-      ArrayList<DisplayWindow> displays = new ArrayList<DisplayWindow>();
+      ArrayList<DisplayWindow> displays = new ArrayList<>();
       providerToDisplays_.put(store, displays);
       for (DisplayWindow display : getAllImageWindows()) {
          if (display.getDataProvider() == store) {
@@ -149,11 +148,6 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
          if (providerToDisplays_.containsKey(store)) {
             displays = providerToDisplays_.get(store);
             providerToDisplays_.remove(store);
-         }
-      }
-      if (displays != null) {
-         for (DisplayWindow display : displays) {
-            //display.forceClosed();
          }
       }
    }
@@ -339,7 +333,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    @Override
    public List<DisplayWindow> loadDisplays(Datastore store) throws IOException {
       String path = store.getSavePath();
-      ArrayList<DisplayWindow> result = new ArrayList<DisplayWindow>();
+      ArrayList<DisplayWindow> result = new ArrayList<>();
       if (path != null) {
          // try to restore display settings
          File displaySettingsFile = new File(store.getSavePath() + File.separator + 
@@ -369,11 +363,11 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    // TODO: deprecate, and/or remove?
    @Override
    public synchronized List<DisplayWindow> getDisplays(Datastore store) {
-      return new ArrayList<DisplayWindow>(providerToDisplays_.get(store));
+      return new ArrayList<>(providerToDisplays_.get(store));
    }
    
    public synchronized List<DisplayWindow> getDisplays(DataProvider provider) {
-      return new ArrayList<DisplayWindow>(providerToDisplays_.get(provider));
+      return new ArrayList<>(providerToDisplays_.get(provider));
    }
    
 
@@ -399,7 +393,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    @Override
    public List<DisplayWindow> getAllImageWindows() {
       List<DataViewer> viewers = viewers_.getAllDataViewers();
-      List<DisplayWindow> ret = new ArrayList<DisplayWindow>();
+      List<DisplayWindow> ret = new ArrayList<>();
       for (DataViewer viewer : viewers) {
          if (viewer instanceof DisplayWindow) {
             ret.add((DisplayWindow) viewer);
@@ -427,7 +421,16 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    }
 
    
-   // TODO Why do we need both store and display?
+   /**
+    * Asks user whether or not to save this data set.
+    * Either saves the data (when so requested), or not.
+    * Return value indicates whether or not the datastore can be closed
+    * 
+    * @param store   Datastore that can be saved
+    * @param display Display over which to orient the prompt (can be null)
+    * @return true if Datastore can be closed, false otherwise
+    * @throws IOException 
+    */
    @Override
    public boolean promptToSave(Datastore store, DisplayWindow display) throws IOException {
       String[] options = {"Save", "Discard", "Cancel"};
@@ -439,8 +442,8 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
          // User cancelled.
          return false;
       }
-      if (result == 0) { // I.e. not the "discard" option
-         if (!store.save(display.getWindow())) {
+      if (result == 0) { // i.e. not the "discard" option
+         if ( store.save(display.getWindow(), true ) == null) {
             // Don't close the window, as saving failed.
             return false;
          }
