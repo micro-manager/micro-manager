@@ -132,10 +132,14 @@ int LambdaVF5::onWavelength(MM::PropertyBase* pProp, MM::ActionType eAct) {
 	else if (eAct == MM::StartSequence) {
 		int ret = resetSequenceIndex(1); //Start from the beginning of the sequence
 		if (ret != DEVICE_OK) { return ret; }
+		ret = SetProperty("TTL Out", "Enabled");
+		if (ret != DEVICE_OK) { return ret; }
 		return SetProperty("TTL In", "Enabled");
 	
 	}
 	else if (eAct == MM::StopSequence) {
+		int ret = SetProperty("TTL Out", "Disabled");
+		if (ret != DEVICE_OK) { return ret; }
 		return SetProperty("TTL In", "Disabled");
 	}
 	else if (eAct == MM::AfterLoadSequence) {
