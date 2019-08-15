@@ -19,6 +19,7 @@
 package org.micromanager.data.internal.multipagetiff;
 
 import com.google.common.eventbus.Subscribe;
+import ij.ImageJ;
 import java.awt.Component;
 import java.awt.GraphicsEnvironment;
 import java.io.File;
@@ -115,9 +116,18 @@ public final class StorageMultipageTiff implements Storage {
             getShouldSplitPositions());
    }
    
-   /*
+   /**
     * Constructor that doesn't make reference to MMStudio so it can be used
     * independently of MM GUI
+    * 
+    * @param parent  GUI element on top of which a ProgressBar (or other things) can be displayed
+    * @param store   Datastore to be saved
+    * @param dir     Directory in which to store the data
+    * @param amInWriteMode 
+    * @param separateMDFile   Whether or not to write a separate file with the MM metadata
+    * @param separateFilesForPositions If true, will store positions in separate files,
+    *             otherwise all data will go into a single file
+    * @throws java.io.IOException
     */
    public StorageMultipageTiff(Component parent, Datastore store, String dir,
          boolean amInWriteMode, boolean separateMDFile,
@@ -458,11 +468,12 @@ public final class StorageMultipageTiff implements Storage {
          int length = fullOMEXMLMetadata.length();
          String uuid = null, filename = null;
          FileSet master = null;
+         String ijDescription = getIJDescriptionString();
          for (FileSet p : positionToFileSet_.values()) {
             if (p.hasSpaceForFullOMEXML(length)) {
                uuid = p.getCurrentUUID();
                filename = p.getCurrentFilename();
-               p.finished(fullOMEXMLMetadata);
+               p.finished(fullOMEXMLMetadata, ijDescription);
                master = p;
                count++;
                if (progressBar != null) {
@@ -490,7 +501,7 @@ public final class StorageMultipageTiff implements Storage {
             if (p == master) {
                continue;
             }
-            p.finished(partialOME);
+            p.finished(partialOME, ijDescription);
             count++;
             if (progressBar != null) {
                progressBar.setProgress(count);
@@ -558,6 +569,71 @@ public final class StorageMultipageTiff implements Storage {
       } else {
          coordsToReader_.putAll(oldImageMap);
       }
+   }
+   
+    /**
+    * This function provides the ImageJ "Properties" information when opening 
+    * in ImageJ/Fiji.   
+    * 
+    * @return 
+    */
+   private String getIJDescriptionString() {
+      StringBuffer sb = new StringBuffer();
+      sb.append("ImageJ=" + ImageJ.VERSION + "\n");
+      int numChannels = getIntendedSize(Coords.CHANNEL);
+      int numFrames = getIntendedSize(Coords.TIME_POINT);
+      int numSlices = getIntendedSize(Coords.Z_SLICE);
+      if (numChannels > 1) {
+         sb.append("channels=").append(numChannels).append("\n");
+      }
+      if (numSlices > 1) {
+         sb.append("slices=").append(numSlices).append("\n");
+      }
+      if (numFrames > 1) {
+         sb.append("frames=").append(numFrames).append("\n");
+      }
+      if (numFrames > 1 || numSlices > 1 || numChannels > 1) {
+         sb.append("hyperstack=true\n");
+      }
+      if (numChannels > 1 && numSlices > 1 && slicesFirst()) {
+         sb.append("order=zct\n");
+      }
+      //cm so calibration unit is consistent with units used in Tiff tags
+      sb.append("unit=um\n");
+      if (numSlices > 1) {
+         double zStepUm = 0.0;
+         if (getSummaryMetadata().getZStepUm() != null) {
+            zStepUm = getSummaryMetadata().getZStepUm();
+         }
+         sb.append("spacing=").append(zStepUm).append("\n");
+      }
+      // write single channel contrast settings or display mode if multi channel
+      // it would be nice to have the display settings of the current viewer,
+      // but we don't, and do not want to couple Display Settings to Data storage,
+      // so come up with reasonable defaults
+      // DisplaySettings settings = DefaultDisplaySettings.builder().build();
+      if (numChannels == 1) {
+         sb.append("mode=gray\n");
+         // sb.append("min=").append(settings.getSafeContrastMin(0, 0, 0)).append("\n");
+         //sb.append("max=").append(settings.getSafeContrastMax(0, 0, 0)).append("\n");
+      } else {
+         // multiple channels?  go for composite display
+         sb.append("mode=composite\n");
+         /*
+         DisplaySettings.ColorMode mode = settings.getChannelColorMode();
+         if (mode == DisplaySettings.ColorMode.COMPOSITE) {
+            
+         } else if (mode == DisplaySettings.ColorMode.COLOR) {
+            sb.append("mode=color\n");
+         } else if (mode == DisplaySettings.ColorMode.GRAYSCALE) {
+            sb.append("mode=gray\n");
+         }    
+         */
+      }
+
+
+      sb.append((char) 0);
+      return new String(sb);
    }
 
    @Override

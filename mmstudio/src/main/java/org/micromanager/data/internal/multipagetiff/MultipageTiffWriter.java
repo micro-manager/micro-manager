@@ -405,9 +405,10 @@ public final class MultipageTiffWriter {
     * all the extra (but nonessential) stuff--comments, display settings,
     * OME/IJ metadata, and truncates the file to a reasonable length
     * @param omeXML
+    * @param ijDescriptionString Info used by ImageJ/Fiji to know what to do with the data
     * @throws java.io.IOException
     */
-   public void close(String omeXML) throws IOException {
+   public void close(String omeXML, String ijDescriptionString) throws IOException {
       String summaryComment = CommentsHelper.getSummaryComment(
             masterStorage_.getDatastore());
       writeImageJMetadata(numChannels_, summaryComment);
@@ -417,8 +418,7 @@ public final class MultipageTiffWriter {
       } catch (IOException ex) {
          ReportingUtils.showError("Error writing OME metadata");
       }
-      writeImageDescription(getIJDescriptionString(),
-            ijDescriptionTagPosition_); 
+      writeImageDescription(ijDescriptionString, ijDescriptionTagPosition_); 
       
       writeDisplaySettings();
       writeComments();
@@ -865,6 +865,20 @@ public final class MultipageTiffWriter {
       filePosition_ += mdBufferSize;
    }
 
+   /**
+    * This function is very important to enable facile opening of MM data
+    * in ImageJ/Fiji.  To do so, it is critical to have access to DisplaySettings
+    * (not including Display settings here leads to lots of annoying extra work
+    * for the user to get the display settings "right", hindering the workflow).
+    * We have been trying to separate things like storage and display settings 
+    * (which is a good thing), but we need a solution here.
+    * 
+    * For now, I am using the (deprecated) way to get a static instance of MMStudio.
+    * Instead, this IJDescrptionString could be created outside of the saving code
+    * and fed into the constructor (or using a setter).  
+    * 
+    * @return 
+    */
    private String getIJDescriptionString() {
       StringBuffer sb = new StringBuffer();
       sb.append("ImageJ=" + ImageJ.VERSION + "\n");
