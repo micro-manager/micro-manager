@@ -30,6 +30,7 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.util.List;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import javax.swing.*;
@@ -2014,8 +2015,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
          int color) {
       // TODO: this is kind of an ugly way to do this.
       RememberedChannelSettings settings = RememberedChannelSettings.loadSettings(
-            channel, channelGroup, Color.WHITE,
-            new Integer[] {0}, new Integer[] {-1}, true);
+            channel, channelGroup, Color.WHITE, null, null, true);
       settings = new RememberedChannelSettings(channel, channelGroup,
             new Color(color), settings.getHistogramMins(),
             settings.getHistogramMaxes(), settings.getShouldAutoscale());

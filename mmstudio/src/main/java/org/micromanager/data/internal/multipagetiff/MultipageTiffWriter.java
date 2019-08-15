@@ -830,8 +830,7 @@ public final class MultipageTiffWriter {
       for (int i = 0; i < numChannels; i++) {
          String name = summary.getSafeChannelName(i);
          RememberedChannelSettings settings = RememberedChannelSettings.loadSettings(
-               name, channelGroup, Color.WHITE, new Integer[] {0},
-               new Integer[] {1}, true);
+               name, channelGroup, Color.WHITE, null, null, true);
          // Display Ranges: For each channel, write min then max
          // TODO: doesn't handle multi-component images.
          mdBuffer.putDouble(bufferPosition, settings.getHistogramMin(0));
@@ -863,72 +862,6 @@ public final class MultipageTiffWriter {
 
       fileChannelWrite(mdBuffer, filePosition_);
       filePosition_ += mdBufferSize;
-   }
-
-   /**
-    * This function is very important to enable facile opening of MM data
-    * in ImageJ/Fiji.  To do so, it is critical to have access to DisplaySettings
-    * (not including Display settings here leads to lots of annoying extra work
-    * for the user to get the display settings "right", hindering the workflow).
-    * We have been trying to separate things like storage and display settings 
-    * (which is a good thing), but we need a solution here.
-    * 
-    * For now, I am using the (deprecated) way to get a static instance of MMStudio.
-    * Instead, this IJDescrptionString could be created outside of the saving code
-    * and fed into the constructor (or using a setter).  
-    * 
-    * @return 
-    */
-   private String getIJDescriptionString() {
-      StringBuffer sb = new StringBuffer();
-      sb.append("ImageJ=" + ImageJ.VERSION + "\n");
-      if (numChannels_ > 1) {
-         sb.append("channels=").append(numChannels_).append("\n");
-      }
-      if (numSlices_ > 1) {
-         sb.append("slices=").append(numSlices_).append("\n");
-      }
-      if (numFrames_ > 1) {
-         sb.append("frames=").append(numFrames_).append("\n");
-      }
-      if (numFrames_ > 1 || numSlices_ > 1 || numChannels_ > 1) {
-         sb.append("hyperstack=true\n");
-      }
-      if (numChannels_ > 1 && numSlices_ > 1 && masterStorage_.slicesFirst()) {
-         sb.append("order=zct\n");
-      }
-      //cm so calibration unit is consistent with units used in Tiff tags
-      sb.append("unit=um\n");
-      if (numSlices_ > 1) {
-         sb.append("spacing=").append(zStepUm_).append("\n");
-      }
-      //write single channel contrast settings or display mode if multi channel
-      // it would be nice to have the display settings of the current viewer,
-      // but we don't, and do not want to couple Display Settings to Data storage,
-      // so come up with reasonable defaults
-      DisplaySettings settings = DefaultDisplaySettings.builder().build();
-      if (numChannels_ == 1) {
-         sb.append("mode=gray\n");
-         // sb.append("min=").append(settings.getSafeContrastMin(0, 0, 0)).append("\n");
-         //sb.append("max=").append(settings.getSafeContrastMax(0, 0, 0)).append("\n");
-      } else {
-         // multiple channels?  go for composite display
-         sb.append("mode=composite\n");
-         /*
-         DisplaySettings.ColorMode mode = settings.getChannelColorMode();
-         if (mode == DisplaySettings.ColorMode.COMPOSITE) {
-            
-         } else if (mode == DisplaySettings.ColorMode.COLOR) {
-            sb.append("mode=color\n");
-         } else if (mode == DisplaySettings.ColorMode.GRAYSCALE) {
-            sb.append("mode=gray\n");
-         }    
-         */
-      }
-
-
-      sb.append((char) 0);
-      return new String(sb);
    }
 
    private void writeImageDescription(String text, long imageDescriptionTagOffset) throws IOException {

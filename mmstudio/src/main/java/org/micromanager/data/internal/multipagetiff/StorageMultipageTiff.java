@@ -56,6 +56,8 @@ import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.ProgressBar;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
+import org.micromanager.display.DataViewer;
+import org.micromanager.display.DisplaySettings;
 
 
 /**
@@ -612,28 +614,65 @@ public final class StorageMultipageTiff implements Storage {
       // but we don't, and do not want to couple Display Settings to Data storage,
       // so come up with reasonable defaults
       // DisplaySettings settings = DefaultDisplaySettings.builder().build();
+      DisplaySettings settings = getDisplaySettings();
+      
       if (numChannels == 1) {
          sb.append("mode=gray\n");
-         // sb.append("min=").append(settings.getSafeContrastMin(0, 0, 0)).append("\n");
-         //sb.append("max=").append(settings.getSafeContrastMax(0, 0, 0)).append("\n");
+         if (settings != null) {
+            sb.append("min=").append(settings.getSafeContrastMin(0, 0, 0)).append("\n");
+            sb.append("max=").append(settings.getSafeContrastMax(0, 0, 0)).append("\n");
+         }
       } else {
          // multiple channels?  go for composite display
-         sb.append("mode=composite\n");
-         /*
-         DisplaySettings.ColorMode mode = settings.getChannelColorMode();
-         if (mode == DisplaySettings.ColorMode.COMPOSITE) {
-            
-         } else if (mode == DisplaySettings.ColorMode.COLOR) {
-            sb.append("mode=color\n");
-         } else if (mode == DisplaySettings.ColorMode.GRAYSCALE) {
-            sb.append("mode=gray\n");
-         }    
-         */
+         if (settings != null) {
+            DisplaySettings.ColorMode mode = settings.getChannelColorMode();
+            if (null != mode) switch (mode) {
+               case COMPOSITE:
+                  sb.append("mode=composite\n");
+                  break;
+               case COLOR:
+                  sb.append("mode=color\n");
+                  break;
+               case GRAYSCALE:
+                  sb.append("mode=gray\n");
+                  break;
+               default:
+                  break;
+            }
+         } else {
+            sb.append("mode=composite\n");
+         }
       }
 
 
       sb.append((char) 0);
       return new String(sb);
+   }
+   
+   /**
+    * Since we do no longer want to pass through DisplaySettings to the saving code,
+    * but still need access to the, to enable saving metadata used by 3rdparty
+    * applications (such as ImageJ/Fiji) to display the data the same way we 
+    * did in MM, we need some ugly heuristics to figure out what DisplaySettings 
+    * were used.
+    * 
+    * @return DisplaySettings of a DataViewer that used this store for data.
+    *          Will be null when no such DataViewer was found.
+    */
+   DisplaySettings getDisplaySettings() {
+      MMStudio studio = MMStudio.getInstance();
+      DataViewer activeDataViewer = studio.displays().getActiveDataViewer();
+      if (activeDataViewer != null && activeDataViewer.getDataProvider().equals (store_)) {
+         return activeDataViewer.getDisplaySettings();
+      } else {
+         List<DataViewer> allDataViewers = studio.displays().getAllDataViewers();
+         for (DataViewer dv : allDataViewers) {
+            if (dv.getDataProvider().equals(store_)) {
+               return dv.getDisplaySettings();
+            }
+         }
+      }
+      return null;
    }
 
    @Override
