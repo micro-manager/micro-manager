@@ -33,7 +33,7 @@ import javax.swing.JProgressBar;
 
 public final class ProgressBar extends JPanel {
    private static final long serialVersionUID = 1L;
-   private final long delayTimeMs = 3000;
+   private final long delayTimeMs = 1000;
    private final long startTimeMs;
    private final JProgressBar progressBar;
    private final JFrame frame;
