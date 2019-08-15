@@ -61,7 +61,11 @@ import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
  * This class provides image storage in the form of a single TIFF file that
  * contains all image data in the dataset.
  * Adapted from the TaggedImageStorageMultipageTiff module.
- * TODO: extricate DisplaySettings from this code.
+ * 
+ * TODO: The org.micromanager.data package should not depend on internal code
+ * (or any code outside of the packae) so that it can be re-used elsewhere.
+ * 
+ * 
  */
 public final class StorageMultipageTiff implements Storage {
    private static final String SHOULD_GENERATE_METADATA_FILE = 
@@ -94,7 +98,7 @@ public final class StorageMultipageTiff implements Storage {
    // complete data rather than risking a call to
    // MultipageTiffReader.readImage().
    private final ConcurrentHashMap<Coords, Image> coordsToPendingImage_ =
-      new ConcurrentHashMap<Coords, Image>();
+            new ConcurrentHashMap<>();
 
    //map of position indices to objects associated with each
    private HashMap<Integer, FileSet> positionToFileSet_;
@@ -130,10 +134,10 @@ public final class StorageMultipageTiff implements Storage {
       directory_ = dir;
       store_.setSavePath(directory_);
       store_.setName(new File(directory_).getName());
-      coordsToReader_ = new HashMap<Coords, MultipageTiffReader>();
+      coordsToReader_ = new HashMap<>();
 
       if (amInWriteMode_) {
-         positionToFileSet_ = new HashMap<Integer, FileSet>();
+         positionToFileSet_ = new HashMap<>();
          // Create the directory now, even though we have nothing to write to
          // it, so we can detect e.g. permissions errors that would cause
          // problems later.
@@ -290,13 +294,7 @@ public final class StorageMultipageTiff implements Storage {
       try {
          writeImage(image, false);
       }
-      catch (MMException e) {
-         ReportingUtils.showError(e, "Failed to write image at " + image.getCoords());
-      } catch (InterruptedException e) {
-         ReportingUtils.showError(e, "Failed to write image at " + image.getCoords());
-      } catch (ExecutionException e) {
-         ReportingUtils.showError(e, "Failed to write image at " + image.getCoords());
-      } catch (IOException e) {
+      catch (MMException | InterruptedException | ExecutionException | IOException e) {
          ReportingUtils.showError(e, "Failed to write image at " + image.getCoords());
       }
    }
@@ -306,7 +304,8 @@ public final class StorageMultipageTiff implements Storage {
       finished();
    }
 
-   private void writeImage(DefaultImage image, boolean waitForWritingToFinish) throws MMException, InterruptedException, ExecutionException, IOException {
+   private void writeImage(DefaultImage image, boolean waitForWritingToFinish) 
+           throws MMException, InterruptedException, ExecutionException, IOException {
       writeImage(image);
       if (waitForWritingToFinish) {
          Future f = writingExecutor_.submit(new Runnable() {
@@ -543,7 +542,7 @@ public final class StorageMultipageTiff implements Storage {
 
       // TODO What does the following have to do with summary metadata?
       Map<Coords, MultipageTiffReader> oldImageMap = coordsToReader_;
-      coordsToReader_ = new HashMap<Coords, MultipageTiffReader>();
+      coordsToReader_ = new HashMap<>();
       if (showProgress && !GraphicsEnvironment.isHeadless()) {
          ProgressBar progressBar = new ProgressBar(parent_, 
                  "Building image location map", 0, oldImageMap.keySet().size());
@@ -596,7 +595,7 @@ public final class StorageMultipageTiff implements Storage {
 
    public long getDataSetSize() {
       File dir = new File (directory_);
-      LinkedList<File> list = new LinkedList<File>();
+      List<File> list = new LinkedList<>();
       for (File f : dir.listFiles()) {
          if (f.isDirectory()) {
             for (File fi : f.listFiles()) {
@@ -623,7 +622,7 @@ public final class StorageMultipageTiff implements Storage {
       // TODO: this method is pretty poorly-implemented at current.
       if (maxIndices_ == null) {
          // Calculate max indices by examining all registered Readers.
-         HashMap<String, Integer> maxIndices = new HashMap<String, Integer>();
+         HashMap<String, Integer> maxIndices = new HashMap<>();
          for (Coords coords : coordsToReader_.keySet()) {
             for (String axis : coords.getAxes()) {
                if (!maxIndices.containsKey(axis) ||
@@ -676,7 +675,7 @@ public final class StorageMultipageTiff implements Storage {
 
    @Override
    public List<Image> getImagesMatching(Coords coords) {
-      HashSet<Image> result = new HashSet<Image>();
+      HashSet<Image> result = new HashSet<>();
       synchronized(coordsToPendingImage_) {
          for (Coords imageCoords : coordsToPendingImage_.keySet()) {
             if (imageCoords.matches(coords)) {
@@ -694,7 +693,7 @@ public final class StorageMultipageTiff implements Storage {
             }
          }
       }
-      return new ArrayList<Image>(result);
+      return new ArrayList<>(result);
    }
 
    @Override
@@ -756,25 +755,22 @@ public final class StorageMultipageTiff implements Storage {
    }
 
    public static boolean getShouldGenerateMetadataFile() {
-      return MMStudio.getInstance().profile().getBoolean(
-            StorageMultipageTiff.class, SHOULD_GENERATE_METADATA_FILE, false);
+      return MMStudio.getInstance().profile().getSettings(StorageMultipageTiff.class).
+              getBoolean(SHOULD_GENERATE_METADATA_FILE, false);
    }
 
    public static void setShouldGenerateMetadataFile(boolean shouldGen) {
-      MMStudio.getInstance().profile().setBoolean(
-            StorageMultipageTiff.class,
-            SHOULD_GENERATE_METADATA_FILE, shouldGen);
+      MMStudio.getInstance().profile().getSettings(StorageMultipageTiff.class).
+              putBoolean(SHOULD_GENERATE_METADATA_FILE, shouldGen);
    }
 
    public static boolean getShouldSplitPositions() {
-      return MMStudio.getInstance().profile().getBoolean(
-            StorageMultipageTiff.class,
-            SHOULD_USE_SEPARATE_FILES_FOR_POSITIONS, true);
+      return MMStudio.getInstance().profile().getSettings(StorageMultipageTiff.class).
+              getBoolean(SHOULD_USE_SEPARATE_FILES_FOR_POSITIONS, true);
    }
 
    public static void setShouldSplitPositions(boolean shouldSplit) {
-      MMStudio.getInstance().profile().setBoolean(
-            StorageMultipageTiff.class,
-            SHOULD_USE_SEPARATE_FILES_FOR_POSITIONS, shouldSplit);
+      MMStudio.getInstance().profile().getSettings(StorageMultipageTiff.class).
+              putBoolean(SHOULD_USE_SEPARATE_FILES_FOR_POSITIONS, shouldSplit);
    }
 }
