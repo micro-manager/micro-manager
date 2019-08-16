@@ -394,16 +394,16 @@ public class IntensityInspectorPanelController
       boolean enabled = autostretchCheckBox_.isSelected();
       double percentile = (Double) percentileSpinner_.getValue();
       DisplaySettings oldSettings, newSettings;
-      boolean needToSetFixedMinMaxToAutoscaled = false;
+      // boolean needToSetFixedMinMaxToAutoscaled = false;
       do {
          oldSettings = viewer_.getDisplaySettings();
-         needToSetFixedMinMaxToAutoscaled = !enabled &&
-               oldSettings.isAutostretchEnabled();
+         //needToSetFixedMinMaxToAutoscaled = !enabled && oldSettings.isAutostretchEnabled();
          newSettings = oldSettings.copyBuilder().
                autostretch(enabled).
                autoscaleIgnoredPercentile(percentile).
                build();
       } while (!viewer_.compareAndSetDisplaySettings(oldSettings, newSettings));
+      /*
       if (needToSetFixedMinMaxToAutoscaled) {
          // When autostretch is turned off, rather than snapping back to
          // whatever the range was before autostretch was enabled, we want to
@@ -415,6 +415,7 @@ public class IntensityInspectorPanelController
          }
          displaySettingsUpdateSuspended_ = false;
       }
+      */
    }
 
    @MustCallOnEDT

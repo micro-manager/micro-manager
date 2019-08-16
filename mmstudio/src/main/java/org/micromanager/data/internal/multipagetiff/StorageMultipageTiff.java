@@ -42,6 +42,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.swing.JOptionPane;
 import org.micromanager.data.Coords;
+import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.Storage;
@@ -662,17 +663,51 @@ public final class StorageMultipageTiff implements Storage {
    DisplaySettings getDisplaySettings() {
       MMStudio studio = MMStudio.getInstance();
       DataViewer activeDataViewer = studio.displays().getActiveDataViewer();
-      if (activeDataViewer != null && activeDataViewer.getDataProvider().equals (store_)) {
-         return activeDataViewer.getDisplaySettings();
-      } else {
-         List<DataViewer> allDataViewers = studio.displays().getAllDataViewers();
-         for (DataViewer dv : allDataViewers) {
-            if (dv.getDataProvider().equals(store_)) {
-               return dv.getDisplaySettings();
+      try {
+         if (activeDataViewer != null && isViewingOurStore(activeDataViewer)) {
+            
+            return activeDataViewer.getDisplaySettings();
+         } else {
+            List<DataViewer> allDataViewers = studio.displays().getAllDataViewers();
+            for (DataViewer dv : allDataViewers) {
+               if (dv != null && isViewingOurStore(dv)) {
+                  return dv.getDisplaySettings();
+               }
             }
          }
+      } catch (IOException ioe) {
+         // TODO, handle nicely
       }
       return null;
+   }
+
+   /** 
+    * We can not simply test if the viewer's store is the same as ours, 
+    * since we may be saving a "copy" (i.e., saving a RAMM data set on disk)
+    * This is bad, but seems to work alright for now.
+    */
+   private boolean isViewingOurStore  (DataViewer dv) throws IOException{
+      DataProvider dp = dv.getDataProvider();
+      if (dp != null) {
+         Image dpImg = dp.getAnyImage();
+         Image ourImg = store_.getAnyImage();
+         if (dpImg.getWidth() != ourImg.getWidth() || 
+                 dpImg.getHeight() != ourImg.getHeight() ||
+                 dpImg.getBytesPerPixel() != ourImg.getBytesPerPixel()) {
+            return false;
+         }
+         if (dp.getAxes().size() != store_.getAxes().size()) {
+            return false;
+         }
+         for (String axis : dp.getAxes() ) {
+            if (store_.getAxisLength(axis) != dp.getAxisLength(axis)) {
+               return false;
+            }
+         }
+         return true;
+         
+      }
+      return false;
    }
 
    @Override

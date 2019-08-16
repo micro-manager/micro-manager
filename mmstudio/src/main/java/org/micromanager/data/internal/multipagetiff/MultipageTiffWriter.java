@@ -54,6 +54,7 @@ import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultMetadata;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.data.internal.PropertyKey;
+import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.RememberedChannelSettings;
@@ -826,24 +827,42 @@ public final class MultipageTiffWriter {
 
       SummaryMetadata summary = masterStorage_.getSummaryMetadata();
       String channelGroup = summary.getChannelGroup();
+      DisplaySettings ds = masterStorage_.getDisplaySettings();
       // Store contrast min/max.
-      for (int i = 0; i < numChannels; i++) {
-         String name = summary.getSafeChannelName(i);
-         RememberedChannelSettings settings = RememberedChannelSettings.loadSettings(
-               name, channelGroup, Color.WHITE, null, null, true);
-         // Display Ranges: For each channel, write min then max
-         // TODO: doesn't handle multi-component images.
-         mdBuffer.putDouble(bufferPosition, settings.getHistogramMin(0));
-         bufferPosition += 8;
-         mdBuffer.putDouble(bufferPosition, settings.getHistogramMax(0));
-         bufferPosition += 8;
+      if (ds == null) {
+         for (int ch = 0; ch < numChannels; ch++) {
+            String name = summary.getSafeChannelName(ch);
+            RememberedChannelSettings settings = RememberedChannelSettings.loadSettings(
+                    name, channelGroup, Color.WHITE, null, null, true);
+            // Display Ranges: For each channel, write min then max
+            // TODO: doesn't handle multi-component images.
+            mdBuffer.putDouble(bufferPosition, settings.getHistogramMin(0));
+            bufferPosition += 8;
+            mdBuffer.putDouble(bufferPosition, settings.getHistogramMax(0));
+            bufferPosition += 8;
+         }
+      } else {
+         for (int ch = 0; ch < numChannels; ch++) {
+            ChannelDisplaySettings cs = ds.getChannelSettings(ch);
+            // Display Ranges: For each channel, write min then max
+            // TODO: doesn't handle multi-component images.
+            mdBuffer.putDouble(bufferPosition, cs.getComponentSettings(0).getScalingMinimum());
+            bufferPosition += 8;
+            mdBuffer.putDouble(bufferPosition, cs.getComponentSettings(0).getScalingMaximum());
+            bufferPosition += 8;
+         }
       }
 
       // Store LUTs for each channel.
-      for (int i = 0; i < numChannels; ++i) {
-         String name = summary.getSafeChannelName(i);
-         Color color = RememberedChannelSettings.getColorForChannel(
-               name, channelGroup, Color.WHITE);
+      for (int ch = 0; ch < numChannels; ++ch) {
+         Color color;
+         if (ds == null) {
+            String name = summary.getSafeChannelName(ch);
+            color = RememberedChannelSettings.getColorForChannel(
+                    name, channelGroup, Color.WHITE);
+         } else {
+            color = ds.getChannelColor(ch);
+         }
          // Defaulting to a gamma range of 1.0, as display settings
          // aren't available here and that's the only place we can access that
          // information. Also, non-linear LUTs do not make much sense in the 
@@ -854,6 +873,7 @@ public final class MultipageTiffWriter {
             bufferPosition++;
          }
       }
+   
 
       ifdCountAndValueBuffer = allocateByteBuffer(8);
       ifdCountAndValueBuffer.putInt(0, mdBufferSize);

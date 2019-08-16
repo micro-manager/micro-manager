@@ -1039,7 +1039,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          long min = stats.getComponentStats(0).getAutoscaleMinForQuantile(q);
          long max = Math.min(Integer.MAX_VALUE,
                stats.getComponentStats(0).getAutoscaleMaxForQuantile(q));
-         // NS 2019-05-29: This should not be done here, but in IntegerComponentsStas
+         // NS 2019-05-29: This should not be done here, but in IntegerComponentsStats
          // however, I do not understand that code enough to touch it....
          // This at least fixes the display somewhat (showing black for 
          // a saturated image is really, really bad!)
@@ -1050,6 +1050,18 @@ public final class DisplayUIController implements Closeable, WindowListener,
                min--;
             }
          }
+         // NS 2019-08-15: We really do need to write the min and max to 
+         // the DisplaySettings (there already is a work-around in the 
+         // IntensityInspectorPanelController handleAutostretch function, but 
+         // the min and max value in the DisplaySettings should be these ones
+         // at any point in time, and not only when the Autostretch checkbox
+         // is checked.
+         // I know that the correct way is to construct a complete new DisplaySettings
+         // object with completely new ComnponentDisplaySettings, but it seems 
+         // more than a little bit excessive to do that on every autostrech update
+         // so we take the shortcut here
+         settings.getChannelSettings(i).getComponentSettings(0).setScalingMinimum(min);
+         settings.getChannelSettings(i).getComponentSettings(0).setScalingMaximum(max);
          ijBridge_.mm2ijSetIntensityScaling(i, (int) min, (int) max);
          } else {
             ReportingUtils.logError("DisplayUICOntroller: Received request to " +
