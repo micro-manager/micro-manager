@@ -441,12 +441,12 @@ public class DefaultDatastore implements Datastore {
    // TODO: re-use existing file-based storage if possible/relevant (i.e.
    // if our current Storage is a file-based Storage).
    @Override
-   public void save(Datastore.SaveMode mode, String path, boolean synchronous) throws IOException {
+   public void save(Datastore.SaveMode mode, String path, boolean blocking) throws IOException {
       DefaultDataSaver ds = new DefaultDataSaver(mmStudio_, this, mode, path);
-      if (synchronous) {
-         ds.execute();
-      } else {
+      if (blocking) {
          ds.doInBackground();
+      } else {
+         ds.execute();
       }
    }
    

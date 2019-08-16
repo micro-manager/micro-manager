@@ -157,11 +157,11 @@ public interface Datastore extends DataProvider {
     * 
     * @param mode File format to save to
     * @param path File path used to save the data
-    * @param synchronous when false, will block while saving data, will return
-    *                   immediately when true
+    * @param blocking when true, will block while saving data, otherwise will return
+    *                   immediately
     * @throws java.io.IOException
     */
-   void save(SaveMode mode, String path, boolean synchronous) throws IOException;
+   void save(SaveMode mode, String path, boolean blocking) throws IOException;
    
    /**
     * Sets the name of the Datastore.  Posts a DatastoreNewNameEvent
