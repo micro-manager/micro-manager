@@ -130,14 +130,15 @@ public interface Datastore extends DataProvider {
    /**
     * Saves the datastore to an interactively determined path.
     * Opens a file dialog prompting user for a storage location
-    * Saves data synchronously (i.e. will not block)
     * 
     * @param parent Window  on top of which to display a dialog prompting
     *        the user for a location to save.  After displaying 
+    * @param blocking if true will return after saving, otherwise will return quickly
+    *       and continue saving on another thread
     * @return Path chosen by user to save the data, null if dialog was canceled
     * @throws java.io.IOException
     */
-   String save(Component parent, boolean synchronous) throws IOException;
+   String save(Component parent, boolean blocking) throws IOException;
 
    
    /**

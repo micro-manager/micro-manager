@@ -26,15 +26,32 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
       private final DefaultDatastore store_;
       private final Datastore.SaveMode mode_;
       private final String path_;
+      private final DefaultDatastore duplicate_;
+      private final Storage saver_;
       
    public DefaultDataSaver(MMStudio mmStudio, 
            DefaultDatastore store, 
            Datastore.SaveMode mode, 
-           String path) {
+           String path) throws IOException {
       mmStudio_ = mmStudio;
       store_ = store;
       mode_ = mode;
       path_ = path;
+      
+      duplicate_ = new DefaultDatastore(mmStudio_);
+
+      if (mode_ == Datastore.SaveMode.MULTIPAGE_TIFF) {
+         saver_ = new StorageMultipageTiff(MMStudio.getFrame(),
+                 duplicate_,
+                 path_, true, true,
+                 StorageMultipageTiff.getShouldSplitPositions());
+      } else if (mode_ == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
+         saver_ = new StorageSinglePlaneTiffSeries(duplicate_, path_, true);
+      } else {
+         throw new IllegalArgumentException("Unrecognized mode parameter "
+                 + mode_);
+      }
+      
    }
    
    @Override
@@ -52,23 +69,9 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
          }
          summary = summary.copyBuilder().intendedDimensions(builder.build()).build();
       }
-
-      DefaultDatastore duplicate = new DefaultDatastore(mmStudio_);
-
-      Storage saver;
-      if (mode_ == Datastore.SaveMode.MULTIPAGE_TIFF) {
-         saver = new StorageMultipageTiff(MMStudio.getFrame(),
-                 duplicate,
-                 path_, true, true,
-                 StorageMultipageTiff.getShouldSplitPositions());
-      } else if (mode_ == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
-         saver = new StorageSinglePlaneTiffSeries(duplicate, path_, true);
-      } else {
-         throw new IllegalArgumentException("Unrecognized mode parameter "
-                 + mode_);
-      }
-      duplicate.setStorage(saver);
-      duplicate.setSummaryMetadata(summary);
+      
+      duplicate_.setStorage(saver_);
+      duplicate_.setSummaryMetadata(summary);
       // HACK HACK HACK HACK HACK
       // Copy images into the duplicate ordered by stage position index.
       // Doing otherwise causes errors when trying to write the OMEMetadata
@@ -109,7 +112,7 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
       int counter = 0;
       double multiplier = 100.0 / tmp.size();
       for (Coords coords : tmp) {
-         duplicate.putImage(store_.getImage(coords));
+         duplicate_.putImage(store_.getImage(coords));
          counter++;
          setProgress((int) (counter * multiplier));
       }
@@ -119,9 +122,9 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
       // may trigger side-effects that "finish" the process of saving.
       store_.setSavePath(path_);
       store_.freeze();
-      duplicate.setSavePath(path_);
-      duplicate.freeze();
-      duplicate.close();
+      duplicate_.setSavePath(path_);
+      duplicate_.freeze();
+      duplicate_.close();
       // Save our annotations now.
       for (DefaultAnnotation annotation : store_.getAnnotations().values()) {
          annotation.save();

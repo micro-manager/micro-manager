@@ -371,7 +371,7 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
-   public String save(Component parent, boolean synchronous) throws IOException {
+   public String save(Component parent, boolean blocking) throws IOException {
       // This replicates some logic from the FileDialogs class, but we want to
       // use non-file-extension-based "filters" to let the user select the
       // savefile format to use, and FileDialogs doesn't play nicely with that.
@@ -408,9 +408,12 @@ public class DefaultDatastore implements Datastore {
          return null;
       }
       setPreferredSaveMode(mmStudio_, mode);
+      // the DefaultDataSave constructor creates the directory
+      // so that displaysettings can be saved there even before we finish
+      // saving all the data
       DefaultDataSaver ds = new DefaultDataSaver(mmStudio_, this, mode,
               file.getAbsolutePath());
-      if (synchronous) {
+      if (!blocking) {
          final ProgressBar pb = new ProgressBar(parent, "Saving..", 0, 100);
          ds.addPropertyChangeListener((PropertyChangeEvent evt) -> {
             if ("progress".equals(evt.getPropertyName())) {
@@ -422,7 +425,7 @@ public class DefaultDatastore implements Datastore {
          });
          ds.execute();
       } else {
-         // synchronous saving.  No way to give feedback since we are blocking the EDT
+         // blocking.  No way to give feedback since we are blocking the EDT
          ds.doInBackground();
       }
 
