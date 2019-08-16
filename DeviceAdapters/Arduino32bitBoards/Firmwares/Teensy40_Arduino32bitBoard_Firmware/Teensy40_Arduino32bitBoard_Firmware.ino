@@ -1,7 +1,4 @@
-// This is the DAC blanking sketch
-// The digital output channels 7 and 8 are replaced with CH1 and CH2
-// The voltages for are set in the same way as for other sketches that use a DAC
-
+// This is a PWM blanking sketch, currently uses a 7 bits accuaracy at 468750
 /*
  * First, a serial command can directly set the digital output patern
  * 
@@ -132,20 +129,20 @@
  *   Get digital patterm
  *   Get Number of digital patterns
  */
- 
-  unsigned int version_ = 3;
-
  // pin on whick to receive the trigger (2 and 3 can be used with interrupts, although this code does not use them)
  // to read out the state of inPin_ faster, ise
  // int inPinBit_ = 1<< inPin_; // bit mask
 
- /* TLV5618 configuration
+// Old Configurations
+ // TLV5618 configuration
+ /*
   int dataPin  = 3; // DIN
   int clockPin = 4; // SLCK
   int latchPin = 5; // CS
-  */
+*/
+  unsigned int version_ = 3;
 
-  const int SEQUENCELENGTH = 12 ; //This shold be good enough for everybody
+  const int SEQUENCELENGTH = 12 ; //This should be good enough for everybody
   byte triggerPattern_[SEQUENCELENGTH]       = {0,0,0,0,0,0,0,0,0,0,0,0};
   unsigned int triggerDelay_[SEQUENCELENGTH] = {0,0,0,0,0,0,0,0,0,0,0,0};
   int patternLength_  = 0;
@@ -159,81 +156,63 @@
   bool blankOnHigh_ = false;
   bool triggerMode_ = false;
   boolean triggerState_ = false;
-
-
+  
 // New additions for rewrite code
   byte portbAlt = 0;
   byte pindAlt = 0;
-  byte Empty = 0;
-
-// Set the output channnels, these are the ones for TinyPico
-  const int inPin_ = 5;
-  const int ch1 = 25;
-  const int ch2 = 26;
-  const int ch3 = 27;
-  const int ch4 = 25;
-  const int ch5 = 14;
-  const int ch6 = 4;
-  const int ch7 = 23;
-  const int ch8 = 19;
-
-// Set the input channels for future use
-  const int a1 = 18;
-  const int a2 = 22;
-  const int a3 = 21;
-//  const int a4 = 0;
-//  const int a5 = 4;
-
 
 // New additions for use of internal DAC
-  unsigned int msblsb[] = {255, 255, 255, 255, 255, 255, 255, 255};
+// Default Channel power
+  const unsigned int ch1Power = 4095; 
+  const unsigned int ch2Power = 4095;
+  const unsigned int ch3Power = 4095;
+  const unsigned int ch4Power = 4095;
+  const unsigned int ch5Power = 4095;
+  const unsigned int ch6Power = 4095;
+  const unsigned int ch7Power = 4095;
+  const unsigned int ch8Power = 4095;
+  unsigned int msblsb[] = {ch1Power,ch2Power,ch3Power,ch4Power,ch5Power,ch6Power,ch7Power,ch8Power};
+  
+  const float freq = 468750;
+  const unsigned int PWMresolution = 12;
+
   
 
-// New Additions for use PWM
- const int PWMfreq = 10000;
- const int pwmCh3 = 2;
- const int pwmCh4 = 3;
- const int pwmCh5 = 4;
- const int pwmCh6 = 5;
- const int pwmCh7 = 6;
- const int pwmCh8 = 7;
- const int PWMresolution = 8;
-
-
+// Channel selection
+  const int inPin_ = 8;
+  const int ch1 = 23;     // Non Dac blanking -> const int ch1 = 8;
+  const int ch2 = 15;     // Non Dac blanking -> const int ch2 = 9;
+  const int ch3 = 3;
+  const int ch4 = 4;
+  const int ch5 = 10;
+  const int ch6 = 9;
+  const int ch7 = 6;
+  const int ch8 = 5;
  
 void setup() {
   // put your setup code here, to run once:
-  Serial.begin(115200); //Baud rate
+  Serial.begin(500000); //Baud rate
 
   pinMode(inPin_, INPUT);
-
-  // Setting up pwm
-  ledcSetup(pwmCh3, PWMfreq, PWMresolution);
-  ledcSetup(pwmCh4, PWMfreq, PWMresolution);
-  ledcSetup(pwmCh5, PWMfreq, PWMresolution);
-  ledcSetup(pwmCh6, PWMfreq, PWMresolution);
-  ledcSetup(pwmCh7, PWMfreq, PWMresolution);
-  ledcSetup(pwmCh8, PWMfreq, PWMresolution);
-
-  ledcAttachPin(ch3, pwmCh3);
-  ledcAttachPin(ch4, pwmCh4);
-  ledcAttachPin(ch5, pwmCh5);
-  ledcAttachPin(ch6, pwmCh6);
-  ledcAttachPin(ch7, pwmCh7);
-  ledcAttachPin(ch8, pwmCh8);
-
-  
-  // Is disabled when PWM blanking
-  /*
-  pinMode(dataPin, OUTPUT);
-  
-  //pinMode(ch1, OUTPUT); 
-  //pinMode(ch2, OUTPUT); is disabled with DAC blanking 
+  pinMode(ch1, OUTPUT);
+  pinMode(ch2, OUTPUT);
   pinMode(ch3, OUTPUT);
   pinMode(ch4, OUTPUT);
   pinMode(ch5, OUTPUT);
   pinMode(ch6, OUTPUT);
-  */
+  pinMode(ch7, OUTPUT);
+  pinMode(ch8, OUTPUT);
+
+  // New for PWM for more information https://www.pjrc.com/teensy/td_pulse.html
+  analogWriteResolution(PWMresolution);          // Sets PWM resolution to 12 bits
+  analogWriteFrequency(23, freq);  // Sets PWM frequency of pins 3 and 4
+  analogWriteFrequency(15, freq);  // Sets PWM frequency of pins 5 and 6
+  analogWriteFrequency(3, freq);  // Sets PWM frequency of pins 7 and 8
+  analogWriteFrequency(4, freq);  // Sets PWM frequency of pins 7 and 8
+  analogWriteFrequency(9, freq);  // Sets PWM frequency of pins 7 and 8
+  analogWriteFrequency(10, freq);  // Sets PWM frequency of pins 7 and 8
+  analogWriteFrequency(6, freq);  // Sets PWM frequency of pins 7 and 8
+  analogWriteFrequency(5, freq);  // Sets PWM frequency of pins 7 and 8
   
 }
 
@@ -249,7 +228,7 @@ void loop() {
       {
        currentPattern_ = Serial.read();
        // Do not set bits 6 and 7 for Arduino Uno
-       currentPattern_ = currentPattern_ & B0011111;
+       // currentPattern_ = currentPattern_ & B0011111;     Removed for additions of extra channels
 
        if (!blanking_)
        {
@@ -263,6 +242,7 @@ void loop() {
       // Get digital output
       case 2:
           Serial.write( byte(2));
+          //Serial.write( PORTB);
           Serial.write( portbAlt);
           break;
       // Set Analogue output (TODO: save for 'Get Analogue output')
@@ -279,18 +259,45 @@ void loop() {
             msb &= B00001111;
             if (waitForSerial(timeOut_)){
               byte lsb = Serial.read();
-              msblsb[channel] = (int)lsb + (int)msb * 256; 
-              msblsb[channel] = msblsb[channel]/16;
-              if (channel == 0){
-                dacWrite(25, msblsb[channel]);
-                
-                }
-              else if(channel == 1){
-                  dacWrite(26, msblsb[channel]);
-                }
-              else{
-                ledcWrite(channel, msblsb[channel]);
+              //msblsb = (int)lsb + (int)msb * 256;     Removed for DAC blanking
+              //analogueOut(channel, msb, lsb);
+              if( channel == 0){
+                msblsb[channel] = (int)lsb + (int)msb * 256; // Added DAC blanking
+                analogWrite(ch1, msblsb[channel]);
               }
+              else if (channel == 1){
+                msblsb[channel] = (int)lsb + (int)msb * 256; // Added DAC blanking
+                analogWrite(ch2, msblsb[channel]);
+                }
+              else if (channel == 2){
+                msblsb[channel] = (int)lsb + (int)msb * 256; // Added DAC blanking
+                analogWrite(ch3, msblsb[channel]);
+                }
+              else if (channel == 3){
+                msblsb[channel] = (int)lsb + (int)msb * 256; // Added DAC blanking
+                analogWrite(ch4, msblsb[channel]);
+                }
+              else if (channel == 3){
+                msblsb[channel] = (int)lsb + (int)msb * 256; // Added DAC blanking
+                analogWrite(ch4, msblsb[channel]);
+                }
+              else if (channel == 4){
+                msblsb[channel] = (int)lsb + (int)msb * 256; // Added DAC blanking
+                analogWrite(ch5, msblsb[channel]);
+                }
+              else if (channel == 5){
+                msblsb[channel] = (int)lsb + (int)msb * 256; // Added DAC blanking
+                analogWrite(ch6, msblsb[channel]);
+                }
+              else if (channel == 6){
+                msblsb[channel] = (int)lsb + (int)msb * 256; // Added DAC blanking
+                analogWrite(ch7, msblsb[channel]);
+                }
+              else if (channel == 7){
+                msblsb[channel] = (int)lsb + (int)msb * 256; // Added DAC blanking
+                analogWrite(ch8, msblsb[channel]);
+                }
+              
               Serial.write( byte(3));
               Serial.write( channel);
               Serial.write(msb);
@@ -306,7 +313,7 @@ void loop() {
             if ( (patternNumber >= 0) && (patternNumber < SEQUENCELENGTH) ) {
               if (waitForSerial(timeOut_)) {
                 triggerPattern_[patternNumber] = Serial.read();
-                triggerPattern_[patternNumber] = triggerPattern_[patternNumber] & B00111111;
+                // triggerPattern_[patternNumber] = triggerPattern_[patternNumber] & B00111111; Removed for extra channels
                 Serial.write( byte(5));
                 Serial.write( patternNumber);
                 Serial.write( triggerPattern_[patternNumber]);
@@ -443,7 +450,7 @@ void loop() {
        case 40:
          Serial.write( byte(40));
          //Serial.write( PINC);
-         Serial.write( Empty); 
+         Serial.write( byte(0)); 
          break;
          
        case 41:
@@ -540,46 +547,98 @@ bool waitForSerial(unsigned long timeOut)
 
 byte writeZeros()
 {
-    dacWrite(25, 0);
-    dacWrite(26, 0);
-    ledcWrite(ch3, 0);
-    ledcWrite(ch4, 0);
-    ledcWrite(ch5, 0);
-    ledcWrite(ch6, 0);
+
+    analogWrite(ch1, 0);  
+    analogWrite(ch2, 0); 
+    analogWrite(ch3, 0); 
+    analogWrite(ch4, 0); 
+    analogWrite(ch5, 0); 
+    analogWrite(ch6, 0);
+    analogWrite(ch7, 0); 
+    analogWrite(ch8, 0); 
+  
+    /*
+    digitalWrite(ch1, 0);     Disabled for DAC Blanking
+    digitalWrite(ch2, 0);     Disabled for DAC Blanking
+    digitalWrite(ch3, 0);
+    digitalWrite(ch4, 0);
+    digitalWrite(ch5, 0);
+    digitalWrite(ch6, 0);
+    */
     return portbAlt = 0;
  }
 
 void writePattern(byte pattern_)
 {
-  if (bitRead(pattern_,0) == 0)   // Added for DAC blanking
-  {
-    dacWrite(25, 0);
-    }
-  else{
-    dacWrite(25, msblsb[0]);
-    }
-    
-  if (bitRead(pattern_,1) == 0) // Added for DAC blanking
-  {
-    dacWrite(26,0);
-    }
-  else{
-    dacWrite(26, msblsb[1]);
-    }
-
-
-  for (int i = 2; i<=7; i++)
-  {
-    if(bitRead(pattern_,i) == 0)
+    if (bitRead(pattern_,0) == 0)   // Added for DAC blanking
     {
-      ledcWrite(i, 0);
+    analogWrite(ch1,0);
     }
     else{
-      ledcWrite(i, msblsb[i]);
-      }
-  }
-  /*
-  digitalWrite(ch1, bitRead(pattern_,0));
+    analogWrite(ch1 ,msblsb[0]);
+    }
+    
+    if (bitRead(pattern_,1) == 0) // Added for DAC blanking
+    {
+    analogWrite(ch2,0);
+    }
+    else{
+    analogWrite(ch2 ,msblsb[1]);
+    }
+  
+    if (bitRead(pattern_,2) == 0) // Added for DAC blanking
+    {
+    analogWrite(ch3,0);
+    }
+    else{
+    analogWrite(ch3 ,msblsb[2]);
+    }
+    
+    if (bitRead(pattern_,3) == 0) // Added for DAC blanking
+    {
+    analogWrite(ch4,0);
+    }
+    
+    else{
+    analogWrite(ch4 ,msblsb[3]);
+    }
+    
+    if (bitRead(pattern_,4) == 0) // Added for DAC blanking
+    {
+    analogWrite(ch5,0);
+    }
+    else{
+    analogWrite(ch5 ,msblsb[4]);
+    }
+    
+    if (bitRead(pattern_,5) == 0) // Added for DAC blanking
+    {
+    analogWrite(ch6,0);
+    }
+    else{
+    analogWrite(ch6 ,msblsb[5]);
+    }
+    
+    if (bitRead(pattern_,6) == 0) // Added for DAC blanking
+    {
+    analogWrite(ch7,0);
+    }
+    else{
+    analogWrite(ch7 ,msblsb[6]);
+    }
+    
+    if (bitRead(pattern_,7) == 0) // Added for DAC blanking
+    {
+    analogWrite(ch8,0);
+    }
+    else{
+    analogWrite(ch8 ,msblsb[7]);
+    }
+    
+
+  
+/* Removed for Arduino32
+  digitalWrite(ch1, bitRead(pattern_,0));   
   digitalWrite(ch2, bitRead(pattern_,1));
   digitalWrite(ch3, bitRead(pattern_,2));
   digitalWrite(ch4, bitRead(pattern_,3));
