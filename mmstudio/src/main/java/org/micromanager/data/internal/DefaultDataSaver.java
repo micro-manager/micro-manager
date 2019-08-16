@@ -4,6 +4,7 @@ package org.micromanager.data.internal;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import javax.swing.SwingWorker;
 import org.micromanager.data.Coords;
@@ -70,8 +71,9 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
          summary = summary.copyBuilder().intendedDimensions(builder.build()).build();
       }
       
+      final SummaryMetadata fSummary = summary;
       duplicate_.setStorage(saver_);
-      duplicate_.setSummaryMetadata(summary);
+      duplicate_.setSummaryMetadata(fSummary);
       // HACK HACK HACK HACK HACK
       // Copy images into the duplicate ordered by stage position index.
       // Doing otherwise causes errors when trying to write the OMEMetadata
@@ -95,19 +97,36 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
          if (p1 != p2) {
             return p1 < p2 ? -1 : 1;
          }
-         int t1 = a.getT();
-         int t2 = b.getT();
-         if (t1 != t2) {
-            return t1 < t2 ? -1 : 1;
+         List<String> orderedAxes = fSummary.getOrderedAxes();
+         // Apparently, ImageJ and MM differ in their opinion about the meaning of axis order....
+         Collections.reverse(orderedAxes);
+         for (String axis : orderedAxes) {
+            switch (axis) {
+               case Coords.P:
+                  break;
+               case Coords.T:
+                  int t1 = a.getT();
+                  int t2 = b.getT();
+                  if (t1 != t2) {
+                     return t1 < t2 ? -1 : 1;
+                  }  break;
+               case Coords.Z:
+                  int z1 = a.getZ();
+                  int z2 = b.getZ();
+                  if (z1 != z2) {
+                     return z1 < z2 ? -1 : 1;
+                  }  break;
+               case Coords.C:
+                  int c1 = a.getChannel();
+                  int c2 = b.getChannel();
+                  if (c1 != c2) {
+                     return c1 < c2 ? -1 : 1;
+                  } break;
+               default:
+                  break;
+            }
          }
-         int z1 = a.getZ();
-         int z2 = b.getZ();
-         if (z1 != z2) {
-            return z1 < z2 ? -1 : 1;
-         }
-         int c1 = a.getChannel();
-         int c2 = b.getChannel();
-         return c1 < c2 ? -1 : 1;
+         return 1;
       });
       int counter = 0;
       double multiplier = 100.0 / tmp.size();

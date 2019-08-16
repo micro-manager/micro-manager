@@ -183,6 +183,14 @@ public final class StorageMultipageTiff implements Storage {
       return writingExecutor_;
    }
 
+   /**
+    * Indicator of Acquisition order.  This function is difficult to name.
+    * "First" means that the axis comes before another axis in the ordered axes
+    * list.  Note, however, that the list of ordered axes is exactly the inverse 
+    * of the Acquisition Order as presented to the user
+    * 
+    * @return true if slices come before channels in the list of ordered axis
+    */
    boolean slicesFirst() {
       List<String> orderList = summaryMetadata_.getOrderedAxes();
       if (orderList == null) {
@@ -194,14 +202,21 @@ public final class StorageMultipageTiff implements Storage {
       return (sliceIndex < channelIndex);
    }
 
+   /**
+    * Indicator of Acquisition order.  This function is difficult to name.
+    * "First" means that the axis comes before another axis in the ordered axes
+    * list.  Note, however, that the list of ordered axes is exactly the inverse 
+    * of the Acquisition Order as presented to the user
+    * 
+    * @return true if time comes before positions in the list of ordered axis
+    */
    boolean timeFirst() {
-      String[] order = summaryMetadata_.getAxisOrder();
-      if (order == null) {
+      List<String> orderList = summaryMetadata_.getOrderedAxes();
+      if (orderList == null) {
          // HACK: default to false.
          return false;
       }
-      List<String> orderList = Arrays.asList(order);
-      int timeIndex = orderList.indexOf(Coords.TIME);
+      int timeIndex = orderList.indexOf(Coords.T);
       int positionIndex = orderList.indexOf(Coords.STAGE_POSITION);
       return (timeIndex < positionIndex);
    }
@@ -597,9 +612,38 @@ public final class StorageMultipageTiff implements Storage {
       }
       if (numFrames > 1 || numSlices > 1 || numChannels > 1) {
          sb.append("hyperstack=true\n");
-      }
-      if (numChannels > 1 && numSlices > 1 && slicesFirst()) {
-         sb.append("order=zct\n");
+         // This is important for correct interoperability.
+         // TODO: there has to be a more robust mechanism to deceide on order 
+         // of images.  Clearly, when acquiring images, they need to go in 
+         // order of acquisition.  When saving a dataset in RAMM, we can provide
+         // images in any order, but we have to have an idea what that order
+         // should be (not because the MM reading code cares, but because 
+         // other readers do care)
+         // Also note that multi-position data will never be read correctly by ImageJ
+         // so give up on those
+         if (numFrames < 1) {
+            if (numChannels > 1 && numSlices > 1) {
+               if (!slicesFirst()) {
+                  sb.append("order=zc\n");
+               } else {
+                  sb.append("order=cz\n");
+               }
+            }
+         } else { // we have a time axis.  Currently, time always comes first
+            sb.append("order=t");
+            if (numChannels > 1 && numSlices > 1) {
+               if (!slicesFirst()) {
+                  sb.append("zc");
+               } else {
+                  sb.append("cz");
+               }
+            } else if (numChannels > 1) {
+               sb.append("c");
+            } else if (numSlices > 1) {
+               sb.append("z");
+            }
+            sb.append("\n");
+         }
       }
       //cm so calibration unit is consistent with units used in Tiff tags
       sb.append("unit=um\n");
