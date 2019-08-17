@@ -43,16 +43,13 @@ public class ExploreAcquisition extends Acquisition {
    private ConcurrentHashMap<Integer, LinkedBlockingQueue<ExploreTileWaitingToAcquire>> queuedTileEvents_ = new ConcurrentHashMap<Integer, LinkedBlockingQueue<ExploreTileWaitingToAcquire>>();
    private ArrayList<Future> submittedStreams_ = new ArrayList<Future>();
    public final ExploreAcqSettings settings_;
-   
+
    public ExploreAcquisition(ExploreAcqSettings settings) {
       super();
       settings_ = settings;
       channels_ = settings.channels_;
-      initialize(settings.dir_, settings.name_, settings.tileOverlap_, settings.zStep_);
-   }
-
-   public void start() {
       try {
+         zStage_ = Magellan.getCore().getFocusDevice();
          //start at current z position
          zTop_ = Magellan.getCore().getPosition(zStage_);
          zOrigin_ = zTop_;
@@ -61,6 +58,11 @@ public class ExploreAcquisition extends Acquisition {
          Log.log("Couldn't get focus device position", true);
          throw new RuntimeException();
       }
+      initialize(settings.dir_, settings.name_, settings.tileOverlap_, settings.zStep_);
+   }
+
+   public void start() {
+      //wait for user input
    }
 
    /**
@@ -275,14 +277,14 @@ public class ExploreAcquisition extends Acquisition {
       @Override
       public boolean equals(Object other) {
          String otherChannel = ((ExploreTileWaitingToAcquire) other).channelName;
-         if( ((ExploreTileWaitingToAcquire) other).col == col && ((ExploreTileWaitingToAcquire) other).row == row
-                 && ((ExploreTileWaitingToAcquire) other).sliceIndex == sliceIndex ) {
+         if (((ExploreTileWaitingToAcquire) other).col == col && ((ExploreTileWaitingToAcquire) other).row == row
+                 && ((ExploreTileWaitingToAcquire) other).sliceIndex == sliceIndex) {
             if (otherChannel == null && channelName == null) {
                return true;
-            } 
-            return otherChannel.equals(channelName);            
+            }
+            return otherChannel.equals(channelName);
          }
-         return false;                 
+         return false;
       }
 
    }
