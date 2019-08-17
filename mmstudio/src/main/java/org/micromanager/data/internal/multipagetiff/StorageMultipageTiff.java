@@ -593,6 +593,9 @@ public final class StorageMultipageTiff implements Storage {
     * This function provides the ImageJ "Properties" information when opening 
     * in ImageJ/Fiji.   
     * 
+    * It also defines the image orde when creating Hyperstacks from sequences
+    * of images
+    * 
     * @return 
     */
    private String getIJDescriptionString() {
@@ -612,22 +615,18 @@ public final class StorageMultipageTiff implements Storage {
       }
       if (numFrames > 1 || numSlices > 1 || numChannels > 1) {
          sb.append("hyperstack=true\n");
-         // This is important for correct interoperability.
-         // TODO: there has to be a more robust mechanism to decide on order 
-         // of images.  Clearly, when acquiring images, they need to go in 
-         // order of acquisition.  When saving a dataset in RAMM, we can provide
-         // images in any order, but we have to have an idea what that order
-         // should be (not because the MM reading code cares, but because 
-         // other readers do care)
-         // Also note that multi-position data will never be read correctly by ImageJ
-         // so give up on those
-         
-         // It loooks like ImageJ ignores the order and always wants it to be
-         // tcz.  This means that datasets acquired in a different order will
-         // open incorrectly in ImageJ
-         sb.append("order=tcz\n");
+                   
+         // It loooks like ImageJ ignores the order and always assumes it to be
+         // tcz (which it calls "xyctz".  This means that datasets acquired in 
+         // a different order will open incorrectly in ImageJ.        
+         // order - hyperstack order ("default", "xyctz", "xyzct", "xyztc", "xytcz" or "xytzc")
          
          /*
+          * This was an attempt to tell ImageJ about image order, but I see no 
+          * evidence (either in practice or in the code) that it looks at the "order" tag
+         
+         sb.append("order=xyctz\n");
+         
          if (numFrames < 1) {
             if (numChannels > 1 && numSlices > 1) {
                if (!slicesFirst()) {

@@ -75,8 +75,7 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
       duplicate_.setStorage(saver_);
       duplicate_.setSummaryMetadata(fSummary);
       
-      // HACK HACK HACK HACK HACK
-      // Copy images into the duplicate ordered by stage position index.
+      // Copy images ordered by stage position index.
       // Doing otherwise causes errors when trying to write the OMEMetadata
       // (we get an ArrayIndexOutOfBoundsException when calling
       // MetadataTools.populateMetadata() in
@@ -87,11 +86,10 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
       // We also need to sort by frame (and while we're at it, sort by
       // z and channel as well), since FileSet.writeImage() assumes that
       // timepoints are written sequentially and can potentially cause
-      // invalid metadata if they are not.
+      // invalid metadata if they are not.     
       
-      
-      // Apparently, ImageJ only opens data correctly when they are ordered \
-      // in out Time, Slice, Channel order
+      // To have data opened correctly in ImageJ, they need to be ordered 
+      // in Time, Slice, Channel order (which ImageJ calls "xyctz" order)
       final List<String> orderedAxes = new ArrayList<>();
       String[] imageJOrderedAxes = new String[] {Coords.T, Coords.Z, Coords.C};
       for (String axis : imageJOrderedAxes) {
