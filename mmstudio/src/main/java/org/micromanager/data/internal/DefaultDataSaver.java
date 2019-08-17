@@ -74,6 +74,7 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
       final SummaryMetadata fSummary = summary;
       duplicate_.setStorage(saver_);
       duplicate_.setSummaryMetadata(fSummary);
+      
       // HACK HACK HACK HACK HACK
       // Copy images into the duplicate ordered by stage position index.
       // Doing otherwise causes errors when trying to write the OMEMetadata
@@ -87,6 +88,18 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
       // z and channel as well), since FileSet.writeImage() assumes that
       // timepoints are written sequentially and can potentially cause
       // invalid metadata if they are not.
+      
+      
+      // Apparently, ImageJ only opens data correctly when they are ordered \
+      // in out Time, Slice, Channel order
+      final List<String> orderedAxes = new ArrayList<>();
+      String[] imageJOrderedAxes = new String[] {Coords.T, Coords.Z, Coords.C};
+      for (String axis : imageJOrderedAxes) {
+         if (store_.getAxes().contains(axis)) {
+            orderedAxes.add(axis);
+         }
+      }
+      
       ArrayList<Coords> tmp = new ArrayList<>();
       for (Coords coords : store_.getUnorderedImageCoords()) {
          tmp.add(coords);
@@ -96,10 +109,8 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
          int p2 = b.getStagePosition();
          if (p1 != p2) {
             return p1 < p2 ? -1 : 1;
-         }
-         List<String> orderedAxes = fSummary.getOrderedAxes();
-         // Apparently, ImageJ and MM differ in their opinion about the meaning of axis order....
-         Collections.reverse(orderedAxes);
+         }        
+         
          for (String axis : orderedAxes) {
             switch (axis) {
                case Coords.P:

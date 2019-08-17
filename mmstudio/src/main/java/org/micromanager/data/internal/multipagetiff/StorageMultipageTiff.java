@@ -613,7 +613,7 @@ public final class StorageMultipageTiff implements Storage {
       if (numFrames > 1 || numSlices > 1 || numChannels > 1) {
          sb.append("hyperstack=true\n");
          // This is important for correct interoperability.
-         // TODO: there has to be a more robust mechanism to deceide on order 
+         // TODO: there has to be a more robust mechanism to decide on order 
          // of images.  Clearly, when acquiring images, they need to go in 
          // order of acquisition.  When saving a dataset in RAMM, we can provide
          // images in any order, but we have to have an idea what that order
@@ -621,6 +621,13 @@ public final class StorageMultipageTiff implements Storage {
          // other readers do care)
          // Also note that multi-position data will never be read correctly by ImageJ
          // so give up on those
+         
+         // It loooks like ImageJ ignores the order and always wants it to be
+         // tcz.  This means that datasets acquired in a different order will
+         // open incorrectly in ImageJ
+         sb.append("order=tcz\n");
+         
+         /*
          if (numFrames < 1) {
             if (numChannels > 1 && numSlices > 1) {
                if (!slicesFirst()) {
@@ -630,7 +637,7 @@ public final class StorageMultipageTiff implements Storage {
                }
             }
          } else { // we have a time axis.  Currently, time always comes first
-            sb.append("order=t");
+            sb.append("order=");
             if (numChannels > 1 && numSlices > 1) {
                if (!slicesFirst()) {
                   sb.append("zc");
@@ -642,8 +649,9 @@ public final class StorageMultipageTiff implements Storage {
             } else if (numSlices > 1) {
                sb.append("z");
             }
-            sb.append("\n");
+            sb.append("t\n");         
          }
+         */
       }
       //cm so calibration unit is consistent with units used in Tiff tags
       sb.append("unit=um\n");
