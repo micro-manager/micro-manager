@@ -146,6 +146,7 @@ public class Properties {
       STAGESCAN_MAX_MOTOR_SPEED_X("MotorSpeedMaximumX(mm/s)", false),
       STAGESCAN_MOTOR_ACCEL_X("AccelerationX-AC(ms)", false),
       STAGESCAN_OVERSHOOT_DIST("ScanOvershootDistance(um)", false),
+      STAGESCAN_RETRACE_SPEED("ScanRetraceSpeedPercent(%)", false),
       STAGESCAN_MOTOR_SPEED_Z("MotorSpeed-S(mm/s)", false),
       STAGESCAN_MOTOR_SPEED_MICRONS_Z("MotorSpeed(um/s)"),
       STAGESCAN_MIN_MOTOR_SPEED_Z("MotorSpeedMinimum(um/s)"),

@@ -164,7 +164,7 @@ public class SettingsPanel extends ListeningJPanel {
             "",
             "[right]16[center]",
             "[]5[]"));
-      scannerPanel.setBorder(PanelUtils.makeTitledBorder("Scanner"));
+      scannerPanel.setBorder(PanelUtils.makeTitledBorder("Light Sheet Scanner"));
 
       scannerPanel.add(new JLabel("Filter freq, sheet axis [kHz]:"));
       final JSpinner scannerFilterX = pu.makeSpinnerFloat(0.1, 1, 0.1,
@@ -276,7 +276,7 @@ public class SettingsPanel extends ListeningJPanel {
             "",
             "[right]16[center]",
             "[]5[]"));
-      stageScanPanel.setBorder(PanelUtils.makeTitledBorder("Stage scanning"));
+      stageScanPanel.setBorder(PanelUtils.makeTitledBorder("Stage Scanning"));
       
       // TODO create method to determine this instead of separate code here and in AcquisitionPanel
       if (devices_.isTigerDevice(Devices.Keys.XYSTAGE)
@@ -290,6 +290,12 @@ public class SettingsPanel extends ListeningJPanel {
             final JSpinner scanOvershootDistance = pu.makeSpinnerInteger(0, 1000,
                   Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_OVERSHOOT_DIST, 0);
             stageScanPanel.add(scanOvershootDistance, "wrap");
+         }
+         if (props_.hasProperty(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_RETRACE_SPEED)) {  // present in 3.30 and above
+            stageScanPanel.add(new JLabel("Scan retrace speed [% of max]:"));
+            final JSpinner scanRetraceSpeed = pu.makeSpinnerFloat(0.01, 99.0, 1.0,
+                  Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_RETRACE_SPEED, 67.0);
+            stageScanPanel.add(scanRetraceSpeed, "wrap");
          }
          final JCheckBox scanFromStart = pu.makeCheckBox("Scan from current position instead of center",
                Properties.Keys.PLUGIN_SCAN_FROM_START_POSITION, panelName_, false);

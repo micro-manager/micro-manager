@@ -1896,8 +1896,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             }
             break;
          case LIGHT_SHEET:
-            // each slice period goes like this:
-            // 1. scan reset time (use to add any extra settling time to the start of each slice)
+         // each slice period goes like this:
+         // 1. scan reset time (use to add any extra settling time to the start of each slice)
          // 2. start scan, wait scan settle time
          // 3. trigger camera/laser when scan settle time elapses
          // 4. scan for total of exposure time plus readout time (total time some row is exposing) plus settle time plus extra 0.25ms to prevent artifacts
@@ -2062,7 +2062,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             retraceSpeed = 1;  // wild-guess default
          }
       } else {
-         retraceSpeed = 0.67f*props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MAX_MOTOR_SPEED_X);  // retrace speed set to 67% of max speed in firmware
+         float retraceRelativeSpeedPercent = props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_RETRACE_SPEED);
+         // this added in firmware v3.30; if not present then get will return 0.0 and we set to firmware default hardcoded previously
+         if (retraceRelativeSpeedPercent <= 0.001f) {
+            retraceRelativeSpeedPercent = 67.f;
+         }
+         retraceSpeed = retraceRelativeSpeedPercent/100f*props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MAX_MOTOR_SPEED_X);
       }
       final DeviceUtils du = new DeviceUtils(gui_, devices_, props_, prefs_);
       final double speedFactor = du.getStageGeometricSpeedFactor(acqSettings.firstSideIsA);
@@ -3832,10 +3837,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          
          long extraStageScanTimeout = 0;
          if (acqSettings.isStageScanning || acqSettings.isStageStepping) {
-            // approximately compute the extra time to wait for stack to begin (ramp up time)
-            //   by getting the volume duration and subtracting the acquisition duration and then dividing by two
+            // approximately compute the extra time to wait for stack to begin (ramp up time) by getting
+            //   the volume duration and subtracting the acquisition duration.  NB this is relatively crude method; 
+            //   since we are computing a timeout we err on the side of having extraStageScanTimeout be too large.
             extraStageScanTimeout = (long) Math.ceil(computeActualVolumeDuration(acqSettings)
-                  - (acqSettings.numSlices * acqSettings.numChannels * acqSettings.sliceTiming.sliceDuration)) / 2;
+                  - (acqSettings.numSlices * acqSettings.numChannels * acqSettings.sliceTiming.sliceDuration));
          }
          
          long extraMultiXYTimeout = 0;
@@ -4386,7 +4392,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                               }
                            }
 
-                           // start the cameras
+                           // trigger the state machine on the controller before triggering cameras for demo cameras
+                           if (usingDemoCam) {
+                              boolean success = controller_.triggerControllerStartAcquisition(spimMode, firstSideA);
+                              if (!success) {
+                                 throw new Exception("Controller triggering not successful for demo cam");
+                              }
+                              // wait for stage scan move to initial position if needed
+                              Thread.sleep(extraStageScanTimeout);
+                           }
+                           
+                           // start the cameras so they are awaiting triggers
                            if (acqSimultSideA) {
                               core_.startSequenceAcquisition(cameraA1, nrSlicesSoftware, 0, true);
                               if (camActiveA2) {
@@ -4409,16 +4425,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                               }
                            }
                            
-                           // trigger the state machine on the controller
-                           // do this even with demo cameras to test everything else
-                           boolean success = controller_.triggerControllerStartAcquisition(spimMode, firstSideA);
-                           if (!success) {
-                              throw new Exception("Controller triggering not successful");
+                           // trigger the state machine on the controller after triggering cameras as usual case
+                           if (!usingDemoCam) {
+                              boolean success = controller_.triggerControllerStartAcquisition(spimMode, firstSideA);
+                              if (!success) {
+                                 throw new Exception("Controller triggering not successful for demo cam");
+                              }
                            }
 
                            ReportingUtils.logDebugMessage("Starting time point " + (timePoint+1) + " of " + nrFrames
                                  + " with (software) channel number " + channelNum);
-
+                           
                            // Wait for first image to create ImageWindow, so that we can be sure about image size
                            // Do not actually grab first image here, just make sure it is there
                            long start = System.currentTimeMillis();
