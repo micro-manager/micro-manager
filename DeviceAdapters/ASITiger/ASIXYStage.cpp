@@ -447,6 +447,13 @@ int CXYStage::Initialize()
          UpdateProperty(g_ScanOvershootDistancePropertyName);
       }
 
+      if (FirmwareVersionAtLeast(3.30)) {
+         pAct = new CPropertyAction (this, &CXYStage::OnScanRetraceSpeedPercent);
+         CreateProperty(g_ScanRetraceSpeedPercentPropertyName, "67", MM::Float, false, pAct);
+         SetPropertyLimits(g_ScanRetraceSpeedPercentPropertyName, 0.01, 100);
+         UpdateProperty(g_ScanRetraceSpeedPercentPropertyName);
+      }
+
    }
 
    //Vector Move VE X=### Y=###
@@ -2054,6 +2061,28 @@ int CXYStage::OnScanOvershootDistance(MM::PropertyBase* pProp, MM::ActionType eA
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
       command << addressChar_ << "NV T=" << tmp/1000;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CXYStage::OnScanRetraceSpeedPercent(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "NR R?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A R="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "NR R=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;

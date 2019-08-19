@@ -143,6 +143,7 @@ public:
    int OnScanNumLines         (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnScanSettlingTime     (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnScanOvershootDistance(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnScanRetraceSpeedPercent(MM::PropertyBase* pProp, MM::ActionType eAct);
    // ring buffer properties
    int OnRBDelayBetweenPoints (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnRBMode               (MM::PropertyBase* pProp, MM::ActionType eAct);
