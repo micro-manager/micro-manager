@@ -49,7 +49,7 @@ public:
    virtual unsigned int GetNumberOfComponents();
    virtual unsigned int GetBytesPerPixel();
 
-   virtual int SetExposure(double interval_ms);
+   virtual int SetExposure(double exposureMs);
    virtual double GetExposure();
 
    virtual int SetImage(unsigned char* pixels);
@@ -67,6 +67,7 @@ private: // Action handlers
 
 private: // Private data
    const std::string name_;
+   double exposureMs_; // not used yet except to store the user's desire
 
    // Used in constructor, pre-init properties, and Initiazlie()
    std::vector<std::string> availableMonitors_;
