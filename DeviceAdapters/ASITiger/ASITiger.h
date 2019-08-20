@@ -340,6 +340,7 @@ const char* const g_ScanSlowAxisStopPositionPropertyName = "ScanSlowAxisStopPosi
 const char* const g_ScanNumLinesPropertyName = "ScanNumLines";
 const char* const g_ScanSettlingTimePropertyName = "ScanSettlingTime(ms)";
 const char* const g_ScanOvershootDistancePropertyName = "ScanOvershootDistance(um)";
+const char* const g_ScanRetraceSpeedPercentPropertyName = "ScanRetraceSpeedPercent(%)";
 
 // CRISP property names
 const char* const g_CRISPWaitAfterLockPropertyName = "Wait ms after Lock";
