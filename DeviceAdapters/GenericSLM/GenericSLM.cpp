@@ -80,6 +80,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 
 GenericSLM::GenericSLM(const char* name) :
    name_(name),
+   exposureMs_(0.0),
    width_(0),
    height_(0),
    windowThread_(0),
@@ -302,16 +303,16 @@ unsigned int GenericSLM::GetBytesPerPixel()
 }
 
 
-int GenericSLM::SetExposure(double)
+int GenericSLM::SetExposure(double exposureMs)
 {
-   // ignore for now.
+   exposureMs_ = exposureMs;
    return DEVICE_OK;
 }
 
 
 double GenericSLM::GetExposure()
 {
-   return 0;
+   return exposureMs_;
 }
 
 
