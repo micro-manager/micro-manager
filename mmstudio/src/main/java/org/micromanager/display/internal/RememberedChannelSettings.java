@@ -140,7 +140,7 @@ public final class RememberedChannelSettings {
     */
    public static RememberedChannelSettings loadSettings(String channelName,
          String channelGroup, Color defaultColor, List<Integer> histogramMins,
-         List<Integer> histogramMaxes, Boolean shouldAutoscale) {
+         List<Integer> histogramMaxes, boolean shouldAutoscale) {
       // Don't try to do this when someone else is (potentially) modifying the
       // profile.
       synchronized(PROFILELOCK) {
@@ -151,8 +151,7 @@ public final class RememberedChannelSettings {
                   defaultColor.getRGB()));
          histogramMins = settings.getIntegerList(key + ":" + MINS, histogramMins);
          histogramMaxes = settings.getIntegerList(key + ":" + MAXES, histogramMaxes);
-         shouldAutoscale = settings.getBoolean(key + ":" + AUTOSCALE,
-               shouldAutoscale);
+         shouldAutoscale = settings.getBoolean(key + ":" + AUTOSCALE, shouldAutoscale);
          return new RememberedChannelSettings(channelName, channelGroup,
                defaultColor, histogramMins, histogramMaxes, shouldAutoscale);
       }
@@ -194,7 +193,7 @@ public final class RememberedChannelSettings {
          // Load this channel's settings
          String name = summary.getSafeChannelName(i);
          RememberedChannelSettings channel = loadSettings(name, group,
-               Color.WHITE, null, null, null);
+               Color.WHITE, null, null, true);
          newSettings[i] = MMStudio.getInstance().displays()
             .getContrastSettings(channel.getHistogramMins().toArray(new Integer[0]),
                   channel.getHistogramMaxes().toArray(new Integer[0]), null, null);
