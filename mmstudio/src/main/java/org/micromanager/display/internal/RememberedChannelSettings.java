@@ -111,7 +111,7 @@ public final class RememberedChannelSettings {
       return shouldAutoscale_;
    }
 
-   private static String genKey(String channelGroup, String channelName) {
+   static String genKey(String channelGroup, String channelName) {
       // weird order, keep for backwards compatibility
       return channelName + ":" + channelGroup;
    }
