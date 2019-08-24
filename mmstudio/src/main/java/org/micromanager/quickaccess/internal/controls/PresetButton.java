@@ -189,8 +189,8 @@ public final class PresetButton extends WidgetPlugin implements SciJavaPlugin {
             // case the color will remain the same.
             pickerLabel.setBackground(
                RememberedChannelSettings.getColorForChannel(
-                  (String) presetSelector.getSelectedItem(),
                   (String) groupSelector.getSelectedItem(),
+                  (String) presetSelector.getSelectedItem(),
                   pickerLabel.getBackground()));
          }
       });

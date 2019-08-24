@@ -62,8 +62,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       private boolean autostretch_ = true;
       private boolean useROI_ = true;
       private double extremaQuantile_ = 0.001;
-      private List<ChannelDisplaySettings> channelSettings_ =
-            new ArrayList<ChannelDisplaySettings>();
+      private List<ChannelDisplaySettings> channelSettings_ = new ArrayList<>();
 
       private Builder() {
          channelSettings_.add(DefaultChannelDisplaySettings.builder().build());

@@ -36,7 +36,7 @@ public final class DefaultChannelDisplaySettings
       private int histoRangeBits_ = 8; 
       private boolean useCameraRange_ = true;
       private final List<ComponentDisplaySettings> componentSettings_ =
-            new ArrayList<ComponentDisplaySettings>();
+            new ArrayList<>();
 
       private Builder() {
          componentSettings_.add(DefaultComponentDisplaySettings.builder().build());
@@ -169,8 +169,7 @@ public final class DefaultChannelDisplaySettings
       visible_ = builder.visible_;
       histoRangeBits_ = builder.histoRangeBits_;
       useCameraRange_ = builder.useCameraRange_;
-      componentSettings_ = new ArrayList<ComponentDisplaySettings>(
-            builder.componentSettings_);
+      componentSettings_ = new ArrayList<>(builder.componentSettings_);
    }
 
    @Override
@@ -213,7 +212,7 @@ public final class DefaultChannelDisplaySettings
 
    @Override
    public List<ComponentDisplaySettings> getAllComponentSettings() {
-      return new ArrayList<ComponentDisplaySettings>(componentSettings_);
+      return new ArrayList<>(componentSettings_);
    }
 
    @Override
@@ -241,7 +240,7 @@ public final class DefaultChannelDisplaySettings
     * @return PropertyMap encoding the current ChannelDisplaySettings
     */
    public PropertyMap toPropertyMap() {
-      List<PropertyMap> componentSettings = new ArrayList<PropertyMap>();
+      List<PropertyMap> componentSettings = new ArrayList<>();
       for (ComponentDisplaySettings cs : componentSettings_) {
          componentSettings.add(((DefaultComponentDisplaySettings) cs).toPropertyMap());
       }
@@ -259,7 +258,7 @@ public final class DefaultChannelDisplaySettings
    /**
     * Restores ChannelDisplaySettings from a PropertyMap
     * 
-    * @param pMap PropertyMap from which to restore the ChannelDIsplaySettings
+    * @param pMap PropertyMap from which to restore the ChannelDisplaySettings
     * @return ChannelDisplaySettings.  Missing values are replaced by defaults.
     */
    public static ChannelDisplaySettings fromPropertyMap (PropertyMap pMap) {
@@ -277,7 +276,7 @@ public final class DefaultChannelDisplaySettings
       }
       if (pMap.containsPropertyMapList(PropertyKey.COMPONENT_SETTINGS.key())) {
          List<PropertyMap> componentMapList = pMap.getPropertyMapList(
-                 PropertyKey.COMPONENT_SETTINGS.key(), new ArrayList<PropertyMap>());
+                 PropertyKey.COMPONENT_SETTINGS.key(), new ArrayList<>());
          for (int i = 0; i < componentMapList.size(); i++) {
             ComponentDisplaySettings cds = DefaultComponentDisplaySettings.fromPropertyMap(
                     componentMapList.get(i));

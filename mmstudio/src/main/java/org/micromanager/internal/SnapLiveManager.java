@@ -16,6 +16,7 @@ package org.micromanager.internal;
 
 import com.bulenkov.iconloader.IconLoader;
 import com.google.common.eventbus.Subscribe;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Insets;
@@ -70,6 +71,7 @@ import org.micromanager.internal.utils.performance.PerformanceMonitor;
 import org.micromanager.internal.utils.performance.gui.PerformanceMonitorUI;
 import org.micromanager.quickaccess.internal.QuickAccessFactory;
 import org.micromanager.display.DisplayWindowControlsFactory;
+import org.micromanager.display.internal.RememberedChannelSettings;
 import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 import org.micromanager.internal.navigation.UiMovesStageManager;
 
@@ -477,10 +479,18 @@ public final class SnapLiveManager extends DataViewerListener
       display_ = new DisplayController.Builder(store_).
             controlsFactory(controlsFactory).
             shouldShow(true).build(mmStudio_);
-      DisplaySettings ds = DefaultDisplaySettings.restoreFromProfile(mmStudio_.profile(), PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key() );
+      DisplaySettings ds = DefaultDisplaySettings.restoreFromProfile(
+              mmStudio_.profile(), 
+              PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key() );
       if (ds == null) {
          ds = DefaultDisplaySettings.builder().colorMode(
                  DisplaySettings.ColorMode.GRAYSCALE).build();
+      }
+      for (int ch = 0; ch < store_.getSummaryMetadata().getChannelNameList().size(); ch++) {
+         ds = ds.copyBuilderWithChannelSettings(ch, 
+                 RememberedChannelSettings.getRememberedChannelDisplaySettings(
+                         store_.getSummaryMetadata(), ch)).
+                 build();
       }
       display_.setDisplaySettings(ds);
       mmStudio_.displays().addViewer(display_);
@@ -597,18 +607,34 @@ public final class SnapLiveManager extends DataViewerListener
          String curChannel = "";
          try {
             curChannel = core_.getCurrentConfig(core_.getChannelGroup());
-         }
-         catch (Exception e) {
+         } catch (Exception e) {
             ReportingUtils.logError(e, "Error getting current channel");
          }
          for (int i = 0; i < numCameraChannels_; ++i) {
             String name = makeChannelName(curChannel, core_.getCameraChannelName(i));
-            if (channelNames == null ||
-                  i >= channelNames.size() ||
-                  !name.equals(channelNames.get(i)))
-            {
-               // Channel name changed.
+            if (channelNames == null
+                    || i >= channelNames.size()) {
                shouldReset = true;
+            } else if (!name.equals(channelNames.get(i))) {
+               // Channel name changed.
+               if (display_ != null && !display_.isClosed()) {
+                  RememberedChannelSettings rcs = RememberedChannelSettings.fromChannelDisplaySettings(
+                          store_.getSummaryMetadata().getChannelGroup(),
+                          store_.getSummaryMetadata().getChannelNameList().get(0),
+                          display_.getDisplaySettings().getChannelSettings(i));
+                  rcs.saveToProfile();
+                  RememberedChannelSettings newRcs = RememberedChannelSettings.loadSettings(
+                          core_.getChannelGroup(),
+                          curChannel,
+                          Color.WHITE,
+                          null,
+                          null, 
+                          true);
+                  ChannelDisplaySettings newCD = newRcs.toChannelDisplaySetting();
+                  display_.setDisplaySettings(display_.getDisplaySettings().
+                          copyBuilderWithChannelSettings(i, newCD).build());
+
+               }
             }
          }
       }
@@ -641,7 +667,7 @@ public final class SnapLiveManager extends DataViewerListener
             // previous seq nr.  However, this results in live mode display
             // stopping to update when the circular buffer is reset!
             // Very bad, especially for cameras with large frames
-            // for now, we will only reject when the sequence nr is identical to the prvious one.
+            // for now, we will only reject when the sequence nr is identical to the previous one.
             if (prevSeqNr != null && newSeqNr != null) {
                if (Objects.equals(prevSeqNr, newSeqNr)) {
                   perfMon_.sample(
@@ -743,6 +769,7 @@ public final class SnapLiveManager extends DataViewerListener
          }
          try {
             store_.setSummaryMetadata(store_.getSummaryMetadata().copyBuilder()
+                    .channelGroup(core_.getChannelGroup())
                     .channelNames(channelNames).build());
          }
          catch (DatastoreFrozenException e) {

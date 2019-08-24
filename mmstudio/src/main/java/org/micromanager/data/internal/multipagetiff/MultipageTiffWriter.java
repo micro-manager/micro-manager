@@ -25,7 +25,6 @@ package org.micromanager.data.internal.multipagetiff;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import ij.ImageJ;
 import ij.io.TiffDecoder;
 import ij.process.LUT;
 import java.awt.Color;
@@ -833,7 +832,7 @@ public final class MultipageTiffWriter {
          for (int ch = 0; ch < numChannels; ch++) {
             String name = summary.getSafeChannelName(ch);
             RememberedChannelSettings settings = RememberedChannelSettings.loadSettings(
-                    name, channelGroup, Color.WHITE, null, null, true);
+                    channelGroup, name, Color.WHITE, null, null, true);
             // Display Ranges: For each channel, write min then max
             // TODO: doesn't handle multi-component images.
             mdBuffer.putDouble(bufferPosition, settings.getHistogramMin(0));
@@ -859,7 +858,7 @@ public final class MultipageTiffWriter {
          if (ds == null) {
             String name = summary.getSafeChannelName(ch);
             color = RememberedChannelSettings.getColorForChannel(
-                    name, channelGroup, Color.WHITE);
+                    channelGroup, name, Color.WHITE);
          } else {
             color = ds.getChannelColor(ch);
          }

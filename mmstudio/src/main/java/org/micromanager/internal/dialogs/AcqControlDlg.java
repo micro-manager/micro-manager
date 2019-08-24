@@ -2007,16 +2007,16 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
    public static Integer getChannelColor(String channelGroup,
          String channel, int defaultVal) {
-      return RememberedChannelSettings.getColorForChannel(channel,
-            channelGroup, new Color(defaultVal)).getRGB();
+      return RememberedChannelSettings.getColorForChannel(channelGroup,
+            channel, new Color(defaultVal)).getRGB();
    }
 
    public static void setChannelColor(String channelGroup, String channel,
          int color) {
       // TODO: this is kind of an ugly way to do this.
       RememberedChannelSettings settings = RememberedChannelSettings.loadSettings(
-            channel, channelGroup, Color.WHITE, null, null, true);
-      settings = new RememberedChannelSettings(channel, channelGroup,
+            channelGroup, channel, Color.WHITE, null, null, true);
+      settings = new RememberedChannelSettings(channelGroup, channel,
             new Color(color), settings.getHistogramMins(),
             settings.getHistogramMaxes(), settings.getShouldAutoscale());
       settings.saveToProfile();
