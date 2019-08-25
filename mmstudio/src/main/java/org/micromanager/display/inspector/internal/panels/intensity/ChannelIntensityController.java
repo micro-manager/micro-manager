@@ -215,20 +215,27 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       }
    }
 
+   /**
+    * Note: because we use a UIManager to set the Look and Feel,
+    * the normal method to set the color of the button does not work.
+    * As a workaround, set a border that fills the complete button and 
+    * color it.  Works on Windows...
+    */
    private static final class ColorSwatch extends JButton {
       private Color color_ = Color.WHITE;
-
+      
       ColorSwatch() {
          super.setPreferredSize(new Dimension(16, 16));
          super.setMinimumSize(new Dimension(16, 16));
-         super.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
          super.setOpaque(true); // Needed for background to be drawn
+         super.setBorder(BorderFactory.createLineBorder(color_, 8));
          super.setBackground(color_);
       }
 
       void setColor(Color color) {
-         color_ = color;
-         setBackground(color_);
+         color_ = color;         
+         super.setBorder(BorderFactory.createLineBorder(color_, 8));
+         super.setBackground(color_);
       }
 
       Color getColor() {
