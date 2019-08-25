@@ -24,6 +24,7 @@
 					<file name="libraries/build.xml"/>
 					<file name="plugins/build.xml"/>
 					<file name="autofocus/build.xml"/>
+               <file name="mmAsImageJMacros/build.xml"/>
 				</filelist>
 			</subant>
 		</sequential>
