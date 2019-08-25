@@ -57,8 +57,13 @@ public class RememberedSettings {
       String key = genKey(channelGroup, channelName);
       MutablePropertyMapView settings = 
               studio.profile().getSettings(RememberedSettings.class);
-      if (cds instanceof DefaultChannelDisplaySettings) {
+      if (cds instanceof DefaultChannelDisplaySettings) {        
          DefaultChannelDisplaySettings dcds = (DefaultChannelDisplaySettings) cds;
+         // for safety, ensure that channelname is stored with ChannelDisplaySettings
+         if (!dcds.getName().equals(channelName)) {
+            dcds = (DefaultChannelDisplaySettings) 
+                    dcds.copyBuilder().name(channelName).build();
+         }
          PropertyMap pMap = dcds.toPropertyMap();
          settings.putPropertyMap(key, pMap);
       }
@@ -98,11 +103,11 @@ public class RememberedSettings {
                     null, 
                     null, 
                     true);
-            return rcs.toChannelDisplaySetting();
+            return rcs.toChannelDisplaySetting(channelName);
          }
       }
       
-      return DefaultChannelDisplaySettings.builder().component(1).build();
+      return DefaultChannelDisplaySettings.builder().name(channelName).component(1).build();
    }
    
    /**

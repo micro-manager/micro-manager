@@ -678,7 +678,6 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             settings.getChannelSettings(channelIndex_);
       channelVisibleButton_.setSelected(channelSettings.isVisible());
       channelColorSwatch_.setColor(channelSettings.getColor());
-      // TODO Name: this from dataset (on attachment, then listen)
       // TODO Component selector: this from dataset (on attachment, or first image)
       // TODO Error-free way to get number of components?
       int numComponents;
@@ -693,6 +692,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          numComponents = 1;
       }
       if (numComponents == 1) {
+         channelNameLabel_.setText(channelSettings.getName());
          histogram_.setComponentColor(0, channelSettings.getColor(),
                channelSettings.getColor());
          histogram_.setGamma(channelSettings.getComponentSettings(0).

@@ -13,7 +13,7 @@ import org.micromanager.display.inspector.InspectorPanelPlugin;
  * @author mark
  */
 @Plugin(type = InspectorPanelPlugin.class,
-      priority = Priority.VERY_HIGH_PRIORITY,
+      priority = Priority.VERY_HIGH,
       name = "Intensity Scaling",
       description = "View and adjust intensity scaling")
 public class IntensityInspectorPanelPlugin implements InspectorPanelPlugin {

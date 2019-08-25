@@ -56,7 +56,7 @@ import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.internal.DefaultDisplaySettings;
-import org.micromanager.display.internal.RememberedChannelSettings;
+import org.micromanager.display.internal.RememberedSettings;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.propertymap.MM1JSONSerializer;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
@@ -831,13 +831,15 @@ public final class MultipageTiffWriter {
       if (ds == null) {
          for (int ch = 0; ch < numChannels; ch++) {
             String name = summary.getSafeChannelName(ch);
-            RememberedChannelSettings settings = RememberedChannelSettings.loadSettings(
-                    channelGroup, name, Color.WHITE, null, null, true);
+            ChannelDisplaySettings cds = RememberedSettings.loadChannel(
+                    MMStudio.getInstance(), channelGroup, name);
             // Display Ranges: For each channel, write min then max
             // TODO: doesn't handle multi-component images.
-            mdBuffer.putDouble(bufferPosition, settings.getHistogramMin(0));
+            mdBuffer.putDouble(bufferPosition, (double) 
+                    cds.getComponentSettings(0).getScalingMinimum());
             bufferPosition += 8;
-            mdBuffer.putDouble(bufferPosition, settings.getHistogramMax(0));
+            mdBuffer.putDouble(bufferPosition, (double)
+                    cds.getComponentSettings(0).getScalingMinimum());
             bufferPosition += 8;
          }
       } else {
@@ -857,8 +859,8 @@ public final class MultipageTiffWriter {
          Color color;
          if (ds == null) {
             String name = summary.getSafeChannelName(ch);
-            color = RememberedChannelSettings.getColorForChannel(
-                    channelGroup, name, Color.WHITE);
+            color = RememberedSettings.loadChannel(
+                    MMStudio.getInstance(), channelGroup, name).getColor();
          } else {
             color = ds.getChannelColor(ch);
          }

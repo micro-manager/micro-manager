@@ -42,9 +42,15 @@ import org.micromanager.propertymap.MutablePropertyMapView;
  * NS 8/2019: It looks like this class is a remnant from 2.0-beta that does not
  * really fit with the new Channel and Component scheme.
  * 
- * This should be completely refactored, but in the mean time I am trying to make this work....
+ * Functionality of this class was moved into RememberedSettings.
+ * That class still uses this class for backwards compatibility
+ * Do not use in new code.  
+ * 
+ * Remove this class by Sept. 2020
  * 
  */
+
+@Deprecated
 public final class RememberedChannelSettings {
    private static final String COLOR = "color to use for channels";
    private static final String MINS = "default minimum values to use in the histograms when scaling";
@@ -209,7 +215,7 @@ public final class RememberedChannelSettings {
          String name = summary.getSafeChannelName(ch);
          RememberedChannelSettings settings = loadSettings(channelGroup, name, 
                  Color.WHITE, null, null, true);
-         builder.channel(ch, settings.toChannelDisplaySetting());
+         builder.channel(ch, settings.toChannelDisplaySetting(name));
       }
       builder.autostretch(true);
       return builder.build();      
@@ -219,12 +225,12 @@ public final class RememberedChannelSettings {
         (SummaryMetadata summary, int chNr) {
       RememberedChannelSettings settings = loadSettings(summary.getChannelGroup(),
               summary.getChannelNameList().get(chNr), Color.WHITE, null, null, true);
-      return settings.toChannelDisplaySetting();
+      return settings.toChannelDisplaySetting(summary.getChannelNameList().get(chNr));
    }
    
-   public ChannelDisplaySettings toChannelDisplaySetting() {
+   public ChannelDisplaySettings toChannelDisplaySetting(String channelName) {
       ChannelDisplaySettings.Builder builder = DefaultChannelDisplaySettings.builder();
-      builder.color(color_);
+      builder.color(color_).name(channelName);
       // ugly, we rely on a null list to know if we should return defaults...
       if (histogramMins_ != null) {
          for (int comp = 0; comp < histogramMins_.size(); comp++) {

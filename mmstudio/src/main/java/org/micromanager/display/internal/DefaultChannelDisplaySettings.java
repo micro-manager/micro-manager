@@ -20,6 +20,7 @@ public final class DefaultChannelDisplaySettings
       implements ChannelDisplaySettings
 {
    private final Color color_;
+   private final String name_;
    private final boolean useUniformComponentScaling_;
    private final boolean visible_;
    private final int histoRangeBits_;
@@ -31,6 +32,7 @@ public final class DefaultChannelDisplaySettings
          implements ChannelDisplaySettings.Builder
    {
       private Color color_ = Color.WHITE;
+      private String name_ = "";
       private boolean useUniformComponentScaling_ = false;
       private boolean visible_ = true;
       private int histoRangeBits_ = 8; 
@@ -46,6 +48,12 @@ public final class DefaultChannelDisplaySettings
       public Builder color(Color color) {
          Preconditions.checkNotNull(color);
          color_ = color;
+         return this;
+      }
+      
+      @Override
+      public Builder name(String name) {
+         name_ = name;
          return this;
       }
 
@@ -165,6 +173,7 @@ public final class DefaultChannelDisplaySettings
 
    private DefaultChannelDisplaySettings(Builder builder) {
       color_ = builder.color_;
+      name_ = builder.name_;
       useUniformComponentScaling_ = builder.useUniformComponentScaling_;
       visible_ = builder.visible_;
       histoRangeBits_ = builder.histoRangeBits_;
@@ -175,6 +184,11 @@ public final class DefaultChannelDisplaySettings
    @Override
    public Color getColor() {
       return color_;
+   }
+   
+   @Override
+   public String getName() {
+      return name_;
    }
 
    @Override
@@ -247,6 +261,7 @@ public final class DefaultChannelDisplaySettings
 
       return PropertyMaps.builder().
             putColor(PropertyKey.COLOR.key(), color_).
+            putString(PropertyKey.CHANNEL_NAME.key(), name_).
             putBoolean(PropertyKey.UNIFORM_COMPONENT_SCALING.key(), useUniformComponentScaling_).
             putBoolean(PropertyKey.VISIBLE.key(), visible_).
             putInteger(PropertyKey.HISTOGRAM_BIT_DEPTH.key(), histoRangeBits_).
@@ -266,6 +281,9 @@ public final class DefaultChannelDisplaySettings
 
       if (pMap.containsColor(PropertyKey.COLOR.key())) {
          b.color(pMap.getColor(PropertyKey.COLOR.key(), b.color_));
+      }
+      if (pMap.containsString(PropertyKey.CHANNEL_NAME.key())) {
+         b.name(pMap.getString(PropertyKey.CHANNEL_NAME.key(), ""));
       }
       if (pMap.containsBoolean(PropertyKey.UNIFORM_COMPONENT_SCALING.key())) {
          b.uniformComponentScaling(pMap.getBoolean(

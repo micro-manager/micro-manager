@@ -41,7 +41,7 @@ import javax.swing.JPanel;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
-import org.micromanager.display.internal.RememberedChannelSettings;
+import org.micromanager.display.internal.RememberedSettings;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.quickaccess.QuickAccessPlugin;
 import org.micromanager.quickaccess.WidgetPlugin;
@@ -174,10 +174,9 @@ public final class PresetButton extends WidgetPlugin implements SciJavaPlugin {
             // anything useful when not dealing with channel groups, in which
             // case the color will remain the same.
             pickerLabel.setBackground(
-               RememberedChannelSettings.getColorForChannel(
-                  (String) groupSelector.getSelectedItem(),
-                  (String) presetSelector.getSelectedItem(),
-                  pickerLabel.getBackground()));
+                    RememberedSettings.loadChannel(studio_, 
+                            (String) groupSelector.getSelectedItem(), 
+                            (String) presetSelector.getSelectedItem()).getColor());
          }
       });
 
@@ -188,10 +187,9 @@ public final class PresetButton extends WidgetPlugin implements SciJavaPlugin {
             // anything useful when not dealing with channel groups, in which
             // case the color will remain the same.
             pickerLabel.setBackground(
-               RememberedChannelSettings.getColorForChannel(
-                  (String) groupSelector.getSelectedItem(),
-                  (String) presetSelector.getSelectedItem(),
-                  pickerLabel.getBackground()));
+               RememberedSettings.loadChannel(studio_, 
+                            (String) groupSelector.getSelectedItem(), 
+                            (String) presetSelector.getSelectedItem()).getColor());
          }
       });
       // Default to the Channel group, if available.

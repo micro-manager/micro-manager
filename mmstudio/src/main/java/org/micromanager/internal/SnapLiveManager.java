@@ -71,7 +71,7 @@ import org.micromanager.internal.utils.performance.PerformanceMonitor;
 import org.micromanager.internal.utils.performance.gui.PerformanceMonitorUI;
 import org.micromanager.quickaccess.internal.QuickAccessFactory;
 import org.micromanager.display.DisplayWindowControlsFactory;
-import org.micromanager.display.internal.RememberedChannelSettings;
+import org.micromanager.display.internal.RememberedSettings;
 import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 import org.micromanager.internal.navigation.UiMovesStageManager;
 
@@ -488,8 +488,9 @@ public final class SnapLiveManager extends DataViewerListener
       }
       for (int ch = 0; ch < store_.getSummaryMetadata().getChannelNameList().size(); ch++) {
          ds = ds.copyBuilderWithChannelSettings(ch, 
-                 RememberedChannelSettings.getRememberedChannelDisplaySettings(
-                         store_.getSummaryMetadata(), ch)).
+                 RememberedSettings.loadChannel(mmStudio_, 
+                         store_.getSummaryMetadata().getChannelGroup(), 
+                         store_.getSummaryMetadata().getChannelNameList().get(ch))).
                  build();
       }
       display_.setDisplaySettings(ds);
@@ -610,31 +611,29 @@ public final class SnapLiveManager extends DataViewerListener
          } catch (Exception e) {
             ReportingUtils.logError(e, "Error getting current channel");
          }
-         for (int i = 0; i < numCameraChannels_; ++i) {
-            String name = makeChannelName(curChannel, core_.getCameraChannelName(i));
+         for (int camCh = 0; camCh < numCameraChannels_; ++camCh) {
+            String name = makeChannelName(curChannel, core_.getCameraChannelName(camCh));
             if (channelNames == null
-                    || i >= channelNames.size()) {
+                    || camCh >= channelNames.size()) {
                shouldReset = true;
-            } else if (!name.equals(channelNames.get(i))) {
+            } else if (!name.equals(channelNames.get(camCh))) {
                // Channel name changed.
                if (display_ != null && !display_.isClosed()) {
-                  RememberedChannelSettings rcs = RememberedChannelSettings.fromChannelDisplaySettings(
-                          store_.getSummaryMetadata().getChannelGroup(),
-                          store_.getSummaryMetadata().getChannelNameList().get(0),
-                          display_.getDisplaySettings().getChannelSettings(i));
-                  rcs.saveToProfile();
-                  RememberedChannelSettings newRcs = RememberedChannelSettings.loadSettings(
+                  RememberedSettings.storeChannel(mmStudio_, 
+                          store_.getSummaryMetadata().getChannelGroup(), 
+                          store_.getSummaryMetadata().getChannelNameList().get(camCh),
+                          display_.getDisplaySettings().getChannelSettings(camCh));
+                  ChannelDisplaySettings newCD = RememberedSettings.loadChannel(
+                          mmStudio_, 
                           core_.getChannelGroup(),
-                          curChannel,
-                          Color.WHITE,
-                          null,
-                          null, 
-                          true);
-                  ChannelDisplaySettings newCD = newRcs.toChannelDisplaySetting();
+                          curChannel);
                   display_.setDisplaySettings(display_.getDisplaySettings().
-                          copyBuilderWithChannelSettings(i, newCD).build());
-
-               }
+                          copyBuilderWithChannelSettings(camCh, newCD).build());
+               }               
+               channelNames.set(camCh, name);
+               store_.setSummaryMetadata(store_.getSummaryMetadata().
+                       copyBuilder().channelGroup(core_.getChannelGroup()).
+                       channelNames(channelNames).build());
             }
          }
       }
@@ -644,14 +643,7 @@ public final class SnapLiveManager extends DataViewerListener
                mmStudio_.acquisitions().generateMetadata(image, true));
 
          int newImageChannel = newImage.getCoords().getChannel();
-         /*
-         DefaultImage lastImage;
-         synchronized (lastImageForEachChannel_) {
-            lastImage = lastImageForEachChannel_.size() > newImageChannel
-                    ? lastImageForEachChannel_.get(newImageChannel)
-                    : null;
-         }
-         */
+
          if ( (displayInfo_ != null) &&
                  (newImage.getWidth() != displayInfo_.getWidth()
                  || newImage.getHeight() != displayInfo_.getHeight()
@@ -860,7 +852,8 @@ public final class SnapLiveManager extends DataViewerListener
 
    private void saveDisplaySettings() {
       if (display_.getDisplaySettings() instanceof DefaultDisplaySettings) {
-         ((DefaultDisplaySettings) display_.getDisplaySettings()).saveToProfile(mmStudio_.profile(), PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key());
+         ((DefaultDisplaySettings) display_.getDisplaySettings()).
+                 saveToProfile(mmStudio_.profile(), PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key());
       }
    }
 

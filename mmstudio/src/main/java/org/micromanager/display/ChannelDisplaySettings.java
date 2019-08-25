@@ -26,7 +26,8 @@ public interface ChannelDisplaySettings {
       Builder uniformComponentScaling(boolean enable);
       Builder histoRangeBits(int bits);
       Builder useCameraHistoRange(boolean use);
-
+      
+      Builder name(String name);
       Builder visible(boolean visible);
       Builder show();
       Builder hide();
@@ -44,6 +45,7 @@ public interface ChannelDisplaySettings {
    int getHistoRangeBits();
    boolean useCameraRange();
    boolean isVisible();
+   String getName();
 
    int getNumberOfComponents();
    ComponentDisplaySettings getComponentSettings(int component);

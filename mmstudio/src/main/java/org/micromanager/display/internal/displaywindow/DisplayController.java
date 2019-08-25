@@ -48,7 +48,6 @@ import org.micromanager.display.overlay.Overlay;
 import org.micromanager.display.overlay.OverlayListener;
 import org.micromanager.display.inspector.internal.panels.intensity.ImageStatsPublisher;
 import org.micromanager.display.internal.DefaultDisplaySettings;
-import org.micromanager.display.internal.RememberedChannelSettings;
 import org.micromanager.display.internal.animate.AnimationController;
 import org.micromanager.display.internal.animate.DataCoordsAnimationState;
 import org.micromanager.display.internal.event.DefaultDisplayDidShowImageEvent;
@@ -72,6 +71,7 @@ import org.micromanager.internal.utils.performance.gui.PerformanceMonitorUI;
 import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.data.DataProviderHasNewNameEvent;
 import org.micromanager.data.Datastore;
+import org.micromanager.display.internal.RememberedSettings;
 import org.micromanager.display.internal.link.internal.DefaultLinkManager;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -213,8 +213,9 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    {
       DisplaySettings initialDisplaySettings = builder.displaySettings_;
       if (initialDisplaySettings == null) {
-         initialDisplaySettings = RememberedChannelSettings.loadDefaultDisplaySettings(
-               builder.dataProvider_.getSummaryMetadata());
+         initialDisplaySettings = RememberedSettings.loadDefaultDisplaySettings(
+                 studio,
+                 builder.dataProvider_.getSummaryMetadata());
       }
       if (initialDisplaySettings == null) {
          initialDisplaySettings = new DefaultDisplaySettings.LegacyBuilder().build();
@@ -728,7 +729,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    //
 
    // Notification from UI controller
-   public void selectionDidChange(BoundsRectAndMask selection) {
+   public void selectionDidChange(final BoundsRectAndMask selectionIn) {
+      BoundsRectAndMask selection = selectionIn;
       if (selection == null) {
          selection = BoundsRectAndMask.unselected();
       }
@@ -744,8 +746,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       }
    }
 
-   public void setStatsComputeRateHz(double hz) {
-      hz = Math.max(0.0, hz);
+   public void setStatsComputeRateHz(final double hzIn) {
+      double hz = Math.max(0.0, hzIn);
       long intervalNs;
       if (hz == 0.0) {
          intervalNs = Long.MAX_VALUE;

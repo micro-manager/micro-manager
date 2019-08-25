@@ -30,7 +30,6 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import javax.swing.*;
@@ -39,13 +38,15 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.table.*;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.internal.DefaultDatastore;
-import org.micromanager.display.internal.RememberedChannelSettings;
+import org.micromanager.display.ChannelDisplaySettings;
+import org.micromanager.display.internal.RememberedSettings;
 import org.micromanager.events.ChannelExposureEvent;
 import org.micromanager.events.GUIRefreshEvent;
 import org.micromanager.events.internal.ChannelGroupEvent;
@@ -2005,21 +2006,20 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
             "Exposure_" + channelGroup + "_" + channel, exposure);
    }
 
-   public static Integer getChannelColor(String channelGroup,
+   public static Integer getChannelColor(Studio studio, String channelGroup,
          String channel, int defaultVal) {
-      return RememberedChannelSettings.getColorForChannel(channelGroup,
-            channel, new Color(defaultVal)).getRGB();
+      return RememberedSettings.loadChannel(studio, channelGroup, channel).
+              getColor().getRGB();
    }
 
-   public static void setChannelColor(String channelGroup, String channel,
-         int color) {
-      // TODO: this is kind of an ugly way to do this.
-      RememberedChannelSettings settings = RememberedChannelSettings.loadSettings(
-            channelGroup, channel, Color.WHITE, null, null, true);
-      settings = new RememberedChannelSettings(channelGroup, channel,
-            new Color(color), settings.getHistogramMins(),
-            settings.getHistogramMaxes(), settings.getShouldAutoscale());
-      settings.saveToProfile();
+   public static void setChannelColor(Studio studio, 
+           String channelGroup, 
+           String channel,
+           int color) {
+      ChannelDisplaySettings newCDS = 
+              RememberedSettings.loadChannel(studio, channelGroup, channel).
+                      copyBuilder().color(new Color(color)).build();
+      RememberedSettings.storeChannel(studio, channelGroup, channel, newCDS);
    }
 
    public static boolean getShouldSyncExposure() {
