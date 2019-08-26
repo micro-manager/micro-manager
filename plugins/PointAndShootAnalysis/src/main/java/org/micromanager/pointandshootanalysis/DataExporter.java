@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import org.ddogleg.optimization.FactoryOptimization;
+import org.ddogleg.optimization.OptimizationException;
 import org.ddogleg.optimization.UnconstrainedLeastSquares;
 import org.ddogleg.optimization.UtilOptimize;
 import org.ejml.data.DMatrixRMaj;
@@ -235,27 +236,33 @@ public class DataExporter {
             fitClass = LinearFunc.class;
             msLimit = MSLIMIT;
          }
-         FitData fitData = fit(index, type_, fitClass, msLimit);
-         // TODO: check which functions was used to fit and do the right one
-         if (fitData != null) {
-            PASFunction fitFunc = null;
-            if (fitClass == SingleExpRecoveryFunc.class) {
-               fitFunc = new SingleExpRecoveryFunc(fitData.data());
-            } else if (fitClass == LinearFunc.class) {
-               fitFunc = new LinearFunc(fitData.data());
-            }
-            if (fitFunc != null) {
-               XYSeries plotData = new XYSeries(data_.get(index).id(), false, false);
-               for (Point2D d : fitFunc.getData()) {
-                  plotData.add(d.getX(), d.getY());
+         try {
+            FitData fitData = fit(index, type_, fitClass, msLimit);
+            // TODO: check which functions was used to fit and do the right one
+            if (fitData != null) {
+               PASFunction fitFunc = null;
+               if (fitClass == SingleExpRecoveryFunc.class) {
+                  fitFunc = new SingleExpRecoveryFunc(fitData.data());
+               } else if (fitClass == LinearFunc.class) {
+                  fitFunc = new LinearFunc(fitData.data());
                }
-               xySeries.add(plotData);
-               XYSeries fittedXY = new XYSeries("f" + data_.get(index).id(), false, false);
-               for (Point2D d : fitFunc.getFittedData(fitData.parms())) {
-                  fittedXY.add(d.getX(), d.getY());
+               if (fitFunc != null) {
+                  XYSeries plotData = new XYSeries(data_.get(index).id(), false, false);
+                  for (Point2D d : fitFunc.getData()) {
+                     plotData.add(d.getX(), d.getY());
+                  }
+                  xySeries.add(plotData);
+                  XYSeries fittedXY = new XYSeries("f" + data_.get(index).id(), false, false);
+                  for (Point2D d : fitFunc.getFittedData(fitData.parms())) {
+                     fittedXY.add(d.getX(), d.getY());
+                  }
+                  xySeries.add(fittedXY);
                }
-               xySeries.add(fittedXY);
             }
+         } catch (OptimizationException oe) {
+            String msg = "Fit failed for dataseries: " + data_.get(index).id();
+            studio_.alerts().postAlert("Fit error", this.getClass(), msg);
+            studio_.logs().logError(oe, msg);
          }
       }
       String title = null;
