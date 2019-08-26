@@ -381,6 +381,7 @@ AC_CONFIG_FILES(m4_strip([
    libraries/Makefile
    autofocus/Makefile
    plugins/Makefile
+   mmAsImageJMacros/Makefile
    scripts/Makefile
    systemtest/Makefile
    systemtest/SequenceTests/Makefile
