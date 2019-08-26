@@ -18,6 +18,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import mmcorej.Configuration;
@@ -164,21 +166,25 @@ public class ProjectorControlExecution {
     * @param targetingShutter
     * @param rois Rois as they appear on the camera.  Only used to records with the images
     */
-   public void exposeRois(final ProjectionDevice dev_, final String targetingChannel, 
+   public void exposeRois(final ProjectionDevice dev_, final String targetingChannel,
            final String targetingShutter, Roi[] rois) {
       if (dev_ == null) {
          return;
       }
       boolean isGalvo = dev_ instanceof Galvo;
-      if (isGalvo) {
-         Configuration originalConfig = prepareChannel(targetingChannel);
-         boolean originalShutterState = prepareShutter(targetingShutter);
-         dev_.runPolygons();
-         returnShutter(targetingShutter, originalShutterState);
-         returnChannel(originalConfig);
-      } else {
-         dev_.runPolygons();
+      Configuration originalConfig = prepareChannel(targetingChannel);
+      boolean originalShutterState = prepareShutter(targetingShutter);
+      dev_.runPolygons();
+      if (!isGalvo) {
+         try {
+            Thread.sleep(dev_.getExposure() / 1000);
+         } catch (InterruptedException ex) {
+            studio_.logs().logError(ex);
+         }
       }
+      returnShutter(targetingShutter, originalShutterState);
+      returnChannel(originalConfig);
+
       recordPolygons(rois);
    }
    
