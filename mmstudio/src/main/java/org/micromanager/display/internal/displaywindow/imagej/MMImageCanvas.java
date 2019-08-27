@@ -125,6 +125,14 @@ public final class MMImageCanvas extends ImageCanvas
       // ImageJ forgets to override this overloaded version
       setSize(newSize.width, newSize.height);
    }
+   
+   /**
+    * The ImageJ canvas knows best what its current size is,
+    * Adjust our display to the current size
+    */
+   public void setSizeToCurrent() {
+      setSize(super.dstWidth, super.dstHeight);
+   }
 
    @Override
    public void setSize(int newWidth, int newHeight) {
@@ -246,6 +254,13 @@ public final class MMImageCanvas extends ImageCanvas
       parent_.mm2ijZoomOut(); // TODO Take into account mouse position
    }
 
+   /**
+    * Zooms in by making the window bigger.  If it can't be made bigger, then
+    * make the source rectangle smaller and center it on the position in the
+    * canvas where the cursor was when zooming started
+    * @param centerScreenX x position of the cursor when zooming started
+    * @param centerScreenY y position of the cursor when zooming started
+    */
    @Override
    public void zoomIn(int centerScreenX, int centerScreenY) {
       // ImageJ's implementation sets the dest size, source rect, and zoom in

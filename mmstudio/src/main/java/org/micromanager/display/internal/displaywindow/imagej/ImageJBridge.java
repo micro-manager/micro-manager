@@ -739,13 +739,22 @@ public final class ImageJBridge {
       // setSize necessarily must "fix" the source rect.
       canvas_.setMagnification(factor);
       canvas_.setSourceRect(newSourceRect);
-      canvas_.setSize(newIdealCanvasSize);
+      canvas_.setSizeToCurrent();
       canvas_.repaint();
    }
    
+   /**
+    * Sets the new zoomed view, centered around the user-desired position
+    *   
+    * @param factor New zoom factor
+    * @param centerScreenX Desired x coordinate on the current canvas
+    * @param centerScreenY Desired y coordinate on the current canvas
+    */
    @MustCallOnEDT
+   
    public void mm2ijSetZoom(double factor, int centerScreenX, int centerScreenY) {
       double originalFactor = getIJZoom();
+      Rectangle originalSrcRect = this.canvas_.getSrcRect();
       if (factor == originalFactor) {
          return;
       }
@@ -762,10 +771,11 @@ public final class ImageJBridge {
                   getMMWidth(), getMMHeight(),
                   canvas_.getSize().width, canvas_.getSize().height);
 
-      // Center the new source rect where the precious source rect was, to the
+      // Center the new source rect where requested, to the
       // extent it fits in the image
       Rectangle newSourceRect = computeSourceRect(factor,
-              centerScreenX / originalFactor, centerScreenY / originalFactor,
+              (centerScreenX / originalFactor) + originalSrcRect.x, 
+              (centerScreenY / originalFactor) + originalSrcRect.y,
             getMMWidth(), getMMHeight(),
             (int) Math.min(canvas_.getPreferredSize().getWidth(), newIdealCanvasSize.width), 
             (int) Math.min(canvas_.getPreferredSize().getHeight(), newIdealCanvasSize.height) );
@@ -774,7 +784,7 @@ public final class ImageJBridge {
       // setSize necessarily must "fix" the source rect.
       canvas_.setMagnification(factor);
       canvas_.setSourceRect(newSourceRect);
-      canvas_.setSize(newIdealCanvasSize);
+      canvas_.setSizeToCurrent();
       canvas_.repaint();
    }
 
