@@ -25,16 +25,15 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.Timer;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -60,7 +59,6 @@ import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.events.AcquisitionEndedEvent;
-import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -68,6 +66,7 @@ import org.micromanager.display.DisplayWindowControlsFactory;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.data.internal.PropertyKey;
+import org.micromanager.display.DisplaySettingsChangedEvent;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.internal.MMStudio;
 
@@ -97,13 +96,18 @@ public final class MMAcquisition extends DataViewerListener {
    private int imagesReceived_ = 0;
    private int imagesExpected_ = 0;
    private UpdatableAlert alert_;
+   private UpdatableAlert nextImageAlert_;
+   
+   private Timer nextFrameAlertGenerator_;
 
+   @SuppressWarnings("LeakingThisInConstructor")
    public MMAcquisition(Studio studio, JSONObject summaryMetadata,
          AcquisitionEngine eng, boolean show) {
       studio_ = studio;
       eng_ = eng;
       show_ = show;
-      store_ = new DefaultDatastore();
+      // TODO: get rid of MMStudo cast
+      store_ = new DefaultDatastore((MMStudio) studio);
       pipeline_ = studio_.data().copyApplicationPipeline(store_, false);
       try {
          if (summaryMetadata.has("Directory") && summaryMetadata.get("Directory").toString().length() > 0) {
@@ -112,7 +116,7 @@ public final class MMAcquisition extends DataViewerListener {
                String acqDirectory = createAcqDirectory(summaryMetadata.getString("Directory"), summaryMetadata.getString("Prefix"));
                summaryMetadata.put("Prefix", acqDirectory);
                String acqPath = summaryMetadata.getString("Directory") + File.separator + acqDirectory;
-               store_.setStorage(getAppropriateStorage(store_, acqPath, true));
+               store_.setStorage(getAppropriateStorage(studio_, store_, acqPath, true));
             } catch (Exception e) {
                ReportingUtils.showError(e, "Unable to create directory for saving images.");
                eng.stop(true);
@@ -135,16 +139,18 @@ public final class MMAcquisition extends DataViewerListener {
             ReportingUtils.logError(e, "Unable to set summary comment");
          }
          catch (IOException e) {
-            // TODO XXX Report
+            ReportingUtils.logError(e, "IOException in MMAcquisition");
          }
       }
 
       try {
          // Compatibility hack: serialize to JSON, then parse as summary metadata JSON format
-         SummaryMetadata summary = DefaultSummaryMetadata.fromPropertyMap(
-                 NonPropertyMapJSONFormats.summaryMetadata().fromJSON(
-                         summaryMetadata.toString()));
-         pipeline_.insertSummaryMetadata(summary);
+         if (summaryMetadata != null) {
+            SummaryMetadata summary = DefaultSummaryMetadata.fromPropertyMap(
+                    NonPropertyMapJSONFormats.summaryMetadata().fromJSON(
+                            summaryMetadata.toString()));
+            pipeline_.insertSummaryMetadata(summary);
+         }
       }
       catch (DatastoreFrozenException e) {
          ReportingUtils.logError(e, "Datastore is frozen; can't set summary metadata");
@@ -169,10 +175,7 @@ public final class MMAcquisition extends DataViewerListener {
       }
       if (show_) {
          studio_.displays().manage(store_);
-         display_ = studio_.displays().createDisplay(
-               store_, makeControlsFactory());
-         display_.addListener(this, 1);
-         //display_.registerForEvents(this);
+         display_ = studio_.displays().createDisplay(store_, makeControlsFactory());
          
          // Color handling is a problem. They are no longer part of the summary 
          // metadata.  However, they clearly need to be stored 
@@ -182,19 +185,19 @@ public final class MMAcquisition extends DataViewerListener {
          // Handling the conversion from colors in the summary metadata to display
          // settings here seems clumsy, but I am not sure where else this belongs
          
+         // Use settings of last closed acquisition viewer
+         DisplaySettings dsTmp = DefaultDisplaySettings.restoreFromProfile(
+                 studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
+
+         if (dsTmp == null) {
+            dsTmp = DefaultDisplaySettings.getStandardSettings(
+                    PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
+         }
+
          try {
             if (summaryMetadata != null && summaryMetadata.has("ChColors")) {
 
                JSONArray chColors = summaryMetadata.getJSONArray("ChColors");
-               
-               // Use settings of last closed acquisition viewer
-               DisplaySettings dsTmp = DefaultDisplaySettings.restoreFromProfile(
-                  studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key() );
-               
-               if (dsTmp == null) {
-                  dsTmp = DefaultDisplaySettings.getStandardSettings(
-                          PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
-               }
       
                DisplaySettings.Builder displaySettingsBuilder
                        = dsTmp.copyBuilder();
@@ -217,18 +220,37 @@ public final class MMAcquisition extends DataViewerListener {
                   }
                } while (!display_.compareAndSetDisplaySettings(
                        display_.getDisplaySettings(), displaySettingsBuilder.build()));
+            } else {
+               display_.compareAndSetDisplaySettings(
+                       display_.getDisplaySettings(), dsTmp);
             }
          } catch (JSONException je) {
             studio_.logs().logError(je);
             // relatively harmless, but look here when display settings are unexpected
          }
-
          
+         // It is a bit funny that there are listeners and events
+         // The listener provides the canClose functionality (which needs to be
+         // synchronous), whereas Events are asynchronous
+         display_.addListener(this, 1);
+         display_.registerForEvents(this);
+
          alert_ = studio_.alerts().postUpdatableAlert("Acquisition Progress", "");
          setProgressText();
       }
       store_.registerForEvents(this);
-      DefaultEventManager.getInstance().registerForEvents(this);
+      studio_.events().registerForEvents(this);
+      
+      // start thread reporting when next frame will be taken
+      if (eng.getFrameIntervalMs()> 5000) {
+         nextFrameAlertGenerator_ = new Timer(1000, (ActionEvent e) -> {
+            if (eng.isAcquisitionRunning()) {
+               setNextImageAlert(eng);
+            }
+         });
+         nextFrameAlertGenerator_.setInitialDelay(3000);
+         nextFrameAlertGenerator_.start();
+      }
   }
 
    private String createAcqDirectory(String root, String prefix) throws Exception {
@@ -270,11 +292,13 @@ public final class MMAcquisition extends DataViewerListener {
       boolean result = eng_.abortRequest();
       if (result) {
          if (viewer instanceof DisplayWindow && viewer.equals(display_)) {
+            // saving settings (again) may not be needed
             if (display_.getDisplaySettings() instanceof DefaultDisplaySettings) {
                ((DefaultDisplaySettings) display_.getDisplaySettings()).saveToProfile(
                        studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
             }
             display_.removeListener(this);
+            display_.unregisterForEvents(this);
          }
       }
       return result;
@@ -297,7 +321,7 @@ public final class MMAcquisition extends DataViewerListener {
       public static SubscribedButton makeButton(final Studio studio,
             final ImageIcon icon, final DisplayWindow display) {
          SubscribedButton result = new SubscribedButton(studio, icon);
-         DefaultEventManager.getInstance().registerForEvents(result);
+         studio.events().registerForEvents(result);
          display.registerForEvents(result);
          return result;
       }
@@ -321,67 +345,62 @@ public final class MMAcquisition extends DataViewerListener {
     * Generate the abort and pause buttons. These are only used for display
     * windows for ongoing acquisitions (i.e. not for opening files from
     * disk).
-    * TODO: remove these special controls (or at least hide them) when the
-    * acquisition ends.
     */
    private DisplayWindowControlsFactory makeControlsFactory() {
-      return new DisplayWindowControlsFactory() {
-         @Override
-         public List<Component> makeControls(final DisplayWindow display) {
-            ArrayList<Component> result = new ArrayList<Component>();
-            JButton abortButton = SubscribedButton.makeButton(studio_,
-                  new ImageIcon(
-                     getClass().getResource("/org/micromanager/icons/cancel.png")),
-                  display);
-            abortButton.setBackground(new Color(255, 255, 255));
-            abortButton.setToolTipText("Halt data acquisition");
-            abortButton.setFocusable(false);
-            abortButton.setMaximumSize(new Dimension(30, 28));
-            abortButton.setMinimumSize(new Dimension(30, 28));
-            abortButton.setPreferredSize(new Dimension(30, 28));
-            abortButton.addActionListener(new ActionListener() {
-               @Override
-               public void actionPerformed(ActionEvent e) {
-                  eng_.abortRequest();
-               }
-            });
-            result.add(abortButton);
-
-            final ImageIcon pauseIcon = new ImageIcon(getClass().getResource(
-                  "/org/micromanager/icons/control_pause.png"));
-            final ImageIcon playIcon = new ImageIcon(getClass().getResource(
-                  "/org/micromanager/icons/resultset_next.png"));
-            final JButton pauseButton = SubscribedButton.makeButton(
-                  studio_, pauseIcon, display);
-            pauseButton.setToolTipText("Pause data acquisition");
-            pauseButton.setFocusable(false);
-            pauseButton.setMaximumSize(new Dimension(30, 28));
-            pauseButton.setMinimumSize(new Dimension(30, 28));
-            pauseButton.setPreferredSize(new Dimension(30, 28));
-            pauseButton.addActionListener(new ActionListener() {
-               @Override
-               public void actionPerformed(ActionEvent e) {
-                  eng_.setPause(!eng_.isPaused());
-                  // Switch the icon depending on if the acquisition is paused.
-                  Icon icon = pauseButton.getIcon();
-                  if (icon == pauseIcon) {
-                     pauseButton.setIcon(playIcon);
-                  }
-                  else {
-                     pauseButton.setIcon(pauseIcon);
-                  }
-               }
-            });
-            result.add(pauseButton);
-
-            return result;
-         }
+      return (final DisplayWindow display) -> {
+         ArrayList<Component> result = new ArrayList<>();
+         JButton abortButton = SubscribedButton.makeButton(studio_,
+                 new ImageIcon(
+                         getClass().getResource("/org/micromanager/icons/cancel.png")),
+                 display);
+         abortButton.setBackground(new Color(255, 255, 255));
+         abortButton.setToolTipText("Halt data acquisition");
+         abortButton.setFocusable(false);
+         abortButton.setMaximumSize(new Dimension(30, 28));
+         abortButton.setMinimumSize(new Dimension(30, 28));
+         abortButton.setPreferredSize(new Dimension(30, 28));
+         abortButton.addActionListener((ActionEvent e) -> {
+            eng_.abortRequest();
+         });
+         result.add(abortButton);
+         
+         final ImageIcon pauseIcon = new ImageIcon(getClass().getResource(
+                 "/org/micromanager/icons/control_pause.png"));
+         final ImageIcon playIcon = new ImageIcon(getClass().getResource(
+                 "/org/micromanager/icons/resultset_next.png"));
+         final JButton pauseButton = SubscribedButton.makeButton(
+                 studio_, pauseIcon, display);
+         pauseButton.setToolTipText("Pause data acquisition");
+         pauseButton.setFocusable(false);
+         pauseButton.setMaximumSize(new Dimension(30, 28));
+         pauseButton.setMinimumSize(new Dimension(30, 28));
+         pauseButton.setPreferredSize(new Dimension(30, 28));
+         pauseButton.addActionListener((ActionEvent e) -> {
+            eng_.setPause(!eng_.isPaused());
+            // Switch the icon depending on if the acquisition is paused.
+            Icon icon = pauseButton.getIcon();
+            if (icon == pauseIcon) {
+               pauseButton.setIcon(playIcon);
+            }
+            else {
+               pauseButton.setIcon(pauseIcon);
+            }
+         });
+         result.add(pauseButton);
+         
+         return result;
       };
    }
 
   
    @Subscribe
    public void onAcquisitionEnded(AcquisitionEndedEvent event) {
+      if (nextFrameAlertGenerator_ != null) {
+         nextFrameAlertGenerator_.stop();
+         if (nextImageAlert_ != null) {
+            nextImageAlert_.dismiss();
+         }
+      }
       try {
          store_.freeze();
       }
@@ -397,20 +416,16 @@ public final class MMAcquisition extends DataViewerListener {
          ((DefaultDisplaySettings) display_.getDisplaySettings()).saveToProfile(
                studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
       }
-      display_.removeListener(this);
-      DefaultEventManager.getInstance().unregisterForEvents(this);
-      new Thread(new Runnable() {
-         @Override
-         public void run() {
-            try {
-               Thread.sleep(5000);
-            }
-            catch (InterruptedException e) {
-               // This should never happen.
-               studio_.logs().logError("Interrupted while waiting to dismiss alert");
-            }
-            alert_.dismiss();
+      studio_.events().unregisterForEvents(this);
+      new Thread(() -> {
+         try {
+            Thread.sleep(5000);
          }
+         catch (InterruptedException e) {
+            // This should never happen.
+            studio_.logs().logError("Interrupted while waiting to dismiss alert");
+         }
+         alert_.dismiss();
       }).start();
    }
 
@@ -419,12 +434,26 @@ public final class MMAcquisition extends DataViewerListener {
       imagesReceived_++;
       setProgressText();
    }
+   
+   @Subscribe
+   public void OnDisplaySettingsChangedEvent(DisplaySettingsChangedEvent event) {
+      if (!event.getDataViewer().equals(display_)) {
+         ReportingUtils.logError("MMAcquisition: received event from unknown viewer");
+      }
+      if (event.getDisplaySettings() instanceof DefaultDisplaySettings) {
+         ((DefaultDisplaySettings) event.getDisplaySettings()).saveToProfile(
+                 studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
+      }
+   }
 
    private void setProgressText() {
       if (imagesExpected_ > 0) {
          int numDigits = (int) (Math.log10(imagesExpected_) + 1);
          String format = "%0" + numDigits + "d";
          if (alert_ != null) {
+            if (nextFrameAlertGenerator_ != null && nextFrameAlertGenerator_.isRunning()) {
+               nextFrameAlertGenerator_.restart();
+            }
             alert_.setText(String.format(
                     "Received " + format + " of %d images",
                     imagesReceived_, imagesExpected_));
@@ -433,10 +462,24 @@ public final class MMAcquisition extends DataViewerListener {
          alert_.setText("No images expected.");
       }
    }
+   
+   private void setNextImageAlert(AcquisitionEngine eng) {
+      if (imagesExpected_ > 0) {
+         int s = (int) ( (eng.getNextWakeTime() - System.nanoTime() / 1000000.0) / 1000.0);
+         String text = "Next frame in " + s + " sec";
+         if (nextImageAlert_ == null) {
+            nextImageAlert_ = studio_.alerts().postUpdatableAlert("Acquisition", text);
+         } else {
+            nextImageAlert_.setText(text);
+         }
+      }
+   }
 
-   private static Storage getAppropriateStorage(final DefaultDatastore store,
-           final String path, final boolean isNew) throws IOException {
-      Datastore.SaveMode mode = DefaultDatastore.getPreferredSaveMode();
+   private static Storage getAppropriateStorage(final Studio studio, 
+           final DefaultDatastore store,
+           final String path, 
+           final boolean isNew) throws IOException {
+      Datastore.SaveMode mode = DefaultDatastore.getPreferredSaveMode(studio);
       if (null != mode) {
          switch (mode) {
             case SINGLEPLANE_TIFF_SERIES:

@@ -81,9 +81,9 @@ public final class MMKeyDispatcher implements KeyEventDispatcher{
       // key event will be dealt with.  CheckSource seems relatively expensive
       // so only call this when the key matches
 
-      if (HotKeys.keys_.containsKey(ke.getKeyCode())) {
+      if (HotKeys.KEYS.containsKey(ke.getKeyCode())) {
          if (checkSource(ke))
-            return HotKeys.keys_.get(ke.getKeyCode()).ExecuteAction();
+            return HotKeys.KEYS.get(ke.getKeyCode()).ExecuteAction();
       }
       return false;
    }

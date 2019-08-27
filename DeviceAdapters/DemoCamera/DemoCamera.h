@@ -208,6 +208,8 @@ public:
    double GaussDistributedValue(double mean, double std);
 
    int RegisterImgManipulatorCallBack(ImgManipulator* imgManpl);
+   long GetCCDXSize() { return cameraCCDXSize_; }
+   long GetCCDYSize() { return cameraCCDYSize_; }
 
 
 private:
@@ -1149,6 +1151,7 @@ public:
 
 private:
 
+   CDemoCamera* demoCamera_;
    unsigned short gaussianMask_[10][10];
 
    double GaussValue(double amplitude, double sigmaX, double sigmaY, int muX, int muY, int x, int y);

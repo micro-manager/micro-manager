@@ -6,6 +6,7 @@ import java.awt.Component;
 import javax.swing.JCheckBox;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
+import org.micromanager.Studio;
 
 /**
  *
@@ -15,6 +16,12 @@ public final class PropertyUsageCellRenderer implements TableCellRenderer {
 
    PropertyItem item_;
    JCheckBox cb_ = new JCheckBox();
+   private final Studio studio_;
+   
+   public PropertyUsageCellRenderer(Studio studio) {
+      super();
+      studio_ = studio;
+   }
 
    @Override
    public Component getTableCellRendererComponent(JTable table, Object value, 
@@ -23,7 +30,7 @@ public final class PropertyUsageCellRenderer implements TableCellRenderer {
       item_ = data.getPropertyItem(rowIndex);
 
       cb_.setSelected(item_.confInclude);
-      cb_.setBackground(DaytimeNighttime.getInstance().getBackgroundColor());
+      cb_.setBackground(studio_.app().skin().getBackgroundColor());
       if (item_.readOnly) {
          cb_.setEnabled(false);
       } else {

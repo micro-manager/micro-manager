@@ -58,7 +58,7 @@ import org.micromanager.display.DataViewer;
 import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.internal.utils.PopupButton;
 import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.internal.utils.UserProfileStaticInterface;
+import org.micromanager.internal.MMStudio;
 
 /**
  * This class displays a grid of scrollbars for selecting which images in a
@@ -114,7 +114,7 @@ public class ScrollerPanel extends JPanel {
       // setting, it is most often set too high for our use.  Better to keep a 
       // separate fps for 3D
 
-      animationFPS_ = UserProfileStaticInterface.getInstance().
+      animationFPS_ = MMStudio.getInstance().profile().
               getSettings(ScrollerPanel.class).getDouble(CV_ANIMATION_FPS, animationFPS_);
       
       List<String> axes;
@@ -218,7 +218,7 @@ public class ScrollerPanel extends JPanel {
                display_.setDisplaySettings(display_.
                        getDisplaySettings().copyBuilder().playbackFPS(animationFPS_).build());
                fpsButton_.setText("FPS: " + animationFPS_);
-               UserProfileStaticInterface.getInstance().
+               MMStudio.getInstance().profile().
                      getSettings(ScrollerPanel.class).putDouble(CV_ANIMATION_FPS, 
                           animationFPS_);
             }

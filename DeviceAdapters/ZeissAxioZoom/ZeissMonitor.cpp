@@ -129,11 +129,12 @@ void ZeissMonitoringThread::interpretMessageAZ(unsigned char* message)
 {
    //const int TARGET = 0;
    const int SOURCE = 1;
-   //const int DATABYTES = 2;
+   const int DATABYTES = 2;
    const int CLASS = 3;
    const int NUMBER = 4;
    //const int PROCID = 5;// data1
    const int SUBID = 6; // data2
+   const int OBJID = 7; // data2
 
    if (message[SOURCE] == MOTOR_FOCUS)
    {
@@ -236,6 +237,7 @@ void ZeissMonitoringThread::interpretMessageAZ(unsigned char* message)
    else if (message[SOURCE] == OPTICS)
    {
       const int DATA3 = 7;
+	 // const int DATA2 = 6;
       // const int DATA4 = 8;
       // const int DATA5 = 9;
       // const int DATA6 = 10;
@@ -262,6 +264,16 @@ void ZeissMonitoringThread::interpretMessageAZ(unsigned char* message)
             assert(message[DATABYTES] == 3);
             hub_.opticsUnitModel_.SetAperture(message[DATA3]);
          }
+		 else if (message[NUMBER] == 0xE0 && message[SUBID] == 0x06)
+         {
+			 // objectives
+
+			
+			ZeissUShort pos = 0;
+            memcpy(&pos, message + OBJID, 1);
+			// pos = ntohs(pos);
+            hub_.opticsUnitModel_.SetPositionObj(pos);
+         }
       }
       else if (message[CLASS] == 0x08) // DIRECT ANSWER
       {
@@ -280,6 +292,15 @@ void ZeissMonitoringThread::interpretMessageAZ(unsigned char* message)
             // aperture
             assert(message[DATABYTES] == 3);
             hub_.opticsUnitModel_.SetAperture(message[DATA3]);
+            hub_.opticsUnitModel_.setWaiting(false);
+         }
+		 else if (message[NUMBER] == 0xE0 && message[SUBID] == 0x06)
+         {
+            ZeissUShort pos = 0;
+            memcpy(&pos, message + OBJID, 1);
+         //  pos = ntohs(pos);
+
+            hub_.opticsUnitModel_.SetPositionObj(pos);
             hub_.opticsUnitModel_.setWaiting(false);
          }
       }

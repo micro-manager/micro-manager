@@ -78,10 +78,10 @@ import org.fife.ui.rtextarea.SearchContext;
 import org.fife.ui.rtextarea.SearchEngine;
 import org.fife.ui.rtextarea.SearchResult;
 import org.micromanager.ScriptController;
+import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.DaytimeNighttime;
-import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
 import org.micromanager.internal.utils.HotKeysDialog;
@@ -127,7 +127,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
    private static final String APP_NAME = "MMScriptPanel";
    private static final String BLACK_STYLE_NAME = "blackStyle";
    private static final String RED_STYLE_NAME = "Red";
-   private final MMStudio gui_;
+   private final Studio studio_;
 
    /*
     * Table model that manages the shortcut script table
@@ -338,8 +338,8 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       // (e.g., typing "x;" causes the value of x to be returned):
       beanshellREPLint_.setShowResults(true);
 
-      insertScriptingObject("mm", gui_);
-      insertScriptingObject("mmc", gui_.core());
+      insertScriptingObject("mm", studio_);
+      insertScriptingObject("mmc", studio_.core());
    }
 
    public JConsole getREPLCons() {
@@ -357,12 +357,12 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
    
    /**
     * Create the dialog
-    * @param gui - MM script-interface implementation
+    * @param studio - MM script-interface implementation
     */
    @SuppressWarnings("LeakingThisInConstructor")
-   public ScriptPanel(MMStudio gui) {
+   public ScriptPanel(MMStudio studio) {
       super("script panel");
-      gui_ = gui;
+      studio_ = studio;
       final MMFrame scriptPanelFrame = this;
 
       // Beanshell REPL Console
@@ -371,7 +371,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       // Needed when Cancel button is pressed upon save file warning
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
-      final UserProfile profile = UserProfileStaticInterface.getInstance();
+      final UserProfile profile = studio_.profile();
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent arg0) {
@@ -821,7 +821,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
 
       SearchResult found = SearchEngine.find(scriptArea_, context);
       if (!found.wasFound()) {
-         gui_.logs().showMessage("\"" + text + "\" was not found", this);
+         studio_.logs().showMessage("\"" + text + "\" was not found", this);
       }
       
    }
@@ -877,7 +877,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
          File curFile = FileDialogs.openFile(this, "Select a Beanshell script", BSH_FILE);
 
          if (curFile != null) {
-               UserProfileStaticInterface.getInstance().setString(ScriptPanel.class,
+               studio_.profile().setString(ScriptPanel.class,
                      SCRIPT_FILE, curFile.getAbsolutePath());
                // only creates a new file when a file with this name does not exist
                addScriptToModel(curFile);
@@ -968,7 +968,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
             fw.write(scriptArea_.getText());
             fw.close();
             scriptFile_ = saveFile;
-            UserProfileStaticInterface.getInstance().setString(ScriptPanel.class,
+            studio_.profile().setString(ScriptPanel.class,
                   SCRIPT_FILE, saveFile.getAbsolutePath());
             scriptPaneSaved_ = true;
             this.setTitle(saveFile.getName());
@@ -1131,7 +1131,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
 
       if (curFile != null) {
          try {
-            UserProfileStaticInterface.getInstance().setString(ScriptPanel.class,
+            studio_.profile().setString(ScriptPanel.class,
                   SCRIPT_FILE, curFile.getAbsolutePath());
             int row = scriptTable_.getSelectedRow();
             int column = scriptTable_.getSelectedColumn();
@@ -1241,7 +1241,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
           ReportingUtils.logError(e);
         promptStr = "bsh % ";
       } 
-     cons_.print("\n"+promptStr, DaytimeNighttime.getInstance().getEnabledTextColor());
+     cons_.print("\n"+promptStr, studio_.app().skin().getEnabledTextColor());
    }
    
    /**
@@ -1273,7 +1273,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       int j = 0;
       String script;
       boolean isFile = false;
-      UserProfile profile = UserProfileStaticInterface.getInstance();
+      UserProfile profile = studio_.profile();
       model_.RemoveAllScripts();
       do {
          script = profile.getString(ScriptPanel.class, SCRIPT_FILE + j, null);
@@ -1299,7 +1299,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
    { 
       File file;
       ArrayList<File> scriptFileArray = model_.getFileArray();
-      UserProfile profile = UserProfileStaticInterface.getInstance();
+      UserProfile profile = studio_.profile();
       for (int i = 0; i < scriptFileArray.size(); i ++) 
       {
          file = scriptFileArray.get(i);
@@ -1318,7 +1318,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       if (!promptToSave(-1)) {
          return;
       }
-      UserProfile profile = UserProfileStaticInterface.getInstance();
+      UserProfile profile = studio_.profile();
       profile.setInt(ScriptPanel.class, RIGHT_DIVIDER_LOCATION,
             rightSplitPane_.getDividerLocation());
       profile.setInt(ScriptPanel.class, DIVIDER_LOCATION,
@@ -1412,7 +1412,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
    
    public void displayMessage(String message) {
       SwingUtilities.invokeLater(new ExecuteDisplayMessage(message));
-      gui_.logs().logMessage(message);
+      studio_.logs().logMessage(message);
    }
 
    public void displayError(String text) {
@@ -1430,19 +1430,19 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
    }
 
    public static String getStartupScript() {
-      return UserProfileStaticInterface.getInstance().getString(ScriptPanel.class,
+      return MMStudio.getInstance().profile().getString(ScriptPanel.class,
             STARTUP_SCRIPT, "MMStartup.bsh");
    }
 
    public static void setStartupScript(String path) {
-      UserProfileStaticInterface.getInstance().setString(ScriptPanel.class,
+      MMStudio.getInstance().profile().setString(ScriptPanel.class,
             STARTUP_SCRIPT, path);
    }
 
    private void showMessage(String text) {
       messagePane_.setCharacterAttributes(sc_.getStyle(BLACK_STYLE_NAME), false);
       messagePane_.replaceSelection(text + "\n");
-      cons_.print("\n" + text, DaytimeNighttime.getInstance().getEnabledTextColor());
+      cons_.print("\n" + text, studio_.app().skin().getEnabledTextColor());
       showPrompt();
    }
 

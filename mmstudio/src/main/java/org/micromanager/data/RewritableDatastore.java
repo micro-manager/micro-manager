@@ -58,6 +58,7 @@ public interface RewritableDatastore extends Datastore {
     * @param metadata Object representing the summary metadata
     * @throws DatastoreFrozenException if the freeze() method has been called.
     */
+   @Override
    public void setSummaryMetadata(SummaryMetadata metadata) 
          throws IOException;
 
@@ -66,6 +67,7 @@ public interface RewritableDatastore extends Datastore {
     * event bus. Throws an IllegalArgumentException if the provided coordinates
     * do not correspond to any image in the Datastore.
     * @param coords Coordinates of the image to remove.
+    * @throws java.io.IOException
     * @throws IllegalArgumentException if the coords do not match any image.
     */
    public void deleteImage(Coords coords) throws IOException;
@@ -82,6 +84,7 @@ public interface RewritableDatastore extends Datastore {
     * This method may potentially remove no images.
     * @param coords Potentially-underspecified coordinates of the image(s) to
     *        remove.
+    * @throws java.io.IOException
     */
    public void deleteImagesMatching(Coords coords) throws IOException;
 
@@ -89,6 +92,7 @@ public interface RewritableDatastore extends Datastore {
     * Delete all images from the Datastore. An ImageDeletedEvent will be
     * published on the Datastore's event bus for each image, as will a
     * DatastoreClearedEvent.
+    * @throws java.io.IOException
     */
    public void deleteAllImages() throws IOException;
 }

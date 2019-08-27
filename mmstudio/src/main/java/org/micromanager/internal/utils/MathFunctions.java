@@ -82,14 +82,15 @@ public final class MathFunctions {
     *
     * @pointPairs is a Map of points measured in the two coordinates systems (srcPt->destPt)
     */
-   public static AffineTransform generateAffineTransformFromPointPairs(Map<Point2D.Double, Point2D.Double> pointPairs, double srcTol, double destTol) throws Exception {
+   public static AffineTransform generateAffineTransformFromPointPairs(Map<Point2D.Double, 
+         Point2D.Double> pointPairs, double srcTol, double destTol) throws Exception {
       AffineTransform transform = generateAffineTransformFromPointPairs(pointPairs);
       double srcDevSqSum = 0;
       double destDevSqSum = 0;
-      for (Map.Entry pair : pointPairs.entrySet()) {
+      for (Map.Entry<Point2D.Double, Point2D.Double> pair : pointPairs.entrySet()) {
          try {
-            Point2D.Double srcPt = (Point2D.Double) pair.getKey();
-            Point2D.Double destPt = (Point2D.Double) pair.getValue();
+            Point2D.Double srcPt = pair.getKey();
+            Point2D.Double destPt = pair.getValue();
 
             Point2D.Double srcPt2 = (Point2D.Double) transform.inverseTransform(destPt, null);
             Point2D.Double destPt2 = (Point2D.Double) transform.transform(srcPt, null);

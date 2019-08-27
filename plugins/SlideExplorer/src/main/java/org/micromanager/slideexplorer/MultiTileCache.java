@@ -7,7 +7,7 @@ import java.awt.Point;
 import java.io.File;
 import java.util.Hashtable;
 
-import org.micromanager.internal.utils.ImageUtils;
+import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 
 public class MultiTileCache {
 	

@@ -47,7 +47,7 @@
 #define ERR_NO_CONTROLLER				10004
 #define ERR_HOMING						10005
 #define ERR_TIMEOUT						10006
-
+//#define ERR_DEVICE_CHECK				10007
 //// QT Error Code
 
 #define ERR_CONTROLER_0					10100	//Controller Error Code: Not In Command Recive Mode
@@ -152,6 +152,8 @@ private:
 	std::vector<char> inventoryDeviceIDs_;
 
 // control variables
+   bool initialized_;
+
 	bool bHomeing;
 	bool bLimitStop;
 
@@ -179,8 +181,6 @@ private:
 	double posY_um_;
 	bool busy_;
 	MM::TimeoutMs* timeOutTimer_;
-
-	bool initialized_;
 
 	std::string controllerAxisX_;
 	std::string controllerAxisY_;
@@ -293,7 +293,7 @@ private:
 	MM::TimeoutMs* timeOutTimer_;
 
 	bool initialized_;
-	double answerTimeoutMs_;
+//	double answerTimeoutMs_;
 
 	std::string controllerAxisZ_;
 

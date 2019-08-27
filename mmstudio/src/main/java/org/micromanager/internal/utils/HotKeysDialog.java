@@ -178,24 +178,24 @@ public final class HotKeysDialog extends MMDialog {
     }
 
     /*
-     * copy keys_ and actions_ back to HotKeys.keys_
+     * copy KEYS and actions_ back to HotKeys.KEYS
      */
     private void generateKeys() {
-       HotKeys.keys_.clear();
+       HotKeys.KEYS.clear();
        for (int i = 0; i < keys_.size(); i++) {
-          HotKeys.keys_.put(keys_.get(i), actions_.get(i));
+          HotKeys.KEYS.put(keys_.get(i), actions_.get(i));
        }
     }
     
    /*
     * copy the map with hotkeys and action temporarily into two ArrayLists
-    * Those will be used by our table model and written back to HotKeys.keys_
+    * Those will be used by our table model and written back to HotKeys.KEYS
     * on exit
     */
     private void readKeys() {
        keys_.clear();
        actions_.clear();
-      for (Map.Entry pairs : HotKeys.keys_.entrySet()) {
+      for (Map.Entry pairs : HotKeys.KEYS.entrySet()) {
          keys_.add((Integer)pairs.getKey());
          actions_.add((HotKeyAction) pairs.getValue());
       }

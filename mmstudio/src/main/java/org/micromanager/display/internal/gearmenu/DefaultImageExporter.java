@@ -32,6 +32,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
@@ -39,6 +40,7 @@ import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
+import org.micromanager.data.Image;
 import org.micromanager.display.DisplayDidShowImageEvent;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.ImageExporter;
@@ -138,6 +140,7 @@ public final class DefaultImageExporter implements ImageExporter {
 
    private BufferedImage currentImage_ = null;
    private Graphics currentGraphics_ = null;
+   private Coords lastDrawnCoords_ = null;
 
    public DefaultImageExporter() {
       // Initialize to true so that waitForCompletion returns immediately.
@@ -203,12 +206,20 @@ public final class DefaultImageExporter implements ImageExporter {
          DisplayController dc = (DisplayController) event.getDataViewer();
          try {
             if (dc.getUIController().getIJImageCanvas().getGraphics() != currentGraphics_) {
+               // On some machines (Stefan's Mac for instance!), the same image
+               // gets drawn twice, resulting in duplication of some images
+               // Keep the Coords of the last drawn image, and make sure that  
+               // the current image is differnt.
+               if (lastDrawnCoords_ != null && lastDrawnCoords_.equals(event.getPrimaryImage().getCoords())) {
+                  return;
+               }
+               lastDrawnCoords_ = event.getPrimaryImage().getCoords();
                // We now know that the correct image is visible on the canvas, so
                // have it paint that image to our own Graphics object. This is
                // inefficient (having to paint the same image twice), but
                // unfortunately there's no way (so far as I'm aware) to get an
                // Image from a component except by painting.
-               // HACK: the getCanvas() and paintImageWithGraphics methods aren't
+               // The getCanvas() and paintImageWithGraphics methods aren't
                // exposed in DisplayWindow; hence why we need display_ to be
                // DefaultDisplayWindow.
                Dimension canvasSize = dc.getUIController().getIJImageCanvas().getSize();
@@ -304,9 +315,15 @@ public final class DefaultImageExporter implements ImageExporter {
       if (display_ == null) {
          throw new IllegalArgumentException("No display has been set");
       }
-      ArrayList<Coords> coords = new ArrayList<Coords>();
+      ArrayList<Coords> coords = new ArrayList<>();
+      List<Image> displayedImages = display_.getDisplayedImages();
+      if (displayedImages.isEmpty()) {
+         // TODO: fill in missing images
+         // we are probably on a missing image
+         return coords;
+      }
       outerLoop_.selectImageCoords(
-            display_.getDisplayedImages().get(0).getCoords(), coords);
+            displayedImages.get(0).getCoords(), coords);
       if (coords.isEmpty()) {
          // Nothing to do.
          return coords;

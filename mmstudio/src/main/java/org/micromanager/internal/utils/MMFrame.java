@@ -37,6 +37,7 @@ import org.micromanager.propertymap.MutablePropertyMapView;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;  
 import java.util.ArrayList;
+
 /**
  * Base class for Micro-Manager frame windows.
  * Saves and restores window size and position. 
@@ -44,6 +45,7 @@ import java.util.ArrayList;
 public class MMFrame extends JFrame implements WindowFocusListener {
    private static final long serialVersionUID = 1L;
    private final String profileKey_;
+   private final MutablePropertyMapView settings_;
    private static ArrayList<MMFrame> applicationFrames = new ArrayList<MMFrame>();
 
    // MMFrame profile settings contain a key for each frame subtype (defined
@@ -53,37 +55,30 @@ public class MMFrame extends JFrame implements WindowFocusListener {
    }
 
    public MMFrame() {
-      super();
-      profileKey_ = "";
-      setupMenus();
-      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-        getClass().getResource("/org/micromanager/icons/microscope.gif")));
-      addWindowFocusListener(this);
+      this("");
    }
 
    public MMFrame(String profileKeyForSavingBounds) {
-      super();
-      profileKey_ = profileKeyForSavingBounds;
-      setupMenus();
-      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-        getClass().getResource("/org/micromanager/icons/microscope.gif")));
-      addWindowFocusListener(this);
+      this(profileKeyForSavingBounds, true);
    }
 
    /**
+    * @param profileKeyForSavingBounds
     * @param usesMMMenus If true, then the Micro-Manager menubar will be shown
     * when the frame has focus. Is effectively true by default for the other
     * constructors.
     */
    public MMFrame(String profileKeyForSavingBounds, boolean usesMMMenus) {
       super();
+      settings_ =
+            MMStudio.getInstance().profile().getSettings(getClass());
       profileKey_ = profileKeyForSavingBounds;
       if (usesMMMenus) {
          setupMenus();
       }
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
         getClass().getResource("/org/micromanager/icons/microscope.gif")));
-      addWindowFocusListener(this);
+      super.addWindowFocusListener(this);
    }
 
    /**
@@ -97,9 +92,7 @@ public class MMFrame extends JFrame implements WindowFocusListener {
    }
 
    public void loadPosition(int x, int y, int width, int height) {
-      MutablePropertyMapView settings =
-            UserProfileStaticInterface.getInstance().getSettings(getClass());
-      PropertyMap pmap = settings.getPropertyMap(profileKey_,
+      PropertyMap pmap = settings_.getPropertyMap(profileKey_,
             PropertyMaps.emptyPropertyMap());
       Rectangle bounds = pmap.getRectangle(ProfileKey.WINDOW_BOUNDS.name(),
             new Rectangle(x, y, width, height));
@@ -112,9 +105,7 @@ public class MMFrame extends JFrame implements WindowFocusListener {
    }
 
    public void loadPosition(int x, int y) {
-      MutablePropertyMapView settings =
-            UserProfileStaticInterface.getInstance().getSettings(getClass());
-      PropertyMap pmap = settings.getPropertyMap(profileKey_,
+      PropertyMap pmap = settings_.getPropertyMap(profileKey_,
             PropertyMaps.emptyPropertyMap());
       Rectangle bounds = pmap.getRectangle(ProfileKey.WINDOW_BOUNDS.name(),
             new Rectangle(x, y, getWidth(), getHeight()));
@@ -132,7 +123,7 @@ public class MMFrame extends JFrame implements WindowFocusListener {
     */
    private void offsetIfNecessary() {
       Point newLoc = getLocation();
-      boolean foundOverlap = false;
+      boolean foundOverlap;
       do {
          foundOverlap = false;
          for (Frame frame : Frame.getFrames()) {
@@ -192,13 +183,11 @@ public class MMFrame extends JFrame implements WindowFocusListener {
 
    public void savePosition() {
       Rectangle bounds = getBounds();
-      MutablePropertyMapView settings =
-            UserProfileStaticInterface.getInstance().getSettings(getClass());
-      PropertyMap pmap = settings.getPropertyMap(profileKey_,
+      PropertyMap pmap = settings_.getPropertyMap(profileKey_,
             PropertyMaps.emptyPropertyMap());
       pmap = pmap.copyBuilder().
             putRectangle(ProfileKey.WINDOW_BOUNDS.name(), bounds).build();
-      settings.putPropertyMap(profileKey_, pmap);
+      settings_.putPropertyMap(profileKey_, pmap);
    }
 
    @Override

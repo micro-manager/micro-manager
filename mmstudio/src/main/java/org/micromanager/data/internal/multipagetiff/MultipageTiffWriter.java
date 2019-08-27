@@ -25,7 +25,6 @@ package org.micromanager.data.internal.multipagetiff;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import ij.ImageJ;
 import ij.io.TiffDecoder;
 import ij.process.LUT;
 import java.awt.Color;
@@ -54,13 +53,14 @@ import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultMetadata;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.data.internal.PropertyKey;
+import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.internal.DefaultDisplaySettings;
-import org.micromanager.display.internal.RememberedChannelSettings;
+import org.micromanager.display.internal.RememberedSettings;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.propertymap.MM1JSONSerializer;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
-import org.micromanager.internal.utils.ImageUtils;
+import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public final class MultipageTiffWriter {
@@ -405,9 +405,10 @@ public final class MultipageTiffWriter {
     * all the extra (but nonessential) stuff--comments, display settings,
     * OME/IJ metadata, and truncates the file to a reasonable length
     * @param omeXML
+    * @param ijDescriptionString Info used by ImageJ/Fiji to know what to do with the data
     * @throws java.io.IOException
     */
-   public void close(String omeXML) throws IOException {
+   public void close(String omeXML, String ijDescriptionString) throws IOException {
       String summaryComment = CommentsHelper.getSummaryComment(
             masterStorage_.getDatastore());
       writeImageJMetadata(numChannels_, summaryComment);
@@ -417,8 +418,7 @@ public final class MultipageTiffWriter {
       } catch (IOException ex) {
          ReportingUtils.showError("Error writing OME metadata");
       }
-      writeImageDescription(getIJDescriptionString(),
-            ijDescriptionTagPosition_); 
+      writeImageDescription(ijDescriptionString, ijDescriptionTagPosition_); 
       
       writeDisplaySettings();
       writeComments();
@@ -826,25 +826,44 @@ public final class MultipageTiffWriter {
 
       SummaryMetadata summary = masterStorage_.getSummaryMetadata();
       String channelGroup = summary.getChannelGroup();
+      DisplaySettings ds = masterStorage_.getDisplaySettings();
       // Store contrast min/max.
-      for (int i = 0; i < numChannels; i++) {
-         String name = summary.getSafeChannelName(i);
-         RememberedChannelSettings settings = RememberedChannelSettings.loadSettings(
-               name, channelGroup, Color.WHITE, new Integer[] {0},
-               new Integer[] {1}, true);
-         // Display Ranges: For each channel, write min then max
-         // TODO: doesn't handle multi-component images.
-         mdBuffer.putDouble(bufferPosition, settings.getHistogramMin(0));
-         bufferPosition += 8;
-         mdBuffer.putDouble(bufferPosition, settings.getHistogramMax(0));
-         bufferPosition += 8;
+      if (ds == null) {
+         for (int ch = 0; ch < numChannels; ch++) {
+            String name = summary.getSafeChannelName(ch);
+            ChannelDisplaySettings cds = RememberedSettings.loadChannel(
+                    MMStudio.getInstance(), channelGroup, name);
+            // Display Ranges: For each channel, write min then max
+            // TODO: doesn't handle multi-component images.
+            mdBuffer.putDouble(bufferPosition, (double) 
+                    cds.getComponentSettings(0).getScalingMinimum());
+            bufferPosition += 8;
+            mdBuffer.putDouble(bufferPosition, (double)
+                    cds.getComponentSettings(0).getScalingMinimum());
+            bufferPosition += 8;
+         }
+      } else {
+         for (int ch = 0; ch < numChannels; ch++) {
+            ChannelDisplaySettings cs = ds.getChannelSettings(ch);
+            // Display Ranges: For each channel, write min then max
+            // TODO: doesn't handle multi-component images.
+            mdBuffer.putDouble(bufferPosition, cs.getComponentSettings(0).getScalingMinimum());
+            bufferPosition += 8;
+            mdBuffer.putDouble(bufferPosition, cs.getComponentSettings(0).getScalingMaximum());
+            bufferPosition += 8;
+         }
       }
 
       // Store LUTs for each channel.
-      for (int i = 0; i < numChannels; ++i) {
-         String name = summary.getSafeChannelName(i);
-         Color color = RememberedChannelSettings.getColorForChannel(
-               name, channelGroup, Color.WHITE);
+      for (int ch = 0; ch < numChannels; ++ch) {
+         Color color;
+         if (ds == null) {
+            String name = summary.getSafeChannelName(ch);
+            color = RememberedSettings.loadChannel(
+                    MMStudio.getInstance(), channelGroup, name).getColor();
+         } else {
+            color = ds.getChannelColor(ch);
+         }
          // Defaulting to a gamma range of 1.0, as display settings
          // aren't available here and that's the only place we can access that
          // information. Also, non-linear LUTs do not make much sense in the 
@@ -855,6 +874,7 @@ public final class MultipageTiffWriter {
             bufferPosition++;
          }
       }
+   
 
       ifdCountAndValueBuffer = allocateByteBuffer(8);
       ifdCountAndValueBuffer.putInt(0, mdBufferSize);
@@ -863,58 +883,6 @@ public final class MultipageTiffWriter {
 
       fileChannelWrite(mdBuffer, filePosition_);
       filePosition_ += mdBufferSize;
-   }
-
-   private String getIJDescriptionString() {
-      StringBuffer sb = new StringBuffer();
-      sb.append("ImageJ=" + ImageJ.VERSION + "\n");
-      if (numChannels_ > 1) {
-         sb.append("channels=").append(numChannels_).append("\n");
-      }
-      if (numSlices_ > 1) {
-         sb.append("slices=").append(numSlices_).append("\n");
-      }
-      if (numFrames_ > 1) {
-         sb.append("frames=").append(numFrames_).append("\n");
-      }
-      if (numFrames_ > 1 || numSlices_ > 1 || numChannels_ > 1) {
-         sb.append("hyperstack=true\n");
-      }
-      if (numChannels_ > 1 && numSlices_ > 1 && masterStorage_.slicesFirst()) {
-         sb.append("order=zct\n");
-      }
-      //cm so calibration unit is consistent with units used in Tiff tags
-      sb.append("unit=um\n");
-      if (numSlices_ > 1) {
-         sb.append("spacing=").append(zStepUm_).append("\n");
-      }
-      //write single channel contrast settings or display mode if multi channel
-      // it would be nice to have the display settings of the current viewer,
-      // but we don't, and do not want to couple Display Settings to Data storage,
-      // so come up with reasonable defaults
-      DisplaySettings settings = DefaultDisplaySettings.builder().build();
-      if (numChannels_ == 1) {
-         sb.append("mode=gray\n");
-         // sb.append("min=").append(settings.getSafeContrastMin(0, 0, 0)).append("\n");
-         //sb.append("max=").append(settings.getSafeContrastMax(0, 0, 0)).append("\n");
-      } else {
-         // multiple channels?  go for composite display
-         sb.append("mode=composite\n");
-         /*
-         DisplaySettings.ColorMode mode = settings.getChannelColorMode();
-         if (mode == DisplaySettings.ColorMode.COMPOSITE) {
-            
-         } else if (mode == DisplaySettings.ColorMode.COLOR) {
-            sb.append("mode=color\n");
-         } else if (mode == DisplaySettings.ColorMode.GRAYSCALE) {
-            sb.append("mode=gray\n");
-         }    
-         */
-      }
-
-
-      sb.append((char) 0);
-      return new String(sb);
    }
 
    private void writeImageDescription(String text, long imageDescriptionTagOffset) throws IOException {

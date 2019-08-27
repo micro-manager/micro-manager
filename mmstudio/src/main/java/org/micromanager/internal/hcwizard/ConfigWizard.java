@@ -54,7 +54,7 @@ import javax.swing.WindowConstants;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.internal.utils.UserProfileStaticInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.HttpUtils;
 import org.micromanager.internal.utils.MMDialog;
@@ -75,6 +75,7 @@ public final class ConfigWizard extends MMDialog {
    private int curPage_ = 0;
    private MicroscopeModel microModel_;
    private final CMMCore core_;
+   private final Studio studio_;
    private JLabel titleLabel_;
    private final String defaultPath_;
 
@@ -83,10 +84,13 @@ public final class ConfigWizard extends MMDialog {
 
    /**
     * Create the application
+    * @param studio Current Studio instance
+    * @param defFile
     */
-   public ConfigWizard(CMMCore core, String defFile) {
+   public ConfigWizard(Studio studio, String defFile) {
       super("hardware configuration wizard");
-      core_ = core;
+      studio_ = studio;
+      core_ = studio_.core();
       defaultPath_ = defFile;
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       setModal(true);
@@ -118,25 +122,20 @@ public final class ConfigWizard extends MMDialog {
       add(pagePanel_, "width 700!, height 600!, span, wrap");
 
       backButton_ = new JButton();
-      backButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            setPage(curPage_ - 1);
-         }
+      backButton_.addActionListener((ActionEvent arg0) -> {
+         setPage(curPage_ - 1);
       });
       backButton_.setText("< Back");
       add(backButton_, "span, split, alignx right");
 
       nextButton_ = new JButton("Next >");
-      nextButton_.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent arg0) {
-            if (curPage_ == pages_.length - 1) {
-               // call the last page's exit
-               pages_[curPage_].exitPage(true);
-               onCloseWindow();
-            } else {
-               setPage(curPage_ + 1);
-            }
+      nextButton_.addActionListener((ActionEvent arg0) -> {
+         if (curPage_ == pages_.length - 1) {
+            // call the last page's exit
+            pages_[curPage_].exitPage(true);
+            onCloseWindow();
+         } else {
+            setPage(curPage_ + 1);
          }
       });
 
@@ -144,7 +143,7 @@ public final class ConfigWizard extends MMDialog {
 
       // Create microscope model used by pages.
       microModel_ = new MicroscopeModel();
-      microModel_.setSendConfiguration(UserProfileStaticInterface.getInstance().getBoolean(
+      microModel_.setSendConfiguration(studio_.profile().getBoolean(
               ConfigWizard.class, CFG_OKAY_TO_SEND, true));
       microModel_.loadAvailableDeviceList(core_);
       microModel_.setFileName(defaultPath_);
@@ -161,7 +160,7 @@ public final class ConfigWizard extends MMDialog {
       pages_[pageNumber++] = new FinishPage();
       for (int i = 0; i < pages_.length; i++) {
          try {
-            pages_[i].setModel(microModel_, core_);
+            pages_[i].setModel(microModel_, studio_);
             pages_[i].loadSettings();
             pages_[i].setTitle("Step " + (i + 1) + " of " + pages_.length + ": " + pages_[i].getTitle());
             pages_[i].setParentDialog(this);
@@ -180,11 +179,8 @@ public final class ConfigWizard extends MMDialog {
       // Only invoke from off the EDT, so that pages may do heavy work without
       // hanging the UI.
       if (SwingUtilities.isEventDispatchThread()) {
-         new Thread(new Runnable() {
-            @Override
-            public void run() {
-               setPage(i);
-            }
+         new Thread(() -> {
+            setPage(i);
          }).start();
          return;
       }
@@ -230,7 +226,9 @@ public final class ConfigWizard extends MMDialog {
       String returnValue = "";
       try {
          HttpUtils httpu = new HttpUtils();
-         List<File> list = new ArrayList<File>();
+         if (this.getFileName() == null) {
+            return "No config file";
+         }
          File conff = new File(this.getFileName());
          if (conff.exists()) {
 
@@ -282,19 +280,19 @@ public final class ConfigWizard extends MMDialog {
             }
             try{
                reader.close();
-            }catch(Exception e){
+            } catch(IOException e) {
                ReportingUtils.logError(e);
             }
             try {
-            writer.close();
-            }catch(Exception e){
+               writer.close();
+            } catch(IOException e) {
                ReportingUtils.logError(e);
             }
             try {
 
                URL url = new URL("http://valelab.ucsf.edu/~MM/upload_file.php");
 
-               List<File> flist = new ArrayList<File>();
+               List<File> flist = new ArrayList<>();
                flist.add(fileToSend);
                // for each of a colleciton of files to send...
                for (Object o0 : flist) {
@@ -383,7 +381,7 @@ public final class ConfigWizard extends MMDialog {
          }
       }
 
-      UserProfileStaticInterface.getInstance().setBoolean(
+      studio_.profile().setBoolean(
            ConfigWizard.class, CFG_OKAY_TO_SEND,
            microModel_.getSendConfiguration());
 

@@ -38,7 +38,7 @@ import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.internal.utils.UserProfileStaticInterface;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.propertymap.MutablePropertyMapView;
@@ -62,8 +62,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       private boolean autostretch_ = true;
       private boolean useROI_ = true;
       private double extremaQuantile_ = 0.001;
-      private List<ChannelDisplaySettings> channelSettings_ =
-            new ArrayList<ChannelDisplaySettings>();
+      private List<ChannelDisplaySettings> channelSettings_ = new ArrayList<>();
 
       private Builder() {
          channelSettings_.add(DefaultChannelDisplaySettings.builder().build());
@@ -292,7 +291,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
     *        different "types" of displays can have different default settings.
     */
    public static DefaultDisplaySettings getStandardSettings(String key) {
-      UserProfile profile = UserProfileStaticInterface.getInstance();
+      UserProfile profile = MMStudio.getInstance().profile();
       LegacyBuilder builder = new LegacyBuilder();
       // We have to convert colors to/from int arrays.
       // Note we assume RGB tuples in the colors array.
@@ -374,7 +373,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
     */
    public static ColorMode getStandardColorMode(String key,
          DisplaySettings.ColorMode defaultVal) {
-      UserProfile profile = UserProfileStaticInterface.getInstance();
+      UserProfile profile = MMStudio.getInstance().profile();
       key = key + "_";
       Integer mode = profile.getInt(DefaultDisplaySettings.class,
             CHANNEL_COLOR_MODE, null);

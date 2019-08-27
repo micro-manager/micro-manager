@@ -39,12 +39,17 @@ sma : 07.03.2019 : add the parameter binning average / sum mode
 sma : 25.03.2019 : Pylon version has been changed to 5.2.0 and it check now for specific pylon version
 				   before call PylonInitialize();
 				   parameter Auto exposure and  auto gain are available.
+				   
+sma : 28.04.2019 Take some changes to be able to compile in Linux
+sma : 04.05.2019 Bugfix in 12bit image format and add parameter Sendsor Width and Height
+sma : 06.05.2019 Improvement in Gain range handling. In some camera model the gain range is depends on selected pixel format.
+sma : 22.05.2019 prepaired for Mac build
 */
 
 
 
 #include <pylon/PylonIncludes.h>
-# include <pylon/PylonGUI.h>
+
 
 // Namespace for using pylon objects.
 using namespace Pylon;
@@ -58,6 +63,23 @@ using namespace GenICam;
 #include "DeviceUtils.h"
 #include <vector>
 
+
+#ifdef PYLON_UNIX_BUILD
+ typedef int BOOL;
+ #define TRUE 1
+ #define FALSE 0 
+
+ #ifndef _LINUX_STDDEF_H
+ #define _LINUX_STDDEF_H
+
+ #undef NULL
+ #if defined(__cplusplus)
+ #define NULL 0
+ #else
+ #define NULL ((void *)0)
+ #endif
+ #endif
+#endif
 
 
 using namespace std;
@@ -136,13 +158,10 @@ CCameraBase<BaslerCamera> (),
 	initialized_(false)
 
 {
-
-
 	// call the base class method to set-up default error codes/messages
 	InitializeDefaultErrorMessages();
 
 	//pre-init properties
-
 }
 
 BaslerCamera::~BaslerCamera()
@@ -150,46 +169,6 @@ BaslerCamera::~BaslerCamera()
 	if(imgBuffer_ != NULL)
 		free(imgBuffer_);
 	free(Buffer4ContinuesShot);
-}
-
-/**
-check if needed pylon version is installed on the target system
-**/
-bool BaslerCamera::IsNeededPylonVersionExists()
-{ 
-  	string msg = "Found Pylon SDK :  ";
-	LPCWSTR PYLON_BASE_DLL(L"PylonBase_v5_2.dll");
-	bool m_PylonRuntimeIsValid = true;
-	HINSTANCE hDll = NULL;
-    if((hDll = LoadLibrary(PYLON_BASE_DLL)) != NULL)
-    {
-		//check runtime version OK
-        VersionInfo currentVersion;
-        VersionInfo minVersion( PYLON_VERSION_MAJOR, PYLON_VERSION_MINOR, 0);
-        VersionInfo maxVersion( PYLON_VERSION_MAJOR, PYLON_VERSION_MINOR, 99);
-		if ( currentVersion < minVersion || currentVersion > maxVersion )
-        {			
-			msg = "unmatched Pylon version found ";
-			msg.append (currentVersion.getVersionString());			
-			AddToLog(msg) ;
-			AddToLog ("Please install pylon sdk 5.2");
-			m_PylonRuntimeIsValid = false;
-		}
-		else
-		{
-			msg.append (currentVersion.getVersionString());			
-		    AddToLog(msg) ;
-		}
-		
-        FreeLibrary( hDll);
-	}
-	else
-	{
-	   AddToLog("Pylon SDK 5.2 not found on the system");
-	   m_PylonRuntimeIsValid = false;
-	}
-	
-    return m_PylonRuntimeIsValid;
 }
 
 /**
@@ -209,12 +188,7 @@ int BaslerCamera::Initialize()
 		return DEVICE_OK;
 
 	try
-	{
-		if(!IsNeededPylonVersionExists())
-		{
-			return DEVICE_ERR;
-		}
-				
+	{			
 		// Before using any pylon methods, the pylon runtime must be initialized. 
 		PylonInitialize();
 		 // Get the transport layer factory.
@@ -280,23 +254,45 @@ int BaslerCamera::Initialize()
 		//Call before reading/writing any parameters
 		camera_->Open();
 		// Get the camera nodeMap_ object.
+
+		//Sensor size
 		nodeMap_ = &camera_->GetNodeMap();
 		const CIntegerPtr width = nodeMap_->GetNode("Width");
 		maxWidth_ = (unsigned int) width->GetMax();
 		const CIntegerPtr height = nodeMap_->GetNode("Height");
 		maxHeight_ = (unsigned int) height->GetMax();
 
+
+		if(IsAvailable(width))
+		{
+			CPropertyAction *pAct = new CPropertyAction (this, &BaslerCamera::OnWidth);
+			ret = CreateProperty("SensorWidth",to_string(width->GetValue()).c_str(), MM::Integer, false, pAct);
+			SetPropertyLimits("SensorWidth", (double)width->GetMin(),(double)width->GetMax());
+			assert(ret == DEVICE_OK);
+		}
+		if(IsAvailable(height))
+		{
+			CPropertyAction *pAct = new CPropertyAction (this, &BaslerCamera::OnHeight);
+			ret = CreateProperty("SensorHeight",to_string(height->GetValue()).c_str(), MM::Integer, false, pAct);
+			SetPropertyLimits("SensorHeight", (double)height->GetMin(),(double)height->GetMax());
+			assert(ret == DEVICE_OK);
+		}
+
+		//end of Sensor size
+
+
 	#if (!_DEBUG)
 			ClearROI();// to be enabled for release
-	#else if(_Debug)
+	#else 
 		{
-			ReduceImageSize(800,800);
+			ReduceImageSize(200,200);
 			if(camera_->IsGigE())
 			{
 				CIntegerPtr(camera_->GetTLNodeMap().GetNode("HeartbeatTimeout"))->SetValue(24*1000);
 			}			
 		}
 	#endif
+	
 
 		long bytes = (long) (height->GetValue() * width->GetValue() * 4) ;
 		Buffer4ContinuesShot = malloc(bytes);
@@ -421,9 +417,6 @@ int BaslerCamera::Initialize()
 				SetAllowedValues("ExposureAuto",LSPVals);	
 			 }
 		}
-
-
-
 
 		//get gain limits and value
 		CFloatPtr gain( nodeMap_->GetNode("Gain"));
@@ -659,12 +652,13 @@ int BaslerCamera::CheckForBinningMode(CPropertyAction *pAct)
 		}
 		return DEVICE_CAN_NOT_SET_PROPERTY;
 }
+/*
 
 int BaslerCamera::SetProperty(const char* name, const char* value)
 {
 	int nRet = __super::SetProperty( name, value );
 	return nRet;
-}
+} /*
 
 /**
 * Shuts down (unloads) the device.
@@ -693,7 +687,7 @@ int BaslerCamera::SnapImage()
 		if (!ptrGrabResult->GrabSucceeded()) {
 			return DEVICE_ERR;		
 		}
-		if(ptrGrabResult->GetPayloadSize() != GetImageBufferSize())
+		if(ptrGrabResult->GetPayloadSize() != imgBufferSize_)
 		{// due to parameter change on  binning
 			ResizeSnapBuffer();
 		}
@@ -712,7 +706,7 @@ int BaslerCamera::SnapImage()
 
 void BaslerCamera::CopyToImageBuffer(CGrabResultPtr ptrGrabResult)
 {
-	char* subject ("Bayer");
+	const char* subject ("Bayer");
 	bool IsByerFormat = false;
 	string currentPixelFormat = Pylon::CPixelTypeMapper::GetNameByPixelType(ptrGrabResult->GetPixelType()) ;
 	std::size_t found = currentPixelFormat.find(subject);
@@ -731,22 +725,17 @@ void BaslerCamera::CopyToImageBuffer(CGrabResultPtr ptrGrabResult)
 		memcpy(imgBuffer_, buffer, GetImageBufferSize());
 		SetProperty( MM::g_Keyword_PixelType, g_PixelType_8bit);
 	}
-	else if (ptrGrabResult->GetPixelType() == PixelType_Mono10 ||
-	   ptrGrabResult->GetPixelType() == PixelType_Mono12 || ptrGrabResult->GetPixelType() == PixelType_Mono16)
-	{
-		/*nComponents_ = 1;
-        bitDepth_ = 12;	*/
-		long val = GetImageBufferSize();
+	else if (ptrGrabResult->GetPixelType() == PixelType_Mono16 || ptrGrabResult->GetPixelType() == PixelType_Mono10 || ptrGrabResult->GetPixelType() == PixelType_Mono12)
+	{			
 		//copy image buffer to a snap buffer allocated by device adapter
-		const void* buffer = ptrGrabResult->GetBuffer();
-		memcpy(imgBuffer_, buffer, val);
-		//SetProperty( MM::g_Keyword_PixelType, g_PixelType_12bit);	
+		void* buffer = ptrGrabResult->GetBuffer();
+		memcpy(imgBuffer_, buffer, ptrGrabResult->GetPayloadSize());
+		SetProperty( MM::g_Keyword_PixelType, g_PixelType_12bit);	
 	}
 	else if (IsByerFormat || ptrGrabResult->GetPixelType() == PixelType_RGB8packed )
 	{
 		nComponents_ = 4;
         bitDepth_ = 8;
-		CPylonImage image;
 		converter->Convert(imgBuffer_,GetImageBufferSize(),ptrGrabResult);
 		SetProperty( MM::g_Keyword_PixelType, g_PixelType_8bitRGBA);	    
 	}
@@ -784,7 +773,7 @@ unsigned BaslerCamera::GetImageHeight() const
 */
 unsigned BaslerCamera::GetImageBytesPerPixel() const
 {
-	char* subject ("Bayer");
+	const char* subject ("Bayer");
 	std::size_t found = pixelType_.find(subject);
 
 	if (pixelType_ == "Mono8") {
@@ -804,7 +793,7 @@ unsigned BaslerCamera::GetImageBytesPerPixel() const
 */
 unsigned BaslerCamera::GetBitDepth() const
 {
-	char* subject ("Bayer");
+	const char* subject ("Bayer");
 	std::size_t found = pixelType_.find(subject);
 
 	if (pixelType_ == "Mono8") {
@@ -1002,6 +991,7 @@ void BaslerCamera::ResizeSnapBuffer() {
 	free(imgBuffer_);
 	long bytes = GetImageBufferSize() ;
 	imgBuffer_ = malloc(bytes);
+	imgBufferSize_ = bytes;
 }
 
 
@@ -1055,6 +1045,115 @@ int BaslerCamera::OnBinningMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 	}
 	return DEVICE_OK;
 }
+int BaslerCamera::OnHeight(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	CIntegerPtr Height(nodeMap_->GetNode("Height"));
+	std::string strval;
+	if (eAct == MM::AfterSet) 
+	{
+		bool Isgrabbing = camera_->IsGrabbing();
+		
+		if(IsAvailable(Height))
+		{
+			try
+			{
+				if(Isgrabbing)
+				{
+					camera_->StopGrabbing();
+				}
+				pProp->Get(strval);
+				int64_t val = std::stoi(strval);
+				int64_t inc = Height->GetInc();
+				Height->SetValue(val - (val % inc));
+				if(Isgrabbing)
+				{
+					camera_->StartGrabbing();
+				}	
+			}
+			catch (const GenericException &e)
+			{
+				// Error handling.
+				AddToLog(e.GetDescription());
+				cerr << "An exception occurred." << endl
+				<< e.GetDescription() << endl;
+			}
+		}	
+	} 
+	else if (eAct == MM::BeforeGet) {
+
+		try{
+			if(IsAvailable(Height) )
+				{
+					binningFactor_ = to_string (Height->GetValue());
+					pProp->Set((long)Height->GetValue());	
+				}	
+		}
+		catch (const GenericException &e)
+		{
+			// Error handling.
+			AddToLog(e.GetDescription());
+			cerr << "An exception occurred." << endl
+			<< e.GetDescription() << endl;
+		}
+	}
+	return DEVICE_OK;
+}
+
+int BaslerCamera::OnWidth(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	CIntegerPtr Width(nodeMap_->GetNode( "Width"));
+	std::string strval;
+	if (eAct == MM::AfterSet) 
+	{
+		bool Isgrabbing = camera_->IsGrabbing();
+		
+		if(IsAvailable(Width))
+		{
+			try
+			{
+				if(Isgrabbing)
+				{
+					camera_->StopGrabbing();
+				}
+				pProp->Get(strval);
+				int64_t val = std::stoi(strval);
+				int64_t inc = Width->GetInc();
+				Width->SetValue(val - (val % inc));
+				if(Isgrabbing)
+				{
+					camera_->StartGrabbing();
+				}	
+				//pProp->Set(Width->GetValue());
+
+			}
+			catch (const GenericException &e)
+			{
+				// Error handling.
+				AddToLog(e.GetDescription());
+				cerr << "An exception occurred." << endl
+				<< e.GetDescription() << endl;
+			}
+		}	
+	} 
+	else if (eAct == MM::BeforeGet) {
+
+		try{
+			if(IsAvailable(Width) )
+				{
+					binningFactor_ = to_string (Width->GetValue());
+					pProp->Set((long)Width->GetValue());	
+				}	
+		}
+		catch (const GenericException &e)
+		{
+			// Error handling.
+			AddToLog(e.GetDescription());
+			cerr << "An exception occurred." << endl
+			<< e.GetDescription() << endl;
+		}
+	}
+	return DEVICE_OK;
+}
 
 
 int BaslerCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -1083,12 +1182,6 @@ int BaslerCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 					camera_->StartGrabbing();
 				}	
 				pProp->Set(binningFactor_.c_str());
-#if (_DEBUG)
-			    if(binningFactor_ == "1")
-				{
-					ReduceImageSize(800,800);
-				}
-#endif
 			}
 			catch (const GenericException &e)
 			{
@@ -1145,7 +1238,7 @@ int BaslerCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 		pixelType_.assign(pixelFormat->ToString().c_str());
 		pProp->Set(pixelType_.c_str());
 	}
-    char* subject ("Bayer");
+    const char* subject ("Bayer");
 	std::size_t found = pixelFormat->ToString().find(subject);
 		
 	if(pixelFormat->ToString().compare("Mono8") == 0 )
@@ -1153,6 +1246,7 @@ int BaslerCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 		nComponents_ = 1;
 		bitDepth_ = 8;
 		SetProperty(MM::g_Keyword_PixelType,g_PixelType_8bit);
+
 	}
 	if(pixelFormat->ToString().compare("Mono10") == 0 )
 	{
@@ -1398,40 +1492,77 @@ int BaslerCamera::OnInterPacketDelay(MM::PropertyBase* pProp, MM::ActionType eAc
 
 int BaslerCamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	CFloatPtr gain( nodeMap_->GetNode( "Gain"));
-	CIntegerPtr GainRaw( nodeMap_->GetNode( "GainRaw"));
+	try
+	{
+		CFloatPtr gain( nodeMap_->GetNode( "Gain"));
+		CIntegerPtr GainRaw( nodeMap_->GetNode( "GainRaw"));
 
-	if (eAct == MM::AfterSet) {
-		pProp->Get(gain_);
-		if (gain_ > gainMax_) {
-			gain_ = gainMax_;
-		}
-		if (gain_ < gainMin_) {
-			gain_ = gainMin_;
-		}
-		if(IsAvailable(gain))
-		{
-			gain->SetValue(gain_);
-		}
-		else if(IsAvailable(GainRaw))
-		{
-			GainRaw->SetValue((int64_t)(gain_));
-		}	
-	} else if (eAct == MM::BeforeGet) {
 
-		if(IsAvailable(gain))
-		{
-			gain_ = gain->GetValue();
-			pProp->Set(gain_);
-		}
-		else if(IsAvailable(GainRaw))
-		{
-			
-			gain_ = (double)GainRaw->GetValue();
-			pProp->Set(gain_);
-			cout << "Gain Raw set successfully" <<  gain_ <<endl;
+		if (eAct == MM::AfterSet) {
+			pProp->Get(gain_);
+			if (gain_ > gainMax_) {
+				gain_ = gainMax_;
+			}
+			if (gain_ < gainMin_) {
+				gain_ = gainMin_;
+			}
+			if(IsAvailable(gain))
+			{
+				// the range gain depends on Pixel format sometimes.
+				if(gain->GetMin() <= gain_ && gain->GetMax() >= gain_)
+				{
+					gain->SetValue(gain_);
+				}
+				else
+				{
+				    AddToLog("gain value out of range");				
+					gainMax_ = gain->GetMax();
+					gainMin_ = gain->GetMin();
+					gain_ = gain->GetValue();
+					SetPropertyLimits(MM::g_Keyword_Gain, gainMin_, gainMax_);
+					pProp->Set(gain_);
+				}			
+			}
+			else if(IsAvailable(GainRaw))
+			{
+				// the range gain depends on Pixel format sometimes.
+				if(GainRaw->GetMin() <= gain_ && GainRaw->GetMax() >= gain_)
+				{
+					GainRaw->SetValue((int64_t)(gain_));
+				}
+				else
+				{
+					AddToLog("gain value out of range");				
+					gainMax_ = gain->GetMax();
+					gainMin_ = gain->GetMin();
+					gain_ = gain->GetValue();
+					SetPropertyLimits(MM::g_Keyword_Gain, gainMin_, gainMax_);	
+					pProp->Set(gain_);
+				}				
+			}	
+		} else if (eAct == MM::BeforeGet) {
+
+			if(IsAvailable(gain))
+			{
+				gain_ = gain->GetValue();
+				pProp->Set(gain_);
+			}
+			else if(IsAvailable(GainRaw))
+			{		
+				gain_ = (double)GainRaw->GetValue();
+				pProp->Set(gain_);
+				cout << "Gain Raw set successfully" <<  gain_ <<endl;
+			}
 		}
 	}
+	catch (const GenericException &e)
+    {
+        // Error handling.
+		AddToLog(e.GetDescription());
+        cerr << "An exception occurred." << endl
+        << e.GetDescription() << endl;
+		return DEVICE_ERR;
+    }
 	return DEVICE_OK;
 }
 
@@ -1537,7 +1668,7 @@ void CircularBufferInserter::OnImageGrabbed( CInstantCamera& /* camera */, const
 	// Image grabbed successfully?
 	if (ptrGrabResult->GrabSucceeded())
 	{
-		char* subject ("Bayer");
+		const char* subject ("Bayer");
 		bool IsByerFormat = false;
 		string currentPixelFormat = Pylon::CPixelTypeMapper::GetNameByPixelType(ptrGrabResult->GetPixelType()) ;
 		std::size_t found = currentPixelFormat.find(subject);

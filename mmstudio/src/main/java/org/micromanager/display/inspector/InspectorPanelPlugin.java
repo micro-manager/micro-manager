@@ -15,6 +15,7 @@
 package org.micromanager.display.inspector;
 
 import org.micromanager.MMGenericPlugin;
+import org.micromanager.Studio;
 import org.micromanager.display.DataViewer;
 
 /**
@@ -41,5 +42,5 @@ public interface InspectorPanelPlugin extends MMGenericPlugin {
     */
    boolean isApplicableToDataViewer(DataViewer viewer);
 
-   InspectorPanelController createPanelController();
+   InspectorPanelController createPanelController(Studio studio);
 }

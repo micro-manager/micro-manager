@@ -18,7 +18,6 @@ import org.micromanager.internal.hcwizard.ConfigWizard;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.profile.internal.gui.HardwareConfigurationManager;
 
 public final class ConfigMenu {
@@ -26,13 +25,13 @@ public final class ConfigMenu {
    private final JMenu configMenu_;
    private final JMenu switchConfigurationMenu_;
 
-   private final MMStudio studio_;
+   private final MMStudio mmStudio_;
    private final CMMCore core_;
 
    @SuppressWarnings("LeakingThisInConstructor")
    public ConfigMenu(MMStudio studio, JMenuBar menuBar) {
-      studio_ = studio;
-      core_ = studio_.core();
+      mmStudio_ = studio;
+      core_ = mmStudio_.core();
       switchConfigurationMenu_ = new JMenu();
 
       configMenu_ = GUIUtils.createMenuInMenuBar(menuBar, "Devices");
@@ -42,7 +41,7 @@ public final class ConfigMenu {
               new Runnable() {
                  @Override
                  public void run() {
-                    studio_.createPropertyEditor();
+                    mmStudio_.createPropertyEditor();
                  }
               });
 
@@ -64,7 +63,7 @@ public final class ConfigMenu {
                  public void run() {
                     loadConfiguration();
                     // TODO: this may be redundant.
-                    studio_.initializeGUI();
+                    mmStudio_.initializeGUI();
                  }
               });
 
@@ -73,9 +72,9 @@ public final class ConfigMenu {
               new Runnable() {
                  @Override
                  public void run() {
-                    studio_.loadSystemConfiguration();
+                    mmStudio_.loadSystemConfiguration();
                     // TODO: this is redundant.
-                    studio_.initializeGUI();
+                    mmStudio_.initializeGUI();
                  }
               });
 
@@ -95,8 +94,8 @@ public final class ConfigMenu {
               new Runnable() {
                  @Override
                  public void run() {
-                    studio_.promptToSaveConfigPresets();
-                    studio_.updateChannelCombos();
+                    mmStudio_.promptToSaveConfigPresets();
+                    mmStudio_.updateChannelCombos();
                  }
               });
 
@@ -107,18 +106,18 @@ public final class ConfigMenu {
             new Runnable() {
                @Override
                public void run() {
-                  studio_.createCalibrationListDlg();
+                  mmStudio_.createCalibrationListDlg();
                }
             });
 
-      studio_.events().registerForEvents(this);
+      mmStudio_.events().registerForEvents(this);
    }
 
    private void loadConfiguration() {
-      File configFile = FileDialogs.openFile(MMStudio.getFrame(), 
+      File configFile = FileDialogs.openFile(mmStudio_.getFrame(), 
             "Load a Configuration File", FileDialogs.MM_CONFIG_FILE);
       if (configFile != null) {
-         studio_.setSysConfigFile(configFile.getAbsolutePath());
+         mmStudio_.setSysConfigFile(configFile.getAbsolutePath());
       }
    }
 
@@ -133,7 +132,7 @@ public final class ConfigMenu {
          return;
       }
       
-      if (studio_.getIsConfigChanged()) {
+      if (mmStudio_.getIsConfigChanged()) {
          Object[] options = {"Yes", "No"};
          int n = JOptionPane.showOptionDialog(null,
                  "Save Hardware Configuration?", "Micro-Manager",
@@ -141,17 +140,16 @@ public final class ConfigMenu {
                  JOptionPane.QUESTION_MESSAGE, null, options,
                  options[0]);
          if (n == JOptionPane.YES_OPTION) {
-            studio_.promptToSaveConfigPresets();
+            mmStudio_.promptToSaveConfigPresets();
          }
-         studio_.setConfigChanged(false);
+         mmStudio_.setConfigChanged(false);
       }
       
       try {
-         studio_.live().setSuspended(true);
+         mmStudio_.live().setSuspended(true);
 
          // Show a "please wait" dialog.
-         JDialog waiter = GUIUtils.createBareMessageDialog(
-               studio_.app().getMainWindow(),
+         JDialog waiter = GUIUtils.createBareMessageDialog(mmStudio_.app().getMainWindow(),
                "Loading wizard; please wait...");
          waiter.setVisible(true);
 
@@ -161,10 +159,10 @@ public final class ConfigMenu {
 
          // run Configurator
          ConfigWizard cfg = null;
-         MainFrame frame = MMStudio.getFrame();
+         MainFrame frame = mmStudio_.getFrame();
          try {
             frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            cfg = new ConfigWizard(core_, studio_.getSysConfigFile());
+            cfg = new ConfigWizard(mmStudio_, mmStudio_.getSysConfigFile());
          } finally {
             frame.setCursor(Cursor.getDefaultCursor());
             waiter.setVisible(false);
@@ -180,13 +178,13 @@ public final class ConfigMenu {
          GUIUtils.preventDisplayAdapterChangeExceptions();
 
          // re-initialize the system with the new configuration file
-         studio_.setSysConfigFile(cfg.getFileName());
+         mmStudio_.setSysConfigFile(cfg.getFileName());
 
          GUIUtils.preventDisplayAdapterChangeExceptions();
       } catch (Exception e) {
          ReportingUtils.showError(e);
       } finally {
-         studio_.live().setSuspended(false);
+         mmStudio_.live().setSuspended(false);
       }
    }
 
@@ -196,9 +194,8 @@ public final class ConfigMenu {
       HashSet<String> seenConfigs = new HashSet<String>();
 
       for (final String configFile : HardwareConfigurationManager.
-            getRecentlyUsedConfigFilesFromProfile(
-                  UserProfileStaticInterface.getInstance())) {
-         if (configFile.equals(studio_.getSysConfigFile()) ||
+            getRecentlyUsedConfigFilesFromProfile(mmStudio_.profile())) {
+         if (configFile.equals(mmStudio_.getSysConfigFile()) ||
                seenConfigs.contains(configFile)) {
             continue;
          }
@@ -211,7 +208,7 @@ public final class ConfigMenu {
                  new Runnable() {
             @Override
             public void run() {
-               studio_.setSysConfigFile(configFile);
+               mmStudio_.setSysConfigFile(configFile);
             }
          });
          seenConfigs.add(configFile);

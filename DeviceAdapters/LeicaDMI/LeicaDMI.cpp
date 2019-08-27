@@ -3008,6 +3008,10 @@ int AFC::Initialize()
 
 int AFC::Shutdown() 
 {
+   // 2019-05-24: Mailing list reports that AFC messages prevent 
+   // re-loading config files.  this should be evaluated more
+   // thoroughly, but for now stop AFC reporting here
+   g_ScopeInterface.StopAFCReporting(*this, *GetCoreCallback());
    return 0;
 }
 

@@ -6,8 +6,6 @@
 		<not>
 			<and>
 				<available file="${mm.ivy.lib.dir}/optional/DT1.2-.jar"/>
-				<available file="${mm.ivy.lib.dir}/optional/ij3d-bin-.jar"/>
-				<available file="${mm.ivy.lib.dir}/optional/ima3d_-.jar"/>
 			</and>
 		</not>
 	</condition>

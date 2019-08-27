@@ -67,6 +67,7 @@ public interface CompatibilityInterface {
     *
     * @deprecated - Use core.getPixelSizeAffineByID(config) instead
     */
+   @Deprecated
    public AffineTransform getCameraTransform(String config);
 
    /**
@@ -78,5 +79,6 @@ public interface CompatibilityInterface {
     * @deprecated - Use core.setPixelSizeAffine(config, DoubleVector transform)
     *                instead
     */
+   @Deprecated
    public void setCameraTransform(AffineTransform transform, String config);
 }

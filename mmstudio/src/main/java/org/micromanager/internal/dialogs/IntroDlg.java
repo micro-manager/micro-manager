@@ -51,7 +51,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.IntroPlugin;
 import org.micromanager.Studio;
 import org.micromanager.internal.StartupSettings;
-import org.micromanager.internal.utils.UserProfileStaticInterface;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.profile.internal.UserProfileAdmin;
@@ -93,7 +93,7 @@ public final class IntroDlg extends JDialog {
             studio.plugins().getIntroPlugins();
       if (plugins.size() > 0) {
          // Take the alphabetically first intro plugin we see.
-         ArrayList<String> names = new ArrayList<String>(plugins.keySet());
+         ArrayList<String> names = new ArrayList<>(plugins.keySet());
          Collections.sort(names);
          plugin_ = plugins.get(names.get(0));
          if (plugins.size() > 1) {
@@ -135,7 +135,7 @@ public final class IntroDlg extends JDialog {
       contentsPanel.add(versionLabel, new CC().gapLeft("5").wrap());
 
       try {
-         UserProfileAdmin admin = UserProfileStaticInterface.getAdmin();
+         UserProfileAdmin admin = ((MMStudio) studio).profileAdmin();
          if (!StartupSettings.create(admin.getNonSavingProfile(
                admin.getUUIDOfCurrentProfile())).
                shouldSkipProfileSelectionAtStartup()) {

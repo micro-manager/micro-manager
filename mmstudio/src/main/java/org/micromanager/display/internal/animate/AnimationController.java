@@ -82,7 +82,7 @@ public final class AnimationController<P> {
    private NewPositionHandlingMode newPositionMode_ =
          NewPositionHandlingMode.JUMP_TO_AND_STAY;
    private final Map<String, NewPositionHandlingMode> newPositionModes_ = 
-           new HashMap<String, NewPositionHandlingMode>();
+           new HashMap<>();
    private int newPositionFlashDurationMs_ = 500;
 
    private boolean animationEnabled_ = false;

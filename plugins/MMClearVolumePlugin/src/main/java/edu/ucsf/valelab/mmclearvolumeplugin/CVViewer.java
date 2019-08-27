@@ -253,6 +253,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
             nte = NativeTypeEnum.UnsignedByte;
          }
 
+         try {
          clearVolumeRenderer_
                  = ClearVolumeRendererFactory.newOpenCLRenderer(
                          name_,
@@ -263,6 +264,17 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
                          768,
                          nrCh,
                          true);
+         } catch (NullPointerException npe) {
+            if (npe.getMessage().contains("is calling TIS")) {
+               // Error message caused by JOGL since macOS 10.13.4, cannot fix at the moment so silencing it:
+               // https://github.com/processing/processing/issues/5462
+               // Some discussion on the Apple's developer forums seems to suggest that is not serious:
+               // https://forums.developer.apple.com/thread/105244
+               studio_.logs().logError("Null Pointer Error caused by upstream jogl code on Mac OS X since 10.13.4");
+            } else {
+               studio_.logs().logError(npe);
+            }
+         }
 
          final NewtCanvasAWT lNCWAWT = clearVolumeRenderer_.getNewtCanvasAWT();
 

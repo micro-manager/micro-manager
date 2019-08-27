@@ -171,7 +171,7 @@ public class PlotUtils {
       plot.setRangeGridlinePaint(Color.lightGray);
 
       XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
-      renderer.setBaseShapesVisible(true);
+      renderer.setDefaultShapesVisible(true);
 
       for (int i = 0; i < data.length; i++) {
          renderer.setSeriesFillPaint(i, Color.white);

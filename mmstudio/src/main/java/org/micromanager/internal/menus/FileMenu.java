@@ -17,7 +17,6 @@ import org.micromanager.data.internal.SciFIODataProvider;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.FileDialogs;
-import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -230,12 +229,12 @@ public final class FileMenu {
    }
 
    private static String[] getRecentFiles() {
-      return UserProfileStaticInterface.getInstance().getStringArray(
+      return MMStudio.getInstance().profile().getStringArray(
             FileMenu.class, FILE_HISTORY, new String[] {});
    }
 
    private static void setRecentFiles(String[] files) {
-      UserProfileStaticInterface.getInstance().setStringArray(
+      MMStudio.getInstance().profile().setStringArray(
             FileMenu.class, FILE_HISTORY, files);
    }
 }

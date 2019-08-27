@@ -50,6 +50,7 @@ public:
    int OnPLogicMode           (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSetShutterChannel    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPLogicOutputState    (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPLogicOutputStateUpper(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFrontpanelOutputState(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBackplaneOutputState (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTriggerSource        (MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -81,7 +82,9 @@ private:
    unsigned int numCells_;
    unsigned int currentPosition_;  // cached value of current position
 //   static const int NUM_CELLS = 16;
-   bool useAsdiSPIMShutter_;
+   bool useAsdiSPIMShutter_;  // super-set of useAs4ChShutter_
+   bool useAs4ChShutter_;
+   bool useAs7ChShutter_;
    bool shutterOpen_;
    bool advancedPropsEnabled_;
    bool editCellUpdates_;

@@ -59,6 +59,7 @@ class LeicaScopeInterface
 	  int GetAFCFocusScore(MM::Device& device, MM::Core& core);
 	  int GetAFCMode(MM::Device& device, MM::Core& core);
 	  int GetAFCLEDIntensity(MM::Device& device, MM::Core& core);
+	  int StopAFCReporting(MM::Device& device, MM::Core& core);
 	  int GetDevicesPresent(MM::Device& device, MM::Core& core);
       int GetILTurretInfo(MM::Device& device, MM::Core& core);
       int GetCondensorInfo(MM::Device& device, MM::Core& core);

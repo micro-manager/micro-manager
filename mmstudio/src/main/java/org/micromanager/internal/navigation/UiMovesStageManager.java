@@ -23,12 +23,11 @@ import com.google.common.eventbus.Subscribe;
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import mmcorej.CMMCore;
 import org.micromanager.Studio;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
-import org.micromanager.internal.menus.MMMenuBar;
+import org.micromanager.internal.MMStudio;
 
 /**
  * This class handles setting up and disabling mouse and keyboard
@@ -38,15 +37,15 @@ public final class UiMovesStageManager {
    private final HashMap<DisplayController, CenterAndDragListener> displayToDragListener_;
    private final HashMap<DisplayController, ZWheelListener> displayToWheelListener_;
    //private final HashMap<DisplayController, KeyAdapter> displayToKeyListener_;
-   private final CMMCore core_;
+   private final Studio studio_;
    private final ExecutorService executorService_; // all stage movements will
              // go through this thread
 
-   public UiMovesStageManager(Studio studio, CMMCore core) {
-      core_ = core;
+   public UiMovesStageManager(Studio studio) {
+      studio_ = studio;
       executorService_ = Executors.newSingleThreadExecutor();
-      displayToDragListener_ = new HashMap<DisplayController, CenterAndDragListener>();
-      displayToWheelListener_ = new HashMap<DisplayController, ZWheelListener>();
+      displayToDragListener_ = new HashMap<>();
+      displayToWheelListener_ = new HashMap<>();
       //displayToKeyListener_ = new HashMap<DisplayController, KeyAdapter>();
       // Calling code has to register us for studio_ events
    }
@@ -59,10 +58,10 @@ public final class UiMovesStageManager {
       CenterAndDragListener dragListener = null;
       ZWheelListener wheelListener = null;
       //KeyAdapter keyListener = null;
-      if (MMMenuBar.getToolsMenu().getMouseMovesStage()) {
-         dragListener = new CenterAndDragListener(core_, executorService_);
+      if (((MMStudio) studio_).getMMMenubar().getToolsMenu().getMouseMovesStage()) {
+         dragListener = new CenterAndDragListener(studio_, executorService_);
          display.registerForEvents(dragListener);
-         wheelListener = new ZWheelListener(core_, executorService_);
+         wheelListener = new ZWheelListener(studio_, executorService_);
          display.registerForEvents(wheelListener);
          //keyListener = new StageShortcutListener();
       }

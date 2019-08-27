@@ -64,12 +64,12 @@ import org.jfree.chart.renderer.xy.StandardXYBarPainter;
 import org.jfree.chart.renderer.xy.StandardXYItemRenderer;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
+import org.jfree.chart.ui.TextAnchor;
 import org.jfree.data.function.Function2D;
-import org.jfree.data.general.DatasetUtilities;
+import org.jfree.data.general.DatasetUtils;
 import org.jfree.data.statistics.HistogramDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
-import org.jfree.ui.TextAnchor;
 
 
 /**
@@ -116,7 +116,7 @@ public class GaussianUtils {
       plot.setBackgroundPaint(Color.white);
       plot.setRangeGridlinePaint(Color.lightGray);
       XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
-      renderer.setBaseShapesVisible(true);
+      renderer.setDefaultShapesVisible(true);
       renderer.setSeriesPaint(0, Color.black);
       renderer.setSeriesFillPaint(0, Color.white);
       renderer.setSeriesLinesVisible(0, true);
@@ -160,7 +160,7 @@ public class GaussianUtils {
       plot.setBackgroundPaint(Color.white);
       plot.setRangeGridlinePaint(Color.lightGray);
       XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
-      renderer.setBaseShapesVisible(true);
+      renderer.setDefaultShapesVisible(true);
       renderer.setSeriesPaint(0, Color.blue);
       renderer.setSeriesFillPaint(0, Color.white);
       renderer.setSeriesLinesVisible(0, true);
@@ -246,7 +246,7 @@ public class GaussianUtils {
       
       
       XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
-      renderer.setBaseShapesVisible(true);
+      renderer.setDefaultShapesVisible(true);
       
       for (int i = 0; i < data.length; i++) {
          renderer.setSeriesFillPaint(i, Color.white);
@@ -348,7 +348,7 @@ public class GaussianUtils {
 
       if (fitResult.length == 2) {
          Function2D p1 = new P2D(fitResult[0], fitResult[1]);
-         XYSeries s1 = DatasetUtilities.sampleFunction2DToSeries(p1, min, 
+         XYSeries s1 = DatasetUtils.sampleFunction2DToSeries(p1, min, 
                  max, 4 * nrBins, "p2d");
          double xAtMaxY = 0.0;
          double maxY = s1.getMaxY();
@@ -433,7 +433,7 @@ public class GaussianUtils {
 
       if (fitResult.length == 2) {
          Function2D p1 = new Gaussian1D(fitResult[0], fitResult[1]);
-         XYSeries s1 = DatasetUtilities.sampleFunction2DToSeries(p1, min, 
+         XYSeries s1 = DatasetUtils.sampleFunction2DToSeries(p1, min, 
                  max, 4 * nrBins, "Gaussian");
          double xAtMaxY = 0.0;
          double maxY = s1.getMaxY();
@@ -498,7 +498,7 @@ public class GaussianUtils {
       SingularValueDecompositionImpl sVD = new SingularValueDecompositionImpl(dataM);
       RealMatrix output = sVD.getUT().multiply(dataM);
 
-      ArrayList<Point2D.Double> result = new ArrayList<Point2D.Double>();
+      ArrayList<Point2D.Double> result = new ArrayList<>();
       for (int i = 0; i < output.getColumnDimension(); i++) {
          result.add(new Point2D.Double(output.getEntry(0,i), output.getEntry(1,i)));
       }

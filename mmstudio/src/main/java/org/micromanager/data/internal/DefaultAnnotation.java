@@ -36,7 +36,6 @@ import org.micromanager.internal.utils.ReportingUtils;
  * plaintext file.
  */
 public final class DefaultAnnotation implements Annotation {
-   private PropertyMap data_;
    private String filename_;
 
    private static final String GENERAL_KEY = "General annotation";
@@ -56,7 +55,7 @@ public final class DefaultAnnotation implements Annotation {
             // Load general annotations.
             if (data.containsKey(GENERAL_KEY)) {
                generalAnnotation_ = data.getPropertyMap(GENERAL_KEY,
-                     new DefaultPropertyMap.Builder().build());
+                     PropertyMaps.builder().build());
             }
             // Load per-image annotations.
             for (String key : data.getKeys()) {
@@ -91,7 +90,7 @@ public final class DefaultAnnotation implements Annotation {
          throw new RuntimeException("Asked to save Annotation when store has no save path");
       }
       File file = getFile(store_, filename_);
-      DefaultPropertyMap.Builder builder = new DefaultPropertyMap.Builder();
+      PropertyMap.Builder builder = PropertyMaps.builder();
       if (generalAnnotation_ != null) {
          builder.putPropertyMap(GENERAL_KEY, generalAnnotation_);
       }
@@ -133,6 +132,9 @@ public final class DefaultAnnotation implements Annotation {
    /**
     * Utility function to get the path at which an Annotation's data should
     * reside, if it exists.
+    * @param store
+    * @param filename
+    * @return 
     */
    public static File getFile(Datastore store, String filename) {
       return new File(store.getSavePath() + "/" + filename);
@@ -141,9 +143,11 @@ public final class DefaultAnnotation implements Annotation {
    /**
     * Return true if there's an existing annotation for this datastore, on
     * disk where the datastore's own data is stored.
+    * @param store
+    * @param filename
+    * @return 
     */
-   public static boolean isAnnotationOnDisk(Datastore store,
-         String filename) {
+   public static boolean isAnnotationOnDisk(Datastore store, String filename) {
       return getFile(store, filename).exists();
    }
 

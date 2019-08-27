@@ -29,6 +29,7 @@ import net.miginfocom.layout.AC;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.DataViewer;
@@ -45,7 +46,7 @@ import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.MustCallOnEDT;
 import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.internal.utils.UserProfileStaticInterface;
+import org.micromanager.internal.MMStudio;
 
 /**
  *
@@ -60,6 +61,7 @@ public class IntensityInspectorPanelController
    private static final String RGBCMYW = "RGBCMYW";
    private static final String CUSTOM = "Custom";
    
+   private final Studio studio_;
    private final JPanel panel_ = new JPanel();
    
    private static boolean expanded_ = true;
@@ -106,11 +108,12 @@ public class IntensityInspectorPanelController
    private final CoalescentEDTRunnablePool runnablePool_ =
          CoalescentEDTRunnablePool.create();
 
-   public static IntensityInspectorPanelController create() {
-      return new IntensityInspectorPanelController();
+   public static IntensityInspectorPanelController create(Studio studio) {
+      return new IntensityInspectorPanelController(studio);
    }
 
-   private IntensityInspectorPanelController() {
+   private IntensityInspectorPanelController(Studio studio) {
+      studio_ = studio;
       setUpGearMenu();
       setUpGeneralControlPanel();
       setUpChannelHistogramsPanel(0);
@@ -149,7 +152,7 @@ public class IntensityInspectorPanelController
                handleColorPalette(colorMenuMap_.get(key).getColorPalette());
                colorMenuMap_.get(key).getCheckBox().setSelected(true);
                // record in profile - even though we do not (yet) use this value
-               UserProfileStaticInterface.getInstance().getSettings(
+               studio_.profile().getSettings(
                      IntensityInspectorPanelController.class).putString(
                              COLOR_PALETTE, key);
             }
@@ -166,7 +169,7 @@ public class IntensityInspectorPanelController
       histogramMenuMap_.put("1 Hz", 1.0);
       histogramMenuMap_.put("0.5 Hz", 0.5);
       histogramMenuMap_.put("Never", 0.0);
-      final String defaultUpdateFrequency = UserProfileStaticInterface.getInstance().getSettings(
+      final String defaultUpdateFrequency = studio_.profile().getSettings(
               IntensityInspectorPanelController.class).getString(HISTOGRAM_UPDATE_FREQUENCY, "5 Hz");
       final List<JCheckBoxMenuItem> histogramMenuItems = new LinkedList<JCheckBoxMenuItem>();
       for (final String hKey : histogramMenuMap_.keySet()) {
@@ -187,7 +190,7 @@ public class IntensityInspectorPanelController
                }
                handleHistogramUpdateRate(histogramMenuMap_.get(jbmi.getText()));
                jbmi.setSelected(true);
-               UserProfileStaticInterface.getInstance().getSettings(
+               studio_.profile().getSettings(
                        IntensityInspectorPanelController.class).putString(
                                HISTOGRAM_UPDATE_FREQUENCY, jbmi.getText());
             }
@@ -375,6 +378,9 @@ public class IntensityInspectorPanelController
 
       DisplaySettings oldSettings, newSettings;
       do {
+         if (viewer_ == null) {
+            return;
+         }
          oldSettings = viewer_.getDisplaySettings();
          if (oldSettings.getColorMode() == mode) {
             return;
@@ -388,16 +394,16 @@ public class IntensityInspectorPanelController
       boolean enabled = autostretchCheckBox_.isSelected();
       double percentile = (Double) percentileSpinner_.getValue();
       DisplaySettings oldSettings, newSettings;
-      boolean needToSetFixedMinMaxToAutoscaled = false;
+      // boolean needToSetFixedMinMaxToAutoscaled = false;
       do {
          oldSettings = viewer_.getDisplaySettings();
-         needToSetFixedMinMaxToAutoscaled = !enabled &&
-               oldSettings.isAutostretchEnabled();
+         //needToSetFixedMinMaxToAutoscaled = !enabled && oldSettings.isAutostretchEnabled();
          newSettings = oldSettings.copyBuilder().
                autostretch(enabled).
                autoscaleIgnoredPercentile(percentile).
                build();
       } while (!viewer_.compareAndSetDisplaySettings(oldSettings, newSettings));
+      /*
       if (needToSetFixedMinMaxToAutoscaled) {
          // When autostretch is turned off, rather than snapping back to
          // whatever the range was before autostretch was enabled, we want to
@@ -409,6 +415,7 @@ public class IntensityInspectorPanelController
          }
          displaySettingsUpdateSuspended_ = false;
       }
+      */
    }
 
    @MustCallOnEDT
@@ -486,7 +493,7 @@ public class IntensityInspectorPanelController
                   viewer_.getDataProvider().getAxisLength(Coords.CHANNEL));
             newDisplaySettings(viewer_.getDisplaySettings());
             updateImageStats(((ImageStatsPublisher) viewer_).getCurrentImagesAndStats());
-            String updateRate = UserProfileStaticInterface.getInstance().
+            String updateRate = studio_.profile().
                     getSettings(IntensityInspectorPanelController.class).
                            getString(HISTOGRAM_UPDATE_FREQUENCY, "1 Hz");
             if (histogramMenuMap_.get(updateRate) != null) {

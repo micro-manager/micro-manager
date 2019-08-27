@@ -29,6 +29,7 @@ import java.awt.event.WindowEvent;
 import javax.swing.JDialog;
 import org.micromanager.UserProfile;
 import org.micromanager.propertymap.MutablePropertyMapView;
+import org.micromanager.internal.MMStudio;
 
 /**
  * Base class for the Micro-Manager dialogs.
@@ -68,7 +69,7 @@ public class MMDialog extends JDialog {
     * @param y new WINDOW_Y position if current value isn't valid
     */
    private void ensureSafeWindowPosition(int x, int y) {
-      UserProfile profile = UserProfileStaticInterface.getInstance();
+      UserProfile profile = MMStudio.getInstance().profile();
       int prefX = profile.getSettings(this.getClass()).getInteger(
               prefPrefix_ + WINDOW_X, 0);
       int prefY = profile.getSettings(this.getClass()).getInteger(
@@ -132,7 +133,7 @@ public class MMDialog extends JDialog {
     */
    protected void loadPosition(int x, int y, int width, int height) {
       ensureSafeWindowPosition(x, y);
-      UserProfile profile = UserProfileStaticInterface.getInstance();
+      UserProfile profile = MMStudio.getInstance().profile();
       MutablePropertyMapView settings = profile.getSettings(this.getClass());
       setBounds(settings.getInteger(prefPrefix_ + WINDOW_X, x),
                 settings.getInteger(prefPrefix_ + WINDOW_Y, y),
@@ -148,7 +149,7 @@ public class MMDialog extends JDialog {
    
    protected void loadPosition(int x, int y) {
       ensureSafeWindowPosition(x, y);
-      UserProfile profile = UserProfileStaticInterface.getInstance();
+      UserProfile profile = MMStudio.getInstance().profile();
       MutablePropertyMapView settings = profile.getSettings(this.getClass());
       setLocation(settings.getInteger(prefPrefix_ + WINDOW_X, x),
                 settings.getInteger(prefPrefix_ + WINDOW_Y, y));
@@ -159,7 +160,7 @@ public class MMDialog extends JDialog {
     */
    protected void savePosition() {
       Rectangle r = getBounds();
-      UserProfile profile = UserProfileStaticInterface.getInstance();
+      UserProfile profile = MMStudio.getInstance().profile();
       MutablePropertyMapView settings = profile.getSettings(this.getClass());
       if (r != null) {
          settings.putInteger(prefPrefix_ + WINDOW_X, r.x);

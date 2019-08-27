@@ -6,6 +6,7 @@ import java.awt.Component;
 import java.awt.Font;
 import javax.swing.JLabel;
 import javax.swing.JTable;
+import org.micromanager.Studio;
 import org.micromanager.internal.ConfigGroupPad;
 
 /**
@@ -22,6 +23,12 @@ public final class StateGroupCellRenderer extends PropertyValueCellRenderer {
     // This method is called each time a cell in a column
     // using this renderer needs to be rendered.
     StateItem stateItem_;
+    private final Studio studio_;
+    
+    public StateGroupCellRenderer (Studio studio) {
+       super(studio);
+       studio_ = studio;
+    }
 
    @Override
     public Component getTableCellRendererComponent(JTable table, Object value,
@@ -48,8 +55,8 @@ public final class StateGroupCellRenderer extends PropertyValueCellRenderer {
             comp.setForeground(Color.BLACK);
         } else {
             // HACK: manually set the colors.
-            comp.setBackground(DaytimeNighttime.getInstance().getBackgroundColor());
-            comp.setForeground(DaytimeNighttime.getInstance().getEnabledTextColor());
+            comp.setBackground(studio_.app().skin().getBackgroundColor());
+            comp.setForeground(studio_.app().skin().getEnabledTextColor());
         }
 
         return comp;

@@ -59,6 +59,8 @@ CPLogic::CPLogic(const char* name) :
    numCells_(16),
    currentPosition_(1),
    useAsdiSPIMShutter_(false),
+   useAs4ChShutter_(false),
+   useAs7ChShutter_(false),
    shutterOpen_(false),
    advancedPropsEnabled_(false),
    editCellUpdates_(true)
@@ -72,11 +74,14 @@ CPLogic::CPLogic(const char* name) :
    CPropertyAction* pAct;
 
    // pre-init property to say how PLogic card is used
-   // for now the only option is have shutter functionality for diSPIM (laser controls on BNCs 5-8)
+   // original option is have shutter functionality for diSPIM (laser controls on BNCs 5-8)
+   // second option to have similar function with laser controls on BNCs 5-8 but not use diSPIM beam enable
    pAct = new CPropertyAction (this, &CPLogic::OnPLogicMode);
    CreateProperty(g_PLogicModePropertyName, g_PLogicModeNone, MM::String, false, pAct, true);
    AddAllowedValue(g_PLogicModePropertyName, g_PLogicModeNone);
    AddAllowedValue(g_PLogicModePropertyName, g_PLogicModediSPIMShutter);
+   AddAllowedValue(g_PLogicModePropertyName, g_PLogicMode4ChShutter);
+   AddAllowedValue(g_PLogicModePropertyName, g_PLogicMode7ChShutter);
 }
 
 int CPLogic::Initialize()
@@ -116,6 +121,13 @@ int CPLogic::Initialize()
    CreateProperty(g_PLogicOutputStatePropertyName, "0", MM::Integer, true, pAct);
    UpdateProperty(g_PLogicOutputStatePropertyName);
 
+   // reports the output state of the upper part of the logic cell array as unsigned integer
+   if (numCells_ > 16) {
+      pAct = new CPropertyAction (this, &CPLogic::OnPLogicOutputStateUpper);
+      CreateProperty(g_PLogicOutputStateUpperPropertyName, "0", MM::Integer, true, pAct);
+      UpdateProperty(g_PLogicOutputStateUpperPropertyName);
+   }
+
    // reports the output state of the BNCs as unsigned integer
    pAct = new CPropertyAction (this, &CPLogic::OnFrontpanelOutputState);
    CreateProperty(g_FrontpanelOutputStatePropertyName, "0", MM::Integer, true, pAct);
@@ -145,11 +157,14 @@ int CPLogic::Initialize()
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode2, 2);
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode3, 3);
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode4, 4);
-   AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode5, 5);
-   AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode6, 6);
-   AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode7, 7);
-   AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode8, 8);
-   AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode9, 9);
+   if (useAs4ChShutter_)  // includes useAsdiSPIMShutter_
+   {
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode5, 5);
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode6, 6);
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode7, 7);
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode8, 8);
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode9, 9);
+   }
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode10, 10);
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode11, 11);
    if (FirmwareVersionAtLeast(3.08)) {
@@ -192,6 +207,26 @@ int CPLogic::Initialize()
       AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode34, 34);
       AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode35, 35);
    }
+   if (FirmwareVersionAtLeast(3.27)) {
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode36, 36);
+   }
+   if (FirmwareVersionAtLeast(3.29) && useAs7ChShutter_) {
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode37, 37);
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode38, 38);
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode39, 39);
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode40, 40);
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode41, 41);
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode42, 42);
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode43, 43);
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode44, 44);
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode45, 45);
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode46, 46);
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode47, 47);
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode48, 48);
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode49, 49);
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode50, 50);
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode51, 51);
+   }
    UpdateProperty(g_SetCardPresetPropertyName);
 
 
@@ -208,6 +243,7 @@ int CPLogic::Initialize()
    CreateProperty(g_RefreshPropValsPropertyName, g_NoState, MM::String, false, pAct);
    AddAllowedValue(g_RefreshPropValsPropertyName, g_NoState);
    AddAllowedValue(g_RefreshPropValsPropertyName, g_YesState);
+//   AddAllowedValue(g_RefreshPropValsPropertyName, g_OneTimeState);
 
    // save settings to controller if requested
    pAct = new CPropertyAction (this, &CPLogic::OnSaveCardSettings);
@@ -237,6 +273,9 @@ int CPLogic::Initialize()
    AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode13, 13);
    AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode14, 14);
    AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode15, 15);
+   AddAllowedValue(g_EditCellTypePropertyName, g_IOTypeCode0, 100);
+   AddAllowedValue(g_EditCellTypePropertyName, g_IOTypeCode1, 101);
+   AddAllowedValue(g_EditCellTypePropertyName, g_IOTypeCode2, 102);
    UpdateProperty(g_EditCellTypePropertyName);
 
    // edit config at current pointer
@@ -258,7 +297,7 @@ int CPLogic::Initialize()
    CreateProperty(g_EditCellInput4PropertyName, "0", MM::Integer, false, pAct);
    UpdateProperty(g_EditCellInput4PropertyName);
 
-   // refresh properties from controller every time; default is false = no refresh (speeds things up by not redoing so much serial comm)
+   // refresh properties from controller every time; default is true = refresh for just selected cell
    pAct = new CPropertyAction (this, &CPLogic::OnEditCellUpdates);
    CreateProperty(g_EditCellUpdateAutomaticallyPropertyName, g_YesState, MM::String, false, pAct);
    AddAllowedValue(g_EditCellUpdateAutomaticallyPropertyName, g_NoState);
@@ -272,13 +311,13 @@ int CPLogic::Initialize()
    AddAllowedValue(g_AdvancedPropertiesPropertyName, g_YesState);
    UpdateProperty(g_AdvancedPropertiesPropertyName);
 
-   if (useAsdiSPIMShutter_)
+   if (useAs4ChShutter_)
    {
       // special masked preset selector for shutter channel
       pAct = new CPropertyAction (this, &CPLogic::OnSetShutterChannel);
-      CreateProperty(g_SetChannelPropertyName, g_ChannelNone, MM::String, false, pAct);
+      CreateProperty(g_SetChannelPropertyName, g_4ChannelNone, MM::String, false, pAct);
       // use (CCA X) card presets here, just under a different name
-      AddAllowedValue(g_SetChannelPropertyName, g_ChannelNone, 9);
+      AddAllowedValue(g_SetChannelPropertyName, g_4ChannelNone, 9);
       AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly5, 5);
       AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly6, 6);
       AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly7, 7);
@@ -289,21 +328,61 @@ int CPLogic::Initialize()
          AddAllowedValue(g_SetChannelPropertyName, g_Channel5To8, 30);
          AddAllowedValue(g_SetChannelPropertyName, g_Channel5To8Alt, 31);
       }
-      UpdateProperty(g_SetChannelPropertyName); // doesn't do anything right now
-      // makes sure card actually gets initialized
-      // SetProperty(g_SetChannelPropertyName, g_ChannelNone);  // done via SetProperty(g_SetCardPresetPropertyName, g_PresetCode14)
+      UpdateProperty(g_SetChannelPropertyName);               // doesn't do anything right now
+      SetProperty(g_SetChannelPropertyName, g_4ChannelNone);  // makes sure card actually gets initialized
+      SetOpen(false);                                         // always start shutter in closed state
+   }
+   else if (useAs7ChShutter_)
+   {
+      // special masked preset selector for shutter channel
+      pAct = new CPropertyAction (this, &CPLogic::OnSetShutterChannel);
+      CreateProperty(g_SetChannelPropertyName, g_7ChannelNone, MM::String, false, pAct);
+      // use (CCA X) card presets here, just under a different name
+      AddAllowedValue(g_SetChannelPropertyName, g_7ChannelNone, 50);
+      AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly1, 37);
+      AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly2, 38);
+      AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly3, 39);
+      AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly4, 40);
+      AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly5, 41);
+      AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly6, 42);
+      AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly7, 43);
+      AddAllowedValue(g_SetChannelPropertyName, g_Channel2And4, 44);
+      AddAllowedValue(g_SetChannelPropertyName, g_Channel3And5, 45);
+      AddAllowedValue(g_SetChannelPropertyName, g_Channel4And6, 46);
+      AddAllowedValue(g_SetChannelPropertyName, g_Channel5And7, 47);
+      AddAllowedValue(g_SetChannelPropertyName, g_Channel1And3And5, 48);
+      AddAllowedValue(g_SetChannelPropertyName, g_Channel2And4And6, 49);
+      UpdateProperty(g_SetChannelPropertyName);               // doesn't do anything right now
+      SetProperty(g_SetChannelPropertyName, g_7ChannelNone);  // makes sure card actually gets initialized
+      SetOpen(false);                                         // always start shutter in closed state
+   }
 
+   if (useAsdiSPIMShutter_) {
       // set up card up for diSPIM shutter
-      // this sets up all 8 BNC outputs
-      // also it sets the card to be set to shutter channel "none"
+      // this sets up all 8 BNC outputs including 4 lasers
       SetProperty(g_SetCardPresetPropertyName, g_PresetCode14);
 
-      // always start shutter in closed state
-      SetOpen(false);
-
-      // set to be triggered by micro-mirror card
+      // set to be triggered by micro-mirror card for diSPIM case
       SetProperty(g_TriggerSourcePropertyName, g_TriggerSourceCode1);
    }
+
+   // things for shutter when not a diSPIM
+   if ((useAs4ChShutter_ || useAs7ChShutter_) && !useAsdiSPIMShutter_) {
+      // sets up 4 lasers triggered by cell 10
+      SetProperty(g_SetCardPresetPropertyName, g_PresetCode12);
+
+      // make it ignore the TTL backplane signal usually from the micro-mirror card
+      if (FirmwareVersionAtLeast(3.27)) {
+         SetProperty(g_SetCardPresetPropertyName, g_PresetCode36);
+      } else {
+         // have to replicate preset behavior ourselves: cell 10 will reflect cell 8
+         SetProperty(g_PointerPositionPropertyName, "10");
+         SetProperty(g_EditCellTypePropertyName, g_CellTypeCode5);
+         SetProperty(g_EditCellInput1PropertyName, "64");
+         SetProperty(g_EditCellInput2PropertyName, "8");
+      }
+   }
+
 
    initialized_ = true;
    return DEVICE_OK;
@@ -311,7 +390,7 @@ int CPLogic::Initialize()
 
 int CPLogic::SetOpen(bool open)
 {
-   if (useAsdiSPIMShutter_)
+   if (useAs4ChShutter_ || useAs7ChShutter_)
    {
       ostringstream command; command.str("");
       shutterOpen_ = open;
@@ -326,7 +405,7 @@ int CPLogic::SetOpen(bool open)
 
 int CPLogic::GetOpen(bool& open)
 {
-   open = useAsdiSPIMShutter_ && shutterOpen_;
+   open = (useAs4ChShutter_ || useAs7ChShutter_) && shutterOpen_;
    return DEVICE_OK;
 }
 
@@ -340,7 +419,30 @@ int CPLogic::OnPLogicMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    } else if (eAct == MM::AfterSet) {
       string tmpstr;
       pProp->Get(tmpstr);
-      useAsdiSPIMShutter_ = (tmpstr.compare(g_PLogicModediSPIMShutter) == 0);
+      if (tmpstr.compare(g_PLogicModediSPIMShutter) == 0)
+      {
+         useAsdiSPIMShutter_ = true;
+         useAs4ChShutter_ = true;
+         useAs7ChShutter_ = false;
+      }
+      else if (tmpstr.compare(g_PLogicMode4ChShutter) == 0)
+      {
+         useAsdiSPIMShutter_ = false;
+         useAs4ChShutter_ = true;
+         useAs7ChShutter_ = false;
+      }
+      else if (tmpstr.compare(g_PLogicMode7ChShutter) == 0)
+      {
+         useAsdiSPIMShutter_ = false;
+         useAs4ChShutter_ = false;
+         useAs7ChShutter_ = true;
+      }
+      else
+      {
+         useAsdiSPIMShutter_ = false;
+         useAs4ChShutter_ = false;
+         useAs7ChShutter_ = false;
+      }
    }
    return DEVICE_OK;
 }
@@ -351,11 +453,15 @@ int CPLogic::OnSetShutterChannel(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       // can't do anything of real value here
       if (!initialized_)
-         pProp->Set(g_ChannelNone);
+         if (useAs4ChShutter_) {
+            pProp->Set(g_4ChannelNone);
+         } else {
+            pProp->Set(g_7ChannelNone);
+         }
    } else if (eAct == MM::AfterSet) {
       ostringstream command; command.str("");
       long tmp;
-      RETURN_ON_MM_ERROR ( GetCurrentPropertyData(g_SetChannelPropertyName, tmp) );
+      RETURN_ON_MM_ERROR ( GetCurrentPropertyData(pProp->GetName().c_str(), tmp) );
       if (tmp < 0) return DEVICE_OK;  // no preset and other "signaling" preset codes are negative
       command << addressChar_ << "CCA X=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
@@ -372,6 +478,22 @@ int CPLogic::OnPLogicOutputState(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       // always read
       command << addressChar_ << "RDADC Z?";
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition2(val) );
+      if (!pProp->Set((long)val))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   return DEVICE_OK;
+}
+
+int CPLogic::OnPLogicOutputStateUpper(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   unsigned int val;
+   ostringstream command; command.str("");
+   if (eAct == MM::BeforeGet || eAct == MM::AfterSet)
+   {
+      // always read
+      command << addressChar_ << "RDADC F?";
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition2(val) );
       if (!pProp->Set((long)val))
@@ -435,7 +557,7 @@ int CPLogic::OnTriggerSource(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (!success)
          return DEVICE_INVALID_PROPERTY_VALUE;
    } else if (eAct == MM::AfterSet) {
-      RETURN_ON_MM_ERROR ( GetCurrentPropertyData(g_TriggerSourcePropertyName, tmp) );
+      RETURN_ON_MM_ERROR ( GetCurrentPropertyData(pProp->GetName().c_str(), tmp) );
       command << "PM " << axisLetter_ << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
    }
@@ -498,6 +620,11 @@ int CPLogic::OnRefreshProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(tmpstr);
       if (tmpstr.compare(g_YesState) == 0)
          refreshProps_ = true;
+//      else if (tmpstr.compare(g_OneTimeState))
+//      {
+//         SetProperty(g_RefreshPropValsPropertyName, g_YesState);
+//         SetProperty(g_RefreshPropValsPropertyName, g_NoState);
+//      }
       else
          refreshProps_ = false;
    }
@@ -522,8 +649,7 @@ int CPLogic::RefreshEditCellPropertyValues()
    } else if (editCellUpdates_ && currentPosition_>=PLOGIC_PHYSICAL_IO_START_ADDRESS
          && currentPosition_<=PLOGIC_PHYSICAL_IO_END_ADDRESS) {
       // if position is an I/O
-      // CellType overlaps with the IOType, but different list of possibilities so
-      //    let's not worry about that for now
+      UpdateProperty(g_EditCellTypePropertyName);  // this is I/O type but encoded in a different string that we
       UpdateProperty(g_EditCellConfigPropertyName);  // this is the source address
    }
 
@@ -535,18 +661,28 @@ int CPLogic::RefreshEditCellPropertyValues()
 
 int CPLogic::OnEditCellType(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+   // NB: works for I/O addresses but will have incorrect strings
    ostringstream command; command.str("");
-   if(currentPosition_ <= numCells_) {
+   if(currentPosition_ <= numCells_                                 // normal cells
+         || (currentPosition_ >= PLOGIC_FRONTPANEL_START_ADDRESS && currentPosition_ <= PLOGIC_BACKPLANE_END_ADDRESS)) {   // or I/O addresses
       if (eAct == MM::BeforeGet) {
          return OnCellType(pProp, eAct, (long)currentPosition_);
       } else if (eAct == MM::AfterSet) {
          long tmp;
-         RETURN_ON_MM_ERROR ( GetCurrentPropertyData(g_EditCellTypePropertyName, tmp) );
+         RETURN_ON_MM_ERROR ( GetCurrentPropertyData(pProp->GetName().c_str(), tmp) );
+         if (currentPosition_ >= PLOGIC_FRONTPANEL_START_ADDRESS && currentPosition_ <= PLOGIC_BACKPLANE_END_ADDRESS) {
+            if (tmp >= 100) {
+               tmp -= 100;
+            } else {
+               return DEVICE_INVALID_PROPERTY_VALUE;
+            }
+         } else if (tmp >= 100) {
+            return DEVICE_INVALID_PROPERTY_VALUE;
+         }
          command << addressChar_ << "CCA Y=" << tmp;
          RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
          RETURN_ON_MM_ERROR ( RefreshEditCellPropertyValues() );
       }
-
    }
    return DEVICE_OK;
 }
@@ -788,7 +924,14 @@ int CPLogic::OnCellType(MM::PropertyBase* pProp, MM::ActionType eAct, long index
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       bool success = 0;
-      switch (tmp) {
+      if (currentPosition_ > numCells_) {
+         switch (tmp) {
+         case 0: success = pProp->Set(g_IOTypeCode0); break;
+         case 1: success = pProp->Set(g_IOTypeCode1); break;
+         case 2: success = pProp->Set(g_IOTypeCode2); break;
+         }
+      } else {
+         switch (tmp) {
          case 0: success = pProp->Set(g_CellTypeCode0); break;
          case 1: success = pProp->Set(g_CellTypeCode1); break;
          case 2: success = pProp->Set(g_CellTypeCode2); break;
@@ -806,6 +949,7 @@ int CPLogic::OnCellType(MM::PropertyBase* pProp, MM::ActionType eAct, long index
          case 14:success = pProp->Set(g_CellTypeCode14); break;
          case 15:success = pProp->Set(g_CellTypeCode15); break;
          default: success=0;
+         }
       }
       if (!success)
          return DEVICE_INVALID_PROPERTY_VALUE;
@@ -1013,12 +1157,12 @@ int CPLogic::OnSetCardPreset(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (!initialized_)
          pProp->Set(g_PresetCodeNone);
    } else if (eAct == MM::AfterSet) {
-      RETURN_ON_MM_ERROR ( GetCurrentPropertyData(g_SetCardPresetPropertyName, tmp) );
+      RETURN_ON_MM_ERROR ( GetCurrentPropertyData(pProp->GetName().c_str(), tmp) );
       if (tmp < 0) return DEVICE_OK;  // g_PresetCodeNone and other "signaling" preset codes are negative
       command << addressChar_ << "CCA X=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
       if (useAsdiSPIMShutter_ && (tmp == 14)) {  // preset 14 affects the channel too
-         SetProperty(g_SetChannelPropertyName, g_ChannelNone);
+         SetProperty(g_SetChannelPropertyName, g_4ChannelNone);
       }
    }
    return DEVICE_OK;

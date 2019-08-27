@@ -28,6 +28,7 @@ import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -64,6 +65,7 @@ public class PixelCalibratorDialog extends MMFrame {
    private JComboBox methodComboBox_;
    private JButton startButton_;
    private JButton stopButton_;
+   private JCheckBox debug_;
 
     /** 
      * The  PixelCalibratorDialog executes an automated calibration of 
@@ -150,14 +152,17 @@ public class PixelCalibratorDialog extends MMFrame {
             stopCalibration();
          }
       });
-
+      
+      debug_ = new JCheckBox("debug");
+      debug_.setSelected(false);
 
       getContentPane().setLayout(new MigLayout());
       super.add(explanationLabel_, "span 2, wrap");
       super.add(methodLabel);
       super.add(methodComboBox_, "wrap");
       super.add(safeTravelLabel);
-      super.add(safeTravelRadiusComboBox_, "wrap");
+      super.add(safeTravelRadiusComboBox_);
+      super.add(debug_, "wrap");
       super.add(startButton_, "split 2");
       super.add(stopButton_);
       super.add(calibrationProgressBar_, "wrap");
@@ -249,10 +254,17 @@ public class PixelCalibratorDialog extends MMFrame {
       }
 
       double pixelSize = AffineUtils.deducePixelSize(result);
-
+      double[] measurements = AffineUtils.affineToMeasurements(result);
+//      xScale, yScale, rotationDeg, shear
       int response = JOptionPane.showConfirmDialog(this,
-            String.format("Affine transform parameters: XScale=%.2f YScale=%.2f XShear=%.4f YShear=%.4f\n", result.getScaleX(), result.getScaleY(), result.getShearX(), result.getShearY()) + 
-            "<html>The Pixel Calibrator plugin measured a pixel size of " + pixelSize + " &#956;m.<br>" + "Do you wish to copy these to your pixel calibration settings?</html>",
+            String.format("Affine transform parameters: XScale=%.4f YScale=%.4f Rotation (degrees)=%.2f Shear=%.4f\n",                     
+                    measurements[0], measurements[1], 
+                    measurements[2], measurements[3]) + 
+            "<html>If this is a correct result, Xscale and YScale should have absoulte value of roughly the number of &#956;m/pixel,</html>\n" +
+                    "rotation should give the angle between the corrdinate system of the camera and the stage, and the shear\nvalue shoud be very small.\n\n" +
+            "<html>The Pixel Calibrator plugin measured a pixel size of " + 
+                    pixelSize + " &#956;m.<br>" + 
+                    "Do you wish to copy these to your pixel calibration settings?</html>",
             "Calibration succeeded!",
             JOptionPane.YES_NO_OPTION);
 
@@ -296,6 +308,9 @@ public class PixelCalibratorDialog extends MMFrame {
    public double safeTravelRadius() {
       return Double.parseDouble(
                     safeTravelRadiusComboBox_.getSelectedItem().toString());
+   }
+   public boolean debugMode() {
+      return debug_.isSelected();
    }
    
    public void update() {

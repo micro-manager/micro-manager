@@ -24,6 +24,7 @@ import mmcorej.DeviceType;
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.PropertyItem;
@@ -37,28 +38,30 @@ public final class DeviceSetupDlg extends MMDialog {
    private static final String SCAN_PORTS = "Scan Ports";
 
    private final JPanel contents_;
-   private CMMCore core_;
+   private final CMMCore core_;
+   private final Studio studio_;
    private Device portDev_;
-   private MicroscopeModel model_;
+   private final MicroscopeModel model_;
    private Device device_;
-   private JTable propTable_;
-   private JButton detectButton_;
+   private final JTable propTable_;
+   private final JButton detectButton_;
    private DetectorJDialog progressDialog_;
    private DetectionTask detectTask_;
    private final JTable comTable_;
-   private JTextField devName_;
-   private JPanel portSettingsPanel_;
-   private JLabel scanStatus_;
+   private final JTextField devName_;
+   private final JPanel portSettingsPanel_;
+   private final JLabel scanStatus_;
 
    /**
     * Create the dialog.
     */
-   public DeviceSetupDlg(MicroscopeModel mod, CMMCore c, Device d) {
+   public DeviceSetupDlg(MicroscopeModel mod, Studio studio, Device d) {
       super("hardware config wizard: device setup dialog");
       setModal(true);
       loadPosition(100, 100);
       model_ = mod;
-      core_ = c;
+      core_ = studio.core();
+      studio_ = studio;
       portDev_ = null;
       device_ = d;
 
@@ -315,8 +318,8 @@ public final class DeviceSetupDlg extends MMDialog {
       PropertyTableModel tm = new PropertyTableModel(model_, device_, this);
       propTable_.setModel(tm);
       PropertyValueCellEditor propValueEditor = new PropertyValueCellEditor();
-      PropertyValueCellRenderer propValueRenderer = new PropertyValueCellRenderer();
-      PropertyNameCellRenderer propNameRenderer = new PropertyNameCellRenderer();
+      PropertyValueCellRenderer propValueRenderer = new PropertyValueCellRenderer(studio_);
+      PropertyNameCellRenderer propNameRenderer = new PropertyNameCellRenderer(studio_);
       if (propTable_.getColumnCount() == 0) {
           TableColumn column;
           column = new TableColumn(0, 200, propNameRenderer, null);
@@ -382,8 +385,8 @@ public final class DeviceSetupDlg extends MMDialog {
       ComPropTableModel tm = new ComPropTableModel(model_, portDev_);
       comTable_.setModel(tm);
       PropertyValueCellEditor propValueEditor = new PropertyValueCellEditor();
-      PropertyValueCellRenderer propValueRenderer = new PropertyValueCellRenderer();
-      PropertyNameCellRenderer propNameRenderer = new PropertyNameCellRenderer();
+      PropertyValueCellRenderer propValueRenderer = new PropertyValueCellRenderer(studio_);
+      PropertyNameCellRenderer propNameRenderer = new PropertyNameCellRenderer(studio_);
       if (comTable_.getColumnCount() == 0) {
           TableColumn column;
           column = new TableColumn(0, 200, propNameRenderer, null);

@@ -35,7 +35,6 @@ import org.micromanager.Studio;
 import org.micromanager.data.Datastore;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.menus.FileMenu;
-import org.micromanager.internal.menus.MMMenuBar;
 
 /**
  * DragDropUtil
@@ -121,7 +120,7 @@ public final class DragDropUtil implements DropTargetListener {
          Datastore store = studio_.data().loadData(dir, false);
          studio_.displays().manage(store);
          studio_.displays().loadDisplays(store);
-         FileMenu fm = MMMenuBar.getFileMenu();
+         FileMenu fm = ((MMStudio) studio_).getMMMenubar().getFileMenu();
          if (fm != null) {
             fm.updateFileHistory(store.getSavePath());
          }

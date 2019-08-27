@@ -24,6 +24,7 @@ package org.micromanager.internal;
 import java.io.IOException;
 import java.util.Collection;
 import org.micromanager.Album;
+import org.micromanager.Studio;
 import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
@@ -37,15 +38,15 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public final class DefaultAlbum implements Album {
-   private static final DefaultAlbum STATIC_INSTANCE;
-   static {
-      STATIC_INSTANCE = new DefaultAlbum();
-   }
-
+   private final Studio studio_;
    private Datastore store_;
    private Integer curTime_ = null;
    private Pipeline pipeline_;
    private final Object pipelineLock_ = new Object();
+   
+   public DefaultAlbum(Studio studio) {
+      studio_ = studio;
+   }
 
    @Override
    public Datastore getDatastore() {
@@ -54,15 +55,14 @@ public final class DefaultAlbum implements Album {
 
    @Override
    public boolean addImage(Image image) throws IOException {
-      MMStudio studio = MMStudio.getInstance();
       boolean mustCreateNew = (store_ == null || store_.isFrozen());
       String curChannel = "";
       try {
-         curChannel = studio.core().getCurrentConfig(
-               studio.core().getChannelGroup());
+         curChannel = studio_.core().getCurrentConfig(
+               studio_.core().getChannelGroup());
       }
       catch (Exception e) {
-         studio.logs().logError(e, "Error getting current channel name");
+         studio_.logs().logError(e, "Error getting current channel name");
       }
       if (store_ != null) {
          String oldChannel = store_.getSummaryMetadata().getSafeChannelName(0);
@@ -73,26 +73,23 @@ public final class DefaultAlbum implements Album {
       if (mustCreateNew) {
          // Need to create a new album.
          
-         store_ = studio.data().createRAMDatastore();
+         store_ = studio_.data().createRAMDatastore();
 
          try {
-            SummaryMetadata.Builder smb = studio.acquisitions().
+            SummaryMetadata.Builder smb = studio_.acquisitions().
                     generateSummaryMetadata().copyBuilder();
             // TODO: can there be other axes than T?
             smb.channelNames(new String[] {curChannel}).axisOrder(
                     Coords.T, Coords.C, Coords.Z, Coords.P);
             store_.setSummaryMetadata(smb.build());
          }
-         catch (DatastoreFrozenException e) {
+         catch (DatastoreFrozenException | DatastoreRewriteException e) {
             // This should never happen!
-            studio.logs().logError(e, "Unable to set summary of newly-created datastore");
+            studio_.logs().logError(e, "Unable to set summary of newly-created datastore");
          }
-         catch (DatastoreRewriteException e) {
-            // This should also never happen!
-            studio.logs().logError(e, "Unable to set summary of newly-created datastore");
-         }
-         studio.displays().manage(store_);
-         DisplayWindow display = studio.displays().createDisplay(store_);
+         // This should also never happen!
+         studio_.displays().manage(store_);
+         DisplayWindow display = studio_.displays().createDisplay(store_);
          display.setCustomTitle("Album");
          curTime_ = null;
       }
@@ -110,17 +107,17 @@ public final class DefaultAlbum implements Album {
             // size, which is bad and results in uncaught, unreported exceptions
             // TODO: at the very least report problems with image size to the user
             // even better: 
-            pipeline_ = studio.data().copyLivePipeline(store_, true);
+            pipeline_ = studio_.data().copyLivePipeline(store_, true);
             try {
                pipeline_.insertImage(image.copyAtCoords(newCoords));
             } catch (DatastoreRewriteException e) {
                // This should never happen, because we use an erasable
                // Datastore.
-               studio.logs().showError(e,
+               studio_.logs().showError(e,
                        "Unable to insert image into pipeline; this should never happen.");
             } catch (PipelineErrorException e) {
                // Notify the user, and halt live.
-               studio.logs().showError(e,
+               studio_.logs().showError(e,
                        "An error occurred while processing images.");
                pipeline_.clearExceptions();
             }
@@ -169,9 +166,5 @@ public final class DefaultAlbum implements Album {
          result = result || tmp;
       }
       return result;
-   }
-
-   public static DefaultAlbum getInstance() {
-      return STATIC_INSTANCE;
    }
 }

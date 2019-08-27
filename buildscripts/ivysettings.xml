@@ -5,7 +5,7 @@
 		<ibiblio name="central" m2compatible="true"/>
       <ibiblio name="clearvolume" m2compatible="true" root="http://dl.bintray.com/clearvolume/ClearVolume"/>
       <ibiblio name="coremem" m2compatible="true" root="http://dl.bintray.com/clearcontrol/ClearControl"/>
-		<ibiblio name="imagej-net" m2compatible="true" root="http://maven.imagej.net/content/groups/public"/>
+		<ibiblio name="imagej-net" m2compatible="true" root="https://maven.scijava.org/content/groups/public"/>
       <ibiblio name ="nico" m2compatible="true" root="http://valelab4.ucsf.edu/~nstuurman/maven"/>
 
 		<filesystem name="thirdpartypublic">

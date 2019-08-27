@@ -46,90 +46,6 @@ import org.micromanager.internal.utils.MMFrame;
 
 
 public final class AlertsWindow extends MMFrame {
-   private static AlertsWindow staticInstance_;
-   private static void ensureWindowExists(Studio studio) {
-      if (staticInstance_ == null) {
-         staticInstance_ = new AlertsWindow(studio);
-         studio.events().registerForEvents(staticInstance_);
-      }
-   }
-
-   /**
-    * Display the AlertsWindow, creating it if necessary.
-    * @param studio MM Studio instance
-    */
-   public static void show(Studio studio) {
-      ensureWindowExists(studio);
-      if (!staticInstance_.isVisible()) {
-         // both of the following methods bring focus to the Alerts Window,
-         // which is highly annoying while working on something else.
-         // At the risk of making it harder to notice new alerts, I prefer 
-         // to call these only when the window is not yet visible.
-         staticInstance_.setVisible(true);
-         staticInstance_.toFront();
-      }
-   }
-
-   /**
-    * Display the AlertsWindow, if the given alert is not muted.
-    * @param studio Studio instance
-    * @param alert  Alert to be shown
-    */
-   public static void showWindowUnlessMuted(Studio studio, DefaultAlert alert) {
-      ensureWindowExists(studio);
-      if (staticInstance_.isMuted(alert) || !staticInstance_.shouldShowOnMessage_) {
-         return;
-      }
-      show(studio);
-   }
-
-   /**
-    * Create a simple alert with a text message.
-    * @param studio Studio instance
-    * @param title  Title of the alert
-    * @param text   Text of the alert
-    * @return       Alert
-    */
-   public static DefaultAlert addUpdatableAlert(Studio studio, String title,
-         String text) {
-      ensureWindowExists(studio);
-      DefaultAlert alert = new DefaultAlert(staticInstance_, title,
-            new JLabel(text));
-      showWindowUnlessMuted(studio, alert);
-      staticInstance_.addAlert(alert);
-      return alert;
-   }
-
-   /**
-    * Create a custom alert with any contents
-    * @param studio Studio instance
-    * @param title  Title of the alert
-    * @param contents Content to be added to the alert
-    * @return 
-    */
-   public static DefaultAlert addCustomAlert(Studio studio, String title,
-         JComponent contents) {
-      ensureWindowExists(studio);
-      DefaultAlert alert = new DefaultAlert(staticInstance_, title, contents);
-      showWindowUnlessMuted(studio, alert);
-      staticInstance_.addAlert(alert);
-      return alert;
-   }
-
-   /**
-    * Create an alert that can contain multiple categories of messages.
-    * @param studio Studio instance
-    * @param title  Title of the alert
-    * @return   Categorized alert
-    */
-   public static CategorizedAlert addCategorizedAlert(Studio studio, String title) {
-      ensureWindowExists(studio);
-      CategorizedAlert alert = CategorizedAlert.createAlert(staticInstance_, title);
-      showWindowUnlessMuted(studio, alert);
-      staticInstance_.addAlert(alert);
-      return alert;
-   }
-
    private static final String NO_ALERTS_MSG = "There are no messages at this time.";
    private static final String SHOULD_SHOW_WINDOW = "Show the Messages window when a message is received";
 
@@ -139,9 +55,11 @@ public final class AlertsWindow extends MMFrame {
    private final JPanel alertsPanel_ = new JPanel(new MigLayout("insets 0, fill, flowy"));
    private boolean shouldShowOnMessage_ = true;
 
-   private AlertsWindow(Studio studio) {
+   public AlertsWindow(Studio studio) {
       super("Messages");
       studio_ = studio;
+      studio.events().registerForEvents(this);
+
 
       super.loadAndRestorePosition(300, 100);
       
@@ -214,6 +132,69 @@ public final class AlertsWindow extends MMFrame {
       super.pack();
    }
 
+      /**
+    * Display the AlertsWindow, creating it if necessary.
+    */
+   public void showWithoutFocus() {
+      if (!isVisible()) {
+         // both of the following methods bring focus to the Alerts Window,
+         // which is highly annoying while working on something else.
+         // At the risk of making it harder to notice new alerts, I prefer 
+         // to call these only when the window is not yet visible.
+         setVisible(true);
+         toFront();
+      }
+   }
+
+   /**
+    * Display the AlertsWindow, if the given alert is not muted.
+    * @param alert  Alert to be shown
+    */
+   public void showWindowUnlessMuted(DefaultAlert alert) {
+      if (isMuted(alert) || !shouldShowOnMessage_) {
+         return;
+      }
+      showWithoutFocus();
+   }
+
+   /**
+    * Create a simple alert with a text message.
+    * @param title  Title of the alert
+    * @param text   Text of the alert
+    * @return       Alert
+    */
+   public DefaultAlert addUpdatableAlert(String title, String text) {
+      DefaultAlert alert = new DefaultAlert(this, title, new JLabel(text));
+      showWindowUnlessMuted(alert);
+      addAlert(alert);
+      return alert;
+   }
+
+   /**
+    * Create a custom alert with any contents
+    * @param title  Title of the alert
+    * @param contents Content to be added to the alert
+    * @return 
+    */
+   public DefaultAlert addCustomAlert(String title, JComponent contents) {
+      DefaultAlert alert = new DefaultAlert(this, title, contents);
+      showWindowUnlessMuted(alert);
+      addAlert(alert);
+      return alert;
+   }
+
+   /**
+    * Create an alert that can contain multiple categories of messages.
+    * @param title  Title of the alert
+    * @return   Categorized alert
+    */
+   public CategorizedAlert addCategorizedAlert(String title) {
+      CategorizedAlert alert = CategorizedAlert.createAlert(this, title);
+      showWindowUnlessMuted(alert);
+      addAlert(alert);
+      return alert;
+   }
+   
    public void addAlert(DefaultAlert alert) {
       if (allAlerts_.isEmpty()) {
          // Remove the "there are no alerts" label.
@@ -276,10 +257,7 @@ public final class AlertsWindow extends MMFrame {
    @Subscribe
    public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
       if (!event.getIsCancelled()) {
-         if (staticInstance_ != null) {
-            staticInstance_.dispose();
-         }
+        dispose();
       }
    }
-   
 }

@@ -41,7 +41,7 @@ public final class PluginFinder {
     * Just a passthrough to the actual recursive method.
     */
    private static ArrayList<String> findPaths(String root, String extension) {
-      ArrayList<String> result = new ArrayList<String>();
+      ArrayList<String> result = new ArrayList<>();
       // Short-circuit if we're called with a non-directory.
       if (!(new File(root).isDirectory())) {
          if (root.endsWith(extension)) {
@@ -72,7 +72,7 @@ public final class PluginFinder {
     * a list of the corresponding annotated classes.
     */
    public static List<Class> findPlugins(String root) {
-      ArrayList<Class> result = new ArrayList<Class>();
+      ArrayList<Class> result = new ArrayList<>();
       for (String jarPath : findPaths(root, ".jar")) {
          URL jarURL;
          try {
@@ -107,7 +107,7 @@ public final class PluginFinder {
    }
 
    public static List<Class> findPluginsWithLoader(ClassLoader loader) {
-      ArrayList<Class> result = new ArrayList<Class>();
+      ArrayList<Class> result = new ArrayList<>();
       DefaultPluginFinder finder = new DefaultPluginFinder(loader);
       PluginIndex index = new PluginIndex(finder);
       index.discover();

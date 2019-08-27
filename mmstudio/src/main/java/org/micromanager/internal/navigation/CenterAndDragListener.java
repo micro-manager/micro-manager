@@ -28,7 +28,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.concurrent.ExecutorService;
 import javax.swing.JOptionPane;
-import mmcorej.CMMCore;
+import org.micromanager.Studio;
 import mmcorej.MMCoreJ;
 import org.micromanager.display.internal.event.DisplayMouseEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
@@ -42,7 +42,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  */
 public final class CenterAndDragListener {
 
-   private final CMMCore core_;
+   private final Studio studio_;
    private final ExecutorService executorService_;
    private final StageMover stageMover_;
    private boolean mirrorX_;
@@ -53,9 +53,9 @@ public final class CenterAndDragListener {
    
    private int lastX_, lastY_;
 
-   public CenterAndDragListener(final CMMCore core, 
+   public CenterAndDragListener(final Studio studio, 
          final ExecutorService executorService) {
-      core_ = core;
+      studio_ = studio;
       executorService_ = executorService;
       stageMover_ = new StageMover();
 
@@ -86,11 +86,11 @@ public final class CenterAndDragListener {
 
          // Move the stage
          try {
-            core_.setRelativeXYPosition(xyStage_, xRel_, yRel_);
+            studio_.core().setRelativeXYPosition(xyStage_, xRel_, yRel_);
             double[] xs = new double[1];
             double[] ys = new double[1];
-            core_.getXYPosition(xyStage_, xs, ys);
-            DefaultEventManager.getInstance().post(
+            studio_.core().getXYPosition(xyStage_, xs, ys);
+            studio_.events().post(
                     new XYStagePositionChangedEvent(xyStage_, xs[0], ys[0]));
          } catch (Exception ex) {
             ReportingUtils.showError(ex);
@@ -103,7 +103,7 @@ public final class CenterAndDragListener {
     * Ensures that the stage moves in the expected direction
     */
    public void getOrientation() {
-      String camera = core_.getCameraDevice();
+      String camera = studio_.core().getCameraDevice();
       if (camera == null) {
          JOptionPane.showMessageDialog(null, "This function does not work without a camera");
          return;
@@ -111,9 +111,9 @@ public final class CenterAndDragListener {
       // If there is an affine transform, use that, otherwise fallbakc to 
       // the old mechanism
       try {
-         double pixelSize = core_.getPixelSizeUm();
+         double pixelSize = studio_.core().getPixelSizeUm();
          try {
-            affineTransform_ = AffineUtils.doubleToAffine(core_.getPixelSizeAffine(true));
+            affineTransform_ = AffineUtils.doubleToAffine(studio_.core().getPixelSizeAffine(true));
             if (Math.abs(pixelSize
                     - AffineUtils.deducePixelSize(affineTransform_)) > 0.1 * pixelSize) {
                // affine transform does not correspond to pixelSize, so do not 
@@ -132,13 +132,13 @@ public final class CenterAndDragListener {
          // to experiment with these settings, and it probably is not very expensive
          // to check every time
          try {
-            String tmp = core_.getProperty(camera, "TransposeCorrection");
+            String tmp = studio_.core().getProperty(camera, "TransposeCorrection");
             correction_ = !(tmp.equals("0"));
-            tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorX());
+            tmp = studio_.core().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorX());
             mirrorX_ = !(tmp.equals("0"));
-            tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorY());
+            tmp = studio_.core().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorY());
             mirrorY_ = !(tmp.equals("0"));
-            tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_SwapXY());
+            tmp = studio_.core().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_SwapXY());
             transposeXY_ = !(tmp.equals("0"));
          } catch (Exception exc) {
             ReportingUtils.showError(exc);
@@ -167,19 +167,19 @@ public final class CenterAndDragListener {
 
                // Get needed info from core
                getOrientation();
-               String xyStage = core_.getXYStageDevice();
+               String xyStage = studio_.core().getXYStageDevice();
                if (xyStage == null) {
                   return;
                }
-               double pixSizeUm = core_.getPixelSizeUm(true);
+               double pixSizeUm = studio_.core().getPixelSizeUm(true);
                if (!(pixSizeUm > 0.0)) {
                   JOptionPane.showMessageDialog(null, 
                           "Please provide pixel size calibration data before using this function");
                   return;
                }
 
-               int width = (int) core_.getImageWidth();
-               int height = (int) core_.getImageHeight();
+               int width = (int) studio_.core().getImageWidth();
+               int height = (int) studio_.core().getImageHeight();
 
                // Calculate the center point of the event
                final Point center = new Point(
@@ -210,12 +210,12 @@ public final class CenterAndDragListener {
             // Get needed info from core
             // (is it really needed to run this every time?)
             getOrientation();
-            String xyStage = core_.getXYStageDevice();
+            String xyStage = studio_.core().getXYStageDevice();
             if (xyStage == null || xyStage.equals("")) {
                return;
             }
             try {
-               if (core_.deviceBusy(xyStage)) {
+               if (studio_.core().deviceBusy(xyStage)) {
                   return;
                }
             } catch (Exception ex) {
@@ -223,7 +223,7 @@ public final class CenterAndDragListener {
                return;
             }
 
-            double pixSizeUm = core_.getPixelSizeUm();
+            double pixSizeUm = studio_.core().getPixelSizeUm();
             if (!(pixSizeUm > 0.0)) {
                JOptionPane.showMessageDialog(null, "Please provide pixel size calibration data before using this function");
                return;

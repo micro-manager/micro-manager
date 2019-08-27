@@ -121,18 +121,24 @@ int XCiteExacte::Initialize()
 
    // Connect to hardware
    status = ExecuteCommand(cmdConnect);
-   if (status != DEVICE_OK)
-      return status;
+   if (status != DEVICE_OK) {
+		LogMessage("XCiteExacte: failed cmdConnect");
+	   return status;
+   }
 
    // Clear alarm
    status = ExecuteCommand(cmdClearAlarm);
-   if (status != DEVICE_OK)
+   if (status != DEVICE_OK){
+	   LogMessage("XCiteExacte: failed cmdClearAlarm");
       return status;
+   }
 
    // Enable Exacte extended commands
    status = ExecuteCommand(cmdEnableExtendedCommands);
-   if (status != DEVICE_OK)
+   if (status != DEVICE_OK){
+	   LogMessage("XCiteExacte: failed cmdEnableExtendedCommands");
       return status;
+   }
 
    // Lamp intensity
    CPropertyAction *pAct = new CPropertyAction(this, &XCiteExacte::OnIntensity);
@@ -141,8 +147,10 @@ int XCiteExacte::Initialize()
 
    // Initialize intensity from existing state
    status = ExecuteCommand(cmdGetIntensityLevel, NULL, 0, &response);
-   if (status != DEVICE_OK)
+   if (status != DEVICE_OK){
+	   LogMessage("XCiteExacte: failed cmdGetIntensityLevel");
       return status;
+   }
    lampIntensity_ = (long) atoi(response.c_str());
    sprintf(cBuff, "%03d", (int) lampIntensity_);
    SetProperty("Lamp-Intensity", cBuff);
@@ -262,19 +270,25 @@ int XCiteExacte::Initialize()
 
    // Enable PC control of shutter
    status = ExecuteCommand(cmdEnableShutterControl);
-   if (status != DEVICE_OK)
+   if (status != DEVICE_OK){
+	   LogMessage("XCiteExacte: failed cmdEnableShutterControl");
       return status;
+   }
 
    // Software version ("field")
    status = ExecuteCommand(cmdGetSoftwareVersion, NULL, 0, &response);
-   if (status != DEVICE_OK)
+   if (status != DEVICE_OK){
+	   LogMessage("XCiteExacte: failed cmdGetSoftwareVersion");
       return status;
+   }
    CreateProperty("Software-Version", response.c_str(), MM::String, true);
 
    // Serial number ("field")
    status = ExecuteCommand(cmdGetSerialNumber, NULL, 0, &response);
-   if (status != DEVICE_OK)
+   if (status != DEVICE_OK){
+	   LogMessage("XCiteExacte: failed cmdGetSerialNumber");
       return status;
+   }
    CreateProperty("Serial-Number", response.c_str(), MM::String, true);
 
    // Lamp hours ("field")
@@ -331,8 +345,10 @@ int XCiteExacte::Initialize()
 
    // Update state based on existing status
    status = ExecuteCommand(cmdGetUnitStatus, NULL, 0, &response);
-   if (status != DEVICE_OK)
+   if (status != DEVICE_OK){
+	   LogMessage("XCiteExacte: failed cmdGetUnitStatus");
       return status;
+   }
    status = atoi(response.c_str());
    shutterOpen_ = 0 != (status & 4);
    SetProperty("Shutter-State", shutterOpen_ ? "Open" : "Closed");

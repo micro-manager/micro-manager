@@ -26,7 +26,7 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,                   
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.           
 //                                                                                     
-// AUTHOR: Nico Stuurman, nico@cmp.ucsf.edu, 02/02/2007                                                 
+// AUTHOR: Nico Stuurman, nico@cmp.ucsf.edu, 02/02/2007; additions by Jon Daniels (ASI) June 2019
 //                                                                                   
 // Based on NikonTE2000 controller adapter by Nenad Amodaj                           
 // 
@@ -76,6 +76,9 @@ public:
    int GetCurrentWheel(MM::Device& device, MM::Core& core, int& wheelNr);
    int GetNumberOfPositions(MM::Device& device, MM::Core& core, int wheelNr, int& nrPos);
    int FilterWheelBusy(MM::Device& device, MM::Core& core, bool& busy);
+   int SetFilterWheelSpeed(MM::Device& device, MM::Core& core, int wheelNr, long speed);
+   int GetFilterWheelSpeed(MM::Device& device, MM::Core& core, int wheelNr, long& speed);
+   int SendFilterWheelCommand(MM::Device& device, MM::Core& core, int wheelNr, std::string command, std::string& response);
    bool IsConnected();
 
 private:

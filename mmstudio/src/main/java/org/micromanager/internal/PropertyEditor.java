@@ -103,8 +103,10 @@ public final class PropertyEditor extends MMFrame {
       table_.setAutoCreateColumnsFromModel(false);
       table_.setModel(data_);
 
-      table_.addColumn(new TableColumn(0, 200, new PropertyNameCellRenderer(), null));
-      table_.addColumn(new TableColumn(1, 200, new PropertyValueCellRenderer(false), new PropertyValueCellEditor(false)));
+      table_.addColumn(new TableColumn(0, 200, 
+              new PropertyNameCellRenderer(studio_), null));
+      table_.addColumn(new TableColumn(1, 200, 
+              new PropertyValueCellRenderer(studio_), new PropertyValueCellEditor(false)));
    }
 
    private void createComponents() {

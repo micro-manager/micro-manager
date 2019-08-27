@@ -117,21 +117,51 @@ public interface Datastore extends DataProvider {
       SINGLEPLANE_TIFF_SERIES,
       MULTIPAGE_TIFF,
    }
-
+   
    /**
     * @param parent Window  on top of which to display the dialog prompt;
     *        may be null.
     * @return true if data was saved; false if user canceled
     * @throws java.io.IOException
     */
+   @Deprecated
    boolean save(Component parent) throws IOException;
 
    /**
-    * @param mode
-    * @param path
+    * Saves the datastore to an interactively determined path.
+    * Opens a file dialog prompting user for a storage location
+    * 
+    * @param parent Window  on top of which to display a dialog prompting
+    *        the user for a location to save.  After displaying 
+    * @param blocking if true will return after saving, otherwise will return quickly
+    *       and continue saving on another thread
+    * @return Path chosen by user to save the data, null if dialog was canceled
+    * @throws java.io.IOException
+    */
+   String save(Component parent, boolean blocking) throws IOException;
+
+   
+   /**
+    * Saves the datastore to the given path using the given format (SaveMode)
+    * Will save synchronously (i.e. this function will block)
+    * 
+    * @param mode File format to save to
+    * @param path File path used to save the data
+    * 
     * @throws java.io.IOException
     */
    void save(SaveMode mode, String path) throws IOException;
+   
+   /**
+    * Saves the datastore to the given path using the given format (SaveMode)
+    * 
+    * @param mode File format to save to
+    * @param path File path used to save the data
+    * @param blocking when true, will block while saving data, otherwise will return
+    *                   immediately
+    * @throws java.io.IOException
+    */
+   void save(SaveMode mode, String path, boolean blocking) throws IOException;
    
    /**
     * Sets the name of the Datastore.  Posts a DatastoreNewNameEvent

@@ -15,6 +15,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import java.awt.Rectangle;
+import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -36,10 +37,10 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.propertymap.MM1JSONSerializer;
 import org.micromanager.internal.propertymap.PropertyMapJSONSerializer;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Keys that appear in the JSON-formatted metadata (and a few other pieces of
@@ -617,7 +618,7 @@ public enum PropertyKey {
                // NS: not sure how to handle this.  Can we be sure only to 
                // receive the correct keys?  I see no straight forward way 
                // to copy other properties
-               MMStudio.getInstance().logs().showError("Found weird key in Intended dimensions: " + key);
+               ReportingUtils.showError("Found weird key in Intended dimensions: " + key);
             }
          }
          dest.putPropertyMap(key(), builder.build());
@@ -943,6 +944,44 @@ public enum PropertyKey {
       }
    },
 
+   PIXEL_SIZE_AFFINE("PixelSizeAffine", Metadata.class) {
+      @Override
+      public String getDescription() {
+         return "Affine transform describing the geometric relation between stage-space and camera-space";
+      }
+
+      @Override
+      protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
+         // PixelSizeAffinString is a ';'-separated sequence of 6 integers
+         String s = je.getAsString();
+
+         String[] affNumbers = s.split(";");
+         if (affNumbers.length == 6) {  // TODO: handle other situations?
+            double[] atf = new double[6];
+            for (int i = 0; i < 6; i++) {
+               atf[i] = Double.parseDouble(affNumbers[i]);
+            }
+            // regretfully, the Core and Java representations are permuations
+            double[] flatMatrix = {atf[0], atf[3], atf[1], atf[4], atf[2], atf[5]};
+            dest.putAffineTransform(key(), new AffineTransform(flatMatrix));
+         }         
+      }
+
+      @Override
+      protected JsonElement convertToGson(PropertyMap pmap) {
+         if (!pmap.containsAffineTransform(key())) {
+            return null;
+         }
+         AffineTransform aff = pmap.getAffineTransform(key(), null);
+         double[] fm = new double[6];
+         aff.getMatrix(fm);
+         // regretfully, the Core and Java representations are permuations
+         double[] atf = {fm[0], fm[2], fm[2], fm[1], fm[3], fm[5]};
+         String afString = Joiner.on(";").join(atf[0], atf[1], atf[2], atf[3], atf[4], atf[5]);
+         return new JsonPrimitive(afString);
+      }
+   },
+   
    PIXEL_SIZE_UM("PixelSizeUm", "PixelSize_um", Metadata.class) {
       @Override
       public String getDescription() {

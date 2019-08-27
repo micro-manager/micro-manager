@@ -21,6 +21,7 @@
 package org.micromanager.internal.utils;
 
 import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
 import mmcorej.DoubleVector;
 import org.apache.commons.math.util.MathUtils;
 
@@ -57,6 +58,53 @@ public class AffineUtils {
       out.set(4, atf.getScaleY());
       out.set(5, atf.getTranslateY());
       return out;
+   }
+   
+    /**
+     * Convert affine transform to human-interpretable measurements of rotation, scale, and shear
+     * @param transform - input affine transform
+     * @return {xScale, yScale, rotationDeg, shear}
+     */
+   public static double[] affineToMeasurements(AffineTransform transform) {
+       try {
+           //[T] = [Rot][Sca][She]
+           //{ m00 m10 m01 m11 m02 m12 }
+           double[] matrix = new double[6];
+           transform.getMatrix(matrix);
+           double angle = Math.atan(matrix[1] / matrix[0]); //radians
+           //figure out which quadrant
+           //sin && cos
+           if (matrix[1] > 0 && matrix[0] >= 0) {
+               //first quadrant, make sure angle is positive (in case ts exactly 90 degrees
+               angle = Math.abs(angle);
+           } else if (matrix[1] > 0 && matrix[0] < 0) {
+               //second quadrant
+               angle = Math.abs(angle - 2*(Math.PI / 2 + angle));
+           } else if (matrix[1] <= 0 && matrix[0] >= 0) {
+               //fourth quadrant, do nothing
+           } else {
+               //third quadrant, subtract 90 degrees
+               angle += 2*(Math.PI / 2 - angle);
+               angle *= -1; //make sure angle is negative
+           }
+           
+           //get shear by reversing the rotation, then reversing the scaling
+           AffineTransform at = AffineTransform.getRotateInstance(angle).createInverse();
+           at.concatenate(transform); //take out the rotations
+           //get scales
+           double[] newMat = new double[6];
+           at.getMatrix(newMat);
+           double xScale = Math.sqrt(newMat[0] * newMat[0] + newMat[1] * newMat[1]) * (newMat[0] > 0 ? 1.0 : -1.0);
+           double yScale = Math.sqrt(newMat[2] * newMat[2] + newMat[3] * newMat[3]) * (newMat[3] > 0 ? 1.0 : -1.0);
+           AffineTransform at2 = AffineTransform.getScaleInstance(xScale, yScale).createInverse();
+           at2.concatenate(at); // take out the scale
+           //should now be left with shear transform;
+           double shear = at2.getShearX();
+           double rotationDeg = angle / Math.PI * 180.0;
+           return new double[]{xScale, yScale, rotationDeg, shear};
+                   } catch (NoninvertibleTransformException ex) {
+           return new double[]{0,0,0,0};
+       }
    }
    
    public static double deducePixelSize(AffineTransform atf) {

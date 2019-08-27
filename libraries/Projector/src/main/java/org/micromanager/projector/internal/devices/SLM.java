@@ -35,8 +35,8 @@ public class SLM implements ProjectionDevice {
    private final String slm_;
    private final CMMCore mmc_;
    private final Studio app_;
-   private final int slmWidth_;
-   private final int slmHeight_;
+   private int slmWidth_;
+   private int slmHeight_;
    private final double spotDiameter_;
    private boolean imageOn_ = false;
    HashSet<OnStateListener> onStateListeners_ = new HashSet<OnStateListener>();
@@ -47,8 +47,13 @@ public class SLM implements ProjectionDevice {
       mmc_ = mmc;
       slm_ = mmc_.getSLMDevice();
       spotDiameter_ = spotDiameter;
-      slmWidth_ = (int) mmc.getSLMWidth(slm_);
-      slmHeight_ = (int) mmc.getSLMHeight(slm_);
+      try {
+         slmWidth_ = (int) mmc.getSLMWidth(slm_);
+         slmHeight_ = (int) mmc.getSLMHeight(slm_);
+      } catch (Exception ex) {
+         // TODO: Refactor this class to allow for multiple SLMs, 
+         // handle an invalid device label with more grace 
+      }
    }
 
    // Adds a state listener that lets a third party know if we are on or off.

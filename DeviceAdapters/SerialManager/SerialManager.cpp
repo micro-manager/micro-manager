@@ -76,6 +76,8 @@ const char* g_Baud_460800 = "460800";
 const char* g_Baud_500000 = "500000";
 const char* g_Baud_576000 = "576000";
 const char* g_Baud_921600 = "921600";
+const char* g_Baud_1000000 = "1000000";
+const char* g_Baud_2000000 = "2000000";
 
 const char* g_Handshaking_Off = "Off";
 const char* g_Handshaking_Hardware = "Hardware";
@@ -408,6 +410,8 @@ SerialPort::SerialPort(const char* portName) :
    AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_460800, (long)460800);
    AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_500000, (long)500000);
    AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_921600, (long)921600);
+   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_1000000, (long)1000000);
+   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_2000000, (long)2000000);
 
    // data bits
    CPropertyAction* pActDataBits = new CPropertyAction(this, &SerialPort::OnDataBits);

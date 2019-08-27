@@ -201,14 +201,20 @@ int MotorFocus::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Set(pos);
    }
    else if (eAct == MM::AfterSet)                             
-   {  
-      double pos;                                             
-      pProp->Get(pos);                                        
-      int ret = SetPositionUm(pos);                           
-      if (ret != DEVICE_OK)                                   
-         return ret;                                          
-   }                                                          
-                                                              
+   { 
+	  double previouspos;
+      int ret = GetPositionUm(previouspos);
+	  if (ret != DEVICE_OK)
+         return ret;
+	  double pos;                                             
+      pProp->Get(pos);   
+	  
+	  if (pos != previouspos)  { // avoid timeout if same position
+		int ret = SetPositionUm(pos);                           
+		if (ret != DEVICE_OK)                                   
+		   return ret;                                          
+	    }                                                          
+      }                                               
    return DEVICE_OK;                                          
 }
 
@@ -652,6 +658,15 @@ int OpticsUnit::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
+   // Obj Position
+   pAct = new CPropertyAction(this, &OpticsUnit::OnPositionObj);
+   ret = CreateProperty("Obj", "1", MM::Integer, true, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+   AddAllowedValue("Obj", "0"); 
+   AddAllowedValue("Obj", "1"); 
+   AddAllowedValue("Obj", "2");
+
    
    ret = UpdateStatus();
    if (ret!= DEVICE_OK)
@@ -667,6 +682,10 @@ int OpticsUnit::Initialize()
    if (ret!= DEVICE_OK)
       return ret;
 
+   unsigned short pos;
+   ret = GetPositionObjDirect(pos);
+   if (ret!= DEVICE_OK)
+      return ret;
 
    initialized = true;
 
@@ -810,8 +829,53 @@ int OpticsUnit::GetApertureDirect(long& a)
 }
 
 
+int OpticsUnit::GetPositionObjDirect(unsigned short& pos) 
+{
+   const int cmdLength = 5;
+   unsigned char command[cmdLength];
+ 
+   command[0] = 0x02; // size of data block = 2 bytes  
+   command[1] = 0x18; // command class
+   command[2] = 0xE0; // command number  
+   command[3] = 0x11; // data byte 1 = processID  
+   command[4] = 0x06; // data byte 2 = subID  
+
+
+   int ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(), command, cmdLength, OPTICS);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   g_hub.opticsUnitModel_.setWaiting(true);
+   int tryCount = 0;
+   const int maxCount = 100;
+   while (g_hub.opticsUnitModel_.isVaiting() && tryCount < maxCount)
+   {
+      CDeviceUtils::SleepMs(5);
+      tryCount++;
+   }
+   if (maxCount == tryCount)
+      return ERR_ANSWER_TIMEOUT;
+
+   return GetPositionObj(pos);
+}
+
+
+
+
+int OpticsUnit::GetPositionObj(unsigned short& position)
+{
+   ZeissUShort pos(0);
+   g_hub.opticsUnitModel_.GetPositionObj(pos);
+   position = pos;
+   return DEVICE_OK;
+}
+
+
+
 int OpticsUnit::OnZoomLevel(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+   
+
    if (eAct == MM::BeforeGet)   {
       long pos;
       int ret = GetZoomLevel(pos);
@@ -821,12 +885,20 @@ int OpticsUnit::OnZoomLevel(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet)                             
    {  
+	  long previouspos;
+      int ret = GetZoomLevel(previouspos);
+	  if (ret != DEVICE_OK)
+         return ret;
       long pos;                                             
-      pProp->Get(pos);                                        
-      int ret = SetZoomLevel(pos);                           
-      if (ret != DEVICE_OK)                                   
-         return ret;                                          
-   }                                                          
+      pProp->Get(pos);     
+
+	  if (pos != previouspos)  { // avoid timeout if same position
+
+	    int ret = SetZoomLevel(pos);                           
+		if (ret != DEVICE_OK)                                   
+           return ret;                                          
+      }  
+   }
                                                               
    return DEVICE_OK;                                          
 }
@@ -841,16 +913,45 @@ int OpticsUnit::OnAperture(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Set(pos);
    }
    else if (eAct == MM::AfterSet)                             
-   {  
+   {  long previouspos;
+      int ret = GetAperture(previouspos);
+	  if (ret != DEVICE_OK)
+         return ret;
       long pos;                                             
-      pProp->Get(pos);                                        
-      int ret = SetAperture(pos);                           
-      if (ret != DEVICE_OK)                                   
-         return ret;                                          
+      pProp->Get(pos);   
+	  if (pos != previouspos)  { // avoid timeout if same position
+         int ret = SetAperture(pos);                           
+         if (ret != DEVICE_OK)                                   
+            return ret;                                          
+	  }
    }                                                          
                                                               
    return DEVICE_OK;                                          
 }
+
+int OpticsUnit::OnPositionObj(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)   {
+      unsigned short pos;
+      int ret = GetPositionObjDirect(pos);
+
+      if (ret != DEVICE_OK)
+         return ret;
+      pProp->Set((long)pos);
+   }
+   else if (eAct == MM::AfterSet)                             
+   {  
+      //long pos;                                             
+     // pProp->Get(pos);                                        
+     //int ret = SetPositionObj((unsigned short)pos);                           
+     // if (ret != DEVICE_OK)                                   
+      //   return ret;                                          
+   }                                                          
+                                                              
+   return DEVICE_OK;                                          
+}
+
+
 
 /////////////////////////////////////////////////////////////////////////////////////
 // FLUO TUBE
@@ -901,39 +1002,31 @@ int FluoTube::Initialize()
    if (!init)
       return ERR_MODULE_NOT_FOUND;
 
+  
    // set property list
    // ----------------
-   // Shutter
-   CPropertyAction* pAct = new CPropertyAction(this, &FluoTube::OnShutter);
-   int ret = CreateProperty("Shutter", "1", MM::Integer, false, pAct);
-   if (ret != DEVICE_OK)
-      return ret;
-   AddAllowedValue("Shutter", "1"); // Closed
-   AddAllowedValue("Shutter", "2"); // Open
 
    // State
    // -----
-   pAct = new CPropertyAction (this, &FluoTube::OnState);
-   ret = CreateIntegerProperty(MM::g_Keyword_State, 1, false, pAct);
+   CPropertyAction* pAct = new CPropertyAction (this, &FluoTube::OnState);
+   int ret = CreateIntegerProperty(MM::g_Keyword_State, 0, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
-   AddAllowedValue(MM::g_Keyword_State, "1");
-   AddAllowedValue(MM::g_Keyword_State, "2");
-   AddAllowedValue(MM::g_Keyword_State, "3");
-   AddAllowedValue(MM::g_Keyword_State, "4");
+	AddAllowedValue(MM::g_Keyword_State, "0"); 
+   AddAllowedValue(MM::g_Keyword_State, "1"); 
 
-   // Label
-   // -----
-   pAct = new CPropertyAction (this, &CStateBase::OnLabel);
-   ret = CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct);
+   // Position
+	// --------
+   pAct = new CPropertyAction(this, &FluoTube::OnPosition);
+   ret = CreateProperty(g_Property_Position, "1", MM::Integer, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
-   SetPositionLabel(1, "Position-1");
-   SetPositionLabel(2, "Position-2");
-   SetPositionLabel(3, "Position-3");
-   SetPositionLabel(4, "Position-4");
+   AddAllowedValue(g_Property_Position, "1");
+   AddAllowedValue(g_Property_Position, "2");
+   AddAllowedValue(g_Property_Position, "3");
+   AddAllowedValue(g_Property_Position, "4");
 
    ret = UpdateStatus();
    if (ret!= DEVICE_OK)
@@ -946,8 +1039,7 @@ int FluoTube::Initialize()
    ret = GetShutterPosDirect(shutterPos_);
    if (ret!= DEVICE_OK)
       return ret;
-
-
+      
    initialized_ = true;
 
    return DEVICE_OK;
@@ -958,6 +1050,19 @@ int FluoTube::Shutdown()
    if (initialized_)
       initialized_ = false;
    return DEVICE_OK;
+}
+
+int FluoTube::SetOpen(bool open)
+{
+   return SetProperty(MM::g_Keyword_State, (open ? "1" : "0"));
+} 
+
+int FluoTube::GetOpen(bool& open)
+{
+	long state = 0;
+	int ret = GetProperty(MM::g_Keyword_State, state);
+	open = state == 1 ? true : false;
+	return ret;
 }
 
 int FluoTube::GetPositionDirect(unsigned short& pos)
@@ -1019,7 +1124,6 @@ int FluoTube::GetStatusDirect(unsigned short& pos)
 
    return GetPosition(pos);
 }
-
 
 int FluoTube::GetPosition(unsigned short& position)
 {
@@ -1130,7 +1234,7 @@ int FluoTube::GetShutterPos(unsigned short& p)
 }
 
 
-int FluoTube::OnShutter(MM::PropertyBase* pProp, MM::ActionType eAct)
+int FluoTube::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)   {
       unsigned short pos;
@@ -1143,13 +1247,13 @@ int FluoTube::OnShutter(MM::PropertyBase* pProp, MM::ActionType eAct)
       }
       if (ret != DEVICE_OK)
          return ret;
-      pProp->Set((long)pos);
+      pProp->Set((long)pos-1);  // pos-1 to convert Zeiss positions 1-2 to MM positions 0-1.
    }
    else if (eAct == MM::AfterSet)                             
    {  
       long pos;                                             
       pProp->Get(pos);                                        
-      int ret = SetShutterPos((unsigned short)pos);                           
+      int ret = SetShutterPos((unsigned short)pos+1);  // pos+1 to convert MM positions 0-1 to Zeiss positions 1-2.                          
       if (ret != DEVICE_OK)                                   
          return ret;                                          
    }                                                          
@@ -1157,7 +1261,7 @@ int FluoTube::OnShutter(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;                                          
 }
 
-int FluoTube::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
+int FluoTube::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)   {
       unsigned short pos;

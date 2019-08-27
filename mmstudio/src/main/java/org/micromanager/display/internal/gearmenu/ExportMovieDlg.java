@@ -39,7 +39,6 @@ import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
@@ -48,13 +47,14 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.ApplicationSkin;
+import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.ImageExporter;
 import org.micromanager.internal.utils.FileDialogs;
-import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -100,8 +100,7 @@ public final class ExportMovieDlg extends MMDialog {
          super(new MigLayout("flowx"));
          super.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
          store_ = display.getDataProvider();
-         List<String> axes = new ArrayList<String>(
-               parent.getNonZeroAxes());
+         List<String> axes = new ArrayList<>(parent.getNonZeroAxes());
          Collections.sort(axes);
          axisSelector_ = new JComboBox(axes.toArray(new String[] {}));
          axisSelector_.addActionListener(new ActionListener() {
@@ -121,7 +120,7 @@ public final class ExportMovieDlg extends MMDialog {
             public void stateChanged(ChangeEvent e) {
                // Ensure that the end point can't go below the start point.
                int newMin = (Integer) minSpinner_.getValue();
-               maxModel_.setMinimum(newMin + 1);
+               maxModel_.setMinimum(newMin);
             }
          });
          maxSpinner_ = new JSpinner();
@@ -130,7 +129,7 @@ public final class ExportMovieDlg extends MMDialog {
             public void stateChanged(ChangeEvent e) {
                // Ensure that the start point can't come after the end point.
                int newMax = (Integer) maxSpinner_.getValue();
-               minModel_.setMaximum(newMax - 1);
+               minModel_.setMaximum(newMax);
             }
          });
 
@@ -183,8 +182,8 @@ public final class ExportMovieDlg extends MMDialog {
          if (minModel_ == null) {
             // Create the spinner models now.
             // Remember our indices here are 1-indexed.
-            minModel_ = new SpinnerNumberModel(1, 1, axisLen - 1, 1);
-            maxModel_ = new SpinnerNumberModel(axisLen, 2, axisLen, 1);
+            minModel_ = new SpinnerNumberModel(1, 1, axisLen, 1);
+            maxModel_ = new SpinnerNumberModel(axisLen, 1, axisLen, 1);
             minSpinner_.setModel(minModel_);
             maxSpinner_.setModel(maxModel_);
          }
@@ -224,6 +223,8 @@ public final class ExportMovieDlg extends MMDialog {
       }
    }
 
+   private final Studio studio_;
+   private final ApplicationSkin skin_;
    private final DisplayWindow display_;
    private final DataProvider provider_;
    private final ArrayList<AxisPanel> axisPanels_;
@@ -236,10 +237,14 @@ public final class ExportMovieDlg extends MMDialog {
 
    /**
     * Show the dialog.
+    * @param studio
     * @param display display showing the data to be exported
     */
-   public ExportMovieDlg(DisplayWindow display) {
+   public ExportMovieDlg(Studio studio, DisplayWindow display) {
       super();
+      studio_ = studio;
+      skin_ = studio.app().getApplicationSkin();
+      
       // position the export dialog over the center of the display:
       Window dw = display.getWindow();
       int centerX = dw.getX() + dw.getWidth() / 2;
@@ -378,7 +383,8 @@ public final class ExportMovieDlg extends MMDialog {
                     true,
                     "",
                     fss,
-                    false);
+                    false,
+                    skin_);
          if (outputDir == null) {
             return;
          }
@@ -423,7 +429,7 @@ public final class ExportMovieDlg extends MMDialog {
     * @return 
     */
    public AxisPanel createAxisPanel() {
-      HashSet<String> axes = new HashSet<String>(getNonZeroAxes());
+      HashSet<String> axes = new HashSet<>(getNonZeroAxes());
       for (AxisPanel panel : axisPanels_) {
          axes.remove(panel.getAxis());
       }
@@ -462,7 +468,7 @@ public final class ExportMovieDlg extends MMDialog {
     */
    public void deleteFollowing(AxisPanel last) {
       boolean shouldRemove = false;
-      HashSet<AxisPanel> defuncts = new HashSet<AxisPanel>();
+      HashSet<AxisPanel> defuncts = new HashSet<>();
       for (AxisPanel panel : axisPanels_) {
          if (shouldRemove) {
             defuncts.add(panel);
@@ -495,7 +501,7 @@ public final class ExportMovieDlg extends MMDialog {
     * @return 
     */
    public ArrayList<String> getNonZeroAxes() {
-      ArrayList<String> result = new ArrayList<String>();
+      ArrayList<String> result = new ArrayList<>();
       for (String axis : provider_.getAxes()) {
          // Channel axis is only available when in non-composite display modes.
          if (provider_.getMaxIndices().getIndex(axis) > 0 &&
@@ -518,8 +524,8 @@ public final class ExportMovieDlg extends MMDialog {
    /**
     * Get the default mode the user wants to use for exporting movies.
     */
-   private static String getDefaultExportFormat() {
-      return UserProfileStaticInterface.getInstance().
+   private String getDefaultExportFormat() {
+      return studio_.profile().
               getSettings(ExportMovieDlg.class).
               getString(DEFAULT_EXPORT_FORMAT, FORMAT_PNG);
    }
@@ -527,38 +533,34 @@ public final class ExportMovieDlg extends MMDialog {
    /**
     * Set the default mode to use for exporting movies.
     */
-   private static void setDefaultExportFormat(String format) {
-      UserProfileStaticInterface.getInstance().getSettings(ExportMovieDlg.class).
+   private void setDefaultExportFormat(String format) {
+      studio_.profile().getSettings(ExportMovieDlg.class).
               putString(DEFAULT_EXPORT_FORMAT, format);
    }
 
    /**
     * Get the default filename prefix.
     */
-   private static String getDefaultPrefix() {
-      return UserProfileStaticInterface.getInstance().
-              getSettings(ExportMovieDlg.class).
+   private String getDefaultPrefix() {
+      return studio_.profile().getSettings(ExportMovieDlg.class).
               getString(DEFAULT_FILENAME_PREFIX, "exported");
    }
 
    /**
     * Set a new default filename prefix.
     */
-   private static void setDefaultPrefix(String prefix) {
-      UserProfileStaticInterface.getInstance().
-              getSettings(ExportMovieDlg.class).
+   private void setDefaultPrefix(String prefix) {
+      studio_.profile().getSettings(ExportMovieDlg.class).
               putString(DEFAULT_FILENAME_PREFIX, prefix);
    }
    
-   private static int getJPEGQuality() {
-      return UserProfileStaticInterface.getInstance().
-              getSettings(ExportMovieDlg.class).
+   private int getJPEGQuality() {
+      return studio_.profile().getSettings(ExportMovieDlg.class).
               getInteger(JPEG_QUALITY, 90);
    }
    
-   private static void setJPEGQuality(int quality) {
-      UserProfileStaticInterface.getInstance().
-              getSettings(ExportMovieDlg.class).
+   private void setJPEGQuality(int quality) {
+      studio_.profile().getSettings(ExportMovieDlg.class).
               putInteger(JPEG_QUALITY, quality);
    }
 }

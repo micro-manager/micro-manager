@@ -9,18 +9,12 @@ import org.micromanager.internal.utils.ReportingUtils;
 // This is a singleton wrapper around the Guava library's EventBus. It exposes
 // a system-wide EventBus for certain general-purpose events.
 public final class DefaultEventManager implements EventManager {
-   // Singleton.
-   private static final DefaultEventManager STATIC_INSTANCE;
-   static {
-      STATIC_INSTANCE = new DefaultEventManager();
-   }
 
    private final EventBus bus_;
    private final LogManager logger_;
    
    /**
     * DefaultEventManager is basically a pass-through to the Google Eventbus
-    * Todo: make non-static
     * 
     */
    public DefaultEventManager() {
@@ -53,9 +47,5 @@ public final class DefaultEventManager implements EventManager {
       } catch (IllegalArgumentException iae) {
          logger_.logError(iae, "Error while posting");
       }
-   }
-
-   public static DefaultEventManager getInstance() {
-      return STATIC_INSTANCE;
    }
 }

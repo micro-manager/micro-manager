@@ -16,10 +16,21 @@ import org.micromanager.data.Coordinates;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.internal.DefaultImage;
 
+import boofcv.abst.distort.FDistort;
+import boofcv.struct.border.BorderType;
 import boofcv.struct.image.ImageGray;
 import boofcv.struct.image.GrayU8;
 import boofcv.struct.image.GrayU16;
+import boofcv.struct.image.GrayS32;
 import boofcv.alg.misc.GImageMiscOps;
+import boofcv.alg.misc.PixelMath;
+import boofcv.core.image.ConvertImage;
+
+import georegression.struct.affine.Affine2D_F64;
+
+
+constX = -350.0;  // displacement between the two datasets in terms of pixels of the largest image
+constY = 200.0;
 
 displays = mm.displays().getAllDataViewers();
 
@@ -49,8 +60,22 @@ imgMD1 = img1.getMetadata();
 imgMD2 = img2.getMetadata();
 pSize1 = imgMD1.getPixelSizeUm();
 pSize2 = imgMD2.getPixelSizeUm();
+aff1 = imgMD1.getPixelSizeAffine();
+aff2 = imgMD2.getPixelSizeAffine();
 smallestPSize = pSize1;
-if (pSize2 < smallestPSize) { smallestPSize = pSize2; }
+ha = aff1;
+ca = aff2;
+if (data2.getMaxIndices().getP() == 0) {
+	ha = aff2;
+	ca = aff1;
+}
+hamAff = new Affine2D_F64(ha.getScaleX(), ha.getShearX(), ha.getShearY(), ha.getScaleY(), 0.0, 0.0);
+hamAffI = hamAff.invert(null);
+confocalAff = new Affine2D_F64(ca.getScaleX(), ca.getShearX(), ca.getShearY(), ca.getScaleY(), 0.0, 0.0);
+
+if (pSize2 < smallestPSize) { 
+	smallestPSize = pSize2; 
+}
 
 bytesPerPixel = img1.getBytesPerPixel();
 if (img2.getBytesPerPixel() != bytesPerPixel) {
@@ -69,7 +94,7 @@ cb = Coordinates.builder().t(0).c(0).p(0).z(0);
 xMinUm = img1.getMetadata().getXPositionUm() - (0.5 * img1.getWidth() * pSize1);
 yMinUm = img1.getMetadata().getYPositionUm() - (0.5 * img1.getHeight() * pSize1);
 xMaxUm = img1.getMetadata().getXPositionUm() + (0.5 * img1.getWidth() * pSize1);
-yMaxUm = img1.getMetadata().getXPositionUm() + (0.5 * img1.getHeight() * pSize1);
+yMaxUm = img1.getMetadata().getYPositionUm() + (0.5 * img1.getHeight() * pSize1);
 
 for (data : datas ) {
 	for (int p = 0; p <= data.getMaxIndices().getP(); p++) {
@@ -89,32 +114,45 @@ for (data : datas ) {
 
 widthUm = xMaxUm - xMinUm;
 heightUm = yMaxUm - yMinUm;
-centerXUm = xMin + (widthUm / 2.0);
-centerYUm = yMin + (heightUm / 2.0);
+centerXUm = xMinUm + (widthUm / 2.0);
+centerYUm = yMinUm + (heightUm / 2.0);
 
-widthPixels = (int) (widthUm / smallestPSize);
-heightPixels = (int) (heightUm / smallestPSize);
+widthPixels = (int) (widthUm / smallestPSize) + 1;
+heightPixels = (int) (heightUm / smallestPSize) + 1;
 //mm.scripter().message("widthPixels: " + widthPixels + ", heightPixels: " + heightPixels);
 
+// Not sure why, but it looks like the image will end up at the origin
+// rather then the center unless we set this translation to the center
+// of the target image.   TODO: get this number dynamically
 
+hamAffI.tx = widthPixels / 2.0 + constX;
+hamAffI.ty = heightPixels / 2.0 + constY;
 
 targetStore = mm.data().createRAMDatastore();
 
 int c = 0;
 for (data: datas) {
-	ImageGray newImgBoof, oldImgBoof;
+	cb.t(0).c(0).p(0).z(0);
+	ImageGray newImgBoof, oldImgBoof, tmpImgBoof, tmp2ImgBoof;
 	newMetadataB  = data.getImage(cb.build()).getMetadata().
 				copyBuilderWithNewUUID().pixelSizeUm(smallestPSize);
 	if (bytesPerPixel == 1) {
 		newImgBoof = new GrayU8(widthPixels, heightPixels);
+		tmpImgBoof = new GrayU8(widthPixels, heightPixels);
+		tmp2ImgBoof = new GrayU16(widthPixels, heightPixels);
 	} else { // bytesPerPixel == 2
-		newImgBoof = new GrayU16 (widthpixels, heightPixels);
+		newImgBoof = new GrayU16 (widthPixels, heightPixels);
+		tmpImgBoof = new GrayU16 (widthPixels, heightPixels);		
+		tmp2ImgBoof = new GrayS32(widthPixels, heightPixels);
 	}
-	for (int p = 0; p <= data.getMaxIndices().getP(); p++) {
+	if (data.getMaxIndices().getP() <= 1) {
+		p = 0;
 		img = data.getImage(cb.p(p).build());
 		pSize = img.getMetadata().getPixelSizeUm();
 		tmpXMinUm = img.getMetadata().getXPositionUm() - (0.5 * img.getWidth() * pSize);
 		tmpYMinUm = img.getMetadata().getYPositionUm() - (0.5 * img.getHeight() * pSize);
+		
+		//mm.scripter().message("" + tmpXMinUm + ", " + xMinUm + ", " + smallestPSize);
 		xMinPixel = (int) ((tmpXMinUm - xMinUm) / smallestPSize);
 		yMinPixel = (int) ((tmpYMinUm - yMinUm) / smallestPSize);
 		//mm.scripter().message("c: " + c + ", p:" + p + ", xMinPixel: " + xMinPixel + ", yminPixel: " + yMinPixel);
@@ -124,9 +162,44 @@ for (data: datas) {
 			oldImgBoof = new GrayU16 (img.getWidth(), img.getHeight());
 		}
 		oldImgBoof.setData(img.getRawPixels());
+		mm.scripter().message("" + xMinPixel + ", " + yMinPixel);
 		GImageMiscOps.copy(0, 0, xMinPixel, yMinPixel, img.getWidth(), img.getHeight(),
 					oldImgBoof, newImgBoof);
-	}	
+	} else { // p > 1	
+		for (int p = 0; p <= data.getMaxIndices().getP(); p++) {
+			img = data.getImage(cb.p(p).build());
+			if (bytesPerPixel == 1) {
+				oldImgBoof = new GrayU8(img.getWidth(), img.getHeight());
+			} else { // bytesPerPixel == 2
+				oldImgBoof = new GrayU16 (img.getWidth(), img.getHeight());
+			}
+			oldImgBoof.setData(img.getRawPixels());
+			diffX = centerXUm - img.getMetadata().getXPositionUm();
+			diffY = centerYUm - img.getMetadata().getYPositionUm();
+			mm.scripter().message("x: " + centerXUm + ", " + img.getMetadata().getXPositionUm() + ", " + diffX);	
+			mm.scripter().message("y: " + centerYUm + ", " + img.getMetadata().getYPositionUm() + ", " + diffY);
+
+			
+			aff = confocalAff.copy();
+			
+			aff.tx = -(diffX);
+			aff.ty = -(diffY);
+					//centerXUm - img.getMetadata().getXPositionUm(),.0
+					//centerYUm - img.getMetadata().getYPositionUm());
+
+		   aff = aff.concat(hamAffI, null);
+		   fd = new FDistort();
+		   fd.input(oldImgBoof);
+		   fd.output(tmpImgBoof);
+		   fd.affine(aff);
+		   fd.interpNN();
+		   fd.border(BorderType.ZERO);
+		   fd.apply();
+		   PixelMath.add(newImgBoof, tmpImgBoof, tmp2ImgBoof);
+		   newImgBoof = ConvertImage.convert(tmp2ImgBoof, newImgBoof);
+		   
+		}
+	}
 	newImage = new DefaultImage(newImgBoof.getData(), widthPixels, heightPixels, 
 				bytesPerPixel, 1, cb.p(0).c(c).build(), 
 				newMetadataB.build());

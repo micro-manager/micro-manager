@@ -72,6 +72,7 @@ import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TextUtils;
+import org.micromanager.projector.Mapping;
 import org.micromanager.projector.ProjectorActions;
 
 // The Mosaic Sequencing Window is for use with Andor's Mosaic3 device adapter.
@@ -82,8 +83,8 @@ public class MosaicSequencingFrame extends MMFrame {
    private final Studio gui_;
    private final String mosaicName_;
    private final SLM mosaicDevice_;
-   private final int mosaicWidth_;
-   private final int mosaicHeight_;
+   private int mosaicWidth_ = 0;
+   private int mosaicHeight_ = 0;
    private final ProjectorControlForm projectorControlForm_;
    private final DefaultTableModel sequenceTableModel_;
    private final Vector<String> headerNames = new Vector<String>(Arrays.asList(         
@@ -484,9 +485,17 @@ public class MosaicSequencingFrame extends MMFrame {
    // Get a list of SequenceEvents by extracting information from the sequenceTable_.
    private ArrayList<SequenceEvent> getSequenceEvents() {
       final ImagePlus snapLiveImage = gui_.live().getDisplay().getImagePlus();
-      Map<Polygon, AffineTransform> mapping = projectorControlForm_.getMapping();
+      Mapping mapping = projectorControlForm_.getMapping();
+      Integer binning = null;
+      Rectangle roi = null;
+      try {
+         binning = Integer.parseInt(core_.getProperty(core_.getCameraDevice(), "Binning"));
+         roi = core_.getROI();
+      } catch (Exception ex) {
+         gui_.logs().logError(ex);
+      }
       List<FloatPolygon> availableFloatRoiPolygons = 
-              ProjectorActions.transformROIs(getRois(), mapping);
+              ProjectorActions.transformROIs(getRois(), mapping, roi, binning);
       List<Polygon> availableRoiPolygons = Utils.FloatToNormalPolygon(
               availableFloatRoiPolygons);
       ArrayList<SequenceEvent> events = new ArrayList<SequenceEvent>();
@@ -784,8 +793,12 @@ public class MosaicSequencingFrame extends MMFrame {
       mosaicDevice_ = mosaicDevice;
       // Get the first available Mosaic device for now.
       mosaicName_ = getMosaicDevices(core_).get(0);
-      mosaicWidth_ = (int) core_.getSLMWidth(mosaicName_);
-      mosaicHeight_ = (int) core.getSLMHeight(mosaicName_);
+      try {
+         mosaicWidth_ = (int) core_.getSLMWidth(mosaicName_);
+         mosaicHeight_ = (int) core.getSLMHeight(mosaicName_);
+      } catch (Exception ex) {
+         // TODO: handle correctly
+      }
       sequenceTableModel_ = (DefaultTableModel) sequenceTable_.getModel();
       intensityNames_ = generateIntensityNames();
       // The mosaic executor service makes sure everything happens

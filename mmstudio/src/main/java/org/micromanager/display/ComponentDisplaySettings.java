@@ -1,8 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package org.micromanager.display;
 
 /**
@@ -21,7 +17,16 @@ public interface ComponentDisplaySettings {
 
    long getScalingMinimum();
    long getScalingMaximum();
-   double getScalingGamma();
+   double getScalingGamma();  
+   
+   // NS 2019-08015: I know this goes against the ideas behind this design,
+   // but we need to set these values everytime and autostretch is executed
+   // and it seems inefficient to create these objects (and its parents) everytime
+   // that happens.
+   // It is OK to do this differently, but we need this functionality
+   void setScalingMinimum(long min);
+   void setScalingMaximum(long max);
+   
 
    Builder copyBuilder();
 

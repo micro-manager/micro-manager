@@ -42,6 +42,8 @@
 #include <iomanip>
 
 using namespace std;
+bool Tsi3Cam::globalColorInitialized = false;
+bool Tsi3Cam::globalPolarizationInitialized = false;
 
 
 void camera_connect_callback(char* /* cameraSerialNumber */, enum TL_CAMERA_USB_PORT_TYPE /* usb_bus_speed */, void* /* context */)
@@ -61,10 +63,18 @@ Tsi3Cam::Tsi3Cam() :
    triggerPolarity(TL_CAMERA_TRIGGER_POLARITY_ACTIVE_HIGH),
    operationMode(TL_CAMERA_OPERATION_MODE_SOFTWARE_TRIGGERED),
    camHandle(nullptr),
+   colorProcessor(nullptr),
+	polarizationProcessor(nullptr),
    acquiringSequence(false),
    acquiringFrame(false),
    maxExposureMs(10000),
-	color(false)
+   color(false),
+	polarized(false),
+	whiteBalance(false),
+	whiteBalancePending(0L),
+	pixelSize(4),
+	bitDepth(8),
+	polarImageType(Intensity)
 {
    // set default error messages
    InitializeDefaultErrorMessages();
@@ -80,6 +90,9 @@ Tsi3Cam::Tsi3Cam() :
 
    // this identifies which camera we want to access
    CreateProperty(MM::g_Keyword_CameraID, "0", MM::Integer, false, 0, true);
+
+	// obtain path for loading DLLs
+	sdkPath = getSDKPath();
 }
 
 Tsi3Cam::~Tsi3Cam()
@@ -97,11 +110,15 @@ void Tsi3Cam::GetName(char* name) const
 
 int Tsi3Cam::Initialize()
 {
+
 	LogMessage("Initializing TSI3 camera...");
+	LogMessage("TSI SDK path: " + sdkPath);
 	
 	const int maxSdkStringLength = 1024;
+	string kernelPath(sdkPath);
+	kernelPath += "thorlabs_unified_sdk_kernel.dll";
 
-   if (tl_camera_sdk_dll_initialize())
+   if (tl_camera_sdk_dll_initialize(kernelPath.c_str()))
    {
       return ERR_TSI_DLL_LOAD_FAILED;
    }
@@ -198,6 +215,12 @@ int Tsi3Cam::Initialize()
 			LogMessage("Color camera: unsupported pixel depth");
 			return ERR_INTERNAL_ERROR; // color processor supports onlly 16 -> 48 conversion
 		}
+		
+		if (tl_camera_get_color_filter_array_phase(camHandle, &cfaPhase))
+		{
+			return ERR_INTERNAL_ERROR;
+		}
+
 		int r = InitializeColorProcessor();
 		if (r != DEVICE_OK)
 		{
@@ -205,11 +228,73 @@ int Tsi3Cam::Initialize()
 			return ERR_INTERNAL_ERROR;
 		}
 		color = true;
+		polarized = false;
+		pixelSize = 4; // 32bitRGB
+
+		// create white balance property
+		CPropertyAction *pAct = new CPropertyAction(this, &Tsi3Cam::OnWhiteBalance);
+		ret = CreateProperty(g_WhiteBalance, g_Off, MM::String, false, pAct);
+		AddAllowedValue(g_WhiteBalance, g_Off);
+		AddAllowedValue(g_WhiteBalance, g_Set);
+		AddAllowedValue(g_WhiteBalance, g_On);
+
+		pAct = new CPropertyAction (this, &Tsi3Cam::OnPixelType);
+
+		ret = CreateStringProperty(MM::g_Keyword_PixelType, g_PixelType_32bitRGB, false, pAct);
+		assert(ret == DEVICE_OK);
+
+		vector<string> pixelTypeValues;
+		pixelTypeValues.push_back(g_PixelType_32bitRGB);
+		pixelTypeValues.push_back(g_PixelType_64bitRGB);
+
+		ret = SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);
+		if (ret != DEVICE_OK)
+			return ret;
+
 	}
 	else if (sensorType == TL_CAMERA_SENSOR_TYPE_MONOCHROME)
+	{
 		color = false;
+		polarized = false;
+		pixelSize = 2;
+	}
+	else if (sensorType == TL_CAMERA_SENSOR_TYPE_MONOCHROME_POLARIZED)
+	{
+		if (tl_camera_get_polar_phase(camHandle, &polarPhase))
+		{
+			return ERR_INTERNAL_ERROR;
+		}
+
+		int r = InitializePolarizationProcessor();
+		if (r != DEVICE_OK)
+		{
+			LogMessage("Failed to initialize polarization processor");
+			return ERR_INTERNAL_ERROR;
+		}
+
+		CPropertyAction *pAct = new CPropertyAction (this, &Tsi3Cam::OnPolarImageType);
+		ret = CreateStringProperty(g_PolarImageType, g_PolarImageType_Intensity, false, pAct);
+		assert(ret == DEVICE_OK);
+
+		polarImageType = Intensity;
+
+		vector<string> pixelTypeValues;
+		pixelTypeValues.push_back(g_PolarImageType_Intensity);
+		pixelTypeValues.push_back(g_PolarImageType_Raw);
+		pixelTypeValues.push_back(g_PolarImageType_Azimuth);
+		pixelTypeValues.push_back(g_PolarImageType_DoLP);
+		pixelTypeValues.push_back(g_PolarImageType_Quad);
+
+		ret = SetAllowedValues(g_PolarImageType, pixelTypeValues);
+		if (ret != DEVICE_OK)
+			return ret;
+
+		color = false;
+		polarized = true;
+		pixelSize = 2;
+	}
 	else
-		return ERR_INTERNAL_ERROR;
+		return ERR_UNSUPPORTED_SENSOR;
 
    long long exp_min = 0, exp_max = 0;
    if (tl_camera_get_exposure_time_range(camHandle, &exp_min, &exp_max))
@@ -236,12 +321,21 @@ int Tsi3Cam::Initialize()
    assert(ret == DEVICE_OK);
 
    vector<string> binValues;
-   for (int bin=1; bin<=binMax; bin++)
-   {
-      ostringstream os;
-      os << bin;
-      binValues.push_back(os.str());
-   }
+	if (color)
+	{
+		// color cameras do not support binning
+		binValues.push_back(string("1"));
+	}
+	else
+	{
+		// all other cameras do
+		for (int bin=1; bin<=binMax; bin++)
+		{
+			ostringstream os;
+			os << bin;
+			binValues.push_back(os.str());
+		}
+	}
   
    ret = SetAllowedValues(MM::g_Keyword_Binning, binValues);
    assert(ret == DEVICE_OK);
@@ -266,7 +360,7 @@ int Tsi3Cam::Initialize()
    //ret = CreateProperty(g_Temperature, "0", MM::Integer, true, pAct);
 
    //tl_camera_get_is_eep_supported create EEP On/Off property
-	bool eepSupported(false);
+	int eepSupported(0);
 	tl_camera_get_is_eep_supported(camHandle, &eepSupported);
 	if (eepSupported)
 	{
@@ -319,6 +413,9 @@ int Tsi3Cam::Shutdown()
 	if (color)
 		ShutdownColorProcessor();
 
+	if (polarized)
+		ShutdownPolarizationProcessor();
+
    if (tl_camera_close_camera(camHandle))
       LogMessage("TSI Camera SDK3 close failed!");
 
@@ -363,22 +460,35 @@ const unsigned int* Tsi3Cam::GetImageBufferAsRGB32()
 }
 unsigned Tsi3Cam::GetNumberOfComponents() const
 {
+	int numComp = 0;
+
 	if (color)
-		return 4;
+		numComp = 4;
 	else
-		return 1;
+		numComp = 1;
+
+	//ostringstream os;
+	//os << "GetNumberOfComponents->" << numComp;
+	//LogMessage(os.str(), true);
+	return numComp;
 }
 
 unsigned Tsi3Cam::GetNumberOfChannels() const
 {
-   // TODO: multichannel
    return 1;
 }
 
+unsigned Tsi3Cam::GetImageBytesPerPixel() const
+{
+	//ostringstream os;
+	//os << "GetImageBytesPerPixel->" << img.Depth();
+	//LogMessage(os.str(), true);
+	return img.Depth();
+} 
+
+
 int Tsi3Cam::GetChannelName(unsigned channel, char* name)
 {
-   // TODO: multichannel
-
    if (channel != 0)
       return ERR_INVALID_CHANNEL_INDEX;
    
@@ -430,7 +540,16 @@ int Tsi3Cam::SnapImage()
 
 unsigned Tsi3Cam::GetBitDepth() const
 {
-   return color ? 8 : (unsigned)fullFrame.bitDepth;
+	if (color)
+		return bitDepth; // color camera
+	
+	if (polarized)
+		if (polarImageType == Raw || polarImageType == Quad)
+			return 12;
+		else
+			return 16;
+	else
+		return fullFrame.bitDepth; // monochrome camera
 }
 
 int Tsi3Cam::GetBinning() const
@@ -574,11 +693,11 @@ int Tsi3Cam::ResizeImageBuffer()
    tl_camera_get_sensor_pixel_size_bytes(camHandle, &d);
 
 	if (color)
-		d = 4; // RGB32 format
+		d = pixelSize;
 
    img.Resize(w, h, d);
    ostringstream os;
-   os << "TSI3 resized to: " << img.Width() << " X " << img.Height() << ", camera: " << w << "X" << h << ", color=" << color;
+   os << "TSI3 resized to: " << img.Width() << " X " << img.Height() << " X " << d << ", camera: " << w << "X" << h << ", color=" << color << ", polarized=" << polarized;
    LogMessage(os.str().c_str(), true);
 
    return DEVICE_OK;
@@ -654,9 +773,88 @@ void Tsi3Cam::frame_available_callback(void* /*sender*/, unsigned short* image_b
    
 	if (instance->color)
 	{
+		if (instance->whiteBalancePending)
+		{
+			// we enter this block only if the user requested WB
+
+			// create white balance color processor
+			int ret = instance->ShutdownColorProcessor();
+			if (ret != DEVICE_OK)
+			{
+				ostringstream osErr;
+				osErr << "ShutdownColorProcessor failed: " << ret;
+				instance->LogMessage(osErr.str());
+				return; // this is fatal error
+			}
+			ret = instance->InitializeColorProcessor(true); // wb pipeline
+			if (ret != DEVICE_OK)
+			{
+				ostringstream osErr;
+				osErr << "InitializeColorProcessor failed: " << ret;
+				instance->LogMessage(osErr.str());
+				return; // fatal error, can't continue
+			}
+
+			// debayer the frame and obtain temporary color image that will be used for computing wb and then discarded
+			vector<unsigned short> colorBuf(img_width * img_height * 3);
+			ret = instance->ColorProcess16to48WB(image_buffer, &colorBuf[0], img_width, img_height);
+			if (ret != DEVICE_OK)
+			{
+				ostringstream osErr;
+				osErr << "ColorProcess16to48WB failed: " << ret;
+				instance->LogMessage(osErr.str());
+			}
+
+			// now compute wb scaling from the 48-bit rgb image
+			double rSum(0.0);
+			double gSum(0.0);
+			double bSum(0.0);
+			for (int i=0; i<colorBuf.size() / 3; i++)
+			{
+				rSum += colorBuf[i*3 + 2];
+				gSum += colorBuf[i*3 + 1];
+				bSum += colorBuf[i*3];
+			}
+
+			double lumin = 0.2126 * rSum + 0.7152 * gSum + 0.0722 * bSum;
+			double redScaler = rSum != 0 ? lumin / rSum : 1.0;
+			double greenScaler = gSum != 0 ? lumin / gSum : 1.0;
+			double blueScaler = bSum != 0 ? lumin / bSum : 1.0;
+
+			ostringstream osWb;
+			osWb << "White Balance parameters: rScale=" << redScaler << ", gScale=" << greenScaler << ", bScale=" << blueScaler;
+			instance->LogMessage(osWb.str());
+
+			// modify pipeline to use wb transformation
+			ret = instance->ApplyWhiteBalance(redScaler, greenScaler, blueScaler);
+			if (ret != DEVICE_OK)
+			{
+				ostringstream osErr;
+				osErr << "ApplyWhiteBalance failed: " << ret;
+				instance->LogMessage(osErr.str());
+			}
+
+			InterlockedExchange(&instance->whiteBalancePending, 0); // clear wb pending flag
+
+			// re enable LUTs that were disabled by the color processor init
+			instance->EnableColorOutputLUTs();
+		}
+
 		// COLOR
-		instance->img.Resize(img_width, img_height, 4);
-		instance->ColorProcess16to32(image_buffer, instance->img.GetPixelsRW(), img_width, img_height);
+		instance->img.Resize(img_width, img_height, instance->pixelSize);
+		if (instance->pixelSize == 4)
+			instance->ColorProcess16to32(image_buffer, instance->img.GetPixelsRW(), img_width, img_height);
+		else if (instance->pixelSize == 8)
+			instance->ColorProcess16to64(image_buffer, instance->img.GetPixelsRW(), img_width, img_height);
+		else
+			assert(!"Unsupported pixel type");
+
+	}
+	else if (instance->polarized)
+	{
+		// Polarization
+		instance->img.Resize(img_width, img_height, instance->fullFrame.pixDepth);
+		instance->TransformPolarizationImage(image_buffer, instance->img.GetPixelsRW(), img_width, img_height, instance->polarImageType);
 	}
 	else
 	{
@@ -676,6 +874,7 @@ void Tsi3Cam::frame_available_callback(void* /*sender*/, unsigned short* image_b
       {
          ostringstream osErr;
          osErr << "Insert image failed: " << ret;
+			instance->LogMessage(osErr.str());
       }
    }
    else

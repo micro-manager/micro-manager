@@ -21,14 +21,17 @@
 package org.micromanager.data.internal;
 
 import java.awt.Component;
+import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import javax.swing.JFileChooser;
 import javax.swing.ProgressMonitor;
 import javax.swing.filechooser.FileFilter;
+import org.micromanager.Studio;
 import org.micromanager.data.Annotation;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
@@ -37,12 +40,11 @@ import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Image;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
-import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
-import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.UserCancelledException;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.PrioritizedEventBus;
+import org.micromanager.internal.utils.ProgressBar;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
@@ -74,17 +76,20 @@ public class DefaultDatastore implements Datastore {
          SINGLEPLANE_TIFF_SERIES);
    private static final FileFilter MULTIPAGEFILTER = new SaveFileFilter(
          MULTIPAGE_TIFF);
-
    private static final String PREFERRED_SAVE_FORMAT = "default format for saving data";
+   
    protected Storage storage_ = null;
    protected String name_ = "Untitled";
-   protected HashMap<String, DefaultAnnotation> annotations_ = new HashMap<String, DefaultAnnotation>();
+   protected Map<String, DefaultAnnotation> annotations_ = new HashMap<>();
    protected PrioritizedEventBus bus_;
    protected boolean isFrozen_ = false;
+   protected final MMStudio mmStudio_;
+   
    private String savePath_ = null;
    private boolean haveSetSummary_ = false;
 
-   public DefaultDatastore() {
+   public DefaultDatastore(MMStudio mmStudio) {
+      mmStudio_ = mmStudio;
       bus_ = new PrioritizedEventBus();
    }
 
@@ -201,6 +206,10 @@ public class DefaultDatastore implements Datastore {
    public void putImage(Image image) throws IOException {
       if (isFrozen_) {
          throw new DatastoreFrozenException();
+      }
+      if (image == null) {
+         // TODO: log? throw exception?  just crashing is not an option...
+         return;
       }
       if (hasImage(image.getCoords())) {
          throw new DatastoreRewriteException();
@@ -337,10 +346,11 @@ public class DefaultDatastore implements Datastore {
    @Override
    public void close() throws IOException {
       freeze();
-      DefaultEventManager.getInstance().post(
+      mmStudio_.events().post(
             new DefaultDatastoreClosingEvent(this));
       if (storage_ != null) {
          storage_.close();
+         System.gc();
       }
    }
 
@@ -353,9 +363,15 @@ public class DefaultDatastore implements Datastore {
    public String getSavePath() {
       return savePath_;
    }
+   
+   @Override
+   @Deprecated
+   public boolean save(Component parent) throws IOException {
+      return save(parent, true) != null;
+   }
 
    @Override
-   public boolean save(Component parent) throws IOException {
+   public String save(Component parent, boolean blocking) throws IOException {
       // This replicates some logic from the FileDialogs class, but we want to
       // use non-file-extension-based "filters" to let the user select the
       // savefile format to use, and FileDialogs doesn't play nicely with that.
@@ -363,7 +379,7 @@ public class DefaultDatastore implements Datastore {
       chooser.setAcceptAllFileFilterUsed(false);
       chooser.addChoosableFileFilter(SINGLEPLANEFILTER);
       chooser.addChoosableFileFilter(MULTIPAGEFILTER);
-      if (getPreferredSaveMode().equals(Datastore.SaveMode.MULTIPAGE_TIFF)) {
+      if (getPreferredSaveMode(mmStudio_).equals(Datastore.SaveMode.MULTIPAGE_TIFF)) {
          chooser.setFileFilter(MULTIPAGEFILTER);
       }
       else {
@@ -374,120 +390,68 @@ public class DefaultDatastore implements Datastore {
       int option = chooser.showSaveDialog(parent);
       if (option != JFileChooser.APPROVE_OPTION) {
          // User cancelled.
-         return false;
+         return null;
       }
       File file = chooser.getSelectedFile();
       FileDialogs.storePath(FileDialogs.MM_DATA_SET, file);
 
       // Determine the mode the user selected.
       FileFilter filter = chooser.getFileFilter();
-      Datastore.SaveMode mode = null;
+      Datastore.SaveMode mode;
       if (filter == SINGLEPLANEFILTER) {
          mode = Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES;
-      }
-      else if (filter == MULTIPAGEFILTER) {
+      } else if (filter == MULTIPAGEFILTER) {
          mode = Datastore.SaveMode.MULTIPAGE_TIFF;
-      }
-      else {
-         ReportingUtils.logError("Unrecognized file format filter " +
+      }  else {
+         ReportingUtils.showError("Unrecognized file format filter " +
                filter.getDescription());
+         return null;
       }
-      setPreferredSaveMode(mode);
-      save(mode, file.getAbsolutePath());
-      return true;
+      setPreferredSaveMode(mmStudio_, mode);
+      // the DefaultDataSave constructor creates the directory
+      // so that displaysettings can be saved there even before we finish
+      // saving all the data
+      DefaultDataSaver ds = new DefaultDataSaver(mmStudio_, this, mode,
+              file.getAbsolutePath());
+      if (!blocking) {
+         final ProgressBar pb = new ProgressBar(parent, "Saving..", 0, 100);
+         ds.addPropertyChangeListener((PropertyChangeEvent evt) -> {
+            if ("progress".equals(evt.getPropertyName())) {
+               pb.setProgress((Integer) evt.getNewValue());
+               if ((Integer) evt.getNewValue() == 100) {
+                  pb.setVisible(false);
+               }
+            }
+         });
+         ds.execute();
+      } else {
+         // blocking.  No way to give feedback since we are blocking the EDT
+         ds.doInBackground();
+      }
+
+      return file.getAbsolutePath();
+   }
+
+
+   @Override
+   public void save(SaveMode mode, String path) throws IOException {
+      save (mode, path, true);
    }
 
    // TODO: re-use existing file-based storage if possible/relevant (i.e.
    // if our current Storage is a file-based Storage).
    @Override
-   public void save(Datastore.SaveMode mode, String path) throws IOException {
-      SummaryMetadata summary = getSummaryMetadata();
-      if (summary == null) {
-         // Create dummy summary metadata just for saving.
-         summary = (new DefaultSummaryMetadata.Builder()).build();
+   public void save(Datastore.SaveMode mode, String path, boolean blocking) throws IOException {
+      DefaultDataSaver ds = new DefaultDataSaver(mmStudio_, this, mode, path);
+      if (blocking) {
+         ds.doInBackground();
+      } else {
+         ds.execute();
       }
-      // Insert intended dimensions if they aren't already present.
-      if (summary.getIntendedDimensions() == null) {
-         DefaultCoords.Builder builder = new DefaultCoords.Builder();
-         for (String axis : getAxes()) {
-            builder.index(axis, getAxisLength(axis));
-         }
-         summary = summary.copyBuilder().intendedDimensions(builder.build()).build();
-      }
-
-      DefaultDatastore duplicate = new DefaultDatastore();
-
-      Storage saver;
-      if (mode == Datastore.SaveMode.MULTIPAGE_TIFF) {
-         saver = new StorageMultipageTiff(MMStudio.getFrame(), 
-               duplicate,
-               path, true, true,
-               StorageMultipageTiff.getShouldSplitPositions());
-      }
-      else if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
-         saver = new StorageSinglePlaneTiffSeries(duplicate, path, true);
-      }
-      else {
-         throw new IllegalArgumentException("Unrecognized mode parameter " +
-               mode);
-      }
-      duplicate.setStorage(saver);
-      duplicate.setSummaryMetadata(summary);
-      // HACK HACK HACK HACK HACK
-      // Copy images into the duplicate ordered by stage position index.
-      // Doing otherwise causes errors when trying to write the OMEMetadata
-      // (we get an ArrayIndexOutOfBoundsException when calling
-      // MetadataTools.populateMetadata() in
-      // org.micromanager.data.internal.multipagetiff.OMEMetadata).
-      // Ideally we'd fix the OME metadata writer to be able to handle
-      // images in arbitrary order, but that would require understanding
-      // that code...
-      // We also need to sort by frame (and while we're at it, sort by
-      // z and channel as well), since FileSet.writeImage() assumes that
-      // timepoints are written sequentially and can potentially cause
-      // invalid metadata if they are not.
-      ArrayList<Coords> tmp = new ArrayList<Coords>();
-      for (Coords coords : getUnorderedImageCoords()) {
-         tmp.add(coords);
-      }
-      java.util.Collections.sort(tmp, new java.util.Comparator<Coords>() {
-         @Override
-         public int compare(Coords a, Coords b) {
-            int p1 = a.getStagePosition();
-            int p2 = b.getStagePosition();
-            if (p1 != p2) {
-               return p1 < p2 ? -1 : 1;
-            }
-            int t1 = a.getTime();
-            int t2 = b.getTime();
-            if (t1 != t2) {
-               return t1 < t2 ? -1 : 1;
-            }
-            int z1 = a.getZ();
-            int z2 = b.getZ();
-            if (z1 != z2) {
-               return z1 < z2 ? -1 : 1;
-            }
-            int c1 = a.getChannel();
-            int c2 = b.getChannel();
-            return c1 < c2 ? -1 : 1;
-         }
-      });
-      for (Coords coords : tmp) {
-         duplicate.putImage(getImage(coords));
-      }
-      // We set the save path and freeze *both* datastores; our own because
-      // we should not be modified post-saving, and the other because it
-      // may trigger side-effects that "finish" the process of saving.
-      setSavePath(path);
-      freeze();
-      duplicate.setSavePath(path);
-      duplicate.freeze();
-      duplicate.close();
-      // Save our annotations now.
-      for (DefaultAnnotation annotation : annotations_.values()) {
-         annotation.save();
-      }
+   }
+   
+   protected Map<String, DefaultAnnotation> getAnnotations() {
+      return annotations_;
    }
 
    @Override
@@ -498,8 +462,8 @@ public class DefaultDatastore implements Datastore {
       return -1;
    }
 
-   public static Datastore.SaveMode getPreferredSaveMode() {
-      String modeStr = MMStudio.getInstance().profile().getSettings(
+   public static Datastore.SaveMode getPreferredSaveMode(Studio studio) {
+      String modeStr = studio.profile().getSettings(
             DefaultDatastore.class).getString(
                   PREFERRED_SAVE_FORMAT, MULTIPAGE_TIFF);
       if (modeStr.equals(MULTIPAGE_TIFF)) {
@@ -514,18 +478,23 @@ public class DefaultDatastore implements Datastore {
       }
    }
 
-   public static void setPreferredSaveMode(Datastore.SaveMode mode) {
+   public static void setPreferredSaveMode(Studio studio, Datastore.SaveMode mode) {
       String modeStr = "";
-      if (mode == Datastore.SaveMode.MULTIPAGE_TIFF) {
-         modeStr = MULTIPAGE_TIFF;
-      }
-      else if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
-         modeStr = SINGLEPLANE_TIFF_SERIES;
-      }
-      else {
+      if (null == mode) {
          ReportingUtils.logError("Unrecognized save mode " + mode);
       }
-      MMStudio.getInstance().profile().getSettings(DefaultDatastore.class).
+      else switch (mode) {
+         case MULTIPAGE_TIFF:
+            modeStr = MULTIPAGE_TIFF;
+            break;
+         case SINGLEPLANE_TIFF_SERIES:
+            modeStr = SINGLEPLANE_TIFF_SERIES;
+            break;
+         default:
+            ReportingUtils.logError("Unrecognized save mode " + mode);
+            break;
+      }
+      studio.profile().getSettings(DefaultDatastore.class).
               putString(PREFERRED_SAVE_FORMAT, modeStr);
    }
 }

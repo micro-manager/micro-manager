@@ -19,6 +19,7 @@
 package org.micromanager.data.internal.multipagetiff;
 
 import com.google.common.eventbus.Subscribe;
+import ij.ImageJ;
 import java.awt.Component;
 import java.awt.GraphicsEnvironment;
 import java.io.File;
@@ -41,6 +42,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.swing.JOptionPane;
 import org.micromanager.data.Coords;
+import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.Storage;
@@ -50,18 +52,24 @@ import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
-import org.micromanager.internal.utils.UserProfileStaticInterface;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.ProgressBar;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
+import org.micromanager.display.DataViewer;
+import org.micromanager.display.DisplaySettings;
 
 
 /**
  * This class provides image storage in the form of a single TIFF file that
  * contains all image data in the dataset.
  * Adapted from the TaggedImageStorageMultipageTiff module.
- * TODO: extricate DisplaySettings from this code.
+ * 
+ * TODO: The org.micromanager.data package should not depend on internal code
+ * (or any code outside of the packae) so that it can be re-used elsewhere.
+ * 
+ * 
  */
 public final class StorageMultipageTiff implements Storage {
    private static final String SHOULD_GENERATE_METADATA_FILE = 
@@ -94,7 +102,7 @@ public final class StorageMultipageTiff implements Storage {
    // complete data rather than risking a call to
    // MultipageTiffReader.readImage().
    private final ConcurrentHashMap<Coords, Image> coordsToPendingImage_ =
-      new ConcurrentHashMap<Coords, Image>();
+            new ConcurrentHashMap<>();
 
    //map of position indices to objects associated with each
    private HashMap<Integer, FileSet> positionToFileSet_;
@@ -111,9 +119,18 @@ public final class StorageMultipageTiff implements Storage {
             getShouldSplitPositions());
    }
    
-   /*
+   /**
     * Constructor that doesn't make reference to MMStudio so it can be used
     * independently of MM GUI
+    * 
+    * @param parent  GUI element on top of which a ProgressBar (or other things) can be displayed
+    * @param store   Datastore to be saved
+    * @param dir     Directory in which to store the data
+    * @param amInWriteMode 
+    * @param separateMDFile   Whether or not to write a separate file with the MM metadata
+    * @param separateFilesForPositions If true, will store positions in separate files,
+    *             otherwise all data will go into a single file
+    * @throws java.io.IOException
     */
    public StorageMultipageTiff(Component parent, Datastore store, String dir,
          boolean amInWriteMode, boolean separateMDFile,
@@ -130,10 +147,10 @@ public final class StorageMultipageTiff implements Storage {
       directory_ = dir;
       store_.setSavePath(directory_);
       store_.setName(new File(directory_).getName());
-      coordsToReader_ = new HashMap<Coords, MultipageTiffReader>();
+      coordsToReader_ = new HashMap<>();
 
       if (amInWriteMode_) {
-         positionToFileSet_ = new HashMap<Integer, FileSet>();
+         positionToFileSet_ = new HashMap<>();
          // Create the directory now, even though we have nothing to write to
          // it, so we can detect e.g. permissions errors that would cause
          // problems later.
@@ -166,6 +183,14 @@ public final class StorageMultipageTiff implements Storage {
       return writingExecutor_;
    }
 
+   /**
+    * Indicator of Acquisition order.  This function is difficult to name.
+    * "First" means that the axis comes before another axis in the ordered axes
+    * list.  Note, however, that the list of ordered axes is exactly the inverse 
+    * of the Acquisition Order as presented to the user
+    * 
+    * @return true if slices come before channels in the list of ordered axis
+    */
    boolean slicesFirst() {
       List<String> orderList = summaryMetadata_.getOrderedAxes();
       if (orderList == null) {
@@ -177,14 +202,21 @@ public final class StorageMultipageTiff implements Storage {
       return (sliceIndex < channelIndex);
    }
 
+   /**
+    * Indicator of Acquisition order.  This function is difficult to name.
+    * "First" means that the axis comes before another axis in the ordered axes
+    * list.  Note, however, that the list of ordered axes is exactly the inverse 
+    * of the Acquisition Order as presented to the user
+    * 
+    * @return true if time comes before positions in the list of ordered axis
+    */
    boolean timeFirst() {
-      String[] order = summaryMetadata_.getAxisOrder();
-      if (order == null) {
+      List<String> orderList = summaryMetadata_.getOrderedAxes();
+      if (orderList == null) {
          // HACK: default to false.
          return false;
       }
-      List<String> orderList = Arrays.asList(order);
-      int timeIndex = orderList.indexOf(Coords.TIME);
+      int timeIndex = orderList.indexOf(Coords.T);
       int positionIndex = orderList.indexOf(Coords.STAGE_POSITION);
       return (timeIndex < positionIndex);
    }
@@ -290,13 +322,7 @@ public final class StorageMultipageTiff implements Storage {
       try {
          writeImage(image, false);
       }
-      catch (MMException e) {
-         ReportingUtils.showError(e, "Failed to write image at " + image.getCoords());
-      } catch (InterruptedException e) {
-         ReportingUtils.showError(e, "Failed to write image at " + image.getCoords());
-      } catch (ExecutionException e) {
-         ReportingUtils.showError(e, "Failed to write image at " + image.getCoords());
-      } catch (IOException e) {
+      catch (MMException | InterruptedException | ExecutionException | IOException e) {
          ReportingUtils.showError(e, "Failed to write image at " + image.getCoords());
       }
    }
@@ -306,7 +332,8 @@ public final class StorageMultipageTiff implements Storage {
       finished();
    }
 
-   private void writeImage(DefaultImage image, boolean waitForWritingToFinish) throws MMException, InterruptedException, ExecutionException, IOException {
+   private void writeImage(DefaultImage image, boolean waitForWritingToFinish) 
+           throws MMException, InterruptedException, ExecutionException, IOException {
       writeImage(image);
       if (waitForWritingToFinish) {
          Future f = writingExecutor_.submit(new Runnable() {
@@ -459,11 +486,12 @@ public final class StorageMultipageTiff implements Storage {
          int length = fullOMEXMLMetadata.length();
          String uuid = null, filename = null;
          FileSet master = null;
+         String ijDescription = getIJDescriptionString();
          for (FileSet p : positionToFileSet_.values()) {
             if (p.hasSpaceForFullOMEXML(length)) {
                uuid = p.getCurrentUUID();
                filename = p.getCurrentFilename();
-               p.finished(fullOMEXMLMetadata);
+               p.finished(fullOMEXMLMetadata, ijDescription);
                master = p;
                count++;
                if (progressBar != null) {
@@ -491,7 +519,7 @@ public final class StorageMultipageTiff implements Storage {
             if (p == master) {
                continue;
             }
-            p.finished(partialOME);
+            p.finished(partialOME, ijDescription);
             count++;
             if (progressBar != null) {
                progressBar.setProgress(count);
@@ -543,7 +571,7 @@ public final class StorageMultipageTiff implements Storage {
 
       // TODO What does the following have to do with summary metadata?
       Map<Coords, MultipageTiffReader> oldImageMap = coordsToReader_;
-      coordsToReader_ = new HashMap<Coords, MultipageTiffReader>();
+      coordsToReader_ = new HashMap<>();
       if (showProgress && !GraphicsEnvironment.isHeadless()) {
          ProgressBar progressBar = new ProgressBar(parent_, 
                  "Building image location map", 0, oldImageMap.keySet().size());
@@ -559,6 +587,178 @@ public final class StorageMultipageTiff implements Storage {
       } else {
          coordsToReader_.putAll(oldImageMap);
       }
+   }
+   
+    /**
+    * This function provides the ImageJ "Properties" information when opening 
+    * in ImageJ/Fiji.   
+    * 
+    * It also defines the image orde when creating Hyperstacks from sequences
+    * of images
+    * 
+    * @return 
+    */
+   private String getIJDescriptionString() {
+      StringBuffer sb = new StringBuffer();
+      sb.append("ImageJ=" + ImageJ.VERSION + "\n");
+      int numChannels = getIntendedSize(Coords.CHANNEL);
+      int numFrames = getIntendedSize(Coords.TIME_POINT);
+      int numSlices = getIntendedSize(Coords.Z_SLICE);
+      if (numChannels > 1) {
+         sb.append("channels=").append(numChannels).append("\n");
+      }
+      if (numSlices > 1) {
+         sb.append("slices=").append(numSlices).append("\n");
+      }
+      if (numFrames > 1) {
+         sb.append("frames=").append(numFrames).append("\n");
+      }
+      if (numFrames > 1 || numSlices > 1 || numChannels > 1) {
+         sb.append("hyperstack=true\n");
+                   
+         // It loooks like ImageJ ignores the order and always assumes it to be
+         // tcz (which it calls "xyctz".  This means that datasets acquired in 
+         // a different order will open incorrectly in ImageJ.        
+         // order - hyperstack order ("default", "xyctz", "xyzct", "xyztc", "xytcz" or "xytzc")
+         
+         /*
+          * This was an attempt to tell ImageJ about image order, but I see no 
+          * evidence (either in practice or in the code) that it looks at the "order" tag
+         
+         sb.append("order=xyctz\n");
+         
+         if (numFrames < 1) {
+            if (numChannels > 1 && numSlices > 1) {
+               if (!slicesFirst()) {
+                  sb.append("order=zc\n");
+               } else {
+                  sb.append("order=cz\n");
+               }
+            }
+         } else { // we have a time axis.  Currently, time always comes first
+            sb.append("order=");
+            if (numChannels > 1 && numSlices > 1) {
+               if (!slicesFirst()) {
+                  sb.append("zc");
+               } else {
+                  sb.append("cz");
+               }
+            } else if (numChannels > 1) {
+               sb.append("c");
+            } else if (numSlices > 1) {
+               sb.append("z");
+            }
+            sb.append("t\n");         
+         }
+         */
+      }
+      //cm so calibration unit is consistent with units used in Tiff tags
+      sb.append("unit=um\n");
+      if (numSlices > 1) {
+         double zStepUm = 0.0;
+         if (getSummaryMetadata().getZStepUm() != null) {
+            zStepUm = getSummaryMetadata().getZStepUm();
+         }
+         sb.append("spacing=").append(zStepUm).append("\n");
+      }
+      // write single channel contrast settings or display mode if multi channel
+      // it would be nice to have the display settings of the current viewer,
+      // but we don't, and do not want to couple Display Settings to Data storage,
+      // so come up with reasonable defaults
+      // DisplaySettings settings = DefaultDisplaySettings.builder().build();
+      DisplaySettings settings = getDisplaySettings();
+      
+      if (numChannels == 1) {
+         sb.append("mode=gray\n");
+         if (settings != null) {
+            sb.append("min=").append(settings.getSafeContrastMin(0, 0, 0)).append("\n");
+            sb.append("max=").append(settings.getSafeContrastMax(0, 0, 0)).append("\n");
+         }
+      } else {
+         // multiple channels?  go for composite display
+         if (settings != null) {
+            DisplaySettings.ColorMode mode = settings.getChannelColorMode();
+            if (null != mode) switch (mode) {
+               case COMPOSITE:
+                  sb.append("mode=composite\n");
+                  break;
+               case COLOR:
+                  sb.append("mode=color\n");
+                  break;
+               case GRAYSCALE:
+                  sb.append("mode=gray\n");
+                  break;
+               default:
+                  break;
+            }
+         } else {
+            sb.append("mode=composite\n");
+         }
+      }
+
+
+      sb.append((char) 0);
+      return new String(sb);
+   }
+   
+   /**
+    * Since we do no longer want to pass through DisplaySettings to the saving code,
+    * but still need access to the, to enable saving metadata used by 3rdparty
+    * applications (such as ImageJ/Fiji) to display the data the same way we 
+    * did in MM, we need some ugly heuristics to figure out what DisplaySettings 
+    * were used.
+    * 
+    * @return DisplaySettings of a DataViewer that used this store for data.
+    *          Will be null when no such DataViewer was found.
+    */
+   DisplaySettings getDisplaySettings() {
+      MMStudio studio = MMStudio.getInstance();
+      DataViewer activeDataViewer = studio.displays().getActiveDataViewer();
+      try {
+         if (activeDataViewer != null && isViewingOurStore(activeDataViewer)) {
+            
+            return activeDataViewer.getDisplaySettings();
+         } else {
+            List<DataViewer> allDataViewers = studio.displays().getAllDataViewers();
+            for (DataViewer dv : allDataViewers) {
+               if (dv != null && isViewingOurStore(dv)) {
+                  return dv.getDisplaySettings();
+               }
+            }
+         }
+      } catch (IOException ioe) {
+         // TODO, handle nicely
+      }
+      return null;
+   }
+
+   /** 
+    * We can not simply test if the viewer's store is the same as ours, 
+    * since we may be saving a "copy" (i.e., saving a RAMM data set on disk)
+    * This is bad, but seems to work alright for now.
+    */
+   private boolean isViewingOurStore  (DataViewer dv) throws IOException{
+      DataProvider dp = dv.getDataProvider();
+      if (dp != null) {
+         Image dpImg = dp.getAnyImage();
+         Image ourImg = store_.getAnyImage();
+         if (dpImg.getWidth() != ourImg.getWidth() || 
+                 dpImg.getHeight() != ourImg.getHeight() ||
+                 dpImg.getBytesPerPixel() != ourImg.getBytesPerPixel()) {
+            return false;
+         }
+         if (dp.getAxes().size() != store_.getAxes().size()) {
+            return false;
+         }
+         for (String axis : dp.getAxes() ) {
+            if (store_.getAxisLength(axis) != dp.getAxisLength(axis)) {
+               return false;
+            }
+         }
+         return true;
+         
+      }
+      return false;
    }
 
    @Override
@@ -596,7 +796,7 @@ public final class StorageMultipageTiff implements Storage {
 
    public long getDataSetSize() {
       File dir = new File (directory_);
-      LinkedList<File> list = new LinkedList<File>();
+      List<File> list = new LinkedList<>();
       for (File f : dir.listFiles()) {
          if (f.isDirectory()) {
             for (File fi : f.listFiles()) {
@@ -623,7 +823,7 @@ public final class StorageMultipageTiff implements Storage {
       // TODO: this method is pretty poorly-implemented at current.
       if (maxIndices_ == null) {
          // Calculate max indices by examining all registered Readers.
-         HashMap<String, Integer> maxIndices = new HashMap<String, Integer>();
+         HashMap<String, Integer> maxIndices = new HashMap<>();
          for (Coords coords : coordsToReader_.keySet()) {
             for (String axis : coords.getAxes()) {
                if (!maxIndices.containsKey(axis) ||
@@ -676,7 +876,7 @@ public final class StorageMultipageTiff implements Storage {
 
    @Override
    public List<Image> getImagesMatching(Coords coords) {
-      HashSet<Image> result = new HashSet<Image>();
+      HashSet<Image> result = new HashSet<>();
       synchronized(coordsToPendingImage_) {
          for (Coords imageCoords : coordsToPendingImage_.keySet()) {
             if (imageCoords.matches(coords)) {
@@ -694,7 +894,7 @@ public final class StorageMultipageTiff implements Storage {
             }
          }
       }
-      return new ArrayList<Image>(result);
+      return new ArrayList<>(result);
    }
 
    @Override
@@ -756,25 +956,22 @@ public final class StorageMultipageTiff implements Storage {
    }
 
    public static boolean getShouldGenerateMetadataFile() {
-      return UserProfileStaticInterface.getInstance().getBoolean(
-            StorageMultipageTiff.class, SHOULD_GENERATE_METADATA_FILE, false);
+      return MMStudio.getInstance().profile().getSettings(StorageMultipageTiff.class).
+              getBoolean(SHOULD_GENERATE_METADATA_FILE, false);
    }
 
    public static void setShouldGenerateMetadataFile(boolean shouldGen) {
-      UserProfileStaticInterface.getInstance().setBoolean(
-            StorageMultipageTiff.class,
-            SHOULD_GENERATE_METADATA_FILE, shouldGen);
+      MMStudio.getInstance().profile().getSettings(StorageMultipageTiff.class).
+              putBoolean(SHOULD_GENERATE_METADATA_FILE, shouldGen);
    }
 
    public static boolean getShouldSplitPositions() {
-      return UserProfileStaticInterface.getInstance().getBoolean(
-            StorageMultipageTiff.class,
-            SHOULD_USE_SEPARATE_FILES_FOR_POSITIONS, true);
+      return MMStudio.getInstance().profile().getSettings(StorageMultipageTiff.class).
+              getBoolean(SHOULD_USE_SEPARATE_FILES_FOR_POSITIONS, true);
    }
 
    public static void setShouldSplitPositions(boolean shouldSplit) {
-      UserProfileStaticInterface.getInstance().setBoolean(
-            StorageMultipageTiff.class,
-            SHOULD_USE_SEPARATE_FILES_FOR_POSITIONS, shouldSplit);
+      MMStudio.getInstance().profile().getSettings(StorageMultipageTiff.class).
+              putBoolean(SHOULD_USE_SEPARATE_FILES_FOR_POSITIONS, shouldSplit);
    }
 }

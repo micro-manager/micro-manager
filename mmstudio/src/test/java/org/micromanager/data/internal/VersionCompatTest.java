@@ -37,6 +37,7 @@ import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.internal.MMStudio;
 
 /**
  * This class tests that we properly transfer data between versions
@@ -298,7 +299,7 @@ public class VersionCompatTest {
     */
    @Test
    public void test14Load() throws IOException, JSONException {
-      DefaultDataManager manager = new DefaultDataManager();
+      DefaultDataManager manager = new DefaultDataManager(MMStudio.getInstance());
       // If you get an IOException at this point, you probably didn't
       // uncompress the files at FILE_PATH.
       Datastore store = manager.loadData(FILE_PATH, true);

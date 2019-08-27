@@ -21,9 +21,7 @@ import java.awt.Rectangle;
 import java.awt.image.ColorModel;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
-import org.micromanager.data.ImageJConverter;
 import org.micromanager.data.internal.DefaultImageJConverter;
-import org.micromanager.internal.MMStudio;
 
 /**
  * Proxy for ImageJ's {@code VirtualStack}.
@@ -130,9 +128,7 @@ public final class MMVirtualStack extends VirtualStack {
    public ImageProcessor getProcessor(int flatIndex) {
       Coords coords = parent_.getMMCoordsForIJFlatIndex(flatIndex);
       Image image = parent_.getMMImage(coords);
-      // TODO Avoid singleton access
-      ImageJConverter ijConv = MMStudio.getInstance().data().ij();
-      return ((DefaultImageJConverter) ijConv).createProcessor(image, false);
+      return DefaultImageJConverter.createProcessor(image, false);
    }
 
    @Override

@@ -1,16 +1,19 @@
-///////////////////////////////////////////////////////////////////////////////
-// FILE:          TeensySLM.cpp
+//////////////////////////////////////////////////////////////////////////////
+// FILE:          LedArray.cpp
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Arduino adapter for sending serial commands as a property value.  Needs accompanying firmware
-// COPYRIGHT:     University of California, Berkeley, 2016
+// DESCRIPTION:   Adapter for illuminate LED controller firmware
+//                Needs accompanying firmware to be installed on the LED Array:
+//                https://github.com/zfphil/illuminate
+//
+// COPYRIGHT:     Regents of the University of California
 // LICENSE:       LGPL
-// 
-// AUTHOR:        Henry Pinkard, hbp@berkeley.edu, 12/13/2016   
+//
+// AUTHOR:        Henry Pinkard, hbp@berkeley.edu, 12/13/2016
 // AUTHOR:        Zack Phillips, zkphil@berkeley.edu, 3/1/2019
 //
-//
+//////////////////////////////////////////////////////////////////////////////
 
 #include "LEDArray.h"
 #include "../../MMDevice/ModuleInterface.h"
@@ -25,142 +28,123 @@
 #include <math.h>
 
 #ifdef WIN32
-   #define WIN32_LEAN_AND_MEAN
-   #include <windows.h>
-   #define snprintf _snprintf 
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#define snprintf _snprintf 
 #endif
 
-const char* g_Keyword_DeviceName = "Illuminate-Led-Array";
-const char* g_Keyword_DeviceNameVirtualShutter = "Illuminate-Led-Array-Virtual-Shutter";
-
-const char * g_Keyword_Red = "ColorRed";      // Global intensity with a maximum of 255
-const char * g_Keyword_Green = "ColorGreen";  // Global intensity with a maximum of 255
-const char * g_Keyword_Blue = "ColorBlue";    // Global intensity with a maximum of 255
-const char * g_Keyword_Brightness = "Brightness";
-const char * g_Keyword_NumericalAp = "NumericalAperture"; // Setting the numerical aperture
-const char * g_Keyword_SetArrayDistanceMM = "ArrayDistance"; 
-const char * g_Keyword_Pattern = "IlluminationPattern";
-const char * g_Keyword_PatternOrientation = "IlluminationPatternOrientation";
-const char * g_Keyword_AnnulusWidth = "AnnulusWidth"; 
-const char * g_Keyword_LedList = "ArbitraryLedList";
-const char * g_Keyword_Reset = "Reset";
-const char * g_Keyword_Shutter = "ShutterOpen";
-
-// Device Parameters
-const char * g_Keyword_WavelengthRed = "CenterWavelengthRedMicrons";
-const char * g_Keyword_WavelengthGreen = "CenterWavelengthGreenMicrons";
-const char * g_Keyword_WavelengthBlue = "CenterWavelengthBlueMicrons";
-const char * g_Keyword_LedCount = "LedCount";
-const char * g_Keyword_PartNumber = "PartNumber";
-const char * g_Keyword_SerialNumber = "SerialNumber";
-const char * g_Keyword_MacAddress = "MacAddress";
-const char * g_Keyword_TriggerInputCount = "TriggerInputCount";
-const char * g_Keyword_TriggerOutputCount = "TriggerOutputCount";
-const char * g_Keyword_NativeBitDepth = "NativeBitDepth";
-const char * g_Keyword_LedArrayType = "Type";
-const char * g_Keyword_InterfaceVersion = "InterfaceVersion";
-const char * g_Keyword_ColorChannelCount = "ColorChannelCount";
-const char * g_Keyword_LedPositions = "LedPositionsCartesian";
-
-// Low-Level Serial IO
-const char * g_Keyword_Response = "SerialResponse";
-const char * g_Keyword_Command = "SerialCommand";
 
 int LedArray::Initialize()
 {
 	if (initialized_)
 		return DEVICE_OK;
-	pixels_ = new unsigned char[width_*height_];
 
 	// Name
-	int ret = CreateProperty(MM::g_Keyword_Name, g_Keyword_DeviceName, MM::String, false);
+	int ret = CreateProperty(MM::g_Keyword_Name, g_Keyword_DeviceName, MM::String, true);
 	if (DEVICE_OK != ret)
 		return ret;
 
 	// Description
-	ret = CreateProperty(MM::g_Keyword_Description, "LED Array", MM::String, false);
+	ret = CreateProperty(MM::g_Keyword_Description, "LED Array", MM::String, true);
 	assert(DEVICE_OK == ret);
 
 	// Most Recent Serial Response
 	ret = CreateProperty(g_Keyword_Response, "", MM::String, false);
+	assert(DEVICE_OK == ret);
 
 	// Shutter
 	CPropertyAction* pActshutter = new CPropertyAction(this, &LedArray::OnShutterOpen);
 	ret = CreateProperty(g_Keyword_Shutter, "0", MM::Integer, false, pActshutter);
+	assert(DEVICE_OK == ret);
 	AddAllowedValue(g_Keyword_Shutter, "0");
 	AddAllowedValue(g_Keyword_Shutter, "1");
 
 	// Reset
 	CPropertyAction* pActreset = new CPropertyAction(this, &LedArray::OnReset);
 	ret = CreateProperty(g_Keyword_Reset, "0", MM::String, false, pActreset);
+	assert(DEVICE_OK == ret);
 	AddAllowedValue(g_Keyword_Reset, "0");
 	AddAllowedValue(g_Keyword_Reset, "1");
 
 	// Manual Command Interface
 	CPropertyAction* pCommand = new CPropertyAction(this, &LedArray::OnCommand);
 	ret = CreateProperty(g_Keyword_Command, "", MM::String, false, pCommand);
+	assert(DEVICE_OK == ret);
 
 	// Illumination Pattern:
 	CPropertyAction* pActpat = new CPropertyAction(this, &LedArray::OnPattern);
-	CreateProperty(g_Keyword_Pattern, "None", MM::String, false, pActpat);
-	AddAllowedValue(g_Keyword_Pattern, "None");
-	AddAllowedValue(g_Keyword_Pattern, "Brightfield");
-	AddAllowedValue(g_Keyword_Pattern, "Darkfield");
-	AddAllowedValue(g_Keyword_Pattern, "DPC");
-	AddAllowedValue(g_Keyword_Pattern, "Color DPC");
-	AddAllowedValue(g_Keyword_Pattern, "Color Darkfield");
-	AddAllowedValue(g_Keyword_Pattern, "Manual LED Indices");
-	AddAllowedValue(g_Keyword_Pattern, "Annulus");
-	AddAllowedValue(g_Keyword_Pattern, "Half Annulus");
-	AddAllowedValue(g_Keyword_Pattern, "Center LED");
-	AddAllowedValue(g_Keyword_Pattern, "Clear");
+	CreateProperty(g_Keyword_Pattern, g_Pattern_None, MM::String, false, pActpat);
+	AddAllowedValue(g_Keyword_Pattern, g_Pattern_None);
+	AddAllowedValue(g_Keyword_Pattern, g_Pattern_Brightfield);
+	AddAllowedValue(g_Keyword_Pattern, g_Pattern_Darkfield);
+	AddAllowedValue(g_Keyword_Pattern, g_Pattern_Dpc);
+	AddAllowedValue(g_Keyword_Pattern, g_Pattern_ColorDpc);
+	AddAllowedValue(g_Keyword_Pattern, g_Pattern_ColorDarkfield);
+	AddAllowedValue(g_Keyword_Pattern, g_Pattern_ManualLedIndices);
+	AddAllowedValue(g_Keyword_Pattern, g_Pattern_Annulus);
+	AddAllowedValue(g_Keyword_Pattern, g_Pattern_HalfAnnulus);
+	AddAllowedValue(g_Keyword_Pattern, g_Pattern_CenterLed);
+	AddAllowedValue(g_Keyword_Pattern, g_Pattern_Clear);
 
 	// Illumination Pattern Orientation
 	CPropertyAction* pActpatOrientation = new CPropertyAction(this, &LedArray::OnPatternOrientation);
-	CreateProperty(g_Keyword_PatternOrientation, "Top", MM::String, false, pActpatOrientation);
-	AddAllowedValue(g_Keyword_PatternOrientation, "Top");
-	AddAllowedValue(g_Keyword_PatternOrientation, "Bottom");
-	AddAllowedValue(g_Keyword_PatternOrientation, "Left");
-	AddAllowedValue(g_Keyword_PatternOrientation, "Right");
+	ret = CreateProperty(g_Keyword_PatternOrientation, g_Orientation_Top, MM::String, false, pActpatOrientation);
+	assert(DEVICE_OK == ret);
+	AddAllowedValue(g_Keyword_PatternOrientation, g_Orientation_Top);
+	AddAllowedValue(g_Keyword_PatternOrientation, g_Orientation_Bottom);
+	AddAllowedValue(g_Keyword_PatternOrientation, g_Orientation_Left);
+	AddAllowedValue(g_Keyword_PatternOrientation, g_Orientation_Right);
 
 	// Annulus Width
 	CPropertyAction* pActAnnuluswidth = new CPropertyAction(this, &LedArray::OnAnnulusWidth);
-	CreateProperty(g_Keyword_AnnulusWidth, "0.2", MM::Float, false, pActAnnuluswidth);
+	ret = CreateProperty(g_Keyword_AnnulusWidth, "0.2", MM::Float, false, pActAnnuluswidth);
+	assert(DEVICE_OK == ret);
 
 	// LED indices illumination:
-	CPropertyAction* pActled = new CPropertyAction(this, &LedArray::OnLED);
-	CreateProperty(g_Keyword_LedList, "0.1.2.3.4", MM::String, false, pActled);
+	CPropertyAction* pActled = new CPropertyAction(this, &LedArray::OnSetManualLedList);
+	ret = CreateProperty(g_Keyword_LedList, "0.1.2.3.4", MM::String, false, pActled);
+	assert(DEVICE_OK == ret);
 
 	// Device MAC address
-	CreateProperty(g_Keyword_MacAddress, "None", MM::String, false);
+	//CreateProperty(g_Keyword_MacAddress, "None", MM::String, false);
+	//assert(DEVICE_OK == ret);
 
 	// Device name
-	CreateProperty(g_Keyword_LedArrayType, "None", MM::String, false);
+	//CreateProperty(g_Keyword_LedArrayType, "None", MM::String, false);
+	//assert(DEVICE_OK == ret);
 
 	// Parse trigger input count
-	CreateProperty(g_Keyword_TriggerInputCount, "-1", MM::Integer, false);
+	ret = CreateProperty(g_Keyword_TriggerInputCount, "-1", MM::Integer, true);
+	assert(DEVICE_OK == ret);
 
 	// Parse trigger output count
-	CreateProperty(g_Keyword_TriggerOutputCount, "-1", MM::Integer, false);
+	ret = CreateProperty(g_Keyword_TriggerOutputCount, "-1", MM::Integer, true);
+	assert(DEVICE_OK == ret);
 
-	// Parse part number
-	CreateProperty(g_Keyword_PartNumber, "-1", MM::Integer, false);
+	//// Parse part number
+	//ret = CreateProperty(g_Keyword_PartNumber, "-1", MM::Integer, false);
+	//assert(DEVICE_OK == ret);
 
-	// Parse serial number
-	CreateProperty(g_Keyword_SerialNumber, "-1", MM::Integer, false);
+	//// Parse serial number
+	//ret = CreateProperty(g_Keyword_SerialNumber, "-1", MM::Integer, false);
+	//assert(DEVICE_OK == ret);
 
 	// Parse bit depth
-	CreateProperty(g_Keyword_NativeBitDepth, "-1", MM::Integer, false);
+	ret = CreateProperty(g_Keyword_NativeBitDepth, "-1", MM::Integer, true);
+	assert(DEVICE_OK == ret);
 
-	// Parse color channel count
-	CreateProperty(g_Keyword_ColorChannelCount, "-1", MM::Integer, false);
+	//// Parse color channel count
+	//ret = CreateProperty(g_Keyword_ColorChannelCount, "-1", MM::Integer, false);
+	//assert(DEVICE_OK == ret);
 
-	// Parse interface version
-	CreateProperty(g_Keyword_InterfaceVersion, "-1.0", MM::Float, false);
+	//// Parse interface version
+	//ret = CreateProperty(g_Keyword_InterfaceVersion, "-1.0", MM::Float, false);
+	//assert(DEVICE_OK == ret);
 
 	// Brightness slider
-	CPropertyAction* pActr = new CPropertyAction(this, &LedArray::OnBrightness);
-	CreateProperty(g_Keyword_Brightness, std::to_string((long long)brightness).c_str(), MM::Float, false, pActr);
+	CPropertyAction* pActbr = new CPropertyAction(this, &LedArray::OnBrightness);
+	ret = CreateProperty(g_Keyword_Brightness, std::to_string((long long)brightness).c_str(), MM::Float, false, pActbr);
+	assert(DEVICE_OK == ret);
 	SetPropertyLimits(g_Keyword_Brightness, 0, 255);
 
 	// Check that we have a controller:
@@ -172,39 +156,55 @@ int LedArray::Initialize()
 	// Get Device Parameters
 	GetDeviceParameters();
 
-	// Create color sliders if array is color
-	if (array_is_color)
+	// Red Color Slider
+	CPropertyAction* pActr = new CPropertyAction(this, &LedArray::OnColorBalanceRed);
+	ret = CreateProperty(g_Keyword_ColorBalanceRed, std::to_string((long long)color_r).c_str(), MM::Float, false, pActr);
+	SetPropertyLimits(g_Keyword_ColorBalanceRed, 0, 255);
+
+	// Green Color Slider
+	CPropertyAction* pActg = new CPropertyAction(this, &LedArray::OnColorBalanceGreen);
+	ret = CreateProperty(g_Keyword_ColorBalanceGreen, std::to_string((long long)color_g).c_str(), MM::Float, false, pActg);
+	SetPropertyLimits(g_Keyword_ColorBalanceGreen, 0, 255);
+
+	// Blue Color Slider
+	CPropertyAction* pActb = new CPropertyAction(this, &LedArray::OnColorBalanceBlue);
+	ret = CreateProperty(g_Keyword_ColorBalanceBlue, std::to_string((long long)color_b).c_str(), MM::Float, false, pActb);
+	SetPropertyLimits(g_Keyword_ColorBalanceBlue, 0, 255);
+
+	// Disable color sliders if LED array is not color
+	if (!array_is_color)
 	{
-		// Red Color Slider
-		CPropertyAction* pActr = new CPropertyAction(this, &LedArray::OnRed);
-		CreateProperty(g_Keyword_Red, std::to_string((long long)color_r).c_str(), MM::Float, false, pActr);
-		SetPropertyLimits(g_Keyword_Red, 0, 255);
+		// Set red color slider to read-only
+		MM::Property* pChildProperty = (MM::Property *)pActr;
+		pChildProperty->SetReadOnly(true);
 
-		// Green Color Slider
-		CPropertyAction* pActg = new CPropertyAction(this, &LedArray::OnGreen);
-		CreateProperty(g_Keyword_Green, std::to_string((long long)color_g).c_str(), MM::Float, false, pActg);
-		SetPropertyLimits(g_Keyword_Green, 0, 255);
+		// Set red color slider to read-only
+		pChildProperty = (MM::Property *)pActg;
+		pChildProperty->SetReadOnly(true);
 
-		// Blue Color Slider
-		CPropertyAction* pActb = new CPropertyAction(this, &LedArray::OnBlue);
-		CreateProperty(g_Keyword_Blue, std::to_string((long long)color_b).c_str(), MM::Float, false, pActb);
-		SetPropertyLimits(g_Keyword_Blue, 0, 255);
+		// Set red color slider to read-only
+		pChildProperty = (MM::Property *)pActb;
+		pChildProperty->SetReadOnly(true);
 	}
 
-	// NA Property
-	CPropertyAction* pActap = new CPropertyAction(this, &LedArray::OnAperture);
-	CreateProperty(g_Keyword_NumericalAp, std::to_string((long double)numerical_aperture).c_str(), MM::Float, false, pActap);
+	// Objective NA Property
+	CPropertyAction* pActap = new CPropertyAction(this, &LedArray::OnObjectiveAperture);
+	ret = CreateProperty(g_Keyword_ObjectiveNumericalAperture, std::to_string((long double)objective_numerical_aperture).c_str(), MM::Float, false, pActap);
+
+	// Pattern NA Property
+	CPropertyAction* pActap23 = new CPropertyAction(this, &LedArray::OnPatternAperture);
+	ret = CreateProperty(g_Keyword_AnnulusNumericalAperture, std::to_string((long double)annulus_numerical_aperture).c_str(), MM::Float, false, pActap23);
 
 	// LED Array Distance
 	CPropertyAction* pActap2 = new CPropertyAction(this, &LedArray::OnDistance);
-	CreateProperty(g_Keyword_SetArrayDistanceMM, std::to_string((long double)array_distance_z).c_str(), MM::Float, false, pActap2);
+	ret = CreateProperty(g_Keyword_SetArrayDistanceMM, std::to_string((long double)array_distance_z).c_str(), MM::Float, false, pActap2);
 
 	// LED Count
-	CreateProperty(g_Keyword_LedCount, std::to_string((long long)led_count).c_str(), MM::Integer, false);
+	ret = CreateProperty(g_Keyword_LedCount, std::to_string((long long)led_count).c_str(), MM::Integer, true);
 
 	// LED Positions
 	//CPropertyAction* pActap2 = new CPropertyAction(this, &LedArray::OnDistance);
-	//CreateProperty(g_Keyword_LedPositions, "", MM::String, false);	
+	//ret = CreateProperty(g_Keyword_LedPositions, "", MM::String, false);	
 
 	// Sync Current Parameters
 	SyncState();
@@ -226,7 +226,7 @@ int LedArray::Initialize()
 }
 
 int LedArray::SendCommand(const char * command, bool get_response)
-{	
+{
 	// Purge COM port
 	PurgeComPort(port_.c_str());
 
@@ -235,7 +235,10 @@ int LedArray::SendCommand(const char * command, bool get_response)
 
 	// Send command to device
 	_command += "\n";
-	WriteToComPort(port_.c_str(), &((unsigned char *)_command.c_str())[0], _command.length());
+	WriteToComPort(port_.c_str(), &((unsigned char *)_command.c_str())[0], (unsigned int)_command.length());
+
+	// Impose a small delay to prevent overloading buffer
+	Sleep(SERIAL_DELAY_MS);
 
 	// Get/check response if desired
 	if (get_response)
@@ -243,8 +246,7 @@ int LedArray::SendCommand(const char * command, bool get_response)
 	else
 		return DEVICE_OK;
 
-	// Impose a small delay to prevent overloading buffer
-	Sleep(SERIAL_DELAY_MS);
+
 }
 
 int LedArray::GetResponse()
@@ -269,7 +271,7 @@ int LedArray::SyncState()
 	// Get current NA
 	SendCommand("na", true);
 	std::string na_str("NA.");
-	numerical_aperture = (float)atoi(_serial_answer.substr(_serial_answer.find(na_str) + na_str.length(), _serial_answer.length() - na_str.length()).c_str()) / 100.0;
+	objective_numerical_aperture = (float)atoi(_serial_answer.substr(_serial_answer.find(na_str) + na_str.length(), _serial_answer.length() - na_str.length()).c_str()) / 100.0;
 
 	// Get current array distance
 	SendCommand("sad", true);
@@ -301,18 +303,18 @@ int LedArray::SyncState()
 			if (color_channel_count == 3)
 			{
 				// Assign current color values
-				color_r = atof(color_values.at(0).c_str());
-				color_g = atof(color_values.at(1).c_str());
-				color_b = atof(color_values.at(2).c_str());
+				color_r = strtoul((color_values.at(0).c_str()), NULL, false);
+				color_g = strtoul((color_values.at(1).c_str()), NULL, false);
+				color_b = strtoul((color_values.at(2).c_str()), NULL, false);
 
 				// Red:
-				SetProperty(g_Keyword_Red, std::to_string((long long)color_r).c_str());
+				SetProperty(g_Keyword_ColorBalanceRed, std::to_string((long long)color_r).c_str());
 
 				// Green:
-				SetProperty(g_Keyword_Green, std::to_string((long long)color_g).c_str());
+				SetProperty(g_Keyword_ColorBalanceGreen, std::to_string((long long)color_g).c_str());
 
 				// Blue:
-				SetProperty(g_Keyword_Blue, std::to_string((long long)color_b).c_str());
+				SetProperty(g_Keyword_ColorBalanceBlue, std::to_string((long long)color_b).c_str());
 			}
 		}
 	}
@@ -320,13 +322,14 @@ int LedArray::SyncState()
 	// Get current brightness
 	SendCommand("sb", true);
 	std::string brightness_str("SB.");
-	brightness = (long) atoi(_serial_answer.substr(_serial_answer.find(brightness_str) + brightness_str.length(), _serial_answer.length() - brightness_str.length()).c_str());
+	brightness = (long)atoi(_serial_answer.substr(_serial_answer.find(brightness_str) + brightness_str.length(), _serial_answer.length() - brightness_str.length()).c_str());
 
 	// Set brightness:
 	SetProperty(g_Keyword_Brightness, std::to_string((long long)brightness).c_str());
 
 	// Set Numerical Aperture:
-	SetProperty(g_Keyword_NumericalAp, std::to_string((long double)numerical_aperture).c_str());
+	SetProperty(g_Keyword_ObjectiveNumericalAperture, std::to_string((long double)objective_numerical_aperture).c_str());
+	SetProperty(g_Keyword_AnnulusNumericalAperture, std::to_string((long double)annulus_numerical_aperture).c_str());
 
 	//Set Array Dist:
 	SetProperty(g_Keyword_SetArrayDistanceMM, std::to_string((long double)array_distance_z).c_str());
@@ -343,13 +346,11 @@ int LedArray::SetMachineMode(bool mode)
 	{
 		// Send command to device
 		unsigned char myString[] = "machine\n";
-		unsigned char* tmpBuffer = &myString[0];
 		WriteToComPort(port_.c_str(), &myString[0], 8);
 	}
 	else {
 		// Send command to device
 		unsigned char myString[] = "human\n";
-		unsigned char* tmpBuffer = &myString[0];
 		WriteToComPort(port_.c_str(), &myString[0], 7);
 	}
 
@@ -378,18 +379,18 @@ int LedArray::GetDeviceParameters()
 	if (d.IsObject())
 	{
 
-		// Get properties from json and set as read-only properties
-		if (d.HasMember("mac_address"))
-			SetProperty(g_Keyword_MacAddress, d["mac_address"].GetString());
+		//// Get properties from json and set as read-only properties
+		//if (d.HasMember("mac_address"))
+		//	SetProperty(g_Keyword_MacAddress, d["mac_address"].GetString());
 
-		// Parse device name
-		if (d.HasMember("device_name"))
-			SetProperty(g_Keyword_LedArrayType, d["device_name"].GetString());
+		//// Parse device name
+		//if (d.HasMember("device_name"))
+		//	SetProperty(g_Keyword_LedArrayType, d["device_name"].GetString());
 
 		// Parse LED count
 		if (d.HasMember("led_count"))
 		{
-			led_count = d["led_count"].GetUint64();
+			led_count = (long)d["led_count"].GetUint64();
 			SetProperty(g_Keyword_LedCount, std::to_string((long long)led_count).c_str());
 		}
 
@@ -407,60 +408,60 @@ int LedArray::GetDeviceParameters()
 			SetProperty(g_Keyword_TriggerOutputCount, std::to_string((long long)trigger_output_count).c_str());
 		}
 
-		// Parse part number
-		if (d.HasMember("part_number"))
-		{
-			part_number = (int)d["part_number"].GetUint64();
-			SetProperty(g_Keyword_PartNumber, std::to_string((long long)part_number).c_str());
-		}
+		//// Parse part number
+		//if (d.HasMember("part_number"))
+		//{
+		//	part_number = (int)d["part_number"].GetUint64();
+		//	SetProperty(g_Keyword_PartNumber, std::to_string((long long)part_number).c_str());
+		//}
 
-		// Parse serial number
-		if (d.HasMember("serial_number"))
-		{
-			serial_number = (int)d["serial_number"].GetUint64();
-			SetProperty(g_Keyword_SerialNumber, std::to_string((long long)serial_number).c_str());
-		}
+		//// Parse serial number
+		//if (d.HasMember("serial_number"))
+		//{
+		//	serial_number = (int)d["serial_number"].GetUint64();
+		//	SetProperty(g_Keyword_SerialNumber, std::to_string((long long)serial_number).c_str());
+		//}
 
 		// Parse bit depth
 		if (d.HasMember("bit_depth"))
-		{	
-			bit_depth = (int) d["bit_depth"].GetUint64();
+		{
+			bit_depth = (int)d["bit_depth"].GetUint64();
 			SetProperty(g_Keyword_NativeBitDepth, std::to_string((long long)bit_depth).c_str());
 		}
 
 		// Parse color channel count
 		if (d.HasMember("color_channel_count"))
-		{	
+		{
 			color_channel_count = (int)d["color_channel_count"].GetUint64();
 
 			// Set color flag
 			array_is_color = color_channel_count > 1;
 
 			// Update property
-			SetProperty(g_Keyword_ColorChannelCount, std::to_string((long long) color_channel_count).c_str());
+			//SetProperty(g_Keyword_ColorChannelCount, std::to_string((long long)color_channel_count).c_str());
 		}
 
-		// Parse interface version
-		if (d.HasMember("interface_version"))
-		{
-			interface_version = d["interface_version"].GetFloat();
-			SetProperty(g_Keyword_InterfaceVersion, std::to_string((long double)interface_version).c_str());
-		}
+		//// Parse interface version
+		//if (d.HasMember("interface_version"))
+		//{
+		//	interface_version = d["interface_version"].GetFloat();
+		//	SetProperty(g_Keyword_InterfaceVersion, std::to_string((long double)interface_version).c_str());
+		//}
 
 		// Parse color channels
 		if (d.HasMember("color_channel_center_wavelengths"))
 		{
 			// Parse red channel
 			if (d["color_channel_center_wavelengths"].HasMember("r"))
-				CreateProperty(g_Keyword_WavelengthRed, std::to_string((long double)d["color_channel_center_wavelengths"]["r"].GetDouble()).c_str(), MM::String, false);
+				CreateProperty(g_Keyword_WavelengthRed, std::to_string((long double)d["color_channel_center_wavelengths"]["r"].GetDouble()).c_str(), MM::String, true);
 
 			// Parse green channel
 			if (d["color_channel_center_wavelengths"].HasMember("g"))
-				CreateProperty(g_Keyword_WavelengthGreen, std::to_string((long double)d["color_channel_center_wavelengths"]["g"].GetDouble()).c_str(), MM::String, false);
+				CreateProperty(g_Keyword_WavelengthGreen, std::to_string((long double)d["color_channel_center_wavelengths"]["g"].GetDouble()).c_str(), MM::String, true);
 
 			// Parse blue channel
 			if (d["color_channel_center_wavelengths"].HasMember("b"))
-				CreateProperty(g_Keyword_WavelengthBlue, std::to_string((long double)d["color_channel_center_wavelengths"]["b"].GetDouble()).c_str(), MM::String, false);
+				CreateProperty(g_Keyword_WavelengthBlue, std::to_string((long double)d["color_channel_center_wavelengths"]["b"].GetDouble()).c_str(), MM::String, true);
 		}
 
 		// Return
@@ -475,7 +476,7 @@ int LedArray::ReadLedPositions()
 {
 
 	// Initialize array
-	led_positions_cartesian = new double * [led_count];
+	led_positions_cartesian = new double *[led_count];
 	for (uint16_t i = 0; i < led_count; i++)
 	{
 		led_positions_cartesian[i] = new double[3];
@@ -486,7 +487,7 @@ int LedArray::ReadLedPositions()
 
 	uint16_t led_positions_read = 0;
 	uint16_t led_batch_size = 10;
-	uint16_t led_batch_count = ceil((double)led_count / (double)led_batch_size);
+	uint16_t led_batch_count = (uint16_t)ceil((double)led_count / (double)led_batch_size);
 	for (uint16_t batch_index = 0; batch_index < led_batch_count; batch_index++)
 	{
 		// Send command
@@ -542,7 +543,7 @@ int LedArray::ReadLedPositions()
 
 	// Get json
 	json_str += std::string("}");
-	
+
 	// Set json string to property
 	SetProperty(g_Keyword_LedPositions, json_str.c_str());
 
@@ -550,49 +551,13 @@ int LedArray::ReadLedPositions()
 }
 
 
-/**
- * Intializes the hardware.
- */
-int LedArrayVirtualShutter::Initialize()
-{
-   if (initialized_)
-      return DEVICE_OK;
-
-
-   // set property list
-   // -----------------
-
-   // Name
-   int ret = CreateProperty(MM::g_Keyword_Name, g_Keyword_DeviceNameVirtualShutter, MM::String, false);
-   if (DEVICE_OK != ret)
-      return ret;
-
-   // Description
-   ret = CreateProperty(MM::g_Keyword_Description, "Virtual dual shutter for turning LED Array on and off", MM::String, false);
-   if (DEVICE_OK != ret)
-      return ret;
-
-   // name of LED array to control
-   ret = CreateProperty(g_Keyword_DeviceName, "", MM::String, false);
-   assert(ret == DEVICE_OK);
-
-   // synchronize all properties
-   // --------------------------
-   ret = UpdateStatus();
-   if (ret != DEVICE_OK)
-      return ret;
-
-   initialized_ = true;
-   return DEVICE_OK;
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
 	RegisterDevice(g_Keyword_DeviceName, MM::SLMDevice, "LED Array");
-	RegisterDevice(g_Keyword_DeviceNameVirtualShutter, MM::ShutterDevice, "LED Array Virtual shutter");
+	RegisterDevice(g_Keyword_DeviceNameVirtualShutter, MM::ShutterDevice, "Virtual shutter device that only turns on LEDs when it is open");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -603,10 +568,10 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 	if (strcmp(deviceName, g_Keyword_DeviceName) == 0)
 	{
 		return new LedArray;
+	} else if (strcmp(deviceName, g_Keyword_DeviceNameVirtualShutter) == 0) {
+	return new LedArrayVirtualShutter;
 	}
-	else if (strcmp(deviceName, g_Keyword_DeviceNameVirtualShutter) == 0) {
-		return new LedArrayVirtualShutter;
-	}
+
 	return 0;
 }
 
@@ -614,73 +579,24 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 {
 	delete pDevice;
 }
-///////////////////////////////////////////////////////////////////////////////
-//LedArrayVirtualShutter Implementation
-///////////////////////////////////////////////////////////////////////////////
-// VShutter control implementation
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-/**
-* Constructor.
-*/
-LedArrayVirtualShutter::LedArrayVirtualShutter() : initialized_(false) {
-	// call the base class method to set-up default error codes/messages
-	InitializeDefaultErrorMessages();
-
-}
-
-LedArrayVirtualShutter::~LedArrayVirtualShutter()
-{
-	Shutdown();
-}
-
-/**
-* Obtains device name.
-*/
-void LedArrayVirtualShutter::GetName(char* name) const {
-	CDeviceUtils::CopyLimitedString(name, g_Keyword_DeviceNameVirtualShutter);
-}
-
-int LedArrayVirtualShutter::SetOpen(bool open) {
-   char arrayname[MM::MaxStrLength];
-   GetProperty(g_Keyword_DeviceName, arrayname);
-
-   if (strlen(arrayname) > 0)
-   {
-	  GetCoreCallback()->SetDeviceProperty(arrayname, g_Keyword_Shutter, open ? "1" : "0");
-   }
-
-   return DEVICE_OK;
-}
-
-
-int LedArrayVirtualShutter::GetOpen(bool& open) {
-	char arrayname[MM::MaxStrLength];
-    GetProperty(g_Keyword_DeviceName, arrayname);
-	char isopen[MM::MaxStrLength];
-	GetCoreCallback()->GetDeviceProperty(arrayname, g_Keyword_Shutter, isopen);
-	open = strcmp(isopen, "0");
-
-   return DEVICE_OK;
-}
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // LedArray implementation
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 LedArray::LedArray() : initialized_(false), name_(g_Keyword_DeviceName), pixels_(0), width_(1), height_(581),
-	shutterOpen_(true), color_r(63), color_g(63), color_b(63), numerical_aperture(0.7),
-	annulus_width(0.2), _pattern_orientation("Top"), array_distance_z(50), led_count(0)
+shutterOpen_(true), color_r(63), color_g(63), color_b(63), objective_numerical_aperture(0.7), 
+annulus_numerical_aperture(0.7), annulus_width(0.2), _pattern_orientation(g_Orientation_Top),
+array_distance_z(50), led_count(0)
 {
-   portAvailable_ = false;
+	portAvailable_ = false;
 
-   // Initialize default error messages
-   InitializeDefaultErrorMessages();
- 
-   ////pre initialization property: port name
-   CPropertyAction* pAct = new CPropertyAction(this, &LedArray::OnPort);
-   CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
+	// Initialize default error messages
+	InitializeDefaultErrorMessages();
+
+	////pre initialization property: port name
+	CPropertyAction* pAct = new CPropertyAction(this, &LedArray::OnPort);
+	CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
 
 
 }
@@ -688,70 +604,55 @@ LedArray::LedArray() : initialized_(false), name_(g_Keyword_DeviceName), pixels_
 LedArray::~LedArray()
 {
 	delete[] pixels_;
-   Shutdown();
+	Shutdown();
 }
 
-bool LedArray::Busy() 
+bool LedArray::Busy()
 {
 	return false;
 }
 
-void LedArray::GetName(char* name) const 
+void LedArray::GetName(char* name) const
 {
-CDeviceUtils::CopyLimitedString(name, g_Keyword_DeviceName);
+	CDeviceUtils::CopyLimitedString(name, g_Keyword_DeviceName);
 }
 
 int LedArray::Shutdown()
 {
-   if (initialized_)
-   {
-      initialized_ = false;
-   }
-   return DEVICE_OK;
+	if (initialized_)
+	{
+		initialized_ = false;
+	}
+	return DEVICE_OK;
 }
 
 //SLM functions
 int LedArray::SetImage(unsigned char * pixels) {
-	memcpy(pixels_ , pixels, width_*height_);
+	memcpy(pixels_, pixels, width_*height_);
 	return DEVICE_OK;
 }
 
-    /**
-    * Command the SLM to display the loaded image.
-    */
+/**
+* Command the SLM to display the loaded image.
+*/
 int LedArray::DisplayImage() {
-	std::string indices;
-	std::string index;
-	int j = 0;
-	for(int i = 0; i < height_; i++){   // It was assumed that pixels_ are unsigned char. However, for the current LED Array, it would make sense if pixels_ was a bool to begin with.
-		if(pixels_[i] != 0){
-			if (i < 10)
-			{
-				index = std::to_string(static_cast <long long> (i + 1));   // Given the assumption mentioned above, it is further assumed that ' ' means that the corresponding pixel is off.
-				indices.insert(j, index);
-				j++;
-				indices.insert(j," ");
-				j++;
-			}
-			else if( i < 100 && i > 10)
-			{
-				index = std::to_string(static_cast <long long> (i + 1));   // Given the assumption mentioned above, it is further assumed that ' ' means that the corresponding pixel is off.
-				indices.insert(j, index);
-				j = j + 2;
-				indices.insert(j," ");
-				j++;
-			}
-			else
-			{
-				index = std::to_string(static_cast <long long> (i + 1));   // Given the assumption mentioned above, it is further assumed that ' ' means that the corresponding pixel is off.
-				indices.insert(j, index);
-				j = j + 3;
-				indices.insert(j," ");
-				j++;
-			}
+	std::string command = std::string("l.");
+	std::string index_str;
+	for (int i = 0; i < height_; i++) {   // It was assumed that pixels_ are unsigned char. However, for the current LED Array, it would make sense if pixels_ was a bool to begin with.
+		if (pixels_[i] != 0)
+		{
+			// Append this command
+			command += std::to_string(static_cast <long long> (i + 1));   // Given the assumption mentioned above, it is further assumed that ' ' means that the corresponding pixel is off.
+
+																		  // Append deimeter
+			if (i < (height_ - 1))
+				command += std::string(".");
+
 		}
 	}
-	indices.erase(indices.end()-1);
+
+	// Send command
+	SendCommand(command.c_str(), true);
 
 	return DEVICE_OK;
 }
@@ -776,15 +677,15 @@ int LedArray::UpdateColor(long redint, long greenint, long blueint)
 	std::string command("sc.");
 
 	// Append Red
-	command += std::to_string((long long) redint);
+	command += std::to_string((long long)redint);
 	command += std::string(".");
 
 	// Append Green
-	command += std::to_string((long long) greenint);
+	command += std::to_string((long long)greenint);
 	command += std::string(".");
 
 	// Append Blue
-	command += std::to_string((long long) blueint);
+	command += std::to_string((long long)blueint);
 
 	// Send Command
 	SendCommand(command.c_str(), true);
@@ -795,17 +696,17 @@ int LedArray::UpdateColor(long redint, long greenint, long blueint)
 /**
 * Command the SLM to display one 8-bit intensity.
 */
-int LedArray::SetPixelsTo(unsigned char intensity) 
+int LedArray::SetPixelsTo(unsigned char intensity)
 {
 	lastModVal_ = intensity;
 	return DEVICE_OK;
 }
 
-int LedArray::Reset() 
-{	
+int LedArray::Reset()
+{
 	// Send reset command
 	SendCommand("reset", true);
-	
+
 	// Return
 	return DEVICE_OK;
 }
@@ -843,7 +744,7 @@ int LedArray::SetArrayDistance(double distMM)
 }
 
 
-int LedArray::SetNumericalAperture(double SetNumericalAperture)
+int LedArray::SetNumericalAperture(double numerical_aperture)
 {
 	// Set Numerical Aperture
 	std::string command("na.");
@@ -852,6 +753,9 @@ int LedArray::SetNumericalAperture(double SetNumericalAperture)
 
 	// Send Command
 	SendCommand(command.c_str(), true);
+
+	//update displayed
+	UpdatePattern();
 
 	return DEVICE_OK;
 }
@@ -863,14 +767,15 @@ int LedArray::DrawDpc(std::string type)
 	std::string command("dpc.");
 
 	// Append orientation
-	if (type == "Top")
+	if (type == g_Orientation_Top)
 		command += std::string("t");
-	else if (type == "Bottom")
+	else if (type == g_Orientation_Bottom)
 		command += std::string("b");
-	else if (type == "Left")
+	else if (type == g_Orientation_Left)
 		command += std::string("l");
-	else
+	else if (type == g_Orientation_Right)
 		command += std::string("r");
+
 
 	// Send Command
 	SendCommand(command.c_str(), true);
@@ -906,14 +811,15 @@ int LedArray::DrawHalfAnnulus(std::string type, double min_na, double max_na)
 	std::string command("ha.");
 
 	// Append orientation
-	if (type == "Top")
+	if (type == g_Orientation_Top)
 		command += std::string("t");
-	else if (type == "Bottom")
+	else if (type == g_Orientation_Bottom)
 		command += std::string("b");
-	else if (type == "Left")
+	else if (type == g_Orientation_Left)
 		command += std::string("l");
-	else
+	else if (type == g_Orientation_Right)
 		command += std::string("r");
+
 	command += std::string(".");
 
 	// Append Min NA
@@ -939,76 +845,82 @@ int LedArray::Clear()
 	return DEVICE_OK;
 }
 
-int LedArray::UpdatePattern(){
+int LedArray::UpdatePattern() {
 	//master function that gets called to send commands to LED array.
 	//Waits on response from serial port so that call blocks until pattern
 	//is corectly shown
 	if (!shutterOpen_) {
 		Clear();
-	} else if (_pattern == "Brightfield"){
-		  SetNumericalAperture(numerical_aperture);
-		  UpdateColor(color_r, color_g, color_b);
-		  SendCommand("bf", true);
-	  }
-	  else if(_pattern == "Darkfield"){
-		  SetNumericalAperture(numerical_aperture);
-		  UpdateColor(color_r, color_g, color_b);
-		  SendCommand("df", true);
-	  }
-	  else if(_pattern == "DPC"){
-		  SetNumericalAperture(numerical_aperture);
-		  UpdateColor(color_r, color_g, color_b);
-		  DrawDpc(_pattern_orientation);
-	  }
-	  else if (strcmp(_pattern.c_str(), "Color DPC") == 0)
-	  {
-		  SetNumericalAperture(numerical_aperture);
-		  UpdateColor(color_r, color_g, color_b);
-		  SendCommand("cdpc", true);
-	  }
-	  else if (strcmp(_pattern.c_str(), "Color Darkfield") == 0)
-	  {
-		  SetNumericalAperture(numerical_aperture);
-		  UpdateColor(color_r, color_g, color_b);
-		  SendCommand("cdf", true);
-	  }
-	  else if(_pattern == "Manual LED Indices"){
-		  if (_led_indicies.size() > 0){
+	}
+	else if (_pattern == g_Pattern_Brightfield) {
+		UpdateColor(color_r, color_g, color_b);
+		SendCommand("bf", true);
+	}
+	else if (_pattern == g_Pattern_Darkfield) {
+		UpdateColor(color_r, color_g, color_b);
+		SendCommand("df", true);
+	}
+	else if (_pattern == g_Pattern_Dpc) {
+		UpdateColor(color_r, color_g, color_b);
+		DrawDpc(_pattern_orientation);
+	}
+	else if (strcmp(_pattern.c_str(), g_Pattern_ColorDpc) == 0)
+	{
+		UpdateColor(color_r, color_g, color_b);
+		SendCommand("cdpc", true);
+	}
+	else if (strcmp(_pattern.c_str(), g_Pattern_ColorDarkfield) == 0)
+	{
+		UpdateColor(color_r, color_g, color_b);
+		SendCommand("cdf", true);
+	}
+	else if (_pattern == g_Pattern_ManualLedIndices) {
+		if (_led_indicies.size() > 0) {
 			UpdateColor(color_r, color_g, color_b);
 			DrawLedList(_led_indicies.c_str());
-		  }
-	  }
-	  else if(_pattern == "Annulus"){
-		  UpdateColor(color_r,color_g,color_b);
-		  DrawAnnulus(numerical_aperture, annulus_width + numerical_aperture);
-	  }
-	  else if(_pattern == "Half Annulus"){
-		  UpdateColor(color_r,color_g,color_b);
-		  DrawHalfAnnulus(_pattern_orientation, numerical_aperture, annulus_width + numerical_aperture);
-	  }
-	  else if (_pattern == "Center LED") {
-		  UpdateColor(color_r, color_g, color_b);
-		  SendCommand("l.0", true);
-	  }
-	  else{
-		  Clear();
-	  }
+		}
+	}
+	else if (_pattern == g_Pattern_Annulus) {
+		UpdateColor(color_r, color_g, color_b);
+		DrawAnnulus(annulus_numerical_aperture, annulus_width + annulus_numerical_aperture);
+	}
+	else if (_pattern == g_Pattern_HalfAnnulus) {
+		UpdateColor(color_r, color_g, color_b);
+		DrawHalfAnnulus(_pattern_orientation, annulus_numerical_aperture, annulus_width + annulus_numerical_aperture);
+	}
+	else if (_pattern == g_Pattern_CenterLed) {
+		UpdateColor(color_r, color_g, color_b);
+		SendCommand("l.0", true);
+	}
+	else {
+		Clear();
+	}
 	return 	ReadResponse();
-	  return 0;
 }
 
-int LedArray::ReadResponse(){
-	  //try to read from serial port
-	  unsigned char response[1];
-	  unsigned long read = 0;
-	  int error  = ReadFromComPort(port_.c_str(), response, 1, read);
-	  if (error==0) {
-		  return DEVICE_OK;
-	  }
+int LedArray::ReadResponse() {
+	//try to read from serial port
+	unsigned char response[1];
+	unsigned long read = 0;
+	int error = ReadFromComPort(port_.c_str(), response, 1, read);
+	if (error == 0) {
+		return DEVICE_OK;
+	}
 
-	  return DEVICE_ERR;
+	return DEVICE_ERR;
 }
 
+int LedArray::SetShutter(boolean open)
+{
+	//TODO maybe update property?
+	shutterOpen_ = open;
+	return UpdatePattern();
+}
+
+bool LedArray::GetShutter()
+{	
+	return shutterOpen_;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Action handlers
@@ -1016,76 +928,79 @@ int LedArray::ReadResponse(){
 
 int LedArray::OnPort(MM::PropertyBase* pProp, MM::ActionType pAct)
 {
-   if (pAct == MM::BeforeGet)
-   {
-      pProp->Set(port_.c_str());
-   }
-   else if (pAct == MM::AfterSet)
-   {
-      pProp->Get(port_);
-      portAvailable_ = true;
-   }
-   return DEVICE_OK;
+	if (pAct == MM::BeforeGet)
+	{
+		pProp->Set(port_.c_str());
+	}
+	else if (pAct == MM::AfterSet)
+	{
+		pProp->Get(port_);
+		portAvailable_ = true;
+	}
+	return DEVICE_OK;
 }
 
 int LedArray::OnReset(MM::PropertyBase* pProp, MM::ActionType pAct)
 {
-   if (pAct == MM::BeforeGet)
-   {
-      pProp->Set("0");
-   }
-   else if (pAct == MM::AfterSet)
-   {
-      Reset();
-   }
-   return DEVICE_OK;
+	if (pAct == MM::BeforeGet)
+	{
+		pProp->Set("0");
+	}
+	else if (pAct == MM::AfterSet)
+	{
+		Reset();
+	}
+	return DEVICE_OK;
 }
 
 int LedArray::OnShutterOpen(MM::PropertyBase* pProp, MM::ActionType pAct)
 {
-   if (pAct == MM::BeforeGet)
-   {
-      pProp->Set( shutterOpen_);
-   }
-   else if (pAct == MM::AfterSet)
-   {
-      pProp->Get(shutterOpen_);	  
-	  return UpdatePattern();
-   }
-   return DEVICE_OK;
+	if (pAct == MM::BeforeGet)
+	{
+		pProp->Set(shutterOpen_);
+	}
+	else if (pAct == MM::AfterSet)
+	{
+		pProp->Get(shutterOpen_);
+		return UpdatePattern();
+	}
+	return DEVICE_OK;
 }
 
 //Pattern functions:
 int LedArray::OnPattern(MM::PropertyBase* pProp, MM::ActionType pAct)
 {
-   if (pAct == MM::BeforeGet)
-   {
-      pProp->Set(_pattern.c_str());
-   }
-   else if (pAct == MM::AfterSet)
-   {
-      pProp->Get(_pattern);  
-	  return UpdatePattern();
-   }
-   return DEVICE_OK;
+	if (pAct == MM::BeforeGet)
+	{
+		pProp->Set(_pattern.c_str());
+	}
+	else if (pAct == MM::AfterSet)
+	{
+		pProp->Get(_pattern);
+		return UpdatePattern();
+	}
+	return DEVICE_OK;
 }
 
 
-int LedArray::OnLED(MM::PropertyBase* pProp, MM::ActionType pAct)
+int LedArray::OnSetManualLedList(MM::PropertyBase* pProp, MM::ActionType pAct)
 {
 	if (pAct == MM::BeforeGet) {
-      pProp->Set(_led_indicies.c_str());
-   }
-   else if (pAct == MM::AfterSet)
-   {
-      pProp->Get(_led_indicies);
-   }
-   return DEVICE_OK;
+		pProp->Set(_led_indicies.c_str());
+		//SetProperty(g_Keyword_Pattern, g_Pattern_ManualLedIndices);
+	}
+	else if (pAct == MM::AfterSet)
+	{
+		pProp->Get(_led_indicies);
+		//SetProperty(g_Keyword_Pattern, g_Pattern_ManualLedIndices);
+	}
+
+	return DEVICE_OK;
 }
 
 
 int LedArray::OnCommand(MM::PropertyBase* pProp, MM::ActionType pAct)
-{	
+{
 	if (pAct == MM::BeforeGet)
 	{
 		pProp->Set(_command.c_str());
@@ -1102,7 +1017,7 @@ int LedArray::OnCommand(MM::PropertyBase* pProp, MM::ActionType pAct)
 		PurgeComPort(port_.c_str());
 
 		// Send command
-		WriteToComPort(port_.c_str(), (unsigned char *)_command.c_str(), _command.length());
+		WriteToComPort(port_.c_str(), (unsigned char *)_command.c_str(), (unsigned int)_command.length());
 
 		// Get Answer
 		std::string answer;
@@ -1112,7 +1027,7 @@ int LedArray::OnCommand(MM::PropertyBase* pProp, MM::ActionType pAct)
 		SetProperty(g_Keyword_Response, answer.c_str());
 		//SetProperty(g_Keyword_Response, std::to_string((long long)answer.length()).c_str());
 	}
-	
+
 	// Return
 	return DEVICE_OK;
 }
@@ -1120,15 +1035,15 @@ int LedArray::OnCommand(MM::PropertyBase* pProp, MM::ActionType pAct)
 int LedArray::OnAnnulusWidth(MM::PropertyBase* pProp, MM::ActionType pAct)
 {
 	if (pAct == MM::BeforeGet)
-   {
-      pProp->Set(annulus_width);
-   }
-   else if (pAct == MM::AfterSet)
-   {
-      pProp->Get(annulus_width);
-	  return UpdatePattern();
-   }
-   return DEVICE_OK;
+	{
+		pProp->Set(annulus_width);
+	}
+	else if (pAct == MM::AfterSet)
+	{
+		pProp->Get(annulus_width);
+		return UpdatePattern();
+	}
+	return DEVICE_OK;
 }
 
 int LedArray::OnBrightness(MM::PropertyBase* pProp, MM::ActionType pAct)
@@ -1145,79 +1060,95 @@ int LedArray::OnBrightness(MM::PropertyBase* pProp, MM::ActionType pAct)
 	return DEVICE_OK;
 }
 
-int LedArray::OnRed(MM::PropertyBase* pProp, MM::ActionType pAct)
+int LedArray::OnColorBalanceRed(MM::PropertyBase* pProp, MM::ActionType pAct)
 {
-   if (pAct == MM::BeforeGet)
-   {
-      pProp->Set(color_r);
-   }
-   else if (pAct == MM::AfterSet)
-   {
-      pProp->Get(color_r);
-	  UpdateColor(color_r,color_g,color_b);
-   }
-   return DEVICE_OK;
+	if (pAct == MM::BeforeGet)
+	{
+		pProp->Set(color_r);
+	}
+	else if (pAct == MM::AfterSet)
+	{
+		pProp->Get(color_r);
+		UpdateColor(color_r, color_g, color_b);
+	}
+	return DEVICE_OK;
 }
 
-int LedArray::OnBlue(MM::PropertyBase* pProp, MM::ActionType pAct)
+int LedArray::OnColorBalanceBlue(MM::PropertyBase* pProp, MM::ActionType pAct)
 {
-   if (pAct == MM::BeforeGet)
-   {
-      pProp->Set(color_b);
-   }
-   else if (pAct == MM::AfterSet)
-   {
-      pProp->Get(color_b);
-	  UpdateColor(color_r,color_g,color_b);
-   }
-   return DEVICE_OK;
+	if (pAct == MM::BeforeGet)
+	{
+		pProp->Set(color_b);
+	}
+	else if (pAct == MM::AfterSet)
+	{
+		pProp->Get(color_b);
+		UpdateColor(color_r, color_g, color_b);
+	}
+	return DEVICE_OK;
 }
 
-int LedArray::OnGreen(MM::PropertyBase* pProp, MM::ActionType pAct)
+int LedArray::OnColorBalanceGreen(MM::PropertyBase* pProp, MM::ActionType pAct)
 {
-   if (pAct == MM::BeforeGet)
-   {
-      pProp->Set(color_g);
-   }
-   else if (pAct == MM::AfterSet)
-   {
-      pProp->Get(color_g);
-	  UpdateColor(color_r,color_g,color_b);
-   }
-   return DEVICE_OK;
+	if (pAct == MM::BeforeGet)
+	{
+		pProp->Set(color_g);
+	}
+	else if (pAct == MM::AfterSet)
+	{
+		pProp->Get(color_g);
+		UpdateColor(color_r, color_g, color_b);
+	}
+	return DEVICE_OK;
 }
 
 int LedArray::OnDistance(MM::PropertyBase* pProp, MM::ActionType pAct)
 {
-	if(pAct == MM::BeforeGet)
+	if (pAct == MM::BeforeGet)
 	{
 		pProp->Set(array_distance_z);
 	}
-	else if(pAct == MM::AfterSet)
+	else if (pAct == MM::AfterSet)
 	{
 		pProp->Get(array_distance_z);
 		SetArrayDistance(array_distance_z);
+		UpdatePattern();
 	}
-    return DEVICE_OK;
+	return DEVICE_OK;
 }
 
-int LedArray::OnAperture(MM::PropertyBase* pProp, MM::ActionType pAct)
+int LedArray::OnObjectiveAperture(MM::PropertyBase* pProp, MM::ActionType pAct)
 {
-	if(pAct == MM::BeforeGet)
+	if (pAct == MM::BeforeGet)
 	{
-		pProp->Set(numerical_aperture);
+		pProp->Set(objective_numerical_aperture);
 	}
-	else if(pAct == MM::AfterSet)
+	else if (pAct == MM::AfterSet)
 	{
-		pProp->Get(numerical_aperture);
-		SetNumericalAperture(numerical_aperture);
+		pProp->Get(objective_numerical_aperture);
+		SetNumericalAperture(objective_numerical_aperture);
+		UpdatePattern();
 	}
-    return DEVICE_OK;
+	return DEVICE_OK;
+}
+
+int LedArray::OnPatternAperture(MM::PropertyBase* pProp, MM::ActionType pAct)
+{
+	if (pAct == MM::BeforeGet)
+	{
+		pProp->Set(annulus_numerical_aperture);
+	}
+	else if (pAct == MM::AfterSet)
+	{
+		pProp->Get(annulus_numerical_aperture);
+		UpdatePattern();
+	}
+	return DEVICE_OK;
 }
 
 int LedArray::OnPatternOrientation(MM::PropertyBase* pProp, MM::ActionType pAct)
 {
-	if(pAct == MM::BeforeGet)
+	if (pAct == MM::BeforeGet)
 	{
 		pProp->Set(_pattern_orientation.c_str());
 	}
@@ -1225,49 +1156,132 @@ int LedArray::OnPatternOrientation(MM::PropertyBase* pProp, MM::ActionType pAct)
 	{
 		pProp->Get(_pattern_orientation);
 
-		// If we're currently displaying a DPC or half-annulus pattern, update the pattern
-		if (_pattern == "DPC")
-		{
-			SetNumericalAperture(numerical_aperture);
-			UpdateColor(color_r, color_g, color_b);
-			DrawDpc(_pattern_orientation);
-		}
-		else if (_pattern == "Half Annulus")
-		{
-			UpdateColor(color_r, color_g, color_b);
-			DrawHalfAnnulus(_pattern_orientation, numerical_aperture, annulus_width + numerical_aperture);
-		}
+		UpdatePattern();
 	}
-    return DEVICE_OK;
+	return DEVICE_OK;
 }
 
 int LedArray::OnWidth(MM::PropertyBase* pProp, MM::ActionType pAct)
 {
-   if (pAct == MM::BeforeGet)
-   {
-      pProp->Set( width_);
-   }
-   else if (pAct == MM::AfterSet)
-   {
-      pProp->Get(width_);
-	  delete[] pixels_;
-	  pixels_ = new unsigned char[width_*height_];
-   }
-   return DEVICE_OK;
+	if (pAct == MM::BeforeGet)
+	{
+		pProp->Set(width_);
+	}
+	else if (pAct == MM::AfterSet)
+	{
+		pProp->Get(width_);
+		delete[] pixels_;
+		pixels_ = new unsigned char[width_*height_];
+	}
+	return DEVICE_OK;
 }
 
 int LedArray::OnHeight(MM::PropertyBase* pProp, MM::ActionType pAct)
 {
-   if (pAct == MM::BeforeGet)
-   {
-      pProp->Set(height_);
-   }
-   else if (pAct == MM::AfterSet)
-   {
-      pProp->Get(height_);
-	  delete[] pixels_;
-	  pixels_  = new unsigned char[width_*height_];
-   }
-   return DEVICE_OK;
+	if (pAct == MM::BeforeGet)
+	{
+		pProp->Set(height_);
+	}
+	else if (pAct == MM::AfterSet)
+	{
+		pProp->Get(height_);
+		delete[] pixels_;
+		pixels_ = new unsigned char[width_*height_];
+	}
+	return DEVICE_OK;
 }
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//LedArrayVirtualShutter Implementation
+///////////////////////////////////////////////////////////////////////////////
+// VShutter control implementation
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+LedArrayVirtualShutter::LedArrayVirtualShutter() : initialized_(false), ledArrayName_(g_Keyword_DeviceName) {
+	//call the base class method to set-up default error codes/messages
+	InitializeDefaultErrorMessages();
+
+	//name of LED array to control
+	CPropertyAction* pActg = new CPropertyAction(this, &LedArrayVirtualShutter::OnDeviceName);
+	CreateProperty(g_Keyword_LEDArrayNameForShutter, "", MM::String, false, pActg, true);
+
+}
+
+int LedArrayVirtualShutter::Initialize()
+{
+if (initialized_)
+return DEVICE_OK;
+
+//Get ref to LED array
+ledArray_ = (LedArray*) GetCoreCallback()->GetDevice(this, ledArrayName_.c_str());
+
+ //set property list
+
+ //Name
+int ret = CreateProperty(MM::g_Keyword_Name, g_Keyword_DeviceNameVirtualShutter, MM::String, false);
+if (DEVICE_OK != ret)
+	return ret;
+
+ //Description
+ret = CreateProperty(MM::g_Keyword_Description, "Virtual dual shutter for turning LED Array on and off", MM::String, true);
+if (DEVICE_OK != ret)
+	return ret;
+
+ //synchronize all properties
+ --------------------------
+ret = UpdateStatus();
+if (ret != DEVICE_OK)
+return ret;
+
+initialized_ = true;
+return DEVICE_OK;
+}
+
+
+LedArrayVirtualShutter::~LedArrayVirtualShutter()
+{
+Shutdown();
+}
+
+int LedArrayVirtualShutter::OnDeviceName(MM::PropertyBase* pProp, MM::ActionType pAct)
+{
+	if (pAct == MM::BeforeGet)
+	{
+		pProp->Set(ledArrayName_.c_str());
+	}
+	else if (pAct == MM::AfterSet)
+	{
+		pProp->Get(ledArrayName_);
+
+	}
+	return DEVICE_OK;
+}
+
+
+void LedArrayVirtualShutter::GetName(char* name) const {
+CDeviceUtils::CopyLimitedString(name, g_Keyword_DeviceNameVirtualShutter);
+}
+
+int LedArrayVirtualShutter::SetOpen(bool open) {
+
+//return GetCoreCallback()->SetDeviceProperty(ledArrayName_.c_str(), g_Keyword_Shutter, open ? "1" : "0");
+	return ledArray_->SetShutter(open);
+}
+
+
+int LedArrayVirtualShutter::GetOpen(bool& open) {
+	open = ledArray_->GetShutter();/*
+	char isopen[1];
+int ret = GetCoreCallback()->GetDeviceProperty(ledArrayName_.c_str(), g_Keyword_Shutter, isopen);
+if (ret != DEVICE_OK)
+	return ret;
+open = strcmp(isopen, "0");*/
+return DEVICE_OK;
+}
+
+
+
 

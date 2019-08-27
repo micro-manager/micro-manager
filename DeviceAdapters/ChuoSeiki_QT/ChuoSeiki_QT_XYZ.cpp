@@ -53,7 +53,6 @@ const char* g_ChuoSeikiXYStageDeviceName = "ChuoSeiki_QT 2-Axis";
 // single axis stage
 const char* g_ChuoSeikiZStageDeviceName = "ChuoSeiki_QT 1-Axis";
 
-
 const char* g_ChuoSeikiController = "ChuoSeiki QT Controller";
 const char* g_ChuoSeiki_Controller_Axis = "ChuoSeikiAxisName";
 
@@ -107,7 +106,7 @@ int clearPort(MM::Device& device, MM::Core& core, const char* port)
 	while (read == bufSize) 
 	{
 		ret = core.ReadFromSerial(&device, port, clear, bufSize, read);
-		if (ret != DEVICE_OK)
+		if (ret != DEVICE_OK && ret != 14)
 			return ret;
 	}
 	return DEVICE_OK;
@@ -133,23 +132,24 @@ accelTimeY_			(100)
 	InitializeDefaultErrorMessages();  // default error messages
 	
 	// define custom error messages
-	SetErrorText (ERR_PORT_CHANGE_FORBIDDEN,"Can't change serial port!"	);
-	SetErrorText (ERR_UNRECOGNIZED_ANSWER,	"Unrecognized answer!");
-	SetErrorText (ERR_NO_ANSWER,			"No response!");
-	SetErrorText (ERR_NO_CONTROLLER,		"Please add the ChuoSeiki Controller device first!");
-	SetErrorText (ERR_HOMING,				"Homing error! Please clear error using control pad!");
-	SetErrorText (ERR_TIMEOUT,				"Timeout error!");
+	SetErrorText(ERR_PORT_CHANGE_FORBIDDEN, "Can't change serial port!");
+	SetErrorText(ERR_UNRECOGNIZED_ANSWER, "Unrecognized answer!");
+	SetErrorText(ERR_NO_ANSWER, "No response!");
+	SetErrorText(ERR_NO_CONTROLLER, "Please connect the ChuoSeiki Controller then add device adapter!");
+	SetErrorText(ERR_HOMING, "Homing error! Please clear error using control pad!");
+	SetErrorText(ERR_TIMEOUT, "Timeout error!");
+	//	SetErrorText(ERR_DEVICE_CHECK, "Error During Confirm Device Version! Please ReStart and Retry!");
 
-	SetErrorText(ERR_CONTROLER_0,	"Not In Command Recive Mode!");
-	SetErrorText(ERR_CONTROLER_1,	"Command Syntax Error!");
-	SetErrorText(ERR_CONTROLER_2,	"Error: Overflow Value/Read Only Parameter!");
-	SetErrorText(ERR_CONTROLER_3,	"Command Set Axis Error/Mode Setting Error!");
-	SetErrorText(ERR_CONTROLER_4,	"Command Char Over!");
-	SetErrorText(ERR_CONTROLER_5,	"Stop Command Sent To Stopped Stage!");
-	SetErrorText(ERR_CONTROLER_6,	"Limit Detected!");
-	SetErrorText(ERR_CONTROLER_7,	"Emergency Stop Detected!");
-	SetErrorText(ERR_CONTROLER_8,	"Com Error/Driver Error!");
-	SetErrorText(ERR_CONTROLER_9,	"Other Errors!");
+	SetErrorText(ERR_CONTROLER_0, "Not In Command Recive Mode!");
+	SetErrorText(ERR_CONTROLER_1, "Command Syntax Error!");
+	SetErrorText(ERR_CONTROLER_2, "Error: Overflow Value/Read Only Parameter!");
+	SetErrorText(ERR_CONTROLER_3, "Command Set Axis Error/Mode Setting Error!");
+	SetErrorText(ERR_CONTROLER_4, "Command Char Over!");
+	SetErrorText(ERR_CONTROLER_5, "Stop Command Sent To Stopped Stage!");
+	SetErrorText(ERR_CONTROLER_6, "Limit Detected!");
+	SetErrorText(ERR_CONTROLER_7, "Emergency Stop Detected!");
+	SetErrorText(ERR_CONTROLER_8, "Com Error/Driver Error!");
+	SetErrorText(ERR_CONTROLER_9, "Other Errors!");
 
 
 	// Name, read-only (RO)
@@ -196,7 +196,7 @@ MM::DeviceDetectionStatus ChuoSeikiXYStage::DetectDevice(void)
 			// device specific default communication parameters
 			GetCoreCallback()->SetDeviceProperty(portName_XY.c_str(), MM::g_Keyword_BaudRate,	"9600"	);
 			GetCoreCallback()->SetDeviceProperty(portName_XY.c_str(), MM::g_Keyword_StopBits,	"1"		);
-			GetCoreCallback()->SetDeviceProperty(portName_XY.c_str(), "AnswerTimeout",			"600.0"	);
+			GetCoreCallback()->SetDeviceProperty(portName_XY.c_str(), "AnswerTimeout",			"500.0"	);
 			GetCoreCallback()->SetDeviceProperty(portName_XY.c_str(), "DelayBetweenCharsMs",	"0.0"	);
 
 			// get portname for 1 stage controller
@@ -204,12 +204,15 @@ MM::DeviceDetectionStatus ChuoSeikiXYStage::DetectDevice(void)
 			// set port parameters
 			device->Initialize();
 			// check version
-			int qvStatus = this->ConfirmComm();
-			if( DEVICE_OK != qvStatus ) 
-				LogMessageCode(qvStatus,true);
+			int ret = this->ConfirmComm();
+			if (ret != DEVICE_OK && ret != 14)
+			{
+				LogMessageCode(ret, true);
+			}
 			else
-			 // to succeed must reach here....
+				// to succeed must reach here....			
 				result = MM::CanCommunicate;
+
 			// device shutdown, return default answertimeout	
 			device->Shutdown();
 			 // always restore the AnswerTimeout to the default
@@ -229,27 +232,31 @@ int ChuoSeikiXYStage::ConfirmComm()
 	int ret;
 	string answer;
 
-	PurgeComPort(portName_XY.c_str());
-	ret= SendSerialCommand(portName_XY.c_str(), "?:CHUOSEIKI", "\r\n");		// it will return the phase after "?:"
-	if (ret!= DEVICE_OK) 
-		return ret;
-
-	ret= GetSerialAnswer(portName_XY.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK) 
-		return ret;
-	
-	if( answer.substr(0, 9).compare("CHUOSEIKI") != 0)
+	for (int i = 0; i < 5; i++)
 	{
-		return ERR_UNRECOGNIZED_ANSWER;
+		PurgeComPort(portName_XY.c_str());
+		ret = SendSerialCommand(portName_XY.c_str(), "?:CHUOSEIKI", "\r\n");		// it will return the phase after "?:"
+		if (ret != DEVICE_OK && ret != 14) 	return ret;
+
+		ret = GetSerialAnswer(portName_XY.c_str(), "\r\n", answer);
+		if (ret != DEVICE_OK && ret != 14) 	return ret;
+
+		if (answer.substr(0, 9).compare("CHUOSEIKI") == 0) {
+			break;
+		}
+		else if (answer.substr(0, 9).compare("CHUOSEIKI") != 0 && i >= 4) {
+			return ERR_CONTROLER_8;
+		}
+		else {
+			CDeviceUtils::SleepMs(10);					// else sleep and retry
+		}
 	}
 
 	ret = SendSerialCommand(portName_XY.c_str(), "X:1", "\r\n");  // request feedback "\r\n" after send control command
-	if (ret != DEVICE_OK)		
-		return ret;
+	if (ret != DEVICE_OK && ret != 14) 	return ret;
 
 	ret = GetSerialAnswer(portName_XY.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK)		
-		return ret;
+	if(ret != DEVICE_OK && ret != 14) 	return ret;
 
 	return DEVICE_OK;
 }
@@ -262,66 +269,66 @@ void ChuoSeikiXYStage::GetName(char* Name) const
 
 int ChuoSeikiXYStage::Initialize()
 {
-	int status = 0;
+	int ret = 0;
 
 	//Step Size X
 	CPropertyAction* pAct = new CPropertyAction(this, &ChuoSeikiXYStage::OnStepSizeX);
-	status = CreateProperty("X-Axis StepSize: um", "1", MM::Float, false, pAct);
-	if (status != DEVICE_OK)
-      return status;
+	ret = CreateProperty("X-Axis StepSize: um", "1", MM::Float, false, pAct);
+	if (ret != DEVICE_OK && ret != 14)
+      return ret;
 
 	//Step Size Y
 	pAct = new CPropertyAction(this, &ChuoSeikiXYStage::OnStepSizeY);
-	status = CreateProperty("Y-Axis StepSize: um", "1", MM::Float, false, pAct);
-	if (status != DEVICE_OK)
-      return status;
+	ret = CreateProperty("Y-Axis StepSize: um", "1", MM::Float, false, pAct);
+	if (ret != DEVICE_OK && ret != 14)
+      return ret;
 
 	//Speed High X
 	pAct = new CPropertyAction(this, &ChuoSeikiXYStage::OnSpeedXHigh);
-	status = CreateProperty("X-Axis HighSpeed: pps", "2000", MM::Float, false, pAct);
-	if (status != DEVICE_OK)
-      return status;
+	ret = CreateProperty("X-Axis HighSpeed: pps", "2000", MM::Float, false, pAct);
+	if (ret != DEVICE_OK && ret != 14)
+      return ret;
 
 	//Speed Low X
 	pAct = new CPropertyAction(this, &ChuoSeikiXYStage::OnSpeedXLow);
-	status = CreateProperty("X-Axis LowSpeed: pps", "500", MM::Float, false, pAct);
-	if (status != DEVICE_OK)
-      return status;
+	ret = CreateProperty("X-Axis LowSpeed: pps", "500", MM::Float, false, pAct);
+	if (ret != DEVICE_OK && ret != 14)
+      return ret;
 
 	//Accel Time X
 	pAct = new CPropertyAction(this, &ChuoSeikiXYStage::OnAccelTimeX);
-	status = CreateProperty("X-Axis AcceleratingTime: msec", "100", MM::Float, false, pAct);
-	if (status != DEVICE_OK)
-      return status;
+	ret = CreateProperty("X-Axis AcceleratingTime: msec", "100", MM::Float, false, pAct);
+	if (ret != DEVICE_OK && ret != 14)
+      return ret;
 
 	//Speed High Y
 	pAct = new CPropertyAction(this, &ChuoSeikiXYStage::OnSpeedYHigh);
-	status = CreateProperty("Y-Axis HighSpeed: pps", "2000", MM::Float, false, pAct);
-	if (status != DEVICE_OK)
-      return status;
+	ret = CreateProperty("Y-Axis HighSpeed: pps", "2000", MM::Float, false, pAct);
+	if (ret != DEVICE_OK && ret != 14)
+      return ret;
 
 	//Speed Low Y
 	pAct = new CPropertyAction(this, &ChuoSeikiXYStage::OnSpeedYLow);
-	status = CreateProperty("Y-Axis LowSpeed: pps", "500", MM::Float, false, pAct);
-	if (status != DEVICE_OK)
-      return status;
+	ret = CreateProperty("Y-Axis LowSpeed: pps", "500", MM::Float, false, pAct);
+	if (ret != DEVICE_OK && ret != 14)
+      return ret;
 
 	//Accel Time Y
 	pAct = new CPropertyAction(this, &ChuoSeikiXYStage::OnAccelTimeY);
-	status = CreateProperty("Y-Axis Accelerating Time: msec", "100", MM::Float, false, pAct);
-	if (status != DEVICE_OK)
-      return status;
+	ret = CreateProperty("Y-Axis Accelerating Time: msec", "100", MM::Float, false, pAct);
+	if (ret != DEVICE_OK && ret != 14)
+      return ret;
 	
 	bHomeing = false;
 	bLimitStop = false;
 
-	status = ConfirmComm();
-	if (status != DEVICE_OK)
-		return status;
+	ret = UpdateStatus();
+	if (ret != DEVICE_OK && ret != 14)
+		return ret;
 
-	status = UpdateStatus();
-	if (status != DEVICE_OK)
-		return status;
+	ret = ConfirmComm();
+	if (ret != DEVICE_OK && ret != 14)
+		return ret;
 
 	initialized_ = true;
 	return DEVICE_OK;
@@ -354,11 +361,11 @@ bool ChuoSeikiXYStage::Busy()
 	command << "Q:" << controllerAxisX_ << "2" << controllerAxisY_ <<"2";		// request state of the stage, return (keyword X)(,)(keyword Y)
 	ret = SendSerialCommand(portName_XY.c_str(), command.str().c_str(), "\r\n");
 	command.str("");
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return true;
 
 	ret = GetSerialAnswer(portName_XY.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return true;
 
 	if (answer.length() == 3)
@@ -401,13 +408,13 @@ int ChuoSeikiXYStage::ConfirmAnswer(std::string errorcode)
 		if (errorcode == "!7") return ERR_CONTROLER_7;
 		if (errorcode == "!8") return ERR_CONTROLER_8;
 		if (errorcode == "!9") return ERR_CONTROLER_9;
-		return ERR_UNRECOGNIZED_ANSWER;
+		return ERR_CONTROLER_9;
 	}
 	else return DEVICE_OK;
 }
 
 
-int ChuoSeikiXYStage::SetPositionSteps(long x, long y)
+int ChuoSeikiXYStage::SetPositionSteps(long abs_X, long abs_Y)
 {
 	int ret = 0;
 	ostringstream command;
@@ -416,30 +423,30 @@ int ChuoSeikiXYStage::SetPositionSteps(long x, long y)
 	if(true == bHomeing)
 	{
 		bHomeing = false;
-		x=0;
-		y=0;
+		abs_X=0;
+		abs_Y=0;
 		return DEVICE_OK;
 	}
 	else
 	{
    		//Absolute Move Command AGO
-		command << "AGO:"<< controllerAxisX_ << x << controllerAxisY_ << y;
+		command << "AGO:"<< controllerAxisX_ << abs_X << controllerAxisY_ << abs_Y;
 		ret = SendSerialCommand(portName_XY.c_str(), command.str().c_str(), "\r\n");
-		command.str("");
-		if (ret != DEVICE_OK)
+
+		if (ret != DEVICE_OK && ret != 14)
 			return ret;
 
 		ret = GetSerialAnswer(portName_XY.c_str(), "\r\n", answer);
-		if (ret != DEVICE_OK)
+		if (ret != DEVICE_OK && ret != 14)
 			return ret;
 
 		ret = ConfirmAnswer(answer);
-		if (ret != DEVICE_OK)
+		if (ret != DEVICE_OK && ret != 14)
 			return ret;
 	}
 
-	double newPosX = x * stepSize_umX_;
-	double newPosY = y * stepSize_umX_;
+	double newPosX = abs_X * stepSize_umX_;
+	double newPosY = abs_Y * stepSize_umX_;
 	double distance_umX = fabs(newPosX - posX_um_);
 	double distance_umY = fabs(newPosY - posY_um_);
 
@@ -451,13 +458,6 @@ int ChuoSeikiXYStage::SetPositionSteps(long x, long y)
 		timeOut  = timeY;
 
 	WaitForBusy(timeOut);
-	
-	posX_um_ = x * stepSize_umX_;
-	posY_um_ = y * stepSize_umY_;
-
-	ret = OnXYStagePositionChanged(posX_um_ , posY_um_ );
-	if (ret != DEVICE_OK)
-		return ret;
 
    return DEVICE_OK;
 }
@@ -469,29 +469,40 @@ int ChuoSeikiXYStage::SetRelativePositionSteps(long x, long y)
 	int ret;
 	string answer;
 
-	posX_um_ = x * stepSize_umX_;
-	posY_um_ = y * stepSize_umY_;
-
 	PurgeComPort(portName_XY.c_str());
 
+	long re_X = x;
+	long re_Y = y;
+
 	//Relative (step) Move Command MGO
-	command << "MGO:"<< controllerAxisX_ << x << controllerAxisY_ << y;
+	command << "MGO:"<< controllerAxisX_ << re_X << controllerAxisY_ << re_Y;
 	ret = SendSerialCommand(portName_XY.c_str(), command.str().c_str(), "\r\n");
-	command.str("");
-	if (ret != DEVICE_OK)
+
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	ret = GetSerialAnswer(portName_XY.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	ret = ConfirmAnswer(answer);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
-	ret = OnXYStagePositionChanged(posX_um_, posY_um_);
-	if (ret != DEVICE_OK)
-		return ret;
+	// added on 20190712, wait until the move completed, 
+	//it is not realy necessary, but just put in for prevention
+	/*
+	double distance_umX = x * stepSize_umX_;
+	double distance_umY = y * stepSize_umX_;
+	long timeX	= (long) (distance_umX / speedHigh_mmX_);
+	long timeY	= (long) (distance_umY / speedHigh_mmY_);
+
+	long timeOut = timeX;
+	if(timeX < timeY)	
+		timeOut  = timeY;
+
+	WaitForBusy(timeOut);
+	*/
 
 	return DEVICE_OK;
 
@@ -504,37 +515,56 @@ int ChuoSeikiXYStage::GetPositionSteps(long& x, long& y)
 	int ret = 0;
 	string answer;
 
-	command << "Q:"<< controllerAxisX_ << "0" << controllerAxisY_ << "0";		// request positions and states
-	ret = SendSerialCommand(portName_XY.c_str(), command.str().c_str(), "\r\n");
-	command.str("");
-	if (ret != DEVICE_OK)
-			return ret;
-
-	ret = GetSerialAnswer(portName_XY.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK)
-			return ret;
-
-	if (answer.length() == 21)					// answer format: (+ or -)(8 digits)(stage A state keyword)(,)(+ or -)(8 digits)(stage B state keyword)
+	for (int i = 0; i < 5; i++)
 	{
-		if( (answer.substr(9, 1) == "D") || (answer.substr(20, 1) == "D") )
-		{	
-			return GetPositionSteps(x,y);		// if stage is running, repeat
-		}
-		else if( answer.substr(9, 1) == "H" || answer.substr(20, 1) == "H" )
+		PurgeComPort(portName_XY.c_str());
+
+		command << "Q:" << controllerAxisX_ << "0" << controllerAxisY_ << "0";		// request positions and states
+		ret = SendSerialCommand(portName_XY.c_str(), command.str().c_str(), "\r\n");
+
+		if (ret != DEVICE_OK && ret != 14)
+			return ret;
+
+		CDeviceUtils::SleepMs(100);		// sleep 100ms for reading position
+
+		ret = GetSerialAnswer(portName_XY.c_str(), "\r\n", answer);
+		if (ret != DEVICE_OK && ret != 14)
+			return ret;
+
+		/*if (answer.length() <= 20)
 		{
-			return ERR_HOMING;	
-		}
-		else
+			ret = ConfirmAnswer(answer);
+			if (ret != DEVICE_OK && ret != 14)
+			return ret;
+		}*/
+
+		if (answer.length() > 20)					// answer format: (+ or -)(8 digits)(stage A state keyword)(,)(+ or -)(8 digits)(stage B state keyword)
 		{
-			x = std::atol(answer.substr(0,9).c_str());
-			y = std::atol(answer.substr(11,9).c_str());
+			x = std::atol(answer.substr(0, 9).c_str());
+			y = std::atol(answer.substr(11, 9).c_str());
 			posX_um_ = x * stepSize_umX_;
 			posY_um_ = y * stepSize_umY_;
-			return DEVICE_OK;
+
+			if ((answer.substr(9, 1) == "D") || (answer.substr(20, 1) == "D")) {
+				CDeviceUtils::SleepMs(20);
+				continue;		// if stage is running, repeat
+			}
+			else if (answer.substr(9, 1) == "H" || answer.substr(20, 1) == "H")	{
+				return ERR_HOMING;
+			}
+			else	{
+				return DEVICE_OK;
+			}
 		}
+		else if (i >= 4){
+				return DEVICE_OK; //return ERR_CONTROLER_8; 20190712 fix error of reading position after using set origin
+		}
+
+		CDeviceUtils::SleepMs(20);
+		// if answer is wrong, try again, max 5 times
 	}
-	else return ERR_UNRECOGNIZED_ANSWER;
-	
+   // should be unreachable, but better safe then sorry
+	return DEVICE_OK; //return ERR_CONTROLER_8; 20190712 fix error of reading position after using set origin
 }
 
 
@@ -554,17 +584,18 @@ int ChuoSeikiXYStage::Home()
 
 	command << "H:"<< controllerAxisX_ << controllerAxisY_;			// Home command
 	ret = SendSerialCommand(portName_XY.c_str(), command.str().c_str(), "\r\n");
-	command.str("");
-	if (ret != DEVICE_OK) 
+
+	if (ret != DEVICE_OK && ret != 14) 
 		return ret;
+
+	//WaitForBusy(2000);
 
 	ret = GetSerialAnswer(portName_XY.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK) 
+	if (ret != DEVICE_OK && ret != 14) 
 		return ret;
-
-
+	
 	ret = ConfirmAnswer(answer);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	posX_um_ = 0;
@@ -583,15 +614,15 @@ int ChuoSeikiXYStage::Stop()
 	PurgeComPort(portName_XY.c_str());
 
 	ret = SendSerialCommand(portName_XY.c_str(), "L:", "\r\n");		// stop all stages
-	if (ret != DEVICE_OK) 
+	if (ret != DEVICE_OK && ret != 14) 
 		return ret;
 
 	ret = GetSerialAnswer(portName_XY.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK) 
+	if (ret != DEVICE_OK && ret != 14) 
 		return ret;
 
 	ret = ConfirmAnswer(answer);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	return DEVICE_OK;
@@ -653,10 +684,10 @@ int ChuoSeikiXYStage::OnResetPort_XY(MM::PropertyBase* pProp, MM::ActionType pAc
       if (request == "Reset")
       {
          // Send the Reset Command
-         int status = SendSerialCommand(portName_XY.c_str(), "RESTA", "\r\n");		// restart controller
+         int ret = SendSerialCommand(portName_XY.c_str(), "RESTA", "\r\n");		// restart controller
          CDeviceUtils::SleepMs (10);
-		 if (status !=DEVICE_OK)
-            return status;
+		 if (ret != DEVICE_OK && ret != 14)
+            return ret;
          // TODO: Do we need to wait until the reset is completed?
       }
    }
@@ -671,7 +702,16 @@ int ChuoSeikiXYStage::OnStepSizeX(MM::PropertyBase* pProp, MM::ActionType eAct)
 	}
 	else if (eAct == MM::AfterSet)
 	{
-		pProp->Get(stepSize_umX_);
+		double stepSize;
+		pProp->Get(stepSize);
+
+		if (stepSize <=0.0)
+		  {
+			 pProp->Set(stepSize_umX_);
+			 return ERR_CONTROLER_2;
+		  }
+		stepSize_umX_ = stepSize;
+
 	}
 	return DEVICE_OK;
 }
@@ -685,7 +725,15 @@ int ChuoSeikiXYStage::OnStepSizeY(MM::PropertyBase* pProp, MM::ActionType eAct)
 	}
 	else if (eAct == MM::AfterSet)
 	{
-		pProp->Get(stepSize_umY_);
+		double stepSize;
+		pProp->Get(stepSize);
+
+		if (stepSize <=0.0)
+		  {
+			 pProp->Set(stepSize_umY_);
+			 return ERR_CONTROLER_2;
+		  }
+		stepSize_umY_ = stepSize;
 	}
 
 	return DEVICE_OK;
@@ -713,15 +761,15 @@ int ChuoSeikiXYStage::OnSpeedXHigh(MM::PropertyBase* pProp, MM::ActionType eAct)
 	command << "D:" << controllerAxisX_ << speedLow_stepX_ << "P" << speedHigh_stepX_ << "P" << accelTimeX_;		// set speed command
 	ret = SendSerialCommand(portName_XY.c_str(), command.str().c_str(), "\r\n");
 	command.str("");
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	ret = GetSerialAnswer(portName_XY.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	ret = ConfirmAnswer(answer);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	return DEVICE_OK;
@@ -748,15 +796,15 @@ int ChuoSeikiXYStage::OnSpeedXLow(MM::PropertyBase* pProp, MM::ActionType eAct)
 	command << "D:" << controllerAxisX_ << speedLow_stepX_ << "P" << speedHigh_stepX_ << "P" << accelTimeX_;
 	ret = SendSerialCommand(portName_XY.c_str(), command.str().c_str(), "\r\n");
 	command.str("");
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	ret = GetSerialAnswer(portName_XY.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	ret = ConfirmAnswer(answer);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	return DEVICE_OK;
@@ -783,15 +831,15 @@ int ChuoSeikiXYStage::OnAccelTimeX(MM::PropertyBase* pProp, MM::ActionType eAct)
 	command << "D:" << controllerAxisX_ << speedLow_stepX_ << "P" << speedHigh_stepX_ << "P" << accelTimeX_;
 	ret = SendSerialCommand(portName_XY.c_str(), command.str().c_str(), "\r\n");
 	command.str("");
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	ret = GetSerialAnswer(portName_XY.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	ret = ConfirmAnswer(answer);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	return DEVICE_OK;
@@ -818,15 +866,15 @@ int ChuoSeikiXYStage::OnSpeedYHigh(MM::PropertyBase* pProp, MM::ActionType eAct)
 	command << "D:" << controllerAxisY_ << speedLow_stepY_ << "P" << speedHigh_stepY_ << "P" << accelTimeY_;
 	ret = SendSerialCommand(portName_XY.c_str(), command.str().c_str(), "\r\n");
 	command.str("");
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	ret = GetSerialAnswer(portName_XY.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	ret = ConfirmAnswer(answer);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	return DEVICE_OK;
@@ -853,15 +901,15 @@ int ChuoSeikiXYStage::OnSpeedYLow(MM::PropertyBase* pProp, MM::ActionType eAct)
 	command << "D:" << controllerAxisY_ << speedLow_stepY_ << "P" << speedHigh_stepY_ << "P" << accelTimeY_;
 	ret = SendSerialCommand(portName_XY.c_str(), command.str().c_str(), "\r\n");
 	command.str("");
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	ret = GetSerialAnswer(portName_XY.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	ret = ConfirmAnswer(answer);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	return DEVICE_OK;
@@ -888,15 +936,15 @@ int ChuoSeikiXYStage::OnAccelTimeY(MM::PropertyBase* pProp, MM::ActionType eAct)
 	command << "D:" << controllerAxisY_ << speedLow_stepY_ << "P" << speedHigh_stepY_ << "P" << accelTimeY_;
 	ret = SendSerialCommand(portName_XY.c_str(), command.str().c_str(), "\r\n");
 	command.str("");
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	ret = GetSerialAnswer(portName_XY.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	ret = ConfirmAnswer(answer);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	return DEVICE_OK;
@@ -909,13 +957,12 @@ int ChuoSeikiXYStage::OnAccelTimeY(MM::PropertyBase* pProp, MM::ActionType eAct)
 //-----------------------------------------------------------------------------
 
 ChuoSeikiZStage::ChuoSeikiZStage() :
-
-initialized_		(false),
-stepSize_umZ_		(1.0),
-speedHigh_stepZ_	(2000),	//pps
-speedLow_stepZ_		(500),	//pps
-accelTimeZ_			(100),
-answerTimeoutMs_	(1000)
+initialized_		(false)
+,stepSize_umZ_		(1.0)
+,speedHigh_stepZ_	(2000)	//pps
+,speedLow_stepZ_	(500)	//pps
+,accelTimeZ_		(100)
+//answerTimeoutMs_	(600)
 
 {
 	InitializeDefaultErrorMessages();	// default error messages
@@ -924,9 +971,10 @@ answerTimeoutMs_	(1000)
 	SetErrorText (ERR_PORT_CHANGE_FORBIDDEN,"Can't change serial port!"	);
 	SetErrorText (ERR_UNRECOGNIZED_ANSWER,	"Unrecognized answer!");
 	SetErrorText (ERR_NO_ANSWER,			"No response!");
-	SetErrorText (ERR_NO_CONTROLLER,		"Please add the ChuoSeiki Controller device first!");
+	SetErrorText (ERR_NO_CONTROLLER,		"Please connect the ChuoSeiki Controller then add device adapter!");
 	SetErrorText (ERR_HOMING,				"Homing error! Please clear error using control pad!");
 	SetErrorText (ERR_TIMEOUT,				"Timeout error!");
+//	SetErrorText(ERR_DEVICE_CHECK, "Error During Confirm Device Version! Please ReStart and Retry!");
 
 	SetErrorText(ERR_CONTROLER_0,	"Not In Command Recive Mode!");
 	SetErrorText(ERR_CONTROLER_1,	"Command Syntax Error!");
@@ -998,18 +1046,20 @@ MM::DeviceDetectionStatus ChuoSeikiZStage::DetectDevice(void)
 			GetCoreCallback()->SetDeviceProperty(portName_Z.c_str(), "DelayBetweenCharsMs",		"0.0"	);
 
 			// get portname for 1 stage controller
-			MM::Device* device = GetCoreCallback()->GetDevice(this, portName_Z.c_str());
+			MM::Device* zdevice = GetCoreCallback()->GetDevice(this, portName_Z.c_str());
 			// set port parameters
-			device->Initialize();
+			zdevice->Initialize();
 			// check version
-			int qvStatus = this->ConfirmComm();
-			if( DEVICE_OK != qvStatus ) 
-				LogMessageCode(qvStatus,true);
+			int ret = this->ConfirmComm();
+			if (ret != DEVICE_OK && ret != 14)
+			{
+				LogMessageCode(ret, true);
+			}
 			else
-				 // to succeed must reach here....
+			// to succeed must reach here....			
 				result = MM::CanCommunicate;
 			// device shutdown, return default answertimeout	
-			device->Shutdown();
+			zdevice->Shutdown();
 			 // always restore the AnswerTimeout to the default
 			GetCoreCallback()->SetDeviceProperty(portName_Z.c_str(), "AnswerTimeout", "2000.0");
 		}
@@ -1026,25 +1076,34 @@ int ChuoSeikiZStage::ConfirmComm()
 	int ret;
 	string answer;
 
-	PurgeComPort(portName_Z.c_str());
-	ret= SendSerialCommand(portName_Z.c_str(), "?:CHUOSEIKI", "\r\n");
-	if (ret!= DEVICE_OK) 
-		return ret;
-	ret= GetSerialAnswer(portName_Z.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK) 
-		return ret;
-
-	if( answer.substr(0, 9).compare("CHUOSEIKI") != 0)
+	for (int i = 0; i < 5; i++)
 	{
-		return ERR_UNRECOGNIZED_ANSWER;
+		PurgeComPort(portName_Z.c_str());
+		ret = SendSerialCommand(portName_Z.c_str(), "?:CHUOSEIKI", "\r\n");		// it will return the phase after "?:"
+		if (ret != DEVICE_OK && ret != 14) 	
+			return ret;
+
+		ret = GetSerialAnswer(portName_Z.c_str(), "\r\n", answer);
+		if (ret != DEVICE_OK && ret != 14) 	
+			return ret;
+
+		if (answer.substr(0, 9).compare("CHUOSEIKI") == 0) {
+			break;
+		}
+		else if (answer.substr(0, 9).compare("CHUOSEIKI") != 0 && i >= 4) {
+			return ERR_CONTROLER_8;
+		}
+		else {
+			CDeviceUtils::SleepMs(10);					// else sleep and retry
+		}
 	}
 
 	ret = SendSerialCommand(portName_Z.c_str(), "X:1", "\r\n");  // request feedback "\r\n" after each command
-	if (ret != DEVICE_OK)		
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	ret = GetSerialAnswer(portName_Z.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK)		
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	return DEVICE_OK;
@@ -1057,36 +1116,36 @@ int ChuoSeikiZStage::Initialize()
 	//Step Size Z
 	CPropertyAction* pAct = new CPropertyAction(this, &ChuoSeikiZStage::OnStepSizeZ);
 	ret = CreateProperty("Step Size: um", "1.0", MM::Float, false, pAct);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
       return ret;
 
 	//Speed High Z
 	pAct = new CPropertyAction(this, &ChuoSeikiZStage::OnSpeedZHigh);
 	ret = CreateProperty("High Speed: pps", "2000", MM::Float, false, pAct);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
       return ret;
 
 	//Speed Low Z
 	pAct = new CPropertyAction(this, &ChuoSeikiZStage::OnSpeedZLow);
 	ret = CreateProperty("Low Speed: pps", "500", MM::Float, false, pAct);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
       return ret;
 
 	//Accel Time Z
 	pAct = new CPropertyAction(this, &ChuoSeikiZStage::OnAccelTimeZ);
 	ret = CreateProperty("Accelerating Time: msec", "100", MM::Float, false, pAct);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
       return ret;
 
 	bHomeing = false;
 	bLimitStop = false;
 
-	ret = ConfirmComm();
-	if (ret != DEVICE_OK)
+	ret = UpdateStatus();
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
-	ret = UpdateStatus();
-	if (ret != DEVICE_OK)
+	ret = ConfirmComm();
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	initialized_ = true;
@@ -1122,11 +1181,11 @@ bool ChuoSeikiZStage::Busy()
 	command << "Q:"<< controllerAxisZ_ << "2";
 	ret = SendSerialCommand(portName_Z.c_str(), command.str().c_str(), "\r\n");
 	command.str("");
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return true;
 
 	ret = GetSerialAnswer(portName_Z.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return true;
 
 	if (answer.length() == 1)
@@ -1138,7 +1197,6 @@ bool ChuoSeikiZStage::Busy()
 	}
 
 	return false;
-
 }
 
 int ChuoSeikiZStage::WaitForBusy(long Time)
@@ -1189,7 +1247,7 @@ int ChuoSeikiZStage::GetPositionUm(double& pos)
 	long steps;
 	int ret;
 	ret = GetPositionSteps(steps);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	pos = steps * stepSize_umZ_;
@@ -1206,14 +1264,14 @@ int ChuoSeikiZStage::SetPositionSteps(long z)
 	command << "AGO:"<< controllerAxisZ_ << z;
 	ret = SendSerialCommand(portName_Z.c_str(), command.str().c_str(), "\r\n");
 	command.str("");
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 			return ret;
 
 	ret = GetSerialAnswer(portName_Z.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 			return ret;
 	ret = ConfirmAnswer(answer);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 			return ret;
 
 	double newPosZ = z * stepSize_umZ_;
@@ -1224,7 +1282,7 @@ int ChuoSeikiZStage::SetPositionSteps(long z)
 	WaitForBusy(timeOut);
 
 	ret = OnStagePositionChanged( newPosZ );
-	if (ret != DEVICE_OK)	
+	if (ret != DEVICE_OK && ret != 14)	
 		return ret;	
 
 	return DEVICE_OK;
@@ -1237,34 +1295,46 @@ int ChuoSeikiZStage::GetPositionSteps(long& z)
 	string answer;
 	ostringstream command;
 
-	command << "Q:"<< controllerAxisZ_ << "0";
-	ret = SendSerialCommand(portName_Z.c_str(), command.str().c_str(), "\r\n");
-	command.str("");
-	if (ret != DEVICE_OK)		
-			return ret;	
-
-	ret = GetSerialAnswer(portName_Z.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK)
-			return ret;	
-	
-	if (answer.length() == 10)				// answer format: (+ or -)(8 digits)(stage state keyword)
+	for (int i = 0; i < 5; i++)
 	{
-		if( answer.substr(9, 1) == "D" )
+		PurgeComPort(portName_Z.c_str());
+
+		command << "Q:" << controllerAxisZ_ << "0";
+		ret = SendSerialCommand(portName_Z.c_str(), command.str().c_str(), "\r\n");
+		command.str("");
+		if (ret != DEVICE_OK && ret != 14)
+			return ret;
+		CDeviceUtils::SleepMs(20);
+		ret = GetSerialAnswer(portName_Z.c_str(), "\r\n", answer);
+		if (ret != DEVICE_OK && ret != 14)
+			return ret;
+
+		if (answer.length() > 8)				// answer format: (+ or -)(8 digits)(stage state keyword)
 		{
-			return GetPositionSteps(z);		// if stage is running, repeat
-		}
-		else if( answer.substr(9, 1) == "H" )
-		{
-			return ERR_HOMING;	
-		}
-		else
-		{
-			z = std::atol(answer.substr(0,9).c_str());
+			z = std::atol(answer.substr(0, 9).c_str());
 			posZ_um_ = z * stepSize_umZ_;
+
+			if (answer.substr(9, 1) == "D")	{
+				CDeviceUtils::SleepMs(20);
+				continue;		// retry request position reading
+			}
+			else if (answer.substr(9, 1) == "H")	{
+				return ERR_HOMING;		// home-error
+			}
+			else	{
 				return DEVICE_OK;
+			}
 		}
+		else if (i >= 4)
+		{
+			return DEVICE_OK; //return ERR_CONTROLER_8; 20190712 fix error of reading position after using set origin
+		}
+
+		CDeviceUtils::SleepMs(20);
+		// if answer is wrong, try again, max 10 times
 	}
-	else return ERR_UNRECOGNIZED_ANSWER;
+   // should be unreachable, but better safe then sorry
+ 	return DEVICE_OK; //return ERR_CONTROLER_8; 20190712 fix error of reading position after using set origin
 }
 
 
@@ -1282,19 +1352,19 @@ int ChuoSeikiZStage::SetRelativePositionSteps(long z)
 	command << "MGO:"<< controllerAxisZ_ << z;
 	ret = SendSerialCommand(portName_Z.c_str(), command.str().c_str(), "\r\n");
 	command.str("");
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	ret = GetSerialAnswer(portName_Z.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	ret = ConfirmAnswer(answer);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	ret = OnStagePositionChanged(posZ_um_);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	return DEVICE_OK;
@@ -1318,10 +1388,10 @@ int ChuoSeikiZStage::Autofocus(long param)
 	int ret;
 
 	ret = SendSerialCommand(portName_Z.c_str(), cmd.str().c_str(), "\r\n");
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 	ret = GetSerialAnswer(portName_Z.c_str(),"\r\n", answer);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	istringstream is(answer);
@@ -1432,10 +1502,10 @@ int ChuoSeikiZStage::OnResetPort_Z(MM::PropertyBase* pProp, MM::ActionType pAct)
       if (request == "Reset")
       {
          // Send the Reset Command
-         int status = SendSerialCommand(portName_Z.c_str(), "RESTA", "\r\n");
+         int ret = SendSerialCommand(portName_Z.c_str(), "RESTA", "\r\n");
          CDeviceUtils::SleepMs (10);
-		 if (status !=DEVICE_OK)
-            return status;
+		 if (ret != DEVICE_OK && ret != 14)
+            return ret;
          // TODO: Do we need to wait until the reset is completed?
       }
    }
@@ -1481,15 +1551,15 @@ int ChuoSeikiZStage::OnSpeedZHigh(MM::PropertyBase* pProp, MM::ActionType eAct)
 	command << "D:"<< controllerAxisZ_ << speedLow_stepZ_ << "P" << speedHigh_stepZ_ << "P" << accelTimeZ_;
 	ret = SendSerialCommand(portName_Z.c_str(), command.str().c_str(), "\r\n");
 	command.str("");
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	ret = GetSerialAnswer(portName_Z.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	ret = ConfirmAnswer(answer);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	return DEVICE_OK;
@@ -1517,15 +1587,15 @@ int ChuoSeikiZStage::OnSpeedZLow(MM::PropertyBase* pProp, MM::ActionType eAct)
 	command << "D:"<< controllerAxisZ_ << speedLow_stepZ_ << "P" << speedHigh_stepZ_ << "P" << accelTimeZ_;
 	ret = SendSerialCommand(portName_Z.c_str(), command.str().c_str(), "\r\n");
 	command.str("");
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	ret = GetSerialAnswer(portName_Z.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	ret = ConfirmAnswer(answer);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	return DEVICE_OK;
@@ -1552,15 +1622,15 @@ int ChuoSeikiZStage::OnAccelTimeZ(MM::PropertyBase* pProp, MM::ActionType eAct)
 	command << "D:"<< controllerAxisZ_ << speedLow_stepZ_ << "P" << speedHigh_stepZ_ << "P" << accelTimeZ_;
 	ret = SendSerialCommand(portName_Z.c_str(), command.str().c_str(), "\r\n");
 	command.str("");
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	ret = GetSerialAnswer(portName_Z.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	ret = ConfirmAnswer(answer);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK && ret != 14)
 		return ret;
 
 	return DEVICE_OK;

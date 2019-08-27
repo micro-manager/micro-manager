@@ -2426,11 +2426,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         channelNames_[channelIndex] = firstCamera + chName;
 
                         cb.color(colors[channelIndex % colors.length]);
+                        cb.name(channelNames_[channelIndex]);
                         dsb.channel(channelIndex, cb.build());
                         viewString += NumberUtils.intToDisplayString(0) + SEPARATOR;
                         if (twoSided) {
                             channelNames_[channelIndex + 1] = secondCamera + chName;
                             cb.color(colors[(channelIndex + 1) % colors.length]);
+                            cb.name(channelNames_[channelIndex + 1]);
                             dsb.channel(channelIndex + 1, cb.build());
                             viewString += NumberUtils.intToDisplayString(90) + SEPARATOR;
                         }
@@ -2444,6 +2446,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                     }
                     channelNames_[0] = firstCamera;
                     cb.color(colors[0]);
+                    cb.name(channelNames_[0]);
                     dsb.channel(channelNr, cb.build());
                     viewString += NumberUtils.intToDisplayString(0) + SEPARATOR;
                     if (twoSided) {

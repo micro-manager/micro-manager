@@ -82,7 +82,10 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
  */
 bool isTsiSDK3Available()
 {
-   if (tl_camera_sdk_dll_initialize())
+	std::string sdkPath = getSDKPath();
+	std::string kernelPath(sdkPath);
+	kernelPath += "thorlabs_unified_sdk_kernel.dll";
+   if (tl_camera_sdk_dll_initialize(kernelPath.c_str()))
    {
       return false;
    }
@@ -106,18 +109,65 @@ bool isTsiSDK3Available()
  */
 bool isTsiSDKAvailable()
 {
-   HMODULE libHandle = LoadLibrary("tsi_sdk.dll");
+	std::string sdkPath = getSDKPath();
+	sdkPath += "tsi_sdk.dll";
+
+   HMODULE libHandle = LoadLibrary(sdkPath.c_str());
    if (!libHandle)
       return false;
 
    // test loading one function
    TSI_CREATE_SDK tsi_create_sdk = (TSI_CREATE_SDK)GetProcAddress(libHandle, "tsi_create_sdk");
-   if(tsi_create_sdk == 0)
+	TSI_DESTROY_SDK tsi_destroy_sdk = (TSI_DESTROY_SDK)GetProcAddress(libHandle, "tsi_destroy_sdk");   
+	
+	if(tsi_create_sdk == 0 || tsi_destroy_sdk == 0)
    {
       FreeLibrary(libHandle);
       return false;
    }
 
+   TsiCam::tsiSdk = tsi_create_sdk();
+	if (TsiCam::tsiSdk == 0)
+   {
+      FreeLibrary(libHandle);
+      return false;
+   }
+
+   if (!TsiCam::tsiSdk->Open())
+	{
+		tsi_destroy_sdk(TsiCam::tsiSdk);
+		TsiCam::tsiSdk = 0;
+		FreeLibrary(libHandle);
+		return false;
+	}
+
+	bool outcome = true;
+	int numCameras = TsiCam::tsiSdk->GetNumberOfCameras();
+   if (numCameras == 0)
+      outcome = false;
+
+	TsiCam::tsiSdk->Close();	
+	tsi_destroy_sdk(TsiCam::tsiSdk);
+   TsiCam::tsiSdk = 0;
+
    FreeLibrary(libHandle);
-   return true;
+   return outcome;
+}
+
+std::string getSDKPath()
+{
+	char buffer[MAX_PATH];
+	std::string envVar;
+
+#if defined _M_IX86
+      envVar = "THORLABS_TSI_SDK_PATH_32_BIT";
+#elif defined _M_X64
+      envVar = "THORLABS_TSI_SDK_PATH_64_BIT";
+#endif
+
+	DWORD ret = GetEnvironmentVariable(envVar.c_str(), buffer, MAX_PATH);
+	if (ret == 0 || ret == MAX_PATH)
+		return "";
+	else
+		return buffer;
 }

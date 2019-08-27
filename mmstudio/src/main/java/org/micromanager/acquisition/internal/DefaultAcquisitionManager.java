@@ -277,6 +277,7 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
          .camera(camera)
          .receivedTime(DATE_FORMATTER.format(new Date()))
          .pixelSizeUm(mmstudio.getCachedPixelSizeUm())
+         .pixelSizeAffine(mmstudio.getCachedPixelSizeAffine())
          .xPositionUm(mmstudio.getCachedXPosition())
          .yPositionUm(mmstudio.getCachedYPosition())
          .zPositionUm(mmstudio.getCachedZPosition())

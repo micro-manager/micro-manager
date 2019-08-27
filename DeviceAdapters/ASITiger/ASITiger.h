@@ -183,11 +183,16 @@ const char* const g_StageWaitTimePropertyName = "WaitTime(ms)";
 const char* const g_NrExtraMoveRepsPropertyName = "ExtraMoveRepetitions";
 const char* const g_MotorSpeedPropertyName = "MotorSpeed-S(mm/s)";
 const char* const g_MotorSpeedXPropertyName = "MotorSpeedX-S(mm/s)";
-const char* const g_MotorSpeedXMicronsPerSecPropertyName = "MotorSpeedX(um/s)";
 const char* const g_MotorSpeedYPropertyName = "MotorSpeedY-S(mm/s)";
+const char* const g_MotorSpeedMicronsPerSecPropertyName = "MotorSpeed(um/s)";
+const char* const g_MotorSpeedXMicronsPerSecPropertyName = "MotorSpeedX(um/s)";
+const char* const g_MotorSpeedYMicronsPerSecPropertyName = "MotorSpeedY(um/s)";
 const char* const g_MaxMotorSpeedPropertyName = "MotorSpeedMaximum(mm/s)";
 const char* const g_MaxMotorSpeedXPropertyName = "MotorSpeedMaximumX(mm/s)";
 const char* const g_MaxMotorSpeedYPropertyName = "MotorSpeedMaximumY(mm/s)";
+const char* const g_MinMotorSpeedPropertyName = "MotorSpeedMinimum(um/s)";
+const char* const g_MinMotorSpeedXPropertyName = "MotorSpeedMinimumX(um/s)";
+const char* const g_MinMotorSpeedYPropertyName = "MotorSpeedMinimumY(um/s)";
 const char* const g_BacklashPropertyName = "Backlash-B(um)";
 const char* const g_BacklashXPropertyName = "BacklashX-B(um)";
 const char* const g_BacklashYPropertyName = "BacklashY-B(um)";
@@ -232,8 +237,10 @@ const char* const g_WheelMirrorPropertyName = "WheelReverse";
 const char* const g_VectorPropertyName = "VectorMove-VE(mm/s)";
 const char* const g_VectorXPropertyName = "VectorMoveX-VE(mm/s)";
 const char* const g_VectorYPropertyName = "VectorMoveY-VE(mm/s)";
-const char* const g_TTLinName = "TTLinMode";
-const char* const g_TTLoutName = "TTLoutMode";
+const char* const g_TTLinName = "TTLinMode";  // for integer-valued property
+const char* const g_TTLoutName = "TTLoutMode";// for integer-valued property
+const char* const g_TTLInputModeName = "TTLInputMode";  // for string-valued property
+const char* const g_TTLOutputModeName = "TTLOutputMode";// for string-valued property
 // Z stage property names
 const char* const g_StepSizePropertyName = "StepSize(um)";
 const char* const g_LowerLimPropertyName =  "LowerLim(mm)";
@@ -333,6 +340,7 @@ const char* const g_ScanSlowAxisStopPositionPropertyName = "ScanSlowAxisStopPosi
 const char* const g_ScanNumLinesPropertyName = "ScanNumLines";
 const char* const g_ScanSettlingTimePropertyName = "ScanSettlingTime(ms)";
 const char* const g_ScanOvershootDistancePropertyName = "ScanOvershootDistance(um)";
+const char* const g_ScanRetraceSpeedPercentPropertyName = "ScanRetraceSpeedPercent(%)";
 
 // CRISP property names
 const char* const g_CRISPWaitAfterLockPropertyName = "Wait ms after Lock";
@@ -408,6 +416,7 @@ const char* const g_NumPositionsPropertyName = "NumPositions";
 const char* const g_NumLogicCellsPropertyName = "NumLogicCells";
 const char* const g_PLogicModePropertyName = "PLogicMode";
 const char* const g_PLogicOutputStatePropertyName = "PLogicOutputState";
+const char* const g_PLogicOutputStateUpperPropertyName = "PLogicOutputStateUpper";
 const char* const g_FrontpanelOutputStatePropertyName = "FrontpanelOutputState";
 const char* const g_BackplaneOutputStatePropertyName = "BackplaneOutputState";
 const char* const g_PointerPositionPropertyName = "PointerPosition";
@@ -489,9 +498,32 @@ const char* const g_PresetCode32 = "32 - BNC1/2 as cameras A/B";
 const char* const g_PresetCode33 = "33 - BNC1/2 as cameras A or B";
 const char* const g_PresetCode34 = "34 - cell 11 as trigger/2";
 const char* const g_PresetCode35 = "35 - BNC3 source = cell 11";
+const char* const g_PresetCode36 = "36 - cell 10 = cell 8";
+const char* const g_PresetCode37 = "37 - BNC1 enabled of 7";
+const char* const g_PresetCode38 = "38 - BNC2 enabled of 7";
+const char* const g_PresetCode39 = "39 - BNC3 enabled of 7";
+const char* const g_PresetCode40 = "40 - BNC4 enabled of 7";
+const char* const g_PresetCode41 = "41 - BNC5 enabled of 7";
+const char* const g_PresetCode42 = "42 - BNC6 enabled of 7";
+const char* const g_PresetCode43 = "43 - BNC7 enabled of 7";
+const char* const g_PresetCode44 = "44 - BNC2/4 enabled of 7";
+const char* const g_PresetCode45 = "45 - BNC3/5 enabled of 7";
+const char* const g_PresetCode46 = "46 - BNC4/6 enabled of 7";
+const char* const g_PresetCode47 = "47 - BNC5/7 enabled of 7";
+const char* const g_PresetCode48 = "48 - BNC1/3/4 enabled of 7";
+const char* const g_PresetCode49 = "49 - BNC2/4/6 enabled of 7";
+const char* const g_PresetCode50 = "50 - None enabled of 7";
+const char* const g_PresetCode51 = "51 - cells 17-24 on BNC1-8";
 const char* const g_PLogicModeNone = "None";
 const char* const g_PLogicModediSPIMShutter = "diSPIM Shutter";
-const char* const g_ChannelNone = "none of outputs 5-8";
+const char* const g_PLogicMode4ChShutter = "Four-channel shutter";
+const char* const g_PLogicMode7ChShutter = "Seven-channel shutter";
+const char* const g_4ChannelNone = "none of outputs 5-8";
+const char* const g_7ChannelNone = "none of outputs 1-7";
+const char* const g_ChannelOnly1 = "output 1 only";
+const char* const g_ChannelOnly2 = "output 2 only";
+const char* const g_ChannelOnly3 = "output 3 only";
+const char* const g_ChannelOnly4 = "output 4 only";
 const char* const g_ChannelOnly5 = "output 5 only";
 const char* const g_ChannelOnly6 = "output 6 only";
 const char* const g_ChannelOnly7 = "output 7 only";
@@ -500,6 +532,12 @@ const char* const g_Channel6And7 = "output 6 and 7";
 const char* const g_Channel5To7 = "outputs 5-7";
 const char* const g_Channel5To8 = "outputs 5-8";
 const char* const g_Channel5To8Alt = "outputs 5/7 or 6/8";
+const char* const g_Channel2And4 = "output 2 and 4";
+const char* const g_Channel3And5 = "output 3 and 5";
+const char* const g_Channel4And6 = "output 4 and 6";
+const char* const g_Channel5And7 = "output 5 and 7";
+const char* const g_Channel1And3And5 = "output 1 and 3 and 5";
+const char* const g_Channel2And4And6 = "output 2 and 4 and 6";
 
 
 // SPIM enums
@@ -548,6 +586,11 @@ const char* const g_ScanPatternRaster = "Raster";
 const char* const g_ScanPatternSerpentine = "Serpentine";
 const char g_ScanPatternRasterCode = '0';
 const char g_ScanPatternSerpentineCode = '1';
+// TTL modes
+const char* const g_TTLInputMode_0 = "0 - none";
+const char* const g_TTLInputMode_1 = "1 - next ring buffer position";
+const char* const g_TTLInputMode_2 = "2 - repeat relative move";
+const char* const g_TTLInputMode_7 = "7 - next array position";
 
 // property descriptions for enums
 // serial terminators for hub

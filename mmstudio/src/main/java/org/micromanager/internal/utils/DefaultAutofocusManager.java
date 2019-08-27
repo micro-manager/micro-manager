@@ -37,15 +37,15 @@ import org.micromanager.Studio;
  * the list of available focusing devices, as well as for selecting a default one.
  */
 public final class DefaultAutofocusManager implements AutofocusManager {
-   private Studio app_;
-   private Vector<AutofocusPlugin> afs_;
+   private final Studio studio_;
+   private final Vector<AutofocusPlugin> afs_;
    private AutofocusPlugin currentAfDevice_;
    private AutofocusPropertyEditor afDlg_;
    
-   public DefaultAutofocusManager(Studio app) {
-      afs_ = new Vector<AutofocusPlugin>();
+   public DefaultAutofocusManager(Studio studio) {
+      afs_ = new Vector<>();
       currentAfDevice_ = null;
-      app_ = app;
+      studio_ = studio;
    }
    
    @Override
@@ -71,7 +71,7 @@ public final class DefaultAutofocusManager implements AutofocusManager {
 
    @Override
    public List<String> getAllAutofocusMethods() {
-      ArrayList<String> result = new ArrayList<String>();
+      ArrayList<String> result = new ArrayList<>();
       for (AutofocusPlugin plugin : afs_) {
          result.add(plugin.getName());
       }
@@ -81,7 +81,7 @@ public final class DefaultAutofocusManager implements AutofocusManager {
    @Override
    public void refresh() {
       afs_.clear();
-      CMMCore core = app_.getCMMCore();
+      CMMCore core = studio_.getCMMCore();
 
       // first check core autofocus
       StrVector afDevs = core.getLoadedDevicesOfType(DeviceType.AutoFocusDevice);
@@ -89,7 +89,7 @@ public final class DefaultAutofocusManager implements AutofocusManager {
          CoreAutofocus caf = new CoreAutofocus();
          try {
             core.setAutoFocusDevice(afDevs.get(i));
-            caf.setContext(app_);
+            caf.setContext(studio_);
             if (caf.getName().length() != 0) {
                afs_.add(caf);
                if (currentAfDevice_ == null)
@@ -101,7 +101,7 @@ public final class DefaultAutofocusManager implements AutofocusManager {
       }
 
       // then check Java
-      for (MMPlugin plugin : app_.plugins().getAutofocusPlugins().values()) {
+      for (MMPlugin plugin : studio_.plugins().getAutofocusPlugins().values()) {
          afs_.add((AutofocusPlugin) plugin);
       }
 
@@ -126,7 +126,7 @@ public final class DefaultAutofocusManager implements AutofocusManager {
       
    public void showOptionsDialog() {
       if (afDlg_ == null)
-         afDlg_ = new AutofocusPropertyEditor(this);
+         afDlg_ = new AutofocusPropertyEditor(studio_, this);
       afDlg_.setVisible(true);
       if (currentAfDevice_ != null) {
          currentAfDevice_.applySettings();

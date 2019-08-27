@@ -215,20 +215,27 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       }
    }
 
+   /**
+    * Note: because we use a UIManager to set the Look and Feel,
+    * the normal method to set the color of the button does not work.
+    * As a workaround, set a border that fills the complete button and 
+    * color it.  Works on Windows...
+    */
    private static final class ColorSwatch extends JButton {
       private Color color_ = Color.WHITE;
-
+      
       ColorSwatch() {
          super.setPreferredSize(new Dimension(16, 16));
          super.setMinimumSize(new Dimension(16, 16));
-         super.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
          super.setOpaque(true); // Needed for background to be drawn
+         super.setBorder(BorderFactory.createLineBorder(color_, 8));
          super.setBackground(color_);
       }
 
       void setColor(Color color) {
-         color_ = color;
-         setBackground(color_);
+         color_ = color;         
+         super.setBorder(BorderFactory.createLineBorder(color_, 8));
+         super.setBackground(color_);
       }
 
       Color getColor() {
@@ -678,7 +685,6 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             settings.getChannelSettings(channelIndex_);
       channelVisibleButton_.setSelected(channelSettings.isVisible());
       channelColorSwatch_.setColor(channelSettings.getColor());
-      // TODO Name: this from dataset (on attachment, then listen)
       // TODO Component selector: this from dataset (on attachment, or first image)
       // TODO Error-free way to get number of components?
       int numComponents;
@@ -693,6 +699,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          numComponents = 1;
       }
       if (numComponents == 1) {
+         channelNameLabel_.setText(channelSettings.getName());
          histogram_.setComponentColor(0, channelSettings.getColor(),
                channelSettings.getColor());
          histogram_.setGamma(channelSettings.getComponentSettings(0).

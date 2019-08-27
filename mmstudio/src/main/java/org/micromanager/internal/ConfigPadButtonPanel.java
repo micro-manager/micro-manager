@@ -57,7 +57,7 @@ public final class ConfigPadButtonPanel extends JPanel {
 
    private CMMCore core_;
 
-   private Studio studio_;
+   private MMStudio mmStudio_;
 
    
    
@@ -102,7 +102,7 @@ public final class ConfigPadButtonPanel extends JPanel {
    }
    
    public void setGUI(MMStudio gui) {
-      studio_ = gui;
+      mmStudio_ = gui;
    }
    
    public void setCore(CMMCore core) {
@@ -158,12 +158,12 @@ public final class ConfigPadButtonPanel extends JPanel {
          removePreset();
       if (e.getSource() == editPresetButton_)
          editPreset();
-      studio_.app().refreshGUI();
+      mmStudio_.app().refreshGUI();
    }
 
    @SuppressWarnings("ResultOfObjectAllocationIgnored")
    public void addGroup() {
-      new GroupEditor("", "", studio_, core_, true);
+      new GroupEditor("", "", mmStudio_, core_, true);
    }
    
    
@@ -176,7 +176,7 @@ public final class ConfigPadButtonPanel extends JPanel {
          if (result == JOptionPane.OK_OPTION) {
             try {
                core_.deleteConfigGroup(groupName);
-               ((MMStudio) studio_).setConfigChanged(true);
+               mmStudio_.setConfigChanged(true);
             } catch (Exception e) {
                handleException(e);
             }
@@ -192,7 +192,7 @@ public final class ConfigPadButtonPanel extends JPanel {
       if (groupName.length() ==0)
          JOptionPane.showMessageDialog(this, "To edit a group, please select it first, then press the edit button.");         
       else
-         new GroupEditor(groupName, configPad_.getPresetForSelectedGroup(), studio_, core_, false);
+         new GroupEditor(groupName, configPad_.getPresetForSelectedGroup(), mmStudio_, core_, false);
    }
    
    
@@ -202,7 +202,7 @@ public final class ConfigPadButtonPanel extends JPanel {
       if (groupName.length()==0)
          JOptionPane.showMessageDialog(this, "To add a preset to a group, please select the group first, then press the edit button.");
       else
-         new PresetEditor(groupName, "", studio_, core_, true);
+         new PresetEditor(groupName, "", mmStudio_, core_, true);
    }
    
    public void removePreset() {
@@ -264,11 +264,11 @@ public final class ConfigPadButtonPanel extends JPanel {
             } catch (Exception ex) {
                ReportingUtils.logError(ex);
             }
-            new PresetEditor(groupName, newPresetName, studio_, core_, false);
+            new PresetEditor(groupName, newPresetName, mmStudio_, core_, false);
 
          }
       } else {
-         new PresetEditor(groupName, presetName, studio_, core_, false);
+         new PresetEditor(groupName, presetName, mmStudio_, core_, false);
       }
    }
 

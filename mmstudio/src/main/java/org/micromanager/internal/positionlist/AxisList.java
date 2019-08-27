@@ -5,7 +5,7 @@ import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
 import org.micromanager.UserProfile;
-import org.micromanager.internal.utils.UserProfileStaticInterface;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -19,7 +19,7 @@ class AxisList {
    public AxisList(CMMCore core) {
       core_ = core;
       // Initialize the axisList.
-      UserProfile profile = UserProfileStaticInterface.getInstance();
+      UserProfile profile = MMStudio.getInstance().profile();
       try {
          // add 1D stages
          StrVector stages = core_.getLoadedDevicesOfType(DeviceType.StageDevice);

@@ -25,19 +25,21 @@ import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.ImageJConverter;
 import org.micromanager.data.Metadata;
-import org.micromanager.internal.utils.ImageUtils;
+import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public final class DefaultImageJConverter implements ImageJConverter {
-   private static final DefaultImageJConverter staticInstance_;
-   static {
-      staticInstance_ = new DefaultImageJConverter();
+   private final Studio studio_;
+   
+   public DefaultImageJConverter(Studio studio) {
+      studio_ = studio;
    }
-
+   
    // Our API does not expose the original pixels so the caller cannot modify
    // the image buffer.
    @Override
@@ -45,7 +47,7 @@ public final class DefaultImageJConverter implements ImageJConverter {
       return createProcessor(image, true);
    }
 
-   public ImageProcessor createProcessor(Image image, boolean shouldCopy) {
+   public static ImageProcessor createProcessor(Image image, boolean shouldCopy) {
       int width = image.getWidth();
       int height = image.getHeight();
       int bytesPerPixel = image.getBytesPerPixel();
@@ -122,12 +124,8 @@ public final class DefaultImageJConverter implements ImageJConverter {
       else {
          ReportingUtils.logError("Unrecognized processor type " + processor.getClass().getName());
       }
-      return DefaultDataManager.getInstance().createImage(
+      return studio_.data().createImage(
             processor.getPixels(), processor.getWidth(), processor.getHeight(),
             bytesPerPixel, numComponents, coords, metadata);
-   }
-
-   public static DefaultImageJConverter getInstance() {
-      return staticInstance_;
    }
 }

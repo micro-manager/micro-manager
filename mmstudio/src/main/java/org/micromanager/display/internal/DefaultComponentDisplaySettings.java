@@ -14,8 +14,8 @@ import org.micromanager.display.ComponentDisplaySettings;
 public final class DefaultComponentDisplaySettings
       implements ComponentDisplaySettings
 {
-   private final long scalingMin_;
-   private final long scalingMax_;
+   private long scalingMin_;
+   private long scalingMax_;
    private final double gamma_;
 
    private static final class Builder
@@ -75,6 +75,16 @@ public final class DefaultComponentDisplaySettings
    @Override
    public long getScalingMaximum() {
       return scalingMax_;
+   }
+   
+   @Override
+   public void setScalingMinimum(long min) {
+      scalingMin_ = min;
+   }
+   
+   @Override
+   public void setScalingMaximum(long max) {
+      scalingMax_ = max;
    }
 
    @Override

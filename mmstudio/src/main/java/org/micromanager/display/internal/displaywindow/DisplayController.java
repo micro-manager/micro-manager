@@ -35,6 +35,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.RunnableFuture;
 import javax.swing.SwingUtilities;
+import org.micromanager.Studio;
 import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
@@ -47,7 +48,6 @@ import org.micromanager.display.overlay.Overlay;
 import org.micromanager.display.overlay.OverlayListener;
 import org.micromanager.display.inspector.internal.panels.intensity.ImageStatsPublisher;
 import org.micromanager.display.internal.DefaultDisplaySettings;
-import org.micromanager.display.internal.RememberedChannelSettings;
 import org.micromanager.display.internal.animate.AnimationController;
 import org.micromanager.display.internal.animate.DataCoordsAnimationState;
 import org.micromanager.display.internal.event.DefaultDisplayDidShowImageEvent;
@@ -55,7 +55,6 @@ import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
 import org.micromanager.display.internal.imagestats.ImageStatsRequest;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
 import org.micromanager.display.internal.imagestats.StatsComputeQueue;
-import org.micromanager.display.internal.DefaultDisplayManager;
 import org.micromanager.display.internal.event.DisplayWindowDidAddOverlayEvent;
 import org.micromanager.display.internal.event.DisplayWindowDidRemoveOverlayEvent;
 import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
@@ -64,7 +63,6 @@ import org.micromanager.display.internal.event.DataViewerDidBecomeInvisibleEvent
 import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
 import org.micromanager.display.internal.link.LinkManager;
 import org.micromanager.events.DatastoreClosingEvent;
-import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.utils.CoalescentEDTRunnablePool;
 import org.micromanager.internal.utils.CoalescentEDTRunnablePool.CoalescentRunnable;
 import org.micromanager.internal.utils.MustCallOnEDT;
@@ -73,6 +71,7 @@ import org.micromanager.internal.utils.performance.gui.PerformanceMonitorUI;
 import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.data.DataProviderHasNewNameEvent;
 import org.micromanager.data.Datastore;
+import org.micromanager.display.internal.RememberedSettings;
 import org.micromanager.display.internal.link.internal.DefaultLinkManager;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -93,6 +92,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       StatsComputeQueue.Listener,
       OverlayListener
 {
+   private final Studio studio_;
    private final DataProvider dataProvider_;
 
    // The actually painted images. Accessed only on EDT.
@@ -106,7 +106,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    // Not final but set only upon creation
    private AnimationController<Coords> animationController_;
 
-   private final Set<String> playbackAxes_ = new HashSet<String>();
+   private final Set<String> playbackAxes_ = new HashSet<>();
 
    private final StatsComputeQueue computeQueue_ = StatsComputeQueue.create();
    private static final long MIN_REPAINT_PERIOD_NS = Math.round(1e9 / 60.0);
@@ -121,10 +121,10 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    private final Object selectionLock_ = new Object();
    private BoundsRectAndMask selection_ = BoundsRectAndMask.unselected();
 
-   private final List<Overlay> overlays_ = new ArrayList<Overlay>();
+   private final List<Overlay> overlays_ = new ArrayList<>();
    
    private final TreeMap<Integer, DataViewerListener> listeners_ = 
-           new TreeMap<Integer, DataViewerListener>();
+           new TreeMap<>();
 
    // A way to know from a non-EDT thread that the display has definitely
    // closed (may not be true for a short period after closing)
@@ -203,27 +203,26 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       }
 
       @MustCallOnEDT
-      public DisplayController build() {
-         return DisplayController.create(this);
+      public DisplayController build(Studio studio) {
+         return DisplayController.create(studio, this);
       }
    }
 
    @MustCallOnEDT
-   private static DisplayController create(Builder builder)
+   private static DisplayController create(Studio studio, Builder builder)
    {
       DisplaySettings initialDisplaySettings = builder.displaySettings_;
       if (initialDisplaySettings == null) {
-         initialDisplaySettings = RememberedChannelSettings.updateSettings(
-               builder.dataProvider_.getSummaryMetadata(),
-               DefaultDisplaySettings.builder().build(),
-               builder.dataProvider_.getAxisLength(Coords.CHANNEL));
+         initialDisplaySettings = RememberedSettings.loadDefaultDisplaySettings(
+                 studio,
+                 builder.dataProvider_.getSummaryMetadata());
       }
       if (initialDisplaySettings == null) {
          initialDisplaySettings = new DefaultDisplaySettings.LegacyBuilder().build();
       }
 
       final DisplayController instance =
-            new DisplayController(builder.dataProvider_,
+            new DisplayController(studio, builder.dataProvider_,
                   initialDisplaySettings, builder.controlsFactory_,
                   builder.linkManager_);
       instance.initialize();
@@ -256,12 +255,14 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       return instance;
    }
 
-   private DisplayController(DataProvider dataProvider,
+   private DisplayController(Studio studio,
+         DataProvider dataProvider,
          DisplaySettings initialDisplaySettings,
          DisplayWindowControlsFactory controlsFactory,
          LinkManager linkManager)
    {
       super(initialDisplaySettings);
+      studio_ = studio;
       dataProvider_ = dataProvider;
       controlsFactory_ = controlsFactory;
       linkManager_ = linkManager;
@@ -281,14 +282,14 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       animationController_.setPerformanceMonitor(perfMon_);
       animationController_.addListener(this);
 
-      uiController_ = DisplayUIController.create(this, controlsFactory_,
+      uiController_ = DisplayUIController.create(studio_, this, controlsFactory_,
             animationController_);
       uiController_.setPerformanceMonitor(perfMon_);
       // TODO Make sure frame controller forwards messages to us (e.g.
       // windowClosing() -> requestToClose())
 
       // Start receiving events
-      DefaultEventManager.getInstance().registerForEvents(this);
+      studio_.events().registerForEvents(this);
       dataProvider_.registerForEvents(this);
    }
 
@@ -533,7 +534,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
       // Always compute stats for all channels
       Coords channellessPos = position.hasAxis(Coords.CHANNEL) ?
-            position.copy().removeAxis(Coords.CHANNEL).build() :
+            position.copyBuilder().removeAxis(Coords.CHANNEL).build() :
             position;
       List<Image> images;
       try {
@@ -728,7 +729,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    //
 
    // Notification from UI controller
-   public void selectionDidChange(BoundsRectAndMask selection) {
+   public void selectionDidChange(final BoundsRectAndMask selectionIn) {
+      BoundsRectAndMask selection = selectionIn;
       if (selection == null) {
          selection = BoundsRectAndMask.unselected();
       }
@@ -744,8 +746,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       }
    }
 
-   public void setStatsComputeRateHz(double hz) {
-      hz = Math.max(0.0, hz);
+   public void setStatsComputeRateHz(final double hzIn) {
+      double hz = Math.max(0.0, hzIn);
       long intervalNs;
       if (hz == 0.0) {
          intervalNs = Long.MAX_VALUE;
@@ -842,29 +844,19 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       // any ongoing playback animation. Actual display of new images happens
       // upon receiving callbacks via the AnimationController.Listener
       // interface.
-      Coords currentlyDisplayedCoords = null;
-      if (displayedImages_ != null) {
-         int nrImages = displayedImages_.getRequest().getNumberOfImages();
-         if (nrImages > 0) {
-            // TODO: handle case where number of Images is > 
-            currentlyDisplayedCoords
-                    = displayedImages_.getRequest().getImage(0).getCoords();
-         }
-      }
       animationController_.newDataPosition(event.getImage().getCoords());
    }
 
 
-   //
-   //
-   //
 
-   // A coalescent runnable to avoid excessively frequent update of the data
-   // coords range in the UI
+   /**
+    * A coalescent runnable to avoid excessively frequent update of the data
+    * coords range in the UI
+    */
    private class ExpandDisplayRangeCoalescentRunnable
          implements CoalescentRunnable
    {
-      private final List<Coords> coords_ = new ArrayList<Coords>();
+      private final List<Coords> coords_ = new ArrayList<>();
 
       ExpandDisplayRangeCoalescentRunnable(Coords coords) {
          coords_.add(coords);
@@ -966,7 +958,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    @Override
    public double getZoom() {
-      throw new UnsupportedOperationException();
+      return getDisplaySettings().getZoomRatio();
    }
 
    @Override
@@ -1066,7 +1058,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          // TODO: report exception
       }
       animationController_.shutdown();
-      DefaultEventManager.getInstance().unregisterForEvents(this);
+      
+      studio_.events().unregisterForEvents(this);
       dataProvider_.unregisterForEvents(this);
       // need to set the flag before closing the UIController,
       // otherwise we wil re-enter this function and write bad
@@ -1114,7 +1107,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    @Override
    public DisplayWindow duplicate() {
-      DisplayWindow dup = DefaultDisplayManager.getInstance().createDisplay(dataProvider_);
+      DisplayWindow dup = studio_.displays().createDisplay(dataProvider_);
       dup.setDisplaySettings(this.getDisplaySettings());
       return dup;
    }

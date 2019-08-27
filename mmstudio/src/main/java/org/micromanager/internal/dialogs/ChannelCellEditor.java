@@ -16,6 +16,7 @@ import javax.swing.JTextField;
 import javax.swing.table.TableCellEditor;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -109,6 +110,7 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
                // Our fallback color is the colorblind-friendly color for our
                // current row index.
                channel_.color = new Color(AcqControlDlg.getChannelColor(
+                       MMStudio.getInstance(),
                      acqEng_.getChannelGroup(),
                      (String) channelSelect_.getSelectedItem(),
                      ColorPalettes.getFromDefaultPalette(editRow_).getRGB()));
@@ -142,6 +144,7 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
             // channel. If no color is available, use the "next" colorblind-
             // friendly color, based on our row index.
             channel_.color = new Color(AcqControlDlg.getChannelColor(
+                    MMStudio.getInstance(),
                      acqEng_.getChannelGroup(),
                      (String) channelSelect_.getSelectedItem(),
                      ColorPalettes.getFromDefaultPalette(editRow_).getRGB()));

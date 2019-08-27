@@ -126,9 +126,24 @@ int JAICamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 	return DEVICE_OK;
 }
 
-int JAICamera::OnFps(MM::PropertyBase* pProp, MM::ActionType eAct)
+int JAICamera::OnFrameRate(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	if (eAct == MM::BeforeGet)
+	if (eAct == MM::AfterSet)
+	{
+		double val(1.0);
+		pProp->Get(val);
+		PvResult pvr = genParams->SetFloatValue("AcquisitionFrameRate", val);
+		if (!pvr.IsOK())
+			return processPvError(pvr);
+
+		// adjust exposure limits
+		double expMinUs, expMaxUs;
+		pvr = genParams->GetFloatRange("ExposureTime", expMinUs, expMaxUs);
+		if (!pvr.IsOK())
+			return processPvError(pvr);
+		SetPropertyLimits(MM::g_Keyword_Exposure, expMinUs / 1000, expMaxUs / 1000);
+	}
+	else if (eAct == MM::BeforeGet)
 	{
 		double fps;
 		PvResult pvr = genParams->GetFloatValue("AcquisitionFrameRate", fps);
@@ -205,17 +220,41 @@ int JAICamera::OnWhiteBalance(MM::PropertyBase* pProp, MM::ActionType eAct)
 		long data;
 		pProp->Get(val);
 		GetPropertyData(g_WhiteBalance, val.c_str(), data);
-		PvResult pvr = genParams->SetEnumValue(pvCmd, data);
-		if (!pvr.IsOK())
-			return processPvError(pvr);
+
+		if (data == 1)
+		{
+			// special handling for "once" option
+			// request white balance adjustment on next sequence acquisition
+			ostringstream os;
+			os << "WB Once set to PENDING status, will apply on the next frame";
+			LogMessage(os.str());
+			InterlockedExchange(&whiteBalancePending, 1L);
+			wbPendingOption = val;
+		}
+		else
+		{
+			PvResult pvr = genParams->SetEnumValue(pvCmd, data);
+			if (!pvr.IsOK())
+				return processPvError(pvr);
+			ostringstream os;
+			os << "Set " << g_WhiteBalance << " : " << val << " = " << data;
+			LogMessage(os.str());
+		}
 	}
 	else if (eAct == MM::BeforeGet)
 	{
-		PvString val;
-		PvResult pvr = genParams->GetEnumValue(pvCmd, val);
-		if (!pvr.IsOK())
-			return processPvError(pvr);
-		pProp->Set(val.GetAscii());
+		if (whiteBalancePending)
+		{
+			pProp->Set(wbPendingOption.c_str());
+		}
+		else
+		{
+			PvString val;
+			PvResult pvr = genParams->GetEnumValue(pvCmd, val);
+			if (!pvr.IsOK())
+				return processPvError(pvr);
+			pProp->Set(val.GetAscii());
+		}
 	}
 	return DEVICE_OK;
 }

@@ -48,6 +48,7 @@
 
 
 
+
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
 //
@@ -98,8 +99,8 @@ public:
 	int SetBinning(int binSize);
 	int IsExposureSequenceable(bool& seq) const {seq = false; return DEVICE_OK;}
 	void RGBPackedtoRGB(void* destbuffer, const CGrabResultPtr& ptrGrabResult);
-	int SetProperty(const char* name, const char* value);
-	int BaslerCamera::CheckForBinningMode(CPropertyAction *pAct);
+	//int SetProperty(const char* name, const char* value);
+	int CheckForBinningMode(CPropertyAction *pAct);
 	void AddToLog(std::string msg);
 	void CopyToImageBuffer(CGrabResultPtr image);
 	CImageFormatConverter *converter;
@@ -122,6 +123,9 @@ public:
 
 	// action interface
 	// ----------------
+	int OnWidth(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnHeight(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnHeigth(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnBinningMode(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -158,6 +162,7 @@ private:
 	std::string sensorReadoutMode_;
 	std::string shutterMode_;
 	void* imgBuffer_;
+	long imgBufferSize_;
 	ImgBuffer img_;
 	INodeMap* nodeMap_;
 

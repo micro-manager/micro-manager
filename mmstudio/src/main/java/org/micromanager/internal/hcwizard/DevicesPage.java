@@ -34,6 +34,7 @@ import java.awt.event.MouseListener;
 import java.io.IOException;
 import java.util.Hashtable;
 import java.util.Vector;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -66,17 +67,17 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
    private static final long serialVersionUID = 1L;
    public static final String WEBSITE_ROOT = "https://micro-manager.org/wiki/";
 
-   private JTable deviceTable_;
-   private JScrollPane installedScrollPane_;
-   private JButton editButton;
-   private JButton removeButton;
-   private JButton peripheralsButton;
+   private final JTable deviceTable_;
+   private final JScrollPane installedScrollPane_;
+   private final JButton editButton;
+   private final JButton removeButton;
+   private final JButton peripheralsButton;
+   private final JScrollPane availableScrollPane_;
    private boolean listByLib_;
    private TreeWContextMenu theTree_;
-   private JScrollPane availableScrollPane_;
    String libraryDocumentationName_;
    private JComboBox byLibCombo_;
-   private boolean amLoadingPage_ = false;
+   private final AtomicBoolean amLoadingPage_;
 
    ///////////////////////////////////////////////////////////
    /**
@@ -104,9 +105,11 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
          model_ = mod;
       }
       
+      @Override
       public int getRowCount() {
          return devices_.length;
       }
+      @Override
       public int getColumnCount() {
          return COLUMN_NAMES.length;
       }
@@ -114,19 +117,21 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
       public String getColumnName(int columnIndex) {
          return COLUMN_NAMES[columnIndex];
       }
+      @Override
       public Object getValueAt(int rowIndex, int columnIndex) {
          
-         if (columnIndex == 0)
-            return devices_[rowIndex].getName();
-         else if (columnIndex == 1)
-            return new String (devices_[rowIndex].getAdapterName() + "/" + devices_[rowIndex].getLibrary());
-         else if (columnIndex == 2)
-            return devices_[rowIndex].getDescription();
-         else {
-            if (devices_[rowIndex].isCore())
-               return "Default";
-            else
-               return devices_[rowIndex].isInitialized() ? "OK" : "Failed";
+         switch (columnIndex) {
+            case 0:
+               return devices_[rowIndex].getName();
+            case 1:
+               return devices_[rowIndex].getAdapterName() + "/" + devices_[rowIndex].getLibrary();
+            case 2:
+               return devices_[rowIndex].getDescription();
+            default:
+               if (devices_[rowIndex].isCore())
+                  return "Default";
+               else
+                  return devices_[rowIndex].isInitialized() ? "OK" : "Failed";
          }
       }
 
@@ -138,7 +143,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
             try {
                model_.changeDeviceName(oldName, newName);
                fireTableCellUpdated(row, col);
-            } catch (Exception e) {
+            } catch (MMConfigFileException e) {
                handleError(e.getMessage());
             }
          }
@@ -180,7 +185,8 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
          popupMenu_.setOpaque(true);
          popupMenu_.setLightWeightPopupEnabled(true);
 
-         addMouseListener(new MouseAdapter() {
+         super.addMouseListener(new MouseAdapter() {
+            @Override
             public void mouseReleased(MouseEvent e) {
                if (e.isPopupTrigger()) {
                   popupMenu_.show((JComponent) e.getSource(), e.getX(),
@@ -190,7 +196,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
          });
 
          // Add the selected device when the Enter key is pressed.
-         addKeyListener(new KeyAdapter() {
+         super.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
@@ -201,6 +207,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
 
       }
 
+      @Override
       public void actionPerformed(ActionEvent ae) {
          if (ae.getActionCommand().equals("help")) {
             dp_.displayDocumentation();
@@ -217,6 +224,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
     * TreeMouseListener
     */
    class TreeMouseListener extends MouseAdapter {
+      @Override
       public void mousePressed(MouseEvent e) {
          if (2 == e.getClickCount()) {
             if (addDevice()) {
@@ -233,6 +241,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
       super();
       title_ = "Add or remove devices";
       listByLib_ = true;
+      amLoadingPage_ = new AtomicBoolean(false);
 
       setLayout(new MigLayout("fill, flowx"));
 
@@ -250,6 +259,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
       deviceTable_.getSelectionModel().addListSelectionListener(this);
 
       deviceTable_.addMouseListener(new MouseAdapter() {
+         @Override
          public void mouseClicked(MouseEvent e) {
             if (e.getClickCount() == 2) {
                editDevice();
@@ -258,6 +268,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
 
       editButton = new JButton("Edit...");
       editButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             editDevice();
          }
@@ -267,6 +278,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
 
       peripheralsButton = new JButton("Peripherals...");
       peripheralsButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             editPeripherals();
          }
@@ -276,6 +288,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
 
       removeButton = new JButton("Remove");
       removeButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             removeDevice();
          }
@@ -290,12 +303,9 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
       byLibCombo_ = new JComboBox(new String[] {
          "List by Module", "List by Type"});
       byLibCombo_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
-            if (byLibCombo_.getSelectedIndex() == 0)
-               listByLib_ = true;
-            else {
-               listByLib_ = false;
-            }
+            listByLib_ = byLibCombo_.getSelectedIndex() == 0;
             buildTree();
          }
       });
@@ -306,6 +316,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
 
       final JButton addButton = new JButton("Add...");
       addButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             addDevice();
          }
@@ -314,6 +325,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
 
       JButton helpButton = new JButton("Help");
       helpButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             displayDocumentation();
          }
@@ -331,7 +343,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
       Device dev = model_.findDevice(devName);
 
       String installed[] = dev.getPeripherals();
-      Vector<Device> peripherals = new Vector<Device>();
+      Vector<Device> peripherals = new Vector<>();
 
       // find which devices can be installed
       for (int i = 0; i < installed.length; i++) {
@@ -348,7 +360,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
 
       // display dialog and load selected
       if (peripherals.size() > 0) {
-         PeripheralSetupDlg dlgp = new PeripheralSetupDlg(model_, core_, dev.getName(), peripherals);
+         PeripheralSetupDlg dlgp = new PeripheralSetupDlg(model_, studio_.core(), dev.getName(), peripherals);
          dlgp.setVisible(true);
          Device sel[] = dlgp.getSelectedPeripherals();
          for (int i=0; i<sel.length; i++) {
@@ -362,7 +374,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
                // offer to edit pre-init properties
                String props[] = sel[i].getPreInitProperties();
                if (props.length > 0) {
-                  DeviceSetupDlg dlgProps = new DeviceSetupDlg(model_, core_, sel[i]);
+                  DeviceSetupDlg dlgProps = new DeviceSetupDlg(model_, studio_, sel[i]);
                   if (!sel[i].isInitialized()) {
                      core_.unloadDevice(sel[i].getName());
                      model_.removeDevice(sel[i].getName());
@@ -396,7 +408,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
          // TODO Auto-generated catch block
          e.printStackTrace();
       }
-      DeviceSetupDlg dlg = new DeviceSetupDlg(model_, core_, dev);
+      DeviceSetupDlg dlg = new DeviceSetupDlg(model_, studio_, dev);
       model_.setModified(true);
       
       if (!dev.isInitialized()) {
@@ -448,14 +460,16 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
       tmd.fireTableDataChanged();
    }
    
+   @Override
    public void refresh() {
       rebuildDevicesTable();
    }
    
+   @Override
    public boolean enterPage(final boolean fromNextPage) {
       Cursor oldCur = getCursor();
       setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-      amLoadingPage_ = true;
+      amLoadingPage_.set(true);
       monitorEnteringPage();
       try {
          // double check that list of device libraries is valid before continuing.
@@ -466,14 +480,14 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
             // do nothing for now
          } else {
             model_.loadModel(core_);
-            model_.initializeModel(core_);
+            model_.initializeModel(core_, amLoadingPage_);
          }
          buildTree();
          return true;
       } catch (Exception e) {
          // Hide the loading dialog *first*, or else the error dialog can't be
          // interacted with.
-         amLoadingPage_ = false;
+         amLoadingPage_.set(false);
          ReportingUtils.showError(e);
          // Clean up from loading the model.
          try {
@@ -485,7 +499,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
          setCursor(Cursor.getDefaultCursor());
       } finally {
          setCursor(oldCur);
-         amLoadingPage_ = false;
+         amLoadingPage_.set(false);
       }
       return false;
    }
@@ -512,7 +526,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
                // This should never happen.
                ReportingUtils.logError(e, "Interrupted waiting to show wait dialog");
             }
-            if (amLoadingPage_) {
+            if (amLoadingPage_.get()) {
                waiter.setVisible(true);
                waiter.toFront(); // This blocks this thread.
             }
@@ -521,7 +535,8 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
       Thread hideThread = new Thread(new Runnable() {
          @Override
          public void run() {
-            while (amLoadingPage_) {
+            // TODO: use proper synchronization
+            while (amLoadingPage_.get()) {
                try {
                   Thread.sleep(100);
                }
@@ -537,6 +552,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
       showThread.start();
    }
 
+   @Override
     public boolean exitPage(boolean toNextPage) {
        Device devs[] = model_.getDevices();
        for (Device d : devs) {
@@ -563,10 +579,12 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
        return true;
     }
 
+   @Override
    public void loadSettings() {
       
    }
    
+   @Override
    public void saveSettings() {
       
    }
@@ -575,6 +593,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
    /**
     * Handler for list selection events in our device table
     */
+   @Override
    public void valueChanged(ListSelectionEvent e) {
       int row = deviceTable_.getSelectedRow();
       if (row < 0) {
@@ -606,6 +625,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
       removeButton.setEnabled(!dev.isCore());
    }
 
+   @Override
    public void valueChanged(TreeSelectionEvent event) {
 
       // update URL for library documentation
@@ -647,12 +667,12 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
             String descr = userData[2].toString();
 
             // load new device
-            String label = new String(adapterName);
+            String label = adapterName;
             Device d = model_.findDevice(label);
             int retries = 0;
             while (d != null) {
                retries++;
-               label = new String(adapterName + "-" + retries);
+               label = adapterName + "-" + retries;
                d = model_.findDevice(label);
             }
 
@@ -668,7 +688,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
             }
 
             // open device setup dialog
-            DeviceSetupDlg dlg = new DeviceSetupDlg(model_, core_, dev);
+            DeviceSetupDlg dlg = new DeviceSetupDlg(model_, studio_, dev);
 
             if (!dev.isInitialized()) {
                // user canceled or things did not work out
@@ -687,7 +707,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
             if (dev.isHub() && !dev.getName().equals("Core")) {
 
                String installed[] = dev.getPeripherals();
-               Vector<Device> peripherals = new Vector<Device>();
+               Vector<Device> peripherals = new Vector<>();
 
                for (int i = 0; i < installed.length; i++) {
                   try {
@@ -717,7 +737,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
                         // offer to edit pre-init properties
                         String props[] = sel[i].getPreInitProperties();
                         if (props.length > 0) {
-                           DeviceSetupDlg dlgProps = new DeviceSetupDlg(model_, core_, sel[i]);
+                           DeviceSetupDlg dlgProps = new DeviceSetupDlg(model_, studio_, sel[i]);
                            if (!sel[i].isInitialized()) {
                               core_.unloadDevice(sel[i].getName());
                               model_.removeDevice(sel[i].getName());

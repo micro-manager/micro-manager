@@ -22,21 +22,36 @@
 package org.micromanager.display.internal;
 
 import java.awt.Color;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import org.micromanager.UserProfile;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.display.ChannelDisplaySettings;
+import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.internal.utils.ColorPalettes;
-import org.micromanager.internal.utils.UserProfileStaticInterface;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  * This container class stores histogram and color settings for a specific
  * named channel (e.g. DAPI or FITC), and is used to ensure that when we need a
  * new display that uses that channel, we are able to recover it from the
  * profile.
+ * 
+ * NS 8/2019: It looks like this class is a remnant from 2.0-beta that does not
+ * really fit with the new Channel and Component scheme.
+ * 
+ * Functionality of this class was moved into RememberedSettings.
+ * That class still uses this class for backwards compatibility
+ * Do not use in new code.  
+ * 
+ * Remove this class by Sept. 2020
+ * 
  */
+
+@Deprecated
 public final class RememberedChannelSettings {
-   private static final String NAMES = "names of channels and channel groups";
    private static final String COLOR = "color to use for channels";
    private static final String MINS = "default minimum values to use in the histograms when scaling";
    private static final String MAXES = "default maximum values to use in the histograms when scaling";
@@ -46,21 +61,30 @@ public final class RememberedChannelSettings {
    private static final Object PROFILELOCK = new Object();
    
    
-   private final String channelName_;
-   private final String channelGroup_;
-   private final Color color_;
-   private final Integer[] histogramMins_;
-   private final Integer[] histogramMaxes_;
-   private final Boolean shouldAutoscale_;
+   private final String channelName_;           //Name of the channel whose settings will be stored
+   private final String channelGroup_;          // Channel group to which this channel belongs
+   private final Color color_;                  // Color to be used in display
+   private final List<Integer> histogramMins_;  // minima (for each component in this channel)
+   private final List<Integer> histogramMaxes_; // maxima (for each component in this channel)
+   private final Boolean shouldAutoscale_;      // whether or not to autoscale this channel
 
    /**
     * For purposes of saving to profile, any or all of the settings (i.e.
     * everything except the channel name and channel group) may be null, in
     * which case they will not be saved to the profile.
+    * @param channelName   Name of the channel whose settings will be stored
+    * @param channelGroup  Channel group to which this channel belongs
+    * @param color         Color to be used in display
+    * @param histogramMins minima (for each component in this channel)
+    * @param histogramMaxes maxima (for each component in this channel)
+    * @param shouldAutoscale whether or not to autoscale this channel
     */
-   public RememberedChannelSettings(String channelName, String channelGroup,
-         Color color, Integer[] histogramMins, Integer[] histogramMaxes,
-         Boolean shouldAutoscale) {
+   public RememberedChannelSettings(String channelName, 
+         String channelGroup,
+         Color color,
+         List<Integer> histogramMins, 
+         List<Integer> histogramMaxes,
+         boolean shouldAutoscale) {
       channelName_ = channelName;
       channelGroup_ = channelGroup;
       color_ = color;
@@ -74,18 +98,18 @@ public final class RememberedChannelSettings {
    }
 
    public Integer getHistogramMin(int component) {
-      return histogramMins_[component];
+      return histogramMins_.get(component);
    }
 
-   public Integer[] getHistogramMins() {
+   public List<Integer> getHistogramMins() {
       return histogramMins_;
    }
 
    public Integer getHistogramMax(int component) {
-      return histogramMaxes_[component];
+      return histogramMaxes_.get(component);
    }
 
-   public Integer[] getHistogramMaxes() {
+   public List<Integer> getHistogramMaxes() {
       return histogramMaxes_;
    }
 
@@ -93,7 +117,8 @@ public final class RememberedChannelSettings {
       return shouldAutoscale_;
    }
 
-   private static String genKey(String channelName, String channelGroup) {
+   static String genKey(String channelGroup, String channelName) {
+      // weird order, keep for backwards compatibility
       return channelName + ":" + channelGroup;
    }
 
@@ -103,22 +128,21 @@ public final class RememberedChannelSettings {
     */
    public void saveToProfile() {
       synchronized(PROFILELOCK) {
-         UserProfile profile = UserProfileStaticInterface.getInstance();
-         String ourKey = genKey(channelName_, channelGroup_);
+         MutablePropertyMapView settings = 
+                 MMStudio.getInstance().profile().getSettings(RememberedChannelSettings.class);
+         
+         String ourKey = genKey(channelGroup_, channelName_);
          if (color_ != null) {
-            profile.setInt(RememberedChannelSettings.class,
-                  ourKey + ":" + COLOR, color_.getRGB());
+            settings.putInteger(ourKey + ":" + COLOR, color_.getRGB());
          }
          if (histogramMins_ != null) {
-            profile.getSettings(RememberedChannelSettings.class).putIntegerList(
-                  ourKey + ":" + MINS, Arrays.asList(histogramMins_));
+            settings.putIntegerList(ourKey + ":" + MINS, histogramMins_);
          }
          if (histogramMaxes_ != null) {
-            profile.getSettings(RememberedChannelSettings.class).putIntegerList(
-                  ourKey + ":" + MAXES, Arrays.asList(histogramMaxes_));
+            settings.putIntegerList(ourKey + ":" + MAXES, histogramMaxes_);
          }
          if (shouldAutoscale_ != null) {
-            profile.getSettings(RememberedChannelSettings.class).putBoolean(
+            settings.putBoolean(
                   ourKey + ":" + AUTOSCALE, shouldAutoscale_);
          }
       }
@@ -128,102 +152,124 @@ public final class RememberedChannelSettings {
     * Read the Profile, find the saved RememberedChannelSettings info for the
     * given name and group, and return the result -- or use the provided
     * default settings if no saved entry can be found.
+    * @param channelName   Name of the channel whose settings will be stored
+    * @param channelGroup  Channel group to which this channel belongs
+    * @param color         Color to be used in display
+    * @param histogramMins minima (for each component in this channel)
+    * @param histogramMaxes maxima (for each component in this channel)
+    * @param shouldAutoscale whether or not to autoscale this channel
+    * @return 
     */
-   public static RememberedChannelSettings loadSettings(String channelName,
-         String channelGroup, Color defaultColor, Integer[] histogramMins,
-         Integer[] histogramMaxes, Boolean shouldAutoscale) {
+   public static RememberedChannelSettings loadSettings(
+           String channelGroup,
+           String channelName, 
+           Color color, 
+           List<Integer> histogramMins,
+           List<Integer> histogramMaxes, 
+           boolean shouldAutoscale) {
       // Don't try to do this when someone else is (potentially) modifying the
       // profile.
       synchronized(PROFILELOCK) {
-         UserProfile profile = UserProfileStaticInterface.getInstance();
-         String key = genKey(channelName, channelGroup);
-         defaultColor = new Color(profile.getInt(
-                  RememberedChannelSettings.class, key + ":" + COLOR,
-                  defaultColor.getRGB()));
-         histogramMins = profile.getIntArray(RememberedChannelSettings.class,
-               key + ":" + MINS, histogramMins);
-         histogramMaxes = profile.getIntArray(RememberedChannelSettings.class,
-               key + ":" + MAXES, histogramMaxes);
-         shouldAutoscale = profile.getBoolean(
-               RememberedChannelSettings.class, key + ":" + AUTOSCALE,
-               shouldAutoscale);
-         return new RememberedChannelSettings(channelName, channelGroup,
-               defaultColor, histogramMins, histogramMaxes, shouldAutoscale);
+         MutablePropertyMapView settings = 
+                 MMStudio.getInstance().profile().getSettings(RememberedChannelSettings.class);
+         String key = genKey(channelGroup, channelName);
+         color = new Color(settings.getInteger(key + ":" + COLOR,
+                  color.getRGB()));
+         histogramMins = settings.getIntegerList(key + ":" + MINS, histogramMins);
+         histogramMaxes = settings.getIntegerList(key + ":" + MAXES, histogramMaxes);
+         shouldAutoscale = settings.getBoolean(key + ":" + AUTOSCALE, shouldAutoscale);
+         return new RememberedChannelSettings(channelGroup, channelName,
+               color, histogramMins, histogramMaxes, shouldAutoscale);
       }
    }
 
    /**
     * Get just the color for the specified channel, or the provided default if
     * no value is found.
+    * @param channelName   Name of the channel whose settings will be stored
+    * @param channelGroup  Channel group to which this channel belongs
+    * @param color         Default color 
+    * @return              Color to be used in display
     */
-   public static Color getColorForChannel(String channelName,
-         String channelGroup, Color defaultColor) {
+   public static Color getColorForChannel(String channelGroup,
+            String channelName, 
+            Color color) {
       synchronized(PROFILELOCK) {
-         UserProfile profile = UserProfileStaticInterface.getInstance();
-         String key = genKey(channelName, channelGroup);
+         UserProfile profile = MMStudio.getInstance().profile();
+         String key = genKey(channelGroup, channelName);
          Integer rgb = profile.getSettings(RememberedChannelSettings.class).
                  getInteger(key + ":" + COLOR, -1);
          if (rgb == -1) {
-            return defaultColor;
+            return color;
          }
          return new Color(rgb);
       }
    }
 
-   /**
-    * Given a SummaryMetadata object and a DisplaySettings object, record the
-    * appropriate color/min/max values into the DisplaySettings and return it.
-    * Note that the SummaryMetadata's channel names are assumed to be in the
-    * same order as the ContrastSettings array in the DisplaySettings.
-    */
-   //TODO: figute out if this function is still needed and if so, 
-   // figure out its intent and how to make it work.
-   public static DisplaySettings updateSettings(SummaryMetadata summary,
-         DisplaySettings settings, int numChannels) {
-      Color[] newColors = new Color[numChannels];
-      DisplaySettings.ContrastSettings[] newSettings = 
-              new DisplaySettings.ContrastSettings[numChannels];
-      String group = summary.getChannelGroup();
-      for (int i = 0; i < numChannels; ++i) {
-         // Load this channel's settings
-         String name = summary.getSafeChannelName(i);
-         RememberedChannelSettings channel = loadSettings(name, group,
-               Color.WHITE, null, null, null);
-         newSettings[i] = DefaultDisplayManager.getInstance()
-            .getContrastSettings(channel.getHistogramMins(),
-                  channel.getHistogramMaxes(), null, null);
+   
+   public static DisplaySettings loadDefaultDisplaySettings(SummaryMetadata summary) {
+      DisplaySettings.Builder builder = DefaultDisplaySettings.builder();
+      String channelGroup = summary.getChannelGroup();
+      List<String> channelNames = summary.getChannelNameList();
+      for (int ch = 0; ch < channelNames.size(); ch++) {
+         String name = summary.getSafeChannelName(ch);
+         RememberedChannelSettings settings = loadSettings(channelGroup, name, 
+                 Color.WHITE, null, null, true);
+         builder.channel(ch, settings.toChannelDisplaySetting(name));
       }
+      builder.autostretch(true);
+      return builder.build();      
+   }
+   
+   public static ChannelDisplaySettings getRememberedChannelDisplaySettings
+        (SummaryMetadata summary, int chNr) {
+      RememberedChannelSettings settings = loadSettings(summary.getChannelGroup(),
+              summary.getChannelNameList().get(chNr), Color.WHITE, null, null, true);
+      return settings.toChannelDisplaySetting(summary.getChannelNameList().get(chNr));
+   }
+   
+   public ChannelDisplaySettings toChannelDisplaySetting(String channelName) {
+      ChannelDisplaySettings.Builder builder = DefaultChannelDisplaySettings.builder();
+      builder.color(color_).name(channelName);
+      // ugly, we rely on a null list to know if we should return defaults...
+      if (histogramMins_ != null) {
+         for (int comp = 0; comp < histogramMins_.size(); comp++) {
+            ComponentDisplaySettings.Builder compBuilder = DefaultComponentDisplaySettings.builder();
+            compBuilder.
+                    scalingGamma(1.0).
+                    scalingMinimum(histogramMins_.get(comp)).
+                    scalingMaximum(histogramMaxes_.get(comp));
+            builder.component(comp, compBuilder.build());
+         }
+      }
+      return builder.build();
+   }
+   
+   public static RememberedChannelSettings fromChannelDisplaySettings(
+           String channelGroup,
+           String channelName,
+           ChannelDisplaySettings settings) {
+      List<Integer> histogramMins = new ArrayList<>();
+      List<Integer> histogramMaxs = new ArrayList<>();
+      for (ComponentDisplaySettings cs : settings.getAllComponentSettings()) {
+         histogramMins.add(((Long) cs.getScalingMinimum()).intValue());
+         histogramMaxs.add(((Long) cs.getScalingMaximum()).intValue());
+      }
+      return new RememberedChannelSettings(
+              channelGroup,
+              channelName,
+              settings.getColor(),
+              histogramMins,
+              histogramMaxs,
+              true);
 
-      //return settings.copyBuilder().channelColors(newColors)
-      //   .channelContrastSettings(newSettings).build();
-      return settings;  //
    }
 
-   /**
-    * Given a DisplaySettings and a SummaryMetadata (for channel names/group),
-    * generate RememberedChannelSettings from its values and save them to the
-    * profile.
-    */
-   @Deprecated
-   public static void saveSettingsToProfile(DisplaySettings settings,
-         SummaryMetadata summary, int numChannels) {
-      String group = summary.getChannelGroup();
-      for (int i = 0; i < numChannels; ++i) {
-         String channel = summary.getSafeChannelName(i);
-         DisplaySettings.ContrastSettings contrast = settings.getSafeContrastSettings(i,
-               new DefaultDisplaySettings.DefaultContrastSettings(0, 0, 1.0, true));
-         Color defaultColor = ColorPalettes.getFromDefaultPalette(i);
-         Color color = settings.getChannelColor(i);
-         new RememberedChannelSettings(channel, group, color,
-               contrast.getContrastMins(), contrast.getContrastMaxes(),
-               settings.isAutostretchEnabled()).saveToProfile();
-      }
-   }
 
    @Override
    public String toString() {
       return String.format("<RememberedChannelSettings name %s, color %s, min %d, max %d, auto %s>",
-            genKey(channelName_, channelGroup_), color_, histogramMins_,
+            genKey(channelGroup_, channelName_), color_, histogramMins_,
             histogramMaxes_, shouldAutoscale_);
    }
 
@@ -236,10 +282,22 @@ public final class RememberedChannelSettings {
       if (color_ != alt.getColor()) {
          return false;
       }
-      if (!Arrays.deepEquals(histogramMins_, alt.getHistogramMins()) ||
-            !Arrays.deepEquals(histogramMaxes_, alt.getHistogramMaxes())) {
+      if (!(histogramMins_.equals(alt.getHistogramMins())) ||
+          !(histogramMaxes_.equals(alt.getHistogramMaxes())) ) {
          return false;
       }
-      return shouldAutoscale_ == alt.getShouldAutoscale();
+      return Objects.equals(shouldAutoscale_, alt.getShouldAutoscale());
+   }
+
+   @Override
+   public int hashCode() {
+      int hash = 3;
+      hash = 89 * hash + Objects.hashCode(this.channelName_);
+      hash = 89 * hash + Objects.hashCode(this.channelGroup_);
+      hash = 89 * hash + Objects.hashCode(this.color_);
+      hash = 89 * hash + Objects.hashCode(this.histogramMins_);
+      hash = 89 * hash + Objects.hashCode(this.histogramMaxes_);
+      hash = 89 * hash + Objects.hashCode(this.shouldAutoscale_);
+      return hash;
    }
 }

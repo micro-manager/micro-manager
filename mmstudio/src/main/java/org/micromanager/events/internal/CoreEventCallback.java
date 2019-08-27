@@ -23,10 +23,13 @@ package org.micromanager.events.internal;
 
 import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
+import mmcorej.DoubleVector;
 import mmcorej.MMEventCallback;
+import org.micromanager.Studio;
 import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
 import org.micromanager.events.ConfigGroupChangedEvent;
 import org.micromanager.events.ExposureChangedEvent;
+import org.micromanager.events.PixelSizeAffineChangedEvent;
 import org.micromanager.events.PixelSizeChangedEvent;
 import org.micromanager.events.PropertiesChangedEvent;
 import org.micromanager.events.PropertyChangedEvent;
@@ -34,6 +37,7 @@ import org.micromanager.events.SLMExposureChangedEvent;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.SystemConfigurationLoadedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
+import org.micromanager.internal.utils.AffineUtils;
 
 /**
  * Callback to update Java layer when a change happens in the MMCore. This
@@ -43,13 +47,15 @@ import org.micromanager.events.XYStagePositionChangedEvent;
 public final class CoreEventCallback extends MMEventCallback {
 
    private final CMMCore core_;
+   private final Studio studio_;
    private final AcquisitionWrapperEngine engine_;
    private volatile boolean ignorePropertyChanges_;
 
    @SuppressWarnings("LeakingThisInConstructor")
-   public CoreEventCallback(CMMCore core, AcquisitionWrapperEngine engine) {
+   public CoreEventCallback(Studio studio, AcquisitionWrapperEngine engine) {
       super();
-      core_ = core;
+      studio_ = studio;
+      core_ = studio.core();
       engine_ = engine;
       core_.registerCallback(this);
    }
@@ -69,12 +75,12 @@ public final class CoreEventCallback extends MMEventCallback {
             SwingUtilities.invokeLater(new Runnable() {
                @Override
                public void run() {
-                  DefaultEventManager.getInstance().post(
+                  studio_.events().post(
                           new PropertiesChangedEvent());
                }
             });
          } else {
-            DefaultEventManager.getInstance().post(
+            studio_.events().post(
                     new PropertiesChangedEvent());
          }
       }
@@ -92,12 +98,12 @@ public final class CoreEventCallback extends MMEventCallback {
          SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-               DefaultEventManager.getInstance().post(
+               studio_.events().post(
                        new PropertyChangedEvent(deviceName, propName, propValue));
             }
          });
       } else {
-         DefaultEventManager.getInstance().post(
+         studio_.events().post(
                  new PropertyChangedEvent(deviceName, propName, propValue));
       }
    }
@@ -108,12 +114,12 @@ public final class CoreEventCallback extends MMEventCallback {
          SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-               DefaultEventManager.getInstance().post(
+               studio_.events().post(
                        new ConfigGroupChangedEvent(groupName, newConfig));
             }
          });
       } else {
-         DefaultEventManager.getInstance().post(
+         studio_.events().post(
                  new ConfigGroupChangedEvent(groupName, newConfig));
       }
    }
@@ -124,12 +130,12 @@ public final class CoreEventCallback extends MMEventCallback {
          SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-               DefaultEventManager.getInstance().post(
+               studio_.events().post(
                        new SystemConfigurationLoadedEvent());
             }
          });
       } else {
-         DefaultEventManager.getInstance().post(
+         studio_.events().post(
                  new SystemConfigurationLoadedEvent());
       }
    }
@@ -141,13 +147,32 @@ public final class CoreEventCallback extends MMEventCallback {
          SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-               DefaultEventManager.getInstance().post(
+               studio_.events().post(
                        new PixelSizeChangedEvent(newPixelSizeUm));
             }
          });
       } else {
-         DefaultEventManager.getInstance().post(
+         studio_.events().post(
                  new PixelSizeChangedEvent(newPixelSizeUm));
+      }
+   }
+   
+   @Override
+   public void onPixelSizeAffineChanged(DoubleVector newPixelSizeAffine) {
+      // see OnPropertyChanged for reasons to run this on the EDT
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               studio_.events().post(
+                       new PixelSizeAffineChangedEvent(
+                               AffineUtils.doubleToAffine(newPixelSizeAffine)));
+            }
+         });
+      } else {
+         studio_.events().post(
+                       new PixelSizeAffineChangedEvent(
+                               AffineUtils.doubleToAffine(newPixelSizeAffine)));
       }
    }
 
@@ -160,12 +185,12 @@ public final class CoreEventCallback extends MMEventCallback {
             SwingUtilities.invokeLater(new Runnable() {
                @Override
                public void run() {
-                  DefaultEventManager.getInstance().post(
+                  studio_.events().post(
                           new StagePositionChangedEvent(deviceName, pos));
                }
             });
          } else {
-            DefaultEventManager.getInstance().post(
+            studio_.events().post(
                     new StagePositionChangedEvent(deviceName, pos));
          }
       }
@@ -180,12 +205,12 @@ public final class CoreEventCallback extends MMEventCallback {
             SwingUtilities.invokeLater(new Runnable() {
                @Override
                public void run() {
-                  DefaultEventManager.getInstance().post(
+                  studio_.events().post(
                           new XYStagePositionChangedEvent(deviceName, xPos, yPos));
                }
             });
          } else {
-            DefaultEventManager.getInstance().post(
+            studio_.events().post(
                     new XYStagePositionChangedEvent(deviceName, xPos, yPos));
          }
       }
@@ -198,12 +223,12 @@ public final class CoreEventCallback extends MMEventCallback {
          SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-               DefaultEventManager.getInstance().post(
+               studio_.events().post(
                        new ExposureChangedEvent(deviceName, exposure));
             }
          });
       } else {
-         DefaultEventManager.getInstance().post(
+         studio_.events().post(
                  new ExposureChangedEvent(deviceName, exposure));
       }
    }
@@ -215,12 +240,12 @@ public final class CoreEventCallback extends MMEventCallback {
          SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-               DefaultEventManager.getInstance().post(
+               studio_.events().post(
                        new SLMExposureChangedEvent(deviceName, exposure));
             }
          });
       } else {
-         DefaultEventManager.getInstance().post(
+         studio_.events().post(
                  new SLMExposureChangedEvent(deviceName, exposure));
       }
    }

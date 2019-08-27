@@ -58,12 +58,10 @@ import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
-import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.utils.DaytimeNighttime;
-import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.internal.utils.EventBusExceptionLogger;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
@@ -125,15 +123,15 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
    /**
     * Create the dialog
     * @param core -  MMCore
-    * @param gui - Studio
+    * @param studio - Studio
     * @param posList - Position list to be displayed in this dialog
     * @param acd - MDA window
     */
    @SuppressWarnings("LeakingThisInConstructor")
-   public PositionListDlg(CMMCore core, Studio gui,
+   public PositionListDlg(CMMCore core, Studio studio,
                      PositionList posList, AcqControlDlg acd) {
       super("position list");
-      final UserProfile profile = UserProfileStaticInterface.getInstance();
+      final UserProfile profile = studio.profile();
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent arg0) {
@@ -141,7 +139,7 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
          }
       });
       core_ = core;
-      studio_ = gui;
+      studio_ = studio;
       bus_ = new EventBus(EventBusExceptionLogger.getInstance());
       bus_.register(this);
       acqControlDlg_ = acd;
@@ -162,7 +160,7 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
       axisPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
       add(axisPane, "growx, wrap");
 
-      final TableCellRenderer firstRowRenderer = new FirstRowRenderer(arialSmallFont_);
+      final TableCellRenderer firstRowRenderer = new FirstRowRenderer(studio_, arialSmallFont_);
       posTable_ = new DaytimeNighttime.Table() {
          private static final long serialVersionUID = -3873504142761785021L;
 
@@ -428,7 +426,7 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
       add(closeButton, "wrap");
 
       // Register to be informed when the current stage position changes.
-      DefaultEventManager.getInstance().registerForEvents(this);
+      studio_.events().registerForEvents(this);
       refreshCurrentPosition();
    }
    

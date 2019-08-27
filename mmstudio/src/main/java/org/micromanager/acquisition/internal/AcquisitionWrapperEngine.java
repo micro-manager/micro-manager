@@ -47,7 +47,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    private boolean useMultiPosition_;
    private boolean keepShutterOpenForStack_;
    private boolean keepShutterOpenForChannels_;
-   private ArrayList<ChannelSpec> channels_ = new ArrayList<ChannelSpec>();
+   private ArrayList<ChannelSpec> channels_ = new ArrayList<>();
    private String rootName_;
    private String dirName_;
    private int numFrames_;
@@ -154,7 +154,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 
          // Start pumping images through the pipeline and into the datastore.
          DefaultTaggedImageSink sink = new DefaultTaggedImageSink(
-                 engineOutputQueue, curPipeline_, curStore_, this);
+                 engineOutputQueue, curPipeline_, curStore_, this, studio_.events());
          sink.start(new Runnable() {
             @Override
             public void run() {

@@ -74,7 +74,8 @@ JAICamera::JAICamera() :
 	camera(0),
 	genParams(0),
 	bitDepth(8),
-	pixelSize(4)
+	pixelSize(4),
+	whiteBalancePending(0)
 {
    // set default error messages
    InitializeDefaultErrorMessages();
@@ -242,30 +243,46 @@ int JAICamera::Initialize()
 	os << "Version=" << devVer.GetAscii() << ", Firmware=" << fwVer.GetAscii() << ", Fpga=" << fpgaVer.GetAscii();
 	LogMessage(os.str());
 
+	// reset to factory defaults
+	pvr = genParams->SetEnumValue("UserSetSelector", 0);
+	if (!pvr.IsOK())
+		return processPvError(pvr);
+
+	pvr = genParams->ExecuteCommand("UserSetLoad");
+		if (!pvr.IsOK())
+		return processPvError(pvr);
+
 	// set timed exposure mode
 	pvr = genParams->SetEnumValue("ExposureMode", 1);
 	if (!pvr.IsOK())
 		return processPvError(pvr);
 
-	// EXPOSURE
-	double expUs;
-	pvr = genParams->GetFloatValue("ExposureTime", expUs);
+	// FRAME RATE
+	CPropertyAction *pAct = new CPropertyAction(this, &JAICamera::OnFrameRate);
+	CreateProperty(g_FrameRate, "0", MM::Float, false, pAct);
+
+	double frMinHz, frMaxHz;
+	pvr = genParams->GetFloatRange("AcquisitionFrameRate", frMinHz, frMaxHz);
 	if (!pvr.IsOK())
 		return processPvError(pvr);
 
+	SetPropertyLimits(g_FrameRate, frMinHz, frMaxHz);
+
+	// EXPOSURE
 	double expMinUs, expMaxUs;
 	pvr = genParams->GetFloatRange("ExposureTime", expMinUs, expMaxUs);
 	if (!pvr.IsOK())
 		return processPvError(pvr);
 
-	CPropertyAction *pAct = new CPropertyAction(this, &JAICamera::OnExposure);
+	double expUs;
+	pvr = genParams->GetFloatValue("ExposureTime", expUs);
+	if (!pvr.IsOK())
+		return processPvError(pvr);
+
+	pAct = new CPropertyAction(this, &JAICamera::OnExposure);
 	int ret = CreateProperty(MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString(expUs), MM::Float, false, pAct);
 	SetPropertyLimits(MM::g_Keyword_Exposure, expMinUs / 1000, expMaxUs / 1000);
 	assert(ret == DEVICE_OK);
-
-	// FRAME RATE
-	pAct = new CPropertyAction(this, &JAICamera::OnFps);
-	CreateProperty("Fps", "0", MM::Float, true, pAct);
 
 	// BINNING
 	pAct = new CPropertyAction(this, &JAICamera::OnBinning);
@@ -309,6 +326,10 @@ int JAICamera::Initialize()
 			int64_t val;
 			entry->GetValue(val);
 			AddAllowedValue(g_WhiteBalance, name.GetAscii(), (long)val);
+
+			ostringstream osWB;
+			osWB << g_WhiteBalance << " : " << name.GetAscii() << "=" << val;
+			LogMessage(osWB.str());
 		}
 	}
 
@@ -486,6 +507,11 @@ int JAICamera::GetChannelName(unsigned channel, char* name)
  */
 int JAICamera::SnapImage()
 {
+	if (whiteBalancePending)
+	{
+		LogMessage("WB Once Pending in SnapImage() will be ignored, WB will be applied on the next Live acqisition frame");
+	}
+
 	// set single frame mode
 	PvResult pvr = genParams->SetEnumValue("AcquisitionMode", "SingleFrame");
 	if (!pvr.IsOK())
@@ -860,24 +886,24 @@ void JAICamera::convert_BGR12P_RGBA64(const uint8_t * src, uint8_t * dest, unsig
 	{
 		int pixPtrR = i * 36 / 8;
 		int bitPtrR = i * 36 % 8;
-		uint16_t* bufR = (uint16_t*)(src + pixPtrR);
-		*bufR = *bufR << bitPtrR;
-		*bufR = *bufR >> 4;
-		*((uint16_t*)(dest + i*byteDepth)) = *bufR; // R
+		uint16_t* buf = (uint16_t*)(src + pixPtrR);
+		uint16_t r = *buf << bitPtrR;
+		r = r >> 4;
+		*((uint16_t*)(dest + i*byteDepth)) = r; // R
 
 		int pixPtrG = (i * 36 + 12) / 8;
 		int bitPtrG = (i * 36 + 12) % 8;
-		uint16_t* bufG = (uint16_t*)(src + pixPtrG);
-		*bufG = *bufG << bitPtrG;
-		*bufG = *bufG >> 4;
-		*((uint16_t*)(dest + i*byteDepth + 2)) = *bufG; // G
+		buf = (uint16_t*)(src + pixPtrG);
+		uint16_t g = *buf << bitPtrG;
+		g = g >> 4;
+		*((uint16_t*)(dest + i*byteDepth + 2)) = g; // G
 
 		int pixPtrB = (i * 36 + 24) / 8;
 		int bitPtrB = (i * 36 + 24) % 8;
-		uint16_t* bufB = (uint16_t*)(src + pixPtrB);
-		*bufB = *bufB << bitPtrB;
-		*bufB = *bufB >> 4;
-		*((uint16_t*)(dest + i*byteDepth + 4)) = *bufB; // B
+		buf = (uint16_t*)(src + pixPtrB);
+		uint16_t b = *buf << bitPtrB;
+		b = b >> 4;
+		*((uint16_t*)(dest + i*byteDepth + 4)) = b; // B
 
 		*((uint16_t*)(dest + i*byteDepth + 6)) = 0; // alpha
 	}
@@ -988,7 +1014,7 @@ int AcqSequenceThread::svc (void)
    InterlockedExchange(&moduleInstance->acquiring, 1);
 
 	// setup continuous acquisition
-		// set single frame mode
+	// set single frame mode
 	PvResult pvr = moduleInstance->genParams->SetEnumValue("AcquisitionMode", "Continuous");
 	if (!pvr.IsOK())
 		return pvr.GetCode();
@@ -1040,6 +1066,55 @@ int AcqSequenceThread::svc (void)
 	if (pvr.IsFailure())
 	{
 		return processPvError(pvr, camStream);
+	}
+
+	if (moduleInstance->whiteBalancePending)
+	{
+		// Acquire first image, which will be used only for WB and then discarded
+		PvBuffer* pvBuf(0);
+		PvResult pvrOp;
+		pvr = camStream->RetrieveBuffer(&pvBuf, &pvrOp, 4000);
+		if (pvr.IsOK())
+		{
+			if (pvrOp.IsFailure())
+			{
+				ostringstream os;
+				os << "WB Once Pending: PvError=" << pvr.GetCode() << ", Description: " << pvr.GetDescription().GetAscii();
+			}
+
+			PvImage* pvImg = pvBuf->GetImage();
+
+			if (!moduleInstance->verifyPvFormat(pvImg))
+			{
+				ostringstream os;
+				os << "WB Once Pending: image format verification failed";
+				return 1;
+			}
+		}
+		else
+		{
+			// attempt to grab WB image unsuccessful
+			ostringstream os;
+			os << "WB Once Pending: PvError=" << pvr.GetCode() << ", Description: " << pvr.GetDescription().GetAscii();
+		}
+
+		PvResult pvr = moduleInstance->genParams->SetEnumValue("BalanceWhiteAuto", 1);
+		if (!pvr.IsOK())
+		{
+			ostringstream os;
+			os << "WB Once Pending: PvError=" << pvr.GetCode() << ", Description: " << pvr.GetDescription().GetAscii();
+			moduleInstance->LogMessage(os.str());
+		}
+		else
+		{
+			ostringstream os;
+			os << "WB Once Pending: White Balance set based on the current image";
+			moduleInstance->LogMessage(os.str());
+		}
+
+		InterlockedExchange(&moduleInstance->whiteBalancePending, 0L); // clear wb pending flag
+		ostringstream os;
+		os << "WB Once Pending flag cleared";
 	}
 
    unsigned count = 0;
@@ -1149,3 +1224,6 @@ int AcqSequenceThread::processPvError(PvResult pvr, std::shared_ptr<PvStream>& s
 	InterlockedExchange(&moduleInstance->acquiring, 0);
 	return 1;
 }
+
+
+

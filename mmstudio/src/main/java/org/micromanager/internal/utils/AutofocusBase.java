@@ -3,6 +3,7 @@ package org.micromanager.internal.utils;
 import java.util.ArrayList;
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.UserProfile;
+import org.micromanager.internal.MMStudio;
 
 public abstract class AutofocusBase implements AutofocusPlugin {
 
@@ -124,7 +125,7 @@ public abstract class AutofocusBase implements AutofocusPlugin {
 
    @Override
    public void saveSettings() {
-      UserProfile profile = UserProfileStaticInterface.getInstance();
+      UserProfile profile = MMStudio.getInstance().profile();
       for (int i=0; i<properties_.size(); i++) {
          profile.setString(this.getClass(),
                properties_.get(i).name, properties_.get(i).value);
@@ -132,7 +133,7 @@ public abstract class AutofocusBase implements AutofocusPlugin {
    }
 
    public void loadSettings() {
-      UserProfile profile = UserProfileStaticInterface.getInstance();
+      UserProfile profile = MMStudio.getInstance().profile();
       for (int i=0; i<properties_.size(); i++) {
          properties_.get(i).value = profile.getString(this.getClass(),
                properties_.get(i).name, properties_.get(i).value);

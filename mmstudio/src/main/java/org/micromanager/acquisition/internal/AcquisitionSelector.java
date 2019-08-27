@@ -21,7 +21,6 @@ import com.bulenkov.iconloader.IconLoader;
 import java.awt.Component;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -36,7 +35,6 @@ import javax.swing.JPopupMenu;
 import javax.swing.ListCellRenderer;
 import org.micromanager.Studio;
 import org.micromanager.internal.pluginmanagement.DefaultPluginManager;
-import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.GUIUtils;
 
 /**
@@ -60,11 +58,8 @@ public final class AcquisitionSelector {
          button.setToolTipText(plugin.getHelpText());
          button.setIcon(plugin.getIcon());
          button.setToolTipText(plugin.getHelpText());
-         button.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               plugin.showAcquisitionDialog();
-            }
+         button.addActionListener((ActionEvent e) -> {
+            plugin.showAcquisitionDialog();
          });
          return button;
       }
@@ -90,16 +85,13 @@ public final class AcquisitionSelector {
          final HashMap<String, AcquisitionDialogPlugin> plugins,
          MouseEvent event) {
       JPopupMenu menu = new JPopupMenu();
-      ArrayList<String> names = new ArrayList<String>(plugins.keySet());
+      ArrayList<String> names = new ArrayList<>(plugins.keySet());
       Collections.sort(names);
       for (final String name : names) {
          JMenuItem item = new JMenuItem(plugins.get(name).getName(),
                plugins.get(name).getIcon());
-         item.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               plugins.get(name).showAcquisitionDialog();
-            }
+         item.addActionListener((ActionEvent e) -> {
+            plugins.get(name).showAcquisitionDialog();
          });
          menu.add(item);
       }
@@ -110,9 +102,11 @@ public final class AcquisitionSelector {
     * Simple renderer for showing strings with icons.
     */
    private static class PluginRenderer extends JLabel implements ListCellRenderer {
-      public PluginRenderer() {
+      private final Studio studio_;
+      public PluginRenderer(Studio studio) {
          super();
-         setOpaque(true);
+         studio_ = studio;
+         super.setOpaque(true);
       }
       @Override
       public Component getListCellRendererComponent(JList list,
@@ -122,7 +116,8 @@ public final class AcquisitionSelector {
          setIcon(label.getIcon());
          setFont(label.getFont());
          // TODO this color is wrong in daytime mode.
-         setBackground(isSelected ? DaytimeNighttime.getInstance().getLightBackgroundColor() : DaytimeNighttime.getInstance().getBackgroundColor());
+         setBackground(isSelected ? studio_.app().skin().getLightBackgroundColor() : 
+                 studio_.app().skin().getBackgroundColor());
          return this;
       }
    }

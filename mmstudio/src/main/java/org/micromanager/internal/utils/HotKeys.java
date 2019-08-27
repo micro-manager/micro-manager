@@ -29,13 +29,13 @@ public final class HotKeys {
    // currently reading and writing at the same time, and access it only from
    // a single thread (I think), this should be safe.
    // Howvere, if this changes in the future, please synchronize this structure
-   public static final LinkedHashMap<Integer, HotKeyAction> keys_ =
+   public static final LinkedHashMap<Integer, HotKeyAction> KEYS =
            new LinkedHashMap<Integer, HotKeyAction>();
 
    // HACK HACK HACK TODO: there should be a cleaner way to disable hotkeys!
    public  static boolean active_ = true;
 
-   public void loadSettings() {
+   public void loadSettings(UserProfile profile) {
       // restore previously listed hotkeys from profile
 
       int j = 0;
@@ -43,22 +43,21 @@ public final class HotKeys {
       int type;
       int guiCommand;
       File file;
-      UserProfile profile = UserProfileStaticInterface.getInstance();
       do {
-         key = profile.getInt(HotKeys.class, KEY + j, STOP);
+         key = profile.getSettings(HotKeys.class).getInteger(KEY + j, STOP);
          if (key != STOP) {
-            type = profile.getInt(HotKeys.class, TYPE + j,
+            type = profile.getSettings(HotKeys.class).getInteger(TYPE + j,
                   HotKeyAction.GUICOMMAND);
             if (type == HotKeyAction.GUICOMMAND) {
-               guiCommand = profile.getInt(HotKeys.class, GUICOMMAND + j,
+               guiCommand = profile.getSettings(HotKeys.class).getInteger(GUICOMMAND + j,
                      HotKeyAction.SNAP);
                HotKeyAction action = new HotKeyAction(guiCommand);
-               keys_.put(key, action);
+               KEYS.put(key, action);
             }  else {
-               file = new File(profile.getString(HotKeys.class,
+               file = new File(profile.getSettings(HotKeys.class).getString(
                         FILENAME + j, ""));
                HotKeyAction action = new HotKeyAction(file);
-               keys_.put(key, action);
+               KEYS.put(key, action);
             }
          }
          j++;
@@ -66,26 +65,26 @@ public final class HotKeys {
       while (key != STOP);
    }
    
-   public void saveSettings() {
-      Iterator it = keys_.entrySet().iterator();
+   public void saveSettings(UserProfile profile) {
+      Iterator it = KEYS.entrySet().iterator();
       int i = 0;
-      UserProfile profile = UserProfileStaticInterface.getInstance();
       while (it.hasNext()) {
          Map.Entry pairs = (Map.Entry) it.next();
-         profile.setInt(HotKeys.class, KEY + i,
-               ((Integer) pairs.getKey()).intValue());
+         profile.getSettings(HotKeys.class).getInteger(KEY + i, 
+                 ((Integer) pairs.getKey()));
          HotKeyAction action = (HotKeyAction) pairs.getValue();
-         profile.setInt(HotKeys.class, TYPE + i, action.type_);
-         if (action.type_ == HotKeyAction.GUICOMMAND)
-            profile.setInt(HotKeys.class, GUICOMMAND + i, action.guiCommand_);
-         else
-            profile.setString(HotKeys.class, FILENAME + i,
+         profile.getSettings(HotKeys.class).putInteger(TYPE + i, action.type_);
+         if (action.type_ == HotKeyAction.GUICOMMAND) {
+            profile.getSettings(HotKeys.class).putInteger(GUICOMMAND + i, action.guiCommand_);
+         } else {
+           profile.getSettings(HotKeys.class).putString(FILENAME + i,
                   action.beanShellScript_.getAbsolutePath());
+         }
          i++;
       }
 
       // Add key as signal for the reader to stop reading
-      profile.setInt(HotKeys.class, KEY + i, STOP);
+      profile.getSettings(HotKeys.class).putInteger(KEY + i, STOP);
    }
 
    public static void load(File f) throws FileNotFoundException {
@@ -94,7 +93,7 @@ public final class HotKeys {
 
       DataInputStream in = new DataInputStream
               (new BufferedInputStream(new FileInputStream(f)));
-      keys_.clear();
+      KEYS.clear();
       try {
          while (in.available() > 0) {
             int key = in.readInt();
@@ -103,14 +102,14 @@ public final class HotKeys {
             if (type == HotKeyAction.GUICOMMAND) {
                int guiCommand = in.readInt();
                HotKeyAction action = new HotKeyAction(guiCommand);
-               keys_.put(key, action);
+               KEYS.put(key, action);
             }
             else {
                int strLength = in.readInt();
                for (int i=0; i < strLength; i ++)
                   filePath += in.readChar();
                HotKeyAction action = new HotKeyAction(new File(filePath));
-               keys_.put(key, action);
+               KEYS.put(key, action);
             }
          }
          in.close();
@@ -129,12 +128,12 @@ public final class HotKeys {
       DataOutputStream out = new DataOutputStream
               (new BufferedOutputStream(new FileOutputStream(f)));
 
-      Iterator it = keys_.entrySet().iterator();
+      Iterator it = KEYS.entrySet().iterator();
       int i = 0;
       while (it.hasNext()) {
          try {
             Map.Entry pairs = (Map.Entry) it.next();
-            out.writeInt(((Integer) pairs.getKey()).intValue());
+            out.writeInt(((Integer) pairs.getKey()));
             HotKeyAction action = (HotKeyAction) pairs.getValue();
             out.writeInt(action.type_);
             if (action.type_ == HotKeyAction.GUICOMMAND) {

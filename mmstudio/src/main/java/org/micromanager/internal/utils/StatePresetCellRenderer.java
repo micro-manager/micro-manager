@@ -8,6 +8,7 @@ import java.text.ParseException;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
+import org.micromanager.Studio;
 import org.micromanager.internal.ConfigGroupPad;
 
 /**
@@ -24,6 +25,12 @@ public final class StatePresetCellRenderer implements TableCellRenderer {
     // This method is called each time a cell in a column
     // using this renderer needs to be rendered.
     StateItem stateItem_;
+    private final Studio studio_;
+    
+    public StatePresetCellRenderer(Studio studio) {
+       super();
+       studio_ = studio;
+    }
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value,
@@ -55,7 +62,7 @@ public final class StatePresetCellRenderer implements TableCellRenderer {
             JLabel label = new JLabel();
             label.setOpaque(true);
             label.setFont(new Font("Arial", Font.PLAIN, 10));
-            label.setText(stateItem_.config.toString());
+            label.setText(stateItem_.config);
             label.setToolTipText(stateItem_.descr);
             label.setHorizontalAlignment(JLabel.LEFT);
             comp = label;
@@ -67,8 +74,8 @@ public final class StatePresetCellRenderer implements TableCellRenderer {
             comp.setForeground(Color.BLACK);
         } else {
             // HACK: manually set day/night colors. 
-            comp.setBackground(DaytimeNighttime.getInstance().getBackgroundColor());
-            comp.setForeground(DaytimeNighttime.getInstance().getEnabledTextColor());
+            comp.setBackground(studio_.app().skin().getBackgroundColor());
+            comp.setForeground(studio_.app().skin().getEnabledTextColor());
         }
 
         return comp;

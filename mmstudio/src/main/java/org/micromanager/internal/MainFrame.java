@@ -28,7 +28,6 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
-import java.awt.Toolkit;
 import java.awt.dnd.DropTarget;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -62,7 +61,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.acquisition.internal.AcquisitionSelector;
 import org.micromanager.alerts.internal.AlertClearedEvent;
 import org.micromanager.alerts.internal.AlertUpdatedEvent;
-import org.micromanager.alerts.internal.AlertsWindow;
+import org.micromanager.alerts.internal.DefaultAlertManager;
 import org.micromanager.alerts.internal.DefaultAlert;
 import org.micromanager.alerts.internal.NoAlertsAvailableEvent;
 import org.micromanager.events.ChannelExposureEvent;
@@ -70,12 +69,10 @@ import org.micromanager.events.ConfigGroupChangedEvent;
 import org.micromanager.events.GUIRefreshEvent;
 import org.micromanager.events.StartupCompleteEvent;
 import org.micromanager.events.internal.ChannelGroupEvent;
-import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 import org.micromanager.events.internal.ShutterDevicesEvent;
 import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.StageControlFrame;
-import org.micromanager.internal.menus.MMMenuBar;
 import org.micromanager.internal.utils.DragDropUtil;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMFrame;
@@ -126,8 +123,7 @@ public final class MainFrame extends MMFrame {
    private final Font defaultFont_ = new Font("Arial", Font.PLAIN, 10);
 
    private final CMMCore core_;
-   private final MMStudio studio_;
-   private final SnapLiveManager snapLiveManager_;
+   private final MMStudio mmStudio_;
 
    private ConfigPadButtonPanel configPadButtonPanel_;
 
@@ -136,13 +132,12 @@ public final class MainFrame extends MMFrame {
    private AbstractButton centerQuadButton_;
 
    @SuppressWarnings("LeakingThisInConstructor")
-   public MainFrame(MMStudio studio, CMMCore core, SnapLiveManager manager) {
+   public MainFrame(MMStudio mmStudio, CMMCore core) {
       super("main micro manager frame");
       org.micromanager.internal.diagnostics.ThreadExceptionLogger.setUp();
 
-      studio_ = studio;
+      mmStudio_ = mmStudio;
       core_ = core;
-      snapLiveManager_ = manager;
 
       super.setTitle(String.format("%s %s", MICRO_MANAGER_TITLE,
                MMVersion.VERSION_STRING));
@@ -160,11 +155,11 @@ public final class MainFrame extends MMFrame {
       // Add our own keyboard manager that handles Micro-Manager shortcuts
       MMKeyDispatcher mmKD = new MMKeyDispatcher();
       KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(mmKD);
-      DropTarget dropTarget = new DropTarget(this, new DragDropUtil(studio_));
+      DropTarget dropTarget = new DropTarget(this, new DragDropUtil(mmStudio_));
 
-      setExitStrategy(OptionsDlg.getShouldCloseOnExit());
+      setExitStrategy(OptionsDlg.getShouldCloseOnExit(mmStudio_));
 
-      super.setJMenuBar(MMMenuBar.createMenuBar(studio_));
+      super.setJMenuBar(mmStudio.getMMMenubar());
 
       setConfigText("");
       // Set minimum size so we can't resize smaller and hide some of our
@@ -173,7 +168,7 @@ public final class MainFrame extends MMFrame {
       super.pack();
       super.setMinimumSize(super.getSize());
       resetPosition();
-      DefaultEventManager.getInstance().registerForEvents(this);
+      mmStudio_.events().registerForEvents(this);
    }
 
    private void setupWindowHandlers() {
@@ -195,7 +190,7 @@ public final class MainFrame extends MMFrame {
          // Shut down when this window is closed.
          @Override
          public void windowClosing(WindowEvent event) {
-            studio_.closeSequence(false);
+            mmStudio_.closeSequence(false);
          }
       });
    }
@@ -207,7 +202,7 @@ public final class MainFrame extends MMFrame {
 
    public void initializeConfigPad() {
       configPad_.setCore(core_);
-      configPad_.setParentGUI(studio_);
+      configPad_.setParentGUI(mmStudio_);
       configPadButtonPanel_.setCore(core_);
    }
 
@@ -253,14 +248,14 @@ public final class MainFrame extends MMFrame {
       textFieldExp_.addFocusListener(new FocusAdapter() {
          @Override
          public void focusLost(FocusEvent fe) {
-            studio_.setExposure(getDisplayedExposureTime());
+            mmStudio_.setExposure(getDisplayedExposureTime());
          }
       });
       textFieldExp_.setFont(defaultFont_);
       textFieldExp_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            studio_.setExposure(getDisplayedExposureTime());
+            mmStudio_.setExposure(getDisplayedExposureTime());
          }
       });
       subPanel.add(textFieldExp_, "gapleft push, wrap");
@@ -286,7 +281,7 @@ public final class MainFrame extends MMFrame {
                return;
             }
             String newGroup = (String) chanGroupSelect_.getSelectedItem();
-            studio_.getAcquisitionEngine().setChannelGroup(newGroup);
+            mmStudio_.getAcquisitionEngine().setChannelGroup(newGroup);
          }
       });
       subPanel.add(chanGroupSelect_, "gapleft push, wrap");
@@ -301,7 +296,7 @@ public final class MainFrame extends MMFrame {
       comboBinning_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            studio_.changeBinning();
+            mmStudio_.changeBinning();
          }
       });
       subPanel.add(comboBinning_, "gapleft push, width 60::, wrap");
@@ -330,13 +325,13 @@ public final class MainFrame extends MMFrame {
       shutterPanel.add(shutterComboBox_, "gapleft push, width 60::, wrap");
 
       // Auto/manual shutter control.
-      autoShutterCheckBox_ = ShutterControl.makeAutoShutterCheckBox(studio_);
+      autoShutterCheckBox_ = ShutterControl.makeAutoShutterCheckBox(mmStudio_);
       shutterPanel.add(autoShutterCheckBox_, "w 72!, h 20!, split 3");
 
-      shutterIcon_ = ShutterControl.makeShutterIcon(studio_);
+      shutterIcon_ = ShutterControl.makeShutterIcon(mmStudio_);
       shutterPanel.add(shutterIcon_, "growx, alignx center");
 
-      toggleShutterButton_ = ShutterControl.makeShutterButton(studio_);
+      toggleShutterButton_ = ShutterControl.makeShutterButton(mmStudio_);
       shutterPanel.add(toggleShutterButton_, "growx, h 20!, wrap");
       subPanel.add(shutterPanel);
       return subPanel;
@@ -353,16 +348,16 @@ public final class MainFrame extends MMFrame {
          new Runnable() {
             @Override
             public void run() {
-               studio_.promptToSaveConfigPresets();
+               mmStudio_.promptToSaveConfigPresets();
             }
          });
       subPanel.add(saveConfigButton_,
             "pushy 0, gapleft push, alignx right, w 88!, h 20!");
 
-      configPad_ = new ConfigGroupPad();
+      configPad_ = new ConfigGroupPad(mmStudio_);
       configPadButtonPanel_ = new ConfigPadButtonPanel();
       configPadButtonPanel_.setConfigPad(configPad_);
-      configPadButtonPanel_.setGUI(studio_);
+      configPadButtonPanel_.setGUI(mmStudio_);
 
       configPad_.setFont(defaultFont_);
 
@@ -382,14 +377,12 @@ public final class MainFrame extends MMFrame {
    private JPanel createCommonActionButtons() {
       JPanel subPanel = new JPanel(
             new MigLayout("flowy, insets 1, gap 1"));
-      snapButton_ = (JButton) QuickAccessFactory.makeGUI(
-            studio_.plugins().getQuickAccessPlugins().get(
+      snapButton_ = (JButton) QuickAccessFactory.makeGUI(mmStudio_.plugins().getQuickAccessPlugins().get(
                "org.micromanager.quickaccess.internal.controls.SnapButton"));
       snapButton_.setFont(defaultFont_);
       subPanel.add(snapButton_, BIGBUTTON_SIZE);
 
-      liveButton_ = (JButton) QuickAccessFactory.makeGUI(
-            studio_.plugins().getQuickAccessPlugins().get(
+      liveButton_ = (JButton) QuickAccessFactory.makeGUI(mmStudio_.plugins().getQuickAccessPlugins().get(
                "org.micromanager.quickaccess.internal.controls.LiveButton"));
       liveButton_.setFont(defaultFont_);
       subPanel.add(liveButton_, BIGBUTTON_SIZE);
@@ -400,15 +393,15 @@ public final class MainFrame extends MMFrame {
             @Override
             public void run() {
                try {
-                  studio_.album().addImages(studio_.live().snap(false));
+                  mmStudio_.album().addImages(mmStudio_.live().snap(false));
                } catch (IOException ioEx) {
-                  studio_.logs().showError(ioEx);
+                  mmStudio_.logs().showError(ioEx);
                }
             }
          });
       subPanel.add(albumButton, BIGBUTTON_SIZE);
 
-      subPanel.add(AcquisitionSelector.makeSelector(studio_), BIGBUTTON_SIZE);
+      subPanel.add(AcquisitionSelector.makeSelector(mmStudio_), BIGBUTTON_SIZE);
 
       JButton refreshButton = createButton("Refresh", "arrow_refresh.png",
          "Refresh all GUI controls directly from the hardware",
@@ -416,13 +409,12 @@ public final class MainFrame extends MMFrame {
             @Override
             public void run() {
                core_.updateSystemStateCache();
-               studio_.updateGUI(true);
+               mmStudio_.updateGUI(true);
             }
          });
       subPanel.add(refreshButton, BIGBUTTON_SIZE);
 
-      JButton closeAllButton = (JButton) QuickAccessFactory.makeGUI(
-            studio_.plugins().getQuickAccessPlugins().get(
+      JButton closeAllButton = (JButton) QuickAccessFactory.makeGUI(mmStudio_.plugins().getQuickAccessPlugins().get(
                "org.micromanager.quickaccess.internal.controls.CloseAllButton"));
       closeAllButton.setFont(defaultFont_);
       // HACK: Windows will helpfully replace "All" with "..." unless we do
@@ -441,7 +433,7 @@ public final class MainFrame extends MMFrame {
             new Runnable() {
                @Override
                public void run() {
-                  AlertsWindow.show(studio_);
+                  ((DefaultAlertManager) mmStudio_.alerts()).alertsWindow().showWithoutFocus();
                }
             });
       alertButton_.setVisible(false);
@@ -511,7 +503,7 @@ public final class MainFrame extends MMFrame {
                new Color(200, 200, 200)));
       profileName_ = new JLabel();
       profileName_.setFont(defaultFont_);
-      profileName_.setText("Profile: " + studio_.profile().getProfileName());
+      profileName_.setText("Profile: " + mmStudio_.profile().getProfileName());
       subPanel.add(profileName_, "alignx left");
       configFile_ = new JLabel();
       configFile_.setFont(defaultFont_);
@@ -534,7 +526,7 @@ public final class MainFrame extends MMFrame {
          new Runnable() {
             @Override
             public void run() {
-               studio_.setROI();
+               mmStudio_.setROI();
             }
          });
       roiPanel.add(setRoiButton_, SMALLBUTTON_SIZE);
@@ -543,7 +535,7 @@ public final class MainFrame extends MMFrame {
          new Runnable() {
             @Override
             public void run() {
-               studio_.setCenterQuad();
+               mmStudio_.setCenterQuad();
             }
          });
       roiPanel.add(centerQuadButton_, SMALLBUTTON_SIZE);
@@ -553,7 +545,7 @@ public final class MainFrame extends MMFrame {
          new Runnable() {
             @Override
             public void run() {
-               studio_.clearROI();
+               mmStudio_.clearROI();
             }
          });
       roiPanel.add(clearRoiButton_, SMALLBUTTON_SIZE);
@@ -588,7 +580,7 @@ public final class MainFrame extends MMFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                boolean isSelected = handMovesButton_.isSelected();
-               studio_.updateCenterAndDragListener(isSelected);
+               mmStudio_.updateCenterAndDragListener(isSelected);
                String path = isSelected ? "move_hand_on.png" : "move_hand.png";
                handMovesButton_.setIcon(IconLoader.getIcon(
                      "/org/micromanager/icons/" + path));
@@ -601,7 +593,7 @@ public final class MainFrame extends MMFrame {
             new Runnable() {
                @Override
                public void run() {
-                  studio_.app().showPositionList();
+                  mmStudio_.app().showPositionList();
                }
             });
       stagePanel.add(listButton, SMALLBUTTON_SIZE);
@@ -619,7 +611,7 @@ public final class MainFrame extends MMFrame {
          new Runnable() {
             @Override
             public void run() {
-               studio_.autofocusNow();
+               mmStudio_.autofocusNow();
             }
          });
       autoPanel.add(autofocusNowButton_, SMALLBUTTON_SIZE);
@@ -631,7 +623,7 @@ public final class MainFrame extends MMFrame {
          new Runnable() {
             @Override
             public void run() {
-               studio_.showAutofocusDialog();
+               mmStudio_.showAutofocusDialog();
             }
          });
       autoPanel.add(autofocusConfigureButton_, SMALLBUTTON_SIZE);
@@ -640,8 +632,9 @@ public final class MainFrame extends MMFrame {
       return subPanel;
    }
 
-   public void setConfigText(String configFile) {
+   public void setConfigText(String inputConfigFileName) {
       // Recognize and specially treat empty config files.
+      String configFile = inputConfigFileName;
       if (configFile == null || configFile.equals("")) {
          configFile = "(none)";
       }
@@ -675,7 +668,7 @@ public final class MainFrame extends MMFrame {
             return;
          }
          toggleShutterButton_.requestFocusInWindow();
-         studio_.shutter().setShutter(!studio_.shutter().getShutter());
+         mmStudio_.shutter().setShutter(!mmStudio_.shutter().getShutter());
       } catch (Exception e1) {
          ReportingUtils.showError(e1);
       }
@@ -687,7 +680,7 @@ public final class MainFrame extends MMFrame {
    }
 
    private void refreshShutterGUI() {
-      List<String> devices = studio_.shutter().getShutterDevices();
+      List<String> devices = mmStudio_.shutter().getShutterDevices();
       if (devices == null) {
          // No shutter devices available yet.
          return;
@@ -696,7 +689,7 @@ public final class MainFrame extends MMFrame {
       GUIUtils.replaceComboContents(shutterComboBox_, items);
       String activeShutter = null;
       try {
-         activeShutter = studio_.shutter().getCurrentShutter();
+         activeShutter = mmStudio_.shutter().getCurrentShutter();
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Error getting shutter device");
@@ -743,7 +736,7 @@ public final class MainFrame extends MMFrame {
    private void refreshChannelGroup() {
       shouldChangeChannelGroup_ = false;
       chanGroupSelect_.removeAllItems();
-      for (String group : studio_.getAcquisitionEngine().getAvailableGroups()) {
+      for (String group : mmStudio_.getAcquisitionEngine().getAvailableGroups()) {
          chanGroupSelect_.addItem(group);
       }
       chanGroupSelect_.setSelectedItem(core_.getChannelGroup());
@@ -846,7 +839,7 @@ public final class MainFrame extends MMFrame {
     */
    public void savePrefs() {
       this.savePosition();
-      studio_.profile().getSettings(MainFrame.class).putString(
+      mmStudio_.profile().getSettings(MainFrame.class).putString(
             MAIN_EXPOSURE, textFieldExp_.getText());
    }
 

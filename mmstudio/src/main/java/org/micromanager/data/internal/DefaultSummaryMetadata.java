@@ -35,7 +35,6 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.SummaryMetadata;
 import static org.micromanager.data.internal.PropertyKey.*;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.utils.UserProfileStaticInterface;
 
 public final class DefaultSummaryMetadata implements SummaryMetadata {
    /**
@@ -51,7 +50,7 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
 
    // TODO This shouldn't live here. Move to DataManager.
    public static SummaryMetadata getStandardSummaryMetadata() {
-      UserProfile profile = UserProfileStaticInterface.getInstance();
+      UserProfile profile = MMStudio.getInstance().profile();
 
       Builder b = new Builder().
             userName(System.getProperty("user.name")).

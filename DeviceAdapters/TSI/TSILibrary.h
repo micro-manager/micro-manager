@@ -58,6 +58,7 @@ static const char* g_TemperatureSetPoint = "TemperatureSetPointC";
 static const char* g_EEP = "EEP";
 static const char* g_HotPixThreshold = "HotPixelThreshold";
 static const char* g_HotPix = "HotPixel";
+static const char* g_PolarImageType = "ImageType";
 
 
 static const char* g_Set = "SetNow";
@@ -70,7 +71,13 @@ static const char* g_HardwareEdge = "HardwareStandard";
 static const char* g_HardwareDuration = "HardwareBulb";
 static const char* g_Positive = "Positive";
 static const char* g_Negative = "Negative";
-
+static const char* g_PixelType_32bitRGB = "RGBA32";
+static const char* g_PixelType_64bitRGB = "RGBA64";
+static const char* g_PolarImageType_Raw = "Raw";
+static const char* g_PolarImageType_Intensity = "Intensity";
+static const char* g_PolarImageType_Azimuth = "Azimuth";
+static const char* g_PolarImageType_DoLP = "DoLP";
+static const char* g_PolarImageType_Quad = "Quad";
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
@@ -88,6 +95,7 @@ static const char* g_Negative = "Negative";
 #define ERR_TEMPERATURE_FAILED            16020
 #define ERR_EEP_FAILED                    16021
 #define ERR_HOT_PIXEL_FAILED              16022
+#define ERR_UNSUPPORTED_SENSOR			  16023
 
 //////////////////////////////////////////////////////////////////////////////
 // Region of Interest
@@ -108,6 +116,7 @@ struct ROI {
 
 bool isTsiSDKAvailable();
 bool isTsiSDK3Available();
+std::string getSDKPath();
 
 
 

@@ -528,7 +528,7 @@ int CScanner::Initialize()
    } // adding SPIM properties
 
    // add ring buffer properties if supported (starting 2.81)
-   if ((FirmwareVersionAtLeast(2.81)) && (build.vAxesProps[0] & BIT1))
+   if (FirmwareVersionAtLeast(2.81) && (build.vAxesProps[0] & BIT1))
    {
       ring_buffer_supported_ = true;
 
@@ -559,7 +559,7 @@ int CScanner::Initialize()
    }
 
    // add FAST_CIRCLES properties if MULTIAXIS_FUNCTION is supported
-   if (build.vAxesProps[0] & BIT5)
+   if (FirmwareVersionAtLeast(3.23) && (build.vAxesProps[0] & BIT3))
    {
       mmFastCircles_ = true;
 

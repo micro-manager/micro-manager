@@ -274,3 +274,119 @@ int Tsi3Cam::OnHotPixThreshold( MM::PropertyBase* pProp, MM::ActionType eAct )
    }
    return DEVICE_OK;
 }
+
+int Tsi3Cam::OnWhiteBalance(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::AfterSet)
+   {
+      string val;
+      pProp->Get(val);
+      if (val.compare(g_Off) == 0)
+      {
+         ClearWhiteBalance();
+      }
+      else if (val.compare(g_On) == 0)
+      {
+         if (!whiteBalance)
+            return SetWhiteBalance();
+      }
+      else if (val.compare(g_Set) == 0)
+      {
+         return SetWhiteBalance();
+      }
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      if (whiteBalance)
+         pProp->Set(g_On);
+      else
+         pProp->Set(g_Off);
+   }
+   return DEVICE_OK;
+}
+
+int Tsi3Cam::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::AfterSet)
+	{
+      if(IsCapturing())
+         return DEVICE_CAMERA_BUSY_ACQUIRING;
+
+      string pixelType;
+      pProp->Get(pixelType);
+      if ( pixelType.compare(g_PixelType_32bitRGB) == 0)
+      {
+         pixelSize = 4;
+         bitDepth = 8;
+      }
+      else if ( pixelType.compare(g_PixelType_64bitRGB) == 0)
+      {
+			pixelSize = 8;
+         bitDepth = 12;
+		}
+		return ResizeImageBuffer();
+	}
+	else if (eAct == MM::BeforeGet)
+	{
+		if (pixelSize == 4)
+			pProp->Set(g_PixelType_32bitRGB);
+		else if(pixelSize == 8)
+			pProp->Set(g_PixelType_64bitRGB);
+		else
+			assert(!"Unsupported pixel type");
+
+	}
+	return DEVICE_OK;
+}
+
+int Tsi3Cam::OnPolarImageType(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::AfterSet)
+	{
+      if(IsCapturing())
+         return DEVICE_CAMERA_BUSY_ACQUIRING;
+
+      string polarType;
+      pProp->Get(polarType);
+      if (polarType.compare(g_PolarImageType_Intensity) == 0)
+      {
+         polarImageType = Intensity;
+      }
+      else if (polarType.compare(g_PolarImageType_Raw) == 0)
+      {
+			polarImageType = Raw;
+		}
+      else if (polarType.compare(g_PolarImageType_Azimuth) == 0)
+      {
+			polarImageType = Azimuth;
+		}
+      else if (polarType.compare(g_PolarImageType_DoLP) == 0)
+      {
+			polarImageType = DoLP;
+		}
+		else if (polarType.compare(g_PolarImageType_Quad) == 0)
+      {
+			polarImageType = Quad;
+		}
+		else
+			assert(!"Unsupported pixel type");
+		return ResizeImageBuffer();
+	}
+	else if (eAct == MM::BeforeGet)
+	{
+		if (polarImageType == Intensity)
+			pProp->Set(g_PolarImageType_Intensity);
+		else if(polarImageType == Raw)
+			pProp->Set(g_PolarImageType_Raw);
+		else if(polarImageType == Azimuth)
+			pProp->Set(g_PolarImageType_Azimuth);
+		else if(polarImageType == Raw)
+			pProp->Set(g_PolarImageType_DoLP);
+		else if(polarImageType == Quad)
+			pProp->Set(g_PolarImageType_Quad);
+		else
+			assert(!"Unsupported pixel type");
+
+	}
+	return DEVICE_OK;
+}

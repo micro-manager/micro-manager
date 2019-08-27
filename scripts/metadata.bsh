@@ -1,0 +1,16 @@
+// This script gives you access to the metadata of the currently
+// displayed image 
+
+import org.micromanager.data.Coords;
+import org.micromanager.data.Image;
+import org.micromanager.data.Datastore;
+import org.micromanager.display.DisplayViewer;
+
+import mmcorej.TaggedImage;
+
+dv = mm.displays().getActiveDataViewer();
+dp = dv.getDataProvider();
+img = dp.getAnyImage();
+md = img.getMetadata();
+posName = md.getPositionName("..");
+mm.scripter().message(posName);

@@ -58,6 +58,7 @@ const char* g_Format7Mode              = "Format-7 Mode";
 const char* g_InternalTrigger          = "Internal";
 const char* g_ExternalTrigger          = "External";
 const char* g_SoftwareTrigger          = "Software";
+const char* g_CameraTime               = "CameraTime";
 
 /////////////////////////////////////////////////////
 
@@ -1229,6 +1230,7 @@ int PointGrey::StopSequenceAcquisition()
    {
       return ret;
    }
+   sequenceStartTime_ = GetCurrentMMTime();
    error = cam_.StartCapture(); // so that SnapImage will work
    return GetCoreCallback()->AcqFinished(this, ret);                                                      
 } 
@@ -1247,7 +1249,6 @@ int PointGrey::StartSequenceAcquisition(long numImages, double /* interval_ms */
    stopOnOverflow_ = stopOnOverflow;
    imageCounter_ = 0;
    desiredNumImages_ = numImages;
-   sequenceStartTime_ = MM::MMTime(0);
 
 	if (IsCapturing())
 		return DEVICE_CAMERA_BUSY_ACQUIRING;
@@ -1273,7 +1274,8 @@ int PointGrey::StartSequenceAcquisition(long numImages, double /* interval_ms */
 	ret = GetCoreCallback()->PrepareForAcq(this);
 	if (ret != DEVICE_OK)
 		return ret;
-
+   
+   sequenceStartTime_ = GetCurrentMMTime();
    error = cam_.StartCapture( PGCallback, this);
    if (error != PGRERROR_OK)
    {
@@ -1303,27 +1305,25 @@ int PointGrey::InsertImage(Image* pImg)
       // StopSequence after the lock is released
    }
 
+   // Note, we can not use the camera's time stamp, to calculate elapsed time, since
+   // we can not set a variable from this function (which is const)
    TimeStamp ts = pImg->GetTimeStamp();
 	MM::MMTime timeStamp = MM::MMTime( (long) ts.seconds, (long) ts.microSeconds);
    char label[MM::MaxStrLength];
 	this->GetLabel(label);
-   // TODO: we want to set the sequenceStartTimeStamp_ here but can not do so 
-   // since we are const
-   // if (imageCounter_ == 0) {
-   //    sequenceStartTimeStamp_ = timeStamp;
-   // }
+
 
 	// Important:  metadata about the image are generated here:
 	Metadata md;
 	md.put(MM::g_Keyword_Metadata_StartTime, CDeviceUtils::ConvertToString(sequenceStartTime_.getMsec()));
-	md.put(MM::g_Keyword_Elapsed_Time_ms, CDeviceUtils::ConvertToString((timeStamp).getMsec()));
+	md.put(MM::g_Keyword_Elapsed_Time_ms, CDeviceUtils::ConvertToString((GetCurrentMMTime() - sequenceStartTime_).getMsec()));
+   md.put(g_CameraTime, CDeviceUtils::ConvertToString(timeStamp.getMsec()));
 	md.put(MM::g_Keyword_Metadata_ImageNumber, CDeviceUtils::ConvertToString(imageCounter_));
    md.put("FrameCounter", frameCounter); // framecounter is always 0 for me
 	//md.put(MM::g_Keyword_Metadata_ROI_X, CDeviceUtils::ConvertToString( (long) roiX_)); 
 	//md.put(MM::g_Keyword_Metadata_ROI_Y, CDeviceUtils::ConvertToString( (long) roiY_)); 
 	
-   // TODO: we want to increment the image counter but can not do so since we are const
-	// imageCounter_++;
+	imageCounter_++;
 
 	char buf[MM::MaxStrLength];
 	GetProperty(MM::g_Keyword_Binning, buf);

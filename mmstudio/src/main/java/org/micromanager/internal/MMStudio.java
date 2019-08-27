@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -84,6 +85,7 @@ import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 import org.micromanager.internal.diagnostics.EDTHangLogger;
+import org.micromanager.internal.diagnostics.ThreadExceptionLogger;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.dialogs.CalibrationListDlg;
 import org.micromanager.internal.dialogs.IJVersionCheckDlg;
@@ -101,7 +103,7 @@ import org.micromanager.internal.propertymap.DefaultPropertyMap;
 import org.micromanager.internal.script.ScriptPanel;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.DefaultAutofocusManager;
-import org.micromanager.internal.utils.UserProfileStaticInterface;
+import org.micromanager.internal.utils.UserProfileManager;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -138,6 +140,9 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private PropertyEditor propertyBrowser_;
    private CalibrationListDlg calibrationListDlg_;
    private AcqControlDlg acqControlWin_;
+   
+   
+   // Managers
    private AcquisitionManager acquisitionManager_;
    private DataManager dataManager_;
    private DisplayManager displayManager_;
@@ -145,10 +150,17 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private SnapLiveManager snapLiveManager_;
    private DefaultAutofocusManager afMgr_;
    private String sysConfigFile_;
-
+   private ShutterManager shutterManager_;
+   private Album albumInstance_;
+   private DefaultQuickAccessManager quickAccess_;
+   private DefaultAlertManager alertManager_;
+   private DefaultEventManager eventManager_;
+   private ApplicationSkin daytimeNighttimeManager_;
+   private UserProfileManager userProfileManager_;
+   
    // MMcore
    private CMMCore core_;
-   private AcquisitionWrapperEngine engine_;
+   private AcquisitionWrapperEngine acqEngine_;
    private PositionList posList_;
    private PositionListDlg posListDlg_;
    private boolean isProgramRunning_;
@@ -160,7 +172,10 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private org.micromanager.internal.utils.HotKeys hotKeys_;
 
    // Our instance
+   // TODO: make this non-static
    private static MMStudio studio_;
+   // Our menubar
+   private MMMenuBar mmMenuBar_;
    // Our primary window.
    private static MainFrame frame_;
    // Callback
@@ -204,6 +219,18 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
     */
    @SuppressWarnings("LeakingThisInConstructor")
    public MMStudio(boolean startAsImageJPlugin) {
+       this(startAsImageJPlugin, null);
+   }
+   
+   /**
+    * MMStudio constructor
+    * @param startAsImageJPlugin Indicates if we're running from "within"
+    * ImageJ, which governs our behavior when we are closed.
+    * @param profileNameAutoStart The name of a user profile. This profile and
+    * its most recently used hardware configuration will be to automatically loaded. 
+    */
+   @SuppressWarnings("LeakingThisInConstructor")
+   public MMStudio(boolean startAsImageJPlugin, String profileNameAutoStart) {
       wasStartedAsImageJPlugin_ = startAsImageJPlugin;
 
       // TODO Of course it is crazy to do all of the following in the
@@ -216,6 +243,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // preventing subsequent instantiation. This is not ideal but
       // intentional, because we do not currently have a way to cleanly exit a
       // partial initialization.
+      
       // TODO Management of the singleton instance has not been done in a clean
       // manner. In fact, there should be an API method to instantiate Studio,
       // rather than calling the constructor directly.
@@ -225,7 +253,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       studio_ = this;
       isProgramRunning_ = true;
 
-      org.micromanager.internal.diagnostics.ThreadExceptionLogger.setUp();
+      ThreadExceptionLogger.setUp();
 
       // The Core is created as early as possible, so that we can make use of
       // the CoreLog (and also to fail early if the MMCoreJ is not available)
@@ -235,19 +263,71 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          ReportingUtils.showError(ex, 
                "Failed to load the MMCoreJ_wrap native library");
       }
-
-      initializeLogging(core_);
-
-      // We need to be subscribed to the global event bus for plugin loading
-      DefaultEventManager.getInstance().registerForEvents(this);
-
+      
+      // Start up multiple managers.  
+      
+      userProfileManager_ = new UserProfileManager();       
+      
+      // Essential GUI settings in preparation of the intro dialog
+      daytimeNighttimeManager_ = DaytimeNighttime.create(studio_);
+      
       // Start loading plugins in the background
+      // Note: plugin constructors should not expect a fully constructed Studio!
       pluginManager_ = new DefaultPluginManager(studio_);
+      
+      // Lots of places use this. instantiate it first.
+      eventManager_ = new DefaultEventManager();
+      
+      snapLiveManager_ = new SnapLiveManager(this, core_);
+      events().registerForEvents(snapLiveManager_);
+
+      shutterManager_ = new DefaultShutterManager(studio_);
+      albumInstance_ = new DefaultAlbum(studio_);
+
+      // The tools menu depends on the Quick-Access Manager.
+      quickAccess_ = new DefaultQuickAccessManager(studio_);    
+
+      acqEngine_ = new AcquisitionWrapperEngine();
+      acqEngine_.setParentGUI(this);
+      acqEngine_.setZStageDevice(core_.getFocusDevice());
+
+      
+      // DisplayManager needs to be created before Pipelineframe
+      displayManager_ = new DefaultDisplayManager(this);
+      
+      // Load, but do not show, image pipeline panel.
+      // Note: pipelineFrame is used in the dataManager, however, pipelineFrame 
+      // needs the dataManager.  Let's hope for the best....
+      dataManager_ = new DefaultDataManager(studio_);
+      createPipelineFrame();
+
+      alertManager_ = new DefaultAlertManager(studio_);
+      
+      afMgr_ = new DefaultAutofocusManager(studio_);
+      afMgr_.refresh();
+      String afDevice = profile().getString(MMStudio.class, AUTOFOCUS_DEVICE, "");
+      if (afMgr_.hasDevice(afDevice)) {
+         afMgr_.setAutofocusMethodByName(afDevice);
+      }
+
+      posList_ = new PositionList();
+      acqEngine_.setPositionList(posList_);
+
+      // Load (but do no show) the scriptPanel
+      createScriptPanel();
+      scriptPanel_.getScriptsFromPrefs();
+      
+      // Tell Core to start logging
+      initializeLogging(core_);
+      
+      // We need to be subscribed to the global event bus for plugin loading
+      events().registerForEvents(this);
+
       // Start loading acqEngine in the background
       prepAcquisitionEngine();
 
-      RegistrationDlg.showIfNecessary();
-
+      RegistrationDlg.showIfNecessary(this);
+      
       // We wait for plugin loading to finish now, since IntroPlugins may be
       // needed to display the intro dialog. Fortunately, plugin loading is
       // fast in 2.0 (it used to be very slow in 1.4, so we loaded plugins in
@@ -268,22 +348,33 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          ReportingUtils.logMessage("Finished waiting for plugins to load");
       }
 
-      // Essential GUI settings in preparation of the intro dialog
-      DaytimeNighttime.getInstance().loadStoredSkin();
-
       ToolTipManager ttManager = ToolTipManager.sharedInstance();
       ttManager.setDismissDelay(TOOLTIP_DISPLAY_DURATION_MILLISECONDS);
       ttManager.setInitialDelay(TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS);
 
 
-      UserProfileAdmin profileAdmin = UserProfileStaticInterface.getAdmin();
+      UserProfileAdmin profileAdmin = userProfileManager_.getAdmin();
       UUID profileUUID = profileAdmin.getUUIDOfDefaultProfile();
       try {
-         if (StartupSettings.create(profileAdmin.getNonSavingProfile(profileUUID)).
+          if (profileNameAutoStart != null) {
+            for (Map.Entry<UUID,String> entry : profileAdmin.getProfileUUIDsAndNames().entrySet()){
+                String name = entry.getValue();
+                if (name.equals(profileNameAutoStart)){
+                    UserProfile profile = profileAdmin.getNonSavingProfile(entry.getKey());
+                    profileAdmin.setCurrentUserProfile(entry.getKey());
+                    sysConfigFile_ = HardwareConfigurationManager.getRecentlyUsedConfigFilesFromProfile(profile).get(0);
+                    break;
+                }
+            }
+            if (sysConfigFile_ == null) {
+                ReportingUtils.showMessage("A hardware configuration for a profile matching name: " + profileNameAutoStart + " could not be found");
+            }
+          }
+          else if (StartupSettings.create(profileAdmin.getNonSavingProfile(profileUUID)).
                shouldSkipUserInteractionWithSplashScreen()) {
             List<String> recentConfigs = HardwareConfigurationManager.
                   getRecentlyUsedConfigFilesFromProfile(
-                        UserProfileStaticInterface.getInstance());
+                        profile());
             sysConfigFile_ = recentConfigs.isEmpty() ? null : recentConfigs.get(0);
          }
          else {
@@ -305,14 +396,14 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
 
       // Profile may have been switched in Intro Dialog, so reflect its setting
-      core_.enableDebugLog(OptionsDlg.getIsDebugLogEnabled());
+      core_.enableDebugLog(OptionsDlg.getIsDebugLogEnabled(studio_));
 
-      IJVersionCheckDlg.execute();
+      IJVersionCheckDlg.execute(studio_);
 
       org.micromanager.internal.diagnostics.gui.ProblemReportController.startIfInterruptedOnExit();
 
       // This entity is a class property to avoid garbage collection.
-      coreCallback_ = new CoreEventCallback(core_, engine_);
+      coreCallback_ = new CoreEventCallback(studio_, acqEngine_);
 
       // Load hardware configuration
       // Note that this also initializes Autofocus plugins.
@@ -325,6 +416,14 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
             ReportingUtils.showErrorOn(false);
          }
       }
+      
+      // Create Multi-D window here but do not show it.
+      // This window needs to be created in order to properly set the 
+      // "ChannelGroup" based on the Multi-D parameters
+      acqControlWin_ = new AcqControlDlg(acqEngine_, studio_);
+
+      acquisitionManager_ = new DefaultAcquisitionManager(this, acqEngine_,
+            acqControlWin_);
 
       try {
          core_.setCircularBufferMemoryFootprint(getCircularBufferSize());
@@ -348,11 +447,11 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          }
       }
 
-      initializeVariousManagers();
 
       // Now create and show the main window
-      frame_ = new MainFrame(this, core_, snapLiveManager_);
-      staticInfo_ = new StaticInfo(core_, frame_);
+      mmMenuBar_ = MMMenuBar.createMenuBar(studio_);
+      frame_ = new MainFrame(this, core_);
+      staticInfo_ = new StaticInfo(studio_, frame_);
       frame_.toFront();
       frame_.setVisible(true);
       ReportingUtils.SetContainingFrame(frame_);
@@ -360,7 +459,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
       // We wait until after showing the main window to enable hot keys
       hotKeys_ = new org.micromanager.internal.utils.HotKeys();
-      hotKeys_.loadSettings();
+      hotKeys_.loadSettings(userProfileManager_.getProfile());
       // zWheelListener_ = new ZWheelListener(core_, studio_);
       // getEventManager().registerForEvents(zWheelListener_);
       // TODO snapLiveManager_.addLiveModeListener(zWheelListener_);
@@ -369,7 +468,9 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
       // Switch error reporting back on TODO See above where it's turned off
       ReportingUtils.showErrorOn(true);
-
+      
+      events().registerForEvents(displayManager_);
+      
       // Tell the GUI to reflect the hardware configuration. (The config was
       // loaded before creating the GUI, so we need to reissue the event.)
       events().post(new SystemConfigurationLoadedEvent());
@@ -377,14 +478,14 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       executeStartupScript();
 
       updateGUI(true);
-
+      
       // Give plugins a chance to initialize their state
       events().post(new StartupCompleteEvent());
    }
 
    private void initializeLogging(CMMCore core) {
       core.enableStderrLog(true);
-      core.enableDebugLog(OptionsDlg.getIsDebugLogEnabled());
+      core.enableDebugLog(OptionsDlg.getIsDebugLogEnabled(studio_));
       ReportingUtils.setCore(core);
 
       // Set up logging to CoreLog file
@@ -407,55 +508,9 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // Although our general rule is to perform identical logging regardless
       // of the current log level, we make an exception for UIMonitor, which we
       // enable only when debug logging is turned on (from the GUI).
-      UIMonitor.enable(OptionsDlg.getIsDebugLogEnabled());
+      UIMonitor.enable(OptionsDlg.getIsDebugLogEnabled(studio_));
    }
-
-   private void initializeVariousManagers() {
-      // The UiMovesStageManager manages itself; don't need to retain a
-      // reference to it.
-      // new UiMovesStageManager(this, core_);
-
-      snapLiveManager_ = new SnapLiveManager(this, core_);
-      events().registerForEvents(snapLiveManager_);
-
-      DefaultShutterManager.instantiate(studio_);
-
-      // The tools menu depends on the Quick-Access Manager.
-      DefaultQuickAccessManager.createManager(studio_);
-
-      engine_ = new AcquisitionWrapperEngine();
-      engine_.setParentGUI(this);
-      engine_.setZStageDevice(core_.getFocusDevice());
-
-      dataManager_ = new DefaultDataManager();
-      displayManager_ = new DefaultDisplayManager(this);
-
-      afMgr_ = new DefaultAutofocusManager(studio_);
-      afMgr_.refresh();
-      String afDevice = profile().getString(MMStudio.class, AUTOFOCUS_DEVICE, "");
-      if (afMgr_.hasDevice(afDevice)) {
-         afMgr_.setAutofocusMethodByName(afDevice);
-      }
-
-      posList_ = new PositionList();
-      engine_.setPositionList(posList_);
-
-      // Load (but do no show) the scriptPanel
-      createScriptPanel();
-      scriptPanel_.getScriptsFromPrefs();
-
-      // Ditto with the image pipeline panel.
-      createPipelineFrame();
-
-      // Create Multi-D window here but do not show it.
-      // This window needs to be created in order to properly set the 
-      // "ChannelGroup" based on the Multi-D parameters
-      acqControlWin_ = new AcqControlDlg(engine_, studio_);
-
-      acquisitionManager_ = new DefaultAcquisitionManager(this, engine_,
-            acqControlWin_);
-   }
-
+  
    public void showPipelineFrame() {
       pipelineFrame_.setVisible(true);
    }
@@ -703,7 +758,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    /**
     * Returns singleton instance of MMStudio
     * @return singleton instance of MMStudio
-    */
+   */
    public static MMStudio getInstance() {
       return studio_;
    }
@@ -719,6 +774,10 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    @Override
    public JFrame getMainWindow() {
       return frame_;
+   }
+   
+   public MMMenuBar getMMMenubar() {
+      return mmMenuBar_;
    }
 
    public void promptToSaveConfigPresets() {
@@ -858,7 +917,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       isClickToMoveEnabled_ = isEnabled;
       if (isEnabled) {
          IJ.setTool(Toolbar.HAND);
-         MMMenuBar.getToolsMenu().setMouseMovesStage(isEnabled);
+         mmMenuBar_.getToolsMenu().setMouseMovesStage(isEnabled);
       }
       events().post(new MouseMovesStageStateChangeEvent(isEnabled));
    }
@@ -958,8 +1017,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       try {
          if (staticInfo_ != null) {
             staticInfo_.refreshValues();
-            if (engine_ != null) {
-               engine_.setZStageDevice(StaticInfo.zStageLabel_);  
+            if (acqEngine_ != null) {
+               acqEngine_.setZStageDevice(StaticInfo.zStageLabel_);  
             }
          }
 
@@ -1101,8 +1160,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          afMgr_.closeOptionsDialog();
       }
       
-      if (engine_ != null) {
-         engine_.shutdown();
+      if (acqEngine_ != null) {
+         acqEngine_.shutdown();
       }
 
       synchronized (shutdownLock_) {
@@ -1166,14 +1225,14 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       saveSettings();
       try {
          frame_.getConfigPad().saveSettings();
-         hotKeys_.saveSettings();
+         hotKeys_.saveSettings(userProfileManager_.getProfile());
       } catch (NullPointerException e) {
          if (core_ != null) {
             ReportingUtils.logError(e);
          }
       }
       try {
-         UserProfileStaticInterface.shutdown();
+         userProfileManager_.shutdown();
       }
       catch (InterruptedException notExpected) {
          Thread.currentThread().interrupt();
@@ -1185,14 +1244,14 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
 
       try {
-         ((DefaultUserProfile) UserProfileStaticInterface.getInstance()).close();
+         ((DefaultUserProfile) profile()).close();
       }
       catch (InterruptedException notUsedByUs) {
          Thread.currentThread().interrupt();
       }
-      UserProfileStaticInterface.getAdmin().shutdownAutosaves();
+      userProfileManager_.getAdmin().shutdownAutosaves();
 
-      boolean shouldCloseWholeApp = OptionsDlg.getShouldCloseOnExit();
+      boolean shouldCloseWholeApp = OptionsDlg.getShouldCloseOnExit(studio_);
       if (shouldCloseWholeApp && !quitInitiatedByImageJ) {
          if (wasStartedAsImageJPlugin_) {
             // Let ImageJ do the quitting
@@ -1261,23 +1320,24 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
 
       try {
-         if (sysConfigFile_.length() > 0) {
+         if (sysConfigFile_ != null && sysConfigFile_.length() > 0) {
             GUIUtils.preventDisplayAdapterChangeExceptions();
             core_.waitForSystem();
             coreCallback_.setIgnoring(true);
             HardwareConfigurationManager.
-                  create(UserProfileStaticInterface.getInstance(), core_).
+                  create(profile(), core_).
                   loadHardwareConfiguration(sysConfigFile_);
             coreCallback_.setIgnoring(false);
             GUIUtils.preventDisplayAdapterChangeExceptions();
             events().post(new AutofocusPluginShouldInitializeEvent());
+            FileDialogs.storePath(FileDialogs.MM_CONFIG_FILE, new File(sysConfigFile_));
          }
       } catch (final Exception err) {
          GUIUtils.preventDisplayAdapterChangeExceptions();
 
          waitDlg.closeDialog(); // Prevent from obscuring error alert
          ReportingUtils.showError(err,
-               "Failed to load hardware configuation",
+               "Failed to load hardware configuration",
                null);
          result = false;
       } finally {
@@ -1290,15 +1350,13 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
       initializeGUI();
 
-      FileDialogs.storePath(FileDialogs.MM_CONFIG_FILE, new File(sysConfigFile_));
-
       return result;
    }
 
    public void openAcqControlDialog() {
       try {
          if (acqControlWin_ == null) {
-            acqControlWin_ = new AcqControlDlg(engine_, studio_);
+            acqControlWin_ = new AcqControlDlg(acqEngine_, studio_);
          }
          if (acqControlWin_.isActive()) {
             acqControlWin_.setTopPosition();
@@ -1455,8 +1513,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
             if (posListDlg_ != null) {
                posListDlg_.setPositionList(posList_);
             }
-            if (engine_ != null) {
-               engine_.setPositionList(posList_);
+            if (acqEngine_ != null) {
+               acqEngine_.setPositionList(posList_);
             }
             if (acqControlWin_ != null) {
                acqControlWin_.updateGUIContents();
@@ -1481,7 +1539,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    }
 
    public AcquisitionWrapperEngine getAcquisitionEngine() {
-      return engine_;
+      return acqEngine_;
    }
 
    public CMMCore getCore() {
@@ -1525,7 +1583,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    }
 
    public void setAcquisitionEngine(AcquisitionWrapperEngine eng) {
-      engine_ = eng;
+      acqEngine_ = eng;
    }
 
    @Override
@@ -1558,11 +1616,15 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    @Override
    public UserProfile profile() {
-      return UserProfileStaticInterface.getInstance();
+      return userProfileManager_.getProfile();
    }
    @Override
    public UserProfile getUserProfile() {
       return profile();
+   }
+   
+   public UserProfileAdmin profileAdmin() {
+       return userProfileManager_.getAdmin();
    }
 
    @Override
@@ -1607,7 +1669,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    @Override
    public Album album() {
-      return DefaultAlbum.getInstance();
+      return albumInstance_;
    }
 
    @Override
@@ -1617,7 +1679,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    @Override
    public EventManager events() {
-      return DefaultEventManager.getInstance();
+      return eventManager_;
    }
 
    @Override
@@ -1637,7 +1699,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    @Override
    public QuickAccessManager quickAccess() {
-      return DefaultQuickAccessManager.getInstance();
+      return quickAccess_;
    }
 
    @Override
@@ -1647,7 +1709,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    @Override
    public ShutterManager shutter() {
-      return DefaultShutterManager.getInstance();
+      return shutterManager_;
    }
 
    @Override
@@ -1687,7 +1749,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    @Override
    public ApplicationSkin skin() {
-      return DaytimeNighttime.getInstance();
+      return daytimeNighttimeManager_;
    }
 
    @Override
@@ -1697,7 +1759,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    @Override
    public AlertManager alerts() {
-      return DefaultAlertManager.getInstance();
+      return alertManager_;
    }
 
    @Override
@@ -1708,7 +1770,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    @Override
    public AffineTransform getCameraTransform(String config) {
       // Try the modern way first
-      Double[] params = UserProfileStaticInterface.getInstance().getDoubleArray(
+      Double[] params = profile().getDoubleArray(
             MMStudio.class, AFFINE_TRANSFORM + config, null);
       if (params != null && params.length == 6) {
          double[] unboxed = new double[6];
@@ -1719,7 +1781,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
 
       // The early 2.0-beta way of storing as a serialized object.
-      PropertyMap studioSettings = UserProfileStaticInterface.getInstance().
+      PropertyMap studioSettings = profile().
             getSettings(MMStudio.class).toPropertyMap();
       AffineTransform result = (AffineTransform)
          ((DefaultPropertyMap) studioSettings).getLegacySerializedObject(
@@ -1750,7 +1812,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       for (int i = 0; i < 6; ++i) {
          boxed[i] = params[i];
       }
-      UserProfileStaticInterface.getInstance().setDoubleArray(MMStudio.class, AFFINE_TRANSFORM + config, boxed);
+      profile().setDoubleArray(MMStudio.class, AFFINE_TRANSFORM + config, boxed);
    }
 
    public double getCachedXPosition() {
@@ -1772,36 +1834,40 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    public double getCachedPixelSizeUm() {
       return staticInfo_.getPixelSizeUm();
    }
+   
+   public AffineTransform getCachedPixelSizeAffine() {
+      return staticInfo_.getPixelSizeAffine();
+   }
 
-   public static boolean getShouldDeleteOldCoreLogs() {
-      return UserProfileStaticInterface.getInstance().getBoolean(MMStudio.class,
+   public boolean getShouldDeleteOldCoreLogs() {
+      return profile().getBoolean(MMStudio.class,
             SHOULD_DELETE_OLD_CORE_LOGS, false);
    }
 
-   public static void setShouldDeleteOldCoreLogs(boolean shouldDelete) {
-      UserProfileStaticInterface.getInstance().setBoolean(MMStudio.class,
+   public void setShouldDeleteOldCoreLogs(boolean shouldDelete) {
+      profile().setBoolean(MMStudio.class,
             SHOULD_DELETE_OLD_CORE_LOGS, shouldDelete);
    }
 
-   public static int getCoreLogLifetimeDays() {
-      return UserProfileStaticInterface.getInstance().getInt(MMStudio.class,
+   public int getCoreLogLifetimeDays() {
+      return profile().getInt(MMStudio.class,
             CORE_LOG_LIFETIME_DAYS, 7);
    }
 
-   public static void setCoreLogLifetimeDays(int days) {
-      UserProfileStaticInterface.getInstance().setInt(MMStudio.class,
+   public void setCoreLogLifetimeDays(int days) {
+      profile().setInt(MMStudio.class,
             CORE_LOG_LIFETIME_DAYS, days);
    }
 
-   public static int getCircularBufferSize() {
+   public int getCircularBufferSize() {
       // Default to more MB for 64-bit systems.
       int defaultVal = System.getProperty("sun.arch.data.model", "32").equals("64") ? 250 : 25;
-      return UserProfileStaticInterface.getInstance().getInt(MMStudio.class,
+      return profile().getInt(MMStudio.class,
             CIRCULAR_BUFFER_SIZE, defaultVal);
    }
 
-   public static void setCircularBufferSize(int newSize) {
-      UserProfileStaticInterface.getInstance().setInt(MMStudio.class,
+   public void setCircularBufferSize(int newSize) {
+      profile().setInt(MMStudio.class,
             CIRCULAR_BUFFER_SIZE, newSize);
    }
 }

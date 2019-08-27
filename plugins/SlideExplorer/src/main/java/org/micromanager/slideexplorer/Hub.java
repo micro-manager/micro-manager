@@ -20,7 +20,7 @@ import org.micromanager.internal.MMStudio;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 import org.micromanager.internal.utils.AffineUtils;
-import org.micromanager.internal.utils.ImageUtils;
+import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public class Hub {
