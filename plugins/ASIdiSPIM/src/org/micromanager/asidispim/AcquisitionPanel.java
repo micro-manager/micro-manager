@@ -3978,7 +3978,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // These metadata have to be added after initialization, 
             // otherwise they will not be shown?!
             gui_.setAcquisitionProperty(acqName, "NumberOfSides", 
-                    NumberUtils.doubleToCoreString(acqSettings.numSides));
+                    NumberUtils.intToCoreString(acqSettings.numSides));
             gui_.setAcquisitionProperty(acqName, "FirstSide", acqSettings.firstSideIsA ? "A" : "B");
             gui_.setAcquisitionProperty(acqName, "SlicePeriod_ms", 
                   actualSlicePeriodLabel_.getText());

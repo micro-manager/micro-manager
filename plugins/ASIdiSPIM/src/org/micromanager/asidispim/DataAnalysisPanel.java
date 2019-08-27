@@ -790,29 +790,24 @@ public class DataAnalysisPanel extends ListeningJPanel {
 
          if (exportFormat_ == 0) { // mipav
             
-            boolean multiPosition = false;
-            if (mmW.getNumberOfPositions() > 1) {
-               multiPosition = true;
-            }
+            final boolean multiPosition = mmW.getNumberOfPositions() > 1;
             
-            boolean firstSideIsA = true;
-            if (mmW.getSummaryMetaData().getString("FirstSide").equals("B")) {
-               firstSideIsA = false;
-            }
+            final boolean firstSideIsA = ! mmW.getSummaryMetaData().getString("FirstSide").equals("B");
             
             for (int position = 0; position < mmW.getNumberOfPositions(); position++) {
                
                ImageProcessor iProc = ip.getProcessor();
-               int nrSides = 0;
-               if (mmW.getSummaryMetaData().getString("NumberOfSides").equals("2")) {
+               final int nrSides;
+               final String strNrSides = mmW.getSummaryMetaData().getString("NumberOfSides").substring(0, 1);
+               if (strNrSides.equals("2")) {
                   nrSides = 2;
-               } else if (mmW.getSummaryMetaData().getString("NumberOfSides").equals("1")) {
+               } else if (strNrSides.equals("1")) {
                   nrSides = 1;
                } else {
                   throw new SaveTaskException("unsupported number of sides");
                }
 
-               boolean usesChannels = (mmW.getNumberOfChannels()/nrSides) > 1;  // if have channels besides two cameras
+               final boolean usesChannels = (mmW.getNumberOfChannels()/nrSides) > 1;  // if have channels besides two cameras
                String [] channelDirArray = new String[mmW.getNumberOfChannels()];
                if (usesChannels) {
                   for (int c = 0; c < mmW.getNumberOfChannels(); c++) {
