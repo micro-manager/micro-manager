@@ -1534,7 +1534,15 @@ public enum PropertyKey {
             try {
             if (!isKnownKey(e.getKey()) && !e.getValue().isJsonNull() &&
                   !scopeDataKeys.contains(e.getKey())) {
-               builder.putString(e.getKey(), e.getValue().getAsString());
+               if (e.getValue().isJsonArray()) {
+                  JsonArray jsonArray = e.getValue().getAsJsonArray();
+                  for (int i = 0; i < jsonArray.size(); i++) {
+                     JsonElement je2 = jsonArray.get(i);
+                     builder.putString(e.getKey(), je2.getAsString());
+                  }
+               } else {
+                  builder.putString(e.getKey(), e.getValue().getAsString());
+               }
             }
             } catch (IllegalStateException ise) {
                ReportingUtils.logError(ise, "IllegalStateError reading value of " + e.getKey());
