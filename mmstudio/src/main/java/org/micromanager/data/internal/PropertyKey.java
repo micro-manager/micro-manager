@@ -1531,9 +1531,13 @@ public enum PropertyKey {
          // (includes device properties if SCOPE_DATA_KEYS unavailable)
          PropertyMap.Builder builder = PropertyMaps.builder();
          for (Map.Entry<String, JsonElement> e : jo.entrySet()) {
+            try {
             if (!isKnownKey(e.getKey()) && !e.getValue().isJsonNull() &&
                   !scopeDataKeys.contains(e.getKey())) {
                builder.putString(e.getKey(), e.getValue().getAsString());
+            }
+            } catch (IllegalStateException ise) {
+               ReportingUtils.logError(ise, "IllegalStateError reading value of " + e.getKey());
             }
          }
          dest.putPropertyMap(key(), builder.build());
