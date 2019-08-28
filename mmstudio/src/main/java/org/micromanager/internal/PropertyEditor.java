@@ -215,8 +215,12 @@ public final class PropertyEditor extends MMFrame {
          PropertyItem item = getItem(device, propName);
          if (item != null) {
             item.value = newValue;
+            Integer row = propToRow_.get(item);
+            if (row != null) {
+               fireTableCellUpdated(row, 2);
+            }
             // Better to call fireTableCellUpdated(row, col)???
-            fireTableDataChanged();
+            // fireTableDataChanged();
          }
       }
 
