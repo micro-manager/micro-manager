@@ -219,8 +219,6 @@ public final class PropertyEditor extends MMFrame {
             if (row != null) {
                fireTableCellUpdated(row, propertyValueColumn_);
             }
-            // Better to call fireTableCellUpdated(row, col)???
-            // fireTableDataChanged();
          }
       }
 
