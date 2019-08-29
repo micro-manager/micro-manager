@@ -44,6 +44,10 @@ public class AffineUtils {
    }
    
    public static final AffineTransform doubleToAffine(DoubleVector atf) {
+      if (atf.size() != 6) {
+          double[] flatMatrix = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+          return new AffineTransform(flatMatrix);
+      }
       double[] flatMatrix = {atf.get(0), atf.get(3), atf.get(1),
          atf.get(4), atf.get(2), atf.get(5)};
       return new AffineTransform(flatMatrix);
