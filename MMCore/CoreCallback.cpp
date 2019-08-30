@@ -565,8 +565,13 @@ int CoreCallback::OnPixelSizeChanged(double newPixelSizeUm)
  */
 int CoreCallback::OnPixelSizeAffineChanged(std::vector<double> newPixelSizeAffine)
 {
-   if (core_->externalCallback_) {
-      core_->externalCallback_->onPixelSizeAffineChanged(newPixelSizeAffine);
+   if (core_->externalCallback_ && newPixelSizeAffine.size() == 6) {
+      core_->externalCallback_->onPixelSizeAffineChanged(newPixelSizeAffine[0],
+            newPixelSizeAffine[1],
+            newPixelSizeAffine[2],
+            newPixelSizeAffine[3],
+            newPixelSizeAffine[4],
+            newPixelSizeAffine[5]);
    }
 
    return DEVICE_OK;
