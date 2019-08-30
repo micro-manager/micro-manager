@@ -147,9 +147,8 @@ CMMCore::CMMCore() :
    const unsigned seqBufMegabytes = (sizeof(void*) > 4) ? 250 : 25;
    cbuf_ = new CircularBuffer(seqBufMegabytes);
 
-   nullAffine_ = new std::vector<double>(6);
    for (int i = 0; i < 6; i++) {
-      nullAffine_->at(i) = 0.0;
+      nullAffine_.at(i) = 0.0;
    }
 
    CreateCoreProperties();
@@ -5454,7 +5453,7 @@ std::vector<double> CMMCore::getPixelSizeAffine(bool cached) throw (CMMError)
    else
    {
       // no config found, return a matrix with all 0.0s
-      return *nullAffine_;
+      return nullAffine_;
    }
 }
 
