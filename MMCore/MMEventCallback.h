@@ -58,7 +58,7 @@ public:
       std::cout << "onPixelSizeChanged() " << newPixelSizeUm << std::endl;
    }
 
-   virtual void onPixelSizeAffineChanged(std::vector<double> newPixelSizeAffine)
+   virtual void onPixelSizeAffineChanged(double v0, double v1, double v2, double v3, double v4, double v5)
    {
       std::cout << "onPixelSizeAffineChanged() " << std::endl;
    }
