@@ -38,6 +38,7 @@
 #include "ASIPLogic.h"
 #include "ASIPmt.h"
 #include "ASILens.h"
+#include "ASIDac.h"
 #include <cstdio>
 #include <string>
 #include "../../MMDevice/MMDevice.h"
@@ -99,6 +100,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       return new CPMT(deviceName);
    else if (deviceStr.compare(0, strlen(g_LensDeviceName), (string)g_LensDeviceName) == 0)
       return new CLens(deviceName);
+   else if (deviceStr.compare(0, strlen(g_DacDeviceName), (string)g_DacDeviceName) == 0)
+	   return new CDAC(deviceName);
    else
       return 0;
 }

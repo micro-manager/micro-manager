@@ -290,6 +290,9 @@ int CTigerCommHub::DetectInstalledDevices()
             command << "Found slave axis letter " <<  build.vAxesLetter[i] << "; skipping it";
             LogMessage(command.str());
             continue; // go on to next axis (skips below code and goes to next for loop iteration)
+		 case 'd':  // Signal DAC
+			 name = g_DacDeviceName;
+			 break;
          default:
             command.str("");
             command << "Device type " <<  build.vAxesType[i] << " not supported by Tiger device adapter, skipping it";
