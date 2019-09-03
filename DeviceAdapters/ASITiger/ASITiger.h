@@ -125,6 +125,8 @@ const char* const g_LEDDeviceName = "LED";
 const char* const g_PLogicDeviceName = "PLogic";
 const char* const g_PMTDeviceName = "PMT";
 const char* const g_LensDeviceName = "TunableLens";
+const char* const g_DacDeviceName = "DAC";
+
 
 // corresponding device descriptions
 const char* const g_TigerCommHubDescription = "ASI TigerComm Hub (TG-1000)";
@@ -141,6 +143,7 @@ const char* const g_LEDDeviceDescription = "ASI LED Illuminator";
 const char* const g_PLogicDeviceDescription = "ASI Programmable Logic";
 const char* const g_PMTDeviceDescription = "ASI Photo Multiplier Tube";  
 const char* const g_LensDeviceDescription = "ASI Tunable Lens";  
+const char* const g_DacDeviceDescription = "ASI DAC";
 
 // constant values
 const double g_StageMinStepSize = 0.001;   // in units of um
@@ -269,6 +272,7 @@ const char* const g_JoystickSelectXPropertyName = "JoystickInputX";
 const char* const g_JoystickSelectYPropertyName = "JoystickInputY";
 const char* const g_ScannerInputModePropertyName = "InputMode";
 const char* const g_ScannerOutputModePropertyName = "OutputMode";
+const char* const g_ScannerCutoffFilterPropertyName = "FilterFreq(kHz)";
 const char* const g_ScannerCutoffFilterXPropertyName = "FilterFreqX(kHz)";
 const char* const g_ScannerCutoffFilterYPropertyName = "FilterFreqY(kHz)";
 const char* const g_ScannerAttenuateXPropertyName = "AttenuateX(0..1)";
@@ -294,8 +298,10 @@ const char* const g_TLCMode_1 = "1 - external input";
 // single axis property names
 const char* const g_AdvancedSAPropertiesPropertyName = "SingleAxisAdvancedPropertiesEnable";
 const char* const g_SAAmplitudePropertyName = "SingleAxisAmplitude(um)";
+const char* const g_SAAmplitudeDACPropertyName = "SingleAxisAmplitude(mv)"; //SIGNAL_DAC version
 const char* const g_SAAnonUnitPropertyName = "SingleAxisAmplitude";
 const char* const g_SAOffsetPropertyName = "SingleAxisOffset(um)";
+const char* const g_SAOffsetDACPropertyName = "SingleAxisOffset(mv)";//SIGNAL_DAC version
 const char* const g_SAOnonUnitPropertyName = "SingleAxisOffset";
 const char* const g_SAPeriodPropertyName = "SingleAxisPeriod(ms)";
 const char* const g_SAModePropertyName = "SingleAxisMode";
@@ -365,6 +371,12 @@ const char* const g_RB_EnablePropertyName = "RingBufferEnable";
 const char* const g_RB_TriggerPropertyName = "RingBufferTrigger";
 const char* const g_RB_AutoplayRunningPropertyName = "RingBufferAutoplayRunning";
 const char* const g_UseSequencePropertyName = "UseSequence";
+const char* const g_RBSequenceStatePropertyName = "RingBufferSequenceState";
+const char* const g_AddtoRBSequencePropertyName = "AddToRingBufferSequence(mV)";
+const char* const g_RBSequenceStart = "Start on TTL";
+const char* const g_RBSequenceStop = "Stop";
+const char* const g_RBSequenceClearSeq = "Clear Sequence";
+const char* const g_RBSequenceSendSeq = "Send Sequence";
 
 // SPIM property names
 const char* const g_SPIMNumSlicesPropertyName = "SPIMNumSlices"; // used by both piezos and micromirror, would be more accurately named NumPiezoPositions because total number of slices is this times NumSlicesPerPiezo
@@ -711,6 +723,13 @@ const char* const g_PMTSignal="PMT Signal";
 const char* const g_PMTOverload="PMT Overloaded";
 const char* const g_PMTOverloadReset="PMT Overload Reset";
 const char* const g_PMTOverloadDone="Reset Applied";
+//SIGNAL_DAC
+const double	  g_DACDefaultUnitMult = 1000;  // in units of volts
+const char* const g_DACModePropertyName = "OutputMode (Restart Needed)";
+const char* const g_DACMaxVoltsPropertyName = "MaxVoltage(V)";
+const char* const g_DACMinVoltsPropertyName = "MinVoltage(V)";
+const char* const g_DACVoltageName = "DACVoltage(mV)";
+const char* const g_DACGatePropertyName = "DAC Gate";
 
 struct build_info_type
 {

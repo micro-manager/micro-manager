@@ -57,6 +57,9 @@
     <ClCompile Include="ASILens.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ASIDac.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ASIBase.h">
