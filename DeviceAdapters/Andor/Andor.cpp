@@ -5456,7 +5456,9 @@ unsigned int AndorCamera::PopulateROIDropdownFVB()
          actualMode = EXTERNAL;
       }
 
-      if (IsTriggerModeAvailable(SOFTWARE) == DRV_SUCCESS)
+	  bool softwareTriggerPresent = 
+		  std::find(triggerModesIMAGE_.begin(), triggerModesIMAGE_.end(), "Software") != triggerModesIMAGE_.end();
+      if (softwareTriggerPresent)
       {
         if (SOFTWARE == actualMode)
         {
