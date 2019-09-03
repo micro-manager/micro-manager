@@ -33,7 +33,7 @@ RAMPSXYStage::RAMPSXYStage() :
     posX_um_(0.0),
     posY_um_(0.0),
     initialized_(false),
-    lowerLimit_(0.0),
+    lowerLimit_( - 20000.0),
     upperLimit_(20000.0),
 	status_("")
 {
@@ -93,7 +93,6 @@ int RAMPSXYStage::Initialize()
   ret = UpdateStatus();
   if (ret != DEVICE_OK)
     return ret;
-
   
   initialized_ = true;
 

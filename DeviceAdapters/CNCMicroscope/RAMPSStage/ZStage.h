@@ -41,8 +41,6 @@ limitations under the License.
 #define ERR_NO_FOCUS_DRIVE           10015
 #define ERR_NO_XY_DRIVE              10016
 
-// Axioskope 2 Z stage
-//
 class RAMPSZStage : public CStageBase<RAMPSZStage>
 {
  public:

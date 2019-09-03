@@ -31,15 +31,11 @@ extern const char* g_ZStageDeviceName;
 extern const char* g_Keyword_LoadSample;
 
 RAMPSZStage::RAMPSZStage() :
-    // http://www.shapeoko.com/wiki/index.php/Zaxis_ACME
-    stepSize_um_ (5.),
+    stepSize_um_ (0.025),
     posZ_um_(0.0),
     initialized_ (false)
 {
   InitializeDefaultErrorMessages();
-
-  SetErrorText(ERR_SCOPE_NOT_ACTIVE, "Zeiss Scope is not initialized.  It is needed for the Focus drive to work");
-  SetErrorText(ERR_NO_FOCUS_DRIVE, "No focus drive found in this microscopes");
 }
 
 RAMPSZStage::~RAMPSZStage()
@@ -104,7 +100,7 @@ bool RAMPSZStage::Busy()
 }
 int RAMPSZStage::SetPositionUm(double pos)
 {
-  long steps = (long)(pos / stepSize_um_ + 0.5);
+  long steps = (long)(pos / stepSize_um_);
   int ret = SetPositionSteps(steps);
   if (ret != DEVICE_OK)
     return ret;
