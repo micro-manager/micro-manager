@@ -180,10 +180,18 @@ public class DataExporter {
                double ts = frameTimeStamps_.get(es.getKey()).toEpochMilli()
                           - frameTimeStamps_.get(d.framePasClicked()).toEpochMilli();
                Double val = null;
-               switch(type_) {
-                  case BLEACH: val = es.getValue().getNormalizedBleachMaskAvg(); break;
-                  case PARTICLE: val = es.getValue().getNormalizedMaskAvg(); break;
-                  case PARTICLE_AND_BLEACH: val = es.getValue().getNormalizedMaskIncludingBleachAvg(); break;
+               if (es.getValue() != null) {
+                  switch (type_) {
+                     case BLEACH:
+                        val = es.getValue().getNormalizedBleachMaskAvg();
+                        break;
+                     case PARTICLE:
+                        val = es.getValue().getNormalizedMaskAvg();
+                        break;
+                     case PARTICLE_AND_BLEACH:
+                        val = es.getValue().getNormalizedMaskIncludingBleachAvg();
+                        break;
+                  }
                }
                if (val != null) {
                   export.append(ts).append("\t").append(val).append("\n");
