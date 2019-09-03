@@ -665,7 +665,7 @@ private:
    long pollingIntervalMs_;
    long timeoutMs_;
    bool autoShutter_;
-   std::vector<double> nullAffine_;
+   std::vector<double> *nullAffine_;
    MM::Core* callback_;                 // core services for devices
    ConfigGroupCollection* configGroups_;
    CorePropertyCollection* properties_;
