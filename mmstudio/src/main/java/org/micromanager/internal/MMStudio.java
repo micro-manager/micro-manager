@@ -262,6 +262,9 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       } catch(UnsatisfiedLinkError ex) {
          ReportingUtils.showError(ex, 
                "Failed to load the MMCoreJ_wrap native library");
+      } catch(NoSuchMethodError ex) {
+         ReportingUtils.showError(ex, 
+               "Incompatible version of MMCoreJ_wrap native library");
       }
       
       // Start up multiple managers.  
