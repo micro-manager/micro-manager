@@ -22,31 +22,30 @@
     <ProjectGuid>{7BAC0C19-0280-4CB2-A8FA-A6BF7C2A025E}</ProjectGuid>
     <RootNamespace>ASITiger</RootNamespace>
     <Keyword>Win32Proj</Keyword>
-    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>Windows7.1SDK</PlatformToolset>
     <UseDebugLibraries>false</UseDebugLibraries>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>Windows7.1SDK</PlatformToolset>
     <UseDebugLibraries>true</UseDebugLibraries>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>Windows7.1SDK</PlatformToolset>
     <UseDebugLibraries>false</UseDebugLibraries>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>Windows7.1SDK</PlatformToolset>
     <UseDebugLibraries>true</UseDebugLibraries>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -163,7 +162,7 @@
   <ItemGroup>
     <ClCompile Include="ASIClocked.cpp" />
     <ClCompile Include="ASICRISP.cpp" />
-    <ClCompile Include="ASIDac.cpp" />
+	<ClCompile Include="ASIDac.cpp" />
     <ClCompile Include="ASIFWheel.cpp" />
     <ClCompile Include="ASIHub.cpp" />
     <ClCompile Include="ASILED.cpp" />
@@ -181,6 +180,7 @@
     <ClInclude Include="ASIBase.h" />
     <ClInclude Include="ASIClocked.h" />
     <ClInclude Include="ASICRISP.h" />
+	<ClCompile Include="ASIDac.h" />
     <ClInclude Include="ASIFWheel.h" />
     <ClInclude Include="ASIHub.h" />
     <ClInclude Include="ASILED.h" />

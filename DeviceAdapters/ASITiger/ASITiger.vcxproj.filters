@@ -57,7 +57,7 @@
     <ClCompile Include="ASILens.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ASIDac.cpp">
+	<ClCompile Include="ASIDac.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -110,5 +110,8 @@
     <ClInclude Include="ASILens.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+	<ClCompile Include="ASIDac.h">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
