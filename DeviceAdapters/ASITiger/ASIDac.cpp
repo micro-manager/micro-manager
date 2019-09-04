@@ -255,7 +255,7 @@ int CDAC::Initialize()
 			// this prop lets user do AddToDASequence()
 			pAct = new CPropertyAction(this, &CDAC::OnAddtoRBSequence);
 			CreateProperty(g_AddtoRBSequencePropertyName, "0", MM::Float, false, pAct);
-			SetPropertyLimits(g_AddtoRBSequencePropertyName, 0, (maxvolts_ - minvolts_) * 1000);
+			SetPropertyLimits(g_AddtoRBSequencePropertyName, minvolts_*1000, maxvolts_ * 1000);
 
 		}
 
