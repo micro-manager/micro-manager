@@ -167,12 +167,13 @@ public final class MultipageTiffReader {
          if (child.isDirectory()) {
             File[] grandchildren = child.listFiles();
             for (File grandchild : grandchildren) {
-               if (grandchild.getName().endsWith(".tif")) {
+               if ( (!grandchild.getName().startsWith("._")) && grandchild.getName().endsWith(".tif")) {
                   testFile = grandchild;
                   break;
                }
             }
-         } else if (child.getName().endsWith(".tif") || child.getName().endsWith(".TIF")) {
+         } else if ( (!child.getName().startsWith("._")) && 
+                 child.getName().endsWith(".tif") || child.getName().endsWith(".TIF")) {
             testFile = child;
             break;
          }
