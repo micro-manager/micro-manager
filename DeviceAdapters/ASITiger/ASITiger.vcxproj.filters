@@ -111,7 +111,7 @@
       <Filter>Header Files</Filter>
     </ClInclude>
 	<ClCompile Include="ASIDac.h">
-      <Filter>Source Files</Filter>
+      <Filter>Header Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

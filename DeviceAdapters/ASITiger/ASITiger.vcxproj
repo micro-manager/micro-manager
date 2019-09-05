@@ -180,7 +180,7 @@
     <ClInclude Include="ASIBase.h" />
     <ClInclude Include="ASIClocked.h" />
     <ClInclude Include="ASICRISP.h" />
-	<ClCompile Include="ASIDac.h" />
+	<ClInclude Include="ASIDac.h" />
     <ClInclude Include="ASIFWheel.h" />
     <ClInclude Include="ASIHub.h" />
     <ClInclude Include="ASILED.h" />
