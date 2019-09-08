@@ -10,8 +10,11 @@
     </Component>
   </NonVisualComponents>
   <Properties>
+    <Property name="bounds" type="java.awt.Rectangle" editor="org.netbeans.beaninfo.editors.RectangleEditor">
+      <Rectangle value="[0, 23, 740, 654]"/>
+    </Property>
     <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-      <Dimension value="[800, 654]"/>
+      <Dimension value="[730, 650]"/>
     </Property>
   </Properties>
   <SyntheticProperties>
@@ -28,7 +31,7 @@
     <AuxValue name="FormSettings_listenerGenerationStyle" type="java.lang.Integer" value="0"/>
     <AuxValue name="FormSettings_variablesLocal" type="java.lang.Boolean" value="false"/>
     <AuxValue name="FormSettings_variablesModifier" type="java.lang.Integer" value="2"/>
-    <AuxValue name="designerSize" type="java.awt.Dimension" value="-84,-19,0,5,115,114,0,18,106,97,118,97,46,97,119,116,46,68,105,109,101,110,115,105,111,110,65,-114,-39,-41,-84,95,68,20,2,0,2,73,0,6,104,101,105,103,104,116,73,0,5,119,105,100,116,104,120,112,0,0,2,-109,0,0,3,30"/>
+    <AuxValue name="designerSize" type="java.awt.Dimension" value="-84,-19,0,5,115,114,0,18,106,97,118,97,46,97,119,116,46,68,105,109,101,110,115,105,111,110,65,-114,-39,-41,-84,95,68,20,2,0,2,73,0,6,104,101,105,103,104,116,73,0,5,119,105,100,116,104,120,112,0,0,2,-118,0,0,2,-42"/>
   </AuxValues>
 
   <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBoxLayout"/>
@@ -38,26 +41,24 @@
       <Layout>
         <DimensionLayout dim="0">
           <Group type="103" groupAlignment="0" attributes="0">
-              <Group type="102" attributes="0">
+              <Group type="102" alignment="0" attributes="0">
                   <EmptySpace min="-2" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Group type="102" attributes="0">
-                          <Component id="bottomPanel_" max="32767" attributes="0"/>
-                          <EmptySpace max="-2" attributes="0"/>
-                      </Group>
-                      <Component id="exploreAcqTabbedPane_" alignment="0" pref="788" max="32767" attributes="0"/>
-                      <Component id="topPanel_" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="exploreAcqTabbedPane_" min="-2" pref="714" max="-2" attributes="0"/>
+                      <Component id="jPanel1" alignment="0" max="32767" attributes="0"/>
+                      <Component id="bottomPanel_" alignment="0" min="-2" max="-2" attributes="0"/>
                   </Group>
+                  <EmptySpace min="-2" max="-2" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
         <DimensionLayout dim="1">
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" alignment="1" attributes="0">
-                  <Component id="topPanel_" min="-2" max="-2" attributes="0"/>
+                  <Component id="jPanel1" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="exploreAcqTabbedPane_" max="32767" attributes="0"/>
-                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                  <EmptySpace min="-2" max="-2" attributes="0"/>
                   <Component id="bottomPanel_" min="-2" max="-2" attributes="0"/>
                   <EmptySpace min="-2" max="-2" attributes="0"/>
               </Group>
@@ -66,6 +67,11 @@
       </Layout>
       <SubComponents>
         <Container class="javax.swing.JTabbedPane" name="exploreAcqTabbedPane_">
+          <Properties>
+            <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+              <Dimension value="[727, 525]"/>
+            </Property>
+          </Properties>
           <Events>
             <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="exploreAcqTabbedPane_StateChanged"/>
           </Events>
@@ -84,83 +90,78 @@
               <Layout>
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Group type="102" attributes="0">
+                      <Group type="102" alignment="0" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
+                              <Component id="surfaceAndGridsPanel_" max="32767" attributes="0"/>
                               <Group type="102" alignment="0" attributes="0">
+                                  <Component id="exploreSavingNameLabel_" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="exploreSavingNameTextField_" max="32767" attributes="0"/>
+                              </Group>
+                              <Group type="102" attributes="0">
                                   <Group type="103" groupAlignment="0" attributes="0">
                                       <Group type="102" alignment="0" attributes="0">
-                                          <Component id="exploreSavingNameLabel_" min="-2" max="-2" attributes="0"/>
-                                          <EmptySpace min="-2" max="-2" attributes="0"/>
-                                          <Component id="exploreSavingNameTextField_" max="32767" attributes="0"/>
+                                          <Component id="exploreZStepLabel_" min="-2" max="-2" attributes="0"/>
+                                          <EmptySpace max="-2" attributes="0"/>
+                                          <Component id="exploreZStepSpinner_" min="-2" pref="77" max="-2" attributes="0"/>
+                                          <EmptySpace max="-2" attributes="0"/>
+                                          <Component id="exploreOverlapLabel_" min="-2" max="-2" attributes="0"/>
+                                          <EmptySpace max="-2" attributes="0"/>
+                                          <Component id="exploreTileOverlapSpinner_" min="-2" pref="65" max="-2" attributes="0"/>
+                                          <EmptySpace max="-2" attributes="0"/>
+                                          <Component id="explorePercentLabel_" min="-2" max="-2" attributes="0"/>
+                                          <EmptySpace min="-2" pref="102" max="-2" attributes="0"/>
+                                          <Component id="newExploreWindowButton_" min="-2" pref="103" max="-2" attributes="0"/>
+                                      </Group>
+                                      <Group type="102" attributes="0">
+                                          <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
+                                          <Component id="surfacesAndGrdisLabel_" min="-2" max="-2" attributes="0"/>
                                       </Group>
                                       <Group type="102" alignment="0" attributes="0">
-                                          <Group type="103" groupAlignment="0" attributes="0">
-                                              <Group type="102" alignment="0" attributes="0">
-                                                  <Component id="exploreZStepLabel_" min="-2" max="-2" attributes="0"/>
-                                                  <EmptySpace max="-2" attributes="0"/>
-                                                  <Component id="exploreZStepSpinner_" min="-2" pref="77" max="-2" attributes="0"/>
-                                                  <EmptySpace max="-2" attributes="0"/>
-                                                  <Component id="exploreOverlapLabel_" min="-2" max="-2" attributes="0"/>
-                                                  <EmptySpace max="-2" attributes="0"/>
-                                                  <Component id="exploreTileOverlapSpinner_" min="-2" pref="65" max="-2" attributes="0"/>
-                                              </Group>
-                                              <Group type="102" alignment="0" attributes="0">
-                                                  <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
-                                                  <Component id="surfacesAndGrdisLabel_" min="-2" max="-2" attributes="0"/>
-                                              </Group>
-                                          </Group>
+                                          <Component id="channelGroupLabel_" min="-2" max="-2" attributes="0"/>
                                           <EmptySpace max="-2" attributes="0"/>
-                                          <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                                              <Component id="newExploreWindowButton_" alignment="0" min="-2" pref="103" max="-2" attributes="0"/>
-                                              <Group type="102" alignment="0" attributes="0">
-                                                  <Component id="explorePercentLabel_" min="-2" max="-2" attributes="0"/>
-                                                  <EmptySpace min="-2" pref="36" max="-2" attributes="0"/>
-                                                  <Component id="channelGroupLabel_" min="-2" max="-2" attributes="0"/>
-                                                  <EmptySpace max="-2" attributes="0"/>
-                                                  <Component id="exploreChannelGroupCombo_" min="-2" pref="172" max="-2" attributes="0"/>
-                                              </Group>
-                                          </Group>
+                                          <Component id="exploreChannelGroupCombo_" min="-2" pref="172" max="-2" attributes="0"/>
                                       </Group>
                                   </Group>
-                                  <EmptySpace min="-2" pref="55" max="-2" attributes="0"/>
-                              </Group>
-                              <Group type="102" alignment="0" attributes="0">
-                                  <Component id="surfaceAndGridsPanel_" max="32767" attributes="0"/>
-                                  <EmptySpace min="-2" pref="28" max="-2" attributes="0"/>
+                                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                               </Group>
                           </Group>
+                          <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
                 <DimensionLayout dim="1">
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
-                          <EmptySpace min="-2" max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="exploreSavingNameTextField_" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="exploreSavingNameLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="exploreZStepSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="exploreZStepLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="channelGroupLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="exploreChannelGroupCombo_" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="exploreOverlapLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="exploreTileOverlapSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="explorePercentLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
-                          </Group>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" attributes="0">
-                                  <EmptySpace min="-2" pref="45" max="-2" attributes="0"/>
-                                  <Component id="surfacesAndGrdisLabel_" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace min="-2" max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="3" attributes="0">
+                                      <Component id="exploreSavingNameTextField_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="exploreSavingNameLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="3" attributes="0">
+                                      <Component id="exploreZStepSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="exploreZStepLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="exploreOverlapLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="exploreTileOverlapSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="explorePercentLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="3" attributes="0">
+                                      <Component id="channelGroupLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="exploreChannelGroupCombo_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  </Group>
                               </Group>
                               <Group type="102" alignment="0" attributes="0">
-                                  <EmptySpace min="-2" pref="7" max="-2" attributes="0"/>
+                                  <EmptySpace min="-2" pref="53" max="-2" attributes="0"/>
                                   <Component id="newExploreWindowButton_" min="-2" pref="40" max="-2" attributes="0"/>
                               </Group>
                           </Group>
+                          <EmptySpace type="separate" max="-2" attributes="0"/>
+                          <Component id="surfacesAndGrdisLabel_" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="surfaceAndGridsPanel_" max="32767" attributes="0"/>
                       </Group>
@@ -283,8 +284,8 @@
                               <EmptySpace max="32767" attributes="0"/>
                           </Group>
                           <Group type="102" alignment="0" attributes="0">
-                              <Component id="jScrollPane2" max="32767" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="jScrollPane2" min="-2" pref="668" max="-2" attributes="0"/>
+                              <EmptySpace min="0" pref="32" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -292,7 +293,7 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace min="-2" pref="20" max="-2" attributes="0"/>
-                              <Component id="jScrollPane2" pref="324" max="32767" attributes="0"/>
+                              <Component id="jScrollPane2" pref="286" max="32767" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="deleteSelectedRegionButton_" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -386,56 +387,28 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" attributes="0">
                           <EmptySpace min="-2" max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="103" groupAlignment="1" attributes="0">
                               <Component id="runAcqPanel_" alignment="0" max="32767" attributes="0"/>
+                              <Component id="acqTabbedPane_" alignment="0" max="32767" attributes="0"/>
                               <Group type="102" alignment="0" attributes="0">
-                                  <Group type="103" groupAlignment="1" attributes="0">
-                                      <Component id="acqTabbedPane_" alignment="0" max="32767" attributes="0"/>
-                                      <Group type="102" attributes="0">
-                                          <Component id="multipleAcqScrollPane_" max="32767" attributes="0"/>
-                                          <EmptySpace min="-2" max="-2" attributes="0"/>
-                                          <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                                              <Component id="addAcqButton_" max="32767" attributes="0"/>
-                                              <Component id="moveAcqUpButton_" pref="0" max="32767" attributes="0"/>
-                                          </Group>
-                                          <EmptySpace min="-2" pref="12" max="-2" attributes="0"/>
-                                          <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                                              <Component id="removeAcqButton_" pref="40" max="32767" attributes="0"/>
-                                              <Component id="moveAcqDownButton_" pref="0" max="32767" attributes="0"/>
-                                          </Group>
-                                          <EmptySpace min="-2" pref="9" max="-2" attributes="0"/>
-                                      </Group>
-                                  </Group>
-                                  <EmptySpace min="-2" max="-2" attributes="0"/>
+                                  <Component id="jPanel2" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                               </Group>
                           </Group>
+                          <EmptySpace min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
                 <DimensionLayout dim="1">
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
-                          <EmptySpace min="-2" max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="0" attributes="0">
-                              <Group type="102" attributes="0">
-                                  <Group type="103" groupAlignment="3" attributes="0">
-                                      <Component id="addAcqButton_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="removeAcqButton_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  </Group>
-                                  <EmptySpace max="-2" attributes="0"/>
-                                  <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="moveAcqUpButton_" min="-2" max="-2" attributes="0"/>
-                                      <Component id="moveAcqDownButton_" min="-2" max="-2" attributes="0"/>
-                                  </Group>
-                                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                              </Group>
-                              <Component id="multipleAcqScrollPane_" alignment="0" pref="140" max="32767" attributes="0"/>
-                          </Group>
-                          <EmptySpace min="-2" max="-2" attributes="0"/>
-                          <Component id="acqTabbedPane_" min="-2" pref="282" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="jPanel2" max="32767" attributes="0"/>
+                          <EmptySpace type="separate" max="-2" attributes="0"/>
+                          <Component id="acqTabbedPane_" min="-2" pref="255" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="runAcqPanel_" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace max="-2" attributes="0"/>
+                          <EmptySpace min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -465,26 +438,29 @@
                       <Layout>
                         <DimensionLayout dim="0">
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Group type="102" attributes="0">
+                              <Group type="102" alignment="1" attributes="0">
                                   <Group type="103" groupAlignment="0" attributes="0">
-                                      <Group type="102" alignment="0" attributes="0">
-                                          <EmptySpace max="-2" attributes="0"/>
-                                          <Component id="controls2DOr3D_" max="32767" attributes="0"/>
-                                      </Group>
                                       <Group type="102" attributes="0">
                                           <Component id="button3D_" min="-2" max="-2" attributes="0"/>
                                           <EmptySpace max="-2" attributes="0"/>
                                           <Component id="button2D_" min="-2" max="-2" attributes="0"/>
-                                          <EmptySpace min="-2" pref="42" max="-2" attributes="0"/>
+                                          <EmptySpace max="-2" attributes="0"/>
+                                          <Component id="footprin2DLabel_" min="-2" max="-2" attributes="0"/>
+                                          <EmptySpace max="-2" attributes="0"/>
+                                          <Component id="xyFootprintComboBox_" min="-2" pref="221" max="-2" attributes="0"/>
+                                          <EmptySpace max="-2" attributes="0"/>
                                           <Component id="acqTileOverlapLabel_" min="-2" max="-2" attributes="0"/>
                                           <EmptySpace max="-2" attributes="0"/>
                                           <Component id="acqOverlapPercentSpinner_" min="-2" pref="58" max="-2" attributes="0"/>
                                           <EmptySpace max="-2" attributes="0"/>
                                           <Component id="tileOverlapPercentLabel_" min="-2" max="-2" attributes="0"/>
-                                          <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                                      </Group>
+                                      <Group type="102" alignment="0" attributes="0">
+                                          <EmptySpace max="-2" attributes="0"/>
+                                          <Component id="controls2DOr3D_" min="-2" max="-2" attributes="0"/>
                                       </Group>
                                   </Group>
-                                  <EmptySpace max="-2" attributes="0"/>
+                                  <EmptySpace max="32767" attributes="0"/>
                               </Group>
                           </Group>
                         </DimensionLayout>
@@ -497,10 +473,12 @@
                                       <Component id="acqTileOverlapLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                                       <Component id="acqOverlapPercentSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
                                       <Component id="tileOverlapPercentLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="footprin2DLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="xyFootprintComboBox_" alignment="3" min="-2" max="-2" attributes="0"/>
                                   </Group>
-                                  <EmptySpace pref="14" max="32767" attributes="0"/>
-                                  <Component id="controls2DOr3D_" min="-2" pref="200" max="-2" attributes="0"/>
-                                  <EmptySpace pref="15" max="32767" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="controls2DOr3D_" min="-2" pref="180" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
                               </Group>
                           </Group>
                         </DimensionLayout>
@@ -543,12 +521,18 @@
                               <Layout>
                                 <DimensionLayout dim="0">
                                   <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="panel2D_" alignment="0" max="32767" attributes="0"/>
+                                      <Group type="102" alignment="0" attributes="0">
+                                          <Component id="panel2D_" min="-2" max="-2" attributes="0"/>
+                                          <EmptySpace min="0" pref="17" max="32767" attributes="0"/>
+                                      </Group>
                                   </Group>
                                 </DimensionLayout>
                                 <DimensionLayout dim="1">
                                   <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="panel2D_" alignment="0" max="32767" attributes="0"/>
+                                      <Group type="102" alignment="0" attributes="0">
+                                          <Component id="panel2D_" min="-2" max="-2" attributes="0"/>
+                                          <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                                      </Group>
                                   </Group>
                                 </DimensionLayout>
                               </Layout>
@@ -560,88 +544,54 @@
                                       <Group type="103" groupAlignment="0" attributes="0">
                                           <Group type="102" attributes="0">
                                               <Group type="103" groupAlignment="0" attributes="0">
-                                                  <Group type="102" alignment="0" attributes="0">
+                                                  <Group type="102" attributes="0">
+                                                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                                                          <Group type="102" attributes="0">
+                                                              <EmptySpace max="-2" attributes="0"/>
+                                                              <Component id="collectionPlaneCombo_" max="32767" attributes="0"/>
+                                                          </Group>
+                                                          <Component id="useCollectionPlaneButton_" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                      </Group>
                                                       <EmptySpace max="-2" attributes="0"/>
-                                                      <Component id="useCollectionPlaneButton_" min="-2" max="-2" attributes="0"/>
-                                                  </Group>
-                                                  <Group type="102" alignment="0" attributes="0">
-                                                      <EmptySpace min="-2" pref="250" max="-2" attributes="0"/>
+                                                      <Component id="labelDiagram2DSurface_" min="-2" max="-2" attributes="0"/>
+                                                      <EmptySpace max="-2" attributes="0"/>
                                                       <Component id="collectionPlaneLabel_" min="-2" max="-2" attributes="0"/>
                                                   </Group>
                                                   <Group type="102" attributes="0">
-                                                      <EmptySpace max="-2" attributes="0"/>
-                                                      <Component id="footprin2DLabel_" min="-2" max="-2" attributes="0"/>
-                                                  </Group>
-                                                  <Group type="103" alignment="0" groupAlignment="1" attributes="0">
-                                                      <Component id="footprint2DComboBox_" alignment="1" min="-2" pref="232" max="-2" attributes="0"/>
-                                                      <Component id="collectionPlaneCombo_" alignment="0" min="-2" pref="238" max="-2" attributes="0"/>
-                                                  </Group>
-                                                  <Group type="102" alignment="0" attributes="0">
-                                                      <EmptySpace max="-2" attributes="0"/>
                                                       <Component id="noCollectionPlaneButton_" min="-2" pref="189" max="-2" attributes="0"/>
+                                                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                                      <Component id="labelDiagram2dSimple_" min="-2" max="-2" attributes="0"/>
                                                   </Group>
                                               </Group>
-                                              <EmptySpace max="-2" attributes="0"/>
-                                              <Group type="103" groupAlignment="0" attributes="0">
-                                                  <Component id="labelDiagram2DSurface_" min="-2" max="-2" attributes="0"/>
-                                                  <Component id="labelDiagram2dSimple_" min="-2" max="-2" attributes="0"/>
-                                              </Group>
-                                              <EmptySpace pref="105" max="32767" attributes="0"/>
+                                              <EmptySpace pref="58" max="32767" attributes="0"/>
                                           </Group>
                                       </Group>
                                     </DimensionLayout>
                                     <DimensionLayout dim="1">
                                       <Group type="103" groupAlignment="0" attributes="0">
-                                          <Group type="102" attributes="0">
+                                          <Group type="102" alignment="0" attributes="0">
                                               <EmptySpace max="-2" attributes="0"/>
                                               <Group type="103" groupAlignment="0" attributes="0">
-                                                  <Group type="102" alignment="0" attributes="0">
-                                                      <Component id="footprin2DLabel_" min="-2" max="-2" attributes="0"/>
-                                                      <EmptySpace max="-2" attributes="0"/>
-                                                      <Component id="footprint2DComboBox_" min="-2" max="-2" attributes="0"/>
-                                                      <EmptySpace type="separate" max="-2" attributes="0"/>
-                                                      <Component id="noCollectionPlaneButton_" min="-2" max="-2" attributes="0"/>
-                                                      <EmptySpace max="-2" attributes="0"/>
-                                                      <Component id="collectionPlaneLabel_" min="-2" max="-2" attributes="0"/>
-                                                      <EmptySpace pref="23" max="32767" attributes="0"/>
+                                                  <Component id="noCollectionPlaneButton_" min="-2" max="-2" attributes="0"/>
+                                                  <Component id="labelDiagram2dSimple_" min="-2" max="-2" attributes="0"/>
+                                              </Group>
+                                              <EmptySpace max="-2" attributes="0"/>
+                                              <Group type="103" groupAlignment="0" attributes="0">
+                                                  <Group type="102" attributes="0">
                                                       <Component id="useCollectionPlaneButton_" min="-2" max="-2" attributes="0"/>
                                                       <EmptySpace max="-2" attributes="0"/>
                                                       <Component id="collectionPlaneCombo_" min="-2" max="-2" attributes="0"/>
-                                                      <EmptySpace min="-2" pref="14" max="-2" attributes="0"/>
+                                                      <EmptySpace min="-2" pref="28" max="-2" attributes="0"/>
+                                                      <Component id="collectionPlaneLabel_" min="-2" max="-2" attributes="0"/>
                                                   </Group>
-                                                  <Group type="102" alignment="1" attributes="0">
-                                                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                                                      <Component id="labelDiagram2dSimple_" min="-2" max="-2" attributes="0"/>
-                                                      <EmptySpace max="-2" attributes="0"/>
-                                                      <Component id="labelDiagram2DSurface_" min="-2" max="-2" attributes="0"/>
-                                                  </Group>
+                                                  <Component id="labelDiagram2DSurface_" min="-2" max="-2" attributes="0"/>
                                               </Group>
+                                              <EmptySpace min="14" max="32767" attributes="0"/>
                                           </Group>
                                       </Group>
                                     </DimensionLayout>
                                   </Layout>
                                   <SubComponents>
-                                    <Component class="javax.swing.JLabel" name="footprin2DLabel_">
-                                      <Properties>
-                                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                                          <Font name="Tahoma" size="14" style="0"/>
-                                        </Property>
-                                        <Property name="text" type="java.lang.String" value="Surface/Grid XY Footprint:"/>
-                                      </Properties>
-                                    </Component>
-                                    <Component class="javax.swing.JComboBox" name="footprint2DComboBox_">
-                                      <Properties>
-                                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                                          <Font name="Tahoma" size="14" style="0"/>
-                                        </Property>
-                                        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-                                          <Connection code="new SurfaceGridComboBoxModel(false, false)" type="code"/>
-                                        </Property>
-                                      </Properties>
-                                      <Events>
-                                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="footprint2DComboBox_ActionPerformed"/>
-                                      </Events>
-                                    </Component>
                                     <Component class="javax.swing.JComboBox" name="collectionPlaneCombo_">
                                       <Properties>
                                         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
@@ -718,24 +668,25 @@
                                 <DimensionLayout dim="0">
                                   <Group type="103" groupAlignment="0" attributes="0">
                                       <Group type="102" attributes="0">
-                                          <Component id="cuboidVolumeButton_" min="-2" max="-2" attributes="0"/>
-                                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                          <Component id="volumeBetweenSurfacesButton_" min="-2" max="-2" attributes="0"/>
-                                          <EmptySpace max="-2" attributes="0"/>
-                                          <Component id="withinDistanceFromSurfacesButton_" min="-2" max="-2" attributes="0"/>
-                                          <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                                      </Group>
-                                      <Component id="acq3DSubtypePanel_" alignment="0" max="32767" attributes="0"/>
-                                      <Group type="102" alignment="0" attributes="0">
-                                          <EmptySpace max="-2" attributes="0"/>
-                                          <Component id="zStepLabel_" min="-2" max="-2" attributes="0"/>
-                                          <EmptySpace max="-2" attributes="0"/>
-                                          <Component id="zStepSpinner_" min="-2" pref="77" max="-2" attributes="0"/>
-                                          <EmptySpace max="-2" attributes="0"/>
-                                          <Component id="acqOrderLabel_" min="-2" max="-2" attributes="0"/>
-                                          <EmptySpace max="-2" attributes="0"/>
-                                          <Component id="acqOrderCombo_" min="-2" pref="207" max="-2" attributes="0"/>
+                                          <EmptySpace min="-2" max="-2" attributes="0"/>
+                                          <Group type="103" groupAlignment="0" attributes="0">
+                                              <Group type="102" alignment="0" attributes="0">
+                                                  <Component id="zStepLabel_" min="-2" max="-2" attributes="0"/>
+                                                  <EmptySpace max="-2" attributes="0"/>
+                                                  <Component id="zStepSpinner_" min="-2" pref="77" max="-2" attributes="0"/>
+                                              </Group>
+                                              <Group type="102" alignment="0" attributes="0">
+                                                  <Component id="acqOrderLabel_" min="-2" max="-2" attributes="0"/>
+                                                  <EmptySpace max="32767" attributes="0"/>
+                                                  <Component id="acqOrderCombo_" min="-2" pref="119" max="-2" attributes="0"/>
+                                              </Group>
+                                              <Component id="cuboidVolumeButton_" alignment="0" min="-2" max="-2" attributes="0"/>
+                                              <Component id="volumeBetweenSurfacesButton_" alignment="0" min="-2" max="-2" attributes="0"/>
+                                              <Component id="withinDistanceFromSurfacesButton_" alignment="0" min="-2" max="-2" attributes="0"/>
+                                          </Group>
                                           <EmptySpace max="32767" attributes="0"/>
+                                          <Component id="acq3DSubtypePanel_" pref="502" max="32767" attributes="0"/>
+                                          <EmptySpace min="-2" max="-2" attributes="0"/>
                                       </Group>
                                   </Group>
                                 </DimensionLayout>
@@ -743,60 +694,32 @@
                                   <Group type="103" groupAlignment="0" attributes="0">
                                       <Group type="102" alignment="0" attributes="0">
                                           <EmptySpace max="-2" attributes="0"/>
-                                          <Group type="103" groupAlignment="3" attributes="0">
-                                              <Component id="zStepLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                              <Component id="zStepSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                              <Component id="acqOrderLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                              <Component id="acqOrderCombo_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Group type="103" groupAlignment="1" max="-2" attributes="0">
+                                              <Component id="acq3DSubtypePanel_" alignment="0" max="32767" attributes="0"/>
+                                              <Group type="102" attributes="0">
+                                                  <Group type="103" groupAlignment="3" attributes="0">
+                                                      <Component id="zStepLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                      <Component id="zStepSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                  </Group>
+                                                  <EmptySpace max="-2" attributes="0"/>
+                                                  <Group type="103" groupAlignment="3" attributes="0">
+                                                      <Component id="acqOrderLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                      <Component id="acqOrderCombo_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                  </Group>
+                                                  <EmptySpace max="-2" attributes="0"/>
+                                                  <Component id="cuboidVolumeButton_" min="-2" max="-2" attributes="0"/>
+                                                  <EmptySpace max="-2" attributes="0"/>
+                                                  <Component id="volumeBetweenSurfacesButton_" min="-2" max="-2" attributes="0"/>
+                                                  <EmptySpace max="-2" attributes="0"/>
+                                                  <Component id="withinDistanceFromSurfacesButton_" min="-2" max="-2" attributes="0"/>
+                                              </Group>
                                           </Group>
-                                          <EmptySpace max="-2" attributes="0"/>
-                                          <Group type="103" groupAlignment="3" attributes="0">
-                                              <Component id="cuboidVolumeButton_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                              <Component id="volumeBetweenSurfacesButton_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                              <Component id="withinDistanceFromSurfacesButton_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          </Group>
-                                          <EmptySpace max="-2" attributes="0"/>
-                                          <Component id="acq3DSubtypePanel_" min="-2" pref="131" max="-2" attributes="0"/>
-                                          <EmptySpace max="32767" attributes="0"/>
+                                          <EmptySpace pref="9" max="32767" attributes="0"/>
                                       </Group>
                                   </Group>
                                 </DimensionLayout>
                               </Layout>
                               <SubComponents>
-                                <Component class="javax.swing.JRadioButton" name="cuboidVolumeButton_">
-                                  <Properties>
-                                    <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
-                                      <ComponentRef name="zStackModeButtonGroup_"/>
-                                    </Property>
-                                    <Property name="selected" type="boolean" value="true"/>
-                                    <Property name="text" type="java.lang.String" value="Cuboid volume"/>
-                                  </Properties>
-                                  <Events>
-                                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cuboidVolumeButton_ActionPerformed"/>
-                                  </Events>
-                                </Component>
-                                <Component class="javax.swing.JRadioButton" name="volumeBetweenSurfacesButton_">
-                                  <Properties>
-                                    <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
-                                      <ComponentRef name="zStackModeButtonGroup_"/>
-                                    </Property>
-                                    <Property name="text" type="java.lang.String" value="Volume between surfaces"/>
-                                  </Properties>
-                                  <Events>
-                                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="volumeBetweenSurfacesButton_ActionPerformed"/>
-                                  </Events>
-                                </Component>
-                                <Component class="javax.swing.JRadioButton" name="withinDistanceFromSurfacesButton_">
-                                  <Properties>
-                                    <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
-                                      <ComponentRef name="zStackModeButtonGroup_"/>
-                                    </Property>
-                                    <Property name="text" type="java.lang.String" value="Within distance from surface"/>
-                                  </Properties>
-                                  <Events>
-                                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="withinDistanceFromSurfacesButton_ActionPerformed"/>
-                                  </Events>
-                                </Component>
                                 <Container class="javax.swing.JPanel" name="acq3DSubtypePanel_">
 
                                   <Layout class="org.netbeans.modules.form.compat2.layouts.DesignCardLayout"/>
@@ -811,37 +734,29 @@
                                       <Layout>
                                         <DimensionLayout dim="0">
                                           <Group type="103" groupAlignment="0" attributes="0">
-                                              <Group type="102" attributes="0">
-                                                  <EmptySpace max="-2" attributes="0"/>
-                                                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                                                      <Group type="102" alignment="0" attributes="0">
-                                                          <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
+                                              <Group type="102" alignment="0" attributes="0">
+                                                  <Group type="103" groupAlignment="0" attributes="0">
+                                                      <Group type="102" attributes="0">
                                                           <EmptySpace max="-2" attributes="0"/>
-                                                          <Component id="simpleZStackFootprintCombo_" max="32767" attributes="0"/>
-                                                      </Group>
-                                                      <Group type="102" alignment="0" attributes="0">
-                                                          <Group type="103" groupAlignment="1" max="-2" attributes="0">
-                                                              <Group type="102" alignment="0" attributes="0">
-                                                                  <Component id="zEndLabel" min="-2" max="-2" attributes="0"/>
-                                                                  <EmptySpace type="separate" max="-2" attributes="0"/>
-                                                                  <Component id="zEndSpinner_" max="32767" attributes="0"/>
-                                                              </Group>
+                                                          <Group type="103" groupAlignment="0" max="-2" attributes="0">
                                                               <Group type="102" alignment="0" attributes="0">
                                                                   <Component id="zStartLabel" min="-2" max="-2" attributes="0"/>
+                                                                  <EmptySpace max="-2" attributes="0"/>
+                                                                  <Component id="zStartSpinner_" min="-2" pref="82" max="-2" attributes="0"/>
+                                                              </Group>
+                                                              <Group type="102" alignment="0" attributes="0">
+                                                                  <Component id="zEndLabel" min="-2" max="-2" attributes="0"/>
                                                                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                                                  <Component id="zStartSpinner_" min="-2" pref="120" max="-2" attributes="0"/>
+                                                                  <Component id="zEndSpinner_" max="32767" attributes="0"/>
                                                               </Group>
                                                           </Group>
-                                                          <EmptySpace max="-2" attributes="0"/>
-                                                          <Group type="103" groupAlignment="0" attributes="0">
-                                                              <Component id="setCurrentZStartButton_" min="-2" max="-2" attributes="0"/>
-                                                              <Component id="setCurrentZEndButton_" min="-2" max="-2" attributes="0"/>
-                                                          </Group>
                                                       </Group>
+                                                      <Component id="setCurrentZStartButton_" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                      <Component id="setCurrentZEndButton_" min="-2" max="-2" attributes="0"/>
                                                   </Group>
                                                   <EmptySpace max="-2" attributes="0"/>
-                                                  <Component id="labelDiagram3dSimple_" min="-2" max="-2" attributes="0"/>
-                                                  <EmptySpace pref="126" max="32767" attributes="0"/>
+                                                  <Component id="labelDiagram3dSimple_" min="-2" pref="295" max="-2" attributes="0"/>
+                                                  <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
                                               </Group>
                                           </Group>
                                         </DimensionLayout>
@@ -849,29 +764,25 @@
                                           <Group type="103" groupAlignment="0" attributes="0">
                                               <Group type="102" attributes="0">
                                                   <EmptySpace max="-2" attributes="0"/>
-                                                  <Group type="103" groupAlignment="0" attributes="0">
+                                                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
                                                       <Group type="102" attributes="0">
                                                           <Group type="103" groupAlignment="3" attributes="0">
                                                               <Component id="zStartLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                                                               <Component id="zStartSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                                              <Component id="setCurrentZStartButton_" alignment="3" min="-2" max="-2" attributes="0"/>
                                                           </Group>
+                                                          <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
+                                                          <Component id="setCurrentZStartButton_" min="-2" max="-2" attributes="0"/>
                                                           <EmptySpace max="-2" attributes="0"/>
                                                           <Group type="103" groupAlignment="3" attributes="0">
                                                               <Component id="zEndLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                                                               <Component id="zEndSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                                              <Component id="setCurrentZEndButton_" alignment="3" min="-2" max="-2" attributes="0"/>
                                                           </Group>
-                                                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                                          <Group type="103" groupAlignment="3" attributes="0">
-                                                              <Component id="jLabel2" alignment="3" min="-2" max="-2" attributes="0"/>
-                                                              <Component id="simpleZStackFootprintCombo_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                                          </Group>
-                                                          <EmptySpace min="0" pref="10" max="32767" attributes="0"/>
+                                                          <EmptySpace max="32767" attributes="0"/>
+                                                          <Component id="setCurrentZEndButton_" min="-2" max="-2" attributes="0"/>
                                                       </Group>
-                                                      <Component id="labelDiagram3dSimple_" alignment="0" pref="0" max="32767" attributes="0"/>
+                                                      <Component id="labelDiagram3dSimple_" min="-2" max="-2" attributes="0"/>
                                                   </Group>
-                                                  <EmptySpace max="-2" attributes="0"/>
+                                                  <EmptySpace pref="25" max="32767" attributes="0"/>
                                               </Group>
                                           </Group>
                                         </DimensionLayout>
@@ -892,27 +803,6 @@
                                             </Property>
                                             <Property name="text" type="java.lang.String" value="&lt;html&gt;Z-end (&amp;mu;m)&lt;/html&gt;"/>
                                           </Properties>
-                                        </Component>
-                                        <Component class="javax.swing.JLabel" name="jLabel2">
-                                          <Properties>
-                                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                                              <Font name="Tahoma" size="14" style="0"/>
-                                            </Property>
-                                            <Property name="text" type="java.lang.String" value="Surface/Grid XY footprint:"/>
-                                          </Properties>
-                                        </Component>
-                                        <Component class="javax.swing.JComboBox" name="simpleZStackFootprintCombo_">
-                                          <Properties>
-                                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                                              <Font name="Tahoma" size="14" style="0"/>
-                                            </Property>
-                                            <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-                                              <Connection code="new SurfaceGridComboBoxModel(false, false)" type="code"/>
-                                            </Property>
-                                          </Properties>
-                                          <Events>
-                                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="simpleZStackFootprintCombo_ActionPerformed"/>
-                                          </Events>
                                         </Component>
                                         <Component class="javax.swing.JSpinner" name="zStartSpinner_">
                                           <Properties>
@@ -992,65 +882,57 @@
                                                   <EmptySpace max="-2" attributes="0"/>
                                                   <Group type="103" groupAlignment="0" attributes="0">
                                                       <Group type="102" attributes="0">
-                                                          <Group type="103" groupAlignment="0" attributes="0">
-                                                              <Component id="topSurfaceLabel_" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                              <Component id="bottomSurfaceLabel_" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                          </Group>
+                                                          <Component id="topSurfaceLabel_" min="-2" max="-2" attributes="0"/>
                                                           <EmptySpace max="-2" attributes="0"/>
-                                                          <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                                                              <Component id="umAboveTopSurfaceSpinner_" pref="71" max="32767" attributes="0"/>
-                                                              <Component id="umBelowBottomSurfaceSpinner_" max="32767" attributes="0"/>
-                                                          </Group>
+                                                          <Component id="umAboveTopSurfaceSpinner_" min="-2" pref="71" max="-2" attributes="0"/>
                                                           <EmptySpace max="-2" attributes="0"/>
-                                                          <Group type="103" groupAlignment="0" attributes="0">
-                                                              <Component id="umAboveVolBetweenLabel_" min="-2" max="-2" attributes="0"/>
+                                                          <Component id="umAboveVolBetweenLabel_" min="-2" max="-2" attributes="0"/>
+                                                      </Group>
+                                                      <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
+                                                          <Component id="topSurfaceCombo_" alignment="0" max="32767" attributes="0"/>
+                                                          <Component id="bottomSurfaceCombo_" alignment="0" max="32767" attributes="0"/>
+                                                          <Group type="102" alignment="0" attributes="0">
+                                                              <Component id="bottomSurfaceLabel_" min="-2" max="-2" attributes="0"/>
+                                                              <EmptySpace max="-2" attributes="0"/>
+                                                              <Component id="umBelowBottomSurfaceSpinner_" min="-2" pref="71" max="-2" attributes="0"/>
+                                                              <EmptySpace max="-2" attributes="0"/>
                                                               <Component id="umBelowVolBetweenLabel_" min="-2" max="-2" attributes="0"/>
                                                           </Group>
-                                                          <EmptySpace max="-2" attributes="0"/>
-                                                          <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                                                              <Component id="topSurfaceCombo_" pref="166" max="32767" attributes="0"/>
-                                                              <Component id="bottomSurfaceCombo_" max="32767" attributes="0"/>
-                                                          </Group>
-                                                      </Group>
-                                                      <Group type="102" alignment="0" attributes="0">
-                                                          <Component id="jLabel5" min="-2" max="-2" attributes="0"/>
-                                                          <EmptySpace max="-2" attributes="0"/>
-                                                          <Component id="volumeBetweenFootprintCombo_" min="-2" max="-2" attributes="0"/>
                                                       </Group>
                                                   </Group>
                                                   <EmptySpace max="-2" attributes="0"/>
                                                   <Component id="labelDiagram3d2Surface_" min="-2" max="-2" attributes="0"/>
-                                                  <EmptySpace pref="124" max="32767" attributes="0"/>
+                                                  <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
                                               </Group>
                                           </Group>
                                         </DimensionLayout>
                                         <DimensionLayout dim="1">
                                           <Group type="103" groupAlignment="0" attributes="0">
-                                              <Group type="102" alignment="0" attributes="0">
-                                                  <Group type="103" groupAlignment="3" attributes="0">
-                                                      <Component id="topSurfaceLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                                      <Component id="topSurfaceCombo_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                                      <Component id="umAboveTopSurfaceSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                                      <Component id="umAboveVolBetweenLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                              <Group type="102" attributes="0">
+                                                  <Group type="103" groupAlignment="0" attributes="0">
+                                                      <Group type="102" attributes="0">
+                                                          <Group type="103" groupAlignment="3" attributes="0">
+                                                              <Component id="topSurfaceLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                              <Component id="umAboveTopSurfaceSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                              <Component id="umAboveVolBetweenLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                          </Group>
+                                                          <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
+                                                          <Component id="topSurfaceCombo_" min="-2" max="-2" attributes="0"/>
+                                                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                                          <Group type="103" groupAlignment="3" attributes="0">
+                                                              <Component id="bottomSurfaceLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                              <Component id="umBelowBottomSurfaceSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                              <Component id="umBelowVolBetweenLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                          </Group>
+                                                          <EmptySpace max="-2" attributes="0"/>
+                                                          <Component id="bottomSurfaceCombo_" min="-2" max="-2" attributes="0"/>
+                                                      </Group>
+                                                      <Group type="102" alignment="0" attributes="0">
+                                                          <EmptySpace max="-2" attributes="0"/>
+                                                          <Component id="labelDiagram3d2Surface_" min="-2" max="-2" attributes="0"/>
+                                                      </Group>
                                                   </Group>
-                                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                                  <Group type="103" groupAlignment="3" attributes="0">
-                                                      <Component id="bottomSurfaceLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                                      <Component id="bottomSurfaceCombo_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                                      <Component id="umBelowBottomSurfaceSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                                      <Component id="umBelowVolBetweenLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                                  </Group>
-                                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                                  <Group type="103" groupAlignment="3" attributes="0">
-                                                      <Component id="jLabel5" alignment="3" min="-2" max="-2" attributes="0"/>
-                                                      <Component id="volumeBetweenFootprintCombo_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                                  </Group>
-                                                  <EmptySpace min="0" pref="26" max="32767" attributes="0"/>
-                                              </Group>
-                                              <Group type="102" alignment="0" attributes="0">
-                                                  <EmptySpace max="-2" attributes="0"/>
-                                                  <Component id="labelDiagram3d2Surface_" pref="0" max="32767" attributes="0"/>
-                                                  <EmptySpace max="-2" attributes="0"/>
+                                                  <EmptySpace pref="26" max="32767" attributes="0"/>
                                               </Group>
                                           </Group>
                                         </DimensionLayout>
@@ -1096,30 +978,6 @@
                                           </Properties>
                                           <Events>
                                             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bottomSurfaceCombo_ActionPerformed"/>
-                                          </Events>
-                                        </Component>
-                                        <Component class="javax.swing.JLabel" name="jLabel5">
-                                          <Properties>
-                                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                                              <Font name="Tahoma" size="14" style="0"/>
-                                            </Property>
-                                            <Property name="text" type="java.lang.String" value="XY footprint from:"/>
-                                          </Properties>
-                                        </Component>
-                                        <Component class="javax.swing.JComboBox" name="volumeBetweenFootprintCombo_">
-                                          <Properties>
-                                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                                              <Font name="Tahoma" size="14" style="0"/>
-                                            </Property>
-                                            <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-                                              <StringArray count="2">
-                                                <StringItem index="0" value="Top surface"/>
-                                                <StringItem index="1" value="Bottom surface"/>
-                                              </StringArray>
-                                            </Property>
-                                          </Properties>
-                                          <Events>
-                                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="volumeBetweenFootprintCombo_ActionPerformed"/>
                                           </Events>
                                         </Component>
                                         <Component class="javax.swing.JSpinner" name="umAboveTopSurfaceSpinner_">
@@ -1207,22 +1065,12 @@
                                                               <Component id="umBelowLabel_" min="-2" max="-2" attributes="0"/>
                                                           </Group>
                                                       </Group>
-                                                      <Group type="103" alignment="0" groupAlignment="0" max="-2" attributes="0">
-                                                          <Group type="102" attributes="0">
-                                                              <Component id="jLabel12" min="-2" max="-2" attributes="0"/>
-                                                              <EmptySpace max="-2" attributes="0"/>
-                                                              <Component id="withinDistanceFromFootprintCombo_" min="-2" pref="161" max="-2" attributes="0"/>
-                                                          </Group>
-                                                          <Group type="102" alignment="0" attributes="0">
-                                                              <Component id="fixedSurfaceLabel_" min="-2" max="-2" attributes="0"/>
-                                                              <EmptySpace max="-2" attributes="0"/>
-                                                              <Component id="fixedDistanceSurfaceComboBox_" max="32767" attributes="0"/>
-                                                          </Group>
-                                                      </Group>
+                                                      <Component id="fixedSurfaceLabel_" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                      <Component id="fixedDistanceSurfaceComboBox_" alignment="0" min="-2" pref="203" max="-2" attributes="0"/>
                                                   </Group>
-                                                  <EmptySpace min="-2" pref="15" max="-2" attributes="0"/>
-                                                  <Component id="labelDiagram3dSurface_" min="-2" pref="274" max="-2" attributes="0"/>
-                                                  <EmptySpace min="0" pref="144" max="32767" attributes="0"/>
+                                                  <EmptySpace max="-2" attributes="0"/>
+                                                  <Component id="labelDiagram3dSurface_" min="-2" pref="270" max="-2" attributes="0"/>
+                                                  <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
                                               </Group>
                                           </Group>
                                         </DimensionLayout>
@@ -1241,21 +1089,15 @@
                                                       <Component id="umBelowLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                                                   </Group>
                                                   <EmptySpace max="-2" attributes="0"/>
-                                                  <Group type="103" groupAlignment="3" attributes="0">
-                                                      <Component id="fixedSurfaceLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                                      <Component id="fixedDistanceSurfaceComboBox_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                                  </Group>
+                                                  <Component id="fixedSurfaceLabel_" min="-2" max="-2" attributes="0"/>
                                                   <EmptySpace max="-2" attributes="0"/>
-                                                  <Group type="103" groupAlignment="3" attributes="0">
-                                                      <Component id="jLabel12" alignment="3" min="-2" max="-2" attributes="0"/>
-                                                      <Component id="withinDistanceFromFootprintCombo_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                                  </Group>
-                                                  <EmptySpace min="0" pref="6" max="32767" attributes="0"/>
+                                                  <Component id="fixedDistanceSurfaceComboBox_" min="-2" max="-2" attributes="0"/>
+                                                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                                               </Group>
                                               <Group type="102" alignment="0" attributes="0">
                                                   <EmptySpace max="-2" attributes="0"/>
-                                                  <Component id="labelDiagram3dSurface_" pref="0" max="32767" attributes="0"/>
-                                                  <EmptySpace max="-2" attributes="0"/>
+                                                  <Component id="labelDiagram3dSurface_" min="-2" pref="125" max="-2" attributes="0"/>
+                                                  <EmptySpace pref="34" max="32767" attributes="0"/>
                                               </Group>
                                           </Group>
                                         </DimensionLayout>
@@ -1346,27 +1188,6 @@
                                             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="fixedDistanceSurfaceComboBox_ActionPerformed"/>
                                           </Events>
                                         </Component>
-                                        <Component class="javax.swing.JLabel" name="jLabel12">
-                                          <Properties>
-                                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                                              <Font name="Tahoma" size="14" style="0"/>
-                                            </Property>
-                                            <Property name="text" type="java.lang.String" value="Surface/Grid XY footprint:"/>
-                                          </Properties>
-                                        </Component>
-                                        <Component class="javax.swing.JComboBox" name="withinDistanceFromFootprintCombo_">
-                                          <Properties>
-                                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                                              <Font name="Tahoma" size="14" style="0"/>
-                                            </Property>
-                                            <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-                                              <Connection code="new SurfaceGridComboBoxModel(false, false)&#xa;" type="code"/>
-                                            </Property>
-                                          </Properties>
-                                          <Events>
-                                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="withinDistanceFromFootprintCombo_ActionPerformed"/>
-                                          </Events>
-                                        </Component>
                                         <Component class="javax.swing.JLabel" name="labelDiagram3dSurface_">
                                           <Properties>
                                             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
@@ -1418,8 +1239,8 @@
                                   <Properties>
                                     <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
                                       <StringArray count="2">
-                                        <StringItem index="0" value="Channels at each Z slice"/>
-                                        <StringItem index="1" value="Z stacks for each channel"/>
+                                        <StringItem index="0" value="Channel, Z"/>
+                                        <StringItem index="1" value="Z, Channel"/>
                                       </StringArray>
                                     </Property>
                                   </Properties>
@@ -1429,6 +1250,40 @@
                                   <AuxValues>
                                     <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value=""/>
                                   </AuxValues>
+                                </Component>
+                                <Component class="javax.swing.JRadioButton" name="withinDistanceFromSurfacesButton_">
+                                  <Properties>
+                                    <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+                                      <ComponentRef name="zStackModeButtonGroup_"/>
+                                    </Property>
+                                    <Property name="selected" type="boolean" value="true"/>
+                                    <Property name="text" type="java.lang.String" value="&lt;html&gt;Within distance&lt;br&gt;from surface"/>
+                                  </Properties>
+                                  <Events>
+                                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="withinDistanceFromSurfacesButton_ActionPerformed"/>
+                                  </Events>
+                                </Component>
+                                <Component class="javax.swing.JRadioButton" name="volumeBetweenSurfacesButton_">
+                                  <Properties>
+                                    <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+                                      <ComponentRef name="zStackModeButtonGroup_"/>
+                                    </Property>
+                                    <Property name="text" type="java.lang.String" value="Between surfaces"/>
+                                  </Properties>
+                                  <Events>
+                                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="volumeBetweenSurfacesButton_ActionPerformed"/>
+                                  </Events>
+                                </Component>
+                                <Component class="javax.swing.JRadioButton" name="cuboidVolumeButton_">
+                                  <Properties>
+                                    <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+                                      <ComponentRef name="zStackModeButtonGroup_"/>
+                                    </Property>
+                                    <Property name="text" type="java.lang.String" value="Cuboid"/>
+                                  </Properties>
+                                  <Events>
+                                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cuboidVolumeButton_ActionPerformed"/>
+                                  </Events>
                                 </Component>
                               </SubComponents>
                             </Container>
@@ -1463,6 +1318,27 @@
                             <Property name="text" type="java.lang.String" value="XY tile overlap:"/>
                           </Properties>
                         </Component>
+                        <Component class="javax.swing.JLabel" name="footprin2DLabel_">
+                          <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
+                            <Property name="text" type="java.lang.String" value="XY stage positions from:"/>
+                          </Properties>
+                        </Component>
+                        <Component class="javax.swing.JComboBox" name="xyFootprintComboBox_">
+                          <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
+                            <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+                              <Connection code="new SurfaceGridComboBoxModel(false, false)" type="code"/>
+                            </Property>
+                          </Properties>
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="xyFootprintComboBox_ActionPerformed"/>
+                          </Events>
+                        </Component>
                       </SubComponents>
                     </Container>
                     <Container class="javax.swing.JPanel" name="ChannelsTab_">
@@ -1477,7 +1353,7 @@
                       <Layout>
                         <DimensionLayout dim="0">
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="jScrollPane1" pref="775" max="32767" attributes="0"/>
+                              <Component id="jScrollPane1" max="32767" attributes="0"/>
                               <Group type="102" attributes="0">
                                   <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
@@ -1486,7 +1362,7 @@
                                   <Component id="jButton1" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
                                   <Component id="syncExposuresButton_" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                                  <EmptySpace min="0" pref="165" max="32767" attributes="0"/>
                               </Group>
                           </Group>
                         </DimensionLayout>
@@ -1500,7 +1376,7 @@
                                       <Component id="syncExposuresButton_" alignment="3" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="jScrollPane1" pref="219" max="32767" attributes="0"/>
+                                  <Component id="jScrollPane1" pref="192" max="32767" attributes="0"/>
                               </Group>
                           </Group>
                         </DimensionLayout>
@@ -1586,7 +1462,7 @@
                                       <Component id="timePointsPanel_" min="-2" max="-2" attributes="0"/>
                                       <Component id="timePointsCheckBox_" min="-2" max="-2" attributes="0"/>
                                   </Group>
-                                  <EmptySpace pref="532" max="32767" attributes="0"/>
+                                  <EmptySpace pref="454" max="32767" attributes="0"/>
                               </Group>
                           </Group>
                         </DimensionLayout>
@@ -1597,7 +1473,7 @@
                                   <Component id="timePointsCheckBox_" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="timePointsPanel_" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace pref="141" max="32767" attributes="0"/>
+                                  <EmptySpace pref="114" max="32767" attributes="0"/>
                               </Group>
                           </Group>
                         </DimensionLayout>
@@ -1729,75 +1605,6 @@
                     </Container>
                   </SubComponents>
                 </Container>
-                <Container class="javax.swing.JScrollPane" name="multipleAcqScrollPane_">
-                  <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                      <Font name="Tahoma" size="14" style="0"/>
-                    </Property>
-                  </Properties>
-
-                  <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
-                  <SubComponents>
-                    <Component class="javax.swing.JTable" name="multipleAcqTable_">
-                      <Properties>
-                        <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-                          <Connection code="new MultipleAcquisitionTableModel(multiAcqManager_,this)" type="code"/>
-                        </Property>
-                        <Property name="selectionModel" type="javax.swing.ListSelectionModel" editor="org.netbeans.modules.form.editors2.JTableSelectionModelEditor">
-                          <JTableSelectionModel selectionMode="0"/>
-                        </Property>
-                      </Properties>
-                    </Component>
-                  </SubComponents>
-                </Container>
-                <Component class="javax.swing.JButton" name="moveAcqDownButton_">
-                  <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                      <Font name="Tahoma" size="14" style="0"/>
-                    </Property>
-                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                      <Image iconType="3" name="/org/micromanager/magellan/arrow_down.png"/>
-                    </Property>
-                  </Properties>
-                  <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="moveAcqDownButton_ActionPerformed"/>
-                  </Events>
-                </Component>
-                <Component class="javax.swing.JButton" name="moveAcqUpButton_">
-                  <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                      <Font name="Tahoma" size="14" style="0"/>
-                    </Property>
-                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                      <Image iconType="3" name="/org/micromanager/magellan/arrow_up.png"/>
-                    </Property>
-                  </Properties>
-                  <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="moveAcqUpButton_ActionPerformed"/>
-                  </Events>
-                </Component>
-                <Component class="javax.swing.JButton" name="removeAcqButton_">
-                  <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                      <Font name="Tahoma" size="14" style="1"/>
-                    </Property>
-                    <Property name="text" type="java.lang.String" value="-"/>
-                  </Properties>
-                  <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="removeAcqButton_ActionPerformed"/>
-                  </Events>
-                </Component>
-                <Component class="javax.swing.JButton" name="addAcqButton_">
-                  <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                      <Font name="Tahoma" size="14" style="1"/>
-                    </Property>
-                    <Property name="text" type="java.lang.String" value="+"/>
-                  </Properties>
-                  <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="addAcqButton_ActionPerformed"/>
-                  </Events>
-                </Component>
                 <Container class="javax.swing.JPanel" name="runAcqPanel_">
 
                   <Layout>
@@ -1806,7 +1613,7 @@
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="estDurationLabel_" pref="299" max="32767" attributes="0"/>
+                                  <Component id="estDurationLabel_" max="32767" attributes="0"/>
                                   <Component id="estSizeLabel_" max="32767" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
@@ -1826,7 +1633,7 @@
                                       <Component id="estSizeLabel_" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <Group type="102" alignment="0" attributes="0">
-                                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                                      <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
                                       <Component id="runAcqButton_" min="-2" pref="44" max="-2" attributes="0"/>
                                   </Group>
                               </Group>
@@ -1859,6 +1666,136 @@
                     </Component>
                   </SubComponents>
                 </Container>
+                <Container class="javax.swing.JPanel" name="jPanel2">
+
+                  <Layout>
+                    <DimensionLayout dim="0">
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" alignment="1" attributes="0">
+                              <Component id="multipleAcqScrollPane_" pref="574" max="32767" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="jPanel3" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                      </Group>
+                    </DimensionLayout>
+                    <DimensionLayout dim="1">
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" alignment="0" attributes="0">
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="multipleAcqScrollPane_" pref="0" max="32767" attributes="0"/>
+                          </Group>
+                          <Group type="102" alignment="0" attributes="0">
+                              <Component id="jPanel3" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace min="0" pref="62" max="32767" attributes="0"/>
+                          </Group>
+                      </Group>
+                    </DimensionLayout>
+                  </Layout>
+                  <SubComponents>
+                    <Container class="javax.swing.JScrollPane" name="multipleAcqScrollPane_">
+                      <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
+                      </Properties>
+
+                      <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
+                      <SubComponents>
+                        <Component class="javax.swing.JTable" name="multipleAcqTable_">
+                          <Properties>
+                            <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+                              <Connection code="new MultipleAcquisitionTableModel(multiAcqManager_,this)" type="code"/>
+                            </Property>
+                            <Property name="selectionModel" type="javax.swing.ListSelectionModel" editor="org.netbeans.modules.form.editors2.JTableSelectionModelEditor">
+                              <JTableSelectionModel selectionMode="0"/>
+                            </Property>
+                          </Properties>
+                        </Component>
+                      </SubComponents>
+                    </Container>
+                    <Container class="javax.swing.JPanel" name="jPanel3">
+
+                      <Layout>
+                        <DimensionLayout dim="0">
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Group type="102" attributes="0">
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                                      <Component id="moveAcqUpButton_" max="32767" attributes="0"/>
+                                      <Component id="addAcqButton_" min="-2" pref="46" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace min="-2" max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                                      <Component id="moveAcqDownButton_" max="32767" attributes="0"/>
+                                      <Component id="removeAcqButton_" min="-2" pref="46" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace max="-2" attributes="0"/>
+                              </Group>
+                          </Group>
+                        </DimensionLayout>
+                        <DimensionLayout dim="1">
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Group type="102" attributes="0">
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                                      <Component id="removeAcqButton_" max="32767" attributes="0"/>
+                                      <Component id="addAcqButton_" min="-2" pref="36" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                                      <Component id="moveAcqUpButton_" max="32767" attributes="0"/>
+                                      <Component id="moveAcqDownButton_" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace max="-2" attributes="0"/>
+                              </Group>
+                          </Group>
+                        </DimensionLayout>
+                      </Layout>
+                      <SubComponents>
+                        <Component class="javax.swing.JButton" name="moveAcqUpButton_">
+                          <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
+                            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                              <Image iconType="3" name="/org/micromanager/magellan/arrow_up.png"/>
+                            </Property>
+                          </Properties>
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="moveAcqUpButton_ActionPerformed"/>
+                          </Events>
+                        </Component>
+                        <Component class="javax.swing.JButton" name="removeAcqButton_">
+                          <Properties>
+                            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                              <Image iconType="3" name="/org/micromanager/icons/minus.png"/>
+                            </Property>
+                          </Properties>
+                        </Component>
+                        <Component class="javax.swing.JButton" name="moveAcqDownButton_">
+                          <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
+                            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                              <Image iconType="3" name="/org/micromanager/magellan/arrow_down.png"/>
+                            </Property>
+                          </Properties>
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="moveAcqDownButton_ActionPerformed"/>
+                          </Events>
+                        </Component>
+                        <Component class="javax.swing.JButton" name="addAcqButton_">
+                          <Properties>
+                            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                              <Image iconType="3" name="/org/micromanager/icons/plus.png"/>
+                            </Property>
+                          </Properties>
+                        </Component>
+                      </SubComponents>
+                    </Container>
+                  </SubComponents>
+                </Container>
               </SubComponents>
             </Container>
           </SubComponents>
@@ -1870,11 +1807,11 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
                       <Component id="userGuideLink_" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="128" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="82" max="-2" attributes="0"/>
                       <Component id="citeLink_" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="32767" attributes="0"/>
+                      <EmptySpace min="-2" pref="119" max="-2" attributes="0"/>
                       <Component id="bugReportLink_" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="150" max="-2" attributes="0"/>
+                      <EmptySpace pref="143" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1936,58 +1873,79 @@
             </Component>
           </SubComponents>
         </Container>
-        <Container class="javax.swing.JPanel" name="topPanel_">
+        <Container class="javax.swing.JPanel" name="jPanel1">
 
           <Layout>
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" alignment="1" attributes="0">
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="freeDiskSpaceLabel_" min="-2" pref="197" max="-2" attributes="0"/>
-                      <EmptySpace pref="381" max="32767" attributes="0"/>
-                      <Component id="exploreBrowseButton_" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="openDatasetButton_" min="-2" max="-2" attributes="0"/>
-                  </Group>
-                  <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
-                      <Group type="102" attributes="0">
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="exploreSavingDirLabel_" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="globalSavingDirTextField_" min="-2" pref="434" max="-2" attributes="0"/>
-                          <EmptySpace pref="222" max="32767" attributes="0"/>
+                  <Group type="102" attributes="0">
+                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                          <Group type="102" attributes="0">
+                              <Component id="exploreSavingDirLabel_" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="globalSavingDirTextField_" min="-2" pref="578" max="-2" attributes="0"/>
+                          </Group>
+                          <Group type="102" attributes="0">
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="openDatasetButton_" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace min="-2" pref="127" max="-2" attributes="0"/>
+                              <Component id="freeDiskSpaceLabel_" min="-2" pref="197" max="-2" attributes="0"/>
+                              <EmptySpace max="32767" attributes="0"/>
+                              <Component id="exploreBrowseButton_" min="-2" max="-2" attributes="0"/>
+                          </Group>
                       </Group>
+                      <EmptySpace max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
             <DimensionLayout dim="1">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" alignment="0" attributes="0">
+                  <Group type="102" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="exploreBrowseButton_" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="exploreSavingDirLabel_" alignment="3" max="32767" attributes="0"/>
+                          <Component id="globalSavingDirTextField_" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="openDatasetButton_" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="exploreBrowseButton_" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="freeDiskSpaceLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="14" max="32767" attributes="0"/>
-                  </Group>
-                  <Group type="102" alignment="1" attributes="0">
-                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                      <Component id="freeDiskSpaceLabel_" min="-2" max="-2" attributes="0"/>
-                  </Group>
-                  <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
-                      <Group type="102" alignment="0" attributes="0">
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                              <Component id="exploreSavingDirLabel_" max="32767" attributes="0"/>
-                              <Component id="globalSavingDirTextField_" max="32767" attributes="0"/>
-                          </Group>
-                          <EmptySpace pref="16" max="32767" attributes="0"/>
-                      </Group>
+                      <EmptySpace min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
           </Layout>
           <SubComponents>
+            <Component class="javax.swing.JLabel" name="freeDiskSpaceLabel_">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Available disk space: "/>
+                <Property name="toolTipText" type="java.lang.String" value=""/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JButton" name="openDatasetButton_">
+              <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Tahoma" size="14" style="0"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="Open dataset"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="openDatasetButton_ActionPerformed"/>
+              </Events>
+            </Component>
+            <Component class="javax.swing.JButton" name="exploreBrowseButton_">
+              <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Tahoma" size="14" style="0"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="Browse"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="exploreBrowseButton_ActionPerformed"/>
+              </Events>
+            </Component>
             <Component class="javax.swing.JLabel" name="exploreSavingDirLabel_">
               <Properties>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
@@ -2002,34 +1960,6 @@
                   <Font name="Tahoma" size="14" style="0"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="jTextField1"/>
-              </Properties>
-            </Component>
-            <Component class="javax.swing.JButton" name="exploreBrowseButton_">
-              <Properties>
-                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                  <Font name="Tahoma" size="14" style="0"/>
-                </Property>
-                <Property name="text" type="java.lang.String" value="Browse"/>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="exploreBrowseButton_ActionPerformed"/>
-              </Events>
-            </Component>
-            <Component class="javax.swing.JButton" name="openDatasetButton_">
-              <Properties>
-                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                  <Font name="Tahoma" size="14" style="0"/>
-                </Property>
-                <Property name="text" type="java.lang.String" value="Open dataset"/>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="openDatasetButton_ActionPerformed"/>
-              </Events>
-            </Component>
-            <Component class="javax.swing.JLabel" name="freeDiskSpaceLabel_">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="Available disk space: "/>
-                <Property name="toolTipText" type="java.lang.String" value=""/>
               </Properties>
             </Component>
           </SubComponents>

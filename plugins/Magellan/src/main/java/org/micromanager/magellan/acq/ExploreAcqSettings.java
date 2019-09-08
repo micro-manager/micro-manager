@@ -16,6 +16,7 @@
 //
 package org.micromanager.magellan.acq;
 
+import org.micromanager.magellan.api.MagellanAcquisitionSettingsAPI;
 import org.micromanager.magellan.channels.MagellanChannelSpec;
 import org.micromanager.magellan.misc.GlobalSettings;
 
@@ -23,19 +24,13 @@ import org.micromanager.magellan.misc.GlobalSettings;
  * Container for settings specific to explore acquisition
  * @author Henry
  */
-public class ExploreAcqSettings  {
+public class ExploreAcqSettings  extends AcquisitionSettingsBase {
    
    private static final String EXPLORE_NAME_PREF = "Explore acq name";
    private static final String EXPLORE_DIR_PREF = "Explore acq dir";
    private static final String EXPLORE_Z_STEP = "Explore acq zStep";
    private static final String EXPLORE_TILE_OVERLAP = "Explore tile overlap";
 
-   
-   public final double zStep_;
-   public final String dir_, name_;
-   public final double tileOverlap_;
-
-   public final MagellanChannelSpec channels_;
 
    public ExploreAcqSettings(double zStep, double overlapPercent, String dir, String name, String channelGroup) {
       zStep_ = zStep;

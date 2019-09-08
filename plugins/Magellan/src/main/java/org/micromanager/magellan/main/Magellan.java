@@ -26,7 +26,7 @@ import mmcorej.CMMCore;
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 import org.micromanager.magellan.api.MagellanAPI;
-import org.micromanager.magellan.api.ZMQMasterServer;
+import org.micromanager.magellan.api.zmq.ZMQServer;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
@@ -40,13 +40,13 @@ public class Magellan implements MenuPlugin, SciJavaPlugin {
 
    private static Studio mmAPI_;
    private static GUI gui_;
-   private static ZMQMasterServer bridge_;
+   private static ZMQServer bridge_;
    private static MagellanAPI api_;
 
    public Magellan() {
       try {
          if (bridge_ == null) {
-            bridge_ = new ZMQMasterServer();
+            bridge_ = new ZMQServer(null);
          }
          if (api_ == null) {
             api_ = new MagellanAPI();

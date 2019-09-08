@@ -30,7 +30,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Spliterator;
 import java.util.Spliterators;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -75,14 +74,18 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
    protected volatile boolean aborted_ = false;
    private MultiResMultipageTiffStorage storage_;
    private MagellanDisplay display_;
-   private String UUID_;
    //map generated at runtime of channel names to channel indices
    private HashMap<String, Integer> channelIndices_ = new HashMap<String, Integer>(); 
-
-   public Acquisition() {
-      UUID_ = UUID.randomUUID().toString();
+   protected AcquisitionSettingsBase settings_;
+   
+   public Acquisition(AcquisitionSettingsBase settings) {
+      settings_ = settings;
    }
-
+   
+   public AcquisitionSettingsBase getAcquisitionSettings() {
+      return settings_;
+   }
+   
    protected void initialize(String dir, String name, double overlapPercent, double zStep) {
       eng_ = MagellanEngine.getInstance();
       xyStage_ = Magellan.getCore().getXYStageDevice();
@@ -134,7 +137,11 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
          }
       } else {
          //this method doesnt return until all images have been writtent to disk
+         try {
          imageCache_.putImage(image);
+         } catch (Exception e) {
+            System.out.println();
+         }
       }
    }
 
@@ -448,7 +455,4 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
       });
    }
 
-   public String getUUID() {
-      return UUID_;
-   }
 }

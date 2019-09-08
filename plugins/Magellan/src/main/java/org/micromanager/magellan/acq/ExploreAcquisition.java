@@ -45,7 +45,7 @@ public class ExploreAcquisition extends Acquisition {
    public final ExploreAcqSettings settings_;
 
    public ExploreAcquisition(ExploreAcqSettings settings) {
-      super();
+      super(settings);
       settings_ = settings;
       channels_ = settings.channels_;
       try {

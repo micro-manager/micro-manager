@@ -86,8 +86,8 @@ public class DisplayWindow extends StackWindow {
                displayPrefs_.putInteger(EXPLOREWINDOWPOSX, window.getLocation().x);
                displayPrefs_.putInteger(EXPLOREWINDOWPOSY, window.getLocation().y);
             } else {
-               displayPrefs_.putInteger(EXPLOREWINDOWPOSX, window.getLocation().x);
-               displayPrefs_.putInteger(EXPLOREWINDOWPOSY, window.getLocation().y);
+               displayPrefs_.putInteger(FIXEDWINDOWPOSX, window.getLocation().x);
+               displayPrefs_.putInteger(FIXEDWINDOWPOSY, window.getLocation().y);
             }
          }
          window_ = window;

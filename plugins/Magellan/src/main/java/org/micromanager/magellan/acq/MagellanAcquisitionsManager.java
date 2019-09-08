@@ -221,9 +221,11 @@ public class MagellanAcquisitionsManager {
          throw new Exception("Error: No surface selected for " + settings.name_);
       }
       //correct coordinate devices--XY
-      if ((settings.spaceMode_ == MagellanGUIAcquisitionSettings.REGION_2D || settings.spaceMode_ == MagellanGUIAcquisitionSettings.CUBOID_Z_STACK)
-              && settings.footprint_ != null 
-              && !settings.footprint_.getXYDevice().equals(Magellan.getCore().getXYStageDevice())) {
+      if ((settings.spaceMode_ == MagellanGUIAcquisitionSettings.REGION_2D || 
+              settings.spaceMode_ == MagellanGUIAcquisitionSettings.REGION_2D_SURFACE_GUIDED ||
+              settings.spaceMode_ == MagellanGUIAcquisitionSettings.CUBOID_Z_STACK)
+              && settings.xyFootprint_ != null 
+              && !settings.xyFootprint_.getXYDevice().equals(Magellan.getCore().getXYStageDevice())) {
          throw new Exception("Error: XY device for surface/grid does match XY device in MM core in " + settings.name_);
       }
       if (settings.spaceMode_ == MagellanGUIAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK
@@ -258,9 +260,9 @@ public class MagellanAcquisitionsManager {
       return ((MagellanGUIAcquisition) acqList_.get(index)).settings_;
    }
 
-   public MagellanAcquisitionAPI getAcquisitionByUUID(String uuid) {
+   public MagellanAcquisitionAPI getAcquisitionByHashCode(String hashCode) {
       for (Acquisition acq : acqList_) {
-         if (acq.getUUID().equals(uuid)) {
+         if (Integer.toHexString(System.identityHashCode(acq)).equals(hashCode)) {
             return acq;
          }
       }
