@@ -26,27 +26,27 @@ import mmcorej.CMMCore;
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 import org.micromanager.magellan.api.MagellanAPI;
-import org.micromanager.magellan.api.ZMQMasterServer;
+import org.micromanager.magellan.api.zmq.ZMQServer;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
 @Plugin(type = MenuPlugin.class)
 public class Magellan implements MenuPlugin, SciJavaPlugin {
 
-   public static final String VERSION = "2.1.0";
+   public static final String VERSION = "2.2.0";
 
    public static final String menuName = "Micro-Magellan";
    public static final String tooltipDescription = "High throughout, automated micrscopy for slidescanning or volumetric imaging";
 
    private static Studio mmAPI_;
    private static GUI gui_;
-   private static ZMQMasterServer bridge_;
+   private static ZMQServer bridge_;
    private static MagellanAPI api_;
 
    public Magellan() {
       try {
          if (bridge_ == null) {
-            bridge_ = new ZMQMasterServer();
+            bridge_ = new ZMQServer(null);
          }
          if (api_ == null) {
             api_ = new MagellanAPI();

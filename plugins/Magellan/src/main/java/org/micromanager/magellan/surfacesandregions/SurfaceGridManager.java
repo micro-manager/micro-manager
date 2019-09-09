@@ -67,6 +67,16 @@ public class SurfaceGridManager {
       return singletonInstance_;
    }
    
+      
+   public MultiPosGrid getGridNamed(String name) {
+      for (MultiPosGrid s : grids_) {
+         if (s.getName().equals(name)) {
+            return s;
+         }
+      }
+      return null;
+   }
+   
    public SurfaceInterpolator getSurfaceNamed(String name) {
       for (SurfaceInterpolator s : surfaces_) {
          if (s.getName().equals(name)) {
@@ -228,6 +238,22 @@ public class SurfaceGridManager {
             l.SurfaceOrGridChanged(g);
          }
       }
+   }
+   
+   public void rename(XYFootprint xy, String newName) {
+      for (SurfaceInterpolator s : surfaces_) {
+         if (s == xy) {
+            s.rename(newName);
+            return;
+         }
+      }
+      for (MultiPosGrid s : grids_) {
+         if (s == xy) {
+            s.rename(newName);
+            return;
+         }
+      }
+      throw new RuntimeException("Couldn't find surface or grid...what?");
    }
    
    public void rename(int row, String newName) throws Exception {

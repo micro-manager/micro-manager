@@ -58,6 +58,11 @@ public class ProgressBar extends JPanel {
       frame.setLocationRelativeTo(null);
       frame.setVisible(true);
    }
+   
+   public void close() {
+      frame.dispose();
+      frame.setVisible(false);
+   }
 
    public void setProgress(int progress) {
       progressBar.setValue(progress);

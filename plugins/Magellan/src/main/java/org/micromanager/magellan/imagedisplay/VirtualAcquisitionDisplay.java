@@ -425,7 +425,7 @@ public abstract class VirtualAcquisitionDisplay {
       // multiple exit points depending on what it was doing when we
       // interrupted it.
       CanvasPaintPending.removeAllPaintPending(mmCompositeImage_.getCanvas());
-      imageCache_.finished();
+//      imageCache_.finished();
 
       // Shut down our controls.
       subImageControls_.prepareForClose();

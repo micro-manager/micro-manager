@@ -30,7 +30,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Spliterator;
 import java.util.Spliterators;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -75,12 +74,16 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
    protected volatile boolean aborted_ = false;
    private MultiResMultipageTiffStorage storage_;
    private MagellanDisplay display_;
-   private String UUID_;
    //map generated at runtime of channel names to channel indices
-   private HashMap<String, Integer> channelIndices_ = new HashMap<String, Integer>(); 
+   private HashMap<String, Integer> channelIndices_ = new HashMap<String, Integer>();
+   protected AcquisitionSettingsBase settings_;
 
-   public Acquisition() {
-      UUID_ = UUID.randomUUID().toString();
+   public Acquisition(AcquisitionSettingsBase settings) {
+      settings_ = settings;
+   }
+
+   public AcquisitionSettingsBase getAcquisitionSettings() {
+      return settings_;
    }
 
    protected void initialize(String dir, String name, double overlapPercent, double zStep) {
@@ -115,7 +118,7 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
       storage_.setDisplaySettings(displaySettings);
       display_ = new MagellanDisplay(imageCache_, this, summaryMetadata_, storage_, displaySettings);
    }
-   
+
    public abstract void start();
 
    protected abstract void shutdownEvents();
@@ -129,8 +132,8 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
    void saveImage(TaggedImage image) {
       if (image.tags == null && image.pix == null) {
          if (!finished_) {
-            finished_ = true;
             imageCache_.finished();
+            finished_ = true;
          }
       } else {
          //this method doesnt return until all images have been writtent to disk
@@ -173,7 +176,7 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
       }
       return channelIndices_.get(channelName);
    }
-   
+
    public void addImageMetadata(JSONObject tags, AcquisitionEvent event, int timeIndex,
            int camChannelIndex, long elapsed_ms, double exposure, boolean multicamera) {
       //add tags
@@ -189,13 +192,13 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
          MD.setPositionIndex(tags, event.positionIndex_);
          MD.setSliceIndex(tags, event.zIndex_);
          MD.setFrameIndex(tags, timeIndex);
-        String channelName = event.channelName_;
-        if (multicamera) {
-           channelName += "_" + Magellan.getCore().getCameraChannelName(camChannelIndex);
-        }
-        //infer channel index at runtime
-        int cIndex = getChannelIndex(event.channelName_);
-        MD.setChannelIndex(tags, cIndex + camChannelIndex);
+         String channelName = event.channelName_;
+         if (multicamera) {
+            channelName += "_" + Magellan.getCore().getCameraChannelName(camChannelIndex);
+         }
+         //infer channel index at runtime
+         int cIndex = getChannelIndex(event.channelName_);
+         MD.setChannelIndex(tags, cIndex + camChannelIndex);
          MD.setChannelName(tags, channelName == null ? "" : channelName);
          MD.setZPositionUm(tags, event.zPosition_);
          MD.setElapsedTimeMs(tags, elapsed_ms);
@@ -448,7 +451,4 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
       });
    }
 
-   public String getUUID() {
-      return UUID_;
-   }
 }

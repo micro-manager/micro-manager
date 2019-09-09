@@ -16,55 +16,21 @@
 //
 package org.micromanager.magellan.acq;
 
-import java.util.prefs.Preferences;
 import org.micromanager.magellan.channels.MagellanChannelSpec;
-import org.micromanager.magellan.gui.GUI;
 import org.micromanager.magellan.main.Magellan;
-import org.micromanager.magellan.surfacesandregions.SurfaceInterpolator;
-import org.micromanager.magellan.surfacesandregions.XYFootprint;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  *
  * @author Henry
  */
-public class MagellanGUIAcquisitionSettings {
+public class MagellanGUIAcquisitionSettings extends AcquisitionSettingsBase {
    
    public static final String PREF_PREFIX = "Fixed area acquisition ";
 
-   public static final int NO_SPACE = 0;
-   public static final int CUBOID_Z_STACK = 1;
-   public static final int SURFACE_FIXED_DISTANCE_Z_STACK = 2;
-   public static final int VOLUME_BETWEEN_SURFACES_Z_STACK = 3;
-   public static final int REGION_2D = 4;
-   public static final int TIME_MS = 0;
-   public static final int TIME_S = 1;
-   public static final int TIME_MIN = 2;
    public static int FOOTPRINT_FROM_TOP = 0, FOOTPRINT_FROM_BOTTOM = 1;
    
-   //saving
-   public String dir_, name_;
-   //time
-   public volatile boolean timeEnabled_;
-   public volatile double timePointInterval_;
-   public volatile int numTimePoints_;
-   public volatile int timeIntervalUnit_; 
-
-   //space
-   public volatile double zStep_, zStart_, zEnd_, distanceBelowFixedSurface_, distanceAboveFixedSurface_,
-           distanceAboveTopSurface_, distanceBelowBottomSurface_;
-   public volatile int spaceMode_;
-   public volatile boolean useCollectionPlane_ = false;
-   public volatile SurfaceInterpolator topSurface_, bottomSurface_, fixedSurface_, collectionPlane_;
-   public volatile XYFootprint footprint_;
-   public volatile int useTopOrBottomFootprint_;
-   public volatile double tileOverlap_; //stored as percent * 100, i.e. 55 => 55%
-   public volatile boolean channelsAtEverySlice_;
    
-   //channels
-   public volatile String channelGroup_;
-   public volatile MagellanChannelSpec channels_ ;
-
    public MagellanGUIAcquisitionSettings() {
       MutablePropertyMapView prefs = Magellan.getStudio().profile().getSettings(MagellanGUIAcquisitionSettings.class);
       name_ = prefs.getString(PREF_PREFIX + "NAME", "Untitled");
@@ -73,7 +39,6 @@ public class MagellanGUIAcquisitionSettings {
       numTimePoints_ = prefs.getInteger(PREF_PREFIX + "NTP", 1);
       timeIntervalUnit_ = prefs.getInteger(PREF_PREFIX + "TPIU", 0);
       //space
-      useCollectionPlane_ = prefs.getBoolean(PREF_PREFIX +"USECOLLECTIONPLANE", false);
       channelsAtEverySlice_ = prefs.getBoolean(PREF_PREFIX +"ACQORDER", true);
       zStep_ = prefs.getDouble(PREF_PREFIX + "ZSTEP", 1);
       zStart_ = prefs.getDouble(PREF_PREFIX + "ZSTART", 0);
@@ -103,7 +68,6 @@ public class MagellanGUIAcquisitionSettings {
       prefs.putInteger(PREF_PREFIX + "NTP", numTimePoints_);
       prefs.putInteger(PREF_PREFIX + "TPIU", timeIntervalUnit_);
       //space
-      prefs.putBoolean(PREF_PREFIX +"USECOLLECTIONPLANE", useCollectionPlane_);
       prefs.putDouble(PREF_PREFIX + "ZSTEP", zStep_);
       prefs.putDouble(PREF_PREFIX + "ZSTART", zStart_);
       prefs.putDouble(PREF_PREFIX + "ZEND", zEnd_);

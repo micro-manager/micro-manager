@@ -48,7 +48,7 @@ public class AcquisitionEvent {
    public JSONObject toJSON() {
       try {
          JSONObject json = new JSONObject();
-         json.put("acquisition-name", acquisition_.getUUID());
+//         json.put("acquisition-name", acquisition_.getUUID());
          json.put("time-index", timeIndex_);
          json.put("channel-index", channelName_);
          json.put("z-index", zIndex_);

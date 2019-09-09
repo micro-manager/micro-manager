@@ -56,7 +56,7 @@ public class MagellanGUIAcquisition extends Acquisition {
     * @throws java.lang.Exception
     */
    public MagellanGUIAcquisition(MagellanGUIAcquisitionSettings settings) {
-      super();
+      super(settings);
       settings_ = settings;
       channels_ = settings.channels_;
    }
@@ -73,7 +73,7 @@ public class MagellanGUIAcquisition extends Acquisition {
       }
       createXYPositions();
       initialize(settings_.dir_, settings_.name_, settings_.tileOverlap_, settings_.zStep_);
-      //Submit a generating stream to get this acquisition going
+      //Submit a generating stream to get this acquisition going      
       Stream<AcquisitionEvent> acqEventStream = magellanGUIAcqEventStream();
       acqFuture_ = MagellanEngine.getInstance().submitEventStream(acqEventStream, this);
       //This event is how the acquisition will end, whether through aborting (which cancels everything undone in the previous event)
@@ -98,7 +98,6 @@ public class MagellanGUIAcquisition extends Acquisition {
               = new ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>>();
       //Define where slice index 0 will be
       zOrigin_ = getZTopCoordinate(settings_.spaceMode_, settings_, zStageHasLimits_, zStageLowerLimit_, zStageUpperLimit_, zStage_);
-      boolean surfaceGuided2D = settings_.spaceMode_ == MagellanGUIAcquisitionSettings.REGION_2D && settings_.useCollectionPlane_;
 
       acqFunctions.add(timelapse());
       acqFunctions.add(positions(IntStream.range(0, positions_ == null ? 1 : positions_.size()).toArray(), positions_));
@@ -106,7 +105,7 @@ public class MagellanGUIAcquisition extends Acquisition {
          if (settings_.channels_.getNumChannels() != 0) {
             acqFunctions.add(channels(settings_.channels_));
          }
-      } else if (surfaceGuided2D) {
+      } else if (settings_.spaceMode_ == MagellanGUIAcquisitionSettings.REGION_2D_SURFACE_GUIDED) {
          acqFunctions.add(surfaceGuided2D());
          if (settings_.channels_.getNumChannels() != 0) {
 
@@ -228,6 +227,10 @@ public class MagellanGUIAcquisition extends Acquisition {
       return (AcquisitionEvent event) -> {
          //index all slcies as 0, even though they may nto be in the same plane
          double zPos;
+         if (settings_.collectionPlane_ == null) {
+            Log.log("Expected surface but didn't find one. Check acquisition settings");
+            throw new RuntimeException("Expected surface but didn't find one. Check acquisition settings");
+         }
          if (settings_.collectionPlane_.getCurentInterpolation().isInterpDefined(
                  event.xyPosition_.getCenter().x, event.xyPosition_.getCenter().y)) {
             zPos = settings_.collectionPlane_.getCurentInterpolation().getInterpolatedValue(
@@ -244,7 +247,7 @@ public class MagellanGUIAcquisition extends Acquisition {
 
    public static boolean isImagingVolumeUndefinedAtPosition(int spaceMode, MagellanGUIAcquisitionSettings settings, XYStagePosition position) {
       if (spaceMode == MagellanGUIAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
-         return !settings.footprint_.isDefinedAtPosition(position);
+         return !settings.xyFootprint_.isDefinedAtPosition(position);
       } else if (spaceMode == MagellanGUIAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
          return !settings.topSurface_.isDefinedAtPosition(position)
                  && !settings.bottomSurface_.isDefinedAtPosition(position);
@@ -262,7 +265,7 @@ public class MagellanGUIAcquisition extends Acquisition {
     */
    public static boolean isZAboveImagingVolume(int spaceMode, MagellanGUIAcquisitionSettings settings, XYStagePosition position, double zPos, double zOrigin) {
       if (spaceMode == MagellanGUIAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
-         boolean extrapolate = settings.fixedSurface_ != settings.footprint_;
+         boolean extrapolate = settings.fixedSurface_ != settings.xyFootprint_;
          //extrapolate only if different surface used for XY positions than footprint
          return settings.fixedSurface_.isPositionCompletelyAboveSurface(position, settings.fixedSurface_, zPos + settings.distanceAboveFixedSurface_, extrapolate);
       } else if (spaceMode == MagellanGUIAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
@@ -277,7 +280,7 @@ public class MagellanGUIAcquisition extends Acquisition {
 
    public static boolean isZBelowImagingVolume(int spaceMode, MagellanGUIAcquisitionSettings settings, XYStagePosition position, double zPos, double zOrigin) {
       if (spaceMode == MagellanGUIAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
-         boolean extrapolate = settings.fixedSurface_ != settings.footprint_;
+         boolean extrapolate = settings.fixedSurface_ != settings.xyFootprint_;
          //extrapolate only if different surface used for XY positions than footprint
          return settings.fixedSurface_.isPositionCompletelyBelowSurface(position, settings.fixedSurface_, zPos - settings.distanceBelowFixedSurface_, extrapolate);
       } else if (spaceMode == MagellanGUIAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
@@ -361,18 +364,7 @@ public class MagellanGUIAcquisition extends Acquisition {
 
    private void createXYPositions() {
       try {
-         //get XY positions
-         if (settings_.spaceMode_ == MagellanGUIAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
-            positions_ = settings_.footprint_ == null ? null : settings_.footprint_.getXYPositions(settings_.tileOverlap_);
-         } else if (settings_.spaceMode_ == MagellanGUIAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
-            positions_ = settings_.useTopOrBottomFootprint_ == MagellanGUIAcquisitionSettings.FOOTPRINT_FROM_TOP
-                    ? settings_.topSurface_.getXYPositions(settings_.tileOverlap_) : settings_.bottomSurface_.getXYPositions(settings_.tileOverlap_);
-         } else if (settings_.spaceMode_ == MagellanGUIAcquisitionSettings.CUBOID_Z_STACK) {
-            positions_ = settings_.footprint_ == null ? null : settings_.footprint_.getXYPositions(settings_.tileOverlap_);
-         } else if (settings_.spaceMode_ == MagellanGUIAcquisitionSettings.REGION_2D) {
-            positions_ = settings_.footprint_ == null ? null : settings_.footprint_.getXYPositions(settings_.tileOverlap_);
-         }
-         if (positions_ == null) {
+         if (settings_.xyFootprint_ == null) { //Use current stage position
             positions_ = new ArrayList<XYStagePosition>();
             int fullTileWidth = (int) Magellan.getCore().getImageWidth();
             int fullTileHeight = (int) Magellan.getCore().getImageHeight();
@@ -382,7 +374,10 @@ public class MagellanGUIAcquisition extends Acquisition {
                     tileWidthMinusOverlap, tileHeightMinusOverlap,
                     fullTileWidth, fullTileHeight, 0, 0, MagellanAffineUtils.getAffineTransform(
                             Magellan.getCore().getXPosition(), Magellan.getCore().getXPosition())));
+         } else {
+            positions_ = settings_.xyFootprint_.getXYPositions(settings_.tileOverlap_);
          }
+
       } catch (Exception e) {
          e.printStackTrace();
          Log.log("Problem with Acquisition's XY positions. Check acquisition settings");
@@ -404,11 +399,17 @@ public class MagellanGUIAcquisition extends Acquisition {
 
    @Override
    protected void shutdownEvents() {
-      acqFuture_.cancel(true);
+      if (acqFuture_ != null) {
+         acqFuture_.cancel(true);
+      }
    }
 
    @Override
    public boolean waitForCompletion() {
+      if (acqFuture_ == null) {
+         //it was never successfully started
+         return !aborted_;
+      }
       while (!acqFuture_.isDone() && !acqFinishedFuture_.isDone()) {
          try {
             Thread.sleep(5);

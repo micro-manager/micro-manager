@@ -178,7 +178,9 @@ public class AcqDurationEstimator {
                   while (true) {
                      checkForInterrupt();
                      double zPos = zOrigin + sliceIndex * settings.zStep_;
-                     if ((settings.spaceMode_ == MagellanGUIAcquisitionSettings.REGION_2D || settings.spaceMode_ == MagellanGUIAcquisitionSettings.NO_SPACE)
+                     if ((settings.spaceMode_ == MagellanGUIAcquisitionSettings.REGION_2D || 
+                             settings.spaceMode_ == MagellanGUIAcquisitionSettings.REGION_2D_SURFACE_GUIDED ||
+                             settings.spaceMode_ == MagellanGUIAcquisitionSettings.NO_SPACE)
                              && sliceIndex > 0) {
                         numImagesAcquired++;
                         numImages++;
@@ -263,18 +265,11 @@ public class AcqDurationEstimator {
 
    private List<XYStagePosition> getXYPositions(MagellanGUIAcquisitionSettings settings) throws Exception, InterruptedException {
       List<XYStagePosition> list;
-      if (settings.spaceMode_ == MagellanGUIAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
-         list = settings.footprint_.getXYPositionsNoUpdate();
-      } else if (settings.spaceMode_ == MagellanGUIAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
-         list = settings.useTopOrBottomFootprint_ == MagellanGUIAcquisitionSettings.FOOTPRINT_FROM_TOP
-                 ? settings.topSurface_.getXYPositionsNoUpdate() : settings.bottomSurface_.getXYPositionsNoUpdate();
-      } else if (settings.spaceMode_ == MagellanGUIAcquisitionSettings.CUBOID_Z_STACK) {
-         list = settings.footprint_.getXYPositionsNoUpdate();
-      } else if (settings.spaceMode_ == MagellanGUIAcquisitionSettings.REGION_2D) {
-         list = settings.footprint_.getXYPositionsNoUpdate();
-      } else {
+      if(settings.xyFootprint_ == null) {
          list = new ArrayList<XYStagePosition>();
          list.add(new XYStagePosition(new Point2D.Double(), 0, 0, ""));
+      } else {              
+         list = settings.xyFootprint_.getXYPositionsNoUpdate();
       }
       return list;
    }
