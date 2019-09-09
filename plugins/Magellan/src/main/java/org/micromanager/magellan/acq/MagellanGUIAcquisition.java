@@ -73,7 +73,7 @@ public class MagellanGUIAcquisition extends Acquisition {
       }
       createXYPositions();
       initialize(settings_.dir_, settings_.name_, settings_.tileOverlap_, settings_.zStep_);
-      //Submit a generating stream to get this acquisition going
+      //Submit a generating stream to get this acquisition going      
       Stream<AcquisitionEvent> acqEventStream = magellanGUIAcqEventStream();
       acqFuture_ = MagellanEngine.getInstance().submitEventStream(acqEventStream, this);
       //This event is how the acquisition will end, whether through aborting (which cancels everything undone in the previous event)
@@ -227,6 +227,10 @@ public class MagellanGUIAcquisition extends Acquisition {
       return (AcquisitionEvent event) -> {
          //index all slcies as 0, even though they may nto be in the same plane
          double zPos;
+         if (settings_.collectionPlane_ == null) {
+            Log.log("Expected surface but didn't find one. Check acquisition settings");
+            throw new RuntimeException("Expected surface but didn't find one. Check acquisition settings");
+         }
          if (settings_.collectionPlane_.getCurentInterpolation().isInterpDefined(
                  event.xyPosition_.getCenter().x, event.xyPosition_.getCenter().y)) {
             zPos = settings_.collectionPlane_.getCurentInterpolation().getInterpolatedValue(
@@ -395,11 +399,17 @@ public class MagellanGUIAcquisition extends Acquisition {
 
    @Override
    protected void shutdownEvents() {
-      acqFuture_.cancel(true);
+      if (acqFuture_ != null) {
+         acqFuture_.cancel(true);
+      }
    }
 
    @Override
    public boolean waitForCompletion() {
+      if (acqFuture_ == null) {
+         //it was never successfully started
+         return !aborted_;
+      }
       while (!acqFuture_.isDone() && !acqFinishedFuture_.isDone()) {
          try {
             Thread.sleep(5);

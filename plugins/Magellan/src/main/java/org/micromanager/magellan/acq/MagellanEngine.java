@@ -187,6 +187,9 @@ public class MagellanEngine {
             }
          });
          Future savingDone = f.get();
+         if (savingDone != null) { //Could be null if acq aborted
+            savingDone.get();
+         }
          savingDone.get();
       } catch (NullPointerException e) {
          Log.log(e);
@@ -284,8 +287,7 @@ public class MagellanEngine {
                            Log.log("exception while tryign to stop sequence acquistion");
                         }
                      }
-                     //forget any acquisition events on abort
-                     eventQueue_.clear();
+
                      throw new RuntimeException("Acquisition canceled");
                   }
                }
@@ -302,7 +304,8 @@ public class MagellanEngine {
                return null;
             } catch (InterruptedException e) {
                //Acquisition aborted
-               t.cancel(true); //interrupt current event, which is especially important if it is an acquisition waiting event
+               boolean sucess = t.cancel(true); //interrupt current event, which is especially important if it is an acquisition waiting event
+               eventQueue_.clear();
                //this exception is needed to make everything stop
                throw new RuntimeException("Acquisition cancelled");
             } catch (ExecutionException ex) {
@@ -318,7 +321,11 @@ public class MagellanEngine {
                if (t != null) { //null if it was combined as part of a sequence
                   t.get();
                }
-            } catch (InterruptedException | ExecutionException ex) {
+            } catch (InterruptedException e) {
+               //forget any acquisition events on abort
+               eventQueue_.clear();
+               throw new RuntimeException("Acquistion aborted");
+            } catch (ExecutionException ex) {
                ex.printStackTrace();
                Log.log(ex);
                throw new RuntimeException(ex);
@@ -426,9 +433,9 @@ public class MagellanEngine {
                      }
                   }
                }
-              
+
                event.acquisition_.addImageMetadata(ti.tags, event, event.timeIndex_, c, currentTime - event.acquisition_.getStartTime_ms(),
-                          exposure, core_.getNumberOfCameraChannels() > 1);
+                       exposure, core_.getNumberOfCameraChannels() > 1);
                images.add(ti);
             }
 
@@ -438,9 +445,9 @@ public class MagellanEngine {
             }
             //keep track of how long it takes to acquire an image for acquisition duration estimation
             try {
-                  
+
                acqDurationEstiamtor_.storeImageAcquisitionTime(
-                        exposure, System.currentTimeMillis() - startTime);
+                       exposure, System.currentTimeMillis() - startTime);
             } catch (Exception ex) {
                Log.log(ex);
             }
@@ -585,8 +592,8 @@ public class MagellanEngine {
                      String propName = ps.getPropertyName();
                      core_.startPropertySequence(deviceName, propName);
                   }
-               } else if (event.acquisition_.channels_ != null && event.acquisition_.channels_.getNumChannels() != 0 && (lastEvent_ == null || 
-                       event.channelName_ != null && lastEvent_.channelName_ != null
+               } else if (event.acquisition_.channels_ != null && event.acquisition_.channels_.getNumChannels() != 0 && (lastEvent_ == null
+                       || event.channelName_ != null && lastEvent_.channelName_ != null
                        && !event.channelName_.equals(lastEvent_.channelName_) && event.acquisition_.channels_ != null)) {
                   final ChannelSetting setting = event.acquisition_.channels_.getChannelSetting(event.channelName_);
                   if (setting.use_ && setting.config_ != null) {

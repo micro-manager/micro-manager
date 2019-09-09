@@ -24,6 +24,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.micromanager.magellan.imagedisplay.SubImageControls;
@@ -257,6 +259,9 @@ public class ExploreAcquisition extends Acquisition {
                Log.log("Interrupt while waiting for finish");
             }
          }
+      }
+      while (!finished_) {
+         
       }
       return true;
    }

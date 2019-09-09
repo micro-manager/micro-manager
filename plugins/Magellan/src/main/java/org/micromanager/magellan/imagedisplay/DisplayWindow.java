@@ -624,7 +624,9 @@ public class DisplayWindow extends StackWindow {
       } catch (NullPointerException ex) {
          Log.log("Null pointer error in ImageJ code while closing window");
       }
-
+      //This was a very suspect and hacky addition to make the window disappear
+      this.setVisible(false);
+      this.dispose();             
       closed_ = true;
    }
 

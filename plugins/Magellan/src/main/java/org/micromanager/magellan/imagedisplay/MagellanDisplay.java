@@ -301,9 +301,9 @@ public class MagellanDisplay extends VirtualAcquisitionDisplay implements Surfac
       overlayer_.shutdown();
       redrawPixelsExecutor_.shutdownNow();
       //make sure acquisition is done before allowing imagestorage to close
-      if (acq_ != null){ 
-         acq_.waitForCompletion();
-      } 
+//      if (acq_ != null){ 
+//         acq_.waitForCompletion();
+//      } 
       super.onWindowClose(event);
    }
 

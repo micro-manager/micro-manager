@@ -19,10 +19,14 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 package org.micromanager.magellan.acq;
 
+import java.lang.reflect.InvocationTargetException;
 import org.micromanager.magellan.datasaving.MultiResMultipageTiffStorage;
 import org.micromanager.magellan.imagedisplay.MagellanDisplay;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
 import org.micromanager.magellan.misc.Log;
@@ -39,6 +43,7 @@ public class MagellanImageCache {
    private MagellanDisplay display_;
    private MultiResMultipageTiffStorage imageStorage_;
    private final ExecutorService listenerExecutor_;
+   private volatile boolean imageCacheFinished_ = false;
 
    public void setDisplay(MagellanDisplay d) {
       display_ = d;
@@ -49,13 +54,27 @@ public class MagellanImageCache {
       listenerExecutor_ = Executors.newFixedThreadPool(1);
    }
 
+   /**
+    * Called when images done arriving
+    */
    public void finished() {
       if (!imageStorage_.isFinished()) {
          imageStorage_.finishedWriting();
       }
-      String path = getDiskLocation();
-      display_.imagingFinished(path);
-      listenerExecutor_.shutdown();
+      final String path = getDiskLocation();
+      try {
+         SwingUtilities.invokeAndWait(new Runnable() {
+            @Override
+            public void run() {
+               display_.imagingFinished(path);
+               listenerExecutor_.shutdown();
+               imageCacheFinished_ = true;
+            }
+         });
+      } catch (Exception ex) {
+         throw new RuntimeException(ex);
+      }
+
    }
 
    public boolean isFinished() {
@@ -70,9 +89,22 @@ public class MagellanImageCache {
       return imageStorage_.getDisplaySettings();
    }
 
+   /**
+    * Call when display and acquisition both done
+    */
    public void close() {
-      imageStorage_.close();
-      display_ = null;
+      if (imageCacheFinished_) {
+         imageStorage_.close();
+         display_ = null;
+      } else {
+         //keep resubmitting so that finish, which comes from a different thread, happens first
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               MagellanImageCache.this.close();
+            }
+         });
+      }
    }
 
    public void putImage(final TaggedImage taggedImg) {
