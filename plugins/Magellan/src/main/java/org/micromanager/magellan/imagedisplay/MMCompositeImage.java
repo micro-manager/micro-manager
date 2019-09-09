@@ -173,7 +173,12 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
       };
 
       if (SwingUtilities.isEventDispatchThread()) {
-         runnable.run();
+         try {
+            runnable.run();
+         } catch (IllegalArgumentException e) {
+            //Weird imagej exception that happens during startup
+            Log.log(e, false);
+         }
       } else {
          SwingUtilities.invokeLater(runnable);
       }
