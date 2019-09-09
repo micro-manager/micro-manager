@@ -34,7 +34,7 @@ public class ZMQServer extends ZMQSocketWrapper {
       PORT_NUMBERS.put(MagellanAPI.class, 4829);
 //      PORT_NUMBERS.put(MagellanAcquisitionAPI.class, 4830);
    }
-   
+
    private static ZMQServer coreServer_ = null;
    private static ZMQServer magellanServer_ = null;
 //   private static ZMQServer magellanAcqServer_ = null;
@@ -97,7 +97,7 @@ public class ZMQServer extends ZMQSocketWrapper {
             reply.put("reply", "success");
             this.serialize(Magellan.getCore(), reply);
             return reply.toString().getBytes();
-           
+
          } else if (server.equals("magellan")) {
             if (magellanServer_ == null) {
                magellanServer_ = new ZMQServer(MagellanAPI.class);
@@ -114,10 +114,18 @@ public class ZMQServer extends ZMQSocketWrapper {
          String hashCode = json.getString("hash-code");
          Object target = externalObjects_.get(hashCode);
          return runMethod(target, json);
+      } else if (json.getString("command").equals("destructor")) {
+         String hashCode = json.getString("hash-code");
+         //TODO this is defined in superclass, maybe it would be good to merge these?
+         externalObjects_.remove(hashCode);
+         JSONObject reply = new JSONObject();
+
+         reply.put("reply", "success");
+         this.serialize(Magellan.getAPI(), reply);
+         return reply.toString().getBytes();
       }
       throw new RuntimeException("Unknown Command");
    }
-
 
    protected int getPort(Class clazz) {
       if (clazz == null) {
