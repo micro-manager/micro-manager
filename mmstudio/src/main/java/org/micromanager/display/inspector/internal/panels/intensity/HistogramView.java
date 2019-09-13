@@ -43,7 +43,6 @@ import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import org.apache.commons.lang3.event.EventListenerSupport;
 
 
@@ -55,7 +54,7 @@ public final class HistogramView extends JPanel {
    }
 
    private final EventListenerSupport<Listener> listeners_ =
-         new EventListenerSupport<Listener>(Listener.class, Listener.class.getClassLoader());
+         new EventListenerSupport<>(Listener.class, Listener.class.getClassLoader());
 
    // Data state
    private static class ComponentState {
@@ -70,8 +69,7 @@ public final class HistogramView extends JPanel {
       float[] cachedInterpolatedLogScaledGraph_;
       Path2D.Float cachedPath_;
    }
-   private final List<ComponentState> componentStates_ =
-         new ArrayList<ComponentState>();
+   private final List<ComponentState> componentStates_ = new ArrayList<>();
    private boolean allowGammaScaling_ = true;
    private double gamma_ = 1.0;
    private boolean fillHistograms_ = true;
@@ -1014,20 +1012,16 @@ public final class HistogramView extends JPanel {
       // TODO spinner model fails if not min <= value <= max!!!
       final JSpinner scalingSpinner = new JSpinner(
             new SpinnerNumberModel((int) intensity, (int) min, (int) max, 1));
-      scalingSpinner.addChangeListener(new ChangeListener() {
-         @Override
-         public void stateChanged(ChangeEvent e) {
-            long intensity = (Integer) scalingSpinner.getValue();
-            if (top) {
-               intensity = Math.max(state.scalingMin_ + 1, intensity);
-               setComponentScaling(selectedComponent_, state.scalingMin_, intensity);
-               listeners_.fire().histogramScalingMaxChanged(selectedComponent_, intensity);
-            }
-            else {
-               intensity = Math.min(state.scalingMax_ - 1, intensity);
-               setComponentScaling(selectedComponent_, intensity, state.scalingMax_);
-               listeners_.fire().histogramScalingMinChanged(selectedComponent_, intensity);
-            }
+      scalingSpinner.addChangeListener((ChangeEvent e) -> {
+         long intensity1 = (Integer) scalingSpinner.getValue();
+         if (top) {
+            intensity1 = Math.max(state.scalingMin_ + 1, intensity1);
+            setComponentScaling(selectedComponent_, state.scalingMin_, intensity1);
+            listeners_.fire().histogramScalingMaxChanged(selectedComponent_, intensity1);
+         } else {
+            intensity1 = Math.min(state.scalingMax_ - 1, intensity1);
+            setComponentScaling(selectedComponent_, intensity1, state.scalingMax_);
+            listeners_.fire().histogramScalingMinChanged(selectedComponent_, intensity1);
          }
       });
       JPopupMenu popup = new JPopupMenu();
