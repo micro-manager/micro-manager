@@ -473,7 +473,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @Override
    public Collection<String> getAnimatedAxes() {
       synchronized (this) {
-         return new ArrayList<String>(playbackAxes_);
+         return new ArrayList<>(playbackAxes_);
       }
    }
 
@@ -491,14 +491,11 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       if (adjustedSettings.isROIAutoscaleEnabled() != oldSettings.isROIAutoscaleEnabled()) {
          // We can't let this coalesce. No need to run on EDT but it's just as
          // good a thread as any.
-         SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-               Coords pos;
-               do {
-                  pos = getDisplayPosition();
-               } while (!compareAndSetDisplayPosition(pos, pos, true));
-            }
+         SwingUtilities.invokeLater(() -> {
+            Coords pos;
+            do {
+               pos = getDisplayPosition();
+            } while (!compareAndSetDisplayPosition(pos, pos, true));
          });
       }
 
@@ -642,11 +639,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @Override
    public void addOverlay(final Overlay overlay) {
       if (!SwingUtilities.isEventDispatchThread()) {
-         SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-               addOverlay(overlay);
-            }
+         SwingUtilities.invokeLater(() -> {
+            addOverlay(overlay);
          });
          return;
       }
@@ -662,11 +656,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @Override
    public void removeOverlay(final Overlay overlay) {
       if (!SwingUtilities.isEventDispatchThread()) {
-         SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-               removeOverlay(overlay);
-            }
+         SwingUtilities.invokeLater(() -> {
+            removeOverlay(overlay);
          });
          return;
       }
@@ -702,7 +693,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          }
       }
 
-      return new ArrayList<Overlay>(overlays_);
+      return new ArrayList<>(overlays_);
    }
 
    @Override
@@ -1115,11 +1106,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @Override
    public void toFront() {
       if (!SwingUtilities.isEventDispatchThread()) {
-         SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-               toFront();
-            }
+         SwingUtilities.invokeLater(() -> {
+            toFront();
          });
       }
 

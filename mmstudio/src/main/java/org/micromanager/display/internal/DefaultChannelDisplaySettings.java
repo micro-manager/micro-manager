@@ -235,6 +235,7 @@ public final class DefaultChannelDisplaySettings
       builder.color_ = color_;
       builder.useUniformComponentScaling_ = useUniformComponentScaling_;
       builder.visible_ = visible_;
+      builder.name_ = name_;
       builder.histoRangeBits_= histoRangeBits_;
       builder.useCameraRange_ = useCameraRange_;
       builder.componentSettings_.clear();

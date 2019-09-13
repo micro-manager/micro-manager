@@ -118,12 +118,9 @@ public abstract class AbstractDataViewer implements DataViewer {
             return;
          }
          displaySettings_ = handleDisplaySettings(settings);
-         asyncEventPoster_.submit(new Runnable() {
-            @Override
-            public void run() {
-               postEvent(DefaultDisplaySettingsChangedEvent.create(
-                     AbstractDataViewer.this, oldSettings, displaySettings_));
-            }
+         asyncEventPoster_.submit(() -> {
+            postEvent(DefaultDisplaySettingsChangedEvent.create(
+                    AbstractDataViewer.this, oldSettings, displaySettings_));
          });
       }
    }
@@ -165,12 +162,9 @@ public abstract class AbstractDataViewer implements DataViewer {
             return true;
          }
          displaySettings_ = handleDisplaySettings(newSettings);
-         asyncEventPoster_.submit(new Runnable() {
-            @Override
-            public void run() {
-               postEvent(DefaultDisplaySettingsChangedEvent.create(
-                     AbstractDataViewer.this, oldSettings, displaySettings_));
-            }
+         asyncEventPoster_.submit(() -> {
+            postEvent(DefaultDisplaySettingsChangedEvent.create(
+                    AbstractDataViewer.this, oldSettings, displaySettings_));
          });
          return true;
       }
@@ -224,12 +218,9 @@ public abstract class AbstractDataViewer implements DataViewer {
          displayPosition_ = handleDisplayPosition(position);
 
          if (!position.equals(oldPosition)) {
-            asyncEventPoster_.submit(new Runnable() {
-               @Override
-               public void run() {
-                  postEvent(DefaultDisplayPositionChangedEvent.create(
-                        AbstractDataViewer.this, oldPosition, displayPosition_));
-               }
+            asyncEventPoster_.submit(() -> {
+               postEvent(DefaultDisplayPositionChangedEvent.create(
+                       AbstractDataViewer.this, oldPosition, displayPosition_));
             });
          }
       }
@@ -275,12 +266,9 @@ public abstract class AbstractDataViewer implements DataViewer {
          displayPosition_ = handleDisplayPosition(newPosition);
 
          if (!newPosition.equals(oldPosition)) {
-            asyncEventPoster_.submit(new Runnable() {
-               @Override
-               public void run() {
-                  postEvent(DefaultDisplayPositionChangedEvent.create(
-                        AbstractDataViewer.this, oldPosition, displayPosition_));
-               }
+            asyncEventPoster_.submit(() -> {
+               postEvent(DefaultDisplayPositionChangedEvent.create(
+                       AbstractDataViewer.this, oldPosition, displayPosition_));
             });
          }
          return true;
