@@ -519,6 +519,13 @@ public class GUI extends javax.swing.JFrame {
       repaint();
       acquisitionRunning_ = !enable;
    }
+   
+   public String getSavingDir() {
+      if (globalSavingDirTextField_ == null) {
+         return null;
+      }
+      return globalSavingDirTextField_.getText();
+   }
 
    /**
     * Channel offsets must be within 9 of eachother
@@ -1625,9 +1632,7 @@ public class GUI extends javax.swing.JFrame {
                   .addComponent(estDurationLabel_)
                   .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                   .addComponent(estSizeLabel_))
-               .addGroup(runAcqPanel_Layout.createSequentialGroup()
-                  .addGap(0, 0, 0)
-                  .addComponent(runAcqButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)))
+               .addComponent(runAcqButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addContainerGap())
       );
 
@@ -1646,6 +1651,11 @@ public class GUI extends javax.swing.JFrame {
       });
 
       removeAcqButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/minus.png"))); // NOI18N
+      removeAcqButton_.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            removeAcqButton_ActionPerformed(evt);
+         }
+      });
 
       moveAcqDownButton_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
       moveAcqDownButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/magellan/arrow_down.png"))); // NOI18N
@@ -1656,6 +1666,11 @@ public class GUI extends javax.swing.JFrame {
       });
 
       addAcqButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/plus.png"))); // NOI18N
+      addAcqButton_.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            addAcqButton_ActionPerformed(evt);
+         }
+      });
 
       javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
       jPanel3.setLayout(jPanel3Layout);
@@ -2154,6 +2169,20 @@ public class GUI extends javax.swing.JFrame {
          SurfaceGridManager.getInstance().getSurfaceOrGrid(index).exportToMicroManager();
       }
    }//GEN-LAST:event_jButton3ActionPerformed
+
+   private void addAcqButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addAcqButton_ActionPerformed
+        multiAcqManager_.addNew();
+      acquisitionSettingsChanged();
+   }//GEN-LAST:event_addAcqButton_ActionPerformed
+
+   private void removeAcqButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeAcqButton_ActionPerformed
+           multiAcqManager_.remove(multipleAcqTable_.getSelectedRow());
+      if (multiAcqSelectedIndex_ == multiAcqManager_.getNumberOfAcquisitions()) {
+         multiAcqSelectedIndex_--;
+         multipleAcqTable_.getSelectionModel().setSelectionInterval(multiAcqSelectedIndex_, multiAcqSelectedIndex_);
+      }
+      acquisitionSettingsChanged();
+   }//GEN-LAST:event_removeAcqButton_ActionPerformed
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JComboBox ChannelGroupCombo_;

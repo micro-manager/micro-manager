@@ -1632,10 +1632,7 @@
                                       <EmptySpace max="32767" attributes="0"/>
                                       <Component id="estSizeLabel_" min="-2" max="-2" attributes="0"/>
                                   </Group>
-                                  <Group type="102" alignment="0" attributes="0">
-                                      <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
-                                      <Component id="runAcqButton_" min="-2" pref="44" max="-2" attributes="0"/>
-                                  </Group>
+                                  <Component id="runAcqButton_" alignment="0" min="-2" pref="44" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                           </Group>
@@ -1771,6 +1768,9 @@
                               <Image iconType="3" name="/org/micromanager/icons/minus.png"/>
                             </Property>
                           </Properties>
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="removeAcqButton_ActionPerformed"/>
+                          </Events>
                         </Component>
                         <Component class="javax.swing.JButton" name="moveAcqDownButton_">
                           <Properties>
@@ -1791,6 +1791,9 @@
                               <Image iconType="3" name="/org/micromanager/icons/plus.png"/>
                             </Property>
                           </Properties>
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="addAcqButton_ActionPerformed"/>
+                          </Events>
                         </Component>
                       </SubComponents>
                     </Container>

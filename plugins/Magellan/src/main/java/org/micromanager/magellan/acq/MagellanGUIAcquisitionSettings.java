@@ -17,6 +17,7 @@
 package org.micromanager.magellan.acq;
 
 import org.micromanager.magellan.channels.MagellanChannelSpec;
+import org.micromanager.magellan.gui.GUI;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
@@ -33,6 +34,9 @@ public class MagellanGUIAcquisitionSettings extends AcquisitionSettingsBase {
    
    public MagellanGUIAcquisitionSettings() {
       MutablePropertyMapView prefs = Magellan.getStudio().profile().getSettings(MagellanGUIAcquisitionSettings.class);
+      if (GUI.getInstance() != null && GUI.getInstance().getSavingDir() != null) { //To avoid error on init
+         dir_ = GUI.getInstance().getSavingDir();
+      }
       name_ = prefs.getString(PREF_PREFIX + "NAME", "Untitled");
       timeEnabled_ = prefs.getBoolean(PREF_PREFIX + "TE", false);
       timePointInterval_ = prefs.getDouble(PREF_PREFIX + "TPI", 0);

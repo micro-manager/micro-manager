@@ -68,6 +68,11 @@ public abstract class ZMQSocketWrapper {
       MagellanAcquisitionSettingsAPI.class
       //TODO: maybe automatically read some of these from their package
    };
+   
+//   private static Package[] API_PACKAGES  = new Package[]{
+//      org.micromanager.data.Annotation.class.getPackage(),      
+//      //TODO: maybe automatically read some of these from their package
+//   };
 
    //map of objects that exist in some client of the server
    protected final static HashMap<String, Object> externalObjects_ = new HashMap<String, Object>();
@@ -222,6 +227,14 @@ public abstract class ZMQSocketWrapper {
                   clazz = apiClass;
                }
             }
+//            //It can also be part of a package...this is for micromanager
+//            //API because I don't know how to restricg to specific inerfaces yet
+//            for (Package apiPackage : API_PACKAGES) {
+//               if (apiPackage.equals(o.getClass().getPackage()) ) {
+//                  clazz = o.getClass();
+//               }
+//            }
+//            
             if (clazz == null) {
                throw new RuntimeException("Internal class accidentally exposed");
             }
