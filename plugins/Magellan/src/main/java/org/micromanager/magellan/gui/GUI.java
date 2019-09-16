@@ -519,6 +519,13 @@ public class GUI extends javax.swing.JFrame {
       repaint();
       acquisitionRunning_ = !enable;
    }
+   
+   public String getSavingDir() {
+      if (globalSavingDirTextField_ == null) {
+         return null;
+      }
+      return globalSavingDirTextField_.getText();
+   }
 
    /**
     * Channel offsets must be within 9 of eachother
