@@ -1558,7 +1558,8 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
             }
          }
          return acqEng_.acquire();
-      } catch (MMException e) {
+      } catch (MMException | RuntimeException e) {
+         acqEng_.shutdown();
          ReportingUtils.showError(e);
          return null;
       }
