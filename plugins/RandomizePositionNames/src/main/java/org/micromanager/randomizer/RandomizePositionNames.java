@@ -28,11 +28,13 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
+import org.micromanager.data.Metadata;
 import org.micromanager.display.DisplayWindow;
 
 /**
@@ -86,11 +88,50 @@ public class RandomizePositionNames {
             well2r.put(well, random);
          }
          Datastore newStore = studio_.data().createRAMDatastore();
-         newStore.setSummaryMetadata(dp.getSummaryMetadata().copyBuilder().build());
-         // TODO: fill with images with scrambled positionname
-         // and display
-         newStore.close();
-
+         // Add keys to UserData
+         PropertyMap.Builder udb = dp.getSummaryMetadata().getUserData().copyBuilder();
+         for (Map.Entry<Integer, String> entry : r2Well.entrySet()) {
+            udb.putString("Key: " + entry.getKey(), entry.getValue());
+         }
+         newStore.setSummaryMetadata(dp.getSummaryMetadata().copyBuilder().
+                 userData(udb.build()).build());
+         // fill with images with scrambled positionname
+         // and show them
+         int newPos = -1;
+         for (Integer r : r2Well.keySet()) {
+            String well = r2Well.get(r);
+            for (int pos = 0; pos < nrP; pos++) {
+               Coords oldCoords = coords.copyBuilder().p(pos).build();
+               Image img = dp.getImage(oldCoords);
+               if (img != null && img.getMetadata().hasPositionName()) {
+                  String posName = img.getMetadata().getPositionName("");
+                  String wellImg = posName.substring(0, posName.indexOf("-", 0));
+                  if (wellImg.equals(well)) {                     
+                     newPos++; 
+                     for (int c = 0; c < dp.getAxisLength(Coords.P); c++) {
+                        for (int t = 0; t < dp.getAxisLength(Coords.T); t++) {
+                           oldCoords = coords.copyBuilder().p(pos).c(c).t(t).build();
+                           img = dp.getImage(oldCoords);
+                           if (img != null && img.getMetadata().hasPositionName()) {
+                              posName = img.getMetadata().getPositionName("");
+                              wellImg = posName.substring(0, posName.indexOf("-", 0));
+                              if (wellImg.equals(well)) {
+                                 Metadata newMetadata = img.getMetadata().copyBuilderWithNewUUID().
+                                         positionName("" + r + posName.substring(posName.indexOf("-", 0))).
+                                         build();
+                                 Coords newCoords = oldCoords.copyBuilder().p(newPos).build();
+                                 Image newImg = img.copyWith(newCoords, newMetadata);
+                                 newStore.putImage(newImg);
+                              }
+                           }
+                        }
+                     }
+                  }
+               }
+            }
+         }
+         DisplayWindow newDisplay = studio_.displays().createDisplay(newStore);
+         newDisplay.setDisplaySettings(window.getDisplaySettings());
       } catch (IOException ioe) {
          studio_.logs().showError(ioe, "IO Error in Position randomizer plugin");
       }

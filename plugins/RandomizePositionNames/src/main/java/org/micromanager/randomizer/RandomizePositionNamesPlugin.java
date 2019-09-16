@@ -39,12 +39,12 @@ import org.scijava.plugin.SciJavaPlugin;
 // to make the code show up in the gearmenu when running under Netbeans
 @Plugin(type = DisplayGearMenuPlugin.class)
 public class RandomizePositionNamesPlugin implements DisplayGearMenuPlugin, SciJavaPlugin {
-   public static final String MENUNAME = "Randomize Pos Names...";
+   public static final String MENUNAME = "Position Names";
    private Studio studio_;
 
    @Override
    public String getSubMenu() {
-      return "";
+      return "Randomize";
    }
 
    @Override
