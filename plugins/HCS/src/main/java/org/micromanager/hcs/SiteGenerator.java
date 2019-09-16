@@ -70,7 +70,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
    private Studio app_;
    private final Point2D.Double xyStagePos_;
    private Point2D.Double offset_;
-   private Boolean saveCalibration_;
+   private Boolean isCalibratedXY_;
    private double zStagePos_;
    private final Point2D.Double cursorPos_;
    private String stageWell_;
@@ -426,6 +426,10 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       setPositionListButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(final ActionEvent e) {
+            if (!isCalibratedXY_) {
+               app_.logs().showMessage("Calibrat XY first");
+               return;
+            }
             setPositionList();
          }
       });
@@ -501,7 +505,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       app_.profile().setString(SiteGenerator.class, SITE_COLS,
             columnsField_.getText());
       Double[] offset;
-      if (saveCalibration_) {
+      if (isCalibratedXY_) {
           offset = new Double[] {offset_.getX(), offset_.getY()};
       } else {
           offset = new Double[] {Double.NaN, Double.NaN};
@@ -525,9 +529,9 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
                SITE_OVERLAP, "10"));
       Double[] offset = app_.profile().getDoubleArray(SiteGenerator.class,
               SITE_OFFSET, new Double[] {Double.NaN, Double.NaN});
-      saveCalibration_ = Double.isFinite(offset[0]) && Double.isFinite(offset[1]);//If the offset appears to be valid numbers then a calibration was previously run.
+      isCalibratedXY_ = Double.isFinite(offset[0]) && Double.isFinite(offset[1]);//If the offset appears to be valid numbers then a calibration was previously run.
       offset_ = new Point2D.Double(offset[0], offset[1]);
-      moveStage_.setEnabled(saveCalibration_); 
+      moveStage_.setEnabled(isCalibratedXY_); 
    }
 
    private void setPositionList() {
@@ -710,9 +714,9 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       }
    }
 
-   public void finishCalibration(Point2D.Double offset, Boolean saveCalibration) {
-       offset_ = offset;
-       saveCalibration_ = saveCalibration;
+   public void finishCalibration(Point2D.Double offset) {
+      offset_ = offset;
+      isCalibratedXY_ = true;
       regenerate();
       moveStage_.setEnabled(true);
    }
