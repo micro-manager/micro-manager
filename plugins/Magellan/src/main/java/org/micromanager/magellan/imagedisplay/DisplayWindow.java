@@ -627,15 +627,7 @@ public class DisplayWindow extends StackWindow {
       } catch (NullPointerException ex) {
          Log.log("Null pointer error in ImageJ code while closing window");
       }
-      //A complete hack that makes no sense to me, but it makes the window disappear, so...
-      SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-               JFrame f = new JFrame();
-               f.setVisible(done);
-               f.dispose();
-            } 
-         });
+      this.repaint(); //make sure the window disappears
       closed_ = true;
    }
   
