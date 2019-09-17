@@ -20,6 +20,7 @@ import org.micromanager.magellan.acq.Acquisition;
 import org.micromanager.magellan.acq.ExploreAcquisition;
 import org.micromanager.magellan.acq.MagellanGUIAcquisition;
 import com.google.common.eventbus.EventBus;
+import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.StackWindow;
 import ij.measure.Calibration;
@@ -30,6 +31,8 @@ import java.text.DecimalFormat;
 import java.util.Comparator;
 import java.util.prefs.Preferences;
 import javax.swing.*;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.magellan.gui.GUI;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.Log;
 import org.micromanager.magellan.mmcloneclasses.graph.ContrastPanel;
@@ -65,7 +68,7 @@ public class DisplayWindow extends StackWindow {
    // store window location in Java Preferences
    private static final int DEFAULTPOSX = 300;
    private static final int DEFAULTPOSY = 100;
-   private static MutablePropertyMapView displayPrefs_;
+   private MutablePropertyMapView displayPrefs_;
    private static final String EXPLOREWINDOWPOSX = "ExploreWindowPosX";
    private static final String EXPLOREWINDOWPOSY = "ExploreWindowPosY";
    private static final String FIXEDWINDOWPOSX = "FixedWindowPosX";
@@ -616,7 +619,7 @@ public class DisplayWindow extends StackWindow {
 
    // Force this window to go away.
    public void forceClosed() {
-      bus_.unregister(this);
+         bus_.unregister(this);
       mdPanelMagellan_.prepareForClose();
       dwControls_.prepareForClose();
       try {
@@ -624,11 +627,18 @@ public class DisplayWindow extends StackWindow {
       } catch (NullPointerException ex) {
          Log.log("Null pointer error in ImageJ code while closing window");
       }
-      //This was a very suspect and hacky addition to make the window disappear
-      this.setVisible(false);
-      this.dispose();             
+      //A complete hack that makes no sense to me, but it makes the window disappear, so...
+      SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               JFrame f = new JFrame();
+               f.setVisible(done);
+               f.dispose();
+            } 
+         });
       closed_ = true;
    }
+  
 
    @Override
    public int getNScrollbars() {
@@ -654,7 +664,7 @@ public class DisplayWindow extends StackWindow {
 
    @Override
    public void windowActivated(WindowEvent e) {
-      if (!isClosed()) {
+      if (!isClosed()) { 
          super.windowActivated(e);
       }
    }
