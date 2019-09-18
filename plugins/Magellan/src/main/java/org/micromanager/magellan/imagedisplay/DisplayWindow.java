@@ -137,7 +137,7 @@ public class DisplayWindow extends StackWindow {
       // Ensure that all references to this canvas are removed.
       CanvasPaintPending.removeAllPaintPending(ic);
       ic = new NoZoomCanvas(plus_);
-      ic.setMinimumSize(new Dimension(200, 200));
+      ic.setMinimumSize(new Dimension(400, 400));
 
       dwControls_ = new DisplayWindowControls(disp, bus, disp.getAcquisition());
       contrastPanelMagellan_ = dwControls_.getContrastPanelMagellan();
@@ -627,6 +627,7 @@ public class DisplayWindow extends StackWindow {
       } catch (NullPointerException ex) {
          Log.log("Null pointer error in ImageJ code while closing window");
       }
+      this.dispose();
       this.repaint(); //make sure the window disappears
       closed_ = true;
    }
