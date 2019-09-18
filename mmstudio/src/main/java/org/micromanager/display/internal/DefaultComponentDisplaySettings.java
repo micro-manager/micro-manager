@@ -77,12 +77,10 @@ public final class DefaultComponentDisplaySettings
       return scalingMax_;
    }
    
-   @Override
    public void setScalingMinimum(long min) {
       scalingMin_ = min;
    }
    
-   @Override
    public void setScalingMaximum(long max) {
       scalingMax_ = max;
    }

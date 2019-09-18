@@ -97,6 +97,7 @@ import org.micromanager.internal.utils.ThreadFactoryFactory;
 import org.micromanager.internal.utils.performance.PerformanceMonitor;
 import org.micromanager.internal.utils.performance.TimeIntervalRunningQuantile;
 import org.micromanager.display.DisplayWindowControlsFactory;
+import org.micromanager.display.internal.DefaultComponentDisplaySettings;
 import org.micromanager.display.internal.displaywindow.imagej.MMImageCanvas;
 import org.micromanager.display.internal.event.DisplayMouseEvent;
 import org.micromanager.display.internal.event.DisplayMouseWheelEvent;
@@ -1060,8 +1061,10 @@ public final class DisplayUIController implements Closeable, WindowListener,
          // object with completely new ComnponentDisplaySettings, but it seems 
          // more than a little bit excessive to do that on every autostrech update
          // so we take the shortcut here
-         settings.getChannelSettings(i).getComponentSettings(0).setScalingMinimum(min);
-         settings.getChannelSettings(i).getComponentSettings(0).setScalingMaximum(max);
+         DefaultComponentDisplaySettings dcds = (DefaultComponentDisplaySettings) 
+                 settings.getChannelSettings(i).getComponentSettings(0);
+         dcds.setScalingMinimum(min);
+         dcds.setScalingMaximum(max);
          ijBridge_.mm2ijSetIntensityScaling(i, (int) min, (int) max);
          } else {
             ReportingUtils.logError("DisplayUICOntroller: Received request to " +
