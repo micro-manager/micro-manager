@@ -891,7 +891,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
                   break;
                case Coords.C:
                   int channelIndex = nominalCoords.getC();
-                  sb.append(displayController_.getChannelName(channelIndex));
+                  sb.append(displayController_.getChannelName(channelIndex)).
+                          append(" ");
                   break;
                default:
                   break;
