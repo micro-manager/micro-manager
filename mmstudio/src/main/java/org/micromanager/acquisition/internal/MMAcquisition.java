@@ -215,8 +215,18 @@ public final class MMAcquisition extends DataViewerListener {
                      ChannelDisplaySettings channelSettings
                              = displaySettingsBuilder.getChannelSettings(channelIndex);
                      Color chColor = new Color(chColors.getInt(channelIndex));
-                     displaySettingsBuilder.channel(channelIndex,
-                             channelSettings.copyBuilder().color(chColor).build());
+                     ChannelDisplaySettings.Builder csb = 
+                             channelSettings.copyBuilder().color(chColor);
+                     if (summaryMetadata.has("ChNames")) {
+                        Object chNames = summaryMetadata.get("ChNames");
+                        if (chNames instanceof JSONArray) {
+                           JSONArray jChNames = (JSONArray) chNames;
+                           if (channelIndex < jChNames.length()) {
+                              csb.name(jChNames.getString(channelIndex));
+                           }
+                        }
+                     }
+                     displaySettingsBuilder.channel(channelIndex,csb.build());
                   }
                } while (!display_.compareAndSetDisplaySettings(
                        display_.getDisplaySettings(), displaySettingsBuilder.build()));
