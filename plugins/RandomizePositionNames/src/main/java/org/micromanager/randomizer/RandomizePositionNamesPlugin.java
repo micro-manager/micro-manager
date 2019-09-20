@@ -1,12 +1,12 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          CropperPlugin.java
+//FILE:          RandomizePositionNamesPlugin.java
 //PROJECT:       Micro-Manager 
-//SUBSYSTEM:     Cropper plugin
+//SUBSYSTEM:     RandomizePositionNames plugin
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Nico Stuurman
 //
-// COPYRIGHT:    Regents of the University of California 2016
+// COPYRIGHT:    Regents of the University of California 2019
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -31,12 +31,14 @@ import org.scijava.plugin.SciJavaPlugin;
 
 
 /**
- * Plugin that copies (parts of) Micro-Manager datasets to a new datastore
+ * Plugin that randomizes the position names to assist in blind scoring.
+ * It requires data generated using the HCS plugin and will replace the 
+ * well in the name with a random number.  The keys relating numbers back 
+ * to wells are put in the summarymetadata, so do not look at those until
+ * you are done scoring the images.
+ * 
  * @author nico
  */
-// replace with:
-//@plugin(type=MenuPlugin.class)
-// to make the code show up in the gearmenu when running under Netbeans
 @Plugin(type = DisplayGearMenuPlugin.class)
 public class RandomizePositionNamesPlugin implements DisplayGearMenuPlugin, SciJavaPlugin {
    public static final String MENUNAME = "Position Names";
@@ -65,7 +67,7 @@ public class RandomizePositionNamesPlugin implements DisplayGearMenuPlugin, SciJ
 
    @Override
    public String getHelpText() {
-      return "Renames well names to random one for blind scoring";
+      return "Renames well names to random ones for blind scoring";
    }
 
    @Override

@@ -1,12 +1,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 //FILE:          RandomizePositionNames.java
 //PROJECT:       Micro-Manager 
-//SUBSYSTEM:     Cropper plugin
+//SUBSYSTEM:     RandomizePositionNames plugin
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Nico Stuurman
 //
-// COPYRIGHT:    Regents of the University of California 2016
+// COPYRIGHT:    Regents of the University of California 2019
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -38,7 +38,12 @@ import org.micromanager.data.Metadata;
 import org.micromanager.display.DisplayWindow;
 
 /**
- *
+ * Plugin that randomizes the position names to assist in blind scoring.
+ * It requires data generated using the HCS plugin and will replace the 
+ * well in the name with a random number.  The keys relating numbers back 
+ * to wells are put in the summarymetadata, so do not look at those until
+ * you are done scoring the images.
+ * 
  * @author nico
  */
 public class RandomizePositionNames {
