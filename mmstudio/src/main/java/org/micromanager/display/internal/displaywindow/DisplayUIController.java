@@ -786,12 +786,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       expandDisplayedRangeToInclude(nominalCoords);
       expandDisplayedRangeToInclude(getAllDisplayedCoords());
 
-      for (String axis : scrollBarPanel_.getAxes()) {
-         if (nominalCoords.hasAxis(axis)) {
-            scrollBarPanel_.setAxisPosition(axis, nominalCoords.getIndex(axis));
-            updateAxisPositionIndicator(axis, nominalCoords.getIndex(axis), -1);
-         }
-      } 
+      updateSliders(images);
       
       if (firstTime) {
          // We need to set the displaySettings after the ijBridge was created
@@ -825,6 +820,20 @@ public final class DisplayUIController implements Closeable, WindowListener,
       imageInfoLabel_.setText(getImageInfoLabel(images));
       
       repaintScheduledForNewImages_.set(true);
+   }
+
+   void setImageInfoLabel(ImagesAndStats images) {
+      imageInfoLabel_.setText(getImageInfoLabel(images));
+   }
+
+   void updateSliders(ImagesAndStats images) {
+      Coords nominalCoords = images.getRequest().getNominalCoords();
+      for (String axis : scrollBarPanel_.getAxes()) {
+         if (nominalCoords.hasAxis(axis)) {
+            scrollBarPanel_.setAxisPosition(axis, nominalCoords.getIndex(axis));
+            updateAxisPositionIndicator(axis, nominalCoords.getIndex(axis), -1);
+         }
+      }
    }
 
    /**
@@ -891,8 +900,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
                   break;
                case Coords.C:
                   int channelIndex = nominalCoords.getC();
-                  sb.append(displayController_.getChannelName(channelIndex)).
-                          append(" ");
+                  sb.append(displayController_.
+                          getChannelName(nominalCoords.getC())).append(" ");
                   break;
                default:
                   break;

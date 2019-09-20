@@ -409,9 +409,18 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
             perfMon_.sample("Scheduling identical images (%)", imagesDiffer ? 0.0 : 100.0);
 
-            if (imagesDiffer || getDisplaySettings().isAutostretchEnabled() || 
-                    getDisplaySettings().getColorMode() != DisplaySettings.ColorMode.COMPOSITE) {
+            if (imagesDiffer || getDisplaySettings().isAutostretchEnabled()
+                    || getDisplaySettings().getColorMode()
+                    != DisplaySettings.ColorMode.COMPOSITE) {
                uiController_.displayImages(images);
+            } else if (getDisplaySettings().getColorMode()
+                    == DisplaySettings.ColorMode.COMPOSITE) {
+               // in composite mode, keep the channel name in sync with the 
+               // channel set by the slider.  It would be even better to 
+               // disable the channel slider and display the names of all 
+               // channels, but that becomes very hacky
+               uiController_.updateSliders(images);
+               uiController_.setImageInfoLabel(images);
             }
 
             postEvent(DefaultDisplayDidShowImageEvent.create(
