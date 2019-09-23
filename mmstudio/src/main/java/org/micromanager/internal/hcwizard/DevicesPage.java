@@ -32,6 +32,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -473,7 +474,6 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
       monitorEnteringPage();
       try {
          // double check that list of device libraries is valid before continuing.
-         core_.getDeviceAdapterNames();
          model_.removeDuplicateComPorts();
          rebuildDevicesTable();
          if (fromNextPage) {
@@ -815,6 +815,7 @@ public final class DevicesPage extends PagePanel implements ListSelectionListene
 
    private void buildTreeByLib(MicroscopeModel model) {
       Device devices[] = model.getAvailableDevicesCompact();
+      Arrays.sort(devices, new DeviceSorter());
 
       String thisLibrary = "";
       DefaultMutableTreeNode root = new DefaultMutableTreeNode("Devices supported by " + "\u00B5" + "Manager");
