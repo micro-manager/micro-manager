@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.concurrent.ThreadFactory;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import org.micromanager.magellan.acq.MagellanImageCache;
+import org.micromanager.magellan.imagedisplaynew.MagellanImageCache;
 import ij.measure.Calibration;
 import java.io.File;
 import java.util.concurrent.ExecutionException;
@@ -81,7 +81,7 @@ public class MagellanDisplay extends VirtualAcquisitionDisplay implements Surfac
    private long fullResPixelWidth_ = -1, fullResPixelHeight_ = -1; //used for scaling in fixed area acqs
    private int tileWidth_, tileHeight_;
    private MultiResMultipageTiffStorage multiResStorage_;
-   private DisplayWindowControls dwc_;
+//   private DisplayWindowControls dwc_;
    private volatile JSONObject currentMetadata_;
    private JSONObject displaySettings_;
    
@@ -143,7 +143,6 @@ public class MagellanDisplay extends VirtualAcquisitionDisplay implements Surfac
       setupKeyListeners();
       setupMouseListeners();
       IJ.setTool(Toolbar.SPARE6);
-      stitchedCache.setDisplay(this);
       canvas_.requestFocus();
       SwingUtilities.invokeLater(new Runnable() {
          @Override
@@ -154,9 +153,9 @@ public class MagellanDisplay extends VirtualAcquisitionDisplay implements Surfac
 
    }
    
-   public DisplayWindowControls getDisplayWindowControls() {
-      return dwc_;
-   }
+//   public DisplayWindowControls getDisplayWindowControls() {
+//      return dwc_;
+//   }
    
    public MultiResMultipageTiffStorage getStorage() {
       return multiResStorage_;
@@ -172,54 +171,54 @@ public class MagellanDisplay extends VirtualAcquisitionDisplay implements Surfac
       return multiResStorage_.getStageCoordsFromPixelCoords(xFullPixel, yFullPixel);
    }
 
-   //Thread safe calls for getting displayed indices
-   public int getVisibleSliceIndex() {
-      return subImageControls_ == null ? 0 : subImageControls_.getDisplayedSlice();
-   }
-
-   public int getVisibleFrameIndex() {
-      return subImageControls_.getDisplayedFrame();
-   }
-
-   public int getVisibleChannelIndex() {
-      return subImageControls_.getDisplayedChannel();
-   }
+//   //Thread safe calls for getting displayed indices
+//   public int getVisibleSliceIndex() {
+////      return subImageControls_ == null ? 0 : subImageControls_.getDisplayedSlice();
+//   }
+//
+//   public int getVisibleFrameIndex() {
+////      return subImageControls_.getDisplayedFrame();
+//   }
+//
+//   public int getVisibleChannelIndex() {
+////      return subImageControls_.getDisplayedChannel();
+//   }
 
    public ZoomableVirtualStack getZoomableStack() {
       return zoomableStack_;
    }
 
    protected void applyPixelSizeCalibration() {
-      JSONObject summary = getSummaryMetadata();
-      double pixSizeUm;
-      try {
-         pixSizeUm = MD.getPixelSizeUm(summary);
-      } catch (Exception e) {
-         Log.log("Summary metadta null or pixel size tag missing from summary metadata");
-         return;
-      }
-      //multiply by zoom factor
-      pixSizeUm *= zoomableStack_.getDownsampleFactor();
-
-      if (pixSizeUm > 0) {
-         Calibration cal = new Calibration();
-         if (pixSizeUm < 10) {
-            cal.setUnit("um");
-            cal.pixelWidth = pixSizeUm;
-            cal.pixelHeight = pixSizeUm;
-         } else if (pixSizeUm < 1000) {
-            cal.setUnit("mm");
-            cal.pixelWidth = pixSizeUm / 1000;
-            cal.pixelHeight = pixSizeUm / 1000;
-         } else {
-            cal.setUnit("cm");
-            cal.pixelWidth = pixSizeUm / 10000;
-            cal.pixelHeight = pixSizeUm / 10000;
-         }
-         cal.frameInterval =  MD.getIntervalMs(summary) / 1000.0;        
-         cal.pixelDepth = MD.getZStepUm(summary);      
-         this.getHyperImage().setCalibration(cal);
-      }
+//      JSONObject summary = getSummaryMetadata();
+//      double pixSizeUm;
+//      try {
+//         pixSizeUm = MD.getPixelSizeUm(summary);
+//      } catch (Exception e) {
+//         Log.log("Summary metadta null or pixel size tag missing from summary metadata");
+//         return;
+//      }
+//      //multiply by zoom factor
+//      pixSizeUm *= zoomableStack_.getDownsampleFactor();
+//
+//      if (pixSizeUm > 0) {
+//         Calibration cal = new Calibration();
+//         if (pixSizeUm < 10) {
+//            cal.setUnit("um");
+//            cal.pixelWidth = pixSizeUm;
+//            cal.pixelHeight = pixSizeUm;
+//         } else if (pixSizeUm < 1000) {
+//            cal.setUnit("mm");
+//            cal.pixelWidth = pixSizeUm / 1000;
+//            cal.pixelHeight = pixSizeUm / 1000;
+//         } else {
+//            cal.setUnit("cm");
+//            cal.pixelWidth = pixSizeUm / 10000;
+//            cal.pixelHeight = pixSizeUm / 10000;
+//         }
+//         cal.frameInterval =  MD.getIntervalMs(summary) / 1000.0;        
+//         cal.pixelDepth = MD.getZStepUm(summary);      
+//         this.getHyperImage().setCalibration(cal);
+//      }
    }
 
    protected void updateWindowTitleAndStatus() {
@@ -234,7 +233,7 @@ public class MagellanDisplay extends VirtualAcquisitionDisplay implements Surfac
       canvas_ = this.getImagePlus().getCanvas();
       overlayer_ = new DisplayOverlayer(this, acq_, tileWidth_, tileHeight_, zoomableStack_);
       //so that contrast panel can signal to redraw overlay
-      ((DisplayWindow) this.getHyperImage().getWindow()).getContrastPanel().setOverlayer(overlayer_);
+//      ((DisplayWindow) this.getHyperImage().getWindow()).getContrastPanel().setOverlayer(overlayer_);
    }
 
    public long getFullResWidth() {
@@ -297,7 +296,7 @@ public class MagellanDisplay extends VirtualAcquisitionDisplay implements Surfac
          }
       }
       this.getEventBus().unregister(this);
-      SurfaceGridManager.getInstance().removeSurfaceGridListener(this);
+      SurfaceGridManager.getInstance().unregisterSurfaceGridListener(this);
       overlayer_.shutdown();
       redrawPixelsExecutor_.shutdownNow();
       //make sure acquisition is done before allowing imagestorage to close
@@ -316,21 +315,21 @@ public class MagellanDisplay extends VirtualAcquisitionDisplay implements Surfac
       return mode_;
    }
    
-   public void unlockAllScroller() {
-      subImageControls_.unlockAllScrollers();
-   }
-   
-   public void superlockAllScrollers() {
-      subImageControls_.superLockAllScroller();
-   }
+//   public void unlockAllScroller() {
+//      subImageControls_.unlockAllScrollers();
+//   }
+//   
+//   public void superlockAllScrollers() {
+//      subImageControls_.superLockAllScroller();
+//   }
+//
+//   public void setAnimateFPS(double fps) {
+//      subImageControls_.setAnimateFPS(fps);
+//   }
 
-   public void setAnimateFPS(double fps) {
-      subImageControls_.setAnimateFPS(fps);
-   }
-
-   public XYFootprint getCurrentEditableSurfaceOrGrid() {
-      return dwc_.getCurrentSurfaceOrGrid();
-   }
+//   public XYFootprint getCurrentEditableSurfaceOrGrid() {
+////      return dwc_.getCurrentSurfaceOrGrid();
+//   }
 
    public void drawOverlay() {
       if (overlayer_ != null) {
@@ -339,56 +338,56 @@ public class MagellanDisplay extends VirtualAcquisitionDisplay implements Surfac
    }
 
    private void mouseReleasedActions(MouseEvent e) {
-      if (exploreAcq_ && mode_ == EXPLORE && SwingUtilities.isLeftMouseButton(e)) {
-         Point p2 = e.getPoint();
-         if (exploreStartTile_ != null) {
-            //create events to acquire one or more tiles
-            ((ExploreAcquisition) acq_).acquireTiles(exploreStartTile_.y, exploreStartTile_.x, exploreEndTile_.y, exploreEndTile_.x);
-            exploreStartTile_ = null;
-            exploreEndTile_ = null;
-         } else {
-            //find top left row and column and number of columns spanned by drage event
-            exploreStartTile_ = zoomableStack_.getTileIndicesFromDisplayedPixel(mouseDragStartPointLeft_.x, mouseDragStartPointLeft_.y);
-            exploreEndTile_ = zoomableStack_.getTileIndicesFromDisplayedPixel(p2.x, p2.y);
-         }
-         overlayer_.redrawOverlay();
-      } else if (mode_ == SURFACE_AND_GRID && this.getCurrentEditableSurfaceOrGrid() != null && 
-              this.getCurrentEditableSurfaceOrGrid() instanceof SurfaceInterpolator && 
-              dwc_.isCurrentlyEditableSurfaceGridVisible()) {
-         SurfaceInterpolator currentSurface = (SurfaceInterpolator) this.getCurrentEditableSurfaceOrGrid();
-         if (SwingUtilities.isRightMouseButton(e) && !mouseDragging_) {
-            double z = zoomableStack_.getZCoordinateOfDisplayedSlice(MagellanDisplay.this.getVisibleSliceIndex());
-            if (e.isShiftDown()) {
-               //delete all points at slice
-               currentSurface.deletePointsWithinZRange(Math.min(z - acq_.getZStep()/2, z + acq_.getZStep()/2),
-                       Math.max(z - acq_.getZStep()/2, z + acq_.getZStep()/2));
-            } else {
-                 //delete point if one is nearby
-               Point2D.Double stagePos = stageCoordFromImageCoords(e.getPoint().x, e.getPoint().y);
-               //calculate tolerance
-               Point2D.Double toleranceStagePos = stageCoordFromImageCoords(e.getPoint().x + DELETE_SURF_POINT_PIXEL_TOLERANCE, e.getPoint().y + DELETE_SURF_POINT_PIXEL_TOLERANCE);
-               double stageDistanceTolerance = Math.sqrt((toleranceStagePos.x - stagePos.x) * (toleranceStagePos.x - stagePos.x)
-                       + (toleranceStagePos.y - stagePos.y) * (toleranceStagePos.y - stagePos.y));
-               currentSurface.deleteClosestPoint(stagePos.x, stagePos.y, stageDistanceTolerance, Math.min(z - acq_.getZStep()/2, z + acq_.getZStep()/2),
-                       Math.max(z - acq_.getZStep()/2, z + acq_.getZStep()/2));
-            }
-         } else if (SwingUtilities.isLeftMouseButton(e)) {
-            //convert to real coordinates in 3D space
-            //Click point --> full res pixel point --> stage coordinate
-            Point2D.Double stagePos = stageCoordFromImageCoords(e.getPoint().x, e.getPoint().y);
-            double z = zoomableStack_.getZCoordinateOfDisplayedSlice(this.getVisibleSliceIndex());
-            if (currentSurface == null) {
-               Log.log("Can't add point--No surface selected", true);
-            } else {
-               currentSurface.addPoint(stagePos.x, stagePos.y, z);
-            }
-         }
-      }
-      if (mouseDragging_ && SwingUtilities.isRightMouseButton(e)) {
-         //drag event finished, make sure pixels updated
-         updateDisplay(true);
-      }
-      mouseDragging_ = false;
+//      if (exploreAcq_ && mode_ == EXPLORE && SwingUtilities.isLeftMouseButton(e)) {
+//         Point p2 = e.getPoint();
+//         if (exploreStartTile_ != null) {
+//            //create events to acquire one or more tiles
+//            ((ExploreAcquisition) acq_).acquireTiles(exploreStartTile_.y, exploreStartTile_.x, exploreEndTile_.y, exploreEndTile_.x);
+//            exploreStartTile_ = null;
+//            exploreEndTile_ = null;
+//         } else {
+//            //find top left row and column and number of columns spanned by drage event
+//            exploreStartTile_ = zoomableStack_.getTileIndicesFromDisplayedPixel(mouseDragStartPointLeft_.x, mouseDragStartPointLeft_.y);
+//            exploreEndTile_ = zoomableStack_.getTileIndicesFromDisplayedPixel(p2.x, p2.y);
+//         }
+//         overlayer_.redrawOverlay();
+//      } else if (mode_ == SURFACE_AND_GRID && this.getCurrentEditableSurfaceOrGrid() != null && 
+//              this.getCurrentEditableSurfaceOrGrid() instanceof SurfaceInterpolator && 
+//              dwc_.isCurrentlyEditableSurfaceGridVisible()) {
+//         SurfaceInterpolator currentSurface = (SurfaceInterpolator) this.getCurrentEditableSurfaceOrGrid();
+//         if (SwingUtilities.isRightMouseButton(e) && !mouseDragging_) {
+////            double z = zoomableStack_.getZCoordinateOfDisplayedSlice(MagellanDisplay.this.getVisibleSliceIndex());
+//            if (e.isShiftDown()) {
+//               //delete all points at slice
+//               currentSurface.deletePointsWithinZRange(Math.min(z - acq_.getZStep()/2, z + acq_.getZStep()/2),
+//                       Math.max(z - acq_.getZStep()/2, z + acq_.getZStep()/2));
+//            } else {
+//                 //delete point if one is nearby
+//               Point2D.Double stagePos = stageCoordFromImageCoords(e.getPoint().x, e.getPoint().y);
+//               //calculate tolerance
+//               Point2D.Double toleranceStagePos = stageCoordFromImageCoords(e.getPoint().x + DELETE_SURF_POINT_PIXEL_TOLERANCE, e.getPoint().y + DELETE_SURF_POINT_PIXEL_TOLERANCE);
+//               double stageDistanceTolerance = Math.sqrt((toleranceStagePos.x - stagePos.x) * (toleranceStagePos.x - stagePos.x)
+//                       + (toleranceStagePos.y - stagePos.y) * (toleranceStagePos.y - stagePos.y));
+//               currentSurface.deleteClosestPoint(stagePos.x, stagePos.y, stageDistanceTolerance, Math.min(z - acq_.getZStep()/2, z + acq_.getZStep()/2),
+//                       Math.max(z - acq_.getZStep()/2, z + acq_.getZStep()/2));
+//            }
+//         } else if (SwingUtilities.isLeftMouseButton(e)) {
+//            //convert to real coordinates in 3D space
+//            //Click point --> full res pixel point --> stage coordinate
+//            Point2D.Double stagePos = stageCoordFromImageCoords(e.getPoint().x, e.getPoint().y);
+//            double z = zoomableStack_.getZCoordinateOfDisplayedSlice(this.getVisibleSliceIndex());
+//            if (currentSurface == null) {
+//               Log.log("Can't add point--No surface selected", true);
+//            } else {
+//               currentSurface.addPoint(stagePos.x, stagePos.y, z);
+//            }
+//         }
+//      }
+//      if (mouseDragging_ && SwingUtilities.isRightMouseButton(e)) {
+//         //drag event finished, make sure pixels updated
+//         updateDisplay(true);
+//      }
+//      mouseDragging_ = false;
    }
 
    private void mouseDraggedActions(MouseEvent e) {
@@ -401,20 +400,20 @@ public class MagellanDisplay extends VirtualAcquisitionDisplay implements Surfac
          mouseDragStartPointRight_ = currentPoint;
       } else if (SwingUtilities.isLeftMouseButton(e)) {
          //only move grid
-         if (mode_ == SURFACE_AND_GRID && this.getCurrentEditableSurfaceOrGrid() != null && 
-              this.getCurrentEditableSurfaceOrGrid() instanceof MultiPosGrid && 
-                 dwc_.isCurrentlyEditableSurfaceGridVisible()) {
-            MultiPosGrid currentGrid = (MultiPosGrid) this.getCurrentEditableSurfaceOrGrid();
-            int dx = (currentPoint.x - mouseDragStartPointLeft_.x);
-            int dy = (currentPoint.y - mouseDragStartPointLeft_.y);
-            //convert pixel dx dy to stage dx dy
-            Point2D.Double p0 = stageCoordFromImageCoords(0, 0);
-            Point2D.Double p1 = stageCoordFromImageCoords(dx, dy);
-            currentGrid.translate(p1.x - p0.x, p1.y - p0.y);
-            mouseDragStartPointLeft_ = currentPoint;
-         } else if (mode_ == EXPLORE) {
-            overlayer_.redrawOverlay();
-         }
+//         if (mode_ == SURFACE_AND_GRID && this.getCurrentEditableSurfaceOrGrid() != null && 
+//              this.getCurrentEditableSurfaceOrGrid() instanceof MultiPosGrid && 
+//                 dwc_.isCurrentlyEditableSurfaceGridVisible()) {
+//            MultiPosGrid currentGrid = (MultiPosGrid) this.getCurrentEditableSurfaceOrGrid();
+//            int dx = (currentPoint.x - mouseDragStartPointLeft_.x);
+//            int dy = (currentPoint.y - mouseDragStartPointLeft_.y);
+//            //convert pixel dx dy to stage dx dy
+//            Point2D.Double p0 = stageCoordFromImageCoords(0, 0);
+//            Point2D.Double p1 = stageCoordFromImageCoords(dx, dy);
+//            currentGrid.translate(p1.x - p0.x, p1.y - p0.y);
+//            mouseDragStartPointLeft_ = currentPoint;
+//         } else if (mode_ == EXPLORE) {
+//            overlayer_.redrawOverlay();
+//         }
       }
    }
 
@@ -636,17 +635,18 @@ public class MagellanDisplay extends VirtualAcquisitionDisplay implements Surfac
    
    @Override
    public void SurfaceInterpolationUpdated(SurfaceInterpolator s) {
-      if(dwc_.getSurfacesAndGridsForDisplay().contains(s)) {
-         drawOverlay();
-      }
+//      if(dwc_.getSurfacesAndGridsForDisplay().contains(s)) {
+//         drawOverlay();
+//      }
    }
 
-   void registerControls(DisplayWindowControls dwc) {
-      dwc_ = dwc;
-   }
+//   void registerControls(DisplayWindowControls dwc) {
+//      dwc_ = dwc;
+//   }
 
    public ArrayList<XYFootprint> getSurfacesAndGridsForDisplay() {
-      return dwc_.getSurfacesAndGridsForDisplay();
+//      return dwc_.getSurfacesAndGridsForDisplay();
+return null;
    }
    
    public void setCurrentMetadata(JSONObject md) {

@@ -16,6 +16,7 @@
 //
 package org.micromanager.magellan.imagedisplay;
 
+//import org.micromanager.magellan.imagedisplaynew.ContrastPanelMagellanAdapter;
 import org.micromanager.magellan.acq.Acquisition;
 import org.micromanager.magellan.acq.ExploreAcquisition;
 import org.micromanager.magellan.acq.MagellanGUIAcquisition;
@@ -35,7 +36,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.magellan.gui.GUI;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.Log;
-import org.micromanager.magellan.mmcloneclasses.graph.ContrastPanel;
+//import org.micromanager.magellan.imagedisplaynew.ContrastPanel;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
@@ -55,15 +56,15 @@ public class DisplayWindow extends StackWindow {
    private final EventBus bus_;
    private ImagePlus plus_;
    private JPanel canvasPanel_;
-   private SubImageControls subImageControls_;
+//   private SubImageControls subImageControls_;
    private final JToggleButton arrowButton_;
    private Acquisition acq_;
    private MagellanDisplay disp_;
    private JPanel nonImagePanel_, controlsAndContrastPanel_;
    private volatile boolean saveWindowResize_ = false;
-   private ContrastPanelMagellanAdapter contrastPanelMagellan_;
+//   private ContrastPanelMagellanAdapter contrastPanelMagellan_;
    private MetadataPanel mdPanelMagellan_;
-   private DisplayWindowControls dwControls_;
+//   private DisplayWindowControls dwControls_;
 
    // store window location in Java Preferences
    private static final int DEFAULTPOSX = 300;
@@ -139,15 +140,15 @@ public class DisplayWindow extends StackWindow {
       ic = new NoZoomCanvas(plus_);
       ic.setMinimumSize(new Dimension(400, 400));
 
-      dwControls_ = new DisplayWindowControls(disp, bus, disp.getAcquisition());
-      contrastPanelMagellan_ = dwControls_.getContrastPanelMagellan();
-      mdPanelMagellan_ = dwControls_.getMetadataPanelMagellan();
-      disp.setControls(dwControls_);
+//      dwControls_ = new DisplayWindowControls(disp, bus, disp.getAcquisition());
+//      contrastPanelMagellan_ = dwControls_.getContrastPanelMagellan();
+//      mdPanelMagellan_ = dwControls_.getMetadataPanelMagellan();
+//      disp.setControls(dwControls_);
 
       //create non image panel
       nonImagePanel_ = new JPanel(new BorderLayout());
       controlsAndContrastPanel_ = new JPanel(new BorderLayout());
-      controlsAndContrastPanel_.add(dwControls_, BorderLayout.LINE_END);
+//      controlsAndContrastPanel_.add(dwControls_, BorderLayout.LINE_END);
 
       //show stuff on explore acquisitions, collapse for fixed area cqs
       arrowButton_ = new JToggleButton(disp_.getAcquisition() instanceof ExploreAcquisition ? "\u25c4" : "\u25ba");
@@ -180,7 +181,7 @@ public class DisplayWindow extends StackWindow {
       nonImagePanel_.add(arrowPanel, BorderLayout.LINE_START);
 
       //create sub image controls
-      subImageControls_ = new SubImageControls(disp, bus, disp.getAcquisition());
+//      subImageControls_ = new SubImageControls(disp, bus, disp.getAcquisition());
       // Wrap the canvas in a subpanel so that we can get events when it
       // resizes.
       canvasPanel_ = new JPanel();
@@ -199,7 +200,7 @@ public class DisplayWindow extends StackWindow {
 
       JPanel leftPanel = new JPanel(new BorderLayout());
       leftPanel.add(canvasPanel_, BorderLayout.CENTER);
-      leftPanel.add(subImageControls_, BorderLayout.PAGE_END);
+//      leftPanel.add(subImageControls_, BorderLayout.PAGE_END);
       this.add(leftPanel, BorderLayout.CENTER);
 
       JPanel rightPanel = new JPanel(new BorderLayout());
@@ -219,7 +220,7 @@ public class DisplayWindow extends StackWindow {
          this.setSize(new Dimension(displayPrefs_.getInteger(WINDOWSIZEX_FIXED, width),
                  displayPrefs_.getInteger(WINDOWSIZEY_FIXED, height)));
       }
-      contrastPanelMagellan_.initialize(disp);
+//      contrastPanelMagellan_.initialize(disp);
       mdPanelMagellan_.initialize(disp);
       doLayout();
 
@@ -229,7 +230,7 @@ public class DisplayWindow extends StackWindow {
          public void run() {
             if (disp_.getAcquisition() == null) {
                //loaded data, force scrollbars to show               
-               subImageControls_.makeScrollersAppear(disp_.getStorage().getNumChannels(), disp_.getStorage().getNumSlices(), disp_.getStorage().getNumFrames());
+//               subImageControls_.makeScrollersAppear(disp_.getStorage().getNumChannels(), disp_.getStorage().getNumSlices(), disp_.getStorage().getNumFrames());
             }
             initWindow();
 
@@ -309,7 +310,8 @@ public class DisplayWindow extends StackWindow {
    }
 
    public int getNumChannels() {
-      return dwControls_.getNumChannels();
+      return 0;
+//      return dwControls_.getNumChannels();
    }
    
    /**
@@ -571,10 +573,10 @@ public class DisplayWindow extends StackWindow {
 
       s += ";  " + (100.0 / (double) disp_.getZoomableStack().getDownsampleFactor()) + "% Zoom;  ";
       //z position:
-      if (acq_ != null) {
-         s += acq_.getZStageName() + ": " + disp_.getZoomableStack().getZCoordinateOfDisplayedSlice(
-                 disp_.getVisibleSliceIndex());
-      }
+//      if (acq_ != null) {
+//         s += acq_.getZStageName() + ": " + disp_.getZoomableStack().getZCoordinateOfDisplayedSlice(
+//                 disp_.getVisibleSliceIndex());
+//      }
 
       return s;
    }
@@ -592,13 +594,13 @@ public class DisplayWindow extends StackWindow {
       }
    }
 
-   public SubImageControls getSubImageControls() {
-      return subImageControls_;
-   }
+//   public SubImageControls getSubImageControls() {
+//      return subImageControls_;
+//   }
 
-   public DisplayWindowControls getDisplayWindowControls() {
-      return dwControls_;
-   }
+//   public DisplayWindowControls getDisplayWindowControls() {
+//      return dwControls_;
+//   }
    
    @Override
    public boolean close() {
@@ -613,15 +615,15 @@ public class DisplayWindow extends StackWindow {
       }
    }
 
-   public ContrastPanel getContrastPanel() {
-      return contrastPanelMagellan_;
-   }
+//   public ContrastPanel getContrastPanel() {
+//      return contrastPanelMagellan_;
+//   }
 
    // Force this window to go away.
    public void forceClosed() {
          bus_.unregister(this);
       mdPanelMagellan_.prepareForClose();
-      dwControls_.prepareForClose();
+//      dwControls_.prepareForClose();
       try {
          super.close();
       } catch (NullPointerException ex) {

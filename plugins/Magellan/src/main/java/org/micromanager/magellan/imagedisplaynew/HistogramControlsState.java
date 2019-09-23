@@ -1,5 +1,5 @@
 
-package org.micromanager.magellan.mmcloneclasses.graph;
+package org.micromanager.magellan.imagedisplaynew;
 
 /**
  *

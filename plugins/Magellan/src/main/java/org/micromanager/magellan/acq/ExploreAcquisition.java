@@ -28,10 +28,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.micromanager.magellan.imagedisplay.SubImageControls;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.Log;
 import org.json.JSONArray;
+import org.micromanager.data.DataProvider;
 
 /**
  * A single time point acquisition that can dynamically expand in X,Y, and Z
@@ -82,7 +82,7 @@ public class ExploreAcquisition extends Acquisition {
       super.abort();
    }
 
-   public void acquireTileAtCurrentLocation(final SubImageControls controls) {
+   public void acquireTileAtCurrentLocation() {
       double xPos, yPos, zPos;
 
       try {
@@ -96,11 +96,12 @@ public class ExploreAcquisition extends Acquisition {
       }
 
       int sliceIndex = (int) Math.round((zPos - zOrigin_) / zStep_);
-      int posIndex = posManager_.getFullResPositionIndexFromStageCoords(xPos, yPos);
-      controls.setZLimitSliderValues(sliceIndex);
+      int posIndex = dataProvider_.getFullResPositionIndexFromStageCoords(xPos, yPos);
+//      controls.setZLimitSliderValues(sliceIndex);
+      //TODO: chagne the sliders to reflect what was acquired
 
-      submitEvents(new int[]{(int) posManager_.getXYPosition(posIndex).getGridRow()},
-              new int[]{(int) posManager_.getXYPosition(posIndex).getGridCol()}, sliceIndex, sliceIndex);
+      submitEvents(new int[]{(int) dataProvider_.getXYPosition(posIndex).getGridRow()},
+              new int[]{(int) dataProvider_.getXYPosition(posIndex).getGridCol()}, sliceIndex, sliceIndex);
    }
 
    public void acquireTiles(final int r1, final int c1, final int r2, final int c2) {
@@ -136,10 +137,10 @@ public class ExploreAcquisition extends Acquisition {
    }
 
    private void submitEvents(int[] newPositionRows, int[] newPositionCols, int minZIndex, int maxZIndex) {
-      int[] posIndices = posManager_.getPositionIndices(newPositionRows, newPositionCols);
+      int[] posIndices = dataProvider_.getPositionIndices(newPositionRows, newPositionCols);
       ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>> acqFunctions
               = new ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>>();
-      acqFunctions.add(positions(posIndices, posManager_.getPositionList()));
+      acqFunctions.add(positions(posIndices, dataProvider_.getPositionList()));
       acqFunctions.add(zStack(minZIndex, maxZIndex + 1));
       if (channels_ != null) {
          acqFunctions.add(channels(channels_));

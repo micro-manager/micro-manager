@@ -23,7 +23,7 @@ package org.micromanager.magellan.imagedisplay;
 import org.micromanager.magellan.acq.Acquisition;
 import org.micromanager.magellan.acq.ExploreAcquisition;
 import org.micromanager.magellan.acq.MagellanGUIAcquisition;
-import org.micromanager.magellan.acq.MagellanImageCache;
+import org.micromanager.magellan.imagedisplaynew.MagellanImageCache;
 import org.micromanager.magellan.datasaving.MultiResMultipageTiffStorage;
 import java.awt.Dimension;
 import java.awt.Point;
@@ -54,7 +54,6 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
    private final boolean boundedImage_;
    private final long xMax_, yMax_, xMin_, yMin_;
    final private MagellanDisplay disp_;
-   private volatile JSONObject latestMetadata_;
 
    public ZoomableVirtualStack(int type, int width, int height, MagellanImageCache imageCache,
            int nSlices, VirtualAcquisitionDisplay vad, MultiResMultipageTiffStorage multiResStorage,
@@ -203,7 +202,7 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
       
       if (acquisition_ != null) {
          //If we haven't already gotten to this low of a resolution, create it
-         acquisition_.addResolutionsUpTo(resolutionIndex_ + numLevels);
+//         acquisition_.addResolutionsUpTo(resolutionIndex_ + numLevels);
       }
 
       int previousDSFactor = (int) Math.pow(2, resolutionIndex_);
@@ -253,67 +252,68 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
 
    private void moveViewToVisibleArea() {
       //compensate for the possibility of negative slice indices 
-      int slice = disp_.getVisibleSliceIndex() + ((ExploreAcquisition) acquisition_).getMinSliceIndex();
-      //check for valid tiles (at lowest res) at this slice        
-      Set<Point> tiles = multiResStorage_.getTileIndicesWithDataAt(slice);
-      if (tiles.size() == 0) {
-         return;
-      }
+//      int slice = disp_.getVisibleSliceIndex() + ((ExploreAcquisition) acquisition_).getMinSliceIndex();
+//
+//      //check for valid tiles (at lowest res) at this slice        
+//      Set<Point> tiles = multiResStorage_.getTileIndicesWithDataAt(slice);
+//      if (tiles.size() == 0) {
+//         return;
+//      }
       //center of one tile must be within corners of current view 
       double minDistance = Integer.MAX_VALUE;
       //do all calculations at full resolution
       long newXView = xView_ * getDownsampleFactor();
       long newYView = yView_ * getDownsampleFactor();
 
-      for (Point p : tiles) {
-         //calclcate limits on margin of tile that must remain in view
-         long tileX1 = (long) ((0.1 + p.x) * tileWidth_);
-         long tileX2 = (long) ((0.9 + p.x) * tileWidth_);
-         long tileY1 = (long) ((0.1 + p.y) * tileHeight_);
-         long tileY2 = (long) ((0.9 + p.y) * tileHeight_);
-         long visibleWidth = (long) (0.8 * tileWidth_);
-         long visibleHeight = (long) (0.8 * tileHeight_);
-         //get bounds of viewing area
-         long fovX1 = getAbsoluteFullResPixelCoordinate(0, 0).x_;
-         long fovY1 = getAbsoluteFullResPixelCoordinate(0, 0).y_;
-         long fovX2 = fovX1 + displayImageWidth_ * getDownsampleFactor();
-         long fovY2 = fovY1 + displayImageHeight_ * getDownsampleFactor();
-
-         //check if tile and fov intersect
-         boolean xInView = fovX1 < tileX2 && fovX2 > tileX1;
-         boolean yInView = fovY1 < tileY2 && fovY2 > tileY1;
-         boolean intersection = xInView && yInView;
-
-         if (intersection) {
-            return; //at least one tile is in view, don't need to do anything
-         }
-         //tile to fov corner to corner distances
-         double tl = ((tileX1 - fovX2) * (tileX1 - fovX2) + (tileY1 - fovY2) * (tileY1 - fovY2)); //top left tile, botom right fov
-         double tr = ((tileX2 - fovX1) * (tileX2 - fovX1) + (tileY1 - fovY2) * (tileY1 - fovY2)); // top right tile, bottom left fov
-         double bl = ((tileX1 - fovX2) * (tileX1 - fovX2) + (tileY2 - fovY1) * (tileY2 - fovY1)); // bottom left tile, top right fov
-         double br = ((tileX1 - fovX1) * (tileX1 - fovX1) + (tileY2 - fovY1) * (tileY2 - fovY1)); //bottom right tile, top left fov
-
-         double closestCornerDistance = Math.min(Math.min(tl, tr), Math.min(bl, br));
-         if (closestCornerDistance < minDistance) {
-            minDistance = closestCornerDistance;
-            if (tl <= tr && tl <= bl && tl <= br) { //top left tile, botom right fov
-               newXView = xInView ? newXView : tileX1 - displayImageWidth_ * getDownsampleFactor();
-               newYView = yInView ? newYView : tileY1 - displayImageHeight_ * getDownsampleFactor();
-            } else if (tr <= tl && tr <= bl && tr <= br) { // top right tile, bottom left fov
-               newXView = xInView ? newXView : tileX2;
-               newYView = yInView ? newYView : tileY1 - displayImageHeight_ * getDownsampleFactor();
-            } else if (bl <= tl && bl <= tr && bl <= br) { // bottom left tile, top right fov
-               newXView = xInView ? newXView : tileX1 - displayImageWidth_ * getDownsampleFactor();
-               newYView = yInView ? newYView : tileY2;
-            } else { //bottom right tile, top left fov
-               newXView = xInView ? newXView : tileX2;
-               newYView = yInView ? newYView : tileY2;
-            }
-         }
-      }
-      //readjust to current res level
-      xView_ = newXView / getDownsampleFactor();
-      yView_ = newYView / getDownsampleFactor();
+//      for (Point p : tiles) {
+//         //calclcate limits on margin of tile that must remain in view
+//         long tileX1 = (long) ((0.1 + p.x) * tileWidth_);
+//         long tileX2 = (long) ((0.9 + p.x) * tileWidth_);
+//         long tileY1 = (long) ((0.1 + p.y) * tileHeight_);
+//         long tileY2 = (long) ((0.9 + p.y) * tileHeight_);
+//         long visibleWidth = (long) (0.8 * tileWidth_);
+//         long visibleHeight = (long) (0.8 * tileHeight_);
+//         //get bounds of viewing area
+//         long fovX1 = getAbsoluteFullResPixelCoordinate(0, 0).x_;
+//         long fovY1 = getAbsoluteFullResPixelCoordinate(0, 0).y_;
+//         long fovX2 = fovX1 + displayImageWidth_ * getDownsampleFactor();
+//         long fovY2 = fovY1 + displayImageHeight_ * getDownsampleFactor();
+//
+//         //check if tile and fov intersect
+//         boolean xInView = fovX1 < tileX2 && fovX2 > tileX1;
+//         boolean yInView = fovY1 < tileY2 && fovY2 > tileY1;
+//         boolean intersection = xInView && yInView;
+//
+//         if (intersection) {
+//            return; //at least one tile is in view, don't need to do anything
+//         }
+//         //tile to fov corner to corner distances
+//         double tl = ((tileX1 - fovX2) * (tileX1 - fovX2) + (tileY1 - fovY2) * (tileY1 - fovY2)); //top left tile, botom right fov
+//         double tr = ((tileX2 - fovX1) * (tileX2 - fovX1) + (tileY1 - fovY2) * (tileY1 - fovY2)); // top right tile, bottom left fov
+//         double bl = ((tileX1 - fovX2) * (tileX1 - fovX2) + (tileY2 - fovY1) * (tileY2 - fovY1)); // bottom left tile, top right fov
+//         double br = ((tileX1 - fovX1) * (tileX1 - fovX1) + (tileY2 - fovY1) * (tileY2 - fovY1)); //bottom right tile, top left fov
+//
+//         double closestCornerDistance = Math.min(Math.min(tl, tr), Math.min(bl, br));
+//         if (closestCornerDistance < minDistance) {
+//            minDistance = closestCornerDistance;
+//            if (tl <= tr && tl <= bl && tl <= br) { //top left tile, botom right fov
+//               newXView = xInView ? newXView : tileX1 - displayImageWidth_ * getDownsampleFactor();
+//               newYView = yInView ? newYView : tileY1 - displayImageHeight_ * getDownsampleFactor();
+//            } else if (tr <= tl && tr <= bl && tr <= br) { // top right tile, bottom left fov
+//               newXView = xInView ? newXView : tileX2;
+//               newYView = yInView ? newYView : tileY1 - displayImageHeight_ * getDownsampleFactor();
+//            } else if (bl <= tl && bl <= tr && bl <= br) { // bottom left tile, top right fov
+//               newXView = xInView ? newXView : tileX1 - displayImageWidth_ * getDownsampleFactor();
+//               newYView = yInView ? newYView : tileY2;
+//            } else { //bottom right tile, top left fov
+//               newXView = xInView ? newXView : tileX2;
+//               newYView = yInView ? newYView : tileY2;
+//            }
+//         }
+//      }
+//      //readjust to current res level
+//      xView_ = newXView / getDownsampleFactor();
+//      yView_ = newYView / getDownsampleFactor();
    }
 
    public void pan(int dx, int dy) {

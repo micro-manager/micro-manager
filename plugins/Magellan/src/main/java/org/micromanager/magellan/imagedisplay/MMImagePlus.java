@@ -25,7 +25,7 @@ public class MMImagePlus extends ImagePlus implements IMMImagePlus {
 
    private EventBus bus_;
 
-   MMImagePlus(String title, ImageStack stack, EventBus bus) {
+   public MMImagePlus(String title, ImageStack stack, EventBus bus) {
       super(title, stack);
       bus_ = bus;
    }

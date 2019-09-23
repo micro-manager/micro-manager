@@ -14,19 +14,17 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.magellan.imagedisplay;
+package org.micromanager.magellan.imagedisplaynew;
 
-import org.micromanager.magellan.acq.Acquisition;
-import org.micromanager.magellan.acq.ExploreAcquisition;
-import org.micromanager.magellan.acq.MagellanGUIAcquisition;
-import com.google.common.eventbus.EventBus;
+import org.micromanager.magellan.imagedisplaynew.events.ExploreZLimitsChangedEvent;
+import org.micromanager.magellan.imagedisplaynew.events.ScrollersAddedEvent;
+import org.micromanager.magellan.imagedisplaynew.events.MagellanNewImageEvent;
+import org.micromanager.magellan.imagedisplay.*;
 import com.google.common.eventbus.Subscribe;
-import ij.gui.StackWindow;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GraphicsEnvironment;
-import java.awt.Panel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
@@ -34,6 +32,8 @@ import java.awt.event.AdjustmentListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.text.DecimalFormat;
+import java.util.List;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
@@ -44,35 +44,35 @@ import org.micromanager.magellan.misc.JavaUtils;
 import org.micromanager.magellan.misc.Log;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
 import org.micromanager.magellan.misc.NumberUtils;
 
 /**
+ * Scrollbars + optional controls for explor acquisitons
  *
  * @author Henry
  */
-public class SubImageControls extends Panel {
+ class NewSubImageControls extends JPanel {
 
    private final static int DEFAULT_FPS = 7;
    private static final DecimalFormat TWO_DECIMAL_FORMAT = new DecimalFormat("0.00");
-   private EventBus bus_;
-   private MagellanDisplay display_;
+   private MagellanDisplayController display_;
    private ScrollerPanel scrollerPanel_;
    private JPanel sliderPanel_;
    private JScrollBar zTopScrollbar_, zBottomScrollbar_;
    private JTextField zTopTextField_, zBottomTextField_;
-   private Acquisition acq_;
    private double zStep_, zOrigin_;
    private int displayHeight_ = -1;
    //thread safe fields for currently displaye dimage
-   private volatile int sliceIndex_ = 0, frameIndex_ = 0, channelIndex_ = 0;
+   private final boolean explore_;
+   private int minZExplored_ =-1, maxZExplored_ = -1;
 
-   public SubImageControls(MagellanDisplay disp, EventBus bus, Acquisition acq) {
+   public NewSubImageControls(MagellanDisplayController disp, double zStep, boolean explore) {
       super(new FlowLayout(FlowLayout.LEADING));
-      bus_ = bus;
+      explore_ = explore;
       display_ = disp;
-      bus_.register(this);
-      acq_ = acq;
-      zStep_ = acq != null ? acq_.getZStep() : 0;
+      display_.registerForEvents(this);
+      zStep_ = zStep;
       try {
          initComponents();
       } catch (Exception e) {
@@ -81,17 +81,25 @@ public class SubImageControls extends Panel {
       }
 
    }
+   
+   @Subscribe
+   public void onDisplayClose(DisplayClosingEvent e) {
+      display_.unregisterForEvents(this);
+      display_ = null;
+      scrollerPanel_ = null;
+   }
 
    /**
     * used for forcing scrollbars to show when opening dataset on disk
     */
+   //TODO: add in negative indices
    public void makeScrollersAppear(int numChannels, int numSlices, int numFrames) {
       for (AxisScroller s : scrollerPanel_.scrollers_) {
-         if (numChannels > 1 && s.getAxis().equals("channel")) {
+         if (numChannels > 1 && s.getAxis().equals("c")) {
             s.setVisible(true);
             s.setMaximum(numChannels);
             scrollerPanel_.add(s, "wrap 0px, align center, growx");
-         } else if (numFrames > 1 && s.getAxis().equals("time")) {
+         } else if (numFrames > 1 && s.getAxis().equals("t")) {
             s.setVisible(true);
             s.setMaximum(numFrames);
             scrollerPanel_.add(s, "wrap 0px, align center, growx");
@@ -101,7 +109,7 @@ public class SubImageControls extends Panel {
             scrollerPanel_.add(s, "wrap 0px, align center, growx");
          }
       }
-      bus_.post(new ScrollerPanel.LayoutChangedEvent());
+      display_.postEvent(new ScrollersAddedEvent());
    }
 
    public void unlockAllScrollers() {
@@ -123,7 +131,7 @@ public class SubImageControls extends Panel {
       double zTop = zStep_ * zTopScrollbar_.getValue() + zOrigin_;
       zTopTextField_.setText(TWO_DECIMAL_FORMAT.format(zTop));
       //Update the acquisition 
-      ((ExploreAcquisition) acq_).setZLimits(zTop, zBottom);
+      display_.postEvent(new ExploreZLimitsChangedEvent(zTop, zBottom));
       //update colored areas on z scrollbar
       //convert to 0 based index based on which slices have been explored
    }
@@ -162,6 +170,11 @@ public class SubImageControls extends Panel {
       this.repaint();
    }
 
+    void expandDisplayedRangeToInclude( List<MagellanNewImageEvent> newIamgeEvents) {
+      scrollerPanel_.expandDisplayedRangeToInclude(newIamgeEvents);
+   }
+
+   
    private void zTopTextFieldAction() {
       //check if new position is outside bounds of current z range
       //and if so expand sliders as needed
@@ -205,10 +218,10 @@ public class SubImageControls extends Panel {
    private void initComponents() {
       final JPanel controlsPanel = new JPanel(new MigLayout("insets 0, fillx, align center", "", "[]0[]0[]"));
 
-      makeScrollerPanel();
+      scrollerPanel_ = new ScrollerPanel(display_, new String[]{"c", "t", "r", "z"}, new Integer[]{1, 1, 1, 1}, DEFAULT_FPS);
       controlsPanel.add(scrollerPanel_, "span, growx, wrap");
 
-      if (acq_ instanceof ExploreAcquisition) {
+      if (explore_) {
          sliderPanel_ = new JPanel(new MigLayout("insets 0", "[][][grow]", ""));
 
          CMMCore core = Magellan.getCore();
@@ -256,9 +269,15 @@ public class SubImageControls extends Panel {
                zBottomSliderAdjustment();
             }
          });
-         //initialize properly
-         zTopTextField_.setText(((ExploreAcquisition) acq_).getZTop() + "");
-         zBottomTextField_.setText(((ExploreAcquisition) acq_).getZBottom() + "");
+         double zPos;
+         try {
+            //initialize properly
+            zPos = Magellan.getCore().getPosition();
+         } catch (Exception ex) {
+            throw new RuntimeException(ex);
+         }
+         zTopTextField_.setText(zPos + "");
+         zBottomTextField_.setText(zPos + "");
          zTopTextField_.getActionListeners()[0].actionPerformed(null);
          zBottomTextField_.getActionListeners()[0].actionPerformed(null);
 
@@ -288,135 +307,38 @@ public class SubImageControls extends Panel {
          public void componentResized(ComponentEvent e) {
             Dimension curSize = getSize(); //size of subimage controls
             //expand window when new scrollbars shown for fixed acq
-            if (display_.getAcquisition() instanceof MagellanGUIAcquisition) {
+            if (!explore_) {
                if (displayHeight_ == -1) {
                   displayHeight_ = curSize.height;
                } else if (curSize.height != displayHeight_) {
                   //don't expand window bigger that max viewable area on scren
                   int maxHeight = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds().height;
-                  display_.getHyperImage().getWindow().setSize(new Dimension(display_.getHyperImage().getWindow().getWidth(),
-                          Math.min(maxHeight, display_.getHyperImage().getWindow().getHeight() + (curSize.height - displayHeight_))));
+                  JFrame window = (JFrame) SwingUtilities.getWindowAncestor(NewSubImageControls.this);
+                  window.setSize(new Dimension(window.getWidth(),
+                          Math.min(maxHeight, window.getHeight() + (curSize.height - displayHeight_))));
                   displayHeight_ = curSize.height;
                }
             }
-            SubImageControls.this.getParent().invalidate();
-            SubImageControls.this.getParent().validate();
+            NewSubImageControls.this.getParent().invalidate();
+            NewSubImageControls.this.getParent().validate();
          }
       });
    }
 
-   private void makeScrollerPanel() {
-      scrollerPanel_ = new ScrollerPanel(bus_, new String[]{"channel", "time", "z"}, new Integer[]{1, 1, 1}, DEFAULT_FPS) {
-         //Override new image event to intercept these events and correct for negative slice indices 
-
-         @Override
-         public void onNewImageEvent(NewImageEvent event) {
-            // show/expand z scroll bar if needed     
-            if (acq_.getNumSlices() > scrollerPanel_.getMaxPosition("z")) {
-               for (AxisScroller scroller : scrollers_) {
-                  if (scroller.getAxis().equals("z") && scroller.getMaximum() == 1) {
-                     scroller.setVisible(true);
-                     add(scroller, "wrap 0px, align center, growx");
-                     //resize controls to reflect newly shown scroller
-                     bus_.post(new ScrollerPanel.LayoutChangedEvent());
-                  }
-               }
-               this.setMaxPosition("z", acq_.getNumSlices());
-               //tell the imageplus about new number of slices so everything works properly
-               ((IMMImagePlus) display_.getHyperImage()).setNSlicesUnverified(scrollerPanel_.getMaxPosition("z"));
-            }
-
-            super.onNewImageEvent(event);
-         }
-      };
-   }
-
-   /**
-    * Our ScrollerPanel is informing us that we need to display a different
-    * image.
-    */
-   @Subscribe
-   public void onSetImage(ScrollerPanel.SetImageEvent event) {
-      try {
-         int channel = event.getPositionForAxis("channel") + 1;
-         int frame = event.getPositionForAxis("time") + 1;
-         int slice = event.getPositionForAxis("z") + 1;
-         //Make sure hyperimage max dimensions are set properly so image actually shows when requested
-         MMCompositeImage immi = display_.getHyperImage();
-         // Ensure proper dimensions are set on the image.
-         if (immi.getNFramesUnverified() < frame) {
-            immi.setNFramesUnverified(frame);
-         }
-         if (immi.getNSlicesUnverified() < slice) {
-            immi.setNSlicesUnverified(slice);
-         }
-         if (immi.getNChannelsUnverified() < channel) {
-            immi.setNChannelsUnverified(channel);
-            //so that composite image updates its number of channels          
-            immi.reset();
-         }
-
-         //for compisite images, make sure the window knows current number of slices so images display properly
-         if (display_.getHyperImage() instanceof MMCompositeImage) {
-            StackWindow win = (StackWindow) display_.getHyperImage().getWindow();
-            try {
-               JavaUtils.setRestrictedFieldValue(win, StackWindow.class, "nSlices", ((MMCompositeImage) display_.getHyperImage()).getNSlicesUnverified());
-            } catch (NoSuchFieldException ex) {
-               Log.log("Couldn't set number of slices in ImageJ stack window");
-            }
-         }
-         //set the imageJ scrollbar positions here. We don't rely on exactly the same
-         //hacky mechanism as MM, I think because dynamic changes required by the explore
-         //window. Instead we use the differnet hacky mechanism seen here    
-         StackWindow win = (StackWindow) display_.getHyperImage().getWindow();
-         try {
-            JavaUtils.setRestrictedFieldValue(win, StackWindow.class, "t", frame);
-            JavaUtils.setRestrictedFieldValue(win, StackWindow.class, "z", slice);
-            JavaUtils.setRestrictedFieldValue(win, StackWindow.class, "c", channel);
-         } catch (NoSuchFieldException e) {
-            Log.log("Unexpected exception when trying to set image position");
-         }
-
-         synchronized (this) {
-            channelIndex_ = channel - 1;
-            frameIndex_ = frame - 1;
-            sliceIndex_ = slice - 1;
-            display_.getHyperImage().setPosition(channel, slice, frame);
-         }
-
-         //now that new scroll bar position have been set, tell display to update itself
-         display_.updateDisplay(true);
-         //update the explore highlight things
-         if (acq_ instanceof ExploreAcquisition) {
-            //convert slice index to explore scrollbar index       
-            ((ColorableScrollbarUI) zTopScrollbar_.getUI()).setHighlightedIndices(sliceIndex_ + ((ExploreAcquisition) acq_).getMinSliceIndex(),
-                    ((ExploreAcquisition) acq_).getMinSliceIndex(), ((ExploreAcquisition) acq_).getMaxSliceIndex());
-            ((ColorableScrollbarUI) zBottomScrollbar_.getUI()).setHighlightedIndices(sliceIndex_ + ((ExploreAcquisition) acq_).getMinSliceIndex(),
-                    ((ExploreAcquisition) acq_).getMinSliceIndex(), ((ExploreAcquisition) acq_).getMaxSliceIndex());
-            this.repaint();
-         }
-
-      } catch (Exception e) {
-         e.printStackTrace();
-         Log.log(e);
-         throw new RuntimeException(e);
+   public void updateExploreZControls(int currentZ) {
+      if (!explore_) {
+         return;
       }
-   }
-
-   public int getDisplayedSlice() {
-      return sliceIndex_;
-   }
-
-   public int getDisplayedChannel() {
-      return channelIndex_;
-   }
-
-   public int getDisplayedFrame() {
-      return frameIndex_;
+      //convert slice index to explore scrollbar index       
+      minZExplored_ = Math.min(minZExplored_, currentZ);
+      maxZExplored_ = Math.max(maxZExplored_, currentZ);
+      ((ColorableScrollbarUI) zTopScrollbar_.getUI()).setHighlightedIndices(currentZ, minZExplored_, maxZExplored_);
+      ((ColorableScrollbarUI) zBottomScrollbar_.getUI()).setHighlightedIndices(currentZ, minZExplored_, maxZExplored_);
+      this.repaint();
    }
 
    @Subscribe
-   public void onLayoutChange(ScrollerPanel.LayoutChangedEvent event) {
+   public void onScrollersAdded(ScrollersAddedEvent event) {
       this.setPreferredSize(new Dimension(this.getPreferredSize().width,
               scrollerPanel_.getPreferredSize().height + (sliderPanel_ != null ? sliderPanel_.getPreferredSize().height : 0)));
       this.invalidate();
@@ -426,13 +348,27 @@ public class SubImageControls extends Panel {
 
          @Override
          public void run() {
-            ((DisplayWindow) display_.getHyperImage().getWindow()).fitExploreCanvasToWindow();
+            if (explore_) {
+               display_.fitExploreCanvasToWindow();
+            }
          }
       });
    }
 
    public void prepareForClose() {
       scrollerPanel_.prepareForClose();
-      bus_.unregister(this);
+      display_.unregisterForEvents(this);
+   }
+
+   void updateScrollerPositions(MagellanDataViewCoords view) {
+      for (AxisScroller a: scrollerPanel_.scrollers_) {
+         if (a.getAxis().equals("c")) {
+            a.setPosition(view.channelIndex_);
+         } else if (a.getAxis().equals("z")) {
+            a.setPosition(view.zIndex_);
+         } else if (a.getAxis().equals("t")) {
+            a.setPosition(view.tIndex_);
+         }
+      }
    }
 }

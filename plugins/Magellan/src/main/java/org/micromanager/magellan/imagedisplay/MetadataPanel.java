@@ -9,7 +9,7 @@ import ij.ImagePlus;
 import java.util.Timer;
 import java.util.TimerTask;
 import org.json.JSONObject;
-import org.micromanager.magellan.acq.MagellanImageCache;
+import org.micromanager.magellan.imagedisplaynew.MagellanImageCache;
 
 /**
  *

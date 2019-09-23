@@ -1970,7 +1970,8 @@ public class GUI extends javax.swing.JFrame {
       new Thread(new Runnable() {
          @Override
          public void run() {
-            new LoadedAcquisitionData(finalFile.toString());
+            //TODO
+//            new LoadedAcquisitionData(finalFile.toString());
          }
       }).start();
 

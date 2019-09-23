@@ -14,17 +14,23 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.magellan.imagedisplay;
+package org.micromanager.magellan.imagedisplaynew;
 
-import com.google.common.eventbus.EventBus;
+import org.micromanager.magellan.imagedisplaynew.events.LockEvent;
+import org.micromanager.magellan.imagedisplaynew.events.ScrollPositionEvent;
+import org.micromanager.magellan.imagedisplaynew.events.AnimationToggleEvent;
 import com.google.common.eventbus.Subscribe;
 
 import java.awt.Dimension;
+import java.awt.event.AdjustmentListener;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 
 import javax.swing.event.MouseInputAdapter;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
+import org.micromanager.magellan.imagedisplay.ScrollbarAnimateIcon;
+import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
 
 /**
  * This class provides a scrollbar and associated buttons for navigating
@@ -32,45 +38,15 @@ import javax.swing.JScrollBar;
  * Communication with the parent is handled by way of events using an EventBus.
  */
 public class AxisScroller extends JPanel {
-   /**
-    * This class is used to communicate with our master when the animation
-    * button is clicked.
-    */
-   public static class AnimationToggleEvent {
-      private boolean isAnimated_;
-      public AxisScroller scroller_;
-      public AnimationToggleEvent(AxisScroller scroller, boolean isAnimated) {
-         scroller_ = scroller;
-         isAnimated_ = isAnimated;
-      }
-      
-      public boolean getIsAnimated() {
-         return isAnimated_;
-      }
-   }
 
-   /**
-    * This class is used to communicate with our master when the scrollbar is
-    * moved to a different position.
-    */
-   public static class ScrollPositionEvent {
-      private int value_;
-      public AxisScroller scroller_;
-      public ScrollPositionEvent(AxisScroller scroller, int value) {
-         scroller_ = scroller;
-         value_ = value;
-      }
+   // Height of components in the panel. 
+   private static final int HEIGHT = 14;
+   // Width of the label/animate button.
+   private static final int LABEL_WIDTH = 24;
 
-      public int getValue() {
-         return value_;
-      }
-   }
-   
    // This string will be used to identify this scrollbar, and thus should be
    // unique across all created scrollbars for your image display.
-   private String axis_; 
-   // We'll use this bus to communicate with our master.
-   private EventBus bus_;
+   private String axis_;
    // Indicates if animation is currently ongoing.
    private boolean isAnimated_;
    // A scrollbar position that we remembered, for later use. This is used so
@@ -85,23 +61,24 @@ public class AxisScroller extends JPanel {
    // Used to turn animation on/off.
    private ScrollbarAnimateIcon animateIcon_;
    // Used to select an image to view along our axis.
-   final private JScrollBar scrollbar_;
+   private JScrollBar scrollbar_;
    private ScrollbarLockIcon lock_;
 
-   // Height of components in the panel. 
-   private static final int HEIGHT = 14;
-   // Width of the label/animate button.
-   private static final int LABEL_WIDTH = 24;
+   private int minOffset_ = 0;
+   private AdjustmentListener adjustmentListener_;
 
-   public AxisScroller(String axis, int maximum, final EventBus bus, 
-         boolean canAnimate) {
+   MagellanDisplayController display_;
+
+   public AxisScroller(MagellanDisplayController display, String axis, int maximum,
+           boolean canAnimate) {
       // Only allow the scrollbar (not the buttons on either side) to grow.
       super(new net.miginfocom.swing.MigLayout("insets 0, fillx",
-               "[][grow][]"));
+              "[][grow][]"));
       axis_ = axis;
-      bus_ = bus;
+      display_ = display;
+      display_.registerForEvents(this);
       shouldIgnoreScrollbarEvent_ = false;
-      
+
       animateIcon_ = new ScrollbarAnimateIcon(axis);
       Dimension size = new Dimension(LABEL_WIDTH, HEIGHT);
       animateIcon_.setPreferredSize(size);
@@ -115,61 +92,69 @@ public class AxisScroller extends JPanel {
                   isAnimated_ = !isAnimated_;
                   animateIcon_.setIsAnimated(isAnimated_);
                }
-               bus.post(new AnimationToggleEvent(AxisScroller.this, isAnimated_));
+               display_.postEvent(new AnimationToggleEvent(AxisScroller.this, isAnimated_));
             }
          });
       }
       add(animateIcon_, "grow 0");
 
       scrollbar_ = new JScrollBar(JScrollBar.HORIZONTAL, 0, 1, 0, maximum);
-      scrollbar_.addAdjustmentListener(new java.awt.event.AdjustmentListener() {
+
+      adjustmentListener_ = new java.awt.event.AdjustmentListener() {
          @Override
          public void adjustmentValueChanged(java.awt.event.AdjustmentEvent e) {
             handleScrollerMotion();
          }
-      });
+      };
+      scrollbar_.addAdjustmentListener(adjustmentListener_);
 
       add(scrollbar_, "growx");
 
-      lock_ = new ScrollbarLockIcon(axis, bus_);
+      lock_ = new ScrollbarLockIcon(display_, axis);
       add(lock_, "grow 0");
 
-      bus.register(this);
    }
-   
+
+   @Subscribe
+   public void onDisplayClose(DisplayClosingEvent e) {
+      for (MouseListener l : animateIcon_.getMouseListeners()) {
+         animateIcon_.removeMouseListener(l);
+      }
+      for (AdjustmentListener l : scrollbar_.getAdjustmentListeners()) {
+         scrollbar_.removeAdjustmentListener(l);
+      }
+      display_.unregisterForEvents(this);
+      display_ = null;
+      scrollbar_ = null;
+      animateIcon_ = null;
+   }
+
    public JScrollBar getScrollBar() {
       return scrollbar_;
    }
 
    /**
-    * The scroller position was updated; we post an event iff we were not 
-    * instructed to ignore the next event (see advancePosition()). 
+    * The scroller position was updated; we post an event iff we were not
+    * instructed to ignore the next event (see advancePosition()).
     */
    private void handleScrollerMotion() {
-      if (shouldIgnoreScrollbarEvent_) {
-         // Ignoring this one, but we'll publish the next one, unless this
-         // variable gets reset of course.
-         shouldIgnoreScrollbarEvent_ = false;
-      }
-      else {
-         bus_.post(new ScrollPositionEvent(this, scrollbar_.getValue()));
-      }
+      display_.postEvent(new ScrollPositionEvent(this, scrollbar_.getValue()));
    }
-   
+
    public void superlock() {
       lock_.setLockedState(ScrollbarLockIcon.LockedState.SUPERLOCKED);
    }
-   
+
    public void unlock() {
       lock_.setLockedState(ScrollbarLockIcon.LockedState.UNLOCKED);
    }
 
    /**
-    * The lock icon was clicked; update our state to suit. Locking cancels 
+    * The lock icon was clicked; update our state to suit. Locking cancels
     * animations and disables the animate button.
     */
    @Subscribe
-   public void onLockToggle(ScrollbarLockIcon.LockEvent event) {
+   public void onLockToggle(LockEvent event) {
       if (!event.getAxis().equals(axis_)) {
          // Ignore; event is for a different axis.
          return;
@@ -178,24 +163,9 @@ public class AxisScroller extends JPanel {
          // We're locked; cancel active animation.
          isAnimated_ = false;
          animateIcon_.setIsAnimated(isAnimated_);
-         bus_.post(new AnimationToggleEvent(this, isAnimated_));
+         display_.postEvent(new AnimationToggleEvent(this, isAnimated_));
       }
       animateIcon_.setEnabled(!lock_.getIsLocked());
-   }
-
-   /**
-    * Change the position of our scrollbar by the specified offset. Don't
-    * move if we're locked, and wrap around if we go off the end. Post a 
-    * ScrollPositionEvent if so instructed.
-    */
-   public void advancePosition(int offset, boolean shouldPostEvent) {
-      if (lock_.getIsLocked()) {
-         // Currently locked, ergo we cannot move.
-         return;
-      }
-      shouldIgnoreScrollbarEvent_ = shouldIgnoreScrollbarEvent_ || shouldPostEvent;
-      int target = (scrollbar_.getValue() + offset) % scrollbar_.getMaximum();
-      scrollbar_.setValue(target);
    }
 
    public String getAxis() {
@@ -209,7 +179,7 @@ public class AxisScroller extends JPanel {
          // Disable the lock. 
          lock_.setLockedState(ScrollbarLockIcon.LockedState.UNLOCKED);
       }
-      bus_.post(new AnimationToggleEvent(this, isAnimated_));
+      display_.postEvent(new AnimationToggleEvent(this, isAnimated_));
    }
 
    public boolean getIsAnimated() {
@@ -221,52 +191,39 @@ public class AxisScroller extends JPanel {
    }
 
    public int getPosition() {
-      return scrollbar_.getValue();
+      return scrollbar_.getValue() + minOffset_;
    }
 
    /**
-    * Set the position of this scroller to the specified position. Do not 
-    * move, if we are locked.
+    * Set scrollbar position, but don't fire action listener
+    *
+    * @param position
     */
-   public void setPosition(int newPosition) {
-      if (!lock_.getIsLocked()) {
-         scrollbar_.setValue(newPosition);
-      }
-   }
-
-   /**
-    * Set the position of this scroller to the specified position, even if 
-    * we are locked -- but remember our original position so it can be 
-    * restored later. Only remember if we don't already have a remembered
-    * position (i.e. don't overwrite existing remembered positions), and we 
-    * are currently animated or locked -- i.e. we have a position we would 
-    * rather be at than the one we're being told to be at. 
-    */
-   public void forcePosition(int newPosition) {
-      if (rememberedPosition_ == -1 && (isAnimated_ || lock_.getIsLocked())) {
-         rememberedPosition_ = scrollbar_.getValue();
-      }
-      scrollbar_.setValue(newPosition);
-   }
-
-   /**
-    * Restore a position that we remembered previously, and then delete the 
-    * remembered position so it can be re-set by a future call to 
-    * forcePosition.
-    */
-   public void restorePosition() {
-      if (rememberedPosition_ != -1) {
-         scrollbar_.setValue(rememberedPosition_);
-         rememberedPosition_ = -1;
-      }
+   public void setPosition(int position) {
+      scrollbar_.removeAdjustmentListener(adjustmentListener_);
+      scrollbar_.setValue(position - minOffset_);
+      scrollbar_.addAdjustmentListener(adjustmentListener_);
    }
 
    public int getMaximum() {
       return scrollbar_.getMaximum();
    }
-   
+
+   public int getMinimum() {
+      return scrollbar_.getMinimum() + minOffset_;
+   }
+
+   public void setMinimum(int newMin) {
+      scrollbar_.removeAdjustmentListener(adjustmentListener_);
+      int expandBy = Math.max(0, minOffset_ - newMin);
+      scrollbar_.setMaximum(scrollbar_.getMaximum() + expandBy);
+      minOffset_ = newMin;
+      scrollbar_.addAdjustmentListener(adjustmentListener_);
+   }
+
    public void setMaximum(int newMax) {
-      scrollbar_.setMaximum(newMax);
+      scrollbar_.removeAdjustmentListener(adjustmentListener_);
+      scrollbar_.setMaximum(newMax - minOffset_);
+      scrollbar_.addAdjustmentListener(adjustmentListener_);
    }
 }
-

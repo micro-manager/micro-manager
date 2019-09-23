@@ -17,7 +17,7 @@
 
 package org.micromanager.magellan.imagedisplay;
 
-import org.micromanager.magellan.acq.MagellanImageCache;
+import org.micromanager.magellan.imagedisplaynew.MagellanImageCache;
 import ij.ImagePlus;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
@@ -91,56 +91,57 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    //relevance to image data on disk. It is protected so that this class can be overriden and a differnet image
    //used for display compared to the the underlying data
    protected TaggedImage getMagellanTaggedImage(int chanIndex, int slice, int frame) {
-      int nSlices;
-      ImagePlus imagePlus = vad_.getImagePlus();
-      if (imagePlus == null) {
-         nSlices = 1;
-      } else {
-         nSlices = imagePlus.getNSlices();
-      }
-      try {
-         TaggedImage img;
-         img = imageCache_.getImage(chanIndex, slice, frame, positionIndex_);
-         int backIndex = slice - 1, forwardIndex = slice + 1;
-         int frameSearchIndex = frame;
-         //If some but not all channels have z stacks, find the closest slice for the given
-         //channel that has an image.  Also if time point missing, go back until image is found
-         while (img == null) {
-            img = imageCache_.getImage(chanIndex, slice, frameSearchIndex, positionIndex_);
-            if (img != null) {
-               break;
-            }
-
-            if (backIndex >= 0) {
-               img = imageCache_.getImage(chanIndex, backIndex, frameSearchIndex, positionIndex_);
-               if (img != null) {
-                  break;
-               }
-               backIndex--;
-            }
-            if (forwardIndex < nSlices) {
-               img = imageCache_.getImage(chanIndex, forwardIndex, frameSearchIndex, positionIndex_);
-               if (img != null) {
-                  break;
-               }
-               forwardIndex++;
-            }
-
-            if (backIndex < 0 && forwardIndex >= nSlices) {
-               frameSearchIndex--;
-               backIndex = slice - 1;
-               forwardIndex = slice + 1;
-               if (frameSearchIndex < 0) {
-                  break;
-               }
-            }
-         }
-
-         return img;
-      } catch (Exception e) {
-         Log.log(e);
-         return null;
-      }
+//      int nSlices;
+//      ImagePlus imagePlus = vad_.getImagePlus();
+//      if (imagePlus == null) {
+//         nSlices = 1;
+//      } else {
+//         nSlices = imagePlus.getNSlices();
+//      }
+//      try {
+//         TaggedImage img;
+//         img = imageCache_.getImage(chanIndex, slice, frame, positionIndex_);
+//         int backIndex = slice - 1, forwardIndex = slice + 1;
+//         int frameSearchIndex = frame;
+//         //If some but not all channels have z stacks, find the closest slice for the given
+//         //channel that has an image.  Also if time point missing, go back until image is found
+//         while (img == null) {
+//            img = imageCache_.getImage(chanIndex, slice, frameSearchIndex, positionIndex_);
+//            if (img != null) {
+//               break;
+//            }
+//
+//            if (backIndex >= 0) {
+//               img = imageCache_.getImage(chanIndex, backIndex, frameSearchIndex, positionIndex_);
+//               if (img != null) {
+//                  break;
+//               }
+//               backIndex--;
+//            }
+//            if (forwardIndex < nSlices) {
+//               img = imageCache_.getImage(chanIndex, forwardIndex, frameSearchIndex, positionIndex_);
+//               if (img != null) {
+//                  break;
+//               }
+//               forwardIndex++;
+//            }
+//
+//            if (backIndex < 0 && forwardIndex >= nSlices) {
+//               frameSearchIndex--;
+//               backIndex = slice - 1;
+//               forwardIndex = slice + 1;
+//               if (frameSearchIndex < 0) {
+//                  break;
+//               }
+//            }
+//         }
+//
+//         return img;
+//      } catch (Exception e) {
+//         Log.log(e);
+//         return null;
+//      }
+   return null;
    }
    
    //this method is available so that image tags can be synchrnized with the pixels displayed in the viewer,

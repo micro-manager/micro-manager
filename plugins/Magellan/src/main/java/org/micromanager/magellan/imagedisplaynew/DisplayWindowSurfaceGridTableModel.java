@@ -3,12 +3,16 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.micromanager.magellan.imagedisplay;
+package org.micromanager.magellan.imagedisplaynew;
 
+import com.google.common.eventbus.Subscribe;
 import java.awt.geom.Point2D;
 import java.util.HashMap;
 import java.util.TreeMap;
 import javax.swing.table.AbstractTableModel;
+import org.micromanager.magellan.imagedisplaynew.MagellanDisplayController;
+import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
+import org.micromanager.magellan.imagedisplaynew.events.UpdateOverlayEvent;
 import org.micromanager.magellan.misc.Log;
 import org.micromanager.magellan.misc.NumberUtils;
 import org.micromanager.magellan.surfacesandregions.MultiPosGrid;
@@ -21,21 +25,29 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
  *
  * @author henrypinkard
  */
-public class DisplayWindowSurfaceGridTableModel extends AbstractTableModel implements SurfaceGridListener {
+ class DisplayWindowSurfaceGridTableModel extends AbstractTableModel implements SurfaceGridListener {
 
    private final String[] COLUMNS = {"Show", "Type", "Name"};
    //maybe, "Z Device"
    private volatile HashMap<XYFootprint, Boolean> showSurfaceOrGridMap = new HashMap<XYFootprint, Boolean>();
 
    private SurfaceGridManager manager_ = SurfaceGridManager.getInstance();
-   private MagellanDisplay display_;
+   private MagellanDisplayController display_;
    
-   public DisplayWindowSurfaceGridTableModel(MagellanDisplay disp) {
+   public DisplayWindowSurfaceGridTableModel(MagellanDisplayController disp) {
       display_ = disp;
+      display_.registerForEvents(this);
       manager_.registerSurfaceGridListener(this);
       for (int i = 0; i < manager_.getNumberOfGrids() + manager_.getNumberOfSurfaces(); i++) {
          showSurfaceOrGridMap.put(manager_.getSurfaceOrGrid(i), Boolean.TRUE);
       }
+   }
+   
+   @Subscribe
+   public void onDisplayClose(DisplayClosingEvent e) {
+      manager_.unregisterSurfaceGridListener(this);
+      display_.unregisterForEvents(this);
+      display_ = null;
    }
 
    public boolean isSurfaceOrGridVisible(int index) {
@@ -72,7 +84,7 @@ public class DisplayWindowSurfaceGridTableModel extends AbstractTableModel imple
       if (col == 0) {
          showSurfaceOrGridMap.put(manager_.getSurfaceOrGrid(row), !showSurfaceOrGridMap.get(manager_.getSurfaceOrGrid(row)));
          //redraw to refelect change in visibility
-         display_.drawOverlay();
+         display_.postEvent(new UpdateOverlayEvent()); 
       } else if (col == 2) {
          try {
             manager_.rename(row, (String) value);
@@ -131,10 +143,6 @@ public class DisplayWindowSurfaceGridTableModel extends AbstractTableModel imple
    @Override
    public void SurfaceInterpolationUpdated(SurfaceInterpolator s) {
       //nothing to do
-   }
-
-   public void shutdown() {
-      manager_.removeSurfaceGridListener(this);
    }
 
    public SurfaceInterpolator addNewSurface() {

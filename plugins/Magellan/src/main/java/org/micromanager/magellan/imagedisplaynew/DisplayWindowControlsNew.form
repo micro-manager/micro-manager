@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<Form version="1.6" maxVersion="1.8" type="org.netbeans.modules.form.forminfo.PanelFormInfo">
+<Form version="1.5" maxVersion="1.9" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
     <AuxValue name="FormSettings_autoSetComponentName" type="java.lang.Boolean" value="false"/>
@@ -17,17 +17,17 @@
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" attributes="0">
-              <EmptySpace max="-2" attributes="0"/>
-              <Component id="tabbedPane_" max="32767" attributes="0"/>
+              <Component id="tabbedPane_" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="32767" attributes="0"/>
           </Group>
-          <Component id="jPanel1" alignment="0" min="-2" max="-2" attributes="0"/>
+          <Component id="topControlPanel_" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
-              <Component id="jPanel1" min="-2" max="-2" attributes="0"/>
-              <EmptySpace min="-2" max="-2" attributes="0"/>
+              <Component id="topControlPanel_" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Component id="tabbedPane_" max="32767" attributes="0"/>
           </Group>
       </Group>
@@ -39,7 +39,7 @@
         <Property name="toolTipText" type="java.lang.String" value=""/>
       </Properties>
       <AccessibilityProperties>
-        <Property name="AccessibleContext.accessibleName" type="java.lang.String" value="Status"/>
+        <Property name="AccessibleContext.accessibleName" type="java.lang.String" value="Contrast"/>
       </AccessibilityProperties>
       <Events>
         <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="tabbedPane_StateChanged"/>
@@ -48,10 +48,13 @@
       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout"/>
       <SubComponents>
         <Container class="javax.swing.JPanel" name="contrastPanelPanel_">
+          <AuxValues>
+            <AuxValue name="JavaCodeGenerator_LayoutCodePost" type="java.lang.String" value="cpMagellan_ = new ContrastPanel(display_);&#xa;contrastPanelPanel_.add(cpMagellan_);&#xa;"/>
+          </AuxValues>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
-              <JTabbedPaneConstraints tabName="Contrast">
-                <Property name="tabTitle" type="java.lang.String" value="Contrast"/>
+              <JTabbedPaneConstraints tabName="tab4">
+                <Property name="tabTitle" type="java.lang.String" value="tab4"/>
               </JTabbedPaneConstraints>
             </Constraint>
           </Constraints>
@@ -59,22 +62,15 @@
           <Layout>
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="cpMagellan_" alignment="0" pref="636" max="32767" attributes="0"/>
+                  <EmptySpace min="0" pref="648" max="32767" attributes="0"/>
               </Group>
             </DimensionLayout>
             <DimensionLayout dim="1">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" alignment="0" attributes="0">
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="cpMagellan_" pref="412" max="32767" attributes="0"/>
-                  </Group>
+                  <EmptySpace min="0" pref="464" max="32767" attributes="0"/>
               </Group>
             </DimensionLayout>
           </Layout>
-          <SubComponents>
-            <Component class="org.micromanager.magellan.imagedisplay.ContrastPanelMagellanAdapter" name="cpMagellan_">
-            </Component>
-          </SubComponents>
         </Container>
         <Container class="javax.swing.JPanel" name="surfaceGridPanel_">
           <Constraints>
@@ -88,18 +84,15 @@
           <Layout>
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" attributes="0">
+                  <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="newGridButton_" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="newSurfaceButton_" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="32767" attributes="0"/>
+                      <EmptySpace pref="18" max="32767" attributes="0"/>
                       <Component id="surfaceGridSpecificControlsPanel_" min="-2" pref="424" max="-2" attributes="0"/>
                   </Group>
-                  <Group type="102" alignment="0" attributes="0">
-                      <Component id="jScrollPane2" max="32767" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                  </Group>
+                  <Component id="jScrollPane2" alignment="0" max="32767" attributes="0"/>
               </Group>
             </DimensionLayout>
             <DimensionLayout dim="1">
@@ -116,7 +109,7 @@
                           </Group>
                       </Group>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                      <Component id="jScrollPane2" pref="362" max="32767" attributes="0"/>
+                      <Component id="jScrollPane2" pref="408" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -130,9 +123,6 @@
                   <Properties>
                     <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
                       <Connection code="new DisplayWindowSurfaceGridTableModel(display_)&#xa;" type="code"/>
-                    </Property>
-                    <Property name="selectionModel" type="javax.swing.ListSelectionModel" editor="org.netbeans.modules.form.editors2.JTableSelectionModelEditor">
-                      <JTableSelectionModel selectionMode="0"/>
                     </Property>
                   </Properties>
                 </Component>
@@ -230,7 +220,7 @@
                   <Layout>
                     <DimensionLayout dim="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" attributes="0">
+                          <Group type="102" alignment="0" attributes="0">
                               <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
                               <EmptySpace min="-2" pref="21" max="-2" attributes="0"/>
                               <Component id="showInterpCheckBox_" min="-2" max="-2" attributes="0"/>
@@ -316,7 +306,7 @@
             </DimensionLayout>
             <DimensionLayout dim="1">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="metadataPanelMagellan_" alignment="0" max="32767" attributes="0"/>
+                  <Component id="metadataPanelMagellan_" alignment="0" pref="464" max="32767" attributes="0"/>
               </Group>
             </DimensionLayout>
           </Layout>
@@ -340,7 +330,7 @@
           <Layout>
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="jScrollPane1" max="32767" attributes="0"/>
+                  <Component id="jScrollPane1" alignment="0" max="32767" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="selectUseAllButton_" min="-2" max="-2" attributes="0"/>
@@ -358,7 +348,7 @@
                           <Component id="syncExposuresButton_" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jScrollPane1" pref="380" max="32767" attributes="0"/>
+                      <Component id="jScrollPane1" pref="426" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -374,7 +364,7 @@
                 <Component class="javax.swing.JTable" name="channelsTable_">
                   <Properties>
                     <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-                      <Connection code="acq_ != null ? new SimpleChannelTableModel(acq_.getChannels(),false) : new DefaultTableModel()" type="code"/>
+                      <Connection code="new SimpleChannelTableModel(channels_,false)" type="code"/>
                     </Property>
                   </Properties>
                 </Component>
@@ -402,7 +392,7 @@
         </Container>
       </SubComponents>
     </Container>
-    <Container class="javax.swing.JPanel" name="jPanel1">
+    <Container class="javax.swing.JPanel" name="topControlPanel_">
 
       <Layout>
         <DimensionLayout dim="0">
@@ -410,13 +400,13 @@
               <Group type="102" alignment="1" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="elapsedTimeLabel_" min="-2" max="-2" attributes="0"/>
+                      <Component id="elapsedTimeLabel_" alignment="0" min="-2" max="-2" attributes="0"/>
                       <Component id="zPosLabel_" alignment="0" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace pref="281" max="32767" attributes="0"/>
+                  <EmptySpace max="32767" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="acquireAtCurrentButton_" min="-2" max="-2" attributes="0"/>
-                      <Component id="exploreButton_" min="-2" pref="89" max="-2" attributes="0"/>
+                      <Component id="acquireAtCurrentButton_" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="exploreButton_" alignment="0" min="-2" pref="89" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace min="-2" pref="101" max="-2" attributes="0"/>
               </Group>
@@ -434,7 +424,7 @@
                       <Component id="animationFPSSpinner_" min="-2" pref="45" max="-2" attributes="0"/>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="showNewImagesCheckBox_" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="90" max="32767" attributes="0"/>
+                      <EmptySpace pref="118" max="32767" attributes="0"/>
                   </Group>
               </Group>
           </Group>
@@ -442,15 +432,15 @@
         <DimensionLayout dim="1">
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" alignment="0" attributes="0">
-                  <EmptySpace pref="39" max="32767" attributes="0"/>
+                  <EmptySpace pref="45" max="32767" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="exploreButton_" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="elapsedTimeLabel_" alignment="3" min="-2" pref="27" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="acquireAtCurrentButton_" min="-2" max="-2" attributes="0"/>
-                      <Component id="zPosLabel_" min="-2" max="-2" attributes="0"/>
+                      <Component id="acquireAtCurrentButton_" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="zPosLabel_" alignment="0" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
               <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
@@ -468,7 +458,7 @@
                               <Component id="showNewImagesCheckBox_" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                       </Group>
-                      <EmptySpace pref="71" max="32767" attributes="0"/>
+                      <EmptySpace pref="77" max="32767" attributes="0"/>
                   </Group>
               </Group>
           </Group>

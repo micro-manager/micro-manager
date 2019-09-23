@@ -32,7 +32,7 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
    private String title_;
    private EventBus bus_;
 
-   MMCompositeImage(ImagePlus imgp, int type, String title, EventBus bus) {
+   public MMCompositeImage(ImagePlus imgp, int type, String title, EventBus bus) {
       super(imgp, type);
       hyperImage_ = imgp;
       title_ = title;

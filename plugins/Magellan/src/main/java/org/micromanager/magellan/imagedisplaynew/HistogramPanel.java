@@ -21,7 +21,7 @@
 //
 // CVS:          $Id$
 //
-package org.micromanager.magellan.mmcloneclasses.graph;
+package org.micromanager.magellan.imagedisplaynew;
 
 
 import java.awt.*;
@@ -719,4 +719,3 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       g2d.setColor(oldColor);
    }
 }
-

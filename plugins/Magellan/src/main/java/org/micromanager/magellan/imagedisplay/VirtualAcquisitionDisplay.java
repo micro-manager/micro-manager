@@ -37,13 +37,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
-import org.micromanager.magellan.acq.MagellanImageCache;
+import org.micromanager.magellan.imagedisplaynew.MagellanImageCache;
 import org.micromanager.magellan.misc.JavaUtils;
 import org.micromanager.magellan.misc.Log;
 import org.micromanager.magellan.misc.MD;
-import org.micromanager.magellan.mmcloneclasses.graph.HistogramSettings;
-import org.micromanager.magellan.mmcloneclasses.graph.MultiChannelHistograms;
-import org.micromanager.magellan.mmcloneclasses.graph.Histograms;
 
 public abstract class VirtualAcquisitionDisplay {
 
@@ -76,8 +73,8 @@ public abstract class VirtualAcquisitionDisplay {
    private final AtomicBoolean shouldStopDisplayThread_ = new AtomicBoolean(false);
 
    private MMCompositeImage mmCompositeImage_;
-   protected DisplayWindowControls dispWindControls_;
-   protected SubImageControls subImageControls_;
+//   protected DisplayWindowControls dispWindControls_;
+//   protected SubImageControls subImageControls_;
    public AcquisitionVirtualStack virtualStack_;
    private boolean contrastInitialized_ = false; //used for autostretching on window opening
    private String channelGroup_ = "none";
@@ -118,9 +115,9 @@ public abstract class VirtualAcquisitionDisplay {
       return title_;
    }
 
-   public void setControls(DisplayWindowControls dwc) {
-      dispWindControls_ = dwc;
-   }
+//   public void setControls(DisplayWindowControls dwc) {
+//      dispWindControls_ = dwc;
+//   }
 
    /**
     * Create a new EventBus that will be used for all events related to this
@@ -186,12 +183,12 @@ public abstract class VirtualAcquisitionDisplay {
       return bus_;
    }
 
-   public int getNumChannels() {
-      if (dispWindControls_ == null) {
-         return 0;
-      }
-      return dispWindControls_.getNumChannels();
-   }
+//   public int getNumChannels() {
+//      if (dispWindControls_ == null) {
+//         return 0;
+//      }
+//      return dispWindControls_.getNumChannels();
+//   }
    
    // Prepare for a drawing event.
    @Subscribe
@@ -219,7 +216,7 @@ public abstract class VirtualAcquisitionDisplay {
          e.printStackTrace();
       }
 
-      createWindows();
+//      createWindows();
       windowToFront();
 
       updateAndDraw(true);
@@ -253,7 +250,7 @@ public abstract class VirtualAcquisitionDisplay {
    }
 
    public int rgbToGrayChannel(int channelIndex) {
-      if (MD.getNumberOfComponents(imageCache_.getSummaryMetadata()) == 3) {
+      if (MD.getNumberOfComponents(imageCache_.getSummaryMD()) == 3) {
          return channelIndex * 3 + 2;
       }
       return channelIndex;
@@ -261,11 +258,11 @@ public abstract class VirtualAcquisitionDisplay {
 
    public int grayToRGBChannel(int grayIndex) {
       if (imageCache_ != null) {
-         if (imageCache_.getSummaryMetadata() != null) {
-            if (MD.getNumberOfComponents(imageCache_.getSummaryMetadata()) == 3) {
-               return grayIndex / 3;
-            }
-         }
+//         if (imageCache_.getSummaryMetadata() != null) {
+//            if (MD.getNumberOfComponents(imageCache_.getSummaryMD()) == 3) {
+//               return grayIndex / 3;
+//            }
+//         }
       }
       return grayIndex;
    }
@@ -394,12 +391,12 @@ public abstract class VirtualAcquisitionDisplay {
       return hyperImage;
    }
 
-   private void createWindows() {
-      DisplayWindow win = new DisplayWindow(mmCompositeImage_, bus_, (MagellanDisplay) this);
-      dispWindControls_ = win.getDisplayWindowControls();
-      subImageControls_ = win.getSubImageControls();
-      imageChangedUpdate();
-   }
+//   private void createWindows() {
+//      DisplayWindow win = new DisplayWindow(mmCompositeImage_, bus_, (MagellanDisplay) this);
+//      dispWindControls_ = win.getDisplayWindowControls();
+////      subImageControls_ = win.getSubImageControls();
+//      imageChangedUpdate();
+//   }
 
    public boolean isClosing() {
       return amClosing_;
@@ -428,7 +425,7 @@ public abstract class VirtualAcquisitionDisplay {
 //      imageCache_.finished();
 
       // Shut down our controls.
-      subImageControls_.prepareForClose();
+//      subImageControls_.prepareForClose();
 
       // Now that we have shut down everything that may access the images,
       // we can close the dataset.
@@ -446,9 +443,9 @@ public abstract class VirtualAcquisitionDisplay {
       return imageCache_;
    }
 
-   public final JSONObject getSummaryMetadata() {
-      return imageCache_.getSummaryMetadata();
-   }
+//   public final JSONObject getSummaryMD() {
+//      return imageCache_.getSummaryMetadata();
+//   }
 
    public void showFolder() {
       if (isDiskCached()) {
@@ -496,12 +493,12 @@ public abstract class VirtualAcquisitionDisplay {
      is the active window
     */
    private void imageChangedUpdate() {
-      if (mmCompositeImage_ != null) {
-         applyPixelSizeCalibration();
-      }
-      if (dispWindControls_ != null) {
-         dispWindControls_.imageChangedUpdate(((MagellanDisplay) this).getCurrentMetadata());
-      }
+//      if (mmCompositeImage_ != null) {
+//         applyPixelSizeCalibration();
+//      }
+//      if (dispWindControls_ != null) {
+//         dispWindControls_.imageChangedUpdate(((MagellanDisplay) this).getCurrentMetadata());
+//      }
    }
 
 

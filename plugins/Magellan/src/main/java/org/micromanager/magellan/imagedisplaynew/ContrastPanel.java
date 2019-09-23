@@ -19,8 +19,9 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.magellan.mmcloneclasses.graph;
+package org.micromanager.magellan.imagedisplaynew;
 
+import com.google.common.eventbus.Subscribe;
 import ij.CompositeImage;
 import org.micromanager.magellan.imagedisplay.DisplayOverlayer;
 import org.micromanager.magellan.imagedisplay.MMScaleBar;
@@ -30,6 +31,9 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.micromanager.magellan.imagedisplay.MagellanDisplay;
+import org.micromanager.magellan.imagedisplaynew.MagellanDisplayController;
+import org.micromanager.magellan.imagedisplaynew.events.ContrastUpdatedEvent;
+import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.Log;
 import org.micromanager.propertymap.MutablePropertyMapView;
@@ -41,7 +45,7 @@ import org.micromanager.propertymap.MutablePropertyMapView;
  * controls on top, and changes which histograms are displayed based on the
  * frontmost window
  */
-public class ContrastPanel extends JPanel {
+ class ContrastPanel extends JPanel {
 
    private static final String PREF_AUTOSTRETCH = "stretch_contrast";
    private static final String PREF_REJECT_OUTLIERS = "reject_outliers";
@@ -60,20 +64,37 @@ public class ContrastPanel extends JPanel {
    private JComboBox sizeBarColorComboBox_;
    private JCheckBox syncChannelsCheckBox_;
    private JLabel displayModeLabel_;
-   private MutablePropertyMapView  prefs_;
-   private Histograms currentHistograms_;
-   private MagellanDisplay currentDisplay_;
+   private MutablePropertyMapView prefs_;
+   protected MultiChannelHistograms histograms_;
    private HistogramControlsState histControlsState_;
    private DisplayOverlayer overlayer_;
    //volatile because accessed by overlayer creation thread
    private volatile boolean showScaleBar_ = false;
    private volatile String sizeBarColorSelection_ = "White";
    private volatile int sizeBarPosition_ = 0;
+   private MagellanDisplayController display_;
 
-   public ContrastPanel() {
+   public ContrastPanel(MagellanDisplayController display) {
+      //TODO: this isnt right is it?
+
+      histograms_ = new MultiChannelHistograms(display, this);
+      display_ = display;
+      display_.registerForEvents(this);
       initializeGUI();
       prefs_ = Magellan.getStudio().profile().getSettings(ContrastPanel.class);
+            histControlsState_ = createDefaultControlsState();
       initializeHistogramDisplayArea();
+      configureControls();
+      showCurrentHistograms();
+      imageChanged();
+   }
+   
+      @Subscribe
+   public void onDisplayClose(DisplayClosingEvent e) {
+      display_.unregisterForEvents(this);
+      display_ = null;
+      histograms_ = null;
+      histControlsState_ = null;
    }
 
    public void setOverlayer(DisplayOverlayer overlayer) {
@@ -93,8 +114,8 @@ public class ContrastPanel extends JPanel {
 
    private void showCurrentHistograms() {
       histDisplayScrollPane_.setViewportView(
-              currentHistograms_ != null ? (JPanel) currentHistograms_ : new JPanel());
-      if (currentDisplay_ != null) {
+              histograms_ != null ? (JPanel) histograms_ : new JPanel());
+      if (histograms_ != null) {
          histDisplayScrollPane_.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
       } else {
          histDisplayScrollPane_.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
@@ -128,9 +149,7 @@ public class ContrastPanel extends JPanel {
    }
 
    private void loadControlsStates() {
-      if (currentDisplay_ == null) {
-         histControlsState_ = createDefaultControlsState();
-      }
+      
 
       logHistCheckBox_.setSelected(histControlsState_.logHist);
       rejectPercentSpinner_.setValue(histControlsState_.percentToIgnore);
@@ -145,23 +164,7 @@ public class ContrastPanel extends JPanel {
       sizeBarColorComboBox_.setSelectedIndex(color);
       sizeBarComboBox_.setSelectedIndex(location);
 
-      if (currentDisplay_ != null && currentDisplay_.getImagePlus() instanceof CompositeImage) {
-         //this block keeps all channels from being set to active by the setMode call, so that
-         //deselected channels persist when switching windows
-         CompositeImage ci = (CompositeImage) currentDisplay_.getImagePlus();
-         boolean[] active = new boolean[ci.getActiveChannels().length];
-         System.arraycopy(ci.getActiveChannels(), 0, active, 0, active.length);
-         int index = ((CompositeImage) currentDisplay_.getImagePlus()).getMode() - 2;
-         if (index == -1) {
-            index = 2;
-         }
-         displayModeCombo_.setSelectedIndex(index);
-         System.arraycopy(active, 0, ci.getActiveChannels(), 0, active.length);
-         ci.updateAndDraw();
-         currentDisplay_.updateAndDraw(true);
-      } else {
-         displayModeCombo_.setSelectedIndex(1);
-      }
+      displayModeCombo_.setSelectedIndex(1);
 
    }
 
@@ -172,7 +175,7 @@ public class ContrastPanel extends JPanel {
       prefs_.putBoolean(PREF_REJECT_OUTLIERS, rejectOutliersCheckBox_.isSelected());
       prefs_.putBoolean(PREF_SYNC_CHANNELS, syncChannelsCheckBox_.isSelected());
 
-      if (currentDisplay_ == null) {
+      if (display_ == null) {
          return;
       }
       histControlsState_.autostretch = autostretchCheckBox_.isSelected();
@@ -340,9 +343,9 @@ public class ContrastPanel extends JPanel {
       if (synced) {
          autostretchCheckBox_.setSelected(false);
          autostretchCheckBox_.setEnabled(false);
-         if (currentHistograms_ != null) {
-            ((MultiChannelHistograms) currentHistograms_).setChannelContrastFromFirst();
-            ((MultiChannelHistograms) currentHistograms_).setChannelDisplayModeFromFirst();
+         if (histograms_ != null) {
+            ((MultiChannelHistograms) histograms_).setChannelContrastFromFirst();
+            ((MultiChannelHistograms) histograms_).setChannelDisplayModeFromFirst();
          }
       } else {
          autostretchCheckBox_.setEnabled(true);
@@ -360,29 +363,7 @@ public class ContrastPanel extends JPanel {
          @Override
          public void run() {
 
-            if (currentDisplay_ == null || !(currentDisplay_.getHyperImage() instanceof CompositeImage)) {
-               return;
-            }
-            int mode;
-            int state = displayModeCombo_.getSelectedIndex();
-            if (state == 0) {
-               mode = CompositeImage.COLOR;
-            } else if (state == 1) {
-               mode = CompositeImage.GRAYSCALE;
-            } else {
-               mode = CompositeImage.COMPOSITE;
-            }
-            CompositeImage ci = (CompositeImage) currentDisplay_.getHyperImage();
-
-            if (state == 2 && currentDisplay_.getNumChannels() > 7) {
-               JOptionPane.showMessageDialog(ContrastPanel.this, "Images with more than 7 channels cannot be displayed in Composite mode");
-               displayModeCombo_.setSelectedIndex(ci.getMode() - 2);
-               return;
-            } else {
-               ci.setMode(mode);
-               ci.updateAndDraw();
-            }
-            currentDisplay_.updateAndDraw(true);
+            display_.postEvent(new ContrastUpdatedEvent(displayModeCombo_.getSelectedIndex()));
             saveCheckBoxStates();
 
          }
@@ -404,8 +385,8 @@ public class ContrastPanel extends JPanel {
       rejectPercentSpinner_.setEnabled(rejectem);
       saveCheckBoxStates();
       if (autostretchCheckBox_.isSelected()) {
-         if (currentHistograms_ != null) {
-            currentHistograms_.autoscaleAllChannels();
+         if (histograms_ != null) {
+            histograms_.autoscaleAllChannels();
          }
       } else {
          rejectOutliersCheckBox_.setSelected(false);
@@ -415,22 +396,22 @@ public class ContrastPanel extends JPanel {
    private void rejectOutliersCheckBoxAction() {
       saveCheckBoxStates();
       rejectPercentSpinner_.setEnabled(rejectOutliersCheckBox_.isSelected());
-      if (currentHistograms_ != null) {
-         currentHistograms_.rejectOutliersChangeAction();
+      if (histograms_ != null) {
+         histograms_.rejectOutliersChangeAction();
       }
    }
 
    private void rejectPercentageChanged() {
       saveCheckBoxStates();
-      if (currentHistograms_ != null) {
-         currentHistograms_.rejectOutliersChangeAction();
+      if (histograms_ != null) {
+         histograms_.rejectOutliersChangeAction();
       }
    }
 
    private void logScaleCheckBoxActionPerformed() {
       saveCheckBoxStates();
-      if (currentHistograms_ != null) {
-         currentHistograms_.calcAndDisplayHistAndStats(true);
+      if (histograms_ != null) {
+         histograms_.calcAndDisplayHistAndStats(true);
       }
    }
 
@@ -471,23 +452,16 @@ public class ContrastPanel extends JPanel {
    }
 
    public void autostretch() {
-      if (currentHistograms_ != null) {
-         currentHistograms_.autostretch();
+      if (histograms_ != null) {
+         histograms_.autostretch();
       }
    }
 
    public void imageChanged() {
-      if (currentHistograms_ != null) {
-         currentHistograms_.imageChanged();
-         ((JPanel) currentHistograms_).repaint();
+      if (histograms_ != null) {
+         histograms_.imageChanged();
+         ((JPanel) histograms_).repaint();
       }
-   }
-
-   public synchronized void displayChanged(MagellanDisplay disp, Histograms hist) {
-      currentDisplay_ = disp;
-      currentHistograms_ = hist;
-      configureControls();
-      showCurrentHistograms();
    }
 
    public void disableAutostretch() {

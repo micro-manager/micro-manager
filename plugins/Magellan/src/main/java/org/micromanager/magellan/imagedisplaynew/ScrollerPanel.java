@@ -14,57 +14,33 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.magellan.imagedisplay;
+package org.micromanager.magellan.imagedisplaynew;
 
+import org.micromanager.magellan.imagedisplaynew.events.ScrollersAddedEvent;
+import org.micromanager.magellan.imagedisplaynew.events.MagellanNewImageEvent;
+import org.micromanager.magellan.imagedisplaynew.events.ScrollPositionEvent;
+import org.micromanager.magellan.imagedisplaynew.events.AnimationToggleEvent;
+import org.micromanager.magellan.imagedisplaynew.events.SetImageEvent;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Panel;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.JPanel;
+import org.micromanager.magellan.imagedisplay.NewImageEvent;
+import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
 
 /**
- * This class is responsible for containing and managing groups of 
+ * This class is responsible for containing and managing groups of
  * AxisScrollers, and how they affect the display of a collection of images.
  */
-public class ScrollerPanel extends Panel {
+ class ScrollerPanel extends JPanel {
 
-   
-   /**
-    * This class signifies that the currently-displayed image needs to be 
-    * updated.
-    */
-   public static class SetImageEvent {
-      // Maps axis labels to their positions. 
-      private HashMap<String, Integer> axisToPosition_;
-      public SetImageEvent(HashMap<String, Integer> axisToPosition) {
-         axisToPosition_ = axisToPosition;
-      }
-      /**
-       * Retrieve the desired position along the specified axis, or 0 if we 
-       * don't have a marker for that axis.
-       */
-      public Integer getPositionForAxis(String axis) {
-         if (axisToPosition_.containsKey(axis)) {
-            return axisToPosition_.get(axis);
-         }
-         return 0;
-      }
-   }
-
-   /**
-    * This class signifies that our layout has changed and our owner needs to 
-    * revalidate.
-    */
-   public static class LayoutChangedEvent {}
-
-   // We'll be communicating with our owner and with our AxisScrollers via
-   // this bus.
-   private EventBus bus_;
    // All AxisScrollers we manage. protected visibility to allow subclassing (Magellan plugin)
-   protected ArrayList<AxisScroller> scrollers_;
+   public ArrayList<AxisScroller> scrollers_;
    // A mapping of axis identifiers to their positions as of the last time
    // checkForImagePositionChanged() was called.
    private HashMap<String, Integer> lastImagePosition_ = null;
@@ -77,21 +53,21 @@ public class ScrollerPanel extends Panel {
    private Timer snapBackTimer_ = null;
    // Rate at which we update images when animating. Defaults to 10.
    private double framesPerSec_;
-   private AxisScroller zScroller_;
+   private MagellanDisplayController display_;
 
    /**
-    * @param axes List of Strings labeling the axes that the caller wants to 
-    *        create AxisScrollers for. 
+    * @param axes List of Strings labeling the axes that the caller wants to
+    * create AxisScrollers for.
     * @param maximums List of Integers indicating the number of images along
-    *        that axis. 
+    * that axis.
     */
-   public ScrollerPanel(EventBus bus, String[] axes, Integer[] maximums, 
-         double framesPerSec) {
+   public ScrollerPanel(MagellanDisplayController display, String[] axes, Integer[] maximums,
+           double framesPerSec) {
       // Minimize whitespace around our components.
       super(new net.miginfocom.swing.MigLayout("insets 0, fillx"));
-      
-      bus_ = bus;
-      bus_.register(this);
+      display_ = display;
+      display_.registerForEvents(this);
+
       framesPerSec_ = framesPerSec;
       scrollers_ = new ArrayList<AxisScroller>();
 
@@ -105,10 +81,8 @@ public class ScrollerPanel extends Panel {
             // Scroll bars do not allow zero "ticks".
             max = 1;
          }
-         AxisScroller scroller = new AxisScroller(axes[i], max, bus, true);
-         if (axes[i].equals("z")) {
-            zScroller_ = scroller;
-         }
+         AxisScroller scroller = new AxisScroller(display, axes[i], max, true);
+
          if (max <= 1) {
             scroller.setVisible(false);
          } else {
@@ -118,63 +92,67 @@ public class ScrollerPanel extends Panel {
       }
    }
 
+   @Subscribe
+   public void onDisplayClose(DisplayClosingEvent e) {
+      display_.unregisterForEvents(this);
+      display_ = null;
+   }
+   
    /**
     * One of our AxisScrollers changed position; update the image.
     */
    @Subscribe
-   public void onScrollPositionChanged(AxisScroller.ScrollPositionEvent event) {
+   public void onScrollPositionChanged(ScrollPositionEvent event) {
       checkForImagePositionChanged();
    }
 
    /**
-    * Check to see if the image we are currently "pointing to" with the 
-    * scrollers is different from the image that we were last pointing to
-    * when this function was called. If so, then we need to post a
-    * SetImageEvent to the event bus so that the image display gets updated.
+    * Check to see if the image we are currently "pointing to" with the
+    * scrollers is different from the image that we were last pointing to when
+    * this function was called. If so, then we need to post a SetImageEvent to
+    * the event bus so that the image display gets updated.
     */
    private void checkForImagePositionChanged() {
       boolean shouldPostEvent = false;
       if (lastImagePosition_ == null) {
-         lastImagePosition_ = new HashMap<String, Integer>(); 
+         lastImagePosition_ = new HashMap<String, Integer>();
       }
       for (AxisScroller scroller : scrollers_) {
          String axis = scroller.getAxis();
          Integer position = scroller.getPosition();
-         if (!lastImagePosition_.containsKey(axis) ||
-               lastImagePosition_.get(axis) != position) {
+         if (!lastImagePosition_.containsKey(axis)
+                 || lastImagePosition_.get(axis) != position) {
             // Position along this axis has changed; we need to refresh.
             shouldPostEvent = true;
          }
          lastImagePosition_.put(axis, position);
       }
       if (shouldPostEvent) {
-         bus_.post(new SetImageEvent(lastImagePosition_));  
+         display_.postEvent(new SetImageEvent(lastImagePosition_));
       }
    }
 
    /**
-    * One of our AxisScrollers toggled animation status; replace our
-    * animation timer.
+    * One of our AxisScrollers toggled animation status; replace our animation
+    * timer.
     */
    @Subscribe
-   public void onAnimationToggle(AxisScroller.AnimationToggleEvent event) {
+   public void onAnimationToggle(AnimationToggleEvent event) {
       resetAnimationTimer();
    }
 
-     
    public void superlockAllScrollers() {
       for (AxisScroller s : scrollers_) {
          s.superlock();
       }
    }
-      
+
    public void unlockAllScrollers() {
       for (AxisScroller s : scrollers_) {
          s.unlock();
       }
    }
 
-   
    /**
     * The window we're in is closing; cancel animations and timers, and ensure
     * that no new ones can get created.
@@ -190,12 +168,12 @@ public class ScrollerPanel extends Panel {
       if (snapBackTimer_ != null) {
          snapBackTimer_.cancel();
       }
-      bus_.unregister(this);
+      display_.unregisterForEvents(HEIGHT);
    }
 
    /**
     * Generate a new AnimationTimer that updates each active (i.e. animated)
-    * scroller according to our update rate (FPS). 
+    * scroller according to our update rate (FPS).
     */
    private void resetAnimationTimer() {
       if (animationUpdateTimer_ != null) {
@@ -211,7 +189,7 @@ public class ScrollerPanel extends Panel {
       int stepSize = 1;
       long interval = (long) (1000.0 / framesPerSec_);
       if (interval < 33) {
-         interval = 33; 
+         interval = 33;
          stepSize = (int) Math.round(framesPerSec_ * 33.0 / 1000.0);
       }
       boolean isAnimated = false;
@@ -222,8 +200,7 @@ public class ScrollerPanel extends Panel {
          if (scrollers_.get(i).getIsAnimated()) {
             isAnimated = true;
             offsets[i] = stepSize;
-         }
-         else {
+         } else {
             offsets[i] = 0;
          }
       }
@@ -237,7 +214,8 @@ public class ScrollerPanel extends Panel {
                      // Note that the scroller handles wrapping around to the 
                      // beginning, and also whether or not to move at all due to
                      // being locked. 
-                     scrollers_.get(i).advancePosition(offsets[i], false);
+                     //TODO: restore animation
+//                     scrollers_.get(i).advancePosition(offsets[i], false);
                   }
                }
                checkForImagePositionChanged();
@@ -247,61 +225,83 @@ public class ScrollerPanel extends Panel {
       }
    }
 
-   /**
-    * A new image has been made available; we need to adjust our scrollbars
-    * to suit. We only show the new image (i.e. update scrollbar positions)
-    * if none of our scrollers are superlocked.
-    */
-   @Subscribe
-   public void onNewImageEvent(NewImageEvent event) {
-      boolean didShowNewScrollers = false;
-      boolean canShowNewImage = true;
-      for (AxisScroller scroller : scrollers_) {
-         if (scroller.getIsSuperlocked()) {
-            canShowNewImage = false;
-            break;
-         }
-      }
-      for (AxisScroller scroller : scrollers_) {
-         int imagePosition = event.getPositionForAxis(scroller.getAxis());
-         if (scroller.getMaximum() <= imagePosition) {
-            if (scroller.getMaximum() == 1) {
-               // This scroller was previously hidden and needs to be shown now.
-               scroller.setVisible(true);
-               add(scroller, "wrap 0px, align center, growx");
-               didShowNewScrollers = true;
-            }
-            // This image is further along the axis for this scrollbar than 
-            // the current maximum, so we need a new maximum.
-            scroller.setMaximum(imagePosition + 1);
-         }
-         if (canShowNewImage) {
-            scroller.forcePosition(imagePosition);
-         }
-
-      }
-      if (didShowNewScrollers) {
-         // Post an event informing our masters that our layout has changed.
-         bus_.post(new LayoutChangedEvent());
-      }
-      if (canShowNewImage && canMakeTimers_) {
-         // Start up a timer to restore the scrollers to their original
-         // positions, if applicable. 
-         if (snapBackTimer_ != null) {
-            snapBackTimer_.cancel();
-         }
-         snapBackTimer_ = new Timer();
-         TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-               for (AxisScroller scroller : scrollers_) {
-                  scroller.restorePosition();
+   void expandDisplayedRangeToInclude(List<MagellanNewImageEvent> newIamgeEvents) {
+      for (MagellanNewImageEvent e : newIamgeEvents) {
+         boolean didShowNewScrollers = false;
+         for (AxisScroller scroller : scrollers_) {
+            int imagePosition = e.getPositionForAxis(scroller.getAxis());
+            if (scroller.getMaximum() <= imagePosition || scroller.getMinimum() > imagePosition) {
+               if (!scroller.isVisible()) {
+                  // This scroller was previously hidden and needs to be shown now.
+                  scroller.setVisible(true);
+                  add(scroller, "wrap 0px, align center, growx");
+                  didShowNewScrollers = true;
                }
+               // xpand display range
+               scroller.setMaximum(Math.max(imagePosition + 1, scroller.getMaximum()));
+               scroller.setMinimum(Math.min(imagePosition, scroller.getMinimum()));
             }
-         };
-         snapBackTimer_.schedule(task, 500);
+
+         }
+         if (didShowNewScrollers) {
+            // Post an event informing our masters that our layout has changed.
+            display_.postEvent(new ScrollersAddedEvent());
+         }
       }
+
    }
+
+   //TODO facotr out code for animation timer
+   @Subscribe
+//   public void onNewImageEvent(MagellanNewImageEvent event) {
+//      boolean didShowNewScrollers = false;
+//      boolean canShowNewImage = true;
+//      for (AxisScroller scroller : scrollers_) {
+//         if (scroller.getIsSuperlocked()) {
+//            canShowNewImage = false;
+//            break;
+//         }
+//      }
+//      for (AxisScroller scroller : scrollers_) {
+//         int imagePosition = event.getPositionForAxis(scroller.getAxis());
+//         if (scroller.getMaximum() <= imagePosition || scroller.getMinimum() > imagePosition) {
+//            if (scroller.getMaximum() - scroller.getMinimum() == 1) {
+//               // This scroller was previously hidden and needs to be shown now.
+//               scroller.setVisible(true);
+//               add(scroller, "wrap 0px, align center, growx");
+//               didShowNewScrollers = true;
+//            }
+//            // xpand display range
+//            scroller.setMaximum(Math.max(imagePosition + 1, scroller.getMaximum()));
+//            scroller.setMinimum(Math.min(imagePosition, scroller.getMinimum()));
+//         }
+//         if (canShowNewImage) {
+//            scroller.forcePosition(imagePosition);
+//         }
+//
+//      }
+//      if (didShowNewScrollers) {
+//         // Post an event informing our masters that our layout has changed.
+//         display_.postEvent(new ScrollersAddedEvent());
+//      }
+//      if (canShowNewImage && canMakeTimers_) {
+//         // Start up a timer to restore the scrollers to their original
+//         // positions, if applicable. 
+//         if (snapBackTimer_ != null) {
+//            snapBackTimer_.cancel();
+//         }
+//         snapBackTimer_ = new Timer();
+//         TimerTask task = new TimerTask() {
+//            @Override
+//            public void run() {
+//               for (AxisScroller scroller : scrollers_) {
+//                  scroller.restorePosition();
+//               }
+//            }
+//         };
+//         snapBackTimer_.schedule(task, 500);
+//      }
+//   }
 
    /**
     * Set a new animation rate.
@@ -311,10 +311,9 @@ public class ScrollerPanel extends Panel {
       resetAnimationTimer();
    }
 
-
    /**
-    * Return the position of the scroller for the specified axis, or 0 if 
-    * we have no scroller for that axis.
+    * Return the position of the scroller for the specified axis, or 0 if we
+    * have no scroller for that axis.
     */
    public int getPosition(String axis) {
       for (AxisScroller scroller : scrollers_) {
@@ -326,8 +325,8 @@ public class ScrollerPanel extends Panel {
    }
 
    /**
-    * Return the maximum position for the specified axis, or 0 if we have
-    * no scroller for that axis.
+    * Return the maximum position for the specified axis, or 0 if we have no
+    * scroller for that axis.
     */
    public int getMaxPosition(String axis) {
       for (AxisScroller scroller : scrollers_) {
@@ -349,4 +348,3 @@ public class ScrollerPanel extends Panel {
       }
    }
 }
-

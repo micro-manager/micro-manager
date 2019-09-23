@@ -17,41 +17,35 @@
 //               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-package org.micromanager.magellan.acq;
+package org.micromanager.magellan.imagedisplaynew;
 
-import java.lang.reflect.InvocationTargetException;
-import org.micromanager.magellan.datasaving.MultiResMultipageTiffStorage;
-import org.micromanager.magellan.imagedisplay.MagellanDisplay;
+import com.google.common.eventbus.EventBus;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.micromanager.magellan.datasaving.MultiResMultipageTiffStorage;
 import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
+import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.magellan.coordinates.XYStagePosition;
+import org.micromanager.magellan.imagedisplaynew.events.ImageCacheClosingEvent;
+import org.micromanager.magellan.imagedisplaynew.events.MagellanNewImageEvent;
 import org.micromanager.magellan.misc.Log;
+import org.micromanager.magellan.misc.MD;
 
 /**
- * MMImageCache: central repository of Images Holds pixels and metadata to be
- * used for display or save on disk
- *
- *
- * @author arthur
+ * This class manages a magellan dataset on disk, as well as the state of a view into it (i.e. contrast settings/zoom, etc"
  */
 public class MagellanImageCache {
 
-   private MagellanDisplay display_;
    private MultiResMultipageTiffStorage imageStorage_;
-   private final ExecutorService listenerExecutor_;
-   private volatile boolean imageCacheFinished_ = false;
+   private EventBus dataProviderBus_ = new EventBus();
+   private ExecutorService displayCommunicationExecutor_ = Executors.newSingleThreadExecutor((Runnable r) -> new Thread(r, "Image cache thread"));
 
-   public void setDisplay(MagellanDisplay d) {
-      display_ = d;
-   }
-
-   public MagellanImageCache(MultiResMultipageTiffStorage imageStorage) {
-      imageStorage_ = imageStorage;
-      listenerExecutor_ = Executors.newFixedThreadPool(1);
+   public MagellanImageCache(String dir, JSONObject summaryMetadata, JSONObject displaySettings) {
+      imageStorage_ = new MultiResMultipageTiffStorage(dir, summaryMetadata);
+      imageStorage_.setDisplaySettings(displaySettings);
    }
 
    /**
@@ -61,20 +55,6 @@ public class MagellanImageCache {
       if (!imageStorage_.isFinished()) {
          imageStorage_.finishedWriting();
       }
-      final String path = getDiskLocation();
-      try {
-         SwingUtilities.invokeAndWait(new Runnable() {
-            @Override
-            public void run() {
-               display_.imagingFinished(path);
-               listenerExecutor_.shutdown();
-               imageCacheFinished_ = true;
-            }
-         });
-      } catch (Exception ex) {
-         throw new RuntimeException(ex);
-      }
-
    }
 
    public boolean isFinished() {
@@ -86,16 +66,23 @@ public class MagellanImageCache {
    }
 
    public JSONObject getDisplayAndComments() {
-      return imageStorage_.getDisplaySettings();
+      try {
+         return new JSONObject(imageStorage_.getDisplaySettings().toString());
+      } catch (JSONException ex) {
+         throw new RuntimeException("THis shouldnt happen");
+      }
    }
 
    /**
     * Call when display and acquisition both done
     */
    public void close() {
-      if (imageCacheFinished_) {
+      if (imageStorage_.isFinished()) {
          imageStorage_.close();
-         display_ = null;
+         imageStorage_ = null;
+         displayCommunicationExecutor_.shutdownNow();
+         displayCommunicationExecutor_ = null;
+         dataProviderBus_.post(new ImageCacheClosingEvent());
       } else {
          //keep resubmitting so that finish, which comes from a different thread, happens first
          SwingUtilities.invokeLater(new Runnable() {
@@ -110,33 +97,119 @@ public class MagellanImageCache {
    public void putImage(final TaggedImage taggedImg) {
       imageStorage_.putImage(taggedImg);
       //let the display know theres a new image in town
-      listenerExecutor_.submit(new Runnable() {
+//      listenerExecutor_.submit(new Runnable() {
+//         @Override
+//         public void run() {
+//            display_.imageReceived(taggedImg);
+//         }
+//      });
+      //new display version
+
+      //put on different thread to not slow down acquisition
+      displayCommunicationExecutor_.submit(new Runnable() {
          @Override
          public void run() {
-            display_.imageReceived(taggedImg);
+            dataProviderBus_.post(new MagellanNewImageEvent(taggedImg.tags));
          }
       });
 
    }
 
-   public TaggedImage getImage(int channel, int slice, int frame, int position) {
-      return imageStorage_.getImage(channel, slice, frame, position);
-   }
-
-   public JSONObject getSummaryMetadata() {
+   public JSONObject getSummaryMD() {
       if (imageStorage_ == null) {
          Log.log("imageStorage_ is null in getSummaryMetadata", true);
          return null;
       }
-      return imageStorage_.getSummaryMetadata();
+      try {
+         return new JSONObject(imageStorage_.getSummaryMetadata().toString());
+      } catch (JSONException ex) {
+         throw new RuntimeException("This shouldnt happen");
+      }
    }
 
-   public void setSummaryMetadata(JSONObject tags) {
-      if (imageStorage_ == null) {
-         Log.log("imageStorage_ is null in setSummaryMetadata", true);
-         return;
-      }
-      imageStorage_.setSummaryMetadata(tags);
+   public int getTileHeight() {
+      return imageStorage_.getTileHeight();
+   }
+
+   public int getTileWidth() {
+      return imageStorage_.getTileWidth();
+   }
+
+   public boolean isRGB() {
+      return false;
+   }
+
+   public boolean isExploreAcquisition() {
+      return MD.isExploreAcq(imageStorage_.getSummaryMetadata());
+   }
+
+   public double getZStep() {
+      return imageStorage_.getPixelSizeZ();
+   }
+
+   public boolean isXYBounded() {
+      return !MD.isExploreAcq(imageStorage_.getSummaryMetadata());
+   }
+
+   public int[] getImageBounds() {
+//          if (acq instanceof MagellanGUIAcquisition) {
+//         xMax_ = disp_.getStorage().getNumCols() * tileWidth_;
+//         yMax_ = disp_.getStorage().getNumRows() * tileHeight_;
+//         xMin_ = 0;
+//         yMin_ = 0;
+//      } else if (acq == null) {
+//         LongPoint topLeft = getDisplayedPixel(multiResStorage.getMinRow(), multiResStorage.getMinCol());
+//         xMax_ = disp_.getStorage().getNumCols() * tileWidth_ + xMin_;
+//         yMax_ = disp_.getStorage().getNumRows() * tileHeight_ + yMin_;
+//         xMin_ = topLeft.x_;
+//         yMin_ = topLeft.y_;
+//      } else {
+//         xView_ = (multiResStorage.getTileWidth() - displayImageWidth_) / 2;
+//         yView_ = (multiResStorage.getTileHeight() - displayImageHeight_) / 2;
+//         //these dont maatter in explore mode
+//         xMax_ = 0;
+//         yMax_ = 0;
+//         xMin_ = 0;
+//         yMin_ = 0;
+//      }
+      return new int[]{500, 500, 0, 0};
+   }
+
+   public TaggedImage getImageForDisplay(int channel, MagellanDataViewCoords dataCoords) {
+      return imageStorage_.getImageForDisplay(channel, dataCoords.zIndex_, dataCoords.tIndex_, dataCoords.resolutionIndex_,
+              dataCoords.xView_, dataCoords.yView_, dataCoords.displayImageWidth_, dataCoords.displayImageHeight_);
+   }
+
+   public void registerForEvents(Object obj) {
+      dataProviderBus_.register(obj);
+   }
+
+   public void unregisterForEvents(Object obj) {
+      dataProviderBus_.unregister(obj);
+   }
+
+    public boolean anythingAcquired() {
+      return !imageStorage_.imageKeys().isEmpty();
+   }
+
+    public String getUniqueAcqName() {
+      return imageStorage_.getUniqueAcqName();
+   }
+
+    public int getFullResPositionIndexFromStageCoords(double xPos, double yPos) {
+      return imageStorage_.getPosManager().getFullResPositionIndexFromStageCoords(xPos, yPos);
+   }
+
+   public XYStagePosition getXYPosition(int posIndex) {
+      return imageStorage_.getPosManager().getXYPosition(posIndex);
+   }
+
+    public int[] getPositionIndices(int[] newPositionRows, int[] newPositionCols) {
+      return imageStorage_.getPosManager().getPositionIndices(newPositionRows,  newPositionCols);
+   }
+
+    public List<XYStagePosition> getPositionList() {
+      return imageStorage_.getPosManager().getPositionList();
    }
 
 }

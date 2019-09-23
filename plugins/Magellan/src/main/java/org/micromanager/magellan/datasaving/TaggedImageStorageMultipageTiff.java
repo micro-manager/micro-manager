@@ -301,6 +301,10 @@ public final class TaggedImageStorageMultipageTiff {
       SwingUtilities.invokeLater(new Runnable() {
          @Override
          public void run() {
+            if (fileSets_ == null) {
+               //its already done
+               return;
+            }
             savingFinishedProgressBar_ = new ProgressBar("Finishing Files", 0, fileSets_.size());
             savingFinishedProgressBar_.setProgress(0);
             savingFinishedProgressBar_.setVisible(true);
@@ -319,14 +323,21 @@ public final class TaggedImageStorageMultipageTiff {
          SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
+               if (savingFinishedProgressBar_ == null) {
+                  return;
+               }
                savingFinishedProgressBar_.setProgress(currentCount);
             }
          });
       }
-
+      fileSets_.clear();
+      fileSets_ = null;
       SwingUtilities.invokeLater(new Runnable() {
          @Override
          public void run() {
+            if (savingFinishedProgressBar_ == null) {
+               return;
+            }
             savingFinishedProgressBar_.close();
             savingFinishedProgressBar_ = null;
          }
@@ -346,6 +357,7 @@ public final class TaggedImageStorageMultipageTiff {
             Log.log(ex);
          }
       }
+      tiffReadersByLabel_ = null;
    }
 
    public boolean isFinished() {
@@ -484,6 +496,7 @@ public final class TaggedImageStorageMultipageTiff {
          for (MultipageTiffWriter w : tiffWriters_) {
             w.close();
          }
+         tiffWriters_ = null;
          finished_ = true;
       }
 

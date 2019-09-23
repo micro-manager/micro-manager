@@ -21,7 +21,7 @@
 //
 // CVS:          $Id$
 //
-package org.micromanager.magellan.mmcloneclasses.graph;
+package org.micromanager.magellan.imagedisplaynew;
 import java.awt.geom.Point2D;
 /**
  * XY graph data structure.

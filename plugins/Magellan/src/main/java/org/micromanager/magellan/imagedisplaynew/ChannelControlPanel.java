@@ -19,37 +19,24 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.magellan.mmcloneclasses.graph;
+package org.micromanager.magellan.imagedisplaynew;
 
-import ij.CompositeImage;
-import ij.process.ImageProcessor;
-import ij.process.LUT;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.prefs.Preferences;
 import javax.swing.*;
-import org.micromanager.magellan.acq.MagellanImageCache;
-import org.micromanager.magellan.mmcloneclasses.graph.HistogramPanel.CursorListener;
-import org.micromanager.magellan.imagedisplay.MMCompositeImage;
-import org.micromanager.magellan.imagedisplay.MagellanDisplay;
-import org.micromanager.magellan.imagedisplay.VirtualAcquisitionDisplay;
-import org.micromanager.magellan.main.Magellan;
-import org.micromanager.magellan.misc.GlobalSettings;
-import org.micromanager.magellan.misc.HistogramUtils;
-import org.micromanager.magellan.misc.JavaUtils;
-import org.micromanager.magellan.misc.Log;
-import org.micromanager.magellan.misc.MD;
-import mmcorej.CMMCore;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import org.micromanager.magellan.imagedisplaynew.MagellanChannelDisplaySettings;
+import org.micromanager.magellan.imagedisplaynew.events.UpdateImageEvent;
+import org.micromanager.magellan.imagedisplaynew.MagellanDisplayController;
+import org.micromanager.magellan.imagedisplaynew.events.ContrastUpdatedEvent;
+import org.micromanager.magellan.imagedisplaynew.HistogramPanel.CursorListener;
 
 /**
  * Draws one histogram of the Multi-Channel control panel
  *
  *
  */
-public class ChannelControlPanel extends JPanel implements CursorListener {
+ class ChannelControlPanel extends JPanel implements CursorListener {
 
    private static final Dimension CONTROLS_SIZE = new Dimension(130, 150);
    public static final Dimension MINIMUM_SIZE = new Dimension(400, CONTROLS_SIZE.height);
@@ -58,8 +45,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private final int channelIndex_;
    private HistogramPanel hp_;
    private MultiChannelHistograms mcHistograms_;
-   private MagellanDisplay display_;
-   private CompositeImage img_;
+   private MagellanDisplayController display_;
    private JButton autoButton_;
    private JButton zoomInButton_;
    private JButton zoomOutButton_;
@@ -89,13 +75,13 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private ContrastPanel contrastPanel_;
    private final String channelName_;
 
-   public ChannelControlPanel(int channelIndex, MultiChannelHistograms mcHistograms, MagellanDisplay disp,
+   public ChannelControlPanel(int channelIndex, MultiChannelHistograms mcHistograms, MagellanDisplayController disp,
            ContrastPanel contrastPanel, String name, Color color, int bitDepth) {
       channelName_ = name;
       histControlState_ = contrastPanel.getHistogramControlsState();
       contrastPanel_ = contrastPanel;
       display_ = disp;
-      img_ = (CompositeImage) disp.getHyperImage();
+      disp.registerForEvents(this);
       color_ = color;
       bitDepth_ = bitDepth;
       maxIntensity_ = (int) Math.pow(2, bitDepth_) - 1;
@@ -418,7 +404,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       } else {
          setFullScale();
          mcHistograms_.applyLUTToImage();
-         display_.drawWithoutUpdate();
+         display_.postEvent(new UpdateImageEvent());
       }
    }
 
@@ -442,7 +428,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       channelNameCheckbox_.setText(name);
       calcAndDisplayHistAndStats(true);
       mcHistograms_.applyLUTToImage();
-      display_.drawWithoutUpdate();
+      display_.postEvent(new UpdateImageEvent());
       this.repaint();
    }
 
@@ -483,20 +469,20 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void channelNameCheckboxAction() {
-      boolean[] active = img_.getActiveChannels();
-      if (img_.getMode() != CompositeImage.COMPOSITE) {
+      boolean[] active = display_.getActiveChannels();
+      if (display_.isCompositeMode()) {
          if (active[channelIndex_]) {
             channelNameCheckbox_.setSelected(true);
             return;
          } else {
-            display_.setChannel(channelIndex_);
+//            display_.setChannel(channelIndex_);
          }
       } else {
-         img_.getActiveChannels()[channelIndex_] = channelNameCheckbox_.isSelected();
+         display_.getActiveChannels()[channelIndex_] = channelNameCheckbox_.isSelected();
       }
 
-      img_.getActiveChannels()[channelIndex_] = channelNameCheckbox_.isSelected();
-      img_.updateAndDraw();
+      display_.getActiveChannels()[channelIndex_] = channelNameCheckbox_.isSelected();
+      display_.postEvent(new UpdateImageEvent());
    }
 
    public void setFullScale() {
@@ -574,53 +560,22 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    //Need to put this on EDT to avoid index out of bounds because of setting currentChannel to -1
    public void applyChannelLUTToImage() {
-      Runnable run = new Runnable() {
+      MagellanChannelDisplaySettings displaySettings = new MagellanChannelDisplaySettings(channelNameCheckbox_.isSelected(),
+                     color_, gamma_, contrastMax_, contrastMin_);
+      
+      //TODO: send LUT to image
+      display_.postEvent(new ContrastUpdatedEvent(channelIndex_, displaySettings));
+      
+      storeDisplaySettings();
 
-         @Override
-         public void run() {
-
-            LUT lut = makeLUT(color_, gamma_);
-            lut.min = contrastMin_;
-            lut.max = contrastMax_;
-            //uses lut.min and lut.max to set min and max of precessor
-            img_.setChannelLut(lut, channelIndex_ + 1);
-
-            //ImageJ workaround: do this so the appropriate color model and min/max get applied 
-            //in color or grayscael mode
-            try {
-               JavaUtils.setRestrictedFieldValue(img_, CompositeImage.class, "currentChannel", -1);
-            } catch (NoSuchFieldException ex) {
-               Log.log(ex);
-            }
-
-            if (img_.getChannel() == channelIndex_ + 1) {
-               LUT grayLut = makeLUT(Color.white, gamma_);
-               ImageProcessor processor = img_.getProcessor();
-               if (processor != null) {
-                  processor.setColorModel(grayLut);
-                  processor.setMinAndMax(contrastMin_, contrastMax_);
-               }
-               if (img_.getMode() == CompositeImage.GRAYSCALE) {
-                  img_.updateImage();
-               }
-            }
-            storeDisplaySettings();
-
-            updateHistogram();
-
-         }
-      };
-      if (SwingUtilities.isEventDispatchThread()) {
-         run.run();
-      } else {
-         SwingUtilities.invokeLater(run);
-      }
+      updateHistogram();
    }
 
    private void storeDisplaySettings() {
-      int histMax = histRangeComboBox_.getSelectedIndex() == 0 ? -1 : histMax_;
-      display_.storeChannelHistogramSettings(channelName_, contrastMin_, contrastMax_,
-              gamma_, histMax, ((MMCompositeImage) img_).getMode());
+      //TODO: could bring this backt
+//      int histMax = histRangeComboBox_.getSelectedIndex() == 0 ? -1 : histMax_;
+//      display_.storeChannelHistogramSettings(channelName_, contrastMin_, contrastMax_,
+//              gamma_, histMax, ((MMCompositeImage) img_).getMode());
    }
 
    public int getChannelIndex() {
@@ -632,115 +587,115 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     *
     */
    public void calcAndDisplayHistAndStats(boolean drawHist) {
-      if (img_ == null || img_.getProcessor() == null) {
-         return;
-      }
-      ImageProcessor ip;
-      if (img_.getMode() == CompositeImage.COMPOSITE) {
-         ip = img_.getProcessor(channelIndex_ + 1);
-         if (ip != null) {
-            ip.setRoi(img_.getRoi());
-         }
-      } else {
-         MMCompositeImage ci = (MMCompositeImage) img_;
-         int flatIndex = 1 + channelIndex_ + (((MagellanDisplay) display_).getVisibleSliceIndex()) * ci.getNChannelsUnverified()
-                 + (img_.getFrame() - 1) * ci.getNSlicesUnverified() * ci.getNChannelsUnverified();
-         ip = img_.getStack().getProcessor(flatIndex);
-
-      }
-
-      if (((MMCompositeImage) img_).getNChannelsUnverified() <= 7) {
-         boolean active = img_.getActiveChannels()[channelIndex_];
-         channelNameCheckbox_.setSelected(active);
-         if (!active) {
-            drawHist = false;
-         }
-      }
-      if (((MMCompositeImage) img_).getMode() != CompositeImage.COMPOSITE) {
-         if (img_.getChannel() - 1 != channelIndex_) {
-            drawHist = false;
-         }
-      }
-
-      if (ip == null) {
-         return;
-      }
-
-      int[] rawHistogram = ip.getHistogram();
-      int imgWidth = img_.getWidth();
-      int imgHeight = img_.getHeight();
-
-      if (rawHistogram[0] == imgWidth * imgHeight) {
-         return;  //Blank pixels 
-      }
-      if (histControlState_.ignoreOutliers) {
-         maxAfterRejectingOutliers_ = rawHistogram.length;
-         // specified percent of pixels are ignored in the automatic contrast setting
-         int totalPoints = imgHeight * imgWidth;
-         HistogramUtils hu = new HistogramUtils(rawHistogram, totalPoints, 0.01 * histControlState_.percentToIgnore);
-         minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
-         maxAfterRejectingOutliers_ = hu.getMaxAfterRejectingOutliers();
-      }
-      GraphData histogramData = new GraphData();
-
-      pixelMin_ = -1;
-      pixelMax_ = 0;
-
-      int numBins = (int) Math.min(rawHistogram.length / binSize_, NUM_BINS);
-      int[] histogram = new int[NUM_BINS];
-      int total = 0;
-      for (int i = 0; i < numBins; i++) {
-         histogram[i] = 0;
-         for (int j = 0; j < binSize_; j++) {
-            int rawHistIndex = (int) (i * binSize_ + j);
-            int rawHistVal = rawHistogram[rawHistIndex];
-            histogram[i] += rawHistVal;
-            if (rawHistVal > 0) {
-               pixelMax_ = rawHistIndex;
-               if (pixelMin_ == -1) {
-                  pixelMin_ = rawHistIndex;
-               }
-            }
-         }
-         total += histogram[i];
-         if (histControlState_.logHist) {
-            histogram[i] = histogram[i] > 0 ? (int) (1000 * Math.log(histogram[i])) : 0;
-         }
-      }
-      //Make sure max has correct value is hist display mode isnt auto
-      if (histRangeComboBox_.getSelectedIndex() != -1) {
-         pixelMin_ = rawHistogram.length - 1;
-         for (int i = rawHistogram.length - 1; i > 0; i--) {
-            if (rawHistogram[i] > 0 && i > pixelMax_) {
-               pixelMax_ = i;
-            }
-            if (rawHistogram[i] > 0 && i < pixelMin_) {
-               pixelMin_ = i;
-            }
-         }
-      }
-
-      // work around what is apparently a bug in ImageJ
-      if (total == 0) {
-         if (img_.getProcessor().getMin() == 0) {
-            histogram[0] = imgWidth * imgHeight;
-         } else {
-            histogram[numBins - 1] = imgWidth * imgHeight;
-         }
-      }
-
-      if (drawHist) {
-         hp_.setVisible(true);
-         //Draw histogram and stats
-         histogramData.setData(histogram);
-         hp_.setData(histogramData);
-         hp_.setAutoScale();
-         hp_.repaint();
-
-         minMaxLabel_.setText("Min: " + pixelMin_ + "   " + "Max: " + pixelMax_);
-      } else {
-         hp_.setVisible(false);
-      }
+//      if (img_ == null || img_.getProcessor() == null) {
+//         return;
+//      }
+//      ImageProcessor ip;
+//      if (img_.getMode() == CompositeImage.COMPOSITE) {
+//         ip = img_.getProcessor(channelIndex_ + 1);
+//         if (ip != null) {
+//            ip.setRoi(img_.getRoi());
+//         }
+//      } else {
+//         MMCompositeImage ci = (MMCompositeImage) img_;
+//         int flatIndex = 1 + channelIndex_ + (((MagellanDisplay) display_).getVisibleSliceIndex()) * ci.getNChannelsUnverified()
+//                 + (img_.getFrame() - 1) * ci.getNSlicesUnverified() * ci.getNChannelsUnverified();
+//         ip = img_.getStack().getProcessor(flatIndex);
+//
+//      }
+//
+//      if (((MMCompositeImage) img_).getNChannelsUnverified() <= 7) {
+//         boolean active = img_.getActiveChannels()[channelIndex_];
+//         channelNameCheckbox_.setSelected(active);
+//         if (!active) {
+//            drawHist = false;
+//         }
+//      }
+//      if (((MMCompositeImage) img_).getMode() != CompositeImage.COMPOSITE) {
+//         if (img_.getChannel() - 1 != channelIndex_) {
+//            drawHist = false;
+//         }
+//      }
+//
+//      if (ip == null) {
+//         return;
+//      }
+//
+//      int[] rawHistogram = ip.getHistogram();
+//      int imgWidth = img_.getWidth();
+//      int imgHeight = img_.getHeight();
+//
+//      if (rawHistogram[0] == imgWidth * imgHeight) {
+//         return;  //Blank pixels 
+//      }
+//      if (histControlState_.ignoreOutliers) {
+//         maxAfterRejectingOutliers_ = rawHistogram.length;
+//         // specified percent of pixels are ignored in the automatic contrast setting
+//         int totalPoints = imgHeight * imgWidth;
+//         HistogramUtils hu = new HistogramUtils(rawHistogram, totalPoints, 0.01 * histControlState_.percentToIgnore);
+//         minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
+//         maxAfterRejectingOutliers_ = hu.getMaxAfterRejectingOutliers();
+//      }
+//      GraphData histogramData = new GraphData();
+//
+//      pixelMin_ = -1;
+//      pixelMax_ = 0;
+//
+//      int numBins = (int) Math.min(rawHistogram.length / binSize_, NUM_BINS);
+//      int[] histogram = new int[NUM_BINS];
+//      int total = 0;
+//      for (int i = 0; i < numBins; i++) {
+//         histogram[i] = 0;
+//         for (int j = 0; j < binSize_; j++) {
+//            int rawHistIndex = (int) (i * binSize_ + j);
+//            int rawHistVal = rawHistogram[rawHistIndex];
+//            histogram[i] += rawHistVal;
+//            if (rawHistVal > 0) {
+//               pixelMax_ = rawHistIndex;
+//               if (pixelMin_ == -1) {
+//                  pixelMin_ = rawHistIndex;
+//               }
+//            }
+//         }
+//         total += histogram[i];
+//         if (histControlState_.logHist) {
+//            histogram[i] = histogram[i] > 0 ? (int) (1000 * Math.log(histogram[i])) : 0;
+//         }
+//      }
+//      //Make sure max has correct value is hist display mode isnt auto
+//      if (histRangeComboBox_.getSelectedIndex() != -1) {
+//         pixelMin_ = rawHistogram.length - 1;
+//         for (int i = rawHistogram.length - 1; i > 0; i--) {
+//            if (rawHistogram[i] > 0 && i > pixelMax_) {
+//               pixelMax_ = i;
+//            }
+//            if (rawHistogram[i] > 0 && i < pixelMin_) {
+//               pixelMin_ = i;
+//            }
+//         }
+//      }
+//
+//      // work around what is apparently a bug in ImageJ
+////      if (total == 0) {
+////         if (img_.getProcessor().getMin() == 0) {
+////            histogram[0] = imgWidth * imgHeight;
+////         } else {
+////            histogram[numBins - 1] = imgWidth * imgHeight;
+////         }
+////      }
+//
+//      if (drawHist) {
+//         hp_.setVisible(true);
+//         //Draw histogram and stats
+//         histogramData.setData(histogram);
+//         hp_.setData(histogramData);
+//         hp_.setAutoScale();
+//         hp_.repaint();
+//
+//         minMaxLabel_.setText("Min: " + pixelMin_ + "   " + "Max: " + pixelMax_);
+//      } else {
+//         hp_.setVisible(false);
+//      }
 
    }
 
@@ -817,29 +772,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          mcHistograms_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
       } else {
          mcHistograms_.applyLUTToImage();
-         display_.drawWithoutUpdate();
+         display_.postEvent(new UpdateImageEvent());
       }
    }
 
-   public static LUT makeLUT(Color color, double gamma) {
-      int r = color.getRed();
-      int g = color.getGreen();
-      int b = color.getBlue();
 
-      int size = 256;
-      byte[] rs = new byte[size];
-      byte[] gs = new byte[size];
-      byte[] bs = new byte[size];
-
-      double xn;
-      double yn;
-      for (int x = 0; x < size; ++x) {
-         xn = x / (double) (size - 1);
-         yn = Math.pow(xn, gamma);
-         rs[x] = (byte) (yn * r);
-         gs[x] = (byte) (yn * g);
-         bs[x] = (byte) (yn * b);
-      }
-      return new LUT(8, size, rs, gs, bs);
-   }
 }

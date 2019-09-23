@@ -16,13 +16,11 @@
 //
 package org.micromanager.magellan.acq;
 
-import org.micromanager.magellan.datasaving.MultiResMultipageTiffStorage;
-import org.micromanager.magellan.imagedisplay.MagellanDisplay;
-import java.awt.Color;
+import org.micromanager.magellan.imagedisplaynew.MagellanImageCache;
+import com.google.common.eventbus.Subscribe;
 import java.awt.geom.AffineTransform;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -30,13 +28,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Spliterator;
 import java.util.Spliterators;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.micromanager.magellan.channels.MagellanChannelSpec;
 import org.micromanager.magellan.coordinates.MagellanAffineUtils;
-import org.micromanager.magellan.coordinates.PositionManager;
 import org.micromanager.magellan.coordinates.XYStagePosition;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.Log;
@@ -44,9 +40,12 @@ import org.micromanager.magellan.misc.MD;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.magellan.api.MagellanAcquisitionAPI;
 import org.micromanager.magellan.imagedisplay.DisplaySettings;
+import org.micromanager.magellan.imagedisplaynew.events.ImageCacheClosingEvent;
+import org.micromanager.magellan.imagedisplaynew.MagellanDisplayController;
 
 /**
  * Abstract class that manages a generic acquisition. Subclassed into specific
@@ -68,15 +67,12 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
    private int overlapX_, overlapY_;
    private volatile boolean paused_ = false;
    protected MagellanChannelSpec channels_;
-   private MagellanImageCache imageCache_;
-   protected PositionManager posManager_;
    private MagellanEngine eng_;
    protected volatile boolean aborted_ = false;
-   private MultiResMultipageTiffStorage storage_;
-   private MagellanDisplay display_;
    //map generated at runtime of channel names to channel indices
    private HashMap<String, Integer> channelIndices_ = new HashMap<String, Integer>();
    protected AcquisitionSettingsBase settings_;
+   protected MagellanImageCache dataProvider_;
 
    public Acquisition(AcquisitionSettingsBase settings) {
       settings_ = settings;
@@ -107,16 +103,33 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
       zStep_ = zStep;
       overlapX_ = (int) (Magellan.getCore().getImageWidth() * overlapPercent / 100);
       overlapY_ = (int) (Magellan.getCore().getImageHeight() * overlapPercent / 100);
-      summaryMetadata_ = makeSummaryMD(name);
-      storage_ = new MultiResMultipageTiffStorage(dir, summaryMetadata_);
-      posManager_ = storage_.getPosManager();
+      JSONObject summaryMetadata = makeSummaryMD(name);
+      try {
+         //keep local copy for viewer
+         summaryMetadata_ = new JSONObject(summaryMetadata.toString());
+      } catch (JSONException ex) {
+         System.err.print("Couldn'r copy summaary metadata");
+         ex.printStackTrace();
+      }
+      
+
+      JSONObject displaySettings = DisplaySettings.getDefaultDisplaySettings(channels_, summaryMetadata);
+      dataProvider_ = new MagellanImageCache(dir, summaryMetadata, displaySettings);
       //storage class has determined unique acq name, so it can now be stored
-      name_ = storage_.getUniqueAcqName();
-      imageCache_ = new MagellanImageCache(storage_);
-      imageCache_.setSummaryMetadata(summaryMetadata_);
-      JSONObject displaySettings = DisplaySettings.getDefaultDisplaySettings(channels_, summaryMetadata_);
-      storage_.setDisplaySettings(displaySettings);
-      display_ = new MagellanDisplay(imageCache_, this, summaryMetadata_, storage_, displaySettings);
+      name_ = dataProvider_.getUniqueAcqName();
+      
+
+      dataProvider_.registerForEvents(this);
+      
+      //create display
+      new MagellanDisplayController(dataProvider_, 
+              org.micromanager.display.internal.DefaultDisplaySettings.getStandardSettings(null));
+   }
+   
+   @Subscribe
+   public void onImageCacheClosingEvent(ImageCacheClosingEvent event) {
+      dataProvider_.unregisterForEvents(this);
+      dataProvider_ = null; 
    }
 
    public abstract void start();
@@ -132,12 +145,12 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
    void saveImage(TaggedImage image) {
       if (image.tags == null && image.pix == null) {
          if (!finished_) {
-            imageCache_.finished();
+            dataProvider_.finished();
             finished_ = true;
          }
       } else {
          //this method doesnt return until all images have been writtent to disk
-         imageCache_.putImage(image);
+         dataProvider_.putImage(image);
       }
    }
 
@@ -427,28 +440,7 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
    }
 
    public boolean anythingAcquired() {
-      return !storage_.imageKeys().isEmpty();
-   }
-
-   /**
-    * Used to tell the multiresoltuion storage to create more downsampled levels
-    * for higher zoom Explore acquisitions use this
-    *
-    * @param index
-    */
-   public void addResolutionsUpTo(int index) {
-      MagellanEngine.getInstance().runOnSavingThread(new Runnable() {
-         @Override
-         public void run() {
-            try {
-               storage_.addResolutionsUpTo(index);
-            } catch (InterruptedException | ExecutionException ex) {
-               ex.printStackTrace();
-               Log.log(ex);
-            }
-            display_.updateDisplay(true);
-         }
-      });
+      return dataProvider_ == null ? true : dataProvider_.anythingAcquired();
    }
 
 }

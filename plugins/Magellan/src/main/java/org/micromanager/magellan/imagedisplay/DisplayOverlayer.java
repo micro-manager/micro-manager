@@ -43,7 +43,7 @@ import java.util.concurrent.ThreadFactory;
 import javax.swing.SwingUtilities;
 import org.micromanager.magellan.misc.Log;
 import org.micromanager.magellan.misc.LongPoint;
-import org.micromanager.magellan.mmcloneclasses.graph.ContrastPanel;
+//import org.micromanager.magellan.imagedisplaynew.ContrastPanel;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.micromanager.magellan.surfacesandregions.SingleResolutionInterpolation;
 import org.micromanager.magellan.surfacesandregions.MultiPosGrid;
@@ -282,13 +282,13 @@ public class DisplayOverlayer {
             addTextBox(text, overlay);
          }
          //always draw tiles waiting to be acquired
-         LinkedBlockingQueue<ExploreAcquisition.ExploreTileWaitingToAcquire> tiles
-                 = expAcq.getTilesWaitingToAcquireAtSlice(display_.getVisibleSliceIndex() + expAcq.getMinSliceIndex());
-         if (tiles != null) {
-            for (ExploreAcquisition.ExploreTileWaitingToAcquire t : tiles) {
-               highlightTilesOnOverlay(overlay, t.row, t.row, t.col, t.col, TRANSPARENT_GREEN);
-            }
-         }
+//         LinkedBlockingQueue<ExploreAcquisition.ExploreTileWaitingToAcquire> tiles
+//                 = expAcq.getTilesWaitingToAcquireAtSlice(display_.getVisibleSliceIndex() + expAcq.getMinSliceIndex());
+//         if (tiles != null) {
+//            for (ExploreAcquisition.ExploreTileWaitingToAcquire t : tiles) {
+//               highlightTilesOnOverlay(overlay, t.row, t.row, t.col, t.col, TRANSPARENT_GREEN);
+//            }
+//         }
       }
    }
 
@@ -326,15 +326,15 @@ public class DisplayOverlayer {
     */
    private Overlay createBackgroundOverlay() {
       Overlay overlay = new Overlay();
-      ContrastPanel cp = ((DisplayWindow) display_.getHyperImage().getWindow()).getContrastPanel();
-      boolean showScaleBar = cp.showScaleBar();
-      Color color = cp.getScaleBarColor();
-
-      if (showScaleBar) {
-         MMScaleBar sizeBar = new MMScaleBar(display_.getHyperImage(), color);
-         sizeBar.setPosition(cp.getScaleBarPosition());
-         sizeBar.addToOverlay(overlay);
-      }
+//      ContrastPanel cp = ((DisplayWindow) display_.getHyperImage().getWindow()).getContrastPanel();
+//      boolean showScaleBar = cp.showScaleBar();
+//      Color color = cp.getScaleBarColor();
+//
+//      if (showScaleBar) {
+//         MMScaleBar sizeBar = new MMScaleBar(display_.getHyperImage(), color);
+//         sizeBar.setPosition(cp.getScaleBarPosition());
+//         sizeBar.addToOverlay(overlay);
+//      }
 
       if (display_.getAcquisition() instanceof MagellanGUIAcquisition || display_.getAcquisition() == null) {
          drawZoomIndicator(overlay);
@@ -351,9 +351,9 @@ public class DisplayOverlayer {
          int displaySlice;
          displaySlice = zoomableStack_.getSliceIndexFromZCoordinate(point.z);
 
-         if (displaySlice != display_.getVisibleSliceIndex()) {
-            continue;
-         }
+//         if (displaySlice != display_.getVisibleSliceIndex()) {
+//            continue;
+//         }
 
          Roi circle = new OvalRoi(displayLocation.x_ - INTERP_POINT_DIAMETER / 2, displayLocation.y_ - INTERP_POINT_DIAMETER / 2, INTERP_POINT_DIAMETER, INTERP_POINT_DIAMETER);
          circle.setFillColor(getSurfaceGridLineColor(newSurface));
@@ -363,9 +363,9 @@ public class DisplayOverlayer {
    }
 
    private Color getSurfaceGridLineColor(XYFootprint xy) {
-      if (xy == display_.getCurrentEditableSurfaceOrGrid()) {
-         return ACTIVE_OBJECT_COLOR;
-      }
+//      if (xy == display_.getCurrentEditableSurfaceOrGrid()) {
+//         return ACTIVE_OBJECT_COLOR;
+//      }
       return BACKGROUND_OBJECT_COLOR;
    }
 
@@ -495,7 +495,7 @@ public class DisplayOverlayer {
       int width = display_.getImagePlus().getWidth();
       int height = display_.getImagePlus().getHeight();
       ZoomableVirtualStack zStack = (ZoomableVirtualStack) display_.virtualStack_;
-      double sliceZ = zStack.getZCoordinateOfDisplayedSlice(display_.getVisibleSliceIndex());
+//      double sliceZ = zStack.getZCoordinateOfDisplayedSlice(display_.getVisibleSliceIndex());
       double zStep = acq_.getZStep();
 
       //Make numTestPoints a factor of image size for clean display of surface
@@ -515,21 +515,21 @@ public class DisplayOverlayer {
             }
             float interpZ = interp.getInterpolatedValue(stageCoord.x, stageCoord.y);
 
-            if (Math.abs(sliceZ - interpZ) < zStep / 2) {
-               double roiX = roiWidth * x;
-               double roiY = roiHeight * y;
-               //calculate distance from last ROI for uninterrupted coverage of image
-               int displayWidth = (int) (roiWidth * (x + 1)) - (int) (roiX);
-               int displayHeight = (int) (roiHeight * (y + 1)) - (int) (roiY);
-               Roi rect = new Roi(roiX, roiY, displayWidth, displayHeight); //make ROI
-               int[] lutRed = VIRIDIS_RED;
-               int[] lutBlue = VIRIDIS_BLUE;
-               int[] lutGreen = VIRIDIS_GREEN;
-               double colorScale = ((sliceZ - interpZ) / (zStep / 2) + 1) / 2; //between 0 and 1
-               rect.setFillColor(new Color(lutRed[(int) (colorScale * lutRed.length)],
-                       lutGreen[(int) (colorScale * lutGreen.length)], lutBlue[(int) (colorScale * lutBlue.length)], 175));
-               overlay.add(rect);
-            }
+//            if (Math.abs(sliceZ - interpZ) < zStep / 2) {
+//               double roiX = roiWidth * x;
+//               double roiY = roiHeight * y;
+//               //calculate distance from last ROI for uninterrupted coverage of image
+//               int displayWidth = (int) (roiWidth * (x + 1)) - (int) (roiX);
+//               int displayHeight = (int) (roiHeight * (y + 1)) - (int) (roiY);
+//               Roi rect = new Roi(roiX, roiY, displayWidth, displayHeight); //make ROI
+//               int[] lutRed = VIRIDIS_RED;
+//               int[] lutBlue = VIRIDIS_BLUE;
+//               int[] lutGreen = VIRIDIS_GREEN;
+//               double colorScale = ((sliceZ - interpZ) / (zStep / 2) + 1) / 2; //between 0 and 1
+//               rect.setFillColor(new Color(lutRed[(int) (colorScale * lutRed.length)],
+//                       lutGreen[(int) (colorScale * lutGreen.length)], lutBlue[(int) (colorScale * lutBlue.length)], 175));
+//               overlay.add(rect);
+//            }
          }
       }
    }
@@ -576,56 +576,56 @@ public class DisplayOverlayer {
    }
 
    private void drawSurfaceInterpScaleBar(Overlay overlay) {
-      ZoomableVirtualStack zStack = (ZoomableVirtualStack) display_.virtualStack_;
-      double sliceZ = zStack.getZCoordinateOfDisplayedSlice(display_.getVisibleSliceIndex());
-      double zStep = acq_.getZStep();
-      String label1 = String.format("%.1f", sliceZ - zStep / 2) + " μm";
-      String label2 = String.format("%.1f", sliceZ) + " μm";
-      String label3 = String.format("%.1f", sliceZ + zStep / 2) + " μm";
-
-      int fontSize = 12;
-      Font font = new Font("Arial", Font.BOLD, fontSize);
-      float textHeight = canvas_.getGraphics().getFontMetrics(font).getLineMetrics(label1, canvas_.getGraphics()).getHeight();
-      float textWidth = Math.max(Math.max(canvas_.getGraphics().getFontMetrics().stringWidth(label1),
-              canvas_.getGraphics().getFontMetrics().stringWidth(label2)),
-              canvas_.getGraphics().getFontMetrics().stringWidth(label3));
-
-      double scalePixelWidth = 10;
-      double scalePixelHeight = 100;
-      double borderSize = 2 + textHeight / 2;
-      double scalePosXBuffer = 50;
-      double offsetY = 10;
-
-      //10 pixel border outside of scale
-      Roi backgroundRect = new Roi(zoomableStack_.width_ - scalePosXBuffer - textWidth - borderSize, offsetY,
-              scalePixelWidth + 2 * borderSize + textWidth, scalePixelHeight + 2 * borderSize);
-      backgroundRect.setFillColor(new Color(230, 230, 230)); //magenta      
-      overlay.add(backgroundRect);
-
-      for (double y = 0; y < scalePixelHeight; y++) {
-         Roi line = new Roi(zoomableStack_.width_ - scalePosXBuffer, offsetY + borderSize + y, scalePixelWidth, 1);
-         double colorScale = y / scalePixelHeight;
-         line.setFillColor(new Color(VIRIDIS_RED[(int) (colorScale * VIRIDIS_RED.length)],
-                 VIRIDIS_GREEN[(int) (colorScale * VIRIDIS_GREEN.length)], VIRIDIS_BLUE[(int) (colorScale * VIRIDIS_BLUE.length)]));
-         overlay.add(line);
-      }
-
-      //outline rectange
-      Roi outline = new Roi(zoomableStack_.width_ - scalePosXBuffer, offsetY + borderSize, scalePixelWidth, scalePixelHeight);
-      outline.setStrokeColor(Color.black);
-      overlay.add(outline);
-      //add three labels
-      Roi labelTop = new TextRoi(zoomableStack_.width_ - scalePosXBuffer - textWidth, offsetY + borderSize - textHeight / 2, label1, font);
-      labelTop.setStrokeColor(Color.black);
-      overlay.add(labelTop);
-
-      Roi labelMid = new TextRoi(zoomableStack_.width_ - scalePosXBuffer - textWidth, offsetY + borderSize + scalePixelHeight / 2 - textHeight / 2, label2, font);
-      labelMid.setStrokeColor(Color.black);
-      overlay.add(labelMid);
-
-      Roi labelBot = new TextRoi(zoomableStack_.width_ - scalePosXBuffer - textWidth, offsetY + borderSize + scalePixelHeight - textHeight / 2, label3, font);
-      labelBot.setStrokeColor(Color.black);
-      overlay.add(labelBot);
+//      ZoomableVirtualStack zStack = (ZoomableVirtualStack) display_.virtualStack_;
+//      double sliceZ = zStack.getZCoordinateOfDisplayedSlice(display_.getVisibleSliceIndex());
+//      double zStep = acq_.getZStep();
+//      String label1 = String.format("%.1f", sliceZ - zStep / 2) + " μm";
+//      String label2 = String.format("%.1f", sliceZ) + " μm";
+//      String label3 = String.format("%.1f", sliceZ + zStep / 2) + " μm";
+//
+//      int fontSize = 12;
+//      Font font = new Font("Arial", Font.BOLD, fontSize);
+//      float textHeight = canvas_.getGraphics().getFontMetrics(font).getLineMetrics(label1, canvas_.getGraphics()).getHeight();
+//      float textWidth = Math.max(Math.max(canvas_.getGraphics().getFontMetrics().stringWidth(label1),
+//              canvas_.getGraphics().getFontMetrics().stringWidth(label2)),
+//              canvas_.getGraphics().getFontMetrics().stringWidth(label3));
+//
+//      double scalePixelWidth = 10;
+//      double scalePixelHeight = 100;
+//      double borderSize = 2 + textHeight / 2;
+//      double scalePosXBuffer = 50;
+//      double offsetY = 10;
+//
+//      //10 pixel border outside of scale
+//      Roi backgroundRect = new Roi(zoomableStack_.width_ - scalePosXBuffer - textWidth - borderSize, offsetY,
+//              scalePixelWidth + 2 * borderSize + textWidth, scalePixelHeight + 2 * borderSize);
+//      backgroundRect.setFillColor(new Color(230, 230, 230)); //magenta      
+//      overlay.add(backgroundRect);
+//
+//      for (double y = 0; y < scalePixelHeight; y++) {
+//         Roi line = new Roi(zoomableStack_.width_ - scalePosXBuffer, offsetY + borderSize + y, scalePixelWidth, 1);
+//         double colorScale = y / scalePixelHeight;
+//         line.setFillColor(new Color(VIRIDIS_RED[(int) (colorScale * VIRIDIS_RED.length)],
+//                 VIRIDIS_GREEN[(int) (colorScale * VIRIDIS_GREEN.length)], VIRIDIS_BLUE[(int) (colorScale * VIRIDIS_BLUE.length)]));
+//         overlay.add(line);
+//      }
+//
+//      //outline rectange
+//      Roi outline = new Roi(zoomableStack_.width_ - scalePosXBuffer, offsetY + borderSize, scalePixelWidth, scalePixelHeight);
+//      outline.setStrokeColor(Color.black);
+//      overlay.add(outline);
+//      //add three labels
+//      Roi labelTop = new TextRoi(zoomableStack_.width_ - scalePosXBuffer - textWidth, offsetY + borderSize - textHeight / 2, label1, font);
+//      labelTop.setStrokeColor(Color.black);
+//      overlay.add(labelTop);
+//
+//      Roi labelMid = new TextRoi(zoomableStack_.width_ - scalePosXBuffer - textWidth, offsetY + borderSize + scalePixelHeight / 2 - textHeight / 2, label2, font);
+//      labelMid.setStrokeColor(Color.black);
+//      overlay.add(labelMid);
+//
+//      Roi labelBot = new TextRoi(zoomableStack_.width_ - scalePosXBuffer - textWidth, offsetY + borderSize + scalePixelHeight - textHeight / 2, label3, font);
+//      labelBot.setStrokeColor(Color.black);
+//      overlay.add(labelBot);
    }
 
    private void drawZoomIndicator(Overlay overlay) {
@@ -656,10 +656,10 @@ public class DisplayOverlayer {
    //put the active one last in the list so that it gets drawn on top
    private ArrayList<XYFootprint> getSurfacesAndGridsInDrawOrder() {
       ArrayList<XYFootprint> list = display_.getSurfacesAndGridsForDisplay();
-      if (list.contains(display_.getCurrentEditableSurfaceOrGrid())) {
-         list.remove(display_.getCurrentEditableSurfaceOrGrid());
-         list.add(display_.getCurrentEditableSurfaceOrGrid());
-      }
+//      if (list.contains(display_.getCurrentEditableSurfaceOrGrid())) {
+//         list.remove(display_.getCurrentEditableSurfaceOrGrid());
+//         list.add(display_.getCurrentEditableSurfaceOrGrid());
+//      }
       return list;
    }
 

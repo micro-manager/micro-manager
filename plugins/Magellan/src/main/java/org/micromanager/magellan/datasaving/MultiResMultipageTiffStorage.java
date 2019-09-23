@@ -36,6 +36,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import mmcorej.TaggedImage;
@@ -67,7 +69,7 @@ public class MultiResMultipageTiffStorage {
    private int fullResTileWidthIncludingOverlap_, fullResTileHeightIncludingOverlap_;
    private int tileWidth_, tileHeight_; //Indpendent of zoom level because tile sizes stay the same--which means overlap is cut off
    private PositionManager posManager_;
-   private boolean finished_;
+   private volatile boolean finished_;
    private String uniqueAcqName_;
    private int byteDepth_;
    private double pixelSizeXY_, pixelSizeZ_;
@@ -177,7 +179,11 @@ public class MultiResMultipageTiffStorage {
    }
 
    public void setDisplaySettings(JSONObject displaySettings) {
-      displaySettings_ = displaySettings;
+      try {
+         displaySettings_ = new JSONObject(displaySettings.toString());
+      } catch (JSONException ex) {
+         throw new RuntimeException();
+      }
    }
    
    public static JSONObject readSummaryMetadata(String dir) throws IOException {
@@ -216,7 +222,7 @@ public class MultiResMultipageTiffStorage {
    }
 
    public String getUniqueAcqName() {
-      return uniqueAcqName_;
+      return uniqueAcqName_ + ""; //make new instance
    }
 
    public double getPixelSizeZ() {
