@@ -20,6 +20,8 @@
 package org.micromanager.magellan.imagedisplaynew;
 
 import com.google.common.eventbus.EventBus;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -35,7 +37,8 @@ import org.micromanager.magellan.misc.Log;
 import org.micromanager.magellan.misc.MD;
 
 /**
- * This class manages a magellan dataset on disk, as well as the state of a view into it (i.e. contrast settings/zoom, etc"
+ * This class manages a magellan dataset on disk, as well as the state of a view
+ * into it (i.e. contrast settings/zoom, etc) and manages class that actually forms the image
  */
 public class MagellanImageCache {
 
@@ -43,9 +46,11 @@ public class MagellanImageCache {
    private EventBus dataProviderBus_ = new EventBus();
    private ExecutorService displayCommunicationExecutor_ = Executors.newSingleThreadExecutor((Runnable r) -> new Thread(r, "Image cache thread"));
 
+
    public MagellanImageCache(String dir, JSONObject summaryMetadata, JSONObject displaySettings) {
       imageStorage_ = new MultiResMultipageTiffStorage(dir, summaryMetadata);
       imageStorage_.setDisplaySettings(displaySettings);
+
    }
 
    /**
@@ -96,14 +101,6 @@ public class MagellanImageCache {
 
    public void putImage(final TaggedImage taggedImg) {
       imageStorage_.putImage(taggedImg);
-      //let the display know theres a new image in town
-//      listenerExecutor_.submit(new Runnable() {
-//         @Override
-//         public void run() {
-//            display_.imageReceived(taggedImg);
-//         }
-//      });
-      //new display version
 
       //put on different thread to not slow down acquisition
       displayCommunicationExecutor_.submit(new Runnable() {
@@ -176,8 +173,18 @@ public class MagellanImageCache {
    }
 
    public TaggedImage getImageForDisplay(int channel, MagellanDataViewCoords dataCoords) {
-      return imageStorage_.getImageForDisplay(channel, dataCoords.zIndex_, dataCoords.tIndex_, dataCoords.resolutionIndex_,
-              dataCoords.xView_, dataCoords.yView_, dataCoords.displayImageWidth_, dataCoords.displayImageHeight_);
+      //convert zoom to resolution index
+      double resIndex = -Math.log(dataCoords.zoom_) / Math.log(2);
+      int resIndexInt = (int) Math.max(0, Math.ceil(resIndex));
+      
+      return imageStorage_.getImageForDisplay(channel, 
+              dataCoords.zIndex_, 
+              dataCoords.tIndex_, 
+              resIndexInt,
+              dataCoords.xView_, 
+              dataCoords.yView_, 
+              dataCoords.displayImageWidth_, 
+              dataCoords.displayImageHeight_);
    }
 
    public void registerForEvents(Object obj) {
@@ -188,15 +195,15 @@ public class MagellanImageCache {
       dataProviderBus_.unregister(obj);
    }
 
-    public boolean anythingAcquired() {
+   public boolean anythingAcquired() {
       return !imageStorage_.imageKeys().isEmpty();
    }
 
-    public String getUniqueAcqName() {
+   public String getUniqueAcqName() {
       return imageStorage_.getUniqueAcqName();
    }
 
-    public int getFullResPositionIndexFromStageCoords(double xPos, double yPos) {
+   public int getFullResPositionIndexFromStageCoords(double xPos, double yPos) {
       return imageStorage_.getPosManager().getFullResPositionIndexFromStageCoords(xPos, yPos);
    }
 
@@ -204,11 +211,11 @@ public class MagellanImageCache {
       return imageStorage_.getPosManager().getXYPosition(posIndex);
    }
 
-    public int[] getPositionIndices(int[] newPositionRows, int[] newPositionCols) {
-      return imageStorage_.getPosManager().getPositionIndices(newPositionRows,  newPositionCols);
+   public int[] getPositionIndices(int[] newPositionRows, int[] newPositionCols) {
+      return imageStorage_.getPosManager().getPositionIndices(newPositionRows, newPositionCols);
    }
 
-    public List<XYStagePosition> getPositionList() {
+   public List<XYStagePosition> getPositionList() {
       return imageStorage_.getPosManager().getPositionList();
    }
 

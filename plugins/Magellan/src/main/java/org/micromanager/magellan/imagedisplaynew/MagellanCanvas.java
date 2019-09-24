@@ -2,8 +2,10 @@ package org.micromanager.magellan.imagedisplaynew;
 
 import com.google.common.eventbus.Subscribe;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
@@ -15,6 +17,17 @@ import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
 
 class MagellanCanvas {
 
+   
+   // The object we will use to write with instead of the standard screen graphics
+     Graphics bufferGraphics;
+     // The image that will contain everything that has been drawn on
+     // bufferGraphics.
+     Image offscreen; 
+          // To get the width and height of the applet.
+     Dimension dim; 
+     
+     
+   
    private volatile BufferedImage currentImage_;
    private int width_, height_;
    private double scale_;
@@ -72,23 +85,28 @@ class MagellanCanvas {
 
    void updateDisplayImage(BufferedImage img) {
       currentImage_ = img;
+
+//      bufferGraphics = currentImage_.getGraphics();
    }
-   
+
    public JPanel getCanvas() {
       return canvas_;
    }
-   
+
    private JPanel createCanvas() {
       return new JPanel() {
          @Override
          public void paint(Graphics g) {
+//            Graphics2D g2 = (Graphics2D) currentImage_.getGraphics();
+            
+
+//            bufferGraphics.clearRect(0,0,this.getWidth(), this.getHeight());
+//            bufferGraphics.drawImage(currentImage_, 0, 0, canvas_);
+
 
             Graphics2D g2 = (Graphics2D) g;
+            g2.drawImage(currentImage_, 0, 0, canvas_);
 
-            AffineTransform xform = new AffineTransform(scale_, 0, 0, scale_, 0, 0);
-            g2.drawImage(currentImage_, xform, null);
-            //TODO implement double buffering to stop flickering
-            
 //      if (volatileImg_.validate(getGraphicsConfiguration()) == VolatileImage.IMAGE_INCOMPATIBLE)
 //          {
 //              // old vImg doesn't work with new GraphicsConfig; re-create it
@@ -121,6 +139,10 @@ class MagellanCanvas {
 //         g.drawImage(volatileImg_, 0, 0, this);
 //         // Test if content is lost   
 //      } while (volatileImg_.contentsLost());
+         }
+
+         public void update(Graphics g) {
+            paint(g);
          }
       };
    }

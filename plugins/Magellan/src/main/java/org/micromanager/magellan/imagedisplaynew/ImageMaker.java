@@ -1,8 +1,6 @@
 package org.micromanager.magellan.imagedisplaynew;
 
-import org.micromanager.magellan.imagedisplaynew.events.ChannelAddedToDisplayEvent;
 import org.micromanager.magellan.imagedisplaynew.events.ContrastUpdatedEvent;
-import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import ij.process.LUT;
 import java.awt.Color;
@@ -14,18 +12,16 @@ import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
 import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import mmcorej.TaggedImage;
+import org.micromanager.magellan.misc.Log;
 
 /**
  * This Class essentially replaces CompositeImage in ImageJ, and uses low level
  * classes to build a multicolor Image from pixels and contrast settings
  */
- class ImageMaker {
+class ImageMaker {
 
    public static final int EIGHTBIT = 0;
    public static final int SIXTEENBIT = 1;
@@ -45,16 +41,9 @@ import mmcorej.TaggedImage;
       rgbPixels_ = new int[imageWidth_ * imageHeight_];
       imageCache_ = data;
    }
-   
+
    void close() {
       imageCache_ = null;
-   }
-
-
-   @Subscribe
-   public void onChannelAddedToDisplay(ChannelAddedToDisplayEvent event) {
-      channelDisplaySettings_.put(event.channelIndex, new MagellanChannelDisplaySettings());
-      channelProcessors_.put(event.channelIndex, new MagellanImageProcessor(imageWidth_, imageHeight_));
    }
 
    @Subscribe
@@ -70,64 +59,93 @@ import mmcorej.TaggedImage;
    }
 
    /**
-    * Do neccesary calcualtion to get image for dipslay
+    * Do neccesary calcualtion to get image for display
     *
     * @return
     */
    public BufferedImage makeBufferedImage(MagellanDataViewCoords viewCoords) {
-      //update pixels
-      for (Integer c : viewCoords.channelIndices_) {
-         TaggedImage imageForDisplay = imageCache_.getImageForDisplay(c, viewCoords);
-         channelProcessors_.get(c).changePixels(imageForDisplay.pix);
+      if (viewCoords.displayImageWidth_ != imageWidth_ || viewCoords.displayImageHeight_ != imageHeight_) {
+         imageWidth_ = viewCoords.displayImageWidth_;
+         imageHeight_ = viewCoords.displayImageHeight_;
+         rgbPixels_ = new int[imageWidth_ * imageHeight_];
       }
-      
+
+      //update pixels
+      for (Integer c : viewCoords.channelsActive_.keySet()) {
+         if (!viewCoords.channelsActive_.get(c)) {
+            continue;
+         }
+         synchronized (this) {
+            if (!channelProcessors_.containsKey(c)) {
+               channelDisplaySettings_.put(c, new MagellanChannelDisplaySettings());
+               channelProcessors_.put(c, new MagellanImageProcessor(imageWidth_, imageHeight_));
+            }
+         }
+         TaggedImage imageForDisplay = imageCache_.getImageForDisplay(c, viewCoords);
+         channelProcessors_.get(c).changePixels(imageForDisplay.pix, imageWidth_, imageHeight_);
+
+      }
+
       //apply contrast settings
-      for (Integer c : viewCoords.channelIndices_) {
+      for (Integer c : viewCoords.channelsActive_.keySet()) {
+         if (!viewCoords.channelsActive_.get(c)) {
+            continue;
+         }
          //only update one channel for speed
          LUT lut = makeLUT(channelDisplaySettings_.get(c).color, channelDisplaySettings_.get(c).gamma);
          channelProcessors_.get(c).setContrast(lut, channelDisplaySettings_.get(c).contrastMin, channelDisplaySettings_.get(c).contrastMax);
       }
 
-      boolean firstActive = true;
-      Arrays.fill(rgbPixels_, 0);
-      int redValue, greenValue, blueValue;
-      for (int c : viewCoords.channelIndices_) {
-         if (channelDisplaySettings_.get(c).active) {
-            //get the appropriate pixels from the data view
+      try {
+         boolean firstActive = true;
+         Arrays.fill(rgbPixels_, 0);
+         int redValue, greenValue, blueValue;
+         for (Integer c : viewCoords.channelsActive_.keySet()) {
+            if (!viewCoords.channelsActive_.get(c)) {
+               continue;
+            }
+            if (channelDisplaySettings_.get(c).active) {
+               //get the appropriate pixels from the data view
 
-            //recompute 8 bit image
-            channelProcessors_.get(c).recompute();
-            byte[] bytes;
-            bytes = channelProcessors_.get(c).eightBitImage;
-            if (firstActive) {
-               for (int p = 0; p < imageWidth_ * imageHeight_; p++) {
-                  redValue = channelProcessors_.get(c).reds[bytes[p] & 0xff];
-                  greenValue = channelProcessors_.get(c).greens[bytes[p] & 0xff];
-                  blueValue = channelProcessors_.get(c).blues[bytes[p] & 0xff];
-                  rgbPixels_[p] = redValue | greenValue | blueValue;
-               }
-               firstActive = false;
-            } else {
-               int pixel;
-               for (int p = 0; p < imageWidth_ * imageHeight_; p++) {
-                  pixel = rgbPixels_[p];
-                  redValue = (pixel & 0x00ff0000) + channelProcessors_.get(p).reds[bytes[p] & 0xff];
-                  greenValue = (pixel & 0x0000ff00) + channelProcessors_.get(p).greens[bytes[p] & 0xff];
-                  blueValue = (pixel & 0x000000ff) + channelProcessors_.get(p).blues[bytes[p] & 0xff];
-                  if (redValue > 16711680) {
-                     redValue = 16711680;
+               //recompute 8 bit image
+               channelProcessors_.get(c).recompute();
+               byte[] bytes;
+               bytes = channelProcessors_.get(c).eightBitImage;
+               if (firstActive) {
+                  for (int p = 0; p < imageWidth_ * imageHeight_; p++) {
+                     redValue = channelProcessors_.get(c).reds[bytes[p] & 0xff];
+                     greenValue = channelProcessors_.get(c).greens[bytes[p] & 0xff];
+                     blueValue = channelProcessors_.get(c).blues[bytes[p] & 0xff];
+                     rgbPixels_[p] = redValue | greenValue | blueValue;
                   }
-                  if (greenValue > 65280) {
-                     greenValue = 65280;
+                  firstActive = false;
+               } else {
+                  int pixel;
+                  for (int p = 0; p < imageWidth_ * imageHeight_; p++) {
+                     pixel = rgbPixels_[p];
+                     redValue = (pixel & 0x00ff0000) + channelProcessors_.get(c).reds[bytes[p] & 0xff];
+                     greenValue = (pixel & 0x0000ff00) + channelProcessors_.get(c).greens[bytes[p] & 0xff];
+                     blueValue = (pixel & 0x000000ff) + channelProcessors_.get(c).blues[bytes[p] & 0xff];
+
+                     if (redValue > 16711680) {
+                        redValue = 16711680;
+                     }
+                     if (greenValue > 65280) {
+                        greenValue = 65280;
+                     }
+                     if (blueValue > 255) {
+                        blueValue = 255;
+                     }
+                     rgbPixels_[p] = redValue | greenValue | blueValue;
+
                   }
-                  if (blueValue > 255) {
-                     blueValue = 255;
-                  }
-                  rgbPixels_[p] = redValue | greenValue | blueValue;
                }
             }
-         }
 
+         }
+      } catch (Exception e) {
+         e.printStackTrace();
+         Log.log(e, true);
       }
 
 //      Arrays.fill(rgbPixels_, 65535);
@@ -178,8 +196,11 @@ import mmcorej.TaggedImage;
          height = h;
       }
 
-      public void changePixels(Object pix) {
+      public void changePixels(Object pix, int w, int h) {
          pixels = pix;
+         width = w;
+         height = h;
+         eightBitImage = null;
       }
 
       public void recompute() {
