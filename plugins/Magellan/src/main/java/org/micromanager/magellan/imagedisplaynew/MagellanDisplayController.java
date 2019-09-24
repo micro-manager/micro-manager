@@ -19,6 +19,7 @@ import org.micromanager.magellan.imagedisplaynew.events.ImageCacheClosingEvent;
 import org.micromanager.magellan.imagedisplaynew.events.SetImageEvent;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import java.awt.Image;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
@@ -422,7 +423,7 @@ public final class MagellanDisplayController {
       public void run() {
 
          //This is where most of the calculation of creating a display image happens
-         BufferedImage img = imageMaker_.makeBufferedImage(view_);
+         Image img = imageMaker_.makeOrGetImage(view_);
          //TODO: maybe also calcualte stats here
          edtRunnablePool_.invokeAsLateAsPossibleWithCoalescence(new CanvasRepaintRunnable(img, view_));
       }
@@ -431,10 +432,10 @@ public final class MagellanDisplayController {
 
    private class CanvasRepaintRunnable implements CoalescentRunnable {
 
-      final BufferedImage img_;
+      final Image img_;
       MagellanDataViewCoords view_;
 
-      public CanvasRepaintRunnable(BufferedImage img, MagellanDataViewCoords view) {
+      public CanvasRepaintRunnable(Image img, MagellanDataViewCoords view) {
          img_ = img;
          view_ = view;
       }

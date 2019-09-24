@@ -18,17 +18,7 @@ import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
 class MagellanCanvas {
 
    
-   // The object we will use to write with instead of the standard screen graphics
-     Graphics bufferGraphics;
-     // The image that will contain everything that has been drawn on
-     // bufferGraphics.
-     Image offscreen; 
-          // To get the width and height of the applet.
-     Dimension dim; 
-     
-     
-   
-   private volatile BufferedImage currentImage_;
+   private volatile Image currentImage_;
    private int width_, height_;
    private double scale_;
    private MagellanDisplayController display_;
@@ -59,15 +49,15 @@ class MagellanCanvas {
       display_ = null;
    }
 
-   private void computeScale() {
-      if (currentImage_ == null) {
-         return;
-      }
-      double wScale = width_ / (double) currentImage_.getWidth();
-      double hScale = height_ / (double) currentImage_.getHeight();
-      //do the bigger scaling so image fills the whole canvas
-      scale_ = Math.max(wScale, hScale);
-   }
+//   private void computeScale() {
+//      if (currentImage_ == null) {
+//         return;
+//      }
+//      double wScale = width_ / (double) currentImage_.getWidth();
+//      double hScale = height_ / (double) currentImage_.getHeight();
+//      //do the bigger scaling so image fills the whole canvas
+//      scale_ = Math.max(wScale, hScale);
+//   }
 
    /**
     * Set the size of the image displayed on screen, which is not neccesarily
@@ -80,10 +70,10 @@ class MagellanCanvas {
    public void onCanvasResize(final CanvasResizeEvent e) {
       width_ = e.w;
       height_ = e.h;
-      computeScale();
+//      computeScale();
    }
 
-   void updateDisplayImage(BufferedImage img) {
+   void updateDisplayImage(Image img) {
       currentImage_ = img;
 
 //      bufferGraphics = currentImage_.getGraphics();

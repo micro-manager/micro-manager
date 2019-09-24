@@ -10,6 +10,7 @@ import org.micromanager.magellan.imagedisplaynew.events.ScrollersAddedEvent;
 import com.google.common.eventbus.Subscribe;
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Image;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -171,7 +172,7 @@ class DisplayWindowNew implements WindowListener {
     *
     * @param images
     */
-   void displayImage(BufferedImage image, MagellanDataViewCoords view) {
+   void displayImage(Image image, MagellanDataViewCoords view) {
       //Make scrollbars reflect image
       subImageControls_.updateScrollerPositions(view);
       imageCanvas_.updateDisplayImage(image);

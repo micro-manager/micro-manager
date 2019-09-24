@@ -12,6 +12,9 @@ import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
 import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
+import java.awt.Image;
+import java.awt.Toolkit;
+import java.awt.image.MemoryImageSource;
 import java.util.Arrays;
 import java.util.TreeMap;
 import mmcorej.TaggedImage;
@@ -32,6 +35,9 @@ class ImageMaker {
    private int imageWidth_, imageHeight_;
    private int[] rgbPixels_;
    private MagellanImageCache imageCache_;
+   private Image displayImage_;
+   private MemoryImageSource imageSource_;
+   DirectColorModel rgbCM_ = new DirectColorModel(24, 0xff0000, 0xff00, 0xff);
 
    public ImageMaker(MagellanDisplayController c, MagellanImageCache data, int width, int height) {
       c.registerForEvents(this);
@@ -63,11 +69,13 @@ class ImageMaker {
     *
     * @return
     */
-   public BufferedImage makeBufferedImage(MagellanDataViewCoords viewCoords) {
+   public Image makeOrGetImage(MagellanDataViewCoords viewCoords) {
+      boolean remakeDisplayImage = false;
       if (viewCoords.displayImageWidth_ != imageWidth_ || viewCoords.displayImageHeight_ != imageHeight_) {
          imageWidth_ = viewCoords.displayImageWidth_;
          imageHeight_ = viewCoords.displayImageHeight_;
          rgbPixels_ = new int[imageWidth_ * imageHeight_];
+         remakeDisplayImage = true;
       }
 
       //update pixels
@@ -148,14 +156,24 @@ class ImageMaker {
          Log.log(e, true);
       }
 
-//      Arrays.fill(rgbPixels_, 65535);
-      DirectColorModel rgbCM = new DirectColorModel(24, 0xff0000, 0xff00, 0xff);
-      WritableRaster wr = rgbCM.createCompatibleWritableRaster(1, 1);
-      SampleModel sampleModel = wr.getSampleModel();
-      sampleModel = sampleModel.createCompatibleSampleModel(imageWidth_, imageHeight_);
-      DataBuffer dataBuffer = new DataBufferInt(rgbPixels_, imageWidth_ * imageHeight_, 0);
-      WritableRaster rgbRaster = Raster.createWritableRaster(sampleModel, dataBuffer, null);
-      return new BufferedImage(rgbCM, rgbRaster, false, null);
+      if (imageSource_ == null || remakeDisplayImage) {
+         imageSource_ = new MemoryImageSource(imageWidth_, imageHeight_, rgbCM_, rgbPixels_, 0, imageWidth_);
+         imageSource_.setAnimated(true);
+         imageSource_.setFullBufferUpdates(true);
+         displayImage_ = Toolkit.getDefaultToolkit().createImage(imageSource_);
+      } else {
+         imageSource_.newPixels(rgbPixels_, rgbCM_, 0, imageWidth_);
+      }
+      return displayImage_;
+//			newPixels = false;
+
+//      DirectColorModel rgbCM = new DirectColorModel(24, 0xff0000, 0xff00, 0xff);
+//      WritableRaster wr = rgbCM.createCompatibleWritableRaster(1, 1);
+//      SampleModel sampleModel = wr.getSampleModel();
+//      sampleModel = sampleModel.createCompatibleSampleModel(imageWidth_, imageHeight_);
+//      DataBuffer dataBuffer = new DataBufferInt(rgbPixels_, imageWidth_ * imageHeight_, 0);
+//      WritableRaster rgbRaster = Raster.createWritableRaster(sampleModel, dataBuffer, null);
+//      return new BufferedImage(rgbCM, rgbRaster, false, null);
    }
 
    public static LUT makeLUT(Color color, double gamma) {
