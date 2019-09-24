@@ -467,7 +467,7 @@ int CPLogic::OnSetShutterChannel(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << addressChar_ << "CCA X=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
       pProp->Get(tmpstr);
-      OnPropertyChanged(g_SetChannelPropertyName, tmpstr.c_str);
+      OnPropertyChanged(g_SetChannelPropertyName, tmpstr.c_str());
       return DEVICE_OK;
    }
    return DEVICE_OK;
