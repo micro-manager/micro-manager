@@ -40,6 +40,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
 import org.micromanager.display.internal.RememberedSettings;
 import org.micromanager.internal.utils.GUIUtils;
@@ -99,7 +100,7 @@ public final class PresetButton extends WidgetPlugin implements SciJavaPlugin {
          @Override
          public Dimension getPreferredSize() {
             // For iconized mode, we want a smaller button.
-            if (config.getString("configGroup") == null) {
+            if (config.getString("configGroup", null) == null) {
                return super.getPreferredSize();
             }
             return QuickAccessPlugin.getPaddedCellSize();
@@ -231,10 +232,10 @@ public final class PresetButton extends WidgetPlugin implements SciJavaPlugin {
       JOptionPane.showMessageDialog(parent, contents,
             "Configure presets button", JOptionPane.PLAIN_MESSAGE);
 
-      return studio_.data().getPropertyMapBuilder()
+      return PropertyMaps.builder()
          .putString("configGroup", (String) groupSelector.getSelectedItem())
          .putString("presetName", (String) presetSelector.getSelectedItem())
-         .putInt("backgroundColor", pickerLabel.getBackground().getRGB())
+         .putInteger("backgroundColor", pickerLabel.getBackground().getRGB())
          .build();
    }
 

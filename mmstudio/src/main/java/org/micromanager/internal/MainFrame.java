@@ -781,9 +781,7 @@ public final class MainFrame extends MMFrame {
 
    public void configureBinningComboForCamera(String cameraLabel) {
       ActionListener[] listeners;
-      if (comboBinning_.getItemCount() > 0) {
-          comboBinning_.removeAllItems();
-      }
+
       try {
          StrVector binSizes = core_.getAllowedPropertyValues(
                  cameraLabel, MMCoreJ.getG_Keyword_Binning());
@@ -794,8 +792,12 @@ public final class MainFrame extends MMFrame {
             comboBinning_.removeActionListener(listener);
          }
 
+         if (comboBinning_.getItemCount() > 0) {
+            comboBinning_.removeAllItems();
+         }
+
          for (String item : items) {
-             comboBinning_.addItem(item);
+            comboBinning_.addItem(item);
          }
 
          comboBinning_.setMaximumRowCount(items.size());
