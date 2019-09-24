@@ -461,10 +461,13 @@ int CPLogic::OnSetShutterChannel(MM::PropertyBase* pProp, MM::ActionType eAct)
    } else if (eAct == MM::AfterSet) {
       ostringstream command; command.str("");
       long tmp;
+      string tmpstr;
       RETURN_ON_MM_ERROR ( GetCurrentPropertyData(pProp->GetName().c_str(), tmp) );
       if (tmp < 0) return DEVICE_OK;  // no preset and other "signaling" preset codes are negative
       command << addressChar_ << "CCA X=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+      pProp->Get(tmpstr);
+      OnPropertyChanged(g_SetChannelPropertyName, tmpstr.c_str);
       return DEVICE_OK;
    }
    return DEVICE_OK;
