@@ -452,12 +452,13 @@ int CPLogic::OnSetShutterChannel(MM::PropertyBase* pProp, MM::ActionType eAct)
    if (eAct == MM::BeforeGet)
    {
       // can't do anything of real value here
-      if (!initialized_)
+      if (!initialized_) {
          if (useAs4ChShutter_) {
             pProp->Set(g_4ChannelNone);
          } else {
             pProp->Set(g_7ChannelNone);
          }
+      }
    } else if (eAct == MM::AfterSet) {
       ostringstream command; command.str("");
       long tmp;
