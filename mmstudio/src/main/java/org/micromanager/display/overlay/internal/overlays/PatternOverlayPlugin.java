@@ -43,7 +43,7 @@ import org.scijava.plugin.Plugin;
  * @author John Daniels, Chris Weisiger, Mark A. Tsuchida
  */
 @Plugin(type = OverlayPlugin.class,
-      priority = Priority.NORMAL_PRIORITY + 100.0,
+      priority = Priority.NORMAL + 100.0,
       name = "Guide Patterns",
       description = "Overlay visual guide patterns on image")
 public class PatternOverlayPlugin implements OverlayPlugin {

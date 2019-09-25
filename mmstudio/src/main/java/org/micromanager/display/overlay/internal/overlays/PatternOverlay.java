@@ -39,7 +39,6 @@ import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
@@ -54,7 +53,6 @@ import javax.swing.JSlider;
 import javax.swing.JFormattedTextField;
 import java.text.NumberFormat;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
@@ -443,55 +441,41 @@ public class PatternOverlay extends AbstractOverlay {
       }
 
       patternTypeComboBox_ = new JComboBox(PatternType.values());
-      patternTypeComboBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            patternType_ = (PatternType) patternTypeComboBox_.getSelectedItem();
-            fireOverlayConfigurationChanged();
-         }
+      patternTypeComboBox_.addActionListener((ActionEvent e) -> {
+         patternType_ = (PatternType) patternTypeComboBox_.getSelectedItem();
+         fireOverlayConfigurationChanged();
       });
 
       colorComboBox_ = new JComboBox(PatternColor.values());
       colorComboBox_.setMaximumRowCount(PatternColor.values().length);
-      colorComboBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            color_ = (PatternColor) colorComboBox_.getSelectedItem();
-            fireOverlayConfigurationChanged();
-         }
+      colorComboBox_.addActionListener((ActionEvent e) -> {
+         color_ = (PatternColor) colorComboBox_.getSelectedItem();
+         fireOverlayConfigurationChanged();
       });
 
       patternSizeSlider_ = new JSlider(0, 100);
-      patternSizeSlider_.addChangeListener(new ChangeListener() {
-         @Override
-         public void stateChanged(ChangeEvent e) {
-            if (programmaticallySettingConfiguration_) {
-               return;
-            }
-            patternSize_ = patternSizeSlider_.getValue();
-            patternSizeTextBox_.setValue(patternSize_);
-            fireOverlayConfigurationChanged();
+      patternSizeSlider_.addChangeListener((ChangeEvent e) -> {
+         if (programmaticallySettingConfiguration_) {
+            return;
          }
+         patternSize_ = patternSizeSlider_.getValue();
+         patternSizeTextBox_.setValue(patternSize_);
+         fireOverlayConfigurationChanged();
       });
       
       NumberFormat patternSizeTextFormat = NumberFormat.getInstance();
       patternSizeTextBox_ = new JFormattedTextField(patternSizeTextFormat);
       patternSizeTextBox_.setColumns(2);
       patternSizeLabel_ = new JLabel("%");
-      patternSizeTextBox_.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent e) {
-           patternSize_ = ((Long) patternSizeTextBox_.getValue()).intValue();
-           patternSizeSlider_.setValue(patternSize_);
-         }
+      patternSizeTextBox_.addActionListener((ActionEvent e) -> {
+         patternSize_ = ((Long) patternSizeTextBox_.getValue()).intValue();
+         patternSizeSlider_.setValue(patternSize_);
       });
 
       showSizeCheckBox_ = new JCheckBox("Display Pattern Size");
-      showSizeCheckBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            showSize_ = showSizeCheckBox_.isSelected();
-            fireOverlayConfigurationChanged();
-         }
+      showSizeCheckBox_.addActionListener((ActionEvent e) -> {
+         showSize_ = showSizeCheckBox_.isSelected();
+         fireOverlayConfigurationChanged();
       });
 
 

@@ -247,21 +247,18 @@ public final class TimestampOverlay extends AbstractOverlay {
       Font font = new Font(Font.SANS_SERIF, Font.PLAIN, 12);
       FontMetrics metrics = g.getFontMetrics(font);
 
-      List<String> texts = new ArrayList<String>();
-      List<Integer> widths = new ArrayList<Integer>();
-      List<Color> foregrounds = new ArrayList<Color>();
+      List<String> texts = new ArrayList<>();
+      List<Integer> widths = new ArrayList<>();
+      List<Color> foregrounds = new ArrayList<>();
       if (perChannel_) {
-         List<Image> sortedImages = new ArrayList<Image>(images);
-         Collections.sort(sortedImages, new Comparator<Image>() {
-            @Override
-            public int compare(Image o1, Image o2) {
-               Coords c1 = o1.getCoords();
-               Coords c2 = o2.getCoords();
-               if (!c1.hasAxis(Coords.CHANNEL) || !c2.hasAxis(Coords.CHANNEL)) {
-                  return 0;
-               }
-               return new Integer(c1.getChannel()).compareTo(c2.getChannel());
+         List<Image> sortedImages = new ArrayList<>(images);
+         Collections.sort(sortedImages, (Image img1, Image img2) -> {
+            Coords c1 = img1.getCoords();
+            Coords c2 = img2.getCoords();
+            if (!c1.hasAxis(Coords.CHANNEL) || !c2.hasAxis(Coords.CHANNEL)) {
+               return 0;
             }
+            return new Integer(c1.getChannel()).compareTo(c2.getChannel());
          });
          for (Image image : sortedImages) {
             String text = format_.formatTime(image);
@@ -383,67 +380,50 @@ public final class TimestampOverlay extends AbstractOverlay {
       }
 
       formatComboBox_ = new JComboBox(TSFormat.values());
-      formatComboBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            format_ = (TSFormat) formatComboBox_.getSelectedItem();
-            fireOverlayConfigurationChanged();
-         }
+      formatComboBox_.addActionListener((ActionEvent e) -> {
+         format_ = (TSFormat) formatComboBox_.getSelectedItem();
+         fireOverlayConfigurationChanged();
       });
 
       colorComboBox_ = new JComboBox(TSColor.values());
-      colorComboBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            color_ = (TSColor) colorComboBox_.getSelectedItem();
-            fireOverlayConfigurationChanged();
-         }
+      colorComboBox_.addActionListener((ActionEvent e) -> {
+         color_ = (TSColor) colorComboBox_.getSelectedItem();
+         fireOverlayConfigurationChanged();
       });
 
       positionComboBox_ = new JComboBox(TSPosition.values());
-      positionComboBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            position_ = (TSPosition) positionComboBox_.getSelectedItem();
-            fireOverlayConfigurationChanged();
-         }
+      positionComboBox_.addActionListener((ActionEvent e) -> {
+         position_ = (TSPosition) positionComboBox_.getSelectedItem();
+         fireOverlayConfigurationChanged();
       });
 
       perChannelCheckBox_ = new JCheckBox("Per Channel");
-      perChannelCheckBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            perChannel_ = perChannelCheckBox_.isSelected();
-            fireOverlayConfigurationChanged();
-         }
+      perChannelCheckBox_.addActionListener((ActionEvent e) -> {
+         perChannel_ = perChannelCheckBox_.isSelected();
+         fireOverlayConfigurationChanged();
       });
 
       addBackgroundCheckBox_ = new JCheckBox("Add Background");
-      addBackgroundCheckBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            addBackground_ = addBackgroundCheckBox_.isSelected();
-            fireOverlayConfigurationChanged();
-         }
+      addBackgroundCheckBox_.addActionListener((ActionEvent e) -> {
+         addBackground_ = addBackgroundCheckBox_.isSelected();
+         fireOverlayConfigurationChanged();
       });
 
       xOffsetField_ = new DynamicTextField(3);
       xOffsetField_.setHorizontalAlignment(SwingConstants.RIGHT);
       xOffsetField_.setMinimumSize(xOffsetField_.getPreferredSize());
-      xOffsetField_.addDynamicTextFieldListener(new DynamicTextField.Listener() {
-         @Override
-         public void textFieldValueChanged(DynamicTextField source, boolean shouldForceValidation) {
-            if (programmaticallySettingConfiguration_) {
-               return;
-            }
-            try {
-               xOffset_ = Integer.parseInt(xOffsetField_.getText());
-               fireOverlayConfigurationChanged();
-            }
-            catch (NumberFormatException e) {
-               if (shouldForceValidation) {
-                  xOffsetField_.setText(String.valueOf(xOffset_));
-               }
+      xOffsetField_.addDynamicTextFieldListener(
+              (DynamicTextField source, boolean shouldForceValidation) -> {
+         if (programmaticallySettingConfiguration_) {
+            return;
+         }
+         try {
+            xOffset_ = Integer.parseInt(xOffsetField_.getText());
+            fireOverlayConfigurationChanged();
+         }
+         catch (NumberFormatException e) {
+            if (shouldForceValidation) {
+               xOffsetField_.setText(String.valueOf(xOffset_));
             }
          }
       });
@@ -451,20 +431,18 @@ public final class TimestampOverlay extends AbstractOverlay {
       yOffsetField_ = new DynamicTextField(3);
       yOffsetField_.setHorizontalAlignment(SwingConstants.RIGHT);
       yOffsetField_.setMinimumSize(yOffsetField_.getPreferredSize());
-      yOffsetField_.addDynamicTextFieldListener(new DynamicTextField.Listener() {
-         @Override
-         public void textFieldValueChanged(DynamicTextField source, boolean shouldForceValidation) {
-            if (programmaticallySettingConfiguration_) {
-               return;
-            }
-            try {
-               yOffset_ = Integer.parseInt(yOffsetField_.getText());
-               fireOverlayConfigurationChanged();
-            }
-            catch (NumberFormatException e) {
-               if (shouldForceValidation) {
-                  yOffsetField_.setText(String.valueOf(yOffset_));
-               }
+      yOffsetField_.addDynamicTextFieldListener(
+              (DynamicTextField source, boolean shouldForceValidation) -> {
+         if (programmaticallySettingConfiguration_) {
+            return;
+         }
+         try {
+            yOffset_ = Integer.parseInt(yOffsetField_.getText());
+            fireOverlayConfigurationChanged();
+         }
+         catch (NumberFormatException e) {
+            if (shouldForceValidation) {
+               yOffsetField_.setText(String.valueOf(yOffset_));
             }
          }
       });
