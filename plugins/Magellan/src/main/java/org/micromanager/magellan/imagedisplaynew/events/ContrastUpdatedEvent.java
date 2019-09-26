@@ -6,8 +6,6 @@
 package org.micromanager.magellan.imagedisplaynew.events;
 
 import java.util.ArrayList;
-import org.micromanager.magellan.imagedisplaynew.MagellanChannelDisplaySettings;
-import org.micromanager.magellan.imagedisplaynew.MagellanChannelDisplaySettings;
 
 /**
  *
@@ -16,17 +14,9 @@ import org.micromanager.magellan.imagedisplaynew.MagellanChannelDisplaySettings;
  public class ContrastUpdatedEvent {
 
    public int displayMode = -1;
-   public int index = -1;
-   public MagellanChannelDisplaySettings channel;
+   public int channelIndex_ = -1;
    
-   public ContrastUpdatedEvent(int i, MagellanChannelDisplaySettings c) {
-      index = i;
-      channel = c;
+   public ContrastUpdatedEvent(int i) {
+      channelIndex_ = i;
    }
-
-   public ContrastUpdatedEvent(int selectedIndex) {
-      displayMode = selectedIndex;
-   }
-   
-
 }

@@ -30,6 +30,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.magellan.coordinates.XYStagePosition;
+import org.micromanager.magellan.imagedisplay.DisplaySettings;
 import org.micromanager.magellan.imagedisplaynew.events.ImageCacheClosingEvent;
 import org.micromanager.magellan.imagedisplaynew.events.MagellanNewImageEvent;
 import org.micromanager.magellan.misc.Log;
@@ -46,10 +47,9 @@ public class MagellanImageCache {
    private EventBus dataProviderBus_ = new EventBus();
    private ExecutorService displayCommunicationExecutor_ = Executors.newSingleThreadExecutor((Runnable r) -> new Thread(r, "Image cache thread"));
 
-   public MagellanImageCache(String dir, JSONObject summaryMetadata, JSONObject displaySettings) {
+   public MagellanImageCache(String dir, JSONObject summaryMetadata, DisplaySettings displaySettings) {
       imageStorage_ = new MultiResMultipageTiffStorage(dir, summaryMetadata);
       imageStorage_.setDisplaySettings(displaySettings);
-
    }
 
    /**
@@ -153,8 +153,8 @@ public class MagellanImageCache {
       if (!isExploreAcquisition()) {
          return new long[]{0, 0, imageStorage_.getNumCols() * tileWidth, imageStorage_.getNumRows() * tileHeight};
       }
-      //TODO: might need some way of querying explore acquisition to get top left pixel
-      throw new RuntimeException();
+      //TODO: might need to figure out data limits for explore acquisitions loaded from disk
+      return null; //No image bounds for explore acquisiiton
    }
 
    public TaggedImage getImageForDisplay(int channel, MagellanDataViewCoords dataCoords) {

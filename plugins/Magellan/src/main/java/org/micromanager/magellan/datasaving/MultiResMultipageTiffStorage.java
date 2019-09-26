@@ -44,6 +44,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.magellan.imagedisplay.DisplaySettings;
 import org.micromanager.magellan.misc.JavaUtils;
 import org.micromanager.magellan.misc.Log;
 import org.micromanager.magellan.misc.LongPoint;
@@ -178,7 +179,7 @@ public class MultiResMultipageTiffStorage {
       lowResStorages_ = new TreeMap<Integer, TaggedImageStorageMultipageTiff>();
    }
 
-   public void setDisplaySettings(JSONObject displaySettings) {
+   public void setDisplaySettings(DisplaySettings displaySettings) {
       try {
          displaySettings_ = new JSONObject(displaySettings.toString());
       } catch (JSONException ex) {

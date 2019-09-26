@@ -21,16 +21,13 @@ import org.micromanager.magellan.imagedisplaynew.events.MagellanNewImageEvent;
 import org.micromanager.magellan.imagedisplaynew.events.ScrollPositionEvent;
 import org.micromanager.magellan.imagedisplaynew.events.AnimationToggleEvent;
 import org.micromanager.magellan.imagedisplaynew.events.SetImageEvent;
-import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-import java.awt.Panel;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.JPanel;
-import org.micromanager.magellan.imagedisplay.NewImageEvent;
 import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
 
 /**

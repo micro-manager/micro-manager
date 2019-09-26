@@ -25,18 +25,17 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.*;
-import org.micromanager.magellan.imagedisplaynew.MagellanChannelDisplaySettings;
-import org.micromanager.magellan.imagedisplaynew.events.UpdateImageEvent;
 import org.micromanager.magellan.imagedisplaynew.MagellanDisplayController;
 import org.micromanager.magellan.imagedisplaynew.events.ContrastUpdatedEvent;
 import org.micromanager.magellan.imagedisplaynew.HistogramPanel.CursorListener;
+import org.micromanager.magellan.misc.HistogramUtils;
 
 /**
  * Draws one histogram of the Multi-Channel control panel
  *
  *
  */
- class ChannelControlPanel extends JPanel implements CursorListener {
+class ChannelControlPanel extends JPanel implements CursorListener {
 
    private static final Dimension CONTROLS_SIZE = new Dimension(130, 150);
    public static final Dimension MINIMUM_SIZE = new Dimension(400, CONTROLS_SIZE.height);
@@ -102,6 +101,7 @@ import org.micromanager.magellan.imagedisplaynew.HistogramPanel.CursorListener;
       }
 //      mcHistograms_.setDisplayMode(cache.getDisplayMode());
 
+      channelNameCheckbox_.setSelected(display_.getDisplaySettings().isActive(channelName_));
       updateHistogram();
    }
 
@@ -387,9 +387,7 @@ import org.micromanager.magellan.imagedisplaynew.HistogramPanel.CursorListener;
       binSize_ = ((double) (histMax_ + 1)) / ((double) NUM_BINS);
       histMaxLabel_ = histMax_ + "";
       updateHistogram();
-      calcAndDisplayHistAndStats(true);
       storeDisplaySettings();
-
    }
 
    private void updateHistogram() {
@@ -404,7 +402,7 @@ import org.micromanager.magellan.imagedisplaynew.HistogramPanel.CursorListener;
       } else {
          setFullScale();
          mcHistograms_.applyLUTToImage();
-         display_.postEvent(new UpdateImageEvent());
+         display_.postEvent(new ContrastUpdatedEvent(channelIndex_));
       }
    }
 
@@ -426,9 +424,8 @@ import org.micromanager.magellan.imagedisplaynew.HistogramPanel.CursorListener;
          name = name.substring(0, 9) + "...";
       }
       channelNameCheckbox_.setText(name);
-      calcAndDisplayHistAndStats(true);
       mcHistograms_.applyLUTToImage();
-      display_.postEvent(new UpdateImageEvent());
+      display_.postEvent(new ContrastUpdatedEvent(channelIndex_));
       this.repaint();
    }
 
@@ -469,20 +466,8 @@ import org.micromanager.magellan.imagedisplaynew.HistogramPanel.CursorListener;
    }
 
    private void channelNameCheckboxAction() {
-      boolean[] active = display_.getActiveChannels();
-      if (display_.isCompositeMode()) {
-         if (active[channelIndex_]) {
-            channelNameCheckbox_.setSelected(true);
-            return;
-         } else {
-//            display_.setChannel(channelIndex_);
-         }
-      } else {
-         display_.getActiveChannels()[channelIndex_] = channelNameCheckbox_.isSelected();
-      }
-
-      display_.getActiveChannels()[channelIndex_] = channelNameCheckbox_.isSelected();
-      display_.postEvent(new UpdateImageEvent());
+      display_.getDisplaySettings().setActive(channelName_, channelNameCheckbox_.isSelected());
+      display_.postEvent(new ContrastUpdatedEvent(channelIndex_));
    }
 
    public void setFullScale() {
@@ -560,14 +545,14 @@ import org.micromanager.magellan.imagedisplaynew.HistogramPanel.CursorListener;
 
    //Need to put this on EDT to avoid index out of bounds because of setting currentChannel to -1
    public void applyChannelLUTToImage() {
-      MagellanChannelDisplaySettings displaySettings = new MagellanChannelDisplaySettings(channelNameCheckbox_.isSelected(),
-                     color_, gamma_, contrastMax_, contrastMin_);
-      
-      //TODO: send LUT to image
-      display_.postEvent(new ContrastUpdatedEvent(channelIndex_, displaySettings));
-      
-      storeDisplaySettings();
+      //apply display settings
+      display_.getDisplaySettings().setActive(channelName_, channelNameCheckbox_.isSelected());
+      display_.getDisplaySettings().setColor(channelName_, color_);
+      display_.getDisplaySettings().setGamma(channelName_, gamma_);
+      display_.getDisplaySettings().setContrastMin(channelName_, contrastMin_);
+      display_.getDisplaySettings().setContrastMax(channelName_, contrastMax_);
 
+      storeDisplaySettings();
       updateHistogram();
    }
 
@@ -582,121 +567,66 @@ import org.micromanager.magellan.imagedisplaynew.HistogramPanel.CursorListener;
       return channelIndex_;
    }
 
-   /**
-    * @param drawHist - set true if hist and stats calculated successfully
-    *
-    */
-   public void calcAndDisplayHistAndStats(boolean drawHist) {
-//      if (img_ == null || img_.getProcessor() == null) {
-//         return;
-//      }
-//      ImageProcessor ip;
-//      if (img_.getMode() == CompositeImage.COMPOSITE) {
-//         ip = img_.getProcessor(channelIndex_ + 1);
-//         if (ip != null) {
-//            ip.setRoi(img_.getRoi());
-//         }
-//      } else {
-//         MMCompositeImage ci = (MMCompositeImage) img_;
-//         int flatIndex = 1 + channelIndex_ + (((MagellanDisplay) display_).getVisibleSliceIndex()) * ci.getNChannelsUnverified()
-//                 + (img_.getFrame() - 1) * ci.getNSlicesUnverified() * ci.getNChannelsUnverified();
-//         ip = img_.getStack().getProcessor(flatIndex);
-//
-//      }
-//
-//      if (((MMCompositeImage) img_).getNChannelsUnverified() <= 7) {
-//         boolean active = img_.getActiveChannels()[channelIndex_];
-//         channelNameCheckbox_.setSelected(active);
-//         if (!active) {
-//            drawHist = false;
-//         }
-//      }
-//      if (((MMCompositeImage) img_).getMode() != CompositeImage.COMPOSITE) {
-//         if (img_.getChannel() - 1 != channelIndex_) {
-//            drawHist = false;
-//         }
-//      }
-//
-//      if (ip == null) {
-//         return;
-//      }
-//
-//      int[] rawHistogram = ip.getHistogram();
-//      int imgWidth = img_.getWidth();
-//      int imgHeight = img_.getHeight();
-//
-//      if (rawHistogram[0] == imgWidth * imgHeight) {
-//         return;  //Blank pixels 
-//      }
-//      if (histControlState_.ignoreOutliers) {
-//         maxAfterRejectingOutliers_ = rawHistogram.length;
-//         // specified percent of pixels are ignored in the automatic contrast setting
-//         int totalPoints = imgHeight * imgWidth;
-//         HistogramUtils hu = new HistogramUtils(rawHistogram, totalPoints, 0.01 * histControlState_.percentToIgnore);
-//         minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
-//         maxAfterRejectingOutliers_ = hu.getMaxAfterRejectingOutliers();
-//      }
-//      GraphData histogramData = new GraphData();
-//
-//      pixelMin_ = -1;
-//      pixelMax_ = 0;
-//
-//      int numBins = (int) Math.min(rawHistogram.length / binSize_, NUM_BINS);
-//      int[] histogram = new int[NUM_BINS];
-//      int total = 0;
-//      for (int i = 0; i < numBins; i++) {
-//         histogram[i] = 0;
-//         for (int j = 0; j < binSize_; j++) {
-//            int rawHistIndex = (int) (i * binSize_ + j);
-//            int rawHistVal = rawHistogram[rawHistIndex];
-//            histogram[i] += rawHistVal;
-//            if (rawHistVal > 0) {
-//               pixelMax_ = rawHistIndex;
-//               if (pixelMin_ == -1) {
-//                  pixelMin_ = rawHistIndex;
-//               }
-//            }
-//         }
-//         total += histogram[i];
-//         if (histControlState_.logHist) {
-//            histogram[i] = histogram[i] > 0 ? (int) (1000 * Math.log(histogram[i])) : 0;
-//         }
-//      }
-//      //Make sure max has correct value is hist display mode isnt auto
-//      if (histRangeComboBox_.getSelectedIndex() != -1) {
-//         pixelMin_ = rawHistogram.length - 1;
-//         for (int i = rawHistogram.length - 1; i > 0; i--) {
-//            if (rawHistogram[i] > 0 && i > pixelMax_) {
-//               pixelMax_ = i;
-//            }
-//            if (rawHistogram[i] > 0 && i < pixelMin_) {
-//               pixelMin_ = i;
-//            }
-//         }
-//      }
-//
-//      // work around what is apparently a bug in ImageJ
-////      if (total == 0) {
-////         if (img_.getProcessor().getMin() == 0) {
-////            histogram[0] = imgWidth * imgHeight;
-////         } else {
-////            histogram[numBins - 1] = imgWidth * imgHeight;
-////         }
-////      }
-//
-//      if (drawHist) {
-//         hp_.setVisible(true);
-//         //Draw histogram and stats
-//         histogramData.setData(histogram);
-//         hp_.setData(histogramData);
-//         hp_.setAutoScale();
-//         hp_.repaint();
-//
-//         minMaxLabel_.setText("Min: " + pixelMin_ + "   " + "Max: " + pixelMax_);
-//      } else {
-//         hp_.setVisible(false);
-//      }
+   public void updateHistogram(int[] rawHistogram) {
+      //Compute stats
+      int totalPixels = 0;
+      for (int i = 0; i < rawHistogram.length; i++) {
+         totalPixels += rawHistogram[i];
+      }
 
+      pixelMin_ = -1;
+      pixelMax_ = 0;
+      int numBins = (int) Math.min(rawHistogram.length / binSize_, NUM_BINS);
+      int[] histogram = new int[NUM_BINS];
+      int total = 0;
+      for (int i = 0; i < numBins; i++) {
+         histogram[i] = 0;
+         for (int j = 0; j < binSize_; j++) {
+            int rawHistIndex = (int) (i * binSize_ + j);
+            int rawHistVal = rawHistogram[rawHistIndex];
+            histogram[i] += rawHistVal;
+            if (rawHistVal > 0) {
+               pixelMax_ = rawHistIndex;
+               if (pixelMin_ == -1) {
+                  pixelMin_ = rawHistIndex;
+               }
+            }
+         }
+         total += histogram[i];
+         if (histControlState_.logHist) {
+            histogram[i] = histogram[i] > 0 ? (int) (1000 * Math.log(histogram[i])) : 0;
+         }
+      }
+
+      if (histControlState_.ignoreOutliers) {
+         maxAfterRejectingOutliers_ = (int) totalPixels;
+         // specified percent of pixels are ignored in the automatic contrast setting
+         HistogramUtils hu = new HistogramUtils(rawHistogram, totalPixels, 0.01 * histControlState_.percentToIgnore);
+         minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
+         maxAfterRejectingOutliers_ = hu.getMaxAfterRejectingOutliers();
+      }
+      GraphData histogramData = new GraphData();
+
+      //Make sure max has correct value is hist display mode isnt auto
+      if (histRangeComboBox_.getSelectedIndex() != -1) {
+         pixelMin_ = rawHistogram.length - 1;
+         for (int i = rawHistogram.length - 1; i > 0; i--) {
+            if (rawHistogram[i] > 0 && i > pixelMax_) {
+               pixelMax_ = i;
+            }
+            if (rawHistogram[i] > 0 && i < pixelMin_) {
+               pixelMin_ = i;
+            }
+         }
+      }
+
+      hp_.setVisible(true);
+      //Draw histogram and stats
+      histogramData.setData(histogram);
+      hp_.setData(histogramData);
+      hp_.setAutoScale();
+      hp_.repaint();
+      minMaxLabel_.setText("Min: " + pixelMin_ + "   " + "Max: " + pixelMax_);
    }
 
    public void contrastMaxInput(int max) {
@@ -772,9 +702,8 @@ import org.micromanager.magellan.imagedisplaynew.HistogramPanel.CursorListener;
          mcHistograms_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
       } else {
          mcHistograms_.applyLUTToImage();
-         display_.postEvent(new UpdateImageEvent());
+         display_.postEvent(new ContrastUpdatedEvent(channelIndex_));
       }
    }
-
 
 }

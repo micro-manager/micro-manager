@@ -10,8 +10,10 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.image.MemoryImageSource;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.TreeMap;
 import mmcorej.TaggedImage;
+import org.micromanager.magellan.imagedisplay.DisplaySettings;
 import org.micromanager.magellan.misc.Log;
 
 /**
@@ -23,7 +25,6 @@ class ImageMaker {
    public static final int EIGHTBIT = 0;
    public static final int SIXTEENBIT = 1;
 
-   private final TreeMap<Integer, MagellanChannelDisplaySettings> channelDisplaySettings_ = new TreeMap<Integer, MagellanChannelDisplaySettings>();
    private final TreeMap<Integer, MagellanImageProcessor> channelProcessors_ = new TreeMap<Integer, MagellanImageProcessor>();
 
    private int imageWidth_, imageHeight_;
@@ -32,10 +33,11 @@ class ImageMaker {
    private Image displayImage_;
    private MemoryImageSource imageSource_;
    DirectColorModel rgbCM_ = new DirectColorModel(24, 0xff0000, 0xff00, 0xff);
+   private DisplaySettings displaySettings_;
 
    public ImageMaker(MagellanDisplayController c, MagellanImageCache data, int width, int height) {
       c.registerForEvents(this);
-      //TODO
+      displaySettings_ = c.getDisplaySettings();
       imageWidth_ = 512;
       imageHeight_ = 512;
       rgbPixels_ = new int[imageWidth_ * imageHeight_];
@@ -44,18 +46,16 @@ class ImageMaker {
 
    void close() {
       imageCache_ = null;
+      displaySettings_ = null;
    }
 
-   @Subscribe
-   public void onContrastUpdatedEvent(ContrastUpdatedEvent e) {
-      //TODO: implement contrast
-//      if (e.index != -1) {
-//         //TODO: don't replace the object so you can do this from different threads
-//         channelDisplaySettings_.put(e.index, e.channel);
-//      } else if (e.displayMode != -1) {
-//         displayMode_ = e.displayMode;
-//      }
-//      applyContrastSettings();
+   /**
+    * Get the histgram, which was automaitically calculated by makeorgetiamge
+    *
+    * @return
+    */
+   public int[] getHistogram(int channelIndex) {
+      return channelProcessors_.get(channelIndex).histogram;
    }
 
    /**
@@ -64,9 +64,9 @@ class ImageMaker {
     * @return
     */
    public Image makeOrGetImage(MagellanDataViewCoords viewCoords) {
-      boolean remakeDisplayImage = false;
-      if (viewCoords.getDisplayImageSizeAtResLevel().x != imageWidth_ || 
-              viewCoords.getDisplayImageSizeAtResLevel().y != imageHeight_) {
+      boolean remakeDisplayImage = false; //remake the acutal Imge object if size has changed, otherwise just set pixels
+      if (viewCoords.getDisplayImageSizeAtResLevel().x != imageWidth_
+              || viewCoords.getDisplayImageSizeAtResLevel().y != imageHeight_) {
          imageWidth_ = (int) viewCoords.getDisplayImageSizeAtResLevel().x;
          imageHeight_ = (int) viewCoords.getDisplayImageSizeAtResLevel().y;
          rgbPixels_ = new int[imageWidth_ * imageHeight_];
@@ -74,40 +74,43 @@ class ImageMaker {
       }
 
       //update pixels
-      for (Integer c : viewCoords.getActiveChannels().keySet()) {
-         if (!viewCoords.getActiveChannels().get(c)) {
-            continue;
-         }
+      for (Integer c : viewCoords.getChannelIndices()) {
          synchronized (this) {
             if (!channelProcessors_.containsKey(c)) {
-               channelDisplaySettings_.put(c, new MagellanChannelDisplaySettings());
                channelProcessors_.put(c, new MagellanImageProcessor(imageWidth_, imageHeight_));
             }
          }
+         if (!displaySettings_.isActive(viewCoords.getChannelName(c))) {
+            continue;
+         }
+
          TaggedImage imageForDisplay = imageCache_.getImageForDisplay(c, viewCoords);
          channelProcessors_.get(c).changePixels(imageForDisplay.pix, imageWidth_, imageHeight_);
 
       }
 
       //apply contrast settings
-      for (Integer c : viewCoords.getActiveChannels().keySet()) {
-         if (!viewCoords.getActiveChannels().get(c)) {
+      for (Integer c : channelProcessors_.keySet()) {
+         if (!displaySettings_.isActive(viewCoords.getChannelName(c))) {
             continue;
          }
-         //only update one channel for speed
-         LUT lut = makeLUT(channelDisplaySettings_.get(c).color, channelDisplaySettings_.get(c).gamma);
-         channelProcessors_.get(c).setContrast(lut, channelDisplaySettings_.get(c).contrastMin, channelDisplaySettings_.get(c).contrastMax);
+         //only update acrtive channels for speed
+
+         String channelName = viewCoords.getChannelName(c);
+         LUT lut = makeLUT(displaySettings_.getColor(channelName), displaySettings_.getGamma(channelName));
+         channelProcessors_.get(c).setContrast(lut, displaySettings_.getContrastMin(channelName), displaySettings_.getContrastMax(channelName));
       }
 
       try {
          boolean firstActive = true;
          Arrays.fill(rgbPixels_, 0);
          int redValue, greenValue, blueValue;
-         for (Integer c : viewCoords.getActiveChannels().keySet()) {
-            if (!viewCoords.getActiveChannels().get(c)) {
+         for (Integer c : channelProcessors_.keySet()) {
+            if (!displaySettings_.isActive(viewCoords.getChannelName(c))) {
                continue;
             }
-            if (channelDisplaySettings_.get(c).active) {
+            String channelName = viewCoords.getChannelName(c);
+            if (displaySettings_.isActive(channelName)) {
                //get the appropriate pixels from the data view
 
                //recompute 8 bit image
@@ -193,6 +196,14 @@ class ImageMaker {
       return new LUT(8, size, rs, gs, bs);
    }
 
+   HashMap<Integer, int[]> getHistograms() {
+      HashMap<Integer, int[]> hists = new HashMap<Integer, int[]>();
+      for (Integer i : channelProcessors_.keySet()) {
+         hists.put(i, channelProcessors_.get(i).histogram);
+      }
+      return hists;
+   }
+
    private class MagellanImageProcessor {
 
       LUT lut;
@@ -203,6 +214,7 @@ class ImageMaker {
       int[] reds = null;
       int[] blues = null;
       int[] greens = null;
+      int[] histogram = null;
 
       public MagellanImageProcessor(int w, int h) {
          width = w;
@@ -211,6 +223,7 @@ class ImageMaker {
 
       public void changePixels(Object pix, int w, int h) {
          pixels = pix;
+         histogram = pixels instanceof short[] ? new int[65536] : new int[256];
          width = w;
          height = h;
          eightBitImage = null;
@@ -260,6 +273,7 @@ class ImageMaker {
       }
 
       //Create grayscale image with LUT min and max applied, but no color mapping
+      //Also compute histogram in the process
       private void create8BitImage() {
          int size = width * height;
          if (eightBitImage == null) {
@@ -269,9 +283,13 @@ class ImageMaker {
          double scale = 256.0 / (max - min + 1);
          for (int i = 0; i < size; i++) {
             if (pixels instanceof short[]) {
-               value = (((short[]) pixels)[i] & 0xffff) - min;
+               int pixVal = (((short[]) pixels)[i] & 0xffff);
+               value = pixVal - min;
+               histogram[pixVal]++;
             } else {
-               value = (((byte[]) pixels)[i] & 0xffff) - min;
+               int pixVal = (((byte[]) pixels)[i] & 0xffff);
+               value = pixVal - min;
+               histogram[pixVal]++;
             }
             if (value < 0) {
                value = 0;

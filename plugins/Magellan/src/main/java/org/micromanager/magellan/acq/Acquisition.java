@@ -112,7 +112,7 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
          ex.printStackTrace();
       }
       
-      JSONObject displaySettings = DisplaySettings.getDefaultDisplaySettings(channels_, summaryMetadata);
+      DisplaySettings displaySettings = new DisplaySettings(channels_, summaryMetadata);
       dataProvider_ = new MagellanImageCache(dir, summaryMetadata, displaySettings);
       //storage class has determined unique acq name, so it can now be stored
       name_ = dataProvider_.getUniqueAcqName();
@@ -121,8 +121,7 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
 
       //create display
       try {
-         new MagellanDisplayController(dataProvider_,
-                 org.micromanager.display.internal.DefaultDisplaySettings.getStandardSettings(null));
+         new MagellanDisplayController(dataProvider_, displaySettings);
       } catch (Exception e) {
          e.printStackTrace();
          Log.log("Couldn't create display succesfully");

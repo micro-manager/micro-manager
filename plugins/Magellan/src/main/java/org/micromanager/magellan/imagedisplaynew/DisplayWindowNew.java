@@ -29,6 +29,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
+import java.util.HashMap;
 import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -164,6 +165,10 @@ class DisplayWindowNew implements WindowListener {
    public void applyDisplaySettings(org.micromanager.display.DisplaySettings adjustedSettings) {
 
    }
+   
+   public void addContrastControls(int channelIndex, String channelName) {
+      sideControls_.addContrastControls(channelIndex, channelName);
+   }
 
    public void collapseOrExpandSideControls(boolean expand) {
       sideControls_.setVisible(expand);
@@ -175,10 +180,11 @@ class DisplayWindowNew implements WindowListener {
     *
     * @param images
     */
-   void displayImage(Image image, MagellanDataViewCoords view) {
+   void displayImage(Image image, HashMap<Integer, int[]> hists, MagellanDataViewCoords view) {
       //Make scrollbars reflect image
       subImageControls_.updateScrollerPositions(view);
       imageCanvas_.updateDisplayImage(image, view.getDisplayScaleFactor());
+      sideControls_.updateHistogramData(hists);
 
       imageCanvas_.getCanvas().repaint();
    }

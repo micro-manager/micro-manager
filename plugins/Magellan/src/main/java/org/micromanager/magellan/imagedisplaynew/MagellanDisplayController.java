@@ -22,34 +22,28 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.geom.Point2D;
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import javax.swing.SwingUtilities;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.overlay.Overlay;
-import org.micromanager.internal.utils.EventBusExceptionLogger;
-import org.micromanager.magellan.acq.ExploreAcquisition;
+import org.micromanager.magellan.imagedisplay.DisplaySettings;
 import org.micromanager.magellan.imagedisplaynew.events.CanvasResizeEvent;
+import org.micromanager.magellan.imagedisplaynew.events.ContrastUpdatedEvent;
 import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
 
 public final class MagellanDisplayController {
 
    public static final int NONE = 0, EXPLORE = 1, SURFACE_AND_GRID = 2;
    private int magellanMode_;
-
+   
    private MagellanImageCache imageCache_;
+   private DisplaySettings displaySettings_;
 
    private MagellanCoalescentEDTRunnablePool edtRunnablePool_ = MagellanCoalescentEDTRunnablePool.create();
 
    private EventBus eventBus_ = new EventBus(EventBusExceptionLogger.getInstance());
-
-   // Guarded by monitor on this
-   private DisplaySettings displaySettings_;
-   // Guarded by monitor on this
 
    private CoalescentExecutor displayCalculationExecutor_ = new CoalescentExecutor("Display calculation executor");
    private DisplayWindowNew displayWindow_;
@@ -59,6 +53,7 @@ public final class MagellanDisplayController {
 
    public MagellanDisplayController(MagellanImageCache cache, DisplaySettings initialDisplaySettings) {
       imageCache_ = cache;
+      displaySettings_ = initialDisplaySettings;
       viewCoords_ = new MagellanDataViewCoords(cache, 0, 0, 0, 0, 0,
               isExploreAcquisiton() ? 700 : cache.getFullResolutionSize().x,
               isExploreAcquisiton() ? 700 : cache.getFullResolutionSize().y, imageCache_.getImageBounds());
@@ -126,21 +121,24 @@ public final class MagellanDisplayController {
       }
 
       //Do zooming--update size of source data
-      double newWidth = sourceDataSize.x * factor;
-      double newHeight = sourceDataSize.x * factor;
+      double newSourceDataWidth = sourceDataSize.x * factor;
+      double newSourceDataHeight = sourceDataSize.x * factor;
+      if (newSourceDataWidth < 5 || newSourceDataHeight < 5) {
+         return; //constrain maximum zoom
+      }
       if (imageCache_.isXYBounded()) {
-         //don't let either of these go smaller than the actual data
-         double overzoomXFactor = newWidth / (viewCoords_.xMax_ - viewCoords_.xMin_);
-         double overzoomYFactor = newHeight / (viewCoords_.yMax_ - viewCoords_.yMin_);
+         //don't let either of these go bigger than the actual data
+         double overzoomXFactor = newSourceDataWidth / (viewCoords_.xMax_ - viewCoords_.xMin_);
+         double overzoomYFactor = newSourceDataHeight / (viewCoords_.yMax_ - viewCoords_.yMin_);
          if (overzoomXFactor > 1 || overzoomYFactor > 1) {
-            newWidth = newWidth / Math.max(overzoomXFactor, overzoomYFactor);
-            newHeight = newHeight / Math.max(overzoomXFactor, overzoomYFactor);
+            newSourceDataWidth = newSourceDataWidth / Math.max(overzoomXFactor, overzoomYFactor);
+            newSourceDataHeight = newSourceDataHeight / Math.max(overzoomXFactor, overzoomYFactor);
          }
       }
-      viewCoords_.setSourceDataSize(newWidth, newHeight);
+      viewCoords_.setSourceDataSize(newSourceDataWidth, newSourceDataHeight);
 
-      double xOffset = (zoomCenter.x - (zoomCenter.x - viewOffset.x) * newWidth / sourceDataSize.x);
-      double yOffset = (zoomCenter.y - (zoomCenter.y - viewOffset.y) * newHeight / sourceDataSize.y);
+      double xOffset = (zoomCenter.x - (zoomCenter.x - viewOffset.x) * newSourceDataWidth / sourceDataSize.x);
+      double yOffset = (zoomCenter.y - (zoomCenter.y - viewOffset.y) * newSourceDataHeight / sourceDataSize.y);
       //make sure view doesn't go outside image bounds
       if (imageCache_.isXYBounded()) {
          viewCoords_.setViewOffset(
@@ -261,11 +259,10 @@ public final class MagellanDisplayController {
       displayWindow_.updateExploreZControls(event.getPositionForAxis("z"));
 
       int channelIndex = event.getPositionForAxis("c");
-      if (!viewCoords_.getActiveChannels().keySet().contains(channelIndex)) {
-         //TODO: might not actually want to set it to true depending on display mode
-         viewCoords_.getActiveChannels().put(channelIndex, true);
+      boolean newChannel = viewCoords_.addChannelIfNew(channelIndex, event.channelName_);
+      if (newChannel) {
+         displayWindow_.addContrastControls(channelIndex, event.channelName_);
       }
-
       //expand the scrollbars with new images
       edtRunnablePool_.invokeLaterWithCoalescence(
               new MagellanDisplayController.ExpandDisplayRangeCoalescentRunnable(event));
@@ -278,6 +275,14 @@ public final class MagellanDisplayController {
     */
    @Subscribe
    public void onSetImageEvent(final SetImageEvent event) {
+      recomputeDisplayedImage();
+   }
+   
+   /**
+    * Called when scrollbars move
+    */
+   @Subscribe
+   public void onContrastUpdated(final ContrastUpdatedEvent event) {
       recomputeDisplayedImage();
    }
 
@@ -381,6 +386,10 @@ public final class MagellanDisplayController {
       throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
    }
 
+   DisplaySettings getDisplaySettings() {
+      return displaySettings_;
+   }
+
    /**
     * A coalescent runnable to avoid excessively frequent update of the data
     * coords range in the UI
@@ -457,6 +466,7 @@ public final class MagellanDisplayController {
       edtRunnablePool_ = null;
       displaySettings_ = null;
       displayCalculationExecutor_ = null;
+      displaySettings_ = null;
    }
 
    @Subscribe
@@ -471,46 +481,6 @@ public final class MagellanDisplayController {
 //      if (event.getDatastore().equals(dataProvider_)) {
       requestToClose();
 //      }
-   }
-
-   public void displayStatusString(String status) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-   }
-
-   public double getZoom() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-   }
-
-   public void setZoom(double ratio) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-   }
-
-   public void adjustZoom(double factor) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-   }
-
-   public void autostretch() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-   }
-
-   public void addOverlay(Overlay overlay) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-   }
-
-   public void removeOverlay(Overlay overlay) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-   }
-
-   public List<Overlay> getOverlays() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-   }
-
-   public void toFront() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-   }
-
-   public void setCustomTitle(String title) {
-
    }
 
    public final void registerForEvents(Object recipient) {
@@ -573,8 +543,8 @@ public final class MagellanDisplayController {
       public void run() {
          //This is where most of the calculation of creating a display image happens
          Image img = imageMaker_.makeOrGetImage(view_);
-         //TODO: maybe also calcualte stats here
-         edtRunnablePool_.invokeAsLateAsPossibleWithCoalescence(new CanvasRepaintRunnable(img, view_));
+         HashMap<Integer, int[]> channelHistograms = imageMaker_.getHistograms();
+         edtRunnablePool_.invokeAsLateAsPossibleWithCoalescence(new CanvasRepaintRunnable(img, channelHistograms, view_));
       }
 
    }
@@ -583,10 +553,12 @@ public final class MagellanDisplayController {
 
       final Image img_;
       MagellanDataViewCoords view_;
+      HashMap<Integer, int[]> hists_; 
 
-      public CanvasRepaintRunnable(Image img, MagellanDataViewCoords view) {
+      public CanvasRepaintRunnable(Image img, HashMap<Integer, int[]> hists, MagellanDataViewCoords view) {
          img_ = img;
          view_ = view;
+         hists_ = hists;
       }
 
       @Override
@@ -601,7 +573,7 @@ public final class MagellanDisplayController {
 
       @Override
       public void run() {
-         displayWindow_.displayImage(img_, view_);
+         displayWindow_.displayImage(img_, hists_, view_);
       }
 
    }

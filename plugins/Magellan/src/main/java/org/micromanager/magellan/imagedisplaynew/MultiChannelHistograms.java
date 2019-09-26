@@ -1,24 +1,20 @@
 package org.micromanager.magellan.imagedisplaynew;
 
 import org.micromanager.magellan.imagedisplaynew.ChannelControlPanel;
-import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-import ij.CompositeImage;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.util.ArrayList;
+import java.util.HashMap;
 import javax.swing.JPanel;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.magellan.imagedisplay.MagellanDisplay;
-import org.micromanager.magellan.imagedisplay.NewImageEvent;
-import org.micromanager.magellan.imagedisplay.VirtualAcquisitionDisplay;
-import org.micromanager.magellan.imagedisplaynew.events.UpdateImageEvent;
+import org.micromanager.magellan.imagedisplay.DisplaySettings;
 import org.micromanager.magellan.imagedisplaynew.MagellanDisplayController;
 import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
+import org.micromanager.magellan.imagedisplaynew.events.MagellanNewImageEvent;
 import org.micromanager.magellan.misc.Log;
-import org.micromanager.magellan.misc.MD;
 
 ///////////////////////////////////////////////////////////////////////////////
 //FILE:          MultiChannelHistograms.java
@@ -41,99 +37,77 @@ import org.micromanager.magellan.misc.MD;
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
- final class MultiChannelHistograms extends JPanel  {
+final class MultiChannelHistograms extends JPanel {
 
    private static final int SLOW_HIST_UPDATE_INTERVAL_MS = 1000;
    private long lastUpdateTime_;
-   private ArrayList<ChannelControlPanel> ccpList_;
+   private HashMap<Integer, ChannelControlPanel> ccpList_;
    private MagellanDisplayController display_;
    private boolean updatingCombos_ = false;
    private HistogramControlsState hcs_;
    private ContrastPanel contrastPanel_;
-   private JSONObject dispSettings_;
-   private int numChannels_ = 0;
+   private DisplaySettings dispSettings_;
 
    public MultiChannelHistograms(MagellanDisplayController disp, ContrastPanel contrastPanel) {
       super();
-      //TODO: initialize wiht disp settings
-//      dispSettings_ = disSettings;
       display_ = disp;
-      display_.registerForEvents(this);
+      dispSettings_ = display_.getDisplaySettings();
       hcs_ = contrastPanel.getHistogramControlsState();
 
       this.setLayout(new GridLayout(1, 1));
       contrastPanel_ = contrastPanel;
-      ccpList_ = new ArrayList<ChannelControlPanel>();
+      ccpList_ = new HashMap<Integer, ChannelControlPanel>();
 //      setupChannelControls();
-   }
-   
-      @Subscribe
-   public void onDisplayClose(DisplayClosingEvent e) {
-      display_.unregisterForEvents(this);
-      display_ = null;
-      
-      
-    ccpList_ = null;
-     hcs_ = null;
-     contrastPanel_ = null;
-     dispSettings_ = null;
-   }
-   
-   public int getNumChannels() {
-      return numChannels_;
    }
 
    @Subscribe
-   public synchronized void onNewImageEvent(NewImageEvent event) {
-      //TODO make sure this is on EDT
-      int channelIndex = event.getPositionForAxis("c");
-      if (channelIndex > ccpList_.size() - 1) {
-         setupChannelControls(channelIndex + 1, event.channelName_);
-      }
+   public void onDisplayClose(DisplayClosingEvent e) {
+      display_.unregisterForEvents(this);
+      display_ = null;
+
+      ccpList_ = null;
+      hcs_ = null;
+      contrastPanel_ = null;
+      dispSettings_ = null;
    }
 
-   private synchronized void setupChannelControls(int nChannels, String channelName) {
-      boolean rgb;
-      try {
-         rgb = display_.isRGB();
-      } catch (Exception ex) {
-         Log.log(ex);
-         rgb = false;
-      }
-      if (rgb) {
-         nChannels *= 3;
-      }
-      
+   public void addContrastControls(int channelIndex, String channelName) {
+      //TODO: bring back RGB if you want...
+//      boolean rgb;
+//      try {
+//         rgb = display_.isRGB();
+//      } catch (Exception ex) {
+//         Log.log(ex);
+//         rgb = false;
+//      }
+//      if (rgb) {
+//         nChannels *= 3;
+//      }
+
       Color color;
       try {
-         color = new Color(dispSettings_.getJSONObject(channelName).getInt("Color"));
-      } catch (JSONException ex) {
+         color = dispSettings_.getColor(channelName);
+      } catch (Exception ex) {
+         ex.printStackTrace();
          color = Color.white;
       }
       int bitDepth = 16;
       try {
-         bitDepth = dispSettings_.getJSONObject(channelName).optInt("BitDepth", 16);
-      } catch (JSONException ex) {
-         
+         bitDepth = dispSettings_.getBitDepth(channelName);
+      } catch (Exception ex) {
+         ex.printStackTrace();
+         bitDepth = 16;
       }
 
       //create new channel control panels as needed
-      for (int i = ccpList_.size(); i < nChannels; ++i) {
-         ChannelControlPanel ccp = new ChannelControlPanel(i, this, display_, contrastPanel_, channelName, color, bitDepth);
-         ccpList_.add(ccp);
-         this.add(ccpList_.get(i));
-      }
-      ((GridLayout) this.getLayout()).setRows(nChannels);
-      //add all to this panel
-      numChannels_ = nChannels;
+      ChannelControlPanel ccp = new ChannelControlPanel(channelIndex, this, display_, contrastPanel_, channelName, color, bitDepth);
+      ccpList_.put(channelIndex, ccp);
+      this.add(ccpList_.get(channelIndex));
 
-      for (ChannelControlPanel c : ccpList_) {
-         c.revalidate();
-      }
+      ((GridLayout) this.getLayout()).setRows(ccpList_.keySet().size());
 
-      
-       Dimension dim = new Dimension(ChannelControlPanel.MINIMUM_SIZE.width,
-              nChannels * ChannelControlPanel.MINIMUM_SIZE.height);
+      Dimension dim = new Dimension(ChannelControlPanel.MINIMUM_SIZE.width,
+              ccpList_.keySet().size() * ChannelControlPanel.MINIMUM_SIZE.height);
       this.setMinimumSize(dim);
       this.setSize(dim);
       this.setPreferredSize(dim);
@@ -145,22 +119,20 @@ import org.micromanager.magellan.misc.MD;
       if (ccpList_ == null) {
          return;
       }
-      for (ChannelControlPanel c : ccpList_) {
+      for (ChannelControlPanel c : ccpList_.values()) {
          c.setFullScale();
       }
       applyLUTToImage();
-      display_.postEvent(new UpdateImageEvent());
    }
 
    public void applyContrastToAllChannels(int min, int max, double gamma) {
       if (ccpList_ == null) {
          return;
       }
-      for (ChannelControlPanel c : ccpList_) {
+      for (ChannelControlPanel c : ccpList_.values()) {
          c.setContrast(min, max, gamma);
       }
       applyLUTToImage();
-      display_.postEvent(new UpdateImageEvent());
    }
 
    public void updateOtherDisplayCombos(int selectedIndex) {
@@ -194,7 +166,6 @@ import org.micromanager.magellan.misc.MD;
          ccpList_.get(i).setContrast(min, max, gamma);
       }
       applyLUTToImage();
-      display_.postEvent(new UpdateImageEvent());
    }
 
    public void setChannelHistogramDisplayMax(int channelIndex, int histMax) {
@@ -209,22 +180,10 @@ import org.micromanager.magellan.misc.MD;
       if (ccpList_ == null) {
          return;
       }
-      for (ChannelControlPanel c : ccpList_) {
+      for (ChannelControlPanel c : ccpList_.values()) {
          c.applyChannelLUTToImage();
       }
    }
-
-   public void imageChanged() {
-      for (ChannelControlPanel c : ccpList_) {
-         c.calcAndDisplayHistAndStats(true);
-
-         if (hcs_.autostretch) {
-            c.autostretch();
-         }
-         c.applyChannelLUTToImage();
-      }
-   }
-
 
    public void setChannelContrast(int channelIndex, int min, int max, double gamma) {
       if (channelIndex >= ccpList_.size()) {
@@ -233,13 +192,9 @@ import org.micromanager.magellan.misc.MD;
       ccpList_.get(channelIndex).setContrast(min, max, gamma);
    }
 
-   public void setDisplayMode(int mode) {
-      contrastPanel_.setDisplayMode(mode);
-   }
-
    public void autoscaleAllChannels() {
       if (ccpList_ != null && ccpList_.size() > 0) {
-         for (ChannelControlPanel c : ccpList_) {
+         for (ChannelControlPanel c : ccpList_.values()) {
             c.autoButtonAction();
          }
       }
@@ -247,24 +202,15 @@ import org.micromanager.magellan.misc.MD;
 
    public void rejectOutliersChangeAction() {
       if (ccpList_ != null && ccpList_.size() > 0) {
-         for (ChannelControlPanel c : ccpList_) {
-            c.calcAndDisplayHistAndStats(true);
+         for (ChannelControlPanel c : ccpList_.values()) {
             c.autoButtonAction();
-         }
-      }
-   }
-
-   public void calcAndDisplayHistAndStats(boolean drawHist) {
-      if (ccpList_ != null) {
-         for (ChannelControlPanel c : ccpList_) {
-            c.calcAndDisplayHistAndStats(drawHist);
          }
       }
    }
 
    public void autostretch() {
       if (ccpList_ != null) {
-         for (ChannelControlPanel c : ccpList_) {
+         for (ChannelControlPanel c : ccpList_.values()) {
             c.autostretch();
          }
       }
@@ -272,5 +218,11 @@ import org.micromanager.magellan.misc.MD;
 
    public int getNumberOfChannels() {
       return ccpList_.size();
+   }
+
+   void updateHistogramData(HashMap<Integer, int[]> hists) {
+      for (Integer i : hists.keySet()) {
+         ccpList_.get(i).updateHistogram(hists.get(i));             
+      }
    }
 }

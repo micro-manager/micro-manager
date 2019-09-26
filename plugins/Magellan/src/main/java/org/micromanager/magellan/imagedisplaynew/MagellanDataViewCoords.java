@@ -19,7 +19,7 @@ class MagellanDataViewCoords {
    private double sourceDataFullResWidth_, sourceDataFullResHeight_; //resolution in pixels of the display image at full res
    private double xView_, yView_; //top left pixel in full res coordinates
    private int zIndex_, tIndex_, rIndex_, cIndex_; //channel index for scrollbar display
-   private HashMap<Integer, Boolean> channelsActive_ = new HashMap<Integer, Boolean>();
+   final private HashMap<Integer, String> channelNames_ = new HashMap<Integer, String>();
    private int resolutionIndex_;
    private MagellanImageCache cache_;
 
@@ -40,6 +40,14 @@ class MagellanDataViewCoords {
       yMin_ = imageBounds[1];
       xMax_ = imageBounds[2];
       yMax_ = imageBounds[3];
+   }
+   
+   public boolean addChannelIfNew(int channelIndex, String channelName) {
+      if (!channelNames_.containsKey(channelIndex)) {
+         channelNames_.put(channelIndex, channelName);
+         return true;
+      }
+      return false;
    }
 
    public Point2D.Double getDisplayImageSizeAtResLevel() {
@@ -134,8 +142,8 @@ class MagellanDataViewCoords {
    public MagellanDataViewCoords copy() {
       MagellanDataViewCoords view = new MagellanDataViewCoords(cache_, xView_, yView_, cIndex_, zIndex_, tIndex_,
               sourceDataFullResWidth_, sourceDataFullResHeight_, new long[]{xMin_, yMin_, xMax_, yMax_});
-      for (Integer channel : channelsActive_.keySet()) {
-         view.channelsActive_.put(channel, channelsActive_.get(channel));
+      for (Integer channel : channelNames_.keySet()) {
+         view.channelNames_.put(channel, channelNames_.get(channel));
       }
       view.displayImageHeight_ = displayImageHeight_;
       view.displayImageWidth_ = displayImageWidth_;
@@ -144,9 +152,13 @@ class MagellanDataViewCoords {
       view.resolutionIndex_ = resolutionIndex_;
       return view;
    }
+   
+   public String getChannelName(int index) {
+      return channelNames_.get(index);
+   }
 
-   HashMap<Integer, Boolean> getActiveChannels() {
-      return channelsActive_;
+   Iterable<Integer> getChannelIndices() {
+      return channelNames_.keySet();
    }
 
 

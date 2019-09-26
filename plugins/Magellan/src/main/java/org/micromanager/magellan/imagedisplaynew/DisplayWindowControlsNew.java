@@ -13,6 +13,7 @@ import java.awt.Component;
 import java.awt.event.ActionListener;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
+import java.util.HashMap;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
@@ -26,8 +27,8 @@ import org.micromanager.magellan.coordinates.NoPositionsDefinedYetException;
 import org.micromanager.magellan.gui.SimpleChannelTableModel;
 import org.micromanager.magellan.imagedisplay.MagellanDisplay;
 import org.micromanager.magellan.imagedisplay.MetadataPanel;
-import org.micromanager.magellan.imagedisplay.NewImageEvent;
 import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
+import org.micromanager.magellan.imagedisplaynew.events.MagellanNewImageEvent;
 import org.micromanager.magellan.misc.ExactlyOneRowSelectionModel;
 import org.micromanager.magellan.misc.MD;
 import org.micromanager.magellan.surfacesandregions.MultiPosGrid;
@@ -174,18 +175,13 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
          display_.setMagellanMode(MagellanDisplay.NONE);
       }
    }
+   
+   void updateHistogramData(HashMap<Integer, int[]> hists) {
+      cpMagellan_.updateHistogramData(hists);
+   }
 
-   /**
-    * Called just before image redrawn
-    */
-   public void imageChangedUpdate(JSONObject metadata) {
-      if (cpMagellan_ != null) {
-         cpMagellan_.imageChanged();
-      }
-      if (metadataPanel_ != null) {
-         metadataPanelMagellan_.imageChangedUpdate(metadata);
-      }
-      updateStatusLabel(metadata);
+   public void addContrastControls(int channelIndex, String channelName) {
+      cpMagellan_.addContrastControls(channelIndex, channelName);
    }
 
    public ArrayList<XYFootprint> getSurfacesAndGridsForDisplay() {
@@ -214,9 +210,9 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
    }
 
    @Subscribe
-   public void onNewImageEvent(NewImageEvent e) {
+   public void onNewImageEvent(MagellanNewImageEvent e) {
       //once there's an image, surfaces and grids are game
-//      tabbedPane_.setEnabledAt(acq_ instanceof ExploreAcquisition ? 1 : 0, true);
+      tabbedPane_.setEnabledAt(display_.isExploreAcquisiton() ? 1 : 0, true);
    }
 
 //   @Subscribe
@@ -321,11 +317,12 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
       pauseButton_ = new javax.swing.JButton();
       fpsLabel_ = new javax.swing.JLabel();
       animationFPSSpinner_ = new javax.swing.JSpinner();
-      showNewImagesCheckBox_ = new javax.swing.JCheckBox();
+      lockScrollbarsCheckBox_ = new javax.swing.JCheckBox();
       elapsedTimeLabel_ = new javax.swing.JLabel();
       zPosLabel_ = new javax.swing.JLabel();
       acquireAtCurrentButton_ = new javax.swing.JButton();
       exploreButton_ = new javax.swing.JToggleButton();
+      scaleBarCheckBox_ = new javax.swing.JCheckBox();
 
       tabbedPane_.setToolTipText("");
       tabbedPane_.addChangeListener(new javax.swing.event.ChangeListener() {
@@ -334,21 +331,12 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
          }
       });
 
-      javax.swing.GroupLayout contrastPanelPanel_Layout = new javax.swing.GroupLayout(contrastPanelPanel_);
-      contrastPanelPanel_.setLayout(contrastPanelPanel_Layout);
-      contrastPanelPanel_Layout.setHorizontalGroup(
-         contrastPanelPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGap(0, 648, Short.MAX_VALUE)
-      );
-      contrastPanelPanel_Layout.setVerticalGroup(
-         contrastPanelPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGap(0, 464, Short.MAX_VALUE)
-      );
+      contrastPanelPanel_.setLayout(new java.awt.BorderLayout());
 
       cpMagellan_ = new ContrastPanel(display_);
       contrastPanelPanel_.add(cpMagellan_);
 
-      tabbedPane_.addTab("tab4", contrastPanelPanel_);
+      tabbedPane_.addTab("Contrast", contrastPanelPanel_);
 
       surfaceGridTable_.setModel(new DisplayWindowSurfaceGridTableModel(display_)
       );
@@ -487,7 +475,7 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
                   .addContainerGap()
                   .addComponent(surfaceGridSpecificControlsPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)))
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 408, Short.MAX_VALUE))
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 403, Short.MAX_VALUE))
       );
 
       tabbedPane_.addTab("Surfaces and Grids", surfaceGridPanel_);
@@ -500,7 +488,7 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
       );
       metadataPanel_Layout.setVerticalGroup(
          metadataPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addComponent(metadataPanelMagellan_, javax.swing.GroupLayout.DEFAULT_SIZE, 464, Short.MAX_VALUE)
+         .addComponent(metadataPanelMagellan_, javax.swing.GroupLayout.DEFAULT_SIZE, 459, Short.MAX_VALUE)
       );
 
       tabbedPane_.addTab("Metadata", metadataPanel_);
@@ -545,7 +533,7 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
                .addComponent(selectUseAllButton_)
                .addComponent(syncExposuresButton_))
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 426, Short.MAX_VALUE))
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 421, Short.MAX_VALUE))
       );
 
       tabbedPane_.addTab("Channels", explorePanel_);
@@ -584,11 +572,10 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
          }
       });
 
-      showNewImagesCheckBox_.setSelected(true);
-      showNewImagesCheckBox_.setText("Move scrollbars on new image");
-      showNewImagesCheckBox_.addActionListener(new java.awt.event.ActionListener() {
+      lockScrollbarsCheckBox_.setText("Lock scrollbars");
+      lockScrollbarsCheckBox_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            showNewImagesCheckBox_ActionPerformed(evt);
+            lockScrollbarsCheckBox_ActionPerformed(evt);
          }
       });
 
@@ -612,6 +599,13 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
          }
       });
 
+      scaleBarCheckBox_.setText("Scale Bar");
+      scaleBarCheckBox_.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            scaleBarCheckBox_ActionPerformed(evt);
+         }
+      });
+
       javax.swing.GroupLayout topControlPanel_Layout = new javax.swing.GroupLayout(topControlPanel_);
       topControlPanel_.setLayout(topControlPanel_Layout);
       topControlPanel_Layout.setHorizontalGroup(
@@ -619,13 +613,27 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
          .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, topControlPanel_Layout.createSequentialGroup()
             .addContainerGap()
             .addGroup(topControlPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-               .addComponent(elapsedTimeLabel_)
-               .addComponent(zPosLabel_))
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+               .addGroup(topControlPanel_Layout.createSequentialGroup()
+                  .addComponent(zPosLabel_)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+               .addGroup(topControlPanel_Layout.createSequentialGroup()
+                  .addComponent(elapsedTimeLabel_)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+            .addGap(286, 286, 286)
             .addGroup(topControlPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                .addComponent(acquireAtCurrentButton_)
                .addComponent(exploreButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addGap(101, 101, 101))
+         .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, topControlPanel_Layout.createSequentialGroup()
+            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(fpsLabel_)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(animationFPSSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(lockScrollbarsCheckBox_)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(scaleBarCheckBox_)
+            .addGap(41, 41, 41))
          .addGroup(topControlPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(topControlPanel_Layout.createSequentialGroup()
                .addContainerGap()
@@ -634,18 +642,20 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
                .addComponent(abortButton_)
                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                .addComponent(pauseButton_)
-               .addGap(18, 18, 18)
-               .addComponent(fpsLabel_)
-               .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-               .addComponent(animationFPSSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
-               .addGap(18, 18, 18)
-               .addComponent(showNewImagesCheckBox_)
-               .addContainerGap(118, Short.MAX_VALUE)))
+               .addContainerGap(500, Short.MAX_VALUE)))
       );
       topControlPanel_Layout.setVerticalGroup(
          topControlPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(topControlPanel_Layout.createSequentialGroup()
-            .addContainerGap(45, Short.MAX_VALUE)
+            .addContainerGap()
+            .addGroup(topControlPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+               .addGroup(topControlPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                  .addComponent(animationFPSSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                  .addComponent(fpsLabel_))
+               .addGroup(topControlPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                  .addComponent(lockScrollbarsCheckBox_)
+                  .addComponent(scaleBarCheckBox_)))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 13, Short.MAX_VALUE)
             .addGroup(topControlPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                .addComponent(exploreButton_)
                .addComponent(elapsedTimeLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -656,15 +666,10 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
          .addGroup(topControlPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(topControlPanel_Layout.createSequentialGroup()
                .addContainerGap()
-               .addGroup(topControlPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                  .addGroup(topControlPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                     .addComponent(showInFolderButton_)
-                     .addComponent(abortButton_)
-                     .addComponent(pauseButton_))
-                  .addGroup(topControlPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                     .addComponent(fpsLabel_)
-                     .addComponent(animationFPSSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(showNewImagesCheckBox_)))
+               .addGroup(topControlPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                  .addComponent(showInFolderButton_)
+                  .addComponent(abortButton_)
+                  .addComponent(pauseButton_))
                .addContainerGap(77, Short.MAX_VALUE)))
       );
 
@@ -675,7 +680,7 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
          .addGroup(layout.createSequentialGroup()
             .addComponent(tabbedPane_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
             .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-         .addComponent(topControlPanel_, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+         .addComponent(topControlPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -768,13 +773,13 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
       display_.setAnimateFPS(((Number) animationFPSSpinner_.getValue()).doubleValue());
    }//GEN-LAST:event_animationFPSSpinner_StateChanged
 
-   private void showNewImagesCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showNewImagesCheckBox_ActionPerformed
-      if (showNewImagesCheckBox_.isSelected()) {
+   private void lockScrollbarsCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lockScrollbarsCheckBox_ActionPerformed
+      if (!lockScrollbarsCheckBox_.isSelected()) {
          display_.unlockAllScroller();
       } else {
          display_.superlockAllScrollers();
       }
-   }//GEN-LAST:event_showNewImagesCheckBox_ActionPerformed
+   }//GEN-LAST:event_lockScrollbarsCheckBox_ActionPerformed
 
    private void acquireAtCurrentButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_acquireAtCurrentButton_ActionPerformed
       display_.acquireTileAtCurrentPosition();
@@ -786,6 +791,10 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
       }
       updateMode();
    }//GEN-LAST:event_exploreButton_ActionPerformed
+
+   private void scaleBarCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_scaleBarCheckBox_ActionPerformed
+      // TODO Ell oveerlay to show a scale bar
+   }//GEN-LAST:event_scaleBarCheckBox_ActionPerformed
 
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -807,15 +816,16 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
    private javax.swing.JLabel jLabel2;
    private javax.swing.JScrollPane jScrollPane1;
    private javax.swing.JScrollPane jScrollPane2;
+   private javax.swing.JCheckBox lockScrollbarsCheckBox_;
    private org.micromanager.magellan.imagedisplay.MetadataPanel metadataPanelMagellan_;
    private javax.swing.JPanel metadataPanel_;
    private javax.swing.JButton newGridButton_;
    private javax.swing.JButton newSurfaceButton_;
    private javax.swing.JButton pauseButton_;
+   private javax.swing.JCheckBox scaleBarCheckBox_;
    private javax.swing.JButton selectUseAllButton_;
    private javax.swing.JButton showInFolderButton_;
    private javax.swing.JCheckBox showInterpCheckBox_;
-   private javax.swing.JCheckBox showNewImagesCheckBox_;
    private javax.swing.JCheckBox showStagePositionsCheckBox_;
    private javax.swing.JPanel surfaceControlPanel_;
    private javax.swing.JPanel surfaceGridPanel_;
@@ -826,4 +836,5 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
    private javax.swing.JPanel topControlPanel_;
    private javax.swing.JLabel zPosLabel_;
    // End of variables declaration//GEN-END:variables
+
 }

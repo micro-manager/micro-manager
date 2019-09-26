@@ -36,6 +36,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.magellan.imagedisplay.DisplaySettings;
 import org.micromanager.magellan.misc.Log;
 import org.micromanager.magellan.misc.MD;
 
@@ -58,7 +59,7 @@ public class MultipageTiffReader {
    private RandomAccessFile raFile_;
    private FileChannel fileChannel_;
       
-   private JSONObject displaySettings_;
+   private DisplaySettings displaySettings_;
    private JSONObject summaryMetadata_;
    private int byteDepth_ = 0;
    private boolean rgb_;
@@ -123,7 +124,7 @@ public class MultipageTiffReader {
          Log.log(e);
       }
       try {
-         displaySettings_ = readDisplaySettings();
+         displaySettings_ = new DisplaySettings(readDisplaySettings());
       } catch (Exception ex) {
          Log.log("Problem with JSON Representation of Display settings", true);
       }
@@ -202,7 +203,7 @@ public class MultipageTiffReader {
       return summaryMetadata_;
    }
    
-   public JSONObject getDisplaySettings() {
+   public DisplaySettings getDisplaySettings() {
       return displaySettings_;
    }
    

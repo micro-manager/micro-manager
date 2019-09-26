@@ -23,14 +23,17 @@ package org.micromanager.magellan.imagedisplaynew;
 
 import com.google.common.eventbus.Subscribe;
 import ij.CompositeImage;
+import java.awt.BorderLayout;
 import org.micromanager.magellan.imagedisplay.DisplayOverlayer;
 import org.micromanager.magellan.imagedisplay.MMScaleBar;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Graphics;
+import java.util.HashMap;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import org.micromanager.magellan.imagedisplay.MagellanDisplay;
 import org.micromanager.magellan.imagedisplaynew.MagellanDisplayController;
 import org.micromanager.magellan.imagedisplaynew.events.ContrastUpdatedEvent;
 import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
@@ -45,7 +48,7 @@ import org.micromanager.propertymap.MutablePropertyMapView;
  * controls on top, and changes which histograms are displayed based on the
  * frontmost window
  */
- class ContrastPanel extends JPanel {
+class ContrastPanel extends JPanel {
 
    private static final String PREF_AUTOSTRETCH = "stretch_contrast";
    private static final String PREF_REJECT_OUTLIERS = "reject_outliers";
@@ -54,25 +57,18 @@ import org.micromanager.propertymap.MutablePropertyMapView;
    private static final String PREF_SYNC_CHANNELS = "sync_channels";
    private static final String PREF_SLOW_HIST = "slow_hist";
    protected JScrollPane histDisplayScrollPane_;
-   private JComboBox displayModeCombo_;
+   private JCheckBox compositeCheckBox_; //TODO use this to change between composite and channel modes
    private JCheckBox autostretchCheckBox_;
    private JCheckBox rejectOutliersCheckBox_;
    private JSpinner rejectPercentSpinner_;
    private JCheckBox logHistCheckBox_;
-   private JCheckBox sizeBarCheckBox_;
-   private JComboBox sizeBarComboBox_;
-   private JComboBox sizeBarColorComboBox_;
    private JCheckBox syncChannelsCheckBox_;
-   private JLabel displayModeLabel_;
    private MutablePropertyMapView prefs_;
    protected MultiChannelHistograms histograms_;
    private HistogramControlsState histControlsState_;
-   private DisplayOverlayer overlayer_;
    //volatile because accessed by overlayer creation thread
-   private volatile boolean showScaleBar_ = false;
-   private volatile String sizeBarColorSelection_ = "White";
-   private volatile int sizeBarPosition_ = 0;
    private MagellanDisplayController display_;
+   private JPanel contentPanel_;
 
    public ContrastPanel(MagellanDisplayController display) {
       //TODO: this isnt right is it?
@@ -80,25 +76,27 @@ import org.micromanager.propertymap.MutablePropertyMapView;
       histograms_ = new MultiChannelHistograms(display, this);
       display_ = display;
       display_.registerForEvents(this);
-      initializeGUI();
+      contentPanel_ = createGUI();
+      this.setLayout(new BorderLayout());
+      this.add(contentPanel_, BorderLayout.CENTER);
       prefs_ = Magellan.getStudio().profile().getSettings(ContrastPanel.class);
-            histControlsState_ = createDefaultControlsState();
+      histControlsState_ = createDefaultControlsState();
       initializeHistogramDisplayArea();
-      configureControls();
       showCurrentHistograms();
-      imageChanged();
    }
-   
-      @Subscribe
+
+   @Subscribe
    public void onDisplayClose(DisplayClosingEvent e) {
       display_.unregisterForEvents(this);
       display_ = null;
+      this.remove(contentPanel_);
+      contentPanel_ = null;
       histograms_ = null;
       histControlsState_ = null;
    }
 
-   public void setOverlayer(DisplayOverlayer overlayer) {
-      overlayer_ = overlayer;
+   public void addContrastControls(int channelIndex, String channelName) {
+      histograms_.addContrastControls(channelIndex, channelName);
    }
 
    public HistogramControlsState getHistogramControlsState() {
@@ -130,41 +128,24 @@ import org.micromanager.propertymap.MutablePropertyMapView;
       state.logHist = prefs_.getBoolean(PREF_LOG_HIST, false);
       state.ignoreOutliers = prefs_.getBoolean(PREF_REJECT_OUTLIERS, false);
       state.syncChannels = prefs_.getBoolean(PREF_SYNC_CHANNELS, false);
-      state.slowHist = prefs_.getBoolean(PREF_SLOW_HIST, false);
-      state.scaleBar = false;
-      state.scaleBarColorIndex = 0;
-      state.scaleBarLocationIndex = 0;
       return state;
    }
 
    private void configureControls() {
       loadControlsStates();
-      displayModeLabel_.setEnabled(true);
-      displayModeCombo_.setEnabled(true);
-      sizeBarCheckBox_.setEnabled(true);
-      sizeBarComboBox_.setEnabled(sizeBarCheckBox_.isSelected());
-      sizeBarColorComboBox_.setEnabled(sizeBarCheckBox_.isSelected());
       logHistCheckBox_.setEnabled(true);
       syncChannelsCheckBox_.setEnabled(true);
    }
 
    private void loadControlsStates() {
-      
 
       logHistCheckBox_.setSelected(histControlsState_.logHist);
       rejectPercentSpinner_.setValue(histControlsState_.percentToIgnore);
       autostretchCheckBox_.setSelected(histControlsState_.autostretch);
+      compositeCheckBox_.setSelected(histControlsState_.composite);
       rejectOutliersCheckBox_.setSelected(histControlsState_.ignoreOutliers);
       syncChannelsCheckBox_.setSelected(histControlsState_.syncChannels);
 
-      boolean bar = histControlsState_.scaleBar;
-      int color = histControlsState_.scaleBarColorIndex;
-      int location = histControlsState_.scaleBarLocationIndex;
-      sizeBarCheckBox_.setSelected(bar);
-      sizeBarColorComboBox_.setSelectedIndex(color);
-      sizeBarComboBox_.setSelectedIndex(location);
-
-      displayModeCombo_.setSelectedIndex(1);
 
    }
 
@@ -183,38 +164,19 @@ import org.micromanager.propertymap.MutablePropertyMapView;
       histControlsState_.logHist = logHistCheckBox_.isSelected();
       histControlsState_.percentToIgnore = (Double) rejectPercentSpinner_.getValue();
       histControlsState_.syncChannels = syncChannelsCheckBox_.isSelected();
-      histControlsState_.scaleBar = sizeBarCheckBox_.isSelected();
-      histControlsState_.scaleBarColorIndex = sizeBarColorComboBox_.getSelectedIndex();
-      histControlsState_.scaleBarLocationIndex = sizeBarComboBox_.getSelectedIndex();
    }
 
-   private void initializeGUI() {
-      JPanel jPanel1 = new JPanel();
-      displayModeLabel_ = new JLabel();
-      displayModeCombo_ = new JComboBox();
+   private JPanel createGUI() {
+      JPanel controlPanel = new JPanel();
+      compositeCheckBox_ = new JCheckBox("Show all");
       autostretchCheckBox_ = new JCheckBox();
       rejectOutliersCheckBox_ = new JCheckBox();
       rejectPercentSpinner_ = new JSpinner();
       logHistCheckBox_ = new JCheckBox();
-      sizeBarCheckBox_ = new JCheckBox();
-      sizeBarComboBox_ = new JComboBox();
-      sizeBarColorComboBox_ = new JComboBox();
 
       histDisplayScrollPane_ = new JScrollPane();
 
       this.setPreferredSize(new Dimension(400, 594));
-
-      displayModeCombo_.setModel(new DefaultComboBoxModel(new String[]{"Color", "Grayscale", "Composite"}));
-      displayModeCombo_.setToolTipText("<html>Choose display mode:<br> - Composite = Multicolor overlay<br> - Color = Single channel color view<br> - Grayscale = Single channel grayscale view</li></ul></html>");
-      displayModeCombo_.setSelectedIndex(2);
-      displayModeCombo_.addActionListener(new java.awt.event.ActionListener() {
-
-         @Override
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            displayModeComboActionPerformed();
-         }
-      });
-      displayModeLabel_.setText("Display mode:");
 
       autostretchCheckBox_.setText("Autostretch");
       autostretchCheckBox_.addChangeListener(new ChangeListener() {
@@ -259,46 +221,6 @@ import org.micromanager.propertymap.MutablePropertyMapView;
          }
       });
 
-      javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-      jPanel1.setLayout(jPanel1Layout);
-      jPanel1Layout.setHorizontalGroup(
-              jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addGroup(jPanel1Layout.createSequentialGroup().addContainerGap(24, Short.MAX_VALUE).addComponent(displayModeLabel_).addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED).addComponent(displayModeCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, 134, javax.swing.GroupLayout.PREFERRED_SIZE).addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED).addComponent(autostretchCheckBox_).addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED).addComponent(rejectOutliersCheckBox_).addGap(6, 6, 6).addComponent(rejectPercentSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE).addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED).addComponent(logHistCheckBox_)));
-      jPanel1Layout.setVerticalGroup(
-              jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER).addComponent(autostretchCheckBox_).addComponent(rejectOutliersCheckBox_).addComponent(rejectPercentSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE).addComponent(logHistCheckBox_)).addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE).addComponent(displayModeCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE).addComponent(displayModeLabel_)));
-
-      sizeBarCheckBox_.setText("Scale Bar");
-      sizeBarCheckBox_.addActionListener(new java.awt.event.ActionListener() {
-
-         @Override
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            sizeBarCheckBoxActionPerformed();
-         }
-      });
-
-      sizeBarComboBox_.setModel(new DefaultComboBoxModel(new String[]{"Top-Left", "Top-Right", "Bottom-Left", "Bottom-Right"}));
-      sizeBarComboBox_.addActionListener(new java.awt.event.ActionListener() {
-
-         @Override
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            sizeBarPosition_ = sizeBarComboBox_.getSelectedIndex();
-            if (overlayer_ != null) {
-               overlayer_.redrawOverlay();
-            }
-         }
-      });
-
-      sizeBarColorComboBox_.setModel(new DefaultComboBoxModel(new String[]{"White", "Black", "Green", "Gray"}));
-      sizeBarColorComboBox_.addActionListener(new java.awt.event.ActionListener() {
-
-         @Override
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            sizeBarColorSelection_ = (String) sizeBarColorComboBox_.getSelectedItem();
-            if (overlayer_ != null) {
-               overlayer_.redrawOverlay();
-            }
-         }
-      });
-
       syncChannelsCheckBox_ = new JCheckBox("Sync channels");
       syncChannelsCheckBox_.addChangeListener(new ChangeListener() {
 
@@ -307,32 +229,20 @@ import org.micromanager.propertymap.MutablePropertyMapView;
             syncChannelsCheckboxAction();
          }
       });
-
-      javax.swing.GroupLayout channelsTablePanel_Layout = new javax.swing.GroupLayout(this);
-      this.setLayout(channelsTablePanel_Layout);
-      channelsTablePanel_Layout.setHorizontalGroup(
-              channelsTablePanel_Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(channelsTablePanel_Layout.createSequentialGroup().
-              addComponent(sizeBarCheckBox_).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(sizeBarComboBox_, GroupLayout.PREFERRED_SIZE, 100, GroupLayout.PREFERRED_SIZE)
-              .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(sizeBarColorComboBox_, GroupLayout.PREFERRED_SIZE, 60, GroupLayout.PREFERRED_SIZE)
-              .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(syncChannelsCheckBox_, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)).addComponent(jPanel1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addGroup(channelsTablePanel_Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(histDisplayScrollPane_, GroupLayout.DEFAULT_SIZE, 620, Short.MAX_VALUE)));
-
-      channelsTablePanel_Layout.setVerticalGroup(
-              channelsTablePanel_Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(channelsTablePanel_Layout.createSequentialGroup().
-              addGroup(channelsTablePanel_Layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(sizeBarCheckBox_)
-                      .addComponent(sizeBarComboBox_, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).
-                      addComponent(sizeBarColorComboBox_, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).
-                      addComponent(syncChannelsCheckBox_, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-              .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(jPanel1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addContainerGap(589, Short.MAX_VALUE)).addGroup(channelsTablePanel_Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(channelsTablePanel_Layout.createSequentialGroup().addGap(79, 79, 79).addComponent(histDisplayScrollPane_, GroupLayout.DEFAULT_SIZE, 571, Short.MAX_VALUE))));
-   }
-
-   public void setDisplayMode(int mode) {
-      if (mode == CompositeImage.COMPOSITE) {
-         displayModeCombo_.setSelectedIndex(2);
-      } else if (mode == CompositeImage.COLOR) {
-         displayModeCombo_.setSelectedIndex(0);
-      } else if (mode == CompositeImage.GRAYSCALE) {
-         displayModeCombo_.setSelectedIndex(1);
-      }
+      JPanel outerPanel = new JPanel(new BorderLayout());
+      
+      controlPanel.setLayout(new FlowLayout(FlowLayout.LEADING));
+      controlPanel.add(compositeCheckBox_);
+      controlPanel.add(autostretchCheckBox_);
+      controlPanel.add(syncChannelsCheckBox_);
+      controlPanel.add(rejectOutliersCheckBox_);
+      controlPanel.add(rejectPercentSpinner_);
+      controlPanel.add(logHistCheckBox_);
+      
+      outerPanel.add(controlPanel, BorderLayout.PAGE_START);
+      outerPanel.add(histDisplayScrollPane_, BorderLayout.CENTER);
+      
+      return outerPanel;
    }
 
    private void syncChannelsCheckboxAction() {
@@ -351,32 +261,6 @@ import org.micromanager.propertymap.MutablePropertyMapView;
          autostretchCheckBox_.setEnabled(true);
       }
       saveCheckBoxStates();
-   }
-
-   private void slowHistCheckboxAction() {
-      saveCheckBoxStates();
-   }
-
-   public void displayModeComboActionPerformed() {
-      Runnable runnable = new Runnable() {
-
-         @Override
-         public void run() {
-
-            display_.postEvent(new ContrastUpdatedEvent(displayModeCombo_.getSelectedIndex()));
-            saveCheckBoxStates();
-
-         }
-      };
-      if (SwingUtilities.isEventDispatchThread()) {
-         runnable.run();
-      } else {
-         try {
-            SwingUtilities.invokeAndWait(runnable);
-         } catch (Exception ex) {
-            Log.log("Couldn't initialize display mode");
-         }
-      }
    }
 
    private void autostretchCheckBoxStateChanged() {
@@ -409,46 +293,8 @@ import org.micromanager.propertymap.MutablePropertyMapView;
    }
 
    private void logScaleCheckBoxActionPerformed() {
+      display_.postEvent(new ContrastUpdatedEvent(-1));
       saveCheckBoxStates();
-      if (histograms_ != null) {
-         histograms_.calcAndDisplayHistAndStats(true);
-      }
-   }
-
-   public void sizeBarCheckBoxActionPerformed() {
-      showScaleBar_ = sizeBarCheckBox_.isSelected();
-      sizeBarComboBox_.setEnabled(showScaleBar_);
-      sizeBarColorComboBox_.setEnabled(showScaleBar_);
-      overlayer_.redrawOverlay();
-   }
-
-   public MMScaleBar.Position getScaleBarPosition() {
-      switch (sizeBarPosition_) {
-         case 0:
-            return MMScaleBar.Position.TOPLEFT;
-         case 1:
-            return MMScaleBar.Position.TOPRIGHT;
-         case 2:
-            return MMScaleBar.Position.BOTTOMLEFT;
-         default:
-            return MMScaleBar.Position.BOTTOMRIGHT;
-      }
-   }
-
-   public Color getScaleBarColor() {
-      if (sizeBarColorSelection_.equals("Black")) {
-         return Color.black;
-      } else if (sizeBarColorSelection_.equals("White")) {
-         return Color.white;
-      } else if (sizeBarColorSelection_.equals("Green")) {
-         return Color.green;
-      } else {
-         return Color.gray;
-      }
-   }
-
-   public boolean showScaleBar() {
-      return showScaleBar_;
    }
 
    public void autostretch() {
@@ -457,15 +303,12 @@ import org.micromanager.propertymap.MutablePropertyMapView;
       }
    }
 
-   public void imageChanged() {
-      if (histograms_ != null) {
-         histograms_.imageChanged();
-         ((JPanel) histograms_).repaint();
-      }
-   }
-
    public void disableAutostretch() {
       autostretchCheckBox_.setSelected(false);
       saveCheckBoxStates();
+   }
+
+   void updateHistogramData(HashMap<Integer, int[]> hists) {
+      histograms_.updateHistogramData(hists);
    }
 }

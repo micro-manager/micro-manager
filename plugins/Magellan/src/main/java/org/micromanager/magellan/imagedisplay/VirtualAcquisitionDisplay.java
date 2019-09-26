@@ -342,7 +342,7 @@ public abstract class VirtualAcquisitionDisplay {
                axisToPosition.put("z", slice - ((MagellanDisplay) VirtualAcquisitionDisplay.this).getStorage().getMinSliceIndexOpenedDataset());
             }
 
-            bus_.post(new NewImageEvent(axisToPosition, MD.getChannelName(tags)));
+//            bus_.post(new NewImageEvent(axisToPosition, MD.getChannelName(tags)));
             ((MagellanDisplay) VirtualAcquisitionDisplay.this).updateDisplay(true);
          }
       });
