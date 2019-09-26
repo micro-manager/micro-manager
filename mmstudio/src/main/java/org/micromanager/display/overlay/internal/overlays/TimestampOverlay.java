@@ -31,6 +31,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -57,6 +58,9 @@ public final class TimestampOverlay extends AbstractOverlay {
    
    private TSFormat format_ = TSFormat.RELATIVE_TIME;
    private boolean perChannel_ = false;
+   private final String formatExampleRelative_ = "HH:mm:ss.S";
+   private String formatString_ = "mm:ss:SSS";
+   private String keyString_ = "m:s:ms";
    private TSColor color_ = TSColor.WHITE;   
    private float fontSize_ = 14.0f;
    private boolean addBackground_ = true;
@@ -68,6 +72,9 @@ public final class TimestampOverlay extends AbstractOverlay {
    private JPanel configUI_;
    private JComboBox formatComboBox_;
    private JCheckBox perChannelCheckBox_;
+   private JLabel formatLabelRelative_;
+   private DynamicTextField formatField_;
+   private DynamicTextField keyField_;
    private JComboBox colorComboBox_;
    private JCheckBox addBackgroundCheckBox_;   
    private DynamicTextField fontSizeField_;
@@ -156,7 +163,7 @@ public final class TimestampOverlay extends AbstractOverlay {
    private static enum TSFormat {
       ABSOLUTE_TIME("Absolute") {
          @Override
-         String formatTime(Image image) {
+         String formatTime(Image image, String formatString) {
             Metadata metadata = image.getMetadata();
             if (metadata.getReceivedTime() == null) {
                return "ABSOLUTE TIME UNAVAILABLE";
@@ -164,10 +171,9 @@ public final class TimestampOverlay extends AbstractOverlay {
             // Strip out timezone. HACK: this format string matches the one in
             // the acquisition engine (mm.clj) that generates the datetime
             // string.
-            SimpleDateFormat source = new SimpleDateFormat(
-                  "yyyy-MM-dd HH:mm:ss.SSS Z");
-            SimpleDateFormat dest = new SimpleDateFormat(
-                  "yyyy-MM-dd HH:mm:ss.SSS");
+            
+            SimpleDateFormat source = new SimpleDateFormat(ABSOLUTE_FORMAT_STRING + " Z");
+            SimpleDateFormat dest = new SimpleDateFormat(ABSOLUTE_FORMAT_STRING);
             try {
                return dest.format(source.parse(metadata.getReceivedTime()));
             }
@@ -179,26 +185,22 @@ public final class TimestampOverlay extends AbstractOverlay {
 
       RELATIVE_TIME("Relative to Start") {
          @Override
-         String formatTime(Image image) {
+         String formatTime(Image image, String formatString) {
             Metadata metadata = image.getMetadata();
             double elapsedMs = metadata.getElapsedTimeMs(-1.0);
             if (elapsedMs < 0.0) {
                return "RELATIVE TIME UNAVAILABLE";
             }
-            long totalSeconds = (long) Math.floor(elapsedMs / 1000.0);
-            int milliseconds = (int) Math.round(elapsedMs - 1000 * totalSeconds);
-            int hours = (int) totalSeconds / 3600;
-            totalSeconds -= hours * 3600;
-            int minutes = (int) totalSeconds / 60;
-            totalSeconds -= minutes * 60;
-            int seconds = (int) totalSeconds;
-            return String.format("%02d:%02d:%02d.%03d", hours, minutes,
-                  seconds, milliseconds);
+            Date date = new Date((long)elapsedMs);
+            SimpleDateFormat dest = new SimpleDateFormat(formatString);
+            return dest.format(date);
          }
       },
       ;
 
       private final String displayName_;
+      
+      private static final String ABSOLUTE_FORMAT_STRING = "yyyy-MM-dd HH:mm:ss.SSS";
 
       private TSFormat(String displayName) {
          displayName_ = displayName;
@@ -208,7 +210,7 @@ public final class TimestampOverlay extends AbstractOverlay {
          return displayName_;
       }
 
-      abstract String formatTime(Image image);
+      abstract String formatTime(Image image, String format);
 
       @Override
       public String toString() {
@@ -220,6 +222,8 @@ public final class TimestampOverlay extends AbstractOverlay {
    // Keys for saving settings
    private static enum Key {
       FORMAT,
+      FORMATSTRING,
+      KEYSTRING,
       PER_CHANNEL,
       COLOR,
       FONTSIZE,
@@ -268,14 +272,18 @@ public final class TimestampOverlay extends AbstractOverlay {
             return new Integer(c1.getChannel()).compareTo(c2.getChannel());
          });
          for (Image image : sortedImages) {
-            String text = format_.formatTime(image);
+            StringBuilder sb = new StringBuilder();
+            sb.append(format_.formatTime(image, formatString_)).append(keyString_);
+            String text = sb.toString();
             texts.add(text);
             widths.add(metrics.stringWidth(text));
             foregrounds.add(color_.getForeground(image, displaySettings));
          }
       }
       else {
-         String text = format_.formatTime(primaryImage);
+         StringBuilder sb = new StringBuilder();
+         sb.append(format_.formatTime(primaryImage, formatString_)).append(keyString_);
+         String text = sb.toString();
          texts.add(text);
          widths.add(metrics.stringWidth(text));
          foregrounds.add(color_.getForeground(primaryImage, displaySettings));
@@ -338,6 +346,8 @@ public final class TimestampOverlay extends AbstractOverlay {
       return PropertyMaps.builder().
             putEnumAsString(Key.FORMAT.name(), format_).
             putBoolean(Key.PER_CHANNEL.name(), perChannel_).
+            putString(Key.FORMATSTRING.name(), formatString_).
+            putString(Key.KEYSTRING.name(), keyString_).
             putEnumAsString(Key.COLOR.name(), color_).
             putFloat(Key.FONTSIZE.name(), fontSize_).
             putBoolean(Key.ADD_BACKGROUND.name(), addBackground_).
@@ -352,6 +362,8 @@ public final class TimestampOverlay extends AbstractOverlay {
       format_ = config.getStringAsEnum(Key.FORMAT.name(),
             TSFormat.class, format_);
       perChannel_ = config.getBoolean(Key.PER_CHANNEL.name(), perChannel_);
+      formatString_ = config.getString(Key.FORMATSTRING.name(), formatString_);
+      keyString_ = config.getString(Key.KEYSTRING.name(), keyString_);
       color_ = config.getStringAsEnum(Key.COLOR.name(),
             TSColor.class, color_);
       fontSize_ = config.getFloat(Key.FONTSIZE.name(), fontSize_);
@@ -379,6 +391,23 @@ public final class TimestampOverlay extends AbstractOverlay {
          }
       }
    }
+    
+   private String validateFormat(String input, boolean forceValidation) {
+      StringBuilder sb = new StringBuilder();
+      boolean error = false;
+      for (int i = 0; i < input.length(); i++) {
+         char c = input.charAt(i);
+         if (c == 'h' || c == 'H' || c == 'm' || c == 's' || c == 'S' || 
+                 c ==':' || c =='-' || c == '.' || c == ' ') {
+            sb.append(c);
+         }
+      }
+      String result = sb.toString();
+      if (error && forceValidation) {
+         formatField_.setText(result);
+      }
+      return result;
+   }
 
    private void updateUI() {
       if (configUI_ == null) {
@@ -389,6 +418,8 @@ public final class TimestampOverlay extends AbstractOverlay {
       try {
          formatComboBox_.setSelectedItem(format_);
          perChannelCheckBox_.setSelected(perChannel_);
+         formatField_.setText(formatString_);
+         keyField_.setText(keyString_);
          colorComboBox_.setSelectedItem(color_);
          addBackgroundCheckBox_.setSelected(addBackground_);
          positionComboBox_.setSelectedItem(position_);
@@ -405,9 +436,16 @@ public final class TimestampOverlay extends AbstractOverlay {
          return;
       }
 
+      formatField_ = new DynamicTextField(12);
+      keyField_ = new DynamicTextField(6);
+      formatField_.setEnabled(format_.equals(TSFormat.RELATIVE_TIME));
+      keyField_.setEnabled(format_.equals(TSFormat.RELATIVE_TIME));
+      
       formatComboBox_ = new JComboBox(TSFormat.values());
       formatComboBox_.addActionListener((ActionEvent e) -> {
          format_ = (TSFormat) formatComboBox_.getSelectedItem();
+         formatField_.setEnabled(format_.equals(TSFormat.RELATIVE_TIME));
+         keyField_.setEnabled(format_.equals(TSFormat.RELATIVE_TIME));
          fireOverlayConfigurationChanged();
       });
 
@@ -415,6 +453,35 @@ public final class TimestampOverlay extends AbstractOverlay {
       colorComboBox_.addActionListener((ActionEvent e) -> {
          color_ = (TSColor) colorComboBox_.getSelectedItem();
          fireOverlayConfigurationChanged();
+      });
+      
+      formatLabelRelative_ = new JLabel(formatExampleRelative_);
+
+      
+      formatField_.setText(formatString_);
+      formatField_.setHorizontalAlignment(SwingConstants.RIGHT);
+      formatField_.setMinimumSize(formatField_.getPreferredSize());
+      formatField_.addDynamicTextFieldListener(
+              (DynamicTextField source, boolean shouldForceValidation) -> {
+                 if (programmaticallySettingConfiguration_) {
+                    return;
+                 }
+                 formatString_ = validateFormat(formatField_.getText(), 
+                         shouldForceValidation);
+                 fireOverlayConfigurationChanged();
+      });
+      
+      keyField_ = new DynamicTextField(6);
+      keyField_.setText(keyString_);
+      keyField_.setHorizontalAlignment(SwingConstants.LEFT);
+      keyField_.setMinimumSize(keyField_.getPreferredSize());
+      keyField_.addDynamicTextFieldListener(
+              (DynamicTextField source, boolean shouldForceValidation) -> {
+                 if (programmaticallySettingConfiguration_) {
+                    return;
+                 }
+                 keyString_ = keyField_.getText();
+                 fireOverlayConfigurationChanged();
       });
 
       positionComboBox_ = new JComboBox(TSPosition.values());
@@ -488,6 +555,12 @@ public final class TimestampOverlay extends AbstractOverlay {
       configUI_.add(new JLabel("Format:"), new CC().split().gapAfter("rel"));
       configUI_.add(formatComboBox_, new CC().gapAfter("48"));
       configUI_.add(perChannelCheckBox_, new CC().wrap());
+      
+      configUI_.add(new JLabel("Format:"), new CC().split().gapAfter("rel"));
+      configUI_.add(formatLabelRelative_, new CC().split().gapAfter("rel"));
+      configUI_.add(formatField_, new CC().split().gapAfter("rel"));
+      configUI_.add(new JLabel("append:"), new CC().split().gapAfter("rel"));
+      configUI_.add(keyField_, new CC().wrap());
 
       configUI_.add(new JLabel("Color:"), new CC().split().gapAfter("rel"));
       configUI_.add(colorComboBox_, new CC().gapAfter("unrel"));
