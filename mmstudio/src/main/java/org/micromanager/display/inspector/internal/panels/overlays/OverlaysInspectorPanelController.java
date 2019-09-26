@@ -18,6 +18,7 @@ import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
+import org.micromanager.UserProfile;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.inspector.AbstractInspectorPanelController;
@@ -36,11 +37,13 @@ public final class OverlaysInspectorPanelController
       extends AbstractInspectorPanelController
 {
    private final JPanel panel_ = new JPanel();
-
+   private final JPanel configsPanel_;
    private final PopupButton addOverlayButton_;
    private final JPopupMenu addOverlayMenu_;
 
-   private final JPanel configsPanel_;
+   private final UserProfile profile_;
+   private static final String PROPERTYMAPKEY = "overlay";
+
    
    private static boolean expanded_ = false;
 
@@ -56,6 +59,7 @@ public final class OverlaysInspectorPanelController
    }
 
    private OverlaysInspectorPanelController(Studio studio) {
+      profile_ = studio.profile();
       List<OverlayPlugin> plugins = new ArrayList<>(
             studio.plugins().getOverlayPlugins().values());
       Collections.sort(plugins, (OverlayPlugin o1, OverlayPlugin o2) -> {
@@ -96,10 +100,16 @@ public final class OverlaysInspectorPanelController
 
    private void handleAddOverlay(OverlayPlugin plugin) {
       Overlay overlay = plugin.createOverlay();
+      if (profile_.getSettings(overlay.getClass()).containsPropertyMap(PROPERTYMAPKEY)) {
+         overlay.setConfiguration(profile_.getSettings(overlay.getClass()).
+                 getPropertyMap(PROPERTYMAPKEY, null));
+      }
       viewer_.addOverlay(overlay);
    }
 
    void handleRemoveOverlay(Overlay overlay) {
+      profile_.getSettings(overlay.getClass()).putPropertyMap(PROPERTYMAPKEY,
+              overlay.getConfiguration());
       viewer_.removeOverlay(overlay);
    }
 
@@ -163,6 +173,10 @@ public final class OverlaysInspectorPanelController
       viewer_.unregisterForEvents(this);
       viewer_ = null;
       configsPanel_.removeAll();
+      for (Overlay overlay : overlays_) {
+         profile_.getSettings(overlay.getClass()).putPropertyMap(PROPERTYMAPKEY,
+              overlay.getConfiguration());
+      }
       overlays_.clear();
       configPanelControllers_.clear();
    }
