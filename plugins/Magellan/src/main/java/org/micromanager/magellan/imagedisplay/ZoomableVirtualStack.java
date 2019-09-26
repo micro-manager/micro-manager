@@ -27,10 +27,8 @@ import org.micromanager.magellan.imagedisplaynew.MagellanImageCache;
 import org.micromanager.magellan.datasaving.MultiResMultipageTiffStorage;
 import java.awt.Dimension;
 import java.awt.Point;
-import java.util.Set;
 import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
-import org.json.JSONObject;
 import org.micromanager.magellan.misc.LongPoint;
 
 /**
@@ -152,7 +150,7 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
     */
    public void initializeUpToRes(int viewStartResIndex, int maxResIndex) {
       resolutionIndex_ = viewStartResIndex;
-      multiResStorage_.initializeToLevel(maxResIndex);
+//      multiResStorage_.initializeToLevel(maxResIndex);
    }
 
    /**

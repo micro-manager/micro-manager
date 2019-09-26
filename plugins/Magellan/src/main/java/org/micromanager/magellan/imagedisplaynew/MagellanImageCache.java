@@ -20,8 +20,7 @@
 package org.micromanager.magellan.imagedisplaynew;
 
 import com.google.common.eventbus.EventBus;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.awt.geom.Point2D;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -38,14 +37,14 @@ import org.micromanager.magellan.misc.MD;
 
 /**
  * This class manages a magellan dataset on disk, as well as the state of a view
- * into it (i.e. contrast settings/zoom, etc) and manages class that actually forms the image
+ * into it (i.e. contrast settings/zoom, etc) and manages class that actually
+ * forms the image
  */
 public class MagellanImageCache {
 
    private MultiResMultipageTiffStorage imageStorage_;
    private EventBus dataProviderBus_ = new EventBus();
    private ExecutorService displayCommunicationExecutor_ = Executors.newSingleThreadExecutor((Runnable r) -> new Thread(r, "Image cache thread"));
-
 
    public MagellanImageCache(String dir, JSONObject summaryMetadata, JSONObject displaySettings) {
       imageStorage_ = new MultiResMultipageTiffStorage(dir, summaryMetadata);
@@ -148,43 +147,28 @@ public class MagellanImageCache {
       return !MD.isExploreAcq(imageStorage_.getSummaryMetadata());
    }
 
-   public int[] getImageBounds() {
-//          if (acq instanceof MagellanGUIAcquisition) {
-//         xMax_ = disp_.getStorage().getNumCols() * tileWidth_;
-//         yMax_ = disp_.getStorage().getNumRows() * tileHeight_;
-//         xMin_ = 0;
-//         yMin_ = 0;
-//      } else if (acq == null) {
-//         LongPoint topLeft = getDisplayedPixel(multiResStorage.getMinRow(), multiResStorage.getMinCol());
-//         xMax_ = disp_.getStorage().getNumCols() * tileWidth_ + xMin_;
-//         yMax_ = disp_.getStorage().getNumRows() * tileHeight_ + yMin_;
-//         xMin_ = topLeft.x_;
-//         yMin_ = topLeft.y_;
-//      } else {
-//         xView_ = (multiResStorage.getTileWidth() - displayImageWidth_) / 2;
-//         yView_ = (multiResStorage.getTileHeight() - displayImageHeight_) / 2;
-//         //these dont maatter in explore mode
-//         xMax_ = 0;
-//         yMax_ = 0;
-//         xMin_ = 0;
-//         yMin_ = 0;
-//      }
-      return new int[]{500, 500, 0, 0};
+   public long[] getImageBounds() {
+      int tileHeight = imageStorage_.getTileHeight();
+      int tileWidth = imageStorage_.getTileWidth();
+      if (!isExploreAcquisition()) {
+         return new long[]{0, 0, imageStorage_.getNumCols() * tileWidth, imageStorage_.getNumRows() * tileHeight};
+      }
+      //TODO: might need some way of querying explore acquisition to get top left pixel
+      throw new RuntimeException();
    }
 
    public TaggedImage getImageForDisplay(int channel, MagellanDataViewCoords dataCoords) {
-      //convert zoom to resolution index
-      double resIndex = -Math.log(dataCoords.zoom_) / Math.log(2);
-      int resIndexInt = (int) Math.max(0, Math.ceil(resIndex));
-      
-      return imageStorage_.getImageForDisplay(channel, 
-              dataCoords.zIndex_, 
-              dataCoords.tIndex_, 
-              resIndexInt,
-              dataCoords.xView_, 
-              dataCoords.yView_, 
-              dataCoords.displayImageWidth_, 
-              dataCoords.displayImageHeight_);
+      int imagePixelWidth = (int) (dataCoords.getSourceDataSize().x / dataCoords.getDownsampleFactor());
+      int imagePixelHeight = (int) (dataCoords.getSourceDataSize().y / dataCoords.getDownsampleFactor());
+      long viewOffsetAtResX = (long) (dataCoords.getViewOffset().x / dataCoords.getDownsampleFactor());
+      long viewOffsetAtResY = (long) (dataCoords.getViewOffset().y / dataCoords.getDownsampleFactor());
+
+      return imageStorage_.getImageForDisplay(channel,
+              dataCoords.getAxisPosition("z"),
+              dataCoords.getAxisPosition("t"),
+              dataCoords.getResolutionIndex(),
+              viewOffsetAtResX, viewOffsetAtResY,
+              imagePixelWidth, imagePixelHeight);
    }
 
    public void registerForEvents(Object obj) {
@@ -217,6 +201,15 @@ public class MagellanImageCache {
 
    public List<XYStagePosition> getPositionList() {
       return imageStorage_.getPosManager().getPositionList();
+   }
+
+   int getMaxResolutionIndex() {
+      return imageStorage_.getNumResLevels() - 1;
+   }
+
+   Point2D.Double getFullResolutionSize() {
+      long[] bounds = getImageBounds();
+      return new Point2D.Double(bounds[2] - bounds[0], bounds[3] - bounds[1]);
    }
 
 }

@@ -73,10 +73,9 @@ class MagellanCanvas {
 //      computeScale();
    }
 
-   void updateDisplayImage(Image img) {
+   void updateDisplayImage(Image img, double scale) {
       currentImage_ = img;
-
-//      bufferGraphics = currentImage_.getGraphics();
+      scale_ = scale;
    }
 
    public JPanel getCanvas() {
@@ -87,48 +86,12 @@ class MagellanCanvas {
       return new JPanel() {
          @Override
          public void paint(Graphics g) {
-//            Graphics2D g2 = (Graphics2D) currentImage_.getGraphics();
-            
-
-//            bufferGraphics.clearRect(0,0,this.getWidth(), this.getHeight());
-//            bufferGraphics.drawImage(currentImage_, 0, 0, canvas_);
-
-
             Graphics2D g2 = (Graphics2D) g;
-            g2.drawImage(currentImage_, 0, 0, canvas_);
-
-//      if (volatileImg_.validate(getGraphicsConfiguration()) == VolatileImage.IMAGE_INCOMPATIBLE)
-//          {
-//              // old vImg doesn't work with new GraphicsConfig; re-create it
-//              volatileImg_ = createVolatileImage(this.getWidth(), this.getHeight());
-//          }
-//      
-//      // Main rendering loop. Volatile images may lose their contents. 
-//      // This loop will continually render to (and produce if neccessary) volatile images
-//      // until the rendering was completed successfully.
-//      do {
-//
-//         // Validate the volatile image for the graphics configuration of this 
-//         // component. If the volatile image doesn't apply for this graphics configuration 
-//         // (in other words, the hardware acceleration doesn't apply for the new device)
-//         // then we need to re-create it.
-//         GraphicsConfiguration gc = this.getGraphicsConfiguration();
-//         int valCode = volatileImg_.validate(gc);
-//
-//         // This means the device doesn't match up to this hardware accelerated image.
-//         if (valCode == VolatileImage.IMAGE_INCOMPATIBLE) {
-//            createBackBuffer(); // recreate the hardware accelerated image.
-//         }
-//
-//         Graphics offscreenGraphics = volatileImg_.getGraphics();
-//         offscreenGraphics.drawImage(currentImage_, 0, 0, null);
-//         //TODO:other rendering
-//         
-//
-//         // paint back buffer to main graphics
-//         g.drawImage(volatileImg_, 0, 0, this);
-//         // Test if content is lost   
-//      } while (volatileImg_.contentsLost());
+//            double scale = canvas_.getWidth() / (double) currentImage_.getWidth(canvas_);
+            AffineTransform af = new AffineTransform(scale_, 0, 0, scale_, 0, 0);
+            g2.drawImage(currentImage_, af, canvas_);
+//            g2.drawImage(currentImage_, 0, 0, canvas_);
+         
          }
 
          public void update(Graphics g) {

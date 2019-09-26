@@ -32,6 +32,7 @@ import org.json.JSONObject;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.overlay.Overlay;
 import org.micromanager.internal.utils.EventBusExceptionLogger;
+import org.micromanager.magellan.acq.ExploreAcquisition;
 import org.micromanager.magellan.imagedisplaynew.events.CanvasResizeEvent;
 import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
 
@@ -52,23 +53,20 @@ public final class MagellanDisplayController {
 
    private CoalescentExecutor displayCalculationExecutor_ = new CoalescentExecutor("Display calculation executor");
    private DisplayWindowNew displayWindow_;
-   private HashSet<Integer> channelsSeen_ = new HashSet<Integer>();
    private ImageMaker imageMaker_;
 
    private MagellanDataViewCoords viewCoords_;
-   private final boolean xyBounded_;
 
    public MagellanDisplayController(MagellanImageCache cache, DisplaySettings initialDisplaySettings) {
-
-      viewCoords_ = new MagellanDataViewCoords(0, 0, 0, 0, 0);
-      imageCache_ =  cache;
+      imageCache_ = cache;
+      viewCoords_ = new MagellanDataViewCoords(cache, 0, 0, 0, 0, 0,
+              isExploreAcquisiton() ? 700 : cache.getFullResolutionSize().x,
+              isExploreAcquisiton() ? 700 : cache.getFullResolutionSize().y, imageCache_.getImageBounds());
       displayWindow_ = new DisplayWindowNew(this);
       //TODO: maybe get these from display windows
 
       imageMaker_ = new ImageMaker(this, cache, 500, 500);
-      xyBounded_ = imageCache_.isXYBounded();
 
-      
       registerForEvents(this);
 
       // TODO Make sure frame controller forwards messages to us (e.g.
@@ -84,30 +82,188 @@ public final class MagellanDisplayController {
    public boolean isExploreAcquisiton() {
       return imageCache_.isExploreAcquisition();
    }
-   
+
    public void pan(int dx, int dy) {
-      viewCoords_.xView_ += dx;
-      viewCoords_.yView_ += dy;
+      Point2D.Double offset = viewCoords_.getViewOffset();
+      double newX = offset.x + (dx / viewCoords_.getDisplayScaleFactorUnfloored()) * viewCoords_.getDownsampleFactor();
+      double newY = offset.y + (dy / viewCoords_.getDisplayScaleFactorUnfloored()) * viewCoords_.getDownsampleFactor();
+
+      if (imageCache_.isXYBounded()) {
+         viewCoords_.setViewOffset(
+                 Math.max(viewCoords_.xMin_, Math.min(newX, viewCoords_.xMax_ - viewCoords_.getSourceDataSize().x)),
+                 Math.max(viewCoords_.yMin_, Math.min(newY, viewCoords_.yMax_ - viewCoords_.getSourceDataSize().y)));
+      } else {
+         moveViewToVisibleArea();
+      }
       recomputeDisplayedImage();
    }
-   
+
+   public void zoom(double factor, Point mouseLocation) {
+      //mouse location should be not in canvas coordinates, but instead display image coords
+
+      //don't let fixed area acquisitions zoom out past the point where the area is too small
+//      if (!isExploreAcquisiton()) {
+//         int maxZoomIndex = imageCache_.getNumResLevels() - 1;
+//         if (maxZoomIndex != -1 && resolutionIndex_ + numLevels > maxZoomIndex) {
+//            numLevels = maxZoomIndex - resolutionIndex_;
+//            if (numLevels == 0) {
+//               return;
+//            }
+//         }
+//      }
+      //get zoom center in full res pixel coords
+      Point2D.Double viewOffset = viewCoords_.getViewOffset();
+      Point2D.Double sourceDataSize = viewCoords_.getSourceDataSize();
+      Point2D.Double zoomCenter;
+      //compute centroid of the zoom in full res coordinates
+      if (mouseLocation == null) {
+         //if mouse not over image zoom to center
+         zoomCenter = new Point2D.Double(viewOffset.x + sourceDataSize.y / 2, viewOffset.y + sourceDataSize.y / 2);
+      } else {
+         zoomCenter = new Point2D.Double(
+                 (long) viewOffset.x + mouseLocation.x / viewCoords_.getDisplayScaleFactor() * viewCoords_.getDownsampleFactor(),
+                 (long) viewOffset.y + mouseLocation.y / viewCoords_.getDisplayScaleFactor() * viewCoords_.getDownsampleFactor());
+      }
+
+      //Do zooming--update size of source data
+      double newWidth = sourceDataSize.x * factor;
+      double newHeight = sourceDataSize.x * factor;
+      if (imageCache_.isXYBounded()) {
+         //don't let either of these go smaller than the actual data
+         double overzoomXFactor = newWidth / (viewCoords_.xMax_ - viewCoords_.xMin_);
+         double overzoomYFactor = newHeight / (viewCoords_.yMax_ - viewCoords_.yMin_);
+         if (overzoomXFactor > 1 || overzoomYFactor > 1) {
+            newWidth = newWidth / Math.max(overzoomXFactor, overzoomYFactor);
+            newHeight = newHeight / Math.max(overzoomXFactor, overzoomYFactor);
+         }
+      }
+      viewCoords_.setSourceDataSize(newWidth, newHeight);
+
+      double xOffset = (zoomCenter.x - (zoomCenter.x - viewOffset.x) * newWidth / sourceDataSize.x);
+      double yOffset = (zoomCenter.y - (zoomCenter.y - viewOffset.y) * newHeight / sourceDataSize.y);
+      //make sure view doesn't go outside image bounds
+      if (imageCache_.isXYBounded()) {
+         viewCoords_.setViewOffset(
+                 Math.max(viewCoords_.xMin_, Math.min(xOffset, viewCoords_.xMax_ - viewCoords_.getSourceDataSize().x)),
+                 Math.max(viewCoords_.yMin_, Math.min(yOffset, viewCoords_.yMax_ - viewCoords_.getSourceDataSize().y)));
+      } else {
+         viewCoords_.setViewOffset(xOffset, yOffset);
+         //TODO: move to an area youve explored in explore acq
+         //explore acquisition must have some area you've already explored in view
+         moveViewToVisibleArea();
+      }
+
+      recomputeDisplayedImage();
+   }
+
+   /**
+    * used to keep explored area visible in explire acquisitons
+    */
+   private void moveViewToVisibleArea() {
+      //TODO reimplement once explore is back
+
+      //compensate for the possibility of negative slice indices 
+//      int slice = disp_.getVisibleSliceIndex() + ((ExploreAcquisition) acquisition_).getMinSliceIndex();
+//
+//      //check for valid tiles (at lowest res) at this slice        
+//      Set<Point> tiles = multiResStorage_.getTileIndicesWithDataAt(slice);
+//      if (tiles.size() == 0) {
+//         return;
+//      }
+      //center of one tile must be within corners of current view 
+//      double minDistance = Integer.MAX_VALUE;
+//      //do all calculations at full resolution
+//      long newXView = xView_ * getDownsampleFactor();
+//      long newYView = yView_ * getDownsampleFactor();
+//      for (Point p : tiles) {
+//         //calclcate limits on margin of tile that must remain in view
+//         long tileX1 = (long) ((0.1 + p.x) * tileWidth_);
+//         long tileX2 = (long) ((0.9 + p.x) * tileWidth_);
+//         long tileY1 = (long) ((0.1 + p.y) * tileHeight_);
+//         long tileY2 = (long) ((0.9 + p.y) * tileHeight_);
+//         long visibleWidth = (long) (0.8 * tileWidth_);
+//         long visibleHeight = (long) (0.8 * tileHeight_);
+//         //get bounds of viewing area
+//         long fovX1 = getAbsoluteFullResPixelCoordinate(0, 0).x_;
+//         long fovY1 = getAbsoluteFullResPixelCoordinate(0, 0).y_;
+//         long fovX2 = fovX1 + displayImageWidth_ * getDownsampleFactor();
+//         long fovY2 = fovY1 + displayImageHeight_ * getDownsampleFactor();
+//
+//         //check if tile and fov intersect
+//         boolean xInView = fovX1 < tileX2 && fovX2 > tileX1;
+//         boolean yInView = fovY1 < tileY2 && fovY2 > tileY1;
+//         boolean intersection = xInView && yInView;
+//
+//         if (intersection) {
+//            return; //at least one tile is in view, don't need to do anything
+//         }
+//         //tile to fov corner to corner distances
+//         double tl = ((tileX1 - fovX2) * (tileX1 - fovX2) + (tileY1 - fovY2) * (tileY1 - fovY2)); //top left tile, botom right fov
+//         double tr = ((tileX2 - fovX1) * (tileX2 - fovX1) + (tileY1 - fovY2) * (tileY1 - fovY2)); // top right tile, bottom left fov
+//         double bl = ((tileX1 - fovX2) * (tileX1 - fovX2) + (tileY2 - fovY1) * (tileY2 - fovY1)); // bottom left tile, top right fov
+//         double br = ((tileX1 - fovX1) * (tileX1 - fovX1) + (tileY2 - fovY1) * (tileY2 - fovY1)); //bottom right tile, top left fov
+//
+//         double closestCornerDistance = Math.min(Math.min(tl, tr), Math.min(bl, br));
+//         if (closestCornerDistance < minDistance) {
+//            minDistance = closestCornerDistance;
+//            if (tl <= tr && tl <= bl && tl <= br) { //top left tile, botom right fov
+//               newXView = xInView ? newXView : tileX1 - displayImageWidth_ * getDownsampleFactor();
+//               newYView = yInView ? newYView : tileY1 - displayImageHeight_ * getDownsampleFactor();
+//            } else if (tr <= tl && tr <= bl && tr <= br) { // top right tile, bottom left fov
+//               newXView = xInView ? newXView : tileX2;
+//               newYView = yInView ? newYView : tileY1 - displayImageHeight_ * getDownsampleFactor();
+//            } else if (bl <= tl && bl <= tr && bl <= br) { // bottom left tile, top right fov
+//               newXView = xInView ? newXView : tileX1 - displayImageWidth_ * getDownsampleFactor();
+//               newYView = yInView ? newYView : tileY2;
+//            } else { //bottom right tile, top left fov
+//               newXView = xInView ? newXView : tileX2;
+//               newYView = yInView ? newYView : tileY2;
+//            }
+//         }
+//      }
+//      //readjust to current res level
+//      xView_ = newXView / getDownsampleFactor();
+//      yView_ = newYView / getDownsampleFactor();
+   }
+
    @Subscribe
    public void onCanvasResize(final CanvasResizeEvent e) {
-      viewCoords_.displayImageWidth_ = e.w;
-      viewCoords_.displayImageHeight_ = e.h;      
+      viewCoords_.setDisplayImageSize(e.w, e.h);
+
+      //reshape the source image to match canvas aspect ratio
+      //expand it, unless it would put it out of range
+      double canvasAspect = e.w / (double) e.h;
+      Point2D.Double source = viewCoords_.getSourceDataSize();
+      double sourceAspect = source.x / source.y;
+      double newSourceX;
+      double newSourceY;
+      if (canvasAspect > sourceAspect) {
+         newSourceX = canvasAspect / sourceAspect * source.x;
+         newSourceY = source.y;
+         //check that still within image bounds
+      } else {
+         newSourceX = source.x;
+         newSourceY = source.y / (canvasAspect / sourceAspect);
+      }
+      double overzoomXFactor = newSourceX / (viewCoords_.xMax_ - viewCoords_.xMin_);
+      double overzoomYFactor = newSourceY / (viewCoords_.yMax_ - viewCoords_.yMin_);
+      if (overzoomXFactor > 1 || overzoomYFactor > 1) {
+         newSourceX = newSourceX / Math.max(overzoomXFactor, overzoomYFactor);
+         newSourceY = newSourceY / Math.max(overzoomXFactor, overzoomYFactor);
+      }
+      viewCoords_.setSourceDataSize(newSourceX, newSourceY);
       recomputeDisplayedImage();
    }
-   
+
    @Subscribe
    public void onNewImage(final MagellanNewImageEvent event) {
 
       displayWindow_.updateExploreZControls(event.getPositionForAxis("z"));
 
-
       int channelIndex = event.getPositionForAxis("c");
-      if (!viewCoords_.channelsActive_.keySet().contains(channelIndex)) {
+      if (!viewCoords_.getActiveChannels().keySet().contains(channelIndex)) {
          //TODO: might not actually want to set it to true depending on display mode
-         viewCoords_.channelsActive_.put(channelIndex, true);
+         viewCoords_.getActiveChannels().put(channelIndex, true);
       }
 
       //expand the scrollbars with new images
@@ -124,7 +280,7 @@ public final class MagellanDisplayController {
    public void onSetImageEvent(final SetImageEvent event) {
       recomputeDisplayedImage();
    }
-   
+
    public void recomputeDisplayedImage() {
       displayCalculationExecutor_.invokeAsLateAsPossibleWithCoalescence(new DisplayImageComputationRunnable());
    }
@@ -225,10 +381,6 @@ public final class MagellanDisplayController {
       throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
    }
 
-   void zoom(int i) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-   }
-
    /**
     * A coalescent runnable to avoid excessively frequent update of the data
     * coords range in the UI
@@ -288,13 +440,12 @@ public final class MagellanDisplayController {
       //make everything else close
       postEvent(new DisplayClosingEvent());
 
-
       displayCalculationExecutor_.shutdownNow();
       imageCache_.unregisterForEvents(this);
-         
+
       imageMaker_.close();
       imageMaker_ = null;
-      
+
       imageCache_.close();
       imageCache_ = null;
       unregisterForEvents(this);
@@ -306,7 +457,6 @@ public final class MagellanDisplayController {
       edtRunnablePool_ = null;
       displaySettings_ = null;
       displayCalculationExecutor_ = null;
-      channelsSeen_ = null;
    }
 
    @Subscribe
@@ -421,7 +571,6 @@ public final class MagellanDisplayController {
 
       @Override
       public void run() {
-
          //This is where most of the calculation of creating a display image happens
          Image img = imageMaker_.makeOrGetImage(view_);
          //TODO: maybe also calcualte stats here

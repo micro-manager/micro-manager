@@ -8,12 +8,18 @@ package org.micromanager.magellan.imagedisplaynew;
 import org.micromanager.magellan.imagedisplaynew.events.MagellanNewImageEvent;
 import org.micromanager.magellan.imagedisplaynew.events.ScrollersAddedEvent;
 import com.google.common.eventbus.Subscribe;
+import ij.gui.ImageWindow;
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -43,6 +49,9 @@ class DisplayWindowNew implements WindowListener {
    private static final int MOUSE_WHEEL_ZOOM_INTERVAL_MS = 100;
    private static final int DELETE_SURF_POINT_PIXEL_TOLERANCE = 10;
    public static final int NONE = 0, EXPLORE = 1, SURFACE_AND_GRID = 2;
+   private static final double ZOOM_FACTOR_MOUSE = 1.4;
+   private static final double ZOOM_FACTOR_KEYS = 2.0;
+
    //all these are volatile because they are accessed by overlayer
    private volatile Point mouseDragStartPointLeft_, mouseDragStartPointRight_, currentMouseLocation_;
    private volatile Point exploreStartTile_, exploreEndTile_;
@@ -52,10 +61,7 @@ class DisplayWindowNew implements WindowListener {
    private boolean mouseDragging_ = false;
    private long fullResPixelWidth_ = -1, fullResPixelHeight_ = -1; //used for scaling in fixed area acqs
    private int tileWidth_, tileHeight_;
-   
-   
-   
-   
+
    private MagellanCanvas imageCanvas_;
    private NewSubImageControls subImageControls_;
    private DisplayWindowControlsNew sideControls_;
@@ -75,6 +81,7 @@ class DisplayWindowNew implements WindowListener {
       window_.addWindowListener(this);
       buildInitialUI();
       setupMouseListeners();
+      setupKeyListeners();
    }
 
    @Subscribe
@@ -86,7 +93,7 @@ class DisplayWindowNew implements WindowListener {
       for (Component c : rightPanel_.getComponents()) {
          rightPanel_.remove(c);
       }
-      
+
       window_.removeWindowListener(this);
       display_.unregisterForEvents(this);
       display_ = null;
@@ -117,7 +124,6 @@ class DisplayWindowNew implements WindowListener {
    private void buildInitialUI() {
       window_.setLayout(new BorderLayout());
 
-
       imageCanvas_ = new MagellanCanvas(display_);
       subImageControls_ = new NewSubImageControls(display_, display_.getZStep(), display_.isExploreAcquisiton());
       //TODO add channels for explore acquisitions
@@ -127,7 +133,6 @@ class DisplayWindowNew implements WindowListener {
       leftPanel_.add(subImageControls_, BorderLayout.PAGE_END);
       window_.add(leftPanel_, BorderLayout.CENTER);
 
-
       DisplayWindowControlsNew sideControls = new DisplayWindowControlsNew(display_, null);
       sideControls_ = sideControls;
       JPanel buttonPanel = new FixedWidthJPanel();
@@ -135,10 +140,8 @@ class DisplayWindowNew implements WindowListener {
 
 //      TextIcon t1 = new TextIcon(collapseExpandButton_, "Hide controls", TextIcon.Layout.HORIZONTAL);
 //      t1.setFont(t1.getFont().deriveFont(15.0f));
-
 //      RotatedIcon r1 = new RotatedIcon(t1, RotatedIcon.Rotate.DOWN);
 //      collapseExpandButton_.setIcon(r1);
-
       collapseExpandButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -153,7 +156,7 @@ class DisplayWindowNew implements WindowListener {
       rightPanel_.add(buttonPanel, BorderLayout.CENTER);
       rightPanel_.add(sideControls_, BorderLayout.LINE_END);
       window_.add(rightPanel_, BorderLayout.LINE_END);
-      
+
       window_.revalidate();
 
    }
@@ -175,7 +178,7 @@ class DisplayWindowNew implements WindowListener {
    void displayImage(Image image, MagellanDataViewCoords view) {
       //Make scrollbars reflect image
       subImageControls_.updateScrollerPositions(view);
-      imageCanvas_.updateDisplayImage(image);
+      imageCanvas_.updateDisplayImage(image, view.getDisplayScaleFactor());
 
       imageCanvas_.getCanvas().repaint();
    }
@@ -213,9 +216,54 @@ class DisplayWindowNew implements WindowListener {
    @Override
    public void windowClosed(WindowEvent e) {
    }
-   
-    private void setupMouseListeners() {
-    
+
+   private void setupKeyListeners() {
+      window_.addFocusListener(new FocusListener() {
+         @Override
+         public void focusGained(FocusEvent e) {
+            imageCanvas_.getCanvas().requestFocus(); //give focus to canvas so keylistener active
+         }
+
+         @Override
+         public void focusLost(FocusEvent e) {
+         }
+      });
+      KeyListener kl = new KeyListener() {
+
+         @Override
+         public void keyTyped(KeyEvent ke) {
+            if (ke.getKeyChar() == '=') {
+               display_.zoom(1 / ZOOM_FACTOR_KEYS, null);
+            } else if (ke.getKeyChar() == '-') {
+               display_.zoom(ZOOM_FACTOR_KEYS, null);
+            }
+         }
+
+         @Override
+         public void keyPressed(KeyEvent ke) {
+         }
+
+         @Override
+         public void keyReleased(KeyEvent ke) {
+         }
+      };
+
+      //add keylistener to window and all subscomponenets so it will fire whenever
+      //focus in anywhere in the window
+      addRecursively(window_, kl);
+   }
+
+   private void addRecursively(Component c, KeyListener kl) {
+      c.addKeyListener(kl);
+      if (c instanceof Container) {
+         for (Component subC : ((Container) c).getComponents()) {
+            addRecursively(subC, kl);
+         }
+      }
+   }
+
+   private void setupMouseListeners() {
+
       imageCanvas_.getCanvas().addMouseWheelListener(new MouseWheelListener() {
 
          @Override
@@ -224,9 +272,9 @@ class DisplayWindowNew implements WindowListener {
             if (currentTime - lastMouseWheelZoomTime_ > MOUSE_WHEEL_ZOOM_INTERVAL_MS) {
                lastMouseWheelZoomTime_ = currentTime;
                if (mwe.getWheelRotation() < 0) {
-                  display_.zoom(-1); //zoom in
+                  display_.zoom(1 / ZOOM_FACTOR_MOUSE, currentMouseLocation_); // zoom in?
                } else if (mwe.getWheelRotation() > 0) {
-                  display_.zoom(1); //zoom out
+                  display_.zoom(ZOOM_FACTOR_MOUSE, currentMouseLocation_); //zoom out
                }
             }
          }
@@ -292,8 +340,7 @@ class DisplayWindowNew implements WindowListener {
          }
       });
    }
-    
-    
+
    private void mouseReleasedActions(MouseEvent e) {
       if (exploreAcq_ && mode_ == EXPLORE && SwingUtilities.isLeftMouseButton(e)) {
          Point p2 = e.getPoint();
@@ -308,26 +355,26 @@ class DisplayWindowNew implements WindowListener {
             exploreEndTile_ = display_.getTileIndicesFromDisplayedPixel(p2.x, p2.y);
          }
          display_.redrawOverlay();
-      } else if (mode_ == SURFACE_AND_GRID && display_.getCurrentEditableSurfaceOrGrid() != null && 
-              display_.getCurrentEditableSurfaceOrGrid() instanceof SurfaceInterpolator && 
-              display_.isCurrentlyEditableSurfaceGridVisible()) {
+      } else if (mode_ == SURFACE_AND_GRID && display_.getCurrentEditableSurfaceOrGrid() != null
+              && display_.getCurrentEditableSurfaceOrGrid() instanceof SurfaceInterpolator
+              && display_.isCurrentlyEditableSurfaceGridVisible()) {
          SurfaceInterpolator currentSurface = (SurfaceInterpolator) display_.getCurrentEditableSurfaceOrGrid();
          if (SwingUtilities.isRightMouseButton(e) && !mouseDragging_) {
             double z = display_.getZCoordinateOfDisplayedSlice();
             if (e.isShiftDown()) {
                //delete all points at slice
-               currentSurface.deletePointsWithinZRange(Math.min(z - display_.getZStep()/2, z + display_.getZStep()/2),
-                       Math.max(z - display_.getZStep()/2, z + display_.getZStep()/2));
+               currentSurface.deletePointsWithinZRange(Math.min(z - display_.getZStep() / 2, z + display_.getZStep() / 2),
+                       Math.max(z - display_.getZStep() / 2, z + display_.getZStep() / 2));
             } else {
-                 //delete point if one is nearby
+               //delete point if one is nearby
                Point2D.Double stagePos = display_.stageCoordFromImageCoords(e.getPoint().x, e.getPoint().y);
                //calculate tolerance
                Point2D.Double toleranceStagePos = display_.stageCoordFromImageCoords(e.getPoint().x + DELETE_SURF_POINT_PIXEL_TOLERANCE, e.getPoint().y + DELETE_SURF_POINT_PIXEL_TOLERANCE);
                double stageDistanceTolerance = Math.sqrt((toleranceStagePos.x - stagePos.x) * (toleranceStagePos.x - stagePos.x)
                        + (toleranceStagePos.y - stagePos.y) * (toleranceStagePos.y - stagePos.y));
-               currentSurface.deleteClosestPoint(stagePos.x, stagePos.y, stageDistanceTolerance, 
-                       Math.min(z - display_.getZStep()/2, z + display_.getZStep()/2),
-                       Math.max(z - display_.getZStep()/2, z + display_.getZStep()/2));
+               currentSurface.deleteClosestPoint(stagePos.x, stagePos.y, stageDistanceTolerance,
+                       Math.min(z - display_.getZStep() / 2, z + display_.getZStep() / 2),
+                       Math.max(z - display_.getZStep() / 2, z + display_.getZStep() / 2));
             }
          } else if (SwingUtilities.isLeftMouseButton(e)) {
             //convert to real coordinates in 3D space
@@ -357,9 +404,9 @@ class DisplayWindowNew implements WindowListener {
          mouseDragStartPointRight_ = currentPoint;
       } else if (SwingUtilities.isLeftMouseButton(e)) {
          //only move grid
-         if (mode_ == SURFACE_AND_GRID && display_.getCurrentEditableSurfaceOrGrid() != null && 
-              display_.getCurrentEditableSurfaceOrGrid() instanceof MultiPosGrid && 
-                 display_.isCurrentlyEditableSurfaceGridVisible()) {
+         if (mode_ == SURFACE_AND_GRID && display_.getCurrentEditableSurfaceOrGrid() != null
+                 && display_.getCurrentEditableSurfaceOrGrid() instanceof MultiPosGrid
+                 && display_.isCurrentlyEditableSurfaceGridVisible()) {
             MultiPosGrid currentGrid = (MultiPosGrid) display_.getCurrentEditableSurfaceOrGrid();
             int dx = (currentPoint.x - mouseDragStartPointLeft_.x);
             int dy = (currentPoint.y - mouseDragStartPointLeft_.y);

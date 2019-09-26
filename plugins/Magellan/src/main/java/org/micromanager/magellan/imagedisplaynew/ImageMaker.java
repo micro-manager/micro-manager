@@ -4,14 +4,8 @@ import org.micromanager.magellan.imagedisplaynew.events.ContrastUpdatedEvent;
 import com.google.common.eventbus.Subscribe;
 import ij.process.LUT;
 import java.awt.Color;
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBuffer;
-import java.awt.image.DataBufferInt;
 import java.awt.image.DirectColorModel;
 import java.awt.image.IndexColorModel;
-import java.awt.image.Raster;
-import java.awt.image.SampleModel;
-import java.awt.image.WritableRaster;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.image.MemoryImageSource;
@@ -71,16 +65,17 @@ class ImageMaker {
     */
    public Image makeOrGetImage(MagellanDataViewCoords viewCoords) {
       boolean remakeDisplayImage = false;
-      if (viewCoords.displayImageWidth_ != imageWidth_ || viewCoords.displayImageHeight_ != imageHeight_) {
-         imageWidth_ = viewCoords.displayImageWidth_;
-         imageHeight_ = viewCoords.displayImageHeight_;
+      if (viewCoords.getDisplayImageSizeAtResLevel().x != imageWidth_ || 
+              viewCoords.getDisplayImageSizeAtResLevel().y != imageHeight_) {
+         imageWidth_ = (int) viewCoords.getDisplayImageSizeAtResLevel().x;
+         imageHeight_ = (int) viewCoords.getDisplayImageSizeAtResLevel().y;
          rgbPixels_ = new int[imageWidth_ * imageHeight_];
          remakeDisplayImage = true;
       }
 
       //update pixels
-      for (Integer c : viewCoords.channelsActive_.keySet()) {
-         if (!viewCoords.channelsActive_.get(c)) {
+      for (Integer c : viewCoords.getActiveChannels().keySet()) {
+         if (!viewCoords.getActiveChannels().get(c)) {
             continue;
          }
          synchronized (this) {
@@ -95,8 +90,8 @@ class ImageMaker {
       }
 
       //apply contrast settings
-      for (Integer c : viewCoords.channelsActive_.keySet()) {
-         if (!viewCoords.channelsActive_.get(c)) {
+      for (Integer c : viewCoords.getActiveChannels().keySet()) {
+         if (!viewCoords.getActiveChannels().get(c)) {
             continue;
          }
          //only update one channel for speed
@@ -108,8 +103,8 @@ class ImageMaker {
          boolean firstActive = true;
          Arrays.fill(rgbPixels_, 0);
          int redValue, greenValue, blueValue;
-         for (Integer c : viewCoords.channelsActive_.keySet()) {
-            if (!viewCoords.channelsActive_.get(c)) {
+         for (Integer c : viewCoords.getActiveChannels().keySet()) {
+            if (!viewCoords.getActiveChannels().get(c)) {
                continue;
             }
             if (channelDisplaySettings_.get(c).active) {

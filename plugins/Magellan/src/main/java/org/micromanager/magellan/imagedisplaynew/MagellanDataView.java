@@ -14,7 +14,7 @@ import org.micromanager.magellan.misc.LongPoint;
    private volatile int resolutionIndex_ = 0;
    private volatile int displayImageWidth_, displayImageHeight_;
    private volatile long xView_ = 0, yView_ = 0;  //top left pixel of view in current res
-   private final long xMax_, yMax_, xMin_, yMin_;
+   private  long xMax_, yMax_, xMin_, yMin_;
    
    private volatile int slice_, frame_, position_; //TODO: replace this with better mechanism
 
@@ -34,11 +34,11 @@ import org.micromanager.magellan.misc.LongPoint;
       tileWidth_ = provider.getTileWidth();
       tileHeight_ = provider.getTileHeight();
       boundedImage_ = provider.isXYBounded();
-      int[] bounds = provider.getImageBounds();
-      xMax_ = bounds[0];
-      yMax_ = bounds[1];
-      xMin_ = bounds[2];
-      yMin_ = bounds[3];
+//      int[] bounds = provider.getImageBounds();
+//      xMax_ = bounds[0];
+//      yMax_ = bounds[1];
+//      xMin_ = bounds[2];
+//      yMin_ = bounds[3];
    }
    
 //   Object getPixels(int c) {
@@ -125,8 +125,8 @@ import org.micromanager.magellan.misc.LongPoint;
 
    void updateView(MagellanDataViewCoords view_) {
 //      position_ = view_.position_;
-      slice_ = view_.zIndex_;
-      frame_ = view_.tIndex_;
+      slice_ = view_.getAxisPosition("z");
+      frame_ = view_.getAxisPosition("t");
 //      displayImageHeight_ = view_.displayImageHeight_;
 //      displayImageWidth_ = view_.displayImageWidth_;
 //      resolutionIndex_ = view_.resolutionIndex_;

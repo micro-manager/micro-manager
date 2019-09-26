@@ -67,7 +67,7 @@ import org.micromanager.magellan.misc.LongPoint;
       tileHeight_ = provider.getTileHeight();
       tileWidth_ = provider.getTileWidth();
       boundedImage_ = provider_.isXYBounded();
-      int[] bounds = provider.getImageBounds();
+      long[] bounds = provider.getImageBounds();
       xMax_ = bounds[0];
       yMax_ = bounds[1];
       xMin_ = bounds[2];

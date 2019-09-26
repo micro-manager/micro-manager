@@ -52,7 +52,7 @@ import org.micromanager.magellan.imagedisplaynew.MagellanDisplayController;
  * types of acquisition
  */
 public abstract class Acquisition implements MagellanAcquisitionAPI {
-
+   
    protected double zStep_;
    protected double zOrigin_;
    protected volatile int minSliceIndex_ = 0, maxSliceIndex_ = 0;
@@ -73,15 +73,15 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
    private HashMap<String, Integer> channelIndices_ = new HashMap<String, Integer>();
    protected AcquisitionSettingsBase settings_;
    protected MagellanImageCache dataProvider_;
-
+   
    public Acquisition(AcquisitionSettingsBase settings) {
       settings_ = settings;
    }
-
+   
    public AcquisitionSettingsBase getAcquisitionSettings() {
       return settings_;
    }
-
+   
    protected void initialize(String dir, String name, double overlapPercent, double zStep) {
       eng_ = MagellanEngine.getInstance();
       xyStage_ = Magellan.getCore().getXYStageDevice();
@@ -112,30 +112,33 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
          ex.printStackTrace();
       }
       
-
       JSONObject displaySettings = DisplaySettings.getDefaultDisplaySettings(channels_, summaryMetadata);
       dataProvider_ = new MagellanImageCache(dir, summaryMetadata, displaySettings);
       //storage class has determined unique acq name, so it can now be stored
       name_ = dataProvider_.getUniqueAcqName();
       
-
       dataProvider_.registerForEvents(this);
-      
+
       //create display
-      new MagellanDisplayController(dataProvider_, 
-              org.micromanager.display.internal.DefaultDisplaySettings.getStandardSettings(null));
+      try {
+         new MagellanDisplayController(dataProvider_,
+                 org.micromanager.display.internal.DefaultDisplaySettings.getStandardSettings(null));
+      } catch (Exception e) {
+         e.printStackTrace();
+         Log.log("Couldn't create display succesfully");
+      }
    }
    
    @Subscribe
    public void onImageCacheClosingEvent(ImageCacheClosingEvent event) {
       dataProvider_.unregisterForEvents(this);
-      dataProvider_ = null; 
+      dataProvider_ = null;      
    }
-
+   
    public abstract void start();
-
+   
    protected abstract void shutdownEvents();
-
+   
    public abstract boolean waitForCompletion();
 
    /**
@@ -153,9 +156,9 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
          dataProvider_.putImage(image);
       }
    }
-
+   
    protected abstract JSONArray createInitialPositionList();
-
+   
    public void abort() {
       //Do this on a seperate thread. Maybe this was to avoid deadlock?
       new Thread(new Runnable() {
@@ -178,10 +181,10 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
          }
       }, "Aborting thread").start();
    }
-
+   
    private int getChannelIndex(String channelName) {
       if (!channelIndices_.containsKey(channelName)) {
-
+         
          List<Integer> indices = new LinkedList<Integer>(channelIndices_.values());
          indices.add(0, -1);
          int maxIndex = indices.stream().mapToInt(v -> v).max().getAsInt();
@@ -189,7 +192,7 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
       }
       return channelIndices_.get(channelName);
    }
-
+   
    public void addImageMetadata(JSONObject tags, AcquisitionEvent event, int timeIndex,
            int camChannelIndex, long elapsed_ms, double exposure, boolean multicamera) {
       //add tags
@@ -233,14 +236,14 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
          throw new RuntimeException();
       }
    }
-
+   
    private JSONObject makeSummaryMD(String prefix) {
       //num channels is camera channels * acquisitionChannels
 
       CMMCore core = Magellan.getCore();
       JSONObject summary = new JSONObject();
       MD.setAcqDate(summary, getCurrentDateAndTime());
-
+      
       MD.setZCTOrder(summary, false);
       MD.setPixelTypeFromByteDepth(summary, (int) Magellan.getCore().getBytesPerPixel());
       MD.setBitDepth(summary, (int) Magellan.getCore().getImageBitDepth());
@@ -284,12 +287,12 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
       Stream<AcquisitionEvent> targetStream = StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED), false);
       return targetStream;
    }
-
+   
    protected Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels(MagellanChannelSpec channels) {
       return (AcquisitionEvent event) -> {
          return new Iterator<AcquisitionEvent>() {
             String channelName_ = null;
-
+            
             @Override
             public boolean hasNext() {
                if (channels.nextActiveChannel(channelName_) != null) {
@@ -297,7 +300,7 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
                }
                return false;
             }
-
+            
             @Override
             public AcquisitionEvent next() {
                AcquisitionEvent channelEvent = event.copy();
@@ -309,18 +312,18 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
          };
       };
    }
-
+   
    protected Function<AcquisitionEvent, Iterator<AcquisitionEvent>> zStack(int startSliceIndex, int stopSliceIndex) {
       return (AcquisitionEvent event) -> {
          return new Iterator<AcquisitionEvent>() {
-
+            
             private int sliceIndex_ = startSliceIndex;
-
+            
             @Override
             public boolean hasNext() {
                return sliceIndex_ < stopSliceIndex;
             }
-
+            
             @Override
             public AcquisitionEvent next() {
                double zPos = sliceIndex_ * zStep_ + zOrigin_;
@@ -334,7 +337,7 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
          };
       };
    }
-
+   
    protected Function<AcquisitionEvent, Iterator<AcquisitionEvent>> positions(
            int[] positionIndices, List<XYStagePosition> positions) {
       return (AcquisitionEvent event) -> {
@@ -352,11 +355,11 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
          return builder.build().iterator();
       };
    }
-
+   
    public String getXYStageName() {
       return xyStage_;
    }
-
+   
    public String getZStageName() {
       return zStage_;
    }
@@ -372,75 +375,75 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
       displaySliceIndex += minSliceIndex_;
       return zOrigin_ + zStep_ * displaySliceIndex;
    }
-
+   
    public int getDisplaySliceIndexFromZCoordinate(double z) {
       return (int) Math.round((z - zOrigin_) / zStep_) - minSliceIndex_;
    }
-
+   
    public MagellanChannelSpec getChannels() {
       return channels_;
    }
-
+   
    public int getNumSlices() {
       return maxSliceIndex_ - minSliceIndex_ + 1;
    }
-
+   
    public int getMinSliceIndex() {
       return minSliceIndex_;
    }
-
+   
    public int getMaxSliceIndex() {
       return maxSliceIndex_;
    }
-
+   
    public boolean isFinished() {
       return finished_;
    }
-
+   
    public long getStartTime_ms() {
       return startTime_ms_;
    }
-
+   
    public void setStartTime_ms(long time) {
       startTime_ms_ = time;
    }
-
+   
    public int getOverlapX() {
       return overlapX_;
    }
-
+   
    public int getOverlapY() {
       return overlapY_;
    }
-
+   
    public String getName() {
       return name_;
    }
-
+   
    public double getZStep() {
       return zStep_;
    }
-
+   
    public boolean isPaused() {
       return paused_;
    }
-
+   
    public void togglePaused() {
       paused_ = !paused_;
    }
-
+   
    private static String getCurrentDateAndTime() {
       DateFormat df = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
       Calendar calobj = Calendar.getInstance();
       return df.format(calobj.getTime());
    }
-
+   
    public JSONObject getSummaryMetadata() {
       return summaryMetadata_;
    }
-
+   
    public boolean anythingAcquired() {
       return dataProvider_ == null ? true : dataProvider_.anythingAcquired();
    }
-
+   
 }

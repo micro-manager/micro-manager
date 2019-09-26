@@ -446,24 +446,24 @@ public class MultiResMultipageTiffStorage {
       return new TaggedImage(pixels, topLeftMD);
    }
 
-   /**
-    * Called before any images have been added to initialize the resolution to
-    * the specifiec zoom level
-    *
-    * @param resIndex
-    */
-   public void initializeToLevel(int resIndex) {
-      //create a null pointer in lower res storages to signal addToLoResStorage function
-      //to continue downsampling to this level
-      maxResolutionLevel_ = resIndex;
-      //Make sure position nodes for lower resolutions are created if they weren't automatically
-      posManager_.updateLowerResolutionNodes(resIndex);
-   }
+//   /**
+//    * Called before any images have been added to initialize the resolution to
+//    * the specifiec zoom level
+//    *
+//    * @param resIndex
+//    */
+//   public void initializeToLevel(int resIndex) {
+//      //create a null pointer in lower res storages to signal addToLoResStorage function
+//      //to continue downsampling to this level
+//      maxResolutionLevel_ = resIndex;
+//      //Make sure position nodes for lower resolutions are created if they weren't automatically
+//      posManager_.updateLowerResolutionNodes(resIndex);
+//   }
 
    /**
     * create an additional lower resolution levels for zooming purposes
     */
-   public void addResolutionsUpTo(int index) throws InterruptedException, ExecutionException {
+   private void addResolutionsUpTo(int index) throws InterruptedException, ExecutionException {
       if (index <= maxResolutionLevel_) {
          return;
       }
@@ -689,7 +689,7 @@ public class MultiResMultipageTiffStorage {
          long fullResPixelWidth = getNumCols() * getTileWidth();
          long fullResPixelHeight = getNumRows() * getTileHeight();
          int maxResIndex = (int) Math.ceil(Math.log((Math.max(fullResPixelWidth, fullResPixelHeight)
-                    / 200)) / Math.log(2));
+                    / 4)) / Math.log(2));
           addResolutionsUpTo(maxResIndex);
          writeFinishedList.addAll(addToLowResStorage(MagellanTaggedImage, 0, MD.getPositionIndex(MagellanTaggedImage.tags)));
          for (Future f : writeFinishedList) {

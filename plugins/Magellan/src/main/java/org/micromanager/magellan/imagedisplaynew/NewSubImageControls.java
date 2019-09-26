@@ -363,11 +363,11 @@ import org.micromanager.magellan.misc.NumberUtils;
    void updateScrollerPositions(MagellanDataViewCoords view) {
       for (AxisScroller a: scrollerPanel_.scrollers_) {
          if (a.getAxis().equals("c")) {
-            a.setPosition(view.cIndex_);
+            a.setPosition(view.getAxisPosition("c"));
          } else if (a.getAxis().equals("z")) {
-            a.setPosition(view.zIndex_);
+            a.setPosition(view.getAxisPosition("z"));
          } else if (a.getAxis().equals("t")) {
-            a.setPosition(view.tIndex_);
+            a.setPosition(view.getAxisPosition("t"));
          }
       }
    }
