@@ -26,13 +26,11 @@ import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.geom.Rectangle2D;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -56,6 +54,29 @@ import org.micromanager.internal.utils.DynamicTextField;
  * This overlay draws the timestamps of the currently-displayed images.
  */
 public final class TimestampOverlay extends AbstractOverlay {
+   
+   private TSFormat format_ = TSFormat.RELATIVE_TIME;
+   private boolean perChannel_ = false;
+   private TSColor color_ = TSColor.WHITE;   
+   private float fontSize_ = 14.0f;
+   private boolean addBackground_ = true;
+   private TSPosition position_ = TSPosition.NORTHEAST;
+   private int xOffset_ = 0;
+   private int yOffset_ = 0;
+   
+   // GUI elements
+   private JPanel configUI_;
+   private JComboBox formatComboBox_;
+   private JCheckBox perChannelCheckBox_;
+   private JComboBox colorComboBox_;
+   private JCheckBox addBackgroundCheckBox_;   
+   private DynamicTextField fontSizeField_;
+   private JComboBox positionComboBox_;
+   private DynamicTextField xOffsetField_;
+   private DynamicTextField yOffsetField_;
+
+   
+   
    private static enum TSPosition {
       // Enum constant names used for persistence; do not change
       NORTHWEST("Upper Left"),
@@ -195,34 +216,20 @@ public final class TimestampOverlay extends AbstractOverlay {
       }
    }
 
-   private TSFormat format_ = TSFormat.RELATIVE_TIME;
-   private boolean perChannel_ = false;
-   private TSColor color_ = TSColor.WHITE;
-   private boolean addBackground_ = true;
-   private TSPosition position_ = TSPosition.NORTHEAST;
-   private int xOffset_ = 0;
-   private int yOffset_ = 0;
-
 
    // Keys for saving settings
    private static enum Key {
       FORMAT,
       PER_CHANNEL,
       COLOR,
+      FONTSIZE,
       ADD_BACKGROUND,
       POSITION,
       X_OFFSET,
       Y_OFFSET,
    }
 
-   private JPanel configUI_;
-   private JComboBox formatComboBox_;
-   private JCheckBox perChannelCheckBox_;
-   private JComboBox colorComboBox_;
-   private JCheckBox addBackgroundCheckBox_;
-   private JComboBox positionComboBox_;
-   private DynamicTextField xOffsetField_;
-   private DynamicTextField yOffsetField_;
+
 
    private boolean programmaticallySettingConfiguration_ = false;
 
@@ -244,7 +251,7 @@ public final class TimestampOverlay extends AbstractOverlay {
          List<Image> images, Image primaryImage,
          Rectangle2D.Float imageViewPort)
    {
-      Font font = new Font(Font.SANS_SERIF, Font.PLAIN, 12);
+      Font font = new Font(Font.SANS_SERIF, Font.PLAIN, 14).deriveFont(fontSize_);
       FontMetrics metrics = g.getFontMetrics(font);
 
       List<String> texts = new ArrayList<>();
@@ -332,9 +339,12 @@ public final class TimestampOverlay extends AbstractOverlay {
             putEnumAsString(Key.FORMAT.name(), format_).
             putBoolean(Key.PER_CHANNEL.name(), perChannel_).
             putEnumAsString(Key.COLOR.name(), color_).
+            putFloat(Key.FONTSIZE.name(), fontSize_).
             putBoolean(Key.ADD_BACKGROUND.name(), addBackground_).
-            putEnumAsString(Key.POSITION.name(), position_).putInteger(Key.X_OFFSET.name(), xOffset_).putInteger(Key.Y_OFFSET.name(), yOffset_).
-            build();
+            putEnumAsString(Key.POSITION.name(), position_).
+            putInteger(Key.X_OFFSET.name(), xOffset_).
+            putInteger(Key.Y_OFFSET.name(), yOffset_).
+          build();
    }
 
    @Override
@@ -344,6 +354,7 @@ public final class TimestampOverlay extends AbstractOverlay {
       perChannel_ = config.getBoolean(Key.PER_CHANNEL.name(), perChannel_);
       color_ = config.getStringAsEnum(Key.COLOR.name(),
             TSColor.class, color_);
+      fontSize_ = config.getFloat(Key.FONTSIZE.name(), fontSize_);
       addBackground_ = config.getBoolean(Key.ADD_BACKGROUND.name(), addBackground_);
       position_ = config.getStringAsEnum(Key.POSITION.name(),
             TSPosition.class, position_);
@@ -352,6 +363,21 @@ public final class TimestampOverlay extends AbstractOverlay {
 
       updateUI();
       fireOverlayConfigurationChanged();
+   }
+   
+    private void handleFontSize(boolean forceValidation) {
+      if (programmaticallySettingConfiguration_) {
+         return;
+      }
+      try {
+         fontSize_ = Float.parseFloat(fontSizeField_.getText());
+         fireOverlayConfigurationChanged();
+      }
+      catch (NumberFormatException e) {
+         if (forceValidation) {
+            fontSizeField_.setText(String.valueOf(fontSize_));
+         }
+      }
    }
 
    private void updateUI() {
@@ -408,6 +434,15 @@ public final class TimestampOverlay extends AbstractOverlay {
          addBackground_ = addBackgroundCheckBox_.isSelected();
          fireOverlayConfigurationChanged();
       });
+      
+      fontSizeField_ = new DynamicTextField(3);
+      fontSizeField_.setHorizontalAlignment(SwingConstants.RIGHT);
+      fontSizeField_.setMinimumSize(fontSizeField_.getPreferredSize());
+      fontSizeField_.setText("" + (int) fontSize_);
+      fontSizeField_.addDynamicTextFieldListener(
+              (DynamicTextField source, boolean shouldForceValidation) -> {
+         handleFontSize(shouldForceValidation);
+      });
 
       xOffsetField_ = new DynamicTextField(3);
       xOffsetField_.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -456,7 +491,11 @@ public final class TimestampOverlay extends AbstractOverlay {
 
       configUI_.add(new JLabel("Color:"), new CC().split().gapAfter("rel"));
       configUI_.add(colorComboBox_, new CC().gapAfter("unrel"));
-      configUI_.add(addBackgroundCheckBox_, new CC().wrap());
+      configUI_.add(addBackgroundCheckBox_, new CC());
+      configUI_.add(new JLabel("(Size:"), new CC().gapAfter("rel"));
+      configUI_.add(fontSizeField_, new CC().gapAfter("0"));
+      configUI_.add(new JLabel("pt)"), new CC().wrap());
+      
 
       configUI_.add(new JLabel("Position:"), new CC().split().gapAfter("rel"));
       configUI_.add(positionComboBox_, new CC().gapAfter("unrel"));
