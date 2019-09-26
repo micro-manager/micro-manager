@@ -18,7 +18,7 @@ import org.micromanager.display.inspector.InspectorPanelPlugin;
  * @author mark
  */
 @Plugin(type = InspectorPanelPlugin.class,
-      priority = Priority.NORMAL_PRIORITY + 100.0,
+      priority = Priority.NORMAL + 100.0,
       name = "Overlays",
       description = "Add overlay graphics to displayed images")
 public final class OverlaysInspectorPanelPlugin implements InspectorPanelPlugin {
