@@ -34,7 +34,7 @@ import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
  * This class is responsible for containing and managing groups of
  * AxisScrollers, and how they affect the display of a collection of images.
  */
- class ScrollerPanel extends JPanel {
+class ScrollerPanel extends JPanel {
 
    // All AxisScrollers we manage. protected visibility to allow subclassing (Magellan plugin)
    public ArrayList<AxisScroller> scrollers_;
@@ -92,9 +92,19 @@ import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
    @Subscribe
    public void onDisplayClose(DisplayClosingEvent e) {
       display_.unregisterForEvents(this);
+      canMakeTimers_ = false;
+      if (animationUpdateTimer_ != null) {
+         animationUpdateTimer_.cancel();
+      }
+      if (snapBackTimer_ != null) {
+         snapBackTimer_.cancel();
+      }
+      display_.unregisterForEvents(HEIGHT);
       display_ = null;
+      DisplayWindowNew.removeKeyListenersRecursively(this); //remove added key listeners
+
    }
-   
+
    /**
     * One of our AxisScrollers changed position; update the image.
     */
@@ -150,23 +160,6 @@ import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
       }
    }
 
-   /**
-    * The window we're in is closing; cancel animations and timers, and ensure
-    * that no new ones can get created.
-    */
-   public void prepareForClose() {
-      canMakeTimers_ = false;
-      for (AxisScroller scroller : scrollers_) {
-         scroller.setIsAnimated(false);
-      }
-      if (animationUpdateTimer_ != null) {
-         animationUpdateTimer_.cancel();
-      }
-      if (snapBackTimer_ != null) {
-         snapBackTimer_.cancel();
-      }
-      display_.unregisterForEvents(HEIGHT);
-   }
 
    /**
     * Generate a new AnimationTimer that updates each active (i.e. animated)

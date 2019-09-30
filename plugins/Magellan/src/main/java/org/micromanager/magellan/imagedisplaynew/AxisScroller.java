@@ -123,7 +123,10 @@ public class AxisScroller extends JPanel {
       for (AdjustmentListener l : scrollbar_.getAdjustmentListeners()) {
          scrollbar_.removeAdjustmentListener(l);
       }
+      setIsAnimated(false);
       display_.unregisterForEvents(this);
+            DisplayWindowNew.removeKeyListenersRecursively(this); //remove added key listeners
+
       display_ = null;
       scrollbar_ = null;
       animateIcon_ = null;
@@ -174,12 +177,14 @@ public class AxisScroller extends JPanel {
 
    public void setIsAnimated(boolean isAnimated) {
       isAnimated_ = isAnimated;
-      animateIcon_.setIsAnimated(isAnimated);
+      if (animateIcon_ != null) {
+         animateIcon_.setIsAnimated(isAnimated);
+      }
       if (lock_.getIsLocked() && isAnimated_) {
          // Disable the lock. 
          lock_.setLockedState(ScrollbarLockIcon.LockedState.UNLOCKED);
       }
-      display_.postEvent(new AnimationToggleEvent(this, isAnimated_));
+//      display_.postEvent(new AnimationToggleEvent(this, isAnimated_));
    }
 
    public boolean getIsAnimated() {

@@ -1,6 +1,8 @@
 package org.micromanager.magellan.imagedisplaynew;
 
 import com.google.common.eventbus.Subscribe;
+import ij.gui.Overlay;
+import ij.gui.Roi;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -9,6 +11,10 @@ import java.awt.Image;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import javax.swing.JPanel;
@@ -17,8 +23,8 @@ import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
 
 class MagellanCanvas {
 
-   
    private volatile Image currentImage_;
+   private volatile Overlay currentOverlay_ = new Overlay();
    private int width_, height_;
    private double scale_;
    private MagellanDisplayController display_;
@@ -44,6 +50,20 @@ class MagellanCanvas {
       for (ComponentListener l : canvas_.getComponentListeners()) {
          canvas_.removeComponentListener(l);
       }
+      for (MouseListener l : canvas_.getMouseListeners()) {
+         canvas_.removeMouseListener(l);
+      }
+      for (MouseMotionListener l : canvas_.getMouseMotionListeners()) {
+         canvas_.removeMouseMotionListener(l);
+      }
+      for (KeyListener l : canvas_.getKeyListeners()) {
+         canvas_.removeKeyListener(l);
+      }
+      for (MouseWheelListener l : canvas_.getMouseWheelListeners()) {
+         canvas_.removeMouseWheelListener(l);
+      }
+      DisplayWindowNew.removeKeyListenersRecursively(canvas_); //remove added key listeners
+
       canvas_ = null;
       display_.unregisterForEvents(this);
       display_ = null;
@@ -58,7 +78,6 @@ class MagellanCanvas {
 //      //do the bigger scaling so image fills the whole canvas
 //      scale_ = Math.max(wScale, hScale);
 //   }
-
    /**
     * Set the size of the image displayed on screen, which is not neccesarily
     * the same as the image pixels read to create it
@@ -78,6 +97,15 @@ class MagellanCanvas {
       scale_ = scale;
    }
 
+   void updateOverlay(Overlay overlay) {
+      synchronized (currentOverlay_) {
+         currentOverlay_.clear();
+         for (int i = 0; i < overlay.size(); i++) {
+            currentOverlay_.add(overlay.get(i));
+         }
+      }
+   }
+
    public JPanel getCanvas() {
       return canvas_;
    }
@@ -87,11 +115,17 @@ class MagellanCanvas {
          @Override
          public void paint(Graphics g) {
             Graphics2D g2 = (Graphics2D) g;
-//            double scale = canvas_.getWidth() / (double) currentImage_.getWidth(canvas_);
             AffineTransform af = new AffineTransform(scale_, 0, 0, scale_, 0, 0);
             g2.drawImage(currentImage_, af, canvas_);
-//            g2.drawImage(currentImage_, 0, 0, canvas_);
-         
+            synchronized (currentOverlay_) {
+               if (currentOverlay_ != null) {
+                  for (int i = 0; i < currentOverlay_.size(); i++) {
+                     Roi roi = currentOverlay_.get(i);
+                     roi.drawOverlay(g);
+                  }
+               }
+            }
+
          }
 
          public void update(Graphics g) {

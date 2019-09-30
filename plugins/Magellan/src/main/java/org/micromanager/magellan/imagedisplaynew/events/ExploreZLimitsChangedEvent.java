@@ -11,7 +11,7 @@ package org.micromanager.magellan.imagedisplaynew.events;
  */
 public class ExploreZLimitsChangedEvent {
    
-   double top_, bottom_;
+   public final double top_, bottom_;
    
    public ExploreZLimitsChangedEvent(double top, double bottom) {
       top_ = top;

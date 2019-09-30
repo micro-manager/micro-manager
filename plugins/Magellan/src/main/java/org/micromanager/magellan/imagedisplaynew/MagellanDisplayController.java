@@ -19,25 +19,30 @@ import org.micromanager.magellan.imagedisplaynew.events.ImageCacheClosingEvent;
 import org.micromanager.magellan.imagedisplaynew.events.SetImageEvent;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import ij.gui.Overlay;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.magellan.acq.Acquisition;
+import org.micromanager.magellan.acq.ExploreAcquisition;
+import org.micromanager.magellan.channels.MagellanChannelSpec;
 import org.micromanager.magellan.imagedisplay.DisplaySettings;
 import org.micromanager.magellan.imagedisplaynew.events.CanvasResizeEvent;
 import org.micromanager.magellan.imagedisplaynew.events.ContrastUpdatedEvent;
 import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
+import org.micromanager.magellan.misc.LongPoint;
+import org.micromanager.magellan.surfacesandregions.XYFootprint;
 
 public final class MagellanDisplayController {
 
-   public static final int NONE = 0, EXPLORE = 1, SURFACE_AND_GRID = 2;
-   private int magellanMode_;
-   
    private MagellanImageCache imageCache_;
    private DisplaySettings displaySettings_;
 
@@ -46,21 +51,26 @@ public final class MagellanDisplayController {
    private EventBus eventBus_ = new EventBus(EventBusExceptionLogger.getInstance());
 
    private CoalescentExecutor displayCalculationExecutor_ = new CoalescentExecutor("Display calculation executor");
+   private CoalescentExecutor overlayCalculationExecutor_ = new CoalescentExecutor("Overlay calculation executor");
+
    private DisplayWindowNew displayWindow_;
    private ImageMaker imageMaker_;
+   private MagellanOverlayer overlayer_;
 
    private MagellanDataViewCoords viewCoords_;
+   private Acquisition acq_;
 
-   public MagellanDisplayController(MagellanImageCache cache, DisplaySettings initialDisplaySettings) {
+   public MagellanDisplayController(MagellanImageCache cache, DisplaySettings initialDisplaySettings,
+           Acquisition acq) {
       imageCache_ = cache;
+      acq_ = acq;
       displaySettings_ = initialDisplaySettings;
       viewCoords_ = new MagellanDataViewCoords(cache, 0, 0, 0, 0, 0,
               isExploreAcquisiton() ? 700 : cache.getFullResolutionSize().x,
               isExploreAcquisiton() ? 700 : cache.getFullResolutionSize().y, imageCache_.getImageBounds());
       displayWindow_ = new DisplayWindowNew(this);
-      //TODO: maybe get these from display windows
-
-      imageMaker_ = new ImageMaker(this, cache, 500, 500);
+      overlayer_ = new MagellanOverlayer(this, edtRunnablePool_);
+      imageMaker_ = new ImageMaker(this, cache);
 
       registerForEvents(this);
 
@@ -80,32 +90,21 @@ public final class MagellanDisplayController {
 
    public void pan(int dx, int dy) {
       Point2D.Double offset = viewCoords_.getViewOffset();
-      double newX = offset.x + (dx / viewCoords_.getDisplayScaleFactorUnfloored()) * viewCoords_.getDownsampleFactor();
-      double newY = offset.y + (dy / viewCoords_.getDisplayScaleFactorUnfloored()) * viewCoords_.getDownsampleFactor();
+      double newX = offset.x + (dx / viewCoords_.getDisplayScaleFactor()) * viewCoords_.getDownsampleFactor();
+      double newY = offset.y + (dy / viewCoords_.getDisplayScaleFactor()) * viewCoords_.getDownsampleFactor();
 
       if (imageCache_.isXYBounded()) {
          viewCoords_.setViewOffset(
                  Math.max(viewCoords_.xMin_, Math.min(newX, viewCoords_.xMax_ - viewCoords_.getSourceDataSize().x)),
                  Math.max(viewCoords_.yMin_, Math.min(newY, viewCoords_.yMax_ - viewCoords_.getSourceDataSize().y)));
       } else {
+         viewCoords_.setViewOffset(newX, newY);
          moveViewToVisibleArea();
       }
       recomputeDisplayedImage();
    }
 
    public void zoom(double factor, Point mouseLocation) {
-      //mouse location should be not in canvas coordinates, but instead display image coords
-
-      //don't let fixed area acquisitions zoom out past the point where the area is too small
-//      if (!isExploreAcquisiton()) {
-//         int maxZoomIndex = imageCache_.getNumResLevels() - 1;
-//         if (maxZoomIndex != -1 && resolutionIndex_ + numLevels > maxZoomIndex) {
-//            numLevels = maxZoomIndex - resolutionIndex_;
-//            if (numLevels == 0) {
-//               return;
-//            }
-//         }
-//      }
       //get zoom center in full res pixel coords
       Point2D.Double viewOffset = viewCoords_.getViewOffset();
       Point2D.Double sourceDataSize = viewCoords_.getSourceDataSize();
@@ -122,7 +121,7 @@ public final class MagellanDisplayController {
 
       //Do zooming--update size of source data
       double newSourceDataWidth = sourceDataSize.x * factor;
-      double newSourceDataHeight = sourceDataSize.x * factor;
+      double newSourceDataHeight = sourceDataSize.y * factor;
       if (newSourceDataWidth < 5 || newSourceDataHeight < 5) {
          return; //constrain maximum zoom
       }
@@ -226,8 +225,8 @@ public final class MagellanDisplayController {
 
    @Subscribe
    public void onCanvasResize(final CanvasResizeEvent e) {
+      Point2D.Double displaySizeOld = viewCoords_.getDisplayImageSize();
       viewCoords_.setDisplayImageSize(e.w, e.h);
-
       //reshape the source image to match canvas aspect ratio
       //expand it, unless it would put it out of range
       double canvasAspect = e.w / (double) e.h;
@@ -235,27 +234,43 @@ public final class MagellanDisplayController {
       double sourceAspect = source.x / source.y;
       double newSourceX;
       double newSourceY;
-      if (canvasAspect > sourceAspect) {
-         newSourceX = canvasAspect / sourceAspect * source.x;
-         newSourceY = source.y;
-         //check that still within image bounds
+      if (!isExploreAcquisiton()) {
+         if (canvasAspect > sourceAspect) {
+            newSourceX = canvasAspect / sourceAspect * source.x;
+            newSourceY = source.y;
+            //check that still within image bounds
+         } else {
+            newSourceX = source.x;
+            newSourceY = source.y / (canvasAspect / sourceAspect);
+         }
+
+         double overzoomXFactor = newSourceX / (viewCoords_.xMax_ - viewCoords_.xMin_);
+         double overzoomYFactor = newSourceY / (viewCoords_.yMax_ - viewCoords_.yMin_);
+         if (overzoomXFactor > 1 || overzoomYFactor > 1) {
+            newSourceX = newSourceX / Math.max(overzoomXFactor, overzoomYFactor);
+            newSourceY = newSourceY / Math.max(overzoomXFactor, overzoomYFactor);
+         }
+      } else if (displaySizeOld.x != 0 && displaySizeOld.y != 0) {
+         newSourceX = source.x * (e.w / (double) displaySizeOld.x);
+         newSourceY = source.y * ( e.h / (double) displaySizeOld.y);
       } else {
-         newSourceX = source.x;
-         newSourceY = source.y / (canvasAspect / sourceAspect);
+         newSourceX = source.x ;
+         newSourceY = source.y ;
       }
-      double overzoomXFactor = newSourceX / (viewCoords_.xMax_ - viewCoords_.xMin_);
-      double overzoomYFactor = newSourceY / (viewCoords_.yMax_ - viewCoords_.yMin_);
-      if (overzoomXFactor > 1 || overzoomYFactor > 1) {
-         newSourceX = newSourceX / Math.max(overzoomXFactor, overzoomYFactor);
-         newSourceY = newSourceY / Math.max(overzoomXFactor, overzoomYFactor);
-      }
+      //move into visible area
+      viewCoords_.setViewOffset(
+              Math.max(viewCoords_.xMin_, Math.min(viewCoords_.xMax_
+                      - newSourceX, viewCoords_.getViewOffset().x)),
+              Math.max(viewCoords_.yMin_, Math.min(viewCoords_.yMax_
+                      - newSourceY, viewCoords_.getViewOffset().y)));
+
       viewCoords_.setSourceDataSize(newSourceX, newSourceY);
       recomputeDisplayedImage();
    }
 
    @Subscribe
    public void onNewImage(final MagellanNewImageEvent event) {
-
+      displayWindow_.onNewImage(); //needed because events dont propagte for some reason
       displayWindow_.updateExploreZControls(event.getPositionForAxis("z"));
 
       int channelIndex = event.getPositionForAxis("c");
@@ -275,9 +290,14 @@ public final class MagellanDisplayController {
     */
    @Subscribe
    public void onSetImageEvent(final SetImageEvent event) {
+      viewCoords_.setAxisPosition("z", event.getPositionForAxis("z"));
+      viewCoords_.setAxisPosition("c", event.getPositionForAxis("c"));
+      viewCoords_.setAxisPosition("t", event.getPositionForAxis("t"));
+      viewCoords_.setAxisPosition("r", event.getPositionForAxis("r"));
+      displayWindow_.updateExploreZControls(event.getPositionForAxis("z"));
       recomputeDisplayedImage();
    }
-   
+
    /**
     * Called when scrollbars move
     */
@@ -290,19 +310,15 @@ public final class MagellanDisplayController {
       displayCalculationExecutor_.invokeAsLateAsPossibleWithCoalescence(new DisplayImageComputationRunnable());
    }
 
+   public MagellanCanvas getCanvas() {
+      return displayWindow_.getCanvas();
+   }
+
    public boolean[] getActiveChannels() {
       throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
    }
 
    public boolean isCompositeMode() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-   }
-
-   public void setMagellanMode(int mode) {
-      magellanMode_ = mode;
-   }
-
-   void fitExploreCanvasToWindow() {
       throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
    }
 
@@ -318,8 +334,10 @@ public final class MagellanDisplayController {
       throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
    }
 
-   public Point2D.Double getCurrentDisplayedCoordinate() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+   public Point2D.Double getStageCoordinateOfViewCenter() {
+      return imageCache_.stageCoordinateFromPixelCoordinate(
+              (long) (viewCoords_.getViewOffset().x + viewCoords_.getSourceDataSize().x / 2),
+              (long) (viewCoords_.getViewOffset().y + viewCoords_.getSourceDataSize().y / 2));
    }
 
    public void showFolder() {
@@ -354,24 +372,42 @@ public final class MagellanDisplayController {
       throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
    }
 
+   public Point getExploreStartTile() {
+      return displayWindow_.getExploreStartTile();
+   }
+
+   public Point getExploreEndTile() {
+      return displayWindow_.getExploreEndTile();
+   }
+
+   public Point getMouseDragStartPointLeft() {
+      return displayWindow_.getMouseDragStartPointLeft();
+   }
+
+   public Point getCurrentMouseLocation() {
+      return displayWindow_.getCurrentMouseLocation();
+   }
+
    public boolean isRGB() {
       return imageCache_.isRGB();
    }
 
-   void redrawOverlay() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-   }
-
-   Point2D.Double stageCoordFromImageCoords(int i, int i0) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+   Point2D.Double stageCoordFromImageCoords( int x, int y) {
+      long newX =  (long) ((x / viewCoords_.getDisplayScaleFactor()) * viewCoords_.getDownsampleFactor());
+      long newY = (long) ((y / viewCoords_.getDisplayScaleFactor()) * viewCoords_.getDownsampleFactor());
+      return imageCache_.stageCoordinateFromPixelCoordinate(newX, newY);
    }
 
    boolean isCurrentlyEditableSurfaceGridVisible() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      return displayWindow_.isCurrentlyEditableSurfaceGridVisible();
    }
 
-   Object getCurrentEditableSurfaceOrGrid() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+   XYFootprint getCurrentEditableSurfaceOrGrid() {
+      return displayWindow_.getCurrenEditableSurfaceOrGrid();
+   }
+   
+    ArrayList<XYFootprint> getSurfacesAndGridsForDisplay()  {
+     return displayWindow_.getSurfacesAndGridsForDisplay();
    }
 
    double getZCoordinateOfDisplayedSlice() {
@@ -379,15 +415,91 @@ public final class MagellanDisplayController {
    }
 
    void acquireTiles(int y, int x, int y0, int x0) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      ((ExploreAcquisition) acq_).acquireTiles(y, x, y0, x0);
    }
 
    Point getTileIndicesFromDisplayedPixel(int x, int y) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      double scale = viewCoords_.getDisplayToFullScaleFactor();
+      int fullResX = (int) ((x / scale) + viewCoords_.getViewOffset().x);
+      int fullResY = (int) ((y / scale) + viewCoords_.getViewOffset().y);
+      int xTileIndex = fullResX / imageCache_.getTileWidth() - (fullResX >= 0 ? 0 : 1);
+      int yTileIndex = fullResY / imageCache_.getTileHeight() - (fullResY >= 0 ? 0 : 1);
+      return new Point(xTileIndex, yTileIndex);
+   }
+
+   /**
+    * return the pixel location in coordinates at appropriate res level of the
+    * top left pixel for the given row/column
+    *
+    * @param row
+    * @param col
+    * @return
+    */
+   public LongPoint getDisplayedPixel(long row, long col) {
+      double scale = viewCoords_.getDisplayToFullScaleFactor();
+      long x = (long) ((col * imageCache_.getTileWidth() - viewCoords_.getViewOffset().x) * scale);
+      long y = (long) ((row * imageCache_.getTileWidth() - viewCoords_.getViewOffset().y) * scale);
+      return new LongPoint(x, y);
    }
 
    DisplaySettings getDisplaySettings() {
       return displaySettings_;
+   }
+
+   long getNumCols() {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+   }
+
+   int getNumRows() {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+   }
+
+   int getTileHeight() {
+      return imageCache_.getTileHeight();
+   }
+
+   int getTileWidth() {
+      return imageCache_.getTileWidth();
+   }
+
+   void setOverlay(Overlay overlay) {
+      displayWindow_.displayOverlay(overlay);
+   }
+
+   void setOverlayMode(int mode) {
+      viewCoords_.setOverlayMode(mode);
+   }
+
+   int getOverlayMode() {
+      return viewCoords_.getOverlayMode();
+   }
+
+   void redrawOverlay() {
+      //this will automatically trigger overlay redrawing in a coalescent fashion
+      displayCalculationExecutor_.invokeAsLateAsPossibleWithCoalescence(new DisplayImageComputationRunnable());
+   }
+
+   boolean anythingAcquired() {
+      return imageCache_.anythingAcquired();
+   }
+
+   LinkedBlockingQueue<ExploreAcquisition.ExploreTileWaitingToAcquire> getTilesWaitingToAcquireAtVisibleSlice() {
+     return ((ExploreAcquisition) acq_).getTilesWaitingToAcquireAtSlice(viewCoords_.getAxisPosition("z")); 
+   }
+
+   double getScale() {
+      return viewCoords_.getDisplayToFullScaleFactor();
+   }
+
+   MagellanChannelSpec getChannels() {
+      return acq_.getChannels();
+   }
+
+   LongPoint imageCoordsFromStageCoords(double x, double y, MagellanDataViewCoords viewCoords) {
+      LongPoint pixelCoord = imageCache_.pixelCoordsFromStageCoords(x, y);
+      return new LongPoint(
+                     (long) ((pixelCoord.x_ - viewCoords.getViewOffset().x) * viewCoords.getDisplayToFullScaleFactor()),
+                     (long) ((pixelCoord.y_ - viewCoords.getViewOffset().y) * viewCoords.getDisplayToFullScaleFactor()));
    }
 
    /**
@@ -433,6 +545,15 @@ public final class MagellanDisplayController {
             }
          });
       } else {
+         if (acq_ != null && !acq_.isFinished()) {
+            int result = JOptionPane.showConfirmDialog(null, "Finish acquisition?",
+                    "Finish Current Acquisition", JOptionPane.OK_CANCEL_OPTION);
+            if (result == JOptionPane.OK_OPTION) {
+               acq_.abort();
+            } else {
+               return;
+            }
+         }
          //TODO: check to stop acquisiton?, return here if the attempt to close window unsuccesslful
 
          close();
@@ -450,10 +571,14 @@ public final class MagellanDisplayController {
       postEvent(new DisplayClosingEvent());
 
       displayCalculationExecutor_.shutdownNow();
+      overlayCalculationExecutor_.shutdownNow();
       imageCache_.unregisterForEvents(this);
 
       imageMaker_.close();
       imageMaker_ = null;
+
+      overlayer_.shutdown();
+      overlayer_ = null;
 
       imageCache_.close();
       imageCache_ = null;
@@ -466,21 +591,19 @@ public final class MagellanDisplayController {
       edtRunnablePool_ = null;
       displaySettings_ = null;
       displayCalculationExecutor_ = null;
+      overlayCalculationExecutor_ = null;
       displaySettings_ = null;
+      acq_ = null;
    }
 
    @Subscribe
    public void onExploreZLimitsChangedEvent(ExploreZLimitsChangedEvent event) {
-      //TODO
-//      ((ExploreAcquisition) acq_).setZLimits(zTop, zBottom);
-
+      ((ExploreAcquisition) acq_).setZLimits(event.top_, event.bottom_);
    }
 
    @Subscribe
    public void onDatastoreClosing(ImageCacheClosingEvent event) {
-//      if (event.getDatastore().equals(dataProvider_)) {
       requestToClose();
-//      }
    }
 
    public final void registerForEvents(Object recipient) {
@@ -543,22 +666,28 @@ public final class MagellanDisplayController {
       public void run() {
          //This is where most of the calculation of creating a display image happens
          Image img = imageMaker_.makeOrGetImage(view_);
-         HashMap<Integer, int[]> channelHistograms = imageMaker_.getHistograms();
-         edtRunnablePool_.invokeAsLateAsPossibleWithCoalescence(new CanvasRepaintRunnable(img, channelHistograms, view_));
-      }
+         
+         Overlay cheapOverlay = overlayer_.createEasyPartsOfOverlay(view_);
 
+         HashMap<Integer, int[]> channelHistograms = imageMaker_.getHistograms();
+         edtRunnablePool_.invokeAsLateAsPossibleWithCoalescence(new CanvasRepaintRunnable(img, channelHistograms, view_, cheapOverlay));
+         //now send expensive overlay computation to overlay creation thread
+//         overlayer_.redrawOverlay(view_);
+      }
    }
 
    private class CanvasRepaintRunnable implements CoalescentRunnable {
 
       final Image img_;
       MagellanDataViewCoords view_;
-      HashMap<Integer, int[]> hists_; 
+      HashMap<Integer, int[]> hists_;
+      Overlay overlay_;
 
-      public CanvasRepaintRunnable(Image img, HashMap<Integer, int[]> hists, MagellanDataViewCoords view) {
+      public CanvasRepaintRunnable(Image img, HashMap<Integer, int[]> hists, MagellanDataViewCoords view, Overlay cheapOverlay) {
          img_ = img;
          view_ = view;
          hists_ = hists;
+         overlay_ = cheapOverlay;
       }
 
       @Override
@@ -574,6 +703,8 @@ public final class MagellanDisplayController {
       @Override
       public void run() {
          displayWindow_.displayImage(img_, hists_, view_);
+         displayWindow_.displayOverlay(overlay_);
+         
       }
 
    }

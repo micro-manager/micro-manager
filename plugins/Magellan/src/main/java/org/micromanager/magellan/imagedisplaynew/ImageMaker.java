@@ -35,12 +35,9 @@ class ImageMaker {
    DirectColorModel rgbCM_ = new DirectColorModel(24, 0xff0000, 0xff00, 0xff);
    private DisplaySettings displaySettings_;
 
-   public ImageMaker(MagellanDisplayController c, MagellanImageCache data, int width, int height) {
+   public ImageMaker(MagellanDisplayController c, MagellanImageCache data) {
       c.registerForEvents(this);
       displaySettings_ = c.getDisplaySettings();
-      imageWidth_ = 512;
-      imageHeight_ = 512;
-      rgbPixels_ = new int[imageWidth_ * imageHeight_];
       imageCache_ = data;
    }
 

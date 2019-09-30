@@ -94,13 +94,7 @@ class ChannelControlPanel extends JPanel implements CursorListener {
       contrastMax_ = (int) (Math.pow(2, bitDepth) - 1);
       contrastMin_ = 0;
       gamma_ = 1.0;
-      int histMax = contrastMax_;
-      if (histMax != -1) {
-         int index = (int) (Math.ceil(Math.log(histMax) / Math.log(2)) - 3);
-         histRangeComboBox_.setSelectedIndex(index);
-      }
-//      mcHistograms_.setDisplayMode(cache.getDisplayMode());
-
+      histRangeComboBox_.setSelectedIndex(0); //set it to camera depth
       channelNameCheckbox_.setSelected(display_.getDisplaySettings().isActive(channelName_));
       updateHistogram();
    }
@@ -192,9 +186,8 @@ class ChannelControlPanel extends JPanel implements CursorListener {
          }
       });
       histRangeComboBox_.setModel(new DefaultComboBoxModel(new String[]{
-         "Camera Depth", "4bit (0-15)", "5bit (0-31)", "6bit (0-63)", "7bit (0-127)",
-         "8bit (0-255)", "9bit (0-511)", "10bit (0-1023)", "11bit (0-2047)",
-         "12bit (0-4095)", "13bit (0-8191)", "14bit (0-16383)", "15bit (0-32767)", "16bit (0-65535)"}));
+         "Camera Depth", "8bit (0-255)", "10bit (0-1023)",
+         "12bit (0-4095)", "14bit (0-16383)", "16bit (0-65535)"}));
 
       zoomInButton_ = new JButton();
 //      zoomInButton_.setIcon(SwingResourceManager.getIcon( "/org/micromanager/magellan/zoom_in.png"));
@@ -378,11 +371,19 @@ class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    public void displayComboAction() {
-      int bits = histRangeComboBox_.getSelectedIndex() + 3;
-      if (bits == 3) {
+      int index = histRangeComboBox_.getSelectedIndex();
+      if (index == 0) {
          histMax_ = maxIntensity_;
-      } else {
-         histMax_ = (int) (Math.pow(2, bits) - 1);
+      } else if (index == 1) {
+         histMax_ = (int) (Math.pow(2, 8) - 1);
+      } else if (index == 2) {
+         histMax_ = (int) (Math.pow(2, 10) - 1);
+      } else if (index == 3) {
+         histMax_ = (int) (Math.pow(2, 12) - 1);
+      } else if (index == 3) {
+         histMax_ = (int) (Math.pow(2, 14) - 1);
+      } else if (index == 3) {
+         histMax_ = (int) (Math.pow(2, 16) - 1);
       }
       binSize_ = ((double) (histMax_ + 1)) / ((double) NUM_BINS);
       histMaxLabel_ = histMax_ + "";
@@ -598,13 +599,13 @@ class ChannelControlPanel extends JPanel implements CursorListener {
          }
       }
 
-      if (histControlState_.ignoreOutliers) {
-         maxAfterRejectingOutliers_ = (int) totalPixels;
-         // specified percent of pixels are ignored in the automatic contrast setting
-         HistogramUtils hu = new HistogramUtils(rawHistogram, totalPixels, 0.01 * histControlState_.percentToIgnore);
-         minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
-         maxAfterRejectingOutliers_ = hu.getMaxAfterRejectingOutliers();
-      }
+//      if (histControlState_.ignoreOutliers) {
+      maxAfterRejectingOutliers_ = (int) totalPixels;
+      // specified percent of pixels are ignored in the automatic contrast setting
+      HistogramUtils hu = new HistogramUtils(rawHistogram, totalPixels, 0.01 * histControlState_.percentToIgnore);
+      minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
+      maxAfterRejectingOutliers_ = hu.getMaxAfterRejectingOutliers();
+//      }
       GraphData histogramData = new GraphData();
 
       //Make sure max has correct value is hist display mode isnt auto

@@ -66,7 +66,7 @@ public final class TaggedImageStorageMultipageTiff {
    private ConcurrentHashMap<String, TaggedImage> writePendingImages_
            = new ConcurrentHashMap<String, TaggedImage>();
    //map of position indices to objects associated with each
-   private HashMap<Integer, FileSet> fileSets_;
+   private volatile HashMap<Integer, FileSet> fileSets_;
    //Map of image labels to file 
    private HashMap<String, MultipageTiffReader> tiffReadersByLabel_;
    private static boolean showProgressBars_ = true;
@@ -331,7 +331,6 @@ public final class TaggedImageStorageMultipageTiff {
          });
       }
       fileSets_.clear();
-      fileSets_ = null;
       SwingUtilities.invokeLater(new Runnable() {
          @Override
          public void run() {
@@ -340,6 +339,7 @@ public final class TaggedImageStorageMultipageTiff {
             }
             savingFinishedProgressBar_.close();
             savingFinishedProgressBar_ = null;
+            fileSets_ = null;
          }
       });
 

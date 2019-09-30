@@ -12,7 +12,6 @@ import java.util.TreeMap;
 import javax.swing.table.AbstractTableModel;
 import org.micromanager.magellan.imagedisplaynew.MagellanDisplayController;
 import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
-import org.micromanager.magellan.imagedisplaynew.events.UpdateOverlayEvent;
 import org.micromanager.magellan.misc.Log;
 import org.micromanager.magellan.misc.NumberUtils;
 import org.micromanager.magellan.surfacesandregions.MultiPosGrid;
@@ -84,7 +83,7 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
       if (col == 0) {
          showSurfaceOrGridMap.put(manager_.getSurfaceOrGrid(row), !showSurfaceOrGridMap.get(manager_.getSurfaceOrGrid(row)));
          //redraw to refelect change in visibility
-         display_.postEvent(new UpdateOverlayEvent()); 
+         display_.redrawOverlay();
       } else if (col == 2) {
          try {
             manager_.rename(row, (String) value);

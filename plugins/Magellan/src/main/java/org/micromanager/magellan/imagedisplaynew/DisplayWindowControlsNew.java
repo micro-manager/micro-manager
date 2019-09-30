@@ -5,7 +5,6 @@
  */
 package org.micromanager.magellan.imagedisplaynew;
 
-import org.micromanager.magellan.imagedisplaynew.events.UpdateOverlayEvent;
 import com.google.common.eventbus.Subscribe;
 import java.awt.CardLayout;
 import java.awt.Color;
@@ -25,7 +24,6 @@ import org.json.JSONObject;
 import org.micromanager.magellan.channels.MagellanChannelSpec;
 import org.micromanager.magellan.coordinates.NoPositionsDefinedYetException;
 import org.micromanager.magellan.gui.SimpleChannelTableModel;
-import org.micromanager.magellan.imagedisplay.MagellanDisplay;
 import org.micromanager.magellan.imagedisplay.MetadataPanel;
 import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
 import org.micromanager.magellan.imagedisplaynew.events.MagellanNewImageEvent;
@@ -121,6 +119,9 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
             acquireAtCurrentButton_.removeActionListener(l);
          }
       }
+      //knitially disable surfaces and grids
+       tabbedPane_.setEnabledAt(display_.isExploreAcquisiton() ? 1 : 0, false);
+
    }
    
    @Subscribe
@@ -130,14 +131,7 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
          ((SimpleChannelTableModel) channelsTable_.getModel()).shutdown();
       }      
       surfaceGridTable_.getSelectionModel().removeListSelectionListener(surfaceTableListSelectionListener_);
-      surfaceTableListSelectionListener_ = null;
-      surfaceGridTable_ = null;
-      
-      display_ = null;
-      cpMagellan_ = null;
-      metadataPanelMagellan_ = null;
-      metadataPanel_ = null;
-      channels_ = null;
+      DisplayWindowNew.removeKeyListenersRecursively(this); //remove added key listeners
    }
 
 
@@ -161,18 +155,18 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
             gridColsSpinner_.setValue(numCols);
          }
       }
-      display_.postEvent(new UpdateOverlayEvent());
+      display_.redrawOverlay();
    }
 
    private void updateMode() {
       if (display_.isExploreAcquisiton() && exploreButton_.isSelected()) {
-         display_.setMagellanMode(MagellanDisplay.EXPLORE);
+         display_.setOverlayMode(MagellanDataViewCoords.EXPLORE);
          return;
       }
       if (tabbedPane_.getSelectedIndex() == 1) {
-         display_.setMagellanMode(MagellanDisplay.SURFACE_AND_GRID);
+         display_.setOverlayMode(MagellanDataViewCoords.SURFACE_AND_GRID);
       } else {
-         display_.setMagellanMode(MagellanDisplay.NONE);
+         display_.setOverlayMode(MagellanDataViewCoords.NONE);
       }
    }
    
@@ -209,23 +203,10 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
       return SurfaceGridManager.getInstance().getSurfaceOrGrid(selectedSurfaceGridIndex_);
    }
 
-   @Subscribe
-   public void onNewImageEvent(MagellanNewImageEvent e) {
+   public void onNewImage() {
       //once there's an image, surfaces and grids are game
       tabbedPane_.setEnabledAt(display_.isExploreAcquisiton() ? 1 : 0, true);
    }
-
-//   @Subscribe
-//   public void onSetImageEvent(ScrollerPanel.SetImageEvent event) {
-//      if (display_.isClosing()) {
-//         return;
-//      }
-//      JSONObject tags = display_.getCurrentMetadata();
-//      if (tags == null) {
-//         return;
-//      }
-//      updateStatusLabel(tags);
-//   }
 
    private void updateStatusLabel(JSONObject metadata) {
       if (metadata == null) {
@@ -697,27 +678,29 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
       if (getCurrentSurfaceOrGrid() != null && getCurrentSurfaceOrGrid() instanceof MultiPosGrid) {
          ((MultiPosGrid) getCurrentSurfaceOrGrid()).updateParams((Integer) gridRowsSpinner_.getValue(), (Integer) gridColsSpinner_.getValue());
       }
+      display_.redrawOverlay();
    }//GEN-LAST:event_gridRowsSpinner_StateChanged
 
    private void gridColsSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_gridColsSpinner_StateChanged
       if (getCurrentSurfaceOrGrid() != null && getCurrentSurfaceOrGrid() instanceof MultiPosGrid) {
          ((MultiPosGrid) getCurrentSurfaceOrGrid()).updateParams((Integer) gridRowsSpinner_.getValue(), (Integer) gridColsSpinner_.getValue());
       }
+      display_.redrawOverlay();
    }//GEN-LAST:event_gridColsSpinner_StateChanged
 
    private void showStagePositionsCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showStagePositionsCheckBox_ActionPerformed
       display_.setSurfaceDisplaySettings(showInterpCheckBox_.isSelected(), showStagePositionsCheckBox_.isSelected());
-      display_.postEvent(new UpdateOverlayEvent());
+      display_.redrawOverlay();
    }//GEN-LAST:event_showStagePositionsCheckBox_ActionPerformed
 
    private void showInterpCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showInterpCheckBox_ActionPerformed
       display_.setSurfaceDisplaySettings(showInterpCheckBox_.isSelected(), showStagePositionsCheckBox_.isSelected());
-      display_.postEvent(new UpdateOverlayEvent());
+      display_.redrawOverlay();
    }//GEN-LAST:event_showInterpCheckBox_ActionPerformed
 
    private void newGridButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newGridButton_ActionPerformed
       try {
-         Point2D.Double coord = display_.getCurrentDisplayedCoordinate();
+         Point2D.Double coord = display_.getStageCoordinateOfViewCenter();
          MultiPosGrid r = ((DisplayWindowSurfaceGridTableModel) surfaceGridTable_.getModel()).newGrid(
             (Integer) gridRowsSpinner_.getValue(), (Integer) gridColsSpinner_.getValue(), coord);
          selectedSurfaceGridIndex_ = SurfaceGridManager.getInstance().getIndex(r);

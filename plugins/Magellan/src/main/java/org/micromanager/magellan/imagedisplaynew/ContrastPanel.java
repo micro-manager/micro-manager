@@ -22,14 +22,9 @@
 package org.micromanager.magellan.imagedisplaynew;
 
 import com.google.common.eventbus.Subscribe;
-import ij.CompositeImage;
 import java.awt.BorderLayout;
-import org.micromanager.magellan.imagedisplay.DisplayOverlayer;
-import org.micromanager.magellan.imagedisplay.MMScaleBar;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Graphics;
 import java.util.HashMap;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -38,7 +33,6 @@ import org.micromanager.magellan.imagedisplaynew.MagellanDisplayController;
 import org.micromanager.magellan.imagedisplaynew.events.ContrastUpdatedEvent;
 import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
 import org.micromanager.magellan.main.Magellan;
-import org.micromanager.magellan.misc.Log;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
@@ -89,7 +83,7 @@ class ContrastPanel extends JPanel {
    public void onDisplayClose(DisplayClosingEvent e) {
       display_.unregisterForEvents(this);
       display_ = null;
-      this.remove(contentPanel_);
+//      this.remove(contentPanel_);
       contentPanel_ = null;
       histograms_ = null;
       histControlsState_ = null;

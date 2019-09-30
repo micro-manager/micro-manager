@@ -34,6 +34,7 @@ import org.micromanager.magellan.imagedisplay.DisplaySettings;
 import org.micromanager.magellan.imagedisplaynew.events.ImageCacheClosingEvent;
 import org.micromanager.magellan.imagedisplaynew.events.MagellanNewImageEvent;
 import org.micromanager.magellan.misc.Log;
+import org.micromanager.magellan.misc.LongPoint;
 import org.micromanager.magellan.misc.MD;
 
 /**
@@ -189,6 +190,14 @@ public class MagellanImageCache {
 
    public int getFullResPositionIndexFromStageCoords(double xPos, double yPos) {
       return imageStorage_.getPosManager().getFullResPositionIndexFromStageCoords(xPos, yPos);
+   }
+   
+   public Point2D.Double stageCoordinateFromPixelCoordinate(long absoluteX, long absoluteY) {
+      return imageStorage_.getStageCoordsFromPixelCoords(absoluteX, absoluteY);
+   }
+   
+   public LongPoint pixelCoordsFromStageCoords(double x, double  y) {
+      return imageStorage_.getPixelCoordsFromStageCoords(x, y);
    }
 
    public XYStagePosition getXYPosition(int posIndex) {

@@ -9,6 +9,7 @@ import org.micromanager.magellan.imagedisplaynew.events.MagellanNewImageEvent;
 import org.micromanager.magellan.imagedisplaynew.events.ScrollersAddedEvent;
 import com.google.common.eventbus.Subscribe;
 import ij.gui.ImageWindow;
+import ij.gui.Overlay;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
@@ -29,6 +30,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import javax.swing.JButton;
@@ -39,6 +41,7 @@ import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
 import org.micromanager.magellan.misc.Log;
 import org.micromanager.magellan.surfacesandregions.MultiPosGrid;
 import org.micromanager.magellan.surfacesandregions.SurfaceInterpolator;
+import org.micromanager.magellan.surfacesandregions.XYFootprint;
 
 /**
  *
@@ -58,9 +61,7 @@ class DisplayWindowNew implements WindowListener {
    private volatile Point exploreStartTile_, exploreEndTile_;
    private long lastMouseWheelZoomTime_ = 0;
    private boolean exploreAcq_ = false;
-   private volatile int mode_ = NONE;
    private boolean mouseDragging_ = false;
-   private long fullResPixelWidth_ = -1, fullResPixelHeight_ = -1; //used for scaling in fixed area acqs
    private int tileWidth_, tileHeight_;
 
    private MagellanCanvas imageCanvas_;
@@ -76,6 +77,7 @@ class DisplayWindowNew implements WindowListener {
       window_ = new JFrame();
 
       display_ = display;
+      exploreAcq_ = display_.isExploreAcquisiton();
       display_.registerForEvents(this);
       window_.setSize(1500, 700);
       window_.setVisible(true);
@@ -94,6 +96,10 @@ class DisplayWindowNew implements WindowListener {
       for (Component c : rightPanel_.getComponents()) {
          rightPanel_.remove(c);
       }
+      for (FocusListener l : window_.getFocusListeners()) {
+         window_.removeFocusListener(l);
+      }
+      removeKeyListenersRecursively(window_); //remove added key listeners
 
       window_.removeWindowListener(this);
       display_.unregisterForEvents(this);
@@ -102,13 +108,11 @@ class DisplayWindowNew implements WindowListener {
       imageCanvas_ = null;
       subImageControls_ = null;
       sideControls_ = null;
-      SwingUtilities.invokeLater(new Runnable() {
-         @Override
-         public void run() {
-            window_.dispose();
-            window_ = null;
-         }
-      });
+      window_.dispose();
+      window_.repaint();
+      window_ = null;
+      //TODO: check for memory leaks
+      //TODO: try cointually resubmitting dispose until window actually gone
    }
 
    @Subscribe
@@ -134,21 +138,22 @@ class DisplayWindowNew implements WindowListener {
       leftPanel_.add(subImageControls_, BorderLayout.PAGE_END);
       window_.add(leftPanel_, BorderLayout.CENTER);
 
-      DisplayWindowControlsNew sideControls = new DisplayWindowControlsNew(display_, null);
+      DisplayWindowControlsNew sideControls = new DisplayWindowControlsNew(display_,
+              display_.isExploreAcquisiton() ? display_.getChannels() : null);
       sideControls_ = sideControls;
       JPanel buttonPanel = new FixedWidthJPanel();
       collapseExpandButton_ = new JButton();
 
-//      TextIcon t1 = new TextIcon(collapseExpandButton_, "Hide controls", TextIcon.Layout.HORIZONTAL);
-//      t1.setFont(t1.getFont().deriveFont(15.0f));
-//      RotatedIcon r1 = new RotatedIcon(t1, RotatedIcon.Rotate.DOWN);
-//      collapseExpandButton_.setIcon(r1);
+      TextIcon t1 = new TextIcon(collapseExpandButton_, "Hide controls", TextIcon.Layout.HORIZONTAL);
+      t1.setFont(t1.getFont().deriveFont(15.0f));
+      RotatedIcon r1 = new RotatedIcon(t1, RotatedIcon.Rotate.DOWN);
+      collapseExpandButton_.setIcon(r1);
       collapseExpandButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             boolean controlsExpanded = !sideControls.isVisible();
 //            "\u25c4" : "\u25ba" //left and right arrow
-//            t1.setText(controlsExpanded ? "Hide controls" : "Show controls");
+            t1.setText(controlsExpanded ? "Hide controls" : "Show controls");
             collapseOrExpandSideControls(controlsExpanded);
          }
       });
@@ -159,13 +164,8 @@ class DisplayWindowNew implements WindowListener {
       window_.add(rightPanel_, BorderLayout.LINE_END);
 
       window_.revalidate();
-
    }
 
-   public void applyDisplaySettings(org.micromanager.display.DisplaySettings adjustedSettings) {
-
-   }
-   
    public void addContrastControls(int channelIndex, String channelName) {
       sideControls_.addContrastControls(channelIndex, channelName);
    }
@@ -185,8 +185,15 @@ class DisplayWindowNew implements WindowListener {
       subImageControls_.updateScrollerPositions(view);
       imageCanvas_.updateDisplayImage(image, view.getDisplayScaleFactor());
       sideControls_.updateHistogramData(hists);
+   }
 
+   void displayOverlay(Overlay overlay) {
+      imageCanvas_.updateOverlay(overlay);
       imageCanvas_.getCanvas().repaint();
+   }
+
+   public void onNewImage() {
+      sideControls_.onNewImage();
    }
 
    public void expandDisplayedRangeToInclude(List<MagellanNewImageEvent> newIamgeEvents) {
@@ -256,7 +263,10 @@ class DisplayWindowNew implements WindowListener {
 
       //add keylistener to window and all subscomponenets so it will fire whenever
       //focus in anywhere in the window
+      window_.addKeyListener(kl);
       addRecursively(window_, kl);
+
+//      recursiveRemoveFocus(window_);
    }
 
    private void addRecursively(Component c, KeyListener kl) {
@@ -264,6 +274,17 @@ class DisplayWindowNew implements WindowListener {
       if (c instanceof Container) {
          for (Component subC : ((Container) c).getComponents()) {
             addRecursively(subC, kl);
+         }
+      }
+   }
+
+   public static void removeKeyListenersRecursively(Component c) {
+      for (KeyListener kl : c.getKeyListeners()) {
+         c.removeKeyListener(kl);
+      }
+      if (c instanceof Container) {
+         for (Component subC : ((Container) c).getComponents()) {
+            removeKeyListenersRecursively(subC);
          }
       }
    }
@@ -297,9 +318,7 @@ class DisplayWindowNew implements WindowListener {
          @Override
          public void mouseMoved(MouseEvent e) {
             currentMouseLocation_ = e.getPoint();
-            if (mode_ == EXPLORE) {
-               display_.redrawOverlay();
-            }
+            display_.redrawOverlay();
          }
       });
 
@@ -332,7 +351,7 @@ class DisplayWindowNew implements WindowListener {
 
          @Override
          public void mouseEntered(MouseEvent e) {
-            if (mode_ == EXPLORE) {
+            if (display_.getOverlayMode() == EXPLORE) {
                display_.redrawOverlay();
             }
          }
@@ -340,7 +359,7 @@ class DisplayWindowNew implements WindowListener {
          @Override
          public void mouseExited(MouseEvent e) {
             currentMouseLocation_ = null;
-            if (mode_ == EXPLORE) {
+            if (display_.getOverlayMode() == EXPLORE) {
                display_.redrawOverlay();
             }
          }
@@ -348,7 +367,7 @@ class DisplayWindowNew implements WindowListener {
    }
 
    private void mouseReleasedActions(MouseEvent e) {
-      if (exploreAcq_ && mode_ == EXPLORE && SwingUtilities.isLeftMouseButton(e)) {
+      if (exploreAcq_ && display_.getOverlayMode() == EXPLORE && SwingUtilities.isLeftMouseButton(e)) {
          Point p2 = e.getPoint();
          if (exploreStartTile_ != null) {
             //create events to acquire one or more tiles
@@ -361,7 +380,7 @@ class DisplayWindowNew implements WindowListener {
             exploreEndTile_ = display_.getTileIndicesFromDisplayedPixel(p2.x, p2.y);
          }
          display_.redrawOverlay();
-      } else if (mode_ == SURFACE_AND_GRID && display_.getCurrentEditableSurfaceOrGrid() != null
+      } else if (display_.getOverlayMode() == SURFACE_AND_GRID && display_.getCurrentEditableSurfaceOrGrid() != null
               && display_.getCurrentEditableSurfaceOrGrid() instanceof SurfaceInterpolator
               && display_.isCurrentlyEditableSurfaceGridVisible()) {
          SurfaceInterpolator currentSurface = (SurfaceInterpolator) display_.getCurrentEditableSurfaceOrGrid();
@@ -385,7 +404,7 @@ class DisplayWindowNew implements WindowListener {
          } else if (SwingUtilities.isLeftMouseButton(e)) {
             //convert to real coordinates in 3D space
             //Click point --> full res pixel point --> stage coordinate
-            Point2D.Double stagePos = display_.stageCoordFromImageCoords(e.getPoint().x, e.getPoint().y);
+            Point2D.Double stagePos = display_.stageCoordFromImageCoords( e.getPoint().x, e.getPoint().y);
             double z = display_.getZCoordinateOfDisplayedSlice();
             if (currentSurface == null) {
                Log.log("Can't add point--No surface selected", true);
@@ -410,7 +429,7 @@ class DisplayWindowNew implements WindowListener {
          mouseDragStartPointRight_ = currentPoint;
       } else if (SwingUtilities.isLeftMouseButton(e)) {
          //only move grid
-         if (mode_ == SURFACE_AND_GRID && display_.getCurrentEditableSurfaceOrGrid() != null
+         if (display_.getOverlayMode() == SURFACE_AND_GRID && display_.getCurrentEditableSurfaceOrGrid() != null
                  && display_.getCurrentEditableSurfaceOrGrid() instanceof MultiPosGrid
                  && display_.isCurrentlyEditableSurfaceGridVisible()) {
             MultiPosGrid currentGrid = (MultiPosGrid) display_.getCurrentEditableSurfaceOrGrid();
@@ -421,10 +440,41 @@ class DisplayWindowNew implements WindowListener {
             Point2D.Double p1 = display_.stageCoordFromImageCoords(dx, dy);
             currentGrid.translate(p1.x - p0.x, p1.y - p0.y);
             mouseDragStartPointLeft_ = currentPoint;
-         } else if (mode_ == EXPLORE) {
-            display_.redrawOverlay();
          }
+         display_.redrawOverlay();
       }
+   }
+
+   MagellanCanvas getCanvas() {
+      return imageCanvas_;
+   }
+
+   public Point getExploreStartTile() {
+      return exploreStartTile_;
+   }
+
+   public Point getExploreEndTile() {
+      return exploreEndTile_;
+   }
+
+   Point getMouseDragStartPointLeft() {
+      return mouseDragStartPointLeft_;
+   }
+
+   Point getCurrentMouseLocation() {
+      return currentMouseLocation_;
+   }
+
+   XYFootprint getCurrenEditableSurfaceOrGrid() {
+      return sideControls_.getCurrentSurfaceOrGrid();
+   }
+
+   ArrayList<XYFootprint> getSurfacesAndGridsForDisplay() {
+      return sideControls_.getSurfacesAndGridsForDisplay();
+   }
+
+   boolean isCurrentlyEditableSurfaceGridVisible() {
+      return sideControls_.isCurrentlyEditableSurfaceGridVisible();
    }
 
 }

@@ -52,7 +52,7 @@ import org.micromanager.magellan.misc.NumberUtils;
  *
  * @author Henry
  */
- class NewSubImageControls extends JPanel {
+class NewSubImageControls extends JPanel {
 
    private final static int DEFAULT_FPS = 7;
    private static final DecimalFormat TWO_DECIMAL_FORMAT = new DecimalFormat("0.00");
@@ -65,7 +65,8 @@ import org.micromanager.magellan.misc.NumberUtils;
    private int displayHeight_ = -1;
    //thread safe fields for currently displaye dimage
    private final boolean explore_;
-   private int minZExplored_ =-1, maxZExplored_ = -1;
+   private int minZExplored_ = Integer.MAX_VALUE, maxZExplored_ = Integer.MIN_VALUE;
+   private JPanel controlsPanel_;
 
    public NewSubImageControls(MagellanDisplayController disp, double zStep, boolean explore) {
       super(new FlowLayout(FlowLayout.LEADING));
@@ -81,12 +82,31 @@ import org.micromanager.magellan.misc.NumberUtils;
       }
 
    }
-   
+
    @Subscribe
    public void onDisplayClose(DisplayClosingEvent e) {
       display_.unregisterForEvents(this);
       display_ = null;
-      scrollerPanel_ = null;
+      controlsPanel_.removeAll();
+      this.remove(controlsPanel_);
+      if (zBottomScrollbar_ != null) {
+         for (AdjustmentListener l : zBottomScrollbar_.getAdjustmentListeners()) {
+            zBottomScrollbar_.removeAdjustmentListener(l);
+         }
+         for (AdjustmentListener l : zTopScrollbar_.getAdjustmentListeners()) {
+            zTopScrollbar_.removeAdjustmentListener(l);
+         }
+         for (ActionListener l : zBottomTextField_.getActionListeners()) {
+            zBottomTextField_.removeActionListener(l);
+         }
+         for (ActionListener l : zTopTextField_.getActionListeners()) {
+            zTopTextField_.removeActionListener(l);
+         }
+      }
+            DisplayWindowNew.removeKeyListenersRecursively(this); //remove added key listeners
+
+//      controlsPanel_ = null;
+//      scrollerPanel_ = null;
    }
 
    /**
@@ -170,11 +190,10 @@ import org.micromanager.magellan.misc.NumberUtils;
       this.repaint();
    }
 
-    void expandDisplayedRangeToInclude( List<MagellanNewImageEvent> newIamgeEvents) {
+   void expandDisplayedRangeToInclude(List<MagellanNewImageEvent> newIamgeEvents) {
       scrollerPanel_.expandDisplayedRangeToInclude(newIamgeEvents);
    }
 
-   
    private void zTopTextFieldAction() {
       //check if new position is outside bounds of current z range
       //and if so expand sliders as needed
@@ -216,10 +235,10 @@ import org.micromanager.magellan.misc.NumberUtils;
    }
 
    private void initComponents() {
-      final JPanel controlsPanel = new JPanel(new MigLayout("insets 0, fillx, align center", "", "[]0[]0[]"));
+      controlsPanel_ = new JPanel(new MigLayout("insets 0, fillx, align center", "", "[]0[]0[]"));
 
       scrollerPanel_ = new ScrollerPanel(display_, new String[]{"c", "t", "r", "z"}, new Integer[]{1, 1, 1, 1}, DEFAULT_FPS);
-      controlsPanel.add(scrollerPanel_, "span, growx, wrap");
+      controlsPanel_.add(scrollerPanel_, "span, growx, wrap");
 
       if (explore_) {
          sliderPanel_ = new JPanel(new MigLayout("insets 0", "[][][grow]", ""));
@@ -294,12 +313,12 @@ import org.micromanager.magellan.misc.NumberUtils;
             sliderPanel_.add(zBottomScrollbar_, "growx");
 
          }
-         controlsPanel.add(sliderPanel_, "span, growx, align center, wrap");
+         controlsPanel_.add(sliderPanel_, "span, growx, align center, wrap");
 
       }
 
       this.setLayout(new BorderLayout());
-      this.add(controlsPanel, BorderLayout.CENTER);
+      this.add(controlsPanel_, BorderLayout.CENTER);
 
       // Propagate resizing through to our JPanel
       this.addComponentListener(new ComponentAdapter() {
@@ -344,24 +363,19 @@ import org.micromanager.magellan.misc.NumberUtils;
       this.invalidate();
       this.validate();
       this.getParent().doLayout();
-      SwingUtilities.invokeLater(new Runnable() {
-
-         @Override
-         public void run() {
-            if (explore_) {
-               display_.fitExploreCanvasToWindow();
-            }
-         }
-      });
-   }
-
-   public void prepareForClose() {
-      scrollerPanel_.prepareForClose();
-      display_.unregisterForEvents(this);
+//      SwingUtilities.invokeLater(new Runnable() {
+//
+//         @Override
+//         public void run() {
+//            if (explore_) {
+//               display_.fitExploreCanvasToWindow();
+//            }
+//         }
+//      });
    }
 
    void updateScrollerPositions(MagellanDataViewCoords view) {
-      for (AxisScroller a: scrollerPanel_.scrollers_) {
+      for (AxisScroller a : scrollerPanel_.scrollers_) {
          if (a.getAxis().equals("c")) {
             a.setPosition(view.getAxisPosition("c"));
          } else if (a.getAxis().equals("z")) {

@@ -15,7 +15,12 @@ import sun.awt.image.ImageCache;
  */
 class MagellanDataViewCoords {
 
-   private int displayImageWidth_, displayImageHeight_; //resolution of the image to be displayed 
+   public static final int NONE = 0, EXPLORE = 1, SURFACE_AND_GRID = 2;
+
+   private volatile int overlayMode_;
+   private volatile boolean showScaleBar_ = false;
+
+   private double displayImageWidth_, displayImageHeight_; //resolution of the image to be displayed 
    private double sourceDataFullResWidth_, sourceDataFullResHeight_; //resolution in pixels of the display image at full res
    private double xView_, yView_; //top left pixel in full res coordinates
    private int zIndex_, tIndex_, rIndex_, cIndex_; //channel index for scrollbar display
@@ -36,12 +41,19 @@ class MagellanDataViewCoords {
       zIndex_ = slice;
       tIndex_ = frame;
       cIndex_ = channel;
-      xMin_ = imageBounds[0];
-      yMin_ = imageBounds[1];
-      xMax_ = imageBounds[2];
-      yMax_ = imageBounds[3];
+      if (imageBounds != null) {
+         xMin_ = imageBounds[0];
+         yMin_ = imageBounds[1];
+         xMax_ = imageBounds[2];
+         yMax_ = imageBounds[3];
+      } else {
+         xMin_ = Long.MIN_VALUE;
+         yMin_ = Long.MIN_VALUE;
+         xMax_ = Long.MAX_VALUE;
+         yMax_ = Long.MAX_VALUE;
+      }
    }
-   
+
    public boolean addChannelIfNew(int channelIndex, String channelName) {
       if (!channelNames_.containsKey(channelIndex)) {
          channelNames_.put(channelIndex, channelName);
@@ -54,6 +66,7 @@ class MagellanDataViewCoords {
       return new Point2D.Double(sourceDataFullResWidth_ / getDownsampleFactor(), sourceDataFullResHeight_ / getDownsampleFactor());
    }
 
+   
    /**
     * Computes the scaling between display pixels and whatever pixels they were
     * derived from
@@ -63,15 +76,16 @@ class MagellanDataViewCoords {
       return displayImageWidth_ / Math.floor(sourceDataFullResWidth_ / getDownsampleFactor());
    }
    
-   public double getDisplayScaleFactorUnfloored() {
-      return displayImageWidth_ / (sourceDataFullResWidth_ / getDownsampleFactor());
+   public double getDisplayToFullScaleFactor() {
+     return displayImageWidth_ / (double) sourceDataFullResWidth_;
    }
-   
+
    private void computeResIndex() {
-      double resIndexFloat = Math.log(sourceDataFullResWidth_ / (double)displayImageWidth_) / Math.log(2);
+      double resIndexFloat = Math.log(sourceDataFullResWidth_ / (double) displayImageWidth_) / Math.log(2);
       int newResIndexInt = (int) Math.min(cache_.getMaxResolutionIndex(), Math.max(0, Math.ceil(resIndexFloat)));
-      resolutionIndex_ =  newResIndexInt;
+      resolutionIndex_ = newResIndexInt;
    }
+
    /**
     * Compute the resolution index used for gettting data based on zoom and
     * available resolution indices
@@ -89,7 +103,7 @@ class MagellanDataViewCoords {
    public Point2D.Double getSourceDataSize() {
       return new Point2D.Double(sourceDataFullResWidth_, sourceDataFullResHeight_);
    }
-   
+
    public void setSourceDataSize(double newWidth, double newHeight) {
       sourceDataFullResWidth_ = newWidth;
       sourceDataFullResHeight_ = newHeight;
@@ -99,16 +113,20 @@ class MagellanDataViewCoords {
    public Point2D.Double getViewOffset() {
       return new Point2D.Double(xView_, yView_);
    }
-   
+
    public void setViewOffset(double xOffset, double yOffset) {
       xView_ = xOffset;
       yView_ = yOffset;
    }
-   
+
    public void setDisplayImageSize(int width, int height) {
       displayImageWidth_ = width;
       displayImageHeight_ = height;
       computeResIndex();
+   }
+
+   public Point2D.Double getDisplayImageSize() {
+      return new Point2D.Double(displayImageWidth_, displayImageHeight_);
    }
 
    public int getAxisPosition(String axis) {
@@ -150,9 +168,10 @@ class MagellanDataViewCoords {
       view.xView_ = xView_;
       view.yView_ = yView_;
       view.resolutionIndex_ = resolutionIndex_;
+      view.overlayMode_ = overlayMode_;
       return view;
    }
-   
+
    public String getChannelName(int index) {
       return channelNames_.get(index);
    }
@@ -161,5 +180,16 @@ class MagellanDataViewCoords {
       return channelNames_.keySet();
    }
 
+   int getOverlayMode() {
+      return overlayMode_;
+   }
+
+   void setOverlayMode(int mode) {
+      overlayMode_ = mode;
+   }
+
+   boolean showScaleBar() {
+      return showScaleBar_;
+   }
 
 }

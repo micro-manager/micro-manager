@@ -121,7 +121,7 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
 
       //create display
       try {
-         new MagellanDisplayController(dataProvider_, displaySettings);
+         new MagellanDisplayController(dataProvider_, displaySettings, this);
       } catch (Exception e) {
          e.printStackTrace();
          Log.log("Couldn't create display succesfully");
