@@ -68,7 +68,7 @@ function S = StartMMStudio(varargin)
 
    flag = '';  % '-setup', '-undosetup', or '' (indicating 'run' mode)
    pathToMM = '';
-   autoStartProfile = []
+   autoStartProfile = [];
    argsOk = true;
 
    for k = 1:nargin
