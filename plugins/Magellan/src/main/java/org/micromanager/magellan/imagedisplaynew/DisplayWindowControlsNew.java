@@ -124,14 +124,12 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
 
    }
    
-   @Subscribe
-   public void onDisplayClose(DisplayClosingEvent e) {
+   public void onDisplayClose() {
       display_.unregisterForEvents(this);
       if (display_.isExploreAcquisiton()) {
          ((SimpleChannelTableModel) channelsTable_.getModel()).shutdown();
       }      
       surfaceGridTable_.getSelectionModel().removeListSelectionListener(surfaceTableListSelectionListener_);
-      DisplayWindowNew.removeKeyListenersRecursively(this); //remove added key listeners
    }
 
 

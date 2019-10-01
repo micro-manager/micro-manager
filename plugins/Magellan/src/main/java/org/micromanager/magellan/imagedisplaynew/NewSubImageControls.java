@@ -83,8 +83,7 @@ class NewSubImageControls extends JPanel {
 
    }
 
-   @Subscribe
-   public void onDisplayClose(DisplayClosingEvent e) {
+   public void onDisplayClose() {
       display_.unregisterForEvents(this);
       display_ = null;
       controlsPanel_.removeAll();
@@ -103,10 +102,9 @@ class NewSubImageControls extends JPanel {
             zTopTextField_.removeActionListener(l);
          }
       }
-            DisplayWindowNew.removeKeyListenersRecursively(this); //remove added key listeners
-
-//      controlsPanel_ = null;
-//      scrollerPanel_ = null;
+      scrollerPanel_.onDisplayClose();
+      controlsPanel_ = null;
+      scrollerPanel_ = null;
    }
 
    /**
@@ -385,4 +383,5 @@ class NewSubImageControls extends JPanel {
          }
       }
    }
+
 }

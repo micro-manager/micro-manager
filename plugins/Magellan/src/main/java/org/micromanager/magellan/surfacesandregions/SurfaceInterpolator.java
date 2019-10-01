@@ -32,6 +32,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.Log;
 import org.apache.commons.math3.geometry.euclidean.twod.Euclidean2D;
@@ -162,11 +164,15 @@ public abstract class SurfaceInterpolator extends XYFootprint {
     * @return
     * @throws InterruptedException 
     */
-   public Vector2D[] getConvexHullPoints() throws InterruptedException {
+   public Vector2D[] getConvexHullPoints() {
       // block until convex hull points available
       synchronized (convexHullLock_) {
          while (convexHullVertices_ == null) {
-            convexHullLock_.wait();
+            try {
+               convexHullLock_.wait();
+            } catch (InterruptedException ex) {
+               throw new RuntimeException();
+            }
          }
          return convexHullVertices_;
       }

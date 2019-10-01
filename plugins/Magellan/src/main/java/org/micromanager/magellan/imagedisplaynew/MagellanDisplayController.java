@@ -322,8 +322,9 @@ public final class MagellanDisplayController {
       throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
    }
 
-   public void setSurfaceDisplaySettings(boolean selected, boolean selected0) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+   public void setSurfaceDisplaySettings(boolean showInterp, boolean showStage) {
+      overlayer_.setSurfaceDisplayParams(showInterp, showStage);
+      redrawOverlay();
    }
 
    public void superlockAllScrollers() {
@@ -393,8 +394,8 @@ public final class MagellanDisplayController {
    }
 
    Point2D.Double stageCoordFromImageCoords( int x, int y) {
-      long newX =  (long) ((x / viewCoords_.getDisplayScaleFactor()) * viewCoords_.getDownsampleFactor());
-      long newY = (long) ((y / viewCoords_.getDisplayScaleFactor()) * viewCoords_.getDownsampleFactor());
+      long newX =  (long) (x / viewCoords_.getDisplayToFullScaleFactor() + viewCoords_.getViewOffset().x) ;
+      long newY = (long) (y / viewCoords_.getDisplayToFullScaleFactor() + viewCoords_.getViewOffset().y) ;
       return imageCache_.stageCoordinateFromPixelCoordinate(newX, newY);
    }
 
@@ -411,7 +412,7 @@ public final class MagellanDisplayController {
    }
 
    double getZCoordinateOfDisplayedSlice() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      return viewCoords_.getAxisPosition("z");
    }
 
    void acquireTiles(int y, int x, int y0, int x0) {
@@ -500,6 +501,10 @@ public final class MagellanDisplayController {
       return new LongPoint(
                      (long) ((pixelCoord.x_ - viewCoords.getViewOffset().x) * viewCoords.getDisplayToFullScaleFactor()),
                      (long) ((pixelCoord.y_ - viewCoords.getViewOffset().y) * viewCoords.getDisplayToFullScaleFactor()));
+   }
+
+   int getSliceIndexFromZCoordinate(double z) {
+      return acq_.getDisplaySliceIndexFromZCoordinate(z);
    }
 
    /**
@@ -672,7 +677,7 @@ public final class MagellanDisplayController {
          HashMap<Integer, int[]> channelHistograms = imageMaker_.getHistograms();
          edtRunnablePool_.invokeAsLateAsPossibleWithCoalescence(new CanvasRepaintRunnable(img, channelHistograms, view_, cheapOverlay));
          //now send expensive overlay computation to overlay creation thread
-//         overlayer_.redrawOverlay(view_);
+         overlayer_.redrawOverlay(view_);
       }
    }
 

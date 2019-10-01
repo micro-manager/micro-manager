@@ -89,8 +89,7 @@ class ScrollerPanel extends JPanel {
       }
    }
 
-   @Subscribe
-   public void onDisplayClose(DisplayClosingEvent e) {
+   public void onDisplayClose() {
       display_.unregisterForEvents(this);
       canMakeTimers_ = false;
       if (animationUpdateTimer_ != null) {
@@ -100,9 +99,10 @@ class ScrollerPanel extends JPanel {
          snapBackTimer_.cancel();
       }
       display_.unregisterForEvents(HEIGHT);
+      for (AxisScroller s: scrollers_) {
+         s.onDisplayClose();
+      }
       display_ = null;
-      DisplayWindowNew.removeKeyListenersRecursively(this); //remove added key listeners
-
    }
 
    /**
@@ -337,4 +337,5 @@ class ScrollerPanel extends JPanel {
          }
       }
    }
+
 }

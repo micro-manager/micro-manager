@@ -45,8 +45,7 @@ class MagellanCanvas {
       });
    }
 
-   @Subscribe
-   public void onDisplayClose(DisplayClosingEvent e) {
+   public void onDisplayClose() {
       for (ComponentListener l : canvas_.getComponentListeners()) {
          canvas_.removeComponentListener(l);
       }
@@ -62,7 +61,6 @@ class MagellanCanvas {
       for (MouseWheelListener l : canvas_.getMouseWheelListeners()) {
          canvas_.removeMouseWheelListener(l);
       }
-      DisplayWindowNew.removeKeyListenersRecursively(canvas_); //remove added key listeners
 
       canvas_ = null;
       display_.unregisterForEvents(this);

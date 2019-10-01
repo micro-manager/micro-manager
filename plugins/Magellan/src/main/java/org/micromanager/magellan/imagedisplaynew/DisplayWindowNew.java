@@ -89,6 +89,9 @@ class DisplayWindowNew implements WindowListener {
 
    @Subscribe
    public void onDisplayClose(DisplayClosingEvent e) {
+      removeKeyListenersRecursively(window_); //remove added key listeners
+      System.out.println("\n");
+
       //For some reason these two lines appear to be essential for preventing memory leaks after closing the display
       for (Component c : leftPanel_.getComponents()) {
          leftPanel_.remove(c);
@@ -99,7 +102,9 @@ class DisplayWindowNew implements WindowListener {
       for (FocusListener l : window_.getFocusListeners()) {
          window_.removeFocusListener(l);
       }
-      removeKeyListenersRecursively(window_); //remove added key listeners
+
+      subImageControls_.onDisplayClose();
+      sideControls_.onDisplayClose();
 
       window_.removeWindowListener(this);
       display_.unregisterForEvents(this);
@@ -111,10 +116,28 @@ class DisplayWindowNew implements WindowListener {
       window_.dispose();
       window_.repaint();
       window_ = null;
+      System.gc();
+//      reclose();
       //TODO: check for memory leaks
       //TODO: try cointually resubmitting dispose until window actually gone
    }
 
+//   private void reclose() {
+//      if (window_.isVisible()) {
+//         SwingUtilities.invokeLater(new Runnable() {
+//            @Override
+//            public void run() {
+//               window_.dispose();
+//               window_.repaint();
+//               System.out.println("Reclosed");
+//               reclose();
+//            }
+//         });
+//
+//      } else {
+//         window_ = null;
+//      }
+//   }
    @Subscribe
    public void onScrollersAdded(final ScrollersAddedEvent e
    ) {
@@ -278,7 +301,7 @@ class DisplayWindowNew implements WindowListener {
       }
    }
 
-   public static void removeKeyListenersRecursively(Component c) {
+   private static void removeKeyListenersRecursively(Component c) {
       for (KeyListener kl : c.getKeyListeners()) {
          c.removeKeyListener(kl);
       }
@@ -318,7 +341,9 @@ class DisplayWindowNew implements WindowListener {
          @Override
          public void mouseMoved(MouseEvent e) {
             currentMouseLocation_ = e.getPoint();
-            display_.redrawOverlay();
+            if (display_.getOverlayMode() == EXPLORE) {
+               display_.redrawOverlay();
+            }
          }
       });
 
@@ -340,6 +365,7 @@ class DisplayWindowNew implements WindowListener {
             } else if (SwingUtilities.isLeftMouseButton(e)) {
                mouseDragStartPointLeft_ = e.getPoint();
             }
+            display_.redrawOverlay();
          }
 
          @Override
@@ -347,6 +373,7 @@ class DisplayWindowNew implements WindowListener {
             mouseReleasedActions(e);
             mouseDragStartPointLeft_ = null;
             mouseDragStartPointRight_ = null;
+            display_.redrawOverlay();
          }
 
          @Override
@@ -404,7 +431,7 @@ class DisplayWindowNew implements WindowListener {
          } else if (SwingUtilities.isLeftMouseButton(e)) {
             //convert to real coordinates in 3D space
             //Click point --> full res pixel point --> stage coordinate
-            Point2D.Double stagePos = display_.stageCoordFromImageCoords( e.getPoint().x, e.getPoint().y);
+            Point2D.Double stagePos = display_.stageCoordFromImageCoords(e.getPoint().x, e.getPoint().y);
             double z = display_.getZCoordinateOfDisplayedSlice();
             if (currentSurface == null) {
                Log.log("Can't add point--No surface selected", true);
@@ -413,11 +440,12 @@ class DisplayWindowNew implements WindowListener {
             }
          }
       }
-      if (mouseDragging_ && SwingUtilities.isRightMouseButton(e)) {
-         //drag event finished, make sure pixels updated
-         display_.recomputeDisplayedImage();
-      }
+//      if (mouseDragging_ && SwingUtilities.isRightMouseButton(e)) {
+//         //drag event finished, make sure pixels updated
+//         display_.recomputeDisplayedImage();
+//      }
       mouseDragging_ = false;
+      display_.redrawOverlay();
    }
 
    private void mouseDraggedActions(MouseEvent e) {
@@ -441,8 +469,8 @@ class DisplayWindowNew implements WindowListener {
             currentGrid.translate(p1.x - p0.x, p1.y - p0.y);
             mouseDragStartPointLeft_ = currentPoint;
          }
-         display_.redrawOverlay();
       }
+      display_.redrawOverlay();
    }
 
    MagellanCanvas getCanvas() {

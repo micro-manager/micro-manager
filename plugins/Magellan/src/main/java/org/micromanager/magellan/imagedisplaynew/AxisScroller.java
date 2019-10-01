@@ -115,17 +115,13 @@ public class AxisScroller extends JPanel {
 
    }
 
-   @Subscribe
-   public void onDisplayClose(DisplayClosingEvent e) {
+   public void onDisplayClose() {
       for (MouseListener l : animateIcon_.getMouseListeners()) {
          animateIcon_.removeMouseListener(l);
       }
-      for (AdjustmentListener l : scrollbar_.getAdjustmentListeners()) {
-         scrollbar_.removeAdjustmentListener(l);
-      }
+         scrollbar_.removeAdjustmentListener(adjustmentListener_);
       setIsAnimated(false);
       display_.unregisterForEvents(this);
-            DisplayWindowNew.removeKeyListenersRecursively(this); //remove added key listeners
 
       display_ = null;
       scrollbar_ = null;
