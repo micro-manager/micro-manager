@@ -144,7 +144,7 @@ public final class PropertyEditor extends MMFrame {
       
       refreshButton.setFont(defaultFont);
       refreshButton.addActionListener((ActionEvent e) -> {
-         refresh();
+         refresh(false);
       });
       add(refreshButton, "width 100!, center, wrap");
 
@@ -155,10 +155,10 @@ public final class PropertyEditor extends MMFrame {
       add(scrollPane_, "span, grow, push, wrap");
    }
 
-   protected void refresh() {
+   protected void refresh(boolean fromCache) {
       data_.setFlags(flags_);
       data_.setShowUnused(true);
-      data_.refresh(false);
+      data_.refresh(fromCache);
    }
 
    @Subscribe
@@ -166,7 +166,7 @@ public final class PropertyEditor extends MMFrame {
       // avoid re-executing a refresh because of callbacks while we are
       // updating
       if (!data_.updating()) {
-         refresh();
+         refresh(false);
       }
    }
 

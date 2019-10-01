@@ -1097,7 +1097,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
             calibrationListDlg_.refreshCalibrations();
          }
          if (propertyBrowser_ != null) {
-            propertyBrowser_.refresh();
+            propertyBrowser_.refresh(fromCache);
          }
 
          ReportingUtils.logMessage("Finished updating GUI");
