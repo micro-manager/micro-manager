@@ -22,6 +22,7 @@ import com.google.common.eventbus.Subscribe;
 import ij.gui.Overlay;
 import java.awt.Image;
 import java.awt.Point;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -505,6 +506,18 @@ public final class MagellanDisplayController {
 
    int getSliceIndexFromZCoordinate(double z) {
       return acq_.getDisplaySliceIndexFromZCoordinate(z);
+   }
+
+   AffineTransform getAffineTransform() {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+   }
+
+   double getPixelSize() {
+      return imageCache_.getPixelSize_um();
+   }
+
+   void showScaleBar(boolean selected) {
+      overlayer_.setShowScaleBar(selected);
    }
 
    /**

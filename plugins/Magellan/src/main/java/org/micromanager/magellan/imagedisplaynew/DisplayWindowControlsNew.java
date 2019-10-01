@@ -774,7 +774,8 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
    }//GEN-LAST:event_exploreButton_ActionPerformed
 
    private void scaleBarCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_scaleBarCheckBox_ActionPerformed
-      // TODO Ell oveerlay to show a scale bar
+      display_.showScaleBar(scaleBarCheckBox_.isSelected());
+      display_.redrawOverlay();
    }//GEN-LAST:event_scaleBarCheckBox_ActionPerformed
 
 

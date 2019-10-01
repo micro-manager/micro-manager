@@ -53,6 +53,10 @@ public class MagellanImageCache {
       imageStorage_.setDisplaySettings(displaySettings);
    }
 
+   public double getPixelSize_um() {
+      return imageStorage_.getPixelSizeXY();
+
+   }
    /**
     * Called when images done arriving
     */

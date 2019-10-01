@@ -18,7 +18,6 @@ class MagellanDataViewCoords {
    public static final int NONE = 0, EXPLORE = 1, SURFACE_AND_GRID = 2;
 
    private volatile int overlayMode_;
-   private volatile boolean showScaleBar_ = false;
 
    private double displayImageWidth_, displayImageHeight_; //resolution of the image to be displayed 
    private double sourceDataFullResWidth_, sourceDataFullResHeight_; //resolution in pixels of the display image at full res
@@ -188,8 +187,5 @@ class MagellanDataViewCoords {
       overlayMode_ = mode;
    }
 
-   boolean showScaleBar() {
-      return showScaleBar_;
-   }
 
 }
