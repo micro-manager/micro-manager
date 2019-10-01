@@ -15,9 +15,11 @@ import java.util.HashMap;
 
       // Maps axis labels to their positions. 
       private HashMap<String, Integer> axisToPosition_;
+      public final boolean fromHuman_;
 
-      public SetImageEvent(HashMap<String, Integer> axisToPosition) {
+      public SetImageEvent(HashMap<String, Integer> axisToPosition, boolean fromHuman) {
          axisToPosition_ = axisToPosition;
+         fromHuman_ = fromHuman;
       }
 
       /**

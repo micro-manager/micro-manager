@@ -253,10 +253,10 @@ public final class MagellanDisplayController {
          }
       } else if (displaySizeOld.x != 0 && displaySizeOld.y != 0) {
          newSourceX = source.x * (e.w / (double) displaySizeOld.x);
-         newSourceY = source.y * ( e.h / (double) displaySizeOld.y);
+         newSourceY = source.y * (e.h / (double) displaySizeOld.y);
       } else {
-         newSourceX = source.x ;
-         newSourceY = source.y ;
+         newSourceX = source.x;
+         newSourceY = source.y;
       }
       //move into visible area
       viewCoords_.setViewOffset(
@@ -283,7 +283,7 @@ public final class MagellanDisplayController {
       edtRunnablePool_.invokeLaterWithCoalescence(
               new MagellanDisplayController.ExpandDisplayRangeCoalescentRunnable(event));
       //move scrollbars to new position
-      postEvent(new SetImageEvent(event.axisToPosition_));
+      postEvent(new SetImageEvent(event.axisToPosition_, false));
    }
 
    /**
@@ -291,10 +291,11 @@ public final class MagellanDisplayController {
     */
    @Subscribe
    public void onSetImageEvent(final SetImageEvent event) {
-      viewCoords_.setAxisPosition("z", event.getPositionForAxis("z"));
-      viewCoords_.setAxisPosition("c", event.getPositionForAxis("c"));
-      viewCoords_.setAxisPosition("t", event.getPositionForAxis("t"));
-      viewCoords_.setAxisPosition("r", event.getPositionForAxis("r"));
+      for (String axis : new String[]{"c", "z", "t", "r"}) {
+         if (!displayWindow_.isScrollerAxisLocked(axis) || event.fromHuman_) {
+            viewCoords_.setAxisPosition(axis, event.getPositionForAxis(axis));
+         }
+      }
       displayWindow_.updateExploreZControls(event.getPositionForAxis("z"));
       recomputeDisplayedImage();
    }
@@ -329,11 +330,11 @@ public final class MagellanDisplayController {
    }
 
    public void superlockAllScrollers() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      displayWindow_.superlockAllScrollers();
    }
 
    public void unlockAllScroller() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      displayWindow_.unlockAllScrollers();
    }
 
    public Point2D.Double getStageCoordinateOfViewCenter() {
@@ -394,9 +395,9 @@ public final class MagellanDisplayController {
       return imageCache_.isRGB();
    }
 
-   Point2D.Double stageCoordFromImageCoords( int x, int y) {
-      long newX =  (long) (x / viewCoords_.getDisplayToFullScaleFactor() + viewCoords_.getViewOffset().x) ;
-      long newY = (long) (y / viewCoords_.getDisplayToFullScaleFactor() + viewCoords_.getViewOffset().y) ;
+   Point2D.Double stageCoordFromImageCoords(int x, int y) {
+      long newX = (long) (x / viewCoords_.getDisplayToFullScaleFactor() + viewCoords_.getViewOffset().x);
+      long newY = (long) (y / viewCoords_.getDisplayToFullScaleFactor() + viewCoords_.getViewOffset().y);
       return imageCache_.stageCoordinateFromPixelCoordinate(newX, newY);
    }
 
@@ -407,9 +408,9 @@ public final class MagellanDisplayController {
    XYFootprint getCurrentEditableSurfaceOrGrid() {
       return displayWindow_.getCurrenEditableSurfaceOrGrid();
    }
-   
-    ArrayList<XYFootprint> getSurfacesAndGridsForDisplay()  {
-     return displayWindow_.getSurfacesAndGridsForDisplay();
+
+   ArrayList<XYFootprint> getSurfacesAndGridsForDisplay() {
+      return displayWindow_.getSurfacesAndGridsForDisplay();
    }
 
    double getZCoordinateOfDisplayedSlice() {
@@ -486,7 +487,7 @@ public final class MagellanDisplayController {
    }
 
    LinkedBlockingQueue<ExploreAcquisition.ExploreTileWaitingToAcquire> getTilesWaitingToAcquireAtVisibleSlice() {
-     return ((ExploreAcquisition) acq_).getTilesWaitingToAcquireAtSlice(viewCoords_.getAxisPosition("z")); 
+      return ((ExploreAcquisition) acq_).getTilesWaitingToAcquireAtSlice(viewCoords_.getAxisPosition("z"));
    }
 
    double getScale() {
@@ -500,8 +501,8 @@ public final class MagellanDisplayController {
    LongPoint imageCoordsFromStageCoords(double x, double y, MagellanDataViewCoords viewCoords) {
       LongPoint pixelCoord = imageCache_.pixelCoordsFromStageCoords(x, y);
       return new LongPoint(
-                     (long) ((pixelCoord.x_ - viewCoords.getViewOffset().x) * viewCoords.getDisplayToFullScaleFactor()),
-                     (long) ((pixelCoord.y_ - viewCoords.getViewOffset().y) * viewCoords.getDisplayToFullScaleFactor()));
+              (long) ((pixelCoord.x_ - viewCoords.getViewOffset().x) * viewCoords.getDisplayToFullScaleFactor()),
+              (long) ((pixelCoord.y_ - viewCoords.getViewOffset().y) * viewCoords.getDisplayToFullScaleFactor()));
    }
 
    int getSliceIndexFromZCoordinate(double z) {
@@ -684,7 +685,7 @@ public final class MagellanDisplayController {
       public void run() {
          //This is where most of the calculation of creating a display image happens
          Image img = imageMaker_.makeOrGetImage(view_);
-         
+
          Overlay cheapOverlay = overlayer_.createEasyPartsOfOverlay(view_);
 
          HashMap<Integer, int[]> channelHistograms = imageMaker_.getHistograms();
@@ -722,7 +723,7 @@ public final class MagellanDisplayController {
       public void run() {
          displayWindow_.displayImage(img_, hists_, view_);
          displayWindow_.displayOverlay(overlay_);
-         
+
       }
 
    }

@@ -505,4 +505,16 @@ class DisplayWindowNew implements WindowListener {
       return sideControls_.isCurrentlyEditableSurfaceGridVisible();
    }
 
+   void superlockAllScrollers() {
+      subImageControls_.superLockAllScroller();
+   }
+
+   void unlockAllScrollers() {
+      subImageControls_.unlockAllScrollers();
+   }
+
+   boolean isScrollerAxisLocked(String axis) {
+      return subImageControls_.isScrollerLocked(axis);
+   }
+
 }

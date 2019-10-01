@@ -39,7 +39,7 @@ public class ScrollbarLockIcon extends JComponent   {
     * still flash the display to newly-acquired images for a brief period.
     */
    public enum LockedState {
-      UNLOCKED, LOCKED, SUPERLOCKED
+      UNLOCKED, SUPERLOCKED
    }
 
 
@@ -80,9 +80,6 @@ public class ScrollbarLockIcon extends JComponent   {
    private void advanceLockedState() {
       switch (lockedState_) {
          case UNLOCKED:
-            setLockedState(LockedState.LOCKED);
-            break;
-         case LOCKED:
             setLockedState(LockedState.SUPERLOCKED);
             break;
          default:
@@ -106,8 +103,7 @@ public class ScrollbarLockIcon extends JComponent   {
     * Return true if we are in LOCKED or SUPERLOCKED state.
     */
    public boolean getIsLocked() {
-      return (lockedState_ == LockedState.LOCKED || 
-            lockedState_ == LockedState.SUPERLOCKED);
+      return (lockedState_ == LockedState.SUPERLOCKED);
    }
 
    /**

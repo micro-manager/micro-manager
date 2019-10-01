@@ -384,4 +384,13 @@ class NewSubImageControls extends JPanel {
       }
    }
 
+   boolean isScrollerLocked(String axis) {
+      for (AxisScroller a : scrollerPanel_.scrollers_) {
+         if (a.getAxis().equals(axis)) {
+            return a.getIsSuperlocked();
+         }
+      }
+      throw new RuntimeException("uknown axis " + axis);
+   }
+
 }

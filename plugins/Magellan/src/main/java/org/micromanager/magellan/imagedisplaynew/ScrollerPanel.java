@@ -135,7 +135,7 @@ class ScrollerPanel extends JPanel {
          lastImagePosition_.put(axis, position);
       }
       if (shouldPostEvent) {
-         display_.postEvent(new SetImageEvent(lastImagePosition_));
+         display_.postEvent(new SetImageEvent(lastImagePosition_, true));
       }
    }
 
