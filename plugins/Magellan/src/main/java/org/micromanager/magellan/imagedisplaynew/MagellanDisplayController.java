@@ -22,20 +22,28 @@ import com.google.common.eventbus.Subscribe;
 import ij.gui.Overlay;
 import java.awt.Image;
 import java.awt.Point;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.magellan.acq.Acquisition;
 import org.micromanager.magellan.acq.ExploreAcquisition;
 import org.micromanager.magellan.channels.MagellanChannelSpec;
 import org.micromanager.magellan.imagedisplay.DisplaySettings;
+import org.micromanager.magellan.imagedisplaynew.events.AnimationToggleEvent;
 import org.micromanager.magellan.imagedisplaynew.events.CanvasResizeEvent;
 import org.micromanager.magellan.imagedisplaynew.events.ContrastUpdatedEvent;
 import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
@@ -57,6 +65,8 @@ public final class MagellanDisplayController {
    private DisplayWindowNew displayWindow_;
    private ImageMaker imageMaker_;
    private MagellanOverlayer overlayer_;
+   private Timer animationTimer_;
+   private double animationFPS_ = 7;
 
    private MagellanDataViewCoords viewCoords_;
    private Acquisition acq_;
@@ -308,6 +318,23 @@ public final class MagellanDisplayController {
       recomputeDisplayedImage();
    }
 
+   @Subscribe
+   public void onAnimationToggle(AnimationToggleEvent event) {
+      if (animationTimer_ != null) {
+         animationTimer_.stop();
+      }
+      if (event.getIsAnimated()) {
+         animationTimer_ = new Timer((int) (1000 / animationFPS_), new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               event.scroller_.setPosition((event.scroller_.getPosition() + 1)
+                       % (event.scroller_.getMaximum() - event.scroller_.getMinimum()));
+            }
+         });
+         animationTimer_.start();
+      }
+   }
+
    public void recomputeDisplayedImage() {
       displayCalculationExecutor_.invokeAsLateAsPossibleWithCoalescence(new DisplayImageComputationRunnable());
    }
@@ -348,7 +375,13 @@ public final class MagellanDisplayController {
    }
 
    public void setAnimateFPS(double doubleValue) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      animationFPS_ = doubleValue;
+      if (animationTimer_ != null) {
+         ActionListener action = animationTimer_.getActionListeners()[0];
+         animationTimer_.stop();
+         animationTimer_ = new Timer((int) (1000 / animationFPS_), action);
+         animationTimer_.start();
+      }
    }
 
    public void acquireTileAtCurrentPosition() {
@@ -356,7 +389,15 @@ public final class MagellanDisplayController {
    }
 
    void abortAcquisition() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      if (acq_ != null && !acq_.isFinished()) {
+         int result = JOptionPane.showConfirmDialog(null, "Finish acquisition?",
+                 "Finish Current Acquisition", JOptionPane.OK_CANCEL_OPTION);
+         if (result == JOptionPane.OK_OPTION) {
+            acq_.abort();
+         } else {
+            return;
+         }
+      }
    }
 
    void togglePauseAcquisition() {
@@ -564,6 +605,7 @@ public final class MagellanDisplayController {
             }
          });
       } else {
+         //check to stop acquisiton?, return here if the attempt to close window unsuccesslful
          if (acq_ != null && !acq_.isFinished()) {
             int result = JOptionPane.showConfirmDialog(null, "Finish acquisition?",
                     "Finish Current Acquisition", JOptionPane.OK_CANCEL_OPTION);
@@ -573,7 +615,6 @@ public final class MagellanDisplayController {
                return;
             }
          }
-         //TODO: check to stop acquisiton?, return here if the attempt to close window unsuccesslful
 
          close();
       }
@@ -598,6 +639,11 @@ public final class MagellanDisplayController {
 
       overlayer_.shutdown();
       overlayer_ = null;
+
+      if (animationTimer_ != null) {
+         animationTimer_.stop();
+      }
+      animationTimer_ = null;
 
       imageCache_.close();
       imageCache_ = null;

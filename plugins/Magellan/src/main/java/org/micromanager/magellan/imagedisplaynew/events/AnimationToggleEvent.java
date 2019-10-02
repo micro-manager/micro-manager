@@ -16,7 +16,6 @@ import org.micromanager.magellan.imagedisplaynew.MagellanDisplayController;
     */
    private boolean isAnimated_;
    public AxisScroller scroller_;
-   public MagellanDisplayController display_;
 
    
    public AnimationToggleEvent(AxisScroller scroller, boolean isAnimated) {
