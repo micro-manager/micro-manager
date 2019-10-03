@@ -26,7 +26,6 @@ class MagellanDataViewCoords {
    final private HashMap<Integer, String> channelNames_ = new HashMap<Integer, String>();
    private int resolutionIndex_;
    private MagellanImageCache cache_;
-   private volatile boolean compositeMode_ = true;
 
    //Parameters that track what part of the dataset is being viewed
    public final long xMax_, yMax_, xMin_, yMin_;
@@ -169,7 +168,6 @@ class MagellanDataViewCoords {
       view.yView_ = yView_;
       view.resolutionIndex_ = resolutionIndex_;
       view.overlayMode_ = overlayMode_;
-      view.compositeMode_ = compositeMode_;
       return view;
    }
 
@@ -188,14 +186,5 @@ class MagellanDataViewCoords {
    void setOverlayMode(int mode) {
       overlayMode_ = mode;
    }
-
-   void setCompositeMode(boolean selected) {
-      compositeMode_ = selected;
-   }
-
-   boolean getCompositeMode() {
-      return compositeMode_;
-   }
-
 
 }

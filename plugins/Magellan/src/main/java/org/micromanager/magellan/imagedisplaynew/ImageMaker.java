@@ -248,11 +248,12 @@ class ImageMaker {
                contrastMin_ = pixelMin_;
                contrastMax_ = pixelMax_;
             }
+            displaySettings_.setContrastMin(channelName_, contrastMin_);
+            displaySettings_.setContrastMax(channelName_, contrastMax_);
             //need to redo this with autoscaled contrast now
             create8BitImage();
             processHistogram();
          }
-         System.out.println(contrastMax_);
          lut = makeLUT(displaySettings_.getColor(channelName_), displaySettings_.getContrastGamma(channelName_));
          splitLUTRGB();
       }

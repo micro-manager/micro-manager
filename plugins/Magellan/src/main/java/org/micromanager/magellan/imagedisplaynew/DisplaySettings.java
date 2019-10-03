@@ -19,10 +19,8 @@ package org.micromanager.magellan.imagedisplaynew;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.magellan.channels.MagellanChannelSpec;
@@ -242,7 +240,7 @@ public class DisplaySettings {
                   if (!t.equals(ALL_CHANNELS_SETTINGS_KEY)) {
                      try {
                         json_.getJSONObject(t).put("Max", contrastMax);
-                        json_.getJSONObject(t).put("Max", Math.min(contrastMax, getContrastMin(t)));
+                        json_.getJSONObject(t).put("Min", Math.min(contrastMax, getContrastMin(t)));
 
                      } catch (JSONException ex) {
                         throw new RuntimeException("Couldnt set display setting");
@@ -273,6 +271,16 @@ public class DisplaySettings {
       synchronized (this) {
          try {
             return json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).optBoolean(LOG_HIST, true);
+         } catch (JSONException ex) {
+            throw new RuntimeException(ex);
+         }
+      }
+   }
+
+   boolean isCompositeMode() {
+      synchronized (this) {
+         try {
+            return json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).optBoolean(COMPOSITE, true);
          } catch (JSONException ex) {
             throw new RuntimeException(ex);
          }
@@ -333,6 +341,36 @@ public class DisplaySettings {
       }
    }
 
+   void setIgnoreOutliersPercentage(double percent) {
+      synchronized (this) {
+         try {
+            json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).put(IGNORE_PERCENTAGE, percent);
+         } catch (JSONException ex) {
+            throw new RuntimeException("Couldnt set autoscale");
+         }
+      }
+   }
+
+   void setIgnoreOutliers(boolean b) {
+      synchronized (this) {
+         try {
+            json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).put(IGNORE_OUTLIERS, b);
+         } catch (JSONException ex) {
+            throw new RuntimeException("Couldnt set autoscale");
+         }
+      }
+   }
+
+   void setLogHist(boolean b) {
+      synchronized (this) {
+         try {
+            json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).put(LOG_HIST, b);
+         } catch (JSONException ex) {
+            throw new RuntimeException("Couldnt set autoscale");
+         }
+      }
+   }
+
    void setAutoscale(boolean b) {
       synchronized (this) {
          try {
@@ -343,8 +381,24 @@ public class DisplaySettings {
       }
    }
 
-   void setChannelDisplayModeFromFirst() {
-      //TODO
+   void setSyncChannels(boolean b) {
+      synchronized (this) {
+         try {
+            json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).put(SYNC_CHANNELS, b);
+         } catch (JSONException ex) {
+            throw new RuntimeException("Couldnt set autoscale");
+         }
+      }
+   }
+
+   void setCompositeMode(boolean b) {
+      synchronized (this) {
+         try {
+            json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).put(COMPOSITE, b);
+         } catch (JSONException ex) {
+            throw new RuntimeException("Couldnt set autoscale");
+         }
+      }
    }
 
 }

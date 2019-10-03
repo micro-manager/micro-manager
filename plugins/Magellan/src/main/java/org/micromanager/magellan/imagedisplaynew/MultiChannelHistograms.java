@@ -36,7 +36,6 @@ final class MultiChannelHistograms extends JPanel {
    private HashMap<Integer, ChannelControlPanel> ccpList_;
    private MagellanDisplayController display_;
    private boolean updatingCombos_ = false;
-   private HistogramControlsState hcs_;
    private ContrastPanel contrastPanel_;
    private DisplaySettings dispSettings_;
 
@@ -45,7 +44,6 @@ final class MultiChannelHistograms extends JPanel {
       display_ = disp;
 //      display_.registerForEvents(this);
       dispSettings_ = display_.getDisplaySettings();
-      hcs_ = contrastPanel.getHistogramControlsState();
 
       this.setLayout(new GridLayout(1, 1));
       contrastPanel_ = contrastPanel;
@@ -65,7 +63,6 @@ final class MultiChannelHistograms extends JPanel {
       display_ = null;
 
       ccpList_ = null;
-      hcs_ = null;
       contrastPanel_ = null;
       dispSettings_ = null;
    }
@@ -112,34 +109,6 @@ final class MultiChannelHistograms extends JPanel {
       this.setPreferredSize(dim);
       //Dunno if this is even needed
       contrastPanel_.revalidate();
-   }
-
-   public void updateOtherDisplayCombos(int selectedIndex) {
-      if (updatingCombos_) {
-         return;
-      }
-      updatingCombos_ = true;
-      for (int i = 0; i < ccpList_.size(); i++) {
-         ccpList_.get(i).setDisplayComboIndex(selectedIndex);
-      }
-      updatingCombos_ = false;
-   }
-
-   public void setChannelDisplayModeFromFirst() {
-      if (ccpList_ == null || ccpList_.size() <= 1) {
-         return;
-      }
-      int displayIndex = ccpList_.get(0).getDisplayComboIndex();
-      //automatically syncs other channels
-      ccpList_.get(0).setDisplayComboIndex(displayIndex);
-   }
-
-   public void setChannelHistogramDisplayMax(int channelIndex, int histMax) {
-      if (ccpList_ == null || ccpList_.size() <= channelIndex) {
-         return;
-      }
-      int index = (int) (histMax == -1 ? 0 : Math.ceil(Math.log(histMax) / Math.log(2)) - 3);
-      ccpList_.get(channelIndex).setDisplayComboIndex(index);
    }
 
    public void autoscaleAllChannels() {

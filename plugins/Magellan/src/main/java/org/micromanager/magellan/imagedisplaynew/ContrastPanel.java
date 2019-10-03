@@ -59,7 +59,6 @@ class ContrastPanel extends JPanel {
    private JCheckBox syncChannelsCheckBox_;
    private MutablePropertyMapView prefs_;
    protected MultiChannelHistograms histograms_;
-   private HistogramControlsState histControlsState_;
    //volatile because accessed by overlayer creation thread
    private MagellanDisplayController display_;
    private JPanel contentPanel_;
@@ -75,7 +74,6 @@ class ContrastPanel extends JPanel {
       this.setLayout(new BorderLayout());
       this.add(contentPanel_, BorderLayout.CENTER);
       prefs_ = Magellan.getStudio().profile().getSettings(ContrastPanel.class);
-      histControlsState_ = createDefaultControlsState();
       initializeHistogramDisplayArea();
       showCurrentHistograms();
       initializing_ = false;
@@ -88,15 +86,10 @@ class ContrastPanel extends JPanel {
 //      this.remove(contentPanel_);
       contentPanel_ = null;
       histograms_ = null;
-      histControlsState_ = null;
    }
 
    public void addContrastControls(int channelIndex, String channelName) {
       histograms_.addContrastControls(channelIndex, channelName);
-   }
-
-   public HistogramControlsState getHistogramControlsState() {
-      return histControlsState_;
    }
 
    private void initializeHistogramDisplayArea() {
@@ -129,20 +122,23 @@ class ContrastPanel extends JPanel {
    }
 
    private void configureControls() {
-      loadControlsStates();
       logHistCheckBox_.setEnabled(true);
       syncChannelsCheckBox_.setEnabled(true);
-   }
-
-   private void loadControlsStates() {
-
-      logHistCheckBox_.setSelected(histControlsState_.logHist);
-      rejectPercentSpinner_.setValue(histControlsState_.percentToIgnore);
-      autostretchCheckBox_.setSelected(histControlsState_.autostretch);
-      compositeCheckBox_.setSelected(histControlsState_.composite);
-      rejectOutliersCheckBox_.setSelected(histControlsState_.ignoreOutliers);
-      syncChannelsCheckBox_.setSelected(histControlsState_.syncChannels);
-
+      //load control state from prefs
+      HistogramControlsState state = createDefaultControlsState();
+      autostretchCheckBox_.setSelected(state.autostretch);
+      logHistCheckBox_.setSelected(state.logHist);
+      rejectPercentSpinner_.setValue(state.percentToIgnore);
+      rejectPercentSpinner_.setEnabled(state.ignoreOutliers);
+      rejectOutliersCheckBox_.setSelected(state.ignoreOutliers);
+      syncChannelsCheckBox_.setSelected(state.syncChannels);
+      compositeCheckBox_.setSelected(state.composite);
+      //sync display settings with this
+      display_.getDisplaySettings().setAutoscale(autostretchCheckBox_.isSelected());
+      display_.getDisplaySettings().setIgnoreOutliers(rejectOutliersCheckBox_.isSelected());
+      display_.getDisplaySettings().setLogHist(logHistCheckBox_.isSelected());
+      display_.getDisplaySettings().setIgnoreOutliersPercentage((double) rejectPercentSpinner_.getValue());
+      display_.getDisplaySettings().setSyncChannels(syncChannelsCheckBox_.isSelected());
    }
 
    private void saveCheckBoxStates() {
@@ -159,11 +155,11 @@ class ContrastPanel extends JPanel {
       if (display_ == null) {
          return;
       }
-      histControlsState_.autostretch = autostretchCheckBox_.isSelected();
-      histControlsState_.ignoreOutliers = rejectOutliersCheckBox_.isSelected();
-      histControlsState_.logHist = logHistCheckBox_.isSelected();
-      histControlsState_.percentToIgnore = (Double) rejectPercentSpinner_.getValue();
-      histControlsState_.syncChannels = syncChannelsCheckBox_.isSelected();
+      display_.getDisplaySettings().setAutoscale(autostretchCheckBox_.isSelected());
+      display_.getDisplaySettings().setIgnoreOutliers(rejectOutliersCheckBox_.isSelected());
+      display_.getDisplaySettings().setLogHist(logHistCheckBox_.isSelected());
+      display_.getDisplaySettings().setIgnoreOutliersPercentage((double) rejectPercentSpinner_.getValue());
+      display_.getDisplaySettings().setSyncChannels(syncChannelsCheckBox_.isSelected());
    }
 
    private JPanel createGUI() {
@@ -262,10 +258,9 @@ class ContrastPanel extends JPanel {
       boolean synced = syncChannelsCheckBox_.isSelected();
       if (synced) {
          autostretchCheckBox_.setSelected(false);
-         autostretchCheckBox_.setEnabled(false);
+//         autostretchCheckBox_.setEnabled(false);
          if (histograms_ != null) {
             display_.getDisplaySettings().setChannelContrastFromFirst();
-            display_.getDisplaySettings().setChannelDisplayModeFromFirst();
          }
       } else {
          autostretchCheckBox_.setEnabled(true);
@@ -280,6 +275,7 @@ class ContrastPanel extends JPanel {
       rejectPercentSpinner_.setEnabled(rejectem);
       saveCheckBoxStates();
       if (autostretchCheckBox_.isSelected()) {
+         syncChannelsCheckBox_.setSelected(false);
          if (histograms_ != null) {
             histograms_.autoscaleAllChannels();
          }
@@ -309,7 +305,7 @@ class ContrastPanel extends JPanel {
    }
 
    public void disableAutostretch() {
-      display_.getDisplaySettings().setAutoscale( false);
+      display_.getDisplaySettings().setAutoscale(false);
       autostretchCheckBox_.setSelected(false);
       saveCheckBoxStates();
    }

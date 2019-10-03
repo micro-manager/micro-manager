@@ -321,7 +321,7 @@ public final class MagellanDisplayController {
    }
 
    void channelSetActive(int channelIndex, boolean selected) {
-      if (!viewCoords_.getCompositeMode()) {
+      if (!displaySettings_.isCompositeMode()) {
          if (selected) {
             viewCoords_.setAxisPosition("c", channelIndex);
             //only one channel can be active so inacivate others
@@ -372,7 +372,7 @@ public final class MagellanDisplayController {
       for (String axis : new String[]{"c", "z", "t", "r"}) {
          if (!displayWindow_.isScrollerAxisLocked(axis) || event.fromHuman_) {
             viewCoords_.setAxisPosition(axis, event.getPositionForAxis(axis));
-            if (!viewCoords_.getCompositeMode()) {
+            if (!displaySettings_.isCompositeMode()) {
                //set all channels inactive except current one
                for (Integer cIndex : viewCoords_.getChannelIndices()) {
                   displaySettings_.setActive(viewCoords_.getChannelName(cIndex),
@@ -629,7 +629,7 @@ public final class MagellanDisplayController {
    }
 
    void setCompositeMode(boolean selected) {
-      viewCoords_.setCompositeMode(selected);
+      displaySettings_.setCompositeMode(selected);
       //select all channels if composite mode is being turned on
       if (selected) {
          for (Integer cIndex : viewCoords_.getChannelIndices()) {
@@ -647,7 +647,7 @@ public final class MagellanDisplayController {
    }
 
    boolean isCompositMode() {
-      return viewCoords_.getCompositeMode();
+      return displaySettings_.isCompositeMode();
    }
 
    /**

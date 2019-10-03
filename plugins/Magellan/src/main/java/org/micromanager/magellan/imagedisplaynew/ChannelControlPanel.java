@@ -45,14 +45,11 @@ class ChannelControlPanel extends JPanel implements CursorListener {
    private MultiChannelHistograms mcHistograms_;
    private MagellanDisplayController display_;
    private JButton autoButton_;
-   private JButton zoomInButton_;
-   private JButton zoomOutButton_;
    private JCheckBox channelNameCheckbox_;
    private JLabel colorPickerLabel_;
    private JButton fullButton_;
    private JPanel histogramPanelHolder_;
    private JLabel minMaxLabel_;
-   private JComboBox histRangeComboBox_;
    private double binSize_;
    private int height_;
    private String histMaxLabel_;
@@ -62,7 +59,6 @@ class ChannelControlPanel extends JPanel implements CursorListener {
    final private int maxIntensity_;
    final private int bitDepth_;
    private Color color_;
-   private HistogramControlsState histControlState_;
    private ContrastPanel contrastPanel_;
    private final String channelName_;
    private int pixelMin_, pixelMax_;
@@ -70,7 +66,6 @@ class ChannelControlPanel extends JPanel implements CursorListener {
    public ChannelControlPanel(int channelIndex, MultiChannelHistograms mcHistograms, MagellanDisplayController disp,
            ContrastPanel contrastPanel, String name, Color color, int bitDepth) {
       channelName_ = name;
-      histControlState_ = contrastPanel.getHistogramControlsState();
       contrastPanel_ = contrastPanel;
       display_ = disp;
       disp.registerForEvents(this);
@@ -83,7 +78,6 @@ class ChannelControlPanel extends JPanel implements CursorListener {
       mcHistograms_ = mcHistograms;
       channelIndex_ = channelIndex;
       initComponents();
-      histRangeComboBox_.setSelectedIndex(0); //set it to camera depth
       channelNameCheckbox_.setSelected(display_.getDisplaySettings().isActive(channelName_));
       redraw();
    }
@@ -162,57 +156,6 @@ class ChannelControlPanel extends JPanel implements CursorListener {
       minMaxLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       minMaxLabel_.setText("Min:   Max:");
 
-      histRangeComboBox_ = new JComboBox();
-      histRangeComboBox_.setFont(new Font("", Font.PLAIN, 10));
-      histRangeComboBox_.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(final ActionEvent e) {
-            if (display_.getDisplaySettings().isSyncChannels()) {
-               mcHistograms_.updateOtherDisplayCombos(histRangeComboBox_.getSelectedIndex());
-            }
-            displayComboAction();
-         }
-      });
-      histRangeComboBox_.setModel(new DefaultComboBoxModel(new String[]{
-         "Camera Depth", "8bit (0-255)", "10bit (0-1023)",
-         "12bit (0-4095)", "14bit (0-16383)", "16bit (0-65535)"}));
-
-      zoomInButton_ = new JButton();
-//      zoomInButton_.setIcon(SwingResourceManager.getIcon( "/org/micromanager/magellan/zoom_in.png"));
-      zoomInButton_.setText("Zoom in");
-      zoomInButton_.setFont(zoomInButton_.getFont().deriveFont((float) 9));
-      zoomInButton_.setName("Zoom in on histogram");
-      zoomInButton_.setText("+");
-      zoomInButton_.setToolTipText("Zoom in on histogram");
-      zoomInButton_.setMargin(new java.awt.Insets(2, 4, 2, 4));
-      zoomInButton_.setPreferredSize(new java.awt.Dimension(40, 30));
-
-      zoomOutButton_ = new JButton();
-//      zoomOutButton_.setIcon(SwingResourceManager.getIcon("/org/micromanager/magellan/zonom_out.png"));   
-      zoomOutButton_.setText("Zoom out");
-      zoomOutButton_.setFont(zoomOutButton_.getFont().deriveFont((float) 9));
-      zoomOutButton_.setName("Zoom out on histogram");
-      zoomOutButton_.setText("-");
-      zoomOutButton_.setToolTipText("Zoom out on histogram");
-      zoomOutButton_.setMargin(new java.awt.Insets(2, 4, 2, 4));
-      zoomOutButton_.setPreferredSize(new java.awt.Dimension(40, 30));
-
-      zoomInButton_.setMaximumSize(new Dimension(22, 22));
-      zoomOutButton_.setMaximumSize(new Dimension(22, 22));
-
-      zoomInButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            zoomInAction();
-         }
-      });
-      zoomOutButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            zoomOutAction();
-         }
-      });
 
       this.setMinimumSize(MINIMUM_SIZE);
       this.setPreferredSize(MINIMUM_SIZE);
@@ -230,9 +173,6 @@ class ChannelControlPanel extends JPanel implements CursorListener {
       controlsHolderPanel_.add(controls_, BorderLayout.PAGE_START);
       GridBagLayout gbl = new GridBagLayout();
       controls_.setLayout(gbl);
-
-      JLabel histRangeLabel = new JLabel("Range:");
-      histRangeLabel.setFont(new Font("Lucida Grande", 0, 11));
 
       GridBagConstraints gbc = new GridBagConstraints();
       gbc.gridx = 0;
@@ -266,56 +206,6 @@ class ChannelControlPanel extends JPanel implements CursorListener {
       gbc.anchor = GridBagConstraints.LINE_START;
       controls_.add(line2, gbc);
 
-      JPanel line3 = new JPanel(flow);
-      line3.setPreferredSize(CONTROLS_SIZE);
-      line3.add(histRangeLabel);
-      line3.add(zoomInButton_);
-      line3.add(zoomOutButton_);
-      line3.setPreferredSize(new Dimension(CONTROLS_SIZE.width, 20));
-
-      gbc = new GridBagConstraints();
-      gbc.gridx = 0;
-      gbc.gridy = 2;
-      gbc.weightx = 1;
-      gbc.weighty = 1;
-      gbc.gridwidth = 5;
-      gbc.anchor = GridBagConstraints.LINE_START;
-      controls_.add(line3, gbc);
-
-//      gbc = new GridBagConstraints();
-//      gbc.gridx = 0;
-//      gbc.gridy = 2;
-//      gbc.weightx = 1;
-//      gbc.weighty = 1;
-//      gbc.gridwidth = 1;
-//      gbc.anchor = GridBagConstraints.LINE_START;
-//      controls_.add(histRangeLabel, gbc);
-//
-//      gbc = new GridBagConstraints();
-//      gbc.gridx = 1;
-//      gbc.gridy = 2;
-//      gbc.weightx = 0;
-//      gbc.weighty = 1;
-//      gbc.gridwidth = 1;
-//      controls_.add(zoomInButton_, gbc);
-//
-//      gbc = new GridBagConstraints();
-//      gbc.gridx = 2;
-//      gbc.gridy = 2;
-//      gbc.weightx = 0;
-//      gbc.weighty = 1;
-//      gbc.gridwidth = 1;
-//      controls_.add(zoomOutButton_, gbc);
-      gbc = new GridBagConstraints();
-      gbc.gridx = 0;
-      gbc.gridy = 3;
-      gbc.weightx = 1;
-      gbc.weighty = 1;
-      gbc.gridwidth = 5;
-      gbc.anchor = GridBagConstraints.LINE_START;
-      gbc.fill = GridBagConstraints.HORIZONTAL;
-      controls_.add(histRangeComboBox_, gbc);
-
       gbc = new GridBagConstraints();
       gbc.gridx = 0;
       gbc.gridy = 4;
@@ -329,55 +219,8 @@ class ChannelControlPanel extends JPanel implements CursorListener {
       controls_.setPreferredSize(controls_.getMinimumSize());
    }
 
-   public void setDisplayComboIndex(int index) {
-      histRangeComboBox_.setSelectedIndex(index);
-   }
-
    public String getChannelName() {
       return channelName_;
-   }
-
-   public int getDisplayComboIndex() {
-      return histRangeComboBox_.getSelectedIndex();
-   }
-
-   private void zoomInAction() {
-      int selected = histRangeComboBox_.getSelectedIndex();
-      if (selected != 0) {
-         selected--;
-      }
-      histRangeComboBox_.setSelectedIndex(selected);
-      redraw();
-
-   }
-
-   private void zoomOutAction() {
-      int selected = histRangeComboBox_.getSelectedIndex();
-      if (selected < histRangeComboBox_.getModel().getSize() - 1) {
-         selected++;
-      }
-      histRangeComboBox_.setSelectedIndex(selected);
-      redraw();
-   }
-
-   public void displayComboAction() {
-      int index = histRangeComboBox_.getSelectedIndex();
-      if (index == 0) {
-         histMax_ = maxIntensity_;
-      } else if (index == 1) {
-         histMax_ = (int) (Math.pow(2, 8) - 1);
-      } else if (index == 2) {
-         histMax_ = (int) (Math.pow(2, 10) - 1);
-      } else if (index == 3) {
-         histMax_ = (int) (Math.pow(2, 12) - 1);
-      } else if (index == 4) {
-         histMax_ = (int) (Math.pow(2, 14) - 1);
-      } else if (index == 5) {
-         histMax_ = (int) (Math.pow(2, 16) - 1);
-      }
-      binSize_ = ((double) (histMax_ + 1)) / ((double) DisplaySettings.NUM_DISPLAY_HIST_BINS);
-      histMaxLabel_ = histMax_ + "";
-      redraw();
    }
 
    private void redraw() {
