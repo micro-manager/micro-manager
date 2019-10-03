@@ -101,7 +101,7 @@ public class MagellanGUIAcquisitionSettings extends AcquisitionSettingsBase {
          s += "2D along surface";
       }
       
-      int nChannels = 1;
+      int nChannels = 0;
       String chName = channels_.nextActiveChannel(null);
       while (chName != null) {
          nChannels++;
