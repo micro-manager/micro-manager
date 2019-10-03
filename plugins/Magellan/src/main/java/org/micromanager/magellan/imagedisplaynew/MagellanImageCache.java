@@ -51,6 +51,7 @@ public class MagellanImageCache {
    private EventBus dataProviderBus_ = new EventBus();
    private ExecutorService displayCommunicationExecutor_ = Executors.newSingleThreadExecutor((Runnable r) -> new Thread(r, "Image cache thread"));
    private final boolean loadedData_;
+   private String dir_;
    
    public MagellanImageCache(String dir, JSONObject summaryMetadata, DisplaySettings displaySettings) {
       imageStorage_ = new MultiResMultipageTiffStorage(dir, summaryMetadata);
@@ -61,6 +62,7 @@ public class MagellanImageCache {
    //Constructor for opening loaded data
    public MagellanImageCache(String dir) throws IOException {
       imageStorage_ = new MultiResMultipageTiffStorage(dir);
+      dir_ = dir;
       loadedData_ = true;
    }
 
@@ -206,6 +208,9 @@ public class MagellanImageCache {
    }
 
    public String getUniqueAcqName() {
+      if (loadedData_) {
+         return dir_;
+      }
       return imageStorage_.getUniqueAcqName();
    }
 

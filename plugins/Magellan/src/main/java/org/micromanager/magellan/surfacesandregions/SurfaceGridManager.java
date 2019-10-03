@@ -16,10 +16,7 @@
 //
 package org.micromanager.magellan.surfacesandregions;
 
-import org.micromanager.magellan.gui.SurfaceGridComboBoxModel;
-import org.micromanager.magellan.gui.SurfaceGridTableModel;
 import org.micromanager.magellan.gui.GUI;
-import org.micromanager.magellan.imagedisplay.MagellanDisplay;
 import java.awt.FileDialog;
 import java.awt.geom.Point2D;
 import java.io.BufferedReader;

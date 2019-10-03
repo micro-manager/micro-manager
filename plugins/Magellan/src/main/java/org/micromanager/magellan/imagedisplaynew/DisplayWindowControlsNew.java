@@ -24,8 +24,7 @@ import org.micromanager.display.DisplaySettingsChangedEvent;
 import org.micromanager.magellan.channels.MagellanChannelSpec;
 import org.micromanager.magellan.coordinates.NoPositionsDefinedYetException;
 import org.micromanager.magellan.gui.SimpleChannelTableModel;
-import org.micromanager.magellan.imagedisplay.MetadataPanel;
-import org.micromanager.magellan.misc.ExactlyOneRowSelectionModel;
+import org.micromanager.magellan.gui.ExactlyOneRowSelectionModel;
 import org.micromanager.magellan.misc.MD;
 import org.micromanager.magellan.surfacesandregions.MultiPosGrid;
 import org.micromanager.magellan.surfacesandregions.SurfaceGridListener;
@@ -289,7 +288,7 @@ class DisplayWindowControlsNew extends javax.swing.JPanel implements SurfaceGrid
       newGridButton_ = new javax.swing.JButton();
       newSurfaceButton_ = new javax.swing.JButton();
       metadataPanel_ = new javax.swing.JPanel();
-      metadataPanelMagellan_ = new org.micromanager.magellan.imagedisplay.MetadataPanel();
+      metadataPanelMagellan_ = new org.micromanager.magellan.imagedisplaynew.MetadataPanel();
       explorePanel_ = new javax.swing.JPanel();
       jScrollPane1 = new javax.swing.JScrollPane();
       channelsTable_ = new javax.swing.JTable();
@@ -804,7 +803,7 @@ class DisplayWindowControlsNew extends javax.swing.JPanel implements SurfaceGrid
    private javax.swing.JScrollPane jScrollPane1;
    private javax.swing.JScrollPane jScrollPane2;
    private javax.swing.JCheckBox lockScrollbarsCheckBox_;
-   private org.micromanager.magellan.imagedisplay.MetadataPanel metadataPanelMagellan_;
+   private org.micromanager.magellan.imagedisplaynew.MetadataPanel metadataPanelMagellan_;
    private javax.swing.JPanel metadataPanel_;
    private javax.swing.JButton newGridButton_;
    private javax.swing.JButton newSurfaceButton_;

@@ -14,17 +14,30 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.magellan.imagedisplay;
 
-// This class provides information when the mouse moves over an image.
-public class MouseIntensityEvent {
-   public int x_;
-   public int y_;
-   public int[] intensities_;
-   public MouseIntensityEvent(int x, int y, int[] intensities) {
-      x_ = x;
-      y_ = y;
-      intensities_ = intensities;
-   }
+package org.micromanager.magellan.gui;
+
+import javax.swing.DefaultListSelectionModel;
+import javax.swing.ListSelectionModel;
+
+/**
+ *
+ * @author Henry
+ */
+public class ExactlyOneRowSelectionModel extends DefaultListSelectionModel {
+
+    public ExactlyOneRowSelectionModel () {
+       super();
+       setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+       this.setSelectionInterval(0, 0);
+    }
+
+    @Override
+    public void clearSelection() {
+    }
+
+    @Override
+    public void removeSelectionInterval(int index0, int index1) {
+    }
+
 }
-

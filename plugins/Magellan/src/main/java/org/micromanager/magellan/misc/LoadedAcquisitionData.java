@@ -18,8 +18,6 @@
 package org.micromanager.magellan.misc;
 
 import org.micromanager.magellan.imagedisplaynew.MagellanImageCache;
-import org.micromanager.magellan.datasaving.MultiResMultipageTiffStorage;
-import org.micromanager.magellan.imagedisplay.MagellanDisplay;
 import java.io.IOException;
 import java.util.List;
 import org.micromanager.magellan.imagedisplaynew.DisplaySettings;

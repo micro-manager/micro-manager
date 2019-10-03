@@ -300,7 +300,7 @@
             </DimensionLayout>
           </Layout>
           <SubComponents>
-            <Component class="org.micromanager.magellan.imagedisplay.MetadataPanel" name="metadataPanelMagellan_">
+            <Component class="org.micromanager.magellan.imagedisplaynew.MetadataPanel" name="metadataPanelMagellan_">
             </Component>
           </SubComponents>
         </Container>

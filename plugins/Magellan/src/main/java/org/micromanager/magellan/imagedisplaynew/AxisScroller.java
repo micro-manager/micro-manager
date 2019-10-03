@@ -29,8 +29,6 @@ import java.awt.event.MouseListener;
 import javax.swing.event.MouseInputAdapter;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
-import org.micromanager.magellan.imagedisplay.ScrollbarAnimateIcon;
-import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
 
 /**
  * This class provides a scrollbar and associated buttons for navigating
