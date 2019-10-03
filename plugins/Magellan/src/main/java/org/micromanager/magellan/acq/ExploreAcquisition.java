@@ -98,7 +98,6 @@ public class ExploreAcquisition extends Acquisition {
       int sliceIndex = (int) Math.round((zPos - zOrigin_) / zStep_);
       int posIndex = dataProvider_.getFullResPositionIndexFromStageCoords(xPos, yPos);
 //      controls.setZLimitSliderValues(sliceIndex);
-      // TODO: chagne the sliders to reflect what was acquired
 
       submitEvents(new int[]{(int) dataProvider_.getXYPosition(posIndex).getGridRow()},
               new int[]{(int) dataProvider_.getXYPosition(posIndex).getGridCol()}, sliceIndex, sliceIndex);

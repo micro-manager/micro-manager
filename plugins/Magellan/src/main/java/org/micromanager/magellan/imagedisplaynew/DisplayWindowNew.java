@@ -81,7 +81,7 @@ class DisplayWindowNew implements WindowListener {
       display_ = display;
       exploreAcq_ = display_.isExploreAcquisiton();
       display_.registerForEvents(this);
-      window_.setSize(1500, 700);
+      window_.setSize(1500, 800);
       window_.setVisible(true);
       window_.addWindowListener(this);
       buildInitialUI();
@@ -119,27 +119,9 @@ class DisplayWindowNew implements WindowListener {
       window_.repaint();
       window_ = null;
       System.gc();
-//      reclose();
-      //TODO: check for memory leaks
-      //TODO: try cointually resubmitting dispose until window actually gone
+
    }
 
-//   private void reclose() {
-//      if (window_.isVisible()) {
-//         SwingUtilities.invokeLater(new Runnable() {
-//            @Override
-//            public void run() {
-//               window_.dispose();
-//               window_.repaint();
-//               System.out.println("Reclosed");
-//               reclose();
-//            }
-//         });
-//
-//      } else {
-//         window_ = null;
-//      }
-//   }
    @Subscribe
    public void onScrollersAdded(final ScrollersAddedEvent e
    ) {
@@ -160,7 +142,6 @@ class DisplayWindowNew implements WindowListener {
 
       imageCanvas_ = new MagellanCanvas(display_);
       subImageControls_ = new NewSubImageControls(display_, display_.getZStep(), display_.isActiveExploreAcquisiton());
-      //TODO add channels for explore acquisitions
 
       leftPanel_ = new JPanel(new BorderLayout());
       leftPanel_.add(imageCanvas_.getCanvas(), BorderLayout.CENTER);

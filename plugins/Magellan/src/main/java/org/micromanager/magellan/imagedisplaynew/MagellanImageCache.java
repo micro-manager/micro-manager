@@ -20,9 +20,11 @@
 package org.micromanager.magellan.imagedisplaynew;
 
 import com.google.common.eventbus.EventBus;
+import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.micromanager.magellan.datasaving.MultiResMultipageTiffStorage;
@@ -174,7 +176,6 @@ public class MagellanImageCache {
          long yMax = imageStorage_.getNumRows() * tileHeight + yMin;
          return new long[]{xMin, yMin, xMax, yMax};
       }
-      //TODO: might need to figure out data limits for explore acquisitions loaded from disk
       return null; //No image bounds for explore acquisiiton
    }
 
@@ -259,6 +260,10 @@ public class MagellanImageCache {
 
    public List<String> getChannelNames() {
       return imageStorage_.getChannelNames();
+   }
+
+   Set<Point> getTileIndicesWithDataAt(int zIndex) {
+      return imageStorage_.getTileIndicesWithDataAt(zIndex);
    }
 
 }

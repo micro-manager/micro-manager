@@ -30,7 +30,6 @@ import org.micromanager.magellan.misc.Log;
  * 
  */
 public class LoadedAcquisitionData {
-   //TODO
    
    public LoadedAcquisitionData(String dir) {
       try {

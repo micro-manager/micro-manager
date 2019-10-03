@@ -41,11 +41,6 @@ import org.micromanager.magellan.misc.LongPoint;
 //      yMin_ = bounds[3];
    }
    
-//   Object getPixels(int c) {
-//      //TODO: figure out which resolution level?
-//      return provider_.getImageForDisplay(c, slice_, frame_, resolutionIndex_, xView_, yView_, displayImageWidth_, displayImageHeight_).pix;
-//   }
-   
    public int getResolutionIndex() {
       return resolutionIndex_;
    }

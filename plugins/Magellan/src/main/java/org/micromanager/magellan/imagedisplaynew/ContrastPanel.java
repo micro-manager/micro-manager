@@ -51,7 +51,7 @@ class ContrastPanel extends JPanel {
    private static final String PREF_SYNC_CHANNELS = "sync_channels";
    private static final String PREF_COMPOSITE = "composite";
    protected JScrollPane histDisplayScrollPane_;
-   private JCheckBox compositeCheckBox_; //TODO use this to change between composite and channel modes
+   private JCheckBox compositeCheckBox_; 
    private JCheckBox autostretchCheckBox_;
    private JCheckBox rejectOutliersCheckBox_;
    private JSpinner rejectPercentSpinner_;
@@ -65,8 +65,6 @@ class ContrastPanel extends JPanel {
    private boolean initializing_ = true;
 
    public ContrastPanel(MagellanDisplayController display) {
-      //TODO: this isnt right is it?
-
       histograms_ = new MultiChannelHistograms(display, this);
       display_ = display;
       display_.registerForEvents(this);

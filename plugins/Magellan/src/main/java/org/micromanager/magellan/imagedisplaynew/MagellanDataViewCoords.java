@@ -61,6 +61,10 @@ class MagellanDataViewCoords {
       return false;
    }
 
+   /**
+    * 
+    * @return 
+    */
    public Point2D.Double getDisplayImageSizeAtResLevel() {
       return new Point2D.Double(sourceDataFullResWidth_ / getDownsampleFactor(), sourceDataFullResHeight_ / getDownsampleFactor());
    }
@@ -81,6 +85,7 @@ class MagellanDataViewCoords {
 
    private void computeResIndex() {
       double resIndexFloat = Math.log(sourceDataFullResWidth_ / (double) displayImageWidth_) / Math.log(2);
+//      sourceDataFullResHeight_ / (double) displayImageHeight_
       int newResIndexInt = (int) Math.min(cache_.getMaxResolutionIndex(), Math.max(0, Math.ceil(resIndexFloat)));
       resolutionIndex_ = newResIndexInt;
    }

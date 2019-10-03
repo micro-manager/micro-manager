@@ -33,11 +33,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JPanel;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
-import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.magellan.acq.ExploreAcquisition;
 import org.micromanager.magellan.coordinates.XYStagePosition;
 import org.micromanager.magellan.misc.Log;
@@ -53,7 +50,7 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
  */
 public class MagellanOverlayer {
 
-   private final static int INTERP_POINT_DIAMETER = 12;
+   private final static int INTERP_POINT_DIAMETER = 14;
    private final static int INITIAL_NUM_INTERPOLATION_DIVISIONS = 10;
 
    private final static Color ACTIVE_OBJECT_COLOR = Color.cyan;
@@ -461,7 +458,7 @@ public class MagellanOverlayer {
            int displayPixPerInterpTile, MagellanDataViewCoords viewCoords) throws InterruptedException {
       int width = (int) viewCoords.getDisplayImageSize().x;
       int height = (int) viewCoords.getDisplayImageSize().y;
-      double sliceZ = viewCoords.getAxisPosition("z");
+      double sliceZ = display_.getZCoordinateOfDisplayedSlice();
       double zStep = display_.getZStep();
 
       //Make numTestPoints a factor of image size for clean display of surface

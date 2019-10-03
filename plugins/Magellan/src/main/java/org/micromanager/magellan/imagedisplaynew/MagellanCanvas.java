@@ -32,7 +32,6 @@ class MagellanCanvas {
 
    public MagellanCanvas(MagellanDisplayController display) {
       canvas_ = createCanvas();
-      //TODO: update size on 
       display.registerForEvents(this);
       display_ = display;
 

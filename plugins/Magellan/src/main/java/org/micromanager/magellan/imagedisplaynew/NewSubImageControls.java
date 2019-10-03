@@ -111,7 +111,6 @@ class NewSubImageControls extends JPanel {
    /**
     * used for forcing scrollbars to show when opening dataset on disk
     */
-   //TODO: add in negative indices
    public void makeScrollersAppear(int numChannels, int numSlices, int numFrames) {
       for (AxisScroller s : scrollerPanel_.scrollers_) {
          if (numChannels > 1 && s.getAxis().equals("c")) {
