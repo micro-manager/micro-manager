@@ -5,16 +5,10 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
-import java.util.ArrayList;
 import java.util.HashMap;
 import javax.swing.JPanel;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.micromanager.magellan.imagedisplay.DisplaySettings;
 import org.micromanager.magellan.imagedisplaynew.MagellanDisplayController;
 import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
-import org.micromanager.magellan.imagedisplaynew.events.MagellanNewImageEvent;
-import org.micromanager.magellan.misc.Log;
 
 ///////////////////////////////////////////////////////////////////////////////
 //FILE:          MultiChannelHistograms.java
@@ -39,8 +33,6 @@ import org.micromanager.magellan.misc.Log;
 //
 final class MultiChannelHistograms extends JPanel {
 
-   private static final int SLOW_HIST_UPDATE_INTERVAL_MS = 1000;
-   private long lastUpdateTime_;
    private HashMap<Integer, ChannelControlPanel> ccpList_;
    private MagellanDisplayController display_;
    private boolean updatingCombos_ = false;
@@ -51,6 +43,7 @@ final class MultiChannelHistograms extends JPanel {
    public MultiChannelHistograms(MagellanDisplayController disp, ContrastPanel contrastPanel) {
       super();
       display_ = disp;
+//      display_.registerForEvents(this);
       dispSettings_ = display_.getDisplaySettings();
       hcs_ = contrastPanel.getHistogramControlsState();
 
@@ -59,7 +52,13 @@ final class MultiChannelHistograms extends JPanel {
       ccpList_ = new HashMap<Integer, ChannelControlPanel>();
 //      setupChannelControls();
    }
-
+   
+   public void displaySettingsChanged() {
+      for (ChannelControlPanel c : ccpList_.values()) {
+         c.updateActiveCheckbox(dispSettings_.isActive(c.getChannelName()));
+      }
+   }
+   
    @Subscribe
    public void onDisplayClose(DisplayClosingEvent e) {
       display_.unregisterForEvents(this);
@@ -115,26 +114,6 @@ final class MultiChannelHistograms extends JPanel {
       contrastPanel_.revalidate();
    }
 
-   public void fullScaleChannels() {
-      if (ccpList_ == null) {
-         return;
-      }
-      for (ChannelControlPanel c : ccpList_.values()) {
-         c.setFullScale();
-      }
-      applyLUTToImage();
-   }
-
-   public void applyContrastToAllChannels(int min, int max, double gamma) {
-      if (ccpList_ == null) {
-         return;
-      }
-      for (ChannelControlPanel c : ccpList_.values()) {
-         c.setContrast(min, max, gamma);
-      }
-      applyLUTToImage();
-   }
-
    public void updateOtherDisplayCombos(int selectedIndex) {
       if (updatingCombos_) {
          return;
@@ -155,41 +134,12 @@ final class MultiChannelHistograms extends JPanel {
       ccpList_.get(0).setDisplayComboIndex(displayIndex);
    }
 
-   public void setChannelContrastFromFirst() {
-      if (ccpList_ == null || ccpList_.size() <= 1) {
-         return;
-      }
-      int min = ccpList_.get(0).getContrastMin();
-      int max = ccpList_.get(0).getContrastMax();
-      double gamma = ccpList_.get(0).getContrastGamma();
-      for (int i = 1; i < ccpList_.size(); i++) {
-         ccpList_.get(i).setContrast(min, max, gamma);
-      }
-      applyLUTToImage();
-   }
-
    public void setChannelHistogramDisplayMax(int channelIndex, int histMax) {
       if (ccpList_ == null || ccpList_.size() <= channelIndex) {
          return;
       }
       int index = (int) (histMax == -1 ? 0 : Math.ceil(Math.log(histMax) / Math.log(2)) - 3);
       ccpList_.get(channelIndex).setDisplayComboIndex(index);
-   }
-
-   public void applyLUTToImage() {
-      if (ccpList_ == null) {
-         return;
-      }
-      for (ChannelControlPanel c : ccpList_.values()) {
-         c.applyChannelLUTToImage();
-      }
-   }
-
-   public void setChannelContrast(int channelIndex, int min, int max, double gamma) {
-      if (channelIndex >= ccpList_.size()) {
-         return;
-      }
-      ccpList_.get(channelIndex).setContrast(min, max, gamma);
    }
 
    public void autoscaleAllChannels() {
@@ -208,21 +158,13 @@ final class MultiChannelHistograms extends JPanel {
       }
    }
 
-   public void autostretch() {
-      if (ccpList_ != null) {
-         for (ChannelControlPanel c : ccpList_.values()) {
-            c.autostretch();
-         }
-      }
-   }
-
    public int getNumberOfChannels() {
       return ccpList_.size();
    }
 
-   void updateHistogramData(HashMap<Integer, int[]> hists) {
+   void updateHistogramData(HashMap<Integer, int[]> hists, HashMap<Integer, Integer> mins, HashMap<Integer, Integer> maxs) {
       for (Integer i : hists.keySet()) {
-         ccpList_.get(i).updateHistogram(hists.get(i));             
+         ccpList_.get(i).updateHistogram(hists.get(i), mins.get(i), maxs.get(i));             
       }
    }
 }

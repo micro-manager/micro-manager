@@ -21,6 +21,9 @@ import org.micromanager.magellan.imagedisplaynew.MagellanImageCache;
 import org.micromanager.magellan.datasaving.MultiResMultipageTiffStorage;
 import org.micromanager.magellan.imagedisplay.MagellanDisplay;
 import java.io.IOException;
+import java.util.List;
+import org.micromanager.magellan.imagedisplaynew.DisplaySettings;
+import org.micromanager.magellan.imagedisplaynew.MagellanDisplayController;
 import org.micromanager.magellan.misc.Log;
 
 /**
@@ -29,16 +32,19 @@ import org.micromanager.magellan.misc.Log;
 public class LoadedAcquisitionData {
    //TODO
    
-//   public LoadedAcquisitionData(String dir) {
-//      try {
-//         MultiResMultipageTiffStorage storage = new MultiResMultipageTiffStorage(dir);
-//         MagellanImageCache imageCache = new MagellanImageCache(storage);
-//         imageCache.setSummaryMetadata(storage.getSummaryMetadata());
-//         new MagellanDisplay(imageCache, null, storage.getSummaryMetadata(), storage, storage.getDisplaySettings());
-//      } catch (IOException ex) {
-//         Log.log("Couldn't open acquisition", true);
-//      }
-//   }
+   public LoadedAcquisitionData(String dir) {
+      try {
+         MagellanImageCache imageCache = new MagellanImageCache(dir);
+         int minZ = imageCache.getMinZIndexLoadedData();
+         int maxZ = imageCache.getMaxZIndexLoadedData();
+         List<String> channelNames = imageCache.getChannelNames();
+         int nFrames = imageCache.getNumChannels();
+         MagellanDisplayController controller = new MagellanDisplayController(imageCache, new DisplaySettings(imageCache.getDisplayJSON()), null);
+         controller.setLoadedDataScrollbarBounds(channelNames, nFrames, minZ, maxZ);
+      } catch (IOException ex) {
+         Log.log("Couldn't open acquisition", true);
+      }
+   }
    
    
 }

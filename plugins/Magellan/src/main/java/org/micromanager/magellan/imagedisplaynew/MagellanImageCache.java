@@ -21,6 +21,7 @@ package org.micromanager.magellan.imagedisplaynew;
 
 import com.google.common.eventbus.EventBus;
 import java.awt.geom.Point2D;
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -30,8 +31,8 @@ import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.magellan.coordinates.XYStagePosition;
-import org.micromanager.magellan.imagedisplay.DisplaySettings;
 import org.micromanager.magellan.imagedisplaynew.events.ImageCacheClosingEvent;
+import org.micromanager.magellan.imagedisplaynew.events.ImageCacheFinishedEvent;
 import org.micromanager.magellan.imagedisplaynew.events.MagellanNewImageEvent;
 import org.micromanager.magellan.misc.Log;
 import org.micromanager.magellan.misc.LongPoint;
@@ -47,10 +48,18 @@ public class MagellanImageCache {
    private MultiResMultipageTiffStorage imageStorage_;
    private EventBus dataProviderBus_ = new EventBus();
    private ExecutorService displayCommunicationExecutor_ = Executors.newSingleThreadExecutor((Runnable r) -> new Thread(r, "Image cache thread"));
-
+   private final boolean loadedData_;
+   
    public MagellanImageCache(String dir, JSONObject summaryMetadata, DisplaySettings displaySettings) {
       imageStorage_ = new MultiResMultipageTiffStorage(dir, summaryMetadata);
       imageStorage_.setDisplaySettings(displaySettings);
+      loadedData_ = false;
+   }
+   
+   //Constructor for opening loaded data
+   public MagellanImageCache(String dir) throws IOException {
+      imageStorage_ = new MultiResMultipageTiffStorage(dir);
+      loadedData_ = true;
    }
 
    public double getPixelSize_um() {
@@ -64,6 +73,7 @@ public class MagellanImageCache {
       if (!imageStorage_.isFinished()) {
          imageStorage_.finishedWriting();
       }
+      dataProviderBus_.post(new ImageCacheFinishedEvent());
    }
 
    public boolean isFinished() {
@@ -74,9 +84,9 @@ public class MagellanImageCache {
       return imageStorage_.getDiskLocation();
    }
 
-   public JSONObject getDisplayAndComments() {
+   public JSONObject getDisplayJSON() {
       try {
-         return new JSONObject(imageStorage_.getDisplaySettings().toString());
+         return imageStorage_.getDisplaySettings() == null ? null : new JSONObject(imageStorage_.getDisplaySettings().toString());
       } catch (JSONException ex) {
          throw new RuntimeException("THis shouldnt happen");
       }
@@ -149,7 +159,7 @@ public class MagellanImageCache {
    }
 
    public boolean isXYBounded() {
-      return !MD.isExploreAcq(imageStorage_.getSummaryMetadata());
+      return loadedData_ || !isExploreAcquisition();
    }
 
    public long[] getImageBounds() {
@@ -157,6 +167,12 @@ public class MagellanImageCache {
       int tileWidth = imageStorage_.getTileWidth();
       if (!isExploreAcquisition()) {
          return new long[]{0, 0, imageStorage_.getNumCols() * tileWidth, imageStorage_.getNumRows() * tileHeight};
+      } else if (loadedData_) {
+         long yMin = (long) (imageStorage_.getMinRow() * tileHeight);
+         long xMin = (long) (imageStorage_.getMinCol() * tileWidth);
+         long xMax = imageStorage_.getNumCols() * tileWidth + xMin;
+         long yMax = imageStorage_.getNumRows() * tileHeight + yMin;
+         return new long[]{xMin, yMin, xMax, yMax};
       }
       //TODO: might need to figure out data limits for explore acquisitions loaded from disk
       return null; //No image bounds for explore acquisiiton
@@ -223,6 +239,26 @@ public class MagellanImageCache {
    Point2D.Double getFullResolutionSize() {
       long[] bounds = getImageBounds();
       return new Point2D.Double(bounds[2] - bounds[0], bounds[3] - bounds[1]);
+   }
+
+   public int getNumChannels() {
+      return imageStorage_.getNumChannels();
+   }
+   
+   public int getNumFrames() {
+      return imageStorage_.getNumFrames();
+   }
+   
+   public int getMinZIndexLoadedData() {
+      return imageStorage_.getMinSliceIndexOpenedDataset();
+   }
+   
+  public int getMaxZIndexLoadedData() {
+      return imageStorage_.getMaxSliceIndexOpenedDataset();
+   }
+
+   public List<String> getChannelNames() {
+      return imageStorage_.getChannelNames();
    }
 
 }

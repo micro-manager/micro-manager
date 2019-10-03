@@ -37,7 +37,9 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import org.json.JSONObject;
 import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
+import org.micromanager.magellan.imagedisplaynew.events.MagellanScrollbarPosition;
 import org.micromanager.magellan.misc.Log;
 import org.micromanager.magellan.surfacesandregions.MultiPosGrid;
 import org.micromanager.magellan.surfacesandregions.SurfaceInterpolator;
@@ -145,6 +147,10 @@ class DisplayWindowNew implements WindowListener {
       window_.revalidate();
    }
 
+   public void setTitle(String title) {
+      window_.setTitle(title);
+   }
+
    public void updateExploreZControls(int zIndex) {
       subImageControls_.updateExploreZControls(zIndex);
    }
@@ -153,7 +159,7 @@ class DisplayWindowNew implements WindowListener {
       window_.setLayout(new BorderLayout());
 
       imageCanvas_ = new MagellanCanvas(display_);
-      subImageControls_ = new NewSubImageControls(display_, display_.getZStep(), display_.isExploreAcquisiton());
+      subImageControls_ = new NewSubImageControls(display_, display_.getZStep(), display_.isActiveExploreAcquisiton());
       //TODO add channels for explore acquisitions
 
       leftPanel_ = new JPanel(new BorderLayout());
@@ -162,7 +168,7 @@ class DisplayWindowNew implements WindowListener {
       window_.add(leftPanel_, BorderLayout.CENTER);
 
       DisplayWindowControlsNew sideControls = new DisplayWindowControlsNew(display_,
-              display_.isExploreAcquisiton() ? display_.getChannels() : null);
+              display_.isActiveExploreAcquisiton() ? display_.getChannels() : null);
       sideControls_ = sideControls;
       JPanel buttonPanel = new FixedWidthJPanel();
       collapseExpandButton_ = new JButton();
@@ -203,11 +209,12 @@ class DisplayWindowNew implements WindowListener {
     *
     * @param images
     */
-   void displayImage(Image image, HashMap<Integer, int[]> hists, MagellanDataViewCoords view) {
+   void displayImage(Image image, HashMap<Integer, int[]> hists, HashMap<Integer, 
+           Integer> mins, HashMap<Integer, Integer> maxs, MagellanDataViewCoords view) {
       //Make scrollbars reflect image
       subImageControls_.updateScrollerPositions(view);
       imageCanvas_.updateDisplayImage(image, view.getDisplayScaleFactor());
-      sideControls_.updateHistogramData(hists);
+      sideControls_.updateHistogramData(hists, mins, maxs);
    }
 
    void displayOverlay(Overlay overlay) {
@@ -219,7 +226,12 @@ class DisplayWindowNew implements WindowListener {
       sideControls_.onNewImage();
    }
 
-   public void expandDisplayedRangeToInclude(List<MagellanNewImageEvent> newIamgeEvents) {
+
+   void setImageMetadata(JSONObject imageMD) {
+      sideControls_.setImageMetadata(imageMD);
+   }
+
+   public void expandDisplayedRangeToInclude(List<MagellanScrollbarPosition> newIamgeEvents) {
       subImageControls_.expandDisplayedRangeToInclude(newIamgeEvents);
    }
 
@@ -515,6 +527,14 @@ class DisplayWindowNew implements WindowListener {
 
    boolean isScrollerAxisLocked(String axis) {
       return subImageControls_.isScrollerLocked(axis);
+   }
+
+   void repaintSideControls() {
+      sideControls_.repaint();
+   }
+
+   void displaySettingsChanged() {
+      sideControls_.displaySettingsChanged();
    }
 
 }

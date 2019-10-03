@@ -220,8 +220,6 @@ public class DisplayWindow extends StackWindow {
          this.setSize(new Dimension(displayPrefs_.getInteger(WINDOWSIZEX_FIXED, width),
                  displayPrefs_.getInteger(WINDOWSIZEY_FIXED, height)));
       }
-//      contrastPanelMagellan_.initialize(disp);
-      mdPanelMagellan_.initialize(disp);
       doLayout();
 
       SwingUtilities.invokeLater(new Runnable() {

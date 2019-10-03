@@ -7,7 +7,6 @@ package org.micromanager.magellan.imagedisplaynew;
 
 import com.google.common.eventbus.Subscribe;
 import java.awt.CardLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionListener;
 import java.awt.geom.Point2D;
@@ -21,12 +20,11 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import org.json.JSONObject;
+import org.micromanager.display.DisplaySettingsChangedEvent;
 import org.micromanager.magellan.channels.MagellanChannelSpec;
 import org.micromanager.magellan.coordinates.NoPositionsDefinedYetException;
 import org.micromanager.magellan.gui.SimpleChannelTableModel;
 import org.micromanager.magellan.imagedisplay.MetadataPanel;
-import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
-import org.micromanager.magellan.imagedisplaynew.events.MagellanNewImageEvent;
 import org.micromanager.magellan.misc.ExactlyOneRowSelectionModel;
 import org.micromanager.magellan.misc.MD;
 import org.micromanager.magellan.surfacesandregions.MultiPosGrid;
@@ -39,9 +37,7 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
  *
  * @author henrypinkard
  */
- class DisplayWindowControlsNew extends javax.swing.JPanel implements SurfaceGridListener {
-
-    private static final Color LIGHT_BLUE = new Color(200, 200, 255);
+class DisplayWindowControlsNew extends javax.swing.JPanel implements SurfaceGridListener {
 
    private MagellanDisplayController display_;
    private ListSelectionListener surfaceTableListSelectionListener_;
@@ -52,12 +48,10 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
    /**
     * Creates new form DisplayWindowControls
     */
-   public DisplayWindowControlsNew(MagellanDisplayController disp, MagellanChannelSpec channels)
-      {
+   public DisplayWindowControlsNew(MagellanDisplayController disp, MagellanChannelSpec channels) {
 
       display_ = disp;
       channels_ = channels;
-//      disp.registerControls(this);
       display_.registerForEvents(this);
       initComponents();
       metadataPanelMagellan_.setSummaryMetadata(disp.getSummaryMD());
@@ -78,13 +72,13 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
 
          //start in explore
          tabbedPane_.setSelectedIndex(0);
-      } 
-      
+      }
+
       if (!(disp.isExploreAcquisiton()) || channels == null) {
          Component c = tabbedPane_.getComponentAt(3);
          tabbedPane_.remove(3); //remove explore tab
          //remove listeners and stuff
-         
+
          acquireAtCurrentButton_.setVisible(false);
          tabbedPane_.setSelectedIndex(0); //statr on contrst
       }
@@ -120,18 +114,18 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
          }
       }
       //knitially disable surfaces and grids
-       tabbedPane_.setEnabledAt(display_.isExploreAcquisiton() ? 1 : 0, false);
+      tabbedPane_.setEnabledAt(display_.isExploreAcquisiton() ? 1 : 0, false);
 
    }
    
+
    public void onDisplayClose() {
       display_.unregisterForEvents(this);
       if (display_.isExploreAcquisiton()) {
          ((SimpleChannelTableModel) channelsTable_.getModel()).shutdown();
-      }      
+      }
       surfaceGridTable_.getSelectionModel().removeListSelectionListener(surfaceTableListSelectionListener_);
    }
-
 
    private void updateSurfaceGridSelection() {
       selectedSurfaceGridIndex_ = surfaceGridTable_.getSelectedRow();
@@ -157,7 +151,7 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
    }
 
    private void updateMode() {
-      if (display_.isExploreAcquisiton() && exploreButton_.isSelected()) {
+      if (display_.isActiveExploreAcquisiton() && exploreButton_.isSelected()) {
          display_.setOverlayMode(MagellanDataViewCoords.EXPLORE);
          return;
       }
@@ -167,9 +161,9 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
          display_.setOverlayMode(MagellanDataViewCoords.NONE);
       }
    }
-   
-   void updateHistogramData(HashMap<Integer, int[]> hists) {
-      cpMagellan_.updateHistogramData(hists);
+
+   void updateHistogramData(HashMap<Integer, int[]> hists, HashMap<Integer, Integer> mins, HashMap<Integer, Integer> maxs) {
+      cpMagellan_.updateHistogramData(hists, mins, maxs);
    }
 
    public void addContrastControls(int channelIndex, String channelName) {
@@ -204,6 +198,16 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
    public void onNewImage() {
       //once there's an image, surfaces and grids are game
       tabbedPane_.setEnabledAt(display_.isExploreAcquisiton() ? 1 : 0, true);
+   }
+   
+   void displaySettingsChanged() {
+      cpMagellan_.displaySettingsChanged();
+   }
+
+   
+   void setImageMetadata(JSONObject imageMD) {
+      metadataPanelMagellan_.updateImageMetadata(imageMD);
+      updateStatusLabel(imageMD);
    }
 
    private void updateStatusLabel(JSONObject metadata) {
@@ -256,6 +260,7 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
    public void SurfaceInterpolationUpdated(SurfaceInterpolator s) {
 
    }
+
    /**
     * This method is called from within the constructor to initialize the form.
     * WARNING: Do NOT modify this code. The content of this method is always
@@ -700,7 +705,7 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
       try {
          Point2D.Double coord = display_.getStageCoordinateOfViewCenter();
          MultiPosGrid r = ((DisplayWindowSurfaceGridTableModel) surfaceGridTable_.getModel()).newGrid(
-            (Integer) gridRowsSpinner_.getValue(), (Integer) gridColsSpinner_.getValue(), coord);
+                 (Integer) gridRowsSpinner_.getValue(), (Integer) gridColsSpinner_.getValue(), coord);
          selectedSurfaceGridIndex_ = SurfaceGridManager.getInstance().getIndex(r);
          surfaceGridTable_.getSelectionModel().setSelectionInterval(selectedSurfaceGridIndex_, selectedSurfaceGridIndex_);
       } catch (NoPositionsDefinedYetException e) {
@@ -716,13 +721,13 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
    }//GEN-LAST:event_newSurfaceButton_ActionPerformed
 
    private void selectUseAllButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectUseAllButton_ActionPerformed
-      display_.synchronizeUseOnChannels();
-      ((SimpleChannelTableModel)channelsTable_.getModel()).fireTableDataChanged();
+      ((SimpleChannelTableModel) channelsTable_.getModel()).selectAllChannels();
+      ((SimpleChannelTableModel) channelsTable_.getModel()).fireTableDataChanged();
    }//GEN-LAST:event_selectUseAllButton_ActionPerformed
 
    private void syncExposuresButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_syncExposuresButton_ActionPerformed
-      display_.synchronizeChannelExposures();
-      ((SimpleChannelTableModel)channelsTable_.getModel()).fireTableDataChanged();
+      ((SimpleChannelTableModel) channelsTable_.getModel()).synchronizeExposures();
+      ((SimpleChannelTableModel) channelsTable_.getModel()).fireTableDataChanged();
    }//GEN-LAST:event_syncExposuresButton_ActionPerformed
 
    private void tabbedPane_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tabbedPane_StateChanged
@@ -746,7 +751,7 @@ import org.micromanager.magellan.surfacesandregions.XYFootprint;
    private void pauseButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pauseButton_ActionPerformed
       display_.togglePauseAcquisition();
       pauseButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource(
-         display_.isAcquisitionPaused() ? "/org/micromanager/magellan/play.png" : "/org/micromanager/magellan/pause.png")));
+              display_.isAcquisitionPaused() ? "/org/micromanager/magellan/play.png" : "/org/micromanager/magellan/pause.png")));
       repaint();
    }//GEN-LAST:event_pauseButton_ActionPerformed
 

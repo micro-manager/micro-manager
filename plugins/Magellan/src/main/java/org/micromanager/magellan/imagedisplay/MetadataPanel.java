@@ -19,7 +19,6 @@ public class MetadataPanel extends javax.swing.JPanel {
 
    private final MetadataTableModel imageMetadataModel_;
    private final MetadataTableModel summaryMetadataModel_;
-   private VirtualAcquisitionDisplay currentDisplay_;
    private volatile Timer updateTimer_;
    private JSONObject summaryMetadata_;
 
@@ -39,55 +38,13 @@ public class MetadataPanel extends javax.swing.JPanel {
       updateTimer_ = null;
    }
 
-   public void initialize(MagellanDisplay display) {
-      //setup for use with a single display
-      currentDisplay_ = display;
-      imageChangedUpdate(null);
-   }
-
    public void setSummaryMetadata(JSONObject metadata) {
       summaryMetadata_ = metadata;
+      summaryMetadataModel_.setMetadata(summaryMetadata_);
    }
 
-   private MagellanImageCache getCache(ImagePlus imgp) {
-      if (VirtualAcquisitionDisplay.getDisplay(imgp) != null) {
-         return VirtualAcquisitionDisplay.getDisplay(imgp).imageCache_;
-      } else {
-         return null;
-      }
-   }
-
-   /*
-    * called just before image is redrawn.  Calcs histogram and stats (and displays
-    * if image is in active window), applies LUT to image.  Does NOT explicitly
-    * call draw because this function should be only be called just before 
-    * ImagePlus.draw or CompositieImage.draw runs as a result of the overriden 
-    * methods in MMCompositeImage and MMImagePlus
-    * We postpone metadata display updates slightly in case the image display
-    * is changing rapidly, to ensure that we don't end up with a race condition
-    * that causes us to display the wrong metadata.
-    */
-   public void imageChangedUpdate(JSONObject metadata) {
-      if (metadata == null) {
-         imageMetadataModel_.setMetadata(null);
-         summaryMetadataModel_.setMetadata(null);
-      } else {
-         if (updateTimer_ == null) {
-            updateTimer_ = new Timer("Metadata update");
-         }
-         TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-               imageMetadataModel_.setMetadata(metadata);
-               summaryMetadataModel_.setMetadata(summaryMetadata_);
-            }
-         };
-         // Cancel all pending tasks and then schedule our task for execution
-         // 125ms in the future.
-         updateTimer_.purge();
-         updateTimer_.schedule(task, 125);
-
-      }
+   public void updateImageMetadata(JSONObject md) {
+      imageMetadataModel_.setMetadata(md);
    }
 
    /**

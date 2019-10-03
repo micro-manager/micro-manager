@@ -13,7 +13,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.TreeMap;
 import mmcorej.TaggedImage;
-import org.micromanager.magellan.imagedisplay.DisplaySettings;
+import org.json.JSONObject;
+import org.micromanager.magellan.misc.HistogramUtils;
 import org.micromanager.magellan.misc.Log;
 
 /**
@@ -34,6 +35,7 @@ class ImageMaker {
    private MemoryImageSource imageSource_;
    DirectColorModel rgbCM_ = new DirectColorModel(24, 0xff0000, 0xff00, 0xff);
    private DisplaySettings displaySettings_;
+   private JSONObject latestTags_;
 
    public ImageMaker(MagellanDisplayController c, MagellanImageCache data) {
       c.registerForEvents(this);
@@ -46,13 +48,8 @@ class ImageMaker {
       displaySettings_ = null;
    }
 
-   /**
-    * Get the histgram, which was automaitically calculated by makeorgetiamge
-    *
-    * @return
-    */
-   public int[] getHistogram(int channelIndex) {
-      return channelProcessors_.get(channelIndex).histogram;
+   public JSONObject getLatestTags() {
+      return latestTags_;
    }
 
    /**
@@ -72,9 +69,10 @@ class ImageMaker {
 
       //update pixels
       for (Integer c : viewCoords.getChannelIndices()) {
+         //create channel processors as needed
          synchronized (this) {
             if (!channelProcessors_.containsKey(c)) {
-               channelProcessors_.put(c, new MagellanImageProcessor(imageWidth_, imageHeight_));
+               channelProcessors_.put(c, new MagellanImageProcessor(imageWidth_, imageHeight_, viewCoords.getChannelName(c)));
             }
          }
          if (!displaySettings_.isActive(viewCoords.getChannelName(c))) {
@@ -82,20 +80,11 @@ class ImageMaker {
          }
 
          TaggedImage imageForDisplay = imageCache_.getImageForDisplay(c, viewCoords);
+         if (viewCoords.getAxisPosition("c") == c) {
+            latestTags_ = imageForDisplay.tags;
+         }
          channelProcessors_.get(c).changePixels(imageForDisplay.pix, imageWidth_, imageHeight_);
 
-      }
-
-      //apply contrast settings
-      for (Integer c : channelProcessors_.keySet()) {
-         if (!displaySettings_.isActive(viewCoords.getChannelName(c))) {
-            continue;
-         }
-         //only update acrtive channels for speed
-
-         String channelName = viewCoords.getChannelName(c);
-         LUT lut = makeLUT(displaySettings_.getColor(channelName), displaySettings_.getGamma(channelName));
-         channelProcessors_.get(c).setContrast(lut, displaySettings_.getContrastMin(channelName), displaySettings_.getContrastMax(channelName));
       }
 
       try {
@@ -196,7 +185,23 @@ class ImageMaker {
    HashMap<Integer, int[]> getHistograms() {
       HashMap<Integer, int[]> hists = new HashMap<Integer, int[]>();
       for (Integer i : channelProcessors_.keySet()) {
-         hists.put(i, channelProcessors_.get(i).histogram);
+         hists.put(i, channelProcessors_.get(i).displayHistogram_);
+      }
+      return hists;
+   }
+
+   HashMap<Integer, Integer> getPixelMins() {
+      HashMap<Integer, Integer> hists = new HashMap<Integer, Integer>();
+      for (Integer i : channelProcessors_.keySet()) {
+         hists.put(i, channelProcessors_.get(i).pixelMin_);
+      }
+      return hists;
+   }
+
+   HashMap<Integer, Integer> getPixelMaxs() {
+      HashMap<Integer, Integer> hists = new HashMap<Integer, Integer>();
+      for (Integer i : channelProcessors_.keySet()) {
+         hists.put(i, channelProcessors_.get(i).pixelMax_);
       }
       return hists;
    }
@@ -204,43 +209,89 @@ class ImageMaker {
    private class MagellanImageProcessor {
 
       LUT lut;
-      int min, max;
+      int contrastMin_, contrastMax_;
       Object pixels;
       int width, height;
+      int pixelMin_, pixelMax_, minAfterRejectingOutliers_, maxAfterRejectingOutliers_;
       byte[] eightBitImage = null;
       int[] reds = null;
       int[] blues = null;
       int[] greens = null;
-      int[] histogram = null;
+      int[] rawHistogram = null;
+      final String channelName_;
+      int[] displayHistogram_;
 
-      public MagellanImageProcessor(int w, int h) {
+      public MagellanImageProcessor(int w, int h, String name) {
          width = w;
          height = h;
+         channelName_ = name;
       }
 
       public void changePixels(Object pix, int w, int h) {
          pixels = pix;
-         histogram = pixels instanceof short[] ? new int[65536] : new int[256];
+         rawHistogram = pixels instanceof short[] ? new int[65536] : new int[256];
          width = w;
          height = h;
          eightBitImage = null;
       }
 
       public void recompute() {
+         contrastMin_ = displaySettings_.getContrastMin(channelName_);
+         contrastMax_ = displaySettings_.getContrastMax(channelName_);
          create8BitImage();
+         processHistogram();
+         if (displaySettings_.getAutoscale()) {
+            if (displaySettings_.ignoreFractionOn()) {
+               contrastMax_ = maxAfterRejectingOutliers_;
+               contrastMin_ = minAfterRejectingOutliers_;
+            } else {
+               contrastMin_ = pixelMin_;
+               contrastMax_ = pixelMax_;
+            }
+            //need to redo this with autoscaled contrast now
+            create8BitImage();
+            processHistogram();
+         }
+         System.out.println(contrastMax_);
+         lut = makeLUT(displaySettings_.getColor(channelName_), displaySettings_.getContrastGamma(channelName_));
+         splitLUTRGB();
       }
 
-      public void setContrast(LUT l, int minn, int maxx) {
-//         boolean reset = min != minn || max != maxx;
-         //reset 8 bit monochrome image if min and max xhange
-//         if (reset) {
-//            create8BitImage();
-//         }
-         //reset LUT    
-         min = minn;
-         max = maxx;
-         lut = l;
-         splitLUTRGB();
+      private void processHistogram() {
+         //Compute stats
+         int totalPixels = 0;
+         for (int i = 0; i < rawHistogram.length; i++) {
+            totalPixels += rawHistogram[i];
+         }
+
+         pixelMin_ = -1;
+         pixelMax_ = 0;
+         int binSize = rawHistogram.length / 256;
+         int numBins = (int) Math.min(rawHistogram.length / binSize, DisplaySettings.NUM_DISPLAY_HIST_BINS);
+         displayHistogram_ = new int[DisplaySettings.NUM_DISPLAY_HIST_BINS];
+         for (int i = 0; i < numBins; i++) {
+            displayHistogram_[i] = 0;
+            for (int j = 0; j < binSize; j++) {
+               int rawHistIndex = (int) (i * binSize + j);
+               int rawHistVal = rawHistogram[rawHistIndex];
+               displayHistogram_[i] += rawHistVal;
+               if (rawHistVal > 0) {
+                  pixelMax_ = rawHistIndex;
+                  if (pixelMin_ == -1) {
+                     pixelMin_ = rawHistIndex;
+                  }
+               }
+            }
+            if (displaySettings_.isLogHistogram()) {
+               displayHistogram_[i] = displayHistogram_[i] > 0 ? (int) (1000 * Math.log(displayHistogram_[i])) : 0;
+            }
+         }
+         maxAfterRejectingOutliers_ = (int) totalPixels;
+         // specified percent of pixels are ignored in the automatic contrast setting
+         HistogramUtils hu = new HistogramUtils(rawHistogram, totalPixels, 0.01 * displaySettings_.percentToIgnore());
+         minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
+         maxAfterRejectingOutliers_ = hu.getMaxAfterRejectingOutliers();
+
       }
 
       /**
@@ -277,16 +328,16 @@ class ImageMaker {
             eightBitImage = new byte[size];
          }
          int value;
-         double scale = 256.0 / (max - min + 1);
+         double scale = 256.0 / (contrastMax_ - contrastMin_ + 1);
          for (int i = 0; i < size; i++) {
             if (pixels instanceof short[]) {
                int pixVal = (((short[]) pixels)[i] & 0xffff);
-               value = pixVal - min;
-               histogram[pixVal]++;
+               value = pixVal - contrastMin_;
+               rawHistogram[pixVal]++;
             } else {
                int pixVal = (((byte[]) pixels)[i] & 0xffff);
-               value = pixVal - min;
-               histogram[pixVal]++;
+               value = pixVal - contrastMin_;
+               rawHistogram[pixVal]++;
             }
             if (value < 0) {
                value = 0;

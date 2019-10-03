@@ -44,7 +44,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.magellan.imagedisplay.DisplaySettings;
+import org.micromanager.magellan.imagedisplaynew.DisplaySettings;
 import org.micromanager.magellan.misc.JavaUtils;
 import org.micromanager.magellan.misc.Log;
 import org.micromanager.magellan.misc.LongPoint;
@@ -181,12 +181,14 @@ public class MultiResMultipageTiffStorage {
 
    public void setDisplaySettings(DisplaySettings displaySettings) {
       try {
-         displaySettings_ = new JSONObject(displaySettings.toString());
+         if (displaySettings != null) {
+            displaySettings_ = new JSONObject(displaySettings.toString());
+         }
       } catch (JSONException ex) {
          throw new RuntimeException();
       }
    }
-   
+
    public static JSONObject readSummaryMetadata(String dir) throws IOException {
       String fullResDir = dir + (dir.endsWith(File.separator) ? "" : File.separator) + FULL_RES_SUFFIX;
       return TaggedImageStorageMultipageTiff.readSummaryMD(fullResDir);
@@ -460,7 +462,6 @@ public class MultiResMultipageTiffStorage {
 //      //Make sure position nodes for lower resolutions are created if they weren't automatically
 //      posManager_.updateLowerResolutionNodes(resIndex);
 //   }
-
    /**
     * create an additional lower resolution levels for zooming purposes
     */
@@ -473,7 +474,7 @@ public class MultiResMultipageTiffStorage {
       //update position manager to reflect addition of new resolution level
       posManager_.updateLowerResolutionNodes(maxResolutionLevel_);
       ArrayList<Future> finished = new ArrayList<Future>();
-      for (int i = oldLevel+1; i <= maxResolutionLevel_; i++) {
+      for (int i = oldLevel + 1; i <= maxResolutionLevel_; i++) {
          populateNewResolutionLevel(finished, i);
          for (Future f : finished) {
             f.get();
@@ -690,8 +691,8 @@ public class MultiResMultipageTiffStorage {
          long fullResPixelWidth = getNumCols() * getTileWidth();
          long fullResPixelHeight = getNumRows() * getTileHeight();
          int maxResIndex = (int) Math.ceil(Math.log((Math.max(fullResPixelWidth, fullResPixelHeight)
-                    / 4)) / Math.log(2));
-          addResolutionsUpTo(maxResIndex);
+                 / 4)) / Math.log(2));
+         addResolutionsUpTo(maxResIndex);
          writeFinishedList.addAll(addToLowResStorage(MagellanTaggedImage, 0, MD.getPositionIndex(MagellanTaggedImage.tags)));
          for (Future f : writeFinishedList) {
             f.get();
@@ -789,14 +790,6 @@ public class MultiResMultipageTiffStorage {
    public String getDiskLocation() {
       //For display purposes
       return directory_;
-   }
-
-   public String getChannelName(int index) {
-      try {
-         return summaryMD_.getJSONArray("ChNames").getString(index);
-      } catch (JSONException ex) {
-         throw new RuntimeException("Channel names missing");
-      }
    }
 
    public int getNumChannels() {
@@ -902,6 +895,21 @@ public class MultiResMultipageTiffStorage {
 
    public PositionManager getPosManager() {
       return posManager_;
+   }
+
+   public List<String> getChannelNames() {
+      List<String> channelNames = new ArrayList<>();
+      Set<String> channelIndices = new TreeSet<String>();
+      for (String key : imageKeys()) {
+         String[] indices = key.split("_");
+         if (!channelIndices.contains(indices[0])) {
+            channelIndices.add(indices[0]);
+            channelNames.add(MD.getChannelName(getImageTags(
+                    Integer.parseInt(indices[0]), Integer.parseInt(indices[1]),
+                    Integer.parseInt(indices[2]), Integer.parseInt(indices[3]))));
+         }
+      }
+      return channelNames;
    }
 
 }

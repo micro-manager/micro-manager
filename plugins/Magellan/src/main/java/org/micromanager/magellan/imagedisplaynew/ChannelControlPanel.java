@@ -40,7 +40,6 @@ class ChannelControlPanel extends JPanel implements CursorListener {
    private static final Dimension CONTROLS_SIZE = new Dimension(130, 150);
    public static final Dimension MINIMUM_SIZE = new Dimension(400, CONTROLS_SIZE.height);
 
-   private static final int NUM_BINS = 256;
    private final int channelIndex_;
    private HistogramPanel hp_;
    private MultiChannelHistograms mcHistograms_;
@@ -60,19 +59,13 @@ class ChannelControlPanel extends JPanel implements CursorListener {
    private int histMax_;
    private JPanel controls_;
    private JPanel controlsHolderPanel_;
-   private int contrastMin_;
-   private int contrastMax_;
-   private double gamma_ = 1;
-   private int minAfterRejectingOutliers_;
-   private int maxAfterRejectingOutliers_;
-   private int pixelMin_ = 0;
-   private int pixelMax_ = 255;
    final private int maxIntensity_;
    final private int bitDepth_;
    private Color color_;
    private HistogramControlsState histControlState_;
    private ContrastPanel contrastPanel_;
    private final String channelName_;
+   private int pixelMin_, pixelMax_;
 
    public ChannelControlPanel(int channelIndex, MultiChannelHistograms mcHistograms, MagellanDisplayController disp,
            ContrastPanel contrastPanel, String name, Color color, int bitDepth) {
@@ -85,18 +78,14 @@ class ChannelControlPanel extends JPanel implements CursorListener {
       bitDepth_ = bitDepth;
       maxIntensity_ = (int) Math.pow(2, bitDepth_) - 1;
       histMax_ = maxIntensity_ + 1;
-      binSize_ = histMax_ / NUM_BINS;
+      binSize_ = histMax_ / DisplaySettings.NUM_DISPLAY_HIST_BINS;
       histMaxLabel_ = "" + histMax_;
       mcHistograms_ = mcHistograms;
       channelIndex_ = channelIndex;
       initComponents();
-      //initialize display settings
-      contrastMax_ = (int) (Math.pow(2, bitDepth) - 1);
-      contrastMin_ = 0;
-      gamma_ = 1.0;
       histRangeComboBox_.setSelectedIndex(0); //set it to camera depth
       channelNameCheckbox_.setSelected(display_.getDisplaySettings().isActive(channelName_));
-      updateHistogram();
+      redraw();
    }
 
    private void initComponents() {
@@ -179,7 +168,7 @@ class ChannelControlPanel extends JPanel implements CursorListener {
 
          @Override
          public void actionPerformed(final ActionEvent e) {
-            if (histControlState_.syncChannels) {
+            if (display_.getDisplaySettings().isSyncChannels()) {
                mcHistograms_.updateOtherDisplayCombos(histRangeComboBox_.getSelectedIndex());
             }
             displayComboAction();
@@ -344,30 +333,31 @@ class ChannelControlPanel extends JPanel implements CursorListener {
       histRangeComboBox_.setSelectedIndex(index);
    }
 
+   public String getChannelName() {
+      return channelName_;
+   }
+
    public int getDisplayComboIndex() {
       return histRangeComboBox_.getSelectedIndex();
    }
 
    private void zoomInAction() {
       int selected = histRangeComboBox_.getSelectedIndex();
-      if (selected == 0) {
-         selected = bitDepth_ - 3;
-      }
-      if (selected != 1) {
+      if (selected != 0) {
          selected--;
       }
       histRangeComboBox_.setSelectedIndex(selected);
+      redraw();
+
    }
 
    private void zoomOutAction() {
       int selected = histRangeComboBox_.getSelectedIndex();
-      if (selected == 0) {
-         selected = bitDepth_ - 3;
-      }
       if (selected < histRangeComboBox_.getModel().getSize() - 1) {
          selected++;
       }
       histRangeComboBox_.setSelectedIndex(selected);
+      redraw();
    }
 
    public void displayComboAction() {
@@ -380,36 +370,40 @@ class ChannelControlPanel extends JPanel implements CursorListener {
          histMax_ = (int) (Math.pow(2, 10) - 1);
       } else if (index == 3) {
          histMax_ = (int) (Math.pow(2, 12) - 1);
-      } else if (index == 3) {
+      } else if (index == 4) {
          histMax_ = (int) (Math.pow(2, 14) - 1);
-      } else if (index == 3) {
+      } else if (index == 5) {
          histMax_ = (int) (Math.pow(2, 16) - 1);
       }
-      binSize_ = ((double) (histMax_ + 1)) / ((double) NUM_BINS);
+      binSize_ = ((double) (histMax_ + 1)) / ((double) DisplaySettings.NUM_DISPLAY_HIST_BINS);
       histMaxLabel_ = histMax_ + "";
-      updateHistogram();
-      storeDisplaySettings();
+      redraw();
    }
 
-   private void updateHistogram() {
-      hp_.setCursorText(contrastMin_ + "", contrastMax_ + "");
-      hp_.setCursors(contrastMin_ / binSize_, (contrastMax_ + 1) / binSize_, gamma_);
+   private void redraw() {
+      int contrastMin = display_.getDisplaySettings().getContrastMin(channelName_);
+      int contrastMax = display_.getDisplaySettings().getContrastMax(channelName_);
+      double gamma = display_.getDisplaySettings().getContrastGamma(channelName_);
+
+      hp_.setCursorText(contrastMin + "", contrastMax + "");
+      hp_.setCursors(contrastMin / binSize_, (contrastMax + 1) / binSize_, gamma);
       hp_.repaint();
    }
 
    private void fullButtonAction() {
-      if (histControlState_.syncChannels) {
-         mcHistograms_.fullScaleChannels();
-      } else {
-         setFullScale();
-         mcHistograms_.applyLUTToImage();
-         display_.postEvent(new ContrastUpdatedEvent(channelIndex_));
-      }
+      display_.getDisplaySettings().setContrastMin(channelName_, 0);
+      display_.getDisplaySettings().setContrastMax(channelName_, (int) (Math.pow(2, bitDepth_) - 1));
+
+      display_.postEvent(new ContrastUpdatedEvent(channelIndex_));
    }
 
    public void autoButtonAction() {
-      autostretch();
-      applyLUT();
+      display_.getDisplaySettings().setContrastMin(channelName_, pixelMin_);
+      display_.getDisplaySettings().setContrastMax(channelName_, pixelMax_);
+
+      display_.postEvent(new ContrastUpdatedEvent(channelIndex_));
+      redraw();
+
    }
 
    private void colorPickerLabelMouseClicked() {
@@ -425,7 +419,6 @@ class ChannelControlPanel extends JPanel implements CursorListener {
          name = name.substring(0, 9) + "...";
       }
       channelNameCheckbox_.setText(name);
-      mcHistograms_.applyLUTToImage();
       display_.postEvent(new ContrastUpdatedEvent(channelIndex_));
       this.repaint();
    }
@@ -467,43 +460,10 @@ class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void channelNameCheckboxAction() {
-      display_.getDisplaySettings().setActive(channelName_, channelNameCheckbox_.isSelected());
+      display_.channelSetActive(channelIndex_, channelNameCheckbox_.isSelected());
       display_.postEvent(new ContrastUpdatedEvent(channelIndex_));
-   }
+      redraw();
 
-   public void setFullScale() {
-      contrastPanel_.disableAutostretch();
-      contrastMin_ = 0;
-      contrastMax_ = histMax_;
-   }
-
-   public void autostretch() {
-      contrastMin_ = pixelMin_;
-      contrastMax_ = pixelMax_;
-      if (pixelMin_ == pixelMax_) {
-         if (pixelMax_ > 0) {
-            contrastMin_--;
-         } else {
-            contrastMax_++;
-         }
-      }
-      if (histControlState_.ignoreOutliers) {
-         if (contrastMin_ < minAfterRejectingOutliers_) {
-            if (0 < minAfterRejectingOutliers_) {
-               contrastMin_ = minAfterRejectingOutliers_;
-            }
-         }
-         if (maxAfterRejectingOutliers_ < contrastMax_) {
-            contrastMax_ = maxAfterRejectingOutliers_;
-         }
-         if (contrastMax_ <= contrastMin_) {
-            if (contrastMax_ > 0) {
-               contrastMin_ = contrastMax_ - 1;
-            } else {
-               contrastMax_ = contrastMin_ + 1;
-            }
-         }
-      }
    }
 
    private HistogramPanel addHistogramPanel() {
@@ -511,11 +471,13 @@ class ChannelControlPanel extends JPanel implements CursorListener {
 
          @Override
          public void paint(Graphics g) {
-            super.paint(g);
-            //For drawing max label
-            g.setColor(Color.black);
-            g.setFont(new Font("Lucida Grande", 0, 10));
-            g.drawString(histMaxLabel_, this.getSize().width - 8 * histMaxLabel_.length(), this.getSize().height);
+            if (channelNameCheckbox_.isSelected()) {
+               super.paint(g);
+               //For drawing max label
+               g.setColor(Color.black);
+               g.setFont(new Font("Lucida Grande", 0, 10));
+               g.drawString(histMaxLabel_, this.getSize().width - 8 * histMaxLabel_.length(), this.getSize().height);
+            }
          }
       };
       hp.setMargins(12, 12);
@@ -526,185 +488,73 @@ class ChannelControlPanel extends JPanel implements CursorListener {
       return hp;
    }
 
-   public int getContrastMin() {
-      return contrastMin_;
-   }
-
-   public int getContrastMax() {
-      return contrastMax_;
-   }
-
-   public double getContrastGamma() {
-      return gamma_;
-   }
-
-   public void setContrast(int min, int max, double gamma) {
-      contrastMin_ = min;
-      contrastMax_ = Math.min(maxIntensity_, max);
-      gamma_ = gamma;
-   }
-
-   //Need to put this on EDT to avoid index out of bounds because of setting currentChannel to -1
-   public void applyChannelLUTToImage() {
-      //apply display settings
-      display_.getDisplaySettings().setActive(channelName_, channelNameCheckbox_.isSelected());
-      display_.getDisplaySettings().setColor(channelName_, color_);
-      display_.getDisplaySettings().setGamma(channelName_, gamma_);
-      display_.getDisplaySettings().setContrastMin(channelName_, contrastMin_);
-      display_.getDisplaySettings().setContrastMax(channelName_, contrastMax_);
-
-      storeDisplaySettings();
-      updateHistogram();
-   }
-
-   private void storeDisplaySettings() {
-      //TODO: could bring this backt
-//      int histMax = histRangeComboBox_.getSelectedIndex() == 0 ? -1 : histMax_;
-//      display_.storeChannelHistogramSettings(channelName_, contrastMin_, contrastMax_,
-//              gamma_, histMax, ((MMCompositeImage) img_).getMode());
-   }
-
    public int getChannelIndex() {
       return channelIndex_;
    }
 
-   public void updateHistogram(int[] rawHistogram) {
-      //Compute stats
-      int totalPixels = 0;
-      for (int i = 0; i < rawHistogram.length; i++) {
-         totalPixels += rawHistogram[i];
-      }
-
-      pixelMin_ = -1;
-      pixelMax_ = 0;
-      int numBins = (int) Math.min(rawHistogram.length / binSize_, NUM_BINS);
-      int[] histogram = new int[NUM_BINS];
-      int total = 0;
-      for (int i = 0; i < numBins; i++) {
-         histogram[i] = 0;
-         for (int j = 0; j < binSize_; j++) {
-            int rawHistIndex = (int) (i * binSize_ + j);
-            int rawHistVal = rawHistogram[rawHistIndex];
-            histogram[i] += rawHistVal;
-            if (rawHistVal > 0) {
-               pixelMax_ = rawHistIndex;
-               if (pixelMin_ == -1) {
-                  pixelMin_ = rawHistIndex;
-               }
-            }
-         }
-         total += histogram[i];
-         if (histControlState_.logHist) {
-            histogram[i] = histogram[i] > 0 ? (int) (1000 * Math.log(histogram[i])) : 0;
-         }
-      }
-
-//      if (histControlState_.ignoreOutliers) {
-      maxAfterRejectingOutliers_ = (int) totalPixels;
-      // specified percent of pixels are ignored in the automatic contrast setting
-      HistogramUtils hu = new HistogramUtils(rawHistogram, totalPixels, 0.01 * histControlState_.percentToIgnore);
-      minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
-      maxAfterRejectingOutliers_ = hu.getMaxAfterRejectingOutliers();
-//      }
-      GraphData histogramData = new GraphData();
-
-      //Make sure max has correct value is hist display mode isnt auto
-      if (histRangeComboBox_.getSelectedIndex() != -1) {
-         pixelMin_ = rawHistogram.length - 1;
-         for (int i = rawHistogram.length - 1; i > 0; i--) {
-            if (rawHistogram[i] > 0 && i > pixelMax_) {
-               pixelMax_ = i;
-            }
-            if (rawHistogram[i] > 0 && i < pixelMin_) {
-               pixelMin_ = i;
-            }
-         }
-      }
-
+   public void updateHistogram(int[] histogram, int pixelMin, int pixelMax) {
+      pixelMin_ = pixelMin;
+      pixelMax_ = pixelMax;
       hp_.setVisible(true);
       //Draw histogram and stats
+      GraphData histogramData = new GraphData();
       histogramData.setData(histogram);
       hp_.setData(histogramData);
       hp_.setAutoScale();
       hp_.repaint();
-      minMaxLabel_.setText("Min: " + pixelMin_ + "   " + "Max: " + pixelMax_);
+      minMaxLabel_.setText("Min: " + pixelMin + "   " + "Max: " + pixelMax);
+      redraw();
+
    }
 
    public void contrastMaxInput(int max) {
       contrastPanel_.disableAutostretch();
-      contrastMax_ = max;
-      if (contrastMax_ > maxIntensity_) {
-         contrastMax_ = maxIntensity_;
-      }
-      if (contrastMax_ < 0) {
-         contrastMax_ = 0;
-      }
-      if (contrastMin_ > contrastMax_) {
-         contrastMin_ = contrastMax_;
-      }
-      applyLUT();
+      display_.getDisplaySettings().setContrastMax(channelName_, max);
+      display_.postEvent(new ContrastUpdatedEvent(channelIndex_));
+      redraw();
+
    }
 
    @Override
    public void contrastMinInput(int min) {
       contrastPanel_.disableAutostretch();
-      contrastMin_ = min;
-      if (contrastMin_ >= maxIntensity_) {
-         contrastMin_ = maxIntensity_ - 1;
-      }
-      if (contrastMin_ < 0) {
-         contrastMin_ = 0;
-      }
-      if (contrastMax_ < contrastMin_) {
-         contrastMax_ = contrastMin_ + 1;
-      }
-      applyLUT();
+      display_.getDisplaySettings().setContrastMax(channelName_, min);
+      display_.postEvent(new ContrastUpdatedEvent(channelIndex_));
+      redraw();
+
    }
 
    public void onLeftCursor(double pos) {
       contrastPanel_.disableAutostretch();
-      contrastMin_ = (int) (Math.max(0, pos) * binSize_);
-      if (contrastMin_ >= maxIntensity_) {
-         contrastMin_ = maxIntensity_ - 1;
-      }
-      if (contrastMax_ < contrastMin_) {
-         contrastMax_ = contrastMin_ + 1;
-      }
-      applyLUT();
+      display_.getDisplaySettings().setContrastMin(channelName_, (int) (Math.min(DisplaySettings.NUM_DISPLAY_HIST_BINS - 1, pos) * binSize_));
+      display_.postEvent(new ContrastUpdatedEvent(channelIndex_));
+      redraw();
    }
 
    @Override
    public void onRightCursor(double pos) {
       contrastPanel_.disableAutostretch();
-      contrastMax_ = (int) (Math.min(NUM_BINS - 1, pos) * binSize_);
-      if (contrastMax_ < 1) {
-         contrastMax_ = 1;
-      }
-      if (contrastMin_ > contrastMax_) {
-         contrastMin_ = contrastMax_;
-      }
-      applyLUT();
+      display_.getDisplaySettings().setContrastMax(channelName_, (int) (Math.min(DisplaySettings.NUM_DISPLAY_HIST_BINS - 1, pos) * binSize_));
+      display_.postEvent(new ContrastUpdatedEvent(channelIndex_));
+      redraw();
+
    }
 
    @Override
    public void onGammaCurve(double gamma) {
       if (gamma != 0) {
          if (gamma > 0.9 & gamma < 1.1) {
-            gamma_ = 1;
-         } else {
-            gamma_ = gamma;
+            gamma = 1;
          }
-         applyLUT();
-      }
-   }
-
-   private void applyLUT() {
-      if (histControlState_.syncChannels) {
-         mcHistograms_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
-      } else {
-         mcHistograms_.applyLUTToImage();
+         display_.getDisplaySettings().setGamma(channelName_, gamma);
          display_.postEvent(new ContrastUpdatedEvent(channelIndex_));
       }
+      redraw();
+   }
+
+   void updateActiveCheckbox(boolean active) {
+      channelNameCheckbox_.setSelected(active);
+      redraw();
    }
 
 }

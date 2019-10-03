@@ -26,14 +26,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
@@ -42,11 +40,14 @@ import org.json.JSONObject;
 import org.micromanager.magellan.acq.Acquisition;
 import org.micromanager.magellan.acq.ExploreAcquisition;
 import org.micromanager.magellan.channels.MagellanChannelSpec;
-import org.micromanager.magellan.imagedisplay.DisplaySettings;
 import org.micromanager.magellan.imagedisplaynew.events.AnimationToggleEvent;
 import org.micromanager.magellan.imagedisplaynew.events.CanvasResizeEvent;
 import org.micromanager.magellan.imagedisplaynew.events.ContrastUpdatedEvent;
 import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
+import org.micromanager.magellan.imagedisplaynew.events.ImageCacheFinishedEvent;
+import org.micromanager.magellan.imagedisplaynew.events.MagellanScrollbarPosition;
+import org.micromanager.magellan.misc.JavaUtils;
+import org.micromanager.magellan.misc.Log;
 import org.micromanager.magellan.misc.LongPoint;
 import org.micromanager.magellan.surfacesandregions.XYFootprint;
 
@@ -80,6 +81,7 @@ public final class MagellanDisplayController {
               isExploreAcquisiton() ? 700 : cache.getFullResolutionSize().x,
               isExploreAcquisiton() ? 700 : cache.getFullResolutionSize().y, imageCache_.getImageBounds());
       displayWindow_ = new DisplayWindowNew(this);
+      displayWindow_.setTitle(cache.getUniqueAcqName() + (acq != null ? (acq.isFinished() ? " (Finished)" : " (Running)") : " (Loaded)"));
       overlayer_ = new MagellanOverlayer(this, edtRunnablePool_);
       imageMaker_ = new ImageMaker(this, cache);
 
@@ -245,7 +247,7 @@ public final class MagellanDisplayController {
       double sourceAspect = source.x / source.y;
       double newSourceX;
       double newSourceY;
-      if (!isExploreAcquisiton()) {
+      if (!isActiveExploreAcquisiton()) {
          if (canvasAspect > sourceAspect) {
             newSourceX = canvasAspect / sourceAspect * source.x;
             newSourceY = source.y;
@@ -279,6 +281,72 @@ public final class MagellanDisplayController {
       recomputeDisplayedImage();
    }
 
+   public void setLoadedDataScrollbarBounds(List<String> channelNames, int nFrames, int minSliceIndex, int maxSliceIndex) {
+
+      for (int c = 0; c < channelNames.size(); c++) {
+         boolean newChannel = viewCoords_.addChannelIfNew(c, channelNames.get(c));
+         if (newChannel) {
+            displayWindow_.addContrastControls(c, channelNames.get(c));
+         }
+      }
+      //maximum scrollbar extensts
+      edtRunnablePool_.invokeLaterWithCoalescence(
+              new MagellanDisplayController.ExpandDisplayRangeCoalescentRunnable(new MagellanScrollbarPosition() {
+                 @Override
+                 public int getPositionForAxis(String axis) {
+                    if (axis.equals("z")) {
+                       return maxSliceIndex;
+                    } else if (axis.equals("t")) {
+                       return nFrames - 1;
+                    } else if (axis.equals("c")) {
+                       return channelNames.size() - 1;
+                    } else if (axis.equals("r")) {
+                       return 0;
+                    } else {
+                       throw new RuntimeException("unknown axis");
+                    }
+                 }
+              }));
+      //minimum scrollbar extensts
+      edtRunnablePool_.invokeLaterWithCoalescence(
+              new MagellanDisplayController.ExpandDisplayRangeCoalescentRunnable(new MagellanScrollbarPosition() {
+                 @Override
+                 public int getPositionForAxis(String axis) {
+                    if (axis.equals("z")) {
+                       return minSliceIndex;
+                    }
+                    return 0;
+                 }
+              }));
+   }
+
+   void channelSetActive(int channelIndex, boolean selected) {
+      if (!viewCoords_.getCompositeMode()) {
+         if (selected) {
+            viewCoords_.setAxisPosition("c", channelIndex);
+            //only one channel can be active so inacivate others
+            for (Integer cIndex : viewCoords_.getChannelIndices()) {
+               displaySettings_.setActive(viewCoords_.getChannelName(cIndex),
+                       cIndex == viewCoords_.getAxisPosition("c"));
+            }
+         } else {
+            //if channel turns off, nothing will show, so dont let this happen
+         }
+         //make sure other checkboxes update if they autochanged
+         displayWindow_.displaySettingsChanged();
+
+      } else {
+         //composite mode
+         displaySettings_.setActive(viewCoords_.getChannelName(channelIndex), selected);
+      }
+      recomputeDisplayedImage();
+   }
+
+   @Subscribe
+   public void onCacheFinished(final ImageCacheFinishedEvent e) {
+      displayWindow_.setTitle(imageCache_.getUniqueAcqName() + " (Finished)");
+   }
+
    @Subscribe
    public void onNewImage(final MagellanNewImageEvent event) {
       displayWindow_.onNewImage(); //needed because events dont propagte for some reason
@@ -304,6 +372,14 @@ public final class MagellanDisplayController {
       for (String axis : new String[]{"c", "z", "t", "r"}) {
          if (!displayWindow_.isScrollerAxisLocked(axis) || event.fromHuman_) {
             viewCoords_.setAxisPosition(axis, event.getPositionForAxis(axis));
+            if (!viewCoords_.getCompositeMode()) {
+               //set all channels inactive except current one
+               for (Integer cIndex : viewCoords_.getChannelIndices()) {
+                  displaySettings_.setActive(viewCoords_.getChannelName(cIndex),
+                          cIndex == viewCoords_.getAxisPosition("c"));
+                  displayWindow_.displaySettingsChanged();
+               }
+            }
          }
       }
       displayWindow_.updateExploreZControls(event.getPositionForAxis("z"));
@@ -343,14 +419,6 @@ public final class MagellanDisplayController {
       return displayWindow_.getCanvas();
    }
 
-   public boolean[] getActiveChannels() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-   }
-
-   public boolean isCompositeMode() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-   }
-
    public void setSurfaceDisplaySettings(boolean showInterp, boolean showStage) {
       overlayer_.setSurfaceDisplayParams(showInterp, showStage);
       redrawOverlay();
@@ -371,7 +439,19 @@ public final class MagellanDisplayController {
    }
 
    public void showFolder() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      try {
+         File location = new File(imageCache_.getDiskLocation());
+         if (JavaUtils.isWindows()) {
+            Runtime.getRuntime().exec("Explorer /n,/select," + location.getAbsolutePath());
+         } else if (JavaUtils.isMac()) {
+            if (!location.isDirectory()) {
+               location = location.getParentFile();
+            }
+            Runtime.getRuntime().exec(new String[]{"open", location.getAbsolutePath()});
+         }
+      } catch (IOException ex) {
+         Log.log(ex);
+      }
    }
 
    public void setAnimateFPS(double doubleValue) {
@@ -385,7 +465,9 @@ public final class MagellanDisplayController {
    }
 
    public void acquireTileAtCurrentPosition() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      if (isActiveExploreAcquisiton()) {
+         ((ExploreAcquisition) acq_).acquireTileAtCurrentLocation();
+      }
    }
 
    void abortAcquisition() {
@@ -401,19 +483,11 @@ public final class MagellanDisplayController {
    }
 
    void togglePauseAcquisition() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      acq_.togglePaused();
    }
 
    boolean isAcquisitionPaused() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-   }
-
-   void synchronizeChannelExposures() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-   }
-
-   void synchronizeUseOnChannels() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      return acq_.isPaused();
    }
 
    public Point getExploreStartTile() {
@@ -490,14 +564,6 @@ public final class MagellanDisplayController {
       return displaySettings_;
    }
 
-   long getNumCols() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-   }
-
-   int getNumRows() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-   }
-
    int getTileHeight() {
       return imageCache_.getTileHeight();
    }
@@ -550,16 +616,38 @@ public final class MagellanDisplayController {
       return acq_.getDisplaySliceIndexFromZCoordinate(z);
    }
 
-   AffineTransform getAffineTransform() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-   }
-
    double getPixelSize() {
       return imageCache_.getPixelSize_um();
    }
 
    void showScaleBar(boolean selected) {
       overlayer_.setShowScaleBar(selected);
+   }
+
+   boolean isActiveExploreAcquisiton() {
+      return isExploreAcquisiton() && acq_ != null;
+   }
+
+   void setCompositeMode(boolean selected) {
+      viewCoords_.setCompositeMode(selected);
+      //select all channels if composite mode is being turned on
+      if (selected) {
+         for (Integer cIndex : viewCoords_.getChannelIndices()) {
+            displaySettings_.setActive(viewCoords_.getChannelName(cIndex), true);
+            displayWindow_.displaySettingsChanged();
+         }
+      } else {
+         for (Integer cIndex : viewCoords_.getChannelIndices()) {
+            displaySettings_.setActive(viewCoords_.getChannelName(cIndex), 
+                    cIndex == viewCoords_.getAxisPosition("c"));
+            displayWindow_.displaySettingsChanged();
+         }
+      }
+      recomputeDisplayedImage();
+   }
+
+   boolean isCompositMode() {
+      return viewCoords_.getCompositeMode();
    }
 
    /**
@@ -569,9 +657,9 @@ public final class MagellanDisplayController {
    private class ExpandDisplayRangeCoalescentRunnable
            implements CoalescentRunnable {
 
-      private final List<MagellanNewImageEvent> newIamgeEvents = new ArrayList<MagellanNewImageEvent>();
+      private final List<MagellanScrollbarPosition> newIamgeEvents = new ArrayList<MagellanScrollbarPosition>();
 
-      ExpandDisplayRangeCoalescentRunnable(MagellanNewImageEvent event) {
+      ExpandDisplayRangeCoalescentRunnable(MagellanScrollbarPosition event) {
          newIamgeEvents.add(event);
       }
 
@@ -731,11 +819,14 @@ public final class MagellanDisplayController {
       public void run() {
          //This is where most of the calculation of creating a display image happens
          Image img = imageMaker_.makeOrGetImage(view_);
-
+         JSONObject tags = imageMaker_.getLatestTags();
          Overlay cheapOverlay = overlayer_.createEasyPartsOfOverlay(view_);
 
          HashMap<Integer, int[]> channelHistograms = imageMaker_.getHistograms();
-         edtRunnablePool_.invokeAsLateAsPossibleWithCoalescence(new CanvasRepaintRunnable(img, channelHistograms, view_, cheapOverlay));
+         HashMap<Integer, Integer> pixelMins = imageMaker_.getPixelMins();
+         HashMap<Integer, Integer> pixelMaxs = imageMaker_.getPixelMaxs();
+         edtRunnablePool_.invokeAsLateAsPossibleWithCoalescence(new CanvasRepaintRunnable(img, 
+                 channelHistograms, pixelMins, pixelMaxs, view_, cheapOverlay, tags));
          //now send expensive overlay computation to overlay creation thread
          overlayer_.redrawOverlay(view_);
       }
@@ -746,13 +837,20 @@ public final class MagellanDisplayController {
       final Image img_;
       MagellanDataViewCoords view_;
       HashMap<Integer, int[]> hists_;
+      HashMap<Integer, Integer> mins_;
+      HashMap<Integer, Integer> maxs_;
       Overlay overlay_;
+      JSONObject imageMD_;
 
-      public CanvasRepaintRunnable(Image img, HashMap<Integer, int[]> hists, MagellanDataViewCoords view, Overlay cheapOverlay) {
+      public CanvasRepaintRunnable(Image img, HashMap<Integer, int[]> hists, HashMap<Integer, Integer> pixelMins, 
+              HashMap<Integer, Integer> pixelMaxs, MagellanDataViewCoords view, Overlay cheapOverlay, JSONObject imageMD) {
          img_ = img;
          view_ = view;
          hists_ = hists;
+         mins_ = pixelMins;
+         maxs_ = pixelMaxs;
          overlay_ = cheapOverlay;
+         imageMD_ = imageMD;
       }
 
       @Override
@@ -767,7 +865,8 @@ public final class MagellanDisplayController {
 
       @Override
       public void run() {
-         displayWindow_.displayImage(img_, hists_, view_);
+         displayWindow_.displayImage(img_, hists_, mins_, maxs_, view_);
+         displayWindow_.setImageMetadata(imageMD_);
          displayWindow_.displayOverlay(overlay_);
 
       }

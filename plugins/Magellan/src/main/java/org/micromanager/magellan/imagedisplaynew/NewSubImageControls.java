@@ -45,6 +45,7 @@ import org.micromanager.magellan.misc.Log;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
+import org.micromanager.magellan.imagedisplaynew.events.MagellanScrollbarPosition;
 import org.micromanager.magellan.misc.NumberUtils;
 
 /**
@@ -188,7 +189,7 @@ class NewSubImageControls extends JPanel {
       this.repaint();
    }
 
-   void expandDisplayedRangeToInclude(List<MagellanNewImageEvent> newIamgeEvents) {
+   void expandDisplayedRangeToInclude(List<MagellanScrollbarPosition> newIamgeEvents) {
       scrollerPanel_.expandDisplayedRangeToInclude(newIamgeEvents);
    }
 

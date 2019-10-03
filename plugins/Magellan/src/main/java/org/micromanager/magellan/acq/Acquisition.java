@@ -43,7 +43,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.magellan.api.MagellanAcquisitionAPI;
-import org.micromanager.magellan.imagedisplay.DisplaySettings;
+import org.micromanager.magellan.imagedisplaynew.DisplaySettings;
 import org.micromanager.magellan.imagedisplaynew.events.ImageCacheClosingEvent;
 import org.micromanager.magellan.imagedisplaynew.MagellanDisplayController;
 
@@ -427,7 +427,7 @@ public abstract class Acquisition implements MagellanAcquisitionAPI {
       return paused_;
    }
    
-   public void togglePaused() {
+   public synchronized void togglePaused() {
       paused_ = !paused_;
    }
    

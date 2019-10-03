@@ -29,6 +29,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.JPanel;
 import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
+import org.micromanager.magellan.imagedisplaynew.events.MagellanScrollbarPosition;
 
 /**
  * This class is responsible for containing and managing groups of
@@ -215,8 +216,8 @@ class ScrollerPanel extends JPanel {
       }
    }
 
-   void expandDisplayedRangeToInclude(List<MagellanNewImageEvent> newIamgeEvents) {
-      for (MagellanNewImageEvent e : newIamgeEvents) {
+   void expandDisplayedRangeToInclude(List<MagellanScrollbarPosition> newIamgeEvents) {
+      for (MagellanScrollbarPosition e : newIamgeEvents) {
          boolean didShowNewScrollers = false;
          for (AxisScroller scroller : scrollers_) {
             int imagePosition = e.getPositionForAxis(scroller.getAxis());

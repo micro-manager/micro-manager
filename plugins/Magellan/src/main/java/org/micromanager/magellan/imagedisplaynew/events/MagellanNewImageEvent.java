@@ -14,7 +14,7 @@ import org.micromanager.magellan.misc.MD;
  *
  * @author henrypinkard
  */
- public final class MagellanNewImageEvent {
+ public final class MagellanNewImageEvent implements MagellanScrollbarPosition {
   
    final public HashMap<String, Integer> axisToPosition_;
    public final String channelName_;

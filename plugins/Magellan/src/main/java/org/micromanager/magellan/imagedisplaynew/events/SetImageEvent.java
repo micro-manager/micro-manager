@@ -6,6 +6,7 @@
 package org.micromanager.magellan.imagedisplaynew.events;
 
 import java.util.HashMap;
+import org.json.JSONObject;
 
    /**
     * This class signifies that the currently-displayed image needs to be

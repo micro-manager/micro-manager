@@ -49,7 +49,7 @@ class ContrastPanel extends JPanel {
    private static final String PREF_REJECT_FRACTION = "reject_fraction";
    private static final String PREF_LOG_HIST = "log_hist";
    private static final String PREF_SYNC_CHANNELS = "sync_channels";
-   private static final String PREF_SLOW_HIST = "slow_hist";
+   private static final String PREF_COMPOSITE = "composite";
    protected JScrollPane histDisplayScrollPane_;
    private JCheckBox compositeCheckBox_; //TODO use this to change between composite and channel modes
    private JCheckBox autostretchCheckBox_;
@@ -63,6 +63,7 @@ class ContrastPanel extends JPanel {
    //volatile because accessed by overlayer creation thread
    private MagellanDisplayController display_;
    private JPanel contentPanel_;
+   private boolean initializing_ = true;
 
    public ContrastPanel(MagellanDisplayController display) {
       //TODO: this isnt right is it?
@@ -77,6 +78,7 @@ class ContrastPanel extends JPanel {
       histControlsState_ = createDefaultControlsState();
       initializeHistogramDisplayArea();
       showCurrentHistograms();
+      initializing_ = false;
    }
 
    @Subscribe
@@ -120,6 +122,7 @@ class ContrastPanel extends JPanel {
       state.autostretch = prefs_.getBoolean(PREF_AUTOSTRETCH, true);
       state.percentToIgnore = prefs_.getDouble(PREF_REJECT_FRACTION, 2);
       state.logHist = prefs_.getBoolean(PREF_LOG_HIST, false);
+      state.composite = prefs_.getBoolean(PREF_COMPOSITE, true);
       state.ignoreOutliers = prefs_.getBoolean(PREF_REJECT_OUTLIERS, false);
       state.syncChannels = prefs_.getBoolean(PREF_SYNC_CHANNELS, false);
       return state;
@@ -140,12 +143,15 @@ class ContrastPanel extends JPanel {
       rejectOutliersCheckBox_.setSelected(histControlsState_.ignoreOutliers);
       syncChannelsCheckBox_.setSelected(histControlsState_.syncChannels);
 
-
    }
 
    private void saveCheckBoxStates() {
+      if (initializing_) {
+         return;
+      }
       prefs_.putBoolean(PREF_AUTOSTRETCH, autostretchCheckBox_.isSelected());
       prefs_.putBoolean(PREF_LOG_HIST, logHistCheckBox_.isSelected());
+      prefs_.putBoolean(PREF_COMPOSITE, compositeCheckBox_.isSelected());
       prefs_.putDouble(PREF_REJECT_FRACTION, (Double) rejectPercentSpinner_.getValue());
       prefs_.putBoolean(PREF_REJECT_OUTLIERS, rejectOutliersCheckBox_.isSelected());
       prefs_.putBoolean(PREF_SYNC_CHANNELS, syncChannelsCheckBox_.isSelected());
@@ -162,7 +168,7 @@ class ContrastPanel extends JPanel {
 
    private JPanel createGUI() {
       JPanel controlPanel = new JPanel();
-      compositeCheckBox_ = new JCheckBox("Show all");
+      compositeCheckBox_ = new JCheckBox("Composite");
       autostretchCheckBox_ = new JCheckBox();
       rejectOutliersCheckBox_ = new JCheckBox();
       rejectPercentSpinner_ = new JSpinner();
@@ -171,6 +177,16 @@ class ContrastPanel extends JPanel {
       histDisplayScrollPane_ = new JScrollPane();
 
       this.setPreferredSize(new Dimension(400, 594));
+
+      compositeCheckBox_.setSelected(display_.isCompositMode());
+      compositeCheckBox_.addChangeListener(new ChangeListener() {
+         @Override
+         public void stateChanged(ChangeEvent e) {
+            display_.setCompositeMode(compositeCheckBox_.isSelected());
+         }
+      });
+
+      compositeCheckBox_.setToolTipText("Show multiple channels at once or one at a time");
 
       autostretchCheckBox_.setText("Autostretch");
       autostretchCheckBox_.addChangeListener(new ChangeListener() {
@@ -224,7 +240,7 @@ class ContrastPanel extends JPanel {
          }
       });
       JPanel outerPanel = new JPanel(new BorderLayout());
-      
+
       controlPanel.setLayout(new FlowLayout(FlowLayout.LEADING));
       controlPanel.add(compositeCheckBox_);
       controlPanel.add(autostretchCheckBox_);
@@ -232,10 +248,10 @@ class ContrastPanel extends JPanel {
       controlPanel.add(rejectOutliersCheckBox_);
       controlPanel.add(rejectPercentSpinner_);
       controlPanel.add(logHistCheckBox_);
-      
+
       outerPanel.add(controlPanel, BorderLayout.PAGE_START);
       outerPanel.add(histDisplayScrollPane_, BorderLayout.CENTER);
-      
+
       return outerPanel;
    }
 
@@ -248,13 +264,14 @@ class ContrastPanel extends JPanel {
          autostretchCheckBox_.setSelected(false);
          autostretchCheckBox_.setEnabled(false);
          if (histograms_ != null) {
-            ((MultiChannelHistograms) histograms_).setChannelContrastFromFirst();
-            ((MultiChannelHistograms) histograms_).setChannelDisplayModeFromFirst();
+            display_.getDisplaySettings().setChannelContrastFromFirst();
+            display_.getDisplaySettings().setChannelDisplayModeFromFirst();
          }
       } else {
          autostretchCheckBox_.setEnabled(true);
       }
       saveCheckBoxStates();
+      display_.postEvent(new ContrastUpdatedEvent(0));
    }
 
    private void autostretchCheckBoxStateChanged() {
@@ -291,18 +308,17 @@ class ContrastPanel extends JPanel {
       saveCheckBoxStates();
    }
 
-   public void autostretch() {
-      if (histograms_ != null) {
-         histograms_.autostretch();
-      }
-   }
-
    public void disableAutostretch() {
+      display_.getDisplaySettings().setAutoscale( false);
       autostretchCheckBox_.setSelected(false);
       saveCheckBoxStates();
    }
 
-   void updateHistogramData(HashMap<Integer, int[]> hists) {
-      histograms_.updateHistogramData(hists);
+   void updateHistogramData(HashMap<Integer, int[]> hists, HashMap<Integer, Integer> mins, HashMap<Integer, Integer> maxs) {
+      histograms_.updateHistogramData(hists, mins, maxs);
+   }
+
+   void displaySettingsChanged() {
+      histograms_.displaySettingsChanged();
    }
 }

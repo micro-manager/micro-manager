@@ -21,7 +21,7 @@
 //
 package org.micromanager.magellan.datasaving;
 
-import org.micromanager.magellan.imagedisplay.DisplaySettings;
+import org.micromanager.magellan.imagedisplaynew.DisplaySettings;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;

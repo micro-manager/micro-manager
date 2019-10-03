@@ -650,9 +650,9 @@ public class MultipageTiffWriter {
    }
 
    private void writeDisplaySettings(JSONObject displaySettings) throws IOException, InterruptedException, ExecutionException {
-      int numReservedBytes = masterMPTiffStorage_.getNumChannels() * DISPLAY_SETTINGS_BYTES_PER_CHANNEL;
       ByteBuffer header = allocateByteBuffer(8);
       ByteBuffer buffer = ByteBuffer.wrap(getBytesFromString(displaySettings.toString()));
+      int numReservedBytes = buffer.capacity();
       header.putInt(0, DISPLAY_SETTINGS_HEADER);
       header.putInt(4, numReservedBytes);
       fileChannelWrite(header, filePosition_);
