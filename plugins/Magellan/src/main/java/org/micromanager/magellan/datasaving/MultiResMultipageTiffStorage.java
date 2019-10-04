@@ -36,12 +36,15 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.magellan.imagedisplaynew.DisplaySettings;
 import org.micromanager.magellan.misc.JavaUtils;
 import org.micromanager.magellan.misc.Log;
 import org.micromanager.magellan.misc.LongPoint;
@@ -67,7 +70,7 @@ public class MultiResMultipageTiffStorage {
    private int fullResTileWidthIncludingOverlap_, fullResTileHeightIncludingOverlap_;
    private int tileWidth_, tileHeight_; //Indpendent of zoom level because tile sizes stay the same--which means overlap is cut off
    private PositionManager posManager_;
-   private boolean finished_;
+   private volatile boolean finished_;
    private String uniqueAcqName_;
    private int byteDepth_;
    private double pixelSizeXY_, pixelSizeZ_;
@@ -176,10 +179,16 @@ public class MultiResMultipageTiffStorage {
       lowResStorages_ = new TreeMap<Integer, TaggedImageStorageMultipageTiff>();
    }
 
-   public void setDisplaySettings(JSONObject displaySettings) {
-      displaySettings_ = displaySettings;
+   public void setDisplaySettings(DisplaySettings displaySettings) {
+      try {
+         if (displaySettings != null) {
+            displaySettings_ = new JSONObject(displaySettings.toString());
+         }
+      } catch (JSONException ex) {
+         throw new RuntimeException();
+      }
    }
-   
+
    public static JSONObject readSummaryMetadata(String dir) throws IOException {
       String fullResDir = dir + (dir.endsWith(File.separator) ? "" : File.separator) + FULL_RES_SUFFIX;
       return TaggedImageStorageMultipageTiff.readSummaryMD(fullResDir);
@@ -216,7 +225,7 @@ public class MultiResMultipageTiffStorage {
    }
 
    public String getUniqueAcqName() {
-      return uniqueAcqName_;
+      return uniqueAcqName_ + ""; //make new instance
    }
 
    public double getPixelSizeZ() {
@@ -440,24 +449,23 @@ public class MultiResMultipageTiffStorage {
       return new TaggedImage(pixels, topLeftMD);
    }
 
-   /**
-    * Called before any images have been added to initialize the resolution to
-    * the specifiec zoom level
-    *
-    * @param resIndex
-    */
-   public void initializeToLevel(int resIndex) {
-      //create a null pointer in lower res storages to signal addToLoResStorage function
-      //to continue downsampling to this level
-      maxResolutionLevel_ = resIndex;
-      //Make sure position nodes for lower resolutions are created if they weren't automatically
-      posManager_.updateLowerResolutionNodes(resIndex);
-   }
-
+//   /**
+//    * Called before any images have been added to initialize the resolution to
+//    * the specifiec zoom level
+//    *
+//    * @param resIndex
+//    */
+//   public void initializeToLevel(int resIndex) {
+//      //create a null pointer in lower res storages to signal addToLoResStorage function
+//      //to continue downsampling to this level
+//      maxResolutionLevel_ = resIndex;
+//      //Make sure position nodes for lower resolutions are created if they weren't automatically
+//      posManager_.updateLowerResolutionNodes(resIndex);
+//   }
    /**
     * create an additional lower resolution levels for zooming purposes
     */
-   public void addResolutionsUpTo(int index) throws InterruptedException, ExecutionException {
+   private void addResolutionsUpTo(int index) throws InterruptedException, ExecutionException {
       if (index <= maxResolutionLevel_) {
          return;
       }
@@ -466,7 +474,7 @@ public class MultiResMultipageTiffStorage {
       //update position manager to reflect addition of new resolution level
       posManager_.updateLowerResolutionNodes(maxResolutionLevel_);
       ArrayList<Future> finished = new ArrayList<Future>();
-      for (int i = oldLevel+1; i <= maxResolutionLevel_; i++) {
+      for (int i = oldLevel + 1; i <= maxResolutionLevel_; i++) {
          populateNewResolutionLevel(finished, i);
          for (Future f : finished) {
             f.get();
@@ -683,8 +691,8 @@ public class MultiResMultipageTiffStorage {
          long fullResPixelWidth = getNumCols() * getTileWidth();
          long fullResPixelHeight = getNumRows() * getTileHeight();
          int maxResIndex = (int) Math.ceil(Math.log((Math.max(fullResPixelWidth, fullResPixelHeight)
-                    / 200)) / Math.log(2));
-          addResolutionsUpTo(maxResIndex);
+                 / 4)) / Math.log(2));
+         addResolutionsUpTo(maxResIndex);
          writeFinishedList.addAll(addToLowResStorage(MagellanTaggedImage, 0, MD.getPositionIndex(MagellanTaggedImage.tags)));
          for (Future f : writeFinishedList) {
             f.get();
@@ -782,14 +790,6 @@ public class MultiResMultipageTiffStorage {
    public String getDiskLocation() {
       //For display purposes
       return directory_;
-   }
-
-   public String getChannelName(int index) {
-      try {
-         return summaryMD_.getJSONArray("ChNames").getString(index);
-      } catch (JSONException ex) {
-         throw new RuntimeException("Channel names missing");
-      }
    }
 
    public int getNumChannels() {
@@ -895,6 +895,21 @@ public class MultiResMultipageTiffStorage {
 
    public PositionManager getPosManager() {
       return posManager_;
+   }
+
+   public List<String> getChannelNames() {
+      List<String> channelNames = new ArrayList<>();
+      Set<String> channelIndices = new TreeSet<String>();
+      for (String key : imageKeys()) {
+         String[] indices = key.split("_");
+         if (!channelIndices.contains(indices[0])) {
+            channelIndices.add(indices[0]);
+            channelNames.add(MD.getChannelName(getImageTags(
+                    Integer.parseInt(indices[0]), Integer.parseInt(indices[1]),
+                    Integer.parseInt(indices[2]), Integer.parseInt(indices[3]))));
+         }
+      }
+      return channelNames;
    }
 
 }

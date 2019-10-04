@@ -16,10 +16,7 @@
 //
 package org.micromanager.magellan.surfacesandregions;
 
-import org.micromanager.magellan.gui.SurfaceGridComboBoxModel;
-import org.micromanager.magellan.gui.SurfaceGridTableModel;
 import org.micromanager.magellan.gui.GUI;
-import org.micromanager.magellan.imagedisplay.MagellanDisplay;
 import java.awt.FileDialog;
 import java.awt.geom.Point2D;
 import java.io.BufferedReader;
@@ -34,7 +31,7 @@ import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.micromanager.magellan.coordinates.AffineUndefinedException;
 import org.micromanager.magellan.coordinates.MagellanAffineUtils;
-import org.micromanager.magellan.imagedisplay.DisplayWindowSurfaceGridTableModel;
+//import org.micromanager.magellan.imagedisplaynew.DisplayWindowSurfaceGridTableModel;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.JavaUtils;
 import org.micromanager.magellan.misc.Log;
@@ -59,7 +56,7 @@ public class SurfaceGridManager {
       listeners_.add(l);
    }
    
-   public void removeSurfaceGridListener(SurfaceGridListener l ) {
+   public void unregisterSurfaceGridListener(SurfaceGridListener l ) {
       listeners_.remove(l);
    }
    

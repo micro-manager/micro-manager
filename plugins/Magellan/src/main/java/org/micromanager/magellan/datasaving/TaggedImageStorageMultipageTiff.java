@@ -21,7 +21,7 @@
 //
 package org.micromanager.magellan.datasaving;
 
-import org.micromanager.magellan.imagedisplay.DisplaySettings;
+import org.micromanager.magellan.imagedisplaynew.DisplaySettings;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -66,7 +66,7 @@ public final class TaggedImageStorageMultipageTiff {
    private ConcurrentHashMap<String, TaggedImage> writePendingImages_
            = new ConcurrentHashMap<String, TaggedImage>();
    //map of position indices to objects associated with each
-   private HashMap<Integer, FileSet> fileSets_;
+   private volatile HashMap<Integer, FileSet> fileSets_;
    //Map of image labels to file 
    private HashMap<String, MultipageTiffReader> tiffReadersByLabel_;
    private static boolean showProgressBars_ = true;
@@ -301,6 +301,10 @@ public final class TaggedImageStorageMultipageTiff {
       SwingUtilities.invokeLater(new Runnable() {
          @Override
          public void run() {
+            if (fileSets_ == null) {
+               //its already done
+               return;
+            }
             savingFinishedProgressBar_ = new ProgressBar("Finishing Files", 0, fileSets_.size());
             savingFinishedProgressBar_.setProgress(0);
             savingFinishedProgressBar_.setVisible(true);
@@ -319,16 +323,23 @@ public final class TaggedImageStorageMultipageTiff {
          SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
+               if (savingFinishedProgressBar_ == null) {
+                  return;
+               }
                savingFinishedProgressBar_.setProgress(currentCount);
             }
          });
       }
-
+      fileSets_.clear();
       SwingUtilities.invokeLater(new Runnable() {
          @Override
          public void run() {
+            if (savingFinishedProgressBar_ == null) {
+               return;
+            }
             savingFinishedProgressBar_.close();
             savingFinishedProgressBar_ = null;
+            fileSets_ = null;
          }
       });
 
@@ -346,6 +357,7 @@ public final class TaggedImageStorageMultipageTiff {
             Log.log(ex);
          }
       }
+      tiffReadersByLabel_ = null;
    }
 
    public boolean isFinished() {
@@ -484,6 +496,7 @@ public final class TaggedImageStorageMultipageTiff {
          for (MultipageTiffWriter w : tiffWriters_) {
             w.close();
          }
+         tiffWriters_ = null;
          finished_ = true;
       }
 

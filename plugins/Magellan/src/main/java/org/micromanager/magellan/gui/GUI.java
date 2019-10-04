@@ -62,7 +62,6 @@ import org.micromanager.magellan.channels.ColorEditor;
 import org.micromanager.magellan.channels.ColorRenderer;
 import org.micromanager.magellan.coordinates.MagellanAffineUtils;
 import org.micromanager.magellan.main.Magellan;
-import org.micromanager.magellan.misc.ExactlyOneRowSelectionModel;
 import org.micromanager.magellan.misc.GlobalSettings;
 import org.micromanager.magellan.misc.JavaUtils;
 import org.micromanager.magellan.misc.LoadedAcquisitionData;
@@ -1970,6 +1969,7 @@ public class GUI extends javax.swing.JFrame {
       new Thread(new Runnable() {
          @Override
          public void run() {
+            //TODO
             new LoadedAcquisitionData(finalFile.toString());
          }
       }).start();

@@ -120,7 +120,8 @@ public class PositionManager {
 
    public synchronized XYStagePosition getXYPosition(int index) {
       try {
-         JSONArray jsonPos = positionList_.getJSONObject(index).getJSONObject("DeviceCoordinatesUm").getJSONArray(xyStageName_);
+         JSONArray jsonPos = new JSONArray(positionList_.getJSONObject(index).getJSONObject(
+                 "DeviceCoordinatesUm").getJSONArray(xyStageName_).toString());
           Point2D.Double posCenter = new Point2D.Double(jsonPos.getDouble(0), jsonPos.getDouble(1));
           //Full 
           double[] mat = new double[4];
@@ -432,7 +433,7 @@ public class PositionManager {
     */
    public synchronized LongPoint getPixelCoordsFromStageCoords(double stageX, double stageY) {
       try {
-          JSONObject existingPosition = positionList_.getJSONObject(0);
+          JSONObject existingPosition = new JSONObject(positionList_.getJSONObject(0).toString());
          double exisitngX = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(0);
          double exisitngY = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(1);
          long existingRow = MD.getGridRow(existingPosition);

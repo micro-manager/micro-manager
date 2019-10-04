@@ -205,7 +205,7 @@ public class AcqDurationEstimator {
                      numImagesAcquired++;
                      String channelName = settings.channels_.nextActiveChannel(null);
                      while (channelName != null) {
-                        channelName = settings.channels_.nextActiveChannel(null);
+                        channelName = settings.channels_.nextActiveChannel(channelName);
                         if (!settings.channels_.getChannelSetting(channelName).uniqueEvent_) {
                               continue;
                            }
