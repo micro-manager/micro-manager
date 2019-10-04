@@ -18,8 +18,6 @@ package org.micromanager.magellan.imagedisplaynew;
 
 import org.micromanager.magellan.imagedisplaynew.events.ExploreZLimitsChangedEvent;
 import org.micromanager.magellan.imagedisplaynew.events.ScrollersAddedEvent;
-import org.micromanager.magellan.imagedisplaynew.events.MagellanNewImageEvent;
-import org.micromanager.magellan.imagedisplay.*;
 import com.google.common.eventbus.Subscribe;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -44,7 +42,6 @@ import org.micromanager.magellan.misc.JavaUtils;
 import org.micromanager.magellan.misc.Log;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.magellan.imagedisplaynew.events.DisplayClosingEvent;
 import org.micromanager.magellan.imagedisplaynew.events.MagellanScrollbarPosition;
 import org.micromanager.magellan.misc.NumberUtils;
 
