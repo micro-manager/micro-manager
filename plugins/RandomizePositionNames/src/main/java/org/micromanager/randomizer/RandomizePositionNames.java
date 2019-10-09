@@ -21,12 +21,16 @@
 
 package org.micromanager.randomizer;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
@@ -48,6 +52,7 @@ import org.micromanager.display.DisplayWindow;
  */
 public class RandomizePositionNames {
    private final Studio studio_;
+   private static final String KEYFILENAME = "Key.txt";
    
    public RandomizePositionNames (Studio studio, DisplayWindow window) {
       studio_ = studio;
@@ -137,6 +142,30 @@ public class RandomizePositionNames {
          }
          DisplayWindow newDisplay = studio_.displays().createDisplay(newStore);
          newDisplay.setDisplaySettings(window.getDisplaySettings());
+         studio.displays().manage(newStore);
+         
+         try {
+            if (dp instanceof Datastore) {
+               Datastore ds = (Datastore) dp;
+               String savePath = ds.getSavePath();
+               if (savePath != null && savePath.length() > 0) {
+                  File keyFile = new File(savePath, KEYFILENAME);
+                  if (keyFile.exists()) {
+                     keyFile.delete();
+                  }
+                  try (BufferedWriter output = new BufferedWriter(new FileWriter(keyFile))) {
+                     Set<Map.Entry<Integer, String>> entrySet = r2Well.entrySet();
+                     for (Entry<Integer, String> entry : entrySet) {
+                        output.append(entry.getKey().toString()).append(" - ").
+                                append(entry.getValue()).append(System.getProperty("line.separator"));
+                     }
+                  }
+               }
+            }
+         } catch (IOException ioe) {
+            studio_.logs().showError("Key file not saved.  Be sure to check the Summarymetadata before closing");
+         }
+
       } catch (IOException ioe) {
          studio_.logs().showError(ioe, "IO Error in Position randomizer plugin");
       }
