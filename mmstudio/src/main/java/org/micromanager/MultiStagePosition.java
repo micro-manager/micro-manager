@@ -25,6 +25,7 @@
 //
 package org.micromanager;
 
+import edu.ucsf.valelab.gaussianfit.utils.ReportingUtils;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -445,7 +446,16 @@ public final class MultiStagePosition {
       }
       for (PropertyMap spmap : pmap.getPropertyMapList(
             PropertyKey.MULTI_STAGE_POSITION__DEVICE_POSITIONS.key())) {
-         ret.stagePosList_.add(StagePosition.fromPropertyMap(spmap));
+         // Opening certain datasets created with certain version of 2.0-beta
+         // give the error: 
+         // "java.lang.IllegalArgumentException: Invalid stage position (0-axis stage not supported)""
+         // catch and log.  This needs a better approach...
+         try {
+            ret.stagePosList_.add(StagePosition.fromPropertyMap(spmap));
+         } catch (IllegalArgumentException iae) {
+            // this can lead to a deluge of output.  Still probably better to keep...
+            ReportingUtils.logError(iae, iae.getMessage() + spmap.toJSON());
+         }
       }
       return ret;
    }

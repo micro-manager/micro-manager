@@ -35,6 +35,7 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.SummaryMetadata;
 import static org.micromanager.data.internal.PropertyKey.*;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.utils.ReportingUtils;
 
 public final class DefaultSummaryMetadata implements SummaryMetadata {
    /**
@@ -207,7 +208,7 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
 
       @Override
       public Builder stagePositions(Iterable<MultiStagePosition> stagePositions) {
-         List<PropertyMap> msps = new ArrayList<PropertyMap>();
+         List<PropertyMap> msps = new ArrayList<>();
          for (MultiStagePosition msp : stagePositions) {
             msps.add(msp.toPropertyMap());
          }
@@ -241,25 +242,32 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
       pmap_ = pmap;
 
       // Check map format
-      getPrefix();
-      getUserName();
-      getProfileName();
-      getMicroManagerVersion();
-      getMetadataVersion();
-      getComputerName();
-      getDirectory();
-      getChannelGroup();
-      getChannelNameList();
-      getZStepUm();
-      getWaitInterval();
-      getCustomIntervalsMsList();
-      getOrderedAxes();
-      getIntendedDimensions();
-      getStartDate();
-      getStagePositionList();
-      getKeepShutterOpenSlices();
-      getKeepShutterOpenChannels();
-      getUserData();
+      // Experience has shown that these functions can encounter exceptions when
+      // opening certain files.  We need to know about these exceptions.
+      try {
+         getPrefix();
+         getUserName();
+         getProfileName();
+         getMicroManagerVersion();
+         getMetadataVersion();
+         getComputerName();
+         getDirectory();
+         getChannelGroup();
+         getChannelNameList();
+         getZStepUm();
+         getWaitInterval();
+         getCustomIntervalsMsList();
+         getOrderedAxes();
+         getIntendedDimensions();
+         getStartDate();
+         getStagePositionList();
+         getKeepShutterOpenSlices();
+         getKeepShutterOpenChannels();
+         getUserData();
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex,
+                 "Encountered an error reading metadata.  Please report (Help > Report a Problem)");
+      }
    }
 
    @Override
