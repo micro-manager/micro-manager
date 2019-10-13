@@ -147,8 +147,8 @@ public final class HistogramView extends JPanel {
    }
 
    private HistogramView() {
-      setOpaque(true);
-      setMinimumSize(new Dimension(2 * HORIZONTAL_MARGIN + MIN_GRAPH_WIDTH,
+      super.setOpaque(true);
+      super.setMinimumSize(new Dimension(2 * HORIZONTAL_MARGIN + MIN_GRAPH_WIDTH,
             2 * VERTICAL_MARGIN + MIN_GRAPH_HEIGHT));
    }
 
@@ -181,10 +181,7 @@ public final class HistogramView extends JPanel {
       state.rangeMax_ = rangeMax;
 
       if (component == selectedComponent_  && rangeMaxChanged) {
-         scalingMinLabelRect_ = scalingMaxLabelRect_ = null;
-         scalingMinHandleRect_ = scalingMaxHandleRect_ = null;
-         gammaHandleRect_ = null;
-         cachedGammaMappingPath_ = null;
+         nullRectsAndMappingPath();
       }
       state.cachedInterpolatedLogScaledGraph_ = null;
       state.cachedPath_ = null;
@@ -192,12 +189,7 @@ public final class HistogramView extends JPanel {
    }
 
    public void clearGraphs() {
-      scalingMinLabelRect_ = null;
-      scalingMaxLabelRect_ = null;
-      scalingMinHandleRect_ = null;
-      scalingMaxHandleRect_ = null;
-      gammaHandleRect_ = null;
-      cachedGammaMappingPath_ = null;
+      nullRectsAndMappingPath();
       for (int i = 0; i < componentStates_.size(); ++i) {
          ComponentState state = componentStates_.get(i);
          state.graph_ = null;
@@ -241,12 +233,18 @@ public final class HistogramView extends JPanel {
       state.scalingMin_ = scalingMin;
       state.scalingMax_ = scalingMax;
       if (component == selectedComponent_) { // Invalidate layout
-         scalingMinLabelRect_ = scalingMaxLabelRect_ = null;
-         scalingMinHandleRect_ = scalingMaxHandleRect_ = null;
-         gammaHandleRect_ = null;
-         cachedGammaMappingPath_ = null;
+         nullRectsAndMappingPath();
       }
       repaint();
+   }
+   
+   private void nullRectsAndMappingPath() {
+      scalingMinLabelRect_ = null;
+      scalingMaxLabelRect_ = null;
+      scalingMinHandleRect_ = null;
+      scalingMaxHandleRect_ = null;
+      gammaHandleRect_ = null;
+      cachedGammaMappingPath_ = null;
    }
 
    public long getComponentScalingMin(int component) {
@@ -521,9 +519,9 @@ public final class HistogramView extends JPanel {
    private void drawGraphBackground(Graphics2D g) {
       Rectangle rect = getGraphRect();
 
-      g = (Graphics2D) g.create();
-      g.setColor(Color.BLACK);
-      g.fillRect(rect.x, rect.y, rect.width, rect.height);
+      Graphics2D g2d = (Graphics2D) g.create();
+      g2d.setColor(Color.BLACK);
+      g2d.fillRect(rect.x, rect.y, rect.width, rect.height);
    }
 
    private void drawRangeMaxLabel(Graphics2D g) {
@@ -540,14 +538,14 @@ public final class HistogramView extends JPanel {
       Rectangle rect = getGraphRect();
       Point graphBottomRight = new Point(rect.x + rect.width, rect.y + rect.height);
 
-      g = (Graphics2D) g.create();
-      g.setFont(g.getFont().deriveFont(INTENSITY_FONT_SIZE));
+      Graphics2D g2d = (Graphics2D) g.create();
+      g2d.setFont(g.getFont().deriveFont(INTENSITY_FONT_SIZE));
       FontMetrics metrics = g.getFontMetrics();
       int x = graphBottomRight.x - metrics.stringWidth(text);
       if (x <= getScalingHandlePos(selectedComponent_, false)) {
          return; // Hide when scaling lower limit handle overlaps
       }
-      g.drawString(text, x, graphBottomRight.y + metrics.getAscent());
+      g2d.drawString(text, x, graphBottomRight.y + metrics.getAscent());
    }
 
    private void drawComponentGraph(int component, Graphics2D g) {
@@ -557,15 +555,15 @@ public final class HistogramView extends JPanel {
       }
       Rectangle rect = getGraphRect();
 
-      g = (Graphics2D) g.create();
-      g.setClip(rect.x, rect.y, rect.width, rect.height);
-      g.setColor(componentStates_.get(component).color_);
+      Graphics2D g2d = (Graphics2D) g.create();
+      g2d.setClip(rect.x, rect.y, rect.width, rect.height);
+      g2d.setColor(componentStates_.get(component).color_);
       if (fillHistograms_) {
-         g.fill(path);
+         g2d.fill(path);
       }
       else {
-         g.setStroke(new BasicStroke(2.0f));
-         g.draw(path);
+         g2d.setStroke(new BasicStroke(2.0f));
+         g2d.draw(path);
       }
    }
 
@@ -579,15 +577,15 @@ public final class HistogramView extends JPanel {
       float loXPos = intensityFractionToGraphXPos((float) state.scalingMin_ / state.rangeMax_);
       float hiXPos = intensityFractionToGraphXPos((float) state.scalingMax_ / state.rangeMax_);
 
-      g = (Graphics2D) g.create();
-      g.setClip(rect.x, rect.y, rect.width, rect.height);
-      g.setColor(state.color_);
-      g.setStroke(new BasicStroke(
+      Graphics2D g2d = (Graphics2D) g.create();
+      g2d.setClip(rect.x, rect.y, rect.width, rect.height);
+      g2d.setColor(state.color_);
+      g2d.setStroke(new BasicStroke(
             1.0f, BasicStroke.CAP_BUTT,
             BasicStroke.JOIN_MITER, 10.0f,
             new float[] { 5.0f, 5.0f }, offset));
-      g.draw(new Line2D.Float(loXPos, rect.y, loXPos, rect.y + rect.height));
-      g.draw(new Line2D.Float(hiXPos, rect.y, hiXPos, rect.y + rect.height));
+      g2d.draw(new Line2D.Float(loXPos, rect.y, loXPos, rect.y + rect.height));
+      g2d.draw(new Line2D.Float(hiXPos, rect.y, hiXPos, rect.y + rect.height));
    }
 
    private void drawHighlightedIntensity(int component, Graphics2D g) {
@@ -602,14 +600,14 @@ public final class HistogramView extends JPanel {
       float xPos = intensityFractionToGraphXPos((float) state.highlightIntensity_ / state.rangeMax_);
       Rectangle rect = getGraphRect();
 
-      g = (Graphics2D) g.create();
-      g.setClip(rect.x, rect.y, rect.width, rect.height);
-      g.setColor(state.highlightColor_);
-      g.setStroke(new BasicStroke(
+      Graphics2D g2d = (Graphics2D) g.create();
+      g2d.setClip(rect.x, rect.y, rect.width, rect.height);
+      g2d.setColor(state.highlightColor_);
+      g2d.setStroke(new BasicStroke(
             1.5f, BasicStroke.CAP_BUTT,
             BasicStroke.JOIN_MITER, 10.0f,
             new float[] { 5.0f, 5.0f }, offset));
-      g.draw(new Line2D.Float(xPos, rect.y, xPos, rect.y + rect.height));
+      g2d.draw(new Line2D.Float(xPos, rect.y, xPos, rect.y + rect.height));
    }
 
    private void drawScalingHandlesAndLabels(int component, Graphics2D g) {
@@ -639,12 +637,12 @@ public final class HistogramView extends JPanel {
       path.lineTo(x - s, y + s);
       path.closePath();
 
-      g = (Graphics2D) g.create();
-      g.setStroke(new BasicStroke(1.0f));
-      g.setColor(state.color_);
-      g.fill(path);
-      g.setColor(Color.BLACK);
-      g.draw(path);
+      Graphics2D g2d = (Graphics2D) g.create();
+      g2d.setStroke(new BasicStroke(1.0f));
+      g2d.setColor(state.color_);
+      g2d.fill(path);
+      g2d.setColor(Color.BLACK);
+      g2d.draw(path);
    }
 
    // See also: getScalingLabelRect()
@@ -671,8 +669,8 @@ public final class HistogramView extends JPanel {
          drawOnLeftOfHandle = true;
       }
 
-      g = (Graphics2D) g.create();
-      g.setFont(g.getFont().deriveFont(INTENSITY_FONT_SIZE));
+      Graphics2D g2d = (Graphics2D) g.create();
+      g2d.setFont(g.getFont().deriveFont(INTENSITY_FONT_SIZE));
       FontMetrics metrics = g.getFontMetrics();
       int width = metrics.stringWidth(text);
       int vOffset = top ? -1 : metrics.getAscent() - 1;
@@ -683,7 +681,7 @@ public final class HistogramView extends JPanel {
          x += drawOnLeftOfHandle ? -width - LUT_HANDLE_SIZE : 2;
       }
       y += vOffset;
-      g.drawString(text, x, y);
+      g2d.drawString(text, x, y);
    }
 
    private void drawGammaMappingAndHandle(int component, Graphics2D g) {
@@ -693,15 +691,15 @@ public final class HistogramView extends JPanel {
       Path2D.Float path = getGammaMappingPath(component);
       Rectangle rect = getGraphRect();
 
-      g = (Graphics2D) g.create();
-      g.setClip(rect.x, rect.y, rect.width, rect.height);
-      g.setColor(Color.GRAY);
-      g.setStroke(new BasicStroke(1.5f));
-      g.draw(path);
+      Graphics2D g2d = (Graphics2D) g.create();
+      g2d.setClip(rect.x, rect.y, rect.width, rect.height);
+      g2d.setColor(Color.GRAY);
+      g2d.setStroke(new BasicStroke(1.5f));
+      g2d.draw(path);
 
       if (allowGammaScaling_) {
          Rectangle handleRect = getGammaHandleRect();
-         g.fillOval(handleRect.x, handleRect.y,
+         g2d.fillOval(handleRect.x, handleRect.y,
                handleRect.width, handleRect.height);
       }
    }
@@ -714,11 +712,11 @@ public final class HistogramView extends JPanel {
       Rectangle rect = getGraphRect();
       Point graphTopRight = new Point(rect.x + rect.width, rect.y);
 
-      g = (Graphics2D) g.create();
-      g.setColor(OVERLAY_COLOR);
-      g.setFont(g.getFont().deriveFont(OVERLAY_FONT_SIZE).deriveFont(OVERLAY_FONT_STYLE));
+      Graphics2D g2d = (Graphics2D) g.create();
+      g2d.setColor(OVERLAY_COLOR);
+      g2d.setFont(g.getFont().deriveFont(OVERLAY_FONT_SIZE).deriveFont(OVERLAY_FONT_STYLE));
       FontMetrics metrics = g.getFontMetrics();
-      g.drawString(text, graphTopRight.x - metrics.stringWidth(text) - 3,
+      g2d.drawString(text, graphTopRight.x - metrics.stringWidth(text) - 3,
             graphTopRight.y + metrics.getAscent());
    }
 
@@ -730,11 +728,11 @@ public final class HistogramView extends JPanel {
       Rectangle rect = getGraphRect();
       Point graphBottomRight = new Point(rect.x + rect.width, rect.y + rect.height);
 
-      g = (Graphics2D) g.create();
-      g.setColor(OVERLAY_COLOR);
-      g.setFont(g.getFont().deriveFont(OVERLAY_FONT_SIZE).deriveFont(OVERLAY_FONT_STYLE));
-      FontMetrics metrics = g.getFontMetrics();
-      g.drawString(text, graphBottomRight.x - metrics.stringWidth(text) - 3,
+      Graphics2D g2d = (Graphics2D) g.create();
+      g2d.setColor(OVERLAY_COLOR);
+      g2d.setFont(g2d.getFont().deriveFont(OVERLAY_FONT_SIZE).deriveFont(OVERLAY_FONT_STYLE));
+      FontMetrics metrics = g2d.getFontMetrics();
+      g2d.drawString(text, graphBottomRight.x - metrics.stringWidth(text) - 3,
             graphBottomRight.y - metrics.getMaxDescent());
    }
 
@@ -746,11 +744,11 @@ public final class HistogramView extends JPanel {
       Rectangle rect = getGraphRect();
       Point graphRight = new Point(rect.x + rect.width, rect.y + rect.height / 2);
 
-      g = (Graphics2D) g.create();
-      g.setColor(OVERLAY_COLOR);
-      g.setFont(g.getFont().deriveFont(OVERLAY_FONT_SIZE).deriveFont(OVERLAY_FONT_STYLE));
-      FontMetrics metrics = g.getFontMetrics();
-      g.drawString(text, graphRight.x - metrics.stringWidth(text) - 3,
+      Graphics2D g2d = (Graphics2D) g.create();
+      g2d.setColor(OVERLAY_COLOR);
+      g2d.setFont(g2d.getFont().deriveFont(OVERLAY_FONT_SIZE).deriveFont(OVERLAY_FONT_STYLE));
+      FontMetrics metrics = g2d.getFontMetrics();
+      g2d.drawString(text, graphRight.x - metrics.stringWidth(text) - 3,
             graphRight.y + metrics.getAscent() / 2);
    }
 
@@ -762,11 +760,11 @@ public final class HistogramView extends JPanel {
       Rectangle rect = getGraphRect();
       Point graphTop = new Point(rect.x + rect.width / 2, rect.y);
 
-      g = (Graphics2D) g.create();
-      g.setColor(OVERLAY_COLOR);
-      g.setFont(g.getFont().deriveFont(OVERLAY_FONT_SIZE).deriveFont(OVERLAY_FONT_STYLE));
-      FontMetrics metrics = g.getFontMetrics();
-      g.drawString(text, graphTop.x - metrics.stringWidth(text) / 2,
+      Graphics2D g2d = (Graphics2D) g.create();
+      g2d.setColor(OVERLAY_COLOR);
+      g2d.setFont(g2d.getFont().deriveFont(OVERLAY_FONT_SIZE).deriveFont(OVERLAY_FONT_STYLE));
+      FontMetrics metrics = g2d.getFontMetrics();
+      g2d.drawString(text, graphTop.x - metrics.stringWidth(text) / 2,
             graphTop.y + metrics.getAscent());
    }
 
@@ -785,20 +783,20 @@ public final class HistogramView extends JPanel {
             return null;
          }
 
-         Path2D.Float path = state.cachedPath_ =
+         state.cachedPath_ =
                new Path2D.Float(Path2D.WIND_EVEN_ODD, 2 * data.length + 2);
-         path.moveTo(0.0f, (float) rect.height);
+         state.cachedPath_.moveTo(0.0f, (float) rect.height);
          for (int i = 0; i < data.length; ++i) {
             float x = i * pixelsPerBin;
             float y = rect.height - dataScaling * data[i];
-            path.lineTo(x, y);                // Vertical
-            path.lineTo(x + pixelsPerBin, y); // Horizontal
+            state.cachedPath_.lineTo(x, y);                // Vertical
+            state.cachedPath_.lineTo(x + pixelsPerBin, y); // Horizontal
          }
-         path.lineTo((float) rect.width, (float) rect.height);
+         state.cachedPath_.lineTo((float) rect.width, (float) rect.height);
          if (fillHistograms_) {
-            path.closePath();
+            state.cachedPath_.closePath();
          }
-         path.transform(AffineTransform.getTranslateInstance(
+         state.cachedPath_.transform(AffineTransform.getTranslateInstance(
                rect.x - 0.5, rect.y - 0.5));
       }
       return state.cachedPath_;
@@ -830,19 +828,19 @@ public final class HistogramView extends JPanel {
                   makeInterpolatedHistogram(state.graph_, interpolatedLen);
          }
          else { // No interpolation necessary
-            float[] fGraph = state.cachedInterpolatedLogScaledGraph_ =
+            state.cachedInterpolatedLogScaledGraph_ =
                   new float[state.graph_.length];
-            for (int i = 0; i < fGraph.length; ++i) {
-               fGraph[i] = state.graph_[i];
+            for (int i = 0; i < state.cachedInterpolatedLogScaledGraph_.length; ++i) {
+               state.cachedInterpolatedLogScaledGraph_[i] = state.graph_[i];
             }
          }
 
          // Apply log scaling if requested
-         float[] fGraph = state.cachedInterpolatedLogScaledGraph_;
          if (plotLogIntensity_) {
-            for (int i = 0; i < fGraph.length; ++i) {
-               fGraph[i] = fGraph[i] > 1.0f ?
-                     (float) Math.log(fGraph[i]) : 0.0f;
+            for (int i = 0; i < state.cachedInterpolatedLogScaledGraph_.length; ++i) {
+               state.cachedInterpolatedLogScaledGraph_[i] = 
+                       state.cachedInterpolatedLogScaledGraph_[i] > 1.0f ?
+                     (float) Math.log(state.cachedInterpolatedLogScaledGraph_[i]) : 0.0f;
             }
          }
       }
@@ -888,16 +886,16 @@ public final class HistogramView extends JPanel {
          float hiX = intensityFractionToGraphXPos((float) state.scalingMax_ / state.rangeMax_);
          int width = (int) Math.floor(hiX - loX);
 
-         Path2D.Float path = cachedGammaMappingPath_ = new Path2D.Float();
-         path.moveTo(0.0f, (float) rect.height);
+         cachedGammaMappingPath_ = new Path2D.Float();
+         cachedGammaMappingPath_.moveTo(0.0f, (float) rect.height);
          for (int x = 1; x < width - 1; ++x) {
             float xFrac = x / (hiX - loX);
             float yFrac = (float) Math.pow(xFrac, gamma_);
-            path.lineTo(x, (1.0f - yFrac) * rect.height);
+            cachedGammaMappingPath_.lineTo(x, (1.0f - yFrac) * rect.height);
          }
-         path.lineTo(hiX - loX, 0.0f);
+         cachedGammaMappingPath_.lineTo(hiX - loX, 0.0f);
 
-         path.transform(AffineTransform.getTranslateInstance(
+         cachedGammaMappingPath_.transform(AffineTransform.getTranslateInstance(
                loX, frequencyFractionToGraphYPos(1.0f)));
       }
       return cachedGammaMappingPath_;
