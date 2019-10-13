@@ -216,7 +216,7 @@ class DiskoveryModel
 
       // Line enabled
       bool GetLineEnabled(uint16_t line) { MMThreadGuard g(lock_); return lineEnabled_[line]; };
-      void SetLineEnabled(uint16_t line, uint16_t val) { MMThreadGuard g(lock_); lineEnabled_[line] = val; };
+      void SetLineEnabled(uint16_t line, uint16_t val) { MMThreadGuard g(lock_); lineEnabled_[line] = (val != 0); };
 
       // Busy
       // deviceBusy_ keeps track of the busy state as signalled by the
@@ -294,7 +294,7 @@ class DiskoveryModel
       long GetWavelength1() { MMThreadGuard g(lock_); return wavelength1_; };
       void SetTIRFWavelength2(long val) { MMThreadGuard g(lock_); wavelength2_ = val;};
       long GetWavelength2() { MMThreadGuard g(lock_); return wavelength2_; };
-      void SetTubeLensFocalLength(double val) { MMThreadGuard g(lock_); tubeLensFocalLength_ = val; };
+      void SetTubeLensFocalLength(double val) { MMThreadGuard g(lock_); tubeLensFocalLength_ = (uint16_t) val; };
       uint16_t  GetTubeLensFocalLength() { MMThreadGuard g(lock_); return tubeLensFocalLength_; };
       uint16_t GetOM(); // { MMThreadGuard g(lock_); return om_; };
       void SetDepth(double val) { MMThreadGuard g(lock_); depth_ = val; };

@@ -919,7 +919,7 @@ int LedArray::SetShutter(boolean open)
 
 bool LedArray::GetShutter()
 {	
-	return shutterOpen_;
+	return (shutterOpen_ != 0);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
