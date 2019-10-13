@@ -78,17 +78,17 @@ protected:
       if (dp == std::string::npos)
       {
          int r;
-         int err = ParseDecimal(s, s.size(), r);
+         int err = ParseDecimal(s, (int) s.size(), r);
          result = r;
          return err;
       }
 
       int i;
-      int err = ParseDecimal(s.substr(0, dp), dp, i);
+      int err = ParseDecimal(s.substr(0, dp), (int) dp, i);
       if (err != DEVICE_OK)
          return err;
 
-      int fDigits = s.size() - dp - 1;
+      int fDigits = (int) s.size() - (int) dp - 1;
       if (fDigits == 0)
       {
          result = i;
@@ -133,7 +133,7 @@ protected:
 
       for (int i = 0; i < fractionalDigits; ++i)
          value *= 10;
-      int iValue = floor(value + 0.5);
+      int iValue = (int) floor(value + 0.5);
       return FormatDecimal(nDigits, iValue);
    }
 
@@ -148,13 +148,20 @@ public:
    virtual ~MCPCommand() {}
 
    std::string Get()
-   { return FormatDecimal(1, addr_) + GetCommand(); }
+   { 
+      return FormatDecimal(1, addr_) + GetCommand(); 
+   }
 
    virtual bool ExpectsSingleCharResponse() = 0;
 
-   virtual int ParseResponse(const std::string& response)
-   { return DEVICE_ERR; }
-   virtual int ParseResponse(char response) { return DEVICE_ERR; }
+   virtual int ParseResponse(const std::string& /* response */)
+   { 
+      return DEVICE_ERR; 
+   }
+   virtual int ParseResponse(char /* response */) 
+   {
+      return DEVICE_ERR; 
+   }
 };
 
 
@@ -658,13 +665,13 @@ class DispensingTimeCommand : public SingleCharResponseCommand
 protected:
    virtual std::string GetCommand()
    {
-      int tenthSecs = floor(10.0 * timeSeconds_ + 0.5);
+      int tenthSecs = (int) floor(10.0 * timeSeconds_ + 0.5);
       if (tenthSecs <= 9999)
          return "V" + FormatDecimal(4, tenthSecs);
-      int minutes = floor(timeSeconds_ / 60.0 + 0.5);
+      int minutes = (int) floor(timeSeconds_ / 60.0 + 0.5);
       if (minutes <= 999)
          return "VM" + FormatDecimal(3, minutes);
-      int hours = floor(timeSeconds_ / 3600.0 + 0.5);
+      int hours = (int) floor(timeSeconds_ / 3600.0 + 0.5);
       if (hours > 999)
          hours = 999;
       return "VH" + FormatDecimal(3, hours);
@@ -807,13 +814,13 @@ class PauseTimeCommand : public SingleCharResponseCommand
 protected:
    virtual std::string GetCommand()
    {
-      int tenthSecs = floor(10.0 * timeSeconds_ + 0.5);
+      int tenthSecs = (int) floor(10.0 * timeSeconds_ + 0.5);
       if (tenthSecs <= 9999)
          return "T" + FormatDecimal(4, tenthSecs);
-      int minutes = floor(timeSeconds_ / 60.0 + 0.5);
+      int minutes = (int) floor(timeSeconds_ / 60.0 + 0.5);
       if (minutes <= 999)
          return "TM" + FormatDecimal(3, minutes);
-      int hours = floor(timeSeconds_ / 3600.0 + 0.5);
+      int hours = (int) floor(timeSeconds_ / 3600.0 + 0.5);
       if (hours > 999)
          hours = 999;
       return "TH" + FormatDecimal(3, hours);

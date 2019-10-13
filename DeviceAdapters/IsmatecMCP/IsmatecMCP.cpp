@@ -131,6 +131,8 @@ private: // Property handlers
    int OnPauseTime(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnNumberOfCycles(MM::PropertyBase* pProp, MM::ActionType eAct);
 
+   MCP& operator=(const MCP &tmp);
+
 private:
    int SendRecv(MCPCommand& cmd);
 };
