@@ -60,7 +60,7 @@ public:
 
    virtual void onPixelSizeAffineChanged(double v0, double v1, double v2, double v3, double v4, double v5)
    {
-      std::cout << "onPixelSizeAffineChanged() " << std::endl;
+      std::cout << "onPixelSizeAffineChanged() " << v0 << "-" << v1 << "-" << v2 << "-" << v3 << "-" << v4 << "-" << v5 << std::endl;
    }
 
    virtual void onStagePositionChanged(char* name, double pos)
