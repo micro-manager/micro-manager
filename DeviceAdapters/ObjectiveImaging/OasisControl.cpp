@@ -599,7 +599,7 @@ int Hub::DetectInstalledDevices()
 
    bool validEntry = false;
 
-   WORD wX, wY, wZ, wF;
+   WORD wX, wY, wZ;
    ret = OI_ReadStatusXY( &wX, &wY );
    if( OISUCCESS(ret) && ((wX & S_MOTOR_DETECTED) || (wY & S_MOTOR_DETECTED)) )
    {
@@ -1674,10 +1674,9 @@ int ZStage::SetAdapterOriginUm(double d)
    return TranslateReturn( OI_SetPositionZ( d ) );
 }
 
-int ZStage::Move(double v)
+int ZStage::Move(double /* v */)
 {
    // TODO: if v is not in mm/s then please convert here to mm/s
-   double v_ = v;
    return DEVICE_OK;
 }
 

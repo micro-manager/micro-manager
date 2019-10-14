@@ -3252,7 +3252,7 @@ RGBLEDShutter::SetChannelIntensity(int chan, double intensity)
 	int deviceIntensity = static_cast<int>(
 			500.0 * (1.0 - intensity));
 
-	char deviceChannel = 'A' + chan;
+	char deviceChannel = 'A' + static_cast<char>(chan);
 
 	const int bufSize = 32;
 	char cbuf[bufSize];

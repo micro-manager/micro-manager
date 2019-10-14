@@ -183,7 +183,7 @@ class PvParam : public PvParamBase
                mMax=static_cast<T>(collection->values_array[collection->values_count-1]);
 
                mCount = collection->values_count;
-               mIncrement = 1.0;
+               mIncrement = 1;
 
                Picam_DestroyCollectionConstraints(collection);
                break;

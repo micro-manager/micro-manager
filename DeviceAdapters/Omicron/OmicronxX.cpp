@@ -249,7 +249,7 @@ int OmicronDevice::Initialize()
 					paraname << chname.str() << "Operating Mode";
 					CPropertyActionEx* pAct = new CPropertyActionEx(this, &OmicronDevice::OnOperatingmode, i);
 					CreateProperty(paraname.str().c_str(), "", MM::String, false, pAct);
-					for (int j = paraopmode.MinValue; j < paraopmode.MaxValue; j++) {
+					for (int j = (int) paraopmode.MinValue; j < (int) paraopmode.MaxValue; j++) {
 						char PositionName[100];
 						wchar_t posname[100];
 						wchar_t* ptrposname = posname;

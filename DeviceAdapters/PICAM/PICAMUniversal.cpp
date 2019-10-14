@@ -2107,7 +2107,6 @@ int Universal::ResizeImageBufferContinuous()
       colorImg_.Resize(roi_.newXSize, roi_.newYSize, 4);
 
       piint frameSize = 0;
-      piint pvExposureMode = 0;
       piflt pvExposure = 0.0;
       nRet = GetExposureValue(pvExposure);
       if ( nRet != DEVICE_OK )
@@ -2191,7 +2190,6 @@ int Universal::ResizeImageBufferSingle()
       img_.Resize(roi_.newXSize, roi_.newYSize);
       colorImg_.Resize(roi_.newXSize, roi_.newYSize, 4);
 
-      piint pvExposureMode = 0;
       piflt pvExposure = 0.0;
       nRet = GetExposureValue(pvExposure);
       if ( nRet != DEVICE_OK ){
@@ -2631,7 +2629,7 @@ void Universal::LogMMMessage(int lineNr, std::string message, bool debug) const 
 /**************************** Post Processing Functions ******************************/
 #ifdef WIN32
 
-int Universal::OnResetPostProcProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
+int Universal::OnResetPostProcProperties(MM::PropertyBase* /* pProp */, MM::ActionType /* eAct */)
 {
    START_METHOD("Universal::OnResetPostProcProperties");
 
@@ -2651,7 +2649,7 @@ int Universal::refreshPostProcValues()
 /**
  * Reverts a single setting that we know had an error
  */
-int Universal::revertPostProcValue( long absoluteParamIdx, MM::PropertyBase* pProp )
+int Universal::revertPostProcValue( long /* absoluteParamIdx */, MM::PropertyBase* /* pProp */)
 {
 
    return DEVICE_OK;
@@ -2665,7 +2663,7 @@ int Universal::revertPostProcValue( long absoluteParamIdx, MM::PropertyBase* pPr
  * we cannot get the actual property value directly from the camera with pl_get_param because the streaming
  * might be already active. (we cannot call pl_get or pl_set when continuous streaming mode is active)
  */
-int Universal::OnPostProcProperties(MM::PropertyBase* pProp, MM::ActionType eAct, long index)
+int Universal::OnPostProcProperties(MM::PropertyBase* /* pProp */, MM::ActionType eAct, long /* index */)
 {
    START_ONPROPERTY("Universal::OnPostProcProperties", eAct);
 
