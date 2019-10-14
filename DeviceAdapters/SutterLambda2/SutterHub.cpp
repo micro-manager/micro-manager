@@ -271,14 +271,14 @@ int SutterHub::SetCommand(const std::vector<unsigned char> command, const std::v
 	ret = GetCoreCallback()->GetDeviceProperty(port_.c_str(), "AnswerTimeout", timeoutChar);
 	if (ret != DEVICE_OK) {return ret;}
 	long timeout = atoi(timeoutChar) * 1000; //Microseconds
-	int read = 0;
+	unsigned int read = 0;
 	unsigned char response[1024];
 	while (true) {
 		unsigned long readThisTime;
 		unsigned char tempResponse[1024];
 		ret = ReadFromComPort(port_.c_str(), tempResponse, 1, readThisTime);
 		if (ret != DEVICE_OK) {return ret;}
-		for (int i=0; i<readThisTime; i++) {
+		for (unsigned long i=0; i<readThisTime; i++) {
 			response[read+i] = tempResponse[i];
 		}
 		read += readThisTime;
@@ -315,7 +315,7 @@ int SutterHub::SetCommand(const std::vector<unsigned char> command, const std::v
 		unsigned char tempResponse[1024];
 		ret = ReadFromComPort(port_.c_str(), tempResponse, 100, readThisTime);
 		if (ret != DEVICE_OK) {return ret;}
-		for (int i=0; i<readThisTime; i++) {
+		for (unsigned long i=0; i<readThisTime; i++) {
 			if ((tempResponse[i] == '\r') && (read >= minimumExpectedChars)) { // '\r' is used to terminate a response, however sometimes the data of a response can contain a '\r'. For this reason we use the `minimumExpectedChars` to avoid terminating too soon.
 				commandTerminated = true;
 				break;
@@ -331,7 +331,7 @@ int SutterHub::SetCommand(const std::vector<unsigned char> command, const std::v
 			return DEVICE_SERIAL_TIMEOUT;
 		}
 	}
-	for (int i=0; i<read; i++) {
+	for (unsigned int i=0; i<read; i++) {
 		Response.push_back(response[i]);
 	}
 	busy_ = false;

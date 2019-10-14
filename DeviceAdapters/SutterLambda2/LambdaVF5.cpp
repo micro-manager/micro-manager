@@ -115,7 +115,7 @@ int LambdaVF5::onWavelength(MM::PropertyBase* pProp, MM::ActionType eAct) {
 		cmd.push_back(0xDA);
 		cmd.push_back(0x01);
 		cmd.push_back((unsigned char) (wv));
-		cmd.push_back(((unsigned char)(wv>>8) | (tiltSpeed_ << 6)));
+		cmd.push_back(((unsigned char)(wv>>8) | (unsigned char) (tiltSpeed_ << 6)));
 		wv_ = wv;
 		int ret = hub_->SetCommand(cmd);
 		initializeDelayTimer();

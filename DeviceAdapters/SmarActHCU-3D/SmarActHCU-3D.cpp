@@ -581,19 +581,19 @@ int XYStage::GetID(std::string* id)
 /////////////////////////////////////////////////////////////////
 /////////////// Unsupported commands ////////////////////////////
 
-int XYStage::SetPositionSteps(long x, long y)
+int XYStage::SetPositionSteps(long /* x */, long /* y */)
 {
 
 	return DEVICE_UNSUPPORTED_COMMAND;
 }
 
-int XYStage::GetPositionSteps(long& x, long& y)
+int XYStage::GetPositionSteps(long& /* x */, long& /* y */)
 {
 
 	return DEVICE_UNSUPPORTED_COMMAND;
 }
 
-int XYStage::GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax)			
+int XYStage::GetLimitsUm(double& /* xMin */, double& /* xMax */, double& /* yMin */, double& /* yMax */)			
 {
 	return DEVICE_UNSUPPORTED_COMMAND;
 }
@@ -608,7 +608,7 @@ int XYStage::Stop()
 	return DEVICE_UNSUPPORTED_COMMAND;
 }
 
-int XYStage::GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax)
+int XYStage::GetStepLimits(long& /* xMin */, long& /* xMax */, long& /* yMin */, long& /* yMax */)
 {
 	return DEVICE_UNSUPPORTED_COMMAND;
 }
@@ -1012,7 +1012,7 @@ int ZStage::SetPositionSteps(long pos)
 	return DEVICE_UNSUPPORTED_COMMAND;   
 }
 
-int ZStage::GetPositionSteps(long& steps)
+int ZStage::GetPositionSteps(long& /* steps */)
 {
 
 	return DEVICE_UNSUPPORTED_COMMAND;

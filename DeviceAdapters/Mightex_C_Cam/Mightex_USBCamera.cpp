@@ -343,7 +343,7 @@ void FrameCallBack(TProcessedDataProperty *Attributes, unsigned char *BytePtr)
 									tmpWord = 255;
 								//for(int j = 0; j < 3; j++)
 								{
-									*p = tmpWord;
+									*p = (BYTE) tmpWord;
 									p++;
 								}
 							}
@@ -351,7 +351,7 @@ void FrameCallBack(TProcessedDataProperty *Attributes, unsigned char *BytePtr)
 							{// 12 bit
 								if (tmpWord >= 0xFFF)
 									tmpWord = 0xFFF;
-								*p = tmpWord >> 4;
+								*p = (BYTE) (tmpWord >> 4);
 								p++;
 								*p = tmpWord & 0x0F;
 								p++;
