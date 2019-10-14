@@ -2065,7 +2065,7 @@ MMIIDCCamera::ProcessedSnapCallback(const void* pixels,
 void
 MMIIDCCamera::ProcessedSequenceCallback(const void* pixels,
       size_t width, size_t height, size_t bytesPerPixel,
-      uint32_t /* timestampUs */)
+      uint32_t timestampUs )
 {
    Metadata md;
 
