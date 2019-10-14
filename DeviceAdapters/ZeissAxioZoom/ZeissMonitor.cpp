@@ -129,7 +129,7 @@ void ZeissMonitoringThread::interpretMessageAZ(unsigned char* message)
 {
    //const int TARGET = 0;
    const int SOURCE = 1;
-   const int DATABYTES = 2;
+   //const int DATABYTES = 2;
    const int CLASS = 3;
    const int NUMBER = 4;
    //const int PROCID = 5;// data1
@@ -153,7 +153,7 @@ void ZeissMonitoringThread::interpretMessageAZ(unsigned char* message)
          else if (message[NUMBER] == 0xB0 && message[SUBID] == 0x06)
          {
             // POSITION in um
-            assert(message[DATABYTES] == 6);
+            // assert(message[DATABYTES] == 6);
             ZeissLong position = 0;
             memcpy(&position, message + DATA3, 4);
             position = ntohl(position);

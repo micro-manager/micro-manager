@@ -581,7 +581,10 @@ bool VarispecLCTF::reportsBusy() {
    unsigned long numReadThisTime;
    while (numRead < 2) {
       ret = ReadFromComPort(port_.c_str(), tempAns, 1, numReadThisTime); //This function returns even if nothing is available. Causes problems.
-      if (ret != DEVICE_OK) { return ret; }
+      if (ret != DEVICE_OK) 
+      { 
+         return (ret != 0); 
+      }
       if (numReadThisTime > 0) {
          ans[numRead] = tempAns[0];
          numRead += numReadThisTime;

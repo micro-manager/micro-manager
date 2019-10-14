@@ -30,10 +30,13 @@
 #pragma once
 
 #include <vector>
+#pragma warning(push)
+#pragma warning(disable: 4201)
 #include	"BFApi.h"
 #include	"BFErApi.h"
 #include	"DSApi.h"
 #include "CiApi.h"
+#pragma warning(pop)
 #include "MMDevice.h"
 
 #define BF_INCOMPATIBLE_CAMERAS 1010
