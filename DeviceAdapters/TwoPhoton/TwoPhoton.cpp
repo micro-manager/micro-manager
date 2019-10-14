@@ -136,8 +136,7 @@ BitFlowCamera::BitFlowCamera(bool dual) :
 
    	//skip certain channels on bitflow board(s) if they have problems
    CPropertyAction *pAct = new CPropertyAction (this, &BitFlowCamera::OnEnableBitflowChannels);
-   int ret = CreateProperty(g_PropertyUseBitflowChannels, "11111111", MM::String, false, pAct, true);
-   assert(ret == DEVICE_OK);
+   CreateProperty(g_PropertyUseBitflowChannels, "11111111", MM::String, false, pAct, true);
 
    img_.resize(numChannels_);
 }
@@ -1110,7 +1109,7 @@ void BitFlowCamera::GetCosineWarpLUT(vector<int> &new_pixel, int image_width, in
 	//double correct_pixel;
    int old_pixel;
 	int pixel;
-	int center_pixel;
+	int center_pixel = 0;
 
 
    /* image width in pixels after pixel reversal routine

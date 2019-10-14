@@ -287,7 +287,7 @@ int VariLC::Initialize()
 		return ret;
 
 	// Wavelength
-	std:string ans;
+	std::string ans;
 	ret = sendCmd("V?", ans);	//The serial number response also contains the tuning range of the device
 	std::vector<double> nums = getNumbersFromMessage(ans, briefModeQ_);	//This will be in the format (revision level, shortest wavelength, longest wavelength, serial number).
 	if (ret != DEVICE_OK)
@@ -707,7 +707,7 @@ std::vector<double> VariLC::getNumbersFromMessage(std::string variLCmessage, boo
 }
 
 int VariLC::sendCmd(std::string cmd, std::string& out) {
-	int ret = sendCmd(cmd);
+	sendCmd(cmd);
 	GetSerialAnswer(port_.c_str(), "\r", out); //Try returning any extra response from the device.
 	return DEVICE_OK;
 }
