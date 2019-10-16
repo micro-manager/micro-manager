@@ -127,7 +127,7 @@ void checkforDevices(void) {
 		int nrDevices = 0;
 		ExXGetNumberOfDevices(&nrDevices);
 		if (nrDevices > alldevices.size()) {
-			int oldSize = alldevices.size();
+			int oldSize = (int) alldevices.size();
 			alldevices.resize(nrDevices);
 			for (int i = oldSize; i < nrDevices; i++) {
 				TxX_Error res = ExXGetDeviceID(i, &alldevices[i].devID);

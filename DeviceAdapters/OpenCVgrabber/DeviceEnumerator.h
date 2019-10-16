@@ -1,12 +1,17 @@
 #pragma once
 
+
+
 #include <Windows.h>
 #include <dshow.h>
 
 #pragma comment(lib, "strmiids")
 
+#pragma warning(push)
+#pragma warning(disable: 4995)
 #include <map>
 #include <string>
+#pragma warning(pop)
 
 struct OpenCVDevice {
 	int id; // This can be used to open the device in OpenCV
