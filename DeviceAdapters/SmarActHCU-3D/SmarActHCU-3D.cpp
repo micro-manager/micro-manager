@@ -1006,7 +1006,7 @@ int ZStage::GetID(std::string* id)
 /////////////////////////////////////////////////////////////////
 /////////////// Unsupported commands ////////////////////////////
 
-int ZStage::SetPositionSteps(long pos)
+int ZStage::SetPositionSteps(long /* pos */)
 {
 
 	return DEVICE_UNSUPPORTED_COMMAND;   
