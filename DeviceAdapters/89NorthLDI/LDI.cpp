@@ -85,7 +85,7 @@ int LDI::Initialize()
 	CreateProperty("Fault", "NONE", MM::String, false, pAct);
 	AddAllowedValue("Fault", "CLEAR");
 
-	for (int i = 0; i < m_availableWavelengths.size(); i++)
+	for (unsigned int i = 0; i < m_availableWavelengths.size(); i++)
 	{
 		// Intensity Control
 		std::stringstream ss = std::stringstream();
@@ -121,7 +121,7 @@ int LDI::Initialize()
 		CreateProperty(ss.str().c_str(), "None", MM::String, false, pActEx);
 		AddAllowedValue(ss.str().c_str(), "None");
 		
-		for (int j = 0; j < m_availableWavelengths.size(); j++)
+		for (unsigned int j = 0; j < m_availableWavelengths.size(); j++)
 			AddAllowedValue(ss.str().c_str(), std::to_string((long long)m_availableWavelengths[j]).c_str());
 	}
 

@@ -693,12 +693,12 @@ int DigitalIO::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       // Load the sequence into NI's buffer, but don't start
       // the task.
       std::vector<std::string> sequence = pProp->GetSequence();
-      if (sequence.size() > maxSequenceLength_)
+      if (sequence.size() > (unsigned int) maxSequenceLength_)
       {
          return DEVICE_SEQUENCE_TOO_LARGE;
       }
       uInt32* values = new uInt32[sequence.size()];
-      for (long i = 0; i < sequence.size(); ++i)
+      for (unsigned long i = 0; i < sequence.size(); ++i)
       {
          values[i] = boost::lexical_cast<uInt32>(sequence[i]);
       }
@@ -1170,7 +1170,7 @@ int AnalogIO::SendDASequence()
 int AnalogIO::LoadBuffer()
 {
    float64* values = new float64[sequence_.size()];
-   for (int i = 0; i < sequence_.size(); ++i)
+   for (unsigned int i = 0; i < sequence_.size(); ++i)
    {
       values[i] = sequence_[i];
    }
@@ -1182,7 +1182,7 @@ int AnalogIO::LoadBuffer()
    {
       return LogError(error, "WriteAnalogF64");
    }
-   if (numWritten != sequence_.size())
+   if ((unsigned long) numWritten != sequence_.size())
    {
       LogMessage(("Didn't write complete analog sequence to buffer: wrote " +
          boost::lexical_cast<string>(numWritten) + " of " +
@@ -1256,11 +1256,11 @@ int AnalogIO::OnVolts(MM::PropertyBase* pProp, MM::ActionType eAct)
       ClearDASequence();
       SetupTask();
       std::vector<std::string> sequence = pProp->GetSequence();
-      if (sequence.size() > maxSequenceLength_)
+      if (sequence.size() > (unsigned long) maxSequenceLength_)
       {
          return DEVICE_SEQUENCE_TOO_LARGE;
       }
-      for (long i = 0; i < sequence.size(); ++i)
+      for (unsigned long i = 0; i < sequence.size(); ++i)
       {
          AddToDASequence(boost::lexical_cast<float64>(sequence[i]));
       }

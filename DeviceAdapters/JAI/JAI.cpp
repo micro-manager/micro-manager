@@ -963,7 +963,7 @@ bool JAICamera::verifyPvFormat(const PvImage * pvImg)
 
 void JAICamera::ClearPvBuffers()
 {
-	for (int i=0; i<pvBuffers.size(); i++)
+	for (unsigned int i=0; i<pvBuffers.size(); i++)
 	{
 		if (pvBuffers[i]->IsAttached())
 			pvBuffers[i]->Detach();
