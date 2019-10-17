@@ -81,7 +81,7 @@ int EagleIce::Shutdown()
 	return 0;
 }
 
-void _stdcall CallbackFunction(char* serial, DWORD ID)
+void _stdcall CallbackFunction(char* /* serial */, DWORD /* ID */)
 {
 	/*EagleIce* mmEI = (EagleIce*)g_Self;*/
 	
@@ -205,8 +205,8 @@ int EagleIce::SnapImage()
 	EI_Status _status = EI_SDK_ErrorList__No_Error;
 	g_device->Set_IntegrationTime((UINT32)GetExposure());
 	EI_SpeedupAndBinning bin;
-	bin.X =(int)GetBinning();
-	bin.Y =(int)GetBinning();
+	bin.X =(BYTE)GetBinning();
+	bin.Y =(BYTE)GetBinning();
 	g_device->Set_Binning(bin);
 	
 	long dat = 0;
@@ -334,7 +334,7 @@ int EagleIce::StartSequenceAcquisition(double interval) {
 	return StartSequenceAcquisition(LONG_MAX, interval, false);    
 }
 
-int EagleIce::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
+int EagleIce::StartSequenceAcquisition(long /* numImages */, double /* interval_ms */, bool /* stopOnOverflow */)
 {
 	if (IsCapturing())
 		return DEVICE_CAMERA_BUSY_ACQUIRING;
@@ -415,7 +415,7 @@ biThread::~biThread()
 {
 };
 
-int EagleIce::OnCoolState(MM::PropertyBase* pProp, MM::ActionType eAct)
+int EagleIce::OnCoolState(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
 {
 	std::string val;
 	pProp->Get(val);
@@ -431,7 +431,7 @@ int EagleIce::OnCoolState(MM::PropertyBase* pProp, MM::ActionType eAct)
 	
 }
 
-int EagleIce::OnTemp(MM::PropertyBase* pProp, MM::ActionType eAct)
+int EagleIce::OnTemp(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
 {
 	std::string val;
 	pProp->Get(val);
@@ -444,13 +444,13 @@ int EagleIce::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 	EI_ROI* roi = new EI_ROI;
 	roi->start.x = x;
 	roi->start.y = y;
-	roi->width = xSize;
-	roi->height = ySize;
+	roi->width = (WORD) xSize;
+	roi->height = (WORD) ySize;
 
 	return g_device->Set_ROI(*roi);
 }
 
-int EagleIce::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
+int EagleIce::GetROI(unsigned& /* x */, unsigned& /* y */, unsigned& /* xSize */, unsigned& /* ySize */)
 {
 	return 0;
 }

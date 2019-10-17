@@ -1313,7 +1313,7 @@ int CDemoCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
             double factor = (double) binFactor / (double) binSize_;
             roiX_ = (unsigned int) (roiX_ / factor);
             roiY_ = (unsigned int) (roiY_ / factor);
-            for (int i = 0; i < multiROIXs_.size(); ++i)
+            for (unsigned int i = 0; i < multiROIXs_.size(); ++i)
             {
                multiROIXs_[i]  = (unsigned int) (multiROIXs_[i] / factor);
                multiROIYs_[i] = (unsigned int) (multiROIYs_[i] / factor);
