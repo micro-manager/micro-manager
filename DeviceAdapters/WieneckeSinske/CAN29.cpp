@@ -84,7 +84,7 @@ CanSrc(canSrc),
 int MessageTools::GetString(std::vector<unsigned char>& data, int startindex, std::string& result)
 {
 	result = "";
-	for (int i=startindex; i < data.size(); i++)
+	for (unsigned int i=startindex; i < data.size(); i++)
 		result += data[i];
 
 	return DEVICE_OK;
@@ -96,7 +96,7 @@ int MessageTools::GetULong(std::vector<unsigned char>& data, int startindex, CAN
 	result = 0;
 
 	// are there enough data bytes
-	if(startindex + CAN29LongSize > data.size())
+	if((unsigned int) startindex + CAN29LongSize > data.size())
 		return ERR_INVALID_MESSAGE_DATA;
 
 	CAN29ULong tmp;
@@ -111,7 +111,7 @@ int MessageTools::GetLong(std::vector<unsigned char>& data, int startindex, CAN2
 	result = 0;
 
 	// are there enough data bytes
-	if(startindex + CAN29LongSize > data.size())
+	if((unsigned int)startindex + CAN29LongSize > data.size())
 		return ERR_INVALID_MESSAGE_DATA;
 
 	CAN29Long tmp;
@@ -179,7 +179,7 @@ int CAN29::Send(Message msg)
 	AppendByte(preparedCommand, nextIdx, msg.ProcID);	// proc id  (0)
 	AppendByte(preparedCommand, nextIdx, msg.SubID);	// sub id	(1)
 
-	for (int i=0; i< msg.Data.size(); i++)					// data
+	for (unsigned int i=0; i< msg.Data.size(); i++)					// data
 		AppendByte(preparedCommand, nextIdx, msg.Data[i]);
 
 	preparedCommand[nextIdx++]=0x10;				// message end
@@ -231,7 +231,7 @@ int CAN29::Receive(Message msg)
 	}
 
 	// call all registered ReceiveMessageHandlers
-	for(int i= 0; i< receiveMessageCallbackClasses_.size(); i++)
+	for(unsigned int i= 0; i< receiveMessageCallbackClasses_.size(); i++)
 		receiveMessageCallbackClasses_[i]->ReceiveMessageHandler(msg);
 
 	return DEVICE_OK;
@@ -291,7 +291,7 @@ int CAN29::AddReceiveMessageHandler(CAN29Component* component)
 
 int CAN29::RemoveReceiveMessageHandler(CAN29Component* component)
 {
-	for(int i = 0; i< receiveMessageCallbackClasses_.size(); i++)
+	for(unsigned int i = 0; i< receiveMessageCallbackClasses_.size(); i++)
 	{
 		if(receiveMessageCallbackClasses_[i] == component)
 		{

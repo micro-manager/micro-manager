@@ -70,7 +70,7 @@ void BFCamera::UseVFGs(string s) {
 }
 
 bool BFCamera::VFGActive(int index) {
-	return useVFGs_.size() > index && useVFGs_[index] == 1;
+	return useVFGs_.size() > (unsigned int) index && useVFGs_[index] == 1;
 }
 
 int BFCamera::Initialize(MM::Device* caller, MM::Core* core) {
@@ -167,7 +167,7 @@ int BFCamera::Initialize(MM::Device* caller, MM::Core* core) {
 
     // create signals for end of frames here
 	//do this on camera init instead of startup to eliminate unneccsary wating of boards on successive signals
-	for (int i = 0; i < boards_.size(); i++) {
+	for (unsigned int i = 0; i < boards_.size(); i++) {
 		BFRC ret = CiSignalCreate(boards_[i], CiIntTypeEOD, eofSignals_[i]);
 		if (ret != BF_OK)
 			return ret;
@@ -181,7 +181,7 @@ int BFCamera::Initialize(MM::Device* caller, MM::Core* core) {
 
 
 int BFCamera::Shutdown() {
-	for (int i = 0; i < eofSignals_.size(); i++) {
+	for (unsigned int i = 0; i < eofSignals_.size(); i++) {
 		CiSignalFree(boards_[i], eofSignals_[i]); //shut down end of frame signals
 		delete eofSignals_[i];
 	}
@@ -208,7 +208,7 @@ int BFCamera::Shutdown() {
 void BFCamera::LogInterrupts() {
 	char message[200];
 	strcpy(message,"Num interrupts by channel ");
-	for (int i = 0; i < boards_.size(); i++) {
+	for (unsigned int i = 0; i < boards_.size(); i++) {
 		BFU32 numIn;
 		CiSignalQueueSize(boards_[i],eofSignals_[i],&numIn);
 		int numI = (int) numIn;
@@ -228,7 +228,7 @@ const unsigned char* BFCamera::GetImageCont() {
 	//Like CiSignalWait, this function waits efficiently for an interrupt. However, this version
 	//always ignores any interrupts that might have occurred since it was called last, and
 	//just waits for the next interrupt.
-	for (int i = 0; i < boards_.size(); i++) {
+	for (unsigned int i = 0; i < boards_.size(); i++) {
 		//BFRC ret = CiSignalNextWait(boards_[i], eofSignals_[i], timeoutMs_); // this one will wait for next interrupt
 		//-CiSignalWait -- efficiently waits for an interrupt to occur. Returns immediately if one has occurred
 		//since the function was last called.
@@ -239,7 +239,7 @@ const unsigned char* BFCamera::GetImageCont() {
 
 		char message[200];
 		strcpy(message,"interrupts before wait for channel ");
-		strcat(message,  CDeviceUtils::ConvertToString(i));
+		strcat(message,  CDeviceUtils::ConvertToString((int)i));
 		//core_->LogMessage(caller_,message, true );
 		//LogInterrupts();
 
@@ -248,7 +248,7 @@ const unsigned char* BFCamera::GetImageCont() {
 
 		char message2[200];
 		strcpy(message2,"Interrupts after wait for channel ");
-		strcat(message2,  CDeviceUtils::ConvertToString(i));
+		strcat(message2,  CDeviceUtils::ConvertToString((int)i));
 		//core_->LogMessage(caller_,message2, true );
 		//LogInterrupts();
 
@@ -329,7 +329,7 @@ int BFCamera::StopAcquiring() {
 
 	//CiConFreeze - stop acquiring at the end of the current frame. If in between
 	//frames, do not acquire any more frames.
-	for (int i=0; i<boards_.size(); i++) {
+	for (unsigned int i=0; i<boards_.size(); i++) {
 		//could call CIConAsync instead of wait to return quicker and end snapimage sooner,
 		//but what would happen if tried to start acquiring again before frame ended, as unlikely as that seems...		
 		//-Async return right away before interrupts accuulate, as expected

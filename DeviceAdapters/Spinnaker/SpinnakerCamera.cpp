@@ -99,7 +99,7 @@ MODULE_API void InitializeModuleData()
 		std::vector<CamNameAndSN> camInfos =
 			GetSpinnakeerCameraNamesAndSNs();
 
-		for (int i = 0; i < camInfos.size(); i++)
+		for (unsigned int i = 0; i < camInfos.size(); i++)
 			RegisterDevice(camInfos[i].name.c_str(),
 				MM::CameraDevice,
 				"Point Grey Spinnaker Camera");
@@ -136,7 +136,7 @@ SpinnakerCamera::SpinnakerCamera(GENICAM::gcstring name)
 		std::vector<CamNameAndSN> camInfos =
 			GetSpinnakeerCameraNamesAndSNs();
 
-		for (int i = 0; i < camInfos.size(); i++)
+		for (unsigned int i = 0; i < camInfos.size(); i++)
 			if (camInfos[i].name == name)
 				AddAllowedValue("Serial Number", camInfos[i].serialNumber.c_str());
 	}
@@ -244,7 +244,7 @@ int SpinnakerCamera::Initialize()
 			AFRA_enumeration->GetSymbolics(symbolics);
 
 			CreateProperty("Frame Rate Auto", symbolics[0].c_str(), MM::String, false, pAct);
-			for (int i = 0; i < symbolics.size(); i++)
+			for (unsigned int i = 0; i < symbolics.size(); i++)
 				AddAllowedValue("Frame Rate Auto", symbolics[i].c_str());
 		}
 	}
@@ -291,11 +291,11 @@ int SpinnakerCamera::Initialize()
 
 			pAct = new CPropertyAction(this, &SpinnakerCamera::OnBinningEnum);
 			CreateProperty(MM::g_Keyword_Binning, VM->GetCurrentEntry()->GetSymbolic(), MM::String, false, pAct);
-			for (int i = 0; i < videoModes.size(); i++)
+			for (unsigned int i = 0; i < videoModes.size(); i++)
 				AddAllowedValue(MM::g_Keyword_Binning, videoModes[i].c_str());
 
 
-			for (int i = 0; i < videoModes.size(); i++)
+			for (unsigned int i = 0; i < videoModes.size(); i++)
 			{
 				VM->FromString(videoModes[i]);
 				GENAPI::CEnumerationPtr BC = nm.GetNode("BinningControl");
@@ -308,7 +308,7 @@ int SpinnakerCamera::Initialize()
 
 				pAct = new CPropertyAction(this, &SpinnakerCamera::OnBinningModeEnum);
 				CreateProperty("Binning Mode", BC->GetCurrentEntry()->GetSymbolic().c_str(), MM::String, false, pAct);
-				for (int j = 0; j < binningModes.size(); j++)
+				for (unsigned int j = 0; j < binningModes.size(); j++)
 					AddAllowedValue("Binning Mode", binningModes[j].c_str());
 
 				VM->FromString(currentVideoMode);
@@ -569,7 +569,7 @@ void SpinnakerCamera::CreatePropertyFromLineEnum(const std::string& nodeName, in
 		CreateProperty(name.c_str(), ePtr->GetCurrentEntry()->ToString().c_str(),
 			MM::String, symbolics.size() == 1, pActEx);
 
-		for (int j = 0; j < symbolics.size(); j++)
+		for (unsigned int j = 0; j < symbolics.size(); j++)
 			AddAllowedValue(name.c_str(), symbolics[j]);
 	}
 }
@@ -804,7 +804,7 @@ void SpinnakerCamera::Unpack12Bit( size_t width, size_t height, bool flip)
 	uint16_t *unpacked = new uint16_t[width*height];
 	uint8_t *packed = m_imageBuff;
 
-	int u_idx;
+	unsigned int u_idx;
 	int p_idx;
 	for (u_idx = 0, p_idx = 0; u_idx < width*height; u_idx++)
 	{

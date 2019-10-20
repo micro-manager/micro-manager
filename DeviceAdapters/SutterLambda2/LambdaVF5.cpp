@@ -161,7 +161,7 @@ int LambdaVF5::onWavelength(MM::PropertyBase* pProp, MM::ActionType eAct) {
 			cmd.push_back(0xF2);
 			cmd.push_back(1);
 			std::vector<std::string> seq = pProp->GetSequence();
-			for (int i=0; i<seq.size(); i++){
+			for (unsigned int i=0; i<seq.size(); i++){
 				int wv = atoi(seq.at(i).c_str());
 				cmd.push_back((unsigned char) (wv));
 				cmd.push_back((unsigned char) (wv>>8));
