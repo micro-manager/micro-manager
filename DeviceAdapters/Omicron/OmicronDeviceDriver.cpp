@@ -126,7 +126,7 @@ void checkforDevices(void) {
 	if (DLLHandle) {
 		int nrDevices = 0;
 		ExXGetNumberOfDevices(&nrDevices);
-		if (nrDevices > alldevices.size()) {
+		if ((unsigned int)nrDevices > alldevices.size()) {
 			int oldSize = (int) alldevices.size();
 			alldevices.resize(nrDevices);
 			for (int i = oldSize; i < nrDevices; i++) {
@@ -157,7 +157,7 @@ int getAvailableDevices(std::vector<std::string> *devices)
 	int count = 0;
 	if (DLLHandle) {
 		checkforDevices();
-		for (int i = 0; i < alldevices.size(); i++) {
+		for (unsigned int i = 0; i < alldevices.size(); i++) {
 			if (alldevices[i].available) {
 				devices->push_back(alldevices[i].name);
 				count++;
@@ -169,7 +169,7 @@ int getAvailableDevices(std::vector<std::string> *devices)
 
 int getDeviceIndexbyName(std::string devname)
 {
-	for (int i = 0; i < alldevices.size(); i++)
+	for (unsigned int i = 0; i < alldevices.size(); i++)
 		if (alldevices[i].name == devname)
 			return i;
 	return -1;
@@ -177,7 +177,7 @@ int getDeviceIndexbyName(std::string devname)
 
 bool blockDevice(int Index)
 {
-	if (Index<alldevices.size()) {
+	if ((unsigned int)Index < alldevices.size()) {
 		alldevices[Index].available = false;
 		return true;
 	}
@@ -186,7 +186,7 @@ bool blockDevice(int Index)
 
 bool unlockDevice(int Index)
 {
-	if (Index<alldevices.size()) {
+	if ( (unsigned int)Index < alldevices.size()) {
 		alldevices[Index].available = true;
 		return true;
 	}
@@ -223,7 +223,7 @@ std::string getDevName(TDeviceID* dev)
 
 TxX_Error OMIGetDeviceComState(int Index, TDeviceComState * DeviceComState)
 {
-	if (Index<alldevices.size() && ExXGetDeviceComState) {
+	if ( (unsigned int)Index < alldevices.size() && ExXGetDeviceComState) {
 		return ExXGetDeviceComState(Index, DeviceComState);
 	}
 	return xXer_Internal;
@@ -231,7 +231,7 @@ TxX_Error OMIGetDeviceComState(int Index, TDeviceComState * DeviceComState)
 
 TxX_Error OMIGetChannels(int Index, int * nrch)
 {
-	if (Index<alldevices.size() && ExXGetChannels) {
+	if ((unsigned int)Index<alldevices.size() && ExXGetChannels) {
 		return ExXGetChannels(Index, nrch);
 	}
 	return xXer_Internal;
@@ -239,7 +239,7 @@ TxX_Error OMIGetChannels(int Index, int * nrch)
 
 TxX_Error OMIGetParameterDetails(int Index, int channelID,TxX_Parameter parameter ,TParameterDetails * ParameterDetails)
 {
-	if (Index<alldevices.size() && ExXGetParameterDetails) {
+	if ((unsigned int)Index<alldevices.size() && ExXGetParameterDetails) {
 		int fullid = (channelID << 16) + Index;
 		return ExXGetParameterDetails(fullid,parameter,ParameterDetails);
 	}
@@ -248,7 +248,7 @@ TxX_Error OMIGetParameterDetails(int Index, int channelID,TxX_Parameter paramete
 
 TxX_Error OMIGetEnumText(int Index, int channelID, TxX_Parameter parameter, int EnumID, wchar_t * EnumText)
 {
-	if (Index<alldevices.size() && ExXGetEnumText) {
+	if ((unsigned int)Index<alldevices.size() && ExXGetEnumText) {
 		int fullid = (channelID << 16) + Index;
 		return ExXGetEnumText(fullid, parameter, EnumID, EnumText);
 	}
@@ -257,7 +257,7 @@ TxX_Error OMIGetEnumText(int Index, int channelID, TxX_Parameter parameter, int 
 
 TxX_Error OMISetInt(int Index, int channelID, TxX_Parameter parameter, int value)
 {
-	if (Index<alldevices.size() && ExXSetInt) {
+	if ((unsigned int)Index<alldevices.size() && ExXSetInt) {
 		int fullid = (channelID << 16) + Index;
 		return ExXSetInt(fullid, parameter, value);
 	}
@@ -266,7 +266,7 @@ TxX_Error OMISetInt(int Index, int channelID, TxX_Parameter parameter, int value
 
 TxX_Error OMIGetInt(int Index, int channelID, TxX_Parameter parameter, int * value)
 {
-	if (Index<alldevices.size() && ExXGetInt) {
+	if ((unsigned int)Index<alldevices.size() && ExXGetInt) {
 		int fullid = (channelID << 16) + Index;
 		return ExXGetInt(fullid, parameter, value);
 	}
@@ -275,7 +275,7 @@ TxX_Error OMIGetInt(int Index, int channelID, TxX_Parameter parameter, int * val
 
 TxX_Error OMISetFloat(int Index, int channelID, TxX_Parameter parameter, double value)
 {
-	if (Index<alldevices.size() && ExXSetFloat) {
+	if ((unsigned int)Index<alldevices.size() && ExXSetFloat) {
 		int fullid = (channelID << 16) + Index;
 		return ExXSetFloat(fullid, parameter, value);
 	}
@@ -284,7 +284,7 @@ TxX_Error OMISetFloat(int Index, int channelID, TxX_Parameter parameter, double 
 
 TxX_Error OMIGetFloat(int Index, int channelID, TxX_Parameter parameter, double * value)
 {
-	if (Index<alldevices.size() && ExXGetFloat) {
+	if ((unsigned int)Index < alldevices.size() && ExXGetFloat) {
 		int fullid = (channelID << 16) + Index;
 		return ExXGetFloat(fullid, parameter, value);
 	}
@@ -293,7 +293,7 @@ TxX_Error OMIGetFloat(int Index, int channelID, TxX_Parameter parameter, double 
 
 TxX_Error OMISetBool(int Index, int channelID, TxX_Parameter parameter, bool state)
 {
-	if (Index<alldevices.size() && ExXGetBool) {
+	if ((unsigned int)Index < alldevices.size() && ExXGetBool) {
 		int fullid = (channelID << 16) + Index;
 		return ExXSetBool(fullid, parameter, state);
 	}
@@ -302,7 +302,7 @@ TxX_Error OMISetBool(int Index, int channelID, TxX_Parameter parameter, bool sta
 
 TxX_Error OMIGetBool(int Index, int channelID, TxX_Parameter parameter, bool * state)
 {
-	if (Index<alldevices.size() && ExXSetBool) {
+	if ((unsigned int)Index < alldevices.size() && ExXSetBool) {
 		int fullid = (channelID << 16) + Index;
 		return ExXGetBool(fullid, parameter, state);
 	}
@@ -311,7 +311,7 @@ TxX_Error OMIGetBool(int Index, int channelID, TxX_Parameter parameter, bool * s
 
 TxX_Error OMIGetString(int Index, int channelID, TxX_Parameter parameter, char ** StringParameter)
 {
-	if (Index<alldevices.size() && ExXGetString) {
+	if (((unsigned int)Index) < alldevices.size() && ExXGetString) {
 		int fullid = (channelID << 16) + Index;
 		return ExXGetString(fullid, parameter, StringParameter);
 	}

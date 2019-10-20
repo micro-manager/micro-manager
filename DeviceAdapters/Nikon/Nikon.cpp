@@ -735,7 +735,7 @@ int TiTIRFShutter::SetShutterPosition(bool state)
       {
          std::vector<std::string> chs = Explode(activeChannel_, '+');
          int ch = 0;
-         for (int i=0; i < chs.size(); i++) {
+         for (unsigned int i=0; i < chs.size(); i++) {
             if (chs[i] == g_Channel_1) 
                ch+=1;
             if (chs[i] == g_Channel_2)

@@ -809,7 +809,7 @@ void Tsi3Cam::frame_available_callback(void* /*sender*/, unsigned short* image_b
 			double rSum(0.0);
 			double gSum(0.0);
 			double bSum(0.0);
-			for (int i=0; i<colorBuf.size() / 3; i++)
+			for (unsigned int i=0; i<colorBuf.size() / 3; i++)
 			{
 				rSum += colorBuf[i*3 + 2];
 				gSum += colorBuf[i*3 + 1];

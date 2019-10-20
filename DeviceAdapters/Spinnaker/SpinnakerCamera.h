@@ -247,7 +247,7 @@ inline void SpinnakerCamera::CreatePropertyFromEnum(const std::string& name, GEN
 
 				CreateProperty(name.c_str(), camProp.GetCurrentEntry()->GetSymbolic().c_str(), MM::String, readOnly, pAct);
 
-				for (int i = 0; i < propertyValues.size(); i++)
+				for (unsigned int i = 0; i < propertyValues.size(); i++)
 					AddAllowedValue(name.c_str(), propertyValues[i].c_str());
 			}
 			else
@@ -284,7 +284,7 @@ inline int SpinnakerCamera::OnEnumPropertyChanged(GENAPI::IEnumerationT<enumType
 				mmProp->ClearAllowedValues();
 				GENAPI::StringList_t propertyValues;
 				camProp.GetSymbolics(propertyValues);
-				for (int i = 0; i < propertyValues.size(); i++)
+				for (unsigned int i = 0; i < propertyValues.size(); i++)
 					mmProp->AddAllowedValue(propertyValues[i].c_str());
 			}
 
