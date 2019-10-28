@@ -1,10 +1,9 @@
 /*
 File:		MCL_NanoDrive_ZStage.h
-Copyright:	Mad City Labs Inc., 2008
+Copyright:	Mad City Labs Inc., 2019
 License:	Distributed under the BSD license.
 */
-#ifndef _MCL_NANODRIVE_ZSTAGE_H_
-#define _MCL_NANODRIVE_ZSTAGE_H_
+#pragma once
 
 // MCL headers
 #include "Madlib.h"
@@ -16,10 +15,8 @@ License:	Distributed under the BSD license.
 #include "../../MMDevice/DeviceBase.h"
 
 // List/heap headers
-#include "device_list.h"
 #include "handle_list_if.h"
 #include "HandleListType.h"
-#include "heap.h"
 
 #include <vector>
 
@@ -93,5 +90,3 @@ private:
 
    int axis_;
 };
-
-#endif // _MCL_NANODRIVE_ZSTAGE_H_

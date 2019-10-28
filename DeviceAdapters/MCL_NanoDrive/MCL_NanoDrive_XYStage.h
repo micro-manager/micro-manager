@@ -1,11 +1,8 @@
 /*
 File:		MCL_NanoDrive_XYStage.h
-Copyright:	Mad City Labs Inc., 2008
+Copyright:	Mad City Labs Inc., 2019
 License:	Distributed under the BSD license.
 */
-#ifndef _MCL_NANODRIVE_XYSTAGE_H_
-#define _MCL_NANODRIVE_XYSTAGE_H_
-
 #pragma once 
 
 // MCL headers
@@ -18,10 +15,8 @@ License:	Distributed under the BSD license.
 #include "../../MMDevice/DeviceBase.h"
 
 // List/heap headers
-#include "device_list.h"
 #include "handle_list_if.h"
 #include "HandleListType.h"
-#include "heap.h"
 
 class MCL_NanoDrive_XYStage : public CXYStageBase<MCL_NanoDrive_XYStage>
 {
@@ -97,5 +92,3 @@ private:
 	double commandedX_;
 	double commandedY_;
 };
-
-#endif // _MCL_NANODRIVE_XYSTAGE_H_

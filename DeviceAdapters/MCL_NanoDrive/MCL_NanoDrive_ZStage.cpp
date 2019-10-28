@@ -1,6 +1,6 @@
 /*
 File:		MCL_NanoDrive_ZStage.cpp
-Copyright:	Mad City Labs Inc., 2008
+Copyright:	Mad City Labs Inc., 2019
 License:	Distributed under the BSD license.
 */
 #include "MCL_NanoDrive_ZStage.h"
@@ -61,7 +61,9 @@ int MCL_NanoDrive_ZStage::Initialize()
 	int possHandle = 0;
 	bool valid = false;
 
-	ProductInformation pi = {NULL, 0, 0, 0, 0, 0};
+	ProductInformation pi;
+	memset(&pi, 0, sizeof(ProductInformation));
+	HandleListType device(possHandle, Z_TYPE);
    
 	if (initialized_)
 	   goto ZSTAGE_INIT_EXIT;
@@ -77,13 +79,10 @@ int MCL_NanoDrive_ZStage::Initialize()
    handlesToUseOrRelease = (int*) malloc(sizeof(int*) * numHandles);
    MCL_GetAllHandles(handlesToUseOrRelease, numHandles);
 
-   HandleListType* device = (HandleListType*)GlobalHeapAllocate(sizeof(HandleListType));
-   device->Initialize(possHandle, Z_TYPE);
-
    for (int i = 0; i < numHandles; i++)
    {
 		possHandle = handlesToUseOrRelease[i];
-		device->setHandle(possHandle);
+		device.setHandle(possHandle);
 
 		MCL_GetProductInfo(&pi, possHandle);
 		
@@ -139,7 +138,6 @@ int MCL_NanoDrive_ZStage::Initialize()
 
    if (!valid)
    {
-	   GlobalHeapFree(device);
 	   err = MCL_INVALID_HANDLE;
 	   goto ZSTAGE_INIT_EXIT;
    }
@@ -220,26 +218,18 @@ ZSTAGE_INIT_EXIT:
 
 int MCL_NanoDrive_ZStage::Shutdown()
 {
-	
 // BEGIN LOCKING
 HandleListLock();
 
-   HandleListType * device = new HandleListType(MCLhandle_, Z_TYPE);
-  
+   HandleListType device(MCLhandle_, Z_TYPE);
    HandleListRemoveSingleItem(device);
-	
    if (!HandleExistsOnLockedList(MCLhandle_))
 		MCL_ReleaseHandle(MCLhandle_);
-   
-   delete device;
-
    MCLhandle_ = 0;
-
    initialized_ = false;
 
 HandleListUnlock();
 // END LOCKING
-
    return DEVICE_OK;
 }
 

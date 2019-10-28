@@ -150,16 +150,13 @@
   <ItemGroup>
     <ClCompile Include="handle_list_if.cpp" />
     <ClCompile Include="HandleListType.cpp" />
-    <ClCompile Include="heap.cpp" />
     <ClCompile Include="MCL_NanoDrive.cpp" />
     <ClCompile Include="MCL_NanoDrive_XYStage.cpp" />
     <ClCompile Include="MCL_NanoDrive_ZStage.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="device_list.h" />
     <ClInclude Include="handle_list_if.h" />
     <ClInclude Include="HandleListType.h" />
-    <ClInclude Include="heap.h" />
     <ClInclude Include="Madlib.h" />
     <ClInclude Include="MCL_NanoDrive.h" />
     <ClInclude Include="MCL_NanoDrive_XYStage.h" />
