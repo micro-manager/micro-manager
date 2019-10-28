@@ -1,19 +1,16 @@
 /*
 File:		MCL_MicroDrive.cpp
-Copyright:	Mad City Labs Inc., 2008
+Copyright:	Mad City Labs Inc., 2019
 License:	Distributed under the BSD license.
 */
 
-#include "MCL_MicroDrive_ZStage.h"
+#include "MicroDriveZStage.h"
 #include "MicroDriveXYStage.h"
 #include "../../MMDevice/ModuleInterface.h"
-#include "heap.h"
 #include "handle_list_if.h"
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
- 
-extern HANDLE gHeap;
 
 BOOL APIENTRY DllMain( HANDLE /*hModule*/, 
                       DWORD  ul_reason_for_call, 
@@ -22,31 +19,20 @@ BOOL APIENTRY DllMain( HANDLE /*hModule*/,
    	switch (ul_reason_for_call)  
    	{
    		case DLL_PROCESS_ATTACH:
-			if(!GlobalHeapInit())
+			if(!MCL_InitLibrary())
 				return false;
-
-			if(!MCL_InitLibrary(::gHeap))
-				return false;
-
 			if(!HandleListCreate())
 				return false;
-
 			break;
   		case DLL_THREAD_ATTACH:
 			break;
    		case DLL_THREAD_DETACH:
 			break;
    		case DLL_PROCESS_DETACH:
-
 			HandleListDestroy();
-
 			MCL_ReleaseLibrary();
-
-			GlobalHeapDestroy();
-
    			break;
    	}
-    
 	return TRUE;
 }
 

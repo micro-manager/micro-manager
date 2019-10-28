@@ -1,27 +1,30 @@
 /*
 File:		MCL_MicroDrive.h
-Copyright:	Mad City Labs Inc., 2008
+Copyright:	Mad City Labs Inc., 2019
 License:	Distributed under the BSD license.
 */
-#ifndef _MCL_MICRO_DRIVE_H
-#define _MCL_MICRO_DRIVE_H
+#pragma once 
 
-#define XAXIS 1
-#define YAXIS 2
-#define ZAXIS 3
+#define M1AXIS 1
+#define M2AXIS 2
+#define M3AXIS 3
+#define M4AXIS 4
+#define M5AXIS 5
+#define M6AXIS 6
 
-#define VALIDX 0x1
-#define VALIDY 0x2
-#define VALIDZ 0x4
-#define AXIS_MASK 0x7
+#define BITMASK_M1 0x01
+#define BITMASK_M2 0x02
+#define BITMASK_M3 0x04
+#define BITMASK_M4 0x08
+#define BITMASK_M5 0x10
+#define BITMASK_M6 0x20
 
-#define X_REVERSE_LIMIT 0x01
-#define X_FORWARD_LIMIT 0x02
-#define Y_REVERSE_LIMIT 0x04
-#define Y_FORWARD_LIMIT 0x08
-#define Z_REVERSE_LIMIT 0x10
-#define Z_FORWARD_LIMIT 0x20
-#define BOTH_FORWARD_LIMITS 0xA
+#define MICRODRIVE                  0x2500
+#define MICRODRIVE1					0x2501
+#define MICRODRIVE3                 0x2503
+#define MICRODRIVE4					0x2504
+#define MICRODRIVE6					0x2506
+#define NC_MICRODRIVE				0x3500
 
 static const char* g_StageDeviceName = "MicroDrive Z Stage";
 static const char* g_XYStageDeviceName = "MicroDrive XY Stage";
@@ -37,10 +40,13 @@ static const char* g_Keyword_Encoded = "EncodersPresent";
 static const char* g_Keyword_IterativeMove = "Enable iterative moves";
 static const char* g_Keyword_ImRetry = "IM number of retries";
 static const char* g_Keyword_ImTolerance = "IM tolerance in Um";
+static const char* g_Keyword_IsTirfModuleAxis = "TIRF module axis";
+static const char* g_Keyword_IsTirfModuleAxis1 = "TIRF module axis1";
+static const char* g_Keyword_IsTirfModuleAxis2 = "TIRF module axis2";
 
 static const char* g_Listword_No = "No";
 static const char* g_Listword_Yes = "Yes";
 static const char* g_Listword_AbsPos = "Absolute Position";
 static const char* g_Listword_RelPos = "Relative Position";
 
-#endif
+static const char* g_Keyword_FindEpi = "Find Epi";

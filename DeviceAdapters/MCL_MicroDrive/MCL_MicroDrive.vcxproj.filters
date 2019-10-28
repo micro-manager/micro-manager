@@ -9,9 +9,6 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="Micro Manager">
-      <UniqueIdentifier>{720b63c3-30e4-4942-8c40-49e5922df62f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Micro Manager Headers">
       <UniqueIdentifier>{9d84756e-f907-479f-9dbc-249f9e4b24d8}</UniqueIdentifier>
     </Filter>
@@ -29,10 +26,10 @@
     <ClCompile Include="HandleListType.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="heap.cpp">
+    <ClCompile Include="MicroDriveZStage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MicroDriveZStage.cpp">
+    <ClCompile Include="mdutils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -64,19 +61,16 @@
     <ClInclude Include="..\MMDevice\Property.h">
       <Filter>Micro Manager Headers</Filter>
     </ClInclude>
-    <ClInclude Include="device_list.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="handle_list_if.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="HandleListType.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="heap.h">
+    <ClInclude Include="MicroDriveZStage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MCL_MicroDrive_ZStage.h">
+    <ClInclude Include="mdutils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
