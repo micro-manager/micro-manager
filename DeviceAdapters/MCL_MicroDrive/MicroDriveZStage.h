@@ -1,5 +1,9 @@
-#ifndef _MICRODRIVEZSTAGE_H_
-#define _MICRODRIVEZSTAGE_H_
+/*
+File:		MicroDriveZStage.h
+Copyright:	Mad City Labs Inc., 2019
+License:	Distributed under the BSD license.
+*/
+#pragma once
 
 // MCL headers
 #include "MicroDrive.h"
@@ -11,19 +15,13 @@
 #include "../../MMDevice/ImgBuffer.h"
 #include "../../MMDevice/ModuleInterface.h"
 
-// List/heap headers
-#include "device_list.h"
+// List
 #include "handle_list_if.h"
 #include "HandleListType.h"
-#include "heap.h"
-
-#include <string>
-#include <map>
 
 #define ERR_UNKNOWN_MODE         102
 #define ERR_UNKNOWN_POSITION     103
 #define ERR_NOT_VALID_INPUT      104
-
 
 class MCL_MicroDrive_ZStage : public CStageBase<MCL_MicroDrive_ZStage>
 {
@@ -32,11 +30,11 @@ public:
 	MCL_MicroDrive_ZStage();
 	~MCL_MicroDrive_ZStage();
 
-	bool Busy();
-	void GetName(char* pszName) const;
-
+	// Device Interface
 	int Initialize();
 	int Shutdown();
+	bool Busy();
+	void GetName(char* pszName) const;
 
 	// Stage API
 	virtual double GetStepSize();
@@ -48,16 +46,10 @@ public:
     virtual int SetOrigin();
 	virtual int GetLimits(double& lower, double& upper);
 	virtual int IsStageSequenceable(bool& isSequenceable) const;
-	virtual int GetStageSequenceMaxLength(long& nrEvents) const;
-	virtual int StartStageSequence() const;
-	virtual int StopStageSequence() const;
-	virtual int LoadStageSequence(std::vector<double> positions) const;
 	virtual bool IsContinuousFocusDrive() const;
-	virtual int ClearStageSequence();
-	virtual int AddToStageSequence(double position);
-	virtual int SendStageSequence() const; 
 
-	int getHandle(){ return MCLhandle_;}
+
+	int getHandle(){ return handle_;}
 
 	// Action interface
 	int OnPositionMm(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -69,9 +61,12 @@ public:
 	int OnIterativeMove(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnImRetry(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnImToleranceUm(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnIsTirfModule(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnFindEpi(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 
 private:
+	// Initialization
 	int CreateZStageProperties();
 
 	// Set/Get positions
@@ -83,30 +78,32 @@ private:
 	int Calibrate();
 	int MoveToForwardLimit();
 	int ReturnToOrigin();
+	int FindEpi();
 
-	// Pause devices
 	void PauseDevice();
+	int ChooseAvailableStageAxis(unsigned short pid, unsigned char axisBitmap, int handle);
 
+	// Device Information
+	int handle_;
+	int serialNumber_;
+	unsigned short pid_;
+	int axis_;
 	double stepSize_mm_;
-    bool busy_;
-    bool initialized_;
-    int MCLhandle_;
-    int serialNumber_;
-    int settlingTimeZ_ms_;
 	double encoderResolution_; 
 	double maxVelocity_;
 	double minVelocity_;
 	double velocity_;
-	int rounding_;
+	// Device State
+	bool busy_;
+	bool initialized_;
 	bool encoded_;
 	double lastZ_;
-    int axis_;
-	bool isMD1_;
-
+	// Iterative Move State
 	bool iterativeMoves_;
 	int imRetry_;
 	double imToleranceUm_;
-
+	// Tirf-Module State
+	bool deviceHasTirfModuleAxis_;
+	bool axisIsTirfModule_;
+	double tirfModCalibrationMm_;
 };
-
-#endif
