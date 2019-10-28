@@ -1,7 +1,10 @@
-#ifndef _MCL_NANODRIVE_H_
-#define _MCL_NANODRIVE_H_
+/*
+File:		MCL_NanoDrive.h
+Copyright:	Mad City Labs Inc., 2019
+License:	Distributed under the BSD license.
+*/
+#pragma once
 
-// x = 1, y = 2, z = 3 as defined by Madlib.h
 #define XAXIS 1
 #define YAXIS 2
 #define ZAXIS 3  
@@ -28,4 +31,3 @@ static const char* g_Keyword_SetSequence = "Use Sequence";
 static const char* g_Keyword_ShiftSequence = "Shift sequence by 1";
 static const char* g_Keyword_AxisUsedForTirf = "Axis used to maintain Tirf-Lock";
 
-#endif //_MCL_NANODRIVE_H_

@@ -1,11 +1,9 @@
 /*
 File:		HandleListType.cpp
-Copyright:	Mad City Labs Inc., 2008
+Copyright:	Mad City Labs Inc., 2019
 License:	Distributed under the BSD license.
 */
 #include "HandleListType.h"
-#include <stdio.h>
-#include <string>
 
 HandleListType::HandleListType(int handle, int type)
 {
