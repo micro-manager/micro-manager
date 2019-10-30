@@ -175,10 +175,10 @@ public class ZProjectorPluginFrame extends MMDialog {
             }
          }
       }
-      
-      if (settings_.getString(ZProjectorPlugin.AXISKEY, null) == null) {
+
+      if (bg.getSelection() == null) {
          bg.getElements().nextElement().setSelected(true);
-      }    
+      }
       
       // Note: Median and Std.Dev. yield 32-bit images
       // Those would need to be converted to 16-bit to be shown...
