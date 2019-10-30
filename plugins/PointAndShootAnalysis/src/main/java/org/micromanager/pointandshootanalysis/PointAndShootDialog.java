@@ -163,6 +163,9 @@ public class PointAndShootDialog extends MMDialog {
       });
       super.add(offsetSpinner, "wrap");
       
+      // Even when we no longer
+      // can measure a bleach spot, continue tracking it based on previous position relative
+      // to particle centroid
       super.add(new JLabel("Fix Bleach positions based on particle centroid"));
       boolean fix = profileSettings_.getBoolean(Terms.FIXBLEACHINPARTICLE, true);
       final JCheckBox fixBleachBox = new JCheckBox();
