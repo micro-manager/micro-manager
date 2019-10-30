@@ -56,6 +56,20 @@ public final class DefaultAlbum implements Album {
    @Override
    public boolean addImage(Image image) throws IOException {
       boolean mustCreateNew = (store_ == null || store_.isFrozen());
+
+      // check if this image is the same size as the ones in the store
+      if (store_ != null) {
+         Image storedImage = store_.getAnyImage();
+         if (storedImage != null) {
+            if (image.getBytesPerPixel() != storedImage.getBytesPerPixel()
+                    || image.getWidth() != storedImage.getWidth()
+                    || image.getHeight() != storedImage.getHeight()
+                    || image.getNumComponents() != storedImage.getNumComponents()) {
+               mustCreateNew = true;
+            }
+         }
+      }
+
       String curChannel = "";
       try {
          curChannel = studio_.core().getCurrentConfig(
@@ -64,12 +78,20 @@ public final class DefaultAlbum implements Album {
       catch (Exception e) {
          studio_.logs().logError(e, "Error getting current channel name");
       }
+      /*
+       * This code determines if the channel has changed, and opens a new
+       * new Album if so.  The motivation for this behavior is unclear, and 
+       * it certainly bothers some people (including myself, NS), so remove
+       * for now.  If the old behavior is desired by some, there can be 
+       * an option added.
+       *
       if (store_ != null) {
          String oldChannel = store_.getSummaryMetadata().getSafeChannelName(0);
          if (!oldChannel.contentEquals(curChannel)) {
             mustCreateNew = true;
          }
       }
+      */
       if (mustCreateNew) {
          // Need to create a new album.
          
@@ -122,7 +144,6 @@ public final class DefaultAlbum implements Album {
                pipeline_.clearExceptions();
             }
          }
-         // store_.putImage(image.copyAtCoords(newCoords));
       }
       catch (DatastoreFrozenException e) {
          ReportingUtils.showError(e, "Album datastore is locked.");
