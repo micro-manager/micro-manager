@@ -36,6 +36,7 @@ either expressed or implied, of the FreeBSD Project.
 
 package org.micromanager.pointandshootanalysis.utils;
 
+import georegression.struct.point.Point2D_I32;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -60,6 +61,28 @@ public class ListUtils {
       
       return myAvg;
    }
+   
+   /**
+	 * Find the average of all the points in the list.
+	 *
+	 * @param contour
+	 * @return
+	 */
+	public static Point2D_I32 avgPoint2DList(List<Point2D_I32> contour) {
+
+		int x = 0;
+		int y = 0;
+
+		for( Point2D_I32 p : contour ) {
+			x += p.x;
+			y += p.y;
+		}
+
+		x /= contour.size();
+		y /= contour.size();
+
+		return new Point2D_I32(x,y);
+	}
    
    public static Point2D.Double stdDevsXYList(ArrayList<Point2D.Double> xyPoints, 
            Point2D.Double avg) {

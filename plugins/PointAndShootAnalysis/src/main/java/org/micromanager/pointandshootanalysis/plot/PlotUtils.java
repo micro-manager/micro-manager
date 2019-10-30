@@ -51,7 +51,6 @@ import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.micromanager.pointandshootanalysis.DataExporter;
-import org.micromanager.pointandshootanalysis.display.WidgetSettings;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
@@ -188,8 +187,8 @@ public class PlotUtils {
       }
 
       for (int i = 0; i < data.length; i++) {
-         int index = i % WidgetSettings.COLORS.length;
-         renderer.setSeriesPaint(i, WidgetSettings.COLORS[index]);
+         int index = i % colors.length;
+         renderer.setSeriesPaint(i, colors[index]);
       }
       for (int i = 0; i < data.length; i++) {
          if (showShapes.length > i && !showShapes[i]) {
@@ -244,8 +243,8 @@ public class PlotUtils {
          jcb.setSelected(true);
          renderer.setSeriesVisible(i, true);
          jcb.addItemListener(new VisibleAction(renderer, i));
-         int index = i % WidgetSettings.COLORS.length;
-         jcb.setForeground(WidgetSettings.COLORS[index]);
+         int index = i % colors.length;
+         jcb.setForeground(colors[index]);
          jcb.setBackground(Color.white);
          String w =  (i + 1) % 5 == 0 ? "wrap" : "";
          controlPanel.add(jcb, w);

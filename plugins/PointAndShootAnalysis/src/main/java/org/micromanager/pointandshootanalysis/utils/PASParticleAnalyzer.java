@@ -28,7 +28,7 @@ public class PASParticleAnalyzer extends ParticleAnalyzer {
       public Integer getArea() { return area_; }
       
    }
-   List<ParticleData> lData_ = new ArrayList<ParticleData>();
+   List<ParticleData> lData_ = new ArrayList<>();
    
    /** Constructs a ParticleAnalyzer using the default min and max circularity values (0 and 1). */
    public PASParticleAnalyzer(int options, int measurements, ResultsTable rt, double minSize, double maxSize) {

@@ -1,6 +1,7 @@
 
 package org.micromanager.pointandshootanalysis;
 
+import java.awt.Color;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
@@ -237,6 +238,7 @@ public class DataExporter {
 
    public void plotFits(List<Integer> indices) {
       List<XYSeries> xySeries = new ArrayList<>(2 * indices.size());
+      List<Integer> succesfullFits = new ArrayList<>();
       for (int index : indices) {
          Class fitClass = SingleExpRecoveryFunc.class;
          Integer msLimit = null;
@@ -265,6 +267,7 @@ public class DataExporter {
                      fittedXY.add(d.getX(), d.getY());
                   }
                   xySeries.add(fittedXY);
+                  succesfullFits.add(index);
                }
             }
          } catch (OptimizationException oe) {
@@ -280,12 +283,17 @@ public class DataExporter {
          case PARTICLE_AND_BLEACH: title = "Fit of Particle (+Bleach)"; break;
       }
       PlotUtils pu = new PlotUtils(studio_.profile().getSettings(this.getClass()));
+      List<Color> colorList = new ArrayList<>();
+      for (Integer index : succesfullFits) {
+         colorList.add(WidgetSettings.COLORS[index]);          
+         colorList.add(WidgetSettings.COLORS[index]);   
+      }
       pu.plotData(title, 
                     xySeries.toArray(new XYSeries[xySeries.size()]),
                     "Time (ms)",
                     "Normalized Intensity", "", 
                     1.3, 
-                    WidgetSettings.COLORS, 
+                    colorList.toArray(new Color[colorList.size()]), 
                     null);
    }
    

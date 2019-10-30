@@ -1,4 +1,5 @@
 
+
 package org.micromanager.pointandshootanalysis.data;
 
 import boofcv.alg.filter.binary.BinaryImageOps;
@@ -48,6 +49,9 @@ public class ParticleData {
    private Double normalizedBleachMaskAverage_;
    private Double maskIncludingBleachAverage_;
    private Double normalizedMaskIncludingBleachAverage_;
+   
+   private final static double BLEACHRATIO = 0.625; // max value for minimum pixel intensity divided
+   // by average of a square ROI around the particle for it to be considered a bleach spot
    
    /**
     * Applies the offset to each point in the list
@@ -356,7 +360,7 @@ public class ParticleData {
       
       
       // Make sure that this is not an abberrant bleachSpot by checking the position
-      // of previou bleachspots.  If it moved too far away (normalized by the centroid
+      // of previous bleachspots.  If it moved too far away (normalized by the centroid
       // of the particle) reposition to the original bleachspot position
       int nrBack = 1;
       ParticleData previousParticle = null;
@@ -389,17 +393,30 @@ public class ParticleData {
          double value = gResult.get(minPixel.x, minPixel.y);
          // TODO: evaluate this ratio and add other criteria to determine if this is
          // really the bleach spot
-         boolean isRealBleach = (value / mean) < 0.625;
+         boolean isRealBleach = (value / mean) < BLEACHRATIO;
          if (previousParticle != null && previousParticle.getMaskAvg() != null) {
             isRealBleach = isRealBleach && (value / previousParticle.getMaskAvg()) < 0.9;
          }
          if (isRealBleach) {
             Point2D_I32 bleachPoint = 
                     new Point2D_I32(minPixel.x + offset.x, minPixel.y + offset.y);
-            List<Point2D_I32> bleachMask = getBleachMask(bleachPoint, bleachSpotRadius);
-            
-            //bleachMask = ParticleData.offset(bleachMask, offset, false);
+            return addBleachSpotToParticle(particle, current, offset, 
+                           bleachPoint, bleachSpotRadius);
+         }
+      }      
+      return particle;
+   }
+   
+   public static ParticleData addBleachSpotToParticle(
+           ParticleData particle,            
+           GrayU16 current,            
+           Point2D_I32 offset, 
+           Point2D_I32 bleachPoint,
+           int bleachSpotRadius) {
+      List<Point2D_I32> bleachMask = getBleachMask(bleachPoint, bleachSpotRadius);
+     
             List<Point2D_I32> mask = particle.getMask();
+            
             // remove bleached pixels from the mask
             for (Point2D_I32 pixel : bleachMask) {
                if (mask.contains(pixel)) {
@@ -420,11 +437,6 @@ public class ParticleData {
             return new ParticleData(mask, particle.getThreshold(), bleachMask,
                      maskIncludingBleach, newCentroid, bleachPoint,
                      maskAvg, bleachMaskAvg, maskIncludingBleachAvg);
-            
-         }
-      }
-      
-      return particle;
    }
    
    

@@ -31,6 +31,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
@@ -161,6 +162,25 @@ public class PointAndShootDialog extends MMDialog {
          profileSettings_.putInteger(Terms.CAMERAOFFSET, (Integer) offsetSpinner.getValue());
       });
       super.add(offsetSpinner, "wrap");
+      
+      super.add(new JLabel("Fix Bleach positions based on particle centroid"));
+      boolean fix = profileSettings_.getBoolean(Terms.FIXBLEACHINPARTICLE, true);
+      final JCheckBox fixBleachBox = new JCheckBox();
+      fixBleachBox.setSelected(fix);
+      fixBleachBox.addChangeListener((ChangeEvent e) -> {
+         profileSettings_.putBoolean(Terms.FIXBLEACHINPARTICLE, fixBleachBox.isSelected());
+      });
+      super.add(fixBleachBox, "wrap");
+      
+      super.add(new JLabel("Nr of frames used to fix bleach-particle offset"));
+      int nrFramesToFixBleach = profileSettings_.getInteger(Terms.NRFRAMESTOFIXBLEACH, 20);
+      final SpinnerNumberModel fixFramesModel = new SpinnerNumberModel(nrFramesToFixBleach, 1, 100, 1);
+      final JSpinner fixBleachSpinner = new JSpinner (fixFramesModel);
+      fixBleachSpinner.setMinimumSize(spinnerSize);
+      fixBleachSpinner.addChangeListener((ChangeEvent e) -> {
+         profileSettings_.putInteger(Terms.NRFRAMESTOFIXBLEACH, (Integer) fixBleachSpinner.getValue());
+      });
+      super.add(fixBleachSpinner, "wrap");
       
       JButton cancelButton = mcsButton(buttonSize, arialSmallFont);
       cancelButton.setText("Cancel");

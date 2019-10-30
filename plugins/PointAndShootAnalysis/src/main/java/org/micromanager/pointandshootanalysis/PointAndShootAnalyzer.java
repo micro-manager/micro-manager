@@ -88,17 +88,27 @@ public class PointAndShootAnalyzer implements Runnable {
    final private PointAndShootDialog psd_;
    final private PropertyMap settings_;
    final Map<String, Point> coordinates_;
-   final private static int MAXDISTANCE = 10; // max distance in pixels from the expected position
-   // if more, we will reject the bleach spot
-   // may need to be changed by the user
-   //final private int findMinFramesBefore_ = 5; // frames before user clicked PAS.  
-   //Used to find actual bleach spot and to normalize
-   final private int findMinFramesAfter_ = 20;  // frames after used clicked PAS.  
-   //Used to find actual bleach spot
+   /* max distance in pixels from the expected position
+    * if more, we will reject the bleach spot.
+    * May need to be changed by the user
+   */
+   final private static int MAXDISTANCE = 10; 
+   // final private int findMinFramesBefore_ = 5; // frames before user clicked PAS. 
+   /*
+     Do a minimum projection from the frame where we expect the bleach up to 
+     this number of frames after.  The bleach is located from the ratio of the 
+     minimum and average projection.
+     If too large, the particle may move causing abberant minima to be detected.
+     May need to be changed by the user 
+   */
+   final private int findMinFramesAfter_ = 10;  
    final private int roiSize_ = 64;  // keep at factor of 2 to enable FFT 
    final private int halfROISize_ = roiSize_ / 2;
    final private int roiWidth_ = roiSize_;  // may need to changed by user
    final private int roiHeight_ = roiSize_;  // may need to changed by user
+   
+   // final private boolean continueBleachSpotTracking_ = true; 
+   //final private int nrFramesToMeasureBleachToParticleVector_ = 20; 
 
    public PointAndShootAnalyzer(Studio studio, PropertyMap settings, PointAndShootDialog psd) {
       studio_ = studio;
@@ -120,6 +130,11 @@ public class PointAndShootAnalyzer implements Runnable {
       // final int nrFramesAfter = settings_.getInteger(Terms.NRFRAMESAFTER, 200);
       final int maxDistance = settings_.getInteger(Terms.MAXDISTANCE, 3);
       final int cameraOffset = settings_.getInteger(Terms.CAMERAOFFSET, 100);
+      // Even when we no longer
+      // can measure a bleach spot, continue tracking it based on previous position relative
+      // to particle centroid
+      final boolean continueBleachSpotTracking = settings_.getBoolean(Terms.FIXBLEACHINPARTICLE, true);
+      final int nrFramesToMeasureBleachToParticleVector = settings_.getInteger(Terms.NRFRAMESTOFIXBLEACH, 20);
 
       File f = new File(fileName);
       if (!f.exists()) {
@@ -134,9 +149,9 @@ public class PointAndShootAnalyzer implements Runnable {
       try {
          // this thing is ugly.  It depends on side effects...
          Consumer<String> action = new pointAndShootParser();
-         Stream<String> fileLines = Files.lines(f.toPath());
-         fileLines.forEach(action);
-         fileLines.close();
+         try (Stream<String> fileLines = Files.lines(f.toPath())) {
+            fileLines.forEach(action);
+         }
       } catch (IOException ex) {
          studio_.logs().showError("Error while parsing file: " + f.getName());
          return;
@@ -248,6 +263,11 @@ public class PointAndShootAnalyzer implements Runnable {
                     pasEntry.framePasClicked(),
                     pasEntry.framePasClicked() + findMinFramesAfter_,
                     dataProvider.getAxisLength(Coords.T));
+            /* Locate the bleach spot by dividing a minimum and average projection
+              of n frames started at the recorded bleach time and reporting the 
+              position of the minimum.  This fails when the particle moves too much
+              This algorithm can probably be improved by tracking the complete particle
+            */
             GrayU16 beforeCV = new GrayU16(x1 - x0, y1 - y0);
             GImageBandMath.average(subImage, beforeCV, 
                     findMinFrames.getStartFrame(), findMinFrames.getCentralFrame() + 1);
@@ -266,7 +286,7 @@ public class PointAndShootAnalyzer implements Runnable {
              // Find the minimum and define this as the bleachPoint
             Point2D_I32 minPoint = findMinPixel(gResult);
             
-            //System.out.println("Lowest Pixel position: " + minPoint.x + ", " + minPoint.y);
+            // System.out.println("Lowest Pixel position: " + minPoint.x + ", " + minPoint.y);
             // check if this is within expected range
             
             if (minPoint.distance(middle) > MAXDISTANCE) {
@@ -326,7 +346,6 @@ public class PointAndShootAnalyzer implements Runnable {
             GrayF32 fPreBleach = new GrayF32(preBleach.getWidth(), preBleach.getHeight());
             ConvertImage.convert(preBleach, fPreBleach);
             ParticleData previousParticle = null;
-            int bleachSpotsMissed = 0;
             for (int frame = pasEntry.framePasClicked() + 2;
                     frame < dataProvider.getAxisLength(Coords.T); frame++) {
                ParticleData nextParticle = ParticleData.centralParticle(dataProvider, 
@@ -340,31 +359,80 @@ public class PointAndShootAnalyzer implements Runnable {
                   //System.out.println("After Missing particle");
                   // TODO: increase counter, give up when too high
                } 
-               
-               if (bleachSpotsMissed < 5) {
+
+               previousParticle = nextParticle;
+               if (nextParticle != null) {
+                  currentPoint = nextParticle.getCentroid();
+               }
+               track.put(frame, nextParticle);
+            }
+            // Now locate the bleachspots in the particle data 
+            int bleachSpotsMissed = 0;
+            currentPoint = track.get(pasEntry.framePasClicked() + 2).getCentroid();
+            final int getCalculateVectorFrame = pasEntry.framePasClicked() + 5 + 
+                    nrFramesToMeasureBleachToParticleVector;
+            Point2D_I32 offsetVector = null;
+            for (int frame = pasEntry.framePasClicked() + 2;
+                    frame < dataProvider.getAxisLength(Coords.T); frame++) {
+               if (bleachSpotsMissed < 5 || continueBleachSpotTracking) {
+                  ParticleData particle = track.get(frame);
                   ImageGray current = BoofCVImageConverter.subImage(dataProvider,
                           cb, frame, currentPoint, halfROISize_);
                   if (current != null) {
-                     nextParticle = ParticleData.addBleachSpotToParticle(
+                     Point2D_I32 offset = new Point2D_I32(currentPoint.x - halfROISize_, 
+                             currentPoint.y - halfROISize_);
+                     if (offsetVector != null) {
+                        Point2D_I32 centroid = particle.getCentroid();
+                        Point2D_I32 bp = new Point2D_I32(centroid.x - offsetVector.x,
+                                 centroid.y - offsetVector.y);
+                        particle = ParticleData.addBleachSpotToParticle(particle, 
+                                (GrayU16)current, offset, bp,
+                        bleachSpotRadius);                                                
+                     } else {
+                     particle = ParticleData.addBleachSpotToParticle(
                              fPreBleach,
                              (GrayU16) current,
                              track,
                              frame,
-                             nextParticle,
-                             new Point2D_I32(currentPoint.x - halfROISize_, currentPoint.y - halfROISize_),
-                             bleachSpotRadius,
+                             particle,
+                             offset,
+                              bleachSpotRadius,
                              MAXDISTANCE);
+                     }
+                     currentPoint = particle.getCentroid();
+                     track.put(frame, particle);
                   }
-                  if (nextParticle.getBleachSpot() == null) {
+                  if (particle.getBleachSpot() == null) {
                      bleachSpotsMissed += 1;
                   } else {
                      bleachSpotsMissed = 0;
                   }
                }
-               previousParticle = nextParticle;
-               currentPoint = nextParticle.getCentroid();
-               track.put(frame, nextParticle);
+               if (continueBleachSpotTracking && frame == getCalculateVectorFrame ) {
+                  List<Point2D_I32> vectors = new ArrayList<>
+                                 (nrFramesToMeasureBleachToParticleVector);
+                  int startFrame = pasEntry.framePasClicked() + 5;
+                  int endFrame = startFrame + nrFramesToMeasureBleachToParticleVector;
+                  for (int vFrame = startFrame; vFrame < endFrame; vFrame++) {
+                     ParticleData pd = track.get(vFrame);
+                     if (pd != null) {
+                        Point2D_I32 c = pd.getCentroid();
+                        Point2D_I32 b = pd.getBleachSpot();
+                        if (c != null && b != null) {
+                           Point2D_I32 vector = new Point2D_I32(c.x - b.x,
+                                 c.y - b.y);
+                           vectors.add(vector);
+                        }
+                     }                     
+                  }
+                  if (vectors.size() > 0.8 * nrFramesToMeasureBleachToParticleVector) {
+                     offsetVector = ListUtils.avgPoint2DList(vectors);
+                     // System.out.println("offset: " + offsetVector.x + ", " + offsetVector.y);
+                  }
+                  
+               }
             }
+
             tracks.add(track);
             pasDataIt.set(pasEntry.copyBuilder().particleDataTrack(track).
                     build());
