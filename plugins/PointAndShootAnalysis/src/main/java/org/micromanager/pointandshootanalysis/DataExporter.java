@@ -148,11 +148,13 @@ public class DataExporter {
       double yHalf = (found[0] - yAtStart) / 2.0 + yAtStart;
       double tHalf = func.calculateX(found, yHalf) - tAtStart;
       func.setParms(found);
+      /*
       System.out.println("A: " + found[0] + ", b: " + found[1]);
       if (func.getParms().length > 2) {
          System.out.println(", k: " + found[2]);
       }
       System.out.println("RSquared: " + rSquared + ", t1/2: " + tHalf + " ms");
+      */
       FitData fitData = new FitData(dataAsList, 
               func.getClass(), 
               type_, 
@@ -273,7 +275,7 @@ public class DataExporter {
          } catch (OptimizationException oe) {
             String msg = "Fit failed for dataseries: " + data_.get(index).id();
             studio_.alerts().postAlert("Fit error", this.getClass(), msg);
-            studio_.logs().logError(oe, msg);
+            studio_.logs().logError(msg);
          }
       }
       String title = null;
@@ -285,8 +287,8 @@ public class DataExporter {
       PlotUtils pu = new PlotUtils(studio_.profile().getSettings(this.getClass()));
       List<Color> colorList = new ArrayList<>();
       for (Integer index : succesfullFits) {
-         colorList.add(WidgetSettings.COLORS[index]);          
-         colorList.add(WidgetSettings.COLORS[index]);   
+         colorList.add(WidgetSettings.COLORS[index % WidgetSettings.COLORS.length]);          
+         colorList.add(WidgetSettings.COLORS[index % WidgetSettings.COLORS.length]);   
       }
       pu.plotData(title, 
                     xySeries.toArray(new XYSeries[xySeries.size()]),
