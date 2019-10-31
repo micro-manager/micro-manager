@@ -14,9 +14,9 @@
 	</configurations>
 
 	<dependencies defaultconf="compile">
-        <dependency conf="build->master" org="ant-contrib" name="ant-contrib" rev="1.0b3"/>
+		<dependency conf="build->master" org="ant-contrib" name="ant-contrib" rev="1.0b3"/>
 		<dependency conf="test" org="junit" name="junit" rev="4.11"/>
-      <dependency conf="test" org="org.msgpack" name="msgpack" rev="0.6.12"/>
+		<dependency conf="test" org="org.msgpack" name="msgpack" rev="0.6.12"/>
 
 		<dependency org="com.fifesoft" name="rsyntaxtextarea" rev="2.6.1"/>
 		<dependency org="com.google.code.gson" name="gson" rev="2.2.4"/>
@@ -38,51 +38,51 @@
 		<dependency org="org.jfree" name="jcommon" rev="1.0.24"/>
 		<dependency org="org.jfree" name="jfreechart" rev="1.5.0"/>
 		<dependency org="org.scijava" name="scijava-common" rev="2.77.0"/>
-      <!-- Magellan dependencies -->
-      <!-- https://mvnrepository.com/artifact/org.zeromq/jeromq -->
-      <dependency org="org.zeromq" name="jeromq" rev="0.5.1"/>
+		<!-- Magellan dependencies -->
+		<!-- https://mvnrepository.com/artifact/org.zeromq/jeromq -->
+		<dependency org="org.zeromq" name="jeromq" rev="0.5.1"/>
 
-      <dependency org="io.scif" name="scifio" rev="0.37.3"/>
+		<dependency org="io.scif" name="scifio" rev="0.37.3"/>
 
-      <dependency org="net.clearvolume" name="cleargl" rev="2.2.6"/>
-      <!--<dependency org="net.clearvolume" name="clearcuda" rev="0.9.4"/> -->
-      <dependency org="net.clearcontrol" name="clearcl" rev="0.6.0"/>
-      <dependency org="net.clearcontrol" name="coremem" rev="0.4.5"/>
+		<dependency org="net.clearvolume" name="cleargl" rev="2.2.6"/>
+		<!--<dependency org="net.clearvolume" name="clearcuda" rev="0.9.4"/> -->
+		<dependency org="net.clearcontrol" name="clearcl" rev="0.6.0"/>
+		<dependency org="net.clearcontrol" name="coremem" rev="0.4.5"/>
 
       <!--jogl and gluegen are a pain! They are in central, but named in a way that is hard to re-concile with ivy.  Rename and use a copy from 3rdpartypublic -->
-      <dependency org="org.jogamp.gluegen" name="gluegen-rt-local" rev="2.3.2"/>
-      <dependency org="org.jogamp.gluegen" name="gluegen-rt-main-local" rev="2.3.2"/>
-      <dependency org="org.jogamp.gluegen" name="gluegen-rt-natives-macosx-universal" rev="2.3.2"/>
-      <dependency org="org.jogamp.gluegen" name="gluegen-rt-natives-windows-amd64" rev="2.3.2"/>
-      <dependency org="org.jogamp.gluegen" name="gluegen-rt-natives-windows-i586" rev="2.3.2"/>
-      <dependency org="org.jogamp.gluegen" name="gluegen" rev="2.3.2"/>
-      <dependency org="org.jogamp.jogl" name="jogl-all-local" rev="2.3.2"/>
-      <dependency org="org.jogamp.jogl" name="jogl-all-main-local" rev="2.3.2"/>
-      <dependency org="org.jogamp.jogl" name="jogl-all-natives-macosx-universal" rev="2.3.2"/>
-      <dependency org="org.jogamp.jogl" name="jogl-all-natives-windows-amd64" rev="2.3.2"/>
-      <dependency org="org.jogamp.jogl" name="jogl-all-natives-windows-i586" rev="2.3.2"/>
+		<dependency org="org.jogamp.gluegen" name="gluegen-rt-local" rev="2.3.2"/>
+		<dependency org="org.jogamp.gluegen" name="gluegen-rt-main-local" rev="2.3.2"/>
+		<dependency org="org.jogamp.gluegen" name="gluegen-rt-natives-macosx-universal" rev="2.3.2"/>
+		<dependency org="org.jogamp.gluegen" name="gluegen-rt-natives-windows-amd64" rev="2.3.2"/>
+		<dependency org="org.jogamp.gluegen" name="gluegen-rt-natives-windows-i586" rev="2.3.2"/>
+		<dependency org="org.jogamp.gluegen" name="gluegen" rev="2.3.2"/>
+		<dependency org="org.jogamp.jogl" name="jogl-all-local" rev="2.3.2"/>
+		<dependency org="org.jogamp.jogl" name="jogl-all-main-local" rev="2.3.2"/>
+		<dependency org="org.jogamp.jogl" name="jogl-all-natives-macosx-universal" rev="2.3.2"/>
+		<dependency org="org.jogamp.jogl" name="jogl-all-natives-windows-amd64" rev="2.3.2"/>
+		<dependency org="org.jogamp.jogl" name="jogl-all-natives-windows-i586" rev="2.3.2"/>
 
-      <!-- Patched version of clearvolume from Nico -->
-      <dependency org="net.clearvolume" name="clearvolume" rev="1.4.1"/>
+		<!-- Patched version of clearvolume from Nico -->
+		<dependency org="net.clearvolume" name="clearvolume" rev="1.4.1"/>
 
-      <dependency conf="imagej" org="net.imagej" name="ij" rev="1.51s"/>
+		<dependency conf="imagej" org="net.imagej" name="ij" rev="1.51s"/>
 
 
-      <dependency org="org.boofcv" name="boofcv-ip" rev="0.33.1"/>
-      <dependency org="org.boofcv" name="boofcv-geo" rev="0.33.1"/>
-      <dependency org="org.georegression" name="georegression" rev="0.19"/>
-      <dependency org="org.ddogleg" name="ddogleg" rev="0.17"/>
-      <dependency org="org.ejml" name="ejml-core" rev="0.38"/>
+		<dependency org="org.boofcv" name="boofcv-ip" rev="0.33.1"/>
+		<dependency org="org.boofcv" name="boofcv-geo" rev="0.33.1"/>
+		<dependency org="org.georegression" name="georegression" rev="0.19"/>
+		<dependency org="org.ddogleg" name="ddogleg" rev="0.17"/>
+		<dependency org="org.ejml" name="ejml-core" rev="0.38"/>
 
-      <!-- Not in Maven yet (resolved in 3rdpartypublic/classext) -->
-      <dependency org="" name="iconloader" rev="GIT"/>
-      <!---		<dependency org="" name="TSFProto" rev="SVN"/>--><!-- dependency on protobuf-java will not be resolved -->
+		<!-- Not in Maven yet (resolved in 3rdpartypublic/classext) -->
+		<dependency org="" name="iconloader" rev="GIT"/>
+		<!---		<dependency org="" name="TSFProto" rev="SVN"/>--><!-- dependency on protobuf-java will not be resolved -->
 
-      <!-- Magellan dependencies; not open source; not in Maven -->
-      <dependency conf="optional" org="" name="DT1.2" rev=""/>
+		<!-- Magellan dependencies; not open source; not in Maven -->
+		<dependency conf="optional" org="" name="DT1.2" rev=""/>
 
-      <!-- Run-time-only dependencies -->
-      <dependency conf="runtime" org="org.swinglabs" name="swingx" rev="0.9.5"/>
-      <!-- <dependency conf="runtime" org="ome" name="loci_tools" rev="5.1.2"/> -->
+		<!-- Run-time-only dependencies -->
+		<dependency conf="runtime" org="org.swinglabs" name="swingx" rev="0.9.5"/>
+		<exclude org="com.googlecode.efficient-java-matrix-library"/>
      </dependencies>
 </ivy-module>
