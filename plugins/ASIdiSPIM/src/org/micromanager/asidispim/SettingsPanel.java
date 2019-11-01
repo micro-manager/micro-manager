@@ -91,7 +91,7 @@ public class SettingsPanel extends ListeningJPanel {
             new MigLayout(
               "", 
               "[right]10[center]10[center]",
-              "[]16[]"));
+              "[]0[]"));
      
       gui_ = gui;
       devices_ = devices;
@@ -107,7 +107,7 @@ public class SettingsPanel extends ListeningJPanel {
       final JPanel guiPanel = new JPanel(new MigLayout(
             "",
             "[right]16[center]",
-            "[]5[]"));
+            "[]4[]"));
       guiPanel.setBorder(PanelUtils.makeTitledBorder("GUI"));
       
       final JCheckBox activeTimerCheckBox = pu.makeCheckBox("Update axis positions continually",
@@ -163,7 +163,7 @@ public class SettingsPanel extends ListeningJPanel {
       final JPanel scannerPanel = new JPanel(new MigLayout(
             "",
             "[right]16[center]",
-            "[]5[]"));
+            "[]4[]"));
       scannerPanel.setBorder(PanelUtils.makeTitledBorder("Light Sheet Scanner"));
 
       scannerPanel.add(new JLabel("Filter freq, sheet axis [kHz]:"));
@@ -201,7 +201,7 @@ public class SettingsPanel extends ListeningJPanel {
       final JPanel acqusitionPanel = new JPanel(new MigLayout(
             "",
             "[left]",
-            "[]5[]"));
+            "[]4[]"));
       acqusitionPanel.setBorder(PanelUtils.makeTitledBorder("Acquisition"));
 
       final JCheckBox acqSettingsWrite = pu.makeCheckBox("Write file with acquisition settings",
