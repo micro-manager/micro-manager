@@ -125,6 +125,15 @@ public interface ASIdiSPIMInterface extends Remote {
    public boolean isAcquisitionRequested() throws ASIdiSPIMException, RemoteException;
    
    /**
+    * Requests an overview acquisition using the current settings, i.e., the settings
+    * as visible in the acquisition panel.  The definition of current
+    * settings may change in the future.  Throws exception if an acquisition
+    * is currently running or has been requested.  Does not block.
+    * @see ASIdiSPIMInterface#stopAcquisition()
+    */
+   public void runOverviewAcquisition() throws ASIdiSPIMException, RemoteException;
+   
+   /**
     * @return ImagePlus object of last acquisition.
     * @throws ASIdiSPIMException, RemoteException
     */

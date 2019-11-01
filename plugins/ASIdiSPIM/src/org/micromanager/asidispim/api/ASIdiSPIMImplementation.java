@@ -132,6 +132,14 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    public boolean isAcquisitionRequested() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().isAcquisitionRequested();
    }
+
+   @Override
+   public void runOverviewAcquisition() throws ASIdiSPIMException, RemoteException {
+      if (isAcquisitionRequested()) {
+         throw new ASIdiSPIMException("another acquisition ongoing");
+      }
+      getAcquisitionPanel().runOverviewAcquisition();
+   }
    
    @Override
    public ij.ImagePlus getLastAcquisitionImagePlus() throws ASIdiSPIMException, RemoteException {
