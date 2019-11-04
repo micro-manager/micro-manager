@@ -30,6 +30,9 @@
     <ClCompile Include="FilterCubeTurret.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Illuminator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Zaber.h">
@@ -45,6 +48,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="FilterCubeTurret.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Illuminator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
