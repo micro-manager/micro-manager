@@ -2,6 +2,10 @@
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS)
 deviceadapter_LTLIBRARIES = libmmgr_dal_Zaber.la
 libmmgr_dal_Zaber_la_SOURCES = \
+			       Illuminator.cpp \
+			       Illuminator.h \
+			       FilterCubeTurret.cpp \
+			       FilterCubeTurret.h \
 			       FilterWheel.cpp \
 			       FilterWheel.h \
 			       XYStage.cpp \

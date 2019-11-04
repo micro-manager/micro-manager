@@ -31,6 +31,7 @@
 #include "Stage.h"
 #include "FilterWheel.h"
 #include "FilterCubeTurret.h"
+#include "Illuminator.h"
 
 using namespace std;
 
@@ -42,6 +43,8 @@ const char* g_Msg_COMMAND_REJECTED = "The device rejected the command.";
 const char* g_Msg_NO_REFERENCE_POS = "The device has not had a reference position established.";
 const char* g_Msg_SETTING_FAILED = "The property could not be set. Is the value in the valid range?";
 const char* g_Msg_INVALID_DEVICE_NUM = "Device numbers must be in the range of 1 to 99.";
+const char* g_Msg_LAMP_DISCONNECTED= "Some of the illuminator lamps are disconnected.";
+const char* g_Msg_LAMP_OVERHEATED = "Some of the illuminator lamps are overheated.";
 
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -53,6 +56,7 @@ MODULE_API void InitializeModuleData()
 	RegisterDevice(g_StageName, MM::StageDevice, g_StageDescription);
 	RegisterDevice(g_FilterWheelName, MM::StateDevice, g_FilterWheelDescription);
 	RegisterDevice(g_FilterTurretName, MM::StateDevice, g_FilterTurretDescription);
+	RegisterDevice(g_IlluminatorName, MM::ShutterDevice, g_IlluminatorDescription);
 }                                                            
 
 
@@ -73,6 +77,10 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 	else if (strcmp(deviceName, g_FilterTurretName) == 0)
 	{	
 		return new FilterCubeTurret();
+	}
+	else if (strcmp(deviceName, g_IlluminatorName) == 0)
+	{	
+		return new Illuminator();
 	}
 	else
 	{	
@@ -141,6 +149,17 @@ int ZaberBase::SendCommand(const string command) const
 }
 
 
+int ZaberBase::SendCommand(long device, long axis, const string command) const
+{
+	core_->LogMessage(device_, "ZaberBase::SendCommand(device,axis)\n", true);
+
+	ostringstream cmd;
+	cmd << cmdPrefix_ << device << " " << axis << " " << command;
+	vector<string> resp;
+	return QueryCommand(cmd.str().c_str(), resp);
+}
+
+
 // COMMUNICATION "send & receive" utility function:
 int ZaberBase::QueryCommand(const string command, vector<string>& reply) const
 {
@@ -202,7 +221,28 @@ int ZaberBase::QueryCommand(const string command, vector<string>& reply) const
 
 int ZaberBase::GetSetting(long device, long axis, string setting, long& data) const
 {
-	core_->LogMessage(device_, "ZaberBase::GetSetting\n", true);
+	core_->LogMessage(device_, "ZaberBase::GetSetting(long)\n", true);
+
+	ostringstream cmd;
+	cmd << cmdPrefix_ << device << " " << axis << " get " << setting;
+	vector<string> resp;
+
+	int ret = QueryCommand(cmd.str().c_str(), resp);
+	if (ret != DEVICE_OK) 
+	{
+		return ret;
+	}
+
+	// extract data
+	string dataString = resp[5];
+	stringstream(dataString) >> data;
+	return DEVICE_OK;
+}
+
+
+int ZaberBase::GetSetting(long device, long axis, string setting, double& data) const
+{
+	core_->LogMessage(device_, "ZaberBase::GetSetting(double)\n", true);
 
 	ostringstream cmd;
 	cmd << cmdPrefix_ << device << " " << axis << " get " << setting;
@@ -223,10 +263,29 @@ int ZaberBase::GetSetting(long device, long axis, string setting, long& data) co
 
 int ZaberBase::SetSetting(long device, long axis, string setting, long data) const
 {
-	core_->LogMessage(device_, "ZaberBase::SetSetting\n", true);
+	core_->LogMessage(device_, "ZaberBase::SetSetting(long)\n", true);
 
 	ostringstream cmd; 
 	cmd << cmdPrefix_ << device << " " << axis << " set " << setting << " " << data;
+	vector<string> resp;
+
+	int ret = QueryCommand(cmd.str().c_str(), resp);
+	if (ret != DEVICE_OK)
+	{
+		return ERR_SETTING_FAILED;
+	}
+
+	return DEVICE_OK;
+}
+
+
+int ZaberBase::SetSetting(long device, long axis, string setting, double data, int decimalPlaces) const
+{
+	core_->LogMessage(device_, "ZaberBase::SetSetting(double)\n", true);
+
+	ostringstream cmd; 
+	cmd.precision(decimalPlaces);
+	cmd << cmdPrefix_ << device << " " << axis << " set " << setting << " " << fixed << data;
 	vector<string> resp;
 
 	int ret = QueryCommand(cmd.str().c_str(), resp);
