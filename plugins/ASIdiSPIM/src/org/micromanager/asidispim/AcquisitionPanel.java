@@ -4661,6 +4661,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       // update Z position for planar correction
       controller_.setPlanarZ(xPos, yPos);
+      gridPanel_.updateStagePositions();
    }
 
    @Override

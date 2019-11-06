@@ -29,6 +29,7 @@ import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -37,17 +38,16 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 
-import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Positions;
 import org.micromanager.asidispim.Data.Prefs;
-import org.micromanager.asidispim.Data.Properties;
+import org.micromanager.asidispim.Data.Joystick.Directions;
 import org.micromanager.asidispim.Data.LimitsSpec;
 import org.micromanager.asidispim.Data.LimitsTableModel;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
+import org.micromanager.asidispim.Utils.MyDialogUtils;
 
-import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 
 /**
@@ -57,15 +57,9 @@ import net.miginfocom.swing.MigLayout;
 @SuppressWarnings("serial")
 public class LimitsPanel extends ListeningJPanel {
    
-   private final ScriptInterface gui_;
-   private final Devices devices_;
-   private final Properties props_;
    private final Prefs prefs_;
    private final Positions positions_;
-   private final CMMCore core_;
    private final LimitsTableModel limitsTableModel_;
-   private LimitsSpec[] usedLimits_ = new LimitsSpec[0];
-   private int nextLimitIndex_ = 0;
    
    
    /**
@@ -121,20 +115,15 @@ public class LimitsPanel extends ListeningJPanel {
     * @param prefs Plugin-wide preferences
     * @param stagePosUpdater Can query the controller for stage positions
     */
-   public LimitsPanel(final ScriptInterface gui, Devices devices, Properties props, 
-         Prefs prefs, Positions positions) {
+   public LimitsPanel(Prefs prefs, Positions positions) {
       super (MyStrings.PanelNames.LIMITS.toString(),
             new MigLayout(
               "", 
               "[right]10[center]",
               "[]0[]"));
      
-      gui_ = gui;
-      devices_ = devices;
-      props_ = props;
       prefs_ = prefs;
       positions_ = positions;
-      core_ = gui.getMMCore();
       
       final JTable limitsTable;
       final JScrollPane limitsTablePane;
@@ -217,6 +206,20 @@ public class LimitsPanel extends ListeningJPanel {
    
    @Override
    public void windowClosing() {
+   }
+   
+   @Override
+   public final void updateStagePositions() {
+      double xPos = positions_.getCachedPosition(Devices.Keys.XYSTAGE, Directions.X);
+      double yPos = positions_.getCachedPosition(Devices.Keys.XYSTAGE, Directions.Y);
+      double zPos = positions_.getCachedPosition(Devices.Keys.UPPERZDRIVE, Directions.NONE);
+      for (LimitsSpec l: limitsTableModel_.getUsedLimits()) {
+         double sum = xPos*l.xCoeff_ + yPos*l.yCoeff_ + zPos*l.zCoeff_;
+         if ((sum > l.sum_) ^ l.invert_) {
+            ASIdiSPIM.getFrame().getNavigationPanel().haltAllMotion();
+            MyDialogUtils.showError("XYZ limit exceeded and motion halted.");
+         }
+      }
    }
    
    

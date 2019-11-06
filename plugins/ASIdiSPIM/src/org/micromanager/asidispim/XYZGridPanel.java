@@ -587,7 +587,7 @@ public class XYZGridPanel extends ListeningJPanel {  // use some of the Listenin
       limitsFrame_ = new MMFrame("diSPIM_XYZ_limits");
       limitsFrame_.setTitle("XYZ Limits");
       limitsFrame_.loadPosition(100, 100);
-      limitsPanel_ = new LimitsPanel(gui_, devices_, props_, prefs_, positions_);
+      limitsPanel_ = new LimitsPanel(prefs_, positions_);
       limitsFrame_.add(limitsPanel_);
       limitsFrame_.pack();
       limitsFrame_.setResizable(false);
@@ -644,6 +644,15 @@ public class XYZGridPanel extends ListeningJPanel {  // use some of the Listenin
       limitsFrame_.savePosition();
       ((ListeningJPanel) limitsPanel_).windowClosing();
       limitsFrame_.dispose();
+   }
+   
+   /**
+    * Called whenever position updater has refreshed positions
+    * (this panel isn't registered as listener but AcquisitionPanel listener calls this)
+    */
+   @Override
+   public final void updateStagePositions() {
+      ((ListeningJPanel) limitsPanel_).updateStagePositions();
    }
    
    private int updateGridXCount() {
