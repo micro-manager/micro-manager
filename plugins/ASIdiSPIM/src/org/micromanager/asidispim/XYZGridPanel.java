@@ -24,6 +24,8 @@ package org.micromanager.asidispim;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -54,6 +56,7 @@ import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.asidispim.Utils.MyNumberUtils;
 import org.micromanager.asidispim.Utils.PanelUtils;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
+import org.micromanager.utils.MMFrame;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
@@ -65,7 +68,7 @@ import net.miginfocom.swing.MigLayout;
  * @author Jon
  */
 @SuppressWarnings("serial")
-public class XYZGridPanel extends ListeningJPanel {
+public class XYZGridPanel extends ListeningJPanel {  // use some of the ListeningJPanel functionality but not other because not a tab in plugin
    
    private final ScriptInterface gui_;
    private final Devices devices_;
@@ -75,12 +78,9 @@ public class XYZGridPanel extends ListeningJPanel {
    private final Positions positions_;
    private final CMMCore core_;
    
-   private final JPanel planarCorrectionPanel_;
-   private final JCheckBox enablePlanarCorrectionCB_;
    private final JFormattedTextField planarSlopeXField_;
    private final JFormattedTextField planarSlopeYField_;
    private final JFormattedTextField planarOffsetZField_;
-   private final JButton buttonOverviewAcq_;
    private final JPanel gridXPanel_;
    private final JCheckBox useXGridCB_;
    private final JFormattedTextField gridXStartField_;
@@ -99,9 +99,10 @@ public class XYZGridPanel extends ListeningJPanel {
    private final JFormattedTextField gridZStopField_;
    private final JFormattedTextField gridZDeltaField_;
    private final JLabel gridZCount_;
-   private final JPanel gridSettingsPanel_;
    private final JCheckBox clearYZGridCB_;
-   private final JButton computeGridButton_;
+   private final JButton limitsButton_;
+   private final MMFrame limitsFrame_;
+   private final JPanel limitsPanel_;
    
    /**
     * 
@@ -113,7 +114,7 @@ public class XYZGridPanel extends ListeningJPanel {
     */
    public XYZGridPanel(final ScriptInterface gui, Devices devices, Properties props, 
          Prefs prefs, StagePositionUpdater stagePosUpdater, Positions positions) {
-      super (MyStrings.PanelNames.SETTINGS.toString(), 
+      super (MyStrings.PanelNames.SETTINGS.toString(), // TODO we are lying here about the panel name, should probably change this but everyone will loose their prefs if we change
             new MigLayout(
               "", 
               "[right]10[center]10[center]",
@@ -419,23 +420,23 @@ public class XYZGridPanel extends ListeningJPanel {
       updateGridZCount();
       PanelUtils.componentsSetEnabled(gridZPanel_, useZGridCB_.isSelected());  // initialize
       
-      gridSettingsPanel_ = new JPanel(new MigLayout(
+      JPanel gridSettingsPanel = new JPanel(new MigLayout(
               "",
               "[right]10[center]",
               "[]8[]"));
 
-      gridSettingsPanel_.setBorder(PanelUtils.makeTitledBorder("Grid settings"));
-      gridSettingsPanel_.add(new JLabel("Overlap (Y and Z) [%]:"));
+      gridSettingsPanel.setBorder(PanelUtils.makeTitledBorder("Grid settings"));
+      gridSettingsPanel.add(new JLabel("Overlap (Y and Z) [%]:"));
       JSpinner tileOverlapPercent = pu.makeSpinnerFloat(0, 100, 1,
               Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_GRID_OVERLAP_PERCENT, 10);
-      gridSettingsPanel_.add(tileOverlapPercent, "wrap");
+      gridSettingsPanel.add(tileOverlapPercent, "wrap");
       clearYZGridCB_ = pu.makeCheckBox("Clear position list if YZ unused",
               Properties.Keys.PREFS_CLEAR_YZ_GRID, panelName_, true);
-      gridSettingsPanel_.add(clearYZGridCB_, "span 2");
+      gridSettingsPanel.add(clearYZGridCB_, "span 2");
       
-      computeGridButton_ = new JButton("Compute grid");
-      computeGridButton_.setBackground(Color.green);
-      computeGridButton_.addActionListener(new ActionListener() {
+      JButton computeGridButton = new JButton("Compute grid");
+      computeGridButton.setBackground(Color.green);
+      computeGridButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
             computeGrid(true, true);
@@ -451,24 +452,24 @@ public class XYZGridPanel extends ListeningJPanel {
       });
       
       
-      planarCorrectionPanel_ = new JPanel(new MigLayout(
+      JPanel planarCorrectionPanel = new JPanel(new MigLayout(
             "",
             "[right]10[center]10[center]",
             "[]8[]"));
-      planarCorrectionPanel_.setBorder(PanelUtils.makeTitledBorder("Planar Correction"));
+      planarCorrectionPanel.setBorder(PanelUtils.makeTitledBorder("Planar Correction"));
       
-      enablePlanarCorrectionCB_ = pu.makeCheckBox("Enable planar correction",
+      JCheckBox enablePlanarCorrectionCB = pu.makeCheckBox("Enable planar correction",
             Properties.Keys.PLUGIN_PLANAR_ENABLED, panelName_, false);
-      planarCorrectionPanel_.add(enablePlanarCorrectionCB_, "left, span 3, wrap");
+      planarCorrectionPanel.add(enablePlanarCorrectionCB, "left, span 3, wrap");
       // always start with planar correction off to avoid unwanted Z movement
-      if (enablePlanarCorrectionCB_.isSelected()) {
-         enablePlanarCorrectionCB_.doClick();
+      if (enablePlanarCorrectionCB.isSelected()) {
+         enablePlanarCorrectionCB.doClick();
       }
       
-      planarCorrectionPanel_.add(new JLabel("X slope [\u00B5m/mm]"));
+      planarCorrectionPanel.add(new JLabel("X slope [\u00B5m/mm]"));
       planarSlopeXField_ = pu.makeFloatEntryField(panelName_, 
             Properties.Keys.PLUGIN_PLANAR_SLOPE_X.toString(), 0, 5);
-      planarCorrectionPanel_.add(planarSlopeXField_);
+      planarCorrectionPanel.add(planarSlopeXField_);
       JButton zeroXSlope = new JButton("Set 0");
       zeroXSlope.setBackground(Color.red);
       zeroXSlope.addActionListener(new ActionListener() {
@@ -477,12 +478,12 @@ public class XYZGridPanel extends ListeningJPanel {
             planarSlopeXField_.setValue((Double)0.0);
          }
       });
-      planarCorrectionPanel_.add(zeroXSlope, "growx, wrap");
+      planarCorrectionPanel.add(zeroXSlope, "growx, wrap");
       
-      planarCorrectionPanel_.add(new JLabel("Y slope [\u00B5m/mm]"));
+      planarCorrectionPanel.add(new JLabel("Y slope [\u00B5m/mm]"));
       planarSlopeYField_ = pu.makeFloatEntryField(panelName_, 
             Properties.Keys.PLUGIN_PLANAR_SLOPE_Y.toString(), 0, 5);
-      planarCorrectionPanel_.add(planarSlopeYField_);
+      planarCorrectionPanel.add(planarSlopeYField_);
       JButton zeroYSlope = new JButton("Set 0");
       zeroYSlope.setBackground(Color.red);
       zeroYSlope.addActionListener(new ActionListener() {
@@ -491,12 +492,12 @@ public class XYZGridPanel extends ListeningJPanel {
             planarSlopeYField_.setValue((Double)0.0);
          }
       });
-      planarCorrectionPanel_.add(zeroYSlope, "growx, wrap");
+      planarCorrectionPanel.add(zeroYSlope, "growx, wrap");
       
-      planarCorrectionPanel_.add(new JLabel("Z offset [\u00B5m/mm]"));
+      planarCorrectionPanel.add(new JLabel("Z offset [\u00B5m/mm]"));
       planarOffsetZField_ = pu.makeFloatEntryField(panelName_, 
             Properties.Keys.PLUGIN_PLANAR_OFFSET_Z.toString(), 0, 5);
-      planarCorrectionPanel_.add(planarOffsetZField_);
+      planarCorrectionPanel.add(planarOffsetZField_);
       JButton setOffsetButton = new JButton("Set here");
       setOffsetButton.setBackground(Color.red);
       setOffsetButton.addActionListener(new ActionListener() {
@@ -505,7 +506,7 @@ public class XYZGridPanel extends ListeningJPanel {
             planarOffsetZField_.setValue((Double)positions_.getUpdatedPosition(Devices.Keys.UPPERZDRIVE));
          }
       });
-      planarCorrectionPanel_.add(setOffsetButton, "wrap");
+      planarCorrectionPanel.add(setOffsetButton, "wrap");
       
       JButton computePlanarCorrection = new JButton("Compute correction from position list");
       computePlanarCorrection.setBackground(Color.green);
@@ -563,17 +564,49 @@ public class XYZGridPanel extends ListeningJPanel {
             }
          }
       });
-      planarCorrectionPanel_.add(computePlanarCorrection, "span 3, growx");
+      planarCorrectionPanel.add(computePlanarCorrection, "span 3, growx");
       
-      buttonOverviewAcq_ = new JButton("Run overview acquisition!");
-      buttonOverviewAcq_.setBackground(Color.green);
-      buttonOverviewAcq_.addActionListener(new ActionListener() {
+      JPanel overviewAcquisitionPanel = new JPanel(new MigLayout(
+            "",
+            "[center]",
+            "[]8[]"));
+      overviewAcquisitionPanel.setBorder(PanelUtils.makeTitledBorder("Overview Acquisition"));
+      
+      JButton buttonOverviewAcq = new JButton("Run overview acquisition!");
+      buttonOverviewAcq.setBackground(Color.green);
+      buttonOverviewAcq.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             ASIdiSPIM.getFrame().getAcquisitionPanel().runOverviewAcquisition();
          }
       });
+      overviewAcquisitionPanel.add(buttonOverviewAcq, "growx, growy, wrap");
+      overviewAcquisitionPanel.add(new JLabel("Corresponding settings on Data Analysis tab"));
       
+      limitsButton_ = new JButton("XYZ stage limits...");
+      limitsFrame_ = new MMFrame("diSPIM_XYZ_limits");
+      limitsFrame_.setTitle("XYZ Limits");
+      limitsFrame_.loadPosition(100, 100);
+      limitsPanel_ = new LimitsPanel(gui_, devices_, props_, prefs_, positions_);
+      limitsFrame_.add(limitsPanel_);
+      limitsFrame_.pack();
+      limitsFrame_.setResizable(false);
+      
+      class LimitsFrameAdapter extends WindowAdapter {
+         @Override
+         public void windowClosing(WindowEvent e) {
+            ((ListeningJPanel) limitsPanel_).windowClosing();
+         }
+      }
+      limitsFrame_.addWindowListener(new LimitsFrameAdapter());
+      
+      limitsButton_.addActionListener(new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+             limitsButton_.setSelected(true);
+             limitsFrame_.setVisible(true);
+          }
+      });
       
       JPanel leftCol = new JPanel(new MigLayout(
             "flowy",
@@ -587,16 +620,17 @@ public class XYZGridPanel extends ListeningJPanel {
             "",
             "0[]8[]8[]8[]0"));
       midCol.add(gridZPanel_, "growx");
-      midCol.add(gridSettingsPanel_, "growx");
-      midCol.add(computeGridButton_, "growx, growy");
+      midCol.add(gridSettingsPanel, "growx");
+      midCol.add(computeGridButton, "growx, growy");
       midCol.add(editPositionListButton2, "growx");
       
       JPanel rightCol = new JPanel(new MigLayout(
             "flowy",
             "",
             "[]8[]"));
-      rightCol.add(buttonOverviewAcq_, "growx, growy");
-      rightCol.add(planarCorrectionPanel_);
+      rightCol.add(overviewAcquisitionPanel, "growx");
+      rightCol.add(planarCorrectionPanel, "growx");
+      rightCol.add(limitsButton_, "growx");
       
       add(leftCol);
       add(midCol);
@@ -604,12 +638,12 @@ public class XYZGridPanel extends ListeningJPanel {
 
       // end XYZ grid frame
    }
-
-      
    
    @Override
-   public void saveSettings() {
-
+   public void windowClosing() {
+      limitsFrame_.savePosition();
+      ((ListeningJPanel) limitsPanel_).windowClosing();
+      limitsFrame_.dispose();
    }
    
    private int updateGridXCount() {

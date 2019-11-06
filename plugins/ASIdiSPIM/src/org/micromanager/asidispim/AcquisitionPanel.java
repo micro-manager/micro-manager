@@ -870,17 +870,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       gridFrame_.add(gridPanel_);
       gridFrame_.pack();
       gridFrame_.setResizable(false);
-
+      
       class GridFrameAdapter extends WindowAdapter {
          @Override
          public void windowClosing(WindowEvent e) {
-            gridButton_.setSelected(false);
-            gridFrame_.savePosition();
+            gridPanel_.windowClosing();
          }
       }
-      
       gridFrame_.addWindowListener(new GridFrameAdapter());
-      
+
       gridButton_.addActionListener(new ActionListener() {
           @Override
           public void actionPerformed(ActionEvent e) {
@@ -4730,9 +4728,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // spin wheels until we are done
          }
       }
+      // close dependent windows
       sliceFrameAdvanced_.savePosition();
       sliceFrameAdvanced_.dispose();
       gridFrame_.savePosition();
+      gridPanel_.windowClosing();
       gridFrame_.dispose();
    }
    

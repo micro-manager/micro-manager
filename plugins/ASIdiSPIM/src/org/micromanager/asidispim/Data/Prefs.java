@@ -54,6 +54,7 @@ public class Prefs {
    // in several preferences, such as beam/sheet control,
    // or else there is no corresponding property.
    // In that case use pref keys.
+   // Also used for table models, why I can't recall.
    public static enum Keys {
       JOYSTICK("Joystick"), 
       RIGHT_WHEEL("Right Wheel"),
@@ -72,6 +73,13 @@ public class Prefs {
       CHANNEL_OFFSET("ColorOffset"),
       NRCHANNELROWS("nrChannels"),
       AUTOFOCUSFITFUNCTION("AutofocusFitFunction"),
+      LIMITS_USE("LimitsUse"),
+      LIMITS_XCOEFF("LimitsXCoeff"),
+      LIMITS_YCOEFF("LimitsYCoeff"),
+      LIMITS_ZCOEFF("LimitsZCoeff"),
+      LIMITS_SUM("LimitsSum"),
+      LIMITS_INVERT("LimitsInvert"),
+      NRLIMITROWS("nrLimits"),
       NONE("None");
       private final String text;
       Keys(String text) {
