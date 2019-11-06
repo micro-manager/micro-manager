@@ -185,12 +185,20 @@ public class PointAndShootDialog extends MMDialog {
       });
       super.add(fixBleachSpinner, "wrap");
       
+      JButton helpButton = mcsButton(buttonSize, arialSmallFont);
+      helpButton.setText("Help");
+      helpButton.addActionListener((ActionEvent evt) -> {
+         new Thread(org.micromanager.internal.utils.GUIUtils.makeURLRunnable(
+                 "https://micro-manager.org/wiki/Point_and_Shoot_Analysis")).start();
+      });
+      super.add(helpButton, "span 2, split 3");
+
       JButton cancelButton = mcsButton(buttonSize, arialSmallFont);
       cancelButton.setText("Cancel");
       cancelButton.addActionListener((ActionEvent evt) -> {
          ourDialog.dispose();
       });
-      super.add(cancelButton, "span 2, split 2, tag cancel");
+      super.add(cancelButton, "tag cancel");
       
       JButton okButton = mcsButton(buttonSize, arialSmallFont);
       okButton.setText("Execute");
