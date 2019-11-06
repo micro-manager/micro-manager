@@ -217,7 +217,8 @@ public class LimitsPanel extends ListeningJPanel {
          double sum = xPos*l.xCoeff_ + yPos*l.yCoeff_ + zPos*l.zCoeff_;
          if ((sum > l.sum_) ^ l.invert_) {
             ASIdiSPIM.getFrame().getNavigationPanel().haltAllMotion();
-            MyDialogUtils.showError("XYZ limit exceeded and motion halted.");
+            MyDialogUtils.showError("XYZ limit exceeded and motion halted.  \n Violated rule with xCoeff=" + l.xCoeff_ +
+                  ", yCoeff=" + l.yCoeff_ + ", zCoeff=" + l.zCoeff_ + ", sum=" + l.sum_ + ", invert=" + l.invert_);
          }
       }
    }

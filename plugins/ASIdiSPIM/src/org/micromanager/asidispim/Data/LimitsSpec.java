@@ -61,13 +61,4 @@ public class LimitsSpec {
       this.invert_ = orig.invert_;
    }
    
-   @Override
-   public String toString() {
-      return "xCoeff=" + this.xCoeff_ + ", " +
-            "yCoeff=" + this.yCoeff_ + ", " +
-            "zCoeff=" + this.zCoeff_ + ", " +
-            "sum=" + this.sum_ + ", " +
-            "invert=" + this.invert_;
-   }
-   
 }
