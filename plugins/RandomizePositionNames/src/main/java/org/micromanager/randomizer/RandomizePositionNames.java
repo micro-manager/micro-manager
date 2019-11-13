@@ -66,10 +66,14 @@ public class RandomizePositionNames {
          for (int pos = 0; pos < nrP; pos++) {
             Coords newCoords = coords.copyBuilder().p(pos).build();
             Image img = dp.getImage(newCoords);
-            if (img.getMetadata().hasPositionName()) {
-               String posName = img.getMetadata().getPositionName("");
-               String well = posName.substring(0, posName.indexOf("-", 0));
-               wellNames.add(well);
+            if (img == null) {
+               studio.alerts().postAlert("Randomizer", this.getClass(), "Missing position " + pos);
+            } else {
+               if (img.getMetadata().hasPositionName()) {
+                  String posName = img.getMetadata().getPositionName("");
+                  String well = posName.substring(0, posName.indexOf("-", 0));
+                  wellNames.add(well);
+               }
             }
          }
          if (wellNames.size() < 2) {
