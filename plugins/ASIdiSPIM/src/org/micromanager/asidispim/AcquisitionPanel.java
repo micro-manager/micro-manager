@@ -4086,15 +4086,23 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                     channelImageNr[channelIndex]++;
                                     cameraImageNr[cameraIndex]++;
 
-                                    // if hardware timepoints then we only send one trigger and
-                                    //   manually keep track of which channel/timepoint comes next
+                                    // for hardware timepoints then we only send one trigger and manually keep track of which channel/timepoint comes next
+                                    // here we check to see if we moved onto next timepoint in harware timepoints mode and if so take appropriate actions
                                     if (acqSettings.hardwareTimepoints
                                           && channelImageNr[channelIndex] >= acqSettings.numSlices) {  // only do this if we are done with the slices in this MM channel
 
                                        // we just finished filling one MM channel with all its slices so go to next timepoint for this channel
                                        channelImageNr[channelIndex] = 0;
                                        tpNumber[channelIndex]++;
-
+                                       
+                                       for (Runnable r : runnablesEndTimepoint_) {
+                                          try {
+                                             r.run();
+                                          } catch(Exception ex) {
+                                             ReportingUtils.logError("runnable threw exception: " + r.toString());
+                                          }
+                                       }
+                                       
                                        // see if we are supposed to skip next image
                                        if (checkForSkips) {
                                           // one extra image per MM channel, this includes case of only 1 color (either multi-channel disabled or else only 1 channel selected)
@@ -4107,13 +4115,24 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                           }
                                        }
 
+                                       
                                        // update acquisition status message for hardware acquisition
                                        //   (for non-hardware acquisition message is updated elsewhere)
                                        //   Arbitrarily choose one possible channel to do this on.
+                                       // At same time execute runnable if any.
                                        if (channelIndex == 0 && (numTimePointsDone_ < acqSettings.numTimepoints)) {
                                           numTimePointsDone_++;
                                           updateAcquisitionStatus(AcquisitionStatus.ACQUIRING);
+
+                                          for (Runnable r : runnablesStartTimepoint_) {
+                                             try {
+                                                r.run();
+                                             } catch(Exception ex) {
+                                                ReportingUtils.logError("runnable threw exception: " + r.toString());
+                                             }
+                                          }
                                        }
+                                       
                                     }
 
                                     last = now;  // keep track of last image timestamp
