@@ -240,6 +240,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private double overviewPixelSize_ = 1;
    private double overviewCompressX_ = 1;
    private double extraChannelOffset_ = 0.0;
+   private final List<Runnable> runnablesStartAcquisition_;
+   private final List<Runnable> runnablesEndAcquisition_;
    private final List<Runnable> runnablesStartTimepoint_;
    private final List<Runnable> runnablesEndTimepoint_;
    private final List<Runnable> runnablesStartPosition_;
@@ -284,6 +286,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       resetZaxisSpeed_ = true;
       acquisitionPanel_ = this;
       
+      runnablesStartAcquisition_ = new ArrayList<Runnable>();
+      runnablesEndAcquisition_ = new ArrayList<Runnable>();
       runnablesStartTimepoint_ = new ArrayList<Runnable>();
       runnablesEndTimepoint_ = new ArrayList<Runnable>();
       runnablesStartPosition_ = new ArrayList<Runnable>();
@@ -3225,6 +3229,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       long acqButtonStart = System.currentTimeMillis();
       String acqName = "";
       acq_ = null;
+      
+      // execute any start-acquisition runnables
+      for (Runnable r : runnablesStartAcquisition_) {
+         try {
+            r.run();
+         } catch(Exception ex) {
+            ReportingUtils.logError("runnable threw exception: " + r.toString());
+         }
+      }
 
       // do not want to return from within this loop => throw exception instead
       // loop is executed once per acquisition (i.e. once if separate viewers isn't selected
@@ -3542,7 +3555,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   throw new Exception("PI stage reporting busy; force-quit acquisition");
                }
             }
-
+            
             // Loop over all the times we trigger the controller's acquisition
             //  (although if multi-channel with volume switching is selected there
             //   is inner loop to trigger once per channel)
@@ -4571,6 +4584,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       
       extraChannelOffset_ = 0.0;
+      
+      // execute any end-acquisition runnables
+      for (Runnable r : runnablesEndAcquisition_) {
+         try {
+            r.run();
+         } catch(Exception ex) {
+            ReportingUtils.logError("runnable threw exception: " + r.toString());
+         }
+      }
 
       return AcquisitionStatus.DONE;  // TODO should we return acquisitionStatus_ instead?
    }
@@ -5192,6 +5214,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
    public void attachRunnable(Runnable runnable, RunnableType type) {
       switch (type) {
+      case ACQUISITION_START:
+         runnablesStartAcquisition_.add(runnable);
+         break;
+      case ACQUISITION_END:
+         runnablesEndAcquisition_.add(runnable);
+         break;
       case TIMEPOINT_START:
          runnablesStartTimepoint_.add(runnable);
          break;
@@ -5204,10 +5232,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       case POSITION_END:
          runnablesEndPosition_.add(runnable);
          break;
+      default:
+         break;
       }
    }
 
    public void clearAllRunnables() {
+      runnablesStartAcquisition_.clear();
+      runnablesEndAcquisition_.clear();
       runnablesStartTimepoint_.clear();
       runnablesEndTimepoint_.clear();
       runnablesStartPosition_.clear();
