@@ -62,6 +62,28 @@ const int SEVEN_SEGMENT_Y_OFFSET[] = {0, 0, 0, 1, 1, 1, 2};
 ////////////////////////
 // DemoHub
 //////////////////////
+#define TUDBG_PRINTF(format,...)	{char dbgMsg[1024] = {0}; sprintf_s(dbgMsg, "" format"", ##__VA_ARGS__); OutputDebugString(dbgMsg);}
+///////////////////////
+// CameraPID
+///////////////////////
+#define DHYANA_400D_X45     0x6404
+#define DHYANA_D95_X45      0x6405
+#define DHYANA_400DC_X45    0x6804
+#define DHYANA_400DC_X100   0xEC03
+#define DHYANA_400D_X100    0xE404
+#define DHYANA_400BSIV1     0xE405
+#define DHYANA_D95_X100     0xE406
+#define DHYANA_400BSIV2     0xE408
+
+#define PID_FL_20BW         0xE40D
+
+///////////////////////
+// ImgMode
+///////////////////////
+#define MODE_12BIT    0x00
+#define MODE_CMS      0x01
+#define MODE_11BIT    0x02
+#define MODE_GLRESET  0x03
 
 class DemoHub : public HubBase<DemoHub>
 {
@@ -97,6 +119,32 @@ private:
 //////////////////////////////////////////////////////////////////////////////
 
 class CTUCamThread;
+
+// outputtrigger mode
+// typedef enum the output trigger port mode
+/*typedef enum 
+{
+	TUPORT_ONE                  = 0x00,            // use port1
+	TUPORT_TWO                  = 0x01,            // use port2
+	TUPORT_THREE                = 0x02,            // use port3
+}TUCAM_OUTPUTTRG_PORT;*/
+
+// the camera triggerout attribute
+typedef struct _tagTUCAM_PATAM_TRGOUTPUT
+{                      
+	INT32   nTgrOutMode;                           
+	INT32   nEdgeMode;                            
+	INT32   nDelayTm;                              
+	INT32   nWidth;                                
+}TUCAM_PATAM_TRGOUTPUT;
+
+typedef struct _tagTUCAM_TRGOUTPUT
+{
+	INT32   nTgrOutPort;                           // [in/out] The port of triggerout 
+	TUCAM_PATAM_TRGOUTPUT TgrPort1;
+    TUCAM_PATAM_TRGOUTPUT TgrPort2;
+	TUCAM_PATAM_TRGOUTPUT TgrPort3;
+}TUCAM_TRGOUTPUT;
 
 class CMMTUCam : public CCameraBase<CMMTUCam>  
 {
@@ -159,6 +207,8 @@ public:
     int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnGlobalGain(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnCMSMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnLEDMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnGAINMode(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnImageMode(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -184,6 +234,14 @@ public:
 	int OnTriggerDoSoftware(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnSharpness(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnDPCLevel(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnDPCAdjust(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnBlackLevel(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+	int OnTrgOutPortMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnTrgOutKindMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnTrgOutEdgeMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnTrgOutDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnTrgOutWidth(MM::PropertyBase* pProp, MM::ActionType eAct);
 /*
    int OnMaxExposure(MM::PropertyBase* pProp, MM::ActionType eAct);             // 设置曝光最大值上限
  
@@ -273,10 +331,8 @@ private:
 	void TestImage(ImgBuffer& img, double exp);
 
     static void __cdecl GetTemperatureThread(LPVOID lParam);    // The thread get the value of temperature
-    static void __cdecl WaitForFrameThread(LPVOID lParam);      // The thread wait for frame
-
-    void RunWaiting();
-    void RunTemperature();
+    
+	void RunTemperature();
 
     int InitTUCamApi();
     int UninitTUCamApi();
@@ -291,6 +347,11 @@ private:
 
     bool SaveRaw(char *pfileName, unsigned char *pData, unsigned long ulSize);
 
+	static int   	s_nNumCam;				// The number of cameras
+	static int		s_nCntCam;				// The count of camera
+
+	int             m_nPID;                 // The PID 
+	int             m_nBCD;                 // The BCD
     int             m_nIdxGain;             // The gain mode
     int             m_nMaxHeight;           // The max height size
     char            m_szImgPath[MAX_PATH];  // The save image path
@@ -308,6 +369,8 @@ private:
     TUCAM_OPEN       m_opCam;               // The camera open parameters
     TUCAM_FRAME      m_frame;               // The frame object
 	TUCAM_TRIGGER_ATTR m_tgrAttr;			// The trigger parameters
+	TUCAM_TRGOUT_ATTR  m_tgrOutAttr;        // The output trigger parameters
+	TUCAM_TRGOUTPUT    m_tgrOutPara;        // The output trigger parameter port
 };
 
 class CTUCamThread : public MMDeviceThreadBase
