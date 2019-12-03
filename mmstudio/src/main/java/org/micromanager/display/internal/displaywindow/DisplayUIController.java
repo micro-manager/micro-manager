@@ -218,6 +218,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
          CoalescentEDTRunnablePool.create();
 
    private PerformanceMonitor perfMon_;
+   
+   private double startTime_ = 0.0; // Elapsed Time for frame #0
 
    private static final int MIN_CANVAS_HEIGHT = 100;
    private static final int BORDER_THICKNESS = 2;
@@ -1554,7 +1556,13 @@ public final class DisplayUIController implements Closeable, WindowListener,
          if (displayedImages != null && displayedImages.size() > 0) {
             Metadata metadata = displayedImages.get(0).getMetadata();
             Long nr = metadata.getImageNumber();
-            double ms = metadata.getElapsedTimeMs(-1.0);
+            // since circular buffer overflow causes the numbers to reset to 0,
+            // but not the elapasedTimeMs, we need to keep track of the elapsedTime
+            // of every image with imageNumber 0:
+            if (nr == 0) {
+               startTime_ = metadata.getElapsedTimeMs(-1.0);
+            }
+            double ms = metadata.getElapsedTimeMs(-1.0) - startTime_;
             if (nr != null && ms > 0.0) {
                double fps = (nr * 1000.0) / ms;
                if (fps < 2.0) {
