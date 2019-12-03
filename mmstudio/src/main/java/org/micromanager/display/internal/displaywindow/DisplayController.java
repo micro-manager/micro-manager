@@ -24,13 +24,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.RunnableFuture;
@@ -232,12 +230,9 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       if (builder.shouldShow_) {
          // Show the window in a later event handler in order to give the
          // calling code a chance to register for events.
-         SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-               instance.setFrameVisible(true);
-               instance.toFront();
-            }
+         SwingUtilities.invokeLater(() -> {
+            instance.setFrameVisible(true);
+            instance.toFront();
          });
       }
 
@@ -555,13 +550,9 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       // way to correctly recombine stats with newer images (when update rate
       // is finite).
       if (images.size() > 1) {
-         Collections.sort(images, new Comparator<Image>() {
-            @Override
-            public int compare(Image o1, Image o2) {
-               return new Integer(o1.getCoords().getChannel()).
-                     compareTo(o2.getCoords().getChannel());
-            }
-         });
+         Collections.sort(images, (Image o1, Image o2) -> 
+                 new Integer(o1.getCoords().getChannel()).
+                        compareTo(o2.getCoords().getChannel()));
       }
 
       // TODO XXX We need to handle missing images if so requested. User should
@@ -683,12 +674,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    public List<Overlay> getOverlays() {
       if (!SwingUtilities.isEventDispatchThread()) {
          RunnableFuture<List<Overlay>> edtFuture = new FutureTask(
-               new Callable<List<Overlay>>() {
-            @Override
-            public List<Overlay> call() throws Exception {
-               return getOverlays();
-            }
-         });
+               () -> getOverlays());
          SwingUtilities.invokeLater(edtFuture);
          try {
             return edtFuture.get();
@@ -980,12 +966,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    public ImagePlus getImagePlus() {
       if (!SwingUtilities.isEventDispatchThread()) {
          RunnableFuture<ImagePlus> edtFuture = new FutureTask(
-               new Callable<ImagePlus>() {
-            @Override
-            public ImagePlus call() throws Exception {
-               return getImagePlus();
-            }
-         });
+               () -> getImagePlus());
          SwingUtilities.invokeLater(edtFuture);
          try {
             return edtFuture.get();
@@ -1006,12 +987,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    public boolean requestToClose() {
       if (!SwingUtilities.isEventDispatchThread()) {
          RunnableFuture<Boolean> edtFuture = new FutureTask(
-               new Callable<Boolean>() {
-            @Override
-            public Boolean call() throws Exception {
-               return requestToClose();
-            }
-         });
+               () -> requestToClose());
          SwingUtilities.invokeLater(edtFuture);
          try {
             return edtFuture.get();
@@ -1130,12 +1106,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    public Window getWindow() throws IllegalStateException {
       if (!SwingUtilities.isEventDispatchThread()) {
          RunnableFuture<Window> edtFuture = new FutureTask(
-               new Callable<Window>() {
-            @Override
-            public Window call() throws Exception {
-               return getWindow();
-            }
-         });
+               () -> getWindow());
          SwingUtilities.invokeLater(edtFuture);
          try {
             return edtFuture.get();

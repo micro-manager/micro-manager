@@ -33,7 +33,6 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.WindowEvent;
@@ -46,7 +45,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,7 +67,6 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
@@ -498,19 +495,9 @@ public final class DisplayUIController implements Closeable, WindowListener,
       panel.add(playbackFpsButton_, new CC().hideMode(2).wrap());
 
       MDScrollBarPanel.ControlsFactory leftFactory =
-            new MDScrollBarPanel.ControlsFactory() {
-               @Override
-               public JComponent getControlsForAxis(String axis, int height) {
-                  return makeScrollBarLeftControls(axis, height);
-               }
-            };
+            (String axis, int height) -> makeScrollBarLeftControls(axis, height);
       MDScrollBarPanel.ControlsFactory rightFactory =
-            new MDScrollBarPanel.ControlsFactory() {
-               @Override
-               public JComponent getControlsForAxis(String axis, int height) {
-                  return makeScrollBarRightControls(axis, height);
-               }
-            };
+            (String axis, int height) -> makeScrollBarRightControls(axis, height);
       scrollBarPanel_ = MDScrollBarPanel.create(leftFactory, rightFactory);
       scrollBarPanel_.addListener(this);
       panel.add(scrollBarPanel_, new CC().growX().pushX().split(2).wrap());
@@ -583,11 +570,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
          animateButton.setIcon(PLAY_ICON);
          animateButton.setSelectedIcon(PAUSE_ICON);
          animateButton.setMargin(buttonInsets_);
-         animateButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               handleAxisAnimateButton(e);
-            }
+         animateButton.addActionListener((ActionEvent e) -> {
+            handleAxisAnimateButton(e);
          });
          axisAnimationButtons_.add(new AbstractMap.SimpleEntry(
                axis, animateButton));
@@ -605,11 +589,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
          SpinnerModel axisModel = new SpinnerNumberModel(1, 1, 1, 1);
          final JSpinner axisSpinner = new JSpinner(axisModel);
-         axisSpinner.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-               handleAxisSpinner(axis, axisSpinner, e);
-            }
+         axisSpinner.addChangeListener((ChangeEvent e) -> {
+            handleAxisSpinner(axis, axisSpinner, e);
          });
          axisSpinner.setFont(axisSpinner.getFont().deriveFont(10.0f));
          // setting a minimum size on the spinner does not seem to have any effects
@@ -655,19 +636,15 @@ public final class DisplayUIController implements Closeable, WindowListener,
          final JPopupMenu linkPopup = new JPopupMenu();
          linkButton = PopupButton.create(IconLoader.getIcon(
                  "/org/micromanager/icons/linkflat.png"), linkPopup);
-         linkButton.addPopupButtonListener(new PopupButton.Listener() {
-            @Override
-            public void popupButtonWillShowPopup(PopupButton button) {
-               linker.updatePopupMenu(linkPopup);
-            }
+         linkButton.addPopupButtonListener((PopupButton button) -> {
+            linker.updatePopupMenu(linkPopup);
          });
          linkButton.setDisabledIcon(IconLoader.getDisabledIcon(linkButton.getIcon()));
          Dimension size = new Dimension(3 * height / 2, height);
          linkButton.setMinimumSize(size);
          linkButton.setMaximumSize(size);
          linkButton.setPreferredSize(size);
-         axisLinkButtons_.add(new AbstractMap.SimpleEntry<String, PopupButton>(
-               axis, linkButton));
+         axisLinkButtons_.add(new AbstractMap.SimpleEntry<>(axis, linkButton));
       }
       ret.add(linkButton, new CC());
       
@@ -685,11 +662,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
          lockButton.setMinimumSize(size);
          lockButton.setPreferredSize(size);
          lockButton.setIcon(UNLOCKED_ICON);
-         lockButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               handleLockButton(axis, e);
-            }
+         lockButton.addActionListener((ActionEvent e) -> {
+            handleLockButton(axis, e);
          });
          // TODO: Right-click menu
          // lockButton.setComponentPopupMenu(new JPopupMenu());
@@ -729,8 +703,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
          }
       }
 
-      List<String> scrollableAxes = new ArrayList<String>();
-      Map<String, Integer> scrollableLengths = new HashMap<String, Integer>();
+      List<String> scrollableAxes = new ArrayList<>();
+      Map<String, Integer> scrollableLengths = new HashMap<>();
       for (int i = 0; i < displayedAxes_.size(); ++i) {
          if (displayedAxisLengths_.get(i) > 1) {
             scrollableAxes.add(displayedAxes_.get(i));
@@ -738,23 +712,19 @@ public final class DisplayUIController implements Closeable, WindowListener,
          }
       }
       // Reorder scrollable axes to match axis order of data provider
-      Collections.sort(scrollableAxes, new Comparator<String>() {
-         @Override
-         // This could be converted in a utility function
-         public int compare(String o1, String o2) {
-            if (o1.equals(o2)) { 
-               return 0;
-            } 
-            List<String> ordered = displayController_.getOrderedAxes();
-            Map<String, Integer> axisMap = new HashMap<String, Integer>(ordered.size());
-            for (int i = 0; i < ordered.size(); i++) {
-               axisMap.put(ordered.get(i), i);
-            }
-            if (axisMap.containsKey(o1) && axisMap.containsKey(o2)) {
-               return axisMap.get(o1) > axisMap.get(o2) ? 1 : -1;
-            } 
-            return 0; // Ugly, TODO: Report?
+      Collections.sort(scrollableAxes, (String o1, String o2) -> {
+         if (o1.equals(o2)) {
+            return 0;
          }
+         List<String> ordered = displayController_.getOrderedAxes();
+         Map<String, Integer> axisMap = new HashMap<>(ordered.size());
+         for (int i = 0; i < ordered.size(); i++) {
+            axisMap.put(ordered.get(i), i);
+         }
+         if (axisMap.containsKey(o1) && axisMap.containsKey(o2)) {
+            return axisMap.get(o1) > axisMap.get(o2) ? 1 : -1;
+         }
+         return 0; // Ugly, TODO: Report?
       });
       scrollBarPanel_.setAxes(scrollableAxes);
       for (int i = 0; i < scrollableAxes.size(); ++i) {
@@ -1412,8 +1382,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
          return;
       }
 
-      List<Image> images = new ArrayList<Image>(
-            displayedImages_.getRequest().getImages());
+      List<Image> images = new ArrayList<>(
+              displayedImages_.getRequest().getImages());
       if (images.isEmpty()) {
          displayController_.postDisplayEvent(
                DataViewerMousePixelInfoChangedEvent.createUnavailable());
@@ -1661,7 +1631,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          return Collections.emptyList();
       }
 
-      List<Coords> ret = new ArrayList<Coords>();
+      List<Coords> ret = new ArrayList<>();
       for (Image image : displayedImages_.getRequest().getImages()) {
          ret.add(image.getCoords());
       }
@@ -1798,7 +1768,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
    //
 
    private void handleAxisAnimateButton(ActionEvent event) {
-      List<String> animatedAxes = new ArrayList<String>();
+      List<String> animatedAxes = new ArrayList<>();
       for (Map.Entry<String, JToggleButton> e : axisAnimationButtons_) {
          if (e.getValue().isSelected()) {
             animatedAxes.add(e.getKey());
@@ -1941,7 +1911,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          return;
       }
 
-      List<String> chStrings = new ArrayList<String>();
+      List<String> chStrings = new ArrayList<>();
       List<Coords> coords = e.getAllCoordsSorted();
       if (coords.isEmpty()) {
          chStrings.add("NA"); // Shouldn't normally happen

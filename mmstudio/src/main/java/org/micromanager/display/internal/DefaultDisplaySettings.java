@@ -185,7 +185,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       useROI_ = builder.useROI_;
       extremaQuantile_ = builder.extremaQuantile_;
       channelSettings_ =
-            new ArrayList<ChannelDisplaySettings>(builder.channelSettings_);
+            new ArrayList<>(builder.channelSettings_);
    }
 
    @Override
@@ -243,12 +243,12 @@ public final class DefaultDisplaySettings implements DisplaySettings {
 
    @Override
    public List<ChannelDisplaySettings> getAllChannelSettings() {
-      return new ArrayList<ChannelDisplaySettings>(channelSettings_);
+      return new ArrayList<>(channelSettings_);
    }
 
    @Override
    public List<Color> getAllChannelColors() {
-      List<Color> ret = new ArrayList<Color>(getNumberOfChannels());
+      List<Color> ret = new ArrayList<>(getNumberOfChannels());
       for (ChannelDisplaySettings channelSettings : channelSettings_) {
          ret.add(channelSettings.getColor());
       }
@@ -262,7 +262,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
 
    @Override
    public List<Boolean> getAllChannelVisibilities() {
-      List<Boolean> ret = new ArrayList<Boolean>(getNumberOfChannels());
+      List<Boolean> ret = new ArrayList<>(getNumberOfChannels());
       for (ChannelDisplaySettings channelSettings : channelSettings_) {
          ret.add(channelSettings.isVisible());
       }
@@ -289,6 +289,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
     * displays don't end up with copies of the same settings.
     * @param key String for storing settings under different locations, so
     *        different "types" of displays can have different default settings.
+    * @return display settings that were saved in the preferences
     */
    public static DefaultDisplaySettings getStandardSettings(String key) {
       UserProfile profile = MMStudio.getInstance().profile();
