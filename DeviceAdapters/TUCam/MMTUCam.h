@@ -121,13 +121,6 @@ private:
 class CTUCamThread;
 
 // outputtrigger mode
-// typedef enum the output trigger port mode
-/*typedef enum 
-{
-	TUPORT_ONE                  = 0x00,            // use port1
-	TUPORT_TWO                  = 0x01,            // use port2
-	TUPORT_THREE                = 0x02,            // use port3
-}TUCAM_OUTPUTTRG_PORT;*/
 
 // the camera triggerout attribute
 typedef struct _tagTUCAM_PATAM_TRGOUTPUT
@@ -242,16 +235,6 @@ public:
 	int OnTrgOutEdgeMode(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnTrgOutDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnTrgOutWidth(MM::PropertyBase* pProp, MM::ActionType eAct);
-/*
-   int OnMaxExposure(MM::PropertyBase* pProp, MM::ActionType eAct);             // 设置曝光最大值上限
- 
-   int OnMono(MM::PropertyBase* pProp, MM::ActionType eAct);					// 彩色模式
-
-   int OnTemperatureState(MM::PropertyBase* pProp, MM::ActionType eAct);        // 温控开关
-   int OnTemperatureCurrent(MM::PropertyBase* pProp, MM::ActionType eAct);      // 当前温度
-   int OnTemperatureCooling(MM::PropertyBase* pProp, MM::ActionType eAct);      // 目标温度
-*/ 
-
     int OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnErrorSimulation(MM::PropertyBase* , MM::ActionType );

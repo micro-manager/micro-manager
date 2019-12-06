@@ -59,20 +59,20 @@ const char* g_PropNameTEMP  = "Temperature";
 const char* g_PropNameLLev  = "Image Adjustment Left  Levels";
 const char* g_PropNameRLev  = "Image Adjustment Right Levels";
 const char* g_PropNameIFMT  = "SaveImage";
-const char* g_PropNameCMS   = "CMSMode";  
-const char* g_PropNameLED   = "LEDMode";  
-const char* g_PropNameDepth = "DepthMode"; 
-const char* g_PropNameMdTgr = "Trigger Mode"; 
+const char* g_PropNameCMS   = "CMSMode";
+const char* g_PropNameLED   = "LEDMode";
+const char* g_PropNameDepth = "DepthMode";
+const char* g_PropNameMdTgr = "Trigger Mode";
 const char* g_PropNameMdExp = "Trigger Exposure Mode";
-const char* g_PropNameMdEdg = "Trigger Edge Mode"; 
+const char* g_PropNameMdEdg = "Trigger Edge Mode";
 const char* g_PropNameMdDly = "Trigger Delay";
 const char* g_PropNameDoSFW = "Trigger Software Do";
 const char* g_PropNameSharp = "Image Adjustment Sharpness";
 const char* g_PropNameDPC   = "Image Adjustment DPC";
 const char* g_PropNameOffset= "Image Adjustment Offset";
-const char* g_PropNamePort  = "Output Trigger Port"; 
+const char* g_PropNamePort  = "Output Trigger Port";
 const char* g_PropNameKind  = "Output Trigger Kind";
-const char* g_PropNameEdge  = "Output Trigger Edge Mode"; 
+const char* g_PropNameEdge  = "Output Trigger Edge Mode";
 const char* g_PropNameDelay = "Output Trigger Delay";
 const char* g_PropNameWidth = "Output Trigger Width";
 
@@ -182,7 +182,7 @@ int CMMTUCam::s_nCntCam  = 0;
 // CMMTUCam implementation
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-/**
+/*
 * CMMTUCam constructor.
 * Setup default all variables and create device properties required to exist
 * before intialization. In this case, no such properties were required. All
@@ -275,7 +275,7 @@ CMMTUCam::CMMTUCam() :
 
 }
 
-/**
+/*
 * CMMTUCam destructor.
 * If this device used as intended within the Micro-Manager system,
 * Shutdown() will be always called before the destructor. But in any case
@@ -305,7 +305,7 @@ CMMTUCam::~CMMTUCam()
     delete thd_;   
 }
 
-/**
+/*
 * Obtains device name.
 * Required by the MM::Device API.
 */
@@ -315,7 +315,7 @@ void CMMTUCam::GetName(char* name) const
     CDeviceUtils::CopyLimitedString(name, g_TUDeviceName);
 }
 
-/**
+/*
 * Intializes the hardware.
 * Required by the MM::Device API.
 * Typically we access and initialize hardware at this point.
@@ -1171,7 +1171,7 @@ int CMMTUCam::Initialize()
     return DEVICE_OK;
 }
 
-/**
+/*
 * Shuts down (unloads) the device.
 * Required by the MM::Device API.
 * Ideally this method will completely unload the device and release all resources.
@@ -1200,7 +1200,7 @@ int CMMTUCam::Shutdown()
     return DEVICE_OK;
 }
 
-/**
+/*
 * Performs exposure and grabs a single image.
 * This function should block during the actual exposure and return immediately afterwards 
 * (i.e., before readout).  This behavior is needed for proper synchronization with the shutter.
@@ -1260,7 +1260,7 @@ int CMMTUCam::SnapImage()
 }
 
 
-/**
+/*
 * Returns pixel data.
 * Required by the MM::Camera API.
 * The calling program will assume the size of the buffer based on the values
@@ -1279,7 +1279,7 @@ const unsigned char* CMMTUCam::GetImageBuffer()
     return pB;  //NULL
 }
 
-/**
+/*
 * Returns image buffer X-size in pixels.
 * Required by the MM::Camera API.
 */
@@ -1296,7 +1296,7 @@ unsigned CMMTUCam::GetImageWidth() const
     return img_.Width();
 }
 
-/**
+/*
 * Returns image buffer Y-size in pixels.
 * Required by the MM::Camera API.
 */
@@ -1313,7 +1313,7 @@ unsigned CMMTUCam::GetImageHeight() const
     return img_.Height();
 }
 
-/**
+/*
 * Returns image buffer pixel depth in bytes.
 * Required by the MM::Camera API.
 */
@@ -1332,7 +1332,7 @@ unsigned CMMTUCam::GetImageBytesPerPixel() const
     return img_.Depth();
 } 
 
-/**
+/*
 * Returns the bit depth (dynamic range) of the pixel.
 * This does not affect the buffer size, it just gives the client application
 * a guideline on how to interpret pixel values.
@@ -1351,7 +1351,7 @@ unsigned CMMTUCam::GetBitDepth() const
     return bitDepth_;
 }
 
-/**
+/*
 * Returns the size in bytes of the image buffer.
 * Required by the MM::Camera API.
 */
@@ -1369,7 +1369,7 @@ long CMMTUCam::GetImageBufferSize() const
     return img_.Width() * img_.Height() * GetImageBytesPerPixel();
 }
 
-/**
+/*
 * Sets the camera Region Of Interest.
 * Required by the MM::Camera API.
 * This command will change the dimensions of the image.
@@ -1442,7 +1442,7 @@ int CMMTUCam::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
     return DEVICE_OK;
 }
 
-/**
+/*
 * Returns the actual dimensions of the current ROI.
 * Required by the MM::Camera API.
 */
@@ -1457,7 +1457,7 @@ int CMMTUCam::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
     return DEVICE_OK;
 }
 
-/**
+/*
 * Resets the Region of Interest to full frame.
 * Required by the MM::Camera API.
 */
@@ -1487,7 +1487,7 @@ int CMMTUCam::ClearROI()
     return DEVICE_OK;
 }
 
-/**
+/*
 * Returns the current exposure setting in milliseconds.
 * Required by the MM::Camera API.
 */
@@ -1501,7 +1501,7 @@ double CMMTUCam::GetExposure() const
     return atof(buf);
 }
 
-/**
+/*
  * Returns the current exposure from a sequence and increases the sequence counter
  * Used for exposure sequences
  */
@@ -1519,7 +1519,7 @@ double CMMTUCam::GetSequenceExposure()
     return exposure;
 }
 
-/**
+/*
 * Sets exposure in milliseconds.
 * Required by the MM::Camera API.
 */
@@ -1535,7 +1535,7 @@ void CMMTUCam::SetExposure(double exp)
     GetCoreCallback()->OnExposureChanged(this, exp);
 }
 
-/**
+/*
 * Returns the current binning factor.
 * Required by the MM::Camera API.
 */
@@ -1549,7 +1549,7 @@ int CMMTUCam::GetBinning() const
     return atoi(buf);*/
 }
 
-/**
+/*
 * Sets binning factor.
 * Required by the MM::Camera API.
 */
@@ -1599,7 +1599,7 @@ int CMMTUCam::StopExposureSequence()
     return DEVICE_OK;
 }
 
-/**
+/*
  * Clears the list of exposures used in sequences
  */
 int CMMTUCam::ClearExposureSequence()
@@ -1613,7 +1613,7 @@ int CMMTUCam::ClearExposureSequence()
     return DEVICE_OK;
 }
 
-/**
+/*
  * Adds an exposure to a list of exposures used in sequences
  */
 int CMMTUCam::AddToExposureSequence(double exposureTime_ms) 
@@ -1775,7 +1775,7 @@ int CMMTUCam::SetAllowedImageMode()
 }
 
 
-/**
+/*
  * Required by the MM::Camera API
  * Please implement this yourself and do not rely on the base class implementation
  * The Base class implementation is deprecated and will be removed shortly
@@ -1785,7 +1785,7 @@ int CMMTUCam::StartSequenceAcquisition(double interval)
     return StartSequenceAcquisition(LONG_MAX, interval, false);            
 }
 
-/**                                                                       
+/*                                                                    
 * Stop Capture and wait for the Sequence thread finished                                   
 */                                                                        
 int CMMTUCam::StopSequenceAcquisition()                                     
@@ -1822,7 +1822,7 @@ int CMMTUCam::StopSequenceAcquisition()
     return DEVICE_OK;
 } 
 
-/**
+/*
 * Simple implementation of Sequence Acquisition
 * A sequence acquisition should run on its own thread and transport new images
 * coming of the camera into the MMCore circular buffer.
@@ -2077,7 +2077,7 @@ int CMMTUCam::OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct, long 
 }
 
 
-/**
+/*
 * Handles "Binning" property.
 */
 int CMMTUCam::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -2176,7 +2176,7 @@ int CMMTUCam::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret; 
 }
 
-/**
+/*
 * Handles "PixelClock" property.
 */
 int CMMTUCam::OnPixelClock(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -2258,7 +2258,7 @@ int CMMTUCam::OnPixelClock(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret; 
 }
 
-/**
+/*
 * Handles "Exposure" property.
 */
 int CMMTUCam::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -2303,7 +2303,7 @@ int CMMTUCam::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "GlobalGain" property.
 */
 int CMMTUCam::OnGlobalGain(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -2341,7 +2341,7 @@ int CMMTUCam::OnGlobalGain(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "CMSMode" property.
 */
 int CMMTUCam::OnCMSMode(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -2418,7 +2418,7 @@ int CMMTUCam::OnCMSMode(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "LEDMode" property.
 */
 int CMMTUCam::OnLEDMode(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -2475,7 +2475,7 @@ int CMMTUCam::OnLEDMode(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "OnGAINMode" property.
 */
 int CMMTUCam::OnGAINMode(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -2624,7 +2624,7 @@ int CMMTUCam::OnGAINMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 
     return ret;
 }
-/**
+/*
 * Handles "ImageMode" property.
 */
 int CMMTUCam::OnImageMode(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -2718,7 +2718,7 @@ int CMMTUCam::OnImageMode(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret; 
 }
 
-/**
+/*
 * Handles "PixelType" property.
 */
 int CMMTUCam::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -2819,7 +2819,7 @@ int CMMTUCam::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret; 
 }
 
-/**
+/*
 * Handles "BitDepth" property.
 */
 int CMMTUCam::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -2914,7 +2914,7 @@ int CMMTUCam::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "FlipHorizontal" property.
 */
 int CMMTUCam::OnFlipH(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -2976,7 +2976,7 @@ int CMMTUCam::OnFlipH(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "FlipVertical" property.
 */
 int CMMTUCam::OnFlipV(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -3038,7 +3038,7 @@ int CMMTUCam::OnFlipV(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "Gamma" property.
 */
 int CMMTUCam::OnGamma(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -3076,7 +3076,7 @@ int CMMTUCam::OnGamma(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "Contrast" property.
 */
 int CMMTUCam::OnContrast(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -3114,7 +3114,7 @@ int CMMTUCam::OnContrast(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "Saturation" property.
 */
 int CMMTUCam::OnSaturation(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -3152,7 +3152,7 @@ int CMMTUCam::OnSaturation(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "WhiteBalance" property.
 */
 int CMMTUCam::OnWhiteBalance(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -3231,7 +3231,7 @@ int CMMTUCam::OnWhiteBalance(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "RedGain" property.
 */
 int CMMTUCam::OnRedGain(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -3269,7 +3269,7 @@ int CMMTUCam::OnRedGain(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "GreenGain" property.
 */
 int CMMTUCam::OnGreenGain(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -3307,7 +3307,7 @@ int CMMTUCam::OnGreenGain(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "BlueGain" property.
 */
 int CMMTUCam::OnBlueGain(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -3345,7 +3345,7 @@ int CMMTUCam::OnBlueGain(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "ATExposure" property.
 */
 int CMMTUCam::OnATExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -3407,7 +3407,7 @@ int CMMTUCam::OnATExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "Temperature" property.
 */
 int CMMTUCam::OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -3443,7 +3443,7 @@ int CMMTUCam::OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "Fan" property.
 */
 int CMMTUCam::OnFan(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -3519,7 +3519,7 @@ int CMMTUCam::OnFan(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret; 
 }
 
-/**
+/*
 * Handles "LeftLevels" property.
 */
 int CMMTUCam::OnLeftLevels(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -3566,7 +3566,7 @@ int CMMTUCam::OnLeftLevels(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "RightLevels" property.
 */
 int CMMTUCam::OnRightLevels(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -3613,7 +3613,7 @@ int CMMTUCam::OnRightLevels(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "IamgeFormat" property.
 */
 int CMMTUCam::OnImageFormat(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -3967,7 +3967,7 @@ int CMMTUCam::OnTriggerDoSoftware(MM::PropertyBase* pProp, MM::ActionType eAct)
 	return ret;
 }
 
-/**
+/*
 * Handles "Sharpness" property.
 */
 int CMMTUCam::OnSharpness(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -4005,7 +4005,7 @@ int CMMTUCam::OnSharpness(MM::PropertyBase* pProp, MM::ActionType eAct)
 	return ret;
 }
 
-/**
+/*
 * Handles "OnDPCAdjust" property.
 */
 int CMMTUCam::OnDPCAdjust(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -4043,7 +4043,7 @@ int CMMTUCam::OnDPCAdjust(MM::PropertyBase* pProp, MM::ActionType eAct)
 	return ret;
 }
 
-/**
+/*
 * Handles "OnBlackLevel" property.
 */
 int CMMTUCam::OnBlackLevel(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -4081,7 +4081,7 @@ int CMMTUCam::OnBlackLevel(MM::PropertyBase* pProp, MM::ActionType eAct)
 	return ret;
 }
 
-/**
+/*
 * Handles "DPC Level" property.
 */
 int CMMTUCam::OnDPCLevel(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -4168,7 +4168,7 @@ int CMMTUCam::OnDPCLevel(MM::PropertyBase* pProp, MM::ActionType eAct)
 	return ret; 
 }
 
-/**
+/*
 * Handles "OutputTriggerPort" property.
 */
 int CMMTUCam::OnTrgOutPortMode(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -4266,7 +4266,7 @@ int CMMTUCam::OnTrgOutPortMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 	return ret; 
 }
 
-/**
+/*
 * Handles "OutputTriggerKind" property.
 */
 int CMMTUCam::OnTrgOutKindMode(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -4379,7 +4379,7 @@ int CMMTUCam::OnTrgOutKindMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 	return ret; 
 }
 
-/**
+/*
 * Handles "OutputTriggerEdge" property.
 */
 int CMMTUCam::OnTrgOutEdgeMode(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -4468,7 +4468,7 @@ int CMMTUCam::OnTrgOutEdgeMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 	return ret; 
 }
 
-/**
+/*
 * Handles "OutputTriggerDelay" property.
 */
 int CMMTUCam::OnTrgOutDelay(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -4531,7 +4531,7 @@ int CMMTUCam::OnTrgOutDelay(MM::PropertyBase* pProp, MM::ActionType eAct)
 	return ret;
 }
 
-/**
+/*
 * Handles "OutputTriggerWidth" property.
 */
 int CMMTUCam::OnTrgOutWidth(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -4594,7 +4594,7 @@ int CMMTUCam::OnTrgOutWidth(MM::PropertyBase* pProp, MM::ActionType eAct)
 	return ret;
 }
 
-/**
+/*
 * Handles "ReadoutTime" property.
 */
 int CMMTUCam::OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -4845,7 +4845,7 @@ int CMMTUCam::OnIsSequenceable(MM::PropertyBase* pProp, MM::ActionType eAct)
 // Private CMMTUCam methods
 ///////////////////////////////////////////////////////////////////////////////
 
-/**
+/*
 * Sync internal image buffer size to the chosen property values.
 */
 int CMMTUCam::ResizeImageBuffer()
@@ -5266,7 +5266,7 @@ void CMMTUCam::TestImage(ImgBuffer& img, double exp)
 	dPhase_ += lSinePeriod / 4.;
 }
 
-/**
+/*
 * Generate a spatial sine wave.
 */
 void CMMTUCam::GenerateSyntheticImage(ImgBuffer& img, double exp)
