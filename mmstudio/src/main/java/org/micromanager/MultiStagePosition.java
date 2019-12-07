@@ -37,6 +37,18 @@ import org.micromanager.internal.utils.ReportingUtils;
 /**
  * Definition of a position in space in terms of available stages/drives
  * 
+ * The current implementation uses the concept of "DefaultXYStage", and 
+ * "DefaultZStage".  This is problematic.  The concept of "default" stages 
+ * originates in the Micro-Manager core, that always has only 1 stage that is 
+ * the "active" one.  However, MultiStagePosition devices can record the position
+ * of multiple stages, sometimes even lacking those of the "default" stages, 
+ * so it can not rely on the Micro-manager "Default" stages being in the list.
+ * 
+ * It would be nice to be able to rely on the getX, getY, and getZ functions,
+ * but these will return bogus values if the system's default stages are not 
+ * included.  To avoid surprises, you may need to parse the MultiStagePosition
+ * yourself.
+ * 
  */
 public final class MultiStagePosition {
    private final ArrayList<StagePosition> stagePosList_;
