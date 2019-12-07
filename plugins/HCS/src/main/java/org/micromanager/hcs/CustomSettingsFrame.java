@@ -1,7 +1,6 @@
 package org.micromanager.hcs;
 
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -61,29 +60,22 @@ public class CustomSettingsFrame extends JFrame {
       super.add(circular_, "wrap");
 
       JButton cancel = new JButton("Cancel");
-      cancel.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            dispose();
-         }
+      cancel.addActionListener((ActionEvent e) -> {
+         dispose();
       });
       super.add(cancel, "align right");
 
       JButton save = new JButton("Save to file");
-      save.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            File target = FileDialogs.save(CustomSettingsFrame.this,
-               "Select a file to save the settings to", SBSPlate.PLATE_FILE);
-            if (target != null) {
-               saveToFile(target);
-            }
+      save.addActionListener((ActionEvent e) -> {
+         File target = FileDialogs.save(CustomSettingsFrame.this,
+                 "Select a file to save the settings to", SBSPlate.PLATE_FILE);
+         if (target != null) {
+            saveToFile(target);
          }
       });
       super.add(save, "align right");
 
       super.pack();
-      super.setVisible(true);
    }
 
    private JTextField createText(String label, int width, boolean shouldWrap) {
@@ -95,18 +87,18 @@ public class CustomSettingsFrame extends JFrame {
 
    private void saveToFile(File target) {
       try {
-         FileWriter writer = new FileWriter(target);
-         writer.write(SBSPlate.serialize(Integer.parseInt(rows_.getText()),
-                  Integer.parseInt(cols_.getText()),
-                  Double.parseDouble(wellSpacingX_.getText()),
-                  Double.parseDouble(wellSpacingY_.getText()),
-                  Double.parseDouble(sizeXUm_.getText()),
-                  Double.parseDouble(sizeYUm_.getText()),
-                  id_.getText(), description_.getText(),
-                  Double.parseDouble(firstWellX_.getText()),
-                  Double.parseDouble(firstWellY_.getText()),
-                  circular_.isSelected()));
-         writer.close();
+         try (FileWriter writer = new FileWriter(target)) {
+            writer.write(SBSPlate.serialize(Integer.parseInt(rows_.getText()),
+                    Integer.parseInt(cols_.getText()),
+                    Double.parseDouble(wellSpacingX_.getText()),
+                    Double.parseDouble(wellSpacingY_.getText()),
+                    Double.parseDouble(sizeXUm_.getText()),
+                    Double.parseDouble(sizeYUm_.getText()),
+                    id_.getText(), description_.getText(),
+                    Double.parseDouble(firstWellX_.getText()),
+                    Double.parseDouble(firstWellY_.getText()),
+                    circular_.isSelected()));
+         }
          dispose();
          parent_.loadCustom(target);
       }

@@ -3,7 +3,6 @@ package org.micromanager.hcs;
 import com.bulenkov.iconloader.IconLoader;
 
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Point2D;
@@ -55,6 +54,8 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
 
    private static final String SNAKE_ORDER = "Snake";
    private static final String TYPEWRITER_ORDER = "Typewriter";
+   
+   private static final String ZPLANESTAGE = "Z-Plane stage: ";
 
    private CMMCore core_;
    private JTextField spacingFieldX_;
@@ -77,6 +78,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
    private String cursorWell_;
    PositionList threePtList_;
    AFPlane focusPlane_;
+   private JLabel threePlaneDrive_;
    private final String PLATE_FORMAT_ID = "plate_format_id";
    private final String SITE_SPACING_X  = "site_spacing"; //keep string for bac
    private final String SITE_SPACING_Y  = "site_spacing_y";
@@ -218,18 +220,15 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
             IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
 
       selectWells_.setToolTipText("Click and drag to select wells.");
-      selectWells_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            if (selectWells_.isSelected()) {
-               platePanel_.setTool(PlatePanel.Tool.SELECT);
-               selectWells_.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor_on.png"));
-               moveStage_.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
-            }
-            else {
-               selectWells_.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor.png"));
-               moveStage_.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand_on.png"));
-            }
+      selectWells_.addActionListener((ActionEvent arg0) -> {
+         if (selectWells_.isSelected()) {
+            platePanel_.setTool(PlatePanel.Tool.SELECT);
+            selectWells_.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor_on.png"));
+            moveStage_.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
+         }
+         else {
+            selectWells_.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor.png"));
+            moveStage_.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand_on.png"));
          }
       });
       toolButtonGroup.add(selectWells_);
@@ -238,18 +237,15 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       sidebar.add(selectWells_, "split 2, alignx center, flowx");
 
       moveStage_.setToolTipText("Click to move the stage");
-      moveStage_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            if (moveStage_.isSelected()) {
-               platePanel_.setTool(PlatePanel.Tool.MOVE);
-               moveStage_.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand_on.png"));
-               selectWells_.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor.png"));
-            }
-            else {
-               moveStage_.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
-               selectWells_.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor_on.png"));
-            }
+      moveStage_.addActionListener((ActionEvent e) -> {
+         if (moveStage_.isSelected()) {
+            platePanel_.setTool(PlatePanel.Tool.MOVE);
+            moveStage_.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand_on.png"));
+            selectWells_.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor.png"));
+         }
+         else {
+            moveStage_.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
+            selectWells_.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor_on.png"));
          }
       });
       toolButtonGroup.add(moveStage_);
@@ -275,33 +271,28 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
 
       JButton customButton = new JButton("Create Custom");
       sidebar.add(customButton, "growx");
-      customButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            new CustomSettingsFrame(SiteGenerator.this);
-         }
+      customButton.addActionListener((ActionEvent e) -> {
+         CustomSettingsFrame csf = new CustomSettingsFrame(SiteGenerator.this);         
+         csf.setVisible(true);
       });
 
-      plateIDCombo_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(final ActionEvent e) {
-            if (shouldIgnoreFormatEvent_) {
-               // Ignore this event, as it occurred due to software setting
-               // the display, rather than due to the user selecting an option.
-               return;
-            }
-            plate_.initialize((String) plateIDCombo_.getSelectedItem());
-            updateXySpacing();
-            PositionList sites = generateSites();
-            try {
-               platePanel_.refreshImagingSites(sites);
-            } catch (HCSException e1) {
-               if (app_ != null) {
-                  app_.logs().logError(e1);
-               }
-            }
-            platePanel_.repaint();
+      plateIDCombo_.addActionListener((final ActionEvent e) -> {
+         if (shouldIgnoreFormatEvent_) {
+            // Ignore this event, as it occurred due to software setting
+            // the display, rather than due to the user selecting an option.
+            return;
          }
+         plate_.initialize((String) plateIDCombo_.getSelectedItem());
+         updateXySpacing();
+         PositionList sites = generateSites();
+         try {
+            platePanel_.refreshImagingSites(sites);
+         } catch (HCSException e1) {
+            if (app_ != null) {
+               app_.logs().logError(e1);
+            }
+         }
+         platePanel_.repaint();
       });
 
 
@@ -361,116 +352,99 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
          EQUAL_SPACING, DIFFERENT_SPACING, VIEW_SPACING});
       sidebar.add(spacingMode_, "growx");
       spacingMode_.setSelectedIndex(0);
-      spacingMode_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            String mode = (String) spacingMode_.getSelectedItem();
-            if (mode.equals(EQUAL_SPACING)) {
+      spacingMode_.addActionListener((ActionEvent e) -> {
+         String mode = (String) spacingMode_.getSelectedItem();
+         switch (mode) {
+            case EQUAL_SPACING:
                spacingLabel.setText("Spacing [\u00b5m]");
                spacingFieldX_.setVisible(true);
                spacingFieldY_.setVisible(false);
                overlapField_.setVisible(false);
-            }
-            else if (mode.equals(DIFFERENT_SPACING)) {
+               break;
+            case DIFFERENT_SPACING:
                spacingLabel.setText("Spacing X,Y [\u00b5m]");
                spacingFieldX_.setVisible(true);
                spacingFieldY_.setVisible(true);
                overlapField_.setVisible(false);
-            }
-            else if (mode.equals(VIEW_SPACING)) {
+               break;
+            case VIEW_SPACING:
                spacingLabel.setText("Overlap [\u00b5m]");
                overlapField_.setVisible(true);
                spacingFieldX_.setVisible(false);
                spacingFieldY_.setVisible(false);
-            }
-            else {
+               break;
+            default:
                app_.logs().showError("Unrecognized spacing mode " + mode);
-            }
-            regenerate();
+               break;
          }
+         regenerate();
       });
 
       sidebar.add(new JLabel("Site visit order:"));
       visitOrder_ = new JComboBox(new String[] {SNAKE_ORDER, TYPEWRITER_ORDER});
-      visitOrder_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            regenerate();
-         }
+      visitOrder_.addActionListener((ActionEvent e) -> {
+         regenerate();
       });
       sidebar.add(visitOrder_, "growx");
 
       final JButton refreshButton = new JButton("Refresh",
             IconLoader.getIcon("/org/micromanager/icons/arrow_refresh.png"));
-      refreshButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(final ActionEvent e) {
-            regenerate();
-         }
+      refreshButton.addActionListener((final ActionEvent e) -> {
+         regenerate();
       });
       sidebar.add(refreshButton, "growx, gaptop 10");
 
       final JButton calibrateXyButton = new JButton("Calibrate XY...",
             IconLoader.getIcon("/org/micromanager/icons/cog.png"));
-      calibrateXyButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(final ActionEvent e) {
-            calibrateXY();
-         }
+      calibrateXyButton.addActionListener((final ActionEvent e) -> {
+         calibrateXY();
       });
       sidebar.add(calibrateXyButton, "growx");
 
 
       final JButton setPositionListButton = new JButton("Build MM List",
             IconLoader.getIcon("/org/micromanager/icons/table.png"));
-      setPositionListButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(final ActionEvent e) {
-            if (!isCalibratedXY_) {
-               app_.logs().showMessage("Calibrat XY first");
-               return;
-            }
-            setPositionList();
+      setPositionListButton.addActionListener((final ActionEvent e) -> {
+         if (!isCalibratedXY_) {
+            app_.logs().showMessage("Calibrate XY first");
+            return;
          }
+         setPositionList();
       });
       sidebar.add(setPositionListButton, "growx");
 
-      chckbxThreePt_ = new JCheckBox("Use 3-Point AF");
-      chckbxThreePt_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            platePanel_.repaint();
-         }
-      });
+      chckbxThreePt_ = new JCheckBox("Use 3-Point Z-Plane");
+      
       sidebar.add(chckbxThreePt_, "gaptop 10");
 
       JButton btnMarkPt = new JButton("Mark Point",
             IconLoader.getIcon("/org/micromanager/icons/plus.png"));
-      btnMarkPt.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            markOnePoint();
-         }
+      btnMarkPt.addActionListener((ActionEvent arg0) -> {
+         markOnePoint();
       });
       sidebar.add(btnMarkPt, "growx");
 
       JButton btnSetThreePt = new JButton("Set 3-Point List",
             IconLoader.getIcon("/org/micromanager/icons/asterisk_orange.png"));
-      btnSetThreePt.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            setThreePoint();
-         }
+      btnSetThreePt.addActionListener((ActionEvent e) -> {
+         setThreePoint();
       });
       sidebar.add(btnSetThreePt, "growx");
+      
+      threePlaneDrive_ = new JLabel(ZPLANESTAGE);
+      sidebar.add(threePlaneDrive_, "growx");
+      
+      chckbxThreePt_.addActionListener((ActionEvent e) -> {
+         platePanel_.repaint();
+         btnMarkPt.setEnabled(chckbxThreePt_.isSelected());
+         btnSetThreePt.setEnabled(chckbxThreePt_.isSelected());
+         threePlaneDrive_.setEnabled(chckbxThreePt_.isSelected());
+      });
 
       JButton btnAbout = new JButton("About...");
-      btnAbout.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            HCSAbout dlgAbout = new HCSAbout(SiteGenerator.this);
-            dlgAbout.setVisible(true);
-         }
+      btnAbout.addActionListener((ActionEvent e) -> {
+         HCSAbout dlgAbout = new HCSAbout(SiteGenerator.this);
+         dlgAbout.setVisible(true);
       });
       sidebar.add(btnAbout, "growx");
 
@@ -479,6 +453,10 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       contentsPanel.add(statusLabel_, "dock south, gap 0");
 
       loadSettings();
+
+      btnMarkPt.setEnabled(chckbxThreePt_.isSelected());
+      btnSetThreePt.setEnabled(chckbxThreePt_.isSelected());
+
       updateXySpacing();
 
       PositionList sites = generateSites();
@@ -489,6 +467,11 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
             app_.logs().logError(e1);
          }
       }
+   }
+   
+   @Override
+   public void dispose() {
+      saveSettings();
    }
 
    protected void saveSettings() {
@@ -540,31 +523,35 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       for (WellPositionList wpl1 : wpl) {
          PositionList pl = PositionList.newInstance(wpl1.getSitePositions());
          for (int j = 0; j < pl.getNumberOfPositions(); j++) {
-            MultiStagePosition mpl = pl.getPosition(j);
+            MultiStagePosition msp = pl.getPosition(j);
             // make label unique
-            mpl.setLabel(wpl1.getLabel() + "-" + mpl.getLabel());
+            msp.setLabel(wpl1.getLabel() + "-" + msp.getLabel());
             if (app_ != null) {
-               mpl.setDefaultXYStage(app_.getCMMCore().getXYStageDevice());
-               mpl.setDefaultZStage(app_.getCMMCore().getFocusDevice());
+               msp.setDefaultXYStage(app_.getCMMCore().getXYStageDevice());
             }
             // set the proper XYstage name
-            for (int k = 0; k < mpl.size(); k++) {
-               StagePosition sp = mpl.get(k);
+            for (int k = 0; k < msp.size(); k++) {
+               StagePosition sp = msp.get(k);
                if (sp.is2DStagePosition()) {
-                  sp.set2DPosition(mpl.getDefaultXYStage(), sp.get2DPositionX() + offset_.getX(), 
+                  sp.set2DPosition(msp.getDefaultXYStage(), sp.get2DPositionX() + offset_.getX(), 
                           sp.get2DPositionY() + offset_.getY());
                }
             }
             // add Z position if 3-point focus is enabled
             if (useThreePtAF()) {
                if (focusPlane_ == null) {
-                  displayError("3-point AF is seleced but 3 points are not defined.");
+                  displayError("3-point AF is selected but 3 points are not defined.");
                   return;
                }
+               if (!focusPlane_.isValid()) {
+                  displayError("3-point AF is selected, but 3 point list is invalid");
+                  return;
+               }
+               msp.setDefaultZStage(focusPlane_.getZStage());
                // add z position from the 3-point plane estimate
-               StagePosition sp = StagePosition.create1D(mpl.getDefaultZStage(), 
-                       focusPlane_.getZPos(mpl.getX(), mpl.getY()));
-               mpl.add(sp);
+               StagePosition sp = StagePosition.create1D(focusPlane_.getZStage(), 
+                       focusPlane_.getZPos(msp.getX(), msp.getY()));
+               msp.add(sp);
             }
             platePl.addPosition(pl.getPosition(j));
          }
@@ -573,6 +560,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       try {
          if (app_ != null) {
             app_.positions().setPositionList(platePl);
+            app_.app().showPositionList();
          }
       } catch (Exception e) {
          displayError(e.getMessage());
@@ -582,21 +570,76 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
 
    /**
     * Mark current position as one point in the 3-pt set
+    * Ensures that one XY stage and one Z stage are selected in the PositionList
+    * Also ensures that the same stages as in the previous points are selected
     */
    private void markOnePoint() {
+      app_.app().showPositionList();
+      int nrPositions = app_.positions().getPositionList().getNumberOfPositions();
+      if (nrPositions > 3) {
+         app_.logs().showMessage("PositionList contains > 3 points.  Try to clear the Stage Position List");
+         return;
+      }
+      if (nrPositions == 3) {
+         app_.logs().showMessage("PositionList already contains 3 positions.  Delete at least one");
+         return;
+      }
       app_.positions().markCurrentPosition();
+      // check that exactly one z-stage and one xy-stage is checked
+      MultiStagePosition msp = app_.positions().getPositionList().getPosition(nrPositions);
+      if (msp == null) {
+         app_.logs().logError("Failed to mark current position in PositionList");
+         return;
+      }
+      if (msp.size() != 2) {
+         app_.positions().getPositionList().removePosition(nrPositions);
+         app_.logs().showMessage("Make sure that only one XY stage and one Z stage is checked", this);
+         return;
+      }
+      boolean stagesOK = false;
+      if (msp.get(0).is1DStagePosition() && msp.get(1).is2DStagePosition() ||
+             msp.get(0).is2DStagePosition() && msp.get(1).is1DStagePosition() ) {
+         stagesOK = true;
+      }
+      if (!stagesOK) {  
+         app_.positions().getPositionList().removePosition(nrPositions);
+         app_.logs().showMessage("Make sure that only one XY stage and one Z stage is checked", this);
+         return;
+      }
+      // also ensure that the same stages are checked
+      nrPositions = app_.positions().getPositionList().getNumberOfPositions();
+      if (nrPositions > 1) {        
+         String stage0 = msp.get(0).getStageDeviceLabel();
+         String stage1 = msp.get(1).getStageDeviceLabel();
+         for (int i = 0; i < nrPositions; i++) {
+            MultiStagePosition mspTest = app_.positions().getPositionList().getPosition(i);
+            if (!mspTest.get(0).getStageDeviceLabel().equals(stage0) || 
+                   !mspTest.get(1).getStageDeviceLabel().equals(stage1) ) {                
+               app_.positions().getPositionList().removePosition(nrPositions - 1);
+               app_.logs().showMessage(
+                       "Make sure that the same stages are checked for all 3 positions", this);
+            }
+         }
+      }
+      
+      
    }
 
    private void setThreePoint() {
       try {
          PositionList plist = app_.positions().getPositionList();
          if (plist.getNumberOfPositions() != 3) {
-            displayError("We need exactly three positions to fit AF plane. Please create XY list with 3 positions.");
+            app_.logs().showMessage(
+                    "We need exactly three positions to fit AF plane. Please create XY list with exactly 3 positions.");
             return;
          }
+         
 
          threePtList_ = PositionList.newInstance(plist);
          focusPlane_ = new AFPlane(threePtList_.getPositions());
+         if (focusPlane_.isValid()) {
+            threePlaneDrive_.setText(ZPLANESTAGE + focusPlane_.getZStage());
+         }
          chckbxThreePt_.setSelected(true);
          platePanel_.repaint();
 

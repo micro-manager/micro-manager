@@ -164,7 +164,7 @@ public class PlatePanel extends JPanel {
       mode_ = Tool.SELECT;
       lockAspect_ = true;
       stagePointer_ = new Rectangle(3, 3);
-      wellMap_ = new Hashtable<String, Integer>();
+      wellMap_ = new Hashtable<>();
       xyStagePos_ = new Point2D.Double(0.0, 0.0);
       zStagePos_ = 0.0;
       
@@ -193,7 +193,7 @@ public class PlatePanel extends JPanel {
          }
       });
 
-      addMouseMotionListener(new MouseMotionAdapter() {
+      super.addMouseMotionListener(new MouseMotionAdapter() {
          @Override
          public void mouseMoved(final MouseEvent e) {
             onMouseMove(e);
@@ -213,7 +213,7 @@ public class PlatePanel extends JPanel {
       
       rescale();
       wellBoxes_ = new WellBox[plate_.getNumRows() * plate_.getNumColumns()];
-      wellMap_ = new Hashtable<String, Integer>();
+      wellMap_ = new Hashtable<>();
       for (int i=0; i<wellBoxes_.length; i++) {
          wellBoxes_[i] = new WellBox(wells_[i].getSitePositions());         
          wellMap_.put(getWellKey(wells_[i].getRow(), wells_[i].getColumn()), i);
