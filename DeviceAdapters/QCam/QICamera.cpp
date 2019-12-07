@@ -290,6 +290,38 @@ void ConvertTriggerTypeToEnum(const char *inType, QCam_qcTriggerType *outType)
    }
 }
 
+void ConvertSyncBToString(QCam_qcSyncb inSync, char *outString)
+{
+    switch(inSync) {
+        case qcSyncbTrigmask:
+            strcpy(outString, "Trigger Mask");
+            break;
+        case qcSyncbExpose:
+            strcpy(outString, "Expose Mode");
+            break;
+        case qcSyncb_last:
+            strcpy(outString, "Last Used");
+            break;
+        default:
+            strcpy(outString, "Unknown");
+            break;
+    }
+}
+
+void ConvertSyncBToEnum(const char *inSync, QCam_qcSyncb *outSync)
+{
+    if (!strcmp(inSync, "Trigger Mask")) {
+        *outSync = qcSyncbTrigmask;
+    } else if (!strcmp(inSync, "Expose Mode")) {
+        *outSync = qcSyncbExpose;
+    } else if (!strcmp(inSync, "Last Used")) {
+        *outSync = qcSyncb_last;
+    } else {
+        // default
+        *outSync = qcSyncb_last;
+    }
+}
+
 static string ConvertCameraTypeToString(unsigned long cameraType)
 {
    char cameraStr[256] = "Unknown Model"; // use of C string is only for historical reasons
@@ -970,7 +1002,6 @@ int QICamera::Initialize()
          }
       }
 
-
       // TRIGGER MODE
       nRet = SetupTriggerType();
       if (nRet != DEVICE_OK && nRet != DEVICE_NOT_SUPPORTED) {
@@ -981,6 +1012,12 @@ int QICamera::Initialize()
       nRet = SetupTriggerDelay();
       if (nRet != DEVICE_OK && nRet != DEVICE_NOT_SUPPORTED) {
          throw nRet;
+      }
+
+      // SyncB
+      nRet = SetupSyncB();
+      if (nRet != DEVICE_OK && nRet != DEVICE_NOT_SUPPORTED) {
+          throw nRet;
       }
 
       // setup the image buffers for queuing frames
@@ -2297,6 +2334,75 @@ int QICamera::SetupTriggerDelay()
       }
    }
    return DEVICE_OK;
+}
+
+/**
+ * Initialize the SyncB.
+ * Set the default to Freerun mode.
+ */
+int QICamera::SetupSyncB()
+{
+    unsigned long				syncTable[32];
+    int							syncTableSize = sizeof(syncTable) / sizeof (unsigned long);
+    int							counter;
+    vector<string>				syncValues;
+    QCam_Err					err;
+    CPropertyAction				*propertyAction;
+    int							nRet;
+    char						tempStr[256];
+    char						defaultSyncStr[256];
+    
+    START_METHOD("QICamera::SyncB");
+    
+    err = QCam_GetParamSparseTable((QCam_Settings *)m_settings, qprmSyncb, syncTable, &syncTableSize);
+    if (err == qerrNotSupported) {
+        return DEVICE_NOT_SUPPORTED;
+    } else if (err != qerrSuccess) {
+        REPORT_QERR(err);
+        return DEVICE_ERR;
+    }
+    
+    // go through each sync type
+    for (counter = 0; counter < syncTableSize; counter ++) {
+        // convert the sync type enum to a string
+        ConvertSyncBToString((QCam_qcSyncb)syncTable[counter], tempStr);
+        
+        // add the trigger value to the vector
+        syncValues.push_back(tempStr);
+    }
+    
+    // Startup in Expose mode
+    err = QCam_SetParam((QCam_Settings *)m_settings, qprmSyncb, qcSyncbExpose);
+    if (err != qerrSuccess) {
+        REPORT_QERR(err);
+        return DEVICE_ERR;
+    }
+    
+    nRet = SendSettingsToCamera((QCam_Settings *)m_settings);
+    if (nRet != DEVICE_OK) {
+        REPORT_MMERR(nRet);
+        return DEVICE_ERR;
+    }
+    
+    // create the default syncB string
+    ConvertSyncBToString(qcSyncbExpose, defaultSyncStr);
+    
+    // create the action
+    propertyAction = new CPropertyAction (this, &QICamera::OnSyncB);
+    nRet = CreateProperty(g_Keyword_SyncB, defaultSyncStr, MM::String, false, propertyAction);
+    if (nRet != DEVICE_OK) {
+        REPORT_MMERR(nRet);
+        return nRet;
+    }
+    
+    // set the allowed values
+    nRet = SetAllowedValues(g_Keyword_SyncB, syncValues);
+    if (nRet != DEVICE_OK) {
+        REPORT_MMERR(nRet);
+        return nRet;
+    }
+    
+    return DEVICE_OK;	
 }
 
 
@@ -3726,6 +3832,68 @@ int QICamera::OnTriggerDelay(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
 
    return DEVICE_OK; 
+}
+
+/**
+ * Sets or gets the SyncB property
+ */
+int QICamera::OnSyncB(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    std::string				syncStr;
+    char					syncChars[256];
+    QCam_qcSyncb            syncEnum;
+    QCam_Err				err;
+    
+    START_ONPROPERTY("QICamera::OnSyncB", eAct);
+    
+    // see if the user wants to get or set the property
+    if (eAct == MM::AfterSet) {
+//        bool wasCapturing = IsCapturing();
+//        if (wasCapturing)
+//            StopSequenceAcquisition();
+        
+        pProp->Get(syncStr);
+        
+        // convert the string to a sync type enum
+        ConvertSyncBToEnum(syncStr.c_str(), &syncEnum);
+        
+        // set it
+        err = QCam_SetParam((QCam_Settings *)m_settings, qprmSyncb, syncEnum);
+        if (err != qerrSuccess) {
+            REPORT_QERR(err);
+            return DEVICE_ERR;
+        }
+        
+        // commit it
+        int nRet = SendSettingsToCamera((QCam_Settings *)m_settings);
+        if (nRet != DEVICE_OK) {
+            REPORT_MMERR(nRet);
+            return DEVICE_ERR;
+        }
+        
+//        // abort any remaining frames
+//        err = QCam_Abort(m_camera);
+//        if (err != qerrSuccess) {
+//            QCam_REPORT_QERR(m_pCam, err);
+//        }
+//        
+//        if (wasCapturing)
+//            RestartSequenceAcquisition();
+        
+    } else if (eAct == MM::BeforeGet) {
+        // get it
+        err = QCam_GetParam((QCam_Settings *)m_settings, qprmSyncb, (unsigned long*)&syncEnum);
+        if (err != qerrSuccess) {
+            REPORT_QERR(err);
+            return DEVICE_ERR;
+        }
+        
+        ConvertSyncBToString(syncEnum, syncChars);
+        
+        pProp->Set(syncChars);
+    }
+    
+    return DEVICE_OK; 
 }
 
 /**

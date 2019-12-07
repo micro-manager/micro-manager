@@ -84,6 +84,7 @@
 #define g_Keyword_TriggerDelay              "TriggerDelay"
 #define g_Keyword_TriggerDelay_Min          "TriggerDelayMin"
 #define g_Keyword_TriggerDelay_Max          "TriggerDelayMax"
+#define g_Keyword_SyncB                     "SyncB"
 #define g_Keyword_Color_Mode                "Color"
 #define g_Value_ON                            "ON"
 #define g_Value_OFF                           "OFF"
@@ -122,6 +123,8 @@ void ConvertReadoutPortToString(QCam_qcReadoutPort inPort, char *outString);
 void ConvertReadoutPortToEnum(const char *inSpeed, QCam_qcReadoutPort *outPort);
 void ConvertTriggerTypeToString(QCam_qcTriggerType inType, char *outString);
 void ConvertTriggerTypeToEnum(const char *inType, QCam_qcTriggerType *outType);
+void ConvertSyncBToString(QCam_qcSyncb inSync, char *outString);
+void ConvertSyncBToEnum(const char *inSync, QCam_qcSyncb *outSync);
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -216,6 +219,7 @@ public:
     int OnEasyEMGain(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
     int OnTriggerType(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnTriggerDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnSyncB(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnColorMode(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnInterpolationAlgorithm(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnRedScale(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -277,6 +281,7 @@ private:
     int SetupFrames();
     int SetupTriggerType();
     int SetupTriggerDelay();
+    int SetupSyncB();
 
     // helper functions
     friend void QCAMAPI FrameDoneCallback(void*, unsigned long, QCam_Err, unsigned long);
