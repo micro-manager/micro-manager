@@ -161,7 +161,7 @@
       </ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
       <AdditionalLibraryDirectories>$(MM_3RDPARTYPUBLIC)\TUCam\TUCam_V2.0.3.0_20190919\sdk\lib\$(Platform)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>TuCam.lib</AdditionalDependencies>
+      <AdditionalDependencies>TUCam.lib</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(TargetPath)" ..\..\bin</Command>
@@ -192,7 +192,7 @@
       </ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
       <AdditionalLibraryDirectories>$(MM_3RDPARTYPUBLIC)\TUCam\TUCam_V2.0.3.0_20190919\sdk\lib\$(Platform)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>TuCam.lib</AdditionalDependencies>
+      <AdditionalDependencies>TUCam.lib</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(TargetPath)" ..\..\bin</Command>
