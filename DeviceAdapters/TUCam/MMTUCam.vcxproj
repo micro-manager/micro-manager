@@ -107,7 +107,7 @@
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <DisableSpecificWarnings>4290;4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>$(MM_3RDPARTYPUBLIC)\TUCam\TUCam_SDK_C++_V1.0.0.9\sdk\inc;..\..\..\..\3rdpartypublic\TUCam\TUCan_SDK_C++_v1.0.0.9\lib\$(Platform)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MM_3RDPARTYPUBLIC)\TUCam\TUCam_V2.0.3.0_20190919\sdk\inc;..\..\..\..\3rdpartypublic\TUCam\TUCam_V2.0.3.0_20190919\lib\$(Platform)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
@@ -124,7 +124,7 @@
       <ImportLibrary>
       </ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalLibraryDirectories>$(MM_3RDPARTYPUBLIC)\TUCam\TUCam_SDK_C++_V1.0.0.9\sdk\lib\$(Platform)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(MM_3RDPARTYPUBLIC)\TUCam\TUCam_V2.0.3.0_20190919\sdk\lib\$(Platform)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(TargetPath)" ..\..\bin</Command>
@@ -147,7 +147,7 @@
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <DisableSpecificWarnings>4290;4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>$(MM_3RDPARTYPUBLIC)\TUCam\TUCam_SDK_C++_V1.0.0.9\sdk\inc;..\..\..\..\3rdpartypublic\TUCam\TUCan_SDK_C++_v1.0.0.9\lib\$(Platform)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MM_3RDPARTYPUBLIC)\TUCam\TUCam_V2.0.3.0_20190919\sdk\inc;..\..\..\..\3rdpartypublic\TUCam\TUCam_V2.0.3.0_20190919\lib\$(Platform)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
@@ -160,7 +160,7 @@
       <ImportLibrary>
       </ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
-      <AdditionalLibraryDirectories>$(MM_3RDPARTYPUBLIC)\TUCam\TUCam_SDK_C++_V1.0.0.9\sdk\lib\$(Platform)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(MM_3RDPARTYPUBLIC)\TUCam\TUCam_V2.0.3.0_20190919\sdk\lib\$(Platform)</AdditionalLibraryDirectories>
       <AdditionalDependencies>TuCam.lib</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
@@ -178,7 +178,7 @@
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <DisableSpecificWarnings>4290;4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>$(MM_3RDPARTYPUBLIC)\TUCam\TUCam_SDK_C++_V1.0.0.9\sdk\inc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MM_3RDPARTYPUBLIC)\TUCam\TUCam_V2.0.3.0_20190919\sdk\inc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
@@ -191,7 +191,7 @@
       <ImportLibrary>
       </ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalLibraryDirectories>$(MM_3RDPARTYPUBLIC)\TUCam\TUCam_SDK_C++_V1.0.0.9\sdk\lib\$(Platform)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(MM_3RDPARTYPUBLIC)\TUCam\TUCam_V2.0.3.0_20190919\sdk\lib\$(Platform)</AdditionalLibraryDirectories>
       <AdditionalDependencies>TuCam.lib</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
@@ -212,7 +212,7 @@
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <DisableSpecificWarnings>4290;4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>$(MM_3RDPARTYPUBLIC)\TUCam\TUCam_SDK_C++_V1.0.0.9\sdk\inc;..\..\..\..\3rdpartypublic\TUCam\TUCan_SDK_C++_v1.0.0.9\lib\$(Platform)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MM_3RDPARTYPUBLIC)\TUCam\TUCam_V2.0.3.0_20190919\sdk\inc;..\..\..\..\3rdpartypublic\TUCam\TUCam_V2.0.3.0_20190919\lib\$(Platform)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
@@ -226,7 +226,7 @@
       <ImportLibrary>
       </ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
-      <AdditionalLibraryDirectories>$(MM_3RDPARTYPUBLIC)\TUCam\TUCam_SDK_C++_V1.0.0.9\sdk\lib\$(Platform)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(MM_3RDPARTYPUBLIC)\TUCam\TUCam_V2.0.3.0_20190919\sdk\lib\$(Platform)</AdditionalLibraryDirectories>
       <AdditionalDependencies>TUCam.lib</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
