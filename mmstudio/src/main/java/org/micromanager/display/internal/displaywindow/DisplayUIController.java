@@ -1526,6 +1526,10 @@ public final class DisplayUIController implements Closeable, WindowListener,
          if (displayedImages != null && displayedImages.size() > 0) {
             Metadata metadata = displayedImages.get(0).getMetadata();
             Long nr = metadata.getImageNumber();
+            if (nr == null) {
+               cameraFpsLabel_.setText(" ");
+               return;
+            }
             // since circular buffer overflow causes the numbers to reset to 0,
             // but not the elapasedTimeMs, we need to keep track of the elapsedTime
             // of every image with imageNumber 0:
