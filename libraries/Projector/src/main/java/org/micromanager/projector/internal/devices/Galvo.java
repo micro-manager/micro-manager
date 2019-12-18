@@ -331,6 +331,7 @@ public class Galvo implements ProjectionDevice {
             }
          }
       }
+      externalShutter_ = null;
    }
 
    @Override

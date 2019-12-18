@@ -345,10 +345,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     */
    void setTargetingShutter(String shutterName) {
       targetingShutter_ = shutterName;
-      if (shutterName != null) {
+     // if (shutterName != null) {
          settings_.putString("shutter", shutterName);
          dev_.setExternalShutter(shutterName);
-      }
+      //}
    }
    
   
