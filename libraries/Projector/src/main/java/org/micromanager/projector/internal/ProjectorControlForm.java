@@ -347,6 +347,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       targetingShutter_ = shutterName;
       if (shutterName != null) {
          settings_.putString("shutter", shutterName);
+         dev_.setExternalShutter(shutterName);
       }
    }
    
@@ -468,12 +469,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                           new Point2D.Double(pOffScreen.x, pOffScreen.y), roi, binning);
                   final Configuration originalConfig
                           =     projectorControlExecution_.prepareChannel(targetingChannel_);
-                  final boolean originalShutterState = 
-                          projectorControlExecution_.prepareShutter(targetingShutter_);
                   PointAndShootInfo.Builder psiBuilder = new PointAndShootInfo.Builder();
                   PointAndShootInfo psi = psiBuilder.projectionDevice(dev_).
                           devPoint(devP).
-                          originalShutterState(originalShutterState).
                           originalConfig(originalConfig).
                           canvasPoint(pOffScreen).
                           build();
@@ -512,8 +510,6 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                                 psi.getDevPoint().x,
                                 psi.getDevPoint().y);
                      }
-                     projectorControlExecution_.returnShutter(
-                             targetingShutter_, psi.getOriginalShutterState());
                      projectorControlExecution_.returnChannel(psi.getOriginalConfig());
                      logPoint(psi.getCanvasPoint());
                   } catch (Exception e) {
