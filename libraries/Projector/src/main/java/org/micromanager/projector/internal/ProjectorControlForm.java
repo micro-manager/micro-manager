@@ -127,6 +127,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private String targetingChannel_;
    private MosaicSequencingFrame mosaicSequencingFrame_;
    private String targetingShutter_;
+   private boolean targetingShutterOriginallyOpen_;
    private Boolean disposing_ = false;
    private Calibrator calibrator_;
    private BufferedWriter logFileWriter_;
@@ -349,49 +350,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
    }
    
-   /**
-    * Sets the Channel Group to the targeting channel, if it exists.
-    * @return the channel group in effect before calling this function
-    * @deprecated - Use ProjectorControlExecution.prepareChannel() instead
-    */
-   @Deprecated
-   public Configuration prepareChannel() {
-      return projectorControlExecution_.prepareChannel(targetingChannel_);
-   }
-   
-   /**
-    * Should be called with the value returned by prepareChannel.
-    * Returns Channel Group to its original settings, if needed.
-    * @param originalConfig Configuration to return to
-    * @deprecated - Use ProjectorControlExecution.returnChannel() instead
-    */
-   @Deprecated
-   public void returnChannel(Configuration originalConfig) {
-      projectorControlExecution_.returnChannel(originalConfig);
-   }
-   
-   /**
-    * Opens the targeting shutter, if it has been specified.
-    * @return true if it was already open
-    * @deprecated - Use ProjectorControlExecution.prepareShutter() instead
-    */
-   @Deprecated
-   public boolean prepareShutter() {
-      return projectorControlExecution_.prepareShutter(targetingShutter_);
-   }
-
-   /**
-    * Closes a targeting shutter if it exists and if it was originally closed.
-    * Should be called with the value returned by prepareShutter.
-    * @param originallyOpen - whether or not the shutter was originally open
-    * @deprecated - Use ProjectorControlExecution.returnShutter() instead
-    */
-   @Deprecated
-   public void returnShutter(boolean originallyOpen) {
-      projectorControlExecution_.returnShutter(targetingShutter_, originallyOpen);
-   }
-   
- 
+  
    /**
     * Runs the full calibration. First
     * generates a linear mapping (a first approximation) and then generates
@@ -752,35 +711,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       individualRois_ = rois;
    }
    
-   /**
-    * Illuminate the polygons ROIs that have been previously uploaded to
-    * phototargeter.
-    * @deprecated Use {@link ProjectorControlExecution#exposeRois(org.micromanager.projector.ProjectionDevice, java.lang.String, java.lang.String) } instead
-    */
-   @Deprecated
-   public void runRois() {
-      projectorControlExecution_.exposeRois(dev_, targetingChannel_, targetingShutter_, individualRois_);
-   }
-
-   // ## Attach/detach MDA
-       
-   /**
-    * Attaches phototargeting ROIs to a multi-dimensional acquisition, so that
-    * they will run on a particular firstFrame and, if repeat is true,
-    * thereafter again every frameRepeatInterval frames.
-    * @param firstFrame
-    * @param repeat
-    * @param frameRepeatInveral
-    * @param runPolygons
-    * @deprecated - User ProjectorControlExecution.attachRoisToMDA instead
-   */
-   @Deprecated
-   public void attachRoisToMDA(int firstFrame, boolean repeat, 
-           int frameRepeatInveral, Runnable runPolygons) {
-      projectorControlExecution_.attachRoisToMDA(
-              firstFrame, true, frameRepeatInveral, runPolygons);
-   }
-  
+   
    // ## GUI
    
    // Forces a JSpinner to fire a change event reflecting the new value
@@ -1058,8 +989,20 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       onButton_.setText("On");
       onButton_.addActionListener((ActionEvent evt) -> {
          dev_.turnOn();
+         targetingShutterOriginallyOpen_ = 
+                 projectorControlExecution_.prepareShutter(targetingShutter_);
          updatePointAndShoot(false);
       });
+      
+      
+      offButton_.setText("Off");
+      offButton_.setSelected(true);
+      offButton_.addActionListener((ActionEvent evt) -> {
+         dev_.turnOff();
+         projectorControlExecution_.returnShutter(targetingShutter_, 
+                 targetingShutterOriginallyOpen_);
+      });
+
 
       mainTabbedPane.addChangeListener((ChangeEvent evt) -> {
          updatePointAndShoot(false);
@@ -1344,12 +1287,6 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
 
       mainTabbedPane.addTab("Setup", setupTab);
 
-      offButton_.setText("Off");
-      offButton_.setSelected(true);
-      offButton_.addActionListener((ActionEvent evt) -> {
-         dev_.turnOff();
-      });
-
       pointAndShootIntervalSpinner_.setModel(new SpinnerNumberModel(500, 1, 1000000000, 1));
       pointAndShootIntervalSpinner_.setMaximumSize(new Dimension(75, 20));
       pointAndShootIntervalSpinner_.setMinimumSize(new Dimension(75, 20));
@@ -1375,5 +1312,82 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     
       pack();
    }
+   
+   
+   /****************** Deprecated functions ******************/
+   
+   
+   /**
+    * Illuminate the polygons ROIs that have been previously uploaded to
+    * phototargeter.
+    * @deprecated Use {@link ProjectorControlExecution#exposeRois(org.micromanager.projector.ProjectionDevice, java.lang.String, java.lang.String) } instead
+    */
+   @Deprecated
+   public void runRois() {
+      projectorControlExecution_.exposeRois(dev_, targetingChannel_, targetingShutter_, individualRois_);
+   }
+
+   // ## Attach/detach MDA
+       
+   /**
+    * Attaches phototargeting ROIs to a multi-dimensional acquisition, so that
+    * they will run on a particular firstFrame and, if repeat is true,
+    * thereafter again every frameRepeatInterval frames.
+    * @param firstFrame
+    * @param repeat
+    * @param frameRepeatInveral
+    * @param runPolygons
+    * @deprecated - User ProjectorControlExecution.attachRoisToMDA instead
+   */
+   @Deprecated
+   public void attachRoisToMDA(int firstFrame, boolean repeat, 
+           int frameRepeatInveral, Runnable runPolygons) {
+      projectorControlExecution_.attachRoisToMDA(
+              firstFrame, true, frameRepeatInveral, runPolygons);
+   }
+  
+    /**
+    * Sets the Channel Group to the targeting channel, if it exists.
+    * @return the channel group in effect before calling this function
+    * @deprecated - Use ProjectorControlExecution.prepareChannel() instead
+    */
+   @Deprecated
+   public Configuration prepareChannel() {
+      return projectorControlExecution_.prepareChannel(targetingChannel_);
+   }
+   
+   /**
+    * Should be called with the value returned by prepareChannel.
+    * Returns Channel Group to its original settings, if needed.
+    * @param originalConfig Configuration to return to
+    * @deprecated - Use ProjectorControlExecution.returnChannel() instead
+    */
+   @Deprecated
+   public void returnChannel(Configuration originalConfig) {
+      projectorControlExecution_.returnChannel(originalConfig);
+   }
+   
+   /**
+    * Opens the targeting shutter, if it has been specified.
+    * @return true if it was already open
+    * @deprecated - Use ProjectorControlExecution.prepareShutter() instead
+    */
+   @Deprecated
+   public boolean prepareShutter() {
+      return projectorControlExecution_.prepareShutter(targetingShutter_);
+   }
+
+   /**
+    * Closes a targeting shutter if it exists and if it was originally closed.
+    * Should be called with the value returned by prepareShutter.
+    * @param originallyOpen - whether or not the shutter was originally open
+    * @deprecated - Use ProjectorControlExecution.returnShutter() instead
+    */
+   @Deprecated
+   public void returnShutter(boolean originallyOpen) {
+      projectorControlExecution_.returnShutter(targetingShutter_, originallyOpen);
+   }
+   
+ 
 
 }
