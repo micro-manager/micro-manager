@@ -60,7 +60,7 @@ struct {
 	const char* EXT;
 	const char* AINT;
 	const char* AEXT;
-} const TrigModeNames = {"Manual", "Sequence (internal clock)", "Sequence (external trig)", "Analog (internal clock)", "Analog (external trig)"};
+} const TrigModeNames = {"Manual", "Sequence (int. clock)", "Sequence (ext. trig)", "Analog (int. clock)", "Analog (ext. trig)"};
 
 const char* const g_LCTFName = "Kurios LCTF";
 
@@ -75,7 +75,7 @@ public:
 	int Initialize();
 	int Shutdown();
 	void GetName(char* pName) const;
-	bool Busy(){return false;};
+	bool Busy(){return false;}; //TODO implement a timer here. delay property
 
 	//Properties
 	int onPort(MM::PropertyBase* pProp, MM::ActionType eAct);
