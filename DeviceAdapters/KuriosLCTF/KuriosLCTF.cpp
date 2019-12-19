@@ -142,8 +142,8 @@ int KuriosLCTF::Initialize() {
 	AddAllowedValue("Output Mode", TrigModeNames.AEXT);
 
 	pAct = new CPropertyAction(this, &KuriosLCTF::onSeqTimeInterval);
-	CreateProperty("Sequence Time Interval (ms)", "1000", MM::Integer, false, pAct, false);
-	SetPropertyLimits("Sequence Time Interval (ms)", 1, 60000);
+	CreateProperty("Sequence Time Interval (ms) (int. clock)", "1000", MM::Integer, false, pAct, false);
+	SetPropertyLimits("Sequence Time Interval (ms) (int. clock)", 1, 60000);
 
 	pAct = new CPropertyAction(this, &KuriosLCTF::onStatus);
 	CreateProperty("Status", "Initialization", MM::String, true, pAct, false);
@@ -184,12 +184,6 @@ void KuriosLCTF::GetName(char* name) const {
 
 //Properties
 int KuriosLCTF::onPort(MM::PropertyBase* pProp, MM::ActionType eAct) {
-	/*if (eAct == MM::BeforeGet) {
-		pProp->Set(port_.c_str());
-	}
-	else if (eAct == MM::AfterSet) {
-		pProp->Get(port_);
-	}*/
 	return DEVICE_OK;
 }
 
@@ -211,7 +205,7 @@ int KuriosLCTF::onOutputMode(MM::PropertyBase* pProp, MM::ActionType eAct) {
 		}
 	}
 	else if (eAct == MM::AfterSet) {
-		std::string msg;
+		std::string msg = "";
 		pProp->Get(msg);
 		const char* m = msg.c_str();
 		int mode;
@@ -252,7 +246,7 @@ int KuriosLCTF::onBandwidthMode(MM::PropertyBase* pProp, MM::ActionType eAct) {
 		}		
 	}
 	else if (eAct == MM::AfterSet) {
-		std::string setting;
+		std::string setting = "";
 		int bandwidth;
 		pProp->Get(setting);
 		const char* bw = setting.c_str();
@@ -292,11 +286,12 @@ int KuriosLCTF::onWavelength(MM::PropertyBase* pProp, MM::ActionType eAct) {
         pProp->SetSequenceable(1024);   //According the thorlabs website it can store 1024 items.
     }
     else if (eAct == MM::StartSequence) {
-		char* msg;
+		char msg[1024];
 		int ret = this->GetProperty("Output Mode", msg);
 		if (ret!=DEVICE_OK) { return ret;}
 		origOutputMode_ = std::string(msg); //save the original output mode we were in. we'll go back to it when the sequence is stopped.
 		ret = this->SetProperty("Output Mode", TrigModeNames.EXT); //For now we only support externally triggered sequencing. We would need to add further configuration properties to support the other modes.
+		kurios_Set_ForceTrigger(portHandle_); //This should set us to the first item of the sequence, the first camera pulse will then set us to the second sequence wavelength.
 		if (ret!=DEVICE_OK) { return ret;}
     }
     else if (eAct == MM::StopSequence) {
@@ -307,9 +302,9 @@ int KuriosLCTF::onWavelength(MM::PropertyBase* pProp, MM::ActionType eAct) {
         std::vector<std::string> sequence =  pProp->GetSequence();
 		int ret = kurios_Set_DeleteSequenceStep(portHandle_, 0); //Using a value of 0 here deletes the whole sequence.
 		if (ret<0){ return DEVICE_ERR; }
-		for (int i=0; i<sequence.size(); i++) {
+		for (int i=0; i<sequence.size(); i++) { 
 			std::string step = sequence[i];
-			ret = kurios_Set_InsertSequenceStep(portHandle_, 0, std::atoi(step.c_str()), defaultIntervalMs_, defaultBandwidth_);
+			ret = kurios_Set_InsertSequenceStep(portHandle_, i+1, std::atoi(step.c_str()), defaultIntervalMs_, defaultBandwidth_); //the sequence index starts at 1.
 			if (ret<0){ return DEVICE_ERR; }
 		}
     }
@@ -346,7 +341,7 @@ int KuriosLCTF::onSequenceBandwidthMode(MM::PropertyBase* pProp, MM::ActionType 
 		}
 	}
 	else if (eAct == MM::AfterSet) {
-		std::string setting;
+		std::string setting = "";
 		pProp->Get(setting);
 		const char* bw = setting.c_str();
 		if (strcmp(bw, BWNames.WIDE)==0) {
@@ -402,7 +397,7 @@ int KuriosLCTF::onTriggerOutMode(MM::PropertyBase* pProp, MM::ActionType eAct) {
 		}
 	}
 	else if (eAct == MM::AfterSet) {
-		std::string msg;
+		std::string msg = "";
 		pProp->Get(msg);
 		const char * polarity = msg.c_str();
 		int pol;
@@ -424,7 +419,7 @@ int KuriosLCTF::onForceTrigger(MM::PropertyBase* pProp, MM::ActionType eAct) {
 		pProp->Set("Idle");
 	}
 	else if (eAct == MM::AfterSet) {
-		std::string msg;
+		std::string msg = "";
 		pProp->Get(msg);
 		if (strcmp(msg.c_str(), "Trigger")==0) {
 			int ret = kurios_Set_ForceTrigger(portHandle_);
