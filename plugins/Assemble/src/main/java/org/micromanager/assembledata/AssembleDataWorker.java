@@ -20,7 +20,6 @@ import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
-import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.utils.imageanalysis.BoofCVImageConverter;
@@ -31,21 +30,19 @@ import org.micromanager.internal.utils.imageanalysis.BoofCVImageConverter;
  */
 public class AssembleDataWorker {
    
-    public static void run(Studio studio, AssembleDataForm form, DataViewer dv1, DataViewer dv2,
+    public static void run(Studio studio, AssembleDataForm form, DataProvider dp1, DataProvider dp2,
            int xOffset, int yOffset, boolean test) {
        Runnable t = () -> {
-          execute ( studio,  form, dv1,  dv2, xOffset,  yOffset, test);
+          execute ( studio,  form, dp1,  dp2, xOffset,  yOffset, test);
        };
        Thread assembleThread = new Thread(t);
        assembleThread.start();
        
     }
     
-    public static void execute (Studio studio, AssembleDataForm form, DataViewer dv1, DataViewer dv2,
+    public static void execute (Studio studio, AssembleDataForm form, DataProvider dp1, DataProvider dp2,
            int xOffset, int yOffset, boolean test) {
       
-      DataProvider dp1 = dv1.getDataProvider();
-      DataProvider dp2 = dv2.getDataProvider();
       DataProvider spd = AssembleDataUtils.singlePositionData(dp1, dp2);
       DataProvider mpd = AssembleDataUtils.multiPositionData(dp1, dp2);
 
@@ -235,8 +232,7 @@ public class AssembleDataWorker {
          DisplaySettings dispSettings = disp.getDisplaySettings();
          DisplaySettings.Builder dpb = dispSettings.copyBuilder();
          
-         DisplaySettings newDP = dpb.zoomRatio(
-                 AssembleDataUtils.getSmallestZoom(dv1, dv2)).colorModeComposite().
+         DisplaySettings newDP = dpb.colorModeComposite().
                  channel(0, dispSettings.getChannelSettings(0).copyBuilder().colorGreen().build()).
                  channel(1, dispSettings.getChannelSettings(1).copyBuilder().colorRed().build()).
                  build();

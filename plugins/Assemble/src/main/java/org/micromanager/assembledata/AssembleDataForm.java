@@ -25,27 +25,40 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
+import java.awt.dnd.DropTarget;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JRadioButton;
+import javax.swing.JSeparator;
 import javax.swing.JSpinner;
+import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
+import org.micromanager.data.Datastore;
+import org.micromanager.data.Image;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.internal.event.DataViewerAddedEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
+import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
@@ -68,6 +81,9 @@ public class AssembleDataForm extends MMDialog {
    
    private final String DATAVIEWER1 = "DataViewer1";
    private final String DATAVIEWER2 = "DataViewer2";
+   private final String CHOOSEDIR = "ChooseDir";
+   private final String CHOOSEDATASET = "ChooseDataSet";
+   private final String DIRNAME = "DirName";
    private final String XOFFSET = "XOffset";
    private final String YOFFSET = "YOffset";
    private final int DEFAULTX = -350;
@@ -97,29 +113,85 @@ public class AssembleDataForm extends MMDialog {
       
       super.setLayout(new MigLayout("flowx, fill, insets 8"));
       super.setTitle(AssembleData.MENUNAME);
-
       super.loadAndRestorePosition(100, 100, 375, 275);
-
-      //populate DataViewer ComboBoxes
-
       
+      JRadioButton chooseDir = new JRadioButton("Choose Directory");
+      super.add(chooseDir, "span 2, wrap");
+      
+      final JTextField locationsField = new JTextField(50);
+      locationsField.setFont(arialSmallFont_);
+      locationsField.setText(profileSettings_.getString(DIRNAME,
+               profileSettings_.getString(DIRNAME, "")));
+      locationsField.setHorizontalAlignment(JTextField.LEFT);
+      super.add(locationsField, "span 2, split");
+      
+      DragDropListener dragDropListener = new DragDropListener(locationsField);
+      new DropTarget(this, dragDropListener);
+      new DropTarget(locationsField, dragDropListener);
+
+      final JButton locationsFieldButton =  mcsButton(buttonSize_, arialSmallFont_);
+      locationsFieldButton.setText("...");
+      locationsFieldButton.addActionListener((ActionEvent evt) -> {
+         File f = FileDialogs.openDir(this, "Locations File",   
+                 new FileDialogs.FileType("MMProjector", "Locations File",
+                         locationsField.getText(), true, "") );
+         if (f != null) {
+            locationsField.setText(f.getAbsolutePath());
+         }
+      });
+      super.add(locationsFieldButton, "wrap");
+      
+      super.add(new JSeparator(), "span 2, grow, wrap");
+      
+      
+      //populate DataViewer ComboBoxes   
+      JRadioButton chooseData = new JRadioButton("Choose from open Data Sets");
+      super.add(chooseData, "span 2, wrap");     
+ 
       dataSet1Box_ = new JComboBox();
       setupDataViewerBox(dataSet1Box_, DATAVIEWER1);
-      /*
-      dataSet1Box_.addActionListener((java.awt.event.ActionEvent evt) -> {
-         profileSettings_.putString(DATAVIEWER1, (String) 
-                 dataSet1Box_.getSelectedItem());
-      });
-      */
       super.add(new JLabel("First Data Set:"));
       super.add(dataSet1Box_, "wrap");
-      
-      
+     
       dataSet2Box_ = new JComboBox();
       setupDataViewerBox(dataSet2Box_, DATAVIEWER2);
       super.add(new JLabel("Second Data Set:"));
       super.add(dataSet2Box_, "wrap");
-    
+      
+      super.add(new JSeparator(), "span 2, grow, wrap");
+      
+      ButtonGroup buttonGroup = new ButtonGroup();
+      buttonGroup.add(chooseDir);
+      buttonGroup.add(chooseData);
+      
+      chooseDir.addActionListener((ActionEvent e) -> {
+         if (chooseDir.isSelected()) {
+            locationsField.setEnabled(true);
+            locationsFieldButton.setEnabled(true);
+            dataSet1Box_.setEnabled(false);
+            dataSet2Box_.setEnabled(false);
+            profileSettings_.putBoolean(CHOOSEDIR, true);
+            profileSettings_.putBoolean(CHOOSEDATASET, false);
+         }
+      });
+      chooseData.addActionListener((ActionEvent e) -> {
+         if (chooseData.isSelected()) {
+            locationsField.setEnabled(false);
+            locationsFieldButton.setEnabled(false);
+            dataSet1Box_.setEnabled(true);
+            dataSet2Box_.setEnabled(true);
+            profileSettings_.putBoolean(CHOOSEDIR, false);
+            profileSettings_.putBoolean(CHOOSEDATASET, true);
+         }
+      });
+      
+      chooseDir.setSelected(profileSettings_.getBoolean(CHOOSEDIR, false));
+      chooseData.setSelected(profileSettings_.getBoolean(CHOOSEDATASET, true));
+      locationsField.setEnabled(chooseDir.isSelected());
+      locationsFieldButton.setEnabled(chooseDir.isSelected());
+      dataSet1Box_.setEnabled(chooseData.isSelected());
+      dataSet2Box_.setEnabled(chooseData.isSelected());
+
       JLabel xOffsetLabel = new JLabel("X Offset (pixels)");
       super.add(xOffsetLabel);
       int xOffset = profileSettings_.getInteger(XOFFSET, DEFAULTX);
@@ -146,26 +218,21 @@ public class AssembleDataForm extends MMDialog {
                  "https://micro-manager.org/wiki/AssembleData")).start();
       });
       super.add (helpButton, "span 2, split 4");
-      
-      // TODO: add listeners and make refresh automatic
-      /*
-      final JButton refreshButton = new JButton("Refresh");
-      refreshButton.addActionListener( (ActionEvent e) -> {
-         setupDataViewerBox(dataSet1Box_, DATAVIEWER1);
-         setupDataViewerBox(dataSet2Box_, DATAVIEWER1);
-      });
-      super.add(refreshButton);
-*/
-                 
+    
+                
       final JButton testButton =  new JButton("Test");
       testButton.addActionListener((ActionEvent e) -> {
-         assemble(true);
+         if (chooseDir.isSelected()) {
+            checkDir(true, locationsField.getText());
+         } else {
+            assembleDataSets(true); 
+         }
       });
       super.add(testButton);
       
       final JButton assembleButton =  new JButton("Assemble");
       assembleButton.addActionListener((ActionEvent e) -> {
-         assemble(false);
+         assembleDataSets(false);
       });
       super.add(assembleButton, "wrap");
       
@@ -180,7 +247,7 @@ public class AssembleDataForm extends MMDialog {
       studio_.displays().registerForEvents(this);
    }
       
-   private void assemble(boolean test) {
+   private void assembleDataSets(boolean test) {
       String dataViewerName1 = profileSettings_.getString(DATAVIEWER1,"");
       String dataViewerName2 = profileSettings_.getString(DATAVIEWER2,"");
       DataViewer dv1 = null;
@@ -203,7 +270,105 @@ public class AssembleDataForm extends MMDialog {
       }
       int xOffset = profileSettings_.getInteger(XOFFSET, DEFAULTX);
       int yOffset = profileSettings_.getInteger(YOFFSET, DEFAULTY);
-      AssembleDataWorker.run(studio_, this, dv1, dv2, xOffset, yOffset, test);    
+      AssembleDataWorker.run(studio_, this, dv1.getDataProvider(), 
+              dv2.getDataProvider(), xOffset, yOffset, test);    
+   }
+   
+   private void checkDir(boolean test, String dirLocation) {
+      File dir = new File(dirLocation);
+      if (!dir.exists()) {
+         studio_.logs().showError("Directory " + dirLocation + " does not exist");
+         return;
+      }
+      if (!dir.isDirectory()) {
+         studio_.logs().showError(dirLocation + " is not a directory");
+      }
+      profileSettings_.putString(DIRNAME, dirLocation);
+      String[] dataSets = dir.list();
+      
+      // Expect dir names of the form:
+      // TIRF/Confocal-A1-Site_0-0   
+      // We will deal with extra "-" before well-Site, but not with extra "_"
+      
+      Set<String> roots = new HashSet<>();
+      Set<String> wells = new HashSet<>();
+      for (String location : dataSets) {
+         String[] lSplit = location.split("_");
+         if (lSplit.length != 2) {
+            studio_.logs().showError("The DataSetNames must contain exactly one underscore (_)");
+            return;
+         }
+         int lI = lSplit[0].lastIndexOf("-");
+         int lI2 = lSplit[0].substring(0,lI).lastIndexOf("-");
+         roots.add(lSplit[0].substring(0,lI2));
+         wells.add(lSplit[0].substring(lI2+1, lI));
+      }
+      if (roots.size() != 2) {
+         studio_.logs().showError("More than 2 roots found for the DataSet Names");
+      }
+      int nrWells = wells.size();
+      
+      // find matching datasets
+      String test1 = dataSets[0];
+      
+      String root = findRoot(test1, roots);
+      if (!root.isEmpty()) {
+         String remainder = test1.substring(root.length());
+         String partner = findOtherRoot(root, roots) + remainder;
+         File f1 = new File(dirLocation + File.separator + test1);
+         File f2 = new File(dirLocation + File.separator + partner);
+         if (!f1.exists() || !f1.isDirectory()) {
+            studio_.logs().showError("Failed to find " + f1.getPath());
+         }
+         if (!f2.exists() || !f2.isDirectory()) {
+            studio_.logs().showError("Failed to find " + f2.getPath());
+         }
+         try {
+            try (Datastore store1 = studio_.data().loadData(f1.getPath(), false)) {
+               try (Datastore store2 = studio_.data().loadData(f2.getPath(), false)) {
+                  Image img1 = store1.getAnyImage();
+                  Image img2 = store2.getAnyImage(); 
+                  int width = img1.getWidth();
+                  int width2 = img2.getWidth();
+                  int xOffset = profileSettings_.getInteger(XOFFSET, DEFAULTX);
+                  int yOffset = profileSettings_.getInteger(YOFFSET, DEFAULTY);
+                  AssembleDataWorker.execute(studio_, this, store1, store2, xOffset, yOffset, false);
+               }
+            }
+         } catch (IOException ioe) {
+            studio_.logs().showError(ioe, "Failed to open file " + f1.getPath());
+         }
+         
+      }
+       
+   }
+   
+   private String findRoot(String dirName, Set<String> roots) {
+      Iterator<String> it = roots.iterator();   
+      while (it.hasNext()) {
+         String root = it.next();
+         if (root.equals(dirName.substring(0, root.length()))) {
+            return root;
+         }
+      }
+      return "";
+   }
+   
+   /**
+    * Find the entry in the Set ( of size 2) that is not the given String
+    * @param root
+    * @param roots
+    * @return 
+    */
+   private String findOtherRoot(String root, Set<String> roots) {
+      Iterator<String> it = roots.iterator();   
+      while (it.hasNext()) {
+         String test = it.next();
+         if (!root.equals(test)) {
+            return test;
+         }
+      }
+      return "";
    }
   
    public void showGUI() {
