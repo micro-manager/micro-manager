@@ -54,7 +54,7 @@ public class SaverProcessor extends Processor {
             store_ = studio.data().createSinglePlaneTIFFSeriesDatastore(savePath_);
          }
          else if (format.equals(SaverPlugin.RAM)) {
-            store_ = studio.data().createRAMDatastore();
+            store_ = studio.data().createRewritableRAMDatastore();
          }
          else {
             studio_.logs().logError("Unrecognized save format " + format);
@@ -77,7 +77,20 @@ public class SaverProcessor extends Processor {
          store_.putImage(image);
       }
       catch (DatastoreFrozenException e) {
-         studio_.logs().logError(e, "Unable to save data: datastore is frozen");
+         // Weird that we can not query the store if it is frozen but have to rely
+         // on an exception...
+         if (format_.equals(SaverPlugin.RAM)) {
+            store_ = studio_.data().createRewritableRAMDatastore();
+            studio_.displays().manage(store_);
+            studio_.displays().createDisplay(store_);
+            try {
+               store_.putImage(image);
+            } catch (IOException ioe) {
+               studio_.logs().logError(ioe, "Unable to show Data: IoException");
+            }
+         } else {
+            studio_.logs().logError(e, "Unable to save data: datastore is frozen");
+         }
       }
       catch (DatastoreRewriteException e) {
          studio_.logs().logError(e, "Unable to save data: image already exists at " + image.getCoords());
