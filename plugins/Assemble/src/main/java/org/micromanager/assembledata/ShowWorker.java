@@ -30,7 +30,7 @@ public class ShowWorker {
            int xOffset, int yOffset, boolean test) {
 
       Datastore targetStore = studio.data().createRAMDatastore();
-      targetStore = AssembleDataAlgo.assemble(studio, form, targetStore, dp1, dp2, xOffset, yOffset, test);
+      targetStore = AssembleDataAlgo.assemble(studio, form, targetStore, dp1, dp2, xOffset, yOffset, 0, test);
 
       if (targetStore != null) {
          DisplayWindow disp = studio.displays().createDisplay(targetStore);

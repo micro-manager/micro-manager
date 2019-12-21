@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import org.micromanager.Studio;
+import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 
 /**
@@ -43,21 +44,21 @@ public class DirWorker {
       String currentWell = null;
 
       try {
+         int targetPosition = 0;
          for (int i = 0; i < fni1.size(); i++) {
             if (!fni1.get(i).well().equals(currentWell)) {
-               String remainder = fni1.get(0).fileName().substring(
-                       fni1.get(0).root().length());
-               String target = TARGET + remainder;
+               String target = TARGET + "-" + fni1.get(i).well();
                File fTarget = new File(dirLocation + File.separator + target);
                if (targetStore != null) {
-                     targetStore.close();
-                  }
+                  targetStore.close();
+               }
                targetStore = studio.data().createMultipageTIFFDatastore(
-                       fTarget.getAbsolutePath(), true, false);
+                       fTarget.getAbsolutePath(), false, false);
                currentWell = fni1.get(i).well();
+               targetPosition = 0;
             }
             File f1 = new File(dirLocation + File.separator + fni1.get(i).fileName());
-            File f2 = new File(dirLocation + File.separator + fni1.get(i).fileName());
+            File f2 = new File(dirLocation + File.separator + fni2.get(i).fileName());
             if (!f1.exists() || !f1.isDirectory()) {
                studio.logs().showError("Failed to find " + f1.getPath());
             }
@@ -67,16 +68,20 @@ public class DirWorker {
 
             try (Datastore store1 = studio.data().loadData(f1.getPath(), false)) {
                try (Datastore store2 = studio.data().loadData(f2.getPath(), false)) {
-                  targetStore = AssembleDataAlgo.assemble(
-                          studio, form, targetStore, store1, store2, xOffset, yOffset, test);
-                  
+                  targetStore = AssembleDataAlgo.assemble(studio, form, 
+                          targetStore, store1, store2, xOffset, yOffset, 
+                          targetPosition, test);
+
                }
             }
+            targetPosition++;
 
          }
-                        if (targetStore != null) {
-                     targetStore.close();
-                  }
+         if (targetStore != null) {
+            Coords c = targetStore.getSummaryMetadata().getIntendedDimensions().copyBuilder().p(targetPosition).build();
+            targetStore.setSummaryMetadata(targetStore.getSummaryMetadata().copyBuilder().intendedDimensions(c).build());
+            targetStore.close();
+         }
       } catch (IOException ioe) {
          studio.logs().showError(ioe, "Failed to open file ");
       }

@@ -28,12 +28,12 @@ import org.micromanager.internal.utils.imageanalysis.BoofCVImageConverter;
 public class AssembleDataAlgo {
 
    public static Datastore assemble(Studio studio, 
-           AssembleDataForm form,
-           Datastore output,
+           AssembleDataForm form, 
+           Datastore output, 
            DataProvider dp1, 
-           DataProvider dp2,
-           int xOffset, 
+           DataProvider dp2, int xOffset, 
            int yOffset, 
+           int targetPosition, 
            boolean test) {
 
       DataProvider spd = Utils.singlePositionData(dp1, dp2);
@@ -66,7 +66,7 @@ public class AssembleDataAlgo {
 
          DataProvider[] datas = {dp1, dp2};
 
-         Coords.Builder cb = Coordinates.builder().t(0).c(0).p(0).z(0);
+         Coords.Builder cb = Coordinates.builder().t(0).c(0).p(targetPosition).z(0);
          // need to initialize these parameters with something sensible
          double xMinUm = singlePositionImg.getMetadata().getXPositionUm() - (0.5 * singlePositionImg.getWidth() * singlePositionPixelSize);
          double yMinUm = singlePositionImg.getMetadata().getYPositionUm() - (0.5 * singlePositionImg.getHeight() * singlePositionPixelSize);
@@ -157,7 +157,7 @@ public class AssembleDataAlgo {
                   GImageMiscOps.copy(0, 0, 0, 0, img.getWidth(), img.getHeight(),
                           oldImgBoof, newImgBoof);
                   Image newImage = BoofCVImageConverter.boofCVToMM(newImgBoof,
-                          cb.p(0).c(c).t(t).build(), newMetadataB.build());
+                          cb.p(targetPosition).c(c).t(t).build(), newMetadataB.build());
                   output.putImage(newImage);
                   GImageMiscOps.fill(newImgBoof, 0.0);
                }
@@ -210,7 +210,7 @@ public class AssembleDataAlgo {
                }
                if (newMetadataB != null) {
                   Image newImage = BoofCVImageConverter.boofCVToMM(newImgBoof,
-                          cb.p(0).c(c + spdCLength).build(), newMetadataB.build());
+                          cb.p(targetPosition).c(c + spdCLength).build(), newMetadataB.build());
                   output.putImage(newImage);
                   GImageMiscOps.fill(newImgBoof, 0.0);
                }
