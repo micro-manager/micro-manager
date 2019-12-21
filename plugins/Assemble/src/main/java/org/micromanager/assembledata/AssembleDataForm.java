@@ -32,6 +32,8 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -52,6 +54,7 @@ import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
+import org.micromanager.assembledata.exceptions.MalFormedFileNameException;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.display.DataViewer;
@@ -223,7 +226,7 @@ public class AssembleDataForm extends MMDialog {
       final JButton testButton =  new JButton("Test");
       testButton.addActionListener((ActionEvent e) -> {
          if (chooseDir.isSelected()) {
-            checkDir(true, locationsField.getText());
+            assembleDir(true, locationsField.getText());
          } else {
             assembleDataSets(true); 
          }
@@ -232,7 +235,11 @@ public class AssembleDataForm extends MMDialog {
       
       final JButton assembleButton =  new JButton("Assemble");
       assembleButton.addActionListener((ActionEvent e) -> {
-         assembleDataSets(false);
+         if (chooseDir.isSelected()) {
+            assembleDir(false, locationsField.getText());
+         } else {
+            assembleDataSets(false); 
+         }
       });
       super.add(assembleButton, "wrap");
       
@@ -270,11 +277,11 @@ public class AssembleDataForm extends MMDialog {
       }
       int xOffset = profileSettings_.getInteger(XOFFSET, DEFAULTX);
       int yOffset = profileSettings_.getInteger(YOFFSET, DEFAULTY);
-      AssembleDataWorker.run(studio_, this, dv1.getDataProvider(), 
+      ShowWorker.run(studio_, this, dv1.getDataProvider(), 
               dv2.getDataProvider(), xOffset, yOffset, test);    
    }
    
-   private void checkDir(boolean test, String dirLocation) {
+   private void assembleDir(boolean test, String dirLocation)  {
       File dir = new File(dirLocation);
       if (!dir.exists()) {
          studio_.logs().showError("Directory " + dirLocation + " does not exist");
@@ -290,86 +297,73 @@ public class AssembleDataForm extends MMDialog {
       // TIRF/Confocal-A1-Site_0-0   
       // We will deal with extra "-" before well-Site, but not with extra "_"
       
-      Set<String> roots = new HashSet<>();
-      Set<String> wells = new HashSet<>();
+      List<FileNameInfo> fileNameInfos = new ArrayList<>();
       for (String location : dataSets) {
-         String[] lSplit = location.split("_");
-         if (lSplit.length != 2) {
-            studio_.logs().showError("The DataSetNames must contain exactly one underscore (_)");
-            return;
+         try {
+         fileNameInfos.add(new FileNameInfo(location));
+         } catch (MalFormedFileNameException mf) {
+            studio_.logs().showError("Failed to parse filename: " + location);
          }
-         int lI = lSplit[0].lastIndexOf("-");
-         int lI2 = lSplit[0].substring(0,lI).lastIndexOf("-");
-         roots.add(lSplit[0].substring(0,lI2));
-         wells.add(lSplit[0].substring(lI2+1, lI));
+      }
+      Collections.sort(fileNameInfos);
+      
+      Set<String> roots = new HashSet<>();
+      for (FileNameInfo entry : fileNameInfos) {
+         roots.add(entry.root());
       }
       if (roots.size() != 2) {
          studio_.logs().showError("More than 2 roots found for the DataSet Names");
       }
-      int nrWells = wells.size();
-      
-      // find matching datasets
-      String test1 = dataSets[0];
-      
-      String root = findRoot(test1, roots);
-      if (!root.isEmpty()) {
-         String remainder = test1.substring(root.length());
-         String partner = findOtherRoot(root, roots) + remainder;
-         File f1 = new File(dirLocation + File.separator + test1);
-         File f2 = new File(dirLocation + File.separator + partner);
-         if (!f1.exists() || !f1.isDirectory()) {
-            studio_.logs().showError("Failed to find " + f1.getPath());
+      List<FileNameInfo> fni1 = new ArrayList<>();
+      List<FileNameInfo> fni2 = new ArrayList<>();
+      List<String> rootList = new ArrayList(2);
+      for (String root : roots) {
+         rootList.add(root);
+      }
+      for (FileNameInfo entry : fileNameInfos) {
+         if (entry.root().equals(rootList.get(0))) {
+            fni1.add(entry);
+         } else if (entry.root().equals(rootList.get(1))) {
+            fni2.add(entry);
          }
-         if (!f2.exists() || !f2.isDirectory()) {
-            studio_.logs().showError("Failed to find " + f2.getPath());
-         }
-         try {
-            try (Datastore store1 = studio_.data().loadData(f1.getPath(), false)) {
-               try (Datastore store2 = studio_.data().loadData(f2.getPath(), false)) {
-                  Image img1 = store1.getAnyImage();
-                  Image img2 = store2.getAnyImage(); 
-                  int width = img1.getWidth();
-                  int width2 = img2.getWidth();
-                  int xOffset = profileSettings_.getInteger(XOFFSET, DEFAULTX);
-                  int yOffset = profileSettings_.getInteger(YOFFSET, DEFAULTY);
-                  AssembleDataWorker.execute(studio_, this, store1, store2, xOffset, yOffset, false);
-               }
+      }
+      
+      // TODO: check that the sie of fni1 and 2 are the same
+
+      int xOffset = profileSettings_.getInteger(XOFFSET, DEFAULTX);
+      int yOffset = profileSettings_.getInteger(YOFFSET, DEFAULTY);
+
+      if (test) {
+         String test1 = dataSets[0];
+         String root = Utils.findRoot(test1, roots);
+         if (!root.isEmpty()) {
+            String remainder = test1.substring(root.length());
+            String partner = Utils.findOtherRoot(root, roots) + remainder;
+            File f1 = new File(dirLocation + File.separator + test1);
+            File f2 = new File(dirLocation + File.separator + partner);
+            if (!f1.exists() || !f1.isDirectory()) {
+               studio_.logs().showError("Failed to find " + f1.getPath());
             }
-         } catch (IOException ioe) {
-            studio_.logs().showError(ioe, "Failed to open file " + f1.getPath());
+            if (!f2.exists() || !f2.isDirectory()) {
+               studio_.logs().showError("Failed to find " + f2.getPath());
+            }
+            try {
+               try (Datastore store1 = studio_.data().loadData(f1.getPath(), false)) {
+                  try (Datastore store2 = studio_.data().loadData(f2.getPath(), false)) {
+                     ShowWorker.execute(studio_, this, store1, store2, xOffset, yOffset, test);
+                  }
+               }
+            } catch (IOException ioe) {
+               studio_.logs().showError(ioe, "Failed to open file " + f1.getPath());
+            }
          }
-         
+      } else {
+         DirWorker.execute(studio_, this, dirLocation, fni1, fni2, xOffset, yOffset, test);
       }
        
    }
    
-   private String findRoot(String dirName, Set<String> roots) {
-      Iterator<String> it = roots.iterator();   
-      while (it.hasNext()) {
-         String root = it.next();
-         if (root.equals(dirName.substring(0, root.length()))) {
-            return root;
-         }
-      }
-      return "";
-   }
-   
-   /**
-    * Find the entry in the Set ( of size 2) that is not the given String
-    * @param root
-    * @param roots
-    * @return 
-    */
-   private String findOtherRoot(String root, Set<String> roots) {
-      Iterator<String> it = roots.iterator();   
-      while (it.hasNext()) {
-         String test = it.next();
-         if (!root.equals(test)) {
-            return test;
-         }
-      }
-      return "";
-   }
+
   
    public void showGUI() {
       setVisible(true);

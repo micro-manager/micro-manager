@@ -1,4 +1,3 @@
-
 package org.micromanager.assembledata;
 
 import boofcv.abst.distort.FDistort;
@@ -20,34 +19,28 @@ import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
-import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.utils.imageanalysis.BoofCVImageConverter;
 
 /**
  *
  * @author nico
  */
-public class AssembleDataWorker {
-   
-    public static void run(Studio studio, AssembleDataForm form, DataProvider dp1, DataProvider dp2,
-           int xOffset, int yOffset, boolean test) {
-       Runnable t = () -> {
-          execute ( studio,  form, dp1,  dp2, xOffset,  yOffset, test);
-       };
-       Thread assembleThread = new Thread(t);
-       assembleThread.start();
-       
-    }
-    
-    public static void execute (Studio studio, AssembleDataForm form, DataProvider dp1, DataProvider dp2,
-           int xOffset, int yOffset, boolean test) {
-      
-      DataProvider spd = AssembleDataUtils.singlePositionData(dp1, dp2);
-      DataProvider mpd = AssembleDataUtils.multiPositionData(dp1, dp2);
+public class AssembleDataAlgo {
+
+   public static Datastore assemble(Studio studio, 
+           AssembleDataForm form,
+           Datastore output,
+           DataProvider dp1, 
+           DataProvider dp2,
+           int xOffset, 
+           int yOffset, 
+           boolean test) {
+
+      DataProvider spd = Utils.singlePositionData(dp1, dp2);
+      DataProvider mpd = Utils.multiPositionData(dp1, dp2);
 
       try {
-         
+
          Image singlePositionImg = spd.getAnyImage();
          Image multiPositionImg = mpd.getAnyImage();
          Metadata singlePositionMD = singlePositionImg.getMetadata();
@@ -60,17 +53,17 @@ public class AssembleDataWorker {
          if (multiPositionPixelSize < basePixelSize) {
             basePixelSize = multiPositionPixelSize;
          }
-         
+
          Affine2D_F64 singlePositionAf64 = BoofCVImageConverter.convertAff(singlePositionAff);
          Affine2D_F64 singlePositionAf64I = singlePositionAf64.invert(null);
          Affine2D_F64 multiPositionAf64 = BoofCVImageConverter.convertAff(multiPositionAff);
-               
+
          int bytesPerPixel = singlePositionImg.getBytesPerPixel();
          if (multiPositionImg.getBytesPerPixel() != bytesPerPixel) {
             // mm.scripter().message("Images differ in bytes per pixel");
-            return;
+            return null;
          }
-         
+
          DataProvider[] datas = {dp1, dp2};
 
          Coords.Builder cb = Coordinates.builder().t(0).c(0).p(0).z(0);
@@ -79,7 +72,7 @@ public class AssembleDataWorker {
          double yMinUm = singlePositionImg.getMetadata().getYPositionUm() - (0.5 * singlePositionImg.getHeight() * singlePositionPixelSize);
          double xMaxUm = singlePositionImg.getMetadata().getXPositionUm() + (0.5 * singlePositionImg.getWidth() * singlePositionPixelSize);
          double yMaxUm = singlePositionImg.getMetadata().getYPositionUm() + (0.5 * singlePositionImg.getHeight() * singlePositionPixelSize);
-         
+
          for (DataProvider data : datas) {
             for (int p = 0; p <= data.getMaxIndices().getP(); p++) {
                Image img = data.getImage(cb.p(p).build());
@@ -102,12 +95,12 @@ public class AssembleDataWorker {
                }
             }
          }
-         
+
          double widthUm = xMaxUm - xMinUm;
          double heightUm = yMaxUm - yMinUm;
          double centerXUm = xMinUm + (widthUm / 2.0);
          double centerYUm = yMinUm + (heightUm / 2.0);
-         
+
          int widthPixels = (int) (widthUm / basePixelSize) + 1;
          int heightPixels = (int) (heightUm / basePixelSize) + 1;
 
@@ -116,8 +109,6 @@ public class AssembleDataWorker {
          // of the target image.   
          singlePositionAf64I.tx = widthPixels / 2.0 + xOffset;
          singlePositionAf64I.ty = heightPixels / 2.0 + yOffset;
-         
-         Datastore targetStore = studio.data().createRAMDatastore();
 
          //for (DataProvider data : datas) {
          cb.t(0).c(0).p(0).z(0);
@@ -133,7 +124,7 @@ public class AssembleDataWorker {
          }
 
          // single position data
-         final int spdTLength = test ? 1 :  spd.getAxisLength(Coords.T);
+         final int spdTLength = test ? 1 : spd.getAxisLength(Coords.T);
          final int spdCLength = test ? 1 : spd.getAxisLength(Coords.C);
          for (int t = 0; t < spdTLength; t++) {
             for (int c = 0; c < spdCLength; c++) {
@@ -141,7 +132,7 @@ public class AssembleDataWorker {
                Image img = spd.getImage(cb.p(0).build());
                if (img != null) {
                   Metadata.Builder newMetadataB = img.getMetadata().
-                       copyBuilderWithNewUUID().pixelSizeUm(basePixelSize);
+                          copyBuilderWithNewUUID().pixelSizeUm(basePixelSize);
                   /*
                   TODO: use stage position informatoin to correct for inaccuracies
                   this will currently cause errors in the GImageMiscOps.copy step
@@ -151,7 +142,7 @@ public class AssembleDataWorker {
 
                   int xMinPixel = (int) ((tmpXMinUm - xMinUm) / basePixelSize);
                   int yMinPixel = (int) ((tmpYMinUm - yMinUm) / basePixelSize);
-                  */
+                   */
                   if (bytesPerPixel == 1) {
                      GrayU8 tmp = new GrayU8(img.getWidth(), img.getHeight());
                      tmp.setData((byte[]) img.getRawPixels());
@@ -167,14 +158,14 @@ public class AssembleDataWorker {
                           oldImgBoof, newImgBoof);
                   Image newImage = BoofCVImageConverter.boofCVToMM(newImgBoof,
                           cb.p(0).c(c).t(t).build(), newMetadataB.build());
-                  targetStore.putImage(newImage);
+                  output.putImage(newImage);
                   GImageMiscOps.fill(newImgBoof, 0.0);
                }
             }
             int progress = (int) (50.0 * t / spd.getAxisLength(Coords.T));
             form.setStatus(" " + progress + "%");
          }
-         
+
          // multi position data
          final int mpdTLength = test ? 1 : mpd.getAxisLength(Coords.T);
          final int mpdCLenghth = test ? 1 : mpd.getAxisLength(Coords.C);
@@ -220,29 +211,21 @@ public class AssembleDataWorker {
                if (newMetadataB != null) {
                   Image newImage = BoofCVImageConverter.boofCVToMM(newImgBoof,
                           cb.p(0).c(c + spdCLength).build(), newMetadataB.build());
-                  targetStore.putImage(newImage);
+                  output.putImage(newImage);
                   GImageMiscOps.fill(newImgBoof, 0.0);
                }
             }
             int progress = (int) (50.0 + 50.0 * t / spdTLength);
             form.setStatus(" " + progress + "%");
          }
-         
-         DisplayWindow disp = studio.displays().createDisplay(targetStore);
-         DisplaySettings dispSettings = disp.getDisplaySettings();
-         DisplaySettings.Builder dpb = dispSettings.copyBuilder();
-         
-         DisplaySettings newDP = dpb.colorModeComposite().
-                 channel(0, dispSettings.getChannelSettings(0).copyBuilder().colorGreen().build()).
-                 channel(1, dispSettings.getChannelSettings(1).copyBuilder().colorRed().build()).
-                 build();
-         disp.compareAndSetDisplaySettings(dispSettings, newDP);
-         studio.displays().manage(targetStore);
-         targetStore.freeze();
-         form.setStatus("Done...");
+
+         return output;
+
       } catch (IOException io2) {
          studio.logs().showError(io2);
       }
+
+      return null;
    }
-   
+
 }
