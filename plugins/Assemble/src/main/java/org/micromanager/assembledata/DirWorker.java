@@ -78,8 +78,8 @@ public class DirWorker {
 
          }
          if (targetStore != null) {
-            Coords c = targetStore.getSummaryMetadata().getIntendedDimensions().copyBuilder().p(targetPosition).build();
-            targetStore.setSummaryMetadata(targetStore.getSummaryMetadata().copyBuilder().intendedDimensions(c).build());
+            //Coords c = targetStore.getSummaryMetadata().getIntendedDimensions().copyBuilder().p(targetPosition).build();
+            //targetStore.setSummaryMetadata(targetStore.getSummaryMetadata().copyBuilder().intendedDimensions(c).build());
             targetStore.close();
          }
       } catch (IOException ioe) {

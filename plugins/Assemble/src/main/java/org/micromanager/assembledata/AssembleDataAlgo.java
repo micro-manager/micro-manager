@@ -156,6 +156,8 @@ public class AssembleDataAlgo {
                   //        oldImgBoof, newImgBoof);
                   GImageMiscOps.copy(0, 0, 0, 0, img.getWidth(), img.getHeight(),
                           oldImgBoof, newImgBoof);
+                  Coords coords = cb.p(targetPosition).c(c).t(t).build();
+                  System.out.println(coords.toString());
                   Image newImage = BoofCVImageConverter.boofCVToMM(newImgBoof,
                           cb.p(targetPosition).c(c).t(t).build(), newMetadataB.build());
                   output.putImage(newImage);
@@ -209,8 +211,10 @@ public class AssembleDataAlgo {
                   }
                }
                if (newMetadataB != null) {
-                  Image newImage = BoofCVImageConverter.boofCVToMM(newImgBoof,
-                          cb.p(targetPosition).c(c + spdCLength).build(), newMetadataB.build());
+                  Coords coords = cb.p(targetPosition).c(c + spdCLength).t(t).build();
+                  System.out.println(coords.toString());
+                  Image newImage = BoofCVImageConverter.boofCVToMM(newImgBoof, 
+                          coords, newMetadataB.build());
                   output.putImage(newImage);
                   GImageMiscOps.fill(newImgBoof, 0.0);
                }

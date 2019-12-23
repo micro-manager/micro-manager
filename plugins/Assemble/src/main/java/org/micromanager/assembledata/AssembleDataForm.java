@@ -358,7 +358,7 @@ public class AssembleDataForm extends MMDialog {
             }
          }
       } else {
-         DirWorker.execute(studio_, this, dirLocation, fni1, fni2, xOffset, yOffset, test);
+         DirWorker.run(studio_, this, dirLocation, fni1, fni2, xOffset, yOffset, test);
       }
        
    }
