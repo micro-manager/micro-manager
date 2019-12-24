@@ -35,7 +35,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import javax.swing.ButtonGroup;
@@ -56,7 +55,6 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.assembledata.exceptions.MalFormedFileNameException;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.Image;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.internal.event.DataViewerAddedEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
@@ -116,12 +114,12 @@ public class AssembleDataForm extends MMDialog {
       
       super.setLayout(new MigLayout("flowx, fill, insets 8"));
       super.setTitle(AssembleData.MENUNAME);
-      super.loadAndRestorePosition(100, 100, 375, 275);
+      super.loadAndRestorePosition(100, 100, 449, 327);
       
       JRadioButton chooseDir = new JRadioButton("Choose Directory");
       super.add(chooseDir, "span 2, wrap");
       
-      final JTextField locationsField = new JTextField(50);
+      final JTextField locationsField = new JTextField(35);
       locationsField.setFont(arialSmallFont_);
       locationsField.setText(profileSettings_.getString(DIRNAME,
                profileSettings_.getString(DIRNAME, "")));
