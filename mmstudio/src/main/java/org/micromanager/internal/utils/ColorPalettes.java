@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.micromanager.internal.utils;
 
 import java.awt.Color;
@@ -96,7 +91,7 @@ public final class ColorPalettes {
    //
    //
 
-   private static final Map<String, Float> wavelengths_ =
+   private static final Map<String, Float> WAVELENGTHS =
          new LinkedHashMap<String, Float>();
    static {
       // Don't expect these numbers to be scientifically accurate in any sense;
@@ -107,53 +102,53 @@ public final class ColorPalettes {
       //
       // Source: Wikipedia, ThermoFisher, Chroma, etc.
       // List is ordered so that longer strings match before their substrings
-      wavelengths_.put("cy7", 767f);
-      wavelengths_.put("cy5.5", 694f);
-      wavelengths_.put("cy5", 670f);
-      wavelengths_.put("cy3.5", 594f);
-      wavelengths_.put("cy3", 570f);
-      wavelengths_.put("cy2", 506f);
-      wavelengths_.put("txr", 615f);
-      wavelengths_.put("texr", 615f);
-      wavelengths_.put("texred", 615f);
-      wavelengths_.put("texas", 615f);
-      wavelengths_.put("tamra", 580f);
-      wavelengths_.put("tritc", 572f);
-      wavelengths_.put("rhodamine", 576f);
-      wavelengths_.put("fitc", 518f);
-      wavelengths_.put("fluorescein", 519f);
-      wavelengths_.put("yoyo", 509f);
-      wavelengths_.put("dapi", 461f);
-      wavelengths_.put("hoechst", 461f);
-      wavelengths_.put("33342", 461f);
-      wavelengths_.put("34580", 461f);
-      wavelengths_.put("coumarin", 400f);
-      wavelengths_.put("raspberry", 625f);
-      wavelengths_.put("plum", 649f);
-      wavelengths_.put("cherry", 610f);
-      wavelengths_.put("mrfp", 607f);
-      wavelengths_.put("strawberry", 596f);
-      wavelengths_.put("rfp", 582f);
-      wavelengths_.put("dsred", 584f);
-      wavelengths_.put("tomato", 581f);
-      wavelengths_.put("orange", 562f);
-      wavelengths_.put("yellow", 539f);
-      wavelengths_.put("citrine", 529f);
-      wavelengths_.put("venus", 528f);
-      wavelengths_.put("eyfp", 527f);
-      wavelengths_.put("yfp", 527f);
-      wavelengths_.put("wasabi", 509f);
-      wavelengths_.put("green", 505f);
-      wavelengths_.put("egfp", 507f);
-      wavelengths_.put("gfp", 508f);
-      wavelengths_.put("mtfp", 477f);
-      wavelengths_.put("cfp", 477f);
-      wavelengths_.put("turquoise", 474f);
-      wavelengths_.put("cerulean", 475f);
-      wavelengths_.put("bfp", 440f);
-      wavelengths_.put("red", 584f);
-      wavelengths_.put("fam", 516f);
-      wavelengths_.put("tr", 615f);
+      WAVELENGTHS.put("cy7", 767f);
+      WAVELENGTHS.put("cy5.5", 694f);
+      WAVELENGTHS.put("cy5", 670f);
+      WAVELENGTHS.put("cy3.5", 594f);
+      WAVELENGTHS.put("cy3", 570f);
+      WAVELENGTHS.put("cy2", 506f);
+      WAVELENGTHS.put("txr", 615f);
+      WAVELENGTHS.put("texr", 615f);
+      WAVELENGTHS.put("texred", 615f);
+      WAVELENGTHS.put("texas", 615f);
+      WAVELENGTHS.put("tamra", 580f);
+      WAVELENGTHS.put("tritc", 572f);
+      WAVELENGTHS.put("rhodamine", 576f);
+      WAVELENGTHS.put("fitc", 518f);
+      WAVELENGTHS.put("fluorescein", 519f);
+      WAVELENGTHS.put("yoyo", 509f);
+      WAVELENGTHS.put("dapi", 461f);
+      WAVELENGTHS.put("hoechst", 461f);
+      WAVELENGTHS.put("33342", 461f);
+      WAVELENGTHS.put("34580", 461f);
+      WAVELENGTHS.put("coumarin", 400f);
+      WAVELENGTHS.put("raspberry", 625f);
+      WAVELENGTHS.put("plum", 649f);
+      WAVELENGTHS.put("cherry", 610f);
+      WAVELENGTHS.put("mrfp", 607f);
+      WAVELENGTHS.put("strawberry", 596f);
+      WAVELENGTHS.put("rfp", 582f);
+      WAVELENGTHS.put("dsred", 584f);
+      WAVELENGTHS.put("tomato", 581f);
+      WAVELENGTHS.put("orange", 562f);
+      WAVELENGTHS.put("yellow", 539f);
+      WAVELENGTHS.put("citrine", 529f);
+      WAVELENGTHS.put("venus", 528f);
+      WAVELENGTHS.put("eyfp", 527f);
+      WAVELENGTHS.put("yfp", 527f);
+      WAVELENGTHS.put("wasabi", 509f);
+      WAVELENGTHS.put("green", 505f);
+      WAVELENGTHS.put("egfp", 507f);
+      WAVELENGTHS.put("gfp", 508f);
+      WAVELENGTHS.put("mtfp", 477f);
+      WAVELENGTHS.put("cfp", 477f);
+      WAVELENGTHS.put("turquoise", 474f);
+      WAVELENGTHS.put("cerulean", 475f);
+      WAVELENGTHS.put("bfp", 440f);
+      WAVELENGTHS.put("red", 584f);
+      WAVELENGTHS.put("fam", 516f);
+      WAVELENGTHS.put("tr", 615f);
    }
    private static final Pattern NM_PATTERN = Pattern.compile(
          // 3-digit number
@@ -162,15 +157,15 @@ public final class ColorPalettes {
    private static final int NM_GROUP_INDEX = 2;
    public static Color guessColor(String channelName) {
       String name = channelName.toLowerCase();
-      Float lambda = wavelengths_.get(name);
+      Float lambda = WAVELENGTHS.get(name);
       // full match
       if (lambda != null) {
          return colorForMonochromaticWavelenth(lambda);
       }
       // partial match
-      for (String key : wavelengths_.keySet()) {
+      for (String key : WAVELENGTHS.keySet()) {
          if (name.contains(key)) {
-            return colorForMonochromaticWavelenth(wavelengths_.get(key));
+            return colorForMonochromaticWavelenth(WAVELENGTHS.get(key));
          }
       }
       // if there is a 3-digit number in name, take it as excitation/absorption
