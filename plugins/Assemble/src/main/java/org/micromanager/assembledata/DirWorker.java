@@ -77,9 +77,7 @@ public class DirWorker {
             targetPosition++;
 
          }
-         if (targetStore != null) {
-            //Coords c = targetStore.getSummaryMetadata().getIntendedDimensions().copyBuilder().p(targetPosition).build();
-            //targetStore.setSummaryMetadata(targetStore.getSummaryMetadata().copyBuilder().intendedDimensions(c).build());
+         if (targetStore != null) {  
             targetStore.close();
          }
       } catch (IOException ioe) {

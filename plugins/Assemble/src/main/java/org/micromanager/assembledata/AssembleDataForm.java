@@ -299,10 +299,12 @@ public class AssembleDataForm extends MMDialog {
       
       List<FileNameInfo> fileNameInfos = new ArrayList<>();
       for (String location : dataSets) {
-         try {
-         fileNameInfos.add(new FileNameInfo(location));
-         } catch (MalFormedFileNameException mf) {
-            studio_.logs().showError("Failed to parse filename: " + location);
+         if (!location.startsWith(".")) { // avoid junk files emitted by Mac OS
+            try {
+               fileNameInfos.add(new FileNameInfo(location));
+            } catch (MalFormedFileNameException mf) {
+               studio_.logs().showError("Failed to parse filename: " + location);
+            }
          }
       }
       Collections.sort(fileNameInfos);

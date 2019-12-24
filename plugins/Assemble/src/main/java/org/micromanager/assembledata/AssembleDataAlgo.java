@@ -101,9 +101,17 @@ public class AssembleDataAlgo {
          double centerXUm = xMinUm + (widthUm / 2.0);
          double centerYUm = yMinUm + (heightUm / 2.0);
 
-         int widthPixels = (int) (widthUm / basePixelSize) + 1;
-         int heightPixels = (int) (heightUm / basePixelSize) + 1;
-
+         /*  Be Warned!
+             reading new image size from metdata is the right size to do, but 
+             leads to slightly different sizes for consecutive positions.
+             MM deals very poorly with images of different sizes (i.e., currently
+             silently accepts them but causes lots of problems downstream)
+         */
+         // int widthPixels = (int) (widthUm / basePixelSize) + 1;
+         // int heightPixels = (int) (heightUm / basePixelSize) + 1;
+         int widthPixels = spd.getAnyImage().getWidth();
+         int heightPixels = spd.getAnyImage().getHeight();
+         
          // Not sure why, but it looks like the image will end up at the origin
          // rather then the center unless we set this translation to the center
          // of the target image.   
@@ -126,12 +134,13 @@ public class AssembleDataAlgo {
          // single position data
          final int spdTLength = test ? 1 : spd.getAxisLength(Coords.T);
          final int spdCLength = test ? 1 : spd.getAxisLength(Coords.C);
+         Metadata.Builder newMetadataB;
          for (int t = 0; t < spdTLength; t++) {
             for (int c = 0; c < spdCLength; c++) {
                cb.t(t).c(c).p(0).z(0);
                Image img = spd.getImage(cb.p(0).build());
                if (img != null) {
-                  Metadata.Builder newMetadataB = img.getMetadata().
+                  newMetadataB = img.getMetadata().
                           copyBuilderWithNewUUID().pixelSizeUm(basePixelSize);
                   /*
                   TODO: use stage position informatoin to correct for inaccuracies
@@ -158,6 +167,7 @@ public class AssembleDataAlgo {
                           oldImgBoof, newImgBoof);
                   Coords coords = cb.p(targetPosition).c(c).t(t).build();
                   System.out.println(coords.toString());
+                  newMetadataB.positionName("Site-" + targetPosition);
                   Image newImage = BoofCVImageConverter.boofCVToMM(newImgBoof,
                           cb.p(targetPosition).c(c).t(t).build(), newMetadataB.build());
                   output.putImage(newImage);
@@ -173,7 +183,7 @@ public class AssembleDataAlgo {
          final int mpdCLenghth = test ? 1 : mpd.getAxisLength(Coords.C);
          for (int t = 0; t < mpdTLength; t++) {
             for (int c = 0; c < mpdCLenghth; c++) {
-               Metadata.Builder newMetadataB = null;
+               newMetadataB = null;
                for (int p = 0; p <= mpd.getMaxIndices().getP(); p++) {
                   Image img = mpd.getImage(cb.c(c).t(t).p(p).build());
                   if (img != null) {
@@ -212,7 +222,8 @@ public class AssembleDataAlgo {
                }
                if (newMetadataB != null) {
                   Coords coords = cb.p(targetPosition).c(c + spdCLength).t(t).build();
-                  System.out.println(coords.toString());
+                  System.out.println(coords.toString());                  
+                  newMetadataB.positionName("Site-" + targetPosition);
                   Image newImage = BoofCVImageConverter.boofCVToMM(newImgBoof, 
                           coords, newMetadataB.build());
                   output.putImage(newImage);
