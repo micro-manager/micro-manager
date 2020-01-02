@@ -216,11 +216,8 @@ public final class MainFrame extends MMFrame {
       button.setMargin(new Insets(0, 0, 0, 0));
       button.setToolTipText(help);
       button.setFont(defaultFont_);
-      button.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            action.run();
-         }
+      button.addActionListener((ActionEvent e) -> {
+         action.run();
       });
       return button;
    }
@@ -252,11 +249,8 @@ public final class MainFrame extends MMFrame {
          }
       });
       textFieldExp_.setFont(defaultFont_);
-      textFieldExp_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            mmStudio_.setExposure(getDisplayedExposureTime());
-         }
+      textFieldExp_.addActionListener((ActionEvent e) -> {
+         mmStudio_.setExposure(getDisplayedExposureTime());
       });
       subPanel.add(textFieldExp_, "gapleft push, wrap");
 
@@ -272,17 +266,14 @@ public final class MainFrame extends MMFrame {
          }
       };
       chanGroupSelect_.setFont(defaultFont_);
-      chanGroupSelect_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            if (!shouldChangeChannelGroup_) {
-               // We're modifying this combobox, so we don't want it making
-               // changes.
-               return;
-            }
-            String newGroup = (String) chanGroupSelect_.getSelectedItem();
-            mmStudio_.getAcquisitionEngine().setChannelGroup(newGroup);
+      chanGroupSelect_.addActionListener((ActionEvent e) -> {
+         if (!shouldChangeChannelGroup_) {
+            // We're modifying this combobox, so we don't want it making
+            // changes.
+            return;
          }
+         String newGroup = (String) chanGroupSelect_.getSelectedItem();
+         mmStudio_.getAcquisitionEngine().setChannelGroup(newGroup);
       });
       subPanel.add(chanGroupSelect_, "gapleft push, wrap");
 
@@ -293,11 +284,8 @@ public final class MainFrame extends MMFrame {
       comboBinning_.setName("Binning");
       comboBinning_.setFont(defaultFont_);
       comboBinning_.setMaximumRowCount(4);
-      comboBinning_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            mmStudio_.changeBinning();
-         }
+      comboBinning_.addActionListener((ActionEvent e) -> {
+         mmStudio_.changeBinning();
       });
       subPanel.add(comboBinning_, "gapleft push, width 60::, wrap");
 
@@ -310,16 +298,13 @@ public final class MainFrame extends MMFrame {
       shutterComboBox_ = new JComboBox();
       shutterComboBox_.setName("Shutter");
       shutterComboBox_.setFont(defaultFont_);
-      shutterComboBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            try {
-               if (shutterComboBox_.getSelectedItem() != null) {
-                  core_.setShutterDevice((String) shutterComboBox_.getSelectedItem());
-               }
-            } catch (Exception e) {
-               ReportingUtils.showError(e);
+      shutterComboBox_.addActionListener((ActionEvent arg0) -> {
+         try {
+            if (shutterComboBox_.getSelectedItem() != null) {
+               core_.setShutterDevice((String) shutterComboBox_.getSelectedItem());
             }
+         } catch (Exception e) {
+            ReportingUtils.showError(e);
          }
       });
       shutterPanel.add(shutterComboBox_, "gapleft push, width 60::, wrap");
@@ -344,13 +329,9 @@ public final class MainFrame extends MMFrame {
             "flowx, growx, pushy 0, split 2");
 
       saveConfigButton_ = createButton("Save", null,
-         "Save current presets to the configuration file",
-         new Runnable() {
-            @Override
-            public void run() {
-               mmStudio_.promptToSaveConfigPresets();
-            }
-         });
+         "Save current presets to the configuration file", () -> {
+            mmStudio_.promptToSaveConfigPresets();
+      });
       subPanel.add(saveConfigButton_,
             "pushy 0, gapleft push, alignx right, w 88!, h 20!");
 
@@ -388,30 +369,22 @@ public final class MainFrame extends MMFrame {
       subPanel.add(liveButton_, BIGBUTTON_SIZE);
 
       JButton albumButton = createButton("Album", "camera_plus_arrow.png",
-         "Acquire single frame and add to an album",
-         new Runnable() {
-            @Override
-            public void run() {
-               try {
-                  mmStudio_.album().addImages(mmStudio_.live().snap(false));
-               } catch (IOException ioEx) {
-                  mmStudio_.logs().showError(ioEx);
-               }
+         "Acquire single frame and add to an album", () -> {
+            try {
+               mmStudio_.album().addImages(mmStudio_.live().snap(false));
+            } catch (IOException ioEx) {
+               mmStudio_.logs().showError(ioEx);
             }
-         });
+      });
       subPanel.add(albumButton, BIGBUTTON_SIZE);
 
       subPanel.add(AcquisitionSelector.makeSelector(mmStudio_), BIGBUTTON_SIZE);
 
       JButton refreshButton = createButton("Refresh", "arrow_refresh.png",
-         "Refresh all GUI controls directly from the hardware",
-         new Runnable() {
-            @Override
-            public void run() {
-               core_.updateSystemStateCache();
-               mmStudio_.updateGUI(true);
-            }
-         });
+         "Refresh all GUI controls directly from the hardware", () -> {
+            core_.updateSystemStateCache();
+            mmStudio_.updateGUI(true);
+      });
       subPanel.add(refreshButton, BIGBUTTON_SIZE);
 
       JButton closeAllButton = (JButton) QuickAccessFactory.makeGUI(mmStudio_.plugins().getQuickAccessPlugins().get(
@@ -430,12 +403,9 @@ public final class MainFrame extends MMFrame {
       // https://commons.wikimedia.org/wiki/File:Echo_bell.svg
       alertButton_ = createButton(null, "bell.png",
             "You have messages requesting your attention. Click to show the Messages window.",
-            new Runnable() {
-               @Override
-               public void run() {
-                  ((DefaultAlertManager) mmStudio_.alerts()).alertsWindow().showWithoutFocus();
-               }
-            });
+            () -> {
+               ((DefaultAlertManager) mmStudio_.alerts()).alertsWindow().showWithoutFocus();
+      });
       alertButton_.setVisible(false);
       result.add(alertButton_, "width 30!, height 20!, hidemode 2");
       alertLabel_ = new JLabel("");
@@ -522,32 +492,20 @@ public final class MainFrame extends MMFrame {
       roiPanel.add(createLabel("ROI", true),
             "span 2, alignx center, growx, wrap");
       setRoiButton_ = createButton(null, "shape_handles.png",
-         "Set Region Of Interest to selected rectangle",
-         new Runnable() {
-            @Override
-            public void run() {
-               mmStudio_.setROI();
-            }
-         });
+         "Set Region Of Interest to selected rectangle", () -> {
+            mmStudio_.setROI();
+      });
       roiPanel.add(setRoiButton_, SMALLBUTTON_SIZE);
       centerQuadButton_ = createButton(null, "center_quad.png",
-         "Set Region Of Interest to center quad of camera",
-         new Runnable() {
-            @Override
-            public void run() {
-               mmStudio_.setCenterQuad();
-            }
-         });
+         "Set Region Of Interest to center quad of camera", () -> {
+            mmStudio_.setCenterQuad();
+      });
       roiPanel.add(centerQuadButton_, SMALLBUTTON_SIZE);
 
       clearRoiButton_ = createButton(null, "arrow_out.png",
-         "Reset Region of Interest to full frame",
-         new Runnable() {
-            @Override
-            public void run() {
-               mmStudio_.clearROI();
-            }
-         });
+         "Reset Region of Interest to full frame", () -> {
+            mmStudio_.clearROI();
+      });
       roiPanel.add(clearRoiButton_, SMALLBUTTON_SIZE);
 
       subPanel.add(roiPanel);
@@ -559,13 +517,9 @@ public final class MainFrame extends MMFrame {
       // This icon is the public-domain icon at
       // https://openclipart.org/detail/198011/mono-move
       AbstractButton moveButton = createButton(null, "move.png",
-            "Control the current stage with a virtual joystick",
-            new Runnable() {
-               @Override
-               public void run() {
-                  StageControlFrame.showStageControl();
-               }
-            });
+            "Control the current stage with a virtual joystick", () -> {
+               StageControlFrame.showStageControl();
+      });
       stagePanel.add(moveButton, SMALLBUTTON_SIZE);
 
       // This icon is based on the public-domain icons at
@@ -576,26 +530,16 @@ public final class MainFrame extends MMFrame {
             IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
       handMovesButton_.setToolTipText(
             "When set, you can double-click on the Snap/Live view to move the stage. Requires pixel sizes to be set (see Pixel Calibration), and that you use the hand tool.");
-      handMovesButton_.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               boolean isSelected = handMovesButton_.isSelected();
-               mmStudio_.updateCenterAndDragListener(isSelected);
-               String path = isSelected ? "move_hand_on.png" : "move_hand.png";
-               handMovesButton_.setIcon(IconLoader.getIcon(
-                     "/org/micromanager/icons/" + path));
-            }
+      handMovesButton_.addActionListener((ActionEvent e) -> {
+         boolean isSelected = handMovesButton_.isSelected();
+         mmStudio_.updateCenterAndDragListener(isSelected);
       });
       stagePanel.add(handMovesButton_, SMALLBUTTON_SIZE);
 
       AbstractButton listButton = createButton(null, "application_view_list.png",
-            "Show the Stage Position List dialog",
-            new Runnable() {
-               @Override
-               public void run() {
-                  mmStudio_.app().showPositionList();
-               }
-            });
+            "Show the Stage Position List dialog", () -> {
+               mmStudio_.app().showPositionList();
+      });
       stagePanel.add(listButton, SMALLBUTTON_SIZE);
 
       subPanel.add(stagePanel, "gapleft 16");
@@ -607,25 +551,17 @@ public final class MainFrame extends MMFrame {
       // Icon based on the public-domain icon at
       // http://www.clker.com/clipart-267005.html
       autofocusNowButton_ = createButton(null, "binoculars.png",
-         "Autofocus now",
-         new Runnable() {
-            @Override
-            public void run() {
-               mmStudio_.autofocusNow();
-            }
-         });
+         "Autofocus now", () -> {
+            mmStudio_.autofocusNow();
+      });
       autoPanel.add(autofocusNowButton_, SMALLBUTTON_SIZE);
 
       // Icon based on the public-domain icon at
       // http://publicdomainvectors.org/en/free-clipart/Adjustable-wrench-icon-vector-image/23097.html
       autofocusConfigureButton_ = createButton(null,
-            "wrench.png", "Set autofocus options",
-         new Runnable() {
-            @Override
-            public void run() {
+            "wrench.png", "Set autofocus options", () -> {
                mmStudio_.showAutofocusDialog();
-            }
-         });
+      });
       autoPanel.add(autofocusConfigureButton_, SMALLBUTTON_SIZE);
 
       subPanel.add(autoPanel, "gapleft 16");
@@ -685,7 +621,7 @@ public final class MainFrame extends MMFrame {
          // No shutter devices available yet.
          return;
       }
-      String[] items = new ArrayList<String>(devices).toArray(new String[] {});
+      String[] items = new ArrayList<>(devices).toArray(new String[] {});
       GUIUtils.replaceComboContents(shutterComboBox_, items);
       String activeShutter = null;
       try {
@@ -745,6 +681,9 @@ public final class MainFrame extends MMFrame {
 
    @Subscribe
    public void onMouseMovesStage(MouseMovesStageStateChangeEvent event) {
+      String path = event.getIsEnabled() ? "move_hand_on.png" : "move_hand.png";
+      handMovesButton_.setIcon(IconLoader.getIcon(
+              "/org/micromanager/icons/" + path));
       handMovesButton_.setSelected(event.getIsEnabled());
    }
 
@@ -756,7 +695,7 @@ public final class MainFrame extends MMFrame {
    }
 
    private List<String> sortBinningItems(final List<String> items) {
-      ArrayList<Integer> binSizes = new ArrayList<Integer>();
+      ArrayList<Integer> binSizes = new ArrayList<>();
 
       // Check if all items are valid integers
       for (String s : items) {
@@ -772,7 +711,7 @@ public final class MainFrame extends MMFrame {
       }
 
       Collections.sort(binSizes);
-      ArrayList<String> ret = new ArrayList<String>();
+      ArrayList<String> ret = new ArrayList<>();
       for (Integer i : binSizes) {
          ret.add(i.toString());
       }
@@ -859,13 +798,10 @@ public final class MainFrame extends MMFrame {
    }
 
    public void enableRoiButtons(final boolean enabled) {
-       SwingUtilities.invokeLater(new Runnable() {
-           @Override
-           public void run() {
-               setRoiButton_.setEnabled(enabled);
-               clearRoiButton_.setEnabled(enabled);
-               centerQuadButton_.setEnabled(enabled);
-           }
+       SwingUtilities.invokeLater(() -> {
+          setRoiButton_.setEnabled(enabled);
+          clearRoiButton_.setEnabled(enabled);
+          centerQuadButton_.setEnabled(enabled);
        });
    }
 }
