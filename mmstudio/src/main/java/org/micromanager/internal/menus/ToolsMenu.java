@@ -25,6 +25,7 @@ import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
 import org.micromanager.quickaccess.internal.QuickAccessPanelEvent;
 
 public final class ToolsMenu {
+
    private static final String MOUSE_MOVES_STAGE = "whether or not the hand tool can be used to move the stage";
 
    private final JMenu toolsMenu_;
@@ -46,7 +47,7 @@ public final class ToolsMenu {
               "Refresh all GUI controls directly from the hardware", () -> {
                  core_.updateSystemStateCache();
                  mmStudio_.updateGUI(true);
-      },
+              },
               "arrow_refresh.png");
 
       toolsMenu_.addSeparator();
@@ -54,7 +55,7 @@ public final class ToolsMenu {
       GUIUtils.addMenuItem(toolsMenu_, "Script Panel...",
               "Open Micro-Manager script editor window", () -> {
                  mmStudio_.showScriptPanel();
-      });
+              });
 
       populateQuickAccessMenu();
       toolsMenu_.add(quickAccessMenu_);
@@ -63,21 +64,21 @@ public final class ToolsMenu {
               "Create keyboard shortcuts to activate image acquisition, mark positions, or run custom scripts",
               () -> {
                  HotKeysDialog hk = new HotKeysDialog();
-      });
+              });
 
       GUIUtils.addMenuItem(toolsMenu_, "Messages...",
-               "Show the Messages window", () -> {
-                  ((DefaultAlertManager) mmStudio_.alerts()).alertsWindow().showWithoutFocus();
-      },
-               "bell.png");
+              "Show the Messages window", () -> {
+                 ((DefaultAlertManager) mmStudio_.alerts()).alertsWindow().showWithoutFocus();
+              },
+              "bell.png");
 
       toolsMenu_.addSeparator();
 
       GUIUtils.addMenuItem(toolsMenu_, "Stage Control...",
-            "Control the stage position with a virtual joystick", () -> {
-               StageControlFrame.showStageControl();
-      },
-            "move.png");
+              "Control the stage position with a virtual joystick", () -> {
+                 StageControlFrame.showStageControl();
+              },
+              "move.png");
 
       centerAndDragMenuItem_ = GUIUtils.addCheckBoxMenuItem(toolsMenu_,
               "Mouse Moves Stage (Use Hand Tool)",
@@ -85,15 +86,15 @@ public final class ToolsMenu {
               + "window moves the XY-stage. Requires the hand tool.", () -> {
                  mmStudio_.updateCenterAndDragListener(
                          centerAndDragMenuItem_.isSelected());
-      },
+              },
               getMouseMovesStage());
       centerAndDragMenuItem_.setIcon(
-            IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
+              IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
 
       GUIUtils.addMenuItem(toolsMenu_, "Stage Position List...",
               "Open the stage position list window", () -> {
                  mmStudio_.app().showPositionList();
-      },
+              },
               "application_view_list.png");
 
       toolsMenu_.addSeparator();
@@ -101,7 +102,7 @@ public final class ToolsMenu {
       GUIUtils.addMenuItem(toolsMenu_, "Multi-Dimensional Acquisition...",
               "Open multi-dimensional acquisition setup window", () -> {
                  mmStudio_.openAcqControlDialog();
-      },
+              },
               "film.png");
 
       toolsMenu_.addSeparator();
@@ -109,7 +110,7 @@ public final class ToolsMenu {
       GUIUtils.addMenuItem(toolsMenu_, "Options...",
               "Set a variety of Micro-Manager configuration options", () -> {
                  final int oldBufsize = mmStudio_.getCircularBufferSize();
-                 
+
                  OptionsDlg dlg = new OptionsDlg(core_, mmStudio_);
                  dlg.setVisible(true);
                  // adjust memory footprint if necessary
@@ -121,7 +122,7 @@ public final class ToolsMenu {
                        ReportingUtils.showError(exc);
                     }
                  }
-      });
+              });
 
       mmStudio_.events().registerForEvents(this);
    }
@@ -129,9 +130,9 @@ public final class ToolsMenu {
    private void populateQuickAccessMenu() {
       quickAccessMenu_.removeAll();
       GUIUtils.addMenuItem(quickAccessMenu_, "Create New Panel",
-            "Create a new Quick Access Panel, for easy access to commonly-used controls.", () -> {
-               ((DefaultQuickAccessManager) mmStudio_.quickAccess()).createNewPanel();
-      });
+              "Create a new Quick Access Panel, for easy access to commonly-used controls.", () -> {
+                 ((DefaultQuickAccessManager) mmStudio_.quickAccess()).createNewPanel();
+              });
 
       final Map<String, JFrame> titleToFrame = mmStudio_.quickAccess().getPanels();
       ArrayList<String> titles = new ArrayList<>(titleToFrame.keySet());
@@ -148,9 +149,9 @@ public final class ToolsMenu {
       quickAccessMenu_.add(deleteMenu);
       quickAccessMenu_.addSeparator();
       JMenuItem show = GUIUtils.addMenuItem(quickAccessMenu_, "Show all",
-            "Show all Quick Access Panels; create a new one if necessary", () -> {
-               mmStudio_.quickAccess().showPanels();
-      });
+              "Show all Quick Access Panels; create a new one if necessary", () -> {
+                 mmStudio_.quickAccess().showPanels();
+              });
       show.setEnabled(titles.size() > 0);
 
       for (final String title : titles) {
@@ -162,23 +163,23 @@ public final class ToolsMenu {
       quickAccessMenu_.addSeparator();
 
       GUIUtils.addMenuItem(quickAccessMenu_, "Save Settings...",
-            "Save the Quick Access Panel settings to a file for use elsewhere", () -> {
-               JFileChooser chooser = new JFileChooser();
-               chooser.showSaveDialog(null);
-               File file = chooser.getSelectedFile();
-               if (file != null) {
-                  mmStudio_.quickAccess().saveSettingsToFile(file);
-               }
-      });
+              "Save the Quick Access Panel settings to a file for use elsewhere", () -> {
+                 JFileChooser chooser = new JFileChooser();
+                 chooser.showSaveDialog(null);
+                 File file = chooser.getSelectedFile();
+                 if (file != null) {
+                    mmStudio_.quickAccess().saveSettingsToFile(file);
+                 }
+              });
       GUIUtils.addMenuItem(quickAccessMenu_, "Load Settings...",
-            "Load saved settings from a file", () -> {
-               JFileChooser chooser = new JFileChooser();
-               chooser.showOpenDialog(null);
-               File file = chooser.getSelectedFile();
-               if (file != null) {
-                  mmStudio_.quickAccess().loadSettingsFromFile(file);
-               }
-      });
+              "Load saved settings from a file", () -> {
+                 JFileChooser chooser = new JFileChooser();
+                 chooser.showOpenDialog(null);
+                 File file = chooser.getSelectedFile();
+                 if (file != null) {
+                    mmStudio_.quickAccess().loadSettingsFromFile(file);
+                 }
+              });
    }
 
    @Subscribe
@@ -200,5 +201,5 @@ public final class ToolsMenu {
       mmStudio_.profile().getSettings(ToolsMenu.class).
               putBoolean(MOUSE_MOVES_STAGE, doesMove);
    }
-   
+
 }
