@@ -163,9 +163,14 @@ public final class StageControlFrame extends MMFrame {
       // set panels visible depending on what drives are actually present
       xyPanel_.setVisible(haveXY);
       zPanel_[0].setVisible(haveZ);
-      String sysConfigFile = org.micromanager.internal.MMStudio.getInstance().getSysConfigFile();  // TODO add method to API
-      int nrZPanels = settings_.getInteger(NRZPANELS + sysConfigFile, nrZDrives);
-      settings_.putInteger(NRZPANELS + sysConfigFile, nrZPanels);
+      final String sysConfigFile = org.micromanager.internal.MMStudio.getInstance().getSysConfigFile();  // TODO add method to API
+      final String key = NRZPANELS + sysConfigFile;
+      int nrZPanels = settings_.getInteger(key, nrZDrives);
+      // mailing list report 12/31/2019 encounters nrZPanels == 0, workaround:
+      if (nrZPanels <= 0 && nrZDrives > 0) {
+         nrZPanels = 1;
+      }
+      settings_.putInteger(key, nrZPanels);
       for (int idx=1; idx<MAX_NUM_Z_PANELS; ++idx) {
          zPanel_[idx].setVisible(idx < nrZPanels);
       }
