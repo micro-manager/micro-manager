@@ -48,20 +48,6 @@ int roundUp(int numToRound, int multiple)
 }
 
 //---------------------------------------------------------------
-void refreshThread(std::atomic<bool>& running, FirstLightImagingCameras* ctx)
-{
-	while (running)
-	{
-		ctx->refreshValues();
-#ifdef WIN32
-		Sleep(1000);
-#else
-		usleep(1000 * 1000);
-#endif
-	}
-}
-
-//---------------------------------------------------------------
 MODULE_API void InitializeModuleData()
 {
 	RegisterDevice("FliSdk", MM::CameraDevice, "First Light Imaging camera");
@@ -88,33 +74,49 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 FirstLightImagingCameras::FirstLightImagingCameras(std::string cameraName) :
 	_initialized(false),
 	_cameraName(cameraName),
-	_credTwo(nullptr),
-	_credThree(nullptr)
+	_cameraModel(CameraModel::undefined),
+	_nbCameras(0)
 {
-	_fli.detectGrabbers();
-	_listOfCameras = _fli.detectCameras();
-	_fli.setBufferSize(400);
+	FliSdk_init();
+	uint8_t nbGrabbers = 0;
+	FliSdk_detectGrabbers(&nbGrabbers);
 
-	if (_listOfCameras.size() > 0)
+	if(nbGrabbers > 0)
 	{
-		_fli.setCamera(_listOfCameras[0]);
-		_fli.update();
+		_listOfCameras = FliSdk_detectCameras(&_nbCameras);
 
-		_credTwo = _fli.credTwo();
-		_credThree = _fli.credThree();
+		if(_nbCameras > 0)
+		{
+			FliSdk_setCamera(_listOfCameras[0]);
+			FliSdk_update();
+			_cameraModel = FliSdk_getCameraModel();
+
+			if(_cameraModel == CameraModel::Cred2)
+			{
+				_credTwo = true;
+				_credThree = false;
+			}
+			else if(_cameraModel == CameraModel::Cred3)
+			{
+				_credTwo = false;
+				_credThree = true;
+			}
+
+			_refreshThread = new FliThreadImp(this);
+			_refreshThread->activate();
+		}
 	}
 
 	createProperties();
-
-	_threadRunning = true;
-	_refreshThread = std::thread(refreshThread, ref(_threadRunning), this);
 }
 
 //---------------------------------------------------------------
 FirstLightImagingCameras::~FirstLightImagingCameras()
 {
-	_threadRunning = false;
-	_refreshThread.join();
+	_refreshThread->exit();
+	_refreshThread->wait();
+	delete _refreshThread;
+	FliSdk_exit();
 }
 
 //---------------------------------------------------------------
@@ -160,8 +162,11 @@ void FirstLightImagingCameras::createProperties()
 		CreateFloatProperty("FPS", _fps, false, pAct, false);
 
 		pAct = new CPropertyAction(this, &FirstLightImagingCameras::onCameraChange);
-		CreateStringProperty("Cameras", _listOfCameras[0].c_str(), false, pAct);
-		SetAllowedValues("Cameras", _listOfCameras);
+		CreateStringProperty("Cameras", _listOfCameras[0], false, pAct);
+		std::vector<std::string> values;
+		for(int i = 0; i < _nbCameras; ++i)
+			values.push_back(std::string(_listOfCameras[i]));
+		SetAllowedValues("Cameras", values);
 	}
 
 	pAct = new CPropertyAction(this, &FirstLightImagingCameras::onSendCommand);
@@ -216,12 +221,6 @@ void FirstLightImagingCameras::imageReceived(const uint8_t* image)
 }
 
 //---------------------------------------------------------------
-double FirstLightImagingCameras::fpsTrigger()
-{
-	return _fpsTrigger;
-}
-
-//---------------------------------------------------------------
 int FirstLightImagingCameras::Initialize()
 {
 	if (_initialized)
@@ -249,7 +248,7 @@ void FirstLightImagingCameras::GetName(char* name) const
 long FirstLightImagingCameras::GetImageBufferSize() const
 {
 	uint16_t width, height;
-	_fli.getCurrentImageDimension(width, height);
+	FliSdk_getCurrentImageDimension(&width, &height);
 	return width * height * 2;
 }
 
@@ -275,9 +274,9 @@ int FirstLightImagingCameras::SetBinning(int binSize)
 void FirstLightImagingCameras::SetExposure(double exp_ms)
 {
 	if (_credTwo)
-		_credTwo->setTint(exp_ms / 1000.0);
+		Cred2_setTint(exp_ms / 1000.0);
 	else if (_credThree)
-		_credThree->setTint(exp_ms / 1000.0);
+		Cred3_setTint(exp_ms / 1000.0);
 }
 
 //---------------------------------------------------------------
@@ -286,9 +285,9 @@ double FirstLightImagingCameras::GetExposure() const
 	double tint;
 
 	if (_credTwo)
-		_credTwo->getTint(tint);
+		Cred2_getTint(&tint);
 	else if (_credThree)
-		_credThree->getTint(tint);
+		Cred3_getTint(&tint);
 
 	return tint*1000;
 }
@@ -296,12 +295,12 @@ double FirstLightImagingCameras::GetExposure() const
 //---------------------------------------------------------------
 int FirstLightImagingCameras::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 {
-	CroppingData cropping;
+	CroppingData_C cropping;
 	cropping.col1 = roundUp(x, 32);
 	cropping.col2 = roundUp(x + xSize, 32)-1;
 	cropping.row1 = roundUp(y, 4);
 	cropping.row2 = roundUp(y + ySize,4)-1;
-	FliSdkError fliError = _fli.setCroppingState(true, cropping);
+	FliSdk_setCroppingState(true, cropping);
 	_croppingEnabled = true;
 	return DEVICE_OK;
 }
@@ -318,9 +317,9 @@ int FirstLightImagingCameras::GetROI(unsigned& x, unsigned& y, unsigned& xSize, 
 	}
 	else
 	{
-		CroppingData cropping;
+		CroppingData_C cropping;
 		bool enabled;
-		FliSdkError fliError = _fli.getCroppingState(enabled, cropping);
+		FliSdk_getCroppingState(&enabled, &cropping);
 		x = cropping.col1;
 		xSize = cropping.col2 - x;
 		y = cropping.row1;
@@ -332,8 +331,8 @@ int FirstLightImagingCameras::GetROI(unsigned& x, unsigned& y, unsigned& xSize, 
 //---------------------------------------------------------------
 int FirstLightImagingCameras::ClearROI()
 {
-	CroppingData cropping;
-	FliSdkError fliError = _fli.setCroppingState(false, cropping);
+	CroppingData_C cropping;
+	FliSdk_setCroppingState(false, cropping);
 	_croppingEnabled = false;
 	return DEVICE_OK;
 }
@@ -347,14 +346,14 @@ int FirstLightImagingCameras::IsExposureSequenceable(bool& isSequenceable) const
 //---------------------------------------------------------------
 const unsigned char* FirstLightImagingCameras::GetImageBuffer()
 {
-	return _fli.getRawImage();
+	return FliSdk_getRawImage(-1);
 }
 
 //---------------------------------------------------------------
 unsigned FirstLightImagingCameras::GetImageWidth() const
 {
 	uint16_t width, height;
-	_fli.getCurrentImageDimension(width, height);
+	FliSdk_getCurrentImageDimension(&width, &height);
 	return width;
 }
 
@@ -362,7 +361,7 @@ unsigned FirstLightImagingCameras::GetImageWidth() const
 unsigned FirstLightImagingCameras::GetImageHeight() const
 {
 	uint16_t width, height;
-	_fli.getCurrentImageDimension(width, height);
+	FliSdk_getCurrentImageDimension(&width, &height);
 	return height;
 }
 
@@ -375,10 +374,10 @@ unsigned FirstLightImagingCameras::GetImageBytesPerPixel() const
 //---------------------------------------------------------------
 int FirstLightImagingCameras::SnapImage()
 {
-	if (_fli.isStarted())
-		_fli.stop();
-	_fli.enableGrabN(10);
-	_fli.start();
+	if (FliSdk_isStarted())
+		FliSdk_stop();
+	FliSdk_enableGrabN(10);
+	FliSdk_start();
 #ifdef WIN32
 		Sleep(50);
 #else
@@ -387,15 +386,21 @@ int FirstLightImagingCameras::SnapImage()
 	return DEVICE_OK;
 }
 
+void onImageReceived(const uint8_t* image, void* ctx)
+{
+	FirstLightImagingCameras* context = static_cast<FirstLightImagingCameras*>(ctx);
+	context->imageReceived(image);
+}
+
 //---------------------------------------------------------------
 int FirstLightImagingCameras::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
 {
-	if (_fli.isStarted())
-		_fli.stop();
-	_fli.disableGrabN();
-	_fli.start();
+	if (FliSdk_isStarted())
+		FliSdk_stop();
+	FliSdk_disableGrabN();
+	FliSdk_start();
 	_fpsTrigger = interval_ms == 0 ? 0 : 1.0 / interval_ms;
-	_fli.addRawImageReceivedObserver(this);
+	_callbackCtx = FliSdk_addCallbackNewImage(onImageReceived, _fpsTrigger, this);
 	_numImages = numImages;
 	return DEVICE_OK;
 }
@@ -403,8 +408,8 @@ int FirstLightImagingCameras::StartSequenceAcquisition(long numImages, double in
 //---------------------------------------------------------------
 int FirstLightImagingCameras::StopSequenceAcquisition()
 {
-	_fli.stop();
-	_fli.removeRawImageReceivedObserver(this);
+	FliSdk_stop();
+	FliSdk_removeCallbackNewImage(_callbackCtx);
 
 	return DEVICE_OK;
 }
@@ -420,17 +425,19 @@ void FirstLightImagingCameras::refreshValues()
 	if (_credTwo)
 	{
 		double val;
-		_credTwo->getTempSnake(val);
-		OnPropertyChanged("Sensor Temp", std::to_string(val).c_str());
+		Cred2_getTempSnake(&val);
+		OnPropertyChanged("Sensor Temp", std::to_string((long double)val).c_str());
 		double consigne;
-		_credTwo->getTempSnakeSetpoint(consigne);
-		OnPropertyChanged("Set sensor temp", std::to_string(consigne).c_str());
-		std::string status;
-		std::string diag;
-		_fli.camera()->getStatusDetailed(status, diag);
-		status.append("-");
-		status.append(diag);
-		OnPropertyChanged("Camera Status", status.c_str());
+		Cred2_getTempSnakeSetPoint(&consigne);
+		OnPropertyChanged("Set sensor temp", std::to_string((long double)consigne).c_str());
+		char status[200];
+		char diag[200];
+		FliCamera_getStatusDetailed(status, diag);
+		std::string s;
+		s.append(status);
+		s.append("-");
+		s.append(diag);
+		OnPropertyChanged("Camera Status", s.c_str());
 	}
 }
 
@@ -441,9 +448,9 @@ int FirstLightImagingCameras::onMaxExposure(MM::PropertyBase* pProp, MM::ActionT
 	{
 		double tintMin;
 		if (_credTwo)
-			_credTwo->getTintRange(tintMin, _maxExposure);
+			Cred2_getTintRange(&tintMin, &_maxExposure);
 		else if (_credThree)
-			_credThree->getTintRange(tintMin, _maxExposure);
+			Cred3_getTintRange(&tintMin, &_maxExposure);
 
 		pProp->Set(_maxExposure *1000);
 	}
@@ -455,7 +462,7 @@ int FirstLightImagingCameras::onMaxFps(MM::PropertyBase* pProp, MM::ActionType e
 {
 	if (eAct == MM::BeforeGet)
 	{
-		_fli.camera()->getFpsMax(_maxFps);
+		FliCamera_getFpsMax(&_maxFps);
 		pProp->Set(_maxFps);
 	}
 	return DEVICE_OK;
@@ -467,13 +474,13 @@ int FirstLightImagingCameras::onFps(MM::PropertyBase* pProp, MM::ActionType eAct
 	if (eAct == MM::BeforeGet)
 	{
 		double fps;
-		_fli.camera()->getFps(_fps);
+		FliCamera_getFps(&_fps);
 		pProp->Set(_fps);
 	}
 	else if (eAct == MM::AfterSet)
 	{
 		pProp->Get(_fps);
-		_fli.camera()->setFps(_fps);
+		FliCamera_setFps(_fps);
 	}
 	return DEVICE_OK;
 }
@@ -486,13 +493,20 @@ int FirstLightImagingCameras::onCameraChange(MM::PropertyBase* pProp, MM::Action
 		std::string camera;
 		pProp->Get(camera);
 
-		if (_listOfCameras.size() > 0)
-		{
-			_fli.setCamera(camera);
-			_fli.update();
+		FliSdk_setCamera(camera.c_str());
+		FliSdk_update();
 
-			_credTwo = _fli.credTwo();
-			_credThree = _fli.credThree();
+		_cameraModel = FliSdk_getCameraModel();
+
+		if(_cameraModel == CameraModel::Cred2)
+		{
+			_credTwo = true;
+			_credThree = false;
+		}
+		else if(_cameraModel == CameraModel::Cred3)
+		{
+			_credTwo = false;
+			_credThree = true;
 		}
 	}
 
@@ -507,29 +521,43 @@ int FirstLightImagingCameras::onDetectCameras(MM::PropertyBase* pProp, MM::Actio
 		std::string detect;
 		pProp->Get(detect);
 
-		_threadRunning = false;
-		_refreshThread.join();
+		_refreshThread->exit();
+		_refreshThread->wait();
+		delete _refreshThread;
 
 		if (detect == "1")
 		{
-			_fli.detectGrabbers();
-			_listOfCameras = _fli.detectCameras();
+			uint8_t nbGrabbers = 0;
+			FliSdk_detectGrabbers(&nbGrabbers);
 
-			CPropertyAction* pAct = nullptr;
-
-			if (_listOfCameras.size() > 0)
+			if(nbGrabbers > 0)
 			{
-				_fli.setCamera(_listOfCameras[0]);
-				_fli.update();
+				_nbCameras = 0;
+				_listOfCameras = FliSdk_detectCameras(&_nbCameras);
 
-				_credTwo = _fli.credTwo();
-				_credThree = _fli.credThree();
+				if(_nbCameras > 0)
+				{
+					FliSdk_setCamera(_listOfCameras[0]);
+					FliSdk_update();
+					_cameraModel = FliSdk_getCameraModel();
 
-				createProperties();
+					if(_cameraModel == CameraModel::Cred2)
+					{
+						_credTwo = true;
+						_credThree = false;
+					}
+					else if(_cameraModel == CameraModel::Cred3)
+					{
+						_credTwo = false;
+						_credThree = true;
+					}
+
+					_refreshThread = new FliThreadImp(this);
+					_refreshThread->activate();
+				}
 			}
 
-			_threadRunning = true;
-			_refreshThread = std::thread(refreshThread, ref(_threadRunning), this);
+			createProperties();
 		}
 	}
 	else if (eAct == MM::BeforeGet)
@@ -544,18 +572,17 @@ int FirstLightImagingCameras::onDetectCameras(MM::PropertyBase* pProp, MM::Actio
 //---------------------------------------------------------------
 int FirstLightImagingCameras::onSendCommand(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	static std::string response;
+	static char response[200];
 	if (eAct == MM::AfterSet)
 	{
 		std::string command;
 		pProp->Get(command);
 		command.append("\n");
-		response = "";
-		_fli.camera()->sendCommand(command, response);
+		FliCamera_sendCommand(command.c_str(), response);
 	}
 	else if (eAct == MM::BeforeGet)
 	{
-		pProp->Set(response.c_str());
+		pProp->Set(response);
 	}
 
 	return DEVICE_OK;
@@ -592,9 +619,9 @@ int FirstLightImagingCameras::onSetMaxExposure(MM::PropertyBase* pProp, MM::Acti
 	case MM::AfterSet:
 		ret = DEVICE_OK;
 		if (_credTwo)
-			_credTwo->setTint(_maxExposure);
+			Cred2_setTint(_maxExposure);
 		else if (_credThree)
-			_credThree->setTint(_maxExposure);
+			Cred3_setTint(_maxExposure);
 		break;
 	case MM::BeforeGet:
 	{
@@ -617,7 +644,7 @@ int FirstLightImagingCameras::onSetMaxFps(MM::PropertyBase* pProp, MM::ActionTyp
 	{
 	case MM::AfterSet:
 		ret = DEVICE_OK;
-		_fli.camera()->setFps(_maxFps);
+		FliCamera_setFps(_maxFps);
 		break;
 	case MM::BeforeGet:
 	{
@@ -640,7 +667,7 @@ int FirstLightImagingCameras::onBuildBias(MM::PropertyBase* pProp, MM::ActionTyp
 	{
 	case MM::AfterSet:
 		ret = DEVICE_OK;
-		_fli.camera()->buildBias();
+		FliCamera_buildBias();
 		break;
 	case MM::BeforeGet:
 	{
@@ -666,14 +693,14 @@ int FirstLightImagingCameras::onApplyBias(MM::PropertyBase* pProp, MM::ActionTyp
 		ret = DEVICE_OK;
 		double enabled;
 		pProp->Get(enabled);
-		_fli.camera()->enableBias(enabled);
+		FliCamera_enableBias(enabled);
 		break;
 	}
 	case MM::BeforeGet:
 	{
 		ret = DEVICE_OK;
 		bool enabled = false;
-		_fli.camera()->getBiasState(enabled);
+		FliCamera_getBiasState(&enabled);
 		pProp->Set((double)enabled);
 		break;
 	}
@@ -694,7 +721,7 @@ int FirstLightImagingCameras::onApplySensorTemp(MM::PropertyBase* pProp, MM::Act
 		ret = DEVICE_OK;
 		double val;
 		pProp->Get(val);
-		_credTwo->setSensorTemp(val);
+		Cred2_setSensorTemp(val);
 		break;
 	}
 	case MM::BeforeGet:
@@ -719,7 +746,7 @@ int FirstLightImagingCameras::onShutdown(MM::PropertyBase* pProp, MM::ActionType
 		ret = DEVICE_OK;
 		double val;
 		pProp->Get(val);
-		_fli.camera()->shutDown();
+		FliCamera_shutDown();
 		break;
 	}
 	case MM::BeforeGet:
@@ -731,4 +758,42 @@ int FirstLightImagingCameras::onShutdown(MM::PropertyBase* pProp, MM::ActionType
 		break;
 	}
 	return ret;
+}
+
+//---------------------------------------------------------------
+FliThreadImp::FliThreadImp(FirstLightImagingCameras* camera) : _camera(camera), _exit(false)
+{
+
+}
+
+//---------------------------------------------------------------
+FliThreadImp::~FliThreadImp()
+{
+
+}
+
+//---------------------------------------------------------------
+void FliThreadImp::exit()
+{
+	MMThreadGuard g(_lock);
+	_exit = true;
+}
+
+//---------------------------------------------------------------
+bool FliThreadImp::mustExit()
+{
+	MMThreadGuard g(_lock);
+	return _exit;
+}
+
+//---------------------------------------------------------------
+int FliThreadImp::svc()
+{
+	while(!mustExit())
+	{
+		_camera->refreshValues();
+		CDeviceUtils::SleepMs(1000);
+	}
+
+	return 0;
 }
