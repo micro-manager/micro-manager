@@ -23,15 +23,17 @@
 #pragma once
 
 #include <string>
-#include <thread>
-#include <atomic>
 
 #include "DeviceBase.h"
-#include "FliSdk.h"
+#include "DeviceThreads.h"
+#include "FliSdk_C.h"
 
-class FirstLightImagingCameras : public CCameraBase<FirstLightImagingCameras>, public IRawImageReceivedObserver
+class FirstLightImagingCameras : public CCameraBase<FirstLightImagingCameras>
 {
 public:
+
+	friend class FliThreadImp;
+
 	FirstLightImagingCameras(std::string cameraName);
 	~FirstLightImagingCameras();
 
@@ -59,6 +61,7 @@ public:
 	void OnThreadExiting() throw();
 
 	void refreshValues();
+	void imageReceived(const uint8_t* image);
 
 private:
 	int onMaxExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -77,24 +80,39 @@ private:
 
 	void createProperties();
 
-	// Hérité via IRawImageReceivedObserver
-	virtual void imageReceived(const uint8_t* image) override;
-	virtual double fpsTrigger() override;
+private:
+	bool			_initialized;
+	std::string		_cameraName;
+	CameraModel		_cameraModel;
+	bool			_credTwo;
+	bool			_credThree;
+	double			_fpsTrigger;
+	double			_maxExposure;
+	double			_maxFps;
+	double			_sensorTemp;
+	double			_fps;
+	long			_numImages;
+	bool			_croppingEnabled;
+	const char**	_listOfCameras;
+	uint8_t			_nbCameras;
+	FliThreadImp*	_refreshThread;
+	callbackHandler	_callbackCtx;
+};
+
+class FliThreadImp : public MMDeviceThreadBase
+{
+public:
+	FliThreadImp(FirstLightImagingCameras* camera);
+	~FliThreadImp();
+
+	int svc();
+	void exit();
 
 private:
-	FliSdk						_fli;
-	bool						_initialized;
-	std::string					_cameraName;
-	FliCredTwo*					_credTwo;
-	FliCredThree*				_credThree;
-	std::thread					_refreshThread;
-	std::atomic<bool>			_threadRunning;
-	double						_fpsTrigger;
-	double						_maxExposure;
-	double						_maxFps;
-	double						_sensorTemp;
-	double						_fps;
-	long						_numImages;
-	bool						_croppingEnabled;
-	std::vector<std::string>	_listOfCameras;
+	bool mustExit();
+
+private:
+	MMThreadLock				_lock;
+	bool						_exit;
+	FirstLightImagingCameras*	_camera;
 };

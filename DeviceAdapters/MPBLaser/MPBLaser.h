@@ -55,9 +55,9 @@ public:
 
 private:
 	// Enumerations
-	enum class LaserMode   { autoCurrentControl, autoPowerControl };
-	enum class DeviceOnOff { off, on };
-	enum class LaserState  { off, keylock, interlock, fault, startup,
+	enum LaserMode   { autoCurrentControl, autoPowerControl };
+	enum DeviceOnOff { off, on };
+	enum LaserState  { off, keylock, interlock, fault, startup,
 					         manualTurningOn, manualOn, autoOn};
 
 	// Property labels
