@@ -74,7 +74,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 FirstLightImagingCameras::FirstLightImagingCameras(std::string cameraName) :
 	_initialized(false),
 	_cameraName(cameraName),
-	_cameraModel(CameraModel::undefined),
+	_cameraModel(undefined),
 	_nbCameras(0)
 {
 	FliSdk_init();
@@ -91,12 +91,12 @@ FirstLightImagingCameras::FirstLightImagingCameras(std::string cameraName) :
 			FliSdk_update();
 			_cameraModel = FliSdk_getCameraModel();
 
-			if(_cameraModel == CameraModel::Cred2)
+			if(_cameraModel == Cred2)
 			{
 				_credTwo = true;
 				_credThree = false;
 			}
-			else if(_cameraModel == CameraModel::Cred3)
+			else if(_cameraModel == Cred3)
 			{
 				_credTwo = false;
 				_credThree = true;
@@ -267,6 +267,7 @@ int FirstLightImagingCameras::GetBinning() const
 //---------------------------------------------------------------
 int FirstLightImagingCameras::SetBinning(int binSize)
 {
+	(void)binSize;
 	return DEVICE_OK;
 }
 
@@ -332,6 +333,10 @@ int FirstLightImagingCameras::GetROI(unsigned& x, unsigned& y, unsigned& xSize, 
 int FirstLightImagingCameras::ClearROI()
 {
 	CroppingData_C cropping;
+	cropping.col1 = 0;
+	cropping.col2 = 0;
+	cropping.row1 = 0;
+	cropping.row2 = 0;
 	FliSdk_setCroppingState(false, cropping);
 	_croppingEnabled = false;
 	return DEVICE_OK;
@@ -340,6 +345,7 @@ int FirstLightImagingCameras::ClearROI()
 //---------------------------------------------------------------
 int FirstLightImagingCameras::IsExposureSequenceable(bool& isSequenceable) const
 {
+	(void)isSequenceable;
 	return 0;
 }
 
@@ -395,12 +401,13 @@ void onImageReceived(const uint8_t* image, void* ctx)
 //---------------------------------------------------------------
 int FirstLightImagingCameras::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
 {
+	(void)stopOnOverflow;
 	if (FliSdk_isStarted())
 		FliSdk_stop();
 	FliSdk_disableGrabN();
 	FliSdk_start();
 	_fpsTrigger = interval_ms == 0 ? 0 : 1.0 / interval_ms;
-	_callbackCtx = FliSdk_addCallbackNewImage(onImageReceived, _fpsTrigger, this);
+	_callbackCtx = FliSdk_addCallbackNewImage(onImageReceived, (uint16_t)_fpsTrigger, this);
 	_numImages = numImages;
 	return DEVICE_OK;
 }
@@ -473,7 +480,6 @@ int FirstLightImagingCameras::onFps(MM::PropertyBase* pProp, MM::ActionType eAct
 {
 	if (eAct == MM::BeforeGet)
 	{
-		double fps;
 		FliCamera_getFps(&_fps);
 		pProp->Set(_fps);
 	}
@@ -498,12 +504,12 @@ int FirstLightImagingCameras::onCameraChange(MM::PropertyBase* pProp, MM::Action
 
 		_cameraModel = FliSdk_getCameraModel();
 
-		if(_cameraModel == CameraModel::Cred2)
+		if(_cameraModel == Cred2)
 		{
 			_credTwo = true;
 			_credThree = false;
 		}
-		else if(_cameraModel == CameraModel::Cred3)
+		else if(_cameraModel == Cred3)
 		{
 			_credTwo = false;
 			_credThree = true;
@@ -541,12 +547,12 @@ int FirstLightImagingCameras::onDetectCameras(MM::PropertyBase* pProp, MM::Actio
 					FliSdk_update();
 					_cameraModel = FliSdk_getCameraModel();
 
-					if(_cameraModel == CameraModel::Cred2)
+					if(_cameraModel == Cred2)
 					{
 						_credTwo = true;
 						_credThree = false;
 					}
-					else if(_cameraModel == CameraModel::Cred3)
+					else if(_cameraModel == Cred3)
 					{
 						_credTwo = false;
 						_credThree = true;
@@ -691,8 +697,9 @@ int FirstLightImagingCameras::onApplyBias(MM::PropertyBase* pProp, MM::ActionTyp
 	case MM::AfterSet:
 	{
 		ret = DEVICE_OK;
-		double enabled;
-		pProp->Get(enabled);
+		double val;
+		pProp->Get(val);
+		bool enabled = val == 0 ? false : true;
 		FliCamera_enableBias(enabled);
 		break;
 	}
