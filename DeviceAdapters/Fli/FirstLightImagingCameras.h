@@ -28,6 +28,8 @@
 #include "DeviceThreads.h"
 #include "FliSdk_C.h"
 
+class FliThreadImp;
+
 class FirstLightImagingCameras : public CCameraBase<FirstLightImagingCameras>
 {
 public:
@@ -114,5 +116,5 @@ private:
 private:
 	MMThreadLock				_lock;
 	bool						_exit;
-	FirstLightImagingCameras*	_camera;
+	FirstLightImagingCameras* _camera;
 };
