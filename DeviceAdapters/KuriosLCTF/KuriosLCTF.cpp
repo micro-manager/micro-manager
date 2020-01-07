@@ -286,30 +286,24 @@ int KuriosLCTF::onWavelength(MM::PropertyBase* pProp, MM::ActionType eAct) {
         pProp->SetSequenceable(1024);   //According the thorlabs website it can store 1024 items.
     }
     else if (eAct == MM::StartSequence) {
-		char msg[1024];
-		int ret = this->GetProperty("Output Mode", msg);
+		int ret = this->SetProperty("Output Mode", TrigModeNames.EXT); //For now we only support externally triggered sequencing. We would need to add further configuration properties to support the other modes.
+		kurios_Set_ForceTrigger(portHandle_); //This should set us to the first item of the sequence, the first camera pulse will then set us to the second sequence wavelength.
 		if (ret!=DEVICE_OK) { return ret;}
-		//We need to delete and reload the steps in order to ensure that we start from the beginning.
+    }
+    else if (eAct == MM::StopSequence) {
+		int ret = this->SetProperty("Output Mode", TrigModeNames.MAN);
+		if (ret!=DEVICE_OK) { return ret; }
+    }
+    else if (eAct == MM::AfterLoadSequence) {
 		std::vector<std::string> sequence =  pProp->GetSequence();
-		ret = kurios_Set_DeleteSequenceStep(portHandle_, 0); //Using a value of 0 here deletes the whole sequence.
+		int ret = kurios_Set_DeleteSequenceStep(portHandle_, 0); //Using a value of 0 here deletes the whole sequence.
 		if (ret<0) { return DEVICE_ERR; }
-		ret = this->SetProperty("Wavelength", std::to_string((long long) std::atoi(sequence[0].c_str())-1).c_str()); //Go to one less than the first item. this should get us started on the write step.
-		if (ret!=0){ return DEVICE_ERR; }
 		for (int i=0; i<sequence.size(); i++) { 
 			std::string step = sequence[i];
 			ret = kurios_Set_InsertSequenceStep(portHandle_, i+1, std::atoi(step.c_str()), defaultIntervalMs_, defaultBandwidth_); //the sequence index starts at 1.
 			if (ret<0){ return DEVICE_ERR; }
 		}
-		origOutputMode_ = std::string(msg); //save the original output mode we were in. we'll go back to it when the sequence is stopped.
-		ret = this->SetProperty("Output Mode", TrigModeNames.EXT); //For now we only support externally triggered sequencing. We would need to add further configuration properties to support the other modes.
-		kurios_Set_ForceTrigger(portHandle_); //This should set us to the first item of the sequence, the first camera pulse will then set us to the second sequence wavelength.
-		if (ret!=DEVICE_OK) { return ret;}
-    }
-    else if (eAct == MM::StopSequence) {
-		int ret = this->SetProperty("Output Mode", origOutputMode_.c_str());
-		if (ret!=DEVICE_OK) { return ret; }
-    }
-    else if (eAct == MM::AfterLoadSequence) {}
+	}
 	return DEVICE_OK;
 }
 
