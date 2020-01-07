@@ -131,6 +131,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private Boolean disposing_ = false;
    private Calibrator calibrator_;
    private BufferedWriter logFileWriter_;
+   private String logFile_;
    
    
    private static final SimpleDateFormat LOGFILEDATE_FORMATTER = 
@@ -561,21 +562,21 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * @return 
     */
    private BufferedWriter checkLogFile() {
-      if (logFileWriter_ == null) {
+      if (logFileWriter_ == null || logFile_ == null || ! (new File(logFile_)).exists()) {
          if (logDirectoryTextField_.getText().isEmpty()) {
             studio_.alerts().postAlert("Logging disabled", this.getClass(),
                     "To enable logging, set the Log Directory");
             return null;
          }
          String currentDate = LOGFILEDATE_FORMATTER.format(new Date());
-         String newLogFile = new StringBuilder().append(
+         logFile_ = new StringBuilder().append(
                  logDirectoryTextField_.getText()).append(
                  File.separator).append(
                          currentDate).append(
                          ".log").toString();
          try {
             OutputStreamWriter writer = new OutputStreamWriter(
-                    new FileOutputStream(newLogFile), "UTF-8");
+                    new FileOutputStream(logFile_), "UTF-8");
             // not sure if buffering is useful
             logFileWriter_ = new BufferedWriter(writer, 128);
          } catch (UnsupportedEncodingException | FileNotFoundException ex) {
