@@ -283,7 +283,7 @@ void FirstLightImagingCameras::SetExposure(double exp_ms)
 //---------------------------------------------------------------
 double FirstLightImagingCameras::GetExposure() const
 {
-	double tint;
+	double tint = 1.0;
 
 	if (_credTwo)
 		Cred2_getTint(&tint);
@@ -297,10 +297,10 @@ double FirstLightImagingCameras::GetExposure() const
 int FirstLightImagingCameras::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 {
 	CroppingData_C cropping;
-	cropping.col1 = roundUp(x, 32);
-	cropping.col2 = roundUp(x + xSize, 32)-1;
-	cropping.row1 = roundUp(y, 4);
-	cropping.row2 = roundUp(y + ySize,4)-1;
+	cropping.col1 = (uint16_t) roundUp(x, 32);
+	cropping.col2 = (uint16_t) roundUp(x + xSize, 32)-1;
+	cropping.row1 = (uint16_t) roundUp(y, 4);
+	cropping.row2 = (uint16_t) roundUp(y + ySize,4)-1;
 	FliSdk_setCroppingState(true, cropping);
 	_croppingEnabled = true;
 	return DEVICE_OK;
