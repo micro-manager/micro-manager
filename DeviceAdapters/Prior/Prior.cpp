@@ -185,7 +185,9 @@ Shutter::Shutter(const char* name, int id) :
    changedTime_(0.0)
 {
    InitializeDefaultErrorMessages();
-   SetErrorText(ERR_UNRECOGNIZED_ANSWER, "Unrecognized answer recived from the device");
+   SetErrorText(ERR_UNRECOGNIZED_ANSWER, "Unrecognized answer received from the device");
+   SetErrorText(ERR_INVALID_VALUE, "Value out of range");
+   SetErrorText(ERR_INVALID_MESSAGE, "Device received a corrupt or invalid message");
 
    // create pre-initialization properties
    // ------------------------------------
@@ -471,8 +473,11 @@ Wheel::Wheel(const char* name, unsigned id) :
 
    // add custom MTB messages
    SetErrorText(ERR_UNKNOWN_POSITION, "Position out of range");
-   SetErrorText(ERR_PORT_CHANGE_FORBIDDEN, "You can't change the port after device has been initialized.");
-   SetErrorText(ERR_SET_POSITION_FAILED, "Set position failed.");
+   SetErrorText(ERR_PORT_CHANGE_FORBIDDEN, "Port cannot be changed after device has been initialized");
+   SetErrorText(ERR_SET_POSITION_FAILED, "Set position failed");
+   SetErrorText(ERR_UNRECOGNIZED_ANSWER, "Unrecognized answer received from the device");
+   SetErrorText(ERR_INVALID_VALUE, "Value out of range");
+   SetErrorText(ERR_INVALID_MESSAGE, "Device received a corrupt or invalid message");
 
    // create pre-initialization properties
    // ------------------------------------
@@ -780,6 +785,8 @@ XYStage::XYStage() :
    stepSizeYUm_(0.0)
 {
    InitializeDefaultErrorMessages();
+   SetErrorText(ERR_INVALID_VALUE, "Value out of range");
+   SetErrorText(ERR_INVALID_MESSAGE, "Device received a corrupt or invalid message");
 
    // create pre-initialization properties
    // ------------------------------------
@@ -1523,6 +1530,8 @@ ZStage::ZStage() :
 {
    InitializeDefaultErrorMessages();
    SetErrorText(ERR_INVALID_STEP_SIZE, "Controller reports an invalid step size");
+   SetErrorText(ERR_INVALID_VALUE, "Value out of range");
+   SetErrorText(ERR_INVALID_MESSAGE, "Device received a corrupt or invalid message");
 
    // create pre-initialization properties
    // ------------------------------------
@@ -2076,10 +2085,12 @@ NanoZStage::NanoZStage() :
    initialized_(false),
    port_("Undefined"),
    stepSizeUm_(0.00001),
-   answerTimeoutMs_(1000)
+   answerTimeoutMs_(1000),
+   delayMs_(100)
 {
    InitializeDefaultErrorMessages();
-   SetErrorText(10108, "Value out of range");
+   SetErrorText(ERR_INVALID_VALUE, "Value out of range");
+   SetErrorText(ERR_INVALID_MESSAGE, "Device received a corrupt or invalid message");
 
    // create pre-initialization properties
    // ------------------------------------
@@ -2091,8 +2102,16 @@ NanoZStage::NanoZStage() :
    CreateProperty(MM::g_Keyword_Description, "Prior NanoScanZ adapter", MM::String, true);
 
    // Port
-   CPropertyAction* pAct = new CPropertyAction (this, &NanoZStage::OnPort);
+   CPropertyAction* pAct = new CPropertyAction(this, &NanoZStage::OnPort);
    CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
+
+   // Busy timer delay, range 
+   pAct = new CPropertyAction(this, &NanoZStage::OnDelay);
+   CreateProperty(MM::g_Keyword_Delay, "100.0", MM::Float, false, pAct);
+   SetPropertyLimits(MM::g_Keyword_Delay, 0.0, 1000.0);
+
+   // Initialise busy timer
+   changedTime_ = GetCurrentMMTime();
 }
 
 NanoZStage::~NanoZStage()
@@ -2107,23 +2126,10 @@ void NanoZStage::GetName(char* Name) const
 
 int NanoZStage::Initialize()
 {
-   // Ensure we are in Standard mode (not Compatibility mode)
-   int ret = SendSerialCommand(port_.c_str(), "COMP 0", "\r");
-   if (ret != DEVICE_OK)
-      return ret;
-   std::string compAnswer;
-   ret = GetSerialAnswer(port_.c_str(), "\r", compAnswer);
-   // (compAnswer should be "0")
-   if (ret != DEVICE_OK)
-      return false;
+   int ret;
 
-
-   // set stage step size and resolution
-   ret = GetPositionSteps(curSteps_);
-   if (ret != DEVICE_OK)
-      ret = GetPositionSteps(curSteps_);
-      if (ret != DEVICE_OK)
-         return ret;
+   // Set resolution if we can.  If not, assume we have the default resolution.
+   (void)SetResolution(stepSizeUm_);
 
    std::string version, model;
    ret = GetModelAndVersion(model, version);
@@ -2151,56 +2157,12 @@ int NanoZStage::Shutdown()
 
 bool NanoZStage::Busy()
 {
-   // First Clear serial port from previous stuff
-   int ret = ClearPort(*this, *GetCoreCallback(), port_);
-   if (ret != DEVICE_OK)
-      return false;
-
-   const char* command = "$";
-
-   // send command
-   ret = SendSerialCommand(port_.c_str(), command, "\r");
-   if (ret != DEVICE_OK)
-      return false;
-
-   // block/wait for acknowledge, or until we time out;
-   std::string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
-   if (ret != DEVICE_OK)
-      return false;
-
-   if (answer.length() == 1)
-   {
-      // Z axis status is in bit 3:
-      int status = atoi(answer.c_str()) & 4;
-      return status > 0 ? true : false;
-   }
-
-   return false;
+   MM::MMTime interval = GetCurrentMMTime() - changedTime_;
+   MM::MMTime delay(GetDelayMs() * delayMs_);
+   return (interval < delay);
 }
 
 int NanoZStage::SetPositionUm(double pos)
-{
-   double fsteps = pos / stepSizeUm_;
-   long steps;
-   if (pos >= 0)
-      steps = (long) (fsteps + 0.5);
-   else
-      steps = (long) (fsteps - 0.5);
-   return SetPositionSteps(steps);
-}
-
-int NanoZStage::GetPositionUm(double& pos)
-{
-   long steps;
-   int ret = GetPositionSteps(steps);
-   if (ret != DEVICE_OK)
-      return ret;
-   pos = steps * stepSizeUm_;
-   return DEVICE_OK;
-}
-  
-int NanoZStage::SetPositionSteps(long pos)
 {
    // First Clear serial port from previous stuff
    int ret = ClearPort(*this, *GetCoreCallback(), port_);
@@ -2208,8 +2170,7 @@ int NanoZStage::SetPositionSteps(long pos)
       return ret;
 
    std::ostringstream command;
-   double dPos = pos * stepSizeUm_;
-   command << "V " << dPos;
+   command << "PZ " << pos;
    // send command
    ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
    if (ret != DEVICE_OK)
@@ -2223,7 +2184,7 @@ int NanoZStage::SetPositionSteps(long pos)
 
    if (answer.substr(0,1).compare("R") == 0)
    {
-      curSteps_ = pos;
+      changedTime_ = GetCurrentMMTime();
       return DEVICE_OK;
    }
    else if (answer.substr(0, 1).compare("E") == 0 && answer.length() > 2)
@@ -2232,10 +2193,69 @@ int NanoZStage::SetPositionSteps(long pos)
       return ERR_OFFSET + errNo;
    }
 
-   // Note: there seem to be issues with controller moving into Relative mode
-   // If this is the case, try sending PV,dPos position here
- 
    return ERR_UNRECOGNIZED_ANSWER;   
+}
+
+int NanoZStage::GetPositionUm(double& pos)
+{
+   // First Clear serial port from previous stuff
+   int ret = ClearPort(*this, *GetCoreCallback(), port_);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   const char* command="PZ";
+
+   // send command
+   ret = SendSerialCommand(port_.c_str(), command, "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // block/wait for acknowledge, or until we time out;
+   std::string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+   if (ret != DEVICE_OK)
+   {
+      // failed reading the port
+      return ret;
+   }
+
+   if (answer.length() > 2 && answer.substr(0, 1).compare("E") == 0)
+   {
+      int errNo = atoi(answer.substr(2).c_str());
+      return ERR_OFFSET + errNo;
+   }
+   else if (answer.length() > 0)
+   {
+      std::stringstream is(answer);
+      is >> pos;
+      return DEVICE_OK;
+   }
+
+   return ERR_UNRECOGNIZED_ANSWER;
+}
+
+int NanoZStage::SetPositionSteps(long steps)
+{
+	double posUm = (double)steps * stepSizeUm_;
+	return SetPositionUm(posUm);
+}
+
+int NanoZStage::GetPositionSteps(long& steps)
+{
+	int returnValue;
+	double posUm = 0.0;
+
+	returnValue = GetPositionUm(posUm);
+	if (posUm >= 0)
+	{
+		steps = (long)((posUm / stepSizeUm_) + 0.5);
+	}
+	else
+	{
+		steps = (long)((posUm / stepSizeUm_) - 0.5);
+	}
+
+	return returnValue;
 }
   
 int NanoZStage::SetRelativePositionUm(double pos)
@@ -2268,6 +2288,7 @@ int NanoZStage::SetRelativePositionUm(double pos)
 
    if (answer.substr(0,1).compare("R") == 0)
    {
+      changedTime_ = GetCurrentMMTime();
       return DEVICE_OK;
    }
    else if (answer.substr(0, 1).compare("E") == 0 && answer.length() > 2)
@@ -2279,19 +2300,58 @@ int NanoZStage::SetRelativePositionUm(double pos)
    return ERR_UNRECOGNIZED_ANSWER;   
 }
 
-int NanoZStage::GetPositionSteps(long& steps)
+int NanoZStage::SetResolution(double value)
 {
    // First Clear serial port from previous stuff
    int ret = ClearPort(*this, *GetCoreCallback(), port_);
    if (ret != DEVICE_OK)
       return ret;
 
-   const char* command="PZ";
+   std::ostringstream command;
+   command << "C " << value;
+
+   // send command
+   ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // block/wait for acknowledge, or until we time out;
+   std::string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (answer.length() > 2 && answer.substr(0, 1).compare("E") == 0)
+   {
+      int errNo = atoi(answer.substr(2).c_str());
+      return ERR_OFFSET + errNo;
+   }
+   else
+   {
+      return DEVICE_OK;
+   }
+}
+
+int NanoZStage::SetOrigin()
+{
+   return DEVICE_UNSUPPORTED_COMMAND;
+}
+
+int NanoZStage::GetLimits(double& min, double& max)
+{
+   // First Clear serial port from previous stuff
+   int ret = ClearPort(*this, *GetCoreCallback(), port_);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   const char* command="PIEZORANGE";
 
    // send command
    ret = SendSerialCommand(port_.c_str(), command, "\r");
    if (ret != DEVICE_OK)
+   {
       return ret;
+   }
 
    // block/wait for acknowledge, or until we time out;
    std::string answer;
@@ -2310,25 +2370,14 @@ int NanoZStage::GetPositionSteps(long& steps)
    else if (answer.length() > 0)
    {
       std::stringstream is(answer);
-      double tmpSteps;
-      is >> tmpSteps;
-      //steps = atol(answer.c_str());
-      steps = (long) (tmpSteps / stepSizeUm_);
-      curSteps_ = steps;
+      is >> max;
+      min = 0.0;
       return DEVICE_OK;
    }
-
-   return ERR_UNRECOGNIZED_ANSWER;
-}
-
-int NanoZStage::SetOrigin()
-{
-   return DEVICE_UNSUPPORTED_COMMAND;
-}
-
-int NanoZStage::GetLimits(double& /*min*/, double& /*max*/)
-{
-   return DEVICE_UNSUPPORTED_COMMAND;
+   else
+   {
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2354,6 +2403,35 @@ int NanoZStage::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
 
    return DEVICE_OK;
+}
+
+int NanoZStage::OnDelay(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   int returnValue = DEVICE_OK;
+
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(delayMs_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      double delayValue;
+
+      pProp->Get(delayValue);
+
+      if (delayValue >= 0.0)
+      {
+         delayMs_ = delayValue;
+      }
+      else
+      {
+         // revert
+         pProp->Set(delayMs_);
+         returnValue = ERR_INVALID_VALUE;
+      }
+   }
+
+   return returnValue;
 }
 
 // NanoZStage private functions
@@ -2410,6 +2488,8 @@ BasicController::BasicController() :
    answerTimeoutMs_(1000)
 {
    InitializeDefaultErrorMessages();
+   SetErrorText(ERR_INVALID_VALUE, "Value out of range");
+   SetErrorText(ERR_INVALID_MESSAGE, "Device received a corrupt or invalid message");
 
    // create pre-initialization properties
    // ------------------------------------
@@ -2418,7 +2498,7 @@ BasicController::BasicController() :
    CreateProperty(MM::g_Keyword_Name, g_BasicControllerName, MM::String, true);
 
    // Description
-   CreateProperty(MM::g_Keyword_Description, "Prior controller adtapter", MM::String, true);
+   CreateProperty(MM::g_Keyword_Description, "Prior controller adapter", MM::String, true);
 
    // Port
    CPropertyAction* pAct = new CPropertyAction (this, &BasicController::OnPort);
@@ -2598,7 +2678,9 @@ Lumen::Lumen() :
    curState_(false)
 {
    InitializeDefaultErrorMessages();
-   SetErrorText(ERR_UNRECOGNIZED_ANSWER, "Unrecognized answer recived from the device");
+   SetErrorText(ERR_UNRECOGNIZED_ANSWER, "Unrecognized answer received from the device");
+   SetErrorText(ERR_INVALID_VALUE, "Value out of range");
+   SetErrorText(ERR_INVALID_MESSAGE, "Device received a corrupt or invalid message");
 
    // create pre-initialization properties
    // ------------------------------------
@@ -2846,6 +2928,8 @@ TTLShutter::TTLShutter(const char* name, int id) :
 {
    InitializeDefaultErrorMessages();
    SetErrorText(ERR_UNRECOGNIZED_ANSWER, "Unrecognized answer received from the device");
+   SetErrorText(ERR_INVALID_VALUE, "Value out of range");
+   SetErrorText(ERR_INVALID_MESSAGE, "Device received a corrupt or invalid message");
 
    // create pre-initialization properties
    // ------------------------------------
