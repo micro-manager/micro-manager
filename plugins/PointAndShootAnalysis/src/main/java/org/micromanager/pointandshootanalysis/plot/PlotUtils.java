@@ -131,6 +131,9 @@ public class PlotUtils {
            String yTitle, String annotation, Double yLimit, Color[] colors, 
            DataExporter dataExporter) {
 
+      if (data.length == 0) {
+         return null;
+      }
       // JFreeChart code
       XYSeriesCollection dataset = new XYSeriesCollection();
       // calculate min and max to scale the graph

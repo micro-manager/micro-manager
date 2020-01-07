@@ -28,6 +28,7 @@ import org.micromanager.pointandshootanalysis.data.ParticleData;
 import org.micromanager.pointandshootanalysis.data.TrackInfoCalculator;
 import org.micromanager.pointandshootanalysis.display.WidgetSettings;
 import org.micromanager.pointandshootanalysis.plot.PlotUtils;
+import static org.micromanager.pointandshootanalysis.utils.ListUtils.xAvgLastN;
 
 /**
  *
@@ -71,7 +72,7 @@ public class DataExporter {
       // search for the frame with the minimum intensity in the n frames 
       // after the bleach was reported.  Note that n is hard coded for now
       // n should be expressed in seconds (or ms) and be provided by the user
-      final int n = 25;
+      final int n = 50;
       for (int frame = d.framePasClicked(); frame < d.framePasClicked() + n
               && frame < frameTimeStamps_.size(); frame++) {
          if (d.particleDataTrack().get(frame) != null) {
@@ -111,6 +112,10 @@ public class DataExporter {
                double ms = frameTimeStamps_.get(frame).toEpochMilli()
                        - frameTimeStamps_.get(d.framePasClicked()).toEpochMilli();
                if (msLimit == null || ms < msLimit) {
+                  if (Double.isInfinite(ms))
+                     System.out.println("ms is infinte");
+                  if (Double.isInfinite(intensity)) 
+                     System.out.println("intensity is infinite");
                   dataAsList.add(new Point2D.Double(ms, intensity));
                }
             }
@@ -119,6 +124,7 @@ public class DataExporter {
       if (dataAsList.size() < 3) { 
          return null;
       }
+      double endIntensityEstimate = xAvgLastN(dataAsList, dataAsList.size() / 10);
       PASFunction func = null;
       if (fitFunction == SingleExpRecoveryFunc.class) {
          func = new SingleExpRecoveryFunc(dataAsList);
@@ -134,9 +140,13 @@ public class DataExporter {
       double startTimeEstimate = frameTimeStamps_.get(startFrame).toEpochMilli() - 
               frameTimeStamps_.get(d.framePasClicked()).toEpochMilli();
       if (fitFunction == SingleExpRecoveryFunc.class) {
-         optimizer.initialize(new double[]{0.8, startTimeEstimate, 0.002}, 1e-12, 1e-12);
+         optimizer.initialize(new double[]
+                  {endIntensityEstimate, startTimeEstimate, 0.0005}, 
+                  1e-12, 1e-12);
       } else if (fitFunction == LinearFunc.class) {
-         optimizer.initialize(new double[]{dataAsList.get(0).getY(), 0.001}, 1e-12, 1e-12);
+         optimizer.initialize(new double[]
+                  {dataAsList.get(0).getY(), 0.001}, 
+                  1e-12, 1e-12);
       }
       UtilOptimize.process(optimizer, 50);
       double[] found = optimizer.getParameters();

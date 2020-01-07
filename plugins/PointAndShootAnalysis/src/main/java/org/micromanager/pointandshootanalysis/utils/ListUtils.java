@@ -84,6 +84,16 @@ public class ListUtils {
 		return new Point2D_I32(x,y);
 	}
    
+   public static double xAvgLastN(List<Point2D> input, int lastN) {
+      double sum = 0.0;
+      int counter = 0;
+      for (int i = input.size() - lastN; i < input.size(); i++) {
+         sum += input.get(i).getY();
+         counter++;
+      }
+      return sum / counter;
+   }
+   
    public static Point2D.Double stdDevsXYList(ArrayList<Point2D.Double> xyPoints, 
            Point2D.Double avg) {
       Point2D.Double myStdDev = new Point2D.Double(0.0, 0.0);
