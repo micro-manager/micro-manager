@@ -237,7 +237,7 @@ public class PointAndShootAnalyzer implements Runnable {
          final int yMiddle = roiHeight_ / 2;
          final Point2D_I32 middle = new Point2D_I32(xMiddle, yMiddle);
          
-         // create a boofCV Planar that contains all of the MM data (no copy, backed by MM
+         // create a boofCV Planar that contains all of the MM data (no copy, backed by MM)
          Coords.Builder cbb = dataProvider.getAnyImage().getCoords().copyBuilder();
          Planar bCVStack = new Planar(GrayU16.class, dataProvider.getAxisLength(Coords.T));
          bCVStack.setWidth(imgWidth);
@@ -331,7 +331,6 @@ public class PointAndShootAnalyzer implements Runnable {
                   track.put(frame, nextParticle);
                } else {
                   track.put(frame, null);
-                 // System.out.println("Before Missing particle");
                   // TODO: increase counter, give up when too high
                }
             }
@@ -356,7 +355,6 @@ public class PointAndShootAnalyzer implements Runnable {
                   if (previousParticle != null) {
                      nextParticle = previousParticle.copy();
                   }
-                  //System.out.println("After Missing particle");
                   // TODO: increase counter, give up when too high
                } 
 
@@ -366,7 +364,8 @@ public class PointAndShootAnalyzer implements Runnable {
                }
                track.put(frame, nextParticle);
             }
-            // Now locate the bleachspots in the particle data 
+            
+            // Locate the bleachspots in the particle data 
             int bleachSpotsMissed = 0;
             currentPoint = track.get(pasEntry.framePasClicked() + 2).getCentroid();
             final int getCalculateVectorFrame = pasEntry.framePasClicked() + 5 + 
@@ -439,7 +438,7 @@ public class PointAndShootAnalyzer implements Runnable {
             psd_.setProgress((double) ++count / (double) pasData.size());
          }
          
-         // find duplicate tracks (i.e. the same particle was bleached twice
+         // Find duplicate tracks (i.e. the same particle was bleached twice
          // Algorithm: find the centroid of the first particle in the track.  
          // If within a certain distance from the centroid of the first particle
          // from another track, we'll assume this is one and the same and remove the track.
@@ -464,7 +463,7 @@ public class PointAndShootAnalyzer implements Runnable {
                }
             }
          }
-         // remove the duplicates that were found
+         // Remove the duplicates that were found
          for (Map<Integer, ParticleData> track : doubleTracks) {
             tracks.remove(track);
             // also remove pasData that contain this track
@@ -499,6 +498,15 @@ public class PointAndShootAnalyzer implements Runnable {
                tracksIndexedByFrame.put(entry.getKey(), particlesInFrame);
             });
          });
+
+         // Remove PASData that have no particleDataTrack 
+         List<PASData> cleanedPASData = new ArrayList<>();
+         for (PASData d : pasData) {
+            if (d.particleDataTrack() != null) {
+               cleanedPASData.add(d);
+            }
+         }
+
 
          // Find "control particle", i.e. particles that were not bleached
          // and that serve as intensity controls
@@ -603,15 +611,10 @@ public class PointAndShootAnalyzer implements Runnable {
                } 
                controlAvgIntensity.put(frame, (sum / n) - cameraOffset ); 
             }
-                        
-            // Remove PASData that have no particleDataTrack 
-            List<PASData> cleanedPASData = new ArrayList<>();
-            for (PASData d : pasData) {
-               if (d.particleDataTrack() != null) {
-                  cleanedPASData.add(d);
-               }
-            }
             
+            //TODO: filter the control intensities
+            // Either Kalman filter or moving average or median
+
             // normalize the bleach spot intensities and store with the PASData->ParticleData
             for (PASData d : cleanedPASData) {
                d.normalizeBleachSpotIntensities(findMinFramesBefore, 
@@ -624,7 +627,6 @@ public class PointAndShootAnalyzer implements Runnable {
             
                         
             if (cleanedPASData.isEmpty()) {
-               // TODO: UI feedback
                psd_.setStatus("No bleaching events found");
                psd_.setProgress(0.0);
                return;

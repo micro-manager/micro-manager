@@ -225,7 +225,7 @@ public class ListUtils {
       if (max >= 0) {
          int cutoffSize = sizes[max];
          for (List<T> sample : input) {
-            if (sample.size() > cutoffSize) {
+            if (sample.size() >= cutoffSize) {
                out.add(sample);
             }
          }
@@ -243,7 +243,7 @@ public class ListUtils {
     * @return output list, ready for bootstrap analysis
     */
    public static <T> List<T> listToListForBootstrap(List<T> list) {
-      List<T> newList = new ArrayList<T>(list.size());
+      List<T> newList = new ArrayList<>(list.size());
       int length = list.size();
       for (int i=0; i < length; i++) {
          int index = (int) Math.floor(Math.random() * (double) list.size());
@@ -252,5 +252,6 @@ public class ListUtils {
       return newList;
    }
    
+
    
 }
