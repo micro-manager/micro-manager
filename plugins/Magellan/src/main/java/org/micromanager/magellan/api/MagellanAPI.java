@@ -42,6 +42,10 @@ public class MagellanAPI {
       SurfaceGridManager.getInstance().rename(grid, name);
    }
    
+   public void deleteAllGridsAndSurfaces() {
+      SurfaceGridManager.getInstance().deleteAll();
+   }
+   
    
 
 }
