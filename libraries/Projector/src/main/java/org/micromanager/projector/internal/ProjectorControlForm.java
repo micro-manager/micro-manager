@@ -87,9 +87,12 @@ import org.micromanager.PropertyMap;
 
 import org.micromanager.Studio;
 import org.micromanager.data.DataProvider;
+import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
+import org.micromanager.events.AcquisitionEndedEvent;
+import org.micromanager.events.AcquisitionStartedEvent;
 import org.micromanager.events.SLMExposureChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.utils.FileDialogs;
@@ -132,6 +135,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private Calibrator calibrator_;
    private BufferedWriter logFileWriter_;
    private String logFile_;
+   private BufferedWriter mdaLogFileWriter_;
+   private String mdaLogFile_;
    
    
    private static final SimpleDateFormat LOGFILEDATE_FORMATTER = 
@@ -193,7 +198,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       pointAndShootMouseListener_ = createPointAndShootMouseListenerInstance();
       projectorControlExecution_ = new ProjectorControlExecution(studio_);
       studio_.events().registerForEvents(projectorControlExecution_);
-      
+
       // Create GUI
       initComponents();
 
@@ -201,7 +206,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       Toolkit.getDefaultToolkit().addAWTEventListener((AWTEvent e) -> {
          enablePointAndShootMode(pointAndShooteModeOn_.get());
       }, AWTEvent.WINDOW_EVENT_MASK);
-      
+
       isSLM_ = dev_ instanceof SLM;
       // Only an SLM (not a galvo) has pixels.
       allPixelsButton_.setVisible(isSLM_);
@@ -216,14 +221,13 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       super.addWindowFocusListener(new WindowAdapter() {
          @Override
          public void windowGainedFocus(WindowEvent e) {
-            if (!disposing_)
-            {
+            if (!disposing_) {
                populateChannelComboBox(settings_.getString(Terms.PTCHANNEL, ""));
                populateShutterComboBox(settings_.getString(Terms.PTSHUTTER, ""));
             }
          }
       });
-      
+
       commitSpinnerOnValidEdit(pointAndShootIntervalSpinner_);
       commitSpinnerOnValidEdit(startFrameSpinner_);
       commitSpinnerOnValidEdit(repeatEveryFrameSpinner_);
@@ -231,7 +235,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       commitSpinnerOnValidEdit(roiLoopSpinner_);
       pointAndShootIntervalSpinner_.setValue(dev_.getExposure() / 1000);
       sequencingButton_.setVisible(MosaicSequencingFrame.getMosaicDevices(core).size() > 0);
-     
+
       studio_.events().registerForEvents(new Object() {
          @Subscribe
          public void onSlmExposureChanged(SLMExposureChangedEvent event) {
@@ -241,12 +245,34 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                pointAndShootIntervalSpinner_.setValue(exposure);
             }
          }
-         
+
          @Subscribe
          public void onShutdownStarting(ShutdownCommencingEvent sce) {
             dispose();
          }
-         
+
+         @Subscribe
+         public void onAcquisitionStart(AcquisitionStartedEvent ae) {
+            Datastore store = ae.getDatastore();
+            String savePath = store.getSavePath();
+            mdaLogFile_ = new StringBuilder().append(savePath).append(
+                    File.separator).append("PointAndShoot.log").toString();
+         }
+
+         @Subscribe
+         public void onAcquisitionEnd(AcquisitionEndedEvent ae) {
+            try {
+               if (mdaLogFileWriter_ != null) {
+                  mdaLogFileWriter_.flush();
+                  mdaLogFileWriter_.close();
+               }
+            } catch (IOException ioe) {
+               studio_.logs().logError(ioe, "Failed to close PAS MDA Log file");
+            }
+            mdaLogFileWriter_ = null;
+            mdaLogFile_ = null;
+         }
+
       });
 
       studio_.displays().registerForEvents(new Object() {
@@ -261,9 +287,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
             }
          }
       });
-      
-      delayField_.setText(settings_.getString( Terms.DELAY, "0"));
-      logDirectoryTextField_.setText(settings_.getString( Terms.LOGDIRECTORY, ""));
+
+      delayField_.setText(settings_.getString(Terms.DELAY, "0"));
+      logDirectoryTextField_.setText(settings_.getString(Terms.LOGDIRECTORY, ""));
 
       super.loadAndRestorePosition(500, 300);
       updateROISettings();
@@ -586,6 +612,23 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
       return logFileWriter_;
    }
+   
+   private BufferedWriter checkMDALogFile() {
+      if (mdaLogFile_ == null) {
+         return null;
+      }
+      if (mdaLogFileWriter_ == null) {
+         try {
+            OutputStreamWriter writer = new OutputStreamWriter(
+               new FileOutputStream (mdaLogFile_), "UTF-8");
+            mdaLogFileWriter_ = new BufferedWriter(writer, 128);
+         }  catch (UnsupportedEncodingException | FileNotFoundException ex) {
+            studio_.alerts().postAlert("Error opening MDA logfile", this.getClass(),
+                    "Failed to open MDA log file");
+         }
+      }
+      return mdaLogFileWriter_;
+   }
 
    /**
     * Writes a point (screen coordinates) to the logfile, preceded
@@ -597,11 +640,19 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       if (logFileWriter == null) {
          return;
       }
+      BufferedWriter mdaLogFileWriter = checkMDALogFile();
       String currentTime = LOGTIME_FORMATTER.format(new Date());  // could use nanoseconds instead...
       try {
-         logFileWriter.write(currentTime + "\t" + p.x + "\t" + p.y);
+         String logLine = new StringBuilder(currentTime).append("\t").append(p.x).
+                                       append("\t").append(p.y).toString();
+         logFileWriter.write(logLine);
          logFileWriter.newLine();
          logFileWriter.flush();
+         if (mdaLogFileWriter != null) {
+            mdaLogFileWriter.write(logLine);
+            mdaLogFileWriter.newLine();
+            mdaLogFileWriter.flush();
+         }
       } catch (IOException ioe) {
          studio_.alerts().postAlert("Projector logfile error", this.getClass(),
                  "Failed to open write to Projector log file");
@@ -892,7 +943,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    {
       formSingleton_ = null;
       disposing_ = true;
-      studio_.events().unregisterForEvents(projectorControlExecution_);
+      studio_.events().unregisterForEvents(projectorControlExecution_);      
+      studio_.events().unregisterForEvents(this);
       if (pointAndShootThread_ != null && pointAndShootThread_.isAlive()) {
          pointAndShootQueue_.add(
                  new PointAndShootInfo.Builder().stop().build());
