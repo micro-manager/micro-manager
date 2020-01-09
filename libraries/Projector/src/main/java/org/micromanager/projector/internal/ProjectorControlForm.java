@@ -23,7 +23,6 @@ import com.google.common.eventbus.Subscribe;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
-import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.gui.Roi;
 import ij.gui.Toolbar;
@@ -36,11 +35,8 @@ import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
-import java.awt.Window;
 import java.awt.event.ActionEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Point2D;
@@ -89,8 +85,9 @@ import org.micromanager.Studio;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
-import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.DataViewer;
 import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
+import org.micromanager.display.internal.event.DisplayMouseEvent;
 import org.micromanager.events.AcquisitionEndedEvent;
 import org.micromanager.events.AcquisitionStartedEvent;
 import org.micromanager.events.SLMExposureChangedEvent;
@@ -116,11 +113,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private static ProjectorControlForm formSingleton_;
    private final ProjectorControlExecution projectorControlExecution_;
    private final ProjectionDevice dev_;
-   private final MouseListener pointAndShootMouseListener_;
    private final AtomicBoolean pointAndShooteModeOn_ = new AtomicBoolean(false);
    private final BlockingQueue<PointAndShootInfo> pointAndShootQueue_;
    private Thread pointAndShootThread_;
-   private ImageCanvas pointAndShootCanvas_;
+   private DataViewer pointAndShootViewer_;
    private final CMMCore core_;
    private final Studio studio_;
    private final MutablePropertyMapView settings_;
@@ -195,7 +191,6 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       dev_ = ProjectorActions.getProjectionDevice(studio_);
       mapping_ = MappingStorage.loadMapping(core_, dev_, settings_.toPropertyMap());
       pointAndShootQueue_ = new LinkedBlockingQueue<>();
-      pointAndShootMouseListener_ = createPointAndShootMouseListenerInstance();
       projectorControlExecution_ = new ProjectorControlExecution(studio_);
       studio_.events().registerForEvents(projectorControlExecution_);
 
@@ -273,18 +268,13 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
             mdaLogFile_ = null;
          }
 
+
       });
 
       studio_.displays().registerForEvents(new Object() {
          @Subscribe
          public void onDataViewerBecameActiveEvent(DataViewerDidBecomeActiveEvent dve) {
-            if (dve.getDataViewer() instanceof DisplayWindow) {
-               Window asWindow = ((DisplayWindow) (dve.getDataViewer())).getWindow();
-               if (asWindow instanceof ImageWindow) {
-                  ImageCanvas canvas = ((ImageWindow) asWindow).getCanvas();
-                  pointAndShootWindow(canvas, pointAndShooteModeOn_.get());
-               }
-            }
+            enablePointAndShootMode(pointAndShooteModeOn_.get());
          }
       });
 
@@ -434,11 +424,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    /** Flips a point if the image was mirrored.
     *   TODO: also correct for rotation..
    */
-   private Point mirrorIfNecessary(ImageCanvas canvas, 
-           Point pOffscreen) {
+   private Point mirrorIfNecessary(DataViewer dv, Point pOffscreen) {
       boolean isImageMirrored = false;
       int imageWidth = 0;
-      DataProvider dp = projectorControlExecution_.getDataProvider(canvas);
+      DataProvider dp = dv.getDataProvider();
       if (dp != null) {
          try {
             Image lastImage = dp.getImage(dp.getMaxIndices());
@@ -464,49 +453,46 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    }
    
 
-
-   /**
-    * ## Point and shoot
-    * Creates a MouseListener instance for future use with Point and Shoot
-    * mode. When the MouseListener is attached to an ImageJ window, any
-    * clicks will result in a spot being illuminated.
-    */
-   private MouseListener createPointAndShootMouseListenerInstance() {
-      return new MouseAdapter() {
-         @Override
-         public void mouseReleased(MouseEvent e) {
-            if (e.isShiftDown()) {
-               if (studio_.acquisitions().isAcquisitionRunning() || studio_.live().getIsLiveModeOn()) {
-                  final Point p = e.getPoint();
-                  final ImageCanvas canvas = (ImageCanvas) e.getSource();
-                  Point pOff = new Point(canvas.offScreenX(p.x), canvas.offScreenY(p.y));
-                  final Point pOffScreen = mirrorIfNecessary(canvas, pOff);
-                  Integer binning = null;
-                  Rectangle roi = null;
-                  try {
-                     binning = Utils.getBinning(core_);
-                     roi = core_.getROI();
-                  } catch (Exception ex) {
-                     studio_.logs().logError(ex);
-                  }
-                  final Point2D.Double devP = ProjectorActions.transformPoint(
-                          MappingStorage.loadMapping(core_, dev_, settings_.toPropertyMap()),
-                          new Point2D.Double(pOffScreen.x, pOffScreen.y), roi, binning);
-                  final Configuration originalConfig
-                          =     projectorControlExecution_.prepareChannel(targetingChannel_);
-                  PointAndShootInfo.Builder psiBuilder = new PointAndShootInfo.Builder();
-                  PointAndShootInfo psi = psiBuilder.projectionDevice(dev_).
-                          devPoint(devP).
-                          originalConfig(originalConfig).
-                          canvasPoint(pOffScreen).
-                          build();
-                  pointAndShootQueue_.add(psi);
-               }
+   @Subscribe
+   public void onDisplayMouseEvent(DisplayMouseEvent dme) {
+      // only take action when the Hand tool is selected
+      if (dme.getToolId() != ij.gui.Toolbar.HAND) {
+         return;
+      }
+      if ( (dme.getEvent().getID() == MouseEvent.MOUSE_PRESSED ) && 
+              dme.getEvent().isShiftDown() && 
+              dme.getEvent().getButton() == 1) {
+         // System.out.println("" + dme.getEvent().getID()+ " " + dme.getEvent().paramString());
+         if (studio_.acquisitions().isAcquisitionRunning() || studio_.live().getIsLiveModeOn()) {
+            Point2D p2D = dme.getCenterLocation();
+            Point p = new Point ((int) Math.round(p2D.getX()), (int) Math.round(p2D.getY()));
+            // Is this needed?
+            p = mirrorIfNecessary(pointAndShootViewer_, p);
+            Integer binning = null;
+            Rectangle roi = null;
+            try {
+               binning = Utils.getBinning(core_);
+               roi = core_.getROI();
+            } catch (Exception ex) {
+               studio_.logs().logError(ex);
             }
+            final Point2D.Double devP = ProjectorActions.transformPoint(
+                    MappingStorage.loadMapping(core_, dev_, settings_.toPropertyMap()),
+                    new Point2D.Double(p.getX(), p.getY()), roi, binning);
+            final Configuration originalConfig
+                    = projectorControlExecution_.prepareChannel(targetingChannel_);
+            PointAndShootInfo.Builder psiBuilder = new PointAndShootInfo.Builder();
+            PointAndShootInfo psi = psiBuilder.projectionDevice(dev_).
+                    devPoint(devP).
+                    originalConfig(originalConfig).
+                    canvasPoint(new Point((int) p2D.getX(), (int) p2D.getY())).
+                    build();
+            pointAndShootQueue_.add(psi);
          }
-      };
+      }
    }
 
+   
    /**
     * Turn on/off point and shoot mode.
     * @param on on/off flag
@@ -547,41 +533,24 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          });
          pointAndShootThread_.start();
       }
-      ImageWindow window = WindowManager.getCurrentWindow();
-      if (window != null) {
-         ImageCanvas canvas = window.getCanvas();
-         pointAndShootWindow(canvas, on);
+      if (!on & pointAndShootViewer_ != null) {
+         pointAndShootViewer_.unregisterForEvents(this);
+         pointAndShootViewer_ = null;
       }
-   }
-
-   private void pointAndShootWindow(ImageCanvas canvas, Boolean on) {
-      if (canvas != null) {
-         if (on) {
-            boolean found = false;
-            for (MouseListener listener : canvas.getMouseListeners()) {
-               if (listener == pointAndShootMouseListener_) {
-                  found = true;
-               }
-            }
-            if (!found) {
-               if (canvas != pointAndShootCanvas_ && pointAndShootCanvas_ != null) {  // this should be true whenever pointAndShootCanvas_ != null
-                  pointAndShootCanvas_.removeMouseListener(pointAndShootMouseListener_);
-               }
-               canvas.addMouseListener(pointAndShootMouseListener_);
-               pointAndShootCanvas_ = canvas;
-            }
-         } else {
-            for (MouseListener listener : canvas.getMouseListeners()) {
-               if (listener == pointAndShootMouseListener_) {
-                  canvas.removeMouseListener(listener);
-               }
-            }
-            pointAndShootCanvas_ = null;
+      if (on && pointAndShootViewer_ != null && 
+              pointAndShootViewer_ != studio_.displays().getActiveDataViewer()) {
+         pointAndShootViewer_.unregisterForEvents(this);
+         pointAndShootViewer_ = null;
+      }
+      if (on && pointAndShootViewer_ == null) {
+         pointAndShootViewer_ = studio_.displays().getActiveDataViewer();
+         if (pointAndShootViewer_ != null) {
+            pointAndShootViewer_.registerForEvents(this);
          }
       }
-
    }
 
+  
    /**
     * Creates the log file - names with the current date - if it 
     * did not yet exist.
@@ -945,6 +914,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       disposing_ = true;
       studio_.events().unregisterForEvents(projectorControlExecution_);      
       studio_.events().unregisterForEvents(this);
+      enablePointAndShootMode(false);
       if (pointAndShootThread_ != null && pointAndShootThread_.isAlive()) {
          pointAndShootQueue_.add(
                  new PointAndShootInfo.Builder().stop().build());
@@ -957,6 +927,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       if (logFileWriter_ != null) {
          try {
             logFileWriter_.close();
+            if (mdaLogFileWriter_ != null) {
+               mdaLogFileWriter_.close();
+            }                    
          } catch (IOException ioe) {
             // we are trying to close this file.  silently ignoring should be OK....
          } finally {
