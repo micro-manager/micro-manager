@@ -29,12 +29,10 @@ import ij.gui.Toolbar;
 import ij.plugin.frame.RoiManager;
 import ij.process.FloatPolygon;
 
-import java.awt.AWTEvent;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -71,7 +69,6 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SpinnerNumberModel;
-import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.text.DefaultFormatter;
 
@@ -79,8 +76,8 @@ import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.DeviceType;
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.PropertyMap;
 
+import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
@@ -92,26 +89,27 @@ import org.micromanager.events.AcquisitionEndedEvent;
 import org.micromanager.events.AcquisitionStartedEvent;
 import org.micromanager.events.SLMExposureChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
-import org.micromanager.internal.utils.FileDialogs;
-import org.micromanager.internal.utils.FileDialogs.FileType;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 import org.micromanager.projector.internal.devices.SLM;
 import org.micromanager.projector.ProjectionDevice;
 import org.micromanager.projector.ProjectorActions;
+import org.micromanager.projector.Mapping;
 
 // TODO should not depend on internal code.
 import org.micromanager.internal.utils.MMFrame;
-import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.projector.Mapping;
+import org.micromanager.internal.utils.FileDialogs;
+import org.micromanager.internal.utils.FileDialogs.FileType;
 
 /**
  * The main window for the Projector plugin. Contains logic for calibration,
  * and control for SLMs and Galvos.
 */
-public class ProjectorControlForm extends MMFrame implements OnStateListener {
+public class ProjectorControlForm extends MMFrame {
    private static ProjectorControlForm formSingleton_;
    private final ProjectorControlExecution projectorControlExecution_;
+   private final Object studioEventHandler_;
+   private final Object displayEventHandler_;
    private final ProjectionDevice dev_;
    private final AtomicBoolean pointAndShooteModeOn_ = new AtomicBoolean(false);
    private final BlockingQueue<PointAndShootInfo> pointAndShootQueue_;
@@ -197,11 +195,6 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       // Create GUI
       initComponents();
 
-      // Make sure that the Point and Shoot code listens to the correct window
-      Toolkit.getDefaultToolkit().addAWTEventListener((AWTEvent e) -> {
-         enablePointAndShootMode(pointAndShooteModeOn_.get());
-      }, AWTEvent.WINDOW_EVENT_MASK);
-
       isSLM_ = dev_ instanceof SLM;
       // Only an SLM (not a galvo) has pixels.
       allPixelsButton_.setVisible(isSLM_);
@@ -231,7 +224,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       pointAndShootIntervalSpinner_.setValue(dev_.getExposure() / 1000);
       sequencingButton_.setVisible(MosaicSequencingFrame.getMosaicDevices(core).size() > 0);
 
-      studio_.events().registerForEvents(new Object() {
+      studioEventHandler_ = new Object() {
          @Subscribe
          public void onSlmExposureChanged(SLMExposureChangedEvent event) {
             String deviceName = event.getDeviceName();
@@ -267,16 +260,16 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
             mdaLogFileWriter_ = null;
             mdaLogFile_ = null;
          }
+      };
+      studio_.events().registerForEvents(studioEventHandler_);
 
-
-      });
-
-      studio_.displays().registerForEvents(new Object() {
+      displayEventHandler_ = new Object() {
          @Subscribe
          public void onDataViewerBecameActiveEvent(DataViewerDidBecomeActiveEvent dve) {
             enablePointAndShootMode(pointAndShooteModeOn_.get());
          }
-      });
+      };
+      studio_.displays().registerForEvents(displayEventHandler_);
 
       delayField_.setText(settings_.getString(Terms.DELAY, "0"));
       logDirectoryTextField_.setText(settings_.getString(Terms.LOGDIRECTORY, ""));
@@ -501,8 +494,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       if (on && (mapping_ == null)) {
          final String errorS = 
                  "Please calibrate the phototargeting device first, using the Setup tab.";
-         ReportingUtils.showError(errorS);
-         throw new RuntimeException(errorS);
+         studio_.logs().logError(errorS);
+         return;
       }
       pointAndShooteModeOn_.set(on);
       // restart this thread if it is not running?
@@ -524,10 +517,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                      projectorControlExecution_.returnChannel(psi.getOriginalConfig());
                      logPoint(psi.getCanvasPoint());
                   } catch (Exception e) {
-                     ReportingUtils.showError(e);
+                     studio_.logs().showError(e);
                   }
                } catch (InterruptedException ex) {
-                  ReportingUtils.showError(ex);
+                  studio_.logs().showError(ex);
                }
             }
          });
@@ -582,6 +575,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       return logFileWriter_;
    }
    
+   /**
+    * Creates logfile in the acquisition directory of current MDA
+    * @return 
+    */
    private BufferedWriter checkMDALogFile() {
       if (mdaLogFile_ == null) {
          return null;
@@ -606,17 +603,18 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     */
    private void logPoint(Point p) {
       BufferedWriter logFileWriter = checkLogFile();
-      if (logFileWriter == null) {
+      BufferedWriter mdaLogFileWriter = checkMDALogFile();
+      if (logFileWriter == null && mdaLogFileWriter == null) {
          return;
       }
-      BufferedWriter mdaLogFileWriter = checkMDALogFile();
-      String currentTime = LOGTIME_FORMATTER.format(new Date());  // could use nanoseconds instead...
-      try {
-         String logLine = new StringBuilder(currentTime).append("\t").append(p.x).
-                                       append("\t").append(p.y).toString();
-         logFileWriter.write(logLine);
-         logFileWriter.newLine();
-         logFileWriter.flush();
+      String logLine = new StringBuilder(LOGTIME_FORMATTER.format(new Date())).
+                 append("\t").append(p.x).append("\t").append(p.y).toString();  // could use nanoseconds instead...
+      try {         
+         if (logFileWriter != null) {
+            logFileWriter.write(logLine);
+            logFileWriter.newLine();
+            logFileWriter.flush();
+         }
          if (mdaLogFileWriter != null) {
             mdaLogFileWriter.write(logLine);
             mdaLogFileWriter.newLine();
@@ -751,6 +749,12 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * @param turnedOn true = Point and Shoot is ON
     */
    public void updatePointAndShoot(boolean turnedOn) {
+      if (turnedOn && (mapping_ == null)) {
+         final String errorS = 
+                 "Please calibrate the phototargeting device first, using the Setup tab.";
+         studio_.logs().showError(errorS);
+         throw new RuntimeException(errorS);
+      }
       if (!turnedOn && logFileWriter_ != null) {
          try {
             logFileWriter_.flush();
@@ -875,15 +879,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
        ProjectorActions.setExposure(dev_, 1000 * exposureMs);
        settings_.putDouble(Terms.EXPOSURE, exposureMs);
    }
-   
-   // Method called if the phototargeting device has turned on or off.
-   @Override
-   public void stateChanged(final boolean onState) {
-      SwingUtilities.invokeLater(() -> {
-         onButton_.setSelected(onState);
-         offButton_.setSelected(!onState);
-      });
-   }
+
    
    /**
     * Show the Mosaic Sequencing window (a JFrame). Should only be called
@@ -913,7 +909,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       formSingleton_ = null;
       disposing_ = true;
       studio_.events().unregisterForEvents(projectorControlExecution_);      
-      studio_.events().unregisterForEvents(this);
+      studio_.events().unregisterForEvents(studioEventHandler_);
+      studio_.displays().unregisterForEvents(displayEventHandler_);
       enablePointAndShootMode(false);
       if (pointAndShootThread_ != null && pointAndShootThread_.isAlive()) {
          pointAndShootQueue_.add(
@@ -1038,7 +1035,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
             updatePointAndShoot(true);
             IJ.setTool(Toolbar.HAND);
          } catch (RuntimeException e) {
-            ReportingUtils.showError(e);
+            studio_.logs().showError(e);
          }
       });
 
@@ -1123,7 +1120,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
             sendCurrentImageWindowRois();
             updateROISettings();
          } catch (RuntimeException e) {
-            ReportingUtils.showError(e);
+            studio_.logs().showError(e);
          }
       });
 
@@ -1251,7 +1248,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                calibrateButton_.setText("Stop calibration");
             }
          } catch (Exception e) {
-            ReportingUtils.showError(e);
+            studio_.logs().showError(e);
          }
       });
 
