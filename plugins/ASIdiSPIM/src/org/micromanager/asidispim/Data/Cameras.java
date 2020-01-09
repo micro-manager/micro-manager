@@ -411,8 +411,10 @@ public class Cameras {
       case HAMCAM:
          if (props_.getPropValueString(camKey, Properties.Keys.CAMERA_NAME).startsWith("C14440")) {  // Fusion
             // Fusion has 3 readout speeds but code architecture is only set up for fast/slow :(
+            // call mode 3 fast and modes 1 and 2 slow 
             return !props_.getPropValueString(camKey, Properties.Keys.SCAN_MODE).equals("3");
          } else {
+            // original case with Flash4: mode 2 is fast and mode 1 is slow
             return props_.getPropValueString(camKey, Properties.Keys.SCAN_MODE).equals("1");
          }
       case PCOCAM:
@@ -457,8 +459,13 @@ public class Cameras {
       int y = 0;
       switch(devices_.getMMDeviceLibrary(camKey)) {
       case HAMCAM:
-         x = 2048;
-         y = 2048;
+         if (props_.getPropValueString(camKey, Properties.Keys.CAMERA_NAME).startsWith("C14440")) {  // Fusion
+            x = 2304;
+            y = 2304;
+         } else { // Flash4
+            x = 2048;
+            y = 2048;
+         }
          break;
       case PCOCAM:
          if (isEdge55(camKey)) {
@@ -504,10 +511,21 @@ public class Cameras {
    public double getRowReadoutTime(Devices.Keys camKey) {
       switch(devices_.getMMDeviceLibrary(camKey)) {
       case HAMCAM:
-         if (isSlowReadout(camKey)) {
-            return (2592 / 266e3 * (10./3)); 
-         } else {
-            return (2592 / 266e3);
+         if (props_.getPropValueString(camKey, Properties.Keys.CAMERA_NAME).startsWith("C14440")) {  // Fusion
+            String mode = props_.getPropValueString(camKey, Properties.Keys.SCAN_MODE);
+            if (mode.equals("3")) {
+               return (11.22/2304);
+            } else if (mode.equals("2")) {
+               return (42.99/2304);
+            }  else {
+               return (184.4/2304); 
+            }
+         } else {  // Flash4
+            if (isSlowReadout(camKey)) {
+               return (2592 / 266e3 * (10./3)); 
+            } else {
+               return (2592 / 266e3);
+            }
          }
       case PCOCAM:
          if (props_.hasProperty(camKey, Properties.Keys.LINE_TIME)) {  // should be present as of 20170926 nightly build for Edge, but not for Panda as of May 2018
@@ -605,6 +623,7 @@ public class Cameras {
             int numRowsOverhead;
             switch (camLibrary) {
             case HAMCAM:
+               // don't know if this is different for Fusion; leave it all the same for time being
                // global reset mode not yet exposed in Micro-manager
                // it will be 17+1 rows of overhead but nothing else
                if (props_.getPropValueString(camKey, Properties.Keys.TRIGGER_ACTIVE)
@@ -707,16 +726,22 @@ public class Cameras {
             if (camLibrary == Devices.Libraries.HAMCAM && props_.getPropValueString(camKey, Properties.Keys.CAMERA_BUS).equals(Properties.Values.USB3)) {
                // trust the device adapter's calculation for USB3
                readoutTimeMs = props_.getPropValueFloat(camKey, Properties.Keys.READOUTTIME)*1000f;
-            } else {  // Camera Link interface, original implementation
-               // device adapter provides readout time rounded to nearest 0.1ms; we calculate it ourselves instead
-               // note that Flash4's ROI is always set in increments of 4 pixels
-               if (props_.getPropValueString(camKey, Properties.Keys.SENSOR_MODE)
-                     .equals(Properties.Values.PROGRESSIVE.toString())) {
+            } else {
+               if (props_.getPropValueString(camKey, Properties.Keys.CAMERA_NAME).startsWith("C14440")) {  // Fusion
                   numReadoutRows = roi.height;
+                  readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
                } else {
-                  numReadoutRows = roiReadoutRowsSplitReadout(roi, sensorSize);
+                  // Camera Link interface, original implementation
+                  // device adapter provides readout time rounded to nearest 0.1ms; we calculate it ourselves instead
+                  // note that Flash4's ROI is always set in increments of 4 pixels
+                  if (props_.getPropValueString(camKey, Properties.Keys.SENSOR_MODE)
+                        .equals(Properties.Values.PROGRESSIVE.toString())) {
+                     numReadoutRows = roi.height;
+                  } else {
+                     numReadoutRows = roiReadoutRowsSplitReadout(roi, sensorSize);
+                  }
+                  readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
                }
-               readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
             }
             break;
          case PCOCAM:
