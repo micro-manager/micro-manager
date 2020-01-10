@@ -1,4 +1,4 @@
-<!-- This build file is intended for building with ant within Micor-manager plugin folder -->
+<!-- Build file used to compile Emu with Micro-Manager -->
 <project name="Emu" basedir="." default="jar">
 	<import file="../javapluginbuild.xml"/>
 	
