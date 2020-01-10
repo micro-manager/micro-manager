@@ -291,7 +291,8 @@ public class SystemDialogs {
 						+ "properties to the UI properties and set the UI parameter values using the configuration <br />"
 						+ "wizard.<br /><br />"
 						+ "<a href=\"https://jdeschamps.github.io/EMU-guide/\">The EMU guide</a> is available online.<br />"
-						+ "Find <a href=\"https://github.com/jdeschamps/EMU\"> the source code</a> on Github.<br /><br />"
+						+ "Find <a href=\"https://github.com/jdeschamps/EMU\">the source code</a> on Github.<br />"
+						+ "Report bugs <a href=\"https://github.com/jdeschamps/EMU/issues\">as Github issues</a>.<br /><br />"
 						+ "EMU was developped by Joran Deschamps, EMBL (2019).";
 	   
 		// html content
