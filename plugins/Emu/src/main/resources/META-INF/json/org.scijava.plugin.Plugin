@@ -1,0 +1,1 @@
+{"class":"de.embl.rieslab.emu.EMUPlugin","values":{"description":"A loader and configuration wizard for UIs built using EMU classes.","name":"EMU","priority":0.0,"type":"org.micromanager.MenuPlugin"}}

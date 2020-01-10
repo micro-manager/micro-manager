@@ -1,0 +1,14 @@
+<!-- Build file used to compile Emu with Micro-Manager -->
+<project name="Emu" basedir="." default="jar">
+	<import file="../javapluginbuild.xml"/>
+	
+	<!-- Adds images to the jar -->
+	<target name="copy-files" depends="mm.javabuild.copy-files"
+		unless="mm.java.disable.build">
+		<copy todir="${intdir}">
+         <fileset dir="${rscdir}">
+            <include name="**/*.png"/>
+         </fileset>
+		</copy>
+	</target>
+</project>
