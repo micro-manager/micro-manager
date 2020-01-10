@@ -87,7 +87,7 @@ public class LaserPanel extends ConfigurablePanel {
 		 */
 	
 		String text1 = "Property changing the percentage of the laser. Set the slope to max/100 and the offset to 0, where max is the maximum value of the property, for instance if "
-				+ "the property is 0-200 mW, then the slope is 2.";
+				+ "the property is 0-200 mW, then the slope is 2. If the device property is already a percentage, then leave the slope and offset as they are.";
 		String text2 = "Property turning the laser on and off.";
 
 		/* 

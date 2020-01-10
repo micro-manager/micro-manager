@@ -56,11 +56,11 @@ public class IBeamSmartPanel extends ConfigurablePanel{
 	public final String LASER_PERCFINEA = "fine a (%)";	
 	public final String LASER_PERCFINEB = "fine b (%)";	
 	public final String LASER_MAXPOWER = "max power";	
-	public final String LASER_EXTERNALTRIGGER = "enable external trigger";	
+	public final String LASER_EXTERNALTRIGGER = "ext. trigger";	
 	
 	//////// Parameters
 	public final String PARAM_ENABLE_FINE = "fine available";
-	public final String PARAM_ENABLE_EXT_TRIGGER = "external trigger available";
+	public final String PARAM_ENABLE_EXT_TRIGGER = "ext. trigger available";
 	public final String PARAM_TITLE = "laser name";
 	
 	/////// Misc variables
@@ -242,14 +242,14 @@ public class IBeamSmartPanel extends ConfigurablePanel{
 	protected void initializeProperties() {
 		max_power = 200;
 		
-		addUIProperty(new UIProperty(this, getPropertyName(LASER_POWER),"iBeamSmart Power (mW).", new NoFlag()));
-		addUIProperty(new UIProperty(this, getPropertyName(LASER_PERCFINEA),"iBeamSmart Power percentage of fine a.", new NoFlag()));
-		addUIProperty(new UIProperty(this, getPropertyName(LASER_PERCFINEB),"iBeamSmart Power percentage of fine b.", new NoFlag()));
-		addUIProperty(new UIProperty(this, getPropertyName(LASER_MAXPOWER),"iBeamSmart Maximum power (mW).", new NoFlag()));
+		addUIProperty(new UIProperty(this, getPropertyName(LASER_POWER),"Power (mW).", new NoFlag()));
+		addUIProperty(new UIProperty(this, getPropertyName(LASER_PERCFINEA),"Fine a percentage.", new NoFlag()));
+		addUIProperty(new UIProperty(this, getPropertyName(LASER_PERCFINEB),"Fine b percentage.", new NoFlag()));
+		addUIProperty(new UIProperty(this, getPropertyName(LASER_MAXPOWER),"Maximum power (mW).", new NoFlag()));
 
-		addUIProperty(new TwoStateUIProperty(this,getPropertyName(LASER_OPERATION),"iBeamSmart On/Off operation property.", new NoFlag()));
-		addUIProperty(new TwoStateUIProperty(this,getPropertyName(LASER_ENABLEFINE),"iBeamSmart Enable property of fine.", new NoFlag()));
-		addUIProperty(new TwoStateUIProperty(this,getPropertyName(LASER_EXTERNALTRIGGER),"iBeamSmart digital trigger on/off.", new NoFlag()));
+		addUIProperty(new TwoStateUIProperty(this,getPropertyName(LASER_OPERATION),"On/off operation property.", new NoFlag()));
+		addUIProperty(new TwoStateUIProperty(this,getPropertyName(LASER_ENABLEFINE),"Enable/disable fine.", new NoFlag()));
+		addUIProperty(new TwoStateUIProperty(this,getPropertyName(LASER_EXTERNALTRIGGER),"Enable/disable digital trigger.", new NoFlag()));
 	}
 
 	@Override
@@ -328,7 +328,7 @@ public class IBeamSmartPanel extends ConfigurablePanel{
 
 	@Override
 	public String getDescription() {
-		return "This panel controls the focus-lock laser fron Toptica, iBeam-smart.";
+		return "This panel controls an iBeamSmart laser from Toptica.";
 	}
 
 	
@@ -344,8 +344,8 @@ public class IBeamSmartPanel extends ConfigurablePanel{
 	
 	@Override
 	protected void initializeParameters() {		
-		addUIParameter(new BoolUIParameter(this, PARAM_ENABLE_FINE,"Fine settings available in the iBeamSmart laser.", true));
-		addUIParameter(new BoolUIParameter(this, PARAM_ENABLE_EXT_TRIGGER,"External trigger available in the iBeamSmart laser.", true));		
+		addUIParameter(new BoolUIParameter(this, PARAM_ENABLE_FINE,"Show/hide the fine feature panel. Check if the feature is available for your device.", true));
+		addUIParameter(new BoolUIParameter(this, PARAM_ENABLE_EXT_TRIGGER,"Show/hide the external trigger panel. Check if the feature is available for your device.", true));		
 		
 		title_ = "Laser";
 		addUIParameter(new StringUIParameter(this, PARAM_TITLE,"Panel title.",title_));
