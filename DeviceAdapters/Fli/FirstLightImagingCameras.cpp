@@ -27,6 +27,7 @@
 #endif
 
 #include <cstdlib>
+#include <iostream>
 
 #include "FliSdk_utils.h"
 #include "ModuleInterface.h"
@@ -75,7 +76,9 @@ FirstLightImagingCameras::FirstLightImagingCameras(std::string cameraName) :
 	_initialized(false),
 	_cameraName(cameraName),
 	_cameraModel(undefined),
-	_nbCameras(0)
+	_nbCameras(0),
+	_credTwo(false),
+	_credThree(false)
 {
 	FliSdk_init();
 	uint8_t nbGrabbers = 0;
@@ -187,7 +190,7 @@ void FirstLightImagingCameras::createProperties()
 	SetAllowedValues("Detect cameras", boolvalues);
 
 	pAct = new CPropertyAction(this, &FirstLightImagingCameras::onBinning);
-	CreateIntegerProperty(MM::g_Keyword_Binning, 1, true, pAct);
+	CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
 }
 
 //---------------------------------------------------------------
@@ -392,6 +395,7 @@ int FirstLightImagingCameras::SnapImage()
 	return DEVICE_OK;
 }
 
+//---------------------------------------------------------------
 void onImageReceived(const uint8_t* image, void* ctx)
 {
 	FirstLightImagingCameras* context = static_cast<FirstLightImagingCameras*>(ctx);
@@ -437,6 +441,17 @@ void FirstLightImagingCameras::refreshValues()
 		double consigne;
 		Cred2_getTempSnakeSetPoint(&consigne);
 		OnPropertyChanged("Set sensor temp", std::to_string((long double)consigne).c_str());
+		char status[200];
+		char diag[200];
+		FliCamera_getStatusDetailed(status, diag);
+		std::string s;
+		s.append(status);
+		s.append("-");
+		s.append(diag);
+		OnPropertyChanged("Camera Status", s.c_str());
+	}
+	else if (_credThree)
+	{
 		char status[200];
 		char diag[200];
 		FliCamera_getStatusDetailed(status, diag);
@@ -533,6 +548,8 @@ int FirstLightImagingCameras::onDetectCameras(MM::PropertyBase* pProp, MM::Actio
 
 		if (detect == "1")
 		{
+			_credTwo = false;
+			_credThree = false;
 			uint8_t nbGrabbers = 0;
 			FliSdk_detectGrabbers(&nbGrabbers);
 
