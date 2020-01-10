@@ -59,8 +59,8 @@ public class IBeamSmartFrame extends ConfigurableMainFrame{
 	
 	@Override
 	protected String getPluginInfo() {
-		return "The iBeamSmart user interface was written by Joran Deschamps, EMBL (2019). It controls a single iBeamSmart laser from Toptica,"
-				+ "and allows hiding/showing the fine or external trigger controls.";
+		return "The iBeamSmart user interface was written by Joran Deschamps, EMBL (2019). It controls several iBeamSmart lasers from Toptica,"
+				+ " and allows hiding/showing the fine or external trigger panels.";
 	}
 
 }

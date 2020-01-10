@@ -225,7 +225,7 @@ public class SystemController {
 			currentPlugin = newPlugin;
 			
 			// close mainframe
-			mainframe_.shutDownAllConfigurablePanels();
+			mainframe_.shutDown();
 			
 			// load with empty settings
 			mainframe_ = pluginloader_.loadPlugin(newPlugin, new TreeMap<String, String>());
@@ -284,7 +284,7 @@ public class SystemController {
 		configurationController_.writeConfiguration(); // to set the default configuration in the configuration file.
 					
 		// closes mainframe
-		mainframe_.shutDownAllConfigurablePanels();
+		mainframe_.shutDown();
 		
 		// empties mmproperties listeners
 		mmregistry_.getMMPropertiesRegistry().clearAllListeners();
@@ -508,7 +508,7 @@ public class SystemController {
 			configurationController_.shutDown();
 		}
 		if(mainframe_ != null){
-			mainframe_.shutDownAllConfigurablePanels();
+			mainframe_.shutDown();
 		}
 	}
 	

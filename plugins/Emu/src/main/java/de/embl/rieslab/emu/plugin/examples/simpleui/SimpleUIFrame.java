@@ -48,10 +48,10 @@ public class SimpleUIFrame extends ConfigurableMainFrame {
 		panel.add(laserPanel_3);
 		
 		/*
-		 * Check the plugin setting for the optional filter wheel.
+		 * Checks the plugin setting for the optional filter wheel.
 		 */
 		if(((BoolSetting) this.getCurrentPluginSettings().get(SETTING_USE_FW)).getValue()) {
-			// add the filter wheel panel
+			// adds the filter wheel panel
 			FilterWheelPanel filtersPanel = new FilterWheelPanel("Filters");
 			filtersPanel.setBounds(10, 297, 474, 54);
 			getContentPane().add(filtersPanel);
@@ -75,7 +75,7 @@ public class SimpleUIFrame extends ConfigurableMainFrame {
 
 	@Override
 	protected String getPluginInfo() {
-		return "The SimpleUI was developed by Joran Deschamps, EMBL (2019), as an example for EMU interfaces. It controls four lasers and"
-				+ "an optional filterwheel.";
+		return "The SimpleUI was developed by Joran Deschamps, EMBL (2019), as an example for EMU. It controls four lasers and"
+				+ " an optional filterwheel.";
 	}
 }

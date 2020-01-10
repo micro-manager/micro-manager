@@ -100,7 +100,7 @@ public class FilterWheelPanel extends ConfigurablePanel {
 	@Override
 	public String getDescription() {
 		// Returns a description of the panel.
-		return "The "+getPanelLabel()+" panel is used to control a filterwheel with a maximum of "+NUM_POS+" positions. The names and colors of the filters can be set with parameters.";
+		return "The "+getPanelLabel()+" panel is used to control a filterwheel with a maximum of "+NUM_POS+" positions. The names and colors of the filters can be set as parameters.";
 	}
 
 	@Override
