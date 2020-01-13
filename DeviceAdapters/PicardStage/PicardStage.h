@@ -82,6 +82,7 @@ public:
 	int GetPositionUm(double& pos);
 	int SetPositionSteps(long steps);
 	int GetPositionSteps(long& steps);
+   int Home();
 	int SetOrigin();
 	int GetLimits(double& lower, double& upper);
 	int GetStepLimits(long& lower, long& upper);
@@ -93,11 +94,11 @@ public:
 private:
 	int OnSerialNumber(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnGoHomeProp(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 	int serial_;
 	int velocity_;
 	void *handle_;
+   bool homing_;
 };
 
 //////////////////////////////////////////////////////////////////////////////
