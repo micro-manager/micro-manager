@@ -6,6 +6,7 @@ import java.util.Iterator;
 import de.embl.rieslab.emu.controller.log.Logger;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
+import org.micromanager.Studio;
 
 /**
  * Class referencing the devices loaded in Micro-Manager and their device properties. 
@@ -16,22 +17,24 @@ import mmcorej.StrVector;
 @SuppressWarnings("rawtypes")
 public class MMPropertiesRegistry {
 
-	private CMMCore core_;
-	private Logger logger_;
-	private HashMap<String, MMDevice> devices_;
-	private HashMap<String, MMProperty> properties_;
+   private final Studio studio_;
+	private final CMMCore core_;
+	private final Logger logger_;
+	private final HashMap<String, MMDevice> devices_;
+	private final HashMap<String, MMProperty> properties_;
 	
 	/**
 	 * Constructor. Calls a private initialization method to extract the devices and their properties. It ignores "COM" devices.
 	 * 
-	 * @param core Micro-manager core
+	 * @param studio MM studio instance
 	 * @param logger EMU logger
 	 */
-	public MMPropertiesRegistry(CMMCore core, Logger logger){
-		core_ = core;
+	public MMPropertiesRegistry(Studio studio, Logger logger){
+      studio_ = studio;
+		core_ = studio.getCMMCore();
 		logger_ = logger;
-		devices_ = new HashMap<String, MMDevice>();
-		properties_ = new HashMap<String,MMProperty>();
+		devices_ = new HashMap<>();
+		properties_ = new HashMap<>();
 		
 		initialize();
 	}
@@ -42,7 +45,7 @@ public class MMPropertiesRegistry {
 		MMPropertyFactory builder = new MMPropertyFactory(core_, logger_);
 
 		for (String device : deviceList) {
-			if(!device.substring(0, 3).equals("COM")){
+			if(! ( (device.length() >= 3) && device.substring(0, 3).equals("COM")) ){
 				MMDevice dev = new MMDevice(device);
 				try {
 					propertyList = core_.getDevicePropertyNames(device);
@@ -52,7 +55,7 @@ public class MMPropertiesRegistry {
 						properties_.put(prop.getHash(),prop);
 					}
 				} catch (Exception e) {
-					e.printStackTrace();
+               studio_.logs().logError(e);
 				}
 				devices_.put(dev.getDeviceLabel(),dev);
 			}

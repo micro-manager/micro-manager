@@ -39,7 +39,7 @@ public class MMRegistry {
 		logger_ = logger;
 		
 		// extracts MM properties
-		mmPropRegistry_ = new MMPropertiesRegistry(studio_.getCMMCore(), logger_);
+		mmPropRegistry_ = new MMPropertiesRegistry(studio_, logger_);
 		mmPresetGroupsRegistry_ = new MMPresetGroupRegistry(studio_.getCMMCore(), mmPropRegistry_);
 		
 		// registers mmconfigs as mmproperties (so that they can be linked to UIProperties)
