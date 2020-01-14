@@ -702,13 +702,15 @@ int CPiStage::GetPositionSteps(long& steps)
 int CPiStage::Home()
 {
 	if (handle_ == NULL)
+   {
 		return DEVICE_NOT_CONNECTED;
+   }
+	int error = piHomeMotor(velocity_, handle_);
 
-	int error;
-
-	if ((error = piHomeMotor(velocity_, handle_) != PI_NO_ERROR)
+	if (error  != PI_NO_ERROR)
+   {
 		return InterpretPiUsbError(error);
-
+   }
 	homing_ = true;
 
 	return DEVICE_OK;
@@ -765,8 +767,12 @@ enum XYSTAGE_ERRORS {
 	XYERR_MOVE_Y
 };
 
-CPiXYStage::CPiXYStage()
-: serialX_(DEFAULT_SERIAL_UNKNOWN), serialY_(DEFAULT_SERIAL_UNKNOWN), handleX_(NULL), handleY_(NULL)
+CPiXYStage::CPiXYStage() : 
+      serialX_(DEFAULT_SERIAL_UNKNOWN), 
+      serialY_(DEFAULT_SERIAL_UNKNOWN), 
+      handleX_(NULL), 
+      handleY_(NULL),
+      homing_(false)
 {
 	CreateProperty(g_Keyword_SerialNumberX, FIXED_TO_STRING(DEFAULT_SERIAL_UNKNOWN), MM::Integer, false, new CPropertyAction (this, &CPiXYStage::OnSerialNumberX), true);
 	CreateProperty(g_Keyword_SerialNumberY, FIXED_TO_STRING(DEFAULT_SERIAL_UNKNOWN), MM::Integer, false, new CPropertyAction (this, &CPiXYStage::OnSerialNumberY), true);

@@ -143,6 +143,7 @@ private:
 	int serialX_, serialY_;
 	int velocityX_, velocityY_;
 	void *handleX_, *handleY_;
+   bool homing_;
 };
 
 #endif //_PICARDSTAGE_H_
