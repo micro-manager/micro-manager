@@ -128,8 +128,16 @@ public final class DefaultAlbum implements Album {
             // This approach runs the risk that the new pipeline changes the image
             // size, which is bad and results in uncaught, unreported exceptions
             // TODO: at the very least report problems with image size to the user
-            // even better: 
-            pipeline_ = studio_.data().copyLivePipeline(store_, true);
+            // 
+            // When users press the Album button in the viewer, this code will 
+            // send the image through the pipeline for a second time.  That can 
+            // never be the intent of the user.  So, it would be best to have 
+            // a "use pipeline" parameter in the addImage function.  At this point,
+            // I do not want to touch the API.  As a work-around use the 
+            // MDA pipeline ratehr than the LivePipeline.  That gives the user
+            // the ability to uncouple the Live and Album pipelines (albeit in 
+            // an obscure way.
+            pipeline_ = studio_.data().copyApplicationPipeline(store_, true);
             try {
                pipeline_.insertImage(image.copyAtCoords(newCoords));
             } catch (DatastoreRewriteException e) {
