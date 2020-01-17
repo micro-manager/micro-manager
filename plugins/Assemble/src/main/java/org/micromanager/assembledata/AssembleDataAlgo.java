@@ -225,7 +225,7 @@ public class AssembleDataAlgo {
                      //centerYUm - img.getMetadata().getYPositionUm());
 
                      aff = aff.concat(singlePositionAf64I, null);
-                     /*
+                     //
                      FDistort fd = new FDistort();
                      fd.input(oldImgBoof);
                      fd.output(tmpImgBoof);
@@ -233,9 +233,9 @@ public class AssembleDataAlgo {
                      fd.interpNN();
                      fd.border(BorderType.SKIP);
                      fd.apply();
-                     GPixelMath.add(newImgBoof, tmpImgBoof, tmp2ImgBoof);
-                     GConvertImage.convert(tmp2ImgBoof, newImgBoof);
-                     */
+                     //GPixelMath.add(newImgBoof, tmpImgBoof, tmp2ImgBoof);
+                     //GConvertImage.convert(tmp2ImgBoof, newImgBoof);
+                     /*
                      Affine2D_F32 a32 = new Affine2D_F32((float) aff.a11,
                               (float) aff.a12,
                               (float) aff.a21,
@@ -254,19 +254,19 @@ public class AssembleDataAlgo {
                      distort.setModel(model);
                      distort.setRenderAll(false);
                      distort.apply(tmpImgNF32, tmpImgSF32);
-                     //
+                     */
                   }
                }
                if (newMetadataB != null) {
                   Coords coords = cb.p(targetPosition).c(c + spdCLength).t(t).build();
                   System.out.println(coords.toString());                  
                   newMetadataB.positionName("Site-" + targetPosition);
-                  GrayU16 g = new GrayU16(tmpImgSF32.width, tmpImgSF32.height);
-                  ConvertImage.convert(tmpImgSF32, g);
-                  Image newImage = BoofCVImageConverter.boofCVToMM(g, 
+                  //GrayU16 g = new GrayU16(tmpImgSF32.width, tmpImgSF32.height);
+                  //ConvertImage.convert(tmpImgSF32, g);
+                  Image newImage = BoofCVImageConverter.boofCVToMM(tmpImgBoof, 
                           coords, newMetadataB.build());
                   output.putImage(newImage);
-                  GImageMiscOps.fill(newImgBoof, 0.0);
+                  GImageMiscOps.fill(tmpImgBoof, 0.0);
                }
             }
             int progress = (int) (50.0 + 50.0 * t / spdTLength);
