@@ -173,25 +173,41 @@ public class ZProjectorPluginExecutor {
            String projectionAxis, int min, int max, int projectionMethod) 
            throws IOException {
       cbp.index(projectionAxis, min);
-      Image tmpImg = oldStore_.getImage(cbp.build());
+      Image tmpImg = oldStore_.getAnyImage();
       ImageStack stack = new ImageStack(
                tmpImg.getWidth(), tmpImg.getHeight());
       Metadata imgMetadata = tmpImg.getMetadata();
       for (int i = min; i <= max; i++) {
          Image img = oldStore_.getImage(cbp.index(projectionAxis, i).build());
-         ImageProcessor ip
-            = studio_.data().getImageJConverter().createProcessor(img);
-         stack.addSlice(ip);
+         if (img != null) {  // null happens when this image was skipped
+            if (imgMetadata == null) {
+               imgMetadata = img.getMetadata();
+            }
+            ImageProcessor ip
+                    = studio_.data().getImageJConverter().createProcessor(img);
+            stack.addSlice(ip);
+         }
       }
+      if (stack.getSize()> 0 && imgMetadata != null) {
       ImagePlus tmp = new ImagePlus("tmp", stack);
       ZProjector zp = new ZProjector(tmp);
       zp.setMethod(projectionMethod);
       zp.doProjection();
       ImagePlus projection = zp.getProjection();
+      if (projection.getBytesPerPixel() > 2) {
+         if (tmp.getBytesPerPixel() == 1) {
+            projection.setProcessor(projection.getProcessor().convertToByteProcessor());
+         } else if (tmp.getBytesPerPixel() == 2) {
+            projection.setProcessor(projection.getProcessor().convertToShortProcessor());
+         }
+      }
       Image outImg = studio_.data().getImageJConverter().createImage(
             projection.getProcessor(), cbp.index(projectionAxis, 0).build(),
                   imgMetadata.copyBuilderWithNewUUID().build());
       newStore.putImage(outImg);
+      } else {
+         studio_.logs().showError("No images found while projecting");
+      }
    }
    
 }
