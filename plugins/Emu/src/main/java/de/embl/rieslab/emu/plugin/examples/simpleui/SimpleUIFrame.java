@@ -69,7 +69,7 @@ public class SimpleUIFrame extends ConfigurableMainFrame {
 		HashMap<String, Setting>  settgs = new HashMap<String, Setting>();
 		
 		// Here, we create an enable/disable option for the filterwheel panel.
-		settgs.put(SETTING_USE_FW, new BoolSetting(SETTING_USE_FW, "Enable/disable filter wheel panel", true));	
+		settgs.put(SETTING_USE_FW, new BoolSetting(SETTING_USE_FW, "Enable/disable the filter wheel.", true));	
 		return settgs;
 	}
 

@@ -1,5 +1,6 @@
 package de.embl.rieslab.emu.configuration.ui;
 
+
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -24,7 +25,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-
 import de.embl.rieslab.emu.configuration.ConfigurationController;
 import de.embl.rieslab.emu.configuration.data.GlobalConfiguration;
 import de.embl.rieslab.emu.configuration.ui.tables.ParametersTable;
@@ -189,10 +189,10 @@ public class ConfigurationWizardUI {
 		
 		// Tab containing the tables
 		JTabbedPane tabbedpane = new JTabbedPane();
-		tabbedpane.addTab("Plugin Settings", null, plugsettingstable, null);
-		tabbedpane.addTab("Properties", null, propertytable, null);
-		tabbedpane.addTab("Parameters", null, parametertable, null);
-		tabbedpane.addTab("Global Settings", null, globsettingstable, null);
+		tabbedpane.addTab("Plugin Settings", null, plugsettingstable, "Set the plugin settings.");
+		tabbedpane.addTab("Properties", null, propertytable, "Map Micro-manager device properties to UI properties.");
+		tabbedpane.addTab("Parameters", null, parametertable, "Set parameters values.");
+		tabbedpane.addTab("Global Settings", null, globsettingstable, "EMU global settings");
 		tabbedpane.addChangeListener(new ChangeListener() {
 	        public void stateChanged(ChangeEvent e) {
 	            updateTabs(tabbedpane, tabbedpane.getSelectedIndex()); // updates property and parameter tab when the settings have changed
@@ -245,7 +245,8 @@ public class ConfigurationWizardUI {
 		upperpane.add(config_name_);
 		upperpane.add(new JLabel(""));
 		upperpane.add(helppane);
-
+		
+		/////////// lower panel
 		JPanel lowerpane = new JPanel();
 		lowerpane.setLayout(new GridLayout(0, 3));
 
@@ -259,7 +260,7 @@ public class ConfigurationWizardUI {
 		lowerpane.add(save);
 		lowerpane.add(new JLabel(""));
 		lowerpane.add(new JLabel(""));
-	
+
 		contentpane.add(upperpane);
 		contentpane.add(tabbedpane);
 		contentpane.add(lowerpane);

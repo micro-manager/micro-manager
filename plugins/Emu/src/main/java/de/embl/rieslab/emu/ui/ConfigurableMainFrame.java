@@ -7,6 +7,8 @@ import java.awt.Font;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -14,6 +16,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.TreeMap;
@@ -31,6 +34,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.JViewport;
 import javax.swing.border.TitledBorder;
 
 import de.embl.rieslab.emu.controller.SystemController;
@@ -279,7 +283,7 @@ public abstract class ConfigurableMainFrame extends JFrame implements Configurab
 			private static final long serialVersionUID = 1L;
 
 			public void actionPerformed(ActionEvent e) {
-				SystemDialogs.showAboutEMU();
+				SystemDialogs.showAboutEMU(this);
 			}
 		});
 		iconURL = getClass().getResource("/images/about16.png");
@@ -557,15 +561,50 @@ public abstract class ConfigurableMainFrame extends JFrame implements Configurab
 				border2.setTitleFont(new Font("Serif", Font.BOLD, 18));
 				panelsDrescription.setBorder(border2);
 				
+				// gets the configurablepanel subclasses and builds a list of panels for each
+				HashMap<String, ArrayList<ConfigurablePanel>> knownClasses = new HashMap<String, ArrayList<ConfigurablePanel>>();
+				for(ConfigurablePanel p: panels_) {
+					String paneClass = p.getClass().getSimpleName();
+
+					if(!knownClasses.containsKey(paneClass)) {
+						ArrayList<ConfigurablePanel> arr = new ArrayList<ConfigurablePanel>();
+						arr.add(p);
+						knownClasses.put(paneClass, arr);
+					} else {
+						ArrayList<ConfigurablePanel> arr = knownClasses.get(paneClass);
+						arr.add(p);
+					}
+				}
+				
+				// creates the description panels with titled border
 				GridBagConstraints c = new GridBagConstraints();
 				c.fill = GridBagConstraints.VERTICAL;
 				c.gridx = 0;
 				int i = 0;
-				for(ConfigurablePanel p: panels_) {
+				Iterator<String> it = knownClasses.keySet().iterator();
+				while(it.hasNext()) {
+					String s = it.next();
+					
+					// build a string with the panel names
+					String title;
+					if(knownClasses.get(s).size() > 1) {
+						String[] titles = new String[knownClasses.get(s).size()];
+						int j = 0;
+						for(ConfigurablePanel p: knownClasses.get(s)) {
+							titles[j] =p.getPanelLabel();
+							j++;
+						}
+						Arrays.sort(titles);
+						title = String.join(", ", titles);
+					} else {
+						title = knownClasses.get(s).get(0).getPanelLabel();
+					}
+					ConfigurablePanel p = knownClasses.get(s).get(0);
+					
 					c.gridy = i++;
 					
 					JPanel panel = new JPanel();
-					TitledBorder border3 = BorderFactory.createTitledBorder(null, p.getPanelLabel(), TitledBorder.DEFAULT_JUSTIFICATION,
+					TitledBorder border3 = BorderFactory.createTitledBorder(null, title, TitledBorder.DEFAULT_JUSTIFICATION,
 							TitledBorder.DEFAULT_POSITION, null, Color.black);
 					border3.setTitleFont(new Font("Serif", Font.BOLD, 16));
 					panel.setBorder(border3);
@@ -581,18 +620,16 @@ public abstract class ConfigurableMainFrame extends JFrame implements Configurab
 					}
 					panelsDrescription.add(panel,c);
 				}
-	
 				
 				JScrollPane scrllpane = new JScrollPane(panelsDrescription, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 						JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 				scrllpane.getVerticalScrollBar().setUnitIncrement(16);
-	
 				pane.add(scrllpane);
 				
 			} else {
 				panelsDrescription = new JPanel();
 				panelsDrescription.add(new JLabel("No description available"));
-	
+		
 				pane.add(panelsDrescription);
 			}
 			
@@ -617,6 +654,7 @@ public abstract class ConfigurableMainFrame extends JFrame implements Configurab
 			descriptionFrame_.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 			descriptionFrame_.pack();
 			descriptionFrame_.setVisible(true);
+
 		}
 	}
 	

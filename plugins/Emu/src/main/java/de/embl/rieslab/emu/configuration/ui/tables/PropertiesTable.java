@@ -395,13 +395,13 @@ public class PropertiesTable extends JPanel {
 			}
 			int diff = row-nmb-1;
 			s = (String) table.getValueAt(nmb, 0);
-			help_.update(s,"Set the device property value corresponding to the state number "+diff+". The allowed values can be read out from the device property browser.");
+			help_.update(s,"Set the device property value corresponding to the state number "+diff+". The allowed values can be read out from the device property browser. State values cannot be left unconfigured if the property is allocated.");
 		} else if (s.contains(TwoStateUIProperty.getOnStateLabel())){
 			s = (String) table.getValueAt(row-1, 0);
-			help_.update(s,"Enter the device property value corresponding to the ON state. The allowed values can be read out from the device property browser.");
+			help_.update(s,"Enter the device property value corresponding to the ON state. The allowed values can be read out from the device property browser. State values cannot be left unconfigured if the property is allocated.");
 		} else if (s.contains(TwoStateUIProperty.getOffStateLabel())){
 			s = (String) table.getValueAt(row-2, 0);
-			help_.update(s,"Enter the device property value corresponding to the OFF state. The allowed values can be read out from the device property browser.");
+			help_.update(s,"Enter the device property value corresponding to the OFF state. The allowed values can be read out from the device property browser. State values cannot be left unconfigured if the property is allocated.");
 		}  else if (s.contains(RescaledUIProperty.getSlopeLabel())){
 			s = (String) table.getValueAt(row-1, 0);
 			help_.update(s,"The values set in the UI will be rescaled to slope*value+offset before setting the device property state. Enter here a value for the slope.");

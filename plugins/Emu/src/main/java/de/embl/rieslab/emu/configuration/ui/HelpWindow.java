@@ -2,7 +2,11 @@ package de.embl.rieslab.emu.configuration.ui;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.util.ArrayList;
 
+import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
@@ -44,8 +48,26 @@ public class HelpWindow {
 		pan.add(new JLabel(" "));
 		pan.add(new JScrollPane(txtarea, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER));
-
+		
 		frame = new JFrame("Help window");
+
+		// Sets the icon
+		ArrayList<BufferedImage> lst = new ArrayList<BufferedImage>();
+		BufferedImage im;
+		try {
+			im = ImageIO.read(getClass().getResource("/images/about16.png"));
+			lst.add(im);
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		try {
+			im = ImageIO.read(getClass().getResource("/images/about32.png"));
+			lst.add(im);
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		frame.setIconImages(lst);
+		
 		frame.add(pan);
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		frame.pack();

@@ -9,6 +9,7 @@ import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
 import javax.swing.border.TitledBorder;
 
+import de.embl.rieslab.emu.plugin.examples.components.TogglePower;
 import de.embl.rieslab.emu.ui.ConfigurablePanel;
 import de.embl.rieslab.emu.ui.swinglisteners.SwingUIListeners;
 import de.embl.rieslab.emu.ui.uiparameters.ColorUIParameter;
@@ -36,9 +37,6 @@ public class LaserPanel extends ConfigurablePanel {
 	public final String PARAM_TITLE = "Name";
 	public final String PARAM_COLOR = "Color";	
 
-	/**
-	 * Create the panel.
-	 */
 	public LaserPanel(String title) {
 		super(title);
 
@@ -68,7 +66,7 @@ public class LaserPanel extends ConfigurablePanel {
 		slider.setOrientation(SwingConstants.VERTICAL);
 		add(slider);
 		
-		tglbtnNewToggleButton = new JToggleButton("On/Off");
+		tglbtnNewToggleButton = new TogglePower();
 		tglbtnNewToggleButton.setBounds(10, 231, 100, 33);
 		tglbtnNewToggleButton.setFont(new Font("Tahoma", Font.BOLD, 12));
 		add(tglbtnNewToggleButton);
@@ -247,6 +245,9 @@ public class LaserPanel extends ConfigurablePanel {
 		 * this description is used to help the user understand how the 
 		 * panel works.
 		 */
-		return "The "+getPanelLabel()+" panel controls a single laser and allows for rapid on/off and power percentage changes.";
+		return "Laser panels control each a single laser and allow for rapid on/off and power percentage changes. "
+				+ "If the laser does not have a power percentage property, the UI property parameters SLOPE and OFFSET can be used "
+				+ "to rescale the power property to a percentage. The name and color of the laser can also be modified using the "
+				+ "corresponding parameters.";
 	}
 }
