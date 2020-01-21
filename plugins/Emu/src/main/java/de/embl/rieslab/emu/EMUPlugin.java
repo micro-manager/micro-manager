@@ -17,7 +17,7 @@ import de.embl.rieslab.emu.controller.utils.GlobalSettings;
 public class EMUPlugin implements MenuPlugin, SciJavaPlugin {
 
 	private SystemController controller_;
-	private static Studio mmAPI_;
+	private static Studio studio_;
 	
 	private static String name = "EMU";
 	private static String description = "Easier Micro-manager User interface: loads its own UI plugins and interfaces them with Micro-manager device properties.";
@@ -41,7 +41,7 @@ public class EMUPlugin implements MenuPlugin, SciJavaPlugin {
 
 	@Override
 	public void setContext(Studio mmAPI) {
-		mmAPI_ = mmAPI;
+		studio_ = mmAPI;
 	}
 
 	@Override
@@ -59,7 +59,7 @@ public class EMUPlugin implements MenuPlugin, SciJavaPlugin {
 					new File(GlobalSettings.HOME).mkdirs();
 				}
 				
-				controller_ = new SystemController(mmAPI_);
+				controller_ = new SystemController(studio_);
 				controller_.start();
 			}
 		});

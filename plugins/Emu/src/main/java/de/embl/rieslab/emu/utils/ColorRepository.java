@@ -101,13 +101,9 @@ public class ColorRepository {
 	public static String[] getColors(){
 		return colors;
 	}
-	
-	public static String getColorsInOneColumn(){
-		String s = colors[0];
-		for(int i=1;i<colors.length;i++){
-			s += "\n"+colors[i];
-		}
-		return s;
+
+	public static String getCommaSeparatedColors(){
+		return String.join(", ", colors);
 	}
 	
 	public static String getStringColor(Color c){

@@ -1,4 +1,4 @@
-package de.embl.rieslab.emu.plugin.examples.ibeamsmart.components;
+package de.embl.rieslab.emu.plugin.examples.components;
 
 import java.awt.Dimension;
 
@@ -7,7 +7,7 @@ import javax.swing.JToggleButton;
 
 public class TogglePower extends JToggleButton {
 
-	private static final long serialVersionUID = 61276494223509703L;
+	private static final long serialVersionUID = 1L;
 
 	public TogglePower(){
 		this.setPreferredSize(new Dimension(30,30));
@@ -23,7 +23,5 @@ public class TogglePower extends JToggleButton {
 			this.setFocusable(false);
 			this.setContentAreaFilled(false);
 		}
-		
 	}
-	
 }

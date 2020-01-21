@@ -105,8 +105,6 @@ public class ConfigurationManagerUI {
 		savepane.add(save);
 		
 		lowerpane.add(savepane);
-		lowerpane.add(new JLabel(""));
-		lowerpane.add(new JLabel(""));
 	
 		contentpane.add(upperpane);
 		contentpane.add(tablepanel);

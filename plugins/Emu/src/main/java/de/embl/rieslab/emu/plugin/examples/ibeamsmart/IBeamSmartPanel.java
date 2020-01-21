@@ -16,8 +16,8 @@ import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.border.TitledBorder;
 
-import de.embl.rieslab.emu.plugin.examples.ibeamsmart.components.TogglePower;
-import de.embl.rieslab.emu.plugin.examples.ibeamsmart.components.ToggleSlider;
+import de.embl.rieslab.emu.plugin.examples.components.TogglePower;
+import de.embl.rieslab.emu.plugin.examples.components.ToggleSlider;
 import de.embl.rieslab.emu.ui.ConfigurablePanel;
 import de.embl.rieslab.emu.ui.swinglisteners.SwingUIListeners;
 import de.embl.rieslab.emu.ui.uiparameters.BoolUIParameter;
