@@ -971,7 +971,13 @@ protected:
    }
 
    /**
-   * Returns a vector with strings listing the devices of the requested types
+   * Provides access to the names of devices of a given type
+   * deviceIterator determines which device in the list of devices of the
+   * given type will become accessible in deviceName.
+   * If deviceIterator exceeds the number of devices of the given type,
+   * no action will be taked (i.e., the memory pointed to by deviceName
+   * will be unchanged).
+   * 
    */
    // Microsoft compiler has trouble generating code to transport stl objects across DLL boundary
    // so we use char*. Other compilers could conceivably have similar trouble, if for example,
