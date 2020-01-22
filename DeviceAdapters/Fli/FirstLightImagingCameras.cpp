@@ -78,7 +78,8 @@ FirstLightImagingCameras::FirstLightImagingCameras(std::string cameraName) :
 	_cameraModel(undefined),
 	_nbCameras(0),
 	_credTwo(false),
-	_credThree(false)
+	_credThree(false),
+	_isCapturing(false)
 {
 	FliSdk_init();
 	uint8_t nbGrabbers = 0;
@@ -91,6 +92,7 @@ FirstLightImagingCameras::FirstLightImagingCameras(std::string cameraName) :
 		if(_nbCameras > 0)
 		{
 			FliSdk_setCamera(_listOfCameras[0]);
+			FliSdk_setBufferSize(500);
 			FliSdk_update();
 			_cameraModel = FliSdk_getCameraModel();
 
@@ -209,12 +211,11 @@ void FirstLightImagingCameras::imageReceived(const uint8_t* image)
 
 	MM::Core* core = GetCoreCallback();
 
-	int ret = core->InsertImage(this, image, w, h, b, 1, md.Serialize().c_str());
+	int ret = core->InsertImage(this, image, w, h, b, 1, md.Serialize().c_str(), false);
 	if (ret == DEVICE_BUFFER_OVERFLOW)
 	{
 		// do not stop on overflow - just reset the buffer
 		core->ClearImageBuffer(this);
-		// don't process this same image again...
 		core->InsertImage(this, image, w, h, b, 1, md.Serialize().c_str(), false);
 	}
 
@@ -286,7 +287,7 @@ void FirstLightImagingCameras::SetExposure(double exp_ms)
 //---------------------------------------------------------------
 double FirstLightImagingCameras::GetExposure() const
 {
-	double tint = 1.0;
+	double tint;
 
 	if (_credTwo)
 		Cred2_getTint(&tint);
@@ -300,10 +301,10 @@ double FirstLightImagingCameras::GetExposure() const
 int FirstLightImagingCameras::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 {
 	CroppingData_C cropping;
-	cropping.col1 = (uint16_t) roundUp(x, 32);
-	cropping.col2 = (uint16_t) roundUp(x + xSize, 32)-1;
-	cropping.row1 = (uint16_t) roundUp(y, 4);
-	cropping.row2 = (uint16_t) roundUp(y + ySize,4)-1;
+	cropping.col1 = roundUp(x, 32);
+	cropping.col2 = roundUp(x + xSize, 32)-1;
+	cropping.row1 = roundUp(y, 4);
+	cropping.row2 = roundUp(y + ySize,4)-1;
 	FliSdk_setCroppingState(true, cropping);
 	_croppingEnabled = true;
 	return DEVICE_OK;
@@ -406,13 +407,14 @@ void onImageReceived(const uint8_t* image, void* ctx)
 int FirstLightImagingCameras::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
 {
 	(void)stopOnOverflow;
+	_callbackCtx = FliSdk_addCallbackNewImage(onImageReceived, (uint16_t)_fpsTrigger, this);
 	if (FliSdk_isStarted())
 		FliSdk_stop();
 	FliSdk_disableGrabN();
 	FliSdk_start();
 	_fpsTrigger = interval_ms == 0 ? 0 : 1.0 / interval_ms;
-	_callbackCtx = FliSdk_addCallbackNewImage(onImageReceived, (uint16_t)_fpsTrigger, this);
 	_numImages = numImages;
+	_isCapturing = true;
 	return DEVICE_OK;
 }
 
@@ -421,13 +423,19 @@ int FirstLightImagingCameras::StopSequenceAcquisition()
 {
 	FliSdk_stop();
 	FliSdk_removeCallbackNewImage(_callbackCtx);
-
+	_isCapturing = false;
 	return DEVICE_OK;
 }
 
 //---------------------------------------------------------------
 void FirstLightImagingCameras::OnThreadExiting() throw()
 {
+}
+
+//---------------------------------------------------------------
+bool FirstLightImagingCameras::IsCapturing()
+{
+	return _isCapturing;
 }
 
 //---------------------------------------------------------------

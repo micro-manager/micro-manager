@@ -61,6 +61,7 @@ public:
 	int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
 	int StopSequenceAcquisition();
 	void OnThreadExiting() throw();
+	bool IsCapturing();
 
 	void refreshValues();
 	void imageReceived(const uint8_t* image);
@@ -99,6 +100,7 @@ private:
 	uint8_t			_nbCameras;
 	FliThreadImp*	_refreshThread;
 	callbackHandler	_callbackCtx;
+	bool			_isCapturing;
 };
 
 class FliThreadImp : public MMDeviceThreadBase
