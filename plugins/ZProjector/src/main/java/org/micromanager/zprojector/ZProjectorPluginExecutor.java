@@ -196,9 +196,9 @@ public class ZProjectorPluginExecutor {
       ImagePlus projection = zp.getProjection();
       if (projection.getBytesPerPixel() > 2) {
          if (tmp.getBytesPerPixel() == 1) {
-            projection.setProcessor(projection.getProcessor().convertToByteProcessor());
+            projection.setProcessor(projection.getProcessor().convertToByte(false));
          } else if (tmp.getBytesPerPixel() == 2) {
-            projection.setProcessor(projection.getProcessor().convertToShortProcessor());
+            projection.setProcessor(projection.getProcessor().convertToShort(false));
          }
       }
       Image outImg = studio_.data().getImageJConverter().createImage(

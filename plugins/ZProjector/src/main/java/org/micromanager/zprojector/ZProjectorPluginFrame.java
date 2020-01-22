@@ -182,7 +182,7 @@ public class ZProjectorPluginFrame extends MMDialog {
       
       // Note: Median and Std.Dev. yield 32-bit images
       // Those would need to be converted to 16-bit to be shown...
-      final String[] projectionMethods = new String[] {"Max", "Min", "Avg"};
+      final String[] projectionMethods = new String[] {"Max", "Min", "Avg", "Median", "Std.Dev"};
       final JComboBox methodBox = new JComboBox(projectionMethods);
       methodBox.setSelectedItem(settings_.getString(ZProjectorPlugin.PROJECTION_METHOD, "Max"));
       methodBox.addActionListener((ActionEvent e) -> {
