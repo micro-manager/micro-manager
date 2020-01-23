@@ -26,7 +26,7 @@ import mmcorej.CMMCore;
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 import org.micromanager.magellan.api.MagellanAPI;
-import org.micromanager.magellan.api.zmq.ZMQServer;
+import org.micromanager.internal.zmq.ZMQServer;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 

@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.micromanager.magellan.api.zmq;
+package org.micromanager.internal.zmq;
 
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
@@ -14,7 +14,7 @@ import org.json.JSONObject;
 import org.micromanager.magellan.acq.MagellanAcquisitionsManager;
 import org.micromanager.magellan.api.MagellanAPI;
 import org.micromanager.magellan.api.MagellanAcquisitionAPI;
-import static org.micromanager.magellan.api.zmq.ZMQSocketWrapper.parseAPI;
+import static org.micromanager.internal.zmq.ZMQSocketWrapper.parseAPI;
 import org.micromanager.magellan.main.Magellan;
 import org.micromanager.magellan.misc.Log;
 import org.zeromq.SocketType;
