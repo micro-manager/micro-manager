@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -19,10 +18,10 @@ import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.Studio;
 import org.micromanager.magellan.api.MagellanAPI;
 import org.micromanager.magellan.api.MagellanAcquisitionAPI;
 import org.micromanager.magellan.api.MagellanAcquisitionSettingsAPI;
-import org.micromanager.magellan.misc.Log;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
@@ -30,22 +29,24 @@ import org.zeromq.ZMQ;
 //Base class that wraps a ZMQ socket and implmenets type conversions as well as the impicit 
 //JSON message syntax
 public abstract class ZMQSocketWrapper {
+   
+   protected final Studio studio_;
 
    private static final ByteOrder BYTE_ORDER = ByteOrder.BIG_ENDIAN;
-   public final static Map<Class<?>, Class<?>> primitiveClassMap_ = new HashMap<Class<?>, Class<?>>();
+   public final static Map<Class<?>, Class<?>> PRIMITIVE_CLASS_MAP = new HashMap<Class<?>, Class<?>>();
    static {
-      primitiveClassMap_.put(Boolean.class, boolean.class);
-      primitiveClassMap_.put(Byte.class, byte.class);
-      primitiveClassMap_.put(Short.class, short.class);
-      primitiveClassMap_.put(Character.class, char.class);
-      primitiveClassMap_.put(Integer.class, int.class);
-      primitiveClassMap_.put(Long.class, long.class);
-      primitiveClassMap_.put(Float.class, float.class);
-      primitiveClassMap_.put(Double.class, double.class);
+      PRIMITIVE_CLASS_MAP.put(Boolean.class, boolean.class);
+      PRIMITIVE_CLASS_MAP.put(Byte.class, byte.class);
+      PRIMITIVE_CLASS_MAP.put(Short.class, short.class);
+      PRIMITIVE_CLASS_MAP.put(Character.class, char.class);
+      PRIMITIVE_CLASS_MAP.put(Integer.class, int.class);
+      PRIMITIVE_CLASS_MAP.put(Long.class, long.class);
+      PRIMITIVE_CLASS_MAP.put(Float.class, float.class);
+      PRIMITIVE_CLASS_MAP.put(Double.class, double.class);
    }
 
    //classes that can be translated into json and reconstructed on the python side
-   private static Class[] SERIALIZABLE_CLASSES = new Class[]{
+   private static final Class[] SERIALIZABLE_CLASSES = new Class[]{
       String.class, 
       Void.TYPE, 
       Short.TYPE,
@@ -60,8 +61,9 @@ public abstract class ZMQSocketWrapper {
       TaggedImage.class, 
       List.class};
 
-   //Classes/interfaces that are allowed to pass over as virtual python objects, but actually exist on Java side
-   private static Class[] API_CLASSES = new Class[]{
+   //Classes/interfaces that are allowed to pass over as virtual python objects, 
+   // but actually exist on Java side
+   private static final Class[] API_CLASSES = new Class[]{
       CMMCore.class,
       MagellanAcquisitionAPI.class,
       MagellanAPI.class,
@@ -74,14 +76,15 @@ public abstract class ZMQSocketWrapper {
 //   };
 
    //map of objects that exist in some client of the server
-   protected final static HashMap<String, Object> externalObjects_ = new HashMap<String, Object>();
+   protected final static Map<String, Object> EXTERNAL_OBJECTS = new HashMap<>();
 
    protected static ZContext context_;
    protected SocketType type_;
    protected ZMQ.Socket socket_;
    protected String name_;
 
-   public ZMQSocketWrapper(Class clazz, SocketType type) {
+   public ZMQSocketWrapper(Studio studio, Class clazz, SocketType type) {
+      studio_ = studio;
       type_ = type;
       name_ = clazz == null ? "master" : clazz.getName();
       if (context_ == null) {
@@ -96,7 +99,9 @@ public abstract class ZMQSocketWrapper {
    protected abstract int getPort(Class clazz);
 
    /**
-    * send a command from a Java client to a python server and wait on response
+    * send a command from a Java client to a python server and wait for response
+    * @param request Command to be send through the port
+    * @return response from the Python side
     */
    protected Object sendRequest(String request) {
       socket_.send(request);
@@ -114,21 +119,20 @@ public abstract class ZMQSocketWrapper {
       for (int i = 0; i < argVals.length; i++) {
          //Converts onpbjects to primitives
          Class c = json.getJSONArray("arguments").get(i).getClass();
-         if (primitiveClassMap_.containsKey(c)) {
-            c = primitiveClassMap_.get(c);
+         if (PRIMITIVE_CLASS_MAP.containsKey(c)) {
+            c = PRIMITIVE_CLASS_MAP.get(c);
          }
          argClasses[i] = c;
          argVals[i] = json.getJSONArray("arguments").get(i);
       }
 
       Method method = obj.getClass().getMethod(methodName, argClasses);
-      Object result = null;
+      Object result;
       try {
          result = method.invoke(obj, argVals);
       } catch (InvocationTargetException ex) {
          result = ex.getCause();
-         Log.log(ex);
-
+         studio_.logs().logError(ex);
       }
 
       JSONObject serialized = new JSONObject();
@@ -165,8 +169,11 @@ public abstract class ZMQSocketWrapper {
    /**
     * Serialize the object in some way that the client will know how to
     * deserialize
+    * @param o       Object to be serialized
+    * @param json    JSONObject that will contain the serialized Object 
+    *                can not be null
     */
-   protected void serialize(Object o, JSONObject json) {
+   protected void serialize(Object o,JSONObject json) {
       try {
          if (o instanceof Exception) {
             json.put("type", "exception");
@@ -214,7 +221,7 @@ public abstract class ZMQSocketWrapper {
             //Keep track of which objects have been sent out, so that garbage collection can be synchronized between 
             //the two languages
             String hash = Integer.toHexString(System.identityHashCode(o));
-            externalObjects_.put(hash, o);
+            EXTERNAL_OBJECTS.put(hash, o);
             json.put("type", "unserialized-object");           
             json.put("class", o.getClass().getName());
             json.put("hash-code", hash);
@@ -240,8 +247,7 @@ public abstract class ZMQSocketWrapper {
             json.put("api", parseAPI(clazz));
          }
       } catch (JSONException e) {
-         e.printStackTrace();
-         Log.log(e);
+         studio_.logs().logError(e);
       }
    }
 
@@ -277,9 +283,7 @@ public abstract class ZMQSocketWrapper {
     */
    private static boolean isValidMethod(Method t) {
       List<Class> l = new ArrayList<>();
-      for (Class c : t.getParameterTypes()) {
-         l.add(c);
-      }
+      l.addAll(Arrays.asList(t.getParameterTypes()));
       //All arguments must be 2-way serializable
       for (Class c : l) {
          if (!Arrays.asList(SERIALIZABLE_CLASSES).contains(c)) {
@@ -300,6 +304,7 @@ public abstract class ZMQSocketWrapper {
     * translated based on argument and return type, and put them into a big JSON
     * array that describes the API
     *
+    * @param clazz  Class to be translated into JSON
     * @return
     * @throws JSONException
     */

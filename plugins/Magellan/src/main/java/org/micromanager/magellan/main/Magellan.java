@@ -21,7 +21,6 @@ package org.micromanager.magellan.main;
  * and open the template in the editor.
  */
 import org.micromanager.magellan.gui.GUI;
-import java.util.prefs.Preferences;
 import mmcorej.CMMCore;
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
@@ -46,7 +45,7 @@ public class Magellan implements MenuPlugin, SciJavaPlugin {
    public Magellan() {
       try {
          if (bridge_ == null) {
-            bridge_ = new ZMQServer(null);
+            bridge_ = new ZMQServer(mmAPI_, null);
          }
          if (api_ == null) {
             api_ = new MagellanAPI();
