@@ -26,8 +26,8 @@ import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
-//Base class that wraps a ZMQ socket and implmenets type conversions as well as the impicit 
-//JSON message syntax
+// Base class that wraps a ZMQ socket and implements type conversions as well 
+// as the impicit JSON message syntax
 public abstract class ZMQSocketWrapper {
    
    protected final Studio studio_;
@@ -61,7 +61,7 @@ public abstract class ZMQSocketWrapper {
       TaggedImage.class, 
       List.class};
 
-   //Classes/interfaces that are allowed to pass over as virtual python objects, 
+   // Classes/interfaces that are allowed to pass over as virtual python objects, 
    // but actually exist on Java side
    private static final Class[] API_CLASSES = new Class[]{
       CMMCore.class,

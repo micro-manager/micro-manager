@@ -13,7 +13,7 @@ import org.micromanager.magellan.main.Magellan;
 import org.zeromq.SocketType;
 
 /**
- * implments request reply server (ie the reply part)
+ * implements request reply server (ie the reply part)
  */
 public class ZMQServer extends ZMQSocketWrapper {
 
@@ -55,7 +55,8 @@ public class ZMQServer extends ZMQSocketWrapper {
                   reply = json.toString().getBytes();
                   studio_.logs().logError(e);
                } catch (JSONException ex) {
-                  //This wont happen
+                  // This wont happen
+                  studio_.logs().logError(ex);
                }
             }
             socket_.send(reply);
@@ -69,7 +70,7 @@ public class ZMQServer extends ZMQSocketWrapper {
 
       switch (json.getString("command")) {
          case "connect":
-            //   Hard coded startup commands that have corresponding methods in pygellan
+            // Hard coded startup commands that have corresponding methods in pygellan
             // These will startup a new server if needed to avoid cross blocking between
             // different APIs
             String server = json.getString("server");
