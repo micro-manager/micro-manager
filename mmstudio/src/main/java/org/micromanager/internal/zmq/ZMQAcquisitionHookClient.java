@@ -1,4 +1,4 @@
-package org.micromanager.magellan.api.zmq;
+package org.micromanager.internal.zmq;
 
 import org.json.JSONObject;
 import org.micromanager.magellan.acq.AcquisitionEvent;

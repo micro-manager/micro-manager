@@ -1,4 +1,4 @@
-package org.micromanager.magellan.api.zmq;
+package org.micromanager.internal.zmq;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -66,7 +66,6 @@ public abstract class ZMQSocketWrapper {
       MagellanAcquisitionAPI.class,
       MagellanAPI.class,
       MagellanAcquisitionSettingsAPI.class
-      //TODO: maybe automatically read some of these from their package
    };
    
 //   private static Package[] API_PACKAGES  = new Package[]{

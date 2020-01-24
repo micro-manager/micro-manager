@@ -3,9 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.micromanager.magellan.api.zmq;
+package org.micromanager.internal.zmq;
 
-import static org.micromanager.magellan.api.zmq.ZMQSocketWrapper.context_;
+import static org.micromanager.internal.zmq.ZMQSocketWrapper.context_;
 import org.zeromq.SocketType;
 
 /**
