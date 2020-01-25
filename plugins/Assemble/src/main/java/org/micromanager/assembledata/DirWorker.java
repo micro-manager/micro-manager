@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import org.micromanager.Studio;
-import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 
 /**

@@ -12,13 +12,17 @@ import boofcv.struct.image.ImageGray;
 import georegression.struct.affine.Affine2D_F64;
 import java.awt.geom.AffineTransform;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import org.micromanager.Studio;
 import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
+import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
+import org.micromanager.data.SummaryMetadata;
 import org.micromanager.internal.utils.imageanalysis.BoofCVImageConverter;
 
 /**
@@ -38,9 +42,17 @@ public class AssembleDataAlgo {
 
       DataProvider spd = Utils.singlePositionData(dp1, dp2);
       DataProvider mpd = Utils.multiPositionData(dp1, dp2);
+      
+      try {
+         SummaryMetadata.Builder smb = spd.getSummaryMetadata().copyBuilder();
+         List<String> channelNames = new ArrayList<>();
+         channelNames.addAll(spd.getSummaryMetadata().getChannelNameList());
+         channelNames.addAll(mpd.getSummaryMetadata().getChannelNameList());
+         output.setSummaryMetadata(smb.channelNames(channelNames).build());
+      } catch (IOException | DatastoreRewriteException ex) {}
+   
 
       try {
-
          Image singlePositionImg = spd.getAnyImage();
          Image multiPositionImg = mpd.getAnyImage();
          Metadata singlePositionMD = singlePositionImg.getMetadata();
