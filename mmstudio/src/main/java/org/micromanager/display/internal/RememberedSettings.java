@@ -129,6 +129,9 @@ public class RememberedSettings {
          ChannelDisplaySettings cds = loadChannel(studio, channelGroup, channelName);
          builder.channel(ch, cds);
       }
+      if (channelNames.size() > 1) {
+         builder.colorModeComposite();
+      }
       builder.autostretch(true);
       return builder.build();      
    }

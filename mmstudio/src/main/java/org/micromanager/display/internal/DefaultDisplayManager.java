@@ -341,7 +341,9 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
          DisplaySettings displaySettings = DefaultDisplaySettings.
                  getSavedDisplaySettings(displaySettingsFile);
          if (displaySettings == null) {
-            displaySettings = this.getStandardDisplaySettings();
+            displaySettings = RememberedSettings.loadDefaultDisplaySettings(
+                 studio_,
+                 store.getSummaryMetadata());
          }
          // instead of using the createDisplay function, set the correct 
          // displaySettings right away
