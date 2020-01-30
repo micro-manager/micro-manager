@@ -125,7 +125,7 @@ private:
    int PowerCameraOn(const unsigned int timeoutMs);
    int TriggerModeFromString(std::string mode, unsigned short& tMode);
    std::string TriggerModeAsString(const unsigned short mode) const;
-   const unsigned char* RGBToRGBA(const unsigned char* img);
+   const unsigned char* RGBToBGRA(const unsigned char* img);
 
 
    FlyCapture2::PGRGuid guid_;
@@ -135,7 +135,6 @@ private:
    bool initialized_;
    std::string deviceName_;
    MM::MMTime sequenceStartTime_;
-   MM::MMTime sequenceStartTimeStamp_;
    long imageCounter_;
    bool stopOnOverflow_;
    long desiredNumImages_;

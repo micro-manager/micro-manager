@@ -1,4 +1,3 @@
-
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I ../m4
 
@@ -10,6 +9,12 @@ if BUILD_ANDORLASERCOMBINER
 endif
 if BUILD_ANDORSDK3
    ANDORSDK3 = AndorSDK3
+endif
+if BUILD_BASLER_LINUX
+   BASLER = Basler
+endif
+if BUILD_BASLER_MAC
+   BASLER = Basler
 endif
 if BUILD_DC1394
    DC1394 = dc1394
@@ -66,6 +71,7 @@ SUBDIRS = \
 	$(ANDOR) \
 	$(ANDORLASERCOMBINER) \
 	$(ANDORSDK3) \
+	$(BASLER) \
 	$(DC1394) \
 	$(FAKECAMERA) \
 	$(HIDMANAGER) \
@@ -93,8 +99,11 @@ SUBDIRS = \
 	Aladdin \
 	Aquinas \
 	Arduino \
+	Arduino32bitBoards \
 	BlueboxOptics_niji \
 	CARVII \
+	ChuoSeiki_MD5000 \
+	ChuoSeiki_QT \
 	CNCMicroscope \
 	CSUW1 \
 	Cobolt \
@@ -117,6 +126,7 @@ SUBDIRS = \
 	IsmatecMCP \
 	K8055 \
 	K8061 \
+	LaserQuantumLaser \
 	LeicaDMI \
 	LeicaDMR \
 	LeicaDMSTC \
@@ -138,6 +148,7 @@ SUBDIRS = \
 	OVP_ECS2 \
 	Omicron \
 	Oxxius \
+	OxxiusCombiner \
 	PI \
 	PI_GCS \
 	PI_GCS_2 \
@@ -159,17 +170,21 @@ SUBDIRS = \
 	SmarActHCU-3D \
 	SpectralLMM5 \
 	SutterLambda \
+	SutterLambda2 \
 	SutterLambdaParallelArduino \
 	SutterStage \
 	Thorlabs \
 	ThorlabsDCxxxx \
+	ThorlabsElliptecSlider \
 	ThorlabsFilterWheel \
 	ThorlabsSC10 \
 	Tofra \
+	Toptica_iBeamSmartCW \
 	TriggerScope \
 	UserDefinedSerial \
 	Utilities \
 	VariLC \
+	VarispecLCTF \
 	Vincent \
 	Vortran \
 	WieneckeSinske \
@@ -178,6 +193,8 @@ SUBDIRS = \
 	XCiteXT600 \
 	XLight \
 	Xcite \
+	PI \
+	YodnE600 \
 	Yokogawa \
 	Zaber \
 	ZeissCAN \

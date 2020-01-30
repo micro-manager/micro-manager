@@ -1,0 +1,38 @@
+/**
+ * Example of running sequence acquisitions (a.k.a. burst acquisitions).
+ */
+
+nrFrames = 500;
+exposureMs = mmc.getExposure();
+// Create a Datastore for the images to be stored in, in RAM.
+store = mm.data().createRAMDatastore();
+// Create a display to show images as they are acquired.
+mm.displays().createDisplay(store);
+
+// Start collecting images.
+// Arguments are the number of images to collect, the amount of time to wait
+// between images, and whether or not to halt the acquisition if the
+// sequence buffer overflows.
+mmc.startSequenceAcquisition(nrFrames, 0, true);
+// Set up a Coords.CoordsBuilder for applying coordinates to each image.
+builder = mm.data().getCoordsBuilder().z(0).channel(0).stagePosition(0);
+int curFrame = 0;
+while (mmc.getRemainingImageCount() > 0 || mmc.isSequenceRunning(mmc.getCameraDevice())) {
+   if (mmc.getRemainingImageCount() > 0) {
+      tagged = mmc.popNextTaggedImage();
+      // Convert to an Image at the desired timepoint.
+      image = mm.data().convertTaggedImage(tagged,
+         builder.time(curFrame).build(), null);
+      store.putImage(image);
+      curFrame++;
+   }
+   else {
+      // Wait for another image to arrive.
+      mmc.sleep(Math.min(.5 * exposureMs, 20));
+   }
+}
+
+mmc.stopSequenceAcquisition();
+// Have Micro-Manager handle logic for ensuring data is saved to disk.
+mm.displays().manage(store);
+

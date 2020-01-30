@@ -1,0 +1,8 @@
+<project name="mm.javalibrarybuild">
+	<!-- This file is intended to be used via 'import' in each library
+	     project's buildfile -->
+
+	<include file="libraryprops.xml"/>
+	<import file="../buildscripts/javabuild.xml"/>
+	<include file="librarypaths.xml"/>
+</project>

@@ -1,0 +1,69 @@
+/**
+ * This script takes ROIs from the ImageJ ROI Manager, and projects them 
+ * on the SLM device.  It sets difference intensities for each ROI 
+ * You will need a configured and calibrated SLM device to use this
+ * 
+ * Written by Nico Stuurman for Michael Glotzer, June 2019
+ * 
+ * 
+ */
+import ij.IJ;
+import mmcorej.CMMCore;
+import ij.process.ImageProcessor;
+import ij.ImagePlus;
+import ij.gui.ShapeRoi;
+import ij.plugin.frame.RoiManager;
+import ij.process.*;
+import java.util.List;
+import java.util.ArrayList;
+import java.awt.Polygon;
+import ij.process.FloatPolygon;
+import ij.process.ImageProcessor;
+import ij.process.ColorProcessor;
+import ij.process.ByteProcessor;
+import ij.gui.PolygonRoi;
+import ij.gui.Roi;
+import java.lang.Math;
+import org.micromanager.Studio;
+import org.micromanager.projector;
+import org.micromanager.projector.ProjectorActions;
+import org.micromanager.projector.ProjectionDevice;
+import org.micromanager.projector.internal;
+import org.micromanager.projector.internal.OnStateListener;
+import org.micromanager.projector.internal.Utils;
+import org.micromanager.projector.internal.devices.SLM;
+
+int slmWidth_;
+int slmHeight_;
+slm_=  mmc.getSLMDevice();
+
+
+RoiManager rm = RoiManager.getInstance();
+if (rm==null) rm = new RoiManager();
+slmWidth_ = (int) mmc.getSLMWidth(slm_);
+slmHeight_ = (int) mmc.getSLMHeight(slm_);
+
+pd = ProjectorActions.getProjectionDevice(mm);
+// will fail if your device is not an SLM.  May need to open 
+Projector plugin first
+slm = (SLM) pd;
+
+ArrayList intensities = new ArrayList();
+for (int i = 0; i < 10; i++) {
+     intensities.add(255 - i*25);
+}
+
+if (slm != null) { // if you do not have an slm it will be null
+     rois = rm.getSelectedRoisAsArray();
+     maps = ProjectorActions.loadMapping(mm, pd);
+     transformedROIs = ProjectorActions.transformROIs(rois, maps, 
+mmc.getROI(), Utils.getBinning(mmc));
+     transformedRoiPolygons = 
+Utils.FloatToNormalPolygon(transformedROIs);
+
+     slmImg = slm.roisToPixels(slmWidth_, slmHeight_, 
+transformedRoiPolygons, intensities);
+     slm.displaySLMImage(slmImg);
+     slm.waitForDevice();
+}
+

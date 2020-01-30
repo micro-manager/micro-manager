@@ -21,7 +21,7 @@
 //
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 06/07/2005
 // 
-// CVS:           $Id$
+// CVS:           $Id: MMCoreJ.i 16466 2017-08-23 21:46:52Z nico $
 //
 
 %module (directors="1") MMCoreJ
@@ -728,6 +728,7 @@
       }
       tags.put("BitDepth", getImageBitDepth());
       tags.put("PixelSizeUm", getPixelSizeUm(true));
+      tags.put("PixelSizeAffine", getPixelSizeAffineAsString());
       tags.put("ROI", getROITag());
       tags.put("Width", getImageWidth());
       tags.put("Height", getImageHeight());
@@ -846,6 +847,23 @@
          heights.add(r.height);
       }
       setMultiROI(xs, ys, widths, heights);
+   }
+
+   /**
+    * Convenience function.  Retuns affine transform as a String
+    * Used in this class and by the acquisition engine 
+    * (rather than duplicating this code there
+    */
+   public String getPixelSizeAffineAsString() throws java.lang.Exception {
+      String pa = "";
+      DoubleVector aff = getPixelSizeAffine(true);
+      if (aff.size() == 6)  {
+         for (int i = 0; i < 5; i++) {
+            pa += aff.get(i) + ";";
+         }
+         pa += aff.get(5);
+      }
+      return pa;
    }
 
    /* 

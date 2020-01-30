@@ -1744,6 +1744,23 @@ int XYStage::OnJSSlowSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+// use the peculiar fact that the info command is the only Tiger command
+// that begins with the letter I.  So isolate for the actual command
+// (stripping card address and leading whitespace) and then see if the
+// first character is an "I" (not case sensitive)
+bool isINFOCommand(const string command)
+{
+   bool ret = false;
+   try
+   {
+      ret = toupper(command.at(command.find_first_not_of(" 0123456789"))) == 'I';
+   }
+   catch (...)
+   {
+   }
+   return ret;
+}
+
 int XYStage::OnSerialCommand(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
@@ -1751,14 +1768,18 @@ int XYStage::OnSerialCommand(MM::PropertyBase* pProp, MM::ActionType eAct)
       // do nothing
    }
    else if (eAct == MM::AfterSet) {
-      static string last_command;
+      static string last_command_via_property;
       string tmpstr;
       pProp->Get(tmpstr);
       tmpstr =   UnescapeControlCharacters(tmpstr);
       // only send the command if it has been updated, or if the feature has been set to "no"/false then always send
-      if (!serialOnlySendChanged_ || (tmpstr.compare(last_command) != 0))
+      if (!serialOnlySendChanged_ || (tmpstr.compare(last_command_via_property) != 0))
       {
-         last_command = tmpstr;
+         // prevent executing the INFO command
+         if (isINFOCommand(tmpstr))
+            return ERR_INFO_COMMAND_NOT_SUPPORTED;
+
+         last_command_via_property = tmpstr;
          int ret = QueryCommand(tmpstr.c_str(), manualSerialAnswer_);
          if (ret != DEVICE_OK)
             return ret;
@@ -5498,6 +5519,7 @@ LED::LED() :
    CreateProperty(MM::g_Keyword_Description, "ASI LED controller", MM::String, true);
 
    // Port
+   
    CPropertyAction* pAct = new CPropertyAction (this, &LED::OnPort);
    CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
    
@@ -5546,22 +5568,19 @@ int LED::Initialize()
    if (ret != DEVICE_OK)
        return ret;
 
+   // not needed SetOpen and GetOpen do the same job. 
+   /*
    CPropertyAction* pAct = new CPropertyAction (this, &LED::OnState);
    CreateProperty(MM::g_Keyword_State, g_Closed, MM::String, false, pAct);
    AddAllowedValue(MM::g_Keyword_State, g_Closed);
    AddAllowedValue(MM::g_Keyword_State, g_Open);
-
-   pAct = new CPropertyAction(this, &LED::OnIntensity);
+   */
+   CPropertyAction* pAct = new CPropertyAction(this, &LED::OnIntensity);
    CreateProperty("Intensity", "20", MM::Integer, false, pAct);
    SetPropertyLimits("Intensity", 0, 100);
 
-   ret = IsOpen(&open_);
-   if (ret != DEVICE_OK)
-      return ret;
 
-   ret = CurrentIntensity(&intensity_);
-   if (ret != DEVICE_OK)
-      return ret;
+   
 
    //Check if LED is DLED
    std::string answer;
@@ -5579,6 +5598,28 @@ int LED::Initialize()
 		   hasDLED_ = true;
 	   }
    }
+   	    
+   ret = CurrentIntensity(&intensity_);
+   if (ret != DEVICE_OK)
+	   return ret;
+
+   if (hasDLED_ || (channel_ != 0)) {
+	// we can figure out if LED is ON or OFF from intensity_ value
+	
+	   if (intensity_ > 0) {
+		   open_ = true;
+	   }
+	   else {
+		   open_ = false;
+	   }
+   }
+   else {
+	// however if it isn't DLED , then we need to check TTL Y 
+	   ret = IsOpen(&open_);
+	   if (ret != DEVICE_OK)
+		   return ret;
+   }// if hasDLED_
+
    //
    initialized_ = true;
    return DEVICE_OK;
@@ -5670,6 +5711,7 @@ int LED::GetOpen(bool& open)
 /**
  * IsOpen queries the microscope for the state of the TTL
  */
+
 int LED::IsOpen(bool *open)
 {
    *open = true;
@@ -5688,23 +5730,22 @@ int LED::IsOpen(bool *open)
 	   if (ret != DEVICE_OK)
 		   return ret;
 
-	   std::istringstream is(answer);
-	   std::string tok;
-	   is >> tok;
-	   if ((tok.substr(0, 2).compare(":A") == 0) || (tok.substr(1, 2).compare(":A") == 0)) {
-		   is >> tok;
-		   if (tok.substr(2, 1) == "0")
+	   
+	   if ((answer.substr(0, 2).compare(":A") == 0) || (answer.substr(1, 2).compare(":A") == 0)) {
+		   
+		   if (answer.substr(2, 1) == "0")
 			   *open = false;
 	   }
-	   else if (tok.substr(0, 2).compare(":N") == 0 && tok.length() > 2)
+	   else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
 	   {
-		   int errNo = atoi(tok.substr(4).c_str());
+		   int errNo = atoi(answer.substr(4).c_str());
 		   return ERR_OFFSET + errNo;
 	   }
 	   return DEVICE_OK;
 
    }
    else {
+	   /*
 	   //Query the LED command 
 	   command << "LED " << channelAxisChar_ << "?";
 	   
@@ -5715,22 +5756,38 @@ int LED::IsOpen(bool *open)
 	   if (ret != DEVICE_OK)
 		   return ret;
 
-	   std::istringstream is(answer);
-	   std::string tok;
-	   is >> tok;
+	   
 	   // Command "LED X?" return "X=0 :A"
-
-	   if (tok.substr(0, 2).compare(channelAxisChar_+"=") == 0) {
-		   is >> tok;
-		   if (tok.substr(2, 1) == "0")
+	   
+	   if (answer.substr(0, 1)[0]==channelAxisChar_) {
+		  
+		   if (answer.substr(2, 1) == "0")
 			   *open = false;
 	   }
-	   else if (tok.substr(0, 2).compare(":N") == 0 && tok.length() > 2)
+	   else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
 	   {
-		   int errNo = atoi(tok.substr(4).c_str());
+		   int errNo = atoi(answer.substr(4).c_str());
 		   return ERR_OFFSET + errNo;
 	   }
 	   return DEVICE_OK;
+	   */
+	   //figure out if shutter is open or close from led x? value
+	   int ret;
+	   long curr_intensity;
+		   
+	  ret = CurrentIntensity(&curr_intensity);
+
+	  if (ret != DEVICE_OK)
+		  return ret;
+
+	  if (curr_intensity > 0) { 
+		  *open = true;
+	  }
+	  else {
+		  *open = false;
+	  }
+	  
+	  return ret;
 
 
 
@@ -5778,7 +5835,7 @@ int LED::Fire(double )
 }
 
 // action interface
-
+/* // not needed SetOpen and GetOpen does the same job
 int LED::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
@@ -5800,7 +5857,7 @@ int LED::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 
    return DEVICE_OK;
 }
-
+*/
 int LED::OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
@@ -5811,7 +5868,7 @@ int LED::OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       pProp->Get(intensity_);
       // We could check that 0 < intensity_ < 101, but the system shoudl guarantee that
-      if (intensity_ < 100)
+     /* if (intensity_ < 100 & open_)
       {
          ClearPort();
 
@@ -5834,7 +5891,7 @@ int LED::OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct)
             return ERR_OFFSET + errNo;
          }
 
-      }
+      } */
       if (open_)
          return SetOpen(open_);
    }

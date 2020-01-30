@@ -32,6 +32,7 @@
 #include "../MMDevice/MMDevice.h"
 
 #include <vector>
+#include "boost/date_time/posix_time/posix_time.hpp"
 
 #ifdef _MSC_VER
 #pragma warning( disable : 4290 ) // exception declaration warning
@@ -65,7 +66,7 @@ public:
    const mm::ImgBuffer* GetNthFromTopImageBuffer(unsigned long n) const;
    const mm::ImgBuffer* GetNthFromTopImageBuffer(long n, unsigned channel) const;
    const mm::ImgBuffer* GetNextImageBuffer(unsigned channel);
-   void Clear() {MMThreadGuard guard(g_bufferLock); insertIndex_=0; saveIndex_=0; overflow_ = false;}
+   void Clear(); 
 
    bool Overflow() {MMThreadGuard guard(g_bufferLock); return overflow_;}
 
@@ -77,6 +78,7 @@ private:
    unsigned int height_;
    unsigned int pixDepth_;
    long imageCounter_;
+   MM::MMTime startTime_;
    std::map<std::string, long> imageNumbers_;
 
    // Invariants:
@@ -89,4 +91,7 @@ private:
    unsigned int numChannels_;
    bool overflow_;
    std::vector<mm::FrameBuffer> frameArray_;
+
+   boost::posix_time::time_facet * facet;
+   std::ostringstream tStream;
 };

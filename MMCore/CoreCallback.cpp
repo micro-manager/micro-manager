@@ -493,7 +493,10 @@ int CoreCallback::OnPropertyChanged(const MM::Device* device, const char* propNa
          {
             Configuration config = 
                core_->getConfigData((*it).c_str(), (*itc).c_str());
-            if (config.isPropertyIncluded(label, propName)) {
+            // only callback when there is more than 1 property in a group
+            // This is needed, since the UI treats groups with one 
+            // property differently, whereas the core does not....
+            if (config.size() > 1 && config.isPropertyIncluded(label, propName)) {
                found = true;
                // If we are part of this configuration, notify that it 
                // was changed. Get the new config from cache rather 
@@ -519,6 +522,7 @@ int CoreCallback::OnPropertyChanged(const MM::Device* device, const char* propNa
             try {
                // update pixel size from cache
                pixSizeUm = core_->getPixelSizeUm(true);
+               OnPixelSizeAffineChanged(core_->getPixelSizeAffine(true));
             }
             catch (CMMError ) {
                pixSizeUm = 0.0;
@@ -550,6 +554,24 @@ int CoreCallback::OnPixelSizeChanged(double newPixelSizeUm)
 {
    if (core_->externalCallback_) {
       core_->externalCallback_->onPixelSizeChanged(newPixelSizeUm);
+   }
+
+   return DEVICE_OK;
+}
+
+/**
+ * Callback indicating that Affine transform relating camera pixels
+ * to stage movement (i.e. the real world) has changed
+ */
+int CoreCallback::OnPixelSizeAffineChanged(std::vector<double> newPixelSizeAffine)
+{
+   if (core_->externalCallback_ && newPixelSizeAffine.size() == 6) {
+      core_->externalCallback_->onPixelSizeAffineChanged(newPixelSizeAffine[0],
+            newPixelSizeAffine[1],
+            newPixelSizeAffine[2],
+            newPixelSizeAffine[3],
+            newPixelSizeAffine[4],
+            newPixelSizeAffine[5]);
    }
 
    return DEVICE_OK;
@@ -625,6 +647,7 @@ int CoreCallback::OnMagnifierChanged(const MM::Device* /* device */)
       {
          // update pixel size from cache
          pixSizeUm = core_->getPixelSizeUm(true);
+         OnPixelSizeAffineChanged(core_->getPixelSizeAffine(true));
       }
       catch (CMMError ) {
          pixSizeUm = 0.0;

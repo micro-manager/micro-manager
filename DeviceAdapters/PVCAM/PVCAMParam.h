@@ -38,7 +38,7 @@ public:
       mId( aParamId ), mCamera( aCamera ), mDebugName( aDebugName ),
           mAvail( FALSE ), mAccess( ACC_READ_ONLY ), mType( TYPE_INT32 )
       {
-          initialize(aDbgPrint);
+          Initialize(aDbgPrint);
       }
 
       virtual ~PvParamBase() {}
@@ -59,9 +59,9 @@ protected:
     uns16       mAccess;
     uns16       mType;
 
-private:
+public:
 
-    int initialize(bool aDbgPrint)
+    int Initialize(bool aDbgPrint = false)
     {
         if (aDbgPrint)
             mCamera->LogAdapterMessage("Initializing " + mDebugName + "...");
@@ -96,6 +96,8 @@ private:
             mCamera->LogAdapterMessage(mDebugName + " initialized");
         return DEVICE_OK;
     }
+
+    virtual int Reset() = 0;
 };
 
 
@@ -124,6 +126,7 @@ public:
     smart_stream_type     Min()       { return mMin; }
     smart_stream_type     Increment() { return mIncrement; }
     smart_stream_type     Count()     { return mCount; }
+    smart_stream_type     Default()   { return mDefault; }
 
     /**
     * Returns the current parameter value as string (useful for settings MM property)
@@ -198,6 +201,14 @@ public:
         if (aDbgPrint)
             mCamera->LogAdapterMessage(mDebugName + " ATTR_INCREMENT (entries): " + CDeviceUtils::ConvertToString(mIncrement.entries));
 
+        if (pl_get_param(mCamera->Handle(), mId, ATTR_DEFAULT, &mDefault ) != PV_OK)
+        {
+            mCamera->LogPvcamError(__LINE__, "pl_get_param for " + mDebugName + " ATTR_DEFAULT failed");
+            return DEVICE_ERR;
+        }
+        if (aDbgPrint)
+            mCamera->LogAdapterMessage(mDebugName + " ATTR_DEFAULT (entries): " + CDeviceUtils::ConvertToString(mDefault.entries));
+
         if (aDbgPrint)
             mCamera->LogAdapterMessage(mDebugName + " update complete");
         return DEVICE_OK;
@@ -219,6 +230,12 @@ public:
         return DEVICE_OK;
     }
 
+    int Reset()
+    {
+        // Nothing
+        return DEVICE_CAN_NOT_SET_PROPERTY;
+    }
+
 protected:
 
     smart_stream_type mCurrent;
@@ -226,6 +243,7 @@ protected:
     smart_stream_type mMin;
     smart_stream_type mCount;     // PARAM_SMART_STREAM_EXP_PARAMS is the only parameter where ATTR_COUNT is not uns32 type
     smart_stream_type mIncrement;
+    smart_stream_type mDefault;
 
 };
 #endif
@@ -241,7 +259,7 @@ class PvParam : public PvParamBase
 public:
     PvParam( const std::string& aDebugName, uns32 aParamId, Universal* aCamera, bool aDbgPrint ) :
       PvParamBase( aDebugName, aParamId, aCamera, aDbgPrint ),
-          mCurrent(0), mMax(0), mMin(0), mCount(0), mIncrement(0)
+          mCurrent(0), mMax(0), mMin(0), mIncrement(0), mCount(0), mDefault(0)
       {
           if (IsAvailable())
           {
@@ -362,6 +380,11 @@ public:
           return DEVICE_OK;
       }
 
+      int Reset()
+      {
+          return SetAndApply(mDefault);
+      }
+
 protected:
 
     T           mCurrent;
@@ -383,7 +406,7 @@ class PvStringParam : public PvParamBase
 public:
     PvStringParam( const std::string& aDebugName, uns32 aParamId, uns32 aMaxStrLen, Universal* aCamera, bool aDbgPrint ) :
       PvParamBase( aDebugName, aParamId, aCamera, aDbgPrint ),
-          mTemp(NULL), mMaxLen(aMaxStrLen), mCurrent(""), mMax(""), mMin(""), mCount(0), mIncrement("")
+          mTemp(NULL), mMaxLen(aMaxStrLen), mCurrent(""), mMax(""), mMin(""), mIncrement(""), mCount(0), mDefault("")
       {
           mTemp = new char[mMaxLen];
           if (IsAvailable())
@@ -476,6 +499,12 @@ public:
           if (aDbgPrint)
               mCamera->LogAdapterMessage(mDebugName + " update complete");
           return DEVICE_OK;
+      }
+
+      int Reset()
+      {
+          // Char properties cannot be set
+          return DEVICE_CAN_NOT_SET_PROPERTY;
       }
 
 protected:
@@ -597,7 +626,6 @@ public:
         return DEVICE_OK;
     }
 
-
 private:
 
     /**
@@ -714,6 +742,7 @@ public:
     int Set(std::string aValue);
     int Set(double aValue);
     int Set(long aValue);
+    int Reset();
 
     int Read();
     int Write();
@@ -730,6 +759,7 @@ protected:
     PvUniversalParamValue mValue;
     PvUniversalParamValue mValueMax;
     PvUniversalParamValue mValueMin;
+    PvUniversalParamValue mValueDefault;
 
     // Enum values and their corresponding names obtained by pl_get_enum_param
     std::vector<std::string> mEnumStrings;

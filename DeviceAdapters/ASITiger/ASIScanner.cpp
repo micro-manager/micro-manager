@@ -64,10 +64,13 @@ CScanner::CScanner(const char* name) :
    laser_side_(0),   // will be set to 1 or 2 if used
    laserTTLenabled_(false),
    mmTarget_(false),
+   mmFastCircles_(false),
+   laserTriggerPLogic_(false),
    targetExposure_(0),
    targetSettling_(5),
    axisIndexX_(0),
-   axisIndexY_(1)
+   axisIndexY_(1),
+   fastCirclesOn_(false)
 {
 
    // initialize these structs
@@ -172,13 +175,6 @@ int CScanner::Initialize()
    if (shutterY_ > 100) {
       GetProperty(g_ScannerUpperLimYPropertyName, shutterY_);
    }
-
-   // mode, currently just changes between internal and external input
-   pAct = new CPropertyAction (this, &CScanner::OnMode);
-   CreateProperty(g_ScannerInputModePropertyName, "0", MM::String, false, pAct);
-   AddAllowedValue(g_ScannerInputModePropertyName, g_ScannerMode_internal);
-   AddAllowedValue(g_ScannerInputModePropertyName, g_ScannerMode_external);
-   UpdateProperty(g_ScannerInputModePropertyName);
 
    // filter cut-off frequency
    // decided to implement separately for X and Y axes so can have one fast and other slow
@@ -362,6 +358,30 @@ int CScanner::Initialize()
    build_info_type build;
    RETURN_ON_MM_ERROR( hub_->GetBuildInfo(addressChar_, build) );
 
+   if (hub_->IsDefinePresent(build, "DAC_4CH"))  // special galvo firmware with analog outputs
+   {
+      // output mode
+      pAct = new CPropertyAction (this, &CScanner::OnOutputMode);
+      CreateProperty(g_ScannerOutputModePropertyName, "0", MM::String, false, pAct);
+      AddAllowedValue(g_ScannerOutputModePropertyName, g_DACOutputMode_0);
+      AddAllowedValue(g_ScannerOutputModePropertyName, g_DACOutputMode_1);
+      AddAllowedValue(g_ScannerOutputModePropertyName, g_DACOutputMode_2);
+      AddAllowedValue(g_ScannerOutputModePropertyName, g_DACOutputMode_4);
+      AddAllowedValue(g_ScannerOutputModePropertyName, g_DACOutputMode_5);
+      AddAllowedValue(g_ScannerOutputModePropertyName, g_DACOutputMode_6);
+      AddAllowedValue(g_ScannerOutputModePropertyName, g_DACOutputMode_7);
+      UpdateProperty(g_ScannerOutputModePropertyName);
+   }
+   else  // original MEMS scanner firmware
+   {
+      // input mode, currently just changes between internal and external input
+      pAct = new CPropertyAction (this, &CScanner::OnInputMode);
+      CreateProperty(g_ScannerInputModePropertyName, "0", MM::String, false, pAct);
+      AddAllowedValue(g_ScannerInputModePropertyName, g_ScannerMode_internal);
+      AddAllowedValue(g_ScannerInputModePropertyName, g_ScannerMode_external);
+      UpdateProperty(g_ScannerInputModePropertyName);
+   }
+
    // add phototargeting (MM_TARGET) properties if supported
    if (build.vAxesProps[0] & BIT3)
    {
@@ -375,18 +395,6 @@ int CScanner::Initialize()
       CreateProperty(g_TargetSettlingTimePropertyName, "0", MM::Integer, false, pAct);
       UpdateProperty(g_TargetSettlingTimePropertyName);
    }
-
-   // turn the beam on and off
-   // need to do this after finding the correct value for mmTarget_
-   // also after creating single-axis properties which we use when turning off beam
-   pAct = new CPropertyAction (this, &CScanner::OnBeamEnabled);
-   CreateProperty(g_ScannerBeamEnabledPropertyName, g_NoState, MM::String, false, pAct);
-   AddAllowedValue(g_ScannerBeamEnabledPropertyName, g_NoState);
-   AddAllowedValue(g_ScannerBeamEnabledPropertyName, g_YesState);
-   UpdateProperty(g_ScannerBeamEnabledPropertyName);
-   UpdateIlluminationState();
-   // always start with the beam off for safety
-   SetProperty(g_ScannerBeamEnabledPropertyName, g_NoState);
 
    // everything below only supported in firmware 2.8 and newer
 
@@ -520,7 +528,7 @@ int CScanner::Initialize()
    } // adding SPIM properties
 
    // add ring buffer properties if supported (starting 2.81)
-   if ((FirmwareVersionAtLeast(2.81)) && (build.vAxesProps[0] & BIT1))
+   if (FirmwareVersionAtLeast(2.81) && (build.vAxesProps[0] & BIT1))
    {
       ring_buffer_supported_ = true;
 
@@ -550,6 +558,31 @@ int CScanner::Initialize()
       UpdateProperty(g_RB_AutoplayRunningPropertyName);
    }
 
+   // add FAST_CIRCLES properties if MULTIAXIS_FUNCTION is supported
+   if (FirmwareVersionAtLeast(3.23) && (build.vAxesProps[0] & BIT3))
+   {
+      mmFastCircles_ = true;
+
+      pAct = new CPropertyAction (this, &CScanner::OnFastCirclesRadius);
+      CreateProperty(g_FastCirclesRadiusPropertyName, "1.0", MM::Float, false, pAct);
+      UpdateProperty(g_FastCirclesRadiusPropertyName);
+
+      pAct = new CPropertyAction (this, &CScanner::OnFastCirclesRate);
+      CreateProperty(g_FastCirclesRatePropertyName, "1.0", MM::Float, false, pAct);
+      UpdateProperty(g_FastCirclesRatePropertyName);
+
+      pAct = new CPropertyAction (this, &CScanner::OnFastCirclesAsymmetry);
+      CreateProperty(g_FastCirclesAsymmetryPropertyName, "1.0", MM::Float, false, pAct);
+      UpdateProperty(g_FastCirclesAsymmetryPropertyName);
+
+      pAct = new CPropertyAction (this, &CScanner::OnFastCirclesState);
+      CreateProperty(g_FastCirclesStatePropertyName, g_OffState, MM::String, false, pAct);
+      UpdateProperty(g_FastCirclesStatePropertyName);
+      AddAllowedValue(g_FastCirclesStatePropertyName, g_OffState);
+      AddAllowedValue(g_FastCirclesStatePropertyName, g_OnState);
+      AddAllowedValue(g_FastCirclesStatePropertyName, g_RestartState);
+   }
+
    if (FirmwareVersionAtLeast(2.88))  // 2.88+
    {
       // populate laser_side_ appropriately
@@ -576,6 +609,7 @@ int CScanner::Initialize()
          AddAllowedValue(g_LaserOutputModePropertyName, g_SPIMLaserOutputMode_0);
          AddAllowedValue(g_LaserOutputModePropertyName, g_SPIMLaserOutputMode_1);
          AddAllowedValue(g_LaserOutputModePropertyName, g_SPIMLaserOutputMode_2);
+         AddAllowedValue(g_LaserOutputModePropertyName, g_SPIMLaserOutputMode_3);
          UpdateProperty(g_LaserOutputModePropertyName);
 
          pAct = new CPropertyAction (this, &CScanner::OnLaserSwitchTime);
@@ -587,7 +621,19 @@ int CScanner::Initialize()
       }
    }
 
-      //Vector Move VE X=### Y=###
+   // turn the beam on and off
+   // need to do this after finding the correct value for mmTarget_ and laserTriggerPLogic_
+   // also after creating single-axis properties which we use when turning off beam
+   pAct = new CPropertyAction (this, &CScanner::OnBeamEnabled);
+   CreateProperty(g_ScannerBeamEnabledPropertyName, g_NoState, MM::String, false, pAct);
+   AddAllowedValue(g_ScannerBeamEnabledPropertyName, g_NoState);
+   AddAllowedValue(g_ScannerBeamEnabledPropertyName, g_YesState);
+   UpdateProperty(g_ScannerBeamEnabledPropertyName);
+   UpdateIlluminationState();
+   // always start with the beam off for safety
+   SetProperty(g_ScannerBeamEnabledPropertyName, g_NoState);
+
+   //Vector Move VE X=### Y=###
    pAct = new CPropertyAction (this, &CScanner::OnVectorX);
    CreateProperty(g_VectorXPropertyName, "0", MM::Float, false, pAct);
    SetPropertyLimits(g_VectorXPropertyName, -10, 10);//hardcoded as -+10mm/sec , can he higher 
@@ -603,36 +649,6 @@ int CScanner::Initialize()
 
 bool CScanner::Busy()
 {
-//   ostringstream command; command.str("");
-//   if (firmwareVersion_ > 2.7) // can use more accurate RS <axis>?
-//   {
-//      command << "RS " << axisLetterX_ << "?";
-//      ret_ = hub_->QueryCommandVerify(command.str(),":A");
-//      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
-//         return false;
-//      if (hub_->LastSerialAnswer().at(3) == 'B')
-//         return true;
-//      command.str("");
-//      command << "RS " << axisLetterY_ << "?";
-//      return (hub_->LastSerialAnswer().at(3) == 'B');
-//   }
-//   else  // use LSB of the status byte as approximate status, not quite equivalent
-//   {
-//      command << "RS " << axisLetterX_;
-//      ret_ = hub_->QueryCommandVerify(command.str(),":A");
-//      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
-//         return false;
-//      int i = (int) (hub_->ParseAnswerAfterPosition(2));
-//      if (i & (int)BIT0)  // mask everything but LSB
-//         return true; // don't bother checking other axis
-//      command.str("");
-//      command << "RS " << axisLetterY_;
-//      ret_ = hub_->QueryCommandVerify(command.str(),":A");
-//      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
-//         return false;
-//      i = (int) (hub_->ParseAnswerAfterPosition(2));
-//      return (i & (int)BIT0);  // mask everything but LSB
-//   }
    return false;
 }
 
@@ -698,7 +714,7 @@ void CScanner::UpdateIlluminationState()
 {
    ostringstream command; command.str("");
    long tmp;
-   if (mmTarget_) {
+   if (mmTarget_ && !laserTriggerPLogic_) {
       // should consider having a dedicated property for TTL output state; for now just do this
       command << addressChar_ << "TTL Y?";
       hub_->QueryCommandVerify(command.str(), ":A Y=");
@@ -712,10 +728,14 @@ void CScanner::UpdateIlluminationState()
       // here we make the assumption that if both axes are at upper limits we are at home
       if (FirmwareVersionAtLeast(2.8))  // require version 2.8 to do this
       {
+         char c;
+         int ret;
          command << "RS " << axisLetterX_ << "-";
          if (hub_->QueryCommandVerify(command.str(),":A") != DEVICE_OK)  // don't choke on comm error
             return;
-         if (hub_->LastSerialAnswer().at(3) != 'U')
+         // anything besides 'U', including no character at all, means we are illuminating
+         ret = hub_->GetAnswerCharAtPosition3(c);
+         if( (ret != DEVICE_OK) || (c != 'U'))
          {
             illuminationState_ = true;
             return;
@@ -723,7 +743,9 @@ void CScanner::UpdateIlluminationState()
          command.str(""); command << "RS " << axisLetterY_ << "-";
          if (hub_->QueryCommandVerify(command.str(),":A") != DEVICE_OK)  // don't choke on comm error
             return;
-         if (hub_->LastSerialAnswer().at(3) != 'U')
+         // anything besides 'U', including no character at all, means we are illuminating
+         ret = hub_->GetAnswerCharAtPosition3(c);
+         if( (ret != DEVICE_OK) || (c != 'U'))
          {
             illuminationState_ = true;
             return;
@@ -739,7 +761,7 @@ int CScanner::SetIlluminationStateHelper(bool on)
 // takes care of setting LED X appropriately, preserving existing setting for other scanner
 {
    // don't do this if we have phototargeting firmware
-   if (mmTarget_)
+   if (mmTarget_ && !laserTriggerPLogic_)
    {
       return DEVICE_OK;
    }
@@ -758,15 +780,6 @@ int CScanner::SetIlluminationStateHelper(bool on)
    // other scanner device on same card
    if (FirmwareVersionAtLeast(3.11))
    {
-      command.str("");
-      if (laser_side_ == 1)
-      {
-
-      }
-      else
-      {
-
-      }
       command << addressChar_ << "LED ";
       if (laser_side_ == 1)
          command << "R";
@@ -812,7 +825,7 @@ int CScanner::SetIlluminationStateHelper(bool on)
 
 int CScanner::SetIlluminationState(bool on)
 {
-   if (mmTarget_)
+   if (mmTarget_ && !laserTriggerPLogic_)
    {  // for phototargeting firmware
       // should consider having a dedicated property for TTL output state; for now just do this
       ostringstream command; command.str("");
@@ -835,17 +848,21 @@ int CScanner::SetIlluminationState(bool on)
    { // for standard micro-mirror firmware
       // we can't turn off beam but we can steer beam to corner where hopefully it is blocked internally
       // to reduce serial traffic we count on illuminationState_ being up to date
-      // if user manually moves to home position then we won't know it
+      // if user manually moves to home position then we won't know it (?is this route to corrupting position?)
       // UpdateIlluminationState();  // don't do to reduce traffic
       if (on && !illuminationState_)  // was off, turning on
       {
          illuminationState_ = true;
+         RETURN_ON_MM_ERROR ( SetPosition(lastX_, lastY_) );  // move to where it was when last turned off
          RETURN_ON_MM_ERROR ( SetIlluminationStateHelper(true) );
-         return SetPosition(lastX_, lastY_);  // move to where it was when last turned off
       }
       else if (!on && illuminationState_) // was on, turning off
       {
-         // stop any single-axis action happening first; should go to position before single-axis was started
+         // turn off laser signal
+         RETURN_ON_MM_ERROR ( SetIlluminationStateHelper(false) );
+
+         // until 20190101 we stopped SAM move before turning off laser, but wanted to eliminate parking the beam before
+         // stop any single-axis action happening after adjusting laser; should go to position before single-axis was started
          // firmware will stop single-axis actions anyway but this gives us the right position
          char SAModeX[MM::MaxStrLength];
          RETURN_ON_MM_ERROR ( GetProperty(g_SAModeXPropertyName, SAModeX) );
@@ -859,13 +876,13 @@ int CScanner::SetIlluminationState(bool on)
          {
             SetProperty(g_SAModeYPropertyName, g_SAMode_0);
          }
-         GetPosition(lastX_, lastY_);  // read and store pre-off position so we can undo
+         RETURN_ON_MM_ERROR ( GetPosition(lastX_, lastY_) );  // read and store pre-off position so we can undo
+
+         // move beam to corner (home position)
          illuminationState_ = false;
          ostringstream command; command.str("");
          command << "! " << axisLetterX_ << " " << axisLetterY_;
-         RETURN_ON_MM_ERROR ( SetIlluminationStateHelper(false) );
          RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
-         return DEVICE_OK;
       }
       // if was off, turning off do nothing
       // if was on, turning on do nothing
@@ -1244,7 +1261,61 @@ int CScanner::OnUpperLimY(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int CScanner::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CScanner::OnOutputMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+// assume X axis's mode is for both, and then set mode for both axes together just like XYStage properties
+{
+   ostringstream command; command.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      ostringstream response; response.str("");
+      command << "PM " << axisLetterX_ << "?";
+      response << axisLetterX_ << "=";
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      bool success = 0;
+      switch (tmp)
+      {
+      case 0: success = pProp->Set(g_DACOutputMode_0); break;
+      case 1: success = pProp->Set(g_DACOutputMode_1); break;
+      case 2: success = pProp->Set(g_DACOutputMode_2); break;
+      case 4: success = pProp->Set(g_DACOutputMode_4); break;
+      case 5: success = pProp->Set(g_DACOutputMode_5); break;
+      case 6: success = pProp->Set(g_DACOutputMode_6); break;
+      case 7: success = pProp->Set(g_DACOutputMode_7); break;
+      default: success = 0;                        break;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_DACOutputMode_0) == 0)
+         tmp = 0;
+      else if (tmpstr.compare(g_DACOutputMode_1) == 0)
+         tmp = 1;
+      else if (tmpstr.compare(g_DACOutputMode_2) == 0)
+         tmp = 2;
+      else if (tmpstr.compare(g_DACOutputMode_4) == 0)
+         tmp = 4;
+      else if (tmpstr.compare(g_DACOutputMode_5) == 0)
+         tmp = 5;
+      else if (tmpstr.compare(g_DACOutputMode_6) == 0)
+         tmp = 6;
+      else if (tmpstr.compare(g_DACOutputMode_7) == 0)
+         tmp = 7;
+      else
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      command << "PM " << axisLetterX_ << "=" << tmp << " " << axisLetterY_ << "=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CScanner::OnInputMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 // assume X axis's mode is for both, and then set mode for both axes together just like XYStage properties
 {
    ostringstream command; command.str("");
@@ -2887,11 +2958,13 @@ int CScanner::OnLaserOutputMode(MM::PropertyBase* pProp, MM::ActionType eAct)
          RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), "Z="));
          RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
          tmp &= (0x07);    // only care about 3 LSBs
+         laserTriggerPLogic_ = (tmp == 3);
          switch (tmp)
          {
             case 0: success = pProp->Set(g_SPIMLaserOutputMode_0); break;
             case 1: success = pProp->Set(g_SPIMLaserOutputMode_1); break;
             case 2: success = pProp->Set(g_SPIMLaserOutputMode_2); break;
+            case 3: success = pProp->Set(g_SPIMLaserOutputMode_3); break;
             default: success = 0;
          }
          if (!success)
@@ -2908,8 +2981,11 @@ int CScanner::OnLaserOutputMode(MM::PropertyBase* pProp, MM::ActionType eAct)
             tmp = 1;
          else if (tmpstr.compare(g_SPIMLaserOutputMode_2) == 0)
             tmp = 2;
+         else if (tmpstr.compare(g_SPIMLaserOutputMode_3) == 0)
+            tmp = 3;
          else
             return DEVICE_INVALID_PROPERTY_VALUE;
+         laserTriggerPLogic_ = (tmp == 3);
          command << addressChar_ << "LED Z?";
          long tmp2;
          RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), "Z="));
@@ -3710,6 +3786,118 @@ int CScanner::OnTargetSettlingTime(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int CScanner::OnFastCirclesRadius(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "MM X?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A X="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "MM X=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CScanner::OnFastCirclesRate(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "MM Y?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Y="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "MM Y=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CScanner::OnFastCirclesAsymmetry(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "MM Z?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "MM Z=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CScanner::OnFastCirclesState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp = 0;
+   bool restart = false;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_ && !refreshOverride_)
+         return DEVICE_OK;
+      refreshOverride_ = false;
+      command << addressChar_ << "MM R?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A R="));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      fastCirclesOn_ = (tmp != 73);
+      if (!pProp->Set(fastCirclesOn_ ? g_OnState : g_OffState))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      tmp = 80;
+      fastCirclesOn_ = false;
+      if (tmpstr.compare(g_RestartState) == 0)
+      {
+         tmp = 82;
+         fastCirclesOn_ = true;
+         restart = true;
+      }
+      else if (tmpstr.compare(g_OnState) == 0)
+      {
+         tmp = fastCirclesOn_ ? 82 : 83;
+         fastCirclesOn_ = true;
+      }
+      command << addressChar_ << "MM R=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+
+   if (restart)
+   {
+      refreshOverride_ = true;
+      return OnFastCirclesState(pProp, MM::BeforeGet);
+   }
+
+   return DEVICE_OK;
+}
+
    int CScanner::OnVectorGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter)
 {
    ostringstream command; command.str("");
@@ -3731,7 +3919,6 @@ int CScanner::OnTargetSettlingTime(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(tmp);
       command << "VE " << axisLetter << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-
    }
    return DEVICE_OK;
 }

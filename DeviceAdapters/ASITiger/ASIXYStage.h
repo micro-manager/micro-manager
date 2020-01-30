@@ -59,8 +59,15 @@ public:
    int Home();
    int SetHome();
    int Move (double vx, double vy);
-   int IsXYStageSequenceable(bool& isSequenceable) const { isSequenceable = false; return DEVICE_OK; }
-   int GetXYStageSequenceMaxLength(long& nrEvents) const { nrEvents = 0; return DEVICE_OK; }
+
+   int IsXYStageSequenceable(bool& isSequenceable) const { isSequenceable = ttl_trigger_enabled_; return DEVICE_OK; }
+   int GetXYStageSequenceMaxLength(long& nrEvents) const { nrEvents = ring_buffer_capacity_; return DEVICE_OK; }
+
+   int StartXYStageSequence();
+   int StopXYStageSequence();
+   int ClearXYStageSequence();
+   int AddToXYStageSequence(double positionX, double positionY);
+   int SendXYStageSequence();
 
    // leave default implementation which call corresponding "Steps" functions
    //    while accounting for mirroring and so forth
@@ -80,6 +87,7 @@ public:
    int OnNrExtraMoveReps      (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSpeedGeneric         (MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter);
    int OnSpeedXMicronsPerSec  (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSpeedYMicronsPerSec  (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSpeedX               (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnSpeedGeneric(pProp, eAct, axisLetterX_); }
    int OnSpeedY               (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnSpeedGeneric(pProp, eAct, axisLetterY_); }
    int OnBacklashGeneric      (MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter);
@@ -134,10 +142,18 @@ public:
    int OnScanSlowStopPosition (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnScanNumLines         (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnScanSettlingTime     (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnScanOvershootDistance (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnScanOvershootDistance(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnScanRetraceSpeedPercent(MM::PropertyBase* pProp, MM::ActionType eAct);
+   // ring buffer properties
+   int OnRBDelayBetweenPoints (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnRBMode               (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnRBTrigger            (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnRBRunning            (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnUseSequence          (MM::PropertyBase* pProp, MM::ActionType eAct);
+   // vector properties (API only half-defined so far, would prefer to use API in long run)
    int OnVectorGeneric		  (MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter);
-   int OnVectorX			  (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnVectorGeneric(pProp, eAct, axisLetterX_); }
-   int OnVectorY              (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnVectorGeneric(pProp, eAct, axisLetterY_); }
+   int OnVectorX			     (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnVectorGeneric(pProp, eAct, axisLetterX_); }
+   int OnVectorY             (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnVectorGeneric(pProp, eAct, axisLetterY_); }
 
 
 private:
@@ -150,10 +166,17 @@ private:
    bool advancedPropsEnabled_;
    bool speedTruth_;
    double lastSpeedX_;
+   double lastSpeedY_;
+   bool ring_buffer_supported_;
+   long ring_buffer_capacity_;
+   bool ttl_trigger_supported_;
+   bool ttl_trigger_enabled_;
+   std::vector<double> sequenceX_;
+   std::vector<double> sequenceY_;
 
    // private helper functions
    int OnSaveJoystickSettings();
-   double getMaxSpeed(string axisLetter);
+   int getMinMaxSpeed(string axisLetter, double& minSpeed, double& maxSpeed);
 };
 
 #endif //_ASIXYStage_H_

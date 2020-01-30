@@ -19,7 +19,7 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id: Controller.cpp,v 1.14, 2014-03-31 12:51:24Z, Steffen Rau$
+// CVS:           $Id: Controller.cpp,v 1.20, 2018-09-26 11:09:17Z, Steffen Rau$
 //
 
 #include "Controller.h"
@@ -53,6 +53,7 @@ PIController::PIController(const std::string& label)
    , onlyIDSTAGEvalid_(false)
    , referenceMoveActive_(false)
    , m_ControllerError(PI_CNTR_NO_ERROR)
+   , errorCheckAfterMOV_ (true)
 {
 	allControllersByLabel_[label_] = this;
 }
@@ -114,9 +115,11 @@ int PIController::InitStage(const std::string& axisName, const std::string& stag
     }
     if (HasSVO())
     {
+        // try to enable servo
+        // This does not work for all stages, see wiki
         if (!SVO(axisName, TRUE))
         {
-            return GetTranslatedError();
+            LogMessage (std::string ("PIController::InitStage() SVO failed"));
         }
     }
     return DEVICE_OK;
@@ -129,7 +132,7 @@ bool PIController::IsBusy()
 	{
 	    LogMessage(std::string("PIController::IsBusy(): active referenceMoveActive_"));
 		if (HasIsReferencing() && IsReferencing("", &BUSY))
-		{	
+		{
 			if (BUSY)
 			{
 			    LogMessage(std::string("PIController::IsBusy(): IsReferencing ->BUSY"));
@@ -138,7 +141,7 @@ bool PIController::IsBusy()
 		}
 		BOOL BREADY = TRUE;
 		if (HasIsControllerReady() && IsControllerReady(&BREADY))
-		{	
+		{
 			if (!BREADY)
 			{
 			    LogMessage(std::string("PIController::IsBusy(): IsControllerReady -> not READY"));
@@ -147,7 +150,7 @@ bool PIController::IsBusy()
 		}
 	}
 	if (HasIsMoving() && IsMoving("", &BUSY))
-	{	
+	{
 		if (BUSY)
 		{
 		    LogMessage(std::string("PIController::IsBusy(): IsMoving ->BUSY"));

@@ -1,10 +1,9 @@
 /*
 File:		HandleListType.h
-Copyright:	Mad City Labs Inc., 2008
+Copyright:	Mad City Labs Inc., 2019
 License:	Distributed under the BSD license.
 */
-#ifndef _HANDLE_LIST_TYPE_
-#define _HANDLE_LIST_TYPE_
+#pragma once
 
 #define XY_TYPE 1
 #define Z_TYPE  2
@@ -29,5 +28,3 @@ private:
 	int handle_;
 	int type_;
 };
-
-#endif

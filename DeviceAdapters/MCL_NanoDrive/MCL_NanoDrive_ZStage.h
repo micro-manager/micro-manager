@@ -1,10 +1,9 @@
 /*
 File:		MCL_NanoDrive_ZStage.h
-Copyright:	Mad City Labs Inc., 2008
+Copyright:	Mad City Labs Inc., 2019
 License:	Distributed under the BSD license.
 */
-#ifndef _MCL_NANODRIVE_ZSTAGE_H_
-#define _MCL_NANODRIVE_ZSTAGE_H_
+#pragma once
 
 // MCL headers
 #include "Madlib.h"
@@ -16,10 +15,8 @@ License:	Distributed under the BSD license.
 #include "../../MMDevice/DeviceBase.h"
 
 // List/heap headers
-#include "device_list.h"
 #include "handle_list_if.h"
 #include "HandleListType.h"
-#include "heap.h"
 
 #include <vector>
 
@@ -63,6 +60,7 @@ public:
   int OnCommandChanged(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnSetSequence(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnSetShiftSequence(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnSetTirfLock(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int CreateZStageProperties();
@@ -77,6 +75,7 @@ private:
    int serialNumber_;
    int settlingTimeZ_ms_;
    double commandedZ_;
+   int dacBits_;
 
    double curZpos_;
    bool firstWrite_;
@@ -87,7 +86,7 @@ private:
    bool shiftSequence_;
    std::vector<double> sequence_;
 
+   bool axisUsedForTirfControl_;
+
    int axis_;
 };
-
-#endif // _MCL_NANODRIVE_ZSTAGE_H_

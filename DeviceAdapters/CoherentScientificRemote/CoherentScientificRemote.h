@@ -41,6 +41,8 @@ using namespace std;
 
 #define POWERCONVERSION              1000 //convert the power into mW from the W it wants the commands in
 
+const std::string WHITESPACE = " \n\r\t\f\v";
+
 // MM::DeviceDetectionStatus CheckConnection(MM::Device& device, MM::Core& core, std::string port, double ato);
 
 class CoherentScientificRemote : public CShutterBase<CoherentScientificRemote>
@@ -162,6 +164,12 @@ private:
    std::string laserNumber_;
 
    string buf_string_;
+
+   std::string rtrim(const std::string& s) 
+   {
+      size_t end = s.find_last_not_of(WHITESPACE);
+      return (end == std::string::npos) ? "" : s.substr(0, end + 1);
+   }
 
    std::string replaceLaserNum(std::string inputToken, long laserNum);
 

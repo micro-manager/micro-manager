@@ -74,6 +74,7 @@ public:
    int OnRefreshProperties    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnWaitTime             (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnMaxSpeed             (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSpeedMicronsPerSec   (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSpeed                (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBacklash             (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnDriftError           (MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -117,18 +118,22 @@ public:
    int OnRBRunning            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnUseSequence          (MM::PropertyBase* pProp, MM::ActionType eAct);
    //Others
-   int OnVector				  (MM::PropertyBase* pProp, MM::ActionType eAct);	
+   int OnVector               (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnTTLInputMode         (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    double unitMult_;
    double stepSizeUm_;
    string axisLetter_;
    bool advancedPropsEnabled_;
+   bool speedTruth_;
+   double lastSpeed_;
    bool ring_buffer_supported_;
    long ring_buffer_capacity_;
    bool ttl_trigger_supported_;
    bool ttl_trigger_enabled_;
    std::vector<double> sequence_;
+   unsigned int axisIndex_;
 
    // private helper functions
    int OnSaveJoystickSettings();

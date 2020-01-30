@@ -125,6 +125,8 @@ const char* const g_LEDDeviceName = "LED";
 const char* const g_PLogicDeviceName = "PLogic";
 const char* const g_PMTDeviceName = "PMT";
 const char* const g_LensDeviceName = "TunableLens";
+const char* const g_DacDeviceName = "DAC";
+
 
 // corresponding device descriptions
 const char* const g_TigerCommHubDescription = "ASI TigerComm Hub (TG-1000)";
@@ -141,6 +143,7 @@ const char* const g_LEDDeviceDescription = "ASI LED Illuminator";
 const char* const g_PLogicDeviceDescription = "ASI Programmable Logic";
 const char* const g_PMTDeviceDescription = "ASI Photo Multiplier Tube";  
 const char* const g_LensDeviceDescription = "ASI Tunable Lens";  
+const char* const g_DacDeviceDescription = "ASI DAC";
 
 // constant values
 const double g_StageMinStepSize = 0.001;   // in units of um
@@ -183,11 +186,16 @@ const char* const g_StageWaitTimePropertyName = "WaitTime(ms)";
 const char* const g_NrExtraMoveRepsPropertyName = "ExtraMoveRepetitions";
 const char* const g_MotorSpeedPropertyName = "MotorSpeed-S(mm/s)";
 const char* const g_MotorSpeedXPropertyName = "MotorSpeedX-S(mm/s)";
-const char* const g_MotorSpeedXMicronsPerSecPropertyName = "MotorSpeedX(um/s)";
 const char* const g_MotorSpeedYPropertyName = "MotorSpeedY-S(mm/s)";
+const char* const g_MotorSpeedMicronsPerSecPropertyName = "MotorSpeed(um/s)";
+const char* const g_MotorSpeedXMicronsPerSecPropertyName = "MotorSpeedX(um/s)";
+const char* const g_MotorSpeedYMicronsPerSecPropertyName = "MotorSpeedY(um/s)";
 const char* const g_MaxMotorSpeedPropertyName = "MotorSpeedMaximum(mm/s)";
 const char* const g_MaxMotorSpeedXPropertyName = "MotorSpeedMaximumX(mm/s)";
 const char* const g_MaxMotorSpeedYPropertyName = "MotorSpeedMaximumY(mm/s)";
+const char* const g_MinMotorSpeedPropertyName = "MotorSpeedMinimum(um/s)";
+const char* const g_MinMotorSpeedXPropertyName = "MotorSpeedMinimumX(um/s)";
+const char* const g_MinMotorSpeedYPropertyName = "MotorSpeedMinimumY(um/s)";
 const char* const g_BacklashPropertyName = "Backlash-B(um)";
 const char* const g_BacklashXPropertyName = "BacklashX-B(um)";
 const char* const g_BacklashYPropertyName = "BacklashY-B(um)";
@@ -232,8 +240,10 @@ const char* const g_WheelMirrorPropertyName = "WheelReverse";
 const char* const g_VectorPropertyName = "VectorMove-VE(mm/s)";
 const char* const g_VectorXPropertyName = "VectorMoveX-VE(mm/s)";
 const char* const g_VectorYPropertyName = "VectorMoveY-VE(mm/s)";
-const char* const g_TTLinName = "TTLinMode";
-const char* const g_TTLoutName = "TTLoutMode";
+const char* const g_TTLinName = "TTLinMode";  // for integer-valued property
+const char* const g_TTLoutName = "TTLoutMode";// for integer-valued property
+const char* const g_TTLInputModeName = "TTLInputMode";  // for string-valued property
+const char* const g_TTLOutputModeName = "TTLOutputMode";// for string-valued property
 // Z stage property names
 const char* const g_StepSizePropertyName = "StepSize(um)";
 const char* const g_LowerLimPropertyName =  "LowerLim(mm)";
@@ -261,6 +271,8 @@ const char* const g_JoystickSlowSpeedYPropertyName = "JoystickSlowSpeedY";
 const char* const g_JoystickSelectXPropertyName = "JoystickInputX";
 const char* const g_JoystickSelectYPropertyName = "JoystickInputY";
 const char* const g_ScannerInputModePropertyName = "InputMode";
+const char* const g_ScannerOutputModePropertyName = "OutputMode";
+const char* const g_ScannerCutoffFilterPropertyName = "FilterFreq(kHz)";
 const char* const g_ScannerCutoffFilterXPropertyName = "FilterFreqX(kHz)";
 const char* const g_ScannerCutoffFilterYPropertyName = "FilterFreqY(kHz)";
 const char* const g_ScannerAttenuateXPropertyName = "AttenuateX(0..1)";
@@ -286,8 +298,10 @@ const char* const g_TLCMode_1 = "1 - external input";
 // single axis property names
 const char* const g_AdvancedSAPropertiesPropertyName = "SingleAxisAdvancedPropertiesEnable";
 const char* const g_SAAmplitudePropertyName = "SingleAxisAmplitude(um)";
+const char* const g_SAAmplitudeDACPropertyName = "SingleAxisAmplitude(mv)"; //SIGNAL_DAC version
 const char* const g_SAAnonUnitPropertyName = "SingleAxisAmplitude";
 const char* const g_SAOffsetPropertyName = "SingleAxisOffset(um)";
+const char* const g_SAOffsetDACPropertyName = "SingleAxisOffset(mv)";//SIGNAL_DAC version
 const char* const g_SAOnonUnitPropertyName = "SingleAxisOffset";
 const char* const g_SAPeriodPropertyName = "SingleAxisPeriod(ms)";
 const char* const g_SAModePropertyName = "SingleAxisMode";
@@ -332,6 +346,7 @@ const char* const g_ScanSlowAxisStopPositionPropertyName = "ScanSlowAxisStopPosi
 const char* const g_ScanNumLinesPropertyName = "ScanNumLines";
 const char* const g_ScanSettlingTimePropertyName = "ScanSettlingTime(ms)";
 const char* const g_ScanOvershootDistancePropertyName = "ScanOvershootDistance(um)";
+const char* const g_ScanRetraceSpeedPercentPropertyName = "ScanRetraceSpeedPercent(%)";
 
 // CRISP property names
 const char* const g_CRISPWaitAfterLockPropertyName = "Wait ms after Lock";
@@ -356,6 +371,12 @@ const char* const g_RB_EnablePropertyName = "RingBufferEnable";
 const char* const g_RB_TriggerPropertyName = "RingBufferTrigger";
 const char* const g_RB_AutoplayRunningPropertyName = "RingBufferAutoplayRunning";
 const char* const g_UseSequencePropertyName = "UseSequence";
+const char* const g_RBSequenceStatePropertyName = "RingBufferSequenceState";
+const char* const g_AddtoRBSequencePropertyName = "AddToRingBufferSequence(mV)";
+const char* const g_RBSequenceStart = "Start on TTL";
+const char* const g_RBSequenceStop = "Stop";
+const char* const g_RBSequenceClearSeq = "Clear Sequence";
+const char* const g_RBSequenceSendSeq = "Send Sequence";
 
 // SPIM property names
 const char* const g_SPIMNumSlicesPropertyName = "SPIMNumSlices"; // used by both piezos and micromirror, would be more accurately named NumPiezoPositions because total number of slices is this times NumSlicesPerPiezo
@@ -388,6 +409,13 @@ const char* const g_LaserSwitchTimePropertyName = "LaserSwitchTime(ms)";
 const char* const g_TargetExposureTimePropertyName = "TargetExposureTime(ms)";
 const char* const g_TargetSettlingTimePropertyName = "TargetSettlingTime(ms)";
 
+// scanner FAST_CIRCLES property names
+const char* const g_FastCirclesRadiusPropertyName = "FastCirclesRadius(deg)";
+const char* const g_FastCirclesRatePropertyName = "FastCirclesRate(Hz)";
+const char* const g_FastCirclesAsymmetryPropertyName = "FastCirclesAsymmetry";
+const char* const g_FastCirclesStatePropertyName = "FastCirclesState";
+const char* const g_RestartState = "Restart";
+
 // LED property names
 const char* const g_LEDIntensityPropertyName = "LED Intensity(%)";
 const char* const g_ShutterState = "State";
@@ -400,6 +428,7 @@ const char* const g_NumPositionsPropertyName = "NumPositions";
 const char* const g_NumLogicCellsPropertyName = "NumLogicCells";
 const char* const g_PLogicModePropertyName = "PLogicMode";
 const char* const g_PLogicOutputStatePropertyName = "PLogicOutputState";
+const char* const g_PLogicOutputStateUpperPropertyName = "PLogicOutputStateUpper";
 const char* const g_FrontpanelOutputStatePropertyName = "FrontpanelOutputState";
 const char* const g_BackplaneOutputStatePropertyName = "BackplaneOutputState";
 const char* const g_PointerPositionPropertyName = "PointerPosition";
@@ -477,9 +506,36 @@ const char* const g_PresetCode28 = "28 - BNC6 and BNC7 enabled";
 const char* const g_PresetCode29 = "29 - BNC5-BNC7 enabled";
 const char* const g_PresetCode30 = "30 - BNC5-BNC8 enabled";
 const char* const g_PresetCode31 = "31 - BNC5/7 side A, BNC6/8 side B";
+const char* const g_PresetCode32 = "32 - BNC1/2 as cameras A/B";
+const char* const g_PresetCode33 = "33 - BNC1/2 as cameras A or B";
+const char* const g_PresetCode34 = "34 - cell 11 as trigger/2";
+const char* const g_PresetCode35 = "35 - BNC3 source = cell 11";
+const char* const g_PresetCode36 = "36 - cell 10 = cell 8";
+const char* const g_PresetCode37 = "37 - BNC1 enabled of 7";
+const char* const g_PresetCode38 = "38 - BNC2 enabled of 7";
+const char* const g_PresetCode39 = "39 - BNC3 enabled of 7";
+const char* const g_PresetCode40 = "40 - BNC4 enabled of 7";
+const char* const g_PresetCode41 = "41 - BNC5 enabled of 7";
+const char* const g_PresetCode42 = "42 - BNC6 enabled of 7";
+const char* const g_PresetCode43 = "43 - BNC7 enabled of 7";
+const char* const g_PresetCode44 = "44 - BNC2/4 enabled of 7";
+const char* const g_PresetCode45 = "45 - BNC3/5 enabled of 7";
+const char* const g_PresetCode46 = "46 - BNC4/6 enabled of 7";
+const char* const g_PresetCode47 = "47 - BNC5/7 enabled of 7";
+const char* const g_PresetCode48 = "48 - BNC1/3/4 enabled of 7";
+const char* const g_PresetCode49 = "49 - BNC2/4/6 enabled of 7";
+const char* const g_PresetCode50 = "50 - None enabled of 7";
+const char* const g_PresetCode51 = "51 - cells 17-24 on BNC1-8";
 const char* const g_PLogicModeNone = "None";
 const char* const g_PLogicModediSPIMShutter = "diSPIM Shutter";
-const char* const g_ChannelNone = "none of outputs 5-8";
+const char* const g_PLogicMode4ChShutter = "Four-channel shutter";
+const char* const g_PLogicMode7ChShutter = "Seven-channel shutter";
+const char* const g_4ChannelNone = "none of outputs 5-8";
+const char* const g_7ChannelNone = "none of outputs 1-7";
+const char* const g_ChannelOnly1 = "output 1 only";
+const char* const g_ChannelOnly2 = "output 2 only";
+const char* const g_ChannelOnly3 = "output 3 only";
+const char* const g_ChannelOnly4 = "output 4 only";
 const char* const g_ChannelOnly5 = "output 5 only";
 const char* const g_ChannelOnly6 = "output 6 only";
 const char* const g_ChannelOnly7 = "output 7 only";
@@ -488,6 +544,12 @@ const char* const g_Channel6And7 = "output 6 and 7";
 const char* const g_Channel5To7 = "outputs 5-7";
 const char* const g_Channel5To8 = "outputs 5-8";
 const char* const g_Channel5To8Alt = "outputs 5/7 or 6/8";
+const char* const g_Channel2And4 = "output 2 and 4";
+const char* const g_Channel3And5 = "output 3 and 5";
+const char* const g_Channel4And6 = "output 4 and 6";
+const char* const g_Channel5And7 = "output 5 and 7";
+const char* const g_Channel1And3And5 = "output 1 and 3 and 5";
+const char* const g_Channel2And4And6 = "output 2 and 4 and 6";
 
 
 // SPIM enums
@@ -508,6 +570,7 @@ const char g_SPIMStateCode_Armed ='A';  // it reports this state when armed
 const char* const g_SPIMLaserOutputMode_0 = "individual shutters";
 const char* const g_SPIMLaserOutputMode_1 = "shutter + side";
 const char* const g_SPIMLaserOutputMode_2 = "side + side";
+const char* const g_SPIMLaserOutputMode_3 = "fast circles";
 // SPIM state on piezo card
 const char g_PZSPIMStateCode_Idle = 'I';
 const char g_PZSPIMStateCode_Arm =  'a';
@@ -535,6 +598,11 @@ const char* const g_ScanPatternRaster = "Raster";
 const char* const g_ScanPatternSerpentine = "Serpentine";
 const char g_ScanPatternRasterCode = '0';
 const char g_ScanPatternSerpentineCode = '1';
+// TTL modes
+const char* const g_TTLInputMode_0 = "0 - none";
+const char* const g_TTLInputMode_1 = "1 - next ring buffer position";
+const char* const g_TTLInputMode_2 = "2 - repeat relative move";
+const char* const g_TTLInputMode_7 = "7 - next array position";
 
 // property descriptions for enums
 // serial terminators for hub
@@ -598,6 +666,14 @@ const char* const g_SATTLPol_1 = "active low";
 // micromirror input modes
 const char* const g_ScannerMode_external = "external input";
 const char* const g_ScannerMode_internal = "internal input";
+// TGDAC output modes
+const char* const g_DACOutputMode_0 = "0V to 2V";
+const char* const g_DACOutputMode_1 = "0V to 4V";
+const char* const g_DACOutputMode_2 = "0V to 10V";
+const char* const g_DACOutputMode_4 = "-1V to 1V";
+const char* const g_DACOutputMode_5 = "-2V to 2V";
+const char* const g_DACOutputMode_6 = "-5V to 5V";
+const char* const g_DACOutputMode_7 = "-10V to 10V";
 // piezo control modes
 const char* const g_AdeptMode_0 = "0 - internal input closed-loop";
 const char* const g_AdeptMode_1 = "1 - external input closed-loop";
@@ -647,6 +723,13 @@ const char* const g_PMTSignal="PMT Signal";
 const char* const g_PMTOverload="PMT Overloaded";
 const char* const g_PMTOverloadReset="PMT Overload Reset";
 const char* const g_PMTOverloadDone="Reset Applied";
+//SIGNAL_DAC
+const double	  g_DACDefaultUnitMult = 1000;  // in units of volts
+const char* const g_DACModePropertyName = "OutputMode (Restart Needed)";
+const char* const g_DACMaxVoltsPropertyName = "MaxVoltage(V)";
+const char* const g_DACMinVoltsPropertyName = "MinVoltage(V)";
+const char* const g_DACVoltageName = "DACVoltage(mV)";
+const char* const g_DACGatePropertyName = "DAC Gate";
 
 struct build_info_type
 {

@@ -663,10 +663,12 @@ void mvIMPACT_Acquire_Device::RefreshCaptureBufferLayout( void )
    case ibpfMono32:
       pID_->pixelFormat.write( idpfMono16 );
       break;
-   case ibpfRGBx888Packed:
-   case ibpfRGBx888Planar:
    case ibpfBGR888Packed:
    case ibpfRGB888Packed:
+      pID_->pixelFormat.write( idpfBGR888Packed );
+      break;
+   case ibpfRGBx888Packed:
+   case ibpfRGBx888Planar:
    case ibpfRGB888Planar:
    case ibpfYUV411_UYYVYY_Packed:
    case ibpfYUV422Packed:

@@ -355,7 +355,7 @@ MVP::Initialize()
          new CPropertyAction(this, &MVP::OnState));
    if (err != DEVICE_OK)
       return err;
-   for (int i = 0; i < GetNumberOfPositions(); ++i)
+   for (unsigned long i = 0; i < GetNumberOfPositions(); ++i)
    {
       char s[16];
       snprintf(s, 15, "%d", i);
@@ -366,7 +366,7 @@ MVP::Initialize()
          new CPropertyAction(this, &CStateBase::OnLabel));
    if (err != DEVICE_OK)
       return err;
-   for (int i = 0; i < GetNumberOfPositions(); ++i)
+   for (unsigned long i = 0; i < GetNumberOfPositions(); ++i)
    {
       char label[32];
       snprintf(label, 31, "Position-%d", i);

@@ -1,25 +1,40 @@
 /*
 File:		MicroDriveXYStage.cpp
-Copyright:	Mad City Labs Inc., 2008
+Copyright:	Mad City Labs Inc., 2019
 License:	Distributed under the BSD license.
 */
 #include "MicroDriveXYStage.h"
+#include "mdutils.h"
 
 #include <math.h>
 #include <string.h>
 
+#include <vector>
 using namespace std;
 
 MicroDriveXYStage::MicroDriveXYStage(): 
-   busy_(false),
-   initialized_(false),
-   rounding_(0),
-   encoded_(true),
-   lastX_(0),
-   lastY_(0),
-   iterativeMoves_(false),
-   imRetry_(0),
-   imToleranceUm_(.250)
+	handle_(0),
+	serialNumber_(0),
+	pid_(0),
+	axis1_(0),
+	axis2_(0),
+	stepSize_mm_(0.0),
+	encoderResolution_(0.0),
+	maxVelocity_(0.0),
+	minVelocity_(0.0),
+	velocity_(0.0),
+	busy_(false),
+	initialized_(false),
+	encoded_(false),
+	lastX_(0),
+	lastY_(0),
+	iterativeMoves_(false),
+	imRetry_(0),
+	imToleranceUm_(.250),
+	deviceHasTirfModuleAxis_(false),
+	axis1IsTirfModule_(false),
+	axis2IsTirfModule_(false),
+	tirfModCalibrationMm_(0.0)
 {
    InitializeDefaultErrorMessages();
 
@@ -34,11 +49,9 @@ MicroDriveXYStage::MicroDriveXYStage():
 	SetErrorText(MCL_INVALID_HANDLE, "MCL Error: Handle not valid");
 	SetErrorText(MCL_INVALID_DRIVER, "MCL Error: Invalid Driver");
 
-   int err;
-
  	// Encoders present?
 	CPropertyAction* pAct = new CPropertyAction(this, &MicroDriveXYStage::OnEncoded);
-	err = CreateProperty(g_Keyword_Encoded, "Yes", MM::String, false, pAct, true);
+	CreateProperty(g_Keyword_Encoded, "Yes", MM::String, false, pAct, true);
 }
 
 MicroDriveXYStage::~MicroDriveXYStage()
@@ -58,112 +71,144 @@ void MicroDriveXYStage::GetName(char* pszName) const
 
 int MicroDriveXYStage::Initialize()
 {
+	if (initialized_)
+		return DEVICE_OK;
+
+	if (MCL_CorrectDriverVersion() == false)
+		return MCL_INVALID_DRIVER;
+
 	// BEGIN LOCKING
 	HandleListLock();
 
-   int err = DEVICE_OK;
-   std::stringstream ss;
-   bool valid = false;
-   unsigned char axisBitmap;
-   int possHandle = 0;
+	int err = DEVICE_OK;
 
-   if (initialized_)
-   {
-	   err = DEVICE_OK;
-	   goto INIT_ERROR;
-   }
-
-   if(!MCL_CorrectDriverVersion())
-   {
-	   err=MCL_INVALID_DRIVER;
-	   goto INIT_ERROR;
-   }
-
-   int numHandles = MCL_GrabAllHandles();
-   if (numHandles == 0)
-   { 
-	   // No handles, i.e. no devices currently attached
-	   err = MCL_INVALID_HANDLE;
-	   goto INIT_ERROR;
-   }
-
-   int* handlesToUseOrRelease = NULL;
-   handlesToUseOrRelease = (int*) malloc(sizeof(int*) * numHandles);
-   MCL_GetAllHandles(handlesToUseOrRelease, numHandles);
-
-   HandleListType* device = (HandleListType*)GlobalHeapAllocate(sizeof(HandleListType));
-   device->Initialize(possHandle, XY_TYPE);
-   for (int i = 0; i < numHandles; i++)
-   {   
-		possHandle = handlesToUseOrRelease[i];
-		device->setHandle(possHandle);
-
-		MCL_GetAxisInfo(&axisBitmap, possHandle);
-		
-		// check to see which axes are valid
-		bool validXaxis = ((axisBitmap & VALIDX) == VALIDX);
-		bool validYaxis = ((axisBitmap & VALIDY) == VALIDY);
-
-		if ( (validXaxis && validYaxis) && 
-			 (!HandleExistsOnLockedList(device)) &&
-			 (possHandle > 0) )
-		{	
-			valid = true;
-
-			HandleListAddToLockedList(device);
-			MCLhandle_ = possHandle;
-
-			// release handles not in use.
-			for (int j = i+1; j < numHandles; j++)
+	// Look for a new device that can function as a XY stage.
+	vector<int> skippedHandles;
+	bool validDevice = false;
+	int deviceHandle = 0;
+	int deviceAxis = 0;
+	unsigned short devicePid = 0;
+	unsigned char deviceAxisBitmap = 0;
+	do
+	{
+		deviceHandle = MCL_InitHandle();
+		if (deviceHandle != 0)
+		{
+			MCL_GetProductID(&devicePid, deviceHandle);
+			// Single axis systems should be controlled by a Stage class.
+			if (devicePid == MICRODRIVE1)
 			{
-				possHandle = handlesToUseOrRelease[j];
-				if (!HandleExistsOnLockedList(possHandle) && possHandle > 0)
-				{ 	
-					MCL_ReleaseHandle(possHandle);
+				validDevice = false;
+				skippedHandles.push_back(deviceHandle);
+			}
+			else
+			{
+				// Discover all avaialble axes
+				MCL_GetAxisInfo(&deviceAxisBitmap, deviceHandle);
+
+				// Choose an available axis.
+				deviceAxis = ChooseAvailableXYStageAxes(devicePid, deviceAxisBitmap, deviceHandle);
+				if (deviceAxis != 0)
+					validDevice = true;
+			}
+		}
+	} while (deviceHandle != 0 && validDevice == false);
+
+	// Release extra handles acquired while looking for a new device.
+	for (vector<int>::iterator it = skippedHandles.begin(); it != skippedHandles.end(); ++it)
+	{
+		MCL_ReleaseHandle(*it);
+	}
+
+	bool foundDevice = deviceHandle != 0 && validDevice == true;
+
+	// If we did not find a new device matching our criteria.  Search through the devices that 
+	// we already control for an availble axis.
+	if (foundDevice == false)
+	{
+		int numExistingHandles = MCL_NumberOfCurrentHandles();
+		if (numExistingHandles > 0)
+		{
+			int* existingHandles = new int[numExistingHandles];
+			MCL_GetAllHandles(existingHandles, numExistingHandles);
+			for (int ii = 0; ii < numExistingHandles; ii++)
+			{
+				deviceHandle = existingHandles[ii];
+
+				MCL_GetProductID(&devicePid, deviceHandle);
+				// Skip single axis systems.
+				if (devicePid == MICRODRIVE1)
+					continue;
+
+				// Discover all avaialble axes
+				MCL_GetAxisInfo(&deviceAxisBitmap, deviceHandle);
+
+				// Choose an available axis.
+				deviceAxis = ChooseAvailableXYStageAxes(devicePid, deviceAxisBitmap, deviceHandle);
+				if (deviceAxis != 0)
+				{
+					foundDevice = true;
+					break;
 				}
 			}
-			break; // found a valid handle, so no need to check any further
+			delete[] existingHandles;
 		}
-		else
+	}
+
+	if (foundDevice == false)
+	{
+		HandleListUnlock();
+		return MCL_INVALID_HANDLE;
+	}
+
+	// Discover device information.
+	err = MCL_GetTirfModuleCalibration(&tirfModCalibrationMm_, deviceHandle);
+	if (err == MCL_SUCCESS)
+	{
+		deviceHasTirfModuleAxis_ = true;
+		if (IsAxisADefaultTirfModuleAxis(devicePid, deviceAxisBitmap, deviceAxis))
 		{
-			if (!HandleExistsOnLockedList(possHandle) && possHandle > 0)
-			{
-				MCL_ReleaseHandle(possHandle);
-			}
+			axis1IsTirfModule_ = true;
 		}
-   }
-   free (handlesToUseOrRelease);
+		if (IsAxisADefaultTirfModuleAxis(devicePid, deviceAxisBitmap, deviceAxis+1))
+		{
+			axis2IsTirfModule_ = true;
+		}
+	}
 
-   if (!valid)
-   {
-	   GlobalHeapFree(device);
-	   err = MCL_INVALID_HANDLE;
-	   goto INIT_ERROR;
-   }
+	err = MCL_MDInformation(&encoderResolution_, &stepSize_mm_, &maxVelocity_, &maxVelocityTwoAxis_, &maxVelocityThreeAxis_, &minVelocity_, deviceHandle);
+	if (err != MCL_SUCCESS)
+	{
+		HandleListUnlock();
+		return err;
+	}
+	velocity_ = maxVelocity_;
 
-   err = MCL_MicroDriveInformation(&encoderResolution_, &stepSize_mm_, &maxVelocity_, &maxVelocityTwoAxis_, &maxVelocityThreeAxis_, &minVelocity_, MCLhandle_);
-   ss << "Detected Encoder Resolution: " << encoderResolution_;
-   this->LogMessage(ss.str());
+	// Create properties
+	char velErrText[50];
+	sprintf(velErrText, "Velocity must be between %f and %f", minVelocity_, maxVelocity_);
+	SetErrorText(INVALID_VELOCITY, velErrText);
 
-   if (err != MCL_SUCCESS)
-	   goto INIT_ERROR;
+	CreateMicroDriveXYProperties();
 
-   velocity_ = maxVelocity_;
+	err = UpdateStatus();
+	if (err != DEVICE_OK)
+	{
+		HandleListUnlock();
+		return err;
+	}
 
-   char velErrText[50];
-   sprintf(velErrText, "Velocity must be between %f and %f", minVelocity_, maxVelocity_);
-   SetErrorText(INVALID_VELOCITY, velErrText);
+	// Add device to global list
+	HandleListType device(deviceHandle, XYSTAGE_TYPE, deviceAxis, deviceAxis+1);
+	HandleListAddToLockedList(device);
 
-   CreateMicroDriveXYProperties();
+	axis1_ = deviceAxis;
+	axis2_ = deviceAxis + 1;
+	handle_ = deviceHandle;
+	pid_ = devicePid;
 
-   err = UpdateStatus();
-   if (err != DEVICE_OK)
-      goto INIT_ERROR;
-
-   initialized_ = true;
-
-   INIT_ERROR:
-	// END LOCKING	
+	initialized_ = true;
+	
 	HandleListUnlock();
 	return err;
 }
@@ -190,7 +235,7 @@ int MicroDriveXYStage::CreateMicroDriveXYProperties()
 		return err;
 
 	// Device handle
-	sprintf(iToChar, "%d", MCLhandle_);
+	sprintf(iToChar, "%d", handle_);
 	err = CreateProperty("Handle", iToChar, MM::Integer, true);
 	if (err != DEVICE_OK)
 		return err;
@@ -206,6 +251,14 @@ int MicroDriveXYStage::CreateMicroDriveXYProperties()
 	err = CreateProperty("Minimum velocity (mm/s)", iToChar, MM::Float, true);
 	if (err != DEVICE_OK)
 		return err;
+
+	if (deviceHasTirfModuleAxis_)
+	{
+		sprintf(iToChar, "%f", tirfModCalibrationMm_);
+		err = CreateProperty("Distance to epi", iToChar, MM::Float, true);
+		if (err != DEVICE_OK)
+			return err;
+	}
 
 	/// Action properties
 
@@ -277,6 +330,35 @@ int MicroDriveXYStage::CreateMicroDriveXYProperties()
 	if (err != DEVICE_OK)
 		return err;
 
+	if (deviceHasTirfModuleAxis_)
+	{
+		// Axis is tirfModule
+		pAct = new CPropertyAction(this, &MicroDriveXYStage::OnIsTirfModuleAxis1);
+		err = CreateProperty(g_Keyword_IsTirfModuleAxis1, axis1IsTirfModule_ ? g_Listword_Yes : g_Listword_No, MM::String, false, pAct);
+		if (err != DEVICE_OK)
+			return err;
+		err = SetAllowedValues(g_Keyword_IsTirfModuleAxis1, yesNoList);
+		if (err != DEVICE_OK)
+			return err;
+
+		pAct = new CPropertyAction(this, &MicroDriveXYStage::OnIsTirfModuleAxis2);
+		err = CreateProperty(g_Keyword_IsTirfModuleAxis2, axis2IsTirfModule_ ? g_Listword_Yes : g_Listword_No, MM::String, false, pAct);
+		if (err != DEVICE_OK)
+			return err;
+		err = SetAllowedValues(g_Keyword_IsTirfModuleAxis2, yesNoList);
+		if (err != DEVICE_OK)
+			return err;
+
+		// Find Epi
+		pAct = new CPropertyAction(this, &MicroDriveXYStage::OnFindEpi);
+		err = CreateProperty(g_Keyword_FindEpi, "No", MM::String, false, pAct);
+		if (err != DEVICE_OK)
+			return err;
+		err = SetAllowedValues(g_Keyword_FindEpi, yesNoList);
+		if (err != DEVICE_OK)
+			return err;
+	}
+
 	return DEVICE_OK;
 }
 
@@ -284,19 +366,13 @@ int MicroDriveXYStage::Shutdown()
 {
 	HandleListLock();
 
-	HandleListType * device = new HandleListType(MCLhandle_, XY_TYPE);
-
+	HandleListType device(handle_, XYSTAGE_TYPE, axis1_, axis2_);
 	HandleListRemoveSingleItem(device);
-
-	if (!HandleExistsOnLockedList(MCLhandle_))
+	if (!HandleExistsOnLockedList(handle_))
 	{
-		MCL_ReleaseHandle(MCLhandle_);
+		MCL_ReleaseHandle(handle_);
 	}
-
-	delete device;
-
-	MCLhandle_ = 0;
-
+	handle_ = 0;
 	initialized_ = false;
 
 	HandleListUnlock();
@@ -334,6 +410,16 @@ int MicroDriveXYStage::SetPositionMm(double goalX, double goalY)
 	{
 		double xMove = goalX - xCurrent;
 		double yMove = goalY - yCurrent;
+		int startingMicroStepsX = 0;
+		int endingMicroStepsX = 0;
+		int startingMicroStepsY = 0;
+		int endingMicroStepsY = 0;
+		err = MCL_MDCurrentPositionM(axis1_, &startingMicroStepsX, handle_);
+		if (err != MCL_SUCCESS)
+			return err;
+		err = MCL_MDCurrentPositionM(axis2_, &startingMicroStepsY, handle_);
+		if (err != MCL_SUCCESS)
+			return err;
 
 		bool noXMovement = (fabs(xMove) < stepSize_mm_); 
 		bool noYMovement = (fabs(yMove) < stepSize_mm_);
@@ -344,29 +430,39 @@ int MicroDriveXYStage::SetPositionMm(double goalX, double goalY)
 		}
 		else if (noXMovement || XMoveBlocked(xMove))
 		{ 
-			err = MCL_MicroDriveMoveProfile(YAXIS, velocity_, yMove, rounding_, MCLhandle_);
+			err = MCL_MDMove(axis2_, velocity_, yMove, handle_);
 			if (err != MCL_SUCCESS)
 				return err;
-			lastY_ += yMove;
 		}
 		else if (noYMovement || YMoveBlocked(yMove))
 		{
-			err = MCL_MicroDriveMoveProfile(XAXIS, velocity_, xMove, rounding_, MCLhandle_);
+			err = MCL_MDMove(axis1_, velocity_, xMove, handle_);
 			if (err != MCL_SUCCESS)
 				return err;
-			lastX_ += xMove;
 		}
 		else 
 		{
 			double twoAxisVelocity = min(maxVelocityTwoAxis_, velocity_);
-			err = MCL_MicroDriveMoveProfileXYZ(twoAxisVelocity, xMove, rounding_, twoAxisVelocity, yMove, rounding_,0,0, 0,MCLhandle_);
+			err = MCL_MDMoveThreeAxes(axis1_, twoAxisVelocity, xMove,
+									  axis2_, twoAxisVelocity, yMove,
+									  0, 0, 0,
+									  handle_);
 			if (err != MCL_SUCCESS)
 				return err;
-			lastX_ += xMove;
-			lastY_ += yMove;
 		}
 
+		busy_ = true;
 		PauseDevice();
+		busy_ = false;
+
+		err = MCL_MDCurrentPositionM(axis1_, &endingMicroStepsX, handle_);
+		if (err != MCL_SUCCESS)
+			return err;
+		err = MCL_MDCurrentPositionM(axis2_, &endingMicroStepsY, handle_);
+		if (err != MCL_SUCCESS)
+			return err;
+		lastX_ += (endingMicroStepsX - startingMicroStepsX) * stepSize_mm_;
+		lastY_ += (endingMicroStepsY - startingMicroStepsY) * stepSize_mm_;
 
 		// Update current position
 		err = GetPositionMm(xCurrent, yCurrent);
@@ -443,12 +539,47 @@ int MicroDriveXYStage::SetRelativePositionMm(double x, double y){
 
 int MicroDriveXYStage::GetPositionMm(double& x, double& y)
 {
-	double tempZ;
-
    if (encoded_) {
-	   int err = MCL_MicroDriveReadEncoders(&x, &y, &tempZ, MCLhandle_);
+	   double m1, m2, m3, m4;
+	   int err = MCL_MDReadEncoders(&m1, &m2, &m3, &m4, handle_);
 	   if (err != MCL_SUCCESS)
 		   return err;
+	   switch (axis1_)
+	   {
+		   case M1AXIS:
+			   x = m1;
+			   break;
+		   case M2AXIS:
+			   x = m2;
+			   break;
+		   case M3AXIS:
+			   x = m3;
+			   break;
+		   case M4AXIS:
+			   x = m4;
+			   break;
+		   default:
+			   x = lastX_;
+			   break;
+	   }
+	   switch (axis2_)
+	   {
+		   case M1AXIS:
+			   y = m1;
+			   break;
+		   case M2AXIS:
+			   y = m2;
+			   break;
+		   case M3AXIS:
+			   y = m3;
+			   break;
+		   case M4AXIS:
+			   y = m4;
+			   break;
+		   default:
+			   y = lastY_;
+			   break;
+	   }
    } else {
       x = lastX_;
       y = lastY_;
@@ -487,16 +618,12 @@ int MicroDriveXYStage::Home()
 
 void MicroDriveXYStage::PauseDevice()
 {
-	int milliseconds;
-
-	milliseconds = MCL_MicroDriveWait(MCLhandle_);
-
-	MCL_DeviceAttached(milliseconds + 1, MCLhandle_);
+	MCL_MicroDriveWait(handle_);
 }
 
 int MicroDriveXYStage::Stop()
 {
-	int err = MCL_MicroDriveStop(NULL, MCLhandle_);
+	int err = MCL_MDStop(NULL, handle_);
 	if (err != MCL_SUCCESS)
 		return err;
 
@@ -505,18 +632,23 @@ int MicroDriveXYStage::Stop()
 
 int MicroDriveXYStage::SetOrigin()
 {
-	int err = MCL_MicroDriveResetEncoders(NULL, MCLhandle_);
-	if (err != MCL_SUCCESS)
-		return err;
-   lastX_ = 0;
-   lastY_ = 0;
+	int err = MCL_SUCCESS;
+	if (encoded_ && axis1_ < M5AXIS)
+	{
+		err = MCL_MDResetEncoder(axis1_, NULL, handle_);
+		if (err != MCL_SUCCESS)
+			return err;
+	}
+	if (encoded_ && axis2_ < M5AXIS)
+	{
+		err = MCL_MDResetEncoder(axis2_, NULL, handle_);
+		if (err != MCL_SUCCESS)
+			return err;
+	}
+	lastX_ = 0;
+	lastY_ = 0;
 
 	return DEVICE_OK;
-}
-
-int MicroDriveXYStage::GetLimits(double& /*lower*/, double& /*upper*/)
-{
-	return DEVICE_UNSUPPORTED_COMMAND;
 }
 
 int MicroDriveXYStage::GetLimitsUm(double& /*xMin*/, double& /*xMax*/, double& /*yMin*/, double& /*yMax*/)
@@ -572,12 +704,15 @@ int MicroDriveXYStage::Calibrate()
 
 bool MicroDriveXYStage::XMoveBlocked(double possNewPos)
 {
-	unsigned char status = 0;
+	unsigned short status = 0;
 
-	MCL_MicroDriveStatus(&status, MCLhandle_);
+	MCL_MDStatus(&status, handle_);
 
-	bool atReverseLimit = ((status & X_REVERSE_LIMIT) == 0);
-	bool atForwardLimit = ((status & X_FORWARD_LIMIT) == 0);
+	unsigned short revLimitBitMask = LimitBitMask(pid_, axis1_, REVERSE);
+	unsigned short fowLimitBitMask = LimitBitMask(pid_, axis1_, FORWARD);
+
+	bool atReverseLimit = ((status & revLimitBitMask) == 0);
+	bool atForwardLimit = ((status & fowLimitBitMask) == 0);
 
 	if(atReverseLimit && possNewPos < 0)
 		return true;
@@ -588,12 +723,15 @@ bool MicroDriveXYStage::XMoveBlocked(double possNewPos)
 
 bool MicroDriveXYStage::YMoveBlocked(double possNewPos)
 {
-	unsigned char status = 0;
+	unsigned short status = 0;
 
-	MCL_MicroDriveStatus(&status, MCLhandle_);
+	MCL_MDStatus(&status, handle_);
 
-	bool atReverseLimit = ((status & Y_REVERSE_LIMIT) == 0);
-	bool atForwardLimit = ((status & Y_FORWARD_LIMIT) == 0);
+	unsigned short revLimitBitMask = LimitBitMask(pid_, axis2_, REVERSE);
+	unsigned short fowLimitBitMask = LimitBitMask(pid_, axis2_, FORWARD);
+
+	bool atReverseLimit = ((status & revLimitBitMask) == 0);
+	bool atForwardLimit = ((status & fowLimitBitMask) == 0);
 
 	if (atReverseLimit && possNewPos < 0)
 		return true;
@@ -617,20 +755,24 @@ void MicroDriveXYStage::GetOrientation(bool& mirrorX, bool& mirrorY)
 int MicroDriveXYStage::MoveToForwardLimits()
 {
 	int err;
-	unsigned char status = 0;
+	unsigned short status = 0;
 
-	err = MCL_MicroDriveStatus(&status, MCLhandle_);
+	err = MCL_MDStatus(&status, handle_);
 	if(err != MCL_SUCCESS)	
 		return err;
 
-	while ((status & BOTH_FORWARD_LIMITS) != 0)
+	unsigned short axis1ForwardLimitBitMask = LimitBitMask(pid_, axis1_, FORWARD);
+	unsigned short axis2ForwardLimitBitMask = LimitBitMask(pid_, axis2_, FORWARD);
+	unsigned short bothLimits = axis1ForwardLimitBitMask | axis2ForwardLimitBitMask;
+
+	while ((status & bothLimits) != 0)
 	{ 
 		err = SetRelativePositionUm(4000, 4000);
 
 		if (err != DEVICE_OK)
 			return err;
 
-		err = MCL_MicroDriveStatus(&status, MCLhandle_);
+		err = MCL_MDStatus(&status, handle_);
 		if (err != MCL_SUCCESS)	
 			return err;
 	}
@@ -668,6 +810,73 @@ int MicroDriveXYStage::ReturnToOrigin()
 
 	return DEVICE_OK;
 }
+
+int MicroDriveXYStage::FindEpi()
+{
+	if ((axis1IsTirfModule_ == false) && (axis2IsTirfModule_ == false))
+		return DEVICE_OK;
+
+	int epiAxis = 0;
+	double a1Find = 0.0;
+	double a2Find = 0.0;
+	double a1Epi = 0.0;
+	double a2Epi = 0.0;
+	if (axis1IsTirfModule_)
+	{
+		epiAxis = axis1_;
+		a1Find = -.5;
+		a1Epi = tirfModCalibrationMm_;
+	}
+	else if(axis2IsTirfModule_)
+	{
+		epiAxis = axis2_;
+		a2Find = -.5;
+		a2Epi = tirfModCalibrationMm_;
+	}
+
+	unsigned short status;
+	unsigned short mask = LimitBitMask(pid_, epiAxis, REVERSE);
+
+	MCL_MDStatus(&status, handle_);
+
+	// Move the stage to its reverse limit.
+	while ((status & mask) == mask)
+	{
+		SetRelativePositionMm(a1Find, a2Find);
+		MCL_MDStatus(&status, handle_);
+	}
+
+	// Set the orgin of the epi axis at the reverse limit.
+	int err = MCL_SUCCESS;
+	if (encoded_ && epiAxis < M5AXIS)
+	{
+		err = MCL_MDResetEncoder(epiAxis, NULL, handle_);
+		if (err != MCL_SUCCESS)
+			return err;
+	}
+	if (epiAxis == axis1_)
+		lastX_ = 0;
+	else
+		lastY_ = 0;
+
+	// Move the calibration distance to find epi.
+	SetPositionMm(a1Epi, a2Epi);
+
+	// Set the orgin of the epi axis at epi.
+	if (encoded_ && epiAxis < M5AXIS)
+	{
+		err = MCL_MDResetEncoder(epiAxis, NULL, handle_);
+		if (err != MCL_SUCCESS)
+			return err;
+	}
+	if (epiAxis == axis1_)
+		lastX_ = 0;
+	else
+		lastY_ = 0;
+
+	return DEVICE_OK;
+}
+
 
 int MicroDriveXYStage::OnPositionXmm(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
@@ -923,3 +1132,97 @@ int MicroDriveXYStage::IsXYStageSequenceable(bool& isSequenceable) const
 	return DEVICE_OK;
 }
 
+int MicroDriveXYStage::OnIsTirfModuleAxis1(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::BeforeGet)
+	{
+		pProp->Set(axis1IsTirfModule_ ? g_Listword_Yes : g_Listword_No);
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		string message;
+		pProp->Get(message);
+		axis1IsTirfModule_ = (message.compare(g_Listword_Yes) == 0);
+	}
+	return DEVICE_OK;
+}
+
+int MicroDriveXYStage::OnIsTirfModuleAxis2(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::BeforeGet)
+	{
+		pProp->Set(axis2IsTirfModule_ ? g_Listword_Yes : g_Listword_No);
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		string message;
+		pProp->Get(message);
+		axis2IsTirfModule_ = (message.compare(g_Listword_Yes) == 0);
+	}
+	return DEVICE_OK;
+}
+
+int MicroDriveXYStage::OnFindEpi(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	int err;
+	string message;
+
+	if (eAct == MM::BeforeGet)
+	{
+		pProp->Set(g_Listword_No);
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		pProp->Get(message);
+
+		if (message.compare(g_Listword_Yes) == 0)
+		{
+			err = FindEpi();
+			if (err != DEVICE_OK)
+				return err;
+		}
+	}
+	return DEVICE_OK;
+}
+
+// The handle list must be locked when calling this function.
+int MicroDriveXYStage::ChooseAvailableXYStageAxes(unsigned short pid, unsigned char axisBitmap, int handle)
+{
+	int ordersize = 2;
+	int order[] = { M1AXIS, M4AXIS};
+
+	switch (pid)
+	{
+		case MICRODRIVE:
+		case NC_MICRODRIVE:
+		case MICRODRIVE3:
+		case MICRODRIVE4:
+			order[1] = 0;
+			break;
+		// Use the standard order.
+		default:
+			break;
+	}
+
+	int axis = 0;
+	for (int ii = 0; ii < ordersize; ii++)
+	{
+		if (order[ii] == 0)
+			break;
+
+		// Check that both axes are valid.
+		int xBitmap = 0x1 << (order[ii] - 1);
+		int yBitmap = 0x1 << order[ii];
+		if (((axisBitmap & xBitmap) != xBitmap) ||
+			((axisBitmap & yBitmap) != yBitmap))
+			continue;
+
+		HandleListType device(handle, XYSTAGE_TYPE, order[ii], order[ii] + 1);
+		if (HandleExistsOnLockedList(device) == false)
+		{
+			axis = order[ii];
+			break;
+		}
+	}
+	return axis;
+}

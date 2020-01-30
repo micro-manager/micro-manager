@@ -34,7 +34,7 @@ endif
 if BUILD_JAVA_APP
 
 ANTEXTENSIONS = buildscripts/AntExtensions
-JAVA_APP_DIRS = mmstudio acqEngine autofocus plugins scripts
+JAVA_APP_DIRS = mmstudio acqEngine libraries autofocus plugins mmAsImageJMacros scripts
 SYSTEMTEST_DIR = systemtest
 
 if INSTALL_AS_IMAGEJ_PLUGIN
@@ -77,6 +77,7 @@ buildscripts/launchers/micromanager: $(srcdir)/buildscripts/launchers/micromanag
 	sed \
 		-e 's%@wrappermoduledir[@]%$(wrappermoduledir)%g' \
 		-e 's%@mmplugindir[@]%$(mmplugindir)%g' \
+		-e 's%@mmlibrarydir[@]%$(mmlibrarydir)%g' \
 		-e 's%@mmautofocusdir[@]%$(mmautofocusdir)%g' \
 		-e 's%@mmdatadir[@]%$(mmdatadir)%g' \
 		-e 's%@jardir[@]%$(jardir)%g' \
@@ -138,7 +139,7 @@ SUBDIRS = \
 	$(JAVA_APP_DIRS) \
 	DeviceAdapters \
 	$(SECRETDEVICEADAPTERS) \
-	$(SYSTEMTEST_DIR) \
+	$(SYSTEMTEST_DIR)
 	bindist
 
 

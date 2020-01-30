@@ -19,7 +19,7 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id: PIGCSControllerDLL.h,v 1.11, 2014-03-31 12:51:24Z, Steffen Rau$
+// CVS:           $Id: PIGCSControllerDLL.h,v 1.19, 2019-01-09 10:45:26Z, Steffen Rau$
 //
 
 #ifndef _PI_GCS_CONTROLLER_DLL_H_
@@ -47,7 +47,7 @@ public:
 
    void CreateProperties();
    void CreateInterfaceProperties(void);
-  
+
    static const char* DeviceName_;
    void GetName(char* pszName) const;
    bool Busy();
@@ -56,11 +56,14 @@ public:
    static const char* PropName_;
    static const char* PropInterfaceType_;
    static const char* PropInterfaceParameter_;
-
+   static const char* UmToDefaultUnitName_;
+   static const char* SendCommand_;
 
    int OnDLLName(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnInterfaceType(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnInterfaceParameter(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnUmInDefaultUnit(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSendCommand(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
     int OnJoystick1(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -74,6 +77,7 @@ private:
     std::string interfaceParameter_;
     bool initialized_;
     bool bShowInterfaceProperties_;
+    double umToDefaultUnit_;
 };
 
 class PIGCSControllerDLL: public PIController
@@ -82,12 +86,13 @@ public:
 	PIGCSControllerDLL(const std::string& label, PIGCSControllerDLLDevice* proxy, MM::Core* logsink);
 	~PIGCSControllerDLL();
 
+    virtual int SendGCSCommand (const std::string& command);
 	virtual bool qIDN(std::string& sIDN);
 	virtual bool INI(const std::string& axis);
 	virtual bool CST(const std::string& axis, const std::string& stagetype);
-	bool qCST(const std::string& axes, std::string& stages);
-	virtual bool SVO(const std::string& axis, BOOL svo);
-	virtual bool FRF(const std::string& axes);
+    virtual bool SVO(const std::string& axis, BOOL svo);
+    virtual bool EAX(const std::string& axis, BOOL eax);
+    virtual bool FRF(const std::string& axes);
 	virtual bool REF(const std::string& axes);
 	virtual bool MNL(const std::string& axes);
 	virtual bool FNL(const std::string& axes);
@@ -131,7 +136,8 @@ public:
 
 
 private:
-	typedef int ( WINAPI *FP_ConnectRS232 ) ( int, int );
+    typedef int ( WINAPI *FP_GcsCommandset ) ( int, const char* );
+    typedef int ( WINAPI *FP_ConnectRS232 ) ( int, int );
 	typedef int ( WINAPI *FP_Connect ) ( int );
 	typedef int ( WINAPI *FP_IsConnected ) (int);
 	typedef int ( WINAPI *FP_CloseConnection ) ( int );
@@ -143,7 +149,8 @@ private:
 	typedef int ( WINAPI *FP_INI ) ( int, const char* );
 	typedef int ( WINAPI *FP_CST ) ( int, const char*, const char*);
 	typedef int ( WINAPI *FP_qCST ) ( int, const char*, char*, int);
-	typedef int ( WINAPI *FP_qFRF )	( int, const char*, BOOL* );
+    typedef int ( WINAPI *FP_EAX )	( int, const char*, const BOOL* );
+    typedef int ( WINAPI *FP_qFRF )	( int, const char*, BOOL* );
 	typedef int ( WINAPI *FP_FRF ) ( int, const char* );
 	typedef int ( WINAPI *FP_FPL ) ( int, const char* );
 	typedef int ( WINAPI *FP_FNL ) ( int, const char* );
@@ -164,7 +171,8 @@ private:
 	typedef int ( WINAPI *FP_VEL ) ( int, const char*, const double* );
 	typedef int ( WINAPI *FP_qTPC ) ( int, int* );
 
-	FP_ConnectRS232 ConnectRS232_;
+    FP_GcsCommandset GcsCommandset_;
+    FP_ConnectRS232 ConnectRS232_;
 	FP_Connect Connect_;
 	FP_IsConnected IsConnected_;
 	FP_CloseConnection CloseConnection_;
@@ -189,8 +197,8 @@ private:
 	FP_qPOS qPOS_;
 	FP_MOV MOV_;
 	FP_STP STP_;
-	FP_SVO SVO_;
-	FP_qSVO qSVO_;
+    FP_SVO SVO_;
+    FP_EAX EAX_;
 	FP_JON JON_;
 	FP_qJON qJON_;
 	FP_VEL VEL_;

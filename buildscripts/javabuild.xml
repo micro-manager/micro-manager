@@ -1,20 +1,22 @@
 <project name="mm.javabuild">
-
 	<!-- This file is intended to be used via 'import' in each Java
-	     project's buildfile -->
+		 project's buildfile -->
 
 	<include file="buildprops.xml"/>
 
 	<!-- Default settings (importing buildfile can override) -->
 	<!-- intdir - where to put tree of *.class
-	     outdir - where to put JAR
-	     installdir - where to install JAR
-	     scratchdir - used only by clojurebuild_noaot
-	     (intdir and scratchdir must not be shared with other projects)
-	     -->
+		 outdir - where to put JAR
+		 installdir - where to install JAR
+		 scratchdir - used only by clojurebuild_noaot
+		 (intdir and scratchdir must not be shared with other projects)
+		 -->
 	<property name="product" value="${ant.project.name}"/>
-	<property name="srcdir" value="src"/>
-	<property name="testdir" value="test"/>
+	<property name="srcdir" value="src/main/java"/>
+	<property name="testdir" value="src/test/java"/>
+	<property name="rscdir" value="src/main/resources"/>
+	<property name="scriptdir" value="src/main/scripts"/>
+	<property name="testrscdir" value="src/test/resources"/>
 	<if>
 		<isset property="mm.platform.is.windows"/>
 		<then>
@@ -65,7 +67,7 @@
 	</path>
 
 	<!-- JARs whose change should trigger a rebuild of the current project
-	     (override after the 'import' element) -->
+		 (override after the 'import' element) -->
 	<path id="project.linked.jars"/>
 
 	<!-- Automatically determine whether the project has any tests -->
@@ -130,8 +132,12 @@
 		<mm-javac srcdir="${testdir}" destdir="${test.intdir}">
 			<classpath refid="project.test.classpath"/>
 		</mm-javac>
+		<copy todir="${test.intdir}">
+			<fileset dir="${testrscdir}"/>
+		</copy>
 		<mkdir dir="${test.reportdir}"/>
-		<junit fork="true" haltonfailure="true" printsummary="true">
+        <junit fork="true" haltonfailure="true" printsummary="true"
+            maxmemory="256m" failureproperty="mm.build.test.failed">
 			<sysproperty key="java.awt.headless" value="true"/>
 			<classpath refid="project.test.classpath"/>
 			<formatter type="plain"/>
@@ -141,9 +147,13 @@
 			<batchtest unless="test.class" todir="${test.reportdir}">
 				<fileset dir="${testdir}">
 					<include name="**/*.java"/>
+					<!-- Allow some helper classes that should not be tested themselves -->
+					<exclude name="**/Helper*.java"/>
 				</fileset>
 			</batchtest>
 		</junit>
+		<!-- Wait until we have finished all tests before failing -->
+		<fail if="mm.build.test.failed"/>
 	</target>
 
 	<target name="test" depends="jar,test-only" description="Run unit tests"

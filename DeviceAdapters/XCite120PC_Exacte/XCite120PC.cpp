@@ -42,6 +42,7 @@
 
 using namespace std;
 
+
 // Commands
 const char* XCite120PC::cmdConnect               = "tt";
 const char* XCite120PC::cmdLockFrontPanel        = "ll";

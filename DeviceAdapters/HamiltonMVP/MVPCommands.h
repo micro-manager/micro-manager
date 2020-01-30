@@ -37,6 +37,7 @@
 #include "MMDeviceConstants.h"
 
 #include <cstdio>
+#include <cstdlib>
 #include <string>
 #include <vector>
 
@@ -67,15 +68,15 @@ protected:
 
    int ParseDecimal(const std::string& s, int maxNDigits, int& result)
    {
-      if (s.empty() || s.size() > maxNDigits)
+      if (s.empty() || s.size() > (unsigned int) maxNDigits)
          return ERR_UNEXPECTED_RESPONSE;
-      for (int i = 0; i < s.size(); ++i)
+      for (unsigned int i = 0; i < s.size(); ++i)
       {
          char c = s[i];
          if (c < '0' || c > '9')
             return ERR_UNEXPECTED_RESPONSE;
       }
-      result = atoi(s.c_str());
+      result = std::atoi(s.c_str());
       return DEVICE_OK;
    }
 

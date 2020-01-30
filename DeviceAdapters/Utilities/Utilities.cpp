@@ -552,7 +552,7 @@ unsigned MultiCamera::GetImageHeight() const
 bool MultiCamera::ImageSizesAreEqual() {
    unsigned height = 0;
    unsigned width = 0;
-   for (int i = 0; i < physicalCameras_.size(); i++) {
+   for (unsigned int i = 0; i < physicalCameras_.size(); i++) {
       if (physicalCameras_[i] != 0) 
       {
          height = physicalCameras_[0]->GetImageHeight();
@@ -560,7 +560,7 @@ bool MultiCamera::ImageSizesAreEqual() {
       }
    }
 
-   for (int i = 0; i < physicalCameras_.size(); i++) {
+   for (unsigned int i = 0; i < physicalCameras_.size(); i++) {
       if (physicalCameras_[i] != 0) 
       {
          if (height != physicalCameras_[i]->GetImageHeight())
@@ -773,7 +773,7 @@ int MultiCamera::StopSequenceAcquisition()
          if (ret != DEVICE_OK)
             return ret;
          std::ostringstream os;
-         os << 0;
+         os << i;
          physicalCameras_[i]->AddTag(MM::g_Keyword_CameraChannelName, usedCameras_[i].c_str(),
                  "");
          physicalCameras_[i]->AddTag(MM::g_Keyword_CameraChannelIndex, usedCameras_[i].c_str(),
@@ -2968,7 +2968,7 @@ int DAZStage::SetPositionUm(double pos)
    if (DADevice_ == 0)
       return ERR_NO_DA_DEVICE;
 
-   double volt = ( (pos + originPos_) / (maxStagePos_ - minStagePos_)) * (maxStageVolt_ - minStageVolt_);
+   double volt =  (pos - minStagePos_) / (maxStagePos_ - minStagePos_) * (maxStageVolt_ - minStageVolt_) + minStageVolt_;
    if (volt > maxStageVolt_ || volt < minStageVolt_)
       return ERR_POS_OUT_OF_RANGE;
 
@@ -2989,8 +2989,11 @@ int DAZStage::GetPositionUm(double& pos)
    if (ret != DEVICE_OK) 
       // DA Device cannot read, set position from cache
       pos = pos_;
-   else
-      pos = volt/(maxStageVolt_ - minStageVolt_) * (maxStagePos_ - minStagePos_) + originPos_;
+   else 
+   {
+      pos = (volt - minStageVolt_) / (maxStageVolt_ - minStageVolt_) * (maxStagePos_ - minStagePos_) + minStagePos_;
+      pos_ = pos;
+   }
 
    return DEVICE_OK;
 }
@@ -3011,7 +3014,7 @@ int DAZStage::SetPositionSteps(long steps)
    else
       return ERR_VOLT_OUT_OF_RANGE;
 
-   pos_ = volt/(maxStageVolt_ - minStageVolt_) * (maxStagePos_ - minStagePos_) + originPos_;
+   pos_ = (volt - minStageVolt_) / (maxStageVolt_ - minStageVolt_) * (maxStagePos_ - minStagePos_) + minStagePos_;
 
    return DEVICE_OK;
 }
@@ -3024,7 +3027,7 @@ int DAZStage::GetPositionSteps(long& steps)
    double volt;
    int ret = DADevice_->GetSignal(volt);
    if (ret != DEVICE_OK)
-      steps = (long) ((pos_ + originPos_)/(maxStagePos_ - minStagePos_) * (maxStageVolt_ - minStageVolt_) * 1000.0); 
+      steps = (long) ((pos_ - minStagePos_)/(maxStagePos_ - minStagePos_) * (maxStageVolt_ - minStageVolt_) * 1000.0); 
    else
       steps = (long) ((volt - minStageVolt_) * 1000.0);
 
@@ -3038,7 +3041,7 @@ int DAZStage::SetOrigin()
 {
    if (DADevice_ == 0)
       return ERR_NO_DA_DEVICE;
-
+   /*
    double volt;
    int ret = DADevice_->GetSignal(volt);
    if (ret != DEVICE_OK)
@@ -3049,6 +3052,7 @@ int DAZStage::SetOrigin()
 
    if (originPos_ < minStagePos_ || originPos_ > maxStagePos_)
       return ERR_POS_OUT_OF_RANGE;
+   */
 
    return DEVICE_OK;
 }
@@ -3085,17 +3089,15 @@ int DAZStage::ClearStageSequence()
    return DADevice_->ClearDASequence();
 }
 
-int DAZStage::AddToStageSequence(double position) 
+int DAZStage::AddToStageSequence(double pos) 
 {
-   double voltage;
+   double voltage =  (pos - minStagePos_) / (maxStagePos_ - minStagePos_) * (maxStageVolt_ - minStageVolt_) + minStageVolt_;
 
-      voltage = ( (position + originPos_) / (maxStagePos_ - minStagePos_)) * 
-                     (maxStageVolt_ - minStageVolt_);
-      if (voltage > maxStageVolt_)
-         voltage = maxStageVolt_;
-      else if (voltage < minStageVolt_)
-         voltage = minStageVolt_;
-   
+   if (voltage > maxStageVolt_)
+      voltage = maxStageVolt_;
+   else if (voltage < minStageVolt_)
+      voltage = minStageVolt_;
+
    return DADevice_->AddToDASequence(voltage);
 }
 
@@ -3848,7 +3850,7 @@ int DATTLStateDevice::Initialize()
 
    daDeviceLabels_.clear();
    daDevices_.clear();
-   for (int i = 0; i < numberOfDADevices_; ++i)
+   for (unsigned int i = 0; i < numberOfDADevices_; ++i)
    {
       daDeviceLabels_.push_back("");
       daDevices_.push_back(0);
@@ -3869,7 +3871,7 @@ int DATTLStateDevice::Initialize()
          break;
    }
 
-   for (int i = 0; i < numberOfDADevices_; ++i)
+   for (unsigned int i = 0; i < numberOfDADevices_; ++i)
    {
       const std::string propName =
          "DADevice-" + boost::lexical_cast<std::string>(i);
@@ -3937,7 +3939,7 @@ bool DATTLStateDevice::Busy()
    // We are busy if any of the underlying DA devices are busy, OR
    // the delay interval has not yet elapsed.
 
-   for (int i = 0; i < numberOfDADevices_; ++i)
+   for (unsigned int i = 0; i < numberOfDADevices_; ++i)
    {
       MM::SignalIO* da = daDevices_[i];
       if (da && da->Busy())
@@ -4013,7 +4015,7 @@ int DATTLStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       {
          // Read signal where possible; otherwise use stored value.
          long mask = 0;
-         for (int i = 0; i < numberOfDADevices_; ++i)
+         for (unsigned int i = 0; i < numberOfDADevices_; ++i)
          {
             if (daDevices_[i])
             {
@@ -4051,7 +4053,7 @@ int DATTLStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
          GetProperty(MM::g_Keyword_Closed_Position, mask);
       }
 
-      for (int i = 0; i < numberOfDADevices_; ++i)
+      for (unsigned int i = 0; i < numberOfDADevices_; ++i)
       {
          if (daDevices_[i])
          {
@@ -4067,7 +4069,7 @@ int DATTLStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       bool allSequenceable = true;
       long maxSeqLen = LONG_MAX;
-      for (int i = 0; i < numberOfDADevices_; ++i)
+      for (unsigned int i = 0; i < numberOfDADevices_; ++i)
       {
          if (daDevices_[i])
          {
@@ -4111,7 +4113,7 @@ int DATTLStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
          }
       }
 
-      for (int i = 0; i < numberOfDADevices_; ++i)
+      for (unsigned int i = 0; i < numberOfDADevices_; ++i)
       {
          if (daDevices_[i])
          {
@@ -4133,7 +4135,7 @@ int DATTLStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::StartSequence)
    {
-      for (int i = 0; i < numberOfDADevices_; ++i)
+      for (unsigned int i = 0; i < numberOfDADevices_; ++i)
       {
          if (daDevices_[i])
          {
@@ -4145,7 +4147,7 @@ int DATTLStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::StopSequence)
    {
-      for (int i = 0; i < numberOfDADevices_; ++i)
+      for (unsigned int i = 0; i < numberOfDADevices_; ++i)
       {
          if (daDevices_[i])
          {
@@ -4200,7 +4202,7 @@ int MultiDAStateDevice::Initialize()
    daDeviceLabels_.clear();
    daDevices_.clear();
    voltages_.clear();
-   for (int i = 0; i < numberOfDADevices_; ++i)
+   for (unsigned int i = 0; i < numberOfDADevices_; ++i)
    {
       daDeviceLabels_.push_back("");
       daDevices_.push_back(0);
@@ -4222,7 +4224,7 @@ int MultiDAStateDevice::Initialize()
          break;
    }
 
-   for (int i = 0; i < numberOfDADevices_; ++i)
+   for (unsigned int i = 0; i < numberOfDADevices_; ++i)
    {
       const std::string propName =
          "DADevice-" + boost::lexical_cast<std::string>(i);
@@ -4266,7 +4268,7 @@ int MultiDAStateDevice::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
-   for (int i = 0; i < numberOfDADevices_; ++i)
+   for (unsigned int i = 0; i < numberOfDADevices_; ++i)
    {
       const std::string propName =
          "DADevice-" + boost::lexical_cast<std::string>(i) + "-Voltage";
@@ -4312,7 +4314,7 @@ bool MultiDAStateDevice::Busy()
    // We are busy if any of the underlying DA devices are busy, OR
    // the delay interval has not yet elapsed.
 
-   for (int i = 0; i < numberOfDADevices_; ++i)
+   for (unsigned int i = 0; i < numberOfDADevices_; ++i)
    {
       MM::SignalIO* da = daDevices_[i];
       if (da && da->Busy())
@@ -4420,7 +4422,7 @@ int MultiDAStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
          GetProperty(MM::g_Keyword_Closed_Position, mask);
       }
 
-      for (int i = 0; i < numberOfDADevices_; ++i)
+      for (unsigned int i = 0; i < numberOfDADevices_; ++i)
       {
          if (daDevices_[i])
          {
@@ -4437,7 +4439,7 @@ int MultiDAStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       bool allSequenceable = true;
       long maxSeqLen = LONG_MAX;
-      for (int i = 0; i < numberOfDADevices_; ++i)
+      for (unsigned int i = 0; i < numberOfDADevices_; ++i)
       {
          if (daDevices_[i])
          {
@@ -4481,7 +4483,7 @@ int MultiDAStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
          }
       }
 
-      for (int i = 0; i < numberOfDADevices_; ++i)
+      for (unsigned int i = 0; i < numberOfDADevices_; ++i)
       {
          if (daDevices_[i])
          {
@@ -4504,7 +4506,7 @@ int MultiDAStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::StartSequence)
    {
-      for (int i = 0; i < numberOfDADevices_; ++i)
+      for (unsigned int i = 0; i < numberOfDADevices_; ++i)
       {
          if (daDevices_[i])
          {
@@ -4516,7 +4518,7 @@ int MultiDAStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::StopSequence)
    {
-      for (int i = 0; i < numberOfDADevices_; ++i)
+      for (unsigned int i = 0; i < numberOfDADevices_; ++i)
       {
          if (daDevices_[i])
          {

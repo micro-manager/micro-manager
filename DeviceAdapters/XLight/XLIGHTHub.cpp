@@ -160,11 +160,11 @@ int XLIGHTHub::GetEmissionWheelPosition(MM::Device& device, MM::Core& core, int 
 int XLIGHTHub::SetSpinMotorState(MM::Device& device, MM::Core& core, int state) {
     ostringstream os;
     os << "N" << state;
-    bool succeeded = false;
-    int counter = 0;
     int ret = DEVICE_OK;
 	deviceWaitMs_ = 15;
 #if 0
+    bool succeeded = false;
+    int counter = 0;
     // try up to 10 times
     while (!succeeded && counter < 10) {
         ret = ExecuteCommand(device, core, os.str().c_str());
@@ -203,11 +203,11 @@ int XLIGHTHub::GetSpinMotorState(MM::Device& device, MM::Core& core, int state) 
 int XLIGHTHub::SetTouchScreenState(MM::Device& device, MM::Core& core, int state) {
     ostringstream os;
     os << "M" << state;
-    bool succeeded = false;
-    int counter = 0;
 
     int ret = DEVICE_OK;
 #if 0
+    bool succeeded = false;
+    int counter = 0;
     // try up to 10 times, wait 50 ms in between tries
     while (!succeeded && counter < 10) {
         ret = ExecuteCommand(device, core, os.str().c_str());

@@ -19,7 +19,7 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id: PIGCSControllerCom.cpp,v 1.13, 2014-03-31 12:51:24Z, Steffen Rau$
+// CVS:           $Id: PIGCSControllerCom.cpp,v 1.23, 2019-01-09 10:47:09Z, Steffen Rau$
 //
 
 
@@ -31,6 +31,8 @@
 
 const char* PIGCSControllerComDevice::DeviceName_ = "PI_GCSController";
 const char* PIGCSControllerComDevice::UmToDefaultUnitName_ = "um in default unit";
+const char* PIGCSControllerComDevice::ErrorCheckAfterMOV_ = "Error Check after MOV command";
+const char* PIGCSControllerComDevice::SendCommand_ = "Send command";
 
 PIGCSControllerComDevice::PIGCSControllerComDevice()
 : umToDefaultUnit_(0.001)
@@ -93,6 +95,13 @@ void PIGCSControllerComDevice::CreateProperties()
       pAct = new CPropertyAction (this, &PIGCSControllerComDevice::OnUmInDefaultUnit);
       CreateProperty(PIGCSControllerComDevice::UmToDefaultUnitName_, "0.001", MM::Float, false, pAct, true);
    }
+
+   // ErrorCheckAfterMOV
+   pAct = new CPropertyAction (this, &PIGCSControllerComDevice::OnErrorCheck);
+   CreateProperty(PIGCSControllerComDevice::ErrorCheckAfterMOV_, "1", MM::Integer, false, pAct, false);
+
+   pAct = new CPropertyAction (this, &PIGCSControllerComDevice::OnSendCommand);
+   CreateProperty(PIGCSControllerComDevice::SendCommand_, "", MM::String, false, pAct);
 }
 
 int PIGCSControllerComDevice::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -130,6 +139,45 @@ int PIGCSControllerComDevice::OnUmInDefaultUnit(MM::PropertyBase* pProp, MM::Act
    return DEVICE_OK;
 }
 
+int PIGCSControllerComDevice::OnErrorCheck(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    if (ctrl_)
+    {
+        if (eAct == MM::BeforeGet)
+        {
+            pProp->Set (long (ctrl_->GetErrorCheckAfterMOV () ? 1 : 0));
+        }
+        else if (eAct == MM::AfterSet)
+        {
+            long value;
+            pProp->Get (value);
+            ctrl_->SetErrorCheckAfterMOV (value != 0);
+        }
+    }
+    return DEVICE_OK;
+}
+
+int PIGCSControllerComDevice::OnSendCommand(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set("");
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        std::string command;
+        pProp->Get(command);
+        if (command.length () > 0)
+        {
+            if (!SendGCSCommand (command))
+            {
+                return lastError_;
+            }
+        }
+    }
+
+    return DEVICE_OK;
+}
 
 int PIGCSControllerComDevice::Initialize()
 {
@@ -138,7 +186,7 @@ int PIGCSControllerComDevice::Initialize()
 
 	char szLabel[MM::MaxStrLength];
 	GetLabel(szLabel);
-	ctrl_ = new PIGCSControllerCom(szLabel, this, GetCoreCallback()); 
+	ctrl_ = new PIGCSControllerCom(szLabel, this, GetCoreCallback());
 
    int ret = ctrl_->Connect();
    if (ret != DEVICE_OK)
@@ -229,7 +277,7 @@ bool PIGCSControllerComDevice::SendGCSCommand(const std::string command)
    if (ret != DEVICE_OK)
    {
 	   lastError_ = ret;
-      return false;
+       return false;
    }
    return true;
 }
@@ -313,6 +361,7 @@ PIGCSControllerCom::PIGCSControllerCom(const std::string& label, PIGCSController
     , deviceProxy_(proxy)
     , hasCST_   (false)
     , hasSVO_   (true)
+    , hasEAX_   (true)
     , hasINI_   (false)
     , hasJON_   (true)
     , hasVEL_   (true)
@@ -340,6 +389,14 @@ int PIGCSControllerCom::Connect()
 }
 
 
+int PIGCSControllerCom::SendGCSCommand (const std::string& command)
+{
+    if (!deviceProxy_->SendGCSCommand (command))
+    {
+        return DEVICE_ERR;
+    }
+    return DEVICE_OK;
+}
 
 bool PIGCSControllerCom::qIDN(std::string& sIDN)
 {
@@ -384,18 +441,34 @@ bool PIGCSControllerCom::CST(const std::string& axis, const std::string& stagety
 
 bool PIGCSControllerCom::SVO(const std::string& axis, BOOL svo)
 {
-	if (!hasSVO_)
-	{
-		return false;
-	}
-	std::ostringstream command;
-	command << "SVO " << axis<<" "<< ((svo==TRUE)?"1":"0");
-	if (!deviceProxy_->SendGCSCommand( command.str() ))
-	{
-		return false;
-	}
+    if (!hasSVO_)
+    {
+        return false;
+    }
+    std::ostringstream command;
+    command << "SVO " << axis<<" "<< ((svo==TRUE)?"1":"0");
+    if (!deviceProxy_->SendGCSCommand( command.str() ))
+    {
+        return false;
+    }
 
-	return CheckError(hasSVO_);
+    return CheckError(hasSVO_);
+};
+
+bool PIGCSControllerCom::EAX(const std::string& axis, BOOL enableAxis)
+{
+    if (!hasEAX_)
+    {
+        return false;
+    }
+    std::ostringstream command;
+    command << "EAX " << axis<<" "<< ((enableAxis==TRUE)?"1":"0");
+    if (!deviceProxy_->SendGCSCommand( command.str() ))
+    {
+        return false;
+    }
+
+    return CheckError(hasEAX_);
 };
 
 int PIGCSControllerCom::GetError()
@@ -475,7 +548,10 @@ bool PIGCSControllerCom::MOV(const std::string& axis, const double* target)
 	{
 		return false;
 	}
-	//No error check due to performance issues
+    if (errorCheckAfterMOV_)
+    {
+        return CheckError ();
+    }
 	return true;
 }
 
@@ -487,8 +563,11 @@ bool PIGCSControllerCom::MOV(const std::string& axis1, const std::string& axis2,
 	{
 		return false;
 	}
-	//No error check due to performance issues
-	return true;
+    if (errorCheckAfterMOV_)
+    {
+        return CheckError ();
+    }
+    return true;
 }
 
 bool PIGCSControllerCom::FRF(const std::string& axes)
@@ -637,12 +716,16 @@ bool PIGCSControllerCom::qVEL(const std::string& axis, double* velocity)
 	std::ostringstream command;
 	command << "VEL? " << axis;
 	std::vector<std::string> answer;
-	if (!deviceProxy_->GCSCommandWithAnswer(command.str(), answer, 1))
-		return false;
-	double value;
-	if (!GetValue(answer[0], value))
-		return false;
-	*velocity = value;
+    if (deviceProxy_->GCSCommandWithAnswer (command.str (), answer, 1))
+    {
+        double value;
+        if (GetValue (answer[0], value))
+        {
+            *velocity = value;
+            return true;
+        }
+
+    }
 	return CheckError(hasVEL_);
 }
 

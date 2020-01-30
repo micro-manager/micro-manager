@@ -569,12 +569,12 @@ public:
    void setSLMExposure(const char* slmLabel, double exposure_ms)
       throw (CMMError);
    double getSLMExposure(const char* slmLabel) throw (CMMError);
-   unsigned getSLMWidth(const char* slmLabel);
-   unsigned getSLMHeight(const char* slmLabel);
-   unsigned getSLMNumberOfComponents(const char* slmLabel);
-   unsigned getSLMBytesPerPixel(const char* slmLabel);
+   unsigned getSLMWidth(const char* slmLabel) throw (CMMError);
+   unsigned getSLMHeight(const char* slmLabel) throw (CMMError);
+   unsigned getSLMNumberOfComponents(const char* slmLabel) throw (CMMError);
+   unsigned getSLMBytesPerPixel(const char* slmLabel) throw (CMMError);
 
-   long getSLMSequenceMaxLength(const char* slmLabel);
+   long getSLMSequenceMaxLength(const char* slmLabel) throw (CMMError);
    void startSLMSequence(const char* slmLabel) throw (CMMError);
    void stopSLMSequence(const char* slmLabel) throw (CMMError);
    void loadSLMSequence(const char* slmLabel,
@@ -665,6 +665,7 @@ private:
    long pollingIntervalMs_;
    long timeoutMs_;
    bool autoShutter_;
+   std::vector<double> *nullAffine_;
    MM::Core* callback_;                 // core services for devices
    ConfigGroupCollection* configGroups_;
    CorePropertyCollection* properties_;

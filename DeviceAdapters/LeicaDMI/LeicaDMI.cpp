@@ -3008,6 +3008,10 @@ int AFC::Initialize()
 
 int AFC::Shutdown() 
 {
+   // 2019-05-24: Mailing list reports that AFC messages prevent 
+   // re-loading config files.  this should be evaluated more
+   // thoroughly, but for now stop AFC reporting here
+   g_ScopeInterface.StopAFCReporting(*this, *GetCoreCallback());
    return 0;
 }
 
@@ -3076,6 +3080,9 @@ bool AFC::IsContinuousFocusLocked() {
 }
 
 int AFC::FullFocus() {
+   bool wasEnabled = false;
+   GetContinuousFocusing(wasEnabled);
+
    int ret = SetContinuousFocusing(true);
    if (ret != DEVICE_OK)
       return ret;
@@ -3092,6 +3099,9 @@ int AFC::FullFocus() {
       return DEVICE_LOCALLY_DEFINED_ERROR;
    }
    CDeviceUtils::SleepMs(fullFocusTime_);
+
+   if (wasEnabled)
+      return DEVICE_OK;
    ret = SetContinuousFocusing(false);
    return ret;
 }

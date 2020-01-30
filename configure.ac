@@ -1,4 +1,3 @@
-
 AC_PREREQ([2.64])
 AC_INIT([Micro-Manager], [1.4], [info@micro-manager.org])
 AC_CONFIG_MACRO_DIR([m4])
@@ -16,7 +15,7 @@ AC_PROG_CC([clang llvm-gcc gcc cc])
 
 # Testing (googletest, googlemock)
 # See testing/setuptesting.sh
-MM_GMOCK([$srcdir/testing/googletest], [\$(top_srcdir)/testing/googletest])
+MM_GMOCK([$srcdir/testing/gmock], [\$(top_srcdir)/testing/gmock])
 AM_CONDITIONAL([BUILD_CPP_TESTS], [test "x$have_gmock" = xyes])
 
 
@@ -310,14 +309,11 @@ build_magellan=yes
 AC_CHECK_FILE([$srcdir/../3rdparty/classext/DT1.2.jar],
               [],
               [build_magellan=no])
-AC_CHECK_FILE([$srcdir/../3rdparty/classext/ij3d-bin.jar],
-              [],
-              [build_magellan=no])
-AC_CHECK_FILE([$srcdir/../3rdparty/classext/ima3d_.jar],
-              [],
-              [build_magellan=no])
 AM_CONDITIONAL([BUILD_MAGELLAN],
                [test "x$build_magellan" = xyes])
+#AM_CONDITIONAL([BUILD_MAGELLAN],
+#               [false])
+
 
 # Java dependencies.
 AC_ARG_ENABLE([install-dependency-jars],
@@ -382,8 +378,10 @@ AC_CONFIG_FILES(m4_strip([
    MMCorePy_wrap/Makefile
    mmstudio/Makefile
    acqEngine/Makefile
-   plugins/Makefile
+   libraries/Makefile
    autofocus/Makefile
+   plugins/Makefile
+   mmAsImageJMacros/Makefile
    scripts/Makefile
    systemtest/Makefile
    systemtest/SequenceTests/Makefile

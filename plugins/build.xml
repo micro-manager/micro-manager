@@ -4,21 +4,9 @@
 		<attribute name="target"/>
 		<attribute name="failonerror" default="true"/>
 		<sequential>
-			<if>
-				<istrue value="${mm.platform.is.windows}"/>
-				<then>
-					<subant target="@{target}" failonerror="@{failonerror}">
-						<fileset dir="." includes="*/build.xml"/>
-					</subant>
-				</then>
-				<else>
-					<subant target="@{target}" failonerror="@{failonerror}">
-						<fileset dir="." includes="*/build.xml">
-							<exclude name="DLLAutoReloader/build.xml"/>
-						</fileset>
-					</subant>
-				</else>
-			</if>
+			<subant target="@{target}" failonerror="@{failonerror}">
+				<fileset dir="." includes="*/build.xml"/>
+			</subant>
 		</sequential>
 	</macrodef>
 

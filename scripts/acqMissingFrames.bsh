@@ -1,0 +1,38 @@
+
+
+import org.micromanager.data.Coords;
+import org.micromanager.data.Image;
+import org.micromanager.data.Datastore;
+import org.micromanager.display.DisplayWindow;
+import java.util.List;
+import java.util.ArrayList;
+
+import mmcorej.TaggedImage;
+
+Datastore store = mm.data().createRAMDatastore();
+axisOrder = new ArrayList();
+axisOrder.add("channel");
+axisOrder.add("time");
+store.setSummaryMetadata(mm.data().getSummaryMetadataBuilder().axisOrder(axisOrder).build());
+DisplayWindow display = mm.displays().createDisplay(store);
+mm.displays().manage(store);
+
+for (int t=0; t < 10; t++) {
+	mm.getCore().snapImage();
+	TaggedImage tmp = mm.getCore().getTaggedImage();
+	Image image1 = mm.data().convertTaggedImage(tmp);
+	image1 = image1.copyAtCoords(image1.getCoords().copy().channel(0).t(t).build());
+	store.putImage(image1);
+
+	//if (t % 3 == 0) {
+		mm.getCore().snapImage();		
+		tmp = mm.getCore().getTaggedImage();
+		Image image2 = mm.data().convertTaggedImage(tmp);
+		image2 = image2.copyAtCoords(image1.getCoords().copy().channel(1).t(t).build());
+		store.putImage(image2);
+	//}
+}
+
+store.freeze();
+//store.save(Datastore.SaveMode.MULTIPAGE_TIFF, saveLocation);
+//store.close();

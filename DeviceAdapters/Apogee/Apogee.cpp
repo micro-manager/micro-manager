@@ -184,7 +184,7 @@ int CApogeeCamera::Initialize()
         // Initialize camera using the ICamDiscover properties
         try {
             hr = ApgCam->Init((Apn_Interface)m_nInterfaceType, m_nCamIdOne, m_nCamIdTwo, 0x0 );
-        } catch(_com_error& e) {
+        } catch(_com_error& /* e */) {
             printf("Failed to connect to pre-configured camera\n" );
             ApgCam = NULL;
             CoUninitialize();

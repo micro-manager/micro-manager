@@ -1,6 +1,6 @@
 <project name="mmstudio" basedir="." default="jar">
 	<!-- Not sure how it got the name "MMJ_", but we'd need significant
-	     planning to change it -->
+		 planning to change it -->
 	<property name="product" value="MMJ_"/>
 
 	<import file="../buildscripts/javabuild.xml"/>
@@ -15,20 +15,15 @@
 	</path>
 
 	<!-- Override javabuild.xml's 'copy-files' target -->
-	<property name="src.pkgroot" location="${srcdir}/org/micromanager"/>
-	<property name="int.pkgroot" location="${intdir}/org/micromanager"/>
 	<target name="copy-files" depends="mm.javabuild.copy-files">
-		<copy todir="${int.pkgroot}/icons">
-			<fileset dir="${src.pkgroot}/icons">
+		<copy todir="${intdir}">
+			<fileset dir="${rscdir}">
 				<include name="**/*.png"/>
 				<include name="**/*.gif"/>
 			</fileset>
-		</copy>
-		<copy todir="${int.pkgroot}/conf2">
-			<fileset dir="${src.pkgroot}/conf2" includes="*.html"/>
-		</copy>
-		<copy todir="${int.pkgroot}/scriptpanel">
-			<fileset dir="${src.pkgroot}/scriptpanel" includes="*.bsh"/>
+        </copy>
+		<copy todir="${intdir}">
+			<fileset dir="${scriptdir}"/>
 		</copy>
 		<copy tofile="${intdir}/plugins.config" file="bin/plugins_mmstudio.config"/>
 	</target>
@@ -37,7 +32,7 @@
 	<target name="jar" depends="compile,copy-files">
 		<mkdir dir="${outdir}"/>
 		<mm-jar basedir="${intdir}" destfile="${jarfile}">
-			<attribute name="Main-Class" value="org.micromanager.MMStudio"/>
+			<attribute name="Main-Class" value="org.micromanager.internal.MMStudio"/>
 		</mm-jar>
 	</target>
 </project>

@@ -1,8 +1,0 @@
-<project name="DLLAutoReloader" default="jar">
-	<property name="plugin.path" value="Developer_Tools"/>
-	<property name="namespace" value="DLLAutoReloader.plugin"/>
-	<import file="../clojurepluginbuild.xml"/>
-	<path id="plugin.classpath">
-		<pathelement location="${mm.java.lib.acq-engine}"/>
-	</path>
-</project>

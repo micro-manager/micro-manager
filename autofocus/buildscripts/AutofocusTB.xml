@@ -1,4 +1,4 @@
 <project name="MMAutofocusTB" default="jar">
-	<property name="sourcefile" value="AutofocusTB.java"/>
+    <property name="sourcefile" value="src/main/java/org/micromanager/autofocus/AutofocusTB.java"/>
 	<import file="autofocusbuild.xml"/>
 </project>

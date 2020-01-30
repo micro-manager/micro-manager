@@ -39,13 +39,12 @@
 #error Missing current pco library (in camera.h). Please copy pco lib into correct library/include folder.
 #endif
 
-#define KAMLIBVERSION_MM 250  // Will be incremented by pco when a new Kamlib is present (do not change)
+#define KAMLIBVERSION_MM 253  // Will be incremented by pco when a new Kamlib is present (do not change)
 #if KAMLIBVERSION != KAMLIBVERSION_MM
 #define STRING2(x) #x
 #define STRING(x) STRING2(x)
 #pragma message ("*****************************************************************************************")
-#pragma message ("* Please upgrade Kamlib library to current version!")
-#pragma message ("* Copy the content of the pco_generic.zip file to the correct library/include folder.")
+#pragma message ("* Kamlib library and header version mismatch!")
 #pragma message ("* Current kamblib version:" STRING(KAMLIBVERSION))
 #pragma message ("*    This kamblib version:" STRING(KAMLIBVERSION_MM))
 #pragma message ("*****************************************************************************************")
@@ -196,6 +195,7 @@ private:
     bool stop_;
     long numImages_;
     int m_svcWidth, m_svcHeight, m_svcBytePP;
+
   };
 
   SequenceThread* sthd_;

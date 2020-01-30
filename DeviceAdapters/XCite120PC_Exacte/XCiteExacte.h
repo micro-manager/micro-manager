@@ -73,6 +73,7 @@ public:
    int OnOutputPower(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGetPowerFactor(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGetLampHours(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnGetOnTime(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnUnitStatusAlarmState(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnUnitStatusLampState(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnUnitStatusShutterState(MM::PropertyBase* pProp, MM::ActionType eAct);

@@ -1,10 +1,9 @@
 /*
 File:		Madlib.h
-Copyright:	Mad City Labs Inc., 2008
+Copyright:	Mad City Labs Inc., 2019
 License:	Distributed under the BSD license.
 */
-#ifndef _MADLIB_H_
-#define _MADLIB_H_
+#pragma once
 
 #define		MCL_SUCCESS				 0
 #define     MCL_GENERAL_ERROR		-1
@@ -17,6 +16,7 @@ License:	Distributed under the BSD license.
 #define		MCL_INVALID_HANDLE		-8
 #define		MCL_INVALID_DRIVER      -9
 #define		MCL_SEQ_NOT_VALID		-10
+#define		MCL_BLOCKED_BY_TIRFLOCK -11
 
 #pragma pack(push, 1)
 struct ProductInformation {
@@ -37,7 +37,7 @@ struct ProductInformation {
 
 #define MADLIB_API
 
-MADLIB_API	bool	MCL_InitLibrary(void *heap);
+MADLIB_API	bool	MCL_InitLibrary();
 MADLIB_API  void	MCL_ReleaseLibrary();
 
 MADLIB_API  int		MCL_GrabAllHandles();
@@ -61,6 +61,4 @@ MADLIB_API  bool    MCL_CorrectDriverVersion();
 
 #ifdef __cplusplus
 	}
-#endif
-
 #endif

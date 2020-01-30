@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="svg6186"
+   sodipodi:docname="wrench.svg"
+   viewBox="0 0 29.414 50.198"
+   sodipodi:version="0.32"
+   version="1.0"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   inkscape:version="0.48.5 r10040"
+   width="100%"
+   height="100%">
+  <defs
+     id="defs6188">
+    <filter
+       id="filter5213"
+       inkscape:collect="always">
+      <feGaussianBlur
+         id="feGaussianBlur5215"
+         stdDeviation="1.8833447"
+         inkscape:collect="always" />
+    </filter>
+    <clipPath
+       id="clipPath5223"
+       clipPathUnits="userSpaceOnUse">
+      <path
+         id="path5225"
+         sodipodi:nodetypes="cccccccccc"
+         style="stroke:#000000;stroke-width:2;fill:none"
+         d="m428.5 319.86l-4.78-5.88 0.04-6 1.51-0.89 0.19-60.29c-13.25 1.75-23.39 7.8-30.04 19l-32.05 53.82-14.66 19.78-3.61 8.22 35.27 0.11" />
+    </clipPath>
+    <filter
+       id="filter5179"
+       inkscape:collect="always">
+      <feGaussianBlur
+         id="feGaussianBlur5181"
+         stdDeviation="2.0614239"
+         inkscape:collect="always" />
+    </filter>
+    <clipPath
+       id="clipPath5195"
+       clipPathUnits="userSpaceOnUse">
+      <path
+         id="path5197"
+         style="stroke:#000000;stroke-width:2;fill:none"
+         d="m508.97 308.78c-1.13 10.2-13.13 13.36-21.88 13.25-33.49-0.12-66.98-0.24-100.47-0.34 6.31 36.53 13.16 75.73-0.93 111.31-10.14 25.47-23.96 49.21-35.29 74.16-35.93 74.09-72.71 147.71-107.93 222.15-6.55 18.9 9.12 41.07 28.94 41.53 13.69 1.08 27.79-7.81 32.47-20.53-7.47 15.77-28.78 23.16-44.13 14.35-16.33-8.45-22.34-31.72-11.28-46.63 10-15.17 33.62-18.8 47.22-6.15 9.43 7.97 13.84 21.59 10.06 33.59 43.16-101.38 85.52-203.16 129.2-304.29 18.05-35.52 54.23-55.71 84.7-79.24 9.57-6.76 19.93-14.87 21.17-27.51 3.47-22.42-3.12-45.6-14.16-65.15-4.38-7.23-10.07-13.9-17.47-18.12-0.08 19.2-0.15 38.41-0.22 57.62zm-77.53 30.84c7.19 0.88 16.19-1.98 22.03 3.41 6.31 8.03 1.7 18.99 3.02 28.25-0.2 10.47 1.11 21.31-1.05 31.56-4.36 8.78-15.81 6.06-23.69 6.04-9.13-0.41-19.13 1.96-27.75-1.66-8.16-5.95-4.03-17.51-4.81-25.97 0.41-11.79-1.49-24.05 1.15-35.56 3.65-7.69 13.1-5.84 19.97-5.89 3.71-0.03 7.42-0.14 11.13-0.18z" />
+    </clipPath>
+    <filter
+       id="filter5126"
+       inkscape:collect="always">
+      <feGaussianBlur
+         id="feGaussianBlur5128"
+         stdDeviation="1.7020065"
+         inkscape:collect="always" />
+    </filter>
+    <clipPath
+       id="clipPath5106"
+       clipPathUnits="userSpaceOnUse">
+      <path
+         id="path5108"
+         sodipodi:nodetypes="csszz"
+         style="stroke:#000000;stroke-width:1px;fill:none"
+         d="m87.043 306.39c-13.918 28.34-102.02 214.15-105.06 220.21-15.148 30.31 28.289 57.58 47.482 14.14 19.192-43.43 81.005-191.03 91.925-219.2 11.59-29.92-20.46-43.44-34.347-15.15z" />
+    </clipPath>
+    <filter
+       id="filter5034"
+       inkscape:collect="always">
+      <feGaussianBlur
+         id="feGaussianBlur5036"
+         stdDeviation="3.4532835"
+         inkscape:collect="always" />
+    </filter>
+    <clipPath
+       id="clipPath5130"
+       clipPathUnits="userSpaceOnUse">
+      <path
+         id="path5132"
+         style="stroke:#f21944;fill:none"
+         d="m513.18 245.01l-0.2 63.78c-0.67 6.56-10.05 9.47-19.68 9.22l-103.38-0.32c5.49 37.16 17.33 80.16-4.89 125.7l-134.74 276.14c-2.98 6.12-5.22 11.88-5.24 18.74-0.07 20.13 16.19 36.52 36.32 36.58 14.78 0.05 27.9-8.58 33.32-21.36l128.22-302.82c19.9-46.99 66.27-65.53 100.96-96.94 22.96-20.78 3.38-98.39-30.69-108.72zm-59.62 98.75c3.89 0.01 7.01 3.17 7.01 7.06l-0.05 47.21c-0.01 3.89-3.14 7.02-7.03 7.01l-35.4-0.04c-3.89-0.01-7.02-3.17-7.01-7.06l0.05-47.22c0.01-3.89 3.14-7.01 7.02-7.01l35.41 0.05zm-170.55 364.44c15.51 0.05 28.03 12.65 27.98 28.15s-12.65 28.05-28.15 28.01c-15.5-0.05-28.06-12.68-28.01-28.19 0.05-15.5 12.68-28.02 28.18-27.97z" />
+    </clipPath>
+    <filter
+       id="filter5263"
+       inkscape:collect="always">
+      <feGaussianBlur
+         id="feGaussianBlur5265"
+         stdDeviation="1.2585653"
+         inkscape:collect="always" />
+    </filter>
+    <clipPath
+       id="clipPath5259"
+       clipPathUnits="userSpaceOnUse">
+      <path
+         id="path5261"
+         style="stroke:#ffffff;stroke-width:2;fill:none"
+         d="m407.31 251.56c-13.17 2.47-22.13 13.46-27.64 24.92-13.58 22.73-26.25 46.19-42.79 66.86 6.32 1.35 13.85-0.71 20.56 0.54 10.96 1.43 18.91-7.68 28.21-11.9 7.52-4.36 15.05-8.72 22.57-13.07-3.78-4.42-2.94-10.42-1.25-15.35 0.85-17.26 0.26-34.98 0.34-52z" />
+    </clipPath>
+    <linearGradient
+       id="linearGradient6178"
+       y2="363.49"
+       gradientUnits="userSpaceOnUse"
+       x2="425.27"
+       gradientTransform="matrix(1,0.0031257,-0.0031257,1,20.487,8.5942)"
+       y1="410.49"
+       x1="425.27"
+       inkscape:collect="always">
+      <stop
+         id="stop22606"
+         style="stop-color:#000000"
+         offset="0" />
+      <stop
+         id="stop22608"
+         style="stop-color:#000000;stop-opacity:0"
+         offset="1" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient6178"
+       id="linearGradient4758"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.08823906,0.03242909,-0.03242909,0.08823906,261.7607,441.28462)"
+       x1="425.27"
+       y1="410.49"
+       x2="425.27"
+       y2="363.49" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     bordercolor="#666666"
+     inkscape:pageshadow="2"
+     guidetolerance="10"
+     pagecolor="#ffffff"
+     gridtolerance="10000"
+     inkscape:window-height="625"
+     inkscape:zoom="5.6568542"
+     objecttolerance="10"
+     borderopacity="1.0"
+     inkscape:current-layer="layer1"
+     inkscape:cx="6.0129633"
+     inkscape:cy="20.15157"
+     inkscape:window-y="0"
+     inkscape:window-x="5"
+     inkscape:window-width="957"
+     inkscape:pageopacity="0.0"
+     inkscape:document-units="px"
+     showgrid="false"
+     inkscape:window-maximized="0" />
+  <g
+     id="layer1"
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     transform="translate(-265.29 -472.98)">
+    <path
+       inkscape:connector-curvature="0"
+       d="m 283.89689,486.97102 c -0.21026,-0.53272 -0.0177,-1.13593 0.44504,-1.45369"
+       style="color:#000000;fill:#616161;fill-rule:evenodd;stroke:#000000;stroke-width:0.18801799"
+       sodipodi:nodetypes="cs"
+       id="path5860"
+       inkscape:export-filename="/Users/chriswei/wrench.png"
+       inkscape:export-xdpi="37.561028"
+       inkscape:export-ydpi="37.561028" />
+    <path
+       inkscape:connector-curvature="0"
+       d="m 284.41316,483.45537 -0.0635,0.70219 0.20728,0.0764 0.12586,-0.17828 0.28806,-0.40937 -0.55776,-0.19098 z"
+       style="color:#000000;fill:#616161;fill-rule:evenodd;stroke:#000000;stroke-width:0.18801799"
+       sodipodi:nodetypes="cccc"
+       id="path5868"
+       inkscape:export-filename="/Users/chriswei/wrench.png"
+       inkscape:export-xdpi="37.561028"
+       inkscape:export-ydpi="37.561028" />
+    <path
+       inkscape:connector-curvature="0"
+       d="m 290.56709,482.35264 c 0.9485,-0.3316 0.28752,2.0485 0.3587,-0.55878 l 1.95532,-5.31987 c -1.22677,-0.27143 -1.2564,0.11378 -2.20397,0.88935 l -4.56175,3.72395 -0.34006,1.45276 0.65423,1.67074 0.28379,-0.0937"
+       style="fill:#a4a4a4;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none"
+       sodipodi:nodetypes="cccccccc"
+       id="path5874"
+       inkscape:export-filename="/Users/chriswei/wrench.png"
+       inkscape:export-xdpi="37.561028"
+       inkscape:export-ydpi="37.561028" />
+    <g
+       transform="matrix(0.08823906,0.03242909,-0.03242909,0.08823906,251.89609,460.49542)"
+       id="g5906"
+       inkscape:export-filename="/Users/chriswei/wrench.png"
+       inkscape:export-xdpi="37.561028"
+       inkscape:export-ydpi="37.561028">
+      <path
+         inkscape:connector-curvature="0"
+         d="m 434.92,162.91 -5.16,-19.25"
+         style="fill:none;stroke:#000000;stroke-width:1px"
+         sodipodi:nodetypes="cc"
+         id="path5908" />
+      <path
+         inkscape:connector-curvature="0"
+         d="m 429.78,161.35 0.42,1.56 h 5.03 l 1.64,-6.12"
+         style="fill:none;stroke:#000000;stroke-width:1px"
+         sodipodi:nodetypes="cccc"
+         id="path5910" />
+    </g>
+    <path
+       inkscape:connector-curvature="0"
+       d="m 298.56691,478.33257 -2.06838,5.62787 c -0.27013,0.55796 -1.1923,0.51343 -2.03498,0.18171 l -9.12225,-3.35226 c -0.70981,3.45922 -1.04645,7.63851 -4.4736,10.94706 l -15.98338,15.89492 c -0.46002,0.44482 -0.8431,0.88163 -1.06544,1.48699 -0.65382,1.77589 0.25599,3.74672 2.03233,4.39926 1.30396,0.47992 2.74054,0.13912 3.63026,-0.8156 l 16.26525,-18.46144 c 3.26883,-3.51124 7.96124,-3.65812 12.03566,-5.31748 2.69642,-1.09746 3.46213,-8.58305 0.78454,-10.59105 z"
+       style="fill:#a4a4a4;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none"
+       id="path5878"
+       inkscape:export-filename="/Users/chriswei/wrench.png"
+       inkscape:export-xdpi="37.561028"
+       inkscape:export-ydpi="37.561028"
+       sodipodi:nodetypes="ccccccccccccc" />
+    <path
+       sodipodi:nodetypes="ccccccc"
+       inkscape:export-ydpi="37.561028"
+       inkscape:export-xdpi="37.561028"
+       inkscape:export-filename="/Users/chriswei/wrench.png"
+       id="path5278"
+       style="fill:#ff8000;fill-opacity:1;fill-rule:evenodd;stroke:none"
+       d="m 280.8677,491.73695 -15.98338,15.89492 c -0.46002,0.44482 -0.8431,0.88163 -1.06544,1.48699 -0.65382,1.77589 0.25599,3.74672 2.03233,4.39926 1.30396,0.47992 2.74054,0.13912 3.63026,-0.8156 l 16.26525,-18.46144 c -0.0229,0.0276 -4.87902,-2.50413 -4.87902,-2.50413 z"
+       inkscape:connector-curvature="0" />
+  </g>
+  <metadata
+     id="metadata4687">
+    <rdf:RDF>
+      <cc:Work>
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/publicdomain/" />
+        <dc:publisher>
+          <cc:Agent
+             rdf:about="http://openclipart.org/">
+            <dc:title>Openclipart</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:title>Adjustable wrench - icon style</dc:title>
+        <dc:date>2007-10-22T14:25:20</dc:date>
+        <dc:description>This is a remix of http://openclipart.org/media/files/method/5077, however I could not link it. Details, shadows and highlights have been added for presentablility and thicker edges have been applied in order to make it more visible in icon sizes. The base SVG has been put into Public Domain by author jannev (http://commons.wikimedia.org/wiki/Image:Adjustable_wrench.svg)</dc:description>
+        <dc:source>https://openclipart.org/detail/7281/adjustable-wrench---icon-style-by-method</dc:source>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>method</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:subject>
+          <rdf:Bag>
+            <rdf:li>tool</rdf:li>
+            <rdf:li>wrench</rdf:li>
+          </rdf:Bag>
+        </dc:subject>
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/publicdomain/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+</svg>

@@ -65,7 +65,7 @@ if [ -z "$MM_VERSION" ]; then
    MM_VERSION="$(cat version.txt)"
    [ "$use_release_version" = yes ] || MM_VERSION="$MM_VERSION-$(date +%Y%m%d)"
 fi
-sed -e "s/@VERSION_STRING@/$MM_VERSION/" buildscripts/MMVersion.java.in > mmstudio/src/org/micromanager/MMVersion.java || exit
+sed -e "s/@VERSION_STRING@/$MM_VERSION/" buildscripts/MMVersion.java.in > mmstudio/src/main/java/org/micromanager/internal/MMVersion.java || exit
 
 if [ "$skip_autogen" != yes ]; then
    sh autogen.sh
@@ -121,9 +121,9 @@ $EVAL ./configure \
    --with-freeimageplus \
    --with-python=/usr \
    $MM_CONFIGUREFLAGS \
-   "JAVA_HOME=\"/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Home\"" \
-   "JNI_CPPFLAGS=\"-I$MM_MACOSX_SDKROOT/System/Library/Frameworks/JavaVM.framework/Versions/A/Headers\"" \
-   "JAVACFLAGS=\"-Xlint:all,-path,-serial -source 1.6 -target 1.6\"" \
+   "JAVA_HOME=\"/Library/Java/JavaVirtualMachines/jdk1.8.0/Contents/Home\"" \
+   "JNI_CPPFLAGS=\"-I/Library/Java/JavaVirtualMachines/jdk1.8.0/Contents/Home/include -I/Library/Java/JavaVirtualMachines/jdk1.8.0/Contents/Home/include/darwin\"" \
+   "JAVACFLAGS=\"-Xlint:all,-path,-serial -source 1.8 -target 1.8\"" \
    "OPENCV_LDFLAGS=\"-framework Cocoa -framework QTKit -framework QuartzCore -framework AppKit\"" \
    "OPENCV_LIBS=\"$MM_DEPS_PREFIX/lib/libopencv_highgui.a $MM_DEPS_PREFIX/lib/libopencv_imgproc.a $MM_DEPS_PREFIX/lib/libopencv_core.a -lz $MM_DEPS_PREFIX/lib/libdc1394.la\"" \
    PKG_CONFIG=$MM_DEPS_PREFIX/bin/pkg-config \
@@ -193,8 +193,21 @@ buildscripts/nightly/mkportableapp_OSX/mkportableapp.py \
 
 
 # Stage third-party JARs.
-cp $MM_SRCDIR/dependencies/artifacts/{compile,optional,runtime}/*.jar $MM_JARDIR
-cp $MM_SRCDIR/dependencies/artifacts/imagej/ij-*.jar $MM_STAGEDIR/ij.jar
+for artifact_dir in compile optional runtime; do
+   if ls $MM_SRCDIR/dependencies/artifacts/$artifact_dir/*.jar 1>/dev/null; then
+      cp $MM_SRCDIR/dependencies/artifacts/$artifact_dir/*.jar $MM_JARDIR
+   fi
+done
+# Include jogl/gluegen native libraries.  
+mkdir -p $MM_STAGEDIR/natives/macosx-universal
+cp ../3rdpartypublic/javalib3d/lib/natives/macosx-universal/* $MM_STAGEDIR/natives/macosx-universal/
+
+# ij.jar goes into the ImageJ.app directory
+# Note: this copying step messes up the code signing that previously happened
+# So, for now, rely on the copy of ij.jar in the repository.  
+# Revisit this once we are signing the app ourselves.
+#mkdir -p $MM_STAGEDIR/ImageJ.app/Contents/Java
+#cp $MM_SRCDIR/dependencies/artifacts/imagej/ij-*.jar $MM_STAGEDIR/ImageJ.app/Contents/Java/ij.jar
 
 # Ensure no SVN data gets into the installer (e.g. when copying from bindist/)
 find $MM_STAGEDIR -name .svn -prune -exec rm -rf {} +
@@ -207,8 +220,9 @@ fi
 
 # Apply ad-hoc signature to the launchers, to prevent "damaged" messages on
 # Mountain Lion and later.
-codesign -s - -f $MM_STAGEDIR/ImageJ.app/Contents/MacOS/JavaApplicationStub
-codesign -s - -f $MM_STAGEDIR/ImageJ64.app/Contents/MacOS/JavaApplicationStub
+# This now creates problems.  Try to verbatim copy the ImageJ.app
+# Revisit once we have our own developer keys
+# codesign -s - -f $MM_STAGEDIR/ImageJ.app
 
 if [ "$make_disk_image" != yes ]; then
    exit 0
@@ -222,13 +236,14 @@ fi
 cd $MM_BUILDDIR
 rm -f Micro-Manager.dmg Micro-Manager.sparseimage
 
-hdiutil convert $MM_SRCDIR/MacInstaller/Micro-Manager1.4.dmg -format UDSP -o Micro-Manager.sparseimage
+hdiutil convert $MM_SRCDIR/MacInstaller/Micro-Manager.dmg -format UDSP -o Micro-Manager.sparseimage
 mkdir -p mm-mnt
 hdiutil attach Micro-Manager.sparseimage -mountpoint mm-mnt
-cp -R $MM_STAGEDIR/* mm-mnt/Micro-Manager1.4
+cp -R $MM_STAGEDIR/* mm-mnt/Micro-Manager
+mv mm-mnt/Micro-Manager mm-mnt/Micro-Manager-$MM_VERSION
 hdiutil detach mm-mnt
 rmdir mm-mnt
-hdiutil convert Micro-Manager.sparseimage -format UDBZ -o Micro-Manager$MM_VERSION.dmg
+hdiutil convert Micro-Manager.sparseimage -format UDBZ -o Micro-Manager-$MM_VERSION.dmg
 
 
 ##

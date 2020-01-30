@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="svg11300"
+   sodipodi:docname="emblem-system.svg"
+   inkscape:export-filename="/home/jimmac/Desktop/wi-fi.png"
+   viewBox="0 0 48 48"
+   sodipodi:version="0.32"
+   inkscape:export-xdpi="90.000000"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   inkscape:export-ydpi="90.000000"
+   inkscape:version="0.48.5 r10040"
+   version="1.1"
+   width="100%"
+   height="100%">
+  <defs
+     id="defs3">
+    <linearGradient
+       x1="14.463"
+       y1="12.285"
+       gradientTransform="matrix(1.2419,0,0,1.2419,-5.0275,-7.209)"
+       x2="34.534"
+       gradientUnits="userSpaceOnUse"
+       y2="39.685001"
+       id="linearGradient3829">
+      <stop
+         offset="0"
+         style="stop-color:#c9c9c9"
+         id="stop3831" />
+      <stop
+         offset=".25"
+         style="stop-color:#f8f8f8"
+         id="stop3833" />
+      <stop
+         offset=".5"
+         style="stop-color:#e2e2e2"
+         id="stop3835" />
+      <stop
+         offset=".75"
+         style="stop-color:#b0b0b0"
+         id="stop3837" />
+      <stop
+         offset="1"
+         style="stop-color:#c9c9c9"
+         id="stop3839" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient3281"
+       y2="39.685001"
+       gradientUnits="userSpaceOnUse"
+       x2="34.534"
+       gradientTransform="matrix(1.2419,0,0,1.2419,-5.0275,-7.209)"
+       y1="12.285"
+       x1="14.463"
+       spreadMethod="pad">
+      <stop
+         id="stop3266"
+         style="stop-color:#646464;stop-opacity:1;"
+         offset="0" />
+      <stop
+         id="stop3276"
+         style="stop-color:#f8f8f8"
+         offset="0.375" />
+      <stop
+         id="stop3272"
+         style="stop-color:#b4b4b4;stop-opacity:1;"
+         offset="0.49776787" />
+      <stop
+         id="stop3274"
+         style="stop-color:#646464;stop-opacity:1;"
+         offset="1" />
+    </linearGradient>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     bordercolor="#666666"
+     inkscape:pageshadow="2"
+     inkscape:window-y="0"
+     pagecolor="#ffffff"
+     inkscape:showpageshadow="false"
+     inkscape:grid-bbox="true"
+     inkscape:zoom="8"
+     inkscape:cx="4.096843"
+     inkscape:window-height="732"
+     showgrid="false"
+     borderopacity="0.25490196"
+     inkscape:current-layer="layer1"
+     stroke="#ef2929"
+     inkscape:cy="24.266212"
+     inkscape:window-x="37"
+     inkscape:window-width="1121"
+     inkscape:pageopacity="0.0"
+     inkscape:document-units="px"
+     fill="#eeeeec"
+     inkscape:window-maximized="0" />
+  <g
+     id="layer1"
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer">
+    <path
+       id="path3243"
+       style="color:#000000;stroke:#646464;fill:url(#linearGradient3281);fill-opacity:1;stroke-opacity:1"
+       d="m23.25 0.46875c-0.465 0.03185-0.918 0.10393-1.375 0.15625h-0.031l-1.094 5.9688c-1.783 0.4059-3.46 1.0949-4.969 2.0312l-4.906-3.5312c-1.3263 1.0296-2.5332 2.2305-3.5938 3.5312l3.4068 4.969c-1.0347 1.58-1.8125 3.385-2.2505 5.281-0.0001 0.009-0.0001 0.03 0 0.031l-5.9375 0.938c-0.1086 0.886-0.1562 1.803-0.1562 2.718 0 0.75 0.0206 1.489 0.0937 2.219l5.9375 1.063c0.4223 2.062 1.2245 3.987 2.344 5.687l-3.5315 4.844c1.0113 1.256 2.1789 2.399 3.4375 3.406l5-3.437c1.747 1.114 3.698 1.896 5.813 2.281l0.937 5.906c0.666 0.061 1.349 0.063 2.031 0.063 0.963 0 1.882-0.037 2.813-0.156l1.125-6.032c2.007-0.499 3.893-1.366 5.531-2.531l4.813 3.5c1.248-1.062 2.389-2.282 3.374-3.594l-3.5-5.062c0.948-1.637 1.605-3.443 1.938-5.375l5.906-0.938c0.052-0.616 0.063-1.214 0.063-1.844 0-1.094-0.127-2.167-0.281-3.218l-6-1.094c-0.471-1.736-1.242-3.356-2.219-4.812l3.531-4.8442c-1.095-1.3387-2.343-2.5752-3.719-3.625l-5.093 3.5c-1.464-0.8659-3.04-1.5302-4.75-1.9063l-0.938-5.9375c-0.853-0.10038-1.714-0.15625-2.594-0.15625-0.238 0-0.482-0.00748-0.718 0-0.116 0.00365-0.229-0.00669-0.344 0-0.031 0.00181-0.063-0.00212-0.094 0zm0.812 15.187c0.115-0.006 0.229 0 0.344 0 3.699 0 6.719 3.02 6.719 6.719s-3.02 6.687-6.719 6.687c-3.699 0.001-6.687-2.988-6.687-6.687 0-3.584 2.804-6.539 6.343-6.719z"
+       inkscape:export-filename="/Users/chriswei/Downloads/gear.png"
+       inkscape:export-xdpi="127.65"
+       inkscape:export-ydpi="127.65" />
+  </g>
+  <metadata
+     id="metadata3059">
+    <rdf:RDF>
+      <cc:Work>
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/publicdomain/" />
+        <dc:publisher>
+          <cc:Agent
+             rdf:about="http://openclipart.org/">
+            <dc:title>Openclipart</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:title>tango emblem system</dc:title>
+        <dc:date>2010-03-29T15:50:09</dc:date>
+        <dc:description>&quot;System&quot; icon from http://tango.freedesktop.org/Tango_Desktop_Project \n\n\nSince version 0.8.90 Tango Project icons are Public Domain: http://tango.freedesktop.org/Frequently_Asked_Questions#Terms_of_Use.3F</dc:description>
+        <dc:source>https://openclipart.org/detail/35533/tango-emblem-system-by-warszawianka</dc:source>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>warszawianka</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:subject>
+          <rdf:Bag>
+            <rdf:li>externalsource</rdf:li>
+            <rdf:li>gear</rdf:li>
+            <rdf:li>icon</rdf:li>
+            <rdf:li>metal</rdf:li>
+            <rdf:li>tango</rdf:li>
+          </rdf:Bag>
+        </dc:subject>
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/publicdomain/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+</svg>

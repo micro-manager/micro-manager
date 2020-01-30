@@ -1,0 +1,16 @@
+<project name="mmImageJMacro" basedir="." default="jar">
+	<property name="product" value="MM2MacroExtensions_"/>
+
+	<import file="../buildscripts/javabuild.xml"/>
+
+	<path id="project.classpath">
+		<path refid="mm.compile.classpath"/>
+      <pathelement location="${mm.java.lib.mmcorej}"/>
+      <pathelement location="${mm.java.lib.mmstudio}"/>
+	</path>
+
+	<path id="project.linked.jars">
+		<pathelement location="${mm.java.lib.mmcorej}"/>
+	</path>
+
+</project>

@@ -1,0 +1,3 @@
+<project name="ExampleLibrary" default="jar">
+	<import file="../javalibrarybuild.xml"/>
+</project>

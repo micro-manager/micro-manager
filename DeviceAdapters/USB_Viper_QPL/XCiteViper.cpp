@@ -516,19 +516,11 @@ int MCCDaqShutter::OnOnOff(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       long pos;
       pProp->Get(pos);
-      int ret;
-	  // Old
-      //if (pos == 0)
-      //   ret = WriteToPort(0); // turn everything off
-      //else
-		// ret = WriteToPort(1 << (channel_ - 1));
-		 // End Old
-		 // New
-		 ret = WriteToPin(channel_ - 1, pos);
-
-		// End new
+	   int ret = WriteToPin(channel_ - 1, (unsigned short) pos);
       if (ret != DEVICE_OK)
+      {
          return ret;
+      }
       g_shutterState = pos;
       openTimeUs_ = GetClockTicksUs();
    }

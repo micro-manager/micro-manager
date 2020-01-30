@@ -1,0 +1,40 @@
+/**
+ * Script to change the pixelSize of a dataset.
+ * For safety reasons, a copy of the dataset is created
+ * All images have the new pixel size
+ * This script can be extended to change other metadata.
+ * Be careful with the powers you get here!
+ * 
+ * Copyright Regents of the University of California, 2018
+ * 
+ * Author: Nico Stuurman
+ * License: BSD License 2.0 (3-clause BSD license)
+ */
+
+double pixelSize = 0.039;
+
+import org.micromanager.data.Coords;
+import org.micromanager.data.Datastore;
+import org.micromanager.data.internal.DefaultDatastore;
+
+oldViewer =  mm.displays().getActiveDataViewer();
+oldStore = oldViewer.getDataProvider();
+
+Datastore newStore = mm.data().createRAMDatastore();
+newStore.setName(oldStore.getName() + "-Changed");
+newStore.setSummaryMetadata(oldStore.getSummaryMetadata().copyBuilder().build());
+
+newDisplay = mm.displays().createDisplay(newStore);
+mm.displays().manage(newStore);
+
+unorderedImageCoords = oldStore.getUnorderedImageCoords();
+
+for (Coords oldCoord : unorderedImageCoords) {
+	img = oldStore.getImage(oldCoord);
+	mb = img.getMetadata().copyBuilderWithNewUUID();
+	mb.pixelSizeUm(pixelSize);
+	newImage = img.copyWithMetadata(mb.build());
+	newStore.putImage(newImage);
+}
+
+newStore.freeze();

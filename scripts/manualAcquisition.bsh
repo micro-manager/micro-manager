@@ -1,0 +1,47 @@
+/**
+ * Run an acquisition that stops after each image to allow the user to
+ * manually adjust the microscope for the next channel.
+ * Nico Stuurman, UCSF, June 2012.
+ * nico@cmp.ucsf.edu
+ */
+
+
+import ij.gui.GenericDialog;
+
+
+mm.acquisitions().clearRunnables();
+
+runnable = new Runnable() {
+   int count = 0;
+   public void run() {
+      settings = mm.acquisitions().getAcquisitionSettings();
+      channels = settings.channels;
+      channel = channels.get(count);
+      // deal with useChannel_ flag
+      round = 0;
+      while (!channel.useChannel && round < channels.size()) {
+         count++;
+         if (count == channels.size()) {
+            count = 0;
+            round++;
+         }
+         channel = channels.get(count);
+      }
+      // show message and wait for response
+      GenericDialog dlg = new GenericDialog("Manual Acquisition", null);
+      dlg.addMessage("Move filters for channel " + channel.config + " in place");
+      dlg.showDialog();
+      print("Move channel " + channel.config + " in place");
+      ++count;
+      if (count >= channels.size()) {
+         count = 0;
+      }
+   }
+};
+
+// Run the runnable on all frames and channels,
+// but only when slize and position  are 0.
+// -1 --> attach to all planes along given dimension
+
+// Numbers are frames, stage positions, channels, slices
+mm.acquisitions().attachRunnable(-1, 0, -1, 0, runnable);

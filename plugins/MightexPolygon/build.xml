@@ -1,4 +1,0 @@
-<project name="MightexPolygon" default="jar">
-	<property name="plugin.path" value="Device_Control"/>
-	<import file="../javapluginbuild.xml"/>
-</project>

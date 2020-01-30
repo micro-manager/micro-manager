@@ -121,18 +121,24 @@ int XCiteExacte::Initialize()
 
    // Connect to hardware
    status = ExecuteCommand(cmdConnect);
-   if (status != DEVICE_OK)
-      return status;
+   if (status != DEVICE_OK) {
+		LogMessage("XCiteExacte: failed cmdConnect");
+	   return status;
+   }
 
    // Clear alarm
    status = ExecuteCommand(cmdClearAlarm);
-   if (status != DEVICE_OK)
+   if (status != DEVICE_OK){
+	   LogMessage("XCiteExacte: failed cmdClearAlarm");
       return status;
+   }
 
    // Enable Exacte extended commands
    status = ExecuteCommand(cmdEnableExtendedCommands);
-   if (status != DEVICE_OK)
+   if (status != DEVICE_OK){
+	   LogMessage("XCiteExacte: failed cmdEnableExtendedCommands");
       return status;
+   }
 
    // Lamp intensity
    CPropertyAction *pAct = new CPropertyAction(this, &XCiteExacte::OnIntensity);
@@ -141,8 +147,10 @@ int XCiteExacte::Initialize()
 
    // Initialize intensity from existing state
    status = ExecuteCommand(cmdGetIntensityLevel, NULL, 0, &response);
-   if (status != DEVICE_OK)
+   if (status != DEVICE_OK){
+	   LogMessage("XCiteExacte: failed cmdGetIntensityLevel");
       return status;
+   }
    lampIntensity_ = (long) atoi(response.c_str());
    sprintf(cBuff, "%03d", (int) lampIntensity_);
    SetProperty("Lamp-Intensity", cBuff);
@@ -262,24 +270,34 @@ int XCiteExacte::Initialize()
 
    // Enable PC control of shutter
    status = ExecuteCommand(cmdEnableShutterControl);
-   if (status != DEVICE_OK)
+   if (status != DEVICE_OK){
+	   LogMessage("XCiteExacte: failed cmdEnableShutterControl");
       return status;
+   }
 
    // Software version ("field")
    status = ExecuteCommand(cmdGetSoftwareVersion, NULL, 0, &response);
-   if (status != DEVICE_OK)
+   if (status != DEVICE_OK){
+	   LogMessage("XCiteExacte: failed cmdGetSoftwareVersion");
       return status;
+   }
    CreateProperty("Software-Version", response.c_str(), MM::String, true);
 
    // Serial number ("field")
    status = ExecuteCommand(cmdGetSerialNumber, NULL, 0, &response);
-   if (status != DEVICE_OK)
+   if (status != DEVICE_OK){
+	   LogMessage("XCiteExacte: failed cmdGetSerialNumber");
       return status;
+   }
    CreateProperty("Serial-Number", response.c_str(), MM::String, true);
 
    // Lamp hours ("field")
    pAct = new CPropertyAction(this, &XCiteExacte::OnGetLampHours);
    CreateProperty("Lamp-Hours", "Unknown", MM::String, true, pAct);
+   
+   // Time since lamp was turned on ("field")
+   pAct = new CPropertyAction(this, &XCiteExacte::OnGetOnTime);
+   CreateProperty("Lamp-On Time (s)", "Unknown", MM::String, true, pAct);
 
    // Unit status: Alarm State ("field")
    pAct = new CPropertyAction(this, &XCiteExacte::OnUnitStatusAlarmState);
@@ -327,8 +345,10 @@ int XCiteExacte::Initialize()
 
    // Update state based on existing status
    status = ExecuteCommand(cmdGetUnitStatus, NULL, 0, &response);
-   if (status != DEVICE_OK)
+   if (status != DEVICE_OK){
+	   LogMessage("XCiteExacte: failed cmdGetUnitStatus");
       return status;
+   }
    status = atoi(response.c_str());
    shutterOpen_ = 0 != (status & 4);
    SetProperty("Shutter-State", shutterOpen_ ? "Open" : "Closed");
@@ -680,7 +700,6 @@ int XCiteExacte::OnGetPowerFactor(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (0 != atoi(buff.c_str()))
          powerFactor_ = buff;
       LogMessage("XCiteExacte: Get Power Factor: " + powerFactor_);
-      SetProperty("Power-Factor", powerFactor_.c_str());
       pProp->Set(powerFactor_.c_str());
    }
    return DEVICE_OK;
@@ -693,8 +712,27 @@ int XCiteExacte::OnGetLampHours(MM::PropertyBase* pProp, MM::ActionType eAct)
       string buff;
       ExecuteCommand(cmdGetLampHours, NULL, 0, &buff);
       pProp->Set(buff.c_str());
-      SetProperty("Lamp-Hours", buff.c_str());
       LogMessage("XCiteExacte: Get Lamp Hours: " + buff);
+   }
+   return DEVICE_OK;
+}
+
+int XCiteExacte::OnGetOnTime(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      char cBuff[8];
+	  bool on;
+	  GetOpen(on);
+	  if (on)
+	  {
+		 sprintf(cBuff, "%d", (int) ((GetCurrentMMTime() - lastShutterTime_).getMsec() / 1000));
+  	  }
+	  else
+	  {
+  	    sprintf(cBuff, "%d", 0);
+	  }
+	  pProp->Set(cBuff);
    }
    return DEVICE_OK;
 }

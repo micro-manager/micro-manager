@@ -53,9 +53,14 @@ public:
 
    // gets the response to a command but waits a certain time for the response to come instead of looking for a terminator
    // also doesn't necessarily wait for a complete response
-   int QueryCommandUnterminatedResponse(const char *command, const long timeoutMs);
+   int QueryCommandUnterminatedResponse(const char *command, const long timeoutMs, unsigned long reply_length);
+   int QueryCommandUnterminatedResponse(const char *command, const long timeoutMs) 
+   {	   return  QueryCommandUnterminatedResponse(command, timeoutMs,1);   }
    int QueryCommandUnterminatedResponse(const string command, const long timeoutMs)
-      { return QueryCommandUnterminatedResponse(command.c_str(), timeoutMs); }
+      { return QueryCommandUnterminatedResponse(command.c_str(), timeoutMs,1); }
+   int QueryCommandUnterminatedResponse(const string command, const long timeoutMs, unsigned long reply_length)
+   {   return QueryCommandUnterminatedResponse(command.c_str(), timeoutMs, reply_length);   }
+
 
    // QueryCommand gets the response (optional 2nd parameter is the response's termination string) (optional 3rd parameter is delay between sending and reading response)
    int QueryCommand(const char *command, const char *replyTerminator, const long delayMs); // all variants call this

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="svg2"
+   viewBox="0 0 16 16"
+   version="1.0"
+   inkscape:version="0.48.5 r10040"
+   width="100%"
+   height="100%"
+   sodipodi:docname="pencil_box.svg">
+  <defs
+     id="defs3089" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1203"
+     inkscape:window-height="760"
+     id="namedview3087"
+     showgrid="false"
+     inkscape:zoom="12.904699"
+     inkscape:cx="5.4006721"
+     inkscape:cy="5.2916922"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg2" />
+  <rect
+     style="fill:#ff0000;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:1;stroke-miterlimit:0;stroke-opacity:1;stroke-dasharray:none"
+     id="rect3859"
+     width="37"
+     height="37"
+     x="-15.5"
+     y="-5.625"
+     ry="1.5381"
+     inkscape:export-filename="/Users/chriswei/Downloads/pencil_red@2x.png"
+     inkscape:export-xdpi="66.32"
+     inkscape:export-ydpi="66.32" />
+  <metadata
+     id="metadata3085">
+    <rdf:RDF>
+      <cc:Work>
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/publicdomain/" />
+        <dc:publisher>
+          <cc:Agent
+             rdf:about="http://openclipart.org/">
+            <dc:title>Openclipart</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:title></dc:title>
+        <dc:date>2008-02-17T17:44:03</dc:date>
+        <dc:description>An icon I created and mostly didn't use so far.</dc:description>
+        <dc:source>http://openclipart.org/detail/14319/16x16px-capable-black-and-white-icons-by-qubodup-14319</dc:source>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>qubodup</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:subject>
+          <rdf:Bag>
+            <rdf:li>black &amp; white</rdf:li>
+            <rdf:li>cartoon</rdf:li>
+            <rdf:li>clip art</rdf:li>
+            <rdf:li>clipart</rdf:li>
+            <rdf:li>icon</rdf:li>
+            <rdf:li>icons</rdf:li>
+            <rdf:li>pixel</rdf:li>
+            <rdf:li>remix problem</rdf:li>
+          </rdf:Bag>
+        </dc:subject>
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/publicdomain/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+  <path
+     style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.484375px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     d="m 4.3886719,-3.0507812 0,14.2871102 12.7099611,-12.7099618 1.762695,-1.7626953 z"
+     id="path3895"
+     inkscape:connector-curvature="0" />
+  <path
+     inkscape:connector-curvature="0"
+     id="use3897"
+     d="m 1.8613281,28.925781 0,-14.287109 -12.7099611,12.709961 -1.762696,1.762695 z"
+     style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1.484375px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+</svg>

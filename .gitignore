@@ -11,9 +11,7 @@ tags
 /SecretDeviceAdapters/
 
 # Visual Studio
-*.VC.db
 *.ncb
-*.opendb
 *.opensdf
 *.sdf
 *.suo
@@ -55,6 +53,9 @@ test-driver
 *.pyo
 __pycache__/
 
+# Pycharm IDE
+.idea
+
 # Build
 *.class
 *.jar
@@ -67,6 +68,10 @@ test-reports/
 /dist/
 /stage/
 /symbols/
+
+# Testing
+/testing/gmock-*.zip
+/testing/gmock/
 
 # Generated source
 /buildscripts/launchers/micromanager

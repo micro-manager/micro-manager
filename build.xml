@@ -14,14 +14,17 @@
 			<subant target="@{target}" inheritall="true">
 				<property name="mm.java.installdir" value="${mm.java.installdir}"/>
 				<property name="mm.java.plugin.installdir" value="${mm.java.plugin.installdir}"/>
+				<property name="mm.java.library.installdir" value="${mm.java.library.installdir}"/>
 				<property name="mm.java.autofocus.installdir" value="${mm.java.autofocus.installdir}"/>
 				<filelist dir="${mm.basedir}">
 					<!-- Note: Order matters -->
 					<file name="MMCoreJ_wrap/build.xml"/>
 					<file name="mmstudio/build.xml"/>
 					<file name="acqEngine/build.xml"/>
+					<file name="libraries/build.xml"/>
 					<file name="plugins/build.xml"/>
 					<file name="autofocus/build.xml"/>
+               <file name="mmAsImageJMacros/build.xml"/>
 				</filelist>
 			</subant>
 		</sequential>
@@ -43,25 +46,28 @@
 
 	<target name="build" depends="set-version,build-cpp,build-java" description="Build all components"/>
 
-	<target name="stage-deviceadapters" unless="mm.build.stage.demo.only">
-		<copy todir="${mm.dll.installdir}">
-			<fileset dir="${mm.cpp.outdir}" includes="mmgr_dal_*.dll"/>
-		</copy>
-		<ant antfile="DeviceAdapters/build.xml" useNativeBasedir="true" target="install">
-			<property name="mm.dll.installdir" value="${mm.dll.installdir}"/>
-			<property name="mm.dll.helper.installdir" value="${mm.dll.helper.installdir}"/>
-		</ant>
-	</target>
-
-	<target name="stage-deviceadapters-demo-only" if="mm.build.stage.demo.only">
-		<copy todir="${mm.dll.installdir}">
-			<fileset file="${mm.cpp.outdir}/mmgr_dal_DemoCamera.dll"/>
-		</copy>
+	<target name="stage-deviceadapters">
+		<if>
+			<istrue value="${mm.build.stage.demo.only}"/>
+			<then>
+				<copy todir="${mm.dll.installdir}">
+					<fileset file="${mm.cpp.outdir}/mmgr_dal_DemoCamera.dll"/>
+				</copy>
+			</then>
+			<else>
+				<copy todir="${mm.dll.installdir}">
+					<fileset dir="${mm.cpp.outdir}" includes="mmgr_dal_*.dll"/>
+				</copy>
+				<ant antfile="DeviceAdapters/build.xml" useNativeBasedir="true" target="install">
+					<property name="mm.dll.installdir" value="${mm.dll.installdir}"/>
+					<property name="mm.dll.helper.installdir" value="${mm.dll.helper.installdir}"/>
+				</ant>
+			</else>
+		</if>
 	</target>
 
 	<target name="stage-only" description="Gather files to be installed (will NOT trigger build)">
 		<antcall target="stage-deviceadapters"/>
-		<antcall target="stage-deviceadapters-demo-only"/>
 
 		<run-all-java-projects target="install-only"/>
 

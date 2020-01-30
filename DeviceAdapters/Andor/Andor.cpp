@@ -138,6 +138,10 @@ const char* g_FastExternal = "Fast External";
 const char* g_Internal = "Internal";
 const char* g_Software = "Software";
 
+const char* g_ReadTempWhileSeq = "CCDTemperature continuous update";
+const char* g_ReadTempWhileSeqOn = "On";
+const char* g_ReadTempWhileSeqOff = "Off";
+
 const char* const g_Keyword_Metadata_SRRF_Frame_Time = "SRRFFrameTime-ms";
 
 const int NUMULTRA897CROPROIS = 9;
@@ -171,6 +175,8 @@ AndorCamera::ROI g_Ultra888CropROIs[NUMULTRA888CROPROIS] = {
 const at_u32 MAX_IMAGES_PER_DMA = 64;
 const at_u32 MAX_CHARS_PER_DESCRIPTION = 64;
 const at_u32 MAX_CHARS_PER_OA_DESCRIPTION = 256;
+
+const at_u32 FRAME_BUFFER_SIZE = 40 * 1024 * 1024;
 
 // singleton instance
 AndorCamera* AndorCamera::instance_ = 0;
@@ -243,6 +249,7 @@ EmCCDGainHigh_(0),
 EMSwitch_(true),
 minTemp_(0),
 ThermoSteady_(0),
+cameraBuffer_(nullptr),
 lSnapImageCnt_(0),
 currentGain_(-1),
 ReadoutTime_(50),
@@ -277,6 +284,7 @@ iSnapImageDelay_(0),
 bSnapImageWaitForReadout_(false),
 stateBeforePause_(PREPAREDFORSINGLESNAP),
 metaDataAvailable_(false),
+updateTemperatureWhileSequencing_(false),
 spuriousNoiseFilterControl_(nullptr),
 readModeControl_(nullptr),
 SRRFControl_(nullptr)
@@ -745,7 +753,7 @@ int AndorCamera::GetListOfAvailableCameras()
       roi_.ySize = fullFrameY_;
 
       binSize_ = 1;
-      fullFrameBuffer_ = new short[fullFrameX_ * fullFrameY_];
+      fullFrameBuffer_ = new short[FRAME_BUFFER_SIZE];
 
       // setup image parameters
       // ----------------------
@@ -775,7 +783,7 @@ int AndorCamera::GetListOfAvailableCameras()
             return nRet;
       }
 
-	  PopulateBinningDropdown();
+      PopulateBinningDropdown();
 
       // pixel type
       if(!HasProperty(MM::g_Keyword_PixelType))
@@ -904,56 +912,56 @@ int AndorCamera::GetListOfAvailableCameras()
          }
          VCVoltages_.clear();
          if(ui_swVersion >= 292) {
-	         for (int i = 0; i < numVCVoltages; i++)
-	         {
-		         char VCAmp[10];
-		         ret = GetVSAmplitudeString(i, VCAmp);
+           for (int i = 0; i < numVCVoltages; i++)
+           {
+             char VCAmp[10];
+             ret = GetVSAmplitudeString(i, VCAmp);
 
-		         if (ret != DRV_SUCCESS) {
-			        numVCVoltages = 0;
-			        ostringstream eMsg;
-			        eMsg << "Andor driver returned error code: " << ret << " to GetVSAmplitudeString";
-			        LogMessage(eMsg.str().c_str(), true);
-		         }
-		         else
-		         {
-			         VCVoltages_.push_back(VCAmp);
-		         }
-	         }
+             if (ret != DRV_SUCCESS) {
+              numVCVoltages = 0;
+              ostringstream eMsg;
+              eMsg << "Andor driver returned error code: " << ret << " to GetVSAmplitudeString";
+              LogMessage(eMsg.str().c_str(), true);
+             }
+             else
+             {
+               VCVoltages_.push_back(VCAmp);
+             }
+           }
          }
          else {
-	         if(numVCVoltages>5)
-		        numVCVoltages = 5;
-	         switch(numVCVoltages)
-	         {
-	         case 1:
-		        VCVoltages_.push_back("Normal");
-		        break;
-	         case 2:
-		        VCVoltages_.push_back("Normal");
-		        VCVoltages_.push_back("+1");
-		        break;
-	         case 3:
-		        VCVoltages_.push_back("Normal");
-		        VCVoltages_.push_back("+1");
-		        VCVoltages_.push_back("+2");
-		        break;
-	         case 4:
-		        VCVoltages_.push_back("Normal");
-		        VCVoltages_.push_back("+1");
-		        VCVoltages_.push_back("+2");
-		        VCVoltages_.push_back("+3");
-		        break;
-	         case 5:
-		        VCVoltages_.push_back("Normal");
-		        VCVoltages_.push_back("+1");
-		        VCVoltages_.push_back("+2");
-		        VCVoltages_.push_back("+3");
-		        VCVoltages_.push_back("+4");
-		        break;
-	         default:
-		        VCVoltages_.push_back("Normal");
-	         }
+           if(numVCVoltages>5)
+            numVCVoltages = 5;
+           switch(numVCVoltages)
+           {
+           case 1:
+            VCVoltages_.push_back("Normal");
+            break;
+           case 2:
+            VCVoltages_.push_back("Normal");
+            VCVoltages_.push_back("+1");
+            break;
+           case 3:
+            VCVoltages_.push_back("Normal");
+            VCVoltages_.push_back("+1");
+            VCVoltages_.push_back("+2");
+            break;
+           case 4:
+            VCVoltages_.push_back("Normal");
+            VCVoltages_.push_back("+1");
+            VCVoltages_.push_back("+2");
+            VCVoltages_.push_back("+3");
+            break;
+           case 5:
+            VCVoltages_.push_back("Normal");
+            VCVoltages_.push_back("+1");
+            VCVoltages_.push_back("+2");
+            VCVoltages_.push_back("+3");
+            VCVoltages_.push_back("+4");
+            break;
+           default:
+            VCVoltages_.push_back("Normal");
+           }
          }
          if (numVCVoltages>=1)
          {
@@ -1288,6 +1296,17 @@ int AndorCamera::GetListOfAvailableCameras()
       pAct = new CPropertyAction (this, &AndorCamera::OnTimeOut);
       nRet = CreateProperty(g_TimeOut, CDeviceUtils::ConvertToString(imageTimeOut_ms_), MM::Integer, false, pAct);
 
+
+      // Some users like to have up to date temperature readings, but that does not work with all 
+      // cameras.  Leave this capability out unless activated by the user
+      pAct = new CPropertyAction(this, &AndorCamera::OnTemperatureWhileSequencing);
+      nRet = CreateProperty(g_ReadTempWhileSeq, g_ReadTempWhileSeqOn, MM::String, false, pAct);
+      if (nRet != DEVICE_OK) 
+         return nRet;
+      AddAllowedValue(g_ReadTempWhileSeq, g_ReadTempWhileSeqOff);
+      AddAllowedValue(g_ReadTempWhileSeq, g_ReadTempWhileSeqOn);
+
+
 	  //SRRF
 	  SRRFControl_ = new SRRFControl(this);
 	  if (SRRFControl_->GetLibraryStatus() != SRRFControl::READY) {
@@ -1378,7 +1397,7 @@ int AndorCamera::GetListOfAvailableCameras()
       nRet = UpdateStatus();
       if (nRet != DEVICE_OK)
          return nRet;
-
+      
       initialized_ = true;
 
       if (biCamFeaturesSupported_)
@@ -2085,63 +2104,62 @@ int AndorCamera::GetListOfAvailableCameras()
    /**
    * Set camera "regular" gain.
    */
-   int AndorCamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
-   {
-	   
-      if (eAct == MM::AfterSet)
-      {
-         long gain;
-         pProp->Get(gain);
+  int AndorCamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
+  {
+    if (eAct == MM::AfterSet)
+    {
+      long gain;
+      pProp->Get(gain);
 
-		 if (!EMSwitch_) {
-			currentGain_ = gain;
-			return DEVICE_OK;
-		 }
-		 if(gain == currentGain_)
-			return DEVICE_OK;
-
-         bool acquiring = sequenceRunning_;
-         if (acquiring)
-            StopSequenceAcquisition(true);
-		 
-		 {
-			 DriverGuard dg(this);
-
-			 if (sequenceRunning_)
-				return ERR_BUSY_ACQUIRING;
-
-			 if (gain!=0 && gain < (long) EmCCDGainLow_ ) 
-				gain = (long)EmCCDGainLow_;
-			 if (gain > (long) EmCCDGainHigh_ ) 
-				gain = (long)EmCCDGainHigh_;
-			 pProp->Set(gain);
-
-			 //added to use RTA
-			 if(!(iCurrentTriggerMode_ == SOFTWARE))
-				SetToIdle();
-
-			 unsigned ret = SetEMCCDGain((int)gain);
-			 if (DRV_SUCCESS != ret)
-				return (int)ret;
-			 currentGain_ = gain;
-
-          int retCode = UpdatePreampGains();
-          if (DRV_SUCCESS != retCode)
-             return retCode;
-
-			 if (acquiring)
-				StartSequenceAcquisition(sequenceLength_ - imageCounter_, intervalMs_, stopOnOverflow_);
-
-			 PrepareSnap();
-		 }
+      if (!EMSwitch_) {
+        currentGain_ = gain;
+        return DEVICE_OK;
       }
-      else if (eAct == MM::BeforeGet)
+      if(gain == currentGain_)
+        return DEVICE_OK;
+
+      bool acquiring = sequenceRunning_;
+      if (acquiring)
+        StopSequenceAcquisition(true);
+     
       {
-		  DriverGuard dg(this); //not even sure this is needed
-         pProp->Set(currentGain_);
+        DriverGuard dg(this);
+
+        if (sequenceRunning_)
+          return ERR_BUSY_ACQUIRING;
+
+        if (gain!=0 && gain < (long) EmCCDGainLow_ ) 
+          gain = (long)EmCCDGainLow_;
+        if (gain > (long) EmCCDGainHigh_ ) 
+          gain = (long)EmCCDGainHigh_;
+        pProp->Set(gain);
+
+        //added to use RTA
+        if(!(iCurrentTriggerMode_ == SOFTWARE))
+          SetToIdle();
+
+        unsigned ret = SetEMCCDGain((int)gain);
+        if (DRV_SUCCESS != ret)
+          return (int)ret;
+        currentGain_ = gain;
+
+        int retCode = UpdatePreampGains();
+        if (DRV_SUCCESS != retCode)
+          return retCode;
+
+        if (acquiring)
+          StartSequenceAcquisition(sequenceLength_ - imageCounter_, intervalMs_, stopOnOverflow_);
+
+        PrepareSnap();
       }
-      return DEVICE_OK;
-   }
+    }
+    else if (eAct == MM::BeforeGet)
+    {
+      DriverGuard dg(this); //not even sure this is needed
+      pProp->Set(currentGain_);
+    }
+    return DEVICE_OK;
+  }
 
    /**
    * Set camera "regular" gain.
@@ -2216,40 +2234,35 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::OnSelectTrigger(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
-      
       if (eAct == MM::AfterSet)
       {
-         bool acquiring = sequenceRunning_;
-         if (acquiring)
-            StopSequenceAcquisition(true);
+        bool acquiring = sequenceRunning_;
+        if (acquiring)
+           StopSequenceAcquisition(true);
          
-         DriverGuard dg(this); //moved driver guard to here to allow AcqSequenceThread to terminate properly
+        DriverGuard dg(this); //moved driver guard to here to allow AcqSequenceThread to terminate properly
 
-         if (sequenceRunning_)
-            return ERR_BUSY_ACQUIRING;
+        if (sequenceRunning_)
+          return ERR_BUSY_ACQUIRING;
 
-         std::string trigger;
-         pProp->Get(trigger);
-         if(trigger == strCurrentTriggerMode_)
-            return DEVICE_OK;
+        std::string trigger;
+        pProp->Get(trigger);
+        if(trigger == strCurrentTriggerMode_)
+          return DEVICE_OK;
 
-         SetToIdle();
+        SetToIdle();
 
+        iCurrentTriggerMode_= GetTriggerModeInt(trigger);
+        strCurrentTriggerMode_ = trigger;
 
-         iCurrentTriggerMode_= GetTriggerModeInt(trigger);
-         strCurrentTriggerMode_ = trigger;
-         
-
-
-
-	
-		  if (acquiring)
-			StartSequenceAcquisition(sequenceLength_ - imageCounter_, intervalMs_, stopOnOverflow_);
-	      else
-	      {
-			UpdateSnapTriggerMode();
-			PrepareSnap();
-	      }
+        if (acquiring) {
+          StartSequenceAcquisition(sequenceLength_ - imageCounter_, intervalMs_, stopOnOverflow_);
+        }
+        else
+        {
+          UpdateSnapTriggerMode();
+          PrepareSnap();
+        }
 
       }
       else if (eAct == MM::BeforeGet)
@@ -2608,6 +2621,33 @@ int AndorCamera::GetListOfAvailableCameras()
       return DEVICE_OK;
    }
    // eof jizhen
+
+
+   int AndorCamera::OnTemperatureWhileSequencing(MM::PropertyBase* pProp, MM::ActionType eAct)
+   {
+      if (eAct == MM::AfterSet)
+      {
+         std::string newState;
+         pProp->Get(newState);
+         if (newState == g_ReadTempWhileSeqOn) 
+         {
+            updateTemperatureWhileSequencing_ = true;
+         } else
+         {
+            updateTemperatureWhileSequencing_ = false;
+         }
+      } else if (eAct == MM::BeforeGet)
+      {
+         std::string state = g_ReadTempWhileSeqOff;
+         if (updateTemperatureWhileSequencing_)
+         {
+            state = g_ReadTempWhileSeqOn;
+         }
+         pProp->Set(state.c_str());
+      }
+      return DEVICE_OK;
+   }
+
 
    //jizhen 05.16.2007
    /**
@@ -3908,9 +3948,7 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
    */
    int AcqSequenceThread::svc(void)
    {
-      at_32 series(0);
-      at_32 seriesInit(0);
-      unsigned ret;
+      unsigned int ret;
       std::ostringstream os;
 
       camera_->Log("Starting Andor svc\n");
@@ -3920,101 +3958,55 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
       at_u32 bytesPerPixel(0);
 
       camera_->CalculateAndSetupCameraImageBuffer(width, height, bytesPerPixel);
-
-      long timePrev = GetTickCount();
-      long imageWait = 0;
-
-      // wait for frames to start coming in
-      do
-      {
-         ret = camera_->GetCameraAcquisitionProgress(&series);
-         if (ret != DRV_SUCCESS)
-            return ret;
-
-         CDeviceUtils::SleepMs(waitTime_);
-
-      } while (series == seriesInit && !stop_);
       camera_->Log("Images appearing");
-
-      at_32 seriesPrev = 0;
+      
+      at_32 imageCountFirst(0), imageCountLast(0);
 
       do
       {
-         {
-            DriverGuard dg(camera_);
-            ret = GetTotalNumberImagesAcquired(&series);
-            //os.str("");
-            //os << "[svc] Thread GetTotalNumberImagesAcquired returned: " << ret << " Series number returned was: " << series << endl;
-            //camera_->Log(os.str().c_str());
-         }
-		
-		
-         if (ret == DRV_SUCCESS)
-         {
-            if (series > seriesPrev)
+        {
+          DriverGuard dg(camera_);
+          ret = WaitForAcquisitionByHandleTimeOut(camera_->myCameraID_, imageTimeOut_);
+          if (ret == DRV_SUCCESS)
+          {
+            ret = GetNumberNewImages(&imageCountFirst, &imageCountLast);
+            if (ret != DRV_SUCCESS)
             {
-               at_32 imageCountFirst, imageCountLast;
-               int returnc;
-               returnc = GetNumberNewImages(&imageCountFirst, &imageCountLast);
-               if (ret != DRV_SUCCESS)
-               {
-                  os.str("");
-                  os << "GetNumberNewImages PushImage error : " << ret << " first: " << imageCountFirst << " last: " << imageCountLast << endl;
-                  camera_->Log(os.str().c_str());
-                  return (int)ret;
-               }
-               // new frame arrived
-               int retCode = camera_->PushImage(width, height, bytesPerPixel, imageCountFirst, imageCountLast);
-               if (retCode != DEVICE_OK)
-               {
-                  os << "PushImage failed with error code " << retCode;
-                  camera_->Log(os.str().c_str());
-                  printf("%s\n", os.str().c_str());
-                  os.str("");
-                  //camera_->StopSequenceAcquisition();
-                  //return ret;
-               }
-
-               // report time elapsed since previous frame
-               //printf("Frame %d captured at %ld ms!\n", ++frameCounter, GetTickCount() - timePrev);
-			   
-               seriesPrev = series;
-               timePrev = GetTickCount();
-            } 
-            else 
-            {
-               imageWait = GetTickCount() - timePrev;
-               if (imageWait > imageTimeOut_) {
-                  os << "Time out reached at frame " << camera_->imageCounter_;
-                  camera_->LogMessage("Time out reached", true);
-                  printf("%s\n", os.str().c_str());
-                  os.str("");
-                  camera_->StopCameraAcquisition();
-                  return 0;
-               }
+              os.str("");
+              os << "GetNumberNewImages error : " << ret << " first: " << imageCountFirst << " last: " << imageCountLast << endl;
+              camera_->Log(os.str().c_str());
+              return (int)ret;
             }
-            
-            CDeviceUtils::SleepMs(waitTime_);
+          }
+        }
+        if (ret == DRV_SUCCESS)
+        {
+          // new frame arrived
+          int retCode = camera_->PushImage(width, height, bytesPerPixel, (camera_->Live_)? imageCountLast:imageCountFirst, imageCountLast);
+          if (retCode != DEVICE_OK)
+          {
+            os << "PushImage failed with error code " << retCode;
+            camera_->Log(os.str().c_str());
+            printf("%s\n", os.str().c_str());
+            os.str("");
+          }
 
-         }
-
-
+          if (camera_->Live_) {
+            DriverGuard dg(camera_);
+            SendSoftwareTrigger();
+          }
+        } 
+        else 
+        {
+          os << "Time out reached at frame " << camera_->imageCounter_;
+          camera_->LogMessage("Time out reached", true);
+          printf("%s\n", os.str().c_str());
+          os.str("");
+          camera_->StopCameraAcquisition();
+          return 0;
+        }
       }
-
-      while (ret == DRV_SUCCESS && camera_->imageCounter_ < numImages_ && !stop_);
-      
-	   
-
-      if (ret != DRV_SUCCESS && series != 0)
-      {
-         camera_->StopCameraAcquisition();
-
-         os << "Error: " << ret;
-         printf("%s\n", os.str().c_str());
-         os.str("");
-		
-         return ret;
-      }
+      while ((imageCountLast < numImages_) && !stop_);
 
       if (stop_)
       {
@@ -4022,15 +4014,13 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
          return DEVICE_OK;
       }
 
-      if ((series-seriesInit) == numImages_)
+      if (imageCountLast != numImages_)
       {
          printf("Did not get the intended number of images\n");
          camera_->StopCameraAcquisition();
          return DEVICE_OK;
       }
 
-      os << "series: " << series << " seriesInit: " << seriesInit << " numImages: "<< numImages_;
-      printf("%s\n", os.str().c_str());
       camera_->LogMessage("Aquire Thread: We can get here if we are not fast enough", true);
       camera_->StopCameraAcquisition();
       return 3; // we can get here if we are not fast enough.  Report?  
@@ -4097,12 +4087,23 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
            return (int)ret;
 
       }
-      
+
       LogMessage("Setting Trigger Mode", true);
+      int trigMode = iCurrentTriggerMode_;
+      if (kineticSeries) {
+        if (SOFTWARE == iCurrentTriggerMode_) {
+          trigMode = INTERNAL;
+        }
+      }
+      else if (IsTriggerModeAvailable(SOFTWARE) == DRV_SUCCESS) {
+        if (INTERNAL == iCurrentTriggerMode_) {
+          trigMode = SOFTWARE;
+        }
+      }
       int ret0;
-      ret0 = ApplyTriggerMode(SOFTWARE == iCurrentTriggerMode_ ? INTERNAL : iCurrentTriggerMode_);
-      if(DRV_SUCCESS!=ret0)
-         return ret0;
+      ret0 = ApplyTriggerMode(trigMode);
+      if (DRV_SUCCESS != ret0)
+        return ret0;
 
       if (interval_ms > 0 && SRRFControl_->GetSRRFEnabled())
       {
@@ -4196,6 +4197,10 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
          startSRRFImageTime_ = GetCurrentMMTime();
          seqThread_->Start();
          sequenceRunning_ = true;
+         Live_ = (LONG_MAX == sequenceLength_);
+         if (Live_) {
+           SendSoftwareTrigger();
+         }
       }
 
       return DEVICE_OK;
@@ -4248,6 +4253,7 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
          }
 
          sequenceRunning_ = false;
+         Live_ = false;
 
          UpdateSnapTriggerMode();
       }
@@ -4280,7 +4286,11 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
 
       seqThread_->Stop();
       seqThread_->wait();
-      delete cameraBuffer_;
+      if (cameraBuffer_ != nullptr) 
+      {
+         delete cameraBuffer_;
+         cameraBuffer_ = nullptr;
+      }
 
       if (!temporary)
       {
@@ -4302,56 +4312,38 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
    * In case of error or if the sequence is finished StopSequenceAcquisition()
    * is called, which will raise the stop_ flag and cause the thread to exit.
    */
-   int AndorCamera::PushImage(at_u32 width, at_u32 height, at_u32 bytesPerPixel, at_32 imageCountFirst, at_32 imageCountLast)
+   int AndorCamera::PushImage(at_u32 width, at_u32 height, at_u32 bytesPerPixel, at_32& imageCountFirst, at_32& imageCountLast)
    {
       if (SRRFControl_->GetSRRFEnabled())
       {
          return PushImageWithSRRF(imageCountFirst, imageCountLast);
       }
-
-      at_u32 imagesPerDMA;
+      
       at_32 validFirst = 0, validLast = 0;
 
       {
          DriverGuard dg(this);
-         unsigned ret;
-         ret = GetImagesPerDMA(&imagesPerDMA);
 
-         long imagesAvailable = imageCountLast - imageCountFirst;
-
-         if( (unsigned long) imagesAvailable >= imagesPerDMA)
+         at_u32 maxFramesInBuffer = FRAME_BUFFER_SIZE / (width * height);
+         at_u32 imagesAvailable = imageCountLast - imageCountFirst + 1;
+         
+         if (imagesAvailable > maxFramesInBuffer)
          {
-            imagesAvailable = imagesPerDMA-1;
+            imagesAvailable = maxFramesInBuffer;
          }
 
-         if(stopOnOverflow_)
+         if (stopOnOverflow_)
          {
-            imageCountLast = imageCountFirst+imagesAvailable; //get oldest images
+            imageCountLast = imageCountFirst + imagesAvailable - 1; //get oldest images
          }
          else
          {
-            imageCountFirst = imageCountLast-imagesAvailable; //get newest images
+            imageCountFirst = imageCountLast - imagesAvailable + 1; //get newest images
          }
-
-         unsigned long imageBufferSizePixels = (imagesAvailable + 1)*width*height;
-         if (NeedToAllocateExtraBuffers(imageBufferSizePixels))
+         unsigned long imageBufferSizePixels = imagesAvailable * width * height;
+         int ret = GetImages16(imageCountFirst,imageCountLast, (WORD*) fullFrameBuffer_, imageBufferSizePixels, &validFirst, &validLast);
+         if (ret != DRV_SUCCESS) 
          {
-            delete[] fullFrameBuffer_;
-            fullFrameBuffer_ = new short[imageBufferSizePixels];
-         }
-
-         ret = GetImages16(imageCountFirst,imageCountLast, (WORD*) fullFrameBuffer_, imageBufferSizePixels, &validFirst, &validLast);
-         if (ret == DRV_NO_NEW_DATA) {
-           int status = 0;
-           ret = GetStatus (&status);
-           if (status == DRV_ACQUIRING) {
-             ret = WaitForAcquisition ();
-             if (ret != DRV_SUCCESS) {
-               return ret;
-             }
-           }
-         }
-         else if (ret != DRV_SUCCESS) {
            return ret;
          }
 
@@ -4360,46 +4352,51 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
       // process image
       // imageprocesssor now called from core
 
-     if(validLast > sequenceLength_) 
-            validLast = sequenceLength_; //don't push more images at the circular buffer than are in the sequence.  
+      if (validLast > sequenceLength_) 
+        validLast = sequenceLength_; //don't push more images at the circular buffer than are in the sequence.  
 
-      int retCode;
       short*  imagePtr = fullFrameBuffer_;
       for(int i=validFirst; i<=validLast; i++)
       {
-
-         // create metadata
-         char label[MM::MaxStrLength];
-         this->GetLabel(label);
-
-         Metadata md;
-         AddMetadataInfo(md);
-
-         imageCounter_++;
-
-         // This method inserts new image in the circular buffer (residing in MMCore)
-         retCode = GetCoreCallback()->InsertImage(this, (unsigned char*) imagePtr,
-            width,
-            height,
-            bytesPerPixel,
-            md.Serialize().c_str());
-
-         if (!stopOnOverflow_ && DEVICE_BUFFER_OVERFLOW == retCode)
-         {
-            // do not stop on overflow - just reset the buffer
-            GetCoreCallback()->ClearImageBuffer(this);
-            GetCoreCallback()->InsertImage(this, (unsigned char*) imagePtr,
-               width,
-               height,
-               bytesPerPixel,
-               md.Serialize().c_str(),
-               false);
-         }
-
-         imagePtr += width*height;
+        MMThreadGuard g(imgPixelsLock_);
+        InsertImage(width, height, bytesPerPixel, (unsigned char*)(imagePtr + (i - validFirst) * width * height));
       }
 
       return DEVICE_OK;
+   }
+
+   /*
+   * Inserts Image and MetaData into MMCore circular Buffer
+   */
+   int AndorCamera::InsertImage(at_u32 width, at_u32 height, at_u32 bytesPerPixel, unsigned char* imagePtr)
+   {
+     MMThreadGuard g(imgPixelsLock_);
+
+     int retCode;
+     Metadata md;
+     AddMetadataInfo(md);
+
+     imageCounter_++;
+
+     // This method inserts new image in the circular buffer (residing in MMCore)
+     retCode = GetCoreCallback()->InsertImage(this, imagePtr,
+       width,
+       height,
+       bytesPerPixel,
+       md.Serialize().c_str());
+
+     if (!stopOnOverflow_ && DEVICE_BUFFER_OVERFLOW == retCode)
+     {
+       // do not stop on overflow - just reset the buffer
+       GetCoreCallback()->ClearImageBuffer(this);
+       GetCoreCallback()->InsertImage(this, (unsigned char*)imagePtr,
+         width,
+         height,
+         bytesPerPixel,
+         md.Serialize().c_str(),
+         false);
+     }
+     return retCode;
    }
 
 
@@ -4961,28 +4958,31 @@ unsigned int AndorCamera::PopulateROIDropdownFVB()
       mstB.SetValue(CDeviceUtils::ConvertToString(binSize_));
       md.SetTag(mstB);
 
-      float temp = 0.;
-      unsigned int ret = GetTemperatureF(&temp);
-
-      if(ret == DRV_NOT_INITIALIZED || ret == DRV_ACQUIRING || ret == DRV_ERROR_ACK)
+      if (updateTemperatureWhileSequencing_) 
       {
-        MetadataSingleTag mstTemperature("CurrentTemperature", label, true);
-        ostringstream os;
+         float temp = 0.;
+         unsigned int ret = GetTemperatureF(&temp);
 
-        os << "Get Temperature failed with error: " << ret << endl;
+         if(ret == DRV_NOT_INITIALIZED || ret == DRV_ACQUIRING || ret == DRV_ERROR_ACK)
+         {
+            MetadataSingleTag mstTemperature("CurrentTemperature", label, true);
+            ostringstream os;
 
-        mstTemperature.SetValue(os.str().c_str());
-        md.SetTag(mstTemperature);
-      }
-      else
-      {
-        char * buffer = new char[MAX_CHARS_PER_DESCRIPTION];
-        sprintf(buffer, "%.2f", temp);
+            os << "Get Temperature failed with error: " << ret << endl;
 
-        MetadataSingleTag mstTemperature("CurrentTemperature", label, true);
-        mstTemperature.SetValue(buffer);
-        md.SetTag(mstTemperature);
-        delete buffer;
+            mstTemperature.SetValue(os.str().c_str());
+            md.SetTag(mstTemperature);
+         }
+         else
+         {
+            char * buffer = new char[MAX_CHARS_PER_DESCRIPTION];
+            sprintf(buffer, "%.2f", temp);
+
+            MetadataSingleTag mstTemperature("CurrentTemperature", label, true);
+            mstTemperature.SetValue(buffer);
+            md.SetTag(mstTemperature);
+            delete buffer;
+         }
       }
 
    }
@@ -5176,7 +5176,7 @@ unsigned int AndorCamera::PopulateROIDropdownFVB()
    {
       DriverGuard dg(this);
       triggerModesIMAGE_.clear();  
-	  triggerModesFVB_.clear();
+      triggerModesFVB_.clear();
       unsigned int retVal = DRV_SUCCESS;
       if(caps->ulTriggerModes & AC_TRIGGERMODE_INTERNAL)
       { 
@@ -5186,7 +5186,7 @@ unsigned int AndorCamera::PopulateROIDropdownFVB()
             return retVal;
          }
       }
-	  if(caps->ulTriggerModes & AC_TRIGGERMODE_CONTINUOUS)
+      if(caps->ulTriggerModes & AC_TRIGGERMODE_CONTINUOUS)
       {
          retVal = AddTriggerProperty(SOFTWARE);
          if (retVal != DRV_SUCCESS)
@@ -5456,10 +5456,15 @@ unsigned int AndorCamera::PopulateROIDropdownFVB()
          actualMode = EXTERNAL;
       }
 
-	  if(SOFTWARE==actualMode)
-	  {
-         acqMode = 5;  // run till abort used in software trigger
-	  }
+	  bool softwareTriggerPresent = 
+		  std::find(triggerModesIMAGE_.begin(), triggerModesIMAGE_.end(), "Software") != triggerModesIMAGE_.end();
+      if (softwareTriggerPresent)
+      {
+        if (SOFTWARE == actualMode)
+        {
+          acqMode = 5;  // run till abort used in software trigger
+        }
+      }
 
       ret = ApplyTriggerMode(actualMode);
       if(DRV_SUCCESS != ret)

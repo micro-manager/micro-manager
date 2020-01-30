@@ -1,12 +1,10 @@
 /*
 File:		MicroDriveXYStage.h
-Copyright:	Mad City Labs Inc., 2008
+Copyright:	Mad City Labs Inc., 2019
 License:	Distributed under the BSD license.
 */
 #ifndef _MICRODRIVEXYSTAGE_H_
 #define _MICRODRIVEXYSTAGE_H_
-
-
 
 // MCL headers
 #include "MicroDrive.h"
@@ -18,14 +16,9 @@ License:	Distributed under the BSD license.
 #include "../../MMDevice/ImgBuffer.h"
 #include "../../MMDevice/ModuleInterface.h"
 
-// List/heap headers
-#include "device_list.h"
+// List headers
 #include "handle_list_if.h"
 #include "HandleListType.h"
-#include "heap.h"
-
-#include <string>
-#include <map>
 
 #define ERR_UNKNOWN_MODE         102
 #define ERR_UNKNOWN_POSITION     103
@@ -37,11 +30,11 @@ public:
    MicroDriveXYStage();
    ~MicroDriveXYStage();
 
-   bool Busy();
-   void GetName(char* pszName) const;
-
+   // Device Interface
    int Initialize();
    int Shutdown();
+   bool Busy();
+   void GetName(char* pszName) const;
      
    // XYStage API
    virtual double GetStepSize();
@@ -50,7 +43,6 @@ public:
    virtual int Home();
    virtual int Stop();
    virtual int SetOrigin();
-   virtual int GetLimits(double& lower, double& upper);
    virtual int GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax);
    virtual int GetStepLimits(long &xMin, long &xMax, long &yMin, long &yMax);
    virtual double GetStepSizeXUm();
@@ -72,10 +64,11 @@ public:
    int OnIterativeMove(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnImRetry(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnImToleranceUm(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnIsTirfModuleAxis1(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnIsTirfModuleAxis2(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFindEpi(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   /// Private methods
-
    // Initialization
    int CreateMicroDriveXYProperties();
 
@@ -90,9 +83,11 @@ private:
    int Calibrate();
    int MoveToForwardLimits();
    int ReturnToOrigin();
+   int FindEpi();
 
    // Pause devices
    void PauseDevice(); 
+   int ChooseAvailableXYStageAxes(unsigned short pid, unsigned char axisBitmap, int handle);
 
    // Check if blocked
    bool XMoveBlocked(double possNewPos);
@@ -100,26 +95,34 @@ private:
 
    void GetOrientation(bool& mirrorX, bool& mirrorY);
 
-   /// Private variables
-   int MCLhandle_;
+   // Device Information
+   int handle_;
+   int serialNumber_;
+   unsigned short pid_;
+   int axis1_;
+   int axis2_;
    double stepSize_mm_;
-   bool busy_;
-   bool initialized_;
    double encoderResolution_; 
    double maxVelocity_;
    double maxVelocityTwoAxis_;
    double maxVelocityThreeAxis_;
    double minVelocity_;
    double velocity_;
-   int rounding_;
-
+   // Device State
+   bool busy_;
+   bool initialized_;
    bool encoded_;
    double lastX_;
    double lastY_;
-
+   // Iterative Move State
    bool iterativeMoves_;
    int imRetry_;
    double imToleranceUm_;
+   // Tirf-Module State
+   bool deviceHasTirfModuleAxis_;
+   bool axis1IsTirfModule_;
+   bool axis2IsTirfModule_;
+   double tirfModCalibrationMm_;
 };
 
 

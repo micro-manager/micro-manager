@@ -1,0 +1,28 @@
+// Thest new FFT preparation code
+
+import org.micromanager.data.Coords;
+import org.micromanager.data.Image;
+import org.micromanager.data.Datastore;
+import org.micromanager.display.DisplayViewer;
+
+import org.micromanager.internal.utils.imageanalysis.BoofCVImageConverter;
+import org.micromanager.internal.utils.imageanalysis.ImagePadder;
+
+import mmcorej.TaggedImage;
+import ij.ImagePlus;
+
+dv = mm.displays().getActiveDataViewer();
+dp = dv.getDataProvider();
+img = dp.getAnyImage();
+
+im = BoofCVImageConverter.mmToBoofCV(img, true);
+
+pad = ImagePadder.padPreibisch(im);
+
+ip = BoofCVImageConverter.convert(pad, true);
+
+ipp = new ImagePlus("test", ip);
+ipp.show();
+
+
+

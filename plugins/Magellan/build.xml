@@ -1,5 +1,4 @@
 <project name="Magellan" default="jar">
-	<property name="plugin.path" value="Acquisition_Tools"/>
 
 	<!-- A bit of a hack to skip building Magellan when non-free
 	     dependencies are not available -->
@@ -8,8 +7,6 @@
 		<not>
 			<and>
 				<available file="${mm.ivy.lib.dir}/optional/DT1.2-.jar"/>
-				<available file="${mm.ivy.lib.dir}/optional/ij3d-bin-.jar"/>
-				<available file="${mm.ivy.lib.dir}/optional/ima3d_-.jar"/>
 			</and>
 		</not>
 	</condition>
@@ -19,7 +16,10 @@
 	<target name="copy-files" depends="mm.javabuild.copy-files"
 		unless="mm.java.disable.build">
 		<copy todir="${intdir}">
-			<fileset dir="${srcdir}" includes="**/*.png"/>
+         <fileset dir="${rscdir}">
+            <include name="**/*.png"/>
+            <include name="**/*.png"/>
+         </fileset>
 		</copy>
 	</target>
 </project>

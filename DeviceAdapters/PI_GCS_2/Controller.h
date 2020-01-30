@@ -19,7 +19,7 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id: Controller.h,v 1.12, 2014-03-31 12:51:24Z, Steffen Rau$
+// CVS:           $Id: Controller.h,v 1.17, 2018-09-26 11:11:16Z, Steffen Rau$
 //
 
 #ifndef _PI_CONTROLLER_H_
@@ -96,17 +96,30 @@ public:
 	int Home(const std::string& axesNames, const std::string& homingMode);
 	double umToDefaultUnit_;
 
+
 	std::string MakeAxesString(const std::string& axis1Name, const std::string& axis2Name) const;
 	static std::vector<std::string> tokenize(const std::string& lines);
 
 	int GetTranslatedError();
 	int TranslateError( int err);
-	
-	virtual bool qIDN(std::string&)                                          {return false;}
+
+    bool GetErrorCheckAfterMOV () const
+    {
+        return errorCheckAfterMOV_;
+    }
+
+    void SetErrorCheckAfterMOV (bool errorCheck)
+    {
+        errorCheckAfterMOV_ = errorCheck;
+    }
+
+    virtual int SendGCSCommand (const std::string& command) = 0;
+    virtual bool qIDN(std::string&)                                          {return false;}
 	virtual bool  INI(const std::string&)                                    {return false;}
 	virtual bool  CST(const std::string&, const std::string&)                {return false;}
-	virtual bool  SVO(const std::string&, BOOL)                              {return false;}
-	virtual bool  FRF(const std::string&)                                    {return false;}
+    virtual bool  SVO(const std::string&, BOOL)                              {return false;}
+    virtual bool  EAX(const std::string&, BOOL)                              {return false;}
+    virtual bool  FRF(const std::string&)                                    {return false;}
 	virtual bool  REF(const std::string&)                                    {return false;}
 	virtual bool  MNL(const std::string&)                                    {return false;}
 	virtual bool  FNL(const std::string&)                                    {return false;}
@@ -160,6 +173,7 @@ protected:
    bool CheckError(bool& hasCmdFlag);
    bool CheckError(void);
    int m_ControllerError;
+   bool errorCheckAfterMOV_;
    //lint -e{1401} // dummy ctor without any initialization
    PIController () {}
 };

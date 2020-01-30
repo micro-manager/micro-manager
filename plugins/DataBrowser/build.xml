@@ -1,8 +1,0 @@
-<project name="DataBrowser" default="jar">
-	<property name="namespace" value="org.micromanager.browser.plugin"/>
-	<import file="../clojurepluginbuild.xml"/>
-
-	<path id="plugin.classpath">
-		<pathelement location="${mm.java.lib.acq-engine}"/>
-	</path>
-</project>

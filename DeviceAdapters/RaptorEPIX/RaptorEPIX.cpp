@@ -5725,7 +5725,7 @@ int CRaptorEPIX::GetExtTrigStatus() const
 
 int CRaptorEPIX::GetBinningFactorX() const
 {
-	unsigned char val, valx, valy;
+	unsigned char valx;
 	int bin=0;
 
 	if(_IS_CAMERA_OWL_FAMILY)
@@ -5742,7 +5742,7 @@ int CRaptorEPIX::GetBinningFactorX() const
 
 int CRaptorEPIX::GetBinningFactorY() const
 {
-	unsigned char val, valx, valy;
+	unsigned char valy;
 	int bin=0;
 
 	if(_IS_CAMERA_OWL_FAMILY)

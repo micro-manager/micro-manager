@@ -27,7 +27,7 @@ micromanager_path=${ac_pwd}/..
 MMDEVAPI_CXXFLAGS="-I${micromanager_path}/MMDevice ${BOOST_CPPFLAGS}"
 AC_SUBST(MMDEVAPI_CXXFLAGS)
 
-# Find Micro-Manager static device library
+# Find Micro-Mana:ger static device library
 MMDEVAPI_LIBADD="${micromanager_path}/MMDevice/libMMDevice.la"
 AC_SUBST(MMDEVAPI_LIBADD)
 
@@ -146,7 +146,6 @@ if test -f "/Library/Frameworks/SpotCam.framework/Headers/SpotCam.h"; then
 else
    AC_MSG_RESULT([not found])
 fi
-
 
 # libdc1394 2.x
 MM_ARG_WITH_OPTIONAL_LIB([libdc1394], [libdc1394], [LIBDC1394])
@@ -289,6 +288,36 @@ else
    AC_MSG_RESULT([not found])
 fi
 
+# BaslerPylon
+AC_MSG_CHECKING(for Basler_Linux)
+AM_CONDITIONAL([BUILD_BASLER_LINUX],[test -f "/opt/pylon5/include/pylon/PylonIncludes.h"])
+if test -f "/opt/pylon5/include/pylon/PylonIncludes.h"; then
+   AC_MSG_RESULT([found])
+else 
+   AC_MSG_RESULT([not found])
+fi
+
+# BaslerPylon Version check
+AM_CONDITIONAL([PYLON64],[test -d "/opt/pylon5/lib64"])
+AM_COND_IF([PYLON64],
+[  
+  AC_MSG_NOTICE(Basler SDK in 64bit  found)
+  AC_MSG_RESULT([found])
+],
+[
+  AC_MSG_RESULT([not found])
+])
+
+# BaslerPylon4Mac
+AC_MSG_CHECKING(for Basler_Mac)
+AM_CONDITIONAL([BUILD_BASLER_MAC],[test -f "/Library/Frameworks/pylon.framework/Headers/PylonIncludes.h"])
+if test -f "/Library/Frameworks/pylon.framework/Headers/PylonIncludes.h"; then
+   AC_MSG_RESULT([found])
+else
+   AC_MSG_RESULT([not found])
+fi
+
+
 # ITC on linux 
 AC_MSG_CHECKING(for ITC)
 AM_CONDITIONAL([BUILD_ITC],[test -f "/usr/local/include/ITC18.h"])
@@ -425,8 +454,12 @@ m4_define([device_adapter_dirs], [m4_strip([
    AndorSDK3
    Aquinas
    Arduino
+   Arduino32bitBoards
+   Basler
    BlueboxOptics_niji
    CARVII
+   ChuoSeiki_MD5000
+   ChuoSeiki_QT
    CNCMicroscope
    CNCMicroscope/ArduinoNeoPixelShutter
    CNCMicroscope/RAMPSStage
@@ -456,6 +489,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    IsmatecMCP
    K8055
    K8061
+   LaserQuantumLaser
    LeicaDMI
    LeicaDMR
    LeicaDMSTC
@@ -479,6 +513,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    Omicron
    OpenCVgrabber
    Oxxius
+   OxxiusCombiner
    PI
    PI_GCS
    PI_GCS_2
@@ -508,19 +543,23 @@ m4_define([device_adapter_dirs], [m4_strip([
    SpectralLMM5
    Spot
    SutterLambda
+   SutterLambda2
    SutterLambdaParallelArduino
    SutterStage
    Thorlabs
    ThorlabsDCxxxx
+   ThorlabsElliptecSlider
    ThorlabsFilterWheel
    ThorlabsSC10
    Tofra
+   Toptica_iBeamSmartCW
    TriggerScope
    USBManager
    UserDefinedSerial
    UserDefinedSerial/unittest
    Utilities
    VariLC
+   VarispecLCTF
    Video4Linux
    Vincent
    Vortran
@@ -530,6 +569,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    XCiteXT600
    XLight
    Xcite
+   YodnE600
    Yokogawa
    Zaber
    ZeissCAN

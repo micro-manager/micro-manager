@@ -26,7 +26,8 @@
 #include <DeviceUtils.h>
 #include <DeviceThreads.h>
 #include "TsiLibrary.h"
-#include "thorlabs_tsi_camera_sdk.h"
+#include "tl_camera_sdk.h"
+#include "tl_camera_sdk_load.h"
 
 #ifdef WIN32
 //...
@@ -67,6 +68,17 @@ struct Tsi3RoiBin
    }
 };
 
+enum PolarImageType
+{
+	Intensity = 0,
+	Raw,
+	Azimuth,
+	DoLP,
+	Quad
+};
+
+static const char* dllLoadErr = "Error loading color processing functions from the dll";
+
 //////////////////////////////////////////////////////////////////////////////
 // Implementation of the MMDevice and MMCamera interfaces
 // for all TSI SDK 3 api compatible cameras
@@ -96,7 +108,7 @@ public:
 
    unsigned GetImageWidth() const {return img.Width();}
    unsigned GetImageHeight() const {return img.Height();}
-   unsigned GetImageBytesPerPixel() const {return img.Depth();} 
+   unsigned GetImageBytesPerPixel() const;
    long GetImageBufferSize() const;
    unsigned GetBitDepth() const;
    int GetBinning() const;
@@ -129,25 +141,56 @@ public:
    int OnEEP(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnHotPixEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnHotPixThreshold(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnWhiteBalance(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnPolarImageType(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int ResizeImageBuffer();
    void ResetImageBuffer();
    bool StopCamera();
    bool StartCamera(int frames);
+	int ColorProcess16to32(unsigned short* monoBuffer, unsigned char* colorBuffer, int width, int height);
+	int ColorProcess16to48WB(unsigned short* monoBuffer, unsigned short* colorBuffer, int width, int height);
+	int ColorProcess16to64(unsigned short* monoBuffer, unsigned char* colorBuffer, int width, int height);
+	int InitializeColorProcessor(bool wb=false);
+	int InitializePolarizationProcessor();
+	int TransformPolarizationImage(unsigned short* monoBuffer, unsigned char* outBuffer, int width, int height, PolarImageType imgType);
+	static void SeparateQuadViewAngles(int polarPhase, unsigned short* sourceImage, unsigned short* destImage, int sourceWidth, int sourceHeight);
+	int ShutdownColorProcessor();
+	int ShutdownPolarizationProcessor();
+	int ClearWhiteBalance();
+	int SetWhiteBalance();
+	int ApplyWhiteBalance(double redScaler, double greenScaler, double blueScaler);
+	void EnableColorOutputLUTs();
 
-   static void frame_available_callback(void* sender, unsigned short* image_buffer, int image_width, int image_height, int bit_depth, int number_of_color_channels, int frame_count, void* context);
+   static void frame_available_callback(void* sender, unsigned short* image_buffer, int frame_count, unsigned char* metadata, int metadata_size_in_bytes, void* context);
 
    ImgBuffer img;
+	std::vector<unsigned short> demosaicBuffer;
    bool initialized;
+	static bool globalColorInitialized;
+	static bool globalPolarizationInitialized;
    bool stopOnOverflow;
    void* camHandle;
+   void* colorProcessor;
+	void* polarizationProcessor;
    long acquiringSequence;
    long acquiringFrame;
    double maxExposureMs;
+   bool color;
+   bool polarized;
+	PolarImageType polarImageType;
+	bool whiteBalance;
+	int pixelSize;
+	int bitDepth;
+	LONG whiteBalancePending;
+	std::string sdkPath;
 
    Tsi3RoiBin fullFrame;
 
-   TRIGGER_TYPE trigger;
-   TRIGGER_POLARITY triggerPolarity;
+   TL_CAMERA_OPERATION_MODE operationMode;
+   TL_CAMERA_TRIGGER_POLARITY triggerPolarity;
+	TL_COLOR_FILTER_ARRAY_PHASE cfaPhase;
+	TL_POLARIZATION_PROCESSOR_POLAR_PHASE polarPhase;
 };

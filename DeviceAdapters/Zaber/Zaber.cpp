@@ -7,7 +7,7 @@
 //                
 // AUTHOR:        David Goosen & Athabasca Witschi (contact@zaber.com)
 //                
-// COPYRIGHT:     Zaber Technologies, 2014
+// COPYRIGHT:     Zaber Technologies Inc., 2014
 //
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
@@ -30,6 +30,8 @@
 #include "XYStage.h"
 #include "Stage.h"
 #include "FilterWheel.h"
+#include "FilterCubeTurret.h"
+#include "Illuminator.h"
 
 using namespace std;
 
@@ -41,6 +43,8 @@ const char* g_Msg_COMMAND_REJECTED = "The device rejected the command.";
 const char* g_Msg_NO_REFERENCE_POS = "The device has not had a reference position established.";
 const char* g_Msg_SETTING_FAILED = "The property could not be set. Is the value in the valid range?";
 const char* g_Msg_INVALID_DEVICE_NUM = "Device numbers must be in the range of 1 to 99.";
+const char* g_Msg_LAMP_DISCONNECTED= "Some of the illuminator lamps are disconnected.";
+const char* g_Msg_LAMP_OVERHEATED = "Some of the illuminator lamps are overheated.";
 
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -51,6 +55,8 @@ MODULE_API void InitializeModuleData()
 	RegisterDevice(g_XYStageName, MM::XYStageDevice, g_XYStageDescription);
 	RegisterDevice(g_StageName, MM::StageDevice, g_StageDescription);
 	RegisterDevice(g_FilterWheelName, MM::StateDevice, g_FilterWheelDescription);
+	RegisterDevice(g_FilterTurretName, MM::StateDevice, g_FilterTurretDescription);
+	RegisterDevice(g_IlluminatorName, MM::ShutterDevice, g_IlluminatorDescription);
 }                                                            
 
 
@@ -67,6 +73,14 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 	else if (strcmp(deviceName, g_FilterWheelName) == 0)
 	{	
 		return new FilterWheel();
+	}
+	else if (strcmp(deviceName, g_FilterTurretName) == 0)
+	{	
+		return new FilterCubeTurret();
+	}
+	else if (strcmp(deviceName, g_IlluminatorName) == 0)
+	{	
+		return new Illuminator();
 	}
 	else
 	{	
@@ -135,6 +149,17 @@ int ZaberBase::SendCommand(const string command) const
 }
 
 
+int ZaberBase::SendCommand(long device, long axis, const string command) const
+{
+	core_->LogMessage(device_, "ZaberBase::SendCommand(device,axis)\n", true);
+
+	ostringstream cmd;
+	cmd << cmdPrefix_ << device << " " << axis << " " << command;
+	vector<string> resp;
+	return QueryCommand(cmd.str().c_str(), resp);
+}
+
+
 // COMMUNICATION "send & receive" utility function:
 int ZaberBase::QueryCommand(const string command, vector<string>& reply) const
 {
@@ -196,7 +221,28 @@ int ZaberBase::QueryCommand(const string command, vector<string>& reply) const
 
 int ZaberBase::GetSetting(long device, long axis, string setting, long& data) const
 {
-	core_->LogMessage(device_, "ZaberBase::GetSetting\n", true);
+	core_->LogMessage(device_, "ZaberBase::GetSetting(long)\n", true);
+
+	ostringstream cmd;
+	cmd << cmdPrefix_ << device << " " << axis << " get " << setting;
+	vector<string> resp;
+
+	int ret = QueryCommand(cmd.str().c_str(), resp);
+	if (ret != DEVICE_OK) 
+	{
+		return ret;
+	}
+
+	// extract data
+	string dataString = resp[5];
+	stringstream(dataString) >> data;
+	return DEVICE_OK;
+}
+
+
+int ZaberBase::GetSetting(long device, long axis, string setting, double& data) const
+{
+	core_->LogMessage(device_, "ZaberBase::GetSetting(double)\n", true);
 
 	ostringstream cmd;
 	cmd << cmdPrefix_ << device << " " << axis << " get " << setting;
@@ -217,10 +263,29 @@ int ZaberBase::GetSetting(long device, long axis, string setting, long& data) co
 
 int ZaberBase::SetSetting(long device, long axis, string setting, long data) const
 {
-	core_->LogMessage(device_, "ZaberBase::SetSetting\n", true);
+	core_->LogMessage(device_, "ZaberBase::SetSetting(long)\n", true);
 
 	ostringstream cmd; 
 	cmd << cmdPrefix_ << device << " " << axis << " set " << setting << " " << data;
+	vector<string> resp;
+
+	int ret = QueryCommand(cmd.str().c_str(), resp);
+	if (ret != DEVICE_OK)
+	{
+		return ERR_SETTING_FAILED;
+	}
+
+	return DEVICE_OK;
+}
+
+
+int ZaberBase::SetSetting(long device, long axis, string setting, double data, int decimalPlaces) const
+{
+	core_->LogMessage(device_, "ZaberBase::SetSetting(double)\n", true);
+
+	ostringstream cmd; 
+	cmd.precision(decimalPlaces);
+	cmd << cmdPrefix_ << device << " " << axis << " set " << setting << " " << fixed << data;
 	vector<string> resp;
 
 	int ret = QueryCommand(cmd.str().c_str(), resp);
@@ -322,3 +387,61 @@ int ZaberBase::SendAndPollUntilIdle(long device, long axis, string command, int 
 	core_->LogMessage(device_, os.str().c_str(), true);
 	return DEVICE_OK;
 }
+
+
+int ZaberBase::GetRotaryIndexedDeviceInfo(long device, long axis, long& numIndices, long& currentIndex) const
+{
+	core_->LogMessage(device_, "ZaberBase::GetRotaryIndexedDeviceInfo\n", true);
+
+   // Get the size of a full circle in microsteps.
+   long cycleSize = -1;
+   int ret = GetSetting(device, axis, "limit.cycle.dist", cycleSize);
+   if (ret != DEVICE_OK) 
+   {
+      core_->LogMessage(device_, "Attempt to detect rotary cycle distance failed.\n", true);
+      return ret;
+   }
+
+   if ((cycleSize < 1) || (cycleSize > 1000000000))
+   {
+      core_->LogMessage(device_, "Device cycle distance is out of range or was not returned.\n", true);
+      return DEVICE_SERIAL_INVALID_RESPONSE;
+   }
+
+
+   // Get the size of a filter increment in microsteps.
+   long indexSize = -1;
+   ret = GetSetting(device, axis, "motion.index.dist", indexSize);
+   if (ret != DEVICE_OK) 
+   {
+      core_->LogMessage(device_, "Attempt to detect index spacing failed.\n", true);
+      return ret;
+   }
+
+   if ((indexSize < 1) || (indexSize > 1000000000) || (indexSize > cycleSize))
+   {
+      core_->LogMessage(device_, "Device index distance is out of range or was not returned.\n", true);
+      return DEVICE_SERIAL_INVALID_RESPONSE;
+   }
+
+   numIndices = cycleSize / indexSize;
+
+   long index = -1;
+   ret = GetSetting(device, axis, "motion.index.num", index);
+   if (ret != DEVICE_OK) 
+   {
+      core_->LogMessage(device_, "Attempt to detect current index position failed.\n", true);
+      return ret;
+   }
+
+   if ((index < 0) || (index > 1000000000))
+   {
+      core_->LogMessage(device_, "Device current index is out of range or was not returned.\n", true);
+      return DEVICE_SERIAL_INVALID_RESPONSE;
+   }
+
+   currentIndex = index;
+
+   return ret;
+}
+

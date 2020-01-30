@@ -72,7 +72,8 @@ public:
    int OnLowerLimY            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnUpperLimX            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnUpperLimY            (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnMode                 (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnInputMode            (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnOutputMode           (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCutoffFreqX          (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCutoffFreqY          (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAttenuateTravelX     (MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -143,6 +144,12 @@ public:
    // phototargeting properties
    int OnTargetExposureTime   (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTargetSettlingTime   (MM::PropertyBase* pProp, MM::ActionType eAct);
+   // FAST_CIRCLES properties
+   int OnFastCirclesRadius   (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFastCirclesRate     (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFastCirclesAsymmetry(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFastCirclesState    (MM::PropertyBase* pProp, MM::ActionType eAct);
+   // vector properties
    int OnVectorGeneric		  (MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter);
    int OnVectorX			  (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnVectorGeneric(pProp, eAct, axisLetterX_); }
    int OnVectorY              (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnVectorGeneric(pProp, eAct, axisLetterY_); }
@@ -164,6 +171,8 @@ private:
    double lastY_;    // used to cache position (in degrees)
    bool illuminationState_;  // true if on, false if beam is turned off
    bool mmTarget_;    // true iff MM_TARGET firmware in place for phototargeting
+   bool mmFastCircles_;   // true iff FAST_CIRCLES firmware in place (usually together with MM_TARGET)
+   bool laserTriggerPLogic_;  // true iff using PLogic for laser trigger (currently equivalent to LED Z=3 mode)
    long targetExposure_;  // exposure time for targeting, stored locally
    long targetSettling_;  // settling time for targeting, stored locally
    unsigned int axisIndexX_;
@@ -184,6 +193,8 @@ private:
 
    unsigned char laser_side_;  // code for corresponding laser line: 0 for none, 1 for side0, 2 for side1
    bool laserTTLenabled_;      // whether it has MM_LASER_TTL module
+
+   bool fastCirclesOn_;
 
    int SetIlluminationStateHelper(bool on);
    int OnSaveJoystickSettings();
