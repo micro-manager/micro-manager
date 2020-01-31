@@ -1,6 +1,6 @@
 ## Micro-Manager 
 
-Micro-Manager is an application to control microscope hardware, such as cameras, xy-stages, filter wheels, etc..  It includes a hardware abstraction layer written in C++ and a user interface written in Java (Swing).  User and developer documenation can be found at https://micro-mamager.org.
+Micro-Manager is an application to control microscope hardware, such as cameras, xy-stages, filter wheels, etc..  It includes a hardware abstraction layer written in C++ and a user interface written in Java (Swing).  User and developer documentation can be found at https://micro-manager.org.
 
 The master branch on https://github.com/micro-manager/micro-manager is used to build version 2.0-gamma (binaries can be download at https://micro-manager.org/wiki/Download%20Micro-Manager_Latest%20Release).
 
