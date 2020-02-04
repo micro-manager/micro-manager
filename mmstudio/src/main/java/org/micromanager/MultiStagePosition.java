@@ -447,10 +447,10 @@ public final class MultiStagePosition {
             PropertyKey.MULTI_STAGE_POSITION__DEFAULT_XY_STAGE.key(), null);
       ret.defaultZStage_ = pmap.getString(
             PropertyKey.MULTI_STAGE_POSITION__DEFAULT_Z_STAGE.key(), null);
-      ret.gridRow_ = pmap.getAsNumber(
-            PropertyKey.MULTI_STAGE_POSITION__GRID_ROW.key(), 0).intValue();
-      ret.gridCol_ = pmap.getAsNumber(
-            PropertyKey.MULTI_STAGE_POSITION__GRID_COLUMN.key(), 0).intValue();
+      ret.gridRow_ = pmap.getInteger(
+            PropertyKey.MULTI_STAGE_POSITION__GRID_ROW.key(), 0);
+      ret.gridCol_ = pmap.getInteger(
+            PropertyKey.MULTI_STAGE_POSITION__GRID_COLUMN.key(), 0);
       for (String key : pmap.getPropertyMap(
             PropertyKey.MULTI_STAGE_POSITION__PROPERTIES.key(),
             PropertyMaps.emptyPropertyMap()).keySet()) {
