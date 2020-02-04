@@ -22,7 +22,6 @@
 package org.micromanager.internal.dialogs;
 
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.text.ParseException;
@@ -47,6 +46,7 @@ import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.UIMonitor;
+import org.micromanager.internal.zmq.ZMQServer;
 
 /**
  * Options dialog for MMStudio.
@@ -113,14 +113,11 @@ public final class OptionsDlg extends MMDialog {
               "Always use the default user profile; no prompt will be displayed to select a profile at startup.");
       alwaysUseDefaultProfileCheckBox.setSelected(
               startupSettings.shouldSkipProfileSelectionAtStartup());
-      alwaysUseDefaultProfileCheckBox.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            boolean checked = alwaysUseDefaultProfileCheckBox.isSelected();
-            startupSettings.setSkipProfileSelectionAtStartup(checked);
-            askForConfigFileCheckBox.setSelected(checked);
-            startupSettings.setSkipConfigSelectionAtStartup(checked);
-         }
+      alwaysUseDefaultProfileCheckBox.addActionListener((ActionEvent e) -> {
+         boolean checked = alwaysUseDefaultProfileCheckBox.isSelected();
+         startupSettings.setSkipProfileSelectionAtStartup(checked);
+         askForConfigFileCheckBox.setSelected(checked);
+         startupSettings.setSkipConfigSelectionAtStartup(checked);
       });
 
       // Slaving the "use default profile" setting.  
@@ -138,11 +135,8 @@ public final class OptionsDlg extends MMDialog {
       final JCheckBox deleteLogCheckBox = new JCheckBox();
       deleteLogCheckBox.setText("Delete log files after");
       deleteLogCheckBox.setSelected(mmStudio_.getShouldDeleteOldCoreLogs());
-      deleteLogCheckBox.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            mmStudio_.setShouldDeleteOldCoreLogs(deleteLogCheckBox.isSelected());
-         }
+      deleteLogCheckBox.addActionListener((ActionEvent e) -> {
+         mmStudio_.setShouldDeleteOldCoreLogs(deleteLogCheckBox.isSelected());
       });
 
       logDeleteDaysField_ =
@@ -152,58 +146,52 @@ public final class OptionsDlg extends MMDialog {
       deleteLogFilesButton.setText("Delete Log Files Now");
       deleteLogFilesButton.setToolTipText("Delete all CoreLog files except " +
             "for the current one");
-      deleteLogFilesButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(final ActionEvent e) {
-            String dir1 =
-               LogFileManager.getLogFileDirectory().getAbsolutePath();
-            String dir2 =
-               LogFileManager.getLegacyLogFileDirectory().getAbsolutePath();
-            String dirs;
-            if (dir1.equals(dir2)) {
-               dirs = dir1;
-            }
-            else {
-               dirs = dir1 + " and " + dir2;
-            }
-
-            int answer = JOptionPane.showConfirmDialog(OptionsDlg.this,
-               "<html><body><p style='width: 400px;'>" +
-               "Delete all CoreLog files in " + dirs + "?" +
-               "</p></body></html>",
-               "Delete Log Files",
-               JOptionPane.YES_NO_OPTION,
-               JOptionPane.QUESTION_MESSAGE);
-            if (answer == JOptionPane.YES_OPTION) {
-               LogFileManager.deleteLogFilesDaysOld(0,
-                  core_.getPrimaryLogFile());
-            }
+      deleteLogFilesButton.addActionListener((final ActionEvent e) -> {
+         String dir1 =
+                 LogFileManager.getLogFileDirectory().getAbsolutePath();
+         String dir2 =
+                 LogFileManager.getLegacyLogFileDirectory().getAbsolutePath();
+         String dirs;
+         if (dir1.equals(dir2)) {
+            dirs = dir1;
+         }
+         else {
+            dirs = dir1 + " and " + dir2;
+         }
+         
+         int answer = JOptionPane.showConfirmDialog(OptionsDlg.this,
+                 "<html><body><p style='width: 400px;'>" +
+                         "Delete all CoreLog files in " + dirs + "?" +
+                                 "</p></body></html>",
+                 "Delete Log Files",
+                 JOptionPane.YES_NO_OPTION,
+                 JOptionPane.QUESTION_MESSAGE);
+         if (answer == JOptionPane.YES_OPTION) {
+            LogFileManager.deleteLogFilesDaysOld(0,
+                    core_.getPrimaryLogFile());
          }
       });
 
       final JButton clearPreferencesButton = new JButton();
       clearPreferencesButton.setText("Reset Preferences");
       clearPreferencesButton.setToolTipText("Clear all preference settings and restore defaults");
-      clearPreferencesButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(final ActionEvent e) {
-            int answer = JOptionPane.showConfirmDialog(OptionsDlg.this,
-               "Reset all preference settings?",
-               "Reset Preferences",
-               JOptionPane.YES_NO_OPTION,
-               JOptionPane.QUESTION_MESSAGE);
-            if (answer != JOptionPane.YES_OPTION) {
-               return;
-            }
-            // Clear everything except whether or not this user has
-            // registered.
-            boolean haveRegistered = RegistrationDlg.getHaveRegistered(mmStudio_);
-            profile_.clearSettingsForAllClasses();
-            RegistrationDlg.setHaveRegistered(mmStudio_, haveRegistered);
-            // Rather than updating all the GUI elements, let's just close
-            // the dialog.
-            dispose();
+      clearPreferencesButton.addActionListener((final ActionEvent e) -> {
+         int answer = JOptionPane.showConfirmDialog(OptionsDlg.this,
+                 "Reset all preference settings?",
+                 "Reset Preferences",
+                 JOptionPane.YES_NO_OPTION,
+                 JOptionPane.QUESTION_MESSAGE);
+         if (answer != JOptionPane.YES_OPTION) {
+            return;
          }
+         // Clear everything except whether or not this user has
+         // registered.
+         boolean haveRegistered = RegistrationDlg.getHaveRegistered(mmStudio_);
+         profile_.clearSettingsForAllClasses();
+         RegistrationDlg.setHaveRegistered(mmStudio_, haveRegistered);
+         // Rather than updating all the GUI elements, let's just close
+         // the dialog.
+         dispose();
       });
 
       bufSizeField_ = new JTextField(
@@ -216,11 +204,8 @@ public final class OptionsDlg extends MMDialog {
       comboDisplayBackground_ = new JComboBox(options);
       comboDisplayBackground_.setMaximumRowCount(2);
       comboDisplayBackground_.setSelectedItem(mmStudio_.app().skin().getSkin().getDesc());
-      comboDisplayBackground_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            changeBackground();
-         }
+      comboDisplayBackground_.addActionListener((ActionEvent e) -> {
+         changeBackground();
       });
 
       startupScriptFile_ = new JTextField(ScriptPanel.getStartupScript());
@@ -228,65 +213,60 @@ public final class OptionsDlg extends MMDialog {
       final JCheckBox closeOnExitCheckBox = new JCheckBox();
       closeOnExitCheckBox.setText("Close app when quitting MM");
       closeOnExitCheckBox.setSelected(getShouldCloseOnExit(mmStudio_));
-      closeOnExitCheckBox.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            boolean shouldClose = closeOnExitCheckBox.isSelected();
-            setShouldCloseOnExit(mmStudio_, shouldClose);
-            MMStudio.getFrame().setExitStrategy(shouldClose);
-         }
+      closeOnExitCheckBox.addActionListener((ActionEvent arg0) -> {
+         boolean shouldClose = closeOnExitCheckBox.isSelected();
+         setShouldCloseOnExit(mmStudio_, shouldClose);
+         MMStudio.getFrame().setExitStrategy(shouldClose);
       });
 
       final JCheckBox metadataFileWithMultipageTiffCheckBox = new JCheckBox();
       metadataFileWithMultipageTiffCheckBox.setText("Create metadata.txt file with Image Stack Files");
       metadataFileWithMultipageTiffCheckBox.setSelected(
             StorageMultipageTiff.getShouldGenerateMetadataFile());
-      metadataFileWithMultipageTiffCheckBox.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            StorageMultipageTiff.setShouldGenerateMetadataFile(metadataFileWithMultipageTiffCheckBox.isSelected());
-         }
+      metadataFileWithMultipageTiffCheckBox.addActionListener((ActionEvent arg0) -> {
+         StorageMultipageTiff.setShouldGenerateMetadataFile(metadataFileWithMultipageTiffCheckBox.isSelected());
       });
       
       final JCheckBox separateFilesForPositionsMPTiffCheckBox = new JCheckBox();
       separateFilesForPositionsMPTiffCheckBox.setText("Save XY positions in separate Image Stack Files");
       separateFilesForPositionsMPTiffCheckBox.setSelected(
             StorageMultipageTiff.getShouldSplitPositions());
-      separateFilesForPositionsMPTiffCheckBox.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            StorageMultipageTiff.setShouldSplitPositions(separateFilesForPositionsMPTiffCheckBox.isSelected());
-         }
+      separateFilesForPositionsMPTiffCheckBox.addActionListener((ActionEvent arg0) -> {
+         StorageMultipageTiff.setShouldSplitPositions(separateFilesForPositionsMPTiffCheckBox.isSelected());
       });
   
       final JCheckBox syncExposureMainAndMDA = new JCheckBox();
       syncExposureMainAndMDA.setText("Sync exposure between Main and MDA windows");
       syncExposureMainAndMDA.setSelected(AcqControlDlg.getShouldSyncExposure());
-      syncExposureMainAndMDA.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            AcqControlDlg.setShouldSyncExposure(syncExposureMainAndMDA.isSelected());
-         }
+      syncExposureMainAndMDA.addActionListener((ActionEvent arg0) -> {
+         AcqControlDlg.setShouldSyncExposure(syncExposureMainAndMDA.isSelected());
       });
   
       final JCheckBox hideMDAdisplay = new JCheckBox();
       hideMDAdisplay.setText("Hide MDA display");
       hideMDAdisplay.setSelected(AcqControlDlg.getShouldHideMDADisplay());
-      hideMDAdisplay.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            AcqControlDlg.setShouldHideMDADisplay(hideMDAdisplay.isSelected());
+      hideMDAdisplay.addActionListener((ActionEvent arg0) -> {
+         AcqControlDlg.setShouldHideMDADisplay(hideMDAdisplay.isSelected());
+      });
+      
+      final JCheckBox runServer = new JCheckBox();
+      runServer.setText("Run server on port " + ZMQServer.DEFAULT_PORT_NUMBER);
+      runServer.setSelected(mmStudio.getShouldRunZMQServer());
+      runServer.addActionListener((ActionEvent arg0) ->  {
+         if (runServer.isSelected()) {
+            mmStudio_.runZMQServer();
+         } else {
+            mmStudio_.pauseZMQServer();
          }
+         mmStudio_.setShouldRunZMQServer(runServer.isSelected());         
       });
 
       final JButton closeButton = new JButton();
       closeButton.setText("Close");
-      closeButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(final ActionEvent ev) {
-            closeRequested();
-         }
+      closeButton.addActionListener((final ActionEvent ev) -> {
+         closeRequested();
       });
+  
 
 
       super.setLayout(new net.miginfocom.swing.MigLayout(
@@ -334,6 +314,7 @@ public final class OptionsDlg extends MMDialog {
 
       super.add(syncExposureMainAndMDA, "wrap");
       super.add(hideMDAdisplay, "wrap");
+      super.add(runServer, "wrap");
 
       super.add(new JSeparator(), "wrap");
 

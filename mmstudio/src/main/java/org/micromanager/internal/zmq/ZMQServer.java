@@ -89,7 +89,6 @@ public class ZMQServer extends ZMQSocketWrapper {
                JSONObject reply = new JSONObject();
                reply.put("reply", "success");
                reply.put("version", VERSION);
-//               initializeAPIClasses(json.getString("packages").split(":"));
                initializeAPIClasses();
 
                return reply.toString().getBytes();
@@ -149,19 +148,13 @@ public class ZMQServer extends ZMQSocketWrapper {
       apiClasses_.add(CMMCore.class);
 
       //recursively get all names that have org.micromånager, but not internal in the name
-      ArrayList<String> mmPackages = new ArrayList<String>();
+      ArrayList<String> mmPackages = new ArrayList<>();
       Package[] p = Package.getPackages();
       for (Package pa : p) {
-//         System.out.println(pa.getName());
          if (pa.getName().contains("org.micromanager") && !pa.getName().contains("internal")) {
             mmPackages.add(pa.getName());
          }
       }
-
-//      System.out.println("\n\n");
-//      for (String s : mmPackages) {
-//         System.out.println(s);
-//      }
 
       ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
       for (String packageName : mmPackages) {
@@ -170,9 +163,9 @@ public class ZMQServer extends ZMQSocketWrapper {
          try {
             resources = classLoader.getResources(path);
          } catch (IOException ex) {
-            throw new RuntimeException("Invalid package neame in ZMQ server: " + path);
+            throw new RuntimeException("Invalid package name in ZMQ server: " + path);
          }
-         List<File> dirs = new ArrayList<File>();
+         List<File> dirs = new ArrayList<>();
          while (resources.hasMoreElements()) {
             URL resource = resources.nextElement();
             dirs.add(new File(resource.getFile()));

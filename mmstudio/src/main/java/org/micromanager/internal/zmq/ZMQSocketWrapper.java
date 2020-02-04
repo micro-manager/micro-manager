@@ -229,14 +229,14 @@ public abstract class ZMQSocketWrapper {
             json.put("port", port_);
 
             //check to make sure that only exposing methods corresponding to API interfaces
-            ArrayList<Class> apiInterfaces = new ArrayList<Class>();
+            ArrayList<Class> apiInterfaces = new ArrayList<>();
             for (Class apiClass : apiClasses_) {
                if (apiClass.isAssignableFrom(o.getClass())) {
                   apiInterfaces.add(apiClass);
                }
             }
 
-            if (apiInterfaces.size() == 0) {
+            if (apiInterfaces.isEmpty()) {
                throw new RuntimeException("Internal class accidentally exposed");
             }
             json.put("api", parseAPI(apiInterfaces));
@@ -303,12 +303,13 @@ public abstract class ZMQSocketWrapper {
     * translated based on argument and return type, and put them into a big JSON
     * array that describes the API
     *
-    * @param clazz Class to be translated into JSON
-    * @return
+    * @param apiClasses Classes to be translated into JSON
+    * @return Classes translated to JSON
     * @throws JSONException
     */
    protected static JSONArray parseAPI(ArrayList<Class> apiClasses) throws JSONException {
-      //Collect all methods whose return types and arguments we know how to translate, and put them in a JSON array describing them
+      //Collect all methods whose return types and arguments we know how to translate, 
+      // and put them in a JSON array describing them
       Predicate<Method> methodFilter = (Method t) -> {
          return isValidMethod(t);
       };
