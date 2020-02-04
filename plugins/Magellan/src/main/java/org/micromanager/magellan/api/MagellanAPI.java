@@ -14,13 +14,6 @@ import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridManager;
  */
 public class MagellanAPI {
 
-   public static MagellanAPI instance_;
-   private static GUI gui_;
-
-   public MagellanAPI() {
-      instance_ = this;
-   }
-
    public MagellanAcquisitionAPI createAcquisition() {
       return MagellanAcquisitionsManager.getInstance().addNew();
    }
