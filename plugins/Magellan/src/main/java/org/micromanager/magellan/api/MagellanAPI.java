@@ -14,11 +14,11 @@ import org.micromanager.magellan.surfacesandregions.SurfaceGridManager;
  */
 public class MagellanAPI {
 
-   private static MagellanAPI singleton_;
+   public static MagellanAPI instance_;
    private static GUI gui_;
 
    public MagellanAPI() {
-      singleton_ = this;
+      instance_ = this;
    }
 
    public MagellanAcquisitionAPI createAcquisition() {

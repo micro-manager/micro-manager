@@ -109,6 +109,7 @@ import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.UIMonitor;
 import org.micromanager.internal.utils.WaitDialog;
+import org.micromanager.internal.zmq.ZMQServer;
 import org.micromanager.profile.internal.DefaultUserProfile;
 import org.micromanager.profile.internal.UserProfileAdmin;
 import org.micromanager.profile.internal.gui.HardwareConfigurationManager;
@@ -168,6 +169,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private boolean isClickToMoveEnabled_ = false;
 
    private ScriptPanel scriptPanel_;
+   private ZMQServer zmqServer_;
    private PipelineFrame pipelineFrame_;
    private org.micromanager.internal.utils.HotKeys hotKeys_;
 
@@ -319,6 +321,9 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // Load (but do no show) the scriptPanel
       createScriptPanel();
       scriptPanel_.getScriptsFromPrefs();
+      
+      //Create (but do not start) the ZMQ Server
+      createZMQServer();
       
       // Tell Core to start logging
       initializeLogging(core_);
@@ -887,6 +892,12 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private void createScriptPanel() {
       scriptPanel_ = new ScriptPanel(studio_);
    }
+   
+   private void createZMQServer() {
+      zmqServer_ = new ZMQServer(studio_);
+      //TODO: addd check in preferences if ZMQ is enabled and run this only if so
+      zmqServer_.initialize(ZMQServer.DEFAULT_PORT_NUMBER);
+   }
 
    private void createPipelineFrame() {
       if (pipelineFrame_ == null) {
@@ -1143,6 +1154,10 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
   
       if (scriptPanel_ != null) {
          scriptPanel_.closePanel();
+      }
+      
+      if (zmqServer_ != null) {
+         zmqServer_.close();
       }
 
       if (pipelineFrame_ != null) {

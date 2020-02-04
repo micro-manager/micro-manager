@@ -43,17 +43,6 @@ public class Magellan implements MenuPlugin, SciJavaPlugin {
    private static MagellanAPI api_;
 
    public Magellan() {
-      try {
-         if (bridge_ == null) {
-            bridge_ = new ZMQServer(mmAPI_, null);
-         }
-         if (api_ == null) {
-            api_ = new MagellanAPI();
-         }
-      } catch (Exception e) {
-         e.printStackTrace();
-         //ignore for now
-      }
 
    }
    
@@ -84,6 +73,9 @@ public class Magellan implements MenuPlugin, SciJavaPlugin {
          gui_ = new GUI(VERSION);
       } else {
          gui_.setVisible(true);
+      }
+      if (api_ == null) {
+         api_ = new MagellanAPI();
       }
    }
 
