@@ -85,7 +85,7 @@ public class ZMQServer extends ZMQSocketWrapper {
          case "connect":
             String server = json.getString("classpath");
             if (server.equals("master")) {
-               //Called from constructor of MagellanBridge in Pygellan
+               //Called from constructor of PygellanBridge in Pygellan
                JSONObject reply = new JSONObject();
                reply.put("reply", "success");
                reply.put("version", VERSION);
