@@ -1,7 +1,7 @@
 package org.micromanager.internal.zmq;
 
 import org.json.JSONObject;
-import org.micromanager.magellan.acq.AcquisitionEvent;
+import org.micromanager.magellan.internal.acq.AcquisitionEvent;
 import org.zeromq.SocketType;
 
 /**
