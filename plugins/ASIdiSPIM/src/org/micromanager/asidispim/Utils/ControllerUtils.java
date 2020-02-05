@@ -1280,7 +1280,8 @@ public class ControllerUtils {
             ReportingUtils.logDebugMessage("Could not get camera ROI for light sheet mode");
             return 0f;
          }
-         sheetWidth = roi.height * sheetSlope / 1e6f;  // in microdegrees per pixel, convert to degrees
+         final float slopePolarity = (side == Devices.Sides.B) ? -1 : 1;
+         sheetWidth = roi.height * sheetSlope * slopePolarity / 1e6f;  // in microdegrees per pixel, convert to degrees
       } else {
          final boolean autoSheet = prefs_.getBoolean(
                MyStrings.PanelNames.SETUP.toString() + side.toString(), 
