@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -222,6 +223,9 @@ public abstract class ZMQSocketWrapper {
             //Keep track of which objects have been sent out, so that garbage collection can be synchronized between 
             //the two languages
             String hash = Integer.toHexString(System.identityHashCode(o));
+            //Add a random UUID to account for the fact that there may be multiple
+            //pythons shadows of the same object
+            hash += UUID.randomUUID();
             EXTERNAL_OBJECTS.put(hash, o);
             json.put("type", "unserialized-object");
             json.put("class", o.getClass().getName());
