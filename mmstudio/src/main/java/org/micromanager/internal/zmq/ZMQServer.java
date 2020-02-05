@@ -87,15 +87,17 @@ public class ZMQServer extends ZMQSocketWrapper {
             if (server.equals("master")) {
                //Called from constructor of PygellanBridge in Pygellan
                JSONObject reply = new JSONObject();
-               reply.put("reply", "success");
+               reply.put("type", "none");
                reply.put("version", VERSION);
-//               initializeAPIClasses(json.getString("packages").split(":"));
                initializeAPIClasses();
 
                return reply.toString().getBytes();
             } else {
                Class baseClass = null;
                for (Class c : apiClasses_) {
+//                  if (c.getName().contains("magellan")) {
+//                     System.out.println();
+//                  }
                   if (c.getName().equals(json.getString("classpath"))) {
                      baseClass = c;
                   }
@@ -110,29 +112,36 @@ public class ZMQServer extends ZMQSocketWrapper {
                } else if (baseClass.equals(CMMCore.class)) {
                   instance = studio_.getCMMCore();
                } else {
-                  instance = baseClass.getField("instance_").get(null);
+                  instance = baseClass.newInstance();
                }
 
                //start the server for this class and store it
                int port = json.getInt("port");
                servers_.put(port, new ZMQServer(baseClass, port));
                JSONObject reply = new JSONObject();
-               reply.put("reply", "success");
+               reply.put("type", "none");
                this.serialize(instance, reply);
                return reply.toString().getBytes();
             }
 
          case "run-method": {
             String hashCode = json.getString("hash-code");
+            System.out.println("get object: " + hashCode);
             Object target = EXTERNAL_OBJECTS.get(hashCode);
-            return runMethod(target, json);
+            try {
+               return runMethod(target, json);
+            } catch (Exception e) {
+                    System.out.println();
+             }
          }
          case "destructor": {
             String hashCode = json.getString("hash-code");
             //TODO this is defined in superclass, maybe it would be good to merge these?
+            System.out.println("remove object: " + hashCode);
             EXTERNAL_OBJECTS.remove(hashCode);
             JSONObject reply = new JSONObject();
-            reply.put("reply", "success");
+            
+            reply.put("type", "none");
             return reply.toString().getBytes();
          }
          default:
