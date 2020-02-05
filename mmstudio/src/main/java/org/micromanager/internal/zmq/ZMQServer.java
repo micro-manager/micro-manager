@@ -126,18 +126,15 @@ public class ZMQServer extends ZMQSocketWrapper {
 
          case "run-method": {
             String hashCode = json.getString("hash-code");
-            System.out.println("get object: " + hashCode);
+//            System.out.println("get object: " + hashCode);
             Object target = EXTERNAL_OBJECTS.get(hashCode);
-            try {
                return runMethod(target, json);
-            } catch (Exception e) {
-                    System.out.println();
-             }
+ 
          }
          case "destructor": {
             String hashCode = json.getString("hash-code");
             //TODO this is defined in superclass, maybe it would be good to merge these?
-            System.out.println("remove object: " + hashCode);
+//            System.out.println("remove object: " + hashCode);
             EXTERNAL_OBJECTS.remove(hashCode);
             JSONObject reply = new JSONObject();
             
