@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -59,7 +60,8 @@ public abstract class ZMQSocketWrapper {
       List.class};
 
    //map of objects that exist in some client of the server
-   protected final static Map<String, Object> EXTERNAL_OBJECTS = new HashMap<>();
+   protected final static ConcurrentHashMap<String, Object> EXTERNAL_OBJECTS = 
+           new ConcurrentHashMap<String, Object>();
 
    protected static HashSet<Class> apiClasses_;
 

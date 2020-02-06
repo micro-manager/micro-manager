@@ -10,6 +10,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import mmcorej.CMMCore;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -22,7 +24,7 @@ import org.zeromq.SocketType;
 public class ZMQServer extends ZMQSocketWrapper {
 
    //Copied from magellan version for backwards compatibility, but they are now seperate I guess
-   public static final String VERSION = "2.3.0"; 
+   public static final String VERSION = "2.3.0";
    public static final int DEFAULT_PORT_NUMBER = 4827;
 
    private ExecutorService executor_;
@@ -128,8 +130,8 @@ public class ZMQServer extends ZMQSocketWrapper {
             String hashCode = json.getString("hash-code");
 //            System.out.println("get object: " + hashCode);
             Object target = EXTERNAL_OBJECTS.get(hashCode);
-               return runMethod(target, json);
- 
+            return runMethod(target, json);
+
          }
          case "destructor": {
             String hashCode = json.getString("hash-code");
@@ -137,7 +139,7 @@ public class ZMQServer extends ZMQSocketWrapper {
 //            System.out.println("remove object: " + hashCode);
             EXTERNAL_OBJECTS.remove(hashCode);
             JSONObject reply = new JSONObject();
-            
+
             reply.put("type", "none");
             return reply.toString().getBytes();
          }
@@ -150,8 +152,6 @@ public class ZMQServer extends ZMQSocketWrapper {
    //Add java classes that are allowed to pass to python to avoid stuff leaking out
    private void initializeAPIClasses() {
       apiClasses_ = new HashSet<>();
-      //manually add this one
-      apiClasses_.add(CMMCore.class);
 
       //recursively get all names that have org.micromånager, but not internal in the name
       ArrayList<String> mmPackages = new ArrayList<>();
@@ -183,16 +183,38 @@ public class ZMQServer extends ZMQSocketWrapper {
          }
 
          for (File directory : dirs) {
-            File[] files = directory.listFiles();
-            if (files != null) {
-               for (File file : files) {
-                  if (!file.isDirectory()) {
-                     try {
-                        apiClasses_.add(Class.forName(packageName + '.' + file.getName().
-                                substring(0, file.getName().length() - 6)));
-                     } catch (ClassNotFoundException ex) {
-                        //throw new RuntimeException("Problem loading class:" + file.getName());
-                        studio_.logs().logError("Problem loading class:" + file.getName());
+            if (directory.getAbsolutePath().contains(".jar!")) {
+               try {
+                  JarFile jarFile = new JarFile(directory.getAbsolutePath().
+                          split("!")[0].split(":")[1]);
+                  Enumeration<JarEntry> entries = jarFile.entries();
+                  while (entries.hasMoreElements()) {
+                     JarEntry entry = entries.nextElement();
+                     String name = entry.getName();
+                     //include classes but not inner classes
+                     if (name.contains(".class") && !name.contains("$")) {
+                        try {
+                           apiClasses_.add(Class.forName(name.replace("/", ".").
+                                   substring(0, name.length() - 6)));
+                        } catch (ClassNotFoundException ex) {
+                           throw new RuntimeException(ex);
+                        }
+                     }
+                  }
+               } catch (IOException ex) {
+                  throw new RuntimeException(ex);
+               }
+            } else {
+               File[] files = directory.listFiles();
+               if (files != null) {
+                  for (File file : files) {
+                     if (!file.isDirectory()) {
+                        try {
+                           apiClasses_.add(Class.forName(packageName + '.' + file.getName().
+                                   substring(0, file.getName().length() - 6)));
+                        } catch (ClassNotFoundException ex) {
+                           throw new RuntimeException("Problem loading class:" + file.getName());
+                        }
                      }
                   }
                }
