@@ -213,7 +213,7 @@ public class ZMQServer extends ZMQSocketWrapper {
                            apiClasses_.add(Class.forName(packageName + '.' + file.getName().
                                    substring(0, file.getName().length() - 6)));
                         } catch (ClassNotFoundException ex) {
-                           throw new RuntimeException("Problem loading class:" + file.getName());
+                           studio_.logs().logError("Failed to load class: " + file.getName());
                         }
                      }
                   }
