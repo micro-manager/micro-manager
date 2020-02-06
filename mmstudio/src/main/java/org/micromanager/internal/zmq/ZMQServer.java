@@ -157,7 +157,12 @@ public class ZMQServer extends ZMQSocketWrapper {
       ArrayList<String> mmPackages = new ArrayList<>();
       Package[] p = Package.getPackages();
       for (Package pa : p) {
+         //Add all non internal MM classes
          if (pa.getName().contains("org.micromanager") && !pa.getName().contains("internal")) {
+            mmPackages.add(pa.getName());
+         }
+         //Add all core classes
+         if (pa.getName().contains("mmcorej")) {
             mmPackages.add(pa.getName());
          }
       }
