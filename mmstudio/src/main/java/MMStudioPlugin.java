@@ -25,6 +25,7 @@
 import ij.CommandListener;
 import ij.Executer;
 import ij.IJ;
+import ij.Macro;
 import ij.plugin.Duplicator;
 import ij.plugin.PlugIn;
 import java.lang.reflect.InvocationTargetException;
@@ -49,7 +50,7 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
     * @param arg the plugin argument (not used)
     */
    @Override
-   public void run(final String arg) {
+   public void run(final String arg) {      
       SwingUtilities.invokeLater(new Runnable() {
          @Override
          public void run() {
@@ -76,7 +77,8 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
                      Executer.addCommandListener(MMStudioPlugin.this);
                   }
 
-                  studio_ = new MMStudio(true);
+                  String profileNameAutoStart = parseMacroOptions();
+                  studio_ = new MMStudio(true, profileNameAutoStart);
                }
             } catch (RuntimeException e) {
                ReportingUtils.logError(e);
@@ -87,6 +89,28 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
       });
    }
 
+    private String parseMacroOptions() {
+        //This method parses the optional ImageJ macro options. Currently it only supports the specification of a profile to automatically load like so: run("Micro-Manager Studio", "-profile {MyProfileNameHere}");
+        //This method could be expanded to support other startup arguments in the future.
+        String optionalArgs = Macro.getOptions(); //If, in ImageJ you start this plugin as `run("Micro-Manager Studio", "-profile MyProfile")` then this line will return "-profile MyProfile"
+        String profileNameAutoStart = null; //The name of the user profile that Micro-Manager should start up with. In the case that this is left as null then a splash screen will request that the user select a profile before startup.
+        if (optionalArgs != null) {
+            String args[] = optionalArgs.split(" "); //Split the arg string into space separated array. This matches the way that system arguments are passed in to the `main` method by Java.
+            for (int i=0; i<args.length; i++) { // a library for the parsing of arguments such as apache commons - cli would make this more robust if needed.
+                if (args[i].equals("-profile")) {
+                    if (i < args.length-1) {
+                        i++;
+                        profileNameAutoStart = args[i];
+                    } else {
+                        ReportingUtils.showError("Micro-Manager received no value for the `-profile` startup argument.");
+                    }
+                } else {
+                    ReportingUtils.showError("Micro-Manager received unknown startup argument: " + args[i]);
+                }
+            }
+        }
+        return profileNameAutoStart;
+    }
 
    private boolean closed_;
    private boolean closeStudio() {
