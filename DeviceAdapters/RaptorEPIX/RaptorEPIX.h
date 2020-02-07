@@ -29,6 +29,29 @@
 #include "../../MMDevice/DeviceThreads.h"
 //#include "../../MMDevice/Debayer.h"
 
+//#define PLEORA
+
+#ifdef PLEORA
+
+	#include "DisplayThread.h"
+	//#include "Resource.h"
+
+	#include <PvDeviceFinderWnd.h>
+	#include <PvDevice.h>
+	#include <PvGenParameter.h>
+	#include <PvGenBrowserWnd.h>
+	#include <PvBuffer.h>
+	#include <PvStream.h>
+	#include <PvPipeline.h>
+	#include <PvDisplayWnd.h>
+	#include <PvAcquisitionStateManager.h>
+	#include <PvDeviceGEV.h>
+	#include <PvDeviceInfoGEV.h>
+	#include <PvDeviceInfoU3V.h>
+	#include <PvStreamGEV.h>
+
+#endif
+
 #include <string>
 #include <map>
 #include <algorithm>
@@ -51,6 +74,89 @@
 //////////////////////////////////////////////////////////////////////////////
 
 class MySequenceThread;
+
+#ifdef PLEORA
+
+#include <PvSampleUtils.h>
+#include <PvSerialBridge.h>
+#include <PvDeviceAdapter.h>
+
+
+#define CLDLL_PORTNAME ( "COM111" )
+
+#define IPENGINEPORT ( PvDeviceSerialBulk0 )
+
+class CRaptorEPIX;
+
+class CRaptorPleora : public PvGenEventSink, PvAcquisitionStateEventSink
+{
+public:
+
+    CRaptorPleora();
+	void SetParent(CRaptorEPIX *parent){	pRaptor = parent;};
+    virtual ~CRaptorPleora();
+
+    void StartStreaming();
+    void StopStreaming();
+	 void OnClose();
+	 void OnBnClickedConnectButton(long &nWidth, long &nHeight );
+	 void OnBnClickedDisconnectButton();
+	 void Connect( const PvDeviceInfo *aDI, long &nWidth, long &nHeight );
+	 void Disconnect();
+	 void StartAcquisition();
+	 void StopAcquisition();
+    bool IsAcquiringImages() const { return mAcquiringImages; }
+	void GetImage(ImgBuffer *pImg );
+private:
+
+
+	 //BOOL OnInitDialog();
+	 //void OnPaint();
+	 //HCURSOR OnQueryDragIcon();
+	 void OnSize(UINT nType, int cx, int cy);
+	 void OnGetMinMaxInfo( MINMAXINFO *lpMMI );
+	 //void EnableInterface();
+	 void OnBnClickedDeviceButton();
+	 void OnBnClickedDeviceEvents();
+	 void OnBnClickedLinkButton();
+	 void OnBnClickedStreamparamsButton();
+	 //void ShowGenWindow( PvGenBrowserWnd **aWnd, PvGenParameterArray *aParams, const CString &aTitle );
+	 void CloseGenWindow( PvGenBrowserWnd **aWnd );
+
+	 void OnBnClickedStart();
+	 void OnBnClickedStop();
+	 void OnCbnSelchangeMode();
+	 void OnParameterUpdate( PvGenParameter *aParameter );
+	 void OnMove(int x, int y);
+	 //void OnAcquisitionStateChanged( PvDevice* aDevice, PvStream* aStream, uint32_t aSource, PvAcquisitionState aState );
+	 LRESULT OnAcquisitionStateChanged( WPARAM wParam, LPARAM lParam );
+	 void CameraLinkDLLBridge( PvDevice *aDevice );
+
+	     BOOL mNeedInit;
+
+    PvDevice* mDevice;
+    PvStream* mStream;
+    PvPipeline* mPipeline;
+
+    bool mAcquiringImages;
+
+    DisplayThread *mDisplayThread;
+
+    PvGenBrowserWnd *mDeviceWnd;
+    PvGenBrowserWnd *mCommunicationWnd;
+    PvGenBrowserWnd *mStreamParametersWnd;
+
+    PvDisplayWnd mDisplay;
+
+    PvAcquisitionStateManager *mAcquisitionStateManager;
+	PvSerialBridge lBridge;
+	PvDeviceSerialPort lPort;
+	PvDeviceAdapter *lDeviceAdapter;
+
+	CRaptorEPIX *pRaptor;
+};
+#endif                                                                  
+
 
 class CRaptorEPIX : public CCameraBase<CRaptorEPIX>  
 {
@@ -263,6 +369,11 @@ public:
 
    void UpdateAOI();
 
+   unsigned AOILeft() { return AOILeft_;};
+   unsigned AOITop() { return AOITop_;};
+   unsigned AOIWidth() { return AOIWidth_;};
+   unsigned AOIHeight() { return AOIHeight_;};
+   bool PostCaptureROI() {return PostCaptureROI_;};
 
 private:
    int SetAllowedBinning();
@@ -299,6 +410,7 @@ private:
 	void SetROIStatus(unsigned int nWidth, unsigned int nHeight, unsigned int nXOffset, unsigned int nYOffset) const;
 
 	int serialReadRaptorRegister1(int unit, unsigned char nReg, unsigned char* val) const;
+	int serialReadRaptorRegister2(int unit, unsigned char nReg, unsigned char* val) const;
 	int serialWriteRaptorRegister1(int unit, unsigned char nReg, unsigned char val) const;
 
 	//int serialWriteReadCmd(int unit, unsigned char* bufin, int insize, unsigned char* bufout, int outsize ) ;
@@ -309,6 +421,7 @@ private:
 	int DisableMicro() const;
 
 	void MyDebayer(unsigned short* pInput, unsigned short* pOutput, int nWidth, int nHeight, int nStep, int nMethod=0);
+           
 
    //int serialWriteReadCmd(int unit, unsigned char* bufin, int insize, unsigned char* bufout, int outsize );
 
@@ -389,6 +502,7 @@ private:
 	double readoutRate_;
 	long readoutMode_;
 	long nCapturing_;
+	long TECCooler_;
 
 	bool bHorizontalFlip_;
 	bool bInvertVideo_;
@@ -457,6 +571,12 @@ private:
 	int UNITSMAP;
 	int MULTIUNITMASK;
 
+
+#ifdef PLEORA
+
+	CRaptorPleora *pPleora;
+
+#endif
 };
 
 class MySequenceThread : public MMDeviceThreadBase
