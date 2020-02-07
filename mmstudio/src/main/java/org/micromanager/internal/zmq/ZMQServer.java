@@ -81,64 +81,59 @@ public class ZMQServer extends ZMQSocketWrapper {
 
    @Override
    protected byte[] parseAndExecuteCommand(String message) throws Exception {
-      JSONObject json = new JSONObject(message);
-
-      switch (json.getString("command")) {
+      JSONObject request = new JSONObject(message);
+      JSONObject reply;
+      switch (request.getString("command")) {
          case "connect":
-            String server = json.getString("classpath");
-            if (server.equals("master")) {
-               //Called from constructor of PygellanBridge in Pygellan
-               JSONObject reply = new JSONObject();
-               reply.put("type", "none");
-               reply.put("version", VERSION);
-               initializeAPIClasses();
-
-               return reply.toString().getBytes();
-            } else {
-               Class baseClass = null;
-               for (Class c : apiClasses_) {
+            //Called from constructor of PygellanBridge in Pygellan
+            reply = new JSONObject();
+            reply.put("type", "none");
+            reply.put("version", VERSION);
+            initializeAPIClasses();
+            return reply.toString().getBytes();
+         case "constructor":
+            Class baseClass = null;
+            for (Class c : apiClasses_) {
 //                  if (c.getName().contains("magellan")) {
 //                     System.out.println();
 //                  }
-                  if (c.getName().equals(json.getString("classpath"))) {
-                     baseClass = c;
-                  }
+               if (c.getName().equals(request.getString("classpath"))) {
+                  baseClass = c;
                }
-               if (baseClass == null) {
-                  throw new RuntimeException("Couldnt find class with name" + json.getString("classpath"));
-               }
-
-               Object instance;
-               if (baseClass.equals(Studio.class)) {
-                  instance = studio_;
-               } else if (baseClass.equals(CMMCore.class)) {
-                  instance = studio_.getCMMCore();
-               } else {
-                  instance = baseClass.newInstance();
-               }
-
-               //start the server for this class and store it
-               int port = json.getInt("port");
-               servers_.put(port, new ZMQServer(baseClass, port));
-               JSONObject reply = new JSONObject();
-               reply.put("type", "none");
-               this.serialize(instance, reply);
-               return reply.toString().getBytes();
+            }
+            if (baseClass == null) {
+               throw new RuntimeException("Couldnt find class with name" + request.getString("classpath"));
             }
 
+            Object instance;
+            if (baseClass.equals(Studio.class)) {
+               instance = studio_;
+            } else if (baseClass.equals(CMMCore.class)) {
+               instance = studio_.getCMMCore();
+            } else {
+               instance = baseClass.newInstance();
+            }
+            if (request.has("port")) {
+               //start the server for this class and store it
+               int port = request.getInt("port");
+               servers_.put(port, new ZMQServer(baseClass, port));
+            }
+            reply = new JSONObject();
+            this.serialize(instance, reply);
+            return reply.toString().getBytes();
          case "run-method": {
-            String hashCode = json.getString("hash-code");
+            String hashCode = request.getString("hash-code");
 //            System.out.println("get object: " + hashCode);
             Object target = EXTERNAL_OBJECTS.get(hashCode);
-            return runMethod(target, json);
+            return runMethod(target, request);
 
          }
          case "destructor": {
-            String hashCode = json.getString("hash-code");
+            String hashCode = request.getString("hash-code");
             //TODO this is defined in superclass, maybe it would be good to merge these?
 //            System.out.println("remove object: " + hashCode);
             EXTERNAL_OBJECTS.remove(hashCode);
-            JSONObject reply = new JSONObject();
+            reply = new JSONObject();
 
             reply.put("type", "none");
             return reply.toString().getBytes();
