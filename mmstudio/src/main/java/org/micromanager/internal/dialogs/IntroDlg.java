@@ -136,15 +136,16 @@ public final class IntroDlg extends JDialog {
 
       try {
          UserProfileAdmin admin = ((MMStudio) studio).profileAdmin();
-         if (!StartupSettings.create(admin.getNonSavingProfile(
-               admin.getUUIDOfCurrentProfile())).
-               shouldSkipProfileSelectionAtStartup()) {
+         profileController_ = ProfileSelectionUIController.create(admin);
+         StartupSettings startupSettings = StartupSettings.create(
+                 admin.getNonSavingProfile(admin.getUUIDOfCurrentProfile()));
+         if (!startupSettings.shouldSkipProfileSelectionAtStartup()) {
             JLabel userProfileLabel = new JLabel("User Profile:");
             userProfileLabel.setFont(DEFAULT_FONT);
             contentsPanel.add(userProfileLabel, new CC().gapTop("5").gapLeft("5").wrap());
-
-            profileController_ = ProfileSelectionUIController.create(admin);
             contentsPanel.add(profileController_.getUI(), new CC().growX().gapRight("5").wrap());
+         } else {
+            profileController_.
          }
          final JLabel loadConfigurationLabel = new JLabel();
          loadConfigurationLabel.setFont(DEFAULT_FONT);
