@@ -70,6 +70,8 @@ public final class IntroDlg extends JDialog {
 
    private ProfileSelectionUIController profileController_;
    private ConfigSelectionUIController configController_;
+   private UserProfileAdmin admin_;
+   private boolean skipProfileSelection_ = false;
 
    public static String DISCLAIMER_TEXT =
       "This software is distributed free of charge in the hope that it will be useful, " +
@@ -77,15 +79,20 @@ public final class IntroDlg extends JDialog {
       "of merchantability or fitness for a particular purpose. In no event shall the copyright owner or contributors " +
       "be liable for any direct, indirect, incidental, special, examplary, or consequential damages.\n\n" +
       
-      "Copyright University of California San Francisco, 2007, 2008, 2009, 2010. All rights reserved.";
+      "Copyright University of California San Francisco, 2005-2020. All rights reserved.";
 
    public static String SUPPORT_TEXT =
-      "Micro-Manager was initially funded by grants from the Sandler Foundation and is now supported by a grant from the NIH.";
+      "Micro-Manager was funded by grants from the Sandler Foundation and NIH, and is now supported by the CZI.";
 
    public static String CITATION_TEXT =
       "If you have found this software useful, please cite Micro-Manager in your publications.";
 
 
+   /**
+    * Shows the Splash screen
+    * @param studio Instance of MMStudio.  Can not be null.
+    * @param versionStr 
+    */
    public IntroDlg(Studio studio, String versionStr) {
       // Select a plugin to use to customize the dialog.
       Map<String, IntroPlugin> plugins = studio == null ?
@@ -135,24 +142,23 @@ public final class IntroDlg extends JDialog {
       contentsPanel.add(versionLabel, new CC().gapLeft("5").wrap());
 
       try {
-         UserProfileAdmin admin = ((MMStudio) studio).profileAdmin();
-         profileController_ = ProfileSelectionUIController.create(admin);
+         admin_ = ((MMStudio) studio).profileAdmin();
+         profileController_ = ProfileSelectionUIController.create(admin_);
          StartupSettings startupSettings = StartupSettings.create(
-                 admin.getNonSavingProfile(admin.getUUIDOfCurrentProfile()));
-         if (!startupSettings.shouldSkipProfileSelectionAtStartup()) {
+                 admin_.getNonSavingProfile(admin_.getUUIDOfCurrentProfile()));
+         skipProfileSelection_ = (!startupSettings.shouldSkipProfileSelectionAtStartup());
+         if (!skipProfileSelection_) {
             JLabel userProfileLabel = new JLabel("User Profile:");
             userProfileLabel.setFont(DEFAULT_FONT);
             contentsPanel.add(userProfileLabel, new CC().gapTop("5").gapLeft("5").wrap());
             contentsPanel.add(profileController_.getUI(), new CC().growX().gapRight("5").wrap());
-         } else {
-            profileController_.
-         }
+         } 
          final JLabel loadConfigurationLabel = new JLabel();
          loadConfigurationLabel.setFont(DEFAULT_FONT);
          loadConfigurationLabel.setText("Hardware Configuration File:");
          contentsPanel.add(loadConfigurationLabel, new CC().gapLeft("5").wrap());
 
-         configController_ = ConfigSelectionUIController.create(admin);
+         configController_ = ConfigSelectionUIController.create(admin_);
          contentsPanel.add(configController_.getUI(), new CC().growX().gapRight("5").wrap());
       }
       catch (IOException e) {
@@ -225,6 +231,9 @@ public final class IntroDlg extends JDialog {
    }
 
    public UUID getSelectedProfileUUID() {
+      if (skipProfileSelection_) {
+         return admin_.getUUIDOfDefaultProfile();
+      }
       return profileController_.getSelectedProfileUUID();
    }
 
