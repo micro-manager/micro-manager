@@ -193,7 +193,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
     * @param args
     */
    public static void main(String args[]) {
-       //TODO this is not used when launching Micro-Manager from ImageJ or from Matlab, so when is it used?
       String profileNameAutoStart = null; //The name of the user profile that Micro-Manager should start up with. In the case that this is left as null then a splash screen will request that the user select a profile before startup.
       for (int i=0; i<args.length; i++) { // a library for the parsing of arguments such as apache commons - cli would make this more robust if needed.
           if (args[i].equals("-profile")) {
