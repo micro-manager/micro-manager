@@ -146,7 +146,7 @@ public final class IntroDlg extends JDialog {
          profileController_ = ProfileSelectionUIController.create(admin_);
          StartupSettings startupSettings = StartupSettings.create(
                  admin_.getNonSavingProfile(admin_.getUUIDOfCurrentProfile()));
-         skipProfileSelection_ = (!startupSettings.shouldSkipProfileSelectionAtStartup());
+         skipProfileSelection_ = startupSettings.shouldSkipProfileSelectionAtStartup();
          if (!skipProfileSelection_) {
             JLabel userProfileLabel = new JLabel("User Profile:");
             userProfileLabel.setFont(DEFAULT_FONT);

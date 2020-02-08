@@ -116,8 +116,12 @@ public final class OptionsDlg extends MMDialog {
          boolean checked = alwaysUseDefaultProfileCheckBox.isSelected();
          startupSettings.setSkipProfileSelectionAtStartup(checked);
          askForConfigFileCheckBox.setEnabled(checked);
+         if (checked) {
          startupSettings.setSkipConfigSelectionAtStartup(
                  askForConfigFileCheckBox.isSelected());
+         } else {
+             startupSettings.setSkipConfigSelectionAtStartup(false);
+         }
       });
 
       // Slaving the "use default profile" setting.  
@@ -130,7 +134,7 @@ public final class OptionsDlg extends MMDialog {
                  !askForConfigFileCheckBox.isSelected());
       });
       askForConfigFileCheckBox.setSelected(
-              startupSettings.shouldSkipConfigSelectionAtStartup());
+              !startupSettings.shouldSkipConfigSelectionAtStartup());
       askForConfigFileCheckBox.setEnabled(alwaysUseDefaultProfileCheckBox.isSelected());
 
       final JCheckBox deleteLogCheckBox = new JCheckBox();
