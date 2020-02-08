@@ -115,7 +115,6 @@ import org.micromanager.profile.internal.gui.HardwareConfigurationManager;
 import org.micromanager.quickaccess.QuickAccessManager;
 import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
 
-
 /*
  * Implements the Studio (i.e. primary API) and does various other
  * tasks that should probably be refactored out at some point.
@@ -194,9 +193,22 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
     * @param args
     */
    public static void main(String args[]) {
+      String profileNameAutoStart = null; //The name of the user profile that Micro-Manager should start up with. In the case that this is left as null then a splash screen will request that the user select a profile before startup.
+      for (int i=0; i<args.length; i++) { // a library for the parsing of arguments such as apache commons - cli would make this more robust if needed.
+          if (args[i].equals("-profile")) {
+              if (i < args.length-1) {
+                  i++;
+                  profileNameAutoStart = args[i];
+              } else {
+                  ReportingUtils.showError("Micro-Manager received no value for the `-profile` startup argument.");
+              }
+          } else {
+              ReportingUtils.showError("Micro-Manager received unknown startup argument: " + args[i]);
+          }
+      }
       try {
          UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-         MMStudio mmStudio = new MMStudio(false);
+         MMStudio mmStudio = new MMStudio(false, profileNameAutoStart);
       } catch (ClassNotFoundException e) {
          ReportingUtils.showError(e, "A java error has caused Micro-Manager to exit.");
          System.exit(1);
