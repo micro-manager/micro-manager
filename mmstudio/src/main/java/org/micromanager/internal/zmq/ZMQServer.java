@@ -180,8 +180,10 @@ public class ZMQServer extends ZMQSocketWrapper {
          for (File directory : dirs) {
             if (directory.getAbsolutePath().contains(".jar!")) {
                try {
-                  JarFile jarFile = new JarFile(directory.getAbsolutePath().
-                          split("!")[0].split(":")[1]);
+                  String jar = directory.getAbsolutePath();
+                  jar = jar.split("!")[0];
+                  jar = jar.split("file:")[1];
+                  JarFile jarFile = new JarFile(jar);
                   Enumeration<JarEntry> entries = jarFile.entries();
                   while (entries.hasMoreElements()) {
                      JarEntry entry = entries.nextElement();
