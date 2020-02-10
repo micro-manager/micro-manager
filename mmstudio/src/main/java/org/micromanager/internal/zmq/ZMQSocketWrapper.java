@@ -2,6 +2,7 @@ package org.micromanager.internal.zmq;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -9,10 +10,12 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -43,25 +46,9 @@ public abstract class ZMQSocketWrapper {
       PRIMITIVE_CLASS_MAP.put(Double.class, double.class);
    }
 
-   //classes that can be translated into json and reconstructed on the python side
-   private static final Class[] SERIALIZABLE_CLASSES = new Class[]{
-      String.class,
-      Void.TYPE,
-      Short.TYPE,
-      Long.TYPE,
-      Integer.TYPE,
-      Float.TYPE,
-      Double.TYPE,
-      Boolean.TYPE,
-      byte[].class,
-      double[].class,
-      int[].class,
-      TaggedImage.class,
-      List.class};
-
    //map of objects that exist in some client of the server
-   protected final static ConcurrentHashMap<String, Object> EXTERNAL_OBJECTS = 
-           new ConcurrentHashMap<String, Object>();
+   protected final static ConcurrentHashMap<String, Object> EXTERNAL_OBJECTS
+           = new ConcurrentHashMap<String, Object>();
 
    protected static HashSet<Class> apiClasses_;
 
@@ -110,22 +97,88 @@ public abstract class ZMQSocketWrapper {
    protected byte[] runMethod(Object obj, JSONObject json) throws NoSuchMethodException, IllegalAccessException, JSONException {
       String methodName = json.getString("name");
 
-      Class[] argClasses = new Class[json.getJSONArray("arguments").length()];
+      Object[] argClasses = new Object[json.getJSONArray("arguments").length()];
       Object[] argVals = new Object[json.getJSONArray("arguments").length()];
       for (int i = 0; i < argVals.length; i++) {
-         //Converts onpbjects to primitives
          Class c = json.getJSONArray("arguments").get(i).getClass();
-         if (PRIMITIVE_CLASS_MAP.containsKey(c)) {
+         if (json.getJSONArray("arguments").get(i) instanceof JSONObject
+                 && json.getJSONArray("arguments").getJSONObject(i).has("hash-code")) {
+            //Passed in a javashadow object as an argument
+            argVals[i] = EXTERNAL_OBJECTS.get(
+                    json.getJSONArray("arguments").getJSONObject(i).get("hash-code"));
+            //abstract to superclasses/interfaces in the API
+            ParamList<Class> potentialClasses = new ParamList<Class>();
+            for (Class apiClass : apiClasses_) {
+               if (apiClass.isAssignableFrom(argVals[i].getClass())) {
+                  potentialClasses.add(apiClass);
+               }
+            }
+            argClasses[i] = potentialClasses;
+            continue;
+         } else if (PRIMITIVE_CLASS_MAP.containsKey(c)) {
             c = PRIMITIVE_CLASS_MAP.get(c);
          }
+         //TODO probably some more work to do here in deserializing argumen types (e.g. TaggedImage)
          argClasses[i] = c;
          argVals[i] = json.getJSONArray("arguments").get(i);
       }
 
-      Method method = obj.getClass().getMethod(methodName, argClasses);
+      //Generate every possible combination of parameters given multiple interfaces
+      LinkedList<LinkedList<Class>> paramCombos = new LinkedList<LinkedList<Class>>();
+      for (Object argument : argClasses) {
+         if (argument instanceof ParamList) {
+            if (paramCombos.isEmpty()) {
+               //Add an entry for each possible type of the argument
+               for (Class c : (ArrayList<Class>) argument) {
+                  paramCombos.add(new LinkedList<Class>());
+                  paramCombos.getLast().add(c);
+               }
+            } else {
+               //multiply each existing combo by each possible value of the arg
+               LinkedList<LinkedList<Class>> newComboList = new LinkedList<LinkedList<Class>>();
+               for (Class c : (ArrayList<Class>) argument) {
+                  for (LinkedList<Class> argList : paramCombos) {
+                     LinkedList<Class> newArgList = new LinkedList<Class>(argList);
+                     newArgList.add(c);
+                     newComboList.add(newArgList);
+                  }
+               }
+               paramCombos = newComboList;
+            }
+         } else {
+            //only one type, simply add it to every combo
+            if (paramCombos.isEmpty()) {
+               //Add an entry for each possible type of the argument
+               paramCombos.add(new LinkedList<Class>());
+            }
+            for (LinkedList<Class> argList : paramCombos) {
+               argList.add((Class) argument);
+            }
+         }
+      }
+
+      Method matchingMethod = null;
+      if (paramCombos.isEmpty()) {
+         //0 argument funtion
+         matchingMethod = obj.getClass().getMethod(methodName);
+      } else {
+         for (LinkedList<Class> argList : paramCombos) {
+            Class[] classArray = argList.stream().toArray(Class[]::new);
+            try {
+               matchingMethod = obj.getClass().getMethod(methodName, classArray);
+               break;
+            } catch (NoSuchMethodException e) {
+               //ignore
+            }
+         }
+      }
+      if (matchingMethod == null) {
+         throw new RuntimeException("No Matching method found with argumetn types");
+      }
+
       Object result;
       try {
-         result = method.invoke(obj, argVals);
+         result = matchingMethod.invoke(obj, argVals);
       } catch (InvocationTargetException ex) {
          result = ex.getCause();
          studio_.logs().logError(ex);
@@ -174,9 +227,9 @@ public abstract class ZMQSocketWrapper {
       try {
          if (o instanceof Exception) {
             json.put("type", "exception");
-            
-            Throwable root = ((Exception) o).getCause() == null ? 
-                    ((Exception) o) : ((Exception) o).getCause();
+
+            Throwable root = ((Exception) o).getCause() == null
+                    ? ((Exception) o) : ((Exception) o).getCause();
             String s = root.toString() + "\n";
             for (StackTraceElement el : root.getStackTrace()) {
                s += el.toString() + "\n";
@@ -212,6 +265,7 @@ public abstract class ZMQSocketWrapper {
             json.put("type", "float-array");
             json.put("value", encodeArray(o));
          } else if (Stream.of(o.getClass().getInterfaces()).anyMatch((Class t) -> t.equals(List.class))) {
+            //Serialize java lists as JSON arrays so tehy canbe converted into python lists
             json.put("type", "list");
             json.put("value", new JSONArray());
             for (Object element : (List) o) {
@@ -245,6 +299,14 @@ public abstract class ZMQSocketWrapper {
             if (apiInterfaces.isEmpty()) {
                throw new RuntimeException("Internal class accidentally exposed");
             }
+            //List all API interfaces this class implments in case its passed
+            //back as an argument to another function
+            JSONArray e = new JSONArray();
+            json.put("interfaces", e);
+            for (Class c : apiInterfaces) {
+               e.put(c.getName());
+            }
+
             json.put("api", parseAPI(apiInterfaces));
          }
       } catch (JSONException e) {
@@ -277,36 +339,7 @@ public abstract class ZMQSocketWrapper {
    }
 
    /**
-    * Check if return types and all argument types can be translated
-    *
-    * @param t
-    * @return
-    */
-   private static boolean isValidMethod(Method t) {
-      List<Class> l = new ArrayList<>();
-      l.addAll(Arrays.asList(t.getParameterTypes()));
-      //All arguments must be 2-way serializable
-      for (Class c : l) {
-         if (!Arrays.asList(SERIALIZABLE_CLASSES).contains(c)) {
-            return false;
-         }
-      }
-
-      //expose every return type
-      return true;
-
-//      //Return type must be serializable or part of the exposable API
-//      if (Arrays.asList(API_CLASSES).contains( t.getReturnType()) || 
-//              Arrays.asList(SERIALIZABLE_CLASSES).contains( t.getReturnType())) {
-//      
-//         return true;
-//      }
-//      return false;
-   }
-
-   /**
-    * Go through all methods of the given class, filter the ones that can be
-    * translated based on argument and return type, and put them into a big JSON
+    * Go through all methods of the given class and put them into a big JSON
     * array that describes the API
     *
     * @param apiClasses Classes to be translated into JSON
@@ -314,16 +347,10 @@ public abstract class ZMQSocketWrapper {
     * @throws JSONException
     */
    protected static JSONArray parseAPI(ArrayList<Class> apiClasses) throws JSONException {
-      //Collect all methods whose return types and arguments we know how to translate, 
-      // and put them in a JSON array describing them
-      Predicate<Method> methodFilter = (Method t) -> {
-         return isValidMethod(t);
-      };
       JSONArray methodArray = new JSONArray();
       for (Class clazz : apiClasses) {
          Method[] m = clazz.getDeclaredMethods();
          Stream<Method> s = Arrays.stream(m);
-         s = s.filter(methodFilter);
          List<Method> validMethods = s.collect(Collectors.toList());
          for (Method method : validMethods) {
             JSONObject methJSON = new JSONObject();
@@ -339,4 +366,8 @@ public abstract class ZMQSocketWrapper {
       }
       return methodArray;
    }
+}
+
+class ParamList<E> extends ArrayList<E> {
+
 }
