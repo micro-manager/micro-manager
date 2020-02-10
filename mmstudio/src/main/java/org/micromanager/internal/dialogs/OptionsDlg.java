@@ -82,8 +82,8 @@ public final class OptionsDlg extends MMDialog {
       super.setModal(true);
       super.setAlwaysOnTop(true);
       super.setTitle("Micro-Manager Options");
-      
-      super.loadAndRestorePosition(100, 100);     
+
+      super.loadAndRestorePosition(100, 100);
 
       super.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       super.addWindowListener(new WindowAdapter() {
@@ -105,9 +105,8 @@ public final class OptionsDlg extends MMDialog {
       });
 
       final JCheckBox askForConfigFileCheckBox = new JCheckBox();
-      
       final JCheckBox alwaysUseDefaultProfileCheckBox = new JCheckBox(
-            "Always use the default user profile");
+              "Always use the default user profile");
       alwaysUseDefaultProfileCheckBox.setToolTipText(
               "Always use the default user profile; no prompt will be displayed to select a profile at startup.");
       alwaysUseDefaultProfileCheckBox.setSelected(
@@ -117,10 +116,10 @@ public final class OptionsDlg extends MMDialog {
          startupSettings.setSkipProfileSelectionAtStartup(checked);
          askForConfigFileCheckBox.setEnabled(checked);
          if (checked) {
-         startupSettings.setSkipConfigSelectionAtStartup(
-                 askForConfigFileCheckBox.isSelected());
+            startupSettings.setSkipConfigSelectionAtStartup(
+                    askForConfigFileCheckBox.isSelected());
          } else {
-             startupSettings.setSkipConfigSelectionAtStartup(false);
+            startupSettings.setSkipConfigSelectionAtStartup(false);
          }
       });
 
@@ -281,8 +280,11 @@ public final class OptionsDlg extends MMDialog {
 
       super.add(new JSeparator(), "wrap");
 
-      super.add(alwaysUseDefaultProfileCheckBox, "wrap");
-      super.add(askForConfigFileCheckBox, "wrap");
+      if (mmStudio_.profileAdmin().getUUIDOfCurrentProfile() ==
+              mmStudio_.profileAdmin().getUUIDOfDefaultProfile()) {
+         super.add(alwaysUseDefaultProfileCheckBox, "wrap");
+         super.add(askForConfigFileCheckBox, "wrap");
+      }
       
       super.add(new JSeparator(), "wrap");
 
