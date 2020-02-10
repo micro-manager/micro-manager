@@ -94,9 +94,6 @@ public class ZMQServer extends ZMQSocketWrapper {
          case "constructor":
             Class baseClass = null;
             for (Class c : apiClasses_) {
-//                  if (c.getName().contains("magellan")) {
-//                     System.out.println();
-//                  }
                if (c.getName().equals(request.getString("classpath"))) {
                   baseClass = c;
                }
@@ -217,6 +214,11 @@ public class ZMQServer extends ZMQSocketWrapper {
                }
             }
          }
+         
+//         for (Class c : apiClasses_) {
+//            System.out.println(c.getName());
+//         }
+         
       }
    }
 }
