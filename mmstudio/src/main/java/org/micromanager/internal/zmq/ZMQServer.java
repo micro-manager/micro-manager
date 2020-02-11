@@ -174,7 +174,8 @@ public class ZMQServer extends ZMQSocketWrapper {
          List<File> dirs = new ArrayList<>();
          while (resources.hasMoreElements()) {
             URL resource = resources.nextElement();
-            dirs.add(new File(resource.getFile()));
+            String file = resource.getFile().replaceAll("^file:", "");
+            dirs.add(new File(file));
          }
 
          for (File directory : dirs) {
