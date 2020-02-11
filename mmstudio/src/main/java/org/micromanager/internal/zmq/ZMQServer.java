@@ -1,9 +1,11 @@
 package org.micromanager.internal.zmq;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,6 +14,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.stream.Stream;
 import mmcorej.CMMCore;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -175,50 +178,105 @@ public class ZMQServer extends ZMQSocketWrapper {
          }
 
          for (File directory : dirs) {
-            if (directory.getAbsolutePath().contains(".jar!")) {
-               try {
-                  String jar = directory.getAbsolutePath();
-                  jar = jar.split("!")[0];
-                  jar = jar.split("file:")[1];
-                  JarFile jarFile = new JarFile(jar);
-                  Enumeration<JarEntry> entries = jarFile.entries();
-                  while (entries.hasMoreElements()) {
-                     JarEntry entry = entries.nextElement();
-                     String name = entry.getName();
-                     //include classes but not inner classes
-                     if (name.contains(".class") && !name.contains("$")) {
-                        try {
-                           apiClasses_.add(Class.forName(name.replace("/", ".").
-                                   substring(0, name.length() - 6)));
-                        } catch (ClassNotFoundException ex) {
-                           throw new RuntimeException(ex);
-                        }
-                     }
-                  }
-               } catch (IOException ex) {
-                  throw new RuntimeException(ex);
-               }
+            if (directory.getAbsolutePath().contains(".jar")) {
+               apiClasses_.addAll(getClassesFromJarFile(directory));
             } else {
-               File[] files = directory.listFiles();
-               if (files != null) {
-                  for (File file : files) {
-                     if (!file.isDirectory()) {
-                        try {
-                           apiClasses_.add(Class.forName(packageName + '.' + file.getName().
-                                   substring(0, file.getName().length() - 6)));
-                        } catch (ClassNotFoundException ex) {
-                           studio_.logs().logError("Failed to load class: " + file.getName());
-                        }
-                     }
-                  }
-               }
+               apiClasses_.addAll(getClassesFromDirectory(packageName, directory));
             }
          }
-         
+
 //         for (Class c : apiClasses_) {
 //            System.out.println(c.getName());
 //         }
-         
       }
    }
+
+   private static Collection<Class> getClassesFromJarFile( File directory) {
+      List<Class> classes = new ArrayList<Class>();
+
+      try {
+         String jarPath = Stream.of(directory.getAbsolutePath().split(File.pathSeparator))
+                 .flatMap((String t) -> Stream.of(t.split("!")))
+                 .filter((String t) -> t.contains(".jar")).findFirst().get();
+         JarFile jarFile = new JarFile(jarPath);
+         Enumeration<JarEntry> entries = jarFile.entries();
+         while (entries.hasMoreElements()) {
+            JarEntry entry = entries.nextElement();
+            String name = entry.getName();
+            //include classes but not inner classes
+            if (name.endsWith(".class") && !name.contains("$")) {
+               try {
+                  classes.add(Class.forName(name.replace("/", ".").
+                          substring(0, name.length() - 6)));
+               } catch (ClassNotFoundException ex) {
+                  throw new RuntimeException(ex);
+               }
+            }
+         }
+      } catch (IOException ex) {
+         throw new RuntimeException(ex);
+      }
+
+      return classes;
+   }
+
+   private static Collection<Class> getClassesFromDirectory(String packageName, File directory) {
+      List<Class> classes = new ArrayList<Class>();
+
+      // get jar files from top-level directory
+      List<File> jarFiles = listFiles(directory, new FilenameFilter() {
+         @Override
+         public boolean accept(File dir, String name) {
+            return name.endsWith(".jar");
+         }
+      }, false);
+
+      for (File file : jarFiles) {
+         classes.addAll(getClassesFromJarFile(file));
+      }
+
+      // get all class-files
+      List<File> classFiles = listFiles(directory, new FilenameFilter() {
+         @Override
+         public boolean accept(File dir, String name) {
+            return name.endsWith(".class");
+         }
+      }, true);
+
+      for (File file : classFiles) {
+         if (!file.isDirectory()) {
+            try {
+               classes.add(Class.forName(packageName + '.' + file.getName().
+                       substring(0, file.getName().length() - 6)));
+            } catch (ClassNotFoundException ex) {
+               studio_.logs().logError("Failed to load class: " + file.getName());
+            }
+         }
+      }
+      return classes;
+   }
+
+   private static List<File> listFiles(File directory, FilenameFilter filter, boolean recurse) {
+      List<File> files = new ArrayList<File>();
+      File[] entries = directory.listFiles();
+
+      // Go over entries
+      for (File entry : entries) {
+         // If there is no filter or the filter accepts the
+         // file / directory, add it to the list
+         if (filter == null || filter.accept(directory, entry.getName())) {
+            files.add(entry);
+         }
+
+         // If the file is a directory and the recurse flag
+         // is set, recurse into the directory
+         if (recurse && entry.isDirectory()) {
+            files.addAll(listFiles(entry, filter, recurse));
+         }
+      }
+
+      // Return collection of files
+      return files;
+   }
+
 }
