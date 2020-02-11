@@ -47,6 +47,8 @@ public class ZMQServer extends ZMQSocketWrapper {
 
    @Override
    public void initialize(int port) {
+      // Can we be initialized multiple times?  If so, we should cleanup
+      // the multiple instances of executors and sockets cleanly
       executor_ = Executors.newSingleThreadExecutor(
               (Runnable r) -> new Thread(r, "ZMQ Server " + name_));
       executor_.submit(() -> {
@@ -77,6 +79,8 @@ public class ZMQServer extends ZMQSocketWrapper {
    }
 
    public void close() {
+      // Do we need to unbing the socket when closing?  If so, how do we keep 
+      // track of the port to unbind from?
       if (executor_ != null) {
          executor_.shutdownNow();
       }
@@ -148,7 +152,7 @@ public class ZMQServer extends ZMQSocketWrapper {
    private void initializeAPIClasses() {
       apiClasses_ = new HashSet<>();
 
-      //recursively get all names that have org.micromånager, but not internal in the name
+      //recursively get all names that have org.micromanager, but not internal in the name
       ArrayList<String> mmPackages = new ArrayList<>();
       Package[] p = Package.getPackages();
       for (Package pa : p) {
@@ -162,7 +166,11 @@ public class ZMQServer extends ZMQSocketWrapper {
          }
       }
 
+
       ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+      ClassLoader classLoader2 = studio_.getClass().getClassLoader();
+      studio_.logs().logDebugMessage("ClassLoader in ZMQServer: " + classLoader.toString());      
+      studio_.logs().logDebugMessage("ClassLoader2 in ZMQServer: " + classLoader.toString());
       for (String packageName : mmPackages) {
          String path = packageName.replace('.', '/');
          Enumeration<URL> resources;
@@ -184,6 +192,13 @@ public class ZMQServer extends ZMQSocketWrapper {
             } else {
                apiClasses_.addAll(getClassesFromDirectory(packageName, directory));
             }
+         }
+         
+         for (Class c : apiClasses_) {
+            studio_.logs().logDebugMessage("ZMQServer class: " + c.getName());
+         }
+         if (apiClasses_.isEmpty()) {
+            studio_.logs().logDebugMessage("ZMQServer: no classes found");
          }
 
 //         for (Class c : apiClasses_) {
