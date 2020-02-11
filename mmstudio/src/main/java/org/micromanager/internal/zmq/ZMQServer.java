@@ -168,9 +168,7 @@ public class ZMQServer extends ZMQSocketWrapper {
 
 
       ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-      ClassLoader classLoader2 = studio_.getClass().getClassLoader();
-      studio_.logs().logDebugMessage("ClassLoader in ZMQServer: " + classLoader.toString());      
-      studio_.logs().logDebugMessage("ClassLoader2 in ZMQServer: " + classLoader.toString());
+      studio_.logs().logDebugMessage("ClassLoader in ZMQServer: " + classLoader.toString());  
       for (String packageName : mmPackages) {
          String path = packageName.replace('.', '/');
          Enumeration<URL> resources;
