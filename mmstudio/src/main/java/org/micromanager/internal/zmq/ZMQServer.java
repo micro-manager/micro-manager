@@ -192,19 +192,16 @@ public class ZMQServer extends ZMQSocketWrapper {
             } else {
                apiClasses_.addAll(getClassesFromDirectory(packageName, directory));
             }
-         }
-         
-         for (Class c : apiClasses_) {
-            studio_.logs().logDebugMessage("ZMQServer class: " + c.getName());
-         }
-         if (apiClasses_.isEmpty()) {
-            studio_.logs().logDebugMessage("ZMQServer: no classes found");
-         }
-
-//         for (Class c : apiClasses_) {
-//            System.out.println(c.getName());
-//         }
+         }       
       }
+
+      for (Class c : apiClasses_) {
+         studio_.logs().logDebugMessage("ZMQServer class: " + c.getName());
+      }
+      if (apiClasses_.isEmpty()) {
+         studio_.logs().logDebugMessage("ZMQServer: no classes found");
+      }
+
    }
 
    private static Collection<Class> getClassesFromJarFile( File directory) {
