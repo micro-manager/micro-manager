@@ -256,7 +256,7 @@ public final class OptionsDlg extends MMDialog {
          if (runServer.isSelected()) {
             mmStudio_.runZMQServer();
          } else {
-            mmStudio_.pauseZMQServer();
+            mmStudio_.stopZMQServer();
          }
          mmStudio_.setShouldRunZMQServer(runServer.isSelected());         
       });

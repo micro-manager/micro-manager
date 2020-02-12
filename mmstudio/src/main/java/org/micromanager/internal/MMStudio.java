@@ -897,10 +897,11 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       logs().logMessage("Initialized ZMQ Server on port: " + ZMQServer.DEFAULT_PORT_NUMBER);
    }
    
-   public void pauseZMQServer() {
+   public void stopZMQServer() {
       if (zmqServer_ != null) {
          zmqServer_.close();
-         logs().logMessage("Paused ZMQ Server");
+         logs().logMessage("Stopped ZMQ Server");
+         zmqServer_ = null;
       }
    }
 
