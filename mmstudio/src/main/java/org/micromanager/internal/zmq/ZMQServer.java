@@ -1,5 +1,6 @@
 package org.micromanager.internal.zmq;
 
+import ij.IJ;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -40,7 +41,7 @@ public class ZMQServer extends ZMQSocketWrapper {
       super(studio, SocketType.REP);
    }
 
-   //Constructor for server the a base class that runs on its own thread
+   //Constructor for server the base class that runs on its own thread
    public ZMQServer(Class baseClass, int port) {
       super(baseClass, SocketType.REP, port);
    }
@@ -167,10 +168,12 @@ public class ZMQServer extends ZMQSocketWrapper {
       }
 
 
-      ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+      // ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+      ClassLoader classLoader = IJ.getClassLoader();
       studio_.logs().logDebugMessage("ClassLoader in ZMQServer: " + classLoader.toString());  
       for (String packageName : mmPackages) {
          String path = packageName.replace('.', '/');
+         studio_.logs().logDebugMessage("ZMQServer-packageName: " + path);
          Enumeration<URL> resources;
          try {
             resources = classLoader.getResources(path);
@@ -180,6 +183,7 @@ public class ZMQServer extends ZMQSocketWrapper {
          List<File> dirs = new ArrayList<>();
          while (resources.hasMoreElements()) {
             URL resource = resources.nextElement();
+            studio_.logs().logDebugMessage("ZMQServer-resource: " + resource.getFile());
             String file = resource.getFile().replaceAll("^file:", "");
             dirs.add(new File(file));
          }
