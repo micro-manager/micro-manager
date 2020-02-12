@@ -78,10 +78,7 @@ public class AffineEditorPanel extends JPanel {
       
       JButton calcButton = new JButton("Calculate");
       calcButton.addActionListener((ActionEvent e) -> {
-         AffineTransform javaAtf = AffineUtils.doubleToAffine(AffineUtils.noTransform());
-         double scale = pixelSizeProvider_.getPixelSize();
-         javaAtf.scale(scale, scale);
-         atm_.setAffineTransform(AffineUtils.affineToDouble(javaAtf));
+         calculate();
       });
       super.add(calcButton, "flowy, split 3, center, width 90!");
       
@@ -128,6 +125,13 @@ public class AffineEditorPanel extends JPanel {
       if (pcd_ != null) {
          pcd_.dispose();
       }
+   }
+
+   public void calculate() {
+      AffineTransform javaAtf = AffineUtils.doubleToAffine(AffineUtils.noTransform());
+      double scale = pixelSizeProvider_.getPixelSize();
+      javaAtf.scale(scale, scale);
+      atm_.setAffineTransform(AffineUtils.affineToDouble(javaAtf));
    }
 
    /*******************Renderer******************************/
