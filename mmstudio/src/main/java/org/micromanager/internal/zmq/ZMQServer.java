@@ -1,5 +1,6 @@
 package org.micromanager.internal.zmq;
 
+import ij.IJ;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -40,13 +41,15 @@ public class ZMQServer extends ZMQSocketWrapper {
       super(studio, SocketType.REP);
    }
 
-   //Constructor for server the a base class that runs on its own thread
+   //Constructor for server the base class that runs on its own thread
    public ZMQServer(Class baseClass, int port) {
       super(baseClass, SocketType.REP, port);
    }
 
    @Override
    public void initialize(int port) {
+      // Can we be initialized multiple times?  If so, we should cleanup
+      // the multiple instances of executors and sockets cleanly
       executor_ = Executors.newSingleThreadExecutor(
               (Runnable r) -> new Thread(r, "ZMQ Server " + name_));
       executor_.submit(() -> {
@@ -77,6 +80,8 @@ public class ZMQServer extends ZMQSocketWrapper {
    }
 
    public void close() {
+      // Do we need to unbing the socket when closing?  If so, how do we keep 
+      // track of the port to unbind from?
       if (executor_ != null) {
          executor_.shutdownNow();
          socket_.close();
@@ -149,7 +154,7 @@ public class ZMQServer extends ZMQSocketWrapper {
    private void initializeAPIClasses() {
       apiClasses_ = new HashSet<>();
 
-      //recursively get all names that have org.micromånager, but not internal in the name
+      //recursively get all names that have org.micromanager, but not internal in the name
       ArrayList<String> mmPackages = new ArrayList<>();
       Package[] p = Package.getPackages();
       for (Package pa : p) {
@@ -163,9 +168,13 @@ public class ZMQServer extends ZMQSocketWrapper {
          }
       }
 
-      ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+
+      // ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+      ClassLoader classLoader = IJ.getClassLoader();
+      studio_.logs().logDebugMessage("ClassLoader in ZMQServer: " + classLoader.toString());  
       for (String packageName : mmPackages) {
          String path = packageName.replace('.', '/');
+         studio_.logs().logDebugMessage("ZMQServer-packageName: " + path);
          Enumeration<URL> resources;
          try {
             resources = classLoader.getResources(path);
@@ -175,6 +184,7 @@ public class ZMQServer extends ZMQSocketWrapper {
          List<File> dirs = new ArrayList<>();
          while (resources.hasMoreElements()) {
             URL resource = resources.nextElement();
+            studio_.logs().logDebugMessage("ZMQServer-resource: " + resource.getFile());
             String file = resource.getFile().replaceAll("^file:", "");
             dirs.add(new File(file));
          }
@@ -185,12 +195,16 @@ public class ZMQServer extends ZMQSocketWrapper {
             } else {
                apiClasses_.addAll(getClassesFromDirectory(packageName, directory));
             }
-         }
-
-//         for (Class c : apiClasses_) {
-//            System.out.println(c.getName());
-//         }
+         }       
       }
+
+      for (Class c : apiClasses_) {
+         studio_.logs().logDebugMessage("ZMQServer class: " + c.getName());
+      }
+      if (apiClasses_.isEmpty()) {
+         studio_.logs().logDebugMessage("ZMQServer: no classes found");
+      }
+
    }
 
    private static Collection<Class> getClassesFromJarFile( File directory) {
