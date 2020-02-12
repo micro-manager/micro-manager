@@ -31,8 +31,8 @@
 
 #ifdef WIN32
 #include <windows.h>
-#define snprintf _snprintf
 #endif
+#include "FixSnprintf.h"
 
 // The main Oasis controller API
 #include "oasis4i.h"

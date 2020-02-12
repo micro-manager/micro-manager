@@ -25,8 +25,8 @@
 
 #ifdef WIN32
    #include <windows.h>
-   #define snprintf _snprintf 
 #endif
+#include "FixSnprintf.h"
 
 #include "PI.h"
 #include <string>

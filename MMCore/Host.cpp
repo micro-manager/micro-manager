@@ -27,9 +27,9 @@
 #include <winsock2.h>
 #include "Iphlpapi.h"
 #include <stdio.h>
-#define snprintf _snprintf 
-
 #endif //_WINDOWS
+
+#include "../MMDevice/FixSnprintf.h"
 
 #ifdef __APPLE__
 

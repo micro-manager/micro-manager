@@ -13,8 +13,8 @@
 
 #ifdef WIN32
 #include <windows.h>
-#define snprintf _snprintf 
 #endif
+#include "FixSnprintf.h"
 
 #include "SmarActHCU-3D.h"
 #include <string>
