@@ -75,8 +75,7 @@ public final class UserProfileAdmin {
    private boolean didMigrateLegacy_ = false;
 
    private Index virtualIndex_ = new Index();
-   private final Map<String, Profile> virtualProfiles_ =
-         new HashMap<String, Profile>();
+   private final Map<String, Profile> virtualProfiles_ = new HashMap<>();
 
    private UUID currentProfileUUID_ = DEFAULT_PROFILE_UUID;
 
@@ -209,7 +208,7 @@ public final class UserProfileAdmin {
     * migrating legacy profiles
     */
    public Map<UUID, String> getProfileUUIDsAndNames() throws IOException {
-      Map<UUID, String> ret = new LinkedHashMap<UUID, String>();
+      Map<UUID, String> ret = new LinkedHashMap<>();
       for (IndexEntry entry : getIndex().getEntries()) {
          UUID uuid = entry.getUUID();
          String name = entry.getName();
@@ -275,18 +274,14 @@ public final class UserProfileAdmin {
             }
             ret.setFallbackProfile(getNonSavingGlobalProfile());
             if (autosaving) {
-               ret.setSaver(ProfileSaver.create(ret, new Runnable() {
-                  @Override
-                  public void run() {
-                     Profile profile;
-                     profile = Profile.fromSettings(ret.toPropertyMap());
-                     try {
-                        writeFile(filename, profile, false);
-                     }
-                     catch (IOException e) {
-                        if (errorHandler != null) {
-                           errorHandler.exceptionThrown(e);
-                        }
+               ret.setSaver(ProfileSaver.create(ret, () -> {
+                  Profile profile1;
+                  profile1 = Profile.fromSettings(ret.toPropertyMap());
+                  try {
+                     writeFile(filename, profile1, false);
+                  }catch (IOException e) {
+                     if (errorHandler != null) {
+                        errorHandler.exceptionThrown(e);
                      }
                   }
                }, saverExecutor_));
@@ -540,7 +535,7 @@ public final class UserProfileAdmin {
          return false;
       }
 
-      List<IndexEntry> entries = new ArrayList<IndexEntry>();
+      List<IndexEntry> entries = new ArrayList<>();
       for (String legacyName : legacyIndex.keySet()) {
          UUID uuid;
          String newName = legacyName;
@@ -599,8 +594,7 @@ public final class UserProfileAdmin {
        * Modern format uses a nested property map for each owner.
        */
 
-      Map<String, PropertyMap.Builder> settings =
-            new LinkedHashMap<String, PropertyMap.Builder>();
+      Map<String, PropertyMap.Builder> settings = new LinkedHashMap<>();
       for (String legacyKey : legacy.keySet()) {
          List<String> split = Splitter.on(':').limit(2).splitToList(legacyKey);
          if (split.size() < 2) {
@@ -675,12 +669,8 @@ public final class UserProfileAdmin {
          System.out.println("Migrated = " + admin.migrateLegacyProfiles());
 
          UUID uuid = admin.getUUIDOfDefaultProfile();
-         UserProfile profile = admin.getAutosavingProfile(uuid,
-               new ExceptionListener() {
-            @Override
-            public void exceptionThrown(Exception e) {
-               System.err.println("Exception Listener:" + e);
-            }
+         UserProfile profile = admin.getAutosavingProfile(uuid, (Exception e) -> {
+            System.err.println("Exception Listener:" + e);
          });
 
          profile.getSettings(UserProfileAdmin.class).putColor("Test!", Color.RED);
@@ -688,10 +678,7 @@ public final class UserProfileAdmin {
 
          admin.shutdownAutosaves();
       }
-      catch (IOException e) {
-         System.err.println(e.getMessage());
-      }
-      catch (InterruptedException e) {
+      catch (IOException | InterruptedException e) {
          System.err.println(e.getMessage());
       }
    }
