@@ -50,8 +50,8 @@
 #include "VersaLase.h"
 #ifdef WIN32
    #include <windows.h>
-   #define snprintf _snprintf
 #endif
+#include "FixSnprintf.h"
 
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"

@@ -70,9 +70,7 @@ using namespace std;
 #define START_ONPROPERTY(name,action)
 #endif
 
-#if WIN64
-#define snprintf _snprintf
-#endif
+#include "FixSnprintf.h"
 
 // Number of references to this class
 int  Universal::refCount_ = 0;

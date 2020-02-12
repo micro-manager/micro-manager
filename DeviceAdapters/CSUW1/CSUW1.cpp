@@ -33,8 +33,8 @@
 
 #ifdef WIN32
 #include <windows.h>
-#define snprintf _snprintf 
 #endif
+#include "FixSnprintf.h"
 
 #include "CSUW1.h"
 #include "CSUW1Hub.h"

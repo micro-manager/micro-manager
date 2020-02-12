@@ -77,7 +77,6 @@ it under the terms of the one of three licenses as you choose:
 #include <sys/utime.h>
 #include <winsock2.h>
 #pragma comment(lib, "ws2_32.lib")
-#define snprintf _snprintf
 #define strcasecmp _stricmp
 #define strncasecmp strnicmp
 #else
@@ -85,6 +84,7 @@ it under the terms of the one of three licenses as you choose:
 #include <utime.h>
 #include <netinet/in.h>
 #endif
+#include "FixSnprintf.h"
 
 #ifdef LJPEG_DECODE
 #error Please compile dcraw.c by itself.

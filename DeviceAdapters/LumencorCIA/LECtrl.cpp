@@ -22,10 +22,9 @@
 
 #ifdef WIN32
    #include <windows.h>
-   #define snprintf _snprintf 
    #include <iostream>
-
 #endif
+#include "FixSnprintf.h"
 
 #include <string>
 #include <math.h>

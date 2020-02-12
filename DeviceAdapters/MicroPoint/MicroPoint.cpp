@@ -27,9 +27,9 @@
 //                Thanks to Sophie Dumont, Mary Elting, and Michael Mohammadi
 
 #ifdef WIN32
-#define snprintf _snprintf 
 #pragma warning(disable: 4355)
 #endif
+#include "FixSnprintf.h"
 
 #include "MicroPoint.h"
 #include <cstdio>

@@ -28,10 +28,10 @@
 
 #ifdef WIN32
 #include <windows.h>
-#define snprintf _snprintf 
 #else
 #include <arpa/inet.h>
 #endif
+#include "FixSnprintf.h"
 
 #include "CAN29.h"
 #include <string>
