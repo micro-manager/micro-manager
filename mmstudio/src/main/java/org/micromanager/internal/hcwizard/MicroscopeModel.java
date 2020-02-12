@@ -684,7 +684,10 @@ public final class MicroscopeModel {
                   if (cp != null) {
                      cp.setPixelSizeUm(Double.parseDouble(tokens[2]));
                   }
-               } else if (tokens.length == 8) {
+               } 
+            }  else if (tokens[0].contentEquals(new StringBuffer()
+                    .append(MMCoreJ.getG_CFGCommand_PixelSizeAffine()))) {
+               if (tokens.length == 8) {
                   ConfigPreset cp = pixelSizeGroup_.findConfigPreset(tokens[1]);
                   if (cp != null) {
                      DoubleVector aft = new DoubleVector(6);
@@ -698,7 +701,6 @@ public final class MicroscopeModel {
                              "Invalid number of parameters (3 or 8 required):\n" + line);
                   }
                }
-               
             } else if (tokens[0].contentEquals(new StringBuffer()
                   .append(MMCoreJ.getG_CFGCommand_Delay()))) {
                // -------------------------------------------------------------
