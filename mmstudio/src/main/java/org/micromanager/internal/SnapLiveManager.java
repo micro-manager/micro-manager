@@ -40,7 +40,6 @@ import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.Studio;
 import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DatastoreFrozenException;
@@ -71,6 +70,7 @@ import org.micromanager.internal.utils.performance.PerformanceMonitor;
 import org.micromanager.internal.utils.performance.gui.PerformanceMonitorUI;
 import org.micromanager.quickaccess.internal.QuickAccessFactory;
 import org.micromanager.display.DisplayWindowControlsFactory;
+import org.micromanager.display.internal.RememberedSettings;
 import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 import org.micromanager.internal.navigation.UiMovesStageManager;
 
@@ -477,11 +477,20 @@ public final class SnapLiveManager extends DataViewerListener
               (DisplayWindow display) -> createControls();
       display_ = new DisplayController.Builder(store_).
             controlsFactory(controlsFactory).
-            shouldShow(true).build();
-      DisplaySettings ds = DefaultDisplaySettings.restoreFromProfile(mmStudio_.profile(), PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key() );
+            shouldShow(true).build(mmStudio_);
+      DisplaySettings ds = DefaultDisplaySettings.restoreFromProfile(
+              mmStudio_.profile(), 
+              PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key() );
       if (ds == null) {
          ds = DefaultDisplaySettings.builder().colorMode(
                  DisplaySettings.ColorMode.GRAYSCALE).build();
+      }
+      for (int ch = 0; ch < store_.getSummaryMetadata().getChannelNameList().size(); ch++) {
+         ds = ds.copyBuilderWithChannelSettings(ch, 
+                 RememberedSettings.loadChannel(mmStudio_, 
+                         store_.getSummaryMetadata().getChannelGroup(), 
+                         store_.getSummaryMetadata().getChannelNameList().get(ch))).
+                 build();
       }
       display_.setDisplaySettings(ds);
       mmStudio_.displays().addViewer(display_);
@@ -505,11 +514,13 @@ public final class SnapLiveManager extends DataViewerListener
    }
    
    @Subscribe
-   public void onMouseMovesStageStateChange (MouseMovesStageStateChangeEvent e) {
-      if (e.getIsEnabled()) {
-         clickToMoveManager_.activate(display_);
-      } else {
-         clickToMoveManager_.deActivate(display_);
+   public void onMouseMovesStageStateChange(MouseMovesStageStateChangeEvent e) {
+      if (display_ != null) {
+         if (e.getIsEnabled()) {
+            clickToMoveManager_.activate(display_);
+         } else {
+            clickToMoveManager_.deActivate(display_);
+         }
       }
    }
 
@@ -578,8 +589,7 @@ public final class SnapLiveManager extends DataViewerListener
    /**
     * Display the provided image. Due to limitations of ImageJ, if the image's
     * parameters (width, height, or pixel type) change, we have to recreate
-    * the display and datastore. We also do this if the channel names change,
-    * as an inefficient way to force the channel colors to update.
+    * the display and datastore. 
     * @param image Image to be displayed
     */
    @Override
@@ -598,18 +608,32 @@ public final class SnapLiveManager extends DataViewerListener
          String curChannel = "";
          try {
             curChannel = core_.getCurrentConfig(core_.getChannelGroup());
-         }
-         catch (Exception e) {
+         } catch (Exception e) {
             ReportingUtils.logError(e, "Error getting current channel");
          }
-         for (int i = 0; i < numCameraChannels_; ++i) {
-            String name = makeChannelName(curChannel, core_.getCameraChannelName(i));
-            if (channelNames == null ||
-                  i >= channelNames.size() ||
-                  !name.equals(channelNames.get(i)))
-            {
-               // Channel name changed.
+         for (int camCh = 0; camCh < numCameraChannels_; ++camCh) {
+            String name = makeChannelName(curChannel, core_.getCameraChannelName(camCh));
+            if (channelNames == null
+                    || camCh >= channelNames.size()) {
                shouldReset = true;
+            } else if (!name.equals(channelNames.get(camCh))) {
+               // Channel name changed.
+               if (display_ != null && !display_.isClosed()) {
+                  RememberedSettings.storeChannel(mmStudio_, 
+                          store_.getSummaryMetadata().getChannelGroup(), 
+                          store_.getSummaryMetadata().getChannelNameList().get(camCh),
+                          display_.getDisplaySettings().getChannelSettings(camCh));
+                  ChannelDisplaySettings newCD = RememberedSettings.loadChannel(
+                          mmStudio_, 
+                          core_.getChannelGroup(),
+                          curChannel);
+                  display_.setDisplaySettings(display_.getDisplaySettings().
+                          copyBuilderWithChannelSettings(camCh, newCD).build());
+               }               
+               channelNames.set(camCh, name);
+               store_.setSummaryMetadata(store_.getSummaryMetadata().
+                       copyBuilder().channelGroup(core_.getChannelGroup()).
+                       channelNames(channelNames).build());
             }
          }
       }
@@ -619,14 +643,7 @@ public final class SnapLiveManager extends DataViewerListener
                mmStudio_.acquisitions().generateMetadata(image, true));
 
          int newImageChannel = newImage.getCoords().getChannel();
-         /*
-         DefaultImage lastImage;
-         synchronized (lastImageForEachChannel_) {
-            lastImage = lastImageForEachChannel_.size() > newImageChannel
-                    ? lastImageForEachChannel_.get(newImageChannel)
-                    : null;
-         }
-         */
+
          if ( (displayInfo_ != null) &&
                  (newImage.getWidth() != displayInfo_.getWidth()
                  || newImage.getHeight() != displayInfo_.getHeight()
@@ -642,7 +659,7 @@ public final class SnapLiveManager extends DataViewerListener
             // previous seq nr.  However, this results in live mode display
             // stopping to update when the circular buffer is reset!
             // Very bad, especially for cameras with large frames
-            // for now, we will only reject when the sequence nr is identical to the prvious one.
+            // for now, we will only reject when the sequence nr is identical to the previous one.
             if (prevSeqNr != null && newSeqNr != null) {
                if (Objects.equals(prevSeqNr, newSeqNr)) {
                   perfMon_.sample(
@@ -744,6 +761,7 @@ public final class SnapLiveManager extends DataViewerListener
          }
          try {
             store_.setSummaryMetadata(store_.getSummaryMetadata().copyBuilder()
+                    .channelGroup(core_.getChannelGroup())
                     .channelNames(channelNames).build());
          }
          catch (DatastoreFrozenException e) {
@@ -834,7 +852,8 @@ public final class SnapLiveManager extends DataViewerListener
 
    private void saveDisplaySettings() {
       if (display_.getDisplaySettings() instanceof DefaultDisplaySettings) {
-         ((DefaultDisplaySettings) display_.getDisplaySettings()).saveToProfile(mmStudio_.profile(), PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key());
+         ((DefaultDisplaySettings) display_.getDisplaySettings()).
+                 saveToProfile(mmStudio_.profile(), PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key());
       }
    }
 

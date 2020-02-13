@@ -13,6 +13,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.micromanager.UserProfile;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  *
@@ -25,7 +26,7 @@ public final class HotKeys {
    private static final String GUICOMMAND = "GuiCommand";
    private static final String FILENAME = "FileName";
 
-   // Note that this data structure is not synchroinized.  Since we are not
+   // Note that this data structure is not synchronized.  Since we are not
    // currently reading and writing at the same time, and access it only from
    // a single thread (I think), this should be safe.
    // Howvere, if this changes in the future, please synchronize this structure
@@ -35,32 +36,34 @@ public final class HotKeys {
    // HACK HACK HACK TODO: there should be a cleaner way to disable hotkeys!
    public  static boolean active_ = true;
 
+   /**
+    * Restore previously listed hotkeys from profile
+    * @param profile 
+    */
    public void loadSettings(UserProfile profile) {
-      // restore previously listed hotkeys from profile
-
-      int j = 0;
+      MutablePropertyMapView settings = profile.getSettings(HotKeys.class);
+      int i = 0;
       int key;
       int type;
       int guiCommand;
       File file;
       do {
-         key = profile.getSettings(HotKeys.class).getInteger(KEY + j, STOP);
+         key = settings.getInteger(KEY + i, STOP);
          if (key != STOP) {
-            type = profile.getSettings(HotKeys.class).getInteger(TYPE + j,
+            type = settings.getInteger(TYPE + i,
                   HotKeyAction.GUICOMMAND);
             if (type == HotKeyAction.GUICOMMAND) {
-               guiCommand = profile.getSettings(HotKeys.class).getInteger(GUICOMMAND + j,
+               guiCommand = settings.getInteger(GUICOMMAND + i,
                      HotKeyAction.SNAP);
                HotKeyAction action = new HotKeyAction(guiCommand);
                KEYS.put(key, action);
             }  else {
-               file = new File(profile.getSettings(HotKeys.class).getString(
-                        FILENAME + j, ""));
+               file = new File(settings.getString(FILENAME + i, ""));
                HotKeyAction action = new HotKeyAction(file);
                KEYS.put(key, action);
             }
          }
-         j++;
+         i++;
       }
       while (key != STOP);
    }
@@ -68,16 +71,17 @@ public final class HotKeys {
    public void saveSettings(UserProfile profile) {
       Iterator it = KEYS.entrySet().iterator();
       int i = 0;
+      MutablePropertyMapView settings = profile.getSettings(HotKeys.class);
       while (it.hasNext()) {
          Map.Entry pairs = (Map.Entry) it.next();
-         profile.getSettings(HotKeys.class).getInteger(KEY + i, 
+         settings.putInteger(KEY + i, 
                  ((Integer) pairs.getKey()));
          HotKeyAction action = (HotKeyAction) pairs.getValue();
-         profile.getSettings(HotKeys.class).putInteger(TYPE + i, action.type_);
+         settings.putInteger(TYPE + i, action.type_);
          if (action.type_ == HotKeyAction.GUICOMMAND) {
-            profile.getSettings(HotKeys.class).putInteger(GUICOMMAND + i, action.guiCommand_);
+            settings.putInteger(GUICOMMAND + i, action.guiCommand_);
          } else {
-           profile.getSettings(HotKeys.class).putString(FILENAME + i,
+           settings.putString(FILENAME + i,
                   action.beanShellScript_.getAbsolutePath());
          }
          i++;
@@ -88,8 +92,9 @@ public final class HotKeys {
    }
 
    public static void load(File f) throws FileNotFoundException {
-      if (f== null || !f.canRead())
+      if (f == null || !f.canRead()) {
          return;
+      }
 
       DataInputStream in = new DataInputStream
               (new BufferedInputStream(new FileInputStream(f)));
@@ -106,8 +111,9 @@ public final class HotKeys {
             }
             else {
                int strLength = in.readInt();
-               for (int i=0; i < strLength; i ++)
+               for (int i=0; i < strLength; i ++) {
                   filePath += in.readChar();
+               }
                HotKeyAction action = new HotKeyAction(new File(filePath));
                KEYS.put(key, action);
             }
@@ -122,8 +128,9 @@ public final class HotKeys {
     * File needs to exist and be writeable
     */
    public static void save(File f) throws FileNotFoundException {
-      if (f== null || !f.canWrite())
+      if (f== null || !f.canWrite()) {
          return;
+      }
 
       DataOutputStream out = new DataOutputStream
               (new BufferedOutputStream(new FileOutputStream(f)));

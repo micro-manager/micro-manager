@@ -47,11 +47,11 @@ public final class SaveButton extends JButton {
                DataProvider dp = display.getDataProvider();
                if (dp instanceof Datastore) {
                   Datastore ds = (Datastore) dp;
-                  savePath = ds.getSavePath();
-                  ds.save(display.getWindow());
-                  if (display.getDisplaySettings() instanceof DefaultDisplaySettings) {
+                  String newSavePath = ds.save(display.getWindow(), false);
+                  if (newSavePath != null && 
+                          display.getDisplaySettings() instanceof DefaultDisplaySettings) {
                      ( (DefaultDisplaySettings) display.getDisplaySettings()).
-                             save(ds.getSavePath());
+                             save(newSavePath);
                   }
                } else {
                   // TODO: save button should never have been shown

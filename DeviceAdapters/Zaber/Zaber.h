@@ -41,6 +41,8 @@
 #define	ERR_NO_REFERENCE_POS         10064
 #define	ERR_SETTING_FAILED           10128
 #define	ERR_INVALID_DEVICE_NUM       10256
+#define ERR_LAMP_DISCONNECTED        10512
+#define ERR_LAMP_OVERHEATED          11024
 
 extern const char* g_Msg_PORT_CHANGE_FORBIDDEN;
 extern const char* g_Msg_DRIVER_DISABLED;
@@ -50,6 +52,8 @@ extern const char* g_Msg_COMMAND_REJECTED;
 extern const char* g_Msg_NO_REFERENCE_POS;
 extern const char* g_Msg_SETTING_FAILED;
 extern const char* g_Msg_INVALID_DEVICE_NUM;
+extern const char* g_Msg_LAMP_DISCONNECTED;
+extern const char* g_Msg_LAMP_OVERHEATED;
 
 // N.B. Concrete device classes deriving ZaberBase must set core_ in
 // Initialize().
@@ -62,9 +66,12 @@ public:
 protected:
 	int ClearPort() const;
 	int SendCommand(const std::string command) const;
+	int SendCommand(long device, long axis, const std::string command) const;
 	int QueryCommand(const std::string command, std::vector<std::string>& reply) const;
 	int GetSetting(long device, long axis, std::string setting, long& data) const;
+	int GetSetting(long device, long axis, std::string setting, double& data) const;
 	int SetSetting(long device, long axis, std::string setting, long data) const;
+	int SetSetting(long device, long axis, std::string setting, double data, int decimalPlaces) const;
 	bool IsBusy(long device) const;
 	int Stop(long device) const;
 	int GetLimits(long device, long axis, long& min, long& max) const;

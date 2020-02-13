@@ -26,8 +26,8 @@
 
 #ifdef WIN32
    #include <windows.h>
-   #define snprintf _snprintf 
 #endif
+#include "FixSnprintf.h"
 
 
 #include "../../MMDevice/MMDevice.h"
@@ -470,9 +470,9 @@ void Controller::Illuminate()
    {
       if (triggerMode_ == OFF) {
          msg << "SQZ" << carriage_return;
-         for (int i=0; i<channelLetters_.size(); i++) {
+         for (unsigned int i=0; i<channelLetters_.size(); i++) {
             msg << "C" << channelLetters_[i];
-            if (i == currentChannel_)
+            if (i == (unsigned int)currentChannel_)
                msg << "N";
             else
                msg << "F";

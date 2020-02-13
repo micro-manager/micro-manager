@@ -71,15 +71,23 @@ public:
 
 	// Custom interface for child devices
 //	bool IsPortAvailable() {return portAvailable_;}
-	int QueryCommand(MM::Device* device, MM::Core* core, const unsigned int destinationSlot, const char* command);
+	int QueryCommand(MM::Device* device, MM::Core* core, const unsigned int destinationSlot, const char* command, bool adco);
 	int ParseforBoolean(bool &destBoolean);
-	int ParseforDouble(double &destFloat);
+	int ParseforFloat(float &destFloat);
 	int ParseforInteger(unsigned int &destInteger);
 	int ParseforString(std::string &destString);
+	int ParseforVersion(unsigned int &Vval);
+	int ParseforPercent(double &Pval);
+	int ParseforChar(char* Nval);
+	// int TempAdminInt(const char* com);
+	// int TempAdminString(int com, std::string &res);
 
+	bool GetAOMpos1(unsigned int slot);
+	bool GetAOMpos2(unsigned int slot);
+	bool GetMPA(unsigned int slot);	
+	int GetObPos();
 
 private:
-//	void ClearRcvBuf();
 	void LogError(int id, MM::Device* device, MM::Core* core, const char* functionName);
 
 	std::string port_;
@@ -91,6 +99,11 @@ private:
 	std::string serialNumber_;
 	bool interlockClosed_;
 	bool keyActivated_;
+
+	unsigned int AOM1pos_;
+	unsigned int AOM2pos_;
+	unsigned int mpa[7];
+	unsigned int obPos_;
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -99,7 +112,7 @@ private:
 //
 //////////////////////////////////////////////////////////////////////////////
 
-class OxxiusLaserBoxx: public CGenericBase<OxxiusLaserBoxx>
+class OxxiusLaserBoxx: public CShutterBase<OxxiusLaserBoxx>
 {
 public:
     OxxiusLaserBoxx(const char* nameAndSlot);
@@ -112,6 +125,10 @@ public:
 
     void GetName(char* pszName) const;
 	bool Busy();
+
+	int SetOpen(bool openCommand = true);
+	int GetOpen(bool& isOpen);
+	int Fire(double /*deltaT*/) { return DEVICE_UNSUPPORTED_COMMAND; }
 //	int LaserOnOff(int);
 
     // Action interface
@@ -130,6 +147,9 @@ public:
 	int OnAlarm(MM::PropertyBase* pProp, MM::ActionType eAct);
 //	int OnHours(MM::PropertyBase* pProp, MM::ActionType eAct);
 
+	unsigned int aomp1;
+	unsigned int aomp2;
+
 private:
 	std::string name_;
 	unsigned int slot_;
@@ -138,10 +158,13 @@ private:
     bool initialized_;
 	bool busy_;
 
-	double powerSetPoint_;
-	double currentSetPoint_;
-	unsigned int maxPower_;
-//	double maxCurrent_;
+	// double powerSetPoint_;
+	// double currentSetPoint_;
+	float maxRelPower_;
+	float nominalPower_;
+	float maxCurrent_;
+	unsigned int waveLength;
+	std::string type;
 
 
 	bool laserOn_;
@@ -154,7 +177,81 @@ private:
 	std::string digitalMod_;
 };
 
+//////////////////////////////////////////////////////////////////////////////
+//
+// Device adaptaters for "Obis" source in Combiner
+//
+//////////////////////////////////////////////////////////////////////////////
+/*
+class OxxiusObisSupport : public CShutterBase<OxxiusObisSupport>
+{
+public:
+	OxxiusObisSupport(const char* nameAndSlot);
+	~OxxiusObisSupport();
 
+	// MMDevice API
+	// ------------
+	int Initialize();
+	int Shutdown();
+
+	void GetName(char* pszName) const;
+	bool Busy();
+
+	int SetOpen(bool openCommand = true);
+	int GetOpen(bool& isOpen);
+	int Fire(double ) { return DEVICE_UNSUPPORTED_COMMAND; }
+	//	int LaserOnOff(int);
+
+		// Action interface
+		// ----------------
+	//	int OnPower(MM::PropertyBase* pProp, MM::ActionType eAct);
+	//	int OnCurrent(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnPowerSetPoint(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnCurrentSetPoint(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnEmissionOnOff(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+	int OnControlMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnAnalogMod(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnDigitalMod(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+	int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnAlarm(MM::PropertyBase* pProp, MM::ActionType eAct);
+	//	int OnHours(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+	unsigned int aomp1;
+	unsigned int aomp2;
+
+private:
+	std::string name_;
+	unsigned int slot_;
+	unsigned int model_[2];
+	OxxiusCombinerHub* parentHub_;
+	bool initialized_;
+	bool busy_;
+
+	double powerSetPoint_;
+	double currentSetPoint_;
+	unsigned int maxPower_;
+	unsigned int waveLength;
+	std::string type;
+	//	double maxCurrent_;
+
+
+	bool laserOn_;
+	std::string state_;
+	std::string alarm_;
+	//	std::string serialNumber_;
+	//	std::string softVersion_;
+	std::string controlMode_;
+	std::string analogMod_;
+	std::string digitalMod_;
+};
+*/
+//////////////////////////////////////////////////////////////////////////////
+//
+// Device adaptaters for "shutter" source in Combiner
+//
+//////////////////////////////////////////////////////////////////////////////
 
 class OxxiusShutter: public CShutterBase<OxxiusShutter>
 {
@@ -191,7 +288,7 @@ private:
 };
 
 
-class OxxiusMDual: public CStateDeviceBase<OxxiusMDual>
+class OxxiusMDual: public CGenericBase<OxxiusMDual>
 {
 public:
 	OxxiusMDual(const char* name);
@@ -204,15 +301,45 @@ public:
 
 	void GetName(char* pszName) const;
 	bool Busy();
-	unsigned long GetNumberOfPositions()const {return numPos_;}
 
 	// Action Interface
 	// ----------------
-	int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnSetRatio(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
 	bool initialized_;
 	std::string name_;
+	std::string slot_;
+	MM::Core* core_;
+
+	OxxiusCombinerHub* parentHub_;
+};
+
+
+class OxxiusFlipMirror : public CGenericBase<OxxiusFlipMirror>
+{
+public:
+	OxxiusFlipMirror(const char* name);
+	~OxxiusFlipMirror();
+
+	// MMDevice API
+	// ------------
+	int Initialize();
+	int Shutdown();
+
+	void GetName(char* pszName) const;
+	bool Busy();
+	//unsigned long GetNumberOfPositions()const { return numPos_; }
+
+	// Action Interface
+	// ----------------
+	int OnSwitchPos(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+
+private:
+	bool initialized_;
+	std::string nameF_;
+	unsigned int slot_;
 	MM::Core* core_;
 
 	OxxiusCombinerHub* parentHub_;

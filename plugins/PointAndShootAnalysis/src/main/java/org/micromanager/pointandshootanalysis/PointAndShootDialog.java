@@ -31,6 +31,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
@@ -80,6 +81,7 @@ public class PointAndShootDialog extends MMDialog {
       final Font arialSmallFont = new Font("Arial", Font.PLAIN, 12);
       final Dimension buttonSize = new Dimension(70, 21);
       final Dimension smallButtonSize = new Dimension(25, 21);
+      final Dimension spinnerSize = new Dimension(80, 21);
       
       super.setLayout(new MigLayout());
       super.loadAndRestorePosition(100, 100);
@@ -113,6 +115,7 @@ public class PointAndShootDialog extends MMDialog {
       int radius = profileSettings_.getInteger(Terms.RADIUS, 3);
       final SpinnerNumberModel sModel = new SpinnerNumberModel(radius, 1, 20, 1);
       final JSpinner radiusSpinner = new JSpinner (sModel);
+      radiusSpinner.setMinimumSize(spinnerSize);
       radiusSpinner.addChangeListener((ChangeEvent e) -> {
          profileSettings_.putInteger(Terms.RADIUS, (Integer) radiusSpinner.getValue());
       });
@@ -123,6 +126,7 @@ public class PointAndShootDialog extends MMDialog {
       int nrFramesBefore = profileSettings_.getInteger(Terms.NRFRAMESBEFORE, 4);
       final SpinnerNumberModel beforeModel = new SpinnerNumberModel(nrFramesBefore, 1, 1000, 1);
       final JSpinner beforeSpinner = new JSpinner (beforeModel);
+      beforeSpinner.setMinimumSize(spinnerSize);
       beforeSpinner.addChangeListener((ChangeEvent e) -> {
          profileSettings_.putInteger(Terms.NRFRAMESBEFORE, (Integer) beforeSpinner.getValue());
       });
@@ -143,6 +147,7 @@ public class PointAndShootDialog extends MMDialog {
       int maxDistance = profileSettings_.getInteger(Terms.MAXDISTANCE, 3);
       final SpinnerNumberModel maxDistanceModel = new SpinnerNumberModel(maxDistance, 1, 100, 1);
       final JSpinner maxDistanceSpinner = new JSpinner (maxDistanceModel);
+      maxDistanceSpinner.setMinimumSize(spinnerSize);
       maxDistanceSpinner.addChangeListener((ChangeEvent e) -> {
          profileSettings_.putInteger(Terms.MAXDISTANCE, (Integer) maxDistanceSpinner.getValue());
       });
@@ -152,17 +157,48 @@ public class PointAndShootDialog extends MMDialog {
       int offset = profileSettings_.getInteger(Terms.CAMERAOFFSET, 100);
       final SpinnerNumberModel offsetModel = new SpinnerNumberModel(offset, 1, 10000, 10);
       final JSpinner offsetSpinner = new JSpinner (offsetModel);
+      offsetSpinner.setMinimumSize(spinnerSize);
       offsetSpinner.addChangeListener((ChangeEvent e) -> {
          profileSettings_.putInteger(Terms.CAMERAOFFSET, (Integer) offsetSpinner.getValue());
       });
       super.add(offsetSpinner, "wrap");
       
+      // Even when we no longer
+      // can measure a bleach spot, continue tracking it based on previous position relative
+      // to particle centroid
+      super.add(new JLabel("Fix Bleach positions based on particle centroid"));
+      boolean fix = profileSettings_.getBoolean(Terms.FIXBLEACHINPARTICLE, true);
+      final JCheckBox fixBleachBox = new JCheckBox();
+      fixBleachBox.setSelected(fix);
+      fixBleachBox.addChangeListener((ChangeEvent e) -> {
+         profileSettings_.putBoolean(Terms.FIXBLEACHINPARTICLE, fixBleachBox.isSelected());
+      });
+      super.add(fixBleachBox, "wrap");
+      
+      super.add(new JLabel("Nr of frames used to fix bleach-particle offset"));
+      int nrFramesToFixBleach = profileSettings_.getInteger(Terms.NRFRAMESTOFIXBLEACH, 20);
+      final SpinnerNumberModel fixFramesModel = new SpinnerNumberModel(nrFramesToFixBleach, 1, 100, 1);
+      final JSpinner fixBleachSpinner = new JSpinner (fixFramesModel);
+      fixBleachSpinner.setMinimumSize(spinnerSize);
+      fixBleachSpinner.addChangeListener((ChangeEvent e) -> {
+         profileSettings_.putInteger(Terms.NRFRAMESTOFIXBLEACH, (Integer) fixBleachSpinner.getValue());
+      });
+      super.add(fixBleachSpinner, "wrap");
+      
+      JButton helpButton = mcsButton(buttonSize, arialSmallFont);
+      helpButton.setText("Help");
+      helpButton.addActionListener((ActionEvent evt) -> {
+         new Thread(org.micromanager.internal.utils.GUIUtils.makeURLRunnable(
+                 "https://micro-manager.org/wiki/Point_and_Shoot_Analysis")).start();
+      });
+      super.add(helpButton, "span 2, split 3");
+
       JButton cancelButton = mcsButton(buttonSize, arialSmallFont);
       cancelButton.setText("Cancel");
       cancelButton.addActionListener((ActionEvent evt) -> {
          ourDialog.dispose();
       });
-      super.add(cancelButton, "span 2, split 2, tag cancel");
+      super.add(cancelButton, "tag cancel");
       
       JButton okButton = mcsButton(buttonSize, arialSmallFont);
       okButton.setText("Execute");

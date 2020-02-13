@@ -28,10 +28,10 @@
 
 #ifdef WIN32
 #include <windows.h>
-#define snprintf _snprintf 
 #else
 #include <netinet/in.h>
 #endif
+#include "FixSnprintf.h"
 
 #include "LeicaDMIModel.h"
 #include "../../MMDevice/ModuleInterface.h"

@@ -641,8 +641,7 @@ int BaslerCamera::CheckForBinningMode(CPropertyAction *pAct)
 				CEnumEntryPtr pEnumEntry(*it);	
 				if(it == entries.begin())
 				{
-				   int ret = CreateProperty("BinningMode", pEnumEntry->GetSymbolic().c_str(), MM::String, false, pAct);
-				   assert(ret == DEVICE_OK);
+				   CreateProperty("BinningMode", pEnumEntry->GetSymbolic().c_str(), MM::String, false, pAct);
 				}
 				
 				LSPVals.push_back(pEnumEntry->GetSymbolic().c_str());							 			

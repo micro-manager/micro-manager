@@ -9,10 +9,7 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="Micro Manager 1.3">
-      <UniqueIdentifier>{f1e453b0-8a69-4c0e-8d11-7e482dd98cbe}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Micro Manager 1.3  Headers">
+    <Filter Include="Micro Manager Headers">
       <UniqueIdentifier>{80bcf84c-ddd6-4cba-9264-98f4470f1f9f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -21,9 +18,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="HandleListType.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="heap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MCL_NanoDrive.cpp">
@@ -37,16 +31,10 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="device_list.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="handle_list_if.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="HandleListType.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="heap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Madlib.h">
@@ -62,25 +50,25 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\MMDevice\DeviceBase.h">
-      <Filter>Micro Manager 1.3  Headers</Filter>
+      <Filter>Micro Manager Headers</Filter>
     </ClInclude>
     <ClInclude Include="..\MMDevice\DeviceUtils.h">
-      <Filter>Micro Manager 1.3  Headers</Filter>
+      <Filter>Micro Manager Headers</Filter>
     </ClInclude>
     <ClInclude Include="..\MMDevice\ImgBuffer.h">
-      <Filter>Micro Manager 1.3  Headers</Filter>
+      <Filter>Micro Manager Headers</Filter>
     </ClInclude>
     <ClInclude Include="..\MMDevice\MMDevice.h">
-      <Filter>Micro Manager 1.3  Headers</Filter>
+      <Filter>Micro Manager Headers</Filter>
     </ClInclude>
     <ClInclude Include="..\MMDevice\MMDeviceConstants.h">
-      <Filter>Micro Manager 1.3  Headers</Filter>
+      <Filter>Micro Manager Headers</Filter>
     </ClInclude>
     <ClInclude Include="..\MMDevice\ModuleInterface.h">
-      <Filter>Micro Manager 1.3  Headers</Filter>
+      <Filter>Micro Manager Headers</Filter>
     </ClInclude>
     <ClInclude Include="..\MMDevice\Property.h">
-      <Filter>Micro Manager 1.3  Headers</Filter>
+      <Filter>Micro Manager Headers</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

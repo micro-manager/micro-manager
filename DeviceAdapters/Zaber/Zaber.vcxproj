@@ -120,6 +120,7 @@
   <ItemGroup>
     <ClCompile Include="FilterCubeTurret.cpp" />
     <ClCompile Include="FilterWheel.cpp" />
+    <ClCompile Include="Illuminator.cpp" />
     <ClCompile Include="Stage.cpp" />
     <ClCompile Include="XYStage.cpp" />
     <ClCompile Include="Zaber.cpp" />
@@ -127,6 +128,7 @@
   <ItemGroup>
     <ClInclude Include="FilterCubeTurret.h" />
     <ClInclude Include="FilterWheel.h" />
+    <ClInclude Include="Illuminator.h" />
     <ClInclude Include="Stage.h" />
     <ClInclude Include="XYStage.h" />
     <ClInclude Include="Zaber.h" />

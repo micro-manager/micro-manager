@@ -32,9 +32,22 @@ import java.util.Map;
 import java.util.Objects;
 import mmcorej.CMMCore;
 import org.micromanager.data.internal.PropertyKey;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Definition of a position in space in terms of available stages/drives
+ * 
+ * The current implementation uses the concept of "DefaultXYStage", and 
+ * "DefaultZStage".  This is problematic.  The concept of "default" stages 
+ * originates in the Micro-Manager core, that always has only 1 stage that is 
+ * the "active" one.  However, MultiStagePosition devices can record the position
+ * of multiple stages, sometimes even lacking those of the "default" stages, 
+ * so it can not rely on the Micro-manager "Default" stages being in the list.
+ * 
+ * It would be nice to be able to rely on the getX, getY, and getZ functions,
+ * but these will return bogus values if the system's default stages are not 
+ * included.  To avoid surprises, you may need to parse the MultiStagePosition
+ * yourself.
  * 
  */
 public final class MultiStagePosition {
@@ -434,10 +447,10 @@ public final class MultiStagePosition {
             PropertyKey.MULTI_STAGE_POSITION__DEFAULT_XY_STAGE.key(), null);
       ret.defaultZStage_ = pmap.getString(
             PropertyKey.MULTI_STAGE_POSITION__DEFAULT_Z_STAGE.key(), null);
-      ret.gridRow_ = pmap.getAsNumber(
-            PropertyKey.MULTI_STAGE_POSITION__GRID_ROW.key(), 0).intValue();
-      ret.gridCol_ = pmap.getAsNumber(
-            PropertyKey.MULTI_STAGE_POSITION__GRID_COLUMN.key(), 0).intValue();
+      ret.gridRow_ = pmap.getInteger(
+            PropertyKey.MULTI_STAGE_POSITION__GRID_ROW.key(), 0);
+      ret.gridCol_ = pmap.getInteger(
+            PropertyKey.MULTI_STAGE_POSITION__GRID_COLUMN.key(), 0);
       for (String key : pmap.getPropertyMap(
             PropertyKey.MULTI_STAGE_POSITION__PROPERTIES.key(),
             PropertyMaps.emptyPropertyMap()).keySet()) {
@@ -445,7 +458,16 @@ public final class MultiStagePosition {
       }
       for (PropertyMap spmap : pmap.getPropertyMapList(
             PropertyKey.MULTI_STAGE_POSITION__DEVICE_POSITIONS.key())) {
-         ret.stagePosList_.add(StagePosition.fromPropertyMap(spmap));
+         // Opening certain datasets created with certain version of 2.0-beta
+         // give the error: 
+         // "java.lang.IllegalArgumentException: Invalid stage position (0-axis stage not supported)""
+         // catch and log.  This needs a better approach...
+         try {
+            ret.stagePosList_.add(StagePosition.fromPropertyMap(spmap));
+         } catch (IllegalArgumentException iae) {
+            // this can lead to a deluge of output.  Still probably better to keep...
+            ReportingUtils.logError(iae, iae.getMessage() + spmap.toJSON());
+         }
       }
       return ret;
    }

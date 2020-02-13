@@ -68,6 +68,15 @@ struct Tsi3RoiBin
    }
 };
 
+enum PolarImageType
+{
+	Intensity = 0,
+	Raw,
+	Azimuth,
+	DoLP,
+	Quad
+};
+
 static const char* dllLoadErr = "Error loading color processing functions from the dll";
 
 //////////////////////////////////////////////////////////////////////////////
@@ -99,7 +108,7 @@ public:
 
    unsigned GetImageWidth() const {return img.Width();}
    unsigned GetImageHeight() const {return img.Height();}
-   unsigned GetImageBytesPerPixel() const {return img.Depth();} 
+   unsigned GetImageBytesPerPixel() const;
    long GetImageBufferSize() const;
    unsigned GetBitDepth() const;
    int GetBinning() const;
@@ -134,6 +143,7 @@ public:
    int OnHotPixThreshold(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnWhiteBalance(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnPolarImageType(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int ResizeImageBuffer();
@@ -145,7 +155,8 @@ private:
 	int ColorProcess16to64(unsigned short* monoBuffer, unsigned char* colorBuffer, int width, int height);
 	int InitializeColorProcessor(bool wb=false);
 	int InitializePolarizationProcessor();
-	int PolarizationIntensity(unsigned short* monoBuffer, unsigned char* outBuffer, int width, int height);
+	int TransformPolarizationImage(unsigned short* monoBuffer, unsigned char* outBuffer, int width, int height, PolarImageType imgType);
+	static void SeparateQuadViewAngles(int polarPhase, unsigned short* sourceImage, unsigned short* destImage, int sourceWidth, int sourceHeight);
 	int ShutdownColorProcessor();
 	int ShutdownPolarizationProcessor();
 	int ClearWhiteBalance();
@@ -157,7 +168,6 @@ private:
 
    ImgBuffer img;
 	std::vector<unsigned short> demosaicBuffer;
-	std::vector<unsigned short> intensityBuffer;
    bool initialized;
 	static bool globalColorInitialized;
 	static bool globalPolarizationInitialized;
@@ -170,14 +180,17 @@ private:
    double maxExposureMs;
    bool color;
    bool polarized;
+	PolarImageType polarImageType;
 	bool whiteBalance;
 	int pixelSize;
 	int bitDepth;
 	LONG whiteBalancePending;
+	std::string sdkPath;
 
    Tsi3RoiBin fullFrame;
 
    TL_CAMERA_OPERATION_MODE operationMode;
    TL_CAMERA_TRIGGER_POLARITY triggerPolarity;
 	TL_COLOR_FILTER_ARRAY_PHASE cfaPhase;
+	TL_POLARIZATION_PROCESSOR_POLAR_PHASE polarPhase;
 };

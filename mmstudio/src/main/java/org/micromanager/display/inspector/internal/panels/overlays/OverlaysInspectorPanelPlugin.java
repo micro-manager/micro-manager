@@ -5,6 +5,7 @@
  */
 package org.micromanager.display.inspector.internal.panels.overlays;
 
+import org.micromanager.Studio;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.inspector.InspectorPanelController;
@@ -17,7 +18,7 @@ import org.micromanager.display.inspector.InspectorPanelPlugin;
  * @author mark
  */
 @Plugin(type = InspectorPanelPlugin.class,
-      priority = Priority.NORMAL_PRIORITY + 100.0,
+      priority = Priority.NORMAL + 100.0,
       name = "Overlays",
       description = "Add overlay graphics to displayed images")
 public final class OverlaysInspectorPanelPlugin implements InspectorPanelPlugin {
@@ -27,7 +28,7 @@ public final class OverlaysInspectorPanelPlugin implements InspectorPanelPlugin 
    }
 
    @Override
-   public InspectorPanelController createPanelController() {
-      return OverlaysInspectorPanelController.create();
+   public InspectorPanelController createPanelController(Studio studio) {
+      return OverlaysInspectorPanelController.create(studio);
    }
 }

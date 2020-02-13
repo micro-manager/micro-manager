@@ -21,9 +21,7 @@
 //
 
 
-#ifdef WIN32
-#define snprintf _snprintf 
-#endif
+#include "FixSnprintf.h"
 
 #include "OVP_ECS2.h"
 #include "../../MMDevice/MMDevice.h"

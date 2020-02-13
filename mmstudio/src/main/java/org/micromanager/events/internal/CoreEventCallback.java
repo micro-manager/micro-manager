@@ -21,9 +21,9 @@
 
 package org.micromanager.events.internal;
 
+import java.awt.geom.AffineTransform;
 import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
-import mmcorej.DoubleVector;
 import mmcorej.MMEventCallback;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
@@ -37,7 +37,6 @@ import org.micromanager.events.SLMExposureChangedEvent;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.SystemConfigurationLoadedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
-import org.micromanager.internal.utils.AffineUtils;
 
 /**
  * Callback to update Java layer when a change happens in the MMCore. This
@@ -72,12 +71,9 @@ public final class CoreEventCallback extends MMEventCallback {
          core_.updateSystemStateCache();
          // see OnPropertyChanged for reasons to run this on the EDT
          if (!SwingUtilities.isEventDispatchThread()) {
-            SwingUtilities.invokeLater(new Runnable() {
-               @Override
-               public void run() {
-                  studio_.events().post(
-                          new PropertiesChangedEvent());
-               }
+            SwingUtilities.invokeLater(() -> {
+               studio_.events().post(
+                       new PropertiesChangedEvent());
             });
          } else {
             studio_.events().post(
@@ -95,12 +91,9 @@ public final class CoreEventCallback extends MMEventCallback {
       // result in deadlock.  Hopefully, always running this on the EDT
       // will fix this, as its main purpose is providing user feedback.
       if (!SwingUtilities.isEventDispatchThread()) {
-         SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-               studio_.events().post(
-                       new PropertyChangedEvent(deviceName, propName, propValue));
-            }
+         SwingUtilities.invokeLater(() -> {
+            studio_.events().post(
+                    new PropertyChangedEvent(deviceName, propName, propValue));
          });
       } else {
          studio_.events().post(
@@ -111,12 +104,9 @@ public final class CoreEventCallback extends MMEventCallback {
    @Override
    public void onConfigGroupChanged(String groupName, String newConfig) {
       if (!SwingUtilities.isEventDispatchThread()) {
-         SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-               studio_.events().post(
-                       new ConfigGroupChangedEvent(groupName, newConfig));
-            }
+         SwingUtilities.invokeLater(() -> {
+            studio_.events().post(
+                    new ConfigGroupChangedEvent(groupName, newConfig));
          });
       } else {
          studio_.events().post(
@@ -127,12 +117,9 @@ public final class CoreEventCallback extends MMEventCallback {
    @Override
    public void onSystemConfigurationLoaded() {
       if (!SwingUtilities.isEventDispatchThread()) {
-         SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-               studio_.events().post(
-                       new SystemConfigurationLoadedEvent());
-            }
+         SwingUtilities.invokeLater(() -> {
+            studio_.events().post(
+                    new SystemConfigurationLoadedEvent());
          });
       } else {
          studio_.events().post(
@@ -144,12 +131,9 @@ public final class CoreEventCallback extends MMEventCallback {
    public void onPixelSizeChanged(double newPixelSizeUm) {
       // see OnPropertyChanged for reasons to run this on the EDT
       if (!SwingUtilities.isEventDispatchThread()) {
-         SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-               studio_.events().post(
-                       new PixelSizeChangedEvent(newPixelSizeUm));
-            }
+         SwingUtilities.invokeLater(() -> {
+            studio_.events().post(
+                    new PixelSizeChangedEvent(newPixelSizeUm));
          });
       } else {
          studio_.events().post(
@@ -158,21 +142,19 @@ public final class CoreEventCallback extends MMEventCallback {
    }
    
    @Override
-   public void onPixelSizeAffineChanged(DoubleVector newPixelSizeAffine) {
+   public void onPixelSizeAffineChanged(double npa0, double npa1, double npa2,
+           double npa3, double npa4, double npa5) {
+      double[] flatMatrix = {npa0, npa1, npa2, npa3, npa4, npa5};
+      AffineTransform newPixelSizeAffine = new AffineTransform(flatMatrix);
       // see OnPropertyChanged for reasons to run this on the EDT
       if (!SwingUtilities.isEventDispatchThread()) {
-         SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-               studio_.events().post(
-                       new PixelSizeAffineChangedEvent(
-                               AffineUtils.doubleToAffine(newPixelSizeAffine)));
-            }
+         SwingUtilities.invokeLater(() -> {
+            studio_.events().post(
+                    new PixelSizeAffineChangedEvent(newPixelSizeAffine));
          });
       } else {
          studio_.events().post(
-                       new PixelSizeAffineChangedEvent(
-                               AffineUtils.doubleToAffine(newPixelSizeAffine)));
+                       new PixelSizeAffineChangedEvent(newPixelSizeAffine));
       }
    }
 
@@ -182,12 +164,9 @@ public final class CoreEventCallback extends MMEventCallback {
       if (deviceName.equals(core_.getFocusDevice())) {
          // see OnPropertyChanged for reasons to run this on the EDT
          if (!SwingUtilities.isEventDispatchThread()) {
-            SwingUtilities.invokeLater(new Runnable() {
-               @Override
-               public void run() {
-                  studio_.events().post(
-                          new StagePositionChangedEvent(deviceName, pos));
-               }
+            SwingUtilities.invokeLater(() -> {
+               studio_.events().post(
+                       new StagePositionChangedEvent(deviceName, pos));
             });
          } else {
             studio_.events().post(
@@ -202,12 +181,9 @@ public final class CoreEventCallback extends MMEventCallback {
       if (deviceName.equals(core_.getXYStageDevice())) {
          // see OnPropertyChanged for reasons to run this on the EDT
          if (!SwingUtilities.isEventDispatchThread()) {
-            SwingUtilities.invokeLater(new Runnable() {
-               @Override
-               public void run() {
-                  studio_.events().post(
-                          new XYStagePositionChangedEvent(deviceName, xPos, yPos));
-               }
+            SwingUtilities.invokeLater(() -> {
+               studio_.events().post(
+                       new XYStagePositionChangedEvent(deviceName, xPos, yPos));
             });
          } else {
             studio_.events().post(
@@ -220,12 +196,9 @@ public final class CoreEventCallback extends MMEventCallback {
    public void onExposureChanged(String deviceName, double exposure) {
       // see OnPropertyChanged for reasons to run this on the EDT
       if (!SwingUtilities.isEventDispatchThread()) {
-         SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-               studio_.events().post(
-                       new ExposureChangedEvent(deviceName, exposure));
-            }
+         SwingUtilities.invokeLater(() -> {
+            studio_.events().post(
+                    new ExposureChangedEvent(deviceName, exposure));
          });
       } else {
          studio_.events().post(
@@ -237,12 +210,9 @@ public final class CoreEventCallback extends MMEventCallback {
    public void onSLMExposureChanged(String deviceName, double exposure) {
       // see OnPropertyChanged for reasons to run this on the EDT
       if (!SwingUtilities.isEventDispatchThread()) {
-         SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-               studio_.events().post(
-                       new SLMExposureChangedEvent(deviceName, exposure));
-            }
+         SwingUtilities.invokeLater(() -> {
+            studio_.events().post(
+                    new SLMExposureChangedEvent(deviceName, exposure));
          });
       } else {
          studio_.events().post(

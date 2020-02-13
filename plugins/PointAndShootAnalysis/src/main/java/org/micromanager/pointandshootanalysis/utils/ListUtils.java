@@ -36,6 +36,7 @@ either expressed or implied, of the FreeBSD Project.
 
 package org.micromanager.pointandshootanalysis.utils;
 
+import georegression.struct.point.Point2D_I32;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -59,6 +60,38 @@ public class ListUtils {
       myAvg.y /= xyPoints.size();
       
       return myAvg;
+   }
+   
+   /**
+	 * Find the average of all the points in the list.
+	 *
+	 * @param contour
+	 * @return
+	 */
+	public static Point2D_I32 avgPoint2DList(List<Point2D_I32> contour) {
+
+		int x = 0;
+		int y = 0;
+
+		for( Point2D_I32 p : contour ) {
+			x += p.x;
+			y += p.y;
+		}
+
+		x /= contour.size();
+		y /= contour.size();
+
+		return new Point2D_I32(x,y);
+	}
+   
+   public static double xAvgLastN(List<Point2D> input, int lastN) {
+      double sum = 0.0;
+      int counter = 0;
+      for (int i = input.size() - lastN; i < input.size(); i++) {
+         sum += input.get(i).getY();
+         counter++;
+      }
+      return sum / counter;
    }
    
    public static Point2D.Double stdDevsXYList(ArrayList<Point2D.Double> xyPoints, 
@@ -192,7 +225,7 @@ public class ListUtils {
       if (max >= 0) {
          int cutoffSize = sizes[max];
          for (List<T> sample : input) {
-            if (sample.size() > cutoffSize) {
+            if (sample.size() >= cutoffSize) {
                out.add(sample);
             }
          }
@@ -210,7 +243,7 @@ public class ListUtils {
     * @return output list, ready for bootstrap analysis
     */
    public static <T> List<T> listToListForBootstrap(List<T> list) {
-      List<T> newList = new ArrayList<T>(list.size());
+      List<T> newList = new ArrayList<>(list.size());
       int length = list.size();
       for (int i=0; i < length; i++) {
          int index = (int) Math.floor(Math.random() * (double) list.size());
@@ -219,5 +252,6 @@ public class ListUtils {
       return newList;
    }
    
+
    
 }

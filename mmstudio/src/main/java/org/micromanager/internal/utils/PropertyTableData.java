@@ -1,7 +1,9 @@
 package org.micromanager.internal.utils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.swing.table.AbstractTableModel;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
@@ -31,6 +33,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
        // The table data is stored in here.
    public List<PropertyItem> propListVisible_ = new ArrayList<>(); 
       // The table data is stored in here.
+   protected Map<PropertyItem, Integer> propToRow_ = new HashMap<>();
    protected CMMCore core_ = null;
    Configuration groupData_[];
    PropertySetting groupSignature_[];
@@ -304,7 +307,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
       // when updating, we do need to keep track which properties have their
       // "Use" checkbox checked.  Otherwise, this information get lost, which
       // is annoying and confusing for the user
-      List<PropertyItem> usedItems = new ArrayList<PropertyItem>();
+      List<PropertyItem> usedItems = new ArrayList<>();
       for (PropertyItem item : propListVisible_) {
          if (item.confInclude) {
             usedItems.add(item);
@@ -407,6 +410,11 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
             propListVisible_.add(item);
          }
       }
+      propToRow_.clear();
+      for (int row = 0; row < propListVisible_.size(); row++) {
+         propToRow_.put(propListVisible_.get(row), row);
+      }
+      
 
       this.fireTableStructureChanged();
       this.fireTableDataChanged();

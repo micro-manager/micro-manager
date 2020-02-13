@@ -22,7 +22,6 @@
 package org.micromanager.internal.dialogs;
 
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.text.ParseException;
@@ -63,28 +62,28 @@ public final class OptionsDlg extends MMDialog {
    private final JComboBox comboDisplayBackground_;
 
    private CMMCore core_;
-   private Studio studio_;
+   private MMStudio mmStudio_;
    private final UserProfile profile_;
 
    /**
     * Create the dialog
     * @param core - The Micro-Manager Core object
-    * @param studio - MMStudio api 
+    * @param mmStudio - MMStudio object (including Studio implementation) 
     */
-   public OptionsDlg(CMMCore core, Studio studio) {
+   public OptionsDlg(CMMCore core, MMStudio mmStudio) {
       super("global micro-manager options");
-      studio_ = studio;
+      mmStudio_ = mmStudio;
       core_ = core;
 
-      profile_ = studio.profile();
+      profile_ = mmStudio.profile();
       final StartupSettings startupSettings = StartupSettings.create(profile_);
 
       super.setResizable(false);
       super.setModal(true);
       super.setAlwaysOnTop(true);
       super.setTitle("Micro-Manager Options");
-      
-      super.loadAndRestorePosition(100, 100);     
+
+      super.loadAndRestorePosition(100, 100);
 
       super.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       super.addWindowListener(new WindowAdapter() {
@@ -97,118 +96,110 @@ public final class OptionsDlg extends MMDialog {
       final JCheckBox debugLogEnabledCheckBox = new JCheckBox();
       debugLogEnabledCheckBox.setText("Enable debug logging");
       debugLogEnabledCheckBox.setToolTipText("Enable verbose logging for troubleshooting and debugging");
-      debugLogEnabledCheckBox.setSelected(getIsDebugLogEnabled());
-      debugLogEnabledCheckBox.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(final ActionEvent e) {
-            boolean isEnabled = debugLogEnabledCheckBox.isSelected();
-            setIsDebugLogEnabled(isEnabled);
-            core_.enableDebugLog(isEnabled);
-            UIMonitor.enable(isEnabled);
-         }
+      debugLogEnabledCheckBox.setSelected(getIsDebugLogEnabled(mmStudio_));
+      debugLogEnabledCheckBox.addActionListener((final ActionEvent e) -> {
+         boolean isEnabled = debugLogEnabledCheckBox.isSelected();
+         setIsDebugLogEnabled(mmStudio_, isEnabled);
+         core_.enableDebugLog(isEnabled);
+         UIMonitor.enable(isEnabled);
       });
 
       final JCheckBox askForConfigFileCheckBox = new JCheckBox();
-      askForConfigFileCheckBox.setText("Ask for config file at startup");
-      askForConfigFileCheckBox.setSelected(!startupSettings.shouldSkipConfigSelectionAtStartup());
-      askForConfigFileCheckBox.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
+      final JCheckBox alwaysUseDefaultProfileCheckBox = new JCheckBox(
+              "Always use the default user profile");
+      alwaysUseDefaultProfileCheckBox.setToolTipText(
+              "Always use the default user profile; no prompt will be displayed to select a profile at startup.");
+      alwaysUseDefaultProfileCheckBox.setSelected(
+              startupSettings.shouldSkipProfileSelectionAtStartup());
+      alwaysUseDefaultProfileCheckBox.addActionListener((ActionEvent e) -> {
+         boolean checked = alwaysUseDefaultProfileCheckBox.isSelected();
+         startupSettings.setSkipProfileSelectionAtStartup(checked);
+         askForConfigFileCheckBox.setEnabled(checked);
+         if (checked) {
             startupSettings.setSkipConfigSelectionAtStartup(
-                  !askForConfigFileCheckBox.isSelected());
+                    askForConfigFileCheckBox.isSelected());
+         } else {
+            startupSettings.setSkipConfigSelectionAtStartup(false);
          }
       });
 
-      final JCheckBox alwaysUseDefaultProfileCheckBox = new JCheckBox(
-            "Always use the default user profile");
-      alwaysUseDefaultProfileCheckBox.setToolTipText("Always use the default user profile; no prompt will be displayed to select a profile at startup.");
-      alwaysUseDefaultProfileCheckBox.setSelected(startupSettings.shouldSkipProfileSelectionAtStartup());
-      alwaysUseDefaultProfileCheckBox.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            boolean checked = alwaysUseDefaultProfileCheckBox.isSelected();
-            startupSettings.setSkipProfileSelectionAtStartup(checked);
-            askForConfigFileCheckBox.setEnabled(!checked);
-            if (checked) {
-               askForConfigFileCheckBox.setSelected(true);
-               startupSettings.setSkipConfigSelectionAtStartup(true);
-            }
-         }
+      // Slaving the "use default profile" setting.  
+      // There is no logic in the splashcreen to do anything useful when only one
+      // of these two is selected
+      askForConfigFileCheckBox.setText("Ask for config file at startup");
+      askForConfigFileCheckBox.setSelected(!startupSettings.shouldSkipConfigSelectionAtStartup());
+      askForConfigFileCheckBox.addActionListener((ActionEvent arg0) -> {
+         startupSettings.setSkipConfigSelectionAtStartup(
+                 !askForConfigFileCheckBox.isSelected());
       });
+      askForConfigFileCheckBox.setSelected(
+              !startupSettings.shouldSkipConfigSelectionAtStartup());
+      askForConfigFileCheckBox.setEnabled(alwaysUseDefaultProfileCheckBox.isSelected());
 
       final JCheckBox deleteLogCheckBox = new JCheckBox();
       deleteLogCheckBox.setText("Delete log files after");
-      deleteLogCheckBox.setSelected(MMStudio.getInstance().getShouldDeleteOldCoreLogs());
-      deleteLogCheckBox.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            MMStudio.getInstance().setShouldDeleteOldCoreLogs(deleteLogCheckBox.isSelected());
-         }
+      deleteLogCheckBox.setSelected(mmStudio_.getShouldDeleteOldCoreLogs());
+      deleteLogCheckBox.addActionListener((ActionEvent e) -> {
+         mmStudio_.setShouldDeleteOldCoreLogs(deleteLogCheckBox.isSelected());
       });
 
       logDeleteDaysField_ =
-         new JTextField(Integer.toString(MMStudio.getInstance().getCoreLogLifetimeDays()), 2);
+         new JTextField(Integer.toString(mmStudio_.getCoreLogLifetimeDays()), 2);
 
       final JButton deleteLogFilesButton = new JButton();
       deleteLogFilesButton.setText("Delete Log Files Now");
       deleteLogFilesButton.setToolTipText("Delete all CoreLog files except " +
             "for the current one");
-      deleteLogFilesButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(final ActionEvent e) {
-            String dir1 =
-               LogFileManager.getLogFileDirectory().getAbsolutePath();
-            String dir2 =
-               LogFileManager.getLegacyLogFileDirectory().getAbsolutePath();
-            String dirs;
-            if (dir1.equals(dir2)) {
-               dirs = dir1;
-            }
-            else {
-               dirs = dir1 + " and " + dir2;
-            }
-
-            int answer = JOptionPane.showConfirmDialog(OptionsDlg.this,
-               "<html><body><p style='width: 400px;'>" +
-               "Delete all CoreLog files in " + dirs + "?" +
-               "</p></body></html>",
-               "Delete Log Files",
-               JOptionPane.YES_NO_OPTION,
-               JOptionPane.QUESTION_MESSAGE);
-            if (answer == JOptionPane.YES_OPTION) {
-               LogFileManager.deleteLogFilesDaysOld(0,
-                  core_.getPrimaryLogFile());
-            }
+      deleteLogFilesButton.addActionListener((final ActionEvent e) -> {
+         String dir1 =
+                 LogFileManager.getLogFileDirectory().getAbsolutePath();
+         String dir2 =
+                 LogFileManager.getLegacyLogFileDirectory().getAbsolutePath();
+         String dirs;
+         if (dir1.equals(dir2)) {
+            dirs = dir1;
+         }
+         else {
+            dirs = dir1 + " and " + dir2;
+         }
+         
+         int answer = JOptionPane.showConfirmDialog(OptionsDlg.this,
+                 "<html><body><p style='width: 400px;'>" +
+                         "Delete all CoreLog files in " + dirs + "?" +
+                                 "</p></body></html>",
+                 "Delete Log Files",
+                 JOptionPane.YES_NO_OPTION,
+                 JOptionPane.QUESTION_MESSAGE);
+         if (answer == JOptionPane.YES_OPTION) {
+            LogFileManager.deleteLogFilesDaysOld(0,
+                    core_.getPrimaryLogFile());
          }
       });
 
       final JButton clearPreferencesButton = new JButton();
       clearPreferencesButton.setText("Reset Preferences");
       clearPreferencesButton.setToolTipText("Clear all preference settings and restore defaults");
-      clearPreferencesButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(final ActionEvent e) {
-            int answer = JOptionPane.showConfirmDialog(OptionsDlg.this,
-               "Reset all preference settings?",
-               "Reset Preferences",
-               JOptionPane.YES_NO_OPTION,
-               JOptionPane.QUESTION_MESSAGE);
-            if (answer != JOptionPane.YES_OPTION) {
-               return;
-            }
-            // Clear everything except whether or not this user has
-            // registered.
-            boolean haveRegistered = RegistrationDlg.getHaveRegistered(studio_);
-            profile_.clearSettingsForAllClasses();
-            RegistrationDlg.setHaveRegistered(studio_, haveRegistered);
-            // Rather than updating all the GUI elements, let's just close
-            // the dialog.
-            dispose();
+      clearPreferencesButton.addActionListener((final ActionEvent e) -> {
+         int answer = JOptionPane.showConfirmDialog(OptionsDlg.this,
+                 "Reset all preference settings?",
+                 "Reset Preferences",
+                 JOptionPane.YES_NO_OPTION,
+                 JOptionPane.QUESTION_MESSAGE);
+         if (answer != JOptionPane.YES_OPTION) {
+            return;
          }
+         // Clear everything except whether or not this user has
+         // registered.
+         boolean haveRegistered = RegistrationDlg.getHaveRegistered(mmStudio_);
+         profile_.clearSettingsForAllClasses();
+         RegistrationDlg.setHaveRegistered(mmStudio_, haveRegistered);
+         // Rather than updating all the GUI elements, let's just close
+         // the dialog.
+         dispose();
       });
 
       bufSizeField_ = new JTextField(
-            Integer.toString(MMStudio.getInstance().getCircularBufferSize()), 5);
+            Integer.toString(mmStudio_.getCircularBufferSize()), 5);
 
       String[] options = new String[SkinMode.values().length];
       for (int i = 0; i < SkinMode.values().length; ++i) {
@@ -216,77 +207,56 @@ public final class OptionsDlg extends MMDialog {
       }
       comboDisplayBackground_ = new JComboBox(options);
       comboDisplayBackground_.setMaximumRowCount(2);
-      comboDisplayBackground_.setSelectedItem(studio_.app().skin().getSkin().getDesc());
-      comboDisplayBackground_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            changeBackground();
-         }
+      comboDisplayBackground_.setSelectedItem(mmStudio_.app().skin().getSkin().getDesc());
+      comboDisplayBackground_.addActionListener((ActionEvent e) -> {
+         changeBackground();
       });
 
       startupScriptFile_ = new JTextField(ScriptPanel.getStartupScript());
 
       final JCheckBox closeOnExitCheckBox = new JCheckBox();
       closeOnExitCheckBox.setText("Close app when quitting MM");
-      closeOnExitCheckBox.setSelected(getShouldCloseOnExit());
-      closeOnExitCheckBox.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            boolean shouldClose = closeOnExitCheckBox.isSelected();
-            setShouldCloseOnExit(shouldClose);
-            MMStudio.getFrame().setExitStrategy(shouldClose);
-         }
+      closeOnExitCheckBox.setSelected(getShouldCloseOnExit(mmStudio_));
+      closeOnExitCheckBox.addActionListener((ActionEvent arg0) -> {
+         boolean shouldClose = closeOnExitCheckBox.isSelected();
+         setShouldCloseOnExit(mmStudio_, shouldClose);
+         MMStudio.getFrame().setExitStrategy(shouldClose);
       });
 
       final JCheckBox metadataFileWithMultipageTiffCheckBox = new JCheckBox();
       metadataFileWithMultipageTiffCheckBox.setText("Create metadata.txt file with Image Stack Files");
       metadataFileWithMultipageTiffCheckBox.setSelected(
             StorageMultipageTiff.getShouldGenerateMetadataFile());
-      metadataFileWithMultipageTiffCheckBox.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            StorageMultipageTiff.setShouldGenerateMetadataFile(metadataFileWithMultipageTiffCheckBox.isSelected());
-         }
+      metadataFileWithMultipageTiffCheckBox.addActionListener((ActionEvent arg0) -> {
+         StorageMultipageTiff.setShouldGenerateMetadataFile(metadataFileWithMultipageTiffCheckBox.isSelected());
       });
       
       final JCheckBox separateFilesForPositionsMPTiffCheckBox = new JCheckBox();
       separateFilesForPositionsMPTiffCheckBox.setText("Save XY positions in separate Image Stack Files");
       separateFilesForPositionsMPTiffCheckBox.setSelected(
             StorageMultipageTiff.getShouldSplitPositions());
-      separateFilesForPositionsMPTiffCheckBox.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            StorageMultipageTiff.setShouldSplitPositions(separateFilesForPositionsMPTiffCheckBox.isSelected());
-         }
+      separateFilesForPositionsMPTiffCheckBox.addActionListener((ActionEvent arg0) -> {
+         StorageMultipageTiff.setShouldSplitPositions(separateFilesForPositionsMPTiffCheckBox.isSelected());
       });
   
       final JCheckBox syncExposureMainAndMDA = new JCheckBox();
       syncExposureMainAndMDA.setText("Sync exposure between Main and MDA windows");
       syncExposureMainAndMDA.setSelected(AcqControlDlg.getShouldSyncExposure());
-      syncExposureMainAndMDA.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            AcqControlDlg.setShouldSyncExposure(syncExposureMainAndMDA.isSelected());
-         }
+      syncExposureMainAndMDA.addActionListener((ActionEvent arg0) -> {
+         AcqControlDlg.setShouldSyncExposure(syncExposureMainAndMDA.isSelected());
       });
   
       final JCheckBox hideMDAdisplay = new JCheckBox();
       hideMDAdisplay.setText("Hide MDA display");
       hideMDAdisplay.setSelected(AcqControlDlg.getShouldHideMDADisplay());
-      hideMDAdisplay.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            AcqControlDlg.setShouldHideMDADisplay(hideMDAdisplay.isSelected());
-         }
+      hideMDAdisplay.addActionListener((ActionEvent arg0) -> {
+         AcqControlDlg.setShouldHideMDADisplay(hideMDAdisplay.isSelected());
       });
 
       final JButton closeButton = new JButton();
       closeButton.setText("Close");
-      closeButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(final ActionEvent ev) {
-            closeRequested();
-         }
+      closeButton.addActionListener((final ActionEvent ev) -> {
+         closeRequested();
       });
 
 
@@ -310,8 +280,13 @@ public final class OptionsDlg extends MMDialog {
 
       super.add(new JSeparator(), "wrap");
 
-      super.add(alwaysUseDefaultProfileCheckBox, "wrap");
-      super.add(askForConfigFileCheckBox, "wrap");
+      if (mmStudio_.profileAdmin().getUUIDOfCurrentProfile() ==
+              mmStudio_.profileAdmin().getUUIDOfDefaultProfile()) {
+         super.add(alwaysUseDefaultProfileCheckBox, "wrap");
+         super.add(askForConfigFileCheckBox, "wrap");
+      }
+      
+      super.add(new JSeparator(), "wrap");
 
       super.add(new JLabel("Startup Script:"), "split 2, grow 0, gapright related");
       super.add(startupScriptFile_, "wrap");
@@ -346,7 +321,7 @@ public final class OptionsDlg extends MMDialog {
    private void changeBackground() {
       String background = (String) comboDisplayBackground_.getSelectedItem();
 
-      studio_.app().skin().setSkin(SkinMode.fromString(background));
+      mmStudio_.app().skin().setSkin(SkinMode.fromString(background));
    }
 
    private void closeRequested() {
@@ -363,31 +338,31 @@ public final class OptionsDlg extends MMDialog {
          return;
       }
 
-      MMStudio.getInstance().setCircularBufferSize(seqBufSize);
-      MMStudio.getInstance().setCoreLogLifetimeDays(deleteLogDays);
+      mmStudio_.setCircularBufferSize(seqBufSize);
+      mmStudio_.setCoreLogLifetimeDays(deleteLogDays);
 
       ScriptPanel.setStartupScript(startupScriptFile_.getText());
-      studio_.app().makeActive();
+      mmStudio_.app().makeActive();
       dispose();
    }
 
-   public static boolean getIsDebugLogEnabled() {
-      return MMStudio.getInstance().profile().getBoolean(OptionsDlg.class,
+   public static boolean getIsDebugLogEnabled(Studio studio) {
+      return studio.profile().getBoolean(OptionsDlg.class,
             IS_DEBUG_LOG_ENABLED, false);
    }
 
-   public static void setIsDebugLogEnabled(boolean isEnabled) {
-      MMStudio.getInstance().profile().setBoolean(OptionsDlg.class,
+   public static void setIsDebugLogEnabled(Studio studio, boolean isEnabled) {
+      studio.profile().setBoolean(OptionsDlg.class,
             IS_DEBUG_LOG_ENABLED, isEnabled);
    }
 
-   public static boolean getShouldCloseOnExit() {
-      return MMStudio.getInstance().profile().getBoolean(OptionsDlg.class,
+   public static boolean getShouldCloseOnExit(Studio studio) {
+      return studio.profile().getBoolean(OptionsDlg.class,
             SHOULD_CLOSE_ON_EXIT, true);
    }
 
-   public static void setShouldCloseOnExit(boolean shouldClose) {
-      MMStudio.getInstance().profile().setBoolean(OptionsDlg.class,
+   public static void setShouldCloseOnExit(Studio studio, boolean shouldClose) {
+      studio.profile().setBoolean(OptionsDlg.class,
             SHOULD_CLOSE_ON_EXIT, shouldClose);
    }
 }

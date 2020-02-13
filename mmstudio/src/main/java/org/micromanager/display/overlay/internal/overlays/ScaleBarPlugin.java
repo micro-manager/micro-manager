@@ -31,7 +31,7 @@ import org.micromanager.display.overlay.Overlay;
  * @author Chris Weisiger, Mark A. Tsuchida
  */
 @Plugin(type = OverlayPlugin.class,
-      priority = Priority.HIGH_PRIORITY,
+      priority = Priority.HIGH,
       name = "Scale Bar",
       description = "Display a scale bar")
 public final class ScaleBarPlugin implements OverlayPlugin {

@@ -39,7 +39,7 @@ double g_IntensityFactor_ = 1.0;
 // External names used used by the rest of the system
 // to load particular device from the "DemoCamera.dll" library
 const char* g_TUDeviceName  = "TUCam";
-
+const char* g_PropNameFan   = "Fan";
 const char* g_PropNamePCLK  = "PixelClock";
 const char* g_PropNameBODP  = "BitDepth";
 const char* g_PropNameGain  = "Gain";
@@ -56,23 +56,23 @@ const char* g_PropNameATWB  = "Image Adjustment Auto White Balance";
 const char* g_PropNameONWB  = "Image Adjustment Once White Balance";
 const char* g_PropNameATEXP = "Exposure_Auto Adjustment";
 const char* g_PropNameTEMP  = "Temperature";
-const char* g_PropNameFANG  = "FanGear";
 const char* g_PropNameLLev  = "Image Adjustment Left  Levels";
 const char* g_PropNameRLev  = "Image Adjustment Right Levels";
 const char* g_PropNameIFMT  = "SaveImage";
-const char* g_PropNameCMS   = "CMSMode";  
-const char* g_PropNameLED   = "LEDMode";  
-const char* g_PropNameDepth = "DepthMode"; 
-const char* g_PropNameMdTgr = "Trigger Mode"; 
+const char* g_PropNameCMS   = "CMSMode";
+const char* g_PropNameLED   = "LEDMode";
+const char* g_PropNameDepth = "DepthMode";
+const char* g_PropNameMdTgr = "Trigger Mode";
 const char* g_PropNameMdExp = "Trigger Exposure Mode";
-const char* g_PropNameMdEdg = "Trigger Edge Mode"; 
+const char* g_PropNameMdEdg = "Trigger Edge Mode";
 const char* g_PropNameMdDly = "Trigger Delay";
 const char* g_PropNameDoSFW = "Trigger Software Do";
 const char* g_PropNameSharp = "Image Adjustment Sharpness";
 const char* g_PropNameDPC   = "Image Adjustment DPC";
-const char* g_PropNamePort  = "Output Trigger Port"; 
+const char* g_PropNameOffset= "Image Adjustment Offset";
+const char* g_PropNamePort  = "Output Trigger Port";
 const char* g_PropNameKind  = "Output Trigger Kind";
-const char* g_PropNameEdge  = "Output Trigger Edge Mode"; 
+const char* g_PropNameEdge  = "Output Trigger Edge Mode";
 const char* g_PropNameDelay = "Output Trigger Delay";
 const char* g_PropNameWidth = "Output Trigger Width";
 
@@ -100,6 +100,8 @@ const char* g_LED_OFF = "Off";
 const char* g_CMSBIT_ON  = "CMS";
 const char* g_HDRBIT_ON  = "HDR";
 const char* g_HIGHBIT_ON  = "HIGH";
+const char* g_GRHIGH_ON  = "GLOBALRESETHIGH";
+const char* g_GRLOW_ON   = "GLOBALRESETLOW";
 
 const char* g_TRIGGER_OFF = "Off";
 const char* g_TRIGGER_STD = "Standard";
@@ -174,11 +176,13 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 }
 
 
+int CMMTUCam::s_nNumCam  = 0;
+int CMMTUCam::s_nCntCam  = 0;
 ///////////////////////////////////////////////////////////////////////////////
 // CMMTUCam implementation
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-/**
+/*
 * CMMTUCam constructor.
 * Setup default all variables and create device properties required to exist
 * before intialization. In this case, no such properties were required. All
@@ -190,7 +194,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 */
 CMMTUCam::CMMTUCam() :
     CCameraBase<CMMTUCam> (),
-    exposureMaximum_(10000.0),     
+    exposureMaximum_(10000.0), 
     exposureMinimum_(0.0),
     dPhase_(0),
     initialized_(false),
@@ -243,16 +247,35 @@ CMMTUCam::CMMTUCam() :
     m_frame.ucFormatGet = TUFRM_FMT_USUAl;
     m_frame.pBuffer     = NULL;
 
+	m_nPID     = 0;
+	m_nBCD     = 0;
     m_nIdxGain = 0;
 	m_tgrOutAttr.nTgrOutPort = 0;   
 	m_tgrOutAttr.nTgrOutMode = 5;  
 	m_tgrOutAttr.nEdgeMode   = 0;   
 	m_tgrOutAttr.nDelayTm    = 0;   
-	m_tgrOutAttr.nWidth      = 1;  
+	m_tgrOutAttr.nWidth      = 5000;  
+
+	m_tgrOutPara.nTgrOutPort= 0;
+	m_tgrOutPara.TgrPort1.nTgrOutMode = 5;
+	m_tgrOutPara.TgrPort1.nEdgeMode = 0;
+	m_tgrOutPara.TgrPort1.nDelayTm = 0;
+	m_tgrOutPara.TgrPort1.nWidth = 5000;
+
+
+	m_tgrOutPara.TgrPort2.nTgrOutMode = 4;
+	m_tgrOutPara.TgrPort2.nEdgeMode = 0;
+	m_tgrOutPara.TgrPort2.nDelayTm = 0;
+	m_tgrOutPara.TgrPort2.nWidth = 5000;
+
+	m_tgrOutPara.TgrPort3.nTgrOutMode = 3;
+	m_tgrOutPara.TgrPort3.nEdgeMode = 0;
+	m_tgrOutPara.TgrPort3.nDelayTm = 0;
+	m_tgrOutPara.TgrPort3.nWidth = 5000;
 
 }
 
-/**
+/*
 * CMMTUCam destructor.
 * If this device used as intended within the Micro-Manager system,
 * Shutdown() will be always called before the destructor. But in any case
@@ -271,12 +294,18 @@ CMMTUCam::~CMMTUCam()
 
     StopSequenceAcquisition();
 	StopCapture();
-    UninitTUCamApi();
+	s_nCntCam--;
+
+	if (s_nCntCam <= 0)
+	{
+		s_nCntCam = 0;
+		UninitTUCamApi();
+	}
 
     delete thd_;   
 }
 
-/**
+/*
 * Obtains device name.
 * Required by the MM::Device API.
 */
@@ -286,7 +315,7 @@ void CMMTUCam::GetName(char* name) const
     CDeviceUtils::CopyLimitedString(name, g_TUDeviceName);
 }
 
-/**
+/*
 * Intializes the hardware.
 * Required by the MM::Device API.
 * Typically we access and initialize hardware at this point.
@@ -356,6 +385,26 @@ int CMMTUCam::Initialize()
     nRet = CreateProperty(MM::g_Keyword_CameraID, "V1.0", MM::String, true);
     assert(nRet == DEVICE_OK);
 
+	// Get BCD 
+	valInfo.nID = TUIDI_BCDDEVICE;
+	if (TUCAMRET_SUCCESS == TUCAM_Dev_GetInfo(m_opCam.hIdxTUCam, &valInfo))
+	{
+		m_nBCD   = valInfo.nValue;
+	}
+
+	// Get camera type
+	valInfo.nID = TUIDI_PRODUCT;
+	if (TUCAMRET_SUCCESS == TUCAM_Dev_GetInfo(m_opCam.hIdxTUCam, &valInfo))
+	{
+		m_nPID   = valInfo.nValue;
+	}
+
+	if (m_nPID == PID_FL_20BW)
+	{
+		m_tgrOutPara.TgrPort1.nTgrOutMode = 3;
+		m_tgrOutPara.TgrPort2.nTgrOutMode = 5;
+	}
+
     // binning
     CPropertyAction *pAct = new CPropertyAction (this, &CMMTUCam::OnBinning);
     nRet = CreateProperty(MM::g_Keyword_Binning, "", MM::String, false, pAct);
@@ -369,9 +418,12 @@ int CMMTUCam::Initialize()
     capaAttr.idCapa = TUIDC_BITOFDEPTH;
     if (TUCAMRET_SUCCESS == TUCAM_Capa_GetAttr(m_opCam.hIdxTUCam, &capaAttr))
     {
-		if(capaAttr.nValMax != capaAttr.nValMin)
+		if(capaAttr.nValMax != capaAttr.nValMin && m_nPID != DHYANA_D95_X100)
 		{
-			TUCAM_Capa_SetValue(m_opCam.hIdxTUCam, TUIDC_BITOFDEPTH, 8);
+			if(m_nPID != PID_FL_20BW)
+			{
+				TUCAM_Capa_SetValue(m_opCam.hIdxTUCam, TUIDC_BITOFDEPTH, 8);
+			}
 
 			pAct = new CPropertyAction (this, &CMMTUCam::OnBitDepth);
 			nRet = CreateProperty(g_PropNameBODP, "8", MM::String, false, pAct);
@@ -380,12 +432,7 @@ int CMMTUCam::Initialize()
 			vector<string> bitDepths;
 			bitDepths.push_back("8");
 			bitDepths.push_back("16");
-			/*
-			bitDepths.push_back("10");
-			bitDepths.push_back("12");
-			bitDepths.push_back("14");
-			bitDepths.push_back("32");
-			*/
+
 			nRet = SetAllowedValues(g_PropNameBODP, bitDepths);
 			if (nRet != DEVICE_OK)
 				return nRet;
@@ -417,8 +464,12 @@ int CMMTUCam::Initialize()
         nRet = CreateProperty(MM::g_Keyword_Exposure, "10.0", MM::Float, false, pAct);
         assert(nRet == DEVICE_OK);
 
-        exposureMaximum_ = (int)propAttr.dbValMax > 1000 ? (propAttr.dbValMax * 100 / 967) : (int)propAttr.dbValMax;
+        exposureMaximum_ = propAttr.dbValMax;//(int)propAttr.dbValMax > 1000 ? (propAttr.dbValMax * 100 / 967) : (int)propAttr.dbValMax;
         exposureMinimum_ = propAttr.dbValMin;
+		if(m_nPID == PID_FL_20BW)
+		{
+			exposureMaximum_ = 3600000;
+		}
         SetPropertyLimits(MM::g_Keyword_Exposure, exposureMinimum_, exposureMaximum_);
 		  
 //      SetPropertyLimits(MM::g_Keyword_Exposure, propAttr.dbValMin, 10/*propAttr.dbValMax*/);
@@ -442,11 +493,12 @@ int CMMTUCam::Initialize()
         {
 			// CMSMode Gain
 			capaAttr.idCapa = TUIDC_IMGMODESELECT;
-			if (TUCAMRET_SUCCESS == TUCAM_Capa_GetAttr(m_opCam.hIdxTUCam, &capaAttr))
+			if (TUCAMRET_SUCCESS == TUCAM_Capa_GetAttr(m_opCam.hIdxTUCam, &capaAttr) && m_nPID != DHYANA_D95_X100)
 			{
-				int nCMSMode = capaAttr.nValMax - capaAttr.nValMin +1;
+				//int nCMSMode = capaAttr.nValMax - capaAttr.nValMin +1;
 
-				if(nCMSMode > 2)
+				//if(nCMSMode > 2)
+				if(capaAttr.nValMax >= 0x2)
 				{
 					pAct = new CPropertyAction (this, &CMMTUCam::OnGAINMode);
 
@@ -457,6 +509,12 @@ int CMMTUCam::Initialize()
 					CMSValues.push_back(g_CMSBIT_ON);
 					CMSValues.push_back(g_HDRBIT_ON);
 					CMSValues.push_back(g_HIGHBIT_ON);
+
+					if (m_nPID == DHYANA_400BSIV2 && m_nBCD > 0x04 && capaAttr.nValMax > 0x2)
+					{
+						CMSValues.push_back(g_GRHIGH_ON);
+						CMSValues.push_back(g_GRLOW_ON);
+					}	
 
 					nRet = SetAllowedValues(g_PropNameMode, CMSValues);
 				}
@@ -633,13 +691,10 @@ int CMMTUCam::Initialize()
     }
 
     // Temperature
+	propAttr.nIdxChn= 0;
     propAttr.idProp = TUIDP_TEMPERATURE;
-    propAttr.nIdxChn= 0;
     if (TUCAMRET_SUCCESS == TUCAM_Prop_GetAttr(m_opCam.hIdxTUCam, &propAttr))
     {
-// 	    pAct = new CPropertyAction (this, &CMMTUCam::OnTemperatureCurrent);
-//      nRet = CreateProperty(g_PropNameTEMPC, "0", MM::String, false, pAct);
-//      assert(nRet == DEVICE_OK);
 
         pAct = new CPropertyAction (this, &CMMTUCam::OnTemperature);
         nRet = CreateProperty(g_PropNameTEMP, "0", MM::Integer, false, pAct);
@@ -647,13 +702,26 @@ int CMMTUCam::Initialize()
         m_nMidTemp = (int)((propAttr.dbValMax - propAttr.dbValMin) / 2); 
         SetPropertyLimits(g_PropNameTEMP, -m_nMidTemp, m_nMidTemp);
 
-        // Set default temperature
-        if (TUCAMRET_SUCCESS == TUCAM_Prop_SetValue(m_opCam.hIdxTUCam, TUIDP_TEMPERATURE, 40.0f))
-        {
-            char sz[10] = {0};
-            sprintf(sz, "%d", -10);
-            SetProperty(g_PropNameTEMP, sz);   
-        }
+		if(m_nPID == PID_FL_20BW)
+		{
+            // Set default temperature
+			if (TUCAMRET_SUCCESS == TUCAM_Prop_SetValue(m_opCam.hIdxTUCam, TUIDP_TEMPERATURE, 0))
+			{
+				char sz[10] = {0};
+				sprintf(sz, "%d", -50);
+				SetProperty(g_PropNameTEMP, sz);   
+			}
+		}
+		else
+		{
+			// Set default temperature
+			if (TUCAMRET_SUCCESS == TUCAM_Prop_SetValue(m_opCam.hIdxTUCam, TUIDP_TEMPERATURE, 40.0f))
+			{
+				char sz[10] = {0};
+				sprintf(sz, "%d", -10);
+				SetProperty(g_PropNameTEMP, sz);   
+			}
+		}
 
         if (NULL == m_hThdTempEvt)
         {
@@ -663,20 +731,6 @@ int CMMTUCam::Initialize()
         }
     }
 
-/*
-    // Fan gear
-    capaAttr.idCapa = TUIDC_FAN_GEAR;
-    if (TUCAMRET_SUCCESS == TUCAM_Capa_GetAttr(m_opCam.hIdxTUCam, &capaAttr))
-    {
-        pAct = new CPropertyAction (this, &CMMTUCam::OnFan);
-        nRet = CreateProperty(g_PropNameFANG, "Fan 1", MM::String, false, pAct);
-        assert(nRet == DEVICE_OK);
-
-        nRet = SetAllowedFanGear();
-        if (nRet != DEVICE_OK)
-            return nRet;
-    }
-*/
     // Left Levels
     propAttr.nIdxChn= 0;
     propAttr.idProp = TUIDP_LFTLEVELS;
@@ -714,7 +768,7 @@ int CMMTUCam::Initialize()
     {
 		int nImgMode = capaAttr.nValMax - capaAttr.nValMin +1;
         
-		if(nImgMode < 3)
+		if((nImgMode < 0x3) && (capaAttr.nValMax < 0x02))
 		{
 			pAct = new CPropertyAction (this, &CMMTUCam::OnCMSMode);
 
@@ -751,68 +805,101 @@ int CMMTUCam::Initialize()
 		if (nRet != DEVICE_OK)
 			return nRet;
 	}
-
-	// Get camera type
-	valInfo.nID = TUIDI_PRODUCT;
+	int nVal = 0;
 	m_tgrAttr.nTgrMode = TUCCM_SEQUENCE;
-	if (TUCAMRET_SUCCESS == TUCAM_Dev_GetInfo(m_opCam.hIdxTUCam, &valInfo))
+	if (DHYANA_400D_X45 != m_nPID && DHYANA_D95_X45 != m_nPID && DHYANA_400DC_X45 != m_nPID && DHYANA_400DC_X100 != m_nPID)
 	{
-		if (0x6404 != valInfo.nValue && 0x6405 != valInfo.nValue && 0x6804 != valInfo.nValue && 0xEC03 != valInfo.nValue)
+		if (TUCAMRET_SUCCESS == TUCAM_Cap_GetTrigger(m_opCam.hIdxTUCam, &m_tgrAttr))
 		{
-			if (TUCAMRET_SUCCESS == TUCAM_Cap_GetTrigger(m_opCam.hIdxTUCam, &m_tgrAttr))
+			// Trigger mode
+			pAct = new CPropertyAction (this, &CMMTUCam::OnTriggerMode);
+			nRet = CreateProperty(g_PropNameMdTgr, g_TRIGGER_OFF, MM::String, false, pAct);
+			assert(nRet == DEVICE_OK);
+
+			vector<string>ModTgrValues;
+			ModTgrValues.push_back(g_TRIGGER_OFF);
+			ModTgrValues.push_back(g_TRIGGER_STD);
+
+			if (m_nPID != PID_FL_20BW)
 			{
-				// Trigger mode
-                ///m_tgrAttr.nTgrMode = TUCCM_TRIGGER_SOFTWARE;
-				///TUCAM_Cap_SetTrigger(m_opCam.hIdxTUCam, m_tgrAttr);
-				pAct = new CPropertyAction (this, &CMMTUCam::OnTriggerMode);
-				nRet = CreateProperty(g_PropNameMdTgr, g_TRIGGER_OFF, MM::String, false, pAct);
-				assert(nRet == DEVICE_OK);
-
-				vector<string>ModTgrValues;
-				ModTgrValues.push_back(g_TRIGGER_OFF);
-				ModTgrValues.push_back(g_TRIGGER_STD);
-				ModTgrValues.push_back(g_TRIGGER_SYN);
-				ModTgrValues.push_back(g_TRIGGER_GLB);
-				ModTgrValues.push_back(g_TRIGGER_SWF);
-
-				nRet = SetAllowedValues(g_PropNameMdTgr, ModTgrValues);
-				if (nRet != DEVICE_OK)
-					return nRet;
-
-				// Trigger exposure mode
-				pAct = new CPropertyAction (this, &CMMTUCam::OnTriggerExpMode);
-				nRet = CreateProperty(g_PropNameMdExp, "Off", MM::String, false, pAct);
-				assert(nRet == DEVICE_OK);
-
-				vector<string>ModExpValues;
-				ModExpValues.push_back(g_TRIGGER_EXP_EXPTM);
-				ModExpValues.push_back(g_TRIGGER_EXP_WIDTH);
-
-				nRet = SetAllowedValues(g_PropNameMdExp, ModExpValues);
-				if (nRet != DEVICE_OK)
-					return nRet;
-
-				// Trigger edge mode
-				pAct = new CPropertyAction (this, &CMMTUCam::OnTriggerEdgeMode);
-				nRet = CreateProperty(g_PropNameMdEdg, "Off", MM::String, false, pAct);
-				assert(nRet == DEVICE_OK);
-
-				vector<string>ModEdgeValues;
-				ModEdgeValues.push_back(g_TRIGGER_EDGE_RISING);
-				ModEdgeValues.push_back(g_TRIGGER_EDGE_FALLING);
-
-				nRet = SetAllowedValues(g_PropNameMdEdg, ModEdgeValues);
-				if (nRet != DEVICE_OK)
-					return nRet;
-
-				// Trigger delay
-				pAct = new CPropertyAction (this, &CMMTUCam::OnTriggerDelay);
-				nRet = CreateProperty(g_PropNameMdDly, "0", MM::Integer, false, pAct);
-				assert(nRet == DEVICE_OK);
-
-				SetPropertyLimits(g_PropNameMdDly, 0, 10000000);
-
+				if (m_nPID == DHYANA_400BSIV2 && m_nBCD > 0x04)
+				{
+					TUCAM_Capa_GetValue(m_opCam.hIdxTUCam, TUIDC_IMGMODESELECT, &nVal);
+					if (nVal < MODE_GLRESET)
+					{
+						ModTgrValues.push_back(g_TRIGGER_SYN);
+					}
+				}
+				else
+				{
+					ModTgrValues.push_back(g_TRIGGER_SYN);
+					ModTgrValues.push_back(g_TRIGGER_GLB);
+				}
 			}
+
+			ModTgrValues.push_back(g_TRIGGER_SWF);
+
+			nRet = SetAllowedValues(g_PropNameMdTgr, ModTgrValues);
+			if (nRet != DEVICE_OK)
+				return nRet;
+
+			// Trigger exposure mode
+			pAct = new CPropertyAction (this, &CMMTUCam::OnTriggerExpMode);
+			nRet = CreateProperty(g_PropNameMdExp, "Off", MM::String, false, pAct);
+			assert(nRet == DEVICE_OK);
+
+			vector<string>ModExpValues;
+			ModExpValues.push_back(g_TRIGGER_EXP_EXPTM);
+			ModExpValues.push_back(g_TRIGGER_EXP_WIDTH);
+
+			nRet = SetAllowedValues(g_PropNameMdExp, ModExpValues);
+			if (nRet != DEVICE_OK)
+				return nRet;
+
+			// Trigger edge mode
+			pAct = new CPropertyAction (this, &CMMTUCam::OnTriggerEdgeMode);
+			nRet = CreateProperty(g_PropNameMdEdg, "Off", MM::String, false, pAct);
+			assert(nRet == DEVICE_OK);
+
+			vector<string>ModEdgeValues;
+			ModEdgeValues.push_back(g_TRIGGER_EDGE_RISING);
+			ModEdgeValues.push_back(g_TRIGGER_EDGE_FALLING);
+
+			nRet = SetAllowedValues(g_PropNameMdEdg, ModEdgeValues);
+			if (nRet != DEVICE_OK)
+				return nRet;
+
+			// Trigger delay
+			pAct = new CPropertyAction (this, &CMMTUCam::OnTriggerDelay);
+			nRet = CreateProperty(g_PropNameMdDly, "0", MM::Integer, false, pAct);
+			assert(nRet == DEVICE_OK);
+
+			SetPropertyLimits(g_PropNameMdDly, 0, 10000000);
+
+			/*				// Software trigger
+			pAct = new CPropertyAction (this, &CMMTUCam::OnTriggerDoSoftware);
+			nRet = CreateStringProperty(g_PropNameDoSFW, g_TRIGGER_DO_SOFTWARE, false, pAct);
+			assert(nRet == DEVICE_OK);
+
+			AddAllowedValue(g_PropNameDoSFW, g_TRIGGER_DO_SOFTWARE);*/
+
+		}
+	}
+	
+
+	// Fan gear
+	capaAttr.idCapa = TUIDC_FAN_GEAR;
+	if (TUCAMRET_SUCCESS == TUCAM_Capa_GetAttr(m_opCam.hIdxTUCam, &capaAttr))
+	{
+		if(DHYANA_400BSIV2 == m_nPID && (0x04 == m_nBCD || m_nBCD > 0x05))     
+		{
+			pAct = new CPropertyAction (this, &CMMTUCam::OnFan);
+			nRet = CreateProperty(g_PropNameFan, "High", MM::String, false, pAct);
+			assert(nRet == DEVICE_OK);
+
+			nRet = SetAllowedFanGear();
+			if (nRet != DEVICE_OK)
+				return nRet;
 		}
 	}
 
@@ -829,11 +916,13 @@ int CMMTUCam::Initialize()
 	}
 
 	// DPC Level
+    int nMaxNoise = 0;
 	propAttr.nIdxChn= 0;
 	propAttr.idProp = TUIDP_NOISELEVEL;
 	if (TUCAMRET_SUCCESS == TUCAM_Prop_GetAttr(m_opCam.hIdxTUCam, &propAttr))
 	{
-		// Trigger mode
+		nMaxNoise = (int)propAttr.dbValMax;
+		// DPC mode
 		pAct = new CPropertyAction (this, &CMMTUCam::OnDPCLevel);
 		nRet = CreateProperty(g_PropNameDPC, g_DPC_OFF, MM::String, false, pAct);
 		assert(nRet == DEVICE_OK);
@@ -849,11 +938,70 @@ int CMMTUCam::Initialize()
 			return nRet;
 	}
 
+	if (nMaxNoise == 0)
+	{
+		propAttr.nIdxChn= 0;
+		propAttr.idProp = TUIDP_DPCLEVEL;
+		if (TUCAMRET_SUCCESS == TUCAM_Prop_GetAttr(m_opCam.hIdxTUCam, &propAttr))
+		{
+			// DPC mode
+			pAct = new CPropertyAction (this, &CMMTUCam::OnDPCAdjust);
+			nRet = CreateProperty(g_PropNameDPC, "0", MM::Integer, false, pAct);
+			assert(nRet == DEVICE_OK);
+
+			SetPropertyLimits(g_PropNameDPC, (int)propAttr.dbValMin, (int)propAttr.dbValMax);
+		}
+	}
+
+	// Offset
+    if(PID_FL_20BW == m_nPID)
+	{
+		propAttr.nIdxChn= 0;
+		propAttr.idProp = TUIDP_BLACKLEVEL;
+		if (TUCAMRET_SUCCESS == TUCAM_Prop_GetAttr(m_opCam.hIdxTUCam, &propAttr))
+		{
+			// DPC mode
+			pAct = new CPropertyAction (this, &CMMTUCam::OnBlackLevel);
+			nRet = CreateProperty(g_PropNameOffset, "0", MM::Integer, false, pAct);
+			assert(nRet == DEVICE_OK);
+
+			SetPropertyLimits(g_PropNameOffset, (int)propAttr.dbValMin, (int)propAttr.dbValMax);
+		}
+	}
+
+	// TriggerOut
 	if (TUCAMRET_SUCCESS == TUCAM_Cap_GetTriggerOut(m_opCam.hIdxTUCam, &m_tgrOutAttr))
 	{
 
         m_tgrOutAttr.nTgrOutMode = 5;
 		TUCAM_Cap_SetTriggerOut(m_opCam.hIdxTUCam, m_tgrOutAttr);
+
+		m_tgrOutPara.nTgrOutPort = m_tgrOutAttr.nTgrOutPort;
+		switch(m_tgrOutPara.nTgrOutPort)
+		{
+		case TUPORT_ONE:
+			m_tgrOutPara.TgrPort1.nTgrOutMode = m_tgrOutAttr.nTgrOutMode;
+			m_tgrOutPara.TgrPort1.nEdgeMode = m_tgrOutAttr.nEdgeMode;
+			m_tgrOutPara.TgrPort1.nDelayTm = m_tgrOutAttr.nDelayTm;
+			m_tgrOutPara.TgrPort1.nWidth = m_tgrOutAttr.nWidth;
+			break;
+
+		case TUPORT_TWO:
+			m_tgrOutPara.TgrPort2.nTgrOutMode = m_tgrOutAttr.nTgrOutMode;
+			m_tgrOutPara.TgrPort2.nEdgeMode = m_tgrOutAttr.nEdgeMode;
+			m_tgrOutPara.TgrPort2.nDelayTm = m_tgrOutAttr.nDelayTm;
+			m_tgrOutPara.TgrPort2.nWidth = m_tgrOutAttr.nWidth;
+			break;
+
+		case TUPORT_THREE:
+			m_tgrOutPara.TgrPort3.nTgrOutMode = m_tgrOutAttr.nTgrOutMode;
+			m_tgrOutPara.TgrPort3.nEdgeMode = m_tgrOutAttr.nEdgeMode;
+			m_tgrOutPara.TgrPort3.nDelayTm = m_tgrOutAttr.nDelayTm;
+			m_tgrOutPara.TgrPort3.nWidth = m_tgrOutAttr.nWidth;
+			break;
+		default:
+			break;
+		}
 
 		// OutPutTrigger Port Mode
 		pAct = new CPropertyAction (this, &CMMTUCam::OnTrgOutPortMode);
@@ -863,28 +1011,35 @@ int CMMTUCam::Initialize()
 		vector<string>ModPortValues;
 		ModPortValues.push_back(g_TRIGGER_PORT1);
 		ModPortValues.push_back(g_TRIGGER_PORT2);
-		ModPortValues.push_back(g_TRIGGER_PORT3);
+
+		if (m_nPID != PID_FL_20BW)
+		{
+			ModPortValues.push_back(g_TRIGGER_PORT3);
+		}
 
 		nRet = SetAllowedValues(g_PropNamePort, ModPortValues);
 		if (nRet != DEVICE_OK)
 			return nRet;
 
 		// OutPutTrigger Kind Mode
-		pAct = new CPropertyAction (this, &CMMTUCam::OnTrgOutKindMode);
-		nRet = CreateProperty(g_PropNameKind, g_TRIGGER_READEND, MM::String, false, pAct);
-		assert(nRet == DEVICE_OK);
+		if (m_nPID != PID_FL_20BW)
+		{
+			pAct = new CPropertyAction (this, &CMMTUCam::OnTrgOutKindMode);
+			nRet = CreateProperty(g_PropNameKind, g_TRIGGER_READEND, MM::String, false, pAct);
+			assert(nRet == DEVICE_OK);
 
-		vector<string>ModKindValues;
-		ModKindValues.push_back(g_TRIGGER_EXPSTART);
-		ModKindValues.push_back(g_TRIGGER_READEND);
-		ModKindValues.push_back(g_TRIGGER_GLBEXP);
-		ModKindValues.push_back(g_TRIGGER_LOW);
-		ModKindValues.push_back(g_TRIGGER_HIGH);
+			vector<string>ModKindValues;
+			ModKindValues.push_back(g_TRIGGER_EXPSTART);
+			ModKindValues.push_back(g_TRIGGER_READEND);
+			ModKindValues.push_back(g_TRIGGER_GLBEXP);
+			ModKindValues.push_back(g_TRIGGER_LOW);
+			ModKindValues.push_back(g_TRIGGER_HIGH);
 
-		nRet = SetAllowedValues(g_PropNameKind, ModKindValues);
-		if (nRet != DEVICE_OK)
-			return nRet;
-
+			nRet = SetAllowedValues(g_PropNameKind, ModKindValues);
+			if (nRet != DEVICE_OK)
+				return nRet;
+		}
+		
 		// OutPutTrigger Edge Mode
 		pAct = new CPropertyAction (this, &CMMTUCam::OnTrgOutEdgeMode);
 		nRet = CreateProperty(g_PropNameEdge, g_TRIGGER_EDGE_RISING, MM::String, false, pAct);
@@ -914,213 +1069,68 @@ int CMMTUCam::Initialize()
 
 	}
 
-/*
-    CPropertyActionEx *pActX = 0;
-    // create an extended (i.e. array) properties 1 through 4
-
-    for(int ij = 1; ij < 7;++ij)
-    {
-        std::ostringstream os;
-        os<<ij;
-        std::string propName = "TestProperty" + os.str();
-        pActX = new CPropertyActionEx(this, &CMMTUCam::OnTestProperty, ij);
-        nRet = CreateFloatProperty(propName.c_str(), 0., false, pActX);
-        if(0!=(ij%5))
-        {
-            // try several different limit ranges
-            double upperLimit = (double)ij*pow(10.,(double)(((ij%2)?-1:1)*ij));
-            double lowerLimit = (ij%3)?-upperLimit:0.;
-            SetPropertyLimits(propName.c_str(), lowerLimit, upperLimit);
-        }
-    }
-
-    // scan mode
-    pAct = new CPropertyAction (this, &CMMTUCam::OnScanMode);
-    nRet = CreateIntegerProperty("ScanMode", 1, false, pAct);
-    assert(nRet == DEVICE_OK);
-    AddAllowedValue("ScanMode","1");
-    AddAllowedValue("ScanMode","2");
-    AddAllowedValue("ScanMode","3");
-
-    // camera offset
-    nRet = CreateIntegerProperty(MM::g_Keyword_Offset, 0, false);
-    assert(nRet == DEVICE_OK);
-
-    // camera temperature
-    pAct = new CPropertyAction (this, &CMMTUCam::OnCCDTemp);
-    nRet = CreateFloatProperty(MM::g_Keyword_CCDTemperature, 0, false, pAct);
-    assert(nRet == DEVICE_OK);
-    SetPropertyLimits(MM::g_Keyword_CCDTemperature, -100, 10);
-
-    // camera temperature RO
-    pAct = new CPropertyAction (this, &CMMTUCam::OnCCDTemp);
-    nRet = CreateFloatProperty("CCDTemperature RO", 0, true, pAct);
-    assert(nRet == DEVICE_OK);
-
-    // readout time
-    pAct = new CPropertyAction (this, &CMMTUCam::OnReadoutTime);
-    nRet = CreateFloatProperty(MM::g_Keyword_ReadoutTime, 0, false, pAct);
-    assert(nRet == DEVICE_OK);
-
-    // CCD size of the camera we are modeling
-    pAct = new CPropertyAction (this, &CMMTUCam::OnCameraCCDXSize);
-    CreateIntegerProperty("OnCameraCCDXSize", 512, false, pAct);
-    pAct = new CPropertyAction (this, &CMMTUCam::OnCameraCCDYSize);
-    CreateIntegerProperty("OnCameraCCDYSize", 512, false, pAct);
-
-    // Trigger device
-    pAct = new CPropertyAction (this, &CMMTUCam::OnTriggerDevice);
-    CreateStringProperty("TriggerDevice", "", false, pAct);
-
-    pAct = new CPropertyAction (this, &CMMTUCam::OnDropPixels);
-    CreateIntegerProperty("DropPixels", 0, false, pAct);
-    AddAllowedValue("DropPixels", "0");
-    AddAllowedValue("DropPixels", "1");
-
-    pAct = new CPropertyAction (this, &CMMTUCam::OnSaturatePixels);
-    CreateIntegerProperty("SaturatePixels", 0, false, pAct);
-    AddAllowedValue("SaturatePixels", "0");
-    AddAllowedValue("SaturatePixels", "1");
-
-    pAct = new CPropertyAction (this, &CMMTUCam::OnFastImage);
-    CreateIntegerProperty("FastImage", 0, false, pAct);
-    AddAllowedValue("FastImage", "0");
-    AddAllowedValue("FastImage", "1");
-
-    pAct = new CPropertyAction (this, &CMMTUCam::OnFractionOfPixelsToDropOrSaturate);
-    CreateFloatProperty("FractionOfPixelsToDropOrSaturate", 0.002, false, pAct);
-    SetPropertyLimits("FractionOfPixelsToDropOrSaturate", 0., 0.1);
-
-    pAct = new CPropertyAction(this, &CMMTUCam::OnShouldRotateImages);
-    CreateIntegerProperty("RotateImages", 0, false, pAct);
-    AddAllowedValue("RotateImages", "0");
-    AddAllowedValue("RotateImages", "1");
-
-    pAct = new CPropertyAction(this, &CMMTUCam::OnShouldDisplayImageNumber);
-    CreateIntegerProperty("DisplayImageNumber", 0, false, pAct);
-    AddAllowedValue("DisplayImageNumber", "0");
-    AddAllowedValue("DisplayImageNumber", "1");
-
-    pAct = new CPropertyAction(this, &CMMTUCam::OnStripeWidth);
-    CreateFloatProperty("StripeWidth", 0, false, pAct);
-    SetPropertyLimits("StripeWidth", 0, 10);
-
-    // Whether or not to use exposure time sequencing
-    pAct = new CPropertyAction (this, &CMMTUCam::OnIsSequenceable);
-    std::string propName = "UseExposureSequences";
-    CreateStringProperty(propName.c_str(), "No", false, pAct);
-    AddAllowedValue(propName.c_str(), "Yes");
-    AddAllowedValue(propName.c_str(), "No");
-*/
     // initialize image buffer
     nRet = StartCapture();
     if (nRet != DEVICE_OK)
         return nRet;
+   
+	// pixel type
+	vector<string> pixelTypeValues;
+	pAct = new CPropertyAction (this, &CMMTUCam::OnPixelType);
 
-    // pixel type
-    vector<string> pixelTypeValues;
-    pAct = new CPropertyAction (this, &CMMTUCam::OnPixelType);
-
-    if (3 == m_frame.ucChannels)
-    {
+	if (3 == m_frame.ucChannels)
+	{
 #ifdef _WIN64        
-        if (2 == m_frame.ucElemBytes)
-        {
-            nRet = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_64bitRGB, MM::String, false, pAct);
-            assert(nRet == DEVICE_OK);
+		if (2 == m_frame.ucElemBytes)
+		{
+			nRet = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_64bitRGB, MM::String, false, pAct);
+			assert(nRet == DEVICE_OK);
 
-            pixelTypeValues.push_back(g_PixelType_64bitRGB);
-        }  
-        else
-        {
-            nRet = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_32bitRGB, MM::String, false, pAct);
-            assert(nRet == DEVICE_OK);
+			pixelTypeValues.push_back(g_PixelType_64bitRGB);
+		}  
+		else
+		{
+			nRet = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_32bitRGB, MM::String, false, pAct);
+			assert(nRet == DEVICE_OK);
 
-            pixelTypeValues.push_back(g_PixelType_32bitRGB);
-        } 
+			pixelTypeValues.push_back(g_PixelType_32bitRGB);
+		} 
 #else
-//         // Do not have enough memory
-//         if (2 == m_frame.ucElemBytes)
-//         {
-//             nRet = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_64bitRGB, MM::String, false, pAct);
-//             assert(nRet == DEVICE_OK);
-// 
-//             pixelTypeValues.push_back(g_PixelType_64bitRGB);
-//         }  
-//         else
-        {
-            nRet = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_32bitRGB, MM::String, false, pAct);
-            assert(nRet == DEVICE_OK);
-
-            pixelTypeValues.push_back(g_PixelType_32bitRGB);
-        }  
+		nRet = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_32bitRGB, MM::String, false, pAct);
+		assert(nRet == DEVICE_OK);
+		pixelTypeValues.push_back(g_PixelType_32bitRGB);
 #endif
-  
-    }
-    else
-    {
-        if (2 == m_frame.ucElemBytes)
-        {
-            nRet = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_16bit, MM::String, false, pAct);
-            assert(nRet == DEVICE_OK);
 
-            pixelTypeValues.push_back(g_PixelType_16bit);
-        }  
-        else 
-        {
-            nRet = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_8bit, MM::String, false, pAct);
-            assert(nRet == DEVICE_OK);
+	}
+	else
+	{
+		if (2 == m_frame.ucElemBytes)
+		{
+			nRet = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_16bit, MM::String, false, pAct);
+			assert(nRet == DEVICE_OK);
 
-            pixelTypeValues.push_back(g_PixelType_8bit);
-        } 
-    }  
-/*
-    if (3 == m_frame.ucChannels)
-    {
-        nRet = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_32bitRGB, MM::String, false, pAct);
-        assert(nRet == DEVICE_OK);
+			pixelTypeValues.push_back(g_PixelType_16bit);
+			if (m_nPID == PID_FL_20BW)
+			{
+                pixelTypeValues.push_back(g_PixelType_8bit);
+			}
+		}  
+		else 
+		{
+			nRet = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_8bit, MM::String, false, pAct);
+			assert(nRet == DEVICE_OK);
 
-#ifdef _WIN64
-        if (2 == m_frame.ucElemBytes)
-        {
-            pixelTypeValues.push_back(g_PixelType_64bitRGB);
-        }  
-        else
-        {
-            pixelTypeValues.push_back(g_PixelType_32bitRGB);
-        }    
-#else
-        pixelTypeValues.push_back(g_PixelType_32bitRGB);
-#endif        
-    }
-    else
-    {
-        nRet = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_8bit, MM::String, false, pAct);
-        assert(nRet == DEVICE_OK);
+			pixelTypeValues.push_back(g_PixelType_8bit);
+			if (m_nPID == PID_FL_20BW)
+			{
+                pixelTypeValues.push_back(g_PixelType_16bit);
+			}
+		} 
+	}  
 
-#ifdef _WIN64
-        if (2 == m_frame.ucElemBytes)
-        {
-            pixelTypeValues.push_back(g_PixelType_16bit);
-        }  
-        else 
-        {
-            pixelTypeValues.push_back(g_PixelType_8bit);
-        } 
-#else
-        pixelTypeValues.push_back(g_PixelType_8bit);
-#endif
-    }   
-*/
-/*
-    pixelTypeValues.push_back(g_PixelType_16bit); 
-    pixelTypeValues.push_back(g_PixelType_32bitRGB);
-    pixelTypeValues.push_back(g_PixelType_64bitRGB);
-    pixelTypeValues.push_back(::g_PixelType_32bit);
-*/
-    nRet = SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);
-    if (nRet != DEVICE_OK)
-        return nRet;
+	nRet = SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);
+	if (nRet != DEVICE_OK)
+		return nRet;
 
 
     // synchronize all properties
@@ -1145,7 +1155,11 @@ int CMMTUCam::Initialize()
     // initialize image buffer
     GenerateEmptyImage(img_);
 
-    // Continue running Capture so that we are ready in the SnapImage function
+
+	// initialize image buffer
+	nRet = StopCapture();
+	if (nRet != DEVICE_OK)
+		return nRet;
 
 //     char sz[256] = {0};
 //     sprintf(sz, "%d\n", m_pfSave->pFrame);
@@ -1157,7 +1171,7 @@ int CMMTUCam::Initialize()
     return DEVICE_OK;
 }
 
-/**
+/*
 * Shuts down (unloads) the device.
 * Required by the MM::Device API.
 * Ideally this method will completely unload the device and release all resources.
@@ -1186,7 +1200,7 @@ int CMMTUCam::Shutdown()
     return DEVICE_OK;
 }
 
-/**
+/*
 * Performs exposure and grabs a single image.
 * This function should block during the actual exposure and return immediately afterwards 
 * (i.e., before readout).  This behavior is needed for proper synchronization with the shutter.
@@ -1194,29 +1208,31 @@ int CMMTUCam::Shutdown()
 */
 int CMMTUCam::SnapImage()
 {
-    static int callCounter = 0;
-    ++callCounter;
+   static int callCounter = 0;
+   ++callCounter;
 
-    MM::MMTime startTime = GetCurrentMMTime();
+   MM::MMTime startTime = GetCurrentMMTime();
     
 	double exp = GetExposure();
-    if (sequenceRunning_) 
+   if (sequenceRunning_) 
     {
 		// Change the exposure time
         exp = GetSequenceExposure();
 		TUCAM_Prop_SetValue(m_opCam.hIdxTUCam, TUIDP_EXPOSURETM, exp);	
+		TUDBG_PRINTF("SanpImage Get Exp = %.2f",exp);
     }
 
 	if (!m_bLiving)  // should never happen, but just in case...
 	{
 		StartCapture();
+		TUDBG_PRINTF("SanpImage Start Capture");
 	}
 
-	if (TUCCM_TRIGGER_SOFTWARE == m_tgrAttr.nTgrMode)
+   if (TUCCM_TRIGGER_SOFTWARE == m_tgrAttr.nTgrMode)
 	{
 		int nCnt = 0;
 		int nRet = DEVICE_ERR;
-
+        TUDBG_PRINTF("SanpImage SOFTWARE");
 		do 
 		{
 			TUCAM_Cap_DoSoftwareTrigger(m_opCam.hIdxTUCam);
@@ -1227,12 +1243,13 @@ int CMMTUCam::SnapImage()
 	else
 	{
 		if (!fastImage_)
-		{
-		   MM::MMTime s0(0,0);
-         if( s0 < startTime )
-         {
-            CDeviceUtils::SleepMs((long) exp);
-         }
+		{	
+			MM::MMTime s0(0,0);
+			if( s0 < startTime )
+			{
+				CDeviceUtils::SleepMs((long) exp);
+			}
+			TUDBG_PRINTF("SanpImage fastImage_ = %d",fastImage_);
 			WaitForFrame(img_);
 		}
 	}
@@ -1243,7 +1260,7 @@ int CMMTUCam::SnapImage()
 }
 
 
-/**
+/*
 * Returns pixel data.
 * Required by the MM::Camera API.
 * The calling program will assume the size of the buffer based on the values
@@ -1262,7 +1279,7 @@ const unsigned char* CMMTUCam::GetImageBuffer()
     return pB;  //NULL
 }
 
-/**
+/*
 * Returns image buffer X-size in pixels.
 * Required by the MM::Camera API.
 */
@@ -1279,7 +1296,7 @@ unsigned CMMTUCam::GetImageWidth() const
     return img_.Width();
 }
 
-/**
+/*
 * Returns image buffer Y-size in pixels.
 * Required by the MM::Camera API.
 */
@@ -1296,7 +1313,7 @@ unsigned CMMTUCam::GetImageHeight() const
     return img_.Height();
 }
 
-/**
+/*
 * Returns image buffer pixel depth in bytes.
 * Required by the MM::Camera API.
 */
@@ -1315,7 +1332,7 @@ unsigned CMMTUCam::GetImageBytesPerPixel() const
     return img_.Depth();
 } 
 
-/**
+/*
 * Returns the bit depth (dynamic range) of the pixel.
 * This does not affect the buffer size, it just gives the client application
 * a guideline on how to interpret pixel values.
@@ -1334,7 +1351,7 @@ unsigned CMMTUCam::GetBitDepth() const
     return bitDepth_;
 }
 
-/**
+/*
 * Returns the size in bytes of the image buffer.
 * Required by the MM::Camera API.
 */
@@ -1352,7 +1369,7 @@ long CMMTUCam::GetImageBufferSize() const
     return img_.Width() * img_.Height() * GetImageBytesPerPixel();
 }
 
-/**
+/*
 * Sets the camera Region Of Interest.
 * Required by the MM::Camera API.
 * This command will change the dimensions of the image.
@@ -1425,7 +1442,7 @@ int CMMTUCam::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
     return DEVICE_OK;
 }
 
-/**
+/*
 * Returns the actual dimensions of the current ROI.
 * Required by the MM::Camera API.
 */
@@ -1440,7 +1457,7 @@ int CMMTUCam::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
     return DEVICE_OK;
 }
 
-/**
+/*
 * Resets the Region of Interest to full frame.
 * Required by the MM::Camera API.
 */
@@ -1470,7 +1487,7 @@ int CMMTUCam::ClearROI()
     return DEVICE_OK;
 }
 
-/**
+/*
 * Returns the current exposure setting in milliseconds.
 * Required by the MM::Camera API.
 */
@@ -1484,7 +1501,7 @@ double CMMTUCam::GetExposure() const
     return atof(buf);
 }
 
-/**
+/*
  * Returns the current exposure from a sequence and increases the sequence counter
  * Used for exposure sequences
  */
@@ -1502,7 +1519,7 @@ double CMMTUCam::GetSequenceExposure()
     return exposure;
 }
 
-/**
+/*
 * Sets exposure in milliseconds.
 * Required by the MM::Camera API.
 */
@@ -1518,20 +1535,21 @@ void CMMTUCam::SetExposure(double exp)
     GetCoreCallback()->OnExposureChanged(this, exp);
 }
 
-/**
+/*
 * Returns the current binning factor.
 * Required by the MM::Camera API.
 */
 int CMMTUCam::GetBinning() const
 {
-    char buf[MM::MaxStrLength];
+    return 1;  // fdy20190212
+    /*char buf[MM::MaxStrLength]; 
     int ret = GetProperty(MM::g_Keyword_Binning, buf);
     if (ret != DEVICE_OK)
         return 1;
-    return atoi(buf);
+    return atoi(buf);*/
 }
 
-/**
+/*
 * Sets binning factor.
 * Required by the MM::Camera API.
 */
@@ -1581,7 +1599,7 @@ int CMMTUCam::StopExposureSequence()
     return DEVICE_OK;
 }
 
-/**
+/*
  * Clears the list of exposures used in sequences
  */
 int CMMTUCam::ClearExposureSequence()
@@ -1595,7 +1613,7 @@ int CMMTUCam::ClearExposureSequence()
     return DEVICE_OK;
 }
 
-/**
+/*
  * Adds an exposure to a list of exposures used in sequences
  */
 int CMMTUCam::AddToExposureSequence(double exposureTime_ms) 
@@ -1718,7 +1736,7 @@ int CMMTUCam::SetAllowedFanGear()
     }
 
     LogMessage("Setting allowed fan gear settings", true);
-    return SetAllowedValues(g_PropNameFANG, fanValues);
+    return SetAllowedValues(g_PropNameFan, fanValues);
 }
 
 int CMMTUCam::SetAllowedImageMode()
@@ -1757,7 +1775,7 @@ int CMMTUCam::SetAllowedImageMode()
 }
 
 
-/**
+/*
  * Required by the MM::Camera API
  * Please implement this yourself and do not rely on the base class implementation
  * The Base class implementation is deprecated and will be removed shortly
@@ -1767,22 +1785,22 @@ int CMMTUCam::StartSequenceAcquisition(double interval)
     return StartSequenceAcquisition(LONG_MAX, interval, false);            
 }
 
-/**                                                                       
+/*                                                                    
 * Stop Capture and wait for the Sequence thread finished                                   
 */                                                                        
 int CMMTUCam::StopSequenceAcquisition()                                     
 {
     OutputDebugString("[StopSequenceAcquisition]:Enter\n");
 
-     if (thd_->IsStopped())
+     if (thd_->IsStopped() && !returnToSoftwareTriggers_)
         return DEVICE_OK;
 
     m_bLiving = false;
 
-	if (NULL == m_opCam.hIdxTUCam)
-	{
-		return DEVICE_NOT_CONNECTED;
-	}
+    if (NULL == m_opCam.hIdxTUCam)
+    {
+            return DEVICE_NOT_CONNECTED;
+    }
     thd_->Stop(); 
     TUCAM_Buf_AbortWait(m_opCam.hIdxTUCam); 
     thd_->wait();
@@ -1791,20 +1809,20 @@ int CMMTUCam::StopSequenceAcquisition()
     ReleaseBuffer();
 
     // Switch back to software trigger mode if that is what the user used
-	if (returnToSoftwareTriggers_)
-	{
-		TUCAM_Cap_GetTrigger(m_opCam.hIdxTUCam, &m_tgrAttr);
-		m_tgrAttr.nTgrMode = TUCCM_TRIGGER_SOFTWARE;
-		TUCAM_Cap_SetTrigger(m_opCam.hIdxTUCam, m_tgrAttr);
-		returnToSoftwareTriggers_ = false;
-	}
+    if (returnToSoftwareTriggers_)
+    {
+       TUCAM_Cap_GetTrigger(m_opCam.hIdxTUCam, &m_tgrAttr);
+       m_tgrAttr.nTgrMode = TUCCM_TRIGGER_SOFTWARE;
+		 TUCAM_Cap_SetTrigger(m_opCam.hIdxTUCam, m_tgrAttr);
+       returnToSoftwareTriggers_ = false;
+    }
 
     StartCapture();  // avoid wasting time in the SnapImage function 
 
     return DEVICE_OK;
 } 
 
-/**
+/*
 * Simple implementation of Sequence Acquisition
 * A sequence acquisition should run on its own thread and transport new images
 * coming of the camera into the MMCore circular buffer.
@@ -2059,7 +2077,7 @@ int CMMTUCam::OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct, long 
 }
 
 
-/**
+/*
 * Handles "Binning" property.
 */
 int CMMTUCam::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -2107,6 +2125,16 @@ int CMMTUCam::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
                         if (0 == val.compare(valText.pText))
                         {
                             TUCAM_Capa_SetValue(m_opCam.hIdxTUCam, TUIDC_RESOLUTION, i);
+							if(m_nPID == PID_FL_20BW)
+							{
+								TUCAM_PROP_ATTR  propAttr;
+								propAttr.nIdxChn= 0;
+								propAttr.idProp = TUIDP_EXPOSURETM;
+								TUCAM_Prop_GetAttr(m_opCam.hIdxTUCam, &propAttr);
+								exposureMinimum_ = propAttr.dbValMin;
+                                exposureMaximum_ = 3600000;
+								SetPropertyLimits(MM::g_Keyword_Exposure, exposureMinimum_, exposureMaximum_);
+							}
                             break;
                         }                         
                     }
@@ -2148,7 +2176,7 @@ int CMMTUCam::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret; 
 }
 
-/**
+/*
 * Handles "PixelClock" property.
 */
 int CMMTUCam::OnPixelClock(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -2230,7 +2258,7 @@ int CMMTUCam::OnPixelClock(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret; 
 }
 
-/**
+/*
 * Handles "Exposure" property.
 */
 int CMMTUCam::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -2275,7 +2303,7 @@ int CMMTUCam::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "GlobalGain" property.
 */
 int CMMTUCam::OnGlobalGain(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -2313,7 +2341,7 @@ int CMMTUCam::OnGlobalGain(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "CMSMode" property.
 */
 int CMMTUCam::OnCMSMode(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -2371,14 +2399,14 @@ int CMMTUCam::OnCMSMode(MM::PropertyBase* pProp, MM::ActionType eAct)
             string val;
             pProp->Get(val);
 
-			if (1 == nVal)  
-			{
-				pProp->Set(g_CMS_ON);
-			}
-			else
-			{
-				pProp->Set(g_CMS_OFF);
-			}
+            if (1 == nVal)
+            {
+                pProp->Set(g_CMS_ON);
+            }
+            else
+            {
+                pProp->Set(g_CMS_OFF);
+            }
 
             ret = DEVICE_OK;
         }
@@ -2390,7 +2418,7 @@ int CMMTUCam::OnCMSMode(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "LEDMode" property.
 */
 int CMMTUCam::OnLEDMode(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -2447,7 +2475,7 @@ int CMMTUCam::OnLEDMode(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "OnGAINMode" property.
 */
 int CMMTUCam::OnGAINMode(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -2475,7 +2503,7 @@ int CMMTUCam::OnGAINMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 					{
 						if (1 != nVal)
 						{
-							TUCAM_Capa_SetValue(m_opCam.hIdxTUCam, TUIDC_IMGMODESELECT, 1);  //1
+							TUCAM_Capa_SetValue(m_opCam.hIdxTUCam, TUIDC_IMGMODESELECT, 1);  //CMS
 						}  
 						TUCAM_Prop_SetValue(m_opCam.hIdxTUCam, TUIDP_GLOBALGAIN, 0);
 					}
@@ -2484,19 +2512,36 @@ int CMMTUCam::OnGAINMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 						if (2 != nVal)
 						{
-							TUCAM_Capa_SetValue(m_opCam.hIdxTUCam, TUIDC_IMGMODESELECT, 2);  //2
+							TUCAM_Capa_SetValue(m_opCam.hIdxTUCam, TUIDC_IMGMODESELECT, 2);  //HDR
 						}
 						TUCAM_Prop_SetValue(m_opCam.hIdxTUCam, TUIDP_GLOBALGAIN, 0);
 
 					}
 					else if(0 == val.compare(g_HIGHBIT_ON))
 					{
-
 						if (2 != nVal)
 						{
 							TUCAM_Capa_SetValue(m_opCam.hIdxTUCam, TUIDC_IMGMODESELECT, 2);  //High Gain
 						}
 						TUCAM_Prop_SetValue(m_opCam.hIdxTUCam, TUIDP_GLOBALGAIN, 1);
+
+					}
+					else if(0 == val.compare(g_GRHIGH_ON))
+					{
+						if (3 != nVal)
+						{
+							TUCAM_Capa_SetValue(m_opCam.hIdxTUCam, TUIDC_IMGMODESELECT, 3);  //Global Reset High Gain
+						}
+						TUCAM_Prop_SetValue(m_opCam.hIdxTUCam, TUIDP_GLOBALGAIN, 1);
+
+					}
+					else if(0 == val.compare(g_GRLOW_ON))
+					{
+						if (3 != nVal)
+						{
+							TUCAM_Capa_SetValue(m_opCam.hIdxTUCam, TUIDC_IMGMODESELECT, 3);  //Global Reset Low Gain
+						}
+						TUCAM_Prop_SetValue(m_opCam.hIdxTUCam, TUIDP_GLOBALGAIN, 2);
 
 					}
                    
@@ -2507,6 +2552,32 @@ int CMMTUCam::OnGAINMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 					{
 						dblExp = max(dblExp,propAttr.dbValMin);
 						TUCAM_Prop_SetValue(m_opCam.hIdxTUCam, TUIDP_EXPOSURETM, dblExp);
+						exposureMaximum_ = propAttr.dbValMax;
+						exposureMinimum_ = propAttr.dbValMin;
+						if(m_nPID == PID_FL_20BW)
+						{
+							exposureMaximum_ = 3600000;
+						}
+						SetPropertyLimits(MM::g_Keyword_Exposure, exposureMinimum_, exposureMaximum_);
+					}
+
+					if (m_nPID == DHYANA_400BSIV2 && m_nBCD > 0x04)
+					{
+						vector<string>ModTgrValues;
+						ModTgrValues.push_back(g_TRIGGER_OFF);
+						if (0 == val.compare(g_GRLOW_ON) ||  0 == val.compare(g_GRHIGH_ON))
+						{
+							ModTgrValues.push_back(g_TRIGGER_STD);
+						}
+						else
+						{
+							ModTgrValues.push_back(g_TRIGGER_STD);
+							ModTgrValues.push_back(g_TRIGGER_SYN);
+						}
+						ModTgrValues.push_back(g_TRIGGER_SWF);
+                        ClearAllowedValues(g_PropNameMdTgr);
+						SetAllowedValues(g_PropNameMdTgr, ModTgrValues);
+						//UpdateProperty(g_PropNameMdTgr);
 					}
 					
 				}
@@ -2529,12 +2600,19 @@ int CMMTUCam::OnGAINMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 			{
 				pProp->Set(g_CMSBIT_ON);
 			}
-			else
+			else if(2 == nVal)
 			{
 				if(dVal == 0)
 					pProp->Set(g_HDRBIT_ON);
 				else
 					pProp->Set(g_HIGHBIT_ON);
+			}
+			else 
+			{
+				if(dVal == 1)
+					pProp->Set(g_GRHIGH_ON);
+				else
+					pProp->Set(g_GRLOW_ON);
 			}
 
             ret = DEVICE_OK;
@@ -2546,7 +2624,7 @@ int CMMTUCam::OnGAINMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 
     return ret;
 }
-/**
+/*
 * Handles "ImageMode" property.
 */
 int CMMTUCam::OnImageMode(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -2640,7 +2718,7 @@ int CMMTUCam::OnImageMode(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret; 
 }
 
-/**
+/*
 * Handles "PixelType" property.
 */
 int CMMTUCam::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -2741,7 +2819,7 @@ int CMMTUCam::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret; 
 }
 
-/**
+/*
 * Handles "BitDepth" property.
 */
 int CMMTUCam::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -2778,13 +2856,26 @@ int CMMTUCam::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
                         TUCAM_Capa_SetValue(m_opCam.hIdxTUCam, TUIDC_BITOFDEPTH, 16);
                         SetPropertyLimits(g_PropNameLLev, 0, 65534);
                         SetPropertyLimits(g_PropNameRLev, 1, 65535);
+						SetProperty(MM::g_Keyword_PixelType, g_PixelType_16bit);
                     }
                     else
                     {
                         TUCAM_Capa_SetValue(m_opCam.hIdxTUCam, TUIDC_BITOFDEPTH, 8);
                         SetPropertyLimits(g_PropNameLLev, 0, 254);
                         SetPropertyLimits(g_PropNameRLev, 1, 255);
+						SetProperty(MM::g_Keyword_PixelType, g_PixelType_8bit);
                     }
+
+					if(m_nPID == PID_FL_20BW)
+					{
+						TUCAM_PROP_ATTR  propAttr;
+						propAttr.nIdxChn= 0;
+						propAttr.idProp = TUIDP_EXPOSURETM;
+						TUCAM_Prop_GetAttr(m_opCam.hIdxTUCam, &propAttr);
+						exposureMinimum_ = propAttr.dbValMin;
+						exposureMaximum_ = 3600000;
+						SetPropertyLimits(MM::g_Keyword_Exposure, exposureMinimum_, exposureMaximum_);
+					}
 
                     StartCapture();
                     ResizeImageBuffer();
@@ -2821,117 +2912,9 @@ int CMMTUCam::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
     }
 
     return ret;
-
-/*
-    int ret = DEVICE_ERR;
-    switch(eAct)
-    {
-    case MM::AfterSet:
-        {
-            if(IsCapturing())
-                return DEVICE_CAMERA_BUSY_ACQUIRING;
-
-            long bitDepth;
-            pProp->Get(bitDepth);
-
-            unsigned int bytesPerComponent;
-
-            switch (bitDepth) 
-            {
-            case 8:
-                bytesPerComponent = 1;
-                bitDepth_ = 8;
-                ret=DEVICE_OK;
-                break;
-            case 10:
-                bytesPerComponent = 2;
-                bitDepth_ = 10;
-                ret=DEVICE_OK;
-                break;
-            case 12:
-                bytesPerComponent = 2;
-                bitDepth_ = 12;
-                ret=DEVICE_OK;
-                break;
-            case 14:
-                bytesPerComponent = 2;
-                bitDepth_ = 14;
-                ret=DEVICE_OK;
-                break;
-            case 16:
-                bytesPerComponent = 2;
-                bitDepth_ = 16;
-                ret=DEVICE_OK;
-                break;
-            case 32:
-                bytesPerComponent = 4;
-                bitDepth_ = 32; 
-                ret=DEVICE_OK;
-                break;
-            default: 
-                // on error switch to default pixel type
-                bytesPerComponent = 1;
-
-                pProp->Set((long)8);
-                bitDepth_ = 8;
-                ret = ERR_UNKNOWN_MODE;
-                break;
-            }
-
-            char buf[MM::MaxStrLength];
-            GetProperty(MM::g_Keyword_PixelType, buf);
-            std::string pixelType(buf);
-            unsigned int bytesPerPixel = 1;
-
-            // automagickally change pixel type when bit depth exceeds possible value
-            if (pixelType.compare(g_PixelType_8bit) == 0)
-            {
-                if( 2 == bytesPerComponent)
-                {
-                    SetProperty(MM::g_Keyword_PixelType, g_PixelType_16bit);
-                    bytesPerPixel = 2;
-                }
-                else if ( 4 == bytesPerComponent)
-                {
-                    SetProperty(MM::g_Keyword_PixelType, g_PixelType_32bit);
-                    bytesPerPixel = 4;
-
-                }else
-                {
-                    bytesPerPixel = 1;
-                }
-            }
-            else if (pixelType.compare(g_PixelType_16bit) == 0)
-            {
-                bytesPerPixel = 2;
-            }
-            else if ( pixelType.compare(g_PixelType_32bitRGB) == 0)
-            {
-                bytesPerPixel = 4;
-            }
-            else if ( pixelType.compare(g_PixelType_32bit) == 0)
-            {
-                bytesPerPixel = 4;
-            }
-            else if ( pixelType.compare(g_PixelType_64bitRGB) == 0)
-            {
-                bytesPerPixel = 8;
-            }
-            img_.Resize(img_.Width(), img_.Height(), bytesPerPixel);
-        }
-        break;
-    case MM::BeforeGet:
-        {
-            pProp->Set((long)bitDepth_);
-            ret=DEVICE_OK;
-        }
-        break;
-    }
-    return ret; 
-*/
 }
 
-/**
+/*
 * Handles "FlipHorizontal" property.
 */
 int CMMTUCam::OnFlipH(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -2993,7 +2976,7 @@ int CMMTUCam::OnFlipH(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "FlipVertical" property.
 */
 int CMMTUCam::OnFlipV(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -3055,7 +3038,7 @@ int CMMTUCam::OnFlipV(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "Gamma" property.
 */
 int CMMTUCam::OnGamma(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -3093,7 +3076,7 @@ int CMMTUCam::OnGamma(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "Contrast" property.
 */
 int CMMTUCam::OnContrast(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -3131,7 +3114,7 @@ int CMMTUCam::OnContrast(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "Saturation" property.
 */
 int CMMTUCam::OnSaturation(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -3169,7 +3152,7 @@ int CMMTUCam::OnSaturation(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "WhiteBalance" property.
 */
 int CMMTUCam::OnWhiteBalance(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -3248,7 +3231,7 @@ int CMMTUCam::OnWhiteBalance(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "RedGain" property.
 */
 int CMMTUCam::OnRedGain(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -3286,7 +3269,7 @@ int CMMTUCam::OnRedGain(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "GreenGain" property.
 */
 int CMMTUCam::OnGreenGain(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -3324,7 +3307,7 @@ int CMMTUCam::OnGreenGain(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "BlueGain" property.
 */
 int CMMTUCam::OnBlueGain(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -3362,7 +3345,7 @@ int CMMTUCam::OnBlueGain(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "ATExposure" property.
 */
 int CMMTUCam::OnATExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -3424,7 +3407,7 @@ int CMMTUCam::OnATExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "Temperature" property.
 */
 int CMMTUCam::OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -3460,7 +3443,7 @@ int CMMTUCam::OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "Fan" property.
 */
 int CMMTUCam::OnFan(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -3504,7 +3487,7 @@ int CMMTUCam::OnFan(MM::PropertyBase* pProp, MM::ActionType eAct)
                     }
                 }
 
-                OnPropertyChanged(g_PropNamePCLK, val.c_str());
+                OnPropertyChanged(g_PropNameFan, val.c_str());
 
                 ret = DEVICE_OK;
             }
@@ -3536,7 +3519,7 @@ int CMMTUCam::OnFan(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret; 
 }
 
-/**
+/*
 * Handles "LeftLevels" property.
 */
 int CMMTUCam::OnLeftLevels(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -3583,7 +3566,7 @@ int CMMTUCam::OnLeftLevels(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "RightLevels" property.
 */
 int CMMTUCam::OnRightLevels(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -3630,7 +3613,7 @@ int CMMTUCam::OnRightLevels(MM::PropertyBase* pProp, MM::ActionType eAct)
     return ret;
 }
 
-/**
+/*
 * Handles "IamgeFormat" property.
 */
 int CMMTUCam::OnImageFormat(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -3723,6 +3706,7 @@ int CMMTUCam::OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 				else if (0 == val.compare(g_TRIGGER_SYN))
 				{
 					m_tgrAttr.nTgrMode = TUCCM_TRIGGER_SYNCHRONOUS;
+					m_tgrAttr.nExpMode = TUCTE_WIDTH;
 				}
 				else if (0 == val.compare(g_TRIGGER_GLB))
 				{
@@ -3815,6 +3799,9 @@ int CMMTUCam::OnTriggerExpMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 				{
 					m_tgrAttr.nExpMode = TUCTE_WIDTH;
 				}
+
+				if(m_tgrAttr.nTgrMode == TUCCM_TRIGGER_SYNCHRONOUS)
+					m_tgrAttr.nExpMode = TUCTE_WIDTH;
 
 				TUCAM_Cap_SetTrigger(m_opCam.hIdxTUCam, m_tgrAttr);
 
@@ -3980,7 +3967,7 @@ int CMMTUCam::OnTriggerDoSoftware(MM::PropertyBase* pProp, MM::ActionType eAct)
 	return ret;
 }
 
-/**
+/*
 * Handles "Sharpness" property.
 */
 int CMMTUCam::OnSharpness(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -4018,7 +4005,83 @@ int CMMTUCam::OnSharpness(MM::PropertyBase* pProp, MM::ActionType eAct)
 	return ret;
 }
 
-/**
+/*
+* Handles "OnDPCAdjust" property.
+*/
+int CMMTUCam::OnDPCAdjust(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (NULL == m_opCam.hIdxTUCam)
+		return DEVICE_NOT_CONNECTED;
+
+	int ret = DEVICE_ERR;
+	switch(eAct)
+	{
+	case MM::AfterSet:
+		{
+			long lVal = 0;
+			pProp->Get(lVal);
+
+			TUCAM_Prop_SetValue(m_opCam.hIdxTUCam, TUIDP_DPCLEVEL, lVal);
+
+			ret = DEVICE_OK;
+		}
+		break;
+	case  MM::BeforeGet:
+		{
+			double dblVal = 0.0f;
+			TUCAM_Prop_GetValue(m_opCam.hIdxTUCam, TUIDP_DPCLEVEL, &dblVal);
+
+			pProp->Set((long)(dblVal));
+
+			ret = DEVICE_OK;
+		}
+		break;
+	default:
+		break;
+	}
+
+	return ret;
+}
+
+/*
+* Handles "OnBlackLevel" property.
+*/
+int CMMTUCam::OnBlackLevel(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (NULL == m_opCam.hIdxTUCam)
+		return DEVICE_NOT_CONNECTED;
+
+	int ret = DEVICE_ERR;
+	switch(eAct)
+	{
+	case MM::AfterSet:
+		{
+			long lVal = 0;
+			pProp->Get(lVal);
+
+			TUCAM_Prop_SetValue(m_opCam.hIdxTUCam, TUIDP_BLACKLEVEL, lVal);
+
+			ret = DEVICE_OK;
+		}
+		break;
+	case  MM::BeforeGet:
+		{
+			double dblVal = 0.0f;
+			TUCAM_Prop_GetValue(m_opCam.hIdxTUCam, TUIDP_BLACKLEVEL, &dblVal);
+
+			pProp->Set((long)(dblVal));
+
+			ret = DEVICE_OK;
+		}
+		break;
+	default:
+		break;
+	}
+
+	return ret;
+}
+
+/*
 * Handles "DPC Level" property.
 */
 int CMMTUCam::OnDPCLevel(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -4073,7 +4136,9 @@ int CMMTUCam::OnDPCLevel(MM::PropertyBase* pProp, MM::ActionType eAct)
 		{
 			int nVal = 0;
 			double dblVal = 0.0f;
+
 			TUCAM_Prop_GetValue(m_opCam.hIdxTUCam, TUIDP_NOISELEVEL, &dblVal);
+
 			nVal = (int)dblVal;
 
 			if (0 == nVal)
@@ -4101,10 +4166,9 @@ int CMMTUCam::OnDPCLevel(MM::PropertyBase* pProp, MM::ActionType eAct)
 	}
 
 	return ret; 
-
 }
 
-/**
+/*
 * Handles "OutputTriggerPort" property.
 */
 int CMMTUCam::OnTrgOutPortMode(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -4140,6 +4204,32 @@ int CMMTUCam::OnTrgOutPortMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 					m_tgrOutAttr.nTgrOutPort = 2;
 				}
 				
+				m_tgrOutPara.nTgrOutPort = m_tgrOutAttr.nTgrOutPort;
+				switch(m_tgrOutAttr.nTgrOutPort)
+				{
+				case TUPORT_ONE:
+					m_tgrOutAttr.nTgrOutMode = m_tgrOutPara.TgrPort1.nTgrOutMode ;
+					m_tgrOutAttr.nEdgeMode   = m_tgrOutPara.TgrPort1.nEdgeMode;
+					m_tgrOutAttr.nDelayTm    = m_tgrOutPara.TgrPort1.nDelayTm ;
+					m_tgrOutAttr.nWidth      = m_tgrOutPara.TgrPort1.nWidth;
+					break;
+
+				case TUPORT_TWO:
+					m_tgrOutAttr.nTgrOutMode = m_tgrOutPara.TgrPort2.nTgrOutMode ;
+					m_tgrOutAttr.nEdgeMode   = m_tgrOutPara.TgrPort2.nEdgeMode;
+					m_tgrOutAttr.nDelayTm    = m_tgrOutPara.TgrPort2.nDelayTm ;
+					m_tgrOutAttr.nWidth      = m_tgrOutPara.TgrPort2.nWidth;
+					break;
+
+				case TUPORT_THREE:
+					m_tgrOutAttr.nTgrOutMode = m_tgrOutPara.TgrPort3.nTgrOutMode ;
+					m_tgrOutAttr.nEdgeMode   = m_tgrOutPara.TgrPort3.nEdgeMode;
+					m_tgrOutAttr.nDelayTm    = m_tgrOutPara.TgrPort3.nDelayTm ;
+					m_tgrOutAttr.nWidth      = m_tgrOutPara.TgrPort3.nWidth;
+					break;
+				default:
+					break;
+				}
 
 				TUCAM_Cap_SetTriggerOut(m_opCam.hIdxTUCam, m_tgrOutAttr);
 
@@ -4176,7 +4266,7 @@ int CMMTUCam::OnTrgOutPortMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 	return ret; 
 }
 
-/**
+/*
 * Handles "OutputTriggerKind" property.
 */
 int CMMTUCam::OnTrgOutKindMode(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -4220,6 +4310,31 @@ int CMMTUCam::OnTrgOutKindMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 					m_tgrOutAttr.nTgrOutMode = 1;
 				}
 
+				switch(m_tgrOutAttr.nTgrOutPort)
+				{
+				case TUPORT_ONE:
+					m_tgrOutPara.TgrPort1.nTgrOutMode = m_tgrOutAttr.nTgrOutMode;
+					m_tgrOutPara.TgrPort1.nEdgeMode = m_tgrOutAttr.nEdgeMode;
+					m_tgrOutPara.TgrPort1.nDelayTm = m_tgrOutAttr.nDelayTm;
+					m_tgrOutPara.TgrPort1.nWidth = m_tgrOutAttr.nWidth;
+					break;
+
+				case TUPORT_TWO:
+					m_tgrOutPara.TgrPort2.nTgrOutMode = m_tgrOutAttr.nTgrOutMode;
+					m_tgrOutPara.TgrPort2.nEdgeMode = m_tgrOutAttr.nEdgeMode;
+					m_tgrOutPara.TgrPort2.nDelayTm = m_tgrOutAttr.nDelayTm;
+					m_tgrOutPara.TgrPort2.nWidth = m_tgrOutAttr.nWidth;
+					break;
+
+				case TUPORT_THREE:
+					m_tgrOutPara.TgrPort3.nTgrOutMode = m_tgrOutAttr.nTgrOutMode;
+					m_tgrOutPara.TgrPort3.nEdgeMode = m_tgrOutAttr.nEdgeMode;
+					m_tgrOutPara.TgrPort3.nDelayTm = m_tgrOutAttr.nDelayTm;
+					m_tgrOutPara.TgrPort3.nWidth = m_tgrOutAttr.nWidth;
+					break;
+				default:
+					break;
+				}
 
 				TUCAM_Cap_SetTriggerOut(m_opCam.hIdxTUCam, m_tgrOutAttr);
 
@@ -4264,7 +4379,7 @@ int CMMTUCam::OnTrgOutKindMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 	return ret; 
 }
 
-/**
+/*
 * Handles "OutputTriggerEdge" property.
 */
 int CMMTUCam::OnTrgOutEdgeMode(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -4294,6 +4409,32 @@ int CMMTUCam::OnTrgOutEdgeMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 				else if (0 == val.compare(g_TRIGGER_EDGE_FALLING))
 				{
 					m_tgrOutAttr.nEdgeMode = TUCTD_RISING;
+				}
+
+				switch(m_tgrOutAttr.nTgrOutPort)
+				{
+				case TUPORT_ONE:
+					m_tgrOutPara.TgrPort1.nTgrOutMode = m_tgrOutAttr.nTgrOutMode;
+					m_tgrOutPara.TgrPort1.nEdgeMode = m_tgrOutAttr.nEdgeMode;
+					m_tgrOutPara.TgrPort1.nDelayTm = m_tgrOutAttr.nDelayTm;
+					m_tgrOutPara.TgrPort1.nWidth = m_tgrOutAttr.nWidth;
+					break;
+
+				case TUPORT_TWO:
+					m_tgrOutPara.TgrPort2.nTgrOutMode = m_tgrOutAttr.nTgrOutMode;
+					m_tgrOutPara.TgrPort2.nEdgeMode = m_tgrOutAttr.nEdgeMode;
+					m_tgrOutPara.TgrPort2.nDelayTm = m_tgrOutAttr.nDelayTm;
+					m_tgrOutPara.TgrPort2.nWidth = m_tgrOutAttr.nWidth;
+					break;
+
+				case TUPORT_THREE:
+					m_tgrOutPara.TgrPort3.nTgrOutMode = m_tgrOutAttr.nTgrOutMode;
+					m_tgrOutPara.TgrPort3.nEdgeMode = m_tgrOutAttr.nEdgeMode;
+					m_tgrOutPara.TgrPort3.nDelayTm = m_tgrOutAttr.nDelayTm;
+					m_tgrOutPara.TgrPort3.nWidth = m_tgrOutAttr.nWidth;
+					break;
+				default:
+					break;
 				}
 
 				TUCAM_Cap_SetTriggerOut(m_opCam.hIdxTUCam, m_tgrOutAttr);
@@ -4327,7 +4468,7 @@ int CMMTUCam::OnTrgOutEdgeMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 	return ret; 
 }
 
-/**
+/*
 * Handles "OutputTriggerDelay" property.
 */
 int CMMTUCam::OnTrgOutDelay(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -4344,6 +4485,31 @@ int CMMTUCam::OnTrgOutDelay(MM::PropertyBase* pProp, MM::ActionType eAct)
 			pProp->Get(lVal);
             TUCAM_Cap_GetTriggerOut(m_opCam.hIdxTUCam, &m_tgrOutAttr);
 			m_tgrOutAttr.nDelayTm= lVal;
+			switch(m_tgrOutAttr.nTgrOutPort)
+			{
+			case TUPORT_ONE:
+				m_tgrOutPara.TgrPort1.nTgrOutMode = m_tgrOutAttr.nTgrOutMode;
+				m_tgrOutPara.TgrPort1.nEdgeMode = m_tgrOutAttr.nEdgeMode;
+				m_tgrOutPara.TgrPort1.nDelayTm = m_tgrOutAttr.nDelayTm;
+				m_tgrOutPara.TgrPort1.nWidth = m_tgrOutAttr.nWidth;
+				break;
+
+			case TUPORT_TWO:
+				m_tgrOutPara.TgrPort2.nTgrOutMode = m_tgrOutAttr.nTgrOutMode;
+				m_tgrOutPara.TgrPort2.nEdgeMode = m_tgrOutAttr.nEdgeMode;
+				m_tgrOutPara.TgrPort2.nDelayTm = m_tgrOutAttr.nDelayTm;
+				m_tgrOutPara.TgrPort2.nWidth = m_tgrOutAttr.nWidth;
+				break;
+
+			case TUPORT_THREE:
+				m_tgrOutPara.TgrPort3.nTgrOutMode = m_tgrOutAttr.nTgrOutMode;
+				m_tgrOutPara.TgrPort3.nEdgeMode = m_tgrOutAttr.nEdgeMode;
+				m_tgrOutPara.TgrPort3.nDelayTm = m_tgrOutAttr.nDelayTm;
+				m_tgrOutPara.TgrPort3.nWidth = m_tgrOutAttr.nWidth;
+				break;
+			default:
+				break;
+			}
 			TUCAM_Cap_SetTriggerOut(m_opCam.hIdxTUCam, m_tgrOutAttr);
 
 			ret = DEVICE_OK;
@@ -4365,7 +4531,7 @@ int CMMTUCam::OnTrgOutDelay(MM::PropertyBase* pProp, MM::ActionType eAct)
 	return ret;
 }
 
-/**
+/*
 * Handles "OutputTriggerWidth" property.
 */
 int CMMTUCam::OnTrgOutWidth(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -4382,6 +4548,31 @@ int CMMTUCam::OnTrgOutWidth(MM::PropertyBase* pProp, MM::ActionType eAct)
 			pProp->Get(lVal);
             TUCAM_Cap_GetTriggerOut(m_opCam.hIdxTUCam, &m_tgrOutAttr);
 			m_tgrOutAttr.nWidth= lVal;
+			switch(m_tgrOutAttr.nTgrOutPort)
+			{
+			case TUPORT_ONE:
+				m_tgrOutPara.TgrPort1.nTgrOutMode = m_tgrOutAttr.nTgrOutMode;
+				m_tgrOutPara.TgrPort1.nEdgeMode = m_tgrOutAttr.nEdgeMode;
+				m_tgrOutPara.TgrPort1.nDelayTm = m_tgrOutAttr.nDelayTm;
+				m_tgrOutPara.TgrPort1.nWidth = m_tgrOutAttr.nWidth;
+				break;
+
+			case TUPORT_TWO:
+				m_tgrOutPara.TgrPort2.nTgrOutMode = m_tgrOutAttr.nTgrOutMode;
+				m_tgrOutPara.TgrPort2.nEdgeMode = m_tgrOutAttr.nEdgeMode;
+				m_tgrOutPara.TgrPort2.nDelayTm = m_tgrOutAttr.nDelayTm;
+				m_tgrOutPara.TgrPort2.nWidth = m_tgrOutAttr.nWidth;
+				break;
+
+			case TUPORT_THREE:
+				m_tgrOutPara.TgrPort3.nTgrOutMode = m_tgrOutAttr.nTgrOutMode;
+				m_tgrOutPara.TgrPort3.nEdgeMode = m_tgrOutAttr.nEdgeMode;
+				m_tgrOutPara.TgrPort3.nDelayTm = m_tgrOutAttr.nDelayTm;
+				m_tgrOutPara.TgrPort3.nWidth = m_tgrOutAttr.nWidth;
+				break;
+			default:
+				break;
+			}
 			TUCAM_Cap_SetTriggerOut(m_opCam.hIdxTUCam, m_tgrOutAttr);
 
 			ret = DEVICE_OK;
@@ -4404,78 +4595,6 @@ int CMMTUCam::OnTrgOutWidth(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 /*
-int CMMTUCam::OnFormatState(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-	if (eAct == MM::BeforeGet)
-	{
-		int picType = 0;
-		m_Cam.CGetImageFormat(picType);
-		if (picType & SNAP_PNG)
-		{
-			pProp->Set(g_Format_PNG);
-		}
-		else if (picType & SNAP_TIF)
-		{
-			pProp->Set(g_Format_TIF);
-		}
-		else if (picType & SNAP_JPG)
-		{
-			pProp->Set(g_Format_JPG);
-		}
-		else if (picType & SNAP_BMP)
-		{
-			pProp->Set(g_Format_BMP);
-		}
-		else if (picType & SNAP_RAW)
-		{
-			pProp->Set(g_Format_RAW);
-		}
-	}
-	else if (eAct == MM::AfterSet)
-	{
-		string val;
-		pProp->Get(val);
-		if (val.compare(g_Format_PNG) == 0)
-		{
-			m_Cam.CSetImageFormat(SNAP_PNG);
-		}
-		else if (val.compare(g_Format_TIF) == 0)
-		{
-			m_Cam.CSetImageFormat(SNAP_TIF);
-		}
-		else if (val.compare(g_Format_JPG) == 0)
-		{
-			m_Cam.CSetImageFormat(SNAP_JPG);
-		}
-		else if (val.compare(g_Format_BMP) == 0)
-		{
-			m_Cam.CSetImageFormat(SNAP_BMP);
-		}
-		else if (val.compare(g_Format_RAW) == 0)
-		{
-			m_Cam.CSetImageFormat(SNAP_RAW);
-		}
-	}
-	return DEVICE_OK;
-}
-
-int CMMTUCam::OnFilePath(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-	if (eAct == MM::BeforeGet)
-	{
-		pProp->Set(m_Cam.GetFilePath());
-	}
-	else if (eAct == MM::AfterSet)
-	{
-		string val;
-		pProp->Get(val);
-		m_Cam.SetFilePath((char*)val.c_str());
-	}
-	return DEVICE_OK;
-}
-*/
-
-/**
 * Handles "ReadoutTime" property.
 */
 int CMMTUCam::OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -4726,7 +4845,7 @@ int CMMTUCam::OnIsSequenceable(MM::PropertyBase* pProp, MM::ActionType eAct)
 // Private CMMTUCam methods
 ///////////////////////////////////////////////////////////////////////////////
 
-/**
+/*
 * Sync internal image buffer size to the chosen property values.
 */
 int CMMTUCam::ResizeImageBuffer()
@@ -5147,7 +5266,7 @@ void CMMTUCam::TestImage(ImgBuffer& img, double exp)
 	dPhase_ += lSinePeriod / 4.;
 }
 
-/**
+/*
 * Generate a spatial sine wave.
 */
 void CMMTUCam::GenerateSyntheticImage(ImgBuffer& img, double exp)
@@ -5193,6 +5312,16 @@ void CMMTUCam::RunTemperature()
             m_fCurTemp = (float)dblVal;
            
             dw = GetTickCount();
+
+			if(DHYANA_400BSIV2 == m_nPID && (0x04 == m_nBCD || m_nBCD > 0x05))     
+			{    
+				int nFan = 0;
+				TUCAM_Capa_GetValue(m_opCam.hIdxTUCam, TUIDC_FAN_GEAR, &nFan);
+				if (m_fCurTemp >= 0.0f && nFan == 0x03)
+				{
+					TUCAM_Capa_SetValue(m_opCam.hIdxTUCam, TUIDC_FAN_GEAR, 0);
+				}
+			}
         }
         else
         {
@@ -5201,50 +5330,47 @@ void CMMTUCam::RunTemperature()
     }
 }
 
-void __cdecl CMMTUCam::WaitForFrameThread(LPVOID lParam)
-{
-    CMMTUCam *pCam = (CMMTUCam *)lParam;
-
-    if (NULL != pCam)
-    {
-        pCam->RunWaiting();
-    }
-
-    SetEvent(pCam->m_hThdWaitEvt);
-    OutputDebugString("Leave wait for frame thread!\n");
-    _endthread();
-}
-
-void CMMTUCam::RunWaiting()
-{
-    while (m_bLiving)
-    {
-        m_frame.ucFormatGet = TUFRM_FMT_USUAl;
-        if (TUCAMRET_SUCCESS == TUCAM_Buf_WaitForFrame(m_opCam.hIdxTUCam, &m_frame))
-        {
-        }
-    }
-}
-
 int CMMTUCam::InitTUCamApi()
 {
-    m_itApi.pstrConfigPath = "";
+    m_itApi.pstrConfigPath = "./";
     m_itApi.uiCamCount     = 0;
 
     TUCAMRET nRet = TUCAM_Api_Init(&m_itApi);
 
-    if (TUCAMRET_SUCCESS != nRet && TUCAMRET_INIT != nRet)
-        return DEVICE_NOT_CONNECTED;
-    
-    if (0 == m_itApi.uiCamCount)
-        return DEVICE_NOT_CONNECTED;
+	if (TUCAMRET_SUCCESS == nRet || TUCAMRET_INIT == nRet)
+	{
+		if (TUCAMRET_SUCCESS == nRet)
+		{
+			s_nNumCam = m_itApi.uiCamCount;
+		}
+		else
+		{
+			m_itApi.uiCamCount = s_nNumCam;
+		}
+	}
+	else
+		return DEVICE_NOT_CONNECTED;
 
-    m_opCam.uiIdxOpen = 0;
-    if (TUCAMRET_SUCCESS !=  TUCAM_Dev_Open(&m_opCam))
-        return DEVICE_NOT_CONNECTED;
+	if (0 == m_itApi.uiCamCount)
+		return DEVICE_NOT_CONNECTED;
 
+	m_opCam.uiIdxOpen = s_nCntCam;
+
+	if (TUCAMRET_SUCCESS !=  TUCAM_Dev_Open(&m_opCam))
+		return DEVICE_NOT_CONNECTED;
+
+	s_nCntCam++;
+  
     if (NULL == m_opCam.hIdxTUCam)
         return DEVICE_NOT_CONNECTED;
+
+	if (s_nCntCam > 1)
+	{
+		for (int i=0; i<s_nCntCam; ++i)
+		{
+			TUCAM_Capa_SetValue(m_opCam.hIdxTUCam, TUIDC_CAM_MULTIPLE, s_nNumCam);
+		}
+	}
 
     return DEVICE_OK;
 }
@@ -5320,45 +5446,7 @@ int CMMTUCam::AllocBuffer()
     }
 
     
-    SetProperty(MM::g_Keyword_PixelType, g_PixelType_16bit);
-/*
-    if (3 == m_frame.ucChannels)
-    {
-        
-
-#ifdef _WIN64
-        if (2 == m_frame.ucElemBytes)
-        {
-            SetProperty(MM::g_Keyword_PixelType, g_PixelType_64bitRGB);
-        }  
-        else
-        {
-            SetProperty(MM::g_Keyword_PixelType, g_PixelType_32bitRGB);
-        }     
-#else
-        SetProperty(MM::g_Keyword_PixelType, g_PixelType_32bitRGB);
-#endif
-        
-    }
-    else
-    {
-        nComponents_ = 1;   // channels Gray
-
-#ifdef _WIN64
-        if (2 == m_frame.ucElemBytes)
-        {
-            SetProperty(MM::g_Keyword_PixelType, g_PixelType_16bit);
-        }  
-        else
-        {
-            SetProperty(MM::g_Keyword_PixelType, g_PixelType_8bit);
-        }
-#else
-        SetProperty(MM::g_Keyword_PixelType, g_PixelType_8bit);
-#endif  
-
-    }    
-*/
+    //SetProperty(MM::g_Keyword_PixelType, g_PixelType_16bit);
     return DEVICE_OK;
 }
 

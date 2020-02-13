@@ -16,6 +16,7 @@
 
 package edu.ucsf.valelab.mmclearvolumeplugin;
 
+import org.micromanager.Studio;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.inspector.InspectorPanelController;
 import org.micromanager.display.inspector.InspectorPanelPlugin;
@@ -39,7 +40,7 @@ public final class CVInspectorPanelPlugin implements InspectorPanelPlugin {
    }
 
    @Override
-   public InspectorPanelController createPanelController() {
+   public InspectorPanelController createPanelController(Studio studio) {
       return new CVInspectorPanelController();
    }
    

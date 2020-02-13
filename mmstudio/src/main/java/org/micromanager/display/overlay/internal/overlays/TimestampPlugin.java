@@ -27,7 +27,7 @@ import org.scijava.plugin.Plugin;
 
 
 @Plugin(type = OverlayPlugin.class,
-      priority = Priority.HIGH_PRIORITY,
+      priority = Priority.HIGH,
       name = "Timestamp",
       description = "Display timestamps")
 public final class TimestampPlugin implements OverlayPlugin {

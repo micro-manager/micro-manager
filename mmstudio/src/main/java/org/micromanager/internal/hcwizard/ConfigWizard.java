@@ -226,7 +226,9 @@ public final class ConfigWizard extends MMDialog {
       String returnValue = "";
       try {
          HttpUtils httpu = new HttpUtils();
-         List<File> list = new ArrayList<>();
+         if (this.getFileName() == null) {
+            return "No config file";
+         }
          File conff = new File(this.getFileName());
          if (conff.exists()) {
 

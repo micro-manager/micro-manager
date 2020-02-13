@@ -255,7 +255,7 @@ public class CalibrationFrame extends JFrame {
                        "XY Stage set at position: " + pt.x + "," + pt.y);
                 }
                 settings.putString(CALIBRATIONMETHOD, (String) methodCombo.getSelectedItem());
-                siteGenerator.finishCalibration(offset, saveCalibration);
+                siteGenerator.finishCalibration(offset);
             } catch (Exception ex) {
                studio.logs().showError(ex, "Failed to reset the stage's coordinates");
             }

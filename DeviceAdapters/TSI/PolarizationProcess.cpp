@@ -53,8 +53,9 @@ int Tsi3Cam::InitializePolarizationProcessor()
 {
 	if (!globalPolarizationInitialized)
 	{
-		// Load the demosaic module.
-		g_polarizationModuleHandle = ::LoadLibrary("thorlabs_tsi_polarization_processor.dll");
+		// Load the polarization module.
+		std::string polarPath = sdkPath + "thorlabs_tsi_polarization_processor.dll";
+		g_polarizationModuleHandle = ::LoadLibrary(polarPath.c_str());
 		if (!g_polarizationModuleHandle)
 		{
 			LogMessage("Failed to open the polarization library!");
@@ -175,32 +176,202 @@ int Tsi3Cam::ShutdownPolarizationProcessor()
  * @param monoBuf - sensor image, assumed to be 2 bytes per pixel with bit-depth defined with bitDepth parameter
  * @param outBuf - output monochrome image
  * @param bitDepth - bit depth of the input image, valid values 8-16
+ * @param imgType - polarization image type
  * @return - error code
  */
-int Tsi3Cam::PolarizationIntensity(unsigned short* monoBuf, unsigned char* colorBuf, int mono_image_width, int mono_image_height)
+int Tsi3Cam::TransformPolarizationImage(unsigned short* monoBuf, unsigned char* outBuf, int mono_image_width, int mono_image_height, PolarImageType imgType)
 {
-	// process
-	intensityBuffer.resize(mono_image_width * mono_image_height);
-
-	if (tl_polarization_processor_transform(	polarizationProcessor,
-															TL_POLARIZATION_PROCESSOR_POLAR_PHASE_0_DEGREES,
-															monoBuf,
-															0,
-															0,
-															mono_image_width,
-															mono_image_height,
-															fullFrame.bitDepth,
-															65535,
-															nullptr,
-														   reinterpret_cast<unsigned short*>(colorBuf),
-															nullptr,
-															nullptr,
-															nullptr,
-															nullptr) != TL_POLARIZATION_PROCESSOR_ERROR_NONE)
+	if (imgType == Raw)
 	{
-		LogMessage("Failed to process polarization image!"); 
-		return ERR_INTERNAL_ERROR;
+		memcpy(outBuf, monoBuf, mono_image_width * mono_image_height * sizeof(unsigned short));
+	}
+	else if (imgType == Quad)
+	{
+		SeparateQuadViewAngles(polarPhase, monoBuf, reinterpret_cast<unsigned short*>(outBuf), mono_image_width, mono_image_height);
+	}
+	else
+	{
+		if (tl_polarization_processor_transform(	polarizationProcessor,
+																polarPhase,
+																monoBuf,
+																0,
+																0,
+																mono_image_width,
+																mono_image_height,
+																fullFrame.bitDepth,
+																65535, //4095,
+																nullptr,
+															   imgType == Intensity ? reinterpret_cast<unsigned short*>(outBuf) : nullptr,
+																nullptr,
+																nullptr,
+																imgType == Azimuth ? reinterpret_cast<unsigned short*>(outBuf) : nullptr,
+																imgType == DoLP ? reinterpret_cast<unsigned short*>(outBuf) : nullptr) != TL_POLARIZATION_PROCESSOR_ERROR_NONE)
+		{
+			LogMessage("Failed to process polarization image!"); 
+			return ERR_INTERNAL_ERROR;
+		}
 	}
 	
 	return DEVICE_OK;
+}
+
+void Tsi3Cam::SeparateQuadViewAngles(int polarPhase, unsigned short* sourceImage, unsigned short* destImage, int sourceWidth, int sourceHeight)
+{
+    int halfRows = sourceHeight / 2;
+    const int halfCols = sourceWidth / 2;
+
+    int topRightRowStart;
+    int topLeftRowStart;
+    int bottomLeftRowStart;
+    int bottomRightRowStart;
+    int topRightColStart;
+    int topLeftColStart;
+    int bottomLeftColStart;
+    int bottomRightColStart;
+
+    switch (polarPhase)
+    {
+    case 0:
+    {
+        topRightRowStart = 0;
+        topLeftRowStart = 0;
+        bottomLeftRowStart = 1;
+        bottomRightRowStart = 1;
+        topRightColStart = 1;
+        topLeftColStart = 0;
+        bottomLeftColStart = 0;
+        bottomRightColStart = 1;
+    }
+    break;
+    case 1:
+    {
+        topRightRowStart = 1;
+        topLeftRowStart = 1;
+        bottomLeftRowStart = 0;
+        bottomRightRowStart = 0;
+        topRightColStart = 1;
+        topLeftColStart = 0;
+        bottomLeftColStart = 0;
+        bottomRightColStart = 1;
+    }
+    break;
+    case 2:
+    {
+        topRightRowStart = 1;
+        topLeftRowStart = 1;
+        bottomLeftRowStart = 0;
+        bottomRightRowStart = 0;
+        topRightColStart = 0;
+        topLeftColStart = 1;
+        bottomLeftColStart = 1;
+        bottomRightColStart = 0;
+    }
+    break;
+    case 3:
+    {
+        topRightRowStart = 0;
+        topLeftRowStart = 0;
+        bottomLeftRowStart = 1;
+        bottomRightRowStart = 1;
+        topRightColStart = 0;
+        topLeftColStart = 1;
+        bottomLeftColStart = 1;
+        bottomRightColStart = 0;
+    }
+    break;
+    default:
+    {
+        assert(!"Attempting to use unknown polar phase");
+		  return;
+    }
+    }
+
+
+    int topLeftRow = 0;
+    int topLeftCol = 0;
+
+    int topRightRow = 0;
+    int topRightCol = halfCols;
+
+    int bottomLeftRow = halfRows;
+    int bottomLeftCol = 0;
+
+    int bottomRightRow = halfRows;
+    int bottomRightCol = halfCols;
+
+    for (int row = topRightRowStart; row < sourceHeight; row += 2)
+    {
+        for (int col = topRightColStart; col < sourceWidth; col += 2)
+        {
+            int index = sourceWidth * row + col;
+
+            if (topRightCol == sourceWidth)
+            {
+                topRightCol = halfCols;
+                topRightRow++;
+            }
+
+            int quadOneIndex = sourceWidth * topRightRow + topRightCol;
+            topRightCol++;
+
+            destImage[quadOneIndex] = sourceImage[index];
+        }
+    }
+
+    for (int row = topLeftRowStart; row < sourceHeight; row += 2)
+    {
+        for (int col = topLeftColStart; col < sourceWidth; col += 2)
+        {
+            int index = sourceWidth * row + col;
+
+            if (topLeftCol == halfCols)
+            {
+                topLeftCol = 0;
+                topLeftRow++;
+            }
+
+            int quadTwoIndex = sourceWidth * topLeftRow + topLeftCol;
+            topLeftCol++;
+
+            destImage[quadTwoIndex] = sourceImage[index];
+        }
+    }
+
+    for (int row = bottomLeftRowStart; row < sourceHeight; row += 2)
+    {
+        for (int col = bottomLeftColStart; col < sourceWidth; col += 2)
+        {
+            int index = sourceWidth * row + col;
+
+            if (bottomLeftCol == halfCols)
+            {
+                bottomLeftCol = 0;
+                bottomLeftRow++;
+            }
+
+            int quadThreeIndex = sourceWidth * bottomLeftRow + bottomLeftCol;
+            bottomLeftCol++;
+
+            destImage[quadThreeIndex] = sourceImage[index];
+        }
+    }
+
+    for (int row = bottomRightRowStart; row < sourceHeight; row += 2)
+    {
+        for (int col = bottomRightColStart; col < sourceWidth; col += 2)
+        {
+            int index = sourceWidth * row + col;
+
+            if (bottomRightCol == sourceWidth)
+            {
+                bottomRightCol = halfCols;
+                bottomRightRow++;
+            }
+
+            int quadFourIndex = sourceWidth * bottomRightRow + bottomRightCol;
+            bottomRightCol++;
+
+            destImage[quadFourIndex] = sourceImage[index];
+        }
+    }
 }

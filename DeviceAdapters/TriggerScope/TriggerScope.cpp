@@ -900,7 +900,7 @@ int CTriggerScopeTTL::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 // For efficiency, the previous state and gateOpen position is cached
       if (1) {
          // check if we are already in that state
-         if (((unsigned)pos == curPos_) && open_)
+         if ((pos == curPos_) && open_)
             return DEVICE_OK;
 
          // try to apply the value
@@ -2368,7 +2368,7 @@ void CTriggerScopeHub::Purge()
 	unsigned char buf[1024];
 	unsigned long bytesRead=0;
 
-	int nRet = ReadFromComPort(port_.c_str(), &buf[0], 1024, bytesRead);
+	ReadFromComPort(port_.c_str(), &buf[0], 1024, bytesRead);
 	if(bytesRead>0)
 		GetTriggerTimeDelta((const char*)&buf[0]);
 

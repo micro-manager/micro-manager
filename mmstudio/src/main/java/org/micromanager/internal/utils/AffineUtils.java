@@ -22,8 +22,6 @@ package org.micromanager.internal.utils;
 
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.DoubleVector;
 import org.apache.commons.math.util.MathUtils;
 
@@ -46,6 +44,10 @@ public class AffineUtils {
    }
    
    public static final AffineTransform doubleToAffine(DoubleVector atf) {
+      if (atf.size() != 6) {
+          double[] flatMatrix = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+          return new AffineTransform(flatMatrix);
+      }
       double[] flatMatrix = {atf.get(0), atf.get(3), atf.get(1),
          atf.get(4), atf.get(2), atf.get(5)};
       return new AffineTransform(flatMatrix);
@@ -63,9 +65,9 @@ public class AffineUtils {
    }
    
     /**
-     * Convert affine to transform to the more interpretable meaurements of rotation, scale, and shear
-     * @param atf
-     * @return 
+     * Convert affine transform to human-interpretable measurements of rotation, scale, and shear
+     * @param transform - input affine transform
+     * @return {xScale, yScale, rotationDeg, shear}
      */
    public static double[] affineToMeasurements(AffineTransform transform) {
        try {

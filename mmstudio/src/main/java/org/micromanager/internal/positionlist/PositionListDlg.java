@@ -803,12 +803,8 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
       positionModel_.setCurrentMSP(curMsp_);
 
       PositionTableModel ptm = (PositionTableModel) posTable_.getModel();
-      int selectedRow = posTable_.getSelectedRow();
       ptm.fireTableCellUpdated(0, 1);
       ptm.fireTableCellUpdated(0, 0);
-      if (selectedRow > 0)
-         posTable_.setRowSelectionInterval(selectedRow, selectedRow);
-      
       posTable_.revalidate();
       axisTable_.revalidate();
    }

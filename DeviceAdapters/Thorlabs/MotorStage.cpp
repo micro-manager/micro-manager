@@ -77,7 +77,7 @@ const unsigned char getVelocityProfileSgn = 0x15;
 // set velocity profile
 const ThorlabsCommand setVelocityProfileCmd = {0x0413, 0x0E, 0x00, DEVICE_CHANNEL0, true, DEVICE_HOSTPC};
 
-MotorStage::MotorStage(MM::Device *parent, MM::Core *core, std::string port, int axis, double aTimeoutMs, double mTimeoutMs) :
+MotorStage::MotorStage(MM::Device *parent, MM::Core *core, std::string port, int axis, double /* aTimeoutMs */, double mTimeoutMs) :
    port_(port), 
    axis_(axis), 
    moveTimeoutMs_(mTimeoutMs),
@@ -377,7 +377,7 @@ int MotorStage::MoveBlocking(long pos, bool relative)
    return DEVICE_OK;
 }
 
-int MotorStage::ProcessEndOfMove(const unsigned char* buf, int bufLen)
+int MotorStage::ProcessEndOfMove(const unsigned char* buf, int /* bufLen */)
 {
       // get data packed and parse it
       unsigned short packetLength(0);

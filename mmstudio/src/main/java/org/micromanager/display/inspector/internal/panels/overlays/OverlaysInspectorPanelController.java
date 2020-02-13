@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.micromanager.display.inspector.internal.panels.overlays;
 
 import com.bulenkov.iconloader.IconLoader;
@@ -10,13 +5,10 @@ import com.google.common.base.Preconditions;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-import javax.swing.JComponent;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
@@ -25,6 +17,8 @@ import javax.swing.SwingConstants;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.Studio;
+import org.micromanager.UserProfile;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.inspector.AbstractInspectorPanelController;
@@ -32,7 +26,6 @@ import org.micromanager.display.internal.event.DisplayWindowDidAddOverlayEvent;
 import org.micromanager.display.internal.event.DisplayWindowDidRemoveOverlayEvent;
 import org.micromanager.display.overlay.Overlay;
 import org.micromanager.display.overlay.OverlayPlugin;
-import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.PopupButton;
 import org.scijava.plugin.Plugin;
 
@@ -44,47 +37,43 @@ public final class OverlaysInspectorPanelController
       extends AbstractInspectorPanelController
 {
    private final JPanel panel_ = new JPanel();
-
+   private final JPanel configsPanel_;
    private final PopupButton addOverlayButton_;
    private final JPopupMenu addOverlayMenu_;
 
-   private final JPanel configsPanel_;
+   private final UserProfile profile_;
+   private static final String PROPERTYMAPKEY = "overlay";
+
    
    private static boolean expanded_ = false;
 
    // These two lists are kept colinear
-   private final List<Overlay> overlays_ =
-         new ArrayList<Overlay>();
+   private final List<Overlay> overlays_ = new ArrayList<>();
    private final List<OverlayConfigPanelController> configPanelControllers_ =
-         new ArrayList<OverlayConfigPanelController>();
+         new ArrayList<>();
 
    private DisplayWindow viewer_;
 
-   public static OverlaysInspectorPanelController create() {
-      return new OverlaysInspectorPanelController();
+   public static OverlaysInspectorPanelController create(Studio studio) {
+      return new OverlaysInspectorPanelController(studio);
    }
 
-   private OverlaysInspectorPanelController() {
-      List<OverlayPlugin> plugins = new ArrayList<OverlayPlugin>(
-            MMStudio.getInstance().plugins().getOverlayPlugins().values());
-      Collections.sort(plugins, new Comparator<OverlayPlugin>() {
-         @Override
-         public int compare(OverlayPlugin o1, OverlayPlugin o2) {
-            Plugin p1 = o1.getClass().getAnnotation(Plugin.class);
-            Plugin p2 = o2.getClass().getAnnotation(Plugin.class);
-            return -Double.compare(p1.priority(), p2.priority());
-         }
+   private OverlaysInspectorPanelController(Studio studio) {
+      profile_ = studio.profile();
+      List<OverlayPlugin> plugins = new ArrayList<>(
+            studio.plugins().getOverlayPlugins().values());
+      Collections.sort(plugins, (OverlayPlugin o1, OverlayPlugin o2) -> {
+         Plugin p1 = o1.getClass().getAnnotation(Plugin.class);
+         Plugin p2 = o2.getClass().getAnnotation(Plugin.class);
+         return -Double.compare(p1.priority(), p2.priority());
       });
 
       addOverlayMenu_ = new JPopupMenu();
       for (final OverlayPlugin plugin : plugins) {
          String name = plugin.getClass().getAnnotation(Plugin.class).name();
          JMenuItem item = new JMenuItem(name);
-         item.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               handleAddOverlay(plugin);
-            }
+         item.addActionListener((ActionEvent e) -> {
+            handleAddOverlay(plugin);
          });
          addOverlayMenu_.add(item);
       }
@@ -111,10 +100,16 @@ public final class OverlaysInspectorPanelController
 
    private void handleAddOverlay(OverlayPlugin plugin) {
       Overlay overlay = plugin.createOverlay();
+      if (profile_.getSettings(overlay.getClass()).containsPropertyMap(PROPERTYMAPKEY)) {
+         overlay.setConfiguration(profile_.getSettings(overlay.getClass()).
+                 getPropertyMap(PROPERTYMAPKEY, null));
+      }
       viewer_.addOverlay(overlay);
    }
 
    void handleRemoveOverlay(Overlay overlay) {
+      profile_.getSettings(overlay.getClass()).putPropertyMap(PROPERTYMAPKEY,
+              overlay.getConfiguration());
       viewer_.removeOverlay(overlay);
    }
 
@@ -178,6 +173,10 @@ public final class OverlaysInspectorPanelController
       viewer_.unregisterForEvents(this);
       viewer_ = null;
       configsPanel_.removeAll();
+      for (Overlay overlay : overlays_) {
+         profile_.getSettings(overlay.getClass()).putPropertyMap(PROPERTYMAPKEY,
+              overlay.getConfiguration());
+      }
       overlays_.clear();
       configPanelControllers_.clear();
    }

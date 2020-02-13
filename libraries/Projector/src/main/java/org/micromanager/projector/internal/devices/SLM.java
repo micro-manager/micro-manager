@@ -27,6 +27,7 @@ import java.awt.Polygon;
 import java.util.HashSet;
 import java.util.List;
 import mmcorej.CMMCore;
+import mmcorej.StrVector;
 import org.micromanager.Studio;
 import org.micromanager.projector.internal.OnStateListener;
 import org.micromanager.projector.internal.Utils;
@@ -39,7 +40,8 @@ public class SLM implements ProjectionDevice {
    private int slmHeight_;
    private final double spotDiameter_;
    private boolean imageOn_ = false;
-   HashSet<OnStateListener> onStateListeners_ = new HashSet<OnStateListener>();
+   HashSet<OnStateListener> onStateListeners_ = new HashSet<>();
+   private String externalShutter_;
 
    // The constructor.
    public SLM(Studio app, CMMCore mmc, double spotDiameter) {
@@ -193,6 +195,11 @@ public class SLM implements ProjectionDevice {
       try {
          mmc_.setSLMImage(slm_, (byte[]) proc.getPixels());
          mmc_.displaySLMImage(slm_);
+         if (externalShutter_ != null) {
+            mmc_.setShutterOpen(externalShutter_, true);
+            Thread.sleep(getExposure());            
+            mmc_.setShutterOpen(externalShutter_, false);
+         }
       } catch (Exception e) {
          app_.logs().showError("SLM not connecting properly.");
       }
@@ -291,5 +298,23 @@ public class SLM implements ProjectionDevice {
       } catch (Exception ex) {
          app_.logs().showError(ex);
       }
+   }
+   
+      @Override
+   public void setExternalShutter(String shutter) {
+      if (shutter != null && !shutter.isEmpty()) {
+         StrVector loadedDevices = mmc_.getLoadedDevices();
+         for (String d : loadedDevices) {
+            if (d.equals(shutter)) {
+               externalShutter_ = shutter;
+               return;
+            }
+         }
+      }
+   }
+
+   @Override
+   public String getExternalShutter() {
+      return externalShutter_;
    }
 }

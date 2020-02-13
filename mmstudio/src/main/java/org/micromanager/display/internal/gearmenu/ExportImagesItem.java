@@ -62,6 +62,6 @@ public final class ExportImagesItem implements DisplayGearMenuPlugin, SciJavaPlu
 
    @Override
    public void onPluginSelected(DisplayWindow display) {
-      new ExportMovieDlg(studio_.app().skin(), display);
+      new ExportMovieDlg(studio_, display);
    }
 }

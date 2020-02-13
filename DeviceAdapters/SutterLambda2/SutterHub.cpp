@@ -255,12 +255,12 @@ int SutterHub::OnMotorsEnabled(MM::PropertyBase* pProp, MM::ActionType eAct) {
 // write 1, 2, or 3 char. command to equipment
 // ensure the command completed by waiting for \r
 // pass response back in argument
-int SutterHub::SetCommand(const std::vector<unsigned char> command, const std::vector<unsigned char> alternateEcho, std::vector<unsigned char>& Response) {
+int SutterHub::SetCommand(const std::vector<unsigned char> command, const std::vector<unsigned char> alternateEcho, std::vector<unsigned char>& Response, unsigned long minimumExpectedChars) {
 	busy_ = true;
 	MMThreadGuard myLock(GetLock());
 	PurgeComPort(port_.c_str());
 	// start time of entire transaction
-	MM::MMTime commandStartTime = GetCurrentMMTime();
+	//MM::MMTime commandStartTime = GetCurrentMMTime();
 	// write command to the port
 	int ret = WriteToComPort(port_.c_str(), &command[0], (unsigned long)command.size());
 	if (ret != DEVICE_OK) {return ret;}
@@ -271,14 +271,14 @@ int SutterHub::SetCommand(const std::vector<unsigned char> command, const std::v
 	ret = GetCoreCallback()->GetDeviceProperty(port_.c_str(), "AnswerTimeout", timeoutChar);
 	if (ret != DEVICE_OK) {return ret;}
 	long timeout = atoi(timeoutChar) * 1000; //Microseconds
-	int read = 0;
+	unsigned int read = 0;
 	unsigned char response[1024];
 	while (true) {
 		unsigned long readThisTime;
 		unsigned char tempResponse[1024];
 		ret = ReadFromComPort(port_.c_str(), tempResponse, 1, readThisTime);
 		if (ret != DEVICE_OK) {return ret;}
-		for (int i=0; i<readThisTime; i++) {
+		for (unsigned long i=0; i<readThisTime; i++) {
 			response[read+i] = tempResponse[i];
 		}
 		read += readThisTime;
@@ -290,7 +290,7 @@ int SutterHub::SetCommand(const std::vector<unsigned char> command, const std::v
 			return DEVICE_SERIAL_TIMEOUT;
 		}
 	}
-	for (int i=0; i<command.size(); i++) {
+	for (unsigned int i=0; i<command.size(); i++) {
 		if (response[i] == command.at(i)) { //We have a match so far.
 			// int a = 1; //This is just here so there's something to debug.
 		}
@@ -315,8 +315,8 @@ int SutterHub::SetCommand(const std::vector<unsigned char> command, const std::v
 		unsigned char tempResponse[1024];
 		ret = ReadFromComPort(port_.c_str(), tempResponse, 100, readThisTime);
 		if (ret != DEVICE_OK) {return ret;}
-		for (int i=0; i<readThisTime; i++) {
-			if (tempResponse[i] == '\r') {
+		for (unsigned long i=0; i<readThisTime; i++) {
+			if ((tempResponse[i] == '\r') && (read >= minimumExpectedChars)) { // '\r' is used to terminate a response, however sometimes the data of a response can contain a '\r'. For this reason we use the `minimumExpectedChars` to avoid terminating too soon.
 				commandTerminated = true;
 				break;
 			}
@@ -331,7 +331,7 @@ int SutterHub::SetCommand(const std::vector<unsigned char> command, const std::v
 			return DEVICE_SERIAL_TIMEOUT;
 		}
 	}
-	for (int i=0; i<read; i++) {
+	for (unsigned int i=0; i<read; i++) {
 		Response.push_back(response[i]);
 	}
 	busy_ = false;
@@ -340,9 +340,13 @@ int SutterHub::SetCommand(const std::vector<unsigned char> command, const std::v
 
 int SutterHub::SetCommand(const std::vector<unsigned char> command, const std::vector<unsigned char> altEcho){
 	std::vector<unsigned char> response;
-	return SetCommand(command, altEcho, response);
+	return SetCommand(command, altEcho, response, 0);
 }
 
 int SutterHub::SetCommand(const std::vector<unsigned char> command) {
 	return SetCommand(command,command);
+}
+
+int SutterHub::SetCommand(const std::vector<unsigned char> command, const std::vector<unsigned char> altEcho, std::vector<unsigned char>& response){
+	return SetCommand(command, altEcho, response, 0);
 }

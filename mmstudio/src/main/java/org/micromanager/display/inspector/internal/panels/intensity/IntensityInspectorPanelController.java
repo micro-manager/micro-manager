@@ -5,7 +5,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -24,11 +23,11 @@ import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import net.miginfocom.layout.AC;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.DataViewer;
@@ -45,7 +44,6 @@ import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.MustCallOnEDT;
 import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.internal.MMStudio;
 
 /**
  *
@@ -60,6 +58,7 @@ public class IntensityInspectorPanelController
    private static final String RGBCMYW = "RGBCMYW";
    private static final String CUSTOM = "Custom";
    
+   private final Studio studio_;
    private final JPanel panel_ = new JPanel();
    
    private static boolean expanded_ = true;
@@ -78,11 +77,11 @@ public class IntensityInspectorPanelController
       public List<Color> getColorPalette() { return colorPalette_;}
    };
    private final Map<String, colorMenuItem> colorMenuMap_ = 
-           new LinkedHashMap<String, colorMenuItem>(3);
+           new LinkedHashMap<>(3);
    private final JMenu gearMenuUpdateRateSubMenu_ =
          new JMenu("Histogram Update Rate");
    private final Map<String, Double> histogramMenuMap_ = 
-           new LinkedHashMap<String, Double>(6);
+           new LinkedHashMap<>(6);
    private final JCheckBoxMenuItem gearMenuLogYAxisItem_ =
          new JCheckBoxMenuItem("Logarithmic Y Axis");
    private final JCheckBoxMenuItem gearMenuUseROIItem_ =
@@ -97,7 +96,7 @@ public class IntensityInspectorPanelController
    private final JPanel channelHistogramsPanel_ = new JPanel();
 
    private final List<ChannelIntensityController> channelControllers_ =
-         new ArrayList<ChannelIntensityController>();
+         new ArrayList<>();
 
    private DataViewer viewer_;
    
@@ -106,11 +105,12 @@ public class IntensityInspectorPanelController
    private final CoalescentEDTRunnablePool runnablePool_ =
          CoalescentEDTRunnablePool.create();
 
-   public static IntensityInspectorPanelController create() {
-      return new IntensityInspectorPanelController();
+   public static IntensityInspectorPanelController create(Studio studio) {
+      return new IntensityInspectorPanelController(studio);
    }
 
-   private IntensityInspectorPanelController() {
+   private IntensityInspectorPanelController(Studio studio) {
+      studio_ = studio;
       setUpGearMenu();
       setUpGeneralControlPanel();
       setUpChannelHistogramsPanel(0);
@@ -139,9 +139,7 @@ public class IntensityInspectorPanelController
       // get these settings from the viewer rather than default:
       colorMenuMap_.get(COLOR_BLIND_FRIENDLY).getCheckBox().setSelected(true);
       for (final String key : colorMenuMap_.keySet()) {
-         colorMenuMap_.get(key).getCheckBox().addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
+         colorMenuMap_.get(key).getCheckBox().addActionListener((ActionEvent e) -> {
             for (String tmpKey : colorMenuMap_.keySet()) {
                colorMenuMap_.get(tmpKey).getCheckBox().setSelected(false);
             }
@@ -149,11 +147,10 @@ public class IntensityInspectorPanelController
                handleColorPalette(colorMenuMap_.get(key).getColorPalette());
                colorMenuMap_.get(key).getCheckBox().setSelected(true);
                // record in profile - even though we do not (yet) use this value
-               MMStudio.getInstance().profile().getSettings(
-                     IntensityInspectorPanelController.class).putString(
-                             COLOR_PALETTE, key);
+               studio_.profile().getSettings(
+                       IntensityInspectorPanelController.class).putString(
+                               COLOR_PALETTE, key);
             }
-         } 
          });
          gearMenuPaletteSubMenu_.add(colorMenuMap_.get(key).getCheckBox());
       }
@@ -166,9 +163,9 @@ public class IntensityInspectorPanelController
       histogramMenuMap_.put("1 Hz", 1.0);
       histogramMenuMap_.put("0.5 Hz", 0.5);
       histogramMenuMap_.put("Never", 0.0);
-      final String defaultUpdateFrequency = MMStudio.getInstance().profile().getSettings(
+      final String defaultUpdateFrequency = studio_.profile().getSettings(
               IntensityInspectorPanelController.class).getString(HISTOGRAM_UPDATE_FREQUENCY, "5 Hz");
-      final List<JCheckBoxMenuItem> histogramMenuItems = new LinkedList<JCheckBoxMenuItem>();
+      final List<JCheckBoxMenuItem> histogramMenuItems = new LinkedList<>();
       for (final String hKey : histogramMenuMap_.keySet()) {
          final JCheckBoxMenuItem jcmi = new JCheckBoxMenuItem(hKey);
          if (hKey.equals(defaultUpdateFrequency)) {
@@ -179,35 +176,26 @@ public class IntensityInspectorPanelController
       }
       final JCheckBoxMenuItem hmis[] = histogramMenuItems.toArray(new JCheckBoxMenuItem[6]);
       for (final JCheckBoxMenuItem jbmi : histogramMenuItems) {
-         jbmi.addActionListener(new ActionListener(){
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               for ( JCheckBoxMenuItem mi : hmis) { 
-                  mi.setSelected(false);
-               }
-               handleHistogramUpdateRate(histogramMenuMap_.get(jbmi.getText()));
-               jbmi.setSelected(true);
-               MMStudio.getInstance().profile().getSettings(
-                       IntensityInspectorPanelController.class).putString(
-                               HISTOGRAM_UPDATE_FREQUENCY, jbmi.getText());
+         jbmi.addActionListener((ActionEvent e) -> {
+            for ( JCheckBoxMenuItem mi : hmis) {
+               mi.setSelected(false);
             }
+            handleHistogramUpdateRate(histogramMenuMap_.get(jbmi.getText()));
+            jbmi.setSelected(true);
+            studio_.profile().getSettings(
+                    IntensityInspectorPanelController.class).putString(
+                            HISTOGRAM_UPDATE_FREQUENCY, jbmi.getText());
          });
          gearMenuUpdateRateSubMenu_.add(jbmi);
       }
 
       gearMenu_.add(gearMenuUseROIItem_);
 
-      gearMenuLogYAxisItem_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            handleHistogramLogYAxis(gearMenuLogYAxisItem_.isSelected());
-         }
+      gearMenuLogYAxisItem_.addActionListener((ActionEvent e) -> {
+         handleHistogramLogYAxis(gearMenuLogYAxisItem_.isSelected());
       });
-      gearMenuUseROIItem_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            handleHistogramUseROI(gearMenuUseROIItem_.isSelected());
-         }
+      gearMenuUseROIItem_.addActionListener((ActionEvent e) -> {
+         handleHistogramUseROI(gearMenuUseROIItem_.isSelected());
       });
    }
 
@@ -222,28 +210,19 @@ public class IntensityInspectorPanelController
       colorModeComboBox_.addItem(ColorModeCell.Item.RED_HOT_LUT);
       // Prevent "Composite" from slowly flashing
       colorModeComboBox_.getModel().setSelectedItem(null);
-      colorModeComboBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            handleColorMode();
-         }
+      colorModeComboBox_.addActionListener((ActionEvent e) -> {
+         handleColorMode();
       });
 
       autostretchCheckBox_.setText("Autostretch");
-      autostretchCheckBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            handleAutostretch();
-         }
+      autostretchCheckBox_.addActionListener((ActionEvent e) -> {
+         handleAutostretch();
       });
       percentileSpinner_.setModel(
             new SpinnerNumberModel(0.0, 0.0, 49.9, 0.1));
-      percentileSpinner_.addChangeListener(new ChangeListener() {
-         @Override
-         public void stateChanged(ChangeEvent e) {
-            if (!changingSpinner_.get()) {
-               handleAutostretch();
-            }
+      percentileSpinner_.addChangeListener((ChangeEvent e) -> {
+         if (!changingSpinner_.get()) {
+            handleAutostretch();
          }
       });
 
@@ -375,6 +354,9 @@ public class IntensityInspectorPanelController
 
       DisplaySettings oldSettings, newSettings;
       do {
+         if (viewer_ == null) {
+            return;
+         }
          oldSettings = viewer_.getDisplaySettings();
          if (oldSettings.getColorMode() == mode) {
             return;
@@ -388,16 +370,16 @@ public class IntensityInspectorPanelController
       boolean enabled = autostretchCheckBox_.isSelected();
       double percentile = (Double) percentileSpinner_.getValue();
       DisplaySettings oldSettings, newSettings;
-      boolean needToSetFixedMinMaxToAutoscaled = false;
+      // boolean needToSetFixedMinMaxToAutoscaled = false;
       do {
          oldSettings = viewer_.getDisplaySettings();
-         needToSetFixedMinMaxToAutoscaled = !enabled &&
-               oldSettings.isAutostretchEnabled();
+         //needToSetFixedMinMaxToAutoscaled = !enabled && oldSettings.isAutostretchEnabled();
          newSettings = oldSettings.copyBuilder().
                autostretch(enabled).
                autoscaleIgnoredPercentile(percentile).
                build();
       } while (!viewer_.compareAndSetDisplaySettings(oldSettings, newSettings));
+      /*
       if (needToSetFixedMinMaxToAutoscaled) {
          // When autostretch is turned off, rather than snapping back to
          // whatever the range was before autostretch was enabled, we want to
@@ -409,6 +391,7 @@ public class IntensityInspectorPanelController
          }
          displaySettingsUpdateSuspended_ = false;
       }
+      */
    }
 
    @MustCallOnEDT
@@ -476,22 +459,19 @@ public class IntensityInspectorPanelController
       viewer_ = viewer;
       viewer.registerForEvents(this);
       viewer.getDataProvider().registerForEvents(this);
-      SwingUtilities.invokeLater(new Runnable() {
-         @Override
-         public void run() {
-            if (viewer_ == null) {
-               return;
-            }
-            setUpChannelHistogramsPanel(
-                  viewer_.getDataProvider().getAxisLength(Coords.CHANNEL));
-            newDisplaySettings(viewer_.getDisplaySettings());
-            updateImageStats(((ImageStatsPublisher) viewer_).getCurrentImagesAndStats());
-            String updateRate = MMStudio.getInstance().profile().
-                    getSettings(IntensityInspectorPanelController.class).
-                           getString(HISTOGRAM_UPDATE_FREQUENCY, "1 Hz");
-            if (histogramMenuMap_.get(updateRate) != null) {
-              handleHistogramUpdateRate(histogramMenuMap_.get(updateRate));
-            }
+      SwingUtilities.invokeLater(() -> {
+         if (viewer_ == null) {
+            return;
+         }
+         setUpChannelHistogramsPanel(
+                 viewer_.getDataProvider().getAxisLength(Coords.CHANNEL));
+         newDisplaySettings(viewer_.getDisplaySettings());
+         updateImageStats(((ImageStatsPublisher) viewer_).getCurrentImagesAndStats());
+         String updateRate = studio_.profile().
+                 getSettings(IntensityInspectorPanelController.class).
+                 getString(HISTOGRAM_UPDATE_FREQUENCY, "1 Hz");
+         if (histogramMenuMap_.get(updateRate) != null) {
+            handleHistogramUpdateRate(histogramMenuMap_.get(updateRate));
          }
       });
    }
@@ -600,30 +580,24 @@ public class IntensityInspectorPanelController
    @Subscribe
    public void onEvent(DisplaySettingsChangedEvent e) {
       final DisplaySettings settings = e.getDisplaySettings();
-      SwingUtilities.invokeLater(new Runnable() {
-         @Override
-         public void run() {
-            newDisplaySettings(settings);
-         }
+      SwingUtilities.invokeLater(() -> {
+         newDisplaySettings(settings);
       });
    }
 
    @Subscribe
    public void onEvent(DataProviderHasNewImageEvent event) {
       final int channel = event.getImage().getCoords().getChannel();
-      SwingUtilities.invokeLater(new Runnable() {
-         @Override
-         public void run() {
-            try {
+      SwingUtilities.invokeLater(() -> {
+         try {
             if (channel >= channelControllers_.size()) {
                setUpChannelHistogramsPanel(channel + 1);
             }
-            } catch (NullPointerException npe) {
-               // it is possible that the dataprovider send a new image event
-               // and immediately closed.  That will result in a null pointer
-               // exception somewhere down the line.  Catch it here
-               ReportingUtils.logError(npe);
-            }
+         } catch (NullPointerException npe) {
+            // it is possible that the dataprovider send a new image event
+            // and immediately closed.  That will result in a null pointer
+            // exception somewhere down the line.  Catch it here
+            ReportingUtils.logError(npe);
          }
       });
    }

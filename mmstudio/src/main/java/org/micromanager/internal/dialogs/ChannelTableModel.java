@@ -166,7 +166,7 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
       TableModel model = (TableModel) e.getSource();
       if (col == 6) {
          Color color = (Color) model.getValueAt(row, col);
-         AcqControlDlg.setChannelColor(acqEng_.getChannelGroup(),
+         AcqControlDlg.setChannelColor(studio_, acqEng_.getChannelGroup(),
                channel.config, color.getRGB());
       }
    }
@@ -204,7 +204,7 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
             // Pick a non-white default color if possible.
             Color defaultColor = ColorPalettes.getFromDefaultPalette(channels_.size());
             channel.color = new Color(AcqControlDlg.getChannelColor(
-                     acqEng_.getChannelGroup(), channel.config,
+                     studio_, acqEng_.getChannelGroup(), channel.config,
                      defaultColor.getRGB()));
             channel.exposure = AcqControlDlg.getChannelExposure(
                   acqEng_.getChannelGroup(), channel.config, 10.0);

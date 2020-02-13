@@ -28,6 +28,7 @@ nobase_mmplugin_DATA = \
 	PipelineSaver.jar \
 	ProjectorPlugin.jar \
 	PointAndShootAnalysis.jar \
+	RandomizePositionNames.jar \
 	Recall.jar \
 	SequenceBufferMonitor.jar \
 	SlideExplorer.jar \

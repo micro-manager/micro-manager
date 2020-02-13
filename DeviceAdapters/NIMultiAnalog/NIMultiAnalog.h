@@ -63,9 +63,10 @@ protected:
    }
 
 private:
-   int minErrorCode_, maxErrorCode_;
-   int nextErrorCode_;
    void (TDevice::*setCodeFunc_)(int, const char*);
+   int minErrorCode_;
+   int maxErrorCode_;
+   int nextErrorCode_;
 };
 
 

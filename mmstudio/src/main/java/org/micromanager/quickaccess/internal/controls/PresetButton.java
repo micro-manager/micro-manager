@@ -40,8 +40,9 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
-import org.micromanager.display.internal.RememberedChannelSettings;
+import org.micromanager.display.internal.RememberedSettings;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.quickaccess.QuickAccessPlugin;
 import org.micromanager.quickaccess.WidgetPlugin;
@@ -99,7 +100,7 @@ public final class PresetButton extends WidgetPlugin implements SciJavaPlugin {
          @Override
          public Dimension getPreferredSize() {
             // For iconized mode, we want a smaller button.
-            if (config.getString("configGroup") == null) {
+            if (config.getString("configGroup", null) == null) {
                return super.getPreferredSize();
             }
             return QuickAccessPlugin.getPaddedCellSize();
@@ -116,7 +117,7 @@ public final class PresetButton extends WidgetPlugin implements SciJavaPlugin {
             try {
                studio_.core().setConfig(group, preset);
                studio_.core().waitForConfig(group, preset);
-               studio_.app().refreshGUI();
+               studio_.app().refreshGUIFromCache();
             }
             catch (Exception e) {
                studio_.logs().showError(e, "Error setting config group " +
@@ -174,10 +175,9 @@ public final class PresetButton extends WidgetPlugin implements SciJavaPlugin {
             // anything useful when not dealing with channel groups, in which
             // case the color will remain the same.
             pickerLabel.setBackground(
-               RememberedChannelSettings.getColorForChannel(
-                  (String) groupSelector.getSelectedItem(),
-                  (String) presetSelector.getSelectedItem(),
-                  pickerLabel.getBackground()));
+                    RememberedSettings.loadChannel(studio_, 
+                            (String) groupSelector.getSelectedItem(), 
+                            (String) presetSelector.getSelectedItem()).getColor());
          }
       });
 
@@ -188,10 +188,9 @@ public final class PresetButton extends WidgetPlugin implements SciJavaPlugin {
             // anything useful when not dealing with channel groups, in which
             // case the color will remain the same.
             pickerLabel.setBackground(
-               RememberedChannelSettings.getColorForChannel(
-                  (String) presetSelector.getSelectedItem(),
-                  (String) groupSelector.getSelectedItem(),
-                  pickerLabel.getBackground()));
+               RememberedSettings.loadChannel(studio_, 
+                            (String) groupSelector.getSelectedItem(), 
+                            (String) presetSelector.getSelectedItem()).getColor());
          }
       });
       // Default to the Channel group, if available.
@@ -233,10 +232,10 @@ public final class PresetButton extends WidgetPlugin implements SciJavaPlugin {
       JOptionPane.showMessageDialog(parent, contents,
             "Configure presets button", JOptionPane.PLAIN_MESSAGE);
 
-      return studio_.data().getPropertyMapBuilder()
+      return PropertyMaps.builder()
          .putString("configGroup", (String) groupSelector.getSelectedItem())
          .putString("presetName", (String) presetSelector.getSelectedItem())
-         .putInt("backgroundColor", pickerLabel.getBackground().getRGB())
+         .putInteger("backgroundColor", pickerLabel.getBackground().getRGB())
          .build();
    }
 

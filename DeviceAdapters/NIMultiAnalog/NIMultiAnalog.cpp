@@ -419,7 +419,7 @@ int MultiAnalogOutHub::GetLCMSamplesPerChannel(size_t& seqLen) const
    const uint64_t factorLimit = 2 << 14;
 
    uint64_t len = 1;
-   for (int i = 0; i < channelSequences_.size(); ++i)
+   for (unsigned int i = 0; i < channelSequences_.size(); ++i)
    {
       uint64_t channelSeqLen = channelSequences_[i].size();
       if (channelSeqLen > factorLimit)
@@ -436,7 +436,7 @@ int MultiAnalogOutHub::GetLCMSamplesPerChannel(size_t& seqLen) const
          return ERR_SEQUENCE_TOO_LONG;
       }
    }
-   seqLen = len;
+   seqLen = (size_t) len;
    return DEVICE_OK;
 }
 
@@ -447,11 +447,11 @@ void MultiAnalogOutHub::GetLCMSequence(double* buffer) const
    if (GetLCMSamplesPerChannel(seqLen) != DEVICE_OK)
       return;
 
-   for (int i = 0; i < channelSequences_.size(); ++i)
+   for (unsigned int i = 0; i < channelSequences_.size(); ++i)
    {
       size_t chanOffset = seqLen * i;
       size_t chanSeqLen = channelSequences_[i].size();
-      for (int j = 0; j < seqLen; ++j)
+      for (unsigned int j = 0; j < seqLen; ++j)
       {
          buffer[chanOffset + j] =
             channelSequences_[i][j % chanSeqLen];
@@ -524,7 +524,7 @@ int MultiAnalogOutHub::StartSequencingTask()
       LogMessage(GetNIDetailedErrorForMostRecentCall().c_str());
       goto error;
    }
-   if (numWritten != samplesPerChan)
+   if (numWritten != static_cast<int32>(samplesPerChan))
    {
       LogMessage("Failed to write complete sequence");
       // This is presumably unlikely; no error code here

@@ -20,6 +20,7 @@
 //
 package org.micromanager.data.internal.multipagetiff;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashSet;
@@ -67,7 +68,7 @@ class FileSet {
          OMEMetadata omeMetadata,
          boolean splitByXYPosition, boolean separateMetadataFile)
       throws IOException {
-      tiffWriters_ = new LinkedList<MultipageTiffWriter>();  
+      tiffWriters_ = new LinkedList<>();  
       masterStorage_ = masterStorage;
       omeMetadata_ = omeMetadata;
       splitByXYPosition_ = splitByXYPosition;
@@ -98,7 +99,7 @@ class FileSet {
       return tiffWriters_.getLast().hasSpaceForFullOMEMetadata(mdLength);
    }
    
-   public void finished(String omeXML) throws IOException {
+   public void finished(String omeXML, String ijDescription) throws IOException {
       if (finished_) {
          return;
       }
@@ -111,7 +112,7 @@ class FileSet {
       tiffWriters_.getLast().finish();
       //close all
       for (MultipageTiffWriter w : tiffWriters_) {
-         w.close(omeXML);
+         w.close(omeXML, ijDescription);
       }
       finished_ = true;
    }
@@ -239,6 +240,10 @@ class FileSet {
       String baseFilename;
       String prefix = masterStorage_.getSummaryMetadata().getPrefix();
       if (prefix == null || prefix.length() == 0) {
+         File dir = new File (masterStorage_.getDiskLocation());
+         prefix = dir.getName();
+      }
+      if (prefix == null || prefix.length() == 0) {
          baseFilename = "MMStack";
       } else {
          baseFilename = prefix + "_MMStack";
@@ -287,7 +292,7 @@ class FileSet {
       int numSlices = masterStorage_.getIntendedSize(Coords.Z);
       int numChannels = masterStorage_.getIntendedSize(Coords.CHANNEL);
       if (numFrames > frame + 1 ) {
-         HashSet<Coords> writtenImages = new HashSet<Coords>();
+         HashSet<Coords> writtenImages = new HashSet<>();
          for (MultipageTiffWriter w : tiffWriters_) {
             writtenImages.addAll(w.getIndexMap().keySet());
             w.setAbortedNumFrames(frame + 1);
@@ -298,7 +303,7 @@ class FileSet {
             positionIndex = iterator.next().getStagePosition();
          }
          omeMetadata_.setNumFrames(positionIndex, frame + 1);
-         TreeSet<Coords> lastFrameCoords = new TreeSet<Coords>();
+         TreeSet<Coords> lastFrameCoords = new TreeSet<>();
          DefaultCoords.Builder builder = new DefaultCoords.Builder();
          builder.t(frame);
          builder.stagePosition(positionIndex);

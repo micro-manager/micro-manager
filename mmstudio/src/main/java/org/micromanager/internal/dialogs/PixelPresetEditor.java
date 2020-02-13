@@ -21,8 +21,10 @@
 package org.micromanager.internal.dialogs;
 
 import java.awt.Dimension;
+import java.awt.HeadlessException;
 import java.awt.geom.AffineTransform;
 import java.text.ParseException;
+import javax.swing.JOptionPane;
 import mmcorej.DoubleVector;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
@@ -43,6 +45,7 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
    private DoubleVector affineTransform_;
    private final AffineEditorPanel affineEditorPanel_;
    private final CalibrationListDlg parent_;
+   private final double fractionErrorAllowed_ = 0.2;
 
    public PixelPresetEditor(String pixelSizeConfigName, 
          CalibrationListDlg parent, String pixelSize, boolean newItem) {
@@ -86,8 +89,27 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
 
    @Override
    public void okChosen() {
+      try {
+      AffineTransform affineTransform = AffineUtils.doubleToAffine(
+              affineEditorPanel_.getAffineTransform());
+      double predictedPixelSize = AffineUtils.deducePixelSize(affineTransform);
+      double inputSize = NumberUtils.displayStringToDouble(pixelSizeField_.getText());
+      if (predictedPixelSize > (1 + fractionErrorAllowed_) * inputSize ||
+            predictedPixelSize < (1 - fractionErrorAllowed_) * inputSize  ) {
+         Object[] options = { "Yes", "No"};
+         Object selectedValue = JOptionPane.showOptionDialog(null, 
+                 "Affine transform appears wrong.  Calculate from pixelSize?", "",
+                  JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE,
+                  null, options, options[0]);
+         if (selectedValue instanceof Integer &&  0 == ((Integer)selectedValue)) {
+            affineEditorPanel_.calculate();
+         }
+      }
       writeGroup(nameField_.getText());
-      this.dispose();      
+      this.dispose();
+      } catch (HeadlessException | ParseException e) {
+         ReportingUtils.showError(e);
+      }      
    }
    
    @Override
@@ -141,7 +163,7 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
          }
          pixelSize_ = pixelSizeField_.getText();
          core_.setPixelSizeUm(newName, NumberUtils.displayStringToDouble(pixelSize_));
-         core_.setPixelSizeAffine(newName, affineEditorPanel_.getAffineTransform() );
+         core_.setPixelSizeAffine(newName, affineEditorPanel_.getAffineTransform() );         
       } catch (Exception e) {
          ReportingUtils.showError(e);
          return false;

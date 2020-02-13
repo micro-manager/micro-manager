@@ -1,10 +1,26 @@
 noinst_LTLIBRARIES = libMMDevice.la
-noinst_HEADERS = DeviceBase.h MMDevice.h MMDeviceConstants.h \
-	ModuleInterface.h Property.h DeviceUtils.h ImgBuffer.h DeviceThreads.h \
-	ImageMetadata.h Debayer.h
-libMMDevice_la_SOURCES = $(noinst_HEADERS) ModuleInterface.cpp \
+
+noinst_HEADERS = \
+	Debayer.h \
+	DeviceBase.h \
+	DeviceThreads.h \
+	DeviceUtils.h \
+	FixSnprintf.h \
+	ImageMetadata.h \
+	ImgBuffer.h \
+	MMDevice.h \
+	MMDeviceConstants.h \
+	ModuleInterface.h \
+	Property.h
+
+libMMDevice_la_SOURCES = \
+	$(noinst_HEADERS) \
+	Debayer.cpp \
+	DeviceUtils.cpp \
+	ImgBuffer.cpp \
 	MMDevice.cpp \
-	Property.cpp DeviceUtils.cpp ImgBuffer.cpp Debayer.cpp
+	ModuleInterface.cpp \
+	Property.cpp
 
 EXTRA_DIST = license.txt
 

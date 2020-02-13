@@ -162,6 +162,7 @@
   <ItemGroup>
     <ClCompile Include="ASIClocked.cpp" />
     <ClCompile Include="ASICRISP.cpp" />
+	<ClCompile Include="ASIDac.cpp" />
     <ClCompile Include="ASIFWheel.cpp" />
     <ClCompile Include="ASIHub.cpp" />
     <ClCompile Include="ASILED.cpp" />
@@ -179,6 +180,7 @@
     <ClInclude Include="ASIBase.h" />
     <ClInclude Include="ASIClocked.h" />
     <ClInclude Include="ASICRISP.h" />
+	<ClInclude Include="ASIDac.h" />
     <ClInclude Include="ASIFWheel.h" />
     <ClInclude Include="ASIHub.h" />
     <ClInclude Include="ASILED.h" />

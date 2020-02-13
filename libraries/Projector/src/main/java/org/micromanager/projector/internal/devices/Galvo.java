@@ -21,12 +21,12 @@ import ij.process.FloatPolygon;
 import java.awt.geom.Point2D;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import mmcorej.CMMCore;
+import mmcorej.StrVector;
 import org.micromanager.Studio;
 import org.micromanager.projector.internal.OnStateListener;
 
@@ -36,8 +36,9 @@ public class Galvo implements ProjectionDevice {
    private final Studio app_;
    private final ExecutorService galvoExecutor_;
    private final HashSet<OnStateListener> onStateListeners_ = 
-           new HashSet<OnStateListener>();
+           new HashSet<>();
    private long interval_us_;
+   private String externalShutter_;
 
    public Galvo(Studio app, CMMCore mmc) {
       mmc_ = mmc;
@@ -53,25 +54,26 @@ public class Galvo implements ProjectionDevice {
    
    @Override
    public void displaySpot(final double x, final double y) {
-      galvoExecutor_.execute(new Runnable() {
-         @Override
-         public void run() {
-            try {
+      galvoExecutor_.execute(() -> {
+         try {
+            if (externalShutter_ != null) {
+               mmc_.setGalvoPosition(galvo_, x, y);
+               mmc_.setShutterOpen(externalShutter_, true);
+               Thread.sleep(getExposure() / 1000);
+               mmc_.setShutterOpen(externalShutter_, false);
+            } else {
                mmc_.pointGalvoAndFire(galvo_, x, y, Galvo.this.getExposure());
-            } catch (Exception ex) {
-               app_.logs().logError(ex);
             }
+         } catch (Exception ex) {
+            app_.logs().logError(ex);
          }
       });
    }
 
    @Override
    public void waitForDevice() {
-      Future result = galvoExecutor_.submit(new Runnable() {
-         @Override
-         public void run() {
-            // do nothing;
-         }
+      Future result = galvoExecutor_.submit(() -> {
+         // do nothing;
       });
       try {
          result.get();
@@ -83,15 +85,11 @@ public class Galvo implements ProjectionDevice {
    @Override
    public double getXRange() {
       try {
-         Double result = galvoExecutor_.submit(new Callable<Double>() {
-
-            @Override
-            public Double call() {
-               try {
-                  return mmc_.getGalvoXRange(galvo_);
-               } catch (Exception ex) {
-                  return null;
-               }
+         Double result = galvoExecutor_.submit(() -> {
+            try {
+               return mmc_.getGalvoXRange(galvo_);
+            } catch (Exception ex) {
+               return null;
             }
          }).get();
          if (result == null) {
@@ -108,15 +106,11 @@ public class Galvo implements ProjectionDevice {
    @Override
    public double getYRange() {
       try {
-         Double result = galvoExecutor_.submit(new Callable<Double>() {
-
-            @Override
-            public Double call() {
-               try {
-                  return mmc_.getGalvoYRange(galvo_);
-               } catch (Exception ex) {
-                  return null;
-               }
+         Double result = galvoExecutor_.submit(() -> {
+            try {
+               return mmc_.getGalvoYRange(galvo_);
+            } catch (Exception ex) {
+               return null;
             }
          }).get();
          if (result == null) {
@@ -133,15 +127,11 @@ public class Galvo implements ProjectionDevice {
    @Override
    public double getXMinimum() {
       try {
-         Double result = galvoExecutor_.submit(new Callable<Double>() {
-
-            @Override
-            public Double call() {
-               try {
-                  return mmc_.getGalvoXMinimum(galvo_);
-               } catch (Exception ex) {
-                  return null;
-               }
+         Double result = galvoExecutor_.submit(() -> {
+            try {
+               return mmc_.getGalvoXMinimum(galvo_);
+            } catch (Exception ex) {
+               return null;
             }
          }).get();
          if (result == null) {
@@ -158,15 +148,11 @@ public class Galvo implements ProjectionDevice {
    @Override
    public double getYMinimum() {
       try {
-         Double result = galvoExecutor_.submit(new Callable<Double>() {
-
-            @Override
-            public Double call() {
-               try {
-                  return mmc_.getGalvoYMinimum(galvo_);
-               } catch (Exception ex) {
-                  return null;
-               }
+         Double result = galvoExecutor_.submit(() -> {
+            try {
+               return mmc_.getGalvoYMinimum(galvo_);
+            } catch (Exception ex) {
+               return null;
             }
          }).get();
          if (result == null) {
@@ -182,79 +168,78 @@ public class Galvo implements ProjectionDevice {
 
    @Override
    public void turnOn() {
-      galvoExecutor_.submit(new Runnable() {
-         @Override
-         public void run() {
-            try {
+      galvoExecutor_.submit(() -> {
+         try {
+            if (externalShutter_ != null) {
+               mmc_.setShutterOpen(externalShutter_, true);
+            } else {
                mmc_.setGalvoIlluminationState(galvo_, true);
-            } catch (Exception ex) {
-               app_.logs().showError(ex);
             }
+         } catch (Exception ex) {
+            app_.logs().showError(ex);
          }
       });
-      for (OnStateListener listener:onStateListeners_) {
-        listener.stateChanged(true);
+      for (OnStateListener listener : onStateListeners_) {
+         listener.stateChanged(true);
       }
    }
 
    @Override
    public void turnOff() {
-      galvoExecutor_.submit(new Runnable() {
-         @Override
-         public void run() {
-            try {
+      galvoExecutor_.submit(() -> {
+         try {
+            if (externalShutter_ != null) {
+               mmc_.setShutterOpen(externalShutter_, false);
+            } else {
                mmc_.setGalvoIlluminationState(galvo_, false);
-            } catch (Exception ex) {
-               app_.logs().showError(ex);
             }
+         } catch (Exception ex) {
+            app_.logs().showError(ex);
          }
       });
-      for (OnStateListener listener:onStateListeners_) {
-        listener.stateChanged(false);
+      for (OnStateListener listener : onStateListeners_) {
+         listener.stateChanged(false);
       }
    }
 
    @Override
    public void loadRois(final List<FloatPolygon> rois) {
-      galvoExecutor_.submit(new Runnable() {
-         @Override
-         public void run() {
-            try {
-               mmc_.deleteGalvoPolygons(galvo_);
-            } catch (Exception ex) {
-               app_.logs().logError(ex);
-            }
-            int roiCount = 0;
-            try {
-               for (FloatPolygon poly : rois) {
-                  Point2D lastGalvoPoint = null;
-                  for (int i = 0; i < poly.npoints; ++i) {
-                     Point2D.Double galvoPoint = new Point2D.Double(
-                             poly.xpoints[i], poly.ypoints[i]);
-                     if (i == 0) {
-                        lastGalvoPoint = galvoPoint;
-                     }
-                     mmc_.addGalvoPolygonVertex(galvo_, roiCount, galvoPoint.getX(), 
-                             galvoPoint.getY());
-                     if (poly.npoints == 1) {
-                        ++roiCount;
-                     }
+      galvoExecutor_.submit(() -> {
+         try {
+            mmc_.deleteGalvoPolygons(galvo_);
+         } catch (Exception ex) {
+            app_.logs().logError(ex);
+         }
+         int roiCount = 0;
+         try {
+            for (FloatPolygon poly : rois) {
+               Point2D lastGalvoPoint = null;
+               for (int i = 0; i < poly.npoints; ++i) {
+                  Point2D.Double galvoPoint = new Point2D.Double(
+                          poly.xpoints[i], poly.ypoints[i]);
+                  if (i == 0) {
+                     lastGalvoPoint = galvoPoint;
                   }
-                  if (poly.npoints > 1 && lastGalvoPoint != null) {
-                     mmc_.addGalvoPolygonVertex(galvo_, roiCount, 
-                             lastGalvoPoint.getX(), lastGalvoPoint.getY());
+                  mmc_.addGalvoPolygonVertex(galvo_, roiCount, galvoPoint.getX(),
+                          galvoPoint.getY());
+                  if (poly.npoints == 1) {
                      ++roiCount;
                   }
                }
-            } catch (Exception e) {
-               app_.logs().showError(e);
+               if (poly.npoints > 1 && lastGalvoPoint != null) {
+                  mmc_.addGalvoPolygonVertex(galvo_, roiCount,
+                          lastGalvoPoint.getX(), lastGalvoPoint.getY());
+                  ++roiCount;
+               }
             }
-
-            try {
-               mmc_.loadGalvoPolygons(galvo_);
-            } catch (Exception ex) {
-               app_.logs().showError(ex);
-            }
+         } catch (Exception e) {
+            app_.logs().showError(e);
+         }
+         
+         try {
+            mmc_.loadGalvoPolygons(galvo_);
+         } catch (Exception ex) {
+            app_.logs().showError(ex);
          }
       });
    }
@@ -262,14 +247,11 @@ public class Galvo implements ProjectionDevice {
 
    @Override
    public void runPolygons() {
-      galvoExecutor_.submit(new Runnable() {
-         @Override
-         public void run() {
-            try {
-               mmc_.runGalvoPolygons(galvo_);
-            } catch (Exception ex) {
-               app_.logs().showError(ex);
-            }
+      galvoExecutor_.submit(() -> {
+         try {
+            mmc_.runGalvoPolygons(galvo_);
+         } catch (Exception ex) {
+            app_.logs().showError(ex);
          }
       });
 
@@ -286,31 +268,24 @@ public class Galvo implements ProjectionDevice {
 
    @Override
    public void setPolygonRepetitions(final int reps) {
-      galvoExecutor_.submit(new Runnable() {
-         @Override
-         public void run() {
-
-            try {
-               mmc_.setGalvoPolygonRepetitions(galvo_, reps);
-            } catch (Exception ex) {
-               app_.logs().showError(ex);
-            }
+      galvoExecutor_.submit(() -> {
+         try {
+            mmc_.setGalvoPolygonRepetitions(galvo_, reps);
+         } catch (Exception ex) {
+            app_.logs().showError(ex);
          }
       });
    }
 
     @Override
     public String getChannel() {
-        Future<String> channel = galvoExecutor_.submit(new Callable<String>() {
-            @Override
-            public String call() {
-                try {
-                    return mmc_.getGalvoChannel(galvo_);
-                } catch (Exception ex) {
-                    app_.logs().logError(ex);
-                    return null;
-                }
-            }
+        Future<String> channel = galvoExecutor_.submit(() -> {
+           try {
+              return mmc_.getGalvoChannel(galvo_);
+           } catch (Exception ex) {
+              app_.logs().logError(ex);
+              return null;
+           }
         });
         try {
             return channel.get();
@@ -344,4 +319,25 @@ public class Galvo implements ProjectionDevice {
     public void showCheckerBoard(int x, int y) {
        // Do nothing
     }
+    
+   @Override
+   public void setExternalShutter(String shutter) {
+      if (shutter != null && !shutter.isEmpty()) {
+         StrVector loadedDevices = mmc_.getLoadedDevices();
+         for (String d : loadedDevices) {
+            if (d.equals(shutter)) {
+               externalShutter_ = shutter;
+               return;
+            }
+         }
+      }
+      externalShutter_ = null;
+   }
+
+   @Override
+   public String getExternalShutter() {
+      return externalShutter_;
+   }
+
+
 }

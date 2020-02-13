@@ -1,6 +1,6 @@
 /*
 File:		MCL_NanoDrive_XYStage.cpp
-Copyright:	Mad City Labs Inc., 2008
+Copyright:	Mad City Labs Inc., 2019
 License:	Distributed under the BSD license.
 */
 #include "MCL_NanoDrive_XYStage.h"
@@ -63,6 +63,8 @@ int MCL_NanoDrive_XYStage::Initialize()
    ProductInformation pi;
    memset(&pi, 0, sizeof(ProductInformation));
 
+   HandleListType device(possHandle, XY_TYPE);
+
    if (initialized_)
    { 
 	  // If already initialized, no need to continue
@@ -87,13 +89,10 @@ int MCL_NanoDrive_XYStage::Initialize()
    handlesToUseOrRelease = (int*) malloc(sizeof(int*) * numHandles);
    MCL_GetAllHandles(handlesToUseOrRelease, numHandles);
 
-   HandleListType* device = (HandleListType*)GlobalHeapAllocate(sizeof(HandleListType));
-   device->Initialize(possHandle, XY_TYPE);
    for (int i = 0; i < numHandles; i++)
-   {   
-	   
+   {    
 		possHandle = handlesToUseOrRelease[i];
-		device->setHandle(possHandle);
+		device.setHandle(possHandle);
 
 		MCL_GetProductInfo(&pi, possHandle);
 		
@@ -133,7 +132,6 @@ int MCL_NanoDrive_XYStage::Initialize()
 
    if (!valid)
    {
-	   GlobalHeapFree(device);
 	   err = MCL_INVALID_HANDLE;
 	   goto INIT_ERROR;
    }
@@ -216,17 +214,12 @@ int MCL_NanoDrive_XYStage::Shutdown()
 {
 HandleListLock();
 
-   HandleListType * device = new HandleListType(MCLhandle_, XY_TYPE);
-
+   HandleListType device(MCLhandle_, XY_TYPE);
    HandleListRemoveSingleItem(device);
-
    if (!HandleExistsOnLockedList(MCLhandle_))
    {
 		MCL_ReleaseHandle(MCLhandle_);
    }
-
-   delete device;
-
    MCLhandle_ = 0;
 
    initialized_ = false;

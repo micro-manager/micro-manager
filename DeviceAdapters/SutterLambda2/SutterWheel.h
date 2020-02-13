@@ -54,6 +54,7 @@ public:
 	int onTTLInPolarity(MM::PropertyBase* pProp, MM::ActionType eAct);
 private:
 	int configureTTL( bool risingEdge, bool enabled, bool output, unsigned char channel);
+	int resetSequenceIndex( unsigned char channel);
 	long wv_;
 	long uSteps_;
 	long tiltSpeed_;

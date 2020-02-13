@@ -32,7 +32,7 @@ public class SingleExpRecoveryFunc extends PASFunction  {
    
    @Override
    public Double calculateX(double[] input, double y) {
-            if (input.length != getNumOfInputsN()) {
+      if (input.length != getNumOfInputsN()) {
          return null; // TODO: throw exception
       }
       double a = input[0];

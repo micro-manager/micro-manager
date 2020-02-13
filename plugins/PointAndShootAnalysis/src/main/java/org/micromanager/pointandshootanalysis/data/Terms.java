@@ -34,4 +34,6 @@ public class Terms {
    public final static String NRFRAMESAFTER = "NrFramesAfter";  
    public final static String MAXDISTANCE = "MaxDistance";
    public final static String CAMERAOFFSET = "CameraOffset";   
+   public final static String FIXBLEACHINPARTICLE = "FixBleachInParticle";
+   public final static String NRFRAMESTOFIXBLEACH = "nrFramesToFixBleach";
 }

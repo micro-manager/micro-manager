@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -114,7 +115,6 @@ import org.micromanager.profile.internal.gui.HardwareConfigurationManager;
 import org.micromanager.quickaccess.QuickAccessManager;
 import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
 
-
 /*
  * Implements the Studio (i.e. primary API) and does various other
  * tasks that should probably be refactored out at some point.
@@ -193,9 +193,22 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
     * @param args
     */
    public static void main(String args[]) {
+      String profileNameAutoStart = null; //The name of the user profile that Micro-Manager should start up with. In the case that this is left as null then a splash screen will request that the user select a profile before startup.
+      for (int i=0; i<args.length; i++) { // a library for the parsing of arguments such as apache commons - cli would make this more robust if needed.
+          if (args[i].equals("-profile")) {
+              if (i < args.length-1) {
+                  i++;
+                  profileNameAutoStart = args[i];
+              } else {
+                  ReportingUtils.showError("Micro-Manager received no value for the `-profile` startup argument.");
+              }
+          } else {
+              ReportingUtils.showError("Micro-Manager received unknown startup argument: " + args[i]);
+          }
+      }
       try {
          UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-         MMStudio mmStudio = new MMStudio(false);
+         MMStudio mmStudio = new MMStudio(false, profileNameAutoStart);
       } catch (ClassNotFoundException e) {
          ReportingUtils.showError(e, "A java error has caused Micro-Manager to exit.");
          System.exit(1);
@@ -218,6 +231,18 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
     */
    @SuppressWarnings("LeakingThisInConstructor")
    public MMStudio(boolean startAsImageJPlugin) {
+       this(startAsImageJPlugin, null);
+   }
+   
+   /**
+    * MMStudio constructor
+    * @param startAsImageJPlugin Indicates if we're running from "within"
+    * ImageJ, which governs our behavior when we are closed.
+    * @param profileNameAutoStart The name of a user profile. This profile and
+    * its most recently used hardware configuration will be to automatically loaded. 
+    */
+   @SuppressWarnings("LeakingThisInConstructor")
+   public MMStudio(boolean startAsImageJPlugin, String profileNameAutoStart) {
       wasStartedAsImageJPlugin_ = startAsImageJPlugin;
 
       // TODO Of course it is crazy to do all of the following in the
@@ -249,6 +274,9 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       } catch(UnsatisfiedLinkError ex) {
          ReportingUtils.showError(ex, 
                "Failed to load the MMCoreJ_wrap native library");
+      } catch(NoSuchMethodError ex) {
+         ReportingUtils.showError(ex, 
+               "Incompatible version of MMCoreJ_wrap native library");
       }
       
       // Start up multiple managers.  
@@ -343,7 +371,21 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       UserProfileAdmin profileAdmin = userProfileManager_.getAdmin();
       UUID profileUUID = profileAdmin.getUUIDOfDefaultProfile();
       try {
-         if (StartupSettings.create(profileAdmin.getNonSavingProfile(profileUUID)).
+          if (profileNameAutoStart != null) {
+            for (Map.Entry<UUID,String> entry : profileAdmin.getProfileUUIDsAndNames().entrySet()){
+                String name = entry.getValue();
+                if (name.equals(profileNameAutoStart)){
+                    UserProfile profile = profileAdmin.getNonSavingProfile(entry.getKey());
+                    profileAdmin.setCurrentUserProfile(entry.getKey());
+                    sysConfigFile_ = HardwareConfigurationManager.getRecentlyUsedConfigFilesFromProfile(profile).get(0);
+                    break;
+                }
+            }
+            if (sysConfigFile_ == null) {
+                ReportingUtils.showMessage("A hardware configuration for a profile matching name: " + profileNameAutoStart + " could not be found");
+            }
+          }
+          else if (StartupSettings.create(profileAdmin.getNonSavingProfile(profileUUID)).
                shouldSkipUserInteractionWithSplashScreen()) {
             List<String> recentConfigs = HardwareConfigurationManager.
                   getRecentlyUsedConfigFilesFromProfile(
@@ -369,7 +411,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
 
       // Profile may have been switched in Intro Dialog, so reflect its setting
-      core_.enableDebugLog(OptionsDlg.getIsDebugLogEnabled());
+      core_.enableDebugLog(OptionsDlg.getIsDebugLogEnabled(studio_));
 
       IJVersionCheckDlg.execute(studio_);
 
@@ -458,7 +500,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    private void initializeLogging(CMMCore core) {
       core.enableStderrLog(true);
-      core.enableDebugLog(OptionsDlg.getIsDebugLogEnabled());
+      core.enableDebugLog(OptionsDlg.getIsDebugLogEnabled(studio_));
       ReportingUtils.setCore(core);
 
       // Set up logging to CoreLog file
@@ -481,7 +523,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // Although our general rule is to perform identical logging regardless
       // of the current log level, we make an exception for UIMonitor, which we
       // enable only when debug logging is turned on (from the GUI).
-      UIMonitor.enable(OptionsDlg.getIsDebugLogEnabled());
+      UIMonitor.enable(OptionsDlg.getIsDebugLogEnabled(studio_));
    }
   
    public void showPipelineFrame() {
@@ -731,11 +773,10 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    /**
     * Returns singleton instance of MMStudio
     * @return singleton instance of MMStudio
-   */ 
+   */
    public static MMStudio getInstance() {
       return studio_;
    }
-   
 
    /**
     * Returns singleton instance of MainFrame.
@@ -1068,7 +1109,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
             calibrationListDlg_.refreshCalibrations();
          }
          if (propertyBrowser_ != null) {
-            propertyBrowser_.refresh();
+            propertyBrowser_.refresh(fromCache);
          }
 
          ReportingUtils.logMessage("Finished updating GUI");
@@ -1225,7 +1266,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
       userProfileManager_.getAdmin().shutdownAutosaves();
 
-      boolean shouldCloseWholeApp = OptionsDlg.getShouldCloseOnExit();
+      boolean shouldCloseWholeApp = OptionsDlg.getShouldCloseOnExit(studio_);
       if (shouldCloseWholeApp && !quitInitiatedByImageJ) {
          if (wasStartedAsImageJPlugin_) {
             // Let ImageJ do the quitting
@@ -1294,7 +1335,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
 
       try {
-         if (sysConfigFile_.length() > 0) {
+         if (sysConfigFile_ != null && sysConfigFile_.length() > 0) {
             GUIUtils.preventDisplayAdapterChangeExceptions();
             core_.waitForSystem();
             coreCallback_.setIgnoring(true);
@@ -1304,6 +1345,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
             coreCallback_.setIgnoring(false);
             GUIUtils.preventDisplayAdapterChangeExceptions();
             events().post(new AutofocusPluginShouldInitializeEvent());
+            FileDialogs.storePath(FileDialogs.MM_CONFIG_FILE, new File(sysConfigFile_));
          }
       } catch (final Exception err) {
          GUIUtils.preventDisplayAdapterChangeExceptions();
@@ -1322,8 +1364,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
 
       initializeGUI();
-
-      FileDialogs.storePath(FileDialogs.MM_CONFIG_FILE, new File(sysConfigFile_));
 
       return result;
    }

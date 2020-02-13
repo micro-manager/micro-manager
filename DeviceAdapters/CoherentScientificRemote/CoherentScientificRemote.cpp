@@ -25,8 +25,8 @@
 
 #ifdef WIN32
    #include <windows.h>
-   #define snprintf _snprintf 
 #endif
+#include "FixSnprintf.h"
 
 #include "CoherentScientificRemote.h"
 
@@ -201,7 +201,7 @@ int CoherentScientificRemote::Initialize()
 	   std::stringstream laserCountStr;
 	   laserName = this->queryLaser(replaceLaserNum("SYST{laserNum}:INF:MOD", laserCount).c_str());
 	   if (laserName.find("ERR") != 0) {
-			//
+         laserName = rtrim(laserName);
 		   setLaser(replaceLaserNum(laserHandToken_, laserCount).c_str(),"On");
 		   setLaser(replaceLaserNum(laserPromToken_, laserCount).c_str(),"Off");
 		   laserErr = this->queryLaser(replaceLaserNum(laserErrorToken_, laserCount).c_str());

@@ -33,7 +33,6 @@ import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.io.IOException;
@@ -79,7 +78,7 @@ public class PtcToolsExecutor extends Thread  {
    public PtcToolsExecutor(Studio studio, PropertyMap settings) {
       studio_ = studio;
       settings_ = settings;
-      expMeanStdDev_ = new ArrayList<ExpMeanStdDev>();
+      expMeanStdDev_ = new ArrayList<>();
    }
 
    @Override
@@ -95,11 +94,8 @@ public class PtcToolsExecutor extends Thread  {
       public void doSequence(JLabel resultLabel) {
 
          try {
-            SwingUtilities.invokeAndWait(new Runnable() {
-               @Override
-               public void run() {
-                  resultLabel.setText("Collecting dark images...");
-               }
+            SwingUtilities.invokeAndWait(() -> {
+               resultLabel.setText("Collecting dark images...");
             });
          } catch (InterruptedException | InvocationTargetException ex) {
          }
@@ -195,11 +191,8 @@ public class PtcToolsExecutor extends Thread  {
          for (int i = 0; i < nrExposures; i++) {
             final int nr = i;
             try {
-               SwingUtilities.invokeAndWait(new Runnable() {
-                  @Override
-                  public void run() {
-                     resultLabel.setText("working on exposure: " + nr + "(of " + nrExposures + ")");
-                  }
+               SwingUtilities.invokeAndWait(() -> {
+                  resultLabel.setText("working on exposure: " + nr + "(of " + nrExposures + ")");
                });
             } catch (InterruptedException | InvocationTargetException ex) {
             }
@@ -265,34 +258,22 @@ public class PtcToolsExecutor extends Thread  {
       dialog.add(new JLabel("Press OK when ready"), "wrap");
       JButton cancelButton = new JButton("Cancel");
       final JLabel resultLabel = new JLabel("Not started yet...");
-      cancelButton.addActionListener(new ActionListener(){
-         @Override
-         public void actionPerformed(ActionEvent e) {
-               dialog.dispose();
+      cancelButton.addActionListener((ActionEvent e) -> {
+         dialog.dispose();
+      });
+      JButton okButton = new JButton("OK");
+      okButton.addActionListener((ActionEvent e) -> {
+         Thread t = new Thread(() -> {
+            sr.doSequence(resultLabel);
+            try {
+               SwingUtilities.invokeAndWait(() -> {
+                  dialog.dispose();
+               });
+            } catch (InterruptedException | InvocationTargetException ex) {
+               // Logger.getLogger(PtcToolsExecutor.class.getName()).log(Level.SEVERE, null, ex);
             }
          });
-      JButton okButton = new JButton("OK");
-      okButton.addActionListener(new ActionListener(){
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            Thread t = new Thread(new Runnable() {
-               @Override
-               public void run() {
-                  sr.doSequence(resultLabel);
-                  try {
-                     SwingUtilities.invokeAndWait(new Runnable() {
-                        @Override
-                        public void run() {
-                           dialog.dispose();
-                        }
-                     });
-                  } catch (InterruptedException | InvocationTargetException ex) {
-                    // Logger.getLogger(PtcToolsExecutor.class.getName()).log(Level.SEVERE, null, ex);
-                  }
-               }
-            });
-            t.start();
-         }
+         t.start();
       });
       dialog.add(cancelButton, "split 2, tag cancel");
       dialog.add(okButton, "tag ok, wrap");
@@ -326,7 +307,7 @@ public class PtcToolsExecutor extends Thread  {
       final Coords.Builder cb = Coordinates.builder().c(1).p(1).t(1).z(1);
       int nrFrames = store.getAxisLength(Coords.T);
       ImageStack tmpStack = new ImageStack(stack.getWidth(), stack.getHeight());
-      List<ShortProcessor> lc = new ArrayList<ShortProcessor>(nrFrames);
+      List<ShortProcessor> lc = new ArrayList<>(nrFrames);
          for (int i = 0; i < nrFrames; i++) {
             ShortProcessor tmpShortProc = new ShortProcessor(stack.getWidth(), 
                     stack.getHeight());

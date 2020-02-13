@@ -1,12 +1,31 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+///////////////////////////////////////////////////////////////////////////////
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     mmstudio
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       ??
+//
+// COPYRIGHT:    University of California, San Francisco, ??
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
+
 package org.micromanager.internal.dialogs;
 
 import com.bulenkov.iconloader.IconLoader;
+import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSortedMap;
+import com.google.common.collect.Ordering;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -149,14 +168,20 @@ public final class ProfileSelectionUIController
          ReportingUtils.logError(e, "Error getting profile index");
          return;
       }
-
+    
+      // Sort profiles by name
+      Ordering<UUID> valueComparator = Ordering.
+              from(String.CASE_INSENSITIVE_ORDER).
+              onResultOf(Functions.forMap(profiles));
+      Map<UUID, String> sortedProfiles = ImmutableSortedMap.copyOf(profiles, valueComparator);
+    
       // Default profile first
       UUID defaultUUID = admin_.getUUIDOfDefaultProfile();
       profileComboBox_.addItem(new ProfileComboItem(defaultUUID, profiles.get(
             defaultUUID)));
-
-      // Rest in given order
-      for (Map.Entry<UUID, String> e : profiles.entrySet()) {
+      
+      // Remainder in sorted order
+      for (Map.Entry<UUID, String> e : sortedProfiles.entrySet()) {
          if (defaultUUID.equals(e.getKey())) {
             continue;
          }

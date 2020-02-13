@@ -37,10 +37,10 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.propertymap.MM1JSONSerializer;
 import org.micromanager.internal.propertymap.PropertyMapJSONSerializer;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Keys that appear in the JSON-formatted metadata (and a few other pieces of
@@ -618,7 +618,7 @@ public enum PropertyKey {
                // NS: not sure how to handle this.  Can we be sure only to 
                // receive the correct keys?  I see no straight forward way 
                // to copy other properties
-               MMStudio.getInstance().logs().showError("Found weird key in Intended dimensions: " + key);
+               ReportingUtils.showError("Found weird key in Intended dimensions: " + key);
             }
          }
          dest.putPropertyMap(key(), builder.build());
@@ -1531,9 +1531,21 @@ public enum PropertyKey {
          // (includes device properties if SCOPE_DATA_KEYS unavailable)
          PropertyMap.Builder builder = PropertyMaps.builder();
          for (Map.Entry<String, JsonElement> e : jo.entrySet()) {
+            try {
             if (!isKnownKey(e.getKey()) && !e.getValue().isJsonNull() &&
                   !scopeDataKeys.contains(e.getKey())) {
-               builder.putString(e.getKey(), e.getValue().getAsString());
+               if (e.getValue().isJsonArray()) {
+                  JsonArray jsonArray = e.getValue().getAsJsonArray();
+                  for (int i = 0; i < jsonArray.size(); i++) {
+                     JsonElement je2 = jsonArray.get(i);
+                     builder.putString(e.getKey(), je2.getAsString());
+                  }
+               } else {
+                  builder.putString(e.getKey(), e.getValue().getAsString());
+               }
+            }
+            } catch (IllegalStateException ise) {
+               ReportingUtils.logError(ise, "IllegalStateError reading value of " + e.getKey());
             }
          }
          dest.putPropertyMap(key(), builder.build());

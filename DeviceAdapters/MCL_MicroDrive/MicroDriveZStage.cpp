@@ -1,25 +1,38 @@
-#include "MCL_MicroDrive_ZStage.h"
+/*
+File:		MicroDriveZStage.cpp
+Copyright:	Mad City Labs Inc., 2019
+License:	Distributed under the BSD license.
+*/
+#include "MicroDriveZStage.h"
+#include "mdutils.h"
 
 #include <math.h>
 #include <string.h>
 
-#include <iostream>
-#include <fstream>
-
+#include <vector>
 using namespace std;
 
 MCL_MicroDrive_ZStage::MCL_MicroDrive_ZStage() :
+	handle_(0),
+	serialNumber_(0),
+	pid_(0),
+	axis_(0),
+	stepSize_mm_(0.0),
+	encoderResolution_(0.0),
+	maxVelocity_(0.0),
+	minVelocity_(0.0),
+	velocity_(0.0),
 	busy_(false),
 	initialized_(false),
-	settlingTimeZ_ms_(100),
-	MCLhandle_(0),
-	isMD1_(false),
+	encoded_(false),
+	lastZ_(0.0),
 	iterativeMoves_(false),
 	imRetry_(0),
-	imToleranceUm_(.250)
+	imToleranceUm_(.250),
+	deviceHasTirfModuleAxis_(false),
+	axisIsTirfModule_(false),
+	tirfModCalibrationMm_(0.0)
 {
-	
-	// Basically only construct error messages in the constructor
 	InitializeDefaultErrorMessages();
 
 	//MCL error Messages
@@ -32,11 +45,9 @@ MCL_MicroDrive_ZStage::MCL_MicroDrive_ZStage() :
 	SetErrorText(MCL_INVALID_AXIS, "MCL Error: Device trying to use unsupported axis");
 	SetErrorText(MCL_INVALID_HANDLE, "MCL Error: Handle not valid");
 
-	int err;
-
  	// Encoders present?
 	CPropertyAction* pAct = new CPropertyAction(this, &MCL_MicroDrive_ZStage::OnEncoded);
-	err = CreateProperty(g_Keyword_Encoded, "Yes", MM::String, false, pAct, true);
+	CreateProperty(g_Keyword_Encoded, "Yes", MM::String, false, pAct, true);
 }
 
 
@@ -54,128 +65,117 @@ void MCL_MicroDrive_ZStage::GetName(char* name) const
 
 int MCL_MicroDrive_ZStage::Initialize()
 {
-	// BEGIN LOCKING -> make sure to unlock before any return call
+	if (initialized_)
+		return DEVICE_OK;
+
+	if (MCL_CorrectDriverVersion() == false)
+		return MCL_INVALID_DRIVER;
+
+	// BEGIN LOCKING
 	HandleListLock(); 
 
 	int err = DEVICE_OK;
-	std::stringstream ss;
-	bool valid = false;
-	unsigned char axisBitmap;
-	int possHandle = 0;
 
-	if (initialized_)
+	// Look for a new device that can function as a stage.
+	vector<int> skippedHandles;
+	bool validDevice = false;
+	int deviceHandle = 0;
+	int deviceAxis = 0;
+	unsigned short devicePid = 0;
+	unsigned char deviceAxisBitmap = 0;
+	do
 	{
-		err = DEVICE_OK;
-		goto ZSTAGE_INIT_EXIT;
-	}
-
-	if(!MCL_CorrectDriverVersion())
-	{
-		err = MCL_INVALID_DRIVER;
-		goto ZSTAGE_INIT_EXIT;
-	}
-
-	int numHandles = MCL_GrabAllHandles();
-	if (numHandles == 0)
-	{
-		err = MCL_INVALID_HANDLE;
-		goto ZSTAGE_INIT_EXIT;
-	}
-
-	int* handlesToUseOrRelease = NULL;
-	handlesToUseOrRelease = (int*) malloc(sizeof(int*) * numHandles);
-	MCL_GetAllHandles(handlesToUseOrRelease, numHandles);
-
-	HandleListType* device = (HandleListType*)GlobalHeapAllocate(sizeof(HandleListType));
-	device->Initialize(possHandle, Z_TYPE);
-
-	for (int i = 0; i < numHandles; i++)
-	{
-		possHandle = handlesToUseOrRelease[i];
-		device->setHandle(possHandle);
-
-		MCL_GetAxisInfo(&axisBitmap, possHandle);
-		
-		// By default use the Z axis.
-		bool validAxis = ((axisBitmap & VALIDZ) == VALIDZ);
-		if (validAxis)
+		deviceHandle = MCL_InitHandle();
+		if (deviceHandle != 0)
 		{
-			axis_  = ZAXIS;
-		}
-		// Otherwise use the X or Y axis of a single axis system.
-		else if ( (axisBitmap & (VALIDX | VALIDY) ) != (VALIDX | VALIDY) )
-		{
-			if ( (axisBitmap & AXIS_MASK) == VALIDX )
+			MCL_GetProductID(&devicePid, deviceHandle);
+			// Two axis systems should be controlled by a XY Stage class.
+			if (devicePid == MICRODRIVE || devicePid == NC_MICRODRIVE)
 			{
-				axis_ = XAXIS;
-				validAxis = true;
+				validDevice = false;
+				skippedHandles.push_back(deviceHandle);
 			}
-
-			if ( (axisBitmap & AXIS_MASK) == VALIDY )
-			{
-				axis_ = YAXIS;
-				validAxis = true;
-			}
-		}
-
-		if ((validAxis) && (!HandleExistsOnLockedList(device)) && (possHandle > 0))
-		{ 
-			valid = true;
-
-			HandleListAddToLockedList(device);
-			MCLhandle_ = possHandle;
-
-			unsigned short PID;
-			MCL_GetProductID(&PID, MCLhandle_);
-
-			if(PID == 0x2501)
-				isMD1_ = true;
 			else
-				isMD1_ = false;
-
-			// release handles not in use.
-			for (int j = i+1; j < numHandles; j++)
 			{
-				possHandle = handlesToUseOrRelease[j];
-				if (!HandleExistsOnLockedList(possHandle) && possHandle > 0)
-				{	
-					MCL_ReleaseHandle(possHandle);
+				validDevice = true;
+
+				// Discover all avaialble axes
+				MCL_GetAxisInfo(&deviceAxisBitmap, deviceHandle);
+
+				// Choose an available axis.
+				deviceAxis = ChooseAvailableStageAxis(devicePid, deviceAxisBitmap, deviceHandle);
+			}
+		}
+	} while (deviceHandle != 0 && validDevice == false);
+
+	// Release extra handles acquired while looking for a new device.
+	for (vector<int>::iterator it = skippedHandles.begin(); it != skippedHandles.end(); ++it)
+	{
+		MCL_ReleaseHandle(*it);
+	}
+
+	bool foundDevice = deviceHandle != 0 && validDevice == true;
+	
+	// If we did not find a new device matching our criteria.  Search through the devices that 
+	// we already control for an availble axis.
+	if (foundDevice == false)
+	{
+		int numExistingHandles = MCL_NumberOfCurrentHandles();
+		if (numExistingHandles > 0)
+		{
+			int* existingHandles = new int[numExistingHandles];
+			MCL_GetAllHandles(existingHandles, numExistingHandles);
+			for (int ii = 0; ii < numExistingHandles; ii++)
+			{
+				deviceHandle = existingHandles[ii];
+
+				MCL_GetProductID(&devicePid, deviceHandle);
+				// Skip two axis systems.
+				if (devicePid == MICRODRIVE || devicePid == NC_MICRODRIVE)
+					continue;
+
+				// Discover all avaialble axes
+				MCL_GetAxisInfo(&deviceAxisBitmap, deviceHandle);
+
+				// Choose an available axis.
+				deviceAxis = ChooseAvailableStageAxis(devicePid, deviceAxisBitmap, deviceHandle);
+				if (deviceAxis != 0)
+				{
+					foundDevice = true;
+					break;
 				}
 			}
-			break; // done, no need to check further
+			delete[] existingHandles;
 		}
-		else 
-		{ 
-			if (!HandleExistsOnLockedList(possHandle) && possHandle > 0)
-			{
-				MCL_ReleaseHandle(possHandle);
-			}
-		}
-   }
-   free (handlesToUseOrRelease);
-
-   if (!valid)
-   {
-	   GlobalHeapFree(device);
-	   err = MCL_INVALID_HANDLE;
-	   goto ZSTAGE_INIT_EXIT;
-   }
-
-	if(isMD1_)
-		MCL_MD1Information(&encoderResolution_, &stepSize_mm_, &maxVelocity_, &minVelocity_, MCLhandle_);
-	else
-	{
-		double ignore1, ignore2;
-		err = MCL_MicroDriveInformation(&encoderResolution_, &stepSize_mm_, &maxVelocity_, &ignore1, &ignore2, &minVelocity_, MCLhandle_);
 	}
-	ss << "Detected Encoder Resolution: " << encoderResolution_;
-	this->LogMessage(ss.str());
 
+	if (foundDevice == false)
+	{
+		HandleListUnlock();
+		return MCL_INVALID_HANDLE;
+	}
+
+	// Discover device information.
+	err = MCL_GetTirfModuleCalibration(&tirfModCalibrationMm_, deviceHandle);
+	if(err == MCL_SUCCESS)
+	{
+		deviceHasTirfModuleAxis_ = true;
+		if (IsAxisADefaultTirfModuleAxis(devicePid, deviceAxisBitmap, deviceAxis))
+		{
+			axisIsTirfModule_ = true;
+		}
+	}
+
+	double ignore1, ignore2;
+	err = MCL_MDInformation(&encoderResolution_, &stepSize_mm_, &maxVelocity_, &ignore1, &ignore2, &minVelocity_, deviceHandle);
 	if (err != MCL_SUCCESS)
-		goto ZSTAGE_INIT_EXIT;
-
+	{
+		HandleListUnlock();
+		return err;
+	}
 	velocity_ = maxVelocity_;
 
+	// Create properties
 	char velErrText[50];
 	sprintf(velErrText, "Velocity must be between %f and %f", minVelocity_, maxVelocity_);
 	SetErrorText(INVALID_VELOCITY, velErrText);
@@ -184,13 +184,23 @@ int MCL_MicroDrive_ZStage::Initialize()
 
 	err = UpdateStatus();
 	if (err != DEVICE_OK)
-		goto ZSTAGE_INIT_EXIT;
+	{
+		HandleListUnlock();
+		return err;
+	}
+
+	// Add device to global list
+	HandleListType device(deviceHandle, STAGE_TYPE, deviceAxis, 0);
+	HandleListAddToLockedList(device);
+
+	axis_ = deviceAxis;
+	handle_ = deviceHandle;
+	pid_ = devicePid;
 
 	initialized_ = true;
 
-	ZSTAGE_INIT_EXIT:
-		HandleListUnlock();
-		return err;
+	HandleListUnlock();
+	return err;
 }
 
 
@@ -199,21 +209,15 @@ int MCL_MicroDrive_ZStage::Shutdown()
 	//BEGIN LOCKING
 	HandleListLock();
 
-	HandleListType * device = new HandleListType(MCLhandle_, Z_TYPE);
-
+	HandleListType device(handle_, STAGE_TYPE, axis_, 0);
 	HandleListRemoveSingleItem(device);
+	if(!HandleExistsOnLockedList(handle_))
+		MCL_ReleaseHandle(handle_);
 
-	if(!HandleExistsOnLockedList(MCLhandle_))
-		MCL_ReleaseHandle(MCLhandle_);
-
-	delete device;
-
-	MCLhandle_ = 0;
-
+	handle_ = 0;
 	initialized_ = false;
 
 	HandleListUnlock();
-
 	//END LOCKING
 
 	return DEVICE_OK;
@@ -275,16 +279,43 @@ int MCL_MicroDrive_ZStage::GetPositionSteps(long& z)
 int MCL_MicroDrive_ZStage::SetOrigin()
 {
 	int err = MCL_SUCCESS;
-		
-	if(isMD1_)
-		err = MCL_MD1ResetEncoder(NULL, MCLhandle_);
-	else
-		err = MCL_MicroDriveResetZEncoder(NULL, MCLhandle_);
-
-	if (err != MCL_SUCCESS)
-		return err;
-
+	if (encoded_ && axis_ < M5AXIS)
+	{
+		err = MCL_MDResetEncoder(axis_, NULL, handle_);
+		if (err != MCL_SUCCESS)
+			return err;
+	}
 	lastZ_ = 0;
+	return DEVICE_OK;
+}
+
+
+int MCL_MicroDrive_ZStage::FindEpi()
+{
+	if (axisIsTirfModule_ == false)
+		return DEVICE_OK;
+
+	unsigned short status;
+	unsigned short mask = LimitBitMask(pid_, axis_, REVERSE);
+
+	MCL_MDStatus(&status, handle_);
+
+	// Move the stage to its reverse limit.
+	while ((status & mask) == mask)
+	{
+		SetRelativePositionMm(-.5);
+		MCL_MDStatus(&status, handle_);
+	}
+
+	// Set the orgin at the reverse limit.
+	SetOrigin();
+
+	// Move the calibration distance to find epi.
+	SetPositionMm(tirfModCalibrationMm_);
+
+	// Set the orgin at epi.
+	SetOrigin();
+
 	return DEVICE_OK;
 }
 
@@ -302,51 +333,9 @@ int MCL_MicroDrive_ZStage::IsStageSequenceable(bool& isSequenceable) const
 }
 
 
-int MCL_MicroDrive_ZStage::GetStageSequenceMaxLength(long& /*nrEvents*/) const
-{
-	return DEVICE_UNSUPPORTED_COMMAND;
-}
-
-
-int MCL_MicroDrive_ZStage::StartStageSequence() const
-{
-	return DEVICE_UNSUPPORTED_COMMAND;
-}
-
-
-int MCL_MicroDrive_ZStage::StopStageSequence() const
-{
-	return DEVICE_UNSUPPORTED_COMMAND;
-}
-
-
-int MCL_MicroDrive_ZStage::LoadStageSequence(std::vector<double> /*positions*/) const
-{
-	return DEVICE_UNSUPPORTED_COMMAND;
-}
-
-
 bool MCL_MicroDrive_ZStage::IsContinuousFocusDrive() const
 {
 	return false;
-}
-
-
-int MCL_MicroDrive_ZStage::ClearStageSequence()
-{
-	return DEVICE_UNSUPPORTED_COMMAND;
-}
-
-
-int MCL_MicroDrive_ZStage::AddToStageSequence(double /*position*/)
-{
-	return DEVICE_UNSUPPORTED_COMMAND;
-}
-
-
-int MCL_MicroDrive_ZStage::SendStageSequence() const
-{
-	return DEVICE_UNSUPPORTED_COMMAND;
 }
 
 
@@ -403,7 +392,7 @@ int MCL_MicroDrive_ZStage::OnSetOrigin(MM::PropertyBase* pProp, MM::ActionType e
 
 	return DEVICE_OK;
 }
-	
+
 	
 int MCL_MicroDrive_ZStage::OnCalibrate(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
@@ -546,6 +535,46 @@ int MCL_MicroDrive_ZStage::OnImToleranceUm(MM::PropertyBase* pProp, MM::ActionTy
 }
 
 
+int MCL_MicroDrive_ZStage::OnIsTirfModule(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::BeforeGet)
+	{
+		pProp->Set(axisIsTirfModule_ ? g_Listword_Yes : g_Listword_No);
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		string message;
+		pProp->Get(message);
+		axisIsTirfModule_ = (message.compare(g_Listword_Yes) == 0);
+	}
+	return DEVICE_OK;
+}
+
+
+int MCL_MicroDrive_ZStage::OnFindEpi(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	int err;
+	string message;
+
+	if (eAct == MM::BeforeGet)
+	{
+		pProp->Set(g_Listword_No);
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		pProp->Get(message);
+
+		if (message.compare(g_Listword_Yes) == 0)
+		{
+			err = FindEpi();
+			if (err != DEVICE_OK)
+				return err;
+		}
+	}
+	return DEVICE_OK;
+}
+
+
 int MCL_MicroDrive_ZStage::CreateZStageProperties()
 {
 	int err;
@@ -563,12 +592,12 @@ int MCL_MicroDrive_ZStage::CreateZStageProperties()
 		return err;
 
 	// Description property
-	err = CreateProperty(MM::g_Keyword_Description, "Z Stage Driver", MM::String, true);
+	err = CreateProperty(MM::g_Keyword_Description, "Stage Driver", MM::String, true);
 	if (err != DEVICE_OK)
 		return err;
 
 	// Device handle
-	sprintf(iToChar, "%d", MCLhandle_);
+	sprintf(iToChar, "%d", handle_);
 	err = CreateProperty("Handle", iToChar, MM::Integer, true);
 	if (err != DEVICE_OK)
 		return err;
@@ -584,6 +613,14 @@ int MCL_MicroDrive_ZStage::CreateZStageProperties()
 	err = CreateProperty("Minimum velocity (mm/s)", iToChar, MM::Float, true);
 	if (err != DEVICE_OK)
 		return err;
+
+	if (deviceHasTirfModuleAxis_)
+	{
+		sprintf(iToChar, "%f", tirfModCalibrationMm_);
+		err = CreateProperty("Distance to epi", iToChar, MM::Float, true);
+		if (err != DEVICE_OK)
+			return err;
+	}
 
 	///// Action properties
 
@@ -649,9 +686,29 @@ int MCL_MicroDrive_ZStage::CreateZStageProperties()
 	if (err != DEVICE_OK)
 		return err;
 
+	if (deviceHasTirfModuleAxis_)
+	{
+		// Axis is tirfModule
+		pAct = new CPropertyAction(this, &MCL_MicroDrive_ZStage::OnIsTirfModule);
+		err = CreateProperty(g_Keyword_IsTirfModuleAxis, axisIsTirfModule_ ? g_Listword_Yes : g_Listword_No, MM::String, false, pAct);
+		if (err != DEVICE_OK)
+			return err;
+		err = SetAllowedValues(g_Keyword_IsTirfModuleAxis, yesNoList);
+		if (err != DEVICE_OK)
+			return err;
+
+		// Find Epi
+		pAct = new CPropertyAction(this, &MCL_MicroDrive_ZStage::OnFindEpi);
+		err = CreateProperty(g_Keyword_FindEpi, "No", MM::String, false, pAct);
+		if (err != DEVICE_OK)
+			return err;
+		err = SetAllowedValues(g_Keyword_FindEpi, yesNoList);
+		if (err != DEVICE_OK)
+			return err;
+	}
+
 	return DEVICE_OK;
 }
-	
 
 int MCL_MicroDrive_ZStage::SetPositionMm(double goalZ)
 {
@@ -668,15 +725,24 @@ int MCL_MicroDrive_ZStage::SetPositionMm(double goalZ)
 	do 
 	{
 		double zMove = goalZ - zCurrent;
-		if(isMD1_)
-			err = MCL_MD1MoveProfile(velocity_, zMove, rounding_, MCLhandle_);
-		else
-			err = MCL_MicroDriveMoveProfile(axis_, velocity_, zMove, rounding_, MCLhandle_);
+		int startingMicroSteps = 0;
+		int endingMicroSteps = 0;
+		err = MCL_MDCurrentPositionM(axis_, &startingMicroSteps, handle_);
+		if (err != MCL_SUCCESS)
+			return err;
+
+		err = MCL_MDMove(axis_, velocity_, zMove, handle_);
 		if (err != MCL_SUCCESS)
 				return err;
-		lastZ_ += zMove;
-
+		busy_ = true;
 		PauseDevice();
+		busy_ = false;
+
+		err = MCL_MDCurrentPositionM(axis_, &endingMicroSteps, handle_);
+		if (err != MCL_SUCCESS)
+			return err;
+
+		lastZ_ += (endingMicroSteps - startingMicroSteps) * stepSize_mm_;
 
 		// Update current position
 		err = GetPositionMm(zCurrent);
@@ -720,35 +786,32 @@ int MCL_MicroDrive_ZStage::SetPositionMm(double goalZ)
 
 int MCL_MicroDrive_ZStage::GetPositionMm(double& z)
 {
-	double tempX, tempY, tempZ;
-
-	if (encoded_) 
+	if (encoded_ && axis_ < M5AXIS) 
 	{
-		if(isMD1_)
+		double tempM1, tempM2, tempM3, tempM4;
+		int err = MCL_MDReadEncoders(&tempM1, &tempM2, &tempM3, &tempM4, handle_);
+		if (err != MCL_SUCCESS)
+			return err;
+		switch (axis_)
 		{
-			int err = MCL_MD1ReadEncoder(&z, MCLhandle_);
-			if (err != MCL_SUCCESS)
-				return err;
-		}
-		else
-		{
-			int err = MCL_MicroDriveReadEncoders(&tempX, &tempY, &tempZ, MCLhandle_);
-			if (err != MCL_SUCCESS)
-				return err;
-
-			if(axis_ == ZAXIS)
-				z = tempZ;
-			else if(axis_ == XAXIS)
-				z = tempX;
-			else if(axis_ == YAXIS)
-				z = tempY;
+			case M1AXIS:
+				z = tempM1;
+				break;
+			case M2AXIS:
+				z = tempM2;
+				break;
+			case M3AXIS:
+				z = tempM3;
+				break;
+			case M4AXIS:
+				z = tempM4;
+				break;
 		}
 	}
 	else
 	{
 		z = lastZ_;
 	}
-
 	return DEVICE_OK;
 }
 
@@ -802,56 +865,98 @@ int MCL_MicroDrive_ZStage::Calibrate()
 int MCL_MicroDrive_ZStage::MoveToForwardLimit()
 {
 	int err;
-	unsigned char status = 0;
+	unsigned short status = 0;
 
-	err = MCL_MicroDriveStatus(&status, MCLhandle_);
+	err = MCL_MDStatus(&status, handle_);
 	if(err != MCL_SUCCESS)	
 		return err;
 
-	int LIMIT = 0;
-
-	if(isMD1_)
-		LIMIT = Y_FORWARD_LIMIT;
-	else if(axis_ == XAXIS)
-		LIMIT = X_FORWARD_LIMIT;
-	else if(axis_ == YAXIS)
-		LIMIT = Y_FORWARD_LIMIT;
-	else if(axis_ == ZAXIS)
-		LIMIT = Z_FORWARD_LIMIT;
-
-
-	while ((status & LIMIT) != 0)
+	unsigned short bitMask = LimitBitMask(pid_, axis_, FORWARD);
+	while ((status & bitMask) != 0)
 	{ 
 		err = SetRelativePositionUm(4000);
-
 		if (err != DEVICE_OK)
 			return err;
 
-		err = MCL_MicroDriveStatus(&status, MCLhandle_);
+		err = MCL_MDStatus(&status, handle_);
 		if (err != MCL_SUCCESS)	
 			return err;
 	}
-
 	return DEVICE_OK;
 }
 
 
 int MCL_MicroDrive_ZStage::ReturnToOrigin()
 {
-	int err;
-	err = SetPositionMm(0.0);
-	if (err != DEVICE_OK)
-		return err;
-
-	return DEVICE_OK;
+	return SetPositionMm(0.0);
 }
 
 
 void MCL_MicroDrive_ZStage::PauseDevice()
 {
-	int milliseconds;
+	MCL_MicroDriveWait(handle_);
+}
 
-	milliseconds = MCL_MicroDriveWait(MCLhandle_);
 
-	MCL_DeviceAttached(milliseconds + 1, MCLhandle_);
+// The handle list must be locked when calling this function.
+int MCL_MicroDrive_ZStage::ChooseAvailableStageAxis(unsigned short pid, unsigned char axisBitmap, int handle)
+{
+	int ordersize = 6;
+	int order[] = { M1AXIS, M2AXIS, M3AXIS, M4AXIS, M5AXIS, M6AXIS };
+
+	switch (pid)
+	{
+		// These devices should be used as XY Stage devices.
+		case MICRODRIVE:
+		case NC_MICRODRIVE:
+			return 0;
+		case MICRODRIVE3:
+		{
+			int neworder[] = { M3AXIS, M2AXIS, M1AXIS, 0, 0, 0 };
+			copy(neworder, neworder + ordersize, order);
+			break;
+		}
+		// For 4 and 6 axis systems leave M1/M2 for an XY Stage.
+		case MICRODRIVE4:
+		{
+			int neworder[] = { M3AXIS, M4AXIS, 0, 0, 0, 0 };
+			copy(neworder, neworder + ordersize, order);
+			break;
+		}
+		case MICRODRIVE6:
+		{
+			int neworder[] = { M3AXIS, M6AXIS, M4AXIS, M5AXIS, 0, 0 };
+			copy(neworder, neworder + ordersize, order);
+			break;
+		}
+		case MICRODRIVE1:
+		{
+			int neworder[] = { M1AXIS, M2AXIS, M3AXIS, 0, 0, 0 };
+			copy(neworder, neworder + ordersize, order);
+			break;
+		}
+			// Use the standard order.
+		default:
+			break;
+	}
+
+	int axis = 0;
+	for (int ii = 0; ii < ordersize; ii++)
+	{
+		if (order[ii] == 0)
+			break;
+
+		// Check that the axis is valid.
+		int bitmap = 0x1 << (order[ii] - 1);
+		if ((axisBitmap & bitmap) != bitmap)
+			continue;
+
+		HandleListType device(handle, STAGE_TYPE, order[ii], 0);
+		if (HandleExistsOnLockedList(device) == false)
+		{
+			axis = order[ii];
+			break;
+		}
+	}
+	return axis;
 }

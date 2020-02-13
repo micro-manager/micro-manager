@@ -43,6 +43,9 @@
     <ClInclude Include="DeviceUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="FixSnprintf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="ImageMetadata.h">
       <Filter>Header Files</Filter>
     </ClInclude>

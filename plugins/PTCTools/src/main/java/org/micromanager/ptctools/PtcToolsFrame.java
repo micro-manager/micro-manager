@@ -28,7 +28,6 @@ package org.micromanager.ptctools;
 
 
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JSpinner;
@@ -96,24 +95,24 @@ public class PtcToolsFrame extends MMFrame {
       add(nrFramesSp_, "w 60, wrap");
       
       MMFrame ptf = this;
-      JButton cancelButton = new JButton ("Cancel");
-      cancelButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent evt){
-            storeSettings();
-            ptf.setVisible(false);
-         }
+      JButton helpButton = new JButton("Help");
+      helpButton.addActionListener((ActionEvent e) -> {
+         new Thread(org.micromanager.internal.utils.GUIUtils.makeURLRunnable(
+                 "https://micro-manager.org/wiki/Photon_Transfer_Curve_Assistant")).start();
       });
-      add(cancelButton, "span 2, split 2, tag cancel");
+      add(helpButton, "span 2, split 3");
+      JButton cancelButton = new JButton ("Cancel");
+      cancelButton.addActionListener((ActionEvent evt) -> {
+         storeSettings();
+         ptf.setVisible(false);
+      });
+      add(cancelButton, "tag cancel");
       
       JButton okButton = new JButton("OK");
-      okButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent evt) {
-            storeSettings();
-            (new PtcToolsExecutor(studio_, settings_.toPropertyMap())).start();
-            ptf.setVisible(false);
-         }
+      okButton.addActionListener((ActionEvent evt) -> {
+         storeSettings();
+         (new PtcToolsExecutor(studio_, settings_.toPropertyMap())).start();
+         ptf.setVisible(false);
       });
       add(okButton, "tag ok");
       

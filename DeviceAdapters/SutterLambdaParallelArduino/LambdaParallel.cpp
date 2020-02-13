@@ -452,7 +452,7 @@ LambdaParallel::GetWheelPosition(int& position)
 int
 LambdaParallel::SetWheelPosition(int position)
 {
-   char ch = '0' + position;
+   char ch = '0' + static_cast<char>(position);
    if (ch < '0' || ch > '9')
       return DEVICE_ERR; // Shouldn't happen
 
@@ -492,7 +492,7 @@ LambdaParallel::GetWheelSpeed(int& speed)
 int
 LambdaParallel::SetWheelSpeed(int speed)
 {
-   char ch = '0' + speed;
+   char ch = '0' + static_cast<char>(speed);
    if (ch < '0' || ch > '7')
       return DEVICE_ERR; // Shouldn't happen
 
@@ -518,7 +518,7 @@ LambdaParallel::LoadPositionSequence(std::vector<int> seq)
    for (std::vector<int>::const_iterator it = seq.begin(), end = seq.end();
          it != end; ++it)
    {
-      command.push_back('0' + *it);
+      command.push_back('0' + static_cast<char>(*it));
    }
    std::string response;
    int err = SendRecv(command, response);

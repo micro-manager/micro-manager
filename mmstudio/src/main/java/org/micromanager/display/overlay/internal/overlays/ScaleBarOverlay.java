@@ -26,7 +26,6 @@ import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.geom.Rectangle2D;
 import java.util.List;
 import javax.swing.JCheckBox;
@@ -335,117 +334,89 @@ public final class ScaleBarOverlay extends AbstractOverlay {
 
       colorComboBox_ = new JComboBox(BarColor.values());
       colorComboBox_.setMaximumRowCount(BarColor.values().length);
-      colorComboBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            color_ = (BarColor) colorComboBox_.getSelectedItem();
-            fireOverlayConfigurationChanged();
-         }
+      colorComboBox_.addActionListener((ActionEvent e) -> {
+         color_ = (BarColor) colorComboBox_.getSelectedItem();
+         fireOverlayConfigurationChanged();
       });
 
       positionComboBox_ = new JComboBox(BarPosition.values());
-      positionComboBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            position_ = (BarPosition) positionComboBox_.getSelectedItem();
-            fireOverlayConfigurationChanged();
-         }
+      positionComboBox_.addActionListener((ActionEvent e) -> {
+         position_ = (BarPosition) positionComboBox_.getSelectedItem();
+         fireOverlayConfigurationChanged();
       });
 
       autoLengthRadio_ = new JRadioButton("Auto");
-      autoLengthRadio_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            if (autoLengthRadio_.isSelected()) {
-               autoLength_ = true;
-               drawLabel_ = true;
-               manualLengthRadio_.setSelected(false);
-               drawLabelCheckBox_.setSelected(true);
-               drawLabelCheckBox_.setEnabled(false);
-               fireOverlayConfigurationChanged();
-            }
+      autoLengthRadio_.addActionListener((ActionEvent e) -> {
+         if (autoLengthRadio_.isSelected()) {
+            autoLength_ = true;
+            drawLabel_ = true;
+            manualLengthRadio_.setSelected(false);
+            drawLabelCheckBox_.setSelected(true);
+            drawLabelCheckBox_.setEnabled(false);
+            fireOverlayConfigurationChanged();
          }
       });
 
       manualLengthRadio_ = new JRadioButton("");
-      manualLengthRadio_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            if (manualLengthRadio_.isSelected()) {
-               autoLength_ = false;
-               autoLengthRadio_.setSelected(false);
-               drawLabelCheckBox_.setEnabled(true);
-               fireOverlayConfigurationChanged();
-            }
+      manualLengthRadio_.addActionListener((ActionEvent e) -> {
+         if (manualLengthRadio_.isSelected()) {
+            autoLength_ = false;
+            autoLengthRadio_.setSelected(false);
+            drawLabelCheckBox_.setEnabled(true);
+            fireOverlayConfigurationChanged();
          }
       });
 
       fillBarCheckBox_ = new JCheckBox("Solid");
-      fillBarCheckBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            fillBar_ = fillBarCheckBox_.isSelected();
-            fireOverlayConfigurationChanged();
-         }
+      fillBarCheckBox_.addActionListener((ActionEvent e) -> {
+         fillBar_ = fillBarCheckBox_.isSelected();
+         fireOverlayConfigurationChanged();
       });
 
       drawLabelCheckBox_ = new JCheckBox("Show Label");
-      drawLabelCheckBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            drawLabel_ = drawLabelCheckBox_.isSelected();
-            fireOverlayConfigurationChanged();
-         }
+      drawLabelCheckBox_.addActionListener((ActionEvent e) -> {
+         drawLabel_ = drawLabelCheckBox_.isSelected();
+         fireOverlayConfigurationChanged();
       });
 
       lengthUmField_ = new DynamicTextField(4);
       lengthUmField_.setHorizontalAlignment(SwingConstants.RIGHT);
       lengthUmField_.setMinimumSize(lengthUmField_.getPreferredSize());
-      lengthUmField_.addDynamicTextFieldListener(new DynamicTextField.Listener() {
-         @Override
-         public void textFieldValueChanged(DynamicTextField source, boolean shouldForceValidation) {
-            handleLengthUm(shouldForceValidation);
-         }
+      lengthUmField_.addDynamicTextFieldListener(
+              (DynamicTextField source, boolean shouldForceValidation) -> {
+         handleLengthUm(shouldForceValidation);
       });
 
       thicknessField_ = new DynamicTextField(3);
       thicknessField_.setHorizontalAlignment(SwingConstants.RIGHT);
       thicknessField_.setMinimumSize(thicknessField_.getPreferredSize());
-      thicknessField_.addDynamicTextFieldListener(new DynamicTextField.Listener() {
-         @Override
-         public void textFieldValueChanged(DynamicTextField source, boolean shouldForceValidation) {
-            handleThickness(shouldForceValidation);
-         }
+      thicknessField_.addDynamicTextFieldListener(
+              (DynamicTextField source, boolean shouldForceValidation) -> {
+         handleThickness(shouldForceValidation);
       });
 
       fontSizeField_ = new DynamicTextField(3);
       fontSizeField_.setHorizontalAlignment(SwingConstants.RIGHT);
       fontSizeField_.setMinimumSize(fontSizeField_.getPreferredSize());
-      fontSizeField_.addDynamicTextFieldListener(new DynamicTextField.Listener() {
-         @Override
-         public void textFieldValueChanged(DynamicTextField source, boolean shouldForceValidation) {
-            handleFontSize(shouldForceValidation);
-         }
+      fontSizeField_.addDynamicTextFieldListener(
+              (DynamicTextField source, boolean shouldForceValidation) -> {
+         handleFontSize(shouldForceValidation);
       });
 
       xOffsetField_ = new DynamicTextField(3);
       xOffsetField_.setHorizontalAlignment(SwingConstants.RIGHT);
       xOffsetField_.setMinimumSize(xOffsetField_.getPreferredSize());
-      xOffsetField_.addDynamicTextFieldListener(new DynamicTextField.Listener() {
-         @Override
-         public void textFieldValueChanged(DynamicTextField source, boolean shouldForceValidation) {
-            handleOffset(SwingConstants.HORIZONTAL, shouldForceValidation);
-         }
+      xOffsetField_.addDynamicTextFieldListener(
+              (DynamicTextField source, boolean shouldForceValidation) -> {
+         handleOffset(SwingConstants.HORIZONTAL, shouldForceValidation);
       });
 
       yOffsetField_ = new DynamicTextField(3);
       yOffsetField_.setHorizontalAlignment(SwingConstants.RIGHT);
       yOffsetField_.setMinimumSize(yOffsetField_.getPreferredSize());
-      yOffsetField_.addDynamicTextFieldListener(new DynamicTextField.Listener() {
-         @Override
-         public void textFieldValueChanged(DynamicTextField source, boolean shouldForceValidation) {
-            handleOffset(SwingConstants.VERTICAL, shouldForceValidation);
-         }
+      yOffsetField_.addDynamicTextFieldListener(
+              (DynamicTextField source, boolean shouldForceValidation) -> {
+         handleOffset(SwingConstants.VERTICAL, shouldForceValidation);
       });
 
 

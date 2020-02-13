@@ -15,7 +15,6 @@ import org.micromanager.projector.ProjectionDevice;
 public class PointAndShootInfo {
    private final ProjectionDevice dev_;
    private final Point2D.Double devPoint_;
-   private final boolean originalShutterState_;
    private final Configuration originalConfig_;
    private final Point canvasPoint_;
    private final boolean stop_;
@@ -23,7 +22,6 @@ public class PointAndShootInfo {
    public static final class Builder {
       private ProjectionDevice dev_;
       private Point2D.Double devPoint_;
-      private boolean originalShutterState_;
       private Configuration originalConfig_;
       private Point canvasPoint_;
       private boolean stop_ = false;
@@ -38,11 +36,7 @@ public class PointAndShootInfo {
          return this;
       }
       
-      public Builder originalShutterState(boolean state) {
-         originalShutterState_ = state;
-         return this;
-      }
-      
+     
       public Builder originalConfig(Configuration config) {
          originalConfig_ = config;
          return this;
@@ -61,7 +55,6 @@ public class PointAndShootInfo {
       public PointAndShootInfo build() {
          return new PointAndShootInfo(dev_,
                  devPoint_,
-                 originalShutterState_,
                  originalConfig_,
                  canvasPoint_,
                   stop_);
@@ -71,14 +64,12 @@ public class PointAndShootInfo {
    
    private PointAndShootInfo(ProjectionDevice dev,
          Point2D.Double devPoint,
-         boolean originalShutterState,
          Configuration originalConfig,
          Point canvasPoint,
          boolean stop)
    {
       dev_ = dev;
       devPoint_ = devPoint;
-      originalShutterState_ = originalShutterState;
       originalConfig_ = originalConfig;
       canvasPoint_ = canvasPoint;
       stop_ = stop;
@@ -86,7 +77,6 @@ public class PointAndShootInfo {
    
    public ProjectionDevice getDevice() {return dev_;}
    public Point2D.Double getDevPoint() {return devPoint_;}
-   public Boolean getOriginalShutterState() {return originalShutterState_;}
    public Configuration getOriginalConfig() {return originalConfig_;}
    public Point getCanvasPoint() { return canvasPoint_;}
    public Boolean isStopped() {return stop_;}

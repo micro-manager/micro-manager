@@ -215,20 +215,27 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       }
    }
 
+   /**
+    * Note: because we use a UIManager to set the Look and Feel,
+    * the normal method to set the color of the button does not work.
+    * As a workaround, set a border that fills the complete button and 
+    * color it.  Works on Windows...
+    */
    private static final class ColorSwatch extends JButton {
       private Color color_ = Color.WHITE;
-
+      
       ColorSwatch() {
          super.setPreferredSize(new Dimension(16, 16));
          super.setMinimumSize(new Dimension(16, 16));
-         super.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
          super.setOpaque(true); // Needed for background to be drawn
+         super.setBorder(BorderFactory.createLineBorder(color_, 8));
          super.setBackground(color_);
       }
 
       void setColor(Color color) {
-         color_ = color;
-         setBackground(color_);
+         color_ = color;         
+         super.setBorder(BorderFactory.createLineBorder(color_, 8));
+         super.setBackground(color_);
       }
 
       Color getColor() {
@@ -307,18 +314,12 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             IconLoader.getIcon("/org/micromanager/icons/eye-out.png"));
       channelVisibleButton_.setSelectedIcon(
             IconLoader.getIcon("/org/micromanager/icons/eye.png"));
-      channelVisibleButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            handleVisible();
-         }
+      channelVisibleButton_.addActionListener((ActionEvent e) -> {
+         handleVisible();
       });
 
-      channelColorSwatch_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            handleColor(channelColorSwatch_.getColor());
-         }
+      channelColorSwatch_.addActionListener((ActionEvent e) -> {
+         handleColor(channelColorSwatch_.getColor());
       });
 
       Font buttonFont = fullscaleButton_.getFont().deriveFont(9.0f);
@@ -326,46 +327,33 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       fullscaleButton_.setFont(buttonFont);
       fullscaleButton_.setPreferredSize(new Dimension(72, 23));
       fullscaleButton_.setMaximumSize(new Dimension(72, 23));
-      fullscaleButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            handleFullscale();
-         }
+      fullscaleButton_.addActionListener((ActionEvent e) -> {
+         handleFullscale();
       });
       autostretchOnceButton_.setMargin(new Insets(0, 0, 0, 0));
       autostretchOnceButton_.setFont(buttonFont);
       autostretchOnceButton_.setPreferredSize(new Dimension(72, 23));
       autostretchOnceButton_.setMaximumSize(new Dimension(72, 23));
-      autostretchOnceButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            handleAutoscale();
-         }
+      autostretchOnceButton_.addActionListener((ActionEvent e) -> {
+         handleAutoscale();
       });
 
       histoRangeDownButton_.setMaximumSize(new Dimension(20, 20));
       histoRangeDownButton_.setIcon(IconLoader.getIcon(
             "/org/micromanager/icons/triangle_left.png"));
-      histoRangeDownButton_.addActionListener(new ActionListener() {
-         @Override
-         
-         public void actionPerformed(ActionEvent e) {
-            int index = histoRangeComboBox_.getSelectedIndex();
-            if (index > 0) {
-               histoRangeComboBox_.setSelectedIndex(index - 1);
-            }
+      histoRangeDownButton_.addActionListener((ActionEvent e) -> {
+         int index = histoRangeComboBox_.getSelectedIndex();
+         if (index > 0) {
+            histoRangeComboBox_.setSelectedIndex(index - 1);
          }
       });
       histoRangeUpButton_.setMaximumSize(new Dimension(20, 20));
       histoRangeUpButton_.setIcon(IconLoader.getIcon(
             "/org/micromanager/icons/triangle_right.png"));
-      histoRangeUpButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            int index = histoRangeComboBox_.getSelectedIndex();
-            if (index < histoRangeComboBoxModel_.getSize() - 1) {
-               histoRangeComboBox_.setSelectedIndex(index + 1);
-            }
+      histoRangeUpButton_.addActionListener((ActionEvent e) -> {
+         int index = histoRangeComboBox_.getSelectedIndex();
+         if (index < histoRangeComboBoxModel_.getSize() - 1) {
+            histoRangeComboBox_.setSelectedIndex(index + 1);
          }
       });
 
@@ -374,12 +362,9 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       histoRangeComboBox_.setFont(histoRangeComboBox_.getFont().deriveFont(10.0f));
       histoRangeComboBox_.setMaximumRowCount(16);
       histoRangeComboBox_.setSelectedItem("Camera Depth");
-      histoRangeComboBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            statsOrRangeChanged();
-            updateHistoRangeButtonStates();
-         }
+      histoRangeComboBox_.addActionListener((ActionEvent e) -> {
+         statsOrRangeChanged();
+         updateHistoRangeButtonStates();
       });
 
       // TODO This will actually be a popup button!
@@ -678,7 +663,6 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             settings.getChannelSettings(channelIndex_);
       channelVisibleButton_.setSelected(channelSettings.isVisible());
       channelColorSwatch_.setColor(channelSettings.getColor());
-      // TODO Name: this from dataset (on attachment, then listen)
       // TODO Component selector: this from dataset (on attachment, or first image)
       // TODO Error-free way to get number of components?
       int numComponents;
@@ -693,6 +677,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          numComponents = 1;
       }
       if (numComponents == 1) {
+         channelNameLabel_.setText(channelSettings.getName());
          histogram_.setComponentColor(0, channelSettings.getColor(),
                channelSettings.getColor());
          histogram_.setGamma(channelSettings.getComponentSettings(0).
