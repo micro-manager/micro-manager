@@ -53,7 +53,7 @@ public final class CalibrationListDlg extends MMDialog {
    private SpringLayout springLayout;
    private CMMCore core_;
    private CalibrationList calibrationList_;
-   private Studio parentGUI_;
+   private Studio studio_;
    private ConfigDialog configDialog_;
    private boolean disposed_ = false;
 
@@ -105,8 +105,8 @@ public final class CalibrationListDlg extends MMDialog {
                double val = Double.parseDouble(value.toString());
                core_.setPixelSizeUm(cal.getLabel(), val);
                cal.setPixelSizeUm(val);
-               ((MMStudio) parentGUI_).setConfigChanged(true);
-               parentGUI_.app().refreshGUI();
+               ((MMStudio) studio_).setConfigChanged(true);
+               studio_.app().refreshGUI();
             } catch (Exception e) {                                                              
                handleException(e);                                                               
             }  
@@ -204,11 +204,8 @@ public final class CalibrationListDlg extends MMDialog {
 
       final JButton newButton = new JButton();
       newButton.setFont(new Font("", Font.PLAIN, 10));
-      newButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            addNewCalibration();
-         }
+      newButton.addActionListener((ActionEvent arg0) -> {
+         addNewCalibration();
       });
       newButton.setText("New");
       super.getContentPane().add(newButton);
@@ -221,11 +218,8 @@ public final class CalibrationListDlg extends MMDialog {
 
       final JButton editButton = new JButton();
       editButton.setFont(new Font("", Font.PLAIN, 10));
-      editButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            editCalibration();
-         }
+      editButton.addActionListener((ActionEvent arg0) -> {
+         editCalibration();
       });
       editButton.setText("Edit");
       super.getContentPane().add(editButton);
@@ -242,11 +236,8 @@ public final class CalibrationListDlg extends MMDialog {
 
       final JButton removeButton = new JButton();
       removeButton.setFont(new Font("", Font.PLAIN, 10));
-      removeButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            removeCalibration();
-         }
+      removeButton.addActionListener((ActionEvent arg0) -> {
+         removeCalibration();
       });
      
       removeButton.setText("Remove");
@@ -264,11 +255,8 @@ public final class CalibrationListDlg extends MMDialog {
 
       final JButton removeAllButton = new JButton();
       removeAllButton.setFont(new Font("", Font.PLAIN, 10));
-      removeAllButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            removeAllCalibrations();
-         }
+      removeAllButton.addActionListener((ActionEvent arg0) -> {
+         removeAllCalibrations();
       });
       removeAllButton.setText("Remove All");
       super.getContentPane().add(removeAllButton);
@@ -282,11 +270,8 @@ public final class CalibrationListDlg extends MMDialog {
               SpringLayout.WEST, removeButton);
       final JButton closeButton = new JButton();
       closeButton.setFont(new Font("", Font.PLAIN, 10));
-      closeButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            dispose();
-         }
+      closeButton.addActionListener((ActionEvent arg0) -> {
+         dispose();
       });
 
       closeButton.setText("Close");
@@ -317,8 +302,8 @@ public final class CalibrationListDlg extends MMDialog {
          calibrationList_.getCalibrationsFromCore();
          CalTableModel ptm = (CalTableModel)calTable_.getModel();
          ptm.fireTableDataChanged();
-         ((MMStudio) parentGUI_).setConfigChanged(true);
-         parentGUI_.app().refreshGUI();
+         ((MMStudio) studio_).setConfigChanged(true);
+         studio_.app().refreshGUI();
       }
    }
 
@@ -339,15 +324,15 @@ public final class CalibrationListDlg extends MMDialog {
       if (editPreset(label, size, false)) {
          calibrationList_.getCalibrationsFromCore();
          ptm.fireTableDataChanged();
-         ((MMStudio) parentGUI_).setConfigChanged(true);
-         parentGUI_.app().refreshGUI();
+         ((MMStudio) studio_).setConfigChanged(true);
+         studio_.app().refreshGUI();
       }
    }
 
    public void updateCalibrations() {
       refreshCalibrations();
-      ((MMStudio) parentGUI_).setConfigChanged(true);
-      parentGUI_.app().refreshGUI();
+      ((MMStudio) studio_).setConfigChanged(true);
+      studio_.app().refreshGUI();
    }
    
    public void refreshCalibrations() {
@@ -361,15 +346,15 @@ public final class CalibrationListDlg extends MMDialog {
    }
 
    public void setParentGUI(Studio parent) {
-      parentGUI_ = parent;
-      parentGUI_.events().registerForEvents(this);
+      studio_ = parent;
+      studio_.events().registerForEvents(this);
    }
    
    @Override
    public void dispose() {
       if (!disposed_) {
-         if (parentGUI_ != null && !disposed_) {
-            parentGUI_.events().unregisterForEvents(this);
+         if (studio_ != null && !disposed_) {
+            studio_.events().unregisterForEvents(this);
          }
          if (configDialog_ != null) {
             configDialog_.dispose();
@@ -402,8 +387,8 @@ public final class CalibrationListDlg extends MMDialog {
          }
          calibrationList_.getCalibrationsFromCore();
          ptm.fireTableDataChanged();
-         parentGUI_.app().refreshGUI();
-         ((MMStudio) parentGUI_).setConfigChanged(true);
+         studio_.app().refreshGUI();
+         ((MMStudio) studio_).setConfigChanged(true);
       }
    }
 
@@ -422,8 +407,8 @@ public final class CalibrationListDlg extends MMDialog {
          calibrationList_.getCalibrationsFromCore();
          CalTableModel ptm = (CalTableModel)calTable_.getModel();
          ptm.fireTableDataChanged();
-         parentGUI_.app().refreshGUI();
-         ((MMStudio) parentGUI_).setConfigChanged(true);
+         studio_.app().refreshGUI();
+         ((MMStudio) studio_).setConfigChanged(true);
       }
    }
 
@@ -452,7 +437,7 @@ public final class CalibrationListDlg extends MMDialog {
    }
    
    public Studio getStudio() {
-      return parentGUI_;
+      return studio_;
    }
 
    private void handleException (Exception e) {
