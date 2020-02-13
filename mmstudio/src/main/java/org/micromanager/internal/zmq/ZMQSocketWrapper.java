@@ -252,6 +252,9 @@ public abstract class ZMQSocketWrapper {
          } else if (o.getClass().equals(byte[].class)) {
             json.put("type", "byte-array");
             json.put("value", encodeArray(o));
+         } else if (o.getClass().equals(short[].class)) {
+            json.put("type", "short-array");
+            json.put("value", encodeArray(o));
          } else if (o.getClass().equals(double[].class)) {
             json.put("type", "double-array");
             json.put("value", encodeArray(o));
