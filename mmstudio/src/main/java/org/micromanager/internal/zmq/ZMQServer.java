@@ -84,6 +84,7 @@ public class ZMQServer extends ZMQSocketWrapper {
       // track of the port to unbind from?
       if (executor_ != null) {
          executor_.shutdownNow();
+         socket_.close();
       }
    }
 
@@ -131,6 +132,13 @@ public class ZMQServer extends ZMQSocketWrapper {
 //            System.out.println("get object: " + hashCode);
             Object target = EXTERNAL_OBJECTS.get(hashCode);
             return runMethod(target, request);
+
+         }
+         case "get-field": {
+            String hashCode = request.getString("hash-code");
+//            System.out.println("get object: " + hashCode);
+            Object target = EXTERNAL_OBJECTS.get(hashCode);
+            return getField(target, request);
 
          }
          case "destructor": {
@@ -224,7 +232,7 @@ public class ZMQServer extends ZMQSocketWrapper {
                   classes.add(Class.forName(name.replace("/", ".").
                           substring(0, name.length() - 6)));
                } catch (ClassNotFoundException ex) {
-                  throw new RuntimeException(ex);
+                  studio_.logs().logError("Class not found in ZMQ server: " + name);
                }
             }
          }

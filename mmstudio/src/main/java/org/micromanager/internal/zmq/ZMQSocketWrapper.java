@@ -1,7 +1,9 @@
 package org.micromanager.internal.zmq;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -16,7 +18,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -91,6 +92,14 @@ public abstract class ZMQSocketWrapper {
 
    protected abstract byte[] parseAndExecuteCommand(String message) throws Exception;
 
+   protected byte[] getField(Object obj, JSONObject json) throws JSONException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException   {
+      String fieldName = json.getString("name");
+      Object field = obj.getClass().getField(fieldName).get(obj);
+      JSONObject serialized = new JSONObject();
+      serialize(field, serialized);
+      return serialized.toString().getBytes();
+   }
+   
    protected byte[] runMethod(Object obj, JSONObject json) throws NoSuchMethodException, IllegalAccessException, JSONException {
       String methodName = json.getString("name");
 
@@ -242,15 +251,15 @@ public abstract class ZMQSocketWrapper {
                  || o.getClass().equals(Double.class) || o.getClass().equals(Boolean.class)) {
             json.put("type", "primitive");
             json.put("value", o);
-         } else if (o.getClass().equals(TaggedImage.class)) {
+         } else if (o.getClass().equals(JSONObject.class)) {
             json.put("type", "object");
-            json.put("class", "TaggedImage");
-            json.put("value", new JSONObject());
-            json.getJSONObject("value").put("pixel-type", (((TaggedImage) o).pix instanceof byte[]) ? "uint8" : "uint16");
-            json.getJSONObject("value").put("tags", ((TaggedImage) o).tags);
-            json.getJSONObject("value").put("pix", encodeArray(((TaggedImage) o).pix));
+            json.put("class", "JSONObject");
+            json.put("value", o.toString());
          } else if (o.getClass().equals(byte[].class)) {
             json.put("type", "byte-array");
+            json.put("value", encodeArray(o));
+         } else if (o.getClass().equals(short[].class)) {
+            json.put("type", "short-array");
             json.put("value", encodeArray(o));
          } else if (o.getClass().equals(double[].class)) {
             json.put("type", "double-array");
@@ -302,6 +311,16 @@ public abstract class ZMQSocketWrapper {
             json.put("interfaces", e);
             for (Class c : apiInterfaces) {
                e.put(c.getName());
+            }
+
+            //copy in all public fields of the object
+            JSONArray f = new JSONArray();
+            json.put("fields", f);
+            for (Field field : o.getClass().getFields()) {
+               int modifiers = field.getModifiers();
+               if (Modifier.isPublic(modifiers)) {
+                  f.put(field.getName());
+               }
             }
 
             json.put("api", parseAPI(apiInterfaces));
