@@ -355,6 +355,17 @@ public final class CalibrationListDlg extends MMDialog {
       if (!disposed_) {
          if (studio_ != null && !disposed_) {
             studio_.events().unregisterForEvents(this);
+            MMStudio mmStudio = (MMStudio) studio_;
+            if (mmStudio.getIsConfigChanged()) {
+               Object[] options = {"Yes", "No"};
+               int userFeedback = JOptionPane.showOptionDialog(null,
+                       "Save Changed Pixel Configuration?", "Micro-Manager",
+                       JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
+                       null, options, options[0]);
+               if (userFeedback == JOptionPane.YES_OPTION) {
+                  mmStudio.promptToSaveConfigPresets();
+               }
+            }
          }
          if (configDialog_ != null) {
             configDialog_.dispose();
