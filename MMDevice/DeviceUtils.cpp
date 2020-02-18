@@ -193,7 +193,7 @@ bool CDeviceUtils::CheckEnvironment(std::string env)
 
 
 
-#ifdef _WINDOWS
+#if defined(_WIN32) && !defined(MMDEVICE_NO_GETTIMEOFDAY)
  
 int gettimeofday(struct timeval *tv, struct timezone *tz)
 {
