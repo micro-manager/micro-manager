@@ -221,7 +221,8 @@ public class ZMQServer extends ZMQSocketWrapper {
          String jarPath = Stream.of(directory.getAbsolutePath().split(File.pathSeparator))
                  .flatMap((String t) -> Stream.of(t.split("!")))
                  .filter((String t) -> t.contains(".jar")).findFirst().get();
-         JarFile jarFile = new JarFile(jarPath);
+         String jp = jarPath.replaceAll("%20", " ");
+         JarFile jarFile = new JarFile(jp);
          Enumeration<JarEntry> entries = jarFile.entries();
          while (entries.hasMoreElements()) {
             JarEntry entry = entries.nextElement();
@@ -237,7 +238,8 @@ public class ZMQServer extends ZMQSocketWrapper {
             }
          }
       } catch (IOException ex) {
-         throw new RuntimeException(ex);
+         studio_.logs().logError(ex);
+         //throw new RuntimeException(ex);
       }
 
       return classes;
