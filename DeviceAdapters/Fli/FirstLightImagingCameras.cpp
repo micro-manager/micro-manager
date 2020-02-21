@@ -72,6 +72,13 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 }
 
 //---------------------------------------------------------------
+void onImageReceived(const uint8_t* image, void* ctx)
+{
+	FirstLightImagingCameras* context = static_cast<FirstLightImagingCameras*>(ctx);
+	context->imageReceived(image);
+}
+
+//---------------------------------------------------------------
 FirstLightImagingCameras::FirstLightImagingCameras(std::string cameraName) :
 	_initialized(false),
 	_cameraName(cameraName),
@@ -107,6 +114,8 @@ FirstLightImagingCameras::FirstLightImagingCameras(std::string cameraName) :
 				_credThree = true;
 			}
 
+			_callbackCtx = FliSdk_addCallbackNewImage(onImageReceived, 0, this);
+			FliSdk_start();
 			_refreshThread = new FliThreadImp(this);
 			_refreshThread->activate();
 		}
@@ -198,6 +207,9 @@ void FirstLightImagingCameras::createProperties()
 //---------------------------------------------------------------
 void FirstLightImagingCameras::imageReceived(const uint8_t* image)
 {
+	if (!_isCapturing)
+		return;
+
 	unsigned int w = GetImageWidth();
 	unsigned int h = GetImageHeight();
 	unsigned int b = GetImageBytesPerPixel();
@@ -218,10 +230,6 @@ void FirstLightImagingCameras::imageReceived(const uint8_t* image)
 		core->ClearImageBuffer(this);
 		core->InsertImage(this, image, w, h, b, 1, md.Serialize().c_str(), false);
 	}
-
-	_numImages--;
-	if (!_numImages)
-		StopSequenceAcquisition();
 }
 
 //---------------------------------------------------------------
@@ -384,36 +392,12 @@ unsigned FirstLightImagingCameras::GetImageBytesPerPixel() const
 //---------------------------------------------------------------
 int FirstLightImagingCameras::SnapImage()
 {
-	if (FliSdk_isStarted())
-		FliSdk_stop();
-	FliSdk_enableGrabN(10);
-	FliSdk_start();
-#ifdef WIN32
-		Sleep(50);
-#else
-		usleep(50 * 1000);
-#endif
 	return DEVICE_OK;
 }
 
 //---------------------------------------------------------------
-void onImageReceived(const uint8_t* image, void* ctx)
+int FirstLightImagingCameras::StartSequenceAcquisition(long /*numImages*/, double /*interval_ms*/, bool /*stopOnOverflow*/)
 {
-	FirstLightImagingCameras* context = static_cast<FirstLightImagingCameras*>(ctx);
-	context->imageReceived(image);
-}
-
-//---------------------------------------------------------------
-int FirstLightImagingCameras::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
-{
-	(void)stopOnOverflow;
-	_callbackCtx = FliSdk_addCallbackNewImage(onImageReceived, (uint16_t)_fpsTrigger, this);
-	if (FliSdk_isStarted())
-		FliSdk_stop();
-	FliSdk_disableGrabN();
-	FliSdk_start();
-	_fpsTrigger = interval_ms == 0 ? 0 : 1.0 / interval_ms;
-	_numImages = numImages;
 	_isCapturing = true;
 	return DEVICE_OK;
 }
@@ -421,8 +405,6 @@ int FirstLightImagingCameras::StartSequenceAcquisition(long numImages, double in
 //---------------------------------------------------------------
 int FirstLightImagingCameras::StopSequenceAcquisition()
 {
-	FliSdk_stop();
-	FliSdk_removeCallbackNewImage(_callbackCtx);
 	_isCapturing = false;
 	return DEVICE_OK;
 }
@@ -553,6 +535,7 @@ int FirstLightImagingCameras::onDetectCameras(MM::PropertyBase* pProp, MM::Actio
 		_refreshThread->exit();
 		_refreshThread->wait();
 		delete _refreshThread;
+		FliSdk_stop();
 
 		if (detect == "1")
 		{
@@ -583,6 +566,7 @@ int FirstLightImagingCameras::onDetectCameras(MM::PropertyBase* pProp, MM::Actio
 						_credThree = true;
 					}
 
+					FliSdk_start();
 					_refreshThread = new FliThreadImp(this);
 					_refreshThread->activate();
 				}
