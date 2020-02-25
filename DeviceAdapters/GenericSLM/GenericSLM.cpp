@@ -396,6 +396,12 @@ int GenericSLM::DisplayImage()
       return ERR_NO_DISPLAY_CONTEXT;
    }
    DWORD result = offscreen->BlitTo(onscreenDC, op);
+   // Wait until the image is actually displayed
+   ret = refreshWaiter_.WaitForVerticalBlank();
+   if (ret != DEVICE_OK)
+   {
+      return ret;
+   }
    // TODO use FormatMessage function to generate error string
 
    // If we do not release the HDC< we'll run out of available contexts
