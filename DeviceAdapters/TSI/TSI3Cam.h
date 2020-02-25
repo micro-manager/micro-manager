@@ -169,6 +169,7 @@ private:
    ImgBuffer img;
 	std::vector<unsigned short> demosaicBuffer;
    bool initialized;
+   bool prepared;
 	static bool globalColorInitialized;
 	static bool globalPolarizationInitialized;
    bool stopOnOverflow;
