@@ -949,12 +949,12 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    @Override
    public void setZoom(double ratio) {
-      throw new UnsupportedOperationException();
+       setDisplaySettings(getDisplaySettings().copyBuilder().zoomRatio(ratio).build());
    }
 
    @Override
    public void adjustZoom(double factor) {
-      throw new UnsupportedOperationException();
+      this.setZoom(this.getZoom()*factor);
    }
 
    @Override
