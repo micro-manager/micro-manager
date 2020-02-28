@@ -1219,10 +1219,9 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       int j = 0;
       String script;
       boolean isFile = false;
-      UserProfile profile = studio_.profile();
       model_.RemoveAllScripts();
       do {
-         script = profile.getString(ScriptPanel.class, SCRIPT_FILE + j, null);
+         script = settings_.getString(SCRIPT_FILE + j, null);
          if ( (script != null) && (!script.equals("") ) )
          {
             File file = new File(script);
@@ -1243,9 +1242,15 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
 
    public void saveScriptsToPrefs ()
    { 
+      // first clear existing entries
+      int i = 0;
+      while (settings_.containsString(SCRIPT_FILE + i)) {
+         settings_.remove(SCRIPT_FILE + i);
+         i++;
+      }
       File file;
       ArrayList<File> scriptFileArray = model_.getFileArray();
-      for (int i = 0; i < scriptFileArray.size(); i ++) 
+            for (i = 0; i < scriptFileArray.size(); i ++) 
       {
          file = scriptFileArray.get(i);
          if (file != null) {

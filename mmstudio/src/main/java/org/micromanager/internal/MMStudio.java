@@ -328,9 +328,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       posList_ = new PositionList();
       acqEngine_.setPositionList(posList_);
 
-      // Load (but do no show) the scriptPanel
-      createScriptPanel();
-      scriptPanel_.getScriptsFromPrefs();
       
       // Tell Core to start logging
       initializeLogging(core_);
@@ -461,8 +458,10 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
             IJ.getInstance().setLocation(150, 150);
          }
       }
-
-
+      
+      // Load (but do no show) the scriptPanel
+      createScriptPanel();
+      
       // Now create and show the main window
       mmMenuBar_ = MMMenuBar.createMenuBar(studio_);
       frame_ = new MainFrame(this, core_);
@@ -1155,6 +1154,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
   
       if (scriptPanel_ != null) {
          scriptPanel_.closePanel();
+         scriptPanel_ = null;
       }
 
       if (pipelineFrame_ != null) {
