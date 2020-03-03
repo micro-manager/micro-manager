@@ -92,7 +92,15 @@ public final class CopyToImageJItem implements DisplayGearMenuPlugin, SciJavaPlu
                for (int z = 0; z <= dp.getMaxIndices().getZ(); z++) {
                   for (int c = 0; c <= dp.getMaxIndices().getC(); c++) {
                      image = dp.getImage(cb.c(c).t(t).z(z).build());
-                     ImageProcessor iProc = DefaultImageJConverter.createProcessor(image, copy);
+                     ImageProcessor iProc;
+                     if (image != null) {
+                        iProc = DefaultImageJConverter.createProcessor(                            
+                             image, copy);
+                     } else { // handle missing images - should be handled by MM
+                              // so remove this code once this is done nicely in MM
+                        iProc = DefaultImageJConverter.createBlankProcessor(
+                                dp.getAnyImage());
+                     }
                      imgStack.addSlice(iProc);
                   }
                }
