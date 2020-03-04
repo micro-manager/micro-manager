@@ -16,9 +16,9 @@
 //
 package org.micromanager.magellan.internal.datasaving;
 
-import org.micromanager.magellan.internal.coordinates.MagellanAffineUtils;
+import org.micromanager.acqj.internal.acqengj.affineTransformUtils;
 import org.micromanager.magellan.internal.coordinates.PositionManager;
-import org.micromanager.magellan.internal.coordinates.XYStagePosition;
+import org.micromanager.acqj.api.XYStagePosition;
 import java.awt.Point;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
@@ -48,7 +48,7 @@ import org.micromanager.magellan.internal.imagedisplay.DisplaySettings;
 import org.micromanager.magellan.internal.misc.JavaUtils;
 import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.magellan.internal.misc.LongPoint;
-import org.micromanager.magellan.internal.misc.MD;
+import org.micromanager.acqj.api.AcqEngMetadata;
 
 /**
  * This class manages multiple multipage Tiff datasets, averaging multiple 2x2
@@ -110,19 +110,19 @@ public class MultiResMultipageTiffStorage {
          TreeMap<Integer, XYStagePosition> positions = new TreeMap<Integer, XYStagePosition>();
          for (String key : fullResStorage_.imageKeys()) {
             // array with entires channelIndex, sliceIndex, frameIndex, positionIndex
-            int[] indices = MD.getIndices(key);
+            int[] indices = AcqEngMetadata.getIndices(key);
             int posIndex = indices[3];
             if (!positions.containsKey(posIndex)) {
                //read rowIndex, colIndex, stageX, stageY from per image metadata
                JSONObject md = fullResStorage_.getImageTags(indices[0], indices[1], indices[2], indices[3]);
-               positions.put(posIndex, new XYStagePosition(new Point2D.Double(MD.getStageX(md), MD.getStageY(md)),
-                       MD.getGridRow(md), MD.getGridCol(md), MD.getCoreXY(md)));
+               positions.put(posIndex, new XYStagePosition(new Point2D.Double(AcqEngMetadata.getStageX(md), AcqEngMetadata.getStageY(md)),
+                       AcqEngMetadata.getGridRow(md), AcqEngMetadata.getGridCol(md), AcqEngMetadata.getCoreXY(md)));
             }
          }
          JSONArray pList = new JSONArray();
          for (XYStagePosition xyPos : positions.values()) {
 //            pList.put(xyPos.getMMPosition(MD.getCoreXY(summaryMD_)));
-            pList.put(xyPos.getMMPosition());
+            pList.put(xyPos.toJSON());
          }
          posManager_ = new PositionManager(affine_, summaryMD_, tileWidth_, tileHeight_, tileWidth_, tileHeight_,
                  xOverlap_, xOverlap_, pList, lowResStorages_.size());
@@ -207,17 +207,17 @@ public class MultiResMultipageTiffStorage {
    }
 
    private void processSummaryMetadata() {
-      rgb_ = MD.isRGB(summaryMD_);
-      xOverlap_ = MD.getPixelOverlapX(summaryMD_);
-      yOverlap_ = MD.getPixelOverlapY(summaryMD_);
-      byteDepth_ = MD.getBytesPerPixel(summaryMD_);
-      fullResTileWidthIncludingOverlap_ = MD.getWidth(summaryMD_);
-      fullResTileHeightIncludingOverlap_ = MD.getHeight(summaryMD_);
+      rgb_ = AcqEngMetadata.isRGB(summaryMD_);
+      xOverlap_ = AcqEngMetadata.getPixelOverlapX(summaryMD_);
+      yOverlap_ = AcqEngMetadata.getPixelOverlapY(summaryMD_);
+      byteDepth_ = AcqEngMetadata.getBytesPerPixel(summaryMD_);
+      fullResTileWidthIncludingOverlap_ = AcqEngMetadata.getWidth(summaryMD_);
+      fullResTileHeightIncludingOverlap_ = AcqEngMetadata.getHeight(summaryMD_);
       tileWidth_ = fullResTileWidthIncludingOverlap_ - xOverlap_;
       tileHeight_ = fullResTileHeightIncludingOverlap_ - yOverlap_;
-      pixelSizeZ_ = MD.getZStepUm(summaryMD_);
-      pixelSizeXY_ = MD.getPixelSizeUm(summaryMD_);
-      affine_ = MagellanAffineUtils.stringToTransform(MD.getAffineTransformString(summaryMD_));
+      pixelSizeZ_ = AcqEngMetadata.getZStepUm(summaryMD_);
+      pixelSizeXY_ = AcqEngMetadata.getPixelSizeUm(summaryMD_);
+      affine_ = affineTransformUtils.stringToTransform(AcqEngMetadata.getAffineTransformString(summaryMD_));
    }
 
    public int getByteDepth() {
@@ -591,9 +591,9 @@ public class MultiResMultipageTiffStorage {
    private List<Future> addToLowResStorage(TaggedImage img, int previousResIndex, int fullResPositionIndex) {
       List<Future> writeFinishedList = new ArrayList<>();
       //Read indices
-      int channel = MD.getChannelIndex(img.tags);
-      int slice = MD.getSliceIndex(img.tags);
-      int frame = MD.getFrameIndex(img.tags);
+      int channel = AcqEngMetadata.getChannelIndex(img.tags);
+      int slice = AcqEngMetadata.getSliceIndex(img.tags);
+      int frame = AcqEngMetadata.getFrameIndex(img.tags);
 
       Object previousLevelPix = img.pix;
       int resolutionIndex = previousResIndex + 1;
@@ -632,12 +632,12 @@ public class MultiResMultipageTiffStorage {
                // while waiting for being written to disk
                JSONObject tags = new JSONObject(img.tags.toString());
                //modify tags to reflect image size, and correct position index
-               MD.setWidth(tags, tileWidth_);
-               MD.setHeight(tags, tileHeight_);
+               AcqEngMetadata.setWidth(tags, tileWidth_);
+               AcqEngMetadata.setHeight(tags, tileHeight_);
                long gridRow = posManager_.getGridRow(fullResPositionIndex, resolutionIndex);
                long gridCol = posManager_.getGridCol(fullResPositionIndex, resolutionIndex);
-               MD.setPositionName(tags, "Grid_" + gridRow + "_" + gridCol);
-               MD.setPositionIndex(tags, posManager_.getLowResPositionIndex(fullResPositionIndex, resolutionIndex));
+               AcqEngMetadata.setPositionName(tags, "Grid_" + gridRow + "_" + gridCol);
+               AcqEngMetadata.setPositionIndex(tags, posManager_.getLowResPositionIndex(fullResPositionIndex, resolutionIndex));
                Future f = lowResStorages_.get(resolutionIndex).putImage(new TaggedImage(currentLevelPix, tags));
                //need to make sure this one gets written before others can be overwritten
                f.get();
@@ -670,8 +670,8 @@ public class MultiResMultipageTiffStorage {
       try {
          JSONObject smd = new JSONObject(summaryMD_.toString());
          //reset dimensions so that overlap not included
-         MD.setWidth(smd, tileWidth_);
-         MD.setHeight(smd, tileHeight_);
+         AcqEngMetadata.setWidth(smd, tileWidth_);
+         AcqEngMetadata.setHeight(smd, tileHeight_);
          TaggedImageStorageMultipageTiff storage = new TaggedImageStorageMultipageTiff(dsDir, true, smd, writingExecutor_, this);
          lowResStorages_.put(resIndex, storage);
       } catch (Exception ex) {
@@ -693,7 +693,7 @@ public class MultiResMultipageTiffStorage {
          int maxResIndex = (int) Math.ceil(Math.log((Math.max(fullResPixelWidth, fullResPixelHeight)
                  / 4)) / Math.log(2));
          addResolutionsUpTo(maxResIndex);
-         writeFinishedList.addAll(addToLowResStorage(MagellanTaggedImage, 0, MD.getPositionIndex(MagellanTaggedImage.tags)));
+         writeFinishedList.addAll(addToLowResStorage(MagellanTaggedImage, 0, AcqEngMetadata.getPositionIndex(MagellanTaggedImage.tags)));
          for (Future f : writeFinishedList) {
             f.get();
          }
@@ -872,7 +872,7 @@ public class MultiResMultipageTiffStorage {
       });
       Set<String> keys = new TreeSet<String>(imageKeys());
       for (String s : keys) {
-         int[] indices = MD.getIndices(s);
+         int[] indices = AcqEngMetadata.getIndices(s);
          if (indices[1] == sliceIndex) {
             exploredTiles.add(new Point((int) posManager_.getGridCol(indices[3], 0), (int) posManager_.getGridRow(indices[3], 0)));
          }
@@ -904,7 +904,7 @@ public class MultiResMultipageTiffStorage {
          String[] indices = key.split("_");
          if (!channelIndices.contains(indices[0])) {
             channelIndices.add(indices[0]);
-            channelNames.add(MD.getChannelName(getImageTags(
+            channelNames.add(AcqEngMetadata.getChannelName(getImageTags(
                     Integer.parseInt(indices[0]), Integer.parseInt(indices[1]),
                     Integer.parseInt(indices[2]), Integer.parseInt(indices[3]))));
          }

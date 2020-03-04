@@ -17,6 +17,7 @@
 
 package org.micromanager.magellan.internal.coordinates;
 
+import org.micromanager.acqj.api.XYStagePosition;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
@@ -30,7 +31,7 @@ import org.json.JSONObject;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.magellan.internal.misc.LongPoint;
-import org.micromanager.magellan.internal.misc.MD;
+import org.micromanager.acqj.api.AcqEngMetadata;
 
 
 
@@ -254,8 +255,8 @@ public class PositionManager {
          for (int h = 0; h < posIndices.length; h++) {
             //check if position is already present in list, and if so, return its index
             for (int i = 0; i < positionList_.length(); i++) {
-               if (MD.getGridRow(positionList_.getJSONObject(i)) == rows[h]
-                       && MD.getGridCol(positionList_.getJSONObject(i)) == cols[h]) {
+               if (AcqEngMetadata.getGridRow(positionList_.getJSONObject(i)) == rows[h]
+                       && AcqEngMetadata.getGridCol(positionList_.getJSONObject(i)) == cols[h]) {
                   //we already have position, so return its index
                   posIndices[h] = i;
                   continue outerloop;
@@ -291,10 +292,10 @@ public class PositionManager {
             Log.log("Unexpected error reading positio list");
             throw new RuntimeException();
          }
-         minRow_ = (int) Math.min(MD.getGridRow(pos), minRow_);
-         minCol_ = (int) Math.min(MD.getGridCol(pos), minCol_);
-         maxRow_ = (int) Math.max(MD.getGridRow(pos), maxRow_); 
-         maxCol_ = (int) Math.max(MD.getGridCol(pos), maxCol_);
+         minRow_ = (int) Math.min(AcqEngMetadata.getGridRow(pos), minRow_);
+         minCol_ = (int) Math.min(AcqEngMetadata.getGridCol(pos), minCol_);
+         maxRow_ = (int) Math.max(AcqEngMetadata.getGridRow(pos), maxRow_); 
+         maxCol_ = (int) Math.max(AcqEngMetadata.getGridCol(pos), maxCol_);
       }
    }
 
@@ -306,7 +307,7 @@ public class PositionManager {
             updateMinAndMaxRowsAndCols();
             updateLowerResolutionNodes(); //make sure nodes created for all preexisiting positions
          } else {
-            positionList_ = new JSONArray();
+            throw new RuntimeException("Missing initialpositionlist");
          }
       } catch (JSONException e) {
          Log.log("Couldn't read initial position list");
@@ -324,8 +325,8 @@ public class PositionManager {
          coords.put(xyStageName_, xy);
          JSONObject pos = new JSONObject();
          pos.put(COORDINATES_KEY, coords);
-         MD.setGridCol(pos, col);
-         MD.setGridRow(pos, row);
+         AcqEngMetadata.setGridCol(pos, col);
+         AcqEngMetadata.setGridRow(pos, row);
          pos.put(PROPERTIES_KEY, new JSONObject());
 
          return pos;
@@ -346,7 +347,7 @@ public class PositionManager {
                positionNodes_.put(0, new TreeSet<MultiResPositionNode>());
             }
             //add node in case its a new position
-            MultiResPositionNode n = new MultiResPositionNode(0,MD.getGridRow(position),MD.getGridCol(position));
+            MultiResPositionNode n = new MultiResPositionNode(0,AcqEngMetadata.getGridRow(position),AcqEngMetadata.getGridCol(position));
             positionNodes_.get(0).add(n);
             n.positionIndex = i;
             position.getJSONObject(PROPERTIES_KEY).put(MULTI_RES_NODE_KEY, n);
@@ -436,8 +437,8 @@ public class PositionManager {
           JSONObject existingPosition = new JSONObject(positionList_.getJSONObject(0).toString());
          double exisitngX = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(0);
          double exisitngY = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(1);
-         long existingRow = MD.getGridRow(existingPosition);
-         long existingColumn = MD.getGridCol(existingPosition);
+         long existingRow = AcqEngMetadata.getGridRow(existingPosition);
+         long existingColumn = AcqEngMetadata.getGridCol(existingPosition);
   
          //get stage displacement from center of the tile we have coordinates for
          double dx = stageX - exisitngX;
@@ -473,8 +474,8 @@ public class PositionManager {
          JSONObject existingPosition = positionList_.getJSONObject(0);
          double exisitngX = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(0);
          double exisitngY = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(1);        
-         long existingRow = MD.getGridRow(existingPosition);
-         long existingColumn = MD.getGridCol(existingPosition);
+         long existingRow = AcqEngMetadata.getGridRow(existingPosition);
+         long existingColumn = AcqEngMetadata.getGridCol(existingPosition);
          //get pixel displacement from center of the tile we have coordinates for
          long dxPix = (long) (xAbsolute - (existingColumn + 0.5) * displayTileWidth_);
          long dyPix = (long) (yAbsolute - (existingRow + 0.5) * displayTileHeight_);
@@ -518,8 +519,8 @@ public class PositionManager {
 
             double exisitngX = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(0);
             double exisitngY = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(1);   
-            long existingRow = MD.getGridRow(existingPosition);
-            long existingColumn = MD.getGridCol(existingPosition);
+            long existingRow = AcqEngMetadata.getGridRow(existingPosition);
+            long existingColumn = AcqEngMetadata.getGridCol(existingPosition);
 
             double xPixelOffset = (col - existingColumn) * (Magellan.getCore().getImageWidth() - pixelOverlapX);
             double yPixelOffset = (row - existingRow) * (Magellan.getCore().getImageHeight() - pixelOverlapY);

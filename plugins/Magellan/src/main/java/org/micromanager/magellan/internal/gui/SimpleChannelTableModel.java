@@ -16,14 +16,13 @@
 //
 package org.micromanager.magellan.internal.gui;
 
-import com.google.common.eventbus.Subscribe;
 import java.awt.Color;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
-import org.micromanager.magellan.internal.channels.MagellanChannelSpec;
 import org.micromanager.magellan.internal.main.Magellan;
 import mmcorej.CMMCore;
+import org.micromanager.magellan.internal.channels.MagellanChannelGroupSettings;
 
 /**
  *
@@ -31,7 +30,7 @@ import mmcorej.CMMCore;
  */
 public class SimpleChannelTableModel extends AbstractTableModel implements TableModelListener {
 
-   private MagellanChannelSpec channels_;
+   private MagellanChannelGroupSettings channels_;
    private final CMMCore core_;
    private final boolean exploreTable_;
    private boolean selectAll_ = true;
@@ -42,7 +41,7 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
       "Z-offset (um)",
       "Color",};
 
-   public SimpleChannelTableModel(MagellanChannelSpec channels, boolean showColor) {
+   public SimpleChannelTableModel(MagellanChannelGroupSettings channels, boolean showColor) {
       exploreTable_ = !showColor;
       core_ = Magellan.getCore();
       channels_ = channels;
@@ -72,7 +71,7 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
       }
    }
 
-   public void setChannels(MagellanChannelSpec channels) {
+   public void setChannels(MagellanChannelGroupSettings channels) {
       channels_ = channels;
    }
 
@@ -107,7 +106,7 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
       } else if (columnIndex == 3) {
          return channels_.getChannelListSetting(rowIndex).offset_;
       } else {
-         return channels_.getChannelListSetting(rowIndex).color_;
+         return (Color) channels_.getChannelListSetting(rowIndex).getProperty("Color");
       }
    }
 
@@ -157,10 +156,11 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
          double val = value instanceof String ? Double.parseDouble((String) value) : (Double) value;
          channels_.getChannelListSetting(row).offset_ = val;
       } else {
-         channels_.getChannelListSetting(row).color_ = ((Color) value);
+         channels_.getChannelListSetting(row).setProperty("Color", value);
       }
       //Store the newly selected value in preferences
-      channels_.storeCurrentSettingsInPrefs();
+      channels_.storeValuesInPrefs();
+
    }
 
    @Override
@@ -171,6 +171,5 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
    @Override
    public void tableChanged(TableModelEvent e) {
    }
-
 
 }

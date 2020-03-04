@@ -38,7 +38,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.magellan.internal.imagedisplay.DisplaySettings;
 import org.micromanager.magellan.internal.misc.Log;
-import org.micromanager.magellan.internal.misc.MD;
+import org.micromanager.acqj.api.AcqEngMetadata;
 
 
 public class MultipageTiffReader {
@@ -189,7 +189,7 @@ public class MultipageTiffReader {
 
    private void getRGBAndByteDepth(JSONObject md) {
       try {
-         String pixelType = MD.getPixelType(md);
+         String pixelType = AcqEngMetadata.getPixelType(md);
          rgb_ = pixelType.startsWith("RGB");
          
             if (pixelType.equals("RGB32") || pixelType.equals("GRAY8")) {
@@ -312,7 +312,7 @@ public class MultipageTiffReader {
          }
          //If a duplicate label is read, forget about the previous one
          //if data has been intentionally overwritten, this gives the most current version
-         indexMap_.put(MD.generateLabel(channel, slice, frame, position), imageOffset);
+         indexMap_.put(AcqEngMetadata.generateLabel(channel, slice, frame, position), imageOffset);
       }
    }
 

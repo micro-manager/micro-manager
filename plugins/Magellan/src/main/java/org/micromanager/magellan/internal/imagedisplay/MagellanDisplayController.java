@@ -37,15 +37,16 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.magellan.internal.acq.Acquisition;
-import org.micromanager.magellan.internal.acq.ExploreAcquisition;
-import org.micromanager.magellan.internal.channels.MagellanChannelSpec;
+import org.micromanager.acqj.api.Acquisition;
+import org.micromanager.magellan.internal.magellanacq.ExploreAcquisition;
+import org.micromanager.magellan.internal.channels.MagellanChannelGroupSettings;
 import org.micromanager.magellan.internal.imagedisplay.events.AnimationToggleEvent;
 import org.micromanager.magellan.internal.imagedisplay.events.CanvasResizeEvent;
 import org.micromanager.magellan.internal.imagedisplay.events.ContrastUpdatedEvent;
 import org.micromanager.magellan.internal.imagedisplay.events.DisplayClosingEvent;
 import org.micromanager.magellan.internal.imagedisplay.events.ImageCacheFinishedEvent;
 import org.micromanager.magellan.internal.imagedisplay.events.MagellanScrollbarPosition;
+import org.micromanager.magellan.internal.magellanacq.MagellanAcquisition;
 import org.micromanager.magellan.internal.misc.JavaUtils;
 import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.magellan.internal.misc.LongPoint;
@@ -63,25 +64,25 @@ public final class MagellanDisplayController {
    private CoalescentExecutor displayCalculationExecutor_ = new CoalescentExecutor("Display calculation executor");
    private CoalescentExecutor overlayCalculationExecutor_ = new CoalescentExecutor("Overlay calculation executor");
 
-   private DisplayWindowNew displayWindow_;
+   private DisplayWindow displayWindow_;
    private ImageMaker imageMaker_;
    private MagellanOverlayer overlayer_;
    private Timer animationTimer_;
    private double animationFPS_ = 7;
 
    private MagellanDataViewCoords viewCoords_;
-   private Acquisition acq_;
+   private MagellanAcquisition acq_;
 
    public MagellanDisplayController(MagellanImageCache cache, DisplaySettings initialDisplaySettings,
-           Acquisition acq) {
+           MagellanAcquisition acq) {
       imageCache_ = cache;
       acq_ = acq;
       displaySettings_ = initialDisplaySettings;
       viewCoords_ = new MagellanDataViewCoords(cache, 0, 0, 0, 0, 0,
               isExploreAcquisiton() ? 700 : cache.getFullResolutionSize().x,
               isExploreAcquisiton() ? 700 : cache.getFullResolutionSize().y, imageCache_.getImageBounds());
-      displayWindow_ = new DisplayWindowNew(this);
-      displayWindow_.setTitle(cache.getUniqueAcqName() + (acq != null ? (acq.isFinished() ? " (Finished)" : " (Running)") : " (Loaded)"));
+      displayWindow_ = new DisplayWindow(this);
+      displayWindow_.setTitle(cache.getUniqueAcqName() + (acq != null ? (acq.isComplete() ? " (Finished)" : " (Running)") : " (Loaded)"));
       overlayer_ = new MagellanOverlayer(this, edtRunnablePool_);
       imageMaker_ = new ImageMaker(this, cache);
 
@@ -466,7 +467,7 @@ public final class MagellanDisplayController {
    }
 
    void abortAcquisition() {
-      if (acq_ != null && !acq_.isFinished()) {
+      if (acq_ != null && !acq_.isComplete()) {
          int result = JOptionPane.showConfirmDialog(null, "Finish acquisition?",
                  "Finish Current Acquisition", JOptionPane.OK_CANCEL_OPTION);
          if (result == JOptionPane.OK_OPTION) {
@@ -596,8 +597,8 @@ public final class MagellanDisplayController {
       return viewCoords_.getDisplayToFullScaleFactor();
    }
 
-   MagellanChannelSpec getChannels() {
-      return acq_.getChannels();
+   MagellanChannelGroupSettings getChannels() {
+      return (MagellanChannelGroupSettings) acq_.getChannels();
    }
 
    LongPoint imageCoordsFromStageCoords(double x, double y, MagellanDataViewCoords viewCoords) {
@@ -689,7 +690,7 @@ public final class MagellanDisplayController {
          });
       } else {
          //check to stop acquisiton?, return here if the attempt to close window unsuccesslful
-         if (acq_ != null && !acq_.isFinished()) {
+         if (acq_ != null && !acq_.isComplete()) {
             int result = JOptionPane.showConfirmDialog(null, "Finish acquisition?",
                     "Finish Current Acquisition", JOptionPane.OK_CANCEL_OPTION);
             if (result == JOptionPane.OK_OPTION) {

@@ -17,9 +17,7 @@
 
 package org.micromanager.magellan.internal.surfacesandregions;
 
-import org.micromanager.magellan.internal.acq.MagellanGUIAcquisitionSettings;
-import org.micromanager.magellan.internal.coordinates.MagellanAffineUtils;
-import org.micromanager.magellan.internal.coordinates.XYStagePosition;
+import org.micromanager.magellan.internal.magellanacq.MagellanGUIAcquisitionSettings;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
@@ -32,8 +30,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.Log;
 import org.apache.commons.math3.geometry.euclidean.twod.Euclidean2D;
@@ -43,6 +39,8 @@ import org.apache.commons.math3.geometry.euclidean.twod.hull.ConvexHull2D;
 import org.apache.commons.math3.geometry.euclidean.twod.hull.MonotoneChain;
 import org.apache.commons.math3.geometry.partitioning.Region;
 import org.apache.commons.math3.geometry.partitioning.RegionFactory;
+import org.micromanager.acqj.api.XYStagePosition;
+import org.micromanager.acqj.internal.acqengj.affineTransformUtils;
 
 /**
  *
@@ -274,7 +272,7 @@ public abstract class SurfaceInterpolator extends XYFootprint {
       double xSpan = corners[2].getX() - corners[0].getX();
       double ySpan = corners[2].getY() - corners[0].getY();
       Point2D.Double pixelSpan = new Point2D.Double();
-      AffineTransform transform = MagellanAffineUtils.getAffineTransform(0, 0);
+      AffineTransform transform = affineTransformUtils.getAffineTransform(0, 0);
       try {
          transform.inverseTransform(new Point2D.Double(xSpan, ySpan), pixelSpan);
       } catch (NoninvertibleTransformException ex) {
@@ -333,7 +331,7 @@ public abstract class SurfaceInterpolator extends XYFootprint {
 
    private void calculateConvexHullBounds() {
       //convert convex hull vertices to pixel offsets in an arbitrary pixel space
-      AffineTransform transform = MagellanAffineUtils.getAffineTransform(0, 0);
+      AffineTransform transform = affineTransformUtils.getAffineTransform(0, 0);
       boundYPixelMin_ = Integer.MAX_VALUE;
       boundYPixelMax_ = Integer.MIN_VALUE; 
       boundXPixelMin_ = Integer.MAX_VALUE;
@@ -386,7 +384,7 @@ public abstract class SurfaceInterpolator extends XYFootprint {
       int pixelCenterX = boundXPixelMin_ + (boundXPixelMax_ - boundXPixelMin_) / 2;
       int pixelCenterY = boundYPixelMin_ + (boundYPixelMax_ - boundYPixelMin_) / 2;
 
-      AffineTransform transform = MagellanAffineUtils.getAffineTransform( 0, 0);
+      AffineTransform transform = affineTransformUtils.getAffineTransform( 0, 0);
       ArrayList<XYStagePosition> positions = new ArrayList<XYStagePosition>();     
       Point2D.Double gridCenterStageCoords = new Point2D.Double();
       transform.transform(new Point2D.Double(pixelCenterX, pixelCenterY), gridCenterStageCoords);
@@ -412,8 +410,8 @@ public abstract class SurfaceInterpolator extends XYFootprint {
                  Point2D.Double pixelPos = new Point2D.Double(xPixelOffset, yPixelOffset);
                  Point2D.Double stagePos = new Point2D.Double();
                  transform.transform(pixelPos, stagePos);
-                 AffineTransform posTransform = MagellanAffineUtils.getAffineTransform( stagePos.x, stagePos.y);
-                 positions.add(new XYStagePosition(stagePos, tileWidthMinusOverlap, tileHeightMinusOverlap,
+                 AffineTransform posTransform = affineTransformUtils.getAffineTransform( stagePos.x, stagePos.y);
+                 positions.add(new XYStagePosition( stagePos, tileWidthMinusOverlap, tileHeightMinusOverlap,
                          fullTileWidth, fullTileHeight, row, col, posTransform));
              }
          } else {
@@ -425,8 +423,8 @@ public abstract class SurfaceInterpolator extends XYFootprint {
                  Point2D.Double pixelPos = new Point2D.Double(xPixelOffset, yPixelOffset);
                  Point2D.Double stagePos = new Point2D.Double();
                  transform.transform(pixelPos, stagePos);
-                 AffineTransform posTransform = MagellanAffineUtils.getAffineTransform( stagePos.x, stagePos.y);
-                 positions.add(new XYStagePosition(stagePos, tileWidthMinusOverlap, tileHeightMinusOverlap,
+                 AffineTransform posTransform = affineTransformUtils.getAffineTransform( stagePos.x, stagePos.y);
+                 positions.add(new XYStagePosition( stagePos, tileWidthMinusOverlap, tileHeightMinusOverlap,
                          fullTileWidth, fullTileHeight, row, col, posTransform));
              }     
          }

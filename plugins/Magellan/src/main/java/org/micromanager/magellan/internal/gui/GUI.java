@@ -24,7 +24,6 @@ import java.awt.Font;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.File;
-import java.util.prefs.Preferences;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
@@ -49,18 +48,17 @@ import javax.swing.BorderFactory;
 import javax.swing.JOptionPane;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import org.micromanager.acqj.api.AcqEngineJ;
+import org.micromanager.acqj.internal.acqengj.Engine;
 import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.magellan.internal.acq.AcqDurationEstimator;
-import org.micromanager.magellan.internal.acq.Acquisition;
-import org.micromanager.magellan.internal.acq.AcquisitionSettingsBase;
-import org.micromanager.magellan.internal.acq.ExploreAcqSettings;
-import org.micromanager.magellan.internal.acq.MagellanGUIAcquisitionSettings;
-import org.micromanager.magellan.internal.acq.MagellanEngine;
-import org.micromanager.magellan.internal.acq.MagellanAcquisitionsManager;
-import org.micromanager.magellan.internal.acq.ExploreAcquisition;
+import org.micromanager.magellan.internal.magellanacq.ExploreAcqSettings;
+import org.micromanager.magellan.internal.magellanacq.MagellanGUIAcquisitionSettings;
+import org.micromanager.magellan.internal.magellanacq.MagellanAcquisitionsManager;
+import org.micromanager.magellan.internal.magellanacq.ExploreAcquisition;
 import org.micromanager.magellan.internal.channels.ColorEditor;
 import org.micromanager.magellan.internal.channels.ColorRenderer;
-import org.micromanager.magellan.internal.coordinates.MagellanAffineUtils;
+import org.micromanager.acqj.internal.acqengj.affineTransformUtils;
+import org.micromanager.magellan.internal.channels.MagellanChannelGroupSettings;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.GlobalSettings;
 import org.micromanager.magellan.internal.misc.JavaUtils;
@@ -81,7 +79,6 @@ public class GUI extends javax.swing.JFrame {
    private static final Color LIGHT_GREEN = new Color(0, 200, 0);
    private static final Color DEFAULT_RADIO_BUTTON_TEXT_COLOR = new JRadioButton().getForeground();
 
-   private AcqDurationEstimator acqDurationEstimator_;
    private MutablePropertyMapView prefs_;
    private SurfaceGridManager manager_ = new SurfaceGridManager();
    private MagellanAcquisitionsManager multiAcqManager_;
@@ -93,6 +90,7 @@ public class GUI extends javax.swing.JFrame {
    private ExploreAcquisition exploreAcq_;
    private volatile boolean acquisitionRunning_ = false;
    private volatile boolean ignoreUpdate_ = false;
+   private AcqEngineJ eng_;
 
    public GUI(String version) {
       singleton_ = this;
@@ -100,8 +98,7 @@ public class GUI extends javax.swing.JFrame {
       prefs_ = Magellan.getStudio().profile().getSettings(GUI.class);
       settings_ = new GlobalSettings();
       this.setTitle("Micro-Magellan " + version);
-      acqDurationEstimator_ = new AcqDurationEstimator();
-      new MagellanEngine(Magellan.getCore(), acqDurationEstimator_);
+      eng_ = new Engine(Magellan.getCore());
       multiAcqManager_ = new MagellanAcquisitionsManager(this);
       initComponents();
       moreInitialization();
@@ -414,8 +411,7 @@ public class GUI extends javax.swing.JFrame {
       settings.storePreferedValues();
       multipleAcqTable_.repaint();
 
-      acqDurationEstimator_.calcAcqDuration(getActiveAcquisitionSettings());
-
+//      acqDurationEstimator_.calcAcqDuration(getActiveAcquisitionSettings());
    }
 
    public void refreshAcqControlsFromSettings() {
@@ -467,7 +463,8 @@ public class GUI extends javax.swing.JFrame {
       //channels
       ChannelGroupCombo_.setSelectedItem(settings.channelGroup_);
       //make sure the table has a reference to the current channels
-      ((SimpleChannelTableModel) channelsTable_.getModel()).setChannels(settings.channels_);
+      ((SimpleChannelTableModel) channelsTable_.getModel()).setChannels(
+              (MagellanChannelGroupSettings) settings.channels_);
       ((SimpleChannelTableModel) channelsTable_.getModel()).fireTableDataChanged();
 
       enableAndChangeFonts();
@@ -518,7 +515,7 @@ public class GUI extends javax.swing.JFrame {
       repaint();
       acquisitionRunning_ = !enable;
    }
-   
+
    public String getSavingDir() {
       if (globalSavingDirTextField_ == null) {
          return null;
@@ -1893,17 +1890,21 @@ public class GUI extends javax.swing.JFrame {
    }//GEN-LAST:event_runAcqButton_ActionPerformed
 
    private void newExploreWindowButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newExploreWindowButton_ActionPerformed
-      if (!MagellanAffineUtils.isAffineTransformDefined()) {
+      if (!affineTransformUtils.isAffineTransformDefined()) {
          ReportingUtils.showError("XY Stage and Camera are not calibrated to each other."
                  + " \nOpen \"Devices--Pixel size calibration\" and set up Affine transform");
          throw new RuntimeException();
       }
-      ExploreAcqSettings settings = new ExploreAcqSettings(
-              ((Number) exploreZStepSpinner_.getValue()).doubleValue(), (Double) exploreTileOverlapSpinner_.getValue(),
-              globalSavingDirTextField_.getText(), exploreSavingNameTextField_.getText(), (String) exploreChannelGroupCombo_.getSelectedItem());
+      double zStep = ((Number) exploreZStepSpinner_.getValue()).doubleValue();
+      double overlap = (Double) exploreTileOverlapSpinner_.getValue();
+      String dir = globalSavingDirTextField_.getText();
+      String name = exploreSavingNameTextField_.getText();
+      String cGroup = (String) exploreChannelGroupCombo_.getSelectedItem();
+
+      ExploreAcqSettings settings = new ExploreAcqSettings(dir, name, cGroup, zStep, overlap);
       //check for abort of existing explore acquisition
       //abort existing explore acq if needed
-      if (exploreAcq_ != null && !exploreAcq_.isFinished()) {
+      if (exploreAcq_ != null && !exploreAcq_.isComplete()) {
          int result = JOptionPane.showConfirmDialog(null, "Finish exisiting explore acquisition?", "Finish Current Explore Acquisition", JOptionPane.OK_CANCEL_OPTION);
          if (result == JOptionPane.OK_OPTION) {
             exploreAcq_.abort();
@@ -2147,13 +2148,13 @@ public class GUI extends javax.swing.JFrame {
    }//GEN-LAST:event_exploreAcqTabbedPane_StateChanged
 
    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-      multiAcqManager_.getAcquisition(multiAcqSelectedIndex_).getChannels().setUseOnAll(
-              !multiAcqManager_.getAcquisition(multiAcqSelectedIndex_).getChannels().getChannelListSetting(0).use_);
+      multiAcqManager_.getAcquisitionSettings(multiAcqSelectedIndex_).channels_.setUseOnAll(
+              !multiAcqManager_.getAcquisitionSettings(multiAcqSelectedIndex_).channels_.getChannelListSetting(0).use_);
       ((SimpleChannelTableModel) channelsTable_.getModel()).fireTableDataChanged();
    }//GEN-LAST:event_jButton1ActionPerformed
 
    private void syncExposuresButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_syncExposuresButton_ActionPerformed
-      multiAcqManager_.getAcquisition(multiAcqSelectedIndex_).getChannels().synchronizeExposures();
+      multiAcqManager_.getAcquisitionSettings(multiAcqSelectedIndex_).channels_.synchronizeExposures();
       ((SimpleChannelTableModel) channelsTable_.getModel()).fireTableDataChanged();
    }//GEN-LAST:event_syncExposuresButton_ActionPerformed
 
@@ -2171,12 +2172,12 @@ public class GUI extends javax.swing.JFrame {
    }//GEN-LAST:event_jButton3ActionPerformed
 
    private void addAcqButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addAcqButton_ActionPerformed
-        multiAcqManager_.addNew();
+      multiAcqManager_.addNew();
       acquisitionSettingsChanged();
    }//GEN-LAST:event_addAcqButton_ActionPerformed
 
    private void removeAcqButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeAcqButton_ActionPerformed
-           multiAcqManager_.remove(multipleAcqTable_.getSelectedRow());
+      multiAcqManager_.remove(multipleAcqTable_.getSelectedRow());
       if (multiAcqSelectedIndex_ == multiAcqManager_.getNumberOfAcquisitions()) {
          multiAcqSelectedIndex_--;
          multipleAcqTable_.getSelectionModel().setSelectionInterval(multiAcqSelectedIndex_, multiAcqSelectedIndex_);

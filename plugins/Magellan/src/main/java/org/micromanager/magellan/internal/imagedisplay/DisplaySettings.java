@@ -23,9 +23,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.magellan.internal.channels.MagellanChannelSpec;
 import org.micromanager.magellan.internal.misc.Log;
-import org.micromanager.magellan.internal.misc.MD;
+import org.micromanager.acqj.api.AcqEngMetadata;
+import org.micromanager.magellan.internal.channels.MagellanChannelGroupSettings;
 
 public class DisplaySettings {
 
@@ -46,12 +46,12 @@ public class DisplaySettings {
       json_ = json;
    }
 
-   public DisplaySettings(MagellanChannelSpec channels, JSONObject summaryMD) {
+   public DisplaySettings(MagellanChannelGroupSettings channels, JSONObject summaryMD) {
       int bitDepth = 16;
       if (summaryMD.has("BitDepth")) {
-         bitDepth = MD.getBitDepth(summaryMD);
+         bitDepth = AcqEngMetadata.getBitDepth(summaryMD);
       } else if (summaryMD.has("PixelType")) {
-         if (MD.isGRAY8(summaryMD) || MD.isRGB32(summaryMD)) {
+         if (AcqEngMetadata.isGRAY8(summaryMD) || AcqEngMetadata.isRGB32(summaryMD)) {
             bitDepth = 8;
          }
       }
@@ -67,7 +67,8 @@ public class DisplaySettings {
       for (String cName : channelNames) {
          try {
             JSONObject channelDisp = new JSONObject();
-            channelDisp.put("Color", cName.equals("") ? Color.white : channels.getChannelSetting(cName).color_.getRGB());
+            channelDisp.put("Color", cName.equals("") ? Color.white : 
+                    ( (Color) channels.getChannelSetting(cName).getProperty("Color")).getRGB());
             channelDisp.put("BitDepth", bitDepth);
 //         channelObject.put("Name", name);
             channelDisp.put("Gamma", 1.0);
@@ -77,7 +78,7 @@ public class DisplaySettings {
             json_.put(cName, channelDisp);
          } catch (JSONException ex) {
             //this wont happen
-            throw new RuntimeException(ex);
+            Log.log(ex);
          }
       }
 
@@ -173,7 +174,7 @@ public class DisplaySettings {
          try {
             json_.getJSONObject(channelName).put("Active", selected);
          } catch (Exception ex) {
-            throw new RuntimeException("Couldnt set display setting");
+            Log.log("Couldnt set display setting");
          }
       }
    }
@@ -183,7 +184,7 @@ public class DisplaySettings {
          try {
             json_.getJSONObject(channelName).put("Color", color.getRGB());
          } catch (Exception ex) {
-            throw new RuntimeException("Couldnt set display setting");
+            Log.log("Couldnt set display setting");
          }
       }
    }
@@ -197,14 +198,14 @@ public class DisplaySettings {
                      try {
                         json_.getJSONObject(t).put("Gamma", gamma);
                      } catch (JSONException ex) {
-                        throw new RuntimeException("Couldnt set display setting");
+                        Log.log("Couldnt set display setting");
                      }
                   }
                });
             }
             json_.getJSONObject(channelName).put("Gamma", gamma);
          } catch (Exception ex) {
-            throw new RuntimeException("Couldnt set display setting");
+            Log.log("Couldnt set display setting");
          }
       }
    }
@@ -219,7 +220,7 @@ public class DisplaySettings {
                         json_.getJSONObject(t).put("Min", contrastMin);
                         json_.getJSONObject(t).put("Max", Math.max(contrastMin, getContrastMax(t)));
                      } catch (JSONException ex) {
-                        throw new RuntimeException("Couldnt set display setting");
+                        Log.log("Couldnt set display setting");
                      }
                   }
                });
@@ -227,7 +228,7 @@ public class DisplaySettings {
             json_.getJSONObject(channelName).put("Min", contrastMin);
             json_.getJSONObject(channelName).put("Max", Math.max(contrastMin, getContrastMax(channelName)));
          } catch (Exception ex) {
-            throw new RuntimeException("Couldnt set display setting");
+            Log.log("Couldnt set display setting");
          }
       }
    }
@@ -243,7 +244,7 @@ public class DisplaySettings {
                         json_.getJSONObject(t).put("Min", Math.min(contrastMax, getContrastMin(t)));
 
                      } catch (JSONException ex) {
-                        throw new RuntimeException("Couldnt set display setting");
+                        Log.log("Couldnt set display setting");
                      }
                   }
                });
@@ -252,7 +253,7 @@ public class DisplaySettings {
             json_.getJSONObject(channelName).put("Min", Math.min(contrastMax, getContrastMin(channelName)));
 
          } catch (JSONException ex) {
-            throw new RuntimeException("Couldnt set display setting");
+            Log.log("Couldnt set display setting");
          }
       }
    }
@@ -262,7 +263,8 @@ public class DisplaySettings {
          try {
             return json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).optBoolean(SYNC_CHANNELS, false);
          } catch (JSONException ex) {
-            throw new RuntimeException(ex);
+            Log.log(ex);
+            return true;
          }
       }
    }
@@ -272,7 +274,8 @@ public class DisplaySettings {
          try {
             return json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).optBoolean(LOG_HIST, true);
          } catch (JSONException ex) {
-            throw new RuntimeException(ex);
+            Log.log(ex);
+            return true;
          }
       }
    }
@@ -282,7 +285,8 @@ public class DisplaySettings {
          try {
             return json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).optBoolean(COMPOSITE, true);
          } catch (JSONException ex) {
-            throw new RuntimeException(ex);
+            Log.log(ex);
+            return true;
          }
       }
    }
@@ -292,7 +296,8 @@ public class DisplaySettings {
          try {
             return json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).optDouble(IGNORE_PERCENTAGE, 0.1);
          } catch (JSONException ex) {
-            throw new RuntimeException(ex);
+            Log.log(ex);
+            return 0;
          }
       }
    }
@@ -302,7 +307,8 @@ public class DisplaySettings {
          try {
             return json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).optBoolean(IGNORE_OUTLIERS, false);
          } catch (JSONException ex) {
-            throw new RuntimeException(ex);
+            Log.log(ex);
+            return false;
          }
       }
    }
@@ -312,7 +318,8 @@ public class DisplaySettings {
          try {
             return json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).optBoolean(AUTOSCALE, true);
          } catch (JSONException ex) {
-            throw new RuntimeException(ex);
+            Log.log(ex);
+            return true;
          }
       }
    }
@@ -332,12 +339,12 @@ public class DisplaySettings {
                   json_.getJSONObject(t).put("Max", max);
                   json_.getJSONObject(t).put("Gamma", gamma);
                } catch (JSONException ex) {
-                  throw new RuntimeException("Couldnt set display setting");
+                  Log.log("Couldnt set display setting");
                }
             }
          });
       } catch (JSONException ex) {
-         throw new RuntimeException(ex);
+         Log.log(ex);
       }
    }
 
@@ -346,7 +353,7 @@ public class DisplaySettings {
          try {
             json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).put(IGNORE_PERCENTAGE, percent);
          } catch (JSONException ex) {
-            throw new RuntimeException("Couldnt set autoscale");
+            Log.log("Couldnt set autoscale");
          }
       }
    }
@@ -356,7 +363,7 @@ public class DisplaySettings {
          try {
             json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).put(IGNORE_OUTLIERS, b);
          } catch (JSONException ex) {
-            throw new RuntimeException("Couldnt set autoscale");
+            Log.log("Couldnt set autoscale");
          }
       }
    }
@@ -366,7 +373,7 @@ public class DisplaySettings {
          try {
             json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).put(LOG_HIST, b);
          } catch (JSONException ex) {
-            throw new RuntimeException("Couldnt set autoscale");
+            Log.log("Couldnt set autoscale");
          }
       }
    }
@@ -376,7 +383,7 @@ public class DisplaySettings {
          try {
             json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).put(AUTOSCALE, b);
          } catch (JSONException ex) {
-            throw new RuntimeException("Couldnt set autoscale");
+            Log.log("Couldnt set autoscale");
          }
       }
    }
@@ -386,7 +393,7 @@ public class DisplaySettings {
          try {
             json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).put(SYNC_CHANNELS, b);
          } catch (JSONException ex) {
-            throw new RuntimeException("Couldnt set autoscale");
+            Log.log("Couldnt set autoscale");
          }
       }
    }
@@ -396,7 +403,7 @@ public class DisplaySettings {
          try {
             json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).put(COMPOSITE, b);
          } catch (JSONException ex) {
-            throw new RuntimeException("Couldnt set autoscale");
+            Log.log("Couldnt set autoscale");
          }
       }
    }

@@ -32,44 +32,73 @@ import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.magellan.internal.coordinates.XYStagePosition;
-import org.micromanager.magellan.internal.imagedisplay.events.ImageCacheClosingEvent;
+import org.micromanager.acqj.internal.acqengj.AcquisitionBase;
+import org.micromanager.acqj.api.DataSink;
+import org.micromanager.acqj.api.XYStagePosition;
 import org.micromanager.magellan.internal.imagedisplay.events.ImageCacheFinishedEvent;
 import org.micromanager.magellan.internal.imagedisplay.events.MagellanNewImageEvent;
 import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.magellan.internal.misc.LongPoint;
-import org.micromanager.magellan.internal.misc.MD;
+import org.micromanager.acqj.api.AcqEngMetadata;
+import org.micromanager.acqj.api.Acquisition;
+import org.micromanager.magellan.internal.channels.MagellanChannelGroupSettings;
+import org.micromanager.magellan.internal.magellanacq.MD;
+import org.micromanager.magellan.internal.magellanacq.MagellanAcquisition;
 
 /**
  * This class manages a magellan dataset on disk, as well as the state of a view
  * into it (i.e. contrast settings/zoom, etc) and manages class that actually
  * forms the image
  */
-public class MagellanImageCache {
+public class MagellanImageCache implements DataSink {
 
    private MultiResMultipageTiffStorage imageStorage_;
    private EventBus dataProviderBus_ = new EventBus();
    private ExecutorService displayCommunicationExecutor_ = Executors.newSingleThreadExecutor((Runnable r) -> new Thread(r, "Image cache thread"));
    private final boolean loadedData_;
    private String dir_;
-   
-   public MagellanImageCache(String dir, JSONObject summaryMetadata, DisplaySettings displaySettings) {
-      imageStorage_ = new MultiResMultipageTiffStorage(dir, summaryMetadata);
-      imageStorage_.setDisplaySettings(displaySettings);
+   private String name_;
+   private Acquisition acq_;
+   private final boolean showDisplay_;
+
+   public MagellanImageCache(String dir, boolean showDisplay) {
+      dir_ = dir;
       loadedData_ = false;
+      showDisplay_ = showDisplay;
    }
-   
+
    //Constructor for opening loaded data
    public MagellanImageCache(String dir) throws IOException {
       imageStorage_ = new MultiResMultipageTiffStorage(dir);
       dir_ = dir;
       loadedData_ = true;
+      showDisplay_ = true;
    }
 
    public double getPixelSize_um() {
       return imageStorage_.getPixelSizeXY();
 
    }
+
+   public void initialize(AcquisitionBase acq, JSONObject summaryMetadata) {
+      acq_ = (MagellanAcquisition) acq;
+      DisplaySettings displaySettings = new DisplaySettings((MagellanChannelGroupSettings) acq.getChannels(), summaryMetadata);
+      imageStorage_ = new MultiResMultipageTiffStorage(dir_, summaryMetadata);
+      imageStorage_.setDisplaySettings(displaySettings);
+      //storage class has determined unique acq name, so it can now be stored
+      name_ = this.getUniqueAcqName();
+
+      if (showDisplay_) {
+         //create display
+         try {
+            new MagellanDisplayController(this, displaySettings, (MagellanAcquisition) acq_);
+         } catch (Exception e) {
+            e.printStackTrace();
+            Log.log("Couldn't create display succesfully");
+         }
+      }
+   }
+
    /**
     * Called when images done arriving
     */
@@ -105,7 +134,7 @@ public class MagellanImageCache {
          imageStorage_ = null;
          displayCommunicationExecutor_.shutdownNow();
          displayCommunicationExecutor_ = null;
-         dataProviderBus_.post(new ImageCacheClosingEvent());
+         acq_.onDataSinkClosing();
       } else {
          //keep resubmitting so that finish, which comes from a different thread, happens first
          SwingUtilities.invokeLater(new Runnable() {
@@ -217,12 +246,12 @@ public class MagellanImageCache {
    public int getFullResPositionIndexFromStageCoords(double xPos, double yPos) {
       return imageStorage_.getPosManager().getFullResPositionIndexFromStageCoords(xPos, yPos);
    }
-   
+
    public Point2D.Double stageCoordinateFromPixelCoordinate(long absoluteX, long absoluteY) {
       return imageStorage_.getStageCoordsFromPixelCoords(absoluteX, absoluteY);
    }
-   
-   public LongPoint pixelCoordsFromStageCoords(double x, double  y) {
+
+   public LongPoint pixelCoordsFromStageCoords(double x, double y) {
       return imageStorage_.getPixelCoordsFromStageCoords(x, y);
    }
 
@@ -250,16 +279,16 @@ public class MagellanImageCache {
    public int getNumChannels() {
       return imageStorage_.getNumChannels();
    }
-   
+
    public int getNumFrames() {
       return imageStorage_.getNumFrames();
    }
-   
+
    public int getMinZIndexLoadedData() {
       return imageStorage_.getMinSliceIndexOpenedDataset();
    }
-   
-  public int getMaxZIndexLoadedData() {
+
+   public int getMaxZIndexLoadedData() {
       return imageStorage_.getMaxSliceIndexOpenedDataset();
    }
 

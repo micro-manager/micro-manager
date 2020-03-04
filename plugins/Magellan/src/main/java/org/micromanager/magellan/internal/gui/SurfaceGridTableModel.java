@@ -7,9 +7,8 @@ package org.micromanager.magellan.internal.gui;
 
 import java.util.List;
 import javax.swing.table.AbstractTableModel;
-import org.micromanager.magellan.internal.coordinates.XYStagePosition;
+import org.micromanager.acqj.api.XYStagePosition;
 import org.micromanager.magellan.internal.misc.Log;
-import org.micromanager.magellan.internal.misc.NumberUtils;
 import org.micromanager.magellan.internal.surfacesandregions.MultiPosGrid;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridListener;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridManager;

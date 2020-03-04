@@ -8,7 +8,7 @@ package org.micromanager.magellan.internal.imagedisplay.events;
 import java.util.HashMap;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
-import org.micromanager.magellan.internal.misc.MD;
+import org.micromanager.acqj.api.AcqEngMetadata;
 
 /**
  *
@@ -21,11 +21,11 @@ import org.micromanager.magellan.internal.misc.MD;
 
    public MagellanNewImageEvent(JSONObject tags) {
       axisToPosition_ = new HashMap<String, Integer>();
-      axisToPosition_.put("t", MD.getFrameIndex(tags));
-      axisToPosition_.put("c", MD.getChannelIndex(tags));
-      axisToPosition_.put("z", MD.getSliceIndex(tags));
+      axisToPosition_.put("t", AcqEngMetadata.getFrameIndex(tags));
+      axisToPosition_.put("c", AcqEngMetadata.getChannelIndex(tags));
+      axisToPosition_.put("z", AcqEngMetadata.getSliceIndex(tags));
       //TODO: region
-      channelName_ = MD.getChannelName(tags);
+      channelName_ = AcqEngMetadata.getChannelName(tags);
    }
 
    public int getPositionForAxis(String axis) {

@@ -10,7 +10,7 @@ import java.util.Vector;
 import javax.swing.table.AbstractTableModel;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.magellan.internal.misc.MD;
+import org.micromanager.acqj.api.AcqEngMetadata;
 
 /**
  *
@@ -67,7 +67,7 @@ public class MetadataTableModel extends AbstractTableModel {
       public synchronized void setMetadata(JSONObject md) {
          clear();
          if (md != null) {
-            String[] keys = MD.getKeys(md);
+            String[] keys = AcqEngMetadata.getKeys(md);
             Arrays.sort(keys);
             for (String key : keys) {
                Vector<String> rowData = new Vector<String>();

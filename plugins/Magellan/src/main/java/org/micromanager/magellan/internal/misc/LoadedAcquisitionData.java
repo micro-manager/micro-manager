@@ -36,7 +36,8 @@ public class LoadedAcquisitionData {
          int maxZ = imageCache.getMaxZIndexLoadedData();
          List<String> channelNames = imageCache.getChannelNames();
          int nFrames = imageCache.getNumChannels();
-         MagellanDisplayController controller = new MagellanDisplayController(imageCache, new DisplaySettings(imageCache.getDisplayJSON()), null);
+         MagellanDisplayController controller = new MagellanDisplayController(
+                 imageCache, new DisplaySettings(imageCache.getDisplayJSON()), null);
          controller.setLoadedDataScrollbarBounds(channelNames, nFrames, minZ, maxZ);
       } catch (IOException ex) {
          Log.log("Couldn't open acquisition", true);

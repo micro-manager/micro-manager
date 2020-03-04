@@ -46,7 +46,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.magellan.internal.misc.Log;
-import org.micromanager.magellan.internal.misc.MD;
+import org.micromanager.acqj.api.AcqEngMetadata;
 
 public class MultipageTiffWriter {
 
@@ -359,7 +359,7 @@ public class MultipageTiffWriter {
       long offset = filePosition_;
       boolean shiftByByte = writeIFD(img);
       Future f = writeBuffers();
-      addToIndexMap(MD.getLabel(img.tags), offset);
+      addToIndexMap(AcqEngMetadata.getLabel(img.tags), offset);
       //Make IFDs start on word
       if (shiftByByte) {
          f = executeWritingTask(new Runnable() {
@@ -408,7 +408,7 @@ public class MultipageTiffWriter {
 
     public Future overwritePixels(Object pixels, int channel, int slice, int frame, int position) throws IOException {
 
-        long byteOffset = indexMap_.get(MD.generateLabel(channel, slice, frame, position));
+        long byteOffset = indexMap_.get(AcqEngMetadata.generateLabel(channel, slice, frame, position));
         ByteBuffer buffer = ByteBuffer.allocate(2).order(BYTE_ORDER);
         fileChannel_.read(buffer, byteOffset);
         int numEntries = buffer.getChar(0);
@@ -595,10 +595,10 @@ public class MultipageTiffWriter {
    }
 
    private void processSummaryMD(JSONObject summaryMD) {
-      rgb_ = MD.isRGB(summaryMD);
-      imageWidth_ = MD.getWidth(summaryMD);
-      imageHeight_ = MD.getHeight(summaryMD);
-      String pixelType = MD.getPixelType(summaryMD);
+      rgb_ = AcqEngMetadata.isRGB(summaryMD);
+      imageWidth_ = AcqEngMetadata.getWidth(summaryMD);
+      imageHeight_ = AcqEngMetadata.getHeight(summaryMD);
+      String pixelType = AcqEngMetadata.getPixelType(summaryMD);
       if (pixelType.equals("GRAY8") || pixelType.equals("RGB32") || pixelType.equals("RGB24")) {
          byteDepth_ = 1;
       } else if (pixelType.equals("GRAY16") || pixelType.equals("RGB64")) {
@@ -630,7 +630,7 @@ public class MultipageTiffWriter {
          resNumerator_ = (long) (1 / cmPerPixel);
          resDenomenator_ = 1;
       }
-      zStepUm_ = MD.getZStepUm(summaryMD);
+      zStepUm_ = AcqEngMetadata.getZStepUm(summaryMD);
    }
 
    private byte[] getBytesFromString(String s) {

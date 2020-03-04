@@ -43,7 +43,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.magellan.internal.misc.JavaUtils;
 import org.micromanager.magellan.internal.misc.Log;
-import org.micromanager.magellan.internal.misc.MD;
+import org.micromanager.acqj.api.AcqEngMetadata;
 import org.micromanager.magellan.internal.misc.ProgressBar;
 
 public final class TaggedImageStorageMultipageTiff {
@@ -184,7 +184,7 @@ public final class TaggedImageStorageMultipageTiff {
    }
 
    public TaggedImage getImage(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
-      String label = MD.generateLabel(channelIndex, sliceIndex, frameIndex, positionIndex);
+      String label = AcqEngMetadata.generateLabel(channelIndex, sliceIndex, frameIndex, positionIndex);
 
       TaggedImage image = writePendingImages_.get(label);
       if (image != null) {
@@ -220,7 +220,7 @@ public final class TaggedImageStorageMultipageTiff {
    }
 
    public Future putImage(TaggedImage MagellanTaggedImage) throws IOException {
-      final String label = MD.getLabel(MagellanTaggedImage.tags);
+      final String label = AcqEngMetadata.getLabel(MagellanTaggedImage.tags);
       // Now, we must hold on to MagellanTaggedImage, so that we can return it if
       // somebody calls getImage() before the writing is finished.
       // There is a data race if the MagellanTaggedImage is modified by other code, but
@@ -252,7 +252,7 @@ public final class TaggedImageStorageMultipageTiff {
 
       int fileSetIndex = 0;
       if (splitByXYPosition_) {
-         fileSetIndex = MD.getPositionIndex(ti.tags);
+         fileSetIndex = AcqEngMetadata.getPositionIndex(ti.tags);
       }
       if (fileSets_ == null) {
          try {
@@ -507,7 +507,7 @@ public final class TaggedImageStorageMultipageTiff {
       public List<Future> overwritePixels(Object pixels, int channel, int slice, int frame, int position) throws IOException {
          ArrayList<Future> list = new ArrayList<Future>();
          for (MultipageTiffWriter w : tiffWriters_) {
-            if (w.getIndexMap().containsKey(MD.generateLabel(channel, slice, frame, position))) {
+            if (w.getIndexMap().containsKey(AcqEngMetadata.generateLabel(channel, slice, frame, position))) {
                list.add(w.overwritePixels(pixels, channel, slice, frame, position));
             }
          }
@@ -543,8 +543,8 @@ public final class TaggedImageStorageMultipageTiff {
          //write image
          Future f = tiffWriters_.getLast().writeImage(img);
 
-         int frame = MD.getFrameIndex(img.tags);
-         int pos = MD.getPositionIndex(img.tags);
+         int frame = AcqEngMetadata.getFrameIndex(img.tags);
+         int pos = AcqEngMetadata.getPositionIndex(img.tags);
          lastAcquiredPosition_ = Math.max(pos, lastAcquiredPosition_);
 
          try {
@@ -559,8 +559,8 @@ public final class TaggedImageStorageMultipageTiff {
 
       private void writeToMetadataFile(JSONObject md) throws JSONException {
          try {
-            mdWriter_.write(",\n\"FrameKey-" + MD.getFrameIndex(md)
-                    + "-" + MD.getChannelIndex(md) + "-" + MD.getSliceIndex(md) + "\": ");
+            mdWriter_.write(",\n\"FrameKey-" + AcqEngMetadata.getFrameIndex(md)
+                    + "-" + AcqEngMetadata.getChannelIndex(md) + "-" + AcqEngMetadata.getSliceIndex(md) + "\": ");
             mdWriter_.write(md.toString(2));
          } catch (IOException ex) {
             Log.log("Problem writing to metadata.txt file", true);
@@ -603,7 +603,7 @@ public final class TaggedImageStorageMultipageTiff {
          }
 
          if (splitByXYPosition_) {
-            baseFilename += "_" + MD.getPositionName(firstImageTags);
+            baseFilename += "_" + AcqEngMetadata.getPositionName(firstImageTags);
          }
          return baseFilename;
       }
