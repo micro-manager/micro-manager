@@ -68,12 +68,14 @@ public class MultiResMultipageTiffStorage {
    private boolean rgb_;
    private ThreadPoolExecutor writingExecutor_;
    private volatile int maxResolutionLevel_ = 0;
+   private final boolean loaded_;
 
    /**
     * Constructor to load existing storage from disk dir --top level saving
     * directory
     */
    public MultiResMultipageTiffStorage(String dir) throws IOException {
+      loaded_ = true;
       directory_ = dir;
       finished_ = true;
       String fullResDir = dir + (dir.endsWith(File.separator) ? "" : File.separator) + FULL_RES_SUFFIX;
@@ -131,7 +133,9 @@ public class MultiResMultipageTiffStorage {
    /**
     * Constructor for creating new storage prior to acquisition
     */
-   public MultiResMultipageTiffStorage(String dir, JSONObject summaryMetadata) {
+   public MultiResMultipageTiffStorage(String dir, JSONObject summaryMetadata, JSONObject displaySettings) {
+      loaded_ = false;
+      displaySettings_ = displaySettings;
       writingExecutor_ = new ThreadPoolExecutor(1, 1, 0, TimeUnit.NANOSECONDS,
               new LinkedBlockingQueue<java.lang.Runnable>());
       try {
@@ -185,7 +189,7 @@ public class MultiResMultipageTiffStorage {
       return dirrr;
    }
 
-   public void setDisplaySettings(JSONObject displaySettings) {
+   void setDisplaySettings(JSONObject displaySettings) {
       try {
          if (displaySettings != null) {
             displaySettings_ = new JSONObject(displaySettings.toString());
@@ -195,14 +199,10 @@ public class MultiResMultipageTiffStorage {
       }
    }
 
-   public static JSONObject readSummaryMetadata(String dir) throws IOException {
-      String fullResDir = dir + (dir.endsWith(File.separator) ? "" : File.separator) + FULL_RES_SUFFIX;
-      return TaggedImageStorageMultipageTiff.readSummaryMD(fullResDir);
-   }
-
-   public boolean isRGB() {
-      return rgb_;
-   }
+//   public static JSONObject readSummaryMetadata(String dir) throws IOException {
+//      String fullResDir = dir + (dir.endsWith(File.separator) ? "" : File.separator) + FULL_RES_SUFFIX;
+//      return TaggedImageStorageMultipageTiff.readSummaryMD(fullResDir);
+//   }
 
    private void processSummaryMetadata() {
       rgb_ = MultiresMetadata.isRGB(summaryMD_);
@@ -221,31 +221,27 @@ public class MultiResMultipageTiffStorage {
       return uniqueAcqName_ + ""; //make new instance
    }
 
-   public double getPixelSizeZ() {
-      return pixelSizeZ_;
-   }
-
-   public double getPixelSizeXY() {
-      return pixelSizeXY_;
-   }
-
    public int getNumResLevels() {
       return maxResolutionLevel_ + 1;
    }
-
-   public int getTileWidth() {
-      return tileWidth_;
+   
+   public long[] getImageBounds() {
+      if (!loaded_) {
+         return new long[]{0, 0, getNumCols() * tileWidth_, getNumRows() * tileHeight_};
+      } else  {
+         long yMin = (long) (getMinRow() * tileHeight_);
+         long xMin = (long) (getMinCol() * tileWidth_);
+         long xMax = getNumCols() * tileWidth_ + xMin;
+         long yMax = getNumRows() * tileHeight_ + yMin;
+         return new long[]{xMin, yMin, xMax, yMax};
+      }
    }
 
-   public int getTileHeight() {
-      return tileHeight_;
-   }
-
-   public long getNumRows() {
+   private long getNumRows() {
       return posManager_.getNumRows();
    }
 
-   public long getNumCols() {
+   private long getNumCols() {
       return posManager_.getNumCols();
    }
 
@@ -616,18 +612,18 @@ public class MultiResMultipageTiffStorage {
    /**
     * Don't return until all images have been written to disk
     */
-   public void putImage(TaggedImage MagellanTaggedImage) {
+   public void putImage(TaggedImage ti) {
       try {
          List<Future> writeFinishedList = new ArrayList<Future>();
          //write to full res storage as normal (i.e. with overlap pixels present)
-         writeFinishedList.add(fullResStorage_.putImage(MagellanTaggedImage));
+         writeFinishedList.add(fullResStorage_.putImage(ti));
          //check if maximum resolution level needs to be updated based on full size of image
-         long fullResPixelWidth = getNumCols() * getTileWidth();
-         long fullResPixelHeight = getNumRows() * getTileHeight();
+         long fullResPixelWidth = getNumCols() * tileWidth_;
+         long fullResPixelHeight = getNumRows() * tileHeight_;
          int maxResIndex = (int) Math.ceil(Math.log((Math.max(fullResPixelWidth, fullResPixelHeight)
                  / 4)) / Math.log(2));
          addResolutionsUpTo(maxResIndex);
-         writeFinishedList.addAll(addToLowResStorage(MagellanTaggedImage, 0, MultiresMetadata.getPositionIndex(MagellanTaggedImage.tags)));
+         writeFinishedList.addAll(addToLowResStorage(ti, 0, MultiresMetadata.getPositionIndex(ti.tags)));
          for (Future f : writeFinishedList) {
             f.get();
          }
@@ -686,10 +682,6 @@ public class MultiResMultipageTiffStorage {
       return finished_;
    }
 
-   public void setSummaryMetadata(JSONObject md) {
-      fullResStorage_.setSummaryMetadata(md);
-   }
-
    public JSONObject getSummaryMetadata() {
       return fullResStorage_.getSummaryMetadata();
    }
@@ -731,10 +723,6 @@ public class MultiResMultipageTiffStorage {
 
    public int getNumFrames() {
       return fullResStorage_.getMaxFrameIndexOpenedDataset() + 1;
-   }
-
-   public int getNumSlices() {
-      return fullResStorage_.getMaxSliceIndexOpenedDataset() - fullResStorage_.getMinSliceIndexOpenedDataset() + 1;
    }
 
    public int getMinSliceIndexOpenedDataset() {
@@ -814,11 +802,11 @@ public class MultiResMultipageTiffStorage {
       return exploredTiles;
    }
 
-   public long getMinRow() {
+   private long getMinRow() {
       return posManager_.getMinRow();
    }
 
-   public long getMinCol() {
+   private long getMinCol() {
       return posManager_.getMinCol();
    }
 

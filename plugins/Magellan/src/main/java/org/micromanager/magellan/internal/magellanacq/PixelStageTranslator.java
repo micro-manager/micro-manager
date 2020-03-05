@@ -252,6 +252,14 @@ public class PixelStageTranslator {
          throw new RuntimeException("Problem with position metadata");
       }
    }
+
+   public int getTileHeight() {
+      return tileHeight_;
+   }
+
+   public int getTileWidth() {
+      return tileWidth_;
+   }
    
 
 

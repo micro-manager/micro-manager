@@ -64,6 +64,7 @@ public class MagellanImageCache implements DataSink {
    private Acquisition acq_;
    private final boolean showDisplay_;
    private PixelStageTranslator stageTranslator_;
+   private double pixelSizeZ_, pixelSizeXY_;
 
    public MagellanImageCache(String dir, boolean showDisplay) {
       dir_ = dir;
@@ -80,20 +81,20 @@ public class MagellanImageCache implements DataSink {
    }
 
    public double getPixelSize_um() {
-      return imageStorage_.getPixelSizeXY();
+      return pixelSizeXY_;
 
    }
 
    public void initialize(AcquisitionBase acq, JSONObject summaryMetadata) {
       acq_ = (MagellanAcquisition) acq;
-      
+      pixelSizeXY_ = MagellanMD.getPixelSizeUm(summaryMetadata);
+      pixelSizeZ_ = MagellanMD.getZStepUm(summaryMetadata);
       stageTranslator_ = new PixelStageTranslator(stringToTransform(AcqEngMetadata.getAffineTransformString(summaryMetadata)),
          MagellanMD.getWidth(summaryMetadata), MagellanMD.getHeight(summaryMetadata), 
               MagellanMD.getPixelOverlapX(summaryMetadata), MagellanMD.getPixelOverlapY(summaryMetadata),
               MagellanMD.getInitialPositionList(summaryMetadata));
       DisplaySettings displaySettings = new DisplaySettings((MagellanChannelGroupSettings) acq.getChannels(), summaryMetadata);
-      imageStorage_ = new MultiResMultipageTiffStorage(dir_, summaryMetadata);
-      imageStorage_.setDisplaySettings(displaySettings.toJSON());
+      imageStorage_ = new MultiResMultipageTiffStorage(dir_, summaryMetadata, displaySettings.toJSON());
       //storage class has determined unique acq name, so it can now be stored
       name_ = this.getUniqueAcqName();
 
@@ -193,11 +194,11 @@ public class MagellanImageCache implements DataSink {
    }
 
    public int getTileHeight() {
-      return imageStorage_.getTileHeight();
+      return stageTranslator_.getTileHeight();
    }
 
    public int getTileWidth() {
-      return imageStorage_.getTileWidth();
+      return stageTranslator_.getTileWidth();
    }
 
    public boolean isRGB() {
@@ -209,7 +210,7 @@ public class MagellanImageCache implements DataSink {
    }
 
    public double getZStep() {
-      return imageStorage_.getPixelSizeZ();
+      return pixelSizeZ_;
    }
 
    public boolean isXYBounded() {
@@ -217,18 +218,10 @@ public class MagellanImageCache implements DataSink {
    }
 
    public long[] getImageBounds() {
-      int tileHeight = imageStorage_.getTileHeight();
-      int tileWidth = imageStorage_.getTileWidth();
-      if (!isExploreAcquisition()) {
-         return new long[]{0, 0, imageStorage_.getNumCols() * tileWidth, imageStorage_.getNumRows() * tileHeight};
-      } else if (loadedData_) {
-         long yMin = (long) (imageStorage_.getMinRow() * tileHeight);
-         long xMin = (long) (imageStorage_.getMinCol() * tileWidth);
-         long xMax = imageStorage_.getNumCols() * tileWidth + xMin;
-         long yMax = imageStorage_.getNumRows() * tileHeight + yMin;
-         return new long[]{xMin, yMin, xMax, yMax};
+      if (isExploreAcquisition()) {
+         return null;
       }
-      return null; //No image bounds for explore acquisiiton
+      return imageStorage_.getImageBounds();
    }
 
    public TaggedImage getImageForDisplay(int channel, MagellanDataViewCoords dataCoords) {
