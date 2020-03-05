@@ -14,10 +14,8 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.magellan.internal.imagedisplay;
+package org.micromanager.multiresviewer;
 
-import org.micromanager.magellan.internal.imagedisplay.events.ExploreZLimitsChangedEvent;
-import org.micromanager.magellan.internal.imagedisplay.events.ScrollersAddedEvent;
 import com.google.common.eventbus.Subscribe;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -38,12 +36,12 @@ import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
-import org.micromanager.magellan.internal.main.Magellan;
-import org.micromanager.magellan.internal.misc.JavaUtils;
-import org.micromanager.magellan.internal.misc.Log;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.magellan.internal.imagedisplay.events.MagellanScrollbarPosition;
+import org.micromanager.multiresviewer.events.ExploreZLimitsChangedEvent;
+import org.micromanager.multiresviewer.events.MagellanScrollbarPosition;
+import org.micromanager.multiresviewer.events.ScrollersAddedEvent;
+
 
 /**
  * Scrollbars + optional controls for explor acquisitons
@@ -75,8 +73,7 @@ class SubImageControls extends JPanel {
       try {
          initComponents();
       } catch (Exception e) {
-         Log.log("Problem initializing subimage controls");
-         Log.log(e);
+         throw new RuntimeException("Problem initializing subimage controls");
       }
 
    }
@@ -262,8 +259,7 @@ class SubImageControls extends JPanel {
             zTopScrollbar_.setUI(new ColorableScrollbarUI());
             zBottomScrollbar_.setUI(new ColorableScrollbarUI());
          } catch (Exception e) {
-            Log.log("problem creating z limit scrollbars", true);
-            Log.log(e);
+            throw new RuntimeException("problem creating z limit scrollbars");
          }
          zTopTextField_ = new JTextField(zOrigin_ + "");
          zTopTextField_.addActionListener(new ActionListener() {
@@ -366,18 +362,9 @@ class SubImageControls extends JPanel {
       this.invalidate();
       this.validate();
       this.getParent().doLayout();
-//      SwingUtilities.invokeLater(new Runnable() {
-//
-//         @Override
-//         public void run() {
-//            if (explore_) {
-//               display_.fitExploreCanvasToWindow();
-//            }
-//         }
-//      });
    }
 
-   void updateScrollerPositions(MagellanDataViewCoords view) {
+   void updateScrollerPositions(DataViewCoords view) {
       for (AxisScroller a : scrollerPanel_.scrollers_) {
          if (a.getAxis().equals("c")) {
             a.setPosition(view.getAxisPosition("c"));

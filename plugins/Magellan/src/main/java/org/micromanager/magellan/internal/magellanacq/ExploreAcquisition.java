@@ -41,7 +41,6 @@ import org.micromanager.acqj.api.DynamicSettingsAcquisition;
 import org.micromanager.acqj.api.ExceptionCallback;
 import org.micromanager.acqj.api.XYStagePosition;
 import org.micromanager.acqj.internal.acqengj.affineTransformUtils;
-import org.micromanager.magellan.internal.imagedisplay.MagellanImageCache;
 
 /**
  * A single time point acquisition that can dynamically expand in X,Y, and Z

@@ -17,7 +17,7 @@
 //               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-package org.micromanager.magellan.internal.imagedisplay;
+package org.micromanager.magellan.internal.magellanacq;
 
 import com.google.common.eventbus.EventBus;
 import java.awt.Point;
@@ -32,21 +32,16 @@ import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.acqj.internal.acqengj.AcquisitionBase;
-import org.micromanager.acqj.api.DataSink;
-import org.micromanager.acqj.api.XYStagePosition;
-import org.micromanager.magellan.internal.imagedisplay.events.ImageCacheFinishedEvent;
-import org.micromanager.magellan.internal.imagedisplay.events.MagellanNewImageEvent;
-import org.micromanager.magellan.internal.misc.Log;
-import org.micromanager.magellan.internal.misc.LongPoint;
 import org.micromanager.acqj.api.AcqEngMetadata;
 import org.micromanager.acqj.api.Acquisition;
-import org.micromanager.acqj.internal.acqengj.NumUtils;
+import org.micromanager.acqj.api.DataSink;
+import org.micromanager.acqj.api.XYStagePosition;
+import org.micromanager.acqj.internal.acqengj.AcquisitionBase;
 import org.micromanager.magellan.internal.channels.MagellanChannelGroupSettings;
-import org.micromanager.magellan.internal.magellanacq.MagellanMD;
-import org.micromanager.magellan.internal.magellanacq.MagellanAcquisition;
-import org.micromanager.magellan.internal.magellanacq.PixelStageTranslator;
+import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.multiresstorage.MultiResMultipageTiffStorage;
+import org.micromanager.multiresviewer.DisplaySettings;
+import org.micromanager.multiresviewer.MagellanDisplayController;
 
 /**
  * This class manages a magellan dataset on disk, as well as the state of a view
@@ -89,15 +84,12 @@ public class MagellanImageCache implements DataSink {
       acq_ = (MagellanAcquisition) acq;
       pixelSizeXY_ = MagellanMD.getPixelSizeUm(summaryMetadata);
       pixelSizeZ_ = MagellanMD.getZStepUm(summaryMetadata);
-      stageTranslator_ = new PixelStageTranslator(stringToTransform(AcqEngMetadata.getAffineTransformString(summaryMetadata)),
+      stageTranslator_ = new PixelStageTranslator(stringToTransform(MagellanMD.getAffineTransformString(summaryMetadata)),
          MagellanMD.getWidth(summaryMetadata), MagellanMD.getHeight(summaryMetadata), 
               MagellanMD.getPixelOverlapX(summaryMetadata), MagellanMD.getPixelOverlapY(summaryMetadata),
               MagellanMD.getInitialPositionList(summaryMetadata));
+      
       DisplaySettings displaySettings = new DisplaySettings((MagellanChannelGroupSettings) acq.getChannels(), summaryMetadata);
-      imageStorage_ = new MultiResMultipageTiffStorage(dir_, summaryMetadata, displaySettings.toJSON());
-      //storage class has determined unique acq name, so it can now be stored
-      name_ = this.getUniqueAcqName();
-
       if (showDisplay_) {
          //create display
          try {
@@ -107,6 +99,9 @@ public class MagellanImageCache implements DataSink {
             Log.log("Couldn't create display succesfully");
          }
       }
+      imageStorage_ = new MultiResMultipageTiffStorage(dir_, summaryMetadata, displaySettings.toJSON());
+      //storage class has determined unique acq name, so it can now be stored
+      name_ = this.getUniqueAcqName();
    }
    
    private static AffineTransform stringToTransform(String s) {

@@ -32,7 +32,6 @@ import org.micromanager.acqj.api.XYStagePosition;
 import org.micromanager.acqj.api.AcqEventModules;
 import org.micromanager.acqj.api.DataSink;
 import org.micromanager.acqj.api.FixedSettingsAcquisition;
-import org.micromanager.magellan.internal.imagedisplay.MagellanImageCache;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.magellan.internal.surfacesandregions.Point3d;

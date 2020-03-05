@@ -17,11 +17,9 @@
 
 package org.micromanager.magellan.internal.misc;
 
-import org.micromanager.magellan.internal.imagedisplay.MagellanImageCache;
 import java.io.IOException;
 import java.util.List;
-import org.micromanager.magellan.internal.imagedisplay.DisplaySettings;
-import org.micromanager.magellan.internal.imagedisplay.MagellanDisplayController;
+import org.micromanager.magellan.internal.magellanacq.MagellanImageCache;
 import org.micromanager.magellan.internal.misc.Log;
 
 /**
@@ -36,9 +34,10 @@ public class LoadedAcquisitionData {
          int maxZ = imageCache.getMaxZIndexLoadedData();
          List<String> channelNames = imageCache.getChannelNames();
          int nFrames = imageCache.getNumChannels();
-         MagellanDisplayController controller = new MagellanDisplayController(
-                 imageCache, new DisplaySettings(imageCache.getDisplayJSON()), null);
-         controller.setLoadedDataScrollbarBounds(channelNames, nFrames, minZ, maxZ);
+         //TODO: restore
+//         MagellanDisplayController controller = new MagellanDisplayController(
+//                 imageCache, new DisplaySettings(imageCache.getDisplayJSON()), null);
+//         controller.setLoadedDataScrollbarBounds(channelNames, nFrames, minZ, maxZ);
       } catch (IOException ex) {
          Log.log("Couldn't open acquisition", true);
       }

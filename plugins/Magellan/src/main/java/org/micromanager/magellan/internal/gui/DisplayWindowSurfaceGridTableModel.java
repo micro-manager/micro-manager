@@ -3,13 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.micromanager.magellan.internal.imagedisplay;
+package org.micromanager.magellan.internal.gui;
 
 import com.google.common.eventbus.Subscribe;
 import java.awt.geom.Point2D;
 import java.util.HashMap;
 import javax.swing.table.AbstractTableModel;
-import org.micromanager.magellan.internal.imagedisplay.MagellanDisplayController;
 import org.micromanager.magellan.internal.imagedisplay.events.DisplayClosingEvent;
 import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.magellan.internal.surfacesandregions.MultiPosGrid;
