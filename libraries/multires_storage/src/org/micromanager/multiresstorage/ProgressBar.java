@@ -21,7 +21,7 @@
 //
 // CVS:          $Id: ProgressBar.java 12081 2013-11-06 21:27:25Z nico $
 //
-package org.micromanager.magellan.internal.misc;
+package org.micromanager.multiresstorage;
 
 import java.awt.BorderLayout;
 

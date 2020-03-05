@@ -16,6 +16,7 @@
 //
 package org.micromanager.magellan.internal.magellanacq;
 
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import org.micromanager.magellan.internal.magellanacq.ExploreAcqSettings;
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.Log;
 import org.json.JSONObject;
@@ -77,13 +79,13 @@ public class ExploreAcquisition extends DynamicSettingsAcquisition implements Ma
 
    @Override
    protected void addToSummaryMetadata(JSONObject summaryMetadata) {
-      MD.setExploreAcq(summaryMetadata, true);
+      MagellanMD.setExploreAcq(summaryMetadata, true);
 
       overlapX_ = (int) (Magellan.getCore().getImageWidth() * ((ExploreAcqSettings) settings_).tileOverlap_ / 100);
       overlapY_ = (int) (Magellan.getCore().getImageHeight() * ((ExploreAcqSettings) settings_).tileOverlap_ / 100);
-      AcqEngMetadata.setPixelOverlapX(summaryMetadata, overlapX_);
-      AcqEngMetadata.setPixelOverlapY(summaryMetadata, overlapY_);
-      
+      MagellanMD.setPixelOverlapX(summaryMetadata, overlapX_);
+      MagellanMD.setPixelOverlapY(summaryMetadata, overlapY_);
+
       AcqEngMetadata.setZStepUm(summaryMetadata, ((ExploreAcqSettings) settings_).zStep_);
       createXYPositions();
       JSONArray initialPosList = createInitialPositionList();
@@ -92,7 +94,7 @@ public class ExploreAcquisition extends DynamicSettingsAcquisition implements Ma
 
    @Override
    protected void addToImageMetadata(JSONObject tags) {
-      
+
    }
 
    private void createXYPositions() {
@@ -113,7 +115,7 @@ public class ExploreAcquisition extends DynamicSettingsAcquisition implements Ma
          throw new RuntimeException();
       }
    }
-   
+
    protected JSONArray createInitialPositionList() {
       JSONArray pList = new JSONArray();
       for (XYStagePosition xyPos : positions_) {
@@ -213,7 +215,7 @@ public class ExploreAcquisition extends DynamicSettingsAcquisition implements Ma
       }
 
       Function<AcquisitionEvent, AcquisitionEvent> removeTileToAcquireFn = (AcquisitionEvent e) -> {
-         queuedTileEvents_.get(e.getZIndex()).remove(new ExploreTileWaitingToAcquire(e.getXY().getGridRow(), 
+         queuedTileEvents_.get(e.getZIndex()).remove(new ExploreTileWaitingToAcquire(e.getXY().getGridRow(),
                  e.getXY().getGridCol(), e.getZIndex(), e.getChannelName()));
          return e;
       };
@@ -327,7 +329,7 @@ public class ExploreAcquisition extends DynamicSettingsAcquisition implements Ma
    public int getDisplaySliceIndexFromZCoordinate(double z) {
       return (int) Math.round((z - zOrigin_) / zStep_) - minSliceIndex_;
    }
-
+   
    //slice and row/col index of an acquisition event in the queue
    public class ExploreTileWaitingToAcquire {
 

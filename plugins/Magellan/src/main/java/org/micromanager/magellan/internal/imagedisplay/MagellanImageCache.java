@@ -21,13 +21,13 @@ package org.micromanager.magellan.internal.imagedisplay;
 
 import com.google.common.eventbus.EventBus;
 import java.awt.Point;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import org.micromanager.magellan.internal.datasaving.MultiResMultipageTiffStorage;
 import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
@@ -41,9 +41,12 @@ import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.magellan.internal.misc.LongPoint;
 import org.micromanager.acqj.api.AcqEngMetadata;
 import org.micromanager.acqj.api.Acquisition;
+import org.micromanager.acqj.internal.acqengj.NumUtils;
 import org.micromanager.magellan.internal.channels.MagellanChannelGroupSettings;
-import org.micromanager.magellan.internal.magellanacq.MD;
+import org.micromanager.magellan.internal.magellanacq.MagellanMD;
 import org.micromanager.magellan.internal.magellanacq.MagellanAcquisition;
+import org.micromanager.magellan.internal.magellanacq.PixelStageTranslator;
+import org.micromanager.multiresstorage.MultiResMultipageTiffStorage;
 
 /**
  * This class manages a magellan dataset on disk, as well as the state of a view
@@ -60,6 +63,7 @@ public class MagellanImageCache implements DataSink {
    private String name_;
    private Acquisition acq_;
    private final boolean showDisplay_;
+   private PixelStageTranslator stageTranslator_;
 
    public MagellanImageCache(String dir, boolean showDisplay) {
       dir_ = dir;
@@ -82,9 +86,14 @@ public class MagellanImageCache implements DataSink {
 
    public void initialize(AcquisitionBase acq, JSONObject summaryMetadata) {
       acq_ = (MagellanAcquisition) acq;
+      
+      stageTranslator_ = new PixelStageTranslator(stringToTransform(AcqEngMetadata.getAffineTransformString(summaryMetadata)),
+         MagellanMD.getWidth(summaryMetadata), MagellanMD.getHeight(summaryMetadata), 
+              MagellanMD.getPixelOverlapX(summaryMetadata), MagellanMD.getPixelOverlapY(summaryMetadata),
+              MagellanMD.getInitialPositionList(summaryMetadata));
       DisplaySettings displaySettings = new DisplaySettings((MagellanChannelGroupSettings) acq.getChannels(), summaryMetadata);
       imageStorage_ = new MultiResMultipageTiffStorage(dir_, summaryMetadata);
-      imageStorage_.setDisplaySettings(displaySettings);
+      imageStorage_.setDisplaySettings(displaySettings.toJSON());
       //storage class has determined unique acq name, so it can now be stored
       name_ = this.getUniqueAcqName();
 
@@ -97,6 +106,18 @@ public class MagellanImageCache implements DataSink {
             Log.log("Couldn't create display succesfully");
          }
       }
+   }
+   
+   private static AffineTransform stringToTransform(String s) {
+       if (s.equals("Undefined")) {
+           return null;
+       }
+      double[] mat = new double[4];
+      String[] vals = s.split("_");
+      for (int i = 0; i < 4; i++) {
+         mat[i] = NumUtils.parseDouble(vals[i]);
+      }
+      return new AffineTransform(mat);
    }
 
    /**
@@ -184,7 +205,7 @@ public class MagellanImageCache implements DataSink {
    }
 
    public boolean isExploreAcquisition() {
-      return MD.isExploreAcq(imageStorage_.getSummaryMetadata());
+      return MagellanMD.isExploreAcq(imageStorage_.getSummaryMetadata());
    }
 
    public double getZStep() {
@@ -244,27 +265,37 @@ public class MagellanImageCache implements DataSink {
    }
 
    public int getFullResPositionIndexFromStageCoords(double xPos, double yPos) {
-      return imageStorage_.getPosManager().getFullResPositionIndexFromStageCoords(xPos, yPos);
+      return stageTranslator_.getFullResPositionIndexFromStageCoords(xPos, yPos);
    }
 
+    /**
+    *
+    * @param xAbsolute x coordinate in the full Res stitched image
+    * @param yAbsolute y coordinate in the full res stitched image
+    * @return stage coordinates of the given pixel position
+    */
    public Point2D.Double stageCoordinateFromPixelCoordinate(long absoluteX, long absoluteY) {
-      return imageStorage_.getStageCoordsFromPixelCoords(absoluteX, absoluteY);
+      return stageTranslator_.getStageCoordsFromPixelCoords(absoluteX, absoluteY);
    }
-
-   public LongPoint pixelCoordsFromStageCoords(double x, double y) {
-      return imageStorage_.getPixelCoordsFromStageCoords(x, y);
+   
+   /* 
+    * @param stageCoords x and y coordinates of image in stage space
+    * @return absolute, full resolution pixel coordinate of given stage posiiton
+    */
+   public Point pixelCoordsFromStageCoords(double x, double y) {
+      return stageTranslator_.getPixelCoordsFromStageCoords(x, y);
    }
 
    public XYStagePosition getXYPosition(int posIndex) {
-      return imageStorage_.getPosManager().getXYPosition(posIndex);
+      return stageTranslator_.getXYPosition(posIndex);
    }
 
    public int[] getPositionIndices(int[] newPositionRows, int[] newPositionCols) {
-      return imageStorage_.getPosManager().getPositionIndices(newPositionRows, newPositionCols);
+      return stageTranslator_.getPositionIndices(newPositionRows, newPositionCols);
    }
 
    public List<XYStagePosition> getPositionList() {
-      return imageStorage_.getPosManager().getPositionList();
+      return stageTranslator_.getPositionList();
    }
 
    int getMaxResolutionIndex() {

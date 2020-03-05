@@ -19,7 +19,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.magellan.internal.datasaving;
+package org.micromanager.multiresstorage;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -29,16 +29,11 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
-import java.util.HashMap;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import mmcorej.TaggedImage;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.magellan.internal.imagedisplay.DisplaySettings;
-import org.micromanager.magellan.internal.misc.Log;
-import org.micromanager.acqj.api.AcqEngMetadata;
 
 
 public class MultipageTiffReader {
@@ -59,10 +54,11 @@ public class MultipageTiffReader {
    private RandomAccessFile raFile_;
    private FileChannel fileChannel_;
       
-   private DisplaySettings displaySettings_;
    private JSONObject summaryMetadata_;
    private int byteDepth_ = 0;
    private boolean rgb_;
+   
+   private JSONObject displaySettings_;
    
    private ConcurrentHashMap<String,Long> indexMap_;
    
@@ -89,7 +85,7 @@ public class MultipageTiffReader {
       try {
          createFileChannel(file_);
       } catch (Exception ex) {
-         Log.log("Can't successfully open file: " + file_.getName());
+         throw new RuntimeException("Can't successfully open file: " + file_.getName());
       }
       
    }
@@ -109,28 +105,24 @@ public class MultipageTiffReader {
     * This constructor is used for opening datasets that have already been saved
     */
    public MultipageTiffReader(File file) throws IOException {
-      displaySettings_ = null;
       file_ = file;
       try {
          createFileChannel(file_);
       } catch (Exception ex) {
-         Log.log("Can't successfully open file: " +  file_.getName());
+         throw new RuntimeException("Can't successfully open file: " +  file_.getName());
       }
       long firstIFD = readHeader();
       summaryMetadata_ = readSummaryMD();
       try {
          readIndexMap();
       } catch (Exception e) {
-         Log.log(e);
+         throw new RuntimeException(e);
       }
-      try {
-         JSONObject dispJSON = readDisplaySettings();
-         if (dispJSON != null) {
-            displaySettings_ = new DisplaySettings(dispJSON);
-         }
-      } catch (Exception ex) {
-         Log.log("Problem with JSON Representation of Display settings", true);
-      }
+//      try {
+//         displaySettings_ = readDisplaySettings();
+//      } catch (Exception ex) {
+//         throw new RuntimeException("Problem with JSON Representation of Display settings");
+//      }
 
       if (summaryMetadata_ != null) {
          getRGBAndByteDepth(summaryMetadata_);
@@ -162,8 +154,7 @@ public class MultipageTiffReader {
       try {
          ra = new RandomAccessFile(testFile,"r");
       } catch (FileNotFoundException ex) {
-        Log.log(ex);
-        return false;
+        throw new RuntimeException(ex);
       }
       FileChannel channel = ra.getChannel();
       ByteBuffer tiffHeader = ByteBuffer.allocate(36);
@@ -189,7 +180,7 @@ public class MultipageTiffReader {
 
    private void getRGBAndByteDepth(JSONObject md) {
       try {
-         String pixelType = AcqEngMetadata.getPixelType(md);
+         String pixelType = md.getString("PixelType");
          rgb_ = pixelType.startsWith("RGB");
          
             if (pixelType.equals("RGB32") || pixelType.equals("GRAY8")) {
@@ -198,7 +189,7 @@ public class MultipageTiffReader {
                byteDepth_ = 2;
             }
       } catch (Exception ex) {
-         Log.log(ex);
+         throw new RuntimeException(ex);
       }
    }
 
@@ -206,15 +197,14 @@ public class MultipageTiffReader {
       return summaryMetadata_;
    }
    
-   public DisplaySettings getDisplaySettings() {
+   public JSONObject getDisplaySettings() {
       return displaySettings_;
    }
    
    public TaggedImage readImage(String label) {
       if (indexMap_.containsKey(label)) {
          if (fileChannel_ == null) {
-            Log.log("Attempted to read image on FileChannel that is null", false); //can happen on acquiition abort
-            return null;
+            throw new RuntimeException("Attempted to read image on FileChannel that is null"); //can happen on acquiition abort
          }
          try {
             long byteOffset = indexMap_.get(label);
@@ -222,8 +212,7 @@ public class MultipageTiffReader {
             IFDData data = readIFD(byteOffset);
             return readTaggedImage(data);
          } catch (IOException ex) {
-            Log.log(ex);
-            return null;
+            throw new RuntimeException(ex);
          }
          
       } else {
@@ -246,8 +235,7 @@ public class MultipageTiffReader {
          int length = mdInfo.getInt(4);
          
          if (header != MultipageTiffWriter.SUMMARY_MD_HEADER) {
-            Log.log("Summary Metadata Header Incorrect", true);
-            return null;
+            throw new RuntimeException("Summary Metadata Header Incorrect");
          }
 
          ByteBuffer mdBuffer = ByteBuffer.allocate(length).order(byteOrder_);
@@ -256,8 +244,7 @@ public class MultipageTiffReader {
 
          return summaryMD;
       } catch (Exception ex) {
-         Log.log("Couldn't read summary Metadata from file: " + file_.getName());
-         return null;
+         throw new RuntimeException("Couldn't read summary Metadata from file: " + file_.getName());
       }
    }
 
@@ -266,7 +253,7 @@ public class MultipageTiffReader {
          long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.DISPLAY_SETTINGS_OFFSET_HEADER,16);
           ByteBuffer header = readIntoBuffer(offset, 8);
           if (header.getInt(0) != MultipageTiffWriter.DISPLAY_SETTINGS_HEADER) {
-             Log.log("Can't find display settings in file: " + file_.getName(), false);
+             System.err.println("Can't find display settings in file: " + file_.getName());
              return null;
           }
           ByteBuffer buffer = readIntoBuffer(offset + 8, header.getInt(4));
@@ -312,7 +299,7 @@ public class MultipageTiffReader {
          }
          //If a duplicate label is read, forget about the previous one
          //if data has been intentionally overwritten, this gives the most current version
-         indexMap_.put(AcqEngMetadata.generateLabel(channel, slice, frame, position), imageOffset);
+         indexMap_.put(channel + "_" + slice + "_" + frame + "_" + position, imageOffset);
       }
    }
 
@@ -342,8 +329,7 @@ public class MultipageTiffReader {
       try {
          return new String(buffer.array(), "UTF-8");
       } catch (UnsupportedEncodingException ex) {
-         Log.log(ex);
-         return "";
+         throw new RuntimeException(ex);
       }
    }
    
@@ -356,8 +342,7 @@ public class MultipageTiffReader {
       try {
          md = new JSONObject(getString(mdBuffer));
       } catch (JSONException ex) {
-         Log.log("Error reading image metadata from file", false);
-         ex.printStackTrace();
+         throw new RuntimeException("Error reading image metadata from file");
       }
       
       if ( byteDepth_ == 0) {
@@ -440,8 +425,7 @@ public class MultipageTiffReader {
       try {
          return s.getBytes("UTF-8");
       } catch (UnsupportedEncodingException ex) {
-         Log.log("Error encoding String to bytes", true);
-         return null;
+         throw new RuntimeException("Error encoding String to bytes");
       }
    }
    

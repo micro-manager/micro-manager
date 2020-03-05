@@ -14,7 +14,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.acqj.api;
+package org.micromanager.multiresstorage;
 
 import java.awt.geom.AffineTransform;
 import java.text.DateFormat;
@@ -24,13 +24,11 @@ import java.util.Iterator;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.acqj.internal.acqengj.Engine;
-import org.micromanager.acqj.internal.acqengj.affineTransformUtils;
 
 /**
  * Convenience/standardization for Acq Engine metadata
  */
-public class AcqEngMetadata {
+public class MultiresMetadata {
 
    private static final String CHANNEL_GROUP = "ChannelGroup";
    private static final String CORE_AUTOFOCUS_DEVICE = "Core-Autofocus";
@@ -68,6 +66,8 @@ public class AcqEngMetadata {
    private static final String BIT_DEPTH = "BitDepth";
    private static final String ELAPSED_TIME_MS = "ElapsedTime-ms";
    private static final String Z_STEP_UM = "z-step_um";
+   private static final String OVERLAP_X = "GridPixelOverlapX";
+   private static final String OVERLAP_Y = "GridPixelOverlapY";
    private static final String GRID_COL = "GridColumnIndex";
    private static final String GRID_ROW = "GridRowIndex";
    private static final String AFFINE_TRANSFORM = "AffineTransform";
@@ -77,120 +77,6 @@ public class AcqEngMetadata {
    private static final String CORE_XYSTAGE = "Core-XYStage";
    private static final String CORE_FOCUS = "Core-Focus";
 
-   /**
-    * Add the core set of image metadata that should be present in any
-    * acquisition
-    *
-    * @param tags
-    * @param event
-    * @param timeIndex
-    * @param camChannelIndex
-    * @param elapsed_ms
-    * @param exposure
-    * @param multicamera
-    */
-   public static void addImageMetadata(JSONObject tags, AcquisitionEvent event,
-           int camChannelIndex, long elapsed_ms, double exposure) {
-      try {
-         //////////  Date and time   //////////////
-         AcqEngMetadata.setElapsedTimeMs(tags, elapsed_ms);
-         AcqEngMetadata.setImageTime(tags, (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss -")).format(Calendar.getInstance().getTime()));
-
-         //////// Info about all hardware that the core specifically knows about ///////
-         // e.g. Core focus, core XYStage, core Camera etc
-         AcqEngMetadata.setStageX(tags, Engine.getCore().getXPosition());
-         AcqEngMetadata.setStageY(tags, Engine.getCore().getYPosition());
-         AcqEngMetadata.setZPositionUm(tags, Engine.getCore().getPosition());
-
-         ////////  Channels /////////
-         String channelName = event.getChannelName();
-         if (Engine.getCore().getNumberOfCameraChannels() > 1) {
-            channelName += "_" + Engine.getCore().getCameraChannelName(camChannelIndex);
-         }
-         //infer channel index at runtime based on name
-         int cIndex = event.acquisition_.getChannelIndexFromName(channelName);
-         AcqEngMetadata.setChannelIndex(tags, cIndex);
-         AcqEngMetadata.setChannelName(tags, channelName == null ? "" : channelName);
-
-         /////////  XY Stage Positions (with optional support for grid layout) ////////
-         if (event.getXY() != null) {
-            //infer Stage position index at acquisition time to support on the fly modification
-            AcqEngMetadata.setPositionIndex(tags, event.acquisition_.getPositionIndexFromName(event.getXY()));
-            AcqEngMetadata.setStageXIntended(tags, event.getXY().getCenter().x);
-            AcqEngMetadata.setStageYIntended(tags, event.getXY().getCenter().y);
-            AcqEngMetadata.setPositionName(tags, event.getXY().getName());
-            if (event.getXY().isInGrid()) {
-               AcqEngMetadata.setGridRow(tags, event.getXY().getGridRow());
-               AcqEngMetadata.setGridCol(tags, event.getXY().getGridCol());
-            }
-         }
-         AcqEngMetadata.setStageZIntended(tags, event.getZPosition());
-
-         ////////   Z and T indices  ////////////
-         //Z indices should be specified in advance if possible,
-         //so that they can be ordered based on Z position
-         AcqEngMetadata.setZIndex(tags, event.getZIndex());
-         //T indices must be specified in advance 
-         AcqEngMetadata.setTIndex(tags, event.getTIndex());
-
-         ////// Generic image coordinate axes //////
-         //TODO
-         
-         AcqEngMetadata.setExposure(tags, exposure);
-
-      } catch (Exception e) {
-         e.printStackTrace();
-         throw new RuntimeException("Problem adding image metadata");
-      }
-   }
-
-   /**
-    * Make the core set of tags needed in summary metadata. Specific types of
-    * acquistitions can add to this as needed
-    *
-    * @param savingName
-    * @return
-    */
-   public static JSONObject makeSummaryMD(String savingName, Acquisition acq) {
-      JSONObject summary = new JSONObject();
-      AcqEngMetadata.setSavingPrefix(summary, savingName);
-
-      AcqEngMetadata.setAcqDate(summary, getCurrentDateAndTime());
-      AcqEngMetadata.setAcqType(summary, acq);
-
-      AcqEngMetadata.setChannelGroup(summary, acq.getChannels() == null ? "" : acq.getChannels().getChannelGroup());
-
-      //General information the core-camera
-      AcqEngMetadata.setPixelTypeFromByteDepth(summary, (int) Engine.getCore().getBytesPerPixel());
-      AcqEngMetadata.setBitDepth(summary, (int) Engine.getCore().getImageBitDepth());
-      AcqEngMetadata.setWidth(summary, (int) Engine.getCore().getImageWidth());
-      AcqEngMetadata.setHeight(summary, (int) Engine.getCore().getImageHeight());
-      AcqEngMetadata.setPixelSizeUm(summary, Engine.getCore().getPixelSizeUm());
-
-      /////// Info about core devices ////////
-      try {
-         AcqEngMetadata.setCoreXY(summary, Engine.getCore().getXYStageDevice());
-         AcqEngMetadata.setCoreFocus(summary, Engine.getCore().getFocusDevice());
-         AcqEngMetadata.setCoreAutofocus(summary, Engine.getCore().getAutoFocusDevice());
-         AcqEngMetadata.setCoreCamera(summary, Engine.getCore().getCameraDevice());
-         AcqEngMetadata.setCoreGalvo(summary, Engine.getCore().getGalvoDevice());
-         AcqEngMetadata.setCoreImageProcessor(summary, Engine.getCore().getImageProcessorDevice());
-         AcqEngMetadata.setCoreSLM(summary, Engine.getCore().getSLMDevice());
-         AcqEngMetadata.setCoreShutter(summary, Engine.getCore().getShutterDevice());
-      } catch (Exception e) {
-         throw new RuntimeException("couldn't get info from corea about devices");
-      }
-
-      //affine transform
-      if (affineTransformUtils.isAffineTransformDefined()) {
-         AffineTransform at = affineTransformUtils.getAffineTransform(0, 0);
-         AcqEngMetadata.setAffineTransformString(summary, affineTransformUtils.transformToString(at));
-      } else {
-         AcqEngMetadata.setAffineTransformString(summary, "Undefined");
-      }
-
-      return summary;
-   }
 
    protected static String getCurrentDateAndTime() {
       DateFormat df = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
@@ -765,6 +651,40 @@ public class AcqEngMetadata {
       }
    }
 
+   public static void setPixelOverlapX(JSONObject smd, int overlap) {
+      try {
+         smd.put(OVERLAP_X, overlap);
+      } catch (JSONException ex) {
+         throw new RuntimeException("Couldnt set pixel overlap tag");
+
+      }
+   }
+
+   public static void setPixelOverlapY(JSONObject smd, int overlap) {
+      try {
+         smd.put(OVERLAP_Y, overlap);
+      } catch (JSONException ex) {
+         throw new RuntimeException("Couldnt set pixel overlap tag");
+
+      }
+   }
+
+   public static int getPixelOverlapX(JSONObject summaryMD) {
+      try {
+         return summaryMD.getInt(OVERLAP_X);
+      } catch (JSONException ex) {
+         throw new RuntimeException("Couldnt find pixel overlap in image tags");
+      }
+   }
+
+   public static int getPixelOverlapY(JSONObject summaryMD) {
+      try {
+         return summaryMD.getInt(OVERLAP_Y);
+      } catch (JSONException ex) {
+         throw new RuntimeException("Couldnt find pixel overlap in image tags");
+      }
+   }
+
    public static void setGridRow(JSONObject smd, long gridRow) {
       try {
          smd.put(GRID_ROW, gridRow);
@@ -856,21 +776,6 @@ public class AcqEngMetadata {
          return smd.getDouble(Y_UM);
       } catch (JSONException ex) {
          throw new RuntimeException("Couldnt get stage y");
-
-      }
-   }
-
-   private static void setAcqType(JSONObject smd, Acquisition acq) {
-      try {
-         if (acq instanceof DynamicSettingsAcquisition) {
-            smd.put(ACQ_TYPE, "DynamicSettingsAcquisition");
-         } else if (acq instanceof FixedSettingsAcquisition) {
-            smd.put(ACQ_TYPE, "FixedSettingsAcquisition");
-         } else {
-            throw new RuntimeException("Unknown acq type");
-         }
-      } catch (JSONException ex) {
-         throw new RuntimeException("Couldnt set stage y");
 
       }
    }

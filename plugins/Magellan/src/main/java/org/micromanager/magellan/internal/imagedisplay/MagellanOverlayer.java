@@ -371,14 +371,14 @@ public class MagellanOverlayer {
          return;
       }
       for (Point3d point : newSurface.getPoints()) {
-         LongPoint displayLocation = display_.imageCoordsFromStageCoords(point.x, point.y, viewCoords);
+         Point displayLocation = display_.imageCoordsFromStageCoords(point.x, point.y, viewCoords);
          int displaySlice;
          displaySlice = display_.getSliceIndexFromZCoordinate(point.z);
 
          if (displaySlice != viewCoords.getAxisPosition("z")) {
             continue;
          }
-         Roi circle = new OvalRoi(displayLocation.x_ - INTERP_POINT_DIAMETER / 2, displayLocation.y_ - INTERP_POINT_DIAMETER / 2, INTERP_POINT_DIAMETER, INTERP_POINT_DIAMETER);
+         Roi circle = new OvalRoi(displayLocation.x - INTERP_POINT_DIAMETER / 2, displayLocation.y - INTERP_POINT_DIAMETER / 2, INTERP_POINT_DIAMETER, INTERP_POINT_DIAMETER);
          circle.setFillColor(getSurfaceGridLineColor(newSurface));
          circle.setStrokeColor(getSurfaceGridLineColor(newSurface));
          overlay.add(circle);
@@ -396,15 +396,15 @@ public class MagellanOverlayer {
       //draw convex hull
       Vector2D[] hullPoints = surface.getConvexHullPoints();
 
-      LongPoint lastPoint = null, firstPoint = null;
+      Point lastPoint = null, firstPoint = null;
       for (Vector2D v : hullPoints) {
 //         if (Thread.interrupted()) {
 //            throw new InterruptedException();
 //         }
          //convert to image coords
-         LongPoint p = display_.imageCoordsFromStageCoords(v.getX(), v.getY(), viewCoords);
+         Point p = display_.imageCoordsFromStageCoords(v.getX(), v.getY(), viewCoords);
          if (lastPoint != null) {
-            Line l = new Line(p.x_, p.y_, lastPoint.x_, lastPoint.y_);
+            Line l = new Line(p.x, p.y, lastPoint.x, lastPoint.y);
             l.setStrokeColor(getSurfaceGridLineColor(surface));
             l.setStrokeWidth(5f);
             overlay.add(l);
@@ -414,7 +414,7 @@ public class MagellanOverlayer {
          lastPoint = p;
       }
       //draw last connection         
-      Line l = new Line(firstPoint.x_, firstPoint.y_, lastPoint.x_, lastPoint.y_);
+      Line l = new Line(firstPoint.x, firstPoint.y, lastPoint.x, lastPoint.y);
       l.setStrokeColor(getSurfaceGridLineColor(surface));
       l.setStrokeWidth(5f);
       overlay.add(l);
@@ -433,15 +433,15 @@ public class MagellanOverlayer {
 //            throw new InterruptedException();
 //         }
          Point2D.Double[] corners = pos.getDisplayedTileCorners();
-         LongPoint corner1 = display_.imageCoordsFromStageCoords(corners[0].x, corners[0].y, viewCoords);
-         LongPoint corner2 = display_.imageCoordsFromStageCoords(corners[1].x, corners[1].y, viewCoords);
-         LongPoint corner3 = display_.imageCoordsFromStageCoords(corners[2].x, corners[2].y, viewCoords);
-         LongPoint corner4 = display_.imageCoordsFromStageCoords(corners[3].x, corners[3].y, viewCoords);
+         Point corner1 = display_.imageCoordsFromStageCoords(corners[0].x, corners[0].y, viewCoords);
+         Point corner2 = display_.imageCoordsFromStageCoords(corners[1].x, corners[1].y, viewCoords);
+         Point corner3 = display_.imageCoordsFromStageCoords(corners[2].x, corners[2].y, viewCoords);
+         Point corner4 = display_.imageCoordsFromStageCoords(corners[3].x, corners[3].y, viewCoords);
          //add lines connecting 4 corners
-         Line l1 = new Line(corner1.x_, corner1.y_, corner2.x_, corner2.y_);
-         Line l2 = new Line(corner2.x_, corner2.y_, corner3.x_, corner3.y_);
-         Line l3 = new Line(corner3.x_, corner3.y_, corner4.x_, corner4.y_);
-         Line l4 = new Line(corner4.x_, corner4.y_, corner1.x_, corner1.y_);
+         Line l1 = new Line(corner1.x, corner1.y, corner2.x, corner2.y);
+         Line l2 = new Line(corner2.x, corner2.y, corner3.x, corner3.y);
+         Line l3 = new Line(corner3.x, corner3.y, corner4.x, corner4.y);
+         Line l4 = new Line(corner4.x, corner4.y, corner1.x, corner1.y);
          l1.setStrokeColor(getSurfaceGridLineColor(surface));
          l2.setStrokeColor(getSurfaceGridLineColor(surface));
          l3.setStrokeColor(getSurfaceGridLineColor(surface));
@@ -502,13 +502,13 @@ public class MagellanOverlayer {
       dsTileHeight = tileHeight_ * viewCoords.getDisplayToFullScaleFactor();
       int roiWidth = (int) ((grid.numCols() * dsTileWidth));
       int roiHeight = (int) ((grid.numRows() * dsTileHeight));
-      LongPoint displayCenter = display_.imageCoordsFromStageCoords(grid.center().x, grid.center().y, viewCoords);
-      Roi rectangle = new Roi(displayCenter.x_ - roiWidth / 2, displayCenter.y_ - roiHeight / 2, roiWidth, roiHeight);
+      Point displayCenter = display_.imageCoordsFromStageCoords(grid.center().x, grid.center().y, viewCoords);
+      Roi rectangle = new Roi(displayCenter.x - roiWidth / 2, displayCenter.y - roiHeight / 2, roiWidth, roiHeight);
       rectangle.setStrokeWidth(5f);
       rectangle.setStrokeColor(getSurfaceGridLineColor(grid));
 
-      Point displayTopLeft = new Point((int) (displayCenter.x_ - roiWidth / 2), (int) (displayCenter.y_ - roiHeight / 2));
-      //draw boundries of tiles
+      Point displayTopLeft = new Point((int) (displayCenter.x - roiWidth / 2), (int) (displayCenter.y - roiHeight / 2));
+      //draw boundries of tile
       for (int row = 1; row < grid.numRows(); row++) {
          int yPos = (int) (displayTopLeft.y + row * dsTileHeight);
          Line l = new Line(displayTopLeft.x, yPos, displayTopLeft.x + roiWidth, yPos);

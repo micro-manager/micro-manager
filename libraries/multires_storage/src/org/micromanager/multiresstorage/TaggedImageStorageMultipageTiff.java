@@ -19,9 +19,8 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.magellan.internal.datasaving;
+package org.micromanager.multiresstorage;
 
-import org.micromanager.magellan.internal.imagedisplay.DisplaySettings;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -41,10 +40,6 @@ import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.magellan.internal.misc.JavaUtils;
-import org.micromanager.magellan.internal.misc.Log;
-import org.micromanager.acqj.api.AcqEngMetadata;
-import org.micromanager.magellan.internal.misc.ProgressBar;
 
 public final class TaggedImageStorageMultipageTiff {
 
@@ -150,7 +145,7 @@ public final class TaggedImageStorageMultipageTiff {
                }
             } catch (IOException ex) {
                ex.printStackTrace();
-               Log.log("Couldn't open file: " + f.toString());
+               throw new RuntimeException("Couldn't open file: " + f.toString());
             }
          }
          numRead++;
@@ -184,7 +179,7 @@ public final class TaggedImageStorageMultipageTiff {
    }
 
    public TaggedImage getImage(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
-      String label = AcqEngMetadata.generateLabel(channelIndex, sliceIndex, frameIndex, positionIndex);
+      String label = MultiresMetadata.generateLabel(channelIndex, sliceIndex, frameIndex, positionIndex);
 
       TaggedImage image = writePendingImages_.get(label);
       if (image != null) {
@@ -220,7 +215,7 @@ public final class TaggedImageStorageMultipageTiff {
    }
 
    public Future putImage(TaggedImage MagellanTaggedImage) throws IOException {
-      final String label = AcqEngMetadata.getLabel(MagellanTaggedImage.tags);
+      final String label = MultiresMetadata.getLabel(MagellanTaggedImage.tags);
       // Now, we must hold on to MagellanTaggedImage, so that we can return it if
       // somebody calls getImage() before the writing is finished.
       // There is a data race if the MagellanTaggedImage is modified by other code, but
@@ -246,20 +241,19 @@ public final class TaggedImageStorageMultipageTiff {
    private Future startWritingTask(String label, TaggedImage ti)
            throws IOException {
       if (!newDataSet_) {
-         Log.log("Tried to write image to a finished data set");
-         throw new RuntimeException("This Dataset is read-only.");
+         throw new RuntimeException("Tried to write image to a finished data set");
       }
 
       int fileSetIndex = 0;
       if (splitByXYPosition_) {
-         fileSetIndex = AcqEngMetadata.getPositionIndex(ti.tags);
+         fileSetIndex = MultiresMetadata.getPositionIndex(ti.tags);
       }
       if (fileSets_ == null) {
          try {
             fileSets_ = new HashMap<Integer, FileSet>();
-            JavaUtils.createDirectory(directory_);
+            MultiResMultipageTiffStorage.createDir(directory_);
          } catch (Exception ex) {
-            Log.log(ex);
+            throw new RuntimeException(ex);
          }
       }
 
@@ -272,8 +266,7 @@ public final class TaggedImageStorageMultipageTiff {
          tiffReadersByLabel_.put(label, set.getCurrentReader());
          return f;
       } catch (IOException ex) {
-         Log.log("problem writing image to file");
-         throw new RuntimeException(ex);
+         throw new RuntimeException("problem writing image to file");
       }
    }
 
@@ -354,7 +347,7 @@ public final class TaggedImageStorageMultipageTiff {
          try {
             r.close();
          } catch (IOException ex) {
-            Log.log(ex);
+            throw new RuntimeException(ex);
          }
       }
       tiffReadersByLabel_ = null;
@@ -465,7 +458,7 @@ public final class TaggedImageStorageMultipageTiff {
                startMetadataFile();
             }
          } catch (JSONException ex) {
-            Log.log("Problem with summary metadata");
+            throw new RuntimeException("Problem with summary metadata");
          }
       }
 
@@ -486,7 +479,7 @@ public final class TaggedImageStorageMultipageTiff {
             try {
                finishMetadataFile();
             } catch (JSONException ex) {
-               Log.log("Problem finishing metadata.txt", true);
+               throw new RuntimeException("Problem finishing metadata.txt");
             }
          }
 
@@ -507,7 +500,7 @@ public final class TaggedImageStorageMultipageTiff {
       public List<Future> overwritePixels(Object pixels, int channel, int slice, int frame, int position) throws IOException {
          ArrayList<Future> list = new ArrayList<Future>();
          for (MultipageTiffWriter w : tiffWriters_) {
-            if (w.getIndexMap().containsKey(AcqEngMetadata.generateLabel(channel, slice, frame, position))) {
+            if (w.getIndexMap().containsKey(MultiresMetadata.generateLabel(channel, slice, frame, position))) {
                list.add(w.overwritePixels(pixels, channel, slice, frame, position));
             }
          }
@@ -537,14 +530,14 @@ public final class TaggedImageStorageMultipageTiff {
          try {
             img.tags.put("FileName", currentTiffFilename_);
          } catch (JSONException ex) {
-            Log.log("Error adding filename to metadata", true);
+            throw new RuntimeException("Error adding filename to metadata");
          }
 
          //write image
          Future f = tiffWriters_.getLast().writeImage(img);
 
-         int frame = AcqEngMetadata.getFrameIndex(img.tags);
-         int pos = AcqEngMetadata.getPositionIndex(img.tags);
+         int frame = MultiresMetadata.getFrameIndex(img.tags);
+         int pos = MultiresMetadata.getPositionIndex(img.tags);
          lastAcquiredPosition_ = Math.max(pos, lastAcquiredPosition_);
 
          try {
@@ -552,18 +545,18 @@ public final class TaggedImageStorageMultipageTiff {
                writeToMetadataFile(img.tags);
             }
          } catch (JSONException ex) {
-            Log.log("Problem with image metadata", true);
+            throw new RuntimeException("Problem with image metadata");
          }
          return f;
       }
 
       private void writeToMetadataFile(JSONObject md) throws JSONException {
          try {
-            mdWriter_.write(",\n\"FrameKey-" + AcqEngMetadata.getFrameIndex(md)
-                    + "-" + AcqEngMetadata.getChannelIndex(md) + "-" + AcqEngMetadata.getSliceIndex(md) + "\": ");
+            mdWriter_.write(",\n\"FrameKey-" + MultiresMetadata.getFrameIndex(md)
+                    + "-" + MultiresMetadata.getChannelIndex(md) + "-" + MultiresMetadata.getSliceIndex(md) + "\": ");
             mdWriter_.write(md.toString(2));
          } catch (IOException ex) {
-            Log.log("Problem writing to metadata.txt file", true);
+            throw new RuntimeException("Problem writing to metadata.txt file");
          }
       }
 
@@ -575,7 +568,7 @@ public final class TaggedImageStorageMultipageTiff {
             mdWriter_.write("\"Summary\": ");
             mdWriter_.write(summaryMetadata_.toString(2));
          } catch (IOException ex) {
-            Log.log("Problem creating metadata.txt file", true);
+            throw new RuntimeException("Problem creating metadata.txt file");
          }
       }
 
@@ -584,7 +577,7 @@ public final class TaggedImageStorageMultipageTiff {
             mdWriter_.write("\n}\n");
             mdWriter_.close();
          } catch (IOException ex) {
-            Log.log("Problem creating metadata.txt file", true);
+            throw new RuntimeException("Problem creating metadata.txt file");
          }
       }
 
@@ -598,12 +591,11 @@ public final class TaggedImageStorageMultipageTiff {
                baseFilename = prefix + "_MagellanStack";
             }
          } catch (JSONException ex) {
-            Log.log("Can't find Prefix in summary metadata", true);
-            baseFilename = "MagellanStack";
+            throw new RuntimeException("Can't find Prefix in summary metadata");
          }
 
          if (splitByXYPosition_) {
-            baseFilename += "_" + AcqEngMetadata.getPositionName(firstImageTags);
+            baseFilename += "_" + MultiresMetadata.getPositionName(firstImageTags);
          }
          return baseFilename;
       }

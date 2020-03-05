@@ -19,11 +19,8 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.magellan.internal.datasaving;
+package org.micromanager.multiresstorage;
 
-import ij.IJ;
-import ij.io.TiffDecoder;
-import ij.process.LUT;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
@@ -41,12 +38,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.magellan.internal.misc.Log;
-import org.micromanager.acqj.api.AcqEngMetadata;
+
 
 public class MultipageTiffWriter {
 
@@ -79,8 +77,6 @@ public class MultipageTiffWriter {
    public static final char X_RESOLUTION = 282;
    public static final char Y_RESOLUTION = 283;
    public static final char RESOLUTION_UNIT = 296;
-   public static final char IJ_METADATA_BYTE_COUNTS = TiffDecoder.META_DATA_BYTE_COUNTS;
-   public static final char IJ_METADATA = TiffDecoder.META_DATA;
    public static final char MM_METADATA = 51123;
 
    public static final int SUMMARY_MD_HEADER = 2355492;
@@ -143,7 +139,7 @@ public class MultipageTiffWriter {
                }
             }
          }).start();
-         Log.log("Insufficent space on disk: no room to write data");
+         throw new RuntimeException("Insufficent space on disk: no room to write data");
       }
       fileChannel_ = raFile_.getChannel();
       writingExecutor_ = writingExecutor;
@@ -189,9 +185,9 @@ public class MultipageTiffWriter {
                   currentImageByteBuffers_.offer(buffer);
                }
             } catch (ClosedChannelException e) {
-               Log.log(e);
+               throw new RuntimeException(e);
             } catch (IOException e ) {
-               Log.log(e);
+               throw new RuntimeException(e);
             } 
          }
       });
@@ -211,7 +207,7 @@ public class MultipageTiffWriter {
                   }
                }
             } catch (IOException e) {
-               Log.log(e);
+               throw new RuntimeException(e);
             }
          }
       });
@@ -282,7 +278,7 @@ public class MultipageTiffWriter {
                try {
                   fileChannel_.position(fileChannel_.position() + 1);
                } catch (IOException ex) {
-                  Log.log("Couldn't reposition file channel");
+                  throw new RuntimeException("Couldn't reposition file channel");
                }
             }
          });
@@ -312,7 +308,7 @@ public class MultipageTiffWriter {
          //extra byte of space, just to make sure nothing gets cut off
          raFile_.setLength(filePosition_ + 8);
       } catch (IOException ex) {
-         Log.log(ex);
+         throw new RuntimeException(ex);
       }
    }
 
@@ -356,24 +352,37 @@ public class MultipageTiffWriter {
    }
 
    public Future writeImage(TaggedImage img) throws IOException {
-      long offset = filePosition_;
-      boolean shiftByByte = writeIFD(img);
-      Future f = writeBuffers();
-      addToIndexMap(AcqEngMetadata.getLabel(img.tags), offset);
-      //Make IFDs start on word
-      if (shiftByByte) {
-         f = executeWritingTask(new Runnable() {
-            @Override
-            public void run() {
-               try {
-                  fileChannel_.position(fileChannel_.position() + 1);
-               } catch (IOException ex) {
-                  Log.log("Couldn't incremement byte");
+      try {
+         long offset = filePosition_;
+         boolean shiftByByte = writeIFD(img);
+         Future f = writeBuffers();
+         
+         //TODO: could transform all non CZTP axes into channel here to support arbitrary saving
+         
+         int t = img.tags.getInt("TIndex");
+         int c = img.tags.getInt("ChannelIndex");
+         int z = img.tags.getInt("ZIndex");
+         int p = img.tags.getInt("PositionIndex");
+         String label = c + "_" + z + "_" + t + "_" + p;
+         
+         addToIndexMap(label, offset);
+         //Make IFDs start on word
+         if (shiftByByte) {
+            f = executeWritingTask(new Runnable() {
+               @Override
+               public void run() {
+                  try {
+                     fileChannel_.position(fileChannel_.position() + 1);
+                  } catch (IOException ex) {
+                     throw new RuntimeException("Couldn't incremement byte");
+                  }
                }
-            }
-         });
+            });
+         }
+         return f;
+      } catch (JSONException ex) {
+         throw new RuntimeException(ex);
       }
-      return f;
    }
 
    private void addToIndexMap(String label, long offset) {
@@ -408,7 +417,7 @@ public class MultipageTiffWriter {
 
     public Future overwritePixels(Object pixels, int channel, int slice, int frame, int position) throws IOException {
 
-        long byteOffset = indexMap_.get(AcqEngMetadata.generateLabel(channel, slice, frame, position));
+        long byteOffset = indexMap_.get(channel + "_" + slice + "_" + frame + "_" + position);
         ByteBuffer buffer = ByteBuffer.allocate(2).order(BYTE_ORDER);
         fileChannel_.read(buffer, byteOffset);
         int numEntries = buffer.getChar(0);
@@ -433,10 +442,8 @@ public class MultipageTiffWriter {
             }
         }
         if (pixelOffset == -1 || bytesPerImage == -1) {
-            IJ.log("Problem writing downsampled display data for file" + filename_ 
+            throw new RuntimeException("Problem writing downsampled display data for file" + filename_ 
                     + "\n But full resolution data is unaffected");
-            System.out.println(position);
-            throw new RuntimeException();
         }
         ByteBuffer pixBuff = getPixelBuffer(pixels);
         Future writingDone = fileChannelWrite(pixBuff, pixelOffset);
@@ -444,7 +451,7 @@ public class MultipageTiffWriter {
     }
 
    private boolean writeIFD(TaggedImage img) throws IOException {
-      char numEntries = ((firstIFD_ ? ENTRIES_PER_IFD + 4 : ENTRIES_PER_IFD));
+      char numEntries = ENTRIES_PER_IFD;
       if (img.tags.has("Summary")) {
          img.tags.remove("Summary");
       }
@@ -474,11 +481,11 @@ public class MultipageTiffWriter {
       writeIFDEntry(ifdBuffer, charView, COMPRESSION, (char) 3, 1, 1);
       writeIFDEntry(ifdBuffer, charView, PHOTOMETRIC_INTERPRETATION, (char) 3, 1, rgb_ ? 2 : 1);
 
-      if (firstIFD_) {
-         writeIFDEntry(ifdBuffer, charView, IMAGE_DESCRIPTION, (char) 2, 0, 0);
-         ijDescriptionTagPosition_ = filePosition_ + bufferPosition_;
-         writeIFDEntry(ifdBuffer, charView, IMAGE_DESCRIPTION, (char) 2, 0, 0);
-      }
+//      if (firstIFD_) {
+//         writeIFDEntry(ifdBuffer, charView, IMAGE_DESCRIPTION, (char) 2, 0, 0);
+//         ijDescriptionTagPosition_ = filePosition_ + bufferPosition_;
+//         writeIFDEntry(ifdBuffer, charView, IMAGE_DESCRIPTION, (char) 2, 0, 0);
+//      }
 
       writeIFDEntry(ifdBuffer, charView, STRIP_OFFSETS, (char) 4, 1, tagDataOffset);
       tagDataOffset += bytesPerImagePixels_;
@@ -490,12 +497,7 @@ public class MultipageTiffWriter {
       writeIFDEntry(ifdBuffer, charView, Y_RESOLUTION, (char) 5, 1, tagDataOffset);
       tagDataOffset += 8;
       writeIFDEntry(ifdBuffer, charView, RESOLUTION_UNIT, (char) 3, 1, 3);
-      if (firstIFD_) {
-         ijMetadataCountsTagPosition_ = filePosition_ + bufferPosition_;
-         writeIFDEntry(ifdBuffer, charView, IJ_METADATA_BYTE_COUNTS, (char) 4, 0, 0);
-         ijMetadataTagPosition_ = filePosition_ + bufferPosition_;
-         writeIFDEntry(ifdBuffer, charView, IJ_METADATA, (char) 1, 0, 0);
-      }
+
       writeIFDEntry(ifdBuffer, charView, MM_METADATA, (char) 2, mdBytes.length, tagDataOffset);
       tagDataOffset += mdBytes.length;
       //NextIFDOffset
@@ -595,50 +597,53 @@ public class MultipageTiffWriter {
    }
 
    private void processSummaryMD(JSONObject summaryMD) {
-      rgb_ = AcqEngMetadata.isRGB(summaryMD);
-      imageWidth_ = AcqEngMetadata.getWidth(summaryMD);
-      imageHeight_ = AcqEngMetadata.getHeight(summaryMD);
-      String pixelType = AcqEngMetadata.getPixelType(summaryMD);
-      if (pixelType.equals("GRAY8") || pixelType.equals("RGB32") || pixelType.equals("RGB24")) {
-         byteDepth_ = 1;
-      } else if (pixelType.equals("GRAY16") || pixelType.equals("RGB64")) {
-         byteDepth_ = 2;
-      } else if (pixelType.equals("GRAY32")) {
-         byteDepth_ = 3;
-      } else {
-         byteDepth_ = 2;
-      }
-      bytesPerImagePixels_ = imageHeight_ * imageWidth_ * byteDepth_ * (rgb_ ? 3 : 1);
-      //Tiff resolution tag values
-      double cmPerPixel = 0.0001;
-      if (summaryMD.has("PixelSizeUm")) {
-         try {
-            cmPerPixel = 0.0001 * summaryMD.getDouble("PixelSizeUm");
-         } catch (JSONException ex) {
+      try {
+         imageWidth_ = summaryMD.getInt("Width");
+         imageHeight_ = summaryMD.getInt("Height");
+         String pixelType = summaryMD.getString("PixelType");
+         rgb_ = pixelType.contains("RGB");
+         if (pixelType.equals("GRAY8") || pixelType.equals("RGB32") || pixelType.equals("RGB24")) {
+            byteDepth_ = 1;
+         } else if (pixelType.equals("GRAY16") || pixelType.equals("RGB64")) {
+            byteDepth_ = 2;
+         } else if (pixelType.equals("GRAY32")) {
+            byteDepth_ = 3;
+         } else {
+            byteDepth_ = 2;
          }
-      } else if (summaryMD.has("PixelSize_um")) {
-         try {
-            cmPerPixel = 0.0001 * summaryMD.getDouble("PixelSize_um");
-         } catch (JSONException ex) {
+         bytesPerImagePixels_ = imageHeight_ * imageWidth_ * byteDepth_ * (rgb_ ? 3 : 1);
+         //Tiff resolution tag values
+         double cmPerPixel = 0.0001;
+         if (summaryMD.has("PixelSizeUm")) {
+            try {
+               cmPerPixel = 0.0001 * summaryMD.getDouble("PixelSizeUm");
+            } catch (JSONException ex) {
+            }
+         } else if (summaryMD.has("PixelSize_um")) {
+            try {
+               cmPerPixel = 0.0001 * summaryMD.getDouble("PixelSize_um");
+            } catch (JSONException ex) {
+            }
          }
+         double log = Math.log10(cmPerPixel);
+         if (log >= 0) {
+            resDenomenator_ = (long) cmPerPixel;
+            resNumerator_ = 1;
+         } else {
+            resNumerator_ = (long) (1 / cmPerPixel);
+            resDenomenator_ = 1;
+         }
+//      zStepUm_ = AcqEngMetadata.getZStepUm(summaryMD);
+      } catch (JSONException ex) {
+         throw new RuntimeException(ex);
       }
-      double log = Math.log10(cmPerPixel);
-      if (log >= 0) {
-         resDenomenator_ = (long) cmPerPixel;
-         resNumerator_ = 1;
-      } else {
-         resNumerator_ = (long) (1 / cmPerPixel);
-         resDenomenator_ = 1;
-      }
-      zStepUm_ = AcqEngMetadata.getZStepUm(summaryMD);
    }
 
    private byte[] getBytesFromString(String s) {
       try {
          return s.getBytes("UTF-8");
       } catch (UnsupportedEncodingException ex) {
-         Log.log("Error encoding String to bytes", true);
-         return null;
+         throw new RuntimeException("Error encoding String to bytes");
       }
    }
 
@@ -666,25 +671,4 @@ public class MultipageTiffWriter {
       done.get();
    }
 
-   public static LUT makeLUT(Color color, double gamma) {
-      int r = color.getRed();
-      int g = color.getGreen();
-      int b = color.getBlue();
-
-      int size = 256;
-      byte[] rs = new byte[size];
-      byte[] gs = new byte[size];
-      byte[] bs = new byte[size];
-
-      double xn;
-      double yn;
-      for (int x = 0; x < size; ++x) {
-         xn = x / (double) (size - 1);
-         yn = Math.pow(xn, gamma);
-         rs[x] = (byte) (yn * r);
-         gs[x] = (byte) (yn * g);
-         bs[x] = (byte) (yn * b);
-      }
-      return new LUT(8, size, rs, gs, bs);
-   }
 }

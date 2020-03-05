@@ -45,6 +45,15 @@ public class DisplaySettings {
    public DisplaySettings(JSONObject json) {
       json_ = json;
    }
+   
+   public JSONObject toJSON() {
+      try {
+         //make copy
+         return new JSONObject(json_.toString());
+      } catch (JSONException ex) {
+         throw new RuntimeException();
+      }
+   }
 
    public DisplaySettings(MagellanChannelGroupSettings channels, JSONObject summaryMD) {
       int bitDepth = 16;

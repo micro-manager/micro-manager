@@ -66,7 +66,7 @@ public class MagellanGUIAcquisition extends FixedSettingsAcquisition implements 
 
    @Override
    protected void addToSummaryMetadata(JSONObject summaryMetadata) {
-      MD.setExploreAcq(summaryMetadata, false);
+      MagellanMD.setExploreAcq(summaryMetadata, false);
             
       zStep_ = ((MagellanGUIAcquisitionSettings) settings_).zStep_;
       
@@ -74,8 +74,8 @@ public class MagellanGUIAcquisition extends FixedSettingsAcquisition implements 
               ((MagellanGUIAcquisitionSettings) settings_).tileOverlap_ / 100);
       overlapY_ = (int) (Magellan.getCore().getImageHeight() *
               ((MagellanGUIAcquisitionSettings) settings_).tileOverlap_ / 100);
-      AcqEngMetadata.setPixelOverlapX(summaryMetadata, overlapX_);
-      AcqEngMetadata.setPixelOverlapY(summaryMetadata, overlapY_);
+      MagellanMD.setPixelOverlapX(summaryMetadata, overlapX_);
+      MagellanMD.setPixelOverlapY(summaryMetadata, overlapY_);
       
       AcqEngMetadata.setZStepUm(summaryMetadata, zStep_);
       AcqEngMetadata.setZStepUm(summaryMetadata, zStep_);
@@ -95,7 +95,7 @@ public class MagellanGUIAcquisition extends FixedSettingsAcquisition implements 
       //right now this only works for fixed distance from the surface
       if (getSpaceMode() == MagellanGUIAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
          //add metadata about surface
-         MD.setSurfacePoints(tags, getFixedSurfacePoints());
+         MagellanMD.setSurfacePoints(tags, getFixedSurfacePoints());
       }
    }
 

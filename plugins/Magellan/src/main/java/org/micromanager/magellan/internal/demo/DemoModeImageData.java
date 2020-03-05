@@ -16,15 +16,10 @@
 //
 package org.micromanager.magellan.internal.demo;
 
-import ij.IJ;
 import ij.ImagePlus;
-import ij.WindowManager;
-import java.awt.Frame;
 import java.util.Random;
-import java.util.function.Function;
 import java.util.function.IntUnaryOperator;
 import java.util.stream.IntStream;
-import org.micromanager.magellan.internal.datasaving.MultiResMultipageTiffStorage;
 
 /**
  *
@@ -36,55 +31,46 @@ public class DemoModeImageData {
    private static int pixelSizeZ_ = 3;
    private static int imageSizeZ_ = 399;
    private static int numChannels_ = 6;
-   
+
    private static Random rand_ = new Random();
-   
+
    private static DemoModeImageData singleton_;
 
    public DemoModeImageData() {
       singleton_ = this;
       //make covariance matrix
-      
-      
-      
+
    }
-   
+
    public static int getNumChannels() {
       return numChannels_;
-      
-      
-   }
-   
 
+   }
 
    private static IntUnaryOperator pixelIndToGaussProcess(boolean x) {
       return new IntUnaryOperator() {
          @Override
          public int applyAsInt(int t) {
-         rand_.setSeed(t + (x ? 23423 : 0));
-         double gaussian = rand_.nextGaussian();
-         return (int) (gaussian * 20000);
+            rand_.setSeed(t + (x ? 23423 : 0));
+            double gaussian = rand_.nextGaussian();
+            return (int) (gaussian * 20000);
          }
       };
 
    }
-   
+
    public static byte[] getBytePixelData(int channel, int x, int y, int z, int width, int height) {
       Random randX = new Random();
       Random randY = new Random();
-      
+
       IntStream yStream = IntStream.range(y, y + height).map(pixelIndToGaussProcess(true));
-      
-      
-      
-      
+
 //      for (int yPix = y; yPix < y + height; yPix++) {
 //         randY.setSeed(y);
 //      }
 //      for (int xPix = x; xPix < x + width; xPix++) {
 //         randY.setSeed(x);
 //      }
-
       int fullWidth = img_.getWidth();
       int fullHeight = img_.getHeight();
       while (x < 0) {

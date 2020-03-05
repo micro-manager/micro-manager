@@ -601,11 +601,11 @@ public final class MagellanDisplayController {
       return (MagellanChannelGroupSettings) acq_.getChannels();
    }
 
-   LongPoint imageCoordsFromStageCoords(double x, double y, MagellanDataViewCoords viewCoords) {
-      LongPoint pixelCoord = imageCache_.pixelCoordsFromStageCoords(x, y);
-      return new LongPoint(
-              (long) ((pixelCoord.x_ - viewCoords.getViewOffset().x) * viewCoords.getDisplayToFullScaleFactor()),
-              (long) ((pixelCoord.y_ - viewCoords.getViewOffset().y) * viewCoords.getDisplayToFullScaleFactor()));
+   Point imageCoordsFromStageCoords(double x, double y, MagellanDataViewCoords viewCoords) {
+      Point pixelCoord = imageCache_.pixelCoordsFromStageCoords(x, y);
+      return new Point(
+              (int) ((pixelCoord.x - viewCoords.getViewOffset().x) * viewCoords.getDisplayToFullScaleFactor()),
+              (int) ((pixelCoord.y - viewCoords.getViewOffset().y) * viewCoords.getDisplayToFullScaleFactor()));
    }
 
    int getSliceIndexFromZCoordinate(double z) {
