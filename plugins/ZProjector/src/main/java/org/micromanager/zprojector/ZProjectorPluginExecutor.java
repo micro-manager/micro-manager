@@ -228,25 +228,26 @@ public class ZProjectorPluginExecutor {
             stack.addSlice(ip);
          }
       }
-      if (stack.getSize()> 0 && imgMetadata != null) {
-      ImagePlus tmp = new ImagePlus("tmp", stack);
-      ZProjector zp = new ZProjector(tmp);
-      zp.setMethod(projectionMethod);
-      zp.doProjection();
-      ImagePlus projection = zp.getProjection();
-      if (projection.getBytesPerPixel() > 2) {
-         if (tmp.getBytesPerPixel() == 1) {
-            projection.setProcessor(projection.getProcessor().convertToByte(false));
-         } else if (tmp.getBytesPerPixel() == 2) {
-            projection.setProcessor(projection.getProcessor().convertToShort(false));
+      if (stack.getSize() > 0 && imgMetadata != null) {
+         ImagePlus tmp = new ImagePlus("tmp", stack);
+         ZProjector zp = new ZProjector(tmp);
+         zp.setMethod(projectionMethod);
+         zp.doProjection();
+         ImagePlus projection = zp.getProjection();
+         if (projection.getBytesPerPixel() > 2) {
+            if (tmp.getBytesPerPixel() == 1) {
+               projection.setProcessor(projection.getProcessor().convertToByte(false));
+            } else if (tmp.getBytesPerPixel() == 2) {
+               projection.setProcessor(projection.getProcessor().convertToShort(false));
+            }
          }
-      }
-      Image outImg = studio_.data().getImageJConverter().createImage(
-            projection.getProcessor(), cbp.index(projectionAxis, 0).build(),
-                  imgMetadata.copyBuilderWithNewUUID().build());
-      newStore.putImage(outImg);
+         Image outImg = studio_.data().getImageJConverter().createImage(
+                 projection.getProcessor(), cbp.index(projectionAxis, 0).build(),
+                 imgMetadata.copyBuilderWithNewUUID().build());
+         newStore.putImage(outImg);
       } else {
-         studio_.logs().showError("No images found while projecting");
+         studio_.alerts().postAlert("Projection problem", this.getClass(), 
+                                             "No images found while projecting");
       }
    }
    
