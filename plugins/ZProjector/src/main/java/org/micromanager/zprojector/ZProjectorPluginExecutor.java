@@ -25,6 +25,7 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.plugin.ZProjector;
 import ij.process.ImageProcessor;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +41,9 @@ import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.internal.utils.FileDialogs;
 
 /**
  *
@@ -61,14 +64,20 @@ public class ZProjectorPluginExecutor {
    /**
     * Performs the actual creation of a new image with reduced content
     *
+    * @param save
     * @param newName - name for the copy
     * @param projectionAxis
     * @param firstFrame
     * @param lastFrame
     * @param projectionMethod ZProjector method
     */
-   public final void project(final String newName, final String projectionAxis, 
+   public final void project(final boolean save, final String newName, final String projectionAxis, 
            final int firstFrame, final int lastFrame, final int projectionMethod) {
+      
+       
+
+      
+      
 
       class ZProjectTask extends SwingWorker<Void, Void> {
 
@@ -77,9 +86,26 @@ public class ZProjectorPluginExecutor {
 
          @Override
          public Void doInBackground() throws Exception {  // TODO use Exceptions
-
-            // TODO: provide options for disk-backed datastores
-            Datastore newStore = studio_.data().createRAMDatastore();
+            Datastore newStore;
+            if (save) {
+               File result = FileDialogs.openDir(null,
+                           "Please choose a directory to save " + newName,
+                           FileDialogs.MM_DATA_SET);
+               if (result != null) {
+                  try {
+                  newStore = studio_.data().createMultipageTIFFDatastore(
+                          result.getAbsolutePath() + File.separator + newName, true, 
+                          StorageMultipageTiff.getShouldSplitPositions());
+                  } catch (IOException ioe) {
+                     studio_.logs().showError(ioe);
+                     return null;
+                  }
+               } else {
+                  return null;
+               }
+            } else {
+               newStore = studio_.data().createRAMDatastore();
+            }
 
             Coords oldSizeCoord = oldStore_.getMaxIndices();
             CoordsBuilder newSizeCoordsBuilder = oldSizeCoord.copyBuilder();
@@ -96,16 +122,20 @@ public class ZProjectorPluginExecutor {
             cb.time(1).channel(1).stagePosition(1).z(1);
             try {
                newStore.setSummaryMetadata(metadata);
-               DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
-               copyDisplay.setCustomTitle(newName);
-               copyDisplay.setDisplaySettings(
-                       window_.getDisplaySettings().copyBuilder().build());
-               studio_.displays().manage(newStore);
-               
+               if (!save) {
+                  DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
+                  copyDisplay.setCustomTitle(newName);
+                  copyDisplay.setDisplaySettings(
+                          window_.getDisplaySettings().copyBuilder().build());
+                  studio_.displays().manage(newStore);
+               } else {
+                  // TODO: UI feedback on progress
+               }
+
                List<String> axes = oldStore_.getAxes();
                axes.remove(projectionAxis);
-               findAllProjections( newStore, axes, cb, projectionAxis, 
-                       firstFrame, lastFrame,  projectionMethod);
+               findAllProjections(newStore, axes, cb, projectionAxis,
+                       firstFrame, lastFrame, projectionMethod);
                
             } catch (DatastoreFrozenException ex) {
                studio_.logs().showError("Can not add data to frozen datastore");
@@ -114,6 +144,15 @@ public class ZProjectorPluginExecutor {
             }
 
             newStore.freeze();
+            
+            if (save) {
+               DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
+               copyDisplay.setCustomTitle(newName);
+               copyDisplay.setDisplaySettings(
+                       window_.getDisplaySettings().copyBuilder().build());
+               studio_.displays().manage(newStore);
+            }
+
             return null;
          }
 
@@ -123,6 +162,7 @@ public class ZProjectorPluginExecutor {
          }
       }
 
+      
       (new ZProjectTask()).execute();
    }
    
