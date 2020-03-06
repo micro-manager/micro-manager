@@ -38,6 +38,13 @@ public class MagellanChannelGroupSettings extends ChannelGroupSettings {
          setValuesFromPrefs(c);
       }
    }
+   
+   public Color getPreferredChannelColor(String channelName) {
+      String prefix = MagellanGUIAcquisitionSettings.PREF_PREFIX + "CHANNELGROUP"
+              + group_ + "CHANNELNAME" + channelName;
+      return new Color(GlobalSettings.getInstance().getIntInPrefs(
+                      prefix + PREF_COLOR, DEFAULT_COLORS[new Random().nextInt(DEFAULT_COLORS.length)].getRGB()));
+   }
 
    private void setValuesFromPrefs(ChannelSetting setting) {
       String prefix = MagellanGUIAcquisitionSettings.PREF_PREFIX + "CHANNELGROUP"

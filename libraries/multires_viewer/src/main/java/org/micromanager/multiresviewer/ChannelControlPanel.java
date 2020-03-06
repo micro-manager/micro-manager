@@ -75,7 +75,7 @@ class ChannelControlPanel extends JPanel implements CursorListener {
       mcHistograms_ = mcHistograms;
       channelIndex_ = channelIndex;
       initComponents();
-      channelNameCheckbox_.setSelected(display_.getDisplaySettings().isActive(channelName_));
+      channelNameCheckbox_.setSelected(display_.getDisplaySettingsObject().isActive(channelName_));
       redraw();
    }
 
@@ -221,9 +221,9 @@ class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void redraw() {
-      int contrastMin = display_.getDisplaySettings().getContrastMin(channelName_);
-      int contrastMax = display_.getDisplaySettings().getContrastMax(channelName_);
-      double gamma = display_.getDisplaySettings().getContrastGamma(channelName_);
+      int contrastMin = display_.getDisplaySettingsObject().getContrastMin(channelName_);
+      int contrastMax = display_.getDisplaySettingsObject().getContrastMax(channelName_);
+      double gamma = display_.getDisplaySettingsObject().getContrastGamma(channelName_);
 
       hp_.setCursorText(contrastMin + "", contrastMax + "");
       hp_.setCursors(contrastMin / binSize_, (contrastMax + 1) / binSize_, gamma);
@@ -231,15 +231,15 @@ class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void fullButtonAction() {
-      display_.getDisplaySettings().setContrastMin(channelName_, 0);
-      display_.getDisplaySettings().setContrastMax(channelName_, (int) (Math.pow(2, bitDepth_) - 1));
+      display_.getDisplaySettingsObject().setContrastMin(channelName_, 0);
+      display_.getDisplaySettingsObject().setContrastMax(channelName_, (int) (Math.pow(2, bitDepth_) - 1));
 
       display_.postEvent(new ContrastUpdatedEvent(channelIndex_));
    }
 
    public void autoButtonAction() {
-      display_.getDisplaySettings().setContrastMin(channelName_, pixelMin_);
-      display_.getDisplaySettings().setContrastMax(channelName_, pixelMax_);
+      display_.getDisplaySettingsObject().setContrastMin(channelName_, pixelMin_);
+      display_.getDisplaySettingsObject().setContrastMax(channelName_, pixelMax_);
 
       display_.postEvent(new ContrastUpdatedEvent(channelIndex_));
       redraw();
@@ -314,7 +314,7 @@ class ChannelControlPanel extends JPanel implements CursorListener {
 
    public void contrastMaxInput(int max) {
       contrastPanel_.disableAutostretch();
-      display_.getDisplaySettings().setContrastMax(channelName_, max);
+      display_.getDisplaySettingsObject().setContrastMax(channelName_, max);
       display_.postEvent(new ContrastUpdatedEvent(channelIndex_));
       redraw();
 
@@ -323,7 +323,7 @@ class ChannelControlPanel extends JPanel implements CursorListener {
    @Override
    public void contrastMinInput(int min) {
       contrastPanel_.disableAutostretch();
-      display_.getDisplaySettings().setContrastMax(channelName_, min);
+      display_.getDisplaySettingsObject().setContrastMax(channelName_, min);
       display_.postEvent(new ContrastUpdatedEvent(channelIndex_));
       redraw();
 
@@ -331,7 +331,7 @@ class ChannelControlPanel extends JPanel implements CursorListener {
 
    public void onLeftCursor(double pos) {
       contrastPanel_.disableAutostretch();
-      display_.getDisplaySettings().setContrastMin(channelName_, (int) (Math.min(DisplaySettings.NUM_DISPLAY_HIST_BINS - 1, pos) * binSize_));
+      display_.getDisplaySettingsObject().setContrastMin(channelName_, (int) (Math.min(DisplaySettings.NUM_DISPLAY_HIST_BINS - 1, pos) * binSize_));
       display_.postEvent(new ContrastUpdatedEvent(channelIndex_));
       redraw();
    }
@@ -339,7 +339,7 @@ class ChannelControlPanel extends JPanel implements CursorListener {
    @Override
    public void onRightCursor(double pos) {
       contrastPanel_.disableAutostretch();
-      display_.getDisplaySettings().setContrastMax(channelName_, (int) (Math.min(DisplaySettings.NUM_DISPLAY_HIST_BINS - 1, pos) * binSize_));
+      display_.getDisplaySettingsObject().setContrastMax(channelName_, (int) (Math.min(DisplaySettings.NUM_DISPLAY_HIST_BINS - 1, pos) * binSize_));
       display_.postEvent(new ContrastUpdatedEvent(channelIndex_));
       redraw();
 
@@ -351,7 +351,7 @@ class ChannelControlPanel extends JPanel implements CursorListener {
          if (gamma > 0.9 & gamma < 1.1) {
             gamma = 1;
          }
-         display_.getDisplaySettings().setGamma(channelName_, gamma);
+         display_.getDisplaySettingsObject().setGamma(channelName_, gamma);
          display_.postEvent(new ContrastUpdatedEvent(channelIndex_));
       }
       redraw();

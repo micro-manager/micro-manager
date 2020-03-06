@@ -44,7 +44,7 @@ final class MultiChannelHistograms extends JPanel {
       super();
       display_ = disp;
 //      display_.registerForEvents(this);
-      dispSettings_ = display_.getDisplaySettings();
+      dispSettings_ = display_.getDisplaySettingsObject();
 
       this.setLayout(new GridLayout(1, 1));
       contrastPanel_ = contrastPanel;

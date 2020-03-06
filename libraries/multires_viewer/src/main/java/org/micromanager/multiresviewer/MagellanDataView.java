@@ -1,6 +1,7 @@
 
 package org.micromanager.multiresviewer;
 
+import org.micromanager.multiresviewer.api.DataSource;
 import java.awt.Dimension;
 import java.awt.Point;
 

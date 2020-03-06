@@ -22,10 +22,10 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.ParseException;
+import java.util.HashMap;
 import java.util.List;
 import javax.swing.JPanel;
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.multiresviewer.events.MagellanScrollbarPosition;
 import org.micromanager.multiresviewer.events.ScrollersAddedEvent;
 
 
@@ -99,7 +99,7 @@ class SubImageControls extends JPanel {
       scrollerPanel_.setFramesPerSecond(fps);
    }
 
-   void expandDisplayedRangeToInclude(List<MagellanScrollbarPosition> newIamgeEvents) {
+   void expandDisplayedRangeToInclude(List<HashMap<String, Integer>> newIamgeEvents) {
       scrollerPanel_.expandDisplayedRangeToInclude(newIamgeEvents);
    }
 

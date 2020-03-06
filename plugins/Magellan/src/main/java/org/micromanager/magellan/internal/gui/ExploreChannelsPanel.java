@@ -10,6 +10,7 @@ import javax.swing.DefaultCellEditor;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.table.DefaultTableCellRenderer;
+import org.micromanager.magellan.internal.channels.MagellanChannelGroupSettings;
 
 /**
  *
@@ -17,44 +18,45 @@ import javax.swing.table.DefaultTableCellRenderer;
  */
 public class ExploreChannelsPanel extends javax.swing.JPanel {
 
+   private MagellanChannelGroupSettings channels_; //TODO: what dis
+   
    /**
     * Creates new form ExploreChannelsPanel
     */
    public ExploreChannelsPanel() {
       initComponents();
 
-         //left justified editor
-         JTextField tf = new JTextField();
-         tf.setHorizontalAlignment(SwingConstants.LEFT);
-         DefaultCellEditor ed = new DefaultCellEditor(tf);
-         channelsTable_.getColumnModel().getColumn(2).setCellEditor(ed);
-         //and renderer
-         DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
-         renderer.setHorizontalAlignment(SwingConstants.LEFT); // left justify
-         channelsTable_.getColumnModel().getColumn(2).setCellRenderer(renderer);
-         channelsTable_.getColumnModel().getColumn(0).setMaxWidth(30); //Acitve checkbox column
+      //left justified editor
+      JTextField tf = new JTextField();
+      tf.setHorizontalAlignment(SwingConstants.LEFT);
+      DefaultCellEditor ed = new DefaultCellEditor(tf);
+      channelsTable_.getColumnModel().getColumn(2).setCellEditor(ed);
+      //and renderer
+      DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
+      renderer.setHorizontalAlignment(SwingConstants.LEFT); // left justify
+      channelsTable_.getColumnModel().getColumn(2).setCellRenderer(renderer);
+      channelsTable_.getColumnModel().getColumn(0).setMaxWidth(30); //Acitve checkbox column
 
-         //TODO: start in explore
-         tabbedPane_.setSelectedIndex(0);
-         
-          if (!disp.isExploreAcquisiton()) {
-         exploreButton_.setVisible(false);
-         acquireAtCurrentButton_.setVisible(false);
-         for (ActionListener l : exploreButton_.getActionListeners()) {
-            exploreButton_.removeActionListener(l);
-         }
-         for (ActionListener l : acquireAtCurrentButton_.getActionListeners()) {
-            acquireAtCurrentButton_.removeActionListener(l);
-         }
-      }
-      //knitially disable surfaces and grids
-      tabbedPane_.setEnabledAt(display_.isExploreAcquisiton() ? 2 : 0, false);
-
-      //TODO: how to do this on shutdown
-      
-            if (display_.isExploreAcquisiton()) {
-         ((SimpleChannelTableModel) channelsTable_.getModel()).shutdown();
-      }
+//      //TODO: start in explore
+//      tabbedPane_.setSelectedIndex(0);
+//
+//      if (!disp.isExploreAcquisiton()) {
+//         exploreButton_.setVisible(false);
+//         acquireAtCurrentButton_.setVisible(false);
+//         for (ActionListener l : exploreButton_.getActionListeners()) {
+//            exploreButton_.removeActionListener(l);
+//         }
+//         for (ActionListener l : acquireAtCurrentButton_.getActionListeners()) {
+//            acquireAtCurrentButton_.removeActionListener(l);
+//         }
+//      }
+//      //knitially disable surfaces and grids
+//      tabbedPane_.setEnabledAt(display_.isExploreAcquisiton() ? 2 : 0, false);
+//
+//      //TODO: how to do this on shutdown
+//      if (display_.isExploreAcquisiton()) {
+//         ((SimpleChannelTableModel) channelsTable_.getModel()).shutdown();
+//      }
    }
 
    /**
@@ -145,14 +147,14 @@ public class ExploreChannelsPanel extends javax.swing.JPanel {
    }//GEN-LAST:event_selectUseAllButton_ActionPerformed
 
    private void exploreButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exploreButton_ActionPerformed
-      if (display_.isExploreAcquisiton() && exploreButton_.isSelected() && tabbedPane_.getSelectedIndex() == 2) {
-         tabbedPane_.setSelectedIndex(0); //switch away from surface grid mode when explorign activated
-      }
-      updateMode();
+//      if (display_.isExploreAcquisiton() && exploreButton_.isSelected() && tabbedPane_.getSelectedIndex() == 2) {
+//         tabbedPane_.setSelectedIndex(0); //switch away from surface grid mode when explorign activated
+//      }
+//      updateMode();
    }//GEN-LAST:event_exploreButton_ActionPerformed
 
    private void acquireAtCurrentButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_acquireAtCurrentButton_ActionPerformed
-      display_.acquireTileAtCurrentPosition();
+//      display_.acquireTileAtCurrentPosition();
    }//GEN-LAST:event_acquireAtCurrentButton_ActionPerformed
 
 

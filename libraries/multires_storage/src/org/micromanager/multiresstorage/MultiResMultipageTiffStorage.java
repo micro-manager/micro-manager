@@ -52,8 +52,8 @@ public class MultiResMultipageTiffStorage {
 
    private static final String FULL_RES_SUFFIX = "Full resolution";
    private static final String DOWNSAMPLE_SUFFIX = "Downsampled_x";
-   private TaggedImageStorageMultipageTiff fullResStorage_;
-   private TreeMap<Integer, TaggedImageStorageMultipageTiff> lowResStorages_; //map of resolution index to storage instance
+   private ResolutionLevel fullResStorage_;
+   private TreeMap<Integer, ResolutionLevel> lowResStorages_; //map of resolution index to storage instance
    private String directory_;
    private JSONObject summaryMD_, displaySettings_;
    private int xOverlap_, yOverlap_;
@@ -80,10 +80,10 @@ public class MultiResMultipageTiffStorage {
       finished_ = true;
       String fullResDir = dir + (dir.endsWith(File.separator) ? "" : File.separator) + FULL_RES_SUFFIX;
       //create fullResStorage
-      fullResStorage_ = new TaggedImageStorageMultipageTiff(fullResDir, false, null, null, this);
+      fullResStorage_ = new ResolutionLevel(fullResDir, false, null, null, this);
       summaryMD_ = fullResStorage_.getSummaryMetadata();
       processSummaryMetadata();
-      lowResStorages_ = new TreeMap<Integer, TaggedImageStorageMultipageTiff>();
+      lowResStorages_ = new TreeMap<Integer, ResolutionLevel>();
       //create low res storages
       int resIndex = 1;
       while (true) {
@@ -93,7 +93,7 @@ public class MultiResMultipageTiffStorage {
             break;
          }
          maxResolutionLevel_ = resIndex;
-         lowResStorages_.put(resIndex, new TaggedImageStorageMultipageTiff(dsDir, false, null, null, this));
+         lowResStorages_.put(resIndex, new ResolutionLevel(dsDir, false, null, null, this));
          resIndex++;
       }
 
@@ -133,9 +133,8 @@ public class MultiResMultipageTiffStorage {
    /**
     * Constructor for creating new storage prior to acquisition
     */
-   public MultiResMultipageTiffStorage(String dir, JSONObject summaryMetadata, JSONObject displaySettings) {
+   public MultiResMultipageTiffStorage(String dir, JSONObject summaryMetadata) {
       loaded_ = false;
-      displaySettings_ = displaySettings;
       writingExecutor_ = new ThreadPoolExecutor(1, 1, 0, TimeUnit.NANOSECONDS,
               new LinkedBlockingQueue<java.lang.Runnable>());
       try {
@@ -172,11 +171,11 @@ public class MultiResMultipageTiffStorage {
       }
       try {
          //Create full Res storage
-         fullResStorage_ = new TaggedImageStorageMultipageTiff(fullResDir, true, summaryMetadata, writingExecutor_, this);
+         fullResStorage_ = new ResolutionLevel(fullResDir, true, summaryMetadata, writingExecutor_, this);
       } catch (IOException ex) {
          throw new RuntimeException("couldn't create Full res storage");
       }
-      lowResStorages_ = new TreeMap<Integer, TaggedImageStorageMultipageTiff>();
+      lowResStorages_ = new TreeMap<Integer, ResolutionLevel>();
    }
 
    static File createDir(String dir) {
@@ -189,10 +188,13 @@ public class MultiResMultipageTiffStorage {
       return dirrr;
    }
 
-   void setDisplaySettings(JSONObject displaySettings) {
+   public void setDisplaySettings(JSONObject displaySettings) {
       try {
          if (displaySettings != null) {
             displaySettings_ = new JSONObject(displaySettings.toString());
+            if (!loaded_) {
+               fullResStorage_.setDisplaySettings(displaySettings_);
+            }
          }
       } catch (JSONException ex) {
          throw new RuntimeException();
@@ -499,7 +501,7 @@ public class MultiResMultipageTiffStorage {
    private void populateNewResolutionLevel(List<Future> writeFinishedList, int resolutionIndex) {
       createDownsampledStorage(resolutionIndex);
       //add all tiles from existing resolution levels to this new one            
-      TaggedImageStorageMultipageTiff previousLevelStorage
+      ResolutionLevel previousLevelStorage
               = resolutionIndex == 1 ? fullResStorage_ : lowResStorages_.get(resolutionIndex - 1);
       Set<String> imageKeys = previousLevelStorage.imageKeys();
       for (String key : imageKeys) {
@@ -602,7 +604,7 @@ public class MultiResMultipageTiffStorage {
          //reset dimensions so that overlap not included
          smd.put("Width", tileWidth_);
          smd.put("Height", tileHeight_);
-         TaggedImageStorageMultipageTiff storage = new TaggedImageStorageMultipageTiff(dsDir, true, smd, writingExecutor_, this);
+         ResolutionLevel storage = new ResolutionLevel(dsDir, true, smd, writingExecutor_, this);
          lowResStorages_.put(resIndex, storage);
       } catch (Exception ex) {
          throw new RuntimeException("Couldnt create downsampled storage");
@@ -658,7 +660,7 @@ public class MultiResMultipageTiffStorage {
          return;
       }
       fullResStorage_.finished();
-      for (TaggedImageStorageMultipageTiff s : lowResStorages_.values()) {
+      for (ResolutionLevel s : lowResStorages_.values()) {
          if (s != null) {
             //s shouldn't be null ever, this check is to prevent window from getting into unclosable state
             //when other bugs prevent storage from being properly created
@@ -689,7 +691,7 @@ public class MultiResMultipageTiffStorage {
    public JSONObject getDisplaySettings() {
       return displaySettings_;
    }
-
+   
    public void close() {
       //put closing on differnt channel so as to not hang up EDT while waiting for finishing
       new Thread(new Runnable() {
@@ -703,7 +705,7 @@ public class MultiResMultipageTiffStorage {
                }
             }
             fullResStorage_.close();
-            for (TaggedImageStorageMultipageTiff s : lowResStorages_.values()) {
+            for (ResolutionLevel s : lowResStorages_.values()) {
                if (s != null) { //this only happens if the viewer requested new resolution levels that were never filled in because no iamges arrived                  
                   s.close();
                }
@@ -736,7 +738,7 @@ public class MultiResMultipageTiffStorage {
    public long getDataSetSize() {
       long sum = 0;
       sum += fullResStorage_.getDataSetSize();
-      for (TaggedImageStorageMultipageTiff s : lowResStorages_.values()) {
+      for (ResolutionLevel s : lowResStorages_.values()) {
          sum += s.getDataSetSize();
       }
       return sum;

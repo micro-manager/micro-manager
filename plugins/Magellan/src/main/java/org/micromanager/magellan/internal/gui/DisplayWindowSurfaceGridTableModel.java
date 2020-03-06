@@ -9,13 +9,13 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.geom.Point2D;
 import java.util.HashMap;
 import javax.swing.table.AbstractTableModel;
-import org.micromanager.magellan.internal.imagedisplay.events.DisplayClosingEvent;
 import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.magellan.internal.surfacesandregions.MultiPosGrid;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridListener;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridManager;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceInterpolator;
 import org.micromanager.magellan.internal.surfacesandregions.XYFootprint;
+import org.micromanager.multiresviewer.MagellanDisplayController;
 
 /**
  *
@@ -39,12 +39,13 @@ import org.micromanager.magellan.internal.surfacesandregions.XYFootprint;
       }
    }
    
-   @Subscribe
-   public void onDisplayClose(DisplayClosingEvent e) {
-      manager_.unregisterSurfaceGridListener(this);
-      display_.unregisterForEvents(this);
-      display_ = null;
-   }
+   //TODO: no subscriptions here. what is the purpose
+//   @Subscribe
+//   public void onDisplayClose(DisplayClosingEvent e) {
+//      manager_.unregisterSurfaceGridListener(this);
+//      display_.unregisterForEvents(this);
+//      display_ = null;
+//   }
 
    public boolean isSurfaceOrGridVisible(int index) {
       return showSurfaceOrGridMap.get(manager_.getSurfaceOrGrid(index));

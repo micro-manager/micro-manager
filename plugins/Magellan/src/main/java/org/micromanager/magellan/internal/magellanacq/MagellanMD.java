@@ -5,6 +5,7 @@
  */
 package org.micromanager.magellan.internal.magellanacq;
 
+import java.awt.Color;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -23,6 +24,23 @@ public class MagellanMD extends AcqEngMetadata {
    private static final String CHANNEL_COLORS = "ChColors";
    private static final String OVERLAP_X = "GridPixelOverlapX";
    private static final String OVERLAP_Y = "GridPixelOverlapY";
+   private static final String CHANNEL_DISPLAY_COLOR = "PreferredChannelDisplayColor";
+   
+   public static Color getChannelDisplayColor(JSONObject tags) {
+      try {
+         return new Color(tags.getInt(CHANNEL_DISPLAY_COLOR));
+      } catch (JSONException ex) {
+         throw new RuntimeException("Missing ChannelColorTag");
+      }
+   }
+   
+   public static void setChannelDisplayColor(JSONObject tags, Color c) {
+      try {
+         tags.put(CHANNEL_DISPLAY_COLOR, c.getRGB());
+      } catch (JSONException ex) {
+         throw new RuntimeException("Missing ChannelColor");
+      }
+   }
 
    public static void setSurfacePoints(JSONObject tags, JSONArray arr) {
       try {

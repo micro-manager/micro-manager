@@ -16,6 +16,7 @@
 //
 package org.micromanager.multiresviewer;
 
+import java.awt.Color;
 import java.awt.geom.AffineTransform;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -29,7 +30,8 @@ import org.json.JSONObject;
  * Convenience/standardization for Acq Engine metadata
  */
 public class DisplayMetadata {
-
+    
+   private static final String CHANNEL_DISPLAY_COLOR = "PreferredChannelDisplayColor";
    private static final String CHANNEL_GROUP = "ChannelGroup";
    private static final String CORE_AUTOFOCUS_DEVICE = "Core-Autofocus";
    private static final String CORE_CAMERA = "Core-Camera";
@@ -604,6 +606,24 @@ public class DisplayMetadata {
       }
    }
 
+   
+   public static Color getChannelDisplayColor(JSONObject tags) {
+      try {
+         return new Color(tags.getInt(CHANNEL_DISPLAY_COLOR));
+      } catch (JSONException ex) {
+         System.err.println("couldnt find channel preferred display color in tags");
+         return Color.white;
+      }
+   }
+   
+   public static void setChannelDisplayColor(JSONObject tags, Color c) {
+      try {
+         tags.put(CHANNEL_DISPLAY_COLOR, c.getRGB());
+      } catch (JSONException ex) {
+         throw new RuntimeException("Missing ChannelColor");
+      }
+   }
+   
    public static boolean getZCTOrder(JSONObject map) {
       try {
          return map.getBoolean(ZC_ORDER);
@@ -714,7 +734,6 @@ public class DisplayMetadata {
          smd.put(X_UM, x);
       } catch (JSONException ex) {
          throw new RuntimeException("Couldnt set stage x");
-
       }
    }
 
@@ -798,4 +817,5 @@ public class DisplayMetadata {
          throw new RuntimeException("Couldnt set stage y");
       }
    }
+
 }

@@ -83,7 +83,7 @@ public class MultipageTiffWriter {
 
    public static final ByteOrder BYTE_ORDER = ByteOrder.nativeOrder();
 
-   private TaggedImageStorageMultipageTiff masterMPTiffStorage_;
+   private ResolutionLevel masterMPTiffStorage_;
    private RandomAccessFile raFile_;
    private FileChannel fileChannel_;
    private ThreadPoolExecutor writingExecutor_;
@@ -105,12 +105,12 @@ public class MultipageTiffWriter {
    //Reader associated with this file
    private MultipageTiffReader reader_;
    private final String filename_;
-   private final boolean displayStorer_;
+   private volatile boolean displayStorer_;
 
    public MultipageTiffWriter(String directory, String filename,
-           JSONObject summaryMD, TaggedImageStorageMultipageTiff mpTiffStorage,
-           boolean splitByPositions, ThreadPoolExecutor writingExecutor, boolean displayStorer) throws IOException {
-      displayStorer_ = displayStorer;
+           JSONObject summaryMD, ResolutionLevel mpTiffStorage,
+           boolean splitByPositions, ThreadPoolExecutor writingExecutor) throws IOException {
+      displayStorer_ = false;
       masterMPTiffStorage_ = mpTiffStorage;
       reader_ = new MultipageTiffReader(summaryMD);
       File f = new File(directory + "/" + filename);
@@ -669,6 +669,10 @@ public class MultipageTiffWriter {
       Future done = fileChannelWrite(offsetHeader, 16);
       filePosition_ += numReservedBytes + 8;
       done.get();
+   }
+
+   void setDisplayStorer() {
+      displayStorer_ = true;
    }
 
 }

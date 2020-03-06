@@ -41,7 +41,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public final class TaggedImageStorageMultipageTiff {
+public final class ResolutionLevel {
 
    private ProgressBar savingFinishedProgressBar_;
    private JSONObject summaryMetadata_;
@@ -67,7 +67,7 @@ public final class TaggedImageStorageMultipageTiff {
    private static boolean showProgressBars_ = true;
    private MultiResMultipageTiffStorage masterMultiResStorage_;
 
-   public TaggedImageStorageMultipageTiff(String dir, boolean newDataSet, JSONObject summaryMetadata,
+   public ResolutionLevel(String dir, boolean newDataSet, JSONObject summaryMetadata,
            ThreadPoolExecutor writingExecutor, MultiResMultipageTiffStorage masterMultiRes) throws IOException {
       masterMultiResStorage_ = masterMultiRes;
       writingExecutor_ = writingExecutor;
@@ -426,6 +426,10 @@ public final class TaggedImageStorageMultipageTiff {
       return masterMultiResStorage_.getDisplaySettings();
    }
 
+   void setDisplaySettings(JSONObject displaySettings) {
+      fileSets_.get(0).putDisplaySettings(displaySettings);
+   }
+
    //Class encapsulating a single File (or series of files)
    //Default is one file series per xy posititon
    private class FileSet {
@@ -438,11 +442,11 @@ public final class TaggedImageStorageMultipageTiff {
       ;
       private String metadataFileFullPath_;
       private boolean finished_ = false;
-      private TaggedImageStorageMultipageTiff mpTiff_;
+      private ResolutionLevel mpTiff_;
       int nextExpectedChannel_ = 0, nextExpectedSlice_ = 0, nextExpectedFrame_ = 0;
       int currentFrame_ = 0;
 
-      public FileSet(JSONObject firstImageTags, TaggedImageStorageMultipageTiff mpt) throws IOException {
+      public FileSet(JSONObject firstImageTags, ResolutionLevel mpt) throws IOException {
          tiffWriters_ = new LinkedList<MultipageTiffWriter>();
          mpTiff_ = mpt;
 
@@ -451,7 +455,7 @@ public final class TaggedImageStorageMultipageTiff {
          currentTiffFilename_ = baseFilename_ + ".tif";
          currentTiffUUID_ = "urn:uuid:" + UUID.randomUUID().toString();
          //make first writer
-         tiffWriters_.add(new MultipageTiffWriter(directory_, currentTiffFilename_, summaryMetadata_, mpt, splitByXYPosition_, writingExecutor_, true));
+         tiffWriters_.add(new MultipageTiffWriter(directory_, currentTiffFilename_, summaryMetadata_, mpt, splitByXYPosition_, writingExecutor_));
 
          try {
             if (separateMetadataFile_) {
@@ -523,7 +527,7 @@ public final class TaggedImageStorageMultipageTiff {
 
             currentTiffFilename_ = baseFilename_ + "_" + tiffWriters_.size() + ".tif";
             currentTiffUUID_ = "urn:uuid:" + UUID.randomUUID().toString();
-            tiffWriters_.add(new MultipageTiffWriter(directory_, currentTiffFilename_, summaryMetadata_, mpTiff_, splitByXYPosition_, writingExecutor_, false));
+            tiffWriters_.add(new MultipageTiffWriter(directory_, currentTiffFilename_, summaryMetadata_, mpTiff_, splitByXYPosition_, writingExecutor_));
          }
 
          //Add filename to image tags
@@ -598,6 +602,10 @@ public final class TaggedImageStorageMultipageTiff {
             baseFilename += "_" + MultiresMetadata.getPositionName(firstImageTags);
          }
          return baseFilename;
+      }
+
+      private void putDisplaySettings(JSONObject displaySettings) {
+         tiffWriters_.getLast().setDisplayStorer();
       }
    }
 

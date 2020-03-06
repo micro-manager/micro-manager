@@ -11,7 +11,11 @@ import java.util.ArrayList;
 import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import org.micromanager.multiresviewer.DisplayWindowSurfaceGridTableModel;
+import org.micromanager.magellan.internal.gui.DisplayWindowSurfaceGridTableModel;
+import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridListener;
+import org.micromanager.magellan.internal.surfacesandregions.SurfaceInterpolator;
+import org.micromanager.magellan.internal.surfacesandregions.XYFootprint;
+import org.micromanager.multiresviewer.MagellanDisplayController;
 
 /**
  *
@@ -19,13 +23,19 @@ import org.micromanager.multiresviewer.DisplayWindowSurfaceGridTableModel;
  */
 public class SurfaceGridPanel extends javax.swing.JPanel implements SurfaceGridListener {
 
+   
+   private MagellanDisplayController display_;
+   private ListSelectionListener surfaceTableListSelectionListener_;
+   private volatile int selectedSurfaceGridIndex_ = -1;
+//   MagellanChannelSpec channels_;
+
    /**
     * Creates new form SurfaceGridPanel
     */
    public SurfaceGridPanel() {
       initComponents();
-      
-       //exactly one surface or grid selected at all times
+
+      //exactly one surface or grid selected at all times
       surfaceGridTable_.setSelectionModel(new ExactlyOneRowSelectionModel());
       surfaceTableListSelectionListener_ = new ListSelectionListener() {
          @Override
@@ -43,14 +53,13 @@ public class SurfaceGridPanel extends javax.swing.JPanel implements SurfaceGridL
       surfaceGridTable_.getColumnModel().getColumn(1).setMaxWidth(120); //type column
       //So it is initialized correctly when surfaces are already present
       updateSurfaceGridSelection();
-      updateMode();
+      //TODO: fix mode stuff
+//      updateMode();
    }
-   
-   //TODO: how to do this on shutdown
-   surfaceGridTable_.getSelectionModel().removeListSelectionListener(surfaceTableListSelectionListener_);
 
-   
-      @Override
+   //TODO: how to do this on shutdown
+//   surfaceGridTable_.getSelectionModel().removeListSelectionListener(surfaceTableListSelectionListener_);
+   @Override
    public void SurfaceOrGridChanged(XYFootprint f) {
 
    }
@@ -75,45 +84,45 @@ public class SurfaceGridPanel extends javax.swing.JPanel implements SurfaceGridL
 
    }
 
-   
-      private void updateSurfaceGridSelection() {
-      selectedSurfaceGridIndex_ = surfaceGridTable_.getSelectedRow();
-      //if last in list is removed, update the selected index
-      if (selectedSurfaceGridIndex_ == surfaceGridTable_.getModel().getRowCount()) {
-         surfaceGridTable_.getSelectionModel().setSelectionInterval(selectedSurfaceGridIndex_ - 1, selectedSurfaceGridIndex_ - 1);
-      }
-      XYFootprint current = getCurrentSurfaceOrGrid();
-      if (current != null) {
+   private void updateSurfaceGridSelection() {
+//      selectedSurfaceGridIndex_ = surfaceGridTable_.getSelectedRow();
+//      //if last in list is removed, update the selected index
+//      if (selectedSurfaceGridIndex_ == surfaceGridTable_.getModel().getRowCount()) {
+//         surfaceGridTable_.getSelectionModel().setSelectionInterval(selectedSurfaceGridIndex_ - 1, selectedSurfaceGridIndex_ - 1);
+//      }
+//      XYFootprint current = getCurrentSurfaceOrGrid();
+//      if (current != null) {
+//
+//         CardLayout card1 = (CardLayout) surfaceGridSpecificControlsPanel_.getLayout();
+//         if (current instanceof SurfaceInterpolator) {
+//            card1.show(surfaceGridSpecificControlsPanel_, "surface");
+//         } else {
+//            card1.show(surfaceGridSpecificControlsPanel_, "grid");
+//            int numRows = ((MultiPosGrid) current).numRows();
+//            int numCols = ((MultiPosGrid) current).numCols();
+//            gridRowsSpinner_.setValue(numRows);
+//            gridColsSpinner_.setValue(numCols);
+//         }
+//      }
+//      display_.redrawOverlay();
+   }
 
-         CardLayout card1 = (CardLayout) surfaceGridSpecificControlsPanel_.getLayout();
-         if (current instanceof SurfaceInterpolator) {
-            card1.show(surfaceGridSpecificControlsPanel_, "surface");
-         } else {
-            card1.show(surfaceGridSpecificControlsPanel_, "grid");
-            int numRows = ((MultiPosGrid) current).numRows();
-            int numCols = ((MultiPosGrid) current).numCols();
-            gridRowsSpinner_.setValue(numRows);
-            gridColsSpinner_.setValue(numCols);
-         }
-      }
-      display_.redrawOverlay();
+   public ArrayList<XYFootprint> getSurfacesAndGridsForDisplay() {
+//      ArrayList<XYFootprint> list = new ArrayList<XYFootprint>();
+//      for (int i = 0; i < SurfaceGridManager.getInstance().getNumberOfGrids() + SurfaceGridManager.getInstance().getNumberOfSurfaces(); i++) {
+//         try {
+//            if (((DisplayWindowSurfaceGridTableModel) surfaceGridTable_.getModel()).isSurfaceOrGridVisible(i)) {
+//               list.add(SurfaceGridManager.getInstance().getSurfaceOrGrid(i));
+//            }
+//         } catch (NullPointerException e) {
+//            //this comes up when making a bunch of surfaces then making a grid, unclear why vut it seems to be debnign
+//         }
+//      }
+//      return list;
+return null;
    }
-      
-         public ArrayList<XYFootprint> getSurfacesAndGridsForDisplay() {
-      ArrayList<XYFootprint> list = new ArrayList<XYFootprint>();
-      for (int i = 0; i < SurfaceGridManager.getInstance().getNumberOfGrids() + SurfaceGridManager.getInstance().getNumberOfSurfaces(); i++) {
-         try {
-            if (((DisplayWindowSurfaceGridTableModel) surfaceGridTable_.getModel()).isSurfaceOrGridVisible(i)) {
-               list.add(SurfaceGridManager.getInstance().getSurfaceOrGrid(i));
-            }
-         } catch (NullPointerException e) {
-            //this comes up when making a bunch of surfaces then making a grid, unclear why vut it seems to be debnign
-         }
-      }
-      return list;
-   }
-         
-            public boolean isCurrentlyEditableSurfaceGridVisible() {
+
+   public boolean isCurrentlyEditableSurfaceGridVisible() {
       if (selectedSurfaceGridIndex_ == -1) {
          return false;
       }
@@ -216,36 +225,36 @@ public class SurfaceGridPanel extends javax.swing.JPanel implements SurfaceGridL
    }// </editor-fold>//GEN-END:initComponents
 
    private void newGridButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newGridButton_ActionPerformed
-        try {
-         Point2D.Double coord = display_.getStageCoordinateOfViewCenter();
-         MultiPosGrid r = ((DisplayWindowSurfaceGridTableModel) surfaceGridTable_.getModel()).newGrid(
-                 (Integer) gridRowsSpinner_.getValue(), (Integer) gridColsSpinner_.getValue(), coord);
-         selectedSurfaceGridIndex_ = SurfaceGridManager.getInstance().getIndex(r);
-         surfaceGridTable_.getSelectionModel().setSelectionInterval(selectedSurfaceGridIndex_, selectedSurfaceGridIndex_);
-      } catch (NoPositionsDefinedYetException e) {
-         JOptionPane.showMessageDialog(this, "Explore a tile first before adding a position");
-         return;
-      }
+//      try {
+//         Point2D.Double coord = display_.getStageCoordinateOfViewCenter();
+//         MultiPosGrid r = ((DisplayWindowSurfaceGridTableModel) surfaceGridTable_.getModel()).newGrid(
+//                 (Integer) gridRowsSpinner_.getValue(), (Integer) gridColsSpinner_.getValue(), coord);
+//         selectedSurfaceGridIndex_ = SurfaceGridManager.getInstance().getIndex(r);
+//         surfaceGridTable_.getSelectionModel().setSelectionInterval(selectedSurfaceGridIndex_, selectedSurfaceGridIndex_);
+//      } catch (NoPositionsDefinedYetException e) {
+//         JOptionPane.showMessageDialog(this, "Explore a tile first before adding a position");
+//         return;
+//      }
    }//GEN-LAST:event_newGridButton_ActionPerformed
 
    private void newSurfaceButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newSurfaceButton_ActionPerformed
-         SurfaceInterpolator s = ((DisplayWindowSurfaceGridTableModel) surfaceGridTable_.getModel()).addNewSurface();
-      selectedSurfaceGridIndex_ = SurfaceGridManager.getInstance().getIndex(s);
-      surfaceGridTable_.getSelectionModel().setSelectionInterval(selectedSurfaceGridIndex_, selectedSurfaceGridIndex_);
+//      SurfaceInterpolator s = ((DisplayWindowSurfaceGridTableModel) surfaceGridTable_.getModel()).addNewSurface();
+//      selectedSurfaceGridIndex_ = SurfaceGridManager.getInstance().getIndex(s);
+//      surfaceGridTable_.getSelectionModel().setSelectionInterval(selectedSurfaceGridIndex_, selectedSurfaceGridIndex_);
    }//GEN-LAST:event_newSurfaceButton_ActionPerformed
 
    private void gridRowsSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_gridRowsSpinner_StateChanged
-      if (getCurrentSurfaceOrGrid() != null && getCurrentSurfaceOrGrid() instanceof MultiPosGrid) {
-         ((MultiPosGrid) getCurrentSurfaceOrGrid()).updateParams((Integer) gridRowsSpinner_.getValue(), (Integer) gridColsSpinner_.getValue());
-      }
-      display_.redrawOverlay();
+//      if (getCurrentSurfaceOrGrid() != null && getCurrentSurfaceOrGrid() instanceof MultiPosGrid) {
+//         ((MultiPosGrid) getCurrentSurfaceOrGrid()).updateParams((Integer) gridRowsSpinner_.getValue(), (Integer) gridColsSpinner_.getValue());
+//      }
+//      display_.redrawOverlay();
    }//GEN-LAST:event_gridRowsSpinner_StateChanged
 
    private void gridColsSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_gridColsSpinner_StateChanged
-       if (getCurrentSurfaceOrGrid() != null && getCurrentSurfaceOrGrid() instanceof MultiPosGrid) {
-         ((MultiPosGrid) getCurrentSurfaceOrGrid()).updateParams((Integer) gridRowsSpinner_.getValue(), (Integer) gridColsSpinner_.getValue());
-      }
-      display_.redrawOverlay();
+//      if (getCurrentSurfaceOrGrid() != null && getCurrentSurfaceOrGrid() instanceof MultiPosGrid) {
+//         ((MultiPosGrid) getCurrentSurfaceOrGrid()).updateParams((Integer) gridRowsSpinner_.getValue(), (Integer) gridColsSpinner_.getValue());
+//      }
+//      display_.redrawOverlay();
    }//GEN-LAST:event_gridColsSpinner_StateChanged
 
 

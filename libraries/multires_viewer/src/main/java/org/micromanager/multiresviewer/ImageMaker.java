@@ -1,6 +1,7 @@
 package org.micromanager.multiresviewer;
 
 
+import org.micromanager.multiresviewer.api.DataSource;
 import java.awt.Color;
 import java.awt.image.DirectColorModel;
 import java.awt.image.IndexColorModel;
@@ -36,7 +37,7 @@ class ImageMaker {
 
    public ImageMaker(MagellanDisplayController c, DataSource data) {
       c.registerForEvents(this);
-      displaySettings_ = c.getDisplaySettings();
+      displaySettings_ = c.getDisplaySettingsObject();
       imageCache_ = data;
    }
 

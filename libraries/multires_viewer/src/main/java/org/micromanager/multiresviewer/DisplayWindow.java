@@ -10,32 +10,21 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Image;
-import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import java.awt.geom.Point2D;
-import java.awt.image.BufferedImage;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
 import org.json.JSONObject;
 import org.micromanager.multiresviewer.events.DisplayClosingEvent;
-import org.micromanager.multiresviewer.events.MagellanScrollbarPosition;
 import org.micromanager.multiresviewer.events.ScrollersAddedEvent;
 import org.micromanager.multiresviewer.overlay.Overlay;
 
@@ -181,6 +170,10 @@ class DisplayWindow implements WindowListener {
       imageCanvas_.updateOverlay(overlay);
       imageCanvas_.getCanvas().repaint();
    }
+   
+   void repaintCanvas() {
+      imageCanvas_.getCanvas().repaint();
+   }
 
    public void onNewImage() {
       sideControls_.onNewImage();
@@ -190,7 +183,7 @@ class DisplayWindow implements WindowListener {
       sideControls_.setImageMetadata(imageMD);
    }
 
-   public void expandDisplayedRangeToInclude(List<MagellanScrollbarPosition> newIamgeEvents) {
+   public void expandDisplayedRangeToInclude(List<HashMap<String, Integer>> newIamgeEvents) {
       subImageControls_.expandDisplayedRangeToInclude(newIamgeEvents);
    }
 

@@ -5,6 +5,7 @@
  */
 package org.micromanager.multiresviewer;
 
+import org.micromanager.multiresviewer.api.DataSource;
 import java.awt.geom.Point2D;
 import java.util.HashMap;
 

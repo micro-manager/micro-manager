@@ -42,7 +42,7 @@ public class DisplaySettings {
    public DisplaySettings(JSONObject json) {
       json_ = json;
    }
-   
+
    public JSONObject toJSON() {
       try {
          //make copy
@@ -52,18 +52,37 @@ public class DisplaySettings {
       }
    }
 
-   public DisplaySettings(JSONObject displaySettingsJSON, JSONObject summaryMD) {
-      int bitDepth = 16;
-      if (summaryMD.has("BitDepth")) {
-         
-         bitDepth = DisplayMetadata.getBitDepth(summaryMD);
-      } else if (summaryMD.has("PixelType")) {
-         if (DisplayMetadata.isGRAY8(summaryMD) || DisplayMetadata.isRGB32(summaryMD)) {
-            bitDepth = 8;
-         }
+   public DisplaySettings() {
+      json_ = new JSONObject();
+      try {
+         JSONObject allChannelSettings = new JSONObject();
+         //settigns for all channels
+         allChannelSettings.put(AUTOSCALE, true);
+         allChannelSettings.put(LOG_HIST, true);
+         allChannelSettings.put(COMPOSITE, true);
+         allChannelSettings.put(SYNC_CHANNELS, false);
+         allChannelSettings.put(IGNORE_OUTLIERS, false);
+         allChannelSettings.put(IGNORE_PERCENTAGE, 0.1);
+         json_.put(ALL_CHANNELS_SETTINGS_KEY, allChannelSettings);
+      } catch (JSONException ex) {
+         System.err.println();
       }
+   }
 
-      json_ = displaySettingsJSON;
+   public void addChannel(String cName, int bitDepth, Color c) {
+      try {
+         JSONObject channelDisp = new JSONObject();
+         channelDisp.put("Color", cName.equals("") || c == null ? Color.white : c.getRGB());
+         channelDisp.put("BitDepth", bitDepth);
+         channelDisp.put("Name", cName);
+         channelDisp.put("Gamma", 1.0);
+         channelDisp.put("Min", 0);
+         channelDisp.put("Max", (int) Math.pow(2, bitDepth) - 1);
+         channelDisp.put("Active", true);
+         json_.put(cName, channelDisp);
+      } catch (JSONException ex) {
+         //this wont happen
+      }
    }
 
    @Override

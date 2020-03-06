@@ -3,13 +3,15 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.micromanager.multiresviewer;
+package org.micromanager.multiresviewer.api;
 
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.util.Set;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
+import org.micromanager.multiresviewer.DataViewCoords;
+import org.micromanager.multiresviewer.MagellanDisplayController;
 
 /**
  * Interface for a multiresolution data source
@@ -29,13 +31,10 @@ public interface DataSource {
       public String getUniqueAcqName();
 
    
-      public void registerForEvents(MagellanDisplayController aThis);
-
    public Point2D.Double stageCoordinateFromPixelCoordinate(long l, long l0);
 
          public Point pixelCoordsFromStageCoords(double x, double y);
 
-         public void unregisterForEvents(MagellanDisplayController aThis);
 ////////////
       
       
@@ -48,7 +47,7 @@ public interface DataSource {
 
    public TaggedImage getImageForDisplay(Integer c, DataViewCoords viewCoords);
 
-   public double getMaxResolutionIndex();
+   public int getMaxResolutionIndex();
 
    public String getDiskLocation();
 

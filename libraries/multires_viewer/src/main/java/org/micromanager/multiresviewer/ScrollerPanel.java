@@ -24,7 +24,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.JPanel;
 import org.micromanager.multiresviewer.events.AnimationToggleEvent;
-import org.micromanager.multiresviewer.events.MagellanScrollbarPosition;
 import org.micromanager.multiresviewer.events.ScrollPositionEvent;
 import org.micromanager.multiresviewer.events.ScrollersAddedEvent;
 import org.micromanager.multiresviewer.events.SetImageEvent;
@@ -213,11 +212,14 @@ class ScrollerPanel extends JPanel {
       }
    }
 
-   void expandDisplayedRangeToInclude(List<MagellanScrollbarPosition> newIamgeEvents) {
-      for (MagellanScrollbarPosition e : newIamgeEvents) {
+   void expandDisplayedRangeToInclude(List<HashMap<String, Integer>> newIamgeEvents) {
+      for (HashMap<String, Integer> e : newIamgeEvents) {
          boolean didShowNewScrollers = false;
          for (AxisScroller scroller : scrollers_) {
-            int imagePosition = e.getPositionForAxis(scroller.getAxis());
+            if (!e.containsKey(scroller.getAxis())) {
+               continue;
+            }
+            int imagePosition = e.get(scroller.getAxis());
             if (scroller.getMaximum() <= imagePosition || scroller.getMinimum() > imagePosition) {
                if (!scroller.isVisible()) {
                   // This scroller was previously hidden and needs to be shown now.

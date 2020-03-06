@@ -18,8 +18,10 @@ public class ChannelGroupSettings {
 
    protected ArrayList<ChannelSetting> channels_;
    private static CMMCore core_;
+   protected String group_;
 
    public ChannelGroupSettings(String channelGroup) {
+      group_ = channelGroup;
       core_ = Engine.getCore();
       updateChannelGroup(channelGroup);
    }
@@ -46,6 +48,7 @@ public class ChannelGroupSettings {
    }
 
    public void updateChannelGroup(String channelGroup) {
+      group_ = channelGroup;
       if (channels_ != null && !channels_.isEmpty() && channels_.get(0).group_.equals(channelGroup)) {
          //nothing to update
          return;
