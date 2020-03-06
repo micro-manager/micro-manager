@@ -29,7 +29,8 @@ public class Roi extends Object implements Cloneable, java.io.Serializable {
 
    static final int NO_MODS = 0, ADD_TO_ROI = 1, SUBTRACT_FROM_ROI = 2; // modification states
 
-   int startX, startY, x, y, width, height;
+   int startX, startY, x, y;
+   int width, height;
    double startXD, startYD;
    Rectangle2D.Double bounds;
    int activeHandle;
@@ -99,12 +100,12 @@ public class Roi extends Object implements Cloneable, java.io.Serializable {
       if (height < 1) {
          height = 1;
       }
-      if (width > xMax) {
-         width = xMax;
-      }
-      if (height > yMax) {
-         height = yMax;
-      }
+//      if (width > xMax) {
+//         width = xMax;
+//      }
+//      if (height > yMax) {
+//         height = yMax;
+//      }
       this.cornerDiameter = cornerDiameter;
       this.x = x;
       this.y = y;

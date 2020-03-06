@@ -28,13 +28,6 @@ public interface DataSource {
    
       public Set<Point> getTileIndicesWithDataAt(int axisPosition);
 
-      public String getUniqueAcqName();
-
-   
-   public Point2D.Double stageCoordinateFromPixelCoordinate(long l, long l0);
-
-         public Point pixelCoordsFromStageCoords(double x, double y);
-
 ////////////
       
       

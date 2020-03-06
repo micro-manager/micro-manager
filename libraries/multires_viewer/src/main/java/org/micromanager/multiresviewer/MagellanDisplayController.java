@@ -15,7 +15,6 @@ package org.micromanager.multiresviewer;
 
 import org.micromanager.multiresviewer.api.DataSource;
 import org.micromanager.multiresviewer.api.AcquisitionPlugin;
-import org.micromanager.multiresviewer.api.OverlayerPlugin;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Color;
@@ -58,14 +57,14 @@ public final class MagellanDisplayController {
 
    private DisplayWindow displayWindow_;
    private ImageMaker imageMaker_;
-   private OverlayerPlugin overlayer_;
+   private BaseOverlayer overlayer_;
    private Timer animationTimer_;
    private double animationFPS_ = 7;
 
    private DataViewCoords viewCoords_;
    private AcquisitionPlugin acq_;
 
-   public MagellanDisplayController(DataSource cache, AcquisitionPlugin acq, OverlayerPlugin overlayer) {
+   public MagellanDisplayController(DataSource cache, AcquisitionPlugin acq) {
       dataSource_ = cache;
       acq_ = acq;
       displaySettings_ = new DisplaySettings();
@@ -73,11 +72,14 @@ public final class MagellanDisplayController {
               cache.isXYBounded() ? 700 : cache.getFullResolutionSize().x,
               cache.isXYBounded() ? 700 : cache.getFullResolutionSize().y, dataSource_.getImageBounds());
       displayWindow_ = new DisplayWindow(this);
-      displayWindow_.setTitle(cache.getUniqueAcqName() + (acq != null ? (acq.isComplete() ? " (Finished)" : " (Running)") : " (Loaded)"));
-      overlayer_ = overlayer;
+      overlayer_ = new BaseOverlayer(this);
       imageMaker_ = new ImageMaker(this, cache);
 
       registerForEvents(this);
+   }
+   
+   public boolean isImageXYBounded() {
+      return dataSource_.isXYBounded();
    }
 
    public JSONObject getDisplaySettingsJSON() {
@@ -155,6 +157,7 @@ public final class MagellanDisplayController {
    }
 
    /**
+    * TODO: might want to move this out to simplyfy API
     * used to keep explored area visible in explire acquisitons
     */
    private void moveViewToVisibleArea() {
@@ -184,7 +187,6 @@ public final class MagellanDisplayController {
          long fovX2 = (long) (fovX1 + viewCoords_.getSourceDataSize().x);
          long fovY2 = (long) (fovY1 + viewCoords_.getSourceDataSize().y);
 
-         System.out.println(viewCoords_.getSourceDataSize().y);
          //check if tile and fov intersect
          boolean xInView = fovX1 < tileX2 && fovX2 > tileX1;
          boolean yInView = fovY1 < tileY2 && fovY2 > tileY1;
@@ -410,12 +412,6 @@ public final class MagellanDisplayController {
       displayWindow_.unlockAllScrollers();
    }
 
-   public Point2D.Double getStageCoordinateOfViewCenter() {
-      return dataSource_.stageCoordinateFromPixelCoordinate(
-              (long) (viewCoords_.getViewOffset().x + viewCoords_.getSourceDataSize().x / 2),
-              (long) (viewCoords_.getViewOffset().y + viewCoords_.getSourceDataSize().y / 2));
-   }
-
    public void showFolder() {
       try {
          File location = new File(dataSource_.getDiskLocation());
@@ -475,11 +471,6 @@ public final class MagellanDisplayController {
 //   public boolean isRGB() {
 //      return imageCache_.isRGB();
 //   }
-   Point2D.Double stageCoordFromImageCoords(int x, int y) {
-      long newX = (long) (x / viewCoords_.getDisplayToFullScaleFactor() + viewCoords_.getViewOffset().x);
-      long newY = (long) (y / viewCoords_.getDisplayToFullScaleFactor() + viewCoords_.getViewOffset().y);
-      return dataSource_.stageCoordinateFromPixelCoordinate(newX, newY);
-   }
 
    Point getTileIndicesFromDisplayedPixel(int x, int y) {
       double scale = viewCoords_.getDisplayToFullScaleFactor();
@@ -743,7 +734,7 @@ public final class MagellanDisplayController {
          Overlay cheapOverlay = null;
          //TODO: add to overlay rather than all external
          if (overlayer_ != null) {
-            cheapOverlay = overlayer_.createEasyPartsOfOverlay(view_);
+            cheapOverlay = overlayer_.createDefaultOverlay(view_);
          }
 
          HashMap<Integer, int[]> channelHistograms = imageMaker_.getHistograms();

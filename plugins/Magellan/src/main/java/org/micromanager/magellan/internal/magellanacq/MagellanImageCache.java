@@ -100,7 +100,9 @@ public class MagellanImageCache implements DataSink, DataSource {
       if (showDisplay_) {
          //create display
          try {
-            display_ = new MagellanDisplayController(this, (AcquisitionPlugin) acq_, null);
+            display_ = new MagellanDisplayController(this, (AcquisitionPlugin) acq_);
+            display_.setWindowTitle(getUniqueAcqName() + (acq != null ? (acq.isComplete() ? " (Finished)" : " (Running)") : " (Loaded)"));
+
          } catch (Exception e) {
             e.printStackTrace();
             Log.log("Couldn't create display succesfully");
