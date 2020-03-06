@@ -2576,6 +2576,22 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       }
       
+      // with Hamamatsu cameras the user needs to have scan mode (readout speed) set to fastest possibel
+      if (acqSettingsOrig.cameraMode == CameraModes.Keys.LIGHT_SHEET) {
+         if (sideActiveA  && devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA)==Devices.Libraries.HAMCAM) {
+            if (cameras_.isSlowReadout(Devices.Keys.CAMERAA)) {
+               MyDialogUtils.showError("Need to set SCAN_MODE property to fastest possible for Hamamatsu cameras in light sheet mode.");
+               return AcquisitionStatus.FATAL_ERROR;
+            }
+         }
+         if (sideActiveB  && devices_.getMMDeviceLibrary(Devices.Keys.CAMERAB)==Devices.Libraries.HAMCAM) {
+            if (cameras_.isSlowReadout(Devices.Keys.CAMERAB)) {
+               MyDialogUtils.showError("Need to set SCAN_MODE property to fastest possible for Hamamatsu cameras in light sheet mode.");
+               return AcquisitionStatus.FATAL_ERROR;
+            }
+         }
+      }
+      
       // if we are told to use path presets but nothing is actually used then set to false
       if (acqSettingsOrig.usePathPresets) {
          boolean needA = sideActiveA && !props_.getPropValueString(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_PATH_CONFIG_A).equals("");

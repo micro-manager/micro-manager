@@ -406,12 +406,13 @@ public class Cameras {
     * @param camKey
     * @return
     */
-   private boolean isSlowReadout(Devices.Keys camKey) {
+   public boolean isSlowReadout(Devices.Keys camKey) {
       switch(devices_.getMMDeviceLibrary(camKey)) {
       case HAMCAM:
          if (props_.getPropValueString(camKey, Properties.Keys.CAMERA_NAME).startsWith("C14440")) {  // Fusion
             // Fusion has 3 readout speeds but code architecture is only set up for fast/slow :(
-            // call mode 3 fast and modes 1 and 2 slow 
+            // call mode 3 fast and modes 1 and 2 slow
+            // require fast readout for light sheet mode, which is somewhat arbitrary but simplifies code
             return !props_.getPropValueString(camKey, Properties.Keys.SCAN_MODE).equals("3");
          } else {
             // original case with Flash4: mode 2 is fast and mode 1 is slow
