@@ -474,9 +474,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          @Override
          public void actionPerformed(ActionEvent e) {
             ASIdiSPIM.getFrame().getAcquisitionPanel().runTestAcquisition(side_);
-            refreshCameraBeamSettings();
-            centerPiezoAndGalvo();  // put piezo and galvo back to the imaging center
-                                    // acquisition code puts them back to zero, this is better and maybe should be done globally
          }
       });
       slicePanel.add(testAcqButton, "center, span 2, wrap");
@@ -923,7 +920,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    * if piezo isn't assigned.
    * @throws Exception 
    */
-   private void centerPiezoAndGalvo() {
+   public void centerPiezoAndGalvo() {
       boolean success = positions_.setPosition(piezoImagingDeviceKey_, imagingCenterPos_, true);
       if (success || !devices_.isValidMMDevice(piezoImagingDeviceKey_)) {
          positions_.setPosition(micromirrorDeviceKey_, Directions.Y,
@@ -967,7 +964,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    /**
     * Restore camera and beam settings after an acquisition has been run (either autofocus or test acquisition)
     */
-   private void refreshCameraBeamSettings() {
+   public void refreshCameraBeamSettings() {
       cameraPanel_.gotSelected();
       if (beamPanel_.isUpdateOnTab()) {
          beamPanel_.gotSelected();

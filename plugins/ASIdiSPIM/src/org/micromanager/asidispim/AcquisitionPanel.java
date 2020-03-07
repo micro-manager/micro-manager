@@ -1124,6 +1124,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    public boolean isFirstSideA() {
       return ((String) firstSide_.getSelectedItem()).equals("A");
    }
+
+   public Devices.Sides getFirstSide() {
+      return isFirstSideA() ? Devices.Sides.A : Devices.Sides.B;
+   }
    
    /**
     * convenience method to avoid having to regenerate acquisition settings.
@@ -1675,11 +1679,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return Math.max(cameras_.getRowReadoutTime(Devices.Keys.CAMERAA),
                cameras_.getRowReadoutTime(Devices.Keys.CAMERAB));
       } else {
-         if (isFirstSideA()) {
-            return cameras_.getRowReadoutTime(Devices.Keys.CAMERAA);
-         } else {
-            return cameras_.getRowReadoutTime(Devices.Keys.CAMERAB);
-         }
+         Devices.Keys camKey = Devices.getSideSpecificKey(Devices.Keys.CAMERAA, getFirstSide());
+         return cameras_.getRowReadoutTime(camKey);
       }
    }
    
@@ -1695,11 +1696,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return Math.max(cameras_.computeCameraResetTime(Devices.Keys.CAMERAA, camMode),
                cameras_.computeCameraResetTime(Devices.Keys.CAMERAB, camMode));
       } else {
-         if (isFirstSideA()) {
-            return cameras_.computeCameraResetTime(Devices.Keys.CAMERAA, camMode);
-         } else {
-            return cameras_.computeCameraResetTime(Devices.Keys.CAMERAB, camMode);
-         }
+         Devices.Keys camKey = Devices.getSideSpecificKey(Devices.Keys.CAMERAA, getFirstSide());
+         return cameras_.computeCameraResetTime(camKey, camMode);
       }
    }
    
@@ -1715,11 +1713,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return Math.max(cameras_.computeCameraReadoutTime(Devices.Keys.CAMERAA, camMode),
                cameras_.computeCameraReadoutTime(Devices.Keys.CAMERAB, camMode));
       } else {
-         if (isFirstSideA()) {
-            return cameras_.computeCameraReadoutTime(Devices.Keys.CAMERAA, camMode);
-         } else {
-            return cameras_.computeCameraReadoutTime(Devices.Keys.CAMERAB, camMode);
-         }
+         Devices.Keys camKey = Devices.getSideSpecificKey(Devices.Keys.CAMERAA, getFirstSide());
+         return cameras_.computeCameraReadoutTime(camKey, camMode);
       }
    }
    
@@ -1853,9 +1848,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     *   Devices.Side.A or B to run only that side
     */
    public void runTestAcquisition(final Devices.Sides side) {
-      Runnable runTestThread = new Runnable() {
+      final SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
          @Override
-         public void run() {
+         protected Void doInBackground() throws Exception {
             ReportingUtils.logDebugMessage("User requested start of test diSPIM acquisition with side " + side.toString() + " selected.");
             cancelAcquisition_.set(false);
             acquisitionRequested_.set(true);
@@ -1879,10 +1874,31 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   ASIdiSPIM.getFrame().getDataAnalysisPanel().runDeskew(acquisitionPanel_);
                }
             }
+            return null;
+         }
+         
+         @Override
+         protected void done() {
+            // update the beam and piezo/galvo
+            // a little bit complicated to handle all situations
+            if (side == Devices.Sides.NONE) {  // call from acquisition panel
+               if (getNumSides()>1) { // two-sided
+                  ASIdiSPIM.getFrame().getSetupPanel(Devices.Sides.A).refreshCameraBeamSettings();
+                  ASIdiSPIM.getFrame().getSetupPanel(Devices.Sides.A).centerPiezoAndGalvo();
+                  ASIdiSPIM.getFrame().getSetupPanel(Devices.Sides.B).refreshCameraBeamSettings();
+                  ASIdiSPIM.getFrame().getSetupPanel(Devices.Sides.B).centerPiezoAndGalvo();
+               } else {
+                  final Devices.Sides side2 = getFirstSide();
+                  ASIdiSPIM.getFrame().getSetupPanel(side2).refreshCameraBeamSettings();
+                  ASIdiSPIM.getFrame().getSetupPanel(side2).centerPiezoAndGalvo();
+               }
+            } else { // coming from setup panels
+               ASIdiSPIM.getFrame().getSetupPanel(side).refreshCameraBeamSettings();
+               ASIdiSPIM.getFrame().getSetupPanel(side).centerPiezoAndGalvo();
+            }
          }
       };
-      
-      (new Thread(runTestThread, "Run Test")).start();
+      worker.execute();
    }
    
    /**
