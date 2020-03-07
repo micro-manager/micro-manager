@@ -702,16 +702,9 @@ public class ControllerUtils {
 
       // if we set piezoAmplitude to 0 here then sliceAmplitude will also be 0
       float piezoAmplitude;
-      switch (settings.spimMode) {
-      case NO_SCAN:
-      case STAGE_SCAN:
-      case STAGE_SCAN_INTERLEAVED:
-      case STAGE_SCAN_UNIDIRECTIONAL:
-      case STAGE_STEP_SUPPLEMENTAL_UNIDIRECTIONAL:
-      case STAGE_SCAN_SUPPLEMENTAL_UNIDIRECTIONAL:
+      if (settings.isStageScanning || settings.spimMode == AcquisitionModes.Keys.NO_SCAN) {
          piezoAmplitude = 0.0f;
-         break;
-      default:
+      } else {
          piezoAmplitude = (settings.numSlices - 1) * settings.stepSizeUm;
       }
 
@@ -791,8 +784,9 @@ public class ControllerUtils {
          props_.setPropValue(galvoDevice, Properties.Keys.SPIM_FIRSTSIDE,
                settings.firstSideIsA ? "A" : "B", skipScannerWarnings);
 
-         // get the piezo card ready; skip if no piezo specified or is stage scanning
-         if (devices_.isValidMMDevice(piezoDevice) && !settings.isStageScanning) {
+         // get the piezo card ready; skip if no piezo specified
+         // need to do this for stage scanning too, which makes sure the piezo amplitude is 0
+         if (devices_.isValidMMDevice(piezoDevice)) {
             // if mode SLICE_SCAN_ONLY we have computed slice movement as if we
             //   were moving the piezo but now make piezo stay still
             if (settings.spimMode.equals(AcquisitionModes.Keys.SLICE_SCAN_ONLY)) {
@@ -821,10 +815,13 @@ public class ControllerUtils {
                   Properties.Keys.SA_AMPLITUDE, piezoAmplitude);
             props_.setPropValue(piezoDevice,
                   Properties.Keys.SA_OFFSET, piezoCenter);
-            props_.setPropValue(piezoDevice,
-                  Properties.Keys.SPIM_NUM_SLICES, numSlices);
-            props_.setPropValue(piezoDevice,
-                  Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED);
+            
+            if (!settings.isStageScanning) {
+               props_.setPropValue(piezoDevice,
+                     Properties.Keys.SPIM_NUM_SLICES, numSlices);
+               props_.setPropValue(piezoDevice,
+                     Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED);
+            }
          }
 
          // TODO figure out what we should do with piezo illumination/center position during stage scan
