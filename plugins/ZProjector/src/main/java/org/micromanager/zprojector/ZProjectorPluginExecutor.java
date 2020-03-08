@@ -125,6 +125,7 @@ public class ZProjectorPluginExecutor {
                newStore.setSummaryMetadata(metadata);               
                List<String> axes = oldStore_.getAxes();
                axes.remove(projectionAxis);
+               axes.sort( new CoordsComparator());
                if (!save) {
                   DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
                   copyDisplay.setCustomTitle(newName);
