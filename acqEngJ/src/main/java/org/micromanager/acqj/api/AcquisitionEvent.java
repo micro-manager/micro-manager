@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.TreeSet;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -37,9 +38,6 @@ public class AcquisitionEvent {
       AcqusitionFinished,
       AcqusitionSequenceEnd
    };
-
-   public static final String T_AXIS_NAME = "t";
-   public static final String Z_AXIS_NAME = "z";
 
    public AcquisitionBase acquisition_;
 
@@ -69,9 +67,6 @@ public class AcquisitionEvent {
    public AcquisitionEvent(AcquisitionBase acq) {
       acquisition_ = acq;
       miniumumStartTime_ = 0;
-      //default values that should be overwritten if they matter to the acq
-      axisPositions_.put(T_AXIS_NAME, 0);
-      axisPositions_.put(T_AXIS_NAME, 0);
    }
 
    /**
@@ -208,6 +203,10 @@ public class AcquisitionEvent {
    public void setMinimumStartTime(long l) {
       miniumumStartTime_ = l;
    }
+   
+   public Set<String> getDefinedAxes() {
+      return axisPositions_.keySet();
+   }
 
    public void setAxisPosition(String label, int index) {
       axisPositions_.put(label, index);
@@ -218,20 +217,20 @@ public class AcquisitionEvent {
    }
 
    public void setTimeIndex(int index) {
-      setAxisPosition(T_AXIS_NAME, index);
+      setAxisPosition(AcqEngMetadata.TIME_AXIS, index);
    }
 
    public void setZ(int index, double position) {
-      setAxisPosition(Z_AXIS_NAME, index);
+      setAxisPosition(AcqEngMetadata.Z_AXIS, index);
       zPosition_ = position;
    }
 
    public int getTIndex() {
-      return getAxisPosition(T_AXIS_NAME);
+      return getAxisPosition(AcqEngMetadata.TIME_AXIS);
    }
 
    public int getZIndex() {
-      return getAxisPosition(Z_AXIS_NAME);
+      return getAxisPosition(AcqEngMetadata.Z_AXIS);
    }
 
    public static AcquisitionEvent createAcquisitionFinishedEvent(AcquisitionBase acq) {

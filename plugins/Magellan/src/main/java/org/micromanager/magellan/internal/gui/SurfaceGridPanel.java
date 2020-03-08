@@ -15,7 +15,7 @@ import org.micromanager.magellan.internal.gui.DisplayWindowSurfaceGridTableModel
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridListener;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceInterpolator;
 import org.micromanager.magellan.internal.surfacesandregions.XYFootprint;
-import org.micromanager.multiresviewer.MagellanDisplayController;
+import org.micromanager.multiresviewer.NDViewer;
 
 /**
  *
@@ -24,7 +24,7 @@ import org.micromanager.multiresviewer.MagellanDisplayController;
 public class SurfaceGridPanel extends javax.swing.JPanel implements SurfaceGridListener {
 
    
-   private MagellanDisplayController display_;
+   private NDViewer display_;
    private ListSelectionListener surfaceTableListSelectionListener_;
    private volatile int selectedSurfaceGridIndex_ = -1;
 //   MagellanChannelSpec channels_;

@@ -66,9 +66,12 @@ public final class ResolutionLevel {
    private HashMap<String, MultipageTiffReader> tiffReadersByLabel_;
    private static boolean showProgressBars_ = true;
    private MultiResMultipageTiffStorage masterMultiResStorage_;
+   private  int imageWidth_, imageHeight_, byteDepth_;
+   private  boolean rgb_;
 
    public ResolutionLevel(String dir, boolean newDataSet, JSONObject summaryMetadata,
-           ThreadPoolExecutor writingExecutor, MultiResMultipageTiffStorage masterMultiRes) throws IOException {
+           ThreadPoolExecutor writingExecutor, MultiResMultipageTiffStorage masterMultiRes,
+           int imageWidth, int imageHeight, boolean rgb, int byteDepth) throws IOException {
       masterMultiResStorage_ = masterMultiRes;
       writingExecutor_ = writingExecutor;
       separateMetadataFile_ = false;
@@ -81,7 +84,13 @@ public final class ResolutionLevel {
 
       if (!newDataSet_) {
          openExistingDataSet();
+      } else {
+         imageWidth_ = imageWidth;
+         imageHeight_ = imageHeight;
+         rgb_ = rgb;
+         byteDepth_ = byteDepth;
       }
+
    }
 
    /**
@@ -160,6 +169,11 @@ public final class ResolutionLevel {
       if (reader != null) {
          setSummaryMetadata(reader.getSummaryMetadata(), true);
       }
+      imageWidth_ = reader.getImageWidth();
+         imageHeight_ = reader.getImageHeight();
+         rgb_ = false;
+         byteDepth_ = reader.getByteDepth();
+      
       if (showProgressBars_) {
          progressBar.setProgress(1);
          progressBar.setVisible(false);
@@ -179,7 +193,7 @@ public final class ResolutionLevel {
    }
 
    public TaggedImage getImage(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
-      String label = MultiresMetadata.generateLabel(channelIndex, sliceIndex, frameIndex, positionIndex);
+      String label = channelIndex + "_" + sliceIndex + "_" + frameIndex + "_" + positionIndex;
 
       TaggedImage image = writePendingImages_.get(label);
       if (image != null) {
@@ -214,16 +228,19 @@ public final class ResolutionLevel {
       return fileSets_.get(fileSetIndex).overwritePixels(pix, channel, slice, frame, position);
    }
 
-   public Future putImage(TaggedImage MagellanTaggedImage) throws IOException {
-      final String label = MultiresMetadata.getLabel(MagellanTaggedImage.tags);
+   public Future putImage(TaggedImage taggedImage, String prefix,
+           int tIndex, int cIndex, int zIndex, int posIndex) throws IOException {
       // Now, we must hold on to MagellanTaggedImage, so that we can return it if
       // somebody calls getImage() before the writing is finished.
       // There is a data race if the MagellanTaggedImage is modified by other code, but
       // that would be a bad thing to do anyway (will break the writer) and is
       // considered forbidden.
+
+      String label = cIndex + "_" + zIndex + "_" + tIndex + "_" + posIndex;
       maxChannelIndex_ = Math.max(maxChannelIndex_, Integer.parseInt(label.split("_")[0]));
-      writePendingImages_.put(label, MagellanTaggedImage);
-      Future f = startWritingTask(label, MagellanTaggedImage);
+      writePendingImages_.put(label, taggedImage);
+      Future f = startWritingTask(label, prefix, taggedImage,
+              tIndex, cIndex, zIndex, posIndex);
 
       writingExecutor_.submit(new Runnable() {
          @Override
@@ -238,7 +255,8 @@ public final class ResolutionLevel {
     * Sets up and kicks off the writing of a new image. This, in an indirect
     * way, ends up submitting the writing task to writingExecutor_.
     */
-   private Future startWritingTask(String label, TaggedImage ti)
+   private Future startWritingTask(String label, String prefix, TaggedImage ti,
+           int tIndex, int cIndex, int zIndex, int posIndex)
            throws IOException {
       if (!newDataSet_) {
          throw new RuntimeException("Tried to write image to a finished data set");
@@ -246,7 +264,7 @@ public final class ResolutionLevel {
 
       int fileSetIndex = 0;
       if (splitByXYPosition_) {
-         fileSetIndex = MultiresMetadata.getPositionIndex(ti.tags);
+         fileSetIndex = posIndex;
       }
       if (fileSets_ == null) {
          try {
@@ -258,11 +276,12 @@ public final class ResolutionLevel {
       }
 
       if (fileSets_.get(fileSetIndex) == null) {
-         fileSets_.put(fileSetIndex, new FileSet(ti.tags, this));
+         fileSets_.put(fileSetIndex, new FileSet(prefix, posIndex, this));
       }
       FileSet set = fileSets_.get(fileSetIndex);
       try {
-         Future f = set.writeImage(ti);
+         Future f = set.writeImage(ti, tIndex,
+                 cIndex, zIndex, posIndex);
          tiffReadersByLabel_.put(label, set.getCurrentReader());
          return f;
       } catch (IOException ex) {
@@ -430,6 +449,18 @@ public final class ResolutionLevel {
       fileSets_.get(0).putDisplaySettings(displaySettings);
    }
 
+   int getByteDepth() {
+      return byteDepth_;
+   }
+
+   int getWidth() {
+      return imageWidth_;
+   }
+
+   int getHeight() {
+      return imageHeight_;
+   }
+
    //Class encapsulating a single File (or series of files)
    //Default is one file series per xy posititon
    private class FileSet {
@@ -446,16 +477,19 @@ public final class ResolutionLevel {
       int nextExpectedChannel_ = 0, nextExpectedSlice_ = 0, nextExpectedFrame_ = 0;
       int currentFrame_ = 0;
 
-      public FileSet(JSONObject firstImageTags, ResolutionLevel mpt) throws IOException {
+      public FileSet(String prefix, int positionIndex, ResolutionLevel mpt) throws IOException {
          tiffWriters_ = new LinkedList<MultipageTiffWriter>();
          mpTiff_ = mpt;
 
          //get file path and name
-         baseFilename_ = createBaseFilename(firstImageTags);
+         baseFilename_ = createBaseFilename(prefix, positionIndex);
          currentTiffFilename_ = baseFilename_ + ".tif";
          currentTiffUUID_ = "urn:uuid:" + UUID.randomUUID().toString();
          //make first writer
-         tiffWriters_.add(new MultipageTiffWriter(directory_, currentTiffFilename_, summaryMetadata_, mpt, splitByXYPosition_, writingExecutor_));
+         tiffWriters_.add(new MultipageTiffWriter(directory_, currentTiffFilename_,
+                 summaryMetadata_, mpt, splitByXYPosition_, writingExecutor_,
+                 imageWidth_, imageHeight_, rgb_, byteDepth_
+         ));
 
          try {
             if (separateMetadataFile_) {
@@ -465,10 +499,10 @@ public final class ResolutionLevel {
             throw new RuntimeException("Problem with summary metadata");
          }
       }
-
-      public String getCurrentUUID() {
-         return currentTiffUUID_;
-      }
+//
+//      public String getCurrentUUID() {
+//         return currentTiffUUID_;
+//      }
 
       public String getCurrentFilename() {
          return currentTiffFilename_;
@@ -504,7 +538,7 @@ public final class ResolutionLevel {
       public List<Future> overwritePixels(Object pixels, int channel, int slice, int frame, int position) throws IOException {
          ArrayList<Future> list = new ArrayList<Future>();
          for (MultipageTiffWriter w : tiffWriters_) {
-            if (w.getIndexMap().containsKey(MultiresMetadata.generateLabel(channel, slice, frame, position))) {
+            if (w.getIndexMap().containsKey(StorageMD.generateLabel(channel, slice, frame, position))) {
                list.add(w.overwritePixels(pixels, channel, slice, frame, position));
             }
          }
@@ -515,7 +549,8 @@ public final class ResolutionLevel {
          return currentFrame_;
       }
 
-      public Future writeImage(TaggedImage img) throws IOException {
+      public Future writeImage(TaggedImage img, int tIndex,
+              int cIndex, int zIndex, int posIndex) throws IOException {
          //check if current writer is out of space, if so, make a new one
          if (!tiffWriters_.getLast().hasSpaceToWrite(img)) {
             try {
@@ -527,7 +562,10 @@ public final class ResolutionLevel {
 
             currentTiffFilename_ = baseFilename_ + "_" + tiffWriters_.size() + ".tif";
             currentTiffUUID_ = "urn:uuid:" + UUID.randomUUID().toString();
-            tiffWriters_.add(new MultipageTiffWriter(directory_, currentTiffFilename_, summaryMetadata_, mpTiff_, splitByXYPosition_, writingExecutor_));
+            tiffWriters_.add(new MultipageTiffWriter(directory_, currentTiffFilename_,
+                    summaryMetadata_, mpTiff_, splitByXYPosition_, writingExecutor_,
+                    imageWidth_, imageHeight_, rgb_, byteDepth_
+            ));
          }
 
          //Add filename to image tags
@@ -538,11 +576,10 @@ public final class ResolutionLevel {
          }
 
          //write image
-         Future f = tiffWriters_.getLast().writeImage(img);
+         Future f = tiffWriters_.getLast().writeImage(img,
+                 tIndex, cIndex, zIndex, posIndex);
 
-         int frame = MultiresMetadata.getFrameIndex(img.tags);
-         int pos = MultiresMetadata.getPositionIndex(img.tags);
-         lastAcquiredPosition_ = Math.max(pos, lastAcquiredPosition_);
+         lastAcquiredPosition_ = Math.max(posIndex, lastAcquiredPosition_);
 
          try {
             if (separateMetadataFile_) {
@@ -555,13 +592,13 @@ public final class ResolutionLevel {
       }
 
       private void writeToMetadataFile(JSONObject md) throws JSONException {
-         try {
-            mdWriter_.write(",\n\"FrameKey-" + MultiresMetadata.getFrameIndex(md)
-                    + "-" + MultiresMetadata.getChannelIndex(md) + "-" + MultiresMetadata.getSliceIndex(md) + "\": ");
-            mdWriter_.write(md.toString(2));
-         } catch (IOException ex) {
-            throw new RuntimeException("Problem writing to metadata.txt file");
-         }
+//         try {
+//            mdWriter_.write(",\n\"FrameKey-" + MultiresMetadata.getFrameIndex(md)
+//                    + "-" + MultiresMetadata.getChannelIndex(md) + "-" + MultiresMetadata.getSliceIndex(md) + "\": ");
+//            mdWriter_.write(md.toString(2));
+//         } catch (IOException ex) {
+//            throw new RuntimeException("Problem writing to metadata.txt file");
+//         }
       }
 
       private void startMetadataFile() throws JSONException {
@@ -585,21 +622,16 @@ public final class ResolutionLevel {
          }
       }
 
-      private String createBaseFilename(JSONObject firstImageTags) {
+      private String createBaseFilename(String prefix, int positionIndex) {
          String baseFilename;
-         try {
-            String prefix = summaryMetadata_.getString("Prefix");
-            if (prefix.length() == 0) {
-               baseFilename = "MagellanStack";
-            } else {
-               baseFilename = prefix + "_MagellanStack";
-            }
-         } catch (JSONException ex) {
-            throw new RuntimeException("Can't find Prefix in summary metadata");
+         if (prefix.length() == 0) {
+            baseFilename = "MagellanStack";
+         } else {
+            baseFilename = prefix + "_MagellanStack";
          }
 
          if (splitByXYPosition_) {
-            baseFilename += "_" + MultiresMetadata.getPositionName(firstImageTags);
+            baseFilename += "_Pos" + positionIndex;
          }
          return baseFilename;
       }

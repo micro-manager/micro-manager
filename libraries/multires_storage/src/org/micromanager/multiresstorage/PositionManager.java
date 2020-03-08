@@ -40,10 +40,22 @@ public class PositionManager {
    //Map of Res level to set of nodes
    private TreeMap<Integer, TreeSet<MultiResPositionNode>> positionNodes_;
 
+   public PositionManager(int displayTileWidth, int displayTileHeight,
+           int fullTileWidth, int fullTileHeight, int overlapX, int overlapY) {
+      positionNodes_ = new TreeMap<Integer, TreeSet<MultiResPositionNode>>();
+      minRow_ = 0;
+      maxRow_ = 0;
+      minCol_ = 0;
+      maxRow_ = 0;
+      positionList_ = new JSONArray();
+      updateMinAndMaxRowsAndCols();
+      updateLowerResolutionNodes(0); //make sure nodes created for all preexisiting positions
+   }
+
    /**
     * constructor to read data from disk
     */
-   public PositionManager(JSONObject summaryMD, int displayTileWidth, int displayTileHeight,
+   public PositionManager(int displayTileWidth, int displayTileHeight,
            int fullTileWidth, int fullTileHeight, int overlapX, int overlapY, JSONArray initialPosList, int maxResLevel) {
       positionNodes_ = new TreeMap<Integer, TreeSet<MultiResPositionNode>>();
       minRow_ = 0;
@@ -55,15 +67,14 @@ public class PositionManager {
       updateLowerResolutionNodes(maxResLevel); //make sure nodes created for all preexisiting positions
    }
 
-   /**
-    * constructor that reads initial position list
-    */
-   public PositionManager(JSONObject summaryMD, int displayTileWidth, int displayTileHeight,
-           int fullTileWidth, int fullTileHeight, int overlapX, int overlapY) {
-      positionNodes_ = new TreeMap<Integer, TreeSet<MultiResPositionNode>>();
-      readRowsAndColsFromPositionList(summaryMD);
-   }
-
+//   /**
+//    * constructor that reads initial position list
+//    */
+//   public PositionManager(JSONObject summaryMD, int displayTileWidth, int displayTileHeight,
+//           int fullTileWidth, int fullTileHeight, int overlapX, int overlapY) {
+//      positionNodes_ = new TreeMap<Integer, TreeSet<MultiResPositionNode>>();
+//      readRowsAndColsFromPositionList(summaryMD);
+//   }
    /**
     * Return the position index of any one of the full res positions
     * corresponding a low res position. There is at least one full res position
@@ -91,7 +102,8 @@ public class PositionManager {
    public synchronized int getLowResPositionIndex(int fullResPosIndex, int resIndex) {
       try {
 
-         MultiResPositionNode node = (MultiResPositionNode) positionList_.getJSONObject(fullResPosIndex).getJSONObject(PROPERTIES_KEY).get(MULTI_RES_NODE_KEY);
+         MultiResPositionNode node = (MultiResPositionNode) positionList_.getJSONObject(fullResPosIndex)
+                 .getJSONObject(PROPERTIES_KEY).get(MULTI_RES_NODE_KEY);
          for (int i = 0; i < resIndex; i++) {
             node = node.parent;
          }
@@ -104,7 +116,8 @@ public class PositionManager {
 
    public synchronized long getGridRow(int fullResPosIndex, int resIndex) {
       try {
-         MultiResPositionNode node = (MultiResPositionNode) positionList_.getJSONObject(fullResPosIndex).getJSONObject(PROPERTIES_KEY).get(MULTI_RES_NODE_KEY);
+         MultiResPositionNode node = (MultiResPositionNode) positionList_.getJSONObject(fullResPosIndex)
+                 .getJSONObject(PROPERTIES_KEY).get(MULTI_RES_NODE_KEY);
          for (int i = 0; i < resIndex; i++) {
             node = node.parent;
          }
@@ -152,10 +165,10 @@ public class PositionManager {
          } catch (JSONException ex) {
             throw new RuntimeException("Unexpected error reading positio list");
          }
-         minRow_ = (int) Math.min(MultiresMetadata.getGridRow(pos), minRow_);
-         minCol_ = (int) Math.min(MultiresMetadata.getGridCol(pos), minCol_);
-         maxRow_ = (int) Math.max(MultiresMetadata.getGridRow(pos), maxRow_);
-         maxCol_ = (int) Math.max(MultiresMetadata.getGridCol(pos), maxCol_);
+         minRow_ = (int) Math.min(StorageMD.getGridRow(pos), minRow_);
+         minCol_ = (int) Math.min(StorageMD.getGridCol(pos), minCol_);
+         maxRow_ = (int) Math.max(StorageMD.getGridRow(pos), maxRow_);
+         maxCol_ = (int) Math.max(StorageMD.getGridCol(pos), maxCol_);
       }
    }
 
@@ -189,7 +202,8 @@ public class PositionManager {
             }
             //add node in case its a new position
             MultiResPositionNode n = new MultiResPositionNode(0,
-                    MultiresMetadata.getGridRow(position), MultiresMetadata.getGridCol(position));
+                    StorageMD.getGridRow(position),
+                    StorageMD.getGridCol(position));
             positionNodes_.get(0).add(n);
             n.positionIndex = i;
             position.getJSONObject(PROPERTIES_KEY).put(MULTI_RES_NODE_KEY, n);
@@ -287,8 +301,8 @@ public class PositionManager {
    private JSONObject createPosition(int row, int col) {
       try {
          JSONObject pos = new JSONObject();
-         MultiresMetadata.setGridCol(pos, col);
-         MultiresMetadata.setGridRow(pos, row);
+         StorageMD.setGridCol(pos, col);
+         StorageMD.setGridRow(pos, row);
          pos.put(PROPERTIES_KEY, new JSONObject());
          return pos;
       } catch (Exception e) {
@@ -300,14 +314,18 @@ public class PositionManager {
       try {
          //check if position is already present in list, and if so, return its index
          for (int i = 0; i < positionList_.length(); i++) {
-            if (MultiresMetadata.getGridRow(positionList_.getJSONObject(i)) == row
-                    && MultiresMetadata.getGridCol(positionList_.getJSONObject(i)) == col) {
+            if (StorageMD.getGridRow(positionList_.getJSONObject(i)) == row
+                    && StorageMD.getGridCol(positionList_.getJSONObject(i)) == col) {
                //we already have position
                return;
             }
          }
          //add this position to list
          positionList_.put(createPosition(row, col));
+         if (positionList_.length() == 1) {
+            updateMinAndMaxRowsAndCols();
+            updateLowerResolutionNodes(0);
+         }
 
          updateMinAndMaxRowsAndCols();
          updateLowerResolutionNodes();

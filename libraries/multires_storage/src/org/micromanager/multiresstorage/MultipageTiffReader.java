@@ -46,6 +46,8 @@ public class MultipageTiffReader {
    public static final char SAMPLES_PER_PIXEL = MultipageTiffWriter.SAMPLES_PER_PIXEL;
    public static final char STRIP_BYTE_COUNTS = MultipageTiffWriter.STRIP_BYTE_COUNTS;
    public static final char IMAGE_DESCRIPTION = MultipageTiffWriter.IMAGE_DESCRIPTION;
+      public static final char WIDTH = 256;
+   public static final char HEIGHT = 257;
    
    public static final char MM_METADATA = MultipageTiffWriter.MM_METADATA;
    
@@ -55,12 +57,13 @@ public class MultipageTiffReader {
    private FileChannel fileChannel_;
       
    private JSONObject summaryMetadata_;
-   private int byteDepth_ = 0;
    private boolean rgb_;
    
    private JSONObject displaySettings_;
    
    private ConcurrentHashMap<String,Long> indexMap_;
+   
+   private int imageWidth_, imageHeight_, byteDepth_;
    
    /**
     * This constructor is used for a file that is currently being written
@@ -68,7 +71,7 @@ public class MultipageTiffReader {
    public MultipageTiffReader(JSONObject summaryMD) {
       summaryMetadata_ = summaryMD;
       byteOrder_ = MultipageTiffWriter.BYTE_ORDER;
-      getRGBAndByteDepth(summaryMD);
+//      getRGBAndByteDepth(summaryMD);
    }
    
    public void setIndexMap(ConcurrentHashMap<String,Long> indexMap) {
@@ -118,16 +121,39 @@ public class MultipageTiffReader {
       } catch (Exception e) {
          throw new RuntimeException(e);
       }
+      
+      //read first IFD to get some info about the image
+      String firstLabel = indexMap_.keys().nextElement();
+        long byteOffset = indexMap_.get(firstLabel);
+          
+            IFDData data = readIFD(byteOffset);
+            imageWidth_ = (int) data.width;
+            imageHeight_ = (int) data.height;
+            byteDepth_ = (int) (data.bytesPerImage / (imageHeight_ * imageWidth_));
+      
 //      try {
 //         displaySettings_ = readDisplaySettings();
 //      } catch (Exception ex) {
 //         throw new RuntimeException("Problem with JSON Representation of Display settings");
 //      }
 
-      if (summaryMetadata_ != null) {
-         getRGBAndByteDepth(summaryMetadata_);
-      }
+//      if (summaryMetadata_ != null) {
+//         getRGBAndByteDepth(summaryMetadata_);
+//      }
    }
+   
+    int getImageWidth() {
+      return imageWidth_;
+   }
+
+   int getImageHeight() {
+      return imageHeight_;
+   }
+
+   int getByteDepth() {
+      return byteDepth_;
+   }
+   
    
    public static boolean isMMMultipageTiff(String directory) throws IOException {
       File dir = new File(directory);
@@ -178,20 +204,20 @@ public class MultipageTiffReader {
       return false;
    }
 
-   private void getRGBAndByteDepth(JSONObject md) {
-      try {
-         String pixelType = md.getString("PixelType");
-         rgb_ = pixelType.startsWith("RGB");
-         
-            if (pixelType.equals("RGB32") || pixelType.equals("GRAY8")) {
-               byteDepth_ = 1;
-            } else {
-               byteDepth_ = 2;
-            }
-      } catch (Exception ex) {
-         throw new RuntimeException(ex);
-      }
-   }
+//   private void getRGBAndByteDepth(JSONObject md) {
+//      try {
+//         String pixelType = md.getString("PixelType");
+//         rgb_ = pixelType.startsWith("RGB");
+//         
+//            if (pixelType.equals("RGB32") || pixelType.equals("GRAY8")) {
+//               byteDepth_ = 1;
+//            } else {
+//               byteDepth_ = 2;
+//            }
+//      } catch (Exception ex) {
+//         throw new RuntimeException(ex);
+//      }
+//   }
 
    public JSONObject getSummaryMetadata() {
       return summaryMetadata_;
@@ -318,7 +344,11 @@ public class MultipageTiffReader {
             data.pixelOffset = entry.value;
          } else if (entry.tag == STRIP_BYTE_COUNTS) {
             data.bytesPerImage = entry.value;
-         } 
+         } else if (entry.tag == WIDTH) {
+            data.width = entry.value;
+         } else if (entry.tag == HEIGHT) {
+            data.height = entry.value;
+         }
       }
       data.nextIFD = unsignInt(entries.getInt(numEntries*12));
       data.nextIFDOffsetLocation = byteOffset + 2 + numEntries*12;
@@ -345,9 +375,9 @@ public class MultipageTiffReader {
          throw new RuntimeException("Error reading image metadata from file");
       }
       
-      if ( byteDepth_ == 0) {
-         getRGBAndByteDepth(md);
-      }
+//      if ( byteDepth_ == 0) {
+//         getRGBAndByteDepth(md);
+//      }
       
       if (rgb_) {
          if (byteDepth_ == 1) {
@@ -452,7 +482,7 @@ public class MultipageTiffReader {
       }
       return val;
    }
-   
+
    private class IFDData {
       public long pixelOffset;
       public long bytesPerImage;
@@ -460,6 +490,7 @@ public class MultipageTiffReader {
       public long mdLength;
       public long nextIFD;
       public long nextIFDOffsetLocation;
+      public long width, height;
       
       public IFDData() {}
    }

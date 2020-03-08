@@ -328,6 +328,16 @@ public class ExploreAcquisition extends DynamicSettingsAcquisition implements Ma
    public int getDisplaySliceIndexFromZCoordinate(double z) {
       return (int) Math.round((z - zOrigin_) / zStep_) - minSliceIndex_;
    }
+
+   @Override
+   public int getOverlapX() {
+      return overlapX_;
+   }
+
+   @Override
+   public int getOverlapY() {
+      return overlapY_;
+   }
    
    //slice and row/col index of an acquisition event in the queue
    public class ExploreTileWaitingToAcquire {

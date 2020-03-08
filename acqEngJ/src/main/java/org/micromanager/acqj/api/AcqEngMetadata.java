@@ -20,7 +20,10 @@ import java.awt.geom.AffineTransform;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -44,18 +47,12 @@ public class AcqEngMetadata {
    private static final String HEIGHT = "Height";
    private static final String PIX_SIZE = "PixelSize_um";
    private static final String POS_NAME = "PositionName";
-   private static final String POS_INDEX = "PositionIndex";
    private static final String X_UM_INTENDED = "XPosition_umIntended";
    private static final String Y_UM_INTENDED = "YPosition_umIntended";
    private static final String Z_UM_INTENDED = "ZPosition_umIntended";
    private static final String X_UM = "XPosition_um";
    private static final String Y_UM = "YPosition_um";
    private static final String Z_UM = "ZPosition_um";
-   private static final String SLICE = "Slice";
-   private static final String FRAME = "Frame";
-   private static final String CHANNEL_INDEX = "ChannelIndex";
-   private static final String Z_INDEX = "ZIndex";
-   private static final String T_INDEX = "TIndex";
    private static final String EXPOSURE = "Exposure";
    private static final String CHANNEL_NAME = "Channel";
    private static final String ZC_ORDER = "SlicesFirst";
@@ -76,6 +73,11 @@ public class AcqEngMetadata {
    private static final String PIX_TYPE_GRAY16 = "GRAY16";
    private static final String CORE_XYSTAGE = "Core-XYStage";
    private static final String CORE_FOCUS = "Core-Focus";
+   private static final String AXES = "AxesPositions";
+   private static final String CHANNEL_AXIS = "c";
+   public static final String TIME_AXIS = "t";
+   public static final String Z_AXIS = "z";
+   public static final String POSITION_AXIS = "p";
 
    /**
     * Add the core set of image metadata that should be present in any
@@ -102,6 +104,9 @@ public class AcqEngMetadata {
          AcqEngMetadata.setStageY(tags, Engine.getCore().getYPosition());
          AcqEngMetadata.setZPositionUm(tags, Engine.getCore().getPosition());
 
+         //Axes (i.e. channel. z, t, or arbitray other indices)
+         AcqEngMetadata.createAxes(tags);
+
          ////////  Channels /////////
          String channelName = event.getChannelName();
          if (Engine.getCore().getNumberOfCameraChannels() > 1) {
@@ -109,7 +114,7 @@ public class AcqEngMetadata {
          }
          //infer channel index at runtime based on name
          int cIndex = event.acquisition_.getChannelIndexFromName(channelName);
-         AcqEngMetadata.setChannelIndex(tags, cIndex);
+         AcqEngMetadata.setAxisPosition(tags, CHANNEL_AXIS, cIndex);
          AcqEngMetadata.setChannelName(tags, channelName == null ? "" : channelName);
 
          /////////  XY Stage Positions (with optional support for grid layout) ////////
@@ -126,16 +131,14 @@ public class AcqEngMetadata {
          }
          AcqEngMetadata.setStageZIntended(tags, event.getZPosition());
 
-         ////////   Z and T indices  ////////////
-         //Z indices should be specified in advance if possible,
-         //so that they can be ordered based on Z position
-         AcqEngMetadata.setZIndex(tags, event.getZIndex());
-         //T indices must be specified in advance 
-         AcqEngMetadata.setTIndex(tags, event.getTIndex());
-
          ////// Generic image coordinate axes //////
-         //TODO
-         
+         // Position and channel indices are inferred at acquisition time
+         //All other axes (including T and Z) must be explicitly defined in the 
+         //acquisition event and get added here
+         for (String s : event.getDefinedAxes()) {
+            AcqEngMetadata.setAxisPosition(tags, s, event.getAxisPosition(s));
+         }
+
          AcqEngMetadata.setExposure(tags, exposure);
 
       } catch (Exception e) {
@@ -264,19 +267,11 @@ public class AcqEngMetadata {
    }
 
    public static int getPositionIndex(JSONObject map) {
-      try {
-         return map.getInt(POS_INDEX);
-      } catch (JSONException ex) {
-         throw new RuntimeException("Missing posotion index tag");
-      }
+      return getAxisPosition(map, POSITION_AXIS);
    }
 
    public static void setPositionIndex(JSONObject map, int positionIndex) {
-      try {
-         map.put(POS_INDEX, positionIndex);
-      } catch (JSONException ex) {
-         throw new RuntimeException("Couldn't set position index");
-      }
+      setAxisPosition(map, POSITION_AXIS, positionIndex);
    }
 
    public static void setBitDepth(JSONObject map, int bitDepth) {
@@ -361,43 +356,6 @@ public class AcqEngMetadata {
       }
    }
 
-   public static int getSliceIndex(JSONObject map) {
-      try {
-         if (map.has(Z_INDEX)) {
-            return map.getInt(Z_INDEX);
-         } else {
-            return map.getInt(SLICE);
-         }
-      } catch (JSONException e) {
-         throw new RuntimeException("Missing slice index tag");
-      }
-   }
-
-   public static void setZIndex(JSONObject map, int sliceIndex) {
-      try {
-         map.put(Z_INDEX, sliceIndex);
-         map.put(SLICE, sliceIndex);
-      } catch (JSONException ex) {
-         throw new RuntimeException("Couldn't set slice index");
-      }
-   }
-
-   public static int getChannelIndex(JSONObject map) {
-      try {
-         return map.getInt(CHANNEL_INDEX);
-      } catch (JSONException ex) {
-         throw new RuntimeException("Missing channel index tag");
-      }
-   }
-
-   public static void setChannelIndex(JSONObject map, int channelIndex) {
-      try {
-         map.put(CHANNEL_INDEX, channelIndex);
-      } catch (JSONException ex) {
-         throw new RuntimeException("Couldn't set channel index");
-      }
-   }
-
    public static String getChannelName(JSONObject map) {
       try {
          return map.getString(CHANNEL_NAME);
@@ -411,27 +369,6 @@ public class AcqEngMetadata {
          map.put(CHANNEL_NAME, channelName);
       } catch (JSONException ex) {
          throw new RuntimeException("Couldn't set channel index");
-      }
-   }
-
-   public static int getFrameIndex(JSONObject map) {
-      try {
-         if (map.has(FRAME)) {
-            return map.getInt(FRAME);
-         } else {
-            return map.getInt(T_INDEX);
-         }
-      } catch (Exception e) {
-         throw new RuntimeException("Frame index tag missing");
-      }
-   }
-
-   public static void setTIndex(JSONObject map, int frameIndex) {
-      try {
-         map.put(FRAME, frameIndex);
-         map.put(T_INDEX, frameIndex);
-      } catch (JSONException ex) {
-         throw new RuntimeException("Couldn't set frame index");
       }
    }
 
@@ -551,13 +488,6 @@ public class AcqEngMetadata {
    public static boolean isRGB(JSONObject map) {
       return (isRGB32(map));
 //              || isRGB64(map));
-   }
-
-   public static String getLabel(JSONObject md) {
-      return generateLabel(getChannelIndex(md),
-              getSliceIndex(md),
-              getFrameIndex(md),
-              getPositionIndex(md));
    }
 
    public static String generateLabel(int channel, int slice, int frame, int position) {
@@ -756,14 +686,6 @@ public class AcqEngMetadata {
       }
    }
 
-   public static void setImageConstructionFilter(JSONObject smd, String type) {
-      try {
-         smd.put(IMAGE_CONSTRUCTION_FILTER, type);
-      } catch (JSONException ex) {
-         throw new RuntimeException("Couldnt set pixel overlap tag");
-
-      }
-   }
 
    public static void setGridRow(JSONObject smd, long gridRow) {
       try {
@@ -860,7 +782,7 @@ public class AcqEngMetadata {
       }
    }
 
-   private static void setAcqType(JSONObject smd, Acquisition acq) {
+   public static void setAcqType(JSONObject smd, Acquisition acq) {
       try {
          if (acq instanceof DynamicSettingsAcquisition) {
             smd.put(ACQ_TYPE, "DynamicSettingsAcquisition");
@@ -875,7 +797,7 @@ public class AcqEngMetadata {
       }
    }
 
-   private static void setChannelGroup(JSONObject summary, String channelGroup) {
+   public static void setChannelGroup(JSONObject summary, String channelGroup) {
       try {
          summary.put(CHANNEL_GROUP, channelGroup);
       } catch (JSONException ex) {
@@ -883,7 +805,7 @@ public class AcqEngMetadata {
       }
    }
 
-   private static void setCoreAutofocus(JSONObject summary, String autoFocusDevice) {
+   public static void setCoreAutofocus(JSONObject summary, String autoFocusDevice) {
       try {
          summary.put(CORE_AUTOFOCUS_DEVICE, autoFocusDevice);
       } catch (JSONException ex) {
@@ -891,7 +813,7 @@ public class AcqEngMetadata {
       }
    }
 
-   private static void setCoreCamera(JSONObject summary, String cameraDevice) {
+   public static void setCoreCamera(JSONObject summary, String cameraDevice) {
       try {
          summary.put(CORE_CAMERA, cameraDevice);
       } catch (JSONException ex) {
@@ -899,7 +821,7 @@ public class AcqEngMetadata {
       }
    }
 
-   private static void setCoreGalvo(JSONObject summary, String galvoDevice) {
+   public static void setCoreGalvo(JSONObject summary, String galvoDevice) {
       try {
          summary.put(CORE_GALVO, galvoDevice);
       } catch (JSONException ex) {
@@ -907,7 +829,7 @@ public class AcqEngMetadata {
       }
    }
 
-   private static void setCoreImageProcessor(JSONObject summary, String imageProcessorDevice) {
+   public static void setCoreImageProcessor(JSONObject summary, String imageProcessorDevice) {
       try {
          summary.put(CORE_IMAGE_PROCESSOR, imageProcessorDevice);
       } catch (JSONException ex) {
@@ -915,7 +837,7 @@ public class AcqEngMetadata {
       }
    }
 
-   private static void setCoreSLM(JSONObject summary, String slmDevice) {
+   public static void setCoreSLM(JSONObject summary, String slmDevice) {
       try {
          summary.put(CORE_SLM, slmDevice);
       } catch (JSONException ex) {
@@ -923,11 +845,50 @@ public class AcqEngMetadata {
       }
    }
 
-   private static void setCoreShutter(JSONObject summary, String shutterDevice) {
+   public static void setCoreShutter(JSONObject summary, String shutterDevice) {
       try {
          summary.put(CORE_SHUTTER, shutterDevice);
       } catch (JSONException ex) {
          throw new RuntimeException("Couldnt set stage y");
+      }
+   }
+
+   public static void createAxes(JSONObject tags) {
+      try {
+         tags.put(AXES, new JSONObject());
+      } catch (JSONException ex) {
+         throw new RuntimeException("couldnt create axes");
+      }
+   }
+   
+    public static HashMap<String, Integer> getAxes(JSONObject tags) {
+      try {
+         JSONObject axes = tags.getJSONObject(AXES);
+         Iterator<String> iter = axes.keys();
+         HashMap<String, Integer> axesMap = new HashMap<String, Integer>();
+         while (iter.hasNext()) {
+            String key = iter.next();
+            axesMap.put(key, axes.getInt(key));        
+         }
+         return axesMap;
+      } catch (JSONException ex) {
+         throw new RuntimeException("couldnt create axes");
+      }
+   }
+
+   public static void setAxisPosition(JSONObject tags, String axis, int position) {
+      try {
+         tags.getJSONObject(AXES).put(axis, position);
+      } catch (JSONException ex) {
+         throw new RuntimeException("couldnt create axes");
+      }
+   }
+
+   public static int getAxisPosition(JSONObject tags, String axis) {
+      try {
+         return tags.getJSONObject(AXES).getInt(axis);
+      } catch (JSONException ex) {
+         throw new RuntimeException("couldnt create axes");
       }
    }
 }

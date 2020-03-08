@@ -45,7 +45,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-
 public class MultipageTiffWriter {
 
 //   private static final long BYTES_PER_MEG = 1048576;
@@ -109,14 +108,23 @@ public class MultipageTiffWriter {
 
    public MultipageTiffWriter(String directory, String filename,
            JSONObject summaryMD, ResolutionLevel mpTiffStorage,
-           boolean splitByPositions, ThreadPoolExecutor writingExecutor) throws IOException {
+           boolean splitByPositions, ThreadPoolExecutor writingExecutor,
+           int imageWidth, int imageHeight, boolean rgb, int byteDepth) throws IOException {
       displayStorer_ = false;
       masterMPTiffStorage_ = mpTiffStorage;
       reader_ = new MultipageTiffReader(summaryMD);
       File f = new File(directory + "/" + filename);
       filename_ = directory + "/" + filename;
-      processSummaryMD(summaryMD);
 
+      imageWidth_ = imageWidth;
+      imageHeight_ = imageHeight;
+      rgb_ = rgb;
+      byteDepth_ = byteDepth;
+      bytesPerImagePixels_ = imageHeight_ * imageWidth_ * byteDepth_ * (rgb_ ? 3 : 1);
+
+      //this is just for optional tiff stuff now
+       processSummaryMD(summaryMD);
+      
       //This is an overestimate of file size because file gets truncated at end
 //      long fileSize = Math.min(MAX_FILE_SIZE, summaryMD.toString().length() + 2000000
 //              + numFrames_ * numChannels_ * numSlices_ * ((long) bytesPerImagePixels_ + 2000));
@@ -186,9 +194,9 @@ public class MultipageTiffWriter {
                }
             } catch (ClosedChannelException e) {
                throw new RuntimeException(e);
-            } catch (IOException e ) {
+            } catch (IOException e) {
                throw new RuntimeException(e);
-            } 
+            }
          }
       });
    }
@@ -351,38 +359,28 @@ public class MultipageTiffWriter {
       return raFile_ == null;
    }
 
-   public Future writeImage(TaggedImage img) throws IOException {
-      try {
-         long offset = filePosition_;
-         boolean shiftByByte = writeIFD(img);
-         Future f = writeBuffers();
-         
-         //TODO: could transform all non CZTP axes into channel here to support arbitrary saving
-         
-         int t = img.tags.getInt("TIndex");
-         int c = img.tags.getInt("ChannelIndex");
-         int z = img.tags.getInt("ZIndex");
-         int p = img.tags.getInt("PositionIndex");
-         String label = c + "_" + z + "_" + t + "_" + p;
-         
-         addToIndexMap(label, offset);
-         //Make IFDs start on word
-         if (shiftByByte) {
-            f = executeWritingTask(new Runnable() {
-               @Override
-               public void run() {
-                  try {
-                     fileChannel_.position(fileChannel_.position() + 1);
-                  } catch (IOException ex) {
-                     throw new RuntimeException("Couldn't incremement byte");
-                  }
+   public Future writeImage(TaggedImage img, int t, int c, int z, int p) throws IOException {
+      long offset = filePosition_;
+      boolean shiftByByte = writeIFD(img);
+      Future f = writeBuffers();
+
+      String label = c + "_" + z + "_" + t + "_" + p;
+
+      addToIndexMap(label, offset);
+      //Make IFDs start on word
+      if (shiftByByte) {
+         f = executeWritingTask(new Runnable() {
+            @Override
+            public void run() {
+               try {
+                  fileChannel_.position(fileChannel_.position() + 1);
+               } catch (IOException ex) {
+                  throw new RuntimeException("Couldn't incremement byte");
                }
-            });
-         }
-         return f;
-      } catch (JSONException ex) {
-         throw new RuntimeException(ex);
+            }
+         });
       }
+      return f;
    }
 
    private void addToIndexMap(String label, long offset) {
@@ -415,40 +413,40 @@ public class MultipageTiffWriter {
       return val;
    }
 
-    public Future overwritePixels(Object pixels, int channel, int slice, int frame, int position) throws IOException {
+   public Future overwritePixels(Object pixels, int channel, int slice, int frame, int position) throws IOException {
 
-        long byteOffset = indexMap_.get(channel + "_" + slice + "_" + frame + "_" + position);
-        ByteBuffer buffer = ByteBuffer.allocate(2).order(BYTE_ORDER);
-        fileChannel_.read(buffer, byteOffset);
-        int numEntries = buffer.getChar(0);
-        ByteBuffer entries = ByteBuffer.allocate(numEntries * 12 + 4).order(BYTE_ORDER);
-        fileChannel_.read(entries, byteOffset + 2);
-        long pixelOffset = -1, bytesPerImage = -1;
-        //read Tiff tags to find pixel offset
-        for (int i = 0; i < numEntries; i++) {
-            char tag = entries.getChar(i * 12);
-            char type = entries.getChar(i * 12 + 2);
-            long count = unsignInt(entries.getInt(i * 12 + 4));
-            long value;
-            if (type == 3 && count == 1) {
-                value = -entries.getChar(i * 12 + 8);
-            } else {
-                value = unsignInt(entries.getInt(i * 12 + 8));
-            }
-            if (tag == STRIP_OFFSETS) {
-                pixelOffset = value;
-            } else if (tag == STRIP_BYTE_COUNTS) {
-                bytesPerImage = value;
-            }
-        }
-        if (pixelOffset == -1 || bytesPerImage == -1) {
-            throw new RuntimeException("Problem writing downsampled display data for file" + filename_ 
-                    + "\n But full resolution data is unaffected");
-        }
-        ByteBuffer pixBuff = getPixelBuffer(pixels);
-        Future writingDone = fileChannelWrite(pixBuff, pixelOffset);
-        return writingDone;
-    }
+      long byteOffset = indexMap_.get(channel + "_" + slice + "_" + frame + "_" + position);
+      ByteBuffer buffer = ByteBuffer.allocate(2).order(BYTE_ORDER);
+      fileChannel_.read(buffer, byteOffset);
+      int numEntries = buffer.getChar(0);
+      ByteBuffer entries = ByteBuffer.allocate(numEntries * 12 + 4).order(BYTE_ORDER);
+      fileChannel_.read(entries, byteOffset + 2);
+      long pixelOffset = -1, bytesPerImage = -1;
+      //read Tiff tags to find pixel offset
+      for (int i = 0; i < numEntries; i++) {
+         char tag = entries.getChar(i * 12);
+         char type = entries.getChar(i * 12 + 2);
+         long count = unsignInt(entries.getInt(i * 12 + 4));
+         long value;
+         if (type == 3 && count == 1) {
+            value = -entries.getChar(i * 12 + 8);
+         } else {
+            value = unsignInt(entries.getInt(i * 12 + 8));
+         }
+         if (tag == STRIP_OFFSETS) {
+            pixelOffset = value;
+         } else if (tag == STRIP_BYTE_COUNTS) {
+            bytesPerImage = value;
+         }
+      }
+      if (pixelOffset == -1 || bytesPerImage == -1) {
+         throw new RuntimeException("Problem writing downsampled display data for file" + filename_
+                 + "\n But full resolution data is unaffected");
+      }
+      ByteBuffer pixBuff = getPixelBuffer(pixels);
+      Future writingDone = fileChannelWrite(pixBuff, pixelOffset);
+      return writingDone;
+   }
 
    private boolean writeIFD(TaggedImage img) throws IOException {
       char numEntries = ENTRIES_PER_IFD;
@@ -486,7 +484,6 @@ public class MultipageTiffWriter {
 //         ijDescriptionTagPosition_ = filePosition_ + bufferPosition_;
 //         writeIFDEntry(ifdBuffer, charView, IMAGE_DESCRIPTION, (char) 2, 0, 0);
 //      }
-
       writeIFDEntry(ifdBuffer, charView, STRIP_OFFSETS, (char) 4, 1, tagDataOffset);
       tagDataOffset += bytesPerImagePixels_;
       writeIFDEntry(ifdBuffer, charView, SAMPLES_PER_PIXEL, (char) 3, 1, (rgb_ ? 3 : 1));
@@ -597,21 +594,6 @@ public class MultipageTiffWriter {
    }
 
    private void processSummaryMD(JSONObject summaryMD) {
-      try {
-         imageWidth_ = summaryMD.getInt("Width");
-         imageHeight_ = summaryMD.getInt("Height");
-         String pixelType = summaryMD.getString("PixelType");
-         rgb_ = pixelType.contains("RGB");
-         if (pixelType.equals("GRAY8") || pixelType.equals("RGB32") || pixelType.equals("RGB24")) {
-            byteDepth_ = 1;
-         } else if (pixelType.equals("GRAY16") || pixelType.equals("RGB64")) {
-            byteDepth_ = 2;
-         } else if (pixelType.equals("GRAY32")) {
-            byteDepth_ = 3;
-         } else {
-            byteDepth_ = 2;
-         }
-         bytesPerImagePixels_ = imageHeight_ * imageWidth_ * byteDepth_ * (rgb_ ? 3 : 1);
          //Tiff resolution tag values
          double cmPerPixel = 0.0001;
          if (summaryMD.has("PixelSizeUm")) {
@@ -634,9 +616,7 @@ public class MultipageTiffWriter {
             resDenomenator_ = 1;
          }
 //      zStepUm_ = AcqEngMetadata.getZStepUm(summaryMD);
-      } catch (JSONException ex) {
-         throw new RuntimeException(ex);
-      }
+   
    }
 
    private byte[] getBytesFromString(String s) {

@@ -27,8 +27,10 @@ import java.awt.geom.Point2D;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.ParseException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.swing.SwingUtilities;
@@ -42,10 +44,10 @@ import org.micromanager.acqj.internal.acqengj.AcquisitionBase;
 import org.micromanager.magellan.internal.channels.MagellanChannelGroupSettings;
 import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.multiresstorage.MultiResMultipageTiffStorage;
-import org.micromanager.multiresviewer.api.DataSource;
-import org.micromanager.multiresviewer.DataViewCoords;
-import org.micromanager.multiresviewer.MagellanDisplayController;
-import org.micromanager.multiresviewer.api.AcquisitionPlugin;
+import org.micromanager.ndviewer.api.DataSource;
+import org.micromanager.ndviewer.internal.gui.DataViewCoords;
+import org.micromanager.multiresviewer.NDViewer;
+import org.micromanager.ndviewer.api.AcquisitionPlugin;
 
 /**
  * This class manages a magellan dataset on disk, as well as the state of a view
@@ -61,10 +63,11 @@ public class MagellanImageCache implements DataSink, DataSource {
    private String name_;
    private Acquisition acq_;
    private final boolean showDisplay_;
-   private PixelStageTranslator stageTranslator_;
+   private PixelStageTranslator stageCoordinateTranslator_;
    private double pixelSizeZ_, pixelSizeXY_;
-   private MagellanDisplayController display_;
+   private MagellanViewer display_;
    private JSONObject summaryMetadata_;
+   private CopyOnWriteArrayList<String> channelNames_ = new CopyOnWriteArrayList<String>();
 
    public MagellanImageCache(String dir, boolean showDisplay) {
       dir_ = dir;
@@ -90,17 +93,26 @@ public class MagellanImageCache implements DataSink, DataSource {
       acq_ = (MagellanAcquisition) acq;
       pixelSizeXY_ = MagellanMD.getPixelSizeUm(summaryMetadata);
       pixelSizeZ_ = MagellanMD.getZStepUm(summaryMetadata);
-      stageTranslator_ = new PixelStageTranslator(stringToTransform(MagellanMD.getAffineTransformString(summaryMetadata)),
+      stageCoordinateTranslator_ = new PixelStageTranslator(stringToTransform(MagellanMD.getAffineTransformString(summaryMetadata)),
               MagellanMD.getWidth(summaryMetadata), MagellanMD.getHeight(summaryMetadata),
               MagellanMD.getPixelOverlapX(summaryMetadata), MagellanMD.getPixelOverlapY(summaryMetadata),
               MagellanMD.getInitialPositionList(summaryMetadata));
 
-            
-      imageStorage_ = new MultiResMultipageTiffStorage(dir_, summaryMetadata);
+      imageStorage_ = new MultiResMultipageTiffStorage(dir_, MagellanMD.getSavingPrefix(summaryMetadata),
+              summaryMetadata, ((MagellanAcquisition) acq).getOverlapX(),
+              ((MagellanAcquisition) acq).getOverlapY(),
+              //TODO: in the futre may want to make multiple datasets if one
+              //of these parameters changes, or better yet implement
+              //in the thin the storage class to output different imaged
+              //parameters to different files within the dataset
+              MagellanMD.getWidth(summaryMetadata),
+              MagellanMD.getHeight(summaryMetadata),
+              MagellanMD.getBytesPerPixel(summaryMetadata));
+
       if (showDisplay_) {
          //create display
          try {
-            display_ = new MagellanDisplayController(this, (AcquisitionPlugin) acq_);
+            display_ = new MagellanViewer(this, (AcquisitionPlugin) acq_, summaryMetadata);
             display_.setWindowTitle(getUniqueAcqName() + (acq != null ? (acq.isComplete() ? " (Finished)" : " (Running)") : " (Loaded)"));
 
          } catch (Exception e) {
@@ -166,7 +178,7 @@ public class MagellanImageCache implements DataSink, DataSource {
    /**
     * Call when display and acquisition both done
     */
-   public void close() {
+   public void viewerClosing() {
       if (imageStorage_.isFinished()) {
          //Get most up to date display settings
          JSONObject displaySettings = display_.getDisplaySettingsJSON();
@@ -188,30 +200,38 @@ public class MagellanImageCache implements DataSink, DataSource {
          SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-               MagellanImageCache.this.close();
+               MagellanImageCache.this.viewerClosing();
             }
          });
       }
    }
 
    public void putImage(final TaggedImage taggedImg) {
-      imageStorage_.putImage(taggedImg);
+      String channelName = MagellanMD.getChannelName(taggedImg.tags);
+      boolean newChannel = !channelNames_.contains(channelName);
+      if (newChannel) {
+         channelNames_.add(channelName);
+      }
+
+      imageStorage_.putImage(taggedImg, MagellanMD.getAxes(taggedImg.tags),
+              MagellanMD.getChannelName(taggedImg.tags),
+              (int) MagellanMD.getGridRow(taggedImg.tags),
+              (int) MagellanMD.getGridCol(taggedImg.tags));
 
       //put on different thread to not slow down acquisition
       displayCommunicationExecutor_.submit(new Runnable() {
          @Override
          public void run() {
-            //Insert a preferred color. Make a copy just in case concurrency issues
-            JSONObject tags = taggedImg.tags;
-            try {
-               tags = new JSONObject(taggedImg.tags.toString());
-               String chName = MagellanMD.getChannelName(tags);
+            if (newChannel) {
+               //Insert a preferred color. Make a copy just in case concurrency issues
+               String chName = MagellanMD.getChannelName(taggedImg.tags);
                Color c = ((MagellanChannelGroupSettings) acq_.getChannels()).getPreferredChannelColor(chName);
-               MagellanMD.setChannelDisplayColor(tags, c);
-            } catch (JSONException e) {
-               Log.log(e);
+               display_.setChannelColor(chName, c);
             }
-            display_.newImageArrived(tags);
+            HashMap<String, Integer> axes = MagellanMD.getAxes(taggedImg.tags);
+            String channelName = MagellanMD.getChannelName(taggedImg.tags);
+            int bitDepth = MagellanMD.getBitDepth(taggedImg.tags);
+            display_.newImageArrived(axes, channelName, bitDepth);
          }
       });
 
@@ -230,11 +250,11 @@ public class MagellanImageCache implements DataSink, DataSource {
    }
 
    public int getTileHeight() {
-      return stageTranslator_.getTileHeight();
+      return stageCoordinateTranslator_.getTileHeight();
    }
 
    public int getTileWidth() {
-      return stageTranslator_.getTileWidth();
+      return stageCoordinateTranslator_.getTileWidth();
    }
 
    public boolean isRGB() {
@@ -253,7 +273,7 @@ public class MagellanImageCache implements DataSink, DataSource {
       return loadedData_ || !isExploreAcquisition();
    }
 
-   public long[] getImageBounds() {
+   public int[] getImageBounds() {
       if (isExploreAcquisition()) {
          return null;
       }
@@ -261,18 +281,14 @@ public class MagellanImageCache implements DataSink, DataSource {
    }
 
    @Override
-   public TaggedImage getImageForDisplay(Integer channel, DataViewCoords dataCoords) {
-      int imagePixelWidth = (int) (dataCoords.getSourceDataSize().x / dataCoords.getDownsampleFactor());
-      int imagePixelHeight = (int) (dataCoords.getSourceDataSize().y / dataCoords.getDownsampleFactor());
-      long viewOffsetAtResX = (long) (dataCoords.getViewOffset().x / dataCoords.getDownsampleFactor());
-      long viewOffsetAtResY = (long) (dataCoords.getViewOffset().y / dataCoords.getDownsampleFactor());
+   public TaggedImage getImageForDisplay(String channelName, HashMap<String, Integer> axes, int resolutionindex,
+           double xOffset, double yOffset, int imageWidth, int imageHeight) {
 
-      return imageStorage_.getImageForDisplay(channel,
-              dataCoords.getAxisPosition("z"),
-              dataCoords.getAxisPosition("t"),
-              dataCoords.getResolutionIndex(),
-              viewOffsetAtResX, viewOffsetAtResY,
-              imagePixelWidth, imagePixelHeight);
+      return imageStorage_.getImageForDisplay(
+              channelNames_.indexOf(channelName), axes.get("z"), axes.get("t"),
+              resolutionindex,
+              (int) xOffset, (int) yOffset,
+              imageWidth, imageHeight);
    }
 
    public boolean anythingAcquired() {
@@ -287,7 +303,7 @@ public class MagellanImageCache implements DataSink, DataSource {
    }
 
    public int getFullResPositionIndexFromStageCoords(double xPos, double yPos) {
-      return stageTranslator_.getFullResPositionIndexFromStageCoords(xPos, yPos);
+      return stageCoordinateTranslator_.getFullResPositionIndexFromStageCoords(xPos, yPos);
    }
 
    /**
@@ -297,7 +313,7 @@ public class MagellanImageCache implements DataSink, DataSource {
     * @return stage coordinates of the given pixel position
     */
    public Point2D.Double stageCoordinateFromPixelCoordinate(long absoluteX, long absoluteY) {
-      return stageTranslator_.getStageCoordsFromPixelCoords(absoluteX, absoluteY);
+      return stageCoordinateTranslator_.getStageCoordsFromPixelCoords(absoluteX, absoluteY);
    }
 
    /* 
@@ -305,28 +321,23 @@ public class MagellanImageCache implements DataSink, DataSource {
     * @return absolute, full resolution pixel coordinate of given stage posiiton
     */
    public Point pixelCoordsFromStageCoords(double x, double y) {
-      return stageTranslator_.getPixelCoordsFromStageCoords(x, y);
+      return stageCoordinateTranslator_.getPixelCoordsFromStageCoords(x, y);
    }
 
    public XYStagePosition getXYPosition(int posIndex) {
-      return stageTranslator_.getXYPosition(posIndex);
+      return stageCoordinateTranslator_.getXYPosition(posIndex);
    }
 
    public int[] getPositionIndices(int[] newPositionRows, int[] newPositionCols) {
-      return stageTranslator_.getPositionIndices(newPositionRows, newPositionCols);
+      return stageCoordinateTranslator_.getPositionIndices(newPositionRows, newPositionCols);
    }
 
    public List<XYStagePosition> getPositionList() {
-      return stageTranslator_.getPositionList();
+      return stageCoordinateTranslator_.getPositionList();
    }
 
    public int getMaxResolutionIndex() {
       return imageStorage_.getNumResLevels() - 1;
-   }
-
-   public Point2D.Double getFullResolutionSize() {
-      long[] bounds = getImageBounds();
-      return new Point2D.Double(bounds[2] - bounds[0], bounds[3] - bounds[1]);
    }
 
    public int getNumChannels() {

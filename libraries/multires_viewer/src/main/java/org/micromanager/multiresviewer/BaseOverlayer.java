@@ -16,6 +16,7 @@
 //
 package org.micromanager.multiresviewer;
 
+import org.micromanager.ndviewer.internal.gui.DataViewCoords;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -29,9 +30,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import javax.swing.JPanel;
-import org.micromanager.multiresviewer.overlay.Overlay;
-import org.micromanager.multiresviewer.overlay.Roi;
-import org.micromanager.multiresviewer.overlay.TextRoi;
+import org.micromanager.ndviewer.overlay.Overlay;
+import org.micromanager.ndviewer.overlay.Roi;
+import org.micromanager.ndviewer.overlay.TextRoi;
 
 /**
  * Class that encapsulates calculation of overlays for DisplayPlus
@@ -42,10 +43,10 @@ public class BaseOverlayer {
 
    private ExecutorService taskExecutor_;
    private Future currentTask_;
-   private MagellanDisplayController display_;
+   private NDViewer display_;
    private volatile boolean showScalebar_ = false;
 
-   public BaseOverlayer(MagellanDisplayController display) {
+   public BaseOverlayer(NDViewer display) {
       display_ = display;
       taskExecutor_ = Executors.newSingleThreadExecutor(new ThreadFactory() {
 
@@ -96,7 +97,7 @@ public class BaseOverlayer {
       double barSize = pixelSize * scaleBarWidth;
       String text = ((int) Math.round(barSize)) + " \u00B5" + "m";
 
-      JPanel canvas = display_.getCanvas().getCanvas();
+      JPanel canvas = display_.getCanvasJPanel();
       textHeight = Math.max(textHeight, canvas.getGraphics().getFontMetrics(font
       ).getLineMetrics(text, canvas.getGraphics()).getHeight());
       textWidth = Math.max(textWidth, canvas.getGraphics().getFontMetrics().stringWidth(text));
@@ -117,7 +118,7 @@ public class BaseOverlayer {
       Font font = new Font("Arial", Font.BOLD, fontSize);
       float lineHeight = 0;
       float textWidth = 0;
-      JPanel canvas = display_.getCanvas().getCanvas();
+      JPanel canvas = display_.getCanvasJPanel();
       for (String line : text) {
          lineHeight = Math.max(lineHeight, canvas.getGraphics().getFontMetrics(font).getLineMetrics(line, canvas.getGraphics()).getHeight());
          textWidth = Math.max(textWidth, canvas.getGraphics().getFontMetrics().stringWidth(line));

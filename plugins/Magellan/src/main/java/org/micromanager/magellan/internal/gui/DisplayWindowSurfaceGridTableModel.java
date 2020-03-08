@@ -15,7 +15,7 @@ import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridListener
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridManager;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceInterpolator;
 import org.micromanager.magellan.internal.surfacesandregions.XYFootprint;
-import org.micromanager.multiresviewer.MagellanDisplayController;
+import org.micromanager.multiresviewer.NDViewer;
 
 /**
  *
@@ -28,11 +28,10 @@ import org.micromanager.multiresviewer.MagellanDisplayController;
    private volatile HashMap<XYFootprint, Boolean> showSurfaceOrGridMap = new HashMap<XYFootprint, Boolean>();
 
    private SurfaceGridManager manager_ = SurfaceGridManager.getInstance();
-   private MagellanDisplayController display_;
+   private NDViewer display_;
    
-   public DisplayWindowSurfaceGridTableModel(MagellanDisplayController disp) {
+   public DisplayWindowSurfaceGridTableModel(NDViewer disp) {
       display_ = disp;
-      display_.registerForEvents(this);
       manager_.registerSurfaceGridListener(this);
       for (int i = 0; i < manager_.getNumberOfGrids() + manager_.getNumberOfSurfaces(); i++) {
          showSurfaceOrGridMap.put(manager_.getSurfaceOrGrid(i), Boolean.TRUE);

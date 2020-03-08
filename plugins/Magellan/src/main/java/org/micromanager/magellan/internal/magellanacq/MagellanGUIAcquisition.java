@@ -395,4 +395,15 @@ public class MagellanGUIAcquisition extends FixedSettingsAcquisition implements 
       return pList;
    }
 
+   @Override
+   public int getOverlapX() {
+      return overlapX_;
+   }
+
+   @Override
+   public int getOverlapY() {
+      return overlapY_;
+   }
+
+
 }

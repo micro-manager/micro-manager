@@ -246,7 +246,7 @@ public class DisplaySettings {
       }
    }
 
-   boolean isSyncChannels() {
+   public boolean isSyncChannels() {
       synchronized (this) {
          try {
             return json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).optBoolean(SYNC_CHANNELS, false);
@@ -257,7 +257,7 @@ public class DisplaySettings {
       }
    }
 
-   boolean isLogHistogram() {
+   public boolean isLogHistogram() {
       synchronized (this) {
          try {
             return json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).optBoolean(LOG_HIST, true);
@@ -268,7 +268,7 @@ public class DisplaySettings {
       }
    }
 
-   boolean isCompositeMode() {
+   public boolean isCompositeMode() {
       synchronized (this) {
          try {
             return json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).optBoolean(COMPOSITE, true);
@@ -279,7 +279,7 @@ public class DisplaySettings {
       }
    }
 
-   double percentToIgnore() {
+   public double percentToIgnore() {
       synchronized (this) {
          try {
             return json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).optDouble(IGNORE_PERCENTAGE, 0.1);
@@ -290,7 +290,7 @@ public class DisplaySettings {
       }
    }
 
-   boolean ignoreFractionOn() {
+   public boolean ignoreFractionOn() {
       synchronized (this) {
          try {
             return json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).optBoolean(IGNORE_OUTLIERS, false);
@@ -301,7 +301,7 @@ public class DisplaySettings {
       }
    }
 
-   boolean getAutoscale() {
+   public boolean getAutoscale() {
       synchronized (this) {
          try {
             return json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).optBoolean(AUTOSCALE, true);
@@ -312,7 +312,7 @@ public class DisplaySettings {
       }
    }
 
-   void setChannelContrastFromFirst() {
+   public void setChannelContrastFromFirst() {
       try {
          String firstChannel = json_.keys().next();
          JSONObject first = json_.getJSONObject(firstChannel);
@@ -336,7 +336,7 @@ public class DisplaySettings {
       }
    }
 
-   void setIgnoreOutliersPercentage(double percent) {
+   public void setIgnoreOutliersPercentage(double percent) {
       synchronized (this) {
          try {
             json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).put(IGNORE_PERCENTAGE, percent);
@@ -346,7 +346,7 @@ public class DisplaySettings {
       }
    }
 
-   void setIgnoreOutliers(boolean b) {
+   public void setIgnoreOutliers(boolean b) {
       synchronized (this) {
          try {
             json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).put(IGNORE_OUTLIERS, b);
@@ -356,7 +356,7 @@ public class DisplaySettings {
       }
    }
 
-   void setLogHist(boolean b) {
+   public void setLogHist(boolean b) {
       synchronized (this) {
          try {
             json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).put(LOG_HIST, b);
@@ -366,7 +366,7 @@ public class DisplaySettings {
       }
    }
 
-   void setAutoscale(boolean b) {
+   public void setAutoscale(boolean b) {
       synchronized (this) {
          try {
             json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).put(AUTOSCALE, b);
@@ -376,7 +376,7 @@ public class DisplaySettings {
       }
    }
 
-   void setSyncChannels(boolean b) {
+   public void setSyncChannels(boolean b) {
       synchronized (this) {
          try {
             json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).put(SYNC_CHANNELS, b);
@@ -386,7 +386,7 @@ public class DisplaySettings {
       }
    }
 
-   void setCompositeMode(boolean b) {
+   public void setCompositeMode(boolean b) {
       synchronized (this) {
          try {
             json_.getJSONObject(ALL_CHANNELS_SETTINGS_KEY).put(COMPOSITE, b);
