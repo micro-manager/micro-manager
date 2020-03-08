@@ -44,6 +44,7 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.utils.FileDialogs;
+import org.micromanager.internal.utils.ProgressBar;
 
 /**
  *
@@ -54,6 +55,9 @@ public class ZProjectorPluginExecutor {
    private final Studio studio_;
    private final DisplayWindow window_;
    private final DataProvider oldStore_;
+   private int nrProjections_;
+   private int projectionNr_;
+   private ProgressBar progressBar_;
 
    public ZProjectorPluginExecutor(Studio studio, DisplayWindow window) {
       studio_ = studio;
@@ -73,11 +77,8 @@ public class ZProjectorPluginExecutor {
     */
    public final void project(final boolean save, final String newName, final String projectionAxis, 
            final int firstFrame, final int lastFrame, final int projectionMethod) {
-      
-       
+     
 
-      
-      
 
       class ZProjectTask extends SwingWorker<Void, Void> {
 
@@ -121,7 +122,10 @@ public class ZProjectorPluginExecutor {
             // physically impossible)
             cb.time(1).channel(1).stagePosition(1).z(1);
             try {
-               newStore.setSummaryMetadata(metadata);
+               newStore.setSummaryMetadata(metadata);               
+               List<String> axes = oldStore_.getAxes();
+               axes.remove(projectionAxis);
+               axes.sort( new CoordsComparator());
                if (!save) {
                   DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
                   copyDisplay.setCustomTitle(newName);
@@ -129,11 +133,15 @@ public class ZProjectorPluginExecutor {
                           window_.getDisplaySettings().copyBuilder().build());
                   studio_.displays().manage(newStore);
                } else {
-                  // TODO: UI feedback on progress
+                  nrProjections_ = 1;
+                  for (String axis : axes) {
+                     nrProjections_ *= oldStore_.getAxisLength(axis);
+                  }
+                  progressBar_ = new ProgressBar (window_.getWindow(), 
+                                       "Projection Progress", 1, nrProjections_);
+                  progressBar_.setVisible(true);
                }
 
-               List<String> axes = oldStore_.getAxes();
-               axes.remove(projectionAxis);
                findAllProjections(newStore, axes, cb, projectionAxis,
                        firstFrame, lastFrame, projectionMethod);
                
@@ -141,6 +149,10 @@ public class ZProjectorPluginExecutor {
                studio_.logs().showError("Can not add data to frozen datastore");
             } catch (DatastoreRewriteException ex) {
                studio_.logs().showError("Can not overwrite data");
+            } finally {
+               if (progressBar_ != null) {
+                  progressBar_.setVisible(false);
+               }
             }
 
             newStore.freeze();
@@ -191,6 +203,10 @@ public class ZProjectorPluginExecutor {
          cbp.index(currentAxis, i);
          if (rcAxes.isEmpty()) {
             executeProjection(newStore, cbp, projectionAxis, min, max, projectionMethod);
+            projectionNr_++;
+            if (progressBar_ != null) {
+               progressBar_.setProgress(projectionNr_); 
+            }
          } else {
             findAllProjections(newStore, rcAxes, cbp, projectionAxis,
                     min, max, projectionMethod);
