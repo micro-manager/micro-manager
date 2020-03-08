@@ -3,23 +3,16 @@ package org.micromanager.magellan.api;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
-import org.micromanager.magellan.acq.MagellanAcquisitionsManager;
-import org.micromanager.magellan.gui.GUI;
-import org.micromanager.magellan.surfacesandregions.MultiPosGrid;
-import org.micromanager.magellan.surfacesandregions.SurfaceGridManager;
+import org.micromanager.magellan.internal.acq.MagellanAcquisitionsManager;
+import org.micromanager.magellan.internal.gui.GUI;
+import org.micromanager.magellan.internal.surfacesandregions.MultiPosGrid;
+import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridManager;
 
 /**
  *
  * @author henrypinkard
  */
 public class MagellanAPI {
-
-   private static MagellanAPI singleton_;
-   private static GUI gui_;
-
-   public MagellanAPI() {
-      singleton_ = this;
-   }
 
    public MagellanAcquisitionAPI createAcquisition() {
       return MagellanAcquisitionsManager.getInstance().addNew();
