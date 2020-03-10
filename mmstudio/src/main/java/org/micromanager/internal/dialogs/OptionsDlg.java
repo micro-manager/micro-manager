@@ -46,6 +46,7 @@ import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.UIMonitor;
+import org.micromanager.internal.zmq.ZMQServer;
 
 /**
  * Options dialog for MMStudio.
@@ -252,12 +253,25 @@ public final class OptionsDlg extends MMDialog {
       hideMDAdisplay.addActionListener((ActionEvent arg0) -> {
          AcqControlDlg.setShouldHideMDADisplay(hideMDAdisplay.isSelected());
       });
+      
+      final JCheckBox runServer = new JCheckBox();
+      runServer.setText("Run server on port " + ZMQServer.DEFAULT_PORT_NUMBER);
+      runServer.setSelected(mmStudio.getShouldRunZMQServer());
+      runServer.addActionListener((ActionEvent arg0) ->  {
+         if (runServer.isSelected()) {
+            mmStudio_.runZMQServer();
+         } else {
+            mmStudio_.stopZMQServer();
+         }
+         mmStudio_.setShouldRunZMQServer(runServer.isSelected());         
+      });
 
       final JButton closeButton = new JButton();
       closeButton.setText("Close");
       closeButton.addActionListener((final ActionEvent ev) -> {
          closeRequested();
       });
+  
 
 
       super.setLayout(new net.miginfocom.swing.MigLayout(
@@ -308,6 +322,7 @@ public final class OptionsDlg extends MMDialog {
 
       super.add(syncExposureMainAndMDA, "wrap");
       super.add(hideMDAdisplay, "wrap");
+      super.add(runServer, "wrap");
 
       super.add(new JSeparator(), "wrap");
 
