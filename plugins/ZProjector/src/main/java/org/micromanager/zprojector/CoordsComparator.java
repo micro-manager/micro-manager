@@ -14,12 +14,12 @@ public class CoordsComparator implements Comparator<String> {
 
    
    public CoordsComparator() {
-      cAxesNumeric.put(Coords.C, 1);
-      cAxesNumeric.put(Coords.CHANNEL, 1);
+      cAxesNumeric.put(Coords.T, 1);
+      cAxesNumeric.put(Coords.TIME_POINT, 1);
+      cAxesNumeric.put(Coords.C,3);
+      cAxesNumeric.put(Coords.CHANNEL, 3);
       cAxesNumeric.put(Coords.Z, 2);
       cAxesNumeric.put(Coords.Z_SLICE, 2);
-      cAxesNumeric.put(Coords.T, 3);
-      cAxesNumeric.put(Coords.TIME_POINT, 3);
       cAxesNumeric.put(Coords.P, 4);
       cAxesNumeric.put(Coords.STAGE_POSITION, 4);
    }
