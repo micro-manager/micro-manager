@@ -239,7 +239,7 @@ int CAN29Axis::GetPositionCmd(CAN29Long& position)
 */
 int CAN29Axis::SetPosition(CAN29Long position, CAN29Byte movemode)
 {	
-	unsigned char dta[2+CAN29LongSize] = {devID_, movemode};   
+	unsigned char dta[2+CAN29LongSize] = {devID_, (unsigned char)movemode};   
 	long tmp = htonl(position);
 	memcpy(dta+2, &tmp, CAN29LongSize); 
 
@@ -256,7 +256,7 @@ int CAN29Axis::SetPosition(CAN29Long position, CAN29Byte movemode)
 */
 int CAN29Axis::SetRelativePosition(CAN29Long position, CAN29Byte movemode)
 {	
-	unsigned char dta[2+CAN29LongSize] = {devID_, movemode};   
+	unsigned char dta[2+CAN29LongSize] = {devID_, (unsigned char)movemode};   
 	long tmp = htonl(position);
 	memcpy(dta+2, &tmp, CAN29LongSize); 
 
@@ -274,7 +274,7 @@ int CAN29Axis::SetRelativePosition(CAN29Long position, CAN29Byte movemode)
 */
 int CAN29Axis::Stop()
 {	
-	unsigned char dta[] = {devID_, moveMode_};   
+	unsigned char dta[] = {devID_, (unsigned char)moveMode_};   
 
 	return can29_->Send(Message(canAddress_, CAN_PC,  0x1B, CMDNR_AXIS, PROCID, 0x05, dta, sizeof(dta)));  
 }
@@ -409,7 +409,7 @@ int CAN29Axis::SetTrajectoryVelocity(CAN29Long velocity)
 }
 
 /*
-* Sets acceleration for position moves in nm/s² 
+* Sets acceleration for position moves in nm/sï¿½ 
 */
 int CAN29Axis::SetTrajectoryAcceleration(CAN29Long acceleration)
 {
@@ -437,7 +437,7 @@ int CAN29Axis::GetTrajectoryVelocity(CAN29Long& velocity)
 }
 
 /*
-* Gets acceleration for position moves in nm/s² 
+* Gets acceleration for position moves in nm/sï¿½ 
 */
 int CAN29Axis::GetTrajectoryAcceleration(CAN29Long& acceleration)
 {

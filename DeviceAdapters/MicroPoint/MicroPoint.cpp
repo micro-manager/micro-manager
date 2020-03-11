@@ -185,7 +185,7 @@ double MicroPoint::AttenuatorTransmissionFromIndex(long n)
 
 int MicroPoint::StepAttenuatorPosition(bool positive)
 {
-   unsigned char buf[] = {'C', (positive ? 0xc0 : 0x80), 'C', 0x00};
+   unsigned char buf[] = {'C', (unsigned char)(positive ? 0xc0 : 0x80), 'C', 0x00};
    return WriteBytes(buf, 4);
 }
 
