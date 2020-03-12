@@ -27,9 +27,11 @@
 
 #include "DeviceBase.h"
 
-
+#ifdef __linux__
 #include <opencv/cv.hpp>
-
+#else
+#include "opencv/highgui.h"
+#endif
 
 #define ERR_INVALID_DEVICE_NAME 10000
 #define OUT_OF_RANGE 10001
