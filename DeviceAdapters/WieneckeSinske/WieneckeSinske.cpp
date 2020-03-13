@@ -409,7 +409,7 @@ int CAN29Axis::SetTrajectoryVelocity(CAN29Long velocity)
 }
 
 /*
-* Sets acceleration for position moves in nm/s� 
+* Sets acceleration for position moves in nm/s² 
 */
 int CAN29Axis::SetTrajectoryAcceleration(CAN29Long acceleration)
 {
@@ -437,7 +437,7 @@ int CAN29Axis::GetTrajectoryVelocity(CAN29Long& velocity)
 }
 
 /*
-* Gets acceleration for position moves in nm/s� 
+* Gets acceleration for position moves in nm/s² 
 */
 int CAN29Axis::GetTrajectoryAcceleration(CAN29Long& acceleration)
 {
