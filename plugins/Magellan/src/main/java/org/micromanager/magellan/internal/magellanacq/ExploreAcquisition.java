@@ -20,6 +20,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import org.micromanager.magellan.internal.magellanacq.ExploreAcqSettings;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -60,7 +61,7 @@ public class ExploreAcquisition extends DynamicSettingsAcquisition implements Ma
    private int overlapX_, overlapY_;
 
    public ExploreAcquisition(ExploreAcqSettings settings) {
-      super(settings, new MagellanImageCache(settings.dir_, true));
+      super(settings, new MagellanDataManager(settings.dir_, true));
       channels_ = settings.channels_;
       zStep_ = settings.zStep_;
 
@@ -93,7 +94,7 @@ public class ExploreAcquisition extends DynamicSettingsAcquisition implements Ma
 
    @Override
    protected void addToImageMetadata(JSONObject tags) {
-
+      
    }
 
    private void createXYPositions() {
@@ -101,11 +102,10 @@ public class ExploreAcquisition extends DynamicSettingsAcquisition implements Ma
          positions_ = new ArrayList<XYStagePosition>();
          int fullTileWidth = (int) Magellan.getCore().getImageWidth();
          int fullTileHeight = (int) Magellan.getCore().getImageHeight();
-         int tileWidthMinusOverlap = fullTileWidth - overlapX_;
-         int tileHeightMinusOverlap = fullTileHeight - overlapY_;
-         positions_.add(new XYStagePosition(new Point2D.Double(Magellan.getCore().getXPosition(), Magellan.getCore().getYPosition()),
-                 tileWidthMinusOverlap, tileHeightMinusOverlap,
-                 fullTileWidth, fullTileHeight, 0, 0, affineTransformUtils.getAffineTransform(
+         positions_.add(new XYStagePosition(new Point2D.Double(Magellan.getCore().getXPosition(),
+                 Magellan.getCore().getYPosition()),
+                 fullTileWidth, fullTileHeight,
+                 overlapX_, overlapY_, 0, 0, affineTransformUtils.getAffineTransform(
                          Magellan.getCore().getXPosition(), Magellan.getCore().getXPosition())));
 
       } catch (Exception e) {
@@ -146,11 +146,11 @@ public class ExploreAcquisition extends DynamicSettingsAcquisition implements Ma
       }
 
       int sliceIndex = (int) Math.round((zPos - zOrigin_) / zStep_);
-      int posIndex = ((MagellanImageCache) dataSink_).getFullResPositionIndexFromStageCoords(xPos, yPos);
+      int posIndex = ((MagellanDataManager) dataSink_).getFullResPositionIndexFromStageCoords(xPos, yPos);
 //      controls.setZLimitSliderValues(sliceIndex);
 
-      submitEvents(new int[]{(int) ((MagellanImageCache) dataSink_).getXYPosition(posIndex).getGridRow()},
-              new int[]{(int) ((MagellanImageCache) dataSink_).getXYPosition(posIndex).getGridCol()}, sliceIndex, sliceIndex);
+      submitEvents(new int[]{(int) ((MagellanDataManager) dataSink_).getXYPosition(posIndex).getGridRow()},
+              new int[]{(int) ((MagellanDataManager) dataSink_).getXYPosition(posIndex).getGridCol()}, sliceIndex, sliceIndex);
    }
 
    public void acquireTiles(final int r1, final int c1, final int r2, final int c2) {
@@ -186,15 +186,15 @@ public class ExploreAcquisition extends DynamicSettingsAcquisition implements Ma
    }
 
    private void submitEvents(int[] newPositionRows, int[] newPositionCols, int minZIndex, int maxZIndex) {
-      int[] posIndices = ((MagellanImageCache) dataSink_).getPositionIndices(newPositionRows, newPositionCols);
-      List<XYStagePosition> all = ((MagellanImageCache) dataSink_).getPositionList();
-      List<XYStagePosition> selected = new ArrayList<XYStagePosition>();
+      int[] posIndices = ((MagellanDataManager) dataSink_).getPositionIndices(newPositionRows, newPositionCols);
+      List<XYStagePosition> allPositions = ((MagellanDataManager) dataSink_).getPositionList();
+      List<XYStagePosition> selectedXYPositions = new ArrayList<XYStagePosition>();
       for (int i : posIndices) {
-         selected.add(all.get(i));
+         selectedXYPositions.add(allPositions.get(i));
       }
       ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>> acqFunctions
               = new ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>>();
-      acqFunctions.add(positions(selected));
+      acqFunctions.add(positions(selectedXYPositions, posIndices));
       acqFunctions.add(AcqEventModules.zStack(minZIndex, maxZIndex + 1, zStep_, zOrigin_));
       if (channels_ != null) {
          acqFunctions.add(AcqEventModules.channels(channels_));
@@ -235,7 +235,7 @@ public class ExploreAcquisition extends DynamicSettingsAcquisition implements Ma
    }
 
    private Function<AcquisitionEvent, Iterator<AcquisitionEvent>> positions(
-           List<XYStagePosition> positions) {
+           List<XYStagePosition> positions, int[] posIndices) {
       return (AcquisitionEvent event) -> {
          Stream.Builder<AcquisitionEvent> builder = Stream.builder();
          if (positions == null) {
@@ -244,6 +244,7 @@ public class ExploreAcquisition extends DynamicSettingsAcquisition implements Ma
             for (int index = 0; index < positions.size(); index++) {
                AcquisitionEvent posEvent = event.copy();
                posEvent.setXY(positions.get(index));
+               posEvent.setAxisPosition(MagellanMD.POSITION_AXIS, posIndices[index]);
                builder.accept(posEvent);
             }
          }
@@ -319,7 +320,7 @@ public class ExploreAcquisition extends DynamicSettingsAcquisition implements Ma
    }
 
    @Override
-   public double getZCoordinateOfDisplaySlice(int displaySliceIndex) {
+   public double getZCoordOfNonnegativeZIndex(int displaySliceIndex) {
       displaySliceIndex += minSliceIndex_;
       return zOrigin_ + zStep_ * displaySliceIndex;
    }
@@ -337,6 +338,11 @@ public class ExploreAcquisition extends DynamicSettingsAcquisition implements Ma
    @Override
    public int getOverlapY() {
       return overlapY_;
+   }
+
+   @Override
+   public double getZStep() {
+      return ((ExploreAcqSettings)settings_).zStep_;
    }
    
    //slice and row/col index of an acquisition event in the queue

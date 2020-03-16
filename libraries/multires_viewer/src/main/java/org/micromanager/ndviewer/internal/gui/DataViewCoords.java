@@ -5,10 +5,10 @@
  */
 package org.micromanager.ndviewer.internal.gui;
 
-import org.micromanager.ndviewer.api.DataSource;
 import java.awt.geom.Point2D;
 import java.util.HashMap;
 import java.util.HashSet;
+import org.micromanager.ndviewer.api.DataSourceInterface;
 
 /**
  *
@@ -24,13 +24,13 @@ public class DataViewCoords {
    private HashMap<String, Integer> axes_ = new HashMap<String, Integer>();
    final private HashSet<String> channelNames_ = new HashSet<String>();
    private int resolutionIndex_;
-   private DataSource cache_;
+   private DataSourceInterface cache_;
    private String currentChannel_;
 
    //Parameters that track what part of the dataset is being viewed
    public final int xMax_, yMax_, xMin_, yMin_;
 
-   public DataViewCoords(DataSource cache, String currentChannel, double xView, double yView,
+   public DataViewCoords(DataSourceInterface cache, String currentChannel, double xView, double yView,
            double initialWidth, double initialHeight, int[] imageBounds) {
       currentChannel_ = currentChannel;
       cache_ = cache;
@@ -55,21 +55,34 @@ public class DataViewCoords {
     * 
     * @return 
     */
-   public Point2D.Double getDisplayImageSizeAtResLevel() {
+   public Point2D.Double getSourceImageSizeAtResLevel() {
       return new Point2D.Double(sourceDataFullResWidth_ / getDownsampleFactor(), sourceDataFullResHeight_ / getDownsampleFactor());
    }
+   
+   public void setFullResSourceDataSize(double newWidth, double newHeight) {
+      sourceDataFullResWidth_ = newWidth;
+      sourceDataFullResHeight_ = newHeight;
+      computeResIndex();
+   }
+   
+    public Point2D.Double getFullResSourceDataSize() {
+      return new Point2D.Double(sourceDataFullResWidth_, sourceDataFullResHeight_);
+   }
 
+   public Point2D.Double getDisplayImageSize() {
+      return new Point2D.Double(displayImageWidth_, displayImageHeight_);
+   }
    
    /**
     * Computes the scaling between display pixels and whatever pixels they were
     * derived from
     */
-   public double getDisplayScaleFactor() {
+   public double getMagnificationFromResLevel() {
       //need this floor because it happens along the way to image creation
       return displayImageWidth_ / Math.floor(sourceDataFullResWidth_ / getDownsampleFactor());
    }
    
-   public double getDisplayToFullScaleFactor() {
+   public double getMagnification() {
      return displayImageWidth_ / (double) sourceDataFullResWidth_;
    }
 
@@ -94,16 +107,6 @@ public class DataViewCoords {
       return Math.pow(2, getResolutionIndex());
    }
 
-   public Point2D.Double getSourceDataSize() {
-      return new Point2D.Double(sourceDataFullResWidth_, sourceDataFullResHeight_);
-   }
-
-   public void setSourceDataSize(double newWidth, double newHeight) {
-      sourceDataFullResWidth_ = newWidth;
-      sourceDataFullResHeight_ = newHeight;
-      computeResIndex();
-   }
-
    public Point2D.Double getViewOffset() {
       return new Point2D.Double(xView_, yView_);
    }
@@ -119,15 +122,14 @@ public class DataViewCoords {
       computeResIndex();
    }
 
-   public Point2D.Double getDisplayImageSize() {
-      return new Point2D.Double(displayImageWidth_, displayImageHeight_);
-   }
-   
    public void setAxisPosition(String axis, Integer position) {
       axes_.put(axis, position);
    }
    
    public int getAxisPosition(String axis) {
+      if (!axes_.containsKey(axis)) {
+         return 0;
+      }
       return axes_.get(axis);
    }
 

@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.JPanel;
-import org.micromanager.multiresviewer.NDViewer;
+import org.micromanager.ndviewer.main.NDViewer;
 
 /**
  * This class is responsible for containing and managing groups of
@@ -126,7 +126,17 @@ class ScrollerPanel extends JPanel {
     * timer.
     */
    public void onAnimationToggle(AxisScroller scoller, boolean isAnimated) {
-      resetAnimationTimer();
+//      resetAnimationTimer();
+
+      //turn off the other ones
+      if (isAnimated) {
+         for (AxisScroller sc : scrollers_) {
+            if (scoller != sc) {
+               sc.setIsAnimated(false);
+            }
+         }
+      }
+      display_.onAnimationToggle(scoller, isAnimated);
    }
 
    public void superlockAllScrollers() {
@@ -138,60 +148,6 @@ class ScrollerPanel extends JPanel {
    public void unlockAllScrollers() {
       for (AxisScroller s : scrollers_) {
          s.unlock();
-      }
-   }
-
-   /**
-    * Generate a new AnimationTimer that updates each active (i.e. animated)
-    * scroller according to our update rate (FPS).
-    */
-   private void resetAnimationTimer() {
-      if (animationUpdateTimer_ != null) {
-         // Stop the previous timer.
-         animationUpdateTimer_.cancel();
-      }
-      if (!canMakeTimers_) {
-         // Not allowed to make new timers because we'll be closing soon.
-         return;
-      }
-      // Enforce a maximum displayed framerate of 30FPS; for higher rates, we
-      // instead skip over images in animation.
-      int stepSize = 1;
-      long interval = (long) (1000.0 / framesPerSec_);
-      if (interval < 33) {
-         interval = 33;
-         stepSize = (int) Math.round(framesPerSec_ * 33.0 / 1000.0);
-      }
-      boolean isAnimated = false;
-      // This is going to be how much we adjust each scroller's position each
-      // tick of the animation.
-      final int[] offsets = new int[scrollers_.size()];
-      for (int i = 0; i < offsets.length; ++i) {
-         if (scrollers_.get(i).getIsAnimated()) {
-            isAnimated = true;
-            offsets[i] = stepSize;
-         } else {
-            offsets[i] = 0;
-         }
-      }
-      if (isAnimated) {
-         animationUpdateTimer_ = new Timer();
-         TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-               for (int i = 0; i < scrollers_.size(); ++i) {
-                  if (offsets[i] != 0) {
-                     // Note that the scroller handles wrapping around to the 
-                     // beginning, and also whether or not to move at all due to
-                     // being locked. 
-                     //TODO: restore animation
-//                     scrollers_.get(i).advancePosition(offsets[i], false);
-                  }
-               }
-               checkForImagePositionChanged();
-            }
-         };
-         animationUpdateTimer_.schedule(task, 0, interval);
       }
    }
 
@@ -241,64 +197,6 @@ class ScrollerPanel extends JPanel {
          }
       }
 
-   }
-
-   //TODO facotr out code for animation timer
-//   public void onNewImageEvent(MagellanNewImageEvent event) {
-//      boolean didShowNewScrollers = false;
-//      boolean canShowNewImage = true;
-//      for (AxisScroller scroller : scrollers_) {
-//         if (scroller.getIsSuperlocked()) {
-//            canShowNewImage = false;
-//            break;
-//         }
-//      }
-//      for (AxisScroller scroller : scrollers_) {
-//         int imagePosition = event.getPositionForAxis(scroller.getAxis());
-//         if (scroller.getMaximum() <= imagePosition || scroller.getMinimum() > imagePosition) {
-//            if (scroller.getMaximum() - scroller.getMinimum() == 1) {
-//               // This scroller was previously hidden and needs to be shown now.
-//               scroller.setVisible(true);
-//               add(scroller, "wrap 0px, align center, growx");
-//               didShowNewScrollers = true;
-//            }
-//            // xpand display range
-//            scroller.setMaximum(Math.max(imagePosition + 1, scroller.getMaximum()));
-//            scroller.setMinimum(Math.min(imagePosition, scroller.getMinimum()));
-//         }
-//         if (canShowNewImage) {
-//            scroller.forcePosition(imagePosition);
-//         }
-//
-//      }
-//      if (didShowNewScrollers) {
-//         // Post an event informing our masters that our layout has changed.
-//         display_.postEvent(new ScrollersAddedEvent());
-//      }
-//      if (canShowNewImage && canMakeTimers_) {
-//         // Start up a timer to restore the scrollers to their original
-//         // positions, if applicable. 
-//         if (snapBackTimer_ != null) {
-//            snapBackTimer_.cancel();
-//         }
-//         snapBackTimer_ = new Timer();
-//         TimerTask task = new TimerTask() {
-//            @Override
-//            public void run() {
-//               for (AxisScroller scroller : scrollers_) {
-//                  scroller.restorePosition();
-//               }
-//            }
-//         };
-//         snapBackTimer_.schedule(task, 500);
-//      }
-//   }
-   /**
-    * Set a new animation rate.
-    */
-   public void setFramesPerSecond(double newFPS) {
-      framesPerSec_ = newFPS;
-      resetAnimationTimer();
    }
 
    /**

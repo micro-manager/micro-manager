@@ -83,7 +83,7 @@ public class Engine implements AcqEngineJ {
       });
       savingAndProcessingExecutor_ = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(),
               (Runnable r) -> new Thread(r, "AcqEngine image processing and saving thread"));
-      eventGeneratorExecutor_ = Executors.newSingleThreadExecutor((Runnable r) -> new Thread(r, "Magellan engine vent generator"));
+      eventGeneratorExecutor_ = Executors.newSingleThreadExecutor((Runnable r) -> new Thread(r, "Acq Eng event generator"));
       restartSavingAndProcessing();
    }
 
@@ -125,9 +125,11 @@ public class Engine implements AcqEngineJ {
                   }
                }
 
-            } catch (InterruptedException ex) {
-               //not sure this will ever happen
-               throw new RuntimeException("Saving thread interrupted");
+            } catch (Exception ex) {
+               System.err.println(ex);
+               ex.printStackTrace();
+            } finally {
+               restartSavingAndProcessing();
             }
          }
       });
@@ -168,8 +170,8 @@ public class Engine implements AcqEngineJ {
       processorOutputQueues_.clear();
    }
 
-   public Future finishAcquisition(AcquisitionBase acq) {
-      Future<Future> ff = eventGeneratorExecutor_.submit(() -> {
+   public Future<Future> finishAcquisition(AcquisitionBase acq) {
+      return eventGeneratorExecutor_.submit(() -> {
          Future f = acqExecutor_.submit(() -> {
             try {
                eventQueue_.clear();
@@ -183,13 +185,6 @@ public class Engine implements AcqEngineJ {
          });
          return f;
       });
-      try {
-         return ff.get();
-      } catch (InterruptedException ex) {
-         throw new RuntimeException(ex);
-      } catch (ExecutionException ex) {
-         throw new RuntimeException(ex);
-      }
    }
 
    /**
@@ -280,19 +275,6 @@ public class Engine implements AcqEngineJ {
          }
          return null;
       });
-      if (savingProcessingFuture_.isDone()) {
-         try {
-            //only happens if exception breaks it out of infinite loop
-            savingProcessingFuture_.get();
-         } catch (InterruptedException ex) {
-            //dont think this will ever happen
-         } catch (ExecutionException ex) {
-            //propagate exception so somthing can be done about it
-            throw ex;
-         } finally {
-            restartSavingAndProcessing();
-         }
-      }
       return imageAcquiredFuture;
    }
 

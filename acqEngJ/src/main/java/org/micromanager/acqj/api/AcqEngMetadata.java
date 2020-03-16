@@ -68,13 +68,12 @@ public class AcqEngMetadata {
    private static final String GRID_COL = "GridColumnIndex";
    private static final String GRID_ROW = "GridRowIndex";
    private static final String AFFINE_TRANSFORM = "AffineTransform";
-   private static final String IMAGE_CONSTRUCTION_FILTER = "ImageConstruction";
    private static final String PIX_TYPE_GRAY8 = "GRAY8";
    private static final String PIX_TYPE_GRAY16 = "GRAY16";
    private static final String CORE_XYSTAGE = "Core-XYStage";
    private static final String CORE_FOCUS = "Core-Focus";
    private static final String AXES = "AxesPositions";
-   private static final String CHANNEL_AXIS = "c";
+//   private static final String CHANNEL_AXIS = "c";
    public static final String TIME_AXIS = "t";
    public static final String Z_AXIS = "z";
    public static final String POSITION_AXIS = "p";
@@ -113,14 +112,13 @@ public class AcqEngMetadata {
             channelName += "_" + Engine.getCore().getCameraChannelName(camChannelIndex);
          }
          //infer channel index at runtime based on name
-         int cIndex = event.acquisition_.getChannelIndexFromName(channelName);
-         AcqEngMetadata.setAxisPosition(tags, CHANNEL_AXIS, cIndex);
+//         int cIndex = event.acquisition_.getChannelIndexFromName(channelName);
          AcqEngMetadata.setChannelName(tags, channelName == null ? "" : channelName);
 
          /////////  XY Stage Positions (with optional support for grid layout) ////////
          if (event.getXY() != null) {
             //infer Stage position index at acquisition time to support on the fly modification
-            AcqEngMetadata.setPositionIndex(tags, event.acquisition_.getPositionIndexFromName(event.getXY()));
+//            AcqEngMetadata.setPositionIndex(tags, event.acquisition_.getPositionIndexFromName(event.getXY()));
             AcqEngMetadata.setStageXIntended(tags, event.getXY().getCenter().x);
             AcqEngMetadata.setStageYIntended(tags, event.getXY().getCenter().y);
             AcqEngMetadata.setPositionName(tags, event.getXY().getName());
@@ -360,7 +358,7 @@ public class AcqEngMetadata {
       try {
          return map.getString(CHANNEL_NAME);
       } catch (JSONException ex) {
-         throw new RuntimeException("Missing channel index tag");
+         throw new RuntimeException("Missing channel name tag");
       }
    }
 
@@ -705,18 +703,18 @@ public class AcqEngMetadata {
       }
    }
 
-   public static long getGridRow(JSONObject smd) {
+   public static int getGridRow(JSONObject smd) {
       try {
-         return smd.getLong(GRID_ROW);
+         return smd.getInt(GRID_ROW);
       } catch (JSONException ex) {
          throw new RuntimeException("Couldnt set grid row");
 
       }
    }
 
-   public static long getGridCol(JSONObject smd) {
+   public static int getGridCol(JSONObject smd) {
       try {
-         return smd.getLong(GRID_COL);
+         return smd.getInt(GRID_COL);
       } catch (JSONException ex) {
          throw new RuntimeException("Couldnt set grid row");
 

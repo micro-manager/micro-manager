@@ -14,7 +14,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.multiresviewer;
+package org.micromanager.ndviewer.internal.gui.contrast;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -23,8 +23,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
+import static org.micromanager.ndviewer.main.NDViewer.getPreferences;
 
 public class DisplaySettings {
+
+   private static final String PREF_KEY_COLOR = "Preferred_color_";
+   private static final String PREF_KEY_BIT_DEPTH = "Channel_Bit_depth_";
 
    public final static int NUM_DISPLAY_HIST_BINS = 256;
 
@@ -69,10 +73,15 @@ public class DisplaySettings {
       }
    }
 
-   public void addChannel(String cName, int bitDepth, Color c) {
+   public void addChannel(String cName) {
       try {
+         //load from preferences
+         int colorInt = getPreferences().getInt(PREF_KEY_COLOR + cName, -1);
+         int bitDepth = getPreferences().getInt(PREF_KEY_BIT_DEPTH + cName, 16);
+
          JSONObject channelDisp = new JSONObject();
-         channelDisp.put("Color", cName.equals("") || c == null ? Color.white : c.getRGB());
+         channelDisp.put("Color",
+                 (cName.equals("") || colorInt == -1) ? Color.white.getRGB() : colorInt);
          channelDisp.put("BitDepth", bitDepth);
          channelDisp.put("Name", cName);
          channelDisp.put("Gamma", 1.0);
@@ -96,9 +105,23 @@ public class DisplaySettings {
          try {
             return new Color(json_.getJSONObject(channelName).getInt("Color"));
          } catch (Exception ex) {
-            System.err.println("Color missing from display settings");
+//            System.err.println("Color missing from display settings");
          }
          return Color.white;
+      }
+   }
+
+   public void setBitDepth(String channelName, int bitDepth) {
+      synchronized (this) {
+         try {
+            if (!json_.has(channelName)) {
+               addChannel(channelName);
+            }
+            json_.getJSONObject(channelName).put("BitDepth", bitDepth);
+            getPreferences().putInt(PREF_KEY_BIT_DEPTH + channelName, bitDepth);
+         } catch (Exception ex) {
+            System.err.println("bitdepth missing from display settings");
+         }
       }
    }
 
@@ -170,7 +193,11 @@ public class DisplaySettings {
    public void setColor(String channelName, Color color) {
       synchronized (this) {
          try {
+            if (!json_.has(channelName)) {
+               addChannel(channelName);
+            }
             json_.getJSONObject(channelName).put("Color", color.getRGB());
+            getPreferences().putInt(PREF_KEY_COLOR + channelName, color.getRGB());
          } catch (Exception ex) {
             System.err.println("Couldnt set display setting");
          }
@@ -200,21 +227,22 @@ public class DisplaySettings {
 
    public void setContrastMin(String channelName, int contrastMin) {
       synchronized (this) {
+         int boundedContrastMin = Math.max(0, contrastMin);
          try {
             if (isSyncChannels()) {
                json_.keys().forEachRemaining((String t) -> {
                   if (!t.equals(ALL_CHANNELS_SETTINGS_KEY)) {
                      try {
-                        json_.getJSONObject(t).put("Min", contrastMin);
-                        json_.getJSONObject(t).put("Max", Math.max(contrastMin, getContrastMax(t)));
+                        json_.getJSONObject(t).put("Min", boundedContrastMin);
+                        json_.getJSONObject(t).put("Max", Math.max(boundedContrastMin, getContrastMax(t)));
                      } catch (JSONException ex) {
                         System.err.println("Couldnt set display setting");
                      }
                   }
                });
             }
-            json_.getJSONObject(channelName).put("Min", contrastMin);
-            json_.getJSONObject(channelName).put("Max", Math.max(contrastMin, getContrastMax(channelName)));
+            json_.getJSONObject(channelName).put("Min", boundedContrastMin);
+            json_.getJSONObject(channelName).put("Max", Math.max(boundedContrastMin, getContrastMax(channelName)));
          } catch (Exception ex) {
             System.err.println("Couldnt set display setting");
          }
@@ -223,13 +251,14 @@ public class DisplaySettings {
 
    public void setContrastMax(String channelName, int contrastMax) {
       synchronized (this) {
+         int boundedContrastMax = Math.max(0, contrastMax);
          try {
             if (isSyncChannels()) {
                json_.keys().forEachRemaining((String t) -> {
                   if (!t.equals(ALL_CHANNELS_SETTINGS_KEY)) {
                      try {
-                        json_.getJSONObject(t).put("Max", contrastMax);
-                        json_.getJSONObject(t).put("Min", Math.min(contrastMax, getContrastMin(t)));
+                        json_.getJSONObject(t).put("Max", boundedContrastMax);
+                        json_.getJSONObject(t).put("Min", Math.min(boundedContrastMax, getContrastMin(t)));
 
                      } catch (JSONException ex) {
                         System.err.println("Couldnt set display setting");
@@ -237,8 +266,9 @@ public class DisplaySettings {
                   }
                });
             }
-            json_.getJSONObject(channelName).put("Max", contrastMax);
-            json_.getJSONObject(channelName).put("Min", Math.min(contrastMax, getContrastMin(channelName)));
+            json_.getJSONObject(channelName).put("Max", boundedContrastMax);
+            json_.getJSONObject(channelName).put("Min",
+                    Math.min(boundedContrastMax, getContrastMin(channelName)));
 
          } catch (JSONException ex) {
             System.err.println("Couldnt set display setting");

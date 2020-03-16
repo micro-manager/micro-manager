@@ -27,8 +27,10 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import org.json.JSONObject;
-import org.micromanager.multiresviewer.NDViewer;
+import org.micromanager.ndviewer.main.NDViewer;
 import org.micromanager.ndviewer.overlay.Overlay;
+import org.micromanager.ndviewer.api.CanvasMouseListenerInterface;
+import org.micromanager.ndviewer.api.ControlsPanelInterface;
 
 /**
  *
@@ -37,7 +39,6 @@ import org.micromanager.ndviewer.overlay.Overlay;
 public class DisplayWindow implements WindowListener {
 
    //from other window
-   public static final int NONE = 0, EXPLORE = 1, SURFACE_AND_GRID = 2;
    private static final double ZOOM_FACTOR_KEYS = 2.0;
 
    private ViewerCanvas imageCanvas_;
@@ -48,6 +49,7 @@ public class DisplayWindow implements WindowListener {
 
    private NDViewer display_;
    JFrame window_;
+   private CanvasMouseListenerInterface listener_;
 
    public DisplayWindow(NDViewer display) {
       window_ = new JFrame();
@@ -74,6 +76,8 @@ public class DisplayWindow implements WindowListener {
       for (FocusListener l : window_.getFocusListeners()) {
          window_.removeFocusListener(l);
       }
+      
+      listener_ = null;
 
       subImageControls_.onDisplayClose();
       sideControls_.onDisplayClose();
@@ -121,7 +125,6 @@ public class DisplayWindow implements WindowListener {
       leftPanel_.add(subImageControls_, BorderLayout.PAGE_END);
       window_.add(leftPanel_, BorderLayout.CENTER);
 
-      //TODO: add in plugin panels
       sideControls_ = new DisplayWindowControls(display_, null);
       JPanel buttonPanel = new FixedWidthJPanel();
       collapseExpandButton_ = new JButton();
@@ -165,7 +168,7 @@ public class DisplayWindow implements WindowListener {
    public void displayImage(Image image, HashMap<String, int[]> hists, HashMap<String, Integer> mins, HashMap<String, Integer> maxs, DataViewCoords view) {
       //Make scrollbars reflect image
       subImageControls_.updateScrollerPositions(view);
-      imageCanvas_.updateDisplayImage(image, view.getDisplayScaleFactor());
+      imageCanvas_.updateDisplayImage(image, view.getMagnificationFromResLevel());
       sideControls_.updateHistogramData(hists, mins, maxs);
    }
 
@@ -176,10 +179,6 @@ public class DisplayWindow implements WindowListener {
 
    public void repaintCanvas() {
       imageCanvas_.getCanvas().repaint();
-   }
-
-   public void onNewImage() {
-      sideControls_.onNewImage();
    }
 
    public void setImageMetadata(JSONObject imageMD) {
@@ -281,10 +280,10 @@ public class DisplayWindow implements WindowListener {
    }
 
    private void setupMouseListeners() {
-      CanvasMouseListener listener = new CanvasMouseListener(display_);
-      imageCanvas_.getCanvas().addMouseWheelListener(listener);
-      imageCanvas_.getCanvas().addMouseMotionListener(listener);
-      imageCanvas_.getCanvas().addMouseListener(listener);
+      listener_ = new CanvasMouseListener(display_);
+      imageCanvas_.getCanvas().addMouseWheelListener(listener_);
+      imageCanvas_.getCanvas().addMouseMotionListener(listener_);
+      imageCanvas_.getCanvas().addMouseListener(listener_);
    }
 
    public ViewerCanvas getCanvas() {
@@ -309,6 +308,21 @@ public class DisplayWindow implements WindowListener {
 
    public void displaySettingsChanged() {
       sideControls_.displaySettingsChanged();
+   }
+
+   public void setCustomCanvasMouseListener(CanvasMouseListenerInterface m) {
+      //out with the old
+      imageCanvas_.getCanvas().removeMouseListener(listener_);
+      imageCanvas_.getCanvas().removeMouseMotionListener(listener_);
+      imageCanvas_.getCanvas().removeMouseWheelListener(listener_);
+      //in with the new
+      imageCanvas_.getCanvas().addMouseWheelListener(m);
+      imageCanvas_.getCanvas().addMouseMotionListener(m);
+      imageCanvas_.getCanvas().addMouseListener(m);
+   }
+
+   public void addControlPanel(ControlsPanelInterface panel) {
+      sideControls_.addControlPanel(panel) ;
    }
 
 }

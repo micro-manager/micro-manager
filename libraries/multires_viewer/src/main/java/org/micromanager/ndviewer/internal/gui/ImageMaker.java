@@ -3,7 +3,6 @@ package org.micromanager.ndviewer.internal.gui;
 import org.micromanager.ndviewer.internal.gui.DataViewCoords;
 import org.micromanager.ndviewer.internal.gui.contrast.HistogramUtils;
 import org.micromanager.ndviewer.internal.gui.contrast.LUT;
-import org.micromanager.ndviewer.api.DataSource;
 import java.awt.Color;
 import java.awt.image.DirectColorModel;
 import java.awt.image.IndexColorModel;
@@ -15,8 +14,9 @@ import java.util.HashMap;
 import java.util.TreeMap;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
-import org.micromanager.multiresviewer.DisplaySettings;
-import org.micromanager.multiresviewer.NDViewer;
+import org.micromanager.ndviewer.internal.gui.contrast.DisplaySettings;
+import org.micromanager.ndviewer.main.NDViewer;
+import org.micromanager.ndviewer.api.DataSourceInterface;
 
 /**
  * This Class essentially replaces CompositeImage in ImageJ, and uses low level
@@ -31,24 +31,21 @@ public class ImageMaker {
 
    private int imageWidth_, imageHeight_;
    private int[] rgbPixels_;
-   private DataSource imageCache_;
+   private DataSourceInterface imageCache_;
    private Image displayImage_;
    private MemoryImageSource imageSource_;
    DirectColorModel rgbCM_ = new DirectColorModel(24, 0xff0000, 0xff00, 0xff);
-   private DisplaySettings displaySettings_;
    private JSONObject latestTags_;
    private NDViewer display_;
 
-   public ImageMaker(NDViewer c, DataSource data) {
+   public ImageMaker(NDViewer c, DataSourceInterface data) {
       display_ = c;
-      displaySettings_ = c.getDisplaySettingsObject();
       imageCache_ = data;
    }
 
    public void close() {
       display_ = null;
       imageCache_ = null;
-      displaySettings_ = null;
    }
 
    public JSONObject getLatestTags() {
@@ -62,10 +59,10 @@ public class ImageMaker {
     */
    public Image makeOrGetImage(DataViewCoords viewCoords) {
       boolean remakeDisplayImage = false; //remake the acutal Imge object if size has changed, otherwise just set pixels
-      if (viewCoords.getDisplayImageSizeAtResLevel().x != imageWidth_
-              || viewCoords.getDisplayImageSizeAtResLevel().y != imageHeight_) {
-         imageWidth_ = (int) viewCoords.getDisplayImageSizeAtResLevel().x;
-         imageHeight_ = (int) viewCoords.getDisplayImageSizeAtResLevel().y;
+      if (viewCoords.getSourceImageSizeAtResLevel().x != imageWidth_
+              || viewCoords.getSourceImageSizeAtResLevel().y != imageHeight_) {
+         imageWidth_ = (int) viewCoords.getSourceImageSizeAtResLevel().x;
+         imageHeight_ = (int) viewCoords.getSourceImageSizeAtResLevel().y;
          rgbPixels_ = new int[imageWidth_ * imageHeight_];
          remakeDisplayImage = true;
       }
@@ -78,17 +75,20 @@ public class ImageMaker {
                channelProcessors_.put(channel, new MagellanImageProcessor(imageWidth_, imageHeight_, channel));
             }
          }
-         if (!displaySettings_.isActive(channel)) {
+         if (!display_.getDisplaySettingsObject().isActive(channel)) {
             continue;
          }
 
-         int imagePixelWidth = (int) (viewCoords.getSourceDataSize().x / viewCoords.getDownsampleFactor());
-         int imagePixelHeight = (int) (viewCoords.getSourceDataSize().y / viewCoords.getDownsampleFactor());
+         int imagePixelWidth = (int) (viewCoords.getFullResSourceDataSize().x / viewCoords.getDownsampleFactor());
+         int imagePixelHeight = (int) (viewCoords.getFullResSourceDataSize().y / viewCoords.getDownsampleFactor());
          long viewOffsetAtResX = (long) (viewCoords.getViewOffset().x / viewCoords.getDownsampleFactor());
          long viewOffsetAtResY = (long) (viewCoords.getViewOffset().y / viewCoords.getDownsampleFactor());
 
-         TaggedImage imageForDisplay = imageCache_.getImageForDisplay(channel,
-                 viewCoords.getAxesPositions(), viewCoords.getResolutionIndex(),
+         //replace channel axis position with the specific channel 
+         HashMap<String, Integer> axes = new HashMap<String, Integer>(viewCoords.getAxesPositions());
+         axes.put("c", display_.getChannelIndex(channel));
+         TaggedImage imageForDisplay = imageCache_.getImageForDisplay(
+                 axes, viewCoords.getResolutionIndex(),
                  viewOffsetAtResX, viewOffsetAtResY, imagePixelWidth, imagePixelHeight);
                  
                  
@@ -104,11 +104,11 @@ public class ImageMaker {
          Arrays.fill(rgbPixels_, 0);
          int redValue, greenValue, blueValue;
          for (String c : channelProcessors_.keySet()) {
-            if (!displaySettings_.isActive(c) ) {
+            if (!display_.getDisplaySettingsObject().isActive(c) ) {
                continue;
             }
             String channelName = c;
-            if (displaySettings_.isActive(channelName)) {
+            if (display_.getDisplaySettingsObject().isActive(channelName)) {
                //get the appropriate pixels from the data view
 
                //recompute 8 bit image
@@ -248,25 +248,26 @@ public class ImageMaker {
       }
 
       public void recompute() {
-         contrastMin_ = displaySettings_.getContrastMin(channelName_);
-         contrastMax_ = displaySettings_.getContrastMax(channelName_);
+         contrastMin_ = display_.getDisplaySettingsObject().getContrastMin(channelName_);
+         contrastMax_ = display_.getDisplaySettingsObject().getContrastMax(channelName_);
          create8BitImage();
          processHistogram();
-         if (displaySettings_.getAutoscale()) {
-            if (displaySettings_.ignoreFractionOn()) {
+         if (display_.getDisplaySettingsObject().getAutoscale()) {
+            if (display_.getDisplaySettingsObject().ignoreFractionOn()) {
                contrastMax_ = maxAfterRejectingOutliers_;
                contrastMin_ = minAfterRejectingOutliers_;
             } else {
                contrastMin_ = pixelMin_;
                contrastMax_ = pixelMax_;
             }
-            displaySettings_.setContrastMin(channelName_, contrastMin_);
-            displaySettings_.setContrastMax(channelName_, contrastMax_);
+            display_.getDisplaySettingsObject().setContrastMin(channelName_, contrastMin_);
+            display_.getDisplaySettingsObject().setContrastMax(channelName_, contrastMax_);
             //need to redo this with autoscaled contrast now
             create8BitImage();
             processHistogram();
          }
-         lut = makeLUT(displaySettings_.getColor(channelName_), displaySettings_.getContrastGamma(channelName_));
+         lut = makeLUT(display_.getDisplaySettingsObject().getColor(channelName_), 
+                 display_.getDisplaySettingsObject().getContrastGamma(channelName_));
          splitLUTRGB();
       }
 
@@ -295,13 +296,14 @@ public class ImageMaker {
                   }
                }
             }
-            if (displaySettings_.isLogHistogram()) {
+            if (display_.getDisplaySettingsObject().isLogHistogram()) {
                displayHistogram_[i] = displayHistogram_[i] > 0 ? (int) (1000 * Math.log(displayHistogram_[i])) : 0;
             }
          }
          maxAfterRejectingOutliers_ = (int) totalPixels;
          // specified percent of pixels are ignored in the automatic contrast setting
-         HistogramUtils hu = new HistogramUtils(rawHistogram, totalPixels, 0.01 * displaySettings_.percentToIgnore());
+         HistogramUtils hu = new HistogramUtils(rawHistogram, totalPixels, 0.01 * 
+                 display_.getDisplaySettingsObject().percentToIgnore());
          minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
          maxAfterRejectingOutliers_ = hu.getMaxAfterRejectingOutliers();
 

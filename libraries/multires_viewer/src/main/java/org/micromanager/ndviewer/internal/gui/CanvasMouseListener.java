@@ -7,30 +7,27 @@ package org.micromanager.ndviewer.internal.gui;
 
 import java.awt.Point;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
 import javax.swing.SwingUtilities;
-import org.micromanager.multiresviewer.NDViewer;
-import static org.micromanager.ndviewer.internal.gui.DisplayWindow.EXPLORE;
+import org.micromanager.ndviewer.main.NDViewer;
+import org.micromanager.ndviewer.api.CanvasMouseListenerInterface;
 
 /**
  *
  * @author henrypinkard
  */
-public class CanvasMouseListener implements MouseListener, MouseMotionListener, MouseWheelListener {
+public class CanvasMouseListener implements CanvasMouseListenerInterface {
 
-   protected static final int MOUSE_WHEEL_ZOOM_INTERVAL_MS = 100;
+   private static final int MOUSE_WHEEL_ZOOM_INTERVAL_MS = 100;
 
-   protected static final double ZOOM_FACTOR_MOUSE = 1.4;
+   private static final double ZOOM_FACTOR_MOUSE = 1.4;
 
    //all these are volatile because they are accessed by overlayer
-   protected volatile Point mouseDragStartPointLeft_, mouseDragStartPointRight_, currentMouseLocation_;
-   protected volatile long lastMouseWheelZoomTime_ = 0;
-   protected volatile boolean mouseDragging_ = false;
+   private volatile Point mouseDragStartPointLeft_, mouseDragStartPointRight_, currentMouseLocation_;
+   private volatile long lastMouseWheelZoomTime_ = 0;
+   private volatile boolean mouseDragging_ = false;
 
-   protected NDViewer display_;
+   private NDViewer display_;
 
    public CanvasMouseListener(NDViewer display) {
       display_ = display;
@@ -58,9 +55,6 @@ public class CanvasMouseListener implements MouseListener, MouseMotionListener, 
    @Override
    public void mouseMoved(MouseEvent e) {
       currentMouseLocation_ = e.getPoint();
-      if (display_.getOverlayMode() == EXPLORE) {
-         display_.redrawOverlay();
-      }
    }
 
    @Override
@@ -89,17 +83,11 @@ public class CanvasMouseListener implements MouseListener, MouseMotionListener, 
 
    @Override
    public void mouseEntered(MouseEvent e) {
-      if (display_.getOverlayMode() == EXPLORE) {
-         display_.redrawOverlay();
-      }
    }
 
    @Override
    public void mouseExited(MouseEvent e) {
       currentMouseLocation_ = null;
-      if (display_.getOverlayMode() == EXPLORE) {
-         display_.redrawOverlay();
-      }
    }
 
    private void mouseReleasedActions(MouseEvent e) {

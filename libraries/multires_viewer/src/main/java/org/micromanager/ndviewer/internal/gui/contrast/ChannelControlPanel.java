@@ -25,11 +25,10 @@ import org.micromanager.ndviewer.internal.gui.contrast.GraphData;
 import org.micromanager.ndviewer.internal.gui.contrast.HistogramPanel;
 import java.awt.*;
 import javax.swing.*;
-import org.micromanager.multiresviewer.DisplaySettings;
 import org.micromanager.ndviewer.internal.gui.contrast.MultiChannelHistograms;
 import org.micromanager.ndviewer.internal.gui.contrast.HistogramPanel.CursorListener;
-import org.micromanager.multiresviewer.NDViewer;
-import org.micromanager.multiresviewer.NDViewer;
+import org.micromanager.ndviewer.main.NDViewer;
+import org.micromanager.ndviewer.main.NDViewer;
 
 /**
  * Draws one histogram of the Multi-Channel control panel
@@ -324,7 +323,8 @@ class ChannelControlPanel extends JPanel implements CursorListener {
 
    public void onLeftCursor(double pos) {
       contrastPanel_.disableAutostretch();
-      display_.getDisplaySettingsObject().setContrastMin(channelName_, (int) (Math.min(DisplaySettings.NUM_DISPLAY_HIST_BINS - 1, pos) * binSize_));
+      display_.getDisplaySettingsObject().setContrastMin(channelName_, 
+              (int) (Math.min(DisplaySettings.NUM_DISPLAY_HIST_BINS - 1, pos) * binSize_));
       display_.onContrastUpdated();
       redraw();
    }
@@ -332,7 +332,8 @@ class ChannelControlPanel extends JPanel implements CursorListener {
    @Override
    public void onRightCursor(double pos) {
       contrastPanel_.disableAutostretch();
-      display_.getDisplaySettingsObject().setContrastMax(channelName_, (int) (Math.min(DisplaySettings.NUM_DISPLAY_HIST_BINS - 1, pos) * binSize_));
+      display_.getDisplaySettingsObject().setContrastMax(channelName_, 
+              (int) (Math.min(DisplaySettings.NUM_DISPLAY_HIST_BINS - 1, pos) * binSize_));
       display_.onContrastUpdated();
       redraw();
 

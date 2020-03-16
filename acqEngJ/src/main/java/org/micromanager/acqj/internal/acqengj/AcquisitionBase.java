@@ -28,6 +28,8 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
@@ -57,7 +59,7 @@ public abstract class AcquisitionBase implements Acquisition {
    private HashMap<String, Integer> channelIndices_ = new HashMap<String, Integer>();
    //map generated at runtime of XY positions to position indices
    private HashMap<XYStagePosition, Integer> positionIndices_ = new HashMap<XYStagePosition, Integer>();
-   
+   protected Future<Future> acqFinishedFuture_;
    protected MinimalAcquisitionSettings settings_;
    protected DataSink dataSink_;
    protected CMMCore core_;
@@ -71,12 +73,8 @@ public abstract class AcquisitionBase implements Acquisition {
    }
    
    
-   /**
-    * Cancel any unexecuted events and shutdown. Non-blocking
-    */
    public abstract void abort();
    
-   public abstract void waitForCompletion();
    
    protected abstract void addToSummaryMetadata(JSONObject summaryMetadata);
    
@@ -84,6 +82,35 @@ public abstract class AcquisitionBase implements Acquisition {
    
    public MinimalAcquisitionSettings getAcquisitionSettings() {
       return settings_;
+   }
+   
+   
+   @Override
+   public void close() {
+      try {
+         //wait for event generation to shut down
+         while (!acqFinishedFuture_.isDone()) {
+            try {
+               Thread.sleep(1);
+            } catch (InterruptedException ex) {
+               throw new RuntimeException("Interrupted while waiting to cancel");
+            }
+         }
+         //wait for final signal to be sent to saving class..cant do much byond that
+         Future executionFuture = acqFinishedFuture_.get();
+         while (!executionFuture.isDone()) {
+            try {
+               Thread.sleep(1);
+            } catch (InterruptedException ex) {
+               throw new RuntimeException("Interrupted while waiting to cancel");
+            }
+         }
+         executionFuture.get();
+      } catch (InterruptedException ex) {
+         throw new RuntimeException(ex);
+      } catch (ExecutionException ex) {
+         throw new RuntimeException(ex);
+      }      
    }
    
    /**
@@ -141,23 +168,6 @@ public abstract class AcquisitionBase implements Acquisition {
       }
    }
 
-   /**
-    * Get index of channel with given name, appending it to the list
-    * of channels seen in acq so far. This enables adding arbitrary channels
-    * at acquisition time
-    * @param channelName
-    * @return 
-    */
-  public int getChannelIndexFromName(String channelName) {
-      if (!channelIndices_.containsKey(channelName)) {    
-         List<Integer> indices = new LinkedList<Integer>(channelIndices_.values());
-         indices.add(0, -1);
-         int maxIndex = indices.stream().mapToInt(v -> v).max().getAsInt();
-         channelIndices_.put(channelName, maxIndex + 1);
-      }
-      return channelIndices_.get(channelName);
-   }
-  
   /**
     * Get index of position based on it's intended x and y coordinates
     * @param channelName

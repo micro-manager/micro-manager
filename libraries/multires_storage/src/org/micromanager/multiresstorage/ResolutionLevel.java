@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          MagellanTaggedImageStorageMultipageTiff.java
+//FILE:          ResolutionLevel.java
 //PROJECT:       Micro-Manager
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
@@ -230,9 +230,9 @@ public final class ResolutionLevel {
 
    public Future putImage(TaggedImage taggedImage, String prefix,
            int tIndex, int cIndex, int zIndex, int posIndex) throws IOException {
-      // Now, we must hold on to MagellanTaggedImage, so that we can return it if
+      // Now, we must hold on to TaggedImage, so that we can return it if
       // somebody calls getImage() before the writing is finished.
-      // There is a data race if the MagellanTaggedImage is modified by other code, but
+      // There is a data race if the TaggedImage is modified by other code, but
       // that would be a bad thing to do anyway (will break the writer) and is
       // considered forbidden.
 
@@ -328,6 +328,7 @@ public final class ResolutionLevel {
          try {
             p.finished();
          } catch (Exception ex) {
+            ex.printStackTrace();
             throw new RuntimeException(ex);
          }
          count++;
@@ -445,8 +446,13 @@ public final class ResolutionLevel {
       return masterMultiResStorage_.getDisplaySettings();
    }
 
-   void setDisplaySettings(JSONObject displaySettings) {
-      fileSets_.get(0).putDisplaySettings(displaySettings);
+   void setDisplaySettings() {
+      if (fileSets_ == null) {
+         //it never wrote anything
+         return;
+      }
+      FileSet fs = fileSets_.get(0);
+      fs.putDisplaySettings();
    }
 
    int getByteDepth() {
@@ -636,7 +642,7 @@ public final class ResolutionLevel {
          return baseFilename;
       }
 
-      private void putDisplaySettings(JSONObject displaySettings) {
+      private void putDisplaySettings() {
          tiffWriters_.getLast().setDisplayStorer();
       }
    }

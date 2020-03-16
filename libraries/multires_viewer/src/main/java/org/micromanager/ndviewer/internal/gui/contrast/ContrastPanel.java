@@ -31,8 +31,8 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.micromanager.ndviewer.internal.gui.contrast.MultiChannelHistograms;
-import org.micromanager.multiresviewer.NDViewer;
-import org.micromanager.multiresviewer.NDViewer;
+import org.micromanager.ndviewer.main.NDViewer;
+import org.micromanager.ndviewer.main.NDViewer;
 
 /**
  *
@@ -64,7 +64,7 @@ public class ContrastPanel extends JPanel {
    private boolean initializing_ = true;
 
    public ContrastPanel(NDViewer display) {
-      histograms_ = new MultiChannelHistograms(display, this, display.getDisplaySettingsObject());
+      histograms_ = new MultiChannelHistograms(display, this);
       display_ = display;
       contentPanel_ = createGUI();
       this.setLayout(new BorderLayout());

@@ -14,15 +14,15 @@ import org.micromanager.acqj.internal.acqengj.MinimalAcquisitionSettings;
 /**
  * Abstraction for an acquisition where all the settings are NOT specified in
  * advance, so that it can rely on user input or feedback from data to
- * dynamically generate events. Extends this class to implement different
- * types of acquistions
+ * dynamically generate events. Extends this class to implement different types
+ * of acquistions
  *
  *
  * @author henrypinkard
  */
 public abstract class DynamicSettingsAcquisition extends AcquisitionBase {
 
-   private Future acqFinishedFuture_;
+   private volatile boolean aborted_ = false;
    private ExecutorService submittedSequenceMonitorExecutor_ = Executors.newSingleThreadExecutor((Runnable r) -> {
       return new Thread(r, "Submitted sequence monitor");
    });
@@ -30,16 +30,18 @@ public abstract class DynamicSettingsAcquisition extends AcquisitionBase {
    public DynamicSettingsAcquisition(MinimalAcquisitionSettings settings, DataSink sink) {
       super(settings, sink);
    }
-   
+
    public void start() {
       //nothing to do its alreay ready
    }
 
    /**
-    * Submit a iterator of acquisition events for execution. 
+    * Submit a iterator of acquisition events for execution.
+    *
     * @param iter an iterator of acquisition events
-    * @param callback an ExceptionCallback for asynchronously handling exceptions
-    * 
+    * @param callback an ExceptionCallback for asynchronously handling
+    * exceptions
+    *
     */
    public void submitEventIterator(Iterator<AcquisitionEvent> iter, ExceptionCallback callback) {
       submittedSequenceMonitorExecutor_.submit(() -> {
@@ -49,12 +51,12 @@ public abstract class DynamicSettingsAcquisition extends AcquisitionBase {
             iteratorFuture.get();
          } catch (InterruptedException ex) {
             iteratorFuture.cancel(true);
-         } catch (ExecutionException ex) {          
+         } catch (ExecutionException ex) {
             callback.run(ex);
-         } 
+         }
       });
    }
-   
+
    /**
     * signal that no more streams can be submitted
     */
@@ -62,9 +64,13 @@ public abstract class DynamicSettingsAcquisition extends AcquisitionBase {
       acqFinishedFuture_ = Engine.getInstance().finishAcquisition(this);
       submittedSequenceMonitorExecutor_.shutdown();
    }
-   
+
    @Override
-   public void abort() {
+   public synchronized void abort() {
+      if (aborted_) {
+         return;
+      }
+      aborted_ = true;
       if (this.isPaused()) {
          this.togglePaused();
       }
@@ -72,12 +78,5 @@ public abstract class DynamicSettingsAcquisition extends AcquisitionBase {
       acqFinishedFuture_ = Engine.getInstance().finishAcquisition(this);
    }
 
-   @Override
-   public void waitForCompletion() {
-      try {
-         acqFinishedFuture_.get();
-      } catch (Exception ex) {
-         throw new RuntimeException(ex);
-      }
-   }
+ 
 }

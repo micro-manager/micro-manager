@@ -23,6 +23,7 @@ public class MagellanMD extends AcqEngMetadata {
    private static final String OVERLAP_X = "GridPixelOverlapX";
    private static final String OVERLAP_Y = "GridPixelOverlapY";
    
+   public static final String CHANNEL_AXIS = "c";
    
    public static void setSurfacePoints(JSONObject tags, JSONArray arr) {
       try {

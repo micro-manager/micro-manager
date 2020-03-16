@@ -29,6 +29,7 @@ import org.micromanager.acqj.internal.acqengj.affineTransformUtils;
 
 /**
  * Immutable object representing single XY stage position
+ * 
  * @author Henry
  */
 public class XYStagePosition {
@@ -90,9 +91,11 @@ public class XYStagePosition {
     * 
     * @param transform -- must be centered at current stage pos 
     */
-   public XYStagePosition(Point2D.Double stagePosCenter, int displayTileWidth, int displayTileHeight, 
-           int fullTileWidth, int fullTileHeight, long row, long col, AffineTransform transform) {
+   public XYStagePosition(Point2D.Double stagePosCenter, int width, int height,
+           int overlapX, int overlapY, long row, long col, AffineTransform transform) {
        
+      int displayTileWidth = width - overlapX;
+      int displayTileHeight = height - overlapY;
       inGrid_ = true;
       label_ = "Grid_" + col + "_" + row;
       center_ = stagePosCenter;
@@ -112,10 +115,10 @@ public class XYStagePosition {
       fullTileCorners_[1] = new Point2D.Double();
       fullTileCorners_[2] = new Point2D.Double();
       fullTileCorners_[3] = new Point2D.Double();
-      transform.transform(new Point2D.Double(-fullTileWidth / 2, -fullTileHeight / 2), fullTileCorners_[0]);
-      transform.transform(new Point2D.Double(-fullTileWidth / 2, fullTileHeight / 2), fullTileCorners_[1]);
-      transform.transform(new Point2D.Double(fullTileWidth / 2, fullTileHeight / 2), fullTileCorners_[2]);
-      transform.transform(new Point2D.Double(fullTileWidth / 2, -fullTileHeight / 2), fullTileCorners_[3]);
+      transform.transform(new Point2D.Double(-width / 2, -height / 2), fullTileCorners_[0]);
+      transform.transform(new Point2D.Double(-width / 2, height / 2), fullTileCorners_[1]);
+      transform.transform(new Point2D.Double(width / 2, height / 2), fullTileCorners_[2]);
+      transform.transform(new Point2D.Double(width / 2, -height / 2), fullTileCorners_[3]);
 
       gridCol_ = col;
       gridRow_ = row;
@@ -201,7 +204,7 @@ public class XYStagePosition {
     * @param tileOverlapPercent
     * @return 
     */
-   public static ArrayList<XYStagePosition> getXYPositions(Point2D.Double center, 
+   public static ArrayList<XYStagePosition> createGrid(Point2D.Double center, 
            double tileOverlapFraction, int numRows, int numCols) {
          AffineTransform transform = affineTransformUtils.getAffineTransform(center.x, center.y);
          ArrayList<XYStagePosition> positions = new ArrayList<XYStagePosition>();
@@ -221,8 +224,9 @@ public class XYStagePosition {
                         Point2D.Double stagePos = new Point2D.Double();
                         transform.transform(pixelPos, stagePos);
                         AffineTransform posTransform = affineTransformUtils.getAffineTransform(stagePos.x, stagePos.y);
-                        positions.add(new XYStagePosition( stagePos, tileWidthMinusOverlap, tileHeightMinusOverlap,
-                                fullTileWidth, fullTileHeight, row, col, posTransform));
+                        positions.add(new XYStagePosition(stagePos,
+                                fullTileWidth, fullTileHeight, 
+                                overlapX, overlapY, row, col, posTransform));
                     }
                 } else {  
                     for (int row = numRows - 1; row >= 0; row--) {
@@ -231,8 +235,9 @@ public class XYStagePosition {
                         Point2D.Double stagePos = new Point2D.Double();
                         transform.transform(pixelPos, stagePos);
                         AffineTransform posTransform = affineTransformUtils.getAffineTransform( stagePos.x, stagePos.y);
-                        positions.add(new XYStagePosition(stagePos, tileWidthMinusOverlap, tileHeightMinusOverlap,
-                                fullTileWidth, fullTileHeight, row, col, posTransform));
+                        positions.add(new XYStagePosition(stagePos,
+                                fullTileWidth, fullTileHeight, 
+                                overlapX, overlapY, row, col, posTransform));
                     }
                 }
          }    

@@ -23,14 +23,17 @@ import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -52,7 +55,7 @@ import org.json.JSONObject;
  * downsample factor without truncation
  *
  */
-public class MultiResMultipageTiffStorage {
+public class MultiResMultipageTiffStorage implements StorageAPI {
 
    private static final String FULL_RES_SUFFIX = "Full resolution";
    private static final String DOWNSAMPLE_SUFFIX = "Downsampled_x";
@@ -71,8 +74,9 @@ public class MultiResMultipageTiffStorage {
    private ThreadPoolExecutor writingExecutor_;
    private volatile int maxResolutionLevel_ = 0;
    private final boolean loaded_;
-   private CopyOnWriteArrayList<String> superChannelNames_ = new CopyOnWriteArrayList<String>();
+   private ConcurrentHashMap<String, Integer> superChannelNames_ = new ConcurrentHashMap<String, Integer>();
    private CopyOnWriteArrayList<String> positions_ = new CopyOnWriteArrayList<String>();
+   private Set<HashMap<String, Integer>> imageAxes_ = new HashSet<HashMap<String, Integer>>();
 
    private String prefix_;
 
@@ -89,8 +93,45 @@ public class MultiResMultipageTiffStorage {
       fullResStorage_ = new ResolutionLevel(fullResDir, false, null, null, this, -1, -1, false, -1);
       summaryMD_ = fullResStorage_.getSummaryMetadata();
 
-      rgb_ = false;
+      //reconstruct map of super channel names to channel indices, and set
+      //of all image axes
+      for (String s : fullResStorage_.imageKeys()) {
+         HashMap<String, Integer> map = new HashMap<String, Integer>();
+         String[] indices = s.split("_");
+         int cIndex = Integer.parseInt(indices[0]);
+         int zIndex = Integer.parseInt(indices[1]);
+         int tIndex = Integer.parseInt(indices[2]);
+         int pIndex = Integer.parseInt(indices[3]);
+         if (!superChannelNames_.values().contains(cIndex)) {
+            String channelName = StorageMD.getChannelName(fullResStorage_.getImageTags(cIndex, zIndex, tIndex, pIndex));
+            superChannelNames_.put(channelName, cIndex);
+         }
+         String channelName = null;
+         for (String name : superChannelNames_.keySet()) {
+            channelName = name;
+            if (superChannelNames_.get(name) == cIndex) {
+               break;
+            }
+         }
+         //This code adds in c index, as well as any others
+         String[] otherAxes = channelName.split("Axis_");
+         for (String newax : otherAxes) {
+            if (newax.isEmpty()) {
+               continue;
+            }
+            map.put(newax.split("_")[0], Integer.parseInt(newax.split("_")[1]));
+         }
 
+         //TODO: could remove these if they dont have values other than 0,
+         //but fine to leave them for time being cause viewer will ignore
+         map.put("t", tIndex);
+         map.put("z", zIndex);
+         map.put("p", pIndex);
+         imageAxes_.add(map);
+      }
+
+      //iterate 
+      rgb_ = false;
       byteDepth_ = fullResStorage_.getByteDepth();
       fullResTileWidthIncludingOverlap_ = fullResStorage_.getWidth();
       fullResTileHeightIncludingOverlap_ = fullResStorage_.getHeight();
@@ -140,8 +181,7 @@ public class MultiResMultipageTiffStorage {
          for (JSONObject xyPos : positions.values()) {
             pList.put(xyPos);
          }
-         posManager_ = new PositionManager(tileWidth_, tileHeight_, tileWidth_, tileHeight_,
-                 xOverlap_, xOverlap_, pList, lowResStorages_.size());
+         posManager_ = new PositionManager(pList, lowResStorages_.size());
 
       } catch (Exception e) {
          throw new RuntimeException("Couldn't create position manager");
@@ -193,9 +233,7 @@ public class MultiResMultipageTiffStorage {
       }
 
       try {
-         posManager_ = new PositionManager(tileWidth_, tileHeight_,
-                 fullResTileWidthIncludingOverlap_, fullResTileHeightIncludingOverlap_,
-                 xOverlap_, yOverlap_);
+         posManager_ = new PositionManager();
       } catch (Exception e) {
          throw new RuntimeException("Couldn't create position manaher");
       }
@@ -225,7 +263,7 @@ public class MultiResMultipageTiffStorage {
          if (displaySettings != null) {
             displaySettings_ = new JSONObject(displaySettings.toString());
             if (!loaded_) {
-               fullResStorage_.setDisplaySettings(displaySettings_);
+               fullResStorage_.setDisplaySettings();
             }
          }
       } catch (JSONException ex) {
@@ -294,8 +332,13 @@ public class MultiResMultipageTiffStorage {
     * @return Tagged image or taggeded image with background pixels and null
     * tags if no pixel data is present
     */
-   public TaggedImage getImageForDisplay(int channel, int slice, int frame, int dsIndex, int x, int y,
-           int width, int height) {
+   public TaggedImage getStitchedImage(HashMap<String, Integer> axes,
+           int dsIndex, int x, int y, int width, int height) {
+
+      int frame = axes.containsKey("t") ? axes.get("t") : 0;
+      int slice = axes.containsKey("z") ? axes.get("z") : 0;
+      int channel = superChannelNames_.get(getSuperChannelName(axes));
+
       Object pixels;
       if (rgb_) {
          pixels = new byte[width * height * 4];
@@ -638,32 +681,29 @@ public class MultiResMultipageTiffStorage {
       }
    }
 
-   private int getSuperChannelIndex(HashMap<String, Integer> axes, String channelName) {
-      Set<String> axesNames = axes.keySet();
-      axesNames.remove("p");
-      axesNames.remove("z");
-      axesNames.remove("t");
+   private String getSuperChannelName(HashMap<String, Integer> axes) {
+      HashMap<String, Integer> axesCopy = new HashMap<String, Integer>(axes);
+      //the storage is specced for T C Z P, so remove PZT and combine
+      //C with any other axes into a sueprchannel
+      axesCopy.remove("p");
+      axesCopy.remove("z");
+      axesCopy.remove("t");
+      //if doesn't contain explicit channel index, default to 0
+      if (!axesCopy.containsKey("c")) {
+         axesCopy.put("c", 0);
+      }
 
       //Convert all other remaining axes into a superchannel
-      String superChannel = channelName;
-      for (String s : axesNames) {
-         superChannel += "_" + s + ": " + axes.get(s);
+      String superChannel = "";
+      for (String s : axesCopy.keySet()) {
+         superChannel += "Axis_" + s + "_" + axesCopy.get(s);
       }
       //get index of superchannel
-      if (!superChannelNames_.contains(superChannel)) {
-         superChannelNames_.add(superChannel);
+      if (!superChannelNames_.keySet().contains(superChannel)) {
+         int superChannelIndex = superChannelNames_.size();
+         superChannelNames_.put(superChannel, superChannelIndex);
       }
-      return superChannelNames_.indexOf(superChannel);
-   }
-
-   /**
-    * Put image without explicit channels
-    *
-    * @param ti
-    * @param axes
-    */
-   public void putImage(TaggedImage ti, HashMap<String, Integer> axes) {
-      putImage(ti, axes, "");
+      return superChannel;
    }
 
    /**
@@ -671,24 +711,30 @@ public class MultiResMultipageTiffStorage {
     *
     * @param ti
     * @param axes
-    * @param channelName
     */
-   public void putImage(TaggedImage ti, HashMap<String, Integer> axes, String channelName) {
+   public void putImage(TaggedImage ti, HashMap<String, Integer> axes) {
       try {
          List<Future> writeFinishedList = new ArrayList<Future>();
+         imageAxes_.add(axes);
 
          int pIndex = axes.containsKey("p") ? axes.get("p") : 0;
          int tIndex = axes.containsKey("t") ? axes.get("t") : 0;
          int zIndex = axes.containsKey("z") ? axes.get("z") : 0;
          //This call merges all other axes besides p z t into a superchannel,
          //Creating a new one if neccessary
-         int superCIndex = getSuperChannelIndex(axes, channelName);
+         String superChannelName = getSuperChannelName(axes);
+         //set the name because it will be needed in recovery
 
-         //Make sure this is set because it will be needed to recover
-         StorageMD.setChannelName(ti.tags, channelName);
+         StorageMD.setSuperChannelName(ti.tags, superChannelName);
+         //make sure to put it in the metadata
+         StorageMD.createAxes(ti.tags);
+         for (String axis : axes.keySet()) {
+            StorageMD.setAxisPosition(ti.tags, axis, axes.get(axis));
+         }
+
          //write to full res storage as normal (i.e. with overlap pixels present)
          writeFinishedList.add(fullResStorage_.putImage(ti, prefix_,
-                 tIndex, superCIndex, zIndex, pIndex));
+                 tIndex, superChannelNames_.get(superChannelName), zIndex, pIndex));
 
 //         //check if maximum resolution level needs to be updated based on full size of image
 //         long fullResPixelWidth = getNumCols() * tileWidth_;
@@ -709,34 +755,45 @@ public class MultiResMultipageTiffStorage {
 
    /**
     * This version is called by programs doing dynamic stitching (i.e.
-    * micro-magellan)
+    * micro-magellan). axes must contain "p" mapping to a desired position index
     *
     * Don't return until all images have been written to disk
     */
-   public void putImage(TaggedImage ti, HashMap<String, Integer> axes,
-           String channelName, int row, int col) {
+   public void putImage(TaggedImage ti, HashMap<String, Integer> axes, int row, int col) {
       try {
 
          List<Future> writeFinishedList = new ArrayList<Future>();
 
-         //read dynamically since positions aren't show in magellan viewer
-         int pIndex = 0;
-         String rowColKey = row + "_" + col;
-         if (!positions_.contains(rowColKey)) {
-            positions_.add(rowColKey);
+         if (!axes.containsKey("p")) {
+            throw new RuntimeException("axes must contain a position index entry with \"p\" as key");
          }
+         imageAxes_.add(axes);
 
+         //dyanmically infer and overwrite position index
+//         int pIndex;
+//         String rowColKey = row + "_" + col;
+//         if (!positions_.contains(rowColKey)) {
+//            positions_.add(rowColKey);
+//         }
+//         pIndex = positions_.indexOf(rowColKey);
+//         axes.put("p", pIndex);
          int tIndex = axes.containsKey("t") ? axes.get("t") : 0;
          int zIndex = axes.containsKey("z") ? axes.get("z") : 0;
          //This call merges all other axes besides p z t into a superchannel,
          //Creating a new one if neccessary
-         int superCIndex = getSuperChannelIndex(axes, channelName);
+         String superChannelName = getSuperChannelName(axes);
+         //set the name because it will be needed in recovery
 
-         //Make sure this is set because it will be needed to recover
-         StorageMD.setChannelName(ti.tags, channelName);
+         StorageMD.setSuperChannelName(ti.tags, superChannelName);
+         //make sure to put it in the metadata
+         StorageMD.createAxes(ti.tags);
+         for (String axis : axes.keySet()) {
+            StorageMD.setAxisPosition(ti.tags, axis, axes.get(axis));
+         }
+
          //write to full res storage as normal (i.e. with overlap pixels present)
          writeFinishedList.add(fullResStorage_.putImage(ti, prefix_,
-                 tIndex, superCIndex, zIndex, pIndex));
+                 tIndex, superChannelNames_.get(superChannelName), zIndex, axes.get("p")));
 
          //check if maximum resolution level needs to be updated based on full size of image
          long fullResPixelWidth = getNumCols() * tileWidth_;
@@ -744,12 +801,11 @@ public class MultiResMultipageTiffStorage {
          int maxResIndex = (int) Math.ceil(Math.log((Math.max(fullResPixelWidth, fullResPixelHeight)
                  / 4)) / Math.log(2));
 
-         
          //Make sure positon manager knows about potential new rows/cols
          posManager_.rowColReceived(row, col);
          addResolutionsUpTo(maxResIndex);
          writeFinishedList.addAll(addToLowResStorage(ti, tIndex, zIndex,
-                 superCIndex, 0, pIndex, row, col));
+                 superChannelNames_.get(superChannelName), 0, axes.get("p"), row, col));
 
          for (Future f : writeFinishedList) {
             f.get();
@@ -759,25 +815,16 @@ public class MultiResMultipageTiffStorage {
       }
    }
 
-   public TaggedImage getImage(int channelIndex, int sliceIndex, int frameIndex, int positionIndex, int resLevel) {
-      if (resLevel == 0) {
-         return fullResStorage_.getImage(channelIndex, sliceIndex, frameIndex, positionIndex);
-      } else {
-         return lowResStorages_.get(resLevel).getImage(channelIndex, sliceIndex, frameIndex, positionIndex);
-      }
-   }
-
-   public TaggedImage getImage(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
+   @Override
+   public TaggedImage getImage(HashMap<String, Integer> axes) {
+      //Convert axes to the 4 axes used by underlying storage by adding in
+      //p z t as needed and converting c + remaining to superchannel
+      int frame = axes.containsKey("t") ? axes.get("t") : 0;
+      int slice = axes.containsKey("z") ? axes.get("z") : 0;
+      int position = axes.containsKey("p") ? axes.get("p") : 0;
+      int superChannel = superChannelNames_.get(getSuperChannelName(axes));
       //return a single tile from the full res image
-      return fullResStorage_.getImage(channelIndex, sliceIndex, frameIndex, positionIndex);
-   }
-
-   private JSONObject getImageTags(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
-      return getImage(channelIndex, sliceIndex, frameIndex, positionIndex).tags;
-   }
-
-   public Set<String> imageKeys() {
-      return fullResStorage_.imageKeys();
+      return fullResStorage_.getImage(superChannel, slice, frame, position);
    }
 
    public void finishedWriting() {
@@ -876,7 +923,7 @@ public class MultiResMultipageTiffStorage {
       return prefix + "_" + (1 + curIndex);
    }
 
-   private int getCurrentMaxDirIndex(File rootDir, String prefix) throws NumberFormatException {
+   private static int getCurrentMaxDirIndex(File rootDir, String prefix) throws NumberFormatException {
       int maxNumber = 0;
       int number;
       String theName;
@@ -902,7 +949,6 @@ public class MultiResMultipageTiffStorage {
 
    /**
     *
-    * @param sliceIndex
     * @return set of points (col, row) with indices of tiles that have been
     * added at this slice index
     */
@@ -918,11 +964,10 @@ public class MultiResMultipageTiffStorage {
             return 0;
          }
       });
-      Set<String> keys = new TreeSet<String>(imageKeys());
-      for (String s : keys) {
-         int[] indices = StorageMD.getIndices(s);
-         if (indices[1] == sliceIndex) {
-            exploredTiles.add(new Point((int) posManager_.getGridCol(indices[3], 0), (int) posManager_.getGridRow(indices[3], 0)));
+      for (HashMap<String, Integer> s : imageAxes_) {
+         if (s.get("z") == sliceIndex) {
+            exploredTiles.add(new Point((int) posManager_.getGridCol(s.get("p"), 0),
+                    (int) posManager_.getGridRow(s.get("p"), 0)));
          }
 
       }
@@ -937,26 +982,9 @@ public class MultiResMultipageTiffStorage {
       return posManager_.getMinCol();
    }
 
-   /**
-    * Needed for loading data on disk
-    *
-    * @return
-    */
-   public List<String> getChannelNames() {
-      List<String> channelNames = new ArrayList<>();
-      Set<String> superChannelIndices = new TreeSet<String>();
-      for (String key : imageKeys()) {
-         String[] indices = key.split("_");
-         if (!superChannelIndices.contains(indices[0])) {
-            superChannelIndices.add(indices[0]);
-            JSONObject tags = getImageTags(
-                    Integer.parseInt(indices[0]), Integer.parseInt(indices[1]),
-                    Integer.parseInt(indices[2]), Integer.parseInt(indices[3]));
-
-            channelNames.add(StorageMD.getChannelName(tags));
-         }
-      }
-      return channelNames;
+   @Override
+   public Set<HashMap<String, Integer>> getAxesSet() {
+      return imageAxes_;
    }
 
 }

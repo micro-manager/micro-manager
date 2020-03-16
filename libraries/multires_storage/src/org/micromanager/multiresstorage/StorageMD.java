@@ -16,8 +16,8 @@ import org.json.JSONObject;
  */
 class StorageMD {
 
-   private static final String CHANNEL_NAME = "MagellanStorageChannelName";
-   private static final String AXES = "AxesPositions";
+   private static final String SUPER_CHANNEL_NAME = "StorageSuperChannelName";
+   private static final String AXES = "ImagrStorageAxesPositions";
    private static final String GRID_COL = "GridColumnIndex";
    private static final String GRID_ROW = "GridRowIndex";
    private static final String OVERLAP_X = "GridPixelOverlapX";
@@ -74,15 +74,15 @@ class StorageMD {
 
    public static String getChannelName(JSONObject map) {
       try {
-         return map.getString(CHANNEL_NAME);
+         return map.getString(SUPER_CHANNEL_NAME);
       } catch (JSONException ex) {
          throw new RuntimeException("Missing channel index tag");
       }
    }
 
-   public static void setChannelName(JSONObject map, String channelName) {
+   public static void setSuperChannelName(JSONObject map, String channelName) {
       try {
-         map.put(CHANNEL_NAME, channelName);
+         map.put(SUPER_CHANNEL_NAME, channelName);
       } catch (JSONException ex) {
          throw new RuntimeException("Couldn't set channel index");
       }
@@ -98,6 +98,22 @@ class StorageMD {
             axesMap.put(key, axes.getInt(key));
          }
          return axesMap;
+      } catch (JSONException ex) {
+         throw new RuntimeException("couldnt create axes");
+      }
+   }
+   
+      public static void createAxes(JSONObject tags) {
+      try {
+         tags.put(AXES, new JSONObject());
+      } catch (JSONException ex) {
+         throw new RuntimeException("couldnt create axes");
+      }
+   }
+
+   public static void setAxisPosition(JSONObject tags, String axis, int position) {
+      try {
+         tags.getJSONObject(AXES).put(axis, position);
       } catch (JSONException ex) {
          throw new RuntimeException("couldnt create axes");
       }

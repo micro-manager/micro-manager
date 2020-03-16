@@ -14,7 +14,7 @@ import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import javax.swing.JPanel;
-import org.micromanager.multiresviewer.NDViewer;
+import org.micromanager.ndviewer.main.NDViewer;
 import org.micromanager.ndviewer.overlay.Overlay;
 import org.micromanager.ndviewer.overlay.Roi;
 

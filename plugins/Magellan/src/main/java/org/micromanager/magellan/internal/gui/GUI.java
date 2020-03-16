@@ -62,7 +62,7 @@ import org.micromanager.magellan.internal.channels.MagellanChannelGroupSettings;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.GlobalSettings;
 import org.micromanager.magellan.internal.misc.JavaUtils;
-import org.micromanager.magellan.internal.misc.LoadedAcquisitionData;
+import org.micromanager.magellan.internal.magellanacq.LoadedAcquisitionData;
 import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridManager;
 import org.micromanager.propertymap.MutablePropertyMapView;

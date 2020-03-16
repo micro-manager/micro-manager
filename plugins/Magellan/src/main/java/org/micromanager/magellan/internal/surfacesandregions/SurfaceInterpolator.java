@@ -411,8 +411,9 @@ public abstract class SurfaceInterpolator extends XYFootprint {
                  Point2D.Double stagePos = new Point2D.Double();
                  transform.transform(pixelPos, stagePos);
                  AffineTransform posTransform = affineTransformUtils.getAffineTransform( stagePos.x, stagePos.y);
-                 positions.add(new XYStagePosition( stagePos, tileWidthMinusOverlap, tileHeightMinusOverlap,
-                         fullTileWidth, fullTileHeight, row, col, posTransform));
+                 positions.add(new XYStagePosition( stagePos,
+                         fullTileWidth, fullTileHeight, 
+                         overlapX, overlapY, row, col, posTransform));
              }
          } else {
             for (int row = numRows_-1; row >= 0; row--) {

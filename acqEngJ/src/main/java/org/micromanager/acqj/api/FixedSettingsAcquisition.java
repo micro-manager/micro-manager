@@ -1,7 +1,10 @@
 package org.micromanager.acqj.api;
 
 import java.util.Iterator;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.micromanager.acqj.internal.acqengj.AcquisitionBase;
 import org.micromanager.acqj.internal.acqengj.Engine;
 import org.micromanager.acqj.internal.acqengj.MinimalAcquisitionSettings;
@@ -20,7 +23,8 @@ import org.micromanager.acqj.internal.acqengj.MinimalAcquisitionSettings;
  */
 public abstract class FixedSettingsAcquisition extends AcquisitionBase {
 
-   private Future acqFuture_, acqFinishedFuture_;
+   private Future acqFuture_;
+   private volatile boolean aborted_ = false;
 
    public FixedSettingsAcquisition(MinimalAcquisitionSettings settings, DataSink sink) {
       super(settings, sink);
@@ -41,7 +45,11 @@ public abstract class FixedSettingsAcquisition extends AcquisitionBase {
    protected abstract Iterator<AcquisitionEvent> buildAcqEventGenerator();
 
    @Override
-   public void abort() {
+   public synchronized void abort() {
+      if (aborted_) {
+         return;
+      }
+      aborted_ = true;
       if (this.isPaused()) {
          this.togglePaused();
       }
@@ -51,19 +59,12 @@ public abstract class FixedSettingsAcquisition extends AcquisitionBase {
    }
 
    @Override
-   public void waitForCompletion() {
+   public void close() {
       if (acqFuture_ == null) {
          //it was never successfully started
          return;
       }
-      //wait for event generation to shut down
-      while (!acqFinishedFuture_.isDone()) {
-         try {
-            Thread.sleep(1);
-         } catch (InterruptedException ex) {
-            throw new RuntimeException("Interrupted while waiting to cancel");
-         }
-      }
+      super.close();
    }
 
 }

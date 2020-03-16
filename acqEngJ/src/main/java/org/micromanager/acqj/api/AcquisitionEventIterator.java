@@ -50,7 +50,7 @@ public class AcquisitionEventIterator implements Iterator<AcquisitionEvent> {
             currentLeaf_ = currentLeaf_.parent;
             if (currentLeaf_ == null) {
                eventsExhausted_ = true;
-               System.out.println(next);
+//               System.out.println(next);
                if (eventMonitorFunction_ == null) {
                   return next;
                }
@@ -59,7 +59,7 @@ public class AcquisitionEventIterator implements Iterator<AcquisitionEvent> {
          }
          descendNewBranch();
       }
-      System.out.println(next);
+//      System.out.println(next);
       if (eventMonitorFunction_ == null) {
          return next;
       }

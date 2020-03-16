@@ -14,25 +14,24 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.multiresviewer;
+package org.micromanager.ndviewer.internal.gui;
 
 import org.micromanager.ndviewer.internal.gui.DataViewCoords;
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Point;
 import java.awt.geom.Point2D;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JPanel;
+import org.micromanager.ndviewer.main.NDViewer;
 import org.micromanager.ndviewer.overlay.Overlay;
 import org.micromanager.ndviewer.overlay.Roi;
 import org.micromanager.ndviewer.overlay.TextRoi;
+import org.micromanager.ndviewer.api.OverlayerPlugin;
 
 /**
  * Class that encapsulates calculation of overlays for DisplayPlus
@@ -44,7 +43,7 @@ public class BaseOverlayer {
    private ExecutorService taskExecutor_;
    private Future currentTask_;
    private NDViewer display_;
-   private volatile boolean showScalebar_ = false;
+   private volatile boolean showScalebar_ = false, showTimeLabel_ = false, showZLabel_ = false;
 
    public BaseOverlayer(NDViewer display) {
       display_ = display;
@@ -65,9 +64,10 @@ public class BaseOverlayer {
    public void shutdown() {
       taskExecutor_.shutdownNow();
    }
+   
 
    //always try to cancel the previous task, assuming it is being replaced with a more current one
-   public synchronized void redrawOverlay(DataViewCoords viewCoords) {
+   public synchronized void createOverlay(DataViewCoords viewCoords, OverlayerPlugin overlayerPlugin) {
       if (currentTask_ != null && !currentTask_.isDone()) {
          //cancel current surface calculation--this call does not block until complete
          currentTask_.cancel(true);
@@ -78,22 +78,30 @@ public class BaseOverlayer {
          public void run() {
             Overlay defaultOverlay = createDefaultOverlay(viewCoords);
 
-            display_.setOverlay(defaultOverlay);
-
-            //TODO: now add in fancy overlay stuff
+            if (overlayerPlugin != null) {
+               try {
+                  overlayerPlugin.drawOverlay(defaultOverlay, viewCoords.getDisplayImageSize(),
+                          viewCoords.getDownsampleFactor(), display_.getCanvasJPanel().getGraphics(),
+                          viewCoords.getAxesPositions(), viewCoords.getMagnification(), viewCoords.getViewOffset());
+               } catch (InterruptedException ex) {
+                  return; // Interrupted to start a new one
+               }
+            } else {
+               display_.setOverlay(defaultOverlay);
+            }
          }
       });
    }
 
    private void addScaleBar(Overlay overlay, DataViewCoords viewCoords) {
-      int fontSize = 18;
+      int fontSize = 24;
       int scaleBarWidth = 100;
       Font font = new Font("Arial", Font.BOLD, fontSize);
       float textHeight = 0;
       float textWidth = 0;
 
       double pixelSize = display_.getPixelSize();
-      pixelSize /= viewCoords.getDisplayToFullScaleFactor();
+      pixelSize /= viewCoords.getMagnification();
       double barSize = pixelSize * scaleBarWidth;
       String text = ((int) Math.round(barSize)) + " \u00B5" + "m";
 
@@ -103,14 +111,52 @@ public class BaseOverlayer {
       textWidth = Math.max(textWidth, canvas.getGraphics().getFontMetrics().stringWidth(text));
 
       TextRoi troi = new TextRoi(canvas.getBounds().width - 100,
-              viewCoords.getDisplayImageSize().y - 70, text, font);
+              30, text, font);
       troi.setStrokeColor(Color.white);
       overlay.add(troi);
 
       Roi outline = new Roi(canvas.getBounds().width - 125,
-              viewCoords.getDisplayImageSize().y - 70 + textHeight + 8, scaleBarWidth, 15);
+              30 + textHeight + 8, scaleBarWidth, 15);
       outline.setFillColor(Color.white);
       overlay.add(outline);
+   }
+
+   private void addZLabel(Overlay overlay, DataViewCoords viewCoords) {
+      int fontSize = 24;
+      Font font = new Font("Arial", Font.BOLD, fontSize);
+      float textHeight = 0;
+      float textWidth = 0;
+
+      String text = display_.getCurrentZPosition();
+
+      JPanel canvas = display_.getCanvasJPanel();
+      textHeight = Math.max(textHeight, canvas.getGraphics().getFontMetrics(font
+      ).getLineMetrics(text, canvas.getGraphics()).getHeight());
+      textWidth = Math.max(textWidth, canvas.getGraphics().getFontMetrics().stringWidth(text));
+
+      TextRoi troi = new TextRoi(canvas.getBounds().width - textWidth - 80,
+              viewCoords.getDisplayImageSize().y - 50, text, font);
+      troi.setStrokeColor(Color.white);
+      overlay.add(troi);
+   }
+
+   private void addTimeLabel(Overlay overlay, DataViewCoords viewCoords) {
+      int fontSize = 24;
+      Font font = new Font("Arial", Font.BOLD, fontSize);
+      float textHeight = 0;
+      float textWidth = 0;
+
+      String text = display_.getCurrentT();
+
+      JPanel canvas = display_.getCanvasJPanel();
+      textHeight = Math.max(textHeight, canvas.getGraphics().getFontMetrics(font
+      ).getLineMetrics(text, canvas.getGraphics()).getHeight());
+      textWidth = Math.max(textWidth, canvas.getGraphics().getFontMetrics().stringWidth(text));
+
+      TextRoi troi = new TextRoi(20,
+              viewCoords.getDisplayImageSize().y - 50, text, font);
+      troi.setStrokeColor(Color.white);
+      overlay.add(troi);
    }
 
    private void addTextBox(String[] text, Overlay overlay) {
@@ -142,14 +188,19 @@ public class BaseOverlayer {
       }
    }
 
- 
-   public Overlay createDefaultOverlay(DataViewCoords viewCoords) {
+   private Overlay createDefaultOverlay(DataViewCoords viewCoords) {
       Overlay overlay = new Overlay();
       if (display_.isImageXYBounded()) {
          drawZoomIndicator(overlay, viewCoords);
       }
       if (showScalebar_) {
          addScaleBar(overlay, viewCoords);
+      }
+      if (showTimeLabel_) {
+         addTimeLabel(overlay, viewCoords);
+      }
+      if (showZLabel_) {
+         addZLabel(overlay, viewCoords);
       }
       return overlay;
    }
@@ -159,7 +210,7 @@ public class BaseOverlayer {
       long fullResHeight = viewCoords.yMax_ - viewCoords.yMin_;
       long fullResWidth = viewCoords.xMax_ - viewCoords.xMin_;
 
-      Point2D.Double sourceDataSize = viewCoords.getSourceDataSize();
+      Point2D.Double sourceDataSize = viewCoords.getFullResSourceDataSize();
       int outerHeight = (int) ((double) fullResHeight / (double) fullResWidth * outerWidth);
       //draw outer rectangle representing full image
       Roi outerRect = new Roi(10, 10, outerWidth, outerHeight);
@@ -175,6 +226,14 @@ public class BaseOverlayer {
          overlay.add(outerRect);
          overlay.add(innerRect);
       }
+   }
+
+   public void setShowTimeLabel(boolean selected) {
+      showTimeLabel_ = selected;
+   }
+
+   public void setShowZPosition(boolean selected) {
+      showZLabel_ = selected;
    }
 
 }

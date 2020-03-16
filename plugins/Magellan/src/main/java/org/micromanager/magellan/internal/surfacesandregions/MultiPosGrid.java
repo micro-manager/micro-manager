@@ -90,8 +90,8 @@ public class MultiPosGrid extends XYFootprint {
                Point2D.Double stagePos = new Point2D.Double();
                transform.transform(pixelPos, stagePos);
                AffineTransform posTransform = affineTransformUtils.getAffineTransform(stagePos.x, stagePos.y);
-               positions.add(new XYStagePosition(stagePos, tileWidthMinusOverlap, tileHeightMinusOverlap,
-                       fullTileWidth, fullTileHeight, row, col, posTransform));
+               positions.add(new XYStagePosition(stagePos, fullTileWidth, fullTileHeight, 
+                       overlapX_, overlapY_, row, col, posTransform));
             }
          }
          return positions;
@@ -120,8 +120,9 @@ public class MultiPosGrid extends XYFootprint {
                         Point2D.Double stagePos = new Point2D.Double();
                         transform.transform(pixelPos, stagePos);
                         AffineTransform posTransform = affineTransformUtils.getAffineTransform(stagePos.x, stagePos.y);
-                        positions.add(new XYStagePosition( stagePos, tileWidthMinusOverlap, tileHeightMinusOverlap,
-                                fullTileWidth, fullTileHeight, row, col, posTransform));
+                        positions.add(new XYStagePosition( stagePos, 
+                                fullTileWidth, fullTileHeight, 
+                                overlapX_, overlapY_, row, col, posTransform));
                     }
                 } else {  
                     for (int row = rows_ - 1; row >= 0; row--) {
@@ -130,8 +131,9 @@ public class MultiPosGrid extends XYFootprint {
                         Point2D.Double stagePos = new Point2D.Double();
                         transform.transform(pixelPos, stagePos);
                         AffineTransform posTransform = affineTransformUtils.getAffineTransform( stagePos.x, stagePos.y);
-                        positions.add(new XYStagePosition(stagePos, tileWidthMinusOverlap, tileHeightMinusOverlap,
-                                fullTileWidth, fullTileHeight, row, col, posTransform));
+                        positions.add(new XYStagePosition(stagePos, 
+                                fullTileWidth, fullTileHeight, 
+                                overlapX_, overlapY_, row, col, posTransform));
                     }
                 }
          }    

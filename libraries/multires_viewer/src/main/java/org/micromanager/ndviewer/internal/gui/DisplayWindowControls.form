@@ -17,10 +17,12 @@
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" attributes="0">
-              <Component id="tabbedPane_" min="-2" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="tabbedPane_" min="-2" max="-2" attributes="0"/>
+                  <Component id="topControlPanel_" min="-2" max="-2" attributes="0"/>
+              </Group>
               <EmptySpace max="32767" attributes="0"/>
           </Group>
-          <Component id="topControlPanel_" min="-2" max="-2" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
@@ -78,7 +80,7 @@
             </DimensionLayout>
             <DimensionLayout dim="1">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="metadataPanelMagellan_" alignment="0" pref="461" max="32767" attributes="0"/>
+                  <Component id="metadataPanelMagellan_" alignment="0" pref="615" max="32767" attributes="0"/>
               </Group>
             </DimensionLayout>
           </Layout>
@@ -95,26 +97,19 @@
         <DimensionLayout dim="0">
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" attributes="0">
-                  <EmptySpace pref="13" max="32767" attributes="0"/>
-                  <Group type="103" groupAlignment="0" attributes="0">
-                      <Group type="102" alignment="1" attributes="0">
-                          <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="elapsedTimeLabel_" min="-2" pref="286" max="-2" attributes="0"/>
-                              <Component id="zPosLabel_" min="-2" pref="299" max="-2" attributes="0"/>
-                          </Group>
-                          <EmptySpace min="-2" pref="344" max="-2" attributes="0"/>
-                      </Group>
-                      <Group type="102" alignment="1" attributes="0">
-                          <Component id="fpsLabel_" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="animationFPSSpinner_" min="-2" pref="45" max="-2" attributes="0"/>
-                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                          <Component id="lockScrollbarsCheckBox_" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="scaleBarCheckBox_" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace min="-2" pref="41" max="-2" attributes="0"/>
-                      </Group>
-                  </Group>
+                  <EmptySpace min="-2" pref="116" max="-2" attributes="0"/>
+                  <Component id="fpsLabel_" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Component id="animationFPSSpinner_" min="-2" pref="45" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Component id="lockScrollbarsCheckBox_" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                  <Component id="scaleBarCheckBox_" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Component id="timeCheckBox_" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Component id="zPositiionCheckBox_" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="32767" attributes="0"/>
               </Group>
               <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
@@ -133,21 +128,15 @@
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" alignment="0" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="0" attributes="0">
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="animationFPSSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="fpsLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <Group type="103" alignment="0" groupAlignment="3" attributes="0">
-                          <Component id="lockScrollbarsCheckBox_" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="scaleBarCheckBox_" alignment="3" min="-2" max="-2" attributes="0"/>
-                      </Group>
+                  <Group type="103" groupAlignment="3" attributes="0">
+                      <Component id="animationFPSSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="fpsLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="lockScrollbarsCheckBox_" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="scaleBarCheckBox_" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="timeCheckBox_" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="zPositiionCheckBox_" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace pref="16" max="32767" attributes="0"/>
-                  <Component id="elapsedTimeLabel_" min="-2" pref="27" max="-2" attributes="0"/>
-                  <EmptySpace max="-2" attributes="0"/>
-                  <Component id="zPosLabel_" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace min="-2" pref="16" max="-2" attributes="0"/>
+                  <EmptySpace max="32767" attributes="0"/>
               </Group>
               <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
@@ -157,7 +146,7 @@
                           <Component id="abortButton_" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="pauseButton_" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="77" max="32767" attributes="0"/>
+                      <EmptySpace pref="16" max="32767" attributes="0"/>
                   </Group>
               </Group>
           </Group>
@@ -221,22 +210,28 @@
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="lockScrollbarsCheckBox_ActionPerformed"/>
           </Events>
         </Component>
-        <Component class="javax.swing.JLabel" name="elapsedTimeLabel_">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Elapsed time (TODO move): "/>
-          </Properties>
-        </Component>
-        <Component class="javax.swing.JLabel" name="zPosLabel_">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Display Z position: "/>
-          </Properties>
-        </Component>
         <Component class="javax.swing.JCheckBox" name="scaleBarCheckBox_">
           <Properties>
             <Property name="text" type="java.lang.String" value="Scale Bar"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="scaleBarCheckBox_ActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JCheckBox" name="timeCheckBox_">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Time"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="timeCheckBox_ActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JCheckBox" name="zPositiionCheckBox_">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Z position"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="zPositiionCheckBox_ActionPerformed"/>
           </Events>
         </Component>
       </SubComponents>

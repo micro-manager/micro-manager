@@ -6,10 +6,12 @@
 package org.micromanager.acqj.api;
 
 import org.json.JSONObject;
+import org.micromanager.acqj.api.ChannelGroupSettings;
+import org.micromanager.acqj.internal.acqengj.MinimalAcquisitionSettings;
 import org.micromanager.acqj.internal.acqengj.MinimalAcquisitionSettings;
 
 /**
- * TODO: fill out this interface. What about metadata stuff?
+ * General interface for acquisitions
  * 
  * @author henrypinkard
  */
@@ -28,9 +30,11 @@ public interface Acquisition {
    public void abort();
    
    /**
-    * Block until acquisition finished and all resources complete
+    * Block until acquisition finished and all resources complete. This should
+    * always be called at the end of an acquisition to ensure that any exceptions
+    * in the saving and processing during shutdown get cleared
     */
-   public void waitForCompletion();
+   public void close();
    
    /**
     * returns true if all data has been collected that will be collected
@@ -74,11 +78,6 @@ public interface Acquisition {
     */
    public boolean anythingAcquired();
    
-   /**
-    * Should be called by the data sink when it closes
-    */
-   public void onDataSinkClosing();
-
    /**
     * TODO: delete this one?
     * @return 

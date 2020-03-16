@@ -60,7 +60,7 @@ public class MagellanGUIAcquisition extends FixedSettingsAcquisition implements 
     * @throws java.lang.Exception
     */
    public MagellanGUIAcquisition(MagellanGUIAcquisitionSettings settings) {
-      super(settings, new MagellanImageCache(settings.dir_, true));
+      super(settings, new MagellanDataManager(settings.dir_, true));
    }
 
    @Override
@@ -135,8 +135,9 @@ public class MagellanGUIAcquisition extends FixedSettingsAcquisition implements 
          }
          acqFunctions.add(MagellanZStack());
       }
-
-      return new AcquisitionEventIterator(new AcquisitionEvent(this), acqFunctions, monitorSliceIndices());
+      AcquisitionEvent baseEvent = new AcquisitionEvent(this);
+      baseEvent.setAxisPosition(MagellanMD.POSITION_AXIS, 0);
+      return new AcquisitionEventIterator(baseEvent, acqFunctions, monitorSliceIndices());
    }
 
    @Override
@@ -167,7 +168,7 @@ public class MagellanGUIAcquisition extends FixedSettingsAcquisition implements 
    }
 
    @Override
-   public double getZCoordinateOfDisplaySlice(int displaySliceIndex) {
+   public double getZCoordOfNonnegativeZIndex(int displaySliceIndex) {
       displaySliceIndex += minSliceIndex_;
       return zOrigin_ + zStep_ * displaySliceIndex;
    }
@@ -367,11 +368,10 @@ public class MagellanGUIAcquisition extends FixedSettingsAcquisition implements 
             positions_ = new ArrayList<XYStagePosition>();
             int fullTileWidth = (int) Magellan.getCore().getImageWidth();
             int fullTileHeight = (int) Magellan.getCore().getImageHeight();
-            int tileWidthMinusOverlap = fullTileWidth - overlapX_;
-            int tileHeightMinusOverlap = fullTileHeight - overlapY_;
-            positions_.add(new XYStagePosition(new Point2D.Double(Magellan.getCore().getXPosition(), Magellan.getCore().getYPosition()),
-                    tileWidthMinusOverlap, tileHeightMinusOverlap,
-                    fullTileWidth, fullTileHeight, 0, 0, affineTransformUtils.getAffineTransform(
+            positions_.add(new XYStagePosition(new Point2D.Double(
+                    Magellan.getCore().getXPosition(), Magellan.getCore().getYPosition()),
+                    fullTileWidth, fullTileHeight, 
+                    overlapX_, overlapY_, 0, 0, affineTransformUtils.getAffineTransform(
                             Magellan.getCore().getXPosition(), Magellan.getCore().getXPosition())));
          } else {
             positions_ = ((MagellanGUIAcquisitionSettings) settings_).xyFootprint_.getXYPositions(((MagellanGUIAcquisitionSettings) settings_).tileOverlap_);
@@ -403,6 +403,11 @@ public class MagellanGUIAcquisition extends FixedSettingsAcquisition implements 
    @Override
    public int getOverlapY() {
       return overlapY_;
+   }
+
+   @Override
+   public double getZStep() {
+      return zStep_;
    }
 
 

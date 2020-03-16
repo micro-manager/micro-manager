@@ -47,7 +47,7 @@ public class PixelStageTranslator {
       overlapX_ = overlapX;
       overlapY_ = overlapY;
    }
-
+   
    /**
     *
     * @param xAbsolute x coordinate in the full Res stitched image
@@ -123,8 +123,8 @@ public class PixelStageTranslator {
          AffineTransform transform = new AffineTransform(mat[0], mat[1], mat[2], mat[3], posCenter.x, posCenter.y);
          int gridRow = (int) MagellanMD.getGridRow(positionList_.getJSONObject(index));
          int gridCol = (int) MagellanMD.getGridCol(positionList_.getJSONObject(index));
-         return new XYStagePosition(posCenter, displayTileWidth_, displayTileHeight_,
-                 tileWidth_, tileHeight_, gridRow, gridCol, transform);
+         return new XYStagePosition(posCenter, tileWidth_, tileHeight_, 
+                 overlapX_, overlapY_, gridRow, gridCol, transform);
       } catch (JSONException ex) {
          throw new RuntimeException("problem with position metadata");
       }

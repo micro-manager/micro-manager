@@ -114,7 +114,10 @@ public class AcqEventModules {
    }
 
    /**
-    * Iterate over an arbitrary list of positions
+    * Iterate over an arbitrary list of positions. Adds in postition indices
+    * to the axes that assumer the order in the list provided correspond to
+    * the desired indices
+    * 
     * @param positions
     * @return
     */
@@ -127,6 +130,7 @@ public class AcqEventModules {
             for (int index = 0; index < positions.size(); index++) {
                AcquisitionEvent posEvent = event.copy();
                posEvent.setXY( positions.get(index));
+               event.setAxisPosition(AcqEngMetadata.POSITION_AXIS, index);
                builder.accept(posEvent);
             }
          }
@@ -150,8 +154,8 @@ public class AcqEventModules {
          int fullTileHeight = (int) Engine.getCore().getImageHeight();
          int overlapX = (int) (Engine.getCore().getImageWidth() * tileOverlapPercent);
          int overlapY = (int) (Engine.getCore().getImageHeight() * tileOverlapPercent);
-         int tileWidthMinusOverlap = fullTileWidth - overlapX;
          int tileHeightMinusOverlap = fullTileHeight - overlapY;
+         int tileWidthMinusOverlap = fullTileWidth - overlapX;
          for (int col = 0; col < numCols; col++) {
             double xPixelOffset = (col - (numCols - 1) / 2.0) * tileWidthMinusOverlap;
             //add in snaky behavior
@@ -162,8 +166,9 @@ public class AcqEventModules {
                         Point2D.Double stagePos = new Point2D.Double();
                         transform.transform(pixelPos, stagePos);
                         AffineTransform posTransform = affineTransformUtils.getAffineTransform(stagePos.x, stagePos.y);
-                        positions.add(new XYStagePosition(stagePos, tileWidthMinusOverlap, tileHeightMinusOverlap,
-                                fullTileWidth, fullTileHeight, row, col, posTransform));
+                        positions.add(new XYStagePosition(stagePos, 
+                                fullTileWidth, fullTileHeight, overlapX, overlapY, 
+                                row, col, posTransform));
                     }
                 } else {  
                     for (int row = numRows - 1; row >= 0; row--) {
@@ -172,8 +177,9 @@ public class AcqEventModules {
                         Point2D.Double stagePos = new Point2D.Double();
                         transform.transform(pixelPos, stagePos);
                         AffineTransform posTransform = affineTransformUtils.getAffineTransform( stagePos.x, stagePos.y);
-                        positions.add(new XYStagePosition(stagePos, tileWidthMinusOverlap, tileHeightMinusOverlap,
-                                fullTileWidth, fullTileHeight, row, col, posTransform));
+                        positions.add(new XYStagePosition(stagePos, 
+                                fullTileWidth, fullTileHeight, 
+                                overlapX, overlapY, row, col, posTransform));
                     }
                 }
          }    

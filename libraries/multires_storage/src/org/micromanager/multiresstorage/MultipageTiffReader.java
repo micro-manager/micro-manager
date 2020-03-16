@@ -131,11 +131,7 @@ public class MultipageTiffReader {
             imageHeight_ = (int) data.height;
             byteDepth_ = (int) (data.bytesPerImage / (imageHeight_ * imageWidth_));
       
-//      try {
-//         displaySettings_ = readDisplaySettings();
-//      } catch (Exception ex) {
-//         throw new RuntimeException("Problem with JSON Representation of Display settings");
-//      }
+         displaySettings_ = readDisplaySettings();
 
 //      if (summaryMetadata_ != null) {
 //         getRGBAndByteDepth(summaryMetadata_);

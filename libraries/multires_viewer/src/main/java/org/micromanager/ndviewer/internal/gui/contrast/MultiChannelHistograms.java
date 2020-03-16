@@ -26,9 +26,8 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.util.HashMap;
 import javax.swing.JPanel;
-import org.micromanager.multiresviewer.DisplaySettings;
-import org.micromanager.multiresviewer.NDViewer;
-import org.micromanager.multiresviewer.NDViewer;
+import org.micromanager.ndviewer.main.NDViewer;
+import org.micromanager.ndviewer.main.NDViewer;
 
 
 final class MultiChannelHistograms extends JPanel {
@@ -39,12 +38,10 @@ final class MultiChannelHistograms extends JPanel {
    private ContrastPanel contrastPanel_;
    private DisplaySettings dispSettings_;
 
-   public MultiChannelHistograms(NDViewer disp, ContrastPanel contrastPanel,
-           DisplaySettings dispSettings) {
+   public MultiChannelHistograms(NDViewer disp, ContrastPanel contrastPanel) {
       super();
       display_ = disp;
 //      display_.registerForEvents(this);
-      dispSettings_ = dispSettings;
 
       this.setLayout(new GridLayout(1, 1));
       contrastPanel_ = contrastPanel;
@@ -79,6 +76,9 @@ final class MultiChannelHistograms extends JPanel {
 //         nChannels *= 3;
 //      }
 
+      dispSettings_ = display_.getDisplaySettingsObject();
+      //refresh display settings
+
       Color color;
       try {
          color = dispSettings_.getColor(channelName);
@@ -93,7 +93,7 @@ final class MultiChannelHistograms extends JPanel {
          ex.printStackTrace();
          bitDepth = 16;
       }
-
+      
       //create new channel control panels as needed
       ChannelControlPanel ccp = new ChannelControlPanel(display_, contrastPanel_, channelName, color, bitDepth);
       ccpList_.put(channelName, ccp);

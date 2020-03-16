@@ -40,8 +40,7 @@ public class PositionManager {
    //Map of Res level to set of nodes
    private TreeMap<Integer, TreeSet<MultiResPositionNode>> positionNodes_;
 
-   public PositionManager(int displayTileWidth, int displayTileHeight,
-           int fullTileWidth, int fullTileHeight, int overlapX, int overlapY) {
+   public PositionManager() {
       positionNodes_ = new TreeMap<Integer, TreeSet<MultiResPositionNode>>();
       minRow_ = 0;
       maxRow_ = 0;
@@ -55,8 +54,7 @@ public class PositionManager {
    /**
     * constructor to read data from disk
     */
-   public PositionManager(int displayTileWidth, int displayTileHeight,
-           int fullTileWidth, int fullTileHeight, int overlapX, int overlapY, JSONArray initialPosList, int maxResLevel) {
+   public PositionManager(JSONArray initialPosList, int maxResLevel) {
       positionNodes_ = new TreeMap<Integer, TreeSet<MultiResPositionNode>>();
       minRow_ = 0;
       maxRow_ = 0;

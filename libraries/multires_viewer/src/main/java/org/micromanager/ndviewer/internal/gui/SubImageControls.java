@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import javax.swing.JPanel;
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.multiresviewer.NDViewer;
+import org.micromanager.ndviewer.main.NDViewer;
 
 
 /**
@@ -73,10 +73,6 @@ class SubImageControls extends JPanel {
 
    public void superLockAllScroller() {
       scrollerPanel_.superlockAllScrollers();
-   }
-
-   public void setAnimateFPS(double fps) {
-      scrollerPanel_.setFramesPerSecond(fps);
    }
 
    void expandDisplayedRangeToInclude(List<HashMap<String, Integer>> newIamgeEvents,

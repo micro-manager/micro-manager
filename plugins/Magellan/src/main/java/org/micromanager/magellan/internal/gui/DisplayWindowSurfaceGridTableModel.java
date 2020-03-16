@@ -15,7 +15,7 @@ import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridListener
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridManager;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceInterpolator;
 import org.micromanager.magellan.internal.surfacesandregions.XYFootprint;
-import org.micromanager.multiresviewer.NDViewer;
+import org.micromanager.ndviewer.main.NDViewer;
 
 /**
  *
@@ -28,23 +28,16 @@ import org.micromanager.multiresviewer.NDViewer;
    private volatile HashMap<XYFootprint, Boolean> showSurfaceOrGridMap = new HashMap<XYFootprint, Boolean>();
 
    private SurfaceGridManager manager_ = SurfaceGridManager.getInstance();
-   private NDViewer display_;
+   private MagellanViewer display_;
    
-   public DisplayWindowSurfaceGridTableModel(NDViewer disp) {
+   public DisplayWindowSurfaceGridTableModel(MagellanViewer disp) {
       display_ = disp;
       manager_.registerSurfaceGridListener(this);
       for (int i = 0; i < manager_.getNumberOfGrids() + manager_.getNumberOfSurfaces(); i++) {
          showSurfaceOrGridMap.put(manager_.getSurfaceOrGrid(i), Boolean.TRUE);
       }
    }
-   
-   //TODO: no subscriptions here. what is the purpose
-//   @Subscribe
-//   public void onDisplayClose(DisplayClosingEvent e) {
-//      manager_.unregisterSurfaceGridListener(this);
-//      display_.unregisterForEvents(this);
-//      display_ = null;
-//   }
+  
 
    public boolean isSurfaceOrGridVisible(int index) {
       return showSurfaceOrGridMap.get(manager_.getSurfaceOrGrid(index));

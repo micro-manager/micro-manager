@@ -6,10 +6,14 @@
 package org.micromanager.ndviewer.api;
 
 /**
- *
+ * This interface is used to pass an acquisition to the viewer, so
+ * that its controls for pausing, aborting, and close can be used
+ * This is optional functionality, as the viewer doesn't need 
+ * an acqusition to work
+ * 
  * @author henrypinkard
  */
-public interface AcquisitionPlugin {
+public interface AcquisitionInterface {
 
    public boolean isComplete();
 
@@ -18,5 +22,7 @@ public interface AcquisitionPlugin {
    public void togglePaused();
 
    public boolean isPaused();
+
+   public void close();
    
 }

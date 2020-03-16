@@ -12,46 +12,50 @@ import java.util.List;
 import javax.swing.JPanel;
 import javax.swing.event.ListSelectionListener;
 import org.json.JSONObject;
-import org.micromanager.multiresviewer.NDViewer;
-
+import org.micromanager.ndviewer.api.ControlsPanelInterface;
+import org.micromanager.ndviewer.main.NDViewer;
 
 /**
  *
  * @author henrypinkard
  */
-class DisplayWindowControls extends javax.swing.JPanel  {
+class DisplayWindowControls extends javax.swing.JPanel {
 
    private NDViewer display_;
-   private ListSelectionListener surfaceTableListSelectionListener_;
-   private volatile int selectedSurfaceGridIndex_ = -1;
-   private ContrastPanel cpMagellan_;
+ private ContrastPanel cpMagellan_;
+   private ArrayList<ControlsPanelInterface> customPanels_ = new ArrayList<ControlsPanelInterface>();
 
    /**
     * Creates new form DisplayWindowControls
     */
    public DisplayWindowControls(NDViewer disp, List<JPanel> additionalPanels) {
-      //TODO: add these additional panels
       display_ = disp;
       initComponents();
       metadataPanelMagellan_.setSummaryMetadata(disp.getSummaryMD());
       this.setFocusable(false); //think this is good 
 
       //Always start showing contrast
-      tabbedPane_.setSelectedIndex(0); 
+      tabbedPane_.setSelectedIndex(0);
    }
-   
+
+   void addControlPanel(ControlsPanelInterface panel) {
+      tabbedPane_.addTab(panel.getTitle(), (JPanel) panel);
+      customPanels_.add(panel);
+      tabbedPane_.revalidate();
+   }
 
    public void onDisplayClose() {
+      for (int i = 0; i < customPanels_.size(); i++) {
+         customPanels_.get(i).close();
+      }
       cpMagellan_.onDisplayClose();
    }
-
-   //TODO: something like display_.setOverlayMode(DataViewCoords.EXPLORE); on tab change
 
    void updateHistogramData(HashMap<String, int[]> hists, HashMap<String, Integer> mins, HashMap<String, Integer> maxs) {
       cpMagellan_.updateHistogramData(hists, mins, maxs);
    }
 
-   public void addContrastControls( String channelName) {
+   public void addContrastControls(String channelName) {
       cpMagellan_.addContrastControls(channelName);
    }
 
@@ -59,44 +63,12 @@ class DisplayWindowControls extends javax.swing.JPanel  {
       return metadataPanelMagellan_;
    }
 
-   public void onNewImage() {
-      //once there's an image, surfaces and grids are game
-//      tabbedPane_.setEnabledAt(display_.isExploreAcquisiton() ? 2 : 0, true);
-      //TODO: inform panels of sumothing
-   }
-   
    void displaySettingsChanged() {
       cpMagellan_.displaySettingsChanged();
    }
 
-   
    void setImageMetadata(JSONObject imageMD) {
       metadataPanelMagellan_.updateImageMetadata(imageMD);
-      updateStatusLabel(imageMD);
-   }
-
-   private void updateStatusLabel(JSONObject metadata) {
-      if (metadata == null) {
-         return;
-      }
-//      long elapsed = AcqEngMetadata.getElapsedTimeMs(metadata);
-      //TODO: fix
-      long elapsed = 0;
-      long days = elapsed / (60 * 60 * 24 * 1000), hours = elapsed / 60 / 60 / 1000, minutes = elapsed / 60 / 1000, seconds = elapsed / 1000;
-
-      hours = hours % 24;
-      minutes = minutes % 60;
-      seconds = seconds % 60;
-      String h = ("0" + hours).substring(("0" + hours).length() - 2);
-      String m = ("0" + (minutes)).substring(("0" + minutes).length() - 2);
-      String s = ("0" + (seconds)).substring(("0" + seconds).length() - 2);
-      String label = days + ":" + h + ":" + m + ":" + s + " (D:H:M:S)";
-
-      elapsedTimeLabel_.setText("Elapsed time: " + label);
-      
-      //TODO: fix
-      
-//      zPosLabel_.setText("Display Z position: " + AcqEngMetadata.getZPositionUm(metadata) + "um");
    }
 
    /**
@@ -119,9 +91,9 @@ class DisplayWindowControls extends javax.swing.JPanel  {
       fpsLabel_ = new javax.swing.JLabel();
       animationFPSSpinner_ = new javax.swing.JSpinner();
       lockScrollbarsCheckBox_ = new javax.swing.JCheckBox();
-      elapsedTimeLabel_ = new javax.swing.JLabel();
-      zPosLabel_ = new javax.swing.JLabel();
       scaleBarCheckBox_ = new javax.swing.JCheckBox();
+      timeCheckBox_ = new javax.swing.JCheckBox();
+      zPositiionCheckBox_ = new javax.swing.JCheckBox();
 
       tabbedPane_.setToolTipText("");
       tabbedPane_.addChangeListener(new javax.swing.event.ChangeListener() {
@@ -145,7 +117,7 @@ class DisplayWindowControls extends javax.swing.JPanel  {
       );
       metadataPanel_Layout.setVerticalGroup(
          metadataPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addComponent(metadataPanelMagellan_, javax.swing.GroupLayout.DEFAULT_SIZE, 461, Short.MAX_VALUE)
+         .addComponent(metadataPanelMagellan_, javax.swing.GroupLayout.DEFAULT_SIZE, 615, Short.MAX_VALUE)
       );
 
       tabbedPane_.addTab("Metadata", metadataPanel_);
@@ -191,14 +163,24 @@ class DisplayWindowControls extends javax.swing.JPanel  {
          }
       });
 
-      elapsedTimeLabel_.setText("Elapsed time (TODO move): ");
-
-      zPosLabel_.setText("Display Z position: ");
-
       scaleBarCheckBox_.setText("Scale Bar");
       scaleBarCheckBox_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             scaleBarCheckBox_ActionPerformed(evt);
+         }
+      });
+
+      timeCheckBox_.setText("Time");
+      timeCheckBox_.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            timeCheckBox_ActionPerformed(evt);
+         }
+      });
+
+      zPositiionCheckBox_.setText("Z position");
+      zPositiionCheckBox_.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            zPositiionCheckBox_ActionPerformed(evt);
          }
       });
 
@@ -207,22 +189,19 @@ class DisplayWindowControls extends javax.swing.JPanel  {
       topControlPanel_Layout.setHorizontalGroup(
          topControlPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(topControlPanel_Layout.createSequentialGroup()
-            .addContainerGap(13, Short.MAX_VALUE)
-            .addGroup(topControlPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-               .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, topControlPanel_Layout.createSequentialGroup()
-                  .addGroup(topControlPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addComponent(elapsedTimeLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, 286, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(zPosLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, 299, javax.swing.GroupLayout.PREFERRED_SIZE))
-                  .addGap(344, 344, 344))
-               .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, topControlPanel_Layout.createSequentialGroup()
-                  .addComponent(fpsLabel_)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(animationFPSSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                  .addComponent(lockScrollbarsCheckBox_)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(scaleBarCheckBox_)
-                  .addGap(41, 41, 41))))
+            .addGap(116, 116, 116)
+            .addComponent(fpsLabel_)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(animationFPSSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(lockScrollbarsCheckBox_)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(scaleBarCheckBox_)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(timeCheckBox_)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(zPositiionCheckBox_)
+            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
          .addGroup(topControlPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(topControlPanel_Layout.createSequentialGroup()
                .addContainerGap()
@@ -237,18 +216,14 @@ class DisplayWindowControls extends javax.swing.JPanel  {
          topControlPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(topControlPanel_Layout.createSequentialGroup()
             .addContainerGap()
-            .addGroup(topControlPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-               .addGroup(topControlPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                  .addComponent(animationFPSSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addComponent(fpsLabel_))
-               .addGroup(topControlPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                  .addComponent(lockScrollbarsCheckBox_)
-                  .addComponent(scaleBarCheckBox_)))
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 16, Short.MAX_VALUE)
-            .addComponent(elapsedTimeLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(zPosLabel_)
-            .addGap(16, 16, 16))
+            .addGroup(topControlPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+               .addComponent(animationFPSSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+               .addComponent(fpsLabel_)
+               .addComponent(lockScrollbarsCheckBox_)
+               .addComponent(scaleBarCheckBox_)
+               .addComponent(timeCheckBox_)
+               .addComponent(zPositiionCheckBox_))
+            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
          .addGroup(topControlPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(topControlPanel_Layout.createSequentialGroup()
                .addContainerGap()
@@ -256,7 +231,7 @@ class DisplayWindowControls extends javax.swing.JPanel  {
                   .addComponent(showInFolderButton_)
                   .addComponent(abortButton_)
                   .addComponent(pauseButton_))
-               .addContainerGap(77, Short.MAX_VALUE)))
+               .addContainerGap(16, Short.MAX_VALUE)))
       );
 
       javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -273,20 +248,21 @@ class DisplayWindowControls extends javax.swing.JPanel  {
          .addGroup(layout.createSequentialGroup()
             .addComponent(topControlPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(tabbedPane_))
+            .addComponent(tabbedPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 639, Short.MAX_VALUE))
       );
 
       tabbedPane_.getAccessibleContext().setAccessibleName("Contrast");
    }// </editor-fold>//GEN-END:initComponents
 
    private void tabbedPane_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tabbedPane_StateChanged
-      //TODO: fix this
-//      if (display_.isExploreAcquisiton() && exploreButton_.isSelected() && tabbedPane_.getSelectedIndex() == 2) {
-//         exploreButton_.setSelected(false);
-//      } else if (display_.isExploreAcquisiton() && !exploreButton_.isSelected() && tabbedPane_.getSelectedIndex() != 2) {
-//         exploreButton_.setSelected(true);
-//      }
-//      updateMode();
+
+      for (int i = 0; i < customPanels_.size(); i++) {
+         if (tabbedPane_.getSelectedIndex() - 2 == i) {
+            customPanels_.get(i).selected();
+         } else {
+            customPanels_.get(i).deselected();
+         }
+      }
    }//GEN-LAST:event_tabbedPane_StateChanged
 
    private void showInFolderButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showInFolderButton_ActionPerformed
@@ -321,12 +297,21 @@ class DisplayWindowControls extends javax.swing.JPanel  {
       display_.redrawOverlay();
    }//GEN-LAST:event_scaleBarCheckBox_ActionPerformed
 
+   private void timeCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_timeCheckBox_ActionPerformed
+      display_.showTimeLabel(timeCheckBox_.isSelected());
+      display_.redrawOverlay();
+   }//GEN-LAST:event_timeCheckBox_ActionPerformed
+
+   private void zPositiionCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zPositiionCheckBox_ActionPerformed
+      display_.showZPositionLabel(zPositiionCheckBox_.isSelected());
+      display_.redrawOverlay();
+   }//GEN-LAST:event_zPositiionCheckBox_ActionPerformed
+
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JButton abortButton_;
    private javax.swing.JSpinner animationFPSSpinner_;
    private javax.swing.JPanel contrastPanelPanel_;
-   private javax.swing.JLabel elapsedTimeLabel_;
    private javax.swing.JLabel fpsLabel_;
    private javax.swing.JCheckBox lockScrollbarsCheckBox_;
    private org.micromanager.ndviewer.internal.gui.MetadataPanel metadataPanelMagellan_;
@@ -335,8 +320,9 @@ class DisplayWindowControls extends javax.swing.JPanel  {
    private javax.swing.JCheckBox scaleBarCheckBox_;
    private javax.swing.JButton showInFolderButton_;
    private javax.swing.JTabbedPane tabbedPane_;
+   private javax.swing.JCheckBox timeCheckBox_;
    private javax.swing.JPanel topControlPanel_;
-   private javax.swing.JLabel zPosLabel_;
+   private javax.swing.JCheckBox zPositiionCheckBox_;
    // End of variables declaration//GEN-END:variables
 
 }
