@@ -1,6 +1,7 @@
 #include "SRRFControl.h"
 #include <boost/filesystem/operations.hpp>
 #include "boost/date_time/posix_time/posix_time.hpp"
+#include "../../MMDevice/ImgBuffer.h"
 
 #ifdef WIN32
 #include <windows.h>
@@ -8,12 +9,9 @@
 #pragma warning(disable : 4091)
 #include <shlobj.h>
 #pragma warning(pop)
-#include "atmcd32d.h"
-#else
-#include "atmcdLXd.h"
 #endif
 
-#include "Andor.h"
+#include "SRRFCamera.h"
 
 using namespace boost::filesystem;
 using namespace boost::posix_time;
@@ -38,6 +36,7 @@ const char* SRRFControl::String_OriginalDataNone_ = "None";
 const char* SRRFControl::String_OriginalDataAll_ = "All";
 const char* SRRFControl::String_OriginalDataAveraged_ = "Averaged";
 const char* SRRFControl::String_OriginalDataPath_ = "SRRF | Save Original Data | Path";
+const char* SRRFControl::String_Keyword_Metadata_SRRF_Frame_Time = "SRRFFrameTime-ms";
 
 // Not required so far.
 //const char* SRRFControl::String_RawDataFormatType_ = "SRRF | Save Original Data | Type";
@@ -45,12 +44,15 @@ const char* SRRFControl::String_OriginalDataPath_ = "SRRF | Save Original Data |
 //const char* SRRFControl::String_RawDataTypeTif_ = "Tiff (*.tif)";
 
 static const int MIN_RADIALITY_MAGNIFICATION = 1;
-static const int MAX_RADIALITY_MAGNIFICATION = 10;
-static const float MIN_RING_RADIUS = 0.1000f;
+static const int MAX_RADIALITY_MAGNIFICATION_OLD = 10;
+static const int MAX_RADIALITY_MAGNIFICATION = 6;
+static const float MIN_RING_RADIUS_OLD = 0.1000f;
+static const float MIN_RING_RADIUS = 1.0f;
 static const float MAX_RING_RADIUS = 3.0f;
+static const float AT_SRRF_DEFAULT_RING_RADIUS_OLD = 0.5f;
 static const int DEFAULT_FRAME_BURST = 100;
 
-SRRFControl::SRRFControl(AndorCamera * camera)
+SRRFControl::SRRFControl(ISRRFCamera * camera)
    : camera_(camera),
       SRRFLibrary_(nullptr),
       libraryStatus_(NOT_INITIALISED),
@@ -365,16 +367,49 @@ bool SRRFControl::CanSRRFBeActivated()
    return true;
 }
 
+bool SRRFControl::IsOldSRRFLibrary() const
+{
+   string version = AT_SRRF_GetLibraryVersion_();
+
+   unsigned int major = 0, minor = 0;
+
+   string::size_type majorDotPosition = version.find('.');
+   try {
+      string majorString(version, 0, majorDotPosition);
+      major = stoul(majorString);
+
+      if (majorDotPosition != string::npos)
+      {
+         string::size_type minorDotPosition = version.find('.', majorDotPosition + 1);
+         string minorString(version, majorDotPosition + 1, minorDotPosition - majorDotPosition - 1);
+         minor = stoul(minorString);
+      }
+   } catch(...) {}
+   
+   if (major < 1 || (major == 1 && minor < 14))
+      return true;
+   return false;
+}
+
 void SRRFControl::AddSRRFPropertiesToDevice()
 {
    camera_->AddProperty(String_SRRF_Library_Version_, AT_SRRF_GetLibraryVersion_(), MM::String, true, nullptr);
    camera_->AddProperty(String_NumberFramesPerTimePoint_, CDeviceUtils::ConvertToString(DEFAULT_FRAME_BURST), MM::Integer, false, nullptr);
    CPropertyAction *pActRadiality = new CPropertyAction(this, &SRRFControl::OnSRRFRadialityChange);
    camera_->AddProperty(String_RadialityMagnification_, CDeviceUtils::ConvertToString(AT_SRRF_DEFAULT_RADIALITY_MAGNIFICATION), MM::Integer, false, pActRadiality);
-   camera_->AddProperty(String_RingRadius_, CDeviceUtils::ConvertToString(AT_SRRF_DEFAULT_RING_RADIUS), MM::Float, false, nullptr);
 
-   camera_->SetPropertyLimits(String_RadialityMagnification_, MIN_RADIALITY_MAGNIFICATION, MAX_RADIALITY_MAGNIFICATION);
-   camera_->SetPropertyLimits(String_RingRadius_, MIN_RING_RADIUS, MAX_RING_RADIUS);
+   if (IsOldSRRFLibrary())
+   {
+      camera_->SetPropertyLimits(String_RadialityMagnification_, MIN_RADIALITY_MAGNIFICATION, MAX_RADIALITY_MAGNIFICATION_OLD);
+      camera_->AddProperty(String_RingRadius_, CDeviceUtils::ConvertToString(AT_SRRF_DEFAULT_RING_RADIUS_OLD), MM::Float, false, nullptr);
+      camera_->SetPropertyLimits(String_RingRadius_, MIN_RING_RADIUS_OLD, MAX_RING_RADIUS);
+   }
+   else
+   {
+      camera_->SetPropertyLimits(String_RadialityMagnification_, MIN_RADIALITY_MAGNIFICATION, MAX_RADIALITY_MAGNIFICATION);
+      camera_->AddProperty(String_RingRadius_, CDeviceUtils::ConvertToString(AT_SRRF_DEFAULT_RING_RADIUS), MM::Float, false, nullptr);
+      camera_->SetPropertyLimits(String_RingRadius_, MIN_RING_RADIUS, MAX_RING_RADIUS);
+   }
 
    camera_->AddProperty(String_TemporalAnalysisType_, String_TemporalAnalysisType_Mean_, MM::String, false, nullptr);
    vector<string> TemporalAnalysisTypeValues;
