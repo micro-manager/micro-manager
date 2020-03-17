@@ -59,6 +59,7 @@
 #include "SpuriousNoiseFilterControl.h"
 #include "ReadModeControl.h"
 #include "SRRFControl.h"
+#include "SRRFAndorCamera.h"
 
 #include <string>
 #include <sstream>
@@ -141,8 +142,6 @@ const char* g_Software = "Software";
 const char* g_ReadTempWhileSeq = "CCDTemperature continuous update";
 const char* g_ReadTempWhileSeqOn = "On";
 const char* g_ReadTempWhileSeqOff = "Off";
-
-const char* const g_Keyword_Metadata_SRRF_Frame_Time = "SRRFFrameTime-ms";
 
 const int NUMULTRA897CROPROIS = 9;
 AndorCamera::ROI g_Ultra897CropROIs[NUMULTRA897CROPROIS] = {
@@ -287,7 +286,8 @@ metaDataAvailable_(false),
 updateTemperatureWhileSequencing_(false),
 spuriousNoiseFilterControl_(nullptr),
 readModeControl_(nullptr),
-SRRFControl_(nullptr)
+SRRFControl_(nullptr),
+SRRFAndorCamera_(nullptr)
 { 
    InitializeDefaultErrorMessages();
 
@@ -335,6 +335,7 @@ AndorCamera::~AndorCamera()
    delete spuriousNoiseFilterControl_;
    delete readModeControl_;
    delete SRRFControl_;
+   delete SRRFAndorCamera_;
    refCount_--;
    if (refCount_ == 0) {
       // release resources
@@ -1308,10 +1309,13 @@ int AndorCamera::GetListOfAvailableCameras()
 
 
 	  //SRRF
-	  SRRFControl_ = new SRRFControl(this);
-	  if (SRRFControl_->GetLibraryStatus() != SRRFControl::READY) {
-         LogMessage(SRRFControl_->GetLastErrorString());
-	  }
+      SRRFAndorCamera_ = new SRRFAndorCamera(this);
+      if (SRRFAndorCamera_) {
+         SRRFControl_ = new SRRFControl(SRRFAndorCamera_);
+         if (SRRFControl_->GetLibraryStatus() != SRRFControl::READY) {
+            LogMessage(SRRFControl_->GetLastErrorString());
+         }
+      }
 
 
       // synchronize all properties
@@ -1483,17 +1487,17 @@ int AndorCamera::GetListOfAvailableCameras()
 
    unsigned AndorCamera::GetImageWidth() const
    {
-      return SRRFControl_->GetSRRFEnabled() ? SRRFImage_->Width() : img_.Width(); 
+      return IsSRRFEnabled() ? SRRFImage_->Width() : img_.Width(); 
    }
 
    unsigned AndorCamera::GetImageHeight() const
    {
-      return SRRFControl_->GetSRRFEnabled() ? SRRFImage_->Height() : img_.Height();
+      return IsSRRFEnabled() ? SRRFImage_->Height() : img_.Height();
    }
 
    long AndorCamera::GetImageBufferSize() const
    {
-      return SRRFControl_->GetSRRFEnabled() ? 
+      return IsSRRFEnabled() ? 
          SRRFImage_->Width() * SRRFImage_->Height() * GetImageBytesPerPixel() :
          img_.Width() * img_.Height() * GetImageBytesPerPixel();
    }
@@ -1555,7 +1559,7 @@ int AndorCamera::GetListOfAvailableCameras()
          if (sequenceRunning_)   // If we are in the middle of a SequenceAcquisition
             return ERR_BUSY_ACQUIRING;
 
-         if (SRRFControl_->GetSRRFEnabled())
+         if (IsSRRFEnabled())
          {
             int returnCodeFromSRRF = SRRFControl_->ApplySRRFParameters(&img_, false);
             if (returnCodeFromSRRF != AT_SRRF_SUCCESS)
@@ -1604,6 +1608,11 @@ int AndorCamera::GetListOfAvailableCameras()
       }
 
       return ret;
+   }
+   
+   bool AndorCamera::IsSRRFEnabled() const
+   {
+      return SRRFControl_ && SRRFControl_->GetSRRFEnabled();
    }
 
    int AndorCamera::SnapImageSRRF()
@@ -1663,7 +1672,7 @@ int AndorCamera::GetListOfAvailableCameras()
    const unsigned char* AndorCamera::GetImageBuffer()
    {
       Log("[GetImageBuffer] called...");
-      if (SRRFControl_->GetSRRFEnabled())
+      if (IsSRRFEnabled())
       {
          return GetAcquiredImageSRRF();
       }
@@ -1792,7 +1801,7 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::SetROI(unsigned uX, unsigned uY, unsigned uXSize, unsigned uYSize)
    {
-      if (SRRFControl_->GetSRRFEnabled())
+      if (IsSRRFEnabled())
       {
          uX /= SRRFControl_->GetRadiality();
          uY /= SRRFControl_->GetRadiality();
@@ -3149,8 +3158,11 @@ int AndorCamera::GetListOfAvailableCameras()
       const int bytesPerPixel = 2;
       img_.Resize(roi_.xSize / binSize_, roi_.ySize / binSize_, bytesPerPixel);
 
-      unsigned int radiality = SRRFControl_->GetRadiality();
-      ResizeSRRFImage(radiality);
+      if (SRRFControl_)
+      {
+         unsigned int radiality = SRRFControl_->GetRadiality();
+         ResizeSRRFImage(radiality);
+      }
 
       return DEVICE_OK;
    }
@@ -4056,7 +4068,7 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
       // prepare the camera
       bool kineticSeries = LONG_MAX != numImages;
 
-      if (SRRFControl_->GetSRRFEnabled())
+      if (IsSRRFEnabled())
       {
          int returnCodeFromSRRF = SRRFControl_->ApplySRRFParameters(&img_, !kineticSeries);
          if (returnCodeFromSRRF != AT_SRRF_SUCCESS)
@@ -4105,7 +4117,7 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
       if (DRV_SUCCESS != ret0)
         return ret0;
 
-      if (interval_ms > 0 && SRRFControl_->GetSRRFEnabled())
+      if (interval_ms > 0 && IsSRRFEnabled())
       {
          kineticSeries = false;
       }
@@ -4314,7 +4326,7 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
    */
    int AndorCamera::PushImage(at_u32 width, at_u32 height, at_u32 bytesPerPixel, at_32& imageCountFirst, at_32& imageCountLast)
    {
-      if (SRRFControl_->GetSRRFEnabled())
+      if (IsSRRFEnabled())
       {
          return PushImageWithSRRF(imageCountFirst, imageCountLast);
       }
@@ -4898,8 +4910,8 @@ unsigned int AndorCamera::PopulateROIDropdownFVB()
       for (unsigned int j = 0; j < keys.size(); j++) {
          md.put(keys[j], GetTagValue(keys[j].c_str()).c_str());
       }
-
-      MetadataSingleTag mstSRRFFrameTime(g_Keyword_Metadata_SRRF_Frame_Time, label, true);
+      
+      MetadataSingleTag mstSRRFFrameTime(SRRFControl_->GetSRRFFrameTimeMetadataName(), label, true);
       mstSRRFFrameTime.SetValue(CDeviceUtils::ConvertToString((tEnd - startSRRFImageTime_).getMsec()));
       md.SetTag(mstSRRFFrameTime);
    }
@@ -5012,7 +5024,7 @@ unsigned int AndorCamera::PopulateROIDropdownFVB()
    {
       if (IsIxonUltra888())
       {
-         if (SRRFControl_->GetLibraryStatus() == SRRFControl::READY) {
+         if (SRRFControl_ && SRRFControl_->GetLibraryStatus() == SRRFControl::READY) {
             string requestedSpeed = "1.13";
             ptrdiff_t pos = find(VSpeeds_.begin(), VSpeeds_.end(), requestedSpeed) - VSpeeds_.begin();
             if (pos < (long long)VSpeeds_.size())
@@ -5487,7 +5499,7 @@ int AndorCamera::AddProperty(const char* name, const char* value, MM::PropertyTy
    {
       SetProperty(name, value);
    }
-   return DRV_SUCCESS;
+   return DEVICE_OK;
 }
 
 
