@@ -92,7 +92,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>lib32/atcorem.lib;atunpackerlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>lib32/atcorem.lib;lib32/atutilitym.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\..\..\3rdparty\Andor\Atunpackerlib_20130514\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <DataExecutionPrevention>
@@ -115,7 +115,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>lib64/atcorem.lib;atunpackerlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>lib64/atcorem.lib;lib64/atutilitym.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\..\..\3rdparty\Andor\Atunpackerlib_20130514\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <DataExecutionPrevention>
@@ -132,7 +132,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>lib32/atcorem.lib;atunpackerlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>lib32/atcorem.lib;lib32/atutilitym.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\..\..\3rdparty\Andor\Atunpackerlib_20130514\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -154,7 +154,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>lib64/atcorem.lib;atunpackerlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>lib64/atcorem.lib;lib64/atutilitym.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\..\..\3rdparty\Andor\Atunpackerlib_20130514\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -164,6 +164,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Andor\SRRFControl.cpp" />
     <ClCompile Include="AndorSDK3.cpp" />
     <ClCompile Include="AOIProperty.cpp" />
     <ClCompile Include="BooleanProperty.cpp" />
@@ -175,8 +176,11 @@
     <ClCompile Include="FloatProperty.cpp" />
     <ClCompile Include="IntegerProperty.cpp" />
     <ClCompile Include="SnapShotControl.cpp" />
+    <ClCompile Include="SRRFAndorSDK3Camera.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Andor\SRRFCamera.h" />
+    <ClInclude Include="..\Andor\SRRFControl.h" />
     <ClInclude Include="AndorSDK3.h" />
     <ClInclude Include="AndorSDK3Strings.h" />
     <ClInclude Include="AOIProperty.h" />
@@ -191,6 +195,7 @@
     <ClInclude Include="FloatProperty.h" />
     <ClInclude Include="IntegerProperty.h" />
     <ClInclude Include="SnapShotControl.h" />
+    <ClInclude Include="SRRFAndorSDK3Camera.h" />
     <ClInclude Include="triggerremapper.h" />
   </ItemGroup>
   <ItemGroup>
