@@ -27,6 +27,12 @@ libmmgr_dal_AndorSDK3_la_SOURCES = \
 	IntegerProperty.h \
 	SnapShotControl.cpp \
 	SnapShotControl.h \
+	SRRFAndorSDK3Camera.cpp \
+	SRRFAndorSDK3Camera.h \
+	../Andor/SRRF_Stream.h \
+	../Andor/SRRFCamera.h \
+	../Andor/SRRFControl.cpp \
+	../Andor/SRRFControl.h \
 	atcore++.h \
 	atcore.h \
 	atunpacker.h \
@@ -37,7 +43,7 @@ libmmgr_dal_AndorSDK3_la_SOURCES = \
 	stdafx.h \
 	targetver.h \
 	triggerremapper.h
-libmmgr_dal_AndorSDK3_la_LDFLAGS = $(MMDEVAPI_LDFLAGS) $(LIBATCORE) $(LIBATUTILITY)
+libmmgr_dal_AndorSDK3_la_LDFLAGS = $(MMDEVAPI_LDFLAGS) $(LIBATCORE) $(LIBATUTILITY) -lboost_filesystem -lboost_date_time
 libmmgr_dal_AndorSDK3_la_LIBADD = $(MMDEVAPI_LIBADD)
 
 EXTRA_DIST = AndorSDK3.vcproj license.txt

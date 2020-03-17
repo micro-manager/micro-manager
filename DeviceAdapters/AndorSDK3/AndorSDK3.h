@@ -60,6 +60,9 @@ class TTriggerRemapper;
 class CEventsManager;
 class ICallBackManager;
 
+class SRRFControl;
+class SRRFAndorSDK3Camera;
+
 
 //////////////////////////////////////////////////////////////////////////////
 // CAndorSDK3Camera class
@@ -113,6 +116,10 @@ public:
    int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
    void RestartLiveAcquisition();
 
+   // Used by SRRFControl via SRRFAndorSDK3Camera
+   int AddProperty(const char* name, const char* value, MM::PropertyType eType, bool readOnly, MM::ActionFunctor* pAct);
+   void ResizeSRRFImage(long radiality);
+   
 private:
    enum CameraId { CIDNeo = 0, CIDZyla = 1, CIDiStar=2, CIDCham = 3 };
    std::wstring currentSoftwareVersion_;
@@ -127,7 +134,14 @@ private:
    int  SetupCameraForSeqAcquisition(long numImages);
    int  CameraStart();
    int  checkForBufferOverflow();
-   bool waitForData(unsigned char *& return_buffer, int & buffer_size);
+   bool waitForData(unsigned char *& return_buffer, int & buffer_size, bool is_first_frame);
+   const unsigned char* GetImageBufferSRRF();
+   int InsertImageWithSRRF();
+   int AcquireFrameInSequence(bool isFirstFrame);
+   int AcquireSRRFImage(bool insertImage, long imageCounter);
+   bool IsSRRFEnabled() const;
+   int InsertMMImage(const ImgBuffer& image, const Metadata& md);
+
 
    static const double nominalPixelSizeUm_;
    static const int CID_FPGA_TICKS = 1;
@@ -138,6 +152,8 @@ private:
    AT_64 sequenceStartTime_;
    AT_64 fpgaTSclockFrequency_;
    AT_64 timeStamp_;
+   AT_64 startSRRFImageTime_;
+   AT_64 startSRRFSequenceTime_;
    int number_of_devices_;
    int deviceInUseIndex_;
    bool keep_trying_;
@@ -165,6 +181,11 @@ private:
    friend class TAOIProperty;
    MySequenceThread * thd_;
    SnapShotControl* snapShotController_;
+
+   // SRRF
+   SRRFControl* SRRFControl_;
+   SRRFAndorSDK3Camera* SRRFCamera_;
+   ImgBuffer *SRRFImage_;
 
    // Properties for the property browser
    TEnumProperty* binning_property;
