@@ -19,7 +19,6 @@ public class RescaledUIProperty extends UIProperty{
 	
 	private double slope_ = 1., offset_ = 0., rescaledMin_, rescaledMax_;
 	private boolean limitsSet_ = false;
-	private boolean hasLimits_ = false;
 	
 	public RescaledUIProperty(ConfigurablePanel owner, String label, String description) {
 		super(owner, label, description);
@@ -71,8 +70,8 @@ public class RescaledUIProperty extends UIProperty{
 					max = ((FloatMMProperty) getMMProperty()).getMax();
 					min = ((FloatMMProperty) getMMProperty()).getMin();
 				} else {
-					max = Float.POSITIVE_INFINITY;
-					min = Float.NEGATIVE_INFINITY;
+					max = Float.MAX_VALUE;
+					min = -Float.MAX_VALUE;
 				}
 				
 				double rescaledMax = (max-offset)/slope;
@@ -124,7 +123,6 @@ public class RescaledUIProperty extends UIProperty{
 				return getMMProperty().setValue(newValue, this);
 			} else if(getMMProperty().getType() == MMProperty.MMPropertyType.FLOAT && EmuUtils.isFloat(newValue)) {
 				Float val = new Float(newValue);
-				
 				if(val.compareTo((float) rescaledMin_) >= 0 && val.compareTo((float) rescaledMax_) <= 0) {
 					Float rescaledValue = new Float(val*slope_+offset_);
 					

@@ -157,6 +157,14 @@ public class RescaledUIPropertyTest {
 		assertEquals(minval1, reporter1.get());
 		assertTrue(cp.property1.setPropertyValue(String.valueOf(100)));
 		assertEquals(maxval1, reporter1.get());
+		
+		// set infinity
+		assertFalse(cp.property1.setPropertyValue(String.valueOf(Integer.MAX_VALUE)));
+		assertFalse(cp.property1.setPropertyValue(String.valueOf(Integer.MIN_VALUE)));
+
+		assertTrue(cp.property1.setScalingFactors(1, 0));
+		assertTrue(cp.property1.setPropertyValue(String.valueOf(Integer.MAX_VALUE)));
+		assertTrue(cp.property1.setPropertyValue(String.valueOf(Integer.MIN_VALUE)));
 	}
 	
 	@Test
@@ -181,8 +189,8 @@ public class RescaledUIPropertyTest {
 		PropertyPair.pair(cp.property1, mmprop1);
 
 		// meant for 0-100 range
-		double slope1 = 3.5;
-		double offset1 = -4;
+		double slope1 = 3.578;
+		double offset1 = -4.448;
 
 		// set scaling factors
 		assertTrue(cp.property1.setScalingFactors(slope1, offset1));
@@ -191,12 +199,20 @@ public class RescaledUIPropertyTest {
 		assertEquals(offset1, cp.property1.getOffset(), 0.0001);
 		
 		// set values
-		int minval1 = (int) offset1;
-		int maxval1 = (int) (100*slope1+offset1);
+		float minval1 = (float) offset1;
+		float maxval1 = (float) (100.*slope1+offset1);
 		assertTrue(cp.property1.setPropertyValue(String.valueOf(0.)));
-		assertEquals(minval1, mmprop1.getValue(), 0.00001);
+		assertEquals(minval1, mmprop1.getValue(), 0.0001);
 		assertTrue(cp.property1.setPropertyValue(String.valueOf(100.)));
-		assertEquals(maxval1, mmprop1.getValue(), 0.00001);
+		assertEquals(maxval1, mmprop1.getValue(), 0.0001);
+		
+		// tests infinity
+		assertFalse(cp.property1.setPropertyValue(String.valueOf(-Float.MAX_VALUE)));
+		assertFalse(cp.property1.setPropertyValue(String.valueOf(Float.MAX_VALUE)));
+		
+		assertTrue(cp.property1.setScalingFactors(1., 0.));
+		assertTrue(cp.property1.setPropertyValue(String.valueOf(-Float.MAX_VALUE)));
+		assertTrue(cp.property1.setPropertyValue(String.valueOf(Float.MAX_VALUE)));
 	}
 
 	@Test
