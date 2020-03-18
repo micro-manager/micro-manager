@@ -465,6 +465,44 @@ public class MultiStateUIPropertyTest {
 	}
 
 	@Test
+	public void testSetValuesPriorityWithAmbiguity() throws AlreadyAssignedUIPropertyException, IncompatibleMMProperty {
+		MultiStateUIPropertyTestPanel cp = new MultiStateUIPropertyTestPanel("MyPanel");
+
+		final IntegerMMProperty mmprop = new IntegerMMProperty(null, new Logger(), "", "", false) {
+			@Override
+			public Integer getValue() { // avoids NullPointerException
+				return 0;
+			}
+			
+			@Override
+			public String getStringValue() {
+				return convertToString(value);
+			}
+			
+			@Override
+			public boolean setValue(String stringval, UIProperty source){
+				value = convertToValue(stringval);
+				return true;
+			}
+		};
+		
+		PropertyPair.pair(cp.property, mmprop);
+
+		final String[] vals = {"3", "1", "2", "0"};
+		final String[] names = {"0", "1", "2", "3"};
+		cp.property.setStateValues(vals);
+		cp.property.setStateNames(names);
+
+		boolean b = cp.property.setPropertyValue("3");
+		assertTrue(b);
+		assertEquals(vals[0], cp.property.getPropertyValue()); // takes state value in priority
+		
+		b = cp.property.setPropertyValue("2");
+		assertTrue(b);
+		assertEquals(vals[2], cp.property.getPropertyValue());
+	}
+
+	@Test
 	public void testWrongValues() throws AlreadyAssignedUIPropertyException, IncompatibleMMProperty {
 		MultiStateUIPropertyTestPanel cp = new MultiStateUIPropertyTestPanel("MyPanel");
 

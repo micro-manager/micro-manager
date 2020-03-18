@@ -19,6 +19,7 @@ public class RescaledUIProperty extends UIProperty{
 	
 	private double slope_ = 1., offset_ = 0., rescaledMin_, rescaledMax_;
 	private boolean limitsSet_ = false;
+	private boolean hasLimits_ = false;
 	
 	public RescaledUIProperty(ConfigurablePanel owner, String label, String description) {
 		super(owner, label, description);
@@ -46,9 +47,7 @@ public class RescaledUIProperty extends UIProperty{
 	public boolean isCompatibleMMProperty(@SuppressWarnings("rawtypes") MMProperty prop) {
 		if(prop.getType() == MMProperty.MMPropertyType.FLOAT 
 				|| prop.getType() == MMProperty.MMPropertyType.INTEGER) {
-			if(prop.hasLimits()) {
-				return true;
-			}
+			return true;
 		}
 		return false;
 	}
@@ -67,9 +66,15 @@ public class RescaledUIProperty extends UIProperty{
 				slope_ = slope;
 				offset_ = offset;
 				
-				Float max = ((FloatMMProperty) getMMProperty()).getMax();
-				Float min = ((FloatMMProperty) getMMProperty()).getMin();
-
+				Float min, max;
+				if(hasMMPropertyLimits()) {
+					max = ((FloatMMProperty) getMMProperty()).getMax();
+					min = ((FloatMMProperty) getMMProperty()).getMin();
+				} else {
+					max = Float.POSITIVE_INFINITY;
+					min = Float.NEGATIVE_INFINITY;
+				}
+				
 				double rescaledMax = (max-offset)/slope;
 				double rescaledMin = (min-offset)/slope;
 				
@@ -86,9 +91,15 @@ public class RescaledUIProperty extends UIProperty{
 				slope_ = slope;
 				offset_ = offset;
 				
-				Integer max = ((IntegerMMProperty) getMMProperty()).getMax();
-				Integer min = ((IntegerMMProperty) getMMProperty()).getMin();
-
+				Integer max, min;
+				if(hasMMPropertyLimits()) {
+					max = ((IntegerMMProperty) getMMProperty()).getMax();
+					min = ((IntegerMMProperty) getMMProperty()).getMin();
+				} else {
+					max = Integer.MAX_VALUE;
+					min = Integer.MIN_VALUE;
+				}
+				
 				double rescaledMax = (max-offset)/slope;
 				double rescaledMin = (min-offset)/slope;
 

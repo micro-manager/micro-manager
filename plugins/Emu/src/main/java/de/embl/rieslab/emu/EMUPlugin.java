@@ -46,7 +46,7 @@ public class EMUPlugin implements MenuPlugin, SciJavaPlugin {
 
 	@Override
 	public String getSubMenu() {
-		return "Interface";
+		return "";
 	}
 
 	@Override
