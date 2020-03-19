@@ -92,7 +92,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>lib32/atcorem.lib;lib32/atutilitym.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>lib32/atcorem.lib;atutilitym.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\..\..\3rdparty\Andor\Atunpackerlib_20130514\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <DataExecutionPrevention>
@@ -115,7 +115,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>lib64/atcorem.lib;lib64/atutilitym.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>lib64/atcorem.lib;atutilitym.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\..\..\3rdparty\Andor\Atunpackerlib_20130514\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <DataExecutionPrevention>
@@ -132,7 +132,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>lib32/atcorem.lib;lib32/atutilitym.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>lib32/atcorem.lib;atutilitym.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\..\..\3rdparty\Andor\Atunpackerlib_20130514\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -154,7 +154,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>lib64/atcorem.lib;lib64/atutilitym.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>lib64/atcorem.lib;atutilitym.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\..\..\3rdparty\Andor\Atunpackerlib_20130514\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
