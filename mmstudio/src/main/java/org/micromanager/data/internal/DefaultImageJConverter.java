@@ -75,6 +75,34 @@ public final class DefaultImageJConverter implements ImageJConverter {
       }
       return null;
    }
+   
+   /**
+    * Creates an Image ImageProcessor with the pixel type and dimensions
+    * of the input Image, but all pixel values set to 0
+    * @param image Input Image that serves as the template for the output ImageProcessor
+    * @return imageProcessor with the type and dimensions of the input Image
+    */
+   public static ImageProcessor createBlankProcessor(Image image) {
+      int width = image.getWidth();
+      int height = image.getHeight();
+      int bytesPerPixel = image.getBytesPerPixel();
+      int numComponents = image.getNumComponents();
+     
+      if (bytesPerPixel == 4 && numComponents == 3) {
+         return new ColorProcessor(width, height);
+      }
+      else if (bytesPerPixel == 1 && numComponents == 1) {
+         return new ByteProcessor(width, height);
+      }
+      else if (bytesPerPixel == 2 && numComponents == 1) {
+         return new ShortProcessor(width, height);
+      }
+      else if (bytesPerPixel == 4 && numComponents == 1) {
+         return new FloatProcessor(width, height);
+      }
+      return null;
+   }
+   
 
    @Override
    public ImageProcessor createProcessorFromComponent(Image image,

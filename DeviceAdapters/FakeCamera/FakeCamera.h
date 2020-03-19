@@ -27,7 +27,13 @@
 
 #include "DeviceBase.h"
 
+#ifdef __linux__
+// This include has been added for compile on Ubuntu 18.04 and newer.
+// The include refers to libopencv version 3.2
+#include <opencv/cv.hpp>
+#else
 #include "opencv/highgui.h"
+#endif
 
 #define ERR_INVALID_DEVICE_NAME 10000
 #define OUT_OF_RANGE 10001

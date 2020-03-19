@@ -192,3 +192,32 @@ As a general rule, the `--with-foo` flags to `configure` (e.g.
 `--with-python=PREFIX`) will try to autodetect the package, whereas the
 capitalized variables listed at the end of `./configure --help` (e.g. `PYTHON`)
 will override any automatic detection and be used unmodified.
+
+
+#### Failing to fetch on Ubuntu 18.04 and newer
+
+If unresolved dependences on some Java libraries:
+
+```
+[ivy:resolve] ::::::::::::::::::::::::::::::::::::::::::::::
+[ivy:resolve] :: UNRESOLVED DEPENDENCIES ::
+[ivy:resolve] ::::::::::::::::::::::::::::::::::::::::::::::
+[ivy:resolve] :: org.jogamp.gluegen#gluegen-rt-local;2.3.2: not found
+[ivy:resolve] :: org.jogamp.gluegen#gluegen-rt-main-local;2.3.2: not found
+[ivy:resolve] :: org.jogamp.gluegen#gluegen-rt-natives-macosx-universal;2.3.2: not found
+[ivy:resolve] :: org.jogamp.gluegen#gluegen-rt-natives-windows-amd64;2.3.2: not found
+[ivy:resolve] :: org.jogamp.gluegen#gluegen-rt-natives-windows-i586;2.3.2: not found
+[ivy:resolve] :: org.jogamp.jogl#jogl-all-local;2.3.2: not found
+[ivy:resolve] :: org.jogamp.jogl#jogl-all-main-local;2.3.2: not found
+[ivy:resolve] :: org.jogamp.jogl#jogl-all-natives-macosx-universal;2.3.2: not found
+[ivy:resolve] :: org.jogamp.jogl#jogl-all-natives-windows-amd64;2.3.2: not found
+[ivy:resolve] :: org.jogamp.jogl#jogl-all-natives-windows-i586;2.3.2: not found
+[ivy:resolve] :: #DT1.2;: not found
+[ivy:resolve] ::::::::::::::::::::::::::::::::::::::::::::::
+```
+
+Take a look at this issue:
+
+```
+https://github.com/micro-manager/micro-manager/issues/708
+```

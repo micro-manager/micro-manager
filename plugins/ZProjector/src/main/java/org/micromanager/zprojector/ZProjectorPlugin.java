@@ -43,6 +43,7 @@ public class ZProjectorPlugin implements DisplayGearMenuPlugin, SciJavaPlugin {
    public static final String MENUNAME = "Project...";
    public static final String AXISKEY = "AxisKey";
    public static final String PROJECTION_METHOD = "ProjectionMethod";
+   public static final String SAVE = "Save";
    
    private Studio studio_;
 

@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
@@ -77,8 +78,7 @@ public class ZProjectorPluginFrame extends MMDialog {
                     window.getWindow());
             return;
          }
-      }
-      
+      }      
       
       super.setLayout(new MigLayout("flowx, fill, insets 8"));
       String shortName = ourProvider_.getName();
@@ -182,9 +182,11 @@ public class ZProjectorPluginFrame extends MMDialog {
       
       // Note: Median and Std.Dev. yield 32-bit images
       // Those would need to be converted to 16-bit to be shown...
-      final String[] projectionMethods = new String[] {"Max", "Min", "Avg", "Median", "Std.Dev"};
+      final String[] projectionMethods = new String[] 
+                                    {"Max", "Min", "Avg", "Median", "Std.Dev"};
       final JComboBox methodBox = new JComboBox(projectionMethods);
-      methodBox.setSelectedItem(settings_.getString(ZProjectorPlugin.PROJECTION_METHOD, "Max"));
+      methodBox.setSelectedItem(settings_.getString(
+                                    ZProjectorPlugin.PROJECTION_METHOD, "Max"));
       methodBox.addActionListener((ActionEvent e) -> {
          settings_.putString(ZProjectorPlugin.PROJECTION_METHOD,
                  (String) methodBox.getSelectedItem());
@@ -195,6 +197,13 @@ public class ZProjectorPluginFrame extends MMDialog {
       super.add(new JLabel("name"));
       final JTextField nameField = new JTextField(shortName);
       super.add(nameField, "span2, grow, wrap");
+     
+      final JCheckBox saveBox = new JCheckBox("save result");
+      saveBox.setSelected(settings_.getBoolean(ZProjectorPlugin.SAVE, false));
+      saveBox.addActionListener((ActionEvent e) -> {
+         settings_.putBoolean(ZProjectorPlugin.SAVE, saveBox.isSelected());
+      });
+      super.add(saveBox, "span3, grow, wrap");
       
       JButton OKButton = new JButton("OK");
       OKButton.addActionListener((ActionEvent ae) -> {
@@ -222,7 +231,12 @@ public class ZProjectorPluginFrame extends MMDialog {
                   break;
             }
          }
-         zp.project(nameField.getText(), axis, mins.get(axis), maxes.get(axis), projectionMethod);
+         zp.project(saveBox.isSelected(),
+                 nameField.getText(), 
+                 axis, 
+                 mins.get(axis), 
+                 maxes.get(axis), 
+                 projectionMethod);
          cpFrame.dispose();
       });
       super.add(OKButton, "span 3, split 2, tag ok, wmin button");

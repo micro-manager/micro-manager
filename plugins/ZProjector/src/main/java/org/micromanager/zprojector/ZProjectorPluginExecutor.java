@@ -25,6 +25,7 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.plugin.ZProjector;
 import ij.process.ImageProcessor;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +41,10 @@ import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.internal.utils.FileDialogs;
+import org.micromanager.internal.utils.ProgressBar;
 
 /**
  *
@@ -51,6 +55,9 @@ public class ZProjectorPluginExecutor {
    private final Studio studio_;
    private final DisplayWindow window_;
    private final DataProvider oldStore_;
+   private int nrProjections_;
+   private int projectionNr_;
+   private ProgressBar progressBar_;
 
    public ZProjectorPluginExecutor(Studio studio, DisplayWindow window) {
       studio_ = studio;
@@ -61,14 +68,17 @@ public class ZProjectorPluginExecutor {
    /**
     * Performs the actual creation of a new image with reduced content
     *
+    * @param save
     * @param newName - name for the copy
     * @param projectionAxis
     * @param firstFrame
     * @param lastFrame
     * @param projectionMethod ZProjector method
     */
-   public final void project(final String newName, final String projectionAxis, 
+   public final void project(final boolean save, final String newName, final String projectionAxis, 
            final int firstFrame, final int lastFrame, final int projectionMethod) {
+     
+
 
       class ZProjectTask extends SwingWorker<Void, Void> {
 
@@ -77,9 +87,26 @@ public class ZProjectorPluginExecutor {
 
          @Override
          public Void doInBackground() throws Exception {  // TODO use Exceptions
-
-            // TODO: provide options for disk-backed datastores
-            Datastore newStore = studio_.data().createRAMDatastore();
+            Datastore newStore;
+            if (save) {
+               File result = FileDialogs.openDir(null,
+                           "Please choose a directory to save " + newName,
+                           FileDialogs.MM_DATA_SET);
+               if (result != null) {
+                  try {
+                  newStore = studio_.data().createMultipageTIFFDatastore(
+                          result.getAbsolutePath() + File.separator + newName, true, 
+                          StorageMultipageTiff.getShouldSplitPositions());
+                  } catch (IOException ioe) {
+                     studio_.logs().showError(ioe);
+                     return null;
+                  }
+               } else {
+                  return null;
+               }
+            } else {
+               newStore = studio_.data().createRAMDatastore();
+            }
 
             Coords oldSizeCoord = oldStore_.getMaxIndices();
             CoordsBuilder newSizeCoordsBuilder = oldSizeCoord.copyBuilder();
@@ -95,25 +122,49 @@ public class ZProjectorPluginExecutor {
             // physically impossible)
             cb.time(1).channel(1).stagePosition(1).z(1);
             try {
-               newStore.setSummaryMetadata(metadata);
-               DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
-               copyDisplay.setCustomTitle(newName);
-               copyDisplay.setDisplaySettings(
-                       window_.getDisplaySettings().copyBuilder().build());
-               studio_.displays().manage(newStore);
-               
+               newStore.setSummaryMetadata(metadata);               
                List<String> axes = oldStore_.getAxes();
                axes.remove(projectionAxis);
-               findAllProjections( newStore, axes, cb, projectionAxis, 
-                       firstFrame, lastFrame,  projectionMethod);
+               axes.sort( new CoordsComparator());
+               if (!save) {
+                  DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
+                  copyDisplay.setCustomTitle(newName);
+                  copyDisplay.setDisplaySettings(
+                          window_.getDisplaySettings().copyBuilder().build());
+                  studio_.displays().manage(newStore);
+               } else {
+                  nrProjections_ = 1;
+                  for (String axis : axes) {
+                     nrProjections_ *= oldStore_.getAxisLength(axis);
+                  }
+                  progressBar_ = new ProgressBar (window_.getWindow(), 
+                                       "Projection Progress", 1, nrProjections_);
+                  progressBar_.setVisible(true);
+               }
+
+               findAllProjections(newStore, axes, cb, projectionAxis,
+                       firstFrame, lastFrame, projectionMethod);
                
             } catch (DatastoreFrozenException ex) {
                studio_.logs().showError("Can not add data to frozen datastore");
             } catch (DatastoreRewriteException ex) {
                studio_.logs().showError("Can not overwrite data");
+            } finally {
+               if (progressBar_ != null) {
+                  progressBar_.setVisible(false);
+               }
             }
 
             newStore.freeze();
+            
+            if (save) {
+               DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
+               copyDisplay.setCustomTitle(newName);
+               copyDisplay.setDisplaySettings(
+                       window_.getDisplaySettings().copyBuilder().build());
+               studio_.displays().manage(newStore);
+            }
+
             return null;
          }
 
@@ -123,6 +174,7 @@ public class ZProjectorPluginExecutor {
          }
       }
 
+      
       (new ZProjectTask()).execute();
    }
    
@@ -151,6 +203,10 @@ public class ZProjectorPluginExecutor {
          cbp.index(currentAxis, i);
          if (rcAxes.isEmpty()) {
             executeProjection(newStore, cbp, projectionAxis, min, max, projectionMethod);
+            projectionNr_++;
+            if (progressBar_ != null) {
+               progressBar_.setProgress(projectionNr_); 
+            }
          } else {
             findAllProjections(newStore, rcAxes, cbp, projectionAxis,
                     min, max, projectionMethod);
@@ -188,25 +244,26 @@ public class ZProjectorPluginExecutor {
             stack.addSlice(ip);
          }
       }
-      if (stack.getSize()> 0 && imgMetadata != null) {
-      ImagePlus tmp = new ImagePlus("tmp", stack);
-      ZProjector zp = new ZProjector(tmp);
-      zp.setMethod(projectionMethod);
-      zp.doProjection();
-      ImagePlus projection = zp.getProjection();
-      if (projection.getBytesPerPixel() > 2) {
-         if (tmp.getBytesPerPixel() == 1) {
-            projection.setProcessor(projection.getProcessor().convertToByte(false));
-         } else if (tmp.getBytesPerPixel() == 2) {
-            projection.setProcessor(projection.getProcessor().convertToShort(false));
+      if (stack.getSize() > 0 && imgMetadata != null) {
+         ImagePlus tmp = new ImagePlus("tmp", stack);
+         ZProjector zp = new ZProjector(tmp);
+         zp.setMethod(projectionMethod);
+         zp.doProjection();
+         ImagePlus projection = zp.getProjection();
+         if (projection.getBytesPerPixel() > 2) {
+            if (tmp.getBytesPerPixel() == 1) {
+               projection.setProcessor(projection.getProcessor().convertToByte(false));
+            } else if (tmp.getBytesPerPixel() == 2) {
+               projection.setProcessor(projection.getProcessor().convertToShort(false));
+            }
          }
-      }
-      Image outImg = studio_.data().getImageJConverter().createImage(
-            projection.getProcessor(), cbp.index(projectionAxis, 0).build(),
-                  imgMetadata.copyBuilderWithNewUUID().build());
-      newStore.putImage(outImg);
+         Image outImg = studio_.data().getImageJConverter().createImage(
+                 projection.getProcessor(), cbp.index(projectionAxis, 0).build(),
+                 imgMetadata.copyBuilderWithNewUUID().build());
+         newStore.putImage(outImg);
       } else {
-         studio_.logs().showError("No images found while projecting");
+         studio_.alerts().postAlert("Projection problem", this.getClass(), 
+                                             "No images found while projecting");
       }
    }
    

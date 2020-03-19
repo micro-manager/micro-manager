@@ -33,6 +33,7 @@ import java.awt.geom.AffineTransform;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -109,6 +110,7 @@ import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.UIMonitor;
 import org.micromanager.internal.utils.WaitDialog;
+import org.micromanager.internal.zmq.ZMQServer;
 import org.micromanager.profile.internal.DefaultUserProfile;
 import org.micromanager.profile.internal.UserProfileAdmin;
 import org.micromanager.profile.internal.gui.HardwareConfigurationManager;
@@ -128,6 +130,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private static final int TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS = 2000;
    // Note that this property is set by one of the launcher scripts.
    private static final String SHOULD_DELETE_OLD_CORE_LOGS = "whether or not to delete old MMCore log files";
+   private static final String SHOULD_RUN_ZMQ_SERVER = "run ZQM server";
    private static final String CORE_LOG_LIFETIME_DAYS = "how many days to keep MMCore log files, before they get deleted";
    private static final String CIRCULAR_BUFFER_SIZE = "size, in megabytes of the circular buffer used to temporarily store images before they are written to disk";
    private static final String AFFINE_TRANSFORM_LEGACY = "affine transform for mapping camera coordinates to stage coordinates for a specific pixel size config: ";
@@ -167,6 +170,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private boolean isClickToMoveEnabled_ = false;
 
    private ScriptPanel scriptPanel_;
+   private ZMQServer zmqServer_;
    private PipelineFrame pipelineFrame_;
    private org.micromanager.internal.utils.HotKeys hotKeys_;
 
@@ -209,16 +213,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       try {
          UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
          MMStudio mmStudio = new MMStudio(false, profileNameAutoStart);
-      } catch (ClassNotFoundException e) {
-         ReportingUtils.showError(e, "A java error has caused Micro-Manager to exit.");
-         System.exit(1);
-      } catch (IllegalAccessException e) {
-         ReportingUtils.showError(e, "A java error has caused Micro-Manager to exit.");
-         System.exit(1);
-      } catch (InstantiationException e) {
-         ReportingUtils.showError(e, "A java error has caused Micro-Manager to exit.");
-         System.exit(1);
-      } catch (UnsupportedLookAndFeelException e) {
+      } catch (ClassNotFoundException | IllegalAccessException | 
+              InstantiationException | UnsupportedLookAndFeelException e) {
          ReportingUtils.showError(e, "A java error has caused Micro-Manager to exit.");
          System.exit(1);
       }
@@ -495,6 +491,12 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       
       // Give plugins a chance to initialize their state
       events().post(new StartupCompleteEvent());
+      
+      // start zmq server if so desired
+      if (getShouldRunZMQServer()) {
+         runZMQServer();
+      }
+      
    }
 
    private void initializeLogging(CMMCore core) {
@@ -683,7 +685,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          return;
       }
       // Generate list of rectangles for the ROIs.
-      ArrayList<Rectangle> rois = new ArrayList<Rectangle>();
+      ArrayList<Rectangle> rois = new ArrayList<>();
       for (Roi subRoi : ((ShapeRoi) roi).getRois()) {
          // HACK: just use the bounding box of each sub-ROI. Determining if
          // sub-ROIs are rectangles is difficult (they "decompose" to Polygons
@@ -897,6 +899,22 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    private void createScriptPanel() {
       scriptPanel_ = new ScriptPanel(studio_);
+   }
+   
+   public void runZMQServer() {
+      if (zmqServer_ == null) {
+         zmqServer_ = new ZMQServer(studio_);
+      }
+      zmqServer_.initialize(ZMQServer.DEFAULT_PORT_NUMBER);
+      logs().logMessage("Initialized ZMQ Server on port: " + ZMQServer.DEFAULT_PORT_NUMBER);
+   }
+   
+   public void stopZMQServer() {
+      if (zmqServer_ != null) {
+         zmqServer_.close();
+         logs().logMessage("Stopped ZMQ Server");
+         zmqServer_ = null;
+      }
    }
 
    private void createPipelineFrame() {
@@ -1155,6 +1173,10 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       if (scriptPanel_ != null) {
          scriptPanel_.closePanel();
          scriptPanel_ = null;
+      }
+      
+      if (zmqServer_ != null) {
+         zmqServer_.close();
       }
 
       if (pipelineFrame_ != null) {
@@ -1433,7 +1455,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       try {
          hostname = java.net.InetAddress.getLocalHost().getHostName();
       }
-      catch (Exception e) {
+      catch (UnknownHostException e) {
          hostname = "unknown";
       }
       core_.logMessage("Host: " + hostname);
@@ -1522,18 +1544,15 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    public void setPositionList(PositionList pl) {
       // use serialization to clone the PositionList object
       posList_ = pl; // PositionList.newInstance(pl);
-      SwingUtilities.invokeLater(new Runnable() {
-         @Override
-         public void run() {
-            if (posListDlg_ != null) {
-               posListDlg_.setPositionList(posList_);
-            }
-            if (acqEngine_ != null) {
-               acqEngine_.setPositionList(posList_);
-            }
-            if (acqControlWin_ != null) {
-               acqControlWin_.updateGUIContents();
-            }
+      SwingUtilities.invokeLater(() -> {
+         if (posListDlg_ != null) {
+            posListDlg_.setPositionList(posList_);
+         }
+         if (acqEngine_ != null) {
+            acqEngine_.setPositionList(posList_);
+         }
+         if (acqControlWin_ != null) {
+            acqControlWin_.updateGUIContents();
          }
       });
    }
@@ -1855,34 +1874,44 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    }
 
    public boolean getShouldDeleteOldCoreLogs() {
-      return profile().getBoolean(MMStudio.class,
+      return profile().getSettings(MMStudio.class).getBoolean(
             SHOULD_DELETE_OLD_CORE_LOGS, false);
    }
 
    public void setShouldDeleteOldCoreLogs(boolean shouldDelete) {
-      profile().setBoolean(MMStudio.class,
+      profile().getSettings(MMStudio.class).putBoolean(
             SHOULD_DELETE_OLD_CORE_LOGS, shouldDelete);
+   }
+   
+   public boolean getShouldRunZMQServer() {
+      return profile().getSettings(MMStudio.class).getBoolean(
+              SHOULD_RUN_ZMQ_SERVER, false);
+   }
+   
+   public void setShouldRunZMQServer(boolean shouldRun) {
+      profile().getSettings(MMStudio.class).putBoolean(
+              SHOULD_RUN_ZMQ_SERVER, shouldRun);
    }
 
    public int getCoreLogLifetimeDays() {
-      return profile().getInt(MMStudio.class,
+      return profile().getSettings(MMStudio.class).getInteger(
             CORE_LOG_LIFETIME_DAYS, 7);
    }
 
    public void setCoreLogLifetimeDays(int days) {
-      profile().setInt(MMStudio.class,
+      profile().getSettings(MMStudio.class).putInteger(
             CORE_LOG_LIFETIME_DAYS, days);
    }
 
    public int getCircularBufferSize() {
       // Default to more MB for 64-bit systems.
       int defaultVal = System.getProperty("sun.arch.data.model", "32").equals("64") ? 250 : 25;
-      return profile().getInt(MMStudio.class,
+      return profile().getSettings(MMStudio.class).getInteger(
             CIRCULAR_BUFFER_SIZE, defaultVal);
    }
 
    public void setCircularBufferSize(int newSize) {
-      profile().setInt(MMStudio.class,
+      profile().getSettings(MMStudio.class).putInteger(
             CIRCULAR_BUFFER_SIZE, newSize);
    }
 }
