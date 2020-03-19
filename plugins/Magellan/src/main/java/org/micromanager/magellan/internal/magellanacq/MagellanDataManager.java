@@ -53,10 +53,10 @@ import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.magellan.internal.surfacesandregions.XYFootprint;
 import org.micromanager.multiresstorage.MultiResMultipageTiffStorage;
 import org.micromanager.multiresstorage.StorageAPI;
-import org.micromanager.ndviewer.api.AcquisitionInterface;
 import org.micromanager.ndviewer.api.DataSourceInterface;
 import org.micromanager.ndviewer.api.OverlayerPlugin;
 import org.micromanager.ndviewer.overlay.Overlay;
+import org.micromanager.ndviewer.api.ViewerAcquisitionInterface;
 
 /**
  * Created by magellan acquisition to manage viewer, data storage, and
@@ -66,7 +66,8 @@ import org.micromanager.ndviewer.overlay.Overlay;
 public class MagellanDataManager implements DataSink, DataSourceInterface {
 
    private StorageAPI storage_;
-   private ExecutorService displayCommunicationExecutor_ = Executors.newSingleThreadExecutor((Runnable r) -> new Thread(r, "Image cache thread"));
+   private ExecutorService displayCommunicationExecutor_ = 
+           Executors.newSingleThreadExecutor((Runnable r) -> new Thread(r, "Magellan viewer communication thread"));
    private final boolean loadedData_;
    private String dir_;
    private String name_;
@@ -129,7 +130,7 @@ public class MagellanDataManager implements DataSink, DataSourceInterface {
    private void createDisplay() {
       //create display
       try {
-         display_ = new MagellanViewer(this, (AcquisitionInterface) acq_, summaryMetadata_);
+         display_ = new MagellanViewer(this, (ViewerAcquisitionInterface) acq_, summaryMetadata_);
          display_.setWindowTitle(getUniqueAcqName() + (acq_ != null
                  ? (acq_.isComplete() ? " (Finished)" : " (Running)") : " (Loaded)"));
          //add functions so display knows how to parse time and z infomration from image tags

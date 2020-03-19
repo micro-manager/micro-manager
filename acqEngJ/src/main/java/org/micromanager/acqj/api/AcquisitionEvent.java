@@ -24,6 +24,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -144,52 +146,52 @@ public class AcquisitionEvent {
       }
    }
 
-   public static AcquisitionEvent fromJSON(JSONObject json, AcquisitionBase acq) throws JSONException {
-      AcquisitionEvent event = new AcquisitionEvent(acq);
+   public static AcquisitionEvent fromJSON(JSONObject json, AcquisitionBase acq) {
       try {
-         event.zPosition_ = json.getDouble("z_position");
-      } catch (JSONException ex) {
-         throw new RuntimeException("Z position undefined");
-      }
 
-      //convert JSON axes to internal hashmap
-      if (json.has("axes")) {
-         JSONObject axes = json.getJSONObject("axes");
-         axes.keys().forEachRemaining((String axisLabel) -> {
-            try {
-               event.axisPositions_.put(axisLabel, axes.getInt(axisLabel));
-            } catch (JSONException ex) {
-               throw new RuntimeException(ex);
-            }
-         });
-      }
+         AcquisitionEvent event = new AcquisitionEvent(acq);
 
-      //channel name
-      if (json.has("channel")) {
-         event.channelName_ = json.getString("channel");
-      }
-
-      //Things for which a generic device type exists in MMCore
-      if (json.has("z")) {
-         event.zPosition_ = json.getDouble("z");
-      }
-      if (json.has("x") && json.has("y")) {
-         double x = json.getDouble("x");
-         double y = json.getDouble("y");
-         event.xyPosition_ = new XYStagePosition(new Point2D.Double(x, y));
-      }
-      //TODO: SLM, galvo, etc
-
-      //Arbitrary additional properties
-      if (json.has("properties")) {
-         JSONArray props = json.getJSONArray("properties");
-         for (int i = 0; i < props.length(); i++) {
-            Triplet t = new Triplet(props.getString(i).split("-"));
-            event.properties_.add(t);
+         //convert JSON axes to internal hashmap
+         if (json.has("axes")) {
+            JSONObject axes = json.getJSONObject("axes");
+            axes.keys().forEachRemaining((String axisLabel) -> {
+               try {
+                  event.axisPositions_.put(axisLabel, axes.getInt(axisLabel));
+               } catch (JSONException ex) {
+                  throw new RuntimeException(ex);
+               }
+            });
          }
-      }
 
-      return event;
+         //channel name
+         if (json.has("channel")) {
+            event.channelName_ = json.getString("channel");
+         }
+
+         //Things for which a generic device type exists in MMCore
+         if (json.has("z")) {
+            event.zPosition_ = json.getDouble("z");
+         }
+         if (json.has("x") && json.has("y")) {
+            double x = json.getDouble("x");
+            double y = json.getDouble("y");
+            event.xyPosition_ = new XYStagePosition(new Point2D.Double(x, y));
+         }
+         //TODO: SLM, galvo, etc
+
+         //Arbitrary additional properties
+         if (json.has("properties")) {
+            JSONArray props = json.getJSONArray("properties");
+            for (int i = 0; i < props.length(); i++) {
+               Triplet t = new Triplet(props.getString(i).split("-"));
+               event.properties_.add(t);
+            }
+         }
+
+         return event;
+      } catch (JSONException ex) {
+         throw new RuntimeException(ex);
+      }
    }
 
    public void setChannelName(String c) {
@@ -203,7 +205,7 @@ public class AcquisitionEvent {
    public void setMinimumStartTime(long l) {
       miniumumStartTime_ = l;
    }
-   
+
    public Set<String> getDefinedAxes() {
       return axisPositions_.keySet();
    }

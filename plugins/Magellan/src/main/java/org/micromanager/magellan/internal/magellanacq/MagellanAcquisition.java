@@ -1,14 +1,14 @@
 package org.micromanager.magellan.internal.magellanacq;
 
-import org.micromanager.acqj.api.Acquisition;
-import org.micromanager.ndviewer.api.AcquisitionInterface;
+import org.micromanager.acqj.api.AcquisitionInterface;
+import org.micromanager.ndviewer.api.ViewerAcquisitionInterface;
 
 /**
  * Functions shared by magellan acquistions
  *
  * @author henrypinkard
  */
-public interface MagellanAcquisition extends Acquisition, AcquisitionInterface {
+public interface MagellanAcquisition extends ViewerAcquisitionInterface, AcquisitionInterface {
 
    public double getZCoordOfNonnegativeZIndex(int displaySliceIndex);
 

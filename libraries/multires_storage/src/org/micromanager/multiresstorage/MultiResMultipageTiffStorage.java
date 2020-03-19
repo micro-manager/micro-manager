@@ -16,18 +16,13 @@
 //
 package org.micromanager.multiresstorage;
 
-import java.awt.Color;
 import java.awt.Point;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;

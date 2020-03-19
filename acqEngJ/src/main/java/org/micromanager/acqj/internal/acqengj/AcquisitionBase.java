@@ -17,14 +17,9 @@
 package org.micromanager.acqj.internal.acqengj;
 
 
-import org.micromanager.acqj.api.Acquisition;
 import org.micromanager.acqj.api.AcqEngMetadata;
 import org.micromanager.acqj.api.ChannelGroupSettings;
 import org.micromanager.acqj.api.DataSink;
-import java.awt.geom.AffineTransform;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -37,13 +32,14 @@ import org.json.JSONObject;
 import org.micromanager.acqj.api.AcquisitionEvent;
 import org.micromanager.acqj.api.XYStagePosition;
 import org.micromanager.acqj.internal.acqengj.Engine;
+import org.micromanager.acqj.api.AcquisitionInterface;
 
 /**
  * Abstract class that manages a generic acquisition. Subclassed into specific
  * types of acquisition. Minimal set of assumptions that mirror those in the core.
  * For example, assumes one Z stage, one XY stage, one channel group, etc
  */
-public abstract class AcquisitionBase implements Acquisition {
+public abstract class AcquisitionBase implements AcquisitionInterface {
    
    protected String xyStage_, zStage_;
    protected boolean zStageHasLimits_ = false;
@@ -222,11 +218,6 @@ public abstract class AcquisitionBase implements Acquisition {
    
    public boolean anythingAcquired() {
       return dataSink_ == null ? true : dataSink_.anythingAcquired();
-   }
-
-   public boolean saveToDisk() {
-      //TODO: add option not to
-      return true;
    }
  
 }

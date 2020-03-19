@@ -15,7 +15,7 @@ import org.micromanager.acqj.internal.acqengj.MinimalAcquisitionSettings;
  * 
  * @author henrypinkard
  */
-public interface Acquisition {
+public interface AcquisitionInterface {
    
    /**
     * Commence acquisition or ready it to reviece externally generated events as applicable
@@ -25,7 +25,6 @@ public interface Acquisition {
    /**
     * Cancels any pending events. Does not block. Use waitForCompletion if blocking until
     * all resources are freed is needed.
-    * @param cancel if true, cancel any pending events, otherwise wait for them to complete
     */
    public void abort();
    
@@ -78,9 +77,4 @@ public interface Acquisition {
     */
    public boolean anythingAcquired();
    
-   /**
-    * TODO: delete this one?
-    * @return 
-    */
-   public boolean saveToDisk();
 }

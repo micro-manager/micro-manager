@@ -29,7 +29,6 @@ import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -46,11 +45,11 @@ import org.micromanager.ndviewer.internal.gui.ViewerCanvas;
 import org.micromanager.ndviewer.internal.gui.DisplayWindow;
 import org.micromanager.ndviewer.internal.gui.ImageMaker;
 import org.micromanager.ndviewer.overlay.Overlay;
-import org.micromanager.ndviewer.api.AcquisitionInterface;
 import org.micromanager.ndviewer.api.DataSourceInterface;
 import org.micromanager.ndviewer.api.CanvasMouseListenerInterface;
 import org.micromanager.ndviewer.api.ControlsPanelInterface;
 import org.micromanager.ndviewer.api.OverlayerPlugin;
+import org.micromanager.ndviewer.api.ViewerAcquisitionInterface;
 
 public class NDViewer implements ViewerInterface {
 
@@ -70,7 +69,7 @@ public class NDViewer implements ViewerInterface {
    private double animationFPS_ = 7;
 
    protected DataViewCoords viewCoords_;
-   private AcquisitionInterface acq_;
+   private ViewerAcquisitionInterface acq_;
    private JSONObject summaryMetadata_;
    private volatile boolean closed_ = false;
 
@@ -84,7 +83,7 @@ public class NDViewer implements ViewerInterface {
 
    private OverlayerPlugin overlayerPlugin_;
 
-   public NDViewer(DataSourceInterface cache, AcquisitionInterface acq, JSONObject summaryMD,
+   public NDViewer(DataSourceInterface cache, ViewerAcquisitionInterface acq, JSONObject summaryMD,
            double pixelSize) {
       pixelSizeUm_ = pixelSize; //TODO: Could be replaced later with per image pixel size
       summaryMetadata_ = summaryMD;

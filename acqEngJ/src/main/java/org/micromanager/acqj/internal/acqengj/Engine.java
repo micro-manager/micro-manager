@@ -103,9 +103,9 @@ public class Engine implements AcqEngineJ {
                   ImageAcqTuple imgAcq = firstDequeue_.takeFirst();
                   TaggedImage img = imgAcq.img_;
                   AcquisitionBase acq = imgAcq.acq_;
-                  if (!acq.saveToDisk()) {
-                     throw new RuntimeException("Must implement an image processor if not saving to disk");
-                  }
+//                  if (!acq.saveToDisk()) {
+//                     throw new RuntimeException("Must implement an image processor if not saving to disk");
+//                  }
                   acq.saveImage(img);                 
                   for (AcquisitionHook h : afterSaveHooks_) {
                      h.run(acq, img);
@@ -115,10 +115,10 @@ public class Engine implements AcqEngineJ {
                   ImageAcqTuple imgAcq = dequeue.takeFirst();
                   TaggedImage img = imgAcq.img_;
                   AcquisitionBase acq = imgAcq.acq_;
-                  if (!acq.saveToDisk()) {
-                     throw new RuntimeException("Terminal image processor shouldn't send image to otputqueue if saving to "
-                             + "disk not desired");
-                  }
+//                  if (!acq.saveToDisk()) {
+//                     throw new RuntimeException("Terminal image processor shouldn't send image to otputqueue if saving to "
+//                             + "disk not desired");
+//                  }
                   acq.saveImage(img);
                   for (AcquisitionHook h : afterSaveHooks_) {
                      h.run(acq, img);

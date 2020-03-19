@@ -13,7 +13,7 @@ package org.micromanager.ndviewer.api;
  * 
  * @author henrypinkard
  */
-public interface AcquisitionInterface {
+public interface ViewerAcquisitionInterface {
 
    public boolean isComplete();
 

@@ -152,7 +152,7 @@ public class AcqEngMetadata {
     * @param savingName
     * @return
     */
-   public static JSONObject makeSummaryMD(String savingName, Acquisition acq) {
+   public static JSONObject makeSummaryMD(String savingName, AcquisitionInterface acq) {
       JSONObject summary = new JSONObject();
       AcqEngMetadata.setSavingPrefix(summary, savingName);
 
@@ -780,7 +780,7 @@ public class AcqEngMetadata {
       }
    }
 
-   public static void setAcqType(JSONObject smd, Acquisition acq) {
+   public static void setAcqType(JSONObject smd, AcquisitionInterface acq) {
       try {
          if (acq instanceof DynamicSettingsAcquisition) {
             smd.put(ACQ_TYPE, "DynamicSettingsAcquisition");

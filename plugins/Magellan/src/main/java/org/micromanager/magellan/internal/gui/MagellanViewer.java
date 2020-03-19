@@ -20,11 +20,11 @@ import org.micromanager.magellan.internal.magellanacq.MagellanDataManager;
 import org.micromanager.magellan.internal.magellanacq.MagellanMD;
 import org.micromanager.ndviewer.main.NDViewer;
 import org.micromanager.ndviewer.api.ViewerInterface;
-import org.micromanager.ndviewer.api.AcquisitionInterface;
 import org.micromanager.ndviewer.api.CanvasMouseListenerInterface;
 import org.micromanager.ndviewer.api.ControlsPanelInterface;
 import org.micromanager.ndviewer.api.OverlayerPlugin;
 import org.micromanager.ndviewer.overlay.Overlay;
+import org.micromanager.ndviewer.api.ViewerAcquisitionInterface;
 
 /**
  * Extends the ND viewer with the information that the image is made up of a
@@ -37,7 +37,7 @@ public class MagellanViewer implements ViewerInterface {
    private ViewerInterface viewer_;
    private MagellanDataManager manager_;
 
-   public MagellanViewer(MagellanDataManager cache, AcquisitionInterface acq, JSONObject summmaryMD) {
+   public MagellanViewer(MagellanDataManager cache, ViewerAcquisitionInterface acq, JSONObject summmaryMD) {
       viewer_ = new NDViewer(cache, acq, summmaryMD, MagellanMD.getPixelSizeUm(summmaryMD));
       manager_ = cache;
    }
