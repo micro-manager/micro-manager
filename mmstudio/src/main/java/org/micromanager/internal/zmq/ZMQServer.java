@@ -1,5 +1,6 @@
 package org.micromanager.internal.zmq;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -10,6 +11,9 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import static org.micromanager.internal.zmq.ZMQUtil.EXTERNAL_OBJECTS;
@@ -47,11 +51,10 @@ public class ZMQServer extends ZMQSocketWrapper {
 //         }
 //      }
 //   }
-   
-   
    public ZMQServer(Function<Class, Object> classMapper) {
       super(SocketType.REP);
       apiClasses_ = ZMQUtil.getAPIClasses();
+      classMapper_ = classMapper;
    }
 
    public static ZMQServer getMasterServer() {
@@ -78,8 +81,9 @@ public class ZMQServer extends ZMQSocketWrapper {
                try {
                   JSONObject json = new JSONObject();
                   json.put("type", "exception");
-                  json.put("value", e.getMessage());
+                  json.put("value", e.toString());
                   reply = json.toString().getBytes();
+                  e.printStackTrace();
 
                } catch (JSONException ex) {
                   throw new RuntimeException(ex);
@@ -106,18 +110,16 @@ public class ZMQServer extends ZMQSocketWrapper {
       return serialized.toString().getBytes();
    }
 
-   protected byte[] runMethod(Object obj, JSONObject json) throws NoSuchMethodException, IllegalAccessException, JSONException {
-      String methodName = json.getString("name");
+   private LinkedList<LinkedList<Class>> getParamCombos(JSONObject message, Object[] argVals) throws JSONException {
 
-      Object[] argClasses = new Object[json.getJSONArray("arguments").length()];
-      Object[] argVals = new Object[json.getJSONArray("arguments").length()];
+      Object[] argClasses = new Object[message.getJSONArray("arguments").length()];
       for (int i = 0; i < argVals.length; i++) {
-         Class c = json.getJSONArray("arguments").get(i).getClass();
-         if (json.getJSONArray("arguments").get(i) instanceof JSONObject
-                 && json.getJSONArray("arguments").getJSONObject(i).has("hash-code")) {
+//         Class c = message.getJSONArray("arguments").get(i).getClass();
+         if (message.getJSONArray("arguments").get(i) instanceof JSONObject
+                 && message.getJSONArray("arguments").getJSONObject(i).has("hash-code")) {
             //Passed in a javashadow object as an argument
             argVals[i] = EXTERNAL_OBJECTS.get(
-                    json.getJSONArray("arguments").getJSONObject(i).get("hash-code"));
+                    message.getJSONArray("arguments").getJSONObject(i).get("hash-code"));
             //abstract to superclasses/interfaces in the API
             ParamList<Class> potentialClasses = new ParamList<Class>();
             for (Class apiClass : apiClasses_) {
@@ -126,16 +128,20 @@ public class ZMQServer extends ZMQSocketWrapper {
                }
             }
             argClasses[i] = potentialClasses;
-            continue;
-         } else if (ZMQUtil.PRIMITIVE_CLASS_MAP.containsKey(c)) {
-            c = ZMQUtil.PRIMITIVE_CLASS_MAP.get(c);
+         } else if (ZMQUtil.PRIMITIVE_NAME_CLASS_MAP.containsKey(message.getJSONArray("argument-types").get(i))) {
+            argClasses[i] = ZMQUtil.PRIMITIVE_NAME_CLASS_MAP.get(
+                    message.getJSONArray("argument-types").get(i));         
+            Object primitive = message.getJSONArray("arguments").get(i); //Double, Integer, Long, Boolean
+            argVals[i] = ZMQUtil.convertToPrimitiveClass(primitive, (Class) argClasses[i]);            
+         } else if (message.getJSONArray("argument-types").get(i).equals("java.lang.String")) {
+            //Strings are a special case
+            argClasses[i] = java.lang.String.class;
+            argVals[i] = message.getJSONArray("arguments").getString(i);
          }
-         //TODO probably some more work to do here in deserializing argumen types (e.g. TaggedImage)
-         argClasses[i] = c;
-         argVals[i] = json.getJSONArray("arguments").get(i);
       }
 
-      //Generate every possible combination of parameters given multiple interfaces
+      //Generate every possible combination of parameters given multiple interfaces for classes
+      //so that the correct method can be located
       LinkedList<LinkedList<Class>> paramCombos = new LinkedList<LinkedList<Class>>();
       for (Object argument : argClasses) {
          if (argument instanceof ParamList) {
@@ -168,6 +174,46 @@ public class ZMQServer extends ZMQSocketWrapper {
             }
          }
       }
+      return paramCombos;
+   }
+
+   private Object runConstructor(JSONObject message, Class baseClass) throws
+           JSONException, InstantiationException, IllegalAccessException,
+           IllegalArgumentException, InvocationTargetException {
+
+      Object[] argVals = new Object[message.getJSONArray("arguments").length()];
+
+      LinkedList<LinkedList<Class>> paramCombos = getParamCombos(message, argVals);
+
+      Constructor mathcingConstructor = null;
+      if (paramCombos.isEmpty()) { //Constructor with no argumetns
+         try {
+            mathcingConstructor = baseClass.getConstructor(new Class[]{});
+         } catch (Exception ex) {
+            throw new RuntimeException(ex);
+         }
+      } else { //Figure out which constructor matches given argumetns
+         for (LinkedList<Class> argList : paramCombos) {
+            Class[] classArray = argList.stream().toArray(Class[]::new);
+            try {
+               mathcingConstructor = baseClass.getConstructor(classArray);
+               break;
+            } catch (NoSuchMethodException e) {
+               //ignore
+            }
+         }
+      }
+      if (mathcingConstructor == null) {
+         throw new RuntimeException("No Matching method found with argumetn types");
+      }
+
+      return mathcingConstructor.newInstance(argVals);
+   }
+
+   private byte[] runMethod(Object obj, JSONObject message) throws NoSuchMethodException, IllegalAccessException, JSONException {
+      String methodName = message.getString("name");
+      Object[] argVals = new Object[message.getJSONArray("arguments").length()];
+      LinkedList<LinkedList<Class>> paramCombos = getParamCombos(message, argVals);
 
       Method matchingMethod = null;
       if (paramCombos.isEmpty()) {
@@ -192,6 +238,7 @@ public class ZMQServer extends ZMQSocketWrapper {
       try {
          result = matchingMethod.invoke(obj, argVals);
       } catch (InvocationTargetException ex) {
+         ex.printStackTrace();
          result = ex.getCause();
       }
 
@@ -236,7 +283,7 @@ public class ZMQServer extends ZMQSocketWrapper {
             //if this is not one of the classes that is supposed to grab an existing 
             //object, construct a new one
             if (instance == null) {
-               instance = baseClass.newInstance();
+               instance = runConstructor(request, baseClass);
             }
 
             if (request.has("new-port") && request.getBoolean("new-port")) {

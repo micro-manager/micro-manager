@@ -24,11 +24,23 @@ public class RemoteAcqManager {
       }
    }
    
-   public RemoteAcquisition createAcquisition() {
-      
+   public void clearImageProcessors() {
+      eng_.clearImageProcessors();;
+   }
+   
+   public RemoteImageProcessor createImageProcessor() {
+      RemoteImageProcessor processor = new RemoteImageProcessor();
+      eng_.addImageProcessor(processor);
+      return processor;
+   }
+   
+   public RemoteAcquisition createAcquisition(String dir, String name) {
       RemoteAcqEventIterator eventSource = new RemoteAcqEventIterator();
-
       RemoteAcquisitionSettings settings = new RemoteAcquisitionSettings();
+      settings.dataLocation = dir;
+      settings.showViewer = true;
+      settings.name = name;
+      
       return new RemoteAcquisition(eventSource, settings);
    }
    

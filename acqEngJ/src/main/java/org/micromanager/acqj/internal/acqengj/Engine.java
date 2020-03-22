@@ -96,9 +96,13 @@ public class Engine implements AcqEngineJ {
    }
 
    private void restartSavingAndProcessing() {
+      if (savingProcessingFuture_ != null) {
+         savingProcessingFuture_.cancel(true);
+      }
       savingProcessingFuture_ = savingAndProcessingExecutor_.submit(() -> {
-         while (true) {
-            try {
+         try {
+            while (true) {
+
                if (imageProcessors_.isEmpty()) {
                   ImageAcqTuple imgAcq = firstDequeue_.takeFirst();
                   TaggedImage img = imgAcq.img_;
@@ -106,11 +110,11 @@ public class Engine implements AcqEngineJ {
 //                  if (!acq.saveToDisk()) {
 //                     throw new RuntimeException("Must implement an image processor if not saving to disk");
 //                  }
-                  acq.saveImage(img);                 
+                  acq.saveImage(img);
                   for (AcquisitionHook h : afterSaveHooks_) {
                      h.run(acq, img);
                   }
-               } else {
+            } else {
                   LinkedBlockingDeque<ImageAcqTuple> dequeue = processorOutputQueues_.get(imageProcessors_.get(imageProcessors_.size() - 1));
                   ImageAcqTuple imgAcq = dequeue.takeFirst();
                   TaggedImage img = imgAcq.img_;
@@ -124,14 +128,15 @@ public class Engine implements AcqEngineJ {
                      h.run(acq, img);
                   }
                }
-
-            } catch (Exception ex) {
-               System.err.println(ex);
-               ex.printStackTrace();
-            } finally {
-               restartSavingAndProcessing();
             }
-         }
+         } catch (InterruptedException e) {
+            //should only be interrrupted by a call of this funciton which already restarts it
+         } catch (Exception ex) {
+            System.err.println(ex);
+            ex.printStackTrace();
+            restartSavingAndProcessing();
+         } 
+
       });
    }
 
@@ -163,6 +168,7 @@ public class Engine implements AcqEngineJ {
          p.setDequeues(processorOutputQueues_.get(imageProcessors_.size() - 2),
                  processorOutputQueues_.get(imageProcessors_.size() - 1));
       }
+      restartSavingAndProcessing();
    }
 
    public void clearImageProcessors() {
@@ -368,7 +374,7 @@ public class Engine implements AcqEngineJ {
                }
             }
 
-            AcqEngMetadata.addImageMetadata(ti.tags, event, camIndex, 
+            AcqEngMetadata.addImageMetadata(ti.tags, event, camIndex,
                     currentTime - event.acquisition_.getStartTime_ms(), exposure);
             event.acquisition_.addToImageMetadata(ti.tags);
             firstDequeue_.putLast(new ImageAcqTuple(ti, event.acquisition_));
@@ -455,8 +461,8 @@ public class Engine implements AcqEngineJ {
             try {
                if (event.isZSequenced()) {
                   core_.startStageSequence(zStage);
-               } else if (lastEvent_ == null || event.getZPosition() != 
-                       lastEvent_.getZPosition() || !event.getXY().equals(lastEvent_.getXY())) {
+               } else if (lastEvent_ == null || event.getZPosition()
+                       != lastEvent_.getZPosition() || !event.getXY().equals(lastEvent_.getXY())) {
                   //wait for it to not be busy (is this even needed?)   
                   while (core_.deviceBusy(zStage)) {
                      Thread.sleep(1);
@@ -626,8 +632,7 @@ public class Engine implements AcqEngineJ {
             }
          }
          //TODO arbitrary additional properties in acq event
-         
-         
+
          //z stage
          if (e1.getZPosition() != e2.getZPosition()) {
             if (!core_.isStageSequenceable(core_.getFocusDevice())) {
@@ -638,7 +643,7 @@ public class Engine implements AcqEngineJ {
             }
          }
          //xy stage
-         if (!e1.getXY().equals(e2.getXY()) ) {
+         if (!e1.getXY().equals(e2.getXY())) {
             if (!core_.isXYStageSequenceable(core_.getXYStageDevice())) {
                return false;
             }

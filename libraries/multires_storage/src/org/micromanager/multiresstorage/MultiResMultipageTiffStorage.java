@@ -68,7 +68,7 @@ public class MultiResMultipageTiffStorage implements StorageAPI {
    private boolean rgb_;
    private ThreadPoolExecutor writingExecutor_;
    private volatile int maxResolutionLevel_ = 0;
-   private final boolean loaded_;
+   private final boolean loaded_, tiled_;
    private ConcurrentHashMap<String, Integer> superChannelNames_ = new ConcurrentHashMap<String, Integer>();
    private CopyOnWriteArrayList<String> positions_ = new CopyOnWriteArrayList<String>();
    private Set<HashMap<String, Integer>> imageAxes_ = new HashSet<HashMap<String, Integer>>();
@@ -87,6 +87,7 @@ public class MultiResMultipageTiffStorage implements StorageAPI {
       //create fullResStorage
       fullResStorage_ = new ResolutionLevel(fullResDir, false, null, null, this, -1, -1, false, -1);
       summaryMD_ = fullResStorage_.getSummaryMetadata();
+      tiled_ = StorageMD.getTiledStorage(summaryMD_);
 
       //reconstruct map of super channel names to channel indices, and set
       //of all image axes
@@ -176,7 +177,9 @@ public class MultiResMultipageTiffStorage implements StorageAPI {
          for (JSONObject xyPos : positions.values()) {
             pList.put(xyPos);
          }
-         posManager_ = new PositionManager(pList, lowResStorages_.size());
+         if (tiled_) {
+            posManager_ = new PositionManager(pList, lowResStorages_.size());
+         }
 
       } catch (Exception e) {
          throw new RuntimeException("Couldn't create position manager");
@@ -187,7 +190,8 @@ public class MultiResMultipageTiffStorage implements StorageAPI {
     * Construcotr for new storage that doesn't parse summary metadata
     */
    public MultiResMultipageTiffStorage(String dir, String name, JSONObject summaryMetadata,
-           int overlapX, int overlapY, int width, int height, int byteDepth) {
+           int overlapX, int overlapY, int width, int height, int byteDepth, boolean tiled) {
+      tiled_ = tiled;
       xOverlap_ = overlapX;
       yOverlap_ = overlapY;
       byteDepth_ = byteDepth;
@@ -205,14 +209,14 @@ public class MultiResMultipageTiffStorage implements StorageAPI {
          summaryMD_ = new JSONObject(summaryMetadata.toString());
          StorageMD.setPixelOverlapX(summaryMD_, xOverlap_);
          StorageMD.setPixelOverlapY(summaryMD_, yOverlap_);
+         StorageMD.setTiledStorage(summaryMD_, tiled_);
       } catch (JSONException ex) {
          throw new RuntimeException("Couldnt copy summary metadata");
       }
 
       //prefix is provided by summary metadata
       try {
-         String baseName = summaryMetadata.getString("Prefix");
-         uniqueAcqName_ = getUniqueAcqDirName(dir, baseName);
+         uniqueAcqName_ = getUniqueAcqDirName(dir, name);
          //create acqusition directory for actual data
          directory_ = dir + (dir.endsWith(File.separator) ? "" : File.separator) + uniqueAcqName_;
       } catch (Exception e) {
@@ -227,10 +231,12 @@ public class MultiResMultipageTiffStorage implements StorageAPI {
          throw new RuntimeException("couldn't create saving directory");
       }
 
-      try {
-         posManager_ = new PositionManager();
-      } catch (Exception e) {
-         throw new RuntimeException("Couldn't create position manaher");
+      if (tiled_) {
+         try {
+            posManager_ = new PositionManager();
+         } catch (Exception e) {
+            throw new RuntimeException("Couldn't create position manaher");
+         }
       }
       try {
          //Create full Res storage
@@ -279,6 +285,9 @@ public class MultiResMultipageTiffStorage implements StorageAPI {
    }
 
    public int[] getImageBounds() {
+      if (!tiled_) {
+         return new int[]{0, 0, tileWidth_, tileHeight_};
+      }
       if (!loaded_) {
          return new int[]{0, 0, getNumCols() * tileWidth_, getNumRows() * tileHeight_};
       } else {
@@ -380,7 +389,13 @@ public class MultiResMultipageTiffStorage implements StorageAPI {
          for (long row = rowStart; row < rowStart + lineHeights.size(); row++) {
             TaggedImage tile = null;
             if (dsIndex == 0) {
-               tile = fullResStorage_.getImage(channel, slice, frame, posManager_.getPositionIndexFromTilePosition(dsIndex, row, col));
+               int posIndex;
+               if (posManager_ == null) {
+                  posIndex = axes.containsKey("p") ? axes.get("p") : 0;
+               } else {
+                  posIndex = posManager_.getPositionIndexFromTilePosition(dsIndex, row, col);
+               }
+               tile = fullResStorage_.getImage(channel, slice, frame, posIndex);
             } else {
                tile = lowResStorages_.get(dsIndex) == null ? null
                        : lowResStorages_.get(dsIndex).getImage(channel, slice, frame, posManager_.getPositionIndexFromTilePosition(dsIndex, row, col));
@@ -690,7 +705,8 @@ public class MultiResMultipageTiffStorage implements StorageAPI {
 
       //Convert all other remaining axes into a superchannel
       String superChannel = "";
-      for (String s : axesCopy.keySet()) {
+      HashSet<String> sortedSet = new HashSet<String>(axesCopy.keySet());
+      for (String s : sortedSet) {
          superChannel += "Axis_" + s + "_" + axesCopy.get(s);
       }
       //get index of superchannel
@@ -759,19 +775,15 @@ public class MultiResMultipageTiffStorage implements StorageAPI {
 
          List<Future> writeFinishedList = new ArrayList<Future>();
 
-         if (!axes.containsKey("p")) {
-            throw new RuntimeException("axes must contain a position index entry with \"p\" as key");
+         if (tiled_) {
+            if (!axes.containsKey("p")) {
+               throw new RuntimeException("axes must contain a position index entry with \"p\" as key");
+            }
          }
+         int pIndex= axes.containsKey("p") ? axes.get("p") : 0;
+
          imageAxes_.add(axes);
 
-         //dyanmically infer and overwrite position index
-//         int pIndex;
-//         String rowColKey = row + "_" + col;
-//         if (!positions_.contains(rowColKey)) {
-//            positions_.add(rowColKey);
-//         }
-//         pIndex = positions_.indexOf(rowColKey);
-//         axes.put("p", pIndex);
          int tIndex = axes.containsKey("t") ? axes.get("t") : 0;
          int zIndex = axes.containsKey("z") ? axes.get("z") : 0;
          //This call merges all other axes besides p z t into a superchannel,
@@ -788,19 +800,21 @@ public class MultiResMultipageTiffStorage implements StorageAPI {
 
          //write to full res storage as normal (i.e. with overlap pixels present)
          writeFinishedList.add(fullResStorage_.putImage(ti, prefix_,
-                 tIndex, superChannelNames_.get(superChannelName), zIndex, axes.get("p")));
+                 tIndex, superChannelNames_.get(superChannelName), zIndex, pIndex));
 
-         //check if maximum resolution level needs to be updated based on full size of image
-         long fullResPixelWidth = getNumCols() * tileWidth_;
-         long fullResPixelHeight = getNumRows() * tileHeight_;
-         int maxResIndex = (int) Math.ceil(Math.log((Math.max(fullResPixelWidth, fullResPixelHeight)
-                 / 4)) / Math.log(2));
+         if (tiled_) {
+            //check if maximum resolution level needs to be updated based on full size of image
+            long fullResPixelWidth = getNumCols() * tileWidth_;
+            long fullResPixelHeight = getNumRows() * tileHeight_;
+            int maxResIndex = (int) Math.ceil(Math.log((Math.max(fullResPixelWidth, fullResPixelHeight)
+                    / 4)) / Math.log(2));
 
-         //Make sure positon manager knows about potential new rows/cols
-         posManager_.rowColReceived(row, col);
-         addResolutionsUpTo(maxResIndex);
-         writeFinishedList.addAll(addToLowResStorage(ti, tIndex, zIndex,
-                 superChannelNames_.get(superChannelName), 0, axes.get("p"), row, col));
+            //Make sure positon manager knows about potential new rows/cols
+            posManager_.rowColReceived(row, col);
+            addResolutionsUpTo(maxResIndex);
+            writeFinishedList.addAll(addToLowResStorage(ti, tIndex, zIndex,
+                    superChannelNames_.get(superChannelName), 0, pIndex, row, col));
+         }
 
          for (Future f : writeFinishedList) {
             f.get();

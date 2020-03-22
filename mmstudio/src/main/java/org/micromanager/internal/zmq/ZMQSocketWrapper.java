@@ -2,8 +2,6 @@ package org.micromanager.internal.zmq;
 
 import java.util.Collections;
 import java.util.HashMap;
-import org.json.JSONException;
-import org.json.JSONObject;
 import static org.micromanager.internal.zmq.ZMQServer.DEFAULT_MASTER_PORT_NUMBER;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;

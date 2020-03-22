@@ -27,21 +27,19 @@ public class RemoteDataManager implements DataSourceInterface, DataSink {
 
    private ExecutorService displayCommunicationExecutor_;
 
-   private ViewerInterface viewer_;
-   private RemoteAcquisition acq_;
-   private TiffStorageAdapter storage_;
+   private volatile ViewerInterface viewer_;
+   private volatile RemoteAcquisition acq_;
+   private volatile MultiResMultipageTiffStorage storage_;
 
    private final boolean showViewer_, storeData_;
    private String dir_;
-   private final int[] dataBounds_;
    private String name_;
 
    public RemoteDataManager(boolean showViewer, String dataStorageLocation,
-           int[] dataBounds, String name) {
+           String name) {
       showViewer_ = showViewer;
       storeData_ = dataStorageLocation != null;
       dir_ = dataStorageLocation;
-      dataBounds_ = dataBounds;
       name_ = name;
    }
 
@@ -49,7 +47,11 @@ public class RemoteDataManager implements DataSourceInterface, DataSink {
       acq_ = (RemoteAcquisition) acq;
 
       if (storeData_) {
-         storage_ = new TiffStorageAdapter(dir_, summaryMetadata);
+         int overlapX = 0, overlapY = 0; //Don't worry about multires features for now
+         storage_ = new MultiResMultipageTiffStorage(dir_, name_,
+                 summaryMetadata, overlapX, overlapY, AcqEngMetadata.getWidth(summaryMetadata),
+                 AcqEngMetadata.getHeight(summaryMetadata),
+                 AcqEngMetadata.getBytesPerPixel(summaryMetadata), false);
       }
 
       if (showViewer_) {
@@ -74,7 +76,8 @@ public class RemoteDataManager implements DataSourceInterface, DataSink {
    }
 
    public void putImage(final TaggedImage taggedImg) {
-      storage_.putImage(taggedImg);
+      HashMap<String, Integer> axes = AcqEngMetadata.getAxes(taggedImg.tags);
+      storage_.putImage(taggedImg, axes);
 
       if (showViewer_) {
          //put on different thread to not slow down acquisition
@@ -91,7 +94,7 @@ public class RemoteDataManager implements DataSourceInterface, DataSink {
    ///////// Data source interface for Viewer //////////
    @Override
    public int[] getBounds() {
-      return dataBounds_;
+      return storage_.getImageBounds();
    }
 
    @Override
@@ -99,8 +102,9 @@ public class RemoteDataManager implements DataSourceInterface, DataSink {
            double xOffset, double yOffset, int imageWidth, int imageHeight) {
 
       //TODO: what if you want to use viewer, but an external data source
+       int resIndex = 0;
       return storage_.getStitchedImage(
-              axes, (int) xOffset, (int) yOffset,
+              axes, resIndex, (int) xOffset, (int) yOffset,
               imageWidth, imageHeight);
    }
 
@@ -114,7 +118,7 @@ public class RemoteDataManager implements DataSourceInterface, DataSink {
       return null; //Doesn't matter for now
    }
 
-   ///////////// Data sink interface required ny acq eng /////////////
+   ///////////// Data sink interface required by acq eng /////////////
    @Override
    public void finished() {
       if (storage_ != null) {

@@ -29,10 +29,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.json.JSONArray;
@@ -51,17 +54,27 @@ public class ZMQUtil {
    protected final static ConcurrentHashMap<String, Object> EXTERNAL_OBJECTS
            = new ConcurrentHashMap<String, Object>();
 
-   public final static Map<Class<?>, Class<?>> PRIMITIVE_CLASS_MAP = new HashMap<Class<?>, Class<?>>();
+   public final static Set<Class> PRIMITIVES = new HashSet<Class>();
+   public final static Map<String, Class<?>> PRIMITIVE_NAME_CLASS_MAP = new HashMap<String, Class<?>>();
 
    static {
-      PRIMITIVE_CLASS_MAP.put(Boolean.class, boolean.class);
-      PRIMITIVE_CLASS_MAP.put(Byte.class, byte.class);
-      PRIMITIVE_CLASS_MAP.put(Short.class, short.class);
-      PRIMITIVE_CLASS_MAP.put(Character.class, char.class);
-      PRIMITIVE_CLASS_MAP.put(Integer.class, int.class);
-      PRIMITIVE_CLASS_MAP.put(Long.class, long.class);
-      PRIMITIVE_CLASS_MAP.put(Float.class, float.class);
-      PRIMITIVE_CLASS_MAP.put(Double.class, double.class);
+      PRIMITIVES.add(Boolean.class);
+      PRIMITIVES.add(Byte.class);
+      PRIMITIVES.add(Short.class);
+      PRIMITIVES.add(Character.class);
+      PRIMITIVES.add(Integer.class);
+      PRIMITIVES.add(Long.class);
+      PRIMITIVES.add(Float.class);
+      PRIMITIVES.add(Double.class);
+
+      PRIMITIVE_NAME_CLASS_MAP.put("boolean", boolean.class);
+      PRIMITIVE_NAME_CLASS_MAP.put("byte", byte.class);
+      PRIMITIVE_NAME_CLASS_MAP.put("short", short.class);
+      PRIMITIVE_NAME_CLASS_MAP.put("char", char.class);
+      PRIMITIVE_NAME_CLASS_MAP.put("int", int.class);
+      PRIMITIVE_NAME_CLASS_MAP.put("long", long.class);
+      PRIMITIVE_NAME_CLASS_MAP.put("float", float.class);
+      PRIMITIVE_NAME_CLASS_MAP.put("double", double.class);
    }
 
    private static final ByteOrder BYTE_ORDER = ByteOrder.BIG_ENDIAN;
@@ -72,22 +85,21 @@ public class ZMQUtil {
          JSONObject json = new JSONObject(s);
          String type = json.getString("type");
          if (type.equals("object")) {
-            return deserializationFn.apply(json.getJSONObject("value"));
+            Object result = deserializationFn.apply(json.getJSONObject("value"));
+            return result;
          }
+         throw new RuntimeException("Problem decoding message");
       } catch (JSONException ex) {
          throw new RuntimeException("Problem turning message into JSON. ");
-      } finally {
-         throw new RuntimeException("Problem decoding message");
       }
    }
 
    /**
-    * This version converts to byte array with no side effects. Used for objects
+    * Convert objects that will be serialized into JSON. Used for objects
     * that will pass out and never need to be returned
     *
-    * //TODO: this is redundant with the below for most types, could combine
     */
-   protected static byte[] serialize(Object o) {
+   public static JSONObject toJSON(Object o) {
       JSONObject json = new JSONObject();
       try {
          if (o instanceof Exception) {
@@ -104,9 +116,7 @@ public class ZMQUtil {
             json.put("value", o);
          } else if (o == null) {
             json.put("type", "none");
-         } else if (o.getClass().equals(Long.class) || o.getClass().equals(Short.class)
-                 || o.getClass().equals(Integer.class) || o.getClass().equals(Float.class)
-                 || o.getClass().equals(Double.class) || o.getClass().equals(Boolean.class)) {
+         } else if (PRIMITIVES.contains(o.getClass())) {
             json.put("type", "primitive");
             json.put("value", o);
          } else if (o.getClass().equals(JSONObject.class)) {
@@ -128,16 +138,13 @@ public class ZMQUtil {
          } else if (o.getClass().equals(float[].class)) {
             json.put("type", "float-array");
             json.put("value", encodeArray(o));
-         } else if (o instanceof SerializableObject) {
-            return ((SerializableObject) o).serialize();
          } else {
-            throw new RuntimeException("Unrecognized object type. Must implement "
-                    + "SerializableObject");
+            return null;
          }
       } catch (JSONException e) {
          throw new RuntimeException(e);
       }
-      return json.toString().getBytes();
+      return json;
    }
 
    //TODO: is list conversion out of place?
@@ -152,45 +159,19 @@ public class ZMQUtil {
    protected static void serialize(Set<Class> apiClasses, Object o,
            JSONObject json, int port) {
       try {
-         if (o instanceof Exception) {
-            json.put("type", "exception");
-
-            Throwable root = ((Exception) o).getCause() == null
-                    ? ((Exception) o) : ((Exception) o).getCause();
-            String s = root.toString() + "\n";
-            for (StackTraceElement el : root.getStackTrace()) {
-               s += el.toString() + "\n";
-            }
-            json.put("value", s);
-         } else if (o instanceof String) {
-            json.put("type", "string");
-            json.put("value", o);
-         } else if (o == null) {
-            json.put("type", "null");
-         } else if (o.getClass().equals(Long.class) || o.getClass().equals(Short.class)
-                 || o.getClass().equals(Integer.class) || o.getClass().equals(Float.class)
-                 || o.getClass().equals(Double.class) || o.getClass().equals(Boolean.class)) {
-            json.put("type", "primitive");
-            json.put("value", o);
-         } else if (o.getClass().equals(JSONObject.class)) {
-            json.put("type", "object");
-            json.put("class", "JSONObject");
-            json.put("value", o.toString());
-         } else if (o.getClass().equals(byte[].class)) {
-            json.put("type", "byte-array");
-            json.put("value", encodeArray(o));
-         } else if (o.getClass().equals(short[].class)) {
-            json.put("type", "short-array");
-            json.put("value", encodeArray(o));
-         } else if (o.getClass().equals(double[].class)) {
-            json.put("type", "double-array");
-            json.put("value", encodeArray(o));
-         } else if (o.getClass().equals(int[].class)) {
-            json.put("type", "int-array");
-            json.put("value", encodeArray(o));
-         } else if (o.getClass().equals(float[].class)) {
-            json.put("type", "float-array");
-            json.put("value", encodeArray(o));
+         JSONObject converted = toJSON(o);
+         if (converted != null) {
+            //Can be driectly converted into a serialized object--copy into
+            converted.keys().forEachRemaining(new Consumer<String>() {
+               @Override
+               public void accept(String t) {
+                  try {
+                     json.put(t, converted.get(t));
+                  } catch (JSONException ex) {
+                     throw new RuntimeException(ex); //Wont happen
+                  }
+               }
+            });
          } else if (Stream.of(o.getClass().getInterfaces()).anyMatch((Class t) -> t.equals(List.class))) {
             //Serialize java lists as JSON arrays so tehy canbe converted into python lists
             json.put("type", "list");
@@ -251,7 +232,13 @@ public class ZMQUtil {
       }
    }
 
-   private static String encodeArray(Object array) {
+   /**
+    * Convert array of primitives to a String
+    *
+    * @param array
+    * @return
+    */
+   public static String encodeArray(Object array) {
       byte[] byteArray = null;
       if (array instanceof byte[]) {
          byteArray = (byte[]) array;
@@ -273,6 +260,22 @@ public class ZMQUtil {
          byteArray = buffer.array();
       }
       return Base64.getEncoder().encodeToString(byteArray);
+   }
+
+   public static Object decodeArray(String serialized, Class arrayClass) {
+      byte[] byteArray = Base64.getDecoder().decode(serialized);
+      if (arrayClass.equals(byte[].class)) {
+         return byteArray;
+      } else if (arrayClass.equals(short[].class)) {
+         return ByteBuffer.wrap(byteArray).asShortBuffer().array();
+      } else if (arrayClass.equals(int[].class)) {
+         return ByteBuffer.wrap(byteArray).asIntBuffer().array();
+      } else if (arrayClass.equals(double[].class)) {
+         return ByteBuffer.wrap(byteArray).asDoubleBuffer().array();
+      } else if (arrayClass.equals(float[].class)) {
+         return ByteBuffer.wrap(byteArray).asFloatBuffer().array();
+      }
+      throw new RuntimeException("unknown array type");
    }
 
    public static JSONArray parseConstructors(Collection<Class> apiClasses) throws JSONException {
@@ -323,13 +326,15 @@ public class ZMQUtil {
    //Add java classes that are allowed to pass to python to avoid stuff leaking out
    //TODO: specify filters as arguments so org.micromanager inst hardcoded
    public static Set<Class> getAPIClasses() {
+      //TODO: pass in classloader as an argument
+      ClassLoader classLoader = IJ.getClassLoader();
+
       HashSet<Class> apiClasses = new HashSet<Class>();
 
       //recursively get all names that have org.micromanager, but not internal in the name
       ArrayList<String> mmPackages = new ArrayList<>();
       Package[] p = Package.getPackages();
       for (Package pa : p) {
-//         System.out.println(pa.getName());
          //Add all non internal MM classes
          if (pa.getName().contains("org.micromanager") && !pa.getName().contains("internal")) {
             mmPackages.add(pa.getName());
@@ -340,9 +345,10 @@ public class ZMQUtil {
          }
       }
 
+      //TODO: this is for netbeans, delte or split out
+      mmPackages.add("org.micromanager.remote");
+
       // ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-      //TODO: pass in classloader as an argument
-      ClassLoader classLoader = IJ.getClassLoader();
 //      studio_.logs().logDebugMessage("ClassLoader in ZMQServer: " + classLoader.toString());  
       for (String packageName : mmPackages) {
          String path = packageName.replace('.', '/');
@@ -479,5 +485,27 @@ public class ZMQUtil {
 
       // Return collection of files
       return files;
+   }
+
+   static Object convertToPrimitiveClass(Object primitive, Class argClass) {
+      if (argClass.equals(boolean.class)) {
+         return primitive;
+      } else if (argClass.equals(char.class)) {
+         return (char) ((Number) primitive).intValue();
+      } else if (argClass.equals(byte.class)) {
+         return ((Number) primitive).byteValue();
+      } else if (argClass.equals(short.class)) {
+         return ((Number) primitive).shortValue();
+      } else if (argClass.equals(int.class)) {
+         return ((Number) primitive).intValue();
+      } else if (argClass.equals(long.class)) {
+         return ((Number) primitive).longValue();
+      } else if (argClass.equals(float.class)) {
+         return ((Number) primitive).floatValue();
+      } else if (argClass.equals(double.class)) {
+         return ((Number) primitive).doubleValue();
+      } else {
+         throw new RuntimeException("Unkown class");
+      }
    }
 }

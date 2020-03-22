@@ -22,7 +22,7 @@ public class RemoteAcqEventIterator implements Iterator<AcquisitionEvent>{
    private RemoteAcquisition acq_;
    
    public RemoteAcqEventIterator() {
-      pullSocket_ = new ZMQPullSocket<AcquisitionEvent>( "Acquisition event socket",
+      pullSocket_ = new ZMQPullSocket<AcquisitionEvent>(
         new Function<JSONObject, AcquisitionEvent>() {
          @Override
          public AcquisitionEvent apply(JSONObject t) {
@@ -34,7 +34,7 @@ public class RemoteAcqEventIterator implements Iterator<AcquisitionEvent>{
 
    @Override
    public boolean hasNext() {
-      if (lastEvent_ != null && !lastEvent_.isAcquisitionFinishedEvent()) {
+      if (lastEvent_ != null && lastEvent_.isAcquisitionFinishedEvent()) {
          return false;
       }
       return true;

@@ -109,7 +109,7 @@
                   <Component id="timeCheckBox_" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="zPositiionCheckBox_" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="32767" attributes="0"/>
+                  <EmptySpace pref="36" max="32767" attributes="0"/>
               </Group>
               <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
@@ -136,7 +136,7 @@
                       <Component id="timeCheckBox_" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="zPositiionCheckBox_" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace max="32767" attributes="0"/>
+                  <EmptySpace pref="22" max="32767" attributes="0"/>
               </Group>
               <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
@@ -156,7 +156,7 @@
         <Component class="javax.swing.JButton" name="showInFolderButton_">
           <Properties>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/org/micromanager/magellan/folder.png"/>
+              <Image iconType="3" name="/org/micromanager/ndviewer/folder.png"/>
             </Property>
             <Property name="toolTipText" type="java.lang.String" value="Show in folder"/>
           </Properties>
@@ -167,7 +167,7 @@
         <Component class="javax.swing.JButton" name="abortButton_">
           <Properties>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/org/micromanager/magellan/abort.png"/>
+              <Image iconType="3" name="/org/micromanager/ndviewer/abort.png"/>
             </Property>
             <Property name="toolTipText" type="java.lang.String" value="Abort acquisition"/>
           </Properties>
@@ -178,7 +178,7 @@
         <Component class="javax.swing.JButton" name="pauseButton_">
           <Properties>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/org/micromanager/magellan/pause.png"/>
+              <Image iconType="3" name="/org/micromanager/ndviewer/pause.png"/>
             </Property>
             <Property name="toolTipText" type="java.lang.String" value="Pause/resume acquisition"/>
           </Properties>

@@ -13,6 +13,7 @@ import org.micromanager.acqj.api.AcquisitionInterface;
 import org.micromanager.acqj.api.DynamicSettingsAcquisition;
 import org.micromanager.acqj.api.ExceptionCallback;
 import org.micromanager.acqj.api.ImageAcqTuple;
+import org.micromanager.ndviewer.api.ViewerAcquisitionInterface;
 
 /**
  * Class that serves as the java counterpart to a python acquisition
@@ -21,13 +22,13 @@ import org.micromanager.acqj.api.ImageAcqTuple;
  * @author henrypinkard
  */
 public class RemoteAcquisition extends DynamicSettingsAcquisition
-        implements AcquisitionInterface {
+        implements AcquisitionInterface, ViewerAcquisitionInterface {
 
    private RemoteAcqEventIterator eventSource_;
 
    public RemoteAcquisition(RemoteAcqEventIterator eventSource, RemoteAcquisitionSettings settings) {
       super(settings, new RemoteDataManager(settings.showViewer,
-              settings.dataLocation, settings.dataBounds, settings.name));
+              settings.dataLocation, settings.name));
       eventSource_ = eventSource;
       eventSource.setAcquisition(this);
    }

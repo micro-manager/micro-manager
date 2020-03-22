@@ -9,6 +9,8 @@ import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Function;
+import org.json.JSONObject;
 import static org.micromanager.internal.zmq.ZMQSocketWrapper.context_;
 import org.zeromq.SocketType;
 
@@ -19,10 +21,12 @@ import org.zeromq.SocketType;
 public class ZMQPushSocket<T> extends ZMQSocketWrapper {
   
    private ExecutorService executor_;
+   private Function<T, JSONObject> serializationFn_;
 
    //Constructor for server the base class that runs on its own thread
-   public ZMQPushSocket(int port, String name) {
-      super(SocketType.PULL);
+   public ZMQPushSocket(Function<T, JSONObject> serializationFn) {
+      super(SocketType.PUSH);
+      serializationFn_ = serializationFn;
    }
 
    @Override
@@ -43,7 +47,7 @@ public class ZMQPushSocket<T> extends ZMQSocketWrapper {
     */
    public Future push(T o) {
       return executor_.submit(() -> {
-         socket_.send(ZMQUtil.serialize(o));
+         socket_.send(serializationFn_.apply(o).toString());
       });
    }
 

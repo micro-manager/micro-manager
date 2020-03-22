@@ -15,8 +15,9 @@ public class RemoteAcquisitionSettings extends MinimalAcquisitionSettings {
    
    boolean showViewer;
    String dataLocation;
-   int[] dataBounds;
    String name;
    
-   
+    public RemoteAcquisitionSettings() {
+      
+   }   
 }

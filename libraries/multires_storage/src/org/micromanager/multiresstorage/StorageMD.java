@@ -22,6 +22,7 @@ class StorageMD {
    private static final String GRID_ROW = "GridRowIndex";
    private static final String OVERLAP_X = "GridPixelOverlapX";
    private static final String OVERLAP_Y = "GridPixelOverlapY";
+   private static final String TILED_STORAGE = "TiledImageStorage";
 
    static String generateLabel(int channel, int slice, int frame, int position) {
       return channel + "_" + slice + "_" + frame + "_" + position;
@@ -102,8 +103,8 @@ class StorageMD {
          throw new RuntimeException("couldnt create axes");
       }
    }
-   
-      public static void createAxes(JSONObject tags) {
+
+   public static void createAxes(JSONObject tags) {
       try {
          tags.put(AXES, new JSONObject());
       } catch (JSONException ex) {
@@ -148,6 +149,22 @@ class StorageMD {
    public static int getPixelOverlapY(JSONObject summaryMD) {
       try {
          return summaryMD.getInt(OVERLAP_Y);
+      } catch (JSONException ex) {
+         throw new RuntimeException("Couldnt find pixel overlap in image tags");
+      }
+   }
+   
+      static void setTiledStorage(JSONObject summaryMD, boolean tiled) {
+      try {
+          summaryMD.put(TILED_STORAGE, tiled);
+      } catch (JSONException ex) {
+         throw new RuntimeException("Couldnt find pixel overlap in image tags");
+      }
+   }
+
+   static boolean getTiledStorage(JSONObject summaryMD) {
+      try {
+         return summaryMD.getBoolean(TILED_STORAGE);
       } catch (JSONException ex) {
          throw new RuntimeException("Couldnt find pixel overlap in image tags");
       }

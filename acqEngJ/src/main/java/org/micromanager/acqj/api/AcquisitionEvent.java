@@ -148,6 +148,13 @@ public class AcquisitionEvent {
 
    public static AcquisitionEvent fromJSON(JSONObject json, AcquisitionBase acq) {
       try {
+         if (json.has("special")) {
+            if (json.getString("special").equals("acquisition-end")) {
+               return AcquisitionEvent.createAcquisitionFinishedEvent(acq);
+            } else if (json.getString("special").equals("sequence-end")) { 
+               return AcquisitionEvent.createAcquisitionSequenceEndEvent(acq);
+            }
+         }
 
          AcquisitionEvent event = new AcquisitionEvent(acq);
 

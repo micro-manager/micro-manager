@@ -122,7 +122,7 @@ class DisplayWindowControls extends javax.swing.JPanel {
 
       tabbedPane_.addTab("Metadata", metadataPanel_);
 
-      showInFolderButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/magellan/folder.png"))); // NOI18N
+      showInFolderButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/ndviewer/folder.png"))); // NOI18N
       showInFolderButton_.setToolTipText("Show in folder");
       showInFolderButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -130,7 +130,7 @@ class DisplayWindowControls extends javax.swing.JPanel {
          }
       });
 
-      abortButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/magellan/abort.png"))); // NOI18N
+      abortButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/ndviewer/abort.png"))); // NOI18N
       abortButton_.setToolTipText("Abort acquisition");
       abortButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -138,7 +138,7 @@ class DisplayWindowControls extends javax.swing.JPanel {
          }
       });
 
-      pauseButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/magellan/pause.png"))); // NOI18N
+      pauseButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/ndviewer/pause.png"))); // NOI18N
       pauseButton_.setToolTipText("Pause/resume acquisition");
       pauseButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -201,7 +201,7 @@ class DisplayWindowControls extends javax.swing.JPanel {
             .addComponent(timeCheckBox_)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addComponent(zPositiionCheckBox_)
-            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addContainerGap(36, Short.MAX_VALUE))
          .addGroup(topControlPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(topControlPanel_Layout.createSequentialGroup()
                .addContainerGap()
@@ -223,7 +223,7 @@ class DisplayWindowControls extends javax.swing.JPanel {
                .addComponent(scaleBarCheckBox_)
                .addComponent(timeCheckBox_)
                .addComponent(zPositiionCheckBox_))
-            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addContainerGap(22, Short.MAX_VALUE))
          .addGroup(topControlPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(topControlPanel_Layout.createSequentialGroup()
                .addContainerGap()
@@ -239,16 +239,17 @@ class DisplayWindowControls extends javax.swing.JPanel {
       layout.setHorizontalGroup(
          layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(layout.createSequentialGroup()
-            .addComponent(tabbedPane_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+               .addComponent(tabbedPane_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+               .addComponent(topControlPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-         .addComponent(topControlPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(layout.createSequentialGroup()
             .addComponent(topControlPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(tabbedPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 639, Short.MAX_VALUE))
+            .addComponent(tabbedPane_))
       );
 
       tabbedPane_.getAccessibleContext().setAccessibleName("Contrast");
@@ -276,7 +277,7 @@ class DisplayWindowControls extends javax.swing.JPanel {
    private void pauseButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pauseButton_ActionPerformed
       display_.togglePauseAcquisition();
       pauseButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource(
-              display_.isAcquisitionPaused() ? "/org/micromanager/magellan/play.png" : "/org/micromanager/magellan/pause.png")));
+              display_.isAcquisitionPaused() ? "/org/micromanager/ndviewer/play.png" : "/org/micromanager/ndviewer/pause.png")));
       repaint();
    }//GEN-LAST:event_pauseButton_ActionPerformed
 

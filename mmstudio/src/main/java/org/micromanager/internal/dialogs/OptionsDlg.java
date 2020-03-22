@@ -47,6 +47,7 @@ import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.UIMonitor;
 import org.micromanager.internal.zmq.ZMQServer;
+import org.micromanager.internal.zmq.ZMQSocketWrapper;
 
 /**
  * Options dialog for MMStudio.
@@ -255,7 +256,7 @@ public final class OptionsDlg extends MMDialog {
       });
       
       final JCheckBox runServer = new JCheckBox();
-      runServer.setText("Run server on port " + ZMQServer.DEFAULT_PORT_NUMBER);
+      runServer.setText("Run server on port " + ZMQSocketWrapper.DEFAULT_MASTER_PORT_NUMBER);
       runServer.setSelected(mmStudio.getShouldRunZMQServer());
       runServer.addActionListener((ActionEvent arg0) ->  {
          if (runServer.isSelected()) {

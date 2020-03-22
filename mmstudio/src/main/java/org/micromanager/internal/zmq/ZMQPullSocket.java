@@ -6,6 +6,9 @@
 package org.micromanager.internal.zmq;
 
 import java.util.function.Function;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.zeromq.SocketType;
 
@@ -17,7 +20,7 @@ public class ZMQPullSocket<T> extends ZMQSocketWrapper {
    
    Function<JSONObject, T> deserializationFunction_;
 
-   public ZMQPullSocket(String name, Function<JSONObject, T> deserializationFunction) {
+   public ZMQPullSocket(Function<JSONObject, T> deserializationFunction) {
       super(SocketType.PULL);
       deserializationFunction_ = deserializationFunction;
    }
@@ -31,6 +34,10 @@ public class ZMQPullSocket<T> extends ZMQSocketWrapper {
 
 
    public T next() {
-      return (T) ZMQUtil.deserialize(socket_.recv(), deserializationFunction_);
+      try {
+         return (T) deserializationFunction_.apply(new JSONObject(new String(socket_.recv())));
+      } catch (JSONException ex) {
+         throw new RuntimeException("problem deserializing");
+      }
    }
 }
