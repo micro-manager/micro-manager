@@ -38,7 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
-import org.json.JSONException;
+import mmcorej.org.json.JSONException;
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;

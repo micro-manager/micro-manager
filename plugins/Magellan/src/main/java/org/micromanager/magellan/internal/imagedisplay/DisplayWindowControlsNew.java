@@ -19,7 +19,7 @@ import javax.swing.SwingConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
-import org.json.JSONObject;
+import mmcorej.org.json.JSONObject;
 import org.micromanager.display.DisplaySettingsChangedEvent;
 import org.micromanager.magellan.internal.channels.MagellanChannelSpec;
 import org.micromanager.magellan.internal.coordinates.NoPositionsDefinedYetException;

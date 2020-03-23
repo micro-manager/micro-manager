@@ -3,7 +3,7 @@ package org.micromanager.asidispim.utils;
 
 import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
-import org.json.JSONException;
+import mmcorej.org.json.JSONException;
 import org.micromanager.asidispim.data.MyStrings;
 import org.micromanager.asidispim.data.Prefs;
 import org.micromanager.asidispim.data.Properties;

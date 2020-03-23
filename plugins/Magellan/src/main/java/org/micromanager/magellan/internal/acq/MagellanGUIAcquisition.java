@@ -24,7 +24,7 @@ import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import org.json.JSONArray;
+import mmcorej.org.json.JSONArray;
 import org.micromanager.magellan.internal.coordinates.MagellanAffineUtils;
 import org.micromanager.magellan.internal.coordinates.XYStagePosition;
 import org.micromanager.magellan.internal.main.Magellan;

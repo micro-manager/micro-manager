@@ -6,7 +6,7 @@
 package org.micromanager.magellan.internal.imagedisplay.events;
 
 import java.util.HashMap;
-import org.json.JSONObject;
+import mmcorej.org.json.JSONObject;
 
    /**
     * This class signifies that the currently-displayed image needs to be

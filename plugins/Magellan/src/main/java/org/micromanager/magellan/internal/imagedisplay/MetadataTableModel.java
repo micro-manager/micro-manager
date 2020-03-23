@@ -8,8 +8,8 @@ package org.micromanager.magellan.internal.imagedisplay;
 import java.util.Arrays;
 import java.util.Vector;
 import javax.swing.table.AbstractTableModel;
-import org.json.JSONException;
-import org.json.JSONObject;
+import mmcorej.org.json.JSONException;
+import mmcorej.org.json.JSONObject;
 import org.micromanager.magellan.internal.misc.MD;
 
 /**

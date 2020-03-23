@@ -37,7 +37,7 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-import org.json.JSONObject;
+import mmcorej.org.json.JSONObject;
 import org.micromanager.magellan.internal.imagedisplay.events.DisplayClosingEvent;
 import org.micromanager.magellan.internal.imagedisplay.events.MagellanScrollbarPosition;
 import org.micromanager.magellan.internal.misc.Log;
