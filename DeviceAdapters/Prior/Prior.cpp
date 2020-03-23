@@ -17,6 +17,7 @@
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 06/01/2006
+//                Graham Bartlett, gbartlett@prior.com, 20 Mar 2020
 //
 // CVS:           $Id$
 //
@@ -2084,7 +2085,7 @@ bool ZStage::HasCommand(std::string command)
 NanoZStage::NanoZStage() :
    initialized_(false),
    port_("Undefined"),
-   stepSizeUm_(0.00001),
+   stepSizeUm_(0.001),
    answerTimeoutMs_(1000),
    delayMs_(100)
 {
@@ -2128,9 +2129,6 @@ int NanoZStage::Initialize()
 {
    int ret;
 
-   // Set resolution if we can.  If not, assume we have the default resolution.
-   (void)SetResolution(stepSizeUm_);
-
    std::string version, model;
    ret = GetModelAndVersion(model, version);
    if (ret != DEVICE_OK)
@@ -2170,7 +2168,7 @@ int NanoZStage::SetPositionUm(double pos)
       return ret;
 
    std::ostringstream command;
-   command << "PZ " << pos;
+   command << "V " << pos;
    // send command
    ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
    if (ret != DEVICE_OK)
@@ -2265,13 +2263,21 @@ int NanoZStage::SetRelativePositionUm(double pos)
       return ret;
 
    std::ostringstream command;
-   if (pos > 0)
-      command << "U ";
-   else if ( pos < 0) {
+
+   if (pos == 0.0)
+   {
+	   /* No move required */
+	   return DEVICE_OK;
+   }
+   else if (pos > 0.0)
+   {
+	   command << "U ";
+   }
+   else
+   {
       command << "D ";
       pos = -pos;
-   } else 
-      return DEVICE_OK;
+   }
 
    command << pos;
 
@@ -2291,7 +2297,8 @@ int NanoZStage::SetRelativePositionUm(double pos)
       changedTime_ = GetCurrentMMTime();
       return DEVICE_OK;
    }
-   else if (answer.substr(0, 1).compare("E") == 0 && answer.length() > 2)
+   
+   if (answer.substr(0, 1).compare("E") == 0 && answer.length() > 2)
    {
       int errNo = atoi(answer.substr(2).c_str());
       return ERR_OFFSET + errNo;
@@ -2302,34 +2309,12 @@ int NanoZStage::SetRelativePositionUm(double pos)
 
 int NanoZStage::SetResolution(double value)
 {
-   // First Clear serial port from previous stuff
-   int ret = ClearPort(*this, *GetCoreCallback(), port_);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   std::ostringstream command;
-   command << "C " << value;
-
-   // send command
-   ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-   if (ret != DEVICE_OK)
-      return ret;
-
-   // block/wait for acknowledge, or until we time out;
-   std::string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   if (answer.length() > 2 && answer.substr(0, 1).compare("E") == 0)
-   {
-      int errNo = atoi(answer.substr(2).c_str());
-      return ERR_OFFSET + errNo;
-   }
-   else
-   {
-      return DEVICE_OK;
-   }
+	/* We do not need/want to store this on the stage.  MM can set this very often,
+	so writing back to the stage each time could burn out the EEPROM.  Just store this
+	as the current step size in the driver, and then it can be updated as needed.
+	*/
+	stepSizeUm_ = value;
+    return DEVICE_OK;
 }
 
 int NanoZStage::SetOrigin()
