@@ -16,7 +16,7 @@
 (ns org.micromanager.mm
   (:import [org.micromanager MultiStagePosition]
            [mmcorej Configuration DoubleVector Metadata StrVector] ;; load mmcorej.DeviceType at runtime only
-           [org.json JSONArray JSONObject]
+           [mmcorej.org.json JSONArray JSONObject]
            [java.text SimpleDateFormat]
            [org.micromanager MultiStagePosition StagePosition]
            [org.micromanager.acquisition ChannelSpec]

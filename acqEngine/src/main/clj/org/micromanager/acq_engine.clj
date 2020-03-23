@@ -35,7 +35,7 @@
     [java.util Date UUID]
     [java.util.concurrent CountDownLatch LinkedBlockingQueue TimeUnit]
     [mmcorej Configuration Metadata TaggedImage]
-    [org.json JSONArray JSONObject]
+    [mmcorej.org.json JSONArray JSONObject]
     [org.micromanager.acquisition SequenceSettings]
     [org.micromanager.acquisition.internal AcquisitionSleepEvent]
     [org.micromanager.acquisition.internal TaggedImageQueue]
