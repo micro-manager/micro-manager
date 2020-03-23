@@ -26,7 +26,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 import mmcorej.TaggedImage;
-import org.json.JSONException;
+import mmcorej.org.json.JSONException;
 import org.micromanager.PropertyMap;
 
 /**
