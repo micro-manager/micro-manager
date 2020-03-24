@@ -8,6 +8,7 @@ package org.micromanager.display.internal.displaywindow.imagej;
 import com.google.common.base.Preconditions;
 import ij.CompositeImage;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import java.awt.Color;
@@ -63,7 +64,15 @@ class RGBColorModeStrategy implements ColorModeStrategy {
       if (unscaledRGBImage_ == null) {
          unscaledRGBImage_ = imagePlus_.getProcessor();
       }
+      // setProcessor will set the stack to null when stacksize == 1
+      // so store a reference and reset the stack if needed
+      ImageStack stack = imagePlus_.getStack();
       imagePlus_.setProcessor(unscaledRGBImage_.duplicate());
+      // imagePlus_.getStack() creates a new stack if stack is null, 
+      // so can not be used here. Use a very indirect method:
+      if (stack.size() <= 1) {
+         imagePlus_.setStack(stack);
+      }
       ((ColorProcessor) imagePlus_.getProcessor()).
                applyTable(getRGBLUTs());
    }
