@@ -21,8 +21,8 @@ public class EMUPlugin implements MenuPlugin, SciJavaPlugin {
 	
 	private static String name = "EMU";
 	private static String description = "Easier Micro-manager User interface: loads its own UI plugins and interfaces them with Micro-manager device properties.";
-	private static String copyright = "Joran Deschamps, EMBL, 2016-2019.";
-	private static String version = "v1.0-alpha-release";
+	private static String copyright = "Joran Deschamps, EMBL, 2016-2020.";
+	private static String version = "v1.1";
 
 	@Override
 	public String getCopyright() {
@@ -46,7 +46,7 @@ public class EMUPlugin implements MenuPlugin, SciJavaPlugin {
 
 	@Override
 	public String getSubMenu() {
-		return "Interface";
+		return "User Interface";
 	}
 
 	@Override

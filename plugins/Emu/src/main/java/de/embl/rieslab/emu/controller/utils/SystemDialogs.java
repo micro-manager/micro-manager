@@ -322,7 +322,7 @@ public class SystemDialogs {
 						+ "&bull Find <a href=\"https://github.com/jdeschamps/EMU\">the source code</a> on Github.<br />"
 						+ "&bull Report bugs <a href=\"https://github.com/jdeschamps/EMU/issues\">as Github issues</a>.<br /><br />"
 						+ "Contribute your UI to Micro-Manager by doing a Github pull request or by getting in touch with us.<br /><br />"
-						+ "<i>EMU was developed by Joran Deschamps, EMBL (2019).</i>";
+						+ "<i>EMU was developed by Joran Deschamps, EMBL (2016-2020).</i>";
 	   
 		showEMUOptionPane(contextObject, title, message);
 	}

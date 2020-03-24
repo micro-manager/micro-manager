@@ -97,7 +97,7 @@ public class SwingComponentTests {
 		// now make the button selected
 		tgl.setSelected(true);
 		
-		// check that the value didn't change.
+		// check that the value change.
 		assertEquals(vals[0], i.intValue());
 	}
 	

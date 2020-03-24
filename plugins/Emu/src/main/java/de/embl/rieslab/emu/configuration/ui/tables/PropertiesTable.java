@@ -16,6 +16,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
@@ -281,7 +283,7 @@ public class PropertiesTable extends JPanel {
 			public TableCellEditor getCellEditor(int row, int column) {
 				String s = (String) table.getValueAt(row, 0);
 				if (column == 2 && isStateValue(s)) { 
-					// if in the last column and corresponds to a field value, returns a textfield cell editor
+					// if in the last column and corresponds to a field value, returns a JTextfield cell editor
 					return new DefaultCellEditor(new JTextField(ConfigurationWizardUI.KEY_ENTERVALUE));
 				} else {
 					// if not a field value or not in third column
@@ -290,7 +292,7 @@ public class PropertiesTable extends JPanel {
 						return super.getCellEditor(row, column);
 					case 1: // in the second column return a JComboBox cell editor with the devices name
 						return new DefaultCellEditor(devices);
-					case 2: // in the last column return a JcomboBox cell editor with the properties name corresponding to the selected device
+					case 2: // in the last column return a JComboBox cell editor with the properties name corresponding to the selected device
 						return new DefaultCellEditor(getDevicePropertiesComboBox((String) getValueAt(row, 1), (String) getValueAt(row, 0)));
 					default:
 						return super.getCellEditor(row, column);
@@ -317,13 +319,34 @@ public class PropertiesTable extends JPanel {
 		table.getColumnModel().getColumn(0).setMinWidth(160);
 		table.getColumnModel().getColumn(1).setMinWidth(80);
 		table.getColumnModel().getColumn(2).setMinWidth(100);
-
+		
 		// adds mouse listener to update the helper window
 		table.addMouseListener(new java.awt.event.MouseAdapter() {
 			@Override
 			public void mouseClicked(java.awt.event.MouseEvent evt) {
 				int row = table.rowAtPoint(evt.getPoint());
 				updateHelper(row);
+			}
+		});
+		
+		// we don't want mismatch between device and device property
+		table.getModel().addTableModelListener(new TableModelListener() {
+			public void tableChanged(TableModelEvent e) {
+				int row = e.getFirstRow();
+				int col = e.getColumn();
+
+				// device changed
+				if(col == 1) {
+					String device = (String) table.getValueAt(row, 1);
+					String property = (String) table.getValueAt(row, 2);
+					if (device != null && property != null) {
+						if (!property.equals(GlobalConfiguration.KEY_UNALLOCATED)
+								&& mmproperties_.getDevice(device) != null
+								&& !mmproperties_.getDevice(device).hasLabelProperty(property)) {
+							table.setValueAt(GlobalConfiguration.KEY_UNALLOCATED, row, 2);
+						}
+					}
+				}
 			}
 		});
 	}
@@ -335,7 +358,7 @@ public class PropertiesTable extends JPanel {
 		cb.addItem(GlobalConfiguration.KEY_UNALLOCATED);
 
 		if (!device.equals(GlobalConfiguration.KEY_UNALLOCATED)) {
-			// RescaledUIProperty are only compatible with Integer- and FloatMMProperty with limits, so
+			// RescaledUIProperty are only compatible with Integer- and FloatMMProperty, so
 			// we filter them here
 			boolean rescaledUIProp = false;
 			if(uipropertySet_.containsKey(uipropName) && uipropertySet_.get(uipropName) instanceof RescaledUIProperty) {
@@ -510,5 +533,4 @@ public class PropertiesTable extends JPanel {
 	        return c;
 	    }
 	}
-	
 }

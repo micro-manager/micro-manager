@@ -283,7 +283,7 @@ public class MultiStateUIProperty extends UIProperty{
 			} else if(EmuUtils.isNumeric(valToCompare) && getMMProperty().getType() == MMProperty.MMPropertyType.INTEGER) {
 				double state = Double.parseDouble(valToCompare);
 				Integer val = Integer.parseInt(stateval);
-				return val.equals((int) state);
+				return val.equals((int) state); // round
 			} else {
 				return stateval.equals(valToCompare);
 			}

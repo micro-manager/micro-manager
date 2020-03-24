@@ -70,8 +70,6 @@ public class SystemController {
 		studio_ = studio;
 		logger_ = new Logger(studio_.getLogManager());
 		currentPlugin = "";
-		
-		isDaySkin();
 	}
 	
 	/**

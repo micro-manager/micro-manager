@@ -12,6 +12,7 @@ import javax.swing.border.TitledBorder;
 import de.embl.rieslab.emu.plugin.examples.components.TogglePower;
 import de.embl.rieslab.emu.ui.ConfigurablePanel;
 import de.embl.rieslab.emu.ui.swinglisteners.SwingUIListeners;
+import de.embl.rieslab.emu.ui.uiparameters.BoolUIParameter;
 import de.embl.rieslab.emu.ui.uiparameters.ColorUIParameter;
 import de.embl.rieslab.emu.ui.uiparameters.StringUIParameter;
 import de.embl.rieslab.emu.ui.uiproperties.RescaledUIProperty;
@@ -27,7 +28,7 @@ public class LaserPanel extends ConfigurablePanel {
 	
 	private JLabel label;
 	private JSlider slider;
-	private JToggleButton tglbtnNewToggleButton;
+	private JToggleButton powerToggleButton;
 	
 	//////// Properties
 	public final String LASER_PERCENTAGE = "power percentage";
@@ -36,6 +37,7 @@ public class LaserPanel extends ConfigurablePanel {
 	//////// Parameters
 	public final String PARAM_TITLE = "Name";
 	public final String PARAM_COLOR = "Color";	
+	public final String PARAM_USEONOFF = "Enable power button";	
 
 	public LaserPanel(String title) {
 		super(title);
@@ -66,10 +68,10 @@ public class LaserPanel extends ConfigurablePanel {
 		slider.setOrientation(SwingConstants.VERTICAL);
 		add(slider);
 		
-		tglbtnNewToggleButton = new TogglePower();
-		tglbtnNewToggleButton.setBounds(10, 231, 100, 33);
-		tglbtnNewToggleButton.setFont(new Font("Tahoma", Font.BOLD, 12));
-		add(tglbtnNewToggleButton);
+		powerToggleButton = new TogglePower();
+		powerToggleButton.setBounds(10, 231, 100, 33);
+		powerToggleButton.setFont(new Font("Tahoma", Font.BOLD, 12));
+		add(powerToggleButton);
 	}
 
 	private String getUIPropertyLabel(String property) {
@@ -121,6 +123,9 @@ public class LaserPanel extends ConfigurablePanel {
 		
 		// We declare a ColorUIParameter for the title color (with default being black)
 		addUIParameter(new ColorUIParameter(this, PARAM_COLOR, "Panel title color.",Color.black));
+		
+		// We declare a BoolUIParameter to enable/disable the on/off button
+		addUIParameter(new BoolUIParameter(this, PARAM_USEONOFF, "Enable power (on/off) button.",true));
 	}
 
 	@Override
@@ -138,7 +143,7 @@ public class LaserPanel extends ConfigurablePanel {
 		 *  it is selected / unselected respectively.
 		 */
 		try {
-			SwingUIListeners.addActionListenerToTwoState(this, getUIPropertyLabel(LASER_OPERATION), tglbtnNewToggleButton);
+			SwingUIListeners.addActionListenerToTwoState(this, getUIPropertyLabel(LASER_OPERATION), powerToggleButton);
 		} catch (IncorrectUIPropertyTypeException e) {
 			e.printStackTrace();
 		}
@@ -184,7 +189,7 @@ public class LaserPanel extends ConfigurablePanel {
 				
 				// Selects the JToggleButton if the new value is the TwoStateUIProperty's ON value,
 				// unselects it otherwise.
-				tglbtnNewToggleButton.setSelected(newvalue.equals(onValue));
+				powerToggleButton.setSelected(newvalue.equals(onValue));
 			} catch (UnknownUIPropertyException e) {
 				e.printStackTrace();
 			}
@@ -222,6 +227,16 @@ public class LaserPanel extends ConfigurablePanel {
 				TitledBorder border = (TitledBorder) this.getBorder();
 				border.setTitleColor(color);
 				this.repaint();
+			} catch (IncorrectUIParameterTypeException | UnknownUIParameterException e) {
+				e.printStackTrace();
+			}
+		} if(PARAM_USEONOFF.equals(parameterName)){
+			try {
+				// retrieves the value of the boolean parameter
+				boolean enable = getBoolUIParameterValue(PARAM_USEONOFF);
+				
+				// enable/disable the power button
+				powerToggleButton.setEnabled(enable);
 			} catch (IncorrectUIParameterTypeException | UnknownUIParameterException e) {
 				e.printStackTrace();
 			}

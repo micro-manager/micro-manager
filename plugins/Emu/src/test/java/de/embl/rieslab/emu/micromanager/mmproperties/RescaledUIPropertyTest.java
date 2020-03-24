@@ -46,39 +46,6 @@ public class RescaledUIPropertyTest {
 	}
 
 
-	@Test(expected = IncompatibleMMProperty.class)
-	public void testNoLimitIntPairing() throws AlreadyAssignedUIPropertyException, IncompatibleMMProperty {
-		RescaledUIPropertyTestPanel cp = new RescaledUIPropertyTestPanel("MyPanel");
-
-		final IntegerMMProperty mmprop = new IntegerMMProperty(null, new Logger(), "", "", false) {
-			
-			@Override
-			public Integer getValue() { // avoids NullPointerException
-				return 0;
-			}
-		};
-
-		assertFalse(cp.property1.isCompatibleMMProperty(mmprop));
-		PropertyPair.pair(cp.property1, mmprop);
-	}
-
-	@Test(expected = IncompatibleMMProperty.class)
-	public void testNoLimitFloatPairing() throws AlreadyAssignedUIPropertyException, IncompatibleMMProperty {
-		RescaledUIPropertyTestPanel cp = new RescaledUIPropertyTestPanel("MyPanel");
-
-		final FloatMMProperty mmprop = new FloatMMProperty(null, new Logger(), "", "", false) {
-			
-			@Override
-			public Float getValue() { // avoids NullPointerException
-				return (float) 0.;
-			}
-		};
-
-		assertFalse(cp.property1.isCompatibleMMProperty(mmprop));
-		PropertyPair.pair(cp.property1, mmprop);
-	}
-	
-
 	@Test
 	public void testIntegerMMProp() throws AlreadyAssignedUIPropertyException, IncompatibleMMProperty {
 		RescaledUIPropertyTestPanel cp = new RescaledUIPropertyTestPanel("MyPanel");
@@ -150,6 +117,102 @@ public class RescaledUIPropertyTest {
 		assertEquals(max2, reporter2.get());
 		assertTrue(cp.property2.setPropertyValue(String.valueOf(60)));
 		assertEquals(153, reporter2.get());		
+	}
+	
+	@Test
+	public void testIntegerMMPropWithoutLimits() throws AlreadyAssignedUIPropertyException, IncompatibleMMProperty {
+		RescaledUIPropertyTestPanel cp = new RescaledUIPropertyTestPanel("MyPanel");
+
+		AtomicInteger reporter1 = new AtomicInteger(1);
+		
+		final IntegerMMProperty mmprop1 = new IntegerMMProperty(null, new Logger(), "", "", false) {
+			@Override
+			public boolean setValue(String stringval, UIProperty source){
+				reporter1.set(Integer.valueOf(stringval));
+				return true;
+			}
+			
+			@Override
+			public Integer getValue() { // avoids NullPointerException
+				return reporter1.get();
+			}
+		}; 
+
+		PropertyPair.pair(cp.property1, mmprop1);
+
+		// meant for 0-100 range
+		double slope1 = 3.5;
+		double offset1 = -4;
+
+		// set scaling factors
+		assertTrue(cp.property1.setScalingFactors(slope1, offset1));
+		assertTrue(cp.property1.haveSlopeOffsetBeenSet());
+		assertEquals(slope1, cp.property1.getSlope(), 0.0001);
+		assertEquals(offset1, cp.property1.getOffset(), 0.0001);
+		
+		// set values
+		int minval1 = (int) offset1;
+		int maxval1 = (int) (100*slope1+offset1);
+		assertTrue(cp.property1.setPropertyValue(String.valueOf(0)));
+		assertEquals(minval1, reporter1.get());
+		assertTrue(cp.property1.setPropertyValue(String.valueOf(100)));
+		assertEquals(maxval1, reporter1.get());
+		
+		// set infinity
+		assertFalse(cp.property1.setPropertyValue(String.valueOf(Integer.MAX_VALUE)));
+		assertFalse(cp.property1.setPropertyValue(String.valueOf(Integer.MIN_VALUE)));
+
+		assertTrue(cp.property1.setScalingFactors(1, 0));
+		assertTrue(cp.property1.setPropertyValue(String.valueOf(Integer.MAX_VALUE)));
+		assertTrue(cp.property1.setPropertyValue(String.valueOf(Integer.MIN_VALUE)));
+	}
+	
+	@Test
+	public void testFloatMMPropWithoutLimits() throws AlreadyAssignedUIPropertyException, IncompatibleMMProperty {
+		RescaledUIPropertyTestPanel cp = new RescaledUIPropertyTestPanel("MyPanel");
+		
+		final FloatMMProperty mmprop1 = new FloatMMProperty(null, new Logger(), "", "", false) {
+			public Float val;
+			
+			@Override
+			public boolean setValue(String stringval, UIProperty source){
+				val = new Float(stringval);
+				return true;
+			}
+			
+			@Override
+			public Float getValue() { // avoids NullPointerException
+				return val;
+			}
+		};
+
+		PropertyPair.pair(cp.property1, mmprop1);
+
+		// meant for 0-100 range
+		double slope1 = 3.578;
+		double offset1 = -4.448;
+
+		// set scaling factors
+		assertTrue(cp.property1.setScalingFactors(slope1, offset1));
+		assertTrue(cp.property1.haveSlopeOffsetBeenSet());
+		assertEquals(slope1, cp.property1.getSlope(), 0.0001);
+		assertEquals(offset1, cp.property1.getOffset(), 0.0001);
+		
+		// set values
+		float minval1 = (float) offset1;
+		float maxval1 = (float) (100.*slope1+offset1);
+		assertTrue(cp.property1.setPropertyValue(String.valueOf(0.)));
+		assertEquals(minval1, mmprop1.getValue(), 0.0001);
+		assertTrue(cp.property1.setPropertyValue(String.valueOf(100.)));
+		assertEquals(maxval1, mmprop1.getValue(), 0.0001);
+		
+		// tests infinity
+		assertFalse(cp.property1.setPropertyValue(String.valueOf(-Float.MAX_VALUE)));
+		assertFalse(cp.property1.setPropertyValue(String.valueOf(Float.MAX_VALUE)));
+		
+		assertTrue(cp.property1.setScalingFactors(1., 0.));
+		assertTrue(cp.property1.setPropertyValue(String.valueOf(-Float.MAX_VALUE)));
+		assertTrue(cp.property1.setPropertyValue(String.valueOf(Float.MAX_VALUE)));
 	}
 
 	@Test
