@@ -29,7 +29,7 @@ import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.ProgressMonitor;
 import mmcorej.TaggedImage;
-import org.json.JSONException;
+import mmcorej.org.json.JSONException;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.data.Coords;

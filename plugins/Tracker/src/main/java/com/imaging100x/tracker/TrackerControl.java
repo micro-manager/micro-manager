@@ -51,7 +51,7 @@ import javax.swing.border.BevelBorder;
 import mmcorej.MMCoreJ;
 import mmcorej.TaggedImage;
 import org.jfree.data.xy.XYSeries;
-import org.json.JSONException;
+import mmcorej.org.json.JSONException;
 
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;

@@ -19,9 +19,9 @@ package org.micromanager.magellan.internal.misc;
 
 import ij.ImagePlus;
 import java.util.Iterator;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import mmcorej.org.json.JSONArray;
+import mmcorej.org.json.JSONException;
+import mmcorej.org.json.JSONObject;
 
 
 

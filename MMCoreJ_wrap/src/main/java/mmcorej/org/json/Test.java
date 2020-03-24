@@ -1,4 +1,4 @@
-package org.json;
+package mmcorej.org.json;
 
 import java.io.StringWriter;
 import java.util.Iterator;

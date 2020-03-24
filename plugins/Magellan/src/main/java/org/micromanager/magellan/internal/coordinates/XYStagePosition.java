@@ -22,8 +22,8 @@ import java.awt.geom.Point2D;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.Log;
 import mmcorej.CMMCore;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import mmcorej.org.json.JSONArray;
+import mmcorej.org.json.JSONObject;
 
 /**
  * Immutable object representing single XY stage position

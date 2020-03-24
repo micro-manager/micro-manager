@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.Log;
-import org.json.JSONArray;
+import mmcorej.org.json.JSONArray;
 import org.micromanager.data.DataProvider;
 
 /**

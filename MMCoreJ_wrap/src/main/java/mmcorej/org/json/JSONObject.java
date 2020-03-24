@@ -1,4 +1,4 @@
-package org.json;
+package mmcorej.org.json;
 
 /*
 Copyright (c) 2002 JSON.org

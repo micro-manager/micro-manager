@@ -12,7 +12,7 @@ import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 import mmcorej.StrVector;
 import mmcorej.TaggedImage;
-import org.json.JSONObject;
+import mmcorej.org.json.JSONObject;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.ChannelSpec;

@@ -8,7 +8,7 @@ package org.micromanager.magellan.internal.imagedisplay;
 import ij.ImagePlus;
 import java.util.Timer;
 import java.util.TimerTask;
-import org.json.JSONObject;
+import mmcorej.org.json.JSONObject;
 import org.micromanager.magellan.internal.imagedisplay.MagellanImageCache;
 
 /**
