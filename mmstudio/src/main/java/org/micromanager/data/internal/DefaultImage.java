@@ -29,6 +29,8 @@ import com.google.gson.JsonParser;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
+
+import com.jogamp.common.nio.Buffers;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
@@ -126,13 +128,12 @@ public final class DefaultImage implements Image {
 
       metadata_ = (DefaultMetadata) metadata;
       coords_ = coords;
-
+/*
       rawPixels_ = DirectBuffers.bufferFromArray(tagged.pix);
       if (rawPixels_.capacity() == 0) {
          throw new IllegalArgumentException("Pixel data has length 0");
       }
-
-
+*/
       pixelWidth_ = formatPmap.getInteger(PropertyKey.WIDTH.key(), 0);
       pixelHeight_ = formatPmap.getInteger(PropertyKey.HEIGHT.key(), 0);
       if (pixelWidth_ <= 0 || pixelHeight_ <= 0) {
@@ -146,17 +147,22 @@ public final class DefaultImage implements Image {
 
       switch (pixelType_.getBytesPerComponent()) {
          case 1:
+            rawPixels_ = ByteBuffer.wrap((byte[]) tagged.pix);
             if (!(rawPixels_ instanceof ByteBuffer)) {
                throw new IllegalArgumentException("Array type doesn't match pixel type");
             }
             break;
          case 2:
+            rawPixels_ = ShortBuffer.wrap((short[]) tagged.pix);
             if (!(rawPixels_ instanceof ShortBuffer)) {
                throw new IllegalArgumentException("Array type doesn't match pixel type");
             }
             break;
          default:
             throw new AssertionError("Unimplemented pixel component size");
+      }
+      if (rawPixels_.capacity() == 0) {
+         throw new IllegalArgumentException("Pixel data has length 0");
       }
    }
 
@@ -264,6 +270,9 @@ public final class DefaultImage implements Image {
     */
    @Override
    public Object getRawPixels() {
+      if (rawPixels_.hasArray()) {
+          return rawPixels_.array();
+      }
       return DirectBuffers.arrayFromBuffer(rawPixels_);
    }
 
