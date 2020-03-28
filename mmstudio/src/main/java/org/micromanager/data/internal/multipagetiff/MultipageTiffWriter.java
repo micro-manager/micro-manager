@@ -124,7 +124,7 @@ public final class MultipageTiffWriter {
    //Reader associated with this file
    private MultipageTiffReader reader_;
    private long blankPixelsOffset_ = -1;
-   
+
    public MultipageTiffWriter(
             final StorageMultipageTiff masterStorage,
             final Image firstImage, 
@@ -220,7 +220,7 @@ public final class MultipageTiffWriter {
    //
 
    // The idea here is to recycle the direct buffers for image pixels, because
-   // allocation is slow. It is expected that we do not need a large pool,
+   // allocation is slow. We do not need a large pool,
    // because the only aim is to avoid situations where allocation is limiting
    // at steady state. If writing is, on average, faster than incoming images,
    // the pool should always have a buffer ready for a new request.
@@ -285,10 +285,6 @@ public final class MultipageTiffWriter {
       }
    }
 
-   //
-   //
-   //
-
    private void executeWritingTask(Runnable writingTask) {
       writingExecutor_.execute(writingTask);
    }
@@ -338,37 +334,37 @@ public final class MultipageTiffWriter {
       String summaryJSON = NonPropertyMapJSONFormats.summaryMetadata().toJSON(summaryMD);
       byte[] summaryMDBytes = getBytesFromString(summaryJSON);
       int mdLength = summaryMDBytes.length;
-      //20 bytes plus 8 header for index map
+      // 20 bytes plus 8 header for index map
       long maxImagesInFile = MAX_FILE_SIZE / bytesPerImagePixels_;
       long indexMapSpace = 8 + 20 * maxImagesInFile;
       
       ByteBuffer headerBuffer = allocateByteBuffer(40);
-      //8 bytes for file header
+      // 8 bytes for file header
       if (BYTE_ORDER.equals(ByteOrder.BIG_ENDIAN)) {
-         headerBuffer.asCharBuffer().put(0,(char) 0x4d4d);
+         headerBuffer.asCharBuffer().put(0, (char) 0x4d4d);
       } else {
-         headerBuffer.asCharBuffer().put(0,(char) 0x4949);
+         headerBuffer.asCharBuffer().put(0, (char) 0x4949);
       }
-      headerBuffer.asCharBuffer().put(1,(char) 42);
-      headerBuffer.putInt(4,40 + (int) (mdLength + indexMapSpace));
+      headerBuffer.asCharBuffer().put(1, (char) 42);
+      headerBuffer.putInt(4, 40 + (int) (mdLength + indexMapSpace));
       
-      //8 bytes for index map offset header and offset
-      headerBuffer.putInt(8,INDEX_MAP_OFFSET_HEADER);
-      headerBuffer.putInt(12,headerBuffer.capacity() + mdLength);
+      // 8 bytes for index map offset header and offset
+      headerBuffer.putInt(8, INDEX_MAP_OFFSET_HEADER);
+      headerBuffer.putInt(12, headerBuffer.capacity() + mdLength);
       
-      //8 bytes for display settings offset header and display settings offset--written later
-      //8 bytes for comments offset header and comments offset--written later
-      //8 bytes for summaryMD header  summary md length + 
-      headerBuffer.putInt(32,SUMMARY_MD_HEADER);
-      headerBuffer.putInt(36,mdLength);
+      // 8 bytes for display settings offset header and display settings offset--written later
+      // 8 bytes for comments offset header and comments offset--written later
+      // 8 bytes for summaryMD header  summary md length +
+      headerBuffer.putInt(32, SUMMARY_MD_HEADER);
+      headerBuffer.putInt(36, mdLength);
       
       ByteBuffer indexMapBuffer = allocateByteBuffer((int) indexMapSpace);
-      indexMapBuffer.putInt(0,INDEX_MAP_HEADER);
-      indexMapBuffer.putInt(4,(int) maxImagesInFile);  
+      indexMapBuffer.putInt(0, INDEX_MAP_HEADER);
+      indexMapBuffer.putInt(4, (int) maxImagesInFile);
       indexMapPosition_ = headerBuffer.capacity() + mdLength + 8;
       indexMapFirstEntry_ = indexMapPosition_;
 
-      //1 byte for each byte of UTF-8-encoded summary md
+      // 1 byte for each byte of UTF-8-encoded summary md
       ByteBuffer[] buffers = new ByteBuffer[3];
       buffers[0] = headerBuffer;
       buffers[1] = ByteBuffer.wrap(summaryMDBytes);
@@ -390,8 +386,8 @@ public final class MultipageTiffWriter {
       writeNullOffsetAfterLastImage();
       // go back to the index map header and change the number of entries from
       // the max value allotted early to the actual number written The
-      // MultipageTiffReader no longer needs this because it interperets 0's as
-      // the the end of the index map. It is added here for backwards
+      // MultipageTiffReader no longer needs this because it interprets 0's as
+      // the end of the index map. It is added here for backwards
       // compatibility of reading using versions of MM before 6-6-2014. Without
       // it, old versions wouldn't correctly read image 0_0_0_0
       int numImages = (int) ((indexMapPosition_ - indexMapFirstEntry_) / 20);
@@ -432,8 +428,8 @@ public final class MultipageTiffWriter {
             } catch (IOException ex) {
                ReportingUtils.logError(ex);
             }
-            // Dont close file channel and random access file becase Tiff
-            // reader still using them
+            // Do not close file channel and random access file because the Tiff
+            // reader is still using them
             fileChannel_ = null;
             raFile_ = null;
          }
@@ -452,7 +448,7 @@ public final class MultipageTiffWriter {
       PropertyMap mdPmap = ((DefaultMetadata) img.getMetadata()).toPropertyMap();
       int mdLength = NonPropertyMapJSONFormats.metadata().toJSON(mdPmap).length();
       int IFDSize = ENTRIES_PER_IFD*12 + 4 + 16;
-      //5 MB extra padding...just to be safe...
+      // 5 MB extra padding...just to be safe...
       int extraPadding = 5000000; 
       long size = mdLength+IFDSize+bytesPerImagePixels_+SPACE_FOR_COMMENTS+
       numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL + extraPadding + filePosition_;
@@ -494,8 +490,8 @@ public final class MultipageTiffWriter {
    }
  
    private void addToIndexMap(Coords coords, long offset) {
-      //If a duplicate key is received, forget about the previous one
-      //this allows overwriting of images without loss of data
+      // If a duplicate key is received, forget about the previous one
+      // this allows overwriting of images without loss of data
       coordsToOffset_.put(coords, offset);
       ByteBuffer buffer = allocateByteBuffer(20);
       int bufOffset = 0;
@@ -549,29 +545,29 @@ public final class MultipageTiffWriter {
       // Null-terminate buffer.
       mdBytes[mdBytes.length - 1] = 0;
 
-      //2 bytes for number of directory entries, 12 bytes per directory entry, 4 byte offset of next IFD
-     //6 bytes for bits per sample if RGB, 16 bytes for x and y resolution, 1 byte per character of MD string
-     //number of bytes for pixels
-     int totalBytes = 2 + numEntries*12 + 4 + (rgb_?6:0) + 16 + mdBytes.length + bytesPerImagePixels_;
-     int IFDandBitDepthBytes = 2+ numEntries*12 + 4 + (rgb_?6:0);
+      // 2 bytes for number of directory entries, 12 bytes per directory entry, 4 byte offset of next IFD
+      // 6 bytes for bits per sample if RGB, 16 bytes for x and y resolution, 1 byte per character of MD string
+      // number of bytes for pixels
+      int totalBytes = 2 + numEntries*12 + 4 + (rgb_?6:0) + 16 + mdBytes.length + bytesPerImagePixels_;
+      int IFDandBitDepthBytes = 2+ numEntries*12 + 4 + (rgb_?6:0);
      
-     ByteBuffer ifdBuffer = allocateByteBuffer(IFDandBitDepthBytes);
-     CharBuffer charView = ifdBuffer.asCharBuffer();
+      ByteBuffer ifdBuffer = allocateByteBuffer(IFDandBitDepthBytes);
+      CharBuffer charView = ifdBuffer.asCharBuffer();
          
-     long tagDataOffset = filePosition_ + 2 + numEntries*12 + 4;
-     nextIFDOffsetLocation_ = filePosition_ + 2 + numEntries*12;
+      long tagDataOffset = filePosition_ + 2 + numEntries*12 + 4;
+      nextIFDOffsetLocation_ = filePosition_ + 2 + numEntries*12;
      
-     bufferPosition_ = 0;
+      bufferPosition_ = 0;
       charView.put(bufferPosition_,numEntries);
       bufferPosition_ += 2;
-      writeIFDEntry(ifdBuffer,charView, WIDTH,(char)4,1,imageWidth_);
-      writeIFDEntry(ifdBuffer,charView,HEIGHT,(char)4,1,imageHeight_);
-      writeIFDEntry(ifdBuffer,charView,BITS_PER_SAMPLE,(char)3,rgb_?3:1,  rgb_? tagDataOffset:byteDepth_*8);
+      writeIFDEntry(ifdBuffer, charView, WIDTH, (char)4,1, imageWidth_);
+      writeIFDEntry(ifdBuffer, charView, HEIGHT, (char)4,1, imageHeight_);
+      writeIFDEntry(ifdBuffer, charView, BITS_PER_SAMPLE, (char)3, rgb_?3:1,  rgb_? tagDataOffset:byteDepth_*8);
       if (rgb_) {
          tagDataOffset += 6;
       }
-      writeIFDEntry(ifdBuffer,charView,COMPRESSION,(char)3,1,1);
-      writeIFDEntry(ifdBuffer,charView,PHOTOMETRIC_INTERPRETATION,(char)3,1,rgb_?2:1);
+      writeIFDEntry(ifdBuffer, charView, COMPRESSION, (char)3,1,1);
+      writeIFDEntry(ifdBuffer, charView, PHOTOMETRIC_INTERPRETATION, (char)3,1, rgb_?2:1);
       
       if (firstIFD_ ) {
          omeDescriptionTagPosition_ = filePosition_ + bufferPosition_;
@@ -580,32 +576,32 @@ public final class MultipageTiffWriter {
          writeIFDEntry(ifdBuffer, charView, IMAGE_DESCRIPTION, (char) 2, 0, 0);
       }
            
-      writeIFDEntry(ifdBuffer,charView,STRIP_OFFSETS,(char)4,1, tagDataOffset );
+      writeIFDEntry(ifdBuffer, charView, STRIP_OFFSETS, (char)4, 1, tagDataOffset );
       tagDataOffset += bytesPerImagePixels_;
-      writeIFDEntry(ifdBuffer,charView,SAMPLES_PER_PIXEL,(char)3,1,(rgb_?3:1));
-      writeIFDEntry(ifdBuffer,charView,ROWS_PER_STRIP, (char) 3, 1, imageHeight_);
-      writeIFDEntry(ifdBuffer,charView,STRIP_BYTE_COUNTS, (char) 4, 1, bytesPerImagePixels_ );
-      writeIFDEntry(ifdBuffer,charView,X_RESOLUTION, (char)5, 1, tagDataOffset);
+      writeIFDEntry(ifdBuffer, charView, SAMPLES_PER_PIXEL, (char)3, 1, (rgb_?3:1));
+      writeIFDEntry(ifdBuffer, charView, ROWS_PER_STRIP, (char) 3,  1, imageHeight_);
+      writeIFDEntry(ifdBuffer, charView, STRIP_BYTE_COUNTS, (char) 4,  1, bytesPerImagePixels_ );
+      writeIFDEntry(ifdBuffer, charView, X_RESOLUTION, (char)5,  1, tagDataOffset);
       tagDataOffset += 8;
-      writeIFDEntry(ifdBuffer,charView,Y_RESOLUTION, (char)5, 1, tagDataOffset);
+      writeIFDEntry(ifdBuffer, charView, Y_RESOLUTION, (char)5,  1, tagDataOffset);
       tagDataOffset += 8;
-      writeIFDEntry(ifdBuffer,charView,RESOLUTION_UNIT, (char) 3,1,3);
+      writeIFDEntry(ifdBuffer, charView, RESOLUTION_UNIT, (char) 3, 1, 3);
       if (firstIFD_) {         
          ijMetadataCountsTagPosition_ = filePosition_ + bufferPosition_;
-         writeIFDEntry(ifdBuffer,charView,IJ_METADATA_BYTE_COUNTS,(char)4,0,0);
+         writeIFDEntry(ifdBuffer, charView, IJ_METADATA_BYTE_COUNTS, (char)4, 0, 0);
          ijMetadataTagPosition_ = filePosition_ + bufferPosition_;
-         writeIFDEntry(ifdBuffer,charView,IJ_METADATA,(char)1,0,0);
+         writeIFDEntry(ifdBuffer, charView, IJ_METADATA, (char)1, 0,0);
       }
-      writeIFDEntry(ifdBuffer,charView,MM_METADATA,(char)2,mdBytes.length,tagDataOffset);
+      writeIFDEntry(ifdBuffer, charView, MM_METADATA, (char)2, mdBytes.length, tagDataOffset);
       tagDataOffset += mdBytes.length;
       //NextIFDOffset
       ifdBuffer.putInt(bufferPosition_, (int)tagDataOffset);
       bufferPosition_ += 4;
       
       if (rgb_) {
-         charView.put(bufferPosition_/2,(char) (byteDepth_*8));
-         charView.put(bufferPosition_/2+1,(char) (byteDepth_*8));
-         charView.put(bufferPosition_/2+2,(char) (byteDepth_*8));
+         charView.put(bufferPosition_/2, (char) (byteDepth_*8));
+         charView.put(bufferPosition_/2+1, (char) (byteDepth_*8));
+         charView.put(bufferPosition_/2+2, (char) (byteDepth_*8));
       }
       buffers_.add(ifdBuffer);
       buffers_.add(getPixelBuffer(img.getRawPixels()));
@@ -622,7 +618,7 @@ public final class MultipageTiffWriter {
       buffer.putInt(bufferPosition_ + 4, (int) count);
       if (type ==3 && count == 1) {  //Left justify in 4 byte value field
          cBuffer.put(bufferPosition_/2 + 4, (char) value);
-         cBuffer.put(bufferPosition_/2 + 5,(char) 0);
+         cBuffer.put(bufferPosition_/2 + 5, (char) 0);
       } else {
          buffer.putInt(bufferPosition_ + 8, (int) value);
       }      
@@ -631,10 +627,10 @@ public final class MultipageTiffWriter {
 
    private ByteBuffer getResolutionValuesBuffer() throws IOException {
       ByteBuffer buffer = allocateByteBuffer(16);
-      buffer.putInt(0,(int)resNumerator_);
-      buffer.putInt(4,(int)resDenomenator_);
-      buffer.putInt(8,(int)resNumerator_);
-      buffer.putInt(12,(int)resDenomenator_);
+      buffer.putInt(0, (int)resNumerator_);
+      buffer.putInt(4, (int)resDenomenator_);
+      buffer.putInt(8, (int)resNumerator_);
+      buffer.putInt(12, (int)resDenomenator_);
       return buffer;
    }
 
@@ -745,40 +741,40 @@ public final class MultipageTiffWriter {
       char[] infoChars = infoString.toCharArray();
       int infoSize = 2 * infoChars.length;
 
-      //size entry (4 bytes) + 4 bytes file info size + 4 bytes for channel display 
-      //ranges length + 4 bytes per channel LUT
+      // size entry (4 bytes) + 4 bytes file info size + 4 bytes for channel display
+      // ranges length + 4 bytes per channel LUT
       int mdByteCountsBufferSize = 4 + 4 + 4 + 4 * numChannels;
       int bufferPosition = 0;
 
       ByteBuffer mdByteCountsBuffer = allocateByteBuffer(mdByteCountsBufferSize);
 
-      //nTypes is number actually written among: fileInfo, slice labels, display ranges, channel LUTS,
-      //slice labels, ROI, overlay, and # of extra metadata entries
+      // nTypes is number actually written among: fileInfo, slice labels, display ranges, channel LUTS,
+      // slice labels, ROI, overlay, and # of extra metadata entries
       int nTypes = 3; //file info, display ranges, and channel LUTs
       int mdBufferSize = 4 + nTypes * 8;
       
-      //Header size: 4 bytes for magic number + 8 bytes for label (int) and count (int) of each type
+      // Header size: 4 bytes for magic number + 8 bytes for label (int) and count (int) of each type
       mdByteCountsBuffer.putInt(bufferPosition, 4 + nTypes * 8);
       bufferPosition += 4;
 
-      //2 bytes per a character of file info
+      // 2 bytes per a character of file info
       mdByteCountsBuffer.putInt(bufferPosition, infoSize);
       bufferPosition += 4;
       mdBufferSize += infoSize;
       
-      //display ranges written as array of doubles (min, max, min, max, etc)
+      // display ranges written as array of doubles (min, max, min, max, etc)
       mdByteCountsBuffer.putInt(bufferPosition, numChannels * 2 * 8);
       bufferPosition += 4;
       mdBufferSize += numChannels * 2 * 8;
 
       for (int i = 0; i < numChannels; i++) {
-         //768 bytes per LUT
+         // 768 bytes per LUT
          mdByteCountsBuffer.putInt(bufferPosition, 768);
          bufferPosition += 4;
          mdBufferSize += 768;
       }
 
-      //Header (1) File info (1) display ranges (1) LUTS (1 per channel)
+      // Header (1) File info (1) display ranges (1) LUTS (1 per channel)
       int numMDEntries = 3 + numChannels;
       ByteBuffer ifdCountAndValueBuffer = allocateByteBuffer(8);
       ifdCountAndValueBuffer.putInt(0, numMDEntries);
@@ -788,16 +784,16 @@ public final class MultipageTiffWriter {
       fileChannelWrite(mdByteCountsBuffer, filePosition_);
       filePosition_ += mdByteCountsBufferSize;
 
-      //Write metadata types and counts
+      // Write metadata types and counts
       ByteBuffer mdBuffer = allocateByteBuffer(mdBufferSize);
       bufferPosition = 0;
 
-      //All the ints declared below are non public field in TiffDecoder
+      // All the ints declared below are non public field in TiffDecoder
       final int ijMagicNumber = 0x494a494a;
       mdBuffer.putInt(bufferPosition, ijMagicNumber);
       bufferPosition += 4;
 
-      //Write ints for each IJ metadata field and its count
+      // Write ints for each IJ metadata field and its count
       final int fileInfo = 0x696e666f;
       mdBuffer.putInt(bufferPosition, fileInfo);
       bufferPosition += 4;
@@ -817,8 +813,8 @@ public final class MultipageTiffWriter {
       bufferPosition += 4;
 
 
-      //write actual metadata
-      //FileInfo
+      // write actual metadata
+      // FileInfo
       for (char c : infoChars) {
          mdBuffer.putChar(bufferPosition, c);
          bufferPosition += 2;
@@ -928,7 +924,7 @@ public final class MultipageTiffWriter {
          // See also MDUtils.getLabel(), though we can't use it directly.
          int channel = coords.getChannel() < 0 ? 0 : coords.getChannel();
          int z = coords.getZ() < 0 ? 0 : coords.getZ();
-         int time = coords.getTime() < 0 ? 0 : coords.getTime();
+         int time = coords.getT() < 0 ? 0 : coords.getT();
          int stagePos = coords.getStagePosition() < 0 ? 0 : coords.getStagePosition();
          String key = String.format("%d_%d_%d_%d", channel, z, time, stagePos);
          comments.putString(key, imageComments);
@@ -971,7 +967,6 @@ public final class MultipageTiffWriter {
    }
   
    private void writeBlankIFD() throws IOException {
-//      boolean blankPixelsAlreadyWritten = blankPixelsOffset_ != -1;
       boolean blankPixelsAlreadyWritten = false;
 
       char numEntries = (char) ((firstIFD_ ? ENTRIES_PER_IFD + 2 : ENTRIES_PER_IFD)
@@ -980,29 +975,30 @@ public final class MultipageTiffWriter {
       byte[] mdBytes = getBytesFromString("NULL ");
 
       //2 bytes for number of directory entries, 12 bytes per directory entry, 4 byte offset of next IFD
-     //6 bytes for bits per sample if RGB, 16 bytes for x and y resolution, 1 byte per character of MD string
-     //number of bytes for pixels
-     int totalBytes = 2 + numEntries*12 + 4 + (rgb_?6:0) + 16 + mdBytes.length
+      //6 bytes for bits per sample if RGB, 16 bytes for x and y resolution, 1 byte per character of MD string
+      //number of bytes for pixels
+      int totalBytes = 2 + numEntries*12 + 4 + (rgb_?6:0) + 16 + mdBytes.length
              + (blankPixelsAlreadyWritten ? 0 : bytesPerImagePixels_);
-     int IFDandBitDepthBytes = 2+ numEntries*12 + 4 + (rgb_?6:0);
+      int IFDandBitDepthBytes = 2+ numEntries*12 + 4 + (rgb_?6:0);
      
-     ByteBuffer ifdBuffer = allocateByteBuffer(IFDandBitDepthBytes);
-     CharBuffer charView = ifdBuffer.asCharBuffer();
+      ByteBuffer ifdBuffer = allocateByteBuffer(IFDandBitDepthBytes);
+      CharBuffer charView = ifdBuffer.asCharBuffer();
          
-     long tagDataOffset = filePosition_ + 2 + numEntries*12 + 4;
-     nextIFDOffsetLocation_ = filePosition_ + 2 + numEntries*12;
+      long tagDataOffset = filePosition_ + 2 + numEntries*12 + 4;
+      nextIFDOffsetLocation_ = filePosition_ + 2 + numEntries*12;
      
-     bufferPosition_ = 0;
+      bufferPosition_ = 0;
       charView.put(bufferPosition_,numEntries);
       bufferPosition_ += 2;
-      writeIFDEntry(ifdBuffer,charView, WIDTH,(char)4,1,imageWidth_);
-      writeIFDEntry(ifdBuffer,charView,HEIGHT,(char)4,1,imageHeight_);
-      writeIFDEntry(ifdBuffer,charView,BITS_PER_SAMPLE,(char)3,rgb_?3:1,  rgb_? tagDataOffset:byteDepth_*8);
+      writeIFDEntry(ifdBuffer,charView, WIDTH,(char)4, 1, imageWidth_);
+      writeIFDEntry(ifdBuffer,charView, HEIGHT,(char)4, 1, imageHeight_);
+      writeIFDEntry(ifdBuffer,charView, BITS_PER_SAMPLE, (char)3, rgb_?3:1,
+              rgb_ ? tagDataOffset : byteDepth_*8);
       if (rgb_) {
          tagDataOffset += 6;
       }
-      writeIFDEntry(ifdBuffer,charView,COMPRESSION,(char)3,1,1);
-      writeIFDEntry(ifdBuffer,charView,PHOTOMETRIC_INTERPRETATION,(char)3,1,rgb_?2:1);
+      writeIFDEntry(ifdBuffer, charView, COMPRESSION, (char)3, 1, 1);
+      writeIFDEntry(ifdBuffer, charView, PHOTOMETRIC_INTERPRETATION, (char)3, 1, rgb_ ? 2 : 1);
       
       if (firstIFD_) {
                   omeDescriptionTagPosition_ = filePosition_ + bufferPosition_;
@@ -1021,30 +1017,30 @@ public final class MultipageTiffWriter {
          writeIFDEntry(ifdBuffer, charView, STRIP_OFFSETS, (char) 4, 1, blankPixelsOffset_);
       }
       
-      writeIFDEntry(ifdBuffer,charView,SAMPLES_PER_PIXEL,(char)3,1,(rgb_?3:1));
-      writeIFDEntry(ifdBuffer,charView,ROWS_PER_STRIP, (char) 3, 1, imageHeight_);
-      writeIFDEntry(ifdBuffer,charView,STRIP_BYTE_COUNTS, (char) 4, 1, bytesPerImagePixels_ );
-      writeIFDEntry(ifdBuffer,charView,X_RESOLUTION, (char)5, 1, tagDataOffset);
+      writeIFDEntry(ifdBuffer, charView, SAMPLES_PER_PIXEL, (char)3,1,(rgb_?3:1));
+      writeIFDEntry(ifdBuffer, charView, ROWS_PER_STRIP, (char) 3, 1, imageHeight_);
+      writeIFDEntry(ifdBuffer, charView, STRIP_BYTE_COUNTS, (char) 4, 1, bytesPerImagePixels_ );
+      writeIFDEntry(ifdBuffer, charView, X_RESOLUTION, (char)5, 1, tagDataOffset);
       tagDataOffset += 8;
-      writeIFDEntry(ifdBuffer,charView,Y_RESOLUTION, (char)5, 1, tagDataOffset);
+      writeIFDEntry(ifdBuffer, charView, Y_RESOLUTION, (char)5,  1, tagDataOffset);
       tagDataOffset += 8;
-      writeIFDEntry(ifdBuffer,charView,RESOLUTION_UNIT, (char) 3,1,3);
+      writeIFDEntry(ifdBuffer, charView, RESOLUTION_UNIT, (char) 3, 1, 3);
       if (firstIFD_) {         
          ijMetadataCountsTagPosition_ = filePosition_ + bufferPosition_;
-         writeIFDEntry(ifdBuffer,charView,IJ_METADATA_BYTE_COUNTS,(char)4,0,0);
+         writeIFDEntry(ifdBuffer, charView, IJ_METADATA_BYTE_COUNTS, (char)4, 0, 0);
          ijMetadataTagPosition_ = filePosition_ + bufferPosition_;
-         writeIFDEntry(ifdBuffer,charView,IJ_METADATA,(char)1,0,0);
+         writeIFDEntry(ifdBuffer, charView, IJ_METADATA, (char)1, 0, 0);
       }
-      writeIFDEntry(ifdBuffer,charView,MM_METADATA,(char)2,mdBytes.length,tagDataOffset);
+      writeIFDEntry(ifdBuffer, charView, MM_METADATA, (char)2, mdBytes.length, tagDataOffset);
       tagDataOffset += mdBytes.length;
       //NextIFDOffset
       ifdBuffer.putInt(bufferPosition_, (int)tagDataOffset);
       bufferPosition_ += 4;
       
       if (rgb_) {
-         charView.put(bufferPosition_/2,(char) (byteDepth_*8));
-         charView.put(bufferPosition_/2+1,(char) (byteDepth_*8));
-         charView.put(bufferPosition_/2+2,(char) (byteDepth_*8));
+         charView.put(bufferPosition_/2, (char) (byteDepth_*8));
+         charView.put(bufferPosition_/2+1, (char) (byteDepth_*8));
+         charView.put(bufferPosition_/2+2, (char) (byteDepth_*8));
       }
       buffers_.add(ifdBuffer);
       if (!blankPixelsAlreadyWritten) {

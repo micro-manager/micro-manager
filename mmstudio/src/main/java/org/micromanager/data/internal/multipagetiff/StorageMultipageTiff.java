@@ -111,6 +111,7 @@ public final class StorageMultipageTiff implements Storage {
    private Map<Coords, MultipageTiffReader> coordsToReader_;
    // Keeps track of our maximum extent along each axis.
    private Coords maxIndices_;
+
   
    public StorageMultipageTiff(Component parent, Datastore store, String dir, 
            Boolean amInWriteMode)
@@ -294,7 +295,7 @@ public final class StorageMultipageTiff implements Storage {
          Set<Coords> readerCoords = reader.getIndexKeys();
          for (Coords coords : readerCoords) {
             coordsToReader_.put(coords, reader);
-            lastFrameOpenedDataSet_ = Math.max(coords.getTime(),
+            lastFrameOpenedDataSet_ = Math.max(coords.getT(),
                   lastFrameOpenedDataSet_);
             if (firstImage_ == null) {
                firstImage_ = reader.readImage(coords);
@@ -383,13 +384,13 @@ public final class StorageMultipageTiff implements Storage {
    private void startWritingTask(DefaultImage image) throws MMException, IOException {
       // Update maxIndices_
       if (maxIndices_ == null) {
-         maxIndices_ = image.getCoords().copy().build();
+         maxIndices_ = image.getCoords().copyBuilder().build();
       }
       else {
          for (String axis : image.getCoords().getAxes()) {
             int pos = image.getCoords().getIndex(axis);
             if (pos > maxIndices_.getIndex(axis)) {
-               maxIndices_ = maxIndices_.copy().index(axis, pos).build();
+               maxIndices_ = maxIndices_.copyBuilder().index(axis, pos).build();
             }
          }
       }
@@ -430,6 +431,7 @@ public final class StorageMultipageTiff implements Storage {
 
       int frame = image.getCoords().getTimePoint();
       lastFrameOpenedDataSet_ = Math.max(frame, lastFrameOpenedDataSet_);
+
    }
 
    public Set<Coords> imageKeys() {
