@@ -236,7 +236,7 @@ public final class MultipageTiffWriter {
    }
 
    private static final int BUFFER_POOL_SIZE =
-         System.getProperty("sun.arch.data.model").equals("32") ? 0 : 3;
+         System.getProperty("sun.arch.data.model").equals("32") ? 0 : 10;
    private static final Deque<ByteBuffer> pooledBuffers_;
    static {
       if (BUFFER_POOL_SIZE > 0) {
