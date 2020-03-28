@@ -1,9 +1,13 @@
 package org.micromanager.internal.utils;
 
+import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.concurrent.ExecutorService;
+
+import static java.util.concurrent.Executors.newSingleThreadExecutor;
 
 /**
  * The PrioritizedEventBus allows registrants to provide a priority value; when
@@ -17,9 +21,21 @@ public final class PrioritizedEventBus {
     * Each priority level corresponds to a different EventBus instance.
     */
    private HashMap<Integer, EventBus> prioritizedBuses_;
+   private boolean async_ = false;
+   private ExecutorService executorService_;
 
    public PrioritizedEventBus() {
-      prioritizedBuses_ = new HashMap<Integer, EventBus>();
+      this(false);
+   }
+
+   public PrioritizedEventBus(boolean async) {
+      prioritizedBuses_ = new HashMap<>();
+      async_ = async;
+
+      if (async) {
+         executorService_ = newSingleThreadExecutor();
+      }
+
    }
 
    public void register(Object o) {
@@ -29,7 +45,11 @@ public final class PrioritizedEventBus {
    public void register(Object o, Integer priority) {
       EventBus subBus;
       if (!prioritizedBuses_.containsKey(priority)) {
-         subBus = new EventBus(EventBusExceptionLogger.getInstance());
+         if (async_) {
+            subBus = new AsyncEventBus(executorService_, EventBusExceptionLogger.getInstance());
+         } else {
+            subBus = new EventBus(EventBusExceptionLogger.getInstance());
+         }
          prioritizedBuses_.put(priority, subBus);
       }
       else {
