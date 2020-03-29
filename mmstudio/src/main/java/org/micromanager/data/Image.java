@@ -202,7 +202,7 @@ public interface Image {
    int getNumComponents();
 
    /**
-    * Return the internal pixel data of this image.
+    * Returns the internal pixel data of this image.
     *
     * The returned value may or may not be a copy of the internal pixel data.
     * <p>
@@ -216,7 +216,7 @@ public interface Image {
    Object getRawPixels();
 
    /**
-    * Return a copy of the raw pixel data that {@code getRawPixels} returns.
+    * Returns a copy of the raw pixel data that {@code getRawPixels} returns.
     * <p>
     * Use if you need to modify the pixel data.
     * <p>
