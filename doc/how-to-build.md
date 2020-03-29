@@ -216,8 +216,4 @@ If unresolved dependences on some Java libraries:
 [ivy:resolve] ::::::::::::::::::::::::::::::::::::::::::::::
 ```
 
-Take a look at this issue:
-
-```
-https://github.com/micro-manager/micro-manager/issues/708
-```
+Take a look at [issue #708](https://github.com/micro-manager/micro-manager/issues/708)
