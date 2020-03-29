@@ -892,7 +892,7 @@ public final class StorageMultipageTiff implements Storage {
                result.add(coordsToReader_.get(imageCoords).readImage(imageCoords));
             }
             catch (IOException ex) {
-               ReportingUtils.logError(ex, "Failed to read image at " + imageCoords);
+               ReportingUtils.logError("Failed to read image at " + imageCoords);
             }
          }
       }
