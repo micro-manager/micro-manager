@@ -396,7 +396,6 @@ public final class MMImageCanvas extends ImageCanvas
 
    @Override
    public void keyPressed(KeyEvent e) {
-      System.out.println("Key: " + e.toString());
       if (!parent_.ij2mmKeyPressConsumed(e) ) {
          IJ.getInstance().keyPressed(e);
       }
