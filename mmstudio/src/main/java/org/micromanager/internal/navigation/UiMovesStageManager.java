@@ -36,7 +36,7 @@ import org.micromanager.internal.MMStudio;
 public final class UiMovesStageManager {
    private final HashMap<DisplayController, CenterAndDragListener> displayToDragListener_;
    private final HashMap<DisplayController, ZWheelListener> displayToWheelListener_;
-   //private final HashMap<DisplayController, KeyAdapter> displayToKeyListener_;
+   private final HashMap<DisplayController, XYZKeyListener> displayToKeyListener_;
    private final Studio studio_;
    private final ExecutorService executorService_; // all stage movements will
              // go through this thread
@@ -46,7 +46,7 @@ public final class UiMovesStageManager {
       executorService_ = Executors.newSingleThreadExecutor();
       displayToDragListener_ = new HashMap<>();
       displayToWheelListener_ = new HashMap<>();
-      //displayToKeyListener_ = new HashMap<DisplayController, KeyAdapter>();
+      displayToKeyListener_ = new HashMap<>();
       // Calling code has to register us for studio_ events
    }
 
@@ -57,17 +57,18 @@ public final class UiMovesStageManager {
    public void activate(DisplayController display) {
       CenterAndDragListener dragListener = null;
       ZWheelListener wheelListener = null;
-      //KeyAdapter keyListener = null;
+      XYZKeyListener keyListener = null;
       if (((MMStudio) studio_).getMMMenubar().getToolsMenu().getMouseMovesStage()) {
          dragListener = new CenterAndDragListener(studio_, executorService_);
          display.registerForEvents(dragListener);
          wheelListener = new ZWheelListener(studio_, executorService_);
          display.registerForEvents(wheelListener);
-         //keyListener = new StageShortcutListener();
+         keyListener = new XYZKeyListener(studio_, executorService_);
+         display.registerForEvents(keyListener);
       }
       displayToDragListener_.put(display, dragListener);
       displayToWheelListener_.put(display, wheelListener);
-      //displayToKeyListener_.put(display, keyListener);
+      displayToKeyListener_.put(display, keyListener);
    }
 
    public void deActivate(final DataViewer displayToDeActivate) {
@@ -90,6 +91,17 @@ public final class UiMovesStageManager {
                   display.unregisterForEvents(displayToWheelListener_.get(display));
                }
                displayToWheelListener_.remove(display);
+            }
+         }
+      }
+
+      synchronized (displayToKeyListener_) {
+         for (DisplayController display : displayToKeyListener_.keySet()) {
+            if (display.equals(displayToDeActivate)) {
+               if (displayToKeyListener_.get(display) != null) {
+                  display.unregisterForEvents(displayToKeyListener_.get(display));
+               }
+               displayToKeyListener_.remove(display);
             }
          }
       }

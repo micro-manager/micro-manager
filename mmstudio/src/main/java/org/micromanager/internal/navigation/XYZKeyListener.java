@@ -19,26 +19,25 @@
 package org.micromanager.internal.navigation;
 
 import com.google.common.eventbus.Subscribe;
-import ij.IJ;
-import ij.WindowManager;
 import ij.gui.ImageCanvas;
-import ij.gui.ImageWindow;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
-import org.micromanager.events.LiveModeEvent;
-import org.micromanager.internal.MMStudio;
+import org.micromanager.Studio;
+import org.micromanager.display.internal.event.DisplayKeyPressEvent;
 import org.micromanager.internal.utils.ReportingUtils;
+
+import javax.swing.*;
+import java.awt.event.KeyEvent;
+import java.util.concurrent.ExecutorService;
 
 /**
  * @author OD
  *
  */
-public final class XYZKeyListener implements KeyListener {
+public final class XYZKeyListener  {
 	private final CMMCore core_;
-   private final MMStudio studio_;
+    private final Studio studio_;
+	private final ExecutorService executorService_;
 	private ImageCanvas canvas_;
 	private static boolean isRunning_ = false;
 	private boolean mirrorX_;
@@ -55,16 +54,18 @@ public final class XYZKeyListener implements KeyListener {
 	private double stepX;
 	private double stepY;
 
-	public XYZKeyListener(CMMCore core, MMStudio gui) {
-		core_ = core;
-      studio_ = gui;
-      studio_.events().registerForEvents(this);
+	public XYZKeyListener(Studio studio, ExecutorService executorService) {
+       studio_ = studio;
+       executorService_ = executorService;
+       core_ = studio_.getCMMCore();
+
+       getOrientation();
 	}
 
-   @Override
-	public void keyPressed(KeyEvent e) {
-
-		//core_.logMessage(Integer.toString(e.getKeyCode()));
+	@Subscribe
+	public void keyPressed(DisplayKeyPressEvent dkpe) {
+		KeyEvent e = dkpe.getKeyEvent();
+		boolean consumed = false;
 
 		switch (e.getKeyCode()) {
 		case KeyEvent.VK_LEFT:
@@ -85,15 +86,19 @@ public final class XYZKeyListener implements KeyListener {
 			switch (e.getKeyCode()) {
 			case KeyEvent.VK_LEFT:
 				IncrementXY(-stepX, 0);
+				consumed = true;
 				break;
 			case KeyEvent.VK_RIGHT:
 				IncrementXY(stepX, 0);
+				consumed = true;
 				break;
 			case KeyEvent.VK_UP:
 				IncrementXY(0, stepY);
+				consumed = true;
 				break;
 			case KeyEvent.VK_DOWN:
 				IncrementXY(0, -stepY);
+				consumed = true;
 			}
 			break;
 		case KeyEvent.VK_1:
@@ -112,60 +117,20 @@ public final class XYZKeyListener implements KeyListener {
 			case KeyEvent.VK_U:
 			case KeyEvent.VK_PAGE_UP:
 				IncrementZ(-step);
+				consumed = true;
 				break;
 			case KeyEvent.VK_2:
 			case KeyEvent.VK_J:
 			case KeyEvent.VK_PAGE_DOWN:
 				IncrementZ(step);
+				consumed = true;
 			}
 		}
-	}
-
-   @Override
-	public void keyReleased(KeyEvent arg0) {
-	}
-
-   @Override
-	public void keyTyped(KeyEvent arg0) {
-	}
-
-	public void start() {
-		// Get a handle to the AcqWindow
-		if (WindowManager.getCurrentWindow() != null) {
-			start(WindowManager.getCurrentWindow());
+		if (consumed) {
+			dkpe.consume();
 		}
 	}
 
-	public void start(ImageWindow win) {
-		if (isRunning_)
-			stop();
-
-		isRunning_ = true;
-		if (win != null) {
-			attach(win);
-		}
-		getOrientation();
-	}
-
-	public void stop() {
-		if (canvas_ != null) {
-			canvas_.removeKeyListener(this);
-         canvas_.addKeyListener(IJ.getInstance());
-		}
-		isRunning_ = false;
-	}
-
-	public boolean isRunning() {
-		return isRunning_;
-	}
-
-	public void attach(ImageWindow win) {
-		if (!isRunning_)
-			return;
-		canvas_ = win.getCanvas();
-      canvas_.removeKeyListener(IJ.getInstance());
-		canvas_.addKeyListener(this);
-	}
 
 	public void IncrementXY(double stepX, double stepY) {
 		// Get needed info from core
@@ -219,7 +184,7 @@ public final class XYZKeyListener implements KeyListener {
 		}
 
       // Cheap way to update XY position in GUI
-      studio_.updateXYPosRelative(mXUm, mYUm);
+      //studio_.updateXYPosRelative(mXUm, mYUm);
 	}
 
 	public void IncrementZ(int step) {
@@ -266,13 +231,5 @@ public final class XYZKeyListener implements KeyListener {
 		}
 	}
    
-   @Subscribe
-   public void onLiveMode(LiveModeEvent event) {
-      if (event.getIsOn()) {
-         start();
-      } else {
-         stop();
-      }
-   }
 
 }
