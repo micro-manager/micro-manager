@@ -21,9 +21,7 @@ package org.micromanager.internal.dialogs;
 import com.bulenkov.iconloader.IconLoader;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Font;
-import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.event.*;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -75,11 +73,11 @@ public final class StageControlFrame extends MMFrame {
    
    private final ExecutorService stageMotionExecutor_;
 
-   private static final String[] XY_MOVEMENTS = new String[] {
+   public static final String[] XY_MOVEMENTS = new String[] {
       "SMALLMOVEMENT", "MEDIUMMOVEMENT", "LARGEMOVEMENT"
    };
-   private static final String SMALLMOVEMENTZ = "SMALLMOVEMENTZ";
-   private static final String MEDIUMMOVEMENTZ = "MEDIUMMOVEMENTZ";
+   public static final String SMALLMOVEMENTZ = "SMALLMOVEMENTZ";
+   public static final String MEDIUMMOVEMENTZ = "MEDIUMMOVEMENTZ";
    private static final String CURRENTZDRIVE = "CURRENTZDRIVE";
    private static final String REFRESH = "REFRESH";
    private static final String NRZPANELS = "NRZPANELS";
@@ -149,10 +147,22 @@ public final class StageControlFrame extends MMFrame {
       }
       // Read XY stepsizes from profile
       for (int i = 0; i < 3; ++i) {
+         final int j = i;
          xyStepSizes[i] = settings_.getDouble(XY_MOVEMENTS[i], xyStepSizes[i]);
          xyStepTexts_[i].setText(
                  NumberUtils.doubleToDisplayString(xyStepSizes[i]) );
+         xyStepTexts_[i].addPropertyChangeListener("value", new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+               try {
+                  settings_.putDouble(XY_MOVEMENTS[j],
+                          NumberUtils.displayStringToDouble(xyStepTexts_[j].getText()));
+               } catch (ParseException pex) {
+               }
+            }
+         });
       }
+
 
       StrVector zDrives = core_.getLoadedDevicesOfType(DeviceType.StageDevice);
       StrVector xyDrives = core_.getLoadedDevicesOfType(DeviceType.XYStageDevice);
@@ -234,6 +244,19 @@ public final class StageControlFrame extends MMFrame {
          minusButtons_[0].setEnabled(false);
          plusButtons_[MAX_NUM_Z_PANELS-1].setEnabled(false);
       }
+
+      this.addMouseListener(new MouseAdapter() {
+         @Override
+         public void mouseExited(MouseEvent e) {
+            for (int i = 0; i < XY_MOVEMENTS.length; i++) {
+               try {
+                  settings_.putDouble(XY_MOVEMENTS[i],
+                          NumberUtils.displayStringToDouble(xyStepTexts_[i].getText()));
+               } catch (ParseException pex) {
+               }
+            }
+         }
+      });
       
       updateStagePositions();  // make sure that positions are correct
       refreshTimer(); // start polling if enabled

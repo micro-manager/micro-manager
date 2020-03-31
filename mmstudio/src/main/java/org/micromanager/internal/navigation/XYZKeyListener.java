@@ -24,11 +24,15 @@ import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 import org.micromanager.Studio;
 import org.micromanager.display.internal.event.DisplayKeyPressEvent;
+import org.micromanager.internal.dialogs.StageControlFrame;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.util.concurrent.ExecutorService;
+
+import static org.micromanager.internal.dialogs.StageControlFrame.XY_MOVEMENTS;
 
 /**
  * @author OD
@@ -38,6 +42,9 @@ public final class XYZKeyListener  {
 	private final CMMCore core_;
     private final Studio studio_;
 	private final ExecutorService executorService_;
+	private final MutablePropertyMapView settings_;
+	double[] xyStepSizes_;
+
 	private ImageCanvas canvas_;
 	private static boolean isRunning_ = false;
 	private boolean mirrorX_;
@@ -59,6 +66,11 @@ public final class XYZKeyListener  {
        executorService_ = executorService;
        core_ = studio_.getCMMCore();
 
+       xyStepSizes_ = new double[] {1.0, core_.getImageWidth() / 4, core_.getImageWidth()};
+
+
+       settings_ = studio_.profile().getSettings(StageControlFrame.class);
+
        getOrientation();
 	}
 
@@ -66,6 +78,9 @@ public final class XYZKeyListener  {
 	public void keyPressed(DisplayKeyPressEvent dkpe) {
 		KeyEvent e = dkpe.getKeyEvent();
 		boolean consumed = false;
+		for (int i = 0; i < xyStepSizes_.length; ++i) {
+			xyStepSizes_[i] = settings_.getDouble(XY_MOVEMENTS[i], xyStepSizes_[i]);
+		}
 
 		switch (e.getKeyCode()) {
 		case KeyEvent.VK_LEFT:
@@ -73,15 +88,11 @@ public final class XYZKeyListener  {
 		case KeyEvent.VK_UP:
 		case KeyEvent.VK_DOWN:
 			//XY step
-			stepX = stepY = normalXYStep;
+			stepX = stepY = xyStepSizes_[1];
 			if (e.isControlDown()) {
-				stepX = stepY = ctrlXYStep;
+				stepX = stepY = xyStepSizes_[0];
 			} else if (e.isShiftDown()) {
-				stepX = core_.getImageWidth();
-				stepY = core_.getImageHeight();
-			} else if (e.isAltDown()) {
-				stepX = core_.getImageWidth() / 2;
-				stepY = core_.getImageHeight() / 2;
+				stepX = stepY = xyStepSizes_[2];
 			}
 			switch (e.getKeyCode()) {
 			case KeyEvent.VK_LEFT:
