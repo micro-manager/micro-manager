@@ -45,6 +45,7 @@ import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
+import org.jfree.chart.axis.NumberTick;
 import org.micromanager.Studio;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.SystemConfigurationLoadedEvent;
@@ -73,8 +74,11 @@ public final class StageControlFrame extends MMFrame {
    
    private final ExecutorService stageMotionExecutor_;
 
-   public static final String[] XY_MOVEMENTS = new String[] {
+   public static final String[] X_MOVEMENTS = new String[] {
       "SMALLMOVEMENT", "MEDIUMMOVEMENT", "LARGEMOVEMENT"
+   };
+   public static final String[] Y_MOVEMENTS = new String[] {
+           "SMALLMOVEMENT_Y", "MEDIUMMOVEMENT_Y", "LARGEMOVEMENT_Y"
    };
    public static final String SMALLMOVEMENTZ = "SMALLMOVEMENTZ";
    public static final String MEDIUMMOVEMENTZ = "MEDIUMMOVEMENTZ";
@@ -94,10 +98,15 @@ public final class StageControlFrame extends MMFrame {
    private JCheckBox enableRefreshCB_;
    private Timer timer_ = null;
    // Ordered small, medium, large.
-   private JFormattedTextField[] xyStepTexts_ = new JFormattedTextField[] {
+   private JFormattedTextField[] xStepTexts_ = new JFormattedTextField[] {
       new JFormattedTextField(NumberFormat.getNumberInstance()),
       new JFormattedTextField(NumberFormat.getNumberInstance()),
       new JFormattedTextField(NumberFormat.getNumberInstance())
+   };
+   private JFormattedTextField[] yStepTexts_ = new JFormattedTextField[] {
+           new JFormattedTextField(NumberFormat.getNumberInstance()),
+           new JFormattedTextField(NumberFormat.getNumberInstance()),
+           new JFormattedTextField(NumberFormat.getNumberInstance())
    };
    private JFormattedTextField[] zStepTextsSmall_ = new JFormattedTextField[MAX_NUM_Z_PANELS];
    private JFormattedTextField[] zStepTextsMedium_ = new JFormattedTextField[MAX_NUM_Z_PANELS];
@@ -137,26 +146,40 @@ public final class StageControlFrame extends MMFrame {
     */
    public final void initialize() {
       stopTimer();
-      double[] xyStepSizes = new double[] {1.0, 10.0, 100.0};
+      double[] xStepSizes = new double[] {1.0, 10.0, 100.0};
+      double[] yStepSizes = new double[] {1.0, 10.0, 100.0};
       double pixelSize = core_.getPixelSizeUm();
       long nrPixelsX = core_.getImageWidth();
       if (pixelSize != 0) {
-         xyStepSizes[0] = pixelSize;
-         xyStepSizes[1] = pixelSize * nrPixelsX * 0.1;
-         xyStepSizes[2] = pixelSize * nrPixelsX;
+         xStepSizes[0] = yStepSizes[0] = pixelSize;
+         xStepSizes[1] = yStepSizes[1] = pixelSize * nrPixelsX * 0.1;
+         xStepSizes[2] = yStepSizes[2] = pixelSize * nrPixelsX;
       }
       // Read XY stepsizes from profile
       for (int i = 0; i < 3; ++i) {
          final int j = i;
-         xyStepSizes[i] = settings_.getDouble(XY_MOVEMENTS[i], xyStepSizes[i]);
-         xyStepTexts_[i].setText(
-                 NumberUtils.doubleToDisplayString(xyStepSizes[i]) );
-         xyStepTexts_[i].addPropertyChangeListener("value", new PropertyChangeListener() {
+         xStepSizes[i] = settings_.getDouble(X_MOVEMENTS[i], xStepSizes[i]);
+         xStepTexts_[i].setText(
+                 NumberUtils.doubleToDisplayString(xStepSizes[i]) );
+         xStepTexts_[i].addPropertyChangeListener("value", new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                try {
-                  settings_.putDouble(XY_MOVEMENTS[j],
-                          NumberUtils.displayStringToDouble(xyStepTexts_[j].getText()));
+                  settings_.putDouble(X_MOVEMENTS[j],
+                          NumberUtils.displayStringToDouble(xStepTexts_[j].getText()));
+               } catch (ParseException pex) {
+               }
+            }
+         });
+         yStepSizes[i] = settings_.getDouble(Y_MOVEMENTS[i], yStepSizes[i]);
+         yStepTexts_[i].setText(
+                 NumberUtils.doubleToDisplayString(yStepSizes[i]) );
+         yStepTexts_[i].addPropertyChangeListener("value", new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+               try {
+                  settings_.putDouble(Y_MOVEMENTS[j],
+                          NumberUtils.displayStringToDouble(yStepTexts_[j].getText()));
                } catch (ParseException pex) {
                }
             }
@@ -248,10 +271,12 @@ public final class StageControlFrame extends MMFrame {
       this.addMouseListener(new MouseAdapter() {
          @Override
          public void mouseExited(MouseEvent e) {
-            for (int i = 0; i < XY_MOVEMENTS.length; i++) {
+            for (int i = 0; i < X_MOVEMENTS.length && i < Y_MOVEMENTS.length; i++) {
                try {
-                  settings_.putDouble(XY_MOVEMENTS[i],
-                          NumberUtils.displayStringToDouble(xyStepTexts_[i].getText()));
+                  settings_.putDouble(X_MOVEMENTS[i],
+                          NumberUtils.displayStringToDouble(xStepTexts_[i].getText()));
+                  settings_.putDouble(Y_MOVEMENTS[i],
+                          NumberUtils.displayStringToDouble(yStepTexts_[i].getText()));
                } catch (ParseException pex) {
                }
             }
@@ -352,7 +377,11 @@ public final class StageControlFrame extends MMFrame {
             }
             try {
                double increment =
-                       NumberUtils.displayStringToDouble(xyStepTexts_[stepIndex].getText());
+                       NumberUtils.displayStringToDouble(xStepTexts_[stepIndex].getText());
+               if (dx == 0) {
+                  increment =
+                          NumberUtils.displayStringToDouble((yStepTexts_[stepIndex].getText()));
+               }
                setRelativeXYStagePosition(dx * increment, dy * increment);
             }
             catch (ParseException ex) {
@@ -389,6 +418,9 @@ public final class StageControlFrame extends MMFrame {
       result.add(new JLabel(), "height 20!, wrap");
 
       // Now the controls for setting the step size.
+      result.add(new JLabel("X"), "height 20!, pos 55 230, alignx center");
+      result.add(new JLabel("Y"), "height 20!, pos 95 230, alignx center, wrap");
+
       String[] labels = new String[] {"1 pixel", "0.1 field", "1 field"};
       for (int i = 0; i < 3; ++i) {
          JLabel indicator = new JLabel(IconLoader.getIcon(
@@ -400,7 +432,8 @@ public final class StageControlFrame extends MMFrame {
          final int index = i;
 
          // See above HACK note.
-         result.add(xyStepTexts_[i], "height 20!, width 80");
+         result.add(xStepTexts_[i], "height 20!, width 40");
+         result.add(yStepTexts_[i], "height 20!, width 40");
 
          result.add(new JLabel("\u00b5m"));
 
@@ -412,8 +445,8 @@ public final class StageControlFrame extends MMFrame {
             double[] sizes = new double[] {pixelSize, viewSize / 10,
                viewSize};
             double stepSize = sizes[index];
-            xyStepTexts_[index].setText(
-                    NumberUtils.doubleToDisplayString(stepSize));
+            xStepTexts_[index].setText(NumberUtils.doubleToDisplayString(stepSize));
+            yStepTexts_[index].setText(NumberUtils.doubleToDisplayString(stepSize));
          });
          result.add(presetButton, "width 80!, height 20!, wrap");
       } // End creating set-step-size text fields/buttons.
@@ -741,8 +774,8 @@ public final class StageControlFrame extends MMFrame {
    public void dispose() {
       for (int i = 0; i < 3; i++) {
          try {
-            settings_.putDouble(XY_MOVEMENTS[i],
-                  NumberUtils.displayStringToDouble(xyStepTexts_[i].getText()));
+            settings_.putDouble(X_MOVEMENTS[i],
+                  NumberUtils.displayStringToDouble(xStepTexts_[i].getText()));
          } catch (ParseException pex) {
             // since we are closing, no need to warn the user
          }

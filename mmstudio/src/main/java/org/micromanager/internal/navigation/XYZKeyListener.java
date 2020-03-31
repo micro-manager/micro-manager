@@ -32,7 +32,8 @@ import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.util.concurrent.ExecutorService;
 
-import static org.micromanager.internal.dialogs.StageControlFrame.XY_MOVEMENTS;
+import static org.micromanager.internal.dialogs.StageControlFrame.X_MOVEMENTS;
+import static org.micromanager.internal.dialogs.StageControlFrame.Y_MOVEMENTS;
 
 /**
  * @author OD
@@ -43,10 +44,9 @@ public final class XYZKeyListener  {
     private final Studio studio_;
 	private final ExecutorService executorService_;
 	private final MutablePropertyMapView settings_;
-	double[] xyStepSizes_;
+	double[] xStepSizes_;
+	double[] yStepSizes_;
 
-	private ImageCanvas canvas_;
-	private static boolean isRunning_ = false;
 	private boolean mirrorX_;
 	private boolean mirrorY_;
 	private boolean transposeXY_;
@@ -55,19 +55,14 @@ public final class XYZKeyListener  {
 	public static int ctrlZStep = 1;
 	public static int normalZStep = 3;
 	public static int shiftZStep = 10;
-	public static int ctrlXYStep = 1;
-	public static int normalXYStep = 10;
-	private int step;
-	private double stepX;
-	private double stepY;
 
 	public XYZKeyListener(Studio studio, ExecutorService executorService) {
        studio_ = studio;
        executorService_ = executorService;
        core_ = studio_.getCMMCore();
 
-       xyStepSizes_ = new double[] {1.0, core_.getImageWidth() / 4, core_.getImageWidth()};
-
+       xStepSizes_ = new double[] {1.0, core_.getImageWidth() / 4, core_.getImageWidth()};
+       yStepSizes_ = new double[] {1.0, core_.getImageHeight() / 4, core_.getImageHeight()};
 
        settings_ = studio_.profile().getSettings(StageControlFrame.class);
 
@@ -78,8 +73,11 @@ public final class XYZKeyListener  {
 	public void keyPressed(DisplayKeyPressEvent dkpe) {
 		KeyEvent e = dkpe.getKeyEvent();
 		boolean consumed = false;
-		for (int i = 0; i < xyStepSizes_.length; ++i) {
-			xyStepSizes_[i] = settings_.getDouble(XY_MOVEMENTS[i], xyStepSizes_[i]);
+		for (int i = 0; i < xStepSizes_.length; ++i) {
+			xStepSizes_[i] = settings_.getDouble(X_MOVEMENTS[i], xStepSizes_[i]);
+		}
+		for (int i = 0; i < yStepSizes_.length; ++i) {
+			yStepSizes_[i] = settings_.getDouble(Y_MOVEMENTS[i], yStepSizes_[i]);
 		}
 
 		switch (e.getKeyCode()) {
@@ -88,11 +86,14 @@ public final class XYZKeyListener  {
 		case KeyEvent.VK_UP:
 		case KeyEvent.VK_DOWN:
 			//XY step
-			stepX = stepY = xyStepSizes_[1];
+			double stepX = xStepSizes_[1];
+			double stepY = yStepSizes_[1];
 			if (e.isControlDown()) {
-				stepX = stepY = xyStepSizes_[0];
+				stepX = xStepSizes_[0];
+				stepY =yStepSizes_[0];
 			} else if (e.isShiftDown()) {
-				stepX = stepY = xyStepSizes_[2];
+				stepX = xStepSizes_[2];
+				stepY = yStepSizes_[2];
 			}
 			switch (e.getKeyCode()) {
 			case KeyEvent.VK_LEFT:
@@ -118,7 +119,7 @@ public final class XYZKeyListener  {
 		case KeyEvent.VK_2:
 		case KeyEvent.VK_J:
 		case KeyEvent.VK_PAGE_DOWN:
-			step = normalZStep;
+			int step = normalZStep;
 			if (e.isControlDown())
 				step = ctrlZStep;
 			else if (e.isShiftDown())
