@@ -109,7 +109,7 @@ public final class BufferTools {
             buffer = ShortBuffer.wrap((short[]) pixels);
             break;
          default:
-            throw new AssertionError("Unimplemented pixel component size");
+            throw new UnsupportedOperationException ("Unimplemented pixel component size");
       }
       return buffer;
    }
