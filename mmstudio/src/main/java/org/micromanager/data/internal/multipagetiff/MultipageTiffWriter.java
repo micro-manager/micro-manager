@@ -247,6 +247,9 @@ public final class MultipageTiffWriter {
    // the pool should always have a buffer ready for a new request.
    // Ideally we would also evict unused buffers after a timeout, so as not to
    // leak memory after writing has concluded.
+   // Increasing the number of buffers becomes a problem when saving MDAs with many
+   // positions and using one MultipageTiffWriter per position, leading to excessive
+   // memory usage by allocating many Direct Byte buffers.
 
    private static final int BUFFER_DIRECT_THRESHOLD = 1024;
    private static ByteBuffer allocateByteBuffer(int capacity) {
@@ -257,7 +260,7 @@ public final class MultipageTiffWriter {
    }
 
    private static final int BUFFER_POOL_SIZE =
-         System.getProperty("sun.arch.data.model").equals("32") ? 0 : 10;
+         System.getProperty("sun.arch.data.model").equals("32") ? 0 : 3;
    private static final Deque<ByteBuffer> pooledBuffers_;
    static {
       if (BUFFER_POOL_SIZE > 0) {
