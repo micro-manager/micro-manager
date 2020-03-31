@@ -433,7 +433,7 @@ public interface DataManager {
     /**
     * Checks whether or not the plugin at position `index` in the list is enabled
     * for the application pipeline.
-    * @param index. an int determining which position in the list to check
+    * @param index an int determining which position in the list to check
     * @return boolean of whether or not the plugin is enabled.
     */
     boolean isApplicationPipelineStepEnabled(int index);
@@ -441,7 +441,7 @@ public interface DataManager {
     /**
     * Sets whether or not the plugin at position `index` in the list is enabled
     * for the application pipeline.
-    * @param index. an int determining which position in the list to check
+    * @param index an int determining which position in the list to check
     * @param enabled of whether or not the plugin should be enabled.
     */
     void setApplicationPipelineStepEnabled(int index, boolean enabled);
@@ -449,7 +449,7 @@ public interface DataManager {
     /**
     * Checks whether or not the plugin at position `index` in the list is enabled
     * for the live pipeline.
-    * @param index. an int determining which position in the list to check
+    * @param index an int determining which position in the list to check
     * @return boolean of whether or not the plugin is enabled.
     */
     boolean isLivePipelineStepEnabled(int index);
@@ -457,7 +457,7 @@ public interface DataManager {
     /**
     * Sets whether or not the plugin at position `index` in the list is enabled
     * for the live pipeline.
-    * @param index. an int determining which position in the list to check
+    * @param index an int determining which position in the list to check
     * @param enabled of whether or not the plugin should be enabled.
     */
     void setLivePipelineStepEnabled(int index, boolean enabled);
