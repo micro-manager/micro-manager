@@ -819,7 +819,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    public void onNewImage(final DataProviderHasNewImageEvent event) {
       // (NS - 2020-03-27)
       // Hack: handle only if the circular buffer is not too full.  How full is highly arbitrary.
-      if ( !studio_.acquisitions().isAcquisitionRunning() || studio_.core().getRemainingImageCount() < 6 ) {
+      if ( !studio_.acquisitions().isAcquisitionRunning() || !studio_.core().isSequenceRunning() ||
+              studio_.core().getRemainingImageCount() < 6 ) {
          perfMon_.sampleTimeInterval("NewImageEvent");
          synchronized (this) {
             if (closeCompleted_) {
