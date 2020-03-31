@@ -53,8 +53,9 @@ test-driver
 *.pyo
 __pycache__/
 
-# Pycharm IDE
+# IntelliJ and Pycharm
 .idea
+*.iml
 
 # Build
 *.class
