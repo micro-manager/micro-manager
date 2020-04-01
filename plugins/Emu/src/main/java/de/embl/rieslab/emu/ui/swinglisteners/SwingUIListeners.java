@@ -112,8 +112,8 @@ public class SwingUIListeners {
 		
 		cbx.addActionListener(new ActionListener(){
 	    	public void actionPerformed(ActionEvent e){
-	    		String val = String.valueOf(cbx.getSelectedIndex());
-	    		cp.setUIPropertyValue(propertyKey,val);
+	    		int val = cbx.getSelectedIndex();
+	    		cp.setUIPropertyValueByStateIndex(propertyKey,val);
 	    	}
         });
 	}
@@ -145,7 +145,7 @@ public class SwingUIListeners {
 			AbstractButton btn = enm.nextElement();		
 			btn.addActionListener(new ActionListener(){
 		    	public void actionPerformed(ActionEvent e){
-		    		cp.setUIPropertyValue(propertyKey,String.valueOf(pos));
+		    		cp.setUIPropertyValueByStateIndex(propertyKey,pos);
 		    	}
 	        });
 			
@@ -189,7 +189,7 @@ public class SwingUIListeners {
 			AbstractButton btn = enm.nextElement();		
 			btn.addActionListener(new ActionListener(){
 		    	public void actionPerformed(ActionEvent e){
-		    		cp.setUIPropertyValue(propertyKey,values[pos]);
+		    		cp.setUIPropertyValueByState(propertyKey,values[pos]);
 		    	}
 	        });
 			
@@ -230,7 +230,7 @@ public class SwingUIListeners {
 	    		int ind = cbx.getSelectedIndex();
 	    		if(ind < values.length && ind >= 0) {
 	    			String val = values[ind];
-	    			cp.setUIPropertyValue(propertyKey,val);
+	    			cp.setUIPropertyValueByState(propertyKey,val);
 	    		}
 	    	}
         });

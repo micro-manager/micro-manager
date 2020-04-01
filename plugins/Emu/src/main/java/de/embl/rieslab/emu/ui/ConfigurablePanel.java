@@ -264,6 +264,68 @@ public abstract class ConfigurablePanel extends JPanel{
 			t.start();
 		}
 	}
+	/**
+	 * Sets the UIProperty {@code propertyName}'s value to value of the {@code stateIndex}th state. This method calls the 
+	 * UIProperty's method to set the value, which will in turn call the corresponding MMProperty's
+	 * method. Since the change will be notified to all the UIProperties listening to the MMProperty 
+	 * (through {@link #triggerPropertyHasChanged(String, String)}), this method runs on an independent
+	 * thread (that is, not on the EDT).
+	 *  
+	 * @param propertyName UIProperty's name
+	 * @param stateIndex New state's index
+	 */
+	public void setUIPropertyValueByStateIndex(String propertyName, int stateIndex){
+		
+		// this should be a protected method, but in order to call it in SwingUIListeners it was set to public...
+		// passing it as lambdas could be a solution
+		
+		if(propertyName == null) {
+			throw new NullPointerException("The UIProperty's label cannot be null.");
+		}
+		
+		if(isComponentTriggeringEnabled()) {
+			// makes sure the call does NOT run on EDT
+			Thread t = new Thread("Property change: " + propertyName) {
+				public void run() {
+					if (properties_.containsKey(propertyName)) {
+						properties_.get(propertyName).setPropertyValueByStateIndex(stateIndex);
+					}
+				}
+			};
+			t.start();
+		}
+	}
+	/**
+	 * Sets the UIProperty {@code propertyName}'s value to value of the state labeled {@code stateIndex}. This method calls the 
+	 * UIProperty's method to set the value, which will in turn call the corresponding MMProperty's
+	 * method. Since the change will be notified to all the UIProperties listening to the MMProperty 
+	 * (through {@link #triggerPropertyHasChanged(String, String)}), this method runs on an independent
+	 * thread (that is, not on the EDT).
+	 *  
+	 * @param propertyName UIProperty's name
+	 * @param stateName New state's name
+	 */
+	public void setUIPropertyValueByState(String propertyName, String stateName){
+		
+		// this should be a protected method, but in order to call it in SwingUIListeners it was set to public...
+		// passing it as lambdas could be a solution
+		
+		if(propertyName == null) {
+			throw new NullPointerException("The UIProperty's label cannot be null.");
+		}
+		
+		if(isComponentTriggeringEnabled()) {
+			// makes sure the call does NOT run on EDT
+			Thread t = new Thread("Property change: " + propertyName) {
+				public void run() {
+					if (properties_.containsKey(propertyName)) {
+						properties_.get(propertyName).setPropertyValueByState(stateName);
+					}
+				}
+			};
+			t.start();
+		}
+	}
 	
 	/**
 	 * Sets the value of the IntegerInternalProperty called {@code propertyName} to {@code newValue}.

@@ -70,11 +70,49 @@ public class SingleStateUIProperty extends UIProperty{
 	 */
 	@Override
 	public boolean setPropertyValue(String val) {
-		if (val != null && isAssigned() && (val.equals(state_) || val.equals(SingleStateUIProperty.getStateLabel()))) {
+		if (val != null && isAssigned() && (val.equals(state_) || val.equals(getStateLabel()))) {
 			return getMMProperty().setValue(state_, this);
 		}
 		return false;
 	}
+	
+
+	/**
+	 * Sets the value of the assigned MMProperty to the value in the state labeled {@code newState}. 
+	 * If newState is not a valid state name, then the regular setPropertyValue method is called.
+	 * 
+	 * @param stateName New state's name 
+	 * @return True if the value was set, false otherwise.
+	 */
+	@Override
+	public boolean setPropertyValueByState(String stateName) {
+		if (isAssigned()) {
+			// if it corresponds to a valid state name 
+			if (getStateLabel().equals(stateName)) {
+				return getMMProperty().setValue(state_, this);
+			}
+			
+			// otherwise, call the regular method
+			return setPropertyValue(stateName);
+		}
+		return false;
+	}
+
+	/**
+	 * Sets the value of the assigned MMProperty to the property state if stateIndex equals 0. 
+	 * 
+	 * @param stateIndex New state's index
+	 * @return True if the value was set, false otherwise.
+	 */
+	@Override
+	public boolean setPropertyValueByStateIndex(int stateIndex) {
+		if (isAssigned()) {
+			if (stateIndex == 0) {
+				return getMMProperty().setValue(state_, this);
+			}
+		}
+		return false;
+	}	
 	
 	/**
 	 * Returns the name of the state.
