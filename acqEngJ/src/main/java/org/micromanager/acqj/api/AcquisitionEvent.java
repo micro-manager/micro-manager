@@ -161,6 +161,8 @@ public class AcquisitionEvent {
          }
 
          //TODO: SLM, galvo, etc
+         //TODO:ability to do API calls (like SLM set image)
+         
          //Arbitrary extra properties
          JSONArray props = new JSONArray();
          for (Triplet t : properties_) {
