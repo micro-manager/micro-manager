@@ -212,11 +212,6 @@ public class MagellanViewer implements ViewerInterface {
    }
 
    @Override
-   public void setChannel(String channelName) {
-      viewer_.setChannel(channelName);
-   }
-
-   @Override
    public void setChannelDisplaySettings(String chName, Color c, int bitDepth) {
       viewer_.setChannelDisplaySettings(chName, c, bitDepth);
    }

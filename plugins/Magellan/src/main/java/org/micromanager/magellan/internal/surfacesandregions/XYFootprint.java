@@ -17,7 +17,7 @@
 
 package org.micromanager.magellan.internal.surfacesandregions;
 
-import org.micromanager.acqj.api.XYStagePosition;
+import org.micromanager.acqj.internal.acqengj.XYStagePosition;
 import java.util.ArrayList;
 import java.util.List;
 import org.micromanager.MultiStagePosition;

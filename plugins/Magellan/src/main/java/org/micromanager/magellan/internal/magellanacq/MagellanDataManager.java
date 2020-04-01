@@ -42,8 +42,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.acqj.api.AcqEngMetadata;
 import org.micromanager.acqj.api.DataSink;
-import org.micromanager.acqj.api.XYStagePosition;
-import org.micromanager.acqj.internal.acqengj.AcquisitionBase;
+import org.micromanager.acqj.internal.acqengj.XYStagePosition;
+import org.micromanager.acqj.api.Acquisition;
 import org.micromanager.magellan.internal.channels.MagellanChannelGroupSettings;
 import org.micromanager.magellan.internal.gui.ExploreControlsPanel;
 import org.micromanager.magellan.internal.gui.MagellanMouseListener;
@@ -99,7 +99,7 @@ public class MagellanDataManager implements DataSink, DataSourceInterface {
       createDisplay();
    }
 
-   public void initialize(AcquisitionBase acq, JSONObject summaryMetadata) {
+   public void initialize(Acquisition acq, JSONObject summaryMetadata) {
       summaryMetadata_ = summaryMetadata;
       acq_ = (MagellanAcquisition) acq;
       pixelSizeXY_ = MagellanMD.getPixelSizeUm(summaryMetadata);

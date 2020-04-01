@@ -7,7 +7,6 @@ package org.micromanager.magellan.internal.channels;
 
 import java.awt.Color;
 import java.util.Random;
-import org.micromanager.acqj.api.ChannelGroupSettings;
 import org.micromanager.acqj.api.ChannelSetting;
 import org.micromanager.magellan.internal.magellanacq.MagellanGUIAcquisitionSettings;
 import org.micromanager.magellan.internal.main.Magellan;

@@ -1,13 +1,11 @@
 package org.micromanager.acqj.api;
 
 import java.util.Iterator;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.micromanager.acqj.internal.acqengj.AcquisitionBase;
+import org.micromanager.acqj.api.Acquisition;
+import org.micromanager.acqj.api.AcquisitionEvent;
+import org.micromanager.acqj.api.DataSink;
 import org.micromanager.acqj.internal.acqengj.Engine;
-import org.micromanager.acqj.internal.acqengj.MinimalAcquisitionSettings;
 
 /**
  * Abstraction for an acquisition where all the settings are specified in
@@ -21,19 +19,19 @@ import org.micromanager.acqj.internal.acqengj.MinimalAcquisitionSettings;
  *
  * @author henrypinkard
  */
-public abstract class FixedSettingsAcquisition extends AcquisitionBase {
+public abstract class FixedSettingsAcquisition extends Acquisition {
 
    private Future acqFuture_;
    private volatile boolean aborted_ = false;
 
-   public FixedSettingsAcquisition(MinimalAcquisitionSettings settings, DataSink sink) {
-      super(settings, sink);
+   public FixedSettingsAcquisition(String dir, String name, DataSink sink) {
+      super(dir, name, sink);
    }
 
    public void start() {
+      super.start();
       if (finished_) {
-         throw new RuntimeException("Cannot start acquistion since it has already been run. "
-                 + " Try refreshing acquisition list or creating new acquisition");
+         throw new RuntimeException("Cannot start acquistion since it has already been run");
       }
       Iterator<AcquisitionEvent> acqEventIterator = buildAcqEventGenerator();
       acqFuture_ = Engine.getInstance().submitEventIterator(acqEventIterator, this);
@@ -44,7 +42,6 @@ public abstract class FixedSettingsAcquisition extends AcquisitionBase {
 
    protected abstract Iterator<AcquisitionEvent> buildAcqEventGenerator();
 
-   @Override
    public synchronized void abort() {
       if (aborted_) {
          return;

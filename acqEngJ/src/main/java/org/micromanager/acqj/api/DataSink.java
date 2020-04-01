@@ -2,7 +2,6 @@ package org.micromanager.acqj.api;
 
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
-import org.micromanager.acqj.internal.acqengj.AcquisitionBase;
 
 /**
  * Where the acquisition sends data to. Conventionally would be a
@@ -15,7 +14,7 @@ public interface DataSink {
     * @param acq
     * @param summaryMetadata 
     */
-   public void initialize(AcquisitionBase acq, JSONObject summaryMetadata);   
+   public void initialize(Acquisition acq, JSONObject summaryMetadata);   
 
    /**
     * No more data will be collected. Ideally should block until all resources cleaned up

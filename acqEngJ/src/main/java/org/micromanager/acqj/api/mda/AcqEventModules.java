@@ -1,5 +1,6 @@
-package org.micromanager.acqj.api;
+package org.micromanager.acqj.api.mda;
 
+import org.micromanager.acqj.internal.acqengj.ChannelSetting;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
@@ -7,7 +8,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
+import org.micromanager.acqj.api.AcqEngMetadata;
 import org.micromanager.acqj.api.AcquisitionEvent;
+import org.micromanager.acqj.api.AcquisitionEvent;
+import org.micromanager.acqj.internal.acqengj.XYStagePosition;
 import org.micromanager.acqj.internal.acqengj.Engine;
 import org.micromanager.acqj.internal.acqengj.affineTransformUtils;
 
@@ -35,7 +39,7 @@ public class AcqEventModules {
                double zPos = zIndex_ * zStep + zOrigin;
                AcquisitionEvent sliceEvent = event.copy();
                //Do plus equals here in case z positions have been modified by another function (e.g. channel specific focal offsets)
-               sliceEvent.setZ(zIndex_, 
+               sliceEvent.setZ(zIndex_,
                        (sliceEvent.getZPosition() == null ? 0.0 : sliceEvent.getZPosition()) + zPos);
                zIndex_++;
                return sliceEvent;
@@ -66,7 +70,7 @@ public class AcqEventModules {
             public AcquisitionEvent next() {
                AcquisitionEvent timePointEvent = event.copy();
 
-               timePointEvent.setMinimumStartTime( interval_ms == 0 ? 0 : lastTPEventStartTime_ + (long) interval_ms);
+               timePointEvent.setMinimumStartTime(interval_ms == 0 ? 0 : lastTPEventStartTime_ + (long) interval_ms);
                timePointEvent.setTimeIndex(frameIndex_);
                if (frameIndex_ == 0) {
                   lastTPEventStartTime_ = System.currentTimeMillis();
@@ -87,26 +91,24 @@ public class AcqEventModules {
     * @param channels
     * @return
     */
-   public static Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels(ChannelGroupSettings channels) {
+   public static Function<AcquisitionEvent, Iterator<AcquisitionEvent>> channels(List<ChannelSetting> channelList) {
       return (AcquisitionEvent event) -> {
          return new Iterator<AcquisitionEvent>() {
-            String channelName_ = null;
+            int index = 0;
 
             @Override
             public boolean hasNext() {
-               if (channels.nextActiveChannel(channelName_) != null) {
-                  return true;
-               }
-               return false;
+               return index < channelList.size();
             }
 
             @Override
             public AcquisitionEvent next() {
                AcquisitionEvent channelEvent = event.copy();
-               channelName_ = channels.nextActiveChannel(channelName_);
-               channelEvent.setChannelName(channelName_);
+               channelEvent.setChannelGroup(channelList.get(index).group_);
+               channelEvent.setChannelConfig(channelList.get(index).config_);
                channelEvent.setZ(channelEvent.getZIndex(), channelEvent.getZPosition()
-                       + channels.getChannelSetting(channelName_).offset_);
+                       + channelList.get(index).offset_);
+               index++;
                return channelEvent;
             }
          };
@@ -114,10 +116,10 @@ public class AcqEventModules {
    }
 
    /**
-    * Iterate over an arbitrary list of positions. Adds in postition indices
-    * to the axes that assumer the order in the list provided correspond to
-    * the desired indices
-    * 
+    * Iterate over an arbitrary list of positions. Adds in postition indices to
+    * the axes that assumer the order in the list provided correspond to the
+    * desired indices
+    *
     * @param positions
     * @return
     */
@@ -129,7 +131,10 @@ public class AcqEventModules {
          } else {
             for (int index = 0; index < positions.size(); index++) {
                AcquisitionEvent posEvent = event.copy();
-               posEvent.setXY( positions.get(index));
+               posEvent.setX(positions.get(index).getCenter().x);
+               posEvent.setY(positions.get(index).getCenter().y);
+               posEvent.setGridRow(positions.get(index).getGridRow());
+               posEvent.setGridCol(positions.get(index).getGridCol());
                event.setAxisPosition(AcqEngMetadata.POSITION_AXIS, index);
                builder.accept(posEvent);
             }
@@ -137,16 +142,17 @@ public class AcqEventModules {
          return builder.build().iterator();
       };
    }
-   
+
    /**
-    * Make a list of XY positions corresponding to a tiled region of XY space, 
-    * based on the affine transform relating pixel and stage coordinates for the 
+    * Make a list of XY positions corresponding to a tiled region of XY space,
+    * based on the affine transform relating pixel and stage coordinates for the
     * current xy stage
+    *
     * @param tileOverlapPercent
-    * @return 
+    * @return
     */
-    public static ArrayList<XYStagePosition> tileXYPositions(double tileOverlapPercent, 
-            double centerX, double centerY, int numRows, int numCols) {
+   public static ArrayList<XYStagePosition> tileXYPositions(double tileOverlapPercent,
+           double centerX, double centerY, int numRows, int numCols) {
       try {
          AffineTransform transform = affineTransformUtils.getAffineTransform(centerX, centerY);
          ArrayList<XYStagePosition> positions = new ArrayList<XYStagePosition>();
@@ -159,30 +165,30 @@ public class AcqEventModules {
          for (int col = 0; col < numCols; col++) {
             double xPixelOffset = (col - (numCols - 1) / 2.0) * tileWidthMinusOverlap;
             //add in snaky behavior
-                if (col % 2 == 0) {
-                    for (int row = 0; row < numRows; row++) {
-                        double yPixelOffset = (row - (numRows - 1) / 2.0) * tileHeightMinusOverlap;
-                        Point2D.Double pixelPos = new Point2D.Double(xPixelOffset, yPixelOffset);
-                        Point2D.Double stagePos = new Point2D.Double();
-                        transform.transform(pixelPos, stagePos);
-                        AffineTransform posTransform = affineTransformUtils.getAffineTransform(stagePos.x, stagePos.y);
-                        positions.add(new XYStagePosition(stagePos, 
-                                fullTileWidth, fullTileHeight, overlapX, overlapY, 
-                                row, col, posTransform));
-                    }
-                } else {  
-                    for (int row = numRows - 1; row >= 0; row--) {
-                        double yPixelOffset = (row - (numRows - 1) / 2.0) * tileHeightMinusOverlap;
-                        Point2D.Double pixelPos = new Point2D.Double(xPixelOffset, yPixelOffset);
-                        Point2D.Double stagePos = new Point2D.Double();
-                        transform.transform(pixelPos, stagePos);
-                        AffineTransform posTransform = affineTransformUtils.getAffineTransform( stagePos.x, stagePos.y);
-                        positions.add(new XYStagePosition(stagePos, 
-                                fullTileWidth, fullTileHeight, 
-                                overlapX, overlapY, row, col, posTransform));
-                    }
-                }
-         }    
+            if (col % 2 == 0) {
+               for (int row = 0; row < numRows; row++) {
+                  double yPixelOffset = (row - (numRows - 1) / 2.0) * tileHeightMinusOverlap;
+                  Point2D.Double pixelPos = new Point2D.Double(xPixelOffset, yPixelOffset);
+                  Point2D.Double stagePos = new Point2D.Double();
+                  transform.transform(pixelPos, stagePos);
+                  AffineTransform posTransform = affineTransformUtils.getAffineTransform(stagePos.x, stagePos.y);
+                  positions.add(new XYStagePosition(stagePos,
+                          fullTileWidth, fullTileHeight, overlapX, overlapY,
+                          row, col, posTransform));
+               }
+            } else {
+               for (int row = numRows - 1; row >= 0; row--) {
+                  double yPixelOffset = (row - (numRows - 1) / 2.0) * tileHeightMinusOverlap;
+                  Point2D.Double pixelPos = new Point2D.Double(xPixelOffset, yPixelOffset);
+                  Point2D.Double stagePos = new Point2D.Double();
+                  transform.transform(pixelPos, stagePos);
+                  AffineTransform posTransform = affineTransformUtils.getAffineTransform(stagePos.x, stagePos.y);
+                  positions.add(new XYStagePosition(stagePos,
+                          fullTileWidth, fullTileHeight,
+                          overlapX, overlapY, row, col, posTransform));
+               }
+            }
+         }
          return positions;
       } catch (Exception ex) {
          throw new RuntimeException("Couldn't get affine transform");

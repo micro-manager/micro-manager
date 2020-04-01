@@ -15,7 +15,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package org.micromanager.acqj.api;
+package org.micromanager.acqj.internal.acqengj;
 
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
@@ -40,7 +40,7 @@ public class XYStagePosition {
    //of the XY stage
    private final Point2D.Double[] displayedTileCorners_;
    private final Point2D.Double[] fullTileCorners_;
-   private long gridRow_, gridCol_;
+   private Integer gridRow_ = null, gridCol_ = null;
    private final String xyName_;
    private final boolean inGrid_;
    
@@ -76,7 +76,7 @@ public class XYStagePosition {
    /**
     * for opening previously acquired data
     */
-   public XYStagePosition(Point2D.Double stagePosCenter, long row, long col, String xyStageName) {
+   public XYStagePosition(Point2D.Double stagePosCenter, int row, int col, String xyStageName) {
       label_ = "Grid_" + col + "_" + row;
       center_ = stagePosCenter;
       gridCol_ = col;
@@ -92,7 +92,7 @@ public class XYStagePosition {
     * @param transform -- must be centered at current stage pos 
     */
    public XYStagePosition(Point2D.Double stagePosCenter, int width, int height,
-           int overlapX, int overlapY, long row, long col, AffineTransform transform) {
+           int overlapX, int overlapY, int row, int col, AffineTransform transform) {
        
       int displayTileWidth = width - overlapX;
       int displayTileHeight = height - overlapY;
@@ -147,11 +147,11 @@ public class XYStagePosition {
       return Objects.hash(center_);
    }
    
-   public long getGridRow() {
+   public Integer getGridRow() {
       return gridRow_;
    }
    
-   public long getGridCol() {
+   public Integer getGridCol() {
       return gridCol_;
    }
    

@@ -2,6 +2,7 @@ package org.micromanager.internal.zmq;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import static org.micromanager.internal.zmq.ZMQServer.DEFAULT_MASTER_PORT_NUMBER;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
@@ -14,8 +15,8 @@ public abstract class ZMQSocketWrapper {
    protected static ZContext context_;
 
    //map of port numbers to servers, each of which has its own thread and base class
-   private static HashMap<Integer, ZMQSocketWrapper> portSocketMap_
-           = new HashMap<Integer, ZMQSocketWrapper>();
+   private static ConcurrentHashMap<Integer, ZMQSocketWrapper> portSocketMap_
+           = new ConcurrentHashMap<Integer, ZMQSocketWrapper>();
    public static final int DEFAULT_MASTER_PORT_NUMBER = 4827;
 
    protected SocketType type_;
@@ -42,5 +43,10 @@ public abstract class ZMQSocketWrapper {
    }
 
    public abstract void initialize(int port);
+   
+   public void close() {
+      socket_.close();
+      portSocketMap_.remove(socket_);
+   }
 
 }

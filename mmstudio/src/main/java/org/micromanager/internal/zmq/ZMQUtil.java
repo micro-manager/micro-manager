@@ -95,8 +95,8 @@ public class ZMQUtil {
    }
 
    /**
-    * Convert objects that will be serialized into JSON. Used for objects
-    * that will pass out and never need to be returned
+    * Convert objects that will be serialized into JSON. Used for objects that
+    * will pass out and never need to be returned
     *
     */
    public static JSONObject toJSON(Object o) {
@@ -267,13 +267,21 @@ public class ZMQUtil {
       if (arrayClass.equals(byte[].class)) {
          return byteArray;
       } else if (arrayClass.equals(short[].class)) {
-         return ByteBuffer.wrap(byteArray).asShortBuffer().array();
+         short[] shorts = new short[byteArray.length / 2];
+         ByteBuffer.wrap(byteArray).asShortBuffer().get(shorts);
+         return shorts;
       } else if (arrayClass.equals(int[].class)) {
-         return ByteBuffer.wrap(byteArray).asIntBuffer().array();
+         int[] ints = new int[byteArray.length / 4];
+         ByteBuffer.wrap(byteArray).asIntBuffer().get(ints);
+         return ints;
       } else if (arrayClass.equals(double[].class)) {
-         return ByteBuffer.wrap(byteArray).asDoubleBuffer().array();
+         double[] doubles = new double[byteArray.length / 8];
+         ByteBuffer.wrap(byteArray).asDoubleBuffer().get(doubles);
+         return doubles;
       } else if (arrayClass.equals(float[].class)) {
-         return ByteBuffer.wrap(byteArray).asFloatBuffer().array();
+         float[] floats = new float[byteArray.length / 4];
+         ByteBuffer.wrap(byteArray).asFloatBuffer().get(floats);
+         return floats;
       }
       throw new RuntimeException("unknown array type");
    }

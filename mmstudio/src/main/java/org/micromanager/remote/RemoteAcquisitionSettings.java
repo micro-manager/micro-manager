@@ -5,13 +5,12 @@
  */
 package org.micromanager.remote;
 
-import org.micromanager.acqj.internal.acqengj.MinimalAcquisitionSettings;
 
 /**
  *
  * @author henrypinkard
  */
-public class RemoteAcquisitionSettings extends MinimalAcquisitionSettings {
+public class RemoteAcquisitionSettings {
    
    boolean showViewer;
    String dataLocation;

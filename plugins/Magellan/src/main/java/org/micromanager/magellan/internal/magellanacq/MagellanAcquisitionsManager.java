@@ -24,7 +24,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import javax.swing.JOptionPane;
-import org.micromanager.acqj.internal.acqengj.AcquisitionBase;
+import org.micromanager.acqj.api.Acquisition;
 import org.micromanager.magellan.api.MagellanAcquisitionAPI;
 import org.micromanager.magellan.internal.gui.GUI;
 import org.micromanager.magellan.internal.main.Magellan;
@@ -41,7 +41,7 @@ public class MagellanAcquisitionsManager {
    private CopyOnWriteArrayList<MagellanGUIAcquisitionSettings> acqSettingsList_ = new CopyOnWriteArrayList<MagellanGUIAcquisitionSettings>();
    private String[] acqStatus_;
    private GUI gui_;
-   private volatile AcquisitionBase currentAcq_;
+   private volatile Acquisition currentAcq_;
    private volatile int currentAcqIndex_;
    private ExecutorService acqManageExecuterService_;
    ArrayList<Future> acqFutures_;

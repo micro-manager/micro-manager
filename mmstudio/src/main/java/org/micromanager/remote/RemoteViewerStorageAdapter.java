@@ -12,7 +12,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONObject;
 import org.micromanager.acqj.api.AcqEngMetadata;
 import org.micromanager.acqj.api.DataSink;
-import org.micromanager.acqj.internal.acqengj.AcquisitionBase;
+import org.micromanager.acqj.api.Acquisition;
 import org.micromanager.multiresstorage.MultiResMultipageTiffStorage;
 import org.micromanager.ndviewer.api.DataSourceInterface;
 import org.micromanager.ndviewer.api.ViewerInterface;
@@ -20,10 +20,11 @@ import org.micromanager.ndviewer.main.NDViewer;
 import org.micromanager.ndviewer.api.ViewerAcquisitionInterface;
 
 /**
- *
+ * Manages where images go after being acquired (i.e. to some storage class)
+ * and alerting the viewer (if applicable) to new data
  * @author henrypinkard
  */
-public class RemoteDataManager implements DataSourceInterface, DataSink {
+public class RemoteViewerStorageAdapter implements DataSourceInterface, DataSink {
 
    private ExecutorService displayCommunicationExecutor_;
 
@@ -35,15 +36,15 @@ public class RemoteDataManager implements DataSourceInterface, DataSink {
    private String dir_;
    private String name_;
 
-   public RemoteDataManager(boolean showViewer, String dataStorageLocation,
-           String name) {
+   public RemoteViewerStorageAdapter(boolean showViewer, 
+           String dataStorageLocation, String name) {
       showViewer_ = showViewer;
       storeData_ = dataStorageLocation != null;
       dir_ = dataStorageLocation;
       name_ = name;
    }
 
-   public void initialize(AcquisitionBase acq, JSONObject summaryMetadata) {
+   public void initialize(Acquisition acq, JSONObject summaryMetadata) {
       acq_ = (RemoteAcquisition) acq;
 
       if (storeData_) {
@@ -52,6 +53,7 @@ public class RemoteDataManager implements DataSourceInterface, DataSink {
                  summaryMetadata, overlapX, overlapY, AcqEngMetadata.getWidth(summaryMetadata),
                  AcqEngMetadata.getHeight(summaryMetadata),
                  AcqEngMetadata.getBytesPerPixel(summaryMetadata), false);
+         name_ = storage_.getUniqueAcqName();
       }
 
       if (showViewer_) {
@@ -90,7 +92,7 @@ public class RemoteDataManager implements DataSourceInterface, DataSink {
          });
       }
    }
-
+  
    ///////// Data source interface for Viewer //////////
    @Override
    public int[] getBounds() {
@@ -115,7 +117,7 @@ public class RemoteDataManager implements DataSourceInterface, DataSink {
 
    @Override
    public String getDiskLocation() {
-      return null; //Doesn't matter for now
+      return dir_;
    }
 
    ///////////// Data sink interface required by acq eng /////////////
@@ -131,7 +133,11 @@ public class RemoteDataManager implements DataSourceInterface, DataSink {
             storage_.finishedWriting();
          }
       }
-      viewer_.setWindowTitle(name_ + " (Finished)");
+      
+      if (showViewer_) {
+         viewer_.setWindowTitle(name_ + " (Finished)");
+         displayCommunicationExecutor_.shutdown();
+      }   
    }
 
    @Override

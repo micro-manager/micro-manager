@@ -25,11 +25,11 @@ import java.util.stream.Stream;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.micromanager.acqj.api.AcquisitionEvent;
-import org.micromanager.acqj.api.AcquisitionEventIterator;
+import org.micromanager.acqj.internal.acqengj.AcquisitionEventIterator;
 import org.micromanager.acqj.api.AcqEngMetadata;
 import org.micromanager.acqj.internal.acqengj.affineTransformUtils;
-import org.micromanager.acqj.api.XYStagePosition;
-import org.micromanager.acqj.api.AcqEventModules;
+import org.micromanager.acqj.internal.acqengj.XYStagePosition;
+import org.micromanager.acqj.api.mda.AcqEventModules;
 import org.micromanager.acqj.api.DataSink;
 import org.micromanager.acqj.api.FixedSettingsAcquisition;
 import org.micromanager.magellan.internal.main.Magellan;
@@ -64,7 +64,7 @@ public class MagellanGUIAcquisition extends FixedSettingsAcquisition implements 
    }
 
    @Override
-   protected void addToSummaryMetadata(JSONObject summaryMetadata) {
+   public void addToSummaryMetadata(JSONObject summaryMetadata) {
       MagellanMD.setExploreAcq(summaryMetadata, false);
             
       zStep_ = ((MagellanGUIAcquisitionSettings) settings_).zStep_;
@@ -85,7 +85,7 @@ public class MagellanGUIAcquisition extends FixedSettingsAcquisition implements 
    }
 
    @Override
-   protected void addToImageMetadata(JSONObject tags) {
+   public void addToImageMetadata(JSONObject tags) {
 
       //add metadata specific to magellan acquisition
       AcqEngMetadata.setIntervalMs(tags, ((MagellanGUIAcquisition) this).getTimeInterval_ms());

@@ -5,10 +5,7 @@
  */
 package org.micromanager.internal.zmq;
 
-import java.util.Collections;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.function.Function;
 import org.json.JSONObject;
 import static org.micromanager.internal.zmq.ZMQSocketWrapper.context_;
@@ -19,8 +16,7 @@ import org.zeromq.SocketType;
  * @author henrypinkard
  */
 public class ZMQPushSocket<T> extends ZMQSocketWrapper {
-  
-   private ExecutorService executor_;
+
    private Function<T, JSONObject> serializationFn_;
 
    //Constructor for server the base class that runs on its own thread
@@ -31,13 +27,16 @@ public class ZMQPushSocket<T> extends ZMQSocketWrapper {
 
    @Override
    public void initialize(int port) {
-      executor_ = Executors.newSingleThreadExecutor(
-              (Runnable r) -> new Thread(r, "ZMQ Pusher " ));
-      executor_.submit(() -> {
-         socket_ = context_.createSocket(type_);
-         port_ = port;
-         socket_.bind("tcp://127.0.0.1:" + port);
-      });
+      socket_ = context_.createSocket(type_);
+      port_ = port;
+      socket_.bind("tcp://127.0.0.1:" + port);
+//      executor_ = Executors.newSingleThreadExecutor(
+//              (Runnable r) -> new Thread(r, "ZMQ Pusher " ));
+//      executor_.submit(() -> {
+//         socket_ = context_.createSocket(type_);
+//         port_ = port;
+//         socket_.bind("tcp://127.0.0.1:" + port);
+//      });
    }
 
    /**
@@ -45,10 +44,14 @@ public class ZMQPushSocket<T> extends ZMQSocketWrapper {
     *
     * @param o
     */
-   public Future push(T o) {
-      return executor_.submit(() -> {
-         socket_.send(serializationFn_.apply(o).toString());
-      });
+   public void push(T o) {
+      JSONObject json = serializationFn_.apply(o);
+      String s = json.toString();
+      socket_.send(s);
+
+//      return executor_.submit(() -> {
+//         socket_.send(serializationFn_.apply(o).toString());
+//      });
    }
 
 }

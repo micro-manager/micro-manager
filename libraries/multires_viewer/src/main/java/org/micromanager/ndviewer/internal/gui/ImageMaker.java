@@ -86,7 +86,7 @@ public class ImageMaker {
 
          //replace channel axis position with the specific channel 
          HashMap<String, Integer> axes = new HashMap<String, Integer>(viewCoords.getAxesPositions());
-         axes.put("c", display_.getChannelIndex(channel));
+         axes.put("channel", display_.getChannelIndex(channel));
          TaggedImage imageForDisplay = imageCache_.getImageForDisplay(
                  axes, viewCoords.getResolutionIndex(),
                  viewOffsetAtResX, viewOffsetAtResY, imagePixelWidth, imagePixelHeight);

@@ -25,6 +25,10 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -35,12 +39,12 @@ import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.Log;
 import org.json.JSONObject;
 import org.micromanager.acqj.api.AcquisitionEvent;
-import org.micromanager.acqj.api.AcquisitionEventIterator;
+import org.micromanager.acqj.internal.acqengj.AcquisitionEventIterator;
 import org.micromanager.acqj.api.AcqEngMetadata;
-import org.micromanager.acqj.api.AcqEventModules;
-import org.micromanager.acqj.api.DynamicSettingsAcquisition;
+import org.micromanager.acqj.api.mda.AcqEventModules;
 import org.micromanager.acqj.api.ExceptionCallback;
-import org.micromanager.acqj.api.XYStagePosition;
+import org.micromanager.acqj.internal.acqengj.XYStagePosition;
+import org.micromanager.acqj.internal.acqengj.Engine;
 import org.micromanager.acqj.internal.acqengj.affineTransformUtils;
 
 /**
@@ -48,13 +52,18 @@ import org.micromanager.acqj.internal.acqengj.affineTransformUtils;
  *
  * @author Henry
  */
-public class ExploreAcquisition extends DynamicSettingsAcquisition implements MagellanAcquisition {
+public class ExploreAcquisition extends Acquisition implements MagellanAcquisition {
 
    private volatile double zTop_, zBottom_;
    private List<XYStagePosition> positions_;
 
    //Map with slice index as keys used to get rid of duplicate events
    private ConcurrentHashMap<Integer, LinkedBlockingQueue<ExploreTileWaitingToAcquire>> queuedTileEvents_ = new ConcurrentHashMap<Integer, LinkedBlockingQueue<ExploreTileWaitingToAcquire>>();
+
+   private ExecutorService submittedSequenceMonitorExecutor_ = Executors.newSingleThreadExecutor((Runnable r) -> {
+      return new Thread(r, "Submitted sequence monitor");
+   });
+   private volatile boolean aborted_ = false;
 
    private final double zOrigin_, zStep_;
    private int minSliceIndex_, maxSliceIndex_;
@@ -92,9 +101,37 @@ public class ExploreAcquisition extends DynamicSettingsAcquisition implements Ma
       AcqEngMetadata.setInitialPositionList(summaryMetadata, initialPosList);
    }
 
-   @Override
    protected void addToImageMetadata(JSONObject tags) {
-      
+
+   }
+   
+   @Override 
+   public void abort() {
+      super.abort();
+      submittedSequenceMonitorExecutor_.shutdownNow();
+   }
+
+
+     /**
+    * Submit a iterator of acquisition events for execution.
+    *
+    * @param iter an iterator of acquisition events
+    * @param callback an ExceptionCallback for asynchronously handling
+    * exceptions
+    *
+    */
+   public void submitEventIterator(Iterator<AcquisitionEvent> iter, ExceptionCallback callback) {
+      submittedSequenceMonitorExecutor_.submit(() -> {
+         Future iteratorFuture = null;
+         try {
+            iteratorFuture = Engine.getInstance().submitEventIterator(iter, this);
+            iteratorFuture.get();
+         } catch (InterruptedException ex) {
+            iteratorFuture.cancel(true);
+         } catch (ExecutionException ex) {
+            callback.run(ex);
+         }
+      });
    }
 
    private void createXYPositions() {
@@ -226,7 +263,7 @@ public class ExploreAcquisition extends DynamicSettingsAcquisition implements Ma
       };
       list.add(fn);
 
-      super.submitEventIterator(new AcquisitionEventIterator(null, list, removeTileToAcquireFn), new ExceptionCallback() {
+      submitEventIterator(new AcquisitionEventIterator(null, list, removeTileToAcquireFn), new ExceptionCallback() {
          @Override
          public void run(Exception e) {
             Log.log(e, true);
@@ -342,9 +379,9 @@ public class ExploreAcquisition extends DynamicSettingsAcquisition implements Ma
 
    @Override
    public double getZStep() {
-      return ((ExploreAcqSettings)settings_).zStep_;
+      return ((ExploreAcqSettings) settings_).zStep_;
    }
-   
+
    //slice and row/col index of an acquisition event in the queue
    public class ExploreTileWaitingToAcquire {
 

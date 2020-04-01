@@ -109,6 +109,15 @@ public class ZMQServer extends ZMQSocketWrapper {
       ZMQUtil.serialize(apiClasses_, field, serialized, port_);
       return serialized.toString().getBytes();
    }
+   
+   protected void setField(Object obj, JSONObject json) throws JSONException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+      String fieldName = json.getString("name");
+      Object val = json.get("value");
+      if (val instanceof JSONObject) {
+         val = EXTERNAL_OBJECTS.get(((JSONObject) val).getString("hash-code"));
+      }
+      obj.getClass().getField(fieldName).set(obj, val);
+   }
 
    private LinkedList<LinkedList<Class>> getParamCombos(JSONObject message, Object[] argVals) throws JSONException {
 
@@ -303,6 +312,14 @@ public class ZMQServer extends ZMQSocketWrapper {
             String hashCode = request.getString("hash-code");
             Object target = EXTERNAL_OBJECTS.get(hashCode);
             return getField(target, request);
+         }
+         case "set-field": {
+            String hashCode = request.getString("hash-code");
+            Object target = EXTERNAL_OBJECTS.get(hashCode);
+            setField(target, request);
+            reply = new JSONObject();
+            reply.put("type", "none");
+            return reply.toString().getBytes();
          }
          case "destructor": {
             String hashCode = request.getString("hash-code");

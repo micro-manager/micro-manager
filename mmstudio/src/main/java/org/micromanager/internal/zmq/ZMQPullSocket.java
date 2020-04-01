@@ -35,9 +35,13 @@ public class ZMQPullSocket<T> extends ZMQSocketWrapper {
 
    public T next() {
       try {
-         return (T) deserializationFunction_.apply(new JSONObject(new String(socket_.recv())));
+         String message = new String(socket_.recv());
+         JSONObject json = new JSONObject(message);
+         return (T) deserializationFunction_.apply(json);
       } catch (JSONException ex) {
+         ex.printStackTrace();
          throw new RuntimeException("problem deserializing");
       }
    }
+
 }

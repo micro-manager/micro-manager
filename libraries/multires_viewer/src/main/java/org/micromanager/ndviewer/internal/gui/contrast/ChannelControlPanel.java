@@ -249,6 +249,7 @@ class ChannelControlPanel extends JPanel implements CursorListener {
       if (newColor != null) {
          color_ = newColor;
       }
+      display_.setChannelColor(channelName_, color_);
       colorPickerLabel_.setBackground(color_);
       hp_.setTraceStyle(true, color_);
       String name = channelName_;

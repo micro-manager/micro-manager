@@ -15,7 +15,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.acqj.api.AcqEngMetadata;
-import org.micromanager.acqj.api.XYStagePosition;
+import org.micromanager.acqj.internal.acqengj.XYStagePosition;
 import org.micromanager.magellan.internal.coordinates.NoPositionsDefinedYetException;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.multiresstorage.PositionManager;

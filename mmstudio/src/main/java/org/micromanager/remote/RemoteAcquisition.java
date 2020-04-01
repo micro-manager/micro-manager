@@ -5,14 +5,9 @@
  */
 package org.micromanager.remote;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import org.json.JSONObject;
+import org.micromanager.acqj.api.Acquisition;
 import org.micromanager.acqj.api.AcquisitionInterface;
-import org.micromanager.acqj.api.DynamicSettingsAcquisition;
-import org.micromanager.acqj.api.ExceptionCallback;
-import org.micromanager.acqj.api.ImageAcqTuple;
 import org.micromanager.ndviewer.api.ViewerAcquisitionInterface;
 
 /**
@@ -21,13 +16,13 @@ import org.micromanager.ndviewer.api.ViewerAcquisitionInterface;
  *
  * @author henrypinkard
  */
-public class RemoteAcquisition extends DynamicSettingsAcquisition
+public class RemoteAcquisition extends Acquisition
         implements AcquisitionInterface, ViewerAcquisitionInterface {
 
-   private RemoteAcqEventIterator eventSource_;
+   private RemoteEventSource eventSource_;
 
-   public RemoteAcquisition(RemoteAcqEventIterator eventSource, RemoteAcquisitionSettings settings) {
-      super(settings, new RemoteDataManager(settings.showViewer,
+   public RemoteAcquisition(RemoteEventSource eventSource, RemoteAcquisitionSettings settings) {
+      super(settings.dataLocation, settings.name, new RemoteViewerStorageAdapter(settings.showViewer,
               settings.dataLocation, settings.name));
       eventSource_ = eventSource;
       eventSource.setAcquisition(this);
@@ -36,26 +31,22 @@ public class RemoteAcquisition extends DynamicSettingsAcquisition
    public int getEventPort() {
       return eventSource_.getPort();
    }
-
+   
    @Override
-   public void start() {
-       submitEventIterator(eventSource_, new ExceptionCallback() {
-         @Override
-         public void run(Exception e) {
-            //TODO: abort somethign
-            e.printStackTrace();
-         }
-      });
+   public void abort() {
+      super.abort();
+      eventSource_.abort();
    }
-
+   
    @Override
-   protected void addToSummaryMetadata(JSONObject summaryMetadata) {
+   public void addToSummaryMetadata(JSONObject summaryMetadata) {
 
    }
 
    @Override
-   protected void addToImageMetadata(JSONObject tags) {
+   public void addToImageMetadata(JSONObject tags) {
 
    }
+    
 
 }

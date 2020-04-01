@@ -16,7 +16,7 @@
 //
 package org.micromanager.magellan.internal.magellanacq;
 
-import org.micromanager.acqj.api.ChannelGroupSettings;
+import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
 import org.micromanager.magellan.api.MagellanAcquisitionSettingsAPI;
 import org.micromanager.magellan.internal.channels.MagellanChannelGroupSettings;
 import org.micromanager.magellan.internal.gui.GUI;
@@ -87,9 +87,9 @@ public class MagellanGUIAcquisitionSettings extends MagellanGenericAcquisitionSe
       spaceMode_ = prefs.getInteger(PREF_PREFIX + "SPACEMODE", 0);
       tileOverlap_ = prefs.getDouble(PREF_PREFIX + "TILEOVERLAP", 5);
       //channels
-      channelGroup_ = prefs.getString(PREF_PREFIX + "CHANNELGROUP", "");
+      String channelGroup = prefs.getString(PREF_PREFIX + "CHANNELGROUP", "");
       //This creates a new Object of channelSpecs that is "Owned" by the accquisition
-      channels_ = new MagellanChannelGroupSettings(channelGroup_); 
+      channels_ = new MagellanChannelGroupSettings(channelGroup); 
    }
 
    
@@ -119,7 +119,7 @@ public class MagellanGUIAcquisitionSettings extends MagellanGenericAcquisitionSe
       prefs.putDouble(PREF_PREFIX + "TILEOVERLAP", tileOverlap_);
       prefs.putBoolean(PREF_PREFIX + "ACQORDER", channelsAtEverySlice_);
       //channels
-      prefs.putString(PREF_PREFIX + "CHANNELGROUP", channelGroup_);
+      prefs.putString(PREF_PREFIX + "CHANNELGROUP", channels_.getChannelGroup());
       //Individual channel settings sotred in ChannelUtils
    }
    
@@ -154,7 +154,7 @@ public class MagellanGUIAcquisitionSettings extends MagellanGenericAcquisitionSe
 
    @Override
    public void setChannelGroup(String channelGroup) {
-      channelGroup_ = channelGroup;
+      channels_.updateChannelGroup(channelGroup);
       GUI.getInstance().refreshAcqControlsFromSettings();
    }
 

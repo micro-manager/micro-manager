@@ -20,11 +20,8 @@ package org.micromanager.acqj.internal.acqengj;
  * To change this template, choose Tools | Templates and open the template in
  * the editor.
  */
-import org.micromanager.acqj.api.ImageAcqTuple;
-import org.micromanager.acqj.api.TaggedImageProcessor;
-import org.micromanager.acqj.api.AcqEngineJ;
+import org.micromanager.acqj.api.Acquisition;
 import org.micromanager.acqj.api.AcquisitionEvent;
-import org.micromanager.acqj.api.ChannelSetting;
 import org.micromanager.acqj.api.AcquisitionHook;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -34,16 +31,8 @@ import java.util.concurrent.Executors;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.DoubleVector;
@@ -52,27 +41,17 @@ import mmcorej.StrVector;
 import mmcorej.TaggedImage;
 import org.micromanager.acqj.api.AcqEngMetadata;
 
-public class Engine implements AcqEngineJ {
+public class Engine {
 
-   private static final int IMAGE_QUEUE_SIZE = 10;
    private static final int HARDWARE_ERROR_RETRIES = 6;
    private static final int DELAY_BETWEEN_RETRIES_MS = 5;
    private static CMMCore core_;
    private static Engine singleton_;
    private AcquisitionEvent lastEvent_ = null;
    private final ExecutorService acqExecutor_;
-   private final ThreadPoolExecutor savingAndProcessingExecutor_;
 //   private AcqDurationEstimator acqDurationEstiamtor_; //get information about how much time different hardware moves take
    private LinkedList<AcquisitionEvent> eventQueue_ = new LinkedList<AcquisitionEvent>();
    private ExecutorService eventGeneratorExecutor_;
-   private volatile Future savingProcessingFuture_;
-   private LinkedBlockingDeque<ImageAcqTuple> firstDequeue_
-           = new LinkedBlockingDeque<ImageAcqTuple>(IMAGE_QUEUE_SIZE);
-   private ConcurrentHashMap<TaggedImageProcessor, LinkedBlockingDeque<ImageAcqTuple>> processorOutputQueues_ = new ConcurrentHashMap<TaggedImageProcessor, LinkedBlockingDeque<ImageAcqTuple>>();
-   private CopyOnWriteArrayList<TaggedImageProcessor> imageProcessors_ = new CopyOnWriteArrayList<TaggedImageProcessor>();
-   private CopyOnWriteArrayList<AcquisitionHook> beforeHardwareHooks_ = new CopyOnWriteArrayList<AcquisitionHook>();
-   private CopyOnWriteArrayList<AcquisitionHook> afterHardwareHooks_ = new CopyOnWriteArrayList<AcquisitionHook>();
-   private CopyOnWriteArrayList<AcquisitionHook> afterSaveHooks_ = new CopyOnWriteArrayList<AcquisitionHook>();
 
    public Engine(CMMCore core) {
       singleton_ = this;
@@ -81,10 +60,7 @@ public class Engine implements AcqEngineJ {
       acqExecutor_ = Executors.newSingleThreadExecutor(r -> {
          return new Thread(r, "Acquisition Engine Thread");
       });
-      savingAndProcessingExecutor_ = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(),
-              (Runnable r) -> new Thread(r, "AcqEngine image processing and saving thread"));
       eventGeneratorExecutor_ = Executors.newSingleThreadExecutor((Runnable r) -> new Thread(r, "Acq Eng event generator"));
-      restartSavingAndProcessing();
    }
 
    public static CMMCore getCore() {
@@ -95,88 +71,7 @@ public class Engine implements AcqEngineJ {
       return singleton_;
    }
 
-   private void restartSavingAndProcessing() {
-      if (savingProcessingFuture_ != null) {
-         savingProcessingFuture_.cancel(true);
-      }
-      savingProcessingFuture_ = savingAndProcessingExecutor_.submit(() -> {
-         try {
-            while (true) {
-
-               if (imageProcessors_.isEmpty()) {
-                  ImageAcqTuple imgAcq = firstDequeue_.takeFirst();
-                  TaggedImage img = imgAcq.img_;
-                  AcquisitionBase acq = imgAcq.acq_;
-//                  if (!acq.saveToDisk()) {
-//                     throw new RuntimeException("Must implement an image processor if not saving to disk");
-//                  }
-                  acq.saveImage(img);
-                  for (AcquisitionHook h : afterSaveHooks_) {
-                     h.run(acq, img);
-                  }
-            } else {
-                  LinkedBlockingDeque<ImageAcqTuple> dequeue = processorOutputQueues_.get(imageProcessors_.get(imageProcessors_.size() - 1));
-                  ImageAcqTuple imgAcq = dequeue.takeFirst();
-                  TaggedImage img = imgAcq.img_;
-                  AcquisitionBase acq = imgAcq.acq_;
-//                  if (!acq.saveToDisk()) {
-//                     throw new RuntimeException("Terminal image processor shouldn't send image to otputqueue if saving to "
-//                             + "disk not desired");
-//                  }
-                  acq.saveImage(img);
-                  for (AcquisitionHook h : afterSaveHooks_) {
-                     h.run(acq, img);
-                  }
-               }
-            }
-         } catch (InterruptedException e) {
-            //should only be interrrupted by a call of this funciton which already restarts it
-         } catch (Exception ex) {
-            System.err.println(ex);
-            ex.printStackTrace();
-            restartSavingAndProcessing();
-         } 
-
-      });
-   }
-
-   public void addAcquisitionHook(int type, AcquisitionHook hook) {
-      if (type == BEFORE_HARDWARE_HOOK) {
-         beforeHardwareHooks_.add(hook);
-      } else if (type == AFTER_HARDWARE_HOOK) {
-         afterHardwareHooks_.add(hook);
-      } else if (type == AFTER_SAVE_HOOK) {
-         afterSaveHooks_.add(hook);
-      } else {
-         throw new RuntimeException("Unknown acquisition hook type");
-      }
-   }
-
-   public void clearAcquisitionHooks() {
-      beforeHardwareHooks_.clear();
-      afterHardwareHooks_.clear();
-      afterSaveHooks_.clear();
-   }
-
-   public synchronized void addImageProcessor(TaggedImageProcessor p) {
-      imageProcessors_.add(p);
-      processorOutputQueues_.put(p, new LinkedBlockingDeque<ImageAcqTuple>(IMAGE_QUEUE_SIZE));
-
-      if (imageProcessors_.size() == 1) {
-         p.setDequeues(firstDequeue_, processorOutputQueues_.get(p));
-      } else {
-         p.setDequeues(processorOutputQueues_.get(imageProcessors_.size() - 2),
-                 processorOutputQueues_.get(imageProcessors_.size() - 1));
-      }
-      restartSavingAndProcessing();
-   }
-
-   public void clearImageProcessors() {
-      imageProcessors_.clear();
-      processorOutputQueues_.clear();
-   }
-
-   public Future<Future> finishAcquisition(AcquisitionBase acq) {
+   public Future<Future> finishAcquisition(Acquisition acq) {
       return eventGeneratorExecutor_.submit(() -> {
          Future f = acqExecutor_.submit(() -> {
             try {
@@ -202,7 +97,7 @@ public class Engine implements AcqEngineJ {
     * @param acq the acquisition
     * @return a Future that can be gotten when the event iteration is finished,
     */
-   public Future submitEventIterator(Iterator<AcquisitionEvent> eventIterator, AcquisitionBase acq) {
+   public Future submitEventIterator(Iterator<AcquisitionEvent> eventIterator, Acquisition acq) {
       return eventGeneratorExecutor_.submit(() -> {
 
          while (eventIterator.hasNext()) {
@@ -225,7 +120,8 @@ public class Engine implements AcqEngineJ {
                return;
             } catch (ExecutionException ex) {
                //some problem with acuisition, abort and propagate exception
-               acq.abort();
+               ex.printStackTrace();
+               finishAcquisition(acq);
                throw new RuntimeException(ex);
             }
          }
@@ -293,7 +189,7 @@ public class Engine implements AcqEngineJ {
     * @return
     * @throws InterruptedException
     */
-   private void executeAcquisitionEvent(final AcquisitionEvent event) throws InterruptedException {
+   private void executeAcquisitionEvent(AcquisitionEvent event) throws InterruptedException {
       while (System.currentTimeMillis() < event.getMinimumStartTime()) {
          try {
             Thread.sleep(1);
@@ -304,14 +200,33 @@ public class Engine implements AcqEngineJ {
       }
       if (event.isAcquisitionFinishedEvent()) {
          //signal to finish saving thread and mark acquisition as finished
-         firstDequeue_.putLast(new ImageAcqTuple(new TaggedImage(null, null), event.acquisition_));
+         if (event.acquisition_.isMarkedFinished()) {
+            return; //Duplicate finishing event, possibly from x-ing out viewer
+         }
+         event.acquisition_.markFinished();
+         event.acquisition_.addToOutput(new TaggedImage(null, null));
+         //signal hooks to shutdown
+         for (AcquisitionHook h : event.acquisition_.getBeforeHardwareHooks()) {
+            event = h.run(event);
+            h.close();
+         }
+         for (AcquisitionHook h : event.acquisition_.getAfterHardwareHooks()) {
+            event = h.run(event);
+            h.close();
+         }
       } else {
-         for (AcquisitionHook h : beforeHardwareHooks_) {
-            h.run(event);
+         for (AcquisitionHook h : event.acquisition_.getBeforeHardwareHooks()) {
+            event = h.run(event);
+            if (event == null) {
+               return; //The hook cancelled this event
+            }
          }
          updateHardware(event);
-         for (AcquisitionHook h : afterHardwareHooks_) {
-            h.run(event);
+         for (AcquisitionHook h : event.acquisition_.getAfterHardwareHooks()) {
+            event = h.run(event);
+            if (event == null) {
+               return; //The hook cancelled this event
+            }
          }
          acquireImages(event);
          //pause here while hardware is doing stuff
@@ -338,7 +253,7 @@ public class Engine implements AcqEngineJ {
     */
    private void acquireImages(final AcquisitionEvent event) throws InterruptedException, HardwareControlException {
 
-      double startTime = System.currentTimeMillis();
+//      double startTime = System.currentTimeMillis();
       loopHardwareCommandRetries(new Runnable() {
          @Override
          public void run() {
@@ -360,8 +275,7 @@ public class Engine implements AcqEngineJ {
       for (int i = 0; i < (event.getSequence() == null ? 1 : event.getSequence().size()); i++) {
          double exposure;
          try {
-            exposure = event.acquisition_.getChannels() == null || event.acquisition_.getChannels().getNumChannels() == 0
-                    ? core_.getExposure() : event.acquisition_.getChannels().getChannelSetting(event.getChannelName()).exposure_;
+            exposure = event.getExposure() == null ? core_.getExposure() : core_.getExposure();
          } catch (Exception ex) {
             throw new RuntimeException("Couldnt get exposure form core");
          }
@@ -377,8 +291,7 @@ public class Engine implements AcqEngineJ {
             AcqEngMetadata.addImageMetadata(ti.tags, event, camIndex,
                     currentTime - event.acquisition_.getStartTime_ms(), exposure);
             event.acquisition_.addToImageMetadata(ti.tags);
-            firstDequeue_.putLast(new ImageAcqTuple(ti, event.acquisition_));
-//            System.out.println("dequeue size: " + firstDequeue_.size());
+            event.acquisition_.addToOutput(ti);
          }
 
          //keep track of how long it takes to acquire an image for acquisition duration estimation
@@ -402,14 +315,15 @@ public class Engine implements AcqEngineJ {
             DoubleVector xSequence = new DoubleVector();
             DoubleVector ySequence = new DoubleVector();
             DoubleVector exposureSequence_ms = new DoubleVector();
-            String group = event.getSequence().get(0).acquisition_.getChannels().getChannelSetting(event.getChannelName()).group_;
-            Configuration config = core_.getConfigData(group, event.getSequence().get(0).acquisition_.getChannels().getConfigName(0));
+            String group = event.getSequence().get(0).getChannelGroup();
+            Configuration config = core_.getConfigData(group, event.getSequence().get(0).getChannelConfig());
             LinkedList<StrVector> propSequences = new LinkedList<StrVector>();
             for (AcquisitionEvent e : event.getSequence()) {
                zSequence.add(event.getZPosition());
-               xSequence.add(event.getXY().getCenter().x);
-               ySequence.add(event.getXY().getCenter().y);
-               exposureSequence_ms.add(event.acquisition_.getChannels().getChannelSetting(event.getChannelName()).exposure_);
+               xSequence.add(event.getXPosition());
+               ySequence.add(event.getYPosition());
+               //TODO: what if exposure is null 
+               exposureSequence_ms.add(event.getExposure());
                //et sequences for all channel properties
                for (int i = 0; i < config.size(); i++) {
                   PropertySetting ps = config.getSetting(i);
@@ -419,7 +333,7 @@ public class Engine implements AcqEngineJ {
                      propSequences.add(new StrVector());
                   }
                   Configuration channelPresetConfig = core_.getConfigData(group,
-                          event.acquisition_.getChannels().getChannelSetting(event.getChannelName()).config_);
+                          event.getChannelConfig());
                   String propValue = channelPresetConfig.getSetting(deviceName, propName).getPropertyValue();
                   propSequences.get(i).add(propValue);
                }
@@ -461,8 +375,9 @@ public class Engine implements AcqEngineJ {
             try {
                if (event.isZSequenced()) {
                   core_.startStageSequence(zStage);
-               } else if (lastEvent_ == null || event.getZPosition()
-                       != lastEvent_.getZPosition() || !event.getXY().equals(lastEvent_.getXY())) {
+               } else if (event.getZPosition() != null && 
+                       (lastEvent_ == null || event.getZPosition() 
+                       != lastEvent_.getZPosition())) {
                   //wait for it to not be busy (is this even needed?)   
                   while (core_.deviceBusy(zStage)) {
                      Thread.sleep(1);
@@ -483,21 +398,26 @@ public class Engine implements AcqEngineJ {
 //      acqDurationEstiamtor_.storeZMoveTime(System.currentTimeMillis() - startTime);
 
       /////////////////////////////XY Stage////////////////////////////////////////////////////
-      if (event.getXY() != null) {
+      if (event.getXPosition() != null && event.getYPosition() != null) {
          startTime = System.currentTimeMillis();
          loopHardwareCommandRetries(new Runnable() {
             @Override
             public void run() {
                try {
+                  boolean noCurrentXY = lastEvent_ == null || lastEvent_.getXPosition() == null
+                          || lastEvent_.getYPosition() == null;
+                  boolean currentXY = event.getXPosition() != null && event.getYPosition() != null;
+                  boolean xyChanged = !noCurrentXY && event.getXPosition() != lastEvent_.getXPosition()
+                          && event.getYPosition() != lastEvent_.getYPosition();
                   if (event.isXYSequenced()) {
                      core_.startXYStageSequence(xyStage);
-                  } else if (lastEvent_ == null || !event.getXY().equals(lastEvent_.getXY())) {
+                  } else if ( (noCurrentXY && currentXY) || xyChanged) {
                      //wait for it to not be busy (is this even needed?)   
                      while (core_.deviceBusy(xyStage)) {
                         Thread.sleep(1);
                      }
                      //Move XY
-                     core_.setXYPosition(xyStage, event.getXY().getCenter().x, event.getXY().getCenter().y);
+                     core_.setXYPosition(xyStage, event.getXPosition(), event.getYPosition());
                      //wait for move to finish
                      while (core_.deviceBusy(xyStage)) {
                         Thread.sleep(1);
@@ -520,26 +440,24 @@ public class Engine implements AcqEngineJ {
             try {
                if (event.isChannelSequenced()) {
                   //Channels
-                  String group = event.acquisition_.getChannels().getChannelSetting(event.getChannelName()).group_;
+                  String group = event.getChannelGroup();
                   Configuration config = core_.getConfigData(group,
-                          event.acquisition_.getChannels().getChannelSetting(event.getChannelName()).config_);
+                          event.getChannelConfig());
                   for (int i = 0; i < config.size(); i++) {
                      PropertySetting ps = config.getSetting(i);
                      String deviceName = ps.getDeviceLabel();
                      String propName = ps.getPropertyName();
                      core_.startPropertySequence(deviceName, propName);
                   }
-               } else if (event.acquisition_.getChannels() != null && event.acquisition_.getChannels().getNumChannels() != 0 && (lastEvent_ == null
-                       || event.getChannelName() != null && lastEvent_.getChannelName() != null
-                       && !event.getChannelName().equals(lastEvent_.getChannelName()) && event.acquisition_.getChannels() != null)) {
-                  final ChannelSetting setting = event.acquisition_.getChannels().getChannelSetting(event.getChannelName());
-                  if (setting.use_ && setting.config_ != null) {
+               } else if (event.getChannelGroup() == null  && event.hasChannel() && (lastEvent_ == null
+                       || event.getChannelConfig()!= null && lastEvent_.getChannelConfig() != null
+                       && !event.getChannelConfig().equals(lastEvent_.getChannelConfig()) && event.hasChannel())) {
                      //set exposure
-                     core_.setExposure(setting.exposure_);
+                     core_.setExposure(event.getExposure());
                      //set other channel props
-                     core_.setConfig(setting.group_, setting.config_);
-                     core_.waitForConfig(setting.group_, setting.config_);
-                  }
+                     core_.setConfig(event.getChannelGroup(), event.getChannelConfig());
+                     core_.waitForConfig(event.getChannelGroup(), event.getChannelConfig());
+                  
                }
             } catch (Exception ex) {
                ex.printStackTrace();
@@ -558,11 +476,9 @@ public class Engine implements AcqEngineJ {
             try {
                if (event.isExposureSequenced()) {
                   core_.startExposureSequence(core_.getCameraDevice());
-               } else if (event.acquisition_.getChannels() != null && event.acquisition_.getChannels().getNumChannels() != 0
-                       && (lastEvent_ == null || lastEvent_.acquisition_ != event.acquisition_
-                       || ((lastEvent_.acquisition_.getChannels().getChannelSetting(lastEvent_.getChannelName()).exposure_
-                       != event.acquisition_.getChannels().getChannelSetting(event.getChannelName()).exposure_)))) {
-                  core_.setExposure(event.acquisition_.getChannels().getChannelSetting(event.getChannelName()).exposure_);
+               } else if ((lastEvent_ == null || lastEvent_.getExposure() != 
+                       event.getExposure()) && event.getExposure() != null) {
+                  core_.setExposure(event.getExposure());
                }
             } catch (Exception ex) {
                throw new HardwareControlException(ex.getMessage());
@@ -613,12 +529,10 @@ public class Engine implements AcqEngineJ {
          }
 
          //check all properties in channel
-         if (e1.getChannelName() != null && e2.getChannelName() != null && !e1.getChannelName().equals(e2.getChannelName())) {
+         if (e1.getChannelConfig() != null && e2.getChannelConfig() != null &&
+                 !e1.getChannelConfig().equals(e2.getChannelConfig())) {
             //check all properties in the channel
-            String group = e1.acquisition_.getChannels().getChannelGroup();
-
-            Configuration config1 = core_.getConfigData(group,
-                    e1.acquisition_.getChannels().getChannelSetting(e1.getChannelName()).config_);
+            Configuration config1 = core_.getConfigData(e1.getChannelGroup(), e1.getChannelConfig());
             for (int i = 0; i < config1.size(); i++) {
                PropertySetting ps = config1.getSetting(i);
                String deviceName = ps.getDeviceLabel();
@@ -643,7 +557,7 @@ public class Engine implements AcqEngineJ {
             }
          }
          //xy stage
-         if (!e1.getXY().equals(e2.getXY())) {
+         if (e1.getXPosition() != e2.getYPosition() || e1.getYPosition() != e2.getXPosition()) {
             if (!core_.isXYStageSequenceable(core_.getXYStageDevice())) {
                return false;
             }

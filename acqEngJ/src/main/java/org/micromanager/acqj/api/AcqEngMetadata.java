@@ -42,7 +42,6 @@ public class AcqEngMetadata {
    private static final String CORE_IMAGE_PROCESSOR = "Core-ImageProcessor";
    private static final String CORE_SLM = "Core-SLM";
    private static final String CORE_SHUTTER = "Core-Shutter";
-   private static final String ACQ_TYPE = "AcquisitionType";
    private static final String WIDTH = "Width";
    private static final String HEIGHT = "Height";
    private static final String PIX_SIZE = "PixelSize_um";
@@ -73,10 +72,11 @@ public class AcqEngMetadata {
    private static final String CORE_XYSTAGE = "Core-XYStage";
    private static final String CORE_FOCUS = "Core-Focus";
    private static final String AXES = "AxesPositions";
-//   private static final String CHANNEL_AXIS = "c";
-   public static final String TIME_AXIS = "t";
+   
+   public static final String CHANNEL_AXIS = "channel";
+   public static final String TIME_AXIS = "time";
    public static final String Z_AXIS = "z";
-   public static final String POSITION_AXIS = "p";
+   public static final String POSITION_AXIS = "position";
 
    /**
     * Add the core set of image metadata that should be present in any
@@ -107,7 +107,7 @@ public class AcqEngMetadata {
          AcqEngMetadata.createAxes(tags);
 
          ////////  Channels /////////
-         String channelName = event.getChannelName();
+         String channelName = event.getChannelConfig();
          if (Engine.getCore().getNumberOfCameraChannels() > 1) {
             channelName += "_" + Engine.getCore().getCameraChannelName(camChannelIndex);
          }
@@ -116,19 +116,20 @@ public class AcqEngMetadata {
          AcqEngMetadata.setChannelName(tags, channelName == null ? "" : channelName);
 
          /////////  XY Stage Positions (with optional support for grid layout) ////////
-         if (event.getXY() != null) {
+         if (event.getXPosition() != null && event.getYPosition() != null) {
             //infer Stage position index at acquisition time to support on the fly modification
 //            AcqEngMetadata.setPositionIndex(tags, event.acquisition_.getPositionIndexFromName(event.getXY()));
-            AcqEngMetadata.setStageXIntended(tags, event.getXY().getCenter().x);
-            AcqEngMetadata.setStageYIntended(tags, event.getXY().getCenter().y);
-            AcqEngMetadata.setPositionName(tags, event.getXY().getName());
-            if (event.getXY().isInGrid()) {
-               AcqEngMetadata.setGridRow(tags, event.getXY().getGridRow());
-               AcqEngMetadata.setGridCol(tags, event.getXY().getGridCol());
+            AcqEngMetadata.setStageXIntended(tags, event.getXPosition());
+            AcqEngMetadata.setStageYIntended(tags, event.getYPosition());
+            if (event.getGridRow() != null && event.getGridCol() != null) {
+               AcqEngMetadata.setGridRow(tags, event.getGridRow());
+               AcqEngMetadata.setGridCol(tags, event.getGridCol());
             }
          }
-         AcqEngMetadata.setStageZIntended(tags, event.getZPosition());
-
+         if (event.getZPosition() != null) {
+            AcqEngMetadata.setStageZIntended(tags, event.getZPosition());
+         }
+         
          ////// Generic image coordinate axes //////
          // Position and channel indices are inferred at acquisition time
          //All other axes (including T and Z) must be explicitly defined in the 
@@ -157,9 +158,6 @@ public class AcqEngMetadata {
       AcqEngMetadata.setSavingPrefix(summary, savingName);
 
       AcqEngMetadata.setAcqDate(summary, getCurrentDateAndTime());
-      AcqEngMetadata.setAcqType(summary, acq);
-
-      AcqEngMetadata.setChannelGroup(summary, acq.getChannels() == null ? "" : acq.getChannels().getChannelGroup());
 
       //General information the core-camera
       AcqEngMetadata.setPixelTypeFromByteDepth(summary, (int) Engine.getCore().getBytesPerPixel());
@@ -776,21 +774,6 @@ public class AcqEngMetadata {
          return smd.getDouble(Y_UM);
       } catch (JSONException ex) {
          throw new RuntimeException("Couldnt get stage y");
-
-      }
-   }
-
-   public static void setAcqType(JSONObject smd, AcquisitionInterface acq) {
-      try {
-         if (acq instanceof DynamicSettingsAcquisition) {
-            smd.put(ACQ_TYPE, "DynamicSettingsAcquisition");
-         } else if (acq instanceof FixedSettingsAcquisition) {
-            smd.put(ACQ_TYPE, "FixedSettingsAcquisition");
-         } else {
-            throw new RuntimeException("Unknown acq type");
-         }
-      } catch (JSONException ex) {
-         throw new RuntimeException("Couldnt set stage y");
 
       }
    }

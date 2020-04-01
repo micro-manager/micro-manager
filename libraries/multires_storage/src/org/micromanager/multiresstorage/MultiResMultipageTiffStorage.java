@@ -35,8 +35,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -51,6 +55,11 @@ import org.json.JSONObject;
  *
  */
 public class MultiResMultipageTiffStorage implements StorageAPI {
+
+   public static final String TIME_AXIS = "time";
+   public static final String CHANNEL_AXIS = "channel";
+   public static final String Z_AXIS = "z";
+   public static final String POSITION_AXIS = "position";
 
    private static final String FULL_RES_SUFFIX = "Full resolution";
    private static final String DOWNSAMPLE_SUFFIX = "Downsampled_x";
@@ -120,9 +129,9 @@ public class MultiResMultipageTiffStorage implements StorageAPI {
 
          //TODO: could remove these if they dont have values other than 0,
          //but fine to leave them for time being cause viewer will ignore
-         map.put("t", tIndex);
-         map.put("z", zIndex);
-         map.put("p", pIndex);
+         map.put(TIME_AXIS, tIndex);
+         map.put(Z_AXIS, zIndex);
+         map.put(POSITION_AXIS, pIndex);
          imageAxes_.add(map);
       }
 
@@ -321,6 +330,83 @@ public class MultiResMultipageTiffStorage implements StorageAPI {
    }
 
    /**
+    * Read tile, and try deleting and try deleting slice/frame/pos indices to
+    * find correct tile This is used in the case that certain axes aren't
+    * present for certain images, so we want them to be shown for all values of
+    * the missing axis
+    *
+    * @param dsIndex
+    * @param channel
+    * @param slice
+    * @param frame
+    * @param posIndex
+    * @return
+    */
+   private TaggedImage readImageWithMissingAxes(int dsIndex, int channel, int slice, int frame, int posIndex) {
+      ResolutionLevel storage;
+      if (dsIndex == 0) {
+         storage = fullResStorage_;
+      } else {
+         if (lowResStorages_.get(dsIndex) == null) {
+            return null;
+         }
+         storage = lowResStorages_.get(dsIndex);
+      }
+
+      TaggedImage tile = storage.getImage(channel, slice, frame, posIndex);
+
+      if (tile == null) {
+         tile = storage.getImage(channel, 0, frame, posIndex);
+         if (tile != null && StorageMD.getAxes(tile.tags).containsKey(Z_AXIS)) {
+            tile = null;
+         }
+      }
+      if (tile == null) {
+         tile = storage.getImage(channel, slice, 0, posIndex);
+         if (tile != null && StorageMD.getAxes(tile.tags).containsKey(TIME_AXIS)) {
+            tile = null;
+         }
+      }
+      if (tile == null) {
+         tile = storage.getImage(channel, slice, frame, 0);
+         if (tile != null && StorageMD.getAxes(tile.tags).containsKey(POSITION_AXIS)) {
+            tile = null;
+         }
+      }
+      if (tile == null) {
+         tile = storage.getImage(channel, 0, 0, posIndex);
+         if (tile != null && (StorageMD.getAxes(tile.tags).containsKey(Z_AXIS)
+                 || StorageMD.getAxes(tile.tags).containsKey(TIME_AXIS))) {
+            tile = null;
+         }
+      }
+      if (tile == null) {
+         tile = storage.getImage(channel, 0, frame, 0);
+         if (tile != null && (StorageMD.getAxes(tile.tags).containsKey(Z_AXIS)
+                 || StorageMD.getAxes(tile.tags).containsKey(POSITION_AXIS))) {
+            tile = null;
+         }
+      }
+      if (tile == null) {
+         tile = storage.getImage(channel, slice, 0, 0);
+         if (tile != null && (StorageMD.getAxes(tile.tags).containsKey(POSITION_AXIS)
+                 || StorageMD.getAxes(tile.tags).containsKey(TIME_AXIS))) {
+            tile = null;
+         }
+      }
+      if (tile == null) {
+         if (tile != null && (StorageMD.getAxes(tile.tags).containsKey(Z_AXIS)
+                 || StorageMD.getAxes(tile.tags).containsKey(TIME_AXIS)
+                 || StorageMD.getAxes(tile.tags).containsKey(POSITION_AXIS))) {
+            tile = null;
+         }
+         tile = storage.getImage(channel, 0, 0, 0);
+      }
+
+      return tile;
+   }
+
+   /**
     * Return a subimage of the larger stitched image at the appropriate zoom
     * level, loading only the tiles neccesary to form the subimage
     *
@@ -339,9 +425,10 @@ public class MultiResMultipageTiffStorage implements StorageAPI {
    public TaggedImage getStitchedImage(HashMap<String, Integer> axes,
            int dsIndex, int x, int y, int width, int height) {
 
-      int frame = axes.containsKey("t") ? axes.get("t") : 0;
-      int slice = axes.containsKey("z") ? axes.get("z") : 0;
-      int channel = superChannelNames_.get(getSuperChannelName(axes));
+      int frame = axes.containsKey(TIME_AXIS) ? axes.get(TIME_AXIS) : 0;
+      int slice = axes.containsKey(Z_AXIS) ? axes.get(Z_AXIS) : 0;
+      String superChannelName = getSuperChannelName(axes, false);
+      int channel = superChannelNames_.get(superChannelName);
 
       Object pixels;
       if (rgb_) {
@@ -388,18 +475,18 @@ public class MultiResMultipageTiffStorage implements StorageAPI {
          int yOffset = 0;
          for (long row = rowStart; row < rowStart + lineHeights.size(); row++) {
             TaggedImage tile = null;
+            int posIndex;
             if (dsIndex == 0) {
-               int posIndex;
                if (posManager_ == null) {
                   posIndex = axes.containsKey("p") ? axes.get("p") : 0;
                } else {
                   posIndex = posManager_.getPositionIndexFromTilePosition(dsIndex, row, col);
                }
-               tile = fullResStorage_.getImage(channel, slice, frame, posIndex);
             } else {
-               tile = lowResStorages_.get(dsIndex) == null ? null
-                       : lowResStorages_.get(dsIndex).getImage(channel, slice, frame, posManager_.getPositionIndexFromTilePosition(dsIndex, row, col));
+               posIndex = posManager_.getPositionIndexFromTilePosition(dsIndex, row, col);
             }
+            tile = readImageWithMissingAxes(dsIndex, channel, slice, frame, posIndex);
+
             if (tile == null) {
                yOffset += lineHeights.get((int) (row - rowStart)); //increment y offset so new tiles appear in correct position
                continue; //If no data present for this tile go on to next one
@@ -452,6 +539,7 @@ public class MultiResMultipageTiffStorage implements StorageAPI {
          }
          xOffset += lineWidths.get((int) (col - colStart));
       }
+
       return new TaggedImage(pixels, topLeftMD);
    }
 
@@ -691,16 +779,16 @@ public class MultiResMultipageTiffStorage implements StorageAPI {
       }
    }
 
-   private String getSuperChannelName(HashMap<String, Integer> axes) {
+   private String getSuperChannelName(HashMap<String, Integer> axes, boolean addNew) {
       HashMap<String, Integer> axesCopy = new HashMap<String, Integer>(axes);
       //the storage is specced for T C Z P, so remove PZT and combine
       //C with any other axes into a sueprchannel
-      axesCopy.remove("p");
-      axesCopy.remove("z");
-      axesCopy.remove("t");
+      axesCopy.remove(POSITION_AXIS);
+      axesCopy.remove(Z_AXIS);
+      axesCopy.remove(TIME_AXIS);
       //if doesn't contain explicit channel index, default to 0
-      if (!axesCopy.containsKey("c")) {
-         axesCopy.put("c", 0);
+      if (!axesCopy.containsKey(CHANNEL_AXIS)) {
+         axesCopy.put(CHANNEL_AXIS, 0);
       }
 
       //Convert all other remaining axes into a superchannel
@@ -710,11 +798,34 @@ public class MultiResMultipageTiffStorage implements StorageAPI {
          superChannel += "Axis_" + s + "_" + axesCopy.get(s);
       }
       //get index of superchannel
-      if (!superChannelNames_.keySet().contains(superChannel)) {
-         int superChannelIndex = superChannelNames_.size();
-         superChannelNames_.put(superChannel, superChannelIndex);
+
+      if (!addNew) {
+         if (superChannelNames_.contains(superChannel)) {
+            return superChannel;
+         }
+         //If all the axes in the per channel match the one requested, but
+         //there are also additional ones requested, count it as a match
+         for (String scName : superChannelNames_.keySet()) {
+            boolean matchesAll = true;
+            for (String axis : axesCopy.keySet()) {
+               if (scName.contains("Axis_" + axis) && 
+                       !scName.contains("Axis_" + axis + "_" + axesCopy.get(axis))) {
+                  matchesAll = false;
+               }
+            }
+            if (matchesAll) {
+               return scName;
+            }
+         } 
+         System.err.println("Couldn't find super channel index");
+       return null;
+      } else {
+         if (!superChannelNames_.keySet().contains(superChannel) && addNew) {
+            int superChannelIndex = superChannelNames_.size();
+            superChannelNames_.put(superChannel, superChannelIndex);
+         }
+         return superChannel;
       }
-      return superChannel;
    }
 
    /**
@@ -728,12 +839,12 @@ public class MultiResMultipageTiffStorage implements StorageAPI {
          List<Future> writeFinishedList = new ArrayList<Future>();
          imageAxes_.add(axes);
 
-         int pIndex = axes.containsKey("p") ? axes.get("p") : 0;
-         int tIndex = axes.containsKey("t") ? axes.get("t") : 0;
-         int zIndex = axes.containsKey("z") ? axes.get("z") : 0;
+         int pIndex = axes.containsKey(POSITION_AXIS) ? axes.get(POSITION_AXIS) : 0;
+         int tIndex = axes.containsKey(TIME_AXIS) ? axes.get(TIME_AXIS) : 0;
+         int zIndex = axes.containsKey(Z_AXIS) ? axes.get(Z_AXIS) : 0;
          //This call merges all other axes besides p z t into a superchannel,
          //Creating a new one if neccessary
-         String superChannelName = getSuperChannelName(axes);
+         String superChannelName = getSuperChannelName(axes, true);
          //set the name because it will be needed in recovery
 
          StorageMD.setSuperChannelName(ti.tags, superChannelName);
@@ -780,15 +891,15 @@ public class MultiResMultipageTiffStorage implements StorageAPI {
                throw new RuntimeException("axes must contain a position index entry with \"p\" as key");
             }
          }
-         int pIndex= axes.containsKey("p") ? axes.get("p") : 0;
+         int pIndex = axes.containsKey("p") ? axes.get("p") : 0;
 
          imageAxes_.add(axes);
 
-         int tIndex = axes.containsKey("t") ? axes.get("t") : 0;
-         int zIndex = axes.containsKey("z") ? axes.get("z") : 0;
+         int tIndex = axes.containsKey(TIME_AXIS) ? axes.get(TIME_AXIS) : 0;
+         int zIndex = axes.containsKey(Z_AXIS) ? axes.get(Z_AXIS) : 0;
          //This call merges all other axes besides p z t into a superchannel,
          //Creating a new one if neccessary
-         String superChannelName = getSuperChannelName(axes);
+         String superChannelName = getSuperChannelName(axes, true);
          //set the name because it will be needed in recovery
 
          StorageMD.setSuperChannelName(ti.tags, superChannelName);
@@ -828,10 +939,11 @@ public class MultiResMultipageTiffStorage implements StorageAPI {
    public TaggedImage getImage(HashMap<String, Integer> axes) {
       //Convert axes to the 4 axes used by underlying storage by adding in
       //p z t as needed and converting c + remaining to superchannel
-      int frame = axes.containsKey("t") ? axes.get("t") : 0;
-      int slice = axes.containsKey("z") ? axes.get("z") : 0;
-      int position = axes.containsKey("p") ? axes.get("p") : 0;
-      int superChannel = superChannelNames_.get(getSuperChannelName(axes));
+      axes = (HashMap<String, Integer>) axes.clone();
+      int frame = axes.containsKey(TIME_AXIS) ? axes.get(TIME_AXIS) : 0;
+      int slice = axes.containsKey(Z_AXIS) ? axes.get(Z_AXIS) : 0;
+      int position = axes.containsKey(POSITION_AXIS) ? axes.get(POSITION_AXIS) : 0;
+      int superChannel = superChannelNames_.get(getSuperChannelName(axes, false));
       //return a single tile from the full res image
       return fullResStorage_.getImage(superChannel, slice, frame, position);
    }

@@ -1,5 +1,6 @@
 package org.micromanager.acqj.api.mda;
 
+import org.micromanager.acqj.api.FixedSettingsAcquisition;
 import org.micromanager.acqj.api.DataSink;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -7,10 +8,8 @@ import java.util.List;
 import java.util.function.Function;
 import org.json.JSONObject;
 import org.micromanager.acqj.api.AcqEngMetadata;
-import org.micromanager.acqj.api.AcqEventModules;
 import org.micromanager.acqj.api.AcquisitionEvent;
-import org.micromanager.acqj.api.AcquisitionEventIterator;
-import org.micromanager.acqj.api.FixedSettingsAcquisition;
+import org.micromanager.acqj.internal.acqengj.AcquisitionEventIterator;
 
 /**
  * Class for the standardize Multi-D acquisition in micro-manager
@@ -21,9 +20,11 @@ import org.micromanager.acqj.api.FixedSettingsAcquisition;
  */
 public class MultiDAcquisition extends FixedSettingsAcquisition {
 
+   private MultiDAcqSettings settings_;
    
    public MultiDAcquisition( MultiDAcqSettings settings, DataSink sink) {
-      super(settings, sink);
+      super(settings.dir_, settings.name_, sink);
+      settings_ = settings;
    }
 
    @Override
@@ -46,7 +47,7 @@ public class MultiDAcquisition extends FixedSettingsAcquisition {
    }
 
    @Override
-   protected void addToSummaryMetadata(JSONObject summaryMetadata) {
+   public void addToSummaryMetadata(JSONObject summaryMetadata) {
       MultiDAcqSettings settings = (MultiDAcqSettings) settings_;
 
       AcqEngMetadata.setZStepUm(summaryMetadata, settings.zStep_);
@@ -56,7 +57,7 @@ public class MultiDAcquisition extends FixedSettingsAcquisition {
    }
 
    @Override
-   protected void addToImageMetadata(JSONObject tags) {
+   public void addToImageMetadata(JSONObject tags) {
       //TODO: what else is needed?
    }
 

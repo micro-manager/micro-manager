@@ -17,15 +17,12 @@
 package org.micromanager.acqj.api;
 
 import java.awt.geom.Point2D;
-import org.micromanager.acqj.internal.acqengj.AcquisitionBase;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -41,19 +38,21 @@ public class AcquisitionEvent {
       AcqusitionSequenceEnd
    };
 
-   public AcquisitionBase acquisition_;
+   public Acquisition acquisition_;
 
    //For encoded time, z indices (or other generic axes)
    //XY position and channel indices should not be encoded because acq engine
    //will dynamically infer them at runtime
    private HashMap<String, Integer> axisPositions_ = new HashMap<String, Integer>();
 
-   private String channelName_ = null;
+   private String channelGroup_, channelConfig_ = null;
+   private Double exposure_ = null; //leave null to keep exposaure unchanged
+
    private long miniumumStartTime_; //For pausing between time points
 
    //positions for devices that are generically hardcoded into MMCore
-   private Double zPosition_ = null;
-   private XYStagePosition xyPosition_ = null;
+   private Double zPosition_ = null, xPosition_ = null, yPosition_ = null;
+   private Integer gridRow_ = null, gridCol_ = null;
    //TODO: SLM, Galvo, etc
 
    //Arbitary additional properties
@@ -66,8 +65,8 @@ public class AcquisitionEvent {
    //To specify end of acquisition or end of sequence
    private SpecialFlag specialFlag_;
 
-   public AcquisitionEvent(AcquisitionBase acq) {
-      acquisition_ = acq;
+   public AcquisitionEvent(AcquisitionInterface acq) {
+      acquisition_ = (Acquisition) acq;
       miniumumStartTime_ = 0;
    }
 
@@ -83,27 +82,33 @@ public class AcquisitionEvent {
       sequence_ = new ArrayList<>();
       sequence_.addAll(sequence);
       TreeSet<Double> zPosSet = new TreeSet<Double>();
-      HashSet<XYStagePosition> xyPosSet = new HashSet<XYStagePosition>();
+      HashSet<Double> xPosSet = new HashSet<Double>();
+      HashSet<Double> yPosSet = new HashSet<Double>();
       TreeSet<Double> exposureSet = new TreeSet<Double>();
       TreeSet<String> configSet = new TreeSet<String>();
       for (int i = 0; i < sequence_.size(); i++) {
          zPosSet.add(sequence_.get(i).zPosition_);
-         xyPosSet.add(sequence_.get(i).xyPosition_);
-         exposureSet.add(sequence_.get(i).acquisition_.getChannels().getChannelSetting(sequence.get(0).channelName_).exposure_);
-         configSet.add(sequence_.get(i).acquisition_.getChannels().getChannelSetting(sequence.get(0).channelName_).config_);
+         xPosSet.add(sequence_.get(i).getXPosition());
+         yPosSet.add(sequence_.get(i).getYPosition());
+         exposureSet.add(sequence_.get(i).getExposure());
+         configSet.add(sequence_.get(i).getChannelConfig());
       }
       exposureSequenced_ = exposureSet.size() > 1;
       channelSequenced_ = configSet.size() > 1;
-      xySequenced_ = xyPosSet.size() > 1;
+      xySequenced_ = xPosSet.size() > 1 && yPosSet.size() > 1;
       zSequenced_ = zPosSet.size() > 1;
    }
 
    public AcquisitionEvent copy() {
       AcquisitionEvent e = new AcquisitionEvent(this.acquisition_);
       e.axisPositions_ = (HashMap<String, Integer>) axisPositions_.clone();
-      e.channelName_ = channelName_;
+      e.channelConfig_ = channelConfig_;
+      e.channelGroup_ = channelConfig_;
       e.zPosition_ = zPosition_;
-      e.xyPosition_ = xyPosition_;
+      e.xPosition_ = xPosition_;
+      e.yPosition_ = yPosition_;
+      e.gridRow_ = gridRow_;
+      e.gridCol_ = gridCol_;
       e.miniumumStartTime_ = miniumumStartTime_;
       return e;
    }
@@ -111,8 +116,23 @@ public class AcquisitionEvent {
    public JSONObject toJSON() {
       try {
          JSONObject json = new JSONObject();
-         if (channelName_ != null) {
-            json.put("channel", channelName_);
+         if (this.isAcquisitionFinishedEvent()) {
+            json.put("special", "acquisition-end");
+            return json;
+         } else if (this.isAcquisitionSequenceEndEvent()) {
+            json.put("special", "sequence-end");
+            return json;
+         }
+
+         if (hasChannel()) {
+            JSONObject channel = new JSONObject();
+            channel.put("group", channelGroup_);
+            channel.put("config", channelConfig_);
+            json.put("channel", channel);
+         }
+
+         if (exposure_ != null) {
+            json.put("exposure", exposure_);
          }
 
          //Coordinate indices
@@ -127,12 +147,20 @@ public class AcquisitionEvent {
          if (zPosition_ != null) {
             json.put("z", zPosition_);
          }
-         if (xyPosition_ != null) {
-            json.put("x", xyPosition_.getCenter().x);
-            json.put("y", xyPosition_.getCenter().y);
+         if (xPosition_ != null) {
+            json.put("x", xPosition_);
          }
-         //TODO: SLM, galvo, etc
+         if (yPosition_ != null) {
+            json.put("y", yPosition_);
+         }
+         if (gridRow_ != null) {
+            json.put("row", gridRow_);
+         }
+         if (gridCol_ != null) {
+            json.put("col", gridCol_);
+         }
 
+         //TODO: SLM, galvo, etc
          //Arbitrary extra properties
          JSONArray props = new JSONArray();
          for (Triplet t : properties_) {
@@ -146,12 +174,12 @@ public class AcquisitionEvent {
       }
    }
 
-   public static AcquisitionEvent fromJSON(JSONObject json, AcquisitionBase acq) {
+   public static AcquisitionEvent fromJSON(JSONObject json, AcquisitionInterface acq) {
       try {
          if (json.has("special")) {
             if (json.getString("special").equals("acquisition-end")) {
                return AcquisitionEvent.createAcquisitionFinishedEvent(acq);
-            } else if (json.getString("special").equals("sequence-end")) { 
+            } else if (json.getString("special").equals("sequence-end")) {
                return AcquisitionEvent.createAcquisitionSequenceEndEvent(acq);
             }
          }
@@ -172,17 +200,28 @@ public class AcquisitionEvent {
 
          //channel name
          if (json.has("channel")) {
-            event.channelName_ = json.getString("channel");
+            event.channelConfig_ = json.getJSONObject("channel").getString("config");
+            event.channelGroup_ = json.getJSONObject("channel").getString("group");
+         }
+         if (json.has("exposure")) {
+            event.exposure_ = json.getDouble("exposure");
          }
 
          //Things for which a generic device type exists in MMCore
          if (json.has("z")) {
             event.zPosition_ = json.getDouble("z");
          }
-         if (json.has("x") && json.has("y")) {
-            double x = json.getDouble("x");
-            double y = json.getDouble("y");
-            event.xyPosition_ = new XYStagePosition(new Point2D.Double(x, y));
+         if (json.has("x")) {
+            event.xPosition_ = json.getDouble("x");
+         }
+         if (json.has("y")) {
+            event.yPosition_ = json.getDouble("y");
+         }
+         if (json.has("row")) {
+            event.gridRow_ = json.getInt("row");
+         }
+         if (json.has("col")) {
+            event.gridCol_ = json.getInt("col");
          }
          //TODO: SLM, galvo, etc
 
@@ -201,12 +240,28 @@ public class AcquisitionEvent {
       }
    }
 
-   public void setChannelName(String c) {
-      channelName_ = c;
+   public boolean hasChannel() {
+      return  channelConfig_ != null && channelConfig_ != null;
    }
 
-   public void setXY(XYStagePosition xy) {
-      xyPosition_ = xy;
+   public String getChannelConfig() {
+      return channelConfig_;
+   }
+
+   public String getChannelGroup() {
+      return channelGroup_;
+   }
+   
+   public void setChannelConfig(String config) {
+      channelConfig_ = config;
+   }
+
+   public void setChannelGroup(String group) {
+      channelGroup_ = group;
+   }
+
+   public Double getExposure() {
+      return exposure_;
    }
 
    public void setMinimumStartTime(long l) {
@@ -242,7 +297,7 @@ public class AcquisitionEvent {
       return getAxisPosition(AcqEngMetadata.Z_AXIS);
    }
 
-   public static AcquisitionEvent createAcquisitionFinishedEvent(AcquisitionBase acq) {
+   public static AcquisitionEvent createAcquisitionFinishedEvent(AcquisitionInterface acq) {
       AcquisitionEvent evt = new AcquisitionEvent(acq);
       evt.specialFlag_ = SpecialFlag.AcqusitionFinished;
       return evt;
@@ -252,7 +307,7 @@ public class AcquisitionEvent {
       return specialFlag_ == SpecialFlag.AcqusitionFinished;
    }
 
-   public static AcquisitionEvent createAcquisitionSequenceEndEvent(AcquisitionBase acq) {
+   public static AcquisitionEvent createAcquisitionSequenceEndEvent(AcquisitionInterface acq) {
       AcquisitionEvent evt = new AcquisitionEvent(acq);
       evt.specialFlag_ = SpecialFlag.AcqusitionSequenceEnd;
       return evt;
@@ -264,17 +319,6 @@ public class AcquisitionEvent {
 
    public Double getZPosition() {
       return zPosition_;
-   }
-
-   public String getChannelName() {
-      if (channelName_ == null) {
-         return "";
-      }
-      return channelName_;
-   }
-
-   public XYStagePosition getXY() {
-      return xyPosition_;
    }
 
    public long getMinimumStartTime() {
@@ -301,6 +345,38 @@ public class AcquisitionEvent {
       return zSequenced_;
    }
 
+   public Double getXPosition() {
+      return xPosition_;
+   }
+
+   public Double getYPosition() {
+      return yPosition_;
+   }
+
+   public Integer getGridRow() {
+      return gridRow_;
+   }
+   
+   public Integer getGridCol() {
+      return gridCol_;
+   }
+   
+   public void setX(double x) {
+      xPosition_ = x;
+   }
+
+   public void setY(double y) {
+      yPosition_ = y;
+   }
+
+   public void setGridRow(Integer gridRow) {
+      gridRow_ = gridRow;
+   }
+
+   public void setGridCol(Integer gridCol) {
+      gridCol_ = gridCol;
+   }
+
    //For debugging
    @Override
    public String toString() {
@@ -311,10 +387,22 @@ public class AcquisitionEvent {
       }
 
       StringBuilder builder = new StringBuilder();
-      builder.append("Channel: " + channelName_);
-      if (xyPosition_ != null) {
-         builder.append("\tXY: " + xyPosition_.getCenter());
+      if (zPosition_ != null) {
+         builder.append("z " + zPosition_);
       }
+      if (xPosition_ != null) {
+         builder.append("x " + xPosition_);
+      }
+      if (yPosition_ != null) {
+         builder.append("y  " + yPosition_);
+      }
+      if (gridRow_ != null) {
+         builder.append("row  " + gridRow_);
+      }
+      if (gridCol_ != null) {
+         builder.append("col   " + gridCol_);
+      }
+
       for (String axis : axisPositions_.keySet()) {
          builder.append("\t" + axis + ": " + axisPositions_.get(axis));
       }

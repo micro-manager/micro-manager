@@ -39,7 +39,7 @@ import org.apache.commons.math3.geometry.euclidean.twod.hull.ConvexHull2D;
 import org.apache.commons.math3.geometry.euclidean.twod.hull.MonotoneChain;
 import org.apache.commons.math3.geometry.partitioning.Region;
 import org.apache.commons.math3.geometry.partitioning.RegionFactory;
-import org.micromanager.acqj.api.XYStagePosition;
+import org.micromanager.acqj.internal.acqengj.XYStagePosition;
 import org.micromanager.acqj.internal.acqengj.affineTransformUtils;
 
 /**

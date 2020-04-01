@@ -16,7 +16,7 @@
 //
 package org.micromanager.magellan.internal.magellanacq;
 
-import org.micromanager.acqj.api.ChannelGroupSettings;
+import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
 import org.micromanager.magellan.internal.channels.MagellanChannelGroupSettings;
 import org.micromanager.magellan.internal.misc.GlobalSettings;
 

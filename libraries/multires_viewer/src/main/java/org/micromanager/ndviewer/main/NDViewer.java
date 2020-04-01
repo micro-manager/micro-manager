@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 import java.util.prefs.Preferences;
@@ -72,14 +73,13 @@ public class NDViewer implements ViewerInterface {
    private ViewerAcquisitionInterface acq_;
    private JSONObject summaryMetadata_;
    private volatile boolean closed_ = false;
+   private ConcurrentHashMap<Integer, String> channelIndices_ = new ConcurrentHashMap<Integer, String>();
 
    private Function<JSONObject, Long> readTimeFunction_ = null;
    private Function<JSONObject, Double> readZFunction_ = null;
 
    private double pixelSizeUm_;
    private volatile JSONObject currentMetadata_;
-
-   private CopyOnWriteArrayList<String> channelNames_ = new CopyOnWriteArrayList<String>();
 
    private OverlayerPlugin overlayerPlugin_;
 
@@ -110,6 +110,10 @@ public class NDViewer implements ViewerInterface {
 
    public void setChannelDisplaySettings(String channel, Color c, int bitDepth) {
       displaySettings_.setBitDepth(channel, bitDepth);
+      displaySettings_.setColor(channel, c);
+   }
+
+   public void setChannelColor(String channel, Color c) {
       displaySettings_.setColor(channel, c);
    }
 
@@ -250,10 +254,10 @@ public class NDViewer implements ViewerInterface {
 
    public void initializeViewerToLoaded(List<String> channelNames, JSONObject dispSettings,
            HashMap<String, Integer> axisMins, HashMap<String, Integer> axisMaxs) {
-      
+
       displaySettings_ = new DisplaySettings(dispSettings);
       for (int c = 0; c < channelNames.size(); c++) {
-         channelNames_.add(channelNames.get(c));
+         channelIndices_.put(c, channelNames.get(c));
          displayWindow_.addContrastControls(channelNames.get(c));
       }
       //maximum scrollbar extents
@@ -269,7 +273,7 @@ public class NDViewer implements ViewerInterface {
             viewCoords_.setActiveChannel(channelName);
 
             //only one channel can be active so inacivate others
-            for (String channel : channelNames_) {
+            for (String channel : channelIndices_.values()) {
                displaySettings_.setActive(channel, channel.equals(viewCoords_.getActiveChannel()));
             }
          } else {
@@ -285,7 +289,9 @@ public class NDViewer implements ViewerInterface {
    }
 
    public void setWindowTitle(String s) {
-      displayWindow_.setTitle(s);
+      if (displayWindow_ != null) {
+         displayWindow_.setTitle(s);
+      }
    }
 
    /**
@@ -302,8 +308,8 @@ public class NDViewer implements ViewerInterface {
       }
 
       boolean newChannel = false;
-      if (!channelNames_.contains(channelName)) {
-         channelNames_.add(channelName);
+      if (!channelIndices_.containsValue(channelName)) {
+         channelIndices_.put(axesPositions.get("channel"), channelName);
          newChannel = true;
       }
 
@@ -323,24 +329,20 @@ public class NDViewer implements ViewerInterface {
 //      setImageEvent(axesPositions, false);
    }
 
-   public void setChannel(String c) {
-      setImageEvent(null, c, true);
-   }
-
    public void setAxisPosition(String axis, int position) {
       HashMap<String, Integer> axes = new HashMap<String, Integer>();
       axes.put(axis, position);
-      if (axis.equals("c")) {
-         viewCoords_.setActiveChannel(channelNames_.get(position));
+      if (axis.equals("channel")) {
+         viewCoords_.setActiveChannel(channelIndices_.get(position));
       }
-      setImageEvent(axes, viewCoords_.getActiveChannel(), true);
+      setImageEvent(axes, true);
    }
 
    /**
     * Called when scrollbars move
     */
-   public void setImageEvent(HashMap<String, Integer> axes, String channel, boolean fromHuman) {
-      if (axes != null) {
+   public void setImageEvent(HashMap<String, Integer> axes, boolean fromHuman) {
+      if (axes != null && displayWindow_ != null) {
          for (String axis : axes.keySet()) {
             if (!displayWindow_.isScrollerAxisLocked(axis) || fromHuman) {
                viewCoords_.setAxisPosition(axis, axes.get(axis));
@@ -348,11 +350,11 @@ public class NDViewer implements ViewerInterface {
          }
       }
       //Set channel
-      viewCoords_.setActiveChannel(channel);
+      viewCoords_.setActiveChannel(channelIndices_.get(axes.get("channel")));
       //Update other channels if in single channel view mode
       if (!displaySettings_.isCompositeMode()) {
          //set all channels inactive except current one
-         for (String c : channelNames_) {
+         for (String c : channelIndices_.values()) {
             displaySettings_.setActive(c, c.equals(viewCoords_.getActiveChannel()));
             displayWindow_.displaySettingsChanged();
          }
@@ -485,12 +487,12 @@ public class NDViewer implements ViewerInterface {
       displaySettings_.setCompositeMode(selected);
       //select all channels if composite mode is being turned on
       if (selected) {
-         for (String channel : channelNames_) {
+         for (String channel : channelIndices_.values()) {
             displaySettings_.setActive(channel, true);
             displayWindow_.displaySettingsChanged();
          }
       } else {
-         for (String channel : channelNames_) {
+         for (String channel : channelIndices_.values()) {
             displaySettings_.setActive(channel, viewCoords_.getActiveChannel().equals(channel));
             displayWindow_.displaySettingsChanged();
          }
@@ -507,7 +509,7 @@ public class NDViewer implements ViewerInterface {
    }
 
    public Iterable<String> getChannels() {
-      return channelNames_;
+      return channelIndices_.values();
    }
 
    public JPanel getCanvasJPanel() {
@@ -534,12 +536,8 @@ public class NDViewer implements ViewerInterface {
       viewCoords_.setViewOffset(newX, newY);
    }
 
-   public int getChannelIndex(String c) {
-      return channelNames_.indexOf(c);
-   }
-
    public String getChannelName(int position) {
-      return channelNames_.get(position);
+      return channelIndices_.get(position);
    }
 
    public void showTimeLabel(boolean selected) {
@@ -599,6 +597,15 @@ public class NDViewer implements ViewerInterface {
       displayWindow_.addControlPanel(panel);
    }
 
+   public Integer getChannelIndex(String channel) {
+      for (Integer i : channelIndices_.keySet()) {
+         if (channelIndices_.get(i).equals(channel)) {
+            return i;
+         }
+      }
+      throw new RuntimeException("channel not found");
+   }
+
    /**
     * A coalescent runnable to avoid excessively frequent update of the data
     * coords range in the UI
@@ -632,8 +639,7 @@ public class NDViewer implements ViewerInterface {
          if (displayWindow_ != null) {
             displayWindow_.expandDisplayedRangeToInclude(newIamgeEvents, activeChannels);
          }
-         setImageEvent(newIamgeEvents.get(newIamgeEvents.size() - 1),
-                 activeChannels.get(activeChannels.size() - 1), false);
+         setImageEvent(newIamgeEvents.get(newIamgeEvents.size() - 1), false);
          newIamgeEvents.clear();
       }
    }
@@ -671,8 +677,16 @@ public class NDViewer implements ViewerInterface {
    public void close() {
       try {
          if (acq_ != null) {
-            acq_.abort(); //it may already be aborted but call this again to be sure
-            acq_.close();
+            //Finish acquisition on different thread to not slow EDT
+            ViewerAcquisitionInterface a = acq_;
+            new Thread(new Runnable() {
+               @Override
+               public void run() {
+                  a.abort(); //it may already be aborted but call this again to be sure
+                  a.close();
+               }
+            }, "NDViewer Acquisition closing thread").start();
+
          }
       } catch (Exception e) {
          //not ,uch to do at this point

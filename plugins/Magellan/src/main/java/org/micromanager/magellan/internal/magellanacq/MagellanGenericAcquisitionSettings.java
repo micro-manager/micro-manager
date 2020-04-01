@@ -5,7 +5,7 @@
  */
 package org.micromanager.magellan.internal.magellanacq;
 
-import org.micromanager.acqj.api.ChannelGroupSettings;
+import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
 import org.micromanager.acqj.internal.acqengj.MinimalAcquisitionSettings;
 import org.micromanager.magellan.internal.gui.GUI;
 
@@ -23,7 +23,7 @@ public abstract class MagellanGenericAcquisitionSettings extends MinimalAcquisit
 
    public MagellanGenericAcquisitionSettings(String dir, String name, String cGroup, ChannelGroupSettings channels, 
            double zStep, double tileOverlap, boolean channelsAtEverySlice) {
-      super(dir, name, cGroup, channels);
+      super(dir, name, channels);
       zStep_ = zStep;
       tileOverlap_ = tileOverlap;
       channelsAtEverySlice_ = channelsAtEverySlice;

@@ -13,9 +13,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.acqj.api.AcqEngMetadata;
-import org.micromanager.acqj.api.ImageAcqTuple;
 import org.micromanager.acqj.api.TaggedImageProcessor;
-import org.micromanager.acqj.internal.acqengj.AcquisitionBase;
 import org.micromanager.internal.zmq.ZMQPullSocket;
 import org.micromanager.internal.zmq.ZMQPushSocket;
 import org.micromanager.internal.zmq.ZMQUtil;
@@ -27,9 +25,8 @@ import org.micromanager.internal.zmq.ZMQUtil;
 public class RemoteImageProcessor implements TaggedImageProcessor {
 
    private ExecutorService pushExecutor_, pullExecutor_;
-   private volatile AcquisitionBase acq_;
 
-   volatile LinkedBlockingDeque<ImageAcqTuple> source_, sink_;
+   volatile LinkedBlockingDeque<TaggedImage> source_, sink_;
 
    ZMQPushSocket<TaggedImage> pushSocket_;
    ZMQPullSocket<TaggedImage> pullSocket_;
@@ -41,54 +38,41 @@ public class RemoteImageProcessor implements TaggedImageProcessor {
          public JSONObject apply(TaggedImage t) {
             try {
                JSONObject json = new JSONObject();
-               json.put("metadata", t.tags);
-               json.put("pixels", ZMQUtil.toJSON(t.pix));
+               if (t.tags == null && t.pix == null) {
+                  json.put("special", "finished");
+               } else {
+                  json.put("metadata", t.tags);
+                  json.put("pixels", ZMQUtil.toJSON(t.pix));
+               }
                return json;
             } catch (JSONException ex) {
                throw new RuntimeException(ex);
             }
          }
       });
+
       pullSocket_ = new ZMQPullSocket<TaggedImage>(
               new Function<JSONObject, TaggedImage>() {
          @Override
          public TaggedImage apply(JSONObject t) {
             try {
-               JSONObject tags = t.getJSONObject("metadata");
-               Object pix = ZMQUtil.decodeArray(t.getString("pixels"),
-                       AcqEngMetadata.getBytesPerPixel(tags) == 1 ? byte[].class : short[].class);
-               return new TaggedImage(pix, tags);
+               if (t.has("special") && t.getString("special").equals("finished")) {
+                  return new TaggedImage(null, null);
+               } else {
+                  JSONObject tags = t.getJSONObject("metadata");
+                  Object pix = ZMQUtil.decodeArray(t.getString("pixels"),
+                          AcqEngMetadata.getBytesPerPixel(tags) == 1 ? byte[].class : short[].class);
+                  return new TaggedImage(pix, tags);
+               }
             } catch (JSONException ex) {
                throw new RuntimeException(ex);
             }
          }
       });
-
       pushExecutor_ = Executors.newSingleThreadExecutor(
               (Runnable r) -> new Thread(r, "Tagged Image socket push"));
-      pushExecutor_.submit(() -> {
-         //take from source and push as fast as possible
-         while (true) {
-            if (source_ != null) {
-               ImageAcqTuple tuple = source_.getFirst();
-               acq_ = tuple.acq_;
-               pushSocket_.push(tuple.img_);
-            }
-         }
-         //TODO: exception handling/restarting?
-      });
-
       pullExecutor_ = Executors.newSingleThreadExecutor(
               (Runnable r) -> new Thread(r, "Tagged Image socket pull"));
-      pullExecutor_.submit(() -> {
-         while (true) {
-            if (sink_ != null) {
-               TaggedImage ti = pullSocket_.next();
-               sink_.addLast(new ImageAcqTuple(ti, acq_));
-            }
-         }
-         //TODO: error handling
-      });
    }
 
    public int getPullPort() {
@@ -99,10 +83,59 @@ public class RemoteImageProcessor implements TaggedImageProcessor {
       return pushSocket_.getPort();
    }
 
+   public void startPush() {
+      pushExecutor_.submit(() -> {
+         //take from source and push as fast as possible
+         while (true) {
+            if (source_ != null) {
+               try {
+                  TaggedImage img = source_.takeFirst();
+                  pushSocket_.push(img);
+               } catch (InterruptedException ex) {
+                  return;
+               } catch (Exception e) {
+                  if (pullExecutor_.isShutdown()) {
+                     return;
+                  }
+                  e.printStackTrace();
+               }
+            }
+         }
+      });
+   }
+
+   public void startPull() {
+      pullExecutor_.submit(() -> {
+         while (true) {
+            if (sink_ != null) {
+               try {
+                  TaggedImage ti = pullSocket_.next();
+                  sink_.putLast(ti);
+               } catch (InterruptedException ex) {
+                  return;
+               } catch (Exception e) {
+                  if (pullExecutor_.isShutdown()) {
+                     return;
+                  }
+                  e.printStackTrace();
+               }
+            }
+         }
+      });
+   }
+
    @Override
-   public void setDequeues(LinkedBlockingDeque<ImageAcqTuple> source, LinkedBlockingDeque<ImageAcqTuple> sink) {
+   public void setDequeues(LinkedBlockingDeque<TaggedImage> source, LinkedBlockingDeque<TaggedImage> sink) {
       source_ = source;
       sink_ = sink;
+   }
+
+   @Override
+   public void close() {
+      pullExecutor_.shutdownNow();
+      pushExecutor_.shutdownNow();
+      pushSocket_.close();
+      pullSocket_.close();
    }
 
 }

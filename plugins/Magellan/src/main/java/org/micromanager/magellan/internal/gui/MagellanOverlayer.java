@@ -26,7 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
-import org.micromanager.acqj.api.XYStagePosition;
+import org.micromanager.acqj.internal.acqengj.XYStagePosition;
 import org.micromanager.magellan.internal.magellanacq.ExploreAcquisition;
 import org.micromanager.magellan.internal.magellanacq.MagellanDataManager;
 import org.micromanager.magellan.internal.misc.Log;

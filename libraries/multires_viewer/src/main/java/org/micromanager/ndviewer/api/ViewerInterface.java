@@ -78,13 +78,6 @@ public interface ViewerInterface {
 
    
    /**
-    * Sets the visible channel
-    *
-    * @param channelName
-    */
-   public void setChannel(String channelName);
-
-   /**
     * Set the text in the windows frame
     *
     * @param string

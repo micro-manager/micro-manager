@@ -103,9 +103,9 @@ class ScrollerPanel extends JPanel {
       }
       String channel = null;
       for (AxisScroller scroller : scrollers_) {
-         if (scroller.getAxis().equals("c")) {
-            channel = display_.getChannelName(scroller.getPosition());
-         }
+//         if (scroller.getAxis().equals("c")) {
+//            channel = display_.getChannelName(scroller.getPosition());
+//         }
          String axis = scroller.getAxis();
          Integer position = scroller.getPosition();
          if (!lastImagePosition_.containsKey(axis)
@@ -117,7 +117,7 @@ class ScrollerPanel extends JPanel {
       }
       if (shouldPostEvent) {
          
-         display_.setImageEvent(lastImagePosition_, channel, true);
+         display_.setImageEvent(lastImagePosition_, true);
       }
    }
 
@@ -155,9 +155,9 @@ class ScrollerPanel extends JPanel {
            List<String> channels) {
       for (int i = 0; i < newIamgeEvents.size(); i++) {
          HashMap<String, Integer> axes = newIamgeEvents.get(i);
-         //convert channel name to coords
-         int cIndex = display_.getChannelIndex(channels.get(i));
-         axes.put("c", cIndex);
+//         convert channel name to coords
+//         int cIndex = display_.getChannelIndex(channels.get(i));
+//         axes.put("c", cIndex);
          
          boolean didShowNewScrollers = false;
          //create new scrollers for any axes not yet seen

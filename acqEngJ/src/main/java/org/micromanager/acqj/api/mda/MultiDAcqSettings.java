@@ -1,29 +1,30 @@
 package org.micromanager.acqj.api.mda;
 
-import org.micromanager.acqj.internal.acqengj.MinimalAcquisitionSettings;
-import org.micromanager.acqj.api.ChannelGroupSettings;
+import org.micromanager.acqj.internal.acqengj.ChannelSetting;
 import java.util.List;
-import org.micromanager.acqj.api.ChannelGroupSettings;
-import org.micromanager.acqj.api.XYStagePosition;
-import org.micromanager.acqj.api.XYStagePosition;
+import org.micromanager.acqj.internal.acqengj.XYStagePosition;
 
 /**
  *
  * @author henrypinkard
  */
-public class MultiDAcqSettings extends MinimalAcquisitionSettings {
+public class MultiDAcqSettings {
 
    public final List<XYStagePosition> xyPositions_;
+   public final List<ChannelSetting> channels_;
    public final int numFrames_;
    public final double frameInterval_;
    public final double zStep_;
    public final double zOrigin_;
    public final int minSliceIndex_, maxSliceIndex_;
-
-   public MultiDAcqSettings(String dir, String name, String cGroup, ChannelGroupSettings channels,
+   public final String name_, dir_;
+   
+   public MultiDAcqSettings(String dir, String name, List<ChannelSetting> channels,
            List<XYStagePosition> xyPos, int numFrames, double frameInterval_ms,
            double zStep, double zOrigin, int minSlice, int maxSlice) {
-      super(dir, name, cGroup, channels);
+      name_ = name;
+      dir_ = dir;
+      channels_ = channels;
       xyPositions_ = xyPos;
       numFrames_ = numFrames;
       frameInterval_ = frameInterval_ms;

@@ -5,76 +5,83 @@
  */
 package org.micromanager.acqj.api;
 
+import java.util.Iterator;
 import org.json.JSONObject;
-import org.micromanager.acqj.api.ChannelGroupSettings;
-import org.micromanager.acqj.internal.acqengj.MinimalAcquisitionSettings;
-import org.micromanager.acqj.internal.acqengj.MinimalAcquisitionSettings;
 
 /**
  * General interface for acquisitions
- * 
+ *
  * @author henrypinkard
  */
 public interface AcquisitionInterface {
-   
+
    /**
-    * Commence acquisition or ready it to reviece externally generated events as applicable
+    * Commence acquisition or prepare it to receive externally generated events
+    * as applicable
     */
    public void start();
-   
+
    /**
-    * Cancels any pending events. Does not block. Use waitForCompletion if blocking until
-    * all resources are freed is needed.
-    */
-   public void abort();
-   
-   /**
-    * Block until acquisition finished and all resources complete. This should
-    * always be called at the end of an acquisition to ensure that any exceptions
-    * in the saving and processing during shutdown get cleared
+    * Block until acquisition finished and all resources complete.
     */
    public void close();
-   
+
    /**
     * returns true if all data has been collected that will be collected
-    * @return 
+    *
+    * @return
     */
    public boolean isComplete();
-   
+
    /**
-    * Get the settings for this acquisition. Will likely be a subsclass of
-    * MinimalAcquisitionSettings
-    * @return 
-    */
-   public MinimalAcquisitionSettings getAcquisitionSettings();
-   
-   /**
-    * Get the channel group settings
-    * @return 
-    */
-   public ChannelGroupSettings getChannels();
-   
-   /**
-    * return if acquisition is paused (i.e. not acquiring new data but not finished)
-    * @return 
+    * return if acquisition is paused (i.e. not acquiring new data but not
+    * finished)
+    *
+    * @return
     */
    public boolean isPaused();
-   
+
    /**
     * Pause or unpause
     */
    public void togglePaused();
-   
+
    /**
     * Get the summary metadata for this acquisition
-    * @return 
+    *
+    * @return
     */
    public JSONObject getSummaryMetadata();
-   
+
    /**
     * Returns true once any data has been acquired
-    * @return 
+    *
+    * @return
     */
    public boolean anythingAcquired();
-   
+
+   /**
+    * Add an image processor for modifying images before saving or diverting
+    * them to some other purpose
+    *
+    * @param p
+    */
+   public void addImageProcessor(TaggedImageProcessor p);
+
+   /**
+    * Add a an arbitrary piece of code (i.e. a hook) to be executed at a
+    * specific time in the acquisition loop
+    *
+    * @param hook Code to run
+    * @param type BEFORE_HARDWARE_HOOK, AFTER_HARDWARE_HOOK, AFTER_SAVE_HOOK
+    */
+   public void addHook(AcquisitionHook hook, int type);
+
+   /**
+    * Submit a list of acquisition events for acquisition. Acquisition engine
+    * will automatically optimize over this list (i.e. implement hardware sequencing).
+    * @param evt 
+    */
+   public void submitEventIterator(Iterator<AcquisitionEvent> evt);
+
 }
