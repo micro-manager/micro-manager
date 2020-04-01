@@ -190,7 +190,7 @@ public class Engine {
     * @throws InterruptedException
     */
    private void executeAcquisitionEvent(AcquisitionEvent event) throws InterruptedException {
-      while (System.currentTimeMillis() < event.getMinimumStartTime()) {
+      while (event.getMinimumStartTime() != null && System.currentTimeMillis() < event.getMinimumStartTime()) {
          try {
             Thread.sleep(1);
          } catch (InterruptedException e) {

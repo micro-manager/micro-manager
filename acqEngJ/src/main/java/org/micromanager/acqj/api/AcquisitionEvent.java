@@ -48,7 +48,7 @@ public class AcquisitionEvent {
    private String channelGroup_, channelConfig_ = null;
    private Double exposure_ = null; //leave null to keep exposaure unchanged
 
-   private long miniumumStartTime_; //For pausing between time points
+   private Long miniumumStartTime_ms_; //For pausing between time points
 
    //positions for devices that are generically hardcoded into MMCore
    private Double zPosition_ = null, xPosition_ = null, yPosition_ = null;
@@ -67,7 +67,6 @@ public class AcquisitionEvent {
 
    public AcquisitionEvent(AcquisitionInterface acq) {
       acquisition_ = (Acquisition) acq;
-      miniumumStartTime_ = 0;
    }
 
    /**
@@ -109,7 +108,7 @@ public class AcquisitionEvent {
       e.yPosition_ = yPosition_;
       e.gridRow_ = gridRow_;
       e.gridCol_ = gridCol_;
-      e.miniumumStartTime_ = miniumumStartTime_;
+      e.miniumumStartTime_ms_ = miniumumStartTime_ms_;
       return e;
    }
 
@@ -122,6 +121,11 @@ public class AcquisitionEvent {
          } else if (this.isAcquisitionSequenceEndEvent()) {
             json.put("special", "sequence-end");
             return json;
+         }
+         
+              //timelpases
+         if (miniumumStartTime_ms_ != null) {
+            json.put("min_start_time", miniumumStartTime_ms_ / 1000);
          }
 
          if (hasChannel()) {
@@ -199,6 +203,10 @@ public class AcquisitionEvent {
                }
             });
          }
+         //timelpases
+         if (json.has("min_start_time") ) {
+            event.miniumumStartTime_ms_ = (long) (json.getDouble("min_start_time") * 1000);
+         }
 
          //channel name
          if (json.has("channel")) {
@@ -266,8 +274,12 @@ public class AcquisitionEvent {
       return exposure_;
    }
 
+   /**
+    * Set the minimum start time in ms relative to when the acq started
+    * @param l 
+    */
    public void setMinimumStartTime(long l) {
-      miniumumStartTime_ = l;
+      miniumumStartTime_ms_ = l;
    }
 
    public Set<String> getDefinedAxes() {
@@ -323,8 +335,12 @@ public class AcquisitionEvent {
       return zPosition_;
    }
 
-   public long getMinimumStartTime() {
-      return miniumumStartTime_;
+   /**
+    * get the minimum start time in ms relative to when the acq started
+    * @return 
+    */
+   public Long getMinimumStartTime() {
+      return acquisition_.getStartTime_ms() + miniumumStartTime_ms_;
    }
 
    public List<AcquisitionEvent> getSequence() {

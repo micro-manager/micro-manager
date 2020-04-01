@@ -70,7 +70,8 @@ public class AcqEventModules {
             public AcquisitionEvent next() {
                AcquisitionEvent timePointEvent = event.copy();
 
-               timePointEvent.setMinimumStartTime(interval_ms == 0 ? 0 : lastTPEventStartTime_ + (long) interval_ms);
+               timePointEvent.setMinimumStartTime(interval_ms == 0 ? 0 :
+                       lastTPEventStartTime_ + (long) interval_ms - timePointEvent.acquisition_.getStartTime_ms());
                timePointEvent.setTimeIndex(frameIndex_);
                if (frameIndex_ == 0) {
                   lastTPEventStartTime_ = System.currentTimeMillis();
