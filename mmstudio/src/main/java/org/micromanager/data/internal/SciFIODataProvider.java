@@ -175,7 +175,7 @@ public class SciFIODataProvider implements DataProvider {
          cb.index(axis, coords.getIndex(axis));
       }
       
-      Image img =  studio_.data().createImage(pixels,
+      Image img =  studio_.data().wrapImage(pixels,
               (int) plane.getLengths()[xAxisIndex_], 
               (int) plane.getLengths()[yAxisIndex_],
               bytesPerPixel, 
