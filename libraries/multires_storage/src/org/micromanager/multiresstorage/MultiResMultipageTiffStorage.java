@@ -478,7 +478,7 @@ public class MultiResMultipageTiffStorage implements StorageAPI {
             int posIndex;
             if (dsIndex == 0) {
                if (posManager_ == null) {
-                  posIndex = axes.containsKey("p") ? axes.get("p") : 0;
+                  posIndex = axes.containsKey(POSITION_AXIS) ? axes.get(POSITION_AXIS) : 0;
                } else {
                   posIndex = posManager_.getPositionIndexFromTilePosition(dsIndex, row, col);
                }
@@ -877,7 +877,7 @@ public class MultiResMultipageTiffStorage implements StorageAPI {
 
    /**
     * This version is called by programs doing dynamic stitching (i.e.
-    * micro-magellan). axes must contain "p" mapping to a desired position index
+    * micro-magellan). axes must contain "position" mapping to a desired position index
     *
     * Don't return until all images have been written to disk
     */
@@ -887,11 +887,11 @@ public class MultiResMultipageTiffStorage implements StorageAPI {
          List<Future> writeFinishedList = new ArrayList<Future>();
 
          if (tiled_) {
-            if (!axes.containsKey("p")) {
-               throw new RuntimeException("axes must contain a position index entry with \"p\" as key");
+            if (!axes.containsKey(POSITION_AXIS)) {
+               throw new RuntimeException("axes must contain a position index entry with \"position\" as key");
             }
          }
-         int pIndex = axes.containsKey("p") ? axes.get("p") : 0;
+         int pIndex = axes.containsKey(POSITION_AXIS) ? axes.get(POSITION_AXIS) : 0;
 
          imageAxes_.add(axes);
 
@@ -1087,8 +1087,8 @@ public class MultiResMultipageTiffStorage implements StorageAPI {
       });
       for (HashMap<String, Integer> s : imageAxes_) {
          if (s.get("z") == sliceIndex) {
-            exploredTiles.add(new Point((int) posManager_.getGridCol(s.get("p"), 0),
-                    (int) posManager_.getGridRow(s.get("p"), 0)));
+            exploredTiles.add(new Point((int) posManager_.getGridCol(s.get(POSITION_AXIS), 0),
+                    (int) posManager_.getGridRow(s.get(POSITION_AXIS), 0)));
          }
 
       }

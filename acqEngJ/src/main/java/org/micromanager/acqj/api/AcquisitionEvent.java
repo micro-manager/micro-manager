@@ -340,6 +340,9 @@ public class AcquisitionEvent {
     * @return 
     */
    public Long getMinimumStartTime() {
+      if (miniumumStartTime_ms_ == null) {
+         return null;
+      }
       return acquisition_.getStartTime_ms() + miniumumStartTime_ms_;
    }
 
