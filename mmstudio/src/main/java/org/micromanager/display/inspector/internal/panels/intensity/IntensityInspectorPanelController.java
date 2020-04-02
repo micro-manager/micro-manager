@@ -587,18 +587,23 @@ public class IntensityInspectorPanelController
 
    @Subscribe
    public void onEvent(DataProviderHasNewImageEvent event) {
-      final int channel = event.getImage().getCoords().getChannel();
-      SwingUtilities.invokeLater(() -> {
-         try {
-            if (channel >= channelControllers_.size()) {
-               setUpChannelHistogramsPanel(channel + 1);
+      // (NS - 2020-03-27)
+      // Hack: handle only if the circular buffer is not too full.  How full is highly arbitrary!
+      if ( !studio_.acquisitions().isAcquisitionRunning() || !studio_.core().isSequenceRunning() ||
+              studio_.core().getRemainingImageCount() < 6 ) {
+         final int channel = event.getImage().getCoords().getChannel();
+         SwingUtilities.invokeLater(() -> {
+            try {
+               if (channel >= channelControllers_.size()) {
+                  setUpChannelHistogramsPanel(channel + 1);
+               }
+            } catch (NullPointerException npe) {
+               // it is possible that the dataprovider send a new image event
+               // and immediately closed.  That will result in a null pointer
+               // exception somewhere down the line.  Catch it here
+               ReportingUtils.logError(npe);
             }
-         } catch (NullPointerException npe) {
-            // it is possible that the dataprovider send a new image event
-            // and immediately closed.  That will result in a null pointer
-            // exception somewhere down the line.  Catch it here
-            ReportingUtils.logError(npe);
-         }
-      });
+         });
+      }
    }
 }

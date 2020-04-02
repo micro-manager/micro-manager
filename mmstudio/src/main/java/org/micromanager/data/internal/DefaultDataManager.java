@@ -268,11 +268,25 @@ public final class DefaultDataManager implements DataManager {
    }
 
    @Override
-   public Image createImage(Object pixels, int width, int height,
-         int bytesPerPixel, int numComponents, Coords coords,
-         Metadata metadata) {
-      return new DefaultImage(pixels, width, height, bytesPerPixel,
+   public Image createImage(Object pixels, int width, int height, int bytesPerPixel,
+                            int numComponents, Coords coords, Metadata metadata) {
+      Object pixelClone;
+      if (pixels instanceof byte[]) {
+         pixelClone = ((byte[]) pixels).clone();
+      } else if (pixels instanceof short[]) {
+         pixelClone = ((short[]) pixels).clone();
+      } else {
+         throw new IllegalArgumentException("Pixel type is not supported.  It could not be cloned");
+      }
+      return new DefaultImage(pixelClone, width, height, bytesPerPixel,
             numComponents, coords, metadata);
+   }
+
+   @Override
+   public Image wrapImage(Object pixels, int width, int height, int bytesPerPixel,
+                             int numComponents, Coords coords, Metadata metadata) {
+      return new DefaultImage(pixels, width, height, bytesPerPixel,
+              numComponents, coords, metadata);
    }
 
    @Override
