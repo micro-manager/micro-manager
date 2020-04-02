@@ -368,15 +368,15 @@ public class Engine {
          lastEvent_ = null; //update all hardware if switching to a new acquisition
       }
       /////////////////////////////Z stage////////////////////////////////////////////
-      double startTime = System.currentTimeMillis();
+//      double startTime = System.currentTimeMillis();
       loopHardwareCommandRetries(new Runnable() {
          @Override
          public void run() {
             try {
                if (event.isZSequenced()) {
                   core_.startStageSequence(zStage);
-               } else if (event.getZPosition() != null && 
-                       (lastEvent_ == null || event.getZPosition() 
+               } else if (event.getZPosition() != null
+                       && (lastEvent_ == null || event.getZPosition()
                        != lastEvent_.getZPosition())) {
                   //wait for it to not be busy (is this even needed?)   
                   while (core_.deviceBusy(zStage)) {
@@ -399,7 +399,7 @@ public class Engine {
 
       /////////////////////////////XY Stage////////////////////////////////////////////////////
       if (event.getXPosition() != null && event.getYPosition() != null) {
-         startTime = System.currentTimeMillis();
+//         startTime = System.currentTimeMillis();
          loopHardwareCommandRetries(new Runnable() {
             @Override
             public void run() {
@@ -411,7 +411,7 @@ public class Engine {
                           && event.getYPosition() != lastEvent_.getYPosition();
                   if (event.isXYSequenced()) {
                      core_.startXYStageSequence(xyStage);
-                  } else if ( (noCurrentXY && currentXY) || xyChanged) {
+                  } else if ((noCurrentXY && currentXY) || xyChanged) {
                      //wait for it to not be busy (is this even needed?)   
                      while (core_.deviceBusy(xyStage)) {
                         Thread.sleep(1);
@@ -433,7 +433,7 @@ public class Engine {
 //         acqDurationEstiamtor_.storeXYMoveTime(System.currentTimeMillis() - startTime);
       }
       /////////////////////////////Channels//////////////////////////////////////////////////
-      startTime = System.currentTimeMillis();
+//      startTime = System.currentTimeMillis();
       loopHardwareCommandRetries(new Runnable() {
          @Override
          public void run() {
@@ -449,15 +449,15 @@ public class Engine {
                      String propName = ps.getPropertyName();
                      core_.startPropertySequence(deviceName, propName);
                   }
-               } else if (event.getChannelGroup() == null  && event.hasChannel() && (lastEvent_ == null
-                       || event.getChannelConfig()!= null && lastEvent_.getChannelConfig() != null
+               } else if (event.getChannelGroup() == null && event.hasChannel() && (lastEvent_ == null
+                       || event.getChannelConfig() != null && lastEvent_.getChannelConfig() != null
                        && !event.getChannelConfig().equals(lastEvent_.getChannelConfig()) && event.hasChannel())) {
-                     //set exposure
-                     core_.setExposure(event.getExposure());
-                     //set other channel props
-                     core_.setConfig(event.getChannelGroup(), event.getChannelConfig());
-                     core_.waitForConfig(event.getChannelGroup(), event.getChannelConfig());
-                  
+                  //set exposure
+                  core_.setExposure(event.getExposure());
+                  //set other channel props
+                  core_.setConfig(event.getChannelGroup(), event.getChannelConfig());
+                  core_.waitForConfig(event.getChannelGroup(), event.getChannelConfig());
+
                }
             } catch (Exception ex) {
                ex.printStackTrace();
@@ -469,17 +469,39 @@ public class Engine {
 //      acqDurationEstiamtor_.storeChannelSwitchTime(System.currentTimeMillis() - startTime);
 
       /////////////////////////////Camera exposure//////////////////////////////////////////////
-      startTime = System.currentTimeMillis();
+//      startTime = System.currentTimeMillis();
       loopHardwareCommandRetries(new Runnable() {
          @Override
          public void run() {
             try {
                if (event.isExposureSequenced()) {
                   core_.startExposureSequence(core_.getCameraDevice());
-               } else if ((lastEvent_ == null || lastEvent_.getExposure() != 
-                       event.getExposure()) && event.getExposure() != null) {
+               } else if ((lastEvent_ == null || lastEvent_.getExposure()
+                       != event.getExposure()) && event.getExposure() != null) {
                   core_.setExposure(event.getExposure());
                }
+            } catch (Exception ex) {
+               throw new HardwareControlException(ex.getMessage());
+            }
+
+         }
+      }, "Changing exposure");
+
+      //////////////////////////   Arbitrary Properties //////////////////////////////////
+      loopHardwareCommandRetries(new Runnable() {
+         @Override
+         public void run() {
+            try {
+               //TODO: add arbitrary additional properties to sequence
+//               if (event.isExposureSequenced()) {
+//                  core_.startExposureSequence(core_.getCameraDevice());
+//               } else if ((lastEvent_ == null || lastEvent_.getExposure()
+//                       != event.getExposure()) && event.getExposure() != null) {
+               for (String[] s : event.getAdditonalProperties()) {
+                  core_.setProperty(s[0], s[1], s[2]);
+               }
+
+//               }
             } catch (Exception ex) {
                throw new HardwareControlException(ex.getMessage());
             }
@@ -529,8 +551,8 @@ public class Engine {
          }
 
          //check all properties in channel
-         if (e1.getChannelConfig() != null && e2.getChannelConfig() != null &&
-                 !e1.getChannelConfig().equals(e2.getChannelConfig())) {
+         if (e1.getChannelConfig() != null && e2.getChannelConfig() != null
+                 && !e1.getChannelConfig().equals(e2.getChannelConfig())) {
             //check all properties in the channel
             Configuration config1 = core_.getConfigData(e1.getChannelGroup(), e1.getChannelConfig());
             for (int i = 0; i < config1.size(); i++) {

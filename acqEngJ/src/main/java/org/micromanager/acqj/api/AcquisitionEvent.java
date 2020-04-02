@@ -56,7 +56,7 @@ public class AcquisitionEvent {
    //TODO: SLM, Galvo, etc
 
    //Arbitary additional properties
-   private TreeSet<Triplet> properties_ = new TreeSet<Triplet>();
+   private TreeSet<ThreeTuple> properties_ = new TreeSet<ThreeTuple>();
 
    //for hardware sequencing
    private List<AcquisitionEvent> sequence_ = null;
@@ -109,6 +109,7 @@ public class AcquisitionEvent {
       e.gridRow_ = gridRow_;
       e.gridCol_ = gridCol_;
       e.miniumumStartTime_ms_ = miniumumStartTime_ms_;
+      e.properties_ = new TreeSet<ThreeTuple>(this.properties_);
       return e;
    }
 
@@ -169,8 +170,12 @@ public class AcquisitionEvent {
          
          //Arbitrary extra properties
          JSONArray props = new JSONArray();
-         for (Triplet t : properties_) {
-            props.put(t.dev + "-" + t.prop + "-" + t.val);
+         for (ThreeTuple t : properties_) {
+            JSONArray prop = new JSONArray();
+            prop.put(t.dev);
+            prop.put(t.prop);
+            prop.put(t.val);
+            props.put(prop);
          }
          json.put("properties", props);
 
@@ -237,9 +242,10 @@ public class AcquisitionEvent {
 
          //Arbitrary additional properties
          if (json.has("properties")) {
-            JSONArray props = json.getJSONArray("properties");
-            for (int i = 0; i < props.length(); i++) {
-               Triplet t = new Triplet(props.getString(i).split("-"));
+            JSONArray propList = json.getJSONArray("properties");
+            for (int i = 0; i < propList.length(); i++) {
+               JSONArray trip = propList.getJSONArray(i);
+               ThreeTuple t = new ThreeTuple(trip.getString(0), trip.getString(1), trip.getString(2));
                event.properties_.add(t);
             }
          }
@@ -248,6 +254,14 @@ public class AcquisitionEvent {
       } catch (JSONException ex) {
          throw new RuntimeException(ex);
       }
+   }
+   
+   public List<String[]> getAdditonalProperties() {
+      ArrayList<String[]> list = new ArrayList<String[]>();
+      for (ThreeTuple t : properties_) {
+         list.add(new String[]{t.dev, t.prop, t.val});
+      }
+      return list;
    }
 
    public boolean hasChannel() {
@@ -433,18 +447,22 @@ public class AcquisitionEvent {
 
 }
 
-class Triplet implements Comparable<Triplet> {
+class ThreeTuple implements Comparable<ThreeTuple> {
 
    final String dev, prop, val;
 
-   public Triplet(String[] trip) {
-      dev = trip[0];
-      prop = trip[1];
-      val = trip[2];
+   public ThreeTuple(String d, String p, String v) {
+      dev = d;
+      prop = p;
+      val = v;
+   }
+   
+   public String[] toArray() {
+      return new String[]{dev, prop, val};
    }
 
    @Override
-   public int compareTo(Triplet t) {
+   public int compareTo(ThreeTuple t) {
       if (!dev.equals(t.dev)) {
          return dev.compareTo(dev);
       } else {
