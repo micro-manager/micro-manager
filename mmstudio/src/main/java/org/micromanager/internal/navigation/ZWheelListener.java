@@ -35,50 +35,19 @@ import org.micromanager.internal.utils.ReportingUtils;
 public final class ZWheelListener  {
    private static final double MOVE_INCREMENT = 0.20;
    private final Studio studio_;
-   private final ExecutorService executorService_;
-   private final ZStageMover zStageMover_;
-   private final AtomicDouble moveMemory_;
-   private Future<?> future_;
+   private ZNavigator zNavigator_;
 
-   public ZWheelListener(final Studio studio, 
-         final ExecutorService executorService) {
+   public ZWheelListener(final Studio studio, final ZNavigator zNavigator) {
       studio_ = studio;
-      executorService_ = executorService;
-      zStageMover_ = new ZStageMover();
-      moveMemory_ = new AtomicDouble(0.0);
+      zNavigator_ = zNavigator;
    }
    
-      private class ZStageMover implements Runnable {
-
-      String stage_;
-      double pos_;
-
-      public void setPosition(String stage, double pos) {
-         stage_ = stage;
-         pos_ = pos;
-      }
-
-      @Override
-      public void run() {
-         // Move the stage
-        try {
-           pos_ += moveMemory_.getAndSet(0.0);
-           studio_.core().setRelativePosition(stage_, pos_);
-           double z = studio_.core().getPosition(stage_);
-           studio_.events().post(
-                   new StagePositionChangedEvent(stage_, z));
-        } catch (Exception ex) {
-           ReportingUtils.showError(ex);
-        }
-      }
-   }
 
    /**
-    * Receives mouseWheel events from the display manager and moves the z stage
-    * The ZStage is moved using an executor service. To avoid piling up
-    * movement requests, requests are only submitted when the previous
-    * task was done.  Requested movements are remembered and added 
-    * to the latest request.
+    * Receives mouseWheel events from the display manager and moves the z stage.
+    * ZStageMovements are funneled through zNavigator, which runs separate
+    * executors for each zStage, and combines movement requests if they come in
+    * too fast.
     * 
     * @param e DisplayMouseWheelEvent containing a MouseWheel event
     */
@@ -98,18 +67,9 @@ public final class ZWheelListener  {
          }
          // Get coordinates of event
          int move = e.getEvent().getWheelRotation();
-
          double moveUm = move * moveIncrement;
 
-         // if the executor is busy, wait for the next move command, and pool
-         // the distance we want to move
-         if (future_ == null || future_.isDone()) {
-            zStageMover_.setPosition(zStage, moveUm);
-            future_ = executorService_.submit(zStageMover_);
-         } else {
-            // moveMemory_ is added to the requested movement in the zStageMover
-            moveMemory_.addAndGet(moveUm);
-         }
+         zNavigator_.setPosition(zStage, moveUm);
       }
    }
    

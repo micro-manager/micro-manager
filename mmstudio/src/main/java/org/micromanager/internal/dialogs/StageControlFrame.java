@@ -88,12 +88,12 @@ public final class StageControlFrame extends MMFrame {
    public static final String[] Y_MOVEMENTS = new String[] {
            "SMALLMOVEMENT_Y", "MEDIUMMOVEMENT_Y", "LARGEMOVEMENT_Y"
    };
-   public static final String SMALLMOVEMENTZ = "SMALLMOVEMENTZ";
-   public static final String MEDIUMMOVEMENTZ = "MEDIUMMOVEMENTZ";
-   public static final String SELECTED_Z_DRIVE = "SELECTED_Z_DRIVE";
-   private static final String CURRENTZDRIVE = "CURRENTZDRIVE";
+   public static final String SMALL_MOVEMENT_Z = "SMALLMOVEMENTZ"; // used both by individual ZPanels (with id) and in general
+   public static final String MEDIUM_MOVEMENT_Z = "MEDIUMMOVEMENTZ";
+   public static final String SELECTED_Z_DRIVE = "SELECTED_Z_DRIVE"; // used to keep track of the "active" Z Drive
+   private static final String CURRENT_Z_DRIVE = "CURRENTZDRIVE"; // used by Drive selection combo boxes
    private static final String REFRESH = "REFRESH";
-   private static final String NRZPANELS = "NRZPANELS";
+   private static final String NR_Z_PANELS = "NRZPANELS";
 
    private static StageControlFrame staticFrame_;
 
@@ -198,8 +198,8 @@ public final class StageControlFrame extends MMFrame {
          });
       }
 
-      StrVector zDrives = core_.getLoadedDevicesOfType(DeviceType.StageDevice);
-      StrVector xyDrives = core_.getLoadedDevicesOfType(DeviceType.XYStageDevice);
+      final StrVector zDrives = core_.getLoadedDevicesOfType(DeviceType.StageDevice);
+      final StrVector xyDrives = core_.getLoadedDevicesOfType(DeviceType.XYStageDevice);
       final boolean haveXY = !xyDrives.isEmpty();
       final boolean haveZ = !zDrives.isEmpty();
       final int nrZDrives = (int) zDrives.size();
@@ -208,7 +208,7 @@ public final class StageControlFrame extends MMFrame {
       xyPanel_.setVisible(haveXY);
       zPanel_[0].setVisible(haveZ);
       final String sysConfigFile = org.micromanager.internal.MMStudio.getInstance().getSysConfigFile();  // TODO add method to API
-      final String key = NRZPANELS + sysConfigFile;
+      final String key = NR_Z_PANELS + sysConfigFile;
       int nrZPanels = settings_.getInteger(key, nrZDrives);
       // mailing list report 12/31/2019 encounters nrZPanels == 0, workaround:
       if (nrZPanels <= 0 && nrZDrives > 0) {
@@ -229,7 +229,8 @@ public final class StageControlFrame extends MMFrame {
       
       // handle Z panels
       if (haveZ) {
-         for (int idx = 0; idx < MAX_NUM_Z_PANELS; ++idx) {
+         // go backwards so that the first Z Panel will become the selected one
+         for (int idx = MAX_NUM_Z_PANELS - 1; idx > -1; idx--) {
             zDriveSelect_[idx].setVisible(true);
             zDriveSelect_[idx].setEnabled(nrZDrives > 1);
             zDriveActiveButtons_[idx].setVisible(true);
@@ -258,8 +259,8 @@ public final class StageControlFrame extends MMFrame {
 
             // select correct drive, which will grab the correct step sizes via listeners
             DefaultComboBoxModel<String> model = (DefaultComboBoxModel<String>) zDriveSelect_[idx].getModel();
-            // first attempt to find drive we previously used, then use the drives in ored
-            int cbIndex = model.getIndexOf(settings_.getString(CURRENTZDRIVE + idx, ""));  // returns -1 if not found
+            // first attempt to find drive we previously used, then use the drives in order
+            int cbIndex = model.getIndexOf(settings_.getString(CURRENT_Z_DRIVE + idx, ""));  // returns -1 if not found
             if (cbIndex < 0) {
                cbIndex = model.getIndexOf((idx < nrZDrives) ? zDrives.get(idx) : "");  // returns -1 if not found
             }
@@ -268,6 +269,9 @@ public final class StageControlFrame extends MMFrame {
             }
             zDriveSelect_[idx].setSelectedIndex(-1);  // needed to make sure setSelectedIndex fires an ItemListener for index 0
             zDriveSelect_[idx].setSelectedIndex(cbIndex);
+            if (zDriveSelect_[idx].getSelectedItem().equals(settings_.getString(SELECTED_Z_DRIVE, " "))) {
+               zDriveActiveButtons_[idx].setSelected(true);
+            }
             
             plusButtons_[idx].setVisible(false);
             minusButtons_[idx].setVisible(false);
@@ -489,6 +493,10 @@ public final class StageControlFrame extends MMFrame {
                String activeZDrive = (String) zDriveSelect_[idx].getSelectedItem();
                // push to profile
                settings_.putString(SELECTED_Z_DRIVE, activeZDrive);
+               settings_.putDouble(SMALL_MOVEMENT_Z, settings_.getDouble(
+                       SMALL_MOVEMENT_Z + idx, 1.1));
+               settings_.putDouble(MEDIUM_MOVEMENT_Z, settings_.getDouble(
+                       MEDIUM_MOVEMENT_Z + idx, 11.1));
             }
          }
       });
@@ -498,7 +506,7 @@ public final class StageControlFrame extends MMFrame {
       //   one type of listener on the combo-box (there are also ItemListeners for step size fields)
       zDriveSelect_[idx].addItemListener((ItemEvent e) -> {
          if (e.getStateChange() == ItemEvent.SELECTED) {
-            settings_.putString(CURRENTZDRIVE + idx, zDriveSelect_[idx].getSelectedItem().toString());
+            settings_.putString(CURRENT_Z_DRIVE + idx, zDriveSelect_[idx].getSelectedItem().toString());
             try {
                getZPosLabelFromCore(idx);
             } catch (Exception ex) {
@@ -563,14 +571,14 @@ public final class StageControlFrame extends MMFrame {
       // These heights again must match those of the corresponding stepsize
       // controls in the XY panel.
       zStepTextsSmall_[idx] = StageControlFrame.createDoubleEntryFieldFromCombo(
-              settings_, zDriveSelect_[idx], SMALLMOVEMENTZ, 1.1);
+              settings_, zDriveSelect_[idx], SMALL_MOVEMENT_Z, 1.1);
       result.add(new JLabel(IconLoader.getIcon("/org/micromanager/icons/stagecontrol/arrowhead-sr.png")),
             "height 20!, span, split 3, flowx");
       result.add(zStepTextsSmall_[idx], "height 20!, width 50");
       result.add(new JLabel("\u00b5m"), "height 20!");
 
       zStepTextsMedium_[idx] = StageControlFrame.createDoubleEntryFieldFromCombo(
-              settings_, zDriveSelect_[idx], MEDIUMMOVEMENTZ, 11.1);
+              settings_, zDriveSelect_[idx], MEDIUM_MOVEMENT_Z, 11.1);
       result.add(new JLabel(IconLoader.getIcon("/org/micromanager/icons/stagecontrol/arrowhead-dr.png")),
             "span, split 3, flowx");
       result.add(zStepTextsMedium_[idx], "height 20!, width 50");
@@ -579,9 +587,9 @@ public final class StageControlFrame extends MMFrame {
       minusButtons_[idx] = new JButton("-");
       minusButtons_[idx].addActionListener((ActionEvent arg0) -> {
          String sysConfigFile = org.micromanager.internal.MMStudio.getInstance().getSysConfigFile();  // TODO add method to API
-         int nrZPanels = settings_.getInteger(NRZPANELS + sysConfigFile, 0);
+         int nrZPanels = settings_.getInteger(NR_Z_PANELS + sysConfigFile, 0);
          if (nrZPanels > 1) {
-            settings_.putInteger(NRZPANELS + sysConfigFile, nrZPanels-1);
+            settings_.putInteger(NR_Z_PANELS + sysConfigFile, nrZPanels-1);
             initialize();
          }
       });
@@ -589,9 +597,9 @@ public final class StageControlFrame extends MMFrame {
       plusButtons_[idx] = new JButton("+");
       plusButtons_[idx].addActionListener((ActionEvent arg0) -> {
          String sysConfigFile = org.micromanager.internal.MMStudio.getInstance().getSysConfigFile();  // TODO add method to API
-         int nrZPanels = settings_.getInteger(NRZPANELS + sysConfigFile, 0);
+         int nrZPanels = settings_.getInteger(NR_Z_PANELS + sysConfigFile, 0);
          if (nrZPanels < MAX_NUM_Z_PANELS) {
-            settings_.putInteger(NRZPANELS + sysConfigFile, nrZPanels+1);
+            settings_.putInteger(NR_Z_PANELS + sysConfigFile, nrZPanels+1);
             initialize();
          }
       });
