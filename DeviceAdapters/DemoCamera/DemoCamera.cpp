@@ -3247,11 +3247,12 @@ CDemoStage::CDemoStage() :
    pos_um_(0.0),
    busy_(false),
    initialized_(false),
-   lowerLimit_(0.0),
-   upperLimit_(20000.0),
+   lowerLimit_(-300.0),
+   upperLimit_(300.0),
    sequenceable_(false)
 {
    InitializeDefaultErrorMessages();
+   SetErrorText(ERR_UNKNOWN_POSITION, "Position out of range");
 
    // parent ID display
    CreateHubIDProperty();
@@ -3331,6 +3332,10 @@ int CDemoStage::Shutdown()
 
 int CDemoStage::SetPositionUm(double pos) 
 {
+   if (pos > upperLimit_ || lowerLimit_ > pos)
+   {
+      return ERR_UNKNOWN_POSITION;
+   }
    pos_um_ = pos; 
    SetIntensityFactor(pos);
    return OnStagePositionChanged(pos_um_);
