@@ -78,6 +78,15 @@ import org.micromanager.display.internal.event.DisplayKeyPressEvent;
 import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
 import org.micromanager.display.internal.imagestats.ImageStats;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
+import org.micromanager.events.LiveModeEvent;
+import org.micromanager.display.DisplayWindowControlsFactory;
+import org.micromanager.display.internal.DefaultComponentDisplaySettings;
+import org.micromanager.display.internal.displaywindow.imagej.MMImageCanvas;
+import org.micromanager.display.internal.event.DisplayMouseEvent;
+import org.micromanager.display.internal.event.DisplayMouseWheelEvent;
+import org.micromanager.display.internal.event.DataViewerMousePixelInfoChangedEvent;
+import org.micromanager.display.internal.gearmenu.GearButton;
+import org.micromanager.display.overlay.Overlay;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.Geometry;
 import org.micromanager.internal.utils.MMFrame;
@@ -88,14 +97,6 @@ import org.micromanager.internal.utils.PopupButton;
 import org.micromanager.internal.utils.ThreadFactoryFactory;
 import org.micromanager.internal.utils.performance.PerformanceMonitor;
 import org.micromanager.internal.utils.performance.TimeIntervalRunningQuantile;
-import org.micromanager.display.DisplayWindowControlsFactory;
-import org.micromanager.display.internal.DefaultComponentDisplaySettings;
-import org.micromanager.display.internal.displaywindow.imagej.MMImageCanvas;
-import org.micromanager.display.internal.event.DisplayMouseEvent;
-import org.micromanager.display.internal.event.DisplayMouseWheelEvent;
-import org.micromanager.display.internal.event.DataViewerMousePixelInfoChangedEvent;
-import org.micromanager.display.internal.gearmenu.GearButton;
-import org.micromanager.display.overlay.Overlay;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -214,6 +215,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
    private PerformanceMonitor perfMon_;
    
    private double startTime_ = 0.0; // Elapsed Time for frame #0
+   private long nrLiveFramesReceived_ = 0;
+   private long lastImageNumber_ = 0;
 
    private static final int MIN_CANVAS_HEIGHT = 100;
    private static final int BORDER_THICKNESS = 2;
@@ -228,6 +231,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       DisplayUIController instance = new DisplayUIController(studio, parent,
             controlsFactory, animationController);
       parent.registerForEvents(instance);
+      studio.events().registerForEvents(instance);
       instance.frame_.addWindowListener(instance);
       return instance;
    }
@@ -1526,9 +1530,21 @@ public final class DisplayUIController implements Closeable, WindowListener,
     * Display fps is confusing to the user.  It is unclear what it means.
     * It also can easily be confused with Playback fps and camera fps, 
     * which are more useful messages.
-    * I leave the code here for future use, but no longer call it
+    * I leave the old code below for future use, but no longer call it
     * Showing camera fps instead.  Display fps is set by the user, and the code
     * should make sure that it is correct.
+    * It is surprisingly difficult to estimate camera fps correctly with the
+    * information we get from the core.  We are using the imageNumber, inserted
+    * by the Circular Buffer to count images produced by the camera.  However,
+    * when the circular buffer is full, it will reset, so we need to deduce
+    * if that event took place, and calculate how many images we missed when that
+    * happened.  When the camera runs very fast, and the circular buffer is
+    * small, it may happen that the buffer overflows before we ever see an
+    * image (or possibly, the first image we see has a higher image number
+    * than the one we remembered from the last iteration, which is how we check
+    * for overflows), resulting in poor fps estimates.
+    * The Core is really much better suited to keep track of camera fps.
+    * I'll open a ticket, but until then, this is teh best I can come up with.
     */
    private void showFPS() {
       // Show camera FPS, only in the preview window (otherwise, what does the number mean?)
@@ -1541,21 +1557,33 @@ public final class DisplayUIController implements Closeable, WindowListener,
                cameraFpsLabel_.setText(" ");
                return;
             }
-            // since circular buffer overflow causes the numbers to reset to 0,
+            // Circular buffer overflow causes the imageNumber to reset to 0.
             // but not the elapasedTimeMs, we need to keep track of the elapsedTime
             // of every image with imageNumber 0:
-            if (nr == 0) {
+            if (nrLiveFramesReceived_ == 0) {
                startTime_ = metadata.getElapsedTimeMs(-1.0);
             }
             double ms = metadata.getElapsedTimeMs(-1.0) - startTime_;
-            if (nr != null && ms > 0.0) {
-               double fps = (nr * 1000.0) / ms;
-               if (fps < 2.0) {
-                  cameraFpsLabel_.setText(String.format(
-                          "Camera: %.3g fps", fps));
+            if (nr != null) {
+               if (nr < lastImageNumber_) {
+                  // circular buffer must have overflown and was reset
+                  // calculate missing images from buffer size and numbers we have
+                  nrLiveFramesReceived_ += studio_.core().getBufferTotalCapacity() -
+                          lastImageNumber_  + nr;
                } else {
-                  cameraFpsLabel_.setText(String.format(
-                          "Camera: %d fps", (int) fps));
+                  nrLiveFramesReceived_ += nr - lastImageNumber_;
+               }
+               lastImageNumber_ = nr;
+               if (ms > 0.0) {
+                  double fps = (nrLiveFramesReceived_ * 1000.0) / ms;
+                  if (fps < 2.0) {
+                     cameraFpsLabel_.setText(String.format(
+                             "Camera: %.3g fps", fps));
+                  }
+                  else {
+                     cameraFpsLabel_.setText(String.format(
+                             "Camera: %d fps", (int) fps));
+                  }
                }
             } else {
                cameraFpsLabel_.setText(" ");
@@ -1962,6 +1990,15 @@ public final class DisplayUIController implements Closeable, WindowListener,
       if (pixelInfoLabel_.getSize().width > pixelInfoLabel_.getMinimumSize().width) {
          pixelInfoLabel_.setMinimumSize(new Dimension(
                  pixelInfoLabel_.getSize().width, 10));
+      }
+   }
+
+   @Subscribe
+   public void onLiveModeEvent(LiveModeEvent liveModeEvent) {
+      // Used to reset counters for camera fps measurements
+      if (liveModeEvent.getIsOn()) {
+         nrLiveFramesReceived_ = 0;
+         lastImageNumber_ = 0;
       }
    }
 }
