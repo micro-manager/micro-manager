@@ -120,6 +120,25 @@ public class SingleStateUIPropertyTest {
 		b = cp.property.setPropertyValue("5");
 		assertFalse(b);
 		assertEquals(val, cp.property.getPropertyValue());
+		
+		// using state index
+		b = cp.property.setPropertyValueByStateIndex(1);
+		assertFalse(b);
+		assertEquals(val, cp.property.getPropertyValue());
+		b = cp.property.setPropertyValueByStateIndex(-1);
+		assertFalse(b);
+		assertEquals(val, cp.property.getPropertyValue());
+		
+		// using state name
+		b = cp.property.setPropertyValueByState(null);
+		assertFalse(b);
+		assertEquals(val, cp.property.getPropertyValue());
+		b = cp.property.setPropertyValueByState("");
+		assertFalse(b);
+		assertEquals(val, cp.property.getPropertyValue());
+		b = cp.property.setPropertyValueByState("fdsdf");
+		assertFalse(b);
+		assertEquals(val, cp.property.getPropertyValue());
 	}
 
 	@Test

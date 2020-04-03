@@ -79,6 +79,16 @@ public class UIPropertyTest {
 		boolean b = cp.property.setPropertyValue(String.valueOf(val));
 		assertTrue(b);
 		assertEquals(val, cp.property.getPropertyValue());
+		
+		val = "21";
+		b = cp.property.setPropertyValueByState(String.valueOf(val));
+		assertTrue(b);
+		assertEquals(val, cp.property.getPropertyValue());
+		
+		int intval = 10;
+		b = cp.property.setPropertyValueByStateIndex(intval);
+		assertTrue(b);
+		assertEquals(String.valueOf(intval), cp.property.getPropertyValue());
 	}
 
 	@Test
