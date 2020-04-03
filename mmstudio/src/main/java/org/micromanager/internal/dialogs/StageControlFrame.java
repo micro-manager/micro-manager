@@ -45,6 +45,7 @@ import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.SystemConfigurationLoadedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.TextUtils;
@@ -68,6 +69,10 @@ import javax.swing.JRadioButton;
  *
  * @author nico
  * @author Jon
+ *
+ * TODO: The XYZKeyListener now gets the active z Stage and the amount each
+ * keypress should move each stage from this dialog.  The Dialog should also
+ * show which keys do what, and possibly provide the option to change these keys.
  */
 public final class StageControlFrame extends MMFrame {
    private final Studio studio_;
@@ -125,8 +130,7 @@ public final class StageControlFrame extends MMFrame {
    private JButton[] plusButtons_ = new JButton[MAX_NUM_Z_PANELS];
    private JButton[] minusButtons_ = new JButton[MAX_NUM_Z_PANELS];
 
-   public static void showStageControl() {
-      Studio studio = org.micromanager.internal.MMStudio.getInstance();
+   public static void showStageControl(Studio studio) {
       if (staticFrame_ == null) {
          staticFrame_ = new StageControlFrame(studio);
          studio.events().registerForEvents(staticFrame_);
@@ -207,7 +211,7 @@ public final class StageControlFrame extends MMFrame {
       // set panels visible depending on what drives are actually present
       xyPanel_.setVisible(haveXY);
       zPanel_[0].setVisible(haveZ);
-      final String sysConfigFile = org.micromanager.internal.MMStudio.getInstance().getSysConfigFile();  // TODO add method to API
+      final String sysConfigFile = ((MMStudio) studio_).getSysConfigFile();  // TODO add method to API
       final String key = NR_Z_PANELS + sysConfigFile;
       int nrZPanels = settings_.getInteger(key, nrZDrives);
       // mailing list report 12/31/2019 encounters nrZPanels == 0, workaround:
@@ -586,7 +590,7 @@ public final class StageControlFrame extends MMFrame {
       
       minusButtons_[idx] = new JButton("-");
       minusButtons_[idx].addActionListener((ActionEvent arg0) -> {
-         String sysConfigFile = org.micromanager.internal.MMStudio.getInstance().getSysConfigFile();  // TODO add method to API
+         String sysConfigFile = ((MMStudio) studio_).getSysConfigFile();  // TODO add method to API
          int nrZPanels = settings_.getInteger(NR_Z_PANELS + sysConfigFile, 0);
          if (nrZPanels > 1) {
             settings_.putInteger(NR_Z_PANELS + sysConfigFile, nrZPanels-1);
@@ -596,7 +600,7 @@ public final class StageControlFrame extends MMFrame {
       
       plusButtons_[idx] = new JButton("+");
       plusButtons_[idx].addActionListener((ActionEvent arg0) -> {
-         String sysConfigFile = org.micromanager.internal.MMStudio.getInstance().getSysConfigFile();  // TODO add method to API
+         String sysConfigFile = ((MMStudio) studio_).getSysConfigFile();  // TODO add method to API
          int nrZPanels = settings_.getInteger(NR_Z_PANELS + sysConfigFile, 0);
          if (nrZPanels < MAX_NUM_Z_PANELS) {
             settings_.putInteger(NR_Z_PANELS + sysConfigFile, nrZPanels+1);
