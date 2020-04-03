@@ -155,13 +155,11 @@ public final class SnapLiveManager extends DataViewerListener
       
          
    }
-   
-   
+
    public SnapLiveManager(MMStudio mmStudio, CMMCore core) {
       mmStudio_ = mmStudio;
       core_ = core;
-      uiMovesStageManager_ = new UiMovesStageManager(mmStudio_);
-      mmStudio_.events().registerForEvents(uiMovesStageManager_);
+      uiMovesStageManager_ = mmStudio_.getUiMovesStageManager();
       displayInfoLock_ = new Object();
    }
 

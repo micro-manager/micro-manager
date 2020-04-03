@@ -46,6 +46,7 @@ import org.micromanager.events.SystemConfigurationLoadedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.navigation.UiMovesStageManager;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.TextUtils;
@@ -77,15 +78,12 @@ import javax.swing.JRadioButton;
 public final class StageControlFrame extends MMFrame {
    private final Studio studio_;
    private final CMMCore core_;
-   
+   private final UiMovesStageManager uiMovesStageManager_;
    private final MutablePropertyMapView settings_;
 
    private static final int MAX_NUM_Z_PANELS = 5;
-
    private static final int FRAME_X_DEFAULT_POS = 100;
    private static final int FRAME_Y_DEFAULT_POS = 100;
-   
-   private final ExecutorService stageMotionExecutor_;
 
    public static final String[] X_MOVEMENTS = new String[] {
       "SMALLMOVEMENT", "MEDIUMMOVEMENT", "LARGEMOVEMENT"
@@ -148,7 +146,7 @@ public final class StageControlFrame extends MMFrame {
       studio_ = gui;
       core_ = studio_.getCMMCore();
       settings_ = studio_.profile().getSettings(StageControlFrame.class);
-      stageMotionExecutor_ = Executors.newFixedThreadPool(2);
+      uiMovesStageManager_ = ((MMStudio) studio_).getUiMovesStageManager(); // TODO: add to API?
 
       initComponents();
 
@@ -314,7 +312,7 @@ public final class StageControlFrame extends MMFrame {
 
    /**
     * Called during constructor and never again.  Creates GUI components and adds
-    *    them to JPanel but they may be turned visible/invisible during operation.
+    *    them to JPanel, but they may be turned visible/invisible during operation.
     */
    private void initComponents() {
       setTitle("Stage Control");
@@ -697,26 +695,14 @@ public final class StageControlFrame extends MMFrame {
    }
    
    private void setRelativeXYStagePosition(double x, double y) {
-      try {
-         if (!core_.deviceBusy(core_.getXYStageDevice())) {
-            StageThread st = new StageThread(core_.getXYStageDevice(), x, y);
-            stageMotionExecutor_.execute(st);
-         }
-      } catch (Exception e) {
-         studio_.logs().logError(e);
-      }
-   }
+      // TODO: should we call moveSampleOnDisplay instead, so that sample moves as expected?
+      uiMovesStageManager_.getXYNavigator().moveXYStageUm(
+              core_.getXYStageDevice(), x, y);
+    }
 
    private void setRelativeStagePosition(double z, int idx) {
-      try {
-         String curDrive = zDriveSelect_[idx].getSelectedItem().toString();
-         if (!core_.deviceBusy(curDrive)) {
-            StageThread st = new StageThread(curDrive, z);
-            stageMotionExecutor_.execute(st);
-         }
-      } catch (Exception ex) {
-         studio_.logs().showError(ex);
-      }
+      String curDrive = zDriveSelect_[idx].getSelectedItem().toString();
+      uiMovesStageManager_.getZNavigator().setPosition(curDrive, z);
    }
 
    private void getXYPosLabelFromCore() throws Exception {

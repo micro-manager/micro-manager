@@ -97,6 +97,7 @@ import org.micromanager.internal.hcwizard.MMConfigFileException;
 import org.micromanager.internal.hcwizard.MicroscopeModel;
 import org.micromanager.internal.logging.LogFileManager;
 import org.micromanager.internal.menus.MMMenuBar;
+import org.micromanager.internal.navigation.UiMovesStageManager;
 import org.micromanager.internal.pipelineinterface.PipelineFrame;
 import org.micromanager.internal.pluginmanagement.DefaultPluginManager;
 import org.micromanager.internal.positionlist.PositionListDlg;
@@ -160,6 +161,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private DefaultEventManager eventManager_;
    private ApplicationSkin daytimeNighttimeManager_;
    private UserProfileManager userProfileManager_;
+   private UiMovesStageManager uiMovesStageManager_;
    
    // MMcore
    private CMMCore core_;
@@ -289,6 +291,10 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       
       // Lots of places use this. instantiate it first.
       eventManager_ = new DefaultEventManager();
+
+      // used by Snap/Live Manager and StageControlFrame
+      uiMovesStageManager_ = new UiMovesStageManager(this);
+      events().registerForEvents(uiMovesStageManager_);
       
       snapLiveManager_ = new SnapLiveManager(this, core_);
       events().registerForEvents(snapLiveManager_);
@@ -1797,6 +1803,11 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    @Override
    public AlertManager getAlertManager() {
       return alerts();
+   }
+
+
+   public UiMovesStageManager getUiMovesStageManager () {
+      return uiMovesStageManager_;
    }
 
    @Override

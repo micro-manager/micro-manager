@@ -117,4 +117,12 @@ public final class UiMovesStageManager {
       deActivate(e.getDataViewer());
    }
 
+   public XYNavigator getXYNavigator() {
+      return xyNavigator_;
+   }
+
+   public ZNavigator getZNavigator() {
+      return zNavigator_;
+   }
+
 }
