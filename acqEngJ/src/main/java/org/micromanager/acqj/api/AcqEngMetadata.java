@@ -71,7 +71,7 @@ public class AcqEngMetadata {
    private static final String PIX_TYPE_GRAY16 = "GRAY16";
    private static final String CORE_XYSTAGE = "Core-XYStage";
    private static final String CORE_FOCUS = "Core-Focus";
-   private static final String AXES = "AxesPositions";
+   private static final String AXES = "Axes";
    
    public static final String CHANNEL_AXIS = "channel";
    public static final String TIME_AXIS = "time";
