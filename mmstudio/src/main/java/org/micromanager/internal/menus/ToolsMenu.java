@@ -76,7 +76,7 @@ public final class ToolsMenu {
 
       GUIUtils.addMenuItem(toolsMenu_, "Stage Control...",
               "Control the stage position with a virtual joystick", () -> {
-                 StageControlFrame.showStageControl();
+                 StageControlFrame.showStageControl(mmStudio_);
               },
               "move.png");
 

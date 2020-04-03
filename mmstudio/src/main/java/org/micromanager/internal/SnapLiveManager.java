@@ -95,7 +95,7 @@ public final class SnapLiveManager extends DataViewerListener
 
    private final MMStudio mmStudio_;
    private final CMMCore core_;
-   private final UiMovesStageManager clickToMoveManager_;
+   private final UiMovesStageManager uiMovesStageManager_;
    private DisplayController display_;
    private DefaultRewritableDatastore store_;
    private Pipeline pipeline_;
@@ -155,13 +155,11 @@ public final class SnapLiveManager extends DataViewerListener
       
          
    }
-   
-   
+
    public SnapLiveManager(MMStudio mmStudio, CMMCore core) {
       mmStudio_ = mmStudio;
       core_ = core;
-      clickToMoveManager_ = new UiMovesStageManager(mmStudio_);
-      mmStudio_.events().registerForEvents(clickToMoveManager_);
+      uiMovesStageManager_ = mmStudio_.getUiMovesStageManager();
       displayInfoLock_ = new Object();
    }
 
@@ -499,7 +497,7 @@ public final class SnapLiveManager extends DataViewerListener
       display_.addListener(this, 1);
       display_.setCustomTitle(TITLE);
       if (mmStudio_.getMMMenubar().getToolsMenu().getMouseMovesStage() && display_ != null) {
-         clickToMoveManager_.activate(display_);
+         uiMovesStageManager_.activate(display_);
       }
       
       synchronized (lastImageForEachChannel_) {
@@ -517,9 +515,9 @@ public final class SnapLiveManager extends DataViewerListener
    public void onMouseMovesStageStateChange(MouseMovesStageStateChangeEvent e) {
       if (display_ != null) {
          if (e.getIsEnabled()) {
-            clickToMoveManager_.activate(display_);
+            uiMovesStageManager_.activate(display_);
          } else {
-            clickToMoveManager_.deActivate(display_);
+            uiMovesStageManager_.deActivate(display_);
          }
       }
    }

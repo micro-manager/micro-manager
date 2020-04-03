@@ -518,7 +518,7 @@ public final class MainFrame extends MMFrame {
       // https://openclipart.org/detail/198011/mono-move
       AbstractButton moveButton = createButton(null, "move.png",
             "Control the current stage with a virtual joystick", () -> {
-               StageControlFrame.showStageControl();
+               StageControlFrame.showStageControl(mmStudio_);
       });
       stagePanel.add(moveButton, SMALLBUTTON_SIZE);
 
