@@ -25,6 +25,7 @@ import org.micromanager.Studio;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
+import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 import org.micromanager.internal.MMStudio;
 
 /**
@@ -60,10 +61,15 @@ public final class UiMovesStageManager {
       if (((MMStudio) studio_).getMMMenubar().getToolsMenu().getMouseMovesStage()) {
          dragListener = new CenterAndDragListener(studio_, xyNavigator_);
          display.registerForEvents(dragListener);
+         studio_.events().registerForEvents(dragListener);
          wheelListener = new ZWheelListener(studio_, zNavigator_);
          display.registerForEvents(wheelListener);
+         studio_.events().registerForEvents(wheelListener);
          keyListener = new XYZKeyListener(studio_, xyNavigator_, zNavigator_);
          display.registerForEvents(keyListener);
+         // EVALUATE: Should keys always be active? I like the ability to switch
+         // them off so that the user can use the ImageJ shortcuts
+         studio_.events().registerForEvents(keyListener);
       }
       displayToDragListener_.put(display, dragListener);
       displayToWheelListener_.put(display, wheelListener);

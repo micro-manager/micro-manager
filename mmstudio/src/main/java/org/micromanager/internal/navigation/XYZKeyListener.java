@@ -22,6 +22,7 @@ import com.google.common.eventbus.Subscribe;
 import mmcorej.CMMCore;
 import org.micromanager.Studio;
 import org.micromanager.display.internal.event.DisplayKeyPressEvent;
+import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 import java.awt.event.KeyEvent;
@@ -44,6 +45,7 @@ public final class XYZKeyListener  {
 	double[] xMovesMicron_;
 	double[] yMovesMicron_;
 	double[] zMovesMicron_;
+	private boolean active_;
 
 	/**
 	 * The XYZKeyListener receives settings from the StageControl plugin
@@ -71,12 +73,17 @@ public final class XYZKeyListener  {
        yMovesMicron_ = new double[] {1.0, core_.getImageHeight() / 4, core_.getImageHeight()};
        zMovesMicron_ = new double[] {1.0, 10.0};
 
+       active_ = false;
+
        settings_ = studio.profile().getSettings(
        		org.micromanager.internal.dialogs.StageControlFrame.class);
 	}
 
 	@Subscribe
 	public void keyPressed(DisplayKeyPressEvent dkpe) {
+		if (!active_) {
+			return;
+		}
 		KeyEvent e = dkpe.getKeyEvent();
 		boolean consumed = false;
 		for (int i = 0; i < xMovesMicron_.length; ++i) {
@@ -157,6 +164,15 @@ public final class XYZKeyListener  {
 			return;
 
 		zNavigator_.setPosition(zStage, micron);
+	}
+
+	@Subscribe
+	public void onActiveChange (MouseMovesStageStateChangeEvent mouseMovesStageStateChangeEvent) {
+		if (mouseMovesStageStateChangeEvent.getIsEnabled()) {
+			active_ = true;
+		} else {
+			active_ = false;
+		}
 	}
 
 }
