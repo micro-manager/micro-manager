@@ -128,7 +128,7 @@ public final class MMVirtualStack extends VirtualStack {
    public ImageProcessor getProcessor(int flatIndex) {
       Coords coords = parent_.getMMCoordsForIJFlatIndex(flatIndex);
       Image image = parent_.getMMImage(coords);
-      return DefaultImageJConverter.createProcessor(image, false);
+      return DefaultImageJConverter.createProcessor(image, true);
    }
 
    @Override
