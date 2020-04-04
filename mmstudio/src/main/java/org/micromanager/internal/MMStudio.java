@@ -300,6 +300,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       events().registerForEvents(snapLiveManager_);
 
       shutterManager_ = new DefaultShutterManager(studio_);
+      // DisplayManager needs to be created before Pipelineframe and albumInstance
+      displayManager_ = new DefaultDisplayManager(this);
       albumInstance_ = new DefaultAlbum(studio_);
 
       // The tools menu depends on the Quick-Access Manager.
@@ -309,9 +311,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       acqEngine_.setParentGUI(this);
       acqEngine_.setZStageDevice(core_.getFocusDevice());
 
-      
-      // DisplayManager needs to be created before Pipelineframe
-      displayManager_ = new DefaultDisplayManager(this);
+
       
       // Load, but do not show, image pipeline panel.
       // Note: pipelineFrame is used in the dataManager, however, pipelineFrame 
