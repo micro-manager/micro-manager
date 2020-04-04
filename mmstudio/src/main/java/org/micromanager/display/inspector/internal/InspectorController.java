@@ -200,6 +200,7 @@ public final class InspectorController
 
    @Override
    public void close() {
+      studio_.events().unregisterForEvents(this);
       viewerCollection_.unregisterForEvents(this);
       if (frame_ != null) {
          detachFromDataViewer();
