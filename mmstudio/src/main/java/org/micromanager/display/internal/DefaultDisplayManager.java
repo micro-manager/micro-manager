@@ -464,20 +464,38 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
          // No open image windows.
          return;
       }
-      int result = JOptionPane.showOptionDialog(null,
-            "Close all open image windows?", "Micro-Manager",
-            JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
-            CLOSE_OPTIONS, CLOSE_OPTIONS[0]);
-      if (result <= 0) { // cancel
-         return;
+      boolean complicatedPromptNeeded = false;
+      for (DisplayWindow displayWindow : getAllImageWindows()) {
+         if (!this.canCloseViewerWithoutPrompting(displayWindow)) {
+            complicatedPromptNeeded = true;
+         }
       }
-      if (result == 2 && JOptionPane.showConfirmDialog(null,
-               "Are you sure you want to close all image windows without prompting to save?",
-               "Micro-Manager", JOptionPane.YES_NO_OPTION) == 1) {
-         // Close without prompting, but user backed out.
-         return;
+      if (complicatedPromptNeeded) {
+         int result = JOptionPane.showOptionDialog(null,
+                 "Close all open image windows?", "Micro-Manager",
+                 JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+                 CLOSE_OPTIONS, CLOSE_OPTIONS[0]);
+         if (result <= 0) { // cancel
+            return;
+         }
+         // this prompt feels like nagging, but may prevent disastrous data loss
+         if (result == 2 && JOptionPane.showConfirmDialog(null,
+                 "Are you sure you want to close all image windows without prompting to save?",
+                 "Micro-Manager", JOptionPane.YES_NO_OPTION) == 1) {
+            // Close without prompting, but user backed out.
+            return;
+         }
+         studio_.displays().closeAllDisplayWindows(result == 1);
+      } else {
+         // simple prompt:
+         if (JOptionPane.showConfirmDialog(null,
+                 "Are you sure you want to close all image windows?",
+                 "Micro-Manager", JOptionPane.YES_NO_OPTION) == 1) {
+            // User backed out.
+            return;
+         }
+         studio_.displays().closeAllDisplayWindows(false);
       }
-      studio_.displays().closeAllDisplayWindows(result == 1);
    }
 
    @Override
@@ -488,7 +506,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
             return false;
          }
          else if (!shouldPromptToSave) {
-            // Force display closed.
+            // Forcefully close display.
             display.close();
          }
       }
@@ -547,6 +565,53 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    }
 
    /**
+    * Checks if this is the last display for a managed Datastore, and
+    * if so, whether that datastore can be closed without prompting
+    * Informational only, no actions are taken, so no side effects
+    * (unlike canCLoseViewer)    *
+    *
+    * @return true if the viewer can be closed without prompting
+    */
+   public boolean canCloseViewerWithoutPrompting(DataViewer viewer) {
+      DataProvider provider = viewer.getDataProvider();
+      List<DisplayWindow> displays;
+      synchronized (this) {
+         if (!providerToDisplays_.containsKey(provider)) {
+            ReportingUtils.logError(
+                    "Received request to close a display that is not associated with a managed datastore.");
+            return true;
+         }
+         displays = getDisplays(provider);
+
+         if (viewer instanceof DisplayWindow) {
+            DisplayWindow window = (DisplayWindow) viewer;
+            if (!displays.contains(window)) {
+               // This should also never happen.
+               ReportingUtils.logError(
+                       "Was notified of a request to close a display that we didn't know was associated with datastore " + provider);
+            }
+            if (displays.size() > 1) {
+               // Not last display, so OK to close
+               return true;
+            }
+            // Last display; check for saving now.
+            if (provider instanceof Datastore) {
+               Datastore store = (Datastore) provider;
+               if (store.getSavePath() != null) {
+                  // Data have been saved already
+                  return true;
+               }
+               else {
+                  // prompt needed
+                  return false;
+               }
+            }
+         }
+         return false;
+      }
+   }
+
+   /**
     * Check if this is the last display for a Datastore that we are managing,
     * and verify closing without saving (if appropriate).
     *
@@ -554,7 +619,6 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
     */
    @Override
    public boolean canCloseViewer(DataViewer viewer) {
-
       DataProvider provider = viewer.getDataProvider();
       List<DisplayWindow> displays;
       synchronized (this) {
