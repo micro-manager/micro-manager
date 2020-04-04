@@ -694,13 +694,15 @@ public final class SnapLiveManager extends DataViewerListener
                     newImage.getHeight(), newImage.getNumComponents(),
                     newImage.getBytesPerPixel()) ;
             displayInfo_.setImageNumber(newImageChannel, newImage.getMetadata().getImageNumber());
-            
-            if (lastImageForEachChannel_.size() > newImageChannel) {
-               lastImageForEachChannel_.set(newImageChannel, newImage);
-            } else {
-               lastImageForEachChannel_.add(newImageChannel, newImage);
+
+            synchronized(lastImageForEachChannel_) {
+               if (lastImageForEachChannel_.size() > newImageChannel) {
+                  lastImageForEachChannel_.set(newImageChannel, newImage);
+               }
+               else {
+                  lastImageForEachChannel_.add(newImageChannel, newImage);
+               }
             }
-            
          }
 
          synchronized (pipelineLock_) {
