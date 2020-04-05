@@ -25,7 +25,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import javax.swing.JOptionPane;
 import org.micromanager.acqj.api.Acquisition;
-import org.micromanager.magellan.api.MagellanAcquisitionAPI;
 import org.micromanager.magellan.internal.gui.GUI;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.Log;
@@ -136,6 +135,10 @@ public class MagellanAcquisitionsManager {
          currentAcq_.abort();
       }
 
+   }
+   
+   public MagellanGUIAcquisition createAcquisition(int index) {
+      return new MagellanGUIAcquisition(acqSettingsList_.get(index));
    }
 
    public void runAllAcquisitions() {

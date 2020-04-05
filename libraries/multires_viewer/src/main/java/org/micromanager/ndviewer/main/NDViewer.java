@@ -719,6 +719,7 @@ public class NDViewer implements ViewerInterface {
          if (animationTimer_ != null) {
             animationTimer_.stop();
          }
+         dataSource_.close();
          animationTimer_ = null;
          dataSource_ = null;
          displayWindow_ = null;

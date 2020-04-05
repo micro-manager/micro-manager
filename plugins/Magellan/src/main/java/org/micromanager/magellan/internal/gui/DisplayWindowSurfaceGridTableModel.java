@@ -15,7 +15,6 @@ import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridListener
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridManager;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceInterpolator;
 import org.micromanager.magellan.internal.surfacesandregions.XYFootprint;
-import org.micromanager.ndviewer.main.NDViewer;
 
 /**
  *

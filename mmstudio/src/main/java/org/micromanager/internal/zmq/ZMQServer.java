@@ -267,6 +267,9 @@ public class ZMQServer extends ZMQSocketWrapper {
             reply.put("type", "none");
             reply.put("version", VERSION);
             reply.put("api", ZMQUtil.parseConstructors(apiClasses_));
+//            for (Class c : apiClasses_) {
+//               System.out.println(c);
+//            }
             return reply.toString().getBytes();
          }
 //         case "pull-socket": { //Create a new Pull socket on the specified port

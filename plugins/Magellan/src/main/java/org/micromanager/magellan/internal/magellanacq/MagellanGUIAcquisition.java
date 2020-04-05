@@ -45,7 +45,8 @@ import org.micromanager.magellan.internal.surfacesandregions.Point3d;
  *
  * @author Henry
  */
-public class MagellanGUIAcquisition extends FixedSettingsAcquisition implements MagellanAcquisition {
+public class MagellanGUIAcquisition extends FixedSettingsAcquisition 
+        implements MagellanAcquisition {
 
    private double zOrigin_, zStep_;
    private int minSliceIndex_, maxSliceIndex_;

@@ -331,11 +331,8 @@ public class ZMQUtil {
       return methodArray;
    }
 
-   //Add java classes that are allowed to pass to python to avoid stuff leaking out
-   //TODO: specify filters as arguments so org.micromanager inst hardcoded
-   public static Set<Class> getAPIClasses() {
+   private static Set<Class> parseAPIWithClassLoader(ClassLoader classLoader) {
       //TODO: pass in classloader as an argument
-      ClassLoader classLoader = IJ.getClassLoader();
 
       HashSet<Class> apiClasses = new HashSet<Class>();
 
@@ -355,6 +352,7 @@ public class ZMQUtil {
 
       //TODO: this is for netbeans, delte or split out
       mmPackages.add("org.micromanager.remote");
+      mmPackages.add("org.micromanager.magellan.api");
 
       // ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 //      studio_.logs().logDebugMessage("ClassLoader in ZMQServer: " + classLoader.toString());  
@@ -405,6 +403,13 @@ public class ZMQUtil {
 //         studio_.logs().logDebugMessage("ZMQServer: no classes found");
 //      }
       return classSet;
+   }
+
+   //Add java classes that are allowed to pass to python to avoid stuff leaking out
+   //TODO: specify filters as arguments so org.micromanager inst hardcoded
+   public static Set<Class> getAPIClasses() {
+      Set<Class> ijClasses = parseAPIWithClassLoader(IJ.getClassLoader());
+      return ijClasses;
    }
 
    private static Collection<Class> getClassesFromJarFile(File directory) {

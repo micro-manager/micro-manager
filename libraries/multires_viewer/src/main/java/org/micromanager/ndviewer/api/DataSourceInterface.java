@@ -56,4 +56,9 @@ public interface DataSourceInterface {
     */
    public String getDiskLocation();
 
+   /**
+    * Called when viewer is closing
+    */
+   public void close();
+
 }

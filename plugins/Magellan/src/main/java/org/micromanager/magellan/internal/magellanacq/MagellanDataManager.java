@@ -66,7 +66,7 @@ import org.micromanager.ndviewer.api.ViewerAcquisitionInterface;
  * conversion between pixel coordinate space (which the viewer and storage work
  * in) and the stage coordiante space (which the acquisition works in)
  */
-public class MagellanDataManager implements DataSink, DataSourceInterface, 
+public class MagellanDataManager implements DataSink, DataSourceInterface,
         SurfaceGridListener {
 
    private StorageAPI storage_;
@@ -246,6 +246,8 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
          storage_.finishedWriting();
       }
       display_.setWindowTitle(getUniqueAcqName() + " (Finished)");
+      displayCommunicationExecutor_.shutdownNow();
+      displayCommunicationExecutor_ = null;
    }
 
    public boolean isFinished() {
@@ -270,27 +272,28 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
    }
 
    /**
-    * Call when display and acquisition both done
+    * The display calls this when its closing
     */
-   public void viewerClosing() {
+   @Override
+   public void close() {
       if (storage_.isFinished()) {
+         if (!loadedData_) {
+            SurfaceGridManager.getInstance().unregisterSurfaceGridListener(this);
+         }
          storage_.close();
          storage_ = null;
-         displayCommunicationExecutor_.shutdownNow();
-         displayCommunicationExecutor_ = null;
+
          mouseListener_ = null;
          overlayer_ = null;
          display_ = null;
          zExploreControls_ = null;
-         if (!loadedData_) {
-            SurfaceGridManager.getInstance().unregisterSurfaceGridListener(this);
-         }
+
       } else {
          //keep resubmitting so that finish, which comes from a different thread, happens first
          SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-               MagellanDataManager.this.viewerClosing();
+               MagellanDataManager.this.close();
             }
          });
       }

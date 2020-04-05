@@ -119,6 +119,10 @@ public class RemoteViewerStorageAdapter implements DataSourceInterface, DataSink
    public String getDiskLocation() {
       return dir_;
    }
+   
+   public void close() {
+      //anything should be done here? cant think of it now...
+   }
 
    ///////////// Data sink interface required by acq eng /////////////
    @Override
