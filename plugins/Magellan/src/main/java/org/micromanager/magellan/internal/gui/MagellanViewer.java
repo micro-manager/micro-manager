@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.function.Function;
 import javax.swing.JPanel;
 import org.json.JSONObject;
+import org.micromanager.acqj.api.AcqEngMetadata;
 import org.micromanager.magellan.internal.gui.ExploreControlsPanel;
 import org.micromanager.magellan.internal.magellanacq.MagellanDataManager;
 import org.micromanager.magellan.internal.magellanacq.MagellanMD;
@@ -42,21 +43,13 @@ public class MagellanViewer implements ViewerInterface {
       manager_ = cache;
    }
 
-   int getTileHeight() {
-      return manager_.getTileHeight();
-   }
-
-   int getTileWidth() {
-      return manager_.getTileWidth();
-   }
-
    boolean anythingAcquired() {
       return manager_.anythingAcquired();
    }
 
    private void moveViewToVisibleArea() {
       //check for valid tiles (at lowest res) at this slice        
-      Set<Point> tiles = manager_.getTileIndicesWithDataAt(viewer_.getAxisPosition("z"));
+      Set<Point> tiles = manager_.getTileIndicesWithDataAt(viewer_.getAxisPosition(AcqEngMetadata.Z_AXIS));
       if (tiles.size() == 0) {
          return;
       }
@@ -68,10 +61,10 @@ public class MagellanViewer implements ViewerInterface {
 
       for (Point p : tiles) {
          //calclcate limits on margin of tile that must remain in view
-         long tileX1 = (long) ((0.1 + p.x) * manager_.getTileWidth());
-         long tileX2 = (long) ((0.9 + p.x) * manager_.getTileWidth());
-         long tileY1 = (long) ((0.1 + p.y) * manager_.getTileHeight());
-         long tileY2 = (long) ((0.9 + p.y) * manager_.getTileHeight());
+         long tileX1 = (long) ((0.1 + p.x) * manager_.getDisplayTileWidth());
+         long tileX2 = (long) ((0.9 + p.x) * manager_.getDisplayTileWidth());
+         long tileY1 = (long) ((0.1 + p.y) * manager_.getDisplayTileHeight());
+         long tileY2 = (long) ((0.9 + p.y) * manager_.getDisplayTileHeight());
 //         long visibleWidth = (long) (0.8 * imageCache_.getTileWidth());
 //         long visibleHeight = (long) (0.8 * imageCache_.getTileHeight());
          //get bounds of viewing area
@@ -119,8 +112,8 @@ public class MagellanViewer implements ViewerInterface {
       double scale = viewer_.getMagnification();
       int fullResX = (int) ((x / scale) + viewer_.getViewOffset().x);
       int fullResY = (int) ((y / scale) + viewer_.getViewOffset().y);
-      int xTileIndex = fullResX / manager_.getTileWidth() - (fullResX >= 0 ? 0 : 1);
-      int yTileIndex = fullResY / manager_.getTileHeight() - (fullResY >= 0 ? 0 : 1);
+      int xTileIndex = fullResX / manager_.getDisplayTileWidth() - (fullResX >= 0 ? 0 : 1);
+      int yTileIndex = fullResY / manager_.getDisplayTileHeight() - (fullResY >= 0 ? 0 : 1);
       return new Point(xTileIndex, yTileIndex);
    }
 
@@ -134,8 +127,8 @@ public class MagellanViewer implements ViewerInterface {
     */
    public Point getDisplayedPixel(long row, long col) {
       double scale = viewer_.getMagnification();
-      int x = (int) ((col * manager_.getTileWidth() - viewer_.getViewOffset().x) * scale);
-      int y = (int) ((row * manager_.getTileWidth() - viewer_.getViewOffset().y) * scale);
+      int x = (int) ((col * manager_.getDisplayTileWidth() - viewer_.getViewOffset().x) * scale);
+      int y = (int) ((row * manager_.getDisplayTileWidth() - viewer_.getViewOffset().y) * scale);
       return new Point(x, y);
    }
 

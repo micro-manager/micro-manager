@@ -303,6 +303,16 @@ public class NDViewer implements ViewerInterface {
     */
    public void newImageArrived(HashMap<String, Integer> axesPositions,
            String channelName) {
+      if (isImageXYBounded()) {
+         int[] newBounds = dataSource_.getBounds();
+         int[] oldBounds = viewCoords_.getBounds();
+         double xResize = (oldBounds[2] - oldBounds[0]) / (double) (newBounds[2] - newBounds[0]);
+         double yResize = (oldBounds[3] - oldBounds[1]) / (double) (newBounds[3] - newBounds[1]);
+         viewCoords_.setImageBounds(newBounds);
+         if (xResize < 1 || yResize < 1) {
+            zoom(1 / Math.min(xResize, yResize), null);
+         }
+      }
       if (viewCoords_.getActiveChannel() == null) {
          viewCoords_.setActiveChannel(channelName);
       }
@@ -438,7 +448,7 @@ public class NDViewer implements ViewerInterface {
    }
 
    public void abortAcquisition() {
-      if (acq_ != null && !acq_.isComplete()) {
+      if (acq_ != null && !acq_.isFinished()) {
          int result = JOptionPane.showConfirmDialog(null, "Finish acquisition?",
                  "Finish Current Acquisition", JOptionPane.OK_CANCEL_OPTION);
          if (result == JOptionPane.OK_OPTION) {
@@ -657,7 +667,7 @@ public class NDViewer implements ViewerInterface {
          });
       } else {
          //check to stop acquisiton?, return here if the attempt to close window unsuccesslful
-         if (acq_ != null && !acq_.isComplete()) {
+         if (acq_ != null && !acq_.isFinished()) {
             int result = JOptionPane.showConfirmDialog(null, "Finish acquisition?",
                     "Finish Current Acquisition", JOptionPane.OK_CANCEL_OPTION);
             if (result == JOptionPane.OK_OPTION) {

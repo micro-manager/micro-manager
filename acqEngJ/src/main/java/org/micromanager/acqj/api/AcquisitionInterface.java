@@ -31,7 +31,7 @@ public interface AcquisitionInterface {
     *
     * @return
     */
-   public boolean isComplete();
+   public boolean isFinished();
 
    /**
     * return if acquisition is paused (i.e. not acquiring new data but not

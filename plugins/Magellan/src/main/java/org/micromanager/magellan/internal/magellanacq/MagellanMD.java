@@ -23,7 +23,9 @@ public class MagellanMD extends AcqEngMetadata {
    private static final String OVERLAP_X = "GridPixelOverlapX";
    private static final String OVERLAP_Y = "GridPixelOverlapY";
    
-   public static final String CHANNEL_AXIS = "c";
+   
+   public static final String SAVING_NAME = "SavingPrefix";
+   public static final String SAVING_DIR = "SavingDir";
    
    public static void setSurfacePoints(JSONObject tags, JSONArray arr) {
       try {
@@ -82,6 +84,22 @@ public class MagellanMD extends AcqEngMetadata {
          return summaryMD.getInt(OVERLAP_Y);
       } catch (JSONException ex) {
          throw new RuntimeException("Couldnt find pixel overlap in image tags");
+      }
+   }
+
+   static void setSavingName(JSONObject md, String name) {
+      try {
+         md.put(SAVING_NAME, name);
+      } catch (JSONException ex) {
+         throw new RuntimeException("Couldnt set pixel overlap tag");
+      }
+   }
+   
+   static void setSavingDir(JSONObject md, String dir) {
+      try {
+         md.put(SAVING_DIR, dir);
+      } catch (JSONException ex) {
+         throw new RuntimeException("Couldnt set pixel overlap tag");
       }
    }
 

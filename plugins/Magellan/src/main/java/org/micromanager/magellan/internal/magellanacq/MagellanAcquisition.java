@@ -1,6 +1,7 @@
 package org.micromanager.magellan.internal.magellanacq;
 
 import org.micromanager.acqj.api.AcquisitionInterface;
+import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
 import org.micromanager.ndviewer.api.ViewerAcquisitionInterface;
 
 /**
@@ -19,5 +20,9 @@ public interface MagellanAcquisition extends ViewerAcquisitionInterface, Acquisi
    public int getOverlapY();
    
    public double getZStep();
+   
+   public ChannelGroupSettings getChannels();
+   
+   public MagellanGenericAcquisitionSettings getAcquisitionSettings();
 
 }

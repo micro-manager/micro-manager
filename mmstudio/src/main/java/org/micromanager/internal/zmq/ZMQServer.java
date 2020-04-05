@@ -30,7 +30,7 @@ public class ZMQServer extends ZMQSocketWrapper {
    protected static Set<Class> apiClasses_;
 
    //Copied from magellan version for backwards compatibility, but they are now seperate I guess
-   public static final String VERSION = "2.3.0";
+   public static final String VERSION = "2.4.0";
 
    private Function<Class, Object> classMapper_;
    private static ZMQServer masterServer_;

@@ -23,7 +23,7 @@ public class MultiDAcquisition extends FixedSettingsAcquisition {
    private MultiDAcqSettings settings_;
    
    public MultiDAcquisition( MultiDAcqSettings settings, DataSink sink) {
-      super(settings.dir_, settings.name_, sink);
+      super(sink);
       settings_ = settings;
    }
 

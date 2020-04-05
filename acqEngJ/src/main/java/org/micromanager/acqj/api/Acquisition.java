@@ -47,9 +47,9 @@ public class Acquisition implements AcquisitionInterface {
    protected boolean zStageHasLimits_ = false;
    protected double zStageLowerLimit_, zStageUpperLimit_;
    protected AcquisitionEvent lastEvent_ = null;
-   protected volatile boolean finished_, completed_ = false;
+   protected volatile boolean finished_;
+   protected volatile boolean abortRequested_ = false;
    private JSONObject summaryMetadata_;
-   private final String name_, dir_;
    private long startTime_ms_ = -1;
    private volatile boolean paused_ = false;
    private CopyOnWriteArrayList<String> channelNames_ = new CopyOnWriteArrayList<String>();
@@ -63,20 +63,32 @@ public class Acquisition implements AcquisitionInterface {
            = new LinkedBlockingDeque<TaggedImage>(IMAGE_QUEUE_SIZE);
    private ConcurrentHashMap<TaggedImageProcessor, LinkedBlockingDeque<TaggedImage>> processorOutputQueues_
            = new ConcurrentHashMap<TaggedImageProcessor, LinkedBlockingDeque<TaggedImage>>();
+   private Object acqFinishedFutureLock_ = new Object();
 
-   public Acquisition(String dir, String name, DataSink sink) {
+   public Acquisition(DataSink sink) {
       core_ = Engine.getCore();
-      name_ = name;
-      dir_ = dir;
       dataSink_ = sink;
       initialize();
    }
 
+   /**
+    * Dont call this one unless you know what you're doing
+    */
+   public Acquisition() {
+   }
+   
+   public boolean isAbortRequested() {
+      return abortRequested_;
+   }
+
    public void abort() {
+      abortRequested_ = true;
       if (this.isPaused()) {
          this.togglePaused();
       }
-      acqFinishedFuture_ = Engine.getInstance().finishAcquisition(this);
+      synchronized (acqFinishedFutureLock_) {
+         acqFinishedFuture_ = Engine.getInstance().finishAcquisition(this);
+      }
    }
 
    public void addToSummaryMetadata(JSONObject summaryMetadata) {
@@ -117,7 +129,7 @@ public class Acquisition implements AcquisitionInterface {
                   for (TaggedImageProcessor p : imageProcessors_) {
                      p.close();
                   }
-                  completed_ = true;
+//                  completed_ = true;
                   return;
                }
             }
@@ -156,24 +168,26 @@ public class Acquisition implements AcquisitionInterface {
    public void close() {
       try {
          //wait for event generation to shut down
-         if (acqFinishedFuture_ != null) {
-            while (!acqFinishedFuture_.isDone()) {
-               try {
-                  Thread.sleep(1);
-               } catch (InterruptedException ex) {
-                  throw new RuntimeException("Interrupted while waiting to cancel");
+         synchronized (acqFinishedFutureLock_) {
+            if (acqFinishedFuture_ != null) {
+               while (!acqFinishedFuture_.isDone()) {
+                  try {
+                     Thread.sleep(1);
+                  } catch (InterruptedException ex) {
+                     throw new RuntimeException("Interrupted while waiting to cancel");
+                  }
                }
-            }
-            //wait for final signal to be sent to saving class..cant do much byond that
-            Future executionFuture = acqFinishedFuture_.get();
-            while (!executionFuture.isDone()) {
-               try {
-                  Thread.sleep(1);
-               } catch (InterruptedException ex) {
-                  throw new RuntimeException("Interrupted while waiting to cancel");
+               //wait for final signal to be sent to saving class..cant do much byond that
+               Future executionFuture = acqFinishedFuture_.get();
+               while (!executionFuture.isDone()) {
+                  try {
+                     Thread.sleep(1);
+                  } catch (InterruptedException ex) {
+                     throw new RuntimeException("Interrupted while waiting to cancel");
+                  }
                }
+               executionFuture.get();
             }
-            executionFuture.get();
          }
       } catch (InterruptedException ex) {
          throw new RuntimeException(ex);
@@ -186,7 +200,7 @@ public class Acquisition implements AcquisitionInterface {
     * 1) Get the names or core devices to be used in acquistion 2) Create
     * Summary metadata 3) Initialize data sink
     */
-   private void initialize() {
+   protected void initialize() {
       xyStage_ = core_.getXYStageDevice();
       zStage_ = core_.getFocusDevice();
       //"postion" is not generic name..and as of right now there is now way of getting generic z positions
@@ -203,7 +217,7 @@ public class Acquisition implements AcquisitionInterface {
       } catch (Exception ex) {
          throw new RuntimeException("Problem communicating with core to get Z stage limits");
       }
-      JSONObject summaryMetadata = AcqEngMetadata.makeSummaryMD(name_, this);
+      JSONObject summaryMetadata = AcqEngMetadata.makeSummaryMD(this);
       addToSummaryMetadata(summaryMetadata);
 
       try {
@@ -227,7 +241,9 @@ public class Acquisition implements AcquisitionInterface {
    private synchronized boolean saveImage(TaggedImage image) {
       if (image.tags == null && image.pix == null) {
          dataSink_.finished();
-         acqFinishedFuture_ = null;
+         synchronized (acqFinishedFutureLock_) {
+            acqFinishedFuture_ = null;
+         }
          return true;
       } else {
          //Now that all data processors have run, the channel index can be inferred
@@ -250,10 +266,6 @@ public class Acquisition implements AcquisitionInterface {
 
    public String getZStageName() {
       return zStage_;
-   }
-
-   public boolean isComplete() {
-      return completed_;
    }
 
    public long getStartTime_ms() {
@@ -296,7 +308,7 @@ public class Acquisition implements AcquisitionInterface {
       finished_ = true;
    }
 
-   public boolean isMarkedFinished() {
+   public boolean isFinished() {
       return finished_;
    }
 }

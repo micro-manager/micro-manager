@@ -28,7 +28,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.acqj.internal.acqengj.Engine;
-import org.micromanager.acqj.internal.acqengj.affineTransformUtils;
+import org.micromanager.acqj.internal.acqengj.AffineTransformUtils;
 
 /**
  * Convenience/standardization for Acq Engine metadata
@@ -153,9 +153,8 @@ public class AcqEngMetadata {
     * @param savingName
     * @return
     */
-   public static JSONObject makeSummaryMD(String savingName, AcquisitionInterface acq) {
+   public static JSONObject makeSummaryMD(AcquisitionInterface acq) {
       JSONObject summary = new JSONObject();
-      AcqEngMetadata.setSavingPrefix(summary, savingName);
 
       AcqEngMetadata.setAcqDate(summary, getCurrentDateAndTime());
 
@@ -181,9 +180,9 @@ public class AcqEngMetadata {
       }
 
       //affine transform
-      if (affineTransformUtils.isAffineTransformDefined()) {
-         AffineTransform at = affineTransformUtils.getAffineTransform(0, 0);
-         AcqEngMetadata.setAffineTransformString(summary, affineTransformUtils.transformToString(at));
+      if (AffineTransformUtils.isAffineTransformDefined()) {
+         AffineTransform at = AffineTransformUtils.getAffineTransform(0, 0);
+         AcqEngMetadata.setAffineTransformString(summary, AffineTransformUtils.transformToString(at));
       } else {
          AcqEngMetadata.setAffineTransformString(summary, "Undefined");
       }
@@ -316,23 +315,6 @@ public class AcqEngMetadata {
          map.put(INITIAL_POS_LIST, initialPositionList);
       } catch (JSONException ex) {
          throw new RuntimeException("Couldn set Initial position list");
-      }
-   }
-
-   public static String getSavingPrefix(JSONObject map) {
-      try {
-         return map.getString(SAVING_PREFIX);
-      } catch (JSONException ex) {
-         throw new RuntimeException("saving prefix tag missing");
-
-      }
-   }
-
-   public static void setSavingPrefix(JSONObject map, String prefix) {
-      try {
-         map.put(SAVING_PREFIX, prefix);
-      } catch (JSONException ex) {
-         throw new RuntimeException("Couldn set saving prefix");
       }
    }
 

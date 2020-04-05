@@ -10,6 +10,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
 import javax.swing.SwingUtilities;
+import org.micromanager.acqj.api.AcqEngMetadata;
 import org.micromanager.magellan.internal.magellanacq.MagellanDataManager;
 import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.magellan.internal.surfacesandregions.MultiPosGrid;
@@ -128,7 +129,7 @@ public class MagellanMouseListener implements CanvasMouseListenerInterface {
               && manager_.isCurrentlyEditableSurfaceGridVisible()) {
          SurfaceInterpolator currentSurface = (SurfaceInterpolator) manager_.getCurrentEditableSurfaceOrGrid();
          if (SwingUtilities.isRightMouseButton(e) && !mouseDragging_) {
-            double z = manager_.getZCoordOfNonnegativeZIndex(viewer_.getAxisPosition("z"));
+            double z = manager_.getZCoordOfNonnegativeZIndex(viewer_.getAxisPosition(AcqEngMetadata.Z_AXIS));
             if (e.isShiftDown()) {
                //delete all points at slice
                currentSurface.deletePointsWithinZRange(Math.min(z - manager_.getZStep() / 2, z + manager_.getZStep() / 2),
@@ -149,7 +150,7 @@ public class MagellanMouseListener implements CanvasMouseListenerInterface {
             //convert to real coordinates in 3D space
             //Click point --> full res pixel point --> stage coordinate
             Point2D.Double stagePos = manager_.stageCoordsFromPixelCoords(e.getPoint().x, e.getPoint().y);
-            double z = manager_.getZCoordOfNonnegativeZIndex(viewer_.getAxisPosition("z"));
+            double z = manager_.getZCoordOfNonnegativeZIndex(viewer_.getAxisPosition(AcqEngMetadata.Z_AXIS));
             if (currentSurface == null) {
                Log.log("Can't add point--No surface selected", true);
             } else {

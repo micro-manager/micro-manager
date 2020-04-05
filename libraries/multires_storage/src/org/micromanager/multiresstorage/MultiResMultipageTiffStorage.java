@@ -35,12 +35,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -342,7 +338,8 @@ public class MultiResMultipageTiffStorage implements StorageAPI {
     * @param posIndex
     * @return
     */
-   private TaggedImage readImageWithMissingAxes(int dsIndex, int channel, int slice, int frame, int posIndex) {
+   private TaggedImage readImageWithMissingAxes(int dsIndex, int channel, 
+           Integer slice, Integer frame, int posIndex) {
       ResolutionLevel storage;
       if (dsIndex == 0) {
          storage = fullResStorage_;
@@ -353,57 +350,10 @@ public class MultiResMultipageTiffStorage implements StorageAPI {
          storage = lowResStorages_.get(dsIndex);
       }
 
-      TaggedImage tile = storage.getImage(channel, slice, frame, posIndex);
-
-      if (tile == null) {
-         tile = storage.getImage(channel, 0, frame, posIndex);
-         if (tile != null && StorageMD.getAxes(tile.tags).containsKey(Z_AXIS)) {
-            tile = null;
-         }
-      }
-      if (tile == null) {
-         tile = storage.getImage(channel, slice, 0, posIndex);
-         if (tile != null && StorageMD.getAxes(tile.tags).containsKey(TIME_AXIS)) {
-            tile = null;
-         }
-      }
-      if (tile == null) {
-         tile = storage.getImage(channel, slice, frame, 0);
-         if (tile != null && StorageMD.getAxes(tile.tags).containsKey(POSITION_AXIS)) {
-            tile = null;
-         }
-      }
-      if (tile == null) {
-         tile = storage.getImage(channel, 0, 0, posIndex);
-         if (tile != null && (StorageMD.getAxes(tile.tags).containsKey(Z_AXIS)
-                 || StorageMD.getAxes(tile.tags).containsKey(TIME_AXIS))) {
-            tile = null;
-         }
-      }
-      if (tile == null) {
-         tile = storage.getImage(channel, 0, frame, 0);
-         if (tile != null && (StorageMD.getAxes(tile.tags).containsKey(Z_AXIS)
-                 || StorageMD.getAxes(tile.tags).containsKey(POSITION_AXIS))) {
-            tile = null;
-         }
-      }
-      if (tile == null) {
-         tile = storage.getImage(channel, slice, 0, 0);
-         if (tile != null && (StorageMD.getAxes(tile.tags).containsKey(POSITION_AXIS)
-                 || StorageMD.getAxes(tile.tags).containsKey(TIME_AXIS))) {
-            tile = null;
-         }
-      }
-      if (tile == null) {
-         if (tile != null && (StorageMD.getAxes(tile.tags).containsKey(Z_AXIS)
-                 || StorageMD.getAxes(tile.tags).containsKey(TIME_AXIS)
-                 || StorageMD.getAxes(tile.tags).containsKey(POSITION_AXIS))) {
-            tile = null;
-         }
-         tile = storage.getImage(channel, 0, 0, 0);
-      }
-
-      return tile;
+      return storage.getImage(channel, 
+              slice != null ? slice : 0, 
+              frame != null ? frame : 0, 
+              posIndex);
    }
 
    /**
@@ -425,8 +375,8 @@ public class MultiResMultipageTiffStorage implements StorageAPI {
    public TaggedImage getStitchedImage(HashMap<String, Integer> axes,
            int dsIndex, int x, int y, int width, int height) {
 
-      int frame = axes.containsKey(TIME_AXIS) ? axes.get(TIME_AXIS) : 0;
-      int slice = axes.containsKey(Z_AXIS) ? axes.get(Z_AXIS) : 0;
+      Integer frame = axes.containsKey(TIME_AXIS) ? axes.get(TIME_AXIS) : null;
+      Integer slice = axes.containsKey(Z_AXIS) ? axes.get(Z_AXIS) : null;
       String superChannelName = getSuperChannelName(axes, false);
       int channel = superChannelNames_.get(superChannelName);
 
@@ -475,17 +425,20 @@ public class MultiResMultipageTiffStorage implements StorageAPI {
          int yOffset = 0;
          for (long row = rowStart; row < rowStart + lineHeights.size(); row++) {
             TaggedImage tile = null;
-            int posIndex;
+            Integer posIndex;
             if (dsIndex == 0) {
                if (posManager_ == null) {
-                  posIndex = axes.containsKey(POSITION_AXIS) ? axes.get(POSITION_AXIS) : 0;
+                  posIndex = axes.containsKey(POSITION_AXIS) ? axes.get(POSITION_AXIS) :
+                          (tiled_ ? null : 0);
                } else {
                   posIndex = posManager_.getPositionIndexFromTilePosition(dsIndex, row, col);
                }
             } else {
                posIndex = posManager_.getPositionIndexFromTilePosition(dsIndex, row, col);
             }
-            tile = readImageWithMissingAxes(dsIndex, channel, slice, frame, posIndex);
+            if (posIndex != null) {
+               tile = readImageWithMissingAxes(dsIndex, channel, slice, frame, posIndex);
+            }
 
             if (tile == null) {
                yOffset += lineHeights.get((int) (row - rowStart)); //increment y offset so new tiles appear in correct position

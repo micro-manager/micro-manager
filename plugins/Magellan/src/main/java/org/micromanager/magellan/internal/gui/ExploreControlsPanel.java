@@ -9,7 +9,7 @@ import javax.swing.DefaultCellEditor;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.table.DefaultTableCellRenderer;
-import org.micromanager.magellan.internal.channels.MagellanChannelGroupSettings;
+import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
 import org.micromanager.magellan.internal.magellanacq.MagellanDataManager;
 import org.micromanager.ndviewer.api.ControlsPanelInterface;
 
@@ -19,14 +19,14 @@ import org.micromanager.ndviewer.api.ControlsPanelInterface;
  */
 public class ExploreControlsPanel extends javax.swing.JPanel implements ControlsPanelInterface {
 
-   private MagellanChannelGroupSettings channels_; 
+   private ChannelGroupSettings channels_; 
    private MagellanDataManager manager_;
    private ExploreZSliders zSliders_;
 
    /**
     * Creates new form ExploreChannelsPanel
     */
-   public ExploreControlsPanel(MagellanDataManager manager, MagellanChannelGroupSettings channels) {
+   public ExploreControlsPanel(MagellanDataManager manager, ChannelGroupSettings channels) {
       channels_ = channels;
       manager_ = manager;
       zSliders_ = new ExploreZSliders(manager);
@@ -100,7 +100,7 @@ public class ExploreControlsPanel extends javax.swing.JPanel implements Controls
 
       jPanel1.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT));
 
-      acquireAtCurrentButton_.setText("Acquire tile here");
+      acquireAtCurrentButton_.setText("Acquire at current position");
       acquireAtCurrentButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             acquireAtCurrentButton_ActionPerformed(evt);

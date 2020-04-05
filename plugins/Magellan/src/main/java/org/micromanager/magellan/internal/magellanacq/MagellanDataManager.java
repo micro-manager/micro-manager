@@ -42,14 +42,17 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.acqj.api.AcqEngMetadata;
 import org.micromanager.acqj.api.DataSink;
-import org.micromanager.acqj.internal.acqengj.XYStagePosition;
+import org.micromanager.acqj.api.mda.XYStagePosition;
 import org.micromanager.acqj.api.Acquisition;
-import org.micromanager.magellan.internal.channels.MagellanChannelGroupSettings;
+import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
 import org.micromanager.magellan.internal.gui.ExploreControlsPanel;
 import org.micromanager.magellan.internal.gui.MagellanMouseListener;
 import org.micromanager.magellan.internal.gui.MagellanOverlayer;
 import org.micromanager.magellan.internal.gui.SurfaceGridPanel;
 import org.micromanager.magellan.internal.misc.Log;
+import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridListener;
+import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridManager;
+import org.micromanager.magellan.internal.surfacesandregions.SurfaceInterpolator;
 import org.micromanager.magellan.internal.surfacesandregions.XYFootprint;
 import org.micromanager.multiresstorage.MultiResMultipageTiffStorage;
 import org.micromanager.multiresstorage.StorageAPI;
@@ -63,11 +66,12 @@ import org.micromanager.ndviewer.api.ViewerAcquisitionInterface;
  * conversion between pixel coordinate space (which the viewer and storage work
  * in) and the stage coordiante space (which the acquisition works in)
  */
-public class MagellanDataManager implements DataSink, DataSourceInterface {
+public class MagellanDataManager implements DataSink, DataSourceInterface, 
+        SurfaceGridListener {
 
    private StorageAPI storage_;
-   private ExecutorService displayCommunicationExecutor_ = 
-           Executors.newSingleThreadExecutor((Runnable r) -> new Thread(r, "Magellan viewer communication thread"));
+   private ExecutorService displayCommunicationExecutor_
+           = Executors.newSingleThreadExecutor((Runnable r) -> new Thread(r, "Magellan viewer communication thread"));
    private final boolean loadedData_;
    private String dir_;
    private String name_;
@@ -83,10 +87,12 @@ public class MagellanDataManager implements DataSink, DataSourceInterface {
    private ExploreControlsPanel zExploreControls_;
    private SurfaceGridPanel surfaceGridControls_;
 
-   public MagellanDataManager(String dir, boolean showDisplay) {
+   public MagellanDataManager(String dir, String name, boolean showDisplay) {
       dir_ = dir;
+      name_ = name;
       loadedData_ = false;
       showDisplay_ = showDisplay;
+      SurfaceGridManager.getInstance().registerSurfaceGridListener(this);
    }
 
    //Constructor for opening loaded data
@@ -109,7 +115,7 @@ public class MagellanDataManager implements DataSink, DataSourceInterface {
               MagellanMD.getPixelOverlapX(summaryMetadata), MagellanMD.getPixelOverlapY(summaryMetadata),
               MagellanMD.getInitialPositionList(summaryMetadata));
 
-      storage_ = new MultiResMultipageTiffStorage(dir_, MagellanMD.getSavingPrefix(summaryMetadata),
+      storage_ = new MultiResMultipageTiffStorage(dir_, name_,
               summaryMetadata, ((MagellanAcquisition) acq).getOverlapX(),
               ((MagellanAcquisition) acq).getOverlapY(),
               //TODO: in the futre may want to make multiple datasets if one
@@ -118,7 +124,7 @@ public class MagellanDataManager implements DataSink, DataSourceInterface {
               //parameters to different files within the dataset
               MagellanMD.getWidth(summaryMetadata),
               MagellanMD.getHeight(summaryMetadata),
-              MagellanMD.getBytesPerPixel(summaryMetadata));
+              MagellanMD.getBytesPerPixel(summaryMetadata), true);
 
       if (showDisplay_) {
          createDisplay();
@@ -132,7 +138,7 @@ public class MagellanDataManager implements DataSink, DataSourceInterface {
       try {
          display_ = new MagellanViewer(this, (ViewerAcquisitionInterface) acq_, summaryMetadata_);
          display_.setWindowTitle(getUniqueAcqName() + (acq_ != null
-                 ? (acq_.isComplete() ? " (Finished)" : " (Running)") : " (Loaded)"));
+                 ? (acq_.isFinished() ? " (Finished)" : " (Running)") : " (Loaded)"));
          //add functions so display knows how to parse time and z infomration from image tags
          display_.setReadTimeMetadataFunction((JSONObject tags) -> AcqEngMetadata.getElapsedTimeMs(tags));
          display_.setReadZMetadataFunction((JSONObject tags) -> AcqEngMetadata.getZPositionUm(tags));
@@ -151,7 +157,7 @@ public class MagellanDataManager implements DataSink, DataSourceInterface {
             display_.addControlPanel(surfaceGridControls_);
             if (isExploreAcquisition()) {
                zExploreControls_ = new ExploreControlsPanel(this,
-                       (MagellanChannelGroupSettings) acq_.getAcquisitionSettings().channels_);
+                       (ChannelGroupSettings) acq_.getAcquisitionSettings().channels_);
                display_.addControlPanel(zExploreControls_);
                this.setSurfaceGridMode(false); //start in explore mode
             }
@@ -181,20 +187,29 @@ public class MagellanDataManager implements DataSink, DataSourceInterface {
          displayCommunicationExecutor_.submit(new Runnable() {
             @Override
             public void run() {
-               if (newChannel) {
-                  //Insert a preferred color. Make a copy just in case concurrency issues
-                  String chName = MagellanMD.getChannelName(taggedImg.tags);
-                  MagellanChannelGroupSettings ch = ((MagellanChannelGroupSettings) acq_.getChannels());
-                  Color c = ch == null ? Color.white : ch.getPreferredChannelColor(chName);
-                  int bitDepth = MagellanMD.getBitDepth(taggedImg.tags);
-                  display_.setChannelDisplaySettings(chName, c, bitDepth);
+               try {
+                  if (newChannel) {
+                     //Insert a preferred color. Make a copy just in case concurrency issues
+                     String chName = MagellanMD.getChannelName(taggedImg.tags);
+                     ChannelGroupSettings ch = ((ChannelGroupSettings) acq_.getChannels());
+                     Color c = ch == null ? Color.white : ch.getPreferredChannelColor(chName);
+                     int bitDepth = MagellanMD.getBitDepth(taggedImg.tags);
+                     display_.setChannelDisplaySettings(chName, c, bitDepth);
+                  }
+                  HashMap<String, Integer> axes = MagellanMD.getAxes(taggedImg.tags);
+                  axes.remove(AcqEngMetadata.POSITION_AXIS); //Magellan doesn't have positions axis
+                  String channelName = MagellanMD.getChannelName(taggedImg.tags);
+                  display_.newImageArrived(axes, channelName);
+                  if (axes.containsKey(AcqEngMetadata.Z_AXIS) && axes.get(AcqEngMetadata.Z_AXIS) != null
+                          && zExploreControls_ != null) {
+                     Integer i = axes.get(AcqEngMetadata.Z_AXIS);
+                     zExploreControls_.updateExploreZControls(i);
+                  }
+                  surfaceGridControls_.enable(); //technically this only needs to happen once, but eh
+               } catch (Exception e) {
+                  e.printStackTrace();;
+                  throw new RuntimeException(e);
                }
-               HashMap<String, Integer> axes = MagellanMD.getAxes(taggedImg.tags);
-               axes.remove("p"); //Magellan doesn't have positions axis
-               String channelName = MagellanMD.getChannelName(taggedImg.tags);
-               display_.newImageArrived(axes, channelName);
-               zExploreControls_.updateExploreZControls(axes.get("z"));
-               surfaceGridControls_.enable(); //technically this only needs to happen once, but eh
             }
          });
       }
@@ -267,6 +282,9 @@ public class MagellanDataManager implements DataSink, DataSourceInterface {
          overlayer_ = null;
          display_ = null;
          zExploreControls_ = null;
+         if (!loadedData_) {
+            SurfaceGridManager.getInstance().unregisterSurfaceGridListener(this);
+         }
       } else {
          //keep resubmitting so that finish, which comes from a different thread, happens first
          SwingUtilities.invokeLater(new Runnable() {
@@ -290,16 +308,16 @@ public class MagellanDataManager implements DataSink, DataSourceInterface {
       }
    }
 
-   public int getTileHeight() {
-      return stageCoordinateTranslator_ == null ? 0 : stageCoordinateTranslator_.getTileHeight();
+   public int getDisplayTileHeight() {
+      return stageCoordinateTranslator_ == null ? 0 : stageCoordinateTranslator_.getDisplayTileHeight();
    }
 
-   public int getTileWidth() {
-      return stageCoordinateTranslator_ == null ? 0 : stageCoordinateTranslator_.getTileWidth();
+   public int getDisplayTileWidth() {
+      return stageCoordinateTranslator_ == null ? 0 : stageCoordinateTranslator_.getDisplayTileWidth();
    }
 
    public boolean isExploreAcquisition() {
-      return MagellanMD.isExploreAcq(summaryMetadata_) ;
+      return MagellanMD.isExploreAcq(summaryMetadata_);
    }
 
    public int[] getBounds() {
@@ -322,6 +340,14 @@ public class MagellanDataManager implements DataSink, DataSourceInterface {
 
    public boolean anythingAcquired() {
       return storage_ == null || !storage_.getAxesSet().isEmpty();
+   }
+
+   public String getName() {
+      return name_;
+   }
+
+   public String getDir() {
+      return dir_;
    }
 
    public String getUniqueAcqName() {
@@ -391,7 +417,7 @@ public class MagellanDataManager implements DataSink, DataSourceInterface {
    }
 
    public double getZCoordinateOfDisplayedSlice() {
-      return acq_.getZCoordOfNonnegativeZIndex(display_.getAxisPosition("z"));
+      return acq_.getZCoordOfNonnegativeZIndex(display_.getAxisPosition(AcqEngMetadata.Z_AXIS));
    }
 
    public int getDisplaySliceIndexFromZCoordinate(double z) {
@@ -399,7 +425,7 @@ public class MagellanDataManager implements DataSink, DataSourceInterface {
    }
 
    public LinkedBlockingQueue<ExploreAcquisition.ExploreTileWaitingToAcquire> getTilesWaitingToAcquireAtVisibleSlice() {
-      return ((ExploreAcquisition) acq_).getTilesWaitingToAcquireAtSlice(display_.getAxisPosition("z"));
+      return ((ExploreAcquisition) acq_).getTilesWaitingToAcquireAtSlice(display_.getAxisPosition(AcqEngMetadata.Z_AXIS));
    }
 
    public MagellanMouseListener getMouseListener() {
@@ -472,24 +498,53 @@ public class MagellanDataManager implements DataSink, DataSourceInterface {
 
    public void initializeViewerToLoaded(
            HashMap<String, Integer> axisMins, HashMap<String, Integer> axisMaxs) {
-        
+
       HashMap<Integer, String> channelNames = new HashMap<Integer, String>();
       for (HashMap<String, Integer> axes : storage_.getAxesSet()) {
          if (axes.containsKey(MagellanMD.CHANNEL_AXIS)) {
             if (!channelNames.containsKey(axes.get(MagellanMD.CHANNEL_AXIS))) {
                //read this channel indexs name from metadata
                String channelName = MagellanMD.getChannelName(storage_.getImage(axes).tags);
-               channelNames.put(axes.get(MagellanMD.CHANNEL_AXIS), channelName);           
+               channelNames.put(axes.get(MagellanMD.CHANNEL_AXIS), channelName);
             }
          }
       }
       List<String> channelNamesList = new ArrayList<String>(channelNames.values());
-      
+
       display_.initializeViewerToLoaded(channelNamesList, storage_.getDisplaySettings(), axisMins, axisMaxs);
    }
 
    public Set<HashMap<String, Integer>> getAxesSet() {
       return storage_.getAxesSet();
+   }
+
+   public Point2D.Double[] getDisplayTileCorners(XYStagePosition pos) {
+      return stageCoordinateTranslator_.getDisplayTileCornerStageCoords(pos);
+   }
+
+   @Override
+   public void SurfaceOrGridChanged(XYFootprint f) {
+      update();
+   }
+
+   @Override
+   public void SurfaceOrGridDeleted(XYFootprint f) {
+      update();
+   }
+
+   @Override
+   public void SurfaceOrGridCreated(XYFootprint f) {
+      update();
+   }
+
+   @Override
+   public void SurfaceOrGridRenamed(XYFootprint f) {
+      update();
+   }
+
+   @Override
+   public void SurfaceInterpolationUpdated(SurfaceInterpolator s) {
+      update();
    }
 
 }

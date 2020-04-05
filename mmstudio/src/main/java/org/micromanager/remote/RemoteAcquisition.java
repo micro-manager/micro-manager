@@ -22,7 +22,7 @@ public class RemoteAcquisition extends Acquisition
    private RemoteEventSource eventSource_;
 
    public RemoteAcquisition(RemoteEventSource eventSource, RemoteAcquisitionSettings settings) {
-      super(settings.dataLocation, settings.name, new RemoteViewerStorageAdapter(settings.showViewer,
+      super(new RemoteViewerStorageAdapter(settings.showViewer,
               settings.dataLocation, settings.name));
       eventSource_ = eventSource;
       eventSource.setAcquisition(this);

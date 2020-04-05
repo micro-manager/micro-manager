@@ -16,6 +16,7 @@
 //
 package org.micromanager.acqj.api;
 
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,6 +27,9 @@ import java.util.TreeSet;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.acqj.api.mda.XYStagePosition;
+import org.micromanager.acqj.internal.acqengj.AffineTransformUtils;
+import org.micromanager.acqj.internal.acqengj.Engine;
 
 /**
  * Information about the acquisition of a single image or a sequence of image
@@ -52,7 +56,9 @@ public class AcquisitionEvent {
 
    //positions for devices that are generically hardcoded into MMCore
    private Double zPosition_ = null, xPosition_ = null, yPosition_ = null;
+   //info for xy positions arranged in a grid
    private Integer gridRow_ = null, gridCol_ = null;
+   private Integer overlapX_ = null, overlapY_ = null;
    //TODO: SLM, Galvo, etc
 
    //Arbitary additional properties
@@ -108,6 +114,8 @@ public class AcquisitionEvent {
       e.yPosition_ = yPosition_;
       e.gridRow_ = gridRow_;
       e.gridCol_ = gridCol_;
+      e.overlapX_ = overlapX_;
+      e.overlapY_ = overlapY_;
       e.miniumumStartTime_ms_ = miniumumStartTime_ms_;
       e.properties_ = new TreeSet<ThreeTuple>(this.properties_);
       return e;
@@ -123,8 +131,8 @@ public class AcquisitionEvent {
             json.put("special", "sequence-end");
             return json;
          }
-         
-              //timelpases
+
+         //timelpases
          if (miniumumStartTime_ms_ != null) {
             json.put("min_start_time", miniumumStartTime_ms_ / 1000);
          }
@@ -158,16 +166,22 @@ public class AcquisitionEvent {
          if (yPosition_ != null) {
             json.put("y", yPosition_);
          }
+
          if (gridRow_ != null) {
             json.put("row", gridRow_);
          }
          if (gridCol_ != null) {
             json.put("col", gridCol_);
          }
+         if (overlapX_ != null) {
+            json.put("overlap_x", overlapX_);
+         }
+         if (overlapY_ != null) {
+            json.put("overlap_y", overlapY_);
+         }
 
          //TODO: SLM, galvo, etc
          //TODO:ability to do API calls (like SLM set image)
-         
          //Arbitrary extra properties
          JSONArray props = new JSONArray();
          for (ThreeTuple t : properties_) {
@@ -209,7 +223,7 @@ public class AcquisitionEvent {
             });
          }
          //timelpases
-         if (json.has("min_start_time") ) {
+         if (json.has("min_start_time")) {
             event.miniumumStartTime_ms_ = (long) (json.getDouble("min_start_time") * 1000);
          }
 
@@ -238,6 +252,12 @@ public class AcquisitionEvent {
          if (json.has("col")) {
             event.gridCol_ = json.getInt("col");
          }
+         if (json.has("overlap_x")) {
+            event.overlapX_ = json.getInt("overlap_x");
+         }
+         if (json.has("overlap_y")) {
+            event.overlapY_ = json.getInt("overlap_y");
+         }
          //TODO: SLM, galvo, etc
 
          //Arbitrary additional properties
@@ -255,7 +275,7 @@ public class AcquisitionEvent {
          throw new RuntimeException(ex);
       }
    }
-   
+
    public List<String[]> getAdditonalProperties() {
       ArrayList<String[]> list = new ArrayList<String[]>();
       for (ThreeTuple t : properties_) {
@@ -265,7 +285,7 @@ public class AcquisitionEvent {
    }
 
    public boolean hasChannel() {
-      return  channelConfig_ != null && channelConfig_ != null;
+      return channelConfig_ != null && channelConfig_ != null;
    }
 
    public String getChannelConfig() {
@@ -275,7 +295,7 @@ public class AcquisitionEvent {
    public String getChannelGroup() {
       return channelGroup_;
    }
-   
+
    public void setChannelConfig(String config) {
       channelConfig_ = config;
    }
@@ -288,11 +308,16 @@ public class AcquisitionEvent {
       return exposure_;
    }
 
+   public void setExposure(double exposure) {
+      exposure_ = exposure;
+   }
+
    /**
     * Set the minimum start time in ms relative to when the acq started
-    * @param l 
+    *
+    * @param l
     */
-   public void setMinimumStartTime(long l) {
+   public void setMinimumStartTime(Long l) {
       miniumumStartTime_ms_ = l;
    }
 
@@ -304,7 +329,10 @@ public class AcquisitionEvent {
       axisPositions_.put(label, index);
    }
 
-   public int getAxisPosition(String label) {
+   public Integer getAxisPosition(String label) {
+      if (!axisPositions_.containsKey(label)) {
+         return null;
+      }
       return axisPositions_.get(label);
    }
 
@@ -312,8 +340,10 @@ public class AcquisitionEvent {
       setAxisPosition(AcqEngMetadata.TIME_AXIS, index);
    }
 
-   public void setZ(int index, double position) {
-      setAxisPosition(AcqEngMetadata.Z_AXIS, index);
+   public void setZ(Integer index, Double position) {
+      if (index != null) {
+         setAxisPosition(AcqEngMetadata.Z_AXIS, index);
+      }
       zPosition_ = position;
    }
 
@@ -321,7 +351,7 @@ public class AcquisitionEvent {
       return getAxisPosition(AcqEngMetadata.TIME_AXIS);
    }
 
-   public int getZIndex() {
+   public Integer getZIndex() {
       return getAxisPosition(AcqEngMetadata.Z_AXIS);
    }
 
@@ -350,10 +380,11 @@ public class AcquisitionEvent {
    }
 
    /**
-    * get the minimum start time in ms relative to when the acq started
-    * @return 
+    * get the minimum start timein system time
+    *
+    * @return
     */
-   public Long getMinimumStartTime() {
+   public Long getMinimumStartTimeAbsolute() {
       if (miniumumStartTime_ms_ == null) {
          return null;
       }
@@ -380,6 +411,29 @@ public class AcquisitionEvent {
       return zSequenced_;
    }
 
+   public Point2D.Double[] getDisplayPositionCorners() {
+      if (xPosition_ == null || yPosition_ == null) {
+         throw new RuntimeException("xy position undefined");
+      }
+      int width = (int) Engine.getCore().getImageWidth();
+      int height = (int) Engine.getCore().getImageHeight();
+      int displayTileWidth = width - (overlapX_ != null ? overlapX_ : 0);
+      int displayTileHeight = height - (overlapY_ != null ? overlapY_ : 0);
+      Point2D.Double[] displayedTileCorners = new Point2D.Double[4];
+      displayedTileCorners[0] = new Point2D.Double();
+      displayedTileCorners[1] = new Point2D.Double();
+      displayedTileCorners[2] = new Point2D.Double();
+      displayedTileCorners[3] = new Point2D.Double();
+      //this AT is centered at the stage position, becuase there no global translation relevant to a single stage position
+      AffineTransform transform = AffineTransformUtils.getAffineTransform(
+              xPosition_, yPosition_);
+      transform.transform(new Point2D.Double(-displayTileWidth / 2, -displayTileHeight / 2), displayedTileCorners[0]);
+      transform.transform(new Point2D.Double(-displayTileWidth / 2, displayTileHeight / 2), displayedTileCorners[1]);
+      transform.transform(new Point2D.Double(displayTileWidth / 2, displayTileHeight / 2), displayedTileCorners[2]);
+      transform.transform(new Point2D.Double(displayTileWidth / 2, -displayTileHeight / 2), displayedTileCorners[3]);
+      return displayedTileCorners;
+   }
+
    public Double getXPosition() {
       return xPosition_;
    }
@@ -391,11 +445,11 @@ public class AcquisitionEvent {
    public Integer getGridRow() {
       return gridRow_;
    }
-   
+
    public Integer getGridCol() {
       return gridCol_;
    }
-   
+
    public void setX(double x) {
       xPosition_ = x;
    }
@@ -456,7 +510,7 @@ class ThreeTuple implements Comparable<ThreeTuple> {
       prop = p;
       val = v;
    }
-   
+
    public String[] toArray() {
       return new String[]{dev, prop, val};
    }

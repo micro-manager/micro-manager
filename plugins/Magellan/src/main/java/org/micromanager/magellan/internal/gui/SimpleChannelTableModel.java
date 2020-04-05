@@ -22,7 +22,7 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import org.micromanager.magellan.internal.main.Magellan;
 import mmcorej.CMMCore;
-import org.micromanager.magellan.internal.channels.MagellanChannelGroupSettings;
+import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
 
 /**
  *
@@ -30,7 +30,7 @@ import org.micromanager.magellan.internal.channels.MagellanChannelGroupSettings;
  */
 public class SimpleChannelTableModel extends AbstractTableModel implements TableModelListener {
 
-   private MagellanChannelGroupSettings channels_;
+   private ChannelGroupSettings channels_;
    private final CMMCore core_;
    private final boolean exploreTable_;
    private boolean selectAll_ = true;
@@ -41,7 +41,7 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
       "Z-offset (um)",
       "Color",};
 
-   public SimpleChannelTableModel(MagellanChannelGroupSettings channels, boolean showColor) {
+   public SimpleChannelTableModel(ChannelGroupSettings channels, boolean showColor) {
       exploreTable_ = !showColor;
       core_ = Magellan.getCore();
       channels_ = channels;
@@ -71,7 +71,7 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
       }
    }
 
-   public void setChannels(MagellanChannelGroupSettings channels) {
+   public void setChannels(ChannelGroupSettings channels) {
       channels_ = channels;
    }
 
@@ -100,13 +100,13 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
       if (columnIndex == 0) {
          return channels_.getChannelListSetting(rowIndex).use_;
       } else if (columnIndex == 1) {
-         return channels_.getChannelListSetting(rowIndex).name_;
+         return channels_.getChannelListSetting(rowIndex).config_;
       } else if (columnIndex == 2) {
          return channels_.getChannelListSetting(rowIndex).exposure_;
       } else if (columnIndex == 3) {
          return channels_.getChannelListSetting(rowIndex).offset_;
       } else {
-         return (Color) channels_.getChannelListSetting(rowIndex).getProperty("Color");
+         return (Color) channels_.getChannelListSetting(rowIndex).color_;
       }
    }
 
@@ -156,7 +156,7 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
          double val = value instanceof String ? Double.parseDouble((String) value) : (Double) value;
          channels_.getChannelListSetting(row).offset_ = val;
       } else {
-         channels_.getChannelListSetting(row).setProperty("Color", value);
+         channels_.getChannelListSetting(row).color_ = (Color) value;
       }
       //Store the newly selected value in preferences
       channels_.storeValuesInPrefs();

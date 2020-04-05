@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.micromanager.acqj.internal.acqengj;
+package org.micromanager.acqj.api.mda;
 
 /**
  * Convenience class that encapsulates a single channel setting
@@ -12,8 +12,8 @@ package org.micromanager.acqj.internal.acqengj;
  */
 public class ChannelSetting {
    
-   public final String group_, config_;
-   public final double exposure_, offset_;
+   public String group_, config_;
+   public double exposure_, offset_;
    
    public ChannelSetting(String group, String config, 
            double exposure, double offset) {

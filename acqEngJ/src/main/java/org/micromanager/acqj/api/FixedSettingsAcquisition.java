@@ -24,9 +24,11 @@ public abstract class FixedSettingsAcquisition extends Acquisition {
    private Future acqFuture_;
    private volatile boolean aborted_ = false;
 
-   public FixedSettingsAcquisition(String dir, String name, DataSink sink) {
-      super(dir, name, sink);
+   public FixedSettingsAcquisition(DataSink sink) {
+      super(sink);
    }
+   
+    public FixedSettingsAcquisition() {}
 
    public void start() {
       super.start();
@@ -42,7 +44,8 @@ public abstract class FixedSettingsAcquisition extends Acquisition {
 
    protected abstract Iterator<AcquisitionEvent> buildAcqEventGenerator();
 
-   public synchronized void abort() {
+   public void abort() {
+      abortRequested_ = true;
       if (aborted_) {
          return;
       }

@@ -76,7 +76,7 @@ public class DisplayWindow implements WindowListener {
       for (FocusListener l : window_.getFocusListeners()) {
          window_.removeFocusListener(l);
       }
-      
+
       listener_ = null;
 
       subImageControls_.onDisplayClose();
@@ -94,9 +94,9 @@ public class DisplayWindow implements WindowListener {
       System.gc();
 
    }
-   
+
    public void onScollPositionChanged(AxisScroller scroller, int value) {
-      subImageControls_.onScollPositionChanged( scroller,  value);
+      subImageControls_.onScollPositionChanged(scroller, value);
    }
 
    public void onScrollersAdded() {
@@ -105,13 +105,15 @@ public class DisplayWindow implements WindowListener {
       //New scrollbars have been made visible
       window_.revalidate();
    }
-   
+
    public void onCanvasResized(int w, int h) {
       imageCanvas_.onCanvasResize(w, h);
    }
 
    public void setTitle(String title) {
-      window_.setTitle(title);
+      if (window_ != null) {
+         window_.setTitle(title);
+      }
    }
 
    private void buildInitialUI() {
@@ -151,8 +153,8 @@ public class DisplayWindow implements WindowListener {
       window_.revalidate();
    }
 
-   public void addContrastControls( String channelName) {
-      sideControls_.addContrastControls( channelName);
+   public void addContrastControls(String channelName) {
+      sideControls_.addContrastControls(channelName);
    }
 
    public void collapseOrExpandSideControls(boolean expand) {
@@ -322,7 +324,7 @@ public class DisplayWindow implements WindowListener {
    }
 
    public void addControlPanel(ControlsPanelInterface panel) {
-      sideControls_.addControlPanel(panel) ;
+      sideControls_.addControlPanel(panel);
    }
 
 }

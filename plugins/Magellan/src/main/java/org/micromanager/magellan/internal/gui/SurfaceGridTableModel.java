@@ -7,7 +7,7 @@ package org.micromanager.magellan.internal.gui;
 
 import java.util.List;
 import javax.swing.table.AbstractTableModel;
-import org.micromanager.acqj.internal.acqengj.XYStagePosition;
+import org.micromanager.acqj.api.mda.XYStagePosition;
 import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.magellan.internal.surfacesandregions.MultiPosGrid;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridListener;
@@ -84,7 +84,7 @@ public class SurfaceGridTableModel extends AbstractTableModel implements Surface
          return ((SurfaceInterpolator) manager_.getSurfaceOrGrid(rowIndex)).getZDevice();
       } else {
          XYFootprint object = manager_.getSurfaceOrGrid(rowIndex);
-         List<XYStagePosition> positions = object.getXYPositionsNoUpdate();
+         List<XYStagePosition> positions = object.getXYPositions();
          return positions != null ? positions.size() : 0;
       }
    }

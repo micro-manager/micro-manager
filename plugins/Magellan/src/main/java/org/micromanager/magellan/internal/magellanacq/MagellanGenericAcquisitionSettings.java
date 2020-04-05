@@ -6,37 +6,43 @@
 package org.micromanager.magellan.internal.magellanacq;
 
 import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
-import org.micromanager.acqj.internal.acqengj.MinimalAcquisitionSettings;
 import org.micromanager.magellan.internal.gui.GUI;
 
 /**
  *
  * @author henrypinkard
  */
-public abstract class MagellanGenericAcquisitionSettings extends MinimalAcquisitionSettings {
+public abstract class MagellanGenericAcquisitionSettings  {
 
+   public String dir_, name_;
+   public ChannelGroupSettings channels_; 
    //space
-   public volatile double tileOverlap_; //stored as percent * 100, i.e. 55 => 55%
    public volatile boolean channelsAtEverySlice_;
    
    public volatile double zStep_;
 
    public MagellanGenericAcquisitionSettings(String dir, String name, String cGroup, ChannelGroupSettings channels, 
            double zStep, double tileOverlap, boolean channelsAtEverySlice) {
-      super(dir, name, channels);
+      dir_ = dir;
+      name_ = name;
+      channels_ = channels;
       zStep_ = zStep;
-      tileOverlap_ = tileOverlap;
       channelsAtEverySlice_ = channelsAtEverySlice;
    }
    
    public MagellanGenericAcquisitionSettings() {
       
    }
-
    
-   public void setTileOverlapPercent(double overlapPercent) {
-      tileOverlap_ = overlapPercent;
-      GUI.getInstance().refreshAcqControlsFromSettings();
+   public void setChannelGroup(String group) {
+      channels_.updateChannelGroup(group);
+   }
+   
+   public String getChannelGroup() {
+      if (channels_ == null) {
+         return null;
+      }
+      return channels_.getChannelGroup();
    }
 
 //   public void setSavingDir(String dirPath) {

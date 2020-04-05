@@ -71,7 +71,7 @@ public class RemoteViewerStorageAdapter implements DataSourceInterface, DataSink
               summaryMetadata, AcqEngMetadata.getPixelSizeUm(summaryMetadata));
 
       viewer_.setWindowTitle(name_ + (acq_ != null
-              ? (acq_.isComplete() ? " (Finished)" : " (Running)") : " (Loaded)"));
+              ? (acq_.isFinished()? " (Finished)" : " (Running)") : " (Loaded)"));
       //add functions so display knows how to parse time and z infomration from image tags
       viewer_.setReadTimeMetadataFunction((JSONObject tags) -> AcqEngMetadata.getElapsedTimeMs(tags));
       viewer_.setReadZMetadataFunction((JSONObject tags) -> AcqEngMetadata.getZPositionUm(tags));

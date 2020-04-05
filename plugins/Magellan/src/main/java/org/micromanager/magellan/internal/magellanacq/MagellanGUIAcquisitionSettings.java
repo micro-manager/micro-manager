@@ -16,9 +16,8 @@
 //
 package org.micromanager.magellan.internal.magellanacq;
 
-import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
 import org.micromanager.magellan.api.MagellanAcquisitionSettingsAPI;
-import org.micromanager.magellan.internal.channels.MagellanChannelGroupSettings;
+import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
 import org.micromanager.magellan.internal.gui.GUI;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridManager;
@@ -85,20 +84,11 @@ public class MagellanGUIAcquisitionSettings extends MagellanGenericAcquisitionSe
       distanceBelowBottomSurface_ = prefs.getDouble(PREF_PREFIX + "ZDISTBELOWBOTTOM", 0);
       distanceAboveTopSurface_ = prefs.getDouble(PREF_PREFIX + "ZDISTABOVETOP", 0);
       spaceMode_ = prefs.getInteger(PREF_PREFIX + "SPACEMODE", 0);
-      tileOverlap_ = prefs.getDouble(PREF_PREFIX + "TILEOVERLAP", 5);
       //channels
       String channelGroup = prefs.getString(PREF_PREFIX + "CHANNELGROUP", "");
       //This creates a new Object of channelSpecs that is "Owned" by the accquisition
-      channels_ = new MagellanChannelGroupSettings(channelGroup); 
+      channels_ = new ChannelGroupSettings(channelGroup); 
    }
-
-   
-   public static double getStoredTileOverlapPercentage() {
-      MutablePropertyMapView prefs = Magellan.getStudio().profile().getSettings(MagellanGUIAcquisitionSettings.class);
-      return prefs.getDouble(PREF_PREFIX + "TILEOVERLAP", 5);
-   }
-
-
 
    public void storePreferedValues() {
       MutablePropertyMapView prefs = Magellan.getStudio().profile().getSettings(MagellanGUIAcquisitionSettings.class);
@@ -116,7 +106,6 @@ public class MagellanGUIAcquisitionSettings extends MagellanGenericAcquisitionSe
       prefs.putDouble(PREF_PREFIX + "ZDISTBELOWBOTTOM", distanceBelowBottomSurface_);
       prefs.putDouble(PREF_PREFIX + "ZDISTABOVETOP", distanceAboveTopSurface_);
       prefs.putInteger(PREF_PREFIX + "SPACEMODE", spaceMode_);
-      prefs.putDouble(PREF_PREFIX + "TILEOVERLAP", tileOverlap_);
       prefs.putBoolean(PREF_PREFIX + "ACQORDER", channelsAtEverySlice_);
       //channels
       prefs.putString(PREF_PREFIX + "CHANNELGROUP", channels_.getChannelGroup());
@@ -157,7 +146,7 @@ public class MagellanGUIAcquisitionSettings extends MagellanGenericAcquisitionSe
       channels_.updateChannelGroup(channelGroup);
       GUI.getInstance().refreshAcqControlsFromSettings();
    }
-
+   
    @Override
    public void setUseChannel(String channelName, boolean use) {
       channels_.getChannelSetting(channelName).use_ = use;
@@ -275,6 +264,7 @@ public class MagellanGUIAcquisitionSettings extends MagellanGenericAcquisitionSe
       timeIntervalUnit_ = (unit.equals("ms") ? TIME_MS : (unit.equals("s") ? TIME_S : TIME_MS));
       GUI.getInstance().refreshAcqControlsFromSettings();
    }
+
 
 
 

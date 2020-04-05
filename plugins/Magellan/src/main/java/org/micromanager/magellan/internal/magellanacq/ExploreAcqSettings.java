@@ -17,7 +17,6 @@
 package org.micromanager.magellan.internal.magellanacq;
 
 import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
-import org.micromanager.magellan.internal.channels.MagellanChannelGroupSettings;
 import org.micromanager.magellan.internal.misc.GlobalSettings;
 
 /**
@@ -33,7 +32,7 @@ public class ExploreAcqSettings  extends MagellanGenericAcquisitionSettings {
 
    
    public ExploreAcqSettings(String dir, String name, String cGroup,  double zStep, double tileOverlap) {
-      super(dir, name, cGroup, cGroup.equals("") ? null : new MagellanChannelGroupSettings(cGroup), zStep, tileOverlap, false);
+      super(dir, name, cGroup, cGroup.equals("") ? null : new ChannelGroupSettings(cGroup), zStep, tileOverlap, false);
 
       //now that explore acquisition is being run, store values
       GlobalSettings.getInstance().storeStringInPrefs(EXPLORE_DIR_PREF, dir);

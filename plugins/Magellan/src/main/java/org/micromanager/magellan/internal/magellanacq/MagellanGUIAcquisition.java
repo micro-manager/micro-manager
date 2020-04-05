@@ -27,11 +27,16 @@ import org.json.JSONObject;
 import org.micromanager.acqj.api.AcquisitionEvent;
 import org.micromanager.acqj.internal.acqengj.AcquisitionEventIterator;
 import org.micromanager.acqj.api.AcqEngMetadata;
-import org.micromanager.acqj.internal.acqengj.affineTransformUtils;
-import org.micromanager.acqj.internal.acqengj.XYStagePosition;
+import org.micromanager.acqj.internal.acqengj.AffineTransformUtils;
+import org.micromanager.acqj.api.mda.XYStagePosition;
 import org.micromanager.acqj.api.mda.AcqEventModules;
 import org.micromanager.acqj.api.DataSink;
 import org.micromanager.acqj.api.FixedSettingsAcquisition;
+import org.micromanager.acqj.api.mda.ChannelSetting;
+import org.micromanager.acqj.internal.acqengj.Engine;
+import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
+import org.micromanager.magellan.internal.channels.SingleChannelSetting;
+import org.micromanager.magellan.internal.gui.GUI;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.magellan.internal.surfacesandregions.Point3d;
@@ -46,6 +51,7 @@ public class MagellanGUIAcquisition extends FixedSettingsAcquisition implements 
    private int minSliceIndex_, maxSliceIndex_;
    private int overlapX_, overlapY_;
    private List<XYStagePosition> positions_;
+   private MagellanGenericAcquisitionSettings settings_;
 
    /**
     * Acquisition with fixed XY positions (although they can potentially all be
@@ -60,22 +66,25 @@ public class MagellanGUIAcquisition extends FixedSettingsAcquisition implements 
     * @throws java.lang.Exception
     */
    public MagellanGUIAcquisition(MagellanGUIAcquisitionSettings settings) {
-      super(settings, new MagellanDataManager(settings.dir_, true));
+      dataSink_ = new MagellanDataManager(settings.dir_, settings.name_, true);
+      settings_ = settings;
+      core_ = Engine.getCore();
+      initialize();
    }
 
    @Override
    public void addToSummaryMetadata(JSONObject summaryMetadata) {
       MagellanMD.setExploreAcq(summaryMetadata, false);
-            
+      MagellanMD.setSavingName(summaryMetadata, ((MagellanDataManager) dataSink_).getName());
+      MagellanMD.setSavingName(summaryMetadata, ((MagellanDataManager) dataSink_).getDir());
+
       zStep_ = ((MagellanGUIAcquisitionSettings) settings_).zStep_;
-      
-      overlapX_ = (int) (Magellan.getCore().getImageWidth() * 
-              ((MagellanGUIAcquisitionSettings) settings_).tileOverlap_ / 100);
-      overlapY_ = (int) (Magellan.getCore().getImageHeight() *
-              ((MagellanGUIAcquisitionSettings) settings_).tileOverlap_ / 100);
+
+      overlapX_ = (int) (Magellan.getCore().getImageWidth() * GUI.getTileOverlap() / 100);
+      overlapY_ = (int) (Magellan.getCore().getImageHeight() * GUI.getTileOverlap() / 100);
       MagellanMD.setPixelOverlapX(summaryMetadata, overlapX_);
       MagellanMD.setPixelOverlapY(summaryMetadata, overlapY_);
-      
+
       AcqEngMetadata.setZStepUm(summaryMetadata, zStep_);
       AcqEngMetadata.setZStepUm(summaryMetadata, zStep_);
       AcqEngMetadata.setIntervalMs(summaryMetadata, getTimeInterval_ms());
@@ -107,31 +116,43 @@ public class MagellanGUIAcquisition extends FixedSettingsAcquisition implements 
               ((MagellanGUIAcquisitionSettings) settings_), zStageHasLimits_,
               zStageLowerLimit_, zStageUpperLimit_, zStage_);
 
-      acqFunctions.add(AcqEventModules.timelapse(((MagellanGUIAcquisitionSettings) settings_).numTimePoints_,
-              (int) (((MagellanGUIAcquisitionSettings) settings_).timePointInterval_
-              * (((MagellanGUIAcquisitionSettings) settings_).timeIntervalUnit_ == 1
-                      ? 1000 : (((MagellanGUIAcquisitionSettings) settings_).timeIntervalUnit_ == 2 ? 60000 : 1)))));
+      if (((MagellanGUIAcquisitionSettings) settings_).timeEnabled_) {
+         acqFunctions.add(AcqEventModules.timelapse(((MagellanGUIAcquisitionSettings) settings_).numTimePoints_,
+                 (int) (((MagellanGUIAcquisitionSettings) settings_).timePointInterval_
+                 * (((MagellanGUIAcquisitionSettings) settings_).timeIntervalUnit_ == 1
+                         ? 1000 : (((MagellanGUIAcquisitionSettings) settings_).timeIntervalUnit_ == 2 ? 60000 : 1)))));
+      }
       if (positions_ != null) {
          acqFunctions.add(AcqEventModules.positions(positions_));
       }
+
+      ArrayList<ChannelSetting> channels = new ArrayList<ChannelSetting>();
+      if (getChannels() != null) {
+         for (String name : getChannels().getChannelNames()) {
+            SingleChannelSetting s = getChannels().getChannelSetting(name);
+            if (s.use_) {
+               channels.add(s);
+            }
+         }
+      }
+
       if (((MagellanGUIAcquisitionSettings) settings_).spaceMode_ == MagellanGUIAcquisitionSettings.REGION_2D) {
          if (((MagellanGUIAcquisitionSettings) settings_).channels_.getNumChannels() != 0) {
-            acqFunctions.add(AcqEventModules.channels(settings_.channels_));
+            acqFunctions.add(AcqEventModules.channels(channels));
          }
       } else if (((MagellanGUIAcquisitionSettings) settings_).spaceMode_ == MagellanGUIAcquisitionSettings.REGION_2D_SURFACE_GUIDED) {
          acqFunctions.add(surfaceGuided2D());
-         if (settings_.channels_.getNumChannels() != 0) {
-
-            acqFunctions.add(AcqEventModules.channels(settings_.channels_));
+         if (!channels.isEmpty()) {
+            acqFunctions.add(AcqEventModules.channels(channels));
          }
       } else if (((MagellanGUIAcquisitionSettings) settings_).channelsAtEverySlice_) {
          acqFunctions.add(MagellanZStack());
-         if (settings_.channels_.getNumChannels() != 0) {
-            acqFunctions.add(AcqEventModules.channels(settings_.channels_));
+         if (!channels.isEmpty()) {
+            acqFunctions.add(AcqEventModules.channels(channels));
          }
       } else {
-         if (settings_.channels_.getNumChannels() != 0) {
-            acqFunctions.add(AcqEventModules.channels(settings_.channels_));
+         if (!channels.isEmpty()) {
+            acqFunctions.add(AcqEventModules.channels(channels));
          }
          acqFunctions.add(MagellanZStack());
       }
@@ -161,8 +182,10 @@ public class MagellanGUIAcquisition extends FixedSettingsAcquisition implements 
 
    private Function<AcquisitionEvent, AcquisitionEvent> monitorSliceIndices() {
       return (AcquisitionEvent event) -> {
-         maxSliceIndex_ = Math.max(maxSliceIndex_, event.getZIndex());
-         minSliceIndex_ = Math.min(minSliceIndex_, event.getZIndex());
+         if (event.getZIndex() != null) {
+            maxSliceIndex_ = Math.max(maxSliceIndex_, event.getZIndex());
+            minSliceIndex_ = Math.min(minSliceIndex_, event.getZIndex());
+         }
          return event;
       };
    }
@@ -179,7 +202,7 @@ public class MagellanGUIAcquisition extends FixedSettingsAcquisition implements 
    }
 
    /**
-    * Fancy Z stack Magellan style
+    * F ancy Z stack Magellan style
     */
    protected Function<AcquisitionEvent, Iterator<AcquisitionEvent>> MagellanZStack() {
       return (AcquisitionEvent event) -> {
@@ -193,10 +216,10 @@ public class MagellanGUIAcquisition extends FixedSettingsAcquisition implements 
             public boolean hasNext() {
                double zPos = zOrigin_ + sliceIndex_ * zStep_;
                boolean undefined = isImagingVolumeUndefinedAtPosition(((MagellanGUIAcquisitionSettings) settings_).spaceMode_,
-                       ((MagellanGUIAcquisitionSettings) settings_), event.getXY());
+                       ((MagellanGUIAcquisitionSettings) settings_), event.getDisplayPositionCorners());
                //position is below z stack or limit of focus device, z stack finished
                boolean below = isZBelowImagingVolume(((MagellanGUIAcquisitionSettings) settings_).spaceMode_,
-                       ((MagellanGUIAcquisitionSettings) settings_), event.getXY(), zPos, zOrigin_)
+                       ((MagellanGUIAcquisitionSettings) settings_), event.getDisplayPositionCorners(), zPos, zOrigin_)
                        || (zStageHasLimits_ && zPos > zStageUpperLimit_);
                return (undefined || below) ? false : true;
             }
@@ -206,13 +229,13 @@ public class MagellanGUIAcquisition extends FixedSettingsAcquisition implements 
                double zPos = zOrigin_ + sliceIndex_ * zStep_;
                while (isZAboveImagingVolume(((MagellanGUIAcquisitionSettings) settings_).spaceMode_,
                        ((MagellanGUIAcquisitionSettings) settings_),
-                       event.getXY(), zPos, zOrigin_) || (zStageHasLimits_ && zPos < zStageLowerLimit_)) {
+                       event.getDisplayPositionCorners(), zPos, zOrigin_) || (zStageHasLimits_ && zPos < zStageLowerLimit_)) {
                   sliceIndex_++;
                   zPos = zOrigin_ + sliceIndex_ * zStep_;
                }
                AcquisitionEvent sliceEvent = event.copy();
                //Do plus equals here in case z positions have been modified by another function (e.g. channel specific focal offsets)
-               
+
                sliceEvent.setZ(sliceIndex_, (sliceEvent.getZPosition() == null
                        ? 0 : sliceEvent.getZPosition()) + zPos);
                sliceIndex_++;
@@ -232,11 +255,12 @@ public class MagellanGUIAcquisition extends FixedSettingsAcquisition implements 
             throw new RuntimeException("Expected surface but didn't find one. Check acquisition settings");
          }
          if (((MagellanGUIAcquisitionSettings) settings_).collectionPlane_.getCurentInterpolation().isInterpDefined(
-                 event.getXY().getCenter().x, event.getXY().getCenter().y)) {
+                 event.getXPosition(), event.getYPosition())) {
             zPos = ((MagellanGUIAcquisitionSettings) settings_).collectionPlane_.getCurentInterpolation().getInterpolatedValue(
-                    event.getXY().getCenter().x, event.getXY().getCenter().y);
+                    event.getXPosition(), event.getYPosition());
          } else {
-            zPos = ((MagellanGUIAcquisitionSettings) settings_).collectionPlane_.getExtrapolatedValue(event.getXY().getCenter().x, event.getXY().getCenter().y);
+            zPos = ((MagellanGUIAcquisitionSettings) settings_).collectionPlane_.getExtrapolatedValue(
+                    event.getXPosition(), event.getYPosition());
          }
          event.setZ(0, event.getZPosition() + zPos);
          //Make z index all 0 for the purposes of the display even though they may be in very differnet locations
@@ -245,12 +269,13 @@ public class MagellanGUIAcquisition extends FixedSettingsAcquisition implements 
 
    }
 
-   public static boolean isImagingVolumeUndefinedAtPosition(int spaceMode, MagellanGUIAcquisitionSettings settings, XYStagePosition position) {
+   public static boolean isImagingVolumeUndefinedAtPosition(int spaceMode, MagellanGUIAcquisitionSettings settings,
+           Point2D.Double[] displayPosCorners) {
       if (spaceMode == MagellanGUIAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
-         return !settings.xyFootprint_.isDefinedAtPosition(position);
+         return !settings.xyFootprint_.isDefinedAtPosition(displayPosCorners);
       } else if (spaceMode == MagellanGUIAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
-         return !settings.topSurface_.isDefinedAtPosition(position)
-                 && !settings.bottomSurface_.isDefinedAtPosition(position);
+         return !settings.topSurface_.isDefinedAtPosition(displayPosCorners)
+                 && !settings.bottomSurface_.isDefinedAtPosition(displayPosCorners);
       }
       return false;
    }
@@ -263,13 +288,14 @@ public class MagellanGUIAcquisition extends FixedSettingsAcquisition implements 
     * @param zPos
     * @return
     */
-   public static boolean isZAboveImagingVolume(int spaceMode, MagellanGUIAcquisitionSettings settings, XYStagePosition position, double zPos, double zOrigin) {
+   public static boolean isZAboveImagingVolume(int spaceMode, MagellanGUIAcquisitionSettings settings,
+           Point2D.Double[] positionCorners, double zPos, double zOrigin) {
       if (spaceMode == MagellanGUIAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
          boolean extrapolate = settings.fixedSurface_ != settings.xyFootprint_;
          //extrapolate only if different surface used for XY positions than footprint
-         return settings.fixedSurface_.isPositionCompletelyAboveSurface(position, settings.fixedSurface_, zPos + settings.distanceAboveFixedSurface_, extrapolate);
+         return settings.fixedSurface_.isPositionCompletelyAboveSurface(positionCorners, settings.fixedSurface_, zPos + settings.distanceAboveFixedSurface_, extrapolate);
       } else if (spaceMode == MagellanGUIAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
-         return settings.topSurface_.isPositionCompletelyAboveSurface(position, settings.topSurface_, zPos + settings.distanceAboveTopSurface_, false);
+         return settings.topSurface_.isPositionCompletelyAboveSurface(positionCorners, settings.topSurface_, zPos + settings.distanceAboveTopSurface_, false);
       } else if (spaceMode == MagellanGUIAcquisitionSettings.CUBOID_Z_STACK) {
          return zPos < settings.zStart_;
       } else {
@@ -278,13 +304,16 @@ public class MagellanGUIAcquisition extends FixedSettingsAcquisition implements 
       }
    }
 
-   public static boolean isZBelowImagingVolume(int spaceMode, MagellanGUIAcquisitionSettings settings, XYStagePosition position, double zPos, double zOrigin) {
+   public static boolean isZBelowImagingVolume(int spaceMode, MagellanGUIAcquisitionSettings settings,
+           Point2D.Double[] positionCorners, double zPos, double zOrigin) {
       if (spaceMode == MagellanGUIAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
          boolean extrapolate = settings.fixedSurface_ != settings.xyFootprint_;
          //extrapolate only if different surface used for XY positions than footprint
-         return settings.fixedSurface_.isPositionCompletelyBelowSurface(position, settings.fixedSurface_, zPos - settings.distanceBelowFixedSurface_, extrapolate);
+         return settings.fixedSurface_.isPositionCompletelyBelowSurface(
+                 positionCorners, settings.fixedSurface_, zPos - settings.distanceBelowFixedSurface_, extrapolate);
       } else if (spaceMode == MagellanGUIAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
-         return settings.bottomSurface_.isPositionCompletelyBelowSurface(position, settings.bottomSurface_, zPos - settings.distanceBelowBottomSurface_, false);
+         return settings.bottomSurface_.isPositionCompletelyBelowSurface(
+                 positionCorners, settings.bottomSurface_, zPos - settings.distanceBelowBottomSurface_, false);
       } else if (spaceMode == MagellanGUIAcquisitionSettings.CUBOID_Z_STACK) {
          return zPos > settings.zEnd_;
       } else {
@@ -366,15 +395,13 @@ public class MagellanGUIAcquisition extends FixedSettingsAcquisition implements 
       try {
          if (((MagellanGUIAcquisitionSettings) settings_).xyFootprint_ == null) { //Use current stage position
             positions_ = new ArrayList<XYStagePosition>();
-            int fullTileWidth = (int) Magellan.getCore().getImageWidth();
-            int fullTileHeight = (int) Magellan.getCore().getImageHeight();
+//            int fullTileWidth = (int) Magellan.getCore().getImageWidth();
+//            int fullTileHeight = (int) Magellan.getCore().getImageHeight();
             positions_.add(new XYStagePosition(new Point2D.Double(
-                    Magellan.getCore().getXPosition(), Magellan.getCore().getYPosition()),
-                    fullTileWidth, fullTileHeight, 
-                    overlapX_, overlapY_, 0, 0, affineTransformUtils.getAffineTransform(
-                            Magellan.getCore().getXPosition(), Magellan.getCore().getXPosition())));
+                    Magellan.getCore().getXPosition(), Magellan.getCore().getYPosition()), 0, 0));
          } else {
-            positions_ = ((MagellanGUIAcquisitionSettings) settings_).xyFootprint_.getXYPositions(((MagellanGUIAcquisitionSettings) settings_).tileOverlap_);
+//                    ((MagellanGUIAcquisitionSettings) settings_).tileOverlap_
+            positions_ = ((MagellanGUIAcquisitionSettings) settings_).xyFootprint_.getXYPositions();
          }
 
       } catch (Exception e) {
@@ -390,7 +417,7 @@ public class MagellanGUIAcquisition extends FixedSettingsAcquisition implements 
       }
       JSONArray pList = new JSONArray();
       for (XYStagePosition xyPos : positions_) {
-         pList.put(xyPos.toJSON());
+         pList.put(xyPos.toJSON(Magellan.getCore()));
       }
       return pList;
    }
@@ -410,5 +437,14 @@ public class MagellanGUIAcquisition extends FixedSettingsAcquisition implements 
       return zStep_;
    }
 
+   @Override
+   public ChannelGroupSettings getChannels() {
+      return settings_.channels_;
+   }
+
+   @Override
+   public MagellanGenericAcquisitionSettings getAcquisitionSettings() {
+      return settings_;
+   }
 
 }

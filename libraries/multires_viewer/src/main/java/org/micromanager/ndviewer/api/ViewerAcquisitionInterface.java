@@ -15,7 +15,7 @@ package org.micromanager.ndviewer.api;
  */
 public interface ViewerAcquisitionInterface {
 
-   public boolean isComplete();
+   public boolean isFinished();
 
    public void abort();
 

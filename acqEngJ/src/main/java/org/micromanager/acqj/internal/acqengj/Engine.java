@@ -77,7 +77,7 @@ public class Engine {
             try {
                eventQueue_.clear();
                executeAcquisitionEvent(AcquisitionEvent.createAcquisitionFinishedEvent(acq));
-               while (!acq.isComplete()) {
+               while (!acq.isFinished()) {
                   Thread.sleep(1);
                }
             } catch (InterruptedException ex) {
@@ -99,44 +99,49 @@ public class Engine {
     */
    public Future submitEventIterator(Iterator<AcquisitionEvent> eventIterator, Acquisition acq) {
       return eventGeneratorExecutor_.submit(() -> {
+         try {
 
-         while (eventIterator.hasNext()) {
-            AcquisitionEvent event = eventIterator.next();
+            while (eventIterator.hasNext()) {
+               AcquisitionEvent event = eventIterator.next();
 
-            //Wait here is acquisition is paused
-            while (event.acquisition_.isPaused()) {
+               //Wait here is acquisition is paused
+               while (event.acquisition_.isPaused()) {
+                  try {
+                     Thread.sleep(5);
+                  } catch (InterruptedException ex) {
+                     throw new RuntimeException(ex);
+
+                  }
+               }
                try {
-                  Thread.sleep(5);
+                  Future imageAcquiredFuture = processAcquistionEvent(event);
+                  imageAcquiredFuture.get();
                } catch (InterruptedException ex) {
+                  //cancelled
+                  return;
+               } catch (ExecutionException ex) {
+                  //some problem with acuisition, abort and propagate exception
+                  ex.printStackTrace();
+                  finishAcquisition(acq);
                   throw new RuntimeException(ex);
-
                }
             }
             try {
-               Future imageAcquiredFuture = processAcquistionEvent(event);
-               imageAcquiredFuture.get();
+               Future lastImageFuture = processAcquistionEvent(AcquisitionEvent.createAcquisitionSequenceEndEvent(acq));
+               lastImageFuture.get();
             } catch (InterruptedException ex) {
                //cancelled
                return;
             } catch (ExecutionException ex) {
-               //some problem with acuisition, abort and propagate exception
+               //some problem with acuisition, propagate exception
                ex.printStackTrace();
-               finishAcquisition(acq);
                throw new RuntimeException(ex);
             }
-         }
-         try {
-            Future lastImageFuture = processAcquistionEvent(AcquisitionEvent.createAcquisitionSequenceEndEvent(acq));
-            lastImageFuture.get();
-         } catch (InterruptedException ex) {
-            //cancelled
-            return;
-         } catch (ExecutionException ex) {
-            //some problem with acuisition, propagate exception
-            ex.printStackTrace();
-            throw new RuntimeException(ex);
-         }
 
+         } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+         }
       });
    }
 
@@ -190,8 +195,12 @@ public class Engine {
     * @throws InterruptedException
     */
    private void executeAcquisitionEvent(AcquisitionEvent event) throws InterruptedException {
-      while (event.getMinimumStartTime() != null && System.currentTimeMillis() < event.getMinimumStartTime()) {
+      while (event.getMinimumStartTimeAbsolute() != null && 
+              System.currentTimeMillis() < event.getMinimumStartTimeAbsolute()) {
          try {
+            if (event.acquisition_.isAbortRequested()) {
+               return;
+            }
             Thread.sleep(1);
          } catch (InterruptedException e) {
             //Abort while waiting for next time point
@@ -200,7 +209,7 @@ public class Engine {
       }
       if (event.isAcquisitionFinishedEvent()) {
          //signal to finish saving thread and mark acquisition as finished
-         if (event.acquisition_.isMarkedFinished()) {
+         if (event.acquisition_.isFinished()) {
             return; //Duplicate finishing event, possibly from x-ing out viewer
          }
          event.acquisition_.markFinished();
@@ -596,7 +605,7 @@ public class Engine {
          }
          //timelapse
          if (e1.getTIndex() != e2.getTIndex()) {
-            if (e1.getMinimumStartTime() != e2.getMinimumStartTime()) {
+            if (e1.getMinimumStartTimeAbsolute() != e2.getMinimumStartTimeAbsolute()) {
                return false;
             }
          }

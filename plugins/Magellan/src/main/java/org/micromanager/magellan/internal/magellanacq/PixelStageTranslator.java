@@ -15,7 +15,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.acqj.api.AcqEngMetadata;
-import org.micromanager.acqj.internal.acqengj.XYStagePosition;
+import org.micromanager.acqj.api.mda.XYStagePosition;
 import org.micromanager.magellan.internal.coordinates.NoPositionsDefinedYetException;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.multiresstorage.PositionManager;
@@ -117,14 +117,9 @@ public class PixelStageTranslator {
          JSONArray jsonPos = new JSONArray(positionList_.getJSONObject(index).getJSONObject(
                  "DeviceCoordinatesUm").getJSONArray(xyStageName_).toString());
          Point2D.Double posCenter = new Point2D.Double(jsonPos.getDouble(0), jsonPos.getDouble(1));
-         //Full 
-         double[] mat = new double[4];
-         affine_.getMatrix(mat);
-         AffineTransform transform = new AffineTransform(mat[0], mat[1], mat[2], mat[3], posCenter.x, posCenter.y);
          int gridRow = (int) MagellanMD.getGridRow(positionList_.getJSONObject(index));
          int gridCol = (int) MagellanMD.getGridCol(positionList_.getJSONObject(index));
-         return new XYStagePosition(posCenter, tileWidth_, tileHeight_, 
-                 overlapX_, overlapY_, gridRow, gridCol, transform);
+         return new XYStagePosition(posCenter, gridRow, gridCol);
       } catch (JSONException ex) {
          throw new RuntimeException("problem with position metadata");
       }
@@ -253,14 +248,16 @@ public class PixelStageTranslator {
       }
    }
 
-   public int getTileHeight() {
-      return tileHeight_;
+   public int getDisplayTileHeight() {
+      return displayTileHeight_;
    }
 
-   public int getTileWidth() {
-      return tileWidth_;
+   public int getDisplayTileWidth() {
+      return displayTileWidth_;
    }
    
-
-
+   public Point2D.Double[] getDisplayTileCornerStageCoords(XYStagePosition pos) {
+      return pos.getVisibleTileCorners(overlapX_, overlapY_);
+   }
+ 
 }

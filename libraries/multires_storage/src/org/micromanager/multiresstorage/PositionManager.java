@@ -146,12 +146,12 @@ public class PositionManager {
     * @param colIndex
     * @return position index given res level or -1 if it doesn't exist
     */
-   public int getPositionIndexFromTilePosition(int dsIndex, long rowIndex, long colIndex) {
+   public Integer getPositionIndexFromTilePosition(int dsIndex, long rowIndex, long colIndex) {
       MultiResPositionNode nodeToFind = findExisitngNode(dsIndex, rowIndex, colIndex);
       if (nodeToFind != null) {
          return nodeToFind.positionIndex;
       }
-      return -1;
+      return null;
    }
 
    private synchronized void updateMinAndMaxRowsAndCols() {

@@ -41,11 +41,16 @@ import org.json.JSONObject;
 import org.micromanager.acqj.api.AcquisitionEvent;
 import org.micromanager.acqj.internal.acqengj.AcquisitionEventIterator;
 import org.micromanager.acqj.api.AcqEngMetadata;
+import org.micromanager.acqj.api.Acquisition;
 import org.micromanager.acqj.api.mda.AcqEventModules;
 import org.micromanager.acqj.api.ExceptionCallback;
-import org.micromanager.acqj.internal.acqengj.XYStagePosition;
+import org.micromanager.acqj.api.mda.ChannelSetting;
+import org.micromanager.acqj.api.mda.XYStagePosition;
 import org.micromanager.acqj.internal.acqengj.Engine;
-import org.micromanager.acqj.internal.acqengj.affineTransformUtils;
+import org.micromanager.acqj.internal.acqengj.AffineTransformUtils;
+import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
+import org.micromanager.magellan.internal.channels.SingleChannelSetting;
+import org.micromanager.magellan.internal.gui.GUI;
 
 /**
  * A single time point acquisition that can dynamically expand in X,Y, and Z
@@ -56,6 +61,7 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
 
    private volatile double zTop_, zBottom_;
    private List<XYStagePosition> positions_;
+   private ExploreAcqSettings settings_;
 
    //Map with slice index as keys used to get rid of duplicate events
    private ConcurrentHashMap<Integer, LinkedBlockingQueue<ExploreTileWaitingToAcquire>> queuedTileEvents_ = new ConcurrentHashMap<Integer, LinkedBlockingQueue<ExploreTileWaitingToAcquire>>();
@@ -70,8 +76,9 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
    private int overlapX_, overlapY_;
 
    public ExploreAcquisition(ExploreAcqSettings settings) {
-      super(settings, new MagellanDataManager(settings.dir_, true));
-      channels_ = settings.channels_;
+      core_ = Engine.getCore();
+      dataSink_ = new MagellanDataManager(settings.dir_, settings.name_, true);
+      settings_ = settings;
       zStep_ = settings.zStep_;
 
       try {
@@ -84,14 +91,17 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
          Log.log("Couldn't get focus device position", true);
          throw new RuntimeException();
       }
+      initialize();
    }
 
    @Override
-   protected void addToSummaryMetadata(JSONObject summaryMetadata) {
+   public void addToSummaryMetadata(JSONObject summaryMetadata) {
       MagellanMD.setExploreAcq(summaryMetadata, true);
+      MagellanMD.setSavingName(summaryMetadata, ((MagellanDataManager) dataSink_).getName());
+      MagellanMD.setSavingName(summaryMetadata, ((MagellanDataManager) dataSink_).getDir());
 
-      overlapX_ = (int) (Magellan.getCore().getImageWidth() * ((ExploreAcqSettings) settings_).tileOverlap_ / 100);
-      overlapY_ = (int) (Magellan.getCore().getImageHeight() * ((ExploreAcqSettings) settings_).tileOverlap_ / 100);
+      overlapX_ = (int) (Magellan.getCore().getImageWidth() * GUI.getTileOverlap() / 100);
+      overlapY_ = (int) (Magellan.getCore().getImageHeight() * GUI.getTileOverlap() / 100);
       MagellanMD.setPixelOverlapX(summaryMetadata, overlapX_);
       MagellanMD.setPixelOverlapY(summaryMetadata, overlapY_);
 
@@ -101,18 +111,17 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
       AcqEngMetadata.setInitialPositionList(summaryMetadata, initialPosList);
    }
 
-   protected void addToImageMetadata(JSONObject tags) {
+   public void addToImageMetadata(JSONObject tags) {
 
    }
-   
-   @Override 
+
+   @Override
    public void abort() {
       super.abort();
       submittedSequenceMonitorExecutor_.shutdownNow();
    }
 
-
-     /**
+   /**
     * Submit a iterator of acquisition events for execution.
     *
     * @param iter an iterator of acquisition events
@@ -140,10 +149,7 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
          int fullTileWidth = (int) Magellan.getCore().getImageWidth();
          int fullTileHeight = (int) Magellan.getCore().getImageHeight();
          positions_.add(new XYStagePosition(new Point2D.Double(Magellan.getCore().getXPosition(),
-                 Magellan.getCore().getYPosition()),
-                 fullTileWidth, fullTileHeight,
-                 overlapX_, overlapY_, 0, 0, affineTransformUtils.getAffineTransform(
-                         Magellan.getCore().getXPosition(), Magellan.getCore().getXPosition())));
+                 Magellan.getCore().getYPosition()), 0, 0));
 
       } catch (Exception e) {
          e.printStackTrace();
@@ -155,7 +161,7 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
    protected JSONArray createInitialPositionList() {
       JSONArray pList = new JSONArray();
       for (XYStagePosition xyPos : positions_) {
-         pList.put(xyPos.toJSON());
+         pList.put(xyPos.toJSON(core_));
       }
       return pList;
    }
@@ -233,8 +239,17 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
               = new ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>>();
       acqFunctions.add(positions(selectedXYPositions, posIndices));
       acqFunctions.add(AcqEventModules.zStack(minZIndex, maxZIndex + 1, zStep_, zOrigin_));
-      if (channels_ != null) {
-         acqFunctions.add(AcqEventModules.channels(channels_));
+      if (settings_.channels_ != null) {
+         ArrayList<ChannelSetting> channels = new ArrayList<ChannelSetting>();
+         if (getChannels() != null) {
+            for (String name : getChannels().getChannelNames()) {
+               SingleChannelSetting s = getChannels().getChannelSetting(name);
+               if (s.use_) {
+                  channels.add(s);
+               }
+            }
+         }
+         acqFunctions.add(AcqEventModules.channels(channels));
       }
 
       Iterator<AcquisitionEvent> iterator = new AcquisitionEventIterator(
@@ -251,8 +266,8 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
       }
 
       Function<AcquisitionEvent, AcquisitionEvent> removeTileToAcquireFn = (AcquisitionEvent e) -> {
-         queuedTileEvents_.get(e.getZIndex()).remove(new ExploreTileWaitingToAcquire(e.getXY().getGridRow(),
-                 e.getXY().getGridCol(), e.getZIndex(), e.getChannelName()));
+         queuedTileEvents_.get(e.getZIndex()).remove(new ExploreTileWaitingToAcquire(e.getGridRow(),
+                 e.getGridCol(), e.getZIndex(), e.getChannelConfig()));
          return e;
       };
 
@@ -280,7 +295,10 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
          } else {
             for (int index = 0; index < positions.size(); index++) {
                AcquisitionEvent posEvent = event.copy();
-               posEvent.setXY(positions.get(index));
+               posEvent.setGridCol(positions.get(index).getGridCol());
+               posEvent.setGridRow(positions.get(index).getGridRow());
+               posEvent.setX(positions.get(index).getCenter().x);
+               posEvent.setY(positions.get(index).getCenter().y);
                posEvent.setAxisPosition(MagellanMD.POSITION_AXIS, posIndices[index]);
                builder.accept(posEvent);
             }
@@ -297,8 +315,8 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
                queuedTileEvents_.put(event.getZIndex(), new LinkedBlockingQueue<ExploreTileWaitingToAcquire>());
             }
 
-            ExploreTileWaitingToAcquire tile = new ExploreTileWaitingToAcquire(event.getXY().getGridRow(),
-                    event.getXY().getGridCol(), event.getZIndex(), event.getChannelName());
+            ExploreTileWaitingToAcquire tile = new ExploreTileWaitingToAcquire(event.getGridRow(),
+                    event.getGridCol(), event.getZIndex(), event.getChannelConfig());
             if (queuedTileEvents_.get(event.getZIndex()).contains(tile)) {
                return false; //This tile is already waiting to be acquired
             }
@@ -380,6 +398,16 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
    @Override
    public double getZStep() {
       return ((ExploreAcqSettings) settings_).zStep_;
+   }
+
+   @Override
+   public ChannelGroupSettings getChannels() {
+      return settings_.channels_;
+   }
+
+   @Override
+   public MagellanGenericAcquisitionSettings getAcquisitionSettings() {
+      return settings_;
    }
 
    //slice and row/col index of an acquisition event in the queue

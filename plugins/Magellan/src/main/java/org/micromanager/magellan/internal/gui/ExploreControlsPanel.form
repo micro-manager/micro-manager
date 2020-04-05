@@ -74,7 +74,7 @@
           <SubComponents>
             <Component class="javax.swing.JButton" name="acquireAtCurrentButton_">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Acquire tile here"/>
+                <Property name="text" type="java.lang.String" value="Acquire at current position"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="acquireAtCurrentButton_ActionPerformed"/>

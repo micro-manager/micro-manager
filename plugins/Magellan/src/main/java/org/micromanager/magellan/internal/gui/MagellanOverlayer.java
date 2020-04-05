@@ -26,7 +26,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
-import org.micromanager.acqj.internal.acqengj.XYStagePosition;
+import org.micromanager.acqj.api.AcqEngMetadata;
+import org.micromanager.acqj.api.mda.XYStagePosition;
 import org.micromanager.magellan.internal.magellanacq.ExploreAcquisition;
 import org.micromanager.magellan.internal.magellanacq.MagellanDataManager;
 import org.micromanager.magellan.internal.misc.Log;
@@ -63,14 +64,11 @@ public class MagellanOverlayer implements OverlayerPlugin {
    private static final Color TRANSPARENT_MAGENTA = new Color(255, 0, 255, 100);
 
    private volatile boolean showSurface_ = true, showConvexHull_ = true, showXYFootprint_ = true;
-   private final int tileWidth_, tileHeight_;
    private MagellanDataManager manager_;
    private boolean exploreMode_, surfaceMode_;
 
    public MagellanOverlayer(MagellanDataManager manager) {
       manager_ = manager;
-      tileWidth_ = manager_.getTileWidth();
-      tileHeight_ = manager_.getTileHeight();
    }
 
    @Override
@@ -88,7 +86,7 @@ public class MagellanOverlayer implements OverlayerPlugin {
       }
       //Create a simple overlay and send it to EDT for display
       addEasyPartsOfOverlay(easyOverlay, magnification, displayImageSize,
-              axes.containsKey("z") ? axes.get("z") : 0, g,
+              axes.containsKey(AcqEngMetadata.Z_AXIS) ? axes.get(AcqEngMetadata.Z_AXIS) : 0, g,
               viewOffset);
       manager_.setOverlay(easyOverlay);
 
@@ -112,7 +110,8 @@ public class MagellanOverlayer implements OverlayerPlugin {
             }
 
             for (XYFootprint xy : getSurfacesAndGridsInDrawOrder()) {
-               if (xy instanceof MultiPosGrid || ((SurfaceInterpolator) xy).getPoints().length < 3) {
+               if (xy instanceof MultiPosGrid || ((SurfaceInterpolator) xy).getPoints().length < 3
+                       || !showSurface_) {
                   continue;
                }
                SurfaceInterpolator surface = ((SurfaceInterpolator) xy);
@@ -357,7 +356,7 @@ public class MagellanOverlayer implements OverlayerPlugin {
 
    private void addStagePositions(SurfaceInterpolator surface, Overlay overlay,
            double mag, Point2D.Double offset) {
-      List<XYStagePosition> positionsXY = surface.getXYPositionsNoUpdate();
+      List<XYStagePosition> positionsXY = surface.getXYPositions();
       if (positionsXY == null) {
          if (surface.getPoints() != null && surface.getPoints().length >= 3) {
             manager_.setOverlay(overlay);
@@ -368,7 +367,7 @@ public class MagellanOverlayer implements OverlayerPlugin {
 //         if (Thread.interrupted()) {
 //            throw new InterruptedException();
 //         }
-         Point2D.Double[] corners = pos.getDisplayedTileCorners();
+         Point2D.Double[] corners = manager_.getDisplayTileCorners(pos);
          Point corner1 = manager_.pixelCoordsFromStageCoords(corners[0].x, corners[0].y,
                  mag, offset);
          Point corner2 = manager_.pixelCoordsFromStageCoords(corners[1].x, corners[1].y,
@@ -443,8 +442,8 @@ public class MagellanOverlayer implements OverlayerPlugin {
    private Overlay addGridToOverlay(Overlay overlay, MultiPosGrid grid,
            double magnification, Point2D.Double offset) {
       double dsTileWidth, dsTileHeight;
-      dsTileWidth = tileWidth_ * magnification;
-      dsTileHeight = tileHeight_ * magnification;
+      dsTileWidth = manager_.getDisplayTileWidth() * magnification;
+      dsTileHeight = manager_.getDisplayTileHeight() * magnification;
       int roiWidth = (int) ((grid.numCols() * dsTileWidth));
       int roiHeight = (int) ((grid.numRows() * dsTileHeight));
       Point displayCenter = manager_.pixelCoordsFromStageCoords(grid.center().x, grid.center().y,
@@ -475,8 +474,8 @@ public class MagellanOverlayer implements OverlayerPlugin {
    private void highlightTilesOnOverlay(Overlay base, long row1, long row2, long col1,
            long col2, Color color, double magnification) {
       Point topLeft = manager_.getDisplayedPixel(row1, col1);
-      int width = (int) Math.round(tileWidth_ * (col2 - col1 + 1) * magnification);
-      int height = (int) Math.round(tileHeight_ * (row2 - row1 + 1) * magnification);
+      int width = (int) Math.round(manager_.getDisplayTileWidth() * (col2 - col1 + 1) * magnification);
+      int height = (int) Math.round(manager_.getDisplayTileHeight() * (row2 - row1 + 1) * magnification);
       Roi rect = new Roi(topLeft.x, topLeft.y, width, height);
       rect.setFillColor(color);
       base.add(rect);

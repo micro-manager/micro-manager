@@ -28,7 +28,7 @@ public class DataViewCoords {
    private String currentChannel_;
 
    //Parameters that track what part of the dataset is being viewed
-   public final int xMax_, yMax_, xMin_, yMin_;
+   public int xMax_, yMax_, xMin_, yMin_;
 
    public DataViewCoords(DataSourceInterface cache, String currentChannel, double xView, double yView,
            double initialWidth, double initialHeight, int[] imageBounds) {
@@ -38,11 +38,15 @@ public class DataViewCoords {
       yView_ = 0;
       sourceDataFullResWidth_ = initialWidth;
       sourceDataFullResHeight_ = initialHeight;
-      if (imageBounds != null) {
-         xMin_ = imageBounds[0];
-         yMin_ = imageBounds[1];
-         xMax_ = imageBounds[2];
-         yMax_ = imageBounds[3];
+      setImageBounds(imageBounds);
+   }
+
+   public void setImageBounds(int[] bounds) {
+      if (bounds != null) {
+         xMin_ = bounds[0];
+         yMin_ = bounds[1];
+         xMax_ = bounds[2];
+         yMax_ = bounds[3];
       } else {
          xMin_ = Integer.MIN_VALUE;
          yMin_ = Integer.MIN_VALUE;
@@ -52,27 +56,27 @@ public class DataViewCoords {
    }
 
    /**
-    * 
-    * @return 
+    *
+    * @return
     */
    public Point2D.Double getSourceImageSizeAtResLevel() {
       return new Point2D.Double(sourceDataFullResWidth_ / getDownsampleFactor(), sourceDataFullResHeight_ / getDownsampleFactor());
    }
-   
+
    public void setFullResSourceDataSize(double newWidth, double newHeight) {
       sourceDataFullResWidth_ = newWidth;
       sourceDataFullResHeight_ = newHeight;
       computeResIndex();
    }
-   
-    public Point2D.Double getFullResSourceDataSize() {
+
+   public Point2D.Double getFullResSourceDataSize() {
       return new Point2D.Double(sourceDataFullResWidth_, sourceDataFullResHeight_);
    }
 
    public Point2D.Double getDisplayImageSize() {
       return new Point2D.Double(displayImageWidth_, displayImageHeight_);
    }
-   
+
    /**
     * Computes the scaling between display pixels and whatever pixels they were
     * derived from
@@ -81,9 +85,9 @@ public class DataViewCoords {
       //need this floor because it happens along the way to image creation
       return displayImageWidth_ / Math.floor(sourceDataFullResWidth_ / getDownsampleFactor());
    }
-   
+
    public double getMagnification() {
-     return displayImageWidth_ / (double) sourceDataFullResWidth_;
+      return displayImageWidth_ / (double) sourceDataFullResWidth_;
    }
 
    private void computeResIndex() {
@@ -125,7 +129,7 @@ public class DataViewCoords {
    public void setAxisPosition(String axis, Integer position) {
       axes_.put(axis, position);
    }
-   
+
    public int getAxisPosition(String axis) {
       if (!axes_.containsKey(axis)) {
          return 0;

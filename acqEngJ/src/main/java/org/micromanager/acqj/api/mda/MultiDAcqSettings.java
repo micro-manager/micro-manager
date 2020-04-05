@@ -1,8 +1,6 @@
 package org.micromanager.acqj.api.mda;
 
-import org.micromanager.acqj.internal.acqengj.ChannelSetting;
 import java.util.List;
-import org.micromanager.acqj.internal.acqengj.XYStagePosition;
 
 /**
  *
