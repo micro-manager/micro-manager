@@ -528,9 +528,6 @@ public final class SnapLiveManager extends DataViewerListener
     *  
     */
    private List<Component> createControls() {
-      /* TODO
-      UiMovesStageManager.getInstance().activate((DisplayController) display);
-      */
       ArrayList<Component> controls = new ArrayList<>();
       Insets zeroInsets = new Insets(0, 0, 0, 0);
       Dimension buttonSize = new Dimension(90, 28);
