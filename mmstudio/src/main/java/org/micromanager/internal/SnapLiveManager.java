@@ -805,6 +805,12 @@ public final class SnapLiveManager extends DataViewerListener
       try {
          List<Image> images = mmStudio_.acquisitions().snap();
          if (shouldDisplay) {
+            long coreCameras = core_.getNumberOfCameraChannels();
+            if (coreCameras != numCameraChannels_) {
+               // Number of camera channels has changed; need to reset the display.
+               shouldForceReset_ = true;
+            }
+            numCameraChannels_ = (int) coreCameras;
             if (display_ != null) {
                display_.resetDisplayIntervalEstimate();
             }
