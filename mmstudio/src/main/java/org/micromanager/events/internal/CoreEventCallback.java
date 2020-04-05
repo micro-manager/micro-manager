@@ -160,35 +160,29 @@ public final class CoreEventCallback extends MMEventCallback {
 
    @Override
    public void onStagePositionChanged(String deviceName, double pos) {
-      // TODO: this check should be in the core, not the java layer!
-      if (deviceName.equals(core_.getFocusDevice())) {
-         // see OnPropertyChanged for reasons to run this on the EDT
-         if (!SwingUtilities.isEventDispatchThread()) {
-            SwingUtilities.invokeLater(() -> {
-               studio_.events().post(
-                       new StagePositionChangedEvent(deviceName, pos));
-            });
-         } else {
+      // see OnPropertyChanged for reasons to run this on the EDT
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(() -> {
             studio_.events().post(
                     new StagePositionChangedEvent(deviceName, pos));
-         }
+         });
+      } else {
+         studio_.events().post(
+                 new StagePositionChangedEvent(deviceName, pos));
       }
    }
 
    @Override
    public void onXYStagePositionChanged(String deviceName, double xPos, double yPos) {
-      // TODO: this check should be in the core, not the java layer!
-      if (deviceName.equals(core_.getXYStageDevice())) {
-         // see OnPropertyChanged for reasons to run this on the EDT
-         if (!SwingUtilities.isEventDispatchThread()) {
-            SwingUtilities.invokeLater(() -> {
-               studio_.events().post(
-                       new XYStagePositionChangedEvent(deviceName, xPos, yPos));
-            });
-         } else {
+      // see OnPropertyChanged for reasons to run this on the EDT
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(() -> {
             studio_.events().post(
                     new XYStagePositionChangedEvent(deviceName, xPos, yPos));
-         }
+         });
+      } else {
+         studio_.events().post(
+                 new XYStagePositionChangedEvent(deviceName, xPos, yPos));
       }
    }
 
