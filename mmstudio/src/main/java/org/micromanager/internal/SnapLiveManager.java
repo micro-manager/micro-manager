@@ -608,8 +608,7 @@ public final class SnapLiveManager extends DataViewerListener
          }
          for (int camCh = 0; camCh < numCameraChannels_; ++camCh) {
             String name = makeChannelName(curChannel, core_.getCameraChannelName(camCh));
-            if (channelNames == null
-                    || camCh >= channelNames.size()) {
+            if (channelNames == null || camCh >= channelNames.size()) {
                shouldReset = true;
             } else if (!name.equals(channelNames.get(camCh))) {
                // Channel name changed.
@@ -621,7 +620,7 @@ public final class SnapLiveManager extends DataViewerListener
                   ChannelDisplaySettings newCD = RememberedSettings.loadChannel(
                           mmStudio_, 
                           core_.getChannelGroup(),
-                          curChannel);
+                          name);
                   display_.setDisplaySettings(display_.getDisplaySettings().
                           copyBuilderWithChannelSettings(camCh, newCD).build());
                }               
