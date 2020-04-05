@@ -528,9 +528,6 @@ public final class SnapLiveManager extends DataViewerListener
     *  
     */
    private List<Component> createControls() {
-      /* TODO
-      UiMovesStageManager.getInstance().activate((DisplayController) display);
-      */
       ArrayList<Component> controls = new ArrayList<>();
       Insets zeroInsets = new Insets(0, 0, 0, 0);
       Dimension buttonSize = new Dimension(90, 28);
@@ -611,8 +608,7 @@ public final class SnapLiveManager extends DataViewerListener
          }
          for (int camCh = 0; camCh < numCameraChannels_; ++camCh) {
             String name = makeChannelName(curChannel, core_.getCameraChannelName(camCh));
-            if (channelNames == null
-                    || camCh >= channelNames.size()) {
+            if (channelNames == null || camCh >= channelNames.size()) {
                shouldReset = true;
             } else if (!name.equals(channelNames.get(camCh))) {
                // Channel name changed.
@@ -624,7 +620,7 @@ public final class SnapLiveManager extends DataViewerListener
                   ChannelDisplaySettings newCD = RememberedSettings.loadChannel(
                           mmStudio_, 
                           core_.getChannelGroup(),
-                          curChannel);
+                          name);
                   display_.setDisplaySettings(display_.getDisplaySettings().
                           copyBuilderWithChannelSettings(camCh, newCD).build());
                }               
@@ -694,13 +690,15 @@ public final class SnapLiveManager extends DataViewerListener
                     newImage.getHeight(), newImage.getNumComponents(),
                     newImage.getBytesPerPixel()) ;
             displayInfo_.setImageNumber(newImageChannel, newImage.getMetadata().getImageNumber());
-            
-            if (lastImageForEachChannel_.size() > newImageChannel) {
-               lastImageForEachChannel_.set(newImageChannel, newImage);
-            } else {
-               lastImageForEachChannel_.add(newImageChannel, newImage);
+
+            synchronized(lastImageForEachChannel_) {
+               if (lastImageForEachChannel_.size() > newImageChannel) {
+                  lastImageForEachChannel_.set(newImageChannel, newImage);
+               }
+               else {
+                  lastImageForEachChannel_.add(newImageChannel, newImage);
+               }
             }
-            
          }
 
          synchronized (pipelineLock_) {
@@ -783,7 +781,11 @@ public final class SnapLiveManager extends DataViewerListener
    private String makeChannelName(String channel, String cameraChannelName) {
       String result = channel;
       if (numCameraChannels_ > 1) {
-         result = result + " " + cameraChannelName;
+         if (channel.isEmpty()) {
+            result = cameraChannelName;
+         } else {
+            result = result + "-" + cameraChannelName;
+         }
       }
       return result;
    }
@@ -803,6 +805,12 @@ public final class SnapLiveManager extends DataViewerListener
       try {
          List<Image> images = mmStudio_.acquisitions().snap();
          if (shouldDisplay) {
+            long coreCameras = core_.getNumberOfCameraChannels();
+            if (coreCameras != numCameraChannels_) {
+               // Number of camera channels has changed; need to reset the display.
+               shouldForceReset_ = true;
+            }
+            numCameraChannels_ = (int) coreCameras;
             if (display_ != null) {
                display_.resetDisplayIntervalEstimate();
             }
