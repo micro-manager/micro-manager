@@ -781,7 +781,11 @@ public final class SnapLiveManager extends DataViewerListener
    private String makeChannelName(String channel, String cameraChannelName) {
       String result = channel;
       if (numCameraChannels_ > 1) {
-         result = result + " " + cameraChannelName;
+         if (channel.isEmpty()) {
+            result = cameraChannelName;
+         } else {
+            result = result + "-" + cameraChannelName;
+         }
       }
       return result;
    }
