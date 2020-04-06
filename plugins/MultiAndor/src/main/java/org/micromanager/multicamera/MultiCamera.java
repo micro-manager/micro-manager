@@ -1,6 +1,5 @@
 package org.micromanager.multicamera;
 
-import mmcorej.CMMCore;
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 

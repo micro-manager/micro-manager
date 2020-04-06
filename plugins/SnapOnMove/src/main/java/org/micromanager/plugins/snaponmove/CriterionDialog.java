@@ -55,10 +55,20 @@ import javax.swing.JTextField;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.internal.dialogs.ComponentTitledBorder;
-import org.micromanager.internal.utils.MMDialog;
+
 import org.micromanager.plugins.snaponmove.ChangeCriterion.XYDistanceCriterion;
 import org.micromanager.plugins.snaponmove.ChangeCriterion.ZDistanceCriterion;
+
+// Imports for MMStudio internal packages
+// Plugins should not access internal packages, to ensure modularity and
+// maintainability. However, this plugin code is older than the current
+// MMStudio API, so it still uses internal classes and interfaces. New code
+// should not imitate this practice.
+import org.micromanager.internal.dialogs.ComponentTitledBorder;
+import org.micromanager.internal.utils.MMDialog;
+
+
+
 
 final class CriterionDialog extends MMDialog {
    private final MainController controller_;

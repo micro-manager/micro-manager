@@ -65,7 +65,6 @@ import org.micromanager.data.Metadata;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.imageprocessing.BoofCVUtils;
-import org.micromanager.internal.utils.imageanalysis.BoofCVImageConverter;
 import org.micromanager.pointandshootanalysis.algorithm.ContourStats;
 import org.micromanager.pointandshootanalysis.data.PASData;
 import org.micromanager.pointandshootanalysis.data.PASFrameSet;
@@ -75,6 +74,13 @@ import org.micromanager.pointandshootanalysis.display.Overlay;
 import org.micromanager.pointandshootanalysis.display.WidgetSettings;
 import org.micromanager.pointandshootanalysis.plot.PlotUtils;
 import org.micromanager.pointandshootanalysis.utils.ListUtils;
+
+// Imports for MMStudio internal packages
+// Plugins should not access internal packages, to ensure modularity and
+// maintainability. However, this plugin code is older than the current
+// MMStudio API, so it still uses internal classes and interfaces. New code
+// should not imitate this practice.
+import org.micromanager.internal.utils.imageanalysis.BoofCVImageConverter;
 
 /**
  *

@@ -12,9 +12,14 @@ import javax.swing.JLabel;
 import javax.swing.JTextField;
 
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.Studio;
 
+// Imports for MMStudio internal packages
+// Plugins should not access internal packages, to ensure modularity and
+// maintainability. However, this plugin code is older than the current
+// MMStudio API, so it still uses internal classes and interfaces. New code
+// should not imitate this practice.
 import org.micromanager.internal.utils.FileDialogs;
-import org.micromanager.internal.utils.ReportingUtils;
 
 public class CustomSettingsFrame extends JFrame {
    private final JTextField id_;
@@ -29,10 +34,12 @@ public class CustomSettingsFrame extends JFrame {
    private final JTextField firstWellY_;
    private final JCheckBox circular_;
 
+   private final Studio studio_;
    private final SiteGenerator parent_;
 
-   public CustomSettingsFrame(SiteGenerator parent) {
+   public CustomSettingsFrame(Studio studio, SiteGenerator parent) {
       super();
+      studio_ = studio;
       parent_ = parent;
       super.setLayout(new MigLayout("flowx"));
 
@@ -103,11 +110,11 @@ public class CustomSettingsFrame extends JFrame {
          parent_.loadCustom(target);
       }
       catch (IOException e) {
-         ReportingUtils.showError(e, "There was an IO error trying to save your settings");
+         studio_.logs().showError(e, "There was an IO error trying to save your settings");
       } catch (NumberFormatException e) {
-         ReportingUtils.showError(e, "There was a NumberFormat Error trying to save your settings");
+         studio_.logs().showError(e, "There was a NumberFormat Error trying to save your settings");
       } catch (HCSException e) {
-         ReportingUtils.showError(e, "There was an HCS error trying to save your settings");
+         studio_.logs().showError(e, "There was an HCS error trying to save your settings");
       }
    }
 }

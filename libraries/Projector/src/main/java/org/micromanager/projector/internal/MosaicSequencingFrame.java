@@ -67,11 +67,19 @@ import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.Studio;
+
+
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TextUtils;
+
+// Imports for MMStudio internal packages
+// Plugins should not access internal packages, to ensure modularity and
+// maintainability. However, this plugin code is older than the current
+// MMStudio API, so it still uses internal classes and interfaces. New code
+// should not imitate this practice.
 import org.micromanager.projector.Mapping;
 import org.micromanager.projector.ProjectorActions;
 
