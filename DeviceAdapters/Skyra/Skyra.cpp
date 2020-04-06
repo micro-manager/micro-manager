@@ -383,7 +383,7 @@ int Skyra::Initialize()
 		return nRet;
 	
 	// Set Property Limits for Power
-	double powerMaximum = std::stof(powerMaximum_);
+   double powerMaximum = std::atof(powerMaximum_.c_str());
 	SetPropertyLimits(g_PropertySkyraPower,0,powerMaximum);
 
 	CreateProperty("Power Units", g_PropertySkyraPowerHelp, MM::String, true);
@@ -422,7 +422,7 @@ int Skyra::Initialize()
 
 	// Set Property Limits for Current
 	currentMaximum_ = SerialCommand (ID_ + "gmlc?");
-	double currentMaximum = std::stof(currentMaximum_);
+   double currentMaximum = std::atof(currentMaximum_.c_str());
 	SetPropertyLimits(g_PropertySkyraCurrent,0,currentMaximum);
 	SetPropertyLimits(g_PropertySkyraCurrentModulationMinimum,0,currentMaximum);
 	SetPropertyLimits(g_PropertySkyraCurrentModulationMaximum,0,currentMaximum);
@@ -678,10 +678,13 @@ int Skyra::OnPower(MM::PropertyBase* pProp, MM::ActionType  eAct)
 		double power; 
 		pProp->Get(power);
 		if (power >= 0) {
-			if (power <= std::stof(powerMaximum_)) {
-				Power_ = std::to_string((long double)power);
+			if (power <= std::atof(powerMaximum_.c_str())) {
+            std::ostringstream strs;
+            strs << (long double) power;
+            Power_ = strs.str();
+				// Power_ = std::to_string((long double)power);
 				if (power > 0) {
-					Power_ = std::to_string((long double)power);
+					//Power_ = std::to_string((long double)power);
 					powerSetPoint_ = Power_; // remember high power value
 				}
 			}
@@ -700,8 +703,11 @@ int Skyra::OnPowerSetPoint(MM::PropertyBase* pProp, MM::ActionType eAct )
 	if (eAct == MM::BeforeGet)
 	{
 		std::string answer;
-		double value = std::stof(SerialCommand(ID_ + "p?")) * 1000; 
-		powerSetPoint_ = std::to_string((long double)value); 
+		double value = std::atof((SerialCommand(ID_ + "p?")).c_str()) * 1000; 
+      std::ostringstream strs;
+      strs << (long double) value;
+      powerSetPoint_ = strs.str();
+		// powerSetPoint_ = std::to_string((long double)value); 
 		pProp->Set(powerSetPoint_.c_str());
 	} 
 
@@ -713,8 +719,11 @@ int Skyra::OnPowerStatus(MM::PropertyBase* pProp, MM::ActionType  eAct)
 	{
 		if (nSkyra_) powerStatus_ = SerialCommand(ID_ + "glp?");
 		else  {
-			double value = std::stof(SerialCommand(ID_ + "pa?")) * 1000; 
-			powerStatus_ = std::to_string((long double)value); 
+			double value = std::atof((SerialCommand(ID_ + "pa?")).c_str()) * 1000; 
+         std::ostringstream strs;
+         strs << (long double) value;
+         powerStatus_ = strs.str();
+			//powerStatus_ = std::to_string((long double)value); 
 		}
 		pProp->Set(powerStatus_.c_str());
 	}
@@ -797,8 +806,11 @@ int Skyra::OnCurrent(MM::PropertyBase* pProp, MM::ActionType eAct)
 			pProp->Get(current);
 			
 			if (current >= 0) {
-				if (current <= std::stof(currentMaximum_)) {
-					Current_ = std::to_string((long double) current);
+            if (current <= std::atof(currentMaximum_.c_str())) {
+               std::ostringstream strs;
+               strs << (long double) current;
+               Current_ = strs.str();
+					//Current_ = std::to_string((long double) current);
 					if (current > 0) {
 						currentSetPoint_ = Current_;
 					}
@@ -843,7 +855,7 @@ int Skyra::OnCurrentModulationMaximum(MM::PropertyBase* pProp, MM::ActionType eA
 		{
 			pProp->Get(currentModulationMaximum_);
 			SerialCommand (ID_ + "smc " + currentModulationMaximum_);
-			SetPropertyLimits(g_PropertySkyraCurrentModulationMinimum,0,std::stof(currentModulationMaximum_));
+			SetPropertyLimits(g_PropertySkyraCurrentModulationMinimum,0,std::atof(currentModulationMaximum_.c_str()));
 		}
 	}
 	return DEVICE_OK;
@@ -868,7 +880,8 @@ int Skyra::OnCurrentModulationMinimum(MM::PropertyBase* pProp, MM::ActionType eA
 		{
 			pProp->Get(currentModulationMinimum_);
 			SerialCommand (ID_ + "slth " + currentModulationMinimum_);
-			SetPropertyLimits(g_PropertySkyraCurrentModulationMaximum, std::stof(currentModulationMinimum_),std::stof(currentMaximum_));
+			SetPropertyLimits(g_PropertySkyraCurrentModulationMaximum, 
+            std::atof(currentModulationMinimum_.c_str()),std::atof(currentMaximum_.c_str()));
 		}
 		return DEVICE_OK;
 }
@@ -1253,9 +1266,12 @@ std::string Skyra::SetPower(std::string requestedPowerSetpoint, std::string lase
 {
 	std::string answer;
 
-	double dPower = std::stof(requestedPowerSetpoint,NULL)/1000;
+	double dPower = std::atof(requestedPowerSetpoint.c_str())/1000;
+   std::ostringstream strs;
+   strs << (long double)dPower;
+   answer = SerialCommand (ID_ + "p " + strs.str());
 
-	answer = SerialCommand (ID_ + "p " + std::to_string((long double)dPower));
+	// answer = SerialCommand (ID_ + "p " + std::to_string((long double)dPower));
 
 	//LogMessage("SetPower: " + ID_ + std::to_string((long double)dPower));
 
@@ -1329,7 +1345,7 @@ std::string Skyra::UpdateWaveLength(std::string id)
 	SetProperty(g_PropertySkyraCurrentOn,currentSetPoint_.c_str());
 
 	currentMaximum_ = SerialCommand (ID_ + "gmlc?");
-	dValue = std::stof(currentMaximum_);
+	dValue = std::atof(currentMaximum_.c_str());
 	// Reset Limits when switching wavelengths
 	SetPropertyLimits(g_PropertySkyraCurrent,0,dValue);
 	SetPropertyLimits(g_PropertySkyraCurrentModulationMinimum,0,dValue);
@@ -1355,7 +1371,7 @@ std::string Skyra::UpdateWaveLength(std::string id)
 	// Power Maximum
 	powerMaximum_ = SerialCommand (ID_ + "gmlp?");
 	// Set Property Limits for Power
-	dValue = std::stof(powerMaximum_);
+	dValue = std::atof(powerMaximum_.c_str());
 	SetPropertyLimits(g_PropertySkyraPower,0,dValue);
 	
 	SetProperty(g_PropertySkyraCurrentMaximum,powerMaximum_.c_str());
