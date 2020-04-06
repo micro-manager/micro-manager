@@ -1068,7 +1068,7 @@ int Skyra::OnInternalModulationPeriod(MM::PropertyBase* pProp, MM::ActionType  e
 
 	if (eAct == MM::BeforeGet)
 	{
-		nInternalModulationPeriodTime_ = std::stoi(SerialCommand(ID_ + "gswmp?"));
+		nInternalModulationPeriodTime_ = std::atoi(SerialCommand(ID_ + "gswmp?").c_str());
 		pProp->Set(nInternalModulationPeriodTime_);
 	}
 	else if (eAct == MM::AfterSet)
@@ -1076,7 +1076,7 @@ int Skyra::OnInternalModulationPeriod(MM::PropertyBase* pProp, MM::ActionType  e
 		std::string answer;
 
 		pProp->Get(answer);
-		nInternalModulationPeriodTime_ = std::stoi(answer);
+		nInternalModulationPeriodTime_ = std::atoi(answer.c_str());
 		// Limited to INT_MAX and >= On Time
 		if (nInternalModulationPeriodTime_ >= 0 && nInternalModulationPeriodTime_ <= INT_MAX) {
 			if (nInternalModulationPeriodTime_ < nInternalModulationOnTime_) {
@@ -1094,7 +1094,7 @@ int Skyra::OnInternalModulationOn(MM::PropertyBase* pProp, MM::ActionType  eAct)
 
 	if (eAct == MM::BeforeGet)
 	{
-		nInternalModulationOnTime_ = std::stoi(SerialCommand(ID_ + "gswmo?"));
+      nInternalModulationOnTime_ = std::atoi(SerialCommand(ID_ + "gswmo?").c_str());
 		pProp->Set(nInternalModulationOnTime_);
 	}
 	else if (eAct == MM::AfterSet)
@@ -1103,7 +1103,7 @@ int Skyra::OnInternalModulationOn(MM::PropertyBase* pProp, MM::ActionType  eAct)
 		// Limited to INT_MAX or OnInternalModulationPeriod, whichever is less
 		pProp->Get(answer);
 
-		nInternalModulationOnTime_ = std::stoi(answer);
+		nInternalModulationOnTime_ = std::atoi(answer.c_str());
 		if (nInternalModulationOnTime_ >= 0 && nInternalModulationOnTime_ <= INT_MAX) {
 			if (nInternalModulationOnTime_ > nInternalModulationPeriodTime_) {
 				nInternalModulationPeriodTime_ = nInternalModulationOnTime_;
@@ -1126,7 +1126,7 @@ int Skyra::OnInternalModulationDelay(MM::PropertyBase* pProp, MM::ActionType  eA
 	else if (eAct == MM::AfterSet)
 	{
 		pProp->Get(answer);
-		int value = std::stoi(answer);
+		int value = std::atoi(answer.c_str());
 		if (value >= 0) if (value <= INT_MAX) SerialCommand(ID_ + "sswmod " + answer);
 	}
 
