@@ -448,6 +448,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FirstLightImagingCameras", 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KuriosLCTF", "DeviceAdapters\KuriosLCTF\KuriosLCTF.vcxproj", "{D098C9DC-D6DB-4E88-851C-A997D0F87C9D}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Skyra", "DeviceAdapters\Skyra\Skyra.vcxproj", "{3941E397-C74E-4AC8-8A01-741DB3AD1624}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -3107,6 +3109,18 @@ Global
 		{D098C9DC-D6DB-4E88-851C-A997D0F87C9D}.Release|Win32.Build.0 = Release|Win32
 		{D098C9DC-D6DB-4E88-851C-A997D0F87C9D}.Release|x64.ActiveCfg = Release|x64
 		{D098C9DC-D6DB-4E88-851C-A997D0F87C9D}.Release|x64.Build.0 = Release|x64
+		{3941E397-C74E-4AC8-8A01-741DB3AD1624}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
+		{3941E397-C74E-4AC8-8A01-741DB3AD1624}.Debug|Mixed Platforms.Build.0 = Debug|x64
+		{3941E397-C74E-4AC8-8A01-741DB3AD1624}.Debug|Win32.ActiveCfg = Debug|Win32
+		{3941E397-C74E-4AC8-8A01-741DB3AD1624}.Debug|Win32.Build.0 = Debug|Win32
+		{3941E397-C74E-4AC8-8A01-741DB3AD1624}.Debug|x64.ActiveCfg = Debug|x64
+		{3941E397-C74E-4AC8-8A01-741DB3AD1624}.Debug|x64.Build.0 = Debug|x64
+		{3941E397-C74E-4AC8-8A01-741DB3AD1624}.Release|Mixed Platforms.ActiveCfg = Release|x64
+		{3941E397-C74E-4AC8-8A01-741DB3AD1624}.Release|Mixed Platforms.Build.0 = Release|x64
+		{3941E397-C74E-4AC8-8A01-741DB3AD1624}.Release|Win32.ActiveCfg = Release|Win32
+		{3941E397-C74E-4AC8-8A01-741DB3AD1624}.Release|Win32.Build.0 = Release|Win32
+		{3941E397-C74E-4AC8-8A01-741DB3AD1624}.Release|x64.ActiveCfg = Release|x64
+		{3941E397-C74E-4AC8-8A01-741DB3AD1624}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
