@@ -22,12 +22,17 @@ import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.micromanager.Studio;
 import org.micromanager.data.Image;
-import org.micromanager.internal.utils.imageanalysis.ImageUtils;
-import org.micromanager.internal.utils.MathFunctions;
-import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.projector.Mapping;
 import org.micromanager.projector.ProjectionDevice;
 import org.micromanager.propertymap.MutablePropertyMapView;
+
+// Imports for MMStudio internal packages
+// Plugins should not access internal packages, to ensure modularity and
+// maintainability. However, this plugin code is older than the current
+// MMStudio API, so it still uses internal classes and interfaces. New code
+// should not imitate this practice.
+import org.micromanager.internal.utils.imageanalysis.ImageUtils;
+import org.micromanager.internal.utils.MathFunctions;
 
 /**
  *
@@ -145,7 +150,7 @@ public class Calibrator {
          Thread.sleep(delayMs);
          return maxPt;
       } catch (Exception e) {
-         ReportingUtils.showError(e);
+         app_.logs().showError(e);
          return null;
       }
    }
@@ -295,7 +300,7 @@ public class Calibrator {
                AffineTransform transform = MathFunctions.generateAffineTransformFromPointPairs(map, srcTol, Double.MAX_VALUE);
                bigMap.put(poly, transform);
             } catch (Exception e) {
-               ReportingUtils.logError("Bad cell in mapping.");
+               app_.logs().logError("Bad cell in mapping.");
             }
          }
       }
@@ -344,7 +349,7 @@ public class Calibrator {
                try {
                   Thread.sleep(500);
                } catch (InterruptedException ex) {
-                  ReportingUtils.logError(ex);
+                  app_.logs().logError(ex);
                }
 
                // save local affine transform map to preferences
@@ -356,11 +361,11 @@ public class Calibrator {
                }
                IJ.getImage().setRoi(originalROI);
             } catch (HeadlessException e) {
-               ReportingUtils.showError(e);
+               app_.logs().showError(e);
             } catch (RuntimeException e) {
-               ReportingUtils.showError(e);
+               app_.logs().showError(e);
             } catch (InterruptedException ex) {
-               ReportingUtils.logError(ex);
+               app_.logs().logError(ex);
             } finally {
                app_.live().setSuspended(false);
                isRunning_.set(false);
