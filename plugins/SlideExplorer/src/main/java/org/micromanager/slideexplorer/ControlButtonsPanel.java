@@ -15,6 +15,12 @@ import ij.IJ;
 import ij.gui.Toolbar;
 import java.awt.Color;
 import org.micromanager.slideexplorer.Hub.ModeManager;
+
+// Imports for MMStudio internal packages
+// Plugins should not access internal packages, to ensure modularity and
+// maintainability. However, this plugin code is older than the current
+// MMStudio API, so it still uses internal classes and interfaces. New code
+// should not imitate this practice.
 import org.micromanager.internal.utils.JavaUtils;
 
 /**

@@ -27,11 +27,7 @@ import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import mmcorej.CMMCore;
 
@@ -39,8 +35,6 @@ import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
 import org.micromanager.StagePosition;
-//import org.micromanager.slideexplorer.SlideExplorer.CoordinateMap;
-import org.micromanager.internal.utils.MMScriptException;
 
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
@@ -48,8 +42,12 @@ import ij.gui.ShapeRoi;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 
+// Imports for MMStudio internal packages
+// Plugins should not access internal packages, to ensure modularity and
+// maintainability. However, this plugin code is older than the current
+// MMStudio API, so it still uses internal classes and interfaces. New code
+// should not imitate this practice.
 import org.micromanager.internal.utils.JavaUtils;
-import org.micromanager.internal.utils.ReportingUtils;
 
 
 
@@ -269,7 +267,7 @@ public class RoiManager extends ij.plugin.frame.RoiManager{
                 System.out.println(super.getClass());
                 return (Shape) JavaUtils.invokeRestrictedMethod(this, this.getClass().getSuperclass(), "getShape");
             } catch (Exception ex) {
-                ReportingUtils.logError(ex);
+                app_.logs().logError(ex);
                 return null;
             }  
         }
@@ -278,7 +276,7 @@ public class RoiManager extends ij.plugin.frame.RoiManager{
             try {
                 JavaUtils.invokeRestrictedMethod(this, this.getClass().getSuperclass(), "setShape", shape, Shape.class);
             } catch (Exception ex) {
-                ReportingUtils.logError(ex);
+                app_.logs().logError(ex);
             }
         }
 

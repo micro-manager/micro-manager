@@ -53,10 +53,16 @@ import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.events.internal.ChannelGroupEvent;
+import org.micromanager.propertymap.MutablePropertyMapView;
+
+// Imports for MMStudio internal packages
+// Plugins should not access internal packages, to ensure modularity and
+// maintainability. However, this plugin code is older than the current
+// MMStudio API, so it still uses internal classes and interfaces. New code
+// should not imitate this practice.
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.NumberUtils;
-import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  * Micro-Manager plugin for ratio imaging
