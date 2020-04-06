@@ -22,6 +22,7 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include <sstream>
 
 #define MODULATION_STATUS 1
 #define MODULATION_ANALOG 2
