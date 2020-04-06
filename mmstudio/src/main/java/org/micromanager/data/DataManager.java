@@ -26,7 +26,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 import mmcorej.TaggedImage;
-import org.json.JSONException;
+import mmcorej.org.json.JSONException;
 import org.micromanager.PropertyMap;
 
 /**
@@ -230,8 +230,10 @@ public interface DataManager {
 
    /**
     * Generate a new Image with the provided pixel data, rules for interpreting
-    * that pixel data, coordinates, and metadata.
-    * @param pixels A byte[] or short[] array of unsigned pixel data.
+    * that pixel data, coordinates, and metadata. Pixel data will be copied.
+    * @param pixels A byte[] or short[] array of unsigned pixel data. This array
+    *               will be copied, so changes in this array will not be propagated
+    *               to the Image
     * @param width Width of the image, in pixels
     * @param height Height of the image, in pixels
     * @param bytesPerPixel How many bytes are allocated to each pixel in the
@@ -250,6 +252,32 @@ public interface DataManager {
          int bytesPerPixel, int numComponents, Coords coords,
          Metadata metadata);
 
+    /**
+     * Generate a new Image with the provided pixel data, rules for interpreting
+     * that pixel data, coordinates, and metadata. Pixel data will be used without
+     * copying, so later changes to the pixel data will result in changes to this image
+     * @param pixels A byte[] or short[] array of unsigned pixel data. This array will
+     *               be used as provided, so changes in pixel values will result in
+     *               changes to this image
+     * @param width Width of the image, in pixels
+     * @param height Height of the image, in pixels
+     * @param bytesPerPixel How many bytes are allocated to each pixel in the
+     *        image. Currently only 1, 2, and 4-byte images are supported.
+     * @param numComponents How many colors are encoded into each pixel.
+     *        Currently only 1-component (grayscale) and 3-component (RGB)
+     *        images are supported.
+     * @param coords Coordinates defining the position of the Image within a
+     *        larger dataset.
+     * @param metadata Image metadata.
+     * @throws IllegalArgumentException if the pixels array has length less than
+     *         width * height.
+     * @return A new Image based on the input parameters.
+     */
+   Image wrapImage(Object pixels, int width, int height,
+                   int bytesPerPixel, int numComponents, Coords coords,
+                   Metadata metadata);
+
+
    /**
     * Given a TaggedImage input, output an Image based on the TaggedImage.
     * Note that certain properties in the metadata in the TaggedImage's tags
@@ -258,6 +286,10 @@ public interface DataManager {
     * the hardware that this instance of Micro-Manager is controlling. If you
     * do not want this to happen, you will need to call the version of
     * convertTaggedImage() that takes a Coords and Metadata parameter.
+    *
+    * PixelData of the tagged image may be used directly (i.e. without copying),
+    * so it is unsafe to make changes to tagged.pix after calling this function.
+    *
     * @param tagged TaggedImage to be converted
     * @return An Image based on the TaggedImage
     * @throws JSONException if the TaggedImage's metadata cannot be read
@@ -269,6 +301,10 @@ public interface DataManager {
    /**
     * Given a TaggedImage input, output an Image based on the TaggedImage,
     * but with the Coords and/or Metadata optionally overridden.
+    *
+    * PixelData of the tagged image may be used directly (i.e. without copying),
+    * so it is unsafe to make changes to tagged.pix after calling this function.
+    *
     * @param tagged TaggedImage to be converted
     * @param coords Coords at which the new image is located. If null, then
     *        the coordinate information in the TaggedImage will be used.
@@ -433,7 +469,7 @@ public interface DataManager {
     /**
     * Checks whether or not the plugin at position `index` in the list is enabled
     * for the application pipeline.
-    * @param index. an int determining which position in the list to check
+    * @param index an int determining which position in the list to check
     * @return boolean of whether or not the plugin is enabled.
     */
     boolean isApplicationPipelineStepEnabled(int index);
@@ -441,7 +477,7 @@ public interface DataManager {
     /**
     * Sets whether or not the plugin at position `index` in the list is enabled
     * for the application pipeline.
-    * @param index. an int determining which position in the list to check
+    * @param index an int determining which position in the list to check
     * @param enabled of whether or not the plugin should be enabled.
     */
     void setApplicationPipelineStepEnabled(int index, boolean enabled);
@@ -449,7 +485,7 @@ public interface DataManager {
     /**
     * Checks whether or not the plugin at position `index` in the list is enabled
     * for the live pipeline.
-    * @param index. an int determining which position in the list to check
+    * @param index an int determining which position in the list to check
     * @return boolean of whether or not the plugin is enabled.
     */
     boolean isLivePipelineStepEnabled(int index);
@@ -457,7 +493,7 @@ public interface DataManager {
     /**
     * Sets whether or not the plugin at position `index` in the list is enabled
     * for the live pipeline.
-    * @param index. an int determining which position in the list to check
+    * @param index an int determining which position in the list to check
     * @param enabled of whether or not the plugin should be enabled.
     */
     void setLivePipelineStepEnabled(int index, boolean enabled);

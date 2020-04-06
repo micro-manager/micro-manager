@@ -23,6 +23,8 @@ package org.micromanager.internal;
 
 import java.io.IOException;
 import java.util.Collection;
+
+import com.google.common.eventbus.Subscribe;
 import org.micromanager.Album;
 import org.micromanager.Studio;
 import org.micromanager.data.Coordinates;
@@ -35,6 +37,7 @@ import org.micromanager.data.Pipeline;
 import org.micromanager.data.PipelineErrorException;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public final class DefaultAlbum implements Album {
@@ -46,6 +49,7 @@ public final class DefaultAlbum implements Album {
    
    public DefaultAlbum(Studio studio) {
       studio_ = studio;
+      studio_.displays().registerForEvents(this);
    }
 
    @Override
@@ -109,7 +113,6 @@ public final class DefaultAlbum implements Album {
             // This should never happen!
             studio_.logs().logError(e, "Unable to set summary of newly-created datastore");
          }
-         // This should also never happen!
          studio_.displays().manage(store_);
          DisplayWindow display = studio_.displays().createDisplay(store_);
          display.setCustomTitle("Album");
@@ -183,7 +186,7 @@ public final class DefaultAlbum implements Album {
             curTime_++;
          }
       }
-      return image.getCoords().copy().time(curTime_).build();
+      return image.getCoords().copyBuilder().time(curTime_).build();
    }
 
    @Override
@@ -196,4 +199,12 @@ public final class DefaultAlbum implements Album {
       }
       return result;
    }
+
+   @Subscribe
+   public void onAlbumStoreClosing(DataViewerWillCloseEvent viewerWillCloseEvent) {
+      if (viewerWillCloseEvent.getDataViewer().getDataProvider().equals(store_)) {
+         store_ = null;
+      }
+   }
+
 }

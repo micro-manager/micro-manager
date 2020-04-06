@@ -382,6 +382,12 @@ public class MultiStateUIPropertyTest {
 			assertTrue(b);
 			assertEquals(vals[i], cp.property.getPropertyValue());
 		}
+		
+		for(int i=0;i<vals.length;i++) {
+			boolean b = cp.property.setPropertyValueByState(names[i]);
+			assertTrue(b);
+			assertEquals(vals[i], cp.property.getPropertyValue());
+		}
 	}
 
 	@Test
@@ -413,6 +419,12 @@ public class MultiStateUIPropertyTest {
 		
 		for(int i=0;i<vals.length;i++) {
 			boolean b = cp.property.setPropertyValue(String.valueOf(i));
+			assertTrue(b);
+			assertEquals(vals[i], cp.property.getPropertyValue());
+		}
+		
+		for(int i=0;i<vals.length;i++) {
+			boolean b = cp.property.setPropertyValueByStateIndex(i);
 			assertTrue(b);
 			assertEquals(vals[i], cp.property.getPropertyValue());
 		}
@@ -462,6 +474,97 @@ public class MultiStateUIPropertyTest {
 		b = cp.property.setPropertyValue("Val2");
 		assertTrue(b);
 		assertEquals(vals[1], cp.property.getPropertyValue());
+	}
+
+	@Test
+	public void testSetValuesPriorityWithAmbiguity() throws AlreadyAssignedUIPropertyException, IncompatibleMMProperty {
+		MultiStateUIPropertyTestPanel cp = new MultiStateUIPropertyTestPanel("MyPanel");
+
+		final IntegerMMProperty mmprop = new IntegerMMProperty(null, new Logger(), "", "", false) {
+			@Override
+			public Integer getValue() { // avoids NullPointerException
+				return 0;
+			}
+			
+			@Override
+			public String getStringValue() {
+				return convertToString(value);
+			}
+			
+			@Override
+			public boolean setValue(String stringval, UIProperty source){
+				value = convertToValue(stringval);
+				return true;
+			}
+		};
+		
+		PropertyPair.pair(cp.property, mmprop);
+
+		final String[] vals = {"3", "1", "2", "0"};
+		final String[] names = {"0", "1", "2", "3"};
+		cp.property.setStateValues(vals);
+		cp.property.setStateNames(names);
+
+		boolean b = cp.property.setPropertyValue("3");
+		assertTrue(b);
+		assertEquals(vals[0], cp.property.getPropertyValue()); // takes state value in priority
+		
+		b = cp.property.setPropertyValue("2");
+		assertTrue(b);
+		assertEquals(vals[2], cp.property.getPropertyValue());
+	}	
+	
+	@Test
+	public void testSetValuesByStatePriorityWithAmbiguity() throws AlreadyAssignedUIPropertyException, IncompatibleMMProperty {
+		MultiStateUIPropertyTestPanel cp = new MultiStateUIPropertyTestPanel("MyPanel");
+
+		final IntegerMMProperty mmprop = new IntegerMMProperty(null, new Logger(), "", "", false) {
+			@Override
+			public Integer getValue() { // avoids NullPointerException
+				return 0;
+			}
+			
+			@Override
+			public String getStringValue() {
+				return convertToString(value);
+			}
+			
+			@Override
+			public boolean setValue(String stringval, UIProperty source){
+				value = convertToValue(stringval);
+				return true;
+			}
+		};
+		
+		PropertyPair.pair(cp.property, mmprop);
+
+		final String[] vals = {"1", "3", "2", "0"};
+		final String[] names = {"3", "1", "0", "2"};
+		cp.property.setStateValues(vals);
+		cp.property.setStateNames(names);
+
+		boolean b;
+		
+		// by state value
+		for(int i=0;i<vals.length;i++) {
+			b = cp.property.setPropertyValue(vals[i]);
+			assertTrue(b);
+			assertEquals(vals[i], cp.property.getPropertyValue());
+		}
+		
+		// by state index
+		for(int i=0;i<vals.length;i++) {
+			b = cp.property.setPropertyValueByStateIndex(i);
+			assertTrue(b);
+			assertEquals(vals[i], cp.property.getPropertyValue());
+		}
+		
+		// by state name
+		for(int i=0;i<vals.length;i++) {
+			b = cp.property.setPropertyValueByState(names[i]);
+			assertTrue(b);
+			assertEquals(vals[i], cp.property.getPropertyValue());
+		}
 	}
 
 	@Test
@@ -521,6 +624,25 @@ public class MultiStateUIPropertyTest {
 		
 		b = cp.property.setPropertyValue(names[3]);
 		assertTrue(b);
+		assertEquals(vals[3], cp.property.getPropertyValue());
+
+		// by state indices
+		b = cp.property.setPropertyValueByStateIndex(5);
+		assertFalse(b);
+		assertEquals(vals[3], cp.property.getPropertyValue());
+		b = cp.property.setPropertyValueByStateIndex(-1);
+		assertFalse(b);
+		assertEquals(vals[3], cp.property.getPropertyValue());
+		
+		// by state names
+		b = cp.property.setPropertyValueByState(null);
+		assertFalse(b);
+		assertEquals(vals[3], cp.property.getPropertyValue());
+		b = cp.property.setPropertyValueByState("");
+		assertFalse(b);
+		assertEquals(vals[3], cp.property.getPropertyValue());
+		b = cp.property.setPropertyValueByState("dsfs");
+		assertFalse(b);
 		assertEquals(vals[3], cp.property.getPropertyValue());
 	}
 	

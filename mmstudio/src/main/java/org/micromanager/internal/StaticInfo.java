@@ -29,7 +29,6 @@ import org.micromanager.events.PixelSizeAffineChangedEvent;
 import org.micromanager.events.PixelSizeChangedEvent;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
-import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TextUtils;
@@ -54,16 +53,13 @@ class StaticInfo {
    static public String xyStageLabel_ = "";
    static public String zStageLabel_ = "";
 
-   static private Studio studio_;
    static private CMMCore core_;
    static private MainFrame frame_;
 
    @SuppressWarnings("LeakingThisInConstructor")
    public StaticInfo(Studio studio, MainFrame frame) {
-      studio_ = studio;
       core_ = studio.core();
       frame_ = frame;
-      studio_.events().registerForEvents(this);
    }
 
    public void updateXYPos(double x, double y) {
@@ -77,8 +73,8 @@ class StaticInfo {
       updateInfoDisplay();
    }
    public void getNewXYStagePosition() {
-      double x[] = new double[1];
-      double y[] = new double[1];
+      double[] x = new double[1];
+      double[] y = new double[1];
       try {
          if (xyStageLabel_.length() > 0) {
             core_.getXYPosition(xyStageLabel_, x, y);
@@ -112,12 +108,16 @@ class StaticInfo {
 
    @Subscribe
    public void onStagePositionChanged(StagePositionChangedEvent event) {
-      updateZPos(event.getPos());
+      if (event.getDeviceName().equals(zStageLabel_)) {
+         updateZPos(event.getPos());
+      }
    }
 
    @Subscribe
    public void onXYStagePositionChanged(XYStagePositionChangedEvent event) {
-      updateXYPos(event.getXPos(), event.getYPos());
+      if (event.getDeviceName().equals(xyStageLabel_)) {
+         updateXYPos(event.getXPos(), event.getYPos());
+      }
    }
 
    public void refreshValues() {
@@ -127,8 +127,8 @@ class StaticInfo {
          zStageLabel_ = core_.getFocusDevice();
          xyStageLabel_ = core_.getXYStageDevice();
          double zPos = 0.0;
-         double x[] = new double[1];
-         double y[] = new double[1];
+         double[] x = new double[1];
+         double[] y = new double[1];
 
          try {
             if (zStageLabel_.length() > 0) {

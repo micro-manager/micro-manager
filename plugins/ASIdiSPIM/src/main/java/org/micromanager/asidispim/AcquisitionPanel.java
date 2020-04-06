@@ -66,7 +66,7 @@ import javax.swing.text.DefaultFormatter;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.json.JSONException;
+import mmcorej.org.json.JSONException;
 
 import mmcorej.CMMCore;
 import mmcorej.StrVector;

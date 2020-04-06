@@ -85,7 +85,7 @@ public class MMPropertiesRegistry {
 	 * Returns the device with label {@code deviceLabel}.
 	 * 
 	 * @param deviceLabel Label of the device
-	 * @return Micro-manager device
+	 * @return Micro-manager device or null if the device does not exists.
 	 */
 	public MMDevice getDevice(String deviceLabel){
 		return devices_.get(deviceLabel);

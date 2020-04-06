@@ -42,7 +42,7 @@ public class MMDevice {
 	}
 
 	/**
-	 * Checks if the properties map already contains the a property indexed by {@code propertyHash}.
+	 * Checks if the properties map already contains a property indexed by {@code propertyHash}.
 	 * 
 	 * @param propertyHash Hash of the property.
 	 * @return True if the property hash is contained in the properties map, false otherwise.

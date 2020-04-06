@@ -97,8 +97,9 @@ public class MultiStateUIProperty extends UIProperty{
 	
 	/**
 	 * Gives names to the states. If stateNames has less entries than the number of states, then only
-	 * the corresponding states will be updated. If it has more entries, then the supernumerary entries
-	 * will be ignored.
+	 * the corresponding states will be updated. If it has more entries, then supernumerary entries
+	 * will be ignored. The method does not check for duplicated names, in such a case, only the first 
+	 * occurrence will be set.
 	 * 
 	 * @param stateNames State names
 	 * @return True if some names were set, false otherwise.
@@ -207,7 +208,9 @@ public class MultiStateUIProperty extends UIProperty{
 	
 	/**
 	 * Sets the value of the MMProperty to {@code val} if {@code val}
-	 * equals either one of the state values or one of the state names.
+	 * equals either one of the state values, state names or state indices 
+	 * (in that order). To avoid collisions, you can use setPropertyValueByState
+	 * or setPropertyValueByStateIndex.
 	 * 
 	 */
 	@Override
@@ -232,6 +235,45 @@ public class MultiStateUIProperty extends UIProperty{
 					return getMMProperty().setValue(states_[v], this);
 				}
 
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Sets the value of the assigned MMProperty to the value in the state labeled {@code newState}. 
+	 * If newState is not a valid state name, then the regular setPropertyValue method is called.
+	 * 
+	 * @param stateName New state's name 
+	 * @return True if the value was set, false otherwise.
+	 */
+	@Override
+	public boolean setPropertyValueByState(String stateName) {
+		if (isAssigned()) {
+			// if it corresponds to a valid state name 
+			for (int i = 0; i < statenames_.length; i++) {
+				if (statenames_[i].equals(stateName)) {
+					return getMMProperty().setValue(states_[i], this);
+				}
+			}
+			
+			// otherwise, call the regular method
+			return setPropertyValue(stateName);
+		}
+		return false;
+	}
+
+	/**
+	 * Sets the value of the assigned MMProperty to the {@code stateIntex}th state.
+	 * 
+	 * @param stateIndex New state's index
+	 * @return True if the value was set, false otherwise.
+	 */
+	@Override
+	public boolean setPropertyValueByStateIndex(int stateIndex) {
+		if (isAssigned()) {
+			if (stateIndex >= 0 && stateIndex < states_.length) {
+				return getMMProperty().setValue(states_[stateIndex], this);
 			}
 		}
 		return false;
@@ -283,7 +325,7 @@ public class MultiStateUIProperty extends UIProperty{
 			} else if(EmuUtils.isNumeric(valToCompare) && getMMProperty().getType() == MMProperty.MMPropertyType.INTEGER) {
 				double state = Double.parseDouble(valToCompare);
 				Integer val = Integer.parseInt(stateval);
-				return val.equals((int) state);
+				return val.equals((int) state); // round
 			} else {
 				return stateval.equals(valToCompare);
 			}

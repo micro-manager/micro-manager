@@ -167,6 +167,25 @@ public class TwoStateUIPropertyTest {
 		b = cp.property.setPropertyValue("2.48");
 		assertFalse(b);
 		assertEquals(offval, cp.property.getPropertyValue());	
+
+		// using state index
+		b = cp.property.setPropertyValueByStateIndex(-1);
+		assertFalse(b);
+		assertEquals(offval, cp.property.getPropertyValue());	
+		b = cp.property.setPropertyValueByStateIndex(3);
+		assertFalse(b);
+		assertEquals(offval, cp.property.getPropertyValue());
+		
+		// using state name
+		b = cp.property.setPropertyValueByState(null);
+		assertFalse(b);
+		assertEquals(offval, cp.property.getPropertyValue());	
+		b = cp.property.setPropertyValueByState("");
+		assertFalse(b);
+		assertEquals(offval, cp.property.getPropertyValue());	
+		b = cp.property.setPropertyValueByState("dsfs");
+		assertFalse(b);
+		assertEquals(offval, cp.property.getPropertyValue());	
 	}	
 	
 	@Test
@@ -366,6 +385,32 @@ public class TwoStateUIPropertyTest {
 
 		b = cp.property.setPropertyValue("0");
 		assertTrue(b);
+		assertEquals(offval, cp.property.getPropertyValue());
+		
+		// using state indices
+		b = cp.property.setPropertyValueByStateIndex(1);
+		assertTrue(b);
+		assertEquals(onval, cp.property.getPropertyValue());
+
+		b = cp.property.setPropertyValueByStateIndex(0);
+		assertTrue(b);
+		assertEquals(offval, cp.property.getPropertyValue());
+
+		b = cp.property.setPropertyValueByStateIndex(3);
+		assertFalse(b);
+		assertEquals(offval, cp.property.getPropertyValue());
+		
+		// using state names
+		b = cp.property.setPropertyValueByState(TwoStateUIProperty.getOnStateLabel());
+		assertTrue(b);
+		assertEquals(onval, cp.property.getPropertyValue());
+
+		b = cp.property.setPropertyValueByState(TwoStateUIProperty.getOffStateLabel());
+		assertTrue(b);
+		assertEquals(offval, cp.property.getPropertyValue());
+
+		b = cp.property.setPropertyValueByState("Somethign else");
+		assertFalse(b);
 		assertEquals(offval, cp.property.getPropertyValue());
 	}
 		

@@ -30,6 +30,7 @@ import java.awt.Graphics2D;
 import java.awt.MenuBar;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Rectangle2D;
@@ -914,6 +915,10 @@ public final class ImageJBridge {
       }
 
       uiController_.selectionMayHaveChanged(makeBoundsAndMaskFromIJRoi(roi));
+   }
+
+   boolean ij2mmKeyPressConsumed(KeyEvent e) {
+      return uiController_.keyPressOnImageConsumed(e);
    }
    
    void ij2mmMouseClicked(MouseEvent e) {

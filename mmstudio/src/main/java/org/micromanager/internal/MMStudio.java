@@ -98,6 +98,7 @@ import org.micromanager.internal.hcwizard.MMConfigFileException;
 import org.micromanager.internal.hcwizard.MicroscopeModel;
 import org.micromanager.internal.logging.LogFileManager;
 import org.micromanager.internal.menus.MMMenuBar;
+import org.micromanager.internal.navigation.UiMovesStageManager;
 import org.micromanager.internal.pipelineinterface.PipelineFrame;
 import org.micromanager.internal.pluginmanagement.DefaultPluginManager;
 import org.micromanager.internal.positionlist.PositionListDlg;
@@ -105,6 +106,7 @@ import org.micromanager.internal.propertymap.DefaultPropertyMap;
 import org.micromanager.internal.script.ScriptPanel;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.DefaultAutofocusManager;
+import org.micromanager.internal.utils.HotKeys;
 import org.micromanager.internal.utils.UserProfileManager;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
@@ -159,6 +161,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private ApplicationSkin daytimeNighttimeManager_;
    private UserProfileManager userProfileManager_;
 
+   private UiMovesStageManager uiMovesStageManager_;
+   
    // MMcore
    private CMMCore core_;
    private AcquisitionWrapperEngine acqEngine_;
@@ -288,10 +292,17 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // Lots of places use this. instantiate it first.
       eventManager_ = new DefaultEventManager();
 
+
+      // used by Snap/Live Manager and StageControlFrame
+      uiMovesStageManager_ = new UiMovesStageManager(this);
+      events().registerForEvents(uiMovesStageManager_);
+      
       snapLiveManager_ = new SnapLiveManager(this, core_);
       events().registerForEvents(snapLiveManager_);
 
       shutterManager_ = new DefaultShutterManager(studio_);
+      // DisplayManager needs to be created before Pipelineframe and albumInstance
+      displayManager_ = new DefaultDisplayManager(this);
       albumInstance_ = new DefaultAlbum(studio_);
 
       // The tools menu depends on the Quick-Access Manager.
@@ -301,9 +312,9 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       acqEngine_.setParentGUI(this);
       acqEngine_.setZStageDevice(core_.getFocusDevice());
 
-      // DisplayManager needs to be created before Pipelineframe
-      displayManager_ = new DefaultDisplayManager(this);
 
+
+      
       // Load, but do not show, image pipeline panel.
       // Note: pipelineFrame is used in the dataManager, however, pipelineFrame 
       // needs the dataManager.  Let's hope for the best....
@@ -455,19 +466,16 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       mmMenuBar_ = MMMenuBar.createMenuBar(studio_);
       frame_ = new MainFrame(this, core_);
       staticInfo_ = new StaticInfo(studio_, frame_);
+      events().registerForEvents(staticInfo_);
       frame_.toFront();
       frame_.setVisible(true);
       ReportingUtils.SetContainingFrame(frame_);
       frame_.initializeConfigPad();
 
       // We wait until after showing the main window to enable hot keys
-      hotKeys_ = new org.micromanager.internal.utils.HotKeys();
+      hotKeys_ = new HotKeys();
       hotKeys_.loadSettings(userProfileManager_.getProfile());
-      // zWheelListener_ = new ZWheelListener(core_, studio_);
-      // getEventManager().registerForEvents(zWheelListener_);
-      // TODO snapLiveManager_.addLiveModeListener(zWheelListener_);
-      // xyzKeyListener_ = new XYZKeyListener(core_, studio_);
-      // TODO snapLiveManager_.addLiveModeListener(xyzKeyListener_);
+
 
       // Switch error reporting back on TODO See above where it's turned off
       ReportingUtils.showErrorOn(true);
@@ -1787,6 +1795,11 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    @Override
    public AlertManager getAlertManager() {
       return alerts();
+   }
+
+
+   public UiMovesStageManager getUiMovesStageManager () {
+      return uiMovesStageManager_;
    }
 
    @Override

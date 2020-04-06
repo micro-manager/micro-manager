@@ -199,6 +199,28 @@ public class UIProperty {
 		}  
 		return false;
 	}
+
+	/**
+	 * Sets the value of the assigned MMProperty to {@code newState}. For a pure UIProperty, this method is equivalent
+	 * to setPropertyValue (subclasses might have a different implementation).
+	 * 
+	 * @param newState New state 
+	 * @return True if the value was set, false otherwise.
+	 */
+	public boolean setPropertyValueByState(String newState) {
+		return mmproperty_.setValue(newState, this);
+	}
+	
+	/**
+	 * Sets the value of the assigned MMProperty to {@code newState}. For a pure UIProperty, this method is equivalent
+	 * to setPropertyValue (subclasses might have a different implementation).
+	 * 
+	 * @param stateIndex New state 
+	 * @return True if the value was set, false otherwise.
+	 */
+	public boolean setPropertyValueByStateIndex(int stateIndex) {
+		return mmproperty_.setValue(String.valueOf(stateIndex), this);
+	}
 	
 	/**
 	 * Returns the assigned MMProperty.

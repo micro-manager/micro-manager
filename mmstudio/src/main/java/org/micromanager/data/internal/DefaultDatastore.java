@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import javax.swing.JFileChooser;
 import javax.swing.ProgressMonitor;
 import javax.swing.filechooser.FileFilter;
@@ -90,11 +89,11 @@ public class DefaultDatastore implements Datastore {
 
    public DefaultDatastore(MMStudio mmStudio) {
       mmStudio_ = mmStudio;
-      bus_ = new PrioritizedEventBus();
+      bus_ = new PrioritizedEventBus(true);
    }
 
    /**
-    * Copy all data from the provided other Datastore into ourselves. The
+    * Copy all data from the source Datastore into ourselves. The
     * optional ProgressMonitor can be used to keep callers appraised of our
     * progress.
     * @param alt Source Datastore
@@ -230,6 +229,9 @@ public class DefaultDatastore implements Datastore {
       if (storage_ != null) {
          storage_.putImage(image);
       }
+      // Note: the store may be very busy saving data, so consumers of this message should use as few
+      // resources as possible.  Note that the bus is asynchronous, so we do not have to
+      // wait for processing to finish.
       bus_.post(new DefaultNewImageEvent(image, this));
    }
 

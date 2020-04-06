@@ -14,6 +14,7 @@
 
 package org.micromanager.display.internal.displaywindow.imagej;
 
+import ij.IJ;
 import ij.gui.ImageCanvas;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -21,15 +22,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.Window;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.HierarchyEvent;
-import java.awt.event.HierarchyListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
+import java.awt.event.*;
 import javax.swing.SwingUtilities;
 import org.micromanager.internal.utils.MustCallOnEDT;
 
@@ -39,7 +32,7 @@ import org.micromanager.internal.utils.MustCallOnEDT;
  * @author Mark A. Tsuchida, parts based on older version by Chris Weisiger
  */
 public final class MMImageCanvas extends ImageCanvas
-      implements MouseListener, MouseMotionListener, MouseWheelListener
+      implements KeyListener, MouseListener, MouseMotionListener, MouseWheelListener
 {
    private final ImageJBridge parent_;
 
@@ -71,12 +64,19 @@ public final class MMImageCanvas extends ImageCanvas
       
       instance.addMouseWheelListener(instance);
 
+      instance.addKeyListener(instance);
+
       return instance;
    }
 
    private MMImageCanvas(ImageJBridge parent) {
       super(parent.getIJImagePlus());
       parent_ = parent;
+
+      // Remove existing key listeners.  Ours will send unprocessed keyEvents through to ImageJ (which handles keyEvents)
+      for (KeyListener kl : super.getKeyListeners()) {
+         super.removeKeyListener(kl);
+      }
    }
 
    @Override
@@ -389,4 +389,20 @@ public final class MMImageCanvas extends ImageCanvas
    }
 
 
+   @Override
+   public void keyTyped(KeyEvent e) {
+      IJ.getInstance().keyTyped(e);
+   }
+
+   @Override
+   public void keyPressed(KeyEvent e) {
+      if (!parent_.ij2mmKeyPressConsumed(e) ) {
+         IJ.getInstance().keyPressed(e);
+      }
+   }
+
+   @Override
+   public void keyReleased(KeyEvent e) {
+      IJ.getInstance().keyReleased(e);
+   }
 }

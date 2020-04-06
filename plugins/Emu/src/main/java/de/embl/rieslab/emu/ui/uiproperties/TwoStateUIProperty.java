@@ -111,7 +111,8 @@ public class TwoStateUIProperty extends UIProperty{
 	
 	/**
 	 * Sets the value of the UIproperty to {@code newValue} if {@code newValue}
-	 * is either equal to the ON state or to the OFF state, or their respective value.
+	 * is either equal to the ON state or to the OFF state, or their respective value. The 
+	 * method also accepts 1/0 or true/false as state labels.
 	 */
 	@Override
 	public boolean setPropertyValue(String newValue) {
@@ -131,7 +132,47 @@ public class TwoStateUIProperty extends UIProperty{
 		return false;
 	}	
 	
+	/**
+	 * Sets the value of the assigned MMProperty to the value in the state labeled {@code newState}. 
+	 * If newState is not a valid state name, then the regular setPropertyValue method is called.
+	 * 
+	 * @param stateName New state's name 
+	 * @return True if the value was set, false otherwise.
+	 */
+	@Override
+	public boolean setPropertyValueByState(String stateName) {
+		if (isAssigned()) {
+			// if it corresponds to a valid state name 
+			if (getOnStateLabel().equals(stateName)) {
+				return getMMProperty().setValue(getOnStateValue(), this);
+			} else if(getOffStateLabel().equals(stateName)) {
+				return getMMProperty().setValue(getOffStateValue(), this);
+			}
+			
+			// otherwise, call the regular method
+			return setPropertyValue(stateName);
+		}
+		return false;
+	}
 
+	/**
+	 * Sets the value of the assigned MMProperty to the On/Off state if stateIndex equals to 1/0 respectively. 
+	 * 
+	 * @param stateIndex New state's index
+	 * @return True if the value was set, false otherwise.
+	 */
+	@Override
+	public boolean setPropertyValueByStateIndex(int stateIndex) {
+		if (isAssigned()) {
+			if (stateIndex == 0) {
+				return getMMProperty().setValue(getOffStateValue(), this);
+			} else if(stateIndex == 1) {
+				return getMMProperty().setValue(getOnStateValue(), this);
+			}
+		}
+		return false;
+	}
+	
 	/**
 	 * {@inheritDoc}
 	 */
