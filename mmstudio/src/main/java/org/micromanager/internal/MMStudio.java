@@ -323,7 +323,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       
       afMgr_ = new DefaultAutofocusManager(studio_);
       afMgr_.refresh();
-      String afDevice = profile().getString(MMStudio.class, AUTOFOCUS_DEVICE, "");
+      String afDevice = profile().getSettings(MMStudio.class).
+              getString(AUTOFOCUS_DEVICE, "");
       if (afMgr_.hasDevice(afDevice)) {
          afMgr_.setAutofocusMethodByName(afDevice);
       }
@@ -1230,7 +1231,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
       // NOTE: do not save auto shutter state
       if (afMgr_ != null && afMgr_.getAutofocusMethod() != null) {
-         profile().setString(MMStudio.class,
+         profile().getSettings(MMStudio.class).putString(
                AUTOFOCUS_DEVICE, afMgr_.getAutofocusMethod().getName());
       }
    }
@@ -1317,15 +1318,15 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    }
 
    private void executeStartupScript() {
-      String filename = ScriptPanel.getStartupScript();
+      String filename = ScriptPanel.getStartupScript(this);
       if (filename == null || filename.length() <= 0) {
-         ReportingUtils.logMessage("No startup script to run");
+         logs().logMessage("No startup script to run");
          return;
       }
 
       File f = new File(filename);
       if (!f.exists()) {
-         ReportingUtils.logMessage("Startup script (" +
+         logs().logMessage("Startup script (" +
                f.getAbsolutePath() + ") not present");
          return;
       }
@@ -1811,16 +1812,14 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    }
 
    @Override
+   @Deprecated
    public AffineTransform getCameraTransform(String config) {
       // Try the modern way first
-      Double[] params = profile().getDoubleArray(
-            MMStudio.class, AFFINE_TRANSFORM + config, null);
+      double[] defaultParams = new double[0];
+      double[] params = profile().getSettings(MMStudio.class).
+              getDoubleList(AFFINE_TRANSFORM + config, defaultParams);
       if (params != null && params.length == 6) {
-         double[] unboxed = new double[6];
-         for (int i = 0; i < 6; ++i) {
-            unboxed[i] = params[i];
-         }
-         return new AffineTransform(unboxed);
+         return new AffineTransform(params);
       }
 
       // The early 2.0-beta way of storing as a serialized object.
@@ -1837,7 +1836,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
       // For backwards compatibility, try retrieving it from the 1.4
       // Preferences instead.
-      AffineTransform tfm = org.micromanager.internal.utils.UnpleasantLegacyCode.legacyRetrieveTransformFromPrefs("affine_transform_" + config);
+      AffineTransform tfm = org.micromanager.internal.utils.UnpleasantLegacyCode.
+              legacyRetrieveTransformFromPrefs("affine_transform_" + config);
       if (tfm != null) {
          // Save it the new way.
          setCameraTransform(tfm, config);
@@ -1846,16 +1846,11 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    }
 
    @Override
+   @Deprecated
    public void setCameraTransform(AffineTransform transform, String config) {
-      // TODO These values should be tied to the hardware config, but before we
-      // do that we need to have a way of chainging config files.
       double[] params = new double[6];
       transform.getMatrix(params);
-      Double[] boxed = new Double[6];
-      for (int i = 0; i < 6; ++i) {
-         boxed[i] = params[i];
-      }
-      profile().setDoubleArray(MMStudio.class, AFFINE_TRANSFORM + config, boxed);
+      profile().getSettings(MMStudio.class).putDoubleList(AFFINE_TRANSFORM + config, params);
    }
 
    public double getCachedXPosition() {

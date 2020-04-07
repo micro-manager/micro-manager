@@ -167,8 +167,8 @@ public final class OMEMetadata {
       }
 
       String positionName = "pos" + repImage.getCoords().getStagePosition();
-      if (repMetadata.getPositionName() != null) {
-         positionName = repMetadata.getPositionName();
+      if (!repMetadata.getPositionName("").equals("")) {
+         positionName = repMetadata.getPositionName("");
       }
       metadata_.setStageLabelName(positionName, seriesIndex);
 

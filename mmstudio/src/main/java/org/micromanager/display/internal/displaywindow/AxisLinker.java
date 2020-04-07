@@ -52,7 +52,7 @@ class AxisLinker {
             if (oldPos.getIndex(axis_) == value) {
                return true;
             }
-            newPos = oldPos.copy().index(axis_, value).build();
+            newPos = oldPos.copyBuilder().index(axis_, value).build();
             if (!viewer_.getDataProvider().hasImage(newPos)) {
                return false;
             }

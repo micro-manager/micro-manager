@@ -182,7 +182,7 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
       posTable_.setDefaultEditor(Object.class, cellEditor_);
       posTable_.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
       // set column divider location
-      int posCol0Width = profile.getInt(PositionListDlg.class,
+      int posCol0Width = profile.getSettings(PositionListDlg.class).getInteger(
             POS_COL0_WIDTH, 75);
       posTable_.getColumnModel().getColumn(0).setWidth(posCol0Width);
       posTable_.getColumnModel().getColumn(0).setPreferredWidth(posCol0Width);
@@ -199,7 +199,7 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
       axisPane.setMaximumSize(new Dimension(32767, 30 + tableHeight));
       axisPane.setMinimumSize(new Dimension(50, 30 + tableHeight));
       // set divider location
-      int axisCol0Width = profile.getInt(PositionListDlg.class,
+      int axisCol0Width = profile.getSettings(PositionListDlg.class).getInteger(
             AXIS_COL0_WIDTH, 75);
       axisTable_.getColumnModel().getColumn(0).setWidth(axisCol0Width);
       axisTable_.getColumnModel().getColumn(0).setPreferredWidth(axisCol0Width);
@@ -681,7 +681,7 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
       // Find the current position for that device in curMsp_
       for (int posIndex = 0; posIndex < curMsp_.size(); ++posIndex) {
          StagePosition subPos = curMsp_.get(posIndex);
-         if (!subPos.stageName.equals(deviceName)) {
+         if (subPos.stageName.equals(deviceName)) {
             continue;
          }
          x = subPos.x;
@@ -1196,10 +1196,10 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
 
    private void saveDims() {
       int posCol0Width = posTable_.getColumnModel().getColumn(0).getWidth();
-      studio_.profile().setInt(PositionListDlg.class, POS_COL0_WIDTH,
+      studio_.profile().getSettings(PositionListDlg.class).putInteger(POS_COL0_WIDTH,
             posCol0Width);
       int axisCol0Width = axisTable_.getColumnModel().getColumn(0).getWidth();
-      studio_.profile().setInt(PositionListDlg.class, AXIS_COL0_WIDTH,
+      studio_.profile().getSettings(PositionListDlg.class).putInteger(AXIS_COL0_WIDTH,
             axisCol0Width);
    }
 }

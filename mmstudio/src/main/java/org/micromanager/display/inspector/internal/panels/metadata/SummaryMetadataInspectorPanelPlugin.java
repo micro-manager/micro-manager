@@ -25,7 +25,7 @@ import org.micromanager.display.inspector.InspectorPanelPlugin;
  * @author Mark A. Tsuchida
  */
 @Plugin(type = InspectorPanelPlugin.class,
-      priority = Priority.HIGH_PRIORITY + 200,
+      priority = Priority.HIGH + 200,
       name = "Summary Metadata",
       description = "View dataset metadata")
 public class SummaryMetadataInspectorPanelPlugin implements InspectorPanelPlugin {

@@ -881,13 +881,13 @@ public final class StorageMultipageTiff implements Storage {
       HashSet<Image> result = new HashSet<>();
       synchronized(coordsToPendingImage_) {
          for (Coords imageCoords : coordsToPendingImage_.keySet()) {
-            if (imageCoords.matches(coords)) {
+            if (imageCoords.isSubspaceCoordsOf(coords)) {
                result.add(coordsToPendingImage_.get(imageCoords));
             }
          }
       }
       for (Coords imageCoords : coordsToReader_.keySet()) {
-         if (imageCoords.matches(coords)) {
+         if (imageCoords.isSubspaceCoordsOf(coords)) {
             try {
                result.add(coordsToReader_.get(imageCoords).readImage(imageCoords));
             }

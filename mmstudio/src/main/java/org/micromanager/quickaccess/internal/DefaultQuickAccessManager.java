@@ -84,8 +84,8 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
    @Subscribe
    public void onStartupComplete(StartupCompleteEvent event) {
       try {
-         String configStr = studio_.profile().getString(
-               QuickAccessManager.class, SAVED_CONFIG, null);
+         String configStr = studio_.profile().
+                 getSettings(QuickAccessManager.class).getString( SAVED_CONFIG, null);
          if (configStr == null) {
             // Nothing saved.
             return;
@@ -120,8 +120,8 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
    @Subscribe
    public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
       String config = getConfig(false);
-      studio_.profile().setString(QuickAccessManager.class, SAVED_CONFIG,
-            config);
+      studio_.profile().getSettings(QuickAccessManager.class).
+              putString(SAVED_CONFIG, config);
    }
 
    /**

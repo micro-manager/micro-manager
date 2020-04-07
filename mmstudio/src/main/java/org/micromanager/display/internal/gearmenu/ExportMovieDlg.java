@@ -52,6 +52,7 @@ import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
+import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.ImageExporter;
 import org.micromanager.internal.utils.FileDialogs;
@@ -488,11 +489,8 @@ public final class ExportMovieDlg extends MMDialog {
     * Returns true if the display mode is composite.
     */
    private boolean getIsComposite() {
-      ImagePlus displayPlus = display_.getImagePlus();
-      if (displayPlus instanceof CompositeImage) {
-         return ((CompositeImage) displayPlus).getMode() == CompositeImage.COMPOSITE;
-      }
-      return false;
+      return display_.getDisplaySettings().getColorMode() ==
+              DisplaySettings.ColorMode.COMPOSITE;
    }
 
    /**
