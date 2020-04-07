@@ -20,6 +20,17 @@ public class MagellanAPI {
       return MagellanAcquisitionsManager.getInstance().createAcquisition(index);
    }
    
+   public MagellanAcquisitionSettingsAPI getAcquisitionSettings(int index) {
+      return MagellanAcquisitionsManager.getInstance().getAcquisitionSettings(index);
+   }
+   
+   public void createAcquisitionSettings() {
+      MagellanAcquisitionsManager.getInstance().addNew();
+   }
+   
+   public void removeAcquisitionSettings(int index) {
+      MagellanAcquisitionsManager.getInstance().remove(index);
+   }
    
    public void createGrid(String name, int nRows, int nCols, double centerX, double centerY) {
       MultiPosGrid grid = SurfaceGridManager.getInstance().addNewGrid(nRows, nCols, new Point2D.Double(centerX, centerY));

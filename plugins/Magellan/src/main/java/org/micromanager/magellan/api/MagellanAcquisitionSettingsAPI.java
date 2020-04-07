@@ -47,9 +47,9 @@ public interface MagellanAcquisitionSettingsAPI {
 
    public void setChannelZOffset(String channelName, double offset);
    
-//   public void setSavingDir(String dirPath);
-//   
-//   public void setAcquisitionName(String newName);
-//   
+   public void setSavingDir(String dirPath);
+   
+   public void setAcquisitionName(String newName);
+   
    
 }

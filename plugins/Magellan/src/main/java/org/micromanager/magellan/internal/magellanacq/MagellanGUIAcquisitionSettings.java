@@ -29,10 +29,9 @@ import org.micromanager.propertymap.MutablePropertyMapView;
  *
  * @author Henry
  */
-public class MagellanGUIAcquisitionSettings extends MagellanGenericAcquisitionSettings 
+public class MagellanGUIAcquisitionSettings extends MagellanGenericAcquisitionSettings
         implements MagellanAcquisitionSettingsAPI {
-   
-     
+
    public static final int TIME_MS = 0;
    public static final int TIME_S = 1;
    public static final int TIME_MIN = 2;
@@ -43,29 +42,28 @@ public class MagellanGUIAcquisitionSettings extends MagellanGenericAcquisitionSe
    public static final int VOLUME_BETWEEN_SURFACES_Z_STACK = 3;
    public static final int REGION_2D = 4;
    public static final int REGION_2D_SURFACE_GUIDED = 5;
-   
+
    public static final String PREF_PREFIX = "Fixed area acquisition ";
 
    public static int FOOTPRINT_FROM_TOP = 0, FOOTPRINT_FROM_BOTTOM = 1;
-   
-      //space
+
+   //space
    public volatile double zStart_, zEnd_, distanceBelowFixedSurface_, distanceAboveFixedSurface_,
            distanceAboveTopSurface_, distanceBelowBottomSurface_;
    public volatile int spaceMode_;
    public volatile XYFootprint xyFootprint_;
    public volatile SurfaceInterpolator topSurface_, bottomSurface_, fixedSurface_, collectionPlane_;
-   
-      //time
+
+   //time
    public volatile boolean timeEnabled_;
    public volatile double timePointInterval_;
    public volatile int numTimePoints_;
    public volatile int timeIntervalUnit_;
 
-
    public MagellanGUIAcquisitionSettings() {
       super();
       //now replace everything with values gotten from preferences
-            MutablePropertyMapView prefs = Magellan.getStudio().profile().getSettings(MagellanGUIAcquisitionSettings.class);
+      MutablePropertyMapView prefs = Magellan.getStudio().profile().getSettings(MagellanGUIAcquisitionSettings.class);
       if (GUI.getInstance() != null && GUI.getInstance().getSavingDir() != null) { //To avoid error on init
          dir_ = GUI.getInstance().getSavingDir();
       }
@@ -75,7 +73,7 @@ public class MagellanGUIAcquisitionSettings extends MagellanGenericAcquisitionSe
       numTimePoints_ = prefs.getInteger(PREF_PREFIX + "NTP", 1);
       timeIntervalUnit_ = prefs.getInteger(PREF_PREFIX + "TPIU", 0);
       //space
-      channelsAtEverySlice_ = prefs.getBoolean(PREF_PREFIX +"ACQORDER", true);
+      channelsAtEverySlice_ = prefs.getBoolean(PREF_PREFIX + "ACQORDER", true);
       zStep_ = prefs.getDouble(PREF_PREFIX + "ZSTEP", 1);
       zStart_ = prefs.getDouble(PREF_PREFIX + "ZSTART", 0);
       zEnd_ = prefs.getDouble(PREF_PREFIX + "ZEND", 0);
@@ -87,7 +85,7 @@ public class MagellanGUIAcquisitionSettings extends MagellanGenericAcquisitionSe
       //channels
       String channelGroup = prefs.getString(PREF_PREFIX + "CHANNELGROUP", "");
       //This creates a new Object of channelSpecs that is "Owned" by the accquisition
-      channels_ = new ChannelGroupSettings(channelGroup); 
+      channels_ = new ChannelGroupSettings(channelGroup);
    }
 
    public void storePreferedValues() {
@@ -111,7 +109,7 @@ public class MagellanGUIAcquisitionSettings extends MagellanGenericAcquisitionSe
       prefs.putString(PREF_PREFIX + "CHANNELGROUP", channels_.getChannelGroup());
       //Individual channel settings sotred in ChannelUtils
    }
-   
+
    public String toString() {
       String s = "";
       if (spaceMode_ == CUBOID_Z_STACK) {
@@ -125,7 +123,7 @@ public class MagellanGUIAcquisitionSettings extends MagellanGenericAcquisitionSe
       } else {
          s += "2D along surface";
       }
-      
+
       int nChannels = 0;
       String chName = channels_.nextActiveChannel(null);
       while (chName != null) {
@@ -142,11 +140,22 @@ public class MagellanGUIAcquisitionSettings extends MagellanGenericAcquisitionSe
    }
 
    @Override
+   public void setSavingDir(String dirPath) {
+      dir_ = dirPath;
+   }
+
+   @Override
+   public void setAcquisitionName(String newName) {
+      name_ = newName;
+      GUI.getInstance().refreshAcqControlsFromSettings();
+   }
+
+   @Override
    public void setChannelGroup(String channelGroup) {
       channels_.updateChannelGroup(channelGroup);
       GUI.getInstance().refreshAcqControlsFromSettings();
    }
-   
+
    @Override
    public void setUseChannel(String channelName, boolean use) {
       channels_.getChannelSetting(channelName).use_ = use;
@@ -240,8 +249,8 @@ public class MagellanGUIAcquisitionSettings extends MagellanGenericAcquisitionSe
       collectionPlane_ = s;
       GUI.getInstance().refreshAcqControlsFromSettings();
    }
-   
-      @Override
+
+   @Override
    public void setTimeEnabled(boolean enable) {
       timeEnabled_ = enable;
       GUI.getInstance().refreshAcqControlsFromSettings();
@@ -252,8 +261,7 @@ public class MagellanGUIAcquisitionSettings extends MagellanGenericAcquisitionSe
       numTimePoints_ = nTimePoints;
       GUI.getInstance().refreshAcqControlsFromSettings();
    }
-   
-   
+
    @Override
    public void setTimeInterval(double interval, String unit) {
       //0 is ms, 1 is s, 2 is min
@@ -264,8 +272,5 @@ public class MagellanGUIAcquisitionSettings extends MagellanGenericAcquisitionSe
       timeIntervalUnit_ = (unit.equals("ms") ? TIME_MS : (unit.equals("s") ? TIME_S : TIME_MS));
       GUI.getInstance().refreshAcqControlsFromSettings();
    }
-
-
-
 
 }
