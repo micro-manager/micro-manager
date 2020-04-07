@@ -38,9 +38,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import mmcorej.org.json.JSONArray;
+import mmcorej.org.json.JSONException;
+import mmcorej.org.json.JSONObject;
 import org.micromanager.acqj.api.AcquisitionEvent;
 
 /**

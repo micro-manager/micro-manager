@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import mmcorej.TaggedImage;
-import org.json.JSONObject;
+import mmcorej.org.json.JSONObject;
 import org.micromanager.acqj.api.AcqEngMetadata;
 import org.micromanager.acqj.api.DataSink;
 import org.micromanager.acqj.api.Acquisition;

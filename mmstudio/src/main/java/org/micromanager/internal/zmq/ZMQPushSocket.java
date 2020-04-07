@@ -7,7 +7,7 @@ package org.micromanager.internal.zmq;
 
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
-import org.json.JSONObject;
+import mmcorej.org.json.JSONObject;
 import static org.micromanager.internal.zmq.ZMQSocketWrapper.context_;
 import org.zeromq.SocketType;
 

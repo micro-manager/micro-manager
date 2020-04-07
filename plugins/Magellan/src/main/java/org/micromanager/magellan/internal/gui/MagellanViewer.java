@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import javax.swing.JPanel;
-import org.json.JSONObject;
+import mmcorej.org.json.JSONObject;
 import org.micromanager.acqj.api.AcqEngMetadata;
 import org.micromanager.magellan.internal.gui.ExploreControlsPanel;
 import org.micromanager.magellan.internal.magellanacq.MagellanDataManager;

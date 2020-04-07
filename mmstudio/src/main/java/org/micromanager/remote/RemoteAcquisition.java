@@ -5,7 +5,7 @@
  */
 package org.micromanager.remote;
 
-import org.json.JSONObject;
+import mmcorej.org.json.JSONObject;
 import org.micromanager.acqj.api.Acquisition;
 import org.micromanager.acqj.api.AcquisitionInterface;
 import org.micromanager.ndviewer.api.ViewerAcquisitionInterface;

@@ -6,7 +6,7 @@
 package org.micromanager.remote;
 
 import java.util.function.Function;
-import org.json.JSONObject;
+import mmcorej.org.json.JSONObject;
 import org.micromanager.acqj.api.AcquisitionEvent;
 import org.micromanager.acqj.api.AcquisitionHook;
 import org.micromanager.acqj.api.AcquisitionInterface;
