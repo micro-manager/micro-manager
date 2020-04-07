@@ -22,7 +22,7 @@
     <ProjectGuid>{bd5dd57f-a092-4441-ba35-5b0701c7cce5}</ProjectGuid>
     <RootNamespace>Basler</RootNamespace>
     <Keyword>Win32Proj</Keyword>
-    <ProjectName>BaslerPylon5</ProjectName>
+    <ProjectName>BaslerPylon</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
