@@ -681,7 +681,7 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
       // Find the current position for that device in curMsp_
       for (int posIndex = 0; posIndex < curMsp_.size(); ++posIndex) {
          StagePosition subPos = curMsp_.get(posIndex);
-         if (subPos.stageName.equals(deviceName)) {
+         if (!subPos.stageName.equals(deviceName)) {
             continue;
          }
          x = subPos.x;
