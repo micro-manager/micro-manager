@@ -58,8 +58,13 @@ class OffsetPositionsDialog extends MMDialog {
       parent_ = parent;
       core_ = core;
       axisInputs_ = new ArrayList<JTextField>();
+
+      // center dialog on the parent dialog
+      int parentCenterX = (int) (parent.getX() + 0.5 * parent.getWidth());
+      int parentCenterY = (int) (parent.getY() + 0.5 * parent.getHeight());
       
-      this.loadAndRestorePosition(100,100, 320, 300);
+      this.loadAndRestorePosition(parentCenterX - 160,parentCenterY - 150,
+              320, 300);
       
       setTitle("Add offset to stage positions");
       setResizable(false);
@@ -102,7 +107,7 @@ class OffsetPositionsDialog extends MMDialog {
       okButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent event) {
-            ArrayList<Float> offsets = new ArrayList<Float>();
+            ArrayList<Float> offsets = new ArrayList<>();
             for (JTextField input : axisInputs_) {
                try {
                   Float value = Float.parseFloat(input.getText());

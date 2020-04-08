@@ -84,10 +84,10 @@ public final class TileCreator {
          // Calculate a bounding rectangle around the defaultXYStage positions
          // TODO: develop method to deal with multiple axis
          StagePosition[] coords = boundingBox(endPoints, xyStage);
-         double maxX = coords[1].x;
-         double minX = coords[0].x;
-         double maxY = coords[1].y;
-         double minY = coords[0].y;
+         double maxX = coords[1].get2DPositionX();
+         double minX = coords[0].get2DPositionX();
+         double maxY = coords[1].get2DPositionY();
+         double minY = coords[0].get2DPositionY();
 
          double[] ans = getImageSize(pixelSizeUm);
          double imageSizeXUm = ans[0];
@@ -249,17 +249,17 @@ public final class TileCreator {
         StagePosition sp;
         for (int i = 0; i < endPoints.length; i++) {
            sp = endPoints[i].get(xyStage);
-           if (sp.x < minX) {
-              minX = sp.x;
+           if (sp.get2DPositionX() < minX) {
+              minX = sp.get2DPositionX();
            }
-           if (sp.x > maxX) {
-              maxX = sp.x;
+           if (sp.get2DPositionX() > maxX) {
+              maxX = sp.get2DPositionX();
            }
-           if (sp.y < minY) {
-              minY = sp.y;
+           if (sp.get2DPositionY() < minY) {
+              minY = sp.get2DPositionY();
            }
-           if (sp.y > maxY) {
-              maxY = sp.y;
+           if (sp.get2DPositionY() > maxY) {
+              maxY = sp.get2DPositionY();
            }
         }
         StagePosition minCoords = StagePosition.create2D(xyStage, minX, minY);

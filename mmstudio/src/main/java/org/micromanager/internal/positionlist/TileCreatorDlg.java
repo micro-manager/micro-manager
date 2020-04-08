@@ -527,16 +527,24 @@ public final class TileCreatorDlg extends MMDialog {
 
                switch (location) {
                   case 0: // top
-                     sp.y += offsetYUm;
+                     sp.set2DPosition(xyStage,
+                             core_.getXPosition(xyStage),
+                             core_.getYPosition(xyStage) + offsetYUm);
                      break;
                   case 1: // right
-                     sp.x += offsetXUm;
+                     sp.set2DPosition(xyStage,
+                             core_.getXPosition(xyStage) + offsetXUm,
+                             core_.getYPosition(xyStage));
                      break;
                   case 2: // bottom
-                     sp.y -= offsetYUm;
+                     sp.set2DPosition(xyStage,
+                             core_.getXPosition(xyStage),
+                             core_.getYPosition(xyStage) - offsetYUm);
                      break;
                   case 3: // left
-                     sp.x -= offsetXUm;
+                     sp.set2DPosition(xyStage,
+                             core_.getXPosition(xyStage) - offsetXUm,
+                             core_.getYPosition(xyStage));
                      break;
                }
                msp.add(sp);
