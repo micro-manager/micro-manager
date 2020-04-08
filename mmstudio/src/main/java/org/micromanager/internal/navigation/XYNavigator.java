@@ -157,8 +157,13 @@ public class XYNavigator {
 		if (xyStage == null || xyStage.equals("")) {
 			return;
 		}
-		Point2D stagePos = toStageSpace(pixSizeUm, tmpXUm, tmpYUm);
-		moveXYStageUm(studio_.core().getXYStageDevice(), stagePos.getX(), stagePos.getY());
+		// It is a bit funny to calculate back to pixels and then receive
+		// a stagposition in microns, but that is likely more exact than
+		// lying about pixelSize here (by setting it to 1)
+		Point2D stagePos = toStageSpace(pixSizeUm, tmpXUm / pixSizeUm,
+				tmpYUm / pixSizeUm);
+		moveXYStageUm(studio_.core().getXYStageDevice(), stagePos.getX(),
+				stagePos.getY());
 	}
 
 
