@@ -436,6 +436,7 @@ public final class DefaultImage implements Image {
    }
 
    @Override
+   @Deprecated
    public int getImageJPixelType() {
       return pixelType_.imageJConstant();
    }

@@ -31,6 +31,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.utils.FileDialogs;
@@ -145,7 +146,7 @@ public final class SavedMDAButton extends WidgetPlugin implements SciJavaPlugin 
       if (file == null) {
          return null;
       }
-      return studio_.data().getPropertyMapBuilder()
-         .putString("settingsPath", file.getAbsolutePath()).build();
+      return PropertyMaps.builder().putString("settingsPath",
+              file.getAbsolutePath()).build();
    }
 }

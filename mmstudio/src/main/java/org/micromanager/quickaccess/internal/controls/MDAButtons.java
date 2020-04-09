@@ -32,6 +32,7 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
 import org.micromanager.events.AcquisitionEndedEvent;
 import org.micromanager.events.AcquisitionStartedEvent;
@@ -170,6 +171,6 @@ public final class MDAButtons extends WidgetPlugin implements SciJavaPlugin {
 
    @Override
    public PropertyMap configureControl(Frame parent) {
-      return studio_.data().getPropertyMapBuilder().build();
+      return PropertyMaps.builder().build();
    }
 }

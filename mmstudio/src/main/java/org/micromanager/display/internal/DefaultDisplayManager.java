@@ -171,11 +171,13 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    }
 
    @Override
+   @Deprecated
    public DisplaySettings.DisplaySettingsBuilder getDisplaySettingsBuilder() {
       return new DefaultDisplaySettings.LegacyBuilder();
    }
    
-   @Override 
+   @Override
+   @Deprecated
    public DisplaySettings.Builder displaySettingsBuilder() {
       return DefaultDisplaySettings.builder();
    }
@@ -191,6 +193,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    }
 
    @Override
+   @Deprecated
    public DisplaySettings.ContrastSettings getContrastSettings(
          Integer contrastMin, Integer contrastMax, Double gamma,
          Boolean isVisible) {
@@ -199,6 +202,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    }
 
    @Override
+   @Deprecated
    public DisplaySettings.ContrastSettings getContrastSettings(
          Integer[] contrastMins, Integer[] contrastMaxes, Double[] gammas,
          Boolean isVisible) {
@@ -244,6 +248,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    */
 
    @Override
+   @Deprecated
    public PropertyMap.Builder getPropertyMapBuilder() {
       return PropertyMaps.builder();
    }

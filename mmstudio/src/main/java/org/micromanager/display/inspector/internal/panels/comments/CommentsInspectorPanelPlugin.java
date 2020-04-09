@@ -18,7 +18,7 @@ import org.scijava.plugin.Plugin;
  * @author mark
  */
 @Plugin(type = InspectorPanelPlugin.class,
-      priority = Priority.HIGH_PRIORITY,
+      priority = Priority.HIGH,
       name = "Comments",
       description = "View and edit image comments")
 public final class CommentsInspectorPanelPlugin implements InspectorPanelPlugin {

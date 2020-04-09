@@ -93,8 +93,8 @@ public final class GroupEditor extends ConfigDialog {
          }
       }
       // Warn user about including shutter state in config groups.
-      if (shutters.size() > 0 && studio_.profile().getBoolean(
-               GroupEditor.class, DISPLAY_SHUTTER_WARNING, true)) {
+      if (shutters.size() > 0 && studio_.profile().getSettings(GroupEditor.class).
+              getBoolean(DISPLAY_SHUTTER_WARNING, true)) {
          JPanel contents = new JPanel(new MigLayout("fill, flowy"));
          // NB I would prefer to use a JTextArea here, and use its automatic
          // line wrapping, but that causes a NullPointerException when laying
@@ -119,8 +119,8 @@ public final class GroupEditor extends ConfigDialog {
                contents, "Shutter State in Config Group",
                JOptionPane.WARNING_MESSAGE, 0, null,
                buttons, buttons[0]);
-         studio_.profile().setBoolean(GroupEditor.class, DISPLAY_SHUTTER_WARNING,
-               !neverAgain.isSelected());
+         studio_.profile().getSettings(GroupEditor.class).putBoolean(
+                 DISPLAY_SHUTTER_WARNING, !neverAgain.isSelected());
          if (selection == 2) {
             // User cancelled.
             return;

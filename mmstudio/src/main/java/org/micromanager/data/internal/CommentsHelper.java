@@ -63,7 +63,7 @@ public final class CommentsHelper {
       if (prop == null) {
          prop = PropertyMaps.builder().build();
       }
-      prop = prop.copy().putString(COMMENTS_KEY, comment).build();
+      prop = prop.copyBuilder().putString(COMMENTS_KEY, comment).build();
       annotation.setGeneralAnnotation(prop);
    }
 

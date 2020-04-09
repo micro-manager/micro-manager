@@ -107,7 +107,7 @@ public final class MMAcquisition extends DataViewerListener {
       eng_ = eng;
       show_ = show;
       // TODO: get rid of MMStudo cast
-      store_ = new DefaultDatastore((MMStudio) studio);
+      store_ = new DefaultDatastore(studio);
       pipeline_ = studio_.data().copyApplicationPipeline(store_, false);
       try {
          if (summaryMetadata.has("Directory") && summaryMetadata.get("Directory").toString().length() > 0) {
