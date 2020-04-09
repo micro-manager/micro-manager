@@ -777,14 +777,22 @@ public final class SnapLiveManager extends DataViewerListener
 
    /**
     * Make a name up for the given channel/camera number combination.
+    * This tries to replicate the code in the acquisition engine
+    * Hopefully this can be refactors to get its info from one and the same
+    * place
     */
    private String makeChannelName(String channel, String cameraChannelName) {
-      String result = channel;
+      String result;
       if (numCameraChannels_ > 1) {
          if (channel.isEmpty()) {
             result = cameraChannelName;
          } else {
-            result = result + "-" + cameraChannelName;
+            result = channel + "-" + cameraChannelName;
+         }
+      } else {
+         result = channel;
+         if (result.isEmpty()) {
+            result = "Default";
          }
       }
       return result;
