@@ -28,6 +28,7 @@ public interface ChannelDisplaySettings {
       Builder useCameraHistoRange(boolean use);
       
       Builder name(String name);
+      Builder groupName(String groupName);
       Builder visible(boolean visible);
       Builder show();
       Builder hide();
@@ -40,12 +41,44 @@ public interface ChannelDisplaySettings {
       ChannelDisplaySettings build();
    }
 
+   /**
+    * Color used to represent this channel, i.e., brightest color of the LUT
+    * used to display this channel
+    *
+    * @return Color for this channel
+    */
    Color getColor();
+
    boolean isUniformComponentScalingEnabled();
+
+   /**
+    * Range of this histogram displayed for this channel
+    * For now, histogram always starts at zero, so this represents
+    * the maximum value on the x-axis of the histogram.
+    *
+    * @return Maximum value on the x-axis of the histogram expressed as a factor of 2
+    */
    int getHistoRangeBits();
+
+   /**
+    * @return True when historangebits is equal to the maximum intensity coming from the camera
+    */
    boolean useCameraRange();
+
+   /**
+    * @return True when this channel is visible to the user, false otherwise
+    */
    boolean isVisible();
+
+   /**
+    * @return Name of the channel being displayed.
+    */
    String getName();
+
+   /**
+    * @return Name of the channelGroup this channel belongs to
+    */
+   String getGroupName();
 
    int getNumberOfComponents();
    ComponentDisplaySettings getComponentSettings(int component);
@@ -54,5 +87,4 @@ public interface ChannelDisplaySettings {
    Builder copyBuilder();
    Builder copyBuilderWithComponentSettings(int component, ComponentDisplaySettings settings);
 
-   // TODO Add static builder() in Java 8
 }

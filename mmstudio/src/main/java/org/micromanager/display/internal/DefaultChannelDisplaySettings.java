@@ -21,6 +21,7 @@ public final class DefaultChannelDisplaySettings
 {
    private final Color color_;
    private final String name_;
+   private final String groupName_;
    private final boolean useUniformComponentScaling_;
    private final boolean visible_;
    private final int histoRangeBits_;
@@ -33,6 +34,7 @@ public final class DefaultChannelDisplaySettings
    {
       private Color color_ = Color.WHITE;
       private String name_ = "";
+      private String groupName_ = "";
       private boolean useUniformComponentScaling_ = false;
       private boolean visible_ = true;
       private int histoRangeBits_ = 8; 
@@ -54,6 +56,12 @@ public final class DefaultChannelDisplaySettings
       @Override
       public Builder name(String name) {
          name_ = name;
+         return this;
+      }
+
+      @Override
+      public Builder groupName(String groupName) {
+         groupName_ = groupName;
          return this;
       }
 
@@ -174,6 +182,7 @@ public final class DefaultChannelDisplaySettings
    private DefaultChannelDisplaySettings(Builder builder) {
       color_ = builder.color_;
       name_ = builder.name_;
+      groupName_ = builder.groupName_;
       useUniformComponentScaling_ = builder.useUniformComponentScaling_;
       visible_ = builder.visible_;
       histoRangeBits_ = builder.histoRangeBits_;
@@ -189,6 +198,11 @@ public final class DefaultChannelDisplaySettings
    @Override
    public String getName() {
       return name_;
+   }
+
+   @Override
+   public String getGroupName() {
+      return groupName_;
    }
 
    @Override
@@ -236,6 +250,7 @@ public final class DefaultChannelDisplaySettings
       builder.useUniformComponentScaling_ = useUniformComponentScaling_;
       builder.visible_ = visible_;
       builder.name_ = name_;
+      builder.groupName_ = groupName_;
       builder.histoRangeBits_= histoRangeBits_;
       builder.useCameraRange_ = useCameraRange_;
       builder.componentSettings_.clear();
@@ -263,6 +278,7 @@ public final class DefaultChannelDisplaySettings
       return PropertyMaps.builder().
             putColor(PropertyKey.COLOR.key(), color_).
             putString(PropertyKey.CHANNEL_NAME.key(), name_).
+            putString(PropertyKey.CHANNEL_GROUP.key(), groupName_).
             putBoolean(PropertyKey.UNIFORM_COMPONENT_SCALING.key(), useUniformComponentScaling_).
             putBoolean(PropertyKey.VISIBLE.key(), visible_).
             putInteger(PropertyKey.HISTOGRAM_BIT_DEPTH.key(), histoRangeBits_).
@@ -270,22 +286,22 @@ public final class DefaultChannelDisplaySettings
             putPropertyMapList(PropertyKey.COMPONENT_SETTINGS.key(), componentSettings).
             build();
    }
-   
+
    /**
-    * Restores ChannelDisplaySettings from a PropertyMap
-    * 
-    * @param pMap PropertyMap from which to restore the ChannelDisplaySettings
-    * @return ChannelDisplaySettings.  Missing values are replaced by defaults.
+    * Helper function for overloaded versions of fromPropertyMap
+    * Restores everything form the propertymap except for Channelgroup and
+    * ChannelName
+    * @param pMap
+    * @return Builder with everything useful in the propertymap except for channelGroup
+    * and channelName
     */
-   public static ChannelDisplaySettings fromPropertyMap (PropertyMap pMap) {
+   private static ChannelDisplaySettings.Builder partialBuilderFromPropertyMap(PropertyMap pMap) {
       Builder b = new Builder();
 
       if (pMap.containsColor(PropertyKey.COLOR.key())) {
          b.color(pMap.getColor(PropertyKey.COLOR.key(), b.color_));
       }
-      if (pMap.containsString(PropertyKey.CHANNEL_NAME.key())) {
-         b.name(pMap.getString(PropertyKey.CHANNEL_NAME.key(), ""));
-      }
+
       if (pMap.containsBoolean(PropertyKey.UNIFORM_COMPONENT_SCALING.key())) {
          b.uniformComponentScaling(pMap.getBoolean(
                  PropertyKey.UNIFORM_COMPONENT_SCALING.key(), b.useUniformComponentScaling_));
@@ -303,14 +319,48 @@ public final class DefaultChannelDisplaySettings
          }
       }
       if (pMap.containsInteger(PropertyKey.HISTOGRAM_BIT_DEPTH.key())) {
-         b.histoRangeBits(pMap.getInteger(PropertyKey.HISTOGRAM_BIT_DEPTH.key(), 
+         b.histoRangeBits(pMap.getInteger(PropertyKey.HISTOGRAM_BIT_DEPTH.key(),
                  b.histoRangeBits_));
       }
       if (pMap.containsBoolean(PropertyKey.USE_CAMERA_BIT_DEPTH.key())) {
-         b.useCameraHistoRange(pMap.getBoolean(PropertyKey.USE_CAMERA_BIT_DEPTH.key(), 
+         b.useCameraHistoRange(pMap.getBoolean(PropertyKey.USE_CAMERA_BIT_DEPTH.key(),
                  b.useCameraRange_));
       }
-            
+
+      return b;
+   }
+
+   /**
+    * Restores ChannelDisplaySettings from a PropertyMap, but uses the input
+    * channelGroup and channelName rather than the ones in the PropertyMap
+    * Needed to gracefully update propertymaps that did not yet store the
+    * channelGroup
+    *
+    * @param pMap PropertyMap from which to restore the ChannelDisplaySettings
+    * @return ChannelDisplaySettings.  Missing values are replaced by defaults.
+    */
+   public static ChannelDisplaySettings fromPropertyMap (PropertyMap pMap,
+                                                         String channelGroup, String channelName) {
+      ChannelDisplaySettings.Builder b = partialBuilderFromPropertyMap(pMap);
+
+      return b.name(channelName).groupName(channelGroup).build();
+   }
+   
+   /**
+    * Restores ChannelDisplaySettings from a PropertyMap
+    * 
+    * @param pMap PropertyMap from which to restore the ChannelDisplaySettings
+    * @return ChannelDisplaySettings.  Missing values are replaced by defaults.
+    */
+   public static ChannelDisplaySettings fromPropertyMap (PropertyMap pMap) {
+      ChannelDisplaySettings.Builder b = partialBuilderFromPropertyMap(pMap);
+
+      if (pMap.containsString(PropertyKey.CHANNEL_NAME.key())) {
+         b.name(pMap.getString(PropertyKey.CHANNEL_NAME.key(), ""));
+      }
+      if (pMap.containsString(PropertyKey.CHANNEL_GROUP.key())) {
+         b.groupName(pMap.getString(PropertyKey.CHANNEL_GROUP.key(), ""));
+      }
       return b.build();
    }
 }

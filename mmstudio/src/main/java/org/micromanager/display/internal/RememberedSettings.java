@@ -90,7 +90,8 @@ public class RememberedSettings {
       MutablePropertyMapView settings = 
               studio.profile().getSettings(RememberedSettings.class);
       if (settings.containsPropertyMap(key)) {
-         return DefaultChannelDisplaySettings.fromPropertyMap(settings.getPropertyMap(key, null));
+          return DefaultChannelDisplaySettings.fromPropertyMap(
+                  settings.getPropertyMap(key, null), channelGroup, channelName);
       } else {
          // for backward compatibility
          String rKey = RememberedChannelSettings.genKey(channelGroup, channelName);
@@ -103,7 +104,7 @@ public class RememberedSettings {
                     null, 
                     null, 
                     true);
-            return rcs.toChannelDisplaySetting(channelName);
+            return rcs.toChannelDisplaySetting(channelGroup, channelName);
          }
       }
       

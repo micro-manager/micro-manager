@@ -215,7 +215,7 @@ public final class RememberedChannelSettings {
          String name = summary.getSafeChannelName(ch);
          RememberedChannelSettings settings = loadSettings(channelGroup, name, 
                  Color.WHITE, null, null, true);
-         builder.channel(ch, settings.toChannelDisplaySetting(name));
+         builder.channel(ch, settings.toChannelDisplaySetting(channelGroup, name));
       }
       builder.autostretch(true);
       return builder.build();      
@@ -225,12 +225,13 @@ public final class RememberedChannelSettings {
         (SummaryMetadata summary, int chNr) {
       RememberedChannelSettings settings = loadSettings(summary.getChannelGroup(),
               summary.getChannelNameList().get(chNr), Color.WHITE, null, null, true);
-      return settings.toChannelDisplaySetting(summary.getChannelNameList().get(chNr));
+      return settings.toChannelDisplaySetting(summary.getChannelGroup(),
+              summary.getChannelNameList().get(chNr));
    }
    
-   public ChannelDisplaySettings toChannelDisplaySetting(String channelName) {
+   public ChannelDisplaySettings toChannelDisplaySetting(String channelGroup, String channelName) {
       ChannelDisplaySettings.Builder builder = DefaultChannelDisplaySettings.builder();
-      builder.color(color_).name(channelName);
+      builder.color(color_).groupName(channelGroup).name(channelName);
       // ugly, we rely on a null list to know if we should return defaults...
       if (histogramMins_ != null) {
          for (int comp = 0; comp < histogramMins_.size(); comp++) {
