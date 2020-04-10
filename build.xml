@@ -204,6 +204,7 @@
 		<delete file="${mm.basedir}/MMCoreJ_wrap/MMCoreJ_wrap.h"/>
 		<delete file="${mm.basedir}/MMCorePy_wrap/MMCorePy_wrap.cpp"/>
 		<delete file="${mm.basedir}/MMCorePy_wrap/MMCorePy_wrap.h"/>
+      <delete dir="${mm.basedir}/build/intermediates/Swig"/>
 	</target>
 
 	<target name="clean-java" description="Clean only the Java components">
