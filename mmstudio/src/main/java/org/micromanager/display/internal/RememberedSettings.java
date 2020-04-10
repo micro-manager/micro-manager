@@ -59,10 +59,10 @@ public class RememberedSettings {
               studio.profile().getSettings(RememberedSettings.class);
       if (cds instanceof DefaultChannelDisplaySettings) {        
          DefaultChannelDisplaySettings dcds = (DefaultChannelDisplaySettings) cds;
-         // for safety, ensure that channelname is stored with ChannelDisplaySettings
+         // for safety, ensure channelgroup and channelname are stored with ChannelDisplaySettings
          if (!dcds.getName().equals(channelName)) {
             dcds = (DefaultChannelDisplaySettings) 
-                    dcds.copyBuilder().name(channelName).build();
+                    dcds.copyBuilder().groupName(channelGroup).name(channelName).build();
          }
          PropertyMap pMap = dcds.toPropertyMap();
          settings.putPropertyMap(key, pMap);
