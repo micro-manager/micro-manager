@@ -106,7 +106,7 @@ using namespace std;
  * (Keep the 3 numbers on one line to make it easier to look at diffs when
  * merging/rebasing.)
  */
-const int MMCore_versionMajor = 10, MMCore_versionMinor = 0, MMCore_versionPatch = 0;
+const int MMCore_versionMajor = 10, MMCore_versionMinor = 1, MMCore_versionPatch = 0;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -3398,6 +3398,12 @@ void CMMCore::setGalvoDevice(const char* galvoLabel) throw (CMMError)
  */
 void CMMCore::setChannelGroup(const char* chGroup) throw (CMMError)
 {
+   // Don't do anything if the new channelgroup is the same as the old one
+   if (channelGroup_.compare(chGroup) == 0)
+   {
+      return;
+   }
+
    if (chGroup && strlen(chGroup)>0)
    {
       channelGroup_ = chGroup;
@@ -3412,6 +3418,10 @@ void CMMCore::setChannelGroup(const char* chGroup) throw (CMMError)
    {
       MMThreadGuard scg(stateCacheLock_);
       stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreChannelGroup, newChGroup.c_str()));
+   }
+   if (externalCallback_ != 0) 
+   {
+      externalCallback_->onChannelGroupChanged(newChGroup.c_str());
    }
 }
 
