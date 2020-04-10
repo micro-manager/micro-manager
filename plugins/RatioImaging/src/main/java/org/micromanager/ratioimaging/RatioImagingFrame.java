@@ -52,7 +52,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
-import org.micromanager.events.internal.ChannelGroupEvent;
+import org.micromanager.events.ChannelGroupChangedEvent;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 // Imports for MMStudio internal packages
@@ -290,7 +290,7 @@ public class RatioImagingFrame extends MMFrame implements ProcessorConfigurator 
    }
    
    @Subscribe
-   public void onChannelGroup(ChannelGroupEvent event) {
+   public void onChannelGroupChanged(ChannelGroupChangedEvent event) {
       populateWithChannels(ch1Combo_);
       populateWithChannels(ch2Combo_);
       pack();

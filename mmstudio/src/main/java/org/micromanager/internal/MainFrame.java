@@ -65,10 +65,10 @@ import org.micromanager.alerts.internal.DefaultAlertManager;
 import org.micromanager.alerts.internal.DefaultAlert;
 import org.micromanager.alerts.internal.NoAlertsAvailableEvent;
 import org.micromanager.events.ChannelExposureEvent;
+import org.micromanager.events.ChannelGroupChangedEvent;
 import org.micromanager.events.ConfigGroupChangedEvent;
 import org.micromanager.events.GUIRefreshEvent;
 import org.micromanager.events.StartupCompleteEvent;
-import org.micromanager.events.internal.ChannelGroupEvent;
 import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 import org.micromanager.events.internal.ShutterDevicesEvent;
 import org.micromanager.internal.dialogs.OptionsDlg;
@@ -660,7 +660,7 @@ public final class MainFrame extends MMFrame {
    }
 
    @Subscribe
-   public void onChannelGroup(ChannelGroupEvent event) {
+   public void onChannelGroupChangedEvent(ChannelGroupChangedEvent event) {
       refreshChannelGroup();
    }
 

@@ -20,7 +20,6 @@ import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Pipeline;
 import org.micromanager.events.AcquisitionEndedEvent;
-import org.micromanager.events.internal.ChannelGroupEvent;
 import org.micromanager.events.internal.DefaultAcquisitionEndedEvent;
 import org.micromanager.events.internal.DefaultAcquisitionStartedEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
@@ -619,7 +618,6 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
             }
             return false;
          }
-         studio_.events().post(new ChannelGroupEvent());
          return true;
       } else {
          return false;

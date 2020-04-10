@@ -48,8 +48,8 @@ import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.internal.RememberedSettings;
 import org.micromanager.events.ChannelExposureEvent;
+import org.micromanager.events.ChannelGroupChangedEvent;
 import org.micromanager.events.GUIRefreshEvent;
-import org.micromanager.events.internal.ChannelGroupEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.utils.AcqOrderMode;
@@ -987,7 +987,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    }
 
    @Subscribe
-   public void onChannelGroup(ChannelGroupEvent event) {
+   public void onChannelGroupChanged(ChannelGroupChangedEvent event) {
       updateGroupsCombo();
    }
 
