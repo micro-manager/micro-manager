@@ -72,6 +72,7 @@ import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.DisplaySettings;
+import org.micromanager.display.internal.RememberedSettings;
 import org.micromanager.display.internal.animate.AnimationController;
 import org.micromanager.display.internal.displaywindow.imagej.ImageJBridge;
 import org.micromanager.display.internal.event.DisplayKeyPressEvent;
@@ -946,8 +947,19 @@ public final class DisplayUIController implements Closeable, WindowListener,
          for (int i = 0; i < nChannels; ++i) {
             ChannelDisplaySettings channelSettings
                     = settings.getChannelSettings(i);
+            // Update RememberedSettings for this channel.
+            // We update color only, but unfortunately, we get called here
+            // also when other things change
+            // TODO: should all channeldisplaysetting changes be remembered?
+            ChannelDisplaySettings rememberedSettings =
+                    RememberedSettings.loadChannel(studio_,
+                            channelSettings.getGroupName(), channelSettings.getName());
+            RememberedSettings.storeChannel(studio_, channelSettings.getGroupName(), channelSettings.getName(),
+                    rememberedSettings.copyBuilder().color(channelSettings.getColor()).build());
+
             ComponentDisplaySettings componentSettings =
                   channelSettings.getComponentSettings(0);
+            // TODO: Remember changes in component display settings?
             ijBridge_.mm2ijSetChannelColor(i, channelSettings.getColor());
             if (!autostretch) {
                int max = Math.max(1, (int) Math.min(Integer.MAX_VALUE,
