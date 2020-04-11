@@ -599,24 +599,24 @@
 %rename(eql) operator=;
 
 // CMMError used by MMCore
-%typemap(throws, throws="java.lang.Exception") CMMError {
-   jclass excep = jenv->FindClass("java/lang/Exception");
+%typemap(throws, throws="mmcorej.CMMError") CMMError {
+   jclass excep = jenv->FindClass("mmcorej/CMMError");
    if (excep)
      jenv->ThrowNew(excep, $1.getFullMsg().c_str());
    return $null;
 }
 
 // MetadataKeyError used by Metadata class
-%typemap(throws, throws="java.lang.Exception") MetadataKeyError {
-   jclass excep = jenv->FindClass("java/lang/Exception");
+%typemap(throws, throws="mmcorej.MetadataKeyError") MetadataKeyError {
+   jclass excep = jenv->FindClass("mmcorej.MetadataKeyError");
    if (excep)
      jenv->ThrowNew(excep, $1.getMsg().c_str());
    return $null;
 }
 
 // MetadataIndexError used by Metadata class
-%typemap(throws, throws="java.lang.Exception") MetadataIndexError {
-   jclass excep = jenv->FindClass("java/lang/Exception");
+%typemap(throws, throws="mmcorej.MetadataIndexError") MetadataIndexError {
+   jclass excep = jenv->FindClass("mmcorej/MetadataIndexError");
    if (excep)
      jenv->ThrowNew(excep, $1.getMsg().c_str());
    return $null;
