@@ -622,7 +622,7 @@
    return $null;
 }
 
-// We've translated exceptions to java.lang.Exception, so don't wrap the unused
+// We've translated exceptions to java versions that extend java.lang.Exception, so don't automatically wrap the unused
 // C++ exception classes.
 %ignore CMMError;
 %ignore MetadataKeyError;
