@@ -850,7 +850,7 @@
    }
 
    /**
-    * Convenience function.  Retuns affine transform as a String
+    * Convenience function.  Returns affine transform as a String
     * Used in this class and by the acquisition engine 
     * (rather than duplicating this code there
     */
