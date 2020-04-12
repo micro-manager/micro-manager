@@ -648,7 +648,7 @@
       return tags;
    }
 
-   private String getROITag() throws java.lang.Exception {
+   private String getROITag() throws mmcorej.CMMError {
       String roi = "";
       int [] x = new int[1];
       int [] y = new int[1];
@@ -795,7 +795,7 @@
    /*
     * Convenience function. Returns the ROI of the current camera in a java.awt.Rectangle.
     */
-   public Rectangle getROI() throws java.lang.Exception {
+   public Rectangle getROI() throws mmcorej.CMMError  {
       // ROI values are given as x,y,w,h in individual one-member arrays (pointers in C++):
       int[][] a = new int[4][1];
       getROI(a[0], a[1], a[2], a[3]);
@@ -805,7 +805,7 @@
     /*
     * Convenience function. Returns the ROI of specified camera in a java.awt.Rectangle.
     */
-   public Rectangle getROI(String label) throws java.lang.Exception {
+   public Rectangle getROI(String label) throws mmcorej.CMMError  {
       // ROI values are given as x,y,w,h in individual one-member arrays (pointers in C++):
       int[][] a = new int[4][1];
       getROI(label, a[0], a[1], a[2], a[3]);
