@@ -608,7 +608,7 @@
 
 // MetadataKeyError used by Metadata class
 %typemap(throws, throws="mmcorej.MetadataKeyError") MetadataKeyError {
-   jclass excep = jenv->FindClass("mmcorej.MetadataKeyError");
+   jclass excep = jenv->FindClass("mmcorej/MetadataKeyError");
    if (excep)
      jenv->ThrowNew(excep, $1.getMsg().c_str());
    return $null;
