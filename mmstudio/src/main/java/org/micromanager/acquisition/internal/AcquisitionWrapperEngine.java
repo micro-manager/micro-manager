@@ -174,6 +174,9 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    private int getNumChannels() {
       int numChannels = 0;
       if (useChannels_) {
+         if (channels_ == null) {
+            return 0;
+         }
          for (ChannelSpec channel : channels_) {
             if (channel.useChannel) {
                ++numChannels;
@@ -765,6 +768,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    public boolean addChannel(String config, double exp, Boolean doZStack, double zOffset, int skip, Color c, boolean use) {
       if (isConfigAvailable(config)) {
          ChannelSpec channel = new ChannelSpec();
+         channel.channelGroup = this.getChannelGroup();
          channel.config = config;
          channel.useChannel = use;
          channel.exposure = exp;
