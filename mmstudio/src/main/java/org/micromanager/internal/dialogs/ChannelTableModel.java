@@ -3,6 +3,7 @@ package org.micromanager.internal.dialogs;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
@@ -13,6 +14,7 @@ import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TooltipTextMaker;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  * Data representation class for the channels list in the MDA dialog.
@@ -20,9 +22,11 @@ import org.micromanager.internal.utils.TooltipTextMaker;
 public final class ChannelTableModel extends AbstractTableModel implements TableModelListener {
 
    private static final long serialVersionUID = 3290621191844925827L;
-   private ArrayList<ChannelSpec> channels_;
    private final Studio studio_;
    private final AcquisitionEngine acqEng_;
+   private final MutablePropertyMapView settings_;
+   // Not sure why, but the acqEngine API requires an ArrayList rather than a List
+   private final ArrayList<ChannelSpec> channels_;
    public final String[] COLUMN_NAMES = new String[]{
       "Use?",
       "Configuration",
@@ -55,6 +59,8 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
    public ChannelTableModel(Studio studio, AcquisitionEngine eng) {
       studio_ = studio;
       acqEng_ = eng;
+      settings_ = studio_.profile().getSettings(ChannelTableModel.class);
+      channels_ = new ArrayList<>(12);
    }
 
    @Override
@@ -171,10 +177,6 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
       }
    }
 
-   public void setChannels(ArrayList<ChannelSpec> ch) {
-      channels_ = ch;
-   }
-
    public ArrayList<ChannelSpec> getChannels() {
       return channels_;
    }
@@ -203,6 +205,7 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
          } else {
             // Pick a non-white default color if possible.
             Color defaultColor = ColorPalettes.getFromDefaultPalette(channels_.size());
+            channel.channelGroup = acqEng_.getChannelGroup();
             channel.color = new Color(AcqControlDlg.getChannelColor(
                      studio_, acqEng_.getChannelGroup(), channel.config,
                      defaultColor.getRGB()));
@@ -211,12 +214,14 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
             channels_.add(channel);
          }
       }
+      storeChannels();
    }
 
    public void removeChannel(int chIndex) {
       if (chIndex >= 0 && chIndex < channels_.size()) {
          channels_.remove(chIndex);
       }
+      storeChannels();
    }
 
    /**
@@ -231,6 +236,7 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
          channels_.add(rowIdx + 1, channel);
          return rowIdx + 1;
       }
+      storeChannels();
       return rowIdx;
    }
 
@@ -246,6 +252,7 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
          channels_.add(rowIdx - 1, channel);
          return rowIdx - 1;
       }
+      storeChannels();
       return rowIdx;
    }
 
@@ -258,14 +265,36 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
     * the current acquisition settings
     */
    public void cleanUpConfigurationList() {
-      String config;
-      for (Iterator<ChannelSpec> it = channels_.iterator(); it.hasNext();) {
-         config = it.next().config;
-         if (!config.contentEquals("") && !acqEng_.isConfigAvailable(config)) {
-            it.remove();
+      String channelGroup = "";
+      List<String> configNames = new ArrayList<>(channels_.size());
+      for (Iterator<ChannelSpec> it = channels_.iterator(); it.hasNext(); ) {
+         ChannelSpec cs = it.next();
+         if (!cs.config.contentEquals("")) {
+            channelGroup = cs.channelGroup;
+            configNames.add(cs.config);
+            // write this config to the profile
+            settings_.putString(channelProfileKey(cs.channelGroup, cs.config),
+                    ChannelSpec.toJSONStream(cs));
+            if (!acqEng_.isConfigAvailable(cs.config)) {
+               it.remove();
+            }
          }
       }
-      fireTableStructureChanged();
+      // Stores the config names that we had for the old channelGroup
+      settings_.putStringList("CG:" + channelGroup, configNames);
+
+      // Restore channels from profile
+      String newChannelGroup = acqEng_.getChannelGroup();
+      if (!channelGroup.equals(newChannelGroup)) {
+         List<String> newConfigNames = settings_.getStringList("CG:" + newChannelGroup);
+         for (String newConfig : newConfigNames) {
+            ChannelSpec cs = ChannelSpec.fromJSONStream(
+                    settings_.getString(channelProfileKey(newChannelGroup, newConfig), ""));
+            channels_.add(cs);
+         }
+         acqEng_.setChannels(channels_);
+         fireTableDataChanged();
+      }
    }
 
    /**
@@ -303,5 +332,27 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
          }
 
       }
+   }
+
+   public void storeChannels() {
+      String channelGroup = "";
+      List<String> configNames = new ArrayList<>(channels_.size());
+      for (Iterator<ChannelSpec> it = channels_.iterator(); it.hasNext(); ) {
+         ChannelSpec cs = it.next();
+         if (!cs.config.contentEquals("")) {
+            channelGroup = cs.channelGroup;
+            configNames.add(cs.config);
+            // write this config to the profile
+            settings_.putString(channelProfileKey(cs.channelGroup, cs.config),
+                    ChannelSpec.toJSONStream(cs));
+         }
+      }
+      // Stores the config names that we had for the old channelGroup
+      settings_.putStringList("CG:" + channelGroup, configNames);
+   }
+
+   private static String channelProfileKey(String channelGroup, String config) {
+      StringBuilder key = new StringBuilder(channelGroup);
+      return key.append("-").append(config).toString();
    }
 }
