@@ -146,9 +146,7 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
    @Override
    public boolean isCellEditable(int nRow, int nCol) {
       if (nCol == 4) {
-         if (!acqEng_.isZSliceSettingEnabled()) {
-            return false;
-         }
+         return acqEng_.isZSliceSettingEnabled();
       }
 
       return true;
@@ -226,8 +224,8 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
 
    /**
     * Used to change the order of the channels in the MDA window
-    * @param rowIdx
-    * @return 
+    * @param rowIdx Row nr (zero-based) of the row to be moved
+    * @return row nr where the selected row ended up
     */
    public int rowDown(int rowIdx) {
       if (rowIdx >= 0 && rowIdx < channels_.size() - 1) {
@@ -242,8 +240,8 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
 
    /**
     * Used to change the order of the channels in the Window
-    * @param rowIdx
-    * @return 
+    * @param rowIdx Row nr (0-based) of the row to move up
+    * @return Row nr where this row ended up
     */
    public int rowUp(int rowIdx) {
       if (rowIdx >= 1 && rowIdx < channels_.size()) {
@@ -299,7 +297,7 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
 
    /**
     * reports if the same channel name is used twice
-    * @return 
+    * @return true when the list of channels contains the same channel name twice
     */
    public boolean duplicateChannels() {
       for (int i = 0; i < channels_.size() - 1; i++) {
@@ -337,8 +335,7 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
    public void storeChannels() {
       String channelGroup = "";
       List<String> configNames = new ArrayList<>(channels_.size());
-      for (Iterator<ChannelSpec> it = channels_.iterator(); it.hasNext(); ) {
-         ChannelSpec cs = it.next();
+      for (ChannelSpec cs : channels_) {
          if (!cs.config.contentEquals("")) {
             channelGroup = cs.channelGroup;
             configNames.add(cs.config);
@@ -352,7 +349,6 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
    }
 
    private static String channelProfileKey(String channelGroup, String config) {
-      StringBuilder key = new StringBuilder(channelGroup);
-      return key.append("-").append(config).toString();
+      return channelGroup + "-" + config;
    }
 }
