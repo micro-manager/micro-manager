@@ -37,6 +37,8 @@ public class ChannelSpec {
 
    /** Whether this channel should be imaged in each Z slice of the stack */
    public Boolean doZStack = true;
+   /** Channel group this channel config belongs to **/
+   public String channelGroup = "";
    /** Name of the channel */
    public String config = "";
    /** Exposure time, in milliseconds */
