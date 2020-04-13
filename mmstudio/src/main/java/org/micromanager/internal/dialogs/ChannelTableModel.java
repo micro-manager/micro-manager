@@ -346,11 +346,13 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
    }
 
    public void storeChannels() {
-      String channelGroup = "";
+      String channelGroup = acqEng_.getChannelGroup();
       List<String> configNames = new ArrayList<>(channels_.size());
       for (ChannelSpec cs : channels_) {
          if (!cs.config.contentEquals("")) {
-            channelGroup = cs.channelGroup;
+            if (cs.channelGroup.isEmpty()) {
+               cs.channelGroup = channelGroup;
+            };
             configNames.add(cs.config);
             // write this config to the profile
             settings_.putString(channelProfileKey(cs.channelGroup, cs.config),
