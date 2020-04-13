@@ -15,9 +15,10 @@ import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.TableCellEditor;
+
+import org.micromanager.Studio;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
-import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -37,10 +38,13 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
    private int editCol_ = -1;
    private int editRow_ = -1;
    private ChannelSpec channel_ = null;
-   private final CheckBoxChangeListener checkBoxChangeListener_;
-   private AcquisitionEngine acqEng_;
 
-   public ChannelCellEditor(AcquisitionEngine engine) {
+   private final Studio studio_;
+   private final AcquisitionEngine acqEng_;
+   private final CheckBoxChangeListener checkBoxChangeListener_;
+
+   public ChannelCellEditor(Studio studio, AcquisitionEngine engine) {
+      studio_ = studio;
       acqEng_ = engine;
       checkBoxChangeListener_ = new CheckBoxChangeListener(this);
    }
@@ -105,18 +109,10 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
          channelSelect_.setSelectedItem(channel.config);
          
          // end editing on selection change
-         channelSelect_.addActionListener(e -> {
-            // Our fallback color is the colorblind-friendly color for our
-            // current row index.
-            channel_.color = new Color(AcqControlDlg.getChannelColor(
-                    MMStudio.getInstance(),
-                  acqEng_.getChannelGroup(),
-                  (String) channelSelect_.getSelectedItem(),
-                  ColorPalettes.getFromDefaultPalette(editRow_).getRGB()));
-            channel_.exposure = AcqControlDlg.getChannelExposure(
-               acqEng_.getChannelGroup(),
-               (String) channelSelect_.getSelectedItem(), 10.0);
-            fireEditingStopped();
+         channelSelect_.addPropertyChangeListener(e -> {
+            if (!channelSelect_.getSelectedItem().equals(channel_.config)) {
+               fireEditingStopped();
+            }
          });
 
          // Return the configured component
@@ -142,8 +138,7 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
             // channel. If no color is available, use the "next" colorblind-
             // friendly color, based on our row index.
             channel_.color = new Color(AcqControlDlg.getChannelColor(
-                    MMStudio.getInstance(),
-                     acqEng_.getChannelGroup(),
+                    studio_, acqEng_.getChannelGroup(),
                      (String) channelSelect_.getSelectedItem(),
                      ColorPalettes.getFromDefaultPalette(editRow_).getRGB()));
             channel_.exposure = AcqControlDlg.getChannelExposure(

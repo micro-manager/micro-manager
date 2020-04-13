@@ -120,8 +120,21 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
          channel.useChannel = ((Boolean) value);
       } else if (col == 1) {
          channel.config = value.toString();
-         channel.exposure = AcqControlDlg.getChannelExposure(
-               acqEng_.getChannelGroup(), channel.config, 10.0);
+         ChannelSpec cs = ChannelSpec.fromJSONStream(
+                 settings_.getString(channelProfileKey(acqEng_.getChannelGroup(),
+                         channel.config), ""));
+         if (cs == null) {
+            // Our fallback color is the colorblind-friendly color for our
+            // current row index.
+            channel.color = new Color(ColorPalettes.getFromDefaultPalette(row).getRGB());
+            channel.exposure = 10.0;
+         }
+         else {
+            channel.color = cs.color;
+            channel.exposure = cs.exposure;
+         }
+         this.fireTableCellUpdated(row, 2);
+         this.fireTableCellUpdated(row, 6);
       } else if (col == 2) {
          channel.exposure = ((Double) value);
          AcqControlDlg.storeChannelExposure(acqEng_.getChannelGroup(),
@@ -348,7 +361,7 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
       settings_.putStringList("CG:" + channelGroup, configNames);
    }
 
-   private static String channelProfileKey(String channelGroup, String config) {
+    private static String channelProfileKey(String channelGroup, String config) {
       return channelGroup + "-" + config;
    }
 }

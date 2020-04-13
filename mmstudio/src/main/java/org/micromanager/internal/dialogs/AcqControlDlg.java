@@ -190,7 +190,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       channelTable_.setAutoCreateColumnsFromModel(false);
       channelTable_.setModel(model_);
 
-      channelCellEditor_ = new ChannelCellEditor(acqEng_);
+      channelCellEditor_ = new ChannelCellEditor(mmStudio_, acqEng_);
       ChannelCellRenderer cellRenderer = new ChannelCellRenderer(acqEng_);
       channelTable_.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
