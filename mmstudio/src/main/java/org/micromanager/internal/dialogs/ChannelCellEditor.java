@@ -134,15 +134,6 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
          if (editCol_ == 0) {
             return checkBox_.isSelected();
          } else if (editCol_ == 1) {
-            // As a side effect, change to the color and exposure of the new
-            // channel. If no color is available, use the "next" colorblind-
-            // friendly color, based on our row index.
-            channel_.color = new Color(AcqControlDlg.getChannelColor(
-                    studio_, acqEng_.getChannelGroup(),
-                     (String) channelSelect_.getSelectedItem(),
-                     ColorPalettes.getFromDefaultPalette(editRow_).getRGB()));
-            channel_.exposure = AcqControlDlg.getChannelExposure(
-                  acqEng_.getChannelGroup(), channel_.config, 10.0);
             return channelSelect_.getSelectedItem();
          } else if (editCol_ == 2 || editCol_ == 3) {
             return NumberUtils.displayStringToDouble(text_.getText());
