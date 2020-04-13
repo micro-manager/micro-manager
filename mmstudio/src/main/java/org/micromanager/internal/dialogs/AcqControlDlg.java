@@ -511,7 +511,6 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
          String newGroup = (String) channelGroupCombo_.getSelectedItem();
          if (acqEng_.setChannelGroup(newGroup)) {
             channelCellEditor_.stopCellEditing();
-            model_.cleanUpConfigurationList();
             if (mmStudio_.getAutofocusManager() != null) {
                mmStudio_.getAutofocusManager().refresh();
             }
