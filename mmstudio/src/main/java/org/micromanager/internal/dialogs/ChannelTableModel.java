@@ -11,6 +11,8 @@ import javax.swing.table.TableModel;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
+import org.micromanager.display.internal.RememberedSettings;
+import org.micromanager.events.internal.ChannelColorEvent;
 import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TooltipTextMaker;
@@ -150,7 +152,10 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
       } else if (col == 5) {
          channel.skipFactorFrame = ((Integer) value);
       } else if (col == 6) {
-         channel.color = (Color) value;
+         if (!channel.color.equals((Color) value)) {
+            studio_.events().post(new ChannelColorEvent(
+                    channel.channelGroup, channel.config, (Color) value));
+         }
       }
 
       acqEng_.setChannel(row, channel);
@@ -179,6 +184,7 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
       if (col < 0) {
          return;
       }
+      /*
       ChannelSpec channel = channels_.get(row);
       TableModel model = (TableModel) e.getSource();
       if (col == 6) {
@@ -186,6 +192,8 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
          AcqControlDlg.setChannelColor(studio_, acqEng_.getChannelGroup(),
                channel.config, color.getRGB());
       }
+
+       */
    }
 
    public ArrayList<ChannelSpec> getChannels() {
@@ -217,9 +225,8 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
             // Pick a non-white default color if possible.
             Color defaultColor = ColorPalettes.getFromDefaultPalette(channels_.size());
             channel.channelGroup = acqEng_.getChannelGroup();
-            channel.color = new Color(AcqControlDlg.getChannelColor(
-                     studio_, acqEng_.getChannelGroup(), channel.config,
-                     defaultColor.getRGB()));
+            channel.color = RememberedSettings.loadChannel(studio_,
+                    acqEng_.getChannelGroup(), channel.config, defaultColor).getColor();
             channel.exposure = AcqControlDlg.getChannelExposure(
                   acqEng_.getChannelGroup(), channel.config, 10.0);
             channels_.add(channel);
@@ -336,13 +343,35 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
            double exposure) {
       if (!channelGroup.equals(acqEng_.getChannelGroup()))
          return;
-      for (ChannelSpec ch : channels_) {
-         if (ch.config.equals(channel)) {
-            ch.exposure = exposure;
-            this.fireTableDataChanged();
+      for (int row = 0; row < channels_.size(); row++) {
+         ChannelSpec cs = channels_.get(row);
+         if (cs.config.equals(channel)) {
+            cs.exposure = exposure;
+            this.fireTableCellUpdated(row, 2);
+            return;
          }
-
       }
+   }
+
+   /**
+    * Updates the color of the specified channel
+    *
+    * @param channelGroup  Channelgroup of the channel
+    * @param channelName   Name of the channel
+    * @param color         New color of the channel
+    */
+   public void setChannelColor(String channelGroup, String channelName, Color color) {
+      if (!channelGroup.equals(acqEng_.getChannelGroup()))
+         return;
+      for (int row = 0; row < channels_.size(); row++) {
+         ChannelSpec cs = channels_.get(row);
+         if (cs.config.equals(channelName)) {
+            cs.color = color;
+            this.fireTableCellUpdated(row, 6);
+            return;
+         }
+      }
+      // not found, should be safe to ignore
    }
 
    public void storeChannels() {

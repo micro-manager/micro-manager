@@ -487,7 +487,8 @@ public final class SnapLiveManager extends DataViewerListener
          ds = ds.copyBuilderWithChannelSettings(ch, 
                  RememberedSettings.loadChannel(mmStudio_, 
                          store_.getSummaryMetadata().getChannelGroup(), 
-                         store_.getSummaryMetadata().getChannelNameList().get(ch))).
+                         store_.getSummaryMetadata().getChannelNameList().get(ch),
+                         null)).
                  build();
       }
       display_.setDisplaySettings(ds);
@@ -620,7 +621,8 @@ public final class SnapLiveManager extends DataViewerListener
                   ChannelDisplaySettings newCD = RememberedSettings.loadChannel(
                           mmStudio_, 
                           core_.getChannelGroup(),
-                          name);
+                          name,
+                          null);
                   display_.setDisplaySettings(display_.getDisplaySettings().
                           copyBuilderWithChannelSettings(camCh, newCD).build());
                }               

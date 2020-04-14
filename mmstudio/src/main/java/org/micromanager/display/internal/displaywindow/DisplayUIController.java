@@ -88,6 +88,7 @@ import org.micromanager.display.internal.event.DisplayMouseWheelEvent;
 import org.micromanager.display.internal.event.DataViewerMousePixelInfoChangedEvent;
 import org.micromanager.display.internal.gearmenu.GearButton;
 import org.micromanager.display.overlay.Overlay;
+import org.micromanager.events.internal.ChannelColorEvent;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.Geometry;
 import org.micromanager.internal.utils.MMFrame;
@@ -187,6 +188,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
    private ImagesAndStats displayedImages_;
    private Double cachedPixelSize_ = -1.0;
    private boolean isPreview_ = false;
+   private ChannelColorEvent channelColorEvent_;
 
    private BoundsRectAndMask lastSeenSelection_;
 
@@ -953,7 +955,20 @@ public final class DisplayUIController implements Closeable, WindowListener,
             // TODO: should all channeldisplaysetting changes be remembered?
             ChannelDisplaySettings rememberedSettings =
                     RememberedSettings.loadChannel(studio_,
-                            channelSettings.getGroupName(), channelSettings.getName());
+                            channelSettings.getGroupName(), channelSettings.getName(), null);
+            if (!rememberedSettings.getColor().equals(channelSettings.getColor())) {
+               // To ensure that we do not respond to the event posted by us
+               // (which will result in a continuous loop), remember our event
+               // so that it can be ignored in the event handler.
+               // This requires that the event bus is synchronous (which it is now),
+               // and that this code always runs on the same thread (it should
+               // always run on the EDT)
+               channelColorEvent_ = new ChannelColorEvent(
+                       channelSettings.getGroupName(),
+                       channelSettings.getName(),
+                       channelSettings.getColor());
+               studio_.events().post(channelColorEvent_);
+            }
             RememberedSettings.storeChannel(studio_, channelSettings.getGroupName(), channelSettings.getName(),
                     rememberedSettings.copyBuilder().color(channelSettings.getColor()).build());
 
@@ -2011,6 +2026,41 @@ public final class DisplayUIController implements Closeable, WindowListener,
       if (liveModeEvent.getIsOn()) {
          nrLiveFramesReceived_ = 0;
          lastImageNumber_ = 0;
+      }
+   }
+
+   @Subscribe
+   public void onChannelColorEvent(ChannelColorEvent channelColorEvent) {
+      // make sure we do not respond to the event we generated ourselves
+      if (!channelColorEvent.equals(channelColorEvent_)) {
+         if (channelColorEvent.getColor() != null) {
+            DisplaySettings oldDisplaySettings, newDisplaySettings;
+            do {
+               oldDisplaySettings = displayController_.getDisplaySettings();
+               int index = 0;
+               boolean found = false;
+               while (!found && index < oldDisplaySettings.getNumberOfChannels()) {
+                  ChannelDisplaySettings channelSettings = oldDisplaySettings.getChannelSettings(index);
+                  if (channelSettings.getGroupName().equals(channelColorEvent.getChannelGroup()) &&
+                          channelSettings.getName().equals(channelColorEvent.getChannel())) {
+                     found = true;
+                  }
+                  else {
+                     index++;
+                  }
+               }
+               if (!found) {
+                  return;
+               }
+               ChannelDisplaySettings channelSettings
+                       = oldDisplaySettings.getChannelSettings(index);
+               newDisplaySettings = oldDisplaySettings.
+                       copyBuilderWithChannelSettings(index,
+                               channelSettings.copyBuilder().color(
+                                       channelColorEvent.getColor()).build()).
+                       build();
+            } while (!displayController_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
+         }
       }
    }
 }

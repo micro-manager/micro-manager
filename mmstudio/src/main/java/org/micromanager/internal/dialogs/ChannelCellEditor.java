@@ -1,6 +1,5 @@
 package org.micromanager.internal.dialogs;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionListener;
 import java.text.ParseException;
@@ -19,7 +18,6 @@ import javax.swing.table.TableCellEditor;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
-import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 

@@ -50,6 +50,7 @@ import org.micromanager.display.internal.RememberedSettings;
 import org.micromanager.events.ChannelExposureEvent;
 import org.micromanager.events.ChannelGroupChangedEvent;
 import org.micromanager.events.GUIRefreshEvent;
+import org.micromanager.events.internal.ChannelColorEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.utils.AcqOrderMode;
@@ -909,6 +910,16 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
             setChannelExposureTime(channelGroup, channel, exposure);
          }
       }
+   }
+
+   @Subscribe
+   public void onChannelColorEvent(ChannelColorEvent event) {
+      model_.setChannelColor(event.getChannelGroup(), event.getChannel(), event.getColor());
+      ChannelDisplaySettings newCDS =
+              RememberedSettings.loadChannel(mmStudio_, event.getChannelGroup(),
+                      event.getChannel(), null ).copyBuilder().color(event.getColor()).
+                      build();
+      RememberedSettings.storeChannel(mmStudio_, event.getChannelGroup(), event.getChannel(), newCDS);
    }
 
    @Subscribe
@@ -1897,22 +1908,6 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       MMStudio.getInstance().profile().getSettings( 
               AcqControlDlg.class).putDouble(
             "Exposure_" + channelGroup + "_" + channel, exposure);
-   }
-
-   public static Integer getChannelColor(Studio studio, String channelGroup,
-         String channel, int defaultVal) {
-      return RememberedSettings.loadChannel(studio, channelGroup, channel).
-              getColor().getRGB();
-   }
-
-   public static void setChannelColor(Studio studio, 
-           String channelGroup, 
-           String channel,
-           int color) {
-      ChannelDisplaySettings newCDS = 
-              RememberedSettings.loadChannel(studio, channelGroup, channel).
-                      copyBuilder().color(new Color(color)).build();
-      RememberedSettings.storeChannel(studio, channelGroup, channel, newCDS);
    }
 
    public static boolean getShouldSyncExposure() {
