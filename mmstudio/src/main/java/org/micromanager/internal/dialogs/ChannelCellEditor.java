@@ -104,11 +104,11 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
                channelSelect_.addItem(config);
             }
          }
-         channelSelect_.setSelectedItem(channel.config);
+         channelSelect_.setSelectedItem(channel.config());
          
          // end editing on selection change
          channelSelect_.addPropertyChangeListener(e -> {
-            if (!channelSelect_.getSelectedItem().equals(channel_.config)) {
+            if (!channelSelect_.getSelectedItem().equals(channel_.config())) {
                fireEditingStopped();
             }
          });

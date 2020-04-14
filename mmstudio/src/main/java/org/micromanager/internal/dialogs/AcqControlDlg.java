@@ -38,7 +38,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.table.*;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.SequenceSettings;
@@ -1107,11 +1106,6 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       acqEng_.setCustomTimeIntervals(intervals);
       acqEng_.enableCustomTimeIntervals(settings.getBoolean(
               ACQ_ENABLE_CUSTOM_INTERVALS, false));
-
-      int numChannels = settings.getInteger(ACQ_NUM_CHANNELS, 0);
-
-      ChannelSpec defaultChannel = new ChannelSpec();
-
       acqEng_.getChannels().clear();
       acqEng_.setShouldDisplayImages(!getShouldHideMDADisplay());
 
@@ -1339,14 +1333,14 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
          ArrayList<ChannelSpec> list = ((ChannelTableModel) channelTable_.getModel() ).getChannels();
          ArrayList<Integer> imagesPerChannel = new ArrayList<>();
          for (ChannelSpec list1 : list) {
-            if (!list1.useChannel) {
+            if (!list1.useChannel()) {
                continue;
             }
             int num = 1;
             if (frames) {
-               num *= Math.max(1, numFrames / (list1.skipFactorFrame + 1));
+               num *= Math.max(1, numFrames / (list1.skipFactorFrame() + 1));
             }
-            if (slices && list1.doZStack) {
+            if (slices && list1.doZStack()) {
                num *= numSlices;
             }
             if (positions) {
@@ -1461,8 +1455,8 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
          // Check for excessively long exposure times.
          ArrayList<String> badChannels = new ArrayList<>();
          for (ChannelSpec spec : model.getChannels()) {
-            if (spec.exposure > 30000) { // More than 30s
-               badChannels.add(spec.config);
+            if (spec.exposure() > 30000) { // More than 30s
+               badChannels.add(spec.config());
             }
          }
          if (badChannels.size() > 0 && getShouldCheckExposureSanity()) {
