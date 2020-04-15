@@ -770,8 +770,9 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    public boolean addChannel(String config, double exp, Boolean doZStack, double zOffset, int skip, Color c, boolean use) {
       if (isConfigAvailable(config)) {
          ChannelSpec.Builder cb = new ChannelSpec.Builder();
-         cb.channelGroup(this.getChannelGroup()).config(config).useChannel(use);
-         cb.exposure(exp).doZStack(doZStack).zOffset(zOffset).color(c).skipFactorFrame(skip);
+         cb.channelGroup(this.getChannelGroup()).config(config).useChannel(use).
+                 exposure(exp).doZStack(doZStack).zOffset(zOffset).color(c).
+                 skipFactorFrame(skip);
          channels_.add(cb.build());
          return true;
       } else {

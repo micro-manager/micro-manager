@@ -177,7 +177,6 @@ public class ChannelSpec {
     */
    public static ChannelSpec fromJSONStream(String stream) {
       Gson gson = new Gson();
-      ChannelSpec cs = gson.fromJson(stream, ChannelSpec.class);
-      return cs;
+      return gson.fromJson(stream, ChannelSpec.class);
    }
 }
