@@ -353,6 +353,7 @@ public class ZMQUtil {
       //TODO: this is for netbeans, delte or split out
       mmPackages.add("org.micromanager.remote");
       mmPackages.add("org.micromanager.magellan.api");
+      mmPackages.add("org.micromanager.acqj.api");
 
       // ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 //      studio_.logs().logDebugMessage("ClassLoader in ZMQServer: " + classLoader.toString());  
