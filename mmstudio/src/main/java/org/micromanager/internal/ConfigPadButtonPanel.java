@@ -151,7 +151,7 @@ public final class ConfigPadButtonPanel extends JPanel {
 
    @SuppressWarnings("ResultOfObjectAllocationIgnored")
    public void addGroup() {
-      new GroupEditor("", "", studio_, studio_.core(), true);
+      new GroupEditor("", "", studio_, true);
    }
    
    
@@ -182,7 +182,7 @@ public final class ConfigPadButtonPanel extends JPanel {
          JOptionPane.showMessageDialog(this,
                  "To edit a group, please select it first, then press the edit button.");
       } else {
-         new GroupEditor(groupName, configPad_.getPresetForSelectedGroup(), studio_, studio_.core(), false);
+         new GroupEditor(groupName, configPad_.getPresetForSelectedGroup(), studio_, false);
       }
    }
    
@@ -194,7 +194,7 @@ public final class ConfigPadButtonPanel extends JPanel {
          JOptionPane.showMessageDialog(this, 
                  "To add a preset to a group, please select the group first, then press the edit button.");
       } else {
-         new PresetEditor(groupName, "", studio_, studio_.core(), true);
+         new PresetEditor(groupName, "", studio_, true);
       }
    }
    
@@ -262,11 +262,11 @@ public final class ConfigPadButtonPanel extends JPanel {
             } catch (Exception ex) {
                ReportingUtils.logError(ex);
             }
-            new PresetEditor(groupName, newPresetName, studio_, studio_.core(), false);
+            new PresetEditor(groupName, newPresetName, studio_, false);
 
          }
       } else {
-         new PresetEditor(groupName, presetName, studio_, studio_.core(), false);
+         new PresetEditor(groupName, presetName, studio_, false);
       }
    }
 
