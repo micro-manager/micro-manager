@@ -21,16 +21,10 @@
 package org.micromanager.data.internal;
 
 import com.google.common.io.Files;
-import java.awt.Rectangle;
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.UUID;
-import org.json.JSONArray;
-import org.json.JSONException;
+import mmcorej.org.json.JSONArray;
+import mmcorej.org.json.JSONException;
 import org.junit.Assert;
 import org.junit.Test;
-import org.micromanager.MultiStagePosition;
 import org.micromanager.PropertyMap;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
@@ -38,6 +32,12 @@ import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.internal.MMStudio;
+
+import java.awt.Rectangle;
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.UUID;
 
 /**
  * This class tests that we properly transfer data between versions
