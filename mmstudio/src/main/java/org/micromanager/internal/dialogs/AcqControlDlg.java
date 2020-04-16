@@ -872,42 +872,14 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       summaryTextArea_.setText(acqEng_.getVerboseSummary());
    }
    
-   /**
-    * Sets the exposure time of a given channel
-    * The channel has to be preset in the current channel group
-    * Will also update the exposure associated with this channel in the preferences,
-    * i.e. even if the preset is not shown, this exposure time will be used
-    * next time it is shown
-    * 
-    * @param channelGroup - name of the channelgroup.  If it does not match the current
-    * channel group, no action will be taken
-    * @param channel - name of the preset in the current channel group
-    * @param exposure  - new exposure time
-    */
-   public void setChannelExposureTime(String channelGroup, String channel, 
-           double exposure) {
-      if (!channelGroup.equals(acqEng_.getChannelGroup()) ||
-               acqEng_.getChannelConfigs().length <= 0) {
-         return;
-      }
-      for (String config : acqEng_.getChannelConfigs()) {
-         if (channel.equals(config)) {
-            storeChannelExposure(acqEng_.getChannelGroup(), channel, exposure);
-            model_.setChannelExposureTime(channelGroup, channel, exposure);
-         }
-      }
-   }
 
    @Subscribe
    public void onChannelExposure(ChannelExposureEvent event) {
       String channel = event.getChannel();
-      if (!channel.equals("")) {
+      if (!channel.equals("") && getShouldSyncExposure()) {
          String channelGroup = event.getChannelGroup();
          double exposure = event.getNewExposureTime();
-         storeChannelExposure(channelGroup, channel, exposure);
-         if (getShouldSyncExposure()) {
-            setChannelExposureTime(channelGroup, channel, exposure);
-         }
+         model_.setChannelExposureTime(channelGroup, channel, exposure);
       }
    }
 
@@ -929,7 +901,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
          try {
             String channelGroup = mmStudio_.core().getChannelGroup();
             String channel = mmStudio_.core().getCurrentConfig(channelGroup);
-            double exposure = getChannelExposureTime(
+            double exposure = model_.getChannelExposureTime(
                   channelGroup, channel, 10.0);
             mmStudio_.app().setChannelExposureTime(channelGroup, channel,
                   exposure);
@@ -943,21 +915,6 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    @Subscribe
    public void onChannelGroupChanged(ChannelGroupChangedEvent event) {
       updateChannelAndGroupCombo();
-   }
-
-   /**
-    * Returns exposure time for the desired preset in the given channelgroup
-    * Acquires its info from the preferences
-    * 
-    * @param channelGroup
-    * @param channel - 
-    * @param defaultExp - default value
-    * @return exposure time
-    */
-   public double getChannelExposureTime(String channelGroup, String channel,
-           double defaultExp) {
-      // Redirect to the static version.
-      return getChannelExposure(channelGroup, channel, defaultExp);
    }
 
    protected void afOptions() {
@@ -1888,20 +1845,6 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
             checkBox.removeActionListener(l);
          }
       }
-   }
-
-   public static Double getChannelExposure(String channelGroup,
-         String channel, double defaultVal) {
-      return MMStudio.getInstance().profile().getSettings(
-            AcqControlDlg.class).getDouble(
-                    "Exposure_" + channelGroup + "_" + channel,defaultVal);
-   }
-
-   public static void storeChannelExposure(String channelGroup,
-         String channel, double exposure) {
-      MMStudio.getInstance().profile().getSettings( 
-              AcqControlDlg.class).putDouble(
-            "Exposure_" + channelGroup + "_" + channel, exposure);
    }
 
    public static boolean getShouldSyncExposure() {

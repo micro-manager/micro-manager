@@ -7,7 +7,6 @@ import java.util.List;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableModel;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
@@ -141,10 +140,11 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
          this.fireTableCellUpdated(row, 6);
       } else if (col == 2) {
          cb.exposure (((Double) value));
-         AcqControlDlg.storeChannelExposure(acqEng_.getChannelGroup(),
-               channel.config(), (Double) value);
          if (AcqControlDlg.getShouldSyncExposure()) {
             studio_.app().setChannelExposureTime(acqEng_.getChannelGroup(),
+                    channel.config(), (Double) value);
+         } else {
+            this.setChannelExposureTime(acqEng_.getChannelGroup(),
                     channel.config(), (Double) value);
          }
       } else if (col == 3) {
@@ -188,16 +188,6 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
       if (col < 0) {
          return;
       }
-      /*
-      ChannelSpec channel = channels_.get(row);
-      TableModel model = (TableModel) e.getSource();
-      if (col == 6) {
-         Color color = (Color) model.getValueAt(row, col);
-         AcqControlDlg.setChannelColor(studio_, acqEng_.getChannelGroup(),
-               channel.config, color.getRGB());
-      }
-
-       */
    }
 
    public ArrayList<ChannelSpec> getChannels() {
@@ -231,7 +221,7 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
             cb.channelGroup(acqEng_.getChannelGroup());
             cb.color(RememberedSettings.loadChannel(studio_,
                     acqEng_.getChannelGroup(), config, defaultColor).getColor());
-            cb.exposure(AcqControlDlg.getChannelExposure(
+            cb.exposure(this.getChannelExposureTime(
                   acqEng_.getChannelGroup(), config, 10.0));
             channels_.add(cb.build());
          }
@@ -355,6 +345,27 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
             return;
          }
       }
+   }
+
+   /**
+    * Returns the exposure time of the given preset
+    *
+    * @param channelGroup - if it does not match current channelGroup,
+    * default exposure will be returns
+    * @param channel - preset for which to change exposure time
+    * @param defaultExposure - return when no match was found
+    */
+   public double getChannelExposureTime(String channelGroup, String channel,
+                                      double defaultExposure) {
+      if (!channelGroup.equals(acqEng_.getChannelGroup()))
+         return defaultExposure;
+      for (int row = 0; row < channels_.size(); row++) {
+         ChannelSpec cs = channels_.get(row);
+         if (cs.config().equals(channel)) {
+            return channels_.get(row).exposure();
+         }
+      }
+      return defaultExposure;
    }
 
    /**
