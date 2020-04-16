@@ -27,7 +27,6 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.DeviceType;
 import mmcorej.PropertyType;
@@ -45,8 +44,8 @@ public final class GroupEditor extends ConfigDialog {
    private static final long serialVersionUID = 8281144157746745260L;
    private static final String DISPLAY_SHUTTER_WARNING = "Warn user before saving a config group that includes shutter state.";
 
-   public GroupEditor(String groupName, String presetName, Studio studio, CMMCore core, boolean newItem) {
-      super(groupName, presetName, studio, core, newItem);
+   public GroupEditor(String groupName, String presetName, Studio studio, boolean newItem) {
+      super(groupName, presetName, studio, newItem);
       instructionsText_ = "Specify properties in this configuration group:";
       nameFieldLabelText_ = "Group name:";
       initName_ = groupName_;
@@ -258,7 +257,7 @@ public final class GroupEditor extends ConfigDialog {
          }
          // Make the first preset.
          if (itemsIncludedCount > 1) {
-            new PresetEditor(newName, "NewPreset", studio_, core_, false);
+            new PresetEditor(newName, "NewPreset", studio_, false);
          }
       } else {// An existing configuration group is being modified.
          // Apply configuration settings to all properties in the group.

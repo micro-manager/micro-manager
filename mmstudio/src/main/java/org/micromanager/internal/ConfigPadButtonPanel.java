@@ -33,7 +33,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
-import mmcorej.CMMCore;
+import org.micromanager.Studio;
 import org.micromanager.internal.dialogs.GroupEditor;
 import org.micromanager.internal.dialogs.PresetEditor;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -53,22 +53,16 @@ public final class ConfigPadButtonPanel extends JPanel {
    private JButton editPresetButton_;
 
    private ConfigGroupPad configPad_;
-
-   private CMMCore core_;
-
-   private MMStudio mmStudio_;
+   private Studio studio_;
 
    
    
-   ConfigPadButtonPanel() {
-      initialize();
+   ConfigPadButtonPanel(Studio studio, ConfigGroupPad configPad) {
+      studio_ = studio;
+      configPad_ = configPad;
    }
-   
+
    public void initialize() {
-      initializeWidgets();
-   }
-   
-   public void initializeWidgets() {
 
       createLabel("Group:");
       addGroupButton_ = createButton("","/org/micromanager/icons/plus.png");
@@ -96,18 +90,6 @@ public final class ConfigPadButtonPanel extends JPanel {
       setLayout(layout);
    }
 
-   public void setConfigPad(ConfigGroupPad configPad) {
-      configPad_ = configPad;
-   }
-   
-   public void setGUI(MMStudio gui) {
-      mmStudio_ = gui;
-   }
-   
-   public void setCore(CMMCore core) {
-      core_ = core;
-   }
-   
    public void format(JComponent theComp) {
       theComp.setFont(new Font("Arial",Font.PLAIN,10));
       add(theComp);
@@ -164,12 +146,12 @@ public final class ConfigPadButtonPanel extends JPanel {
       if (e.getSource() == editPresetButton_) {
          editPreset();
       }
-      mmStudio_.app().refreshGUI();
+      studio_.app().refreshGUI();
    }
 
    @SuppressWarnings("ResultOfObjectAllocationIgnored")
    public void addGroup() {
-      new GroupEditor("", "", mmStudio_, core_, true);
+      new GroupEditor("", "", studio_, true);
    }
    
    
@@ -181,8 +163,8 @@ public final class ConfigPadButtonPanel extends JPanel {
                JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE);
          if (result == JOptionPane.OK_OPTION) {
             try {
-               core_.deleteConfigGroup(groupName);
-               mmStudio_.setConfigChanged(true);
+               studio_.core().deleteConfigGroup(groupName);
+               ((MMStudio) studio_).setConfigChanged(true);
             } catch (Exception e) {
                handleException(e);
             }
@@ -200,7 +182,7 @@ public final class ConfigPadButtonPanel extends JPanel {
          JOptionPane.showMessageDialog(this,
                  "To edit a group, please select it first, then press the edit button.");
       } else {
-         new GroupEditor(groupName, configPad_.getPresetForSelectedGroup(), mmStudio_, core_, false);
+         new GroupEditor(groupName, configPad_.getPresetForSelectedGroup(), studio_, false);
       }
    }
    
@@ -212,7 +194,7 @@ public final class ConfigPadButtonPanel extends JPanel {
          JOptionPane.showMessageDialog(this, 
                  "To add a preset to a group, please select the group first, then press the edit button.");
       } else {
-         new PresetEditor(groupName, "", mmStudio_, core_, true);
+         new PresetEditor(groupName, "", studio_, true);
       }
    }
    
@@ -228,14 +210,14 @@ public final class ConfigPadButtonPanel extends JPanel {
          presetName = choosePreset(groupName, "for removal");
       }
       int result;
-      if (core_.getAvailableConfigs(groupName).size() == 1) {
+      if (studio_.core().getAvailableConfigs(groupName).size() == 1) {
          result = JOptionPane.showConfirmDialog(this, "\"" + presetName + "\" is the last preset for the \"" + groupName + "\" group.\nDelete both preset and group?",
                  "Remove last preset in group",
                  JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE);
          if (result == JOptionPane.OK_OPTION) {
             try {
-               core_.deleteConfig(groupName, presetName);
-               core_.deleteConfigGroup(groupName);
+               studio_.core().deleteConfig(groupName, presetName);
+               studio_.core().deleteConfigGroup(groupName);
             } catch (Exception e) {
                handleException(e);
             }
@@ -246,7 +228,7 @@ public final class ConfigPadButtonPanel extends JPanel {
                  JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE);
          if (result == JOptionPane.OK_OPTION) {
             try {
-               core_.deleteConfig(groupName, presetName);
+               studio_.core().deleteConfig(groupName, presetName);
             } catch (Exception e) {
                handleException(e);
             }
@@ -256,7 +238,7 @@ public final class ConfigPadButtonPanel extends JPanel {
    }
 
    public String choosePreset(String groupName, String msg) {
-      final String [] presets = core_.getAvailableConfigs(groupName).toArray();
+      final String [] presets = studio_.core().getAvailableConfigs(groupName).toArray();
       return (String) JOptionPane.showInputDialog(
                     null,
                     "Please choose a preset from the " + groupName + " group " + msg,                    "Preset not selected.",
@@ -276,15 +258,15 @@ public final class ConfigPadButtonPanel extends JPanel {
          final String newPresetName = choosePreset(groupName, "for editing");
          if (newPresetName != null) {
             try {
-               core_.setConfig(groupName, newPresetName);
+               studio_.core().setConfig(groupName, newPresetName);
             } catch (Exception ex) {
                ReportingUtils.logError(ex);
             }
-            new PresetEditor(groupName, newPresetName, mmStudio_, core_, false);
+            new PresetEditor(groupName, newPresetName, studio_, false);
 
          }
       } else {
-         new PresetEditor(groupName, presetName, mmStudio_, core_, false);
+         new PresetEditor(groupName, presetName, studio_, false);
       }
    }
 

@@ -30,7 +30,7 @@ public interface EventPublisher {
     *
     * @param recipient the object to register
     *
-    * @see unregisterForEvents
+    * @see #unregisterForEvents
     */
    void registerForEvents(Object recipient);
 
@@ -39,7 +39,7 @@ public interface EventPublisher {
     *
     * @param recipient the object to unregister
     *
-    * @see registerForEvents
+    * @see #registerForEvents
     */
    void unregisterForEvents(Object recipient);
 }
