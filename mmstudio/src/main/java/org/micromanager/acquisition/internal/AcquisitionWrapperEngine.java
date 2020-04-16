@@ -174,8 +174,11 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    private int getNumChannels() {
       int numChannels = 0;
       if (useChannels_) {
+         if (channels_ == null) {
+            return 0;
+         }
          for (ChannelSpec channel : channels_) {
-            if (channel.useChannel) {
+            if (channel.useChannel()) {
                ++numChannels;
             }
          }
@@ -225,8 +228,10 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    private void updateChannelCameras() {
-      for (ChannelSpec channel : channels_) {
-         channel.camera = getSource(channel);
+      for (int row = 0; row < channels_.size(); row++) {
+         ChannelSpec channel = channels_.get(row);
+         channels_.add(row,
+                 channel.copyBuilder().camera(getSource(channel)).build());
       }
    }
 
@@ -251,7 +256,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    private String getSource(ChannelSpec channel) {
       try {
-         Configuration state = core_.getConfigState(core_.getChannelGroup(), channel.config);
+         Configuration state = core_.getConfigState(core_.getChannelGroup(), channel.config());
          if (state.isPropertyIncluded("Core", "Camera")) {
             return state.getSetting("Core", "Camera").getPropertyValue();
          } else {
@@ -311,7 +316,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 
       if (this.useChannels_) {
          for (ChannelSpec channel : channels_) {
-            if (channel.useChannel) {
+            if (channel.useChannel()) {
                acquisitionSettings.channels.add(channel);
             }
          }
@@ -764,15 +769,11 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    @Override
    public boolean addChannel(String config, double exp, Boolean doZStack, double zOffset, int skip, Color c, boolean use) {
       if (isConfigAvailable(config)) {
-         ChannelSpec channel = new ChannelSpec();
-         channel.config = config;
-         channel.useChannel = use;
-         channel.exposure = exp;
-         channel.doZStack = doZStack;
-         channel.zOffset = zOffset;
-         channel.color = c;
-         channel.skipFactorFrame = skip;
-         channels_.add(channel);
+         ChannelSpec.Builder cb = new ChannelSpec.Builder();
+         cb.channelGroup(this.getChannelGroup()).config(config).useChannel(use).
+                 exposure(exp).doZStack(doZStack).zOffset(zOffset).color(c).
+                 skipFactorFrame(skip);
+         channels_.add(cb.build());
          return true;
       } else {
          ReportingUtils.logError("\"" + config + "\" is not found in the current Channel group.");

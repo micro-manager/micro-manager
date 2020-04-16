@@ -137,7 +137,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private static final String CIRCULAR_BUFFER_SIZE = "size, in megabytes of the circular buffer used to temporarily store images before they are written to disk";
    private static final String AFFINE_TRANSFORM_LEGACY = "affine transform for mapping camera coordinates to stage coordinates for a specific pixel size config: ";
    private static final String AFFINE_TRANSFORM = "affine transform parameters for mapping camera coordinates to stage coordinates for a specific pixel size config: ";
-
+   private static final String EXPOSURE_KEY = "Exposure_";
    
    // GUI components
    private boolean wasStartedAsImageJPlugin_;
@@ -596,8 +596,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          try {
             channelGroup = core_.getChannelGroup();
             channel = core_.getCurrentConfigFromCache(channelGroup);
-            AcqControlDlg.storeChannelExposure(
-                  channelGroup, channel, exposureTime);
+            storeChannelExposureTime(channelGroup, channel, exposureTime);
          }
          catch (Exception e) {
             studio_.logs().logError("Unable to determine channel group");
@@ -1510,8 +1509,14 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    @Override
    public double getChannelExposureTime(String channelGroup, String channel,
            double defaultExp) {
-      return AcqControlDlg.getChannelExposure(channelGroup, channel,
-            defaultExp);
+      return this.profile().getSettings(MMStudio.class).getDouble(
+              EXPOSURE_KEY + channelGroup + "_" + channel, defaultExp);
+   }
+
+   public void storeChannelExposureTime(String channelGroup, String channel,
+                                      double exposure) {
+      this.profile().getSettings(MMStudio.class).putDouble(
+              EXPOSURE_KEY + channelGroup + "_" + channel, exposure);
    }
 
    /**
@@ -1528,7 +1533,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    public void setChannelExposureTime(String channelGroup, String channel,
            double exposure) {
       try {
-         AcqControlDlg.storeChannelExposure(channelGroup, channel, exposure);
+         storeChannelExposureTime(channelGroup, channel, exposure);
          if (channelGroup != null && channelGroup.equals(core_.getChannelGroup())) {
             if (channel != null && !channel.equals("") && 
                     channel.equals(core_.getCurrentConfigFromCache(channelGroup))) {

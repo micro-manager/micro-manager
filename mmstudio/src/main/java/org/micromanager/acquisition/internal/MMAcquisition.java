@@ -215,7 +215,8 @@ public final class MMAcquisition extends DataViewerListener {
                   for (int channelIndex = 0; channelIndex < nrChannels; channelIndex++) {
                      displaySettingsBuilder.channel(channelIndex, RememberedSettings.loadChannel(studio_,
                              store_.getSummaryMetadata().getChannelGroup(),
-                             store_.getSummaryMetadata().getChannelNameList().get(channelIndex)));
+                             store_.getSummaryMetadata().getChannelNameList().get(channelIndex),
+                             null));  // TODO: use chColors as default Color?
                      /*
                      ChannelDisplaySettings channelSettings
                              = displaySettingsBuilder.getChannelSettings(channelIndex);
