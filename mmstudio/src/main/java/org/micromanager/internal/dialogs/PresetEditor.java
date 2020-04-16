@@ -22,7 +22,6 @@ package org.micromanager.internal.dialogs;
 
 
 import java.awt.Dimension;
-import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.StrVector;
 import org.micromanager.Studio;

@@ -34,7 +34,6 @@ import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.StrVector;
 import org.micromanager.Studio;
-import org.micromanager.internal.dialogs.PresetEditor;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
