@@ -80,9 +80,6 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
          text_.setText(NumberUtils.intToDisplayString((Integer) value));
          return text_;
       } else if (colIndex == 1) {
-         // channel
-         channelSelect_.removeAllItems();
-
          // remove old listeners
          ActionListener[] listeners = channelSelect_.getActionListeners();
          for (ActionListener listener : listeners) {
