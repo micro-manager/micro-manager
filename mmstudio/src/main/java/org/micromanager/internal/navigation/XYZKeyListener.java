@@ -112,19 +112,19 @@ public final class XYZKeyListener  {
 				}
 				switch (e.getKeyCode()) {
 					case KeyEvent.VK_LEFT:
-						xyNavigator_.moveSampleOnDisplay(-xMicron, 0);
+						xyNavigator_.moveSampleOnDisplayUm(-xMicron, 0);
 						consumed = true;
 						break;
 					case KeyEvent.VK_RIGHT:
-						xyNavigator_.moveSampleOnDisplay(xMicron, 0);
+						xyNavigator_.moveSampleOnDisplayUm(xMicron, 0);
 						consumed = true;
 						break;
 					case KeyEvent.VK_UP:
-						xyNavigator_.moveSampleOnDisplay(0, yMicron);
+						xyNavigator_.moveSampleOnDisplayUm(0, yMicron);
 						consumed = true;
 						break;
 					case KeyEvent.VK_DOWN:
-						xyNavigator_.moveSampleOnDisplay(0, -yMicron);
+						xyNavigator_.moveSampleOnDisplayUm(0, -yMicron);
 						consumed = true;
 				}
 				break;
