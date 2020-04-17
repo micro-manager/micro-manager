@@ -164,6 +164,7 @@ public final class StageControlFrame extends MMFrame {
       double[] yStepSizes = new double[] {1.0, 10.0, 100.0};
       double pixelSize = core_.getPixelSizeUm();
       long nrPixelsX = core_.getImageWidth();
+      long nrPixelsY = core_.getImageHeight();
       if (pixelSize != 0) {
          xStepSizes[0] = yStepSizes[0] = pixelSize;
          xStepSizes[1] = yStepSizes[1] = pixelSize * nrPixelsX * 0.1;
@@ -179,8 +180,23 @@ public final class StageControlFrame extends MMFrame {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                try {
-                  settings_.putDouble(X_MOVEMENTS[j],
-                          NumberUtils.displayStringToDouble(xStepTexts_[j].getText()));
+                  if (evt.getPropertyName().equals("value")) {
+                     Double xStep = NumberUtils.displayStringToDouble(xStepTexts_[j].getText());
+                     // the property fires multiple times, show the dialog only once
+                     if (xStep != settings_.getDouble(X_MOVEMENTS[j], xStepSizes[j])) {
+                        if (xStep > 2 * pixelSize * nrPixelsX) {
+                           if (!confirmLargeMovementSetting(xStep)) {
+                              // not removing listener shows the dialog multiple times
+                              xStepTexts_[j].removePropertyChangeListener(this);
+                              xStepTexts_[j].setText(NumberUtils.doubleToDisplayString(Math.min(
+                                      settings_.getDouble(X_MOVEMENTS[j], xStepSizes[j]), pixelSize * nrPixelsX)));
+                              xStepTexts_[j].addPropertyChangeListener(this);
+                              return;
+                           }
+                        }
+                        settings_.putDouble(X_MOVEMENTS[j], xStep);
+                      }
+                  }
                } catch (ParseException pex) {
                }
             }
@@ -192,8 +208,23 @@ public final class StageControlFrame extends MMFrame {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                try {
-                  settings_.putDouble(Y_MOVEMENTS[j],
-                          NumberUtils.displayStringToDouble(yStepTexts_[j].getText()));
+                  if (evt.getPropertyName().equals("value")) {
+                     Double yStep = NumberUtils.displayStringToDouble(yStepTexts_[j].getText());
+                     // the property fires multiple times, show the dialog only once
+                     if (yStep != settings_.getDouble(Y_MOVEMENTS[j], yStepSizes[j])) {
+                        if (yStep > 2 * pixelSize * nrPixelsY) {
+                           if (!confirmLargeMovementSetting(yStep)) {
+                              // not removing listener shows the dialog multiple times
+                              yStepTexts_[j].removePropertyChangeListener(this);
+                              yStepTexts_[j].setText(NumberUtils.doubleToDisplayString(Math.min(
+                                      settings_.getDouble(Y_MOVEMENTS[j], yStepSizes[j]), pixelSize * nrPixelsY)));
+                              yStepTexts_[j].addPropertyChangeListener(this);
+                              return;
+                           }
+                        }
+                        settings_.putDouble(Y_MOVEMENTS[j], yStep);
+                     }
+                  }
                } catch (ParseException pex) {
                }
             }
@@ -769,6 +800,16 @@ public final class StageControlFrame extends MMFrame {
       tf.addPropertyChangeListener("value", listener);
       cb.addItemListener(listener);
       return tf;
+   }
+
+   private boolean confirmLargeMovementSetting(double movementUm) {
+      int response = JOptionPane.showConfirmDialog(this,
+              String.format(NumberUtils.doubleToDisplayString(movementUm, 0) +
+                      " microns could be dangerously large.  Are you sure you want to set this?",
+              "Large movement requested",
+              JOptionPane.YES_NO_OPTION) );
+
+      return response == JOptionPane.YES_OPTION;
    }
 
    @Subscribe
