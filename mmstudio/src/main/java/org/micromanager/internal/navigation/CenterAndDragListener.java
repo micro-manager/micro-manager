@@ -66,7 +66,7 @@ public final class CenterAndDragListener  {
       switch (dme.getEvent().getID()) {
          case MouseEvent.MOUSE_CLICKED:
             if (dme.getEvent().getClickCount() >= 2) {
-               // double clik, center the stage
+               // double click, center the stage
                Rectangle location = dme.getLocation();
 
                int width = (int) studio_.core().getImageWidth();
@@ -78,10 +78,10 @@ public final class CenterAndDragListener  {
                        location.y + location.height / 2);
 
                // calculate needed relative movement in pixels
-               double tmpXUm = (0.5 * width) - center.x;
-               double tmpYUm = (0.5 * height) - center.y;
+               double tmpXPixels = (0.5 * width) - center.x;
+               double tmpYPixels = (0.5 * height) - center.y;
 
-               xyNavigator_.moveSampleOnDisplay(tmpXUm, tmpYUm);
+               xyNavigator_.moveSampleOnDisplayPixels(tmpXPixels, tmpYPixels);
             }
             break;
          case MouseEvent.MOUSE_PRESSED:
@@ -107,7 +107,7 @@ public final class CenterAndDragListener  {
             lastX_ = center2.x;
             lastY_ = center2.y;
 
-            xyNavigator_.moveSampleOnDisplay(tmpXUm, tmpYUm);
+            xyNavigator_.moveSampleOnDisplayPixels(tmpXUm, tmpYUm);
 
             break;
       }
