@@ -216,8 +216,8 @@ public final class PipelineTableModel extends AbstractTableModel {
       for (ConfiguratorWrapper config : pipelineConfigs_) {
          serializedConfigs.add(config.toJSON());
       }
-      studio.profile().setStringArray(PipelineTableModel.class,
-            SAVED_PIPELINE, serializedConfigs.toArray(new String[] {}));
+      studio.profile().getSettings(PipelineTableModel.class).putStringList(
+            SAVED_PIPELINE, serializedConfigs);
    }
 
    /**
@@ -225,9 +225,9 @@ public final class PipelineTableModel extends AbstractTableModel {
     * updated the model.
     */
    public boolean restorePipelineFromProfile(Studio studio) {
-      String[] serializedConfigs = studio.profile().getStringArray(
-            PipelineTableModel.class, SAVED_PIPELINE,
-            new String[] {});
+      List<String> serializedConfigs = studio.profile().
+              getSettings(PipelineTableModel.class).
+              getStringList(SAVED_PIPELINE, new String[] {});
       boolean didUpdate = false;
       for (String configString : serializedConfigs) {
          ConfiguratorWrapper config = ConfiguratorWrapper.fromString(

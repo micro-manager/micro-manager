@@ -127,7 +127,7 @@ public abstract class AutofocusBase implements AutofocusPlugin {
    public void saveSettings() {
       UserProfile profile = MMStudio.getInstance().profile();
       for (int i=0; i<properties_.size(); i++) {
-         profile.setString(this.getClass(),
+         profile.getSettings(this.getClass()).putString(
                properties_.get(i).name, properties_.get(i).value);
       }      
    }
@@ -135,8 +135,8 @@ public abstract class AutofocusBase implements AutofocusPlugin {
    public void loadSettings() {
       UserProfile profile = MMStudio.getInstance().profile();
       for (int i=0; i<properties_.size(); i++) {
-         properties_.get(i).value = profile.getString(this.getClass(),
-               properties_.get(i).name, properties_.get(i).value);
+         properties_.get(i).value = profile.getSettings(this.getClass()).
+                 getString(properties_.get(i).name, properties_.get(i).value);
       }      
    }
 

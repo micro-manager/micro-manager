@@ -32,6 +32,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
 import org.micromanager.events.LiveModeEvent;
 import org.micromanager.internal.utils.GUIUtils;
@@ -147,7 +148,6 @@ public final class LiveButton extends WidgetPlugin implements SciJavaPlugin {
    public PropertyMap configureControl(Frame parent) {
       // When used in the Quick-Access window, we use a bigger size than when
       // used in other contexts.
-      return studio_.data().getPropertyMapBuilder()
-         .putBoolean("isBig", true).build();
+      return PropertyMaps.builder().putBoolean("isBig", true).build();
    }
 }

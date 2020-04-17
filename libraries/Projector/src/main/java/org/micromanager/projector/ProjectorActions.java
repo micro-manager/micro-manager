@@ -15,12 +15,18 @@ import java.util.Set;
 import mmcorej.CMMCore;
 import org.micromanager.Studio;
 import org.micromanager.propertymap.MutablePropertyMapView;
-import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.projector.internal.MappingStorage;
 import org.micromanager.projector.internal.ProjectorControlForm;
 import org.micromanager.projector.internal.Utils;
 import org.micromanager.projector.internal.devices.Galvo;
 import org.micromanager.projector.internal.devices.SLM;
+
+// Imports for MMStudio internal packages
+// Plugins should not access internal packages, to ensure modularity and
+// maintainability. However, this plugin code is older than the current
+// MMStudio API, so it still uses internal classes and interfaces. New code
+// should not imitate this practice.
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *

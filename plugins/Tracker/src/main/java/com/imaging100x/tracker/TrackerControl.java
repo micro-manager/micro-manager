@@ -26,7 +26,6 @@ package com.imaging100x.tracker;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.gui.ImageWindow;
 import ij.gui.Roi;
 import ij.process.ImageProcessor;
 
@@ -58,15 +57,17 @@ import org.micromanager.data.Image;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
-import org.micromanager.internal.MMStudio;
+
+// Imports for MMStudio internal packages
+// Plugins should not access internal packages, to ensure modularity and
+// maintainability. However, this plugin code is older than the current
+// MMStudio API, so it still uses internal classes and interfaces. New code
+// should not imitate this practice.
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMFrame;
-import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.TextUtils;
 
-import org.scijava.plugin.Plugin;
-import org.scijava.plugin.SciJavaPlugin;
 
 public class TrackerControl extends MMFrame {
    public static final String menuName = "Live Tracking";
@@ -189,7 +190,7 @@ public class TrackerControl extends MMFrame {
       limits_ = new MMRect();
       initialize();
       app_ = app;
-      final UserProfile up  = MMStudio.getInstance().profile();
+      final UserProfile up  = app_.profile();
 
       addWindowListener(new WindowAdapter() {
          @Override

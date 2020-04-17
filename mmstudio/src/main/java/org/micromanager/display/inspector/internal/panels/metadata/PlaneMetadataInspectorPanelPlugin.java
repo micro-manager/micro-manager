@@ -17,7 +17,7 @@ import org.micromanager.display.inspector.InspectorPanelPlugin;
  * @author mark
  */
 @Plugin(type = InspectorPanelPlugin.class,
-      priority = Priority.HIGH_PRIORITY + 100,
+      priority = Priority.HIGH + 100,
       name = "Plane Metadata",
       description = "View image plane metadata")
 public final class PlaneMetadataInspectorPanelPlugin implements InspectorPanelPlugin {

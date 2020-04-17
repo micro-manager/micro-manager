@@ -48,7 +48,6 @@ import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
-import org.micromanager.internal.utils.ReportingUtils;
 
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
@@ -102,7 +101,7 @@ public class RecallPlugin implements MenuPlugin, SciJavaPlugin {
       try {
          store_.setSummaryMetadata(metadataBuilder.axisOrder(orderedAxis).build());
       } catch (IOException ioe) {
-         ReportingUtils.logError(ioe, "SummaryMetadat Error in Recall plugin");
+         studio_.logs().logError(ioe, "SummaryMetadat Error in Recall plugin");
       }
       studio_.getDisplayManager().createDisplay(store_);
       studio_.getDisplayManager().manage(store_);

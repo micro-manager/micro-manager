@@ -343,7 +343,7 @@ public final class ImageJBridge {
       // set the TZC coordinates, we need this:
       int channel = coords.hasAxis(Coords.CHANNEL) ? coords.getChannel() : 0;
       int slice = coords.hasAxis(Coords.Z) ? coords.getZ() : 0;
-      int timepoint = coords.hasAxis(Coords.TIME) ? coords.getTime() : 0;
+      int timepoint = coords.hasAxis(Coords.T) ? coords.getT() : 0;
       imagePlus_.updatePosition(channel + 1, slice + 1, timepoint + 1);
 
       // The way to get ImagePlus to repaint even when the position hasn't
@@ -499,14 +499,14 @@ public final class ImageJBridge {
          return new DefaultCoords.Builder().build();
       }
 
-      Coords.CoordsBuilder cb = position.copy();
+      Coords.CoordsBuilder cb = position.copyBuilder();
       if (uiController_.isAxisDisplayed(Coords.CHANNEL)) {
          cb.channel(channel);
       }
       if (uiController_.isAxisDisplayed(Coords.Z)) {
          cb.z(zSlice);
       }
-      if (uiController_.isAxisDisplayed(Coords.TIME)) {
+      if (uiController_.isAxisDisplayed(Coords.T)) {
          cb.time(timePoint);
       }
       return cb.build();
@@ -515,7 +515,7 @@ public final class ImageJBridge {
    int getIJFlatIndexForMMCoords(Coords coords) {
       int channel = Math.max(0, coords.getChannel());
       int zSlice = Math.max(0, coords.getZ());
-      int timePoint = Math.max(0, coords.getTime());
+      int timePoint = Math.max(0, coords.getT());
       int nChannels = getMMNumberOfChannels();
       int nZSlices = getMMNumberOfZSlices();
       int nTimePoints = getMMNumberOfTimePoints();

@@ -117,9 +117,6 @@
       <DataExecutionPrevention>
       </DataExecutionPrevention>
     </Link>
-    <PostBuildEvent>
-      <Command>copy /Y "$(TargetDir)mmgr_dal_$(ProjectName).dll" "C:\Program Files\Micro-Manager-1.4\mmgr_dal_$(ProjectName).dll"</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -161,9 +158,6 @@
       <DataExecutionPrevention>
       </DataExecutionPrevention>
     </Link>
-    <PostBuildEvent>
-      <Command>copy /Y "$(TargetDir)mmgr_dal_$(ProjectName).dll" "C:\Program Files\Micro-Manager-1.4\mmgr_dal_$(ProjectName).dll"</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Skyra.cpp" />

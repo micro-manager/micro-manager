@@ -967,6 +967,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    }
 
    @Override
+   @Deprecated
    public ImagePlus getImagePlus() {
       if (!SwingUtilities.isEventDispatchThread()) {
          RunnableFuture<ImagePlus> edtFuture = new FutureTask(
@@ -1081,6 +1082,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    }
 
    @Override
+   @Deprecated
    public void toggleFullScreen() {
       throw new UnsupportedOperationException();
    }

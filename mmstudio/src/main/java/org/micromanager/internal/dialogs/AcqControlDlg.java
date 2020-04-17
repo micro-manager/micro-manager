@@ -38,7 +38,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.table.*;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.SequenceSettings;
@@ -48,8 +47,9 @@ import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.internal.RememberedSettings;
 import org.micromanager.events.ChannelExposureEvent;
+import org.micromanager.events.ChannelGroupChangedEvent;
 import org.micromanager.events.GUIRefreshEvent;
-import org.micromanager.events.internal.ChannelGroupEvent;
+import org.micromanager.events.internal.ChannelColorEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.utils.AcqOrderMode;
@@ -105,22 +105,18 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    private final AcquisitionWrapperEngine acqEng_;
    private JScrollPane channelTablePane_;
    private JTable channelTable_;
+   private ChannelCellEditor channelCellEditor_;
    private JSpinner numFrames_;
    private ChannelTableModel model_;
    private File acqFile_;
    private String acqDir_;
    private int zVals_ = 0;
-   private JButton acquireButton_;
    private JButton setBottomButton_;
    private JButton setTopButton_;
    private final MMStudio mmStudio_;
    private final NumberFormat numberFormat_;
-   private JLabel namePrefixLabel_;
-   private JLabel saveTypeLabel_;
    private JRadioButton singleButton_;
    private JRadioButton multiButton_;
-   private JLabel rootLabel_;
-   private JButton browseRootButton_;
    private JCheckBox stackKeepShutterOpenCheckBox_;
    private JCheckBox chanKeepShutterOpenCheckBox_;
    private AcqOrderMode[] acqOrderModes_;
@@ -143,15 +139,6 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    private static final String ACQ_NUM_CHANNELS = "acqNumchannels";
    private static final String ACQ_CHANNELS_KEEP_SHUTTER_OPEN = "acqChannelsKeepShutterOpen";
    private static final String ACQ_STACK_KEEP_SHUTTER_OPEN = "acqStackKeepShutterOpen";
-   private static final String CHANNEL_NAME_PREFIX = "acqChannelName";
-   private static final String CHANNEL_USE_PREFIX = "acqChannelUse";
-   private static final String CHANNEL_EXPOSURE_PREFIX = "acqChannelExp";
-   private static final String CHANNEL_ZOFFSET_PREFIX = "acqChannelZOffset";
-   private static final String CHANNEL_DOZSTACK_PREFIX = "acqChannelDoZStack";
-   private static final String CHANNEL_COLOR_R_PREFIX = "acqChannelColorR";
-   private static final String CHANNEL_COLOR_G_PREFIX = "acqChannelColorG";
-   private static final String CHANNEL_COLOR_B_PREFIX = "acqChannelColorB";
-   private static final String CHANNEL_SKIP_PREFIX = "acqSkip";
    private static final String ACQ_Z_VALUES = "acqZValues";
    private static final String ACQ_DIR_NAME = "acqDirName";
    private static final String ACQ_ROOT_NAME = "acqRootName";
@@ -166,8 +153,8 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    public static final FileType ACQ_SETTINGS_FILE = new FileType("ACQ_SETTINGS_FILE", "Acquisition settings",
            System.getProperty("user.home") + "/AcqSettings.txt",
            true, "txt");
-   private int columnWidth_[];
-   private int columnOrder_[];
+   private int[] columnWidth_;
+   private int[] columnOrder_;
    private CheckBoxPanel framesPanel_;
    private JPanel defaultTimesPanel_;
    private JPanel customTimesPanel_;
@@ -176,9 +163,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    protected CheckBoxPanel positionsPanel_;
    private JPanel acquisitionOrderPanel_;
    private CheckBoxPanel afPanel_;
-   private JPanel summaryPanel_;
    private CheckBoxPanel savePanel_;
-   private ComponentTitledPanel commentsPanel_;
    private boolean disableGUItoSettings_ = false;
 
    public final void createChannelTable() {
@@ -192,7 +177,6 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
             return new JTableHeader(columnModel) {
                @Override
                public String getToolTipText(MouseEvent e) {
-                  String tip = null;
                   java.awt.Point p = e.getPoint();
                   int index = columnModel.getColumnIndexAtX(p.x);
                   int realIndex = columnModel.getColumn(index).getModelIndex();
@@ -205,9 +189,8 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       channelTable_.setFont(new Font("Dialog", Font.PLAIN, 10));
       channelTable_.setAutoCreateColumnsFromModel(false);
       channelTable_.setModel(model_);
-      model_.setChannels(acqEng_.getChannels());
 
-      ChannelCellEditor cellEditor = new ChannelCellEditor(acqEng_);
+      channelCellEditor_ = new ChannelCellEditor(mmStudio_, acqEng_);
       ChannelCellRenderer cellRenderer = new ChannelCellRenderer(acqEng_);
       channelTable_.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
@@ -225,7 +208,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
             column.setPreferredWidth(columnWidth_[model_.getColumnCount() - 1]);
 
          } else {
-            column = new TableColumn(colIndex, 200, cellRenderer, cellEditor);
+            column = new TableColumn(colIndex, 200, cellRenderer, channelCellEditor_);
             column.setPreferredWidth(columnWidth_[colIndex]);
             // HACK: the "Configuration" tab should be wider than the others.
             if (colIndex == 1) {
@@ -286,9 +269,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       JTextField field = ((JSpinner.DefaultEditor) numFrames_.getEditor()).getTextField();
       field.setColumns(5);
       ((JSpinner.DefaultEditor) numFrames_.getEditor()).getTextField().setFont(DEFAULT_FONT);
-      numFrames_.addChangeListener((ChangeEvent e) -> {
-         applySettings();
-      });
+      numFrames_.addChangeListener((ChangeEvent e) -> applySettings());
 
       defaultTimesPanel_.add(numFrames_, "wrap");
 
@@ -336,9 +317,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       customTimesPanel_.add(overrideLabel, "alignx center, wrap");
       customTimesPanel_.add(disableCustomIntervalsButton, "alignx center");
 
-      framesPanel_.addActionListener((ActionEvent e) -> {
-         applySettings();
-      });
+      framesPanel_.addActionListener((ActionEvent e) -> applySettings());
       return framesPanel_;
    }
 
@@ -351,9 +330,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       listButton_.setIcon(IconLoader.getIcon(
             "/org/micromanager/icons/application_view_list.png"));
       listButton_.setFont(new Font("Dialog", Font.PLAIN, 10));
-      listButton_.addActionListener((ActionEvent e) -> {
-         mmStudio_.app().showPositionList();
-      });
+      listButton_.addActionListener((ActionEvent e) -> mmStudio_.app().showPositionList());
 
       // Not sure why 'span' is needed to prevent second column from appearing
       // (interaction with CheckBoxPanel layout??)
@@ -394,9 +371,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       setBottomButton_.setMargin(new Insets(-5, -5, -5, -5));
       setBottomButton_.setFont(new Font("", Font.PLAIN, 10));
       setBottomButton_.setToolTipText("Set value as microscope's current Z position");
-      setBottomButton_.addActionListener((final ActionEvent e) -> {
-         setBottomPosition();
-      });
+      setBottomButton_.addActionListener((final ActionEvent e) -> setBottomPosition());
       slicesPanel_.add(setBottomButton_, buttonSize + ", pushx 100, wrap");
 
       final JLabel ztopLabel = new JLabel("End Z:");
@@ -415,9 +390,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       setTopButton_.setMargin(new Insets(-5, -5, -5, -5));
       setTopButton_.setFont(new Font("Dialog", Font.PLAIN, 10));
       setTopButton_.setToolTipText("Set value as microscope's current Z position");
-      setTopButton_.addActionListener((final ActionEvent e) -> {
-         setTopPosition();
-      });
+      setTopButton_.addActionListener((final ActionEvent e) -> setTopPosition());
       slicesPanel_.add(setTopButton_, buttonSize + ", pushx 100, wrap");
 
       final JLabel zstepLabel = new JLabel("Step size:");
@@ -435,18 +408,14 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
       zValCombo_ = new JComboBox<>(new String[] {RELATIVE_Z, ABSOLUTE_Z});
       zValCombo_.setFont(DEFAULT_FONT);
-      zValCombo_.addActionListener((final ActionEvent e) -> {
-         zValCalcChanged();
-      });
+      zValCombo_.addActionListener((final ActionEvent e) -> zValCalcChanged());
       slicesPanel_.add(zValCombo_,
             "skip 1, spanx, gaptop 4, gapbottom 0, alignx left, wrap");
 
       stackKeepShutterOpenCheckBox_ = new JCheckBox("Keep shutter open");
       stackKeepShutterOpenCheckBox_.setFont(DEFAULT_FONT);
       stackKeepShutterOpenCheckBox_.setSelected(false);
-      stackKeepShutterOpenCheckBox_.addActionListener((final ActionEvent e) -> {
-         applySettings();
-      });
+      stackKeepShutterOpenCheckBox_.addActionListener((final ActionEvent e) -> applySettings());
       slicesPanel_.add(stackKeepShutterOpenCheckBox_,
             "skip 1, spanx, gaptop 0, alignx left");
 
@@ -491,9 +460,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
             "/org/micromanager/icons/wrench_orange.png"));
       afButton.setMargin(new Insets(2, 5, 2, 5));
       afButton.setFont(new Font("Dialog", Font.PLAIN, 10));
-      afButton.addActionListener((ActionEvent arg0) -> {
-         afOptions();
-      });
+      afButton.addActionListener((ActionEvent arg0) -> afOptions());
       afPanel_.add(afButton, "alignx center, wrap");
 
       final JLabel afSkipFrame1 = new JLabel("Skip frame(s):");
@@ -513,21 +480,19 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       });
       afPanel_.add(afSkipInterval_);
 
-      afPanel_.addActionListener((ActionEvent arg0) -> {
-         applySettings();
-      });
+      afPanel_.addActionListener((ActionEvent arg0) -> applySettings());
       return afPanel_;
    }
 
    private JPanel createSummary() {
-      summaryPanel_ = createLabelPanel("Summary");
-      summaryPanel_.setLayout(new MigLayout(PANEL_CONSTRAINT + ", filly, insets 4 8 4 8"));
+      JPanel summaryPanel = createLabelPanel("Summary");
+      summaryPanel.setLayout(new MigLayout(PANEL_CONSTRAINT + ", filly, insets 4 8 4 8"));
       summaryTextArea_ = new JTextArea(8, 25);
       summaryTextArea_.setFont(new Font("Arial", Font.PLAIN, 11));
       summaryTextArea_.setEditable(false);
       summaryTextArea_.setOpaque(false);
-      summaryPanel_.add(summaryTextArea_, "grow");
-      return summaryPanel_;
+      summaryPanel.add(summaryTextArea_, "grow");
+      return summaryPanel;
    }
 
    private JPanel createChannelsPanel() {
@@ -544,9 +509,8 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       updateGroupsCombo();
       channelGroupCombo_.addActionListener((ActionEvent arg0) -> {
          String newGroup = (String) channelGroupCombo_.getSelectedItem();
-         
          if (acqEng_.setChannelGroup(newGroup)) {
-            model_.cleanUpConfigurationList();
+            channelCellEditor_.stopCellEditing();
             if (mmStudio_.getAutofocusManager() != null) {
                mmStudio_.getAutofocusManager().refresh();
             }
@@ -558,9 +522,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
       chanKeepShutterOpenCheckBox_ = new JCheckBox("Keep shutter open");
       chanKeepShutterOpenCheckBox_.setFont(DEFAULT_FONT);
-      chanKeepShutterOpenCheckBox_.addActionListener((final ActionEvent e) -> {
-         applySettings();
-      });
+      chanKeepShutterOpenCheckBox_.addActionListener((final ActionEvent e) -> applySettings());
       chanKeepShutterOpenCheckBox_.setSelected(false);
       channelsPanel_.add(chanKeepShutterOpenCheckBox_, "gapleft push, wrap");
 
@@ -635,9 +597,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       });
       channelsPanel_.add(downButton, buttonConstraint);
 
-      channelsPanel_.addActionListener((ActionEvent e) -> {
-         applySettings();
-      });
+      channelsPanel_.addActionListener((ActionEvent e) -> applySettings());
       return channelsPanel_;
    }
 
@@ -655,22 +615,20 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
    private JPanel createRunButtons() {
       JPanel result = new JPanel(new MigLayout("flowy, insets 0, gapx 0, gapy 2"));
-      acquireButton_ = new JButton("Acquire!");
-      acquireButton_.setMargin(new Insets(-9, -9, -9, -9));
-      acquireButton_.setFont(new Font("Arial", Font.BOLD, 12));
-      acquireButton_.addActionListener((ActionEvent e) -> {
+      JButton acquireButton = new JButton("Acquire!");
+      acquireButton.setMargin(new Insets(-9, -9, -9, -9));
+      acquireButton.setFont(new Font("Arial", Font.BOLD, 12));
+      acquireButton.addActionListener((ActionEvent e) -> {
          AbstractCellEditor ae = (AbstractCellEditor) channelTable_.getCellEditor();
          if (ae != null) {
             ae.stopCellEditing();
          }
          runAcquisition();
       });
-      result.add(acquireButton_, BUTTON_SIZE);
+      result.add(acquireButton, BUTTON_SIZE);
 
       final JButton stopButton = new JButton("Stop");
-      stopButton.addActionListener((final ActionEvent e) -> {
-         acqEng_.abortRequest();
-      });
+      stopButton.addActionListener((final ActionEvent e) -> acqEng_.abortRequest());
       stopButton.setFont(new Font("Arial", Font.BOLD, 12));
       result.add(stopButton, BUTTON_SIZE);
       return result;
@@ -682,18 +640,14 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       loadButton.setToolTipText("Load acquisition settings");
       loadButton.setFont(DEFAULT_FONT);
       loadButton.setMargin(new Insets(-5, -5, -5, -5));
-      loadButton.addActionListener((ActionEvent e) -> {
-         loadAcqSettingsFromFile();
-      });
+      loadButton.addActionListener((ActionEvent e) -> loadAcqSettingsFromFile());
       result.add(loadButton, BUTTON_SIZE);
 
       final JButton saveAsButton = new JButton("Save as...");
       saveAsButton.setToolTipText("Save current acquisition settings as");
       saveAsButton.setFont(DEFAULT_FONT);
       saveAsButton.setMargin(new Insets(-5, -5, -5, -5));
-      saveAsButton.addActionListener((ActionEvent e) -> {
-         saveAsAcqSettingsToFile();
-      });
+      saveAsButton.addActionListener((ActionEvent e) -> saveAsAcqSettingsToFile());
       result.add(saveAsButton, BUTTON_SIZE);
       return result;
    }
@@ -703,7 +657,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       savePanel_.setLayout(new MigLayout(PANEL_CONSTRAINT,
                "[][grow, fill][]", "[][][]"));
 
-      rootLabel_ = new JLabel("Directory root:");
+      JLabel rootLabel_ = new JLabel("Directory root:");
       rootLabel_.setFont(DEFAULT_FONT);
       savePanel_.add(rootLabel_, "alignx label");
 
@@ -711,41 +665,37 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       rootField_.setFont(DEFAULT_FONT);
       savePanel_.add(rootField_);
 
-      browseRootButton_ = new JButton("...");
-      browseRootButton_.setToolTipText("Browse");
-      browseRootButton_.setMargin(new Insets(2, 5, 2, 5));
-      browseRootButton_.setFont(new Font("Dialog", Font.PLAIN, 10));
-      browseRootButton_.addActionListener((final ActionEvent e) -> {
-         setRootDirectory();
-      });
-      savePanel_.add(browseRootButton_, "wrap");
+      JButton browseRootButton = new JButton("...");
+      browseRootButton.setToolTipText("Browse");
+      browseRootButton.setMargin(new Insets(2, 5, 2, 5));
+      browseRootButton.setFont(new Font("Dialog", Font.PLAIN, 10));
+      browseRootButton.addActionListener((final ActionEvent e) -> setRootDirectory());
+      savePanel_.add(browseRootButton, "wrap");
 
-      namePrefixLabel_ = new JLabel("Name prefix:");
-      namePrefixLabel_.setFont(DEFAULT_FONT);
-      savePanel_.add(namePrefixLabel_, "alignx label");
+      JLabel namePrefixLabel = new JLabel("Name prefix:");
+      namePrefixLabel.setFont(DEFAULT_FONT);
+      savePanel_.add(namePrefixLabel, "alignx label");
 
       nameField_ = new JTextField();
       nameField_.setFont(DEFAULT_FONT);
       savePanel_.add(nameField_, "wrap");
 
-      saveTypeLabel_ = new JLabel("Saving format:");
-      saveTypeLabel_.setFont(DEFAULT_FONT);
-      savePanel_.add(saveTypeLabel_, "alignx label");
+      JLabel saveTypeLabel = new JLabel("Saving format:");
+      saveTypeLabel.setFont(DEFAULT_FONT);
+      savePanel_.add(saveTypeLabel, "alignx label");
 
       singleButton_ = new JRadioButton("Separate image files");
       singleButton_.setFont(DEFAULT_FONT);
-      singleButton_.addActionListener((ActionEvent e) -> {
-         DefaultDatastore.setPreferredSaveMode(mmStudio_,
-                 Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
-      });
+      singleButton_.addActionListener((ActionEvent e) ->
+              DefaultDatastore.setPreferredSaveMode(mmStudio_,
+                           Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES));
       savePanel_.add(singleButton_, "spanx, split");
 
       multiButton_ = new JRadioButton("Image stack file");
       multiButton_.setFont(DEFAULT_FONT);
-      multiButton_.addActionListener((ActionEvent e) -> {
-         DefaultDatastore.setPreferredSaveMode(mmStudio_,
-                 Datastore.SaveMode.MULTIPAGE_TIFF);
-      });
+      multiButton_.addActionListener((ActionEvent e) ->
+              DefaultDatastore.setPreferredSaveMode(mmStudio_,
+                           Datastore.SaveMode.MULTIPAGE_TIFF));
       savePanel_.add(multiButton_, "gapafter push");
 
       ButtonGroup buttonGroup = new ButtonGroup();
@@ -753,15 +703,13 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       buttonGroup.add(multiButton_);
       updateSavingTypeButtons();
 
-      savePanel_.addActionListener((final ActionEvent e) -> {
-         applySettings();
-      });
+      savePanel_.addActionListener((final ActionEvent e) -> applySettings());
       return savePanel_;
    }
 
    private JPanel createCommentsPanel() {
-      commentsPanel_ = createLabelPanel("Acquisition Comments");
-      commentsPanel_.setLayout(new MigLayout(PANEL_CONSTRAINT,
+      ComponentTitledPanel commentsPanel = createLabelPanel("Acquisition Comments");
+      commentsPanel.setLayout(new MigLayout(PANEL_CONSTRAINT,
                "[grow, fill]", "[]"));
 
       commentTextArea_ = new JTextArea();
@@ -777,8 +725,8 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
                BorderFactory.createEtchedBorder()));
       commentScrollPane.setViewportView(commentTextArea_);
 
-      commentsPanel_.add(commentScrollPane, "wmin 0, height pref!, span");
-      return commentsPanel_;
+      commentsPanel.add(commentScrollPane, "wmin 0, height pref!, span");
+      return commentsPanel;
    }
 
    private void createToolTips() {
@@ -882,16 +830,12 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       super.add(createSavePanel(), "growx");
       super.add(createCommentsPanel(), "growx");
 
-
       // add update event listeners
-      positionsPanel_.addActionListener((ActionEvent arg0) -> {
-         applySettings();
-      });
+      positionsPanel_.addActionListener((ActionEvent arg0) -> applySettings());
       acqOrderBox_.addActionListener((ActionEvent e) -> {
          updateAcquisitionOrderText();
          applySettings();
       });
-
 
       // load acquisition settings
       loadAcqSettings();
@@ -928,43 +872,25 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       summaryTextArea_.setText(acqEng_.getVerboseSummary());
    }
    
-   /**
-    * Sets the exposure time of a given channel
-    * The channel has to be preset in the current channel group
-    * Will also update the exposure associated with this channel in the preferences,
-    * i.e. even if the preset is not shown, this exposure time will be used
-    * next time it is shown
-    * 
-    * @param channelGroup - name of the channelgroup.  If it does not match the current
-    * channel group, no action will be taken
-    * @param channel - name of the preset in the current channel group
-    * @param exposure  - new exposure time
-    */
-   public void setChannelExposureTime(String channelGroup, String channel, 
-           double exposure) {
-      if (!channelGroup.equals(acqEng_.getChannelGroup()) ||
-               acqEng_.getChannelConfigs().length <= 0) {
-         return;
-      }
-      for (String config : acqEng_.getChannelConfigs()) {
-         if (channel.equals(config)) {
-            storeChannelExposure(acqEng_.getChannelGroup(), channel, exposure);
-            model_.setChannelExposureTime(channelGroup, channel, exposure);
-         }
-      }
-   }
 
    @Subscribe
    public void onChannelExposure(ChannelExposureEvent event) {
       String channel = event.getChannel();
-      if (!channel.equals("")) {
+      if (!channel.equals("") && getShouldSyncExposure()) {
          String channelGroup = event.getChannelGroup();
          double exposure = event.getNewExposureTime();
-         storeChannelExposure(channelGroup, channel, exposure);
-         if (getShouldSyncExposure()) {
-            setChannelExposureTime(channelGroup, channel, exposure);
-         }
+         model_.setChannelExposureTime(channelGroup, channel, exposure);
       }
+   }
+
+   @Subscribe
+   public void onChannelColorEvent(ChannelColorEvent event) {
+      model_.setChannelColor(event.getChannelGroup(), event.getChannel(), event.getColor());
+      ChannelDisplaySettings newCDS =
+              RememberedSettings.loadChannel(mmStudio_, event.getChannelGroup(),
+                      event.getChannel(), null ).copyBuilder().color(event.getColor()).
+                      build();
+      RememberedSettings.storeChannel(mmStudio_, event.getChannelGroup(), event.getChannel(), newCDS);
    }
 
    @Subscribe
@@ -975,7 +901,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
          try {
             String channelGroup = mmStudio_.core().getChannelGroup();
             String channel = mmStudio_.core().getCurrentConfig(channelGroup);
-            double exposure = getChannelExposureTime(
+            double exposure = model_.getChannelExposureTime(
                   channelGroup, channel, 10.0);
             mmStudio_.app().setChannelExposureTime(channelGroup, channel,
                   exposure);
@@ -987,23 +913,8 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    }
 
    @Subscribe
-   public void onChannelGroup(ChannelGroupEvent event) {
-      updateGroupsCombo();
-   }
-
-   /**
-    * Returns exposure time for the desired preset in the given channelgroup
-    * Acquires its info from the preferences
-    * 
-    * @param channelGroup
-    * @param channel - 
-    * @param defaultExp - default value
-    * @return exposure time
-    */
-   public double getChannelExposureTime(String channelGroup, String channel,
-           double defaultExp) {
-      // Redirect to the static version.
-      return getChannelExposure(channelGroup, channel, defaultExp);
+   public void onChannelGroupChanged(ChannelGroupChangedEvent event) {
+      updateChannelAndGroupCombo();
    }
 
    protected void afOptions() {
@@ -1058,7 +969,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    }
 
    public final void updateGroupsCombo() {
-      String groups[] = acqEng_.getAvailableGroups();
+      String[] groups = acqEng_.getAvailableGroups();
       if (groups.length != 0) {
          channelGroupCombo_.setModel(new DefaultComboBoxModel<>(groups));
          if (!inArray(acqEng_.getChannelGroup(), groups)) {
@@ -1123,7 +1034,6 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       savePanel_.setSelected(settings.getBoolean(ACQ_SAVE_FILES, false));
 
       nameField_.setText(settings.getString(ACQ_DIR_NAME, "Untitled"));
-      String os_name = System.getProperty("os.name", "");
       rootField_.setText(settings.getString(ACQ_ROOT_NAME, 
               System.getProperty("user.home") + "/AcquisitionData"));
       acqEng_.setAcqOrderMode(settings.getInteger(ACQ_ORDER_MODE, 
@@ -1153,30 +1063,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       acqEng_.setCustomTimeIntervals(intervals);
       acqEng_.enableCustomTimeIntervals(settings.getBoolean(
               ACQ_ENABLE_CUSTOM_INTERVALS, false));
-
-
-      int numChannels = settings.getInteger(ACQ_NUM_CHANNELS, 0);
-
-      ChannelSpec defaultChannel = new ChannelSpec();
-
       acqEng_.getChannels().clear();
-      for (int i = 0; i < numChannels; i++) {
-         String name = settings.getString(CHANNEL_NAME_PREFIX + i, "Undefined");
-         boolean use = settings.getBoolean(CHANNEL_USE_PREFIX + i, true);
-         double exp = settings.getDouble(CHANNEL_EXPOSURE_PREFIX + i, 0.0);
-         Boolean doZStack = settings.getBoolean(CHANNEL_DOZSTACK_PREFIX + i, true);
-         double zOffset = settings.getDouble(CHANNEL_ZOFFSET_PREFIX + i, 0.0);
-         int r = settings.getInteger(CHANNEL_COLOR_R_PREFIX + i, 
-                 defaultChannel.color.getRed());
-         int g = settings.getInteger(CHANNEL_COLOR_G_PREFIX + i, 
-                 defaultChannel.color.getGreen());
-         int b = settings.getInteger(CHANNEL_COLOR_B_PREFIX + i, 
-                 defaultChannel.color.getBlue());
-         int skip = settings.getInteger(CHANNEL_SKIP_PREFIX + i, 
-                 defaultChannel.skipFactorFrame);
-         Color c = new Color(r, g, b);
-         acqEng_.addChannel(name, exp, doZStack, zOffset, skip, c, use);
-      }
       acqEng_.setShouldDisplayImages(!getShouldHideMDADisplay());
 
       // Restore Column Width and Column order
@@ -1220,20 +1107,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       settings.putBoolean(ACQ_STACK_KEEP_SHUTTER_OPEN, acqEng_.isShutterOpenForStack());
 
       settings.putString(ACQ_CHANNEL_GROUP, acqEng_.getChannelGroup());
-      ArrayList<ChannelSpec> channels = acqEng_.getChannels();
-      settings.putInteger(ACQ_NUM_CHANNELS, channels.size());
-      for (int i = 0; i < channels.size(); i++) {
-         ChannelSpec channel = channels.get(i);
-         settings.putString(CHANNEL_NAME_PREFIX + i, channel.config);
-         settings.putBoolean(CHANNEL_USE_PREFIX + i, channel.useChannel);
-         settings.putDouble(CHANNEL_EXPOSURE_PREFIX + i, channel.exposure);
-         settings.putBoolean(CHANNEL_DOZSTACK_PREFIX + i, channel.doZStack);
-         settings.putDouble(CHANNEL_ZOFFSET_PREFIX + i, channel.zOffset);
-         settings.putInteger(CHANNEL_COLOR_R_PREFIX + i, channel.color.getRed());
-         settings.putInteger(CHANNEL_COLOR_G_PREFIX + i, channel.color.getGreen());
-         settings.putInteger(CHANNEL_COLOR_B_PREFIX + i, channel.color.getBlue());
-         settings.putInteger(CHANNEL_SKIP_PREFIX + i, channel.skipFactorFrame);
-      }
+      model_.storeChannels();
 
       //Save custom time intervals
       double[] customIntervals = acqEng_.getCustomTimeIntervals();
@@ -1416,14 +1290,14 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
          ArrayList<ChannelSpec> list = ((ChannelTableModel) channelTable_.getModel() ).getChannels();
          ArrayList<Integer> imagesPerChannel = new ArrayList<>();
          for (ChannelSpec list1 : list) {
-            if (!list1.useChannel) {
+            if (!list1.useChannel()) {
                continue;
             }
             int num = 1;
             if (frames) {
-               num *= Math.max(1, numFrames / (list1.skipFactorFrame + 1));
+               num *= Math.max(1, numFrames / (list1.skipFactorFrame() + 1));
             }
-            if (slices && list1.doZStack) {
+            if (slices && list1.doZStack()) {
                num *= numSlices;
             }
             if (positions) {
@@ -1538,8 +1412,8 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
          // Check for excessively long exposure times.
          ArrayList<String> badChannels = new ArrayList<>();
          for (ChannelSpec spec : model.getChannels()) {
-            if (spec.exposure > 30000) { // More than 30s
-               badChannels.add(spec.config);
+            if (spec.exposure() > 30000) { // More than 30s
+               badChannels.add(spec.config());
             }
          }
          if (badChannels.size() > 0 && getShouldCheckExposureSanity()) {
@@ -1611,12 +1485,8 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       if (disableGUItoSettings_) {
          return;
       }
+      // Disable updates to prevent action listener loops
       disableGUItoSettings_ = true;
-      // Disable update prevents action listener loops
-
-
-      // TODO: remove setChannels()
-      model_.setChannels(acqEng_.getChannels());
 
       double intervalMs = acqEng_.getFrameIntervalMs();
       interval_.setText(numberFormat_.format(convertMsToTime(intervalMs, timeUnitCombo_.getSelectedIndex())));
@@ -1708,23 +1578,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
       disableGUItoSettings_ = false;
    }
-       
-   private void updateDoubleValue(double value, JTextField field) {
-       try {
-           if (NumberUtils.displayStringToDouble(field.getText()) != value) {
-               field.setText(NumberUtils.doubleToDisplayString(value));
-           }
-       } catch (ParseException e) {
-           field.setText(NumberUtils.doubleToDisplayString(value));
-       }
-   }
-       
-   private void updateCheckBox(boolean setting,  CheckBoxPanel panel) {
-      if (panel.isSelected() != setting) {
-          panel.setSelected(setting);
-      }
-   }
-   
+
    @Override      
    public void settingsChanged() {
    }
@@ -1821,7 +1675,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    }
 
    private void zValCalcChanged() {
-      final boolean isEnabled = ((String) zValCombo_.getSelectedItem()).equals(ABSOLUTE_Z);
+      final boolean isEnabled = zValCombo_.getSelectedItem().equals(ABSOLUTE_Z);
       // HACK: push this to a later call; even though this method should only
       // be called from the EDT, for some reason if we do this action
       // immediately, then the buttons don't visually become disabled.
@@ -1960,7 +1814,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       }
 
       public void setChildrenEnabled(boolean enabled) {
-         Component comp[] = this.getComponents();
+         Component[] comp = this.getComponents();
          for (Component comp1 : comp) {
             if (comp1.getClass().equals(JPanel.class)) {
                Component[] subComp = ((JPanel) comp1).getComponents();
@@ -1991,36 +1845,6 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
             checkBox.removeActionListener(l);
          }
       }
-   }
-
-   public static Double getChannelExposure(String channelGroup,
-         String channel, double defaultVal) {
-      return MMStudio.getInstance().profile().getSettings(
-            AcqControlDlg.class).getDouble(
-                    "Exposure_" + channelGroup + "_" + channel,defaultVal);
-   }
-
-   public static void storeChannelExposure(String channelGroup,
-         String channel, double exposure) {
-      MMStudio.getInstance().profile().getSettings( 
-              AcqControlDlg.class).putDouble(
-            "Exposure_" + channelGroup + "_" + channel, exposure);
-   }
-
-   public static Integer getChannelColor(Studio studio, String channelGroup,
-         String channel, int defaultVal) {
-      return RememberedSettings.loadChannel(studio, channelGroup, channel).
-              getColor().getRGB();
-   }
-
-   public static void setChannelColor(Studio studio, 
-           String channelGroup, 
-           String channel,
-           int color) {
-      ChannelDisplaySettings newCDS = 
-              RememberedSettings.loadChannel(studio, channelGroup, channel).
-                      copyBuilder().color(new Color(color)).build();
-      RememberedSettings.storeChannel(studio, channelGroup, channel, newCDS);
    }
 
    public static boolean getShouldSyncExposure() {

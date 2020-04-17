@@ -39,7 +39,6 @@ import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Image;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
-import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.UserCancelledException;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.PrioritizedEventBus;
@@ -82,13 +81,13 @@ public class DefaultDatastore implements Datastore {
    protected Map<String, DefaultAnnotation> annotations_ = new HashMap<>();
    protected PrioritizedEventBus bus_;
    protected boolean isFrozen_ = false;
-   protected final MMStudio mmStudio_;
+   protected final Studio studio;
    
    private String savePath_ = null;
    private boolean haveSetSummary_ = false;
 
-   public DefaultDatastore(MMStudio mmStudio) {
-      mmStudio_ = mmStudio;
+   public DefaultDatastore(Studio mmStudio) {
+      studio = mmStudio;
       bus_ = new PrioritizedEventBus(true);
    }
 
@@ -348,7 +347,7 @@ public class DefaultDatastore implements Datastore {
    @Override
    public void close() throws IOException {
       freeze();
-      mmStudio_.events().post(
+      studio.events().post(
             new DefaultDatastoreClosingEvent(this));
       if (storage_ != null) {
          storage_.close();
@@ -381,7 +380,7 @@ public class DefaultDatastore implements Datastore {
       chooser.setAcceptAllFileFilterUsed(false);
       chooser.addChoosableFileFilter(SINGLEPLANEFILTER);
       chooser.addChoosableFileFilter(MULTIPAGEFILTER);
-      if (getPreferredSaveMode(mmStudio_).equals(Datastore.SaveMode.MULTIPAGE_TIFF)) {
+      if (getPreferredSaveMode(studio).equals(Datastore.SaveMode.MULTIPAGE_TIFF)) {
          chooser.setFileFilter(MULTIPAGEFILTER);
       }
       else {
@@ -409,11 +408,11 @@ public class DefaultDatastore implements Datastore {
                filter.getDescription());
          return null;
       }
-      setPreferredSaveMode(mmStudio_, mode);
+      setPreferredSaveMode(studio, mode);
       // the DefaultDataSave constructor creates the directory
       // so that displaysettings can be saved there even before we finish
       // saving all the data
-      DefaultDataSaver ds = new DefaultDataSaver(mmStudio_, this, mode,
+      DefaultDataSaver ds = new DefaultDataSaver(studio, this, mode,
               file.getAbsolutePath());
       if (!blocking) {
          final ProgressBar pb = new ProgressBar(parent, "Saving..", 0, 100);
@@ -444,7 +443,7 @@ public class DefaultDatastore implements Datastore {
    // if our current Storage is a file-based Storage).
    @Override
    public void save(Datastore.SaveMode mode, String path, boolean blocking) throws IOException {
-      DefaultDataSaver ds = new DefaultDataSaver(mmStudio_, this, mode, path);
+      DefaultDataSaver ds = new DefaultDataSaver(studio, this, mode, path);
       if (blocking) {
          ds.doInBackground();
       } else {

@@ -44,8 +44,9 @@ class AxisTableModel extends AbstractTableModel {
       bus_ = bus;
       // restore the usage settings from our previous session
       for (int i = 0; i < axisList_.getNumberOfPositions(); i++) {
-         axisList_.get(i).setUse(MMStudio.getInstance().profile().getBoolean(
-               AxisTableModel.class, axisList_.get(i).getAxisName(), true ) );
+         axisList_.get(i).setUse(MMStudio.getInstance().profile().
+                 getSettings(AxisTableModel.class).
+                 getBoolean(axisList_.get(i).getAxisName(), true ) );
       }
    }
 
@@ -96,9 +97,9 @@ class AxisTableModel extends AbstractTableModel {
       if (columnIndex == 0) { // i.e. action was in the column with checkboxes
          axisList_.get(rowIndex).setUse((Boolean) value);
          // store new choice to profile
-         MMStudio.getInstance().profile().setBoolean(
-               AxisTableModel.class, axisList_.get(rowIndex).getAxisName(), 
-               (Boolean) value); 
+         MMStudio.getInstance().profile().getSettings(AxisTableModel.class).
+                 putBoolean(axisList_.get(rowIndex).getAxisName(),
+                            (Boolean) value);
          bus_.post(new MoversChangedEvent());
       }
       fireTableCellUpdated(rowIndex, columnIndex);

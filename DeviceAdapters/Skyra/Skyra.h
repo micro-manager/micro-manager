@@ -22,6 +22,7 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include <sstream>
 
 #define MODULATION_STATUS 1
 #define MODULATION_ANALOG 2
@@ -87,31 +88,30 @@ const char * g_RecvTerm = "\r\n";
 
 const char * g_PropertySkyraAutostart = "Autostart";
 const char * g_PropertySkyraAutostartStatus = "Autostart Status";
-const char * g_PropertySkyraAutostartHelp = "Autostart needs to be disabled if a non-modulatable laser is used as a shutter";
 
 const char * g_PropertySkyraAutostartHelp1 = "Off->On: If Autostart is enabled, the start-up sequence will Restart";
 const char * g_PropertySkyraAutostartHelp2 = "Off->On: If Autostart is disabled, laser(s) will go directly to On";
-const char * g_PropertySkyraAutostartHelp3 = "On->Off: If Autostart is enabled, the start-up sequence will Abort";
+const char * g_PropertySkyraAutostartHelp3 = "On->Off: If Autostart is enabled, the start-up sequence will Abort, requiring a Restart";
 const char * g_PropertySkyraAutostartHelp4 = "On->Off: If Autostart is disabled, laser(s) will go directly to Off state";
 
-const char * g_PropertySkyraCurrentModulationHelpMinimum = "Current is set to this when the laser is Off in either Modulation or Shutter Modes";
-const char * g_PropertySkyraCurrentModulationHelpMaximum = "Current is set to this when the laser is On in either Modulation or Shutter Modes";
+const char * g_PropertySkyraCurrentModulationHelpMinimum = "Current Minimum when shutter is closed, with Autostart Enabled (default)";
+const char * g_PropertySkyraCurrentModulationHelpMaximum = "Current Maximum when shutter is open, with Autostart Enabled (default)";
 const char * g_PropertySkyraCurrentHelpOn = "Current is set to this when the laser is On, in Constant Current Mode";
 const char * g_PropertySkyraCurrentHelp =  "mA - milliamps ";
 
 const char * g_PropertySkyraPowerHelpOn = "Power is set to this when the laser is On, in Constant Power Mode";
 const char * g_PropertySkyraPowerHelp =  "mW - milliwatts";
 
-const char * gPropertySkyraControlMode = "Control Mode";
-const char * gPropertySkyraControlModeConstant = "Constant Current";
-const char * gPropertySkyraControlModePower = "Constant Power";
-const char * gPropertySkyraControlModeModulation = "Modulation";
+const char * g_PropertySkyraControlMode = "Control Mode";
+const char * g_PropertySkyraControlModeCurrent = "Constant Current";
+const char * g_PropertySkyraControlModePower = "Constant Power";
+const char * g_PropertySkyraControlModeModulation = "Modulation";
 
 const char * g_PropertySkyraAnalogImpedance = "Analog Impedance";
 const char * g_PropertySkyraAnalogImpedanceStatus = "Analog Impedance: Status";
 
 const char * g_PropertySkyraCurrent = "Current";
-const char * g_PropertySkyraCurrentOn = "Current On";
+const char * g_PropertySkyraCurrentSetpoint = "Current Setpoint";
 const char * g_PropertySkyraCurrentMaximum = "Current Maximum";
 const char * g_PropertySkyraCurrentModulationMinimum = "Current Modulation Minimum";
 const char * g_PropertySkyraCurrentModulationMaximum = "Current Modulation Maximum";
@@ -120,7 +120,7 @@ const char * g_PropertySkyraCurrentStatus = "Current Status";
 
 const char * g_PropertySkyraPower =  "Power";
 const char * g_PropertySkyraPowerStatus =  "Power Status";
-const char * g_PropertySkyraPowerOn =  "Power On";
+const char * g_PropertySkyraPowerSetpoint =  "Power Setpoint";
 const char * g_PropertySkyraPowerMaximum = "Power Maximum";
 
 const char * g_PropertySkyraActive = "Active";
@@ -137,12 +137,16 @@ const char * g_PropertySkyraInternalModulationOn = "Modulation Internal On Time"
 const char * g_PropertySkyraInternalModulationHelp =  "Modulation Internal Units";
 const char * g_PropertySkyraInternalModulationHelpUnits =  "ms - milliseconds";
 
+const char * g_PropertySkyraOperatingStatus = "Operating Status";
 const char * g_PropertySkyraWavelength = "Wavelength";
 const char * g_PropertySkyraLaserType = "Laser Type";
 
 const char * g_PropertySkyraAllLaser = "All Lasers";
 const char * g_PropertySkyraLaser = "Laser";
 const char * g_PropertySkyraLaserStatus = "Laser Status";
+
+const char * g_PropertyCoboltSerialCommand = "Serial Command";
+const char * g_PropertyCoboltSerialCommandResponse = "Serial Command Response";
 
 const char * g_PropertyActive = "Active";
 const char * g_PropertyInactive = "Inactive";
@@ -158,7 +162,7 @@ const char * g_Default_String = "Unknown";
 const char * g_Default_Integer = "0";
 const char * g_Default_Float = "0.0";
 
-const char * g_Default_ControlMode = gPropertySkyraControlModePower;
+const char * g_Default_ControlMode = g_PropertySkyraControlModePower;
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
@@ -184,91 +188,92 @@ public:
     bool Busy();
     int AllLasersOn(int);
 
-	// Automatic Serial Port Detection
-	bool SupportsDeviceDetection(void);
-	MM::DeviceDetectionStatus DetectDevice(void);
-	int DetectInstalledDevices();
+    // Automatic Serial Port Detection
+    bool SupportsDeviceDetection(void);
+    MM::DeviceDetectionStatus DetectDevice(void);
+    int DetectInstalledDevices();
  
+    // Direct Serial Commands
+    int OnSerialCommand(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnSerialCommandResponse(MM::PropertyBase* pProp, MM::ActionType eAct);
+
     // action interface
     // ----------------
     int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
    
-	int OnControlMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnControlMode(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-	int OnWaveLength(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnWaveLength(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-	int OnPower(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnPowerStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnPowerSetPoint(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnPowerMaximum(MM::PropertyBase* pProp, MM::ActionType eAct);
-	//int OnPowerSetMaximum(MM::PropertyBase* pProp, MM::ActionType  eAct);
-		
-	int OnCurrent(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnCurrentStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnCurrentSetPoint(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnCurrentMaximum(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnCurrentModulationMinimum(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnCurrentModulationMaximum(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnPower(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnPowerStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnPowerSetPoint(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnPowerMaximum(MM::PropertyBase* pProp, MM::ActionType eAct);
+    //int OnPowerSetMaximum(MM::PropertyBase* pProp, MM::ActionType  eAct);
+        
+    int OnCurrent(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnCurrentStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnCurrentSetPoint(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnCurrentMaximum(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnCurrentModulationMinimum(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnCurrentModulationMaximum(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-	int OnAutoStart(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnAutoStartStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnAutoStart(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnAutoStartStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-	// There is a global autostart commands. Despite the manual, I don't think there are laser specific autostart commands.
-	int OnSkyraAutoStart(MM::PropertyBase* pProp, MM::ActionType eAct); 
-	int OnSkyraAutoStartStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
-	
-	int OnActive(MM::PropertyBase* pProp, MM::ActionType eAct);
+    // There is a global autostart commands. Despite the manual, I don't think there are laser specific autostart commands.
+    int OnSkyraAutoStart(MM::PropertyBase* pProp, MM::ActionType eAct); 
+    int OnSkyraAutoStartStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
+    
+    int OnActive(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-	//int OnModulationStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnDigitalModulation(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnAnalogModulation(MM::PropertyBase* pProp, MM::ActionType eAct);	
-	
-	int OnInternalModulation(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnInternalModulationOn(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnInternalModulationDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnInternalModulationPeriod(MM::PropertyBase* pProp, MM::ActionType eAct);
+    //int OnModulationStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnDigitalModulation(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnAnalogModulation(MM::PropertyBase* pProp, MM::ActionType eAct);	
+    
+    int OnInternalModulation(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnInternalModulationOn(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnInternalModulationDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnInternalModulationPeriod(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-	int OnAllLasers(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnLaserHelp1(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnLaserHelp2(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnAllLasers(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnLaserHelp1(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnLaserHelp2(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-	int OnLaser(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnLaserStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnLaser(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnLaserStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-	int OnAnalogImpedance(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnAnalogImpedance(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnAnalogImpedanceStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-	int OnHours(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnKeyStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnHours(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnKeyStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
     
     int OnInterlock(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnFault(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnOperatingStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnSerialNumber(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnModel(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnLaserType(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnOperatingStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnLaserType(MM::PropertyBase* pProp, MM::ActionType eAct);
     
     // base functions
-	std::string AutostartStatus();
+    std::string AutoStartStatus();
 
 // Despite what the cobolt software shows, individual lasers in a Skyra doesn't have their own autostart setting
 //	std::string AutostartStatusSkyra();
 
-	// bool GetModulation(int modulation=0); This is now handled by GetReadAll() 
-	std::string SetModulation(int modulation=0, bool value = false);
-	std::string GetReadAll(std::string ID);
-	std::string GetRASP(std::string ID);
-	std::string AnalogImpedanceStatus();
-	std::string UpdateWaveLength(std::string ID);
-	
-	std::string SetPower(std::string power, std::string laserid);
-	//std::string GetPowerStatus(long &value, std::string laserid);
-	//std::string GetPowerOn(long& value, std::string laserid);
+    // bool GetModulation(int modulation=0); This is now handled by GetReadAll() 
+    std::string SetModulation(int modulation=0, bool value = false);
+    std::string GetReadAll(std::string ID);
+    std::string GetRASP(std::string ID);
+    std::string AnalogImpedanceStatus();
+    std::string UpdateWaveLength(std::string ID);
+    
+    std::string SetPower(std::string power, std::string laserid);
+    //std::string GetPowerStatus(long &value, std::string laserid);
+    //std::string GetPowerOn(long& value, std::string laserid);
    
-	std::string SetCurrent(std::string);
+    std::string SetCurrent(std::string);
 
-	// Shutter API
+    // Shutter API
     // ----------------
     int SetOpen(bool open = true);
     int GetOpen(bool& open);
@@ -277,70 +282,70 @@ public:
 private:
     bool bInitialized_;
     bool bBusy_;
-	bool bOn_;
-	bool bImpedance_;
-	bool bModulation_;
-	//bool bModulationOn_;
-	bool bAnalogModulation_;
-	bool bDigitalModulation_;
-	bool bInternalModulation_;
-	long nInternalModulationOnTime_;
-	long nInternalModulationPeriodTime_;
-	long nInternalModulationPeriod_;
-	long nSkyra_;
+    bool bOn_;
+    bool bImpedance_;
+    bool bModulation_;
+    //bool bModulationOn_;
+    bool bAnalogModulation_;
+    bool bDigitalModulation_;
+    bool bInternalModulation_;
+    long nInternalModulationOnTime_;
+    long nInternalModulationPeriodTime_;
+    long nSkyra_;
 
 
-	std::string RA_;
-	std::string RASP_;
-	// string buffer for serial reads
-	char tempstr_[SERIAL_BUFFER];
+    std::string RA_;
+    std::string RASP_;
+    // string buffer for serial reads
+    char tempstr_[SERIAL_BUFFER];
 
-	std::string photoDiode_;
-	std::string name_;
+    std::string photoDiode_;
+    std::string name_;
     std::string hours_;
-	std::string keyStatus_;
+    std::string keyStatus_;
     std::string laserStatus_;
     std::string interlock_;  
     std::string fault_;
-	std::string operatingStatus_;
-	std::string identity_;
+    std::string operatingStatus_;
+    std::string identity_;
     std::string serialNumber_;
     std::string version_;
-	
-	std::string model_;
-	std::string autostartStatus_;
-	std::string autostartStatusSKyra_;
-	std::string impedanceStatus_;
-	
-	//global, but should be set to current laser if a Skyra
-	std::string Power_;
-	std::string powerSetPoint_;
-	std::string powerMaximum_;
-	std::string powerStatus_;
-	std::string Current_;
-	std::string currentStatus_;
-	std::string currentMaximum_;
-	std::string currentModulationMinimum_;
-	std::string currentModulationMaximum_;
-	std::string currentSetPoint_;
-	std::string ID_;
-	std::string Type_;
-	std::string waveLength_;
-	std::string controlMode_;
-
-	// need this vector from micromanager property drowndown
-	std::vector<std::string> waveLengths_;
-	std::vector<std::string> IDs_;
-	
-	//struct Lasers *Laser_;
     
-	int ConfirmIdentity();
+    std::string model_;
+    std::string autostartStatus_;
+    std::string autostartStatusSKyra_;
+    std::string impedanceStatus_;
+    
+    //global, but should be set to current laser if a Skyra
+    std::string Power_;
+    std::string powerSetPoint_;
+    std::string powerMaximum_;
+    std::string powerStatus_;
+    std::string Current_;
+    std::string currentStatus_;
+    std::string currentMaximum_;
+    std::string currentModulationMinimum_;
+    std::string currentModulationMaximum_;
+    std::string currentSetPoint_;
+    std::string ID_;
+    std::string Type_;
+    std::string waveLength_;
+    std::string controlMode_;
+
+    // need this vector from micromanager property drowndown
+    std::vector<std::string> waveLengths_;
+    std::vector<std::string> IDs_;
+    
+    //struct Lasers *Laser_;
+    
+    int ConfirmIdentity();
     int GetState(int &value);
 
-	// Serial Port
-	std::string port_;
-	int ClearPort(void);
-	std::string GetPort();
-	std::string SerialCommand (std::string serialCommand);
+    // Serial Port
+    std::string port_;
+    std::string serialResponse_;
+    //int ClearPort(void);
+    std::string GetPort();
+    std::string SerialCommand (std::string serialCommand);
 
 };

@@ -293,6 +293,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
     */
    public static DefaultDisplaySettings getStandardSettings(String key) {
       UserProfile profile = MMStudio.getInstance().profile();
+      MutablePropertyMapView settings = profile.getSettings(DefaultDisplaySettings.class);
       LegacyBuilder builder = new LegacyBuilder();
       // We have to convert colors to/from int arrays.
       // Note we assume RGB tuples in the colors array.
@@ -305,29 +306,17 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       key += "_";
       // This value used to be an int, then got changed to a double, hence the
       // name change.
-      builder.animationFPS(profile.getDouble(
-               DefaultDisplaySettings.class,
+      builder.animationFPS(settings.getDouble(
                key + ANIMATION_FPS_DOUBLE, 10.0));
       builder.channelColorMode(
-            DisplaySettings.ColorMode.fromInt(profile.getInt(
-            DefaultDisplaySettings.class,
+            DisplaySettings.ColorMode.fromInt(settings.getInteger(
                key + CHANNEL_COLOR_MODE,
                DisplaySettings.ColorMode.COMPOSITE.getIndex())));
-      builder.zoom(profile.getDouble(
-            DefaultDisplaySettings.class,
-               key + ZOOM_RATIO, 1.0));
-      builder.shouldSyncChannels(profile.getBoolean(
-            DefaultDisplaySettings.class,
-               key + SHOULD_SYNC_CHANNELS, false));
-      builder.shouldAutostretch(profile.getBoolean(
-            DefaultDisplaySettings.class,
-               key + SHOULD_AUTOSTRETCH, true));
-      builder.shouldScaleWithROI(profile.getBoolean(
-            DefaultDisplaySettings.class,
-               key + SHOULD_SCALE_WITH_ROI, true));
-      builder.extremaPercentage(profile.getDouble(
-            DefaultDisplaySettings.class,
-               key + EXTREMA_PERCENTAGE, 0.0));
+      builder.zoom(settings.getDouble(key + ZOOM_RATIO, 1.0));
+      builder.shouldSyncChannels(settings.getBoolean(key + SHOULD_SYNC_CHANNELS, false));
+      builder.shouldAutostretch(settings.getBoolean(key + SHOULD_AUTOSTRETCH, true));
+      builder.shouldScaleWithROI(settings.getBoolean(key + SHOULD_SCALE_WITH_ROI, true));
+      builder.extremaPercentage(settings.getDouble(key + EXTREMA_PERCENTAGE, 0.0));
       // Note we don't store user data in the prefs explicitly; let third-party
       // code manually access the prefs if they want.
       return builder.build();
@@ -376,9 +365,9 @@ public final class DefaultDisplaySettings implements DisplaySettings {
          DisplaySettings.ColorMode defaultVal) {
       UserProfile profile = MMStudio.getInstance().profile();
       key = key + "_";
-      Integer mode = profile.getInt(DefaultDisplaySettings.class,
-            CHANNEL_COLOR_MODE, null);
-      if (mode == null) {
+      Integer mode = profile.getSettings(DefaultDisplaySettings.class).
+              getInteger(CHANNEL_COLOR_MODE, -1);
+      if (mode == -1) {
          return defaultVal;
       }
       return DisplaySettings.ColorMode.fromInt(mode);
@@ -415,6 +404,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       return result;
    }
 
+   @Deprecated
    public static class DefaultContrastSettings implements DisplaySettings.ContrastSettings {
       Integer[] contrastMins_;
       Integer[] contrastMaxes_;
@@ -445,11 +435,13 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       }
 
       @Override
+      @Deprecated
       public Integer[] getContrastMins() {
          return contrastMins_;
       }
 
       @Override
+      @Deprecated
       public Integer getSafeContrastMin(int component, Integer defaultVal) {
          if (component < 0 || contrastMins_ == null ||
                contrastMins_.length <= component) {
@@ -459,11 +451,13 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       }
 
       @Override
+      @Deprecated
       public Integer[] getContrastMaxes() {
          return contrastMaxes_;
       }
 
       @Override
+      @Deprecated
       public Integer getSafeContrastMax(int component, Integer defaultVal) {
          if (component < 0 || contrastMaxes_ == null ||
                contrastMaxes_.length <= component) {
@@ -473,6 +467,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       }
 
       @Override
+      @Deprecated
       public Double[] getContrastGammas() {
          return gammas_;
       }
@@ -487,6 +482,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       }
 
       @Override
+      @Deprecated
       public int getNumComponents() {
          int result = 0;
          if (contrastMins_ != null) {
@@ -502,11 +498,13 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       }
 
       @Override
+      @Deprecated
       public Boolean getIsVisible() {
          return isVisible();
       }
 
       @Override
+      @Deprecated
       public Boolean isVisible() {
          return isVisible_;
       }
@@ -697,6 +695,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
+   @Deprecated
    public ContrastSettings[] getChannelContrastSettings() {
       ContrastSettings[] ret = new ContrastSettings[getNumberOfChannels()];
       for (int i = 0; i < getNumberOfChannels(); ++i) {
@@ -706,6 +705,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
+   @Deprecated
    public ContrastSettings getSafeContrastSettings(int index,
          ContrastSettings defaultVal) {
       if (index < 0 || index >= getNumberOfChannels()) {
@@ -730,6 +730,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
+   @Deprecated
    public Integer getSafeContrastMin(int index, int component,
          Integer defaultVal) {
       if (index < 0 || index >= getNumberOfChannels()) {
@@ -744,6 +745,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
+   @Deprecated
    public Integer getSafeContrastMax(int index, int component,
          Integer defaultVal) {
       if (index < 0 || index >= getNumberOfChannels()) {
@@ -758,6 +760,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
+   @Deprecated
    public Double getSafeContrastGamma(int index, int component,
          Double defaultVal) {
       if (index < 0 || index >= getNumberOfChannels()) {
@@ -771,6 +774,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
+   @Deprecated
    public Boolean getSafeIsVisible(int index, Boolean defaultVal) {
       if (index < 0 || index >= getNumberOfChannels()) {
          return defaultVal;
@@ -779,11 +783,13 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
+   @Deprecated
    public DisplaySettings.ColorMode getChannelColorMode() {
       return getColorMode();
    }
 
    @Override
+   @Deprecated
    public Boolean getShouldSyncChannels() {
       return null;
    }
@@ -872,7 +878,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
             }
          }
          if (minsArr != null) {
-            ArrayList<ContrastSettings> contrastSettings = new ArrayList<ContrastSettings>();
+            ArrayList<ContrastSettings> contrastSettings = new ArrayList<>();
             for (int i = 0; i < minsArr.length; ++i) {
                Integer min = minsArr[i];
                Integer max = maxesArr[i];

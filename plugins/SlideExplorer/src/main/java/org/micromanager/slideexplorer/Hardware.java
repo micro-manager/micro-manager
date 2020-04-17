@@ -11,7 +11,7 @@ import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 import mmcorej.CMMCore;
 import org.micromanager.Studio;
 import org.micromanager.data.Image;
-import org.micromanager.internal.utils.ReportingUtils;
+
 
 public class Hardware {
 
@@ -35,7 +35,7 @@ public class Hardware {
             return studio_.data().ij().createProcessor(snap);
             //return ImageUtils.makeProcessor(core_, img);
         } catch (Exception e) {
-            ReportingUtils.logError(e);
+            studio_.logs().logError(e);
             return null;
         }
     }
@@ -45,7 +45,7 @@ public class Hardware {
         try {
             core_.getROI(roi[0], roi[1], roi[2], roi[3]);
         } catch (Exception e) {
-            ReportingUtils.logError(e);
+            studio_.logs().logError(e);
         }
         return new Rectangle(roi[0][0], roi[1][0], roi[2][0], roi[3][0]);
     }
@@ -67,7 +67,7 @@ public class Hardware {
             core_.getXYPosition(stage, x, y);
             return new Point2D.Double(x[0], y[0]);
         } catch (Exception e) {
-            ReportingUtils.logError(e);
+            studio_.logs().logError(e);
         }
         return null;
     }
@@ -76,7 +76,7 @@ public class Hardware {
         try {
             core_.setXYPosition(stage_, x, y);
         } catch (Exception e) {
-            ReportingUtils.logError(e);
+            studio_.logs().logError(e);
         }
 
     }
@@ -93,7 +93,7 @@ public class Hardware {
             try {
                 while (core_.deviceBusy(xystage));
             } catch (Exception e) {
-                ReportingUtils.logError(e);
+                studio_.logs().logError(e);
             }
             setXYPosition(stagePos.x, stagePos.y);
             try {
@@ -102,7 +102,7 @@ public class Hardware {
                     core_.sleep(100);
                 }
             } catch (Exception e) {
-                ReportingUtils.logError(e);
+                studio_.logs().logError(e);
             }
             //updateStagePositionRect();
         }
@@ -116,7 +116,7 @@ public class Hardware {
         try {
             return core_.getPosition(core_.getFocusDevice());
         } catch (Exception ex) {
-            ReportingUtils.logError(ex);
+            studio_.logs().logError(ex);
             return Double.POSITIVE_INFINITY;
         }
     }
@@ -125,7 +125,7 @@ public class Hardware {
         try {
             core_.setPosition(core_.getFocusDevice(),pos);
         } catch (Exception ex) {
-            ReportingUtils.logError(ex);
+            studio_.logs().logError(ex);
         }
     }
     
@@ -136,7 +136,7 @@ public class Hardware {
             core_.setPosition(focusDevice, z + dz);
             core_.waitForDevice(focusDevice);
         } catch (Exception ex) {
-            ReportingUtils.logError(ex);
+            studio_.logs().logError(ex);
         }
 
     }

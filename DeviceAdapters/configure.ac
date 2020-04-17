@@ -548,6 +548,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    SerialManager
    SimpleAutofocus
    SimpleCam
+   Skyra
    SmarActHCU-3D
    SpectralLMM5
    Spot

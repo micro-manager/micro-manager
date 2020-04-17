@@ -34,7 +34,6 @@ import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.StrVector;
 import org.micromanager.Studio;
-import org.micromanager.internal.dialogs.PresetEditor;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -54,10 +53,7 @@ public final class ConfigGroupPad extends JScrollPane {
    private final Studio studio_;
    private JTable table_;
    private StateTableData data_;
-   private Studio parentGUI_;
    private final String COLUMN_WIDTH = "group_col_width";
-   public PresetEditor presetEditor_ = null;
-   public String groupName_ = "";
 
    
    public ConfigGroupPad(Studio studio) {
@@ -69,14 +65,14 @@ public final class ConfigGroupPad extends JScrollPane {
       ReportingUtils.showError(e);
    }
 
-   public void setCore(CMMCore core){
+   public void initialize(){
       table_ = new DaytimeNighttime.Table();
       table_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       table_.setAutoCreateColumnsFromModel(false);
       table_.setRowSelectionAllowed(true);
       setViewportView(table_);
       
-      data_ = new StateTableData(core);
+      data_ = new StateTableData(studio_.core());
       table_.setModel(data_);
 
 
@@ -97,10 +93,6 @@ public final class ConfigGroupPad extends JScrollPane {
            studio_.profile().getSettings(this.getClass()).putInteger(
                  COLUMN_WIDTH, table_.getColumnModel().getColumn(0).getWidth());
       }
-   }
-
-   public void setParentGUI(Studio parentGUI) {
-      parentGUI_ = parentGUI;
    }
 
    public void refreshStructure(boolean fromCache) {
@@ -204,7 +196,7 @@ public final class ConfigGroupPad extends JScrollPane {
          if (col == 1) {
             if (value != null && value.toString().length() > 0) {
                try {
-                  parentGUI_.live().setSuspended(true);
+                  studio_.live().setSuspended(true);
                   if (item.singleProp) {
                      if (item.hasLimits && item.isInteger()) {
                         core_.setProperty(item.device, item.name, NumberUtils.intStringDisplayToCore(value));
@@ -222,33 +214,33 @@ public final class ConfigGroupPad extends JScrollPane {
                   // Associate exposure time with presets in current channel group
                   if (item.group.equals(core_.getChannelGroup())) {
                      core_.setExposure(
-                             parentGUI_.app().getChannelExposureTime(
+                             studio_.app().getChannelExposureTime(
                                      item.group, value.toString(), core_.getExposure()));
                   }
 
                   refreshStatus();
                   table_.repaint();
-                  if (parentGUI_ != null) {
+                  if (studio_ != null) {
                      // This is a little superfluous, but it is nice that we
                      // are depending only on Studio, not MMStudio
                      // directly, so keep it that way.
-                     if (parentGUI_ instanceof MMStudio) {
+                     if (studio_ instanceof MMStudio) {
                         // But it appears to be important for performance that
                         // we use the non-config-pad-updating version of
-                        // MMStudio.refreshGUI(). Calling updateGUI(ture) or,
+                        // MMStudio.refreshGUI(). Calling updateGUI(true) or,
                         // equivalently, refreshGUI(), results in a system
                         // state cache update, which can be very slow.
-                        MMStudio parentGUI = (MMStudio) parentGUI_;
+                        MMStudio parentGUI = (MMStudio) studio_;
                         parentGUI.updateGUI(false);
                      } else {
-                        parentGUI_.app().refreshGUI();
+                        studio_.app().refreshGUI();
                      }
                   }
 
                } catch (Exception e) {
                   handleException(e);
                } finally {
-                  parentGUI_.live().setSuspended(false);
+                  studio_.live().setSuspended(false);
                }
             }
          }

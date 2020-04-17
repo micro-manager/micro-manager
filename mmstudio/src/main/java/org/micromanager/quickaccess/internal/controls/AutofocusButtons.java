@@ -31,6 +31,7 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.GUIUtils;
@@ -128,6 +129,6 @@ public final class AutofocusButtons extends WidgetPlugin implements SciJavaPlugi
 
    @Override
    public PropertyMap configureControl(Frame parent) {
-      return studio_.data().getPropertyMapBuilder().build();
+      return PropertyMaps.builder().build();
    }
 }

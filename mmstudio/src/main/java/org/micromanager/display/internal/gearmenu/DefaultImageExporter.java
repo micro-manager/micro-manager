@@ -110,7 +110,7 @@ public final class DefaultImageExporter implements ImageExporter {
       public void selectImageCoords(Coords baseCoords,
             ArrayList<Coords> result) {
          for (int i = startIndex_; i <= stopIndex_; ++i) {
-            Coords newCoords = baseCoords.copy().index(axis_, i).build();
+            Coords newCoords = baseCoords.copyBuilder().index(axis_, i).build();
             if (child_ == null) {
                // Add the corresponding image, if any.
                if (store_.hasImage(newCoords)) {

@@ -26,7 +26,7 @@ import org.jfree.data.time.TimeSeriesCollection;
 
 
 // create a series that automatically discard data > 30 seconds old... 
-TimeSeries intensities = new TimeSeries("Int", Millisecond.class); 
+TimeSeries intensities = new TimeSeries("Int"); 
 intensities.setMaximumItemAge(30000); 
 TimeSeriesCollection dataset = new TimeSeriesCollection(); 
 dataset.addSeries(intensities); 

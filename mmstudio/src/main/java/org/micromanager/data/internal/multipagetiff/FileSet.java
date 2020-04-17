@@ -250,12 +250,12 @@ class FileSet {
       }
 
       if (splitByXYPosition_) {
-         String posName = firstImage.getMetadata().getPositionName();
+         String posName = firstImage.getMetadata().getPositionName("");
          int posIndex = firstImage.getCoords().getStagePosition();
          if (posIndex == -1) {
             posIndex = 0;
          }
-         if (posName != null) {
+         if (posName != null && !posName.isEmpty()) {
             baseFilename += "_" + posName;
          }
          else {

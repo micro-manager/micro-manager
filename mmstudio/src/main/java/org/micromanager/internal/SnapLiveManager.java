@@ -487,7 +487,8 @@ public final class SnapLiveManager extends DataViewerListener
          ds = ds.copyBuilderWithChannelSettings(ch, 
                  RememberedSettings.loadChannel(mmStudio_, 
                          store_.getSummaryMetadata().getChannelGroup(), 
-                         store_.getSummaryMetadata().getChannelNameList().get(ch))).
+                         store_.getSummaryMetadata().getChannelNameList().get(ch),
+                         null)).
                  build();
       }
       display_.setDisplaySettings(ds);
@@ -620,7 +621,8 @@ public final class SnapLiveManager extends DataViewerListener
                   ChannelDisplaySettings newCD = RememberedSettings.loadChannel(
                           mmStudio_, 
                           core_.getChannelGroup(),
-                          name);
+                          name,
+                          null);
                   display_.setDisplaySettings(display_.getDisplaySettings().
                           copyBuilderWithChannelSettings(camCh, newCD).build());
                }               
@@ -776,15 +778,22 @@ public final class SnapLiveManager extends DataViewerListener
    }
 
    /**
-    * Make a name up for the given channel/camera number combination.
+    * Make a name for the given channel/camera number combination.
+    * This tries to replicate the code in the acquisition engine.
+    * TODO: Combine code in acq engine and this function
     */
    private String makeChannelName(String channel, String cameraChannelName) {
-      String result = channel;
+      String result;
       if (numCameraChannels_ > 1) {
          if (channel.isEmpty()) {
             result = cameraChannelName;
          } else {
-            result = result + "-" + cameraChannelName;
+            result = channel + "-" + cameraChannelName;
+         }
+      } else {
+         result = channel;
+         if (result.isEmpty()) {
+            result = "Default";
          }
       }
       return result;

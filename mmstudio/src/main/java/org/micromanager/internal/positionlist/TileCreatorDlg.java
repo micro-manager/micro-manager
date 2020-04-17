@@ -46,6 +46,7 @@ import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.positionlist.utils.TileCreator;
 import org.micromanager.internal.positionlist.utils.ZGenerator;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 public final class TileCreatorDlg extends MMDialog {
    private static final long serialVersionUID = 1L;
@@ -93,6 +94,9 @@ public final class TileCreatorDlg extends MMDialog {
       positionListDlg_.activateAxisTable(false);
       endPosition_ = new MultiStagePosition[4];
       endPositionSet_ = new boolean[4];
+
+      MutablePropertyMapView settings = studio.profile().getSettings(
+              TileCreatorDlg.class);
 
       super.setTitle("Tile Creator");
 
@@ -292,13 +296,11 @@ public final class TileCreatorDlg extends MMDialog {
       overlapField_ = new JTextField();
       overlapField_.setBounds(70, 186, 50, 20);
       overlapField_.setFont(new Font("", Font.PLAIN, 10));
-      overlapField_.setText(studio.profile().getString(TileCreatorDlg.class, 
-              OVERLAP_PREF, "0"));
+      overlapField_.setText(settings.getString(OVERLAP_PREF, "0"));
       overlapField_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            studio.profile().setString(TileCreatorDlg.class, 
-               OVERLAP_PREF,overlapField_.getText() );
+            settings.putString(OVERLAP_PREF, overlapField_.getText() );
             updateCenteredSizeLabel();
          }
       });
@@ -343,8 +345,7 @@ public final class TileCreatorDlg extends MMDialog {
       okButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            studio.profile().setString(TileCreatorDlg.class, 
-               OVERLAP_PREF,overlapField_.getText() );
+            settings.putString(OVERLAP_PREF, overlapField_.getText() );
             addToPositionList();
          }
       });
@@ -381,16 +382,16 @@ public final class TileCreatorDlg extends MMDialog {
 
    @Override
    public void dispose(){
-        studio_.profile().setString(TileCreatorDlg.class, 
-        OVERLAP_PREF,overlapField_.getText() );
+        studio_.profile().getSettings(TileCreatorDlg.class).putString(
+                  OVERLAP_PREF,overlapField_.getText() );
         positionListDlg_.activateAxisTable(true);
         super.dispose();
    }
    
    @Subscribe
    public void shuttingDown(ShutdownCommencingEvent se) {
-      studio_.profile().setString(TileCreatorDlg.class,
-              OVERLAP_PREF, overlapField_.getText());
+      studio_.profile().getSettings(TileCreatorDlg.class).putString(
+                 OVERLAP_PREF, overlapField_.getText());
       dispose();
    }
 
@@ -526,16 +527,24 @@ public final class TileCreatorDlg extends MMDialog {
 
                switch (location) {
                   case 0: // top
-                     sp.y += offsetYUm;
+                     sp.set2DPosition(xyStage,
+                             core_.getXPosition(xyStage),
+                             core_.getYPosition(xyStage) + offsetYUm);
                      break;
                   case 1: // right
-                     sp.x += offsetXUm;
+                     sp.set2DPosition(xyStage,
+                             core_.getXPosition(xyStage) + offsetXUm,
+                             core_.getYPosition(xyStage));
                      break;
                   case 2: // bottom
-                     sp.y -= offsetYUm;
+                     sp.set2DPosition(xyStage,
+                             core_.getXPosition(xyStage),
+                             core_.getYPosition(xyStage) - offsetYUm);
                      break;
                   case 3: // left
-                     sp.x -= offsetXUm;
+                     sp.set2DPosition(xyStage,
+                             core_.getXPosition(xyStage) - offsetXUm,
+                             core_.getYPosition(xyStage));
                      break;
                }
                msp.add(sp);
