@@ -103,6 +103,13 @@ using namespace std;
  * This applies to all classes exposed through the SWIG layer (i.e. the whole
  * of the public API of the Core), not just CMMCore.
  *
+ * Because currently there is no C++ DLL build of MMCore, what we care about is
+ * the backward compatibility of the Java and Python bindings. So a change that
+ * requires recompilation (without source changes) of (hypothetical) C++ code
+ * calling MMCore does not, by itself, require incrementing the major version,
+ * provided that the resulting MMCoreJ.jar can be dropped in without
+ * recompilation of client Java code.
+ *
  * (Keep the 3 numbers on one line to make it easier to look at diffs when
  * merging/rebasing.)
  */
