@@ -1,4 +1,4 @@
-/**
+/*
  * StageControlFrame.java
  *
  * Created on Aug 19, 2010, 10:04:49 PM
@@ -31,10 +31,9 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
@@ -103,12 +102,12 @@ public final class StageControlFrame extends MMFrame {
    private JPanel errorPanel_;
    private JPanel xyPanel_;
    private JLabel xyPositionLabel_;
-   private JPanel zPanel_[] = new JPanel[MAX_NUM_Z_PANELS];
+   private JPanel[] zPanel_ = new JPanel[MAX_NUM_Z_PANELS];
    private JComboBox<String>[] zDriveSelect_ = new JComboBox[MAX_NUM_Z_PANELS];
    private JRadioButton[] zDriveActiveButtons_ = new JRadioButton[MAX_NUM_Z_PANELS];
    private ButtonGroup zDriveActiveGroup_ = new ButtonGroup();
 
-   private JLabel zPositionLabel_[] = new JLabel[MAX_NUM_Z_PANELS];
+   private JLabel[] zPositionLabel_ = new JLabel[MAX_NUM_Z_PANELS];
    private JPanel settingsPanel_;
    private JCheckBox enableRefreshCB_;
    private Timer timer_ = null;
@@ -181,7 +180,7 @@ public final class StageControlFrame extends MMFrame {
             public void propertyChange(PropertyChangeEvent evt) {
                try {
                   if (evt.getPropertyName().equals("value")) {
-                     Double xStep = NumberUtils.displayStringToDouble(xStepTexts_[j].getText());
+                     double xStep = NumberUtils.displayStringToDouble(xStepTexts_[j].getText());
                      // the property fires multiple times, show the dialog only once
                      if (xStep != settings_.getDouble(X_MOVEMENTS[j], xStepSizes[j])) {
                         if (xStep > 2 * pixelSize * nrPixelsX) {
@@ -209,7 +208,7 @@ public final class StageControlFrame extends MMFrame {
             public void propertyChange(PropertyChangeEvent evt) {
                try {
                   if (evt.getPropertyName().equals("value")) {
-                     Double yStep = NumberUtils.displayStringToDouble(yStepTexts_[j].getText());
+                     double yStep = NumberUtils.displayStringToDouble(yStepTexts_[j].getText());
                      // the property fires multiple times, show the dialog only once
                      if (yStep != settings_.getDouble(Y_MOVEMENTS[j], yStepSizes[j])) {
                         if (yStep > 2 * pixelSize * nrPixelsY) {
@@ -302,7 +301,8 @@ public final class StageControlFrame extends MMFrame {
             }
             zDriveSelect_[idx].setSelectedIndex(-1);  // needed to make sure setSelectedIndex fires an ItemListener for index 0
             zDriveSelect_[idx].setSelectedIndex(cbIndex);
-            if (zDriveSelect_[idx].getSelectedItem().equals(settings_.getString(SELECTED_Z_DRIVE, " "))) {
+            if (Objects.equals(zDriveSelect_[idx].getSelectedItem(),
+                    settings_.getString(SELECTED_Z_DRIVE, " "))) {
                zDriveActiveButtons_[idx].setSelected(true);
             }
             
@@ -519,18 +519,15 @@ public final class StageControlFrame extends MMFrame {
       // result.add(new JLabel("Z Stage", JLabel.CENTER), "growx, alignx center");
       zDriveSelect_[idx] = new JComboBox<>();
       zDriveActiveButtons_[idx] = new JRadioButton();
-      zDriveActiveButtons_[idx].addItemListener(new ItemListener() {
-         @Override
-         public void itemStateChanged(ItemEvent e) {
-            if (e.getStateChange() == ItemEvent.SELECTED) {
-               String activeZDrive = (String) zDriveSelect_[idx].getSelectedItem();
-               // push to profile
-               settings_.putString(SELECTED_Z_DRIVE, activeZDrive);
-               settings_.putDouble(SMALL_MOVEMENT_Z, settings_.getDouble(
-                       SMALL_MOVEMENT_Z + idx, 1.1));
-               settings_.putDouble(MEDIUM_MOVEMENT_Z, settings_.getDouble(
-                       MEDIUM_MOVEMENT_Z + idx, 11.1));
-            }
+      zDriveActiveButtons_[idx].addItemListener(e -> {
+         if (e.getStateChange() == ItemEvent.SELECTED) {
+            String activeZDrive = (String) zDriveSelect_[idx].getSelectedItem();
+            // push to profile
+            settings_.putString(SELECTED_Z_DRIVE, activeZDrive);
+            settings_.putDouble(SMALL_MOVEMENT_Z, settings_.getDouble(
+                    SMALL_MOVEMENT_Z + idx, 1.1));
+            settings_.putDouble(MEDIUM_MOVEMENT_Z, settings_.getDouble(
+                    MEDIUM_MOVEMENT_Z + idx, 11.1));
          }
       });
       zDriveActiveGroup_.add(zDriveActiveButtons_[idx]);
@@ -732,7 +729,7 @@ public final class StageControlFrame extends MMFrame {
     }
 
    private void setRelativeStagePosition(double z, int idx) {
-      String curDrive = zDriveSelect_[idx].getSelectedItem().toString();
+      String curDrive = (String) zDriveSelect_[idx].getSelectedItem();
       uiMovesStageManager_.getZNavigator().setPosition(curDrive, z);
    }
 
@@ -749,7 +746,7 @@ public final class StageControlFrame extends MMFrame {
    }
 
    private void getZPosLabelFromCore(int idx) throws Exception {
-      double zPos = core_.getPosition(zDriveSelect_[idx].getSelectedItem().toString());
+      double zPos = core_.getPosition((String) zDriveSelect_[idx].getSelectedItem());
       setZPosLabel(zPos, idx);
    }
 
@@ -778,7 +775,7 @@ public final class StageControlFrame extends MMFrame {
 
          @Override
          public String toString() {
-            return (prefix_ + (String)cb_.getSelectedItem());
+            return (prefix_ + cb_.getSelectedItem());
          }
          
          @Override
@@ -820,7 +817,7 @@ public final class StageControlFrame extends MMFrame {
    @Subscribe
    public void onStagePositionChanged(StagePositionChangedEvent event) {
       for (int idx=0; idx<MAX_NUM_Z_PANELS; ++idx) {
-         if (event.getDeviceName().equals((String) zDriveSelect_[idx].getSelectedItem())) {
+         if (event.getDeviceName().equals(zDriveSelect_[idx].getSelectedItem())) {
             setZPosLabel(event.getPos(), idx);
          }
       }
@@ -851,58 +848,8 @@ public final class StageControlFrame extends MMFrame {
             // since we are closing, no need to warn the user
          }
       }
-//      for (int idx=0; idx<maxNumZPanels_; ++idx) {
-//         storeZValuesInProfile(idx);
-//      }
       stopTimer();
       super.dispose();
    }
 
-   private class StageThread implements Runnable {
-      final String device_;
-      final boolean isXYStage_;
-      final double x_;
-      final double y_;
-      final double z_;
-      
-      public StageThread(String device, double z) {
-         device_ = device;
-         z_ = z;
-         x_ = y_ = 0;
-         isXYStage_ = false;
-      }
-
-      public StageThread(String device, double x, double y) {
-         device_ = device;
-         x_ = x;
-         y_ = y;
-         z_ = 0;
-         isXYStage_ = true;
-      }
-
-      @Override
-      public void run() {
-         try {
-            core_.waitForDevice(device_);
-            if (isXYStage_) {
-               core_.setRelativeXYPosition(device_, x_, y_);
-            }
-            else {
-               core_.setRelativePosition(device_, z_);
-            }
-            core_.waitForDevice(device_);
-            if (isXYStage_) {
-               getXYPosLabelFromCore();
-            }
-            else {
-               for (int idx=0; idx<MAX_NUM_Z_PANELS; ++idx) {
-                  getZPosLabelFromCore(idx);
-               }
-            }
-         } catch (Exception ex) {
-            studio_.logs().logError(ex);
-         }
-      }
-   }
-   
 }
