@@ -228,11 +228,12 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    private void updateChannelCameras() {
+      ArrayList<ChannelSpec> camChannels = new ArrayList<>();
       for (int row = 0; row < channels_.size(); row++) {
-         ChannelSpec channel = channels_.get(row);
-         channels_.add(row,
-                 channel.copyBuilder().camera(getSource(channel)).build());
+         camChannels.add(row,
+                 channels_.get(row).copyBuilder().camera(getSource(channels_.get(row))).build());
       }
+      channels_ = camChannels;
    }
 
    /*
