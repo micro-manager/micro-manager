@@ -40,7 +40,9 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -88,6 +90,7 @@ import org.micromanager.display.internal.imagestats.ImageStatsProcessor;
 import org.micromanager.display.internal.imagestats.IntegerComponentStats;
 import org.micromanager.internal.utils.MMFrame;
 
+import static org.micromanager.data.internal.BufferTools.NATIVE_ORDER;
 
 
 /**
@@ -614,7 +617,14 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
 
             // add the contiguous memory as fragment:
             if (image != null) {
-               fragmentedMemory.add(image.getPixelBuffer());
+               if (image.getBytesPerPixel() == 1) {
+                  byte[] pixels = ((ByteBuffer) image.getPixelBuffer()).array();
+                  fragmentedMemory.add(ByteBuffer.allocateDirect(pixels.length).put(pixels));
+               } else if (image.getBytesPerPixel() == 2) {
+                  short[] pixels = ((ShortBuffer) image.getPixelBuffer()).array();
+                  fragmentedMemory.add(ByteBuffer.allocateDirect(2*pixels.length).order(NATIVE_ORDER).asShortBuffer().put(pixels));
+               }
+               //fragmentedMemory.add(DirectBuffers.bufferFromArray(image.getPixelBuffer()));
             } else {
                 // if the image is missing, replace with pixels initialized to 0
                 fragmentedMemory.add(ByteBuffer.allocateDirect(
