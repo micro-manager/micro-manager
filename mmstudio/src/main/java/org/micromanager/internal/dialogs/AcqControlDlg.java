@@ -28,6 +28,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URISyntaxException;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -35,6 +36,8 @@ import java.util.Enumeration;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.table.*;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
@@ -1248,144 +1251,69 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       return false;
    }
 
-   private long estimateMemoryUsage() {
-      // XXX This ought to be done by the acquisition engine
-      boolean channels = channelsPanel_.isSelected();
-      boolean frames = framesPanel_.isSelected();
-      boolean slices = slicesPanel_.isSelected();
-      boolean positions = positionsPanel_.isSelected();
-      
-      int numFrames = Math.max(1, (Integer) numFrames_.getValue());
-      if (acqEng_.customTimeIntervalsEnabled()) {
-         int h = 0;
-         while (profile_.getSettings(this.getClass()).getDouble(
-                  CUSTOM_INTERVAL_PREFIX + h, -1.0) >= 0.0) {
-            h++;
-         }
-         numFrames = Math.max(1, h);
-      }
-      
-      double zTop, zBottom, zStep;
-      try {
-         zTop = NumberUtils.displayStringToDouble(zTop_.getText());
-         zBottom = NumberUtils.displayStringToDouble(zBottom_.getText());
-         zStep = NumberUtils.displayStringToDouble(zStep_.getText()); 
-      } catch (ParseException ex) {
-         ReportingUtils.showError("Invalid Z-Stacks input value");
-         return -1;
-      }
-      
-      int numSlices = Math.max(1, (int) (1 + Math.floor( 
-              (Math.abs(zTop - zBottom) /  zStep))));
-      int numPositions = 1;
-      try {
-         numPositions = Math.max(1, mmStudio_.positions().getPositionList().getNumberOfPositions());
-      } catch (Exception ex) {
-         ReportingUtils.showError(ex);
-      }
-      
-      int numImages;
-      
-      if (channels) {
-         ArrayList<ChannelSpec> list = ((ChannelTableModel) channelTable_.getModel() ).getChannels();
-         ArrayList<Integer> imagesPerChannel = new ArrayList<>();
-         for (ChannelSpec list1 : list) {
-            if (!list1.useChannel()) {
-               continue;
-            }
-            int num = 1;
-            if (frames) {
-               num *= Math.max(1, numFrames / (list1.skipFactorFrame() + 1));
-            }
-            if (slices && list1.doZStack()) {
-               num *= numSlices;
-            }
-            if (positions) {
-               num *= numPositions;
-            }
-            imagesPerChannel.add(num);
-         }
-         numImages = 0;
-         for (Integer i : imagesPerChannel) {
-            numImages += i;
-         }
-      } else {
-         numImages = 1;
-         if (slices) {
-            numImages *= numSlices;
-         }
-         if (frames) {
-            numImages *= numFrames;
-         }
-         if (positions) {
-            numImages *= numPositions;
-         }
-      }
-
-      CMMCore core = mmStudio_.getCore();
-      long byteDepth = core.getBytesPerPixel();
-      long width = core.getImageWidth();
-      long height = core.getImageHeight();
-      long bytesPerImage = byteDepth*width*height;
-
-      return bytesPerImage * numImages;
-   }
-
-   // Returns false if user chooses to cancel.
+    /**
+    * Asks acqEngine to estimate memory usage, so use this method only after
+    * settings have been send to acqEngine.
+    * Prompt the user if there may not be enough memory
+    * @return false if user chooses to cancel.
+    */
    private boolean warnIfMemoryMayNotBeSufficient() {
       if (savePanel_.isSelected()) {
          return true;
       } 
 
-      long acqTotalBytes = estimateMemoryUsage();
+      long acqTotalBytes = acqEng_.getTotalMemory();
       if (acqTotalBytes < 0) {
          return false;
       }
 
-      // Currently, images are stored in direct byte buffers in the case of
-      // acquire-to-RAM. This means that the image (pixel and metadata) data do
-      // not fill up the Java heap memory. The best we can do is to try to
-      // estimate the available physical memory.
-      //
-      // In reality, there is a hard cap to the direct memory size in the
-      // HotSpot JVM, but there is no way to get that limit, much less how much
-      // of it is currently in use (there is the non-API
-      // sun.misc.VM.maxDirectMemory() method, which we could call via
-      // reflection where available, but we would need to estimate current
-      // usage on our own). The limit can be set from the JVM command line
-      // using e.g. -XX:MaxDirectMemorySize=16G.
-      //
-      // As of this writing, we ship the 64-bit version with
-      // -XX:MaxDirectMemroySize=1000g, which essentially disables the limit,
-      // so the assumptions we make here are not completely off.
+      // get memory than can be used within JVM:
+      // https://stackoverflow.com/questions/12807797/java-get-available-memory
+      long allocatedMemory = (Runtime.getRuntime().totalMemory() -
+              Runtime.getRuntime().freeMemory());
+      long freeRam = Runtime.getRuntime().maxMemory() - allocatedMemory;
 
-      long freeRAM;
-      java.lang.management.OperatingSystemMXBean osMXB =
-         java.lang.management.ManagementFactory.getOperatingSystemMXBean();
-      try { // Use HotSpot extensions if available
-         Class<?> sunOSMXBClass = Class.forName("com.sun.management.OperatingSystemMXBean");
-         java.lang.reflect.Method freeMemMethod = sunOSMXBClass.getMethod("getFreePhysicalMemorySize");
-         freeRAM = ((Long) freeMemMethod.invoke(osMXB));
-      }
-      catch (ClassNotFoundException | 
-              NoSuchMethodException | 
-              SecurityException | 
-              IllegalAccessException | 
-              IllegalArgumentException | 
-              InvocationTargetException e) {
-         return true; // We just don't warn the user in this case.
-      }
       // There is no hard reason for the 80% factor.
-      if (acqTotalBytes > 0.8 * freeRAM) {
-         int answer = JOptionPane.showConfirmDialog(this,
-               "<html><body><p width='400'>" +
-               "Available RAM may not be sufficient for this acquisition " +
-               "(the estimate is approximate). After RAM is exhausted, the " +
-               "acquisition may slow down or fail.</p>" +
-               "<p>Would you like to start the acquisition anyway?</p>" +
-               "</body></html>",
-               "Insufficient memory warning",
-               JOptionPane.YES_NO_OPTION);
+      if (acqTotalBytes > 0.8 * freeRam) {
+         // for copying style
+         JLabel label = new JLabel();
+         Font font = label.getFont();
+         // create some css from the label's font
+         StringBuffer style = new StringBuffer("font-family:" + font.getFamily() + ";");
+         style.append("font-weight:" + (font.isBold() ? "bold" : "normal") + ";");
+         style.append("font-size:" + font.getSize() + "pt;");
+         Color c = label.getForeground();
+         style.append(("color:rgb(") + c.getRed() + "," + c.getGreen() + "," + c.getBlue() +")" );
+
+         int availableMemoryMB = (int) (freeRam / (1024 * 1024));
+
+         String paneTxt = "<html><body style=" +
+                 style + "><p width='400'>" +
+                 "Available memory (approximate estimate: " + availableMemoryMB +
+                 " MB) may not be sufficient. " +
+                 "Once memory is full, the acquisition may slow down or fail.</p>" +
+                 "<p width='400'>See <a style=\"" + style + "" +
+                 "\" href=https://micro-manager.org/wiki/Micro-Manager_Configuration_Guide#Memory_Settings> " +
+                 " the configuration guide</a> for ways to make more memory available.</p>" +
+                 "<p width='400'>Would you like to start the acquisition anyway?</p>" +
+                 "</body></html>";
+         JEditorPane ep = new JEditorPane("text/html", paneTxt);
+
+         // handle link events
+         ep.addHyperlinkListener(e -> {
+            if (e.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
+               try {
+                  Desktop.getDesktop().browse(e.getURL().toURI());
+               } catch (IOException | URISyntaxException ex) {
+                  mmStudio_.logs().logError(ex);
+               }
+            }
+         });
+         ep.setEditable(false);
+         ep.setBackground(label.getBackground());
+
+         int answer = JOptionPane.showConfirmDialog(this, ep,
+                 "Not enough memory", JOptionPane.YES_NO_OPTION);
          return answer == JOptionPane.YES_OPTION;
       }
       return true;

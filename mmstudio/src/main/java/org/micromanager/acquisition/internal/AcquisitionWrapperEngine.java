@@ -221,9 +221,9 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       return totalImages;
    }
 
-   private long getTotalMB() {
+   public long getTotalMemory() {
       CMMCore core = studio_.core();
-      long totalMB = core.getImageWidth() * core.getImageHeight() * core.getBytesPerPixel() * ((long) getTotalImages()) / 1048576L;
+      long totalMB = core.getImageWidth() * core.getImageHeight() * core.getBytesPerPixel() * ((long) getTotalImages());
       return totalMB;
    }
 
@@ -836,8 +836,8 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
             return false;
          }
       }
-      long usableMB = root.getUsableSpace() / (1024 * 1024);
-      return (1.25 * getTotalMB()) < usableMB;
+      long usableMB = root.getUsableSpace();
+      return (1.25 * getTotalMemory()) < usableMB;
    }
 
    @Override
@@ -848,7 +848,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       int numChannels = getNumChannels();
 
       int totalImages = getTotalImages();
-      long totalMB = getTotalMB();
+      long totalMB = getTotalMemory() / (1024 * 1024);
 
       double totalDurationSec = 0;
       if (!useCustomIntervals_) {
