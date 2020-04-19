@@ -62,6 +62,7 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
       acqEng_ = eng;
       settings_ = studio_.profile().getSettings(ChannelTableModel.class);
       channels_ = new ArrayList<>(12);
+      cleanUpConfigurationList();
    }
 
    @Override
