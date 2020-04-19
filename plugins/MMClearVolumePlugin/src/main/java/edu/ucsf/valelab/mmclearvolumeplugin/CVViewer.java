@@ -1,4 +1,4 @@
-/**
+/*
  * Binding to ClearVolume 3D viewer View Micro-Manager datasets in 3D
  *
  * AUTHOR: Nico Stuurman COPYRIGHT: Regents of the University of California,
@@ -41,6 +41,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -88,6 +89,7 @@ import org.micromanager.display.internal.imagestats.ImageStatsProcessor;
 import org.micromanager.display.internal.imagestats.IntegerComponentStats;
 import org.micromanager.internal.utils.MMFrame;
 
+import static org.micromanager.data.internal.BufferTools.NATIVE_ORDER;
 
 
 /**
@@ -107,8 +109,6 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    private final EventBus displayBus_;
    private final CVFrame cvFrame_;
    private int maxValue_;
-   private final String XLOC = "XLocation";
-   private final String YLOC = "YLocation";
    private final Class<?> ourClass_;
    private int activeChannel_ = 0;
    private Coords lastDisplayedCoords_;
@@ -175,18 +175,18 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    private void initializeRenderer(final int timePoint, final int position) {
 
       final double preferredGamma = 0.5;
-      final int min = 0;
 
       if (clonedDisplay_ == null) {
          // There could be a display attached to the store now
          clonedDisplay_ = getDisplay(dataProvider_);
       }
 
+      DisplaySettings ds;
       if (clonedDisplay_ != null) {
          name_ = clonedDisplay_.getName() + "-ClearVolume";
-         displaySettings_ = clonedDisplay_.getDisplaySettings().copyBuilder().build();
+         ds = clonedDisplay_.getDisplaySettings().copyBuilder().build();
       } else {
-         displaySettings_ = studio_.displays().getStandardDisplaySettings();
+         ds = studio_.displays().getStandardDisplaySettings();
       }
 
       try {
@@ -194,73 +194,27 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
 
          final int nrCh = dataProvider_.getAxisLength(Coords.CHANNEL);
 
-         // clean up ContrastSettings
-         // TODO: convert to new scheme of dealing with contrasSettings
-         DisplaySettings.ContrastSettings[] contrastSettings
-                 = displaySettings_.getChannelContrastSettings();
-         if (contrastSettings == null || contrastSettings.length != nrCh) {
-            contrastSettings = new DisplaySettings.ContrastSettings[nrCh];
-            for (int ch = 0; ch < dataProvider_.getAxisLength(Coords.CHANNEL); ch++) {
-               contrastSettings[ch] = studio_.displays().
-                       getContrastSettings(min, maxValue_, preferredGamma, true);
+         DisplaySettings.Builder dsb = ds.copyBuilder();
+         for (int ch = 0; ch < ds.getNumberOfChannels(); ch++) {
+            ChannelDisplaySettings cds = ds.getChannelSettings(ch);
+            ChannelDisplaySettings.Builder cdsb = cds.copyBuilder();
+            for (int comp = 0; comp < cds.getNumberOfComponents(); comp++) {
+               ComponentDisplaySettings.Builder compb =
+                       cds.getComponentSettings(comp).copyBuilder().scalingGamma(
+                               preferredGamma * cds.getComponentSettings(comp).getScalingGamma());
+               cdsb.component(comp, compb.build());
             }
-         } else {
-            for (int ch = 0; ch < contrastSettings.length; ch++) {
-               if (contrastSettings[ch] == null
-                       || contrastSettings[ch].getContrastMaxes() == null
-                       || contrastSettings[ch].getContrastMaxes()[0] == null
-                       || contrastSettings[ch].getContrastMaxes()[0] == 0
-                       || contrastSettings[ch].getContrastMins() == null
-                       || contrastSettings[ch].getContrastMins()[0] == null) {
-                  contrastSettings[ch] = studio_.displays().
-                          getContrastSettings(min, maxValue_, preferredGamma, true);
-               } else if (contrastSettings[ch].getContrastGammas() == null
-                       || contrastSettings[ch].getContrastGammas()[0] == null) {
-                  contrastSettings[ch] = studio_.displays().getContrastSettings(
-                          contrastSettings[ch].getContrastMins()[0],
-                          contrastSettings[ch].getContrastMaxes()[0],
-                          preferredGamma,
-                          contrastSettings[ch].getIsVisible());
-               }
-
-               contrastSettings[ch] = studio_.displays().getContrastSettings(
-                       contrastSettings[ch].getContrastMins()[0],
-                       contrastSettings[ch].getContrastMaxes()[0],
-                       0.5 * contrastSettings[ch].getContrastGammas()[0],
-                       true);
-            }
+            dsb.channel(ch, cdsb.build());
          }
-
-         // and clean up Colors
-         List<Color> channelColors = displaySettings_.getAllChannelColors();
-         if (channelColors == null || channelColors.size() != nrCh) {
-            channelColors = new ArrayList<>(colors.length);
-            for (int i = 0; i < nrCh && i < colors.length; i++) {
-               channelColors.add(colors[i]);
-            }
-         } else {
-            for (int ch = 0; ch < nrCh; ch++) {
-               if (channelColors.get(ch) == null) {
-                  channelColors.add(ch, colors[ch]);
-               }
-            }
-         }
-
-         displaySettings_ = displaySettings_.copy().
-                 channelColors(channelColors.toArray((new Color[0]))).
-                 channelContrastSettings(contrastSettings).
-                 autostretch(displaySettings_.isAutostretchEnabled()).
-                 build();
+         displaySettings_ = dsb.build();
 
          Image randomImage = dataProvider_.getAnyImage();
-         // creates renderer:
          NativeTypeEnum nte = NativeTypeEnum.UnsignedShort;
          if (randomImage.getBytesPerPixel() == 1) {
             nte = NativeTypeEnum.UnsignedByte;
          }
-
          try {
-         clearVolumeRenderer_
+            clearVolumeRenderer_
                  = ClearVolumeRendererFactory.newOpenCLRenderer(
                          name_,
                          randomImage.getWidth(),
@@ -359,9 +313,6 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    }
 
    private void cleanup() {
-      UserProfile profile = studio_.profile();
-      profile.getSettings(ourClass_).putInteger(XLOC, cvFrame_.getX());
-      profile.getSettings(ourClass_).putInteger(YLOC, cvFrame_.getY());
       studio_.getDisplayManager().removeViewer(this);
       studio_.events().post(DataViewerWillCloseEvent.create(this));
       dataProvider_.unregisterForEvents(this);
@@ -412,7 +363,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
          }
          if (displaySettings_.getChannelColor(ch) != nc || 
                  displaySettings_.getColorMode() != ds.getColorMode() ) {
-            clearVolumeRenderer_.setTransferFunction(ch, getGradientForColor(nc));
+            clearVolumeRenderer_.setTransferFunction(ch, TransferFunctions.getGradientForColor(nc));
          }
 
          // Autostretch if set
@@ -469,22 +420,20 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
 
    @Override
    public void registerForEvents(Object o) {
-      // System.out.println("Registering for event: " + o.toString());
       displayBus_.register(o);
    }
 
    @Override
    public void unregisterForEvents(Object o) {
-      // System.out.println("Unregistering for event: " + o.toString());
       displayBus_.unregister(o);
    }
    
    public void postEvent(Object o) {
-      // System.out.println("Posting event on the EventBus");
       displayBus_.post(o);
    }
 
    @Override
+   @Deprecated
    public Datastore getDatastore() {
       if (dataProvider_ instanceof Datastore) {
          return (Datastore) dataProvider_;
@@ -496,33 +445,24 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    public DataProvider getDataProvider() {
       return dataProvider_;
    }
-   
-   @Override
-   public void setDisplayedImageTo(Coords coords) {
-      // ClearVolume uses commands and keystrokes that work on a given channel
-      // Make sure that the channel that ClearVolume works on is synced with the
-      // Channel slider position in the ClearVolume panel in the Image Inspector
-      activeChannel_ = coords.getChannel();
-      if (displaySettings_.getChannelColorMode() != DisplaySettings.ColorMode.COMPOSITE) {
-         setOneChannelVisible(coords.getChannel());
-      }
-      clearVolumeRenderer_.setCurrentRenderLayer(coords.getChannel());
-      try {
-         drawVolume(coords.getT(), coords.getP());
-      } catch (IOException ioe) {
-          studio_.logs().logError(ioe);
-      }
-      lastDisplayedCoords_ = coords;
-      displayBus_.post(new CanvasDrawCompleteEvent());
-   }
 
    @Override
+   @Deprecated
+   public void setDisplayedImageTo(Coords coords) {
+      setDisplayPosition(coords);
+   }
+
+
    /**
-    * Assemble all images that are showing in our volume. May need to be updated
-    * for multiple time points in the future
+    * Supposed to return all images currently shown.
+    * In reality only returns the middle image of each z-stack.
+    * Not sure, but probably doing so to avoid calculating the
+    * histogram over the whole stack.
+    *
+    * @return List with middle image of each z stack
     */
+   @Override
    public List<Image> getDisplayedImages() throws IOException {
-      // System.out.println("getDisplayed Images called");
       List<Image> imageList = new ArrayList<>();
       final int nrZ = dataProvider_.getAxisLength(Coords.Z);
       final int nrCh = dataProvider_.getAxisLength(Coords.CHANNEL);
@@ -546,40 +486,10 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       return imageList;
    }
 
-   /**
-    * This method ensures that the Inspector histograms have up-to-date data to
-    * display.
-    */
-   //public void updateHistograms() {
-      // Needed to initialize the histograms
-      // TODO
-      // studio_.displays().updateHistogramDisplays(getDisplayedImages(), this);
-   //}
 
    @Override
    public String getName() {
-      // System.out.println("Name requested, gave: " + name_);
       return name_;
-   }
-
-   /**
-    * This function is in CV 1.1.2, replace when updating.
-    * Returns a transfer a
-    * simple transfer function that is a gradient from dark transparent to a
-    * given color. The transparency of the given color is used.
-    *
-    * @param pColor color
-    * @return 1D transfer function.
-    */
-   private TransferFunction1D getGradientForColor(Color pColor) {
-      final TransferFunction1D lTransfertFunction = new TransferFunction1D();
-      lTransfertFunction.addPoint(0, 0, 0, 0);
-      float lNormaFactor = (float) (1.0 / 255);
-      lTransfertFunction.addPoint(lNormaFactor * pColor.getRed(),
-              lNormaFactor * pColor.getGreen(),
-              lNormaFactor * pColor.getBlue(),
-              lNormaFactor * pColor.getAlpha());
-      return lTransfertFunction;
    }
 
    /**
@@ -597,9 +507,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       final SummaryMetadata summary = dataProvider_.getSummaryMetadata();
       final int nrZ = dataProvider_.getAxisLength(Coords.Z);
       final int nrCh = dataProvider_.getAxisLength(Coords.CHANNEL);
-      final int nrPos = dataProvider_.getAxisLength(Coords.STAGE_POSITION);
 
-      // long startTime = System.currentTimeMillis();
       clearVolumeRenderer_.setVolumeDataUpdateAllowed(false);
 
       for (int ch = 0; ch < nrCh; ch++) {
@@ -609,12 +517,18 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
                                                    stagePosition(position).build();
             lastDisplayedCoords_ = coords;
 
-            // Bypass Micro-Manager api to get access to the ByteBuffers
+            // Bypass Micro-Manager api to get access to the pixels to avoid extra copying
             DefaultImage image = (DefaultImage) dataProvider_.getImage(coords);
 
             // add the contiguous memory as fragment:
             if (image != null) {
-               fragmentedMemory.add(image.getPixelBuffer());
+               if (image.getBytesPerPixel() == 1) {
+                  byte[] pixels = ((ByteBuffer) image.getPixelBuffer()).array();
+                  fragmentedMemory.add(ByteBuffer.allocateDirect(pixels.length).put(pixels));
+               } else if (image.getBytesPerPixel() == 2) {
+                  short[] pixels = ((ShortBuffer) image.getPixelBuffer()).array();
+                  fragmentedMemory.add(ByteBuffer.allocateDirect(2*pixels.length).order(NATIVE_ORDER).asShortBuffer().put(pixels));
+               }
             } else {
                 // if the image is missing, replace with pixels initialized to 0
                 fragmentedMemory.add(ByteBuffer.allocateDirect(
@@ -648,30 +562,28 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
 
 
          // Set various display options:
-         // HACK: on occassion we get null colors, correct that problem here
+         // HACK: on occasion we get null colors, correct that problem here
          Color chColor = displaySettings_.getChannelColor(ch);
          if (chColor == null) {
             chColor = colors[ch];
             List<Color> chColors = displaySettings_.getAllChannelColors();
             chColors.add(nrCh, chColor);
-            // TODO
-            // displaySettings_ = displaySettings_.copyBuilder().channelColors(chColors).build();
          }
-         if (displaySettings_.getChannelColorMode() == ColorMode.GRAYSCALE) {
+         if (displaySettings_.getColorMode() == ColorMode.GRAYSCALE) {
             chColor = Color.WHITE;
          }
          clearVolumeRenderer_.setLayerVisible(ch, displaySettings_.isChannelVisible(ch) );
-         clearVolumeRenderer_.setTransferFunction(ch, getGradientForColor(chColor));
+         clearVolumeRenderer_.setTransferFunction(ch,
+                 TransferFunctions.getGradientForColor(chColor));
+         ChannelDisplaySettings cd = displaySettings_.getChannelSettings(ch);
          try {
-            float max = (float) displaySettings_.getChannelContrastSettings()[ch].getContrastMaxes()[0]
+            float max = (float) cd.getComponentSettings(0).getScalingMaximum()
                     / (float) maxValue_;
-            float min = (float) displaySettings_.getChannelContrastSettings()[ch].getContrastMins()[0]
+            float min = (float) cd.getComponentSettings(0).getScalingMinimum()
                     / (float) maxValue_;
             clearVolumeRenderer_.setTransferFunctionRange(ch, min, max);
-            Double[] contrastGammas = displaySettings_.getChannelContrastSettings()[ch].getContrastGammas();
-            if (contrastGammas != null) {
-               clearVolumeRenderer_.setGamma(ch, contrastGammas[0]);
-            }
+            double contrastGamma = cd.getComponentSettings(0).getScalingGamma();
+            clearVolumeRenderer_.setGamma(ch, contrastGamma);
          } catch (NullPointerException ex) {
             studio_.logs().logError(ex);
          }
@@ -711,8 +623,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
          clearVolumeRenderer_.toggleParametersListFrame();
       }
    }
-   
-   
+
    public void resetRotationTranslation () {
       if (clearVolumeRenderer_ != null) {
          clearVolumeRenderer_.resetRotationTranslation();
@@ -733,7 +644,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
          float[] clipBox = clearVolumeRenderer_.getClipBox();
          clearVolumeRenderer_.setTranslationX( -(clipBox[1] + clipBox[0]) / 2.0f);
          clearVolumeRenderer_.setTranslationY( -(clipBox[3] + clipBox[2]) / 2.0f);
-         // do not change TRanslationZ, since that mainly changes how close we are 
+         // do not change TranslationZ, since that mainly changes how close we are
          // to the object, not really the rotation point
          // clearVolumeRenderer_.setTranslationZ( -5);
       }
@@ -772,23 +683,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       });
       SwingUtilities.invokeLater(dt);
    }
-   
-   /**
-    * Print statements to learn about the renderer.  Should be removed before release
-    */
-   private void printRendererInfo() {
-      float x = clearVolumeRenderer_.getTranslationX();
-      float y = clearVolumeRenderer_.getTranslationY();
-      float z = clearVolumeRenderer_.getTranslationZ();
-      studio_.logs().logMessage("Translation now is: " + x + ", " + y + ", " + z);
-      String clipBoxString = "Clipbox: ";
-      for (int i = 0; i < 6; i++) {
-         clipBoxString += ", " + clearVolumeRenderer_.getClipBox()[i];
-      }
-      studio_.logs().logMessage(clipBoxString);
-   }
-   
-   
+
    /**
     * It appears that the clip range in the ClearVolume Renderer goes from 
     * -1 to 1
@@ -875,7 +770,6 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       
       return newSettings;
    }
-
      
    @Subscribe
    public void onShutdownCommencing(ShutdownCommencingEvent sce) {
@@ -947,7 +841,6 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       }
    }
 
-
    @Override
    public void setDisplayPosition(Coords position, boolean forceRedisplay) {
       if (forceRedisplay || !position.equals(lastDisplayedCoords_)) {
@@ -956,8 +849,22 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    }
 
    @Override
-   public void setDisplayPosition(Coords position) {
-      setDisplayedImageTo(position);
+   public void setDisplayPosition(Coords coords) {
+      // ClearVolume uses commands and keystrokes that work on a given channel
+      // Make sure that the channel that ClearVolume works on is synced with the
+      // Channel slider position in the ClearVolume panel in the Image Inspector
+      activeChannel_ = coords.getChannel();
+      if (displaySettings_.getColorMode() != DisplaySettings.ColorMode.COMPOSITE) {
+         setOneChannelVisible(coords.getChannel());
+      }
+      clearVolumeRenderer_.setCurrentRenderLayer(coords.getChannel());
+      try {
+         drawVolume(coords.getT(), coords.getP());
+      } catch (IOException ioe) {
+         studio_.logs().logError(ioe);
+      }
+      lastDisplayedCoords_ = coords;
+      displayBus_.post(new CanvasDrawCompleteEvent());
    }
 
    @Override
@@ -1054,6 +961,5 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       
       return process;
    }
-         
-   
+
 }
