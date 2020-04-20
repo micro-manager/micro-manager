@@ -217,13 +217,36 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    private int getTotalImages() {
-      int totalImages = getNumFrames() * getNumSlices() * getNumChannels() * getNumPositions();
-      return totalImages;
+      if (!useChannels_) {
+         return getNumFrames() * getNumSlices() * getNumChannels() * getNumPositions();
+      }
+
+      int nrImages = 0;
+      for (ChannelSpec channel : channels_) {
+         if (channel.useChannel()) {
+            for (int t = 0; t < getNumFrames(); t++) {
+               boolean doTimePoint = true;
+               if (channel.skipFactorFrame() > 0) {
+                  if (t % (channel.skipFactorFrame() + 1) != 0 ) {
+                     doTimePoint = false;
+                  }
+               }
+               if (doTimePoint) {
+                  if (channel.doZStack()) {
+                     nrImages += getNumSlices();
+                  } else {
+                     nrImages++;
+                  }
+               }
+             }
+         }
+      }
+      return nrImages;
    }
 
-   private long getTotalMB() {
+   public long getTotalMemory() {
       CMMCore core = studio_.core();
-      long totalMB = core.getImageWidth() * core.getImageHeight() * core.getBytesPerPixel() * ((long) getTotalImages()) / 1048576L;
+      long totalMB = core.getImageWidth() * core.getImageHeight() * core.getBytesPerPixel() * ((long) getTotalImages());
       return totalMB;
    }
 
@@ -836,8 +859,8 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
             return false;
          }
       }
-      long usableMB = root.getUsableSpace() / (1024 * 1024);
-      return (1.25 * getTotalMB()) < usableMB;
+      long usableMB = root.getUsableSpace();
+      return (1.25 * getTotalMemory()) < usableMB;
    }
 
    @Override
@@ -847,24 +870,54 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       int numPositions = getNumPositions();
       int numChannels = getNumChannels();
 
+      double exposurePerTimePointMs = 0.0;
+      if (this.useChannels_) {
+         for (ChannelSpec channel : channels_) {
+            if (channel.useChannel()) {
+               double channelExposure = channel.exposure();
+               if (channel.doZStack()) {
+                  channelExposure *= getNumSlices();
+               }
+               channelExposure *= getNumPositions();
+               exposurePerTimePointMs += channelExposure;
+            }
+         }
+      } else { // use the current settings for acquisition
+         try {
+            exposurePerTimePointMs = core_.getExposure() * getNumSlices() * getNumPositions();
+         } catch (Exception ex) {
+            studio_.logs().logError(ex, "Failed to get exposure time");
+         }
+      }
+
       int totalImages = getTotalImages();
-      long totalMB = getTotalMB();
+      long totalMB = getTotalMemory() / (1024 * 1024);
 
       double totalDurationSec = 0;
+      double interval = (interval_ > exposurePerTimePointMs) ? interval_ : exposurePerTimePointMs;
       if (!useCustomIntervals_) {
-         totalDurationSec = interval_ * numFrames / 1000.0;
+         totalDurationSec = interval * (numFrames - 1) / 1000.0;
       } else {
          for (Double d : customTimeIntervalsMs_) {
             totalDurationSec += d / 1000.0;
          }
       }
+      totalDurationSec += exposurePerTimePointMs / 1000;
       int hrs = (int) (totalDurationSec / 3600);
       double remainSec = totalDurationSec - hrs * 3600;
       int mins = (int) (remainSec / 60);
       remainSec = remainSec - mins * 60;
 
-      String txt;
-      txt =
+      String durationString = "\nMinimum duration: ";
+      if (hrs > 0) {
+         durationString += hrs + "h ";
+      }
+      if (mins > 0 || hrs > 0) {
+         durationString += mins + "m ";
+      }
+      durationString += NumberUtils.doubleToDisplayString(remainSec) + "s";
+
+      String txt =
               "Number of time points: " + (!useCustomIntervals_
               ? numFrames : customTimeIntervalsMs_.size())
               + "\nNumber of positions: " + numPositions
@@ -872,7 +925,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
               + "\nNumber of channels: " + numChannels
               + "\nTotal images: " + totalImages
               + "\nTotal memory: " + (totalMB <= 1024 ? totalMB + " MB" : NumberUtils.doubleToDisplayString(totalMB/1024.0) + " GB")
-              + "\nDuration: " + hrs + "h " + mins + "m " + NumberUtils.doubleToDisplayString(remainSec) + "s";
+              + durationString;
 
       if (useFrames_ || useMultiPosition_ || useChannels_ || useSlices_) {
          StringBuffer order = new StringBuffer("\nOrder: ");

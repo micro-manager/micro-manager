@@ -73,6 +73,8 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
          text_.setText(NumberUtils.doubleToDisplayString((Double)value));
          return text_;
       } else if (colIndex == 4) {
+         checkBox_.removeChangeListener(checkBoxChangeListener_);
+         checkBox_.addChangeListener(checkBoxChangeListener_);
          checkBox_.setSelected((Boolean) value);
          return checkBox_;
       } else if (colIndex == 5) {
