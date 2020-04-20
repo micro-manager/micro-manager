@@ -37,9 +37,9 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.*;
-import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.UserProfile;
 import org.micromanager.acquisition.ChannelSpec;
@@ -75,7 +75,7 @@ import org.micromanager.propertymap.MutablePropertyMapView;
  *
  */
 public final class AcqControlDlg extends MMFrame implements PropertyChangeListener, 
-        AcqSettingsListener { 
+        AcqSettingsListener, TableModelListener {
 
    private static final long serialVersionUID = 1L;
    private static final Font DEFAULT_FONT = new Font("Arial", Font.PLAIN, 10);
@@ -171,7 +171,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
    public final void createChannelTable() {
       model_ = new ChannelTableModel(mmStudio_, acqEng_);
-      model_.addTableModelListener(model_);
+      model_.addTableModelListener(this);
 
       channelTable_ = new DaytimeNighttime.Table() {
          @Override
@@ -577,7 +577,6 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
             int newSel = model_.rowUp(sel);
             model_.fireTableStructureChanged();
             channelTable_.setRowSelectionInterval(newSel, newSel);
-            //applySettings();
          }
       });
       channelsPanel_.add(upButton, buttonConstraint);
@@ -595,7 +594,6 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
             int newSel = model_.rowDown(sel);
             model_.fireTableStructureChanged();
             channelTable_.setRowSelectionInterval(newSel, newSel);
-            //applySettings();
          }
       });
       channelsPanel_.add(downButton, buttonConstraint);
@@ -866,7 +864,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    /** 
     * Called when a field's "value" property changes. 
     * Causes the Summary to be updated
-    * @param e
+    * @param e Property that changed
     */
    @Override
    public void propertyChange(PropertyChangeEvent e) {
@@ -1177,7 +1175,6 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
          double z = mmStudio_.core().getPosition();
          zTop_.setText(NumberUtils.doubleToDisplayString(z));
          applySettings();
-         // update summary
          summaryTextArea_.setText(acqEng_.getVerboseSummary());
       } catch (Exception e) {
          mmStudio_.logs().showError(e, "Error getting Z Position");
@@ -1373,12 +1370,12 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
          return null;
       }
 
+      applySettings();
       if (! warnIfMemoryMayNotBeSufficient()) {
          return null;
       }
 
       try {
-         applySettings();
          ChannelTableModel model = (ChannelTableModel) channelTable_.getModel();
          if (acqEng_.isChannelsSettingEnabled() && model.duplicateChannels()) {
             JOptionPane.showMessageDialog(this, "Cannot start acquisition using the same channel twice");
@@ -1450,7 +1447,6 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       model_.fireTableStructureChanged();
 
       channelGroupCombo_.setSelectedItem(acqEng_.getChannelGroup());
-
 
       for (AcqOrderMode mode : acqOrderModes_) {
          mode.setEnabled(framesPanel_.isSelected(), positionsPanel_.isSelected(),
@@ -1648,6 +1644,11 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
          customTimesWindow = new CustomTimesDialog(acqEng_,mmStudio_);
       }
       customTimesWindow.setVisible(true);
+   }
+
+   @Override
+   public void tableChanged(TableModelEvent e) {
+      summaryTextArea_.setText(acqEng_.getVerboseSummary());
    }
 
    @SuppressWarnings("serial")

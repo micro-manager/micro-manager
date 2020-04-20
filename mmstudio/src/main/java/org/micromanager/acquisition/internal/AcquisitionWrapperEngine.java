@@ -217,8 +217,31 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    private int getTotalImages() {
-      int totalImages = getNumFrames() * getNumSlices() * getNumChannels() * getNumPositions();
-      return totalImages;
+      if (!useChannels_) {
+         return getNumFrames() * getNumSlices() * getNumChannels() * getNumPositions();
+      }
+
+      int nrImages = 0;
+      for (ChannelSpec channel : channels_) {
+         if (channel.useChannel()) {
+            for (int t = 0; t < getNumFrames(); t++) {
+               boolean doTimePoint = true;
+               if (channel.skipFactorFrame() > 0) {
+                  if (t % (channel.skipFactorFrame() + 1) != 0 ) {
+                     doTimePoint = false;
+                  }
+               }
+               if (doTimePoint) {
+                  if (channel.doZStack()) {
+                     nrImages += getNumSlices();
+                  } else {
+                     nrImages++;
+                  }
+               }
+             }
+         }
+      }
+      return nrImages;
    }
 
    public long getTotalMemory() {
@@ -847,17 +870,39 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       int numPositions = getNumPositions();
       int numChannels = getNumChannels();
 
+      double exposurePerTimePointMs = 0.0;
+      if (this.useChannels_) {
+         for (ChannelSpec channel : channels_) {
+            if (channel.useChannel()) {
+               double channelExposure = channel.exposure();
+               if (channel.doZStack()) {
+                  channelExposure *= getNumSlices();
+               }
+               channelExposure *= getNumPositions();
+               exposurePerTimePointMs += channelExposure;
+            }
+         }
+      } else { // use the current settings for acquisition
+         try {
+            exposurePerTimePointMs = core_.getExposure() * getNumSlices() * getNumPositions();
+         } catch (Exception ex) {
+            studio_.logs().logError(ex, "Failed to get exposure time");
+         }
+      }
+
       int totalImages = getTotalImages();
       long totalMB = getTotalMemory() / (1024 * 1024);
 
       double totalDurationSec = 0;
+      double interval = (interval_ > exposurePerTimePointMs) ? interval_ : exposurePerTimePointMs;
       if (!useCustomIntervals_) {
-         totalDurationSec = interval_ * numFrames / 1000.0;
+         totalDurationSec = interval * (numFrames - 1) / 1000.0;
       } else {
          for (Double d : customTimeIntervalsMs_) {
             totalDurationSec += d / 1000.0;
          }
       }
+      totalDurationSec += exposurePerTimePointMs / 1000;
       int hrs = (int) (totalDurationSec / 3600);
       double remainSec = totalDurationSec - hrs * 3600;
       int mins = (int) (remainSec / 60);
