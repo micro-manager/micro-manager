@@ -908,8 +908,16 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       int mins = (int) (remainSec / 60);
       remainSec = remainSec - mins * 60;
 
-      String txt;
-      txt =
+      String durationString = "\nMinimum duration: ";
+      if (hrs > 0) {
+         durationString += hrs + "h ";
+      }
+      if (mins > 0 || hrs > 0) {
+         durationString += mins + "m ";
+      }
+      durationString += NumberUtils.doubleToDisplayString(remainSec) + "s";
+
+      String txt =
               "Number of time points: " + (!useCustomIntervals_
               ? numFrames : customTimeIntervalsMs_.size())
               + "\nNumber of positions: " + numPositions
@@ -917,7 +925,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
               + "\nNumber of channels: " + numChannels
               + "\nTotal images: " + totalImages
               + "\nTotal memory: " + (totalMB <= 1024 ? totalMB + " MB" : NumberUtils.doubleToDisplayString(totalMB/1024.0) + " GB")
-              + "\nDuration: " + hrs + "h " + mins + "m " + NumberUtils.doubleToDisplayString(remainSec) + "s";
+              + durationString;
 
       if (useFrames_ || useMultiPosition_ || useChannels_ || useSlices_) {
          StringBuffer order = new StringBuffer("\nOrder: ");
