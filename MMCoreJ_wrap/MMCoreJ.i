@@ -598,9 +598,9 @@
 //
 %rename(eql) operator=;
 
-// CMMError used by MMCore
-%typemap(throws, throws="mmcorej.CMMError") CMMError {
-   jclass excep = jenv->FindClass("mmcorej/CMMError");
+// CMMError used by CMMCore is generally converted to our custom DeviceIOException subclass of java.io.IOException
+%typemap(throws, throws="mmcorej.DeviceIOException") CMMError {
+   jclass excep = jenv->FindClass("mmcorej/DeviceIOException");
    if (excep)
      jenv->ThrowNew(excep, $1.getFullMsg().c_str());
    return $null;
@@ -648,7 +648,7 @@
       return tags;
    }
 
-   private String getROITag() throws mmcorej.CMMError {
+   private String getROITag() throws mmcorej.DeviceIOException {
       String roi = "";
       int [] x = new int[1];
       int [] y = new int[1];
@@ -698,7 +698,7 @@
 
    }
 
-   private TaggedImage createTaggedImage(Object pixels, Metadata md, int cameraChannelIndex) throws mmcorej.CMMError {
+   private TaggedImage createTaggedImage(Object pixels, Metadata md, int cameraChannelIndex) throws mmcorej.DeviceIOException {
       TaggedImage image = createTaggedImage(pixels, md);
       JSONObject tags = image.tags;
       
@@ -721,7 +721,7 @@
       return image;
    }
 
-   private TaggedImage createTaggedImage(Object pixels, Metadata md) throws mmcorej.CMMError  {
+   private TaggedImage createTaggedImage(Object pixels, Metadata md) throws mmcorej.DeviceIOException  {
     JSONObject tags = metadataToMap(md);
     PropertySetting setting;
     Configuration config = getSystemStateCache();
@@ -762,39 +762,39 @@
       return new TaggedImage(pixels, tags);	
    }
 
-   public TaggedImage getTaggedImage(int cameraChannelIndex) throws mmcorej.CMMError {
+   public TaggedImage getTaggedImage(int cameraChannelIndex) throws mmcorej.DeviceIOException {
       Metadata md = new Metadata();
       Object pixels = getImage(cameraChannelIndex);
       return createTaggedImage(pixels, md, cameraChannelIndex);
    }
 
-   public TaggedImage getTaggedImage() throws mmcorej.CMMError {
+   public TaggedImage getTaggedImage() throws mmcorej.DeviceIOException {
       return getTaggedImage(0);
    }
 
-   public TaggedImage getLastTaggedImage(int cameraChannelIndex) throws mmcorej.CMMError {
+   public TaggedImage getLastTaggedImage(int cameraChannelIndex) throws mmcorej.DeviceIOException {
       Metadata md = new Metadata();
       Object pixels = getLastImageMD(cameraChannelIndex, 0, md);
       return createTaggedImage(pixels, md, cameraChannelIndex);
    }
    
-   public TaggedImage getLastTaggedImage() throws mmcorej.CMMError {
+   public TaggedImage getLastTaggedImage() throws mmcorej.DeviceIOException {
       return getLastTaggedImage(0);
    }
 
-   public TaggedImage getNBeforeLastTaggedImage(long n) throws mmcorej.CMMError {
+   public TaggedImage getNBeforeLastTaggedImage(long n) throws mmcorej.DeviceIOException {
       Metadata md = new Metadata();
       Object pixels = getNBeforeLastImageMD(n, md);
       return createTaggedImage(pixels, md);
    }
 
-   public TaggedImage popNextTaggedImage(int cameraChannelIndex) throws mmcorej.CMMError {
+   public TaggedImage popNextTaggedImage(int cameraChannelIndex) throws mmcorej.DeviceIOException {
       Metadata md = new Metadata();
       Object pixels = popNextImageMD(cameraChannelIndex, 0, md);
       return createTaggedImage(pixels, md, cameraChannelIndex);
    }
 
-   public TaggedImage popNextTaggedImage() throws mmcorej.CMMError {
+   public TaggedImage popNextTaggedImage() throws mmcorej.DeviceIOException {
       return popNextTaggedImage(0);
    }
 
@@ -803,7 +803,7 @@
    /*
     * Convenience function. Returns the ROI of the current camera in a java.awt.Rectangle.
     */
-   public Rectangle getROI() throws mmcorej.CMMError  {
+   public Rectangle getROI() throws mmcorej.DeviceIOException  {
       // ROI values are given as x,y,w,h in individual one-member arrays (pointers in C++):
       int[][] a = new int[4][1];
       getROI(a[0], a[1], a[2], a[3]);
@@ -813,7 +813,7 @@
     /*
     * Convenience function. Returns the ROI of specified camera in a java.awt.Rectangle.
     */
-   public Rectangle getROI(String label) throws mmcorej.CMMError  {
+   public Rectangle getROI(String label) throws mmcorej.DeviceIOException  {
       // ROI values are given as x,y,w,h in individual one-member arrays (pointers in C++):
       int[][] a = new int[4][1];
       getROI(label, a[0], a[1], a[2], a[3]);
@@ -824,7 +824,7 @@
     * Convenience function: returns multiple ROIs of the current camera as a
     * list of java.awt.Rectangles.
     */
-   public List<Rectangle> getMultiROI() throws mmcorej.CMMError {
+   public List<Rectangle> getMultiROI() throws mmcorej.DeviceIOException {
       UnsignedVector xs = new UnsignedVector();
       UnsignedVector ys = new UnsignedVector();
       UnsignedVector widths = new UnsignedVector();
@@ -843,7 +843,7 @@
     * Convenience function: convert incoming list of Rectangles into vectors
     * of ints to set multiple ROIs.
     */
-   public void setMultiROI(List<Rectangle> rects) throws mmcorej.CMMError {
+   public void setMultiROI(List<Rectangle> rects) throws mmcorej.DeviceIOException {
       UnsignedVector xs = new UnsignedVector();
       UnsignedVector ys = new UnsignedVector();
       UnsignedVector widths = new UnsignedVector();
@@ -862,7 +862,7 @@
     * Used in this class and by the acquisition engine 
     * (rather than duplicating this code there
     */
-   public String getPixelSizeAffineAsString() throws mmcorej.CMMError {
+   public String getPixelSizeAffineAsString() throws mmcorej.DeviceIOException {
       String pa = "";
       DoubleVector aff = getPixelSizeAffine(true);
       if (aff.size() == 6)  {
@@ -877,7 +877,7 @@
    /* 
     * Convenience function. Returns the current x,y position of the stage in a Point2D.Double.
     */
-   public Point2D.Double getXYStagePosition(String stage) throws mmcorej.CMMError {
+   public Point2D.Double getXYStagePosition(String stage) throws mmcorej.DeviceIOException {
       // stage position is given as x,y in individual one-member arrays (pointers in C++):
       double p[][] = new double[2][1];
       getXYPosition(stage, p[0], p[1]);
@@ -888,7 +888,7 @@
     * Convenience function: returns the current XY position of the current
     * XY stage device as a Point2D.Double.
     */
-   public Point2D.Double getXYStagePosition() throws mmcorej.CMMError {
+   public Point2D.Double getXYStagePosition() throws mmcorej.DeviceIOException {
       double x[] = new double[1];
       double y[] = new double[1];
       getXYPosition(x, y);
@@ -898,7 +898,7 @@
    /* 
     * Convenience function. Returns the current x,y position of the galvo in a Point2D.Double.
     */
-   public Point2D.Double getGalvoPosition(String galvoDevice) throws mmcorej.CMMError {
+   public Point2D.Double getGalvoPosition(String galvoDevice) throws mmcorej.DeviceIOException {
       // stage position is given as x,y in individual one-member arrays (pointers in C++):
       double p[][] = new double[2][1];
       getGalvoPosition(galvoDevice, p[0], p[1]);
