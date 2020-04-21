@@ -698,54 +698,62 @@
 
    }
 
-   private TaggedImage createTaggedImage(Object pixels, Metadata md, int cameraChannelIndex) throws mmcorej.CMMError, mmcorej.org.json.JSONException {
+   private TaggedImage createTaggedImage(Object pixels, Metadata md, int cameraChannelIndex) throws mmcorej.CMMError {
       TaggedImage image = createTaggedImage(pixels, md);
       JSONObject tags = image.tags;
       
-      if (!tags.has("CameraChannelIndex")) {
-         tags.put("CameraChannelIndex", cameraChannelIndex);
-         tags.put("ChannelIndex", cameraChannelIndex);
+      try {
+        if (!tags.has("CameraChannelIndex")) {
+           tags.put("CameraChannelIndex", cameraChannelIndex);
+           tags.put("ChannelIndex", cameraChannelIndex);
+        }
+        if (!tags.has("Camera")) {
+           String physicalCamera = getMultiCameraChannel(tags, cameraChannelIndex);
+           if (physicalCamera != null) {
+              tags.put("Camera", physicalCamera);
+              tags.put("Channel",physicalCamera);
+           }
+        }
+      } catch (mmcorej.org.json.JSONException jsonExc) {
+          throw new RuntimeException(jsonExc);
       }
-      if (!tags.has("Camera")) {
-         String physicalCamera = getMultiCameraChannel(tags, cameraChannelIndex);
-         if (physicalCamera != null) {
-            tags.put("Camera", physicalCamera);
-            tags.put("Channel",physicalCamera);
-         }
-      }
+      
       return image;
    }
 
-   private TaggedImage createTaggedImage(Object pixels, Metadata md) throws mmcorej.CMMError, mmcorej.org.json.JSONException  {
-      JSONObject tags = metadataToMap(md);
-      PropertySetting setting;
-      Configuration config = getSystemStateCache();
-      for (int i = 0; i < config.size(); ++i) {
-         setting = config.getSetting(i);
-         String key = setting.getDeviceLabel() + "-" + setting.getPropertyName();
-         String value = setting.getPropertyValue();
-          tags.put(key, value);
+   private TaggedImage createTaggedImage(Object pixels, Metadata md) throws mmcorej.CMMError  {
+    JSONObject tags = metadataToMap(md);
+    PropertySetting setting;
+    Configuration config = getSystemStateCache();
+    try {
+        for (int i = 0; i < config.size(); ++i) {
+           setting = config.getSetting(i);
+           String key = setting.getDeviceLabel() + "-" + setting.getPropertyName();
+           String value = setting.getPropertyValue();
+            tags.put(key, value);
+        }
+        tags.put("BitDepth", getImageBitDepth());
+        tags.put("PixelSizeUm", getPixelSizeUm(true));
+        tags.put("PixelSizeAffine", getPixelSizeAffineAsString());
+        tags.put("ROI", getROITag());
+        tags.put("Width", getImageWidth());
+        tags.put("Height", getImageHeight());
+        tags.put("PixelType", getPixelType());
+        tags.put("Frame", 0);
+        tags.put("FrameIndex", 0);
+        tags.put("Position", "Default");
+        tags.put("PositionIndex", 0);
+        tags.put("Slice", 0);
+        tags.put("SliceIndex", 0);
+        String channel = getCurrentConfigFromCache(getPropertyFromCache("Core","ChannelGroup"));
+        if ((channel == null) || (channel.length() == 0)) {
+           channel = "Default";
+        }
+        tags.put("Channel", channel);
+        tags.put("ChannelIndex", 0);
+      } catch (mmcorej.org.json.JSONException jsonExc) {
+          throw new RuntimeException(jsonExc);
       }
-      tags.put("BitDepth", getImageBitDepth());
-      tags.put("PixelSizeUm", getPixelSizeUm(true));
-      tags.put("PixelSizeAffine", getPixelSizeAffineAsString());
-      tags.put("ROI", getROITag());
-      tags.put("Width", getImageWidth());
-      tags.put("Height", getImageHeight());
-      tags.put("PixelType", getPixelType());
-      tags.put("Frame", 0);
-      tags.put("FrameIndex", 0);
-      tags.put("Position", "Default");
-      tags.put("PositionIndex", 0);
-      tags.put("Slice", 0);
-      tags.put("SliceIndex", 0);
-      String channel = getCurrentConfigFromCache(getPropertyFromCache("Core","ChannelGroup"));
-      if ((channel == null) || (channel.length() == 0)) {
-         channel = "Default";
-      }
-      tags.put("Channel", channel);
-      tags.put("ChannelIndex", 0);
-
 
       try {
          tags.put("Binning", getProperty(getCameraDevice(), "Binning"));
@@ -754,39 +762,39 @@
       return new TaggedImage(pixels, tags);	
    }
 
-   public TaggedImage getTaggedImage(int cameraChannelIndex) throws mmcorej.CMMError, mmcorej.org.json.JSONException {
+   public TaggedImage getTaggedImage(int cameraChannelIndex) throws mmcorej.CMMError {
       Metadata md = new Metadata();
       Object pixels = getImage(cameraChannelIndex);
       return createTaggedImage(pixels, md, cameraChannelIndex);
    }
 
-   public TaggedImage getTaggedImage() throws mmcorej.CMMError, mmcorej.org.json.JSONException {
+   public TaggedImage getTaggedImage() throws mmcorej.CMMError {
       return getTaggedImage(0);
    }
 
-   public TaggedImage getLastTaggedImage(int cameraChannelIndex) throws mmcorej.CMMError, mmcorej.org.json.JSONException {
+   public TaggedImage getLastTaggedImage(int cameraChannelIndex) throws mmcorej.CMMError {
       Metadata md = new Metadata();
       Object pixels = getLastImageMD(cameraChannelIndex, 0, md);
       return createTaggedImage(pixels, md, cameraChannelIndex);
    }
    
-   public TaggedImage getLastTaggedImage() throws mmcorej.CMMError, mmcorej.org.json.JSONException {
+   public TaggedImage getLastTaggedImage() throws mmcorej.CMMError {
       return getLastTaggedImage(0);
    }
 
-   public TaggedImage getNBeforeLastTaggedImage(long n) throws mmcorej.CMMError, mmcorej.org.json.JSONException {
+   public TaggedImage getNBeforeLastTaggedImage(long n) throws mmcorej.CMMError {
       Metadata md = new Metadata();
       Object pixels = getNBeforeLastImageMD(n, md);
       return createTaggedImage(pixels, md);
    }
 
-   public TaggedImage popNextTaggedImage(int cameraChannelIndex) throws mmcorej.CMMError, mmcorej.org.json.JSONException {
+   public TaggedImage popNextTaggedImage(int cameraChannelIndex) throws mmcorej.CMMError {
       Metadata md = new Metadata();
       Object pixels = popNextImageMD(cameraChannelIndex, 0, md);
       return createTaggedImage(pixels, md, cameraChannelIndex);
    }
 
-   public TaggedImage popNextTaggedImage() throws mmcorej.CMMError, mmcorej.org.json.JSONException {
+   public TaggedImage popNextTaggedImage() throws mmcorej.CMMError {
       return popNextTaggedImage(0);
    }
 
