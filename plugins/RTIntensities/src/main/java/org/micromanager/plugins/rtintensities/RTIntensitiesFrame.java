@@ -25,7 +25,6 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Ellipse2D;
-import java.awt.image.Raster;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Shape;
@@ -33,35 +32,17 @@ import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
-import javax.swing.JTextField;
-
 
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
-import org.micromanager.events.ExposureChangedEvent;
-import org.micromanager.events.NewDisplayEvent;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
-import org.jfree.chart.annotations.XYPointerAnnotation;
-import org.jfree.chart.axis.LogAxis;
-import org.jfree.chart.axis.NumberAxis;
-import org.jfree.chart.axis.NumberTickUnit;
-import org.jfree.chart.axis.ValueAxis;
-import org.jfree.chart.plot.DatasetRenderingOrder;
-import org.jfree.chart.renderer.xy.StandardXYBarPainter;
-import org.jfree.chart.renderer.xy.StandardXYItemRenderer;
-import org.jfree.chart.renderer.xy.XYBarRenderer;
-import org.jfree.chart.renderer.xy.XYItemRenderer;
-import org.jfree.chart.ui.TextAnchor;
-import org.jfree.data.function.Function2D;
-import org.jfree.data.general.DatasetUtils;
-import org.jfree.data.statistics.HistogramDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.micromanager.Studio;
@@ -70,11 +51,8 @@ import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplayWindow;
 
-import ij.IJ;
 import ij.ImagePlus;
-import ij.gui.PointRoi;
 import ij.gui.Roi;
-import ij.measure.*;
 import ij.process.ImageProcessor;
 
 public class RTIntensitiesFrame extends MMFrame {
@@ -90,13 +68,13 @@ public class RTIntensitiesFrame extends MMFrame {
    private JButton acquireButton_;
    private Datastore ds_;
    private int skip_ = 0;
-   private Roi roi_[] = new Roi[100];
+   private Roi[] roi_ = new Roi[100];
    private int ROIs_ = 0;
    private int imagesReceived_ = 0;
    static final long serialVersionUID = 1;
    private JLabel title;
    private XYSeriesCollection      dataset;
-   XYSeries data[] = new XYSeries[100];
+   XYSeries[] data = new XYSeries[100];
 
    public RTIntensitiesFrame(Studio studio) {
       super("Real time intensity GUI");
@@ -133,7 +111,6 @@ public class RTIntensitiesFrame extends MMFrame {
       super.add(roiInfoLabel_, "growx, split, span");
       clearRoiButton_ = new JButton("Clear ROIs");
       clearRoiButton_.addActionListener(new ActionListener() {
-    	  @SuppressWarnings("deprecation")
     	  @Override
     	  public void actionPerformed(ActionEvent e) {
    			  title.setText("Define ROIs ...");
@@ -146,19 +123,15 @@ public class RTIntensitiesFrame extends MMFrame {
       super.add(clearRoiButton_, "split, span");
             
       setRoiButton_ = new JButton("Set ROI");
-      setRoiButton_.addActionListener(new ActionListener() {
-    	  @SuppressWarnings("deprecation")
-    	  @Override
-    	  public void actionPerformed(ActionEvent e) {
-              image_ = studio_.displays().getAllImageWindows().get(0).getImagePlus();
-              SummaryMetadata md = studio_.displays().getAllDataViewers().get(0).getDataProvider().getSummaryMetadata();
-    		  if (ROIs_ < 100 && image_.getRoi().isVisible()) {
-    			  title.setText("Ready to acquire");
-    			  roi_[ROIs_] = image_.getRoi();
-    			  ROIs_ ++;
-    			  roiInfoLabel_.setText(String.format("Defined: %d", ROIs_));
-    			  acquireButton_.setEnabled(true);
-    		  }
+      setRoiButton_.addActionListener(e -> {
+         image_ = studio_.displays().getAllImageWindows().get(0).getImagePlus();
+         SummaryMetadata md = studio_.displays().getAllDataViewers().get(0).getDataProvider().getSummaryMetadata();
+         if (ROIs_ < 100 && image_.getRoi().isVisible()) {
+            title.setText("Ready to acquire");
+            roi_[ROIs_] = image_.getRoi();
+            ROIs_++;
+            roiInfoLabel_.setText(String.format("Defined: %d", ROIs_));
+            acquireButton_.setEnabled(true);
          }
       });
       setRoiButton_.setEnabled(false);
@@ -219,7 +192,7 @@ public class RTIntensitiesFrame extends MMFrame {
 		   double v;
 		   title.setText("You should be seeing data on the plot.");
 		   Image image = event.getImage();
-		   t = (double)image.getCoords().getTime();
+		   t = (double)image.getCoords().getT();
 		   if (window_ == null) window_ = studio_.getDisplayManager().getDisplays(ds_).get(0);
 		   ImageProcessor processor = studio_.data().ij().createProcessor(image);
 		   processor.setLineWidth(1);
@@ -255,7 +228,6 @@ public class RTIntensitiesFrame extends MMFrame {
    /**
     * Create a frame with a plot of the data given in XYSeries
     * @param title
-    * @param data
     * @param xTitle
     * @param yTitle
     * @param xLocation
