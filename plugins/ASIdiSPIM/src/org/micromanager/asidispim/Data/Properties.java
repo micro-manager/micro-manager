@@ -187,6 +187,7 @@ public class Properties {
       CONTROLLER_NAME("Controller Name"),  // for PI stage
       VELOCITY("Velocity"),                // for PI stage
       FIRMWARE_VERSION("FirmwareVersion"),
+      FIRMWARE_BUILD("FirmwareBuild"),
       CAMERA("Camera"),
       CORE_TIMEOUT_MS("TimeoutMs"),
       PLUGIN_POSITION_REFRESH_INTERVAL("PositionRefreshInterval(s)"),

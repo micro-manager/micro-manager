@@ -166,14 +166,17 @@ public class SettingsPanel extends ListeningJPanel {
             "[]4[]"));
       scannerPanel.setBorder(PanelUtils.makeTitledBorder("Light Sheet Scanner"));
 
+      String firmwareBuild = props_.getPropValueString(Devices.Keys.GALVOA, Properties.Keys.FIRMWARE_BUILD);
+      double maxFilterFreq= 1.0;
+      if (firmwareBuild.equals("GALVO_SPIM")) maxFilterFreq = 10.0;
+      
       scannerPanel.add(new JLabel("Filter freq, sheet axis [kHz]:"));
-      final JSpinner scannerFilterX = pu.makeSpinnerFloat(0.1, 1, 0.1,
+      final JSpinner scannerFilterX = pu.makeSpinnerFloat(0.1, maxFilterFreq, 0.1,
             new Devices.Keys [] {Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SCANNER_FILTER_X, 0.8);
       scannerPanel.add(scannerFilterX, "wrap");
-      
       scannerPanel.add(new JLabel("Filter freq, slice axis [kHz]:"));
-      final JSpinner scannerFilterY = pu.makeSpinnerFloat(0.1, 1, 0.1,
+      final JSpinner scannerFilterY = pu.makeSpinnerFloat(0.1, maxFilterFreq, 0.1,
             new Devices.Keys [] {Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SCANNER_FILTER_Y, 0.4);
       scannerPanel.add(scannerFilterY, "wrap");
