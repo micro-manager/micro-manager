@@ -31,6 +31,7 @@ import java.awt.Shape;
 import java.util.List;
 
 import javax.swing.JButton;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 
 import net.miginfocom.swing.MigLayout;
@@ -54,8 +55,9 @@ import org.micromanager.display.DisplayWindow;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.process.ImageProcessor;
+import org.micromanager.internal.utils.WindowPositioning;
 
-public class RTIntensitiesFrame extends MMFrame {
+public class RTIntensitiesFrame extends JFrame {
 
    private Studio studio_;
    private DisplayWindow window_ = null;
@@ -79,6 +81,8 @@ public class RTIntensitiesFrame extends MMFrame {
    public RTIntensitiesFrame(Studio studio) {
       super("Real time intensity GUI");
       studio_ = studio;
+      super.setLocation(100, 100); // Default location
+      WindowPositioning.setUpLocationMemory(this, RTIntensitiesFrame.class, "Main");
 
       super.setLayout(new MigLayout("fill, insets 2, gap 2, flowx"));
 
