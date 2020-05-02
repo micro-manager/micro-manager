@@ -1,0 +1,24 @@
+[submodule "libraries/AcqEngJ"]
+	path = libraries/AcqEngJ
+	url = https://github.com/micro-manager/AcqEngJ.git
+	branch = master
+[submodule "libraries/NDViewer"]
+	path = libraries/NDViewer
+	url = https://github.com/micro-manager/NDViewer.git
+	branch = master
+[submodule "libraries/NDTiffStorage"]
+	path = libraries/NDTiffStorage
+	url = https://github.com/micro-manager/NDTiffStorage.git
+	branch = master
+[submodule "AcqEngJ"]
+	path = AcqEngJ
+	url = https://github.com/micro-manager/AcqEngJ.git
+	branch = master
+[submodule "NDViewer"]
+	path = NDViewer
+	url = https://github.com/micro-manager/NDViewer.git
+	branch = master
+[submodule "NDTiffStorage"]
+	path = NDTiffStorage
+	url = https://github.com/micro-manager/NDTiffStorage.git
+	branch = master
