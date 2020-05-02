@@ -22,3 +22,15 @@
 	path = NDTiffStorage
 	url = https://github.com/micro-manager/NDTiffStorage.git
 	branch = master
+[submodule "baseLibraries/NDTiffStorage"]
+	path = baseLibraries/NDTiffStorage
+	url = https://github.com/micro-manager/NDTiffStorage.git
+	branch = master
+[submodule "baseLibraries/NDViewer"]
+	path = baseLibraries/NDViewer
+	url = https://github.com/micro-manager/NDViewer.git
+	branch = master
+[submodule "baseLibraries/AcqEngJ"]
+	path = baseLibraries/AcqEngJ
+	url = https://github.com/micro-manager/AcqEngJ.git
+	branch = master
