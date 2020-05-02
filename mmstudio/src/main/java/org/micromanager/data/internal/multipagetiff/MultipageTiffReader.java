@@ -359,7 +359,7 @@ public final class MultipageTiffReader {
          DefaultCoords.Builder builder = new DefaultCoords.Builder();
          builder.channel(channel)
                  .z(slice)
-                 .time(frame)
+                 .t(frame)
                  .stagePosition(position);
          coordsToOffset_.put(builder.build(), imageOffset);
       }

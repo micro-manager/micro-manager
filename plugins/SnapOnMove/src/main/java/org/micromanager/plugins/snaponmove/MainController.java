@@ -52,6 +52,12 @@ import org.micromanager.alerts.UpdatableAlert;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
+
+// Imports for MMStudio internal packages
+// Plugins should not access internal packages, to ensure modularity and
+// maintainability. However, this plugin code is older than the current
+// MMStudio API, so it still uses internal classes and interfaces. New code
+// should not imitate this practice.
 import org.micromanager.internal.propertymap.DefaultPropertyMap;
 import org.micromanager.internal.propertymap.MM1JSONSerializer;
 

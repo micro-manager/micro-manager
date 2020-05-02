@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -14,6 +15,7 @@ import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 
 import com.google.common.eventbus.Subscribe;
+import org.micromanager.Studio;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.internal.SciFIODataProvider;
 import org.micromanager.display.DisplayWindow;
@@ -23,7 +25,7 @@ import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
-
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 
 /**
@@ -32,12 +34,14 @@ import org.micromanager.internal.utils.ReportingUtils;
 public final class FileMenu {
    private static final String FILE_HISTORY = "list of recently-viewed files";
    private static final int MAX_HISTORY_SIZE = 15;
-   private final MMStudio studio_;
+   private final Studio studio_;
+   private final MutablePropertyMapView settings_;
    private boolean enableCloseAll_ = false;
 
-   public FileMenu(MMStudio studio, JMenuBar menuBar) {
+   public FileMenu(Studio studio, JMenuBar menuBar) {
       studio_ = studio;
       studio_.displays().registerForEvents(this);
+      settings_ = studio_.profile().getSettings(FileMenu.class);
 
       // We generate the menu contents on the fly, as the "open recent"
       // menu items are dynamically-generated.
@@ -108,7 +112,7 @@ public final class FileMenu {
          new Runnable() {
             @Override
             public void run() {
-               studio_.closeSequence(false);
+               ((MMStudio) studio_).closeSequence(false);
             }
          }
       );
@@ -174,8 +178,7 @@ public final class FileMenu {
       JMenu result = new JMenu(String.format("Open Recent (%s)",
                isVirtual ? "Virtual" : "RAM"));
 
-      String[] history = getRecentFiles();
-      ArrayList<String> files = new ArrayList<String>(Arrays.asList(history));
+      List<String> files = getRecentFiles();
       // History is from oldest to newest; we want newest to oldest so new
       // files are on top.
       Collections.reverse(files);
@@ -223,8 +226,7 @@ public final class FileMenu {
     * @param newFile file to be added to history
     */
    public void updateFileHistory(String newFile) {
-      String[] fileHistory = getRecentFiles();
-      ArrayList<String> files = new ArrayList<String>(Arrays.asList(fileHistory));
+      List<String> files = getRecentFiles();
       if (files.contains(newFile)) {
          // It needs to go on the end; remove it from the middle.
          files.remove(newFile);
@@ -234,17 +236,15 @@ public final class FileMenu {
          files.remove(files.get(0));
       }
       files.add(newFile);
-      setRecentFiles(files.toArray(fileHistory));
+      setRecentFiles(files);
    }
 
-   private static String[] getRecentFiles() {
-      return MMStudio.getInstance().profile().getStringArray(
-            FileMenu.class, FILE_HISTORY, new String[] {});
+   private List<String> getRecentFiles() {
+      return settings_.getStringList(FILE_HISTORY, new String[] {});
    }
 
-   private static void setRecentFiles(String[] files) {
-      MMStudio.getInstance().profile().setStringArray(
-            FileMenu.class, FILE_HISTORY, files);
+   private void setRecentFiles(List<String> files) {
+      settings_.putStringList(FILE_HISTORY, files);
    }
 
    @Subscribe

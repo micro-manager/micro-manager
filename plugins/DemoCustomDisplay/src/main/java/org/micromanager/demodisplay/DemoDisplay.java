@@ -39,21 +39,24 @@ import javax.swing.JPanel;
 
 import net.miginfocom.swing.MigLayout;
 
+import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.data.DatastoreRewriteException;
-
+import org.micromanager.data.DataProvider;
+import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplaySettings;
 
-import org.micromanager.Studio;
-import org.micromanager.data.DataProvider;
-import org.micromanager.display.DataViewerListener;
+// Imports for MMStudio internal packages
+// Plugins should not access internal packages, to ensure modularity and
+// maintainability. However, this plugin code is older than the current
+// MMStudio API, so it still uses internal classes and interfaces. New code
+// should not imitate this practice.
 import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
 import org.micromanager.display.internal.event.DefaultDisplaySettingsChangedEvent;
-import org.micromanager.internal.utils.ReportingUtils;
 
 
 /**
@@ -215,7 +218,7 @@ public class DemoDisplay extends JFrame implements DataViewer {
       try {
          currentImage_ = store_.getImage(coords);
       } catch (IOException ex) {
-         ReportingUtils.logError(ex, "IOException in DemoDataViewer");
+         studio_.logs().logError(ex, "IOException in DemoDataViewer");
       }
       repaint();
    }

@@ -31,6 +31,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
 import org.micromanager.events.ExposureChangedEvent;
 import org.micromanager.events.GUIRefreshEvent;
@@ -117,7 +118,7 @@ public final class ExposureTime extends WidgetPlugin implements SciJavaPlugin {
 
    @Override
    public PropertyMap configureControl(Frame parent) {
-      return studio_.data().getPropertyMapBuilder().build();
+      return PropertyMaps.builder().build();
    }
 
    /**

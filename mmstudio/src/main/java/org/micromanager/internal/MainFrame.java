@@ -65,10 +65,10 @@ import org.micromanager.alerts.internal.DefaultAlertManager;
 import org.micromanager.alerts.internal.DefaultAlert;
 import org.micromanager.alerts.internal.NoAlertsAvailableEvent;
 import org.micromanager.events.ChannelExposureEvent;
+import org.micromanager.events.ChannelGroupChangedEvent;
 import org.micromanager.events.ConfigGroupChangedEvent;
 import org.micromanager.events.GUIRefreshEvent;
 import org.micromanager.events.StartupCompleteEvent;
-import org.micromanager.events.internal.ChannelGroupEvent;
 import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 import org.micromanager.events.internal.ShutterDevicesEvent;
 import org.micromanager.internal.dialogs.OptionsDlg;
@@ -201,9 +201,8 @@ public final class MainFrame extends MMFrame {
    }
 
    public void initializeConfigPad() {
-      configPad_.setCore(core_);
-      configPad_.setParentGUI(mmStudio_);
-      configPadButtonPanel_.setCore(core_);
+      configPad_.initialize();
+      configPadButtonPanel_.initialize();
    }
 
    private JButton createButton(String text, String iconPath,
@@ -336,10 +335,7 @@ public final class MainFrame extends MMFrame {
             "pushy 0, gapleft push, alignx right, w 88!, h 20!");
 
       configPad_ = new ConfigGroupPad(mmStudio_);
-      configPadButtonPanel_ = new ConfigPadButtonPanel();
-      configPadButtonPanel_.setConfigPad(configPad_);
-      configPadButtonPanel_.setGUI(mmStudio_);
-
+      configPadButtonPanel_ = new ConfigPadButtonPanel(mmStudio_, configPad_);
       configPad_.setFont(defaultFont_);
 
       // Allowing the config pad to grow horizontally and vertically requires
@@ -660,7 +656,7 @@ public final class MainFrame extends MMFrame {
    }
 
    @Subscribe
-   public void onChannelGroup(ChannelGroupEvent event) {
+   public void onChannelGroupChangedEvent(ChannelGroupChangedEvent event) {
       refreshChannelGroup();
    }
 

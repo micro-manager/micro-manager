@@ -182,7 +182,7 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
       posTable_.setDefaultEditor(Object.class, cellEditor_);
       posTable_.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
       // set column divider location
-      int posCol0Width = profile.getInt(PositionListDlg.class,
+      int posCol0Width = profile.getSettings(PositionListDlg.class).getInteger(
             POS_COL0_WIDTH, 75);
       posTable_.getColumnModel().getColumn(0).setWidth(posCol0Width);
       posTable_.getColumnModel().getColumn(0).setPreferredWidth(posCol0Width);
@@ -199,7 +199,7 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
       axisPane.setMaximumSize(new Dimension(32767, 30 + tableHeight));
       axisPane.setMinimumSize(new Dimension(50, 30 + tableHeight));
       // set divider location
-      int axisCol0Width = profile.getInt(PositionListDlg.class,
+      int axisCol0Width = profile.getSettings(PositionListDlg.class).getInteger(
             AXIS_COL0_WIDTH, 75);
       axisTable_.getColumnModel().getColumn(0).setWidth(axisCol0Width);
       axisTable_.getColumnModel().getColumn(0).setPreferredWidth(axisCol0Width);
@@ -681,12 +681,15 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
       // Find the current position for that device in curMsp_
       for (int posIndex = 0; posIndex < curMsp_.size(); ++posIndex) {
          StagePosition subPos = curMsp_.get(posIndex);
-         if (!subPos.stageName.equals(deviceName)) {
-            continue;
+         if (subPos.getStageDeviceLabel().equals(deviceName)) {
+            if (subPos.is1DStagePosition()) {
+               z = subPos.get1DPosition();
+            }
+            else if (subPos.is2DStagePosition()) {
+               x = subPos.get2DPositionX();
+               y = subPos.get2DPositionY();
+            }
          }
-         x = subPos.x;
-         y = subPos.y;
-         z = subPos.z;
       }
       for (int row : selectedRows) {
          // Find the appropriate StagePosition in this MultiStagePosition and
@@ -695,18 +698,19 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
          boolean foundPos = false;
          for (int posIndex = 0; posIndex < listPos.size(); ++posIndex) {
             StagePosition subPos = listPos.get(posIndex);
-            if (!subPos.stageName.equals(deviceName)) {
-               continue;
+            if (subPos.getStageDeviceLabel().equals(deviceName)) {
+               if (subPos.is1DStagePosition()) {
+                  subPos.set1DPosition(subPos.getStageDeviceLabel(), z);
+               } else if (subPos.is2DStagePosition()) {
+                  subPos.set2DPosition(subPos.getStageDeviceLabel(), x, y);
+               }
+               foundPos = true;
             }
-            subPos.x = x;
-            subPos.y = y;
-            subPos.z = z;
-            foundPos = true;
          }
          if (!foundPos) {
             // No existing StagePosition for this location; add a new one.
-            StagePosition subPos = new StagePosition();
-            subPos.stageName = deviceName;
+            StagePosition subPos;
+            //subPos.stageName = deviceName;
             DeviceType type;
             try {
                type = core_.getDeviceType(deviceName);
@@ -716,13 +720,10 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
                continue;
             }
             if (type == DeviceType.StageDevice) {
-               subPos.x = x;
-               subPos.numAxes = 1;
+               subPos = StagePosition.create1D(deviceName, z);
             }
             else if (type == DeviceType.XYStageDevice) {
-               subPos.x = x;
-               subPos.y = y;
-               subPos.numAxes = 2;
+               subPos = StagePosition.create2D(deviceName, x, y);
             }
             else {
                throw new IllegalArgumentException("Unrecognized stage device type " + type + " for stage " + deviceName);
@@ -772,10 +773,8 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
          StrVector stages = core_.getLoadedDevicesOfType(DeviceType.StageDevice);
          for (int i=0; i<stages.size(); i++) {
             if (axisList_.use(stages.get(i))) {
-               StagePosition sp = new StagePosition();
-               sp.stageName = stages.get(i);
-               sp.numAxes = 1;
-               sp.x = core_.getPosition(stages.get(i));
+               StagePosition sp = StagePosition.create1D(stages.get(i),
+                       core_.getPosition(stages.get(i)));
                msp.add(sp);
                sb.append(sp.getVerbose()).append("\n");
             }
@@ -785,11 +784,10 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
          StrVector stages2D = core_.getLoadedDevicesOfType(DeviceType.XYStageDevice);
          for (int i=0; i<stages2D.size(); i++) {
             if (axisList_.use(stages2D.get(i))) {
-               StagePosition sp = new StagePosition();
-               sp.stageName = stages2D.get(i);
-               sp.numAxes = 2;
-               sp.x = core_.getXPosition(stages2D.get(i));
-               sp.y = core_.getYPosition(stages2D.get(i));
+               String stageName = stages2D.get(i);
+               StagePosition sp = StagePosition.create2D(stageName,
+                       core_.getXPosition(stageName),
+                       core_.getYPosition(stageName));
                msp.add(sp);
                sb.append(sp.getVerbose()).append("\n");
             }
@@ -1165,20 +1163,15 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
          MultiStagePosition multiPos = positions.getPosition(rowIndex - 1);
          for (int posIndex = 0; posIndex < multiPos.size(); ++posIndex) {
             StagePosition subPos = multiPos.get(posIndex);
-            if (subPos.stageName.equals(deviceName)) {
-               // This is the one to modify.
-               if (subPos.numAxes >= 3) {
-                  // With the current definition of StagePosition axis fields,
-                  // I don't think this can ever happen, but hey, future-
-                  // proofing.
-                  subPos.z += offsets.get(2);
+            if (subPos.getStageDeviceLabel().equals(deviceName)) {
+               if (subPos.is1DStagePosition()) {
+                  subPos.set1DPosition(subPos.getStageDeviceLabel(),
+                          subPos.get1DPosition() + offsets.get(0));
+               } else if (subPos.is2DStagePosition()) {
+                  subPos.set2DPosition(subPos.getStageDeviceLabel(),
+                          subPos.get2DPositionX() + offsets.get(0),
+                          subPos.get2DPositionY() + offsets.get(1));
                }
-               if (subPos.numAxes >= 2) {
-                  subPos.y += offsets.get(1);
-               }
-               // Assume every stage device has at least one axis, because
-               // if they don't, then oh dear...
-               subPos.x += offsets.get(0);
             }
          }
       }
@@ -1196,10 +1189,10 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
 
    private void saveDims() {
       int posCol0Width = posTable_.getColumnModel().getColumn(0).getWidth();
-      studio_.profile().setInt(PositionListDlg.class, POS_COL0_WIDTH,
+      studio_.profile().getSettings(PositionListDlg.class).putInteger(POS_COL0_WIDTH,
             posCol0Width);
       int axisCol0Width = axisTable_.getColumnModel().getColumn(0).getWidth();
-      studio_.profile().setInt(PositionListDlg.class, AXIS_COL0_WIDTH,
+      studio_.profile().getSettings(PositionListDlg.class).putInteger(AXIS_COL0_WIDTH,
             axisCol0Width);
    }
 }

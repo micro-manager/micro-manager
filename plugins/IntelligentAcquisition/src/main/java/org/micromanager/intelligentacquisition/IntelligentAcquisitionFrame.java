@@ -18,37 +18,40 @@
 
 package org.micromanager.intelligentacquisition;
 
-import ij.IJ;
-import ij.ImagePlus;
-import ij.WindowManager;
-import java.io.File;
-import java.text.ParseException;
-import mmcorej.CMMCore;
-
-
-
-import org.micromanager.Studio;
-
-import org.micromanager.data.Datastore;
-
-import org.micromanager.internal.utils.FileDialogs;
-import org.micromanager.internal.utils.FileDialogs.FileType;
-import org.micromanager.internal.utils.NumberUtils;
-
-import ij.measure.ResultsTable;
-import ij.text.TextPanel;
-import ij.text.TextWindow;
 import java.awt.Frame;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.IOException;
+import java.io.File;
+import java.text.ParseException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import ij.IJ;
+import ij.ImagePlus;
+import ij.WindowManager;
+import ij.measure.ResultsTable;
+import ij.text.TextPanel;
+import ij.text.TextWindow;
+
+import mmcorej.CMMCore;
+
+import org.micromanager.Studio;
+import org.micromanager.data.Datastore;
 import org.micromanager.data.Coords;
 import org.micromanager.display.DataViewer;
+
+// Imports for MMStudio internal packages
+// Plugins should not access internal packages, to ensure modularity and
+// maintainability. However, this plugin code is older than the current
+// MMStudio API, so it still uses internal classes and interfaces. New code
+// should not imitate this practice.
+import org.micromanager.internal.utils.FileDialogs;
+import org.micromanager.internal.utils.FileDialogs.FileType;
+import org.micromanager.internal.utils.NumberUtils;
 
 /**
  *

@@ -7,6 +7,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import javax.swing.SwingWorker;
+
+import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Storage;
@@ -23,23 +25,23 @@ import org.micromanager.internal.MMStudio;
  * @author nico
  */
 public class DefaultDataSaver extends SwingWorker<Void, Void> {
-      private final MMStudio mmStudio_;
+      private final Studio studio;
       private final DefaultDatastore store_;
       private final Datastore.SaveMode mode_;
       private final String path_;
       private final DefaultDatastore duplicate_;
       private final Storage saver_;
       
-   public DefaultDataSaver(MMStudio mmStudio, 
-           DefaultDatastore store, 
-           Datastore.SaveMode mode, 
-           String path) throws IOException {
-      mmStudio_ = mmStudio;
+   public DefaultDataSaver(Studio studio,
+                           DefaultDatastore store,
+                           Datastore.SaveMode mode,
+                           String path) throws IOException {
+      this.studio = studio;
       store_ = store;
       mode_ = mode;
       path_ = path;
       
-      duplicate_ = new DefaultDatastore(mmStudio_);
+      duplicate_ = new DefaultDatastore(this.studio);
 
       if (mode_ == Datastore.SaveMode.MULTIPAGE_TIFF) {
          saver_ = new StorageMultipageTiff(MMStudio.getFrame(),
@@ -167,10 +169,10 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
       try {
          get();
       } catch (ExecutionException | InterruptedException e) {
-          mmStudio_.logs().showError(e, "Failed to save to " + path_);
+          studio.logs().showError(e, "Failed to save to " + path_);
       }
       
-      mmStudio_.alerts().postAlert("Finished saving", this.getClass(), path_);
+      studio.alerts().postAlert("Finished saving", this.getClass(), path_);
    }
 
 

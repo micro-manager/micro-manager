@@ -313,7 +313,7 @@ public final class DraggableIcon extends JLabel {
                   DefaultQuickAccessManager.CUSTOM_FILE);
             iconJson.put(DefaultQuickAccessManager.ICON_PATH,
                   imageFile.getAbsolutePath());
-            config = config.copy()
+            config = config.copyBuilder()
                .putString(WidgetPlugin.CUSTOM_ICON_STRING, iconJson.toString())
                .build();
             frame_.removeControl(parentCell_, false);
@@ -340,7 +340,7 @@ public final class DraggableIcon extends JLabel {
             iconJson.put(DefaultQuickAccessManager.ICON_TYPE,
                   DefaultQuickAccessManager.COLOR_SWATCH);
             iconJson.put(DefaultQuickAccessManager.ICON_COLOR, color.getRGB());
-            config = config.copy()
+            config = config.copyBuilder()
                .putString(WidgetPlugin.CUSTOM_ICON_STRING, iconJson.toString())
                .build();
             frame_.removeControl(parentCell_, false);
@@ -364,7 +364,7 @@ public final class DraggableIcon extends JLabel {
             iconJson.put(DefaultQuickAccessManager.ICON_TYPE,
                   DefaultQuickAccessManager.JAR_ICON);
             iconJson.put(DefaultQuickAccessManager.ICON_PATH, name);
-            config = config.copy()
+            config = config.copyBuilder()
                .putString(WidgetPlugin.CUSTOM_ICON_STRING, iconJson.toString())
                .build();
             frame_.removeControl(parentCell_, false);

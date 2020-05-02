@@ -15,6 +15,8 @@ import net.imglib2.display.ColorTable8;
 import org.micromanager.internal.utils.ColorMaps;
 
 /**
+ * Generates the items in the colorModeComboBox in the top of the
+ * Histograms and Intensity scaling panel
  *
  * @author mark
  */

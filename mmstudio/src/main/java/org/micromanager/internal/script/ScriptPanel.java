@@ -838,7 +838,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
          File curFile = FileDialogs.openFile(this, "Select a Beanshell script", BSH_FILE);
 
          if (curFile != null) {
-               studio_.profile().setString(ScriptPanel.class,
+               studio_.profile().getSettings(ScriptPanel.class).putString(
                      SCRIPT_FILE, curFile.getAbsolutePath());
                // only creates a new file when a file with this name does not exist
                addScriptToModel(curFile);
@@ -1376,13 +1376,13 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       return interp_.stopRequestPending();
    }
 
-   public static String getStartupScript() {
-      return MMStudio.getInstance().profile().getString(ScriptPanel.class,
-            STARTUP_SCRIPT, "MMStartup.bsh");
+   public static String getStartupScript(Studio studio) {
+      return studio.profile().getSettings(ScriptPanel.class).
+              getString(STARTUP_SCRIPT, "MMStartup.bsh");
    }
 
-   public static void setStartupScript(String path) {
-      MMStudio.getInstance().profile().setString(ScriptPanel.class,
+   public static void setStartupScript(Studio studio, String path) {
+      studio.profile().getSettings(ScriptPanel.class).putString(
             STARTUP_SCRIPT, path);
    }
 

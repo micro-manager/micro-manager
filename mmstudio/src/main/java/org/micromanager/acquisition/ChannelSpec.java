@@ -34,27 +34,135 @@ import java.awt.Color;
  */
 @SuppressWarnings("unused")
 public class ChannelSpec {
+   public static class Builder{
 
-   /** Whether this channel should be imaged in each Z slice of the stack */
-   public Boolean doZStack = true;
-   /** Name of the channel */
+      /** Channel group this channel config belongs to **/
+      private String channelGroup_ = "";
+      /** Name of the channel */
+      private String config_ = "";
+      /** Exposure time, in milliseconds */
+      private double exposure_ = 10.0;
+      /** Z-offset, in microns */
+      private double zOffset_ = 0.0;
+      /** Whether this channel should be imaged in each Z slice of the stack */
+      private Boolean doZStack_ = true;
+      /** Color to use when displaying this channel */
+      private Color color_ = Color.gray;
+      /** Number of frames to skip between each time this channel is imaged. */
+      private int skipFactorFrame_ = 0;
+      /** Whether the channel is enabled for imaging at all. */
+      private boolean useChannel_ = true;
+      /** Name of the camera to use. */
+      private String camera_ = "";
+
+      public Builder() {}
+
+      public Builder channelGroup (String channelGroup) { channelGroup_ = channelGroup;
+         return this;
+      }
+      public Builder config (String config) { config_ = config; return this; }
+      public Builder exposure (double exposure) { exposure_ = exposure; return this; }
+      public Builder zOffset (double zOffset) { zOffset_ = zOffset; return this; }
+      public Builder doZStack (Boolean doZStack) { doZStack_ = doZStack; return this; }
+      public Builder color (Color color) { color_ = color; return this; }
+      public Builder skipFactorFrame (int skipFactorFrame) { skipFactorFrame_ = skipFactorFrame; return this; }
+      public Builder useChannel (boolean useChannel) { useChannel_ = useChannel; return this; }
+      public Builder camera (String camera) {camera_ = camera; return this; }
+
+      private Builder(String channelGroup, String config, double exposure,
+                      double zOffset, Boolean doZStack, Color color,
+                      int skipFactorFrame, boolean useChannel, String camera) {
+         channelGroup_ = channelGroup;
+         config_ = config;
+         exposure_ = exposure;
+         zOffset_ = zOffset;
+         doZStack_ = doZStack;
+         color_ = color;
+         skipFactorFrame_ = skipFactorFrame;
+         useChannel_ = useChannel;
+         camera_ = camera;
+      }
+
+      public ChannelSpec build() {
+         return new ChannelSpec(channelGroup_, config_, exposure_, zOffset_,
+                 doZStack_, color_, skipFactorFrame_, useChannel_,  camera_);
+      }
+   }
+
+
+   /** Channel group this channel config belongs to
+    * @deprecated Use Builder and getters instead **/
+   @Deprecated
+   public String channelGroup = "";
+   /** Name of the channel
+    * @deprecated Use Builder and getters instead **/
+   @Deprecated
    public String config = "";
-   /** Exposure time, in milliseconds */
+   /** Exposure time, in milliseconds
+    * @deprecated Use Builder and getters instead **/
+   @Deprecated
    public double exposure = 10.0;
-   /** Z-offset, in microns */
+   /** Z-offset, in microns
+    * @deprecated Use Builder and getters instead **/
+   @Deprecated
    public double zOffset = 0.0;
-   /** Color to use when displaying this channel */
+   /** Whether this channel should be imaged in each Z slice of the stack
+    * @deprecated Use Builder and getters instead **/
+   @Deprecated
+   public Boolean doZStack = true;
+   /** Color to use when displaying this channel
+    * @deprecated Use Builder and getters instead **/
+   @Deprecated
    public Color color = Color.gray;
-   /** Number of frames to skip between each time this channel is imaged. */
+   /** Number of frames to skip between each time this channel is imaged.
+    * @deprecated Use Builder and getters instead **/
+   @Deprecated
    public int skipFactorFrame = 0;
-   /** Whether the channel is enabled for imaging at all. */
+   /** Whether the channel is enabled for imaging at all.
+    * @deprecated Use Builder and getters instead **/
+   @Deprecated
    public boolean useChannel = true;
-   /** Name of the camera to use. */
+   /** Name of the camera to use.
+    * @deprecated Use Builder and getters instead **/
+   @Deprecated
    public String camera = "";
 
+   /**
+    * @deprecated Use Builder.build() instead for a default ChannelSpec
+    */
+   @Deprecated
    public ChannelSpec(){
       color = Color.WHITE;
    }
+
+   private ChannelSpec(String mChannelGroup, String mConfig, double mExposure,
+                      double mZOffset, Boolean mDoZStack, Color mColor,
+                      int mSkipFactorFrame, boolean mUseChannel, String mCamera) {
+      channelGroup = mChannelGroup;
+      config = mConfig;
+      exposure = mExposure;
+      zOffset = mZOffset;
+      doZStack = mDoZStack;
+      color = mColor;
+      skipFactorFrame = mSkipFactorFrame;
+      useChannel = mUseChannel;
+      camera = mCamera;
+   }
+
+   public Builder copyBuilder() {
+      return new Builder(channelGroup, config, exposure, zOffset, doZStack,
+              color, skipFactorFrame, useChannel, camera);
+   }
+
+   public String channelGroup () { return channelGroup; }
+   public String config() { return config; }
+   public double exposure() { return exposure; }
+   public double zOffset() { return zOffset; }
+   public boolean doZStack() { return doZStack; }
+   public Color color() { return color; }
+   public int skipFactorFrame() { return skipFactorFrame; }
+   public boolean useChannel() { return useChannel; }
+   public String camera() { return camera; }
 
    /**
     * Serialize to JSON encoded string
@@ -69,8 +177,6 @@ public class ChannelSpec {
     */
    public static ChannelSpec fromJSONStream(String stream) {
       Gson gson = new Gson();
-      ChannelSpec cs = gson.fromJson(stream, ChannelSpec.class);
-      return cs;
+      return gson.fromJson(stream, ChannelSpec.class);
    }
 }
-

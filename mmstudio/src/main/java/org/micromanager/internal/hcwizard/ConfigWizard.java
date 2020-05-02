@@ -143,8 +143,8 @@ public final class ConfigWizard extends MMDialog {
 
       // Create microscope model used by pages.
       microModel_ = new MicroscopeModel();
-      microModel_.setSendConfiguration(studio_.profile().getBoolean(
-              ConfigWizard.class, CFG_OKAY_TO_SEND, true));
+      microModel_.setSendConfiguration(studio_.profile().
+              getSettings(ConfigWizard.class).getBoolean(CFG_OKAY_TO_SEND, true));
       microModel_.loadAvailableDeviceList(core_);
       microModel_.setFileName(defaultPath_);
 
@@ -381,9 +381,8 @@ public final class ConfigWizard extends MMDialog {
          }
       }
 
-      studio_.profile().setBoolean(
-           ConfigWizard.class, CFG_OKAY_TO_SEND,
-           microModel_.getSendConfiguration());
+      studio_.profile().getSettings(ConfigWizard.class).putBoolean(
+           CFG_OKAY_TO_SEND, microModel_.getSendConfiguration());
 
       org.micromanager.internal.utils.HotKeys.active_ = true;
       dispose();

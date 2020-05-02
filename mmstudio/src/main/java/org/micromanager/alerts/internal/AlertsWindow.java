@@ -67,8 +67,8 @@ public final class AlertsWindow extends MMFrame {
 
       Font defaultFont = new Font("Arial", Font.PLAIN, 10);
 
-      shouldShowOnMessage_ = studio_.profile().getBoolean(AlertsWindow.class,
-            SHOULD_SHOW_WINDOW, true);
+      shouldShowOnMessage_ = studio_.profile().getSettings(AlertsWindow.class).
+              getBoolean(SHOULD_SHOW_WINDOW, true);
       final JCheckBox showWindowCheckBox = new JCheckBox(
             "Open this window when messages arrive", shouldShowOnMessage_);
       showWindowCheckBox.setFont(defaultFont);
@@ -76,8 +76,8 @@ public final class AlertsWindow extends MMFrame {
          @Override
          public void actionPerformed(ActionEvent e) {
             shouldShowOnMessage_ = showWindowCheckBox.isSelected();
-            studio_.profile().setBoolean(AlertsWindow.class,
-               SHOULD_SHOW_WINDOW, shouldShowOnMessage_);
+            studio_.profile().getSettings(AlertsWindow.class).putBoolean(
+                    SHOULD_SHOW_WINDOW, shouldShowOnMessage_);
          }
       });
       super.add(showWindowCheckBox, "split, span");

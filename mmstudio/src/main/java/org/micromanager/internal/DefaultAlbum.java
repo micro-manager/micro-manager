@@ -186,7 +186,7 @@ public final class DefaultAlbum implements Album {
             curTime_++;
          }
       }
-      return image.getCoords().copyBuilder().time(curTime_).build();
+      return image.getCoords().copyBuilder().t(curTime_).build();
    }
 
    @Override

@@ -132,7 +132,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       // a PositionName property in its metadata.
       if (isDatasetWritable_ && image.getCoords().getStagePosition() > 0 &&
             (image.getMetadata() == null ||
-             image.getMetadata().getPositionName() == null)) {
+             image.getMetadata().getPositionName("").equals(""))) {
          throw new IllegalArgumentException("Image " + image + " does not have a valid positionName metadata value");
       }
       // If we're in the middle of loading a file, then the code that writes
@@ -140,9 +140,9 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       // records.
       String positionPrefix = "";
       if (isMultiPosition_ && image.getMetadata() != null &&
-            image.getMetadata().getPositionName() != null) {
+            !image.getMetadata().getPositionName("").equals("")) {
          // File is in a subdirectory.
-         positionPrefix = image.getMetadata().getPositionName() + "/";
+         positionPrefix = image.getMetadata().getPositionName("") + "/";
       }
       String fileName = positionPrefix + createFileName(image.getCoords());
       if (amLoading_ && !(new File(dir_ + "/" + fileName).exists())) {
@@ -163,7 +163,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
                ReportingUtils.logError(ex);
             }
          }
-         String posName = image.getMetadata().getPositionName();
+         String posName = image.getMetadata().getPositionName("");
          if (posName != null && posName.length() > 0 &&
                !posName.contentEquals("null")) {
             // Create a directory to hold images for this stage position.
@@ -369,7 +369,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
          channel = orderedChannelNames_.get(coords.getChannel());
       }
       return String.format("img_%09d_%s_%03d.tif",
-            coords.getTime(), channel, coords.getZ());
+            coords.getT(), channel, coords.getZ());
    }
 
    private static final Pattern FILENAME_PATTERN_14 = Pattern.compile(
@@ -523,11 +523,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
    }
 
    private void openNewDataSet(Image image) throws IOException, Exception {
-      String posName = image.getMetadata().getPositionName();
-      if (posName == null || posName.contentEquals("null")) {
-         posName = "";
-      }
-
+      String posName = image.getMetadata().getPositionName("");
       int pos = image.getCoords().getStagePosition();
       if (pos == -1) {
          // No stage position axis.

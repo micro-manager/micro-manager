@@ -58,6 +58,7 @@ import org.micromanager.display.DataViewer;
 import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.internal.RememberedSettings;
 import org.micromanager.events.AcquisitionEndedEvent;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MDUtils;
@@ -107,7 +108,7 @@ public final class MMAcquisition extends DataViewerListener {
       eng_ = eng;
       show_ = show;
       // TODO: get rid of MMStudo cast
-      store_ = new DefaultDatastore((MMStudio) studio);
+      store_ = new DefaultDatastore(studio);
       pipeline_ = studio_.data().copyApplicationPipeline(store_, false);
       try {
          if (summaryMetadata.has("Directory") && summaryMetadata.get("Directory").toString().length() > 0) {
@@ -212,6 +213,11 @@ public final class MMAcquisition extends DataViewerListener {
                      displaySettingsBuilder.colorModeComposite();
                   }
                   for (int channelIndex = 0; channelIndex < nrChannels; channelIndex++) {
+                     displaySettingsBuilder.channel(channelIndex, RememberedSettings.loadChannel(studio_,
+                             store_.getSummaryMetadata().getChannelGroup(),
+                             store_.getSummaryMetadata().getChannelNameList().get(channelIndex),
+                             null));  // TODO: use chColors as default Color?
+                     /*
                      ChannelDisplaySettings channelSettings
                              = displaySettingsBuilder.getChannelSettings(channelIndex);
                      Color chColor = new Color(chColors.getInt(channelIndex));
@@ -227,6 +233,8 @@ public final class MMAcquisition extends DataViewerListener {
                         }
                      }
                      displaySettingsBuilder.channel(channelIndex,csb.build());
+
+                      */
                   }
                } while (!display_.compareAndSetDisplaySettings(
                        display_.getDisplaySettings(), displaySettingsBuilder.build()));

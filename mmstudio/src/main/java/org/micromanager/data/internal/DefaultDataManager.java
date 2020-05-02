@@ -73,11 +73,13 @@ public final class DefaultDataManager implements DataManager {
    }
 
    @Override
+   @Deprecated
    public Coords.Builder getCoordsBuilder() {
       return new DefaultCoords.Builder();
    }
 
    @Override
+   @Deprecated
    public Coords createCoords(String def) throws IllegalArgumentException {
       return DefaultCoords.fromNormalizedString(def);
    }
@@ -311,11 +313,13 @@ public final class DefaultDataManager implements DataManager {
    }
 
    @Override
+   @Deprecated
    public PropertyMap.Builder getPropertyMapBuilder() {
       return PropertyMaps.builder();
    }
 
    @Override
+   @Deprecated
    public PropertyMap loadPropertyMap(String path) throws IOException {
       return PropertyMaps.loadJSON(new File(path));
    }

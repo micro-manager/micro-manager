@@ -27,6 +27,7 @@ import mmcorej.CMMCore;
 import mmcorej.MMEventCallback;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
+import org.micromanager.events.ChannelGroupChangedEvent;
 import org.micromanager.events.ConfigGroupChangedEvent;
 import org.micromanager.events.ExposureChangedEvent;
 import org.micromanager.events.PixelSizeAffineChangedEvent;
@@ -88,6 +89,12 @@ public final class CoreEventCallback extends MMEventCallback {
       // (see https://github.com/micro-manager/micro-manager/issues/498)
       SwingUtilities.invokeLater(() -> studio_.events().post(
               new PropertyChangedEvent(deviceName, propName, propValue)));
+   }
+
+   @Override
+   public void onChannelGroupChanged(String newChannelGroupName) {
+      SwingUtilities.invokeLater(() -> studio_.events().post(
+              new DefaultChannelGroupChangedEvent(newChannelGroupName)));
    }
 
    @Override
