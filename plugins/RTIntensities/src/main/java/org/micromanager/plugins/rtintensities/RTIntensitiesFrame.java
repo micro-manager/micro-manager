@@ -1,12 +1,9 @@
 /**
- * ExampleFrame.java
+ * RTIntensitiesFrame.java
  *
- * This module shows an example of creating a GUI (Graphical User Interface).
- * There are many ways to do this in Java; this particular example uses the
- * MigLayout layout manager, which has extensive documentation online.
+ * Based on ExampleFrame, shows RealTime intensity plots during live views or acquisitions.
  *
- *
- * Nico Stuurman, copyright UCSF, 2012, 2015
+ * Nico Stuurman, Carlos Mendioroz copyright UCSF, 2020
  *
  * LICENSE: This file is distributed under the BSD license. License text is
  * included with the source distribution.
@@ -28,7 +25,8 @@ import java.awt.geom.Ellipse2D;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Shape;
-import java.util.List;
+import java.awt.List;
+import java.util.Hashtable;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -37,7 +35,6 @@ import javax.swing.JLabel;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.data.Image;
-import org.micromanager.data.SummaryMetadata;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
@@ -47,13 +44,12 @@ import org.jfree.chart.ChartFrame;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.micromanager.Studio;
-import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplayWindow;
 
-import ij.ImagePlus;
 import ij.gui.Roi;
+import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
 import org.micromanager.internal.utils.WindowPositioning;
 
@@ -61,17 +57,15 @@ public class RTIntensitiesFrame extends JFrame {
 
    private Studio studio_;
    private DisplayWindow window_ = null;
-   private ImagePlus  image_;
-   private final JLabel imageInfoLabel_;
-   private final JLabel roiInfoLabel_;
-   private JButton clearRoiButton_;
-   private JButton setRoiButton_;
-   private final JLabel acqInfoLabel_;
-   private JButton acquireButton_;
    private Datastore ds_;
+   private JButton managerButton_;
+   private JButton startButton_;
    private int skip_ = 0;
-   private Roi[] roi_ = new Roi[100];
+   // This is our local cache ...
    private int ROIs_ = 0;
+   private Roi[] roi_ = new Roi[100];
+   // of the manager kept ROIs
+   private RoiManager manager_;
    private int imagesReceived_ = 0;
    static final long serialVersionUID = 1;
    private JLabel title;
@@ -86,94 +80,69 @@ public class RTIntensitiesFrame extends JFrame {
 
       super.setLayout(new MigLayout("fill, insets 2, gap 2, flowx"));
 
+      // Tell user what to do, in case he does not know...
       title = new JLabel("                Prepare for instructions!            ");
       title.setFont(new Font("Arial", Font.BOLD, 14));
       super.add(title, "span, alignx center, wrap");
 
-      // Snap an image, remember, show the image in the Snap/Live view, and show some
-      // stats on the image in our frame.
-      imageInfoLabel_ = new JLabel();
-      super.add(imageInfoLabel_, "growx, split, span");
-      JButton snapButton = new JButton("Snap Image");
-      snapButton.addActionListener(new ActionListener() {
+      // Shortcut to ROI Manager
+      JButton managerButton_ = new JButton("ROI Manager");
+      managerButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-        	 // Multiple images are returned only if there are multiple
-        	 // cameras. We only care about the first image.
-             List<Image> images = studio_.live().snap(true);
-             Image firstImage = images.get(0);
-             showImageInfo(firstImage);
-             title.setText("Now define ROIs ...");
-             clearRoiButton_.setEnabled(true);
-             setRoiButton_.setEnabled(true);
+   			if (manager_ == null)
+   			    manager_ = new RoiManager();
+   			manager_.setVisible(true);
          }
       });
-      super.add(snapButton, "wrap");
+      super.add(managerButton_, "split, span");
 
-      // Assign ROI to image
-      roiInfoLabel_ = new JLabel();
-      super.add(roiInfoLabel_, "growx, split, span");
-      clearRoiButton_ = new JButton("Clear ROIs");
-      clearRoiButton_.addActionListener(new ActionListener() {
-    	  @Override
-    	  public void actionPerformed(ActionEvent e) {
-   			  title.setText("Define ROIs ...");
-   			  acquireButton_.setEnabled(false);
-   			  ROIs_ = 0;
-   			roiInfoLabel_.setText("");
-         }
-      });
-      clearRoiButton_.setEnabled(false);
-      super.add(clearRoiButton_, "split, span");
-            
-      setRoiButton_ = new JButton("Set ROI");
-      setRoiButton_.addActionListener(e -> {
-         image_ = studio_.displays().getAllImageWindows().get(0).getImagePlus();
-         SummaryMetadata md = studio_.displays().getAllDataViewers().get(0).getDataProvider().getSummaryMetadata();
-         if (ROIs_ < 100 && image_.getRoi().isVisible()) {
-            title.setText("Ready to acquire");
-            roi_[ROIs_] = image_.getRoi();
-            ROIs_++;
-            roiInfoLabel_.setText(String.format("Defined: %d", ROIs_));
-            acquireButton_.setEnabled(true);
-         }
-      });
-      setRoiButton_.setEnabled(false);
-      super.add(setRoiButton_, "wrap");
-      
-      acqInfoLabel_ = new JLabel("");
-      super.add(acqInfoLabel_, "split, span, growx");
-
-      // Run an acquisition using the current MDA parameters.
-      acquireButton_ = new JButton("Run Acquisition");
-      acquireButton_.addActionListener(new ActionListener() {
+      // Create a graph and start plotting, or tell user what's missing for so doing
+      startButton_ = new JButton("Plot");
+      startButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            // All GUI event handlers are invoked on the EDT (Event Dispatch
-            // Thread). Acquisitions are not allowed to be started from the
-            // EDT. Therefore we must make a new thread to run this.
-            Thread acqThread = new Thread(new Runnable() {
-               @Override
-               public void run() {
-            	   studio_.getDisplayManager().getCurrentWindow().close();
-            	   ds_ = studio_.acquisitions().runAcquisitionNonblocking();
-            	   if (studio.acquisitions().getAcquisitionSettings().intervalMs < 1000) {
-            		   skip_ = (int) (1000 / studio.acquisitions().getAcquisitionSettings().intervalMs);
-            	   }
-            	   ds_.registerForEvents(RTIntensitiesFrame.this);
-            	   dataset = new XYSeriesCollection();
-            	   for (int i = 0; i < ROIs_; i++) {
-            		   data[i] = new XYSeries("ROI_" + i);
-            		   dataset.addSeries(data[i]);
-            	   }
-            	   plotData("Intensities", dataset, "Time", "Value", 100, 100);
-               }
-            });
-            acqThread.start();
+         	// Active window ?
+        	   window_ = studio.displays().getCurrentWindow();
+        	   if (window_ == null) {
+        	   	title.setText("You need an open window (Snap/Live).");
+        	   	return;
+        	   }
+        	   ds_ = window_.getDatastore();
+        	   // At least one ROI defined ?
+        	   if (manager_ == null) {
+        	   	title.setText("Please setup ROI(s).");
+        	   	return;
+        	   }
+        	   List labels = manager_.getList();
+        	   Hashtable<String, Roi> table = (Hashtable<String, Roi>)manager_.getROIs();
+        	   ROIs_ = labels.getItemCount();
+        	   if (ROIs_ == 0) {
+        	   	title.setText("Please setup ROI(s).");
+        	   	return;
+        	   }
+        	   // Hard limit of 100 ROIs
+        	   if (ROIs_ > 100) ROIs_ = 100; 
+        	   for (int i = 0; i < ROIs_; i++) {
+        	   	String label = labels.getItem(i);
+        	   	roi_[i] = table.get(label);
+        	   }
+        	   // We are all set ?
+        	   imagesReceived_ = 0; // new plot
+        	   if (studio.acquisitions().getAcquisitionSettings().intervalMs < 1000) {
+        		   skip_ = (int) (1000 / studio.acquisitions().getAcquisitionSettings().intervalMs);
+        	   }
+        	   ds_.registerForEvents(RTIntensitiesFrame.this);
+        	   dataset = new XYSeriesCollection();
+        	   for (int i = 0; i < ROIs_; i++) {
+        		   data[i] = new XYSeries("ROI_" + i);
+        		   dataset.addSeries(data[i]);
+        	   }
+        	   plotData("Intensities", dataset, "Time", "Value", 100, 100);
          }
       });
-      acquireButton_.setEnabled(false);
-      super.add(acquireButton_, "wrap");
+      startButton_.setEnabled(true);
+      super.add(startButton_, "wrap");
 
       super.pack();
 
@@ -185,7 +154,7 @@ public class RTIntensitiesFrame extends JFrame {
       // Datastore, and DisplayWindow.registerForEvents() for events specific
       // to one image display window.
       studio_.events().registerForEvents(this);
-      title.setText("Snap an image ...");
+      title.setText("You need an active window and a ROI ...");
    }
 
    @Subscribe
@@ -197,6 +166,11 @@ public class RTIntensitiesFrame extends JFrame {
 		   title.setText("You should be seeing data on the plot.");
 		   Image image = event.getImage();
 		   t = (double)image.getCoords().getT();
+		   // Check if doing live
+		   if (t < 0.01 && imagesReceived_ > 1) {
+		   	skip_ = 99;
+		   	t = imagesReceived_ * 0.1; // oops, 2 initial images, too bad.
+		   }
 		   if (window_ == null) window_ = studio_.getDisplayManager().getDisplays(ds_).get(0);
 		   ImageProcessor processor = studio_.data().ij().createProcessor(image);
 		   processor.setLineWidth(1);
@@ -213,20 +187,6 @@ public class RTIntensitiesFrame extends JFrame {
 		   data[ROIs_ - 1].add(t, v, true);
 		   processor.draw(roi_[ROIs_ - 1]);
 	   }
-   }
-   
- 
-   /**
-    * Display some information on the data in the provided image.
-    */
-   private void showImageInfo(Image image) {
-      // See DisplayManager for information on these parameters.
-      //HistogramData data = studio_.displays().calculateHistogram(
-      //   image, 0, 16, 16, 0, true);
-      imageInfoLabel_.setText(String.format(
-            "Image size: %dx%d", // min: %d, max: %d, mean: %d, std: %.2f",
-            image.getWidth(), image.getHeight() ) ); //, data.getMinVal(),
-            //data.getMaxVal(), data.getMean(), data.getStdDev()));
    }
    
    /**
@@ -270,6 +230,7 @@ public class RTIntensitiesFrame extends JFrame {
       graphFrame.getChartPanel().setMouseWheelEnabled(true);
       graphFrame.pack();
       graphFrame.setLocation(xLocation, yLocation);
+      graphFrame.setSize(400, 300);
       graphFrame.setVisible(true);
    }
 
