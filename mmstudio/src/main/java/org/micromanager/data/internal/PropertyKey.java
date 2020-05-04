@@ -305,7 +305,7 @@ public enum PropertyKey {
       }
    },
 
-   CHANNEL_INDEX("ChannelIndex", Coords.class) {
+   CHANNEL_INDEX("ChannelIndex", "channel", Coords.class) {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putInteger(Coords.CHANNEL, je.getAsInt());
@@ -509,7 +509,7 @@ public enum PropertyKey {
       }
    },
 
-   FRAME_INDEX("Frame", "FrameIndex", Coords.class) {
+   FRAME_INDEX("Frame", "FrameIndex", "time", Coords.class) {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putInteger(Coords.TIME_POINT, je.getAsInt());
@@ -1056,7 +1056,7 @@ public enum PropertyKey {
       }
    },
 
-   POSITION_INDEX("PositionIndex", Coords.class) {
+   POSITION_INDEX("PositionIndex", "position", Coords.class) {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putInteger(Coords.STAGE_POSITION, je.getAsInt());
@@ -1341,7 +1341,7 @@ public enum PropertyKey {
       }
    },
 
-   SLICE_INDEX("Slice", "SliceIndex", Coords.class) {
+   SLICE_INDEX("Slice", "SliceIndex", "z", Coords.class) {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putInteger(Coords.Z_SLICE, je.getAsInt());
