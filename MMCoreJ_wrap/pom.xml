@@ -1,6 +1,6 @@
 <project xmlns="https://maven.apache.org/POM/4.0.0" xmlns:xsi="https://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
-   <groupId>org.micromanager</groupId>
+   <groupId>org.micro-manager.mmcorej</groupId>
    <artifactId>MMCoreJ</artifactId>
    <packaging>jar</packaging>
    <version>10.1.0.0</version>
@@ -39,6 +39,25 @@
 			</plugin>
 		</plugins>
 	</build>
+
+   <repositories>
+       <repository>
+           <snapshots>
+               <enabled>false</enabled>
+           </snapshots>
+           <id>bintray-micro-manager-mmcorej</id>
+           <name>bintray</name>
+           <url>https://dl.bintray.com/micromanager/micro-manager</url>
+       </repository>
+   </repositories>
+
+   <distributionManagement>
+       <repository>
+          <id>bintray-micro-manager-mmcorej</id>
+          <name>micro-manager-mmcorej</name>
+          <url>https://api.bintray.com/maven/micromanager/micro-manager/MMCoreJ/;publish=1</url>
+       </repository>
+   </distributionManagement>
 
 </project>
 
