@@ -90,17 +90,17 @@
            <snapshots>
                <enabled>false</enabled>
            </snapshots>
-           <id>bintray-micromanager-micro-manager</id>
+           <id>bintray-micro-manager</id>
            <name>bintray</name>
-           <url>https://dl.bintray.com/micromanager/micro-manager</url>
+           <url>https://dl.bintray.com/micro-manager/micro-manager</url>
        </repository>
    </repositories>
 
    <distributionManagement>
        <repository>
-          <id>bintray-micro-manager-mmcorej</id>
+          <id>bintray-micro-manager</id>
           <name>micro-manager-mmcorej</name>
-          <url>https://api.bintray.com/maven/micromanager/micro-manager/MMCoreJ/;publish=1</url>
+          <url>https://api.bintray.com/maven/micro-manager/micro-manager/MMCoreJ/;publish=1</url>
        </repository>
    </distributionManagement>
 
