@@ -11,6 +11,25 @@
        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
    </properties>
 
+   <developers>
+      <developer>
+         <id>nenada</id>
+         <name>Nenad Amodaj</name>
+         <organization>Luminous Point</organization>
+      </developer>
+      <developer>
+         <id>marktsuchida</id>
+         <name>Mark Tsuchida</name>
+         <organization>University of Wisconsin, Madison</organization>
+      </developer>
+      <developer>
+         <id>nicost</id>
+         <name>Nico Stuurman</name>
+         <organization>UCSF/HHMI</organization>
+      </developer>
+   </developers>
+
+
 	<!--
 	    Do not use maven to build MMCoreJ.jar.  
 		The code below tries to make a valid jar in case someone 
@@ -37,6 +56,32 @@
 					</execution>
 				</executions>
 			</plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>3.2.1</version>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar-no-fork</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>3.2.0</version>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
 		</plugins>
 	</build>
 
@@ -45,7 +90,7 @@
            <snapshots>
                <enabled>false</enabled>
            </snapshots>
-           <id>bintray-micro-manager-mmcorej</id>
+           <id>bintray-micromanager-micro-manager</id>
            <name>bintray</name>
            <url>https://dl.bintray.com/micromanager/micro-manager</url>
        </repository>
