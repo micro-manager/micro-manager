@@ -87,7 +87,6 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
    private final AxisTableModel axisModel_;
    private CMMCore core_;
    private Studio studio_;
-   private AcqControlDlg acqControlDlg_;
    private AxisList axisList_;
    private final JButton tileButton_;
 
@@ -126,8 +125,7 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
     * @param acd - MDA window
     */
    @SuppressWarnings("LeakingThisInConstructor")
-   public PositionListDlg(Studio studio,
-                     PositionList posList, AcqControlDlg acd) {
+   public PositionListDlg(Studio studio, PositionList posList) {
       super("position list");
       final UserProfile profile = studio.profile();
       addWindowListener(new WindowAdapter() {
@@ -140,7 +138,6 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
       studio_ = studio;
       bus_ = new EventBus(EventBusExceptionLogger.getInstance());
       bus_.register(this);
-      acqControlDlg_ = acd;
 
       setTitle("Stage Position List");
       setLayout(new MigLayout("flowy, filly, insets 8", "[grow][]", 
@@ -522,7 +519,7 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
       }
    }
 
-   private void updatePositionData() {
+   protected void updatePositionData() {
       positionModel_.fireTableDataChanged();
    }
    
@@ -557,7 +554,6 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
    protected void clearAllPositions() {
       getPositionList().clearAllPositions();
       updatePositionData();
-      acqControlDlg_.updateGUIContents();
    }
 
    
@@ -609,7 +605,6 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
          getPositionList().removePosition(selectedRows[i] - 1);
       }
       updatePositionData();
-      acqControlDlg_.updateGUIContents();
    }
 
    /**
@@ -630,7 +625,6 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
          msp.setLabel(getPositionList().generateLabel());
          getPositionList().addPosition(msp);
          updatePositionData();
-         acqControlDlg_.updateGUIContents();
       }
       else { // replace instead of add
          msp.setLabel(getPositionList().getPosition(
@@ -718,7 +712,6 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
          }
       }
       updatePositionData();
-      acqControlDlg_.updateGUIContents();
    }
  
    // The stage position changed; update curMsp_.
@@ -1160,7 +1153,6 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
          }
       }
       updatePositionData();
-      acqControlDlg_.updateGUIContents();
    }
 
    @Subscribe
