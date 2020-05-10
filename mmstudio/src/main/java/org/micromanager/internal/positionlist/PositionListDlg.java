@@ -70,31 +70,31 @@ import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public class PositionListDlg extends MMFrame implements MouseListener, ChangeListener {
-   private static final long serialVersionUID = 1L;
-   private String posListDir_;
-   private File curFile_;
-   private static final String POS = "pos";
-   private static final String POS_COL0_WIDTH = "posCol0WIDTH";
-   private static final String AXIS_COL0_WIDTH = "axisCol0WIDTH";
-   private static final FileType POSITION_LIST_FILE =
+   static final long serialVersionUID = 1L;
+   String posListDir_;
+   File curFile_;
+   static final String POS = "pos";
+   static final String POS_COL0_WIDTH = "posCol0WIDTH";
+   static final String AXIS_COL0_WIDTH = "axisCol0WIDTH";
+   static final FileType POSITION_LIST_FILE =
            new FileType("POSITION_LIST_FILE","Position list file",
                         System.getProperty("user.home") + "/PositionList.pos",
                         true, POS);
 
-   private Font arialSmallFont_;
-   private JTable posTable_;
-   private final JTable axisTable_;
-   private final AxisTableModel axisModel_;
-   private CMMCore core_;
-   private Studio studio_;
-   private AxisList axisList_;
-   private final JButton tileButton_;
+   Font arialSmallFont_;
+   JTable posTable_;
+   final JTable axisTable_;
+   final AxisTableModel axisModel_;
+   CMMCore core_;
+   Studio studio_;
+   AxisList axisList_;
+   final JButton tileButton_;
 
-   private MultiStagePosition curMsp_;
-   public JButton markButton_;
-   private final PositionTableModel positionModel_;
+   MultiStagePosition curMsp_;
+   JButton markButton_;
+   final PositionTableModel positionModel_;
 
-   private EventBus bus_;
+   EventBus bus_;
 
    @Subscribe
    public void onTileUpdate(MoversChangedEvent event) {
