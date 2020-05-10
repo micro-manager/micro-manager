@@ -69,14 +69,13 @@ import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.ReportingUtils;
 
-public final class PositionListDlg extends MMFrame implements MouseListener, ChangeListener {
+public class PositionListDlg extends MMFrame implements MouseListener, ChangeListener {
    private static final long serialVersionUID = 1L;
    private String posListDir_;
    private File curFile_;
    private static final String POS = "pos";
    private static final String POS_COL0_WIDTH = "posCol0WIDTH";
    private static final String AXIS_COL0_WIDTH = "axisCol0WIDTH";
-   // @SuppressWarnings("unused")
    private static final FileType POSITION_LIST_FILE =
            new FileType("POSITION_LIST_FILE","Position list file",
                         System.getProperty("user.home") + "/PositionList.pos",
@@ -100,7 +99,7 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
 
    @Subscribe
    public void onTileUpdate(MoversChangedEvent event) {
-      setTileButtonEnabled();
+      setTileButtonEnabled(); //This handler is executed when the axis checkboxes are changed.
    }
 
    private void setTileButtonEnabled() {
@@ -128,7 +127,7 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
     * @param acd - MDA window
     */
    @SuppressWarnings("LeakingThisInConstructor")
-   public PositionListDlg(CMMCore core, Studio studio,
+   public PositionListDlg(Studio studio,
                      PositionList posList, AcqControlDlg acd) {
       super("position list");
       final UserProfile profile = studio.profile();
@@ -138,7 +137,7 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
             saveDims();
          }
       });
-      core_ = core;
+      core_ = studio.core();
       studio_ = studio;
       bus_ = new EventBus(EventBusExceptionLogger.getInstance());
       bus_.register(this);
