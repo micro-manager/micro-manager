@@ -121,7 +121,6 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
 
    /**
     * Create the dialog
-    * @param core -  MMCore
     * @param studio - Studio
     * @param posList - Position list to be displayed in this dialog
     * @param acd - MDA window
