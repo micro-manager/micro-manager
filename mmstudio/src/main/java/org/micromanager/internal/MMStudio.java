@@ -317,7 +317,9 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // Note: pipelineFrame is used in the dataManager, however, pipelineFrame 
       // needs the dataManager.  Let's hope for the best....
       dataManager_ = new DefaultDataManager(studio_);
-      createPipelineFrame();
+      if (pipelineFrame_ == null) { //Create the pipelineframe if it hasn't already been done.
+         pipelineFrame_ = new PipelineFrame(studio_);
+      }
 
       alertManager_ = new DefaultAlertManager(studio_);
       
@@ -921,12 +923,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
    }
 
-   private void createPipelineFrame() {
-      if (pipelineFrame_ == null) {
-         pipelineFrame_ = new PipelineFrame(studio_);
-      }
-   }
-
    public PipelineFrame getPipelineFrame() {
       return pipelineFrame_;
    }
@@ -1014,18 +1010,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          return false;
       }
       return true;
-   }
-
-   private boolean isCurrentImageFormatSupported() {
-      long channels = core_.getNumberOfComponents();
-      long bpp = core_.getBytesPerPixel();
-
-      if (channels > 1 && channels != 4 && bpp != 1) {
-         handleError("Unsupported image format.");
-      } else {
-         return true;
-      }
-      return false;
    }
 
    private void configureBinningCombo() throws Exception {
