@@ -471,13 +471,13 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
    public void addPosition(MultiStagePosition msp, String label) {
       msp.setLabel(label);
       getPositionList().addPosition(msp);
-      positionModel_.fireTableDataChanged();
+      updatePositionData();
    }
 
    public void addPosition(MultiStagePosition msp) {
       msp.setLabel(getPositionList().generateLabel());
       getPositionList().addPosition(msp);
-      positionModel_.fireTableDataChanged();
+      updatePositionData();
    }
 
    protected boolean savePositionListAs() {
@@ -522,7 +522,7 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
       }
    }
 
-   public void updatePositionData() {
+   private void updatePositionData() {
       positionModel_.fireTableDataChanged();
    }
    
@@ -538,7 +538,7 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
    
    public void setPositionList(PositionList pl) {
       positionModel_.setData(pl);
-      positionModel_.fireTableDataChanged();
+      updatePositionData();
    }
 
    protected void goToCurrentPosition() {
@@ -556,7 +556,7 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
 
    protected void clearAllPositions() {
       getPositionList().clearAllPositions();
-      positionModel_.fireTableDataChanged();
+      updatePositionData();
       acqControlDlg_.updateGUIContents();
    }
 
@@ -589,7 +589,7 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
             }
          }
       }
-      positionModel_.fireTableDataChanged();
+      updatePositionData();
 
       if (-1 < newEdittingRow) {
          posTable_.changeSelection(newEdittingRow, newEdittingRow, false, false);
@@ -608,7 +608,7 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
       for (int i = selectedRows.length - 1; i >= 0; --i) {
          getPositionList().removePosition(selectedRows[i] - 1);
       }
-      positionModel_.fireTableDataChanged();
+      updatePositionData();
       acqControlDlg_.updateGUIContents();
    }
 
@@ -629,7 +629,7 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
       if (selMsp == null) {
          msp.setLabel(getPositionList().generateLabel());
          getPositionList().addPosition(msp);
-         positionModel_.fireTableDataChanged();
+         updatePositionData();
          acqControlDlg_.updateGUIContents();
       }
       else { // replace instead of add
@@ -638,7 +638,7 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
          int selectedRow = posTable_.getSelectedRow();
          getPositionList().replacePosition(
                  posTable_.getSelectedRow() -1, msp);
-         positionModel_.fireTableDataChanged();
+         updatePositionData();
          // Not sure why this is here as we undo the selection after
          // this functions exits...
          posTable_.setRowSelectionInterval(selectedRow, selectedRow);
@@ -717,7 +717,7 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
             listPos.add(subPos);
          }
       }
-      positionModel_.fireTableDataChanged();
+      updatePositionData();
       acqControlDlg_.updateGUIContents();
    }
  
@@ -1159,7 +1159,7 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
             }
          }
       }
-      positionModel_.fireTableDataChanged();
+      updatePositionData();
       acqControlDlg_.updateGUIContents();
    }
 
