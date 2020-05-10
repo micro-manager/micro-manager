@@ -428,6 +428,11 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
       // Register to be informed when the current stage position changes.
       studio_.events().registerForEvents(this);
       refreshCurrentPosition();
+      
+      //Add listeners
+      axisTable_.addMouseListener(this);
+      posTable_.addMouseListener(this);      
+      getPositionList().addChangeListener(this); 
    }
    
    private JButton posListButton(Dimension buttonSize, Font font) {
@@ -438,12 +443,6 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
       button.setMargin(new Insets(0, 0, 0, 0));
       
       return button;
-   }
-   
-   public void addListeners() {   
-      axisTable_.addMouseListener(this);
-      posTable_.addMouseListener(this);      
-      getPositionList().addChangeListener(this);    
    }
    
    

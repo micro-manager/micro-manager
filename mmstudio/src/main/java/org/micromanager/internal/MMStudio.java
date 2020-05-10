@@ -1461,7 +1461,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       if (posListDlg_ == null) {
          posListDlg_ = new PositionListDlg(core_, studio_, posList_, 
                  acqControlWin_);
-         posListDlg_.addListeners();
       }
       posListDlg_.setVisible(true);
    }
