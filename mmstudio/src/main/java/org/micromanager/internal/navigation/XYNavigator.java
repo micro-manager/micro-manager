@@ -146,7 +146,7 @@ public class XYNavigator {
 	 * @param tmpXUm amount (in microns) the sample should move in the x direction
 	 * @param tmpYUm amount (in microns) the sample should move in the y direction
 	 */
-	public void moveSampleOnDisplay(final double tmpXUm, final double tmpYUm) {
+	public void moveSampleOnDisplayUm(final double tmpXUm, final double tmpYUm) {
 		double pixSizeUm = studio_.core().getPixelSizeUm(true);
 		if (!(pixSizeUm > 0.0)) {
 			JOptionPane.showMessageDialog(null,
@@ -158,10 +158,37 @@ public class XYNavigator {
 			return;
 		}
 		// It is a bit funny to calculate back to pixels and then receive
-		// a stagposition in microns, but that is likely more exact than
+		// a stageposition in microns, but that is likely more exact than
 		// lying about pixelSize here (by setting it to 1)
 		Point2D stagePos = toStageSpace(pixSizeUm, tmpXUm / pixSizeUm,
 				tmpYUm / pixSizeUm);
+		moveXYStageUm(studio_.core().getXYStageDevice(), stagePos.getX(),
+				stagePos.getY());
+	}
+
+	/**
+	 * Move the XYStage in such a manner that the sample as displayed in the
+	 * viewer will move in an absolute Carthesian coordinate system.
+	 * For instance, moving 1 pixel in x will move the stage so that the
+	 * image on the screen will move 1 pixels to the right, which may
+	 * involve XYStage movement in both x and y.
+	 *
+	 * @param tmpXPixels amount (in pixels) the sample should move in the x direction
+	 * @param tmpYPixels amount (in pixels) the sample should move in the y direction
+	 */
+	public void moveSampleOnDisplayPixels(final double tmpXPixels, final double tmpYPixels) {
+		double pixSizeUm = studio_.core().getPixelSizeUm(true);
+		if (!(pixSizeUm > 0.0)) {
+			JOptionPane.showMessageDialog(null,
+					"Please provide pixel size calibration data before using this function");
+			return;
+		}
+		String xyStage = studio_.core().getXYStageDevice();
+		if (xyStage == null || xyStage.equals("")) {
+			return;
+		}
+		Point2D stagePos = toStageSpace(pixSizeUm, tmpXPixels,
+				tmpYPixels);
 		moveXYStageUm(studio_.core().getXYStageDevice(), stagePos.getX(),
 				stagePos.getY());
 	}

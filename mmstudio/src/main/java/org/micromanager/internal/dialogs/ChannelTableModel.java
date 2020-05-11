@@ -20,7 +20,7 @@ import org.micromanager.propertymap.MutablePropertyMapView;
 /**
  * Data representation class for the channels list in the MDA dialog.
  */
-public final class ChannelTableModel extends AbstractTableModel implements TableModelListener {
+public final class ChannelTableModel extends AbstractTableModel  {
 
    private static final long serialVersionUID = 3290621191844925827L;
    private final Studio studio_;
@@ -62,6 +62,7 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
       acqEng_ = eng;
       settings_ = studio_.profile().getSettings(ChannelTableModel.class);
       channels_ = new ArrayList<>(12);
+      cleanUpConfigurationList();
    }
 
    @Override
@@ -163,6 +164,7 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
       channels_.set(row, channel);
 
       acqEng_.setChannel(row, channel);
+      this.fireTableChanged(new TableModelEvent(this));
    }
 
    @Override
@@ -172,22 +174,6 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
       }
 
       return true;
-   }
-
-   /*
-    * Catched events thrown by the ColorEditor
-    * Will write the new color into the Color Prefs
-    */
-   @Override
-   public void tableChanged(TableModelEvent e) {
-      int row = e.getFirstRow();
-      if (row < 0) {
-         return;
-      }
-      int col = e.getColumn();
-      if (col < 0) {
-         return;
-      }
    }
 
    public ArrayList<ChannelSpec> getChannels() {
