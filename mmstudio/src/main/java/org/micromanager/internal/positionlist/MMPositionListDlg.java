@@ -8,8 +8,6 @@ package org.micromanager.internal.positionlist;
 import com.google.common.eventbus.Subscribe;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import javax.swing.event.TableModelListener;
-import mmcorej.CMMCore;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
 import org.micromanager.events.internal.DefaultNewPositionListEvent;
@@ -17,13 +15,16 @@ import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 
 /**
- *
- * @author nick
+ * The MMPositionListDlg class extends PositionListDlg to be used as the singleton PositionListDlg used in the MMStudio API
+ * In addition to the normal behavior of a PositionListDlg, this object will:
+ *   1: Update an AcqControlDlg window each time the position list is modified.
+ *   2: Post a DefaultNewPositionListEvent to the MMStudio EventManager each time the position list is modified.
+ *   3: Save preferences to the MMStudio UserProfile.
  */
-public final class MMStudioPositionListDlg extends PositionListDlg {
+public final class MMPositionListDlg extends PositionListDlg {
     AcqControlDlg acd_;
     
-    public MMStudioPositionListDlg(Studio studio, PositionList posList, AcqControlDlg acd) {
+    public MMPositionListDlg(Studio studio, PositionList posList, AcqControlDlg acd) {
         super(studio, posList);
         acd_ = acd;
         

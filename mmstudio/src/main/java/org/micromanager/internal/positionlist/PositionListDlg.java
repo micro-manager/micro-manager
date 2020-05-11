@@ -32,8 +32,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.ArrayList;
 import javax.swing.ImageIcon;
@@ -58,9 +56,7 @@ import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
-import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.EventBusExceptionLogger;
 import org.micromanager.internal.utils.FileDialogs;
@@ -69,6 +65,9 @@ import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.ReportingUtils;
 
+/**
+ * The PositionListDlg class provides a convenient UI to generate, edit, load, and save PositionList objects.
+ */
 public class PositionListDlg extends MMFrame implements MouseListener, ChangeListener {
    static final long serialVersionUID = 1L;
    String posListDir_;

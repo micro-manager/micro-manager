@@ -100,7 +100,7 @@ import org.micromanager.internal.menus.MMMenuBar;
 import org.micromanager.internal.navigation.UiMovesStageManager;
 import org.micromanager.internal.pipelineinterface.PipelineFrame;
 import org.micromanager.internal.pluginmanagement.DefaultPluginManager;
-import org.micromanager.internal.positionlist.PositionListDlg;
+import org.micromanager.internal.positionlist.MMPositionListDlg;
 import org.micromanager.internal.propertymap.DefaultPropertyMap;
 import org.micromanager.internal.script.ScriptPanel;
 import org.micromanager.internal.utils.DaytimeNighttime;
@@ -167,7 +167,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private CMMCore core_;
    private AcquisitionWrapperEngine acqEngine_;
    private PositionList posList_;
-   private PositionListDlg posListDlg_;
+   private MMPositionListDlg posListDlg_;
    private boolean isProgramRunning_;
    private boolean configChanged_ = false;
    private boolean isClickToMoveEnabled_ = false;
@@ -1459,7 +1459,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    @Override
    public void showPositionList() {
       if (posListDlg_ == null) {
-         posListDlg_ = new PositionListDlg(studio_, posList_, 
+         posListDlg_ = new MMPositionListDlg(studio_, posList_, 
                  acqControlWin_);
       }
       posListDlg_.setVisible(true);
