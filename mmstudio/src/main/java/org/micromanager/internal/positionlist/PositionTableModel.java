@@ -113,6 +113,5 @@ class PositionTableModel extends AbstractTableModel {
    @Override
    public void fireTableDataChanged() {
       super.fireTableDataChanged();
-      studio_.events().post(new DefaultNewPositionListEvent(posList_));
    }
 }

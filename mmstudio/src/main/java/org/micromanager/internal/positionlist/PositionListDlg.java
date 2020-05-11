@@ -122,7 +122,6 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
     * Create the dialog
     * @param studio - Studio
     * @param posList - Position list to be displayed in this dialog
-    * @param acd - MDA window
     */
    @SuppressWarnings("LeakingThisInConstructor")
    public PositionListDlg(Studio studio, PositionList posList) {
@@ -828,7 +827,7 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
       tileCreatorDlg.setVisible(true);
    }
 
-   private PositionList getPositionList() {
+   protected PositionList getPositionList() {
       return positionModel_.getPositionList();
 
    }
@@ -1012,9 +1011,7 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
 
       @Override
       public void run() {
-
          try {
-
             core_.home(deviceName);
 
             // check if the device busy?

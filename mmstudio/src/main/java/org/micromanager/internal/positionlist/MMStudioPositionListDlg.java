@@ -8,9 +8,11 @@ package org.micromanager.internal.positionlist;
 import com.google.common.eventbus.Subscribe;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import javax.swing.event.TableModelListener;
 import mmcorej.CMMCore;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
+import org.micromanager.events.internal.DefaultNewPositionListEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 
@@ -31,12 +33,14 @@ public final class MMStudioPositionListDlg extends PositionListDlg {
                saveDims();
             }
         });
+        
     }
     
     @Override
     protected void updatePositionData() {
         super.updatePositionData();
         acd_.updateGUIContents();
+        studio_.events().post(new DefaultNewPositionListEvent(getPositionList()));
     }
     
     private void saveDims() {
@@ -54,5 +58,5 @@ public final class MMStudioPositionListDlg extends PositionListDlg {
          saveDims();
          dispose();
       }
-   }
+   }   
 }
