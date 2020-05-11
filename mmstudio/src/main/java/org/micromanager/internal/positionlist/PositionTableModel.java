@@ -109,9 +109,4 @@ class PositionTableModel extends AbstractTableModel {
    public void setCurrentMSP(MultiStagePosition msp) {
       curMsp_ = msp;
    }
-
-   @Override
-   public void fireTableDataChanged() {
-      super.fireTableDataChanged();
-   }
 }
