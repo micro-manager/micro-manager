@@ -960,15 +960,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       return isClickToMoveEnabled_;
    }
 
-   // Ensure that the "XY list..." dialog exists.
-   private void checkPosListDlg() {
-      if (posListDlg_ == null) {
-         posListDlg_ = new PositionListDlg(core_, studio_, posList_,
-                 acqControlWin_);
-         posListDlg_.addListeners();
-      }
-   }
-
    // //////////////////////////////////////////////////////////////////////////
    // public interface available for scripting access
    // //////////////////////////////////////////////////////////////////////////
