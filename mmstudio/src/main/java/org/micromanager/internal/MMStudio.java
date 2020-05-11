@@ -100,7 +100,7 @@ import org.micromanager.internal.menus.MMMenuBar;
 import org.micromanager.internal.navigation.UiMovesStageManager;
 import org.micromanager.internal.pipelineinterface.PipelineFrame;
 import org.micromanager.internal.pluginmanagement.DefaultPluginManager;
-import org.micromanager.internal.positionlist.PositionListDlg;
+import org.micromanager.internal.positionlist.MMPositionListDlg;
 import org.micromanager.internal.propertymap.DefaultPropertyMap;
 import org.micromanager.internal.script.ScriptPanel;
 import org.micromanager.internal.utils.DaytimeNighttime;
@@ -167,7 +167,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private CMMCore core_;
    private AcquisitionWrapperEngine acqEngine_;
    private PositionList posList_;
-   private PositionListDlg posListDlg_;
+   private MMPositionListDlg posListDlg_;
    private boolean isProgramRunning_;
    private boolean configChanged_ = false;
    private boolean isClickToMoveEnabled_ = false;
@@ -317,7 +317,9 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // Note: pipelineFrame is used in the dataManager, however, pipelineFrame 
       // needs the dataManager.  Let's hope for the best....
       dataManager_ = new DefaultDataManager(studio_);
-      createPipelineFrame();
+      if (pipelineFrame_ == null) { //Create the pipelineframe if it hasn't already been done.
+         pipelineFrame_ = new PipelineFrame(studio_);
+      }
 
       alertManager_ = new DefaultAlertManager(studio_);
       
@@ -921,12 +923,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
    }
 
-   private void createPipelineFrame() {
-      if (pipelineFrame_ == null) {
-         pipelineFrame_ = new PipelineFrame(studio_);
-      }
-   }
-
    public PipelineFrame getPipelineFrame() {
       return pipelineFrame_;
    }
@@ -960,15 +956,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    public boolean getIsClickToMoveEnabled() {
       return isClickToMoveEnabled_;
-   }
-   
-   // Ensure that the "XY list..." dialog exists.
-   private void checkPosListDlg() {
-      if (posListDlg_ == null) {
-         posListDlg_ = new PositionListDlg(core_, studio_, posList_, 
-                 acqControlWin_);
-         posListDlg_.addListeners();
-      }
    }
    
 
@@ -1023,18 +1010,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          return false;
       }
       return true;
-   }
-
-   private boolean isCurrentImageFormatSupported() {
-      long channels = core_.getNumberOfComponents();
-      long bpp = core_.getBytesPerPixel();
-
-      if (channels > 1 && channels != 4 && bpp != 1) {
-         handleError("Unsupported image format.");
-      } else {
-         return true;
-      }
-      return false;
    }
 
    private void configureBinningCombo() throws Exception {
@@ -1483,7 +1458,11 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
     */
    @Override
    public void showPositionList() {
-      checkPosListDlg();
+      if (posListDlg_ == null) {
+         posListDlg_ = new MMPositionListDlg(studio_, posList_, 
+                 acqControlWin_);
+         posListDlg_.addListeners();
+      }
       posListDlg_.setVisible(true);
    }
 

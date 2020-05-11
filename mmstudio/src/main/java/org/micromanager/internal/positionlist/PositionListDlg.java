@@ -32,8 +32,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.ArrayList;
 import javax.swing.ImageIcon;
@@ -58,9 +56,7 @@ import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
-import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.EventBusExceptionLogger;
 import org.micromanager.internal.utils.FileDialogs;
@@ -69,38 +65,39 @@ import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.ReportingUtils;
 
-public final class PositionListDlg extends MMFrame implements MouseListener, ChangeListener {
-   private static final long serialVersionUID = 1L;
-   private String posListDir_;
-   private File curFile_;
-   private static final String POS = "pos";
-   private static final String POS_COL0_WIDTH = "posCol0WIDTH";
-   private static final String AXIS_COL0_WIDTH = "axisCol0WIDTH";
-   // @SuppressWarnings("unused")
-   private static final FileType POSITION_LIST_FILE =
+/**
+ * The PositionListDlg class provides a convenient UI to generate, edit, load, and save PositionList objects.
+ */
+public class PositionListDlg extends MMFrame implements MouseListener, ChangeListener {
+   protected static final long serialVersionUID = 1L;
+   protected String posListDir_;
+   protected File curFile_;
+   protected static final String POS = "pos";
+   protected static final String POS_COL0_WIDTH = "posCol0WIDTH";
+   protected static final String AXIS_COL0_WIDTH = "axisCol0WIDTH";
+   protected static final FileType POSITION_LIST_FILE =
            new FileType("POSITION_LIST_FILE","Position list file",
                         System.getProperty("user.home") + "/PositionList.pos",
                         true, POS);
 
-   private Font arialSmallFont_;
-   private JTable posTable_;
-   private final JTable axisTable_;
+   protected Font arialSmallFont_;
+   protected JTable posTable_;
+   protected final JTable axisTable_;
    private final AxisTableModel axisModel_;
-   private CMMCore core_;
-   private Studio studio_;
-   private AcqControlDlg acqControlDlg_;
+   protected CMMCore core_;
+   protected Studio studio_;
    private AxisList axisList_;
-   private final JButton tileButton_;
+   protected final JButton tileButton_;
 
-   private MultiStagePosition curMsp_;
-   public JButton markButton_;
+   protected MultiStagePosition curMsp_;
+   protected JButton markButton_;
    private final PositionTableModel positionModel_;
 
-   private EventBus bus_;
+   protected EventBus bus_;
 
    @Subscribe
    public void onTileUpdate(MoversChangedEvent event) {
-      setTileButtonEnabled();
+      setTileButtonEnabled(); //This handler is executed when the axis checkboxes are changed.
    }
 
    private void setTileButtonEnabled() {
@@ -122,27 +119,18 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
 
    /**
     * Create the dialog
-    * @param core -  MMCore
     * @param studio - Studio
     * @param posList - Position list to be displayed in this dialog
-    * @param acd - MDA window
     */
    @SuppressWarnings("LeakingThisInConstructor")
-   public PositionListDlg(CMMCore core, Studio studio,
-                     PositionList posList, AcqControlDlg acd) {
+   public PositionListDlg(Studio studio, PositionList posList) {
       super("position list");
       final UserProfile profile = studio.profile();
-      addWindowListener(new WindowAdapter() {
-         @Override
-         public void windowClosing(WindowEvent arg0) {
-            saveDims();
-         }
-      });
-      core_ = core;
+
+      core_ = studio.core();
       studio_ = studio;
       bus_ = new EventBus(EventBusExceptionLogger.getInstance());
       bus_.register(this);
-      acqControlDlg_ = acd;
 
       setTitle("Stage Position List");
       setLayout(new MigLayout("flowy, filly, insets 8", "[grow][]", 
@@ -440,7 +428,8 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
       return button;
    }
    
-   public void addListeners() {   
+   public void addListeners() { 
+       // This method should be called after the constructor finishes to fully register all needed listeners.
       axisTable_.addMouseListener(this);
       posTable_.addMouseListener(this);      
       getPositionList().addChangeListener(this);    
@@ -459,8 +448,7 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
    }
 
    protected void updateMarkButtonText() {
-      PositionTableModel tm = (PositionTableModel) posTable_.getModel();
-      MultiStagePosition msp = tm.getPositionList().
+      MultiStagePosition msp = getPositionList().
               getPosition(posTable_.getSelectedRow() - 1);
       if (markButton_ != null) {
          if (msp == null) {
@@ -473,17 +461,15 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
    
 
    public void addPosition(MultiStagePosition msp, String label) {
-      PositionTableModel ptm = (PositionTableModel) posTable_.getModel();
       msp.setLabel(label);
-      ptm.getPositionList().addPosition(msp);
-      ptm.fireTableDataChanged();
+      getPositionList().addPosition(msp);
+      updatePositionData();
    }
 
    public void addPosition(MultiStagePosition msp) {
-      PositionTableModel ptm = (PositionTableModel) posTable_.getModel();
-      msp.setLabel(ptm.getPositionList().generateLabel());
-      ptm.getPositionList().addPosition(msp);
-      ptm.fireTableDataChanged();
+      msp.setLabel(getPositionList().generateLabel());
+      getPositionList().addPosition(msp);
+      updatePositionData();
    }
 
    protected boolean savePositionListAs() {
@@ -528,15 +514,13 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
       }
    }
 
-   public void updatePositionData() {
-      PositionTableModel ptm = (PositionTableModel) posTable_.getModel();
-      ptm.fireTableDataChanged();
+   protected void updatePositionData() {
+      positionModel_.fireTableDataChanged();
    }
    
    public void rebuildAxisList() {
       axisList_ = new AxisList(core_);
-      AxisTableModel axm = (AxisTableModel)axisTable_.getModel();
-      axm.fireTableDataChanged();
+      axisModel_.fireTableDataChanged();
    }
 
    public void activateAxisTable(boolean state) {
@@ -545,14 +529,12 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
    }
    
    public void setPositionList(PositionList pl) {
-      PositionTableModel ptm = (PositionTableModel) posTable_.getModel();
-      ptm.setData(pl);
-      ptm.fireTableDataChanged();
+      positionModel_.setData(pl);
+      updatePositionData();
    }
 
    protected void goToCurrentPosition() {
-      PositionTableModel ptm = (PositionTableModel) posTable_.getModel();
-      MultiStagePosition msp = ptm.getPositionList().getPosition(posTable_.getSelectedRow() - 1);
+      MultiStagePosition msp = getPositionList().getPosition(posTable_.getSelectedRow() - 1);
       if (msp == null)
          return;
 
@@ -565,15 +547,12 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
    }
 
    protected void clearAllPositions() {
-      PositionTableModel ptm = (PositionTableModel) posTable_.getModel();
-      ptm.getPositionList().clearAllPositions();
-      ptm.fireTableDataChanged();
-      acqControlDlg_.updateGUIContents();
+      getPositionList().clearAllPositions();
+      updatePositionData();
    }
 
    
    protected void incrementOrderOfSelectedPosition(int direction) {
-      PositionTableModel ptm = (PositionTableModel) posTable_.getModel();
       int currentRow = posTable_.getSelectedRow() - 1;
       int newEdittingRow = -1;
 
@@ -582,15 +561,15 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
          {
             if (0 <= destinationRow) {
                if (destinationRow < posTable_.getRowCount()) {
-                  PositionList pl = ptm.getPositionList();
+                  PositionList pl = getPositionList();
 
                   MultiStagePosition[] mspos = pl.getPositions();
 
                   MultiStagePosition tmp = mspos[currentRow];
                   pl.replacePosition(currentRow, mspos[destinationRow]);//
                   pl.replacePosition(destinationRow, tmp);
-                  ptm.setData(pl);
-                  if (destinationRow + 1 < ptm.getRowCount()) {
+                  positionModel_.setData(pl);
+                  if (destinationRow + 1 < positionModel_.getRowCount()) {
                      newEdittingRow = destinationRow + 1;
                   }
                } else {
@@ -601,7 +580,7 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
             }
          }
       }
-      ptm.fireTableDataChanged();
+      updatePositionData();
 
       if (-1 < newEdittingRow) {
          posTable_.changeSelection(newEdittingRow, newEdittingRow, false, false);
@@ -613,16 +592,14 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
    
    
    protected void removeSelectedPositions() {
-      PositionTableModel ptm = (PositionTableModel) posTable_.getModel();
       int[] selectedRows = posTable_.getSelectedRows();
       // Reverse the rows so that we delete from the end; if we delete from
       // the front then the position list gets re-ordered as we go and we 
       // delete the wrong positions!
       for (int i = selectedRows.length - 1; i >= 0; --i) {
-         ptm.getPositionList().removePosition(selectedRows[i] - 1);
+         getPositionList().removePosition(selectedRows[i] - 1);
       }
-      ptm.fireTableDataChanged();
-      acqControlDlg_.updateGUIContents();
+      updatePositionData();
    }
 
    /**
@@ -634,25 +611,23 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
       refreshCurrentPosition();
       MultiStagePosition msp = curMsp_;
 
-      PositionTableModel ptm = (PositionTableModel) posTable_.getModel();
       MultiStagePosition selMsp = null;
       if (shouldOverwrite) {
-         selMsp = ptm.getPositionList().getPosition(posTable_.getSelectedRow() -1);
+         selMsp = getPositionList().getPosition(posTable_.getSelectedRow() -1);
       }
 
       if (selMsp == null) {
-         msp.setLabel(ptm.getPositionList().generateLabel());
-         ptm.getPositionList().addPosition(msp);
-         ptm.fireTableDataChanged();
-         acqControlDlg_.updateGUIContents();
+         msp.setLabel(getPositionList().generateLabel());
+         getPositionList().addPosition(msp);
+         updatePositionData();
       }
       else { // replace instead of add
-         msp.setLabel(ptm.getPositionList().getPosition(
+         msp.setLabel(getPositionList().getPosition(
                  posTable_.getSelectedRow() - 1).getLabel() );
          int selectedRow = posTable_.getSelectedRow();
-         ptm.getPositionList().replacePosition(
+         getPositionList().replacePosition(
                  posTable_.getSelectedRow() -1, msp);
-         ptm.fireTableDataChanged();
+         updatePositionData();
          // Not sure why this is here as we undo the selection after
          // this functions exits...
          posTable_.setRowSelectionInterval(selectedRow, selectedRow);
@@ -694,7 +669,7 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
       for (int row : selectedRows) {
          // Find the appropriate StagePosition in this MultiStagePosition and
          // update its values.
-         MultiStagePosition listPos = positionModel_.getPositionList().getPosition(row - 1);
+         MultiStagePosition listPos = getPositionList().getPosition(row - 1);
          boolean foundPos = false;
          for (int posIndex = 0; posIndex < listPos.size(); ++posIndex) {
             StagePosition subPos = listPos.get(posIndex);
@@ -731,8 +706,7 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
             listPos.add(subPos);
          }
       }
-      positionModel_.fireTableDataChanged();
-      acqControlDlg_.updateGUIContents();
+      updatePositionData();
    }
  
    // The stage position changed; update curMsp_.
@@ -800,9 +774,8 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
       curMsp_.setLabel("Current");
       positionModel_.setCurrentMSP(curMsp_);
 
-      PositionTableModel ptm = (PositionTableModel) posTable_.getModel();
-      ptm.fireTableCellUpdated(0, 1);
-      ptm.fireTableCellUpdated(0, 0);
+      positionModel_.fireTableCellUpdated(0, 1);
+      positionModel_.fireTableCellUpdated(0, 0);
       posTable_.revalidate();
       axisTable_.revalidate();
    }
@@ -855,9 +828,8 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
       tileCreatorDlg.setVisible(true);
    }
 
-   private PositionList getPositionList() {
-      PositionTableModel ptm = (PositionTableModel) posTable_.getModel();
-      return ptm.getPositionList();
+   public PositionList getPositionList() {
+      return positionModel_.getPositionList();
 
    }
 
@@ -1040,9 +1012,7 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
 
       @Override
       public void run() {
-
          try {
-
             core_.home(deviceName);
 
             // check if the device busy?
@@ -1158,7 +1128,7 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
     * @param offsets
     */
    public void offsetSelectedSites(String deviceName, ArrayList<Float> offsets) {
-      PositionList positions = positionModel_.getPositionList();
+      PositionList positions = getPositionList();
       for (int rowIndex : posTable_.getSelectedRows()) {
          MultiStagePosition multiPos = positions.getPosition(rowIndex - 1);
          for (int posIndex = 0; posIndex < multiPos.size(); ++posIndex) {
@@ -1175,24 +1145,6 @@ public final class PositionListDlg extends MMFrame implements MouseListener, Cha
             }
          }
       }
-      positionModel_.fireTableDataChanged();
-      acqControlDlg_.updateGUIContents();
-   }
-
-   @Subscribe
-   public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
-      if (!event.getIsCancelled()) {
-         saveDims();
-         dispose();
-      }
-   }
-
-   private void saveDims() {
-      int posCol0Width = posTable_.getColumnModel().getColumn(0).getWidth();
-      studio_.profile().getSettings(PositionListDlg.class).putInteger(POS_COL0_WIDTH,
-            posCol0Width);
-      int axisCol0Width = axisTable_.getColumnModel().getColumn(0).getWidth();
-      studio_.profile().getSettings(PositionListDlg.class).putInteger(AXIS_COL0_WIDTH,
-            axisCol0Width);
+      updatePositionData();
    }
 }
