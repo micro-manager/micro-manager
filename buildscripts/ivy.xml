@@ -41,6 +41,9 @@
 		<!-- Magellan dependencies -->
 		<!-- https://mvnrepository.com/artifact/org.zeromq/jeromq -->
 		<dependency org="org.zeromq" name="jeromq" rev="0.5.1"/>
+		<dependency org="org.micro-manager.acqengj" name="AcqEngJ" rev="0.1.0"/>
+		<dependency org="org.micro-manager.ndviewer" name="NDViewer" rev="0.1.0"/>
+		<dependency org="org.micro-manager.ndtiffstorage" name="NDTiffStorage" rev="0.1.0"/>
 
 		<dependency org="io.scif" name="scifio" rev="0.37.3"/>
 
