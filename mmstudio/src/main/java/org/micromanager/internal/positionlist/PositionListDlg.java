@@ -826,7 +826,7 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
       tileCreatorDlg.setVisible(true);
    }
 
-   protected PositionList getPositionList() {
+   public PositionList getPositionList() {
       return positionModel_.getPositionList();
 
    }
