@@ -428,7 +428,8 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
       return button;
    }
    
-   public void addListeners() {   
+   public void addListeners() { 
+       // This method should be called after the constructor finishes to fully register all needed listeners.
       axisTable_.addMouseListener(this);
       posTable_.addMouseListener(this);      
       getPositionList().addChangeListener(this);    
