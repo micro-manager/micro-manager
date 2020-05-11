@@ -1,2 +1,0 @@
-mvn deploy:deploy-file -DpomFile=pom.xml -Dfile=../build/Java/MMCoreJ.jar -DrepositoryId=nico -Durl=file:///z:/public_html/maven
-
