@@ -69,31 +69,31 @@ import org.micromanager.internal.utils.ReportingUtils;
  * The PositionListDlg class provides a convenient UI to generate, edit, load, and save PositionList objects.
  */
 public class PositionListDlg extends MMFrame implements MouseListener, ChangeListener {
-   static final long serialVersionUID = 1L;
-   String posListDir_;
-   File curFile_;
-   static final String POS = "pos";
-   static final String POS_COL0_WIDTH = "posCol0WIDTH";
-   static final String AXIS_COL0_WIDTH = "axisCol0WIDTH";
-   static final FileType POSITION_LIST_FILE =
+   protected static final long serialVersionUID = 1L;
+   protected String posListDir_;
+   protected File curFile_;
+   protected static final String POS = "pos";
+   protected static final String POS_COL0_WIDTH = "posCol0WIDTH";
+   protected static final String AXIS_COL0_WIDTH = "axisCol0WIDTH";
+   protected static final FileType POSITION_LIST_FILE =
            new FileType("POSITION_LIST_FILE","Position list file",
                         System.getProperty("user.home") + "/PositionList.pos",
                         true, POS);
 
-   Font arialSmallFont_;
-   JTable posTable_;
-   final JTable axisTable_;
-   final AxisTableModel axisModel_;
-   CMMCore core_;
-   Studio studio_;
-   AxisList axisList_;
-   final JButton tileButton_;
+   protected Font arialSmallFont_;
+   protected JTable posTable_;
+   protected final JTable axisTable_;
+   private final AxisTableModel axisModel_;
+   protected CMMCore core_;
+   protected Studio studio_;
+   private AxisList axisList_;
+   protected final JButton tileButton_;
 
-   MultiStagePosition curMsp_;
-   JButton markButton_;
-   final PositionTableModel positionModel_;
+   protected MultiStagePosition curMsp_;
+   protected JButton markButton_;
+   private final PositionTableModel positionModel_;
 
-   EventBus bus_;
+   protected EventBus bus_;
 
    @Subscribe
    public void onTileUpdate(MoversChangedEvent event) {
