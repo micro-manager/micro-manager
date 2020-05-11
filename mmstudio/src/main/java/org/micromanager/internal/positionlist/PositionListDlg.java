@@ -128,12 +128,7 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
    public PositionListDlg(Studio studio, PositionList posList) {
       super("position list");
       final UserProfile profile = studio.profile();
-      addWindowListener(new WindowAdapter() {
-         @Override
-         public void windowClosing(WindowEvent arg0) {
-            saveDims();
-         }
-      });
+
       core_ = studio.core();
       studio_ = studio;
       bus_ = new EventBus(EventBusExceptionLogger.getInstance());
@@ -1153,22 +1148,5 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
          }
       }
       updatePositionData();
-   }
-
-   @Subscribe
-   public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
-      if (!event.getIsCancelled()) {
-         saveDims();
-         dispose();
-      }
-   }
-
-   private void saveDims() {
-      int posCol0Width = posTable_.getColumnModel().getColumn(0).getWidth();
-      studio_.profile().getSettings(PositionListDlg.class).putInteger(POS_COL0_WIDTH,
-            posCol0Width);
-      int axisCol0Width = axisTable_.getColumnModel().getColumn(0).getWidth();
-      studio_.profile().getSettings(PositionListDlg.class).putInteger(AXIS_COL0_WIDTH,
-            axisCol0Width);
    }
 }
