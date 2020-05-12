@@ -372,7 +372,8 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    public synchronized List<DisplayWindow> getDisplays(Datastore store) {
       return new ArrayList<>(providerToDisplays_.get(store));
    }
-   
+
+   @Override
    public synchronized List<DisplayWindow> getDisplays(DataProvider provider) {
       return new ArrayList<>(providerToDisplays_.get(provider));
    }
