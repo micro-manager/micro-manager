@@ -32,7 +32,9 @@ import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
@@ -898,8 +900,9 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    public void runZMQServer() {
       if (zmqServer_ == null) {
-         zmqServer_ = new ZMQServer(
-                 new Function<Class, Object>() {
+         //Make a function that passes existing instances of core and studio,
+         //rather than constructing them
+         Function<Class, Object> instanceGrabberFunction = new Function<Class, Object>() {
             @Override
             public Object apply(Class baseClass) {
                //return instances of existing objects
@@ -910,8 +913,15 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
                }
                return null;
             }
-         });
-         logs().logMessage("Initialized ZMQ Server on port: " + ZMQServer.DEFAULT_MASTER_PORT_NUMBER);
+         };
+         try {
+            zmqServer_ = new ZMQServer(IJ.getClassLoader(), instanceGrabberFunction);
+            logs().logMessage("Initialized ZMQ Server on port: " + ZMQServer.DEFAULT_MASTER_PORT_NUMBER);
+         } catch (URISyntaxException | UnsupportedEncodingException e) {
+            studio_.logs().logError("Failed to initialize ZMQ Server");
+            studio_.logs().logError(e);
+         }
+
       }
    }
 
