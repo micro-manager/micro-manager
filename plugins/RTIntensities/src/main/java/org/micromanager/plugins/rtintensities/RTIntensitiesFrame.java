@@ -34,6 +34,7 @@ import javax.swing.JLabel;
 
 import net.miginfocom.swing.MigLayout;
 
+import org.micromanager.data.DataProvider;
 import org.micromanager.data.Image;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
@@ -46,6 +47,7 @@ import org.jfree.data.xy.XYSeriesCollection;
 import org.micromanager.Studio;
 import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.data.Datastore;
+import org.micromanager.data.ImageOverwrittenEvent;
 import org.micromanager.display.DisplayWindow;
 
 import ij.gui.Roi;
@@ -57,10 +59,9 @@ public class RTIntensitiesFrame extends JFrame {
 
    private Studio studio_;
    private DisplayWindow window_ = null;
-   private Datastore ds_;
-   private JButton managerButton_;
+   private DataProvider ds_;
    private JButton startButton_;
-   private int skip_ = 0;
+   private double lastElapsedTimeMs_ = 0.0;
    // This is our local cache ...
    private int ROIs_ = 0;
    private Roi[] roi_ = new Roi[100];
@@ -108,7 +109,7 @@ public class RTIntensitiesFrame extends JFrame {
         	   	title.setText("You need an open window (Snap/Live).");
         	   	return;
         	   }
-        	   ds_ = window_.getDatastore();
+        	   ds_ = window_.getDataProvider();
         	   // At least one ROI defined ?
         	   if (manager_ == null) {
         	   	title.setText("Please setup ROI(s).");
@@ -130,8 +131,7 @@ public class RTIntensitiesFrame extends JFrame {
         	   // We are all set ?
         	   imagesReceived_ = 0; // new plot
         	   if (studio.acquisitions().getAcquisitionSettings().intervalMs < 1000) {
-        		   skip_ = (int) (1000 / studio.acquisitions().getAcquisitionSettings().intervalMs);
-        	   }
+            }
         	   ds_.registerForEvents(RTIntensitiesFrame.this);
         	   dataset = new XYSeriesCollection();
         	   for (int i = 0; i < ROIs_; i++) {
@@ -159,19 +159,32 @@ public class RTIntensitiesFrame extends JFrame {
 
    @Subscribe
    public void onNewImage(DataProviderHasNewImageEvent event) {
+      processImage(event.getImage());
+   }
+
+   @Subscribe
+   public void onOverWrittenImage(ImageOverwrittenEvent event) {
+      processImage(event.getNewImage());
+   }
+
+   private void processImage(Image image) {
 	   imagesReceived_++;
-	   if (skip_ == 0 || imagesReceived_ % (skip_+1) == 1) { // 1Hz max
+	   double elapsedTimeMs = image.getMetadata().getElapsedTimeMs(0.0);
+	   // do not process images at ore than 1 Hz
+	   if (lastElapsedTimeMs_ == 0.0 || elapsedTimeMs - lastElapsedTimeMs_ >= 1000.0 ||
+              elapsedTimeMs < lastElapsedTimeMs_ ) { // 1Hz max
+         lastElapsedTimeMs_ = elapsedTimeMs;
 		   double t;
 		   double v;
 		   title.setText("You should be seeing data on the plot.");
-		   Image image = event.getImage();
 		   t = (double)image.getCoords().getT();
 		   // Check if doing live
 		   if (t < 0.01 && imagesReceived_ > 1) {
-		   	skip_ = 99;
-		   	t = imagesReceived_ * 0.1; // oops, 2 initial images, too bad.
+            t = imagesReceived_ * 0.1; // oops, 2 initial images, too bad.
 		   }
-		   if (window_ == null) window_ = studio_.getDisplayManager().getDisplays(ds_).get(0);
+		   if (window_ == null) {
+		      window_ = studio_.getDisplayManager().getDisplays(ds_).get(0);
+         }
 		   ImageProcessor processor = studio_.data().ij().createProcessor(image);
 		   processor.setLineWidth(1);
 		   processor.setColor(Color.red);
