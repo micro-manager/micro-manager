@@ -188,13 +188,15 @@ public class RTIntensitiesFrame extends JFrame {
          firstImageDate_ = imgTime;
       }
 	   imagesReceived_++;
+      if (image.getCoords().getChannel() > 0 ) {
+         // TODO: plot channels individually
+      }
 	   double elapsedTimeMs = imgTime.getTime() - firstImageDate_.getTime();
-	   // do not process images at ore than 1 Hz
-	   if (lastElapsedTimeMs_ == 0.0 || elapsedTimeMs - lastElapsedTimeMs_ >= 10.0) { // 100Hz max
+	   // do not process images at more than 100 Hz
+	   if (lastElapsedTimeMs_ == 0.0 || elapsedTimeMs - lastElapsedTimeMs_ >= 10.0) {
          lastElapsedTimeMs_ = elapsedTimeMs;
 		   double v;
 		   title.setText("You should be seeing data on the plot.");
-
 
 		   if (window_ == null) {
 		      window_ = studio_.getDisplayManager().getDisplays(dataProvider_).get(0);
