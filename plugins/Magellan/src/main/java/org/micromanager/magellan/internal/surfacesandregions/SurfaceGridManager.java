@@ -29,13 +29,13 @@ import java.util.ArrayList;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import org.micromanager.acqj.internal.acqengj.NumUtils;
 import org.micromanager.magellan.internal.coordinates.AffineUndefinedException;
-import org.micromanager.magellan.internal.coordinates.MagellanAffineUtils;
+import org.micromanager.acqj.internal.acqengj.AffineTransformUtils;
 //import org.micromanager.magellan.imagedisplaynew.DisplayWindowSurfaceGridTableModel;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.JavaUtils;
 import org.micromanager.magellan.internal.misc.Log;
-import org.micromanager.magellan.internal.misc.NumberUtils;
 
 /**
  *
@@ -148,7 +148,7 @@ public class SurfaceGridManager {
    }
    
    public SurfaceInterpolator addNewSurface() {
-      if (!MagellanAffineUtils.isAffineTransformDefined()) {
+      if (!AffineTransformUtils.isAffineTransformDefined()) {
           throw new AffineUndefinedException();
       }
        SurfaceInterpolator s = new SurfaceInterpolatorSimple(Magellan.getCore().getXYStageDevice(), Magellan.getCore().getFocusDevice());
@@ -160,7 +160,7 @@ public class SurfaceGridManager {
    }
    
    public MultiPosGrid addNewGrid(int rows, int cols, Point2D.Double center) {
-      if (!MagellanAffineUtils.isAffineTransformDefined()) {
+      if (!AffineTransformUtils.isAffineTransformDefined()) {
           throw new AffineUndefinedException();
       }     
        MultiPosGrid grid = new MultiPosGrid(this, Magellan.getCore().getXYStageDevice(), rows, cols, center);
@@ -414,7 +414,7 @@ public class SurfaceGridManager {
          }
          for (int i = 1; i < lines.length; i++) {
             String[] xyz = lines[i].split("\t");
-            surface.addPoint(NumberUtils.parseDouble(xyz[0]), NumberUtils.parseDouble(xyz[1]), NumberUtils.parseDouble(xyz[2]));
+            surface.addPoint(NumUtils.parseDouble(xyz[0]), NumUtils.parseDouble(xyz[1]), NumUtils.parseDouble(xyz[2]));
          }
          for (SurfaceGridListener l : listeners_) {
             l.SurfaceOrGridCreated(surface);

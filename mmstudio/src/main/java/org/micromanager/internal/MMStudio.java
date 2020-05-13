@@ -32,12 +32,15 @@ import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -118,6 +121,8 @@ import org.micromanager.profile.internal.UserProfileAdmin;
 import org.micromanager.profile.internal.gui.HardwareConfigurationManager;
 import org.micromanager.quickaccess.QuickAccessManager;
 import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
+import org.micromanager.internal.zmq.ZMQServer;
+
 
 /*
  * Implements the Studio (i.e. primary API) and does various other
@@ -907,14 +912,33 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       scriptPanel_ = new ScriptPanel(studio_);
    }
    
-   public void runZMQServer() {
+  public void runZMQServer() {
       if (zmqServer_ == null) {
-         zmqServer_ = new ZMQServer(studio_);
+         //Make a function that passes existing instances of core and studio,
+         //rather than constructing them
+         Function<Class, Object> instanceGrabberFunction = new Function<Class, Object>() {
+            @Override
+            public Object apply(Class baseClass) {
+               //return instances of existing objects
+               if (baseClass.equals(Studio.class)) {
+                  return studio_;
+               } else if (baseClass.equals(CMMCore.class)) {
+                  return studio_.getCMMCore();
+               }
+               return null;
+            }
+         };
+         try {
+            zmqServer_ = new ZMQServer(IJ.getClassLoader(), instanceGrabberFunction);
+            logs().logMessage("Initialized ZMQ Server on port: " + ZMQServer.DEFAULT_MASTER_PORT_NUMBER);
+         } catch (URISyntaxException | UnsupportedEncodingException e) {
+            studio_.logs().logError("Failed to initialize ZMQ Server");
+            studio_.logs().logError(e);
+         }
+
       }
-      zmqServer_.initialize(ZMQServer.DEFAULT_PORT_NUMBER);
-      logs().logMessage("Initialized ZMQ Server on port: " + ZMQServer.DEFAULT_PORT_NUMBER);
    }
-   
+
    public void stopZMQServer() {
       if (zmqServer_ != null) {
          zmqServer_.close();

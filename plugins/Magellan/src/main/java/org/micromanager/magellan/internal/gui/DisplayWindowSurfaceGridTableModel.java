@@ -5,9 +5,10 @@
  */
 package org.micromanager.magellan.internal.gui;
 
-import java.util.List;
+import com.google.common.eventbus.Subscribe;
+import java.awt.geom.Point2D;
+import java.util.HashMap;
 import javax.swing.table.AbstractTableModel;
-import org.micromanager.acqj.api.mda.XYStagePosition;
 import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.magellan.internal.surfacesandregions.MultiPosGrid;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridListener;
@@ -19,18 +20,28 @@ import org.micromanager.magellan.internal.surfacesandregions.XYFootprint;
  *
  * @author henrypinkard
  */
-public class SurfaceGridTableModel extends AbstractTableModel implements SurfaceGridListener {
+ class DisplayWindowSurfaceGridTableModel extends AbstractTableModel implements SurfaceGridListener {
 
-   private final String[] COLUMNS = {"Type", "Name", "Z Device", "# Positions"};
+   private final String[] COLUMNS = {"Show", "Type", "Name"};
+   //maybe, "Z Device"
+   private volatile HashMap<XYFootprint, Boolean> showSurfaceOrGridMap = new HashMap<XYFootprint, Boolean>();
 
-   private SurfaceGridManager manager_;
-
-   public SurfaceGridTableModel() {
-      manager_ = SurfaceGridManager.getInstance();
+   private SurfaceGridManager manager_ = SurfaceGridManager.getInstance();
+   private MagellanViewer display_;
+   
+   public DisplayWindowSurfaceGridTableModel(MagellanViewer disp) {
+      display_ = disp;
       manager_.registerSurfaceGridListener(this);
-      //I suppose it never needs to be removed because this table is persisten as longa as magellan is open
+      for (int i = 0; i < manager_.getNumberOfGrids() + manager_.getNumberOfSurfaces(); i++) {
+         showSurfaceOrGridMap.put(manager_.getSurfaceOrGrid(i), Boolean.TRUE);
+      }
    }
+  
 
+   public boolean isSurfaceOrGridVisible(int index) {
+      return showSurfaceOrGridMap.get(manager_.getSurfaceOrGrid(index));
+   }
+   
    @Override
    public int getRowCount() {
       return manager_.getNumberOfSurfaces() + manager_.getNumberOfGrids();
@@ -48,9 +59,9 @@ public class SurfaceGridTableModel extends AbstractTableModel implements Surface
 
    @Override
    public boolean isCellEditable(int rowIndex, int colIndex) {
-      if (colIndex == 1) {
+      if (colIndex == 0 || colIndex == 2) {
          return true;
-      } else if (colIndex == 2 && manager_.getSurfaceOrGrid(rowIndex) instanceof SurfaceInterpolator) {
+      } else if (colIndex == 3 && manager_.getSurfaceOrGrid(rowIndex) instanceof SurfaceInterpolator) {
          return true; // only surfaces have XY padding
       }
       return false;
@@ -58,7 +69,11 @@ public class SurfaceGridTableModel extends AbstractTableModel implements Surface
 
    @Override
    public void setValueAt(Object value, int row, int col) {
-      if (col == 1) {
+      if (col == 0) {
+         showSurfaceOrGridMap.put(manager_.getSurfaceOrGrid(row), !showSurfaceOrGridMap.get(manager_.getSurfaceOrGrid(row)));
+         //redraw to refelect change in visibility
+         display_.redrawOverlay();
+      } else if (col == 2) {
          try {
             manager_.rename(row, (String) value);
          } catch (Exception ex) {
@@ -69,49 +84,60 @@ public class SurfaceGridTableModel extends AbstractTableModel implements Surface
 
    @Override
    public Object getValueAt(int rowIndex, int columnIndex) {
-//         private final String[] COLUMNS = {"Type", "Name", "XY padding (um)", "Z Device", "# Positions",
-//      "# Rows", "# Cols", "Width (um)", "Height (um)"};
 
       XYFootprint surfaceOrGird = manager_.getSurfaceOrGrid(rowIndex);
       if (columnIndex == 0) {
-         return manager_.getSurfaceOrGrid(rowIndex) instanceof SurfaceInterpolator ? "Surface" : "Grid";
+         return showSurfaceOrGridMap.get(surfaceOrGird);
       } else if (columnIndex == 1) {
-         return manager_.getSurfaceOrGrid(rowIndex).getName();
-      } else if (columnIndex == 2) {
-         if (manager_.getSurfaceOrGrid(rowIndex) instanceof MultiPosGrid) {
-            return "N/A";
-         }
-         return ((SurfaceInterpolator) manager_.getSurfaceOrGrid(rowIndex)).getZDevice();
+         return manager_.getSurfaceOrGrid(rowIndex) instanceof SurfaceInterpolator ? "Surface" : "Grid";
       } else {
-         XYFootprint object = manager_.getSurfaceOrGrid(rowIndex);
-         List<XYStagePosition> positions = object.getXYPositions();
-         return positions != null ? positions.size() : 0;
+         return manager_.getSurfaceOrGrid(rowIndex).getName();
+      }
+   }
+
+   @Override
+   public Class getColumnClass(int columnIndex) {
+      if (columnIndex == 0) {
+         return Boolean.class;
+      } else if (columnIndex == 1) {
+         return String.class;
+      } else {
+         return String.class;
       }
    }
 
    @Override
    public void SurfaceOrGridChanged(XYFootprint f) {
-      fireTableDataChanged();
+      this.fireTableDataChanged();
    }
 
    @Override
    public void SurfaceOrGridDeleted(XYFootprint f) {
-      fireTableDataChanged();
+      showSurfaceOrGridMap.remove(f);
+      this.fireTableDataChanged();
    }
 
    @Override
    public void SurfaceOrGridCreated(XYFootprint f) {
-      fireTableDataChanged();
+      showSurfaceOrGridMap.put(f, Boolean.TRUE);
+      this.fireTableDataChanged();
    }
 
    @Override
    public void SurfaceOrGridRenamed(XYFootprint f) {
-      fireTableDataChanged();
+      this.fireTableDataChanged();
    }
 
    @Override
    public void SurfaceInterpolationUpdated(SurfaceInterpolator s) {
-      //nothin
+      //nothing to do
    }
 
+   public SurfaceInterpolator addNewSurface() {
+      return manager_.addNewSurface();
+   }
+
+   public MultiPosGrid newGrid(int rows, int cols, Point2D.Double center) {
+      return manager_.addNewGrid(rows, cols, center);
+   }
 }
