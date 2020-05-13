@@ -32,15 +32,12 @@ import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
 import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Function;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -121,6 +118,8 @@ import org.micromanager.profile.internal.UserProfileAdmin;
 import org.micromanager.profile.internal.gui.HardwareConfigurationManager;
 import org.micromanager.quickaccess.QuickAccessManager;
 import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
+import org.micromanager.internal.zmq.ZMQServer;
+
 
 /*
  * Implements the Studio (i.e. primary API) and does various other
@@ -129,7 +128,7 @@ import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
 public final class MMStudio implements Studio, CompatibilityInterface, PositionListManager, Application {
 
    private static final long serialVersionUID = 3556500289598574541L;
-
+   
    private static final String AUTOFOCUS_DEVICE = "autofocus_device";
    private static final int TOOLTIP_DISPLAY_DURATION_MILLISECONDS = 15000;
    private static final int TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS = 2000;
@@ -147,7 +146,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private PropertyEditor propertyBrowser_;
    private CalibrationListDlg calibrationListDlg_;
    private AcqControlDlg acqControlWin_;
-
+   
+   
    // Managers
    private AcquisitionManager acquisitionManager_;
    private DataManager dataManager_;
@@ -163,7 +163,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private DefaultEventManager eventManager_;
    private ApplicationSkin daytimeNighttimeManager_;
    private UserProfileManager userProfileManager_;
-
    private UiMovesStageManager uiMovesStageManager_;
    
    // MMcore
@@ -196,10 +195,10 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private Class<?> acquisitionEngine2010Class_ = null;
    private IAcquisitionEngine2010 acquisitionEngine2010_ = null;
    private StaticInfo staticInfo_;
-
+   
+   
    /**
     * Main procedure for stand alone operation.
-    *
     * @param args
     */
    public static void main(String args[]) {
@@ -228,23 +227,20 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    /**
     * MMStudio constructor
-    *
     * @param startAsImageJPlugin Indicates if we're running from "within"
     * ImageJ, which governs our behavior when we are closed.
     */
    @SuppressWarnings("LeakingThisInConstructor")
    public MMStudio(boolean startAsImageJPlugin) {
-      this(startAsImageJPlugin, null);
+       this(startAsImageJPlugin, null);
    }
-
+   
    /**
     * MMStudio constructor
-    *
     * @param startAsImageJPlugin Indicates if we're running from "within"
     * ImageJ, which governs our behavior when we are closed.
     * @param profileNameAutoStart The name of a user profile. This profile and
-    * its most recently used hardware configuration will be to automatically
-    * loaded.
+    * its most recently used hardware configuration will be to automatically loaded. 
     */
    @SuppressWarnings("LeakingThisInConstructor")
    public MMStudio(boolean startAsImageJPlugin, String profileNameAutoStart) {
@@ -252,6 +248,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
       // TODO Of course it is crazy to do all of the following in the
       // constructor.
+
       // Bad Things will happen if two are instantiated (a lot of legacy
       // internal code assumes a single instance, and some internal services
       // are singletons), so just prevent that for now.
@@ -259,6 +256,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // preventing subsequent instantiation. This is not ideal but
       // intentional, because we do not currently have a way to cleanly exit a
       // partial initialization.
+      
       // TODO Management of the singleton instance has not been done in a clean
       // manner. In fact, there should be an API method to instantiate Studio,
       // rather than calling the constructor directly.
@@ -274,27 +272,27 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // the CoreLog (and also to fail early if the MMCoreJ is not available)
       try {
          core_ = new CMMCore();
-      } catch (UnsatisfiedLinkError ex) {
-         ReportingUtils.showError(ex,
-                 "Failed to load the MMCoreJ_wrap native library");
-      } catch (NoSuchMethodError ex) {
-         ReportingUtils.showError(ex,
-                 "Incompatible version of MMCoreJ_wrap native library");
+      } catch(UnsatisfiedLinkError ex) {
+         ReportingUtils.showError(ex, 
+               "Failed to load the MMCoreJ_wrap native library");
+      } catch(NoSuchMethodError ex) {
+         ReportingUtils.showError(ex, 
+               "Incompatible version of MMCoreJ_wrap native library");
       }
-
+      
       // Start up multiple managers.  
-      userProfileManager_ = new UserProfileManager();
-
+      
+      userProfileManager_ = new UserProfileManager();       
+      
       // Essential GUI settings in preparation of the intro dialog
       daytimeNighttimeManager_ = DaytimeNighttime.create(studio_);
-
+      
       // Start loading plugins in the background
       // Note: plugin constructors should not expect a fully constructed Studio!
       pluginManager_ = new DefaultPluginManager(studio_);
-
+      
       // Lots of places use this. instantiate it first.
       eventManager_ = new DefaultEventManager();
-
 
       // used by Snap/Live Manager and StageControlFrame
       uiMovesStageManager_ = new UiMovesStageManager(this);
@@ -309,12 +307,11 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       albumInstance_ = new DefaultAlbum(studio_);
 
       // The tools menu depends on the Quick-Access Manager.
-      quickAccess_ = new DefaultQuickAccessManager(studio_);
+      quickAccess_ = new DefaultQuickAccessManager(studio_);    
 
       acqEngine_ = new AcquisitionWrapperEngine();
       acqEngine_.setParentGUI(this);
       acqEngine_.setZStageDevice(core_.getFocusDevice());
-
 
 
       
@@ -327,7 +324,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
 
       alertManager_ = new DefaultAlertManager(studio_);
-
+      
       afMgr_ = new DefaultAutofocusManager(studio_);
       afMgr_.refresh();
       String afDevice = profile().getSettings(MMStudio.class).
@@ -342,7 +339,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       
       // Tell Core to start logging
       initializeLogging(core_);
-
+      
       // We need to be subscribed to the global event bus for plugin loading
       events().registerForEvents(this);
 
@@ -350,7 +347,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       prepAcquisitionEngine();
 
       RegistrationDlg.showIfNecessary(this);
-
+      
       // We wait for plugin loading to finish now, since IntroPlugins may be
       // needed to display the intro dialog. Fortunately, plugin loading is
       // fast in 2.0 (it used to be very slow in 1.4, so we loaded plugins in
@@ -366,7 +363,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
       if (!pluginManager_.isInitializationComplete()) {
          ReportingUtils.logMessage("Warning: Plugin loading did not finish within 15 seconds; continuing anyway");
-      } else {
+      }
+      else {
          ReportingUtils.logMessage("Finished waiting for plugins to load");
       }
 
@@ -374,29 +372,32 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       ttManager.setDismissDelay(TOOLTIP_DISPLAY_DURATION_MILLISECONDS);
       ttManager.setInitialDelay(TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS);
 
+
       UserProfileAdmin profileAdmin = userProfileManager_.getAdmin();
       UUID profileUUID = profileAdmin.getUUIDOfDefaultProfile();
       try {
-         if (profileNameAutoStart != null) {
-            for (Map.Entry<UUID, String> entry : profileAdmin.getProfileUUIDsAndNames().entrySet()) {
-               String name = entry.getValue();
-               if (name.equals(profileNameAutoStart)) {
-                  UserProfile profile = profileAdmin.getNonSavingProfile(entry.getKey());
-                  profileAdmin.setCurrentUserProfile(entry.getKey());
-                  sysConfigFile_ = HardwareConfigurationManager.getRecentlyUsedConfigFilesFromProfile(profile).get(0);
-                  break;
-               }
+          if (profileNameAutoStart != null) {
+            for (Map.Entry<UUID,String> entry : profileAdmin.getProfileUUIDsAndNames().entrySet()){
+                String name = entry.getValue();
+                if (name.equals(profileNameAutoStart)){
+                    UserProfile profile = profileAdmin.getNonSavingProfile(entry.getKey());
+                    profileAdmin.setCurrentUserProfile(entry.getKey());
+                    sysConfigFile_ = HardwareConfigurationManager.getRecentlyUsedConfigFilesFromProfile(profile).get(0);
+                    break;
+                }
             }
             if (sysConfigFile_ == null) {
-               ReportingUtils.showMessage("A hardware configuration for a profile matching name: " + profileNameAutoStart + " could not be found");
+                ReportingUtils.showMessage("A hardware configuration for a profile matching name: " + profileNameAutoStart + " could not be found");
             }
-         } else if (StartupSettings.create(profileAdmin.getNonSavingProfile(profileUUID)).
-                 shouldSkipUserInteractionWithSplashScreen()) {
+          }
+          else if (StartupSettings.create(profileAdmin.getNonSavingProfile(profileUUID)).
+               shouldSkipUserInteractionWithSplashScreen()) {
             List<String> recentConfigs = HardwareConfigurationManager.
-                    getRecentlyUsedConfigFilesFromProfile(
-                            profile());
+                  getRecentlyUsedConfigFilesFromProfile(
+                        profile());
             sysConfigFile_ = recentConfigs.isEmpty() ? null : recentConfigs.get(0);
-         } else {
+         }
+         else {
             IntroDlg introDlg = new IntroDlg(this, MMVersion.VERSION_STRING);
             if (!introDlg.okChosen()) {
                closeSequence(false);
@@ -408,7 +409,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
             sysConfigFile_ = introDlg.getSelectedConfigFilePath();
          }
-      } catch (IOException ex) {
+      }
+      catch (IOException ex) {
          // TODO We should fall back to virtual profile
          ReportingUtils.showError(ex, "Error accessing user profiles");
       }
@@ -434,21 +436,22 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
             ReportingUtils.showErrorOn(false);
          }
       }
-
+      
       // Create Multi-D window here but do not show it.
       // This window needs to be created in order to properly set the 
       // "ChannelGroup" based on the Multi-D parameters
       acqControlWin_ = new AcqControlDlg(acqEngine_, studio_);
 
       acquisitionManager_ = new DefaultAcquisitionManager(this, acqEngine_,
-              acqControlWin_);
+            acqControlWin_);
 
       try {
          core_.setCircularBufferMemoryFootprint(getCircularBufferSize());
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
       }
-
+      
+      
       // Arrange to log stack traces when the EDT hangs.
       // Use parameters that ensure a stack trace dump within 10 seconds of an
       // EDT hang (and _no_ dump on hangs under 5.5 seconds)
@@ -467,7 +470,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // Load (but do no show) the scriptPanel
       createScriptPanel();
       
-
       // Now create and show the main window
       mmMenuBar_ = MMMenuBar.createMenuBar(studio_);
       frame_ = new MainFrame(this, core_);
@@ -485,9 +487,9 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
       // Switch error reporting back on TODO See above where it's turned off
       ReportingUtils.showErrorOn(true);
-
+      
       events().registerForEvents(displayManager_);
-
+      
       // Tell the GUI to reflect the hardware configuration. (The config was
       // loaded before creating the GUI, so we need to reissue the event.)
       events().post(new SystemConfigurationLoadedEvent());
@@ -495,15 +497,15 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       executeStartupScript();
 
       updateGUI(true);
-
+      
       // Give plugins a chance to initialize their state
       events().post(new StartupCompleteEvent());
-
+      
       // start zmq server if so desired
       if (getShouldRunZMQServer()) {
          runZMQServer();
       }
-
+      
    }
 
    private void initializeLogging(CMMCore core) {
@@ -516,13 +518,14 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       new File(logFileName).getParentFile().mkdirs();
       try {
          core.setPrimaryLogFile(logFileName);
-      } catch (Exception ignore) {
+      }
+      catch (Exception ignore) {
          // The Core will have logged the error to stderr, so do nothing.
       }
 
       if (getShouldDeleteOldCoreLogs()) {
          LogFileManager.deleteLogFilesDaysOld(
-                 getCoreLogLifetimeDays(), logFileName);
+               getCoreLogLifetimeDays(), logFileName);
       }
 
       logStartupProperties();
@@ -532,7 +535,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // enable only when debug logging is turned on (from the GUI).
       UIMonitor.enable(OptionsDlg.getIsDebugLogEnabled(studio_));
    }
-
+  
    public void showPipelineFrame() {
       pipelineFrame_.setVisible(true);
    }
@@ -548,15 +551,16 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    }
 
    /**
-    * Spawn a new thread to load the acquisition engine jar, because this takes
-    * significant time (TODO: Does it really, not that it is AOT-compiled?).
+    * Spawn a new thread to load the acquisition engine jar, because this
+    * takes significant time (TODO: Does it really, not that it is
+    * AOT-compiled?).
     */
    private void prepAcquisitionEngine() {
       acquisitionEngine2010LoadingThread_ = new Thread("Pipeline Class loading thread") {
          @Override
          public void run() {
             try {
-               acquisitionEngine2010Class_ = Class.forName("org.micromanager.internal.AcquisitionEngine2010");
+               acquisitionEngine2010Class_  = Class.forName("org.micromanager.internal.AcquisitionEngine2010");
             } catch (ClassNotFoundException ex) {
                ReportingUtils.logError(ex);
                acquisitionEngine2010Class_ = null;
@@ -575,13 +579,14 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          if (core_ != null && core_.getExposure() == exposureTime) {
             shouldSetInCore = false;
          }
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
          ReportingUtils.logError(e, "Error getting core exposure time");
       }
       // This is synchronized with the shutdown lock primarily so that
       // the exposure-time field in MainFrame won't cause issues when it loses
       // focus during shutdown.
-      synchronized (shutdownLock_) {
+      synchronized(shutdownLock_) {
          if (core_ == null) {
             // Just give up.
             return;
@@ -606,7 +611,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
             try {
                core_.setExposure(exposureTime);
                core_.waitForDevice(core_.getCameraDevice());
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                ReportingUtils.logError(e, "Failed to set core exposure time.");
             }
             live().setSuspended(false);
@@ -617,8 +623,9 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          try {
             exposure = core_.getExposure();
             events().post(new ChannelExposureEvent(exposure,
-                    channelGroup, channel, true));
-         } catch (Exception e) {
+                     channelGroup, channel, true));
+         }
+         catch (Exception e) {
             ReportingUtils.logError(e, "Couldn't set exposure time.");
          }
       } // End synchronization check
@@ -644,7 +651,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       Roi roi = curImage.getRoi();
       try {
          setROI(updateROI(roi));
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
          // Core failed to set new ROI.
          logs().logError(e, "Unable to set new ROI");
       }
@@ -666,7 +674,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       if (roi.getType() == Roi.RECTANGLE) {
          try {
             setROI(updateROI(roi));
-         } catch (Exception e) {
+         }
+         catch (Exception e) {
             // Core failed to set new ROI.
             logs().logError(e, "Unable to set new ROI");
          }
@@ -678,7 +687,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
             handleError("ROI must be a rectangle.\nUse the ImageJ rectangle tool to draw the ROI.");
             return;
          }
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
          handleError("Unable to determine if multiple ROIs is supported");
          return;
       }
@@ -695,7 +705,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
       try {
          setMultiROI(rois);
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
          // Core failed to set new ROI.
          logs().logError(e, "Unable to set new ROI");
       }
@@ -721,7 +732,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
             List<Image> images = viewer.getDisplayedImages();
             // Just take the first one.
             originalROI = images.get(0).getMetadata().getROI();
-         } catch (IOException e) {
+         }
+         catch (IOException e) {
             ReportingUtils.showError(e, "There was an error determining the selected ROI");
          }
       }
@@ -729,7 +741,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       if (originalROI == null) {
          try {
             originalROI = core().getROI();
-         } catch (Exception e) {
+         }
+         catch (Exception e) {
             // Core failed to provide an ROI.
             logs().logError(e, "Unable to get core ROI");
             return null;
@@ -768,16 +781,14 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    /**
     * Returns singleton instance of MMStudio
-    *
     * @return singleton instance of MMStudio
-    */
+   */
    public static MMStudio getInstance() {
       return studio_;
    }
 
    /**
     * Returns singleton instance of MainFrame.
-    *
     * @return singleton instance of the mainFrame
     */
    public static MainFrame getFrame() {
@@ -788,18 +799,19 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    public JFrame getMainWindow() {
       return frame_;
    }
-
+   
    public MMMenuBar getMMMenubar() {
       return mmMenuBar_;
    }
 
    public void promptToSaveConfigPresets() {
       File f = FileDialogs.save(frame_,
-              "Save the configuration file", FileDialogs.MM_CONFIG_FILE);
+            "Save the configuration file", FileDialogs.MM_CONFIG_FILE);
       if (f != null) {
          try {
             saveConfigPresets(f.getAbsolutePath(), true);
-         } catch (IOException e) {
+         }
+         catch (IOException e) {
             // This should be impossible as we set shouldOverwrite to true.
             logs().logError(e, "Error saving config presets");
          }
@@ -828,7 +840,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    /**
     * Get currently used configuration file
-    *
     * @return - Path to currently used configuration file
     */
    public String getSysConfigFile() {
@@ -897,8 +908,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private void createScriptPanel() {
       scriptPanel_ = new ScriptPanel(studio_);
    }
-
-   public void runZMQServer() {
+   
+  public void runZMQServer() {
       if (zmqServer_ == null) {
          //Make a function that passes existing instances of core and studio,
          //rather than constructing them
@@ -940,7 +951,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    public void updateXYPos(double x, double y) {
       staticInfo_.updateXYPos(x, y);
    }
-
    public void updateXYPosRelative(double x, double y) {
       staticInfo_.updateXYPosRelative(x, y);
    }
@@ -948,7 +958,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    public void updateZPos(double z) {
       staticInfo_.updateZPos(z);
    }
-
    public void updateZPosRelative(double z) {
       staticInfo_.updateZPosRelative(z);
    }
@@ -969,17 +978,21 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    public boolean getIsClickToMoveEnabled() {
       return isClickToMoveEnabled_;
    }
+   
 
    // //////////////////////////////////////////////////////////////////////////
    // public interface available for scripting access
    // //////////////////////////////////////////////////////////////////////////
+
    private boolean isCameraAvailable() {
       return StaticInfo.cameraLabel_.length() > 0;
    }
 
    /**
-    * Part of Studio API Opens the XYPositionList when it is not opened Adds the
-    * current position to the list (same as pressing the "Mark" button)
+    * Part of Studio API
+    * Opens the XYPositionList when it is not opened
+    * Adds the current position to the list (same as pressing the "Mark"
+    * button)
     */
    @Override
    public void markCurrentPosition() {
@@ -997,7 +1010,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       String[] m = v[0].split("\\.", 3);
       String[] v2 = version.split(" ", 2);
       String[] m2 = v2[0].split("\\.", 3);
-      for (int i = 0; i < 3; i++) {
+      for (int i=0; i < 3; i++) {
          if (Integer.parseInt(m[i]) < Integer.parseInt(m2[i])) {
             ReportingUtils.showError("This code needs Micro-Manager version " + version + " or greater");
             return true;
@@ -1006,10 +1019,10 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
             return false;
          }
       }
-      if (v2.length < 2 || v2[1].equals("")) {
+      if (v2.length < 2 || v2[1].equals("") ) {
          return false;
       }
-      if (v.length < 2) {
+      if (v.length < 2 ) {
          ReportingUtils.showError("This code needs Micro-Manager version " + version + " or greater");
          return true;
       }
@@ -1037,7 +1050,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          if (staticInfo_ != null) {
             staticInfo_.refreshValues();
             if (acqEngine_ != null) {
-               acqEngine_.setZStageDevice(StaticInfo.zStageLabel_);
+               acqEngine_.setZStageDevice(StaticInfo.zStageLabel_);  
             }
          }
 
@@ -1073,8 +1086,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    }
 
    public void updateGUI(boolean updateConfigPadStructure, boolean fromCache) {
-      ReportingUtils.logMessage("Updating GUI; config pad = "
-              + updateConfigPadStructure + "; from cache = " + fromCache);
+      ReportingUtils.logMessage("Updating GUI; config pad = " +
+            updateConfigPadStructure + "; from cache = " + fromCache);
       try {
          staticInfo_.refreshValues();
          afMgr_.refresh();
@@ -1125,20 +1138,20 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    }
 
    /**
-    * Cleans up resources while shutting down
-    *
+    * Cleans up resources while shutting down 
+    * 
     * @param quitInitiatedByImageJ
-    * @return Whether or not cleanup was successful. Shutdown should abort on
-    * failure.
+    * @return Whether or not cleanup was successful. Shutdown should abort
+    *         on failure.
     */
    private boolean cleanupOnClose(boolean quitInitiatedByImageJ) {
       // Save config presets if they were changed.
       if (configChanged_) {
          Object[] options = {"Yes", "No"};
          int n = JOptionPane.showOptionDialog(null,
-                 "Save Changed Configuration?", "Micro-Manager",
-                 JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
-                 null, options, options[0]);
+               "Save Changed Configuration?", "Micro-Manager",
+               JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
+               null, options, options[0]);
          if (n == JOptionPane.YES_OPTION) {
             promptToSaveConfigPresets();
             // if the configChanged_ flag did not become false, the user 
@@ -1156,12 +1169,12 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
             core_.logMessage("Failed to close some windows");
          }
       }
-
+  
       if (scriptPanel_ != null) {
          scriptPanel_.closePanel();
          scriptPanel_ = null;
       }
-
+      
       if (zmqServer_ != null) {
          zmqServer_.close();
       }
@@ -1183,7 +1196,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       if (afMgr_ != null) {
          afMgr_.closeOptionsDialog();
       }
-
+      
       if (acqEngine_ != null) {
          acqEngine_.shutdown();
       }
@@ -1257,7 +1270,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
       try {
          userProfileManager_.shutdown();
-      } catch (InterruptedException notExpected) {
+      }
+      catch (InterruptedException notExpected) {
          Thread.currentThread().interrupt();
       }
 
@@ -1268,7 +1282,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
       try {
          ((DefaultUserProfile) profile()).close();
-      } catch (InterruptedException notUsedByUs) {
+      }
+      catch (InterruptedException notUsedByUs) {
          Thread.currentThread().interrupt();
       }
       userProfileManager_.getAdmin().shutdownAutosaves();
@@ -1281,7 +1296,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
             if (ij != null) {
                ij.quit();
             }
-         } else {
+         }
+         else {
             // We are on our own to actually exit
             System.exit(0);
          }
@@ -1310,14 +1326,15 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          return;
       }
 
-      ReportingUtils.logMessage("Running startup script ("
-              + f.getAbsolutePath() + ")...");
+      ReportingUtils.logMessage("Running startup script (" +
+               f.getAbsolutePath() + ")...");
       WaitDialog waitDlg = new WaitDialog(
-              "Executing startup script, please wait...");
+            "Executing startup script, please wait...");
       waitDlg.showDialog();
       try {
          scriptPanel_.runFile(f);
-      } finally {
+      }
+      finally {
          waitDlg.closeDialog();
       }
       ReportingUtils.logMessage("Finished running startup script");
@@ -1325,7 +1342,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    /**
     * Loads system configuration from the cfg file.
-    *
     * @return true when successful
     */
    public boolean loadSystemConfiguration() {
@@ -1346,8 +1362,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
             core_.waitForSystem();
             coreCallback_.setIgnoring(true);
             HardwareConfigurationManager.
-                    create(profile(), core_).
-                    loadHardwareConfiguration(sysConfigFile_);
+                  create(profile(), core_).
+                  loadHardwareConfiguration(sysConfigFile_);
             coreCallback_.setIgnoring(false);
             GUIUtils.preventDisplayAdapterChangeExceptions();
             events().post(new AutofocusPluginShouldInitializeEvent());
@@ -1358,8 +1374,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
          waitDlg.closeDialog(); // Prevent from obscuring error alert
          ReportingUtils.showError(err,
-                 "Failed to load hardware configuration",
-                 null);
+               "Failed to load hardware configuration",
+               null);
          result = false;
       } finally {
          waitDlg.closeDialog();
@@ -1384,13 +1400,13 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          }
 
          acqControlWin_.setVisible(true);
-
+         
          acqControlWin_.repaint();
 
       } catch (Exception exc) {
          ReportingUtils.showError(exc,
-                 "\nAcquisition window failed to open due to invalid or corrupted settings.\n"
-                 + "Try resetting registry settings to factory defaults (Menu Tools|Options).");
+               "\nAcquisition window failed to open due to invalid or corrupted settings.\n"
+               + "Try resetting registry settings to factory defaults (Menu Tools|Options).");
       }
    }
 
@@ -1408,13 +1424,15 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
                live().setSuspended(true);
                try {
                   afMgr_.getAutofocusMethod().fullFocus();
-               } catch (Exception ex) {
+               }
+               catch (Exception ex) {
                   ReportingUtils.showError(ex, "An error occurred during autofocus");
                }
                live().setSuspended(false);
             }
          }.start();
-      } else {
+      }
+      else {
          ReportingUtils.showError("No autofocus device is selected.");
       }
    }
@@ -1422,11 +1440,12 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    // //////////////////////////////////////////////////////////////////////////
    // Script interface
    // //////////////////////////////////////////////////////////////////////////
+
    @Override
    public String getVersion() {
       return MMVersion.VERSION_STRING;
    }
-
+   
    /**
     * Inserts version info for various components in the Corelog
     */
@@ -1435,25 +1454,26 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       String hostname;
       try {
          hostname = java.net.InetAddress.getLocalHost().getHostName();
-      } catch (UnknownHostException e) {
+      }
+      catch (UnknownHostException e) {
          hostname = "unknown";
       }
       core_.logMessage("Host: " + hostname);
       core_.logMessage("MM Studio version: " + getVersion());
       core_.logMessage(core_.getVersionInfo());
       core_.logMessage(core_.getAPIVersionInfo());
-      core_.logMessage("Operating System: " + System.getProperty("os.name")
-              + " (" + System.getProperty("os.arch") + ") " + System.getProperty("os.version"));
-      core_.logMessage("JVM: " + System.getProperty("java.vm.name")
-              + ", version " + System.getProperty("java.version") + ", "
-              + System.getProperty("sun.arch.data.model") + "-bit");
+      core_.logMessage("Operating System: " + System.getProperty("os.name") +
+              " (" + System.getProperty("os.arch") + ") " + System.getProperty("os.version"));
+      core_.logMessage("JVM: " + System.getProperty("java.vm.name") +
+              ", version " + System.getProperty("java.version") + ", " +
+              System.getProperty("sun.arch.data.model") + "-bit");
    }
-
+   
    @Override
    public void makeActive() {
       frame_.toFront();
    }
-
+   
    /**
     * Opens a dialog to record stage positions
     */
@@ -1476,13 +1496,13 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       return configChanged_;
    }
 
-   /**
+    /**
     * Returns exposure time for the desired preset in the given channelgroup
-    * Acquires its info from the preferences Same thing is used in MDA window,
-    * but this class keeps its own copy
-    *
+    * Acquires its info from the preferences
+    * Same thing is used in MDA window, but this class keeps its own copy
+    * 
     * @param channelGroup
-    * @param channel -
+    * @param channel - 
     * @param defaultExp - default value
     * @return exposure time
     */
@@ -1500,11 +1520,12 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    }
 
    /**
-    * Updates the exposure time in the given preset Will also update current
-    * exposure if it the given channel and channelgroup are the current one
-    *
-    * @param channelGroup -
-    *
+    * Updates the exposure time in the given preset 
+    * Will also update current exposure if it the given channel and channelgroup
+    * are the current one
+    * 
+    * @param channelGroup - 
+    * 
     * @param channel - preset for which to change exposure time
     * @param exposure - desired exposure time
     */
@@ -1514,8 +1535,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       try {
          storeChannelExposureTime(channelGroup, channel, exposure);
          if (channelGroup != null && channelGroup.equals(core_.getChannelGroup())) {
-            if (channel != null && !channel.equals("")
-                    && channel.equals(core_.getCurrentConfigFromCache(channelGroup))) {
+            if (channel != null && !channel.equals("") && 
+                    channel.equals(core_.getCurrentConfigFromCache(channelGroup))) {
                setExposure(exposure);
             }
          }
@@ -1555,7 +1576,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    public void refreshGUI() {
       updateGUI(true);
    }
-
+   
    @Override
    public void refreshGUIFromCache() {
       updateGUI(true, true);
@@ -1573,16 +1594,17 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       try {
          acquisitionEngine2010LoadingThread_.join();
          if (acquisitionEngine2010_ == null) {
-            acquisitionEngine2010_
-                    = (IAcquisitionEngine2010) acquisitionEngine2010Class_.getConstructor(Studio.class).newInstance(studio_);
+            acquisitionEngine2010_ = 
+                    (IAcquisitionEngine2010) 
+                    acquisitionEngine2010Class_.getConstructor(Studio.class).newInstance(studio_);
          }
          return acquisitionEngine2010_;
-      } catch (IllegalAccessException |
-              IllegalArgumentException |
-              InstantiationException |
-              InterruptedException |
-              NoSuchMethodException |
-              SecurityException |
+      } catch (IllegalAccessException | 
+              IllegalArgumentException | 
+              InstantiationException | 
+              InterruptedException | 
+              NoSuchMethodException | 
+              SecurityException | 
               InvocationTargetException e) {
          ReportingUtils.logError(e);
          return null;
@@ -1622,7 +1644,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    public DataManager data() {
       return dataManager_;
    }
-
    @Override
    public DataManager getDataManager() {
       return data();
@@ -1632,7 +1653,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    public DisplayManager displays() {
       return displayManager_;
    }
-
    @Override
    public DisplayManager getDisplayManager() {
       return displays();
@@ -1642,21 +1662,19 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    public UserProfile profile() {
       return userProfileManager_.getProfile();
    }
-
    @Override
    public UserProfile getUserProfile() {
       return profile();
    }
-
+   
    public UserProfileAdmin profileAdmin() {
-      return userProfileManager_.getAdmin();
+       return userProfileManager_.getAdmin();
    }
 
    @Override
    public LogManager logs() {
       return ReportingUtils.getWrapper();
    }
-
    @Override
    public LogManager getLogManager() {
       return logs();
@@ -1668,7 +1686,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    public CompatibilityInterface compat() {
       return this;
    }
-
    @Override
    public CompatibilityInterface getCompatibilityInterface() {
       return this;
@@ -1812,9 +1829,10 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
       // The early 2.0-beta way of storing as a serialized object.
       PropertyMap studioSettings = profile().
-              getSettings(MMStudio.class).toPropertyMap();
-      AffineTransform result = (AffineTransform) ((DefaultPropertyMap) studioSettings).getLegacySerializedObject(
-              AFFINE_TRANSFORM_LEGACY + config, null);
+            getSettings(MMStudio.class).toPropertyMap();
+      AffineTransform result = (AffineTransform)
+         ((DefaultPropertyMap) studioSettings).getLegacySerializedObject(
+               AFFINE_TRANSFORM_LEGACY + config, null);
       if (result != null) {
          // Save it the new way
          setCameraTransform(result, config);
@@ -1859,26 +1877,26 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    public double getCachedPixelSizeUm() {
       return staticInfo_.getPixelSizeUm();
    }
-
+   
    public AffineTransform getCachedPixelSizeAffine() {
       return staticInfo_.getPixelSizeAffine();
    }
 
    public boolean getShouldDeleteOldCoreLogs() {
       return profile().getSettings(MMStudio.class).getBoolean(
-              SHOULD_DELETE_OLD_CORE_LOGS, false);
+            SHOULD_DELETE_OLD_CORE_LOGS, false);
    }
 
    public void setShouldDeleteOldCoreLogs(boolean shouldDelete) {
       profile().getSettings(MMStudio.class).putBoolean(
-              SHOULD_DELETE_OLD_CORE_LOGS, shouldDelete);
+            SHOULD_DELETE_OLD_CORE_LOGS, shouldDelete);
    }
-
+   
    public boolean getShouldRunZMQServer() {
       return profile().getSettings(MMStudio.class).getBoolean(
               SHOULD_RUN_ZMQ_SERVER, false);
    }
-
+   
    public void setShouldRunZMQServer(boolean shouldRun) {
       profile().getSettings(MMStudio.class).putBoolean(
               SHOULD_RUN_ZMQ_SERVER, shouldRun);
@@ -1886,23 +1904,23 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    public int getCoreLogLifetimeDays() {
       return profile().getSettings(MMStudio.class).getInteger(
-              CORE_LOG_LIFETIME_DAYS, 7);
+            CORE_LOG_LIFETIME_DAYS, 7);
    }
 
    public void setCoreLogLifetimeDays(int days) {
       profile().getSettings(MMStudio.class).putInteger(
-              CORE_LOG_LIFETIME_DAYS, days);
+            CORE_LOG_LIFETIME_DAYS, days);
    }
 
    public int getCircularBufferSize() {
       // Default to more MB for 64-bit systems.
       int defaultVal = System.getProperty("sun.arch.data.model", "32").equals("64") ? 250 : 25;
       return profile().getSettings(MMStudio.class).getInteger(
-              CIRCULAR_BUFFER_SIZE, defaultVal);
+            CIRCULAR_BUFFER_SIZE, defaultVal);
    }
 
    public void setCircularBufferSize(int newSize) {
       profile().getSettings(MMStudio.class).putInteger(
-              CIRCULAR_BUFFER_SIZE, newSize);
+            CIRCULAR_BUFFER_SIZE, newSize);
    }
 }
