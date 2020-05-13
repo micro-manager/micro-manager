@@ -26,6 +26,9 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Shape;
 import java.awt.List;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Hashtable;
 
 import javax.swing.JButton;
@@ -46,7 +49,6 @@ import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.micromanager.Studio;
 import org.micromanager.data.DataProviderHasNewImageEvent;
-import org.micromanager.data.Datastore;
 import org.micromanager.data.ImageOverwrittenEvent;
 import org.micromanager.display.DisplayWindow;
 
@@ -57,11 +59,13 @@ import org.micromanager.internal.utils.WindowPositioning;
 
 public class RTIntensitiesFrame extends JFrame {
 
-   private Studio studio_;
+   private final Studio studio_;
+   private final SimpleDateFormat dateFormat_;
    private DisplayWindow window_ = null;
-   private DataProvider ds_;
+   private DataProvider dataProvider_;
    private JButton startButton_;
    private double lastElapsedTimeMs_ = 0.0;
+   private Date firstImageDate_;
    // This is our local cache ...
    private int ROIs_ = 0;
    private Roi[] roi_ = new Roi[100];
@@ -73,9 +77,12 @@ public class RTIntensitiesFrame extends JFrame {
    private XYSeriesCollection      dataset;
    XYSeries[] data = new XYSeries[100];
 
+   private static final String ABSOLUTE_FORMAT_STRING = "yyyy-MM-dd HH:mm:ss.SSS Z";
+
    public RTIntensitiesFrame(Studio studio) {
       super("Real time intensity GUI");
       studio_ = studio;
+      dateFormat_ = new SimpleDateFormat(ABSOLUTE_FORMAT_STRING);
       super.setLocation(100, 100); // Default location
       WindowPositioning.setUpLocationMemory(this, RTIntensitiesFrame.class, "Main");
 
@@ -109,7 +116,7 @@ public class RTIntensitiesFrame extends JFrame {
         	   	title.setText("You need an open window (Snap/Live).");
         	   	return;
         	   }
-        	   ds_ = window_.getDataProvider();
+        	   dataProvider_ = window_.getDataProvider();
         	   // At least one ROI defined ?
         	   if (manager_ == null) {
         	   	title.setText("Please setup ROI(s).");
@@ -130,15 +137,14 @@ public class RTIntensitiesFrame extends JFrame {
         	   }
         	   // We are all set ?
         	   imagesReceived_ = 0; // new plot
-        	   if (studio.acquisitions().getAcquisitionSettings().intervalMs < 1000) {
-            }
-        	   ds_.registerForEvents(RTIntensitiesFrame.this);
+            lastElapsedTimeMs_ = 0;
+        	   dataProvider_.registerForEvents(RTIntensitiesFrame.this);
         	   dataset = new XYSeriesCollection();
         	   for (int i = 0; i < ROIs_; i++) {
-        		   data[i] = new XYSeries("ROI_" + i);
+        		   data[i] = new XYSeries("" + (i + 1));
         		   dataset.addSeries(data[i]);
         	   }
-        	   plotData("Intensities", dataset, "Time", "Value", 100, 100);
+        	   plotData("Intensities " + dataProvider_.getName(), dataset, "Time(ms)", "Value", 100, 100);
          }
       });
       startButton_.setEnabled(true);
@@ -159,31 +165,39 @@ public class RTIntensitiesFrame extends JFrame {
 
    @Subscribe
    public void onNewImage(DataProviderHasNewImageEvent event) {
-      processImage(event.getImage());
+      processImage(event.getDataProvider(), event.getImage());
    }
 
    @Subscribe
    public void onOverWrittenImage(ImageOverwrittenEvent event) {
-      processImage(event.getNewImage());
+      processImage(event.getDatastore(), event.getNewImage());
    }
 
-   private void processImage(Image image) {
+   private void processImage(DataProvider dp, Image image) {
+      if (!dp.equals(dataProvider_)) {
+         return;
+      }
+      Date imgTime;
+      try {
+          imgTime = dateFormat_.parse(image.getMetadata().getReceivedTime());
+      } catch (ParseException pe) {
+         studio_.logs().logError(pe);
+         return;
+      }
+      if (imagesReceived_ == 0) {
+         firstImageDate_ = imgTime;
+      }
 	   imagesReceived_++;
-	   double elapsedTimeMs = image.getMetadata().getElapsedTimeMs(0.0);
+	   double elapsedTimeMs = imgTime.getTime() - firstImageDate_.getTime();
 	   // do not process images at ore than 1 Hz
-	   if (lastElapsedTimeMs_ == 0.0 || elapsedTimeMs - lastElapsedTimeMs_ >= 1000.0 ||
-              elapsedTimeMs < lastElapsedTimeMs_ ) { // 1Hz max
+	   if (lastElapsedTimeMs_ == 0.0 || elapsedTimeMs - lastElapsedTimeMs_ >= 10.0) { // 100Hz max
          lastElapsedTimeMs_ = elapsedTimeMs;
-		   double t;
 		   double v;
 		   title.setText("You should be seeing data on the plot.");
-		   t = (double)image.getCoords().getT();
-		   // Check if doing live
-		   if (t < 0.01 && imagesReceived_ > 1) {
-            t = imagesReceived_ * 0.1; // oops, 2 initial images, too bad.
-		   }
+
+
 		   if (window_ == null) {
-		      window_ = studio_.getDisplayManager().getDisplays(ds_).get(0);
+		      window_ = studio_.getDisplayManager().getDisplays(dataProvider_).get(0);
          }
 		   ImageProcessor processor = studio_.data().ij().createProcessor(image);
 		   processor.setLineWidth(1);
@@ -192,23 +206,22 @@ public class RTIntensitiesFrame extends JFrame {
 		   for (int i = 0; i < ROIs_-1; i++) {
 			   processor.setRoi(roi_[i]);
 			   v = processor.getStats().mean;
-			   data[i].add(t, v, false);
-			   processor.draw(roi_[i]);
+			   data[i].add(elapsedTimeMs, v, false);
 		   }
 		   processor.setRoi(roi_[ROIs_ - 1]);
 		   v = processor.getStats().mean;
-		   data[ROIs_ - 1].add(t, v, true);
-		   processor.draw(roi_[ROIs_ - 1]);
+		   data[ROIs_ - 1].add(elapsedTimeMs, v, true);
 	   }
    }
    
    /**
     * Create a frame with a plot of the data given in XYSeries
-    * @param title
-    * @param xTitle
-    * @param yTitle
-    * @param xLocation
-    * @param yLocation
+    * @param title Title of the plot
+    * @param dataset Data to be plotted
+    * @param xTitle Title of the x axis
+    * @param yTitle Title of the y axis
+    * @param xLocation Window location on the screen (x)
+    * @param yLocation Window Location on the screen (y)
     */
    public static void plotData(String title, XYSeriesCollection dataset, String xTitle,
            String yTitle, int xLocation, int yLocation) {
@@ -218,7 +231,7 @@ public class RTIntensitiesFrame extends JFrame {
                 yTitle, // y-axis Label
                 dataset, // Dataset
                 PlotOrientation.VERTICAL, // Plot Orientation
-                false, // Show Legend
+                true, // Show Legend
                 true, // Use tooltips
                 false // Configure chart to generate URLs?
             );
@@ -244,6 +257,8 @@ public class RTIntensitiesFrame extends JFrame {
       graphFrame.pack();
       graphFrame.setLocation(xLocation, yLocation);
       graphFrame.setSize(400, 300);
+      WindowPositioning.setUpBoundsMemory(graphFrame, RTIntensities.class, "plot");
+      WindowPositioning.cascade(graphFrame, RTIntensities.class);
       graphFrame.setVisible(true);
    }
 
