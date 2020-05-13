@@ -1,17 +1,17 @@
 /**
  * RTIntensitiesFrame.java
- *
+ * <p>
  * Based on ExampleFrame, shows RealTime intensity plots during live views or acquisitions.
- *
+ * <p>
  * Nico Stuurman, Carlos Mendioroz copyright UCSF, 2020
- *
+ * <p>
  * LICENSE: This file is distributed under the BSD license. License text is
  * included with the source distribution.
- *
+ * <p>
  * This file is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
- *
+ * <p>
  * IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY
  * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
  */
@@ -74,7 +74,7 @@ public class RTIntensitiesFrame extends JFrame {
    private int imagesReceived_ = 0;
    static final long serialVersionUID = 1;
    private JLabel title;
-   private XYSeriesCollection      dataset;
+   private XYSeriesCollection dataset;
    XYSeries[] data = new XYSeries[100];
 
    private static final String ABSOLUTE_FORMAT_STRING = "yyyy-MM-dd HH:mm:ss.SSS Z";
@@ -98,9 +98,10 @@ public class RTIntensitiesFrame extends JFrame {
       managerButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-   			if (manager_ == null)
-   			    manager_ = new RoiManager();
-   			manager_.setVisible(true);
+            if (manager_ == null) {
+               manager_ = new RoiManager();
+            }
+            manager_.setVisible(true);
          }
       });
       super.add(managerButton_, "split, span");
@@ -110,41 +111,43 @@ public class RTIntensitiesFrame extends JFrame {
       startButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-         	// Active window ?
-        	   window_ = studio.displays().getCurrentWindow();
-        	   if (window_ == null) {
-        	   	title.setText("You need an open window (Snap/Live).");
-        	   	return;
-        	   }
-        	   dataProvider_ = window_.getDataProvider();
-        	   // At least one ROI defined ?
-        	   if (manager_ == null) {
-        	   	title.setText("Please setup ROI(s).");
-        	   	return;
-        	   }
-        	   List labels = manager_.getList();
-        	   Hashtable<String, Roi> table = (Hashtable<String, Roi>)manager_.getROIs();
-        	   ROIs_ = labels.getItemCount();
-        	   if (ROIs_ == 0) {
-        	   	title.setText("Please setup ROI(s).");
-        	   	return;
-        	   }
-        	   // Hard limit of 100 ROIs
-        	   if (ROIs_ > 100) ROIs_ = 100; 
-        	   for (int i = 0; i < ROIs_; i++) {
-        	   	String label = labels.getItem(i);
-        	   	roi_[i] = table.get(label);
-        	   }
-        	   // We are all set ?
-        	   imagesReceived_ = 0; // new plot
+            // Active window ?
+            window_ = studio.displays().getCurrentWindow();
+            if (window_ == null) {
+               title.setText("You need an open window (Snap/Live).");
+               return;
+            }
+            dataProvider_ = window_.getDataProvider();
+            // At least one ROI defined ?
+            if (manager_ == null) {
+               title.setText("Please setup ROI(s).");
+               return;
+            }
+            List labels = manager_.getList();
+            Hashtable<String, Roi> table = (Hashtable<String, Roi>) manager_.getROIs();
+            ROIs_ = labels.getItemCount();
+            if (ROIs_ == 0) {
+               title.setText("Please setup ROI(s).");
+               return;
+            }
+            // Hard limit of 100 ROIs
+            if (ROIs_ > 100) {
+               ROIs_ = 100;
+            }
+            for (int i = 0; i < ROIs_; i++) {
+               String label = labels.getItem(i);
+               roi_[i] = table.get(label);
+            }
+            // We are all set ?
+            imagesReceived_ = 0; // new plot
             lastElapsedTimeMs_ = 0;
-        	   dataProvider_.registerForEvents(RTIntensitiesFrame.this);
-        	   dataset = new XYSeriesCollection();
-        	   for (int i = 0; i < ROIs_; i++) {
-        		   data[i] = new XYSeries("" + (i + 1));
-        		   dataset.addSeries(data[i]);
-        	   }
-        	   plotData("Intensities " + dataProvider_.getName(), dataset, "Time(ms)", "Value", 100, 100);
+            dataProvider_.registerForEvents(RTIntensitiesFrame.this);
+            dataset = new XYSeriesCollection();
+            for (int i = 0; i < ROIs_; i++) {
+               data[i] = new XYSeries("" + (i + 1));
+               dataset.addSeries(data[i]);
+            }
+            plotData("Intensities " + dataProvider_.getName(), dataset, "Time(ms)", "Value", 100, 100);
          }
       });
       startButton_.setEnabled(true);
@@ -179,7 +182,7 @@ public class RTIntensitiesFrame extends JFrame {
       }
       Date imgTime;
       try {
-          imgTime = dateFormat_.parse(image.getMetadata().getReceivedTime());
+         imgTime = dateFormat_.parse(image.getMetadata().getReceivedTime());
       } catch (ParseException pe) {
          studio_.logs().logError(pe);
          return;
@@ -187,35 +190,35 @@ public class RTIntensitiesFrame extends JFrame {
       if (imagesReceived_ == 0) {
          firstImageDate_ = imgTime;
       }
-	   imagesReceived_++;
-      if (image.getCoords().getChannel() > 0 ) {
+      imagesReceived_++;
+      if (image.getCoords().getChannel() > 0) {
          // TODO: plot channels individually
       }
-	   double elapsedTimeMs = imgTime.getTime() - firstImageDate_.getTime();
-	   // do not process images at more than 100 Hz
-	   if (lastElapsedTimeMs_ == 0.0 || elapsedTimeMs - lastElapsedTimeMs_ >= 10.0) {
+      double elapsedTimeMs = imgTime.getTime() - firstImageDate_.getTime();
+      // do not process images at more than 100 Hz
+      if (lastElapsedTimeMs_ == 0.0 || elapsedTimeMs - lastElapsedTimeMs_ >= 10.0) {
          lastElapsedTimeMs_ = elapsedTimeMs;
-		   double v;
-		   title.setText("You should be seeing data on the plot.");
+         double v;
+         title.setText("You should be seeing data on the plot.");
 
-		   if (window_ == null) {
-		      window_ = studio_.getDisplayManager().getDisplays(dataProvider_).get(0);
+         if (window_ == null) {
+            window_ = studio_.getDisplayManager().getDisplays(dataProvider_).get(0);
          }
-		   ImageProcessor processor = studio_.data().ij().createProcessor(image);
-		   processor.setLineWidth(1);
-		   processor.setColor(Color.red);
-		   
-		   for (int i = 0; i < ROIs_-1; i++) {
-			   processor.setRoi(roi_[i]);
-			   v = processor.getStats().mean;
-			   data[i].add(elapsedTimeMs, v, false);
-		   }
-		   processor.setRoi(roi_[ROIs_ - 1]);
-		   v = processor.getStats().mean;
-		   data[ROIs_ - 1].add(elapsedTimeMs, v, true);
-	   }
+         ImageProcessor processor = studio_.data().ij().createProcessor(image);
+         processor.setLineWidth(1);
+         processor.setColor(Color.red);
+
+         for (int i = 0; i < ROIs_ - 1; i++) {
+            processor.setRoi(roi_[i]);
+            v = processor.getStats().mean;
+            data[i].add(elapsedTimeMs, v, false);
+         }
+         processor.setRoi(roi_[ROIs_ - 1]);
+         v = processor.getStats().mean;
+         data[ROIs_ - 1].add(elapsedTimeMs, v, true);
+      }
    }
-   
+
    /**
     * Create a frame with a plot of the data given in XYSeries
     * @param title Title of the plot
@@ -226,17 +229,17 @@ public class RTIntensitiesFrame extends JFrame {
     * @param yLocation Window Location on the screen (y)
     */
    public static void plotData(String title, XYSeriesCollection dataset, String xTitle,
-           String yTitle, int xLocation, int yLocation) {
+                               String yTitle, int xLocation, int yLocation) {
       // JFreeChart code
       JFreeChart chart = ChartFactory.createScatterPlot(title, // Title
-                xTitle, // x-axis Label
-                yTitle, // y-axis Label
-                dataset, // Dataset
-                PlotOrientation.VERTICAL, // Plot Orientation
-                true, // Show Legend
-                true, // Use tooltips
-                false // Configure chart to generate URLs?
-            );
+              xTitle, // x-axis Label
+              yTitle, // y-axis Label
+              dataset, // Dataset
+              PlotOrientation.VERTICAL, // Plot Orientation
+              true, // Show Legend
+              true, // Use tooltips
+              false // Configure chart to generate URLs?
+      );
       XYPlot plot = (XYPlot) chart.getPlot();
       plot.setBackgroundPaint(Color.white);
       plot.setRangeGridlinePaint(Color.lightGray);
@@ -248,10 +251,10 @@ public class RTIntensitiesFrame extends JFrame {
       Shape circle = new Ellipse2D.Float(-2.0f, -2.0f, 4.0f, 4.0f);
       renderer.setSeriesShape(0, circle, false);
       renderer.setUseFillPaint(true);
-      for(int i=1;i<100;i++){
-          renderer.setSeriesShape(i, circle, false);
-          renderer.setSeriesLinesVisible(i, true);
-          renderer.setSeriesPaint(i, plot.getDrawingSupplier().getNextPaint());
+      for (int i = 1; i < 100; i++) {
+         renderer.setSeriesShape(i, circle, false);
+         renderer.setSeriesLinesVisible(i, true);
+         renderer.setSeriesPaint(i, plot.getDrawingSupplier().getNextPaint());
       }
 
       ChartFrame graphFrame = new ChartFrame(title, chart);
