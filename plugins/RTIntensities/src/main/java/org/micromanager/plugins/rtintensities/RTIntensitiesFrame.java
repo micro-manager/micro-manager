@@ -1,17 +1,17 @@
 /**
  * RTIntensitiesFrame.java
- *
+ * <p>
  * Based on ExampleFrame, shows RealTime intensity plots during live views or acquisitions.
- *
+ * <p>
  * Nico Stuurman, Carlos Mendioroz copyright UCSF, 2020
- *
+ * <p>
  * LICENSE: This file is distributed under the BSD license. License text is
  * included with the source distribution.
- *
+ * <p>
  * This file is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE.
- *
+ * <p>
  * IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY
  * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
  */
@@ -26,6 +26,9 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Shape;
 import java.awt.List;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Hashtable;
 
 import javax.swing.JButton;
@@ -34,6 +37,7 @@ import javax.swing.JLabel;
 
 import net.miginfocom.swing.MigLayout;
 
+import org.micromanager.data.DataProvider;
 import org.micromanager.data.Image;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
@@ -45,7 +49,7 @@ import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.micromanager.Studio;
 import org.micromanager.data.DataProviderHasNewImageEvent;
-import org.micromanager.data.Datastore;
+import org.micromanager.data.ImageOverwrittenEvent;
 import org.micromanager.display.DisplayWindow;
 
 import ij.gui.Roi;
@@ -55,12 +59,13 @@ import org.micromanager.internal.utils.WindowPositioning;
 
 public class RTIntensitiesFrame extends JFrame {
 
-   private Studio studio_;
+   private final Studio studio_;
+   private final SimpleDateFormat dateFormat_;
    private DisplayWindow window_ = null;
-   private Datastore ds_;
-   private JButton managerButton_;
+   private DataProvider dataProvider_;
    private JButton startButton_;
-   private int skip_ = 0;
+   private double lastElapsedTimeMs_ = 0.0;
+   private Date firstImageDate_;
    // This is our local cache ...
    private int ROIs_ = 0;
    private Roi[] roi_ = new Roi[100];
@@ -69,12 +74,15 @@ public class RTIntensitiesFrame extends JFrame {
    private int imagesReceived_ = 0;
    static final long serialVersionUID = 1;
    private JLabel title;
-   private XYSeriesCollection      dataset;
+   private XYSeriesCollection dataset;
    XYSeries[] data = new XYSeries[100];
+
+   private static final String ABSOLUTE_FORMAT_STRING = "yyyy-MM-dd HH:mm:ss.SSS Z";
 
    public RTIntensitiesFrame(Studio studio) {
       super("Real time intensity GUI");
       studio_ = studio;
+      dateFormat_ = new SimpleDateFormat(ABSOLUTE_FORMAT_STRING);
       super.setLocation(100, 100); // Default location
       WindowPositioning.setUpLocationMemory(this, RTIntensitiesFrame.class, "Main");
 
@@ -90,9 +98,10 @@ public class RTIntensitiesFrame extends JFrame {
       managerButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-   			if (manager_ == null)
-   			    manager_ = new RoiManager();
-   			manager_.setVisible(true);
+            if (manager_ == null) {
+               manager_ = new RoiManager();
+            }
+            manager_.setVisible(true);
          }
       });
       super.add(managerButton_, "split, span");
@@ -102,43 +111,43 @@ public class RTIntensitiesFrame extends JFrame {
       startButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-         	// Active window ?
-        	   window_ = studio.displays().getCurrentWindow();
-        	   if (window_ == null) {
-        	   	title.setText("You need an open window (Snap/Live).");
-        	   	return;
-        	   }
-        	   ds_ = window_.getDatastore();
-        	   // At least one ROI defined ?
-        	   if (manager_ == null) {
-        	   	title.setText("Please setup ROI(s).");
-        	   	return;
-        	   }
-        	   List labels = manager_.getList();
-        	   Hashtable<String, Roi> table = (Hashtable<String, Roi>)manager_.getROIs();
-        	   ROIs_ = labels.getItemCount();
-        	   if (ROIs_ == 0) {
-        	   	title.setText("Please setup ROI(s).");
-        	   	return;
-        	   }
-        	   // Hard limit of 100 ROIs
-        	   if (ROIs_ > 100) ROIs_ = 100; 
-        	   for (int i = 0; i < ROIs_; i++) {
-        	   	String label = labels.getItem(i);
-        	   	roi_[i] = table.get(label);
-        	   }
-        	   // We are all set ?
-        	   imagesReceived_ = 0; // new plot
-        	   if (studio.acquisitions().getAcquisitionSettings().intervalMs < 1000) {
-        		   skip_ = (int) (1000 / studio.acquisitions().getAcquisitionSettings().intervalMs);
-        	   }
-        	   ds_.registerForEvents(RTIntensitiesFrame.this);
-        	   dataset = new XYSeriesCollection();
-        	   for (int i = 0; i < ROIs_; i++) {
-        		   data[i] = new XYSeries("ROI_" + i);
-        		   dataset.addSeries(data[i]);
-        	   }
-        	   plotData("Intensities", dataset, "Time", "Value", 100, 100);
+            // Active window ?
+            window_ = studio.displays().getCurrentWindow();
+            if (window_ == null) {
+               title.setText("You need an open window (Snap/Live).");
+               return;
+            }
+            dataProvider_ = window_.getDataProvider();
+            // At least one ROI defined ?
+            if (manager_ == null) {
+               title.setText("Please setup ROI(s).");
+               return;
+            }
+            List labels = manager_.getList();
+            Hashtable<String, Roi> table = (Hashtable<String, Roi>) manager_.getROIs();
+            ROIs_ = labels.getItemCount();
+            if (ROIs_ == 0) {
+               title.setText("Please setup ROI(s).");
+               return;
+            }
+            // Hard limit of 100 ROIs
+            if (ROIs_ > 100) {
+               ROIs_ = 100;
+            }
+            for (int i = 0; i < ROIs_; i++) {
+               String label = labels.getItem(i);
+               roi_[i] = table.get(label);
+            }
+            // We are all set ?
+            imagesReceived_ = 0; // new plot
+            lastElapsedTimeMs_ = 0;
+            dataProvider_.registerForEvents(RTIntensitiesFrame.this);
+            dataset = new XYSeriesCollection();
+            for (int i = 0; i < ROIs_; i++) {
+               data[i] = new XYSeries("" + (i + 1));
+               dataset.addSeries(data[i]);
+            }
+            plotData("Intensities " + dataProvider_.getName(), dataset, "Time(ms)", "Value", 100, 100);
          }
       });
       startButton_.setEnabled(true);
@@ -159,56 +168,78 @@ public class RTIntensitiesFrame extends JFrame {
 
    @Subscribe
    public void onNewImage(DataProviderHasNewImageEvent event) {
-	   imagesReceived_++;
-	   if (skip_ == 0 || imagesReceived_ % (skip_+1) == 1) { // 1Hz max
-		   double t;
-		   double v;
-		   title.setText("You should be seeing data on the plot.");
-		   Image image = event.getImage();
-		   t = (double)image.getCoords().getT();
-		   // Check if doing live
-		   if (t < 0.01 && imagesReceived_ > 1) {
-		   	skip_ = 99;
-		   	t = imagesReceived_ * 0.1; // oops, 2 initial images, too bad.
-		   }
-		   if (window_ == null) window_ = studio_.getDisplayManager().getDisplays(ds_).get(0);
-		   ImageProcessor processor = studio_.data().ij().createProcessor(image);
-		   processor.setLineWidth(1);
-		   processor.setColor(Color.red);
-		   
-		   for (int i = 0; i < ROIs_-1; i++) {
-			   processor.setRoi(roi_[i]);
-			   v = processor.getStats().mean;
-			   data[i].add(t, v, false);
-			   processor.draw(roi_[i]);
-		   }
-		   processor.setRoi(roi_[ROIs_ - 1]);
-		   v = processor.getStats().mean;
-		   data[ROIs_ - 1].add(t, v, true);
-		   processor.draw(roi_[ROIs_ - 1]);
-	   }
+      processImage(event.getDataProvider(), event.getImage());
    }
-   
+
+   @Subscribe
+   public void onOverWrittenImage(ImageOverwrittenEvent event) {
+      processImage(event.getDatastore(), event.getNewImage());
+   }
+
+   private void processImage(DataProvider dp, Image image) {
+      if (!dp.equals(dataProvider_)) {
+         return;
+      }
+      Date imgTime;
+      try {
+         imgTime = dateFormat_.parse(image.getMetadata().getReceivedTime());
+      } catch (ParseException pe) {
+         studio_.logs().logError(pe);
+         return;
+      }
+      if (imagesReceived_ == 0) {
+         firstImageDate_ = imgTime;
+      }
+      imagesReceived_++;
+      if (image.getCoords().getChannel() > 0) {
+         // TODO: plot channels individually
+      }
+      double elapsedTimeMs = imgTime.getTime() - firstImageDate_.getTime();
+      // do not process images at more than 100 Hz
+      if (lastElapsedTimeMs_ == 0.0 || elapsedTimeMs - lastElapsedTimeMs_ >= 10.0) {
+         lastElapsedTimeMs_ = elapsedTimeMs;
+         double v;
+         title.setText("You should be seeing data on the plot.");
+
+         if (window_ == null) {
+            window_ = studio_.getDisplayManager().getDisplays(dataProvider_).get(0);
+         }
+         ImageProcessor processor = studio_.data().ij().createProcessor(image);
+         processor.setLineWidth(1);
+         processor.setColor(Color.red);
+
+         for (int i = 0; i < ROIs_ - 1; i++) {
+            processor.setRoi(roi_[i]);
+            v = processor.getStats().mean;
+            data[i].add(elapsedTimeMs, v, false);
+         }
+         processor.setRoi(roi_[ROIs_ - 1]);
+         v = processor.getStats().mean;
+         data[ROIs_ - 1].add(elapsedTimeMs, v, true);
+      }
+   }
+
    /**
     * Create a frame with a plot of the data given in XYSeries
-    * @param title
-    * @param xTitle
-    * @param yTitle
-    * @param xLocation
-    * @param yLocation
+    * @param title Title of the plot
+    * @param dataset Data to be plotted
+    * @param xTitle Title of the x axis
+    * @param yTitle Title of the y axis
+    * @param xLocation Window location on the screen (x)
+    * @param yLocation Window Location on the screen (y)
     */
    public static void plotData(String title, XYSeriesCollection dataset, String xTitle,
-           String yTitle, int xLocation, int yLocation) {
+                               String yTitle, int xLocation, int yLocation) {
       // JFreeChart code
       JFreeChart chart = ChartFactory.createScatterPlot(title, // Title
-                xTitle, // x-axis Label
-                yTitle, // y-axis Label
-                dataset, // Dataset
-                PlotOrientation.VERTICAL, // Plot Orientation
-                false, // Show Legend
-                true, // Use tooltips
-                false // Configure chart to generate URLs?
-            );
+              xTitle, // x-axis Label
+              yTitle, // y-axis Label
+              dataset, // Dataset
+              PlotOrientation.VERTICAL, // Plot Orientation
+              true, // Show Legend
+              true, // Use tooltips
+              false // Configure chart to generate URLs?
+      );
       XYPlot plot = (XYPlot) chart.getPlot();
       plot.setBackgroundPaint(Color.white);
       plot.setRangeGridlinePaint(Color.lightGray);
@@ -220,10 +251,10 @@ public class RTIntensitiesFrame extends JFrame {
       Shape circle = new Ellipse2D.Float(-2.0f, -2.0f, 4.0f, 4.0f);
       renderer.setSeriesShape(0, circle, false);
       renderer.setUseFillPaint(true);
-      for(int i=1;i<100;i++){
-          renderer.setSeriesShape(i, circle, false);
-          renderer.setSeriesLinesVisible(i, true);
-          renderer.setSeriesPaint(i, plot.getDrawingSupplier().getNextPaint());
+      for (int i = 1; i < 100; i++) {
+         renderer.setSeriesShape(i, circle, false);
+         renderer.setSeriesLinesVisible(i, true);
+         renderer.setSeriesPaint(i, plot.getDrawingSupplier().getNextPaint());
       }
 
       ChartFrame graphFrame = new ChartFrame(title, chart);
@@ -231,6 +262,8 @@ public class RTIntensitiesFrame extends JFrame {
       graphFrame.pack();
       graphFrame.setLocation(xLocation, yLocation);
       graphFrame.setSize(400, 300);
+      WindowPositioning.setUpBoundsMemory(graphFrame, RTIntensities.class, "plot");
+      WindowPositioning.cascade(graphFrame, RTIntensities.class);
       graphFrame.setVisible(true);
    }
 

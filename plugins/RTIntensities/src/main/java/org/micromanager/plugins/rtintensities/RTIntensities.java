@@ -83,7 +83,7 @@ public class RTIntensities implements SciJavaPlugin, MenuPlugin {
     */
    @Override
    public String getName() {
-      return "Realtime intensities plugin";
+      return "Realtime Intensity Plots";
    }
 
    @Override
