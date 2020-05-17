@@ -929,7 +929,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
             }
          };
          try {
-            zmqServer_ = new ZMQServer(IJ.getClassLoader(), instanceGrabberFunction);
+            zmqServer_ = new ZMQServer(IJ.getClassLoader(), instanceGrabberFunction, new String[]{"org.micromanager.internal"});
             logs().logMessage("Initialized ZMQ Server on port: " + ZMQServer.DEFAULT_MASTER_PORT_NUMBER);
          } catch (URISyntaxException | UnsupportedEncodingException e) {
             studio_.logs().logError("Failed to initialize ZMQ Server");
