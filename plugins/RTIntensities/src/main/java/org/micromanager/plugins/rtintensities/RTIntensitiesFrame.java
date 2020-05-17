@@ -82,6 +82,7 @@ public class RTIntensitiesFrame extends JFrame {
    // How many channels do we have ? do we plot ?
    private int channels_ = 0;
    private int plots_ = 0;
+   private int missing_ = 0;
    private JLabel title;
    private XYSeriesCollection dataset;
    XYSeries[] data = new XYSeries[200];
@@ -161,10 +162,12 @@ public class RTIntensitiesFrame extends JFrame {
                case 1:
                	plots_ = 2; 
                	ratio_ = false;
+               	missing_ = 1; // wait for pairs of data points
                	break;
                case 2:
                	plots_ = 2;
                	ratio_ = true;
+               	missing_ = 1;
                	break;
                }
         	   } else {
@@ -228,14 +231,20 @@ public class RTIntensitiesFrame extends JFrame {
       }
       double elapsedTimeMs = imgTime.getTime() - firstImageDate_.getTime();
       // do not process images at more than 100 Hz
-      if (elapsedTimeMs == lastElapsedTimeMs_ || elapsedTimeMs - lastElapsedTimeMs_ >= 10.0) {
+      if (missing_ > 0 || elapsedTimeMs - lastElapsedTimeMs_ >= 10.0) {
          lastElapsedTimeMs_ = elapsedTimeMs;
          double v;
          int channel = image.getCoords().getChannel(); // 0..1
          if (channel > plots_) {
          	return;
          }
-         title.setText("You should be seeing data on the plot.");
+         if (channel == 0) {
+         	missing_ = channels_ -1; 
+         }	else {
+         	missing_--;
+         }
+
+         title.setText("You should be seeing data on the plot." + imagesReceived_);
 
          ImageProcessor processor = studio_.data().ij().createProcessor(image);
 
@@ -246,17 +255,13 @@ public class RTIntensitiesFrame extends JFrame {
 				   last_[i] = processor.getStats().mean;
 			   }
 	   	} else {
-	   		int offset = 0;
-	   		if (plots_ > 1 && channel == 1) {
-	   			 offset = 1; // Paired plots
-	   		}
 	   		for (int i = 0; i < ROIs_; i++) {
 	   			processor.setRoi(roi_[i]);
 	   			v = processor.getStats().mean;
 	   			if (ratio_) {
 	   					v = last_[i] / (v + 0.000001); //Check!
 	   			}
-	   			data[offset + i * plots_].add(elapsedTimeMs, v, (i < ROIs_ - 1)?false:true);
+	   			data[channel + i * plots_].add(elapsedTimeMs, v, (i < ROIs_ - 1)?false:true);
 	   		}
 	   	}
       }
