@@ -76,7 +76,6 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
    private int overlapX_, overlapY_;
 
    public ExploreAcquisition(ExploreAcqSettings settings) {
-      core_ = Engine.getCore();
       dataSink_ = new MagellanDataManager(settings.dir_, settings.name_, true);
       settings_ = settings;
       zStep_ = settings.zStep_;

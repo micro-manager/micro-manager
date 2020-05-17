@@ -20,18 +20,16 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Iterator;
+import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONObject;
-import org.micromanager.acqj.api.AcquisitionEvent;
+import org.micromanager.acqj.api.*;
 import org.micromanager.acqj.internal.acqengj.AcquisitionEventIterator;
-import org.micromanager.acqj.api.AcqEngMetadata;
 import org.micromanager.acqj.internal.acqengj.AffineTransformUtils;
 import org.micromanager.acqj.api.mda.XYStagePosition;
 import org.micromanager.acqj.api.mda.AcqEventModules;
-import org.micromanager.acqj.api.DataSink;
-import org.micromanager.acqj.api.FixedSettingsAcquisition;
 import org.micromanager.acqj.api.mda.ChannelSetting;
 import org.micromanager.acqj.internal.acqengj.Engine;
 import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
@@ -45,7 +43,7 @@ import org.micromanager.magellan.internal.surfacesandregions.Point3d;
  *
  * @author Henry
  */
-public class MagellanGUIAcquisition extends FixedSettingsAcquisition 
+public class MagellanGUIAcquisition extends Acquisition
         implements MagellanAcquisition {
 
    private double zOrigin_, zStep_;
@@ -53,6 +51,7 @@ public class MagellanGUIAcquisition extends FixedSettingsAcquisition
    private int overlapX_, overlapY_;
    private List<XYStagePosition> positions_;
    private MagellanGenericAcquisitionSettings settings_;
+   private volatile boolean started_ = false;
 
    /**
     * Acquisition with fixed XY positions (although they can potentially all be
@@ -63,14 +62,23 @@ public class MagellanGUIAcquisition extends FixedSettingsAcquisition
     * acquisition has another thread that generates events
     *
     * @param settings
-    * @param acqGroup
     * @throws java.lang.Exception
     */
    public MagellanGUIAcquisition(MagellanGUIAcquisitionSettings settings) {
       dataSink_ = new MagellanDataManager(settings.dir_, settings.name_, true);
       settings_ = settings;
-      core_ = Engine.getCore();
       initialize();
+   }
+
+   public void start() {
+         super.start();
+         if (finished_) {
+            throw new RuntimeException("Cannot start acquistion since it has already been run");
+         }
+         Iterator<AcquisitionEvent> acqEventIterator = buildAcqEventGenerator();
+         Engine.getInstance().submitEventIterator(acqEventIterator, this);
+         Engine.getInstance().finishAcquisition(this);
+         started_ = true;
    }
 
    @Override
@@ -108,8 +116,7 @@ public class MagellanGUIAcquisition extends FixedSettingsAcquisition
       }
    }
 
-   @Override
-   protected Iterator<AcquisitionEvent> buildAcqEventGenerator() {
+   private Iterator<AcquisitionEvent> buildAcqEventGenerator() {
       ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>> acqFunctions
               = new ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>>();
       //Define where slice index 0 will be
@@ -160,6 +167,14 @@ public class MagellanGUIAcquisition extends FixedSettingsAcquisition
       AcquisitionEvent baseEvent = new AcquisitionEvent(this);
       baseEvent.setAxisPosition(MagellanMD.POSITION_AXIS, 0);
       return new AcquisitionEventIterator(baseEvent, acqFunctions, monitorSliceIndices());
+   }
+
+   public void waitForCompletion() {
+      if (!started_) {
+         //it was never successfully started
+         return;
+      }
+      super.waitForCompletion();
    }
 
    @Override
@@ -285,7 +300,6 @@ public class MagellanGUIAcquisition extends FixedSettingsAcquisition
     * This function and the one below determine which slices will be collected
     * for a given position
     *
-    * @param position
     * @param zPos
     * @return
     */
