@@ -22,10 +22,12 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Shape;
 import java.awt.List;
+import java.awt.Paint;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -34,6 +36,7 @@ import java.util.Hashtable;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -66,6 +69,9 @@ public class RTIntensitiesFrame extends JFrame {
    private JButton startButton_;
    private double lastElapsedTimeMs_ = 0.0;
    private Date firstImageDate_;
+   // Ratio plot memory
+   private boolean ratio_ = false;
+   private double[] last_ = new double[100];
    // This is our local cache ...
    private int ROIs_ = 0;
    private Roi[] roi_ = new Roi[100];
@@ -73,9 +79,12 @@ public class RTIntensitiesFrame extends JFrame {
    private RoiManager manager_;
    private int imagesReceived_ = 0;
    static final long serialVersionUID = 1;
+   // How many channels do we have ? do we plot ?
+   private int channels_ = 0;
+   private int plots_ = 0;
    private JLabel title;
    private XYSeriesCollection dataset;
-   XYSeries[] data = new XYSeries[100];
+   XYSeries[] data = new XYSeries[200];
 
    private static final String ABSOLUTE_FORMAT_STRING = "yyyy-MM-dd HH:mm:ss.SSS Z";
 
@@ -118,6 +127,7 @@ public class RTIntensitiesFrame extends JFrame {
                return;
             }
             dataProvider_ = window_.getDataProvider();
+            channels_ = dataProvider_.getAxisLength("channel");
             // At least one ROI defined ?
             if (manager_ == null) {
                title.setText("Please setup ROI(s).");
@@ -138,16 +148,41 @@ public class RTIntensitiesFrame extends JFrame {
                String label = labels.getItem(i);
                roi_[i] = table.get(label);
             }
+         // Multiple channels ? Logic for 2 channels only ...
+        	   if (channels_ > 1) {
+               Object[] options = {"1", "1&2", "1/2"};
+               int x = JOptionPane.showOptionDialog(null, "Please select:",
+                       "Multi channel data options",
+                       JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
+               switch(x) {
+               case 0:
+               	plots_ = 1; 
+               	break;
+               case 1:
+               	plots_ = 2; 
+               	ratio_ = false;
+               	break;
+               case 2:
+               	plots_ = 2;
+               	ratio_ = true;
+               	break;
+               }
+        	   } else {
+        	   	plots_ = 1;
+        	   }
             // We are all set ?
             imagesReceived_ = 0; // new plot
             lastElapsedTimeMs_ = 0;
             dataProvider_.registerForEvents(RTIntensitiesFrame.this);
             dataset = new XYSeriesCollection();
-            for (int i = 0; i < ROIs_; i++) {
-               data[i] = new XYSeries("" + (i + 1));
-               dataset.addSeries(data[i]);
+           	for (int i = 0; i < ROIs_; i++) {
+               for (int c = 0; c < channels_; c++) {
+            		data[i*channels_+c] = new XYSeries("" + (i + 1) + 
+            				((channels_>1) ? ("/" + ( c + 1)) : ""));
+            		dataset.addSeries(data[i*channels_+c]);
+            	}
             }
-            plotData("Intensities " + dataProvider_.getName(), dataset, "Time(ms)", "Value", 100, 100);
+            plotData("Intensities " + dataProvider_.getName(), dataset, "Time(ms)", "Value", channels_, 100, 100);
          }
       });
       startButton_.setEnabled(true);
@@ -189,34 +224,43 @@ public class RTIntensitiesFrame extends JFrame {
       }
       if (imagesReceived_ == 0) {
          firstImageDate_ = imgTime;
-      }
-      imagesReceived_++;
-      if (image.getCoords().getChannel() > 0) {
-         // TODO: plot channels individually
+         lastElapsedTimeMs_ = 0.0;
       }
       double elapsedTimeMs = imgTime.getTime() - firstImageDate_.getTime();
       // do not process images at more than 100 Hz
-      if (lastElapsedTimeMs_ == 0.0 || elapsedTimeMs - lastElapsedTimeMs_ >= 10.0) {
+      if (elapsedTimeMs == lastElapsedTimeMs_ || elapsedTimeMs - lastElapsedTimeMs_ >= 10.0) {
          lastElapsedTimeMs_ = elapsedTimeMs;
          double v;
+         int channel = image.getCoords().getChannel(); // 0..1
+         if (channel > plots_) {
+         	return;
+         }
          title.setText("You should be seeing data on the plot.");
 
-         if (window_ == null) {
-            window_ = studio_.getDisplayManager().getDisplays(dataProvider_).get(0);
-         }
          ImageProcessor processor = studio_.data().ij().createProcessor(image);
-         processor.setLineWidth(1);
-         processor.setColor(Color.red);
 
-         for (int i = 0; i < ROIs_ - 1; i++) {
-            processor.setRoi(roi_[i]);
-            v = processor.getStats().mean;
-            data[i].add(elapsedTimeMs, v, false);
-         }
-         processor.setRoi(roi_[ROIs_ - 1]);
-         v = processor.getStats().mean;
-         data[ROIs_ - 1].add(elapsedTimeMs, v, true);
+		   if (plots_ > 1 && ratio_ && channel == 0) {
+	   		//Remember values
+			   for (int i = 0; i < ROIs_; i++) {
+				   processor.setRoi(roi_[i]);
+				   last_[i] = processor.getStats().mean;
+			   }
+	   	} else {
+	   		int offset = 0;
+	   		if (plots_ > 1 && channel == 1) {
+	   			 offset = 1; // Paired plots
+	   		}
+	   		for (int i = 0; i < ROIs_; i++) {
+	   			processor.setRoi(roi_[i]);
+	   			v = processor.getStats().mean;
+	   			if (ratio_) {
+	   					v = last_[i] / (v + 0.000001); //Check!
+	   			}
+	   			data[offset + i * plots_].add(elapsedTimeMs, v, (i < ROIs_ - 1)?false:true);
+	   		}
+	   	}
       }
+      imagesReceived_++;
    }
 
    /**
@@ -229,7 +273,7 @@ public class RTIntensitiesFrame extends JFrame {
     * @param yLocation Window Location on the screen (y)
     */
    public static void plotData(String title, XYSeriesCollection dataset, String xTitle,
-                               String yTitle, int xLocation, int yLocation) {
+                               String yTitle, int channels, int xLocation, int yLocation) {
       // JFreeChart code
       JFreeChart chart = ChartFactory.createScatterPlot(title, // Title
               xTitle, // x-axis Label
@@ -241,20 +285,34 @@ public class RTIntensitiesFrame extends JFrame {
               false // Configure chart to generate URLs?
       );
       XYPlot plot = (XYPlot) chart.getPlot();
+      int series = dataset.getSeriesCount();
       plot.setBackgroundPaint(Color.white);
       plot.setRangeGridlinePaint(Color.lightGray);
       XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
       renderer.setDefaultShapesVisible(true);
-      renderer.setSeriesPaint(0, plot.getDrawingSupplier().getNextPaint());
+      Paint paint = plot.getDrawingSupplier().getNextPaint();
+      renderer.setSeriesPaint(0, paint);
       renderer.setSeriesFillPaint(0, Color.white);
       renderer.setSeriesLinesVisible(0, true);
       Shape circle = new Ellipse2D.Float(-2.0f, -2.0f, 4.0f, 4.0f);
+      Shape square = new Rectangle2D.Float(-2.0f, -2.0f, 4.0f, 4.0f);
       renderer.setSeriesShape(0, circle, false);
       renderer.setUseFillPaint(true);
-      for (int i = 1; i < 100; i++) {
+      if (channels > 1) {
+      	renderer.setSeriesShape(1, square, false);
+      	renderer.setSeriesLinesVisible(1, true);
+      	renderer.setSeriesPaint(1, paint);
+      }
+      for(int i=channels;i<series;i++){
+      	paint = plot.getDrawingSupplier().getNextPaint();
          renderer.setSeriesShape(i, circle, false);
          renderer.setSeriesLinesVisible(i, true);
-         renderer.setSeriesPaint(i, plot.getDrawingSupplier().getNextPaint());
+         renderer.setSeriesPaint(i, paint);
+         if (channels > 1) {
+         	renderer.setSeriesShape(++i, square, false);
+         	renderer.setSeriesLinesVisible(i, true);
+         	renderer.setSeriesPaint(i, paint);
+         }
       }
 
       ChartFrame graphFrame = new ChartFrame(title, chart);
