@@ -173,7 +173,7 @@ public class MagellanAcquisitionsManager {
                   currentAcq_ = new MagellanGUIAcquisition(acqSettings);
                   currentAcq_.start();
                   currentAcqIndex_ = index;
-                  currentAcq_.close();
+                  currentAcq_.waitForCompletion();
                   acqStatus_[index] = "Complete";
                } catch (Exception e) {
                   acqStatus_[index] = "Error";
