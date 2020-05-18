@@ -151,13 +151,14 @@ public class RTIntensitiesFrame extends JFrame {
             }
          // Multiple channels ? Logic for 2 channels only ...
         	   if (channels_ > 1) {
-               Object[] options = {"1", "1&2", "1/2"};
+               Object[] options = {"Ch 1", "Ch 1 & 2", "Ch 1 / 2"};
                int x = JOptionPane.showOptionDialog(null, "Please select:",
                        "Multi channel data options",
                        JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
                switch(x) {
                case 0:
                	plots_ = 1; 
+               	channels_ = 1;
                	break;
                case 1:
                	plots_ = 2; 
