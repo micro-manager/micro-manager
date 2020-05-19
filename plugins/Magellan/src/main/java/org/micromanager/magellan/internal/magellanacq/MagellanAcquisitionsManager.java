@@ -138,7 +138,9 @@ public class MagellanAcquisitionsManager {
    }
    
    public MagellanGUIAcquisition createAcquisition(int index) {
-      return new MagellanGUIAcquisition(acqSettingsList_.get(index));
+      MagellanGUIAcquisitionSettings settings = acqSettingsList_.get(index);
+      return new MagellanGUIAcquisition(settings,
+              new MagellanDataManager(settings.dir_, settings.name_, true));
    }
 
    public void runAllAcquisitions() {
@@ -170,7 +172,8 @@ public class MagellanAcquisitionsManager {
                acqStatus_[index] = "Running";
                gui_.acquisitionRunning(true);
                try {
-                  currentAcq_ = new MagellanGUIAcquisition(acqSettings);
+                  currentAcq_ = new MagellanGUIAcquisition(acqSettings,
+                          new MagellanDataManager(acqSettings.dir_, acqSettings.name_, true));
                   currentAcq_.start();
                   currentAcqIndex_ = index;
                   currentAcq_.waitForCompletion();
