@@ -64,8 +64,8 @@ public class MagellanGUIAcquisition extends Acquisition
     * @param settings
     * @throws java.lang.Exception
     */
-   public MagellanGUIAcquisition(MagellanGUIAcquisitionSettings settings) {
-      dataSink_ = new MagellanDataManager(settings.dir_, settings.name_, true);
+   public MagellanGUIAcquisition(MagellanGUIAcquisitionSettings settings, DataSink sink) {
+      super(sink);
       settings_ = settings;
       initialize();
    }

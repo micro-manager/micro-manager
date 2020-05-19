@@ -50,10 +50,7 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import org.micromanager.acqj.internal.acqengj.Engine;
 import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.magellan.internal.magellanacq.ExploreAcqSettings;
-import org.micromanager.magellan.internal.magellanacq.MagellanGUIAcquisitionSettings;
-import org.micromanager.magellan.internal.magellanacq.MagellanAcquisitionsManager;
-import org.micromanager.magellan.internal.magellanacq.ExploreAcquisition;
+import org.micromanager.magellan.internal.magellanacq.*;
 import org.micromanager.magellan.internal.channels.ColorEditor;
 import org.micromanager.magellan.internal.channels.ColorRenderer;
 import org.micromanager.acqj.internal.acqengj.AffineTransformUtils;
@@ -61,7 +58,6 @@ import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.GlobalSettings;
 import org.micromanager.magellan.internal.misc.JavaUtils;
-import org.micromanager.magellan.internal.magellanacq.LoadedAcquisitionData;
 import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridManager;
 import org.micromanager.propertymap.MutablePropertyMapView;
@@ -1891,7 +1887,7 @@ public class GUI extends javax.swing.JFrame {
             return;
          }
       }
-      exploreAcq_ = new ExploreAcquisition(settings);
+      exploreAcq_ = new ExploreAcquisition(settings, new MagellanDataManager(settings.dir_, settings.name_, true));
       exploreAcq_.start();
    }//GEN-LAST:event_newExploreWindowButton_ActionPerformed
 

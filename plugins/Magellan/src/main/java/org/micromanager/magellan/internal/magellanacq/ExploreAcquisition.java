@@ -18,6 +18,8 @@ package org.micromanager.magellan.internal.magellanacq;
 
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+
+import org.micromanager.acqj.api.*;
 import org.micromanager.magellan.internal.magellanacq.ExploreAcqSettings;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,12 +40,8 @@ import mmcorej.org.json.JSONException;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.Log;
 import mmcorej.org.json.JSONObject;
-import org.micromanager.acqj.api.AcquisitionEvent;
 import org.micromanager.acqj.internal.acqengj.AcquisitionEventIterator;
-import org.micromanager.acqj.api.AcqEngMetadata;
-import org.micromanager.acqj.api.Acquisition;
 import org.micromanager.acqj.api.mda.AcqEventModules;
-import org.micromanager.acqj.api.ExceptionCallback;
 import org.micromanager.acqj.api.mda.ChannelSetting;
 import org.micromanager.acqj.api.mda.XYStagePosition;
 import org.micromanager.acqj.internal.acqengj.Engine;
@@ -69,14 +67,13 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
    private ExecutorService submittedSequenceMonitorExecutor_ = Executors.newSingleThreadExecutor((Runnable r) -> {
       return new Thread(r, "Submitted sequence monitor");
    });
-   private volatile boolean aborted_ = false;
 
    private final double zOrigin_, zStep_;
    private int minSliceIndex_, maxSliceIndex_;
    private int overlapX_, overlapY_;
 
-   public ExploreAcquisition(ExploreAcqSettings settings) {
-      dataSink_ = new MagellanDataManager(settings.dir_, settings.name_, true);
+   public ExploreAcquisition(ExploreAcqSettings settings, DataSink sink) {
+      super(sink);
       settings_ = settings;
       zStep_ = settings.zStep_;
 
