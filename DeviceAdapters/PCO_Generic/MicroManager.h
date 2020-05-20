@@ -39,7 +39,7 @@
 #error Missing current pco library (in camera.h). Please copy pco lib into correct library/include folder.
 #endif
 
-#define KAMLIBVERSION_MM 253  // Will be incremented by pco when a new Kamlib is present (do not change)
+#define KAMLIBVERSION_MM 254  // Will be incremented by pco when a new Kamlib is present (do not change)
 #if KAMLIBVERSION != KAMLIBVERSION_MM
 #define STRING2(x) #x
 #define STRING(x) STRING2(x)
@@ -103,6 +103,8 @@ public:
   int InitLineTiming();
   int InitFlim();
   int SetupFlim();
+  int InitFanLED();
+  int SetupFanLED();
 
   // action interface
   //int OnBoard(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -159,6 +161,9 @@ public:
   int OnVBin(CPropertyBase* pProp, ActionType eAct);
   int OnCCDType(CPropertyBase* pProp, ActionType eAct);   
   */
+  int OnFanControl(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnFanSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnLEDControl(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
   int ResizeImageBuffer();
@@ -234,6 +239,10 @@ private:
   WORD m_wFlimAsymmetryCorrection, m_wFlimCalculationMode, m_wFlimReferencingMode, m_wFlimThresholdLow, m_wFlimThresholdHigh, m_wFlimOutputMode;
   DWORD m_dwFlimFrequency, m_dwFlimPhaseMilliDeg;
   BOOL m_bFlimMasterFrequencyMHz;
+
+  WORD m_wFanControl;
+  WORD m_wFanSpeed;
+  DWORD m_dwLEDControl;
 
   int    m_iFpsMode;
   int    m_iNoiseFilterMode;

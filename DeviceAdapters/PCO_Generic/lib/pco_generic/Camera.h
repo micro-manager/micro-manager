@@ -38,7 +38,7 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#define KAMLIBVERSION           253
+#define KAMLIBVERSION           254
 #pragma once
 
 #define WM_CHANGE_CAMERAVALUES WM_APP + 200
@@ -143,6 +143,10 @@
 #define CAMERA_DETAIL_INDEX_6           0x60000000
 #define CAMERA_DETAIL_INDEX_7           0x70000000
 #define CAMERA_DETAIL_INDEX_8           0x80000000
+
+#define FAN_LED_IS_POSSIBLE 0x00000001
+#define FAN_IS_POSSIBLE     0x00000002
+#define LED_IS_POSSIBLE     0x00000004
 
 typedef unsigned char byte;     /* 8-bit  */
 typedef unsigned short word;    /* 16-bit */
@@ -281,7 +285,14 @@ public:
 
   int GetCameraSetup(WORD* wType, DWORD* dwSetup, WORD *wLen);
   int SetCameraSetup(WORD wType, DWORD* dwSetup, WORD wLen, DWORD dwflags);
-
+  int CanWeDoLensControl();
+  int InitLensControl(HANDLE* hLensControl);
+  int CloseLensControl(HANDLE hLensControl);
+  int SetAperture(HANDLE hLensControl, WORD* wAperturePos, DWORD dwflagsin, DWORD* dwflagsout);
+  int GetApertureF(HANDLE hLensControl, DWORD* dwAperturePosF, WORD* wAperturePos, DWORD* dwflagsout);
+  int SetLensFocus(HANDLE hLensControl, LONG* lFocus, DWORD dwflagsin, DWORD* dwflagsout);
+  int GetLensFocus(HANDLE hLensControl, LONG* lFocus, DWORD* dwflagsout);
+  int HandleFanAndLED(int iControl, WORD* wMode, WORD* wValue, WORD* wmin, WORD* wmax, DWORD* dwLedSignal, DWORD* dwFlagsout);
   // Dialog related functions:
 
   // Recorder related functions:
