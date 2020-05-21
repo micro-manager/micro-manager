@@ -121,7 +121,6 @@ import org.micromanager.profile.internal.UserProfileAdmin;
 import org.micromanager.profile.internal.gui.HardwareConfigurationManager;
 import org.micromanager.quickaccess.QuickAccessManager;
 import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
-import org.micromanager.internal.zmq.ZMQServer;
 
 
 /*
