@@ -82,10 +82,10 @@
 
 
 
-		<dependency org="org.boofcv" name="boofcv-ip" rev="0.33.1"/>
-		<dependency org="org.boofcv" name="boofcv-geo" rev="0.33.1"/>
-		<dependency org="org.georegression" name="georegression" rev="0.19"/>
-		<dependency org="org.ddogleg" name="ddogleg" rev="0.17"/>
+		<dependency org="org.boofcv" name="boofcv-ip" rev="0.36"/>
+		<dependency org="org.boofcv" name="boofcv-geo" rev="0.36"/>
+		<dependency org="org.georegression" name="georegression" rev="0.22"/>
+		<dependency org="org.ddogleg" name="ddogleg" rev="0.18"/>
 		<dependency org="org.ejml" name="ejml-core" rev="0.38"/>
 
 		<!-- Not in Maven yet (resolved in 3rdpartypublic/classext) -->

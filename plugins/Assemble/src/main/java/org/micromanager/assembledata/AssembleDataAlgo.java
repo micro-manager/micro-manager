@@ -1,15 +1,27 @@
 package org.micromanager.assembledata;
 
 import boofcv.abst.distort.FDistort;
+import boofcv.alg.distort.AssignPixelValue_SB;
+import boofcv.alg.distort.ImageDistort;
+import boofcv.alg.distort.ImageDistortBasic_SB;
+import boofcv.alg.distort.PixelTransformAffine_F32;
+import boofcv.alg.distort.PixelTransformAffine_F64;
+import boofcv.alg.distort.PixelTransformHomography_F32;
+import boofcv.alg.interpolate.InterpolatePixelS;
 import boofcv.alg.misc.GImageMiscOps;
 import boofcv.alg.misc.GPixelMath;
+import boofcv.core.image.ConvertImage;
 import boofcv.core.image.GConvertImage;
+import boofcv.factory.interpolate.FactoryInterpolation;
 import boofcv.struct.border.BorderType;
+import boofcv.struct.image.GrayF32;
 import boofcv.struct.image.GrayS32;
 import boofcv.struct.image.GrayU16;
 import boofcv.struct.image.GrayU8;
 import boofcv.struct.image.ImageGray;
+import georegression.struct.affine.Affine2D_F32;
 import georegression.struct.affine.Affine2D_F64;
+import georegression.struct.homography.Homography2D_F64;
 import java.awt.geom.AffineTransform;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -72,7 +84,6 @@ public class AssembleDataAlgo {
 
          int bytesPerPixel = singlePositionImg.getBytesPerPixel();
          if (multiPositionImg.getBytesPerPixel() != bytesPerPixel) {
-            // mm.scripter().message("Images differ in bytes per pixel");
             return null;
          }
 
@@ -114,7 +125,7 @@ public class AssembleDataAlgo {
          double centerYUm = yMinUm + (heightUm / 2.0);
 
          /*  Be Warned!
-             reading new image size from metdata is the right size to do, but 
+             reading new image size from metdata seems the right thing to do, but 
              leads to slightly different sizes for consecutive positions.
              MM deals very poorly with images of different sizes (i.e., currently
              silently accepts them but causes lots of problems downstream)
@@ -142,6 +153,9 @@ public class AssembleDataAlgo {
             tmpImgBoof = new GrayU16(widthPixels, heightPixels);
             tmp2ImgBoof = new GrayS32(widthPixels, heightPixels);
          }
+         
+         GrayF32 tmpImgNF32 = new GrayF32(mpd.getAnyImage().getWidth(), mpd.getAnyImage().getHeight());
+         GrayF32 tmpImgSF32 = new GrayF32(spd.getAnyImage().getWidth(), spd.getAnyImage().getHeight());
 
          // single position data
          final int spdTLength = test ? 1 : spd.getAxisLength(Coords.T);
@@ -208,6 +222,8 @@ public class AssembleDataAlgo {
                      } else { // bytesPerPixel == 2
                         GrayU16 tmp = new GrayU16(img.getWidth(), img.getHeight());
                         tmp.setData((short[]) img.getRawPixels());
+                        //oldImgBoof = new GrayF32(img.getWidth(), img.getHeight());
+                        ConvertImage.convert(tmp, tmpImgNF32);
                         oldImgBoof = tmp;
                      }
                      double diffX = centerXUm - img.getMetadata().getXPositionUm();
@@ -221,25 +237,48 @@ public class AssembleDataAlgo {
                      //centerYUm - img.getMetadata().getYPositionUm());
 
                      aff = aff.concat(singlePositionAf64I, null);
+                     //
                      FDistort fd = new FDistort();
                      fd.input(oldImgBoof);
                      fd.output(tmpImgBoof);
                      fd.affine(aff);
                      fd.interpNN();
-                     fd.border(BorderType.ZERO);
+                     fd.border(BorderType.SKIP);
                      fd.apply();
-                     GPixelMath.add(newImgBoof, tmpImgBoof, tmp2ImgBoof);
-                     GConvertImage.convert(tmp2ImgBoof, newImgBoof);
+                     //GPixelMath.add(newImgBoof, tmpImgBoof, tmp2ImgBoof);
+                     //GConvertImage.convert(tmp2ImgBoof, newImgBoof);
+                     /*
+                     Affine2D_F32 a32 = new Affine2D_F32((float) aff.a11,
+                              (float) aff.a12,
+                              (float) aff.a21,
+                              (float) aff.a22,
+                              (float) aff.tx,
+                              (float) aff.ty );
+                     PixelTransformAffine_F32 model = new PixelTransformAffine_F32(a32);
+                     //PixelTransformHomography_F32 model = new PixelTransformHomography_F32();                     
+                     //model.set(pf);
+                     InterpolatePixelS<GrayF32> interp = FactoryInterpolation.bilinearPixelS(
+                             GrayF32.class, BorderType.ZERO);
+                     AssignPixelValue_SB.F32 f32 = new AssignPixelValue_SB.F32();
+                     ImageDistort<GrayF32, GrayF32> distort = new ImageDistortBasic_SB(f32, interp);
+                     //ImageDistort<Planar<GrayF32>,Planar<GrayF32>> distort =
+                     //               DistortSupport.createDistortPL(GrayF32.class, model, interp, false);
+                     distort.setModel(model);
+                     distort.setRenderAll(false);
+                     distort.apply(tmpImgNF32, tmpImgSF32);
+                     */
                   }
                }
                if (newMetadataB != null) {
                   Coords coords = cb.p(targetPosition).c(c + spdCLength).t(t).build();
                   System.out.println(coords.toString());                  
                   newMetadataB.positionName("Site-" + targetPosition);
-                  Image newImage = BoofCVImageConverter.boofCVToMM(newImgBoof, 
+                  //GrayU16 g = new GrayU16(tmpImgSF32.width, tmpImgSF32.height);
+                  //ConvertImage.convert(tmpImgSF32, g);
+                  Image newImage = BoofCVImageConverter.boofCVToMM(tmpImgBoof, 
                           coords, newMetadataB.build());
                   output.putImage(newImage);
-                  GImageMiscOps.fill(newImgBoof, 0.0);
+                  GImageMiscOps.fill(tmpImgBoof, 0.0);
                }
             }
             int progress = (int) (50.0 + 50.0 * t / spdTLength);
@@ -253,6 +292,20 @@ public class AssembleDataAlgo {
       }
 
       return null;
+   }
+   
+   
+   public static Homography2D_F64 affineToHomography(Affine2D_F64 aff) {
+      return new Homography2D_F64(
+               aff.a11,
+               aff.a12,
+               0,
+               aff.a21,
+               aff.a22,
+               0,
+               aff.tx,
+               aff.ty,
+               1);
    }
 
 }
