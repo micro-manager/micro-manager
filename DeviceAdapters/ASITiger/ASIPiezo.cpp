@@ -53,7 +53,8 @@ CPiezo::CPiezo(const char* name) :
    ring_buffer_supported_(false),
    ring_buffer_capacity_(0),
    ttl_trigger_supported_(false),
-   ttl_trigger_enabled_(false)
+   ttl_trigger_enabled_(false),
+   runningFastSequence_(false)
 {
    if (IsExtendedName(name))  // only set up these properties if we have the required information in the name
    {
@@ -374,6 +375,11 @@ int CPiezo::Initialize()
          AddAllowedValue(g_UseSequencePropertyName, g_NoState);
          AddAllowedValue(g_UseSequencePropertyName, g_YesState);
          ttl_trigger_enabled_ = false;
+
+         pAct = new CPropertyAction (this, &CPiezo::OnFastSequence);
+         CreateProperty(g_UseFastSequencePropertyName, g_NoState, MM::String, false, pAct);
+         AddAllowedValue(g_UseFastSequencePropertyName, g_NoState);
+         AddAllowedValue(g_UseFastSequencePropertyName, g_ArmedState);
       }
 
    }
@@ -432,6 +438,10 @@ int CPiezo::GetPositionUm(double& pos)
 
 int CPiezo::SetPositionUm(double pos)
 {
+   if (runningFastSequence_)
+   {
+      return DEVICE_OK;
+   }
    ostringstream command; command.str("");
    command << "M " << axisLetter_ << "=" << pos*unitMult_;
    return hub_->QueryCommandVerify(command.str(),":A");
@@ -450,6 +460,10 @@ int CPiezo::GetPositionSteps(long& steps)
 
 int CPiezo::SetPositionSteps(long steps)
 {
+   if (runningFastSequence_)
+   {
+      return DEVICE_OK;
+   }
    ostringstream command; command.str("");
    command << "M " << axisLetter_ << "=" << steps*unitMult_*stepSizeUm_;
    return hub_->QueryCommandVerify(command.str(),":A");
@@ -519,6 +533,10 @@ int CPiezo::StopStageSequence()
 // disables TTL triggering; doesn't actually stop anything already happening on controller
 {
    ostringstream command; command.str("");
+   if (runningFastSequence_)
+   {
+      return DEVICE_OK;
+   }
    if (!ttl_trigger_supported_)
    {
       return DEVICE_UNSUPPORTED_COMMAND;
@@ -532,6 +550,10 @@ int CPiezo::StartStageSequence()
 // enables TTL triggering; doesn't actually start anything going on controller
 {
    ostringstream command; command.str("");
+   if (runningFastSequence_)
+   {
+      return DEVICE_OK;
+   }
    if (!ttl_trigger_supported_)
    {
       return DEVICE_UNSUPPORTED_COMMAND;
@@ -550,6 +572,10 @@ int CPiezo::StartStageSequence()
 int CPiezo::SendStageSequence()
 {
    ostringstream command; command.str("");
+   if (runningFastSequence_)
+   {
+      return DEVICE_OK;
+   }
    if (!ttl_trigger_supported_)
    {
       return DEVICE_UNSUPPORTED_COMMAND;
@@ -569,6 +595,10 @@ int CPiezo::SendStageSequence()
 int CPiezo::ClearStageSequence()
 {
    ostringstream command; command.str("");
+   if (runningFastSequence_)
+   {
+      return DEVICE_OK;
+   }
    if (!ttl_trigger_supported_)
    {
       return DEVICE_UNSUPPORTED_COMMAND;
@@ -1887,6 +1917,40 @@ int CPiezo::OnUseSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(tmpstr);
       ttl_trigger_enabled_ = (ttl_trigger_supported_ && (tmpstr.compare(g_YesState) == 0));
       return OnUseSequence(pProp, MM::BeforeGet);  // refresh value
+   }
+   return DEVICE_OK;
+}
+
+int CPiezo::OnFastSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      if (runningFastSequence_)
+         pProp->Set(g_ArmedState);
+      else
+         pProp->Set(g_NoState);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      // only let user do fast sequence if regular one is enabled
+      if (!ttl_trigger_enabled_) {
+         pProp->Set(g_NoState);
+         return DEVICE_OK;
+      }
+      if (tmpstr.compare(g_ArmedState) == 0)
+      {
+         runningFastSequence_ = false;
+         RETURN_ON_MM_ERROR ( SendStageSequence() );
+         RETURN_ON_MM_ERROR ( StartStageSequence() );
+         runningFastSequence_ = true;
+      }
+      else
+      {
+         runningFastSequence_ = false;
+         RETURN_ON_MM_ERROR ( StopStageSequence() );
+      }
    }
    return DEVICE_OK;
 }
