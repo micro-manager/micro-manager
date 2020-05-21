@@ -46,7 +46,6 @@ import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.UIMonitor;
-import org.micromanager.internal.zmq.ZMQServer;
 import org.micromanager.internal.zmq.ZMQSocketWrapper;
 
 /**
