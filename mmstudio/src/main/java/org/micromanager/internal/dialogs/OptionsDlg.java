@@ -210,7 +210,8 @@ public final class OptionsDlg extends MMDialog {
       comboDisplayBackground_.setMaximumRowCount(2);
       comboDisplayBackground_.setSelectedItem(mmStudio_.app().skin().getSkin().getDesc());
       comboDisplayBackground_.addActionListener((ActionEvent e) -> {
-         changeBackground();
+         String background = (String) comboDisplayBackground_.getSelectedItem();
+         mmStudio_.app().skin().setSkin(SkinMode.fromString(background));
       });
 
       startupScriptFile_ = new JTextField(ScriptPanel.getStartupScript(mmStudio_));
@@ -331,12 +332,6 @@ public final class OptionsDlg extends MMDialog {
       super.add(closeButton, "sizegroup bottomBtns");
 
       super.pack();
-   }
-
-   private void changeBackground() {
-      String background = (String) comboDisplayBackground_.getSelectedItem();
-
-      mmStudio_.app().skin().setSkin(SkinMode.fromString(background));
    }
 
    private void closeRequested() {
