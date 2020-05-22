@@ -191,7 +191,7 @@ public class RTIntensitiesFrame extends JFrame {
            	for (int i = 0; i < ROIs_; i++) {
                for (int p = 0; p < plots_; p++) {
             		data_[i * plots_ + p] = new XYSeries("" + (i + 1) + 
-            				((plots_>1) ? ("/" + ( p + 1)) : ""));
+            				((plots_>1) ? ("c" + ( p + 1)) : ""));
             		dataset_.addSeries(data_[i * plots_ + p]);
             	}
             }
