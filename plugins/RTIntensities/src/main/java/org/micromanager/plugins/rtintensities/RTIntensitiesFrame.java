@@ -28,6 +28,7 @@ import java.awt.Font;
 import java.awt.Shape;
 import java.awt.List;
 import java.awt.Paint;
+import java.awt.BasicStroke;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -318,6 +319,12 @@ public class RTIntensitiesFrame extends JFrame {
       	renderer.setSeriesShape(1, square, false);
       	renderer.setSeriesLinesVisible(1, true);
       	renderer.setSeriesPaint(1, paint);
+      	renderer.setSeriesStroke(
+               1, new BasicStroke(
+                   2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND,
+                   1.0f, new float[] {2.0f, 6.0f}, 0.0f
+               )
+            );
       }
       for(int i=plots;i<series;i++){
       	paint = plot.getDrawingSupplier().getNextPaint();
@@ -328,6 +335,12 @@ public class RTIntensitiesFrame extends JFrame {
          	renderer.setSeriesShape(++i, square, false);
          	renderer.setSeriesLinesVisible(i, true);
          	renderer.setSeriesPaint(i, paint);
+         	renderer.setSeriesStroke(
+               i, new BasicStroke(
+                   2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND,
+                   1.0f, new float[] {2.0f, 6.0f}, 0.0f
+               )
+            );
          }
       }
 
