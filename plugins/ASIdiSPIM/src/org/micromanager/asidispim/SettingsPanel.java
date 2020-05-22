@@ -182,8 +182,8 @@ public class SettingsPanel extends ListeningJPanel {
       scannerPanel.add(scannerFilterY, "wrap");
       
       scannerPanel.add(new JLabel("Live scan period [ms]:"));
-      liveScanMs_ = pu.makeSpinnerInteger(1, 10000,
-            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_CAMERA_LIVE_SCAN, 10);
+      liveScanMs_ = pu.makeSpinnerInteger(2, 10000,
+            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_CAMERA_LIVE_SCAN, 20);
       liveScanMs_.addChangeListener(new ChangeListener() {
          @Override
          public void stateChanged(ChangeEvent arg0) {
