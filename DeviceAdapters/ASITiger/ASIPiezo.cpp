@@ -380,6 +380,7 @@ int CPiezo::Initialize()
          CreateProperty(g_UseFastSequencePropertyName, g_NoState, MM::String, false, pAct);
          AddAllowedValue(g_UseFastSequencePropertyName, g_NoState);
          AddAllowedValue(g_UseFastSequencePropertyName, g_ArmedState);
+         runningFastSequence_ = false;
       }
 
    }
@@ -438,10 +439,6 @@ int CPiezo::GetPositionUm(double& pos)
 
 int CPiezo::SetPositionUm(double pos)
 {
-   if (runningFastSequence_)
-   {
-      return DEVICE_OK;
-   }
    ostringstream command; command.str("");
    command << "M " << axisLetter_ << "=" << pos*unitMult_;
    return hub_->QueryCommandVerify(command.str(),":A");
@@ -460,10 +457,6 @@ int CPiezo::GetPositionSteps(long& steps)
 
 int CPiezo::SetPositionSteps(long steps)
 {
-   if (runningFastSequence_)
-   {
-      return DEVICE_OK;
-   }
    ostringstream command; command.str("");
    command << "M " << axisLetter_ << "=" << steps*unitMult_*stepSizeUm_;
    return hub_->QueryCommandVerify(command.str(),":A");
@@ -611,6 +604,10 @@ int CPiezo::ClearStageSequence()
 
 int CPiezo::AddToStageSequence(double position)
 {
+   if (runningFastSequence_)
+   {
+      return DEVICE_OK;
+   }
    if (!ttl_trigger_supported_)
    {
       return DEVICE_UNSUPPORTED_COMMAND;
