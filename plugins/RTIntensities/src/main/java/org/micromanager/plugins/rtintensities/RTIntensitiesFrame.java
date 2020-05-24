@@ -36,8 +36,11 @@ import java.util.Hashtable;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 import javax.swing.JLabel;
+import javax.swing.JTextField;
 import javax.swing.JOptionPane;
+import javax.swing.Box;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -67,7 +70,6 @@ public class RTIntensitiesFrame extends JFrame {
    private final SimpleDateFormat dateFormat_;
    private DisplayWindow window_ = null;
    private DataProvider dataProvider_;
-   private JButton startButton_;
    private double lastElapsedTimeMs_ = 0.0;
    private Date firstImageDate_;
    // Ratio plot memory
@@ -91,6 +93,10 @@ public class RTIntensitiesFrame extends JFrame {
    XYSeries[] data_ = new XYSeries[200];
    // Doing background "equalization" ?
    private int backgroundeq_ = -1;
+   // Min refresh time (ms)
+   private int minPeriod_ = 10;
+   // Max plot points
+   private int maxPoints_ = 200;
 
    private static final String ABSOLUTE_FORMAT_STRING = "yyyy-MM-dd HH:mm:ss.SSS Z";
 
@@ -109,8 +115,8 @@ public class RTIntensitiesFrame extends JFrame {
       super.add(title_, "span, alignx center, wrap");
 
       // Shortcut to ROI Manager
-      JButton managerButton_ = new JButton("ROI Manager");
-      managerButton_.addActionListener(new ActionListener() {
+      JButton managerButton = new JButton("ROI Manager");
+      managerButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             if (manager_ == null) {
@@ -119,11 +125,11 @@ public class RTIntensitiesFrame extends JFrame {
             manager_.setVisible(true);
          }
       });
-      super.add(managerButton_, "split, span");
+      super.add(managerButton, "split, span");
 
       // Create a graph and start plotting, or tell user what's missing for so doing
-      startButton_ = new JButton("Plot");
-      startButton_.addActionListener(new ActionListener() {
+      JButton startButton = new JButton("Plot");
+      startButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             // Active window ?
@@ -208,6 +214,7 @@ public class RTIntensitiesFrame extends JFrame {
             		for (int p = 0; p < plots_; p++) {
                		data_[i * plots_ + p] = new XYSeries("" + (i + 1) + 
                				((plots_>1) ? ("c" + ( p + 1)) : ""));
+               		data_[i * plots_ + p].setMaximumItemCount(maxPoints_);
                		dataset_.addSeries(data_[i * plots_ + p]);
                	} 
             		idx++;
@@ -217,6 +224,7 @@ public class RTIntensitiesFrame extends JFrame {
                for (int p = 0; p < plots_; p++) {
                	data_[backgroundeq_ * plots_ + p] = new XYSeries("bg" + 
                			((plots_>1) ? ("c" + ( p + 1)) : ""));
+               	data_[backgroundeq_ * plots_ + p].setMaximumItemCount(maxPoints_);
                	dataset_.addSeries(data_[backgroundeq_ * plots_ + p]);
                }
          	}
@@ -224,8 +232,37 @@ public class RTIntensitiesFrame extends JFrame {
             title_.setText("Waiting for images...");
          }
       });
-      startButton_.setEnabled(true);
-      super.add(startButton_, "wrap");
+      startButton.setEnabled(true);
+      super.add(startButton, "span");
+      
+      // Define custom settings
+      JButton settingsButton = new JButton("Settings");
+      settingsButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+
+         	JTextField period = new JTextField(5);
+         	period.setText(new Integer(minPeriod_).toString());
+         	JTextField maxPoints = new JTextField(5);
+         	maxPoints.setText(new Integer(maxPoints_).toString());
+         	
+         	JPanel settingsPanel = new JPanel();
+         	settingsPanel.add(new JLabel("min refresh period(ms):"));
+         	settingsPanel.add(period);
+         	settingsPanel.add(Box.createHorizontalStrut(15)); // a spacer
+         	settingsPanel.add(new JLabel("max data points:"));
+         	settingsPanel.add(maxPoints);
+
+         	int result = JOptionPane.showConfirmDialog(null, settingsPanel, 
+               "Plot settings", JOptionPane.OK_CANCEL_OPTION);
+         	if (result == JOptionPane.OK_OPTION) {
+         		minPeriod_ = new Integer(period.getText()).intValue();
+         		maxPoints_ = new Integer(maxPoints.getText()).intValue();
+         	}
+         }
+      });
+      settingsButton.setEnabled(true);
+      super.add(settingsButton, "wrap");
 
       super.pack();
 
@@ -251,7 +288,6 @@ public class RTIntensitiesFrame extends JFrame {
    }
 
    private void processImage(DataProvider dp, Image image) {
-   	final double minPeriod = 10; // update damping
       if (!dp.equals(dataProvider_)) {
          return;
       }
@@ -264,11 +300,11 @@ public class RTIntensitiesFrame extends JFrame {
       }
       if (imagesReceived_ == 0) {
          firstImageDate_ = imgTime;
-         lastElapsedTimeMs_ = -minPeriod; // process first
+         lastElapsedTimeMs_ = -minPeriod_; // process first
       }
       double elapsedTimeMs = imgTime.getTime() - firstImageDate_.getTime();
       // do not process images at more than 100 Hz
-      if (missing_ > 0 || elapsedTimeMs - lastElapsedTimeMs_ >= minPeriod) {
+      if (missing_ > 0 || elapsedTimeMs - lastElapsedTimeMs_ >= minPeriod_) {
          lastElapsedTimeMs_ = elapsedTimeMs;
          double v, bg = 0;
          int channel = image.getCoords().getChannel(); // 0..1
