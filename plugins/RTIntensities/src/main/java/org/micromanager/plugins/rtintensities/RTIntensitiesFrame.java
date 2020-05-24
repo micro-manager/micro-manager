@@ -89,6 +89,8 @@ public class RTIntensitiesFrame extends JFrame {
    private JLabel title_;
    private XYSeriesCollection dataset_;
    XYSeries[] data_ = new XYSeries[200];
+   // Doing background "equalization" ?
+   private int backgroundeq_ = -1;
 
    private static final String ABSOLUTE_FORMAT_STRING = "yyyy-MM-dd HH:mm:ss.SSS Z";
 
@@ -137,9 +139,7 @@ public class RTIntensitiesFrame extends JFrame {
                title_.setText("Please setup ROI(s).");
                return;
             }
-            List labels = manager_.getList();
-            Hashtable<String, Roi> table = (Hashtable<String, Roi>) manager_.getROIs();
-            ROIs_ = labels.getItemCount();
+            ROIs_ = manager_.getCount();
             if (ROIs_ == 0) {
                title_.setText("Please setup ROI(s).");
                return;
@@ -148,9 +148,20 @@ public class RTIntensitiesFrame extends JFrame {
             if (ROIs_ > 100) {
                ROIs_ = 100;
             }
+            // Copy ROIs, determine if doing background "equalization" ?
+            Roi managerRois[] = manager_.getRoisAsArray();
             for (int i = 0; i < ROIs_; i++) {
-               String label = labels.getItem(i);
-               roi_[i] = table.get(label);
+               roi_[i] = (Roi)managerRois[i].clone();
+            	if (roi_[i].getName() != null && roi_[i].getName().startsWith("bg")) {
+            		if (backgroundeq_ < 0) {
+            				backgroundeq_= i; // keep track of first one (series plot)
+            		}
+            		roi_[i].setIsCursor(true); //our local mark
+            	}
+            	else
+            	{
+            		roi_[i].setIsCursor(false); // actual data point
+            	}
             }
             // Multiple channels ? Logic for 2 channels only ...
          	String plotmode = "Intensities";
@@ -183,19 +194,34 @@ public class RTIntensitiesFrame extends JFrame {
          	} else {
          		plots_ = 1;
          	}
+         	if (backgroundeq_ >= 0) {
+         		plotmode += " (BG eq)";
+         	}
             // We are all set ?
             imagesReceived_ = 0; // new plot
             lastElapsedTimeMs_ = 0;
             dataProvider_.registerForEvents(RTIntensitiesFrame.this);
             dataset_ = new XYSeriesCollection();
+            int idx = 0;
            	for (int i = 0; i < ROIs_; i++) {
-               for (int p = 0; p < plots_; p++) {
-            		data_[i * plots_ + p] = new XYSeries("" + (i + 1) + 
-            				((plots_>1) ? ("c" + ( p + 1)) : ""));
-            		dataset_.addSeries(data_[i * plots_ + p]);
+            	if (!roi_[i].isCursor()) {
+            		for (int p = 0; p < plots_; p++) {
+               		data_[i * plots_ + p] = new XYSeries("" + (i + 1) + 
+               				((plots_>1) ? ("c" + ( p + 1)) : ""));
+               		dataset_.addSeries(data_[i * plots_ + p]);
+               	} 
+            		idx++;
             	}
             }
-            plotData(plotmode + " of " + dataProvider_.getName(), dataset_, "Time(ms)", "Value", plots_, 100, 100);
+           	if (backgroundeq_ >= 0) {
+               for (int p = 0; p < plots_; p++) {
+               	data_[backgroundeq_ * plots_ + p] = new XYSeries("bg" + 
+               			((plots_>1) ? ("c" + ( p + 1)) : ""));
+               	dataset_.addSeries(data_[backgroundeq_ * plots_ + p]);
+               }
+         	}
+            plotData(plotmode + " of " + dataProvider_.getName(), dataset_, "Time(ms)", "Value", plots_, backgroundeq_, 100, 100);
+            title_.setText("Waiting for images...");
          }
       });
       startButton_.setEnabled(true);
@@ -225,6 +251,7 @@ public class RTIntensitiesFrame extends JFrame {
    }
 
    private void processImage(DataProvider dp, Image image) {
+   	final double minPeriod = 10; // update damping
       if (!dp.equals(dataProvider_)) {
          return;
       }
@@ -237,13 +264,13 @@ public class RTIntensitiesFrame extends JFrame {
       }
       if (imagesReceived_ == 0) {
          firstImageDate_ = imgTime;
-         lastElapsedTimeMs_ = 0.0;
+         lastElapsedTimeMs_ = -minPeriod; // process first
       }
       double elapsedTimeMs = imgTime.getTime() - firstImageDate_.getTime();
       // do not process images at more than 100 Hz
-      if (missing_ > 0 || elapsedTimeMs - lastElapsedTimeMs_ >= 10.0) {
+      if (missing_ > 0 || elapsedTimeMs - lastElapsedTimeMs_ >= minPeriod) {
          lastElapsedTimeMs_ = elapsedTimeMs;
-         double v;
+         double v, bg = 0;
          int channel = image.getCoords().getChannel(); // 0..1
          if (channel >= channels_) {
          	return;
@@ -254,27 +281,54 @@ public class RTIntensitiesFrame extends JFrame {
          	missing_--;
          }
 
-         title_.setText("Data should be on the plot.(" + channel + ")");
+         title_.setText("Data should be on the plot.(" + channel + "/" + imagesReceived_ + ")");
 
          ImageProcessor processor = studio_.data().ij().createProcessor(image);
+         
+         if (backgroundeq_ >= 0) {
+         	int points = 0;
+         	for (int i = 0; i < ROIs_; i++) {
+         		if (roi_[i].isCursor()) {
+         			processor.setRoi(roi_[i]);
+         			bg += processor.getStats().mean;
+         			points++;
+         		}
+         	}
+         	bg /= points;
+         }
 
 		   if (channels_ > 1 && ratio_ && channel == 0) {
 	   		//Remember values of first channel when doing ratio plotting
 			   for (int i = 0; i < ROIs_; i++) {
-				   processor.setRoi(roi_[i]);
-				   last_[i] = processor.getStats().mean;
+			   	if (!roi_[i].isCursor()) {
+			   		processor.setRoi(roi_[i]);
+			   		last_[i] = processor.getStats().mean - bg;
+			   	}
+			   }
+			   if (backgroundeq_ >= 0) {
+			   	last_[backgroundeq_] = bg;
 			   }
 	   	} else {
+	   		int idx = 0; // follow series order with background gaps
 	   		for (int i = 0; i < ROIs_; i++) {
-	   			processor.setRoi(roi_[i]);
-	   			v = processor.getStats().mean;
-	   			if (ratio_) {
-	   				// Compute ratio, assign to base channel
-	   				channel = 0;
-	   				v = last_[i] / (v + 0.000001); //Check!
+	   			if (!roi_[i].isCursor()) {
+	   				processor.setRoi(roi_[i]);
+	   				v = processor.getStats().mean - bg;
+	   				if (ratio_) {
+	   					// Compute ratio, assign to base channel
+	   					channel = 0;
+	   					v = last_[i] / (v + 0.000001); //Check!
+	   				}
+	   				data_[channel + idx * plots_].add(elapsedTimeMs, v, (idx < ROIs_ - 1)?false:true);
+	   				idx++; // Background ROIs do not have data series, just one at the end
 	   			}
-	   			data_[channel + i * plots_].add(elapsedTimeMs, v, (i < ROIs_ - 1)?false:true);
 	   		}
+			   if (backgroundeq_ >= 0) {
+   				if (ratio_) {
+   					bg = last_[backgroundeq_] / (bg + 0.000001); //Check!
+   				}
+   				data_[channel + idx * plots_].add(elapsedTimeMs, bg, true);
+			   }
 	   	}
       }
       imagesReceived_++;
@@ -290,7 +344,7 @@ public class RTIntensitiesFrame extends JFrame {
     * @param yLocation Window Location on the screen (y)
     */
    public static void plotData(String title, XYSeriesCollection dataset, String xTitle,
-                               String yTitle, int plots, int xLocation, int yLocation) {
+                               String yTitle, int plots, int bg, int xLocation, int yLocation) {
       // JFreeChart code
       JFreeChart chart = ChartFactory.createScatterPlot(title, // Title
               xTitle, // x-axis Label
@@ -303,6 +357,10 @@ public class RTIntensitiesFrame extends JFrame {
       );
       XYPlot plot = (XYPlot) chart.getPlot();
       int series = dataset.getSeriesCount();
+      // Specific background series treatment
+      if (bg >=0) {
+      	series-= plots;
+      }
       plot.setBackgroundPaint(Color.white);
       plot.setRangeGridlinePaint(Color.lightGray);
       XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
@@ -343,6 +401,24 @@ public class RTIntensitiesFrame extends JFrame {
             );
          }
       }
+      if (bg >= 0) {
+      	renderer.setSeriesPaint(series, Color.lightGray);
+      	renderer.setSeriesShape(series, circle, false);
+      	renderer.setSeriesLinesVisible(series, true);
+      	renderer.setSeriesStroke(
+            series, new BasicStroke(
+                2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND,
+                1.0f, new float[] {1.0f, 6.0f}, 0.0f));
+	         if (plots > 1) {
+	         	renderer.setSeriesPaint(series + 1, Color.lightGray);
+	         	renderer.setSeriesShape(series + 1, square, false);
+	         	renderer.setSeriesLinesVisible(series + 1, true);
+	         	renderer.setSeriesStroke(
+	         		series + 1, new BasicStroke(
+	         			2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND,
+	         			1.0f, new float[] {1.0f, 6.0f}, 0.0f));
+	         }
+      }
 
       ChartFrame graphFrame = new ChartFrame(title, chart);
       graphFrame.getChartPanel().setMouseWheelEnabled(true);
@@ -353,5 +429,4 @@ public class RTIntensitiesFrame extends JFrame {
       WindowPositioning.cascade(graphFrame, RTIntensities.class);
       graphFrame.setVisible(true);
    }
-
 }
