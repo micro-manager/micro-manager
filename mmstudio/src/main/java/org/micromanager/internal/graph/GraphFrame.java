@@ -120,13 +120,13 @@ public final class GraphFrame extends MMFrame {
    public GraphFrame(final Runnable refreshAction) {
       super("graph frame");
      
-      setFont(new Font("Arial", Font.PLAIN, 10));
+      //setFont(new Font("Arial", Font.PLAIN, 10));
       
-      setTitle("Graph");
+      setTitleText("Graph");
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
       loadAndRestorePosition(100, 100, 542, 298);
-      setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+      //setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
       panel_ = new GraphPanel();
       panel_.setBorder(new LineBorder(Color.black, 1, false));

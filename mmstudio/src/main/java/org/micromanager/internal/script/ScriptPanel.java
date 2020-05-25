@@ -46,6 +46,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -270,7 +271,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
                         readFileToTextArea(file, scriptArea_);
                         scriptFile_ = file;
                         scriptPaneSaved_ = true;
-                        setTitle(file.getName());
+                        setTitleText(file.getName());
                         model_.setLastMod(table_.getSelectedRow(), 0, file.lastModified());
                      } catch (IOException | MMScriptException ee) {
                         ReportingUtils.logError(ee);
@@ -319,16 +320,16 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
             ReportingUtils.logError("Failed to find Script Panel Beanshell startup script");
          }
       } catch (IOException e) {
-         ReportingUtils.showError("Failed to read Script Panel BeanShell startup script", this);
+         ReportingUtils.showError("Failed to read Script Panel BeanShell startup script");
       }
 
       if (tmpFile != null) {
          try {
             beanshellREPLint_.source(tmpFile.getAbsolutePath());
          } catch (FileNotFoundException e) {
-            ReportingUtils.showError(e, this);
+            ReportingUtils.showError(e);
          } catch (IOException | EvalError e) {
-            ReportingUtils.showError(e, this);
+            ReportingUtils.showError(e);
          }
       }
 
@@ -368,9 +369,9 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       createBeanshellREPL();
       
       // Needed when Cancel button is pressed upon save file warning
-      setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+      //setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
-      addWindowListener(new WindowAdapter() {
+      /*addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent arg0) {
             if (!promptToSave(-1))
@@ -382,17 +383,17 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
             saveScriptsToPrefs();
             setVisible(false);
          }
-      });
+      });*/
 
       setVisible(false);
 
       interp_ = new BeanshellEngine(this);
       interp_.setInterpreter(beanshellREPLint_);
       
-      setTitle("Script Panel");
-      setIconImage(Toolkit.getDefaultToolkit().getImage(
+      setTitleText("Script Panel");
+      setTitleIcon(new ImageIcon(Toolkit.getDefaultToolkit().getImage(
                MMStudio.class.getResource( 
-                       "/org/micromanager/icons/microscope.gif")));
+                       "/org/micromanager/icons/microscope.gif"))));
 
       int buttonHeight = 15;
       Dimension buttonSize = new Dimension(80, buttonHeight);
@@ -631,7 +632,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
          try {
             ij.plugin.BrowserLauncher.openURL("https://micro-manager.org/wiki/Version_2.0_Users_Guide#Script_Panel");
          } catch (IOException e1) {
-            ReportingUtils.showError(e1, scriptPanelFrame);
+            ReportingUtils.showError(e1);
          }
       });
       helpButton.setText("Help");
@@ -782,7 +783,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
 
       SearchResult found = SearchEngine.find(scriptArea_, context);
       if (!found.wasFound()) {
-         studio_.logs().showMessage("\"" + text + "\" was not found", this);
+         studio_.logs().showMessage("\"" + text + "\" was not found");
       }
       
    }
@@ -800,7 +801,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
          message = "Save changes to " + scriptFile_.getName() + "?";
       else
          message = "Save script?";
-      int result = JOptionPane.showConfirmDialog(this,
+      int result = JOptionPane.showConfirmDialog(MMStudio.getFrame(),
             message,
             APP_NAME, JOptionPane.YES_NO_OPTION,
             JOptionPane.INFORMATION_MESSAGE);
@@ -835,7 +836,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
          if (!promptToSave(-1))
             return;
 
-         File curFile = FileDialogs.openFile(this, "Select a Beanshell script", BSH_FILE);
+         File curFile = FileDialogs.openFile(MMStudio.getFrame(), "Select a Beanshell script", BSH_FILE);
 
          if (curFile != null) {
                studio_.profile().getSettings(ScriptPanel.class).putString(
@@ -866,7 +867,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       model_.fireTableDataChanged();
       scriptArea_.setText("");
       scriptPaneSaved_ = true;
-      this.setTitle("");
+      this.setTitleText("");
       scriptFile_ = null;
    }
 
@@ -885,7 +886,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
             row = scriptTable_.getSelectedRow();
          boolean modified = (scriptFile_.lastModified() != model_.getLastMod(row, 0));
          if (modified) {
-            int result = JOptionPane.showConfirmDialog(this,
+            int result = JOptionPane.showConfirmDialog(MMStudio.getFrame(),
                   "Script was changed on disk.  Continue saving anyways?",
                   APP_NAME, JOptionPane.YES_NO_OPTION,
                   JOptionPane.INFORMATION_MESSAGE);
@@ -907,7 +908,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
          model_.setLastMod(cellAddress[0], 0, scriptFile_.lastModified());
          showMessage("Saved file: " + scriptFile_.getName());
       } catch (IOException ioe){
-         ReportingUtils.showError(ioe, this);
+         ReportingUtils.showError(ioe);
       }
    }
 
@@ -916,7 +917,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
     */
    private void saveScriptAs () 
    {
-      File saveFile = FileDialogs.save(this, "Save beanshell script", BSH_FILE);
+      File saveFile = FileDialogs.save(MMStudio.getFrame(), "Save beanshell script", BSH_FILE);
       if (saveFile != null) {
          try {
             // Add .bsh extension if file did not have an extension itself
@@ -931,9 +932,9 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
             scriptFile_ = saveFile;
             settings_.putString(SCRIPT_FILE, saveFile.getAbsolutePath());
             scriptPaneSaved_ = true;
-            this.setTitle(saveFile.getName());
+            this.setTitleText(saveFile.getName());
          } catch (IOException ioe){
-            ReportingUtils.showError(ioe, this);
+            ReportingUtils.showError(ioe);
          }
       }
    }
@@ -958,7 +959,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       if (curFile != null) {
          boolean modified = (curFile.lastModified() != model_.getLastMod(scriptTable_.getSelectedRow(), 0));
          if (modified) {
-            int result = JOptionPane.showConfirmDialog(this,
+            int result = JOptionPane.showConfirmDialog(MMStudio.getFrame(),
                   "Script was changed on disk.  Re-load from disk?",
                   APP_NAME, JOptionPane.YES_NO_CANCEL_OPTION,
                   JOptionPane.INFORMATION_MESSAGE);
@@ -1066,7 +1067,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       scriptArea_.setText("");
       scriptPaneSaved_ = true;
       scriptFile_ = null;
-      this.setTitle("");
+      this.setTitleText("");
       scriptArea_.requestFocusInWindow();
    }
 
@@ -1078,7 +1079,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       if (!promptToSave(-1))
          return;
 
-      File curFile = FileDialogs.openFile(this, "Choose Beanshell script", BSH_FILE);
+      File curFile = FileDialogs.openFile(MMStudio.getFrame(), "Choose Beanshell script", BSH_FILE);
 
       if (curFile != null) {
          try {
@@ -1089,7 +1090,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
             readFileToTextArea(curFile, scriptArea_);
             scriptFile_ = curFile;
             scriptPaneSaved_ = true;
-            this.setTitle(curFile.getName());
+            this.setTitleText(curFile.getName());
          } catch (IOException | MMScriptException e) {
             handleException (e);
          } finally {
@@ -1146,7 +1147,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
          return;
       savePosition();
       saveScriptsToPrefs();
-      dispose();
+      //dispose();
    }
 
    /**
@@ -1154,7 +1155,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
     * @param e
     */
    public void handleException (Exception e) {
-      ReportingUtils.showError(e, this);
+      ReportingUtils.showError(e);
    }
 
    /**
@@ -1202,14 +1203,14 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
          try {
             beanshellREPLint_.eval("setAccessibility(true);");
          } catch (EvalError e1) {
-            ReportingUtils.showError(e1, this);
+            ReportingUtils.showError(e1);
          }
       }
       try {
          beanshellREPLint_.eval("bsh.console.text.setText(\"\");"
                + "setAccessibility("+originalAccessibility+");");
       } catch (EvalError e) {
-           ReportingUtils.showError(e, this);
+           ReportingUtils.showError(e);
       }
    }
 
@@ -1274,11 +1275,11 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       setVisible(false);
    }
    
-   @Override
+   /*@Override
    public void dispose() {
       finishUp();
       super.dispose();
-   }
+   }*/
 
    private String getExtension(File f) {
       String ext = null;

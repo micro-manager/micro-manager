@@ -114,7 +114,7 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
       }
       if (display == null) {
          ReportingUtils.showError("Preview window did not open. Is the exposure time very long?");
-         dialogFrame_.dispose();
+         //dialogFrame_.dispose();
       } else if (display instanceof DisplayController) {
          dc_ = (DisplayController) display;
          dc_.registerForEvents(this);
@@ -124,7 +124,7 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
             } catch (InterruptedException ie) {
 
             }
-            dialogFrame_.dispose();
+            //dialogFrame_.dispose();
          }
       }
    }
@@ -171,7 +171,7 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
                            dialogFrame_.setOKButtonVisible(true);
                         }
                      } else {
-                        dialogFrame_.dispose();
+                        //dialogFrame_.dispose();
                         dialog_.calibrationDone();
                         return;
                      }
@@ -239,13 +239,13 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
       
       public DialogFrame(Object caller) {
          caller_ = caller;
-         super.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+         /*super.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
          super.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent we) {
                dispose();
             }
-         });
+         });*/
          super.setLayout(new MigLayout());
          final String label1Text = "<html>This method creates an affine transform based on"
                  + " a <br>pixelSize of "
@@ -273,11 +273,11 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
          cancelButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-               dispose();
+               //dispose();
             }
          });
          super.add(cancelButton, "tag cancel, wrap");
-         super.pack();
+         //super.pack();
          super.loadAndRestorePosition(200, 200);
          super.setVisible(true);
       }
@@ -294,7 +294,7 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
          explanationLabel_.setText(newText);
       }
 
-      @Override
+      /*@Override
       public void dispose() {
          super.dispose();
          if (dc_ != null) {
@@ -305,7 +305,7 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
          }
          //running_.set(false);
          dialog_.calibrationFailed(true);
-      }
+      }*/
       
       public void setOKButtonVisible(boolean visible) {
          okButton_.setVisible(visible);

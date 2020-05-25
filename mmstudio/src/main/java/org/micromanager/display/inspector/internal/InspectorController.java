@@ -75,7 +75,7 @@ public final class InspectorController
    private final DataViewerCollection viewerCollection_;
    private final Studio studio_;
 
-   private JFrame frame_;
+   private MMFrame frame_;
    private JPanel headerPanel_;
    private JScrollPane scrollPane_;
    private VerticalMultiSplitPane sectionsPane_;
@@ -141,7 +141,7 @@ public final class InspectorController
 
    private void makeUI() {
       frame_ = new MMFrame(); // TODO
-      frame_.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+      /*frame_.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
       frame_.addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent w) {
@@ -149,7 +149,7 @@ public final class InspectorController
          }
       });
       frame_.setAlwaysOnTop(false); // TODO
-      frame_.getRootPane().putClientProperty("Window.style", "small");
+      frame_.getRootPane().putClientProperty("Window.style", "small");*/
       frame_.setLayout(new MigLayout(
             new LC().fill().insets("0").gridGap("0", "0")));
 
@@ -191,11 +191,11 @@ public final class InspectorController
       frame_.add(headerPanel_, new CC().growX().pushX().wrap());
       frame_.add(scrollPane_, new CC().grow().push().wrap());
 
-      frame_.pack();
+      //frame_.pack();
 
       // The frame's minimum size will need to be updated when there are panels
       // inserted, but for now the packed size is the minimum.
-      frame_.setMinimumSize(frame_.getPreferredSize());
+      //frame_.setMinimumSize(frame_.getPreferredSize());
    }
 
    @Override
@@ -205,7 +205,7 @@ public final class InspectorController
       if (frame_ != null) {
          detachFromDataViewer();
          frame_.setVisible(false);
-         frame_.dispose();
+         //frame_.dispose();
          frame_ = null;
       }
       eventBus_.post(InspectorDidCloseEvent.create(this));
@@ -339,14 +339,14 @@ public final class InspectorController
 
       GraphicsConfiguration config = GUIUtils.getGraphicsConfigurationContaining(1, 1);
       // TODO Set initial (factory default) position of frame
-      WindowPositioning.setUpBoundsMemory(frame_, InspectorController.class, null);
+      //WindowPositioning.setUpBoundsMemory(frame_, InspectorController.class, null);
       // TODO Attach MM menus to frame
 
-      frame_.setMinimumSize(new Dimension(frame_.getPreferredSize().width + 16,
+      /*frame_.setMinimumSize(new Dimension(frame_.getPreferredSize().width + 16,
             frame_.getMinimumSize().height));
       frame_.setSize(
             Math.max(frame_.getWidth(), frame_.getMinimumSize().width),
-            frame_.getHeight());
+            frame_.getHeight());*/
    }
 
    void inspectorSectionWillChangeHeight(InspectorSectionController section) {
@@ -468,14 +468,14 @@ public final class InspectorController
          return;
       }
       if (viewer != viewer_) {
-         frame_.setTitle(String.format("Inspect \"%s\"", viewer.getName()));
+         frame_.setTitleText(String.format("Inspect \"%s\"", viewer.getName()));
          showPanelsForDataViewer(viewer);
          viewer_ = viewer;
       }
    }
 
    private void detachFromDataViewer() {
-      frame_.setTitle(String.format("Inspector: No Image"));
+      frame_.setTitleText(String.format("Inspector: No Image"));
       showPanelsForDataViewer(null);
    }
 

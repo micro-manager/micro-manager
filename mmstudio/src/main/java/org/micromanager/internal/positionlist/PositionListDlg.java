@@ -132,10 +132,10 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
       bus_ = new EventBus(EventBusExceptionLogger.getInstance());
       bus_.register(this);
 
-      setTitle("Stage Position List");
+      setTitleText("Stage Position List");
       setLayout(new MigLayout("flowy, filly, insets 8", "[grow][]", 
               "[top]"));
-      setMinimumSize(new Dimension(275, 365));
+      //setMinimumSize(new Dimension(275, 365));
       super.loadAndRestorePosition(100, 100, 362, 595);
 
       arialSmallFont_ = new Font("Arial", Font.PLAIN, 10);
@@ -405,7 +405,7 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
       closeButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            dispose();
+            //dispose();
          }
       });
       closeButton.setIcon(new ImageIcon(MMStudio.class.getResource(
@@ -473,7 +473,7 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
    }
 
    protected boolean savePositionListAs() {
-      File f = FileDialogs.save(this, "Save the position list", POSITION_LIST_FILE);
+      File f = FileDialogs.save(MMStudio.getFrame(), "Save the position list", POSITION_LIST_FILE);
       if (f != null) {
          curFile_ = f;
          
@@ -500,7 +500,7 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
    }
 
    protected void loadPositionList() {
-      File f = FileDialogs.openFile(this, "Load a position list", POSITION_LIST_FILE);
+      File f = FileDialogs.openFile(MMStudio.getFrame(), "Load a position list", POSITION_LIST_FILE);
       if (f != null) {
          curFile_ = f;
          try {
@@ -838,11 +838,11 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
     */
    private void calibrate() {
 
-      JOptionPane.showMessageDialog(this, "ALERT! Please REMOVE objectives! It may damage lens!", 
+      JOptionPane.showMessageDialog(MMStudio.getFrame(), "ALERT! Please REMOVE objectives! It may damage lens!", 
             "Calibrate the XY stage", JOptionPane.WARNING_MESSAGE);
 
       Object[] options = { "Yes", "No"};
-      if (JOptionPane.YES_OPTION != JOptionPane.showOptionDialog(this, "Really calibrate your XY stage?", "Are you sure?", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[1]))
+      if (JOptionPane.YES_OPTION != JOptionPane.showOptionDialog(MMStudio.getFrame(), "Really calibrate your XY stage?", "Are you sure?", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[1]))
          return ;
 
       // calibrate xy-axis stages
@@ -896,7 +896,7 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
 
             // popup a dialog that says stop the calibration
             Object[] options = { "Stop" };
-            int option = JOptionPane.showOptionDialog(d, "Stop calibration?", "Calibration", 
+            int option = JOptionPane.showOptionDialog(MMStudio.getFrame(), "Stop calibration?", "Calibration", 
                   JOptionPane.CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
                   null, options, options[0]);
 
@@ -918,7 +918,7 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
                }
 
                Object[] options2 = { "Yes", "No" };
-               option = JOptionPane.showOptionDialog(d, "RESUME calibration?", "Calibration", 
+               option = JOptionPane.showOptionDialog(MMStudio.getFrame(), "RESUME calibration?", "Calibration", 
                      JOptionPane.OK_OPTION, JOptionPane.QUESTION_MESSAGE,
                      null, options2, options2[0]);
 
@@ -1076,7 +1076,7 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
       }     
       @Override
       public void run() {
-         JOptionPane.showMessageDialog(d, "Going back to the original position!");              
+         JOptionPane.showMessageDialog(MMStudio.getFrame(), "Going back to the original position!");              
       }
    } // End BackThread class
 

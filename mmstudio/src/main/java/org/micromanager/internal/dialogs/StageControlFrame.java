@@ -321,7 +321,7 @@ public final class StageControlFrame extends MMFrame {
          plusButtons_[MAX_NUM_Z_PANELS-1].setEnabled(false);
       }
 
-      this.addMouseListener(new MouseAdapter() {
+      /*this.addMouseListener(new MouseAdapter() {
          @Override
          public void mouseExited(MouseEvent e) {
             for (int i = 0; i < X_MOVEMENTS.length && i < Y_MOVEMENTS.length; i++) {
@@ -334,11 +334,11 @@ public final class StageControlFrame extends MMFrame {
                }
             }
          }
-      });
+      });*/
       
       updateStagePositions();  // make sure that positions are correct
       refreshTimer(); // start polling if enabled
-      pack();  // re-layout the frame depending on what is visible now
+      //pack();  // re-layout the frame depending on what is visible now
    }
 
    /**
@@ -346,9 +346,9 @@ public final class StageControlFrame extends MMFrame {
     *    them to JPanel, but they may be turned visible/invisible during operation.
     */
    private void initComponents() {
-      setTitle("Stage Control");
-      setLocationByPlatform(true);
-      setResizable(false);
+      setTitleText("Stage Control");
+      //setLocationByPlatform(true);
+      //setResizable(false);
       setLayout(new MigLayout("fill, insets 5, gap 2"));
 
       xyPanel_ = createXYPanel();
@@ -368,11 +368,9 @@ public final class StageControlFrame extends MMFrame {
       errorPanel_ = createErrorPanel();
       add(errorPanel_, "grow, hidemode 3");
       
-      pack();
    }
 
    private JPanel createXYPanel() {
-      final JFrame theWindow = this;
       JPanel result = new JPanel(new MigLayout("insets 0, gap 0"));
       result.add(new JLabel("XY Stage", JLabel.CENTER),
             "span, alignx center, wrap");
@@ -438,7 +436,7 @@ public final class StageControlFrame extends MMFrame {
                setRelativeXYStagePosition(dx * increment, dy * increment);
             }
             catch (ParseException ex) {
-               JOptionPane.showMessageDialog(theWindow, "XY Step size is not a number");
+               JOptionPane.showMessageDialog(MMStudio.getFrame(), "XY Step size is not a number");
             }
          });
          // Add the button to the panel.
@@ -514,7 +512,6 @@ public final class StageControlFrame extends MMFrame {
     * between the chevrons and the step size controls.
     */
    private JPanel createZPanel(final int idx) {
-      final JFrame theWindow = this;
       JPanel result = new JPanel(new MigLayout("insets 0, gap 0, flowy"));
       // result.add(new JLabel("Z Stage", JLabel.CENTER), "growx, alignx center");
       zDriveSelect_[idx] = new JComboBox<>();
@@ -575,7 +572,7 @@ public final class StageControlFrame extends MMFrame {
                stepSize = NumberUtils.displayStringToDouble(text.getText());
             }
             catch (ParseException ex) {
-               JOptionPane.showMessageDialog(theWindow, "Z-step value is not a number");
+               JOptionPane.showMessageDialog(MMStudio.getFrame(), "Z-step value is not a number");
                return;
             }
             setRelativeStagePosition(dz * stepSize, idx);
@@ -800,7 +797,7 @@ public final class StageControlFrame extends MMFrame {
    }
 
    private boolean confirmLargeMovementSetting(double movementUm) {
-      int response = JOptionPane.showConfirmDialog(this,
+      int response = JOptionPane.showConfirmDialog(MMStudio.getFrame(),
               String.format(NumberUtils.doubleToDisplayString(movementUm, 0) +
                       " microns could be dangerously large.  Are you sure you want to set this?",
               "Large movement requested",
@@ -834,22 +831,8 @@ public final class StageControlFrame extends MMFrame {
    @Subscribe
    public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
       if (!event.getIsCancelled()) {
-         this.dispose();
+         //this.dispose();
       }
-   }
-   
-   @Override
-   public void dispose() {
-      for (int i = 0; i < 3; i++) {
-         try {
-            settings_.putDouble(X_MOVEMENTS[i],
-                  NumberUtils.displayStringToDouble(xStepTexts_[i].getText()));
-         } catch (ParseException pex) {
-            // since we are closing, no need to warn the user
-         }
-      }
-      stopTimer();
-      super.dispose();
    }
 
 }

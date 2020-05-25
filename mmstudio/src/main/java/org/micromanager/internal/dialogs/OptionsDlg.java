@@ -222,7 +222,7 @@ public final class OptionsDlg extends MMDialog {
       closeOnExitCheckBox.addActionListener((ActionEvent arg0) -> {
          boolean shouldClose = closeOnExitCheckBox.isSelected();
          setShouldCloseOnExit(mmStudio_, shouldClose);
-         MMStudio.getFrame().setExitStrategy(shouldClose);
+         //MMStudio.getFrame().setExitStrategy(shouldClose);
       });
 
       final JCheckBox metadataFileWithMultipageTiffCheckBox = new JCheckBox();

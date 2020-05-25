@@ -393,13 +393,13 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
       public DialogFrame(Object caller) {
          caller_ = caller;
          explanationLabel_ = new JLabel();
-         super.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+         /*super.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
          super.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent we) {
                dispose();
             }
-         });
+         });*/
          super.setLayout(new MigLayout());
          final String label1Text = "<html>This method creates an affine transform based on"
                  + " a <br>pixelSize of "
@@ -426,11 +426,11 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
          cancelButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-               dispose();
+               //dispose();
             }
          });
          super.add(cancelButton, "tag cancel, wrap");
-         super.pack();
+         //super.pack();
          super.loadAndRestorePosition(200, 200);
          super.setVisible(true);
       }
@@ -445,19 +445,6 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
              });
          }
          explanationLabel_.setText(newText);
-      }
-      
-      @Override
-      public void dispose() {
-         super.dispose();
-         if (dc_ != null) {
-            dc_.unregisterForEvents(caller_);
-         }
-         synchronized(CalibrationThread.class) {
-            CalibrationThread.class.notifyAll();
-         }
-         //running_.set(false);
-         dialog_.calibrationFailed(true);
       }
       
       public void setOKButtonVisible(boolean visible) {

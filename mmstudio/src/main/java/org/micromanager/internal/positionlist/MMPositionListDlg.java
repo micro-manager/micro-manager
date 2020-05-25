@@ -38,12 +38,12 @@ public final class MMPositionListDlg extends PositionListDlg {
         super(studio, posList);
         acd_ = acd;
         
-        addWindowListener(new WindowAdapter() {
+        /*addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent arg0) {
                saveDims();
             }
-        });
+        });*/
         
     }
     
@@ -67,7 +67,7 @@ public final class MMPositionListDlg extends PositionListDlg {
    public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
       if (!event.getIsCancelled()) {
          saveDims();
-         dispose();
+         //dispose();
       }
    }   
 }

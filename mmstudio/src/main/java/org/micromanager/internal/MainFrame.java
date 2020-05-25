@@ -139,40 +139,36 @@ public final class MainFrame extends MMFrame {
       mmStudio_ = mmStudio;
       core_ = core;
 
-      super.setTitle(String.format("%s %s", MICRO_MANAGER_TITLE,
+      super.setTitleText(String.format("%s %s", MICRO_MANAGER_TITLE,
                MMVersion.VERSION_STRING));
 
-      JPanel contents = new JPanel();
+      JPanel contents = (JPanel) this.getContentPane();
       // Minimize insets.
       contents.setLayout(new MigLayout("insets 1, gap 0, fill"));
-      super.setContentPane(contents);
 
       contents.add(createComponents(), "grow");
 
-      super.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+      //super.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
       setupWindowHandlers();
 
       // Add our own keyboard manager that handles Micro-Manager shortcuts
       MMKeyDispatcher mmKD = new MMKeyDispatcher();
       KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(mmKD);
-      DropTarget dropTarget = new DropTarget(this, new DragDropUtil(mmStudio_));
 
       setExitStrategy(OptionsDlg.getShouldCloseOnExit(mmStudio_));
-
-      super.setJMenuBar(mmStudio.getMMMenubar());
 
       setConfigText("");
       // Set minimum size so we can't resize smaller and hide some of our
       // contents. Our insets are only available after the first call to
       // pack().
-      super.pack();
-      super.setMinimumSize(super.getSize());
+      //super.pack();
+      //super.setMinimumSize(super.getSize());
       resetPosition();
       mmStudio_.events().registerForEvents(this);
    }
 
    private void setupWindowHandlers() {
-      addWindowListener(new WindowAdapter() {
+      /*addWindowListener(new WindowAdapter() {
          // HACK: on OSX, some kind of system bug can disable the entire
          // menu bar at times (it has something to do with modal dialogs and
          // possibly with errors resulting from the code that handles their
@@ -192,7 +188,7 @@ public final class MainFrame extends MMFrame {
          public void windowClosing(WindowEvent event) {
             mmStudio_.closeSequence(false);
          }
-      });
+      });*/
    }
 
    public void resetPosition() {
@@ -574,12 +570,12 @@ public final class MainFrame extends MMFrame {
    }
 
    public final void setExitStrategy(boolean closeOnExit) {
-      if (closeOnExit) {
+      /*if (closeOnExit) {
          setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
       }
       else {
          setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-      }
+      }*/
    }
 
    protected void setConfigSaveButtonStatus(boolean changed) {

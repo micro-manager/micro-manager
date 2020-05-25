@@ -80,7 +80,7 @@ import org.micromanager.internal.navigation.UiMovesStageManager;
  *
  * @author Chris Weisiger and Mark A. Tsuchida
  */
-public final class SnapLiveManager extends DataViewerListener 
+public final class DefaultSnapLiveManager extends DataViewerListener 
         implements org.micromanager.SnapLiveManager {
    private static final String TITLE = "Preview";
 
@@ -156,7 +156,7 @@ public final class SnapLiveManager extends DataViewerListener
          
    }
 
-   public SnapLiveManager(MMStudio mmStudio, CMMCore core) {
+   public DefaultSnapLiveManager(MMStudio mmStudio, CMMCore core) {
       mmStudio_ = mmStudio;
       core_ = core;
       uiMovesStageManager_ = mmStudio_.getUiMovesStageManager();
@@ -278,7 +278,7 @@ public final class SnapLiveManager extends DataViewerListener
             public void run() {
                // We are started from within the monitor. Wait until that
                // monitor is released before starting.
-               synchronized (SnapLiveManager.this) {
+               synchronized (DefaultSnapLiveManager.this) {
                   if (scheduledGrab_ == null ||
                         liveModeStartCount_ != liveModeCount) {
                      return;
@@ -301,7 +301,7 @@ public final class SnapLiveManager extends DataViewerListener
                }
 
                long delayMs;
-               synchronized (SnapLiveManager.this) {
+               synchronized (DefaultSnapLiveManager.this) {
                   if (scheduledGrab_ == null ||
                         liveModeStartCount_ != liveModeCount) {
                      return;
@@ -417,7 +417,7 @@ public final class SnapLiveManager extends DataViewerListener
 
               try {
                   SwingUtilities.invokeAndWait(() -> {
-                     synchronized (SnapLiveManager.this) {
+                     synchronized (DefaultSnapLiveManager.this) {
                         if (scheduledGrab_ == null
                                 || liveModeStartCount_ != liveModeCount) {
                            throw new CancellationException();

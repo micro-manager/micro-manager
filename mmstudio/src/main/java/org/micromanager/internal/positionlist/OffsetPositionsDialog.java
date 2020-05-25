@@ -32,6 +32,7 @@ import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -60,8 +61,8 @@ class OffsetPositionsDialog extends MMDialog {
       axisInputs_ = new ArrayList<JTextField>();
 
       // center dialog on the parent dialog
-      int parentCenterX = (int) (parent.getX() + 0.5 * parent.getWidth());
-      int parentCenterY = (int) (parent.getY() + 0.5 * parent.getHeight());
+      int parentCenterX = (int) (MMStudio.getFrame().getX() + 0.5 * MMStudio.getFrame().getWidth());
+      int parentCenterY = (int) (MMStudio.getFrame().getY() + 0.5 * MMStudio.getFrame().getHeight());
       
       this.loadAndRestorePosition(parentCenterX - 160,parentCenterY - 150,
               320, 300);

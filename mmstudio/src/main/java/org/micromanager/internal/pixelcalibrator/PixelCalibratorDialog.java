@@ -37,6 +37,7 @@ import javax.swing.SwingUtilities;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.events.ShutdownCommencingEvent;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.dialogs.PixelSizeProvider;
 import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.GUIUtils;
@@ -95,17 +96,17 @@ public class PixelCalibratorDialog extends MMFrame {
       safeTravelRadiusComboBox_ = new JComboBox();
       methodComboBox_ = new JComboBox();
 
-      setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-      setTitle("Pixel Calibrator");
-      setResizable(false);
-      addWindowListener(new java.awt.event.WindowAdapter() {
+      //setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+      setTitleText("Pixel Calibrator");
+      //setResizable(false);
+      /*addWindowListener(new java.awt.event.WindowAdapter() {
          @Override
          public void windowClosing(java.awt.event.WindowEvent evt) {
             stopCalibration();
             setVisible(false);
             dispose();
          }
-      });
+      });*/
 
       explanationLabel_.setText("<html>This plugin measures the size " +
               "of the current camera's pixels at the sample plane.<br><br>" +
@@ -167,7 +168,7 @@ public class PixelCalibratorDialog extends MMFrame {
       super.add(stopButton_);
       super.add(calibrationProgressBar_, "wrap");
       
-      super.pack();
+      //super.pack();
 
    }
 
@@ -196,21 +197,21 @@ public class PixelCalibratorDialog extends MMFrame {
    }
 
 
-   @Override
+   /*@Override
    public void dispose() {
       stopCalibration();
       if (studio_ != null) {
          studio_.events().unregisterForEvents(this);
       }
       super.dispose();
-   }
+   }*/
    
    /**
     * @param event indicating that shutdown is happening
     */
    @Subscribe
    public void onShutdownCommencing(ShutdownCommencingEvent event) {
-      this.dispose();
+      //this.dispose();
    }
 
    
@@ -256,7 +257,7 @@ public class PixelCalibratorDialog extends MMFrame {
       double pixelSize = AffineUtils.deducePixelSize(result);
       double[] measurements = AffineUtils.affineToMeasurements(result);
 //      xScale, yScale, rotationDeg, shear
-      int response = JOptionPane.showConfirmDialog(this,
+      int response = JOptionPane.showConfirmDialog(MMStudio.getFrame(),
             String.format("Affine transform parameters: XScale=%.4f YScale=%.4f Rotation (degrees)=%.2f Shear=%.4f\n",                     
                     measurements[0], measurements[1], 
                     measurements[2], measurements[3]) + 
@@ -274,7 +275,7 @@ public class PixelCalibratorDialog extends MMFrame {
             pixelSizeProvider_.setAffineTransform(result);
          }
       } 
-      dispose();
+      //dispose();
    }
    
    private void showFailureMessage() {

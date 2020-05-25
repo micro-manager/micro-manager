@@ -129,7 +129,7 @@ public final class AlertsWindow extends MMFrame {
       scroller.setBorder(null);
       alertsPanel_.add(new JLabel(NO_ALERTS_MSG));
       super.add(scroller, "push, grow");
-      super.pack();
+//      super.pack();
    }
 
       /**
@@ -227,7 +227,7 @@ public final class AlertsWindow extends MMFrame {
       SwingUtilities.invokeLater(new Runnable() {
          @Override
          public void run() {
-            pack();
+            //pack();
          }
       });
    }
@@ -257,7 +257,7 @@ public final class AlertsWindow extends MMFrame {
    @Subscribe
    public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
       if (!event.getIsCancelled()) {
-        dispose();
+        //dispose();
       }
    }
 }

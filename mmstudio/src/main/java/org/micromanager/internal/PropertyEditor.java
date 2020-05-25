@@ -89,7 +89,7 @@ public final class PropertyEditor extends MMFrame {
       createComponents();
       
       loadAndRestorePosition(100, 100, 550, 600);
-      setMinimumSize(new Dimension(420, 400));
+      //setMinimumSize(new Dimension(420, 400));
    }
 
    private void createTable() {
@@ -110,12 +110,12 @@ public final class PropertyEditor extends MMFrame {
    }
 
    private void createComponents() {
-      setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("/org/micromanager/icons/microscope.gif") ) );
+      setTitleIcon(new ImageIcon(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif") ) ));
 
       setLayout(new MigLayout("fill, insets 2, flowy"));
 
-      addWindowListener(new WindowAdapter() {
+      /*addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent e) {
             flags_.save(PropertyEditor.class);
@@ -126,11 +126,11 @@ public final class PropertyEditor extends MMFrame {
             data_.update(false);
             data_.fireTableStructureChanged();
         }
-      });
-      setTitle("Device Property Browser");
+      });*/
+      setTitleText("Device Property Browser");
 
       loadAndRestorePosition(100, 100, 550, 600);
-      setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+      //setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
       
       final JButton refreshButton = new JButton("Refresh",
             new ImageIcon(getClass().getResource(

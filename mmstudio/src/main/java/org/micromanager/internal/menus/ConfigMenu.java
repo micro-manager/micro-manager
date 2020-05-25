@@ -17,6 +17,7 @@ import org.micromanager.internal.MainFrame;
 import org.micromanager.internal.hcwizard.ConfigWizard;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
+import org.micromanager.internal.utils.MMMainFrame;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.profile.internal.gui.HardwareConfigurationManager;
 
@@ -159,7 +160,7 @@ public final class ConfigMenu {
 
          // run Configurator
          ConfigWizard cfg = null;
-         MainFrame frame = mmStudio_.getFrame();
+          MMMainFrame frame = mmStudio_.getFrame();
          try {
             frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             cfg = new ConfigWizard(mmStudio_, mmStudio_.getSysConfigFile());

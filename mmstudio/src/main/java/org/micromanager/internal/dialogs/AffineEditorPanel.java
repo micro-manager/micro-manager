@@ -123,7 +123,7 @@ public class AffineEditorPanel extends JPanel {
    
    public void cleanup() {
       if (pcd_ != null) {
-         pcd_.dispose();
+         //pcd_.dispose();
       }
    }
 

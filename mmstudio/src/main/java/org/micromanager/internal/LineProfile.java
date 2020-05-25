@@ -35,17 +35,17 @@ public final class LineProfile {
             updateLineProfile();
          }
       });
-      profileWin_.addWindowListener(new WindowAdapter() {
+      /*profileWin_.addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent event) {
             cleanup();
          }
-      });
-      profileWin_.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+      });*/
+      //profileWin_.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
       profileWin_.setData(lineProfileData_);
       profileWin_.setLabels("Pixel", "Intensity");
       profileWin_.setAutoScale();
-      profileWin_.setTitle("Line profile for " + display_.getName());
+      profileWin_.setTitleText("Line profile for " + display_.getName());
       profileWin_.setVisible(true);
    }
 
@@ -100,7 +100,7 @@ public final class LineProfile {
    public void cleanup() {
       display_.unregisterForEvents(this);
       if (profileWin_ != null) {
-         profileWin_.dispose();
+         //profileWin_.dispose();
       }
    }
 }

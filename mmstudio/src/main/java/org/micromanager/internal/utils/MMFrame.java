@@ -22,6 +22,8 @@
 //
 package org.micromanager.internal.utils;
 
+import bibliothek.gui.dock.common.DefaultMultipleCDockable;
+import bibliothek.gui.dock.common.action.CAction;
 import java.awt.Frame;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -37,12 +39,13 @@ import org.micromanager.propertymap.MutablePropertyMapView;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;  
 import java.util.ArrayList;
+import javax.swing.ImageIcon;
 
 /**
  * Base class for Micro-Manager frame windows.
  * Saves and restores window size and position. 
  */
-public class MMFrame extends JFrame implements WindowFocusListener {
+public class MMFrame extends DefaultMultipleCDockable {
    private static final long serialVersionUID = 1L;
    private final String profileKey_;
    private final MutablePropertyMapView settings_;
@@ -69,16 +72,16 @@ public class MMFrame extends JFrame implements WindowFocusListener {
     * constructors.
     */
    public MMFrame(String profileKeyForSavingBounds, boolean usesMMMenus) {
-      super();
+      super(null, (CAction[]) null);
       settings_ =
             MMStudio.getInstance().profile().getSettings(getClass());
       profileKey_ = profileKeyForSavingBounds;
       if (usesMMMenus) {
          setupMenus();
       }
-      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-        getClass().getResource("/org/micromanager/icons/microscope.gif")));
-      super.addWindowFocusListener(this);
+      super.setTitleIcon(new ImageIcon(Toolkit.getDefaultToolkit().getImage(
+        getClass().getResource("/org/micromanager/icons/microscope.gif"))));
+      MMStudio.getFrame().getControl().addDockable(this);
    }
 
    /**
@@ -87,34 +90,14 @@ public class MMFrame extends JFrame implements WindowFocusListener {
     */
    private void setupMenus() {
       if (JavaUtils.isMac()) {
-         setJMenuBar(MMMenuBar.createMenuBar(MMStudio.getInstance()));
+         //setJMenuBar(MMMenuBar.createMenuBar(MMStudio.getInstance()));
       }
    }
 
    public void loadPosition(int x, int y, int width, int height) {
-      PropertyMap pmap = settings_.getPropertyMap(profileKey_,
-            PropertyMaps.emptyPropertyMap());
-      Rectangle bounds = pmap.getRectangle(ProfileKey.WINDOW_BOUNDS.name(),
-            new Rectangle(x, y, width, height));
-      if (GUIUtils.getGraphicsConfigurationBestMatching(bounds) == null) {
-         bounds.x = x;
-         bounds.y = y;
-      }
-      setBounds(bounds);
-      offsetIfNecessary();
    }
 
    public void loadPosition(int x, int y) {
-      PropertyMap pmap = settings_.getPropertyMap(profileKey_,
-            PropertyMaps.emptyPropertyMap());
-      Rectangle bounds = pmap.getRectangle(ProfileKey.WINDOW_BOUNDS.name(),
-            new Rectangle(x, y, getWidth(), getHeight()));
-      if (GUIUtils.getGraphicsConfigurationBestMatching(bounds) == null) {
-         bounds.x = x;
-         bounds.y = y;
-      }
-      super.setLocation(bounds.x, bounds.y);
-      offsetIfNecessary();
    }
 
    /**
@@ -122,24 +105,6 @@ public class MMFrame extends JFrame implements WindowFocusListener {
     * MMFrame, and make certain we don't precisely overlap any of them.
     */
    private void offsetIfNecessary() {
-      Point newLoc = getLocation();
-      boolean foundOverlap;
-      do {
-         foundOverlap = false;
-         for (Frame frame : Frame.getFrames()) {
-            if (frame != this && frame.getClass() == getClass() &&
-                  frame.isVisible() && frame.getLocation().equals(newLoc)) {
-               foundOverlap = true;
-               newLoc.x += 22;
-               newLoc.y += 22;
-            }
-         }
-         if (!foundOverlap) {
-            break;
-         }
-      } while (foundOverlap);
-
-      setLocation(newLoc);
    }
 
     /**
@@ -153,13 +118,6 @@ public class MMFrame extends JFrame implements WindowFocusListener {
     * @param height - height of this dialog if preference value invalid
     */
    protected void loadAndRestorePosition(int x, int y, int width, int height) {
-      loadPosition(x, y, width, height);
-      addComponentListener(new ComponentAdapter() {
-         @Override
-         public void componentMoved(ComponentEvent e) {
-            savePosition();
-         }
-      });
    }
    
     /**
@@ -171,56 +129,8 @@ public class MMFrame extends JFrame implements WindowFocusListener {
     * @param y - y position of this dialog if preference value invalid
     */
    protected void loadAndRestorePosition(int x, int y) {
-      loadPosition(x, y);
-      addComponentListener(new ComponentAdapter() {
-         @Override
-         public void componentMoved(ComponentEvent e) {
-            savePosition();
-         }
-      });
    }
    
 
-   public void savePosition() {
-      Rectangle bounds = getBounds();
-      PropertyMap pmap = settings_.getPropertyMap(profileKey_,
-            PropertyMaps.emptyPropertyMap());
-      pmap = pmap.copyBuilder().
-            putRectangle(ProfileKey.WINDOW_BOUNDS.name(), bounds).build();
-      settings_.putPropertyMap(profileKey_, pmap);
-   }
-
-   @Override
-   public void dispose() {
-      applicationFrames.remove(this);
-      savePosition();
-      super.dispose();
-   }
-   
-   @Override
-   public void setVisible(boolean visible) {
-       //The static applicationFrames list keeps track of all the MMFrames that are visible.
-       if (visible) {
-           applicationFrames.add(this);
-       } else {
-           applicationFrames.remove(this);
-       }
-       super.setVisible(visible);
-   }
-   
-   @Override
-   public void windowGainedFocus(WindowEvent e) {
-      if (JavaUtils.isWindows()) { // On WIndows, selecting a frame does not automatically
-         // bring all other frames to the forefront, so do it here
-         if (e.getOppositeWindow() == null) { //If the last selected windows was from a different application
-            for (MMFrame frame : applicationFrames) {
-               frame.toFront(); //Move all visible MMframes to the front
-            }
-            this.toFront(); // make sure that this window ends up on top
-         }
-      }
-   }
-
-   @Override
-   public void windowLostFocus(WindowEvent e) {}
+   public void savePosition() {}
 }

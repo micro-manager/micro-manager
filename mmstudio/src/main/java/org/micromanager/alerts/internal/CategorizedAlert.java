@@ -155,12 +155,12 @@ public final class CategorizedAlert extends DefaultAlert {
       text_ = text;
 
       // HACK: for some reason if we don't do this, our viewable area is tiny.
-      parent_.pack();
+      //parent_.pack();
       SwingUtilities.invokeLater(new Runnable() {
          @Override
          public void run() {
             invalidate();
-            parent_.validate();
+            //parent_.validate();
          }
       });
       parent_.textUpdated(this);

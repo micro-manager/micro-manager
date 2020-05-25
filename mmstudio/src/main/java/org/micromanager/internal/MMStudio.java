@@ -112,6 +112,7 @@ import org.micromanager.internal.utils.HotKeys;
 import org.micromanager.internal.utils.UserProfileManager;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
+import org.micromanager.internal.utils.MMMainFrame;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.UIMonitor;
 import org.micromanager.internal.utils.WaitDialog;
@@ -155,7 +156,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private DataManager dataManager_;
    private DisplayManager displayManager_;
    private DefaultPluginManager pluginManager_;
-   private SnapLiveManager snapLiveManager_;
+   private DefaultSnapLiveManager snapLiveManager_;
    private DefaultAutofocusManager afMgr_;
    private String sysConfigFile_;
    private ShutterManager shutterManager_;
@@ -188,6 +189,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private MMMenuBar mmMenuBar_;
    // Our primary window.
    private static MainFrame frame_;
+   private static MMMainFrame mainFrame_;
    // Callback
    private CoreEventCallback coreCallback_;
    // Lock invoked while shutting down
@@ -300,7 +302,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       uiMovesStageManager_ = new UiMovesStageManager(this);
       events().registerForEvents(uiMovesStageManager_);
       
-      snapLiveManager_ = new SnapLiveManager(this, core_);
+      snapLiveManager_ = new DefaultSnapLiveManager(this, core_);
       events().registerForEvents(snapLiveManager_);
 
       shutterManager_ = new DefaultShutterManager(studio_);
@@ -316,7 +318,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       acqEngine_.setZStageDevice(core_.getFocusDevice());
 
 
-      
+        mmMenuBar_ = MMMenuBar.createMenuBar(studio_);
+      mainFrame_ = new MMMainFrame(this);
       // Load, but do not show, image pipeline panel.
       // Note: pipelineFrame is used in the dataManager, however, pipelineFrame 
       // needs the dataManager.  Let's hope for the best....
@@ -337,6 +340,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
       posList_ = new PositionList();
       acqEngine_.setPositionList(posList_);
+      
+
 
       
       // Tell Core to start logging
@@ -473,13 +478,14 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       createScriptPanel();
       
       // Now create and show the main window
-      mmMenuBar_ = MMMenuBar.createMenuBar(studio_);
+
       frame_ = new MainFrame(this, core_);
       staticInfo_ = new StaticInfo(studio_, frame_);
       events().registerForEvents(staticInfo_);
       frame_.toFront();
       frame_.setVisible(true);
-      ReportingUtils.SetContainingFrame(frame_);
+      mainFrame_.setVisible(true);
+      ReportingUtils.SetContainingFrame(mainFrame_);
       frame_.initializeConfigPad();
 
       // We wait until after showing the main window to enable hot keys
@@ -548,7 +554,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    private void handleError(String message) {
       live().setLiveMode(false);
-      JOptionPane.showMessageDialog(frame_, message);
+      JOptionPane.showMessageDialog(mainFrame_, message);
       core_.logMessage(message);
    }
 
@@ -793,13 +799,13 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
     * Returns singleton instance of MainFrame.
     * @return singleton instance of the mainFrame
     */
-   public static MainFrame getFrame() {
-      return frame_;
+   public static MMMainFrame getFrame() {
+      return mainFrame_;
    }
 
    @Override
    public JFrame getMainWindow() {
-      return frame_;
+      return mainFrame_;
    }
    
    public MMMenuBar getMMMenubar() {
@@ -807,7 +813,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    }
 
    public void promptToSaveConfigPresets() {
-      File f = FileDialogs.save(frame_,
+      File f = FileDialogs.save(mainFrame_,
             "Save the configuration file", FileDialogs.MM_CONFIG_FILE);
       if (f != null) {
          try {
@@ -880,13 +886,13 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    public void createPropertyEditor() {
       if (propertyBrowser_ != null) {
-         propertyBrowser_.dispose();
+         propertyBrowser_.setVisible(false);
       }
 
       propertyBrowser_ = new PropertyEditor(studio_);
       this.events().registerForEvents(propertyBrowser_);
       propertyBrowser_.setVisible(true);
-      propertyBrowser_.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+      //propertyBrowser_.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
    }
 
    public void createCalibrationListDlg() {
@@ -1182,14 +1188,14 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
 
       if (pipelineFrame_ != null) {
-         pipelineFrame_.dispose();
+         //pipelineFrame_.dispose();
       }
 
-      if (propertyBrowser_ != null) {
+      /*if (propertyBrowser_ != null) {
          propertyBrowser_.getToolkit().getSystemEventQueue().postEvent(
                  new WindowEvent(propertyBrowser_, WindowEvent.WINDOW_CLOSING));
          propertyBrowser_.dispose();
-      }
+      }*/
 
       if (acqControlWin_ != null) {
          acqControlWin_.close();
@@ -1278,7 +1284,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
 
       if (frame_ != null) {
-         frame_.dispose();
+         //frame_.dispose();
          frame_ = null;
       }
 
@@ -1355,7 +1361,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       waitDlg.setAlwaysOnTop(true);
       waitDlg.showDialog();
       if (frame_ != null) {
-         frame_.setEnabled(false);
+         //frame_.setEnabled(false);
       }
 
       try {
@@ -1382,7 +1388,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       } finally {
          waitDlg.closeDialog();
          if (frame_ != null) {
-            frame_.setEnabled(true);
+            //frame_.setEnabled(true);
          }
 
       }
@@ -1397,13 +1403,13 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          if (acqControlWin_ == null) {
             acqControlWin_ = new AcqControlDlg(acqEngine_, studio_);
          }
-         if (acqControlWin_.isActive()) {
-            acqControlWin_.setTopPosition();
-         }
+         //if (acqControlWin_.isActive()) {
+        //    acqControlWin_.setTopPosition();
+         //}
 
          acqControlWin_.setVisible(true);
          
-         acqControlWin_.repaint();
+         //acqControlWin_.repaint();
 
       } catch (Exception exc) {
          ReportingUtils.showError(exc,

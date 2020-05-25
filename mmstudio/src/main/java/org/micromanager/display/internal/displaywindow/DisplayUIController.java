@@ -89,6 +89,7 @@ import org.micromanager.display.internal.event.DataViewerMousePixelInfoChangedEv
 import org.micromanager.display.internal.gearmenu.GearButton;
 import org.micromanager.display.overlay.Overlay;
 import org.micromanager.events.internal.ChannelColorEvent;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.Geometry;
 import org.micromanager.internal.utils.MMFrame;
@@ -127,7 +128,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
    private final DisplayWindowControlsFactory controlsFactory_;
 
-   private JFrame frame_; // Not null iff not closed
+   private MMFrame frame_; // Not null iff not closed
    private JFrame fullScreenFrame_; // Not null iff in full-screen mode
 
    // We place all components in a JPanel, so that they can be transferred
@@ -238,7 +239,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
             controlsFactory, animationController);
       parent.registerForEvents(instance);
       studio.events().registerForEvents(instance);
-      instance.frame_.addWindowListener(instance);
+      //instance.frame_.addWindowListener(instance);
       return instance;
    }
 
@@ -255,7 +256,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       frame_ = makeFrame(false);
       contentPanel_ = buildInitialUI();
       frame_.add(contentPanel_);
-      frame_.validate();
+      //frame_.validate();
    }
 
    public void setPerformanceMonitor(PerformanceMonitor perfMon) {
@@ -263,13 +264,13 @@ public final class DisplayUIController implements Closeable, WindowListener,
    }
 
    @MustCallOnEDT
-   private JFrame makeFrame(boolean fullScreen) {
-      JFrame frame;
-      if (!fullScreen) {
+   private MMFrame makeFrame(boolean fullScreen) {
+      MMFrame frame;
+      //if (!fullScreen) {
          // TODO LATER Eliminate MMFrame
          frame = new MMFrame("image display window", false);
-         frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-         ((MMFrame) frame).loadPosition(320, 320, 480, 320);
+         //frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+         //((MMFrame) frame).loadPosition(320, 320, 480, 320);
 
          // TODO Determine initial window bounds using a CascadingWindowPositioner:
          // - (Setting canvas zoom has been handled by DisplayController (ImageJLink))
@@ -295,16 +296,16 @@ public final class DisplayUIController implements Closeable, WindowListener,
          //   area.
          // - In any case, the screen to use is the screen in which a viewer window
          //   was last found (not created).
-      }
-      else {
+      //}
+      /*else {
          frame = new JFrame();
          frame.setUndecorated(true);
          frame.setResizable(false);
          frame.setBounds(
                GUIUtils.getFullScreenBounds(frame.getGraphicsConfiguration()));
          frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
-      }
-      setTitle(frame);
+      }*/
+      //setTitle(frame);
       return frame;
    }
 
@@ -321,14 +322,14 @@ public final class DisplayUIController implements Closeable, WindowListener,
          fullScreenFrame_ = null;
       }
       if (frame_ != null) {
-         frame_.dispose();
+         //frame_.dispose();
          frame_ = null;
       }
    }
 
    @MustCallOnEDT
    public JFrame getFrame() {
-      return fullScreenFrame_ == null ? frame_ : fullScreenFrame_;
+      return MMStudio.getFrame();
    }
 
    @MustCallOnEDT
@@ -371,10 +372,10 @@ public final class DisplayUIController implements Closeable, WindowListener,
       int minHeight = topControlPanel_.getMinimumSize().height +
             MIN_CANVAS_HEIGHT +
             bottomControlPanel_.getMinimumSize().height;
-      Insets frameInsets = frame_.getInsets();
-      minWidth += frameInsets.left + frameInsets.right;
-      minHeight += frameInsets.top + frameInsets.bottom;
-      frame_.setMinimumSize(new Dimension(minWidth, minHeight));
+      //Insets frameInsets = frame_.getInsets();
+      //minWidth += frameInsets.left + frameInsets.right;
+      //minHeight += frameInsets.top + frameInsets.bottom;
+      //frame_.setMinimumSize(new Dimension(minWidth, minHeight));
 
       return contentPanel;
    }
@@ -432,10 +433,10 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
       fullScreenButton_ = new JButton();
       fullScreenButton_.setFont(GUIUtils.buttonFont);
-      fullScreenButton_.addActionListener((ActionEvent e) -> {
-         setFullScreenMode(!isFullScreenMode());
-      });
-      setFullScreenMode(isFullScreenMode()); // Sync button state
+      //fullScreenButton_.addActionListener((ActionEvent e) -> {
+      //   setFullScreenMode(!isFullScreenMode());
+      //});
+      //setFullScreenMode(isFullScreenMode()); // Sync button state
       buttonPanel.add(fullScreenButton_);
 
       zoomInButton_ = new JButton(
@@ -1156,7 +1157,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       return fullScreenFrame_ != null;
    }
 
-   @MustCallOnEDT
+   /*@MustCallOnEDT
    void setFullScreenMode(boolean fullScreen) {
       if (fullScreen) {
          if (!isFullScreenMode()) {
@@ -1177,7 +1178,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
             fullScreenFrame_.setVisible(false);
             frame_.add(contentPanel_);
             contentPanel_.invalidate();
-            frame_.validate();
+            //frame_.validate();
             frame_.setVisible(true);
             fullScreenFrame_.dispose();
             fullScreenFrame_ = null;
@@ -1188,6 +1189,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          fullScreenButton_.setToolTipText("View in full screen mode");
       }
    }
+   */
    
 
    public void updateTitle() {
@@ -1216,7 +1218,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
     * Actually sets the title to this Display
     */
    @MustCallOnEDT
-   private void setTitle(JFrame frame) {
+   private void setTitle(MMFrame frame) {
       StringBuilder sb = new StringBuilder();
       sb.append(displayController_.getName());
       isPreview_ = isPreview(displayController_.getName());
@@ -1228,7 +1230,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          sb.append(" (100%)");
       }
       // TODO: add save status, and listen for changes
-      frame.setTitle(sb.toString());
+      frame.setTitleText(sb.toString());
    }
    
    private boolean isPreview(String title) {
@@ -1250,7 +1252,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          fullScreenFrame_.validate();
       }
       else {
-         frame_.validate();
+         //frame_.validate();
       }
    }
 
@@ -1292,7 +1294,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          fullScreenFrame_.validate();
       }
       else {
-         GraphicsConfiguration gConfig = frame_.getGraphicsConfiguration();
+         /*GraphicsConfiguration gConfig = frame_.getGraphicsConfiguration();
          Rectangle screenBounds = Geometry.insettedRectangle(
                gConfig.getBounds(),
                Toolkit.getDefaultToolkit().getScreenInsets(gConfig));
@@ -1310,7 +1312,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
                new Dimension(newCanvasWidth, newCanvasHeight));
          ijBridge_.getIJImageCanvas().invalidate();
 
-         frame_.pack(); // Includes validation
+         frame_.pack(); // Includes validation*/
 
          // NS: I find the autonomous movement of the window highly annoying
          // Uncomment if you disagree and want the window to move all by itself
@@ -1922,12 +1924,12 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
    @Override
    public void windowClosing(WindowEvent e) {
-      if (e.getWindow() == frame_) {
+      /*if (e.getWindow() == frame_) {
          displayController_.requestToClose();
-      }
-      else if (e.getWindow() == fullScreenFrame_) {
-         setFullScreenMode(false);
-      }
+      }*/
+      //else if (e.getWindow() == fullScreenFrame_) {
+      //   setFullScreenMode(false);
+      //}
    }
 
    @Override
@@ -1966,10 +1968,10 @@ public final class DisplayUIController implements Closeable, WindowListener,
       }
       else {
          // Adjust window height
-         frame_.setSize(frame_.getWidth(),
-               frame_.getHeight() - oldHeight + newHeight);
+         //frame_.setSize(frame_.getWidth(),
+         //      frame_.getHeight() - oldHeight + newHeight);
          panel.setVisible(true);
-         frame_.validate();
+         //frame_.validate();
          // TODO Move frame up if bottom beyond screen bottom (which means we
          // also need to shrink window if too tall for screen)
       }

@@ -39,6 +39,7 @@
 		<dependency org="org.jfree" name="jcommon" rev="1.0.24"/>
 		<dependency org="org.jfree" name="jfreechart" rev="1.5.0"/>
 		<dependency org="org.scijava" name="scijava-common" rev="2.77.0"/>
+		<dependency org="org.dockingframes" name="docking-frames-common" rev="1.1.1"/>
 		<!-- Magellan dependencies -->
 		<!-- https://mvnrepository.com/artifact/org.zeromq/jeromq -->
 		<dependency org="org.zeromq" name="jeromq" rev="0.5.1"/>
@@ -79,7 +80,6 @@
 		<dependency org="net.clearvolume" name="clearvolume" rev="1.4.1"/>
       <!-- cl-kernel-binding from nico brings in clij-kernels, and clij version of the cleacl libraries.  Ugly, but the harsh truth if we want to use this code -->
       <dependency org="org.micromanager" name="cl-kernel-bindings" rev="0.1.1-SNAPSHOT"/>
-
 
 
 		<dependency org="org.boofcv" name="boofcv-ip" rev="0.36"/>

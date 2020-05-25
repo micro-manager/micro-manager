@@ -608,7 +608,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       closeButton.addActionListener((ActionEvent e) -> {
          saveSettings();
          saveAcqSettings();
-         AcqControlDlg.this.dispose();
+         //AcqControlDlg.this.dispose();
          mmStudio_.app().makeActive();
       });
       return closeButton;
@@ -766,26 +766,22 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
       mmStudio_ = mmStudio;
       profile_ = mmStudio_.getUserProfile();
-
-      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
-              MMStudio.class.getResource(
-            "/org/micromanager/icons/microscope.gif")));
       
-      super.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+      //super.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
       numberFormat_ = NumberFormat.getNumberInstance();
 
-      super.addWindowListener(new WindowAdapter() {
+      /*super.addWindowListener(new WindowAdapter() {
 
          @Override
          public void windowClosing(final WindowEvent e) {
             close();
          }
-      });
+      });*/
       acqEng_ = acqEng;
       acqEng.addSettingsListener(this);
 
-      super.setTitle("Multi-Dimensional Acquisition");
+      super.setTitleText("Multi-Dimensional Acquisition");
       super.setLayout(new MigLayout("fill, flowy, gap 2, insets 6",
                "[grow, fill]",
                "[][grow][][]"));
@@ -852,11 +848,11 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
       createToolTips();
 
-      super.pack();
-      Dimension size = super.getPreferredSize();
-      size.height += 10; // Compensate for inaccurate size given by Apple Java 6
-      super.setMinimumSize(size);
-      super.loadAndRestorePosition(100, 100, size.width, size.height);
+      //super.pack();
+      //Dimension size = super.getPreferredSize();
+      //size.height += 10; // Compensate for inaccurate size given by Apple Java 6
+      //super.setMinimumSize(size);
+      //super.loadAndRestorePosition(100, 100, size.width, size.height);
 
       mmStudio_.events().registerForEvents(this);
    }
@@ -956,7 +952,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
          ReportingUtils.logError(t, "in saveAcqSettings");
       }
       try {
-         dispose();
+         //dispose();
       } catch (Throwable t) {
          ReportingUtils.logError(t, "in dispose");
       }
@@ -1161,7 +1157,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    }
 
    protected void setRootDirectory() {
-      File result = FileDialogs.openDir(this,
+      File result = FileDialogs.openDir(MMStudio.getFrame(),
               "Please choose a directory root for image data",
               FileDialogs.MM_DATA_SET);
       if (result != null) {
@@ -1194,7 +1190,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    }
 
    protected void loadAcqSettingsFromFile() {
-      File f = FileDialogs.openFile(this, "Load acquisition settings", ACQ_SETTINGS_FILE);
+      File f = FileDialogs.openFile(MMStudio.getFrame(), "Load acquisition settings", ACQ_SETTINGS_FILE);
       if (f != null) {
          try {
             loadAcqSettingsFromFile(f.getAbsolutePath());
@@ -1232,7 +1228,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
    protected boolean saveAsAcqSettingsToFile() {
       saveAcqSettings();
-      File file = FileDialogs.save(this, "Save the acquisition settings file", ACQ_SETTINGS_FILE);
+      File file = FileDialogs.save(MMStudio.getFrame(), "Save the acquisition settings file", ACQ_SETTINGS_FILE);
       if (file != null) {
          try {
             SequenceSettings settings = acqEng_.getSequenceSettings();
@@ -1309,7 +1305,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
          ep.setEditable(false);
          ep.setBackground(label.getBackground());
 
-         int answer = JOptionPane.showConfirmDialog(this, ep,
+         int answer = JOptionPane.showConfirmDialog(MMStudio.getFrame(), ep,
                  "Not enough memory", JOptionPane.YES_NO_OPTION);
          return answer == JOptionPane.YES_OPTION;
       }
@@ -1318,7 +1314,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
    public Datastore runAcquisition() {
       if (acqEng_.isAcquisitionRunning()) {
-         JOptionPane.showMessageDialog(this, "Cannot start acquisition: previous acquisition still in progress.");
+         JOptionPane.showMessageDialog(MMStudio.getFrame(), "Cannot start acquisition: previous acquisition still in progress.");
          return null;
       }
 
@@ -1331,7 +1327,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
          saveAcqSettings();
          ChannelTableModel model = (ChannelTableModel) channelTable_.getModel();
          if (acqEng_.isChannelsSettingEnabled() && model.duplicateChannels()) {
-            JOptionPane.showMessageDialog(this, "Cannot start acquisition using the same channel twice");
+            JOptionPane.showMessageDialog(MMStudio.getFrame(), "Cannot start acquisition using the same channel twice");
             return null;
          }
          // Check for excessively long exposure times.
@@ -1348,7 +1344,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
             String message = String.format("I found unusually long exposure times for %s. Are you sure you want to run this acquisition?",
                   channelString);
             JCheckBox neverAgain = new JCheckBox("Do not ask me again.");
-            int response = JOptionPane.showConfirmDialog(this,
+            int response = JOptionPane.showConfirmDialog(MMStudio.getFrame(),
                   new Object[] {message, neverAgain},
                   "Confirm exposure times", JOptionPane.YES_NO_OPTION);
             setShouldCheckExposureSanity(!neverAgain.isSelected());
@@ -1366,7 +1362,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
    public Datastore runAcquisition(String acqName, String acqRoot) {
       if (acqEng_.isAcquisitionRunning()) {
-         JOptionPane.showMessageDialog(this, "Unable to start the new acquisition task: previous acquisition still in progress.");
+         JOptionPane.showMessageDialog(MMStudio.getFrame(), "Unable to start the new acquisition task: previous acquisition still in progress.");
          return null;
       }
 
@@ -1378,7 +1374,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       try {
          ChannelTableModel model = (ChannelTableModel) channelTable_.getModel();
          if (acqEng_.isChannelsSettingEnabled() && model.duplicateChannels()) {
-            JOptionPane.showMessageDialog(this, "Cannot start acquisition using the same channel twice");
+            JOptionPane.showMessageDialog(MMStudio.getFrame(), "Cannot start acquisition using the same channel twice");
             return null;
          }
          acqEng_.setDirName(acqName);

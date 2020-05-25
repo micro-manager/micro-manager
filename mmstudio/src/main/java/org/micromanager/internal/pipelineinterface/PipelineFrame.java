@@ -70,7 +70,7 @@ final public class PipelineFrame extends MMFrame
 
    public PipelineFrame(Studio studio) {
       super(TITLE);
-      setTitle(TITLE);
+      setTitleText(TITLE);
       studio_ = studio;
 
       setLayout(new MigLayout("fill, flowy, insets dialog",
@@ -172,21 +172,21 @@ final public class PipelineFrame extends MMFrame
       //
       // Overall constraints
       //
-      pack();
+      //pack();
       final Dimension contentSize = getContentPane().getPreferredSize();
       final Dimension minSize = getContentPane().getMinimumSize();
 
       // Compute the difference between the content pane's size and the
       // frame's size, so that we can constrain the frame's size.
-      final int widthDelta = getSize().width - getContentPane().getSize().width;
-      final int heightDelta = getSize().height - getContentPane().getSize().height;
+      //final int widthDelta = getSize().width - getContentPane().getSize().width;
+      //final int heightDelta = getSize().height - getContentPane().getSize().height;
 
-      final Dimension frameSize = new Dimension(contentSize.width + widthDelta,
-            contentSize.height + heightDelta);
-      final Dimension minFrameSize = new Dimension(minSize.width + widthDelta,
-            minSize.height + heightDelta);
-      setPreferredSize(frameSize);
-      setMinimumSize(minFrameSize);
+      //final Dimension frameSize = new Dimension(contentSize.width + widthDelta,
+            //contentSize.height + heightDelta);
+      //final Dimension minFrameSize = new Dimension(minSize.width + widthDelta,
+           //minSize.height + heightDelta);
+      //setPreferredSize(frameSize);
+      //setMinimumSize(minFrameSize);
       
       super.loadAndRestorePosition(200, 200);
 
@@ -410,9 +410,9 @@ final public class PipelineFrame extends MMFrame
       getTableModel().clearPipeline();
    }
 
-   @Override
+   /*@Override
    public void dispose() {
       super.dispose();
       getTableModel().cleanup();
-   }
+   }*/
 }
