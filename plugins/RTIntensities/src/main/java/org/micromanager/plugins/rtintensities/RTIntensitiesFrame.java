@@ -21,6 +21,8 @@ import com.google.common.eventbus.Subscribe;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.Color;
@@ -70,6 +72,8 @@ public class RTIntensitiesFrame extends JFrame {
    private final SimpleDateFormat dateFormat_;
    private DisplayWindow window_ = null;
    private DataProvider dataProvider_;
+   // Only one chart for the time being
+   private ChartFrame graphFrame_ = null;
    private double lastElapsedTimeMs_ = 0.0;
    private Date firstImageDate_;
    // Ratio plot memory
@@ -228,7 +232,17 @@ public class RTIntensitiesFrame extends JFrame {
                	dataset_.addSeries(data_[backgroundeq_ * plots_ + p]);
                }
          	}
-            plotData(plotmode + " of " + dataProvider_.getName(), dataset_, "Time(ms)", "Value", plots_, backgroundeq_, 100, 100);
+           	if (graphFrame_ != null) {
+           		graphFrame_.setVisible(false);
+           		graphFrame_.dispose();
+           	}
+           	graphFrame_ = plotData(plotmode + " of " + dataProvider_.getName(), dataset_, "Time(ms)", "Value", plots_, backgroundeq_, 100, 100);
+           	graphFrame_.addWindowListener(new WindowAdapter() {
+         		public void windowClosing(WindowEvent e) {
+         			graphFrame_ = null;
+         			title_.setText("Ready");
+         		}
+         	});
             title_.setText("Waiting for images...");
          }
       });
@@ -289,6 +303,9 @@ public class RTIntensitiesFrame extends JFrame {
 
    private void processImage(DataProvider dp, Image image) {
       if (!dp.equals(dataProvider_)) {
+         return;
+      }
+      if (graphFrame_ == null) {
          return;
       }
       Date imgTime;
@@ -379,7 +396,7 @@ public class RTIntensitiesFrame extends JFrame {
     * @param xLocation Window location on the screen (x)
     * @param yLocation Window Location on the screen (y)
     */
-   public static void plotData(String title, XYSeriesCollection dataset, String xTitle,
+   public static ChartFrame plotData(String title, XYSeriesCollection dataset, String xTitle,
                                String yTitle, int plots, int bg, int xLocation, int yLocation) {
       // JFreeChart code
       JFreeChart chart = ChartFactory.createScatterPlot(title, // Title
@@ -463,6 +480,8 @@ public class RTIntensitiesFrame extends JFrame {
       graphFrame.setSize(400, 300);
       WindowPositioning.setUpBoundsMemory(graphFrame, RTIntensities.class, "plot");
       WindowPositioning.cascade(graphFrame, RTIntensities.class);
+      graphFrame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
       graphFrame.setVisible(true);
+      return graphFrame;
    }
 }
