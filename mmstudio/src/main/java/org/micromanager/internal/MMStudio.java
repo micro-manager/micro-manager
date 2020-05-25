@@ -316,9 +316,29 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       acqEngine_ = new AcquisitionWrapperEngine();
       acqEngine_.setParentGUI(this);
       acqEngine_.setZStageDevice(core_.getFocusDevice());
+      
+            // We wait for plugin loading to finish now, since IntroPlugins may be
+      // needed to display the intro dialog. Fortunately, plugin loading is
+      // fast in 2.0 (it used to be very slow in 1.4, so we loaded plugins in
+      // parallel with the intro dialog).
+      // TODO Remove time out (With the current loading mechanism, the only
+      // case where the plugin loading thread will hang due to individual
+      // plugins is if a plugin constructor hangs, which is a case where we
+      // should just hang rather than pretend nothing is wrong.)
+      try {
+         pluginManager_.waitForInitialization(15000);
+      } catch (InterruptedException ex) {
+         Thread.currentThread().interrupt();
+      }
+      if (!pluginManager_.isInitializationComplete()) {
+         ReportingUtils.logMessage("Warning: Plugin loading did not finish within 15 seconds; continuing anyway");
+      }
+      else {
+         ReportingUtils.logMessage("Finished waiting for plugins to load");
+      }
 
 
-        mmMenuBar_ = MMMenuBar.createMenuBar(studio_);
+      mmMenuBar_ = MMMenuBar.createMenuBar(studio_);
       mainFrame_ = new MMMainFrame(this);
       // Load, but do not show, image pipeline panel.
       // Note: pipelineFrame is used in the dataManager, however, pipelineFrame 
@@ -355,25 +375,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
       RegistrationDlg.showIfNecessary(this);
       
-      // We wait for plugin loading to finish now, since IntroPlugins may be
-      // needed to display the intro dialog. Fortunately, plugin loading is
-      // fast in 2.0 (it used to be very slow in 1.4, so we loaded plugins in
-      // parallel with the intro dialog).
-      // TODO Remove time out (With the current loading mechanism, the only
-      // case where the plugin loading thread will hang due to individual
-      // plugins is if a plugin constructor hangs, which is a case where we
-      // should just hang rather than pretend nothing is wrong.)
-      try {
-         pluginManager_.waitForInitialization(15000);
-      } catch (InterruptedException ex) {
-         Thread.currentThread().interrupt();
-      }
-      if (!pluginManager_.isInitializationComplete()) {
-         ReportingUtils.logMessage("Warning: Plugin loading did not finish within 15 seconds; continuing anyway");
-      }
-      else {
-         ReportingUtils.logMessage("Finished waiting for plugins to load");
-      }
+
 
       ToolTipManager ttManager = ToolTipManager.sharedInstance();
       ttManager.setDismissDelay(TOOLTIP_DISPLAY_DURATION_MILLISECONDS);
@@ -487,6 +489,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       mainFrame_.setVisible(true);
       ReportingUtils.SetContainingFrame(mainFrame_);
       frame_.initializeConfigPad();
+      
 
       // We wait until after showing the main window to enable hot keys
       hotKeys_ = new HotKeys();
@@ -513,6 +516,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       if (getShouldRunZMQServer()) {
          runZMQServer();
       }
+      
+      mainFrame_.initialSetup();
       
    }
 
