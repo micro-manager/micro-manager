@@ -54,7 +54,6 @@ public class MD {
    private static final String TIME = "Time";
    private static final String DATE_TIME = "DateAndTime";
    private static final String SAVING_PREFIX = "Prefix";
-   private static final String INITIAL_POS_LIST = "InitialPositionList";
    private static final String TIMELAPSE_INTERVAL = "Interval_ms";
    private static final String PIX_TYPE = "PixelType";
    private static final String BIT_DEPTH = "BitDepth";
@@ -200,23 +199,7 @@ public class MD {
          Log.log("Couldn set image width");
       }
    }
-       
-   public static JSONArray getInitialPositionList(JSONObject map) {
-      try {
-         return map.getJSONArray(INITIAL_POS_LIST);
-      } catch (JSONException ex) {
-         Log.log("Couldn get Initial position list");
-         throw new RuntimeException();
-      }
-   }
-   
-   public static void setInitialPositionList(JSONObject map, JSONArray initialPositionList) {
-      try {
-         map.put(INITIAL_POS_LIST, initialPositionList);
-      } catch (JSONException ex) {
-         Log.log("Couldn set Initial position list");
-      }
-   }
+
    
     public static String getSavingPrefix(JSONObject map) {
       try {

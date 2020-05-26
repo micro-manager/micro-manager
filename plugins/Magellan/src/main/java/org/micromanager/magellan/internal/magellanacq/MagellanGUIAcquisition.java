@@ -20,17 +20,15 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Iterator;
-import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.acqj.api.*;
 import org.micromanager.acqj.internal.acqengj.AcquisitionEventIterator;
-import org.micromanager.acqj.internal.acqengj.AffineTransformUtils;
-import org.micromanager.acqj.api.mda.XYStagePosition;
-import org.micromanager.acqj.api.mda.AcqEventModules;
-import org.micromanager.acqj.api.mda.ChannelSetting;
+import org.micromanager.acqj.api.xystage.XYStagePosition;
+import org.micromanager.acqj.api.AcqEventModules;
+import org.micromanager.acqj.api.channels.ChannelSetting;
 import org.micromanager.acqj.internal.acqengj.Engine;
 import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
 import org.micromanager.magellan.internal.channels.SingleChannelSetting;
@@ -48,7 +46,6 @@ public class MagellanGUIAcquisition extends Acquisition
 
    private double zOrigin_, zStep_;
    private int minSliceIndex_, maxSliceIndex_;
-   private int overlapX_, overlapY_;
    private List<XYStagePosition> positions_;
    private MagellanGenericAcquisitionSettings settings_;
    private volatile boolean started_ = false;
@@ -67,7 +64,9 @@ public class MagellanGUIAcquisition extends Acquisition
    public MagellanGUIAcquisition(MagellanGUIAcquisitionSettings settings, DataSink sink) {
       super(sink);
       settings_ = settings;
-      initialize();
+      int overlapX = (int) (Magellan.getCore().getImageWidth() * GUI.getTileOverlap() / 100);
+      int overlapY = (int) (Magellan.getCore().getImageHeight() * GUI.getTileOverlap() / 100);
+      initialize(overlapX, overlapY);
    }
 
    public void start() {
@@ -89,17 +88,10 @@ public class MagellanGUIAcquisition extends Acquisition
 
       zStep_ = ((MagellanGUIAcquisitionSettings) settings_).zStep_;
 
-      overlapX_ = (int) (Magellan.getCore().getImageWidth() * GUI.getTileOverlap() / 100);
-      overlapY_ = (int) (Magellan.getCore().getImageHeight() * GUI.getTileOverlap() / 100);
-      MagellanMD.setPixelOverlapX(summaryMetadata, overlapX_);
-      MagellanMD.setPixelOverlapY(summaryMetadata, overlapY_);
-
       AcqEngMetadata.setZStepUm(summaryMetadata, zStep_);
       AcqEngMetadata.setZStepUm(summaryMetadata, zStep_);
       AcqEngMetadata.setIntervalMs(summaryMetadata, getTimeInterval_ms());
       createXYPositions();
-      JSONArray initialPosList = createInitialPositionList();
-      AcqEngMetadata.setInitialPositionList(summaryMetadata, initialPosList);
    }
 
    @Override
@@ -419,6 +411,7 @@ public class MagellanGUIAcquisition extends Acquisition
             positions_ = ((MagellanGUIAcquisitionSettings) settings_).xyFootprint_.getXYPositions();
          }
 
+         getPixelStageTranslator().setPositions(positions_);
       } catch (Exception e) {
          e.printStackTrace();
          Log.log("Problem with Acquisition's XY positions. Check acquisition settings");
@@ -426,25 +419,14 @@ public class MagellanGUIAcquisition extends Acquisition
       }
    }
 
-   protected JSONArray createInitialPositionList() {
-      if (positions_ == null) {
-         return null;
-      }
-      JSONArray pList = new JSONArray();
-      for (XYStagePosition xyPos : positions_) {
-         pList.put(xyPos.toJSON(Magellan.getCore()));
-      }
-      return pList;
-   }
-
    @Override
    public int getOverlapX() {
-      return overlapX_;
+      return MagellanMD.getPixelOverlapX(getSummaryMetadata());
    }
 
    @Override
    public int getOverlapY() {
-      return overlapY_;
+      return MagellanMD.getPixelOverlapY(getSummaryMetadata());
    }
 
    @Override

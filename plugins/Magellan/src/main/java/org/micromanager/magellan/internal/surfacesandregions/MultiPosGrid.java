@@ -16,15 +16,13 @@
 //
 package org.micromanager.magellan.internal.surfacesandregions;
 
-import org.micromanager.magellan.internal.magellanacq.MagellanGUIAcquisitionSettings;
 import org.micromanager.acqj.internal.acqengj.AffineTransformUtils;
-import org.micromanager.acqj.api.mda.XYStagePosition;
+import org.micromanager.acqj.api.xystage.XYStagePosition;
 import java.awt.geom.Point2D;
 import java.util.List;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.apache.commons.math3.geometry.euclidean.twod.Euclidean2D;
 import org.apache.commons.math3.geometry.partitioning.Region;
-import org.apache.commons.math3.geometry.partitioning.RegionFactory;
 import org.micromanager.magellan.internal.gui.GUI;
 
 /**

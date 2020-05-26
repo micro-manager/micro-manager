@@ -16,7 +16,6 @@
 //
 package org.micromanager.magellan.internal.surfacesandregions;
 
-import org.micromanager.magellan.internal.magellanacq.MagellanGUIAcquisitionSettings;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
@@ -29,18 +28,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.Log;
 import org.apache.commons.math3.geometry.euclidean.twod.Euclidean2D;
-import org.apache.commons.math3.geometry.euclidean.twod.PolygonsSet;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.apache.commons.math3.geometry.euclidean.twod.hull.ConvexHull2D;
 import org.apache.commons.math3.geometry.euclidean.twod.hull.MonotoneChain;
 import org.apache.commons.math3.geometry.partitioning.Region;
-import org.apache.commons.math3.geometry.partitioning.RegionFactory;
-import org.micromanager.acqj.api.mda.XYStagePosition;
+import org.micromanager.acqj.api.xystage.XYStagePosition;
 import org.micromanager.acqj.internal.acqengj.AffineTransformUtils;
 import org.micromanager.magellan.internal.gui.GUI;
 

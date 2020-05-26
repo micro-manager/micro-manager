@@ -6,7 +6,7 @@
 package org.micromanager.magellan.internal.channels;
 
 import java.awt.Color;
-import org.micromanager.acqj.api.mda.ChannelSetting;
+import org.micromanager.acqj.api.channels.ChannelSetting;
 
 /**
  * Convenience class that encapsulates a single channel setting
