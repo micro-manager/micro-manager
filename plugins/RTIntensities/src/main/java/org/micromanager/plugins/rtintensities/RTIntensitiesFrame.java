@@ -42,6 +42,7 @@ import javax.swing.JPanel;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.JOptionPane;
+import javax.swing.JCheckBox;
 import javax.swing.Box;
 
 import net.miginfocom.swing.MigLayout;
@@ -67,7 +68,8 @@ import ij.process.ImageProcessor;
 import org.micromanager.internal.utils.WindowPositioning;
 
 public class RTIntensitiesFrame extends JFrame {
-
+	private static final int MAXrois = 100;
+	
    private final Studio studio_;
    private final SimpleDateFormat dateFormat_;
    private DisplayWindow window_ = null;
@@ -78,10 +80,10 @@ public class RTIntensitiesFrame extends JFrame {
    private Date firstImageDate_;
    // Ratio plot memory
    private boolean ratio_ = false;
-   private double[] last_ = new double[100];
+   private double[] last_ = new double[MAXrois];
    // This is our local cache ...
    private int ROIs_ = 0;
-   private Roi[] roi_ = new Roi[100];
+   private Roi[] roi_ = new Roi[MAXrois];
    // of the manager kept ROIs
    private RoiManager manager_;
    private int imagesReceived_ = 0;
@@ -94,7 +96,7 @@ public class RTIntensitiesFrame extends JFrame {
    private int missing_ = 0;
    private JLabel title_;
    private XYSeriesCollection dataset_;
-   XYSeries[] data_ = new XYSeries[200];
+   XYSeries[] data_ = null;
    // Doing background "equalization" ?
    private int backgroundeq_ = -1;
    // Min refresh time (ms)
@@ -154,9 +156,9 @@ public class RTIntensitiesFrame extends JFrame {
                title_.setText("Please setup ROI(s).");
                return;
             }
-            // Hard limit of 100 ROIs
-            if (ROIs_ > 100) {
-               ROIs_ = 100;
+            // Hard limit of 100 ROIs and 200
+            if (ROIs_ > MAXrois) {
+               ROIs_ = MAXrois;
             }
             // Copy ROIs, determine if doing background "equalization" ?
             Roi managerRois[] = manager_.getRoisAsArray();
@@ -173,33 +175,18 @@ public class RTIntensitiesFrame extends JFrame {
             		roi_[i].setIsCursor(false); // actual data point
             	}
             }
-            // Multiple channels ? Logic for 2 channels only ...
+            // Multiple channels ? 1/2 Ratio ?
          	String plotmode = "Intensities";
          	if (channels_ > 1) {
-               Object[] options = {"Ch 1", "Ch 1 & 2", "Ch 1 / 2"};
-               int x = JOptionPane.showOptionDialog(null, "Please select:",
-                       "Multi channel data options",
-                       JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
-               switch(x) {
-               case 0:
-               	plots_ = 1; 
-               	channels_ = 1;
-               	plotmode = "Channel 1 intensities";
-               	break;
-               case 1:
-               	plots_ = 2; 
-               	channels_ = 2;
-               	ratio_ = false;
-               	missing_ = 1; // wait for pairs of data points
-               	plotmode = "Channel 1 & 2 intensities";
-               	break;
-               case 2:
+         		if (ratio_) {
                	plots_ = 1;
                	channels_ = 2;
-               	ratio_ = true;
-               	missing_ = 1;
+               	missing_ = 1; // wait for pairs of data points
                	plotmode = "Channel 1 over 2 intensity ratio";
-               	break;
+         		} else {
+               	plots_ = channels_; 
+               	missing_ = channels_ - 1;
+               	plotmode = "Channel intensities";
                }
          	} else {
          		plots_ = 1;
@@ -208,6 +195,7 @@ public class RTIntensitiesFrame extends JFrame {
          		plotmode += " (BG eq)";
          	}
             // We are all set ?
+         	data_ = new XYSeries[channels_ * ROIs_];
             imagesReceived_ = 0; // new plot
             lastElapsedTimeMs_ = 0;
             dataProvider_.registerForEvents(RTIntensitiesFrame.this);
@@ -259,6 +247,8 @@ public class RTIntensitiesFrame extends JFrame {
          	period.setText(new Integer(minPeriod_).toString());
          	JTextField maxPoints = new JTextField(5);
          	maxPoints.setText(new Integer(maxPoints_).toString());
+         	JCheckBox ratioPlot = new JCheckBox();
+         	ratioPlot.setSelected(ratio_);
          	
          	JPanel settingsPanel = new JPanel();
          	settingsPanel.add(new JLabel("min refresh period(ms):"));
@@ -266,12 +256,16 @@ public class RTIntensitiesFrame extends JFrame {
          	settingsPanel.add(Box.createHorizontalStrut(15)); // a spacer
          	settingsPanel.add(new JLabel("max data points:"));
          	settingsPanel.add(maxPoints);
+         	settingsPanel.add(Box.createHorizontalStrut(15));
+         	settingsPanel.add(new JLabel("2 channel ratio (1/2) plot:"));
+         	settingsPanel.add(ratioPlot);
 
          	int result = JOptionPane.showConfirmDialog(null, settingsPanel, 
                "Plot settings", JOptionPane.OK_CANCEL_OPTION);
          	if (result == JOptionPane.OK_OPTION) {
          		minPeriod_ = new Integer(period.getText()).intValue();
          		maxPoints_ = new Integer(maxPoints.getText()).intValue();
+         		ratio_ = ratioPlot.isSelected();
          	}
          }
       });
@@ -294,11 +288,6 @@ public class RTIntensitiesFrame extends JFrame {
    @Subscribe
    public void onNewImage(DataProviderHasNewImageEvent event) {
       processImage(event.getDataProvider(), event.getImage());
-   }
-
-   @Subscribe
-   public void onOverWrittenImage(ImageOverwrittenEvent event) {
-      processImage(event.getDatastore(), event.getNewImage());
    }
 
    private void processImage(DataProvider dp, Image image) {
@@ -324,7 +313,7 @@ public class RTIntensitiesFrame extends JFrame {
       if (missing_ > 0 || elapsedTimeMs - lastElapsedTimeMs_ >= minPeriod_) {
          lastElapsedTimeMs_ = elapsedTimeMs;
          double v, bg = 0;
-         int channel = image.getCoords().getChannel(); // 0..1
+         int channel = image.getCoords().getChannel(); // 0..(n-1)
          if (channel >= channels_) {
          	return;
          }
@@ -410,6 +399,7 @@ public class RTIntensitiesFrame extends JFrame {
       );
       XYPlot plot = (XYPlot) chart.getPlot();
       int series = dataset.getSeriesCount();
+      Paint paint;
       // Specific background series treatment
       if (bg >=0) {
       	series-= plots;
@@ -418,41 +408,26 @@ public class RTIntensitiesFrame extends JFrame {
       plot.setRangeGridlinePaint(Color.lightGray);
       XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
       renderer.setDefaultShapesVisible(true);
-      Paint paint = plot.getDrawingSupplier().getNextPaint();
-      renderer.setSeriesPaint(0, paint);
+   	renderer.setUseFillPaint(true);
       renderer.setSeriesFillPaint(0, Color.white);
-      renderer.setSeriesLinesVisible(0, true);
       Shape circle = new Ellipse2D.Float(-2.0f, -2.0f, 4.0f, 4.0f);
-      Shape square = new Rectangle2D.Float(-2.0f, -2.0f, 4.0f, 4.0f);
-      renderer.setSeriesShape(0, circle, false);
-      renderer.setUseFillPaint(true);
-      if (plots > 1) {
-      	renderer.setSeriesShape(1, square, false);
-      	renderer.setSeriesLinesVisible(1, true);
-      	renderer.setSeriesPaint(1, paint);
-      	renderer.setSeriesStroke(
-               1, new BasicStroke(
-                   2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND,
-                   1.0f, new float[] {2.0f, 6.0f}, 0.0f
-               )
-            );
-      }
-      for(int i=plots;i<series;i++){
+      // Shape square = new Rectangle2D.Float(-2.0f, -2.0f, 4.0f, 4.0f);
+      for(int i = 0; i < series; i++){
       	paint = plot.getDrawingSupplier().getNextPaint();
-         renderer.setSeriesShape(i, circle, false);
-         renderer.setSeriesLinesVisible(i, true);
-         renderer.setSeriesPaint(i, paint);
-         if (plots > 1) {
-         	renderer.setSeriesShape(++i, square, false);
+      	renderer.setSeriesPaint(i, paint);
+      	renderer.setSeriesLinesVisible(i, true);
+      	renderer.setSeriesShape(i, circle, false);
+      	for (int p = 1; p < plots; p++) {
+         	renderer.setSeriesShape(++i, circle, false);
          	renderer.setSeriesLinesVisible(i, true);
          	renderer.setSeriesPaint(i, paint);
          	renderer.setSeriesStroke(
                i, new BasicStroke(
                    2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND,
-                   1.0f, new float[] {2.0f, 6.0f}, 0.0f
+                   1.0f, new float[] {(float)(2*p), 6.0f}, 0.0f
                )
             );
-         }
+      	}
       }
       if (bg >= 0) {
       	renderer.setSeriesPaint(series, Color.lightGray);
@@ -462,14 +437,14 @@ public class RTIntensitiesFrame extends JFrame {
             series, new BasicStroke(
                 2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND,
                 1.0f, new float[] {1.0f, 6.0f}, 0.0f));
-	         if (plots > 1) {
+      		for (int p = 1; p < plots; p++) {
 	         	renderer.setSeriesPaint(series + 1, Color.lightGray);
-	         	renderer.setSeriesShape(series + 1, square, false);
-	         	renderer.setSeriesLinesVisible(series + 1, true);
+	         	renderer.setSeriesShape(series + 1, circle, false);
+	         	renderer.setSeriesLinesVisible(series + p, true);
 	         	renderer.setSeriesStroke(
 	         		series + 1, new BasicStroke(
 	         			2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND,
-	         			1.0f, new float[] {1.0f, 6.0f}, 0.0f));
+	         			1.0f, new float[] {(float)(2*p), 6.0f}, 0.0f));
 	         }
       }
 
