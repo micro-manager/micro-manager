@@ -18,8 +18,8 @@
 package org.micromanager.magellan.internal.surfacesandregions;
 
 import java.awt.geom.Point2D;
-import org.micromanager.acqj.api.mda.XYStagePosition;
-import java.util.ArrayList;
+import org.micromanager.acqj.api.xystage.XYStagePosition;
+
 import java.util.List;
 import org.apache.commons.math3.geometry.euclidean.twod.Euclidean2D;
 import org.apache.commons.math3.geometry.euclidean.twod.PolygonsSet;

@@ -16,13 +16,11 @@
 //
 package org.micromanager.magellan.internal.magellanacq;
 
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 
 import org.micromanager.acqj.api.*;
-import org.micromanager.magellan.internal.magellanacq.ExploreAcqSettings;
+
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,16 +34,14 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import mmcorej.org.json.JSONArray;
-import mmcorej.org.json.JSONException;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.Log;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.acqj.internal.acqengj.AcquisitionEventIterator;
-import org.micromanager.acqj.api.mda.AcqEventModules;
-import org.micromanager.acqj.api.mda.ChannelSetting;
-import org.micromanager.acqj.api.mda.XYStagePosition;
+import org.micromanager.acqj.api.AcqEventModules;
+import org.micromanager.acqj.api.channels.ChannelSetting;
+import org.micromanager.acqj.api.xystage.XYStagePosition;
 import org.micromanager.acqj.internal.acqengj.Engine;
-import org.micromanager.acqj.internal.acqengj.AffineTransformUtils;
 import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
 import org.micromanager.magellan.internal.channels.SingleChannelSetting;
 import org.micromanager.magellan.internal.gui.GUI;
@@ -87,7 +83,9 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
          Log.log("Couldn't get focus device position", true);
          throw new RuntimeException();
       }
-      initialize();
+      overlapX_ = (int) (Magellan.getCore().getImageWidth() * GUI.getTileOverlap() / 100);
+      overlapY_ = (int) (Magellan.getCore().getImageHeight() * GUI.getTileOverlap() / 100);
+      initialize(overlapX_, overlapY_);
    }
 
    @Override
@@ -96,15 +94,8 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
       MagellanMD.setSavingName(summaryMetadata, ((MagellanDataManager) dataSink_).getName());
       MagellanMD.setSavingName(summaryMetadata, ((MagellanDataManager) dataSink_).getDir());
 
-      overlapX_ = (int) (Magellan.getCore().getImageWidth() * GUI.getTileOverlap() / 100);
-      overlapY_ = (int) (Magellan.getCore().getImageHeight() * GUI.getTileOverlap() / 100);
-      MagellanMD.setPixelOverlapX(summaryMetadata, overlapX_);
-      MagellanMD.setPixelOverlapY(summaryMetadata, overlapY_);
-
       AcqEngMetadata.setZStepUm(summaryMetadata, ((ExploreAcqSettings) settings_).zStep_);
       createXYPositions();
-      JSONArray initialPosList = createInitialPositionList();
-      AcqEngMetadata.setInitialPositionList(summaryMetadata, initialPosList);
    }
 
    public void addToImageMetadata(JSONObject tags) {
@@ -152,14 +143,6 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
          Log.log("Problem with Acquisition's XY positions. Check acquisition settings");
          throw new RuntimeException();
       }
-   }
-
-   protected JSONArray createInitialPositionList() {
-      JSONArray pList = new JSONArray();
-      for (XYStagePosition xyPos : positions_) {
-         pList.put(xyPos.toJSON(core_));
-      }
-      return pList;
    }
 
    /**

@@ -19,6 +19,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 package org.micromanager.magellan.internal.magellanacq;
 
+import org.micromanager.acqj.api.xystage.PixelStageTranslator;
 import org.micromanager.magellan.internal.gui.MagellanViewer;
 import java.awt.Color;
 import java.awt.Point;
@@ -42,13 +43,14 @@ import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.acqj.api.AcqEngMetadata;
 import org.micromanager.acqj.api.DataSink;
-import org.micromanager.acqj.api.mda.XYStagePosition;
+import org.micromanager.acqj.api.xystage.XYStagePosition;
 import org.micromanager.acqj.api.Acquisition;
 import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
 import org.micromanager.magellan.internal.gui.ExploreControlsPanel;
 import org.micromanager.magellan.internal.gui.MagellanMouseListener;
 import org.micromanager.magellan.internal.gui.MagellanOverlayer;
 import org.micromanager.magellan.internal.gui.SurfaceGridPanel;
+import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridListener;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridManager;
@@ -77,7 +79,6 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
    private String name_;
    private MagellanAcquisition acq_;
    private final boolean showDisplay_;
-   private PixelStageTranslator stageCoordinateTranslator_;
    private MagellanViewer display_;
    private JSONObject summaryMetadata_;
    private CopyOnWriteArrayList<String> channelNames_ = new CopyOnWriteArrayList<String>();
@@ -110,18 +111,14 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
       acq_ = (MagellanAcquisition) acq;
       pixelSizeXY_ = MagellanMD.getPixelSizeUm(summaryMetadata);
       pixelSizeZ_ = acq_.getZStep();
-      stageCoordinateTranslator_ = new PixelStageTranslator(stringToTransform(MagellanMD.getAffineTransformString(summaryMetadata)),
-              MagellanMD.getWidth(summaryMetadata), MagellanMD.getHeight(summaryMetadata),
-              MagellanMD.getPixelOverlapX(summaryMetadata), MagellanMD.getPixelOverlapY(summaryMetadata),
-              MagellanMD.getInitialPositionList(summaryMetadata));
 
       storage_ = new MultiResMultipageTiffStorage(dir_, name_,
               summaryMetadata, ((MagellanAcquisition) acq).getOverlapX(),
               ((MagellanAcquisition) acq).getOverlapY(),
-              //TODO: in the futre may want to make multiple datasets if one
-              //of these parameters changes, or better yet implement
-              //in the thin the storage class to output different imaged
-              //parameters to different files within the dataset
+              //TODO: in the future may want to make multiple datasets if one
+              // of these parameters changes, or better yet implement
+              // in the storage class to output different imaged
+              // parameters to different files within the dataset
               MagellanMD.getWidth(summaryMetadata),
               MagellanMD.getHeight(summaryMetadata),
               MagellanMD.getBytesPerPixel(summaryMetadata), true);
@@ -215,26 +212,6 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
       }
    }
 
-   private static AffineTransform stringToTransform(String s) {
-      if (s.equals("Undefined")) {
-         return null;
-      }
-      double[] mat = new double[4];
-      String[] vals = s.split("_");
-      for (int i = 0; i < 4; i++) {
-         mat[i] = parseDouble(vals[i]);
-      }
-      return new AffineTransform(mat);
-   }
-
-   private static double parseDouble(String s) {
-      try {
-         return DecimalFormat.getNumberInstance().parse(s).doubleValue();
-      } catch (ParseException ex) {
-         throw new RuntimeException(ex);
-      }
-   }
-
    /**
     * Called when images done arriving
     */
@@ -312,11 +289,11 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
    }
 
    public int getDisplayTileHeight() {
-      return stageCoordinateTranslator_ == null ? 0 : stageCoordinateTranslator_.getDisplayTileHeight();
+      return acq_.getPixelStageTranslator() == null ? 0 : acq_.getPixelStageTranslator().getDisplayTileHeight();
    }
 
    public int getDisplayTileWidth() {
-      return stageCoordinateTranslator_ == null ? 0 : stageCoordinateTranslator_.getDisplayTileWidth();
+      return acq_.getPixelStageTranslator() == null ? 0 : acq_.getPixelStageTranslator().getDisplayTileWidth();
    }
 
    public boolean isExploreAcquisition() {
@@ -368,19 +345,19 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
 
    /**
     *
-    * @param xAbsolute x coordinate in the full Res stitched image
-    * @param yAbsolute y coordinate in the full res stitched image
+    * @param absoluteX x coordinate in the full Res stitched image
+    * @param absoluteY y coordinate in the full res stitched image
     * @return stage coordinates of the given pixel position
     */
    public Point2D.Double stageCoordsFromPixelCoords(int absoluteX, int absoluteY,
            double mag, Point2D.Double offset) {
       long newX = (long) (absoluteX / mag + offset.x);
       long newY = (long) (absoluteY / mag + offset.y);
-      return stageCoordinateTranslator_.getStageCoordsFromPixelCoords(newX, newY);
+      return acq_.getPixelStageTranslator().getStageCoordsFromPixelCoords(newX, newY);
    }
 
    public int getFullResPositionIndexFromStageCoords(double xPos, double yPos) {
-      return stageCoordinateTranslator_.getFullResPositionIndexFromStageCoords(xPos, yPos);
+      return acq_.getPixelStageTranslator().getFullResPositionIndexFromStageCoords(xPos, yPos);
    }
 
    /* 
@@ -389,22 +366,22 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
     */
    public Point pixelCoordsFromStageCoords(double x, double y, double magnification,
            Point2D.Double offset) {
-      Point fullResCoords = stageCoordinateTranslator_.getPixelCoordsFromStageCoords(x, y);
+      Point fullResCoords = acq_.getPixelStageTranslator().getPixelCoordsFromStageCoords(x, y);
       return new Point(
               (int) ((fullResCoords.x - offset.x) * magnification),
               (int) ((fullResCoords.y - offset.y) * magnification));
    }
 
    public XYStagePosition getXYPosition(int posIndex) {
-      return stageCoordinateTranslator_.getXYPosition(posIndex);
+      return acq_.getPixelStageTranslator().getXYPosition(posIndex);
    }
 
    public int[] getPositionIndices(int[] newPositionRows, int[] newPositionCols) {
-      return stageCoordinateTranslator_.getPositionIndices(newPositionRows, newPositionCols);
+      return acq_.getPixelStageTranslator().getPositionIndices(newPositionRows, newPositionCols);
    }
 
    public List<XYStagePosition> getPositionList() {
-      return stageCoordinateTranslator_.getPositionList();
+      return acq_.getPixelStageTranslator().getPositionList();
    }
 
    public int getMaxResolutionIndex() {
@@ -484,7 +461,7 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
    }
 
    public Point2D.Double getStageCoordinateOfViewCenter() {
-      return stageCoordinateTranslator_.getStageCoordsFromPixelCoords(
+      return acq_.getPixelStageTranslator().getStageCoordsFromPixelCoords(
               (long) (display_.getViewOffset().x + display_.getFullResSourceDataSize().x / 2),
               (long) (display_.getViewOffset().y + display_.getFullResSourceDataSize().y / 2));
 
@@ -522,7 +499,7 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
    }
 
    public Point2D.Double[] getDisplayTileCorners(XYStagePosition pos) {
-      return stageCoordinateTranslator_.getDisplayTileCornerStageCoords(pos);
+      return acq_.getPixelStageTranslator().getDisplayTileCornerStageCoords(pos);
    }
 
    @Override
