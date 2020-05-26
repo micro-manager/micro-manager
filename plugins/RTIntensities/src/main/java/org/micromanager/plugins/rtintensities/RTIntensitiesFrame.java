@@ -47,6 +47,7 @@ import javax.swing.Box;
 
 import net.miginfocom.swing.MigLayout;
 
+import org.micromanager.data.Datastore;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Image;
 import org.jfree.chart.plot.PlotOrientation;
@@ -60,6 +61,8 @@ import org.jfree.data.xy.XYSeriesCollection;
 import org.micromanager.Studio;
 import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.data.ImageOverwrittenEvent;
+import org.micromanager.events.AcquisitionStartedEvent;
+import org.micromanager.events.LiveModeEvent;
 import org.micromanager.display.DisplayWindow;
 
 import ij.gui.Roi;
@@ -71,6 +74,8 @@ public class RTIntensitiesFrame extends JFrame {
 	private static final int MAXrois = 100;
 	
    private final Studio studio_;
+   // A reference to the event handling (only?) instance
+   private static Object RThandler_ = null;
    private final SimpleDateFormat dateFormat_;
    private DisplayWindow window_ = null;
    private DataProvider dataProvider_;
@@ -78,6 +83,10 @@ public class RTIntensitiesFrame extends JFrame {
    private ChartFrame graphFrame_ = null;
    private double lastElapsedTimeMs_ = 0.0;
    private Date firstImageDate_;
+   // autoStart on new active window
+   private boolean autoStart_ = false;
+   // acquisition plot start on first image delivered.
+   private boolean delayedStart_ = false;
    // Ratio plot memory
    private boolean ratio_ = false;
    private double[] last_ = new double[MAXrois];
@@ -109,6 +118,9 @@ public class RTIntensitiesFrame extends JFrame {
    public RTIntensitiesFrame(Studio studio) {
       super("Real time intensity GUI");
       studio_ = studio;
+      if (RThandler_ == null) {
+      	RThandler_ = this;
+      }
       dateFormat_ = new SimpleDateFormat(ABSOLUTE_FORMAT_STRING);
       super.setLocation(100, 100); // Default location
       WindowPositioning.setUpLocationMemory(this, RTIntensitiesFrame.class, "Main");
@@ -156,82 +168,8 @@ public class RTIntensitiesFrame extends JFrame {
                title_.setText("Please setup ROI(s).");
                return;
             }
-            // Hard limit of 100 ROIs and 200
-            if (ROIs_ > MAXrois) {
-               ROIs_ = MAXrois;
-            }
-            // Copy ROIs, determine if doing background "equalization" ?
-            Roi managerRois[] = manager_.getRoisAsArray();
-            for (int i = 0; i < ROIs_; i++) {
-               roi_[i] = (Roi)managerRois[i].clone();
-            	if (roi_[i].getName() != null && roi_[i].getName().startsWith("bg")) {
-            		if (backgroundeq_ < 0) {
-            				backgroundeq_= i; // keep track of first one (series plot)
-            		}
-            		roi_[i].setIsCursor(true); //our local mark
-            	}
-            	else
-            	{
-            		roi_[i].setIsCursor(false); // actual data point
-            	}
-            }
-            // Multiple channels ? 1/2 Ratio ?
-         	String plotmode = "Intensities";
-         	if (channels_ > 1) {
-         		if (ratio_) {
-               	plots_ = 1;
-               	channels_ = 2;
-               	missing_ = 1; // wait for pairs of data points
-               	plotmode = "Channel 1 over 2 intensity ratio";
-         		} else {
-               	plots_ = channels_; 
-               	missing_ = channels_ - 1;
-               	plotmode = "Channel intensities";
-               }
-         	} else {
-         		plots_ = 1;
-         	}
-         	if (backgroundeq_ >= 0) {
-         		plotmode += " (BG eq)";
-         	}
             // We are all set ?
-         	data_ = new XYSeries[channels_ * ROIs_];
-            imagesReceived_ = 0; // new plot
-            lastElapsedTimeMs_ = 0;
-            dataProvider_.registerForEvents(RTIntensitiesFrame.this);
-            dataset_ = new XYSeriesCollection();
-            int idx = 0;
-           	for (int i = 0; i < ROIs_; i++) {
-            	if (!roi_[i].isCursor()) {
-            		for (int p = 0; p < plots_; p++) {
-               		data_[i * plots_ + p] = new XYSeries("" + (i + 1) + 
-               				((plots_>1) ? ("c" + ( p + 1)) : ""));
-               		data_[i * plots_ + p].setMaximumItemCount(maxPoints_);
-               		dataset_.addSeries(data_[i * plots_ + p]);
-               	} 
-            		idx++;
-            	}
-            }
-           	if (backgroundeq_ >= 0) {
-               for (int p = 0; p < plots_; p++) {
-               	data_[backgroundeq_ * plots_ + p] = new XYSeries("bg" + 
-               			((plots_>1) ? ("c" + ( p + 1)) : ""));
-               	data_[backgroundeq_ * plots_ + p].setMaximumItemCount(maxPoints_);
-               	dataset_.addSeries(data_[backgroundeq_ * plots_ + p]);
-               }
-         	}
-           	if (graphFrame_ != null) {
-           		graphFrame_.setVisible(false);
-           		graphFrame_.dispose();
-           	}
-           	graphFrame_ = plotData(plotmode + " of " + dataProvider_.getName(), dataset_, "Time(ms)", "Value", plots_, backgroundeq_, 100, 100);
-           	graphFrame_.addWindowListener(new WindowAdapter() {
-         		public void windowClosing(WindowEvent e) {
-         			graphFrame_ = null;
-         			title_.setText("Ready");
-         		}
-         	});
-            title_.setText("Waiting for images...");
+         	setupPlot();
          }
       });
       startButton.setEnabled(true);
@@ -249,16 +187,23 @@ public class RTIntensitiesFrame extends JFrame {
          	maxPoints.setText(new Integer(maxPoints_).toString());
          	JCheckBox ratioPlot = new JCheckBox();
          	ratioPlot.setSelected(ratio_);
+         	JCheckBox autoPlot = new JCheckBox();
+         	autoPlot.setSelected(autoStart_);
          	
          	JPanel settingsPanel = new JPanel();
+         	settingsPanel.setLayout(new MigLayout("fill, insets 2, gap 2, flowx"));
+         	
          	settingsPanel.add(new JLabel("min refresh period(ms):"));
-         	settingsPanel.add(period);
-         	settingsPanel.add(Box.createHorizontalStrut(15)); // a spacer
+         	settingsPanel.add(period, "wrap");
+         	
          	settingsPanel.add(new JLabel("max data points:"));
-         	settingsPanel.add(maxPoints);
-         	settingsPanel.add(Box.createHorizontalStrut(15));
+         	settingsPanel.add(maxPoints, "wrap");
+         	
          	settingsPanel.add(new JLabel("2 channel ratio (1/2) plot:"));
-         	settingsPanel.add(ratioPlot);
+         	settingsPanel.add(ratioPlot, "wrap");
+         	
+         	settingsPanel.add(new JLabel("autostart plot:"));
+         	settingsPanel.add(autoPlot, "wrap");
 
          	int result = JOptionPane.showConfirmDialog(null, settingsPanel, 
                "Plot settings", JOptionPane.OK_CANCEL_OPTION);
@@ -266,6 +211,7 @@ public class RTIntensitiesFrame extends JFrame {
          		minPeriod_ = new Integer(period.getText()).intValue();
          		maxPoints_ = new Integer(maxPoints.getText()).intValue();
          		ratio_ = ratioPlot.isSelected();
+         		autoStart_ = autoPlot.isSelected();
          	}
          }
       });
@@ -286,11 +232,135 @@ public class RTIntensitiesFrame extends JFrame {
    }
 
    @Subscribe
+   public void onNewAcquisition(AcquisitionStartedEvent event) {
+   	if (! autoStart_  || manager_ == null) {
+   		return;
+   	}
+      ROIs_ = manager_.getCount();
+      if (ROIs_ <= 0) {
+      	return;
+      }
+      title_.setText("Set");
+   	delayedStart_ = true;
+   	event.getDatastore().registerForEvents(RThandler_);
+   }
+   
+   @Subscribe
+   public void onLiveMode(LiveModeEvent event) {
+   	if (! autoStart_  || manager_ == null) {
+   		return;
+   	}
+   	if (!event.getIsOn()) {
+   		return;
+   	}
+   	window_ = studio_.displays().getCurrentWindow();
+      if (window_ == null) {
+      	return;
+      }
+      dataProvider_ = window_.getDataProvider();
+      channels_ = dataProvider_.getAxisLength("channel");
+      ROIs_ = manager_.getCount();
+      if (ROIs_ <= 0) {
+      	return;
+      }
+   	setupPlot();
+   }
+
+   // Actual new plot setup work
+   private void setupPlot() {
+      // Hard limit of 100 ROIs and 200
+      if (ROIs_ > MAXrois) {
+         ROIs_ = MAXrois;
+      }
+      // Copy ROIs, determine if doing background "equalization" ?
+      Roi managerRois[] = manager_.getRoisAsArray();
+      for (int i = 0; i < ROIs_; i++) {
+         roi_[i] = (Roi)managerRois[i].clone();
+      	if (roi_[i].getName() != null && roi_[i].getName().startsWith("bg")) {
+      		if (backgroundeq_ < 0) {
+      				backgroundeq_= i; // keep track of first one (series plot)
+      		}
+      		roi_[i].setIsCursor(true); //our local mark
+      	}
+      	else
+      	{
+      		roi_[i].setIsCursor(false); // actual data point
+      	}
+      }
+      // Multiple channels ? 1/2 Ratio ?
+   	String plotmode = "Intensities";
+   	if (channels_ > 1) {
+   		if (ratio_) {
+         	plots_ = 1;
+         	channels_ = 2;
+         	missing_ = 1; // wait for pairs of data points
+         	plotmode = "Channel 1 over 2 intensity ratio";
+   		} else {
+         	plots_ = channels_; 
+         	missing_ = channels_ - 1;
+         	plotmode = "Channel intensities";
+         }
+   	} else {
+   		plots_ = 1;
+   	}
+   	if (backgroundeq_ >= 0) {
+   		plotmode += " (BG eq)";
+   	}
+
+   	data_ = new XYSeries[channels_ * ROIs_];
+      imagesReceived_ = 0; // new plot
+      lastElapsedTimeMs_ = 0;
+      dataset_ = new XYSeriesCollection();
+     	for (int i = 0; i < ROIs_; i++) {
+      	if (!roi_[i].isCursor()) {
+      		for (int p = 0; p < plots_; p++) {
+         		data_[i * plots_ + p] = new XYSeries("" + (i + 1) + 
+         				((plots_>1) ? ("c" + ( p + 1)) : ""));
+         		data_[i * plots_ + p].setMaximumItemCount(maxPoints_);
+         		dataset_.addSeries(data_[i * plots_ + p]);
+         	} 
+      	}
+      }
+     	if (backgroundeq_ >= 0) {
+         for (int p = 0; p < plots_; p++) {
+         	data_[backgroundeq_ * plots_ + p] = new XYSeries("bg" + 
+         			((plots_>1) ? ("c" + ( p + 1)) : ""));
+         	data_[backgroundeq_ * plots_ + p].setMaximumItemCount(maxPoints_);
+         	dataset_.addSeries(data_[backgroundeq_ * plots_ + p]);
+         }
+   	}
+     	if (graphFrame_ != null) {
+     		graphFrame_.setVisible(false);
+     		graphFrame_.dispose();
+     	}
+     	graphFrame_ = plotData(plotmode + " of " + dataProvider_.getName(), dataset_, "Time(ms)", "Value", plots_, backgroundeq_, 100, 100);
+     	graphFrame_.addWindowListener(new WindowAdapter() {
+   		public void windowClosing(WindowEvent e) {
+   			graphFrame_ = null;
+   			title_.setText("Ready");
+   		}
+   	});
+      if (!delayedStart_) {
+      	title_.setText("Waiting for images...");
+         dataProvider_.registerForEvents(RThandler_);
+      } else {
+      	delayedStart_ = false;
+      }
+   }
+   
+   
+   @Subscribe
    public void onNewImage(DataProviderHasNewImageEvent event) {
       processImage(event.getDataProvider(), event.getImage());
    }
 
    private void processImage(DataProvider dp, Image image) {
+   	// Kind of ugly way to autostart on new acquisition, new acquisition event seems too early
+   	if (delayedStart_) {
+         dataProvider_ = dp;
+         channels_ = dataProvider_.getAxisLength("channel");
+         setupPlot();
+   	}
       if (!dp.equals(dataProvider_)) {
          return;
       }
@@ -424,7 +494,7 @@ public class RTIntensitiesFrame extends JFrame {
          	renderer.setSeriesStroke(
                i, new BasicStroke(
                    2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND,
-                   1.0f, new float[] {(float)(2*p), 6.0f}, 0.0f
+                   1.0f, new float[] {2.0f, (float)(4*p)}, 0.0f
                )
             );
       	}
@@ -436,7 +506,7 @@ public class RTIntensitiesFrame extends JFrame {
       	renderer.setSeriesStroke(
             series, new BasicStroke(
                 2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND,
-                1.0f, new float[] {1.0f, 6.0f}, 0.0f));
+                1.0f, new float[] {1.0f, 4.0f}, 0.0f));
       		for (int p = 1; p < plots; p++) {
 	         	renderer.setSeriesPaint(series + 1, Color.lightGray);
 	         	renderer.setSeriesShape(series + 1, circle, false);
@@ -444,7 +514,7 @@ public class RTIntensitiesFrame extends JFrame {
 	         	renderer.setSeriesStroke(
 	         		series + 1, new BasicStroke(
 	         			2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND,
-	         			1.0f, new float[] {(float)(2*p), 6.0f}, 0.0f));
+	         			1.0f, new float[] {1.0f, (float)(4*(p+1))}, 0.0f));
 	         }
       }
 
