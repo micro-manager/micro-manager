@@ -61,6 +61,9 @@ public:
    int QueryCommandUnterminatedResponse(const string command, const long timeoutMs, unsigned long reply_length)
    {   return QueryCommandUnterminatedResponse(command.c_str(), timeoutMs, reply_length);   }
 
+   int QueryCommandLongReply(const char *command, const char *replyTerminator);  // all variants call this
+   int QueryCommandLongReply(const char *command) { return QueryCommandLongReply(command, g_SerialTerminatorMultiLine); }
+   int QueryCommandLongReply(const string &command) { return QueryCommandLongReply(command.c_str(), g_SerialTerminatorMultiLine); }
 
    // QueryCommand gets the response (optional 2nd parameter is the response's termination string) (optional 3rd parameter is delay between sending and reading response)
    int QueryCommand(const char *command, const char *replyTerminator, const long delayMs); // all variants call this
