@@ -110,8 +110,8 @@
     <ClInclude Include="ASILens.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-	<ClCompile Include="ASIDac.h">
+	<ClInclude Include="ASIDac.h">
       <Filter>Header Files</Filter>
-    </ClCompile>
+    </ClInclude>
   </ItemGroup>
 </Project>
