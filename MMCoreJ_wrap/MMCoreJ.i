@@ -911,6 +911,144 @@
 // instantiate STL mappings
 
 namespace std {
+	%typemap(javaimports) vector<char> %{
+		import java.lang.Iterable;
+		import java.util.Iterator;
+		import java.util.NoSuchElementException;
+		import java.lang.UnsupportedOperationException;
+	%}
+
+   %typemap(javainterfaces) vector<char> %{ Iterable<Character>%}
+
+   %typemap(javacode) vector<char> %{
+      public Iterator<Character> iterator() {
+         return new Iterator<Character>() {
+
+            private int i_=0;
+
+            public boolean hasNext() {
+               return (i_<size());
+            }
+
+            public Character next() throws NoSuchElementException {
+               if (hasNext()) {
+                  ++i_;
+                  return get(i_-1);
+               } else {
+                  throw new NoSuchElementException();
+               }
+            }
+
+            public void remove() throws UnsupportedOperationException {
+               throw new UnsupportedOperationException();
+            }
+         };
+      }
+
+      public Character[] toArray() {
+         if (0==size())
+            return new Character[0];
+
+         Character ints[] = new Character[(int) size()];
+         for (int i=0; i<size(); ++i) {
+            ints[i] = get(i);
+         }
+         return ints;
+      }
+   %}
+   
+   %typemap(javaimports) vector<long> %{
+		import java.lang.Iterable;
+		import java.util.Iterator;
+		import java.util.NoSuchElementException;
+		import java.lang.UnsupportedOperationException;
+	%}
+
+   %typemap(javainterfaces) vector<long> %{ Iterable<Long>%}
+
+   %typemap(javacode) vector<long> %{
+      public Iterator<Long> iterator() {
+         return new Iterator<Long>() {
+
+            private int i_=0;
+
+            public boolean hasNext() {
+               return (i_<size());
+            }
+
+            public Long next() throws NoSuchElementException {
+               if (hasNext()) {
+                  ++i_;
+                  return (long) get(i_-1); //For some reason the automatically generated `get` method returns `int`
+               } else {
+                  throw new NoSuchElementException();
+               }
+            }
+
+            public void remove() throws UnsupportedOperationException {
+               throw new UnsupportedOperationException();
+            }
+         };
+      }
+
+      public Long[] toArray() {
+         if (0==size())
+            return new Long[0];
+
+         Long ints[] = new Long[(int) size()];
+         for (int i=0; i<size(); ++i) {
+            ints[i] = (long) get(i); //For some reason the automatically generated `get` method returns `int`
+         }
+         return ints;
+      }
+   %}
+   
+   %typemap(javaimports) vector<double> %{
+		import java.lang.Iterable;
+		import java.util.Iterator;
+		import java.util.NoSuchElementException;
+		import java.lang.UnsupportedOperationException;
+	%}
+
+   %typemap(javainterfaces) vector<double> %{ Iterable<Double>%}
+
+   %typemap(javacode) vector<double> %{
+      public Iterator<Double> iterator() {
+         return new Iterator<Double>() {
+
+            private int i_=0;
+
+            public boolean hasNext() {
+               return (i_<size());
+            }
+
+            public Double next() throws NoSuchElementException {
+               if (hasNext()) {
+                  ++i_;
+                  return get(i_-1);
+               } else {
+                  throw new NoSuchElementException();
+               }
+            }
+
+            public void remove() throws UnsupportedOperationException {
+               throw new UnsupportedOperationException();
+            }
+         };
+      }
+
+      public Double[] toArray() {
+         if (0==size())
+            return new Double[0];
+
+         Double ints[] = new Double[(int) size()];
+         for (int i=0; i<size(); ++i) {
+            ints[i] = get(i);
+         }
+         return ints;
+      }
+   %}
+
 
 	%typemap(javaimports) vector<string> %{
 		import java.lang.Iterable;
