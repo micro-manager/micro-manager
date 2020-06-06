@@ -112,6 +112,7 @@ public:
    int OnRBTrigger            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnRBRunning            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnUseSequence          (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFastSequence         (MM::PropertyBase* pProp, MM::ActionType eAct);
    //Others
    int OnVector				  (MM::PropertyBase* pProp, MM::ActionType eAct);
 
@@ -123,6 +124,7 @@ private:
    long ring_buffer_capacity_;
    bool ttl_trigger_supported_;
    bool ttl_trigger_enabled_;
+   bool runningFastSequence_;
    std::vector<double> sequence_;
 
    // private helper functions
