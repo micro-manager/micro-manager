@@ -395,7 +395,7 @@ public final class SnapLiveManager extends DataViewerListener
             }
             JSONObject tags = tagged.tags;
             int imageChannel = c;
-            if (tags.has(camName + "-CameraChannelIndex")) {
+            if ( (numCameraChannels_ > 1) && tags.has(camName + "-CameraChannelIndex")) {
                imageChannel = tags.getInt(camName + "-CameraChannelIndex");
             }
             if (channelsSet.contains(imageChannel)) {
