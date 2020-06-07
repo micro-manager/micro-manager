@@ -203,7 +203,7 @@ public final class MMAcquisition extends DataViewerListener {
                DisplaySettings.Builder displaySettingsBuilder
                        = dsTmp.copyBuilder();
                
-               final int nrChannels = MDUtils.getNumChannels(summaryMetadata);
+               final int nrChannels = store_.getSummaryMetadata().getChannelNameList().size();
                // the do-while loop is a way to set display settings in a thread
                // safe way.  See docs to compareAndSetDisplaySettings.
                do {
