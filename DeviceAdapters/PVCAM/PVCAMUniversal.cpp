@@ -1526,13 +1526,21 @@ unsigned Universal::GetImageHeight() const
 
 unsigned Universal::GetImageBytesPerPixel() const
 {
-    const unsigned int bpp = acqCfgCur_.ColorProcessingEnabled ? 4 : 2;
-    return bpp;
+    if (GetBitDepth() == 8)
+    {
+        const unsigned int bpp = acqCfgCur_.ColorProcessingEnabled ? 4 : 1;
+        return bpp;
+    }
+    else
+    {
+        const unsigned int bpp = acqCfgCur_.ColorProcessingEnabled ? 4 : 2;
+        return bpp;
+    }
 }
 
 long Universal::GetImageBufferSize() const
 {
-    const int bytesPerPixel = acqCfgCur_.ColorProcessingEnabled ? 4 : 2;
+    const int bytesPerPixel = GetImageBytesPerPixel();
     const long bufferSize = acqCfgCur_.Rois.ImpliedRoi().ImageRgnWidth() * acqCfgCur_.Rois.ImpliedRoi().ImageRgnHeight() * bytesPerPixel;
     return bufferSize;
 }
@@ -3701,8 +3709,11 @@ int Universal::PollingThreadRun(void)
 
     try
     {
-        const double estReadTimeSec = getEstimatedMaxReadoutTimeMs() / 1000.0f;
-        const MM::MMTime timeout((long)(triggerTimeout_ + estReadTimeSec + 2*GetExposure() * 0.001), (long)(2*GetExposure() * 1000));
+        const long long usec = triggerTimeout_
+            + getEstimatedMaxReadoutTimeMs() * 1000
+            + (long long)(4 * GetExposure() * 1000.0);
+
+        const MM::MMTime timeout((long)(usec / 1000000L), (long)(usec % 1000000L));
 
         do
         {
@@ -4639,8 +4650,11 @@ int Universal::waitForFrameSeq()
 
     int nRet = DEVICE_OK;
 
-    const double estReadTimeSec = getEstimatedMaxReadoutTimeMs() / 1000.0f;
-    const MM::MMTime timeout((long)(triggerTimeout_ + estReadTimeSec + 2*GetExposure() * 0.001), (long)(2*GetExposure() * 1000));
+    const long long usec = triggerTimeout_
+        + getEstimatedMaxReadoutTimeMs() * 1000
+        + (long long)(4 * GetExposure() * 1000.0);
+
+    const MM::MMTime timeout((long)(usec / 1000000L), (long)(usec % 1000000L));
 
     if (!acqCfgCur_.CallbacksEnabled)
     {
