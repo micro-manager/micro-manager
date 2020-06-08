@@ -42,6 +42,7 @@ public class SurfaceGridPanel extends javax.swing.JPanel implements
       manager_ = manager;
       display_ = disp;
       initComponents();
+      showStagePositionsCheckBox_.setSelected(false);
 
       //exactly one surface or grid selected at all times
       surfaceGridTable_.setSelectionModel(new ExactlyOneRowSelectionModel());

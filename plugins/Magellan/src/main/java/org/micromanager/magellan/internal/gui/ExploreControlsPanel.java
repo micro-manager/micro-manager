@@ -32,6 +32,7 @@ public class ExploreControlsPanel extends javax.swing.JPanel implements Controls
       zSliders_ = new ExploreZSliders(manager);
       initComponents();
 
+
       //left justified editor
       JTextField tf = new JTextField();
       tf.setHorizontalAlignment(SwingConstants.LEFT);

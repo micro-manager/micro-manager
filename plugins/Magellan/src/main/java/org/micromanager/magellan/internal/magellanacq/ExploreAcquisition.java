@@ -66,7 +66,6 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
 
    private final double zOrigin_, zStep_;
    private int minSliceIndex_, maxSliceIndex_;
-   private int overlapX_, overlapY_;
 
    public ExploreAcquisition(ExploreAcqSettings settings, DataSink sink) {
       super(sink);
@@ -83,9 +82,9 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
          Log.log("Couldn't get focus device position", true);
          throw new RuntimeException();
       }
-      overlapX_ = (int) (Magellan.getCore().getImageWidth() * GUI.getTileOverlap() / 100);
-      overlapY_ = (int) (Magellan.getCore().getImageHeight() * GUI.getTileOverlap() / 100);
-      initialize(overlapX_, overlapY_);
+      int overlapX = (int) (Magellan.getCore().getImageWidth() * GUI.getTileOverlap() / 100);
+      int overlapY = (int) (Magellan.getCore().getImageHeight() * GUI.getTileOverlap() / 100);
+      initialize(overlapX, overlapY);
    }
 
    @Override
@@ -345,33 +344,9 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
       zTop_ = Math.min(zTop, zBottom);
    }
 
-   public double getZTop() {
-      return zTop_;
-   }
-
-   public double getZBottom() {
-      return zBottom_;
-   }
-
    @Override
-   public double getZCoordOfNonnegativeZIndex(int displaySliceIndex) {
-      displaySliceIndex += minSliceIndex_;
-      return zOrigin_ + zStep_ * displaySliceIndex;
-   }
-
-   @Override
-   public int getDisplaySliceIndexFromZCoordinate(double z) {
-      return (int) Math.round((z - zOrigin_) / zStep_) - minSliceIndex_;
-   }
-
-   @Override
-   public int getOverlapX() {
-      return overlapX_;
-   }
-
-   @Override
-   public int getOverlapY() {
-      return overlapY_;
+   public double getZOrigin() {
+      return zOrigin_;
    }
 
    @Override
