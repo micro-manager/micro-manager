@@ -11,14 +11,12 @@ import org.micromanager.ndviewer.api.ViewerAcquisitionInterface;
  */
 public interface MagellanAcquisition extends ViewerAcquisitionInterface, AcquisitionInterface {
 
-   public double getZCoordOfNonnegativeZIndex(int displaySliceIndex);
+   /**
+    * Get z coordinate corresponding to z index of 0
+     * @return
+    */
+   public double getZOrigin();
 
-   public int getDisplaySliceIndexFromZCoordinate(double d);
-
-   public int getOverlapX();
-
-   public int getOverlapY();
-   
    public double getZStep();
    
    public ChannelGroupSettings getChannels();

@@ -113,8 +113,8 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
       pixelSizeZ_ = acq_.getZStep();
 
       storage_ = new MultiResMultipageTiffStorage(dir_, name_,
-              summaryMetadata, ((MagellanAcquisition) acq).getOverlapX(),
-              ((MagellanAcquisition) acq).getOverlapY(),
+              summaryMetadata, AcqEngMetadata.getPixelOverlapX(summaryMetadata),
+              AcqEngMetadata.getPixelOverlapY(summaryMetadata),
               //TODO: in the future may want to make multiple datasets if one
               // of these parameters changes, or better yet implement
               // in the storage class to output different imaged
@@ -396,14 +396,6 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
       return pixelSizeZ_;
    }
 
-   public double getZCoordinateOfDisplayedSlice() {
-      return acq_.getZCoordOfNonnegativeZIndex(display_.getAxisPosition(AcqEngMetadata.Z_AXIS));
-   }
-
-   public int getDisplaySliceIndexFromZCoordinate(double z) {
-      return acq_.getDisplaySliceIndexFromZCoordinate(z);
-   }
-
    public LinkedBlockingQueue<ExploreAcquisition.ExploreTileWaitingToAcquire> getTilesWaitingToAcquireAtVisibleSlice() {
       return ((ExploreAcquisition) acq_).getTilesWaitingToAcquireAtSlice(display_.getAxisPosition(AcqEngMetadata.Z_AXIS));
    }
@@ -422,10 +414,6 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
 
    public double getPixelSize() {
       return pixelSizeXY_;
-   }
-
-   public double getZCoordOfNonnegativeZIndex(int axisPosition) {
-      return acq_.getZCoordOfNonnegativeZIndex(axisPosition);
    }
 
    public void acquireTiles(int y, int x, int y0, int x0) {
@@ -527,4 +515,12 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
       update();
    }
 
+   public double getZCoordinateOfDisplayedSlice() {
+      int index = display_.getAxisPosition(AcqEngMetadata.Z_AXIS);
+      return index * acq_.getZStep() + acq_.getZOrigin();
+   }
+
+   public int zCoordinateToZIndex(double z) {
+      return (int) ((z - acq_.getZOrigin()) / acq_.getZStep());
+   }
 }

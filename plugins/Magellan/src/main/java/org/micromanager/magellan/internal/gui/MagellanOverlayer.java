@@ -63,7 +63,7 @@ public class MagellanOverlayer implements OverlayerPlugin {
    private static final Color TRANSPARENT_GREEN = new Color(0, 255, 0, 100);
    private static final Color TRANSPARENT_MAGENTA = new Color(255, 0, 255, 100);
 
-   private volatile boolean showSurface_ = true, showConvexHull_ = true, showXYFootprint_ = true;
+   private volatile boolean showSurface_ = true, showConvexHull_ = true, showXYFootprint_ = false;
    private MagellanDataManager manager_;
    private boolean exploreMode_, surfaceMode_;
 
@@ -305,7 +305,7 @@ public class MagellanOverlayer implements OverlayerPlugin {
          Point displayLocation = manager_.pixelCoordsFromStageCoords(point.x, point.y,
                  mag, offset);
          int displaySlice;
-         displaySlice = manager_.getDisplaySliceIndexFromZCoordinate(point.z);
+         displaySlice = manager_.zCoordinateToZIndex(point.z);
 
          if (displaySlice != zIndex) {
             continue;

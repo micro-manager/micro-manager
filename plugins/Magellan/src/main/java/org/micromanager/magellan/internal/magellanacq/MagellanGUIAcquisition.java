@@ -41,8 +41,7 @@ import org.micromanager.magellan.internal.surfacesandregions.Point3d;
  *
  * @author Henry
  */
-public class MagellanGUIAcquisition extends Acquisition
-        implements MagellanAcquisition {
+public class MagellanGUIAcquisition extends Acquisition implements MagellanAcquisition {
 
    private double zOrigin_, zStep_;
    private int minSliceIndex_, maxSliceIndex_;
@@ -196,17 +195,6 @@ public class MagellanGUIAcquisition extends Acquisition
          }
          return event;
       };
-   }
-
-   @Override
-   public double getZCoordOfNonnegativeZIndex(int displaySliceIndex) {
-      displaySliceIndex += minSliceIndex_;
-      return zOrigin_ + zStep_ * displaySliceIndex;
-   }
-
-   @Override
-   public int getDisplaySliceIndexFromZCoordinate(double z) {
-      return (int) Math.round((z - zOrigin_) / zStep_) - minSliceIndex_;
    }
 
    /**
@@ -420,13 +408,8 @@ public class MagellanGUIAcquisition extends Acquisition
    }
 
    @Override
-   public int getOverlapX() {
-      return MagellanMD.getPixelOverlapX(getSummaryMetadata());
-   }
-
-   @Override
-   public int getOverlapY() {
-      return MagellanMD.getPixelOverlapY(getSummaryMetadata());
+   public double getZOrigin() {
+      return zOrigin_;
    }
 
    @Override
