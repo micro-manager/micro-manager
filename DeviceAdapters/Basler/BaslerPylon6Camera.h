@@ -139,6 +139,12 @@ public:
 	int OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnAutoGain(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnAutoExpore(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnTemperatureStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnReverseX(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnReverseY(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnAcqFramerateEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnAcqFramerate(MM::PropertyBase* pProp, MM::ActionType eAct);
 	
 
 private:
@@ -154,6 +160,8 @@ private:
 	double exposure_us_, exposureMax_, exposureMin_;
 	double gain_, gainMax_, gainMin_;
 	double offset_, offsetMin_, offsetMax_;
+	double temperature_;
+	double acqFramerate_, acqFramerateMax_, acqFramerateMin_;
 	int64_t DeviceLinkThroughputLimit_;
 	int64_t InterPacketDelay_;
 	
@@ -161,6 +169,9 @@ private:
 	std::string binningFactor_;
 	std::string sensorReadoutMode_;
 	std::string shutterMode_;
+	std::string setAcqFrm_;
+	std::string temperatureStatus_;
+	std::string reverseX_, reverseY_;
 	void* imgBuffer_;
 	long imgBufferSize_;
 	ImgBuffer img_;

@@ -156,6 +156,9 @@ CCameraBase<BaslerCamera> (),
 	gainMax_(0),
 	gainMin_(0),
 	bitDepth_(8),
+	temperatureStatus_("Undefined"),
+	reverseX_("0"),
+	reverseY_("0"),
 	imgBuffer_(NULL),
 	colorCamera_(true),
 	pixelType_("Undefined"),
@@ -374,6 +377,21 @@ int BaslerCamera::Initialize()
 		}
 		SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);
 
+		/////Temperature//////
+		pAct = new CPropertyAction(this, &BaslerCamera::OnTemperature);
+		ret = CreateProperty("Temperature", "0.0", MM::Float, true, pAct);
+		if (DEVICE_OK != ret)
+			return ret;
+
+		/////Temperature Status//////
+		pAct = new CPropertyAction(this, &BaslerCamera::OnTemperatureStatus);
+		ret = CreateProperty("TemperatureStatus", "NA", MM::String, true, pAct);
+		vector<string> temperatureStatusVals;
+		temperatureStatusVals.push_back("OK");
+		temperatureStatusVals.push_back("Critical");
+		temperatureStatusVals.push_back("OverTemperature");
+		SetAllowedValues("TemperatureStatus", temperatureStatusVals);
+		
 		/////AutoGain//////
 		CEnumerationPtr gainAuto( nodeMap_->GetNode("GainAuto"));
 		if (IsWritable( gainAuto)) 
@@ -483,7 +501,7 @@ int BaslerCamera::Initialize()
 		//	 vals.push_back("Fast");
 		// }
 		// SetAllowedValues("SensorReadoutMode", vals);
-
+		
 		CEnumerationPtr LightSourcePreset( nodeMap_->GetNode( "LightSourcePreset"));
 		if(LightSourcePreset != NULL && IsAvailable(LightSourcePreset))
 		{
@@ -506,15 +524,16 @@ int BaslerCamera::Initialize()
 		 }
 
 		
+		/////Trigger Mode//////
 		CEnumerationPtr TriggerMode( nodeMap_->GetNode( "TriggerMode"));
 		if(IsAvailable(TriggerMode))
 		{
 			pAct = new CPropertyAction (this, &BaslerCamera::OnTriggerMode);
-			ret = CreateProperty("ExternalTrigger", "Off", MM::String, false, pAct);
+			ret = CreateProperty("TriggerMode", "Off", MM::String, false, pAct);
 			vector<string> LSPVals;
 			LSPVals.push_back("Off");
 			LSPVals.push_back("On");
-			SetAllowedValues("ExternalTrigger",LSPVals);
+			SetAllowedValues("TriggerMode",LSPVals);
 		 }
 
 
@@ -567,6 +586,38 @@ int BaslerCamera::Initialize()
 				assert(ret == DEVICE_OK);
 			}
 		}
+
+		/////Reverse X//////
+		pAct = new CPropertyAction(this, &BaslerCamera::OnReverseX);
+		ret = CreateProperty("ReverseX", "0", MM::String, false, pAct);
+		vector<string> reverseXVals;
+		reverseXVals.push_back("0");
+		reverseXVals.push_back("1");
+		SetAllowedValues("ReverseX", reverseXVals);
+
+		/////Reverse Y//////
+		pAct = new CPropertyAction(this, &BaslerCamera::OnReverseY);
+		ret = CreateProperty("ReverseY", "0", MM::String, false, pAct);
+		vector<string> reverseYVals;
+		reverseYVals.push_back("0");
+		reverseYVals.push_back("1");
+		SetAllowedValues("ReverseY", reverseYVals);
+
+		/////Set Acquisition Framerate//////
+		pAct = new CPropertyAction(this, &BaslerCamera::OnAcqFramerateEnable);
+		ret = CreateProperty("AcquisitionFramerateEnable", "0", MM::String, false, pAct);
+		vector<string> setAcqFrmVals;
+		setAcqFrmVals.push_back("0");
+		setAcqFrmVals.push_back("1");
+		SetAllowedValues("AcquisitionFramerateEnable", setAcqFrmVals);
+
+		/////Acquisition Framerate//////
+		CFloatPtr acqFramerate(nodeMap_->GetNode("AcquisitionFrameRate"));
+		acqFramerateMax_ = acqFramerate->GetMax();
+		acqFramerateMin_ = acqFramerate->GetMin();
+		pAct = new CPropertyAction(this, &BaslerCamera::OnAcqFramerate);
+		ret = CreateProperty("AcquisitionFramerate", "1.0", MM::Float, false, pAct);
+		SetPropertyLimits("AcquisitionFramerate", acqFramerateMin_, acqFramerateMax_);
 	
 
 		//// binning
@@ -1239,6 +1290,11 @@ int BaslerCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 	if (eAct == MM::AfterSet) {
 		pProp->Get(pixelType_);
 		pixelFormat->FromString(pixelType_.c_str());
+
+		CFloatPtr offset(nodeMap_->GetNode("BlackLevel"));
+		offsetMax_ = offset->GetMax();
+		offsetMin_ = offset->GetMin();
+		SetPropertyLimits(MM::g_Keyword_Offset, offsetMin_, offsetMax_);
 	} else if (eAct == MM::BeforeGet) {	
 		pixelType_.assign(pixelFormat->ToString().c_str());
 		pProp->Set(pixelType_.c_str());
@@ -1384,6 +1440,92 @@ int BaslerCamera::OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct)
         cerr << "An exception occurred." << endl
         << e.GetDescription() << endl;
     }
+	return DEVICE_OK;
+}
+
+int BaslerCamera::OnTemperature(MM::PropertyBase * pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::BeforeGet) {
+		CFloatPtr temperature(nodeMap_->GetNode("DeviceTemperature"));
+		temperature_ = temperature->GetValue();
+		pProp->Set(temperature_);
+	}
+	return DEVICE_OK;
+}
+
+int BaslerCamera::OnTemperatureStatus(MM::PropertyBase * pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::BeforeGet) {
+		CEnumerationPtr temperatureStatus(nodeMap_->GetNode("TemperatureState"));
+		temperatureStatus_.assign(temperatureStatus->ToString().c_str());
+		pProp->Set(temperatureStatus_.c_str());
+	}
+	return DEVICE_OK;
+}
+
+int BaslerCamera::OnReverseX(MM::PropertyBase * pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::AfterSet) {
+		pProp->Get(reverseX_);
+		CBooleanPtr reverseX(nodeMap_->GetNode("ReverseX"));
+		reverseX->FromString(reverseX_.c_str());
+	}
+	else if (eAct == MM::BeforeGet) {
+		CBooleanPtr reverseX(nodeMap_->GetNode("ReverseX"));
+		reverseX_.assign(reverseX->ToString().c_str());
+		pProp->Set(reverseX_.c_str());
+	}
+	return DEVICE_OK;
+}
+
+int BaslerCamera::OnReverseY(MM::PropertyBase * pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::AfterSet) {
+		pProp->Get(reverseY_);
+		CBooleanPtr reverseY(nodeMap_->GetNode("ReverseY"));
+		reverseY->FromString(reverseY_.c_str());
+	}
+	else if (eAct == MM::BeforeGet) {
+		CBooleanPtr reverseY(nodeMap_->GetNode("ReverseY"));
+		reverseY_.assign(reverseY->ToString().c_str());
+		pProp->Set(reverseY_.c_str());
+	}
+	return DEVICE_OK;
+}
+
+int BaslerCamera::OnAcqFramerateEnable(MM::PropertyBase * pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::AfterSet) {
+		pProp->Get(setAcqFrm_);
+		CBooleanPtr setAcqFrm(nodeMap_->GetNode("AcquisitionFrameRateEnable"));
+		setAcqFrm->FromString(setAcqFrm_.c_str());
+	}
+	else if (eAct == MM::BeforeGet) {
+		CBooleanPtr setAcqFrm(nodeMap_->GetNode("AcquisitionFrameRateEnable"));
+		setAcqFrm_.assign(setAcqFrm->ToString().c_str());
+		pProp->Set(setAcqFrm_.c_str());
+	}
+	return DEVICE_OK;
+}
+
+int BaslerCamera::OnAcqFramerate(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::AfterSet) {
+		pProp->Get(acqFramerate_);
+		if (acqFramerate_ > acqFramerateMax_) {
+			acqFramerate_ = acqFramerateMax_;
+		}
+		if (acqFramerate_ < acqFramerateMin_) {
+			acqFramerate_ = acqFramerateMin_;
+		}
+		CFloatPtr acqFramerate(nodeMap_->GetNode("AcquisitionFrameRate"));
+		acqFramerate->SetValue(acqFramerate_);
+	}
+	else if (eAct == MM::BeforeGet) {
+		CFloatPtr resultingFramerate(nodeMap_->GetNode("ResultingFrameRate"));
+		acqFramerate_ = resultingFramerate->GetValue();
+		pProp->Set(acqFramerate_);
+	}
 	return DEVICE_OK;
 }
 
