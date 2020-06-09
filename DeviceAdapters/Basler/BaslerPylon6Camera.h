@@ -44,16 +44,16 @@
 #include <iostream>
 
 
-
-
-
-
-
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
 //
 //#define ERR_UNKNOWN_BINNING_MODE 410
-
+enum
+{
+	ERR_SERIAL_NUMBER_REQUIRED = 20001,
+	ERR_SERIAL_NUMBER_NOT_FOUND,
+	ERR_CANNOT_CONNECT,
+};
 
 //////////////////////////////////////////////////////////////////////////////
 // Basler USB Ace camera class

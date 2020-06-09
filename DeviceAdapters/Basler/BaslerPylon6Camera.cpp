@@ -170,8 +170,42 @@ CCameraBase<BaslerCamera> (),
 {
 	// call the base class method to set-up default error codes/messages
 	InitializeDefaultErrorMessages();
+	SetErrorText(ERR_SERIAL_NUMBER_REQUIRED, "Serial number is required");
+	SetErrorText(ERR_SERIAL_NUMBER_NOT_FOUND, "No camera with the given serial number was found");
+	SetErrorText(ERR_CANNOT_CONNECT, "Cannot connect to camera; it may be in use");
+
+	CreateStringProperty("SerialNumber", "Undefined", false, 0, true);
 
 	//pre-init properties
+	PylonInitialize(); // Initialize/Terminate is reference counted by Pylon
+
+					   // Get the available cameras. TODO: This can be very slow and perhaps the
+					   // result should be cached.
+	DeviceInfoList_t devices;
+	if (CTlFactory::GetInstance().EnumerateDevices(devices) == 0)
+	{
+		AddToLog("No camera present.");
+		PylonTerminate();
+        throw RUNTIME_EXCEPTION( "No camera present.");
+	}
+
+	bool first = true;
+	for (DeviceInfoList_t::const_iterator it = devices.begin(), end = devices.end();
+		it != end;
+		++it)
+	{
+		const CDeviceInfo& device = *it;
+		String_t s = device.GetSerialNumber();
+		AddAllowedValue("SerialNumber", s.c_str());
+
+		if (first)
+		{
+			SetProperty("SerialNumber", s.c_str());
+			first = false;
+		}
+	}
+
+	PylonTerminate();
 }
 
 BaslerCamera::~BaslerCamera()
@@ -201,35 +235,31 @@ int BaslerCamera::Initialize()
 	{			
 		// Before using any pylon methods, the pylon runtime must be initialized. 
 		PylonInitialize();
-		 // Get the transport layer factory.
-        CTlFactory& tlFactory = CTlFactory::GetInstance();
-		initialized_= false;
-
-        // Get all attached devices and exit application if no device is found.
-        DeviceInfoList_t devices;
-        if ( tlFactory.EnumerateDevices(devices) == 0 )
-        {
-			AddToLog("No camera present.");
-            throw RUNTIME_EXCEPTION( "No camera present.");
-        }
 		
-		if(devices.size() == 1)
-		{
-			camera_ = new CBaslerUniversalInstantCamera(CTlFactory::GetInstance().CreateFirstDevice()); // returns a pointer to the device
-			initialized_ = true;
-		}
+		char serialNumber[MM::MaxStrLength];
+		GetProperty("SerialNumber", serialNumber);
+		if (strlen(serialNumber) == 0 || strcmp(serialNumber, "Undefined") == 0)
+			return ERR_SERIAL_NUMBER_REQUIRED;
+
+		CDeviceInfo deviceInfo;
+		deviceInfo.SetSerialNumber(String_t(serialNumber));
+		
+		// Get the transport layer factory.
+		CTlFactory& tlFactory = CTlFactory::GetInstance();
+		initialized_ = false;
+		
+		// This checks, among other things, that the camera is not already in use.
+		// Without that check, the following CreateDevice() may crash on duplicate
+		// serial number. Unfortunately, this call is slow.
+		if (!tlFactory.IsDeviceAccessible(deviceInfo))
+			return ERR_CANNOT_CONNECT;
+
+		IPylonDevice* device = tlFactory.CreateDevice(deviceInfo);
+		if (!device)
+			return ERR_CANNOT_CONNECT;
 		else
-		{
-			for (DeviceInfoList_t::iterator it = devices.begin(); it != devices.end(); ++it)
-			{
-				if(tlFactory.IsDeviceAccessible(*it))
-				{
-				  camera_ = new CBaslerUniversalInstantCamera(CTlFactory::GetInstance().CreateFirstDevice(*it));
-				  initialized_ = true;
-				  break;
-				}
-			}	
-		}
+			camera_ = new CBaslerUniversalInstantCamera(device);
+			initialized_ = true;
 
 		if(!initialized_)
 		{
@@ -253,6 +283,11 @@ int BaslerCamera::Initialize()
 		
 		// Description
 		ret = CreateProperty(MM::g_Keyword_Description, "Basler Camera device adapter", MM::String, true);
+		if (DEVICE_OK != ret)
+			return ret;
+		
+		// Serial Number
+		ret = CreateProperty(MM::g_Keyword_CameraID, String_t(serialNumber), MM::String, true);
 		if (DEVICE_OK != ret)
 			return ret;
 
