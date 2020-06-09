@@ -35,7 +35,7 @@ import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 public final class CenterAndDragListener  {
 
    private final Studio studio_;
-   private XYNavigator xyNavigator_;
+   private final XYNavigator xyNavigator_;
    private boolean active_;
    private int lastX_, lastY_;
 
@@ -115,11 +115,7 @@ public final class CenterAndDragListener  {
 
    @Subscribe
    public void onActiveChange (MouseMovesStageStateChangeEvent mouseMovesStageStateChangeEvent) {
-      if (mouseMovesStageStateChangeEvent.getIsEnabled()) {
-         active_ = true;
-      } else {
-         active_ = false;
-      }
+       active_ = mouseMovesStageStateChangeEvent.getIsEnabled();
    }
 
 }
