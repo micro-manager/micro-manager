@@ -46,6 +46,7 @@ sma : 06.05.2019 Improvement in Gain range handling. In some camera model the ga
 sma : 22.05.2019 prepared for Mac build
 sma : 06.03.2020 pylon version has been switched to V 6.1
 sma : 06.03.2020 camera class has been switched to CBaslerUniversalInstantCamera but not all code lines rewritten. In future you profit from the advantage of CBaslerUniversalInstantCamera for sure.
+iei : 06.08.2020 add support for additional camera properties; initialize camera by serial number
 
 */
 
@@ -572,8 +573,7 @@ int BaslerCamera::Initialize()
 		 }
 
 
-		////Shutter mode//////
-	
+		////Shutter mode//////	
 		CEnumerationPtr shutterMode( nodeMap_->GetNode( "ShutterMode"));
 		if(IsAvailable(shutterMode))
 		{
