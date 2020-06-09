@@ -63,7 +63,7 @@ public:
 	//////////////////////////////////////////////////////////////
 	int                  SnapImage();
 	const unsigned char* GetImageBuffer();
-	unsigned             GetNumberOfComponents()  const { return nComponents_;};
+	unsigned             GetNumberOfComponents()  const { return nComponents_; };
 	//////////////////////////////////////////////////////////////
 	unsigned GetImageWidth() const;
 	unsigned GetImageHeight() const;
@@ -81,7 +81,7 @@ public:
 	//////////////////////////////////////////////////////////////
 	int      GetBinning() const;
 	int      SetBinning(int binSize);
-	int      IsExposureSequenceable(bool& seq) const {seq = false; return DEVICE_OK;}
+	int      IsExposureSequenceable(bool& seq) const { seq = false; return DEVICE_OK; }
 	//////////////////////////////////////////////////////////////
 	bool     SupportsMultiROI();
 	bool     IsMultiROISet();
@@ -97,13 +97,13 @@ public:
 	int      CaptureImage();
 	int      RunSequenceOnThread(MM::MMTime startTime);
 	bool     IsCapturing();
-	void     OnThreadExiting() throw(); ;
+	void     OnThreadExiting() throw();;
 	//////////////////////////////////////////////////////////////
 	// action interface
-   int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnPropertyChange(MM::PropertyBase* pProp, MM::ActionType eAct);
 	XimeaParam* GetXimeaParam(string param_name, bool use_xiapi_param_name = false);
-	
+
 private:
 
 	void   UpdateRoiParams();
@@ -141,7 +141,7 @@ private:
 
 class XiSequenceThread : public MMDeviceThreadBase
 {
-	enum { default_numImages=1, default_intervalMS = 100 };
+	enum { default_numImages = 1, default_intervalMS = 100 };
 
 public:
 
@@ -153,12 +153,12 @@ public:
 	void Suspend();
 	bool IsSuspended();
 	void Resume();
-	double GetIntervalMs(){return intervalMs_;}
-	void SetLength(long images) {numImages_ = images;}
-	long GetLength() const {return numImages_;}
-	long GetImageCounter(){return imageCounter_;}
-	MM::MMTime GetStartTime(){return startTime_;}
-	MM::MMTime GetActualDuration(){return actualDuration_;}
+	double GetIntervalMs(){ return intervalMs_; }
+	void SetLength(long images) { numImages_ = images; }
+	long GetLength() const { return numImages_; }
+	long GetImageCounter(){ return imageCounter_; }
+	MM::MMTime GetStartTime(){ return startTime_; }
+	MM::MMTime GetActualDuration(){ return actualDuration_; }
 
 private:
 
@@ -241,19 +241,19 @@ public:
 	}
 
 	void SetName(string name){ display_name = name; }
-	void SetXiParamName(string name){xiapi_param_name = name;}
+	void SetXiParamName(string name){ xiapi_param_name = name; }
 	void SetAppDefault(string val){ app_default = val; };
 	void SetVisibility(string val){ visiblility = val; };
 	void SetParamType(type_t type){ param_type = type; };
 	void SetAccessType(string access)
 	{
-		if(access == FEAT_ACCESS_RW)      access_type = access_readwrite;
-		else if(access == FEAT_ACCESS_RO) access_type = access_read;
-		else if(access == FEAT_ACCESS_WO) access_type = access_write;
+		if (access == FEAT_ACCESS_RW)      access_type = access_readwrite;
+		else if (access == FEAT_ACCESS_RO) access_type = access_read;
+		else if (access == FEAT_ACCESS_WO) access_type = access_write;
 		else                              access_type = access_undef;
 	};
 
-	string GetName () { return display_name; }
+	string GetName() { return display_name; }
 	string GetXiParamName(){ return xiapi_param_name; };
 	string GetAppDefault(){ return app_default; };
 	string GetVisibility(){ return visiblility; };
@@ -265,13 +265,13 @@ public:
 
 	void AddEnumValue(string name, int value)
 	{
-		enum_values.insert(std::pair<string, int>(name, value) );
+		enum_values.insert(std::pair<string, int>(name, value));
 	}
-	int CountEnumEntries(){ return (int) enum_values.size(); };
+	int CountEnumEntries(){ return (int)enum_values.size(); };
 	vector<string> GetEnumValues()
 	{
 		vector<string> vals;
-		for (std::map<string,int>::iterator it=enum_values.begin(); it!=enum_values.end(); ++it)
+		for (std::map<string, int>::iterator it = enum_values.begin(); it != enum_values.end(); ++it)
 		{
 			vals.push_back(it->first);
 		}
@@ -280,7 +280,7 @@ public:
 	int GetEnumValue(string val)
 	{
 		int value = 0;
-		if ( enum_values.find(val) == enum_values.end() )
+		if (enum_values.find(val) == enum_values.end())
 		{
 			// not found
 			throw(std::exception("Value was not found among enumerators"));
@@ -294,9 +294,9 @@ public:
 	string GetEnumName(int value)
 	{
 		string str_val = "";
-		for (map<string,int>::iterator it= enum_values.begin(); it!= enum_values.end(); ++it)
+		for (map<string, int>::iterator it = enum_values.begin(); it != enum_values.end(); ++it)
 		{
-			if(value == it->second)
+			if (value == it->second)
 			{
 				str_val = it->first;
 				break;
@@ -306,9 +306,9 @@ public:
 	}
 	void RemoveEnumItem(string val)
 	{
-		std::map<string,int>::iterator it;
+		std::map<string, int>::iterator it;
 		it = enum_values.find(val);
-		if(it != enum_values.end())
+		if (it != enum_values.end())
 		{
 			enum_values.erase(val);
 		}
