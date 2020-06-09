@@ -18,6 +18,7 @@ tags
 *.vcproj.*.user
 *.vcxproj.user
 ipch/
+*.vs
 
 # GNU build system
 *.la
