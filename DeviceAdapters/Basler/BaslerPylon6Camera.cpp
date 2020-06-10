@@ -304,9 +304,11 @@ int BaslerCamera::Initialize()
 		//Sensor size
 		nodeMap_ = &camera_->GetNodeMap();
 		const CIntegerPtr width = nodeMap_->GetNode("Width");
-		maxWidth_ = (unsigned int) width->GetMax();
+		// maxWidth_ = (unsigned int) width->GetMax();
+		maxWidth_ = (unsigned int) CIntegerPtr(nodeMap_->GetNode("WidthMax"))->GetValue();
 		const CIntegerPtr height = nodeMap_->GetNode("Height");
-		maxHeight_ = (unsigned int) height->GetMax();
+		// maxHeight_ = (unsigned int) height->GetMax();
+		maxHeight_ = (unsigned int) CIntegerPtr(nodeMap_->GetNode("HeightMax"))->GetValue();
 
 
 		if(IsAvailable(width))
