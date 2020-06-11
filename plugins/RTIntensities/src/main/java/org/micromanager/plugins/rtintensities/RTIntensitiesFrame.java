@@ -1,4 +1,4 @@
-/**
+/*
  * RTIntensitiesFrame.java
  * <p>
  * Based on ExampleFrame, shows RealTime intensity plots during live views or acquisitions.
@@ -19,22 +19,17 @@ package org.micromanager.plugins.rtintensities;
 
 import com.google.common.eventbus.Subscribe;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Ellipse2D;
-import java.awt.geom.Rectangle2D;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Shape;
-import java.awt.List;
 import java.awt.Paint;
 import java.awt.BasicStroke;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Hashtable;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -43,13 +38,9 @@ import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.JOptionPane;
 import javax.swing.JCheckBox;
-import javax.swing.Box;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.data.Datastore;
-import org.micromanager.data.DataProvider;
-import org.micromanager.data.Image;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
@@ -58,26 +49,28 @@ import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+
+import org.micromanager.data.DataProvider;
+import org.micromanager.data.Image;
 import org.micromanager.Studio;
 import org.micromanager.data.DataProviderHasNewImageEvent;
-import org.micromanager.data.ImageOverwrittenEvent;
+import org.micromanager.display.DataViewer;
 import org.micromanager.events.AcquisitionStartedEvent;
 import org.micromanager.events.LiveModeEvent;
-import org.micromanager.display.DisplayWindow;
 
 import ij.gui.Roi;
 import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
+
 import org.micromanager.internal.utils.WindowPositioning;
 
 public class RTIntensitiesFrame extends JFrame {
-	private static final int MAXrois = 100;
+	private static final int MAX_ROIS = 100;
 	
    private final Studio studio_;
    // A reference to the event handling (only?) instance
    private static Object RThandler_ = null;
    private final SimpleDateFormat dateFormat_;
-   private DisplayWindow window_ = null;
    private DataProvider dataProvider_;
    // Only one chart for the time being
    private ChartFrame graphFrame_ = null;
@@ -89,10 +82,10 @@ public class RTIntensitiesFrame extends JFrame {
    private boolean delayedStart_ = false;
    // Ratio plot memory
    private boolean ratio_ = false;
-   private double[] last_ = new double[MAXrois];
+   private double[] last_ = new double[MAX_ROIS];
    // This is our local cache ...
    private int ROIs_ = 0;
-   private Roi[] roi_ = new Roi[MAXrois];
+   private Roi[] roi_ = new Roi[MAX_ROIS];
    // of the manager kept ROIs
    private RoiManager manager_;
    private int imagesReceived_ = 0;
@@ -104,7 +97,6 @@ public class RTIntensitiesFrame extends JFrame {
    // how many extra data do we need for a time point
    private int missing_ = 0;
    private JLabel title_;
-   private XYSeriesCollection dataset_;
    XYSeries[] data_ = null;
    // Doing background "equalization" ?
    private int backgroundeq_ = -1;
@@ -134,85 +126,75 @@ public class RTIntensitiesFrame extends JFrame {
 
       // Shortcut to ROI Manager
       JButton managerButton = new JButton("ROI Manager");
-      managerButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            if (manager_ == null) {
-               manager_ = new RoiManager();
-            }
-            manager_.setVisible(true);
+      managerButton.addActionListener(e -> {
+         if (manager_ == null) {
+            manager_ = new RoiManager();
          }
+         manager_.setVisible(true);
       });
       super.add(managerButton, "split, span");
 
       // Create a graph and start plotting, or tell user what's missing for so doing
       JButton startButton = new JButton("Plot");
-      startButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            // Active window ?
-            window_ = studio.displays().getCurrentWindow();
-            if (window_ == null) {
-               title_.setText("You need an open window (Snap/Live).");
-               return;
-            }
-            dataProvider_ = window_.getDataProvider();
-            channels_ = dataProvider_.getAxisLength("channel");
-            // At least one ROI defined ?
-            if (manager_ == null) {
-               title_.setText("Please setup ROI(s).");
-               return;
-            }
-            ROIs_ = manager_.getCount();
-            if (ROIs_ == 0) {
-               title_.setText("Please setup ROI(s).");
-               return;
-            }
-            // We are all set ?
-         	setupPlot();
+      startButton.addActionListener(e -> {
+         // Active window ?
+         DataViewer viewer = studio.displays().getActiveDataViewer();
+         if (viewer == null) {
+            title_.setText("You need an open window (Snap/Live).");
+            return;
          }
+         dataProvider_ = viewer.getDataProvider();
+         channels_ = dataProvider_.getAxisLength("channel");
+         // At least one ROI defined ?
+         if (manager_ == null) {
+            title_.setText("Please setup ROI(s).");
+            return;
+         }
+         ROIs_ = manager_.getCount();
+         if (ROIs_ == 0) {
+            title_.setText("Please setup ROI(s).");
+            return;
+         }
+         // We are all set ?
+         setupPlot();
       });
       startButton.setEnabled(true);
       super.add(startButton, "span");
       
       // Define custom settings
       JButton settingsButton = new JButton("Settings");
-      settingsButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
+      settingsButton.addActionListener(e -> {
+         JTextField period = new JTextField(5);
+         period.setText(Integer.toString(minPeriod_));
+         JTextField maxPoints = new JTextField(5);
+         maxPoints.setText(Integer.toString(maxPoints_));
+         JCheckBox ratioPlot = new JCheckBox();
+         ratioPlot.setSelected(ratio_);
+         JCheckBox autoPlot = new JCheckBox();
+         autoPlot.setSelected(autoStart_);
 
-         	JTextField period = new JTextField(5);
-         	period.setText(new Integer(minPeriod_).toString());
-         	JTextField maxPoints = new JTextField(5);
-         	maxPoints.setText(new Integer(maxPoints_).toString());
-         	JCheckBox ratioPlot = new JCheckBox();
-         	ratioPlot.setSelected(ratio_);
-         	JCheckBox autoPlot = new JCheckBox();
-         	autoPlot.setSelected(autoStart_);
-         	
-         	JPanel settingsPanel = new JPanel();
-         	settingsPanel.setLayout(new MigLayout("fill, insets 2, gap 2, flowx"));
-         	
-         	settingsPanel.add(new JLabel("min refresh period(ms):"));
-         	settingsPanel.add(period, "wrap");
-         	
-         	settingsPanel.add(new JLabel("max data points:"));
-         	settingsPanel.add(maxPoints, "wrap");
-         	
-         	settingsPanel.add(new JLabel("2 channel ratio (1/2) plot:"));
-         	settingsPanel.add(ratioPlot, "wrap");
-         	
-         	settingsPanel.add(new JLabel("autostart plot:"));
-         	settingsPanel.add(autoPlot, "wrap");
+         JPanel settingsPanel = new JPanel();
+         settingsPanel.setLayout(new MigLayout("fill, insets 2, gap 2, flowx"));
 
-         	int result = JOptionPane.showConfirmDialog(null, settingsPanel, 
-               "Plot settings", JOptionPane.OK_CANCEL_OPTION);
-         	if (result == JOptionPane.OK_OPTION) {
-         		minPeriod_ = new Integer(period.getText()).intValue();
-         		maxPoints_ = new Integer(maxPoints.getText()).intValue();
-         		ratio_ = ratioPlot.isSelected();
-         		autoStart_ = autoPlot.isSelected();
-         	}
+         settingsPanel.add(new JLabel("min refresh period(ms):"));
+         settingsPanel.add(period, "wrap");
+
+         settingsPanel.add(new JLabel("max data points:"));
+         settingsPanel.add(maxPoints, "wrap");
+
+         settingsPanel.add(new JLabel("2 channel ratio (1/2) plot:"));
+         settingsPanel.add(ratioPlot, "wrap");
+
+         settingsPanel.add(new JLabel("autostart plot:"));
+         settingsPanel.add(autoPlot, "wrap");
+
+         int result = JOptionPane.showConfirmDialog(null, settingsPanel,
+            "Plot settings", JOptionPane.OK_CANCEL_OPTION);
+         if (result == JOptionPane.OK_OPTION) {
+            minPeriod_ = new Integer(period.getText());
+            maxPoints_ = new Integer(maxPoints.getText());
+            ratio_ = ratioPlot.isSelected();
+            autoStart_ = autoPlot.isSelected();
          }
       });
       settingsButton.setEnabled(true);
@@ -253,11 +235,11 @@ public class RTIntensitiesFrame extends JFrame {
    	if (!event.getIsOn()) {
    		return;
    	}
-   	window_ = studio_.displays().getCurrentWindow();
-      if (window_ == null) {
+      DataViewer viewer = studio_.displays().getActiveDataViewer();
+      if (viewer == null) {
       	return;
       }
-      dataProvider_ = window_.getDataProvider();
+      dataProvider_ = viewer.getDataProvider();
       channels_ = dataProvider_.getAxisLength("channel");
       ROIs_ = manager_.getCount();
       if (ROIs_ <= 0) {
@@ -269,11 +251,11 @@ public class RTIntensitiesFrame extends JFrame {
    // Actual new plot setup work
    private void setupPlot() {
       // Hard limit of 100 ROIs and 200
-      if (ROIs_ > MAXrois) {
-         ROIs_ = MAXrois;
+      if (ROIs_ > MAX_ROIS) {
+         ROIs_ = MAX_ROIS;
       }
       // Copy ROIs, determine if doing background "equalization" ?
-      Roi managerRois[] = manager_.getRoisAsArray();
+      Roi[] managerRois = manager_.getRoisAsArray();
       for (int i = 0; i < ROIs_; i++) {
          roi_[i] = (Roi)managerRois[i].clone();
       	if (roi_[i].getName() != null && roi_[i].getName().startsWith("bg")) {
@@ -310,7 +292,7 @@ public class RTIntensitiesFrame extends JFrame {
    	data_ = new XYSeries[channels_ * ROIs_];
       imagesReceived_ = 0; // new plot
       lastElapsedTimeMs_ = 0;
-      dataset_ = new XYSeriesCollection();
+      XYSeriesCollection dataset_ = new XYSeriesCollection();
      	for (int i = 0; i < ROIs_; i++) {
       	if (!roi_[i].isCursor()) {
       		for (int p = 0; p < plots_; p++) {
@@ -431,7 +413,7 @@ public class RTIntensitiesFrame extends JFrame {
 	   					channel = 0;
 	   					v = last_[i] / (v + 0.000001); //Check!
 	   				}
-	   				data_[channel + idx * plots_].add(elapsedTimeMs, v, (idx < ROIs_ - 1)?false:true);
+	   				data_[channel + idx * plots_].add(elapsedTimeMs, v, idx >= ROIs_ - 1);
 	   				idx++; // Background ROIs do not have data series, just one at the end
 	   			}
 	   		}
