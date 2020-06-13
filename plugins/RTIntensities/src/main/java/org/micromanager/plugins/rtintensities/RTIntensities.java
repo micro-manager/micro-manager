@@ -1,18 +1,4 @@
-/**
- * A very simple Micro-Manager plugin, intended to be used as an example for
- * developers wishing to create their own, actually useful plugins. This one
- * demonstrates performing various common tasks, but does not do anything
- * really useful.
- *
- * Copy this code to a location of your choice, change the name of the project
- * (and the classes), build the jar file and copy it to the mmplugins folder
- * in your Micro-Manager directory.
- *
- * Once you have it loaded and running, you can attach the NetBean debugger
- * and use all of NetBean's functionality to debug your code.  If you make a
- * generally useful plugin, please do not hesitate to send a copy to
- * info@micro-managaer.org for inclusion in the Micro-Manager source code
- * repository.
+/*
  *
  * Nico Stuurman, 2012
  * copyright University of California
@@ -93,11 +79,11 @@ public class RTIntensities implements SciJavaPlugin, MenuPlugin {
 
    @Override
    public String getVersion() {
-      return "2.0";
+      return "1.0";
    }
 
    @Override
    public String getCopyright() {
-      return "University of California et. al., 2012-2020";
+      return "Carlos Mendioroz and University of California, 2020";
    }
 }

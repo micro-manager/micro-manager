@@ -19,6 +19,7 @@ package org.micromanager.plugins.rtintensities;
 
 import com.google.common.eventbus.Subscribe;
 
+import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Ellipse2D;
@@ -116,6 +117,8 @@ public class RTIntensitiesFrame extends JFrame {
       dateFormat_ = new SimpleDateFormat(ABSOLUTE_FORMAT_STRING);
       super.setLocation(100, 100); // Default location
       WindowPositioning.setUpLocationMemory(this, RTIntensitiesFrame.class, "Main");
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
 
       super.setLayout(new MigLayout("fill, insets 2, gap 2, flowx"));
 
@@ -188,7 +191,7 @@ public class RTIntensitiesFrame extends JFrame {
          settingsPanel.add(new JLabel("autostart plot:"));
          settingsPanel.add(autoPlot, "wrap");
 
-         int result = JOptionPane.showConfirmDialog(null, settingsPanel,
+         int result = JOptionPane.showConfirmDialog(this, settingsPanel,
             "Plot settings", JOptionPane.OK_CANCEL_OPTION);
          if (result == JOptionPane.OK_OPTION) {
             minPeriod_ = new Integer(period.getText());
@@ -276,7 +279,7 @@ public class RTIntensitiesFrame extends JFrame {
          	plots_ = 1;
          	channels_ = 2;
          	missing_ = 1; // wait for pairs of data points
-         	plotmode = "Channel 1 over 2 intensity ratio";
+         	plotmode = "Channel 1/2 ratio";
    		} else {
          	plots_ = channels_; 
          	missing_ = channels_ - 1;
@@ -315,7 +318,8 @@ public class RTIntensitiesFrame extends JFrame {
      		graphFrame_.setVisible(false);
      		graphFrame_.dispose();
      	}
-     	graphFrame_ = plotData(plotmode + " of " + dataProvider_.getName(), dataset_, "Time(ms)", "Value", plots_, backgroundeq_, 100, 100);
+     	graphFrame_ = plotData(plotmode + " of " + dataProvider_.getName(),
+              dataset_, "Time(ms)", "Value", plots_, backgroundeq_, 100, 100);
      	graphFrame_.addWindowListener(new WindowAdapter() {
    		public void windowClosing(WindowEvent e) {
    			graphFrame_ = null;
@@ -340,7 +344,7 @@ public class RTIntensitiesFrame extends JFrame {
    	// Kind of ugly way to autostart on new acquisition, new acquisition event seems too early
    	if (delayedStart_) {
          dataProvider_ = dp;
-         channels_ = dataProvider_.getAxisLength("channel");
+         channels_ = dataProvider_.getSummaryMetadata().getChannelNameList().size();
          setupPlot();
    	}
       if (!dp.equals(dataProvider_)) {
@@ -508,6 +512,8 @@ public class RTIntensitiesFrame extends JFrame {
       WindowPositioning.setUpBoundsMemory(graphFrame, RTIntensities.class, "plot");
       WindowPositioning.cascade(graphFrame, RTIntensities.class);
       graphFrame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+      graphFrame.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              RTIntensitiesFrame.class.getResource("/org/micromanager/icons/microscope.gif")));
       graphFrame.setVisible(true);
       return graphFrame;
    }
