@@ -337,6 +337,10 @@ public interface Coords {
    @Deprecated
    public boolean matches(Coords alt);
 
+   /**
+    * Provides a Builder pre-loaded with a copy of this Coords
+    * @return copyBuilder
+    */
    public Builder copyBuilder();
 
    /**
@@ -346,6 +350,21 @@ public interface Coords {
    @Deprecated
    public CoordsBuilder copy();
 
+
+   /**
+    * Removes the axes provided as varargs from this Coord
+    * @param axes One or more Strings naming the axes to be removed
+    * @return COpy of this Coords without the listed axes
+    */
    Coords copyRemovingAxes(String... axes);
+
+   /**
+    * Name of this function is very unclear.  It seems that its functionality is
+    * to provide a copy of the given Coords, but only for the axes provided
+    * in the input strings.
+    * A more useful name may be: copyProvidedAxes, or copyAxes
+    * @param axes Names of axes to be represented in the output
+    * @return Copy of this Coords, but only with the subset of axes provided in the axes param
+    */
    Coords copyRetainingAxes(String... axes);
 }
