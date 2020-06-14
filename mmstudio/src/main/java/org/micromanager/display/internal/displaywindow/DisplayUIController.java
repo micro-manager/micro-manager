@@ -1455,7 +1455,11 @@ public final class DisplayUIController implements Closeable, WindowListener,
                fromAxesAndImages(center.x, center.y,
                      new String[] { Coords.CHANNEL }, images));
          } catch (IllegalArgumentException iea) {
-            ReportingUtils.logError(iea);
+            String coordString = "";
+            for (Image img : images) {
+               coordString += img.getCoords().toString() + " ";
+            }
+            ReportingUtils.logError("Request to display mousePixel Info failed for these images : " + coordString);
             displayController_.postDisplayEvent(
                DataViewerMousePixelInfoChangedEvent.createUnavailable());
          }
