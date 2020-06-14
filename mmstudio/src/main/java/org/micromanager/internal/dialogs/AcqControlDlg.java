@@ -902,10 +902,12 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
          try {
             String channelGroup = mmStudio_.core().getChannelGroup();
             String channel = mmStudio_.core().getCurrentConfig(channelGroup);
-            double exposure = model_.getChannelExposureTime(
-                  channelGroup, channel, 10.0);
-            mmStudio_.app().setChannelExposureTime(channelGroup, channel,
-                  exposure);
+            if (model_.hasChannel(channelGroup, channel)) {
+               double exposure = model_.getChannelExposureTime(
+                       channelGroup, channel, 10.0);
+               mmStudio_.app().setChannelExposureTime(channelGroup, channel,
+                       exposure);
+            }
          }
          catch (Exception e) {
             mmStudio_.logs().logError(e, "Error getting channel exposure time");
