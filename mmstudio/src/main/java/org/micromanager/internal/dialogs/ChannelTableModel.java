@@ -333,6 +333,19 @@ public final class ChannelTableModel extends AbstractTableModel  {
       }
    }
 
+   public boolean hasChannel(String channelGroup, String channel) {
+      if (!channelGroup.equals(acqEng_.getChannelGroup())) {
+         return false;
+      }
+      for (int row = 0; row < channels_.size(); row++) {
+         ChannelSpec cs = channels_.get(row);
+         if (cs.config().equals(channel)) {
+            return true;
+         }
+      }
+      return false;
+   }
+
    /**
     * Returns the exposure time of the given preset
     *
