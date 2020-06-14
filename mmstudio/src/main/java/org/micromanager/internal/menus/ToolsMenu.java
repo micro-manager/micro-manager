@@ -28,7 +28,6 @@ public final class ToolsMenu {
 
    private static final String MOUSE_MOVES_STAGE = "whether or not the hand tool can be used to move the stage";
 
-   private final JMenu toolsMenu_;
    private final JMenu quickAccessMenu_;
    private JCheckBoxMenuItem centerAndDragMenuItem_;
 
@@ -41,7 +40,7 @@ public final class ToolsMenu {
       core_ = mmStudio_.core();
       quickAccessMenu_ = new JMenu("Quick Access Panels");
 
-      toolsMenu_ = GUIUtils.createMenuInMenuBar(menuBar, "Tools");
+      JMenu toolsMenu_ = GUIUtils.createMenuInMenuBar(menuBar, "Tools");
 
       GUIUtils.addMenuItem(toolsMenu_, "Refresh GUI",
               "Refresh all GUI controls directly from the hardware", () -> {
@@ -53,31 +52,26 @@ public final class ToolsMenu {
       toolsMenu_.addSeparator();
 
       GUIUtils.addMenuItem(toolsMenu_, "Script Panel...",
-              "Open Micro-Manager script editor window", () -> {
-                 mmStudio_.showScriptPanel();
-              });
+              "Open Micro-Manager script editor window",
+              mmStudio_::showScriptPanel);
 
       populateQuickAccessMenu();
       toolsMenu_.add(quickAccessMenu_);
 
       GUIUtils.addMenuItem(toolsMenu_, "Shortcuts...",
               "Create keyboard shortcuts to activate image acquisition, mark positions, or run custom scripts",
-              () -> {
-                 HotKeysDialog hk = new HotKeysDialog();
-              });
+              HotKeysDialog::new);
 
       GUIUtils.addMenuItem(toolsMenu_, "Messages...",
-              "Show the Messages window", () -> {
-                 ((DefaultAlertManager) mmStudio_.alerts()).alertsWindow().showWithoutFocus();
-              },
+              "Show the Messages window", () -> ((DefaultAlertManager)
+                      mmStudio_.alerts()).alertsWindow().showWithoutFocus(),
               "bell.png");
 
       toolsMenu_.addSeparator();
 
       GUIUtils.addMenuItem(toolsMenu_, "Stage Control...",
-              "Control the stage position with a virtual joystick", () -> {
-                 StageControlFrame.showStageControl(mmStudio_);
-              },
+              "Control the stage position with a virtual joystick",
+               () -> StageControlFrame.showStageControl(mmStudio_),
               "move.png");
 
       centerAndDragMenuItem_ = GUIUtils.addCheckBoxMenuItem(toolsMenu_,
@@ -96,17 +90,15 @@ public final class ToolsMenu {
               "/org/micromanager/icons/" + icon));
 
       GUIUtils.addMenuItem(toolsMenu_, "Stage Position List...",
-              "Open the stage position list window", () -> {
-                 mmStudio_.app().showPositionList();
-              },
+              "Open the stage position list window",
+              () -> mmStudio_.app().showPositionList(),
               "application_view_list.png");
 
       toolsMenu_.addSeparator();
 
       GUIUtils.addMenuItem(toolsMenu_, "Multi-Dimensional Acquisition...",
-              "Open multi-dimensional acquisition setup window", () -> {
-                 mmStudio_.openAcqControlDialog();
-              },
+              "Open multi-dimensional acquisition setup window",
+              mmStudio_::openAcqControlDialog,
               "film.png");
 
       toolsMenu_.addSeparator();
@@ -134,9 +126,8 @@ public final class ToolsMenu {
    private void populateQuickAccessMenu() {
       quickAccessMenu_.removeAll();
       GUIUtils.addMenuItem(quickAccessMenu_, "Create New Panel",
-              "Create a new Quick Access Panel, for easy access to commonly-used controls.", () -> {
-                 ((DefaultQuickAccessManager) mmStudio_.quickAccess()).createNewPanel();
-              });
+              "Create a new Quick Access Panel, for easy access to commonly-used controls.",
+              () -> ((DefaultQuickAccessManager) mmStudio_.quickAccess()).createNewPanel());
 
       final Map<String, JFrame> titleToFrame = mmStudio_.quickAccess().getPanels();
       ArrayList<String> titles = new ArrayList<>(titleToFrame.keySet());
@@ -145,23 +136,20 @@ public final class ToolsMenu {
       JMenu deleteMenu = new JMenu("Delete...");
       deleteMenu.setEnabled(titles.size() > 0);
       for (final String title : titles) {
-         GUIUtils.addMenuItem(deleteMenu, title, "Delete this panel", () -> {
-            ((DefaultQuickAccessManager) mmStudio_.quickAccess()).promptToDelete(
-                    titleToFrame.get(title));
-         });
+         GUIUtils.addMenuItem(deleteMenu, title, "Delete this panel",
+                 () -> ((DefaultQuickAccessManager)
+                         mmStudio_.quickAccess()).promptToDelete(titleToFrame.get(title)));
       }
       quickAccessMenu_.add(deleteMenu);
       quickAccessMenu_.addSeparator();
       JMenuItem show = GUIUtils.addMenuItem(quickAccessMenu_, "Show all",
-              "Show all Quick Access Panels; create a new one if necessary", () -> {
-                 mmStudio_.quickAccess().showPanels();
-              });
+              "Show all Quick Access Panels; create a new one if necessary",
+              () -> mmStudio_.quickAccess().showPanels());
       show.setEnabled(titles.size() > 0);
 
       for (final String title : titles) {
-         GUIUtils.addMenuItem(quickAccessMenu_, title, "", () -> {
-            titleToFrame.get(title).setVisible(true);
-         });
+         GUIUtils.addMenuItem(quickAccessMenu_, title, "",
+                 () -> titleToFrame.get(title).setVisible(true));
       }
 
       quickAccessMenu_.addSeparator();

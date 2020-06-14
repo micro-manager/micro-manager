@@ -22,7 +22,6 @@ import com.google.common.eventbus.Subscribe;
 import mmcorej.CMMCore;
 import org.micromanager.Studio;
 import org.micromanager.display.internal.event.DisplayKeyPressEvent;
-import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 import java.awt.event.KeyEvent;

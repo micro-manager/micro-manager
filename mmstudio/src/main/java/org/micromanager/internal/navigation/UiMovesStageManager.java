@@ -25,7 +25,6 @@ import org.micromanager.Studio;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
-import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 import org.micromanager.internal.MMStudio;
 
 /**
