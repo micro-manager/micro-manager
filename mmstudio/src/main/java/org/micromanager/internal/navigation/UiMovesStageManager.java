@@ -55,6 +55,7 @@ public final class UiMovesStageManager {
     * @param display Display to which we will listen for events
     */
    public void activate(final DisplayController display) {
+      deActivate(display); // ensure that there will always be only one listener per display
       CenterAndDragListener dragListener = null;
       ZWheelListener wheelListener = null;
       XYZKeyListener keyListener = null;

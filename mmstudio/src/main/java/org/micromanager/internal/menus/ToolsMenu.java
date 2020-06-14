@@ -84,12 +84,16 @@ public final class ToolsMenu {
               "Mouse Moves Stage (Use Hand Tool)",
               "When enabled, double clicking or dragging in the snap/live\n"
               + "window moves the XY-stage. Requires the hand tool.", () -> {
-                 mmStudio_.updateCenterAndDragListener(
-                         centerAndDragMenuItem_.isSelected());
+                 boolean state = centerAndDragMenuItem_.isSelected();
+                 mmStudio_.updateCenterAndDragListener(state);
+                 String icon = state ? "move_hand_on.png" : "move_hand.png";
+                 centerAndDragMenuItem_.setIcon(IconLoader.getIcon(
+                         "/org/micromanager/icons/" + icon));
               },
-              getMouseMovesStage());
-      centerAndDragMenuItem_.setIcon(
-              IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
+              getMouseMovesStage() );
+      String icon = getMouseMovesStage() ? "move_hand_on.png" : "move_hand.png";
+      centerAndDragMenuItem_.setIcon(IconLoader.getIcon(
+              "/org/micromanager/icons/" + icon));
 
       GUIUtils.addMenuItem(toolsMenu_, "Stage Position List...",
               "Open the stage position list window", () -> {
@@ -189,6 +193,9 @@ public final class ToolsMenu {
 
    @Subscribe
    public void onMouseMovesStage(MouseMovesStageStateChangeEvent event) {
+      String icon = event.getIsEnabled() ? "move_hand_on.png" : "move_hand.png";
+      centerAndDragMenuItem_.setIcon(IconLoader.getIcon(
+              "/org/micromanager/icons/" + icon));
       centerAndDragMenuItem_.setSelected(event.getIsEnabled());
    }
 

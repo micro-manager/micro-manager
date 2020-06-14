@@ -972,8 +972,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       isClickToMoveEnabled_ = isEnabled;
       if (isEnabled) {
          IJ.setTool(Toolbar.HAND);
-         mmMenuBar_.getToolsMenu().setMouseMovesStage(isEnabled);
       }
+      mmMenuBar_.getToolsMenu().setMouseMovesStage(isEnabled);
       events().post(new MouseMovesStageStateChangeEvent(isEnabled));
    }
 
