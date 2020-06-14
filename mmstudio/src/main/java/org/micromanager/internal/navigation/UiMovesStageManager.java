@@ -25,7 +25,6 @@ import org.micromanager.Studio;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
-import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 import org.micromanager.internal.MMStudio;
 
 /**
@@ -55,6 +54,7 @@ public final class UiMovesStageManager {
     * @param display Display to which we will listen for events
     */
    public void activate(final DisplayController display) {
+      deActivate(display); // ensure that there will always be only one listener per display
       CenterAndDragListener dragListener = null;
       ZWheelListener wheelListener = null;
       XYZKeyListener keyListener = null;

@@ -26,7 +26,6 @@ import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import org.micromanager.Studio;
 import org.micromanager.display.internal.event.DisplayMouseEvent;
-import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 
 /**
  * @author OD, nico
@@ -35,14 +34,12 @@ import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 public final class CenterAndDragListener  {
 
    private final Studio studio_;
-   private XYNavigator xyNavigator_;
-   private boolean active_;
+   private final XYNavigator xyNavigator_;
    private int lastX_, lastY_;
 
    public CenterAndDragListener(final Studio studio, final XYNavigator xyNavigator) {
       studio_ = studio;
       xyNavigator_ = xyNavigator;
-      active_ = false;
    }
    
 
@@ -56,9 +53,6 @@ public final class CenterAndDragListener  {
     */
    @Subscribe
    public void onDisplayMouseEvent(DisplayMouseEvent dme) {
-      if (!active_) {
-         return;
-      }
       // only take action when the users selected the Hand tool
       if (dme.getToolId() != ij.gui.Toolbar.HAND) {
          return;
@@ -110,15 +104,6 @@ public final class CenterAndDragListener  {
             xyNavigator_.moveSampleOnDisplayPixels(tmpXUm, tmpYUm);
 
             break;
-      }
-   }
-
-   @Subscribe
-   public void onActiveChange (MouseMovesStageStateChangeEvent mouseMovesStageStateChangeEvent) {
-      if (mouseMovesStageStateChangeEvent.getIsEnabled()) {
-         active_ = true;
-      } else {
-         active_ = false;
       }
    }
 
