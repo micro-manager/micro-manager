@@ -290,15 +290,15 @@ fi
 
 # BaslerPylon
 AC_MSG_CHECKING(for Basler_Linux)
-AM_CONDITIONAL([BUILD_BASLER_LINUX],[test -f "/opt/pylon5/include/pylon/PylonIncludes.h"])
-if test -f "/opt/pylon5/include/pylon/PylonIncludes.h"; then
+AM_CONDITIONAL([BUILD_BASLER_LINUX],[test -f "/opt/pylon6/include/pylon/PylonIncludes.h"])
+if test -f "/opt/pylon6/include/pylon/PylonIncludes.h"; then
    AC_MSG_RESULT([found])
 else 
    AC_MSG_RESULT([not found])
 fi
 
 # BaslerPylon Version check
-AM_CONDITIONAL([PYLON64],[test -d "/opt/pylon5/lib64"])
+AM_CONDITIONAL([PYLON64],[test -d "/opt/pylon6/lib64"])
 AM_COND_IF([PYLON64],
 [  
   AC_MSG_NOTICE(Basler SDK in 64bit  found)
