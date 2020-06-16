@@ -450,6 +450,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KuriosLCTF", "DeviceAdapter
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Skyra", "DeviceAdapters\Skyra\Skyra.vcxproj", "{3941E397-C74E-4AC8-8A01-741DB3AD1624}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoboltOfficial", "DeviceAdapters\CoboltOfficial\CoboltOfficial.vcxproj", "{7074BB23-A32B-4CD5-B77E-9EF4E24416BD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -3121,6 +3123,18 @@ Global
 		{3941E397-C74E-4AC8-8A01-741DB3AD1624}.Release|Win32.Build.0 = Release|Win32
 		{3941E397-C74E-4AC8-8A01-741DB3AD1624}.Release|x64.ActiveCfg = Release|x64
 		{3941E397-C74E-4AC8-8A01-741DB3AD1624}.Release|x64.Build.0 = Release|x64
+		{7074BB23-A32B-4CD5-B77E-9EF4E24416BD}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
+		{7074BB23-A32B-4CD5-B77E-9EF4E24416BD}.Debug|Mixed Platforms.Build.0 = Debug|x64
+		{7074BB23-A32B-4CD5-B77E-9EF4E24416BD}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7074BB23-A32B-4CD5-B77E-9EF4E24416BD}.Debug|Win32.Build.0 = Debug|Win32
+		{7074BB23-A32B-4CD5-B77E-9EF4E24416BD}.Debug|x64.ActiveCfg = Debug|x64
+		{7074BB23-A32B-4CD5-B77E-9EF4E24416BD}.Debug|x64.Build.0 = Debug|x64
+		{7074BB23-A32B-4CD5-B77E-9EF4E24416BD}.Release|Mixed Platforms.ActiveCfg = Release|x64
+		{7074BB23-A32B-4CD5-B77E-9EF4E24416BD}.Release|Mixed Platforms.Build.0 = Release|x64
+		{7074BB23-A32B-4CD5-B77E-9EF4E24416BD}.Release|Win32.ActiveCfg = Release|Win32
+		{7074BB23-A32B-4CD5-B77E-9EF4E24416BD}.Release|Win32.Build.0 = Release|Win32
+		{7074BB23-A32B-4CD5-B77E-9EF4E24416BD}.Release|x64.ActiveCfg = Release|x64
+		{7074BB23-A32B-4CD5-B77E-9EF4E24416BD}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
