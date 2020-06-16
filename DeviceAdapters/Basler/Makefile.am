@@ -7,12 +7,12 @@ PLIBADD =
 PLDFLAGS =
 PYLONCPPFLAGS =
 AM_CXXFLAGS=$(MMDEVAPI_CXXFLAGS) 
-libmmgr_dal_BaslerCamera_la_SOURCES=BaslerPylon5Camera.cpp BaslerPylon5Camera.h
+libmmgr_dal_BaslerCamera_la_SOURCES=BaslerPylon6Camera.cpp BaslerPylon6Camera.h
 deviceadapter_LTLIBRARIES=libmmgr_dal_BaslerCamera.la
 
 
 if BUILD_BASLER_LINUX
-   PYLON_ROOT=/opt/pylon5
+   PYLON_ROOT=/opt/pylon6
 
 if PYLON64
    PYLONLDFLAGS +=-Wl,--enable-new-dtags -Wl,-rpath,$(PYLON_ROOT)/lib64,-L$(PYLON_ROOT)/lib64
