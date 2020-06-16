@@ -314,14 +314,14 @@ int BaslerCamera::Initialize()
 		if(IsAvailable(width))
 		{
 			CPropertyAction *pAct = new CPropertyAction (this, &BaslerCamera::OnWidth);
-			ret = CreateProperty("SensorWidth",to_string(width->GetValue()).c_str(), MM::Integer, false, pAct);
+			ret = CreateProperty("SensorWidth",CDeviceUtils::ConvertToString((int) width->GetValue()), MM::Integer, false, pAct);
 			SetPropertyLimits("SensorWidth", (double)width->GetMin(),(double)width->GetMax());
 			assert(ret == DEVICE_OK);
 		}
 		if(IsAvailable(height))
 		{
 			CPropertyAction *pAct = new CPropertyAction (this, &BaslerCamera::OnHeight);
-			ret = CreateProperty("SensorHeight",to_string(height->GetValue()).c_str(), MM::Integer, false, pAct);
+			ret = CreateProperty("SensorHeight",CDeviceUtils::ConvertToString((int) height->GetValue()), MM::Integer, false, pAct);
 			SetPropertyLimits("SensorHeight", (double)height->GetMin(),(double)height->GetMax());
 			assert(ret == DEVICE_OK);
 		}
@@ -605,7 +605,7 @@ int BaslerCamera::Initialize()
 			{
 				int64_t val = DeviceLinkThroughputLimit->GetValue();
 				pAct = new CPropertyAction (this, &BaslerCamera::OnDeviceLinkThroughputLimit);
-				ret = CreateProperty("DeviceLinkThroughputLimit",to_string(val).c_str(), MM::Integer, false, pAct);
+            ret = CreateProperty("DeviceLinkThroughputLimit",CDeviceUtils::ConvertToString((long) val), MM::Integer, false, pAct);
 				SetPropertyLimits("DeviceLinkThroughputLimit", (double)DeviceLinkThroughputLimit->GetMin(),(double) DeviceLinkThroughputLimit->GetMax());
 				assert(ret == DEVICE_OK);
 			}
@@ -618,7 +618,7 @@ int BaslerCamera::Initialize()
 			if(IsAvailable(GevSCPD))
 			{
 				pAct = new CPropertyAction (this, &BaslerCamera::OnInterPacketDelay);
-				ret = CreateProperty("InterPacketDelay",to_string(GevSCPD->GetValue()).c_str(), MM::Integer, false, pAct);
+            ret = CreateProperty("InterPacketDelay",CDeviceUtils::ConvertToString((long)GevSCPD->GetValue()), MM::Integer, false, pAct);
 				SetPropertyLimits("InterPacketDelay", (double)GevSCPD->GetMin(),(double)GevSCPD->GetMax());
 				assert(ret == DEVICE_OK);
 			}
@@ -681,7 +681,7 @@ int BaslerCamera::Initialize()
 				ss << x;
 				binValues.push_back(ss.str());
 			}				
-			binningFactor_.assign(to_string (BinningHorizontal->GetValue()));
+         binningFactor_.assign(CDeviceUtils::ConvertToString ((long)BinningHorizontal->GetValue()));
 			CheckForBinningMode(pAct);
 		}
 		else
@@ -1024,7 +1024,7 @@ void BaslerCamera::SetExposure(double exp)
 */
 int BaslerCamera::GetBinning() const
 {
-	return  std::stoi(binningFactor_);
+   return  std::atoi(binningFactor_.c_str());
 }
 
 int BaslerCamera::SetBinning(int binFactor)
@@ -1108,8 +1108,7 @@ int BaslerCamera::OnBinningMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 				string binningMode;
 				pProp->Get(binningMode);				
 				BinningModeHorizontal->FromString(binningMode.c_str());
-			    BinningModeHorizontal->FromString(binningMode.c_str());				
-
+			   BinningModeHorizontal->FromString(binningMode.c_str());
 			}
 			catch (const GenericException &e)
 			{
@@ -1155,7 +1154,7 @@ int BaslerCamera::OnHeight(MM::PropertyBase* pProp, MM::ActionType eAct)
 					camera_->StopGrabbing();
 				}
 				pProp->Get(strval);
-				int64_t val = std::stoi(strval);
+				int64_t val = std::atoi(strval.c_str());
 				int64_t inc = Height->GetInc();
 				Height->SetValue(val - (val % inc));
 				if(Isgrabbing)
@@ -1177,7 +1176,7 @@ int BaslerCamera::OnHeight(MM::PropertyBase* pProp, MM::ActionType eAct)
 		try{
 			if(IsAvailable(Height) )
 				{
-					binningFactor_ = to_string (Height->GetValue());
+               binningFactor_ = CDeviceUtils::ConvertToString ((long)Height->GetValue());
 					pProp->Set((long)Height->GetValue());	
 				}	
 		}
@@ -1209,7 +1208,7 @@ int BaslerCamera::OnWidth(MM::PropertyBase* pProp, MM::ActionType eAct)
 					camera_->StopGrabbing();
 				}
 				pProp->Get(strval);
-				int64_t val = std::stoi(strval);
+				int64_t val = std::atoi(strval.c_str());
 				int64_t inc = Width->GetInc();
 				Width->SetValue(val - (val % inc));
 				if(Isgrabbing)
@@ -1233,7 +1232,7 @@ int BaslerCamera::OnWidth(MM::PropertyBase* pProp, MM::ActionType eAct)
 		try{
 			if(IsAvailable(Width) )
 				{
-					binningFactor_ = to_string (Width->GetValue());
+               binningFactor_ = CDeviceUtils::ConvertToString ((long) Width->GetValue());
 					pProp->Set((long)Width->GetValue());	
 				}	
 		}
@@ -1267,7 +1266,7 @@ int BaslerCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 					camera_->StopGrabbing();
 				}
 				pProp->Get(binningFactor_);
-				int64_t val = std::stoi(binningFactor_);
+				int64_t val = std::atoi(binningFactor_.c_str());
 				BinningHorizontal->SetValue(val);
 				BinningVertical->SetValue(val);	
 				if(Isgrabbing)
@@ -1290,7 +1289,7 @@ int BaslerCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 		try{
 			if(IsAvailable(BinningHorizontal) && IsAvailable(BinningHorizontal))
 				{
-					binningFactor_ = to_string (BinningHorizontal->GetValue());
+               binningFactor_ = CDeviceUtils::ConvertToString ((long) BinningHorizontal->GetValue());
 					pProp->Set((long)BinningHorizontal->GetValue());	
 				}
 				else
@@ -1646,7 +1645,7 @@ int BaslerCamera::OnDeviceLinkThroughputLimit(MM::PropertyBase* pProp, MM::Actio
 		else if (eAct == MM::BeforeGet)
 		{
 			DeviceLinkThroughputLimit_ = DeviceLinkThroughputLimit->GetValue();
-			pProp->Set(to_string(DeviceLinkThroughputLimit_).c_str());			
+			pProp->Set(CDeviceUtils::ConvertToString ((long) DeviceLinkThroughputLimit_) );			
 		}
 	}
 
@@ -1668,7 +1667,7 @@ int BaslerCamera::OnInterPacketDelay(MM::PropertyBase* pProp, MM::ActionType eAc
 		else if (eAct == MM::BeforeGet)
 		{
 			InterPacketDelay_ = GevSCPD->GetValue();
-			pProp->Set(to_string(InterPacketDelay_).c_str());			
+			pProp->Set(CDeviceUtils::ConvertToString ((long)InterPacketDelay_));			
 		}
 	}
 	return DEVICE_OK;
