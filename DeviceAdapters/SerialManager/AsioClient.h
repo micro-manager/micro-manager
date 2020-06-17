@@ -177,6 +177,20 @@ public:
       }
    }
 
+   void ChangeDTR (bool enable)
+   {
+      boost::asio::serial_port::native_type handle = serialPortImplementation_.native();
+      BOOL result = true;
+      if (enable) 
+      {
+         result = EscapeCommFunction( handle, SETDTR );
+      } else 
+      {
+         result = EscapeCommFunction( handle, CLRDTR );
+      }
+      LogMessage("Error setting DTR in AsioClient()", true);
+   }
+
    void ChangeStopBits(const boost::asio::serial_port::stop_bits::type& stopBits)
    {
       boost::system::error_code anError;
