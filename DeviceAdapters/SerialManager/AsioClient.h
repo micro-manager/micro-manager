@@ -177,6 +177,8 @@ public:
       }
    }
 
+#ifdef WIN32
+
    void ChangeDTR (bool enable)
    {
       boost::asio::serial_port::native_type handle = serialPortImplementation_.native();
@@ -190,6 +192,8 @@ public:
       }
       LogMessage("Error setting DTR in AsioClient()", true);
    }
+
+#endif
 
    void ChangeStopBits(const boost::asio::serial_port::stop_bits::type& stopBits)
    {
