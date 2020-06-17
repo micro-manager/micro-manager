@@ -813,6 +813,7 @@ int CPCOCam::OnPixelRate(MM::PropertyBase* pProp, MM::ActionType eAct)
 
       if(m_bCMOSLineTiming)
       {
+        m_pCamera->GetCameraStruct((PCO_Camera*)&m_pCamera->m_strCamera.wSize);
         m_wCMOSParameter = m_pCamera->m_strCamera.strTiming.wCMOSParameter;
         m_wCMOSTimeBase = m_pCamera->m_strCamera.strTiming.wCMOSTimeBase;
         m_dwCMOSLineTime = m_pCamera->m_strCamera.strTiming.dwCMOSLineTime;
