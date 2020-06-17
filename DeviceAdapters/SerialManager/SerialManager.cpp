@@ -447,15 +447,14 @@ SerialPort::SerialPort(const char* portName) :
    AddAllowedValue(MM::g_Keyword_Handshaking, g_Handshaking_Hardware, (long)boost::asio::serial_port_base::flow_control::hardware);
    AddAllowedValue(MM::g_Keyword_Handshaking, g_Handshaking_Software, (long)boost::asio::serial_port_base::flow_control::software);
 
-// on Windows only, DTR Enable:
-// Since this does not make a difference for Sam Lord and Diskovery, comment out for now
-// #ifdef WIN32
-//   CPropertyAction* pActDTREnable = new CPropertyAction(this, &SerialPort::OnDTR);
-//   ret = CreateProperty("DTR Control", "Enable", MM::String, false, pActDTREnable, true);
-//   assert (ret == DEVICE_OK);
-//   AddAllowedValue("DTR Control", "Enable");
-//   AddAllowedValue("DTR Control", "Disable");
-//#endif
+   // on Windows only, DTR Enable:
+ #ifdef WIN32
+   CPropertyAction* pActDTREnable = new CPropertyAction(this, &SerialPort::OnDTR);
+   ret = CreateProperty("DTR", "Enable", MM::String, false, pActDTREnable, true);
+   assert (ret == DEVICE_OK);
+   AddAllowedValue("DTR", "Enable");
+   AddAllowedValue("DTR", "Disable");
+#endif
 
 #ifdef WIN32
    CPropertyAction* pActFastUSB2Serial = new CPropertyAction(this, &SerialPort::OnFastUSB2Serial);
@@ -550,6 +549,7 @@ int SerialPort::Initialize()
             boost::asio::serial_port::stop_bits::type(sb),
             dataBits_,
             this);
+      
 #else
       pPort_ = new AsioClient(*pService_,
             boost::lexical_cast<unsigned int>(baud),
@@ -624,12 +624,13 @@ int SerialPort::OpenWin32SerialPort(const std::string& portName,
    dcb.fDsrSensitivity = FALSE;
    dcb.fNull = FALSE;
    dcb.fAbortOnError = FALSE;
-   // Since this does not make a difference for Sam Lord and Diskovery, comment out for now
-   //if (dtrEnable_)
-   //   dcb.fDtrControl = DTR_CONTROL_ENABLE;
-   //else
-   //   dcb.fDtrControl = DTR_CONTROL_DISABLE;
-
+   if (dtrEnable_)
+   {
+      dcb.fDtrControl = DTR_CONTROL_ENABLE;
+   } else 
+   {
+      dcb.fDtrControl = DTR_CONTROL_DISABLE;
+   }
    // The following lines work around crashes caused by invalid or incorrect
    // values returned by some serial port drivers (some versions of Silicon
    // Labs USB-serial drivers).
@@ -1110,9 +1111,16 @@ int SerialPort::OnDTR(MM::PropertyBase* pProp, MM::ActionType eAct)
       std::string answer;
       pProp->Get(answer);
       if (answer == "Enable")
+      {
          dtrEnable_ = true;
-      else
+      }
+      else {
          dtrEnable_ = false;
+      }
+      if (initialized_) 
+      {
+         pPort_->ChangeDTR(dtrEnable_);   
+      }
    }
 
    return DEVICE_OK;
