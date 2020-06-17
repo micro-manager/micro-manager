@@ -53,10 +53,14 @@ const char* g_DeviceNameDATTLStateDevice = "DA TTL State Device";
 const char* g_DeviceNameMultiDAStateDevice = "Multi DA State Device";
 const char* g_DeviceNameAutoFocusStage = "AutoFocus Stage";
 const char* g_DeviceNameStateDeviceShutter = "State Device Shutter";
+const char* g_DeviceNameSerialDTRShutter = "Serial port DTR Shutter";
 
 const char* g_PropertyMinUm = "Stage Low Position(um)";
 const char* g_PropertyMaxUm = "Stage High Position(um)";
 const char* g_SyncNow = "Sync positions now";
+
+const char* g_normalLogicString = "Normal";
+const char* g_invertedLogicString = "Inverted";
 
 
 inline long Round(double x)
@@ -88,6 +92,7 @@ MODULE_API void InitializeModuleData()
    RegisterDevice(g_DeviceNameMultiDAStateDevice, MM::StateDevice, "Several DAs as a single state device allowing digital masking");
    RegisterDevice(g_DeviceNameAutoFocusStage, MM::StageDevice, "AutoFocus offset acting as a Z-stage");
    RegisterDevice(g_DeviceNameStateDeviceShutter, MM::ShutterDevice, "State device used as a shutter");
+   RegisterDevice(g_DeviceNameSerialDTRShutter, MM::ShutterDevice, "Serial port DTR used as a shutter");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)                  
@@ -121,6 +126,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       return new AutoFocusStage();
    } else if (strcmp(deviceName, g_DeviceNameStateDeviceShutter) == 0) {
       return new StateDeviceShutter();
+   } else if (strcmp(deviceName, g_DeviceNameSerialDTRShutter) == 0) {
+      return new SerialDTRShutter();
    }
 
    return 0;
@@ -4907,4 +4914,157 @@ int StateDeviceShutter::OnStateDevice(MM::PropertyBase* pProp, MM::ActionType eA
    return DEVICE_OK;
 }
 
+/**********************************************************************
+ * StateDeviceShutter implementation
+ */
+SerialDTRShutter::SerialDTRShutter() :
+   port_ (""),
+   portDevice_ (0),
+   invertedLogic_(false),
+   initialized_ (false),
+   lastMoveStartTime_(0, 0)
+{
+   InitializeDefaultErrorMessages();
 
+   SetErrorText(ERR_INVALID_DEVICE_NAME, "Please select a valid port");
+   SetErrorText(ERR_TIMEOUT, "Device was busy.  Try increasing the Core-Timeout property");
+
+   // Name                                                                   
+   CreateProperty(MM::g_Keyword_Name, g_DeviceNameSerialDTRShutter, MM::String, true); 
+                                                                             
+   // Description                                                            
+   CreateProperty(MM::g_Keyword_Description, "Serial port DTR used as a shutter", MM::String, true);
+
+   // Port
+   CPropertyAction* pAct = new CPropertyAction(this, &SerialDTRShutter::OnPort);
+   CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
+
+   // Logic 
+   pAct = new CPropertyAction(this, &SerialDTRShutter::OnLogic);
+   CreateProperty("Logic", g_invertedLogicString, MM::String, false, pAct, true);
+   AddAllowedValue("Logic", g_invertedLogicString);
+   AddAllowedValue("Logic", g_normalLogicString);
+
+   EnableDelay(true);
+}  
+ 
+SerialDTRShutter::~SerialDTRShutter()
+{
+   Shutdown();
+}
+
+void SerialDTRShutter::GetName(char* Name) const
+{
+   CDeviceUtils::CopyLimitedString(Name, g_DeviceNameSerialDTRShutter);
+}                                                                            
+                                                                             
+int SerialDTRShutter::Initialize() 
+{
+   initialized_ = true;
+
+   return DEVICE_OK;
+}
+
+bool SerialDTRShutter::Busy()
+{
+   if (portDevice_ != 0 && portDevice_->Busy())
+      return true;
+
+   MM::MMTime delay(GetDelayMs() * 1000.0);
+   if (GetCoreCallback()->GetCurrentMMTime() < lastMoveStartTime_ + delay)
+      return true;
+
+   return false;
+}
+
+/*
+ * Opens or closes the shutter. 
+ */
+int SerialDTRShutter::SetOpen(bool open)
+{
+   if (portDevice_ == 0)
+      return DEVICE_OK;
+
+   std::string state = "Enable";
+   if (!open || (open && invertedLogic_))
+   {
+      state = "Disable";
+   }
+
+   lastMoveStartTime_ = GetCoreCallback()->GetCurrentMMTime();
+   return portDevice_->SetProperty("DTR", state.c_str());
+}
+
+int SerialDTRShutter::GetOpen(bool& open)
+{
+   if (portDevice_ == 0)
+      return DEVICE_OK;
+
+   char buf[MM::MaxStrLength];
+   int ret = portDevice_->GetProperty("DTR", buf);
+   if (ret != DEVICE_OK) 
+   {
+      return ret;
+   }
+   if (strcmp(buf, "Enable") == 0)
+   {
+      open = !invertedLogic_;
+   } else { //"Disable"
+      open = invertedLogic_;
+   }
+   return DEVICE_OK;
+}
+
+int SerialDTRShutter::WaitWhileBusy()
+{
+   if (portDevice_ == 0)
+      return DEVICE_OK;
+
+   bool busy = true;
+   char timeout[MM::MaxStrLength];
+   GetCoreCallback()->GetDeviceProperty("Core", "TimeoutMs", timeout);
+   MM::MMTime dTimeout = MM::MMTime (atof(timeout) * 1000.0);
+   MM::MMTime start = GetCoreCallback()->GetCurrentMMTime();
+   while (busy && (GetCoreCallback()->GetCurrentMMTime() - start) < dTimeout)
+      busy = Busy();
+
+   if (busy)
+      return ERR_TIMEOUT;
+
+   return DEVICE_OK;
+}
+
+///////////////////////////////////////
+// Action Interface
+//////////////////////////////////////
+int SerialDTRShutter::OnPort(MM::PropertyBase* pProp, MM::ActionType pAct)
+{   if (pAct == MM::BeforeGet)
+   {
+      pProp->Set(port_.c_str());
+   }
+   else if (pAct == MM::AfterSet)
+   {
+      pProp->Get(port_);
+      portDevice_ = GetCoreCallback()->GetDevice(this, port_.c_str());
+   }
+   return DEVICE_OK;
+}
+
+int SerialDTRShutter::OnLogic(MM::PropertyBase* pProp, MM::ActionType pAct)
+{
+   if (pAct == MM::BeforeGet)
+   {
+      if (invertedLogic_)
+         pProp->Set(g_invertedLogicString);
+      else
+         pProp->Set(g_normalLogicString);
+   } else if (pAct == MM::AfterSet)
+   {
+      std::string logic;
+      pProp->Get(logic);
+      if (logic.compare(g_invertedLogicString)==0)
+         invertedLogic_ = true;
+      else invertedLogic_ = false;
+   }
+   return DEVICE_OK;
+}
