@@ -3,7 +3,7 @@
   <ItemGroup>
     <Filter Include="Source Files">
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
     <Filter Include="Header Files">
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
@@ -11,106 +11,91 @@
     </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx</Extensions>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ASIClocked.cpp">
+    <ClCompile Include="CoboltOfficial.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ASICRISP.cpp">
+    <ClCompile Include="Laser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ASIFWheel.cpp">
+    <ClCompile Include="Property.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ASIHub.cpp">
+    <ClCompile Include="EnumerationProperty.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ASIPiezo.cpp">
+    <ClCompile Include="LaserShutterProperty.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ASITiger.cpp">
+    <ClCompile Include="MutableDeviceProperty.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ASITigerComm.cpp">
+    <ClCompile Include="NumericProperty.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ASIXYStage.cpp">
+    <ClCompile Include="StaticStringProperty.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ASIZStage.cpp">
+    <ClCompile Include="DeviceProperty.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ASIScanner.cpp">
+    <ClCompile Include="NoShutterCommandLegacyFix.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ASILED.cpp">
+    <ClCompile Include="LaserStateProperty.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ASIPLogic.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ASIPmt.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ASILens.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-	<ClCompile Include="ASIDac.cpp">
+    <ClCompile Include="ImmutableEnumerationProperty.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ASIBase.h">
+    <ClInclude Include="CoboltOfficial.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ASIClocked.h">
+    <ClInclude Include="Laser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ASICRISP.h">
+    <ClInclude Include="Logger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ASIFWheel.h">
+    <ClInclude Include="Property.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ASIHub.h">
+    <ClInclude Include="base.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ASIPeripheralBase.h">
+    <ClInclude Include="DeviceProperty.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ASIPiezo.h">
+    <ClInclude Include="EnumerationProperty.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ASITiger.h">
+    <ClInclude Include="LaserShutterProperty.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ASITigerComm.h">
+    <ClInclude Include="MutableDeviceProperty.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ASIXYStage.h">
+    <ClInclude Include="NumericProperty.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ASIZStage.h">
+    <ClInclude Include="StaticStringProperty.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ASIScanner.h">
+    <ClInclude Include="NoShutterCommandLegacyFix.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ASILED.h">
+    <ClInclude Include="LaserDriver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ASIPLogic.h">
+    <ClInclude Include="LaserStateProperty.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ASIPmt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ASILens.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-	<ClInclude Include="ASIDac.h">
+    <ClInclude Include="ImmutableEnumerationProperty.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

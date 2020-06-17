@@ -46,6 +46,7 @@ sma : 06.05.2019 Improvement in Gain range handling. In some camera model the ga
 sma : 22.05.2019 prepared for Mac build
 sma : 06.03.2020 pylon version has been switched to V 6.1
 sma : 06.03.2020 camera class has been switched to CBaslerUniversalInstantCamera but not all code lines rewritten. In future you profit from the advantage of CBaslerUniversalInstantCamera for sure.
+iei : 06.08.2020 add support for additional camera properties; initialize camera by serial number
 
 */
 
@@ -156,6 +157,9 @@ CCameraBase<BaslerCamera> (),
 	gainMax_(0),
 	gainMin_(0),
 	bitDepth_(8),
+	temperatureStatus_("Undefined"),
+	reverseX_("0"),
+	reverseY_("0"),
 	imgBuffer_(NULL),
 	colorCamera_(true),
 	pixelType_("Undefined"),
@@ -167,8 +171,42 @@ CCameraBase<BaslerCamera> (),
 {
 	// call the base class method to set-up default error codes/messages
 	InitializeDefaultErrorMessages();
+	SetErrorText(ERR_SERIAL_NUMBER_REQUIRED, "Serial number is required");
+	SetErrorText(ERR_SERIAL_NUMBER_NOT_FOUND, "No camera with the given serial number was found");
+	SetErrorText(ERR_CANNOT_CONNECT, "Cannot connect to camera; it may be in use");
+
+	CreateStringProperty("SerialNumber", "Undefined", false, 0, true);
 
 	//pre-init properties
+	PylonInitialize(); // Initialize/Terminate is reference counted by Pylon
+
+					   // Get the available cameras. TODO: This can be very slow and perhaps the
+					   // result should be cached.
+	DeviceInfoList_t devices;
+	if (CTlFactory::GetInstance().EnumerateDevices(devices) == 0)
+	{
+		AddToLog("No camera present.");
+		PylonTerminate();
+        throw RUNTIME_EXCEPTION( "No camera present.");
+	}
+
+	bool first = true;
+	for (DeviceInfoList_t::const_iterator it = devices.begin(), end = devices.end();
+		it != end;
+		++it)
+	{
+		const CDeviceInfo& device = *it;
+		String_t s = device.GetSerialNumber();
+		AddAllowedValue("SerialNumber", s.c_str());
+
+		if (first)
+		{
+			SetProperty("SerialNumber", s.c_str());
+			first = false;
+		}
+	}
+
+	PylonTerminate();
 }
 
 BaslerCamera::~BaslerCamera()
@@ -198,35 +236,31 @@ int BaslerCamera::Initialize()
 	{			
 		// Before using any pylon methods, the pylon runtime must be initialized. 
 		PylonInitialize();
-		 // Get the transport layer factory.
-        CTlFactory& tlFactory = CTlFactory::GetInstance();
-		initialized_= false;
-
-        // Get all attached devices and exit application if no device is found.
-        DeviceInfoList_t devices;
-        if ( tlFactory.EnumerateDevices(devices) == 0 )
-        {
-			AddToLog("No camera present.");
-            throw RUNTIME_EXCEPTION( "No camera present.");
-        }
 		
-		if(devices.size() == 1)
-		{
-			camera_ = new CBaslerUniversalInstantCamera(CTlFactory::GetInstance().CreateFirstDevice()); // returns a pointer to the device
-			initialized_ = true;
-		}
+		char serialNumber[MM::MaxStrLength];
+		GetProperty("SerialNumber", serialNumber);
+		if (strlen(serialNumber) == 0 || strcmp(serialNumber, "Undefined") == 0)
+			return ERR_SERIAL_NUMBER_REQUIRED;
+
+		CDeviceInfo deviceInfo;
+		deviceInfo.SetSerialNumber(String_t(serialNumber));
+		
+		// Get the transport layer factory.
+		CTlFactory& tlFactory = CTlFactory::GetInstance();
+		initialized_ = false;
+		
+		// This checks, among other things, that the camera is not already in use.
+		// Without that check, the following CreateDevice() may crash on duplicate
+		// serial number. Unfortunately, this call is slow.
+		if (!tlFactory.IsDeviceAccessible(deviceInfo))
+			return ERR_CANNOT_CONNECT;
+
+		IPylonDevice* device = tlFactory.CreateDevice(deviceInfo);
+		if (!device)
+			return ERR_CANNOT_CONNECT;
 		else
-		{
-			for (DeviceInfoList_t::iterator it = devices.begin(); it != devices.end(); ++it)
-			{
-				if(tlFactory.IsDeviceAccessible(*it))
-				{
-				  camera_ = new CBaslerUniversalInstantCamera(CTlFactory::GetInstance().CreateFirstDevice(*it));
-				  initialized_ = true;
-				  break;
-				}
-			}	
-		}
+			camera_ = new CBaslerUniversalInstantCamera(device);
+			initialized_ = true;
 
 		if(!initialized_)
 		{
@@ -252,6 +286,11 @@ int BaslerCamera::Initialize()
 		ret = CreateProperty(MM::g_Keyword_Description, "Basler Camera device adapter", MM::String, true);
 		if (DEVICE_OK != ret)
 			return ret;
+		
+		// Serial Number
+		ret = CreateProperty(MM::g_Keyword_CameraID, String_t(serialNumber), MM::String, true);
+		if (DEVICE_OK != ret)
+			return ret;
 
 		Pylon::String_t modelName = camera_->GetDeviceInfo().GetModelName();
 		//Get information about camera (e.g. height, width, byte depth)
@@ -265,22 +304,24 @@ int BaslerCamera::Initialize()
 		//Sensor size
 		nodeMap_ = &camera_->GetNodeMap();
 		const CIntegerPtr width = nodeMap_->GetNode("Width");
-		maxWidth_ = (unsigned int) width->GetMax();
+		// maxWidth_ = (unsigned int) width->GetMax();
+		maxWidth_ = (unsigned int) CIntegerPtr(nodeMap_->GetNode("WidthMax"))->GetValue();
 		const CIntegerPtr height = nodeMap_->GetNode("Height");
-		maxHeight_ = (unsigned int) height->GetMax();
+		// maxHeight_ = (unsigned int) height->GetMax();
+		maxHeight_ = (unsigned int) CIntegerPtr(nodeMap_->GetNode("HeightMax"))->GetValue();
 
 
 		if(IsAvailable(width))
 		{
 			CPropertyAction *pAct = new CPropertyAction (this, &BaslerCamera::OnWidth);
-			ret = CreateProperty("SensorWidth",to_string(width->GetValue()).c_str(), MM::Integer, false, pAct);
+			ret = CreateProperty("SensorWidth",CDeviceUtils::ConvertToString((int) width->GetValue()), MM::Integer, false, pAct);
 			SetPropertyLimits("SensorWidth", (double)width->GetMin(),(double)width->GetMax());
 			assert(ret == DEVICE_OK);
 		}
 		if(IsAvailable(height))
 		{
 			CPropertyAction *pAct = new CPropertyAction (this, &BaslerCamera::OnHeight);
-			ret = CreateProperty("SensorHeight",to_string(height->GetValue()).c_str(), MM::Integer, false, pAct);
+			ret = CreateProperty("SensorHeight",CDeviceUtils::ConvertToString((int) height->GetValue()), MM::Integer, false, pAct);
 			SetPropertyLimits("SensorHeight", (double)height->GetMin(),(double)height->GetMax());
 			assert(ret == DEVICE_OK);
 		}
@@ -374,6 +415,21 @@ int BaslerCamera::Initialize()
 		}
 		SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);
 
+		/////Temperature//////
+		pAct = new CPropertyAction(this, &BaslerCamera::OnTemperature);
+		ret = CreateProperty("Temperature", "0.0", MM::Float, true, pAct);
+		if (DEVICE_OK != ret)
+			return ret;
+
+		/////Temperature Status//////
+		pAct = new CPropertyAction(this, &BaslerCamera::OnTemperatureStatus);
+		ret = CreateProperty("TemperatureStatus", "NA", MM::String, true, pAct);
+		vector<string> temperatureStatusVals;
+		temperatureStatusVals.push_back("OK");
+		temperatureStatusVals.push_back("Critical");
+		temperatureStatusVals.push_back("OverTemperature");
+		SetAllowedValues("TemperatureStatus", temperatureStatusVals);
+		
 		/////AutoGain//////
 		CEnumerationPtr gainAuto( nodeMap_->GetNode("GainAuto"));
 		if (IsWritable( gainAuto)) 
@@ -483,7 +539,7 @@ int BaslerCamera::Initialize()
 		//	 vals.push_back("Fast");
 		// }
 		// SetAllowedValues("SensorReadoutMode", vals);
-
+		
 		CEnumerationPtr LightSourcePreset( nodeMap_->GetNode( "LightSourcePreset"));
 		if(LightSourcePreset != NULL && IsAvailable(LightSourcePreset))
 		{
@@ -506,20 +562,20 @@ int BaslerCamera::Initialize()
 		 }
 
 		
+		/////Trigger Mode//////
 		CEnumerationPtr TriggerMode( nodeMap_->GetNode( "TriggerMode"));
 		if(IsAvailable(TriggerMode))
 		{
 			pAct = new CPropertyAction (this, &BaslerCamera::OnTriggerMode);
-			ret = CreateProperty("ExternalTrigger", "Off", MM::String, false, pAct);
+			ret = CreateProperty("TriggerMode", "Off", MM::String, false, pAct);
 			vector<string> LSPVals;
 			LSPVals.push_back("Off");
 			LSPVals.push_back("On");
-			SetAllowedValues("ExternalTrigger",LSPVals);
+			SetAllowedValues("TriggerMode",LSPVals);
 		 }
 
 
-		////Shutter mode//////
-	
+		////Shutter mode//////	
 		CEnumerationPtr shutterMode( nodeMap_->GetNode( "ShutterMode"));
 		if(IsAvailable(shutterMode))
 		{
@@ -549,7 +605,7 @@ int BaslerCamera::Initialize()
 			{
 				int64_t val = DeviceLinkThroughputLimit->GetValue();
 				pAct = new CPropertyAction (this, &BaslerCamera::OnDeviceLinkThroughputLimit);
-				ret = CreateProperty("DeviceLinkThroughputLimit",to_string(val).c_str(), MM::Integer, false, pAct);
+            ret = CreateProperty("DeviceLinkThroughputLimit",CDeviceUtils::ConvertToString((long) val), MM::Integer, false, pAct);
 				SetPropertyLimits("DeviceLinkThroughputLimit", (double)DeviceLinkThroughputLimit->GetMin(),(double) DeviceLinkThroughputLimit->GetMax());
 				assert(ret == DEVICE_OK);
 			}
@@ -562,11 +618,43 @@ int BaslerCamera::Initialize()
 			if(IsAvailable(GevSCPD))
 			{
 				pAct = new CPropertyAction (this, &BaslerCamera::OnInterPacketDelay);
-				ret = CreateProperty("InterPacketDelay",to_string(GevSCPD->GetValue()).c_str(), MM::Integer, false, pAct);
+            ret = CreateProperty("InterPacketDelay",CDeviceUtils::ConvertToString((long)GevSCPD->GetValue()), MM::Integer, false, pAct);
 				SetPropertyLimits("InterPacketDelay", (double)GevSCPD->GetMin(),(double)GevSCPD->GetMax());
 				assert(ret == DEVICE_OK);
 			}
 		}
+
+		/////Reverse X//////
+		pAct = new CPropertyAction(this, &BaslerCamera::OnReverseX);
+		ret = CreateProperty("ReverseX", "0", MM::String, false, pAct);
+		vector<string> reverseXVals;
+		reverseXVals.push_back("0");
+		reverseXVals.push_back("1");
+		SetAllowedValues("ReverseX", reverseXVals);
+
+		/////Reverse Y//////
+		pAct = new CPropertyAction(this, &BaslerCamera::OnReverseY);
+		ret = CreateProperty("ReverseY", "0", MM::String, false, pAct);
+		vector<string> reverseYVals;
+		reverseYVals.push_back("0");
+		reverseYVals.push_back("1");
+		SetAllowedValues("ReverseY", reverseYVals);
+
+		/////Set Acquisition Framerate//////
+		pAct = new CPropertyAction(this, &BaslerCamera::OnAcqFramerateEnable);
+		ret = CreateProperty("AcquisitionFramerateEnable", "0", MM::String, false, pAct);
+		vector<string> setAcqFrmVals;
+		setAcqFrmVals.push_back("0");
+		setAcqFrmVals.push_back("1");
+		SetAllowedValues("AcquisitionFramerateEnable", setAcqFrmVals);
+
+		/////Acquisition Framerate//////
+		CFloatPtr acqFramerate(nodeMap_->GetNode("AcquisitionFrameRate"));
+		acqFramerateMax_ = acqFramerate->GetMax();
+		acqFramerateMin_ = acqFramerate->GetMin();
+		pAct = new CPropertyAction(this, &BaslerCamera::OnAcqFramerate);
+		ret = CreateProperty("AcquisitionFramerate", "1.0", MM::Float, false, pAct);
+		SetPropertyLimits("AcquisitionFramerate", acqFramerateMin_, acqFramerateMax_);
 	
 
 		//// binning
@@ -593,7 +681,7 @@ int BaslerCamera::Initialize()
 				ss << x;
 				binValues.push_back(ss.str());
 			}				
-			binningFactor_.assign(to_string (BinningHorizontal->GetValue()));
+         binningFactor_.assign(CDeviceUtils::ConvertToString ((long)BinningHorizontal->GetValue()));
 			CheckForBinningMode(pAct);
 		}
 		else
@@ -936,7 +1024,7 @@ void BaslerCamera::SetExposure(double exp)
 */
 int BaslerCamera::GetBinning() const
 {
-	return  std::stoi(binningFactor_);
+   return  std::atoi(binningFactor_.c_str());
 }
 
 int BaslerCamera::SetBinning(int binFactor)
@@ -1020,8 +1108,7 @@ int BaslerCamera::OnBinningMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 				string binningMode;
 				pProp->Get(binningMode);				
 				BinningModeHorizontal->FromString(binningMode.c_str());
-			    BinningModeHorizontal->FromString(binningMode.c_str());				
-
+			   BinningModeHorizontal->FromString(binningMode.c_str());
 			}
 			catch (const GenericException &e)
 			{
@@ -1067,7 +1154,7 @@ int BaslerCamera::OnHeight(MM::PropertyBase* pProp, MM::ActionType eAct)
 					camera_->StopGrabbing();
 				}
 				pProp->Get(strval);
-				int64_t val = std::stoi(strval);
+				int64_t val = std::atoi(strval.c_str());
 				int64_t inc = Height->GetInc();
 				Height->SetValue(val - (val % inc));
 				if(Isgrabbing)
@@ -1089,7 +1176,7 @@ int BaslerCamera::OnHeight(MM::PropertyBase* pProp, MM::ActionType eAct)
 		try{
 			if(IsAvailable(Height) )
 				{
-					binningFactor_ = to_string (Height->GetValue());
+               binningFactor_ = CDeviceUtils::ConvertToString ((long)Height->GetValue());
 					pProp->Set((long)Height->GetValue());	
 				}	
 		}
@@ -1121,7 +1208,7 @@ int BaslerCamera::OnWidth(MM::PropertyBase* pProp, MM::ActionType eAct)
 					camera_->StopGrabbing();
 				}
 				pProp->Get(strval);
-				int64_t val = std::stoi(strval);
+				int64_t val = std::atoi(strval.c_str());
 				int64_t inc = Width->GetInc();
 				Width->SetValue(val - (val % inc));
 				if(Isgrabbing)
@@ -1145,7 +1232,7 @@ int BaslerCamera::OnWidth(MM::PropertyBase* pProp, MM::ActionType eAct)
 		try{
 			if(IsAvailable(Width) )
 				{
-					binningFactor_ = to_string (Width->GetValue());
+               binningFactor_ = CDeviceUtils::ConvertToString ((long) Width->GetValue());
 					pProp->Set((long)Width->GetValue());	
 				}	
 		}
@@ -1179,7 +1266,7 @@ int BaslerCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 					camera_->StopGrabbing();
 				}
 				pProp->Get(binningFactor_);
-				int64_t val = std::stoi(binningFactor_);
+				int64_t val = std::atoi(binningFactor_.c_str());
 				BinningHorizontal->SetValue(val);
 				BinningVertical->SetValue(val);	
 				if(Isgrabbing)
@@ -1202,7 +1289,7 @@ int BaslerCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 		try{
 			if(IsAvailable(BinningHorizontal) && IsAvailable(BinningHorizontal))
 				{
-					binningFactor_ = to_string (BinningHorizontal->GetValue());
+               binningFactor_ = CDeviceUtils::ConvertToString ((long) BinningHorizontal->GetValue());
 					pProp->Set((long)BinningHorizontal->GetValue());	
 				}
 				else
@@ -1239,6 +1326,11 @@ int BaslerCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 	if (eAct == MM::AfterSet) {
 		pProp->Get(pixelType_);
 		pixelFormat->FromString(pixelType_.c_str());
+
+		CFloatPtr offset(nodeMap_->GetNode("BlackLevel"));
+		offsetMax_ = offset->GetMax();
+		offsetMin_ = offset->GetMin();
+		SetPropertyLimits(MM::g_Keyword_Offset, offsetMin_, offsetMax_);
 	} else if (eAct == MM::BeforeGet) {	
 		pixelType_.assign(pixelFormat->ToString().c_str());
 		pProp->Set(pixelType_.c_str());
@@ -1387,6 +1479,92 @@ int BaslerCamera::OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 	return DEVICE_OK;
 }
 
+int BaslerCamera::OnTemperature(MM::PropertyBase * pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::BeforeGet) {
+		CFloatPtr temperature(nodeMap_->GetNode("DeviceTemperature"));
+		temperature_ = temperature->GetValue();
+		pProp->Set(temperature_);
+	}
+	return DEVICE_OK;
+}
+
+int BaslerCamera::OnTemperatureStatus(MM::PropertyBase * pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::BeforeGet) {
+		CEnumerationPtr temperatureStatus(nodeMap_->GetNode("TemperatureState"));
+		temperatureStatus_.assign(temperatureStatus->ToString().c_str());
+		pProp->Set(temperatureStatus_.c_str());
+	}
+	return DEVICE_OK;
+}
+
+int BaslerCamera::OnReverseX(MM::PropertyBase * pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::AfterSet) {
+		pProp->Get(reverseX_);
+		CBooleanPtr reverseX(nodeMap_->GetNode("ReverseX"));
+		reverseX->FromString(reverseX_.c_str());
+	}
+	else if (eAct == MM::BeforeGet) {
+		CBooleanPtr reverseX(nodeMap_->GetNode("ReverseX"));
+		reverseX_.assign(reverseX->ToString().c_str());
+		pProp->Set(reverseX_.c_str());
+	}
+	return DEVICE_OK;
+}
+
+int BaslerCamera::OnReverseY(MM::PropertyBase * pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::AfterSet) {
+		pProp->Get(reverseY_);
+		CBooleanPtr reverseY(nodeMap_->GetNode("ReverseY"));
+		reverseY->FromString(reverseY_.c_str());
+	}
+	else if (eAct == MM::BeforeGet) {
+		CBooleanPtr reverseY(nodeMap_->GetNode("ReverseY"));
+		reverseY_.assign(reverseY->ToString().c_str());
+		pProp->Set(reverseY_.c_str());
+	}
+	return DEVICE_OK;
+}
+
+int BaslerCamera::OnAcqFramerateEnable(MM::PropertyBase * pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::AfterSet) {
+		pProp->Get(setAcqFrm_);
+		CBooleanPtr setAcqFrm(nodeMap_->GetNode("AcquisitionFrameRateEnable"));
+		setAcqFrm->FromString(setAcqFrm_.c_str());
+	}
+	else if (eAct == MM::BeforeGet) {
+		CBooleanPtr setAcqFrm(nodeMap_->GetNode("AcquisitionFrameRateEnable"));
+		setAcqFrm_.assign(setAcqFrm->ToString().c_str());
+		pProp->Set(setAcqFrm_.c_str());
+	}
+	return DEVICE_OK;
+}
+
+int BaslerCamera::OnAcqFramerate(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::AfterSet) {
+		pProp->Get(acqFramerate_);
+		if (acqFramerate_ > acqFramerateMax_) {
+			acqFramerate_ = acqFramerateMax_;
+		}
+		if (acqFramerate_ < acqFramerateMin_) {
+			acqFramerate_ = acqFramerateMin_;
+		}
+		CFloatPtr acqFramerate(nodeMap_->GetNode("AcquisitionFrameRate"));
+		acqFramerate->SetValue(acqFramerate_);
+	}
+	else if (eAct == MM::BeforeGet) {
+		CFloatPtr resultingFramerate(nodeMap_->GetNode("ResultingFrameRate"));
+		acqFramerate_ = resultingFramerate->GetValue();
+		pProp->Set(acqFramerate_);
+	}
+	return DEVICE_OK;
+}
+
 int BaslerCamera::OnAutoGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	string GainAuto_;
@@ -1467,7 +1645,7 @@ int BaslerCamera::OnDeviceLinkThroughputLimit(MM::PropertyBase* pProp, MM::Actio
 		else if (eAct == MM::BeforeGet)
 		{
 			DeviceLinkThroughputLimit_ = DeviceLinkThroughputLimit->GetValue();
-			pProp->Set(to_string(DeviceLinkThroughputLimit_).c_str());			
+			pProp->Set(CDeviceUtils::ConvertToString ((long) DeviceLinkThroughputLimit_) );			
 		}
 	}
 
@@ -1489,7 +1667,7 @@ int BaslerCamera::OnInterPacketDelay(MM::PropertyBase* pProp, MM::ActionType eAc
 		else if (eAct == MM::BeforeGet)
 		{
 			InterPacketDelay_ = GevSCPD->GetValue();
-			pProp->Set(to_string(InterPacketDelay_).c_str());			
+			pProp->Set(CDeviceUtils::ConvertToString ((long)InterPacketDelay_));			
 		}
 	}
 	return DEVICE_OK;
