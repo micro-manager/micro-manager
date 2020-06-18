@@ -430,6 +430,31 @@ int BaslerCamera::Initialize()
 		temperatureStatusVals.push_back("OverTemperature");
 		SetAllowedValues("TemperatureStatus", temperatureStatusVals);
 		
+		/////Trigger Source//////
+		CEnumerationPtr triggersource(nodeMap_->GetNode("TriggerSource"));
+		if (IsWritable(triggersource))
+		{
+
+			if (triggersource != NULL && IsAvailable(triggersource))
+			{
+				pAct = new CPropertyAction(this, &BaslerCamera::OnTriggerSource);
+				ret = CreateProperty("TriggerSource", "NA", MM::String, false, pAct);
+				vector<string> LSPVals;
+				NodeList_t entries;
+				triggersource->GetEntries(entries);
+				for (NodeList_t::iterator it = entries.begin(); it != entries.end(); ++it)
+				{
+					CEnumEntryPtr pEnumEntry(*it);
+					string strValue = pEnumEntry->GetSymbolic().c_str();
+					if (IsAvailable(*it))
+					{
+						LSPVals.push_back(strValue);
+					}
+				}
+				SetAllowedValues("TriggerSource", LSPVals);
+			}
+		}
+		
 		/////AutoGain//////
 		CEnumerationPtr gainAuto( nodeMap_->GetNode("GainAuto"));
 		if (IsWritable( gainAuto)) 
@@ -455,7 +480,8 @@ int BaslerCamera::Initialize()
 				SetAllowedValues("GainAuto",LSPVals);	
 			 }
 		}
-			/////AutoExposure//////
+		
+		/////AutoExposure//////
 		CEnumerationPtr ExposureAuto( nodeMap_->GetNode("ExposureAuto"));
 		if (IsWritable( ExposureAuto)) 
 		{			
@@ -1411,61 +1437,23 @@ int BaslerCamera::OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 	{
 		string TriggerMode_;
 		CEnumerationPtr TriggerMode( nodeMap_->GetNode( "TriggerMode"));
-		CEnumerationPtr TriggerSelector( nodeMap_->GetNode( "TriggerSelector"));
 	
-		if(TriggerMode != NULL && TriggerSelector != NULL && IsAvailable(TriggerMode)  && IsAvailable(TriggerSelector))
+		if(TriggerMode != NULL && IsAvailable(TriggerMode))
 		{
-			if (eAct == MM::AfterSet)
-			{
-					pProp->Get(TriggerMode_);	
-					TriggerMode->FromString(TriggerMode_.c_str());
-					
-					if(TriggerMode_.compare("On") == 0 && TriggerSelector != NULL && IsAvailable(TriggerSelector))
-					{
-						TriggerSelector->FromString("FrameStart");
-						if(IsWritable(TriggerMode))
-						{
-							TriggerMode->FromString("On");
-						}			
-					}
-					else if( TriggerMode_.compare("Off") == 0 && TriggerSelector != NULL && IsAvailable(TriggerSelector))
-					{
-						TriggerSelector->FromString("FrameStart");
-						TriggerMode->FromString("Off");
-						if(camera_->IsGigE())
-						{
-							TriggerSelector->FromString("AcquisitionStart");
-							TriggerMode->FromString("Off");
-					
-						} else if (camera_->IsUsb())
-						{
-							TriggerSelector->FromString("FrameBurstStart");
-							TriggerMode->FromString("Off");				
-						}
-					}
-					if(TriggerMode != NULL && IsAvailable(TriggerMode))
-					{
-						pProp->Set(TriggerMode->ToString().c_str());
-					}
-
-				} else if (eAct == MM::BeforeGet)
-				{					
-					// assumed user uses the trigger Line1 for externally triggering the camera.
-					// if any one wants to use the GPIO of the camera, then we need to allow to set this camera parameter separately
-					if(TriggerSelector != NULL && IsAvailable(TriggerSelector))
-					{
-						TriggerSelector->FromString("FrameStart");
-					}			
-					if(TriggerMode != NULL && IsAvailable(TriggerMode))
-					{
-						pProp->Set(TriggerMode->ToString().c_str());
-					}
-					CEnumerationPtr TriggerSource( nodeMap_->GetNode("TriggerSource"));
-					if(TriggerSource != NULL && IsAvailable(TriggerSource))
-					{
-						TriggerSource->FromString("Line1");
-					}			
+			if (eAct == MM::AfterSet) {
+				pProp->Get(TriggerMode_);	
+				TriggerMode->FromString(TriggerMode_.c_str());
+				
+				if(TriggerMode != NULL && IsAvailable(TriggerMode)) {
+					pProp->Set(TriggerMode->ToString().c_str());
 				}
+			}
+			else if (eAct == MM::BeforeGet) {
+				if (TriggerMode != NULL && IsAvailable(TriggerMode))
+				{
+					pProp->Set(TriggerMode->ToString().c_str());
+				}
+			}
 		}		
 	}
 	catch (const GenericException &e)
@@ -1565,6 +1553,23 @@ int BaslerCamera::OnAcqFramerate(MM::PropertyBase* pProp, MM::ActionType eAct)
 	return DEVICE_OK;
 }
 
+int BaslerCamera::OnTriggerSource(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	string TriggerSource_;
+	if (eAct == MM::AfterSet) {
+		pProp->Get(TriggerSource_);
+		CEnumerationPtr TriggerSource(nodeMap_->GetNode("TriggerSource"));
+		TriggerSource->FromString(TriggerSource_.c_str());
+	}
+	else if (eAct == MM::BeforeGet) {
+		CEnumerationPtr TriggerSource(nodeMap_->GetNode("TriggerSource"));
+		gcstring val = TriggerSource->ToString();
+		const char* s = val.c_str();
+		pProp->Set(s);
+	}
+	return DEVICE_OK;
+}
+
 int BaslerCamera::OnAutoGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	string GainAuto_;
@@ -1580,6 +1585,7 @@ int BaslerCamera::OnAutoGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 	}
 	return DEVICE_OK;
 }
+
 int BaslerCamera::OnAutoExpore(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	string ExposureAuto_;

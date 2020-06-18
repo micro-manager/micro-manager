@@ -145,6 +145,7 @@ public:
 	int OnReverseY(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnAcqFramerateEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnAcqFramerate(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnTriggerSource(MM::PropertyBase* pProp, MM::ActionType eAct);
 	
 
 private:
