@@ -1202,7 +1202,6 @@ int BaslerCamera::OnHeight(MM::PropertyBase* pProp, MM::ActionType eAct)
 		try{
 			if(IsAvailable(Height) )
 				{
-               binningFactor_ = CDeviceUtils::ConvertToString ((long)Height->GetValue());
 					pProp->Set((long)Height->GetValue());	
 				}	
 		}
@@ -1258,7 +1257,6 @@ int BaslerCamera::OnWidth(MM::PropertyBase* pProp, MM::ActionType eAct)
 		try{
 			if(IsAvailable(Width) )
 				{
-               binningFactor_ = CDeviceUtils::ConvertToString ((long) Width->GetValue());
 					pProp->Set((long)Width->GetValue());	
 				}	
 		}
