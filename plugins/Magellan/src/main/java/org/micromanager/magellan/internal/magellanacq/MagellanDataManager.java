@@ -334,9 +334,9 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
       if (loadedData_) {
          return dir_;
       }
-      String[] parts = storage_.getDiskLocation().split(File.separator);
-
-      return parts[parts.length - 1];
+      File file = new File(storage_.getDiskLocation());
+      String simpleFileName = file.getName();
+      return simpleFileName;
    }
 
    public Point2D.Double stageCoordsFromPixelCoords(int x, int y) {
