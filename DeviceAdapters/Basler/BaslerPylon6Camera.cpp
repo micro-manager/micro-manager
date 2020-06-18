@@ -158,7 +158,7 @@ CCameraBase<BaslerCamera> (),
 	gainMax_(0),
 	gainMin_(0),
 	bitDepth_(8),
-	temperatureStatus_("Undefined"),
+	temperatureState_("Undefined"),
 	reverseX_("0"),
 	reverseY_("0"),
 	imgBuffer_(NULL),
@@ -422,14 +422,24 @@ int BaslerCamera::Initialize()
 		if (DEVICE_OK != ret)
 			return ret;
 
-		/////Temperature Status//////
-		pAct = new CPropertyAction(this, &BaslerCamera::OnTemperatureStatus);
-		ret = CreateProperty("TemperatureStatus", "NA", MM::String, true, pAct);
-		vector<string> temperatureStatusVals;
-		temperatureStatusVals.push_back("OK");
-		temperatureStatusVals.push_back("Critical");
-		temperatureStatusVals.push_back("OverTemperature");
-		SetAllowedValues("TemperatureStatus", temperatureStatusVals);
+		/////Temperature State//////
+		CEnumerationPtr temperaturestate(nodeMap_->GetNode("TemperatureState"));
+		if (temperaturestate != NULL && IsAvailable(temperaturestate)) {
+			pAct = new CPropertyAction(this, &BaslerCamera::OnTemperatureState);
+			ret = CreateProperty("TemperatureState", "NA", MM::String, true, pAct);
+
+			vector<string> LSPVals;
+			NodeList_t entries;
+			temperaturestate->GetEntries(entries);
+			for (NodeList_t::iterator it = entries.begin(); it != entries.end(); ++it) {
+				CEnumEntryPtr pEnumEntry(*it);
+				string strValue = pEnumEntry->GetSymbolic().c_str();
+				if (IsAvailable(*it)) {
+					LSPVals.push_back(strValue);
+				}
+			}
+			SetAllowedValues("TemperatureState", LSPVals);
+		}
 		
 		/////Trigger Source//////
 		CEnumerationPtr triggersource(nodeMap_->GetNode("TriggerSource"));
@@ -1476,12 +1486,12 @@ int BaslerCamera::OnTemperature(MM::PropertyBase * pProp, MM::ActionType eAct)
 	return DEVICE_OK;
 }
 
-int BaslerCamera::OnTemperatureStatus(MM::PropertyBase * pProp, MM::ActionType eAct)
+int BaslerCamera::OnTemperatureState(MM::PropertyBase * pProp, MM::ActionType eAct)
 {
 	if (eAct == MM::BeforeGet) {
-		CEnumerationPtr temperatureStatus(nodeMap_->GetNode("TemperatureState"));
-		temperatureStatus_.assign(temperatureStatus->ToString().c_str());
-		pProp->Set(temperatureStatus_.c_str());
+		CEnumerationPtr temperatureState(nodeMap_->GetNode("TemperatureState"));
+		temperatureState_.assign(temperatureState->ToString().c_str());
+		pProp->Set(temperatureState_.c_str());
 	}
 	return DEVICE_OK;
 }

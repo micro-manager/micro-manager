@@ -140,7 +140,7 @@ public:
 	int OnAutoGain(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnAutoExpore(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnTemperatureStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnTemperatureState(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnReverseX(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnReverseY(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnAcqFramerateEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -171,7 +171,7 @@ private:
 	std::string sensorReadoutMode_;
 	std::string shutterMode_;
 	std::string setAcqFrm_;
-	std::string temperatureStatus_;
+	std::string temperatureState_;
 	std::string reverseX_, reverseY_;
 	void* imgBuffer_;
 	long imgBufferSize_;
