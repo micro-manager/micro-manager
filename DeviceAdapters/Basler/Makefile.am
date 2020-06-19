@@ -12,7 +12,7 @@ deviceadapter_LTLIBRARIES=libmmgr_dal_BaslerCamera.la
 
 
 if BUILD_BASLER_LINUX
-   PYLON_ROOT=/opt/pylon6
+   PYLON_ROOT=/opt/pylon
 
 if PYLON64
    PYLONLDFLAGS +=-Wl,--enable-new-dtags -Wl,-rpath,$(PYLON_ROOT)/lib64,-L$(PYLON_ROOT)/lib64
