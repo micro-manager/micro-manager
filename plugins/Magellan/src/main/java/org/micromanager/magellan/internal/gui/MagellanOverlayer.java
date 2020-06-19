@@ -280,7 +280,7 @@ public class MagellanOverlayer implements OverlayerPlugin {
       float textHeight = lineHeight * text.length;
       //10 pixel border 
       int border = 10;
-      int roiWidth = (int) (textWidth + 2 * border);
+      int roiWidth = (int) ((textWidth + 2 * border) * 1.3); //add 50 as a hack for windows
       int roiHeight = (int) (textHeight + 2 * border);
       Roi rectangle = new Roi(displayImageSize.x / 2 - roiWidth / 2,
               displayImageSize.y / 2 - roiHeight / 2, roiWidth, roiHeight);
