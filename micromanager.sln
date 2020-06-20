@@ -418,7 +418,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ChuoSeiki_MD5000", "DeviceA
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ChuoSeiki_QT", "DeviceAdapters\ChuoSeiki_QT\ChuoSeiki_QT.vcxproj", "{474D32D8-5BEC-453B-ADEA-ACF6F742DE0D}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BaslerPylon6", "DeviceAdapters\Basler\BaslerPylon6.vcxproj", "{BD5DD57F-A092-4441-BA35-5B0701C7CCE5}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BaslerPylon", "DeviceAdapters\Basler\BaslerPylon.vcxproj", "{BD5DD57F-A092-4441-BA35-5B0701C7CCE5}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VarispecLCTF", "DeviceAdapters\VarispecLCTF\VarispecLCTF.vcxproj", "{DFA5AB7B-A917-44BB-AB76-6AB1AECFADC8}"
 EndProject
