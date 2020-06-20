@@ -1,5 +1,6 @@
-# sma 26.05.2019 
-# File Version  2.11
+# sma 20.05.2020 
+# File Version  2.12
+# cpp and pylon path has been adapted
 
 
 PYLONLDFLAGS =
@@ -7,7 +8,7 @@ PLIBADD =
 PLDFLAGS =
 PYLONCPPFLAGS =
 AM_CXXFLAGS=$(MMDEVAPI_CXXFLAGS) 
-libmmgr_dal_BaslerCamera_la_SOURCES=BaslerPylon6Camera.cpp BaslerPylon6Camera.h
+libmmgr_dal_BaslerCamera_la_SOURCES=BaslerPylonCamera.cpp BaslerPylonCamera.h
 deviceadapter_LTLIBRARIES=libmmgr_dal_BaslerCamera.la
 
 
