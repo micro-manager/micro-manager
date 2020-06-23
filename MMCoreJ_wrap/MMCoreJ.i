@@ -957,6 +957,11 @@ namespace std {
       }
    %}
    
+   /* 
+   * On most platforms a c++ `long` will be 32bit and therefore should map to a Java `Integer`. However 
+   * on some platforms a c++ `long` could be 64bit which could potentially cause issues. Ideally we should just avoid using vector<long> in MMCore interfaces.
+   */
+   
    %typemap(javaimports) vector<long> %{
 		import java.lang.Iterable;
 		import java.util.Iterator;
@@ -964,11 +969,11 @@ namespace std {
 		import java.lang.UnsupportedOperationException;
 	%}
 
-   %typemap(javainterfaces) vector<long> %{ Iterable<Long>%}
+   %typemap(javainterfaces) vector<long> %{ Iterable<Integer>%}
 
    %typemap(javacode) vector<long> %{
-      public Iterator<Long> iterator() {
-         return new Iterator<Long>() {
+      public Iterator<Integer> iterator() {
+         return new Iterator<Integer>() {
 
             private int i_=0;
 
@@ -976,10 +981,10 @@ namespace std {
                return (i_<size());
             }
 
-            public Long next() throws NoSuchElementException {
+            public Integer next() throws NoSuchElementException {
                if (hasNext()) {
                   ++i_;
-                  return (long) get(i_-1); //For some reason the automatically generated `get` method returns `int`
+                  return get(i_-1); 
                } else {
                   throw new NoSuchElementException();
                }
@@ -991,13 +996,13 @@ namespace std {
          };
       }
 
-      public Long[] toArray() {
+      public Integer[] toArray() {
          if (0==size())
-            return new Long[0];
+            return new Integer[0];
 
-         Long ints[] = new Long[(int) size()];
+         Integer ints[] = new Integer[(int) size()];
          for (int i=0; i<size(); ++i) {
-            ints[i] = (long) get(i); //For some reason the automatically generated `get` method returns `int`
+            ints[i] = get(i);
          }
          return ints;
       }
