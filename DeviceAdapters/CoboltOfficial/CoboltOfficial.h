@@ -43,6 +43,7 @@
 #include "Logger.h"
 #include "LaserDriver.h"
 
+
 class CoboltOfficial : 
     public CShutterBase<CoboltOfficial>, 
     public cobolt::LaserDriver, 
