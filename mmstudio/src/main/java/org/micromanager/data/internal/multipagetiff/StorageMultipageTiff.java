@@ -744,6 +744,9 @@ public final class StorageMultipageTiff implements Storage {
       if (dp != null) {
          Image dpImg = dp.getAnyImage();
          Image ourImg = store_.getAnyImage();
+         if (dpImg == null || ourImg == null) {
+            return false;
+         }
          if (dpImg.getWidth() != ourImg.getWidth() || 
                  dpImg.getHeight() != ourImg.getHeight() ||
                  dpImg.getBytesPerPixel() != ourImg.getBytesPerPixel()) {
