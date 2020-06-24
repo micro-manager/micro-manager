@@ -128,7 +128,7 @@ public class MagellanViewer implements ViewerInterface {
    public Point getDisplayedPixel(long row, long col) {
       double scale = viewer_.getMagnification();
       int x = (int) ((col * manager_.getDisplayTileWidth() - viewer_.getViewOffset().x) * scale);
-      int y = (int) ((row * manager_.getDisplayTileWidth() - viewer_.getViewOffset().y) * scale);
+      int y = (int) ((row * manager_.getDisplayTileHeight() - viewer_.getViewOffset().y) * scale);
       return new Point(x, y);
    }
 
