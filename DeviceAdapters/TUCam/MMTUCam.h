@@ -74,8 +74,9 @@ const int SEVEN_SEGMENT_Y_OFFSET[] = {0, 0, 0, 1, 1, 1, 2};
 #define DHYANA_400BSIV1     0xE405
 #define DHYANA_D95_X100     0xE406
 #define DHYANA_400BSIV2     0xE408
-
 #define PID_FL_20BW         0xE40D
+#define DHYANA_D95_V2       0xE40F
+#define DHYANA_401D         0xE005
 
 ///////////////////////
 // ImgMode
