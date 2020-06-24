@@ -122,6 +122,9 @@ public:
 	*/
 	bool IsCapturing();
 
+	//Genicam Callback
+	void ResultingFramerateCallback(GenApi::INode* pNode);
+
 
 	// action interface
 	// ----------------
@@ -146,6 +149,7 @@ public:
 	int OnReverseY(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnAcqFramerateEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnAcqFramerate(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnResultingFramerate(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnTriggerSource(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
@@ -163,8 +167,9 @@ private:
 	double offset_, offsetMin_, offsetMax_;
 	double temperature_;
 	double acqFramerate_, acqFramerateMax_, acqFramerateMin_;
-	int64_t DeviceLinkThroughputLimit_ =120000000;
+	int64_t DeviceLinkThroughputLimit_;
 	int64_t InterPacketDelay_;
+	double ResultingFrameRatePrevious;
 	
 	std::string pixelType_;
 	std::string binningFactor_;

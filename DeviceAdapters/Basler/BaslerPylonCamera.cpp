@@ -50,6 +50,7 @@ iei : 08.06.2020 add support for additional camera properties; initialize camera
 iei : 18.06.2020 added trigger source property, removing hard-coded Line 1; fixed bug with binnigFactor
 sma : 20.06.2020 project and cpp files name has been renamed
 sma : 23.06.2020 old project and cpp files name has been removed
+sma : 24.04.2020 Drop down binning values on main GUI working properly. issue with Compiler issue with VS2010 fixed.
 */
 
 
@@ -239,7 +240,6 @@ void BaslerCamera::GetName(char* name) const
 /// <returns></returns>
 std::string BaslerCamera::EnumToString(EDeviceAccessiblityInfo AccessiblityInfo)
 {
-	string state = "Unknown";
 	switch (AccessiblityInfo)
 	{
 	case Accessibility_Unknown:
@@ -253,6 +253,7 @@ std::string BaslerCamera::EnumToString(EDeviceAccessiblityInfo AccessiblityInfo)
 	case Accessibility_NotReachable:
 		return  "Device is not reachable ";		
 	}
+	return "Unknown";
 }
 
 /**
@@ -339,6 +340,19 @@ int BaslerCamera::Initialize()
 		camera_->Open();
 		// Get the camera nodeMap_ object.
 		nodeMap_ = &camera_->GetNodeMap();
+		//Register Genicam Callback to be informed if on any changes on  resulting frame rate. 
+		if (IsAvailable(camera_->ResultingFrameRate))
+		{
+			// to void 0 while casting the value ti int.
+			camera_->ResultingFrameRate.ImposeMin(1);
+			GenApi::Register(camera_->ResultingFrameRate.GetNode(),*this,&BaslerCamera::ResultingFramerateCallback);
+		}
+		else if (IsAvailable(camera_->ResultingFrameRateAbs))
+		{
+			camera_->ResultingFrameRateAbs.ImposeMin(1);
+			GenApi::Register(camera_->ResultingFrameRateAbs.GetNode(),*this, &BaslerCamera::ResultingFramerateCallback);
+		}
+		
 		//Sensor size
 		const CIntegerPtr width = nodeMap_->GetNode("Width");
 		// maxWidth_ = (unsigned int) width->GetMax();
@@ -461,7 +475,10 @@ int BaslerCamera::Initialize()
 			pAct = new CPropertyAction(this, &BaslerCamera::OnTemperature);
 			ret = CreateProperty("Temperature", "0.0", MM::Float, true, pAct);
 			if (DEVICE_OK != ret)
+			{
 				return ret;
+			}
+				
 		}
 
 
@@ -474,9 +491,12 @@ int BaslerCamera::Initialize()
 			temperatureStateVals.push_back("OK");
 			temperatureStateVals.push_back("Critical");
 			temperatureStateVals.push_back("OverTemperature");
-			SetAllowedValues("TemperatureState", temperatureStateVals);
+			ret = SetAllowedValues("TemperatureState", temperatureStateVals);
+			if (DEVICE_OK != ret)
+			{
+				return ret;
+			}
 		}
-
 
 		/////AutoGain//////
 		CEnumerationPtr gainAuto(nodeMap_->GetNode("GainAuto"));
@@ -724,6 +744,21 @@ int BaslerCamera::Initialize()
 			SetAllowedValues("ReverseY", reverseYVals);
 		}
 
+		//////ResultingFramerate
+		if (IsAvailable(camera_->ResultingFrameRate) || IsAvailable(camera_->ResultingFrameRateAbs))
+		{
+			ResultingFrameRatePrevious = camera_->ResultingFrameRate.GetValueOrDefault(ResultingFrameRatePrevious);
+			ResultingFrameRatePrevious = camera_->ResultingFrameRateAbs.GetValueOrDefault(ResultingFrameRatePrevious);
+			std::ostringstream oss;
+			oss << ResultingFrameRatePrevious;
+			pAct = new CPropertyAction(this, &BaslerCamera::OnResultingFramerate);
+			ret = CreateProperty("ResultingFrameRate", oss.str().c_str(), MM::Integer, true, pAct);
+			if (DEVICE_OK != ret)
+			{
+				return ret;
+			}
+
+		}
 		/////Set Acquisition AcquisitionFrameRateEnable//////
 		if (IsAvailable(camera_->AcquisitionFrameRateEnable))
 		{
@@ -736,17 +771,32 @@ int BaslerCamera::Initialize()
 		}
 
 		/////Acquisition Frame rate//////
-		CFloatPtr acqFramerate(nodeMap_->GetNode("AcquisitionFrameRate"));
-		if (IsAvailable(acqFramerate))
-		{			
-			acqFramerateMax_ = acqFramerate->GetMax();
-			acqFramerateMin_ = acqFramerate->GetMin();
-			acqFramerate_ = acqFramerate->GetValue();
+		{
+			if (IsAvailable(camera_->AcquisitionFrameRate))
+			{
+				// it is not necessary to use full range to 
+				camera_->AcquisitionFrameRate.ImposeMax(ResultingFrameRatePrevious + 10);
+				camera_->AcquisitionFrameRate.ImposeMin(1);
+				acqFramerateMax_ = camera_->AcquisitionFrameRate.GetMax();
+				acqFramerateMin_ = camera_->AcquisitionFrameRate.GetMin();
+				acqFramerate_ = camera_->AcquisitionFrameRate.GetValue();
+				
+			}
+			else if (IsAvailable(camera_->AcquisitionFrameRateAbs))
+			{	
+				camera_->AcquisitionFrameRateAbs.ImposeMax(ResultingFrameRatePrevious + 10);
+				camera_->AcquisitionFrameRateAbs.ImposeMin(1);
+				acqFramerateMax_ = camera_->AcquisitionFrameRateAbs.GetMax();
+				acqFramerateMin_ = camera_->AcquisitionFrameRateAbs.GetMin();
+				acqFramerate_ = camera_->AcquisitionFrameRateAbs.GetValue();
+
+			}
 			pAct = new CPropertyAction(this, &BaslerCamera::OnAcqFramerate);
 			ret = CreateProperty("AcquisitionFramerate", "100", MM::Integer, false, pAct);
-			SetPropertyLimits("AcquisitionFramerate",(int) acqFramerateMin_,(int)acqFramerateMax_);
+			SetPropertyLimits("AcquisitionFramerate", (int)acqFramerateMin_, (int)acqFramerateMax_);
 			assert(ret == DEVICE_OK);
 		}
+
 
 		//// binning
 		pAct = new CPropertyAction(this, &BaslerCamera::OnBinning);
@@ -755,6 +805,7 @@ int BaslerCamera::Initialize()
 		assert(ret == DEVICE_OK);
 
 		vector<string> binValues;
+		
 
 		CIntegerPtr BinningHorizontal(nodeMap_->GetNode("BinningHorizontal"));
 		CIntegerPtr BinningVertical(nodeMap_->GetNode("BinningVertical"));
@@ -771,9 +822,11 @@ int BaslerCamera::Initialize()
 				std::ostringstream oss;
 				oss << x;
 				binValues.push_back(oss.str());
+				AddAllowedValue(MM::g_Keyword_Binning, oss.str().c_str());
 			}
 			binningFactor_.assign(CDeviceUtils::ConvertToString((long)BinningHorizontal->GetValue()));
 			CheckForBinningMode(pAct);
+			
 		}
 		else
 		{
@@ -1100,9 +1153,9 @@ void BaslerCamera::SetExposure(double exp)
 	else if (exp < exposureMin_) {
 		exp = exposureMin_;
 	}
-	INodeMap& nodeMap_ = camera_->GetNodeMap();
-	CFloatPtr exposure(nodeMap_.GetNode("ExposureTime"));
-	CIntegerPtr ExposureTimeRaw(nodeMap_.GetNode("ExposureTimeRaw"));
+	INodeMap& nodemap = camera_->GetNodeMap();
+	CFloatPtr exposure(nodemap.GetNode("ExposureTime"));
+	CIntegerPtr ExposureTimeRaw(nodemap.GetNode("ExposureTimeRaw"));
 	if (camera_->IsGigE() && IsWritable(ExposureTimeRaw))
 	{
 		ExposureTimeRaw->SetValue((int64_t)exp);
@@ -1225,7 +1278,7 @@ int BaslerCamera::OnBinningMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 				string binningMode;
 				pProp->Get(binningMode);
 				BinningModeHorizontal->FromString(binningMode.c_str());
-				BinningModeHorizontal->FromString(binningMode.c_str());
+				BinningModeVertical->FromString(binningMode.c_str());
 			}
 			catch (const GenericException& e)
 			{
@@ -1571,6 +1624,7 @@ int BaslerCamera::OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct)
 	return DEVICE_OK;
 }
 
+
 int BaslerCamera::OnTemperatureState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	if (eAct == MM::BeforeGet) {
@@ -1633,15 +1687,19 @@ int BaslerCamera::OnAcqFramerate(MM::PropertyBase* pProp, MM::ActionType eAct)
 		
 		pProp->Get(acqFramerate_);	
 		CFloatPtr acqFramerate(nodeMap_->GetNode("AcquisitionFrameRate"));
-		if (acqFramerate_ <= 0)
-		{   // to avoid the in int cast.
-			acqFramerate_ = 1;
-		}
-		acqFramerate->SetValue((int)acqFramerate_);
+		camera_->AcquisitionFrameRateAbs.TrySetValue((int)acqFramerate_);
+		camera_->AcquisitionFrameRate.TrySetValue((int)acqFramerate_);
+		
 	}
 	else if (eAct == MM::BeforeGet) {
-		CFloatPtr resultingFramerate(nodeMap_->GetNode("AcquisitionFrameRate"));
-		acqFramerate_ = resultingFramerate->GetValue();
+		if (IsAvailable(camera_->AcquisitionFrameRate))
+		{
+			acqFramerate_ = camera_->AcquisitionFrameRate.GetValue();
+		}
+		else if (IsAvailable(camera_->AcquisitionFrameRateAbs))
+		{
+			acqFramerate_ = camera_->AcquisitionFrameRateAbs.GetValue();
+		}		
 		pProp->Set(acqFramerate_);
 	}
 	return DEVICE_OK;
@@ -1660,6 +1718,38 @@ int BaslerCamera::OnAutoGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 		gcstring val = GainAuto->ToString();
 		const char* s = val.c_str();
 		pProp->Set(s);
+	}
+	return DEVICE_OK;
+}
+void  BaslerCamera::ResultingFramerateCallback(GenApi::INode* pNode)
+{
+	double currentvalue = -1;
+	if (CFloatPtr(pNode))
+	{   //USB camera
+		currentvalue = CFloatPtr(pNode)->GetValue();
+	}
+	else if (CIntegerPtr(pNode))
+	{ //Gige camera
+		currentvalue = static_cast<double>( CIntegerPtr(pNode)->GetValue());
+	}
+	if (currentvalue != -1 && currentvalue != ResultingFrameRatePrevious)
+	{
+		ResultingFrameRatePrevious = currentvalue;
+		acqFramerateMax_ = currentvalue;
+		SetPropertyLimits("AcquisitionFramerate", (int)acqFramerateMin_, (int)acqFramerateMax_);
+	}
+}
+int BaslerCamera::OnResultingFramerate(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::BeforeGet) {
+		if(IsAvailable(camera_->ResultingFrameRateAbs))
+		{
+			pProp->Set(camera_->ResultingFrameRateAbs.GetValue());
+		} 
+		else if (IsAvailable(camera_->ResultingFrameRate))
+		{
+			pProp->Set(camera_->ResultingFrameRate.GetValue());
+		}
 	}
 	return DEVICE_OK;
 }
