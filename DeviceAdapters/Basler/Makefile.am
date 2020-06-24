@@ -1,5 +1,6 @@
-# sma 26.05.2019 
-# File Version  2.11
+# sma 20.05.2020 
+# File Version  2.12
+# cpp and pylon path has been adapted
 
 
 PYLONLDFLAGS =
@@ -7,12 +8,12 @@ PLIBADD =
 PLDFLAGS =
 PYLONCPPFLAGS =
 AM_CXXFLAGS=$(MMDEVAPI_CXXFLAGS) 
-libmmgr_dal_BaslerCamera_la_SOURCES=BaslerPylon5Camera.cpp BaslerPylon5Camera.h
+libmmgr_dal_BaslerCamera_la_SOURCES=BaslerPylonCamera.cpp BaslerPylonCamera.h
 deviceadapter_LTLIBRARIES=libmmgr_dal_BaslerCamera.la
 
 
 if BUILD_BASLER_LINUX
-   PYLON_ROOT=/opt/pylon5
+   PYLON_ROOT=/opt/pylon
 
 if PYLON64
    PYLONLDFLAGS +=-Wl,--enable-new-dtags -Wl,-rpath,$(PYLON_ROOT)/lib64,-L$(PYLON_ROOT)/lib64

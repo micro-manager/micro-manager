@@ -22,7 +22,7 @@
     <ProjectGuid>{bd5dd57f-a092-4441-ba35-5b0701c7cce5}</ProjectGuid>
     <RootNamespace>Basler</RootNamespace>
     <Keyword>Win32Proj</Keyword>
-    <ProjectName>BaslerPylon6</ProjectName>
+    <ProjectName>BaslerPylon</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -170,10 +170,10 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="BaslerPylon6Camera.cpp" />
+    <ClCompile Include="BaslerPylonCamera.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BaslerPylon6Camera.h" />
+    <ClInclude Include="BaslerPylonCamera.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\MMDevice\MMDevice-SharedRuntime.vcxproj">

@@ -8,46 +8,48 @@
 // Copyright 2018 Henry Pinkard
 // Copyright 2019 SMA extended for supporting Bayer,Mono12, Mono16 and  RGB formats
 // Copyright 2019 SMA add binning support
-// Redistribution and use in source and binary forms, with or without modification, 
+// Redistribution and use in source and binary forms, with or without modification,
 // are permitted provided that the following conditions are met:
 //
-// 1. Redistributions of source code must retain the above copyright notice, this 
+// 1. Redistributions of source code must retain the above copyright notice, this
 // list of conditions and the following disclaimer.
 //
 // 2. Redistributions in binary form must reproduce the above copyright notice, this
-// list of conditions and the following disclaimer in the documentation and/or other 
+// list of conditions and the following disclaimer in the documentation and/or other
 // materials provided with the distribution.
 //
 // 3. Neither the name of the copyright holder nor the names of its contributors may
-// be used to endorse or promote products derived from this software without specific 
+// be used to endorse or promote products derived from this software without specific
 // prior written permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES 
-// OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
-// SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+// OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+// SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 // INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
-// TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
-// BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN 
-// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH 
+// TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+// BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 // DAMAGE.
 
-sma : 02.03.2019 : Possible issue with Webcam solved. 
+sma : 02.03.2019 : Possible issue with Webcam solved.
 sma : 03.03.2019 : add the parameter external trigger.Trigger is expected in Line1.
-sma : 07.03.2019 : add the parameter binning average / sum mode 
+sma : 07.03.2019 : add the parameter binning average / sum mode
 sma : 25.03.2019 : Pylon version has been changed to 5.2.0 and it check now for specific pylon version
 				   before call PylonInitialize();
 				   parameter Auto exposure and  auto gain are available.
-				   
+
 sma : 28.04.2019 Take some changes to be able to compile in Linux
 sma : 04.05.2019 Bugfix in 12bit image format and add parameter Sensor Width and Height
 sma : 06.05.2019 Improvement in Gain range handling. In some camera model the gain range is depends on selected pixel format.
 sma : 22.05.2019 prepared for Mac build
 sma : 06.03.2020 pylon version has been switched to V 6.1
 sma : 06.03.2020 camera class has been switched to CBaslerUniversalInstantCamera but not all code lines rewritten. In future you profit from the advantage of CBaslerUniversalInstantCamera for sure.
-iei : 06.08.2020 add support for additional camera properties; initialize camera by serial number
-
+iei : 08.06.2020 add support for additional camera properties; initialize camera by serial number
+iei : 18.06.2020 added trigger source property, removing hard-coded Line 1; fixed bug with binnigFactor
+sma : 20.06.2020 project and cpp files name has been renamed
+sma : 23.06.2020 old project and cpp files name has been removed
 */
 
 
@@ -64,7 +66,7 @@ using namespace Basler_UniversalCameraParams;
 using namespace GenApi;
 using namespace GenICam;
 
-#include "BaslerPylon6Camera.h"
+#include "BaslerPylonCamera.h"
 #include <sstream>
 #include <math.h>
 #include "ModuleInterface.h"
@@ -73,20 +75,20 @@ using namespace GenICam;
 
 
 #ifdef PYLON_UNIX_BUILD
- typedef int BOOL;
- #define TRUE 1
- #define FALSE 0 
+typedef int BOOL;
+#define TRUE 1
+#define FALSE 0 
 
- #ifndef _LINUX_STDDEF_H
- #define _LINUX_STDDEF_H
+#ifndef _LINUX_STDDEF_H
+#define _LINUX_STDDEF_H
 
- #undef NULL
- #if defined(__cplusplus)
- #define NULL 0
- #else
- #define NULL ((void *)0)
- #endif
- #endif
+#undef NULL
+#if defined(__cplusplus)
+#define NULL 0
+#else
+#define NULL ((void *)0)
+#endif
+#endif
 #endif
 
 
@@ -118,7 +120,7 @@ static const  char* g_PixelType_8bitBGR = "8bitBGR";
 
 MODULE_API void InitializeModuleData()
 {
-   RegisterDevice(g_BaslerCameraDeviceName, MM::CameraDevice, "Basler  Camera");
+	RegisterDevice(g_BaslerCameraDeviceName, MM::CameraDevice, "Basler  Camera");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -126,11 +128,11 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 	if (deviceName == 0)
 		return 0;
 
-   // decide which device class to create based on the deviceName parameter
+	// decide which device class to create based on the deviceName parameter
 	if (strcmp(deviceName, g_BaslerCameraDeviceName) == 0) {
 		// create camera
 		return new BaslerCamera();
-	} 
+	}
 	// ...supplied name not recognized
 	return 0;
 }
@@ -147,8 +149,8 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 /**
 * Constructor.
 */
-BaslerCamera::BaslerCamera():
-CCameraBase<BaslerCamera> (),
+BaslerCamera::BaslerCamera() :
+	CCameraBase<BaslerCamera>(),
 	maxWidth_(0),
 	maxHeight_(0),
 	exposure_us_(0),
@@ -157,10 +159,11 @@ CCameraBase<BaslerCamera> (),
 	gainMax_(0),
 	gainMin_(0),
 	bitDepth_(8),
-	temperatureStatus_("Undefined"),
+	temperatureState_("Undefined"),
 	reverseX_("0"),
 	reverseY_("0"),
 	imgBuffer_(NULL),
+	Buffer4ContinuesShot(NULL),
 	colorCamera_(true),
 	pixelType_("Undefined"),
 	sensorReadoutMode_("Undefined"),
@@ -182,12 +185,13 @@ CCameraBase<BaslerCamera> (),
 
 					   // Get the available cameras. TODO: This can be very slow and perhaps the
 					   // result should be cached.
+					  //  or setting up TL Filter, currently it enumerates all pylon TL, eg. GigE , USB Camemu, CXP, CL etc..
 	DeviceInfoList_t devices;
 	if (CTlFactory::GetInstance().EnumerateDevices(devices) == 0)
 	{
 		AddToLog("No camera present.");
 		PylonTerminate();
-        throw RUNTIME_EXCEPTION( "No camera present.");
+		throw RUNTIME_EXCEPTION("No camera present.");
 	}
 
 	bool first = true;
@@ -211,9 +215,14 @@ CCameraBase<BaslerCamera> (),
 
 BaslerCamera::~BaslerCamera()
 {
-	if(imgBuffer_ != NULL)
+	if (imgBuffer_ != NULL)
+	{
 		free(imgBuffer_);
-	free(Buffer4ContinuesShot);
+	}
+	if (Buffer4ContinuesShot != NULL)
+	{
+		free(Buffer4ContinuesShot);
+	}
 }
 
 /**
@@ -222,6 +231,28 @@ BaslerCamera::~BaslerCamera()
 void BaslerCamera::GetName(char* name) const
 {
 	CDeviceUtils::CopyLimitedString(name, g_BaslerCameraDeviceName);
+}
+/// <summary>
+/// convert the EDeviceAccessiblityInfo to string 
+/// </summary>
+/// <param name="AccessiblityInfo"></param>
+/// <returns></returns>
+std::string BaslerCamera::EnumToString(EDeviceAccessiblityInfo AccessiblityInfo)
+{
+	string state = "Unknown";
+	switch (AccessiblityInfo)
+	{
+	case Accessibility_Unknown:
+		return "Unknown Device Status";
+	case Accessibility_Ok:
+		return "Device  is ready to be open";
+	case Accessibility_Opened:
+		return "Device  is ready to be open";		
+	case Accessibility_OpenedExclusively:
+		return  "Device is currently opened exclusively by another application ";
+	case Accessibility_NotReachable:
+		return  "Device is not reachable ";		
+	}
 }
 
 /**
@@ -233,10 +264,10 @@ int BaslerCamera::Initialize()
 		return DEVICE_OK;
 
 	try
-	{			
+	{
 		// Before using any pylon methods, the pylon runtime must be initialized. 
 		PylonInitialize();
-		
+
 		char serialNumber[MM::MaxStrLength];
 		GetProperty("SerialNumber", serialNumber);
 		if (strlen(serialNumber) == 0 || strcmp(serialNumber, "Undefined") == 0)
@@ -244,33 +275,40 @@ int BaslerCamera::Initialize()
 
 		CDeviceInfo deviceInfo;
 		deviceInfo.SetSerialNumber(String_t(serialNumber));
-		
+
 		// Get the transport layer factory.
 		CTlFactory& tlFactory = CTlFactory::GetInstance();
 		initialized_ = false;
-		
+
 		// This checks, among other things, that the camera is not already in use.
 		// Without that check, the following CreateDevice() may crash on duplicate
 		// serial number. Unfortunately, this call is slow.
-		if (!tlFactory.IsDeviceAccessible(deviceInfo))
+		Pylon::EDeviceAccessiblityInfo isAccessableInfo;
+		
+		if (!tlFactory.IsDeviceAccessible(deviceInfo,Control,&isAccessableInfo))
+		{
+			AddToLog("trying to open camera with SN " + std::string( deviceInfo.GetSerialNumber()));
+			AddToLog("The current state of selected camera " + EnumToString(isAccessableInfo));
 			return ERR_CANNOT_CONNECT;
+		}
+		
 
 		IPylonDevice* device = tlFactory.CreateDevice(deviceInfo);
 		if (!device)
 			return ERR_CANNOT_CONNECT;
 		else
 			camera_ = new CBaslerUniversalInstantCamera(device);
-			initialized_ = true;
+		initialized_ = true;
 
-		if(!initialized_)
+		if (!initialized_)
 		{
 			AddToLog("No free camera  available.");
-            throw RUNTIME_EXCEPTION( "No camera available.");
+			throw RUNTIME_EXCEPTION("No camera available.");
 		}
 
-		
+
 		stringstream ss;
-		ss <<"using camera " << camera_->GetDeviceInfo().GetFriendlyName();
+		ss << "using camera " << camera_->GetDeviceInfo().GetFriendlyName();
 
 		AddToLog(ss.str());
 		// initialize the pylon image formatter.
@@ -281,12 +319,12 @@ int BaslerCamera::Initialize()
 		int ret = CreateProperty(MM::g_Keyword_Name, g_BaslerCameraDeviceName, MM::String, true);
 		if (DEVICE_OK != ret)
 			return ret;
-		
+
 		// Description
 		ret = CreateProperty(MM::g_Keyword_Description, "Basler Camera device adapter", MM::String, true);
 		if (DEVICE_OK != ret)
 			return ret;
-		
+
 		// Serial Number
 		ret = CreateProperty(MM::g_Keyword_CameraID, String_t(serialNumber), MM::String, true);
 		if (DEVICE_OK != ret)
@@ -300,144 +338,154 @@ int BaslerCamera::Initialize()
 		//Call before reading/writing any parameters
 		camera_->Open();
 		// Get the camera nodeMap_ object.
-
-		//Sensor size
 		nodeMap_ = &camera_->GetNodeMap();
+		//Sensor size
 		const CIntegerPtr width = nodeMap_->GetNode("Width");
 		// maxWidth_ = (unsigned int) width->GetMax();
-		maxWidth_ = (unsigned int) CIntegerPtr(nodeMap_->GetNode("WidthMax"))->GetValue();
+		maxWidth_ = (unsigned int)CIntegerPtr(nodeMap_->GetNode("WidthMax"))->GetValue();
 		const CIntegerPtr height = nodeMap_->GetNode("Height");
 		// maxHeight_ = (unsigned int) height->GetMax();
-		maxHeight_ = (unsigned int) CIntegerPtr(nodeMap_->GetNode("HeightMax"))->GetValue();
+		maxHeight_ = (unsigned int)CIntegerPtr(nodeMap_->GetNode("HeightMax"))->GetValue();
 
 
-		if(IsAvailable(width))
+		if (IsAvailable(width))
 		{
-			CPropertyAction *pAct = new CPropertyAction (this, &BaslerCamera::OnWidth);
-			ret = CreateProperty("SensorWidth",CDeviceUtils::ConvertToString((int) width->GetValue()), MM::Integer, false, pAct);
-			SetPropertyLimits("SensorWidth", (double)width->GetMin(),(double)width->GetMax());
+			CPropertyAction* pAct = new CPropertyAction(this, &BaslerCamera::OnWidth);
+			ret = CreateProperty("SensorWidth", CDeviceUtils::ConvertToString((int)width->GetValue()), MM::Integer, false, pAct);
+			SetPropertyLimits("SensorWidth", (double)width->GetMin(), (double)width->GetMax());
 			assert(ret == DEVICE_OK);
 		}
-		if(IsAvailable(height))
+		if (IsAvailable(height))
 		{
-			CPropertyAction *pAct = new CPropertyAction (this, &BaslerCamera::OnHeight);
-			ret = CreateProperty("SensorHeight",CDeviceUtils::ConvertToString((int) height->GetValue()), MM::Integer, false, pAct);
-			SetPropertyLimits("SensorHeight", (double)height->GetMin(),(double)height->GetMax());
+			CPropertyAction* pAct = new CPropertyAction(this, &BaslerCamera::OnHeight);
+			ret = CreateProperty("SensorHeight", CDeviceUtils::ConvertToString((int)height->GetValue()), MM::Integer, false, pAct);
+			SetPropertyLimits("SensorHeight", (double)height->GetMin(), (double)height->GetMax());
 			assert(ret == DEVICE_OK);
 		}
 
 		//end of Sensor size
 
 
-	#if (!_DEBUG)
-			ClearROI();// to be enabled for release
-	#else 
+#if (!_DEBUG)
+		ClearROI();// to be enabled for release
+#else 
 		{
-			ReduceImageSize(200,200);
-			if(camera_->IsGigE())
+			ReduceImageSize(200, 200);
+			if (camera_->IsGigE())
 			{
-				CIntegerPtr(camera_->GetTLNodeMap().GetNode("HeartbeatTimeout"))->SetValue(24*1000);
-			}			
+				CIntegerPtr(camera_->GetTLNodeMap().GetNode("HeartbeatTimeout"))->SetValue(24 * 1000);
+			}
 		}
-	#endif
-	
+		if (IsAvailable(camera_->TestImageSelector))
+		{
+			camera_->TestImageSelector.TrySetValue(TestImageSelectorEnums::TestImageSelector_Testimage4);
+		}
+#endif
 
-		long bytes = (long) (height->GetValue() * width->GetValue() * 4) ;
+
+		long bytes = (long)(height->GetValue() * width->GetValue() * 4);
 		Buffer4ContinuesShot = malloc(bytes);
 
 
 		//Exposure
-		CFloatPtr exposure( nodeMap_->GetNode( "ExposureTime"));  
-		CFloatPtr ExposureTimeAbs( nodeMap_->GetNode( "ExposureTimeAbs")); 
-		if(IsAvailable(exposure))
+		CFloatPtr exposure(nodeMap_->GetNode("ExposureTime"));
+		CFloatPtr ExposureTimeAbs(nodeMap_->GetNode("ExposureTimeAbs"));
+		if (IsAvailable(exposure))
 		{
 			// USB cameras
 			exposure_us_ = exposure->GetValue();
 			exposureMax_ = exposure->GetMax();
 			exposureMin_ = exposure->GetMin();
 		}
-		else if(IsAvailable(ExposureTimeAbs))
+		else if (IsAvailable(ExposureTimeAbs))
 		{   // GigE
 			exposure_us_ = ExposureTimeAbs->GetValue();
 			exposureMax_ = ExposureTimeAbs->GetMax();
 			exposureMin_ = ExposureTimeAbs->GetMin();
-		
 		}
 
 
 		//Pixel type
-		CPropertyAction *pAct = new CPropertyAction (this, &BaslerCamera::OnPixelType);
+		CPropertyAction* pAct = new CPropertyAction(this, &BaslerCamera::OnPixelType);
 		ret = CreateProperty(MM::g_Keyword_PixelType, "NA", MM::String, false, pAct);
 		assert(ret == DEVICE_OK);
 
 		vector<string> pixelTypeValues;
 
-		CEnumerationPtr pixelFormat( nodeMap_->GetNode( "PixelFormat"));
-		if (IsAvailable( pixelFormat->GetEntryByName( "Mono10"))) {
+		CEnumerationPtr pixelFormat(nodeMap_->GetNode("PixelFormat"));
+		if (IsAvailable(pixelFormat->GetEntryByName("Mono10"))) {
 			pixelTypeValues.push_back("Mono10");
 			pixelFormat->FromString("Mono10");
 			pixelType_ = "Mono10";
 		}
-		if (IsAvailable( pixelFormat->GetEntryByName( "Mono12"))) {
+		if (IsAvailable(pixelFormat->GetEntryByName("Mono12"))) {
 			pixelTypeValues.push_back("Mono12");
 			pixelFormat->FromString("Mono12");
-			pixelType_ = "Mono12"; 
+			pixelType_ = "Mono12";
 		}
-		if (IsAvailable( pixelFormat->GetEntryByName( "Mono16"))) {
+		if (IsAvailable(pixelFormat->GetEntryByName("Mono16"))) {
 			pixelTypeValues.push_back("Mono16");
 			pixelFormat->FromString("Mono16");
 			pixelType_ = "Mono16"; //default to using highest bit depth
 		}
-			if (IsAvailable( pixelFormat->GetEntryByName( "Mono8"))) {
+		if (IsAvailable(pixelFormat->GetEntryByName("Mono8"))) {
 			pixelTypeValues.push_back("Mono8");
 			pixelFormat->FromString("Mono8");
-			pixelType_ = "Mono8";	
+			pixelType_ = "Mono8";
 		}
-		if (IsAvailable( pixelFormat->GetEntryByName( "BGR8"))) {
+		if (IsAvailable(pixelFormat->GetEntryByName("BGR8"))) {
 			pixelTypeValues.push_back("BGR8");
 			pixelFormat->FromString("BGR8");
-			pixelType_ = "BGR8" ; 	
+			pixelType_ = "BGR8";
 		}
-		if (IsAvailable( pixelFormat->GetEntryByName("RGB8"))) {
+		if (IsAvailable(pixelFormat->GetEntryByName("RGB8"))) {
 			pixelTypeValues.push_back("RGB8");
 			pixelFormat->FromString("RGB8");
-			pixelType_ = "RGB8" ; 		
+			pixelType_ = "RGB8";
 		}
-			if (IsAvailable( pixelFormat->GetEntryByName("BayerRG8"))) {
+		if (IsAvailable(pixelFormat->GetEntryByName("BayerRG8"))) {
 			pixelTypeValues.push_back("BayerRG8");
 			pixelFormat->FromString("BayerRG8");
-			pixelType_ = "BayerRG8" ; 	
+			pixelType_ = "BayerRG8";
 		}
-		if (IsAvailable( pixelFormat->GetEntryByName( "BayerBG8"))) {
+		if (IsAvailable(pixelFormat->GetEntryByName("BayerBG8"))) {
 			pixelTypeValues.push_back("BayerBG8");
 			pixelFormat->FromString("BayerBG8");
-			pixelType_ = "BayerBG8" ; 
+			pixelType_ = "BayerBG8";
 		}
 		SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);
 
 		/////Temperature//////
-		pAct = new CPropertyAction(this, &BaslerCamera::OnTemperature);
-		ret = CreateProperty("Temperature", "0.0", MM::Float, true, pAct);
-		if (DEVICE_OK != ret)
-			return ret;
+		if (IsAvailable(camera_->DeviceTemperature))
+		{
+			pAct = new CPropertyAction(this, &BaslerCamera::OnTemperature);
+			ret = CreateProperty("Temperature", "0.0", MM::Float, true, pAct);
+			if (DEVICE_OK != ret)
+				return ret;
+		}
+
 
 		/////Temperature Status//////
-		pAct = new CPropertyAction(this, &BaslerCamera::OnTemperatureStatus);
-		ret = CreateProperty("TemperatureStatus", "NA", MM::String, true, pAct);
-		vector<string> temperatureStatusVals;
-		temperatureStatusVals.push_back("OK");
-		temperatureStatusVals.push_back("Critical");
-		temperatureStatusVals.push_back("OverTemperature");
-		SetAllowedValues("TemperatureStatus", temperatureStatusVals);
-		
+		if (IsAvailable(camera_->TemperatureState))
+		{
+			pAct = new CPropertyAction(this, &BaslerCamera::OnTemperatureState);
+			ret = CreateProperty("TemperatureState", "NA", MM::String, true, pAct);
+			vector<string> temperatureStateVals;
+			temperatureStateVals.push_back("OK");
+			temperatureStateVals.push_back("Critical");
+			temperatureStateVals.push_back("OverTemperature");
+			SetAllowedValues("TemperatureState", temperatureStateVals);
+		}
+
+
 		/////AutoGain//////
-		CEnumerationPtr gainAuto( nodeMap_->GetNode("GainAuto"));
-		if (IsWritable( gainAuto)) 
-		{			
-		
-			if(gainAuto != NULL && IsAvailable(gainAuto))
+		CEnumerationPtr gainAuto(nodeMap_->GetNode("GainAuto"));
+		if (IsWritable(gainAuto))
+		{
+
+			if (gainAuto != NULL && IsAvailable(gainAuto))
 			{
-				pAct = new CPropertyAction (this, &BaslerCamera::OnAutoGain);
+				pAct = new CPropertyAction(this, &BaslerCamera::OnAutoGain);
 				ret = CreateProperty("GainAuto", "NA", MM::String, false, pAct);
 				vector<string> LSPVals;
 				NodeList_t entries;
@@ -452,17 +500,17 @@ int BaslerCamera::Initialize()
 						LSPVals.push_back(strValue);
 					}
 				}
-				SetAllowedValues("GainAuto",LSPVals);	
-			 }
+				SetAllowedValues("GainAuto", LSPVals);
+			}
 		}
-			/////AutoExposure//////
-		CEnumerationPtr ExposureAuto( nodeMap_->GetNode("ExposureAuto"));
-		if (IsWritable( ExposureAuto)) 
-		{			
-		
-			if(ExposureAuto != NULL && IsAvailable(ExposureAuto))
+		/////AutoExposure//////
+		CEnumerationPtr ExposureAuto(nodeMap_->GetNode("ExposureAuto"));
+		if (IsWritable(ExposureAuto))
+		{
+
+			if (ExposureAuto != NULL && IsAvailable(ExposureAuto))
 			{
-				pAct = new CPropertyAction (this, &BaslerCamera::OnAutoExpore);
+				pAct = new CPropertyAction(this, &BaslerCamera::OnAutoExpore);
 				ret = CreateProperty("ExposureAuto", "NA", MM::String, false, pAct);
 				vector<string> LSPVals;
 				NodeList_t entries;
@@ -477,20 +525,21 @@ int BaslerCamera::Initialize()
 						LSPVals.push_back(strValue);
 					}
 				}
-				SetAllowedValues("ExposureAuto",LSPVals);	
-			 }
+				SetAllowedValues("ExposureAuto", LSPVals);
+			}
 		}
 
 		//get gain limits and value
-		CFloatPtr gain( nodeMap_->GetNode("Gain"));
-		CIntegerPtr GainRaw( nodeMap_->GetNode("GainRaw"));
+		CFloatPtr gain(nodeMap_->GetNode("Gain"));
+		CIntegerPtr GainRaw(nodeMap_->GetNode("GainRaw"));
 
-		if(IsAvailable(gain))
+		if (IsAvailable(gain))
 		{
 			gainMax_ = gain->GetMax();
 			gainMin_ = gain->GetMin();
 			gain_ = gain->GetValue();
-		}else if (IsAvailable(GainRaw))
+		}
+		else if (IsAvailable(GainRaw))
 		{
 			gainMax_ = (double)GainRaw->GetMax();
 			gainMin_ = (double)GainRaw->GetMin();
@@ -499,51 +548,58 @@ int BaslerCamera::Initialize()
 
 
 		//make property
-		pAct = new CPropertyAction (this, &BaslerCamera::OnGain);
+		pAct = new CPropertyAction(this, &BaslerCamera::OnGain);
 		ret = CreateProperty(MM::g_Keyword_Gain, "1.0", MM::Float, false, pAct);
 		SetPropertyLimits(MM::g_Keyword_Gain, gainMin_, gainMax_);
 
 		/////Offset//////
-		CFloatPtr BlackLevel( nodeMap_->GetNode( "BlackLevel"));	
-		CIntegerPtr BlackLevelRaw( nodeMap_->GetNode( "BlackLevelRaw"));	
+		CFloatPtr BlackLevel(nodeMap_->GetNode("BlackLevel"));
+		CIntegerPtr BlackLevelRaw(nodeMap_->GetNode("BlackLevelRaw"));
 
-		if(IsAvailable(BlackLevel))
+		if (IsAvailable(BlackLevel))
 		{
 			offsetMax_ = BlackLevel->GetMax();
 			offsetMin_ = BlackLevel->GetMin();
 			offset_ = BlackLevel->GetValue();
-		
+
 		}
 		else if (IsAvailable(BlackLevelRaw))
 		{
-			offsetMax_ = (double) BlackLevelRaw->GetMax();
+			offsetMax_ = (double)BlackLevelRaw->GetMax();
 			offsetMin_ = (double)BlackLevelRaw->GetMin();
 			offset_ = (double)BlackLevelRaw->GetValue();
 		}
 
 
 		//make property
-		pAct = new CPropertyAction (this, &BaslerCamera::OnOffset);
+		pAct = new CPropertyAction(this, &BaslerCamera::OnOffset);
 		ret = CreateProperty(MM::g_Keyword_Offset, "1.0", MM::Float, false, pAct);
 		SetPropertyLimits(MM::g_Keyword_Offset, offsetMin_, offsetMax_);
 
 		////Sensor readout//////
-		//pAct = new CPropertyAction (this, &BaslerCamera::OnSensorReadoutMode);
-		//ret = CreateProperty("SensorReadoutMode", "NA", MM::String, false, pAct);
-		//vector<string> vals;
-		//CEnumerationPtr sensorReadout( nodeMap_->GetNode( "SensorReadoutMode"));
-		// if ( IsAvailable( sensorReadout->GetEntryByName( "Normal"))) {
-		//	 vals.push_back("Normal");
-		// }
-		// if ( IsAvailable( sensorReadout->GetEntryByName( "Fast"))) {
-		//	 vals.push_back("Fast");
-		// }
-		// SetAllowedValues("SensorReadoutMode", vals);
-		
-		CEnumerationPtr LightSourcePreset( nodeMap_->GetNode( "LightSourcePreset"));
-		if(LightSourcePreset != NULL && IsAvailable(LightSourcePreset))
+		if (IsAvailable(camera_->SensorReadoutMode))
 		{
-			pAct = new CPropertyAction (this, &BaslerCamera::OnLightSourcePreset);
+			pAct = new CPropertyAction(this, &BaslerCamera::OnSensorReadoutMode);
+			ret = CreateProperty("SensorReadoutMode", "NA", MM::String, false, pAct);
+			vector<string> vals;
+			NodeList_t entries;
+			camera_->SensorReadoutMode.GetEntries(entries);
+				for (NodeList_t::iterator it = entries.begin(); it != entries.end(); ++it)
+				{
+					CEnumEntryPtr pEnumEntry(*it);
+					string strValue = pEnumEntry->GetSymbolic().c_str();
+					if (IsAvailable(*it) && strValue != "Off")
+					{
+						vals.push_back(strValue);
+					}
+				}
+			SetAllowedValues("SensorReadoutMode", vals);
+		}
+
+		CEnumerationPtr LightSourcePreset(nodeMap_->GetNode("LightSourcePreset"));
+		if (LightSourcePreset != NULL && IsAvailable(LightSourcePreset))
+		{
+			pAct = new CPropertyAction(this, &BaslerCamera::OnLightSourcePreset);
 			ret = CreateProperty("LightSourcePreset", "NA", MM::String, false, pAct);
 			vector<string> LSPVals;
 			NodeList_t entries;
@@ -558,130 +614,165 @@ int BaslerCamera::Initialize()
 					LSPVals.push_back(strValue);
 				}
 			}
-			SetAllowedValues("LightSourcePreset",LSPVals);	
-		 }
+			SetAllowedValues("LightSourcePreset", LSPVals);
+		}
 
-		
+
 		/////Trigger Mode//////
-		CEnumerationPtr TriggerMode( nodeMap_->GetNode( "TriggerMode"));
-		if(IsAvailable(TriggerMode))
+		CEnumerationPtr TriggerMode(nodeMap_->GetNode("TriggerMode"));
+		if (IsAvailable(TriggerMode))
 		{
-			pAct = new CPropertyAction (this, &BaslerCamera::OnTriggerMode);
+			pAct = new CPropertyAction(this, &BaslerCamera::OnTriggerMode);
 			ret = CreateProperty("TriggerMode", "Off", MM::String, false, pAct);
 			vector<string> LSPVals;
 			LSPVals.push_back("Off");
 			LSPVals.push_back("On");
-			SetAllowedValues("TriggerMode",LSPVals);
-		 }
-
-
-		////Shutter mode//////	
-		CEnumerationPtr shutterMode( nodeMap_->GetNode( "ShutterMode"));
-		if(IsAvailable(shutterMode))
+			SetAllowedValues("TriggerMode", LSPVals);
+		}
+		/////Trigger Source//////
+		CEnumerationPtr triggersource(nodeMap_->GetNode("TriggerSource"));
+		if (IsWritable(triggersource))
 		{
-			pAct = new CPropertyAction (this, &BaslerCamera::OnShutterMode);
+			if (triggersource != NULL && IsAvailable(triggersource))
+			{
+				pAct = new CPropertyAction(this, &BaslerCamera::OnTriggerSource);
+				ret = CreateProperty("TriggerSource", "NA", MM::String, false, pAct);
+				vector<string> LSPVals;
+				NodeList_t entries;
+				triggersource->GetEntries(entries);
+				for (NodeList_t::iterator it = entries.begin(); it != entries.end(); ++it)
+				{
+					CEnumEntryPtr pEnumEntry(*it);
+					string strValue = pEnumEntry->GetSymbolic().c_str();
+					//Software Execute button not implement yet.
+					if (IsAvailable(*it) && strValue.find("Software") == std::string::npos)
+					{
+						LSPVals.push_back(strValue);
+					}
+				}
+				SetAllowedValues("TriggerSource", LSPVals);
+			}
+		}
+		////Shutter mode//////	
+		CEnumerationPtr shutterMode(nodeMap_->GetNode("ShutterMode"));
+		if (IsAvailable(shutterMode))
+		{
+			pAct = new CPropertyAction(this, &BaslerCamera::OnShutterMode);
 			ret = CreateProperty("ShutterMode", "NA", MM::String, false, pAct);
 			vector<string> shutterVals;
 
-		   if ( IsAvailable( shutterMode->GetEntryByName( "Global")))
-		   {
+			if (IsAvailable(shutterMode->GetEntryByName("Global")))
+			{
 				shutterVals.push_back("Global");
-		   }
-			if ( IsAvailable( shutterMode->GetEntryByName( "Rolling"))) {
+			}
+			if (IsAvailable(shutterMode->GetEntryByName("Rolling"))) {
 				shutterVals.push_back("Rolling");
 			}
-			if ( IsAvailable( shutterMode->GetEntryByName( "GlobalResetRelease"))) {
+			if (IsAvailable(shutterMode->GetEntryByName("GlobalResetRelease"))) {
 				shutterVals.push_back("GlobalResetRelease");
 			}
-			SetAllowedValues("ShutterMode", shutterVals);	
+			SetAllowedValues("ShutterMode", shutterVals);
 		}
 
 		////DeviceLinkThroughputLimit for USB Camera//////
 
-		if(camera_->IsUsb())
+		if (camera_->IsUsb())
 		{
-			CIntegerPtr DeviceLinkThroughputLimit( nodeMap_->GetNode( "DeviceLinkThroughputLimit"));
-			if(IsAvailable(DeviceLinkThroughputLimit))
+			CIntegerPtr DeviceLinkThroughputLimit(nodeMap_->GetNode("DeviceLinkThroughputLimit"));
+			if (IsAvailable(DeviceLinkThroughputLimit))
 			{
 				int64_t val = DeviceLinkThroughputLimit->GetValue();
-				pAct = new CPropertyAction (this, &BaslerCamera::OnDeviceLinkThroughputLimit);
-            ret = CreateProperty("DeviceLinkThroughputLimit",CDeviceUtils::ConvertToString((long) val), MM::Integer, false, pAct);
-				SetPropertyLimits("DeviceLinkThroughputLimit", (double)DeviceLinkThroughputLimit->GetMin(),(double) DeviceLinkThroughputLimit->GetMax());
+				pAct = new CPropertyAction(this, &BaslerCamera::OnDeviceLinkThroughputLimit);
+				ret = CreateProperty("DeviceLinkThroughputLimit", CDeviceUtils::ConvertToString((long)val), MM::Integer, false, pAct);
+				SetPropertyLimits("DeviceLinkThroughputLimit", (double)DeviceLinkThroughputLimit->GetMin(), (double)DeviceLinkThroughputLimit->GetMax());
 				assert(ret == DEVICE_OK);
 			}
 		}
-			////Inter packet delay for GigE Camera//////
+		////Inter packet delay for GigE Camera//////
 
-		if(camera_->IsGigE())
+		if (camera_->IsGigE())
 		{
-			CIntegerPtr GevSCPD( nodeMap_->GetNode( "GevSCPD"));
-			if(IsAvailable(GevSCPD))
+			CIntegerPtr GevSCPD(nodeMap_->GetNode("GevSCPD"));
+			if (IsAvailable(GevSCPD))
 			{
-				pAct = new CPropertyAction (this, &BaslerCamera::OnInterPacketDelay);
-            ret = CreateProperty("InterPacketDelay",CDeviceUtils::ConvertToString((long)GevSCPD->GetValue()), MM::Integer, false, pAct);
-				SetPropertyLimits("InterPacketDelay", (double)GevSCPD->GetMin(),(double)GevSCPD->GetMax());
+				pAct = new CPropertyAction(this, &BaslerCamera::OnInterPacketDelay);
+				ret = CreateProperty("InterPacketDelay", CDeviceUtils::ConvertToString((long)GevSCPD->GetValue()), MM::Integer, false, pAct);
+				SetPropertyLimits("InterPacketDelay", (double)GevSCPD->GetMin(), (double)GevSCPD->GetMax());
 				assert(ret == DEVICE_OK);
 			}
 		}
 
 		/////Reverse X//////
-		pAct = new CPropertyAction(this, &BaslerCamera::OnReverseX);
-		ret = CreateProperty("ReverseX", "0", MM::String, false, pAct);
-		vector<string> reverseXVals;
-		reverseXVals.push_back("0");
-		reverseXVals.push_back("1");
-		SetAllowedValues("ReverseX", reverseXVals);
+		if (IsAvailable(camera_->ReverseX))
+		{
+			pAct = new CPropertyAction(this, &BaslerCamera::OnReverseX);
+			ret = CreateProperty("ReverseX", "0", MM::String, false, pAct);
+			vector<string> reverseXVals;
+			reverseXVals.push_back("0");
+			reverseXVals.push_back("1");
+			SetAllowedValues("ReverseX", reverseXVals);
+		}
 
 		/////Reverse Y//////
-		pAct = new CPropertyAction(this, &BaslerCamera::OnReverseY);
-		ret = CreateProperty("ReverseY", "0", MM::String, false, pAct);
-		vector<string> reverseYVals;
-		reverseYVals.push_back("0");
-		reverseYVals.push_back("1");
-		SetAllowedValues("ReverseY", reverseYVals);
+		if (IsAvailable(camera_->ReverseY))
+		{
+			pAct = new CPropertyAction(this, &BaslerCamera::OnReverseY);
+			ret = CreateProperty("ReverseY", "0", MM::String, false, pAct);
+			vector<string> reverseYVals;
+			reverseYVals.push_back("0");
+			reverseYVals.push_back("1");
+			SetAllowedValues("ReverseY", reverseYVals);
+		}
 
-		/////Set Acquisition Framerate//////
-		pAct = new CPropertyAction(this, &BaslerCamera::OnAcqFramerateEnable);
-		ret = CreateProperty("AcquisitionFramerateEnable", "0", MM::String, false, pAct);
-		vector<string> setAcqFrmVals;
-		setAcqFrmVals.push_back("0");
-		setAcqFrmVals.push_back("1");
-		SetAllowedValues("AcquisitionFramerateEnable", setAcqFrmVals);
+		/////Set Acquisition AcquisitionFrameRateEnable//////
+		if (IsAvailable(camera_->AcquisitionFrameRateEnable))
+		{
+			pAct = new CPropertyAction(this, &BaslerCamera::OnAcqFramerateEnable);
+			ret = CreateProperty("AcquisitionFramerateEnable", "0", MM::String, false, pAct);
+			vector<string> setAcqFrmVals;
+			setAcqFrmVals.push_back("0");
+			setAcqFrmVals.push_back("1");
+			SetAllowedValues("AcquisitionFramerateEnable", setAcqFrmVals);
+		}
 
-		/////Acquisition Framerate//////
+		/////Acquisition Frame rate//////
 		CFloatPtr acqFramerate(nodeMap_->GetNode("AcquisitionFrameRate"));
-		acqFramerateMax_ = acqFramerate->GetMax();
-		acqFramerateMin_ = acqFramerate->GetMin();
-		pAct = new CPropertyAction(this, &BaslerCamera::OnAcqFramerate);
-		ret = CreateProperty("AcquisitionFramerate", "1.0", MM::Float, false, pAct);
-		SetPropertyLimits("AcquisitionFramerate", acqFramerateMin_, acqFramerateMax_);
-	
+		if (IsAvailable(acqFramerate))
+		{			
+			acqFramerateMax_ = acqFramerate->GetMax();
+			acqFramerateMin_ = acqFramerate->GetMin();
+			acqFramerate_ = acqFramerate->GetValue();
+			pAct = new CPropertyAction(this, &BaslerCamera::OnAcqFramerate);
+			ret = CreateProperty("AcquisitionFramerate", "100", MM::Integer, false, pAct);
+			SetPropertyLimits("AcquisitionFramerate",(int) acqFramerateMin_,(int)acqFramerateMax_);
+			assert(ret == DEVICE_OK);
+		}
 
 		//// binning
-		pAct = new CPropertyAction (this, &BaslerCamera::OnBinning);
+		pAct = new CPropertyAction(this, &BaslerCamera::OnBinning);
 		ret = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
 		SetPropertyLimits(MM::g_Keyword_Binning, 1, 1);
 		assert(ret == DEVICE_OK);
 
 		vector<string> binValues;
 
-		CIntegerPtr BinningHorizontal(nodeMap_->GetNode( "BinningHorizontal"));
-		CIntegerPtr BinningVertical(nodeMap_->GetNode( "BinningVertical"));
-		
-		if(IsAvailable(BinningHorizontal) && IsAvailable(BinningVertical))
+		CIntegerPtr BinningHorizontal(nodeMap_->GetNode("BinningHorizontal"));
+		CIntegerPtr BinningVertical(nodeMap_->GetNode("BinningVertical"));
+
+		if (IsAvailable(BinningHorizontal) && IsAvailable(BinningVertical))
 		{
 			//assumed that BinningHorizontal and BinningVertical allow same steps
 			int64_t min = BinningHorizontal->GetMin();
 			int64_t max = BinningHorizontal->GetMax();
-			SetPropertyLimits(MM::g_Keyword_Binning, (double)min,(double) max);
+			SetPropertyLimits(MM::g_Keyword_Binning, (double)min, (double)max);
 
-			for(int x =1; x <= max;  x++)
+			for (int x = 1; x <= max; x++)
 			{
-				std::ostringstream ss;
-				ss << x;
-				binValues.push_back(ss.str());
-			}				
-         binningFactor_.assign(CDeviceUtils::ConvertToString ((long)BinningHorizontal->GetValue()));
+				std::ostringstream oss;
+				oss << x;
+				binValues.push_back(oss.str());
+			}
+			binningFactor_.assign(CDeviceUtils::ConvertToString((long)BinningHorizontal->GetValue()));
 			CheckForBinningMode(pAct);
 		}
 		else
@@ -700,50 +791,49 @@ int BaslerCamera::Initialize()
 		ResizeSnapBuffer();
 		//preparation for sequences	
 		//camera_->RegisterImageEventHandler( &ImageHandler_, RegistrationMode_Append, Cleanup_Delete);	
-		initialized_ = true;		
+		initialized_ = true;
 	}
-	catch (const GenericException &e)
-    {
-        // Error handling.
+	catch (const GenericException& e)
+	{
+		// Error handling.
 		AddToLog(e.GetDescription());
-        cerr << "An exception occurred." << endl
-        << e.GetDescription() << endl;
+		cerr << "An exception occurred." << endl
+			<< e.GetDescription() << endl;
 		return DEVICE_ERR;
-    }
-	return DEVICE_OK;	
+	}
+	return DEVICE_OK;
 }
 
 
 
-
-int BaslerCamera::CheckForBinningMode(CPropertyAction *pAct)
+int BaslerCamera::CheckForBinningMode(CPropertyAction* pAct)
 {
-	    // Binning Mode
-		INodeMap& nodeMap(camera_->GetNodeMap());
-		CEnumerationPtr BinningModeHorizontal(nodeMap.GetNode("BinningModeHorizontal"));		
-		CEnumerationPtr BinningModeVertical(nodeMap.GetNode("BinningModeVertical"));
-		if(IsAvailable(BinningModeVertical) && IsAvailable(BinningModeHorizontal))
+	// Binning Mode
+	INodeMap& nodeMap(camera_->GetNodeMap());
+	CEnumerationPtr BinningModeHorizontal(nodeMap.GetNode("BinningModeHorizontal"));
+	CEnumerationPtr BinningModeVertical(nodeMap.GetNode("BinningModeVertical"));
+	if (IsAvailable(BinningModeVertical) && IsAvailable(BinningModeHorizontal))
+	{
+		pAct = new CPropertyAction(this, &BaslerCamera::OnBinningMode);
+
+		vector<string> LSPVals;
+		NodeList_t entries;
+		// assumed BinningHorizontalMode & BinningVerticalMode same entries
+		BinningModeVertical->GetEntries(entries);
+		for (NodeList_t::iterator it = entries.begin(); it != entries.end(); ++it)
 		{
-			pAct = new CPropertyAction (this, &BaslerCamera::OnBinningMode);
-			
-			vector<string> LSPVals;
-			NodeList_t entries;
-			// assumed BinningHorizontalMode & BinningVerticalMode same entries
-			BinningModeVertical->GetEntries(entries);
-			for (NodeList_t::iterator it = entries.begin(); it != entries.end(); ++it)
+			CEnumEntryPtr pEnumEntry(*it);
+			if (it == entries.begin())
 			{
-				CEnumEntryPtr pEnumEntry(*it);	
-				if(it == entries.begin())
-				{
-				   CreateProperty("BinningMode", pEnumEntry->GetSymbolic().c_str(), MM::String, false, pAct);
-				}
-				
-				LSPVals.push_back(pEnumEntry->GetSymbolic().c_str());							 			
+				CreateProperty("BinningMode", pEnumEntry->GetSymbolic().c_str(), MM::String, false, pAct);
 			}
-			SetAllowedValues("BinningMode",LSPVals);
-			return DEVICE_OK;
+
+			LSPVals.push_back(pEnumEntry->GetSymbolic().c_str());
 		}
-		return DEVICE_CAN_NOT_SET_PROPERTY;
+		SetAllowedValues("BinningMode", LSPVals);
+		return DEVICE_OK;
+	}
+	return DEVICE_CAN_NOT_SET_PROPERTY;
 }
 /*
 
@@ -758,86 +848,89 @@ int BaslerCamera::SetProperty(const char* name, const char* value)
 */
 int BaslerCamera::Shutdown()
 {
-	camera_->Close();
-	delete camera_;
+	if (!camera_)
+	{
+		camera_->Close();
+		delete camera_;
+	}
 	initialized_ = false;
-	PylonTerminate();  
+	PylonTerminate();
 	return DEVICE_OK;
 }
 
 int BaslerCamera::SnapImage()
-{ 
+{
 	try
 	{
-		camera_->StartGrabbing( 1, GrabStrategy_OneByOne, GrabLoop_ProvidedByUser);
+		camera_->StartGrabbing(1, GrabStrategy_OneByOne, GrabLoop_ProvidedByUser);
 		// This smart pointer will receive the grab result data.
 		//When all smart pointers referencing a Grab Result Data object go out of scope, the grab result's image buffer is reused for grabbing
 		CGrabResultPtr ptrGrabResult;
 		int timeout_ms = 5000;
-		if (!camera_->RetrieveResult( timeout_ms, ptrGrabResult, TimeoutHandling_ThrowException)) {
-		return DEVICE_ERR;
+		if (!camera_->RetrieveResult(timeout_ms, ptrGrabResult, TimeoutHandling_ThrowException)) {
+			return DEVICE_ERR;
 		}
 		if (!ptrGrabResult->GrabSucceeded()) {
-			return DEVICE_ERR;		
+			return DEVICE_ERR;
 		}
-		if(ptrGrabResult->GetPayloadSize() != imgBufferSize_)
+		if (ptrGrabResult->GetPayloadSize() != imgBufferSize_)
 		{// due to parameter change on  binning
 			ResizeSnapBuffer();
 		}
 		CopyToImageBuffer(ptrGrabResult);
-	
+
 	}
-	catch (const GenericException &e)
-    {
-        // Error handling.
+	catch (const GenericException& e)
+	{
+		// Error handling.
 		AddToLog(e.GetDescription());
-        cerr << "An exception occurred." << endl
-        << e.GetDescription() << endl;
-    }
+		cerr << "An exception occurred." << endl
+			<< e.GetDescription() << endl;
+	}
 	return DEVICE_OK;
 }
 
 void BaslerCamera::CopyToImageBuffer(CGrabResultPtr ptrGrabResult)
 {
-	const char* subject ("Bayer");
+	const char* subject("Bayer");
 	bool IsByerFormat = false;
-	string currentPixelFormat = Pylon::CPixelTypeMapper::GetNameByPixelType(ptrGrabResult->GetPixelType()) ;
+	string currentPixelFormat = Pylon::CPixelTypeMapper::GetNameByPixelType(ptrGrabResult->GetPixelType());
 	std::size_t found = currentPixelFormat.find(subject);
 	if (found != std::string::npos)
 	{
 		IsByerFormat = true;
 	}
-	if(ptrGrabResult->GetPixelType() == PixelType_Mono8)
+	if (ptrGrabResult->GetPixelType() == PixelType_Mono8)
 	{
-       // Workaround : OnPixelType call back will not be fired always.
-	    nComponents_ = 1;
-        bitDepth_ = 8;
+		// Workaround : OnPixelType call back will not be fired always.
+		nComponents_ = 1;
+		bitDepth_ = 8;
 
 		//copy image buffer to a snap buffer allocated by device adapter
-		const void* buffer = ptrGrabResult->GetBuffer();	
+		const void* buffer = ptrGrabResult->GetBuffer();
 		memcpy(imgBuffer_, buffer, GetImageBufferSize());
-		SetProperty( MM::g_Keyword_PixelType, g_PixelType_8bit);
+		SetProperty(MM::g_Keyword_PixelType, g_PixelType_8bit);
 	}
 	else if (ptrGrabResult->GetPixelType() == PixelType_Mono16 || ptrGrabResult->GetPixelType() == PixelType_Mono10 || ptrGrabResult->GetPixelType() == PixelType_Mono12)
-	{			
+	{
 		//copy image buffer to a snap buffer allocated by device adapter
 		void* buffer = ptrGrabResult->GetBuffer();
 		memcpy(imgBuffer_, buffer, ptrGrabResult->GetPayloadSize());
-		SetProperty( MM::g_Keyword_PixelType, g_PixelType_12bit);	
+		SetProperty(MM::g_Keyword_PixelType, g_PixelType_12bit);
 	}
-	else if (IsByerFormat || ptrGrabResult->GetPixelType() == PixelType_RGB8packed )
+	else if (IsByerFormat || ptrGrabResult->GetPixelType() == PixelType_RGB8packed)
 	{
 		nComponents_ = 4;
-        bitDepth_ = 8;
-		converter->Convert(imgBuffer_,GetImageBufferSize(),ptrGrabResult);
-		SetProperty( MM::g_Keyword_PixelType, g_PixelType_8bitRGBA);	    
+		bitDepth_ = 8;
+		converter->Convert(imgBuffer_, GetImageBufferSize(), ptrGrabResult);
+		SetProperty(MM::g_Keyword_PixelType, g_PixelType_8bitRGBA);
 	}
-	else if (ptrGrabResult->GetPixelType() == PixelType_BGR8packed  )
+	else if (ptrGrabResult->GetPixelType() == PixelType_BGR8packed)
 	{
 		nComponents_ = 4;
-        bitDepth_ = 8;
-		SetProperty( MM::g_Keyword_PixelType, g_PixelType_8bitBGR);
-		RGBPackedtoRGB(imgBuffer_,ptrGrabResult);			
+		bitDepth_ = 8;
+		SetProperty(MM::g_Keyword_PixelType, g_PixelType_8bitBGR);
+		RGBPackedtoRGB(imgBuffer_, ptrGrabResult);
 	}
 }
 
@@ -845,14 +938,14 @@ void BaslerCamera::CopyToImageBuffer(CGrabResultPtr ptrGrabResult)
 * Returns pixel data.
 */
 const unsigned char* BaslerCamera::GetImageBuffer()
-{  
-	return (unsigned char*) imgBuffer_;	
+{
+	return (unsigned char*)imgBuffer_;
 }
 
 unsigned BaslerCamera::GetImageWidth() const
 {
 	const CIntegerPtr width = nodeMap_->GetNode("Width");
-	return(unsigned) width->GetValue();
+	return(unsigned)width->GetValue();
 }
 
 unsigned BaslerCamera::GetImageHeight() const
@@ -866,40 +959,43 @@ unsigned BaslerCamera::GetImageHeight() const
 */
 unsigned BaslerCamera::GetImageBytesPerPixel() const
 {
-	const char* subject ("Bayer");
+	const char* subject("Bayer");
 	std::size_t found = pixelType_.find(subject);
 
 	if (pixelType_ == "Mono8") {
 		return 1;
-	} else if (pixelType_ == "Mono10" || pixelType_ == "Mono12" || pixelType_ == "Mono16") {
+	}
+	else if (pixelType_ == "Mono10" || pixelType_ == "Mono12" || pixelType_ == "Mono16") {
 		return 2;
-	} 
-	else if (found != std::string::npos || pixelType_ == "BGR8" || pixelType_ == "RGB8" ) {
+	}
+	else if (found != std::string::npos || pixelType_ == "BGR8" || pixelType_ == "RGB8") {
 		return 4;
 	}
 	assert(0); //shouldn't happen
 	return 0;
-} 
+}
 
 /**
 * Returns the bit depth (dynamic range) of the pixel.
 */
 unsigned BaslerCamera::GetBitDepth() const
 {
-	const char* subject ("Bayer");
+	const char* subject("Bayer");
 	std::size_t found = pixelType_.find(subject);
 
 	if (pixelType_ == "Mono8") {
 		return 8;
-	} else if (pixelType_ == "Mono10") {
+	}
+	else if (pixelType_ == "Mono10") {
 		return 10;
-	} else if (pixelType_ == "Mono12" ) {
+	}
+	else if (pixelType_ == "Mono12") {
 		return 12;
 	}
-	else if (pixelType_ == "Mono16" ) {
+	else if (pixelType_ == "Mono16") {
 		return 16;
 	}
-	else if (found != std::string::npos || pixelType_ == "BGR8" || pixelType_ == "RGB8") {	
+	else if (found != std::string::npos || pixelType_ == "BGR8" || pixelType_ == "RGB8") {
 		return 8;
 	}
 	assert(0); //shoudlnt happen
@@ -911,7 +1007,7 @@ unsigned BaslerCamera::GetBitDepth() const
 */
 long BaslerCamera::GetImageBufferSize() const
 {
-	return GetImageWidth()*GetImageHeight()*GetImageBytesPerPixel();
+	return GetImageWidth() * GetImageHeight() * GetImageBytesPerPixel();
 }
 
 /**
@@ -932,16 +1028,16 @@ int BaslerCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 	xSize -= (xSize % width->GetInc());
 	ySize -= (ySize % height->GetInc());
 	if (xSize < width->GetMin()) {
-		xSize = (unsigned int) width->GetMin();
+		xSize = (unsigned int)width->GetMin();
 	}
 	if (ySize < height->GetMin()) {
-		ySize = (unsigned int) height->GetMin();
+		ySize = (unsigned int)height->GetMin();
 	}
 	if (x < offsetX->GetMin()) {
-		x = (unsigned int) offsetX->GetMin();
+		x = (unsigned int)offsetX->GetMin();
 	}
 	if (y < offsetY->GetMin()) {
-		y = (unsigned int) offsetY->GetMin();
+		y = (unsigned int)offsetY->GetMin();
 	}
 	width->SetValue(xSize);
 	height->SetValue(ySize);
@@ -959,10 +1055,10 @@ int BaslerCamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& yS
 	const CIntegerPtr height = nodeMap_->GetNode("Height");
 	const CIntegerPtr offsetX = nodeMap_->GetNode("OffsetX");
 	const CIntegerPtr offsetY = nodeMap_->GetNode("OffsetY");
-	x = (unsigned int) offsetX->GetValue();
-	y = (unsigned int) offsetY->GetValue();
-	xSize = (unsigned int) width->GetValue();
-	ySize = (unsigned int) height->GetValue();
+	x = (unsigned int)offsetX->GetValue();
+	y = (unsigned int)offsetY->GetValue();
+	xSize = (unsigned int)width->GetValue();
+	ySize = (unsigned int)height->GetValue();
 	return DEVICE_OK;
 }
 
@@ -970,7 +1066,7 @@ int BaslerCamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& yS
 * Resets the Region of Interest to full frame.
 */
 int BaslerCamera::ClearROI()
-{  
+{
 	const CIntegerPtr width = nodeMap_->GetNode("Width");
 	const CIntegerPtr height = nodeMap_->GetNode("Height");
 	const CIntegerPtr offsetX = nodeMap_->GetNode("OffsetX");
@@ -1000,21 +1096,22 @@ void BaslerCamera::SetExposure(double exp)
 	exp *= 1000; //convert to us
 	if (exp > exposureMax_) {
 		exp = exposureMax_;
-	} else if (exp < exposureMin_) {
+	}
+	else if (exp < exposureMin_) {
 		exp = exposureMin_;
 	}
 	INodeMap& nodeMap_ = camera_->GetNodeMap();
-	CFloatPtr exposure( nodeMap_.GetNode( "ExposureTime"));
-	CIntegerPtr ExposureTimeRaw(nodeMap_.GetNode( "ExposureTimeRaw"));
-	if(camera_->IsGigE() && IsWritable(ExposureTimeRaw))
+	CFloatPtr exposure(nodeMap_.GetNode("ExposureTime"));
+	CIntegerPtr ExposureTimeRaw(nodeMap_.GetNode("ExposureTimeRaw"));
+	if (camera_->IsGigE() && IsWritable(ExposureTimeRaw))
 	{
 		ExposureTimeRaw->SetValue((int64_t)exp);
 		exposure_us_ = exp;
 	}
-	else if(camera_->IsUsb() && IsWritable(exposure))
+	else if (camera_->IsUsb() && IsWritable(exposure))
 	{
 		exposure->SetValue(exp);
-	    exposure_us_ = exp;
+		exposure_us_ = exp;
 	}
 
 }
@@ -1024,19 +1121,19 @@ void BaslerCamera::SetExposure(double exp)
 */
 int BaslerCamera::GetBinning() const
 {
-   return  std::atoi(binningFactor_.c_str());
+	return  std::atoi(binningFactor_.c_str());
 }
 
 int BaslerCamera::SetBinning(int binFactor)
 {
-	cout <<"SetBinning called\n";
+	cout << "SetBinning called\n";
 	if (binFactor > 1 && binFactor < 4) {
 		return DEVICE_OK;
 	}
 	return DEVICE_UNSUPPORTED_COMMAND;
 }
 
-int BaslerCamera::StartSequenceAcquisition(long numImages, double /* interval_ms */, bool /* stopOnOverflow */){
+int BaslerCamera::StartSequenceAcquisition(long numImages, double /* interval_ms */, bool /* stopOnOverflow */) {
 
 	ImageHandler_ = new CircularBufferInserter(this);
 	camera_->RegisterImageEventHandler(ImageHandler_, RegistrationMode_Append, Cleanup_Delete);
@@ -1055,7 +1152,7 @@ int BaslerCamera::StartSequenceAcquisition(double /* interval_ms */) {
 	if (ret != DEVICE_OK) {
 		return ret;
 	}
-	camera_->StartGrabbing( GrabStrategy_OneByOne, GrabLoop_ProvidedByInstantCamera);
+	camera_->StartGrabbing(GrabStrategy_OneByOne, GrabLoop_ProvidedByInstantCamera);
 	return DEVICE_OK;
 }
 
@@ -1080,9 +1177,8 @@ int BaslerCamera::PrepareSequenceAcqusition()
 
 void BaslerCamera::ResizeSnapBuffer() {
 
-
 	free(imgBuffer_);
-	long bytes = GetImageBufferSize() ;
+	long bytes = GetImageBufferSize();
 	imgBuffer_ = malloc(bytes);
 	imgBufferSize_ = bytes;
 }
@@ -1094,46 +1190,67 @@ void BaslerCamera::ResizeSnapBuffer() {
 // Action handlers
 ///////////////////////////////////////////////////////////////////////////////
 
+int BaslerCamera::OnTriggerSource(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	string TriggerSource_;
+	if (eAct == MM::AfterSet) {
+		pProp->Get(TriggerSource_);
+		CEnumerationPtr TriggerSource(nodeMap_->GetNode("TriggerSource"));
+		TriggerSource->FromString(TriggerSource_.c_str());
+	}
+	else if (eAct == MM::BeforeGet) {
+		CEnumerationPtr TriggerSource(nodeMap_->GetNode("TriggerSource"));
+		gcstring val = TriggerSource->ToString();
+		//camemu has only Software trigger.
+		if (val.find("Software") == string::npos)
+		{
+			const char* s = val.c_str();
+			pProp->Set(s);
+		}
+	}
+	return DEVICE_OK;
+}
+
 int BaslerCamera::OnBinningMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	CEnumerationPtr BinningModeHorizontal(nodeMap_->GetNode( "BinningModeHorizontal"));
-	CEnumerationPtr BinningModeVertical(nodeMap_->GetNode( "BinningModeVertical"));
+	CEnumerationPtr BinningModeHorizontal(nodeMap_->GetNode("BinningModeHorizontal"));
+	CEnumerationPtr BinningModeVertical(nodeMap_->GetNode("BinningModeVertical"));
 
-	if (eAct == MM::AfterSet) 
-	{	
-		if(IsAvailable(BinningModeVertical) && IsAvailable(BinningModeVertical))
+	if (eAct == MM::AfterSet)
+	{
+		if (IsAvailable(BinningModeVertical) && IsAvailable(BinningModeVertical))
 		{
 			try
 			{
 				string binningMode;
-				pProp->Get(binningMode);				
+				pProp->Get(binningMode);
 				BinningModeHorizontal->FromString(binningMode.c_str());
-			   BinningModeHorizontal->FromString(binningMode.c_str());
+				BinningModeHorizontal->FromString(binningMode.c_str());
 			}
-			catch (const GenericException &e)
+			catch (const GenericException& e)
 			{
 				// Error handling.
 				AddToLog(e.GetDescription());
 				cerr << "An exception occurred." << endl
-				<< e.GetDescription() << endl;
+					<< e.GetDescription() << endl;
 			}
-		}	
-	} 
+		}
+	}
 	else if (eAct == MM::BeforeGet)
 	{
-		try{
-				if(IsAvailable(BinningModeVertical) && IsAvailable(BinningModeVertical))
-				{
-					pProp->Set(BinningModeHorizontal->ToString());	
-				}				
-			}
-			catch (const GenericException &e)
+		try {
+			if (IsAvailable(BinningModeVertical) && IsAvailable(BinningModeVertical))
 			{
-				// Error handling.
-				AddToLog(e.GetDescription());
-				cerr << "An exception occurred." << endl
-				<< e.GetDescription() << endl;
+				pProp->Set(BinningModeHorizontal->ToString());
 			}
+		}
+		catch (const GenericException& e)
+		{
+			// Error handling.
+			AddToLog(e.GetDescription());
+			cerr << "An exception occurred." << endl
+				 << e.GetDescription() << endl;
+		}
 	}
 	return DEVICE_OK;
 }
@@ -1141,15 +1258,15 @@ int BaslerCamera::OnHeight(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	CIntegerPtr Height(nodeMap_->GetNode("Height"));
 	std::string strval;
-	if (eAct == MM::AfterSet) 
+	if (eAct == MM::AfterSet)
 	{
 		bool Isgrabbing = camera_->IsGrabbing();
-		
-		if(IsAvailable(Height))
+
+		if (IsAvailable(Height))
 		{
 			try
 			{
-				if(Isgrabbing)
+				if (Isgrabbing)
 				{
 					camera_->StopGrabbing();
 				}
@@ -1157,35 +1274,34 @@ int BaslerCamera::OnHeight(MM::PropertyBase* pProp, MM::ActionType eAct)
 				int64_t val = std::atoi(strval.c_str());
 				int64_t inc = Height->GetInc();
 				Height->SetValue(val - (val % inc));
-				if(Isgrabbing)
+				if (Isgrabbing)
 				{
 					camera_->StartGrabbing();
-				}	
+				}
 			}
-			catch (const GenericException &e)
+			catch (const GenericException& e)
 			{
 				// Error handling.
 				AddToLog(e.GetDescription());
 				cerr << "An exception occurred." << endl
-				<< e.GetDescription() << endl;
+					 << e.GetDescription() << endl;
 			}
-		}	
-	} 
+		}
+	}
 	else if (eAct == MM::BeforeGet) {
 
-		try{
-			if(IsAvailable(Height) )
-				{
-               binningFactor_ = CDeviceUtils::ConvertToString ((long)Height->GetValue());
-					pProp->Set((long)Height->GetValue());	
-				}	
+		try {
+			if (IsAvailable(Height))
+			{
+				pProp->Set((long)Height->GetValue());
+			}
 		}
-		catch (const GenericException &e)
+		catch (const GenericException& e)
 		{
 			// Error handling.
 			AddToLog(e.GetDescription());
 			cerr << "An exception occurred." << endl
-			<< e.GetDescription() << endl;
+				 << e.GetDescription() << endl;
 		}
 	}
 	return DEVICE_OK;
@@ -1193,17 +1309,17 @@ int BaslerCamera::OnHeight(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int BaslerCamera::OnWidth(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	CIntegerPtr Width(nodeMap_->GetNode( "Width"));
+	CIntegerPtr Width(nodeMap_->GetNode("Width"));
 	std::string strval;
-	if (eAct == MM::AfterSet) 
+	if (eAct == MM::AfterSet)
 	{
 		bool Isgrabbing = camera_->IsGrabbing();
-		
-		if(IsAvailable(Width))
+
+		if (IsAvailable(Width))
 		{
 			try
 			{
-				if(Isgrabbing)
+				if (Isgrabbing)
 				{
 					camera_->StopGrabbing();
 				}
@@ -1211,37 +1327,35 @@ int BaslerCamera::OnWidth(MM::PropertyBase* pProp, MM::ActionType eAct)
 				int64_t val = std::atoi(strval.c_str());
 				int64_t inc = Width->GetInc();
 				Width->SetValue(val - (val % inc));
-				if(Isgrabbing)
+				if (Isgrabbing)
 				{
 					camera_->StartGrabbing();
-				}	
+				}
 				//pProp->Set(Width->GetValue());
 
 			}
-			catch (const GenericException &e)
+			catch (const GenericException& e)
 			{
 				// Error handling.
 				AddToLog(e.GetDescription());
 				cerr << "An exception occurred." << endl
-				<< e.GetDescription() << endl;
+					 << e.GetDescription() << endl;
 			}
-		}	
-	} 
-	else if (eAct == MM::BeforeGet) {
-
-		try{
-			if(IsAvailable(Width) )
-				{
-               binningFactor_ = CDeviceUtils::ConvertToString ((long) Width->GetValue());
-					pProp->Set((long)Width->GetValue());	
-				}	
 		}
-		catch (const GenericException &e)
+	}
+	else if (eAct == MM::BeforeGet) {
+		try {
+			if (IsAvailable(Width))
+			{
+				pProp->Set((long)Width->GetValue());
+			}
+		}
+		catch (const GenericException& e)
 		{
 			// Error handling.
 			AddToLog(e.GetDescription());
 			cerr << "An exception occurred." << endl
-			<< e.GetDescription() << endl;
+				 << e.GetDescription() << endl;
 		}
 	}
 	return DEVICE_OK;
@@ -1250,78 +1364,78 @@ int BaslerCamera::OnWidth(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int BaslerCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	CIntegerPtr BinningHorizontal(nodeMap_->GetNode( "BinningHorizontal"));
-	CIntegerPtr BinningVertical(nodeMap_->GetNode( "BinningVertical"));
+	CIntegerPtr BinningHorizontal(nodeMap_->GetNode("BinningHorizontal"));
+	CIntegerPtr BinningVertical(nodeMap_->GetNode("BinningVertical"));
 
-	if (eAct == MM::AfterSet) 
+	if (eAct == MM::AfterSet)
 	{
 		bool Isgrabbing = camera_->IsGrabbing();
-		
-		if(IsAvailable(BinningHorizontal) && IsAvailable(BinningHorizontal))
+
+		if (IsAvailable(BinningHorizontal) && IsAvailable(BinningHorizontal))
 		{
 			try
 			{
-				if(Isgrabbing)
+				if (Isgrabbing)
 				{
 					camera_->StopGrabbing();
 				}
 				pProp->Get(binningFactor_);
 				int64_t val = std::atoi(binningFactor_.c_str());
 				BinningHorizontal->SetValue(val);
-				BinningVertical->SetValue(val);	
-				if(Isgrabbing)
+				BinningVertical->SetValue(val);
+				if (Isgrabbing)
 				{
 					camera_->StartGrabbing();
-				}	
+				}
 				pProp->Set(binningFactor_.c_str());
 			}
-			catch (const GenericException &e)
+			catch (const GenericException& e)
 			{
 				// Error handling.
 				AddToLog(e.GetDescription());
 				cerr << "An exception occurred." << endl
-				<< e.GetDescription() << endl;
+					<< e.GetDescription() << endl;
 			}
-		}	
-	} 
+		}
+	}
 	else if (eAct == MM::BeforeGet) {
 
-		try{
-			if(IsAvailable(BinningHorizontal) && IsAvailable(BinningHorizontal))
-				{
-               binningFactor_ = CDeviceUtils::ConvertToString ((long) BinningHorizontal->GetValue());
-					pProp->Set((long)BinningHorizontal->GetValue());	
-				}
-				else
-				{
-					 pProp->Set("1");
-				}		
+		try {
+			if (IsAvailable(BinningHorizontal) && IsAvailable(BinningHorizontal))
+			{
+				binningFactor_ = CDeviceUtils::ConvertToString((long)BinningHorizontal->GetValue());
+				pProp->Set((long)BinningHorizontal->GetValue());
+			}
+			else
+			{
+				pProp->Set("1");
+			}
 		}
-		catch (const GenericException &e)
+		catch (const GenericException& e)
 		{
 			// Error handling.
 			AddToLog(e.GetDescription());
 			cerr << "An exception occurred." << endl
-			<< e.GetDescription() << endl;
+				<< e.GetDescription() << endl;
 		}
 	}
 	return DEVICE_OK;
 }
 
-unsigned  BaslerCamera::GetNumberOfComponents() const		
-  { 
-	  return nComponents_;
-  };
+unsigned  BaslerCamera::GetNumberOfComponents() const
+{
+	return nComponents_;
+};
 
 int BaslerCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	bool isGrabing = camera_->IsGrabbing();
-	if(isGrabing)
+	if (isGrabing)
 	{
 		camera_->StopGrabbing();
 	}
 
-	CEnumerationPtr pixelFormat( nodeMap_->GetNode( "PixelFormat"));
+	CEnumerationPtr pixelFormat(nodeMap_->GetNode("PixelFormat"));
 
 	if (eAct == MM::AfterSet) {
 		pProp->Get(pixelType_);
@@ -1331,155 +1445,123 @@ int BaslerCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 		offsetMax_ = offset->GetMax();
 		offsetMin_ = offset->GetMin();
 		SetPropertyLimits(MM::g_Keyword_Offset, offsetMin_, offsetMax_);
-	} else if (eAct == MM::BeforeGet) {	
+	}
+	else if (eAct == MM::BeforeGet) {
 		pixelType_.assign(pixelFormat->ToString().c_str());
 		pProp->Set(pixelType_.c_str());
 	}
-    const char* subject ("Bayer");
+	const char* subject("Bayer");
 	std::size_t found = pixelFormat->ToString().find(subject);
-		
-	if(pixelFormat->ToString().compare("Mono8") == 0 )
+
+	if (pixelFormat->ToString().compare("Mono8") == 0)
 	{
 		nComponents_ = 1;
 		bitDepth_ = 8;
-		SetProperty(MM::g_Keyword_PixelType,g_PixelType_8bit);
+		SetProperty(MM::g_Keyword_PixelType, g_PixelType_8bit);
 
 	}
-	if(pixelFormat->ToString().compare("Mono10") == 0 )
+	if (pixelFormat->ToString().compare("Mono10") == 0)
 	{
 		nComponents_ = 1;
 		bitDepth_ = 10;
-		SetProperty(MM::g_Keyword_PixelType,g_PixelType_10bit);
+		SetProperty(MM::g_Keyword_PixelType, g_PixelType_10bit);
 	}
-	if(pixelFormat->ToString().compare("Mono12") == 0 )
+	if (pixelFormat->ToString().compare("Mono12") == 0)
 	{
 		nComponents_ = 1;
 		bitDepth_ = 12;
-		SetProperty(MM::g_Keyword_PixelType,g_PixelType_12bit);
+		SetProperty(MM::g_Keyword_PixelType, g_PixelType_12bit);
 	}
-	if(pixelFormat->ToString().compare("Mono16") == 0 )
+	if (pixelFormat->ToString().compare("Mono16") == 0)
 	{
 		nComponents_ = 1;
 		bitDepth_ = 16;
-		SetProperty(MM::g_Keyword_PixelType,g_PixelType_16bit);
+		SetProperty(MM::g_Keyword_PixelType, g_PixelType_16bit);
 	}
-	else if (found != std::string::npos )
+	else if (found != std::string::npos)
 	{
 		nComponents_ = 4;
 		bitDepth_ = 8;
-		SetProperty(MM::g_Keyword_PixelType,g_PixelType_8bitRGBA);
+		SetProperty(MM::g_Keyword_PixelType, g_PixelType_8bitRGBA);
 	}
-	else if(pixelFormat->ToString().compare("BGR8") == 0 )
+	else if (pixelFormat->ToString().compare("BGR8") == 0)
 	{
 		nComponents_ = 4;
-		bitDepth_ = 8;	
-		SetProperty(MM::g_Keyword_PixelType,g_PixelType_8bitBGR);
+		bitDepth_ = 8;
+		SetProperty(MM::g_Keyword_PixelType, g_PixelType_8bitBGR);
 	}
-	else if(pixelFormat->ToString().compare("RGB8") == 0 )
+	else if (pixelFormat->ToString().compare("RGB8") == 0)
 	{
 		nComponents_ = 4;
-        bitDepth_ = 8;	
-		SetProperty(MM::g_Keyword_PixelType,g_PixelType_8bitRGB);
+		bitDepth_ = 8;
+		SetProperty(MM::g_Keyword_PixelType, g_PixelType_8bitRGB);
 	}
-	if(isGrabing)
+	if (isGrabing)
 	{
 		camera_->StartGrabbing();
 	}
 	return DEVICE_OK;
 }
 
-//Might need to find some way to access expert features to do this 
-//int BaslerCamera::OnSensorReadoutMode(MM::PropertyBase* pProp, MM::ActionType eAct)
-//{
-//	if (eAct == MM::AfterSet) {
-//		pProp->Get(sensorReadoutMode_);
-//		CEnumerationPtr sensorReadoutMode( nodeMap_->GetNode( "SensorReadoutMode"));
-//		sensorReadoutMode->FromString(sensorReadoutMode_.c_str());
-//	} else if (eAct == MM::BeforeGet) {
-//		CEnumerationPtr sensorReadoutMode( nodeMap_->GetNode( "SensorReadoutMode"));
-//		gcstring gc = sensorReadoutMode->ToString();
-//		const char* s = gc.c_str();
-//		sensorReadoutMode_.assign(s);
-//		pProp->Set(sensorReadoutMode_.c_str());
-//	}
-//   return DEVICE_OK;
-//}
+
+int BaslerCamera::OnSensorReadoutMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	try
+	{
+		if (IsAvailable(camera_->SensorReadoutMode))
+		{
+			string Sensormode = "";
+			if (eAct == MM::AfterSet) {
+				pProp->Get(Sensormode);
+				camera_->SensorReadoutMode.TrySetValue(Sensormode.c_str());
+				pProp->Set(camera_->SensorReadoutMode.ToString());
+			}
+			else if (eAct == MM::BeforeGet) {
+				pProp->Set(camera_->SensorReadoutMode.ToString());
+			}
+		}
+	}
+	catch (const GenericException& e)
+	{
+		// Error handling.
+		AddToLog(e.GetDescription());
+		cout << "An exception occurred." << endl << e.GetDescription() << endl;
+		cerr << "An exception occurred." << endl
+			<< e.GetDescription() << endl;
+	}
+   return DEVICE_OK;
+}
 
 int BaslerCamera::OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	try
 	{
 		string TriggerMode_;
-		CEnumerationPtr TriggerMode( nodeMap_->GetNode( "TriggerMode"));
-		CEnumerationPtr TriggerSelector( nodeMap_->GetNode( "TriggerSelector"));
-	
-		if(TriggerMode != NULL && TriggerSelector != NULL && IsAvailable(TriggerMode)  && IsAvailable(TriggerSelector))
+		CEnumerationPtr TriggerMode(nodeMap_->GetNode("TriggerMode"));
+		if (TriggerMode != NULL && IsAvailable(TriggerMode))
 		{
-			if (eAct == MM::AfterSet)
-			{
-					pProp->Get(TriggerMode_);	
-					TriggerMode->FromString(TriggerMode_.c_str());
-					
-					if(TriggerMode_.compare("On") == 0 && TriggerSelector != NULL && IsAvailable(TriggerSelector))
-					{
-						TriggerSelector->FromString("FrameStart");
-						if(IsWritable(TriggerMode))
-						{
-							TriggerMode->FromString("On");
-						}			
-					}
-					else if( TriggerMode_.compare("Off") == 0 && TriggerSelector != NULL && IsAvailable(TriggerSelector))
-					{
-						TriggerSelector->FromString("FrameStart");
-						TriggerMode->FromString("Off");
-						if(camera_->IsGigE())
-						{
-							TriggerSelector->FromString("AcquisitionStart");
-							TriggerMode->FromString("Off");
-					
-						} else if (camera_->IsUsb())
-						{
-							TriggerSelector->FromString("FrameBurstStart");
-							TriggerMode->FromString("Off");				
-						}
-					}
-					if(TriggerMode != NULL && IsAvailable(TriggerMode))
-					{
-						pProp->Set(TriggerMode->ToString().c_str());
-					}
-
-				} else if (eAct == MM::BeforeGet)
-				{					
-					// assumed user uses the trigger Line1 for externally triggering the camera.
-					// if any one wants to use the GPIO of the camera, then we need to allow to set this camera parameter separately
-					if(TriggerSelector != NULL && IsAvailable(TriggerSelector))
-					{
-						TriggerSelector->FromString("FrameStart");
-					}			
-					if(TriggerMode != NULL && IsAvailable(TriggerMode))
-					{
-						pProp->Set(TriggerMode->ToString().c_str());
-					}
-					CEnumerationPtr TriggerSource( nodeMap_->GetNode("TriggerSource"));
-					if(TriggerSource != NULL && IsAvailable(TriggerSource))
-					{
-						TriggerSource->FromString("Line1");
-					}			
-				}
-		}		
+			if (eAct == MM::AfterSet) {
+				pProp->Get(TriggerMode_);
+				TriggerMode->FromString(TriggerMode_.c_str());
+				pProp->Set(TriggerMode->ToString().c_str());
+			}
+			else if (eAct == MM::BeforeGet) {				
+					pProp->Set(TriggerMode->ToString().c_str());				
+			}
+		}
 	}
-	catch (const GenericException &e)
-    {
-        // Error handling.
+	catch (const GenericException& e)
+	{
+		// Error handling.
 		AddToLog(e.GetDescription());
 		cout << "An exception occurred." << endl << e.GetDescription() << endl;
-        cerr << "An exception occurred." << endl
-        << e.GetDescription() << endl;
-    }
+		cerr << "An exception occurred." << endl
+			<< e.GetDescription() << endl;
+	}
 	return DEVICE_OK;
 }
 
-int BaslerCamera::OnTemperature(MM::PropertyBase * pProp, MM::ActionType eAct)
+int BaslerCamera::OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	if (eAct == MM::BeforeGet) {
 		CFloatPtr temperature(nodeMap_->GetNode("DeviceTemperature"));
@@ -1489,17 +1571,17 @@ int BaslerCamera::OnTemperature(MM::PropertyBase * pProp, MM::ActionType eAct)
 	return DEVICE_OK;
 }
 
-int BaslerCamera::OnTemperatureStatus(MM::PropertyBase * pProp, MM::ActionType eAct)
+int BaslerCamera::OnTemperatureState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	if (eAct == MM::BeforeGet) {
-		CEnumerationPtr temperatureStatus(nodeMap_->GetNode("TemperatureState"));
-		temperatureStatus_.assign(temperatureStatus->ToString().c_str());
-		pProp->Set(temperatureStatus_.c_str());
+		CEnumerationPtr ptrtemperatureState_(nodeMap_->GetNode("TemperatureState"));
+		temperatureState_.assign(ptrtemperatureState_->ToString().c_str());
+		pProp->Set(temperatureState_.c_str());
 	}
 	return DEVICE_OK;
 }
 
-int BaslerCamera::OnReverseX(MM::PropertyBase * pProp, MM::ActionType eAct)
+int BaslerCamera::OnReverseX(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	if (eAct == MM::AfterSet) {
 		pProp->Get(reverseX_);
@@ -1514,7 +1596,7 @@ int BaslerCamera::OnReverseX(MM::PropertyBase * pProp, MM::ActionType eAct)
 	return DEVICE_OK;
 }
 
-int BaslerCamera::OnReverseY(MM::PropertyBase * pProp, MM::ActionType eAct)
+int BaslerCamera::OnReverseY(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	if (eAct == MM::AfterSet) {
 		pProp->Get(reverseY_);
@@ -1529,12 +1611,13 @@ int BaslerCamera::OnReverseY(MM::PropertyBase * pProp, MM::ActionType eAct)
 	return DEVICE_OK;
 }
 
-int BaslerCamera::OnAcqFramerateEnable(MM::PropertyBase * pProp, MM::ActionType eAct)
+int BaslerCamera::OnAcqFramerateEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	if (eAct == MM::AfterSet) {
 		pProp->Get(setAcqFrm_);
 		CBooleanPtr setAcqFrm(nodeMap_->GetNode("AcquisitionFrameRateEnable"));
 		setAcqFrm->FromString(setAcqFrm_.c_str());
+		
 	}
 	else if (eAct == MM::BeforeGet) {
 		CBooleanPtr setAcqFrm(nodeMap_->GetNode("AcquisitionFrameRateEnable"));
@@ -1547,18 +1630,17 @@ int BaslerCamera::OnAcqFramerateEnable(MM::PropertyBase * pProp, MM::ActionType 
 int BaslerCamera::OnAcqFramerate(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	if (eAct == MM::AfterSet) {
-		pProp->Get(acqFramerate_);
-		if (acqFramerate_ > acqFramerateMax_) {
-			acqFramerate_ = acqFramerateMax_;
-		}
-		if (acqFramerate_ < acqFramerateMin_) {
-			acqFramerate_ = acqFramerateMin_;
-		}
+		
+		pProp->Get(acqFramerate_);	
 		CFloatPtr acqFramerate(nodeMap_->GetNode("AcquisitionFrameRate"));
-		acqFramerate->SetValue(acqFramerate_);
+		if (acqFramerate_ <= 0)
+		{   // to avoid the in int cast.
+			acqFramerate_ = 1;
+		}
+		acqFramerate->SetValue((int)acqFramerate_);
 	}
 	else if (eAct == MM::BeforeGet) {
-		CFloatPtr resultingFramerate(nodeMap_->GetNode("ResultingFrameRate"));
+		CFloatPtr resultingFramerate(nodeMap_->GetNode("AcquisitionFrameRate"));
 		acqFramerate_ = resultingFramerate->GetValue();
 		pProp->Set(acqFramerate_);
 	}
@@ -1570,10 +1652,11 @@ int BaslerCamera::OnAutoGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 	string GainAuto_;
 	if (eAct == MM::AfterSet) {
 		pProp->Get(GainAuto_);
-		CEnumerationPtr GainAuto( nodeMap_->GetNode( "GainAuto"));
+		CEnumerationPtr GainAuto(nodeMap_->GetNode("GainAuto"));
 		GainAuto->FromString(GainAuto_.c_str());
-	} else if (eAct == MM::BeforeGet) {
-		CEnumerationPtr GainAuto( nodeMap_->GetNode( "GainAuto"));
+	}
+	else if (eAct == MM::BeforeGet) {
+		CEnumerationPtr GainAuto(nodeMap_->GetNode("GainAuto"));
 		gcstring val = GainAuto->ToString();
 		const char* s = val.c_str();
 		pProp->Set(s);
@@ -1585,10 +1668,11 @@ int BaslerCamera::OnAutoExpore(MM::PropertyBase* pProp, MM::ActionType eAct)
 	string ExposureAuto_;
 	if (eAct == MM::AfterSet) {
 		pProp->Get(ExposureAuto_);
-		CEnumerationPtr ExposureAuto( nodeMap_->GetNode( "ExposureAuto"));
+		CEnumerationPtr ExposureAuto(nodeMap_->GetNode("ExposureAuto"));
 		ExposureAuto->FromString(ExposureAuto_.c_str());
-	} else if (eAct == MM::BeforeGet) {
-		CEnumerationPtr ExposureAuto( nodeMap_->GetNode( "ExposureAuto"));
+	}
+	else if (eAct == MM::BeforeGet) {
+		CEnumerationPtr ExposureAuto(nodeMap_->GetNode("ExposureAuto"));
 		gcstring val = ExposureAuto->ToString();
 		const char* s = val.c_str();
 		pProp->Set(s);
@@ -1603,10 +1687,11 @@ int BaslerCamera::OnLightSourcePreset(MM::PropertyBase* pProp, MM::ActionType eA
 	string LightSourcePreset_;
 	if (eAct == MM::AfterSet) {
 		pProp->Get(LightSourcePreset_);
-		CEnumerationPtr LightSourcePreset( nodeMap_->GetNode( "LightSourcePreset"));
+		CEnumerationPtr LightSourcePreset(nodeMap_->GetNode("LightSourcePreset"));
 		LightSourcePreset->FromString(LightSourcePreset_.c_str());
-	} else if (eAct == MM::BeforeGet) {
-		CEnumerationPtr LightSourcePreset( nodeMap_->GetNode( "LightSourcePreset"));
+	}
+	else if (eAct == MM::BeforeGet) {
+		CEnumerationPtr LightSourcePreset(nodeMap_->GetNode("LightSourcePreset"));
 		gcstring val = LightSourcePreset->ToString();
 		const char* s = val.c_str();
 		pProp->Set(s);
@@ -1618,10 +1703,11 @@ int BaslerCamera::OnShutterMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	if (eAct == MM::AfterSet) {
 		pProp->Get(shutterMode_);
-		CEnumerationPtr shutterMode( nodeMap_->GetNode( "ShutterMode"));
+		CEnumerationPtr shutterMode(nodeMap_->GetNode("ShutterMode"));
 		shutterMode->FromString(shutterMode_.c_str());
-	} else if (eAct == MM::BeforeGet) {
-		CEnumerationPtr shutterMode( nodeMap_->GetNode( "ShutterMode"));
+	}
+	else if (eAct == MM::BeforeGet) {
+		CEnumerationPtr shutterMode(nodeMap_->GetNode("ShutterMode"));
 		gcstring gc = shutterMode->ToString();
 		const char* s = gc.c_str();
 		shutterMode_.assign(s);
@@ -1632,12 +1718,12 @@ int BaslerCamera::OnShutterMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int BaslerCamera::OnDeviceLinkThroughputLimit(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	CIntegerPtr DeviceLinkThroughputLimit( nodeMap_->GetNode( "DeviceLinkThroughputLimit"));
-	if(IsAvailable(DeviceLinkThroughputLimit))
+	CIntegerPtr DeviceLinkThroughputLimit(nodeMap_->GetNode("DeviceLinkThroughputLimit"));
+	if (IsAvailable(DeviceLinkThroughputLimit))
 	{
-		if (eAct == MM::AfterSet && IsWritable(DeviceLinkThroughputLimit)) 
-		{   
-			long val ;
+		if (eAct == MM::AfterSet && IsWritable(DeviceLinkThroughputLimit))
+		{
+			long val;
 			pProp->Get(val);
 			DeviceLinkThroughputLimit->SetValue(val);
 			DeviceLinkThroughputLimit_ = DeviceLinkThroughputLimit->GetValue();
@@ -1645,7 +1731,7 @@ int BaslerCamera::OnDeviceLinkThroughputLimit(MM::PropertyBase* pProp, MM::Actio
 		else if (eAct == MM::BeforeGet)
 		{
 			DeviceLinkThroughputLimit_ = DeviceLinkThroughputLimit->GetValue();
-			pProp->Set(CDeviceUtils::ConvertToString ((long) DeviceLinkThroughputLimit_) );			
+			pProp->Set(CDeviceUtils::ConvertToString((long)DeviceLinkThroughputLimit_));
 		}
 	}
 
@@ -1654,12 +1740,12 @@ int BaslerCamera::OnDeviceLinkThroughputLimit(MM::PropertyBase* pProp, MM::Actio
 
 int BaslerCamera::OnInterPacketDelay(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	CIntegerPtr GevSCPD( nodeMap_->GetNode( "GevSCPD"));
-	if(IsAvailable(GevSCPD))
+	CIntegerPtr GevSCPD(nodeMap_->GetNode("GevSCPD"));
+	if (IsAvailable(GevSCPD))
 	{
-		if (eAct == MM::AfterSet && IsWritable(GevSCPD)) 
-		{   
-			long val ;
+		if (eAct == MM::AfterSet && IsWritable(GevSCPD))
+		{
+			long val;
 			pProp->Get(val);
 			GevSCPD->SetValue(val);
 			InterPacketDelay_ = GevSCPD->GetValue();
@@ -1667,7 +1753,7 @@ int BaslerCamera::OnInterPacketDelay(MM::PropertyBase* pProp, MM::ActionType eAc
 		else if (eAct == MM::BeforeGet)
 		{
 			InterPacketDelay_ = GevSCPD->GetValue();
-			pProp->Set(CDeviceUtils::ConvertToString ((long)InterPacketDelay_));			
+			pProp->Set(CDeviceUtils::ConvertToString((long)InterPacketDelay_));
 		}
 	}
 	return DEVICE_OK;
@@ -1677,10 +1763,8 @@ int BaslerCamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	try
 	{
-		CFloatPtr gain( nodeMap_->GetNode( "Gain"));
-		CIntegerPtr GainRaw( nodeMap_->GetNode( "GainRaw"));
-
-
+		CFloatPtr gain(nodeMap_->GetNode("Gain"));
+		CIntegerPtr GainRaw(nodeMap_->GetNode("GainRaw"));
 		if (eAct == MM::AfterSet) {
 			pProp->Get(gain_);
 			if (gain_ > gainMax_) {
@@ -1689,72 +1773,71 @@ int BaslerCamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 			if (gain_ < gainMin_) {
 				gain_ = gainMin_;
 			}
-			if(IsAvailable(gain))
+			if (IsAvailable(gain))
 			{
 				// the range gain depends on Pixel format sometimes.
-				if(gain->GetMin() <= gain_ && gain->GetMax() >= gain_)
+				if (gain->GetMin() <= gain_ && gain->GetMax() >= gain_)
 				{
 					gain->SetValue(gain_);
 				}
 				else
 				{
-				    AddToLog("gain value out of range");				
+					AddToLog("gain value out of range");
 					gainMax_ = gain->GetMax();
 					gainMin_ = gain->GetMin();
 					gain_ = gain->GetValue();
 					SetPropertyLimits(MM::g_Keyword_Gain, gainMin_, gainMax_);
 					pProp->Set(gain_);
-				}			
+				}
 			}
-			else if(IsAvailable(GainRaw))
+			else if (IsAvailable(GainRaw))
 			{
 				// the range gain depends on Pixel format sometimes.
-				if(GainRaw->GetMin() <= gain_ && GainRaw->GetMax() >= gain_)
+				if (GainRaw->GetMin() <= gain_ && GainRaw->GetMax() >= gain_)
 				{
 					GainRaw->SetValue((int64_t)(gain_));
 				}
 				else
 				{
-					AddToLog("gain value out of range");				
+					AddToLog("gain value out of range");
 					gainMax_ = gain->GetMax();
 					gainMin_ = gain->GetMin();
 					gain_ = gain->GetValue();
-					SetPropertyLimits(MM::g_Keyword_Gain, gainMin_, gainMax_);	
+					SetPropertyLimits(MM::g_Keyword_Gain, gainMin_, gainMax_);
 					pProp->Set(gain_);
-				}				
-			}	
-		} else if (eAct == MM::BeforeGet) {
+				}
+			}
+		}
+		else if (eAct == MM::BeforeGet) {
 
-			if(IsAvailable(gain))
+			if (IsAvailable(gain))
 			{
 				gain_ = gain->GetValue();
 				pProp->Set(gain_);
 			}
-			else if(IsAvailable(GainRaw))
-			{		
+			else if (IsAvailable(GainRaw))
+			{
 				gain_ = (double)GainRaw->GetValue();
 				pProp->Set(gain_);
-				cout << "Gain Raw set successfully" <<  gain_ <<endl;
+				cout << "Gain Raw set successfully" << gain_ << endl;
 			}
 		}
 	}
-	catch (const GenericException &e)
-    {
-        // Error handling.
+	catch (const GenericException& e)
+	{
+		// Error handling.
 		AddToLog(e.GetDescription());
-        cerr << "An exception occurred." << endl
-        << e.GetDescription() << endl;
+		cerr << "An exception occurred." << endl
+			<< e.GetDescription() << endl;
 		return DEVICE_ERR;
-    }
+	}
 	return DEVICE_OK;
 }
 
 int BaslerCamera::OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	
-	CFloatPtr offset( nodeMap_->GetNode( "BlackLevel"));
-	CFloatPtr offsetRaw( nodeMap_->GetNode( "BlackLevelRaw"));
-	
+	CFloatPtr offset(nodeMap_->GetNode("BlackLevel"));
+	CFloatPtr offsetRaw(nodeMap_->GetNode("BlackLevelRaw"));
 	if (eAct == MM::AfterSet) {
 		pProp->Get(offset_);
 		if (offset_ > offsetMax_) {
@@ -1763,24 +1846,25 @@ int BaslerCamera::OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
 		if (offset_ < offsetMin_) {
 			offset_ = offsetMin_;
 		}
-		if(IsAvailable(offset))
+		if (IsAvailable(offset))
 		{
 			offset->SetValue(offset_);
-		}else if (IsAvailable(offsetRaw))
+		}
+		else if (IsAvailable(offsetRaw))
 		{
 			offsetRaw->SetValue(offset_);
 		}
-		
-	} else if (eAct == MM::BeforeGet) {
-		if(IsAvailable(offset))
+	}
+	else if (eAct == MM::BeforeGet) {
+		if (IsAvailable(offset))
 		{
 			offset_ = offset->GetValue();
-		    pProp->Set(offset_);
-		
-		}else if (IsAvailable(offsetRaw))
+			pProp->Set(offset_);
+		}
+		else if (IsAvailable(offsetRaw))
 		{
 			offset_ = offsetRaw->GetValue();
-		    pProp->Set(offset_);			
+			pProp->Set(offset_);
 		}
 	}
 	return DEVICE_OK;
@@ -1789,121 +1873,122 @@ int BaslerCamera::OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
 void BaslerCamera::ReduceImageSize(int64_t Width, int64_t Height)
 {
 	// This function is just for debug purpose
-	if(!camera_->IsOpen())
+	if (!camera_->IsOpen())
 	{
 		camera_->Open();
-	}	
+	}
 	// Get the camera nodeMap_ object.
 	nodeMap_ = &camera_->GetNodeMap();
 	int64_t inc = 1;
 	const CIntegerPtr width = nodeMap_->GetNode("Width");
-	if(width->GetMax() >= Width)
-	{   inc = width->GetInc();
-		width->SetValue(Width -(Width % inc));
+	if (width->GetMax() >= Width)
+	{
+		inc = width->GetInc();
+		width->SetValue(Width - (Width % inc));
 	}
 	const CIntegerPtr height = nodeMap_->GetNode("Height");
-	if(height->GetMax() >= Height)
+	if (height->GetMax() >= Height)
 	{
 		inc = height->GetInc();
 		height->SetValue(Height - (Height % inc));
-	}  
+	}
 }
 
 
-void BaslerCamera::RGBPackedtoRGB(void* destbuffer,const CGrabResultPtr& ptrGrabResult)
+void BaslerCamera::RGBPackedtoRGB(void* destbuffer, const CGrabResultPtr& ptrGrabResult)
 {
-
 	char* buffer = (char*)ptrGrabResult->GetBuffer();
 	unsigned int srcOffset = 0;
 	unsigned int dstOffset = 0;
-	size_t Payloadsize = ptrGrabResult->GetPayloadSize()/3;	
-	for(size_t i=0; i < Payloadsize; ++i)
+	size_t Payloadsize = ptrGrabResult->GetPayloadSize() / 3;
+	for (size_t i = 0; i < Payloadsize; ++i)
 	{
-		memcpy((char*)destbuffer+dstOffset, buffer+srcOffset,3);
+		memcpy((char*)destbuffer + dstOffset, buffer + srcOffset, 3);
 		srcOffset += 3;
 		dstOffset += 4;
-	}	
+	}
 }
 
 
 void BaslerCamera::AddToLog(std::string msg)
 {
-	LogMessage(msg,false);
+	LogMessage(msg, false);
 }
 
-CircularBufferInserter::CircularBufferInserter(BaslerCamera* dev):
-dev_(dev)
+CircularBufferInserter::CircularBufferInserter(BaslerCamera* dev) :
+	dev_(dev)
 {}
 
-void CircularBufferInserter::OnImageGrabbed( CInstantCamera& /* camera */, const CGrabResultPtr& ptrGrabResult)
+void CircularBufferInserter::OnImageGrabbed(CInstantCamera& /* camera */, const CGrabResultPtr& ptrGrabResult)
 {
-	
-   // char label[MM::MaxStrLength];
- 
-   // Important:  metadata about the image are generated here:
-   Metadata md;
-   md.put("Camera", "");
-  
-   md.put(MM::g_Keyword_Metadata_ROI_X, CDeviceUtils::ConvertToString( (long) ptrGrabResult->GetWidth())); 
-   md.put(MM::g_Keyword_Metadata_ROI_Y, CDeviceUtils::ConvertToString( (long)  ptrGrabResult->GetHeight())); 
-   md.put(MM::g_Keyword_Metadata_ImageNumber, CDeviceUtils::ConvertToString( (long)  ptrGrabResult->GetImageNumber())); 
+
+	// char label[MM::MaxStrLength];
+
+	// Important:  metadata about the image are generated here:
+	Metadata md;
+	md.put("Camera", "");
+
+	md.put(MM::g_Keyword_Metadata_ROI_X, CDeviceUtils::ConvertToString((long)ptrGrabResult->GetWidth()));
+	md.put(MM::g_Keyword_Metadata_ROI_Y, CDeviceUtils::ConvertToString((long)ptrGrabResult->GetHeight()));
+	md.put(MM::g_Keyword_Metadata_ImageNumber, CDeviceUtils::ConvertToString((long)ptrGrabResult->GetImageNumber()));
 
 	// Image grabbed successfully?
 	if (ptrGrabResult->GrabSucceeded())
 	{
-		const char* subject ("Bayer");
+		const char* subject("Bayer");
 		bool IsByerFormat = false;
-		string currentPixelFormat = Pylon::CPixelTypeMapper::GetNameByPixelType(ptrGrabResult->GetPixelType()) ;
+		string currentPixelFormat = Pylon::CPixelTypeMapper::GetNameByPixelType(ptrGrabResult->GetPixelType());
 		std::size_t found = currentPixelFormat.find(subject);
 		if (found != std::string::npos)
 		{
 			IsByerFormat = true;
 		}
-		if(ptrGrabResult->GetPixelType() == PixelType_Mono8 || ptrGrabResult->GetPixelType() == PixelType_Mono12 ||
-		   ptrGrabResult->GetPixelType() == PixelType_Mono10 || ptrGrabResult->GetPixelType() == PixelType_Mono16
-		  )
+		if (ptrGrabResult->GetPixelType() == PixelType_Mono8 || ptrGrabResult->GetPixelType() == PixelType_Mono12 ||
+			ptrGrabResult->GetPixelType() == PixelType_Mono10 || ptrGrabResult->GetPixelType() == PixelType_Mono16
+			)
 		{
 
 			//copy to intermediate buffer
-			int ret = dev_->GetCoreCallback()->InsertImage(dev_, (const unsigned char*) ptrGrabResult->GetBuffer(),
-				(unsigned) ptrGrabResult->GetWidth(), (unsigned ) ptrGrabResult->GetHeight(), 
-				(unsigned) dev_->GetImageBytesPerPixel(),1,md.Serialize().c_str(),FALSE);
+			int ret = dev_->GetCoreCallback()->InsertImage(dev_, (const unsigned char*)ptrGrabResult->GetBuffer(),
+				(unsigned)ptrGrabResult->GetWidth(), (unsigned)ptrGrabResult->GetHeight(),
+				(unsigned)dev_->GetImageBytesPerPixel(), 1, md.Serialize().c_str(), FALSE);
 			if (ret == DEVICE_BUFFER_OVERFLOW) {
 				//if circular buffer overflows, just clear it and keep putting stuff in so live mode can continue
 				dev_->GetCoreCallback()->ClearImageBuffer(dev_);
-				}
+			}
 		}
-		else if( IsByerFormat || ptrGrabResult->GetPixelType() == PixelType_RGB8packed)
+		else if (IsByerFormat || ptrGrabResult->GetPixelType() == PixelType_RGB8packed)
 		{
-			CPylonImage image ;
-			dev_->converter->Convert(image,ptrGrabResult);
-					
+			CPylonImage image;
+			dev_->converter->Convert(image, ptrGrabResult);
+
 			//copy to intermediate buffer
 			int ret = dev_->GetCoreCallback()->InsertImage(dev_, (const unsigned char*)image.GetBuffer(),
-				(unsigned) dev_->GetImageWidth(), (unsigned ) dev_->GetImageHeight(), 
-				(unsigned) dev_->GetImageBytesPerPixel(),1,md.Serialize().c_str(),FALSE);
+				(unsigned)dev_->GetImageWidth(), (unsigned)dev_->GetImageHeight(),
+				(unsigned)dev_->GetImageBytesPerPixel(), 1, md.Serialize().c_str(), FALSE);
 			if (ret == DEVICE_BUFFER_OVERFLOW) {
 				//if circular buffer overflows, just clear it and keep putting stuff in so live mode can continue
 				dev_->GetCoreCallback()->ClearImageBuffer(dev_);
-			}	
-		}else if(ptrGrabResult->GetPixelType() ==  PixelType_BGR8packed )
+			}
+		}
+		else if (ptrGrabResult->GetPixelType() == PixelType_BGR8packed)
 		{
-			 dev_->RGBPackedtoRGB(dev_->Buffer4ContinuesShot,ptrGrabResult);
-			 //copy to intermediate buffer
+			dev_->RGBPackedtoRGB(dev_->Buffer4ContinuesShot, ptrGrabResult);
+			//copy to intermediate buffer
 			int ret = dev_->GetCoreCallback()->InsertImage(dev_, (const unsigned char*)dev_->Buffer4ContinuesShot,
-				(unsigned) dev_->GetImageWidth(), (unsigned ) dev_->GetImageHeight(), 
-				(unsigned) dev_->GetImageBytesPerPixel(),1,md.Serialize().c_str(),FALSE);
-			if (ret == DEVICE_BUFFER_OVERFLOW) 
+				(unsigned)dev_->GetImageWidth(), (unsigned)dev_->GetImageHeight(),
+				(unsigned)dev_->GetImageBytesPerPixel(), 1, md.Serialize().c_str(), FALSE);
+			if (ret == DEVICE_BUFFER_OVERFLOW)
 			{
 				//if circular buffer overflows, just clear it and keep putting stuff in so live mode can continue
 				dev_->GetCoreCallback()->ClearImageBuffer(dev_);
 			}
 		}
-	} 
+	}
 	else
-	{	
+	{
 		std::stringstream ss;
-		ss << "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription() << endl;	
+		ss << "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription() << endl;
 		dev_->AddToLog(ss.str());
 	}
 }
