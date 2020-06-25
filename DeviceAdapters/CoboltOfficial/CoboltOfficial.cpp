@@ -28,7 +28,7 @@
 //                SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 // CAUTION:       Use of controls or adjustments or performance of any procedures other than those
-//                specified in owner’s manual may result in exposure to hazardous radiation and
+//                specified in owner's manual may result in exposure to hazardous radiation and
 //                violation of the CE / CDRH laser safety compliance.
 //
 // AUTHORS:       Lukas Kalinski / lukas.kalinski@coboltlasers.com (2020)
@@ -145,9 +145,9 @@ int CoboltOfficial::Initialize()
     }
 
     // Make sure 'device mode' is selected:
-    SendCommand( "1" );
+    //SendCommand( "1" );
 
-    laser_ = Laser::Create( this );
+    laser_ = LaserFactory::Create( this );
 
     if ( laser_ == NULL ) {
         return cobolt::return_code::error;
@@ -232,6 +232,31 @@ int CoboltOfficial::Fire( double deltaT )
 int CoboltOfficial::SendCommand( const std::string& command, std::string* response )
 {
     Logger::Instance()->LogMessage( "CoboltOfficial::SendCommand: About to send command '" + command + "', response expected=" + ( response != NULL ? "yes" : "no" ), true );
+
+    // Split up into atomic commands if command is composite:
+    if ( command.find( '\r' ) != std::string::npos ) {
+
+        std::string atomicCommand;
+
+        for ( int i = 0; i < command.length(); i++ ) {
+
+            if ( command[ i ] == '\r' ) {
+
+                int returnCode = SendCommand( atomicCommand );
+
+                if ( returnCode != return_code::ok ) {
+                    return returnCode;
+                }
+
+                atomicCommand.clear();
+                continue;
+            }
+
+            atomicCommand.push_back( command[ i ] );
+        }
+
+        return return_code::ok;
+    }
 
     int returnCode = SendSerialCommand( port_.c_str(), command.c_str(), "\r" );
     
