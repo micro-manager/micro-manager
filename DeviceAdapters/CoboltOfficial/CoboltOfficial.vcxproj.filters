@@ -13,12 +13,15 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\Laser">
+      <UniqueIdentifier>{4369c2ac-d34e-4e24-9f3d-a0613284b298}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Laser">
+      <UniqueIdentifier>{f7ce918a-344c-4577-803f-188733286482}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CoboltOfficial.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Laser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Property.cpp">
@@ -51,12 +54,24 @@
     <ClCompile Include="ImmutableEnumerationProperty.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="LaserFactory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Laser.cpp">
+      <Filter>Source Files\Laser</Filter>
+    </ClCompile>
+    <ClCompile Include="Dpl06Laser.cpp">
+      <Filter>Source Files\Laser</Filter>
+    </ClCompile>
+    <ClCompile Include="Mld06Laser.cpp">
+      <Filter>Source Files\Laser</Filter>
+    </ClCompile>
+    <ClCompile Include="SkyraLaser.cpp">
+      <Filter>Source Files\Laser</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CoboltOfficial.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Laser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Logger.h">
@@ -97,6 +112,21 @@
     </ClInclude>
     <ClInclude Include="ImmutableEnumerationProperty.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LaserFactory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Laser.h">
+      <Filter>Header Files\Laser</Filter>
+    </ClInclude>
+    <ClInclude Include="Mld06Laser.h">
+      <Filter>Header Files\Laser</Filter>
+    </ClInclude>
+    <ClInclude Include="SkyraLaser.h">
+      <Filter>Header Files\Laser</Filter>
+    </ClInclude>
+    <ClInclude Include="Dpl06Laser.h">
+      <Filter>Header Files\Laser</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

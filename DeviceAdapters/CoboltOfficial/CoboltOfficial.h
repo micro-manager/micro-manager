@@ -28,7 +28,7 @@
 //                SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 // CAUTION:       Use of controls or adjustments or performance of any procedures other than those
-//                specified in owner’s manual may result in exposure to hazardous radiation and
+//                specified in owner's manual may result in exposure to hazardous radiation and
 //                violation of the CE / CDRH laser safety compliance.
 //
 // AUTHORS:       Lukas Kalinski / lukas.kalinski@coboltlasers.com (2020)
@@ -39,7 +39,7 @@
 
 #include "DeviceBase.h"
 #include <string>
-#include "Laser.h"
+#include "LaserFactory.h"
 #include "Logger.h"
 #include "LaserDriver.h"
 

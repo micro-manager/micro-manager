@@ -28,7 +28,7 @@
 //                SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 // CAUTION:       Use of controls or adjustments or performance of any procedures other than those
-//                specified in owner’s manual may result in exposure to hazardous radiation and
+//                specified in owner's manual may result in exposure to hazardous radiation and
 //                violation of the CE / CDRH laser safety compliance.
 //
 // AUTHORS:       Lukas Kalinski / lukas.kalinski@coboltlasers.com (2020)
@@ -102,7 +102,6 @@ int EnumerationProperty::SetValue( const std::string& enumerationItemName )
     Logger::Instance()->LogError( "EnumerationProperty[ " + GetName() + " ]::SetValue(): Invalid enumeration item '" + enumerationItemName + "'" );
     return return_code::invalid_property_value;
 }
-
 
 bool EnumerationProperty::IsValidValue( const std::string& enumerationItemName )
 {

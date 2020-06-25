@@ -28,7 +28,7 @@
 //                SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 // CAUTION:       Use of controls or adjustments or performance of any procedures other than those
-//                specified in owner’s manual may result in exposure to hazardous radiation and
+//                specified in owner's manual may result in exposure to hazardous radiation and
 //                violation of the CE / CDRH laser safety compliance.
 //
 // AUTHORS:       Lukas Kalinski / lukas.kalinski@coboltlasers.com (2020)
@@ -49,6 +49,7 @@ NAMESPACE_COBOLT_BEGIN
 
 class LaserDriver;
 class LaserStateProperty;
+class LaserShutterProperty;
 class MutableDeviceProperty;
 
 class Laser
@@ -57,13 +58,12 @@ public:
 
     typedef std::map<std::string, cobolt::Property*>::iterator PropertyIterator;
 
-    static Laser* Create( LaserDriver* driver );
+    Laser( const std::string& name, LaserDriver* driver );
 
     virtual ~Laser();
 
     const std::string& GetId() const;
     const std::string& GetName() const;
-    const std::string& GetWavelength() const;
 
     void SetOn( const bool );
     void SetShutterOpen( const bool );
@@ -78,32 +78,22 @@ public:
     PropertyIterator GetPropertyIteratorBegin();
     PropertyIterator GetPropertyIteratorEnd();
 
-private:
-
-    enum Stereotype {
-
-        ST_06_DPL,
-        ST_06_MLD,
-        ST_05_Series
-    };
+protected:
 
     static int NextId__;
 
-    Laser( const std::string& name, const std::string& wavelength, LaserDriver* device );
-
     void RegisterState( const std::string& state );
 
-
     /// ###
-    /// Property Factories
+    /// Property Generators
 
     void CreateNameProperty();
     void CreateModelProperty();
-    void CreateWavelengthProperty();
+    void CreateWavelengthProperty( const std::string& wavelength );
     void CreateKeyswitchProperty();
     void CreateSerialNumberProperty();
     void CreateFirmwareVersionProperty();
-    void CreateDriverVersionProperty();
+    void CreateAdapterVersionProperty();
 
     void CreateOperatingHoursProperty();
     void CreateCurrentSetpointProperty();
@@ -111,17 +101,8 @@ private:
     void CreatePowerSetpointProperty();
     void CreatePowerReadingProperty();
 
-    template<Stereotype T> void CreateLaserStateProperty();
-    template<> void CreateLaserStateProperty<ST_05_Series>();
-    template<> void CreateLaserStateProperty<ST_06_DPL>();
-    template<> void CreateLaserStateProperty<ST_06_MLD>();
-
     void CreateLaserOnOffProperty();
     void CreateShutterProperty();
-    template <Stereotype T> void CreateRunModeProperty() {}
-    template <> void CreateRunModeProperty<ST_05_Series>();
-    template <> void CreateRunModeProperty<ST_06_DPL>();
-    template <> void CreateRunModeProperty<ST_06_MLD>();
     void CreateDigitalModulationProperty();
     void CreateAnalogModulationFlagProperty();
 
@@ -142,12 +123,8 @@ private:
     static const std::string EnumerationItem_RunMode_ConstantPower;
     static const std::string EnumerationItem_RunMode_Modulation;
 
-    static void DecomposeModelString( std::string modelString, std::vector<std::string>& modelTokens );
-
     bool IsShutterCommandSupported() const;
     bool IsInCdrhMode() const;
-
-    void CreateGenericProperties();
 
     void RegisterPublicProperty( Property* );
     
@@ -155,7 +132,6 @@ private:
     
     std::string id_;
     std::string name_;
-    std::string wavelength_;
     LaserDriver* laserDriver_;
 
     std::string currentUnit_;
@@ -163,7 +139,7 @@ private:
 
     LaserStateProperty* laserStateProperty_;
     MutableDeviceProperty* laserOnOffProperty_;
-    MutableDeviceProperty* shutter_;
+    LaserShutterProperty* shutter_;
 };
 
 NAMESPACE_COBOLT_END

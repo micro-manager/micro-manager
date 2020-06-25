@@ -28,7 +28,7 @@
 //                SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 // CAUTION:       Use of controls or adjustments or performance of any procedures other than those
-//                specified in owner’s manual may result in exposure to hazardous radiation and
+//                specified in ownerï¿½s manual may result in exposure to hazardous radiation and
 //                violation of the CE / CDRH laser safety compliance.
 //
 // AUTHORS:       Lukas Kalinski / lukas.kalinski@coboltlasers.com (2020)
@@ -51,11 +51,15 @@ public:
     static const std::string Value_Closed;
 
     LaserShutterProperty( const std::string& name, LaserDriver* laserDriver, Laser* laser );
+    LaserShutterProperty( const std::string& name, LaserDriver* laserDriver, Laser* laser,
+        const std::string& closeCommand, const std::string& openCommand );
     
     virtual int GetValue( std::string& string ) const;
     virtual int SetValue( const std::string& );
 
-private:
+    virtual bool IsOpen() const;
+
+protected:
 
     Laser* laser_;
     bool isOpen_;

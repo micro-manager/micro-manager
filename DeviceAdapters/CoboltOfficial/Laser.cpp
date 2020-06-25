@@ -28,7 +28,7 @@
 //                SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 // CAUTION:       Use of controls or adjustments or performance of any procedures other than those
-//                specified in owner’s manual may result in exposure to hazardous radiation and
+//                specified in owner's manual may result in exposure to hazardous radiation and
 //                violation of the CE / CDRH laser safety compliance.
 //
 // AUTHORS:       Lukas Kalinski / lukas.kalinski@coboltlasers.com (2020)
@@ -68,119 +68,15 @@ const std::string Laser::EnumerationItem_RunMode_Modulation = "Modulation";
 
 int Laser::NextId__ = 1;
 
-Laser* Laser::Create( LaserDriver* driver )
+Laser::Laser( const std::string& name, LaserDriver* driver ) :
+    id_( std::to_string( (long double) NextId__++ ) ),
+    name_( name ),
+    laserDriver_( driver ),
+    currentUnit_( "?" ),
+    powerUnit_( "?" ),
+    laserOnOffProperty_( NULL ),
+    shutter_( NULL )
 {
-    assert( driver != NULL );
-    
-    std::string modelString;
-    if ( driver->SendCommand( "glm?", &modelString ) != return_code::ok ) {
-        return NULL;
-    }
-    
-    std::vector<std::string> modelTokens;
-    DecomposeModelString( modelString, modelTokens );
-    std::string wavelength = "Unknown";
-    
-    if ( modelTokens.size() > 0 ) {
-        wavelength = std::to_string( (_Longlong) atoi( modelTokens[ 0 ].c_str() ) );
-    }
-
-    Laser* laser;
-
-    if ( modelString.find( "-06-91-" ) != std::string::npos ) {
-
-        laser = new Laser( "06-DPL", wavelength, driver );
-
-        laser->currentUnit_ = Milliamperes; 
-        laser->powerUnit_ = Milliwatts;
-
-        laser->CreateNameProperty();
-        laser->CreateModelProperty();
-        laser->CreateFirmwareVersionProperty();
-        laser->CreateWavelengthProperty();
-        laser->CreateKeyswitchProperty();
-        laser->CreateLaserStateProperty<ST_06_DPL>();
-        //laser->CreateLaserOnOffProperty();
-        laser->CreateShutterProperty();
-        laser->CreateRunModeProperty<ST_06_DPL>();
-        laser->CreatePowerSetpointProperty();
-        laser->CreatePowerReadingProperty();
-        laser->CreateCurrentSetpointProperty();
-        laser->CreateCurrentReadingProperty();
-        laser->CreateDigitalModulationProperty();
-        laser->CreateAnalogModulationFlagProperty();
-        laser->CreateOperatingHoursProperty();
-        laser->CreateSerialNumberProperty();
-        laser->CreateFirmwareVersionProperty();
-        laser->CreateDriverVersionProperty();
-
-    } else if ( modelString.find( "-06-01-" ) != std::string::npos ||
-                modelString.find( "-06-03-" ) != std::string::npos ) {
-
-        laser = new Laser( "06-MLD", wavelength, driver );
-
-        laser->currentUnit_ = Milliamperes;
-        laser->powerUnit_ = Milliwatts;
-
-        laser->CreateNameProperty();
-        laser->CreateModelProperty();
-        laser->CreateFirmwareVersionProperty();
-        laser->CreateWavelengthProperty();
-        laser->CreateKeyswitchProperty();
-        laser->CreateLaserStateProperty<ST_06_MLD>();
-        //laser->CreateLaserOnOffProperty();
-        laser->CreateShutterProperty();
-        laser->CreateRunModeProperty<ST_06_MLD>();
-        laser->CreatePowerSetpointProperty();
-        laser->CreatePowerReadingProperty();
-        laser->CreateCurrentSetpointProperty();
-        laser->CreateCurrentReadingProperty();
-        laser->CreateDigitalModulationProperty();
-        laser->CreateAnalogModulationFlagProperty();
-        laser->CreateAnalogImpedanceProperty();
-        laser->CreateModulationPowerSetpointProperty();
-        laser->CreateOperatingHoursProperty();
-        laser->CreateSerialNumberProperty();
-        laser->CreateFirmwareVersionProperty();
-        laser->CreateDriverVersionProperty();
-        
-    } else if ( modelString.find( "-05-" ) != std::string::npos ) {
-
-        laser = new Laser( "Compact 05", wavelength, driver );
-
-        laser->currentUnit_ = Amperes;
-        laser->powerUnit_ = Milliwatts;
-        
-        laser->CreateNameProperty();
-        laser->CreateModelProperty();
-        laser->CreateFirmwareVersionProperty();
-        laser->CreateWavelengthProperty();
-        laser->CreateKeyswitchProperty();
-        laser->CreateLaserStateProperty<ST_05_Series>();
-        //laser->CreateLaserOnOffProperty();
-        laser->CreateShutterProperty();
-        laser->CreateRunModeProperty<ST_05_Series>();
-        laser->CreatePowerSetpointProperty();
-        laser->CreatePowerReadingProperty();
-        laser->CreateCurrentSetpointProperty();
-        laser->CreateCurrentReadingProperty();
-        laser->CreateOperatingHoursProperty();
-        laser->CreateSerialNumberProperty();
-        laser->CreateFirmwareVersionProperty();
-        laser->CreateDriverVersionProperty();
-
-    } else {
-
-        laser = new Laser( "Unknown", wavelength, driver );
-    }
-    
-    Logger::Instance()->LogMessage( "Created laser '" + laser->GetName() + "'", true );
-
-    laser->SetShutterOpen( false );
-
-    Property::ResetIdGenerator();
-
-    return laser;
 }
 
 Laser::~Laser()
@@ -208,11 +104,6 @@ const std::string& Laser::GetName() const
     return name_;
 }
 
-const std::string& Laser::GetWavelength() const
-{
-    return wavelength_;
-}
-
 void Laser::SetOn( const bool on )
 {
     // Reset shutter on laser on/off:
@@ -234,6 +125,12 @@ void Laser::SetOn( const bool on )
 
 void Laser::SetShutterOpen( const bool open )
 {
+    if ( shutter_ == NULL ) {
+
+        Logger::Instance()->LogError( "Laser::SetShutterOpen(): Shutter not available" );
+        return;
+    }
+
     shutter_->SetValue( open ? LaserShutterProperty::Value_Open : LaserShutterProperty::Value_Closed );
 }
 
@@ -254,7 +151,13 @@ bool Laser::IsShutterEnabled() const
 
 bool Laser::IsShutterOpen() const
 {
-    return ( shutter_->GetValue() == LaserShutterProperty::Value_Open );
+    if ( shutter_ == NULL ) {
+
+        Logger::Instance()->LogError( "Laser::IsShutterOpen(): Shutter not available" );
+        return false;
+    }
+
+    return ( shutter_->IsOpen() );
 }
 
 Property* Laser::GetProperty( const std::string& name ) const
@@ -277,42 +180,6 @@ Laser::PropertyIterator Laser::GetPropertyIteratorEnd()
     return properties_.end();
 }
 
-void Laser::DecomposeModelString( std::string modelString, std::vector<std::string>& modelTokens )
-{
-    std::string token;
-
-    for ( std::string::iterator character = modelString.begin(); character != modelString.end(); character++ ) {
-
-        if ( *character == '-' || *character == '\r' ) {
-
-            if ( token.length() > 0 ) {
-                modelTokens.push_back( token );
-                token.clear();
-            }
-
-        } else {
-
-            token.push_back( *character );
-        }
-    }
-    
-    if ( token.length() > 0 ) {
-        modelTokens.push_back( token );
-    }
-}
-
-Laser::Laser( const std::string& name, const std::string& wavelength, LaserDriver* driver ) :
-    id_( std::to_string( (long double) NextId__++ ) ),
-    name_( name ),
-    wavelength_( wavelength ),
-    laserDriver_( driver ),
-    currentUnit_( "?" ),
-    powerUnit_( "?" ),
-    laserOnOffProperty_( NULL ),
-    shutter_( NULL )
-{
-}
-
 void Laser::CreateNameProperty()
 {
     RegisterPublicProperty( new StaticStringProperty( "Name", this->GetName() ) );
@@ -323,9 +190,9 @@ void Laser::CreateModelProperty()
     RegisterPublicProperty( new DeviceProperty( Property::String, "Model", laserDriver_, "glm?") );
 }
 
-void Laser::CreateWavelengthProperty()
+void Laser::CreateWavelengthProperty( const std::string& wavelength)
 {
-    RegisterPublicProperty( new StaticStringProperty( "Wavelength", this->GetWavelength()) );
+    RegisterPublicProperty( new StaticStringProperty( "Wavelength", wavelength ) );
 }
 
 void Laser::CreateKeyswitchProperty()
@@ -348,9 +215,9 @@ void Laser::CreateFirmwareVersionProperty()
     RegisterPublicProperty( new DeviceProperty( Property::String, "Firmware Version", laserDriver_, "gfv?") );
 }
 
-void Laser::CreateDriverVersionProperty()
+void Laser::CreateAdapterVersionProperty()
 {
-    RegisterPublicProperty( new StaticStringProperty( "Driver Version", COBOLT_MM_DRIVER_VERSION ) );
+    RegisterPublicProperty( new StaticStringProperty( "Adapter Version", COBOLT_MM_DRIVER_VERSION ) );
 }
 
 void Laser::CreateOperatingHoursProperty()
@@ -409,63 +276,6 @@ void Laser::CreatePowerReadingProperty()
     RegisterPublicProperty( property );
 }
 
-template<> void Laser::CreateLaserStateProperty<Laser::ST_05_Series>()
-{
-    Logger::Instance()->LogError( "05 Series support not fully implemented" );
-    assert( false ); // TODO: Implement
-}
-
-template<> void Laser::CreateLaserStateProperty<Laser::ST_06_DPL>()
-{
-    if ( IsInCdrhMode() ) {
-
-        laserStateProperty_ = new LaserStateProperty( Property::String, "Laser State", laserDriver_, "gom?" );
-
-        laserStateProperty_->RegisterState( "0", "Off", false );
-        laserStateProperty_->RegisterState( "1", "Waiting for TEC", false );
-        laserStateProperty_->RegisterState( "2", "Waiting for Key", false );
-        laserStateProperty_->RegisterState( "3", "Warming Up", false );
-        laserStateProperty_->RegisterState( "4", "Completed", true );
-        laserStateProperty_->RegisterState( "5", "Fault", false );
-        laserStateProperty_->RegisterState( "6", "Aborted", false );
-        laserStateProperty_->RegisterState( "7", "Modulation", false );
-
-    } else {
-
-        laserStateProperty_ = new LaserStateProperty( Property::String, "Laser State", laserDriver_, "l?" );
-
-        laserStateProperty_->RegisterState( "0", "Off", true );
-        laserStateProperty_->RegisterState( "1", "On", true );
-    }
-
-    RegisterPublicProperty( laserStateProperty_ );
-}
-
-template<> void Laser::CreateLaserStateProperty<Laser::ST_06_MLD>()
-{
-    if ( IsInCdrhMode() ) {
-
-        laserStateProperty_ = new LaserStateProperty( Property::String, "Laser State", laserDriver_, "gom?" );
-    
-        laserStateProperty_->RegisterState( "0", "Off", false );
-        laserStateProperty_->RegisterState( "1", "Waiting for Key", false );
-        laserStateProperty_->RegisterState( "2", "Completed", true );
-        laserStateProperty_->RegisterState( "3", "Completed (On/Off Modulation)", false );
-        laserStateProperty_->RegisterState( "4", "Completed (Modulation)", false );
-        laserStateProperty_->RegisterState( "5", "Fault", false );
-        laserStateProperty_->RegisterState( "6", "Aborted", false );
-
-    } else {
-
-        laserStateProperty_ = new LaserStateProperty( Property::String, "Laser State", laserDriver_, "l?" );
-
-        laserStateProperty_->RegisterState( "0", "Off", true );
-        laserStateProperty_->RegisterState( "1", "On", true );
-    }
-
-    RegisterPublicProperty( laserStateProperty_ );
-}
-
 void Laser::CreateLaserOnOffProperty()
 {
     EnumerationProperty* property = new EnumerationProperty( "Laser Status", laserDriver_, "l?" );
@@ -491,62 +301,6 @@ void Laser::CreateShutterProperty()
     }
     
     RegisterPublicProperty( shutter_ );
-}
-
-template <> void Laser::CreateRunModeProperty<Laser::ST_05_Series>()
-{
-    EnumerationProperty* property;
-    
-    if ( IsShutterCommandSupported() || !IsInCdrhMode() ) {
-        property = new EnumerationProperty( "Run Mode", laserDriver_, "gam?" );
-    } else {
-        property = new legacy::no_shutter_command::LaserRunModeProperty( "Run Mode", laserDriver_, "gam?", this );
-    }
-
-    property->SetCaching( false );
-
-    property->RegisterEnumerationItem( "0", "ecc", EnumerationItem_RunMode_ConstantCurrent );
-    property->RegisterEnumerationItem( "1", "ecp", EnumerationItem_RunMode_ConstantPower );
-
-    RegisterPublicProperty( property );
-}
-
-template <> void Laser::CreateRunModeProperty<Laser::ST_06_DPL>()
-{
-    EnumerationProperty* property;
-    
-    if ( IsShutterCommandSupported() || !IsInCdrhMode() ) {
-        property = new EnumerationProperty( "Run Mode", laserDriver_, "gam?" );
-    } else {
-        property = new legacy::no_shutter_command::LaserRunModeProperty( "Run Mode", laserDriver_, "gam?", this );
-    }
-    
-    property->SetCaching( false );
-
-    property->RegisterEnumerationItem( "0", "ecc", EnumerationItem_RunMode_ConstantCurrent );
-    property->RegisterEnumerationItem( "1", "ecp", EnumerationItem_RunMode_ConstantPower );
-    property->RegisterEnumerationItem( "2", "em", EnumerationItem_RunMode_Modulation );
-    
-    RegisterPublicProperty( property );
-}
-
-template <> void Laser::CreateRunModeProperty<Laser::ST_06_MLD>()
-{
-    EnumerationProperty* property;
-
-    if ( IsShutterCommandSupported() || !IsInCdrhMode() ) {
-        property = new EnumerationProperty( "Run Mode", laserDriver_, "gam?" );
-    } else {
-        property = new legacy::no_shutter_command::LaserRunModeProperty( "Run Mode", laserDriver_, "gam?", this );
-    }
-    
-    property->SetCaching( false );
-
-    property->RegisterEnumerationItem( "0", "ecc", EnumerationItem_RunMode_ConstantCurrent );
-    property->RegisterEnumerationItem( "1", "ecp", EnumerationItem_RunMode_ConstantPower );
-    property->RegisterEnumerationItem( "2", "em", EnumerationItem_RunMode_Modulation );
-
-    RegisterPublicProperty( property );
 }
 
 void Laser::CreateDigitalModulationProperty()
@@ -589,7 +343,7 @@ void Laser::CreateAnalogImpedanceProperty()
     RegisterPublicProperty( property );
 }
 
-bool Laser::IsShutterCommandSupported() const
+bool Laser::IsShutterCommandSupported() const // TODO: Split into IsShutterCommandSupported() and IsPauseCommandSupported()
 {
     std::string response;
     laserDriver_->SendCommand( "l0r", &response );

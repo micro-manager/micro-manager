@@ -28,7 +28,7 @@
 //                SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 // CAUTION:       Use of controls or adjustments or performance of any procedures other than those
-//                specified in owner’s manual may result in exposure to hazardous radiation and
+//                specified in owner's manual may result in exposure to hazardous radiation and
 //                violation of the CE / CDRH laser safety compliance.
 //
 // AUTHORS:       Lukas Kalinski / lukas.kalinski@coboltlasers.com (2020)
@@ -60,7 +60,7 @@ namespace return_code
     const int unsupported_device_property_value = 101006;
 }
 
-#define COBOLT_MM_DRIVER_VERSION "0.9.1b"
+#define COBOLT_MM_DRIVER_VERSION "1.0.0"
 
 NAMESPACE_COBOLT_END
 
