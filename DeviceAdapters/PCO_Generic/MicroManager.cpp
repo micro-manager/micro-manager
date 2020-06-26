@@ -1600,6 +1600,9 @@ int CPCOCam::SetupCamera(bool bStopRecording, bool bSizeChanged)
   {
     DWORD dwresult = 0;
     m_pCamera->SetCameraStruct((PCO_Camera*) &m_pCamera->m_strCamera.wSize, &dwresult);
+
+    std:string szsetname = "";
+    m_pCamera->WriteSettingsToRegistryMM(0, szsetname, m_pCamera->m_strCamera);
   }
   /*else
   {
@@ -1906,8 +1909,10 @@ int CPCOCam::Initialize()
   if(m_pCamera->m_iCamClass == 3)
   {
     int tb[3] = {1000000, 1000, 1};
+    std:string szsetname = "";
 
     m_pCamera->m_strCamera.wSize = sizeof(PCO_Camera);
+    m_pCamera->LoadSettingsFromRegistryMM(0, szsetname, m_pCamera->m_strCamera);
     m_pCamera->GetCameraStruct((PCO_Camera*) &m_pCamera->m_strCamera.wSize);
     //m_nHBin = m_nVBin = 1;
     //m_nMode = 0;//M_LONG;
