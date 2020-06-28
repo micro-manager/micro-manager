@@ -75,15 +75,25 @@ public class ChannelCorrectorPanel extends JPanel {
             @Override
             public void run() {
                try {
+                  SwingUtilities.invokeLater(() -> {
+                     studio_.alerts().postAlert("ChannelCorrector", this.getClass(),
+                             "Calculating " + channels.get(0) + "-" + channels.get(ch2nr_));
+                  });
                   AffineTransform af = calculateTransform();
                   if (af != null) {
                      affineTransform_.setTransform(af);
                      double[] flatAffine = new double[6];
                      affineTransform_.getMatrix(flatAffine);
                      SwingUtilities.invokeLater(() -> {
-                        for (int i = 0; i < ftfs.size() && i < flatAffine.length; i++) {
-                           ftfs.get(i).setValue(flatAffine[i]);
+                        int i = 0;
+                        for (int row = 0; row < 2; row++) {
+                           for (int col = 0; col < 3; col++) {
+                              ftfs.get(i).setValue(flatAffine[row + col * 2]);
+                              i++;
+                           }
                         }
+                        studio_.alerts().postAlert("ChannelCorrector", this.getClass(),
+                                "Finished " +  channels.get(0) + "-" + channels.get(ch2nr_));
                      });
                   }
                } catch (IOException ioe) {
@@ -146,20 +156,31 @@ public class ChannelCorrectorPanel extends JPanel {
       CoordinateMapper.PointMap points = new CoordinateMapper.PointMap();
       GaussianFit gf = new GaussianFit(1, fitmode_);
 
-      int p = dataViewer_.getDisplayPosition().getP();
-      Coords.Builder cb = Coordinates.builder().c(0).t(0).p(p).z(0);
       DataProvider dataProvider = dataViewer_.getDataProvider();
-      Image img1 = dataProvider.getImage(cb.build());
-      Image img2 = dataProvider.getImage(cb.c(ch2nr_).build());
-      ArrayList<Point2D.Double> xyPointsCh1 = detectPoints(img1, gf);
-      ArrayList<Point2D.Double> xyPointsCh2 = detectPoints(img2, gf);
+      int p = dataViewer_.getDisplayPosition().getP();
+      List<Integer> ps = new ArrayList<>();
+      if (useAllPositions_) {
+         Coords maxIndices = dataProvider.getMaxIndices();
+         for (p = 0; p < maxIndices.getP(); p++) {
+            ps.add(p);
+         }
+      } else {
+         ps.add(p);
+      }
+      for (Integer pp : ps) {
+         Coords.Builder cb = Coordinates.builder().c(0).t(0).p(pp).z(0);
+         Image img1 = dataProvider.getImage(cb.build());
+         Image img2 = dataProvider.getImage(cb.c(ch2nr_).build());
+         ArrayList<Point2D.Double> xyPointsCh1 = detectPoints(img1, gf);
+         ArrayList<Point2D.Double> xyPointsCh2 = detectPoints(img2, gf);
 
-      // Find matching points in the two ArrayLists
-      NearestPoint2D np = new NearestPoint2D(xyPointsCh2, maxPairDistance_);
-      for (Point2D.Double pCh1 : xyPointsCh1) {
-         Point2D.Double pCh2 = np.findKDWSE(pCh1);
-         if (pCh2 != null) {
-            points.put(pCh1, pCh2);
+         // Find matching points in the two ArrayLists
+         NearestPoint2D np = new NearestPoint2D(xyPointsCh2, maxPairDistance_);
+         for (Point2D.Double pCh1 : xyPointsCh1) {
+            Point2D.Double pCh2 = np.findKDWSE(pCh1);
+            if (pCh2 != null) {
+               points.put(pCh1, pCh2);
+            }
          }
       }
 
