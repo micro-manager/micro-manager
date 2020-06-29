@@ -1,15 +1,37 @@
+///////////////////////////////////////////////////////////////////////////////
+//FILE:          ChannelCorrectorPanel.java
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     ChannelCorrector plugin
+//
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Nico Stuurman
+//
+// COPYRIGHT:    Regents of the University of California 2020
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 package org.micromanager.channelcorrector;
 
 
+import edu.ucsf.valelab.gaussianfit.algorithm.FindLocalMaxima;
+import edu.ucsf.valelab.gaussianfit.algorithm.GaussianFit;
+import edu.ucsf.valelab.gaussianfit.data.SpotData;
+import edu.ucsf.valelab.gaussianfit.datasettransformations.CoordinateMapper;
+import edu.ucsf.valelab.gaussianfit.spotoperations.NearestPoint2D;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
-import org.micromanager.channelcorrector.utils.CoordinateMapper;
-import org.micromanager.channelcorrector.utils.FindLocalMaxima;
-import org.micromanager.channelcorrector.utils.GaussianFit;
-import org.micromanager.channelcorrector.utils.GaussianSpotData;
-import org.micromanager.channelcorrector.utils.NearestPoint2D;
 import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
@@ -191,7 +213,7 @@ public class ChannelCorrectorPanel extends JPanel {
          return null;
       }
 
-      CoordinateMapper c2t = new CoordinateMapper(points, 1, 2);
+      CoordinateMapper c2t = new CoordinateMapper(points, 1, 2, false);
 
       AffineTransform af = c2t.getAffineTransform();
       try {
@@ -223,13 +245,14 @@ public class ChannelCorrectorPanel extends JPanel {
          // filter out spots too close to the edge
          if (sC[j][0] > halfSize_ && sC[j][0] < siPlus.getWidth() - halfSize_
                  && sC[j][1] > halfSize_ && sC[j][1] < siPlus.getHeight() - halfSize_) {
-            ImageProcessor sp = GaussianSpotData.getSpotProcessor(siProc,
+            ImageProcessor sp = SpotData.getSpotProcessor(siProc,
                     halfSize_, sC[j][0], sC[j][1]);
             if (sp == null) {
                continue;
             }
 
-            double[] paramsOut = gf.doGaussianFit(sp, maxIterations_);
+            GaussianFit.Data gfData =  gf.dogaussianfit(sp, maxIterations_);
+            double[] paramsOut = gfData.getParms();
             if (paramsOut.length > 3) {
                double x = sC[j][0] - halfSize_ + paramsOut[2];
                double y = sC[j][1] - halfSize_ + paramsOut[3];

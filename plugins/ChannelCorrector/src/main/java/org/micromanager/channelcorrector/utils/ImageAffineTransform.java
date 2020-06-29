@@ -24,6 +24,7 @@ import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author nico
@@ -31,7 +32,6 @@ import java.util.ArrayList;
 public class ImageAffineTransform {
    private final Studio studio_;
    private final DataViewer dataViewer_;
-   //private final ArrayList<AffineTransform> affineTransforms_;
    private final ArrayList<AffineTransformOp> affineTransformOps_;
    private final int interpolationType_;
    private final Object renderingHint_;
@@ -61,7 +61,7 @@ public class ImageAffineTransform {
       renderingHint_ = rh;
    }
 
-   public void apply() throws IOException, ImageAffineTransformException {
+   public void apply(boolean allPositions) throws IOException, ImageAffineTransformException {
       final DataProvider dp = dataViewer_.getDataProvider();
       final int maxChan = dp.getMaxIndices().getC();
       if (maxChan !=  affineTransformOps_.size()) {
@@ -80,19 +80,38 @@ public class ImageAffineTransform {
          if (out.getHeight() < minHeight) minHeight = out.getHeight();
       }
       Datastore outStore = studio_.data().createRAMDatastore();
-      outStore.setSummaryMetadata(dp.getSummaryMetadata().copyBuilder().build());
+      List<Integer> positions = new ArrayList<>();
+      String posString = "";
+      Coords intendedDimensions = dp.getSummaryMetadata().getIntendedDimensions();
+      if (allPositions) {
+         for (int p = 0; p <= dp.getMaxIndices().getP(); p++) {
+            positions.add(p);
+         }
+      } else {
+         positions.add(dataViewer_.getDisplayPosition().getP());
+         posString = "-pos" + dataViewer_.getDisplayPosition().getP();
+         intendedDimensions = intendedDimensions.copyBuilder().p(1).build();
+      }
+      outStore.setName(dp.getName() + "-Corrected" + posString);
+      outStore.setSummaryMetadata(dp.getSummaryMetadata().copyBuilder().
+              intendedDimensions(intendedDimensions).build());
       DisplayWindow newDisplay = studio_.displays().createDisplay(outStore, null);
       newDisplay.setDisplaySettings(dataViewer_.getDisplaySettings());
       studio_.displays().manage(outStore);
-      for (int p = 0; p <= dp.getMaxIndices().getP(); p++) {
+
+      for (Integer  p : positions) {
          for (int t = 0; t <= dp.getMaxIndices().getT(); t++) {
             for (int z = 0; z <= dp.getMaxIndices().getZ(); z++) {
-               // crop inImage, and add to outStore
-               Image inImage = dp.getImage(builder.c(0).z(z).t(t).p(p).build());
+               // crop channel 0 image, and add to outStore
+               int pos = p;
+               if (!allPositions) {
+                  pos = 0;
+               }
+               Image inImage = dp.getImage(builder.c(0).z(z).t(t).p(pos).build());
                outStore.putImage(crop(inImage, 0, 0, minWidth, minHeight));
                for (int c = 1; c <= dp.getMaxIndices().getC(); c++) {
-                  // transform inImage, crop to size and add to store
-                  inImage = dp.getImage(builder.c(c).z(z).t(t).p(p).build());
+                  // transform other channel to channel 0, crop to size and add to store
+                  inImage = dp.getImage(builder.c(c).z(z).t(t).p(pos).build());
                   outStore.putImage(transformImage(inImage, affineTransformOps_.get(c-1), minWidth, minHeight));
                }
             }

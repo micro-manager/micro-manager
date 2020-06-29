@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          ChannelCorrecto.java
+//FILE:          ChannelCorrector.java
 //PROJECT:       Micro-Manager 
 //SUBSYSTEM:     ChannelCorrector plugin
 //

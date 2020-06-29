@@ -72,13 +72,17 @@ public class ChannelCorrectorFrame extends JFrame {
               getClass().getResource("/org/micromanager/icons/microscope.gif")));
 
       JButton applyButton = new JButton("Apply");
-      applyButton.addActionListener((ActionEvent ae) -> {
-         try {
-            apply();
-         } catch (IOException | ImageAffineTransformException e) {
-            studio_.logs().showError(e.getMessage());
+      applyButton.addActionListener((ActionEvent ae) ->
+              executor_.submit(new Runnable() {
+         @Override
+         public void run() {
+            try {
+               apply();
+            } catch (IOException | ImageAffineTransformException e) {
+               studio_.logs().showError(e.getMessage());
+            }
          }
-      });
+      }));
       JCheckBox useAllPositions = new JCheckBox("all positions");
       useAllPositions.addActionListener((ActionEvent ae) -> {
          for (ChannelCorrectorPanel ccp : channelCorrectorPanels_) {
@@ -152,13 +156,18 @@ public class ChannelCorrectorFrame extends JFrame {
    }
 
    public void apply() throws IOException, ImageAffineTransformException {
+      final String dataViewerName = dataViewer_.getName();
+      studio_.alerts().postAlert("ChannelCorrector", this.getClass(),
+              "Correcting " + dataViewerName);
       ArrayList<AffineTransform> affineTransforms = new ArrayList<>(channelCorrectorPanels_.size());
       for (ChannelCorrectorPanel ccp : channelCorrectorPanels_) {
          affineTransforms.add(ccp.getAffineTransform());
       }
       ImageAffineTransform iat = new ImageAffineTransform(studio_, dataViewer_,
               affineTransforms, AffineTransformOp.TYPE_BICUBIC);
-      iat.apply();
+      iat.apply(settings_.getBoolean(USE_ALL_POS_KEY, false));
+      studio_.alerts().postAlert("ChannelCorrector", this.getClass(),
+              "Finished correcting " + dataViewerName);
    }
 
 }
