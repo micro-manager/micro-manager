@@ -37,6 +37,7 @@ import edu.ucsf.valelab.gaussianfit.fitting.MultiVariateGaussianMLE;
 import edu.ucsf.valelab.gaussianfit.fitting.ParametricGaussianFunction;
 import edu.ucsf.valelab.gaussianfit.utils.ReportingUtils;
 import org.apache.commons.math.FunctionEvaluationException;
+import org.apache.commons.math.MaxIterationsExceededException;
 import org.apache.commons.math.optimization.OptimizationException;
 import org.apache.commons.math.optimization.direct.NelderMead;
 import org.apache.commons.math.optimization.RealPointValuePair;
@@ -254,11 +255,13 @@ public class GaussianFit {
                     shape_, siProc.getWidth(), fixedWidth_), 
                   estimate.getParms());
          } catch (FunctionEvaluationException ex) {
-            ReportingUtils.logError(ex);
+            ReportingUtils.logError(ex.getMessage());
          } catch (OptimizationException ex) {
-            ReportingUtils.logError(ex);
+            ReportingUtils.logError(ex.getMessage());
          } catch (IllegalArgumentException ex) {
-            ReportingUtils.logError(ex);
+            ReportingUtils.logError(ex.getMessage());
+         } catch (Exception miee) {
+            ReportingUtils.logError(miee.getMessage());
          }
       }
       
