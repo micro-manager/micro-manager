@@ -15,6 +15,7 @@ import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.display.DataViewer;
+import org.micromanager.display.DisplayWindow;
 
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -80,7 +81,8 @@ public class ImageAffineTransform {
       }
       Datastore outStore = studio_.data().createRAMDatastore();
       outStore.setSummaryMetadata(dp.getSummaryMetadata().copyBuilder().build());
-      studio_.displays().createDisplay(outStore, null);
+      DisplayWindow newDisplay = studio_.displays().createDisplay(outStore, null);
+      newDisplay.setDisplaySettings(dataViewer_.getDisplaySettings());
       studio_.displays().manage(outStore);
       for (int p = 0; p <= dp.getMaxIndices().getP(); p++) {
          for (int t = 0; t <= dp.getMaxIndices().getT(); t++) {
@@ -147,7 +149,17 @@ public class ImageAffineTransform {
       return studio_.data().ij().createImage(p.getProcessor(), inImg.getCoords(), inImg.getMetadata());
    }
 
-
+   /**
+    * Uses the provided AffineTransform to transfrom the input image, then crops
+    * it to given width and height
+    *
+    * @param inImg  Input Image to be transformed
+    * @param aOp     AffineTransformOp to be applied
+    * @param width   Width in pixels of result image
+    * @param height  Height in pixels of result image
+    * @return        Transformed Image
+    * @throws ImageAffineTransformException Currently only thrown when input != 16 bit image
+    */
    public Image transformImage(Image inImg, AffineTransformOp aOp, int width, int height
    ) throws ImageAffineTransformException {
 
@@ -169,7 +181,6 @@ public class ImageAffineTransform {
          g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, renderingHint_);
          g.drawImage(bi16, null, 0, 0);
       }
-      //BufferedImage afBi16 = aOp.filter(bi16, null);
       ImagePlus p = new ImagePlus("", aOpResult);
       ImageProcessor destProc = p.getProcessor();
       destProc.setRoi(0, 0, width, height);
@@ -178,88 +189,3 @@ public class ImageAffineTransform {
       return studio_.data().ij().createImage(destProc, inImg.getCoords(), inImg.getMetadata());
    }
 }
-         /*
-
-         ImageStack stack = siPlus.getStack();
-         if (stack.getProcessor(1).getBitDepth() > 8) {
-
-            // first get the final width and height
-            ShortProcessor testProc = (ShortProcessor) stack.getProcessor(2);
-            BufferedImage bi16 = testProc.get16BitBufferedImage();
-            BufferedImage afBi16 = aOp.filter(bi16, null);
-
-            // take the minimum of the original and transformed images
-            int width = Math.min(testProc.getWidth(), afBi16.getWidth());
-            int height = Math.min(testProc.getHeight(), afBi16.getHeight());
-
-            // Create the destination Window
-            ImagePlus dest = IJ.createHyperStack(siPlus.getTitle() + "aligned",
-                    width, height, siPlus.getNChannels(),
-                    siPlus.getNSlices(), siPlus.getNFrames(), siPlus.getBitDepth());
-            dest.copyScale(siPlus);
-            
-            ImageStack destStack = dest.getStack();
-            BufferedImage aOpResult = new BufferedImage(afBi16.getWidth(),
-               afBi16.getHeight(), BufferedImage.TYPE_USHORT_GRAY);
-
-            for (int i = 1; i <= stack.getSize(); i++) {
-               ShortProcessor proc = (ShortProcessor) stack.getProcessor(i);
-               ShortProcessor destProc;
-               if (i % 2 == 0) { // do the affine transformed
-                  bi16 = proc.get16BitBufferedImage();
-                  if (interpolationType == 
-                          AffineTransformOp.TYPE_NEAREST_NEIGHBOR) {
-                     BufferedImage bres = aOp.filter(bi16, aOpResult);
-                  } else {
-                     // work around bug in AffineTransformationOp, see:
-                     // http://stackoverflow.com/questions/2428109/java-error-on-bilinear-interpolation-of-16-bit-data
-                     Graphics2D g = aOpResult.createGraphics();
-                     g.transform(af);
-                     g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, rh);
-                     g.drawImage(bi16, null, 0, 0);
-                  }
-                  ImagePlus p = new ImagePlus("" + i, aOpResult);
-                  destProc = (ShortProcessor) p.getProcessor();
-                  
-               } else {
-                  destProc = (ShortProcessor) proc.duplicate();
-               }
-               destProc.setRoi(0, 0, width, height);
-               destProc = (ShortProcessor) destProc.crop();
-               destStack.setPixels(destProc.getPixels(), i);
-               
-               // The following is weird, but was needed to get the first frame 
-               // of the first channel to display.  Remove when solved in ImageJ
-               if (i == 1)
-                  dest.setProcessor(destProc);
-            }
-                        
-            ImageWindow win = new ij.gui.StackWindow(dest);
-
-         } else {
-            ij.IJ.showMessage("This only works with 16 bit images");
-         }
-      } else {
-         ij.IJ.showMessage("This only works with a 2 channel image");
-      }
-
-   }
-}
-
-
-          */
-
-            /*
-    * Beanshell script to test transformImagePlus:
-    *
-
-import java.awt.image.AffineTransformOp;
-
-dc = edu.valelab.GaussianFit.DataCollectionForm.getInstance();
-af = dc.getAffineTransform().clone();
-af.invert();
-siPlus = ij.IJ.getImage();
-type = AffineTransformOp.TYPE_NEAREST_NEIGHBOR;
-edu.valelab.GaussianFit.utils.ImageAffineTransform.transformImagePlus(siPlus, af, type);
-
-    */
