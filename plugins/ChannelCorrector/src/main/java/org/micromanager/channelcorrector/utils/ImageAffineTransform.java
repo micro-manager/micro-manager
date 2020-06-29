@@ -1,94 +1,184 @@
 /*
- * 
+ *
  */
 package org.micromanager.channelcorrector.utils;
 
 import ij.ImagePlus;
+import ij.gui.Roi;
+import ij.process.ByteProcessor;
+import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
+import org.micromanager.Studio;
+import org.micromanager.data.Coordinates;
+import org.micromanager.data.Coords;
+import org.micromanager.data.DataProvider;
+import org.micromanager.data.Datastore;
+import org.micromanager.data.Image;
+import org.micromanager.display.DataViewer;
+
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
-import ij.ImageStack;
-import ij.IJ;
-import ij.gui.ImageWindow;
-import ij.process.ShortProcessor;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
+import java.io.IOException;
+import java.util.ArrayList;
 
 /**
- *
  * @author nico
  */
 public class ImageAffineTransform {
+   private final Studio studio_;
+   private final DataViewer dataViewer_;
+   //private final ArrayList<AffineTransform> affineTransforms_;
+   private final ArrayList<AffineTransformOp> affineTransformOps_;
+   private final int interpolationType_;
+   private final Object renderingHint_;
 
-   /**
-    *
-    * @param input
-    * @param af
-    * @param interpolationType - AffineTransformOp.Type_Bilinear, or
-    * AffineTransformOp.Type_Bicubic AffineTransformOp.Type_Nearest_Neighbor if
-    * an invalid number is supplied, Nearest_neighbor will be used
-    * @return transform image
-    */
-   public static BufferedImage transform(BufferedImage input, AffineTransform af,
-           int interpolationType) {
+   public ImageAffineTransform(Studio studio, DataViewer dataViewer,
+                               ArrayList<AffineTransform> affineTransforms,
+                               int interpolationType) {
+      studio_ = studio;
+      dataViewer_ = dataViewer;
       if (interpolationType != AffineTransformOp.TYPE_BICUBIC
               && interpolationType != AffineTransformOp.TYPE_BILINEAR
               && interpolationType != AffineTransformOp.TYPE_NEAREST_NEIGHBOR) {
          interpolationType = AffineTransformOp.TYPE_NEAREST_NEIGHBOR;
       }
-      AffineTransformOp aOp = new AffineTransformOp(af, interpolationType);
-      return aOp.filter(input, null);
+      interpolationType_ = interpolationType;
+      affineTransformOps_ = new ArrayList<>(affineTransforms.size());
+      for (AffineTransform aff : affineTransforms) {
+         affineTransformOps_.add(new AffineTransformOp(aff, interpolationType));
+      }
+      // Part of work-around bug in AffineTransformOp
+      Object rh = RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR;
+      if (interpolationType_ == AffineTransformOp.TYPE_BICUBIC) {
+         rh = RenderingHints.VALUE_INTERPOLATION_BICUBIC;
+      } else if (interpolationType_ == AffineTransformOp.TYPE_BILINEAR) {
+         rh = RenderingHints.VALUE_INTERPOLATION_BILINEAR;
+      }
+      renderingHint_ = rh;
    }
 
-   
-   /*
-    * Beanshell script to test transformImagePlus:
-    * 
-   
-import java.awt.image.AffineTransformOp;
+   public void apply() throws IOException, ImageAffineTransformException {
+      final DataProvider dp = dataViewer_.getDataProvider();
+      final int maxChan = dp.getMaxIndices().getC();
+      if (maxChan !=  affineTransformOps_.size()) {
+         studio_.logs().showError("Unexpected difference between viewer and affine transform data");
+         return;
+      }
+      // Calculate eventual width and height
+      Coords.Builder builder = Coordinates.builder().t(0).z(0).p(0).c(0);
+      int minWidth = dp.getAnyImage().getWidth();
+      int minHeight = dp.getAnyImage().getHeight();
+      for (int c = 1; c <= maxChan; c++) {
+         AffineTransformOp affineTransformOp = affineTransformOps_.get(c - 1);
+         Image out = transformImage(dp.getImage(builder.c(c).build()),
+                 affineTransformOp);
+         if (out.getWidth() < minWidth) minWidth = out.getWidth();
+         if (out.getHeight() < minHeight) minHeight = out.getHeight();
+      }
+      Datastore outStore = studio_.data().createRAMDatastore();
+      outStore.setSummaryMetadata(dp.getSummaryMetadata().copyBuilder().build());
+      studio_.displays().createDisplay(outStore, null);
+      studio_.displays().manage(outStore);
+      for (int p = 0; p <= dp.getMaxIndices().getP(); p++) {
+         for (int t = 0; t <= dp.getMaxIndices().getT(); t++) {
+            for (int z = 0; z <= dp.getMaxIndices().getZ(); z++) {
+               // crop inImage, and add to outStore
+               Image inImage = dp.getImage(builder.c(0).z(z).t(t).p(p).build());
+               outStore.putImage(crop(inImage, 0, 0, minWidth, minHeight));
+               for (int c = 1; c <= dp.getMaxIndices().getC(); c++) {
+                  // transform inImage, crop to size and add to store
+                  inImage = dp.getImage(builder.c(c).z(z).t(t).p(p).build());
+                  outStore.putImage(transformImage(inImage, affineTransformOps_.get(c-1), minWidth, minHeight));
+               }
+            }
+         }
+      }
 
-dc = edu.valelab.GaussianFit.DataCollectionForm.getInstance();
-af = dc.getAffineTransform().clone();
-af.invert();
-siPlus = ij.IJ.getImage();
-type = AffineTransformOp.TYPE_NEAREST_NEIGHBOR;
-edu.valelab.GaussianFit.utils.ImageAffineTransform.transformImagePlus(siPlus, af, type);
+   }
 
-    */
-   
-   
+   public Image crop (Image inImg, int x, int y, int width, int height) throws ImageAffineTransformException {
+      ImageProcessor ip = null;
+      if (inImg.getBytesPerPixel() == 1) {
+         ip = new ByteProcessor(
+                 inImg.getWidth(), inImg.getHeight(), (byte[]) inImg.getRawPixels());
+      } else
+      if (inImg.getBytesPerPixel() == 2) {
+         ip = new ShortProcessor(
+                 inImg.getWidth(), inImg.getHeight() );
+         ip.setPixels(inImg.getRawPixels());
+      }
+      if (ip != null) {
+         ip.setRoi(new Roi(x, y, width, height));
+         ImageProcessor copyIp = ip.crop();
+         return studio_.data().createImage(copyIp.getPixels(),
+                 copyIp.getWidth(), copyIp.getHeight(),
+                 inImg.getBytesPerPixel(), inImg.getNumComponents(),
+                 inImg.getCoords().copyBuilder().build(),
+                 inImg.getMetadata().copyBuilderWithNewUUID().build());
+      }
+      throw new ImageAffineTransformException("Failed to crop image");
+   }
+
+
    /**
     * Given an input image and affine transform, will apply the affine transform
-    * to the second channel and create a new window with the untouched
-    * first channel and transformed second channel
-    * For now only works on 16 bit (short) images, and 2-channel images (which
-    * may contain multiple frames and slices)
-    * 
-    * @param siPlus - input image
-    * @param af - affine transform that will be applied
-    * @param interpolationType - valid AffinTRansformOp type
+    * to the image and returned the transformed image (which may be of a different size
+    * from the input image
+    * For now only works on 16 bit (short) images
+    *
+    * @param inImg             - input image
+    * @param aOp                - affine transform operation that will be applied
     */
-   public static void transformImagePlus(ImagePlus siPlus, AffineTransform af,
-           int interpolationType) {
-      
-      if (siPlus.getNChannels() == 2) {
-         
-         if (interpolationType != AffineTransformOp.TYPE_BICUBIC
-                 && interpolationType != AffineTransformOp.TYPE_BILINEAR
-                 && interpolationType != AffineTransformOp.TYPE_NEAREST_NEIGHBOR) {
-            interpolationType = AffineTransformOp.TYPE_NEAREST_NEIGHBOR;
-         }
+   public Image transformImage(Image inImg, AffineTransformOp aOp
+                            ) throws ImageAffineTransformException {
 
-         // Part of work-around bug in AffineTransformOp
-         Object rh = RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR;
-         if (interpolationType == AffineTransformOp.TYPE_BICUBIC) {
-            rh = RenderingHints.VALUE_INTERPOLATION_BICUBIC;
-         }
-         if (interpolationType == AffineTransformOp.TYPE_BILINEAR) {
-            rh = RenderingHints.VALUE_INTERPOLATION_BILINEAR;
-         }
-         
-         AffineTransformOp aOp = new AffineTransformOp(af, interpolationType);
+      if (inImg.getBytesPerPixel() != 2) {
+         throw new ImageAffineTransformException("ImageAffineTransform only works with 2 bytes per pixel");
+      }
+
+      ShortProcessor testProc = (ShortProcessor) studio_.data().ij().createProcessor(inImg);
+      BufferedImage bi16 = testProc.get16BitBufferedImage();
+      BufferedImage afBi16 = aOp.filter(bi16, null);
+      ImagePlus p = new ImagePlus("", afBi16);
+
+      return studio_.data().ij().createImage(p.getProcessor(), inImg.getCoords(), inImg.getMetadata());
+   }
+
+
+   public Image transformImage(Image inImg, AffineTransformOp aOp, int width, int height
+   ) throws ImageAffineTransformException {
+
+      if (inImg.getBytesPerPixel() != 2) {
+         throw new ImageAffineTransformException("ImageAffineTransform only works with 2 bytes per pixel");
+      }
+
+      ShortProcessor testProc = (ShortProcessor) studio_.data().ij().createProcessor(inImg);
+      BufferedImage bi16 = testProc.get16BitBufferedImage();
+      BufferedImage aOpResult = new BufferedImage(bi16.getWidth(),
+              bi16.getHeight(), BufferedImage.TYPE_USHORT_GRAY);
+      if (interpolationType_ == AffineTransformOp.TYPE_NEAREST_NEIGHBOR) {
+         aOp.filter(bi16, aOpResult);
+      } else {
+         // work around bug in AffineTransformationOp, see:
+         // http://stackoverflow.com/questions/2428109/java-error-on-bilinear-interpolation-of-16-bit-data
+         Graphics2D g = aOpResult.createGraphics();
+         g.transform(aOp.getTransform());
+         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, renderingHint_);
+         g.drawImage(bi16, null, 0, 0);
+      }
+      //BufferedImage afBi16 = aOp.filter(bi16, null);
+      ImagePlus p = new ImagePlus("", aOpResult);
+      ImageProcessor destProc = p.getProcessor();
+      destProc.setRoi(0, 0, width, height);
+      destProc = destProc.crop();
+
+      return studio_.data().ij().createImage(destProc, inImg.getCoords(), inImg.getMetadata());
+   }
+}
+         /*
 
          ImageStack stack = siPlus.getStack();
          if (stack.getProcessor(1).getBitDepth() > 8) {
@@ -156,3 +246,20 @@ edu.valelab.GaussianFit.utils.ImageAffineTransform.transformImagePlus(siPlus, af
    }
 }
 
+
+          */
+
+            /*
+    * Beanshell script to test transformImagePlus:
+    *
+
+import java.awt.image.AffineTransformOp;
+
+dc = edu.valelab.GaussianFit.DataCollectionForm.getInstance();
+af = dc.getAffineTransform().clone();
+af.invert();
+siPlus = ij.IJ.getImage();
+type = AffineTransformOp.TYPE_NEAREST_NEIGHBOR;
+edu.valelab.GaussianFit.utils.ImageAffineTransform.transformImagePlus(siPlus, af, type);
+
+    */

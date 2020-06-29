@@ -24,6 +24,8 @@ package org.micromanager.channelcorrector;
 import com.google.common.eventbus.Subscribe;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
+import org.micromanager.channelcorrector.utils.ImageAffineTransform;
+import org.micromanager.channelcorrector.utils.ImageAffineTransformException;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
@@ -36,16 +38,14 @@ import javax.swing.JSeparator;
 import javax.swing.WindowConstants;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-// Imports for MMStudio internal packages
-// Plugins should not access internal packages, to ensure modularity and
-// maintainability. However, this plugin code is older than the current
-// MMStudio API, so it still uses internal classes and interfaces. New code
-// should not imitate this practice.
 
 /**
  *
@@ -73,7 +73,11 @@ public class ChannelCorrectorFrame extends JFrame {
 
       JButton applyButton = new JButton("Apply");
       applyButton.addActionListener((ActionEvent ae) -> {
-         // TODO
+         try {
+            apply();
+         } catch (IOException | ImageAffineTransformException e) {
+            studio_.logs().showError(e.getMessage());
+         }
       });
       JCheckBox useAllPositions = new JCheckBox("all positions");
       useAllPositions.addActionListener((ActionEvent ae) -> {
@@ -145,6 +149,16 @@ public class ChannelCorrectorFrame extends JFrame {
          ccp.updateValues();
       }
       super.dispose();
+   }
+
+   public void apply() throws IOException, ImageAffineTransformException {
+      ArrayList<AffineTransform> affineTransforms = new ArrayList<>(channelCorrectorPanels_.size());
+      for (ChannelCorrectorPanel ccp : channelCorrectorPanels_) {
+         affineTransforms.add(ccp.getAffineTransform());
+      }
+      ImageAffineTransform iat = new ImageAffineTransform(studio_, dataViewer_,
+              affineTransforms, AffineTransformOp.TYPE_BICUBIC);
+      iat.apply();
    }
 
 }
