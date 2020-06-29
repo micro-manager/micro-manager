@@ -17,6 +17,8 @@ package org.micromanager.display;
 import com.google.common.eventbus.EventBus;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
@@ -162,10 +164,19 @@ public abstract class AbstractDataViewer implements DataViewer {
             return true;
          }
          displaySettings_ = handleDisplaySettings(newSettings);
-         asyncEventPoster_.submit(() -> {
-            postEvent(DefaultDisplaySettingsChangedEvent.create(
-                    AbstractDataViewer.this, oldSettings, displaySettings_));
-         });
+         try {
+            asyncEventPoster_.submit(() -> {
+               postEvent(DefaultDisplaySettingsChangedEvent.create(
+                       AbstractDataViewer.this, oldSettings, displaySettings_));
+            });
+         } catch (RejectedExecutionException ree) {
+            // I do not fully understand the cause for this exception (it is rare), but the
+            // consequences are bad (i.e. the code ends up in a loop originating from
+            // DisplayUIController:973 running through these pesky event bus (ses?).
+            // If this exception is not caught here, it may go on for ever.
+            // It seems that the DisplaUIController does not recognize the ChannelColorEvent
+            // as its current one.  Further study is warranted.
+         }
          return true;
       }
    }
