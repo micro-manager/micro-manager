@@ -125,6 +125,7 @@ public class ChannelCorrectorFrame extends JFrame {
                super.remove(ccp);
             }
             channelCorrectorPanels_.clear();
+            super.pack();
          }
       }
    }
