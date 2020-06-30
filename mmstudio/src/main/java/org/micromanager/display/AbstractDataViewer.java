@@ -164,19 +164,10 @@ public abstract class AbstractDataViewer implements DataViewer {
             return true;
          }
          displaySettings_ = handleDisplaySettings(newSettings);
-         try {
-            asyncEventPoster_.submit(() -> {
-               postEvent(DefaultDisplaySettingsChangedEvent.create(
-                       AbstractDataViewer.this, oldSettings, displaySettings_));
-            });
-         } catch (RejectedExecutionException ree) {
-            // I do not fully understand the cause for this exception (it is rare), but the
-            // consequences are bad (i.e. the code ends up in a loop originating from
-            // DisplayUIController:973 running through these pesky event bus (ses?).
-            // If this exception is not caught here, it may go on for ever.
-            // It seems that the DisplaUIController does not recognize the ChannelColorEvent
-            // as its current one.  Further study is warranted.
-         }
+         asyncEventPoster_.submit(() -> {
+            postEvent(DefaultDisplaySettingsChangedEvent.create(
+                    AbstractDataViewer.this, oldSettings, displaySettings_));
+         });
          return true;
       }
    }
