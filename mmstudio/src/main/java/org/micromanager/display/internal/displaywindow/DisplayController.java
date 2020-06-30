@@ -162,8 +162,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    public static class Builder {
       private DataProvider dataProvider_;
       private DisplaySettings displaySettings_;
-      private LinkManager linkManager_ = DefaultLinkManager.create();;
-      private boolean shouldShow_;
+      private LinkManager linkManager_ = DefaultLinkManager.create();
       private DisplayWindowControlsFactory controlsFactory_;
 
       public Builder(DataProvider dataProvider)
@@ -187,11 +186,6 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
       public Builder linkManager(LinkManager manager) {
          linkManager_ = manager;
-         return this;
-      }
-
-      public Builder shouldShow(boolean flag) {
-         shouldShow_ = flag;
          return this;
       }
 
@@ -226,15 +220,6 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       instance.initialize();
 
       instance.computeQueue_.addListener(instance);
-
-      if (builder.shouldShow_) {
-         // Show the window in a later event handler in order to give the
-         // calling code a chance to register for events.
-         SwingUtilities.invokeLater(() -> {
-            instance.setFrameVisible(true);
-            instance.toFront();
-         });
-      }
 
       if (instance.dataProvider_.getNumImages() > 0) {
          Coords.Builder b = Coordinates.builder();
@@ -313,6 +298,12 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    void frameDidBecomeActive() {
       postEvent(DataViewerDidBecomeActiveEvent.create(this));
+   }
+
+   @Override
+   public void show() {
+      setFrameVisible(true);
+      toFront();
    }
 
 

@@ -321,4 +321,10 @@ public interface DisplayWindow extends DataViewer, Closeable {
     * default
     */
    public void setCustomTitle(String title);
+
+   /**
+    * DisplayWindows are not shown by default.  Call this function after
+    * construction, and after attaching listeners as needed, to show the Window.
+    */
+   void show();
 }

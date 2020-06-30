@@ -474,8 +474,7 @@ public final class SnapLiveManager extends DataViewerListener
       DisplayWindowControlsFactory controlsFactory = 
               (DisplayWindow display) -> createControls();
       display_ = new DisplayController.Builder(store_).
-            controlsFactory(controlsFactory).
-            shouldShow(true).build(mmStudio_);
+            controlsFactory(controlsFactory).build(mmStudio_);
       DisplaySettings ds = DefaultDisplaySettings.restoreFromProfile(
               mmStudio_.profile(), 
               PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key() );
@@ -500,6 +499,7 @@ public final class SnapLiveManager extends DataViewerListener
       if (mmStudio_.getMMMenubar().getToolsMenu().getMouseMovesStage() && display_ != null) {
          uiMovesStageManager_.activate(display_);
       }
+      display_.show();
       
       synchronized (lastImageForEachChannel_) {
          lastImageForEachChannel_.clear();
