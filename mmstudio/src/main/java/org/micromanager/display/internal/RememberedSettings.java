@@ -143,6 +143,31 @@ public class RememberedSettings {
       return builder.build();      
    }
 
+   /**
+    * Some MM versions have stored DisplaySettings without storing ChannelNames
+    * This causes the channel names not to be shown in the Intensity Inspector
+    * Panels.  Fix this here.
+    * @param displaySettings   Settings as read from disk
+    * @param summary Metadata of the datastore, will be used to fill in missing info
+    * @return Copy of the input with Channelgroup and Channelnames from the summary
+    * metadata if they were empty in the input.
+    */
+   public static DisplaySettings fixMissingInfo(
+           DisplaySettings displaySettings, SummaryMetadata summary) {
+      DisplaySettings.Builder builder = displaySettings.copyBuilder();
+      String channelGroup = summary.getChannelGroup();
+      List<String> channelNames = summary.getChannelNameList();
+      for (int ch = 0; ch < channelNames.size(); ch++) {
+         String channelName = summary.getSafeChannelName(ch);
+         ChannelDisplaySettings cdSettings = displaySettings.getChannelSettings(ch);  // check for null?
+         ChannelDisplaySettings.Builder cddBuilder = cdSettings.copyBuilder();
+         if (cdSettings.getGroupName().isEmpty()) { cddBuilder.groupName(channelGroup); }
+         if (cdSettings.getName().isEmpty()) { cddBuilder.name(channelName); }
+         builder.channel(ch, cddBuilder.build());
+      }
+      return builder.build();
+   }
+
    
    
    private static String genKey(String channelGroup, String channelName) {

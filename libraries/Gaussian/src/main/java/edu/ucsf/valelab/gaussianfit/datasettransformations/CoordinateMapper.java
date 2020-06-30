@@ -61,6 +61,7 @@ public class CoordinateMapper {
    final private EnhancedKDTree kdTree_;
    final private int order_;
    final private PointMap pointMap_;
+   private boolean log_;
    private PointMap cleanedPointMap_ = null;
    private AffineTransform af_;
    final private AffineTransform rbAf_;
@@ -491,7 +492,9 @@ public class CoordinateMapper {
             if (cleanedPointMap_ == null) {
                cleanedPointMap_ = makeCleanedPointMap();
                af_ = generateAffineTransformFromPointPairs(cleanedPointMap_);
-               logAffineTransform(af_);
+               if (log_) {
+                  logAffineTransform(af_);
+               }
                ij.IJ.log("Used " + cleanedPointMap_.size() + 
                        " spot pairs to calculate 2C reference");
             }
@@ -577,6 +580,9 @@ public class CoordinateMapper {
       return cleanedPointMap;
    }
 
+   public CoordinateMapper(PointMap pointMap, int order, int method) {
+      this(pointMap, order, method, true);
+   }
 
    /**
     * Feeds control points into this class
@@ -586,10 +592,11 @@ public class CoordinateMapper {
     * @param method Affine, LWM, non-reflective similarity
     * 
     */
-   public CoordinateMapper(PointMap pointMap, int order, int method) {
+   public CoordinateMapper(PointMap pointMap, int order, int method, boolean log) {
       pointMap_ = pointMap;
       order_ = order;
       method_ = method;
+      log_ = log;
       
       // Set up LWM
       exponentPairs_ = polynomialExponents(order);
@@ -601,7 +608,9 @@ public class CoordinateMapper {
       
       // Set up Affine transform
       af_ = generateAffineTransformFromPointPairs(pointMap);
-      logAffineTransform(af_);
+      if (log_) {
+         logAffineTransform(af_);
+      }
       
       // set up Rigid Body
       rbAf_ = generateRigidBodyTransform(pointMap);      
