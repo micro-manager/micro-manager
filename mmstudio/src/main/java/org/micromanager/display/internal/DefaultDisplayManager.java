@@ -256,8 +256,9 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    @Override
    public DisplayWindow createDisplay(DataProvider provider) {
       DisplayWindow ret = new DisplayController.Builder(provider).
-            linkManager(linkManager_).shouldShow(true).build(studio_);
+            linkManager(linkManager_).build(studio_);
       addViewer(ret);
+      ret.show();
       return ret;
    }
 
@@ -266,9 +267,9 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
          DisplayWindowControlsFactory factory)
    {
       DisplayWindow ret = new DisplayController.Builder(provider).
-            linkManager(linkManager_).shouldShow(true).
-            controlsFactory(factory).build(studio_);
+            linkManager(linkManager_).controlsFactory(factory).build(studio_);
       addViewer(ret);
+      ret.show();
       return ret;
    }
 
@@ -356,10 +357,11 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
          // instead of using the createDisplay function, set the correct 
          // displaySettings right away
          DisplayWindow tmp = new DisplayController.Builder(store).
-            linkManager(linkManager_).shouldShow(true).
+            linkManager(linkManager_).
                  initialDisplaySettings(displaySettings).build(studio_);
          addViewer(tmp);
          result.add(tmp);
+         tmp.show();
       }
       if (result.isEmpty()) {
          // No path, or no display settings at the path.  Just create a blank
