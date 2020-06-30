@@ -2,10 +2,10 @@
 #define AUTOBUILD_H
 // change the FALSE to TRUE for autoincrement of build number
 #define INCREMENT_VERSION TRUE
-#define FILEVER        2,0,0,55
-#define PRODUCTVER     2,0,0,55
-#define STRFILEVER     "2,0,0,55\0"
-#define STRPRODUCTVER  "2,0,0,55\0"
+#define FILEVER        2,0,0,58
+#define PRODUCTVER     2,0,0,58
+#define STRFILEVER     "2,0,0,58\0"
+#define STRPRODUCTVER  "2,0,0,58\0"
 #define FILEVER_MAJOR  2
 #define FILEVER_MINOR  0
 
