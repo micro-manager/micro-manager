@@ -188,7 +188,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
    private ImagesAndStats displayedImages_;
    private Double cachedPixelSize_ = -1.0;
    private boolean isPreview_ = false;
-   private ChannelColorEvent channelColorEvent_;
+   private static ChannelColorEvent channelColorEvent_;
 
    private BoundsRectAndMask lastSeenSelection_;
 
@@ -964,8 +964,11 @@ public final class DisplayUIController implements Closeable, WindowListener,
                // (which will result in a continuous loop), remember our event
                // so that it can be ignored in the event handler.
                // This requires that the event bus is synchronous (which it is now),
-               // and that this code always runs on the same thread (it should
-               // always run on the EDT)
+               // that this code always runs on the same thread (it should
+               // always run on the EDT), and that this variable is a static
+               // variable shared by all instances if DisplayUIController.
+               // In other words, this is a bit of a feeble construction, and it
+               // is not so clear the current behavior is desirable.
                channelColorEvent_ = new ChannelColorEvent(
                        channelSettings.getGroupName(),
                        channelSettings.getName(),
