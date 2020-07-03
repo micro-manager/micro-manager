@@ -50,7 +50,7 @@
 
 SerialManager g_serialManager;
 
-std::vector<std::string> g_BlackListedPorts;
+std::vector<std::string> g_BlockListedPorts;
 std::vector<std::string> g_PortList;
 time_t g_PortListLastUpdated = 0;
 
@@ -230,16 +230,16 @@ void SerialPortLister::ListPorts(std::vector<std::string> &availablePorts)
          std::string::size_type loc = rresult.find("DialupNetwork", 0);
          if (result && (loc == std::string::npos))
          {
-             bool blackListed = false;
-             std::vector<std::string>::iterator it = g_BlackListedPorts.begin();
-             while (it < g_BlackListedPorts.end())
+             bool blockListed = false;
+             std::vector<std::string>::iterator it = g_BlockListedPorts.begin();
+             while (it < g_BlockListedPorts.end())
              {
                 if (bsdPath == (*it))
                 {
-                   blackListed = true;
+                   blockListed = true;
                 }
             }
-            if (portAccessible(bsdPath) && ! blackListed)
+            if (portAccessible(bsdPath) && ! blockListed)
             {
                availablePorts.push_back(bsdPath);
             }
@@ -496,13 +496,13 @@ int SerialPort::Initialize()
    if (initialized_)
       return DEVICE_OK;
 
-   // do not initialize if this port has been blacklisted
-   std::vector<std::string>::iterator it = g_BlackListedPorts.begin();
-   while (it < g_BlackListedPorts.end())
+   // do not initialize if this port has been blocklisted
+   std::vector<std::string>::iterator it = g_BlockListedPorts.begin();
+   while (it < g_BlockListedPorts.end())
    {
       if (portName_ == (*it))
       {
-         return ERR_PORT_BLACKLISTED;
+         return ERR_PORT_BLOCKLISTED;
       }
       it++;
    }
@@ -702,7 +702,7 @@ int SerialPort::Shutdown()
       if (!pThread_->timed_join(boost::posix_time::millisec(1000) )) {
          LogMessage("Failed to cleanly close port (thread join timed out)");
          pThread_->detach();
-         g_BlackListedPorts.push_back(portName_);
+         g_BlockListedPorts.push_back(portName_);
       }
    }
    initialized_ = false;
