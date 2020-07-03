@@ -241,7 +241,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
              }
          }
       }
-      return nrImages;
+      return nrImages * getNumPositions();
    }
 
    public long getTotalMemory() {
