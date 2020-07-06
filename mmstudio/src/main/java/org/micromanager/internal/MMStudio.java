@@ -384,6 +384,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
                 if (name.equals(profileNameAutoStart)){
                     UserProfile profile = profileAdmin.getNonSavingProfile(entry.getKey());
                     profileAdmin.setCurrentUserProfile(entry.getKey());
+                    daytimeNighttimeManager_.setSkin(daytimeNighttimeManager_.getSkin());
                     sysConfigFile_ = HardwareConfigurationManager.getRecentlyUsedConfigFilesFromProfile(profile).get(0);
                     break;
                 }
