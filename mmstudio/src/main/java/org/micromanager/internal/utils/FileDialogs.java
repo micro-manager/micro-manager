@@ -33,7 +33,7 @@ public final class FileDialogs {
       final String[] suffixes;
       final String description;
       final boolean suggestFileOnSave;
-      final String defaultFileName;
+      String defaultFileName;
 
       public FileType(String name, String description, String defaultFileName,
               boolean suggestFileOnSave, String... suffixes) {
@@ -55,6 +55,10 @@ public final class FileDialogs {
    public static final FileType SCIFIO_DATA = new FileType("SciFIO_Data_Set",
            "Image Location", System.getProperty("user.home") + "/Untitled.tif",
             false, "tif", "jpg", "avi", "png", "jpg" );
+
+   public static final FileType ACQ_SETTINGS_FILE = new FileType("ACQ_SETTINGS_FILE", "Acquisition settings",
+           System.getProperty("user.home") + "/AcqSettings.txt",
+           true, "txt");
 
    private static class GeneralFileFilter
            extends javax.swing.filechooser.FileFilter
@@ -159,11 +163,16 @@ public final class FileDialogs {
          skin.suspendToMode(SkinMode.DAY);
          JFileChooser fc = new JFileChooser();
          if (startFile != null) {
+            fc.setSelectedFile(startFile);
+            /* This code leads to undesired behavior for "simple" files.
+               It may be here for specific behavior of certain File Selectors
+               I'll leave it here in case undesired behavior pops up (NS, 20200708, delete after 20210101)
             if ((!load && suggestFileName) || startFile.isDirectory()) {
                fc.setSelectedFile(startFile);
             } else {
                fc.setSelectedFile(startFile.getParentFile());
             }
+            */
          }
          skin.resume();
          fc.setDialogTitle(title);
@@ -203,8 +212,9 @@ public final class FileDialogs {
 
    public static void storePath(FileType type, File path) {
       UserProfile profile = MMStudio.getInstance().profile();
+      type.defaultFileName = path.getAbsolutePath();
       profile.getSettings(FileDialogs.class).putString(type.name,
-            path.getAbsolutePath());
+              type.defaultFileName);
    }
 
    public static File openFile(Window parent, String title, FileType type) {
