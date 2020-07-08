@@ -17,7 +17,7 @@ unsigned short LimitBitMask(unsigned short pid, int axis, int direction)
 	else
 	{
 		bitShift = (2 * (axis - 1)) + direction;
-		if (axis > 2)
+		if (axis > 3)
 			bitShift += 2;
 	}
 	bitMask = 0x1 << bitShift;
