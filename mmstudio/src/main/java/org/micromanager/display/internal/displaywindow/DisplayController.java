@@ -32,6 +32,7 @@ import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.RunnableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.SwingUtilities;
 import org.micromanager.Studio;
 import org.micromanager.data.Coordinates;
@@ -138,6 +139,9 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          PerformanceMonitor.createWithTimeConstantMs(1000.0);
    private final PerformanceMonitorUI perfMonUI_ =
          PerformanceMonitorUI.create(perfMon_, "Display Performance");
+   
+    private static final AtomicInteger counter = new AtomicInteger(); //This static counter makes sure that each object has it's own unique id during runtime.
+    private final Integer uid = counter.getAndIncrement();
 
    @Override
    public void addListener(DataViewerListener listener, int priority) {
@@ -924,10 +928,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    @Override
    public String getName() {
-      // TODO: using the hashCode may be foolproof to provide a unique name, 
-      // but is not very useful to the end-user.
-      // Find a way to number viewers for one datastore sequentially instead
-      return dataProvider_.getName() + "-" + hashCode();
+       //The UID ensures that each object has a unique name during runtime.
+      return dataProvider_.getName() + "-" + uid;
    }
    
 
