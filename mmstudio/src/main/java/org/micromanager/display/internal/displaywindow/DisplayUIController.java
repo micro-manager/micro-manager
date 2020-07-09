@@ -83,6 +83,8 @@ import org.micromanager.events.LiveModeEvent;
 import org.micromanager.display.DisplayWindowControlsFactory;
 import org.micromanager.display.internal.DefaultComponentDisplaySettings;
 import org.micromanager.display.internal.displaywindow.imagej.MMImageCanvas;
+import org.micromanager.display.internal.displaywindow.interfaces.Bridgeable;
+import org.micromanager.display.internal.displaywindow.interfaces.Controllable;
 import org.micromanager.display.internal.event.DisplayMouseEvent;
 import org.micromanager.display.internal.event.DisplayMouseWheelEvent;
 import org.micromanager.display.internal.event.DataViewerMousePixelInfoChangedEvent;
@@ -116,9 +118,8 @@ import org.micromanager.internal.utils.ColorMaps;
  *
  * @author Mark A. Tsuchida
  */
-public final class DisplayUIController implements Closeable, WindowListener,
-      MDScrollBarPanel.Listener
-{
+public final class DisplayUIController implements 
+        Closeable, MDScrollBarPanel.Listener, WindowListener, Bridgeable, Controllable {
    private final Studio studio_;
    private final DisplayController displayController_;
    private final AnimationController animationController_;
@@ -258,6 +259,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       frame_.validate();
    }
 
+    @Override
    public void setPerformanceMonitor(PerformanceMonitor perfMon) {
       perfMon_ = perfMon;
    }
@@ -327,11 +329,13 @@ public final class DisplayUIController implements Closeable, WindowListener,
    }
 
    @MustCallOnEDT
+    @Override
    public JFrame getFrame() {
-      return fullScreenFrame_ == null ? frame_ : fullScreenFrame_;
+      return  frame_;
    }
 
    @MustCallOnEDT
+    @Override
    public ImagePlus getIJImagePlus() {
       return ijBridge_.getIJImagePlus();
    }
@@ -342,6 +346,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
     * 
     * @return 
     */
+    @Override
    public MMImageCanvas getIJImageCanvas() {
       return ijBridge_.getIJImageCanvas();
    }
@@ -684,7 +689,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
    }
 
    @MustCallOnEDT
-   void expandDisplayedRangeToInclude(Coords... coords) {
+   @Override
+   public void expandDisplayedRangeToInclude(Coords... coords) {
       expandDisplayedRangeToInclude(Arrays.asList(coords));
    }
 
@@ -750,7 +756,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
    }
 
    @MustCallOnEDT
-   void displayImages(ImagesAndStats images) {
+   @Override
+   public void displayImages(ImagesAndStats images) {
       boolean firstTime = false;
       if (ijBridge_ == null) {
          firstTime = true;
@@ -801,11 +808,13 @@ public final class DisplayUIController implements Closeable, WindowListener,
       repaintScheduledForNewImages_.set(true);
    }
 
-   void setImageInfoLabel(ImagesAndStats images) {
+   @Override
+   public void setImageInfoLabel(ImagesAndStats images) {
       imageInfoLabel_.setText(getImageInfoLabel(images));
    }
 
-   void updateSliders(ImagesAndStats images) {
+   @Override
+   public void updateSliders(ImagesAndStats images) {
       Coords nominalCoords = images.getRequest().getNominalCoords();
       for (String axis : scrollBarPanel_.getAxes()) {
          if (nominalCoords.hasAxis(axis)) {
@@ -892,6 +901,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
    }
    
    @MustCallOnEDT
+    @Override
    public void applyDisplaySettings(DisplaySettings settings) {
       // Note: This applies to color settings, zoom and playback fps
       // Note that this function will be called every time the 
@@ -1090,6 +1100,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
    }
 
    @MustCallOnEDT
+    @Override
    public void overlaysChanged() {
       if (ijBridge_ == null) {
          return;
@@ -1097,11 +1108,13 @@ public final class DisplayUIController implements Closeable, WindowListener,
       ijBridge_.mm2ijRepaint();
    }
 
-   void setPlaybackFpsIndicator(double fps) {
+   @Override
+   public void setPlaybackFpsIndicator(double fps) {
       playbackFpsButton_.setText(String.format("Playback: %.1f fps", fps));
    }
 
-   void setNewImageIndicator(boolean show) {
+   @Override
+   public void setNewImageIndicator(boolean show) {
       // NS: I am not sure what this means to the user in the snap/live window,
       // and it takes up space, so don't show in preview windows
       newImageIndicator_.setVisible(show && !isPreview_);
@@ -1142,12 +1155,14 @@ public final class DisplayUIController implements Closeable, WindowListener,
    }
 
    @MustCallOnEDT
+    @Override
    public void setVisible(boolean visible) {
       frame_.setVisible(visible);
       // TODO Full screen
    }
 
    @MustCallOnEDT
+    @Override
    public void toFront() {
       frame_.toFront();
       // TODO Full screen
@@ -1193,6 +1208,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
    }
    
 
+    @Override
    public void updateTitle() {
       if (frame_ != null) {
          
@@ -1238,14 +1254,17 @@ public final class DisplayUIController implements Closeable, WindowListener,
       return  title.startsWith("Preview");
    }
 
+    @Override
    public void zoomIn() {
       ijBridge_.mm2ijZoomIn();
    }
 
+    @Override
    public void zoomOut() {
       ijBridge_.mm2ijZoomOut();
    }
 
+    @Override
    public void canvasNeedsSwap() {
       canvasBorderPanel_.removeAll();
       canvasBorderPanel_.add(ijBridge_.getIJImageCanvas());
@@ -1263,6 +1282,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
     * 
     * @param factor Newly set Zoom factor.
     */
+    @Override
    public void uiDidSetZoom(double factor) {
       updateZoomUIState();
       displayController_.setDisplaySettings(displayController_.getDisplaySettings().
@@ -1271,6 +1291,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       canvasDidChangeSize();
    }
 
+    @Override
    public void canvasDidChangeSize() {
       // TODO XXX The following should also execute when we detect that the
       // frame has been moved from one monitor to another
@@ -1343,6 +1364,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       zoomOutButton_.setEnabled(!ijBridge_.isIJZoomedAllTheWayOut());
    }
 
+    @Override
    public void selectionMayHaveChanged(final BoundsRectAndMask selection) {
       if (selection != lastSeenSelection_) {
          if (selection == null || !selection.equals(lastSeenSelection_)) {
@@ -1374,6 +1396,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
     * @param e KeyEvent generated by the key press on our canvas
     * @return true if action was taken by one of the handlers, false otherwise
     */
+    @Override
    public boolean keyPressOnImageConsumed(KeyEvent e) {
       DisplayKeyPressEvent displayKeyPressEvent = new DisplayKeyPressEvent(e);
       displayController_.postDisplayEvent(displayKeyPressEvent);
@@ -1394,6 +1417,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
     * information should be displayed (in image coordinates)
     * @param ijToolId ID of tool selected in ImageJ tool-bar
     */
+    @Override
    public void mouseEventOnImage(final MouseEvent e, final Rectangle imageLocation, 
            final int ijToolId) {
       displayController_.postDisplayEvent( new DisplayMouseEvent(
@@ -1419,6 +1443,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       }
    }
    
+    @Override
    public void mouseWheelMoved(MouseWheelEvent e) {
       displayController_.postDisplayEvent( new DisplayMouseWheelEvent(e));
    }
@@ -1474,6 +1499,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       }
    }
 
+    @Override
    public void paintOverlays(Graphics2D g, Rectangle destRect,
          Rectangle2D.Float viewPort)
    {
@@ -1503,6 +1529,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       }
    }
 
+    @Override
    public void paintDidFinish() {
       perfMon_.sampleTimeInterval("Repaint completed");
 
@@ -1692,10 +1719,12 @@ public final class DisplayUIController implements Closeable, WindowListener,
       */
    }
 
+    @Override
    public double getDisplayIntervalQuantile(double q) {
       return displayIntervalEstimator_.get().getQuantile(q);
    }
 
+    @Override
    public void resetDisplayIntervalEstimate() {
       displayIntervalEstimator_.set(TimeIntervalRunningQuantile.create(
             DISPLAY_INTERVAL_SMOOTH_N_SAMPLES));
@@ -1707,14 +1736,17 @@ public final class DisplayUIController implements Closeable, WindowListener,
    // presenting what ImageJ should think the current state of the display is.
    //
 
+    @Override
    public DisplayController getDisplayController() {
       return displayController_;
    }
 
+    @Override
    public boolean isAxisDisplayed(String axis) {
       return displayedAxes_.contains(axis);
    }
 
+    @Override
    public int getDisplayedAxisLength(String axis) {
       int axisIndex = displayedAxes_.indexOf(axis);
       if (axisIndex == -1) {
@@ -1739,6 +1771,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
     * Return the coords of selected channel among the displayed images.
     * @return coords of the selected channel
     */
+    @Override
    public Coords getMMPrincipalDisplayedCoords() {
       if (displayedImages_ == null) {
          return null;
@@ -1746,6 +1779,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       return displayedImages_.getRequest().getNominalCoords();
    }
 
+    @Override
    public int getImageWidth() {
       try {
          return displayController_.getDataProvider().getAnyImage().getWidth();
@@ -1755,6 +1789,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       }
    }
 
+    @Override
    public int getImageHeight() {
       try {
          return displayController_.getDataProvider().getAnyImage().getHeight();
@@ -1852,6 +1887,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       return infoStringB.toString();
    }
 
+    @Override
    public List<Image> getDisplayedImages() {
       if (displayedImages_ == null) {
          return Collections.emptyList();
