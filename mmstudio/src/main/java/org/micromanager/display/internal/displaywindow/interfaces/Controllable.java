@@ -10,6 +10,7 @@ import java.io.Closeable;
 import javax.swing.JFrame;
 import org.micromanager.data.Coords;
 import org.micromanager.display.DisplaySettings;
+import org.micromanager.display.internal.displaywindow.imagej.MMImageCanvas;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
 import org.micromanager.internal.utils.MustCallOnEDT;
 import org.micromanager.internal.utils.performance.PerformanceMonitor;
@@ -67,6 +68,8 @@ public interface Controllable extends Closeable {
     
     @Override
     public void close();
+    
+    MMImageCanvas getIJImageCanvas();
 }
 
 
