@@ -47,6 +47,7 @@ import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultMetadata;
 import org.micromanager.display.internal.displaywindow.DisplayUIController;
+import org.micromanager.display.internal.displaywindow.interfaces.Bridgeable;
 import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
 import org.micromanager.internal.utils.JavaUtils;
@@ -70,7 +71,7 @@ import org.micromanager.internal.utils.MustCallOnEDT;
  * @author Mark Tsuchida
  */
 public final class ImageJBridge {
-   private final DisplayUIController uiController_;
+   private final Bridgeable uiController_;
 
    // Our child objects on the ImageJ side. These are created and owned by this
    // class. There are three events in the lifetime of these objects: creation,

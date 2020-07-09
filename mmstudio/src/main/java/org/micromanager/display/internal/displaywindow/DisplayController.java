@@ -71,6 +71,7 @@ import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.data.DataProviderHasNewNameEvent;
 import org.micromanager.data.Datastore;
 import org.micromanager.display.internal.RememberedSettings;
+import org.micromanager.display.internal.displaywindow.interfaces.Controllable;
 import org.micromanager.display.internal.link.internal.DefaultLinkManager;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -115,7 +116,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    // The UI controller manages the actual JFrame and all the components in it,
    // including interaction with ImageJ. After being closed, set to null.
    // Must access on EDT
-   private DisplayUIController uiController_;
+   private Controllable uiController_;
 
    private final Object selectionLock_ = new Object();
    private BoundsRectAndMask selection_ = BoundsRectAndMask.unselected();
@@ -283,7 +284,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    }
 
    @MustCallOnEDT
-   public DisplayUIController getUIController() {
+   public Controllable getUIController() {
       return uiController_;
    }
 
@@ -862,7 +863,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       @Override
       public void run() {
          if (uiController_ != null) {
-            uiController_.expandDisplayedRangeToInclude(coords_);
+            uiController_.expandDisplayedRangeToInclude(coords_.toArray(new Coords[coords_.size()]));
          }
       }
    }
