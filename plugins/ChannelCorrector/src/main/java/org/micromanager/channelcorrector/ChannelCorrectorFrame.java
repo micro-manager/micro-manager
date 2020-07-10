@@ -164,8 +164,9 @@ public class ChannelCorrectorFrame extends JFrame {
       for (ChannelCorrectorPanel ccp : channelCorrectorPanels_) {
          affineTransforms.add(ccp.getAffineTransform());
       }
+      // Note that types other than Nearest Neighbor lead to strange pixel values
       ImageAffineTransform iat = new ImageAffineTransform(studio_, dataViewer_,
-              affineTransforms, AffineTransformOp.TYPE_BICUBIC);
+              affineTransforms, AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
       iat.apply(settings_.getBoolean(USE_ALL_POS_KEY, false));
       studio_.alerts().postAlert("ChannelCorrector", this.getClass(),
               "Finished correcting " + dataViewerName);
