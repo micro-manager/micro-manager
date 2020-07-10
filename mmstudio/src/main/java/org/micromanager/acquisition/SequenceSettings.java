@@ -130,36 +130,65 @@ public class SequenceSettings {
     */
    public boolean shouldDisplayImages = true;
 
+
+   public boolean useSlices = false;
+   public boolean useFrames = false;
+   public boolean useChannels = false;
+   public double sliceZStepUm;
+   public double sliceZBottomUm;
+   public double sliceZTopUm;
+   public int acqOrderMode; // defined in org.micromanager.internal.utils.AcqOrderMode
+
+
    /**
     * Create a copy of this SequenceSettings. All parameters will be copied,
     * with new objects being created as necessary (i.e. this is a deep copy).
     * @return Copy of this SequenceSettings.
     */
    public SequenceSettings copy() {
-      SequenceSettings result = new SequenceSettings();
-      result.cameraTimeout = cameraTimeout;
-      result.channelGroup = channelGroup;
-      result.channels = channels == null ? null : new ArrayList<ChannelSpec>(channels);
-      result.comment = comment;
-      result.customIntervalsMs = customIntervalsMs == null ? null : new ArrayList<Double>(customIntervalsMs);
-      result.intervalMs = intervalMs;
-      result.keepShutterOpenSlices = keepShutterOpenSlices;
-      result.keepShutterOpenChannels = keepShutterOpenChannels;
-      result.numFrames = numFrames;
-      result.prefix = prefix;
-      result.relativeZSlice = relativeZSlice;
-      result.root = root;
-      result.save = save;
-      result.shouldDisplayImages = shouldDisplayImages;
-      result.skipAutofocusCount = skipAutofocusCount;
-      result.slices = slices == null ? null : new ArrayList<Double>(slices);
-      result.slicesFirst = slicesFirst;
-      result.timeFirst = timeFirst;
-      result.useAutofocus = useAutofocus;
-      result.useCustomIntervals = useCustomIntervals;
-      result.usePositionList = usePositionList;
-      result.zReference = zReference;
-      return result;
+      return new SequenceSettings(this);
+   }
+
+   /**
+    * Default constructor needed since we have a copy constructor
+    */
+   public SequenceSettings() {
+   }
+
+   /**
+    * copy Constructor provides a deep copy
+    * @param input input that will b deep copied
+    */
+   public SequenceSettings(SequenceSettings input) {
+      cameraTimeout = input.cameraTimeout;
+      channelGroup = input.channelGroup;
+      channels = input.channels == null ? null : new ArrayList<>(input.channels);
+      comment = input.comment;
+      customIntervalsMs = input.customIntervalsMs == null ? null : new ArrayList<>(input.customIntervalsMs);
+      intervalMs = input.intervalMs;
+      keepShutterOpenSlices = input.keepShutterOpenSlices;
+      keepShutterOpenChannels = input.keepShutterOpenChannels;
+      numFrames = input.numFrames;
+      prefix = input.prefix;
+      relativeZSlice = input.relativeZSlice;
+      root = input.root;
+      save = input.save;
+      shouldDisplayImages = input.shouldDisplayImages;
+      skipAutofocusCount = input.skipAutofocusCount;
+      slices = input.slices == null ? null : new ArrayList<>(input.slices);
+      slicesFirst = input.slicesFirst;
+      timeFirst = input.timeFirst;
+      useAutofocus = input.useAutofocus;
+      useCustomIntervals = input.useCustomIntervals;
+      usePositionList = input.usePositionList;
+      zReference = input.zReference;
+      useSlices = input.useSlices;
+      useFrames = input.useFrames;
+      useChannels = input.useChannels;
+      sliceZStepUm = input.sliceZStepUm;
+      sliceZBottomUm = input.sliceZBottomUm;
+      sliceZTopUm = input.sliceZTopUm;
+      acqOrderMode = input.acqOrderMode;
    }
 
    public static String toJSONStream(SequenceSettings settings) {
