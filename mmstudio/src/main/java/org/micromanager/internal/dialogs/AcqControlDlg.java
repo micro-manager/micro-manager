@@ -117,6 +117,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    private JButton setBottomButton_;
    private JButton setTopButton_;
    private final MMStudio mmStudio_;
+   private final MutablePropertyMapView settings_;
    private final NumberFormat numberFormat_;
    private JRadioButton singleButton_;
    private JRadioButton multiButton_;
@@ -127,6 +128,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    private final UserProfile profile_;
    // persistent properties (app settings)
    private static final String ACQ_FILE_DIR = "dir";
+   private static final String MDA_SEQUENCE_SETTINGS = "MDA_SEQUENCE_SETTINGS";
    private static final String ACQ_INTERVAL = "acqInterval";
    private static final String ACQ_TIME_UNIT = "acqTimeInit";
    private static final String ACQ_ZBOTTOM = "acqZbottom";
@@ -312,7 +314,8 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
       JButton disableCustomIntervalsButton = new JButton("Disable custom intervals");
       disableCustomIntervalsButton.addActionListener((ActionEvent e) -> {
-         acqEng_.enableCustomTimeIntervals(false);
+
+         acqEng_.getSequenceSettings().useChannels = false;
          updateGUIContents();
       });
       disableCustomIntervalsButton.setFont(DEFAULT_FONT);
@@ -476,10 +479,10 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       JSpinner.DefaultEditor editor = (JSpinner.DefaultEditor) afSkipInterval_.getEditor();
       editor.setFont(DEFAULT_FONT);
       editor.getTextField().setColumns(3);
-      afSkipInterval_.setValue(acqEng_.getAfSkipInterval());
+      afSkipInterval_.setValue(acqEng_.getSequenceSettings().skipAutofocusCount);
       afSkipInterval_.addChangeListener((ChangeEvent e) -> {
          applySettings();
-         afSkipInterval_.setValue(acqEng_.getAfSkipInterval());
+         afSkipInterval_.setValue(acqEng_.getSequenceSettings().skipAutofocusCount);
       });
       afPanel_.add(afSkipInterval_);
 
@@ -766,6 +769,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
       mmStudio_ = mmStudio;
       profile_ = mmStudio_.getUserProfile();
+      settings_ = profile_.getSettings(this.getClass());
 
       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
               MMStudio.class.getResource(
@@ -840,6 +844,16 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
       // load acquisition settings
       loadAcqSettings();
+
+      // Restore Column Width and Column order
+      int columnCount = 7;
+      columnWidth_ = new int[columnCount];
+      columnOrder_ = new int[columnCount];
+      for (int k = 0; k < columnCount; k++) {
+         columnWidth_[k] = settings_.getInteger(ACQ_COLUMN_WIDTH + k,
+                 ACQ_DEFAULT_COLUMN_WIDTH);
+         columnOrder_[k] = settings_.getInteger(ACQ_COLUMN_ORDER + k, k);
+      }
 
       // create the table of channels
       createChannelTable();
@@ -989,6 +1003,14 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    }
 
    public final synchronized void loadAcqSettings() {
+      String seqString = settings_.getString(MDA_SEQUENCE_SETTINGS, "");
+      if (seqString.isEmpty()) {
+         // add translation of "old" data here
+      } else {
+         SequenceSettings sequenceSettings = SequenceSettings.fromJSONStream(seqString);
+         acqEng_.setSequenceSettings(sequenceSettings);
+      }
+      /*
       disableGUItoSettings_ = true;
 
       // load acquisition engine preferences
@@ -1080,11 +1102,15 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       }
 
       disableGUItoSettings_ = false;
+
+       */
    }
 
    public synchronized void saveAcqSettings() {
       MutablePropertyMapView settings = profile_.getSettings(this.getClass());
-
+      SequenceSettings sequenceSettings = acqEng_.getSequenceSettings();
+      settings_.putString(MDA_SEQUENCE_SETTINGS, SequenceSettings.toJSONStream(sequenceSettings));
+/*
       applySettings();
 
       settings.putBoolean(ACQ_ENABLE_MULTI_FRAME, acqEng_.isFramesSettingEnabled());
@@ -1122,6 +1148,8 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
       settings.putBoolean(ACQ_ENABLE_CUSTOM_INTERVALS, acqEng_.customTimeIntervalsEnabled());
 
+
+ */
       // Save preferred save mode.
       if (singleButton_.isSelected()) {
          DefaultDatastore.setPreferredSaveMode(mmStudio_, 
@@ -1168,7 +1196,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
               FileDialogs.MM_DATA_SET);
       if (result != null) {
          rootField_.setText(result.getAbsolutePath().trim());
-         acqEng_.setRootName(result.getAbsolutePath().trim());
+         acqEng_.getSequenceSettings().root = result.getAbsolutePath().trim();
       }
    }
 
@@ -1232,7 +1260,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       }
    }
 
-   protected boolean saveAsAcqSettingsToFile() {
+   protected void saveAsAcqSettingsToFile() {
       saveAcqSettings();
       File file = FileDialogs.save(this, "Save the acquisition settings file", ACQ_SETTINGS_FILE);
       if (file != null) {
@@ -1243,11 +1271,8 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
          }
          catch (IOException e) {
             ReportingUtils.showError(e);
-            return false;
          }
-         return true;
       }
-      return false;
    }
 
     /**
@@ -1278,7 +1303,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
          JLabel label = new JLabel();
          Font font = label.getFont();
          // create some css from the label's font
-         StringBuffer style = new StringBuffer("font-family:" + font.getFamily() + ";");
+         StringBuilder style = new StringBuilder("font-family:" + font.getFamily() + ";");
          style.append("font-weight:" + (font.isBold() ? "bold" : "normal") + ";");
          style.append("font-size:" + font.getSize() + "pt;");
          Color c = label.getForeground();
@@ -1332,7 +1357,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
          applySettings();
          saveAcqSettings();
          ChannelTableModel model = (ChannelTableModel) channelTable_.getModel();
-         if (acqEng_.isChannelsSettingEnabled() && model.duplicateChannels()) {
+         if (acqEng_.getSequenceSettings().useChannels && model.duplicateChannels()) {
             JOptionPane.showMessageDialog(this, "Cannot start acquisition using the same channel twice");
             return null;
          }
@@ -1379,13 +1404,14 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
       try {
          ChannelTableModel model = (ChannelTableModel) channelTable_.getModel();
-         if (acqEng_.isChannelsSettingEnabled() && model.duplicateChannels()) {
+         if (acqEng_.getSequenceSettings().useChannels && model.duplicateChannels()) {
             JOptionPane.showMessageDialog(this, "Cannot start acquisition using the same channel twice");
             return null;
          }
-         acqEng_.setDirName(acqName);
-         acqEng_.setRootName(acqRoot);
-         acqEng_.setSaveFiles(true);
+         acqEng_.getSequenceSettings().prefix = acqName;
+         acqEng_.getSequenceSettings().root = acqRoot;
+         acqEng_.getSequenceSettings().save = true;
+
          return acqEng_.acquire();
       } catch (MMException e) {
          ReportingUtils.showError(e);
@@ -1403,7 +1429,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    }
 
    private void checkForCustomTimeIntervals() {
-      boolean isCustom = acqEng_.customTimeIntervalsEnabled();
+      boolean isCustom = acqEng_.getSequenceSettings().useCustomIntervals;
       defaultTimesPanel_.setVisible(!isCustom);
       customTimesPanel_.setVisible(isCustom);
    }
@@ -1415,37 +1441,39 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       // Disable updates to prevent action listener loops
       disableGUItoSettings_ = true;
 
-      double intervalMs = acqEng_.getFrameIntervalMs();
+      SequenceSettings sequenceSettings = acqEng_.getSequenceSettings();
+
+      double intervalMs = sequenceSettings.intervalMs;
       interval_.setText(numberFormat_.format(convertMsToTime(intervalMs, timeUnitCombo_.getSelectedIndex())));
 
-      zBottom_.setText(NumberUtils.doubleToDisplayString(acqEng_.getSliceZBottomUm()));
-      zTop_.setText(NumberUtils.doubleToDisplayString(acqEng_.getZTopUm()));
-      zStep_.setText(NumberUtils.doubleToDisplayString(acqEng_.getSliceZStepUm()));
+      zBottom_.setText(NumberUtils.doubleToDisplayString(sequenceSettings.sliceZBottomUm));
+      zTop_.setText(NumberUtils.doubleToDisplayString(sequenceSettings.sliceZTopUm));
+      zStep_.setText(NumberUtils.doubleToDisplayString(sequenceSettings.sliceZStepUm));
 
-      boolean framesEnabled = acqEng_.isFramesSettingEnabled(); 
+      boolean framesEnabled = sequenceSettings.useFrames;
       framesPanel_.setSelected(framesEnabled);
       defaultTimesPanel_.setVisible(!framesEnabled);
       customTimesPanel_.setVisible(framesEnabled);
 
       checkForCustomTimeIntervals();
-      slicesPanel_.setSelected(acqEng_.isZSliceSettingEnabled());
-      positionsPanel_.setSelected(acqEng_.isMultiPositionEnabled());
-      afPanel_.setSelected(acqEng_.isAutoFocusEnabled());
+      slicesPanel_.setSelected(sequenceSettings.useSlices);
+      positionsPanel_.setSelected(sequenceSettings.usePositionList);
+      afPanel_.setSelected(sequenceSettings.useAutofocus);
       acqOrderBox_.setEnabled(positionsPanel_.isSelected() || framesPanel_.isSelected()
               || slicesPanel_.isSelected() || channelsPanel_.isSelected());
 
-      afSkipInterval_.setEnabled(acqEng_.isAutoFocusEnabled());
+      afSkipInterval_.setEnabled(sequenceSettings.useAutofocus);
 
       // These values need to be cached or we will loose them due to the Spinners OnChanged methods calling applySetting
       Integer numFrames = acqEng_.getNumFrames();
-      Integer afSkipInterval = acqEng_.getAfSkipInterval();
-      if (acqEng_.isFramesSettingEnabled()) {
+      Integer afSkipInterval = sequenceSettings.skipAutofocusCount;
+      if (sequenceSettings.useFrames) {
          numFrames_.setValue(numFrames);
       }
 
       afSkipInterval_.setValue(afSkipInterval);
 
-      enableZSliceControls(acqEng_.isZSliceSettingEnabled());
+      enableZSliceControls(sequenceSettings.useSlices);
       model_.fireTableStructureChanged();
 
       channelGroupCombo_.setSelectedItem(acqEng_.getChannelGroup());
@@ -1456,7 +1484,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       }
 
       // add correct acquisition order options
-      int selectedIndex = acqEng_.getAcqOrderMode();
+      int selectedIndex = sequenceSettings.acqOrderMode;
       acqOrderBox_.removeAllItems();
       if (framesPanel_.isSelected() && positionsPanel_.isSelected()
               && slicesPanel_.isSelected() && channelsPanel_.isSelected()) {
@@ -1484,12 +1512,12 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
          acqOrderBox_.addItem(acqOrderModes_[selectedIndex]);
       }
 
-      acqOrderBox_.setSelectedItem(acqOrderModes_[acqEng_.getAcqOrderMode()]);
+      acqOrderBox_.setSelectedItem(acqOrderModes_[sequenceSettings.acqOrderMode]);
 
 
       zValCombo_.setSelectedIndex(zVals_);
-      stackKeepShutterOpenCheckBox_.setSelected(acqEng_.isShutterOpenForStack());
-      chanKeepShutterOpenCheckBox_.setSelected(acqEng_.isShutterOpenForChannels());
+      stackKeepShutterOpenCheckBox_.setSelected(sequenceSettings.keepShutterOpenSlices);
+      chanKeepShutterOpenCheckBox_.setSelected(sequenceSettings.keepShutterOpenChannels);
 
       channelTable_.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
@@ -1520,43 +1548,60 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
          ae.stopCellEditing();
       }
 
+      SequenceSettings SequenceSettings = new SequenceSettings();
+
       try {
          // TODO: ideally we would be able to check this value against the
          // physical resolution of the Z positioner.
-         double zStep = NumberUtils.displayStringToDouble(zStep_.getText());
-         acqEng_.setSlices(NumberUtils.displayStringToDouble(zBottom_.getText()), NumberUtils.displayStringToDouble(zTop_.getText()), zStep, (zVals_ != 0));
-         acqEng_.enableZSliceSetting(slicesPanel_.isSelected());
-         acqEng_.enableMultiPosition(positionsPanel_.isSelected());
 
+         SequenceSettings.acqOrderMode = ((AcqOrderMode) acqOrderBox_.getSelectedItem()).getID();
 
-         acqEng_.setAcqOrderMode(((AcqOrderMode) acqOrderBox_.getSelectedItem()).getID());
-         acqEng_.enableChannelsSetting(channelsPanel_.isSelected());
-         acqEng_.setChannels(((ChannelTableModel) channelTable_.getModel()).getChannels());
-         acqEng_.enableFramesSetting(framesPanel_.isSelected());
-         acqEng_.setFrames((Integer) numFrames_.getValue(),
-                 convertTimeToMs(NumberUtils.displayStringToDouble(interval_.getText()), timeUnitCombo_.getSelectedIndex()));
-         acqEng_.setAfSkipInterval(NumberUtils.displayStringToInt(afSkipInterval_.getValue().toString()));
-         acqEng_.keepShutterOpenForChannels(chanKeepShutterOpenCheckBox_.isSelected());
-         acqEng_.keepShutterOpenForStack(stackKeepShutterOpenCheckBox_.isSelected());
+         SequenceSettings.sliceZBottomUm = NumberUtils.displayStringToDouble(zBottom_.getText());
+         SequenceSettings.sliceZTopUm = NumberUtils.displayStringToDouble(zTop_.getText());
+         SequenceSettings.sliceZTopUm = NumberUtils.displayStringToDouble(zTop_.getText());
+         SequenceSettings.sliceZBottomUm = NumberUtils.displayStringToDouble(zBottom_.getText());
+         SequenceSettings.sliceZStepUm = NumberUtils.displayStringToDouble(zStep_.getText());
+         SequenceSettings.relativeZSlice = zVals_ == 0;  // 0 == relative, 1 == absolute
+         // TODO: generate list of slices at this point
+
+         SequenceSettings.useSlices = slicesPanel_.isSelected();
+         SequenceSettings.usePositionList = positionsPanel_.isSelected();
+
+         SequenceSettings.useChannels = channelsPanel_.isSelected();
+         SequenceSettings.channels = ((ChannelTableModel) channelTable_.getModel()).getChannels();
+
+         SequenceSettings.useFrames = framesPanel_.isSelected();
+         SequenceSettings.numFrames = (Integer) numFrames_.getValue();
+         SequenceSettings.intervalMs = convertTimeToMs(
+                 NumberUtils.displayStringToDouble(interval_.getText()),
+                 timeUnitCombo_.getSelectedIndex() );
+         // TODO: mdaSequenceSettings.useCustomIntervals =
+         // TODO: set frames (should be in sequenceSettings?)
+
+         SequenceSettings.skipAutofocusCount =
+                 NumberUtils.displayStringToInt(afSkipInterval_.getValue().toString());
+         SequenceSettings.keepShutterOpenChannels = chanKeepShutterOpenCheckBox_.isSelected();
+         SequenceSettings.keepShutterOpenSlices = stackKeepShutterOpenCheckBox_.isSelected();
 
       } catch (ParseException p) {
          ReportingUtils.showError(p);
          // TODO: throw error
       }
 
-      acqEng_.setSaveFiles(savePanel_.isSelected());    
+      SequenceSettings.save = savePanel_.isSelected();
+
       // avoid dangerous characters in the name that will be used as a directory name
       String name = nameField_.getText().replaceAll("[/\\*!':]", "-");
-      acqEng_.setDirName(name.trim());
-      acqEng_.setRootName(rootField_.getText().trim());
+      SequenceSettings.prefix = name.trim();
+      SequenceSettings.root = rootField_.getText().trim();
 
       // update summary
 
-      acqEng_.setComment(commentTextArea_.getText());
+      SequenceSettings.comment = commentTextArea_.getText();
+      SequenceSettings.useAutofocus = afPanel_.isSelected();
+      SequenceSettings.shouldDisplayImages = !getShouldHideMDADisplay();
 
-      acqEng_.enableAutoFocus(afPanel_.isSelected());
-
-      acqEng_.setShouldDisplayImages(!getShouldHideMDADisplay());
+      acqEng_.setSequenceSettings(SequenceSettings);
 
       disableGUItoSettings_ = false;
       updateGUIContents();

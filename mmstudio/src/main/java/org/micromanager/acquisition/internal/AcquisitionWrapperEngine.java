@@ -2,11 +2,6 @@
 package org.micromanager.acquisition.internal;
 
 import com.google.common.eventbus.Subscribe;
-import java.awt.Color;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.concurrent.BlockingQueue;
-import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
@@ -30,6 +25,12 @@ import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
+import javax.swing.JOptionPane;
+import java.awt.Color;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.concurrent.BlockingQueue;
+
 
 public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 
@@ -37,44 +38,30 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    protected Studio studio_;
    private PositionList posList_;
    private String zstage_;
-   private double sliceZStepUm_;
-   private double sliceZBottomUm_;
-   private double sliceZTopUm_;
-   private boolean useSlices_;
-   private boolean useFrames_;
-   private boolean useChannels_;
-   private boolean useMultiPosition_;
-   private boolean keepShutterOpenForStack_;
-   private boolean keepShutterOpenForChannels_;
-   private ArrayList<ChannelSpec> channels_ = new ArrayList<>();
-   private String rootName_;
-   private String dirName_;
-   private int numFrames_;
-   private double interval_;
-   private String comment_;
-   private boolean saveFiles_;
-   private int acqOrderMode_;
-   private boolean useAutoFocus_;
-   private int afSkipInterval_;
-   private boolean absoluteZ_;
-   private int cameraTimeout_ = 20000;
-   private boolean shouldDisplayImages_ = true;
+   private SequenceSettings sequenceSettings;
+
    private IAcquisitionEngine2010 acquisitionEngine2010_;
-   private ArrayList<Double> customTimeIntervalsMs_;
-   private boolean useCustomIntervals_;
    protected JSONObject summaryMetadata_;
    private ArrayList<AcqSettingsListener> settingsListeners_;
    private Datastore curStore_;
    private Pipeline curPipeline_;
 
    public AcquisitionWrapperEngine() {
-      useCustomIntervals_ = false;
-      settingsListeners_ = new ArrayList<AcqSettingsListener>();
+      settingsListeners_ = new ArrayList<>();
+      sequenceSettings = new SequenceSettings();
    }
+
+   public SequenceSettings getSequenceSettings() { return sequenceSettings; }
+
+   public void setSequenceSettings(SequenceSettings SequenceSettings) {
+      sequenceSettings = SequenceSettings;
+   }
+
 
    @Override
    public Datastore acquire() throws MMException {
-      return runAcquisition(getSequenceSettings());
+      calculateSlices();
+      return runAcquisition(sequenceSettings);
    }
 
    @Override
@@ -105,10 +92,30 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       return acquisitionEngine2010_;
    }
 
+   private void calculateSlices() {
+      // Slices
+      sequenceSettings.slices.clear();
+      if (sequenceSettings.useSlices) {
+         double start = sequenceSettings.sliceZBottomUm;
+         double stop = sequenceSettings.sliceZTopUm;
+         double step = Math.abs(sequenceSettings.sliceZStepUm);
+         if (step == 0.0) {
+            throw new UnsupportedOperationException("zero Z step size");
+         }
+         int count = getNumSlices();
+         if (start > stop) {
+            step = -step;
+         }
+         for (int i = 0; i < count; i++) {
+            sequenceSettings.slices.add(start + i * step);
+         }
+      }
+   }
+
    protected Datastore runAcquisition(SequenceSettings acquisitionSettings) {
       //Make sure computer can write to selected location and that there is enough space to do so
-      if (saveFiles_) {
-         File root = new File(rootName_);
+      if (acquisitionSettings.save) {
+         File root = new File(acquisitionSettings.root);
          if (!root.canWrite()) {
             int result = JOptionPane.showConfirmDialog(null, 
                     "The specified root directory\n" + root.getAbsolutePath() +
@@ -133,7 +140,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       }
       try {
          PositionList posListToUse = posList_;
-         if (posList_ == null && useMultiPosition_) {
+         if (posList_ == null && sequenceSettings.usePositionList) {
             posListToUse = studio_.positions().getPositionList();
          }
          // Start up the acquisition engine
@@ -173,11 +180,11 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    private int getNumChannels() {
       int numChannels = 0;
-      if (useChannels_) {
-         if (channels_ == null) {
+      if (sequenceSettings.useChannels) {
+         if (sequenceSettings.channels == null) {
             return 0;
          }
-         for (ChannelSpec channel : channels_) {
+         for (ChannelSpec channel : sequenceSettings.channels) {
             if (channel.useChannel()) {
                ++numChannels;
             }
@@ -188,10 +195,9 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       return numChannels;
    }
 
-   @Override
    public int getNumFrames() {
-      int numFrames = numFrames_;
-      if (!useFrames_) {
+      int numFrames = sequenceSettings.numFrames;
+      if (!sequenceSettings.useFrames) {
          numFrames = 1;
       }
       return numFrames;
@@ -199,30 +205,31 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    private int getNumPositions() {
       int numPositions = Math.max(1, posList_.getNumberOfPositions());
-      if (!useMultiPosition_) {
+      if (!sequenceSettings.usePositionList) {
          numPositions = 1;
       }
       return numPositions;
    }
 
    private int getNumSlices() {
-      if (!useSlices_) {
+      if (!sequenceSettings.useSlices) {
          return 1;
       }
-      if (sliceZStepUm_ == 0) {
+      if (sequenceSettings.sliceZStepUm == 0) {
          // XXX How should this be handled?
          return Integer.MAX_VALUE;
       }
-      return 1 + (int)Math.abs((sliceZTopUm_ - sliceZBottomUm_) / sliceZStepUm_);
+      return 1 + (int)Math.abs( (sequenceSettings.sliceZTopUm - sequenceSettings.sliceZBottomUm)
+              / sequenceSettings.sliceZStepUm);
    }
 
    private int getTotalImages() {
-      if (!useChannels_) {
+      if (!sequenceSettings.useChannels) {
          return getNumFrames() * getNumSlices() * getNumChannels() * getNumPositions();
       }
 
       int nrImages = 0;
-      for (ChannelSpec channel : channels_) {
+      for (ChannelSpec channel : sequenceSettings.channels) {
          if (channel.useChannel()) {
             for (int t = 0; t < getNumFrames(); t++) {
                boolean doTimePoint = true;
@@ -246,17 +253,18 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    public long getTotalMemory() {
       CMMCore core = studio_.core();
-      long totalMB = core.getImageWidth() * core.getImageHeight() * core.getBytesPerPixel() * ((long) getTotalImages());
-      return totalMB;
+      return core.getImageWidth() * core.getImageHeight() *
+              core.getBytesPerPixel() * ((long) getTotalImages());
    }
 
    private void updateChannelCameras() {
       ArrayList<ChannelSpec> camChannels = new ArrayList<>();
-      for (int row = 0; row < channels_.size(); row++) {
+      ArrayList<ChannelSpec> channels = sequenceSettings.channels;
+      for (int row = 0; row < channels.size(); row++) {
          camChannels.add(row,
-                 channels_.get(row).copyBuilder().camera(getSource(channels_.get(row))).build());
+                 channels.get(row).copyBuilder().camera(getSource(channels.get(row))).build());
       }
-      channels_ = camChannels;
+      sequenceSettings.channels = camChannels;
    }
 
    /*
@@ -292,7 +300,10 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       }
    }
 
+   /*
    public SequenceSettings getSequenceSettings() {
+      return sequenceSettings;
+
       SequenceSettings acquisitionSettings = new SequenceSettings();
 
       updateChannelCameras();
@@ -372,10 +383,14 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       acquisitionSettings.cameraTimeout = this.cameraTimeout_;
       acquisitionSettings.shouldDisplayImages = shouldDisplayImages_;
       return acquisitionSettings;
-   }
 
+
+   }
+   */
+
+   /*
    public void setSequenceSettings(SequenceSettings ss) {
-      
+      sequenceSettings = new MDASequenceSettings(ss);
       updateChannelCameras();
 
       // Frames
@@ -451,8 +466,10 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       useMultiPosition_ = ss.usePositionList;
       cameraTimeout_ = ss.cameraTimeout;
       shouldDisplayImages_ = ss.shouldDisplayImages;
+
+
    }
-   
+ */
 
 //////////////////// Actions ///////////////////////////////////////////
    @Override
@@ -570,28 +587,54 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    @Override
    public int getCurrentFrameCount() {
-      return 0;
+      return sequenceSettings.numFrames;
    }
 
    @Override
    public double getFrameIntervalMs() {
-      return interval_;
+      return sequenceSettings.intervalMs;
    }
 
    @Override
-   public double getSliceZStepUm() {
-      return sliceZStepUm_;
+   public boolean isZSliceSettingEnabled() {
+      return sequenceSettings.useSlices;
+   }
+
+
+   /**
+    * Add new channel if the current state of the hardware permits.
+    *
+    * @param config - configuration name
+    * @param exp
+    * @param doZStack
+    * @param zOffset
+    * @param c
+    * @return - true if successful
+    */
+   public boolean addChannel(String config, double exp, Boolean doZStack,
+                             double zOffset, int skip, Color c, boolean use) {
+      if (isConfigAvailable(config)) {
+         ChannelSpec.Builder cb = new ChannelSpec.Builder();
+         cb.channelGroup(this.getChannelGroup()).config(config).useChannel(use).
+                 exposure(exp).doZStack(doZStack).zOffset(zOffset).color(c).
+                 skipFactorFrame(skip);
+         sequenceSettings.channels.add(cb.build());
+         return true;
+      } else {
+         ReportingUtils.logError("\"" + config + "\" is not found in the current Channel group.");
+         return false;
+      }
    }
 
    @Override
-   public double getSliceZBottomUm() {
-      return sliceZBottomUm_;
+   public void setChannel(int row, ChannelSpec sp) {
+      sequenceSettings.channels.add(row, sp);
+   }
+   @Override
+   public void setChannels(ArrayList<ChannelSpec> channels) {
+      sequenceSettings.channels = channels;
    }
 
-   @Override
-   public void setChannel(int row, ChannelSpec channel) {
-      channels_.set(row, channel);
-   }
 
    /**
     * Get first available config group
@@ -657,201 +700,19 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
     * Resets the engine.
     */
    @Override
+   @Deprecated
    public void clear() {
-      if (channels_ != null) {
-         channels_.clear();
-      }
-      numFrames_ = 0;
+      // unclear what the purpose is  Delete?
    }
 
-   @Override
-   public void setFrames(int numFrames, double interval) {
-      numFrames_ = numFrames;
-      interval_ = interval;
-   }
-
-   @Override
-   public void setSlices(double bottom, double top, double step, boolean absolute) {
-      sliceZBottomUm_ = bottom;
-      sliceZTopUm_ = top;
-      sliceZStepUm_ = step;
-      absoluteZ_ = absolute;
-      this.settingsChanged();
-   }
-
-   @Override
-   public boolean getZAbsoluteMode() {
-       return absoluteZ_;
-   }
-   
-   @Override
-   public boolean isFramesSettingEnabled() {
-      return useFrames_;
-   }
-
-   @Override
-   public void enableFramesSetting(boolean enable) {
-      useFrames_ = enable;
-   }
-
-   @Override
-   public boolean isChannelsSettingEnabled() {
-      return useChannels_;
-   }
-
-   @Override
-   public void enableChannelsSetting(boolean enable) {
-      useChannels_ = enable;
-   }
-
-   @Override
-   public boolean isZSliceSettingEnabled() {
-      return useSlices_;
-   }
-
-   @Override
-   public double getZTopUm() {
-      return sliceZTopUm_;
-   }
-
-   @Override
-   public void keepShutterOpenForStack(boolean open) {
-      keepShutterOpenForStack_ = open;
-   }
-
-   @Override
-   public boolean isShutterOpenForStack() {
-      return keepShutterOpenForStack_;
-   }
-
-   @Override
-   public void keepShutterOpenForChannels(boolean open) {
-      keepShutterOpenForChannels_ = open;
-   }
-
-   @Override
-   public boolean isShutterOpenForChannels() {
-      return keepShutterOpenForChannels_;
-   }
-
-   @Override
-   public void enableZSliceSetting(boolean boolean1) {
-      useSlices_ = boolean1;
-   }
-
-   @Override
-   public void enableMultiPosition(boolean selected) {
-      useMultiPosition_ = selected;
-   }
-
-   @Override
-   public boolean isMultiPositionEnabled() {
-      return useMultiPosition_;
-   }
-
-   @Override
-   public ArrayList<ChannelSpec> getChannels() {
-      return channels_;
-   }
-
-   @Override
-   public void setChannels(ArrayList<ChannelSpec> channels) {
-      channels_ = channels;
-   }
-
-   @Override
-   public String getRootName() {
-      return rootName_;
-   }
-
-   @Override
-   public void setRootName(String absolutePath) {
-      rootName_ = absolutePath;
-   }
-
-   @Override
-   public void setDirName(String text) {
-      dirName_ = text;
-   }
-
-   @Override
-   public void setComment(String text) {
-      comment_ = text;
-      settingsChanged();
-   }
-
-   /**
-    * Add new channel if the current state of the hardware permits.
-    *
-    * @param config - configuration name
-    * @param exp
-    * @param doZStack
-    * @param zOffset
-    * @param c
-    * @return - true if successful
-    */
-   @Override
-   public boolean addChannel(String config, double exp, Boolean doZStack, double zOffset, int skip, Color c, boolean use) {
-      if (isConfigAvailable(config)) {
-         ChannelSpec.Builder cb = new ChannelSpec.Builder();
-         cb.channelGroup(this.getChannelGroup()).config(config).useChannel(use).
-                 exposure(exp).doZStack(doZStack).zOffset(zOffset).color(c).
-                 skipFactorFrame(skip);
-         channels_.add(cb.build());
-         return true;
-      } else {
-         ReportingUtils.logError("\"" + config + "\" is not found in the current Channel group.");
-         return false;
-      }
-   }
-
-   @Override
-   public void setSaveFiles(boolean selected) {
-      saveFiles_ = selected;
-   }
-
-   @Override
-   public boolean getSaveFiles() {
-      return saveFiles_;
-   }
-
-   @Override
-   public int getAcqOrderMode() {
-      return acqOrderMode_;
-   }
-
-   @Override
-   public void setAcqOrderMode(int mode) {
-      acqOrderMode_ = mode;
-   }
-
-   @Override
-   public void enableAutoFocus(boolean enabled) {
-      useAutoFocus_ = enabled;
-   }
-
-   @Override
-   public boolean isAutoFocusEnabled() {
-      return useAutoFocus_;
-   }
-
-   @Override
-   public int getAfSkipInterval() {
-      return afSkipInterval_;
-   }
-
-   @Override
-   public void setAfSkipInterval(int interval) {
-      afSkipInterval_ = interval;
-   }
 
    @Override
    public void setShouldDisplayImages(boolean shouldDisplay) {
-      shouldDisplayImages_ = shouldDisplay;
+      sequenceSettings.shouldDisplayImages = shouldDisplay;
    }
 
    protected boolean enoughDiskSpace() {
-      File root = new File(rootName_);
+      File root = new File(sequenceSettings.root);
       //Need to find a file that exists to check space
       while (!root.exists()) {
          root = root.getParentFile();
@@ -871,8 +732,8 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       int numChannels = getNumChannels();
 
       double exposurePerTimePointMs = 0.0;
-      if (this.useChannels_) {
-         for (ChannelSpec channel : channels_) {
+      if (sequenceSettings.useChannels) {
+         for (ChannelSpec channel : sequenceSettings.channels) {
             if (channel.useChannel()) {
                double channelExposure = channel.exposure();
                if (channel.doZStack()) {
@@ -894,11 +755,12 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       long totalMB = getTotalMemory() / (1024 * 1024);
 
       double totalDurationSec = 0;
-      double interval = (interval_ > exposurePerTimePointMs) ? interval_ : exposurePerTimePointMs;
-      if (!useCustomIntervals_) {
+      double interval = (sequenceSettings.intervalMs > exposurePerTimePointMs) ?
+              sequenceSettings.intervalMs : exposurePerTimePointMs;
+      if (!sequenceSettings.useCustomIntervals) {
          totalDurationSec = interval * (numFrames - 1) / 1000.0;
       } else {
-         for (Double d : customTimeIntervalsMs_) {
+         for (Double d : sequenceSettings.customIntervalsMs) {
             totalDurationSec += d / 1000.0;
          }
       }
@@ -918,8 +780,8 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       durationString += NumberUtils.doubleToDisplayString(remainSec) + "s";
 
       String txt =
-              "Number of time points: " + (!useCustomIntervals_
-              ? numFrames : customTimeIntervalsMs_.size())
+              "Number of time points: " + (!sequenceSettings.useCustomIntervals
+              ? numFrames : sequenceSettings.customIntervalsMs.size())
               + "\nNumber of positions: " + numPositions
               + "\nNumber of slices: " + numSlices
               + "\nNumber of channels: " + numChannels
@@ -927,35 +789,37 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
               + "\nTotal memory: " + (totalMB <= 1024 ? totalMB + " MB" : NumberUtils.doubleToDisplayString(totalMB/1024.0) + " GB")
               + durationString;
 
-      if (useFrames_ || useMultiPosition_ || useChannels_ || useSlices_) {
-         StringBuffer order = new StringBuffer("\nOrder: ");
-         if (useFrames_ && useMultiPosition_) {
-            if (acqOrderMode_ == AcqOrderMode.TIME_POS_CHANNEL_SLICE
-                    || acqOrderMode_ == AcqOrderMode.TIME_POS_SLICE_CHANNEL) {
+      if (sequenceSettings.useFrames || sequenceSettings.usePositionList ||
+              sequenceSettings.useChannels || sequenceSettings.useSlices) {
+         StringBuilder order = new StringBuilder("\nOrder: ");
+         if (sequenceSettings.useFrames && sequenceSettings.usePositionList) {
+            if (sequenceSettings.acqOrderMode == AcqOrderMode.TIME_POS_CHANNEL_SLICE
+                    || sequenceSettings.acqOrderMode == AcqOrderMode.TIME_POS_SLICE_CHANNEL) {
                order.append("Time, Position");
             } else {
                order.append("Position, Time");
             }
-         } else if (useFrames_) {
+         } else if (sequenceSettings.useFrames) {
             order.append("Time");
-         } else if (useMultiPosition_) {
+         } else if (sequenceSettings.usePositionList) {
             order.append("Position");
          }
 
-         if ((useFrames_ || useMultiPosition_) && (useChannels_ || useSlices_)) {
+         if ((sequenceSettings.useFrames || sequenceSettings.usePositionList) &&
+                 (sequenceSettings.useChannels || sequenceSettings.useSlices)) {
             order.append(", ");
          }
 
-         if (useChannels_ && useSlices_) {
-            if (acqOrderMode_ == AcqOrderMode.TIME_POS_CHANNEL_SLICE
-                    || acqOrderMode_ == AcqOrderMode.POS_TIME_CHANNEL_SLICE) {
+         if (sequenceSettings.useChannels && sequenceSettings.useSlices) {
+            if (sequenceSettings.acqOrderMode == AcqOrderMode.TIME_POS_CHANNEL_SLICE
+                    || sequenceSettings.acqOrderMode == AcqOrderMode.POS_TIME_CHANNEL_SLICE) {
                order.append("Channel, Slice");
             } else {
                order.append("Slice, Channel");
             }
-         } else if (useChannels_) {
+         } else if (sequenceSettings.useChannels) {
             order.append("Channel");
-         } else if (useSlices_) {
+         } else if (sequenceSettings.useSlices) {
             order.append("Slice");
          }
 
@@ -992,7 +856,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
          ReportingUtils.logError(ex);
          return new String[0];
       }
-      ArrayList<String> strGroups = new ArrayList<String>();
+      ArrayList<String> strGroups = new ArrayList<>();
       for (String group : groups) {
          if (groupIsEligibleChannel(group)) {
             strGroups.add(group);
@@ -1024,11 +888,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    protected boolean isFocusStageAvailable() {
-      if (zstage_ != null && zstage_.length() > 0) {
-         return true;
-      } else {
-         return false;
-      }
+      return zstage_ != null && zstage_.length() > 0;
    }
 
    private boolean groupIsEligibleChannel(String group) {
@@ -1054,6 +914,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       return true;
    }
 
+   /*
    @Override
    public void setCustomTimeIntervals(double[] customTimeIntervals) {
       if (customTimeIntervals == null || customTimeIntervals.length == 0) {
@@ -1067,6 +928,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
          }
       }
    }
+
 
    @Override
    public double[] getCustomTimeIntervals() {
@@ -1090,6 +952,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    public boolean customTimeIntervalsEnabled() {
       return useCustomIntervals_;
    }
+   */
 
    /*
     * Returns the summary metadata associated with the most recent acquisition.
@@ -1101,7 +964,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    @Override
    public String getComment() {
-       return this.comment_;
+       return sequenceSettings.comment;
    }
    
    @Subscribe

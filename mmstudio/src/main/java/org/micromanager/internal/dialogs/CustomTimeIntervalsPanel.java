@@ -184,13 +184,13 @@ public final class CustomTimeIntervalsPanel extends JPanel {
         buttonsPanel_.add(new JLabel("      ")); //spacer
         
         useIntervalsCheckBox_ = new JCheckBox("Use custom intervals");
-        useIntervalsCheckBox_.setEnabled(acqEng_.getCustomTimeIntervals() != null);
-        useIntervalsCheckBox_.setSelected(acqEng_.customTimeIntervalsEnabled());
+        useIntervalsCheckBox_.setEnabled(acqEng_.getSequenceSettings().customIntervalsMs != null);
+        useIntervalsCheckBox_.setSelected(acqEng_.getSequenceSettings().useCustomIntervals);
         buttonsPanel_.add(useIntervalsCheckBox_);
         useIntervalsCheckBox_.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                acqEng_.enableCustomTimeIntervals(useIntervalsCheckBox_.isSelected());
+                acqEng_.getSequenceSettings().useCustomIntervals = useIntervalsCheckBox_.isSelected();
             }});
         
     }
@@ -208,8 +208,8 @@ public final class CustomTimeIntervalsPanel extends JPanel {
     }
  
      public void syncCheckBoxFromAcqEng() {
-         useIntervalsCheckBox_.setEnabled(acqEng_.getCustomTimeIntervals() != null);
-         useIntervalsCheckBox_.setSelected(acqEng_.customTimeIntervalsEnabled());
+         useIntervalsCheckBox_.setEnabled(acqEng_.getSequenceSettings().customIntervalsMs != null);
+         useIntervalsCheckBox_.setSelected(acqEng_.getSequenceSettings().useCustomIntervals);
      }  
      
      public void syncIntervalsFromAcqEng() {
@@ -762,25 +762,20 @@ public final class CustomTimeIntervalsPanel extends JPanel {
         
         private void sendIntervalsToAcqEng() {
             if (timeIntervals_ == null || timeIntervals_.isEmpty()) {
-                acqEng_.setCustomTimeIntervals(null);
+                acqEng_.getSequenceSettings().customIntervalsMs = null;
             } else {
-                double[] intervalsArray = new double[timeIntervals_.size()];
-                for (int i = 0; i < timeIntervals_.size(); i++) {
-                    intervalsArray[i] = timeIntervals_.get(i);
-                }
-                acqEng_.setCustomTimeIntervals(intervalsArray);
+                ArrayList<Double> intervals = new ArrayList<>(timeIntervals_.size());
+               for (Double aDouble : timeIntervals_) {
+                  intervals.add(aDouble);
+               }
+                acqEng_.getSequenceSettings().customIntervalsMs = intervals;
             }
            fireTableDataChanged();
         }
         
         public final void syncIntervalsFromAcqEng() {
             timeIntervals_.clear();
-            double[] existingCustomIntervals = acqEng_.getCustomTimeIntervals();
-            if (existingCustomIntervals != null) {
-                for (double d : existingCustomIntervals) {
-                    timeIntervals_.add(d);
-                }
-            }
+            timeIntervals_.addAll(acqEng_.getSequenceSettings().customIntervalsMs);
             fireTableDataChanged();
         }
 
