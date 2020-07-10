@@ -190,11 +190,14 @@ public class ImageAffineTransform {
       BufferedImage bi16 = testProc.get16BitBufferedImage();
       BufferedImage aOpResult = new BufferedImage(bi16.getWidth(),
               bi16.getHeight(), BufferedImage.TYPE_USHORT_GRAY);
+      aOp.filter(bi16, aOpResult);
       if (interpolationType_ == AffineTransformOp.TYPE_NEAREST_NEIGHBOR) {
          aOp.filter(bi16, aOpResult);
       } else {
          // work around bug in AffineTransformationOp, see:
          // http://stackoverflow.com/questions/2428109/java-error-on-bilinear-interpolation-of-16-bit-data
+         // Note: although the image looks alright, histogram values are strangely distorted
+         // presumably, since calculations are done with bytes rather than shorts
          Graphics2D g = aOpResult.createGraphics();
          g.transform(aOp.getTransform());
          g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, renderingHint_);
