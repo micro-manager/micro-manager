@@ -1,19 +1,11 @@
 package org.micromanager.internal.dialogs;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.GridLayout;
-import java.awt.Window;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
+import org.micromanager.Studio;
+import org.micromanager.acquisition.internal.AcquisitionEngine;
+import org.micromanager.internal.utils.DaytimeNighttime;
+import org.micromanager.internal.utils.MMDialog;
+import org.micromanager.internal.utils.TooltipTextMaker;
+
 import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -36,11 +28,19 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
-import org.micromanager.Studio;
-import org.micromanager.acquisition.internal.AcquisitionEngine;
-import org.micromanager.internal.utils.DaytimeNighttime;
-import org.micromanager.internal.utils.MMDialog;
-import org.micromanager.internal.utils.TooltipTextMaker;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GridLayout;
+import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public final class CustomTimeIntervalsPanel extends JPanel {
 
@@ -191,7 +191,8 @@ public final class CustomTimeIntervalsPanel extends JPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 acqEng_.getSequenceSettings().useCustomIntervals = useIntervalsCheckBox_.isSelected();
-            }});
+            }
+        });
         
     }
 
@@ -721,23 +722,8 @@ public final class CustomTimeIntervalsPanel extends JPanel {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            Component cell = super.getTableCellRendererComponent(table, formatter.format((Number) value), isSelected, hasFocus, row, column);
-            if (column == 0 || column == 2) {
-                if (isSelected) {
-                    cell.setBackground(Color.LIGHT_GRAY);
-                    cell.setForeground(Color.BLACK);
-                } else {
-                    cell.setBackground(Color.DARK_GRAY);
-                    cell.setForeground(Color.WHITE);
-                }
-            } else if (isSelected) {
-                cell.setBackground(Color.BLUE);
-                cell.setForeground(Color.WHITE);
-            } else {
-                cell.setBackground(Color.WHITE);
-                cell.setForeground(Color.BLACK);
-            }
-
+            Component cell = super.getTableCellRendererComponent(table,
+                    formatter.format((Number) value), isSelected, hasFocus, row, column);
             return cell;
         }
     }
@@ -775,7 +761,9 @@ public final class CustomTimeIntervalsPanel extends JPanel {
         
         public final void syncIntervalsFromAcqEng() {
             timeIntervals_.clear();
-            timeIntervals_.addAll(acqEng_.getSequenceSettings().customIntervalsMs);
+            if (acqEng_.getSequenceSettings().customIntervalsMs != null) {
+               timeIntervals_.addAll(acqEng_.getSequenceSettings().customIntervalsMs);
+            }
             fireTableDataChanged();
         }
 
