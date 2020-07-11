@@ -38,7 +38,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    protected Studio studio_;
    private PositionList posList_;
    private String zstage_;
-   private SequenceSettings sequenceSettings;
+   private SequenceSettings sequenceSettings_;
 
    private IAcquisitionEngine2010 acquisitionEngine2010_;
    protected JSONObject summaryMetadata_;
@@ -48,20 +48,20 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    public AcquisitionWrapperEngine() {
       settingsListeners_ = new ArrayList<>();
-      sequenceSettings = new SequenceSettings();
+      sequenceSettings_ = new SequenceSettings();
    }
 
-   public SequenceSettings getSequenceSettings() { return sequenceSettings; }
+   public SequenceSettings getSequenceSettings() { return sequenceSettings_; }
 
    public void setSequenceSettings(SequenceSettings SequenceSettings) {
-      sequenceSettings = SequenceSettings;
+      sequenceSettings_ = SequenceSettings;
    }
 
 
    @Override
    public Datastore acquire() throws MMException {
       calculateSlices();
-      return runAcquisition(sequenceSettings);
+      return runAcquisition(sequenceSettings_);
    }
 
    @Override
@@ -94,11 +94,11 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    private void calculateSlices() {
       // Slices
-      sequenceSettings.slices.clear();
-      if (sequenceSettings.useSlices) {
-         double start = sequenceSettings.sliceZBottomUm;
-         double stop = sequenceSettings.sliceZTopUm;
-         double step = Math.abs(sequenceSettings.sliceZStepUm);
+      sequenceSettings_.slices.clear();
+      if (sequenceSettings_.useSlices) {
+         double start = sequenceSettings_.sliceZBottomUm;
+         double stop = sequenceSettings_.sliceZTopUm;
+         double step = Math.abs(sequenceSettings_.sliceZStepUm);
          if (step == 0.0) {
             throw new UnsupportedOperationException("zero Z step size");
          }
@@ -107,13 +107,15 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
             step = -step;
          }
          for (int i = 0; i < count; i++) {
-            sequenceSettings.slices.add(start + i * step);
+            sequenceSettings_.slices.add(start + i * step);
          }
       }
    }
 
-   protected Datastore runAcquisition(SequenceSettings acquisitionSettings) {
-      //Make sure computer can write to selected location and that there is enough space to do so
+   protected Datastore runAcquisition(SequenceSettings sequenceSettings) {
+      SequenceSettings acquisitionSettings = new SequenceSettings(sequenceSettings);
+
+      //Make sure computer can write to selected location and there is enough space to do so
       if (acquisitionSettings.save) {
          File root = new File(acquisitionSettings.root);
          if (!root.canWrite()) {
@@ -138,16 +140,35 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
             return null;
          }
       }
+
+      // manipulate positionlist
+      PositionList posListToUse = posList_;
+      if (posList_ == null && sequenceSettings_.usePositionList) {
+         posListToUse = studio_.positions().getPositionList();
+      }
+
+      // The clojure acquisition engine always uses numFrames, and customIntervals
+      // unless they are null.
+      if (acquisitionSettings.useCustomIntervals) {
+         acquisitionSettings.numFrames = acquisitionSettings.customIntervalsMs.size();
+      } else {
+         acquisitionSettings.customIntervalsMs = null;
+      }
+
       try {
-         PositionList posListToUse = posList_;
-         if (posList_ == null && sequenceSettings.usePositionList) {
-            posListToUse = studio_.positions().getPositionList();
-         }
          // Start up the acquisition engine
          BlockingQueue<TaggedImage> engineOutputQueue = getAcquisitionEngine2010().run(
                  acquisitionSettings, true, posListToUse,
                  studio_.getAutofocusManager().getAutofocusMethod());
+
+         // note: summaryMetadata contain instructions how/where to safe the data
+         // summary metadata generated in the clojure acq engine will look at the
+         // sequenceSettings.save flag and set "Directory" and "Prefix" only
+         // when save == true.  summaryMetadata.Directory and Prefix are used
+         // by MMAcquisition to decide whether and where to save the acquisition.
          summaryMetadata_ = getAcquisitionEngine2010().getSummaryMetadata();
+
+         // file type (multi or single) is a global setting, not sure where/when that is applied
 
          boolean shouldShow = acquisitionSettings.shouldDisplayImages;
          MMAcquisition acq = new MMAcquisition(studio_, summaryMetadata_, this,
@@ -180,11 +201,11 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    private int getNumChannels() {
       int numChannels = 0;
-      if (sequenceSettings.useChannels) {
-         if (sequenceSettings.channels == null) {
+      if (sequenceSettings_.useChannels) {
+         if (sequenceSettings_.channels == null) {
             return 0;
          }
-         for (ChannelSpec channel : sequenceSettings.channels) {
+         for (ChannelSpec channel : sequenceSettings_.channels) {
             if (channel.useChannel()) {
                ++numChannels;
             }
@@ -196,8 +217,8 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    public int getNumFrames() {
-      int numFrames = sequenceSettings.numFrames;
-      if (!sequenceSettings.useFrames) {
+      int numFrames = sequenceSettings_.numFrames;
+      if (!sequenceSettings_.useFrames) {
          numFrames = 1;
       }
       return numFrames;
@@ -205,31 +226,31 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    private int getNumPositions() {
       int numPositions = Math.max(1, posList_.getNumberOfPositions());
-      if (!sequenceSettings.usePositionList) {
+      if (!sequenceSettings_.usePositionList) {
          numPositions = 1;
       }
       return numPositions;
    }
 
    private int getNumSlices() {
-      if (!sequenceSettings.useSlices) {
+      if (!sequenceSettings_.useSlices) {
          return 1;
       }
-      if (sequenceSettings.sliceZStepUm == 0) {
+      if (sequenceSettings_.sliceZStepUm == 0) {
          // XXX How should this be handled?
          return Integer.MAX_VALUE;
       }
-      return 1 + (int)Math.abs( (sequenceSettings.sliceZTopUm - sequenceSettings.sliceZBottomUm)
-              / sequenceSettings.sliceZStepUm);
+      return 1 + (int)Math.abs( (sequenceSettings_.sliceZTopUm - sequenceSettings_.sliceZBottomUm)
+              / sequenceSettings_.sliceZStepUm);
    }
 
    private int getTotalImages() {
-      if (!sequenceSettings.useChannels) {
+      if (!sequenceSettings_.useChannels) {
          return getNumFrames() * getNumSlices() * getNumChannels() * getNumPositions();
       }
 
       int nrImages = 0;
-      for (ChannelSpec channel : sequenceSettings.channels) {
+      for (ChannelSpec channel : sequenceSettings_.channels) {
          if (channel.useChannel()) {
             for (int t = 0; t < getNumFrames(); t++) {
                boolean doTimePoint = true;
@@ -259,12 +280,12 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    private void updateChannelCameras() {
       ArrayList<ChannelSpec> camChannels = new ArrayList<>();
-      ArrayList<ChannelSpec> channels = sequenceSettings.channels;
+      ArrayList<ChannelSpec> channels = sequenceSettings_.channels;
       for (int row = 0; row < channels.size(); row++) {
          camChannels.add(row,
                  channels.get(row).copyBuilder().camera(getSource(channels.get(row))).build());
       }
-      sequenceSettings.channels = camChannels;
+      sequenceSettings_.channels = camChannels;
    }
 
    /*
@@ -587,17 +608,17 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    @Override
    public int getCurrentFrameCount() {
-      return sequenceSettings.numFrames;
+      return sequenceSettings_.numFrames;
    }
 
    @Override
    public double getFrameIntervalMs() {
-      return sequenceSettings.intervalMs;
+      return sequenceSettings_.intervalMs;
    }
 
    @Override
    public boolean isZSliceSettingEnabled() {
-      return sequenceSettings.useSlices;
+      return sequenceSettings_.useSlices;
    }
 
 
@@ -618,7 +639,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
          cb.channelGroup(this.getChannelGroup()).config(config).useChannel(use).
                  exposure(exp).doZStack(doZStack).zOffset(zOffset).color(c).
                  skipFactorFrame(skip);
-         sequenceSettings.channels.add(cb.build());
+         sequenceSettings_.channels.add(cb.build());
          return true;
       } else {
          ReportingUtils.logError("\"" + config + "\" is not found in the current Channel group.");
@@ -628,11 +649,11 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    @Override
    public void setChannel(int row, ChannelSpec sp) {
-      sequenceSettings.channels.add(row, sp);
+      sequenceSettings_.channels.add(row, sp);
    }
    @Override
    public void setChannels(ArrayList<ChannelSpec> channels) {
-      sequenceSettings.channels = channels;
+      sequenceSettings_.channels = channels;
    }
 
 
@@ -682,6 +703,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       if (groupIsEligibleChannel(group)) {
          try {
             core_.setChannelGroup(group);
+            sequenceSettings_.channelGroup = group;
          } catch (Exception e) {
             try {
                core_.setChannelGroup("");
@@ -708,11 +730,11 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    @Override
    public void setShouldDisplayImages(boolean shouldDisplay) {
-      sequenceSettings.shouldDisplayImages = shouldDisplay;
+      sequenceSettings_.shouldDisplayImages = shouldDisplay;
    }
 
    protected boolean enoughDiskSpace() {
-      File root = new File(sequenceSettings.root);
+      File root = new File(sequenceSettings_.root);
       //Need to find a file that exists to check space
       while (!root.exists()) {
          root = root.getParentFile();
@@ -732,8 +754,8 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       int numChannels = getNumChannels();
 
       double exposurePerTimePointMs = 0.0;
-      if (sequenceSettings.useChannels) {
-         for (ChannelSpec channel : sequenceSettings.channels) {
+      if (sequenceSettings_.useChannels) {
+         for (ChannelSpec channel : sequenceSettings_.channels) {
             if (channel.useChannel()) {
                double channelExposure = channel.exposure();
                if (channel.doZStack()) {
@@ -755,12 +777,12 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       long totalMB = getTotalMemory() / (1024 * 1024);
 
       double totalDurationSec = 0;
-      double interval = (sequenceSettings.intervalMs > exposurePerTimePointMs) ?
-              sequenceSettings.intervalMs : exposurePerTimePointMs;
-      if (!sequenceSettings.useCustomIntervals) {
+      double interval = (sequenceSettings_.intervalMs > exposurePerTimePointMs) ?
+              sequenceSettings_.intervalMs : exposurePerTimePointMs;
+      if (!sequenceSettings_.useCustomIntervals) {
          totalDurationSec = interval * (numFrames - 1) / 1000.0;
       } else {
-         for (Double d : sequenceSettings.customIntervalsMs) {
+         for (Double d : sequenceSettings_.customIntervalsMs) {
             totalDurationSec += d / 1000.0;
          }
       }
@@ -780,8 +802,8 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       durationString += NumberUtils.doubleToDisplayString(remainSec) + "s";
 
       String txt =
-              "Number of time points: " + (!sequenceSettings.useCustomIntervals
-              ? numFrames : sequenceSettings.customIntervalsMs.size())
+              "Number of time points: " + (!sequenceSettings_.useCustomIntervals
+              ? numFrames : sequenceSettings_.customIntervalsMs.size())
               + "\nNumber of positions: " + numPositions
               + "\nNumber of slices: " + numSlices
               + "\nNumber of channels: " + numChannels
@@ -789,37 +811,37 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
               + "\nTotal memory: " + (totalMB <= 1024 ? totalMB + " MB" : NumberUtils.doubleToDisplayString(totalMB/1024.0) + " GB")
               + durationString;
 
-      if (sequenceSettings.useFrames || sequenceSettings.usePositionList ||
-              sequenceSettings.useChannels || sequenceSettings.useSlices) {
+      if (sequenceSettings_.useFrames || sequenceSettings_.usePositionList ||
+              sequenceSettings_.useChannels || sequenceSettings_.useSlices) {
          StringBuilder order = new StringBuilder("\nOrder: ");
-         if (sequenceSettings.useFrames && sequenceSettings.usePositionList) {
-            if (sequenceSettings.acqOrderMode == AcqOrderMode.TIME_POS_CHANNEL_SLICE
-                    || sequenceSettings.acqOrderMode == AcqOrderMode.TIME_POS_SLICE_CHANNEL) {
+         if (sequenceSettings_.useFrames && sequenceSettings_.usePositionList) {
+            if (sequenceSettings_.acqOrderMode == AcqOrderMode.TIME_POS_CHANNEL_SLICE
+                    || sequenceSettings_.acqOrderMode == AcqOrderMode.TIME_POS_SLICE_CHANNEL) {
                order.append("Time, Position");
             } else {
                order.append("Position, Time");
             }
-         } else if (sequenceSettings.useFrames) {
+         } else if (sequenceSettings_.useFrames) {
             order.append("Time");
-         } else if (sequenceSettings.usePositionList) {
+         } else if (sequenceSettings_.usePositionList) {
             order.append("Position");
          }
 
-         if ((sequenceSettings.useFrames || sequenceSettings.usePositionList) &&
-                 (sequenceSettings.useChannels || sequenceSettings.useSlices)) {
+         if ((sequenceSettings_.useFrames || sequenceSettings_.usePositionList) &&
+                 (sequenceSettings_.useChannels || sequenceSettings_.useSlices)) {
             order.append(", ");
          }
 
-         if (sequenceSettings.useChannels && sequenceSettings.useSlices) {
-            if (sequenceSettings.acqOrderMode == AcqOrderMode.TIME_POS_CHANNEL_SLICE
-                    || sequenceSettings.acqOrderMode == AcqOrderMode.POS_TIME_CHANNEL_SLICE) {
+         if (sequenceSettings_.useChannels && sequenceSettings_.useSlices) {
+            if (sequenceSettings_.acqOrderMode == AcqOrderMode.TIME_POS_CHANNEL_SLICE
+                    || sequenceSettings_.acqOrderMode == AcqOrderMode.POS_TIME_CHANNEL_SLICE) {
                order.append("Channel, Slice");
             } else {
                order.append("Slice, Channel");
             }
-         } else if (sequenceSettings.useChannels) {
+         } else if (sequenceSettings_.useChannels) {
             order.append("Channel");
-         } else if (sequenceSettings.useSlices) {
+         } else if (sequenceSettings_.useSlices) {
             order.append("Slice");
          }
 
@@ -964,7 +986,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    @Override
    public String getComment() {
-       return sequenceSettings.comment;
+       return sequenceSettings_.comment;
    }
    
    @Subscribe
