@@ -1263,10 +1263,10 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
             public void run() {
                acqEng_.setSequenceSettings(settings);
                acqDir_ = acqFile_.getParent();
-               //if (acqDir_ != null) {
-               //   mmStudio_.profile().getSettings(this.getClass()).putString(
-                //     ACQ_FILE_DIR, acqDir_);
-               //}
+               if (acqDir_ != null) {
+                  mmStudio_.profile().getSettings(this.getClass()).putString(
+                    ACQ_FILE_DIR, acqDir_);
+               }
             }
          });
       }
