@@ -53,8 +53,9 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    public SequenceSettings getSequenceSettings() { return sequenceSettings_; }
 
-   public void setSequenceSettings(SequenceSettings SequenceSettings) {
-      sequenceSettings_ = SequenceSettings;
+   public void setSequenceSettings(SequenceSettings sequenceSettings) {
+      sequenceSettings_ = sequenceSettings;
+      settingsChanged();
    }
 
 
