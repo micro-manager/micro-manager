@@ -155,9 +155,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    private static final int ACQ_DEFAULT_COLUMN_WIDTH = 77;
    private static final String CUSTOM_INTERVAL_PREFIX = "customInterval";
    private static final String ACQ_ENABLE_CUSTOM_INTERVALS = "enableCustomIntervals";
-   public static final FileType ACQ_SETTINGS_FILE = new FileType("ACQ_SETTINGS_FILE", "Acquisition settings",
-           System.getProperty("user.home") + "/AcqSettings.txt",
-           true, "txt");
+
    private int[] columnWidth_;
    private int[] columnOrder_;
    private CheckBoxPanel framesPanel_;
@@ -1243,7 +1241,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    }
 
    protected void loadAcqSettingsFromFile() {
-      File f = FileDialogs.openFile(this, "Load acquisition settings", ACQ_SETTINGS_FILE);
+      File f = FileDialogs.openFile(this, "Load acquisition settings", FileDialogs.ACQ_SETTINGS_FILE);
       if (f != null) {
          try {
             loadAcqSettingsFromFile(f.getAbsolutePath());
@@ -1256,31 +1254,30 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
    public void loadAcqSettingsFromFile(String path) throws IOException {
       acqFile_ = new File(path);
-      final SequenceSettings settings = mmStudio_.acquisitions().loadSequenceSettings(path);
-      try {
-         GUIUtils.invokeAndWait(new Runnable() {
-            @Override
-            public void run() {
-               acqEng_.setSequenceSettings(settings);
-               acqDir_ = acqFile_.getParent();
-               if (acqDir_ != null) {
-                  mmStudio_.profile().getSettings(this.getClass()).putString(
-                    ACQ_FILE_DIR, acqDir_);
+      if (acqFile_ != null) {
+         final SequenceSettings settings = mmStudio_.acquisitions().loadSequenceSettings(path);
+         try {
+            GUIUtils.invokeAndWait(new Runnable() {
+               @Override
+               public void run() {
+                  acqEng_.setSequenceSettings(settings);
+                  updateGUIContents();
                }
-            }
-         });
-      }
-      catch (InterruptedException e) {
-         ReportingUtils.logError(e, "Interrupted while updating GUI");
-      }
-      catch (InvocationTargetException e) {
-         ReportingUtils.logError(e, "Error updating GUI");
+            });
+         } catch (InterruptedException e) {
+            ReportingUtils.logError(e, "Interrupted while updating GUI");
+         } catch (InvocationTargetException e) {
+            ReportingUtils.logError(e, "Error updating GUI");
+         }
+      } else {
+         mmStudio_.logs().logError("Could not open acquisition settings file: " + path);
       }
    }
 
    protected void saveAsAcqSettingsToFile() {
       saveAcqSettings();
-      File file = FileDialogs.save(this, "Save the acquisition settings file", ACQ_SETTINGS_FILE);
+      File file = FileDialogs.save(this, "Save the acquisition settings file",
+              FileDialogs.ACQ_SETTINGS_FILE);
       if (file != null) {
          try {
             SequenceSettings settings = acqEng_.getSequenceSettings();
@@ -1445,6 +1442,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       }
       return -1;
    }
+
 
     @Override
    public void settingsChanged() {
