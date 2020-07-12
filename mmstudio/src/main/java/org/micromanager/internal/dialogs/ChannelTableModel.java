@@ -1,12 +1,5 @@
 package org.micromanager.internal.dialogs;
 
-import java.awt.Color;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-import javax.swing.table.AbstractTableModel;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
@@ -16,6 +9,13 @@ import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TooltipTextMaker;
 import org.micromanager.propertymap.MutablePropertyMapView;
+
+import javax.swing.event.TableModelEvent;
+import javax.swing.table.AbstractTableModel;
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Data representation class for the channels list in the MDA dialog.
@@ -176,7 +176,21 @@ public final class ChannelTableModel extends AbstractTableModel  {
    }
 
    public ArrayList<ChannelSpec> getChannels() {
-      return channels_;
+      return new ArrayList<>(channels_);
+   }
+
+   public void setChannels(ArrayList<ChannelSpec> channels) {
+      channels_.clear();
+      for (ChannelSpec channel : channels) {
+         if (acqEng_.getChannelConfigs().length > 0) {
+            for (String config : acqEng_.getChannelConfigs()) {
+               if (config.equals(channel.config())) {
+                  channels_.add(channel);
+                  break;
+               }
+            }
+         }
+      }
    }
 
    /**
@@ -184,16 +198,16 @@ public final class ChannelTableModel extends AbstractTableModel  {
     */
    public void addNewChannel() {
       ChannelSpec.Builder cb = new ChannelSpec.Builder();
-      if (acqEng_.getSequenceSettings().channels.size() > 0) {
-         for (ChannelSpec config : acqEng_.getSequenceSettings().channels) {
+      if (acqEng_.getChannelConfigs().length > 0) {
+         for (String config : acqEng_.getChannelConfigs()) {
             boolean unique = true;
             for (ChannelSpec chan : channels_) {
-               if (config.config() .equals(chan.config())) {
+               if (config.equals(chan.config())) {
                   unique = false;
                }
             }
             if (unique) {
-               cb.config(config.config());
+               cb.config(config);
                break;
             }
          }
@@ -254,12 +268,15 @@ public final class ChannelTableModel extends AbstractTableModel  {
    }
 
    public String[] getAvailableChannels() {
-      ArrayList<ChannelSpec> channelSpecs = acqEng_.getSequenceSettings().channels;
+      return acqEng_.getChannelConfigs();
+      /*
+      String[] channelsInGroup = acqEng_.getChannelConfigs();
       ArrayList<String> channels  = new ArrayList<>();
       for (ChannelSpec cs : channelSpecs) {
          channels.add(cs.config());
       }
       return channels.toArray(new String[0]);
+      */
    }
 
    /**
@@ -406,6 +423,8 @@ public final class ChannelTableModel extends AbstractTableModel  {
       }
       // Stores the config names that we had for the old channelGroup
       settings_.putStringList("CG:" + channelGroup, configNames);
+      acqEng_.getSequenceSettings().channels.clear();
+      acqEng_.getSequenceSettings().channels.addAll(channels_);
    }
 
     private static String channelProfileKey(String channelGroup, String config) {
