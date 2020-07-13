@@ -22,24 +22,6 @@ package org.micromanager.internal.dialogs;
 
 import com.bulenkov.iconloader.IconLoader;
 import com.google.common.eventbus.Subscribe;
-import java.awt.*;
-import java.awt.event.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.io.*;
-import java.lang.reflect.InvocationTargetException;
-import java.net.URISyntaxException;
-import java.text.NumberFormat;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-import javax.swing.table.*;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.UserProfile;
 import org.micromanager.acquisition.ChannelSpec;
@@ -60,21 +42,74 @@ import org.micromanager.internal.utils.ColorEditor;
 import org.micromanager.internal.utils.ColorRenderer;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.FileDialogs;
-import org.micromanager.internal.utils.FileDialogs.FileType;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMException;
-import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TooltipTextMaker;
+import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.propertymap.MutablePropertyMapView;
+
+import javax.swing.AbstractCellEditor;
+import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JEditorPane;
+import javax.swing.JFormattedTextField;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.SpinnerModel;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingUtilities;
+import javax.swing.WindowConstants;
+import javax.swing.border.Border;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableColumn;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Desktop;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Insets;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.net.URISyntaxException;
+import java.text.NumberFormat;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Enumeration;
 
 /**
  * Time-lapse, channel and z-stack acquisition setup dialog.
  * This dialog specifies all parameters for the MDA acquisition. 
  *
  */
-public final class AcqControlDlg extends MMFrame implements PropertyChangeListener, 
+public final class AcqControlDlg extends JFrame implements PropertyChangeListener,
         AcqSettingsListener, TableModelListener {
 
    private static final long serialVersionUID = 1L;
@@ -111,8 +146,6 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    private ChannelCellEditor channelCellEditor_;
    private JSpinner numFrames_;
    private ChannelTableModel model_;
-   private File acqFile_;
-   private String acqDir_;
    private int zRelativeAbsolute_ = 0;
    private JButton setBottomButton_;
    private JButton setTopButton_;
@@ -126,8 +159,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    private AcqOrderMode[] acqOrderModes_;
    private CustomTimesDialog customTimesWindow;
    private final UserProfile profile_;
-   // persistent properties (app settings)
-   private static final String ACQ_FILE_DIR = "dir";
+   // persistent properties (app settings), most are only for backward compatibility
    private static final String MDA_SEQUENCE_SETTINGS = "MDA_SEQUENCE_SETTINGS";
    private static final String ACQ_INTERVAL = "acqInterval";
    private static final String ACQ_TIME_UNIT = "acqTimeInit";
@@ -141,7 +173,6 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    private static final String ACQ_ORDER_MODE = "acqOrderMode";
    private static final String ACQ_NUMFRAMES = "acqNumframes";
    private static final String ACQ_CHANNEL_GROUP = "acqChannelGroup";
-   private static final String ACQ_NUM_CHANNELS = "acqNumchannels";
    private static final String ACQ_CHANNELS_KEEP_SHUTTER_OPEN = "acqChannelsKeepShutterOpen";
    private static final String ACQ_STACK_KEEP_SHUTTER_OPEN = "acqStackKeepShutterOpen";
    private static final String ACQ_Z_VALUES = "acqZValues";
@@ -269,8 +300,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       // create the table of channels
       createChannelTable();
 
-      updateGUIFromSequenceSettings(sequenceSettings);
-      acqEng_.setSequenceSettings(sequenceSettings);
+      acqEng_.setSequenceSettings(sequenceSettings); // listener will call updateGUIContent()
 
       createToolTips();
 
@@ -278,7 +308,8 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       Dimension size = super.getPreferredSize();
       size.height += 10; // Compensate for inaccurate size given by Apple Java 6
       super.setMinimumSize(size);
-      super.loadAndRestorePosition(100, 100, size.width, size.height);
+      super.setBounds(100, 100, size.width, size.height);
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), "MDA");
 
       mmStudio_.events().registerForEvents(this);
    }
@@ -427,8 +458,8 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
       JButton disableCustomIntervalsButton = new JButton("Disable custom intervals");
       disableCustomIntervalsButton.addActionListener((ActionEvent e) -> {
-         acqEng_.getSequenceSettings().useCustomIntervals = false;
-         updateGUIContents();
+         acqEng_.setSequenceSettings(acqEng_.getSequenceSettings().copyBuilder().
+                 useCustomIntervals(false).build());
       });
       disableCustomIntervalsButton.setFont(DEFAULT_FONT);
 
@@ -721,10 +752,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       final JButton closeButton = new JButton("Close");
       closeButton.setFont(DEFAULT_FONT);
       closeButton.addActionListener((ActionEvent e) -> {
-         super.savePosition();
-         saveAcqSettings();
-         AcqControlDlg.this.dispose();
-         mmStudio_.app().makeActive();
+         close();
       });
       return closeButton;
    }
@@ -763,7 +791,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       saveAsButton.setToolTipText("Save current acquisition settings as");
       saveAsButton.setFont(DEFAULT_FONT);
       saveAsButton.setMargin(new Insets(-5, -5, -5, -5));
-      saveAsButton.addActionListener((ActionEvent e) -> saveAsAcqSettingsToFile());
+      saveAsButton.addActionListener((ActionEvent e) -> saveAcqSettingsToFile());
       result.add(saveAsButton, BUTTON_SIZE);
       return result;
    }
@@ -955,12 +983,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
    public void close() {
       try {
-         super.savePosition();
-      } catch (Throwable t) {
-         ReportingUtils.logError(t, "in saveSettings");
-      }
-      try {
-         saveAcqSettings();
+         saveAcqSettingsToProfile();
       } catch (Throwable t) {
          ReportingUtils.logError(t, "in saveAcqSettings");
       }
@@ -1063,44 +1086,44 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
          }
          disableGUItoSettings_ = true;
 
-         numFrames_.setValue(sequenceSettings.numFrames);
+         numFrames_.setValue(sequenceSettings.numFrames());
          interval_.setText(numberFormat_.format(convertMsToTime(
-                 sequenceSettings.intervalMs,
+                 sequenceSettings.intervalMs(),
                  timeUnitCombo_.getSelectedIndex())));
          int unit = settings_.getInteger(ACQ_TIME_UNIT, 0);
          timeUnitCombo_.setSelectedIndex(unit);
 
-         boolean framesEnabled = sequenceSettings.useFrames;
+         boolean framesEnabled = sequenceSettings.useFrames();
          framesPanel_.setSelected(framesEnabled);
          defaultTimesPanel_.setVisible(!framesEnabled);
          customTimesPanel_.setVisible(framesEnabled);
 
-         boolean isCustom = sequenceSettings.useCustomIntervals;
+         boolean isCustom = sequenceSettings.useCustomIntervals();
          defaultTimesPanel_.setVisible(!isCustom);
          customTimesPanel_.setVisible(isCustom);
 
-         positionsPanel_.setSelected(sequenceSettings.usePositionList);
+         positionsPanel_.setSelected(sequenceSettings.usePositionList());
 
-         zBottom_.setText(NumberUtils.doubleToDisplayString(sequenceSettings.sliceZBottomUm));
-         zTop_.setText(NumberUtils.doubleToDisplayString(sequenceSettings.sliceZTopUm));
-         zStep_.setText(NumberUtils.doubleToDisplayString(sequenceSettings.sliceZStepUm));
-         zBottom_.setEnabled(sequenceSettings.useSlices);
-         zTop_.setEnabled(sequenceSettings.useSlices);
-         zStep_.setEnabled(sequenceSettings.useSlices);
-         zValCombo_.setEnabled(sequenceSettings.useSlices);
-         zRelativeAbsolute_ = sequenceSettings.relativeZSlice ? 0 : 1;
+         zBottom_.setText(NumberUtils.doubleToDisplayString(sequenceSettings.sliceZBottomUm()));
+         zTop_.setText(NumberUtils.doubleToDisplayString(sequenceSettings.sliceZTopUm()));
+         zStep_.setText(NumberUtils.doubleToDisplayString(sequenceSettings.sliceZStepUm()));
+         zBottom_.setEnabled(sequenceSettings.useSlices());
+         zTop_.setEnabled(sequenceSettings.useSlices());
+         zStep_.setEnabled(sequenceSettings.useSlices());
+         zValCombo_.setEnabled(sequenceSettings.useSlices());
+         zRelativeAbsolute_ = sequenceSettings.relativeZSlice() ? 0 : 1;
          zValCombo_.setSelectedIndex(zRelativeAbsolute_);
-         stackKeepShutterOpenCheckBox_.setSelected(sequenceSettings.keepShutterOpenSlices);
-         slicesPanel_.setSelected(sequenceSettings.useSlices);
+         stackKeepShutterOpenCheckBox_.setSelected(sequenceSettings.keepShutterOpenSlices());
+         slicesPanel_.setSelected(sequenceSettings.useSlices());
 
-         afPanel_.setSelected(sequenceSettings.useAutofocus);
+         afPanel_.setSelected(sequenceSettings.useAutofocus());
 
-         channelsPanel_.setSelected(sequenceSettings.useChannels);
-         channelGroupCombo_.setSelectedItem(sequenceSettings.channelGroup);
-         acqEng_.setChannelGroup(sequenceSettings.channelGroup);
-         model_.setChannels(sequenceSettings.channels);
+         channelsPanel_.setSelected(sequenceSettings.useChannels());
+         channelGroupCombo_.setSelectedItem(sequenceSettings.channelGroup());
+         acqEng_.setChannelGroup(sequenceSettings.channelGroup());
+         model_.setChannels(sequenceSettings.channels());
          model_.fireTableStructureChanged();
-         chanKeepShutterOpenCheckBox_.setSelected(sequenceSettings.keepShutterOpenChannels);
+         chanKeepShutterOpenCheckBox_.setSelected(sequenceSettings.keepShutterOpenChannels());
          channelTable_.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
          boolean selected = channelsPanel_.isSelected();
          channelTable_.setEnabled(selected);
@@ -1111,7 +1134,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
                     slicesPanel_.isSelected(), channelsPanel_.isSelected());
          }
          // add correct acquisition order options
-         int selectedIndex = sequenceSettings.acqOrderMode;
+         int selectedIndex = sequenceSettings.acqOrderMode();
          acqOrderBox_.removeAllItems();
          if (framesPanel_.isSelected() && positionsPanel_.isSelected()
                  && slicesPanel_.isSelected() && channelsPanel_.isSelected()) {
@@ -1143,13 +1166,13 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
          else {
             acqOrderBox_.addItem(acqOrderModes_[selectedIndex]);
          }
-         acqOrderBox_.setSelectedItem(acqOrderModes_[sequenceSettings.acqOrderMode]);
+         acqOrderBox_.setSelectedItem(acqOrderModes_[sequenceSettings.acqOrderMode()]);
 
-         savePanel_.setSelected(sequenceSettings.save);
-         nameField_.setText(sequenceSettings.prefix);
-         rootField_.setText(sequenceSettings.root);
+         savePanel_.setSelected(sequenceSettings.save());
+         nameField_.setText(sequenceSettings.prefix());
+         rootField_.setText(sequenceSettings.root());
 
-         commentTextArea_.setText(sequenceSettings.comment);
+         commentTextArea_.setText(sequenceSettings.comment());
 
          updateSavingTypeButtons();
 
@@ -1168,8 +1191,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       });
    }
 
-   public synchronized void saveAcqSettings() {
-      MutablePropertyMapView settings = profile_.getSettings(this.getClass());
+   public synchronized void saveAcqSettingsToProfile() {
       applySettings();
       SequenceSettings sequenceSettings = acqEng_.getSequenceSettings();
       settings_.putString(MDA_SEQUENCE_SETTINGS, SequenceSettings.toJSONStream(sequenceSettings));
@@ -1189,8 +1211,8 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
       // Save model column widths and order
       for (int k = 0; k < model_.getColumnCount(); k++) {
-         settings.putInteger(ACQ_COLUMN_WIDTH + k, findTableColumn(channelTable_, k).getWidth());
-         settings.putInteger(ACQ_COLUMN_ORDER + k, channelTable_.convertColumnIndexToView(k));
+         settings_.putInteger(ACQ_COLUMN_WIDTH + k, findTableColumn(channelTable_, k).getWidth());
+         settings_.putInteger(ACQ_COLUMN_ORDER + k, channelTable_.convertColumnIndexToView(k));
       }
    }
 
@@ -1253,7 +1275,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    }
 
    public void loadAcqSettingsFromFile(String path) throws IOException {
-      acqFile_ = new File(path);
+      File acqFile_ = new File(path);
       if (acqFile_ != null) {
          final SequenceSettings settings = mmStudio_.acquisitions().loadSequenceSettings(path);
          try {
@@ -1261,7 +1283,6 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
                @Override
                public void run() {
                   acqEng_.setSequenceSettings(settings);
-                  updateGUIContents();
                }
             });
          } catch (InterruptedException e) {
@@ -1274,8 +1295,8 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       }
    }
 
-   protected void saveAsAcqSettingsToFile() {
-      saveAcqSettings();
+   protected void saveAcqSettingsToFile() {
+      saveAcqSettingsToProfile();
       File file = FileDialogs.save(this, "Save the acquisition settings file",
               FileDialogs.ACQ_SETTINGS_FILE);
       if (file != null) {
@@ -1370,7 +1391,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
       try {
          applySettings();
-         saveAcqSettings();
+         saveAcqSettingsToProfile();
          ChannelTableModel model = (ChannelTableModel) channelTable_.getModel();
          if (acqEng_.getSequenceSettings().useChannels && model.duplicateChannels()) {
             JOptionPane.showMessageDialog(this, "Cannot start acquisition using the same channel twice");
@@ -1419,13 +1440,12 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
       try {
          ChannelTableModel model = (ChannelTableModel) channelTable_.getModel();
-         if (acqEng_.getSequenceSettings().useChannels && model.duplicateChannels()) {
+         if (acqEng_.getSequenceSettings().useChannels() && model.duplicateChannels()) {
             JOptionPane.showMessageDialog(this, "Cannot start acquisition using the same channel twice");
             return null;
          }
-         acqEng_.getSequenceSettings().prefix = acqName;
-         acqEng_.getSequenceSettings().root = acqRoot;
-         acqEng_.getSequenceSettings().save = true;
+         SequenceSettings.Builder sb = acqEng_.getSequenceSettings().copyBuilder();
+         acqEng_.setSequenceSettings(sb.prefix(acqName).root(acqRoot).save(true).build());
 
          return acqEng_.acquire();
       } catch (MMException e) {
@@ -1460,57 +1480,57 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
          ae.stopCellEditing();
       }
 
-      SequenceSettings sequenceSettings = new SequenceSettings();
+      SequenceSettings.Builder ssb = new SequenceSettings.Builder();
 
       try {
-         sequenceSettings.acqOrderMode = ((AcqOrderMode) acqOrderBox_.getSelectedItem()).getID();
+         ssb.acqOrderMode( ((AcqOrderMode) acqOrderBox_.getSelectedItem()).getID() );
 
-         sequenceSettings.useFrames = framesPanel_.isSelected();
-         sequenceSettings.numFrames = (Integer) numFrames_.getValue();
-         sequenceSettings.intervalMs = convertTimeToMs(
+         ssb.useFrames(framesPanel_.isSelected());
+         ssb.numFrames ((Integer) numFrames_.getValue());
+         ssb.intervalMs( convertTimeToMs(
                  NumberUtils.displayStringToDouble(interval_.getText()),
-                 timeUnitCombo_.getSelectedIndex() );
-         sequenceSettings.useCustomIntervals = acqEng_.getSequenceSettings().useCustomIntervals;
-         sequenceSettings.customIntervalsMs = acqEng_.getSequenceSettings().customIntervalsMs;
+                 timeUnitCombo_.getSelectedIndex() ));
+         ssb.useCustomIntervals(acqEng_.getSequenceSettings().useCustomIntervals());
+         ssb.customIntervalsMs(acqEng_.getSequenceSettings().customIntervalsMs());
 
-         sequenceSettings.sliceZBottomUm = NumberUtils.displayStringToDouble(zBottom_.getText());
-         sequenceSettings.sliceZTopUm = NumberUtils.displayStringToDouble(zTop_.getText());
-         sequenceSettings.sliceZTopUm = NumberUtils.displayStringToDouble(zTop_.getText());
-         sequenceSettings.sliceZBottomUm = NumberUtils.displayStringToDouble(zBottom_.getText());
-         sequenceSettings.sliceZStepUm = NumberUtils.displayStringToDouble(zStep_.getText());
-         sequenceSettings.relativeZSlice = zRelativeAbsolute_ == 0;  // 0 == relative, 1 == absolute
+         ssb.sliceZBottomUm (NumberUtils.displayStringToDouble(zBottom_.getText()));
+         ssb.sliceZTopUm(NumberUtils.displayStringToDouble(zTop_.getText()));
+         ssb.sliceZTopUm(NumberUtils.displayStringToDouble(zTop_.getText()));
+         ssb.sliceZBottomUm(NumberUtils.displayStringToDouble(zBottom_.getText()));
+         ssb.sliceZStepUm(NumberUtils.displayStringToDouble(zStep_.getText()));
+         ssb.relativeZSlice(zRelativeAbsolute_ == 0);  // 0 == relative, 1 == absolute
 
-         sequenceSettings.useSlices = slicesPanel_.isSelected();
-         sequenceSettings.usePositionList = positionsPanel_.isSelected();
+         ssb.useSlices(slicesPanel_.isSelected());
+         ssb.usePositionList(positionsPanel_.isSelected());
 
-         sequenceSettings.useChannels = channelsPanel_.isSelected();
-         sequenceSettings.channelGroup = acqEng_.getChannelGroup();
-         sequenceSettings.channels = ((ChannelTableModel) channelTable_.getModel()).getChannels();
+         ssb.useChannels(channelsPanel_.isSelected());
+         ssb.channelGroup(acqEng_.getChannelGroup());
+         ssb.channels( ((ChannelTableModel) channelTable_.getModel()).getChannels());
 
-         sequenceSettings.skipAutofocusCount =
-                 NumberUtils.displayStringToInt(afSkipInterval_.getValue().toString());
-         sequenceSettings.keepShutterOpenChannels = chanKeepShutterOpenCheckBox_.isSelected();
-         sequenceSettings.keepShutterOpenSlices = stackKeepShutterOpenCheckBox_.isSelected();
+         ssb.skipAutofocusCount(
+                 NumberUtils.displayStringToInt(afSkipInterval_.getValue().toString()));
+         ssb.keepShutterOpenChannels(chanKeepShutterOpenCheckBox_.isSelected());
+         ssb.keepShutterOpenSlices(stackKeepShutterOpenCheckBox_.isSelected());
 
       } catch (ParseException p) {
          ReportingUtils.showError(p);
          // TODO: throw error
       }
 
-      sequenceSettings.save = savePanel_.isSelected();
+      ssb.save(savePanel_.isSelected());
 
       // avoid dangerous characters in the name that will be used as a directory name
       String name = nameField_.getText().replaceAll("[/\\*!':]", "-");
-      sequenceSettings.prefix = name.trim();
-      sequenceSettings.root = rootField_.getText().trim();
+      ssb.prefix(name.trim());
+      ssb.root(rootField_.getText().trim());
 
       // update summary
 
-      sequenceSettings.comment = commentTextArea_.getText();
-      sequenceSettings.useAutofocus = afPanel_.isSelected();
-      sequenceSettings.shouldDisplayImages = !getShouldHideMDADisplay();
+      ssb.comment(commentTextArea_.getText());
+      ssb.useAutofocus(afPanel_.isSelected());
+      ssb.shouldDisplayImages(!getShouldHideMDADisplay());
 
-      acqEng_.setSequenceSettings(sequenceSettings);
+      acqEng_.setSequenceSettings(ssb.build());
 
       disableGUItoSettings_ = false;
       updateGUIContents();
