@@ -37,11 +37,12 @@ import java.util.ArrayList;
  */
 public class SequenceSettings {
    // version ID for the sequence settings
-   public static final double Version = 1.2;
+   public static final double Version = 1.3;
 
    public static class Builder {
       private int numFrames = 1;
       private double intervalMs = 0.0;
+      private int displayTimeUnit = 1;
       private boolean useCustomIntervals = false;
       private ArrayList<Double> customIntervalsMs;
       private ArrayList<ChannelSpec> channels = new ArrayList<>();
@@ -72,6 +73,7 @@ public class SequenceSettings {
 
       public Builder numFrames(int nFrames) { numFrames = nFrames; return this;}
       public Builder intervalMs(double d) { intervalMs = d; return this;}
+      public Builder displayTimeUnit(int d) { displayTimeUnit = d; return this; }
       public Builder useCustomIntervals (boolean use) {
          useCustomIntervals = use; return this; }
       public Builder customIntervalsMs(ArrayList<Double> c) {
@@ -108,6 +110,7 @@ public class SequenceSettings {
       public Builder(SequenceSettings s) {
          numFrames =  s.numFrames;
          intervalMs = s.intervalMs;
+         displayTimeUnit = s.displayTimeUnit;
          useCustomIntervals = s.useCustomIntervals;
          customIntervalsMs = s.customIntervalsMs;
          channels = s.channels;
@@ -141,6 +144,7 @@ public class SequenceSettings {
          SequenceSettings s = new SequenceSettings();
          s.numFrames =  numFrames;
          s.intervalMs = intervalMs;
+         s.displayTimeUnit = displayTimeUnit;
          s.useCustomIntervals = useCustomIntervals;
          s.customIntervalsMs = customIntervalsMs;
          s.channels = channels;
@@ -187,6 +191,8 @@ public class SequenceSettings {
     */
    @Deprecated
    public double intervalMs = 0.0;
+
+   private int displayTimeUnit;
    /**
     * Whether or not to use custom time intervals. Do not set this to true
     * if customIntervalsMs is null!
@@ -382,6 +388,7 @@ public class SequenceSettings {
       comment = input.comment;
       customIntervalsMs = input.customIntervalsMs == null ? null : new ArrayList<>(input.customIntervalsMs);
       intervalMs = input.intervalMs;
+      displayTimeUnit = input.displayTimeUnit;
       keepShutterOpenSlices = input.keepShutterOpenSlices;
       keepShutterOpenChannels = input.keepShutterOpenChannels;
       numFrames = input.numFrames;
@@ -411,6 +418,11 @@ public class SequenceSettings {
 
    public int numFrames() {return numFrames;}
    public double intervalMs() {return  intervalMs; }
+   /**
+    * Time unit, only used to store preferred way to display the time
+    * @return 0-milliseconds, 1-seconds, 2-minutes
+    */
+   public int displayTimeUnit() { return displayTimeUnit;}
    public boolean useCustomIntervals() { return useCustomIntervals; }
    public ArrayList<Double> customIntervalsMs() { return customIntervalsMs; };
    public ArrayList<ChannelSpec> channels() {return channels; }

@@ -1087,6 +1087,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          disableGUItoSettings_ = true;
 
          numFrames_.setValue(sequenceSettings.numFrames());
+         timeUnitCombo_.setSelectedIndex(sequenceSettings.displayTimeUnit());
          interval_.setText(numberFormat_.format(convertMsToTime(
                  sequenceSettings.intervalMs(),
                  timeUnitCombo_.getSelectedIndex())));
@@ -1490,6 +1491,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          ssb.intervalMs( convertTimeToMs(
                  NumberUtils.displayStringToDouble(interval_.getText()),
                  timeUnitCombo_.getSelectedIndex() ));
+         ssb.displayTimeUnit(timeUnitCombo_.getSelectedIndex());
          ssb.useCustomIntervals(acqEng_.getSequenceSettings().useCustomIntervals());
          ssb.customIntervalsMs(acqEng_.getSequenceSettings().customIntervalsMs());
 
