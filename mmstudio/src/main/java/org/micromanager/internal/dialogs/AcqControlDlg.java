@@ -1088,8 +1088,6 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          interval_.setText(numberFormat_.format(convertMsToTime(
                  sequenceSettings.intervalMs(),
                  timeUnitCombo_.getSelectedIndex())));
-         int unit = settings_.getInteger(ACQ_TIME_UNIT, 0);
-         timeUnitCombo_.setSelectedIndex(unit);
 
          boolean framesEnabled = sequenceSettings.useFrames();
          framesPanel_.setSelected(framesEnabled);
@@ -1172,13 +1170,10 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
          commentTextArea_.setText(sequenceSettings.comment());
 
-         if (sequenceSettings.saveMode() == 0) {
-            DefaultDatastore.setPreferredSaveMode(mmStudio_,
-                    Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
+         DefaultDatastore.setPreferredSaveMode(mmStudio_, sequenceSettings.saveMode());
+         if (sequenceSettings.saveMode() == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
             singleButton_.setSelected(true);
-         } else if (sequenceSettings.saveMode() == 1) {
-            DefaultDatastore.setPreferredSaveMode(mmStudio_,
-                    Datastore.SaveMode.MULTIPAGE_TIFF);
+         } else if (sequenceSettings.saveMode() == Datastore.SaveMode.MULTIPAGE_TIFF) {
             multiButton_.setSelected(true);
          }
 
@@ -1529,16 +1524,15 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       if (singleButton_.isSelected()) {
          DefaultDatastore.setPreferredSaveMode(mmStudio_,
                  Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
-         ssb.saveMode(0);
       }
       else if (multiButton_.isSelected()) {
          DefaultDatastore.setPreferredSaveMode(mmStudio_,
                  Datastore.SaveMode.MULTIPAGE_TIFF);
-         ssb.saveMode(1);
       }
       else {
-         ReportingUtils.logError("Unknown save mode button is selected, or no buttons are selected");
+         ReportingUtils.logError("Unknown save mode button or no save mode buttons selected");
       }
+      ssb.saveMode(DefaultDatastore.getPreferredSaveMode(mmStudio_));
 
       acqEng_.setSequenceSettings(ssb.build());
 

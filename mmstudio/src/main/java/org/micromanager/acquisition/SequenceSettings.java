@@ -25,6 +25,7 @@ package org.micromanager.acquisition;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.micromanager.data.Datastore;
 
 import java.util.ArrayList;
 
@@ -55,7 +56,7 @@ public class SequenceSettings {
       private boolean useAutofocus = false;
       private int skipAutofocusCount = 0;
       private boolean save = false;
-      private int saveMode = 1;
+      private Datastore.SaveMode saveMode = Datastore.SaveMode.MULTIPAGE_TIFF;
       private String root = null;
       private String prefix = null;
       private double zReference = 0.0;
@@ -89,7 +90,7 @@ public class SequenceSettings {
       public Builder useAutofocus(boolean u) {useAutofocus = u; return this;}
       public Builder skipAutofocusCount(int s) {skipAutofocusCount = s; return this;}
       public Builder save(boolean s) {save = s; return this;}
-      public Builder saveMode(int s) { saveMode = s; return this;}
+      public Builder saveMode(Datastore.SaveMode s) { saveMode = s; return this;}
       public Builder root(String r) {root = r; return this;}
       public Builder prefix (String p) {prefix = p; return this;}
       public Builder zReference(double z) {zReference = z; return this;}
@@ -194,7 +195,7 @@ public class SequenceSettings {
    @Deprecated
    public double intervalMs = 0.0;
 
-   private int displayTimeUnit;
+   private int displayTimeUnit = 0;
    /**
     * Whether or not to use custom time intervals. Do not set this to true
     * if customIntervalsMs is null!
@@ -268,7 +269,7 @@ public class SequenceSettings {
     */
    @Deprecated
    public boolean save = false;
-   private int saveMode = 1;
+   private Datastore.SaveMode saveMode = Datastore.SaveMode.MULTIPAGE_TIFF;
    /**
     * root directory name
     * @deprecated use Builder and root() instead
@@ -473,7 +474,7 @@ public class SequenceSettings {
     * 1 - {@link org.micromanager.data.Datastore.SaveMode#MULTIPAGE_TIFF}
     * @return integer representing {@link org.micromanager.data.Datastore.SaveMode}
     */
-   public int saveMode() { return saveMode; }
+   public Datastore.SaveMode saveMode() { return saveMode; }
    public String root() { return root; }
    public String prefix() { return prefix; }
    public double zReference() { return zReference; }

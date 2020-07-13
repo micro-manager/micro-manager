@@ -141,13 +141,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
             return null;
          }
 
-         if (sequenceSettings.saveMode() == 0) {
-            DefaultDatastore.setPreferredSaveMode(studio_,
-                    Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
-         } else if (sequenceSettings.saveMode() == 1) {
-            DefaultDatastore.setPreferredSaveMode(studio_,
-                    Datastore.SaveMode.MULTIPAGE_TIFF);
-         }
+         DefaultDatastore.setPreferredSaveMode(studio_, sequenceSettings.saveMode());
 
       }
 
@@ -592,8 +586,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       long totalMB = getTotalMemory() / (1024 * 1024);
 
       double totalDurationSec = 0;
-      double interval = (sequenceSettings_.intervalMs() > exposurePerTimePointMs) ?
-              sequenceSettings_.intervalMs() : exposurePerTimePointMs;
+      double interval = Math.max(sequenceSettings_.intervalMs(), exposurePerTimePointMs);
       if (!sequenceSettings_.useCustomIntervals()) {
          totalDurationSec = interval * (numFrames - 1) / 1000.0;
       } else {
@@ -649,7 +642,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 
          if (sequenceSettings_.useChannels() && sequenceSettings_.useSlices()) {
             if (sequenceSettings_.acqOrderMode() == AcqOrderMode.TIME_POS_CHANNEL_SLICE
-                    || sequenceSettings_.acqOrderMode == AcqOrderMode.POS_TIME_CHANNEL_SLICE) {
+                    || sequenceSettings_.acqOrderMode() == AcqOrderMode.POS_TIME_CHANNEL_SLICE) {
                order.append("Channel, Slice");
             } else {
                order.append("Slice, Channel");
