@@ -42,7 +42,7 @@ public class SequenceSettings {
    public static class Builder {
       private int numFrames = 1;
       private double intervalMs = 0.0;
-      private int displayTimeUnit = 1;
+      private int displayTimeUnit = 0;  // default to ms to enable import of older settings
       private boolean useCustomIntervals = false;
       private ArrayList<Double> customIntervalsMs;
       private ArrayList<ChannelSpec> channels = new ArrayList<>();
@@ -55,6 +55,7 @@ public class SequenceSettings {
       private boolean useAutofocus = false;
       private int skipAutofocusCount = 0;
       private boolean save = false;
+      private int saveMode = 1;
       private String root = null;
       private String prefix = null;
       private double zReference = 0.0;
@@ -88,6 +89,7 @@ public class SequenceSettings {
       public Builder useAutofocus(boolean u) {useAutofocus = u; return this;}
       public Builder skipAutofocusCount(int s) {skipAutofocusCount = s; return this;}
       public Builder save(boolean s) {save = s; return this;}
+      public Builder saveMode(int s) { saveMode = s; return this;}
       public Builder root(String r) {root = r; return this;}
       public Builder prefix (String p) {prefix = p; return this;}
       public Builder zReference(double z) {zReference = z; return this;}
@@ -123,6 +125,7 @@ public class SequenceSettings {
          useAutofocus = s.useAutofocus;
          skipAutofocusCount = s.skipAutofocusCount;
          save = s.save;
+         saveMode = s.saveMode;
          root = s.root;
          prefix = s.prefix;
          zReference = s.zReference;
@@ -157,6 +160,7 @@ public class SequenceSettings {
          s.useAutofocus = useAutofocus;
          s.skipAutofocusCount = skipAutofocusCount;
          s.save = save;
+         s.saveMode = saveMode;
          s.root = root;
          s.prefix = prefix;
          s.zReference = zReference;
@@ -180,13 +184,11 @@ public class SequenceSettings {
 
    // acquisition protocol
    /**
-    * number of frames
     * @deprecated use Builder and numFrames() instead
     */
    @Deprecated
    public int numFrames = 1;
    /**
-    * frame interval
     * @deprecated use Builder and intervalMs() instead
     */
    @Deprecated
@@ -266,6 +268,7 @@ public class SequenceSettings {
     */
    @Deprecated
    public boolean save = false;
+   private int saveMode = 1;
    /**
     * root directory name
     * @deprecated use Builder and root() instead
@@ -353,11 +356,11 @@ public class SequenceSettings {
    @Deprecated
    public double sliceZTopUm;
    /**
-    * Order of the various axes during acquisition
+    * Order of the various axes during acquisition as defined in {@link org.micromanager.internal.utils.AcqOrderMode}
     * @deprecated use Builder and acqOrderMode() instead
     */
    @Deprecated
-   public int acqOrderMode; // defined in org.micromanager.internal.utils.AcqOrderMode
+   public int acqOrderMode;
 
 
    /**
@@ -396,6 +399,7 @@ public class SequenceSettings {
       relativeZSlice = input.relativeZSlice;
       root = input.root;
       save = input.save;
+      saveMode = input.saveMode;
       shouldDisplayImages = input.shouldDisplayImages;
       skipAutofocusCount = input.skipAutofocusCount;
       slices = input.slices == null ? null : new ArrayList<>(input.slices);
@@ -416,25 +420,60 @@ public class SequenceSettings {
 
    public SequenceSettings.Builder copyBuilder() {return new Builder(this);}
 
+   /**
+    * Number of time points to be acquired.  Defines a sequence of time points
+    * together with {@link #intervalMs()}.  Will be overriden when
+    * {@link #useCustomIntervals()} and {@link #customIntervalsMs()} are set.
+    */
    public int numFrames() {return numFrames;}
+
+   /**
+    * Desired interval between the start of two consecutive time points in milliseconds.
+    * Defines a sequence of time points together r with {@link #numFrames()}.
+    * Will be overriden when {@link #useCustomIntervals()}
+    * and {@link #customIntervalsMs()} are set.
+    */
    public double intervalMs() {return  intervalMs; }
+
    /**
     * Time unit, only used to store preferred way to display the time
     * @return 0-milliseconds, 1-seconds, 2-minutes
     */
    public int displayTimeUnit() { return displayTimeUnit;}
+
+   /**
+    * Whether to use custom time intervals defined {@link #customIntervalsMs()}
+    * @return use custom time intervals when true
+    */
    public boolean useCustomIntervals() { return useCustomIntervals; }
+   /**
+    * Time intervals between the starts of time points in milliseconds
+    */
    public ArrayList<Double> customIntervalsMs() { return customIntervalsMs; };
    public ArrayList<ChannelSpec> channels() {return channels; }
    public ArrayList<Double> slices() { return slices; }
    public boolean relativeZSlice() { return relativeZSlice; }
-   public boolean slicesFirst() { return slicesFirst; }
-   public boolean timeFirst() { return timeFirst; }
+   // public boolean slicesFirst() { return slicesFirst; }
+   // public boolean timeFirst() { return timeFirst; }
    public boolean keepShutterOpenSlices() { return keepShutterOpenSlices; }
    public boolean keepShutterOpenChannels() { return keepShutterOpenChannels; }
    public boolean useAutofocus() { return useAutofocus; }
    public int skipAutofocusCount() { return skipAutofocusCount; }
+
+   /**
+    * Whether the data acquisition should be stored on disk
+    * @return save when true, otherwise to RAMM only
+    */
    public boolean save() { return save; }
+   /**
+    * File format to be used to save this acquisition when {@link #save()} is set.
+    * Formats are defined in {@link org.micromanager.data.Datastore.SaveMode}.
+    * Currently:
+    * 0 - {@link org.micromanager.data.Datastore.SaveMode#SINGLEPLANE_TIFF_SERIES}
+    * 1 - {@link org.micromanager.data.Datastore.SaveMode#MULTIPAGE_TIFF}
+    * @return integer representing {@link org.micromanager.data.Datastore.SaveMode}
+    */
+   public int saveMode() { return saveMode; }
    public String root() { return root; }
    public String prefix() { return prefix; }
    public double zReference() { return zReference; }
@@ -449,6 +488,16 @@ public class SequenceSettings {
    public double sliceZStepUm() { return sliceZStepUm ; }
    public double sliceZBottomUm() { return sliceZBottomUm; }
    public double sliceZTopUm () { return sliceZTopUm; }
+   /**
+    * Order of the various axes during acquisition as defined in
+    * {@link org.micromanager.internal.utils.AcqOrderMode}
+    * Currently available orders:
+    * 0 - {@link org.micromanager.internal.utils.AcqOrderMode#TIME_POS_SLICE_CHANNEL}
+    * 1 - {@link org.micromanager.internal.utils.AcqOrderMode#TIME_POS_CHANNEL_SLICE}
+    * 2 - {@link org.micromanager.internal.utils.AcqOrderMode#POS_TIME_SLICE_CHANNEL}
+    * 3 - {@link org.micromanager.internal.utils.AcqOrderMode#POS_TIME_CHANNEL_SLICE}
+    * @return integer representing enum {@link org.micromanager.internal.utils.AcqOrderMode}
+    */
    public int acqOrderMode() { return acqOrderMode; }
 
    public static String toJSONStream(SequenceSettings settings) {

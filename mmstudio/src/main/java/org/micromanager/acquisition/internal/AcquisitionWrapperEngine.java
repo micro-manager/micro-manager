@@ -14,6 +14,7 @@ import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Pipeline;
+import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.events.AcquisitionEndedEvent;
 import org.micromanager.events.internal.DefaultAcquisitionEndedEvent;
 import org.micromanager.events.internal.DefaultAcquisitionStartedEvent;
@@ -139,6 +140,15 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
                     "Not enough space on disk to save the requested image set; acquisition canceled.");
             return null;
          }
+
+         if (sequenceSettings.saveMode() == 0) {
+            DefaultDatastore.setPreferredSaveMode(studio_,
+                    Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
+         } else if (sequenceSettings.saveMode() == 1) {
+            DefaultDatastore.setPreferredSaveMode(studio_,
+                    Datastore.SaveMode.MULTIPAGE_TIFF);
+         }
+
       }
 
       // manipulate positionlist

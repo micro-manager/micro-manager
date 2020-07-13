@@ -278,10 +278,10 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       super.add(createCommentsPanel(), "growx");
 
       // add update event listeners
-      positionsPanel_.addActionListener((ActionEvent arg0) -> applySettings());
+      positionsPanel_.addActionListener((ActionEvent arg0) -> applySettingsFromGUI());
       acqOrderBox_.addActionListener((ActionEvent e) -> {
          updateAcquisitionOrderText();
-         applySettings();
+         applySettingsFromGUI();
       });
 
       // load acquisition settings
@@ -418,7 +418,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       JTextField field = ((JSpinner.DefaultEditor) numFrames_.getEditor()).getTextField();
       field.setColumns(5);
       ((JSpinner.DefaultEditor) numFrames_.getEditor()).getTextField().setFont(DEFAULT_FONT);
-      numFrames_.addChangeListener((ChangeEvent e) -> applySettings());
+      numFrames_.addChangeListener((ChangeEvent e) -> applySettingsFromGUI());
 
       defaultTimesPanel_.add(numFrames_, "wrap");
 
@@ -466,7 +466,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       customTimesPanel_.add(overrideLabel, "alignx center, wrap");
       customTimesPanel_.add(disableCustomIntervalsButton, "alignx center");
 
-      framesPanel_.addActionListener((ActionEvent e) -> applySettings());
+      framesPanel_.addActionListener((ActionEvent e) -> applySettingsFromGUI());
       return framesPanel_;
    }
 
@@ -564,13 +564,13 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       stackKeepShutterOpenCheckBox_ = new JCheckBox("Keep shutter open");
       stackKeepShutterOpenCheckBox_.setFont(DEFAULT_FONT);
       stackKeepShutterOpenCheckBox_.setSelected(false);
-      stackKeepShutterOpenCheckBox_.addActionListener((final ActionEvent e) -> applySettings());
+      stackKeepShutterOpenCheckBox_.addActionListener((final ActionEvent e) -> applySettingsFromGUI());
       slicesPanel_.add(stackKeepShutterOpenCheckBox_,
             "skip 1, spanx, gaptop 0, alignx left");
 
       slicesPanel_.addActionListener((final ActionEvent e) -> {
          // enable disable all related contrtols
-         applySettings();
+         applySettingsFromGUI();
       });
       return slicesPanel_;
    }
@@ -624,12 +624,12 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       editor.getTextField().setColumns(3);
       afSkipInterval_.setValue(acqEng_.getSequenceSettings().skipAutofocusCount);
       afSkipInterval_.addChangeListener((ChangeEvent e) -> {
-         applySettings();
+         applySettingsFromGUI();
          afSkipInterval_.setValue(acqEng_.getSequenceSettings().skipAutofocusCount);
       });
       afPanel_.add(afSkipInterval_);
 
-      afPanel_.addActionListener((ActionEvent arg0) -> applySettings());
+      afPanel_.addActionListener((ActionEvent arg0) -> applySettingsFromGUI());
       return afPanel_;
    }
 
@@ -671,7 +671,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
       chanKeepShutterOpenCheckBox_ = new JCheckBox("Keep shutter open");
       chanKeepShutterOpenCheckBox_.setFont(DEFAULT_FONT);
-      chanKeepShutterOpenCheckBox_.addActionListener((final ActionEvent e) -> applySettings());
+      chanKeepShutterOpenCheckBox_.addActionListener((final ActionEvent e) -> applySettingsFromGUI());
       chanKeepShutterOpenCheckBox_.setSelected(false);
       channelsPanel_.add(chanKeepShutterOpenCheckBox_, "gapleft push, wrap");
 
@@ -688,7 +688,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       addButton.setMargin(new Insets(0, 0, 0, 0));
       addButton.setToolTipText("Add an additional channel");
       addButton.addActionListener((ActionEvent e) -> {
-         applySettings();
+         applySettingsFromGUI();
          model_.addNewChannel();
          model_.fireTableStructureChanged();
       });
@@ -701,7 +701,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       removeButton.addActionListener((ActionEvent e) -> {
          int sel = channelTable_.getSelectedRow();
          if (sel > -1) {
-            applySettings();
+            applySettingsFromGUI();
             model_.removeChannel(sel);
             model_.fireTableStructureChanged();
             if (channelTable_.getRowCount() > sel) {
@@ -719,7 +719,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       upButton.addActionListener((ActionEvent e) -> {
          int sel = channelTable_.getSelectedRow();
          if (sel > -1) {
-            applySettings();
+            applySettingsFromGUI();
             int newSel = model_.rowUp(sel);
             model_.fireTableStructureChanged();
             channelTable_.setRowSelectionInterval(newSel, newSel);
@@ -736,7 +736,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       downButton.addActionListener((ActionEvent e) -> {
          int sel = channelTable_.getSelectedRow();
          if (sel > -1) {
-            applySettings();
+            applySettingsFromGUI();
             int newSel = model_.rowDown(sel);
             model_.fireTableStructureChanged();
             channelTable_.setRowSelectionInterval(newSel, newSel);
@@ -744,7 +744,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       });
       channelsPanel_.add(downButton, buttonConstraint);
 
-      channelsPanel_.addActionListener((ActionEvent e) -> applySettings());
+      channelsPanel_.addActionListener((ActionEvent e) -> applySettingsFromGUI());
       return channelsPanel_;
    }
 
@@ -845,9 +845,19 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       ButtonGroup buttonGroup = new ButtonGroup();
       buttonGroup.add(singleButton_);
       buttonGroup.add(multiButton_);
-      updateSavingTypeButtons();
 
-      savePanel_.addActionListener((final ActionEvent e) -> applySettings());
+      Datastore.SaveMode mode = mmStudio_.data().getPreferredSaveMode();
+      if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
+         singleButton_.setSelected(true);
+      }
+      else if (mode == Datastore.SaveMode.MULTIPAGE_TIFF) {
+         multiButton_.setSelected(true);
+      }
+      else {
+         ReportingUtils.logError("Unrecognized save mode " + mode);
+      }
+
+      savePanel_.addActionListener((final ActionEvent e) -> applySettingsFromGUI());
       return savePanel_;
    }
 
@@ -908,7 +918,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    @Override
    public void propertyChange(PropertyChangeEvent e) {
       // update summary
-      applySettings();
+      applySettingsFromGUI();
       summaryTextArea_.setText(acqEng_.getVerboseSummary());
    }
    
@@ -967,19 +977,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       }
       return false;
    }
-   
-   public final void updateSavingTypeButtons() {
-      Datastore.SaveMode mode = mmStudio_.data().getPreferredSaveMode();
-      if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
-         singleButton_.setSelected(true);
-      }
-      else if (mode == Datastore.SaveMode.MULTIPAGE_TIFF) {
-         multiButton_.setSelected(true);
-      }
-      else {
-         ReportingUtils.logError("Unrecognized save mode " + mode);
-      }
-   }
+
 
    public void close() {
       try {
@@ -1027,37 +1025,36 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       // the following is for backward compatibility (i.e. restoring old format settings)
       // Change introduced July 10, 2020, delete after July 2021?
 
-      SequenceSettings sequenceSettings = new SequenceSettings();
+      SequenceSettings.Builder ssb = new SequenceSettings.Builder();
 
       // load acquisition engine preferences
-      sequenceSettings.numFrames = settings_.getInteger(ACQ_NUMFRAMES, 1);
-      sequenceSettings.intervalMs = settings_.getDouble(ACQ_INTERVAL, 0.0);
-      sequenceSettings.useFrames = settings_.getBoolean(
-              ACQ_ENABLE_MULTI_FRAME, false);
+      ssb.numFrames(settings_.getInteger(ACQ_NUMFRAMES, 1));
+      ssb.intervalMs(settings_.getDouble(ACQ_INTERVAL, 0.0));
+      ssb.useFrames(settings_.getBoolean(ACQ_ENABLE_MULTI_FRAME, false));
 
-      sequenceSettings.sliceZBottomUm = settings_.getDouble(ACQ_ZBOTTOM, 0.0);
-      sequenceSettings.sliceZTopUm = settings_.getDouble(ACQ_ZTOP, 0.0);
-      sequenceSettings.sliceZStepUm = settings_.getDouble(ACQ_ZSTEP, 1.0);
-      sequenceSettings.relativeZSlice = settings_.getInteger(ACQ_Z_VALUES, 0) == 0;
-      sequenceSettings.useSlices = settings_.getBoolean(ACQ_ENABLE_SLICE_SETTINGS, false);
+      ssb.sliceZBottomUm(settings_.getDouble(ACQ_ZBOTTOM, 0.0));
+      ssb.sliceZTopUm(settings_.getDouble(ACQ_ZTOP, 0.0));
+      ssb.sliceZStepUm(settings_.getDouble(ACQ_ZSTEP, 1.0));
+      ssb.relativeZSlice(settings_.getInteger(ACQ_Z_VALUES, 0) == 0);
+      ssb.useSlices(settings_.getBoolean(ACQ_ENABLE_SLICE_SETTINGS, false));
 
-      sequenceSettings.usePositionList = settings_.getBoolean(ACQ_ENABLE_MULTI_POSITION, false);
+      ssb.usePositionList(settings_.getBoolean(ACQ_ENABLE_MULTI_POSITION, false));
 
-      sequenceSettings.channelGroup = settings_.getString(ACQ_CHANNEL_GROUP, "");
-      sequenceSettings.useChannels = settings_.getBoolean(ACQ_ENABLE_MULTI_CHANNEL, false);
+      ssb.channelGroup(settings_.getString(ACQ_CHANNEL_GROUP, ""));
+      ssb.useChannels(settings_.getBoolean(ACQ_ENABLE_MULTI_CHANNEL, false));
 
-      sequenceSettings.save = settings_.getBoolean(ACQ_SAVE_FILES, false);
-      sequenceSettings.prefix = settings_.getString(ACQ_DIR_NAME, "Untitled");
-      sequenceSettings.root = settings_.getString(ACQ_ROOT_NAME,
-              System.getProperty("user.home") + "/AcquisitionData");
-      sequenceSettings.acqOrderMode = settings_.getInteger(ACQ_ORDER_MODE, 0);
-      sequenceSettings.useAutofocus = settings_.getBoolean(ACQ_AF_ENABLE, false);
-      sequenceSettings.skipAutofocusCount = settings_.getInteger(ACQ_AF_SKIP_INTERVAL, 0);
+      ssb.save(settings_.getBoolean(ACQ_SAVE_FILES, false));
+      ssb.prefix(settings_.getString(ACQ_DIR_NAME, "Untitled"));
+      ssb.root(settings_.getString(ACQ_ROOT_NAME,
+              System.getProperty("user.home") + "/AcquisitionData"));
+      ssb.acqOrderMode(settings_.getInteger(ACQ_ORDER_MODE, 0));
+      ssb.useAutofocus(settings_.getBoolean(ACQ_AF_ENABLE, false));
+      ssb.skipAutofocusCount(settings_.getInteger(ACQ_AF_SKIP_INTERVAL, 0));
 
-      sequenceSettings.keepShutterOpenChannels = settings_.getBoolean(
-              ACQ_CHANNELS_KEEP_SHUTTER_OPEN, false);
-      sequenceSettings.keepShutterOpenSlices = settings_.getBoolean(
-              ACQ_STACK_KEEP_SHUTTER_OPEN, false);
+      ssb.keepShutterOpenChannels(settings_.getBoolean(
+              ACQ_CHANNELS_KEEP_SHUTTER_OPEN, false));
+      ssb.keepShutterOpenSlices(settings_.getBoolean(
+              ACQ_STACK_KEEP_SHUTTER_OPEN, false));
 
       ArrayList<Double> customIntervals = new ArrayList<>();
       int h = 0;
@@ -1065,13 +1062,13 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          customIntervals.add(settings_.getDouble(CUSTOM_INTERVAL_PREFIX + h, -1.0));
          h++;
       }
-      sequenceSettings.customIntervalsMs = customIntervals;
-      sequenceSettings.useCustomIntervals = settings_.getBoolean(
-              ACQ_ENABLE_CUSTOM_INTERVALS, false);
+      ssb.customIntervalsMs(customIntervals);
+      ssb.useCustomIntervals(settings_.getBoolean(
+              ACQ_ENABLE_CUSTOM_INTERVALS, false));
       // acqEng_.getChannels().clear();
-      sequenceSettings.shouldDisplayImages = settings_.getBoolean(SHOULD_HIDE_DISPLAY, false);
+      ssb.shouldDisplayImages(settings_.getBoolean(SHOULD_HIDE_DISPLAY, false));
 
-      return sequenceSettings;
+      return ssb.build();
    }
 
    public final void updateGUIContents() {
@@ -1079,7 +1076,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       updateGUIFromSequenceSettings(sequenceSettings);
    }
 
-   private void updateGUIFromSequenceSettings(SequenceSettings sequenceSettings) {
+   private void updateGUIFromSequenceSettings(final SequenceSettings sequenceSettings) {
       SwingUtilities.invokeLater(() -> {
          if (disableGUItoSettings_) {
             return;
@@ -1175,7 +1172,15 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
          commentTextArea_.setText(sequenceSettings.comment());
 
-         updateSavingTypeButtons();
+         if (sequenceSettings.saveMode() == 0) {
+            DefaultDatastore.setPreferredSaveMode(mmStudio_,
+                    Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
+            singleButton_.setSelected(true);
+         } else if (sequenceSettings.saveMode() == 1) {
+            DefaultDatastore.setPreferredSaveMode(mmStudio_,
+                    Datastore.SaveMode.MULTIPAGE_TIFF);
+            multiButton_.setSelected(true);
+         }
 
          // update summary
          summaryTextArea_.setText(acqEng_.getVerboseSummary());
@@ -1193,22 +1198,9 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    }
 
    public synchronized void saveAcqSettingsToProfile() {
-      applySettings();
+      applySettingsFromGUI();
       SequenceSettings sequenceSettings = acqEng_.getSequenceSettings();
       settings_.putString(MDA_SEQUENCE_SETTINGS, SequenceSettings.toJSONStream(sequenceSettings));
-
-      // Save preferred save mode.
-      if (singleButton_.isSelected()) {
-         DefaultDatastore.setPreferredSaveMode(mmStudio_, 
-            Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
-      }
-      else if (multiButton_.isSelected()) {
-         DefaultDatastore.setPreferredSaveMode(mmStudio_, 
-            Datastore.SaveMode.MULTIPAGE_TIFF);
-      }
-      else {
-         ReportingUtils.logError("Unknown save mode button is selected, or no buttons are selected");
-      }
 
       // Save model column widths and order
       for (int k = 0; k < model_.getColumnCount(); k++) {
@@ -1236,7 +1228,9 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
               FileDialogs.MM_DATA_SET);
       if (result != null) {
          rootField_.setText(result.getAbsolutePath().trim());
-         acqEng_.getSequenceSettings().root = result.getAbsolutePath().trim();
+         acqEng_.setSequenceSettings(acqEng_.getSequenceSettings().copyBuilder().
+                 root(result.getAbsolutePath().trim()).build());
+         //acqEng_.getSequenceSettings().root = result.getAbsolutePath().trim();
       }
    }
 
@@ -1244,7 +1238,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       try {
          double z = mmStudio_.core().getPosition();
          zTop_.setText(NumberUtils.doubleToDisplayString(z));
-         applySettings();
+         applySettingsFromGUI();
          summaryTextArea_.setText(acqEng_.getVerboseSummary());
       } catch (Exception e) {
          mmStudio_.logs().showError(e, "Error getting Z Position");
@@ -1255,8 +1249,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       try {
          double z = mmStudio_.core().getPosition();
          zBottom_.setText(NumberUtils.doubleToDisplayString(z));
-         applySettings();
-         // update summary
+         applySettingsFromGUI();
          summaryTextArea_.setText(acqEng_.getVerboseSummary());
       } catch (Exception e) {
          mmStudio_.logs().showError(e, "Error getting Z Position");
@@ -1391,10 +1384,10 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       }
 
       try {
-         applySettings();
+         applySettingsFromGUI();
          saveAcqSettingsToProfile();
          ChannelTableModel model = (ChannelTableModel) channelTable_.getModel();
-         if (acqEng_.getSequenceSettings().useChannels && model.duplicateChannels()) {
+         if (acqEng_.getSequenceSettings().useChannels() && model.duplicateChannels()) {
             JOptionPane.showMessageDialog(this, "Cannot start acquisition using the same channel twice");
             return null;
          }
@@ -1434,7 +1427,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          return null;
       }
 
-      applySettings();
+      applySettingsFromGUI();
       if (! warnIfMemoryMayNotBeSufficient()) {
          return null;
       }
@@ -1469,8 +1462,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    public void settingsChanged() {
       updateGUIContents();
    }
-      
-   private void applySettings() {
+
+   private void applySettingsFromGUI() {
       if (disableGUItoSettings_) {
          return;
       }
@@ -1531,6 +1524,21 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       ssb.comment(commentTextArea_.getText());
       ssb.useAutofocus(afPanel_.isSelected());
       ssb.shouldDisplayImages(!getShouldHideMDADisplay());
+
+      // Save preferred save mode.
+      if (singleButton_.isSelected()) {
+         DefaultDatastore.setPreferredSaveMode(mmStudio_,
+                 Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
+         ssb.saveMode(0);
+      }
+      else if (multiButton_.isSelected()) {
+         DefaultDatastore.setPreferredSaveMode(mmStudio_,
+                 Datastore.SaveMode.MULTIPAGE_TIFF);
+         ssb.saveMode(1);
+      }
+      else {
+         ReportingUtils.logError("Unknown save mode button is selected, or no buttons are selected");
+      }
 
       acqEng_.setSequenceSettings(ssb.build());
 
@@ -1607,7 +1615,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       }
       zBottom_.setText(NumberUtils.doubleToDisplayString(newBottom));
       zTop_.setText(NumberUtils.doubleToDisplayString(newTop));
-      applySettings();
+      applySettingsFromGUI();
    }
 
    private void showCustomTimesDialog() {
