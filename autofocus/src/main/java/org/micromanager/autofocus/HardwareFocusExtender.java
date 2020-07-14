@@ -49,6 +49,8 @@ import org.scijava.plugin.SciJavaPlugin;
 public class HardwareFocusExtender extends AutofocusBase implements AutofocusPlugin, SciJavaPlugin {
 
    private static final String AF_DEVICE_NAME = "HardwareFocusExtender";
+   
+   //Settings property names
    private static final String HARDWARE_AUTOFOCUS = "HardwareFocusDevice";
    private static final String ZDRIVE = "ZDrive";
    private static final String STEP_SIZE = "StepSize (um)";
@@ -56,6 +58,8 @@ public class HardwareFocusExtender extends AutofocusBase implements AutofocusPlu
    private static final String UPPER_LIMIT = "Upper limit (relative, um)";
    
    private Studio gui_;
+   
+   //These variables store current settings for the plugin
    private String hardwareFocusDevice_;
    private String zDrive_;
    private double stepSize_ = 5.0;
@@ -154,19 +158,20 @@ public class HardwareFocusExtender extends AutofocusBase implements AutofocusPlu
    @Override
    public void setContext(Studio app) {
       gui_ = app;
-      gui_.events().registerForEvents(this);
+      gui_.events().registerForEvents(this); //We subscribe to the AutofocusPluginShouldInitialize event.
    }
 
    /**
     *
-    * @return z position for in focus image
+    * @return z position for in focus image. Returns 0 if no focused position was found.
     * @throws Exception
     */
    @Override
    public double fullFocus() throws Exception {
       applySettings();
+      gui_.logs().logDebugMessage("HardwareFocusExtender: Beginning fullFocus.");
       if (hardwareFocusDevice_ == null || zDrive_ == null) {
-         ReportingUtils.showError("Autofocus, and/or ZDrive have not been set");
+         gui_.logs().showError("HardwareFocusExtender: Autofocus, and/or ZDrive have not been set");
          return 0.0;
       }
       CMMCore core = gui_.getCMMCore();
@@ -174,7 +179,7 @@ public class HardwareFocusExtender extends AutofocusBase implements AutofocusPlu
          core.getDeviceType(hardwareFocusDevice_);
          core.getDeviceType(zDrive_);
       } catch (Exception ex) {
-         ReportingUtils.showError("Hardware focus device and/or ZDrive were not set");
+         gui_.logs().showError("HardwareFocusExtender: Hardware focus device and/or ZDrive were not set");
          return 0.0;
       }
       double pos = 0.0;
@@ -185,33 +190,41 @@ public class HardwareFocusExtender extends AutofocusBase implements AutofocusPlu
          ReportingUtils.logError(ex);
       }
       boolean success = testFocus();
+      //Search from 0 to `lowerLimit` for a focus lock.
       for (int i = 0; i < lowerLimit_ / stepSize_ && !success; i++) {
+         double z = pos + (stepSize_ * -i);
          try {
-            core.setPosition(zDrive_, pos + (stepSize_ * -i) );
+            core.setPosition(zDrive_, z);
             core.waitForDevice(zDrive_);
          } catch (Exception ex) {
-            ReportingUtils.showError(ex, "Failed to set Z position");
+            gui_.logs().showError(ex, "Failed to set Z position");
          }
+         gui_.logs().logDebugMessage(String.format("HardwareFocusExtender: Checking hardware focus at %.2f.", z));
          success = testFocus();
       }
+      //If searching to `lowerLimit` failed try searching from 0 to `upperLimit`
       for (int i = 0; i < upperLimit_ / stepSize_ && !success; i++) {
+        double z = pos + (stepSize_ * i); 
         try {
-            core.setPosition(zDrive_, pos + (stepSize_ * i) );
+            core.setPosition(zDrive_, z );
             core.waitForDevice(zDrive_);
          } catch (Exception ex) {
-            ReportingUtils.showError(ex, "Failed to set Z position");
+            gui_.logs().showError(ex, "HardwareFocusExtender: Failed to set Z position");
          }
+         gui_.logs().logDebugMessage(String.format("HardwareFocusExtender: Checking hardware focus at %.2f.", z));
          success = testFocus();
       }
       if (success) {
          try {
-            return core.getPosition(zDrive_);
+            double currentZ = core.getPosition(zDrive_);
+            gui_.logs().logDebugMessage(String.format("HardwareFocusExtender: Successfully found focus at %.2f.", currentZ));
+            return currentZ;
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
          }
       }
-      
-      return 0.0;
+      gui_.logs().logDebugMessage("HardwareFocusExtender: Failed to find focus. Returning 0.");
+      return 0.0; //No focus was found.
    }
 
    /**
@@ -221,11 +234,10 @@ public class HardwareFocusExtender extends AutofocusBase implements AutofocusPlu
    private boolean testFocus() {
       CMMCore core = gui_.getCMMCore();
       try {
-         // specific for Nikon PFS.  Check if the PFS is within range instead of
-         // trying to lock
-         if (core.hasProperty(hardwareFocusDevice_, "Status")) {
+         // specific for Nikon TI 1 PFS. If the TI reports that it is out of search range there is not point trying fullFocus.
+         if (core.getDeviceLibrary(hardwareFocusDevice_).equals("NikonTI") && core.hasProperty(hardwareFocusDevice_, "Status")) {
             String result = core.getProperty(hardwareFocusDevice_, "Status");
-            if (result.equals("Out of focus search range")) {
+            if (result.equals("Out of focus search range")) { 
                return false;
             }
          }
