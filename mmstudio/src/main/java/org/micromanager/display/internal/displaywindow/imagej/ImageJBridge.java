@@ -46,12 +46,11 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultMetadata;
-import org.micromanager.display.internal.displaywindow.DisplayUIController;
-import org.micromanager.display.internal.displaywindow.interfaces.Bridgeable;
 import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MustCallOnEDT;
+import org.micromanager.display.internal.displaywindow.interfaces.ImageJBridgeParent;
 
 /**
  * Bridge to ImageJ1 image viewer window.
@@ -71,7 +70,7 @@ import org.micromanager.internal.utils.MustCallOnEDT;
  * @author Mark Tsuchida
  */
 public final class ImageJBridge {
-   private final Bridgeable uiController_;
+   private final ImageJBridgeParent uiController_;
 
    // Our child objects on the ImageJ side. These are created and owned by this
    // class. There are three events in the lifetime of these objects: creation,
@@ -141,14 +140,14 @@ public final class ImageJBridge {
 
 
    @MustCallOnEDT
-   public static ImageJBridge create(final DisplayUIController parent, 
+   public static ImageJBridge create(final ImageJBridgeParent parent, 
            final ImagesAndStats images) {
       ImageJBridge instance = new ImageJBridge(parent, images);
       instance.initialize();
       return instance;
    }
 
-   private ImageJBridge(DisplayUIController parent, ImagesAndStats images) {
+   private ImageJBridge(ImageJBridgeParent parent, ImagesAndStats images) {
       uiController_ = parent;
       if (images != null && images.getRequest().getImages().size() > 0 && 
               images.getRequest().getImage(0).getNumComponents() > 1) {

@@ -71,9 +71,9 @@ import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.data.DataProviderHasNewNameEvent;
 import org.micromanager.data.Datastore;
 import org.micromanager.display.internal.RememberedSettings;
-import org.micromanager.display.internal.displaywindow.interfaces.Controllable;
 import org.micromanager.display.internal.link.internal.DefaultLinkManager;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.display.internal.displaywindow.interfaces.DisplayUIController;
 
 /**
  * Main controller for the standard image viewer.
@@ -116,7 +116,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    // The UI controller manages the actual JFrame and all the components in it,
    // including interaction with ImageJ. After being closed, set to null.
    // Must access on EDT
-   private Controllable uiController_;
+   private DisplayUIController uiController_;
 
    private final Object selectionLock_ = new Object();
    private BoundsRectAndMask selection_ = BoundsRectAndMask.unselected();
@@ -267,7 +267,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       animationController_.setPerformanceMonitor(perfMon_);
       animationController_.addListener(this);
 
-      uiController_ = DisplayUIController.create(studio_, this, controlsFactory_,
+      uiController_ = DefaultDisplayUIController.create(studio_, this, controlsFactory_,
             animationController_);
       uiController_.setPerformanceMonitor(perfMon_);
       // TODO Make sure frame controller forwards messages to us (e.g.
@@ -284,7 +284,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    }
 
    @MustCallOnEDT
-   public Controllable getUIController() {
+   public DisplayUIController getUIController() {
       return uiController_;
    }
 

@@ -1,8 +1,15 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+// Copyright (C) 2020 Contributors to the Micro-Manager project
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 package org.micromanager.display.internal.displaywindow.interfaces;
 
 import ij.ImagePlus;
@@ -17,16 +24,12 @@ import org.micromanager.internal.utils.performance.PerformanceMonitor;
 
 /**
  *
- * @author nicke
+ * @author Nick Anthony (nickmanthony at hotmail.com)
  */
-public interface Controllable extends Closeable {
+public interface DisplayUIController extends Closeable {
     @MustCallOnEDT
     void applyDisplaySettings(DisplaySettings settings);
     
-    //
-    // Interface exposed for use by ImageJBridge and its associated objects,
-    // presenting what ImageJ should think the current state of the display is.
-    //
     double getDisplayIntervalQuantile(double q);
     
     @MustCallOnEDT
@@ -54,6 +57,7 @@ public interface Controllable extends Closeable {
     @MustCallOnEDT
     void toFront();
     
+    @MustCallOnEDT
     public void displayImages(ImagesAndStats images);
     
     public void updateSliders(ImagesAndStats images);

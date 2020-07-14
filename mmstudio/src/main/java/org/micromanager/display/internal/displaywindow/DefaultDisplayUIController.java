@@ -32,7 +32,6 @@ import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -83,8 +82,6 @@ import org.micromanager.events.LiveModeEvent;
 import org.micromanager.display.DisplayWindowControlsFactory;
 import org.micromanager.display.internal.DefaultComponentDisplaySettings;
 import org.micromanager.display.internal.displaywindow.imagej.MMImageCanvas;
-import org.micromanager.display.internal.displaywindow.interfaces.Bridgeable;
-import org.micromanager.display.internal.displaywindow.interfaces.Controllable;
 import org.micromanager.display.internal.event.DisplayMouseEvent;
 import org.micromanager.display.internal.event.DisplayMouseWheelEvent;
 import org.micromanager.display.internal.event.DataViewerMousePixelInfoChangedEvent;
@@ -105,6 +102,8 @@ import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.ColorMaps;
+import org.micromanager.display.internal.displaywindow.interfaces.DisplayUIController;
+import org.micromanager.display.internal.displaywindow.interfaces.ImageJBridgeParent;
 
 /**
  * Manages the JFrame(s) for image displays.
@@ -118,8 +117,8 @@ import org.micromanager.internal.utils.ColorMaps;
  *
  * @author Mark A. Tsuchida
  */
-public final class DisplayUIController implements 
-        Closeable, MDScrollBarPanel.Listener, WindowListener, Bridgeable, Controllable {
+public final class DefaultDisplayUIController implements 
+        MDScrollBarPanel.Listener, WindowListener, ImageJBridgeParent, DisplayUIController {
    private final Studio studio_;
    private final DisplayController displayController_;
    private final AnimationController animationController_;
@@ -230,12 +229,12 @@ public final class DisplayUIController implements
 
 
    @MustCallOnEDT
-   static DisplayUIController create(Studio studio, 
+   static DefaultDisplayUIController create(Studio studio, 
          DisplayController parent,
          DisplayWindowControlsFactory controlsFactory,
          AnimationController animationController)
    {
-      DisplayUIController instance = new DisplayUIController(studio, parent,
+      DefaultDisplayUIController instance = new DefaultDisplayUIController(studio, parent,
             controlsFactory, animationController);
       parent.registerForEvents(instance);
       studio.events().registerForEvents(instance);
@@ -244,7 +243,7 @@ public final class DisplayUIController implements
    }
 
    @MustCallOnEDT
-   private DisplayUIController(Studio studio, 
+   private DefaultDisplayUIController(Studio studio, 
          DisplayController parent,
          DisplayWindowControlsFactory controlsFactory,
          AnimationController animationController)
