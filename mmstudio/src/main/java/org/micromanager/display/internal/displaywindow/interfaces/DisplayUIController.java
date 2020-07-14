@@ -26,6 +26,14 @@ import org.micromanager.internal.utils.performance.PerformanceMonitor;
  *
  * @author Nick Anthony (nickmanthony at hotmail.com)
  */
+
+/*
+This interface outlines the methods that must be implemented for a class to act
+as a UI controller for the `DisplayController`. To quote a comment from `DisplayController`:
+"The UI controller manages the actual JFrame and all the components in it,
+including interaction with ImageJ. After being closed, set to null.
+Must access on EDT"
+*/
 public interface DisplayUIController extends Closeable {
     @MustCallOnEDT
     void applyDisplaySettings(DisplaySettings settings);

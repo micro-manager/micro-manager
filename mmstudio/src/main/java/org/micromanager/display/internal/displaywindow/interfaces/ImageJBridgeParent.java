@@ -31,6 +31,11 @@ import org.micromanager.internal.utils.MustCallOnEDT;
  *
  * @author Nick Anthony (nickmanthony at hotmail.com)
  */
+
+/*
+This interface outlines the methods that must be implemented for an object to
+act as the `parent` of the `ImageJBridge`
+*/
 public interface ImageJBridgeParent {
     void canvasDidChangeSize();
 
