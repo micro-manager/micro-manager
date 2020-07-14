@@ -322,46 +322,32 @@ public class SequenceSettings {
 
    /**
     * Whether or not to acquire a z-stack during the acquisition.
-    * @deprecated use Builder and useSlices() instead
     */
-   @Deprecated
-   public boolean useSlices = false;
+   private boolean useSlices = false;
    /**
     * Whether or not to acquire multiple time points during the acquisition.
-    * @deprecated use Builder and useFrames() instead
     */
-   @Deprecated
-   public boolean useFrames = false;
+   private boolean useFrames = false;
    /**
     * Whether or not to acquire multiple channels during the acquisition.
-    * @deprecated use Builder and useChannels() instead
     */
-   @Deprecated
-   public boolean useChannels = false;
+   private boolean useChannels = false;
    /**
     * Distance the z-drive should travel between steps when acquiring a z-stack
-    * @deprecated use Builder and sliceZStepUm() instead
     */
-   @Deprecated
-   public double sliceZStepUm;
+   private double sliceZStepUm;
    /**
     * Start position of the z-stack in microns.  Can be absolute or relative to current position.
-    * @deprecated use Builder and sliceZBottomUm() instead
     */
-   @Deprecated
-   public double sliceZBottomUm;
+   private double sliceZBottomUm;
    /**
     * End position of the z-stack in microns.  Can be absolute or relative to current position.
-    * @deprecated use Builder and sliceZTopUm() instead
     */
-   @Deprecated
-   public double sliceZTopUm;
+   private double sliceZTopUm;
    /**
     * Order of the various axes during acquisition as defined in {@link org.micromanager.internal.utils.AcqOrderMode}
-    * @deprecated use Builder and acqOrderMode() instead
     */
-   @Deprecated
-   public int acqOrderMode;
+   private int acqOrderMode;
 
 
    /**
@@ -427,7 +413,6 @@ public class SequenceSettings {
     * {@link #useCustomIntervals()} and {@link #customIntervalsMs()} are set.
     */
    public int numFrames() {return numFrames;}
-
    /**
     * Desired interval between the start of two consecutive time points in milliseconds.
     * Defines a sequence of time points together r with {@link #numFrames()}.
@@ -435,13 +420,11 @@ public class SequenceSettings {
     * and {@link #customIntervalsMs()} are set.
     */
    public double intervalMs() {return  intervalMs; }
-
    /**
     * Time unit, only used to store preferred way to display the time
     * @return 0-milliseconds, 1-seconds, 2-minutes
     */
    public int displayTimeUnit() { return displayTimeUnit;}
-
    /**
     * Whether to use custom time intervals defined {@link #customIntervalsMs()}
     * @return use custom time intervals when true
@@ -451,14 +434,41 @@ public class SequenceSettings {
     * Time intervals between the starts of time points in milliseconds
     */
    public ArrayList<Double> customIntervalsMs() { return customIntervalsMs; };
+   /**
+    * LIst with channel definitions to be used in the acquisition
+    * @return LIst with channel definitions to be used in the acquisition
+    */
    public ArrayList<ChannelSpec> channels() {return channels; }
+   /**
+    * Z- drive positions to be used to acquire a z-stack
+    * @return List of Z- drive positions to be used to acquire a z-stack
+    */
    public ArrayList<Double> slices() { return slices; }
+   /**
+    * Whether to base the z Top and Bottom for a z stack relative to a referent position
+    * or treat them as absolute values
+    * @return true when values are relative
+    */
    public boolean relativeZSlice() { return relativeZSlice; }
    // public boolean slicesFirst() { return slicesFirst; }
    // public boolean timeFirst() { return timeFirst; }
+   /**
+    * Whether to keep shutter open during z-stack stage movements
+    */
    public boolean keepShutterOpenSlices() { return keepShutterOpenSlices; }
+   /**
+    * Whether to keep shutter open during channel changes
+    */
    public boolean keepShutterOpenChannels() { return keepShutterOpenChannels; }
+
+   /**
+    * Whether to use autofocus before each time point / position
+    * @return Whether to use autofocus before each time point / position
+    */
    public boolean useAutofocus() { return useAutofocus; }
+   /**
+    * how many autofocus opportunities to skip
+    */
    public int skipAutofocusCount() { return skipAutofocusCount; }
 
    /**
@@ -475,19 +485,70 @@ public class SequenceSettings {
     * @return integer representing {@link org.micromanager.data.Datastore.SaveMode}
     */
    public Datastore.SaveMode saveMode() { return saveMode; }
+
+   /**
+    * Directory where data will be saved
+    * @return irectory where data will be saved
+    */
    public String root() { return root; }
+
+   /**
+    * Acquisition name. Will be used in storage and display
+    * @return acquisition anme
+    */
    public String prefix() { return prefix; }
+   /**
+    * referent z position for relative moves
+    */
    public double zReference() { return zReference; }
+
+   /**
+    * Text comment to be attached to the acquired data
+    * @return text comment
+    */
    public String comment() { return comment; }
+   /**
+    * Configuration group used to define channels used in the acquisition
+    */
    public String channelGroup() { return channelGroup; }
+
+   /**
+    * Whether to acquire at multiple positions (defined in the positionLost
+    * @return True if positions in the list should all be visited, when false, only acquired at current position
+    */
    public boolean usePositionList() { return usePositionList; }
+   /**
+    * Minimum camera timeout, in ms, for sequence acquisitions
+    * (actual timeout depends on exposure time and other factors)
+    */
    public int cameraTimeout() { return cameraTimeout; }
+   /**
+    * Whether to display acquired data
+    */
    public boolean shouldDisplayImages() { return shouldDisplayImages; }
+   /**
+    * Whether to acquire z stacks during the acquisition.
+    */
    public boolean useSlices() { return useSlices; }
+   /**
+    * Whether to acquire multiple time points during the acquisition.
+    */
    public boolean useFrames() { return useFrames; }
+   /**
+    * Whether to acquire multiple channels during the acquisition.
+    */
    public boolean useChannels() { return  useChannels; }
+   /**
+    * Distance the z-drive should travel between steps when acquiring a z-stack
+    */
    public double sliceZStepUm() { return sliceZStepUm ; }
+   /**
+    * Start position of the z-stack in microns.  Can be absolute or relative to current position.
+    */
    public double sliceZBottomUm() { return sliceZBottomUm; }
+   /**
+    * End position of the z-stack in microns.  Can be absolute or relative to current position.
+    */
    public double sliceZTopUm () { return sliceZTopUm; }
    /**
     * Order of the various axes during acquisition as defined in
