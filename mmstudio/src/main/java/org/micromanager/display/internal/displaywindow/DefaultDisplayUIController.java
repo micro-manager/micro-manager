@@ -330,7 +330,7 @@ public final class DefaultDisplayUIController implements
    @MustCallOnEDT
     @Override
    public JFrame getFrame() {
-      return  frame_;
+      return fullScreenFrame_ == null ? frame_ : fullScreenFrame_;
    }
 
    @MustCallOnEDT
