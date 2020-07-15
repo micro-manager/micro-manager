@@ -2,7 +2,7 @@
 // FILE:          BaslerAce.h
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Adapter for Basler Ace Cameras
+// DESCRIPTION:   Adapter for Basler  Cameras
 //
 // Copyright 2018 Henry Pinkard
 //
@@ -61,7 +61,7 @@ enum
 //////////////////////////////////////////////////////////////////////////////
 //Callback class for putting frames in circular buffer as they arrive
 
-
+class CTempCameraEventHandler;
 class CircularBufferInserter;
 class BaslerCamera : public CCameraBase<BaslerCamera>  {
 public:
@@ -107,6 +107,7 @@ public:
 	CImageFormatConverter *converter;
     CircularBufferInserter *ImageHandler_;
 	std::string EnumToString(EDeviceAccessiblityInfo DeviceAccessiblityInfo);
+	void UpdateTemperature();
 
 	/**
 	* Starts continuous acquisition.
@@ -128,56 +129,59 @@ public:
 
 	// action interface
 	// ----------------
-	int OnWidth(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnHeight(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnAcqFramerate(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnAcqFramerateEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnAutoExpore(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnAutoGain(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnBinningMode(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnSensorReadoutMode(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnShutterMode(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnDeviceLinkThroughputLimit(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnHeight(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnInterPacketDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnLightSourcePreset(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnAutoGain(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnAutoExpore(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnTemperatureState(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnResultingFramerate(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnReverseX(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnReverseY(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnAcqFramerateEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnAcqFramerate(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnResultingFramerate(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnSensorReadoutMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnShutterMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnTemperatureState(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnTriggerSource(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnWidth(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
 
 	CBaslerUniversalInstantCamera *camera_;
-   
+	CTempCameraEventHandler *pTempHandler_;
 
     int nComponents_;
 	unsigned bitDepth_;
 	bool  colorCamera_;
 
 	unsigned maxWidth_, maxHeight_;
-	double exposure_us_, exposureMax_, exposureMin_;
-	double gain_, gainMax_, gainMin_;
-	double offset_, offsetMin_, offsetMax_;
-	double temperature_;
-	double acqFramerate_, acqFramerateMax_, acqFramerateMin_;
 	int64_t DeviceLinkThroughputLimit_;
 	int64_t InterPacketDelay_;
 	double ResultingFrameRatePrevious;
-	
-	std::string pixelType_;
+	double acqFramerate_, acqFramerateMax_, acqFramerateMin_;
+	double exposure_us_, exposureMax_, exposureMin_;
+	double gain_, gainMax_, gainMin_;
+	double offset_, offsetMin_, offsetMax_;
+
+
 	std::string binningFactor_;
-	std::string sensorReadoutMode_;
-	std::string shutterMode_;
-	std::string setAcqFrm_;
-	std::string temperatureState_;
+	std::string pixelType_;
 	std::string reverseX_, reverseY_;
+	std::string sensorReadoutMode_;
+	std::string setAcqFrm_;
+	std::string shutterMode_;
+	std::string temperature_;
+	std::string temperatureState_;
+	
+
 	void* imgBuffer_;
 	long imgBufferSize_;
 	ImgBuffer img_;
@@ -189,6 +193,27 @@ private:
 
 	void ResizeSnapBuffer();
 	
+};
+
+//Enumeration used for distinguishing different events.
+enum TemperatureEvents
+{
+	TempCritical = 100,
+	TempOverTemp = 200    
+};
+
+// Number of images to be grabbed.
+static const uint32_t c_countOfImagesToGrab = 5;
+
+
+// Example handler for camera events.
+class CTempCameraEventHandler : public CBaslerUniversalCameraEventHandler
+{
+private:
+	BaslerCamera* dev_;
+public:
+	CTempCameraEventHandler(BaslerCamera* dev);
+	virtual void OnCameraEvent(CBaslerUniversalInstantCamera& camera, intptr_t userProvidedId, GenApi::INode* pNode);
 };
 
 
