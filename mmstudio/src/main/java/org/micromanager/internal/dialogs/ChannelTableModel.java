@@ -1,12 +1,5 @@
 package org.micromanager.internal.dialogs;
 
-import java.awt.Color;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-import javax.swing.table.AbstractTableModel;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
@@ -16,6 +9,13 @@ import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TooltipTextMaker;
 import org.micromanager.propertymap.MutablePropertyMapView;
+
+import javax.swing.event.TableModelEvent;
+import javax.swing.table.AbstractTableModel;
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Data representation class for the channels list in the MDA dialog.
@@ -124,7 +124,7 @@ public final class ChannelTableModel extends AbstractTableModel  {
       } else if (col == 1) {
          cb.config (value.toString());
          ChannelSpec cs = ChannelSpec.fromJSONStream(
-                 settings_.getString(channelProfileKey(acqEng_.getChannelGroup(),
+                 settings_.getString(channelProfileKey(acqEng_.getSequenceSettings().channelGroup,
                          value.toString()), ""));
          if (cs == null) {
             // Our fallback color is the colorblind-friendly color for our
@@ -142,10 +142,10 @@ public final class ChannelTableModel extends AbstractTableModel  {
       } else if (col == 2) {
          cb.exposure (((Double) value));
          if (AcqControlDlg.getShouldSyncExposure()) {
-            studio_.app().setChannelExposureTime(acqEng_.getChannelGroup(),
+            studio_.app().setChannelExposureTime(acqEng_.getSequenceSettings().channelGroup,
                     channel.config(), (Double) value);
          } else {
-            this.setChannelExposureTime(acqEng_.getChannelGroup(),
+            this.setChannelExposureTime(acqEng_.getSequenceSettings().channelGroup,
                     channel.config(), (Double) value);
          }
       } else if (col == 3) {
@@ -155,7 +155,7 @@ public final class ChannelTableModel extends AbstractTableModel  {
       } else if (col == 5) {
          cb.skipFactorFrame((Integer) value);
       } else if (col == 6) {
-         if (!channel.color().equals((Color) value)) {
+         if (!channel.color().equals(value)) {
             studio_.events().post(new ChannelColorEvent(
                     channel.channelGroup(), channel.config(), (Color) value));
          }
@@ -163,21 +163,34 @@ public final class ChannelTableModel extends AbstractTableModel  {
       channel = cb.build();
       channels_.set(row, channel);
 
-      acqEng_.setChannel(row, channel);
       this.fireTableChanged(new TableModelEvent(this));
    }
 
    @Override
    public boolean isCellEditable(int nRow, int nCol) {
       if (nCol == 4) {
-         return acqEng_.isZSliceSettingEnabled();
+         return acqEng_.getSequenceSettings().useSlices;
       }
 
       return true;
    }
 
    public ArrayList<ChannelSpec> getChannels() {
-      return channels_;
+      return new ArrayList<>(channels_);
+   }
+
+   public void setChannels(ArrayList<ChannelSpec> channels) {
+      channels_.clear();
+      for (ChannelSpec channel : channels) {
+         if (acqEng_.getChannelConfigs().length > 0) {
+            for (String config : acqEng_.getChannelConfigs()) {
+               if (config.equals(channel.config())) {
+                  channels_.add(channel);
+                  break;
+               }
+            }
+         }
+      }
    }
 
    /**
@@ -189,7 +202,7 @@ public final class ChannelTableModel extends AbstractTableModel  {
          for (String config : acqEng_.getChannelConfigs()) {
             boolean unique = true;
             for (ChannelSpec chan : channels_) {
-               if (config.contentEquals(chan.config())) {
+               if (config.equals(chan.config())) {
                   unique = false;
                }
             }
@@ -204,11 +217,11 @@ public final class ChannelTableModel extends AbstractTableModel  {
          } else {
             // Pick a non-white default color if possible.
             Color defaultColor = ColorPalettes.getFromDefaultPalette(channels_.size());
-            cb.channelGroup(acqEng_.getChannelGroup());
+            cb.channelGroup(acqEng_.getSequenceSettings().channelGroup);
             cb.color(RememberedSettings.loadChannel(studio_,
-                    acqEng_.getChannelGroup(), config, defaultColor).getColor());
+                    acqEng_.getSequenceSettings().channelGroup, config, defaultColor).getColor());
             cb.exposure(this.getChannelExposureTime(
-                  acqEng_.getChannelGroup(), config, 10.0));
+                  acqEng_.getSequenceSettings().channelGroup, config, 10.0));
             channels_.add(cb.build());
          }
       }
@@ -256,6 +269,14 @@ public final class ChannelTableModel extends AbstractTableModel  {
 
    public String[] getAvailableChannels() {
       return acqEng_.getChannelConfigs();
+      /*
+      String[] channelsInGroup = acqEng_.getChannelConfigs();
+      ArrayList<String> channels  = new ArrayList<>();
+      for (ChannelSpec cs : channelSpecs) {
+         channels.add(cs.config());
+      }
+      return channels.toArray(new String[0]);
+      */
    }
 
    /**
@@ -282,7 +303,7 @@ public final class ChannelTableModel extends AbstractTableModel  {
       settings_.putStringList("CG:" + channelGroup, configNames);
 
       // Restore channels from profile
-      String newChannelGroup = acqEng_.getChannelGroup();
+      String newChannelGroup = acqEng_.getSequenceSettings().channelGroup;
       if (!channelGroup.equals(newChannelGroup)) {
          List<String> newConfigNames = settings_.getStringList("CG:" + newChannelGroup);
          for (String newConfig : newConfigNames) {
@@ -290,7 +311,7 @@ public final class ChannelTableModel extends AbstractTableModel  {
                     settings_.getString(channelProfileKey(newChannelGroup, newConfig), ""));
             channels_.add(cs);
          }
-         acqEng_.setChannels(channels_);
+         acqEng_.getSequenceSettings().channels = channels_;
          fireTableDataChanged();
       }
    }
@@ -321,7 +342,7 @@ public final class ChannelTableModel extends AbstractTableModel  {
     */
    public void setChannelExposureTime(String channelGroup, String channel, 
            double exposure) {
-      if (!channelGroup.equals(acqEng_.getChannelGroup()))
+      if (!channelGroup.equals(acqEng_.getSequenceSettings().channelGroup))
          return;
       for (int row = 0; row < channels_.size(); row++) {
          ChannelSpec cs = channels_.get(row);
@@ -334,11 +355,10 @@ public final class ChannelTableModel extends AbstractTableModel  {
    }
 
    public boolean hasChannel(String channelGroup, String channel) {
-      if (!channelGroup.equals(acqEng_.getChannelGroup())) {
+      if (!channelGroup.equals(acqEng_.getSequenceSettings().channelGroup)) {
          return false;
       }
-      for (int row = 0; row < channels_.size(); row++) {
-         ChannelSpec cs = channels_.get(row);
+      for (ChannelSpec cs : channels_) {
          if (cs.config().equals(channel)) {
             return true;
          }
@@ -356,12 +376,11 @@ public final class ChannelTableModel extends AbstractTableModel  {
     */
    public double getChannelExposureTime(String channelGroup, String channel,
                                       double defaultExposure) {
-      if (!channelGroup.equals(acqEng_.getChannelGroup()))
+      if (!channelGroup.equals(acqEng_.getSequenceSettings().channelGroup))
          return defaultExposure;
-      for (int row = 0; row < channels_.size(); row++) {
-         ChannelSpec cs = channels_.get(row);
+      for (ChannelSpec cs : channels_) {
          if (cs.config().equals(channel)) {
-            return channels_.get(row).exposure();
+            return cs.exposure();
          }
       }
       return defaultExposure;
@@ -375,7 +394,7 @@ public final class ChannelTableModel extends AbstractTableModel  {
     * @param color         New color of the channel
     */
    public void setChannelColor(String channelGroup, String channelName, Color color) {
-      if (!channelGroup.equals(acqEng_.getChannelGroup()))
+      if (!channelGroup.equals(acqEng_.getSequenceSettings().channelGroup))
          return;
       for (int row = 0; row < channels_.size(); row++) {
          ChannelSpec cs = channels_.get(row);
@@ -389,13 +408,13 @@ public final class ChannelTableModel extends AbstractTableModel  {
    }
 
    public void storeChannels() {
-      String channelGroup = acqEng_.getChannelGroup();
+      String channelGroup = acqEng_.getSequenceSettings().channelGroup;
       List<String> configNames = new ArrayList<>(channels_.size());
       for (ChannelSpec cs : channels_) {
          if (!cs.config().contentEquals("")) {
             if (cs.channelGroup().isEmpty()) {
                cs = cs.copyBuilder().channelGroup(channelGroup).build();
-            };
+            }
             configNames.add(cs.config());
             // write this config to the profile
             settings_.putString(channelProfileKey(cs.channelGroup(), cs.config()),
@@ -404,6 +423,8 @@ public final class ChannelTableModel extends AbstractTableModel  {
       }
       // Stores the config names that we had for the old channelGroup
       settings_.putStringList("CG:" + channelGroup, configNames);
+      acqEng_.getSequenceSettings().channels.clear();
+      acqEng_.getSequenceSettings().channels.addAll(channels_);
    }
 
     private static String channelProfileKey(String channelGroup, String config) {
