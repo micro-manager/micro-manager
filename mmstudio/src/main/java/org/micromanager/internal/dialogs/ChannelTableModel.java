@@ -169,7 +169,7 @@ public final class ChannelTableModel extends AbstractTableModel  {
    @Override
    public boolean isCellEditable(int nRow, int nCol) {
       if (nCol == 4) {
-         return acqEng_.getSequenceSettings().useSlices;
+         return acqEng_.getSequenceSettings().useSlices();
       }
 
       return true;
