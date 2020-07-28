@@ -41,7 +41,7 @@ public class ASI_CRISP_Frame extends javax.swing.JFrame {
     private final CMMCore core_;
     private Preferences prefs_;
     private String CRISP_;
-    private int timer_poll=250;//250 millisec
+    private int timer_poll=250;  // 250 milliseconds
     private int skip_refresh=20; // # of times to skip Polling
     private int skip_counter=0;
     private int frameXPos_ = 100;
