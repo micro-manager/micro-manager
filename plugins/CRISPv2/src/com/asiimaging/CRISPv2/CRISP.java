@@ -90,7 +90,7 @@ public final class CRISP {
 		deviceName = "";
 		
 		// timer variables
-		pollingRateMs = 100;
+		pollingRateMs = 120;
 		skipRefresh = 20;
 		skipCounter = 0;
 	}
@@ -234,6 +234,7 @@ public final class CRISP {
 	 */
 	public void setPollingRate(final int pollingRate) {
 		pollingRateMs = pollingRate;
+		timer.setDelay(pollingRateMs);
 	}
 	
 	/**
@@ -243,19 +244,16 @@ public final class CRISP {
 	public void setRefreshPropertyValues(final boolean state) {
 		try {
 			final String value = (state == true) ? "Yes" : "No";
-//			String value = "No";
-//			if (state) {
-//				value = "Yes";
-//			}
 			core.setProperty(deviceName, "RefreshPropertyValues", value);
 		} catch (Exception e) {
-			// TODO: trying to set RefreshPropertyValues will always throw an error so just don't report it
+			// TODO: trying to set RefreshPropertyValues will always throw an error so don't report it
+			// TODO: fix this in the device adapter
 			// ReportingUtils.showError("Failed to set RefreshPropertyValues to " + state + ".");
 		}
 	}
 	
 	/**
-	 * 
+	 * Returns the current state of CRISP.
 	 */
 	public String getState() {
 		try {
@@ -267,7 +265,7 @@ public final class CRISP {
 	}
 	
 	/**
-	 * 
+	 * Returns the dither error.
 	 */
 	public String getDitherError() {
 		try {
@@ -323,7 +321,7 @@ public final class CRISP {
 	}
 	
 	/**
-	 * 
+	 * Returns the offset.
 	 */
 	public String getOffset() {
 		try {
@@ -335,7 +333,7 @@ public final class CRISP {
 	}
 	
 	/**
-	 * 
+	 * Returns the axis CRISP is set to control.
 	 */
 	public String getAxis() {
 		try {
@@ -390,7 +388,7 @@ public final class CRISP {
 	}
 	
 	/**
-	 * 
+	 * Returns the number of averages.
 	 */
 	public int getNumberOfAverages() {
 		try {
@@ -404,7 +402,7 @@ public final class CRISP {
 	}
 	
 	/**
-	 * Returns the Objective NA.
+	 * Returns the objective numerical aperture.
 	 */
 	public float getObjectiveNA() {
 		try {
@@ -449,7 +447,6 @@ public final class CRISP {
 			}
 		}
 	}
-	
 
 	/**
 	 * Sets the gain multiplier.
