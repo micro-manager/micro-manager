@@ -68,13 +68,17 @@ import mmcorej.StrVector;
  *   http://asiimaging.com/docs/crisp_manual
  *   
  */
+
 public final class CRISP {
 	
 	private final ScriptInterface gui;
 	private final CMMCore core;
 	
-	private Timer timer;
 	private String deviceName;
+	private ASIDeviceType deviceType;
+	
+	// timer variables
+	private Timer timer;
 	private int skipRefresh;
 	private int skipCounter;
 	private int pollingRateMs;
@@ -88,6 +92,7 @@ public final class CRISP {
 		gui = app;
 		core = gui.getMMCore();
 		deviceName = "";
+		deviceType = null;
 		
 		// timer variables
 		pollingRateMs = 120;
@@ -96,10 +101,22 @@ public final class CRISP {
 	}
 	
 	/**
-	 * Returns the name of the device as a String.
+	 * Returns the name of the device.
+	 * 
+	 * @return deviceName
 	 */
 	public String getDeviceName() {
 		return deviceName;
+	}
+	
+
+	/**
+	 * Returns the type of controller.
+	 * 
+	 * @return deviceType
+	 */
+	public String getDeviceType() {
+		return deviceType.toString();
 	}
 	
 //	private void initTimer() {
@@ -107,18 +124,11 @@ public final class CRISP {
 //	}
 	
 	/**
-	 * 
+	 * This is used by the window closing event handler to stop the timer on exit.
 	 */
 	public void stopTimer() {
 		timer.stop();
 	}
-	
-	/**
-	 * 
-	 */
-//	public void startTimer() {
-//		timer.start();
-//	}
 	
 	/**
 	 * 
@@ -134,6 +144,25 @@ public final class CRISP {
 	 */
 	public void setStatusPanel(final StatusPanel panel) {
 		statusPanel = panel;
+	}
+	
+	/**
+	 * Detects the type of controller the plugin is communicating with.
+	 * 
+	 * @param deviceName The name of the device to check.
+	 * @return true if the device is a CRISP Autofocus unit.
+	 */
+	public boolean isCRISPDevice(final String deviceName) throws Exception {
+		boolean found = false;
+		if (core.getProperty(deviceName, "Description").equals("ASI CRISP Autofocus adapter")) {
+			deviceType = ASIDeviceType.MS2000;
+			found = true;
+		}
+		if (core.getProperty(deviceName, "Description").startsWith("ASI CRISP AutoFocus")) {
+			deviceType = ASIDeviceType.TIGER;
+			found =  true;
+		}
+		return found;
 	}
 
 	/**
@@ -154,30 +183,34 @@ public final class CRISP {
 	
 	/**
 	 * Find the CRISP autofocus device.
+	 * 
+	 * @return true if we found the device.
 	 */
 	public boolean findAutofocusDevices() {
 		boolean found = false;
 		final StrVector autoFocusDevices = core.getLoadedDevicesOfType(DeviceType.AutoFocusDevice);
-		for (String device : autoFocusDevices) {
-			try {
-				if (core.hasProperty(device, "Description")) {
-					if (core.getProperty(device, "Description").equals("ASI CRISP Autofocus adapter") || 
-						core.getProperty(device, "Description").startsWith("ASI CRISP AutoFocus")) { // this line is for Tiger
-						
-						found = true;
-						deviceName = device;
-						createPollingTask();
-						timer = new Timer(pollingRateMs, pollingTask);
-						final String axis = getAxis();
-						final String text = device + ":" + axis;
-						
-						// set the axis label on the spinner panel
-						if (axisLabel != null) {
-							axisLabel.setText(text);
-						}
-						
-						// start the timer and begin polling data from CRISP
-						timer.start();
+		for (final String device : autoFocusDevices) {
+			try { 
+				if (isCRISPDevice(device)) {
+					// deviceType is detected in isCRISPDevice
+					found = true;
+					deviceName = device;
+					
+					// set the info label
+					final String axis = getAxis();
+					final String text = deviceType.toString() + ":" + deviceName + ":" + axis;
+					
+					// set the axis label on the spinner panel
+					if (axisLabel != null) {
+						axisLabel.setText(text);
+					}
+					
+					createPollingTask(); // pollingTask set here
+					timer = new Timer(pollingRateMs, pollingTask);
+					
+					// start the timer and begin polling data
+					timer.start();
+					if (deviceType == ASIDeviceType.TIGER) {
 						setRefreshPropertyValues(true);
 					}
 				}
@@ -219,9 +252,13 @@ public final class CRISP {
 	public void setPollingState(final boolean state) {
 		if (state) {
 			timer.start();
-			setRefreshPropertyValues(true);
+			if (deviceType == ASIDeviceType.TIGER) {
+				setRefreshPropertyValues(true);
+			}
 		} else {
-			setRefreshPropertyValues(false);
+			if (deviceType == ASIDeviceType.TIGER) {
+				setRefreshPropertyValues(false);
+			}
 			timer.stop();
 		}
 	}
@@ -246,8 +283,6 @@ public final class CRISP {
 			final String value = (state == true) ? "Yes" : "No";
 			core.setProperty(deviceName, "RefreshPropertyValues", value);
 		} catch (Exception e) {
-			// TODO: trying to set RefreshPropertyValues will always throw an error so don't report it
-			// TODO: fix this in the device adapter
 			// ReportingUtils.showError("Failed to set RefreshPropertyValues to " + state + ".");
 		}
 	}
