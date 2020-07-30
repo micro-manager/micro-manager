@@ -89,7 +89,9 @@ public class CRISPFrame extends MMFrame {
             @Override
             public void windowClosing(final WindowEvent event) {
             	if (!crisp.getDeviceName().isEmpty()) {
-	        		crisp.setRefreshPropertyValues(false);
+            		if (crisp.getDeviceType() == ASIDeviceType.TIGER) {
+            			crisp.setRefreshPropertyValues(false);
+            		}
 	        		crisp.stopTimer();
             	}
             }

@@ -115,8 +115,17 @@ public final class CRISP {
 	 * 
 	 * @return deviceType
 	 */
-	public String getDeviceType() {
+	public String getDeviceTypeString() {
 		return deviceType.toString();
+	}
+	
+	/**
+	 * Returns the type of controller.
+	 * 
+	 * @return deviceType
+	 */
+	public ASIDeviceType getDeviceType() {
+		return deviceType;
 	}
 	
 //	private void initTimer() {
