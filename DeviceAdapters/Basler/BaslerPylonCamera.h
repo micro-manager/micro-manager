@@ -136,6 +136,7 @@ public:
 	int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnBinningMode(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnDeviceLinkThroughputLimit(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnHeight(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnInterPacketDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
