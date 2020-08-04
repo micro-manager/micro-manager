@@ -44,8 +44,9 @@ iei : 18.06.2020 added trigger source property, removing hard-coded Line 1; fixe
 sma : 20.06.2020 project and cpp files name has been renamed
 sma : 23.06.2020 old project and cpp files name has been removed
 sma : 24.04.2020 Drop down binning values on main GUI working properly. issue with Compiler issue with VS2010 fixed.
-sam : 15.07.2020 issue in saving config file fixed
-sam : 01.08.2020 Variable type of AcquisitionFrameRateEnable changed to display the float values
+sma : 15.07.2020 issue in saving config file fixed
+sma : 20.07.2020 Variable type of 
+sma : 04.08.2020 scope removed in enums
 */
 
 
@@ -339,8 +340,8 @@ int BaslerCamera::Initialize()
 
 		if (camera_->EventSelector.IsWritable())
 		{
-			if (camera_->EventSelector.CanSetValue(EventSelectorEnums::EventSelector_CriticalTemperature) &&
-				camera_->EventSelector.CanSetValue(EventSelectorEnums::EventSelector_OverTemperature)
+			if (camera_->EventSelector.CanSetValue(EventSelector_CriticalTemperature) &&
+				camera_->EventSelector.CanSetValue(EventSelector_OverTemperature)
 				)
 			{
 				pTempHandler_ = new CTempCameraEventHandler(this);
@@ -368,12 +369,12 @@ int BaslerCamera::Initialize()
 			stringstream strMsg;
 			strMsg << "current device Temperature " << camera_->DeviceTemperature.ToString();
 			AddToLog(strMsg.str());
-			if (camera_->EventSelector.TrySetValue(EventSelectorEnums::EventSelector_CriticalTemperature))
+			if (camera_->EventSelector.TrySetValue(EventSelector_CriticalTemperature))
 			{
 				camera_->EventSelector.SetValue(EventSelector_CriticalTemperature);
 				camera_->EventNotification.SetValue(EventNotification_On);
 			}
-			if (camera_->EventSelector.TrySetValue(EventSelectorEnums::EventSelector_OverTemperature))
+			if (camera_->EventSelector.TrySetValue(EventSelector_OverTemperature))
 			{
 				camera_->EventSelector.SetValue(EventSelector_OverTemperature);
 				camera_->EventNotification.SetValue(EventNotification_On);
@@ -420,7 +421,7 @@ int BaslerCamera::Initialize()
 		}
 		if (IsAvailable(camera_->TestImageSelector))
 		{
-			camera_->TestImageSelector.TrySetValue(TestImageSelectorEnums::TestImageSelector_Testimage4);
+			camera_->TestImageSelector.TrySetValue(TestImageSelector_Testimage4);
 		}
 #endif
 
