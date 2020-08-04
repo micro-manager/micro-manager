@@ -44,7 +44,9 @@ iei : 18.06.2020 added trigger source property, removing hard-coded Line 1; fixe
 sma : 20.06.2020 project and cpp files name has been renamed
 sma : 23.06.2020 old project and cpp files name has been removed
 sma : 24.04.2020 Drop down binning values on main GUI working properly. issue with Compiler issue with VS2010 fixed.
-sam : 15.07.2020 issue in saving config file fixed
+sma : 15.07.2020 issue in saving config file fixed
+sma : 20.07.2020 Variable type of 
+sma : 04.08.2020 scope removed in enums
 */
 
 
@@ -338,9 +340,9 @@ int BaslerCamera::Initialize()
 
 		if (camera_->EventSelector.IsWritable())
 		{
-			if (camera_->EventSelector.CanSetValue(EventSelectorEnums::EventSelector_CriticalTemperature) &&
-				camera_->EventSelector.CanSetValue(EventSelectorEnums::EventSelector_OverTemperature)
-			   )
+			if (camera_->EventSelector.CanSetValue(EventSelector_CriticalTemperature) &&
+				camera_->EventSelector.CanSetValue(EventSelector_OverTemperature)
+				)
 			{
 				pTempHandler_ = new CTempCameraEventHandler(this);
 				// register camera events
@@ -367,12 +369,12 @@ int BaslerCamera::Initialize()
 			stringstream strMsg;
 			strMsg << "current device Temperature " << camera_->DeviceTemperature.ToString();
 			AddToLog(strMsg.str());
-			if (camera_->EventSelector.TrySetValue(EventSelectorEnums::EventSelector_CriticalTemperature))
+			if (camera_->EventSelector.TrySetValue(EventSelector_CriticalTemperature))
 			{
 				camera_->EventSelector.SetValue(EventSelector_CriticalTemperature);
 				camera_->EventNotification.SetValue(EventNotification_On);
 			}
-			if (camera_->EventSelector.TrySetValue(EventSelectorEnums::EventSelector_OverTemperature))
+			if (camera_->EventSelector.TrySetValue(EventSelector_OverTemperature))
 			{
 				camera_->EventSelector.SetValue(EventSelector_OverTemperature);
 				camera_->EventNotification.SetValue(EventNotification_On);
@@ -416,10 +418,10 @@ int BaslerCamera::Initialize()
 			{
 				CIntegerPtr(camera_->GetTLNodeMap().GetNode("HeartbeatTimeout"))->SetValue(24 * 1000);
 			}
-	}
+		}
 		if (IsAvailable(camera_->TestImageSelector))
 		{
-			camera_->TestImageSelector.TrySetValue(TestImageSelectorEnums::TestImageSelector_Testimage4);
+			camera_->TestImageSelector.TrySetValue(TestImageSelector_Testimage4);
 		}
 #endif
 
@@ -437,6 +439,7 @@ int BaslerCamera::Initialize()
 			exposure_us_ = exposure->GetValue();
 			exposureMax_ = exposure->GetMax();
 			exposureMin_ = exposure->GetMin();
+
 		}
 		else if (IsAvailable(ExposureTimeAbs))
 		{   // GigE
@@ -444,6 +447,10 @@ int BaslerCamera::Initialize()
 			exposureMax_ = ExposureTimeAbs->GetMax();
 			exposureMin_ = ExposureTimeAbs->GetMin();
 		}
+	/*	CPropertyAction* pAct = new CPropertyAction(this, &BaslerCamera::OnExposure);
+		ret = CreateProperty("Exposure", CDeviceUtils::ConvertToString((long)exposure->GetValue()), MM::Float, false, pAct);
+		SetPropertyLimits("Exposure", exposureMin_, exposureMax_);
+		assert(ret == DEVICE_OK);*/
 
 
 		//Pixel type
@@ -498,7 +505,7 @@ int BaslerCamera::Initialize()
 			pixelTypeValues.push_back("BayerGR8");
 			pixelFormat->FromString("BayerGR8");
 			pixelType_ = "BayerGR8";
-		}		
+		}
 		SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);
 
 		/////Temperature//////
@@ -780,7 +787,7 @@ int BaslerCamera::Initialize()
 			std::ostringstream oss;
 			oss << ResultingFrameRatePrevious;
 			pAct = new CPropertyAction(this, &BaslerCamera::OnResultingFramerate);
-			ret = CreateProperty("ResultingFrameRate", oss.str().c_str(), MM::Integer, true, pAct);
+			ret = CreateProperty("ResultingFrameRate", oss.str().c_str(), MM::String, true, pAct);
 			if (DEVICE_OK != ret)
 			{
 				return ret;
@@ -791,7 +798,7 @@ int BaslerCamera::Initialize()
 		if (IsAvailable(camera_->AcquisitionFrameRateEnable))
 		{
 			pAct = new CPropertyAction(this, &BaslerCamera::OnAcqFramerateEnable);
-			ret = CreateProperty("AcquisitionFramerateEnable", "0", MM::Integer, false, pAct);
+			ret = CreateProperty("AcquisitionFramerateEnable", "0", MM::String, false, pAct);
 			vector<string> setAcqFrmVals;
 			setAcqFrmVals.push_back("0");
 			setAcqFrmVals.push_back("1");
@@ -817,7 +824,7 @@ int BaslerCamera::Initialize()
 			}
 			pAct = new CPropertyAction(this, &BaslerCamera::OnAcqFramerate);
 			ret = CreateProperty("AcquisitionFramerate", "100", MM::String, false, pAct);
-			SetPropertyLimits("AcquisitionFramerate", acqFramerateMin_, acqFramerateMax_);
+			//SetPropertyLimits("AcquisitionFramerate", acqFramerateMin_, acqFramerateMax_);
 			assert(ret == DEVICE_OK);
 		}
 
@@ -868,7 +875,7 @@ int BaslerCamera::Initialize()
 		//preparation for sequences	
 		//camera_->RegisterImageEventHandler( &ImageHandler_, RegistrationMode_Append, Cleanup_Delete);	
 		initialized_ = true;
-}
+	}
 	catch (const GenericException & e)
 	{
 		// Error handling.
@@ -1440,6 +1447,48 @@ int BaslerCamera::OnWidth(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 
+int BaslerCamera::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::AfterSet)
+	{
+		if (IsWritable(camera_->ExposureTime) || IsWritable(camera_->ExposureTimeAbs))
+		{
+			try
+			{
+				pProp->Get(exposure_us_);
+				exposure_us_ = camera_->ExposureTime.TrySetValue(exposure_us_);
+				exposure_us_ = camera_->ExposureTimeAbs.TrySetValue(exposure_us_);
+			}
+			catch (const GenericException & e)
+			{
+				// Error handling.
+				AddToLog(e.GetDescription());
+				cerr << "An exception occurred." << endl
+					<< e.GetDescription() << endl;
+			}
+		}
+	}
+	else if (eAct == MM::BeforeGet) {
+
+		try {
+			if (IsAvailable(camera_->ExposureTime) && IsAvailable(camera_->ExposureTimeAbs))
+			{
+				exposure_us_ = camera_->ExposureTime.GetValueOrDefault(exposure_us_);
+				exposure_us_ = camera_->ExposureTimeAbs.GetValueOrDefault(exposure_us_);
+				pProp->Set(exposure_us_);
+			}
+		}
+		catch (const GenericException & e)
+		{
+			// Error handling.
+			AddToLog(e.GetDescription());
+			cerr << "An exception occurred." << endl
+				<< e.GetDescription() << endl;
+		}
+	}
+	return DEVICE_OK;
+}
+
 int BaslerCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	CIntegerPtr BinningHorizontal(nodeMap_->GetNode("BinningHorizontal"));
@@ -1735,7 +1784,8 @@ int BaslerCamera::OnAcqFramerate(MM::PropertyBase* pProp, MM::ActionType eAct)
 			acqFramerate_ = camera_->AcquisitionFrameRateAbs.GetValue();
 		}
 		std::ostringstream oss;
-		oss << std::fixed << std::setfill('0') << std::setprecision(2) << acqFramerate_;
+		//oss << std::fixed << std::setfill('0') << std::setprecision(2) << acqFramerate_;
+		oss << acqFramerate_;
 		pProp->Set(oss.str().c_str());
 	}
 	return DEVICE_OK;
@@ -1764,7 +1814,6 @@ void  BaslerCamera::ResultingFramerateCallback(GenApi::INode* pNode)
 	if (CFloatPtr(pNode) && IsReadable(pNode))
 	{   //USB camera
 		currentvalue = CFloatPtr(pNode)->GetValue();
-		string name = pNode->GetDisplayName();
 	}
 	else if (CIntegerPtr(pNode) && IsReadable(pNode))
 	{ //Gige camera

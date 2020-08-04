@@ -1,7 +1,7 @@
 # sma 20.05.2020 
-# File Version  2.12
+# File Version  2.14
 # cpp and pylon path has been adapted
-
+# PYLONCXXFLAGS removed
 
 PYLONLDFLAGS =
 PLIBADD =
@@ -14,7 +14,7 @@ deviceadapter_LTLIBRARIES=libmmgr_dal_BaslerCamera.la
 
 if BUILD_BASLER_LINUX
    PYLON_ROOT=/opt/pylon
-
+   
 if PYLON64
    PYLONLDFLAGS +=-Wl,--enable-new-dtags -Wl,-rpath,$(PYLON_ROOT)/lib64,-L$(PYLON_ROOT)/lib64
 else
@@ -43,7 +43,8 @@ if BUILD_BASLER_MAC
 endif
 endif
 
-libmmgr_dal_BaslerCamera_la_CPPFLAGS= $(PYLONCPPFLAGS)
+
+libmmgr_dal_BaslerCamera_la_CPPFLAGS= $(PYLONCPPFLAGS) 
 libmmgr_dal_BaslerCamera_la_LIBADD=$(PLIBADD)  
 libmmgr_dal_BaslerCamera_la_LDFLAGS=$(PLDFLAGS)
 
