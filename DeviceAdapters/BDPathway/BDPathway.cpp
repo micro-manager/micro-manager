@@ -904,7 +904,7 @@ int XYStage::Shutdown()
 
 bool XYStage::Busy()
 {
-   return false;
+   return g_hub.IsFocusBusy(*this, *GetCoreCallback());
 }
 
 //Position in our coordinate system

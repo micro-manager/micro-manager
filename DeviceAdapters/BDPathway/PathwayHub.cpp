@@ -148,7 +148,15 @@ int PathwayHub::GetPosition(MM::Device& device, MM::Core& core, char deviceId, i
 
 bool PathwayHub::IsDeviceBusy(MM::Device& /* device */, MM::Core& /* core */)
 {
-   return false;
+   //the pos is returned in 1/100. microns.
+   int pos;
+   int ret = GetFocusPosition(device, core, pos);
+
+   ostringstream os;
+   os << "IsDeviceBusy? " << ret;
+   core.LogMessage(&device, os.str().c_str(), true);
+
+   return (ret != DEVICE_OK);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -181,7 +189,15 @@ int PathwayHub::SetFocusPosition(MM::Device& device, MM::Core& core, int pos)
 
 bool PathwayHub::IsFocusBusy(MM::Device& /* device */, MM::Core& /* core */)
 {
-   return false;
+   //the pos is returned in 1/100. microns.
+   int pos;
+   int ret = GetFocusPosition(device, core, pos);
+
+   ostringstream os;
+   os << "IsFocusBusy? " << ret;
+   core.LogMessage(&device, os.str().c_str(), true);
+
+   return (ret != DEVICE_OK);
 }
 
 int PathwayHub::GetFocusPosition(MM::Device& device, MM::Core& core, int& pos)
@@ -248,7 +264,15 @@ int PathwayHub::SetXYPosition(MM::Device& device, MM::Core& core, long xpos, lon
 
 bool PathwayHub::IsXYStageBusy(MM::Device& /* device */, MM::Core& /* core */)
 {
-   return false;
+   //the pos is returned in 1/100. microns.
+   int pos;
+   int ret = GetFocusPosition(device, core, pos);
+
+   ostringstream os;
+   os << "IsXYStageBusy? " << ret;
+   core.LogMessage(&device, os.str().c_str(), true);
+
+   return (ret != DEVICE_OK);
 }
 
 int PathwayHub::GetXYPosition(MM::Device& device, MM::Core& core, long& xpos, long& ypos)
@@ -399,15 +423,14 @@ int PathwayHub::ExecuteCommand(MM::Device& device, MM::Core& core, const char* c
 int PathwayHub::ExecuteCommand(MM::Device& device, MM::Core& core, const char* command, bool expectResponse)
 {
    //More than 3 times would be beating a dead horse...
-   int ret = DEVICE_OK;
-   int numRetries = 5;
-   long delayMs = 50;
+   int ret=DEVICE_OK, numRetries = 5;
+   long delayMs = 10;
    long timeoutMs = 5000;
 
    for (int i=0; i<numRetries; i++)
    {
-      // empty the Rx serial buffer before sending command
-      FetchSerialData(device, core);
+      // FIXME, needed? empty the Rx serial buffer before sending command
+      //FetchSerialData(device, core);
       ClearRcvBuf();
 
       // send command
