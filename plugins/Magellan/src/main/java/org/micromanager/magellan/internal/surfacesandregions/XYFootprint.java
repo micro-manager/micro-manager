@@ -77,7 +77,7 @@ public abstract class XYFootprint {
       return name_;
    }
 
-   public void rename(String newName) {
+    void rename(String newName) {
       name_ = newName;
       manager_.surfaceOrGridRenamed(this);
    }
@@ -86,7 +86,6 @@ public abstract class XYFootprint {
     * Create a 2D square region corresponding to the the stage position + any
     * extra padding
     *
-    * @param pos
     * @return
     */
    protected Region<Euclidean2D> getStagePositionRegion(Point2D.Double[] dispPositionCorners) {

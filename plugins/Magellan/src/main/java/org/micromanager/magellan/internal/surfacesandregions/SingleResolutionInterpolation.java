@@ -19,6 +19,7 @@ package org.micromanager.magellan.internal.surfacesandregions;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.TreeSet;
 import org.apache.commons.math3.geometry.euclidean.twod.Euclidean2D;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
@@ -38,10 +39,9 @@ public class SingleResolutionInterpolation {
    private Region<Euclidean2D> convexHullRegion_;
    //for extrapolation
    private TreeSet<Vector2D> convexHullVertices_;
-   private Point3d[] allPoints_;
-   
+
    public SingleResolutionInterpolation(int pixPerPoint, boolean[][] defined, float[][] interp, float[][] normals, double boundXMin, double boundXMax, double boundYMin, double boundYMax, 
-           Region<Euclidean2D> ch, Vector2D[] convexHullVertices, Point3d[] allPoints ) {
+           Region<Euclidean2D> ch, Vector2D[] convexHullVertices ) {
       pixPerInterpPoint_ = pixPerPoint;
       interpDefined_ = defined;
       interpolation_ = interp;      
@@ -65,7 +65,6 @@ public class SingleResolutionInterpolation {
          }
       });
       convexHullVertices_.addAll(Arrays.asList(convexHullVertices));
-      allPoints_ = allPoints;
    }
    
    public int getPixelsPerInterpPoint() {
