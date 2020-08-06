@@ -146,7 +146,7 @@ int PathwayHub::GetPosition(MM::Device& device, MM::Core& core, char deviceId, i
    return DEVICE_OK;
 }
 
-bool PathwayHub::IsDeviceBusy(MM::Device& /* device */, MM::Core& /* core */)
+bool PathwayHub::IsDeviceBusy(MM::Device& device, MM::Core& core)
 {
    //the pos is returned in 1/100. microns.
    int pos;
@@ -187,7 +187,7 @@ int PathwayHub::SetFocusPosition(MM::Device& device, MM::Core& core, int pos)
    return DEVICE_OK;
 }
 
-bool PathwayHub::IsFocusBusy(MM::Device& /* device */, MM::Core& /* core */)
+bool PathwayHub::IsFocusBusy(MM::Device& device, MM::Core& core)
 {
    //the pos is returned in 1/100. microns.
    int pos;
@@ -262,7 +262,7 @@ int PathwayHub::SetXYPosition(MM::Device& device, MM::Core& core, long xpos, lon
    return DEVICE_OK;
 }
 
-bool PathwayHub::IsXYStageBusy(MM::Device& /* device */, MM::Core& /* core */)
+bool PathwayHub::IsXYStageBusy(MM::Device& device, MM::Core& core)
 {
    //the pos is returned in 1/100. microns.
    int pos;
