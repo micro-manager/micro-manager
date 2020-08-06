@@ -113,7 +113,7 @@ public class SurfaceInterpolatorSimple extends SurfaceInterpolator {
          synchronized (interpolationLock_) {
             currentInterpolation_ = new SingleResolutionInterpolation(pixelsPerInterpPoint, interpDefined, interpVals, interpNormals,
                     boundXMin_, boundXMax_, boundYMin_, boundYMax_,
-                    convexHullRegion_, convexHullVertices_, getPoints());
+                    convexHullRegion_, convexHullVertices_);
             interpolationLock_.notifyAll();
             manager_.SurfaceInterpolationUpdated(this);
          }

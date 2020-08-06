@@ -17,7 +17,8 @@
 
 package org.micromanager.magellan.internal.gui;
 
-import javax.swing.DefaultComboBoxModel;
+import javax.swing.*;
+
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridListener;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridManager;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceInterpolator;
@@ -81,7 +82,12 @@ public class SurfaceGridComboBoxModel extends DefaultComboBoxModel implements Su
    }
 
    public void update() {
-      super.fireContentsChanged(manager_, -1, -1);
+      SwingUtilities.invokeLater(new Runnable() {
+         @Override
+         public void run() {
+            SurfaceGridComboBoxModel.super.fireContentsChanged(manager_, -1, -1);
+         }
+      });
    }
 
    @Override

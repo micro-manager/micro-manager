@@ -258,7 +258,7 @@ public class MagellanGUIAcquisition extends Acquisition implements MagellanAcqui
             zPos = ((MagellanGUIAcquisitionSettings) settings_).collectionPlane_.getExtrapolatedValue(
                     event.getXPosition(), event.getYPosition());
          }
-         event.setZ(0, event.getZPosition() + zPos);
+         event.setZ(0, zPos);
          //Make z index all 0 for the purposes of the display even though they may be in very differnet locations
          return Stream.of(event).iterator();
       };
@@ -341,22 +341,22 @@ public class MagellanGUIAcquisition extends Acquisition implements MagellanAcqui
       }
 
       if (spaceMode == MagellanGUIAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
-         Point3d[] interpPoints = settings.fixedSurface_.getPoints();
+         List<Point3d> interpPoints = settings.fixedSurface_.getPoints();
          if (towardsSampleIsPositive) {
-            double top = interpPoints[0].z - settings.distanceAboveFixedSurface_;
+            double top = interpPoints.get(0).z - settings.distanceAboveFixedSurface_;
             return zStageHasLimits ? Math.max(zStageLowerLimit, top) : top;
          } else {
-            double top = interpPoints[interpPoints.length - 1].z + settings.distanceAboveFixedSurface_;
+            double top = interpPoints.get(interpPoints.size() - 1).z + settings.distanceAboveFixedSurface_;
             return zStageHasLimits ? Math.max(zStageUpperLimit, top) : top;
          }
       } else if (spaceMode == MagellanGUIAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
          if (towardsSampleIsPositive) {
-            Point3d[] interpPoints = settings.topSurface_.getPoints();
-            double top = interpPoints[0].z - settings.distanceAboveTopSurface_;
+            List<Point3d> interpPoints = settings.topSurface_.getPoints();
+            double top = interpPoints.get(0).z - settings.distanceAboveTopSurface_;
             return zStageHasLimits ? Math.max(zStageLowerLimit, top) : top;
          } else {
-            Point3d[] interpPoints = settings.topSurface_.getPoints();
-            double top = interpPoints[interpPoints.length - 1].z + settings.distanceAboveTopSurface_;
+            List<Point3d> interpPoints = settings.topSurface_.getPoints();
+            double top = interpPoints.get(interpPoints.size() - 1).z + settings.distanceAboveTopSurface_;
             return zStageHasLimits ? Math.max(zStageLowerLimit, top) : top;
          }
       } else if (spaceMode == MagellanGUIAcquisitionSettings.CUBOID_Z_STACK) {
@@ -374,7 +374,7 @@ public class MagellanGUIAcquisition extends Acquisition implements MagellanAcqui
 
    //TODO: this could be generalized into a method to get metadata specific to any acwuisiton surface type
    public JSONArray getFixedSurfacePoints() {
-      Point3d[] points = ((MagellanGUIAcquisitionSettings) settings_).fixedSurface_.getPoints();
+      List<Point3d> points = ((MagellanGUIAcquisitionSettings) settings_).fixedSurface_.getPoints();
       JSONArray pointArray = new JSONArray();
       for (Point3d p : points) {
          pointArray.put(p.x + "_" + p.y + "_" + p.z);

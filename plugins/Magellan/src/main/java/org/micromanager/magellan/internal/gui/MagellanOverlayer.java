@@ -110,7 +110,7 @@ public class MagellanOverlayer implements OverlayerPlugin {
             }
 
             for (XYFootprint xy : getSurfacesAndGridsInDrawOrder()) {
-               if (xy instanceof MultiPosGrid || ((SurfaceInterpolator) xy).getPoints().length < 3
+               if (xy instanceof MultiPosGrid || ((SurfaceInterpolator) xy).getPoints().size() < 3
                        || !showSurface_) {
                   continue;
                }
@@ -179,7 +179,7 @@ public class MagellanOverlayer implements OverlayerPlugin {
             //if any surfaces are visible show the interp scale bar
             boolean showSurfaceInterpScale = false;
             for (XYFootprint xy : sAndg) {
-               if (xy instanceof SurfaceInterpolator && ((SurfaceInterpolator) xy).getPoints().length >= 3) {
+               if (xy instanceof SurfaceInterpolator && ((SurfaceInterpolator) xy).getPoints().size() >= 3) {
                   showSurfaceInterpScale = true;
                }
             }
@@ -193,14 +193,14 @@ public class MagellanOverlayer implements OverlayerPlugin {
                   //Do only fast version of surface overlay rendering, which don't require 
                   //any progress in the interpolation
                   addInterpPoints((SurfaceInterpolator) xy, base, zIndex, magnification, offset);
-                  if (((SurfaceInterpolator) xy).getPoints().length >= 3) {
+                  if (((SurfaceInterpolator) xy).getPoints().size() >= 3) {
                      if (showConvexHull_) {
                         addConvexHull((SurfaceInterpolator) xy, base, magnification, offset);
                      }
                      if (showXYFootprint_) {
                         addStagePositions((SurfaceInterpolator) xy, base, magnification, offset);
                      }
-                  } else if (((SurfaceInterpolator) xy).getPoints().length == 0) {
+                  } else if (((SurfaceInterpolator) xy).getPoints().size() == 0) {
                      //Add surface instructions
                      String[] text = {"Surface creation (for non-rectangular/cuboidal acquisitions):",
                         "",
@@ -358,7 +358,7 @@ public class MagellanOverlayer implements OverlayerPlugin {
            double mag, Point2D.Double offset) {
       List<XYStagePosition> positionsXY = surface.getXYPositions();
       if (positionsXY == null) {
-         if (surface.getPoints() != null && surface.getPoints().length >= 3) {
+         if (surface.getPoints() != null && surface.getPoints().size() >= 3) {
             manager_.setOverlay(overlay);
          }
          return;

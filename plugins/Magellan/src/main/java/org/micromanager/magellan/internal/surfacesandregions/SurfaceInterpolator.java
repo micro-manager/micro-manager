@@ -19,11 +19,7 @@ package org.micromanager.magellan.internal.surfacesandregions;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -570,8 +566,8 @@ public abstract class SurfaceInterpolator extends XYFootprint {
       }
    }
 
-   public synchronized Point3d[] getPoints() {
-      return points_.toArray(new Point3d[0]);
+   public synchronized List<Point3d> getPoints() {
+      return Arrays.asList(points_.toArray(new Point3d[0]));
    }
 
 }

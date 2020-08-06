@@ -239,6 +239,18 @@ public class SurfaceGridManager {
    
    public void rename(XYFootprint xy, String newName) {
       for (SurfaceInterpolator s : surfaces_) {
+         if (s.getName().equals(newName)) {
+            throw new RuntimeException("There is already a surface named " + newName);
+         }
+      }
+
+      for (MultiPosGrid s : grids_) {
+         if (s.getName().equals(newName)) {
+            throw new RuntimeException("There is already a grid named " + newName);
+         }
+      }
+
+      for (SurfaceInterpolator s : surfaces_) {
          if (s == xy) {
             s.rename(newName);
             return;

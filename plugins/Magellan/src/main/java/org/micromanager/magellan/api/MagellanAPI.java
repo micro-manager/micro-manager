@@ -8,6 +8,7 @@ import org.micromanager.magellan.internal.magellanacq.MagellanAcquisitionsManage
 import org.micromanager.magellan.internal.gui.GUI;
 import org.micromanager.magellan.internal.surfacesandregions.MultiPosGrid;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridManager;
+import org.micromanager.magellan.internal.surfacesandregions.SurfaceInterpolator;
 
 /**
  * Master Magellan API
@@ -32,15 +33,31 @@ public class MagellanAPI {
       MagellanAcquisitionsManager.getInstance().remove(index);
    }
    
-   public void createGrid(String name, int nRows, int nCols, double centerX, double centerY) {
+   public MultiPosGrid createGrid(String name, int nRows, int nCols, double centerX, double centerY) {
       MultiPosGrid grid = SurfaceGridManager.getInstance().addNewGrid(nRows, nCols, new Point2D.Double(centerX, centerY));
       SurfaceGridManager.getInstance().rename(grid, name);
+      return grid;
    }
-   
+
+   public MultiPosGrid getGrid(String name) {
+      return SurfaceGridManager.getInstance().getGridNamed(name);
+   }
+
+   public SurfaceInterpolator createSurface(String name) {
+      SurfaceInterpolator surf = SurfaceGridManager.getInstance().addNewSurface();
+      SurfaceGridManager.getInstance().rename(surf, name);
+      return surf;
+   }
+
+   public SurfaceInterpolator getSurface(String name) {
+      return SurfaceGridManager.getInstance().getSurfaceNamed(name);
+   }
+
+
    public void deleteAllGridsAndSurfaces() {
       SurfaceGridManager.getInstance().deleteAll();
    }
    
-   
+
 
 }
