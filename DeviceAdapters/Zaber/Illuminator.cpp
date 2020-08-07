@@ -155,42 +155,56 @@ int Illuminator::Initialize()
 		snprintf(nameBuf, sizeof(nameBuf) - 1, "Lamp %d connected", i + 1);
 		CreateProperty(nameBuf, lampExists_[i] ? "1" : "0", MM::Integer, true);
 
-		ret = GetSetting(deviceAddress_, i + 1, "lamp.wavelength.peak", data);
-		if (ret != DEVICE_OK) 
+		data = 0;
+		if (lampExists_[i])
 		{
-			LogMessage("Failed to detect the peak wavelength of a lamp.\n", true);
-			return ret;
+			ret = GetSetting(deviceAddress_, i + 1, "lamp.wavelength.peak", data);
+			if (ret != DEVICE_OK) 
+			{
+				LogMessage("Failed to detect the peak wavelength of a lamp.\n", true);
+				return ret;
+			}
 		}
 
 		snprintf(nameBuf, sizeof(nameBuf) - 1, "Lamp %d peak wavelength", i + 1);
 		snprintf(valueBuf, sizeof(valueBuf), "%ld", data);
 		CreateProperty(nameBuf, valueBuf, MM::Integer, true);
 
-		ret = GetSetting(deviceAddress_, i + 1, "lamp.wavelength.fwhm", data);
-		if (ret != DEVICE_OK) 
+		if (lampExists_[i])
 		{
-			LogMessage("Failed to detect the full-width half-magnitude of a lamp.\n", true);
-			return ret;
+			ret = GetSetting(deviceAddress_, i + 1, "lamp.wavelength.fwhm", data);
+			if (ret != DEVICE_OK) 
+			{
+				LogMessage("Failed to detect the full-width half-magnitude of a lamp.\n", true);
+				return ret;
+			}
 		}
 
 		snprintf(nameBuf, sizeof(nameBuf) - 1, "Lamp %d full width half magnitude", i + 1);
 		snprintf(valueBuf, sizeof(valueBuf), "%ld", data);
 		CreateProperty(nameBuf, valueBuf, MM::Integer, true);
 
-		ret = GetSetting(deviceAddress_, i + 1, "lamp.flux", analogData);
-		if (ret != DEVICE_OK) 
+		analogData = 0.0;
+		if (lampExists_[i])
 		{
-			LogMessage("Failed to read flux of a lamp.\n", true);
-			return ret;
+			ret = GetSetting(deviceAddress_, i + 1, "lamp.flux", analogData);
+			if (ret != DEVICE_OK) 
+			{
+				LogMessage("Failed to read flux of a lamp.\n", true);
+				return ret;
+			}
 		}
 
 		currentFlux_[i] = analogData;
 
-		ret = GetSetting(deviceAddress_, i + 1, "lamp.flux.max", analogData);
-		if (ret != DEVICE_OK) 
+		if (lampExists_[i])
 		{
-			LogMessage("Failed to read max flux of a lamp.\n", true);
-			return ret;
+			ret = GetSetting(deviceAddress_, i + 1, "lamp.flux.max", analogData);
+			if (ret != DEVICE_OK) 
+			{
+				LogMessage("Failed to read max flux of a lamp.\n", true);
+				return ret;
+			}
 		}
 
 		maxFlux_[i] = analogData;
