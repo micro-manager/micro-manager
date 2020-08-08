@@ -41,7 +41,6 @@ public class Magellan implements MenuPlugin, SciJavaPlugin {
    private static MagellanAPI api_;
 
    public Magellan() {
-
    }
    
    public static MagellanAPI getAPI() {

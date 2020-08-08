@@ -17,20 +17,26 @@ import org.micromanager.magellan.internal.surfacesandregions.SurfaceInterpolator
  */
 public class MagellanAPI {
 
+   MagellanAcquisitionsManager acqManager_;
+
+   public MagellanAPI() {
+      acqManager_ = MagellanAcquisitionsManager.getInstance();
+   }
+
    public Acquisition createAcquisition(int index) {
-      return MagellanAcquisitionsManager.getInstance().createAcquisition(index);
+      return acqManager_.createAcquisition(index);
    }
    
    public MagellanAcquisitionSettingsAPI getAcquisitionSettings(int index) {
-      return MagellanAcquisitionsManager.getInstance().getAcquisitionSettings(index);
+      return acqManager_.getAcquisitionSettings(index);
    }
    
    public void createAcquisitionSettings() {
-      MagellanAcquisitionsManager.getInstance().addNew();
+      acqManager_.addNew();
    }
    
    public void removeAcquisitionSettings(int index) {
-      MagellanAcquisitionsManager.getInstance().remove(index);
+      acqManager_.remove(index);
    }
    
    public MultiPosGrid createGrid(String name, int nRows, int nCols, double centerX, double centerY) {

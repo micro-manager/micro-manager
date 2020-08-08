@@ -35,11 +35,10 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -928,7 +927,17 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
             }
          };
          try {
-            zmqServer_ = new ZMQServer(IJ.getClassLoader(), instanceGrabberFunction, new String[]{"org.micromanager.internal"});
+            //It appears that every plugin has its own ClassLoader. Need to extract all of these and pass to
+            //ZMQServer, so that knows where to search for classes to load. If we don't do this, and just create
+            //new ClassLoaders to instantiate objects, static varibles will not be shared across instances
+            //created by the two objects, leading to confusing behavior
+            Collection<ClassLoader> classLoaders = new HashSet<ClassLoader>();
+            for (Object plugin : plugins().getMenuPlugins().values()) {
+               classLoaders.add(plugin.getClass().getClassLoader());
+            }
+
+
+            zmqServer_ = new ZMQServer(classLoaders, instanceGrabberFunction, new String[]{"org.micromanager.internal"});
             logs().logMessage("Initialized ZMQ Server on port: " + ZMQServer.DEFAULT_MASTER_PORT_NUMBER);
          } catch (URISyntaxException | UnsupportedEncodingException e) {
             studio_.logs().logError("Failed to initialize ZMQ Server");
