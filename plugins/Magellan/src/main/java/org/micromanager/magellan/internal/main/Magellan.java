@@ -38,13 +38,8 @@ public class Magellan implements MenuPlugin, SciJavaPlugin {
 
    private static Studio mmAPI_;
    private static GUI gui_;
-   private static MagellanAPI api_;
 
    public Magellan() {
-   }
-   
-   public static MagellanAPI getAPI() {
-      return api_;
    }
 
    public static Studio getStudio() {
@@ -70,9 +65,6 @@ public class Magellan implements MenuPlugin, SciJavaPlugin {
          gui_ = new GUI(VERSION);
       } else {
          gui_.setVisible(true);
-      }
-      if (api_ == null) {
-         api_ = new MagellanAPI();
       }
    }
 

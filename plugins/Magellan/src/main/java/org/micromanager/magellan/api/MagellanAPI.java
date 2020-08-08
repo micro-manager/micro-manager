@@ -6,6 +6,7 @@ import java.util.List;
 import org.micromanager.acqj.api.Acquisition;
 import org.micromanager.magellan.internal.magellanacq.MagellanAcquisitionsManager;
 import org.micromanager.magellan.internal.gui.GUI;
+import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.surfacesandregions.MultiPosGrid;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridManager;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceInterpolator;
@@ -20,6 +21,8 @@ public class MagellanAPI {
    MagellanAcquisitionsManager acqManager_;
 
    public MagellanAPI() {
+      //make sure Magellan GUI showing
+      (new Magellan()).onPluginSelected();
       acqManager_ = MagellanAcquisitionsManager.getInstance();
    }
 
