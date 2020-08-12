@@ -16,6 +16,8 @@ public final class HttpUtils {
 
     public void upload(URL url, File f) throws Exception {
         final String boundary = HttpBoundaryString();
+        // TOD: handle redirects, so that we have more freedom to move things around
+        // on the server side
         HttpURLConnection anURLConnection = (HttpURLConnection) url.openConnection();
         anURLConnection.setDoOutput(true);
         anURLConnection.setDoInput(true);
