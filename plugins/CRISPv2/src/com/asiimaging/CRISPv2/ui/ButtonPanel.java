@@ -39,8 +39,8 @@ public class ButtonPanel extends JPanel {
 	private Button buttonSave;
 	//private Button buttonPlot;
 	
-	public ButtonPanel(final CRISP crispDevice, final String layoutConstraints, final String columnConstraints, final String rowConstraints) {
-		setLayout(new MigLayout(layoutConstraints, columnConstraints, rowConstraints));
+	public ButtonPanel(final CRISP crispDevice, final String layout, final String cols, final String rows) {
+		setLayout(new MigLayout(layout, cols, rows));
 		crisp = crispDevice;
 		
 		// CRISP control buttons
@@ -76,6 +76,13 @@ public class ButtonPanel extends JPanel {
 	 */
 	private void createEventHandlers() {
 		// step 1 in the calibration routine
+//		buttonIdle.registerListener(new Method() {
+//			@Override
+//			public void run(EventObject event) {
+//				crisp.setStateIdle();
+//			}
+//		});
+		
 		buttonIdle.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent event) {

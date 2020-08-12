@@ -24,6 +24,7 @@ import org.micromanager.api.ScriptInterface;
  * The current code is based on the work of the previous authors. 
  * 
  * [Changelog]
+ * v2.1.3 - added saving and loading user settings, query controller for initial values
  * v2.1.2 - plugin detects the type of controller, setRefreshPropertyValues on ms2k fixed
  * v2.1.1 - added lock range and timer polling rate
  * v2.1.0 - rewrite by Brandon Simpson
@@ -37,7 +38,7 @@ public class CRISPPlugin implements MMPlugin {
 	public final static String copyright = "Applied Scientific Instrumentation (ASI), 2014-2020";
 	public final static String description = "Description: Interface for ASIs CRISP Autofocus. Written by ASI.";
 	public final static String menuName = "ASI CRISP Control";
-	public final static String version = "2.1.2";
+	public final static String version = "2.1.3";
 	
 	private ScriptInterface gui;
 	private CRISPFrame frame;

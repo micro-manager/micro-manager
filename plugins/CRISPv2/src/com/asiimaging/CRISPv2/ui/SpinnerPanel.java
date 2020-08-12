@@ -26,7 +26,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import com.asiimaging.CRISPv2.CRISP;
-import com.asiimaging.CRISPv2.DefaultSettings;
+import com.asiimaging.CRISPv2.data.DefaultSettings;
+import com.asiimaging.CRISPv2.data.RangeSettings;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -34,6 +35,7 @@ import net.miginfocom.swing.MigLayout;
 public class SpinnerPanel extends JPanel {
 
 	private final CRISP crisp;
+	
 	private JLabel labelDeviceAxis;
 	private JLabel labelLED;
 	private JLabel labelGain;
@@ -49,8 +51,8 @@ public class SpinnerPanel extends JPanel {
 	private Spinner spinnerPollingRate;
 	private JCheckBox checkboxPollingEnabled;
 	
-	public SpinnerPanel(final CRISP crispDevice, final String layoutConstraints, final String columnConstraints, final String rowConstraints) {
-		setLayout(new MigLayout(layoutConstraints, columnConstraints, rowConstraints));
+	public SpinnerPanel(final CRISP crispDevice, final String layout, final String cols, final String rows) {
+		setLayout(new MigLayout(layout, cols, rows));
 		crisp = crispDevice;
 		
 		// spinner labels
@@ -63,17 +65,60 @@ public class SpinnerPanel extends JPanel {
 		labelPollingRate = new JLabel("Polling Rate [ms]");
 		
 		// spinners to change CRISP values
-		spinnerLED = new Spinner(50, 0, 100, 1);
-		spinnerGain = new Spinner(10, 0, 100, 1);
-		spinnerAverage = new Spinner(10, 0, 100, 1);
-		spinnerNA = new Spinner(0.65f, 0.0f, 1.4f, 0.01f);
-		spinnerLockRange = new Spinner(1.0f, 0.0f, 2.0f, 0.1f);
-		spinnerPollingRate = new Spinner(120, DefaultSettings.MIN_CRISP_POLL_RATE_MS, DefaultSettings.MAX_CRISP_POLL_RATE_MS, 10);
+		spinnerLED = new Spinner(
+			DefaultSettings.LED_INTENSITY,
+			RangeSettings.MIN_LED_INTENSITY,
+			RangeSettings.MAX_LED_INTENSITY,
+			1
+		);
 		
-		// starts and stops the timer
+		spinnerGain = new Spinner(
+			DefaultSettings.GAIN,
+			RangeSettings.MIN_GAIN,
+			RangeSettings.MAX_GAIN,
+			1
+		);
+		
+		spinnerAverage = new Spinner(
+			DefaultSettings.NUM_AVERAGES,
+			RangeSettings.MIN_NUM_AVERAGES,
+			RangeSettings.MAX_NUM_AVERAGES,
+			1
+		);
+		
+		spinnerNA = new Spinner(
+			DefaultSettings.OBJECTIVE_NA,
+			RangeSettings.MIN_OBJECTIVE_NA,
+			RangeSettings.MAX_OBJECTIVE_NA,
+			0.01f
+		);
+		
+		spinnerLockRange = new Spinner(
+			DefaultSettings.LOCK_RANGE,
+			RangeSettings.MIN_LOCK_RANGE,
+			RangeSettings.MAX_LOCK_RANGE,
+			0.1f
+		);
+		
+		spinnerPollingRate = new Spinner(
+			DefaultSettings.POLL_RATE_MS,
+			RangeSettings.MIN_POLL_RATE_MS,
+			RangeSettings.MAX_POLL_RATE_MS,
+			10
+		);
+		
+		// enables or disables the CRISP polling timer
 		checkboxPollingEnabled = new JCheckBox("Polling Enabled", true);
-		checkboxPollingEnabled.setFocusPainted(false);
+		checkboxPollingEnabled.setFocusPainted(false); // no highlight
 		checkboxPollingEnabled.setToolTipText("Enable or disable updating CRISP values.");
+		
+		// tooltips for the spinners
+		spinnerPollingRate.setToolTipText("The rate in milliseconds that CRISP is polled to update the status text.");
+		spinnerNA.setToolTipText("The numerical aperture of the objective.");
+		spinnerGain.setToolTipText("");
+		spinnerAverage.setToolTipText("");
+		spinnerLockRange.setToolTipText("The range of the focus lock.");
+		spinnerLED.setToolTipText("The intensity of the LED.");
 		
 		// set the size of the spinners
 		final int width = 5;
@@ -124,7 +169,7 @@ public class SpinnerPanel extends JPanel {
 			public void stateChanged(ChangeEvent event) {
 				final int intensity = (Integer)spinnerLED.getValue();
 				crisp.setLEDIntensity(intensity);
-				System.out.println("led spinner " + intensity);
+				//System.out.println("led spinner " + intensity);
 			}
 		});
 		
@@ -148,13 +193,13 @@ public class SpinnerPanel extends JPanel {
 			}
 		});
 		
-		// set this value to the objective numerical aperture
+		// set this value to the objectives numerical aperture
 		spinnerNA.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent event) {
-				final float objNA = (Float)spinnerNA.getValue();
-				crisp.setObjectiveNA(objNA);
-				//System.out.println("obj na spinner " + objNA);
+				final float objectiveNA = (Float)spinnerNA.getValue();
+				crisp.setObjectiveNA(objectiveNA);
+				//System.out.println("obj na spinner " + objectiveNA);
 			}
 		});
 		
@@ -172,8 +217,8 @@ public class SpinnerPanel extends JPanel {
 		spinnerPollingRate.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent event) {
-				final int pollingRate = (Integer)spinnerPollingRate.getValue();
-				crisp.setPollingRate(pollingRate);
+				final int pollRate = (Integer)spinnerPollingRate.getValue();
+				crisp.setPollRateMs(pollRate);
 				//System.out.println("polling rate " + pollingRate);
 			}
 		});
@@ -189,11 +234,32 @@ public class SpinnerPanel extends JPanel {
 		});
 	}
 	
-	/**
-	 * 
-	 * @return
-	 */
 	public JLabel getAxisLabel() {
 		return labelDeviceAxis;
+	}
+	
+	// used to save user settings
+	public Spinner getGainSpinner() {
+		return spinnerGain;
+	}
+	
+	public Spinner getAveragesSpinner() {
+		return spinnerAverage;
+	}
+	
+	public Spinner getNASpinner() {
+		return spinnerNA;
+	}
+	
+	public Spinner getLEDSpinner() {
+		return spinnerLED;
+	}
+	
+	public Spinner getPollRateSpinner() {
+		return spinnerPollingRate;
+	}
+	
+	public Spinner getLockRangeSpinner() {
+		return spinnerLockRange;
 	}
 }

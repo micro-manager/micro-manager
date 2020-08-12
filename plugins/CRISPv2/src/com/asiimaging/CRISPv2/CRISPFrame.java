@@ -43,7 +43,9 @@ public class CRISPFrame extends MMFrame {
 	
 	private final ScriptInterface gui;
 	private final CMMCore core;
+	
 	private final CRISP crisp;
+	private final UserSettings settings;
 	
 	private JLabel title;
 	private JPanel leftPanel;
@@ -55,11 +57,22 @@ public class CRISPFrame extends MMFrame {
 	public CRISPFrame(final ScriptInterface app) throws Exception {
 		gui = app;
 		core = gui.getMMCore();
+		
 		crisp = new CRISP(gui);
 		createUserInterface();
+		
+		// create the user settings after we create the ui
+		// we set spinner values in the constructor
+		settings = new UserSettings(crisp, spinnerPanel);
+		
 		// wait to find CRISP until after we create the ui
 		// CRISP needs to reference ui elements to update text
 		init();
+		
+		// load saved settings into the ui after we
+		// find CRISP to send the settings to the unit
+		settings.queryController();
+		settings.load();
 	}
 
 	/**
@@ -88,12 +101,15 @@ public class CRISPFrame extends MMFrame {
 		addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(final WindowEvent event) {
+            	// stop CRISP
             	if (!crisp.getDeviceName().isEmpty()) {
             		if (crisp.getDeviceType() == ASIDeviceType.TIGER) {
             			crisp.setRefreshPropertyValues(false);
             		}
 	        		crisp.stopTimer();
             	}
+            	// save user settings
+            	settings.save();
             }
         });
 	}

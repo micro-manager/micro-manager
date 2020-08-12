@@ -79,9 +79,9 @@ public final class CRISP {
 	
 	// timer variables
 	private Timer timer;
+	private int pollRateMs;
 	private int skipRefresh;
 	private int skipCounter;
-	private int pollingRateMs;
 	private ActionListener pollingTask;
 	
 	// references to ui elements from the plugin
@@ -95,7 +95,7 @@ public final class CRISP {
 		deviceType = null;
 		
 		// timer variables
-		pollingRateMs = 120;
+		pollRateMs = 120;
 		skipRefresh = 20;
 		skipCounter = 0;
 	}
@@ -126,6 +126,15 @@ public final class CRISP {
 	 */
 	public ASIDeviceType getDeviceType() {
 		return deviceType;
+	}
+	
+	/**
+	 * Returns the polling rate in milliseconds.
+	 * 
+	 * @return
+	 */
+	public int getPollRateMs() {
+		return pollRateMs;
 	}
 	
 //	private void initTimer() {
@@ -215,7 +224,7 @@ public final class CRISP {
 					}
 					
 					createPollingTask(); // pollingTask set here
-					timer = new Timer(pollingRateMs, pollingTask);
+					timer = new Timer(pollRateMs, pollingTask);
 					
 					// start the timer and begin polling data
 					timer.start();
@@ -240,7 +249,7 @@ public final class CRISP {
 				if (skipCounter > 0) {
 					skipCounter--;
 					// update the CRISP state JLabel
-					final String seconds = Float.toString((pollingRateMs*skipCounter)/1000);
+					final String seconds = Float.toString((pollRateMs*skipCounter)/1000);
 					final String text = "Calibrating..." + seconds + "s";
 					statusPanel.getStateLabel().setText(text);
 				} else {
@@ -278,12 +287,13 @@ public final class CRISP {
 	 * 
 	 * @param pollingRate The polling rate in milliseconds.
 	 */
-	public void setPollingRate(final int pollingRate) {
-		pollingRateMs = pollingRate;
-		timer.setDelay(pollingRateMs);
+	public void setPollRateMs(final int pollingRate) {
+		pollRateMs = pollingRate;
+		timer.setDelay(pollRateMs);
 	}
 	
 	/**
+	 * This method only works on Tiger, "RefreshPropertyValues" only exists there.
 	 * 
 	 * @param state
 	 */
@@ -567,7 +577,7 @@ public final class CRISP {
 			if (timer.isRunning()) {
 				skipCounter = skipRefresh;
 				timer.restart();
-				final String seconds = Float.toString((pollingRateMs*skipCounter)/1000);
+				final String seconds = Float.toString((pollRateMs*skipCounter)/1000);
 				statusPanel.getStateLabel().setText("Calibrating..." + seconds + "s");
 			}
 			core.setProperty(deviceName, "CRISP State", "loG_cal");

@@ -46,4 +46,20 @@ public class Spinner extends JSpinner {
 		final JFormattedTextField textField = ((JSpinner.NumberEditor)editor).getTextField();
 		textField.setColumns(width);
 	}
+	
+	public Integer getInt() {
+		return (Integer)getValue();
+	}
+	
+	public Float getFloat() {
+		return (Float)getValue();
+	}
+	
+	public void setInt(final int n) {
+		setValue(n);
+	}
+	
+	public void setFloat(final float n) {
+		setValue(n);
+	}
 }
