@@ -290,7 +290,7 @@ public final class ConfigWizard extends MMDialog {
             }
             try {
 
-               URL url = new URL("http://valelab.ucsf.edu/~MM/upload_file.php");
+               URL url = new URL("https://valelab.ucsf.edu/~MM/upload_file.php");
 
                List<File> flist = new ArrayList<>();
                flist.add(fileToSend);
