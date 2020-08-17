@@ -41,8 +41,9 @@ public class CRISPFrame extends MMFrame {
 	// flag to turn on debug mode when editing the user interface
 	private final static boolean DEBUG = false;
 	
-	private final ScriptInterface gui;
+	@SuppressWarnings("unused")
 	private final CMMCore core;
+	private final ScriptInterface gui;
 	
 	private final CRISP crisp;
 	private final UserSettings settings;
@@ -73,6 +74,8 @@ public class CRISPFrame extends MMFrame {
 		// find CRISP to send the settings to the unit
 		settings.queryController();
 		settings.load();
+		
+		// crisp.printDeviceProperties();
 	}
 
 	/**

@@ -43,12 +43,10 @@ import mmcorej.StrVector;
  * 
  * You first need to call findAutofocusDevices() before you can query properties from CRISP.
  * 
- * Note:
- *   There is a special tag to mark methods that support legacy versions of the CRISP firmware.
- *   This tag will be located in the Javadoc of any methods that implement this behavior.
- *   The tag is as follows: <LEGACY_SUPPORT>
- *   
- *   The currently tagged methods:
+ * A few properties have had their name change over the years and those changes are detected when
+ * the user calls findAutofocusDevices().
+ * 
+ *   Methods that need to propNameXXXX:
  *   	1) getSNR() 
  *   	2) getLEDIntensity()
  *   	3) getGainMultiplier()
@@ -61,8 +59,6 @@ import mmcorej.StrVector;
  *     Signal Noise Ratio = Signal to Noise Ratio
  *     LED Intensity      = LED Intensity(%)
  *     GainMultiplier     = LoopGainMultiplier
- *     
- *     TODO: which are the modern firmware versions? "Device Property Strings" correct?
  *     
  * Manual:
  *   http://asiimaging.com/docs/crisp_manual
@@ -87,6 +83,11 @@ public final class CRISP {
 	// references to ui elements from the plugin
 	private JLabel axisLabel;
 	private StatusPanel statusPanel;
+	
+	// these property names are detected at runtime
+	private String propNameLEDIntensity;
+	private String propNameGain;
+	private String propNameSNR;
 	
 	public CRISP(final ScriptInterface app) {
 		gui = app;
@@ -170,7 +171,7 @@ public final class CRISP {
 	 * @param deviceName The name of the device to check.
 	 * @return true if the device is a CRISP Autofocus unit.
 	 */
-	public boolean isCRISPDevice(final String deviceName) throws Exception {
+	public boolean isDeviceCRISP(final String deviceName) throws Exception {
 		boolean found = false;
 		if (core.getProperty(deviceName, "Description").equals("ASI CRISP Autofocus adapter")) {
 			deviceType = ASIDeviceType.MS2000;
@@ -181,22 +182,6 @@ public final class CRISP {
 			found =  true;
 		}
 		return found;
-	}
-
-	/**
-	 * Prints all CRISP autofocus properties to the console for use while debugging.
-	 */
-	public void printAllProperties() {
-		try {
-			final StrVector properties = core.getDevicePropertyNames(deviceName);
-			for (int i = 0; i < properties.size(); i++) {
-				final String property = properties.get(i);
-				final String value = core.getProperty(deviceName, property);
-				System.out.println("Property Name: " + property + ", Value: " + value);
-			}
-		} catch (Exception e) {
-			ReportingUtils.showError("Failed to list all CRISP device properties!");
-		}
 	}
 	
 	/**
@@ -209,10 +194,13 @@ public final class CRISP {
 		final StrVector autoFocusDevices = core.getLoadedDevicesOfType(DeviceType.AutoFocusDevice);
 		for (final String device : autoFocusDevices) {
 			try { 
-				if (isCRISPDevice(device)) {
-					// deviceType is detected in isCRISPDevice
+				if (isDeviceCRISP(device)) {
+					// deviceType is detected in isDeviceCRISP
 					found = true;
 					deviceName = device;
+					
+					// determine what property names to use
+					detectPropertyNames();
 					
 					// set the info label
 					final String axis = getAxis();
@@ -281,7 +269,6 @@ public final class CRISP {
 		}
 	}
 
-
 	/**
 	 * Set the polling rate of the Swing timer.
 	 * 
@@ -299,12 +286,13 @@ public final class CRISP {
 	 */
 	public void setRefreshPropertyValues(final boolean state) {
 		try {
-			final String value = (state == true) ? "Yes" : "No";
-			core.setProperty(deviceName, "RefreshPropertyValues", value);
+			core.setProperty(deviceName, "RefreshPropertyValues", (state == true) ? "Yes" : "No");
 		} catch (Exception e) {
-			// ReportingUtils.showError("Failed to set RefreshPropertyValues to " + state + ".");
+			ReportingUtils.showError("Failed to set RefreshPropertyValues to " + state + ".");
 		}
 	}
+	
+	// the following methods that return "" because we only need a String to update the panel
 	
 	/**
 	 * Returns the current state of CRISP.
@@ -329,25 +317,19 @@ public final class CRISP {
 			return "";
 		}
 	}
-	
+
 	/**
 	 * Returns the signal to noise ratio.
 	 * 
 	 * <LEGACY_SUPPORT>
 	 */
 	public String getSNR() {
-		String snr = null;
 		try {
-			snr = core.getProperty(deviceName, "Signal Noise Ratio");
-		} catch (Exception e1) {
-			try {
-				snr = core.getProperty(deviceName, "Signal to Noise Ratio");
-			} catch (Exception e2) {
-				// ReportingUtils.showError("Failed to read the SNR.");
-				return "";
-			}
+			return core.getProperty(deviceName, propNameSNR);
+		} catch (Exception e) {
+			// ReportingUtils.showError("Failed to read the SNR.");
+			return "";
 		}
-		return snr;
 	}
 	
 	/**
@@ -397,27 +379,19 @@ public final class CRISP {
 			return "";
 		}
 	}
-	
+
 	/**
 	 * Returns the LED intensity.
 	 * 
 	 * <LEGACY_SUPPORT>
 	 */
 	public int getLEDIntensity() {
-		String intensity;
 		try {
-			intensity = core.getProperty(deviceName, "LED Intensity");
-		} catch (Exception e1) {
-			try {
-				// sometimes this property is also called led intesity with a %
-				intensity = core.getProperty(deviceName, "LED Intensity(%)");
-			} catch (Exception e2) {
-				ReportingUtils.showError("Failed to read the LED Intensity from CRISP.");
-				return 0;
-			}
+			return Integer.parseInt(core.getProperty(deviceName, propNameLEDIntensity));
+		} catch (Exception e) {
+			ReportingUtils.showError("Failed to read the LED Intensity from CRISP.");
+			return 0;
 		}
-		final int value = Integer.parseInt(intensity);
-		return value;
 	}
 	
 	/**
@@ -426,19 +400,12 @@ public final class CRISP {
 	 * <LEGACY_SUPPORT>
 	 */
 	public int getGainMultiplier() {
-		String gain;
 		try {
-			gain = core.getProperty(deviceName, "GainMultiplier");
-		} catch (Exception e1) {
-			try {
-				gain = core.getProperty(deviceName, "LoopGainMultiplier");
-			} catch (Exception e2) {
-				ReportingUtils.showError("Failed to read the Gain Multiplier from CRISP.");
-				return 0;
-			}
+			return Integer.parseInt(core.getProperty(deviceName, propNameGain));
+		} catch (Exception e) {
+			ReportingUtils.showError("Failed to read the Gain Multiplier from CRISP.");
+			return 0;
 		}
-		final int value = Integer.parseInt(gain);
-		return value;
 	}
 	
 	/**
@@ -446,9 +413,7 @@ public final class CRISP {
 	 */
 	public int getNumberOfAverages() {
 		try {
-			final String averages = core.getProperty(deviceName, "Number of Averages");
-			final int value = Integer.parseInt(averages);
-			return value;
+			return Integer.parseInt(core.getProperty(deviceName, "Number of Averages"));
 		} catch (Exception e) {
 			ReportingUtils.showError("Failed to read the Number of Averages from CRISP.");
 			return 0;
@@ -460,9 +425,7 @@ public final class CRISP {
 	 */
 	public float getObjectiveNA() {
 		try {
-			final String objNA = core.getProperty(deviceName, "Objective NA");
-			final float value = Float.parseFloat(objNA);
-			return value;
+			return Float.parseFloat(core.getProperty(deviceName, "Objective NA"));
 		} catch (Exception e) {
 			ReportingUtils.showError("Failed to read the Objective NA from CRISP.");
 			return 0.0f;
@@ -474,50 +437,36 @@ public final class CRISP {
 	 */
 	public float getLockRange() {
 		try {
-			final String lockRange = core.getProperty(deviceName, "Max Lock Range(mm)");
-			final float value = Float.parseFloat(lockRange);
-			return value;
+			return Float.parseFloat(core.getProperty(deviceName, "Max Lock Range(mm)"));
 		} catch (Exception e) {
 			ReportingUtils.showError("Failed to read the Lock Range from CRISP.");
 			return 0.0f;
 		}
 	}
-	
+
 	/**
 	 * Sets the LED intensity.
-	 * 
-	 * <LEGACY_SUPPORT>
 	 * 
 	 * @param value
 	 */
 	public void setLEDIntensity(final int value) {
 		try {
-			core.setProperty(deviceName, "LED Intensity", value);
-		} catch (Exception e1) {
-			try {
-				core.setProperty(deviceName, "LED Intensity(%)", value);
-			} catch (Exception e2) {
-				ReportingUtils.showError("Failed to set the LED intensity.");
-			}
+			core.setProperty(deviceName, propNameLEDIntensity, value);
+		} catch (Exception e) {
+			ReportingUtils.showError("Failed to set the LED intensity.");
 		}
 	}
 
 	/**
 	 * Sets the gain multiplier.
 	 * 
-	 * <LEGACY_SUPPORT>
-	 * 
 	 * @param value
 	 */
 	public void setGainMultiplier(final int value) {
 		try {
-			core.setProperty(deviceName, "GainMultiplier", value);
-		} catch (Exception e1) {
-			try {
-				core.setProperty(deviceName, "LoopGainMultiplier", value);
-			} catch (Exception e2) {
-				ReportingUtils.showError("Failed to set the Gain Multiplier.");
-			}
+			core.setProperty(deviceName, propNameGain, value);
+		} catch (Exception e) {
+			ReportingUtils.showError("Failed to set the Gain Multiplier.");
 		}		
 	}
 	
@@ -650,5 +599,70 @@ public final class CRISP {
 		} catch (Exception e) {
 			ReportingUtils.showError("Failed to aquire the focus curve.");
 		}
+	}
+	
+	// useful helper methods, they return null on failure
+	// TODO: consider using Optional in Java 8 for MM 2.0
+	
+	public void printDeviceProperties() {
+		final StrVector properties = getDevicePropertyNames(deviceName);
+		for (int i = 0; i < properties.size(); i++) {
+		    final String property = properties.get(i);
+		    final String value = getProperty(deviceName, property);
+		    System.out.println("Property Name: " + property + ", Value: " + value);
+		}
+	}
+	
+	private StrVector getDevicePropertyNames(final String deviceName) {
+		StrVector properties = null;
+		try {
+			properties = core.getDevicePropertyNames(deviceName);
+		} catch (Exception e) {
+			ReportingUtils.showError("Failed to get device property names!");
+		}
+		return properties;
+	}
+	
+	private String getProperty(final String deviceName, final String property) {
+		String value = null;
+		try {
+			value = core.getProperty(deviceName, property);
+		} catch (Exception e) {
+			ReportingUtils.showError("Failed to get property " + property + " from device " + deviceName);
+		}
+		return value;
+	}
+	
+	/**
+	 * Detect property names from the CRISP device and sets the names that 
+	 * vary across device adapters. Any additional variations discovered  
+	 * should be handled here.
+	 * 
+	 */
+	public void detectPropertyNames() {
+		final StrVector properties = getDevicePropertyNames(deviceName);
+		
+		for (int i = 0; i < properties.size(); i++) {
+		    final String property = properties.get(i);
+		    
+		    if (property.equals("Signal Noise Ratio") || 
+		    	property.equals("Signal to Noise Ratio")) {
+		    	propNameSNR = property;		    	
+		    }
+		    
+		    if (property.equals("GainMultiplier") || 
+		    	property.equals("LoopGainMultiplier")) {
+		    	propNameGain = property;
+		    }
+		    
+		    if (property.equals("LED Intensity") || 
+		    	property.equals("LED Intensity(%)")) {
+		    	propNameLEDIntensity = property;
+		    }
+		}
+		
+		// System.out.println("propNameSNR: " + propNameSNR);
+		// System.out.println("propNameGain: " + propNameGain);
+		// System.out.println("propNameLEDIntensity: " + propNameLEDIntensity);
 	}
 }
