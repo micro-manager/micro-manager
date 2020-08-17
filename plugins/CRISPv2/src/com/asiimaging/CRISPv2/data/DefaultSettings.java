@@ -30,4 +30,6 @@ public final class DefaultSettings {
 	public final static float LOCK_RANGE = 1.0f;
 	public final static float OBJECTIVE_NA = 0.65f;
 	
+	public final static boolean POLL_CHECKED = true;
+	
 }

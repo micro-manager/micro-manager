@@ -262,4 +262,8 @@ public class SpinnerPanel extends JPanel {
 	public Spinner getLockRangeSpinner() {
 		return spinnerLockRange;
 	}
+	
+	public JCheckBox getPollingCheckBox() {
+		return checkboxPollingEnabled;
+	}
 }

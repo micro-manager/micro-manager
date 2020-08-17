@@ -101,7 +101,7 @@ public class CRISPFrame extends MMFrame {
 		addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(final WindowEvent event) {
-            	// stop CRISP
+            	// stop CRISP polling
             	if (!crisp.getDeviceName().isEmpty()) {
             		if (crisp.getDeviceType() == ASIDeviceType.TIGER) {
             			crisp.setRefreshPropertyValues(false);
