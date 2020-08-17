@@ -23,6 +23,7 @@ package org.micromanager.asidispim;
 
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
+import org.micromanager.asidispim.Data.Icons;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
@@ -45,10 +46,8 @@ import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.MMStudio;
 import org.micromanager.internalinterfaces.LiveModeListener;
 
-import com.swtdesigner.SwingResourceManager;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -179,11 +178,7 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
    * @param enable - true: live mode is switched on 
    */ 
    public final void setLiveButtonAppearance(boolean enable) {
-      toggleButtonLive_.setIcon(enable ? SwingResourceManager.
-            getIcon(MMStudio.class,
-            "/org/micromanager/icons/cancel.png")
-            : SwingResourceManager.getIcon(MMStudio.class,
-                  "/org/micromanager/icons/camera_go.png"));
+      toggleButtonLive_.setIcon(enable ? Icons.CANCEL : Icons.CAMERA_GO);
       toggleButtonLive_.setSelected(false);
       toggleButtonLive_.setText(enable ? "Stop Live" : "Live");
    }

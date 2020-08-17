@@ -31,9 +31,9 @@ import java.util.Set;
 
 import javax.swing.BorderFactory;
 
-import org.micromanager.MMStudio;
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
+import org.micromanager.asidispim.Data.Icons;
 import org.micromanager.asidispim.Data.Joystick;
 import org.micromanager.asidispim.Data.Joystick.Directions;
 import org.micromanager.asidispim.Data.MyStrings;
@@ -56,8 +56,6 @@ import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.internalinterfaces.LiveModeListener;
-
-import com.swtdesigner.SwingResourceManager;
 
 
 /**
@@ -140,7 +138,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
 
       // buttons to move the head to top/bottom for easy sample loading
       JButton headUpGo = new JButton();
-      headUpGo.setIcon(SwingResourceManager.getIcon(MMStudio.class, "icons/arrow_up.png"));
+      headUpGo.setIcon(Icons.ARROW_UP);
       headUpGo.setText("");
       headUpGo.setToolTipText("Move SPIM head to set height for sample loading");
       headUpGo.addActionListener(new ActionListener() {
@@ -150,7 +148,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
          }
       });
       JButton headDownGo = new JButton();
-      headDownGo.setIcon(SwingResourceManager.getIcon(MMStudio.class, "icons/arrow_down.png"));
+      headDownGo.setIcon(Icons.ARROW_DOWN);
       headDownGo.setText("");
       headDownGo.setToolTipText("Move SPIM head to set height after sample loading");
       headDownGo.addActionListener(new ActionListener() {

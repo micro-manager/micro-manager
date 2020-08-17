@@ -32,6 +32,7 @@ import org.micromanager.asidispim.Data.Positions;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Data.Devices.Sides;
+import org.micromanager.asidispim.Data.Icons;
 import org.micromanager.asidispim.Data.AcquisitionSettings;
 import org.micromanager.asidispim.Data.ChannelSpec;
 import org.micromanager.asidispim.Data.Joystick.Directions;
@@ -99,8 +100,6 @@ import org.json.JSONObject;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
-import com.swtdesigner.SwingResourceManager;
 
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
@@ -1053,12 +1052,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       buttonStart_.setSelected(started);
       buttonStart_.setText(started ? "Stop Acquisition!" : "Start Acquisition!");
       buttonStart_.setBackground(started ? Color.red : Color.green);
-      buttonStart_.setIcon(started ?
-            SwingResourceManager.
-            getIcon(MMStudio.class,
-            "/org/micromanager/icons/cancel.png")
-            : SwingResourceManager.getIcon(MMStudio.class,
-                  "/org/micromanager/icons/arrow_right.png"));
+      buttonStart_.setIcon(started ? Icons.CANCEL : Icons.ARROW_RIGHT);
       buttonTestAcq_.setEnabled(!started);
    }
    

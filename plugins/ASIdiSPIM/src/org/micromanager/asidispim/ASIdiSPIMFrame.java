@@ -26,6 +26,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.asidispim.Data.CameraModes;
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
+import org.micromanager.asidispim.Data.Icons;
 import org.micromanager.asidispim.Data.Joystick;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Positions;
@@ -40,6 +41,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.prefs.Preferences;
 
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.border.Border;
 import javax.swing.JLabel;
 import javax.swing.JFrame;
@@ -306,6 +308,8 @@ public class ASIdiSPIMFrame extends MMFrame
       setTitle(ASIdiSPIM.menuName + " Control"); 
       pack();           // shrinks the window as much as it can
       setResizable(false);
+      
+      setIconImage(Icons.MICROSCOPE.getImage());
       
       // take care of shutdown tasks when window is closed
       setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);

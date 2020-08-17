@@ -20,8 +20,6 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 package org.micromanager.asidispim;
 
-import com.swtdesigner.SwingResourceManager;
-
 import ij.IJ;
 import ij.ImagePlus;
 
@@ -37,6 +35,7 @@ import java.beans.PropertyChangeListener;
 import org.micromanager.asidispim.Data.CameraModes;
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
+import org.micromanager.asidispim.Data.Icons;
 import org.micromanager.asidispim.Data.Joystick;
 import org.micromanager.asidispim.Data.Joystick.Directions;
 import org.micromanager.asidispim.Data.MyStrings;
@@ -57,7 +56,6 @@ import javax.swing.event.ChangeListener;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.MMStudio;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Utils.AutofocusUtils;
 import org.micromanager.asidispim.Utils.ControllerUtils;
@@ -193,7 +191,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       piezoDeltaField_.setToolTipText("Piezo increment used by up/down arrow buttons");
       
       JButton upButton = new JButton();
-      upButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "icons/arrow_up.png"));
+      upButton.setIcon(Icons.ARROW_UP);
       upButton.setText("");
       upButton.setToolTipText("Move slice and piezo up together");
       upButton.addActionListener(new ActionListener() {
@@ -204,7 +202,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       });
       
       JButton downButton = new JButton();
-      downButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "icons/arrow_down.png"));
+      downButton.setIcon(Icons.ARROW_DOWN);
       downButton.setText("");
       downButton.setToolTipText("Move slice and piezo down together");
       downButton.addActionListener(new ActionListener() {
