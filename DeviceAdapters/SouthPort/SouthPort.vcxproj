@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{1CB0DE2A-5A06-4F58-9EB1-8D3B289EAC7B}</ProjectGuid>
+    <ProjectGuid>{9B71AD68-C43A-42C2-96E7-4113975D1C2A}</ProjectGuid>
     <RootNamespace>SouthPort</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

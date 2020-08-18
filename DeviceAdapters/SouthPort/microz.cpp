@@ -287,10 +287,10 @@ int MicroZStage::SetPositionUm(double pos)
 
 	// calculate CRC16 for data1 0~15
 	uint16_t crc161 = crc16_modbus(temp1, sizeof(temp1) / sizeof(unsigned char));
-	unsigned char first = crc161 / 256;
-	unsigned char second = crc161 % 256;
-	data1[15] = second;
-	data1[16] = first;
+	uint16_t first = crc161 / 256;
+	uint16_t second = crc161 % 256;
+	data1[15] = (unsigned char)second;
+	data1[16] = (unsigned char)first;
 
 	unsigned char ret1[8];
 	if (DEVICE_OK != CommandQuery(data1, sizeof(data1) / sizeof(unsigned char), ret1, sizeof(ret1) / sizeof(unsigned char)))
@@ -357,11 +357,14 @@ int MicroZStage::SetOrigin()
 
 int MicroZStage::GetLimits(double& lower, double& upper)
 {
+	lower = -4500000;
+	upper = 4500000;
 	return DEVICE_OK;
 }
 
 int MicroZStage::Move(double d)
 {
+	(void)d;
 	return DEVICE_OK;
 }
 
@@ -440,10 +443,10 @@ int MicroZStage::SetRelativePositionUm(double d)
 
 		// calculate CRC16 and appending 
 		uint16_t crc161 = crc16_modbus(temp1, sizeof(temp1) / sizeof(unsigned char));
-		unsigned char first = crc161 / 256;
-		unsigned char second = crc161 % 256;
-		data1[15] = second;
-		data1[16] = first;
+		uint16_t first = crc161 / 256;
+		uint16_t second = crc161 % 256;
+		data1[15] = (unsigned char)second;
+		data1[16] = (unsigned char)first;
 
 		unsigned char ret[8];
 		if (DEVICE_OK != CommandQuery(data1, sizeof(data1) / sizeof(unsigned char), ret, sizeof(ret) / sizeof(unsigned char)))
@@ -524,10 +527,10 @@ int MicroZStage::SetRelativePositionUm(double d)
 
 			// calculate CRC16 and appending 
 			uint16_t crc161 = crc16_modbus(temp1, sizeof(temp1) / sizeof(unsigned char));
-			unsigned char first = crc161 / 256;
-			unsigned char second = crc161 % 256;
-			data1[11] = second;
-			data1[12] = first;
+			uint16_t first = crc161 / 256;
+			uint16_t second = crc161 % 256;
+			data1[11] = (unsigned char)second;
+			data1[12] = (unsigned char)first;
 
 			unsigned char data_res[8];
 			if (DEVICE_OK != CommandQuery(data1, sizeof(data1) / sizeof(unsigned char), data_res, sizeof(data_res) / sizeof(unsigned char)))
@@ -581,11 +584,13 @@ bool MicroZStage::IsContinuousFocusDrive() const
 
 int MicroZStage::IsStageSequenceable(bool& isSequenceable) const
 {
+	isSequenceable = false;
 	return DEVICE_OK;
 }
 
 int MicroZStage::GetStageSequenceMaxLength(long& nrEvents) const
 {
+	nrEvents = 0;
 	return DEVICE_OK;
 }
 
@@ -616,11 +621,15 @@ int MicroZStage::SendStageSequence()
 
 int MicroZStage::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+	(void)eAct;
+	(void)pProp;
 	return DEVICE_OK;
 }
 
 int MicroZStage::OnSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+	(void)eAct;
+	(void)pProp;
 	return DEVICE_OK;
 }
 
@@ -832,8 +841,8 @@ bool MicroZStage::Busy()
 		if (DEVICE_OK != CommandQuery(data, sizeof(data) / sizeof(unsigned char), ret, sizeof(ret) / sizeof(unsigned char)))
 			return false;
 
-		unsigned char state_slience[9] = { 0x01, 0x03, 0x04, 0xC4, 0x3C, 0x00, 0x00, 0x07, 0x0F };
-		unsigned char state_move[9] = { 0x01, 0x03, 0x04, 0x60, 0x6C, 0x00, 0x00, 0x24, 0x2E };
+		//unsigned char state_slience[9] = { 0x01, 0x03, 0x04, 0xC4, 0x3C, 0x00, 0x00, 0x07, 0x0F };
+		//unsigned char state_move[9] = { 0x01, 0x03, 0x04, 0x60, 0x6C, 0x00, 0x00, 0x24, 0x2E };
 
 		if (ret[3] == 0x60 && (ret[4] == 0x6C || ret[4] == 0x4C)) {
 			busy_ = true;
