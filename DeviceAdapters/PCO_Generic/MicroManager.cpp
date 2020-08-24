@@ -1958,6 +1958,10 @@ int CPCOCam::Initialize()
       m_bCMOSLineTiming = true;
     }
   }
+  else
+  {
+    ::MessageBox(NULL, "As of 23rd of August 2020 pco ag has stopped software support for SensiCam and PixelFly (PCO PCI 540).\r\nPlease use a previous version of MicroManager.\r\nAdapter still works, but the next version will not.\r\nTo avoid this dialog downgrade MicroManager.", "Deprecated camera!", MB_ICONERROR);
+  }
 
   if(m_pCamera->m_iCamClass == 2)
   {
