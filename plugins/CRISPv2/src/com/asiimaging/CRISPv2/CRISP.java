@@ -202,13 +202,15 @@ public final class CRISP {
 					// determine what property names to use
 					detectPropertyNames();
 					
-					// set the info label
-					final String axis = getAxis();
-					final String text = deviceType.toString() + ":" + deviceName + ":" + axis;
-					
 					// set the axis label on the spinner panel
+					// deviceName on Tiger contains the Axis Letter
+					final String text = deviceType.toString() + ":" + deviceName;
 					if (axisLabel != null) {
-						axisLabel.setText(text);
+						if (deviceType == ASIDeviceType.TIGER) {
+							axisLabel.setText(text);
+						} else {
+							axisLabel.setText(text + ":" + getAxis());
+						}
 					}
 					
 					createPollingTask(); // pollingTask set here
@@ -372,8 +374,9 @@ public final class CRISP {
 	 * Returns the axis CRISP is set to control.
 	 */
 	public String getAxis() {
+		final String axisPropertyName = (deviceType == ASIDeviceType.TIGER) ? "AxisLetter" : "Axis";
 		try {
-			return core.getProperty(deviceName, "Axis");
+			return core.getProperty(deviceName, axisPropertyName);
 		} catch (Exception e) {
 			ReportingUtils.showError("Failed to read the Axis from CRISP.");
 			return "";
