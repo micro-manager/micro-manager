@@ -68,6 +68,24 @@ struct Tsi3RoiBin
    }
 };
 
+struct Roi
+{
+	unsigned x;
+	unsigned y;
+	unsigned xSize;
+	unsigned ySize;
+
+	Roi()
+	{
+		x = 0;
+		y = 0;
+		xSize = 0;
+		ySize = 0;
+	}
+
+	bool isSet() { return xSize != 0 && ySize  != 0;}
+};
+
 enum PolarImageType
 {
 	Intensity = 0,
@@ -163,6 +181,7 @@ private:
 	int SetWhiteBalance();
 	int ApplyWhiteBalance(double redScaler, double greenScaler, double blueScaler);
 	void EnableColorOutputLUTs();
+	int GetCameraROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize);
 
    static void frame_available_callback(void* sender, unsigned short* image_buffer, int frame_count, unsigned char* metadata, int metadata_size_in_bytes, void* context);
 
@@ -189,6 +208,7 @@ private:
 	std::string sdkPath;
 
    Tsi3RoiBin fullFrame;
+	Roi cachedRoi;
 
    TL_CAMERA_OPERATION_MODE operationMode;
    TL_CAMERA_TRIGGER_POLARITY triggerPolarity;
