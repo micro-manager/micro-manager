@@ -95,6 +95,11 @@ public class CRISPFrame extends MMFrame {
 		// get values from CRISP and update text
 		spinnerPanel.update();
 		statusPanel.update();
+		
+		// disable spinners if CRISP is already focus locked
+		if (crisp.getState().equals("In Focus")) {
+			spinnerPanel.setEnabledFocusLock(false);
+		}
 	}
 
 	/**
@@ -146,7 +151,7 @@ public class CRISPFrame extends MMFrame {
 			"[]10[]"
 		);
 		
-		buttonPanel = new ButtonPanel(crisp,
+		buttonPanel = new ButtonPanel(this, crisp,
 			"",
 			"[]10[]",
 			"[]10[]"
@@ -198,6 +203,11 @@ public class CRISPFrame extends MMFrame {
 		
 		// clean up resources when the frame is closed
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+	}
+	
+	// used to disable and enable spinner during focus lock
+	public SpinnerPanel getSpinnerPanel() {
+		return spinnerPanel;
 	}
 	
 	/**

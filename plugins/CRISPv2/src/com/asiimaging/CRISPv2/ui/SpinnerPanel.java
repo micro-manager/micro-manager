@@ -58,9 +58,9 @@ public class SpinnerPanel extends JPanel {
 		// spinner labels
 		labelDeviceAxis = new JLabel("Axis");
 		labelLED = new JLabel("LED Intensity");
-		labelGain = new JLabel("Gain");
-		labelAverage = new JLabel("Average");
 		labelNA = new JLabel("Objective NA");
+		labelGain = new JLabel("Loop Gain");
+		labelAverage = new JLabel("Averaging");
 		labelLockRange = new JLabel("Lock Range [mm]");
 		labelPollingRate = new JLabel("Polling Rate [ms]");
 		
@@ -135,12 +135,12 @@ public class SpinnerPanel extends JPanel {
 		add(labelDeviceAxis, "right, span 2, wrap");
 		add(labelLED, "");
 		add(spinnerLED, "wrap");
+		add(labelNA, "");
+		add(spinnerNA, "wrap");
 		add(labelGain, "");
 		add(spinnerGain, "wrap");
 		add(labelAverage, "");
 		add(spinnerAverage, "wrap");
-		add(labelNA, "");
-		add(spinnerNA, "wrap");
 		add(labelLockRange, "");
 		add(spinnerLockRange, "wrap");
 		add(labelPollingRate, "");
@@ -232,6 +232,14 @@ public class SpinnerPanel extends JPanel {
 				//System.out.println("checkbox: " + selected);
 			}
 		});
+	}
+	
+	// used to enable or disable spinners based on focus lock state
+	public void setEnabledFocusLock(final boolean state) {
+		labelLED.setEnabled(state);
+		spinnerLED.setEnabled(state);
+		labelNA.setEnabled(state);
+		spinnerNA.setEnabled(state);
 	}
 	
 	public JLabel getAxisLabel() {

@@ -24,7 +24,7 @@ public final class DefaultSettings {
 	
 	public final static int GAIN = 10;
 	public final static int NUM_AVERAGES = 10;
-	public final static int POLL_RATE_MS = 120;
+	public final static int POLL_RATE_MS = 250;
 	public final static int LED_INTENSITY = 50;
 	
 	public final static float LOCK_RANGE = 1.0f;

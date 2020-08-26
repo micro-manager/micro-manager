@@ -24,6 +24,7 @@ import org.micromanager.api.ScriptInterface;
  * The current code is based on the work of the previous authors. 
  * 
  * [Changelog]
+ * v2.1.6 - disable spinners during focus lock and set the polling rate correctly on startup
  * v2.1.5 - detects AxisLetter on Tiger, the property name differs between Whizkid and Tiger.
  * v2.1.4 - CRISP class now detects variations in property names: "LED Intensity" vs "LED Intensity(%)"
  * v2.1.3 - added saving and loading user settings, query controller for initial values
@@ -40,7 +41,7 @@ public class CRISPPlugin implements MMPlugin {
 	public final static String copyright = "Applied Scientific Instrumentation (ASI), 2014-2020";
 	public final static String description = "Description: Interface for ASIs CRISP Autofocus. Written by ASI.";
 	public final static String menuName = "ASI CRISP Control";
-	public final static String version = "2.1.5";
+	public final static String version = "2.1.6";
 	
 	private ScriptInterface gui;
 	private CRISPFrame frame;

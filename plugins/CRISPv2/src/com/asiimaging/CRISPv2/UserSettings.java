@@ -51,6 +51,7 @@ public class UserSettings {
 		// set values from settings
 		panel.getPollRateSpinner().setInt(pollRateMs);
 		panel.getPollingCheckBox().setSelected(isPollChecked);
+		crisp.setPollRateMs(pollRateMs);
 	}
 	
 	/**

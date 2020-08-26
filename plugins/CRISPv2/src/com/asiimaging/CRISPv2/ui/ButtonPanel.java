@@ -22,6 +22,7 @@ import java.awt.event.ActionListener;
 import javax.swing.JPanel;
 
 import com.asiimaging.CRISPv2.CRISP;
+import com.asiimaging.CRISPv2.CRISPFrame;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -29,6 +30,7 @@ import net.miginfocom.swing.MigLayout;
 public class ButtonPanel extends JPanel {
 
 	private final CRISP crisp;
+	private final CRISPFrame frame;
 	private Button buttonIdle;
 	private Button buttonLogCal;
 	private Button buttonDither;
@@ -39,9 +41,10 @@ public class ButtonPanel extends JPanel {
 	private Button buttonSave;
 	//private Button buttonPlot;
 	
-	public ButtonPanel(final CRISP crispDevice, final String layout, final String cols, final String rows) {
+	public ButtonPanel(final CRISPFrame frame, final CRISP crisp, final String layout, final String cols, final String rows) {
 		setLayout(new MigLayout(layout, cols, rows));
-		crisp = crispDevice;
+		this.frame = frame;
+		this.crisp = crisp;
 		
 		// CRISP control buttons
 		final int width = 100;
@@ -76,17 +79,11 @@ public class ButtonPanel extends JPanel {
 	 */
 	private void createEventHandlers() {
 		// step 1 in the calibration routine
-//		buttonIdle.registerListener(new Method() {
-//			@Override
-//			public void run(EventObject event) {
-//				crisp.setStateIdle();
-//			}
-//		});
-		
 		buttonIdle.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent event) {
 				crisp.setStateIdle();
+				frame.getSpinnerPanel().setEnabledFocusLock(true);
 			}
 		});
 		
@@ -127,6 +124,7 @@ public class ButtonPanel extends JPanel {
 			@Override
 			public void actionPerformed(ActionEvent event) {
 				crisp.lock();
+				frame.getSpinnerPanel().setEnabledFocusLock(false);
 			}
 		});
 		
@@ -135,6 +133,7 @@ public class ButtonPanel extends JPanel {
 			@Override
 			public void actionPerformed(ActionEvent event) {
 				crisp.unlock();
+				frame.getSpinnerPanel().setEnabledFocusLock(true);
 			}
 		});
 		

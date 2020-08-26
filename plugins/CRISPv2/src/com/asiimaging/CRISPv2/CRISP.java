@@ -96,7 +96,7 @@ public final class CRISP {
 		deviceType = null;
 		
 		// timer variables
-		pollRateMs = 120;
+		pollRateMs = 250;
 		skipRefresh = 20;
 		skipCounter = 0;
 	}
