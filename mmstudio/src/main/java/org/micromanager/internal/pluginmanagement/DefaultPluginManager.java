@@ -45,6 +45,9 @@ import org.micromanager.internal.utils.SortedMenu;
 import org.micromanager.quickaccess.QuickAccessPlugin;
 import org.micromanager.display.inspector.InspectorPanelPlugin;
 
+/**
+ * Implementation of the {@link PluginManager} API.
+ */
 public final class DefaultPluginManager implements PluginManager {
 
    // List of the types of plugins we allow.
@@ -54,7 +57,6 @@ public final class DefaultPluginManager implements PluginManager {
       VALID_CLASSES.add(AcquisitionDialogPlugin.class);
       VALID_CLASSES.add(AutofocusPlugin.class);
       VALID_CLASSES.add(DisplayGearMenuPlugin.class);
-      VALID_CLASSES.add(InspectorPanelPlugin.class);
       VALID_CLASSES.add(InspectorPanelPlugin.class);
       VALID_CLASSES.add(IntroPlugin.class);
       VALID_CLASSES.add(MenuPlugin.class);
@@ -120,7 +122,7 @@ public final class DefaultPluginManager implements PluginManager {
       ReportingUtils.logMessage("Searching for plugins in " + dir);
       loadPlugins(PluginFinder.findPlugins(dir));
 
-      ReportingUtils.logMessage("Searching for plugins in class loader");
+      ReportingUtils.logMessage("Searching for plugins in MMStudio's class loader");
       // We need to use our normal class loader to load stuff from the MMJ_.jar
       // file, since otherwise we won't be able to cast the new plugin to
       // MMPlugin in loadPlugins(), below.
@@ -138,12 +140,11 @@ public final class DefaultPluginManager implements PluginManager {
    private void loadPlugins(List<Class> pluginClasses) {
       for (Class pluginClass : pluginClasses) {
          try {
-            // HACK: We can load a bunch of scijava stuff from the MMJ_.jar
-            // file, which of course isn't really relevant to our interests, so
-            // skip things that aren't actually MMPlugins.
+            // Ignore any SciJava plugins that are not MM plugins.
             if (!MMGenericPlugin.class.isAssignableFrom(pluginClass)) {
                continue;
             }
+
             MMGenericPlugin plugin = (MMGenericPlugin) pluginClass.newInstance();
             ReportingUtils.logMessage("Found plugin " + plugin);
             addPlugin(plugin);
