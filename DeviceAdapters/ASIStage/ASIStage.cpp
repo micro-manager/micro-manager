@@ -54,6 +54,8 @@ const char* g_StateDeviceName = "State Device";
 const char* g_LEDName = "LED";
 const char* g_Open = "Open";
 const char* g_Closed = "Closed";
+const char* g_MagnifierDeviceName = "Magnifier";
+const char* g_TIRFDeviceName = "TIRF";
 
 // CRIF states
 const char* g_CRIFState = "CRIF State";
@@ -101,6 +103,8 @@ MODULE_API void InitializeModuleData()
    RegisterDevice(g_AZ100TurretName, MM::StateDevice, "AZ100 Turret");
    RegisterDevice(g_StateDeviceName, MM::StateDevice, "State Device");
    RegisterDevice(g_LEDName, MM::ShutterDevice, "LED");
+   RegisterDevice(g_MagnifierDeviceName, MM::MagnifierDevice, "Magnifier");
+   RegisterDevice(g_TIRFDeviceName, MM::GenericDevice, "TIRF");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -137,6 +141,15 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    else if (strcmp(deviceName, g_LEDName) == 0)
    {
       return  new LED();
+   }
+   else if (strcmp(deviceName, g_MagnifierDeviceName) == 0)
+   {
+       return  new Magnifier();
+   }
+
+   else if (strcmp(deviceName, g_TIRFDeviceName) == 0)
+   {
+       return  new ASI_TIRF();
    }
 
    return 0;
@@ -5958,4 +5971,481 @@ int LED::OnChannel(MM::PropertyBase * pProp, MM::ActionType eAct)
 	}
 
 	return DEVICE_OK;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Magnifier
+//
+
+Magnifier::Magnifier() :
+    ASIBase(this, ""),
+    answerTimeoutMs_(1000),
+    axis_("M") //normaly the zoom axis is the M axis.
+
+{
+    InitializeDefaultErrorMessages();
+
+    // create pre-initialization properties
+    // ------------------------------------
+
+    // Name
+    CreateProperty(MM::g_Keyword_Name, g_MagnifierDeviceName, MM::String, true);
+
+    // Description
+    CreateProperty(MM::g_Keyword_Description, "ASI Motorized Zoom", MM::String, true);
+
+    // Port
+    CPropertyAction* pAct = new CPropertyAction(this, &Magnifier::OnPort);
+    CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
+
+    // Axis
+    pAct = new CPropertyAction(this, &Magnifier::OnAxis);
+    CreateProperty("Axis", "M", MM::String, false, pAct, true);
+    AddAllowedValue("Axis", "M");
+}
+
+Magnifier::~Magnifier()
+{
+    Shutdown();
+}
+
+void Magnifier::GetName(char* Name) const
+{
+    CDeviceUtils::CopyLimitedString(Name, g_MagnifierDeviceName);
+}
+
+bool Magnifier::SupportsDeviceDetection(void)
+{
+    return true;
+}
+
+MM::DeviceDetectionStatus Magnifier::DetectDevice(void)
+{
+    return ASICheckSerialPort(*this, *GetCoreCallback(), port_, answerTimeoutMs_);
+}
+
+int Magnifier::Initialize()
+{
+    core_ = GetCoreCallback();
+
+    // empty the Rx serial buffer before sending command
+    ClearPort();
+
+    // check status first (test for communication protocol)
+    int ret = CheckDeviceStatus();
+    if (ret != DEVICE_OK)
+        return ret;
+
+    CPropertyAction* pAct = new CPropertyAction(this, &Magnifier::OnMagnification);
+    CreateProperty("Magnification", "0.0", MM::Float, false, pAct);
+    SetPropertyLimits("Magnification", 3.5, 125);
+
+    pAct = new CPropertyAction(this, &Magnifier::OnAxis);
+    CreateProperty("Magnifier Axis", "t", MM::String, true, pAct);
+
+
+    initialized_ = true;
+    return DEVICE_OK;
+}
+
+int Magnifier::SetMagnification(double mag)
+{
+    // empty the Rx serial buffer before sending command
+    ClearPort();
+
+    ostringstream command;
+    command << fixed << "M " << axis_ << "=" << mag; // in 10th of micros
+
+    string answer;
+    // query the device
+    int ret = QueryCommand(command.str().c_str(), answer);
+    if (ret != DEVICE_OK)
+        return ret;
+
+    if (answer.substr(0, 2).compare(":A") == 0 || answer.substr(1, 2).compare(":A") == 0)
+    {
+        return DEVICE_OK;
+    }
+    // deal with error later
+    else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+    {
+        int errNo = atoi(answer.substr(4).c_str());
+        return ERR_OFFSET + errNo;
+    }
+
+    return ERR_UNRECOGNIZED_ANSWER;
+}
+
+
+double Magnifier::GetMagnification()
+{
+    // empty the Rx serial buffer before sending command
+    ClearPort();
+
+    ostringstream command;
+    command << "W " << axis_;
+
+    string answer;
+    // query the device
+    int ret = QueryCommand(command.str().c_str(), answer);
+    if (ret != DEVICE_OK)
+        return ret;
+
+    if (answer.length() > 2 && answer.substr(0, 2).compare(":N") == 0)
+    {
+        int errNo = atoi(answer.substr(2).c_str());
+        return ERR_OFFSET + errNo;
+    }
+    else if (answer.length() > 0)
+    {
+        double mag;
+        char head[64];
+        char iBuf[256];
+        strcpy(iBuf, answer.c_str());
+        sscanf(iBuf, "%s %lf\r\n", head, &mag);
+
+        return mag;
+    }
+
+    return 0.0;
+}
+
+
+int Magnifier::Shutdown()
+{
+    if (initialized_)
+    {
+        initialized_ = false;
+    }
+    return DEVICE_OK;
+}
+
+bool Magnifier::Busy()
+{
+    // empty the Rx serial buffer before sending command
+    ClearPort();
+
+    const char* command = "/";
+    string answer;
+    // query command
+    int ret = QueryCommand(command, answer);
+    if (ret != DEVICE_OK)
+        return false;
+
+    if (answer.length() >= 1)
+    {
+        if (answer.substr(0, 1) == "B") return true;
+        else if (answer.substr(0, 1) == "N") return false;
+        else return false;
+    }
+
+    return false;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Action handlers
+///////////////////////////////////////////////////////////////////////////////
+
+
+
+int Magnifier::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set(port_.c_str());
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        if (initialized_)
+        {
+            // revert
+            pProp->Set(port_.c_str());
+            return ERR_PORT_CHANGE_FORBIDDEN;
+        }
+
+        pProp->Get(port_);
+    }
+
+    return DEVICE_OK;
+}
+
+
+
+int Magnifier::OnAxis(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set(axis_.c_str());
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        pProp->Get(axis_);
+    }
+
+    return DEVICE_OK;
+
+}
+
+int Magnifier::OnMagnification(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set(GetMagnification());
+
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        double mag;
+        pProp->Get(mag);
+        SetMagnification(mag);
+    }
+    return DEVICE_OK;
+
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// ASI TIRF
+//
+
+ASI_TIRF::ASI_TIRF() :
+    ASIBase(this, ""),
+    axis_("F"),//normaly the TIRF axis is the F axis.
+    answerTimeoutMs_(1000),
+    scaleFactor_(1),
+    unitFactor_(174.532925199433)  // 10000 controller units per mm times pi/180deg
+{
+    InitializeDefaultErrorMessages();
+
+    // create pre-initialization properties
+    // ------------------------------------
+
+    // Name
+    CreateProperty(MM::g_Keyword_Name, g_TIRFDeviceName, MM::String, true);
+
+    // Description
+    CreateProperty(MM::g_Keyword_Description, "ASI TIRF Actuator", MM::String, true);
+
+    // Port
+    CPropertyAction* pAct = new CPropertyAction(this, &ASI_TIRF::OnPort);
+    CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
+
+    // Axis
+    pAct = new CPropertyAction(this, &ASI_TIRF::OnAxis);
+    CreateProperty("Axis", "F", MM::String, false, pAct, true);
+    AddAllowedValue("Axis", "A");
+    AddAllowedValue("Axis", "B");
+    AddAllowedValue("Axis", "C");
+    AddAllowedValue("Axis", "F");
+
+    pAct = new CPropertyAction(this, &ASI_TIRF::OnScaleFactor);
+    CreateProperty("ScaleFactor(mm)", "3.0", MM::Float, false, pAct, true);
+}
+
+ASI_TIRF::~ASI_TIRF()
+{
+    Shutdown();
+}
+
+void ASI_TIRF::GetName(char* Name) const
+{
+    CDeviceUtils::CopyLimitedString(Name, g_TIRFDeviceName);
+}
+
+bool ASI_TIRF::SupportsDeviceDetection(void)
+{
+    return true;
+}
+
+MM::DeviceDetectionStatus ASI_TIRF::DetectDevice(void)
+{
+
+    return ASICheckSerialPort(*this, *GetCoreCallback(), port_, answerTimeoutMs_);
+}
+
+int ASI_TIRF::Initialize()
+{
+    core_ = GetCoreCallback();
+
+    // empty the Rx serial buffer before sending command
+    ClearPort();
+
+    // check status first (test for communication protocol)
+    int ret = CheckDeviceStatus();
+    if (ret != DEVICE_OK)
+        return ret;
+
+    CPropertyAction* pAct = new CPropertyAction(this, &ASI_TIRF::OnAngle);
+    CreateProperty("TIRFAngle(deg)", "0.0", MM::Float, false, pAct);
+    SetPropertyLimits("TIRFAngle(deg)", -90, 90);
+
+    initialized_ = true;
+    return DEVICE_OK;
+}
+
+int ASI_TIRF::Shutdown()
+{
+    if (initialized_)
+    {
+        initialized_ = false;
+    }
+    return DEVICE_OK;
+}
+
+bool ASI_TIRF::Busy()
+{
+    // empty the Rx serial buffer before sending command
+    ClearPort();
+
+    const char* command = "/";
+    string answer;
+    // query command
+    int ret = QueryCommand(command, answer);
+    if (ret != DEVICE_OK)
+        return false;
+
+    if (answer.length() >= 1)
+    {
+        if (answer.substr(0, 1) == "B") return true;
+        else if (answer.substr(0, 1) == "N") return false;
+        else return false;
+    }
+
+    return false;
+}
+
+double ASI_TIRF::GetAngle()
+{
+    // empty the Rx serial buffer before sending command
+    ClearPort();
+
+    ostringstream command;
+    command << "W " << axis_ ;
+
+    string answer;
+    // query the device
+    int ret = QueryCommand(command.str().c_str(), answer);
+    if (ret != DEVICE_OK)
+        return ret;
+
+    if (answer.length() > 2 && answer.substr(0, 2).compare(":N") == 0)
+    {
+        int errNo = atoi(answer.substr(2).c_str());
+        return ERR_OFFSET + errNo;
+    }
+    else if (answer.length() > 0)
+    {
+        double angle;
+        char head[64];
+        char iBuf[256];
+        strcpy(iBuf, answer.c_str());
+        sscanf(iBuf, "%s %lf\r\n", head, &angle);
+
+        return angle/(scaleFactor_*unitFactor_);
+    }
+
+    return 0.0;
+}
+
+int ASI_TIRF::SetAngle(double angle)
+{
+    // empty the Rx serial buffer before sending command
+    ClearPort();
+
+    ostringstream command;
+    command << fixed << "M " << axis_ << "=" << scaleFactor_*unitFactor_*angle;
+
+    string answer;
+    // query the device
+    int ret = QueryCommand(command.str().c_str(), answer);
+    if (ret != DEVICE_OK)
+        return ret;
+
+    if (answer.substr(0, 2).compare(":A") == 0 || answer.substr(1, 2).compare(":A") == 0)
+    {
+        return DEVICE_OK;
+    }
+    // deal with error later
+    else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+    {
+        int errNo = atoi(answer.substr(4).c_str());
+        return ERR_OFFSET + errNo;
+    }
+
+    return ERR_UNRECOGNIZED_ANSWER;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Action handlers
+///////////////////////////////////////////////////////////////////////////////
+
+
+
+int ASI_TIRF::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set(port_.c_str());
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        if (initialized_)
+        {
+            // revert
+            pProp->Set(port_.c_str());
+            return ERR_PORT_CHANGE_FORBIDDEN;
+        }
+        pProp->Get(port_);
+    }
+    return DEVICE_OK;
+}
+
+
+
+int ASI_TIRF::OnAxis(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set(axis_.c_str());
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        pProp->Get(axis_);
+    }
+    return DEVICE_OK;
+
+}
+
+int ASI_TIRF::OnAngle(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set(GetAngle());
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        double angle;
+        pProp->Get(angle);
+        SetAngle(angle);
+    }
+    return DEVICE_OK;
+}
+
+
+
+int ASI_TIRF::OnScaleFactor(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set(scaleFactor_);
+    }
+    else if (eAct == MM::AfterSet)
+    {
+       double val;
+       pProp->Get(val);
+       scaleFactor_ = val;
+    }
+    return DEVICE_OK;
 }
