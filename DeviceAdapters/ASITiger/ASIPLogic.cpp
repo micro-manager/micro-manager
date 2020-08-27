@@ -352,6 +352,9 @@ int CPLogic::Initialize()
       AddAllowedValue(g_SetChannelPropertyName, g_Channel5And7, 47);
       AddAllowedValue(g_SetChannelPropertyName, g_Channel1And3And5, 48);
       AddAllowedValue(g_SetChannelPropertyName, g_Channel2And4And6, 49);
+      if (FirmwareVersionAtLeast(3.33)) {
+         AddAllowedValue(g_SetChannelPropertyName, g_Channel1And6, 53);
+      }
       UpdateProperty(g_SetChannelPropertyName);               // doesn't do anything right now
       SetProperty(g_SetChannelPropertyName, g_7ChannelNone);  // makes sure card actually gets initialized
       SetOpen(false);                                         // always start shutter in closed state
