@@ -159,6 +159,28 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
          sb.customIntervalsMs(null);
       }
 
+      // Several "translations" have to be made to accommodate the Clojure engine:
+      if (!sequenceSettings.useFrames()) { sb.numFrames(0); }
+      if (!sequenceSettings.useChannels()) { sb.channels(null); }
+      switch (sequenceSettings.acqOrderMode()) {
+         case AcqOrderMode.TIME_POS_SLICE_CHANNEL:
+            sb.timeFirst(false);
+            sb.slicesFirst(false);
+            break;
+         case AcqOrderMode.TIME_POS_CHANNEL_SLICE:
+            sb.timeFirst(false);
+            sb.slicesFirst(true);
+            break;
+         case AcqOrderMode.POS_TIME_SLICE_CHANNEL:
+            sb.timeFirst(true);
+            sb.slicesFirst(false);
+            break;
+         case AcqOrderMode.POS_TIME_CHANNEL_SLICE:
+            sb.timeFirst(true);
+            sb.slicesFirst(true);
+            break;
+      }
+
       try {
          // Start up the acquisition engine
          SequenceSettings acquisitionSettings = sb.build();
