@@ -552,6 +552,7 @@ const char* const g_Channel4And6 = "output 4 and 6";
 const char* const g_Channel5And7 = "output 5 and 7";
 const char* const g_Channel1And3And5 = "output 1 and 3 and 5";
 const char* const g_Channel2And4And6 = "output 2 and 4 and 6";
+const char* const g_Channel1And6 = "output 1 and 6";
 
 
 // SPIM enums

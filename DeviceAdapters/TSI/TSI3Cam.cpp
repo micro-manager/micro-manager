@@ -199,6 +199,11 @@ int Tsi3Cam::Initialize()
    fullFrame.yBin = 1;
    ResetImageBuffer();
 
+	// update roi cache
+	ret = GetCameraROI(cachedRoi.x, cachedRoi.y, cachedRoi.xSize, cachedRoi.ySize);
+	if (ret != DEVICE_OK)
+		return ret;
+
    tl_camera_get_sensor_pixel_size_bytes(camHandle, &fullFrame.pixDepth);
    tl_camera_get_bit_depth(camHandle, &fullFrame.bitDepth);
 
@@ -597,10 +602,26 @@ int Tsi3Cam::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
       ResetImageBuffer();
       return ERR_ROI_BIN_FAILED;
    }
+
+	// update roi cache
+	int ret = GetCameraROI(cachedRoi.x, cachedRoi.y, cachedRoi.xSize, cachedRoi.ySize);
+	if (ret != DEVICE_OK)
+		return ret;
+
    return ResizeImageBuffer();
 }
 
 int Tsi3Cam::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
+{
+   x = cachedRoi.x;
+	y = cachedRoi.y;
+	xSize = cachedRoi.xSize;
+	ySize = cachedRoi.ySize;
+
+   return DEVICE_OK;
+}
+
+int Tsi3Cam::GetCameraROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
 {
    int bin(1);
    tl_camera_get_binx(camHandle, &bin); // vbin is the same
@@ -616,6 +637,7 @@ int Tsi3Cam::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
 
    return DEVICE_OK;
 }
+
 
 int Tsi3Cam::ClearROI()
 {
