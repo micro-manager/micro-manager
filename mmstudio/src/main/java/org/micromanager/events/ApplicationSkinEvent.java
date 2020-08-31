@@ -12,16 +12,10 @@ import org.micromanager.ApplicationSkin;
  * This event is posted when the ApplicationSkin is set via
  * {@link org.micromanager.ApplicationSkin#setSkin(org.micromanager.ApplicationSkin.SkinMode)}
  */
-public class ApplicationSkinEvent {
-    private final ApplicationSkin.SkinMode mode_;
+public interface ApplicationSkinEvent {
 
-    public ApplicationSkinEvent(ApplicationSkin.SkinMode mode) {
-        mode_ = mode;
-    }
     /**
      * @return new skin mode
      */
-    public ApplicationSkin.SkinMode getSkinMode() {
-        return mode_;
-    }
+    public ApplicationSkin.SkinMode getSkinMode();
 }

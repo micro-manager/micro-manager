@@ -34,7 +34,7 @@ import javax.swing.table.TableModel;
 import org.micromanager.ApplicationSkin;
 import org.micromanager.ApplicationSkin.SkinMode;
 import org.micromanager.Studio;
-import org.micromanager.events.ApplicationSkinEvent;
+import org.micromanager.events.internal.DefaultApplicationSkinEvent;
 
 /*
  * This class controls the colors of the user interface
@@ -208,7 +208,7 @@ public final class DaytimeNighttime implements ApplicationSkin {
             }
 
             // Alert any listeners of the change.
-            studio_.events().post(new ApplicationSkinEvent(mode));
+            studio_.events().post(new DefaultApplicationSkinEvent(mode));
          });
       }
    }
