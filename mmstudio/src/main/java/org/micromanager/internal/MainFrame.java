@@ -201,9 +201,8 @@ public final class MainFrame extends MMFrame {
    }
 
    public void initializeConfigPad() {
-      configPad_.setCore(core_);
-      configPad_.setParentGUI(mmStudio_);
-      configPadButtonPanel_.setCore(core_);
+      configPad_.initialize();
+      configPadButtonPanel_.initialize();
    }
 
    private JButton createButton(String text, String iconPath,
@@ -336,10 +335,7 @@ public final class MainFrame extends MMFrame {
             "pushy 0, gapleft push, alignx right, w 88!, h 20!");
 
       configPad_ = new ConfigGroupPad(mmStudio_);
-      configPadButtonPanel_ = new ConfigPadButtonPanel();
-      configPadButtonPanel_.setConfigPad(configPad_);
-      configPadButtonPanel_.setGUI(mmStudio_);
-
+      configPadButtonPanel_ = new ConfigPadButtonPanel(mmStudio_, configPad_);
       configPad_.setFont(defaultFont_);
 
       // Allowing the config pad to grow horizontally and vertically requires
@@ -534,6 +530,7 @@ public final class MainFrame extends MMFrame {
          boolean isSelected = handMovesButton_.isSelected();
          mmStudio_.updateCenterAndDragListener(isSelected);
       });
+      setHandMovesButton(mmStudio_.getMMMenubar().getToolsMenu().getMouseMovesStage());
       stagePanel.add(handMovesButton_, SMALLBUTTON_SIZE);
 
       AbstractButton listButton = createButton(null, "application_view_list.png",
@@ -681,10 +678,14 @@ public final class MainFrame extends MMFrame {
 
    @Subscribe
    public void onMouseMovesStage(MouseMovesStageStateChangeEvent event) {
-      String path = event.getIsEnabled() ? "move_hand_on.png" : "move_hand.png";
+      setHandMovesButton(event.getIsEnabled());
+   }
+
+   private void setHandMovesButton(boolean state) {
+      String icon = state ? "move_hand_on.png" : "move_hand.png";
       handMovesButton_.setIcon(IconLoader.getIcon(
-              "/org/micromanager/icons/" + path));
-      handMovesButton_.setSelected(event.getIsEnabled());
+              "/org/micromanager/icons/" + icon));
+      handMovesButton_.setSelected(state);
    }
 
    @Subscribe

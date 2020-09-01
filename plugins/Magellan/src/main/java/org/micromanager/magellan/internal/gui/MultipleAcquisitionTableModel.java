@@ -18,7 +18,7 @@
 package org.micromanager.magellan.internal.gui;
 
 import javax.swing.table.AbstractTableModel;
-import org.micromanager.magellan.internal.acq.MagellanAcquisitionsManager;
+import org.micromanager.magellan.internal.magellanacq.MagellanAcquisitionsManager;
 
 /**
  *

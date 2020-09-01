@@ -1,19 +1,11 @@
 package org.micromanager.internal.dialogs;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.GridLayout;
-import java.awt.Window;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
+import org.micromanager.Studio;
+import org.micromanager.acquisition.internal.AcquisitionEngine;
+import org.micromanager.internal.utils.DaytimeNighttime;
+import org.micromanager.internal.utils.MMDialog;
+import org.micromanager.internal.utils.TooltipTextMaker;
+
 import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -36,11 +28,19 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
-import org.micromanager.Studio;
-import org.micromanager.acquisition.internal.AcquisitionEngine;
-import org.micromanager.internal.utils.DaytimeNighttime;
-import org.micromanager.internal.utils.MMDialog;
-import org.micromanager.internal.utils.TooltipTextMaker;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GridLayout;
+import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public final class CustomTimeIntervalsPanel extends JPanel {
 
@@ -184,14 +184,15 @@ public final class CustomTimeIntervalsPanel extends JPanel {
         buttonsPanel_.add(new JLabel("      ")); //spacer
         
         useIntervalsCheckBox_ = new JCheckBox("Use custom intervals");
-        useIntervalsCheckBox_.setEnabled(acqEng_.getCustomTimeIntervals() != null);
-        useIntervalsCheckBox_.setSelected(acqEng_.customTimeIntervalsEnabled());
+        useIntervalsCheckBox_.setEnabled(acqEng_.getSequenceSettings().customIntervalsMs != null);
+        useIntervalsCheckBox_.setSelected(acqEng_.getSequenceSettings().useCustomIntervals);
         buttonsPanel_.add(useIntervalsCheckBox_);
         useIntervalsCheckBox_.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                acqEng_.enableCustomTimeIntervals(useIntervalsCheckBox_.isSelected());
-            }});
+                acqEng_.getSequenceSettings().useCustomIntervals = useIntervalsCheckBox_.isSelected();
+            }
+        });
         
     }
 
@@ -208,8 +209,8 @@ public final class CustomTimeIntervalsPanel extends JPanel {
     }
  
      public void syncCheckBoxFromAcqEng() {
-         useIntervalsCheckBox_.setEnabled(acqEng_.getCustomTimeIntervals() != null);
-         useIntervalsCheckBox_.setSelected(acqEng_.customTimeIntervalsEnabled());
+         useIntervalsCheckBox_.setEnabled(acqEng_.getSequenceSettings().customIntervalsMs != null);
+         useIntervalsCheckBox_.setSelected(acqEng_.getSequenceSettings().useCustomIntervals);
      }  
      
      public void syncIntervalsFromAcqEng() {
@@ -721,23 +722,8 @@ public final class CustomTimeIntervalsPanel extends JPanel {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            Component cell = super.getTableCellRendererComponent(table, formatter.format((Number) value), isSelected, hasFocus, row, column);
-            if (column == 0 || column == 2) {
-                if (isSelected) {
-                    cell.setBackground(Color.LIGHT_GRAY);
-                    cell.setForeground(Color.BLACK);
-                } else {
-                    cell.setBackground(Color.DARK_GRAY);
-                    cell.setForeground(Color.WHITE);
-                }
-            } else if (isSelected) {
-                cell.setBackground(Color.BLUE);
-                cell.setForeground(Color.WHITE);
-            } else {
-                cell.setBackground(Color.WHITE);
-                cell.setForeground(Color.BLACK);
-            }
-
+            Component cell = super.getTableCellRendererComponent(table,
+                    formatter.format((Number) value), isSelected, hasFocus, row, column);
             return cell;
         }
     }
@@ -762,24 +748,21 @@ public final class CustomTimeIntervalsPanel extends JPanel {
         
         private void sendIntervalsToAcqEng() {
             if (timeIntervals_ == null || timeIntervals_.isEmpty()) {
-                acqEng_.setCustomTimeIntervals(null);
+                acqEng_.getSequenceSettings().customIntervalsMs = null;
             } else {
-                double[] intervalsArray = new double[timeIntervals_.size()];
-                for (int i = 0; i < timeIntervals_.size(); i++) {
-                    intervalsArray[i] = timeIntervals_.get(i);
-                }
-                acqEng_.setCustomTimeIntervals(intervalsArray);
+                ArrayList<Double> intervals = new ArrayList<>(timeIntervals_.size());
+               for (Double aDouble : timeIntervals_) {
+                  intervals.add(aDouble);
+               }
+                acqEng_.getSequenceSettings().customIntervalsMs = intervals;
             }
            fireTableDataChanged();
         }
         
         public final void syncIntervalsFromAcqEng() {
             timeIntervals_.clear();
-            double[] existingCustomIntervals = acqEng_.getCustomTimeIntervals();
-            if (existingCustomIntervals != null) {
-                for (double d : existingCustomIntervals) {
-                    timeIntervals_.add(d);
-                }
+            if (acqEng_.getSequenceSettings().customIntervalsMs != null) {
+               timeIntervals_.addAll(acqEng_.getSequenceSettings().customIntervalsMs);
             }
             fireTableDataChanged();
         }

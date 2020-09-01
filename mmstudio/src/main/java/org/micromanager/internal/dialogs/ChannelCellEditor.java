@@ -1,8 +1,6 @@
 package org.micromanager.internal.dialogs;
 
-import java.awt.Color;
 import java.awt.Component;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -13,11 +11,13 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.table.TableCellEditor;
+
+import org.micromanager.Studio;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
-import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -28,28 +28,29 @@ import org.micromanager.internal.utils.ReportingUtils;
 public final class ChannelCellEditor extends AbstractCellEditor implements TableCellEditor {
 
    private static final long serialVersionUID = -8374637422965302637L;
-   JTextField text_ = new JTextField();
-   JComboBox channelSelect_ = new JComboBox();
-   JCheckBox checkBox_ = new JCheckBox();
-   JLabel colorLabel_ = new JLabel();
-   int editCol_ = -1;
-   int editRow_ = -1;
-   ChannelSpec channel_ = null;
+   private JTextField text_ = new JTextField();
+   private JComboBox<String> channelSelect_ = new JComboBox<>();
+   private JCheckBox checkBox_ = new JCheckBox();
+   boolean checkBoxValue_ = false;
+   private JLabel colorLabel_ = new JLabel();
+   private int editCol_ = -1;
+   private int editRow_ = -1;
+   private ChannelSpec channel_ = null;
 
-   private AcquisitionEngine acqEng_;
+   private final Studio studio_;
+   private final AcquisitionEngine acqEng_;
+   private final CheckBoxChangeListener checkBoxChangeListener_;
 
-   public ChannelCellEditor(AcquisitionEngine engine) {
+   public ChannelCellEditor(Studio studio, AcquisitionEngine engine) {
+      studio_ = studio;
       acqEng_ = engine;
+      checkBoxChangeListener_ = new CheckBoxChangeListener(this);
    }
 
    // This method is called when a cell value is edited by the user.
    @Override
    public Component getTableCellEditorComponent(JTable table, Object value,
            boolean isSelected, int rowIndex, int colIndex) {
-
-      if (isSelected) {
-         // cell (and perhaps other cells) are selected
-      }
 
       ChannelTableModel model = (ChannelTableModel) table.getModel();
       ArrayList<ChannelSpec> channels = model.getChannels();
@@ -62,13 +63,18 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
       editRow_ = rowIndex;
       editCol_ = colIndex;
       if (colIndex == 0) {
-         checkBox_.setSelected((Boolean) value);
+         checkBox_.removeChangeListener(checkBoxChangeListener_);
+         checkBoxValue_ = (Boolean) value;
+         checkBox_.setSelected(checkBoxValue_);
+         checkBox_.addChangeListener(checkBoxChangeListener_);
          return checkBox_;
       } else if (colIndex == 2 || colIndex == 3) {
          // exposure and z offset
          text_.setText(NumberUtils.doubleToDisplayString((Double)value));
          return text_;
       } else if (colIndex == 4) {
+         checkBox_.removeChangeListener(checkBoxChangeListener_);
+         checkBox_.addChangeListener(checkBoxChangeListener_);
          checkBox_.setSelected((Boolean) value);
          return checkBox_;
       } else if (colIndex == 5) {
@@ -76,47 +82,32 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
          text_.setText(NumberUtils.intToDisplayString((Integer) value));
          return text_;
       } else if (colIndex == 1) {
-         // channel
-         channelSelect_.removeAllItems();
-
          // remove old listeners
          ActionListener[] listeners = channelSelect_.getActionListeners();
-         for (int i = 0; i < listeners.length; i++) {
-            channelSelect_.removeActionListener(listeners[i]);
+         for (ActionListener listener : listeners) {
+            channelSelect_.removeActionListener(listener);
          }
          channelSelect_.removeAllItems();
 
          // Only allow channels that aren't already selected in a different
          // row.
-         HashSet<String> usedChannels = new HashSet<String>();
+         HashSet<String> usedChannels = new HashSet<>();
          for (int i = 0; i < model.getChannels().size(); ++i) {
             if (i != editRow_) {
                usedChannels.add((String) model.getValueAt(i, 1));
             }
          }
-         String configs[] = model.getAvailableChannels();
-         for (int i = 0; i < configs.length; i++) {
-            if (!usedChannels.contains(configs[i])) {
-               channelSelect_.addItem(configs[i]);
+         String[] configs = model.getAvailableChannels();
+         for (String config : configs) {
+            if (!usedChannels.contains(config)) {
+               channelSelect_.addItem(config);
             }
          }
-         channelSelect_.setSelectedItem(channel.config);
+         channelSelect_.setSelectedItem(channel.config());
          
          // end editing on selection change
-         channelSelect_.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               // Our fallback color is the colorblind-friendly color for our
-               // current row index.
-               channel_.color = new Color(AcqControlDlg.getChannelColor(
-                       MMStudio.getInstance(),
-                     acqEng_.getChannelGroup(),
-                     (String) channelSelect_.getSelectedItem(),
-                     ColorPalettes.getFromDefaultPalette(editRow_).getRGB()));
-               channel_.exposure = AcqControlDlg.getChannelExposure(
-                  acqEng_.getChannelGroup(),
-                  (String) channelSelect_.getSelectedItem(), 10.0);
+         channelSelect_.addPropertyChangeListener(e -> {
+            if (!channelSelect_.getSelectedItem().equals(channel_.config())) {
                fireEditingStopped();
             }
          });
@@ -140,34 +131,36 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
          if (editCol_ == 0) {
             return checkBox_.isSelected();
          } else if (editCol_ == 1) {
-            // As a side effect, change to the color and exposure of the new
-            // channel. If no color is available, use the "next" colorblind-
-            // friendly color, based on our row index.
-            channel_.color = new Color(AcqControlDlg.getChannelColor(
-                    MMStudio.getInstance(),
-                     acqEng_.getChannelGroup(),
-                     (String) channelSelect_.getSelectedItem(),
-                     ColorPalettes.getFromDefaultPalette(editRow_).getRGB()));
-            channel_.exposure = AcqControlDlg.getChannelExposure(
-                  acqEng_.getChannelGroup(), channel_.config, 10.0);
             return channelSelect_.getSelectedItem();
          } else if (editCol_ == 2 || editCol_ == 3) {
-            return new Double(NumberUtils.displayStringToDouble(text_.getText()));
+            return NumberUtils.displayStringToDouble(text_.getText());
          } else if (editCol_ == 4) {
             return checkBox_.isSelected();
          } else if (editCol_ == 5) {
-            return new Integer(NumberUtils.displayStringToInt(text_.getText()));
+            return NumberUtils.displayStringToInt(text_.getText());
          } else if (editCol_ == 6) {
-            Color c = colorLabel_.getBackground();
-            return c;
+            return colorLabel_.getBackground();
          } else {
-            String err = "Internal error: unknown column";
-            return err;
+            return "Internal error: unknown column";
          }
       } catch (ParseException p) {
          ReportingUtils.showError(p);
       }
-      String err = "Internal error: unknown column";
-      return err;
+      return "Internal error: unknown column";
+   }
+
+   private class CheckBoxChangeListener implements ChangeListener {
+      private final ChannelCellEditor cce_;
+      public CheckBoxChangeListener(ChannelCellEditor cce) {
+         cce_ = cce;
+      }
+      @Override
+      public void stateChanged(ChangeEvent e) {
+         if (checkBox_.isSelected() != checkBoxValue_) {
+            cce_.fireEditingStopped();
+            // avoid calling fireEditingStopped multiple times:
+            checkBoxValue_ = checkBox_.isSelected();
+         }
+      }
    }
 }

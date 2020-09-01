@@ -919,6 +919,149 @@
 // instantiate STL mappings
 
 namespace std {
+	%typemap(javaimports) vector<char> %{
+		import java.lang.Iterable;
+		import java.util.Iterator;
+		import java.util.NoSuchElementException;
+		import java.lang.UnsupportedOperationException;
+	%}
+
+   %typemap(javainterfaces) vector<char> %{ Iterable<Character>%}
+
+   %typemap(javacode) vector<char> %{
+      public Iterator<Character> iterator() {
+         return new Iterator<Character>() {
+
+            private int i_=0;
+
+            public boolean hasNext() {
+               return (i_<size());
+            }
+
+            public Character next() throws NoSuchElementException {
+               if (hasNext()) {
+                  ++i_;
+                  return get(i_-1);
+               } else {
+                  throw new NoSuchElementException();
+               }
+            }
+
+            public void remove() throws UnsupportedOperationException {
+               throw new UnsupportedOperationException();
+            }
+         };
+      }
+
+      public Character[] toArray() {
+         if (0==size())
+            return new Character[0];
+
+         Character ints[] = new Character[(int) size()];
+         for (int i=0; i<size(); ++i) {
+            ints[i] = get(i);
+         }
+         return ints;
+      }
+   %}
+   
+   /* 
+   * On most platforms a c++ `long` will be 32bit and therefore should map to a Java `Integer`. However 
+   * on some platforms a c++ `long` could be 64bit which could potentially cause issues. Ideally we should just avoid using vector<long> in MMCore interfaces.
+   */
+   
+   %typemap(javaimports) vector<long> %{
+		import java.lang.Iterable;
+		import java.util.Iterator;
+		import java.util.NoSuchElementException;
+		import java.lang.UnsupportedOperationException;
+	%}
+
+   %typemap(javainterfaces) vector<long> %{ Iterable<Integer>%}
+
+   %typemap(javacode) vector<long> %{
+      public Iterator<Integer> iterator() {
+         return new Iterator<Integer>() {
+
+            private int i_=0;
+
+            public boolean hasNext() {
+               return (i_<size());
+            }
+
+            public Integer next() throws NoSuchElementException {
+               if (hasNext()) {
+                  ++i_;
+                  return get(i_-1); 
+               } else {
+                  throw new NoSuchElementException();
+               }
+            }
+
+            public void remove() throws UnsupportedOperationException {
+               throw new UnsupportedOperationException();
+            }
+         };
+      }
+
+      public Integer[] toArray() {
+         if (0==size())
+            return new Integer[0];
+
+         Integer ints[] = new Integer[(int) size()];
+         for (int i=0; i<size(); ++i) {
+            ints[i] = get(i);
+         }
+         return ints;
+      }
+   %}
+   
+   %typemap(javaimports) vector<double> %{
+		import java.lang.Iterable;
+		import java.util.Iterator;
+		import java.util.NoSuchElementException;
+		import java.lang.UnsupportedOperationException;
+	%}
+
+   %typemap(javainterfaces) vector<double> %{ Iterable<Double>%}
+
+   %typemap(javacode) vector<double> %{
+      public Iterator<Double> iterator() {
+         return new Iterator<Double>() {
+
+            private int i_=0;
+
+            public boolean hasNext() {
+               return (i_<size());
+            }
+
+            public Double next() throws NoSuchElementException {
+               if (hasNext()) {
+                  ++i_;
+                  return get(i_-1);
+               } else {
+                  throw new NoSuchElementException();
+               }
+            }
+
+            public void remove() throws UnsupportedOperationException {
+               throw new UnsupportedOperationException();
+            }
+         };
+      }
+
+      public Double[] toArray() {
+         if (0==size())
+            return new Double[0];
+
+         Double ints[] = new Double[(int) size()];
+         for (int i=0; i<size(); ++i) {
+            ints[i] = get(i);
+         }
+         return ints;
+      }
+   %}
+
 
 	%typemap(javaimports) vector<string> %{
 		import java.lang.Iterable;

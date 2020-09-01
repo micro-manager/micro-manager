@@ -88,6 +88,7 @@ import org.micromanager.display.internal.event.DisplayMouseWheelEvent;
 import org.micromanager.display.internal.event.DataViewerMousePixelInfoChangedEvent;
 import org.micromanager.display.internal.gearmenu.GearButton;
 import org.micromanager.display.overlay.Overlay;
+import org.micromanager.events.internal.ChannelColorEvent;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.Geometry;
 import org.micromanager.internal.utils.MMFrame;
@@ -187,6 +188,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
    private ImagesAndStats displayedImages_;
    private Double cachedPixelSize_ = -1.0;
    private boolean isPreview_ = false;
+   private static ChannelColorEvent channelColorEvent_;
 
    private BoundsRectAndMask lastSeenSelection_;
 
@@ -218,6 +220,9 @@ public final class DisplayUIController implements Closeable, WindowListener,
    private double startTime_ = 0.0; // Elapsed Time for frame #0
    private long nrLiveFramesReceived_ = 0;
    private long lastImageNumber_ = 0;
+   private double durationMs_ = 0.0;
+   private double lastElapsedTimeMs_ = 0.0;
+   private double fps_ = 0.0;
 
    private static final int MIN_CANVAS_HEIGHT = 100;
    private static final int BORDER_THICKNESS = 2;
@@ -953,7 +958,23 @@ public final class DisplayUIController implements Closeable, WindowListener,
             // TODO: should all channeldisplaysetting changes be remembered?
             ChannelDisplaySettings rememberedSettings =
                     RememberedSettings.loadChannel(studio_,
-                            channelSettings.getGroupName(), channelSettings.getName());
+                            channelSettings.getGroupName(), channelSettings.getName(), null);
+            if (!rememberedSettings.getColor().equals(channelSettings.getColor())) {
+               // To ensure that we do not respond to the event posted by us
+               // (which will result in a continuous loop), remember our event
+               // so that it can be ignored in the event handler.
+               // This requires that the event bus is synchronous (which it is now),
+               // that this code always runs on the same thread (it should
+               // always run on the EDT), and that this variable is a static
+               // variable shared by all instances if DisplayUIController.
+               // In other words, this is a bit of a feeble construction, and it
+               // is not so clear the current behavior is desirable.
+               channelColorEvent_ = new ChannelColorEvent(
+                       channelSettings.getGroupName(),
+                       channelSettings.getName(),
+                       channelSettings.getColor());
+               studio_.events().post(channelColorEvent_);
+            }
             RememberedSettings.storeChannel(studio_, channelSettings.getGroupName(), channelSettings.getName(),
                     rememberedSettings.copyBuilder().color(channelSettings.getColor()).build());
 
@@ -1437,7 +1458,11 @@ public final class DisplayUIController implements Closeable, WindowListener,
                fromAxesAndImages(center.x, center.y,
                      new String[] { Coords.CHANNEL }, images));
          } catch (IllegalArgumentException iea) {
-            ReportingUtils.logError(iea);
+            String coordString = "";
+            for (Image img : images) {
+               coordString += img.getCoords().toString() + " ";
+            }
+            ReportingUtils.logError("Request to display mousePixel Info failed for these images : " + coordString);
             displayController_.postDisplayEvent(
                DataViewerMousePixelInfoChangedEvent.createUnavailable());
          }
@@ -1569,32 +1594,49 @@ public final class DisplayUIController implements Closeable, WindowListener,
                cameraFpsLabel_.setText(" ");
                return;
             }
-            // Circular buffer overflow causes the imageNumber to reset to 0.
-            // but not the elapasedTimeMs, we need to keep track of the elapsedTime
-            // of every image with imageNumber 0:
+            // The elapsedTime metadata can be inserted by the Circular buffer
+            // or by the Device Adapter.  When the Circular buffer resets, (i.e.
+            // after an overflow), the Circular Buffer will reset the imageNumber
+            // and elapsedTimeMs to 0, however, the Device Adapter can do whatever
+            // it wants.  Currently, the DemoCamera only inserts the elapsedTimeMs
+            // and will report the elapsedTime from the beginning of live mode,
+            // not the beginning of this Circular buffer, whereas the image number
+            // (inserted by the Circular Buffer) is the image number in this buffer.
+            // All of this is a bit crazy and needs refactoring, but deal with
+            // it using ugly heuristics for now
+            // Also note that changing the exposure time while live mode is
+            // running will result in wrong estimates of camera fps
+            // This really needs a better approach...
             if (nrLiveFramesReceived_ == 0) {
-               startTime_ = metadata.getElapsedTimeMs(-1.0);
+               durationMs_ = - metadata.getElapsedTimeMs(-1.0);
             }
-            double ms = metadata.getElapsedTimeMs(-1.0) - startTime_;
+            double elapsedMs = metadata.getElapsedTimeMs(-1.0);
             if (nr != null) {
                if (nr < lastImageNumber_) {
                   // circular buffer must have overflown and was reset
                   // calculate missing images from buffer size and numbers we have
-                  nrLiveFramesReceived_ += studio_.core().getBufferTotalCapacity() -
+                  long missingImages = studio_.core().getBufferTotalCapacity() -
                           lastImageNumber_  + nr;
+                  nrLiveFramesReceived_ += missingImages;
+                  // reset also reset elapsedTimeMs_. Estimate real elapsedTime
+                  if (elapsedMs < lastElapsedTimeMs_ && fps_ > 0.0) {
+                     durationMs_ += missingImages * (1000.0 / fps_);
+                  }
                } else {
                   nrLiveFramesReceived_ += nr - lastImageNumber_;
+                  durationMs_ += elapsedMs - lastElapsedTimeMs_;
                }
                lastImageNumber_ = nr;
-               if (ms > 0.0) {
-                  double fps = (nrLiveFramesReceived_ * 1000.0) / ms;
-                  if (fps < 2.0) {
+               lastElapsedTimeMs_ = elapsedMs;
+               if (durationMs_ > 0.0) {
+                  fps_ = ( (nrLiveFramesReceived_ - 1) * 1000.0) / durationMs_;
+                  if (fps_ < 2.0) {
                      cameraFpsLabel_.setText(String.format(
-                             "Camera: %.3g fps", fps));
+                             "Camera: %.3g fps", fps_));
                   }
                   else {
                      cameraFpsLabel_.setText(String.format(
-                             "Camera: %d fps", (int) fps));
+                             "Camera: %d fps", (int) fps_));
                   }
                }
             } else {
@@ -2011,6 +2053,44 @@ public final class DisplayUIController implements Closeable, WindowListener,
       if (liveModeEvent.getIsOn()) {
          nrLiveFramesReceived_ = 0;
          lastImageNumber_ = 0;
+         durationMs_ = 0.0;
+         lastElapsedTimeMs_ = 0.0;
+         fps_ = 0.0;
+      }
+   }
+
+   @Subscribe
+   public void onChannelColorEvent(ChannelColorEvent channelColorEvent) {
+      // make sure we do not respond to the event we generated ourselves
+      if (!channelColorEvent.equals(channelColorEvent_)) {
+         if (channelColorEvent.getColor() != null) {
+            DisplaySettings oldDisplaySettings, newDisplaySettings;
+            do {
+               oldDisplaySettings = displayController_.getDisplaySettings();
+               int index = 0;
+               boolean found = false;
+               while (!found && index < oldDisplaySettings.getNumberOfChannels()) {
+                  ChannelDisplaySettings channelSettings = oldDisplaySettings.getChannelSettings(index);
+                  if (channelSettings.getGroupName().equals(channelColorEvent.getChannelGroup()) &&
+                          channelSettings.getName().equals(channelColorEvent.getChannel())) {
+                     found = true;
+                  }
+                  else {
+                     index++;
+                  }
+               }
+               if (!found) {
+                  return;
+               }
+               ChannelDisplaySettings channelSettings
+                       = oldDisplaySettings.getChannelSettings(index);
+               newDisplaySettings = oldDisplaySettings.
+                       copyBuilderWithChannelSettings(index,
+                               channelSettings.copyBuilder().color(
+                                       channelColorEvent.getColor()).build()).
+                       build();
+            } while (!displayController_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
+         }
       }
    }
 }

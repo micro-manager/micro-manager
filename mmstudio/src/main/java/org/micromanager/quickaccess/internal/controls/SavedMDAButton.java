@@ -142,10 +142,11 @@ public final class SavedMDAButton extends WidgetPlugin implements SciJavaPlugin 
    public PropertyMap configureControl(Frame parent) {
       File file = FileDialogs.openFile(parent,
             "Choose acquisition settings file",
-            AcqControlDlg.ACQ_SETTINGS_FILE);
+            FileDialogs.ACQ_SETTINGS_FILE);
       if (file == null) {
          return null;
       }
+      FileDialogs.storePath(FileDialogs.ACQ_SETTINGS_FILE, file);
       return PropertyMaps.builder().putString("settingsPath",
               file.getAbsolutePath()).build();
    }

@@ -808,7 +808,7 @@ public final class MultipageTiffWriter {
          for (int ch = 0; ch < numChannels; ch++) {
             String name = summary.getSafeChannelName(ch);
             ChannelDisplaySettings cds = RememberedSettings.loadChannel(
-                    MMStudio.getInstance(), channelGroup, name);
+                    MMStudio.getInstance(), channelGroup, name, null);
             // Display Ranges: For each channel, write min then max
             // TODO: doesn't handle multi-component images.
             mdBuffer.putDouble(bufferPosition, (double) 
@@ -836,7 +836,7 @@ public final class MultipageTiffWriter {
          if (ds == null) {
             String name = summary.getSafeChannelName(ch);
             color = RememberedSettings.loadChannel(
-                    MMStudio.getInstance(), channelGroup, name).getColor();
+                    MMStudio.getInstance(), channelGroup, name, null).getColor();
          } else {
             color = ds.getChannelColor(ch);
          }

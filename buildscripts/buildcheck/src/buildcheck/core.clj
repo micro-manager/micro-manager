@@ -44,8 +44,8 @@
 
 (defn do-not-build []
   (set (apply concat
-         (for [blacklist (map #(File. % "_ADAPTERS_NOT_IN_BUILD.txt") device-adapter-parent-dirs)]
-           (let [txt (slurp blacklist)]
+         (for [blocklist (map #(File. % "_ADAPTERS_NOT_IN_BUILD.txt") device-adapter-parent-dirs)]
+           (let [txt (slurp blocklist)]
              (map #(first (.split % ":")) (.split txt "\n")))))))
 
 (def non-windows-device-adapters #{"dc1394" "HamamatsuMac" "SimpleCam" "Video4Linux" "Spot"})

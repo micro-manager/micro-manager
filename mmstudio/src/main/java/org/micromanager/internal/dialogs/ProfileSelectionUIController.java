@@ -50,6 +50,7 @@ import javax.swing.event.ChangeListener;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.Application;
 import org.micromanager.internal.utils.PopupButton;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.profile.internal.UserProfileAdmin;
@@ -62,6 +63,7 @@ import org.micromanager.profile.internal.UserProfileAdmin;
 public final class ProfileSelectionUIController
       implements PopupButton.Listener, ActionListener {
    private final UserProfileAdmin admin_;
+   private final Application app_;
 
    private ChangeListener currentProfileListener_;
    private ChangeListener profileIndexListener_;
@@ -98,10 +100,10 @@ public final class ProfileSelectionUIController
       }
    }
 
-   public static ProfileSelectionUIController create(UserProfileAdmin admin)
+   public static ProfileSelectionUIController create(Application app, UserProfileAdmin admin)
          throws IOException {
       final ProfileSelectionUIController ret =
-            new ProfileSelectionUIController(admin);
+            new ProfileSelectionUIController(app, admin);
 
       ret.profileComboBox_.addActionListener(ret);
       ret.gearButton_.addPopupButtonListener(ret);
@@ -128,8 +130,10 @@ public final class ProfileSelectionUIController
       return ret;
    }
 
-   private ProfileSelectionUIController(UserProfileAdmin admin) throws IOException {
+   private ProfileSelectionUIController(Application app, UserProfileAdmin admin) throws IOException {
+      app_ = app;
       admin_ = admin;
+
 
       profileComboBox_.setPrototypeDisplayValue("");
       profileComboBox_.setMaximumRowCount(32);
@@ -257,6 +261,9 @@ public final class ProfileSelectionUIController
          UUID uuid = getSelectedProfileUUID();
          if (uuid != null) {
             admin_.setCurrentUserProfile(uuid);
+            if (app_ != null) {
+               app_.skin().setSkin(app_.skin().getSkin());
+            }
             gearMenuReadOnlyCheckBox_.setSelected(admin_.isProfileReadOnly());
          }
       }
@@ -425,7 +432,7 @@ public final class ProfileSelectionUIController
    public static void main(String[] args) {
       try {
          ProfileSelectionUIController c = ProfileSelectionUIController.create(
-               UserProfileAdmin.create());
+               null, UserProfileAdmin.create());
          JFrame f = new JFrame();
          f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
          f.add(c.getUI());

@@ -36,17 +36,17 @@ MODULE_API void InitializeModuleData()
 {
 	DWORD numDevices = 0;
 	XI_RETURN ret = xiGetNumberDevices(&numDevices);
-	if(ret != XI_OK)
+	if (ret != XI_OK)
 	{
 		// camera enumeration failed
 		return;
 	}
 
-	for(DWORD i = 0; i < numDevices; i++)
+	for (DWORD i = 0; i < numDevices; i++)
 	{
 		char dev_sn[DEV_SN_LEN] = "";
 		ret = xiGetDeviceInfoString(i, XI_PRM_DEVICE_SN, dev_sn, DEV_SN_LEN);
-		if(ret == XI_OK)
+		if (ret == XI_OK)
 		{
 			RegisterDevice(dev_sn, MM::CameraDevice, "XIMEA camera adapter");
 		}
@@ -64,23 +64,23 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 
 	DWORD numDevices = 0;
 	XI_RETURN ret = xiGetNumberDevices(&numDevices);
-	if(ret != XI_OK)
+	if (ret != XI_OK)
 	{
 		// camera enumeration failed
 		return NULL;
 	}
-	if(numDevices == 0)
+	if (numDevices == 0)
 	{
 		// no device connected
 		return NULL;
 	}
 
 	// create new camera object for selected device
-	for(DWORD i = 0; i < numDevices; i++)
+	for (DWORD i = 0; i < numDevices; i++)
 	{
 		char camera_sn[DEV_SN_LEN] = "";
 		ret = xiGetDeviceInfoString(i, XI_PRM_DEVICE_SN, camera_sn, DEV_SN_LEN);
-		if(ret != XI_OK)
+		if (ret != XI_OK)
 		{
 			// reading of device info failed
 			continue;
@@ -105,7 +105,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 /***********************************************************************
 * XimeaCamera constructor.
 * Setup default all variables and create device properties required to exist
-* before intialization. In this case, no such properties were required. All
+* before initialization. In this case, no such properties were required. All
 * properties will be created in the Initialize() method.
 *
 * As a general guideline Micro-Manager devices do not access hardware in the
@@ -141,7 +141,7 @@ XimeaCamera::XimeaCamera(const char* name) :
 */
 XimeaCamera::~XimeaCamera()
 {
-	if(camera)
+	if (camera)
 	{
 		delete camera;
 		camera = NULL;
@@ -158,7 +158,7 @@ void XimeaCamera::GetName(char* name) const
 }
 
 /***********************************************************************
-* Intializes the hardware.
+* Initializes the hardware.
 * Typically we access and initialize hardware at this point.
 * Device properties are typically created here as well.
 * Required by the MM::Device API.
@@ -172,10 +172,10 @@ int XimeaCamera::Initialize()
 
 	// -------------------------------------------------------------------------------------
 	// Open camera
-	if(camera == NULL)
+	if (camera == NULL)
 	{
 		camera = new xiAPIplus_Camera();
-		if(camera == NULL)
+		if (camera == NULL)
 		{
 			LogMessage("Failed to allocate XiSequenceThread()");
 			return DEVICE_OUT_OF_MEMORY;
@@ -187,10 +187,10 @@ int XimeaCamera::Initialize()
 		// open camera
 		camera->OpenBySN(device_name.c_str());
 		initialized_ = true;
-		
+
 		// clear current parameter list
 		cam_params.clear();
-		
+
 		// load XML manifest
 		camera->LoadCameraManifest();
 		ParseCameraManifest(camera->GetCameraManifest());
@@ -200,9 +200,9 @@ int XimeaCamera::Initialize()
 		// prepare internal image buffer
 		int width = camera->GetXIAPIParamInt(XI_PRM_WIDTH);
 		int height = camera->GetXIAPIParamInt(XI_PRM_HEIGHT);
-	
+
 		img_ = new ImgBuffer(width, height, bytesPerPixel_);
-		if(img_ == NULL)
+		if (img_ == NULL)
 		{
 			LogMessage("Failed to allocate ImgBuffer");
 			return DEVICE_OUT_OF_MEMORY;
@@ -212,22 +212,22 @@ int XimeaCamera::Initialize()
 		// set acquisition timeout
 		camera->SetNextImageTimeout_ms(DEFAULT_ACQ_TOUT_MS);
 	}
-	catch(xiAPIplus_Exception exc)
+	catch (xiAPIplus_Exception exc)
 	{
 		string err_msg = "Initialize(): " + exc.GetDescription();
 		LogMessage(err_msg);
 		return DEVICE_ERR;
 	}
-	catch(...)
+	catch (...)
 	{
-		LogMessage("Initialize(): Unknown exception");									\
+		LogMessage("Initialize(): Unknown exception");
 		return DEVICE_ERR;
 	}
 
 	// -------------------------------------------------------------------------------------
 	// call the base class method to set-up default error codes/messages
 	seq_thd_ = new XiSequenceThread(this);
-	if(seq_thd_ == NULL)
+	if (seq_thd_ == NULL)
 	{
 		LogMessage("Failed to allocate XiSequenceThread()");
 		return DEVICE_OUT_OF_MEMORY;
@@ -247,7 +247,7 @@ int XimeaCamera::Initialize()
 int XimeaCamera::Shutdown()
 {
 	int ret = DEVICE_OK;
-	if(initialized_)
+	if (initialized_)
 	{
 		try
 		{
@@ -255,25 +255,25 @@ int XimeaCamera::Shutdown()
 			camera->Close();
 			cam_params.clear();
 		}
-		catch(xiAPIplus_Exception exc)
+		catch (xiAPIplus_Exception exc)
 		{
 			string err_msg = "Shutdown(): " + exc.GetDescription();
 			LogMessage(err_msg);
 			ret = DEVICE_ERR;
 		}
-		catch(...)
+		catch (...)
 		{
 			LogMessage("Shutdown(): Unknown exception");
 			return DEVICE_ERR;
 		}
 
-		if(img_)
+		if (img_)
 		{
 			delete img_;
 			img_ = NULL;
 		}
 
-		if(seq_thd_)
+		if (seq_thd_)
 		{
 			delete seq_thd_;
 			seq_thd_ = NULL;
@@ -310,7 +310,7 @@ int XimeaCamera::SnapImage()
 			img_->SetPixelsPadded(image.GetPixels(), image.GetPadding_X());
 		}
 
-		// store timestamp dataS
+		// store time stamp data
 		readoutStartTime_.sec_ = image.GetTimeStampSec();
 		readoutStartTime_.uSec_ = image.GetTimeStampUSec();
 
@@ -319,13 +319,13 @@ int XimeaCamera::SnapImage()
 			camera->StopAcquisition();
 		}
 	}
-	catch(xiAPIplus_Exception exc)
+	catch (xiAPIplus_Exception exc)
 	{
 		string err_msg = "SnapImage(): " + exc.GetDescription();
 		LogMessage(err_msg);
 		return DEVICE_SNAP_IMAGE_FAILED;
 	}
-	catch(...)
+	catch (...)
 	{
 		LogMessage("SnapImage(): Unknown exception");
 		return DEVICE_SNAP_IMAGE_FAILED;
@@ -346,7 +346,7 @@ int XimeaCamera::SnapImage()
 * The calling program will assume the size of the buffer based on the values
 * obtained from GetImageBufferSize(), which in turn should be consistent with
 * values returned by GetImageWidth(), GetImageHight() and GetImageBytesPerPixel().
-* The calling program allso assumes that camera never changes the size of
+* The calling program also assumes that camera never changes the size of
 * the pixel buffer on its own. In other words, the buffer can change only if
 * appropriate properties are set (such as binning, pixel type, etc.)
 */
@@ -395,13 +395,13 @@ unsigned XimeaCamera::GetBitDepth() const
 	{
 		bitDepth = camera->GetXIAPIParamInt(XI_PRM_IMAGE_DATA_BIT_DEPTH);
 	}
-	catch(xiAPIplus_Exception exc)
+	catch (xiAPIplus_Exception exc)
 	{
 		string err_msg = "SnapImage(): " + exc.GetDescription();
 		LogMessage(err_msg);
 		return DEVICE_SNAP_IMAGE_FAILED;
 	}
-	catch(...)
+	catch (...)
 	{
 		LogMessage("SnapImage(): Unknown exception");
 		return DEVICE_SNAP_IMAGE_FAILED;
@@ -465,13 +465,13 @@ int XimeaCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 			roiY_ = off_y;
 			UpdateRoiParams();
 		}
-		catch(xiAPIplus_Exception exc)
+		catch (xiAPIplus_Exception exc)
 		{
 			string err_msg = "SetROI(): " + exc.GetDescription();
 			LogMessage(err_msg);
 			return DEVICE_INVALID_PROPERTY_VALUE;
 		}
-		catch(...)
+		catch (...)
 		{
 			LogMessage("SetROI(): Unknown exception");
 			return DEVICE_ERR;
@@ -494,13 +494,13 @@ int XimeaCamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySi
 		offx = camera->GetXIAPIParamInt(XI_PRM_OFFSET_X);
 		offy = camera->GetXIAPIParamInt(XI_PRM_OFFSET_Y);
 	}
-	catch(xiAPIplus_Exception exc)
+	catch (xiAPIplus_Exception exc)
 	{
 		string err_msg = "GetROI(): " + exc.GetDescription();
 		LogMessage(err_msg);
 		return DEVICE_INVALID_PROPERTY_VALUE;
 	}
-	catch(...)
+	catch (...)
 	{
 		LogMessage("GetROI(): Unknown exception");
 		return DEVICE_ERR;
@@ -531,20 +531,19 @@ int XimeaCamera::ClearROI()
 		camera->SetXIAPIParamInt(XI_PRM_HEIGHT, height);
 		UpdateRoiParams();
 	}
-	catch(xiAPIplus_Exception exc)
+	catch (xiAPIplus_Exception exc)
 	{
 		string err_msg = "GetROI(): " + exc.GetDescription();
 		LogMessage(err_msg);
 		return DEVICE_INVALID_PROPERTY_VALUE;
 	}
-	catch(...)
+	catch (...)
 	{
 		LogMessage("GetROI(): Unknown exception");
 		return DEVICE_ERR;
 	}
 
-	ResizeImageBuffer();
-	return DEVICE_OK;
+	return ResizeImageBuffer();
 }
 
 /***********************************************************************
@@ -558,14 +557,14 @@ double XimeaCamera::GetExposure() const
 	{
 		int exposure_us = 0;
 		camera->GetXIAPIParamInt(XI_PRM_EXPOSURE, &exposure_us);
-		exposure_ms = (double) exposure_us / 1000.0;
+		exposure_ms = (double)exposure_us / 1000.0;
 	}
-	catch(xiAPIplus_Exception exc)
+	catch (xiAPIplus_Exception exc)
 	{
 		string err_msg = "GetExposure(): " + exc.GetDescription();
 		LogMessage(err_msg);
 	}
-	catch(...)
+	catch (...)
 	{
 		LogMessage("GetExposure(): Unknown exception");
 	}
@@ -580,16 +579,16 @@ void XimeaCamera::SetExposure(double exp)
 {
 	try
 	{
-		int exposure_us = (int) (exp * 1000.0);
+		int exposure_us = (int)(exp * 1000.0);
 		camera->SetXIAPIParamInt(XI_PRM_EXPOSURE, exposure_us);
 		UpdateProperty("Exposure time");
 	}
-	catch(xiAPIplus_Exception exc)
+	catch (xiAPIplus_Exception exc)
 	{
 		string err_msg = "SetExposure(): " + exc.GetDescription();
 		LogMessage(err_msg);
 	}
-	catch(...)
+	catch (...)
 	{
 		LogMessage("SetExposure(): Unknown exception");
 	}
@@ -604,14 +603,14 @@ int XimeaCamera::GetBinning() const
 	int binning = 1;
 	try
 	{
-		camera->GetXIAPIParamInt(XI_PRM_DOWNSAMPLING, &binning);		
+		camera->GetXIAPIParamInt(XI_PRM_DOWNSAMPLING, &binning);
 	}
-	catch(xiAPIplus_Exception exc)
+	catch (xiAPIplus_Exception exc)
 	{
 		string err_msg = "GetBinning(): " + exc.GetDescription();
 		LogMessage(err_msg);
 	}
-	catch(...)
+	catch (...)
 	{
 		LogMessage("GetBinning(): Unknown exception");
 	}
@@ -624,25 +623,26 @@ int XimeaCamera::GetBinning() const
 */
 int XimeaCamera::SetBinning(int binF)
 {
+	int retVal = DEVICE_OK;
 	try
 	{
 		camera->SetXIAPIParamInt(XI_PRM_DOWNSAMPLING, binF);
 		UpdateStatus();
-		ResizeImageBuffer();
+		retVal = ResizeImageBuffer();
 	}
-	catch(xiAPIplus_Exception exc)
+	catch (xiAPIplus_Exception exc)
 	{
 		string err_msg = "SetBinning(): " + exc.GetDescription();
 		LogMessage(err_msg);
 		return DEVICE_ERR;
 	}
-	catch(...)
+	catch (...)
 	{
 		LogMessage("SetBinning(): Unknown exception");
 		return DEVICE_ERR;
 	}
 
-	return DEVICE_OK;
+	return retVal;
 }
 //////////////////////////////////////////////////////////////
 
@@ -670,8 +670,8 @@ int XimeaCamera::GetMultiROICount(unsigned& /* count */)
 	return DEVICE_ERR;
 }
 
-int XimeaCamera::SetMultiROI(const unsigned* /*xs */, const unsigned* /* ys */, const unsigned* /* widths */, 
-            const unsigned* /* heights */, unsigned /* numROIs */)
+int XimeaCamera::SetMultiROI(const unsigned* /*xs */, const unsigned* /* ys */, const unsigned* /* widths */,
+	const unsigned* /* heights */, unsigned /* numROIs */)
 {
 	/*TODO
 	Add MultiROI support
@@ -679,8 +679,8 @@ int XimeaCamera::SetMultiROI(const unsigned* /*xs */, const unsigned* /* ys */, 
 	return DEVICE_ERR;
 }
 
-int XimeaCamera::GetMultiROI(unsigned*  /*xs */, unsigned* /* ys */, unsigned* /* widths */, unsigned* /* heights */, 
-            unsigned* /* length */)
+int XimeaCamera::GetMultiROI(unsigned*  /*xs */, unsigned* /* ys */, unsigned* /* widths */, unsigned* /* heights */,
+	unsigned* /* length */)
 {
 	/*TODO
 	Add MultiROI support
@@ -709,13 +709,13 @@ int XimeaCamera::StopSequenceAcquisition()
 	{
 		camera->StopAcquisition();
 	}
-	catch(xiAPIplus_Exception exc)
+	catch (xiAPIplus_Exception exc)
 	{
 		string err_msg = "StopSequenceAcquisition(): " + exc.GetDescription();
 		LogMessage(err_msg);
 		return DEVICE_ERR;
 	}
-	catch(...)
+	catch (...)
 	{
 		LogMessage("StopSequenceAcquisition(): Unknown exception");
 		return DEVICE_ERR;
@@ -748,14 +748,13 @@ int XimeaCamera::StartSequenceAcquisition(long numImages, double interval_ms, bo
 	{
 		camera->SetXIAPIParamInt(XI_PRM_TS_RST_SOURCE, XI_TS_RST_SRC_SW);
 		camera->SetXIAPIParamInt(XI_PRM_TS_RST_MODE, XI_TS_RST_ARM_ONCE);
-
 	}
-	catch(xiAPIplus_Exception exc)
+	catch (xiAPIplus_Exception exc)
 	{
 		string err_msg = "Timestamp reset error: " + exc.GetDescription();
 		LogMessage(err_msg);
 	}
-	catch(...)
+	catch (...)
 	{
 		LogMessage("Timestamp reset error: Unknown exception");
 	}
@@ -766,13 +765,13 @@ int XimeaCamera::StartSequenceAcquisition(long numImages, double interval_ms, bo
 		camera->StartAcquisition();
 		isAcqRunning = true;
 	}
-	catch(xiAPIplus_Exception exc)
+	catch (xiAPIplus_Exception exc)
 	{
 		string err_msg = "StartSequenceAcquisition(): " + exc.GetDescription();
 		LogMessage(err_msg);
 		return DEVICE_ERR;
 	}
-	catch(...)
+	catch (...)
 	{
 		LogMessage("StartSequenceAcquisition(): Unknown exception");
 		return DEVICE_ERR;
@@ -782,7 +781,7 @@ int XimeaCamera::StartSequenceAcquisition(long numImages, double interval_ms, bo
 	sequenceStartTime_.uSec_ = 0;
 
 	imageCounter_ = 0;
-	seq_thd_->Start( numImages, interval_ms);
+	seq_thd_->Start(numImages, interval_ms);
 	stopOnOverflow_ = stopOnOverflow;
 	return DEVICE_OK;
 }
@@ -800,14 +799,14 @@ int XimeaCamera::InsertImage()
 
 	// Important:  metadata about the image are generated here:
 	Metadata md;
-	double exp_time = (double)image.GetExpTime()/1000;
+	double exp_time = (double)image.GetExpTime() / 1000;
 	md.put(MM::g_Keyword_Meatdata_Exposure, CDeviceUtils::ConvertToString(exp_time));
 	md.put(MM::g_Keyword_Metadata_StartTime, CDeviceUtils::ConvertToString(sequenceStartTime_.getMsec()));
 	md.put(MM::g_Keyword_Metadata_StartTime, CDeviceUtils::ConvertToString(sequenceStartTime_.getMsec()));
 	md.put(MM::g_Keyword_Elapsed_Time_ms, CDeviceUtils::ConvertToString((timeStamp - sequenceStartTime_).getMsec()));
 	md.put(MM::g_Keyword_Metadata_ImageNumber, CDeviceUtils::ConvertToString(imageCounter_));
-	md.put(MM::g_Keyword_Metadata_ROI_X, CDeviceUtils::ConvertToString((long) roiX_));
-	md.put(MM::g_Keyword_Metadata_ROI_Y, CDeviceUtils::ConvertToString((long) roiY_));
+	md.put(MM::g_Keyword_Metadata_ROI_X, CDeviceUtils::ConvertToString((long)roiX_));
+	md.put(MM::g_Keyword_Metadata_ROI_Y, CDeviceUtils::ConvertToString((long)roiY_));
 	md.put(MM::g_Keyword_Gain, CDeviceUtils::ConvertToString(image.GetGain()));
 	imageCounter_++;
 
@@ -840,7 +839,7 @@ int XimeaCamera::InsertImage()
 * Do actual capturing
 * Called from inside the thread
 */
-int XimeaCamera::CaptureImage (void)
+int XimeaCamera::CaptureImage(void)
 {
 	int ret = DEVICE_ERR;
 
@@ -862,9 +861,9 @@ void XimeaCamera::OnThreadExiting() throw()
 	try
 	{
 		LogMessage(g_Msg_SEQUENCE_ACQUISITION_THREAD_EXITING);
-		GetCoreCallback()?GetCoreCallback()->AcqFinished(this,0) : DEVICE_OK;
+		GetCoreCallback() ? GetCoreCallback()->AcqFinished(this, 0) : DEVICE_OK;
 	}
-	catch(...)
+	catch (...)
 	{
 		LogMessage(g_Msg_EXCEPTION_IN_ON_THREAD_EXITING, false);
 	}
@@ -880,7 +879,6 @@ bool XimeaCamera::IsCapturing()
 ///////////////////////////////////////////////////////////////////////////////
 // XimeaCamera Action handlers
 ///////////////////////////////////////////////////////////////////////////////
-
 
 int XimeaCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
@@ -902,7 +900,7 @@ int XimeaCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 int XimeaCamera::OnPropertyChange(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	// acquisition timeout is not among standard parameters
-	if(pProp->GetName() == CAM_PARAM_ACQ_TIMEOUT)
+	if (pProp->GetName() == CAM_PARAM_ACQ_TIMEOUT)
 	{
 		if (eAct == MM::AfterSet)
 		{
@@ -910,7 +908,7 @@ int XimeaCamera::OnPropertyChange(MM::PropertyBase* pProp, MM::ActionType eAct)
 			pProp->Get(value);
 			camera->SetNextImageTimeout_ms(value);
 		}
-		else if(eAct == MM::BeforeGet)
+		else if (eAct == MM::BeforeGet)
 		{
 			long value = camera->GetNextImageTimeout_ms();
 			pProp->Set(value);
@@ -920,7 +918,7 @@ int XimeaCamera::OnPropertyChange(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 	// search camera parameters
 	XimeaParam* param = GetXimeaParam(pProp->GetName());
-	if(param == NULL)
+	if (param == NULL)
 	{
 		return DEVICE_INVALID_PROPERTY;
 	}
@@ -930,21 +928,21 @@ int XimeaCamera::OnPropertyChange(MM::PropertyBase* pProp, MM::ActionType eAct)
 	{
 		if (eAct == MM::AfterSet)
 		{
-			switch(param->GetParamType())
+			switch (param->GetParamType())
 			{
 			case type_command:
 			case type_int:
 				{
 					long value = 0;
 					pProp->Get(value);
-					camera->SetXIAPIParamInt(param_name.c_str(), (int) value);
+					camera->SetXIAPIParamInt(param_name.c_str(), (int)value);
 				}
 				break;
 			case type_float:
 				{
 					double value = 0;
 					pProp->Get(value);
-					camera->SetXIAPIParamFloat(param_name.c_str(), (float) value);
+					camera->SetXIAPIParamFloat(param_name.c_str(), (float)value);
 				}
 				break;
 			case type_enum:
@@ -956,7 +954,7 @@ int XimeaCamera::OnPropertyChange(MM::PropertyBase* pProp, MM::ActionType eAct)
 						int enum_value = param->GetEnumValue(value);
 						camera->SetXIAPIParamInt(param_name.c_str(), enum_value);
 					}
-					catch(std::exception exc)
+					catch (std::exception exc)
 					{
 						string exc_text = exc.what();
 						string err_msg = "OnPropertyChange ERROR:  " + exc_text + ", " + pProp->GetName();
@@ -973,7 +971,7 @@ int XimeaCamera::OnPropertyChange(MM::PropertyBase* pProp, MM::ActionType eAct)
 						cmd_val = 1;
 					else if (value == BOOL_VALUE_OFF || value == BOOL_VALUE_NO)
 						cmd_val = 0;
-					else 
+					else
 						return DEVICE_INVALID_PROPERTY_VALUE;
 
 					camera->SetXIAPIParamInt(param_name.c_str(), cmd_val);
@@ -983,7 +981,7 @@ int XimeaCamera::OnPropertyChange(MM::PropertyBase* pProp, MM::ActionType eAct)
 				{
 					string value = "";
 					pProp->Get(value);
-					camera->SetXIAPIParamString(param_name.c_str(), value.c_str(), (unsigned int) value.size());
+					camera->SetXIAPIParamString(param_name.c_str(), value.c_str(), (unsigned int)value.size());
 				}
 				break;
 			default:
@@ -995,28 +993,38 @@ int XimeaCamera::OnPropertyChange(MM::PropertyBase* pProp, MM::ActionType eAct)
 			}
 
 			// resize image buffer when data format and downsampling are changed
-			if(param->GetXiParamName() == XI_PRM_IMAGE_DATA_FORMAT ||
+			if (param->GetXiParamName() == XI_PRM_IMAGE_DATA_FORMAT ||
 				param->GetXiParamName() == XI_PRM_DOWNSAMPLING ||
 				param->GetXiParamName() == XI_PRM_DOWNSAMPLING_TYPE ||
+				param->GetXiParamName() == XI_PRM_BINNING_SELECTOR ||
+				param->GetXiParamName() == XI_PRM_BINNING_VERTICAL_MODE ||
 				param->GetXiParamName() == XI_PRM_BINNING_VERTICAL ||
+				param->GetXiParamName() == XI_PRM_BINNING_HORIZONTAL_MODE ||
 				param->GetXiParamName() == XI_PRM_BINNING_HORIZONTAL ||
+				param->GetXiParamName() == XI_PRM_DECIMATION_SELECTOR ||
 				param->GetXiParamName() == XI_PRM_DECIMATION_VERTICAL ||
 				param->GetXiParamName() == XI_PRM_DECIMATION_HORIZONTAL ||
 				param->GetXiParamName() == XI_PRM_WIDTH ||
-				param->GetXiParamName() == XI_PRM_HEIGHT)
+				param->GetXiParamName() == XI_PRM_HEIGHT ||
+				param->GetXiParamName() == XI_PRM_USER_SET_LOAD ||
+				param->GetXiParamName() == XI_PRM_USER_SET_DEFAULT)
 			{
-				ResizeImageBuffer();
+				if (ResizeImageBuffer() != DEVICE_OK)
+				{
+					LogMessage("OnPropertyChange ERROR: Failed to resize image buffer");
+					return DEVICE_ERR;
+				}
 			}
 		}
-		else if(eAct == MM::BeforeGet)
+		else if (eAct == MM::BeforeGet)
 		{
 			// do not read write-only parameters
-			if(param->GetAccessType() == access_write)
+			if (param->GetAccessType() == access_write)
 			{
 				return DEVICE_OK;
 			}
 
-			switch(param->GetParamType())
+			switch (param->GetParamType())
 			{
 			case type_command:
 			case type_int:
@@ -1050,7 +1058,7 @@ int XimeaCamera::OnPropertyChange(MM::PropertyBase* pProp, MM::ActionType eAct)
 					{
 						if (value == 0) pProp->Set(BOOL_VALUE_OFF);
 						else            pProp->Set(BOOL_VALUE_ON);
-					}					
+					}
 				}
 				break;
 			case type_string:
@@ -1068,13 +1076,13 @@ int XimeaCamera::OnPropertyChange(MM::PropertyBase* pProp, MM::ActionType eAct)
 			}
 		}
 	}
-	catch(xiAPIplus_Exception exc)
+	catch (xiAPIplus_Exception exc)
 	{
 		string err_msg = "OnPropertyChange(): " + exc.GetDescription();
 		LogMessage(err_msg);
 		return DEVICE_INVALID_PROPERTY_VALUE;
 	}
-	catch(...)
+	catch (...)
 	{
 		LogMessage("OnPropertyChange(): Unknown exception");
 		return DEVICE_INVALID_PROPERTY_VALUE;
@@ -1088,11 +1096,11 @@ int XimeaCamera::OnPropertyChange(MM::PropertyBase* pProp, MM::ActionType eAct)
 XimeaParam* XimeaCamera::GetXimeaParam(string param_name, bool use_xiapi_param_name)
 {
 	XimeaParam* p = NULL;
-	for (std::vector<XimeaParam>::iterator param = cam_params.begin() ; param != cam_params.end(); ++param)
+	for (std::vector<XimeaParam>::iterator param = cam_params.begin(); param != cam_params.end(); ++param)
 	{
-		if(use_xiapi_param_name)
+		if (use_xiapi_param_name)
 		{
-			if(param->GetXiParamName() == param_name)
+			if (param->GetXiParamName() == param_name)
 			{
 				p = &*param;
 				break;
@@ -1100,7 +1108,7 @@ XimeaParam* XimeaCamera::GetXimeaParam(string param_name, bool use_xiapi_param_n
 		}
 		else
 		{
-			if(param->GetName() == param_name)
+			if (param->GetName() == param_name)
 			{
 				p = &*param;
 				break;
@@ -1127,21 +1135,22 @@ void XimeaCamera::UpdateRoiParams()
 void XimeaCamera::CreateCameraProperties()
 {
 	// create binning property needed by Micro-Manager GUI
-	CPropertyAction *pAct = new CPropertyAction (this, &XimeaCamera::OnBinning);
+	CPropertyAction *pAct = new CPropertyAction(this, &XimeaCamera::OnBinning);
 	int ret = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
 	assert(ret == DEVICE_OK);
 
 	int maxBin = 0;
 	vector<string> binningValues;
 	camera->GetXIAPIParamInt(XI_PRM_DOWNSAMPLING XI_PRM_INFO_MAX, &maxBin);
-	for(int i = 1; i <= maxBin; i++) 
+	for (int i = 1; i <= maxBin; i++)
 	{
 		try {
 			char buf[16] = "";
 			camera->SetXIAPIParamInt(XI_PRM_DOWNSAMPLING, i); // will throw exception if it fails
 			sprintf(buf, "%d", i);
 			binningValues.push_back(buf);
-		} catch(xiAPIplus_Exception exc) { /* No need to log or take action */}
+		}
+		catch (xiAPIplus_Exception exc) { /* No need to log or take action */ }
 	}
 	camera->SetXIAPIParamInt(XI_PRM_DOWNSAMPLING, 1);
 	ret = SetAllowedValues(MM::g_Keyword_Binning, binningValues);
@@ -1149,14 +1158,23 @@ void XimeaCamera::CreateCameraProperties()
 
 	// remove unsupported pixel formats
 	XimeaParam* param = GetXimeaParam(XI_PRM_IMAGE_DATA_FORMAT, true);
-	if(param != NULL)
+	if (param != NULL)
 	{
 		param->RemoveEnumItem("Transport Data");
 		param->RemoveEnumItem("RGB24");
 		param->RemoveEnumItem("RGB Planar");
+		param->RemoveEnumItem("RGB48");
+		param->RemoveEnumItem("RGB64");
+		param->RemoveEnumItem("RGB16_PLANAR ");
+		param->RemoveEnumItem("RAW8X2");
+		param->RemoveEnumItem("RAW8X4");
+		param->RemoveEnumItem("RAW16X2");
+		param->RemoveEnumItem("RAW16X4");
+		param->RemoveEnumItem("RAW32");
+		param->RemoveEnumItem("RAW32FLOAT");
 	}
 
-	for (std::vector<XimeaParam>::iterator param = cam_params.begin() ; param != cam_params.end(); ++param)
+	for (std::vector<XimeaParam>::iterator param = cam_params.begin(); param != cam_params.end(); ++param)
 	{
 		MM::PropertyType property_type = MM::Undef;
 		string property_value = "";
@@ -1176,21 +1194,21 @@ void XimeaCamera::CreateCameraProperties()
 		}
 
 		// check if parameter is not already in list
-		if(HasProperty(param->GetName().c_str()))
+		if (HasProperty(param->GetName().c_str()))
 		{
 			continue;
 		}
 
 		// prepare readonly flag
-		if(param->GetAccessType() == access_write ||
-		   param->GetAccessType() ==  access_readwrite)
+		if (param->GetAccessType() == access_write ||
+			param->GetAccessType() == access_readwrite)
 		{
 			is_read_only = false;
 		}
 
 		try
 		{
-			switch(param->GetParamType())
+			switch (param->GetParamType())
 			{
 			case type_int:
 				{
@@ -1204,26 +1222,41 @@ void XimeaCamera::CreateCameraProperties()
 			case type_float:
 				{
 					property_type = MM::Float;
-					property_value = camera->GetParamString(param->GetXiParamName());					
+					property_value = camera->GetParamString(param->GetXiParamName());
 				}
 				break;
 			case type_enum:
 				{
 					property_type = MM::String;
-					enum_values = param->GetEnumValues();
-					property_value = enum_values.at(0);
+					vector<string> par_values = param->GetEnumValues();
+					HANDLE xiH = camera->GetCameraHandle();
 
+					// enumerator value must be settable to be used in UI
+					for (unsigned int enum_id = 0; enum_id < par_values.size(); enum_id++)
+					{
+						string enum_name = par_values.at(enum_id);
+						int    enum_value = param->GetEnumValue(enum_name);
+						string param_settable = param->GetXiParamName() + XI_PRM_INFO_SETTABLE;
+
+						int xiRet = xiSetParamInt(xiH, param_settable.c_str(), enum_value);
+						if (xiRet != XI_PARAM_NOT_SETTABLE)
+						{
+							enum_values.push_back(enum_name);
+						}
+					}
+				
 					// enum parameters with one value will be skipped
-					if(enum_values.size() <= 1)
+					if (enum_values.size() <= 1)
 					{
 						continue;
 					}
+					property_value = enum_values.at(0);
 				}
 				break;
 			case type_bool:
 				{
 					property_type = MM::String;
-					// use different text values for readonly bool parameters
+					// use different text values for read-only bool parameters
 					if (param->GetAccessType() == access_read)
 					{
 						param->AddEnumValue(BOOL_VALUE_NO, 0);
@@ -1233,11 +1266,11 @@ void XimeaCamera::CreateCameraProperties()
 					{
 						param->AddEnumValue(BOOL_VALUE_OFF, 0);
 						param->AddEnumValue(BOOL_VALUE_ON, 1);
-					}					
+					}
 					enum_values = param->GetEnumValues();
 
 					string def_val = param->GetAppDefault();
-					if(def_val == "1")
+					if (def_val == "1")
 					{
 						property_value = enum_values.at(1);
 						camera->SetXIAPIParamInt(param->GetXiParamName().c_str(), 1);
@@ -1251,14 +1284,14 @@ void XimeaCamera::CreateCameraProperties()
 			case type_string:
 				{
 					// path string parameters will be skipped
-					if(param->IsParamTypePath())
+					if (param->IsParamTypePath())
 					{
 						continue;
 					}
 					property_type = MM::String;
 					property_value = camera->GetParamString(param->GetXiParamName());
 				}
-			
+
 				break;
 			case type_command:
 				{
@@ -1274,20 +1307,20 @@ void XimeaCamera::CreateCameraProperties()
 				}
 			}
 		}
-		catch(xiAPIplus_Exception exc)
+		catch (xiAPIplus_Exception exc)
 		{
 			string err_msg = "CreateCameraProperties() failed to read property value: " + exc.GetDescription();
 			LogMessage(err_msg);
 			continue;
 		}
-		catch(...)
+		catch (...)
 		{
 			LogMessage("CreateCameraProperties() property preparation: Unknown exception");
 			continue;
 		}
 
 		int ret = DEVICE_OK;
-		CPropertyAction *pAct = new CPropertyAction (this, &XimeaCamera::OnPropertyChange);
+		CPropertyAction *pAct = new CPropertyAction(this, &XimeaCamera::OnPropertyChange);
 		assert(pAct != NULL);
 
 		// create MM property
@@ -1295,7 +1328,7 @@ void XimeaCamera::CreateCameraProperties()
 		assert(ret == DEVICE_OK);
 
 		// update min/max values
-		if(param->GetParamType() == type_int    ||
+		if (param->GetParamType() == type_int ||
 			param->GetParamType() == type_float ||
 			param->GetParamType() == type_command)
 		{
@@ -1310,18 +1343,18 @@ void XimeaCamera::CreateCameraProperties()
 				max = camera->GetXIAPIParamFloat(param_max);
 
 				// values must be different
-				if(min != max)
+				if (min != max)
 				{
 					ret = SetPropertyLimits(param->GetName().c_str(), min, max);
-					assert(ret == DEVICE_OK);				
+					assert(ret == DEVICE_OK);
 				}
 			}
-			catch(xiAPIplus_Exception exc)
+			catch (xiAPIplus_Exception exc)
 			{
 				string err_msg = "CreateCameraProperties(): " + exc.GetDescription();
 				LogMessage(err_msg);
 			}
-			catch(...)
+			catch (...)
 			{
 				LogMessage("CreateCameraProperties(): Unknown exception");
 			}
@@ -1330,7 +1363,7 @@ void XimeaCamera::CreateCameraProperties()
 		}
 
 		// update enum values of property
-		if(param->GetParamType() == type_enum ||
+		if (param->GetParamType() == type_enum ||
 			param->GetParamType() == type_bool)
 		{
 			ret = SetAllowedValues(param->GetName().c_str(), enum_values);
@@ -1341,7 +1374,7 @@ void XimeaCamera::CreateCameraProperties()
 	// add acquisition timeout param
 	{
 		int ret = DEVICE_OK;
-		CPropertyAction *pAct = new CPropertyAction (this, &XimeaCamera::OnPropertyChange);
+		CPropertyAction *pAct = new CPropertyAction(this, &XimeaCamera::OnPropertyChange);
 		assert(pAct != NULL);
 
 		// create MM property
@@ -1358,7 +1391,7 @@ void XimeaCamera::CreateCameraProperties()
 bool GoChildNode(pugi::xml_node* node)
 {
 	pugi::xml_node temp_nd = node->first_child();
-	if(temp_nd == NULL)
+	if (temp_nd == NULL)
 	{
 		return false;
 	}
@@ -1372,7 +1405,7 @@ bool GoChildNode(pugi::xml_node* node)
 bool GoSiblingNode(pugi::xml_node* node)
 {
 	pugi::xml_node temp_nd = node->next_sibling();
-	if(temp_nd == NULL)
+	if (temp_nd == NULL)
 	{
 		return false;
 	}
@@ -1386,7 +1419,7 @@ bool GoSiblingNode(pugi::xml_node* node)
 bool GoParentNode(pugi::xml_node* node)
 {
 	pugi::xml_node temp_nd = node->parent();
-	if(temp_nd == NULL)
+	if (temp_nd == NULL)
 	{
 		return false;
 	}
@@ -1408,7 +1441,7 @@ void XimeaCamera::ParseCameraManifest(char* manifest)
 	check_feats.push_back(TAG_VISIBILITY);
 
 	pugi::xml_document doc;
-	if(doc.load(manifest))
+	if (doc.load(manifest))
 	{
 		pugi::xml_node curr_nd = doc.root();
 		GoChildNode(&curr_nd);;
@@ -1447,8 +1480,8 @@ void XimeaCamera::ParseCameraManifest(char* manifest)
 					{
 						string feat = check_feats.at(f_num).c_str();
 						string value = ReadNodeData(curr_nd, feat);
-						
-						if(feat.empty())
+
+						if (feat.empty())
 						{
 							continue;
 						}
@@ -1481,8 +1514,7 @@ void XimeaCamera::ParseCameraManifest(char* manifest)
 									// all enums read
 									break;
 								}
-							}
-							while (GoSiblingNode(&curr_nd));
+							} while (GoSiblingNode(&curr_nd));
 							GoParentNode(&curr_nd);
 						}
 					}
@@ -1493,13 +1525,11 @@ void XimeaCamera::ParseCameraManifest(char* manifest)
 				{
 					cam_params.push_back(param);
 				}
-			}
-			while (GoSiblingNode(&curr_nd));
+			} while (GoSiblingNode(&curr_nd));
 
 			// continue to next parameter type group
 			GoParentNode(&curr_nd);
-		}
-		while (GoSiblingNode(&curr_nd));
+		} while (GoSiblingNode(&curr_nd));
 	}
 	else
 	{
@@ -1516,7 +1546,7 @@ string XimeaCamera::ReadNodeData(pugi::xml_node nd, string feature_name)
 	for (pugi::xpath_node_set::const_iterator it = features.begin(); it != features.end(); ++it)
 	{
 		pugi::xpath_node prop_node = *it;
-		if(it->node().name() == feature_name)
+		if (it->node().name() == feature_name)
 		{
 			value = it->node().first_child().value();
 			break;
@@ -1532,7 +1562,7 @@ int XimeaCamera::ReadNodeDataInt(pugi::xml_node nd, string feature_name)
 	string str_val = ReadNodeData(nd, feature_name);
 	// alias of size_t
 	std::string::size_type sz;
-	int value = std::stoi (str_val, &sz);
+	int value = std::stoi(str_val, &sz);
 	return value;
 }
 
@@ -1546,7 +1576,7 @@ int XimeaCamera::CountNodes(pugi::xml_node nd, string node_name)
 	for (pugi::xpath_node_set::const_iterator it = features.begin(); it != features.end(); ++it)
 	{
 		pugi::xpath_node prop_node = *it;
-		if(it->node().name() == node_name)
+		if (it->node().name() == node_name)
 		{
 			node_count++;
 		}
@@ -1569,35 +1599,42 @@ int XimeaCamera::ResizeImageBuffer()
 		height = camera->GetXIAPIParamInt(XI_PRM_HEIGHT);
 		frm = camera->GetXIAPIParamInt(XI_PRM_IMAGE_DATA_FORMAT);
 	}
-	catch(xiAPIplus_Exception exc)
+	catch (xiAPIplus_Exception exc)
 	{
 		string err_msg = "ResizeImageBuffer(): " + exc.GetDescription();
 		LogMessage(err_msg);
 		return DEVICE_ERR;
 	}
-	catch(...)
+	catch (...)
 	{
 		LogMessage("ResizeImageBuffer(): Unknown exception");
 		return DEVICE_ERR;
 	}
 
-	switch(frm)
+	switch (frm)
 	{
 	case XI_MONO8:
-	case XI_RAW8: 
-		bytesPerPixel_ = 1; 
+	case XI_RAW8:
+		bytesPerPixel_ = 1;
 		nComponents_ = 1;
 		break;
 	case XI_MONO16:
-	case XI_RAW16: 
+	case XI_RAW16:
 		bytesPerPixel_ = 2;
 		nComponents_ = 1;
 		break;
-	case XI_RGB32: 
-		bytesPerPixel_ = 4; 
+	case XI_RGB32:
+		bytesPerPixel_ = 4;
 		nComponents_ = 4;
 		break;
-	default: assert(false); // this should never happen
+	case XI_RAW32:
+	case XI_RAW32FLOAT:
+		bytesPerPixel_ = 4;
+		nComponents_ = 1;
+		break;
+	default: 
+		LogMessage("ResizeImageBuffer(): Unknown data format");
+		return DEVICE_ERR;
 	}
 
 	img_->Resize(width, height, bytesPerPixel_);
@@ -1610,14 +1647,14 @@ int XimeaCamera::ResizeImageBuffer()
 
 XiSequenceThread::XiSequenceThread(XimeaCamera* pCam)
 	:intervalMs_(default_intervalMS)
-	,numImages_(default_numImages)
-	,imageCounter_(0)
-	,stop_(true)
-	,suspend_(false)
-	,camera_(pCam)
-	,startTime_(0)
-	,actualDuration_(0)
-	,lastFrameTime_(0)
+	, numImages_(default_numImages)
+	, imageCounter_(0)
+	, stop_(true)
+	, suspend_(false)
+	, camera_(pCam)
+	, startTime_(0)
+	, actualDuration_(0)
+	, lastFrameTime_(0)
 {};
 
 //***********************************************************************
@@ -1628,7 +1665,7 @@ XiSequenceThread::~XiSequenceThread() {};
 
 void XiSequenceThread::Stop() {
 	MMThreadGuard(this->stopLock_);
-	stop_=true;
+	stop_ = true;
 }
 
 //***********************************************************************
@@ -1637,14 +1674,14 @@ void XiSequenceThread::Start(long numImages, double intervalMs)
 {
 	MMThreadGuard(this->stopLock_);
 	MMThreadGuard(this->suspendLock_);
-	numImages_=numImages;
-	intervalMs_=intervalMs;
-	imageCounter_=0;
+	numImages_ = numImages;
+	intervalMs_ = intervalMs;
+	imageCounter_ = 0;
 	stop_ = false;
-	suspend_=false;
+	suspend_ = false;
 	activate();
 	actualDuration_ = 0;
-	startTime_= camera_->GetCurrentMMTime();
+	startTime_ = camera_->GetCurrentMMTime();
 	lastFrameTime_ = 0;
 }
 
@@ -1691,19 +1728,19 @@ int XiSequenceThread::svc(void) throw()
 		{
 			ret = camera_->CaptureImage();
 		}
-		while (DEVICE_OK == ret && !IsStopped() && imageCounter_++ < numImages_-1);
+		while (DEVICE_OK == ret && !IsStopped() && imageCounter_++ < numImages_ - 1);
 
 		if (IsStopped())
 		{
 			camera_->LogMessage("SeqAcquisition interrupted by the user\n");
 		}
 	}
-	catch(...)
+	catch (...)
 	{
 		camera_->LogMessage(g_Msg_EXCEPTION_IN_THREAD, false);
 	}
 
-	stop_=true;
+	stop_ = true;
 	actualDuration_ = camera_->GetCurrentMMTime() - startTime_;
 	camera_->OnThreadExiting();
 	return ret;

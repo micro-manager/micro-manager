@@ -208,7 +208,7 @@ public final class DefaultCoords implements Coords {
    @Override
    public Coords copyRetainingAxes(String... axes) {
       Builder b = new Builder();
-      for (String axis : getAxes()) {
+      for (String axis : axes_) {
          if (ArrayUtils.contains(axes, axis)) {
             b.index(axis, getIndex(axis));
          }

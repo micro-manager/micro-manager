@@ -71,8 +71,8 @@ import java.util.Map;
  *     <code>{ } [ ] / \ : , = ; #</code> and if they do not look like numbers
  *     and if they are not the reserved words <code>true</code>,
  *     <code>false</code>, or <code>null</code>.</li>
- * <li>Keys can be followed by <code>=</code> or <code>=></code> as well as
- *     by <code>:</code>.</li>
+ * <li>Keys can be followed by {@code =} or {@code =>} as well as
+ *     by {@code :}.</li>
  * <li>Values can be followed by <code>;</code> <small>(semicolon)</small> as
  *     well as by <code>,</code> <small>(comma)</small>.</li>
  * <li>Numbers may have the <code>0-</code> <small>(octal)</small> or
@@ -795,7 +795,7 @@ public class JSONObject {
 
     /**
      * Produce a string in double quotes with backslash sequences in all the
-     * right places. A backslash will be inserted within </, allowing JSON
+     * right places. A backslash will be inserted within {@code </}, allowing JSON
      * text to be delivered in HTML. In JSON text, a string cannot contain a
      * control character or an unescaped quote or backslash.
      * @param string A String

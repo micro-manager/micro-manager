@@ -752,4 +752,42 @@ private:
    MM::MMTime lastMoveStartTime_;
 };
 
+/**
+ * SerialDTRShutter: Uses the DTR property of a serial port as a shutter
+ */
+class SerialDTRShutter : public CShutterBase<SerialDTRShutter>
+{
+public:
+   SerialDTRShutter();
+   ~SerialDTRShutter();
+  
+   // Device API
+   // ----------
+   int Initialize();
+   int Shutdown() {initialized_ = false; return DEVICE_OK;}
+  
+   void GetName(char* pszName) const;
+   bool Busy();
+
+   // Shutter API
+   int SetOpen(bool open = true);
+   int GetOpen(bool& open);
+   int Fire (double /* deltaT */) { return DEVICE_UNSUPPORTED_COMMAND;}
+   // ---------
+
+   // action interface
+   // ----------------
+   int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnLogic(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   int WaitWhileBusy();
+   std::string port_;
+   MM::Device* portDevice_;
+   bool invertedLogic_;
+   bool initialized_;
+   MM::MMTime lastMoveStartTime_;
+};
+
+
 #endif //_UTILITIES_H_

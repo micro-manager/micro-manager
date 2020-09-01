@@ -111,13 +111,13 @@ public abstract class ConfigDialog extends MMDialog {
    protected int scrollPaneTop_;
 
    public ConfigDialog(String groupName, String presetName, Studio studio, 
-           CMMCore core,  boolean newItem) {
+           boolean newItem) {
       super("config editing for " + groupName);
       groupName_ = groupName;
       presetName_ = presetName;
       newItem_ = newItem;
       studio_ = studio;
-      core_ = core;
+      core_ = studio.core();
       super.setLayout(new MigLayout("fill, insets 2, gap 2, flowy"));
       // call loadAndRestorePosition and setMinimumSize from concrete subclasses
    }

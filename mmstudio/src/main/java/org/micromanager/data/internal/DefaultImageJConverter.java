@@ -131,6 +131,7 @@ public final class DefaultImageJConverter implements ImageJConverter {
    @Override
    public Image createImage(ImageProcessor processor, Coords coords,
          Metadata metadata) {
+      Object pixels = processor.getPixels();
       int bytesPerPixel = -1;
       int numComponents = -1;
       if (processor instanceof ByteProcessor) {
@@ -146,14 +147,16 @@ public final class DefaultImageJConverter implements ImageJConverter {
          numComponents = 1;
       }
       else if (processor instanceof ColorProcessor) {
-         bytesPerPixel = 1;
+         bytesPerPixel = 4;
          numComponents = 3;
+
+         pixels = ImageUtils.convertRGB32IntToBytes((int[])processor.getPixels());
       }
       else {
          ReportingUtils.logError("Unrecognized processor type " + processor.getClass().getName());
       }
-      return studio_.data().createImage(
-            processor.getPixels(), processor.getWidth(), processor.getHeight(),
-            bytesPerPixel, numComponents, coords, metadata);
+      return studio_.data().createImage(pixels,
+              processor.getWidth(), processor.getHeight(), bytesPerPixel,
+              numComponents, coords, metadata);
    }
 }

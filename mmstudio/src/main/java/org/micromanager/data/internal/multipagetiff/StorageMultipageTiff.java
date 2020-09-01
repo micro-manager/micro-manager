@@ -617,43 +617,16 @@ public final class StorageMultipageTiff implements Storage {
       }
       if (numFrames > 1 || numSlices > 1 || numChannels > 1) {
          sb.append("hyperstack=true\n");
-                   
-         // It loooks like ImageJ ignores the order and always assumes it to be
-         // tcz (which it calls "xyctz".  This means that datasets acquired in 
-         // a different order will open incorrectly in ImageJ.        
-         // order - hyperstack order ("default", "xyctz", "xyzct", "xyztc", "xytcz" or "xytzc")
-         
-         /*
-          * This was an attempt to tell ImageJ about image order, but I see no 
-          * evidence (either in practice or in the code) that it looks at the "order" tag
-         
-         sb.append("order=xyctz\n");
-         
-         if (numFrames < 1) {
-            if (numChannels > 1 && numSlices > 1) {
-               if (!slicesFirst()) {
-                  sb.append("order=zc\n");
-               } else {
-                  sb.append("order=cz\n");
-               }
-            }
-         } else { // we have a time axis.  Currently, time always comes first
-            sb.append("order=");
-            if (numChannels > 1 && numSlices > 1) {
-               if (!slicesFirst()) {
-                  sb.append("zc");
-               } else {
-                  sb.append("cz");
-               }
-            } else if (numChannels > 1) {
-               sb.append("c");
-            } else if (numSlices > 1) {
-               sb.append("z");
-            }
-            sb.append("t\n");         
+
+         // ImageJ currently defaults to XYCZT order, and there is support for
+         // indicating XYZCT instead if the description has "order=zct".
+         // ImageJ ignores all other "order= " variants.
+
+         if (numChannels > 1 && numSlices > 1 && slicesFirst()) {
+            sb.append("order=zct\n");
          }
-         */
       }
+
       //cm so calibration unit is consistent with units used in Tiff tags
       sb.append("unit=um\n");
       if (numSlices > 1) {
@@ -744,6 +717,9 @@ public final class StorageMultipageTiff implements Storage {
       if (dp != null) {
          Image dpImg = dp.getAnyImage();
          Image ourImg = store_.getAnyImage();
+         if (dpImg == null || ourImg == null) {
+            return false;
+         }
          if (dpImg.getWidth() != ourImg.getWidth() || 
                  dpImg.getHeight() != ourImg.getHeight() ||
                  dpImg.getBytesPerPixel() != ourImg.getBytesPerPixel()) {

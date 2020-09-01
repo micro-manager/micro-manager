@@ -49,8 +49,7 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
 
    public PixelPresetEditor(String pixelSizeConfigName, 
          CalibrationListDlg parent, String pixelSize, boolean newItem) {
-      super("ConfigPixelSize", pixelSizeConfigName, parent.getStudio(), 
-            parent.getStudio().getCMMCore(), newItem);
+      super("ConfigPixelSize", pixelSizeConfigName, parent.getStudio(), newItem);
       // note: pixelSizeConfigName is called presetName_ in ConfigDialog
       instructionsText_ = "Specify pixel size configuration";
       nameFieldLabelText_ = "Pixel Config Name:";

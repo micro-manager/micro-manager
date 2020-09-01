@@ -2,15 +2,19 @@ package org.micromanager.internal.dialogs;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JPanel;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.MMDialog;
+import org.micromanager.internal.utils.WindowPositioning;
 
 /**
  * This class provides a dialog available from the "Advanced" button
@@ -18,7 +22,7 @@ import org.micromanager.internal.utils.MMDialog;
  * users to set custom time intervals, i.e. nonuniform timing for a series of
  * frames.
  */
-public final class CustomTimesDialog extends MMDialog {
+public final class CustomTimesDialog extends JDialog {
 
     private static final long serialVersionUID = 1L;
     private final AcquisitionEngine acqEng_;
@@ -26,18 +30,17 @@ public final class CustomTimesDialog extends MMDialog {
     private final CustomTimeIntervalsPanel customTimeIntervalsPanel_;
 
     public CustomTimesDialog(AcquisitionEngine acqEng, Studio gui) {
-        super("custom timepoints configuration");
         this.setModal(true);
         acqEng_ = acqEng;
-        loadPosition(0,0,600,500);
-        addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent arg0) {
-                savePosition();
-            }});
-        setTitle("Custom Timepoints Configuration");
+        super.setBounds(50, 50, 500, 450);
+        super.setMinimumSize(new Dimension(400,300));
+        WindowPositioning.setUpBoundsMemory(this, this.getClass(), "CustomDialog");
 
-        this.setMinimumSize(new Dimension(600,400));
+        setTitle("Custom Timepoints Configuration");
+        super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+                MMStudio.class.getResource(
+                        "/org/micromanager/icons/microscope.gif")));
+
 
         customTimeIntervalsPanel_ = new CustomTimeIntervalsPanel(acqEng_, gui,
               this);

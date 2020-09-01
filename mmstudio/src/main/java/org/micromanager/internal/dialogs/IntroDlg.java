@@ -143,7 +143,7 @@ public final class IntroDlg extends JDialog {
 
       try {
          admin_ = ((MMStudio) studio).profileAdmin();
-         profileController_ = ProfileSelectionUIController.create(admin_);
+         profileController_ = ProfileSelectionUIController.create((MMStudio) studio, admin_);
          StartupSettings startupSettings = StartupSettings.create(
                  admin_.getNonSavingProfile(admin_.getUUIDOfCurrentProfile()));
          skipProfileSelection_ = startupSettings.shouldSkipProfileSelectionAtStartup();

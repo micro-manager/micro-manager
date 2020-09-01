@@ -53,6 +53,7 @@ CZStage::CZStage(const char* name) :
    ring_buffer_capacity_(0),
    ttl_trigger_supported_(false),
    ttl_trigger_enabled_(false),
+   runningFastSequence_(false),
    axisIndex_(0)
 {
    if (IsExtendedName(name))  // only set up these properties if we have the required information in the name
@@ -366,6 +367,12 @@ int CZStage::Initialize()
          AddAllowedValue(g_UseSequencePropertyName, g_NoState);
          AddAllowedValue(g_UseSequencePropertyName, g_YesState);
          ttl_trigger_enabled_ = false;
+
+         pAct = new CPropertyAction (this, &CZStage::OnFastSequence);
+         CreateProperty(g_UseFastSequencePropertyName, g_NoState, MM::String, false, pAct);
+         AddAllowedValue(g_UseFastSequencePropertyName, g_NoState);
+         AddAllowedValue(g_UseFastSequencePropertyName, g_ArmedState);
+         runningFastSequence_ = false;
       }
 
    }
@@ -478,6 +485,10 @@ int CZStage::Home()
 bool CZStage::Busy()
 {
    ostringstream command; command.str("");
+   if (runningFastSequence_)
+   {
+      return false;
+   }
    if (FirmwareVersionAtLeast(2.7)) // can use more accurate RS <axis>?
    {
       command << "RS " << axisLetter_ << "?";
@@ -511,6 +522,10 @@ int CZStage::StopStageSequence()
 // disables TTL triggering; doesn't actually stop anything already happening on controller
 {
    ostringstream command; command.str("");
+   if (runningFastSequence_)
+   {
+      return DEVICE_OK;
+   }
    if (!ttl_trigger_supported_)
    {
       return DEVICE_UNSUPPORTED_COMMAND;
@@ -524,6 +539,10 @@ int CZStage::StartStageSequence()
 // enables TTL triggering; doesn't actually start anything going on controller
 {
    ostringstream command; command.str("");
+   if (runningFastSequence_)
+   {
+      return DEVICE_OK;
+   }
    if (!ttl_trigger_supported_)
    {
       return DEVICE_UNSUPPORTED_COMMAND;
@@ -543,6 +562,10 @@ int CZStage::StartStageSequence()
 int CZStage::SendStageSequence()
 {
    ostringstream command; command.str("");
+   if (runningFastSequence_)
+   {
+      return DEVICE_OK;
+   }
    if (!ttl_trigger_supported_)
    {
       return DEVICE_UNSUPPORTED_COMMAND;
@@ -568,6 +591,10 @@ int CZStage::SendStageSequence()
 int CZStage::ClearStageSequence()
 {
    ostringstream command; command.str("");
+   if (runningFastSequence_)
+   {
+      return DEVICE_OK;
+   }
    if (!ttl_trigger_supported_)
    {
       return DEVICE_UNSUPPORTED_COMMAND;
@@ -580,6 +607,10 @@ int CZStage::ClearStageSequence()
 
 int CZStage::AddToStageSequence(double position)
 {
+   if (runningFastSequence_)
+   {
+      return DEVICE_OK;
+   }
    if (!ttl_trigger_supported_)
    {
       return DEVICE_UNSUPPORTED_COMMAND;
@@ -2042,6 +2073,40 @@ int CZStage::OnUseSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(tmpstr);
       ttl_trigger_enabled_ = (ttl_trigger_supported_ && (tmpstr.compare(g_YesState) == 0));
       return OnUseSequence(pProp, MM::BeforeGet);  // refresh value
+   }
+   return DEVICE_OK;
+}
+
+int CZStage::OnFastSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      if (runningFastSequence_)
+         pProp->Set(g_ArmedState);
+      else
+         pProp->Set(g_NoState);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      // only let user do fast sequence if regular one is enabled
+      if (!ttl_trigger_enabled_) {
+         pProp->Set(g_NoState);
+         return DEVICE_OK;
+      }
+      if (tmpstr.compare(g_ArmedState) == 0)
+      {
+         runningFastSequence_ = false;
+         RETURN_ON_MM_ERROR ( SendStageSequence() );
+         RETURN_ON_MM_ERROR ( StartStageSequence() );
+         runningFastSequence_ = true;
+      }
+      else
+      {
+         runningFastSequence_ = false;
+         RETURN_ON_MM_ERROR ( StopStageSequence() );
+      }
    }
    return DEVICE_OK;
 }

@@ -395,7 +395,7 @@ public final class SnapLiveManager extends DataViewerListener
             }
             JSONObject tags = tagged.tags;
             int imageChannel = c;
-            if (tags.has(camName + "-CameraChannelIndex")) {
+            if ( (numCameraChannels_ > 1) && tags.has(camName + "-CameraChannelIndex")) {
                imageChannel = tags.getInt(camName + "-CameraChannelIndex");
             }
             if (channelsSet.contains(imageChannel)) {
@@ -474,8 +474,7 @@ public final class SnapLiveManager extends DataViewerListener
       DisplayWindowControlsFactory controlsFactory = 
               (DisplayWindow display) -> createControls();
       display_ = new DisplayController.Builder(store_).
-            controlsFactory(controlsFactory).
-            shouldShow(true).build(mmStudio_);
+            controlsFactory(controlsFactory).build(mmStudio_);
       DisplaySettings ds = DefaultDisplaySettings.restoreFromProfile(
               mmStudio_.profile(), 
               PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key() );
@@ -487,7 +486,8 @@ public final class SnapLiveManager extends DataViewerListener
          ds = ds.copyBuilderWithChannelSettings(ch, 
                  RememberedSettings.loadChannel(mmStudio_, 
                          store_.getSummaryMetadata().getChannelGroup(), 
-                         store_.getSummaryMetadata().getChannelNameList().get(ch))).
+                         store_.getSummaryMetadata().getChannelNameList().get(ch),
+                         null)).
                  build();
       }
       display_.setDisplaySettings(ds);
@@ -499,6 +499,7 @@ public final class SnapLiveManager extends DataViewerListener
       if (mmStudio_.getMMMenubar().getToolsMenu().getMouseMovesStage() && display_ != null) {
          uiMovesStageManager_.activate(display_);
       }
+      display_.show();
       
       synchronized (lastImageForEachChannel_) {
          lastImageForEachChannel_.clear();
@@ -620,7 +621,8 @@ public final class SnapLiveManager extends DataViewerListener
                   ChannelDisplaySettings newCD = RememberedSettings.loadChannel(
                           mmStudio_, 
                           core_.getChannelGroup(),
-                          name);
+                          name,
+                          null);
                   display_.setDisplaySettings(display_.getDisplaySettings().
                           copyBuilderWithChannelSettings(camCh, newCD).build());
                }               

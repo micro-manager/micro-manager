@@ -4,7 +4,7 @@
 	<info organisation="org.micromanager" module="micromanager"/>
 
 	<configurations
-		defaultconfmapping="build->default;test->default;compile->default;optional->default;imagej->default;runtime->default">
+      defaultconfmapping="build->default;test->default;compile->default;optional->default;imagej->default;runtime->default">
 		<conf name="build" visibility="private" description="needed for building only"/>
 		<conf name="test" visibility="private" description="needed for testing only"/>
 		<conf name="compile" description="compile-time dependencies, except for ij.jar"/>
@@ -16,6 +16,7 @@
 	<dependencies defaultconf="compile">
 		<dependency conf="build->master" org="ant-contrib" name="ant-contrib" rev="1.0b3"/>
 		<dependency conf="test" org="junit" name="junit" rev="4.11"/>
+		<dependency conf="imagej" org="net.imagej" name="ij" rev="1.51s"/>
 		<dependency conf="test" org="org.msgpack" name="msgpack" rev="0.6.12"/>
 
 		<dependency org="com.fifesoft" name="rsyntaxtextarea" rev="2.6.1"/>
@@ -41,6 +42,18 @@
 		<!-- Magellan dependencies -->
 		<!-- https://mvnrepository.com/artifact/org.zeromq/jeromq -->
 		<dependency org="org.zeromq" name="jeromq" rev="0.5.1"/>
+		<dependency org="org.micro-manager.acqengj" name="AcqEngJ" rev="0.6.2">
+         <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
+      </dependency>
+		<dependency org="org.micro-manager.ndviewer" name="NDViewer" rev="0.2.6">
+         <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
+      </dependency>
+		<dependency org="org.micro-manager.ndtiffstorage" name="NDTiffStorage" rev="0.3.2">
+         <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
+      </dependency>
+		<dependency org="org.micro-manager.pycro-manager" name="PycroManagerJava" rev="0.8.11">
+         <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
+      </dependency>
 
 		<dependency org="io.scif" name="scifio" rev="0.37.3"/>
 
@@ -67,13 +80,12 @@
       <!-- cl-kernel-binding from nico brings in clij-kernels, and clij version of the cleacl libraries.  Ugly, but the harsh truth if we want to use this code -->
       <dependency org="org.micromanager" name="cl-kernel-bindings" rev="0.1.1-SNAPSHOT"/>
 
-		<dependency conf="imagej" org="net.imagej" name="ij" rev="1.51s"/>
 
 
-		<dependency org="org.boofcv" name="boofcv-ip" rev="0.33.1"/>
-		<dependency org="org.boofcv" name="boofcv-geo" rev="0.33.1"/>
-		<dependency org="org.georegression" name="georegression" rev="0.19"/>
-		<dependency org="org.ddogleg" name="ddogleg" rev="0.17"/>
+		<dependency org="org.boofcv" name="boofcv-ip" rev="0.36"/>
+		<dependency org="org.boofcv" name="boofcv-geo" rev="0.36"/>
+		<dependency org="org.georegression" name="georegression" rev="0.22"/>
+		<dependency org="org.ddogleg" name="ddogleg" rev="0.18"/>
 		<dependency org="org.ejml" name="ejml-core" rev="0.38"/>
 
 		<!-- Not in Maven yet (resolved in 3rdpartypublic/classext) -->

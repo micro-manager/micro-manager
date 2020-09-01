@@ -105,13 +105,7 @@
                                           <Component id="exploreZStepLabel_" min="-2" max="-2" attributes="0"/>
                                           <EmptySpace max="-2" attributes="0"/>
                                           <Component id="exploreZStepSpinner_" min="-2" pref="77" max="-2" attributes="0"/>
-                                          <EmptySpace max="-2" attributes="0"/>
-                                          <Component id="exploreOverlapLabel_" min="-2" max="-2" attributes="0"/>
-                                          <EmptySpace max="-2" attributes="0"/>
-                                          <Component id="exploreTileOverlapSpinner_" min="-2" pref="65" max="-2" attributes="0"/>
-                                          <EmptySpace max="-2" attributes="0"/>
-                                          <Component id="explorePercentLabel_" min="-2" max="-2" attributes="0"/>
-                                          <EmptySpace min="-2" pref="102" max="-2" attributes="0"/>
+                                          <EmptySpace min="-2" pref="291" max="-2" attributes="0"/>
                                           <Component id="newExploreWindowButton_" min="-2" pref="103" max="-2" attributes="0"/>
                                       </Group>
                                       <Group type="102" attributes="0">
@@ -145,9 +139,6 @@
                                   <Group type="103" groupAlignment="3" attributes="0">
                                       <Component id="exploreZStepSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
                                       <Component id="exploreZStepLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="exploreOverlapLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="exploreTileOverlapSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="explorePercentLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
                                   <Group type="103" groupAlignment="3" attributes="0">
@@ -209,32 +200,6 @@
                     <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
                       <Connection code="new ChannelComboBoxModel()" type="code"/>
                     </Property>
-                  </Properties>
-                </Component>
-                <Component class="javax.swing.JLabel" name="exploreOverlapLabel_">
-                  <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                      <Font name="Tahoma" size="14" style="0"/>
-                    </Property>
-                    <Property name="text" type="java.lang.String" value="XY tile overlap:"/>
-                  </Properties>
-                </Component>
-                <Component class="javax.swing.JSpinner" name="exploreTileOverlapSpinner_">
-                  <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                      <Font name="Tahoma" size="14" style="0"/>
-                    </Property>
-                    <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
-                      <SpinnerModel initial="0.0" maximum="99.0" minimum="0.0" numberType="java.lang.Double" stepSize="1.0" type="number"/>
-                    </Property>
-                  </Properties>
-                </Component>
-                <Component class="javax.swing.JLabel" name="explorePercentLabel_">
-                  <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                      <Font name="Tahoma" size="14" style="0"/>
-                    </Property>
-                    <Property name="text" type="java.lang.String" value="%"/>
                   </Properties>
                 </Component>
                 <Component class="javax.swing.JLabel" name="exploreSavingNameLabel_">
@@ -447,13 +412,7 @@
                                           <EmptySpace max="-2" attributes="0"/>
                                           <Component id="footprin2DLabel_" min="-2" max="-2" attributes="0"/>
                                           <EmptySpace max="-2" attributes="0"/>
-                                          <Component id="xyFootprintComboBox_" min="-2" pref="221" max="-2" attributes="0"/>
-                                          <EmptySpace max="-2" attributes="0"/>
-                                          <Component id="acqTileOverlapLabel_" min="-2" max="-2" attributes="0"/>
-                                          <EmptySpace max="-2" attributes="0"/>
-                                          <Component id="acqOverlapPercentSpinner_" min="-2" pref="58" max="-2" attributes="0"/>
-                                          <EmptySpace max="-2" attributes="0"/>
-                                          <Component id="tileOverlapPercentLabel_" min="-2" max="-2" attributes="0"/>
+                                          <Component id="xyFootprintComboBox_" min="-2" pref="333" max="-2" attributes="0"/>
                                       </Group>
                                       <Group type="102" alignment="0" attributes="0">
                                           <EmptySpace max="-2" attributes="0"/>
@@ -470,9 +429,6 @@
                                   <Group type="103" groupAlignment="3" attributes="0">
                                       <Component id="button3D_" alignment="3" min="-2" max="-2" attributes="0"/>
                                       <Component id="button2D_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="acqTileOverlapLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="acqOverlapPercentSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="tileOverlapPercentLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                                       <Component id="footprin2DLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                                       <Component id="xyFootprintComboBox_" alignment="3" min="-2" max="-2" attributes="0"/>
                                   </Group>
@@ -1289,35 +1245,6 @@
                             </Container>
                           </SubComponents>
                         </Container>
-                        <Component class="javax.swing.JLabel" name="tileOverlapPercentLabel_">
-                          <Properties>
-                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                              <Font name="Tahoma" size="14" style="0"/>
-                            </Property>
-                            <Property name="text" type="java.lang.String" value="%"/>
-                          </Properties>
-                        </Component>
-                        <Component class="javax.swing.JSpinner" name="acqOverlapPercentSpinner_">
-                          <Properties>
-                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                              <Font name="Tahoma" size="14" style="0"/>
-                            </Property>
-                            <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
-                              <SpinnerModel initial="5.0" maximum="99.0" minimum="0.0" numberType="java.lang.Double" stepSize="1.0" type="number"/>
-                            </Property>
-                          </Properties>
-                          <Events>
-                            <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="acqOverlapPercentSpinner_StateChanged"/>
-                          </Events>
-                        </Component>
-                        <Component class="javax.swing.JLabel" name="acqTileOverlapLabel_">
-                          <Properties>
-                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                              <Font name="Tahoma" size="14" style="0"/>
-                            </Property>
-                            <Property name="text" type="java.lang.String" value="XY tile overlap:"/>
-                          </Properties>
-                        </Component>
                         <Component class="javax.swing.JLabel" name="footprin2DLabel_">
                           <Properties>
                             <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
@@ -1890,10 +1817,16 @@
                           </Group>
                           <Group type="102" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="openDatasetButton_" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace min="-2" pref="127" max="-2" attributes="0"/>
+                              <Component id="overlapLabel_" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="tileOverlapSpinner_" min="-2" pref="65" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="percentLabel_" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace min="-2" pref="56" max="-2" attributes="0"/>
                               <Component id="freeDiskSpaceLabel_" min="-2" pref="197" max="-2" attributes="0"/>
                               <EmptySpace max="32767" attributes="0"/>
+                              <Component id="openDatasetButton_" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
                               <Component id="exploreBrowseButton_" min="-2" max="-2" attributes="0"/>
                           </Group>
                       </Group>
@@ -1914,6 +1847,9 @@
                           <Component id="openDatasetButton_" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="exploreBrowseButton_" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="freeDiskSpaceLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="overlapLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="tileOverlapSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="percentLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace min="-2" max="-2" attributes="0"/>
                   </Group>
@@ -1963,6 +1899,35 @@
                   <Font name="Tahoma" size="14" style="0"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="jTextField1"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="overlapLabel_">
+              <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Tahoma" size="14" style="0"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="XY tile overlap:"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JSpinner" name="tileOverlapSpinner_">
+              <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Tahoma" size="14" style="0"/>
+                </Property>
+                <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                  <SpinnerModel initial="0.0" maximum="99.0" minimum="0.0" numberType="java.lang.Double" stepSize="1.0" type="number"/>
+                </Property>
+              </Properties>
+              <Events>
+                <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="tileOverlapSpinner_StateChanged"/>
+              </Events>
+            </Component>
+            <Component class="javax.swing.JLabel" name="percentLabel_">
+              <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Tahoma" size="14" style="0"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="%"/>
               </Properties>
             </Component>
           </SubComponents>

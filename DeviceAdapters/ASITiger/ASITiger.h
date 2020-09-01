@@ -151,6 +151,7 @@ const double g_StageDefaultUnitMult = 10;  // in units of um
 const double g_ScannerDefaultUnitMult = 1000;  // units per degree
 const char* const g_SerialTerminatorDefault = "\r\n";
 const char* const g_SerialTerminatorFW = "\n\r";
+const char* const g_SerialTerminatorMultiLine = "\r";
 const string g_EmptyAxisLetterStr = " ";     // single char but like convenience of strings
 const string g_EmptyCardAddressCode = " ";   // ascii 0x31 for '1' through ascii 0x39 for '9', then 0x81 upward (extended ascii)
 const string g_EmptyCardAddressStr = "00";   // hex representation of the address, eg 31..39, 81 upward
@@ -371,6 +372,7 @@ const char* const g_RB_EnablePropertyName = "RingBufferEnable";
 const char* const g_RB_TriggerPropertyName = "RingBufferTrigger";
 const char* const g_RB_AutoplayRunningPropertyName = "RingBufferAutoplayRunning";
 const char* const g_UseSequencePropertyName = "UseSequence";
+const char* const g_UseFastSequencePropertyName = "UseFastSequence";
 const char* const g_RBSequenceStatePropertyName = "RingBufferSequenceState";
 const char* const g_AddtoRBSequencePropertyName = "AddToRingBufferSequence(mV)";
 const char* const g_RBSequenceStart = "Start on TTL";
@@ -550,6 +552,7 @@ const char* const g_Channel4And6 = "output 4 and 6";
 const char* const g_Channel5And7 = "output 5 and 7";
 const char* const g_Channel1And3And5 = "output 1 and 3 and 5";
 const char* const g_Channel2And4And6 = "output 2 and 4 and 6";
+const char* const g_Channel1And6 = "output 1 and 6";
 
 
 // SPIM enums
@@ -638,6 +641,7 @@ const char* const g_OnState = "On";
 const char* const g_YesState = "Yes";
 const char* const g_NoState = "No";
 const char* const g_OneTimeState = "One time";
+const char* const g_ArmedState = "Armed";
 // shutter states
 const char* const g_OpenState = "Open";
 const char* const g_ClosedState = "Closed";

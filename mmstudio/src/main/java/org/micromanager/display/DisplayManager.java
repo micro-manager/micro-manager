@@ -290,8 +290,19 @@ public interface DisplayManager extends EventPublisher {
     * @param store Datastore of interest to the caller
     * @return A list of all DisplayWindows Micro-Manager knows are associated
     *         with the specified Datastore, or null.
+    * @deprecated replaced by {@link #getDisplays(DataProvider)}
     */
+   @Deprecated
    List<DisplayWindow> getDisplays(Datastore store);
+
+   /**
+    * Return all associated DisplayWindows for the DataProvider. Returns null if
+    * the DataProvider is not managed.
+    * @param dataProvider DataProvider of interest to the caller
+    * @return A list of all DisplayWindows Micro-Manager knows are associated
+    *         with the specified Datastore, or null.
+    */
+   List<DisplayWindow> getDisplays(DataProvider dataProvider);
 
    /**
     * Return the DisplayWindow whose window is front-most.

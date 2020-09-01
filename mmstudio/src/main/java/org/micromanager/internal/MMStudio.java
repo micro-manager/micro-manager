@@ -32,12 +32,14 @@ import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.function.Function;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -100,7 +102,7 @@ import org.micromanager.internal.menus.MMMenuBar;
 import org.micromanager.internal.navigation.UiMovesStageManager;
 import org.micromanager.internal.pipelineinterface.PipelineFrame;
 import org.micromanager.internal.pluginmanagement.DefaultPluginManager;
-import org.micromanager.internal.positionlist.PositionListDlg;
+import org.micromanager.internal.positionlist.MMPositionListDlg;
 import org.micromanager.internal.propertymap.DefaultPropertyMap;
 import org.micromanager.internal.script.ScriptPanel;
 import org.micromanager.internal.utils.DaytimeNighttime;
@@ -118,6 +120,7 @@ import org.micromanager.profile.internal.UserProfileAdmin;
 import org.micromanager.profile.internal.gui.HardwareConfigurationManager;
 import org.micromanager.quickaccess.QuickAccessManager;
 import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
+
 
 /*
  * Implements the Studio (i.e. primary API) and does various other
@@ -137,7 +140,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private static final String CIRCULAR_BUFFER_SIZE = "size, in megabytes of the circular buffer used to temporarily store images before they are written to disk";
    private static final String AFFINE_TRANSFORM_LEGACY = "affine transform for mapping camera coordinates to stage coordinates for a specific pixel size config: ";
    private static final String AFFINE_TRANSFORM = "affine transform parameters for mapping camera coordinates to stage coordinates for a specific pixel size config: ";
-
+   private static final String EXPOSURE_KEY = "Exposure_";
    
    // GUI components
    private boolean wasStartedAsImageJPlugin_;
@@ -167,7 +170,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private CMMCore core_;
    private AcquisitionWrapperEngine acqEngine_;
    private PositionList posList_;
-   private PositionListDlg posListDlg_;
+   private MMPositionListDlg posListDlg_;
    private boolean isProgramRunning_;
    private boolean configChanged_ = false;
    private boolean isClickToMoveEnabled_ = false;
@@ -317,7 +320,9 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // Note: pipelineFrame is used in the dataManager, however, pipelineFrame 
       // needs the dataManager.  Let's hope for the best....
       dataManager_ = new DefaultDataManager(studio_);
-      createPipelineFrame();
+      if (pipelineFrame_ == null) { //Create the pipelineframe if it hasn't already been done.
+         pipelineFrame_ = new PipelineFrame(studio_);
+      }
 
       alertManager_ = new DefaultAlertManager(studio_);
       
@@ -378,6 +383,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
                 if (name.equals(profileNameAutoStart)){
                     UserProfile profile = profileAdmin.getNonSavingProfile(entry.getKey());
                     profileAdmin.setCurrentUserProfile(entry.getKey());
+                    daytimeNighttimeManager_.setSkin(daytimeNighttimeManager_.getSkin());
                     sysConfigFile_ = HardwareConfigurationManager.getRecentlyUsedConfigFilesFromProfile(profile).get(0);
                     break;
                 }
@@ -596,8 +602,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          try {
             channelGroup = core_.getChannelGroup();
             channel = core_.getCurrentConfigFromCache(channelGroup);
-            AcqControlDlg.storeChannelExposure(
-                  channelGroup, channel, exposureTime);
+            storeChannelExposureTime(channelGroup, channel, exposureTime);
          }
          catch (Exception e) {
             studio_.logs().logError("Unable to determine channel group");
@@ -906,25 +911,48 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       scriptPanel_ = new ScriptPanel(studio_);
    }
    
-   public void runZMQServer() {
+  public void runZMQServer() {
       if (zmqServer_ == null) {
-         zmqServer_ = new ZMQServer(studio_);
+         //Make a function that passes existing instances of core and studio,
+         //rather than constructing them
+         Function<Class, Object> instanceGrabberFunction = new Function<Class, Object>() {
+            @Override
+            public Object apply(Class baseClass) {
+               //return instances of existing objects
+               if (baseClass.equals(Studio.class)) {
+                  return studio_;
+               } else if (baseClass.equals(CMMCore.class)) {
+                  return studio_.getCMMCore();
+               }
+               return null;
+            }
+         };
+         try {
+            //It appears that every plugin has its own ClassLoader. Need to extract all of these and pass to
+            //ZMQServer, so that knows where to search for classes to load. If we don't do this, and just create
+            //new ClassLoaders to instantiate objects, static varibles will not be shared across instances
+            //created by the two objects, leading to confusing behavior
+            Collection<ClassLoader> classLoaders = new HashSet<ClassLoader>();
+            for (Object plugin : plugins().getMenuPlugins().values()) {
+               classLoaders.add(plugin.getClass().getClassLoader());
+            }
+
+
+            zmqServer_ = new ZMQServer(classLoaders, instanceGrabberFunction, new String[]{"org.micromanager.internal"});
+            logs().logMessage("Initialized ZMQ Server on port: " + ZMQServer.DEFAULT_MASTER_PORT_NUMBER);
+         } catch (URISyntaxException | UnsupportedEncodingException e) {
+            studio_.logs().logError("Failed to initialize ZMQ Server");
+            studio_.logs().logError(e);
+         }
+
       }
-      zmqServer_.initialize(ZMQServer.DEFAULT_PORT_NUMBER);
-      logs().logMessage("Initialized ZMQ Server on port: " + ZMQServer.DEFAULT_PORT_NUMBER);
    }
-   
+
    public void stopZMQServer() {
       if (zmqServer_ != null) {
          zmqServer_.close();
          logs().logMessage("Stopped ZMQ Server");
          zmqServer_ = null;
-      }
-   }
-
-   private void createPipelineFrame() {
-      if (pipelineFrame_ == null) {
-         pipelineFrame_ = new PipelineFrame(studio_);
       }
    }
 
@@ -954,22 +982,13 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       isClickToMoveEnabled_ = isEnabled;
       if (isEnabled) {
          IJ.setTool(Toolbar.HAND);
-         mmMenuBar_.getToolsMenu().setMouseMovesStage(isEnabled);
       }
+      mmMenuBar_.getToolsMenu().setMouseMovesStage(isEnabled);
       events().post(new MouseMovesStageStateChangeEvent(isEnabled));
    }
 
    public boolean getIsClickToMoveEnabled() {
       return isClickToMoveEnabled_;
-   }
-   
-   // Ensure that the "XY list..." dialog exists.
-   private void checkPosListDlg() {
-      if (posListDlg_ == null) {
-         posListDlg_ = new PositionListDlg(core_, studio_, posList_, 
-                 acqControlWin_);
-         posListDlg_.addListeners();
-      }
    }
    
 
@@ -1024,18 +1043,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          return false;
       }
       return true;
-   }
-
-   private boolean isCurrentImageFormatSupported() {
-      long channels = core_.getNumberOfComponents();
-      long bpp = core_.getBytesPerPixel();
-
-      if (channels > 1 && channels != 4 && bpp != 1) {
-         handleError("Unsupported image format.");
-      } else {
-         return true;
-      }
-      return false;
    }
 
    private void configureBinningCombo() throws Exception {
@@ -1484,7 +1491,11 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
     */
    @Override
    public void showPositionList() {
-      checkPosListDlg();
+      if (posListDlg_ == null) {
+         posListDlg_ = new MMPositionListDlg(studio_, posList_, 
+                 acqControlWin_);
+         posListDlg_.addListeners();
+      }
       posListDlg_.setVisible(true);
    }
 
@@ -1510,8 +1521,14 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    @Override
    public double getChannelExposureTime(String channelGroup, String channel,
            double defaultExp) {
-      return AcqControlDlg.getChannelExposure(channelGroup, channel,
-            defaultExp);
+      return this.profile().getSettings(MMStudio.class).getDouble(
+              EXPOSURE_KEY + channelGroup + "_" + channel, defaultExp);
+   }
+
+   public void storeChannelExposureTime(String channelGroup, String channel,
+                                      double exposure) {
+      this.profile().getSettings(MMStudio.class).putDouble(
+              EXPOSURE_KEY + channelGroup + "_" + channel, exposure);
    }
 
    /**
@@ -1528,7 +1545,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    public void setChannelExposureTime(String channelGroup, String channel,
            double exposure) {
       try {
-         AcqControlDlg.storeChannelExposure(channelGroup, channel, exposure);
+         storeChannelExposureTime(channelGroup, channel, exposure);
          if (channelGroup != null && channelGroup.equals(core_.getChannelGroup())) {
             if (channel != null && !channel.equals("") && 
                     channel.equals(core_.getCurrentConfigFromCache(channelGroup))) {

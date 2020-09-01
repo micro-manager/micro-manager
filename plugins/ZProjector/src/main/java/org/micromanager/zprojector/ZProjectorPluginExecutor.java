@@ -74,17 +74,16 @@ public class ZProjectorPluginExecutor {
    /**
     * Performs the actual creation of a new image with reduced content
     *
-    * @param save
-    * @param newName - name for the copy
-    * @param projectionAxis
-    * @param firstFrame
-    * @param lastFrame
-    * @param projectionMethod ZProjector method
+    * @param save  True when projection should be saved automatically
+    * @param newName  Name for the copy
+    * @param projectionAxis Axis to be projected (often Z or T), see Coords
+    * @param firstFrame  Frame nr (zero-based) of first frame to include in projection
+    * @param lastFrame  Last frame (nr zero-based) to include in projection
+    * @param projectionMethod ZProjector method see ImageJ code
     */
    public final void project(final boolean save, final String newName, final String projectionAxis, 
            final int firstFrame, final int lastFrame, final int projectionMethod) {
      
-
 
       class ZProjectTask extends SwingWorker<Void, Void> {
 
@@ -188,7 +187,8 @@ public class ZProjectorPluginExecutor {
    /**
     * Recursively figures out which projections need to be performed
     * It does so by taking the first remaining axes, cycle through all positions
-    * in that axes, and calling this function (without including that axis).
+    * in that axes, and recursively calling this function (omitting that axis).
+    * When no more axes are remining, the actual projection will be exected.
     * 
     * @param newStore Datastore to put the new projected images into
     * @param remainingAxes List with axes to look at
@@ -197,13 +197,13 @@ public class ZProjectorPluginExecutor {
     * @param min       lowest frame number to be included in the projection
     * @param max        highest frame number to be included in the projection
     * @param projectionMethod Projection method (as an ImageJ ZProjector int)
-    * @throws IOException 
+    * @throws IOException Can arise when saving to disk
     */
    private void findAllProjections(Datastore newStore, List<String> remainingAxes, 
            Coords.CoordsBuilder cbp, String projectionAxis, int min, int max, 
            int projectionMethod) throws IOException {
       String currentAxis = remainingAxes.get(0);
-      List<String> rcAxes = new ArrayList(remainingAxes);
+      List<String> rcAxes = new ArrayList<>(remainingAxes);
       rcAxes.remove(currentAxis);
       for (int i = 0; i < oldStore_.getAxisLength(currentAxis); i++) {
          cbp.index(currentAxis, i);
@@ -221,29 +221,34 @@ public class ZProjectorPluginExecutor {
    }
    
    /**
-    * Does the actual projection
+    * Do the actual projection
     * 
     * @param newStore Datastore to put the new projected images into
-    * @param cbp      Coordinates build set to the correct position
-    * @param projectionAxis   Axis that needs to be projected
-    * @param min       lowest frame number to be included in the projection
-    * @param max        hightst frame number to be included in the projection
+    * @param cbp Coordinates build set to the correct position
+    * @param projectionAxis Axis that needs to be projected
+    * @param min lowest frame number to be included in the projection
+    * @param max Highest frame number to be included in the projection
     * @param projectionMethod Projection method (as an ImageJ ZProjector int)
-    * @throws IOException 
+    * @throws IOException Can arise when saving to disk
     */
    private void executeProjection(Datastore newStore, Coords.CoordsBuilder cbp, 
            String projectionAxis, int min, int max, int projectionMethod) 
            throws IOException {
       cbp.index(projectionAxis, min);
       Image tmpImg = oldStore_.getAnyImage();
+      if (tmpImg== null) {
+         studio_.alerts().postAlert("Projection problem", this.getClass(),
+                 "No images found while projecting");
+         return;
+      }
       ImageStack stack = new ImageStack(
                tmpImg.getWidth(), tmpImg.getHeight());
-      Metadata imgMetadata = tmpImg.getMetadata();
+      Metadata imgMetadata = null;
       for (int i = min; i <= max; i++) {
          Image img = oldStore_.getImage(cbp.index(projectionAxis, i).build());
          if (img != null) {  // null happens when this image was skipped
             if (imgMetadata == null) {
-               imgMetadata = img.getMetadata();
+               imgMetadata = img.getMetadata().copyBuilderWithNewUUID().build();
             }
             ImageProcessor ip
                     = studio_.data().getImageJConverter().createProcessor(img);

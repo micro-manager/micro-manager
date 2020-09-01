@@ -177,7 +177,8 @@ public final class PresetButton extends WidgetPlugin implements SciJavaPlugin {
             pickerLabel.setBackground(
                     RememberedSettings.loadChannel(studio_, 
                             (String) groupSelector.getSelectedItem(), 
-                            (String) presetSelector.getSelectedItem()).getColor());
+                            (String) presetSelector.getSelectedItem(),
+                            null).getColor());
          }
       });
 
@@ -189,8 +190,9 @@ public final class PresetButton extends WidgetPlugin implements SciJavaPlugin {
             // case the color will remain the same.
             pickerLabel.setBackground(
                RememberedSettings.loadChannel(studio_, 
-                            (String) groupSelector.getSelectedItem(), 
-                            (String) presetSelector.getSelectedItem()).getColor());
+                       (String) groupSelector.getSelectedItem(),
+                       (String) presetSelector.getSelectedItem(),
+                       null).getColor());
          }
       });
       // Default to the Channel group, if available.

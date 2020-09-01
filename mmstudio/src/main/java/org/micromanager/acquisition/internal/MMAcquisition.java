@@ -203,7 +203,7 @@ public final class MMAcquisition extends DataViewerListener {
                DisplaySettings.Builder displaySettingsBuilder
                        = dsTmp.copyBuilder();
                
-               final int nrChannels = MDUtils.getNumChannels(summaryMetadata);
+               final int nrChannels = store_.getSummaryMetadata().getChannelNameList().size();
                // the do-while loop is a way to set display settings in a thread
                // safe way.  See docs to compareAndSetDisplaySettings.
                do {
@@ -215,7 +215,8 @@ public final class MMAcquisition extends DataViewerListener {
                   for (int channelIndex = 0; channelIndex < nrChannels; channelIndex++) {
                      displaySettingsBuilder.channel(channelIndex, RememberedSettings.loadChannel(studio_,
                              store_.getSummaryMetadata().getChannelGroup(),
-                             store_.getSummaryMetadata().getChannelNameList().get(channelIndex)));
+                             store_.getSummaryMetadata().getChannelNameList().get(channelIndex),
+                             null));  // TODO: use chColors as default Color?
                      /*
                      ChannelDisplaySettings channelSettings
                              = displaySettingsBuilder.getChannelSettings(channelIndex);

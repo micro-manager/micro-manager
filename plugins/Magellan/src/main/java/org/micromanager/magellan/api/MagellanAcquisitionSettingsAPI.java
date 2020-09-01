@@ -39,8 +39,6 @@ public interface MagellanAcquisitionSettingsAPI {
    
    public void setSurface(String withinDistanceSurfaceName);
    
-   public void setTileOverlapPercent(double overlapPercent);
-
    public void setChannelGroup(String channelGroup);
 
    public void setUseChannel(String channelName, boolean use);

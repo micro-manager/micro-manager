@@ -81,34 +81,40 @@ public class RememberedSettings {
     * @param studio        Object used to get access to profile
     * @param channelGroup  Group to which the channel belongs
     * @param channelName   Channel name
+    * @param defaultColor  If nothing was found, use this color as the default color
+    *                      will be ignored when null
     * @return Stored or Default ChannelDisplaySetting
     */
    public static ChannelDisplaySettings loadChannel(Studio studio, 
-           String channelGroup, 
-           String channelName) {
+           String channelGroup, String channelName, Color defaultColor) {
       String key = genKey(channelGroup, channelName);
-      MutablePropertyMapView settings = 
+      MutablePropertyMapView settings =
               studio.profile().getSettings(RememberedSettings.class);
       if (settings.containsPropertyMap(key)) {
-          return DefaultChannelDisplaySettings.fromPropertyMap(
-                  settings.getPropertyMap(key, null), channelGroup, channelName);
-      } else {
+         return DefaultChannelDisplaySettings.fromPropertyMap(
+                 settings.getPropertyMap(key, null), channelGroup, channelName);
+      }
+      else {
          // for backward compatibility
          String rKey = RememberedChannelSettings.genKey(channelGroup, channelName);
          settings = studio.profile().getSettings(RememberedChannelSettings.class);
          if (settings.containsInteger(rKey + ":" + COLOR)) {
             RememberedChannelSettings rcs = RememberedChannelSettings.loadSettings(
-                    channelGroup, 
-                    channelName, 
-                    Color.WHITE, 
-                    null, 
-                    null, 
+                    channelGroup,
+                    channelName,
+                    Color.WHITE,
+                    null,
+                    null,
                     true);
             return rcs.toChannelDisplaySetting(channelGroup, channelName);
          }
       }
-      
-      return DefaultChannelDisplaySettings.builder().name(channelName).component(1).build();
+      ChannelDisplaySettings.Builder cdsBuilder =
+              DefaultChannelDisplaySettings.builder().name(channelName).component(1);
+      if (defaultColor != null) {
+         cdsBuilder.color(defaultColor);
+      }
+      return cdsBuilder.build();
    }
    
    /**
@@ -127,7 +133,7 @@ public class RememberedSettings {
       List<String> channelNames = summary.getChannelNameList();
       for (int ch = 0; ch < channelNames.size(); ch++) {
          String channelName = summary.getSafeChannelName(ch);
-         ChannelDisplaySettings cds = loadChannel(studio, channelGroup, channelName);
+         ChannelDisplaySettings cds = loadChannel(studio, channelGroup, channelName, null);
          builder.channel(ch, cds);
       }
       if (channelNames.size() > 1) {
@@ -135,6 +141,31 @@ public class RememberedSettings {
       }
       builder.autostretch(true);
       return builder.build();      
+   }
+
+   /**
+    * Some MM versions have stored DisplaySettings without storing ChannelNames
+    * This causes the channel names not to be shown in the Intensity Inspector
+    * Panels.  Fix this here.
+    * @param displaySettings   Settings as read from disk
+    * @param summary Metadata of the datastore, will be used to fill in missing info
+    * @return Copy of the input with Channelgroup and Channelnames from the summary
+    * metadata if they were empty in the input.
+    */
+   public static DisplaySettings fixMissingInfo(
+           DisplaySettings displaySettings, SummaryMetadata summary) {
+      DisplaySettings.Builder builder = displaySettings.copyBuilder();
+      String channelGroup = summary.getChannelGroup();
+      List<String> channelNames = summary.getChannelNameList();
+      for (int ch = 0; ch < channelNames.size(); ch++) {
+         String channelName = summary.getSafeChannelName(ch);
+         ChannelDisplaySettings cdSettings = displaySettings.getChannelSettings(ch);  // check for null?
+         ChannelDisplaySettings.Builder cddBuilder = cdSettings.copyBuilder();
+         if (cdSettings.getGroupName().isEmpty()) { cddBuilder.groupName(channelGroup); }
+         if (cdSettings.getName().isEmpty()) { cddBuilder.name(channelName); }
+         builder.channel(ch, cddBuilder.build());
+      }
+      return builder.build();
    }
 
    

@@ -22,8 +22,6 @@ package org.micromanager.demodisplay;
 import com.google.common.eventbus.EventBus;
 
 import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.Font;
@@ -57,6 +55,7 @@ import org.micromanager.display.DisplaySettings;
 // should not imitate this practice.
 import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
 import org.micromanager.display.internal.event.DefaultDisplaySettingsChangedEvent;
+import org.micromanager.internal.utils.WindowPositioning;
 
 
 /**
@@ -68,7 +67,6 @@ public class DemoDisplay extends JFrame implements DataViewer {
    private Datastore store_;
    private DisplaySettings settings_;
    private Studio studio_;
-   private final JPanel imageDisplay_;
 
    private int imageCount_ = 0;
    private Image currentImage_ = null;
@@ -77,7 +75,7 @@ public class DemoDisplay extends JFrame implements DataViewer {
       super("Demo Display");
       studio_ = studio;
       // Ensure we start with valid, if empty, DisplaySettings.
-      settings_ = studio_.displays().getDisplaySettingsBuilder().build();
+      settings_ = studio_.displays().displaySettingsBuilder().build();
       bus_ = new EventBus();
       store_ = studio_.data().createRAMDatastore();
 
@@ -91,7 +89,11 @@ public class DemoDisplay extends JFrame implements DataViewer {
 
       super.setLayout(new MigLayout("flowy"));
 
-      imageDisplay_ = new JPanel() {
+      // Ordinarily you would paint your images here, but we just
+      // draw some information about the image.
+      // No images in the Datastore yet.
+      // Ensure we're large enough to show our text.
+      JPanel imageDisplay_ = new JPanel() {
          @Override
          public void paint(Graphics g) {
             // Ordinarily you would paint your images here, but we just
@@ -102,30 +104,28 @@ public class DemoDisplay extends JFrame implements DataViewer {
             }
             g.setFont(new Font("Arial", Font.PLAIN, 14));
             g.drawString("Image coords: " + currentImage_.getCoords(),
-                  15, 15);
+                    15, 15);
          }
 
          @Override
          public Dimension getPreferredSize() {
             // Ensure we're large enough to show our text.
-            return new Dimension(400, 400);
+            return new Dimension(400, 100);
          }
       };
       super.add(imageDisplay_);
 
       JButton snap = new JButton("Snap new image");
-      snap.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            addNewImage();
-         }
-      });
+      snap.addActionListener(e -> addNewImage());
       super.add(snap);
 
       // Start us off with several images already in our Datastore.
       for (int i = 0; i < 5; ++i) {
          addNewImage();
       }
+
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), "key");
+      WindowPositioning.cascade(this, this.getClass());
 
       super.pack();
       super.setVisible(true);
@@ -142,8 +142,8 @@ public class DemoDisplay extends JFrame implements DataViewer {
    private void addNewImage()  {
       Image newImage = studio_.live().snap(false).get(0);
       // Move its timepoint to the end of our little timeseries.
-      newImage = newImage.copyAtCoords(newImage.getCoords()
-         .copy().time(imageCount_).build());
+      newImage = newImage.copyAtCoords(newImage.getCoords().copyBuilder().
+                        t(imageCount_).build());
       try {
          store_.putImage(newImage);
       }
@@ -209,6 +209,7 @@ public class DemoDisplay extends JFrame implements DataViewer {
    }
 
    @Override
+   @Deprecated
    public Datastore getDatastore() {
       return store_;
    }
@@ -226,7 +227,7 @@ public class DemoDisplay extends JFrame implements DataViewer {
    @Override
    public List<Image> getDisplayedImages() {
       // We only ever show one image at a time.
-      ArrayList<Image> result = new ArrayList<Image>();
+      ArrayList<Image> result = new ArrayList<>();
       result.add(currentImage_);
       return result;
    }
@@ -243,7 +244,7 @@ public class DemoDisplay extends JFrame implements DataViewer {
 
    @Override
    public DataProvider getDataProvider() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      return store_;
    }
 
    @Override
@@ -273,7 +274,7 @@ public class DemoDisplay extends JFrame implements DataViewer {
 
    @Override
    public boolean isClosed() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      return !this.isVisible();
    }
 
    @Override

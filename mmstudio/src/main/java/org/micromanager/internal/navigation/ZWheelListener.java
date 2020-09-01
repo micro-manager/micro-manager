@@ -21,28 +21,19 @@
 package org.micromanager.internal.navigation;
 
 import com.google.common.eventbus.Subscribe;
-import com.google.common.util.concurrent.AtomicDouble;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import org.micromanager.Studio;
 import org.micromanager.display.internal.event.DisplayMouseWheelEvent;
-import org.micromanager.events.StagePositionChangedEvent;
-import org.micromanager.events.internal.DefaultEventManager;
-import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
-import org.micromanager.internal.utils.ReportingUtils;
 
 /**
 */
 public final class ZWheelListener  {
    private static final double MOVE_INCREMENT = 0.20;
    private final Studio studio_;
-   private ZNavigator zNavigator_;
-   private boolean active_;
+   private final ZNavigator zNavigator_;
 
    public ZWheelListener(final Studio studio, final ZNavigator zNavigator) {
       studio_ = studio;
       zNavigator_ = zNavigator;
-      active_ = false;
    }
    
 
@@ -56,9 +47,6 @@ public final class ZWheelListener  {
     */
    @Subscribe
    public void mouseWheelMoved(DisplayMouseWheelEvent e) {
-      if (!active_) {
-         return;
-      }
       synchronized (this) {
          // Get needed info from core
          String zStage = studio_.core().getFocusDevice();
@@ -79,13 +67,5 @@ public final class ZWheelListener  {
       }
    }
 
-   @Subscribe
-   public void onActiveChange (MouseMovesStageStateChangeEvent mouseMovesStageStateChangeEvent) {
-      if (mouseMovesStageStateChangeEvent.getIsEnabled()) {
-         active_ = true;
-      } else {
-         active_ = false;
-      }
-   }
 
 }

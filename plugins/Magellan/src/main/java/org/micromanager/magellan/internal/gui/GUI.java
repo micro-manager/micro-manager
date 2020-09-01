@@ -24,7 +24,6 @@ import java.awt.Font;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.File;
-import java.util.prefs.Preferences;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
@@ -49,22 +48,16 @@ import javax.swing.BorderFactory;
 import javax.swing.JOptionPane;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import org.micromanager.acqj.internal.acqengj.Engine;
 import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.magellan.internal.acq.AcqDurationEstimator;
-import org.micromanager.magellan.internal.acq.Acquisition;
-import org.micromanager.magellan.internal.acq.AcquisitionSettingsBase;
-import org.micromanager.magellan.internal.acq.ExploreAcqSettings;
-import org.micromanager.magellan.internal.acq.MagellanGUIAcquisitionSettings;
-import org.micromanager.magellan.internal.acq.MagellanEngine;
-import org.micromanager.magellan.internal.acq.MagellanAcquisitionsManager;
-import org.micromanager.magellan.internal.acq.ExploreAcquisition;
+import org.micromanager.magellan.internal.magellanacq.*;
 import org.micromanager.magellan.internal.channels.ColorEditor;
 import org.micromanager.magellan.internal.channels.ColorRenderer;
-import org.micromanager.magellan.internal.coordinates.MagellanAffineUtils;
+import org.micromanager.acqj.internal.acqengj.AffineTransformUtils;
+import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.GlobalSettings;
 import org.micromanager.magellan.internal.misc.JavaUtils;
-import org.micromanager.magellan.internal.misc.LoadedAcquisitionData;
 import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridManager;
 import org.micromanager.propertymap.MutablePropertyMapView;
@@ -81,7 +74,7 @@ public class GUI extends javax.swing.JFrame {
    private static final Color LIGHT_GREEN = new Color(0, 200, 0);
    private static final Color DEFAULT_RADIO_BUTTON_TEXT_COLOR = new JRadioButton().getForeground();
 
-   private AcqDurationEstimator acqDurationEstimator_;
+
    private MutablePropertyMapView prefs_;
    private SurfaceGridManager manager_ = new SurfaceGridManager();
    private MagellanAcquisitionsManager multiAcqManager_;
@@ -93,6 +86,7 @@ public class GUI extends javax.swing.JFrame {
    private ExploreAcquisition exploreAcq_;
    private volatile boolean acquisitionRunning_ = false;
    private volatile boolean ignoreUpdate_ = false;
+   private Engine eng_;
 
    public GUI(String version) {
       singleton_ = this;
@@ -100,8 +94,7 @@ public class GUI extends javax.swing.JFrame {
       prefs_ = Magellan.getStudio().profile().getSettings(GUI.class);
       settings_ = new GlobalSettings();
       this.setTitle("Micro-Magellan " + version);
-      acqDurationEstimator_ = new AcqDurationEstimator();
-      new MagellanEngine(Magellan.getCore(), acqDurationEstimator_);
+      eng_ = new Engine(Magellan.getCore());
       multiAcqManager_ = new MagellanAcquisitionsManager(this);
       initComponents();
       moreInitialization();
@@ -115,13 +108,14 @@ public class GUI extends javax.swing.JFrame {
       return singleton_;
    }
 
+   public static double getTileOverlap() {
+     return ((Number) getInstance().tileOverlapSpinner_.getValue()).doubleValue();
+   }
+      
    public void acquisitionRunning(boolean running) {
       //disable or enabe the controls that cannot be changed during acquisition
       zStepSpinner_.setEnabled(!running);
       zStepLabel_.setEnabled(!running);
-      acqTileOverlapLabel_.setEnabled(!running);
-      acqOverlapPercentSpinner_.setEnabled(!running);
-      tileOverlapPercentLabel_.setEnabled(!running);
       this.repaint();
    }
 
@@ -271,7 +265,7 @@ public class GUI extends javax.swing.JFrame {
       //load explore settings
       exploreSavingNameTextField_.setText(ExploreAcqSettings.getNameFromPrefs());
       exploreZStepSpinner_.setValue(ExploreAcqSettings.getZStepFromPrefs());
-      exploreTileOverlapSpinner_.setValue(ExploreAcqSettings.getExploreTileOverlapFromPrefs());
+      tileOverlapSpinner_.setValue(ExploreAcqSettings.getExploreTileOverlapFromPrefs());
 
       refreshAcqControlsFromSettings();
       enableAndChangeFonts();
@@ -309,7 +303,8 @@ public class GUI extends javax.swing.JFrame {
          l3.setFont(acqTabbedPane_.getComponent(0).getFont().deriveFont(true ? Font.BOLD : Font.PLAIN));
          acqTabbedPane_.setTabComponentAt(0, l3);
          JLabel l4 = new JLabel("Channels");
-         boolean useChannels = !multiAcqManager_.getAcquisitionSettings(multiAcqSelectedIndex_).channelGroup_.equals("");
+         boolean useChannels = multiAcqManager_.getAcquisitionSettings(multiAcqSelectedIndex_).getChannelGroup() != null &&
+                 !multiAcqManager_.getAcquisitionSettings(multiAcqSelectedIndex_).getChannelGroup().equals("");
          l4.setForeground(useChannels ? LIGHT_GREEN : Color.black);
          l4.setFont(acqTabbedPane_.getComponent(1).getFont().deriveFont(useChannels ? Font.BOLD : Font.PLAIN));
          acqTabbedPane_.setTabComponentAt(1, l4);
@@ -375,7 +370,6 @@ public class GUI extends javax.swing.JFrame {
          settings.timeIntervalUnit_ = timeIntevalUnitCombo_.getSelectedIndex();
       }
       //space  
-      settings.tileOverlap_ = (Double) acqOverlapPercentSpinner_.getValue();
       settings.xyFootprint_ = manager_.getSurfaceOrGrid(xyFootprintComboBox_.getSelectedIndex());
       if (button2D_.isSelected()) { //2D pane
          if (useCollectionPlaneButton_.isSelected()) {
@@ -409,13 +403,12 @@ public class GUI extends javax.swing.JFrame {
       }
 
       //channels
-      settings.channelGroup_ = (String) ChannelGroupCombo_.getSelectedItem();
+      settings.setChannelGroup((String) ChannelGroupCombo_.getSelectedItem());
 
       settings.storePreferedValues();
       multipleAcqTable_.repaint();
 
-      acqDurationEstimator_.calcAcqDuration(getActiveAcquisitionSettings());
-
+//      acqDurationEstimator_.calcAcqDuration(getActiveAcquisitionSettings());
    }
 
    public void refreshAcqControlsFromSettings() {
@@ -455,7 +448,6 @@ public class GUI extends javax.swing.JFrame {
       zEndSpinner_.setValue(settings.zEnd_);
       distanceBelowFixedSurfaceSpinner_.setValue(settings.distanceBelowFixedSurface_);
       distanceAboveFixedSurfaceSpinner_.setValue(settings.distanceAboveFixedSurface_);
-      acqOverlapPercentSpinner_.setValue(settings.tileOverlap_);
       umAboveTopSurfaceSpinner_.setValue(settings.distanceAboveTopSurface_);
       umBelowBottomSurfaceSpinner_.setValue(settings.distanceBelowBottomSurface_);
       //select surfaces/regions
@@ -465,9 +457,10 @@ public class GUI extends javax.swing.JFrame {
       xyFootprintComboBox_.setSelectedItem(settings.xyFootprint_);
 
       //channels
-      ChannelGroupCombo_.setSelectedItem(settings.channelGroup_);
+      ChannelGroupCombo_.setSelectedItem(settings.getChannelGroup());
       //make sure the table has a reference to the current channels
-      ((SimpleChannelTableModel) channelsTable_.getModel()).setChannels(settings.channels_);
+      ((SimpleChannelTableModel) channelsTable_.getModel()).setChannels(
+              (ChannelGroupSettings) settings.channels_);
       ((SimpleChannelTableModel) channelsTable_.getModel()).fireTableDataChanged();
 
       enableAndChangeFonts();
@@ -518,7 +511,7 @@ public class GUI extends javax.swing.JFrame {
       repaint();
       acquisitionRunning_ = !enable;
    }
-   
+
    public String getSavingDir() {
       if (globalSavingDirTextField_ == null) {
          return null;
@@ -562,9 +555,6 @@ public class GUI extends javax.swing.JFrame {
       exploreZStepSpinner_ = new javax.swing.JSpinner();
       channelGroupLabel_ = new javax.swing.JLabel();
       exploreChannelGroupCombo_ = new javax.swing.JComboBox();
-      exploreOverlapLabel_ = new javax.swing.JLabel();
-      exploreTileOverlapSpinner_ = new javax.swing.JSpinner();
-      explorePercentLabel_ = new javax.swing.JLabel();
       exploreSavingNameLabel_ = new javax.swing.JLabel();
       exploreSavingNameTextField_ = new javax.swing.JTextField();
       newExploreWindowButton_ = new javax.swing.JButton();
@@ -627,9 +617,6 @@ public class GUI extends javax.swing.JFrame {
       withinDistanceFromSurfacesButton_ = new javax.swing.JRadioButton();
       volumeBetweenSurfacesButton_ = new javax.swing.JRadioButton();
       cuboidVolumeButton_ = new javax.swing.JRadioButton();
-      tileOverlapPercentLabel_ = new javax.swing.JLabel();
-      acqOverlapPercentSpinner_ = new javax.swing.JSpinner();
-      acqTileOverlapLabel_ = new javax.swing.JLabel();
       footprin2DLabel_ = new javax.swing.JLabel();
       xyFootprintComboBox_ = new javax.swing.JComboBox();
       ChannelsTab_ = new javax.swing.JPanel();
@@ -669,6 +656,9 @@ public class GUI extends javax.swing.JFrame {
       exploreBrowseButton_ = new javax.swing.JButton();
       exploreSavingDirLabel_ = new javax.swing.JLabel();
       globalSavingDirTextField_ = new javax.swing.JTextField();
+      overlapLabel_ = new javax.swing.JLabel();
+      tileOverlapSpinner_ = new javax.swing.JSpinner();
+      percentLabel_ = new javax.swing.JLabel();
 
       setBounds(new java.awt.Rectangle(0, 23, 740, 654));
       setMinimumSize(new java.awt.Dimension(730, 650));
@@ -697,15 +687,6 @@ public class GUI extends javax.swing.JFrame {
 
       exploreChannelGroupCombo_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
       exploreChannelGroupCombo_.setModel(new ChannelComboBoxModel());
-
-      exploreOverlapLabel_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-      exploreOverlapLabel_.setText("XY tile overlap:");
-
-      exploreTileOverlapSpinner_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-      exploreTileOverlapSpinner_.setModel(new javax.swing.SpinnerNumberModel(0.0d, 0.0d, 99.0d, 1.0d));
-
-      explorePercentLabel_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-      explorePercentLabel_.setText("%");
 
       exploreSavingNameLabel_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
       exploreSavingNameLabel_.setText("Saving name: ");
@@ -813,13 +794,7 @@ public class GUI extends javax.swing.JFrame {
                         .addComponent(exploreZStepLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(exploreZStepSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 77, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(exploreOverlapLabel_)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(exploreTileOverlapSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(explorePercentLabel_)
-                        .addGap(102, 102, 102)
+                        .addGap(291, 291, 291)
                         .addComponent(newExploreWindowButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 103, javax.swing.GroupLayout.PREFERRED_SIZE))
                      .addGroup(explorePanelLayout.createSequentialGroup()
                         .addGap(8, 8, 8)
@@ -843,10 +818,7 @@ public class GUI extends javax.swing.JFrame {
                   .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                   .addGroup(explorePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                      .addComponent(exploreZStepSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(exploreZStepLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(exploreOverlapLabel_)
-                     .addComponent(exploreTileOverlapSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(explorePercentLabel_))
+                     .addComponent(exploreZStepLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                   .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                   .addGroup(explorePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                      .addComponent(channelGroupLabel_)
@@ -1352,20 +1324,6 @@ public class GUI extends javax.swing.JFrame {
 
       controls2DOr3D_.add(panel3DControlsSpecific_, "3D");
 
-      tileOverlapPercentLabel_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-      tileOverlapPercentLabel_.setText("%");
-
-      acqOverlapPercentSpinner_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-      acqOverlapPercentSpinner_.setModel(new javax.swing.SpinnerNumberModel(5.0d, 0.0d, 99.0d, 1.0d));
-      acqOverlapPercentSpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
-         public void stateChanged(javax.swing.event.ChangeEvent evt) {
-            acqOverlapPercentSpinner_StateChanged(evt);
-         }
-      });
-
-      acqTileOverlapLabel_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-      acqTileOverlapLabel_.setText("XY tile overlap:");
-
       footprin2DLabel_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
       footprin2DLabel_.setText("XY stage positions from:");
 
@@ -1390,13 +1348,7 @@ public class GUI extends javax.swing.JFrame {
                   .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                   .addComponent(footprin2DLabel_)
                   .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(xyFootprintComboBox_, javax.swing.GroupLayout.PREFERRED_SIZE, 221, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(acqTileOverlapLabel_)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(acqOverlapPercentSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(tileOverlapPercentLabel_))
+                  .addComponent(xyFootprintComboBox_, javax.swing.GroupLayout.PREFERRED_SIZE, 333, javax.swing.GroupLayout.PREFERRED_SIZE))
                .addGroup(spaceTab_Layout.createSequentialGroup()
                   .addContainerGap()
                   .addComponent(controls2DOr3D_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
@@ -1408,9 +1360,6 @@ public class GUI extends javax.swing.JFrame {
             .addGroup(spaceTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                .addComponent(button3D_)
                .addComponent(button2D_)
-               .addComponent(acqTileOverlapLabel_)
-               .addComponent(acqOverlapPercentSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-               .addComponent(tileOverlapPercentLabel_)
                .addComponent(footprin2DLabel_)
                .addComponent(xyFootprintComboBox_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1822,6 +1771,20 @@ public class GUI extends javax.swing.JFrame {
       globalSavingDirTextField_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
       globalSavingDirTextField_.setText("jTextField1");
 
+      overlapLabel_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+      overlapLabel_.setText("XY tile overlap:");
+
+      tileOverlapSpinner_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+      tileOverlapSpinner_.setModel(new javax.swing.SpinnerNumberModel(0.0d, 0.0d, 99.0d, 1.0d));
+      tileOverlapSpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
+         public void stateChanged(javax.swing.event.ChangeEvent evt) {
+            tileOverlapSpinner_StateChanged(evt);
+         }
+      });
+
+      percentLabel_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+      percentLabel_.setText("%");
+
       javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
       jPanel1.setLayout(jPanel1Layout);
       jPanel1Layout.setHorizontalGroup(
@@ -1834,10 +1797,16 @@ public class GUI extends javax.swing.JFrame {
                   .addComponent(globalSavingDirTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, 578, javax.swing.GroupLayout.PREFERRED_SIZE))
                .addGroup(jPanel1Layout.createSequentialGroup()
                   .addContainerGap()
-                  .addComponent(openDatasetButton_)
-                  .addGap(127, 127, 127)
+                  .addComponent(overlapLabel_)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                  .addComponent(tileOverlapSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                  .addComponent(percentLabel_)
+                  .addGap(56, 56, 56)
                   .addComponent(freeDiskSpaceLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, 197, javax.swing.GroupLayout.PREFERRED_SIZE)
                   .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                  .addComponent(openDatasetButton_)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                   .addComponent(exploreBrowseButton_)))
             .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
       );
@@ -1852,7 +1821,10 @@ public class GUI extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                .addComponent(openDatasetButton_)
                .addComponent(exploreBrowseButton_)
-               .addComponent(freeDiskSpaceLabel_))
+               .addComponent(freeDiskSpaceLabel_)
+               .addComponent(overlapLabel_)
+               .addComponent(tileOverlapSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+               .addComponent(percentLabel_))
             .addContainerGap())
       );
 
@@ -1893,14 +1865,18 @@ public class GUI extends javax.swing.JFrame {
    }//GEN-LAST:event_runAcqButton_ActionPerformed
 
    private void newExploreWindowButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newExploreWindowButton_ActionPerformed
-      if (!MagellanAffineUtils.isAffineTransformDefined()) {
+      if (!AffineTransformUtils.isAffineTransformDefined()) {
          ReportingUtils.showError("XY Stage and Camera are not calibrated to each other."
                  + " \nOpen \"Devices--Pixel size calibration\" and set up Affine transform");
          throw new RuntimeException();
       }
-      ExploreAcqSettings settings = new ExploreAcqSettings(
-              ((Number) exploreZStepSpinner_.getValue()).doubleValue(), (Double) exploreTileOverlapSpinner_.getValue(),
-              globalSavingDirTextField_.getText(), exploreSavingNameTextField_.getText(), (String) exploreChannelGroupCombo_.getSelectedItem());
+      double zStep = ((Number) exploreZStepSpinner_.getValue()).doubleValue();
+      double overlap = (Double) tileOverlapSpinner_.getValue();
+      String dir = globalSavingDirTextField_.getText();
+      String name = exploreSavingNameTextField_.getText();
+      String cGroup = (String) exploreChannelGroupCombo_.getSelectedItem();
+
+      ExploreAcqSettings settings = new ExploreAcqSettings(dir, name, cGroup, zStep, overlap);
       //check for abort of existing explore acquisition
       //abort existing explore acq if needed
       if (exploreAcq_ != null && !exploreAcq_.isFinished()) {
@@ -1911,7 +1887,7 @@ public class GUI extends javax.swing.JFrame {
             return;
          }
       }
-      exploreAcq_ = new ExploreAcquisition(settings);
+      exploreAcq_ = new ExploreAcquisition(settings, new MagellanDataManager(settings.dir_, settings.name_, true));
       exploreAcq_.start();
    }//GEN-LAST:event_newExploreWindowButton_ActionPerformed
 
@@ -1990,7 +1966,8 @@ public class GUI extends javax.swing.JFrame {
 
    private void ChannelGroupCombo_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ChannelGroupCombo_ActionPerformed
       //update the current channels object displayed in the GUI
-      multiAcqManager_.getAcquisitionSettings(multiAcqSelectedIndex_).channelGroup_ = (String) ChannelGroupCombo_.getSelectedItem();
+      multiAcqManager_.getAcquisitionSettings(multiAcqSelectedIndex_).setChannelGroup(
+              (String) ChannelGroupCombo_.getSelectedItem());
       multiAcqManager_.getAcquisitionSettings(multiAcqSelectedIndex_).channels_.updateChannelGroup((String) ChannelGroupCombo_.getSelectedItem());
       acquisitionSettingsChanged();
    }//GEN-LAST:event_ChannelGroupCombo_ActionPerformed
@@ -1998,12 +1975,6 @@ public class GUI extends javax.swing.JFrame {
    private void acqOrderCombo_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_acqOrderCombo_ActionPerformed
       acquisitionSettingsChanged();
    }//GEN-LAST:event_acqOrderCombo_ActionPerformed
-
-   private void acqOverlapPercentSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_acqOverlapPercentSpinner_StateChanged
-      acquisitionSettingsChanged();
-      //update any grids/surface shown
-      manager_.updateAll();
-   }//GEN-LAST:event_acqOverlapPercentSpinner_StateChanged
 
    private void zStepSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_zStepSpinner_StateChanged
       acquisitionSettingsChanged();
@@ -2147,13 +2118,13 @@ public class GUI extends javax.swing.JFrame {
    }//GEN-LAST:event_exploreAcqTabbedPane_StateChanged
 
    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-      multiAcqManager_.getAcquisition(multiAcqSelectedIndex_).getChannels().setUseOnAll(
-              !multiAcqManager_.getAcquisition(multiAcqSelectedIndex_).getChannels().getChannelListSetting(0).use_);
+      multiAcqManager_.getAcquisitionSettings(multiAcqSelectedIndex_).channels_.setUseOnAll(
+              !multiAcqManager_.getAcquisitionSettings(multiAcqSelectedIndex_).channels_.getChannelListSetting(0).use_);
       ((SimpleChannelTableModel) channelsTable_.getModel()).fireTableDataChanged();
    }//GEN-LAST:event_jButton1ActionPerformed
 
    private void syncExposuresButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_syncExposuresButton_ActionPerformed
-      multiAcqManager_.getAcquisition(multiAcqSelectedIndex_).getChannels().synchronizeExposures();
+      multiAcqManager_.getAcquisitionSettings(multiAcqSelectedIndex_).channels_.synchronizeExposures();
       ((SimpleChannelTableModel) channelsTable_.getModel()).fireTableDataChanged();
    }//GEN-LAST:event_syncExposuresButton_ActionPerformed
 
@@ -2171,18 +2142,22 @@ public class GUI extends javax.swing.JFrame {
    }//GEN-LAST:event_jButton3ActionPerformed
 
    private void addAcqButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addAcqButton_ActionPerformed
-        multiAcqManager_.addNew();
+      multiAcqManager_.addNew();
       acquisitionSettingsChanged();
    }//GEN-LAST:event_addAcqButton_ActionPerformed
 
    private void removeAcqButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeAcqButton_ActionPerformed
-           multiAcqManager_.remove(multipleAcqTable_.getSelectedRow());
+      multiAcqManager_.remove(multipleAcqTable_.getSelectedRow());
       if (multiAcqSelectedIndex_ == multiAcqManager_.getNumberOfAcquisitions()) {
          multiAcqSelectedIndex_--;
          multipleAcqTable_.getSelectionModel().setSelectionInterval(multiAcqSelectedIndex_, multiAcqSelectedIndex_);
       }
       acquisitionSettingsChanged();
    }//GEN-LAST:event_removeAcqButton_ActionPerformed
+
+   private void tileOverlapSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tileOverlapSpinner_StateChanged
+      SurfaceGridManager.getInstance().updateAll();
+   }//GEN-LAST:event_tileOverlapSpinner_StateChanged
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JComboBox ChannelGroupCombo_;
@@ -2191,10 +2166,8 @@ public class GUI extends javax.swing.JFrame {
    private javax.swing.JPanel acq3DSubtypePanel_;
    private javax.swing.JComboBox acqOrderCombo_;
    private javax.swing.JLabel acqOrderLabel_;
-   private javax.swing.JSpinner acqOverlapPercentSpinner_;
    private javax.swing.JPanel acqPanel;
    private javax.swing.JTabbedPane acqTabbedPane_;
-   private javax.swing.JLabel acqTileOverlapLabel_;
    private javax.swing.JButton addAcqButton_;
    private javax.swing.JPanel bottomPanel_;
    private javax.swing.JComboBox bottomSurfaceCombo_;
@@ -2220,13 +2193,10 @@ public class GUI extends javax.swing.JFrame {
    private javax.swing.JTabbedPane exploreAcqTabbedPane_;
    private javax.swing.JButton exploreBrowseButton_;
    private javax.swing.JComboBox exploreChannelGroupCombo_;
-   private javax.swing.JLabel exploreOverlapLabel_;
    private javax.swing.JPanel explorePanel;
-   private javax.swing.JLabel explorePercentLabel_;
    private javax.swing.JLabel exploreSavingDirLabel_;
    private javax.swing.JLabel exploreSavingNameLabel_;
    private javax.swing.JTextField exploreSavingNameTextField_;
-   private javax.swing.JSpinner exploreTileOverlapSpinner_;
    private javax.swing.JLabel exploreZStepLabel_;
    private javax.swing.JSpinner exploreZStepSpinner_;
    private javax.swing.JComboBox fixedDistanceSurfaceComboBox_;
@@ -2258,9 +2228,11 @@ public class GUI extends javax.swing.JFrame {
    private javax.swing.JLabel numTimePointsLabel_;
    private javax.swing.JSpinner numTimePointsSpinner_;
    private javax.swing.JButton openDatasetButton_;
+   private javax.swing.JLabel overlapLabel_;
    private javax.swing.JPanel panel2D_;
    private javax.swing.JPanel panel2dControlsSpecific_;
    private javax.swing.JPanel panel3DControlsSpecific_;
+   private javax.swing.JLabel percentLabel_;
    private javax.swing.JButton removeAcqButton_;
    private javax.swing.JPanel root_panel_;
    private javax.swing.JButton runAcqButton_;
@@ -2273,7 +2245,7 @@ public class GUI extends javax.swing.JFrame {
    private javax.swing.JLabel surfacesAndGrdisLabel_;
    private javax.swing.JTable surfacesAndGridsTable_;
    private javax.swing.JButton syncExposuresButton_;
-   private javax.swing.JLabel tileOverlapPercentLabel_;
+   private javax.swing.JSpinner tileOverlapSpinner_;
    private javax.swing.JLabel timeIntervalLabel_;
    private javax.swing.JSpinner timeIntervalSpinner_;
    private javax.swing.JComboBox timeIntevalUnitCombo_;

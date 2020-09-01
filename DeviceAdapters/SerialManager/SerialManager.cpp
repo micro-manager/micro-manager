@@ -50,7 +50,7 @@
 
 SerialManager g_serialManager;
 
-std::vector<std::string> g_BlackListedPorts;
+std::vector<std::string> g_BlockListedPorts;
 std::vector<std::string> g_PortList;
 time_t g_PortListLastUpdated = 0;
 
@@ -230,16 +230,16 @@ void SerialPortLister::ListPorts(std::vector<std::string> &availablePorts)
          std::string::size_type loc = rresult.find("DialupNetwork", 0);
          if (result && (loc == std::string::npos))
          {
-             bool blackListed = false;
-             std::vector<std::string>::iterator it = g_BlackListedPorts.begin();
-             while (it < g_BlackListedPorts.end())
+             bool blockListed = false;
+             std::vector<std::string>::iterator it = g_BlockListedPorts.begin();
+             while (it < g_BlockListedPorts.end())
              {
                 if (bsdPath == (*it))
                 {
-                   blackListed = true;
+                   blockListed = true;
                 }
             }
-            if (portAccessible(bsdPath) && ! blackListed)
+            if (portAccessible(bsdPath) && ! blockListed)
             {
                availablePorts.push_back(bsdPath);
             }
@@ -447,15 +447,14 @@ SerialPort::SerialPort(const char* portName) :
    AddAllowedValue(MM::g_Keyword_Handshaking, g_Handshaking_Hardware, (long)boost::asio::serial_port_base::flow_control::hardware);
    AddAllowedValue(MM::g_Keyword_Handshaking, g_Handshaking_Software, (long)boost::asio::serial_port_base::flow_control::software);
 
-// on Windows only, DTR Enable:
-// Since this does not make a difference for Sam Lord and Diskovery, comment out for now
-// #ifdef WIN32
-//   CPropertyAction* pActDTREnable = new CPropertyAction(this, &SerialPort::OnDTR);
-//   ret = CreateProperty("DTR Control", "Enable", MM::String, false, pActDTREnable, true);
-//   assert (ret == DEVICE_OK);
-//   AddAllowedValue("DTR Control", "Enable");
-//   AddAllowedValue("DTR Control", "Disable");
-//#endif
+   // on Windows only, DTR Enable:
+ #ifdef WIN32
+   CPropertyAction* pActDTREnable = new CPropertyAction(this, &SerialPort::OnDTR);
+   ret = CreateProperty("DTR", "Enable", MM::String, false, pActDTREnable, true);
+   assert (ret == DEVICE_OK);
+   AddAllowedValue("DTR", "Enable");
+   AddAllowedValue("DTR", "Disable");
+#endif
 
 #ifdef WIN32
    CPropertyAction* pActFastUSB2Serial = new CPropertyAction(this, &SerialPort::OnFastUSB2Serial);
@@ -497,13 +496,13 @@ int SerialPort::Initialize()
    if (initialized_)
       return DEVICE_OK;
 
-   // do not initialize if this port has been blacklisted
-   std::vector<std::string>::iterator it = g_BlackListedPorts.begin();
-   while (it < g_BlackListedPorts.end())
+   // do not initialize if this port has been blocklisted
+   std::vector<std::string>::iterator it = g_BlockListedPorts.begin();
+   while (it < g_BlockListedPorts.end())
    {
       if (portName_ == (*it))
       {
-         return ERR_PORT_BLACKLISTED;
+         return ERR_PORT_BLOCKLISTED;
       }
       it++;
    }
@@ -550,6 +549,7 @@ int SerialPort::Initialize()
             boost::asio::serial_port::stop_bits::type(sb),
             dataBits_,
             this);
+      
 #else
       pPort_ = new AsioClient(*pService_,
             boost::lexical_cast<unsigned int>(baud),
@@ -624,12 +624,13 @@ int SerialPort::OpenWin32SerialPort(const std::string& portName,
    dcb.fDsrSensitivity = FALSE;
    dcb.fNull = FALSE;
    dcb.fAbortOnError = FALSE;
-   // Since this does not make a difference for Sam Lord and Diskovery, comment out for now
-   //if (dtrEnable_)
-   //   dcb.fDtrControl = DTR_CONTROL_ENABLE;
-   //else
-   //   dcb.fDtrControl = DTR_CONTROL_DISABLE;
-
+   if (dtrEnable_)
+   {
+      dcb.fDtrControl = DTR_CONTROL_ENABLE;
+   } else 
+   {
+      dcb.fDtrControl = DTR_CONTROL_DISABLE;
+   }
    // The following lines work around crashes caused by invalid or incorrect
    // values returned by some serial port drivers (some versions of Silicon
    // Labs USB-serial drivers).
@@ -701,7 +702,7 @@ int SerialPort::Shutdown()
       if (!pThread_->timed_join(boost::posix_time::millisec(1000) )) {
          LogMessage("Failed to cleanly close port (thread join timed out)");
          pThread_->detach();
-         g_BlackListedPorts.push_back(portName_);
+         g_BlockListedPorts.push_back(portName_);
       }
    }
    initialized_ = false;
@@ -1110,9 +1111,16 @@ int SerialPort::OnDTR(MM::PropertyBase* pProp, MM::ActionType eAct)
       std::string answer;
       pProp->Get(answer);
       if (answer == "Enable")
+      {
          dtrEnable_ = true;
-      else
+      }
+      else {
          dtrEnable_ = false;
+      }
+      if (initialized_) 
+      {
+         pPort_->ChangeDTR(dtrEnable_);   
+      }
    }
 
    return DEVICE_OK;

@@ -19,19 +19,15 @@ package org.micromanager.magellan.internal.surfacesandregions;
 import delaunay_triangulation.Delaunay_Triangulation;
 import delaunay_triangulation.Point_dt;
 import delaunay_triangulation.Triangle_dt;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
-import java.util.TreeMap;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.apache.commons.math3.geometry.euclidean.threed.Line;
 import org.apache.commons.math3.geometry.euclidean.threed.Plane;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.apache.commons.math3.geometry.partitioning.Region;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * Subclass that implements a particular interpolation method This one creates a
@@ -117,7 +113,7 @@ public class SurfaceInterpolatorSimple extends SurfaceInterpolator {
          synchronized (interpolationLock_) {
             currentInterpolation_ = new SingleResolutionInterpolation(pixelsPerInterpPoint, interpDefined, interpVals, interpNormals,
                     boundXMin_, boundXMax_, boundYMin_, boundYMax_,
-                    convexHullRegion_, convexHullVertices_, getPoints());
+                    convexHullRegion_, convexHullVertices_);
             interpolationLock_.notifyAll();
             manager_.SurfaceInterpolationUpdated(this);
          }

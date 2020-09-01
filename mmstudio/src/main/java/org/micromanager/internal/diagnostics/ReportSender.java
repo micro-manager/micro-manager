@@ -24,7 +24,7 @@ public final class ReportSender {
    private static java.net.URL problemReportUploadURL_;
    static {
       try {
-         problemReportUploadURL_ = new java.net.URL("http://valelab.ucsf.edu/~MM/upload_corelog.php");
+         problemReportUploadURL_ = new java.net.URL("https://valelab.ucsf.edu/~MM/upload_corelog.php");
       }
       catch (java.net.MalformedURLException impossible) {
          System.exit(1);

@@ -1,3 +1,7 @@
+import mmcorej.CMMCore;
+import mmcorej.StrVector;
+import mmcorej.Configuration;
+import mmcorej.PropertySetting;
 
 public class Tutorial4 {
    
