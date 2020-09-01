@@ -60,18 +60,20 @@ public:
 
 	// action interface
 	// ----------------
-	int OnPort          (MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnAxisX         (MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnAxisY         (MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnMotorStepsX   (MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnMotorStepsY   (MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnLinearMotionX (MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnLinearMotionY (MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnSpeedX        (MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnSpeedY        (MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnAccelX        (MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnAccelY        (MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnDeviceAddress (MM::PropertyBase* pProp, MM::ActionType eAct); // Single controller
+	int OnPort           (MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnAxisX          (MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnAxisY          (MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnLockstepGroupX (MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnLockstepGroupY (MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnMotorStepsX    (MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnMotorStepsY    (MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnLinearMotionX  (MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnLinearMotionY  (MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnSpeedX         (MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnSpeedY         (MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnAccelX         (MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnAccelY         (MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnDeviceAddress  (MM::PropertyBase* pProp, MM::ActionType eAct); // Single controller
 	int OnDeviceAddressY (MM::PropertyBase* pProp, MM::ActionType eAct); // Composite XY (two controllers)
 
 private:
@@ -95,6 +97,8 @@ private:
 	double convFactor_; // not very informative name
 	long axisX_;
 	long axisY_;
+	long lockstepGroupX_;
+	long lockstepGroupY_;
 	long resolutionX_;
 	long resolutionY_;
 	long motorStepsX_;

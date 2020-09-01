@@ -63,7 +63,8 @@ public:
 	// ----------------
 	int OnPort          (MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnDeviceAddress (MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnAxisNumber       (MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnAxisNumber    (MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnLockstepGroup (MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnMotorSteps    (MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnLinearMotion  (MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnSpeed         (MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -72,6 +73,7 @@ public:
 private:
 	long deviceAddress_;
 	long axisNumber_;
+	long lockstepGroup_;
 	int homingTimeoutMs_;
 	double stepSizeUm_;
 	double convFactor_; // not very informative name

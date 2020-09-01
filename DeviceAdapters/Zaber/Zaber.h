@@ -73,9 +73,9 @@ protected:
 	int SetSetting(long device, long axis, std::string setting, long data) const;
 	int SetSetting(long device, long axis, std::string setting, double data, int decimalPlaces) const;
 	bool IsBusy(long device) const;
-	int Stop(long device) const;
+	int Stop(long device, long lockstepGroup = 0) const;
 	int GetLimits(long device, long axis, long& min, long& max) const;
-	int SendMoveCommand(long device, long axis, std::string type, long data) const;
+	int SendMoveCommand(long device, long axis, std::string type, long data, bool lockstep = false) const;
 	int SendAndPollUntilIdle(long device, long axis, std::string command, int timeoutMs) const;
 	int GetRotaryIndexedDeviceInfo(long device, long axis, long& numIndices, long& currentIndex) const;
 
