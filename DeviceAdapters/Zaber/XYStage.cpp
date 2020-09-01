@@ -50,6 +50,8 @@ XYStage::XYStage() :
 	convFactor_(1.6384),
 	axisX_(2),
 	axisY_(1),
+	lockstepGroupX_(0),
+	lockstepGroupY_(0),
 	resolutionX_(64),
 	resolutionY_(64),
 	motorStepsX_(200),
@@ -90,6 +92,14 @@ XYStage::XYStage() :
 	pAct = new CPropertyAction(this, &XYStage::OnAxisY);
 	CreateIntegerProperty("Axis Number (Y Axis)", axisY_, false, pAct, true);
 	SetPropertyLimits("Axis Number (Y Axis)", 1, 9);
+
+	pAct = new CPropertyAction(this, &XYStage::OnLockstepGroupX);
+	CreateIntegerProperty("Lockstep Group (X Axis)", lockstepGroupX_, false, pAct, true);
+	SetPropertyLimits("Lockstep Group (X Axis)", 0, 3);
+
+	pAct = new CPropertyAction(this, &XYStage::OnLockstepGroupY);
+	CreateIntegerProperty("Lockstep Group (Y Axis)", lockstepGroupY_, false, pAct, true);
+	SetPropertyLimits("Lockstep Group (Y Axis)", 0, 3);
 
 	pAct = new CPropertyAction(this, &XYStage::OnMotorStepsX);
 	CreateIntegerProperty("Motor Steps Per Rev (X Axis)", motorStepsX_, false, pAct, true);
@@ -294,7 +304,8 @@ int XYStage::Move(double vx, double vy)
 int XYStage::Stop()
 {
 	this->LogMessage("XYStage::Stop\n", true);
-	int result1 = ZaberBase::Stop(deviceAddressX_);
+	int result1 = ZaberBase::Stop(deviceAddressX_, lockstepGroupX_);
+
 	if (IsSingleController())
 	{
 		return result1;
@@ -304,7 +315,8 @@ int XYStage::Stop()
 	// even if the first one produces an error. In the case where they both
 	// produce errors, the second error code is returned; otherwise whichever
 	// code is not DEVICE_OK.
-	int result2 = ZaberBase::Stop(deviceAddressY_);
+	int result2 = ZaberBase::Stop(deviceAddressY_, lockstepGroupY_);
+
 	if (DEVICE_OK != result2)
 	{
 		return result2;
@@ -329,10 +341,23 @@ int XYStage::Home()
 	rangeMeasured_ = false;
 
 	// calibrate stage
-	int ret = SendAndPollUntilIdle(deviceAddressX_, 0, "tools findrange", homingTimeoutMs_);
-	if (ret == ERR_COMMAND_REJECTED) // Some stages don't support the findrange command. Instead we have to home them before moving.
+	int ret = DEVICE_OK;
+	bool lockstepX = (lockstepGroupX_ > 0);
+	bool lockstepY = (lockstepGroupY_ > 0);
+
+	if (lockstepX)
 	{
-		ret = SendAndPollUntilIdle(deviceAddressX_, 0, "home", homingTimeoutMs_);
+		ostringstream cmd;
+		cmd << "lockstep " << lockstepGroupX_ << " home";
+		ret = SendAndPollUntilIdle(deviceAddressX_, 0, cmd.str().c_str(), homingTimeoutMs_);
+	}
+	else
+	{
+		ret = SendAndPollUntilIdle(deviceAddressX_, 0, "tools findrange", homingTimeoutMs_);
+		if (ret == ERR_COMMAND_REJECTED) // Some stages don't support the findrange command. Instead we have to home them before moving.
+		{
+			ret = SendAndPollUntilIdle(deviceAddressX_, 0, "home", homingTimeoutMs_);
+		}
 	}
 
 	if (ret != DEVICE_OK)
@@ -342,15 +367,24 @@ int XYStage::Home()
 
 	if (!IsSingleController())
 	{
-		ret = SendAndPollUntilIdle(deviceAddressY_, 0, "tools findrange", homingTimeoutMs_);
-		if (ret == ERR_COMMAND_REJECTED) // Some stages don't support the findrange command. Instead we have to home them before moving.
+		if (lockstepY)
 		{
-			ret = SendAndPollUntilIdle(deviceAddressY_, 0, "home", homingTimeoutMs_);
+			ostringstream cmd;
+			cmd << "lockstep " << lockstepGroupY_ << " home";
+			ret = SendAndPollUntilIdle(deviceAddressY_, 0, cmd.str().c_str(), homingTimeoutMs_);
 		}
-
-		if (ret != DEVICE_OK)
+		else
 		{
-			return ret;
+			ret = SendAndPollUntilIdle(deviceAddressY_, 0, "tools findrange", homingTimeoutMs_);
+			if (ret == ERR_COMMAND_REJECTED) // Some stages don't support the findrange command. Instead we have to home them before moving.
+			{
+				ret = SendAndPollUntilIdle(deviceAddressY_, 0, "home", homingTimeoutMs_);
+			}
+
+			if (ret != DEVICE_OK)
+			{
+				return ret;
+			}
 		}
 	}
 
@@ -360,15 +394,31 @@ int XYStage::Home()
 	bool mirrorX, mirrorY;
 	GetOrientation(mirrorX, mirrorY);
 
-	string cmdX = (mirrorX ? "move max" : "move min");
-	ret = SendAndPollUntilIdle(deviceAddressX_, axisX_, cmdX, homingTimeoutMs_);
+	ostringstream cmdX;
+	long xAxis = axisX_;
+	if (lockstepX)
+	{
+		cmdX << "lockstep " << lockstepGroupX_ << " ";
+		xAxis = 0;
+	}
+
+	cmdX << (mirrorX ? "move max" : "move min");
+	ret = SendAndPollUntilIdle(deviceAddressX_, xAxis, cmdX.str().c_str(), homingTimeoutMs_);
 	if (ret != DEVICE_OK) 
 	{
 		return ret;
 	}
 
-	string cmdY = (mirrorY ? "move max" : "move min");
-	ret = SendAndPollUntilIdle(deviceAddressY_, axisY_, cmdY, homingTimeoutMs_);
+	ostringstream cmdY;
+	long yAxis = axisY_;
+	if (lockstepY)
+	{
+		cmdY << "lockstep " << lockstepGroupY_ << " ";
+		yAxis = 0;
+	}
+	
+	cmdY << (mirrorY ? "move max" : "move min");
+	ret = SendAndPollUntilIdle(deviceAddressY_, yAxis, cmdY.str().c_str(), homingTimeoutMs_);
 	if (ret != DEVICE_OK) 
 	{
 		return ret;
@@ -439,14 +489,18 @@ int XYStage::GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax)
 int XYStage::SendXYMoveCommand(string type, long x, long y) const
 {
 	this->LogMessage("XYStage::SendXYMoveCommand\n", true);
+	bool lockstepX = (lockstepGroupX_ > 0);
+	long xAxis = lockstepX ? lockstepGroupX_ : axisX_;
 
-	int ret = SendMoveCommand(deviceAddressX_, axisX_, type, x);
+	int ret = SendMoveCommand(deviceAddressX_, xAxis, type, x, lockstepX);
 	if (ret != DEVICE_OK) 
 	{
 		return ret;
 	}
 
-	return SendMoveCommand(deviceAddressY_, axisY_, type, y);
+	bool lockstepY = (lockstepGroupY_ > 0);
+	long yAxis = lockstepY ? lockstepGroupY_ : axisY_;
+	return SendMoveCommand(deviceAddressY_, yAxis, type, y, lockstepY);
 }
 
 
@@ -635,6 +689,40 @@ int XYStage::OnAxisY(MM::PropertyBase* pProp, MM::ActionType eAct)
 	else if (eAct == MM::AfterSet)
 	{
 		pProp->Get(axisY_);
+	}
+
+	return DEVICE_OK;
+}
+
+
+int XYStage::OnLockstepGroupX(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	this->LogMessage("XYStage::OnLockstepGroupX\n", true);
+
+	if (eAct == MM::BeforeGet)
+	{
+		pProp->Set(lockstepGroupX_);
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		pProp->Get(lockstepGroupX_);
+	}
+
+	return DEVICE_OK;
+}
+
+
+int XYStage::OnLockstepGroupY(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	this->LogMessage("XYStage::OnLockstepGroupY\n", true);
+
+	if (eAct == MM::BeforeGet)
+	{
+		pProp->Set(lockstepGroupY_);
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		pProp->Get(lockstepGroupY_);
 	}
 
 	return DEVICE_OK;
