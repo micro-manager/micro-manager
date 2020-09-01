@@ -3,10 +3,12 @@ AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS)
 deviceadapter_LTLIBRARIES = libmmgr_dal_ASITiger.la
 libmmgr_dal_ASITiger_la_SOURCES = \
 	ASIBase.h \
-	ASICRISP.cpp \
-	ASICRISP.h \
 	ASIClocked.cpp \
 	ASIClocked.h \
+	ASICRISP.cpp \
+	ASICRISP.h \
+	ASIDac.cpp \
+	ASIDac.h \
 	ASIFWheel.cpp \
 	ASIFWheel.h \
 	ASIHub.cpp \
@@ -15,11 +17,11 @@ libmmgr_dal_ASITiger_la_SOURCES = \
 	ASILED.h \
 	ASILens.cpp \
 	ASILens.h \
-	ASIPLogic.cpp \
-	ASIPLogic.h \
 	ASIPeripheralBase.h \
 	ASIPiezo.cpp \
 	ASIPiezo.h \
+	ASIPLogic.cpp \
+	ASIPLogic.h \
 	ASIPmt.cpp \
 	ASIPmt.h \
 	ASIScanner.cpp \
