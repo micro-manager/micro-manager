@@ -154,7 +154,7 @@ int MicroZStage::Initialize()
 	CPropertyAction* pAct = nullptr;
 	if (!isJog_) {
 		pAct = new CPropertyAction(this, &MicroZStage::OnSetStepSize);
-		ret = CreateFloatProperty("Step Size(um)", 0.1, false, pAct);
+		ret = CreateFloatProperty("Step Size(um)", 0.01, false, pAct);
 		if (DEVICE_OK != ret)
 			return ret;
 
