@@ -319,12 +319,20 @@ bool ZaberBase::IsBusy(long device) const
 }
 
 
-int ZaberBase::Stop(long device) const
+int ZaberBase::Stop(long device, long lockstepGroup) const
 {
 	core_->LogMessage(device_, "ZaberBase::Stop\n", true);
 
 	ostringstream cmd;
-	cmd << cmdPrefix_ << device << " stop";
+	if (lockstepGroup > 0)
+	{
+		cmd << cmdPrefix_ << device << " lockstep " << lockstepGroup << " stop";
+	}
+	else
+	{
+		cmd << cmdPrefix_ << device << " stop";
+	}
+
 	vector<string> resp;
 	return QueryCommand(cmd.str().c_str(), resp);
 }
@@ -344,12 +352,20 @@ int ZaberBase::GetLimits(long device, long axis, long& min, long& max) const
 }
 
 
-int ZaberBase::SendMoveCommand(long device, long axis, std::string type, long data) const
+int ZaberBase::SendMoveCommand(long device, long axis, std::string type, long data, bool lockstep) const
 {
 	core_->LogMessage(device_, "ZaberBase::SendMoveCommand\n", true);
 
 	ostringstream cmd;
-	cmd << cmdPrefix_ << device << " " << axis << " move " << type << " " << data;
+	if (lockstep)
+	{
+		cmd << cmdPrefix_ << device << " lockstep " << axis << " move " << type << " " << data;
+	}
+	else
+	{
+		cmd << cmdPrefix_ << device << " " << axis << " move " << type << " " << data;
+	}
+
 	vector<string> resp;
 	return QueryCommand(cmd.str().c_str(), resp);
 }
