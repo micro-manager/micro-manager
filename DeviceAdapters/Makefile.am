@@ -175,7 +175,6 @@ SUBDIRS = \
 	SutterLambdaParallelArduino \
 	SutterStage \
 	Thorlabs \
-	ThorlabsDCxxxx \
 	ThorlabsElliptecSlider \
 	ThorlabsFilterWheel \
 	ThorlabsSC10 \
