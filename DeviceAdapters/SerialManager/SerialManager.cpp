@@ -782,6 +782,7 @@ int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
       {
          if (bufLen <= answerOffset)
          {
+            pPort_->Purge();
             answer[answerOffset] = '\0';
             LogMessage("BUFFER_OVERRUN error occured!");
             return ERR_BUFFER_OVERRUN;
