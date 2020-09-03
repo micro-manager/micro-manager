@@ -824,8 +824,8 @@
       getMultiROI(xs, ys, widths, heights);
       ArrayList<Rectangle> result = new ArrayList<Rectangle>();
       for (int i = 0; i < xs.size(); ++i) {
-         Rectangle r = new Rectangle((int) xs.get(i), (int) ys.get(i),
-               (int) widths.get(i), (int) heights.get(i));
+         Rectangle r = new Rectangle(xs.get(i).intValue(), ys.get(i).intValue(),
+               widths.get(i).intValue(), heights.get(i).intValue());
          result.add(r);
       }
       return result;
@@ -841,10 +841,10 @@
       UnsignedVector widths = new UnsignedVector();
       UnsignedVector heights = new UnsignedVector();
       for (Rectangle r : rects) {
-         xs.add(r.x);
-         ys.add(r.y);
-         widths.add(r.width);
-         heights.add(r.height);
+         xs.add(Long.valueOf(r.x));
+         ys.add(Long.valueOf(r.y));
+         widths.add(Long.valueOf(r.width));
+         heights.add(Long.valueOf(r.height));
       }
       setMultiROI(xs, ys, widths, heights);
    }
