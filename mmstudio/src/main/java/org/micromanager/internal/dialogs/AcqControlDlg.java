@@ -1077,7 +1077,6 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    }
 
    private void updateGUIFromSequenceSettings(final SequenceSettings sequenceSettings) {
-      SwingUtilities.invokeLater(() -> {
          if (disableGUItoSettings_) {
             return;
          }
@@ -1188,8 +1187,6 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          savePanel_.repaint();
 
          disableGUItoSettings_ = false;
-
-      });
    }
 
    public synchronized void saveAcqSettingsToProfile() {
