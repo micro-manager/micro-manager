@@ -30,7 +30,12 @@
 #include <string>
 #include <map>
 #include <algorithm>
+#ifdef win32
 #include <cstdint>
+#else
+#include <stdint.h>
+#endif
+
 using namespace std;
 
 //////////////////////////////////////////////////////////////////////////////
