@@ -482,6 +482,13 @@ public final class SnapLiveManager extends DataViewerListener
          ds = DefaultDisplaySettings.builder().colorMode(
                  DisplaySettings.ColorMode.GRAYSCALE).build();
       }
+      // NS 202-09-07: channeldisplaysettings remembered in SNAP/Live displaysetting
+      // are replaced by channel specific display settings.  It is a bit unclear
+      // how this is supposed to work, but at the very least, these settings should
+      // also be saved when closing the Snap/Live display.
+      // For now, it seems simpler to not do this, revisit when this code is
+      // thoroughly examined
+      /*
       for (int ch = 0; ch < store_.getSummaryMetadata().getChannelNameList().size(); ch++) {
          ds = ds.copyBuilderWithChannelSettings(ch, 
                  RememberedSettings.loadChannel(mmStudio_, 
@@ -490,6 +497,7 @@ public final class SnapLiveManager extends DataViewerListener
                          null)).
                  build();
       }
+       */
       display_.setDisplaySettings(ds);
       mmStudio_.displays().addViewer(display_);
 
