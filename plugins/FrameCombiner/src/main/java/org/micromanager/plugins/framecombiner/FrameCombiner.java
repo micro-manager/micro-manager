@@ -73,7 +73,7 @@ public class FrameCombiner extends Processor {
          return;
       }
       // when running MDA without z stack and user want FrameCombiner to combin z frames => do nothing
-      if (studio_.getAcquisitionManager().getAcquisitionSettings().slices.size() == 0
+      if (studio_.getAcquisitionManager().getAcquisitionSettings().slices().size() == 0
               && processorDimension_.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_Z)) {
          context.outputImage(image);
          return;

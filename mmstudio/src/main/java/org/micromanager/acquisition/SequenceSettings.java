@@ -77,13 +77,15 @@ public class SequenceSettings {
       public Builder intervalMs(double d) { intervalMs = d; return this;}
       public Builder displayTimeUnit(int d) { displayTimeUnit = d; return this; }
       public Builder useCustomIntervals (boolean use) {
-         useCustomIntervals = use; return this; }
+         useCustomIntervals = use; return this;
+      }
       public Builder customIntervalsMs(ArrayList<Double> c) {
-         customIntervalsMs = c; return this; }
+         customIntervalsMs = c; return this;
+      }
       public Builder channels(ArrayList<ChannelSpec> c) {
          // avoid inserting null channels
          channels = new ArrayList<>();
-         if (c!= null) {
+         if (c != null) {
             for (ChannelSpec cs : c) {
                if (cs != null) {
                   channels.add(cs);

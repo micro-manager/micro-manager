@@ -255,10 +255,10 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
             try {
                 statusText.setText("Acquiring region " + String.valueOf(i));
                 //turn on position list, turn off time lapse
-                SequenceSettings currSettings = gui_.acquisitions().getAcquisitionSettings();
-                currSettings.usePositionList = true;
-                currSettings.numFrames = 1;
-                gui_.acquisitions().setAcquisitionSettings(currSettings);
+                SequenceSettings.Builder currSettingsB = gui_.acquisitions().getAcquisitionSettings().copyBuilder();
+                currSettingsB.usePositionList(true);
+                currSettingsB.numFrames(1);
+                gui_.acquisitions().setAcquisitionSettings(currSettingsB.build());
                 // TODO: ensure saving chooses the correct format. This logic
                 // became lost in the MM2.0 refactoring.
 //                gui_.compat().setImageSavingFormat(org.micromanager.acquisition.internal.TaggedImageStorageMultipageTiff.class);
