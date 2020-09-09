@@ -2,6 +2,7 @@ package org.micromanager.internal.dialogs;
 
 import org.micromanager.Studio;
 import org.micromanager.acquisition.ChannelSpec;
+import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.display.internal.RememberedSettings;
 import org.micromanager.events.internal.ChannelColorEvent;
@@ -124,7 +125,7 @@ public final class ChannelTableModel extends AbstractTableModel  {
       } else if (col == 1) {
          cb.config (value.toString());
          ChannelSpec cs = ChannelSpec.fromJSONStream(
-                 settings_.getString(channelProfileKey(acqEng_.getSequenceSettings().channelGroup,
+                 settings_.getString(channelProfileKey(acqEng_.getSequenceSettings().channelGroup(),
                          value.toString()), ""));
          if (cs == null) {
             // Our fallback color is the colorblind-friendly color for our
@@ -142,10 +143,10 @@ public final class ChannelTableModel extends AbstractTableModel  {
       } else if (col == 2) {
          cb.exposure (((Double) value));
          if (AcqControlDlg.getShouldSyncExposure()) {
-            studio_.app().setChannelExposureTime(acqEng_.getSequenceSettings().channelGroup,
+            studio_.app().setChannelExposureTime(acqEng_.getSequenceSettings().channelGroup(),
                     channel.config(), (Double) value);
          } else {
-            this.setChannelExposureTime(acqEng_.getSequenceSettings().channelGroup,
+            this.setChannelExposureTime(acqEng_.getSequenceSettings().channelGroup(),
                     channel.config(), (Double) value);
          }
       } else if (col == 3) {
@@ -309,9 +310,12 @@ public final class ChannelTableModel extends AbstractTableModel  {
          for (String newConfig : newConfigNames) {
             ChannelSpec cs = ChannelSpec.fromJSONStream(
                     settings_.getString(channelProfileKey(newChannelGroup, newConfig), ""));
-            channels_.add(cs);
+            if (cs != null) {
+               channels_.add(cs);
+            }
          }
-         acqEng_.getSequenceSettings().channels = channels_;
+         acqEng_.setSequenceSettings(acqEng_.getSequenceSettings().
+                 copyBuilder().channels(channels_).build());
          fireTableDataChanged();
       }
    }

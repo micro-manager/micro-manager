@@ -222,18 +222,17 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    private int getNumChannels() {
+      if (!sequenceSettings_.useChannels()) {
+         return 1;
+      }
+      if (sequenceSettings_.channels() == null || sequenceSettings_.channels().size() == 0) {
+         return 1;
+      }
       int numChannels = 0;
-      if (sequenceSettings_.useChannels()) {
-         if (sequenceSettings_.channels() == null) {
-            return 0;
+      for (ChannelSpec channel : sequenceSettings_.channels()) {
+         if (channel != null && channel.useChannel()) {
+            ++numChannels;
          }
-         for (ChannelSpec channel : sequenceSettings_.channels()) {
-            if (channel.useChannel()) {
-               ++numChannels;
-            }
-         }
-      } else {
-         numChannels = 1;
       }
       return numChannels;
    }
@@ -267,7 +266,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    private int getTotalImages() {
-      if (!sequenceSettings_.useChannels()) {
+      if (!sequenceSettings_.useChannels() || sequenceSettings_.channels().size() == 0) {
          return getNumFrames() * getNumSlices() * getNumChannels() * getNumPositions();
       }
 
@@ -307,7 +306,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
          camChannels.add(row,
                  channels.get(row).copyBuilder().camera(getSource(channels.get(row))).build());
       }
-      sequenceSettings_.channels = camChannels;
+      sequenceSettings_ = sequenceSettings_.copyBuilder().channels(camChannels).build();
    }
 
    /*
