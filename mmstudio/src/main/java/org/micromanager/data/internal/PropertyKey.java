@@ -168,8 +168,12 @@ public enum PropertyKey {
             dest.putInteger(key(), jp.getAsInt());
          }
          if (jp.isString()) { // "1x1", "2x2", ...
-            dest.putInteger(key(),
-                  Integer.parseInt(jp.getAsString().split("x", 2)[0]));
+            String token = jp.getAsString().split("x", 2)[0];
+            if (token.length() < 3) {
+               dest.putInteger(key(), Integer.parseInt(token));
+            } else {  // another crazy format for binning, no way to figure this out
+               dest.putInteger(key(), 1);
+            }
          }
       }
 
