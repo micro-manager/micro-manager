@@ -7,8 +7,10 @@
 //				  See http://www.trggerscope.com
 //                
 // AUTHOR:        Austin Blanco, 5 Oct 2014
+//                Nico Stuurman, Sept. 2020
 //
 // COPYRIGHT:     Advanced Research Consulting. (2014)
+//                Regents of the University of California (2020)
 //
 // LICENSE:       
 //
@@ -76,7 +78,6 @@ static const char* g_DACR5 = "-2 - 2V";
 
 class CTriggerScopeMMHub : public HubBase<CTriggerScopeMMHub>  
 {
-//class CTriggerScope : public CStateBase<CTriggerScope>
 
 public:
 	CTriggerScopeMMHub(void);
@@ -172,7 +173,7 @@ public:
    }
    int GetDASequenceMaxLength(long& nrEvents) const
    {
-      nrEvents = 50;  // TODO: can this number be queried from the controller?
+      nrEvents = nrEvents_;  // TODO: can this number be queried from the controller?
       return DEVICE_OK;
    }
    int StartDASequence();
@@ -182,14 +183,15 @@ public:
    int AddToDASequence(double voltage);
 
    int OnVolts(MM::PropertyBase* pProp, MM::ActionType eAct);
-   // int OnMaxVolt(MM::PropertyBase* pProp, MM::ActionType eAct);
-   // int OnMinVolt(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnVoltRange(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSequence(MM::PropertyBase* pProp, MM::ActionType eAct);   
    int OnSequenceTriggerDirection(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnBlanking(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnBlankingTriggerDirection(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
   int WriteSignal(double volts);
+  int SendBlankingCommand();
 
    CTriggerScopeMMHub *pHub_;
 
@@ -207,6 +209,9 @@ private:
 	double minV_;
 	double maxV_;
 	double gatedVolts_;
+   bool blanking_;
+   bool blankOnLow_;
+   int nrEvents_;
 	std::string name_;
 	std::vector<double> sequence_;
 
