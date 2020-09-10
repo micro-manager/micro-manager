@@ -227,7 +227,7 @@ public class SequenceSettings {
     * @deprecated use Builder and channels() instead
     */
    @Deprecated
-   private ArrayList<ChannelSpec> channels = new ArrayList<>();
+   public ArrayList<ChannelSpec> channels = new ArrayList<>();
    /**
     * slice Z coordinates
     * @deprecated use Builder and slices() instead
