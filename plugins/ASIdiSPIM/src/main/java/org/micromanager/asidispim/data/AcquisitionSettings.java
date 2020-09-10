@@ -126,9 +126,9 @@ public class AcquisitionSettings {
     * @return MM Sequence Settings
     */
    public SequenceSettings getSequenceSettings() {
-      SequenceSettings mmss = new SequenceSettings();
-      mmss.numFrames = this.numTimepoints;
-      mmss.channelGroup = this.channelGroup;
+      SequenceSettings.Builder mmssb = new SequenceSettings.Builder();
+      mmssb.numFrames(this.numTimepoints);
+      mmssb.channelGroup(this.channelGroup);
       //mmss.channels = new ArrayList<ChannelSpec>(Arrays.asList(this.channels));
 
       ArrayList<Double> slices = new ArrayList<Double>(this.numSlices);
@@ -136,11 +136,11 @@ public class AcquisitionSettings {
          // todo: add the start z position
          slices.add(this.stepSizeUm * (double) z);
       }      
-      mmss.slices = slices;     
+      mmssb.slices(slices);
       
-      mmss.usePositionList = this.useMultiPositions;
+      mmssb.usePositionList(this.useMultiPositions);
       
-      return mmss;
+      return mmssb.build();
    }
    
 }

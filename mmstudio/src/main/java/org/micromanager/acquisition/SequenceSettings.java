@@ -77,10 +77,22 @@ public class SequenceSettings {
       public Builder intervalMs(double d) { intervalMs = d; return this;}
       public Builder displayTimeUnit(int d) { displayTimeUnit = d; return this; }
       public Builder useCustomIntervals (boolean use) {
-         useCustomIntervals = use; return this; }
+         useCustomIntervals = use; return this;
+      }
       public Builder customIntervalsMs(ArrayList<Double> c) {
-         customIntervalsMs = c; return this; }
-      public Builder channels(ArrayList<ChannelSpec> c) {channels = c; return this;}
+         customIntervalsMs = c; return this;
+      }
+      public Builder channels(ArrayList<ChannelSpec> c) {
+         // avoid inserting null channels
+         channels = new ArrayList<>();
+         if (c != null) {
+            for (ChannelSpec cs : c) {
+               if (cs != null) {
+                  channels.add(cs);
+               }
+            }
+         } return this;
+      }
       public Builder slices (ArrayList<Double> s) { slices = s; return this;}
       public Builder relativeZSlice(boolean r) {relativeZSlice = r; return this;}
       public Builder slicesFirst(boolean s) {slicesFirst = s; return this;}
@@ -211,6 +223,7 @@ public class SequenceSettings {
    public ArrayList<Double> customIntervalsMs = null;
    /**
     * an array of ChannelSpec settings (one for each channel)
+    * no member of the array should ever by null
     * @deprecated use Builder and channels() instead
     */
    @Deprecated

@@ -622,10 +622,10 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       JSpinner.DefaultEditor editor = (JSpinner.DefaultEditor) afSkipInterval_.getEditor();
       editor.setFont(DEFAULT_FONT);
       editor.getTextField().setColumns(3);
-      afSkipInterval_.setValue(acqEng_.getSequenceSettings().skipAutofocusCount);
+      afSkipInterval_.setValue(acqEng_.getSequenceSettings().skipAutofocusCount());
       afSkipInterval_.addChangeListener((ChangeEvent e) -> {
          applySettingsFromGUI();
-         afSkipInterval_.setValue(acqEng_.getSequenceSettings().skipAutofocusCount);
+         afSkipInterval_.setValue(acqEng_.getSequenceSettings().skipAutofocusCount());
       });
       afPanel_.add(afSkipInterval_);
 
