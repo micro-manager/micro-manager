@@ -10,12 +10,9 @@
 //                Nico Stuurman, 3 Sept 2020                  
 //
 // COPYRIGHT:     Advanced Research Consulting. (2014-2015)
-//                Regents of the University of California
+//                Regents of the University of California (2020)
 //
-// LICENSE:       
-
-//
-//                This file is distributed in the hope that it will be useful,
+// LICENSE:       This file is distributed in the hope that it will be useful,
 //                but WITHOUT ANY WARRANTY; without even the implied warranty
 //                of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 //
@@ -46,16 +43,18 @@ CTriggerScopeMMDAC::CTriggerScopeMMDAC(int dacNr) :
    voltRangeS_(g_DACR1)
 {
    bTS16_ = false;
-	dacNr_ = dacNr;
-	initialized_ = false;
-	volts_ = 0.0;
-	minV_ = 0.0;
-	maxV_ = 10.0;
-	busy_ = false;
-	open_ = false;
+   dacNr_ = dacNr;
+   initialized_ = false;
+   volts_ = 0.0;
+   minV_ = 0.0;
+   maxV_ = 10.0;
+   busy_ = false;
+   open_ = false;
+   blanking_ = false;
+   blankOnLow_ = true;
 
-	gateOpen_ = true;
-	gatedVolts_ = 0.0;
+   gateOpen_ = true;
+   gatedVolts_ = 0.0;
 
    const char* vRange = "Voltage Range";
    CPropertyAction* pAct = new CPropertyAction (this, &CTriggerScopeMMDAC::OnVoltRange);
@@ -100,6 +99,17 @@ int CTriggerScopeMMDAC::Initialize()
    is >> tmp;  // reads away the dash
    is >> maxV_;
 
+   std::ostringstream oss;
+   oss << "PAN" << dacNr_;
+   std::string answer;
+   int nRet = pHub_->SendAndReceive(oss.str().c_str(), answer);
+   if (nRet != DEVICE_OK)
+      return nRet;
+   // answer looks like !PAN1-560 or !PAN11-560
+   std::string token = answer.substr(answer.find("-") + 1);
+   std::stringstream as (token);
+   as >> nrEvents_;
+
    CPropertyAction* pAct = new CPropertyAction (this, &CTriggerScopeMMDAC::OnState);
    ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct); 
    if (ret != DEVICE_OK) 
@@ -129,6 +139,22 @@ int CTriggerScopeMMDAC::Initialize()
       return ret;
    AddAllowedValue(sequenceTriggerDirection.c_str(), g_Falling);
    AddAllowedValue(sequenceTriggerDirection.c_str(), g_Rising);
+
+   std::string blankMode = "Blanking";
+   pAct = new CPropertyAction(this, &CTriggerScopeMMDAC::OnBlanking);
+   nRet = CreateProperty(blankMode.c_str(), g_Off, MM::String, false, pAct);
+   if (nRet != DEVICE_OK) 
+      return nRet;
+	AddAllowedValue(blankMode.c_str(), g_Off);
+	AddAllowedValue(blankMode.c_str(), g_On);
+
+   std::string blankOn = "Blank On";
+   pAct = new CPropertyAction(this, &CTriggerScopeMMDAC::OnBlankingTriggerDirection);
+   nRet = CreateProperty(blankOn.c_str(), g_Low, MM::String, false, pAct);
+   if (nRet != DEVICE_OK) 
+      return nRet;
+	AddAllowedValue(blankOn.c_str(), g_Low);
+	AddAllowedValue(blankOn.c_str(), g_High);
 
    initialized_ = true;
    return DEVICE_OK;
@@ -273,24 +299,6 @@ int CTriggerScopeMMDAC::OnVoltRange(MM::PropertyBase* pProp, MM::ActionType eAct
    return DEVICE_OK;
 }
 
-/*
-int CTriggerScopeMMDAC::OnMaxVolt(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (eAct == MM::BeforeGet)
-   {
-      pProp->Set(maxV_);
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      pProp->Get(maxV_);
-      if (HasProperty("Volts"))
-         SetPropertyLimits("Volts", 0.0, maxV_);
-
-   }
-   return DEVICE_OK;
-}
-*/
-
 int CTriggerScopeMMDAC::OnSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
@@ -335,17 +343,72 @@ int CTriggerScopeMMDAC::OnSequenceTriggerDirection(MM::PropertyBase* pProp, MM::
 }
 
 
+int CTriggerScopeMMDAC::OnBlanking(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      if (blanking_)
+         pProp->Set(g_On);
+      else
+         pProp->Set(g_Off);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string state;
+      pProp->Get(state);
+      if (state == g_On)
+         blanking_ = true;
+      else
+         blanking_ = false;
+      return SendBlankingCommand();
+   }
+   return DEVICE_OK;
+}
+
+int CTriggerScopeMMDAC::OnBlankingTriggerDirection(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      if (blankOnLow_)
+         pProp->Set(g_Low);
+      else
+         pProp->Set(g_High);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string state;
+      pProp->Get(state);
+      if (state == g_Low)
+         blankOnLow_ = true;
+      else
+         blankOnLow_ = false;
+      return SendBlankingCommand();
+   }
+   return DEVICE_OK;
+}
+
+
+
+int CTriggerScopeMMDAC::SendBlankingCommand()
+{   
+   std::ostringstream os;
+   os << "BAO" << (int) dacNr_ << "-" << (blanking_ ? "1" : "0") << 
+               "-" << (blankOnLow_ ? "0" : "1"); 
+   return pHub_->SendAndReceive(os.str().c_str());
+}
+
+
 int CTriggerScopeMMDAC::StartDASequence()
 {
    std::ostringstream os;
-   os << "PAS" << (int) dacNr_ << "-1-" << (int) sequenceTransitionOnRising_; 
+   os << "PAS" << (int) dacNr_ << "-1-" << (sequenceTransitionOnRising_ ? "1" : "0"); 
    return pHub_->SendAndReceive(os.str().c_str());
 }
 
 int CTriggerScopeMMDAC::StopDASequence()
 {
 	std::ostringstream os;
-   os << "PAS" << (int) dacNr_ << "-0-" << (int) sequenceTransitionOnRising_; 
+   os << "PAS" << (int) dacNr_ << "-0-" << (sequenceTransitionOnRising_ ? "1" : "0"); 
    return pHub_->SendAndReceive(os.str().c_str());
 }
 

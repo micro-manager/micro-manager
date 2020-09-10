@@ -108,7 +108,7 @@ int CTriggerScopeMMTTL::Initialize()
    AddAllowedValue(sequenceTriggerDirection.c_str(), g_Falling);
    AddAllowedValue(sequenceTriggerDirection.c_str(), g_Rising);
    
-   std::string blankMode = "Blanking Mode";
+   std::string blankMode = "Blanking";
    pAct = new CPropertyAction(this, &CTriggerScopeMMTTL::OnBlanking);
    nRet = CreateProperty(blankMode.c_str(), g_Off, MM::String, false, pAct);
    if (nRet != DEVICE_OK) 
