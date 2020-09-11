@@ -536,8 +536,9 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
          } catch (Exception e) {
             try {
                core_.setChannelGroup("");
+               sequenceSettings_ = sequenceSettings_.copyBuilder().channelGroup("").build();
             } catch (Exception ex) {
-                ReportingUtils.showError(ex);
+                ReportingUtils.logError(ex);
             }
             return false;
          }
@@ -742,6 +743,15 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       return zstage_ != null && zstage_.length() > 0;
    }
 
+   /**
+    * The name of this function is a bit misleading
+    * Every channel group name provided as an argument will return
+    * true, unless the group exists and only contains a single property with
+    * propertylimits (i.e. a slider in the UI)
+    * @param group channel group name to be tested
+    * @return false if the group exists and only has a single property that has
+    *             propertylimits, true otherwise
+    */
    private boolean groupIsEligibleChannel(String group) {
       StrVector cfgs = core_.getAvailableConfigs(group);
       if (cfgs.size() == 1) {
