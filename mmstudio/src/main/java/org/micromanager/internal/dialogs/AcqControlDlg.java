@@ -1477,7 +1477,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
     @Override
    public void settingsChanged() {
-      updateGUIContents();
+     if(this.isDisplayable())
+       updateGUIContents();
    }
 
    private void applySettingsFromGUI() {
