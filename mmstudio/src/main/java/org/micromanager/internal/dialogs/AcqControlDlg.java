@@ -966,6 +966,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
    @Subscribe
    public void onChannelGroupChanged(ChannelGroupChangedEvent event) {
+      acqEng_.setSequenceSettings(acqEng_.getSequenceSettings().copyBuilder().
+              channelGroup(event.getNewChannelGroup()).build());
       updateChannelAndGroupCombo();
    }
 

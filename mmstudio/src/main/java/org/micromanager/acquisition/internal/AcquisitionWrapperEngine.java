@@ -521,6 +521,13 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       return core_.getChannelGroup();
    }
 
+   /**
+    * Sets the channel group in the core
+    * Replies on callbacks to update the UI as well as sequenceSettings
+    * (SequenceSettings are updated in the callback function in AcqControlDlg)
+    * @param group name of group to set as the new Channel Group
+    * @return true when successful, false if no change is needed or when the change fails
+    */
    @Override
    public boolean setChannelGroup(String group) {
       String curGroup = core_.getChannelGroup();
@@ -532,11 +539,9 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       if (groupIsEligibleChannel(group)) {
          try {
             core_.setChannelGroup(group);
-            sequenceSettings_ = sequenceSettings_.copyBuilder().channelGroup(group).build();
          } catch (Exception e) {
             try {
                core_.setChannelGroup("");
-               sequenceSettings_ = sequenceSettings_.copyBuilder().channelGroup("").build();
             } catch (Exception ex) {
                 ReportingUtils.logError(ex);
             }
