@@ -182,6 +182,7 @@ SUBDIRS = \
 	Tofra \
 	Toptica_iBeamSmartCW \
 	TriggerScope \
+	TriggerScopeMM \
 	UserDefinedSerial \
 	Utilities \
 	VariLC \

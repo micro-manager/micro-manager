@@ -340,6 +340,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Mightex_C_Cam", "DeviceAdap
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TriggerScope", "DeviceAdapters\TriggerScope\TriggerScope.vcxproj", "{8F3B9231-0B58-49F4-9FB0-BCAF8F24771D}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TriggerScopeMM", "DeviceAdapters\TriggerScopeMM\TriggerScopeMM.vcxproj", "{11F219E1-907F-44C3-B817-A595C6BDFC6B}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "StandaStage", "DeviceAdapters\StandaStage\StandaStage.vcxproj", "{977C1D7D-5CCC-466A-9FEF-3F7471032FE6}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Usb3CamHS", "SecretDeviceAdapters\Usb3CamHS\Usb3CamHS.vcxproj", "{504F5562-47FD-4D46-8F18-0F5D078212D2}"
@@ -2471,6 +2473,18 @@ Global
 		{8F3B9231-0B58-49F4-9FB0-BCAF8F24771D}.Release|Win32.Build.0 = Release|Win32
 		{8F3B9231-0B58-49F4-9FB0-BCAF8F24771D}.Release|x64.ActiveCfg = Release|x64
 		{8F3B9231-0B58-49F4-9FB0-BCAF8F24771D}.Release|x64.Build.0 = Release|x64
+		{11F219E1-907F-44C3-B817-A595C6BDFC6B}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
+		{11F219E1-907F-44C3-B817-A595C6BDFC6B}.Debug|Mixed Platforms.Build.0 = Debug|x64
+		{11F219E1-907F-44C3-B817-A595C6BDFC6B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{11F219E1-907F-44C3-B817-A595C6BDFC6B}.Debug|Win32.Build.0 = Debug|Win32
+		{11F219E1-907F-44C3-B817-A595C6BDFC6B}.Debug|x64.ActiveCfg = Debug|x64
+		{11F219E1-907F-44C3-B817-A595C6BDFC6B}.Debug|x64.Build.0 = Debug|x64
+		{11F219E1-907F-44C3-B817-A595C6BDFC6B}.Release|Mixed Platforms.ActiveCfg = Release|x64
+		{11F219E1-907F-44C3-B817-A595C6BDFC6B}.Release|Mixed Platforms.Build.0 = Release|x64
+		{11F219E1-907F-44C3-B817-A595C6BDFC6B}.Release|Win32.ActiveCfg = Release|Win32
+		{11F219E1-907F-44C3-B817-A595C6BDFC6B}.Release|Win32.Build.0 = Release|Win32
+		{11F219E1-907F-44C3-B817-A595C6BDFC6B}.Release|x64.ActiveCfg = Release|x64
+		{11F219E1-907F-44C3-B817-A595C6BDFC6B}.Release|x64.Build.0 = Release|x64
 		{977C1D7D-5CCC-466A-9FEF-3F7471032FE6}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
 		{977C1D7D-5CCC-466A-9FEF-3F7471032FE6}.Debug|Mixed Platforms.Build.0 = Debug|x64
 		{977C1D7D-5CCC-466A-9FEF-3F7471032FE6}.Debug|Win32.ActiveCfg = Debug|Win32
