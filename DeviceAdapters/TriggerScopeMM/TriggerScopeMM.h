@@ -53,6 +53,7 @@ using namespace std;
 #define ERR_NO_PORT_SET 108
 #define ERR_VERSION_MISMATCH 109
 #define ERR_INVALID_VALUE 110
+#define ERR_NON_MM_FIRMWARE 111
 
 static const char* g_TriggerScopeDACDeviceName = "TriggerScope_DAC00";
 static const char* g_TriggerScopeTTLDeviceName1 = "TriggerScope_TTL1-8";
