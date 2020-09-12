@@ -192,6 +192,8 @@ CTriggerScopeMMHub::CTriggerScopeMMHub(void)  :
    CPropertyAction* pAct = new CPropertyAction (this, &CTriggerScopeMMHub::OnCOMPort);
    CreateProperty(MM::g_Keyword_Port, "", MM::String, false, pAct, true);
 
+   // Error messages
+   SetErrorText(ERR_NON_MM_FIRMWARE, "Firmware is not MM firmware and will not work with this adapter");
 }
 
 int CTriggerScopeMMHub::DetectInstalledDevices()
@@ -297,7 +299,11 @@ int CTriggerScopeMMHub::Initialize()
             idx = answer.find("v");
             if (idx!=string::npos)
                firmwareVer_ = atof(&(answer.c_str()[idx+1]));
-         }	
+         }
+         if (answer.substr(answer.length() - 2, 2) != "MM") 
+         {
+            return ERR_NON_MM_FIRMWARE;
+         }
 		}
 	}
 
