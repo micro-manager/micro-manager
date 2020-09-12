@@ -1406,12 +1406,12 @@ int SpinnakerCamera::PrepareSequenceAcqusition()
 
 int SpinnakerCamera::StartSequenceAcquisition(double interval)
 {
-	if (!m_aqThread->IsStopped())
-		return DEVICE_CAMERA_BUSY_ACQUIRING;
+   if (!m_aqThread->IsStopped())
+      return DEVICE_CAMERA_BUSY_ACQUIRING;
 
-	m_stopOnOverflow = false;
-		m_aqThread->Start(-1, interval);
-	return DEVICE_OK;
+   m_stopOnOverflow = false;
+   m_aqThread->Start(-1, interval);
+   return DEVICE_OK;
 }
 
 int SpinnakerCamera::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
@@ -1424,8 +1424,6 @@ int SpinnakerCamera::StartSequenceAcquisition(long numImages, double interval_ms
 		return ret;
 
 	m_stopOnOverflow = stopOnOverflow;
-	m_aqTriggerMode = m_cam->TriggerMode.GetValue();
-	m_aqTriggerSource = m_cam->TriggerSource.GetValue();
 	m_aqThread->Start(numImages, interval_ms);
 	return DEVICE_OK;
 }
@@ -1455,9 +1453,6 @@ int SpinnakerCamera::MoveImageToCircularBuffer()
 
 	try
 	{
-		//if (m_aqTriggerMode == SPKR::TriggerMode_On &&
-		//	m_aqTriggerSource == SPKR::TriggerSource_Software)
-
       if (m_cam->TriggerMode.GetValue() == SPKR::TriggerMode_On &&
 			m_cam->TriggerSource.GetValue() == SPKR::TriggerSource_Software)
 		{
