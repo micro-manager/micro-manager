@@ -1087,8 +1087,11 @@ int SpinnakerCamera::OnFrameRateEnabled(MM::PropertyBase * pProp, MM::ActionType
 		}
 		else
 		{
-			SetErrorText(SPKR_ERROR, "Could not read acquisition frame rate control enabled");
-			return SPKR_ERROR;
+         // with certain camera settings this node is not available.  Rather than stopping altogether
+         // deal with this situation gracefully.  It seems OK to say that this feature is not enabled.
+         pProp->Set("0");
+			// SetErrorText(SPKR_ERROR, "Could not read acquisition frame rate control enabled");
+			// return SPKR_ERROR;
 		}
 	}
 	else if (eAct == MM::AfterSet)
@@ -1452,8 +1455,11 @@ int SpinnakerCamera::MoveImageToCircularBuffer()
 
 	try
 	{
-		if (m_aqTriggerMode == SPKR::TriggerMode_On &&
-			m_aqTriggerSource == SPKR::TriggerSource_Software)
+		//if (m_aqTriggerMode == SPKR::TriggerMode_On &&
+		//	m_aqTriggerSource == SPKR::TriggerSource_Software)
+
+      if (m_cam->TriggerMode.GetValue() == SPKR::TriggerMode_On &&
+			m_cam->TriggerSource.GetValue() == SPKR::TriggerSource_Software)
 		{
 			m_cam->TriggerSoftware.Execute();
 		}
