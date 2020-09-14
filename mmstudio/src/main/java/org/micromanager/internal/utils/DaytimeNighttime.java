@@ -208,8 +208,9 @@ public final class DaytimeNighttime implements ApplicationSkin {
             }
 
             // Alert any listeners of the change.
-            if(studio_ != null && studio_.events() != null)
-              studio_.events().post(new DefaultApplicationSkinEvent(mode));
+            if (studio_ != null && studio_.events() != null) {
+               studio_.events().post( new DefaultApplicationSkinEvent( mode ) );
+            }
          });
       }
    }
