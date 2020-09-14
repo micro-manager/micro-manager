@@ -19,6 +19,7 @@ import org.micromanager.acqj.api.AcqEngMetadata;
 import org.micromanager.magellan.internal.gui.ExploreControlsPanel;
 import org.micromanager.magellan.internal.magellanacq.MagellanDataManager;
 import org.micromanager.magellan.internal.magellanacq.MagellanMD;
+import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.ndviewer.main.NDViewer;
 import org.micromanager.ndviewer.api.ViewerInterface;
 import org.micromanager.ndviewer.api.CanvasMouseListenerInterface;
@@ -39,7 +40,7 @@ public class MagellanViewer implements ViewerInterface {
    private MagellanDataManager manager_;
 
    public MagellanViewer(MagellanDataManager cache, ViewerAcquisitionInterface acq, JSONObject summmaryMD) {
-      viewer_ = new NDViewer(cache, acq, summmaryMD, MagellanMD.getPixelSizeUm(summmaryMD));
+      viewer_ = new NDViewer(cache, acq, summmaryMD, MagellanMD.getPixelSizeUm(summmaryMD), MagellanMD.isRGB(summmaryMD));
       manager_ = cache;
    }
 
