@@ -60,11 +60,11 @@ void CTriggerScopeMMTTL::GetName(char* name) const
 {	
    if(pinGroup_ == 1)
    {
-	   CDeviceUtils::CopyLimitedString(name, g_TriggerScopeTTLDeviceName1);   
+	   CDeviceUtils::CopyLimitedString(name, g_TriggerScopeMMTTLDeviceName1);   
    }
    else
    {
-      CDeviceUtils::CopyLimitedString(name, g_TriggerScopeTTLDeviceName2);
+      CDeviceUtils::CopyLimitedString(name, g_TriggerScopeMMTTLDeviceName2);
    }
 }
 
@@ -366,12 +366,12 @@ int CTriggerScopeMMTTL::OnTTL(MM::PropertyBase* pProp, MM::ActionType eActEx, lo
 
       if(prop)
       {
-         curPos_ |= prop << ttlNr; //set desired bit
+         prop |= prop << ttlNr; //set desired bit
       } else {
-         curPos_ &= ~(1 << ttlNr); // clear the second lowest bit
+         prop &= ~(1 << ttlNr); // clear the second lowest bit
       }
       std::ostringstream os;
-      os << curPos_;
+      os << prop;
       return SetProperty(MM::g_Keyword_State, os.str().c_str());
    }
    return DEVICE_OK;

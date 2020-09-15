@@ -70,7 +70,7 @@ CTriggerScopeMMDAC::CTriggerScopeMMDAC(int dacNr) :
 
 void CTriggerScopeMMDAC::GetName(char* name) const
 {
-   CDeviceUtils::CopyLimitedString(name, g_TriggerScopeDACDeviceName);
+   CDeviceUtils::CopyLimitedString(name, g_TriggerScopeMMDACDeviceName);
    snprintf(&name[strlen(name)-2], 3, "%02d", dacNr_);
 }
 
