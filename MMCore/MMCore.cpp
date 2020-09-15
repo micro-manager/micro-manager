@@ -113,7 +113,7 @@ using namespace std;
  * (Keep the 3 numbers on one line to make it easier to look at diffs when
  * merging/rebasing.)
  */
-const int MMCore_versionMajor = 10, MMCore_versionMinor = 1, MMCore_versionPatch = 0;
+const int MMCore_versionMajor = 10, MMCore_versionMinor = 1, MMCore_versionPatch = 1;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -3411,24 +3411,23 @@ void CMMCore::setChannelGroup(const char* chGroup) throw (CMMError)
       return;
    }
 
-   if (chGroup && strlen(chGroup)>0)
+   if (!chGroup)
    {
-      channelGroup_ = chGroup;
-      LOG_INFO(coreLogger_) << "Channel group set to " << chGroup;
+      chGroup = "";
    }
-   else
-   {
-      channelGroup_.clear();
-   }
-   properties_->Refresh(); // TODO: more efficient
-   std::string newChGroup = getChannelGroup();
+   
+   // CoreProperty checks if this is a valid group, throws CMMError otherwise
+   properties_->Set(MM::g_Keyword_CoreChannelGroup, chGroup);
+   channelGroup_ = chGroup;
+   LOG_INFO(coreLogger_) << "Channel group set to " << chGroup;
+
    {
       MMThreadGuard scg(stateCacheLock_);
-      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreChannelGroup, newChGroup.c_str()));
+      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreChannelGroup, channelGroup_.c_str()));
    }
    if (externalCallback_ != 0) 
    {
-      externalCallback_->onChannelGroupChanged(newChGroup.c_str());
+      externalCallback_->onChannelGroupChanged(channelGroup_.c_str());
    }
 }
 
