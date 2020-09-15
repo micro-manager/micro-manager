@@ -89,6 +89,9 @@ public:
 
    int Initialize();
    int Shutdown();
+
+   bool SupportsDeviceDetection(void);
+   MM::DeviceDetectionStatus DetectDevice(void);
      
    bool IsInitialized() {return initialized_;}
    

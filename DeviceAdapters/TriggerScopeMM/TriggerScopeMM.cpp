@@ -92,7 +92,7 @@ BOOL APIENTRY DllMain( HANDLE /*hModule*/,
  */
 MODULE_API void InitializeModuleData()
 {
-   RegisterDevice("TriggerScope-Hub", MM::HubDevice, "Hub");
+   RegisterDevice("TriggerScope-Hub", MM::HubDevice, "Hub (required)");
 
    RegisterDevice(g_TriggerScopeTTLDeviceName1, MM::StateDevice, "TTL1-8");
    RegisterDevice(g_TriggerScopeTTLDeviceName2, MM::StateDevice, "TTL9-16");
@@ -185,9 +185,6 @@ CTriggerScopeMMHub::CTriggerScopeMMHub(void)  :
    InitializeDefaultErrorMessages();
    pResourceLock_ = new MMThreadLock();
 
-      // parent ID display
-   CreateHubIDProperty();
-
    //Com port
    CPropertyAction* pAct = new CPropertyAction (this, &CTriggerScopeMMHub::OnCOMPort);
    CreateProperty(MM::g_Keyword_Port, "", MM::String, false, pAct, true);
@@ -217,6 +214,92 @@ int CTriggerScopeMMHub::DetectInstalledDevices()
    }
    return DEVICE_OK; 
 }
+
+bool CTriggerScopeMMHub::SupportsDeviceDetection(void)
+{
+   return true;
+}
+
+MM::DeviceDetectionStatus CTriggerScopeMMHub::DetectDevice(void)
+{
+   if (initialized_)
+      return MM::CanCommunicate;
+
+   // all conditions must be satisfied...
+   MM::DeviceDetectionStatus result = MM::Misconfigured;
+   char answerTO[MM::MaxStrLength];
+   
+   try
+   {
+      std::string portLowerCase = port_;
+      for( std::string::iterator its = portLowerCase.begin(); its != portLowerCase.end(); ++its)
+      {
+         *its = (char)tolower(*its);
+      }
+      if( 0< portLowerCase.length() &&  0 != portLowerCase.compare("undefined")  && 0 != portLowerCase.compare("unknown") )
+      {
+         result = MM::CanNotCommunicate;
+         // record the default answer time out
+         GetCoreCallback()->GetDeviceProperty(port_.c_str(), "AnswerTimeout", answerTO);
+
+         // device specific default communication parameters
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_Handshaking, g_Off);
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_BaudRate, "115200" );
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_StopBits, "1");
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), "AnswerTimeout", "500.0");
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), "DelayBetweenCharsMs", "0");
+         MM::Device* pS = GetCoreCallback()->GetDevice(this, port_.c_str());
+         pS->Initialize();
+         // The first second or so after opening the serial port, the Arduino is waiting for firmwareupgrades.  Simply sleep 2 seconds.
+         CDeviceUtils::SleepMs(1000);
+         MMThreadGuard myLock(lock_);
+         PurgeComPort(port_.c_str());
+
+         std::string answer;
+         int ret = SendAndReceiveNoCheck("*", answer);
+         int attempts = 1;
+         while (ret != DEVICE_OK && attempts < 10)
+         {
+            CDeviceUtils::SleepMs(1000);
+            ret = SendAndReceiveNoCheck("*", answer);
+            attempts++;
+         }
+
+         if(answer.length() > 0)
+	      {
+            size_t idx = answer.find("ARC TRIGGERSCOPE 16");
+            if(idx!=string::npos)
+            {
+               if (answer.substr(answer.length() - 2, 2) == "MM") 
+               {
+                  result = MM::CanCommunicate;
+               }
+            }
+         }
+            
+         if( DEVICE_OK != ret )
+         {
+            LogMessageCode(ret,true);
+         }
+         else
+         {
+            // to succeed must reach here....
+            result = MM::CanCommunicate;
+         }
+         pS->Shutdown();
+         // always restore the AnswerTimeout to the default
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), "AnswerTimeout", answerTO);
+
+      }
+   }
+   catch(...)
+   {
+      LogMessage("Exception in DetectDevice!",false);
+   }
+
+   return result;
+}
+
 
 /**
 * CTriggerScopeMMHub destructor.
