@@ -232,6 +232,7 @@ public:
 
    unsigned long GetNumberOfPositions()const { return 256; }
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);   
+   int OnTTL(MM::PropertyBase* pProp, MM::ActionType eActEx, long ttlNr); 
    int OnBlanking(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBlankingTriggerDirection(MM::PropertyBase* pProp, MM::ActionType eAct);
    
