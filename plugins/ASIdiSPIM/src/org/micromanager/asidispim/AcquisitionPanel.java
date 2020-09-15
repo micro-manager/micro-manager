@@ -3342,6 +3342,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             if (cancelAcquisition_.get()) {
                throw new IllegalMonitorStateException("User stopped the acquisition");
             }
+
+            // dump errors and then clear them; the serial traffic will appear in the corelog if we need them
+            // hardcode addresses 1, 2, 3, and 6 which are almost always present
+            props_.setPropValue(Devices.Keys.TIGERCOMM, Properties.Keys.SERIAL_COMMAND, "1 DU Y");
+            props_.setPropValue(Devices.Keys.TIGERCOMM, Properties.Keys.SERIAL_COMMAND, "1 DU X");
+            props_.setPropValue(Devices.Keys.TIGERCOMM, Properties.Keys.SERIAL_COMMAND, "2 DU Y");
+            props_.setPropValue(Devices.Keys.TIGERCOMM, Properties.Keys.SERIAL_COMMAND, "2 DU X");
+            props_.setPropValue(Devices.Keys.TIGERCOMM, Properties.Keys.SERIAL_COMMAND, "3 DU Y");
+            props_.setPropValue(Devices.Keys.TIGERCOMM, Properties.Keys.SERIAL_COMMAND, "3 DU X");
+            props_.setPropValue(Devices.Keys.TIGERCOMM, Properties.Keys.SERIAL_COMMAND, "6 DU Y");
+            props_.setPropValue(Devices.Keys.TIGERCOMM, Properties.Keys.SERIAL_COMMAND, "6 DU X");
             
             // flag that we are actually running acquisition now
             acquisitionRunning_.set(true);
@@ -3557,9 +3568,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // Transformation matrices to convert between camera and stage coordinates
             final Vector3D yAxis = new Vector3D(0.0, 1.0, 0.0);
             final Rotation camARotation = new Rotation( yAxis, Math.toRadians(-45) );
-            final Rotation camBRotation = new Rotation ( yAxis, Math.toRadians(45) );
+            final Rotation camBRotation = new Rotation ( yAxis, Math.toRadiatons(45) );
 
             final Vector3D zeroPoint = new Vector3D(0.0, 0.0, 0.0);  // cache a zero point for efficiency
+            
+            // explicit check that PI stage has arrived
+            if (devices_.isValidMMDevice(Devices.Keys.SUPPLEMENTAL_X) &&
+                  devices_.getMMDeviceLibrary(Devices.Keys.SUPPLEMENTAL_X) == Devices.Libraries.PI_GCS_2) {
+               core_.waitForDevice(devices_.getMMDevice(Devices.Keys.SUPPLEMENTAL_X));
+            }
             
             // make sure all devices have arrived, e.g. a stage isn't still moving
             try {
@@ -3717,9 +3734,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      //   than making it impossible for user to select different Z positions e.g. for YZ grid
                      MultiStagePosition.goToPosition(nextPosition, core_);
                      
+                     
                      // for stage scanning: restore speed and set up scan at new position 
                      // non-multi-position situation is handled in prepareControllerForAquisition instead
                      if (acqSettings.isStageScanning) {
+                        
+                        refreshXYZPositions();
+                        ReportingUtils.logError("Tried to go to position (" + nextPosition.getX() + ", " + nextPosition.getY() + ", " + nextPosition.getZ() + ")"
+                              + "and first try actually went to position (" + xPositionUm_ + ", " + yPositionUm_ + ", " + zPositionUm_ + ").");
+                        // for debugging: make call a second time
+                        // TODO remove
+                        // MultiStagePosition.goToPosition(nextPosition, core_);
+                        
                         StagePosition pos = nextPosition.get(devices_.getMMDevice(Devices.Keys.XYSTAGE));  // get ideal position from position list, not current position
                         controller_.prepareStageScanForAcquisition(pos.x, pos.y, acqSettings.spimMode);
                         props_.setPropValue(Devices.Keys.XYSTAGE,
@@ -3739,6 +3765,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      }
                      
                      refreshXYZPositions();
+                     ReportingUtils.logError("Tried to go to position (" + nextPosition.getX() + ", " + nextPosition.getY() + ", " + nextPosition.getZ() + ")"
+                           + "and actually went to position (" + xPositionUm_ + ", " + yPositionUm_ + ", " + zPositionUm_ + ").");
                      
                      // wait any extra time the user requests
                      Thread.sleep(Math.round(PanelUtils.getSpinnerFloatValue(positionDelay_)));
@@ -4416,6 +4444,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                // gui_.closeAcquisition(acqName);
                ReportingUtils.logMessage("diSPIM plugin acquisition " + acqName + 
                      " took: " + (System.currentTimeMillis() - acqButtonStart) + "ms");
+               
+               // dump errors again
+               props_.setPropValue(Devices.Keys.TIGERCOMM, Properties.Keys.SERIAL_COMMAND, "1 DU Y");
+               props_.setPropValue(Devices.Keys.TIGERCOMM, Properties.Keys.SERIAL_COMMAND, "2 DU Y");
+               props_.setPropValue(Devices.Keys.TIGERCOMM, Properties.Keys.SERIAL_COMMAND, "3 DU Y");
+               props_.setPropValue(Devices.Keys.TIGERCOMM, Properties.Keys.SERIAL_COMMAND, "6 DU Y");
                
                waitForBlockingQueue(imageCache);
                
