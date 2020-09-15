@@ -3568,7 +3568,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // Transformation matrices to convert between camera and stage coordinates
             final Vector3D yAxis = new Vector3D(0.0, 1.0, 0.0);
             final Rotation camARotation = new Rotation( yAxis, Math.toRadians(-45) );
-            final Rotation camBRotation = new Rotation ( yAxis, Math.toRadiatons(45) );
+            final Rotation camBRotation = new Rotation ( yAxis, Math.toRadians(45) );
 
             final Vector3D zeroPoint = new Vector3D(0.0, 0.0, 0.0);  // cache a zero point for efficiency
             
