@@ -36,7 +36,7 @@ import org.jfree.data.function.Function2D;
  * 
  * A Non-Gaussian Distribution Quantifies Distances Measured with Fluorescence Localization Techniques
 L. Stirling Churchman,*† Henrik Flyvbjerg,‡ and James A. Spudich*
-* Biophys J. Jan 15, 2006; 90(2): 668–671. 
+* Biophys J. Jan 15, 2006; 90(2): 668-671. 
 * 
 * To avoid running into problems with positive and negative infinity, we use
 * the approximation function when sigma < mu/2

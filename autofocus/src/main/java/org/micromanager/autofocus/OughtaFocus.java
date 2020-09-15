@@ -498,7 +498,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    // Volath's 1D autocorrelation
    // Volath  D., "The influence of the scene parameters and of noise on
    // the behavior of automatic focusing algorithms,"
-   // J. Microsc. 151, (2), 133 –146 (1988).
+   // J. Microsc. 151, (2), 133-146 (1988).
    private double computeVolath(ImageProcessor proc) {
       int h = proc.getHeight();
       int w = proc.getWidth();
@@ -523,7 +523,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    // Volath 5 - smooths out high-frequency (suppresses noise)
    // Volath  D., "The influence of the scene parameters and of noise on
    // the behavior of automatic focusing algorithms,"
-   // J. Microsc. 151, (2), 133 –146 (1988).
+   // J. Microsc. 151, (2), 133-146 (1988).
    private double computeVolath5(ImageProcessor proc) {
       int h = proc.getHeight();
       int w = proc.getWidth();
