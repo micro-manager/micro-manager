@@ -39,7 +39,7 @@ using namespace std;
 
 // External names used used by the rest of the system
 // to load particular device from the "TriggerScope.dll" library
-const char* g_TriggerScopeHubDeviceName = "TriggerScopeMM-Hub";
+const char* g_TriggerScopeHubDeviceName = g_TriggerScopeMMHubName;
 
 const char* g_Keyword_Clear = "Clear Arrays";
 const char* g_Keyword_Clear_Off = "Off";
@@ -92,12 +92,12 @@ BOOL APIENTRY DllMain( HANDLE /*hModule*/,
  */
 MODULE_API void InitializeModuleData()
 {
-   RegisterDevice("TriggerScope-Hub", MM::HubDevice, "Hub (required)");
+   RegisterDevice(g_TriggerScopeMMHubName, MM::HubDevice, "Hub (required)");
 
-   RegisterDevice(g_TriggerScopeTTLDeviceName1, MM::StateDevice, "TTL1-8");
-   RegisterDevice(g_TriggerScopeTTLDeviceName2, MM::StateDevice, "TTL9-16");
+   RegisterDevice(g_TriggerScopeMMTTLDeviceName1, MM::StateDevice, "TTL1-8");
+   RegisterDevice(g_TriggerScopeMMTTLDeviceName2, MM::StateDevice, "TTL9-16");
 
-   std::string deviceName = g_TriggerScopeDACDeviceName;
+   std::string deviceName = g_TriggerScopeMMDACDeviceName;
    std::string shortName = "DAC01";
    char number[3] = "01";
    for (int c = 1; c <= 16; c++) 
@@ -121,11 +121,11 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    baseName[strlen(deviceName) - 2] = 0;
 
    char referenceName[MM::MaxStrLength];
-   strncpy(referenceName, g_TriggerScopeDACDeviceName, strlen(g_TriggerScopeDACDeviceName) - 2);
-   referenceName[strlen(g_TriggerScopeDACDeviceName) - 2] = 0;
+   strncpy(referenceName, g_TriggerScopeMMDACDeviceName, strlen(g_TriggerScopeMMDACDeviceName) - 2);
+   referenceName[strlen(g_TriggerScopeMMDACDeviceName) - 2] = 0;
 
    // decide which device class to create based on the deviceName parameter
-   if (strcmp(deviceName, "TriggerScope-Hub") == 0)
+   if (strcmp(deviceName, g_TriggerScopeMMHubName) == 0)
    {
       // create hub
       return new CTriggerScopeMMHub();
@@ -137,12 +137,12 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       int nr = atoi(number.c_str());
       return new CTriggerScopeMMDAC(nr);
    }
-   else if (strcmp(deviceName, g_TriggerScopeTTLDeviceName1) == 0)
+   else if (strcmp(deviceName, g_TriggerScopeMMTTLDeviceName1) == 0)
    {
       return new CTriggerScopeMMTTL(0);
    }
 
-	else if (strcmp(deviceName, g_TriggerScopeTTLDeviceName2) == 0)
+	else if (strcmp(deviceName, g_TriggerScopeMMTTLDeviceName2) == 0)
    {
       return new CTriggerScopeMMTTL(1);
    }
@@ -257,13 +257,6 @@ MM::DeviceDetectionStatus CTriggerScopeMMHub::DetectDevice(void)
 
          std::string answer;
          int ret = SendAndReceiveNoCheck("*", answer);
-         int attempts = 1;
-         while (ret != DEVICE_OK && attempts < 10)
-         {
-            CDeviceUtils::SleepMs(1000);
-            ret = SendAndReceiveNoCheck("*", answer);
-            attempts++;
-         }
 
          if(answer.length() > 0)
 	      {

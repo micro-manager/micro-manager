@@ -55,10 +55,10 @@ using namespace std;
 #define ERR_INVALID_VALUE 110
 #define ERR_NON_MM_FIRMWARE 111
 
-static const char* g_TriggerScopeDACDeviceName = "TriggerScope_DAC00";
-static const char* g_TriggerScopeTTLDeviceName1 = "TriggerScope_TTL1-8";
-static const char* g_TriggerScopeTTLDeviceName2 = "TriggerScope_TTL9-16";
-static const char* g_TriggerScopeTTLMasterDeviceName = "TriggerScope-TTL-Master";
+static const char* g_TriggerScopeMMHubName = "TriggerScopeMM-Hub";
+static const char* g_TriggerScopeMMDACDeviceName = "TS_DAC00";
+static const char* g_TriggerScopeMMTTLDeviceName1 = "TS_TTL1-8";
+static const char* g_TriggerScopeMMTTLDeviceName2 = "TS_TTL9-16";
 static const char* g_On = "On";
 static const char* g_Off = "Off";
 static const char* g_High = "High";
