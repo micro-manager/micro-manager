@@ -285,12 +285,30 @@ public class MagellanGUIAcquisition extends Acquisition implements MagellanAcqui
     */
    public static boolean isZAboveImagingVolume(int spaceMode, MagellanGUIAcquisitionSettings settings,
            Point2D.Double[] positionCorners, double zPos, double zOrigin) {
+      boolean towardsSampleIsPositive;
+      try {
+         String zDevice = Magellan.getCore().getFocusDevice();
+         int dir = Magellan.getCore().getFocusDirection(zDevice);
+
+         if (dir > 0) {
+            towardsSampleIsPositive = true;
+         } else if (dir < 0) {
+            towardsSampleIsPositive = false;
+         } else {
+            throw new Exception();
+         }
+      } catch (Exception e) {
+         Log.log("Couldn't get focus direction of Z drive. Configre using Tools--Hardware Configuration Wizard");
+         throw new RuntimeException();
+      }
       if (spaceMode == MagellanGUIAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
          boolean extrapolate = settings.fixedSurface_ != settings.xyFootprint_;
          //extrapolate only if different surface used for XY positions than footprint
-         return settings.fixedSurface_.isPositionCompletelyAboveSurface(positionCorners, settings.fixedSurface_, zPos + settings.distanceAboveFixedSurface_, extrapolate);
+         return settings.fixedSurface_.isPositionCompletelyAboveSurface(positionCorners, settings.fixedSurface_,
+                 zPos + settings.distanceAboveFixedSurface_, extrapolate, towardsSampleIsPositive);
       } else if (spaceMode == MagellanGUIAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
-         return settings.topSurface_.isPositionCompletelyAboveSurface(positionCorners, settings.topSurface_, zPos + settings.distanceAboveTopSurface_, false);
+         return settings.topSurface_.isPositionCompletelyAboveSurface(positionCorners, settings.topSurface_,
+                 zPos + settings.distanceAboveTopSurface_, false, towardsSampleIsPositive);
       } else if (spaceMode == MagellanGUIAcquisitionSettings.CUBOID_Z_STACK) {
          return zPos < settings.zStart_;
       } else {
@@ -301,14 +319,32 @@ public class MagellanGUIAcquisition extends Acquisition implements MagellanAcqui
 
    public static boolean isZBelowImagingVolume(int spaceMode, MagellanGUIAcquisitionSettings settings,
            Point2D.Double[] positionCorners, double zPos, double zOrigin) {
+      boolean towardsSampleIsPositive;
+      try {
+         String zDevice = Magellan.getCore().getFocusDevice();
+         int dir = Magellan.getCore().getFocusDirection(zDevice);
+
+         if (dir > 0) {
+            towardsSampleIsPositive = true;
+         } else if (dir < 0) {
+            towardsSampleIsPositive = false;
+         } else {
+            throw new Exception();
+         }
+      } catch (Exception e) {
+         Log.log("Couldn't get focus direction of Z drive. Configre using Tools--Hardware Configuration Wizard");
+         throw new RuntimeException();
+      }
       if (spaceMode == MagellanGUIAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
          boolean extrapolate = settings.fixedSurface_ != settings.xyFootprint_;
          //extrapolate only if different surface used for XY positions than footprint
          return settings.fixedSurface_.isPositionCompletelyBelowSurface(
-                 positionCorners, settings.fixedSurface_, zPos - settings.distanceBelowFixedSurface_, extrapolate);
+                 positionCorners, settings.fixedSurface_, zPos - settings.distanceBelowFixedSurface_,
+                 extrapolate, towardsSampleIsPositive);
       } else if (spaceMode == MagellanGUIAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
          return settings.bottomSurface_.isPositionCompletelyBelowSurface(
-                 positionCorners, settings.bottomSurface_, zPos - settings.distanceBelowBottomSurface_, false);
+                 positionCorners, settings.bottomSurface_, zPos - settings.distanceBelowBottomSurface_,
+                 false, towardsSampleIsPositive);
       } else if (spaceMode == MagellanGUIAcquisitionSettings.CUBOID_Z_STACK) {
          return zPos > settings.zEnd_;
       } else {
