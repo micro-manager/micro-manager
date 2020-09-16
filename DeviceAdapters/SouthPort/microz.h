@@ -64,17 +64,17 @@ public:
 
 private:
 	static double stepSize_um_;
-	double pos_um_;
-	bool busy_;
-	bool initialized_;
-	std::string port_;
+   
 	MM::Core *core_;
-	MM::Device *device_;
+	double pos_um_; 
+	bool initialized_;
+	std::string port_;  
 	bool isReverseDirection_;
-	long velocity_;
+	bool busy_;
 	bool isJog_;
 	bool isJogRunning_;
 	bool isSetZero_;
+	long velocity_;
 	double goPos_;
 
 	// Actions
