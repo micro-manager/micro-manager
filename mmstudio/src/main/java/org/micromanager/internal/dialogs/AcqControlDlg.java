@@ -1073,18 +1073,18 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
 
    public final void updateGUIContents() {
       SequenceSettings sequenceSettings = acqEng_.getSequenceSettings();
-	   if (!SwingUtilities.isEventDispatchThread()) {
-	     SwingUtilities.invokeLater(() -> {
-           updateGUIFromSequenceSettings(sequenceSettings);
-	     } );
-	   }
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(() -> {
+            updateGUIFromSequenceSettings(sequenceSettings);
+         });
+      }
       else {
          updateGUIFromSequenceSettings(sequenceSettings);
       }
    }
 
    private void updateGUIFromSequenceSettings(final SequenceSettings sequenceSettings) {
-      if ( disableGUItoSettings_ )
+      if (disableGUItoSettings_)
       {
          return;
       }
@@ -1470,7 +1470,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    }
 
 
-    @Override
+   @Override
    public void settingsChanged() {
       if (this.isDisplayable()) {
          updateGUIContents();
