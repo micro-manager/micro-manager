@@ -130,11 +130,18 @@ SpinnakerCamera::SpinnakerCamera(GENICAM::gcstring name)
 {
 	InitializeDefaultErrorMessages();
 
-	CreateProperty("Serial Number", "", MM::String, false, 0, true);
+   
 	try
 	{
 		std::vector<CamNameAndSN> camInfos =
 			GetSpinnakeerCameraNamesAndSNs();
+
+      std::string serialNumber = "";
+      if (camInfos.size() > 0)
+      {
+         serialNumber = camInfos[0].serialNumber;
+      }
+	   CreateProperty("Serial Number", serialNumber.c_str(), MM::String, false, 0, true);
 
 		for (unsigned int i = 0; i < camInfos.size(); i++)
 			if (camInfos[i].name == name)
@@ -151,10 +158,10 @@ SpinnakerCamera::SpinnakerCamera(GENICAM::gcstring name)
 
 SpinnakerCamera::~SpinnakerCamera()
 {
-	StopSequenceAcquisition();
-	delete m_aqThread;
-	if (m_imageBuff)
-		delete[] m_imageBuff;
+   StopSequenceAcquisition();
+   delete m_aqThread;
+   // Shutdown should already have been called by the Core, but it should not hurt to do it again
+   Shutdown();
 }
 
 int SpinnakerCamera::Initialize()
@@ -455,20 +462,23 @@ int SpinnakerCamera::Initialize()
 
 int SpinnakerCamera::Shutdown()
 {
-	try
-	{
-		if (m_imageBuff)
-			delete[] m_imageBuff;
-		m_cam = NULL;
-		m_system->ReleaseInstance();
-	}
-	catch (SPKR::Exception ex)
-	{
-		SetErrorText(SPKR_ERROR, "Failed to clean up resources!");
-		return SPKR_ERROR;
-	}
+   try
+   {
+      if (m_imageBuff)
+         delete[] m_imageBuff;
+      m_imageBuff = NULL;
+      m_cam = NULL;
+      if (m_system != NULL)
+         m_system->ReleaseInstance();
+      m_system = NULL;
+   }
+   catch (SPKR::Exception ex)
+   {
+      SetErrorText(SPKR_ERROR, "Failed to clean up resources!");
+      return SPKR_ERROR;
+   }
 
-	return DEVICE_OK;
+   return DEVICE_OK;
 }
 
 void SpinnakerCamera::GetName(char * name) const
@@ -1087,8 +1097,11 @@ int SpinnakerCamera::OnFrameRateEnabled(MM::PropertyBase * pProp, MM::ActionType
 		}
 		else
 		{
-			SetErrorText(SPKR_ERROR, "Could not read acquisition frame rate control enabled");
-			return SPKR_ERROR;
+         // with certain camera settings this node is not available.  Rather than stopping altogether
+         // deal with this situation gracefully.  It seems OK to say that this feature is not enabled.
+         pProp->Set("0");
+			// SetErrorText(SPKR_ERROR, "Could not read acquisition frame rate control enabled");
+			// return SPKR_ERROR;
 		}
 	}
 	else if (eAct == MM::AfterSet)
@@ -1403,12 +1416,12 @@ int SpinnakerCamera::PrepareSequenceAcqusition()
 
 int SpinnakerCamera::StartSequenceAcquisition(double interval)
 {
-	if (!m_aqThread->IsStopped())
-		return DEVICE_CAMERA_BUSY_ACQUIRING;
+   if (!m_aqThread->IsStopped())
+      return DEVICE_CAMERA_BUSY_ACQUIRING;
 
-	m_stopOnOverflow = false;
-		m_aqThread->Start(-1, interval);
-	return DEVICE_OK;
+   m_stopOnOverflow = false;
+   m_aqThread->Start(-1, interval);
+   return DEVICE_OK;
 }
 
 int SpinnakerCamera::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
@@ -1421,8 +1434,6 @@ int SpinnakerCamera::StartSequenceAcquisition(long numImages, double interval_ms
 		return ret;
 
 	m_stopOnOverflow = stopOnOverflow;
-	m_aqTriggerMode = m_cam->TriggerMode.GetValue();
-	m_aqTriggerSource = m_cam->TriggerSource.GetValue();
 	m_aqThread->Start(numImages, interval_ms);
 	return DEVICE_OK;
 }
@@ -1452,8 +1463,8 @@ int SpinnakerCamera::MoveImageToCircularBuffer()
 
 	try
 	{
-		if (m_aqTriggerMode == SPKR::TriggerMode_On &&
-			m_aqTriggerSource == SPKR::TriggerSource_Software)
+      if (m_cam->TriggerMode.GetValue() == SPKR::TriggerMode_On &&
+			m_cam->TriggerSource.GetValue() == SPKR::TriggerSource_Software)
 		{
 			m_cam->TriggerSoftware.Execute();
 		}

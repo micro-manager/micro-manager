@@ -60,11 +60,11 @@ void CTriggerScopeMMTTL::GetName(char* name) const
 {	
    if(pinGroup_ == 1)
    {
-	   CDeviceUtils::CopyLimitedString(name, g_TriggerScopeTTLDeviceName1);   
+	   CDeviceUtils::CopyLimitedString(name, g_TriggerScopeMMTTLDeviceName1);   
    }
    else
    {
-      CDeviceUtils::CopyLimitedString(name, g_TriggerScopeTTLDeviceName2);
+      CDeviceUtils::CopyLimitedString(name, g_TriggerScopeMMTTLDeviceName2);
    }
 }
 
@@ -132,6 +132,24 @@ int CTriggerScopeMMTTL::Initialize()
 	if (nRet != DEVICE_OK)
 		return nRet;
    SetPropertyLimits(MM::g_Keyword_State, 0, numPos_ - 1);
+
+   for (long ttlNr = 1; ttlNr <= 8; ttlNr ++) 
+   {
+      long pinNr = ttlNr + (pinGroup_ * 8l);
+      std::ostringstream os;
+      if (pinNr == 9) 
+         os << "TTL-" << std::setfill('0') << std::setw(2) << pinNr;
+      else
+         os << "TTL-" << pinNr;
+      std::string propName = os.str();
+      CPropertyActionEx* pActEx = new CPropertyActionEx(this, &CTriggerScopeMMTTL::OnTTL, ttlNr - 1);
+      nRet = CreateProperty(propName.c_str(), "0", MM::Integer, false, pActEx, false);
+      if (nRet != DEVICE_OK)
+      {
+         return nRet;
+      }
+      SetPropertyLimits(propName.c_str(), 0, 1);
+   }
 
    curPos_ = 0;
 
@@ -331,6 +349,31 @@ int CTriggerScopeMMTTL::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       return pHub_->SendAndReceive(cout.str().c_str());
    }                                                                         
 
+   return DEVICE_OK;
+}
+
+
+int CTriggerScopeMMTTL::OnTTL(MM::PropertyBase* pProp, MM::ActionType eActEx, long ttlNr)
+{
+   if (eActEx == MM::BeforeGet)
+   {
+      long state =  (curPos_ >> ttlNr) & 1 ;
+      pProp->Set(state);
+   } else if (eActEx == MM::AfterSet)
+   {
+      long prop;
+      pProp->Get(prop);
+
+      if(prop)
+      {
+         prop |= prop << ttlNr; //set desired bit
+      } else {
+         prop &= ~(1 << ttlNr); // clear the second lowest bit
+      }
+      std::ostringstream os;
+      os << prop;
+      return SetProperty(MM::g_Keyword_State, os.str().c_str());
+   }
    return DEVICE_OK;
 }
 
