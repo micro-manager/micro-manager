@@ -213,6 +213,10 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
       }
    }
 
+   public void updateExploreZControls(int i) {
+      zExploreControls_.updateExploreZControls(i);
+   }
+
    /**
     * Called when images done arriving
     */

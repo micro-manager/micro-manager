@@ -40,12 +40,16 @@ public class MagellanViewer implements ViewerInterface {
    private MagellanDataManager manager_;
 
    public MagellanViewer(MagellanDataManager cache, ViewerAcquisitionInterface acq, JSONObject summmaryMD) {
-      viewer_ = new NDViewer(cache, acq, summmaryMD, MagellanMD.getPixelSizeUm(summmaryMD), MagellanMD.isRGB(summmaryMD));
+      viewer_ = new NDViewer(cache, acq, summmaryMD, MagellanMD.getPixelSizeUm(summmaryMD), MagellanMD.isRGB(summmaryMD)) {
+            public void setImageEvent(HashMap<String, Integer> axes, boolean fromHuman) {
+               super.setImageEvent(axes, fromHuman);
+               if (axes.containsKey(AcqEngMetadata.Z_AXIS)) {
+                  Integer i = axes.get(AcqEngMetadata.Z_AXIS);
+                  cache.updateExploreZControls(i);
+               }
+            }
+         };
       manager_ = cache;
-   }
-
-   boolean anythingAcquired() {
-      return manager_.anythingAcquired();
    }
 
    private void moveViewToVisibleArea() {
