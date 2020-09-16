@@ -109,7 +109,7 @@ SUBDIRS = \
 	Cobolt \
 	CoherentCube \
 	CoherentOBIS \
-   CoherentScientificRemote \
+	CoherentScientificRemote \
 	Conix \
 	CoolLEDpE300 \
 	CoolLEDpE4000 \
@@ -169,6 +169,7 @@ SUBDIRS = \
 	SimpleAutofocus \
 	Skyra \
 	SmarActHCU-3D \
+	SouthPort \
 	SpectralLMM5 \
 	SutterLambda \
 	SutterLambda2 \
