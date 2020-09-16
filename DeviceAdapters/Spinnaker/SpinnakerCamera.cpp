@@ -130,11 +130,18 @@ SpinnakerCamera::SpinnakerCamera(GENICAM::gcstring name)
 {
 	InitializeDefaultErrorMessages();
 
-	CreateProperty("Serial Number", "", MM::String, false, 0, true);
+   
 	try
 	{
 		std::vector<CamNameAndSN> camInfos =
 			GetSpinnakeerCameraNamesAndSNs();
+
+      std::string serialNumber = "";
+      if (camInfos.size() > 0)
+      {
+         serialNumber = camInfos[0].serialNumber;
+      }
+	   CreateProperty("Serial Number", serialNumber.c_str(), MM::String, false, 0, true);
 
 		for (unsigned int i = 0; i < camInfos.size(); i++)
 			if (camInfos[i].name == name)
@@ -151,10 +158,10 @@ SpinnakerCamera::SpinnakerCamera(GENICAM::gcstring name)
 
 SpinnakerCamera::~SpinnakerCamera()
 {
-	StopSequenceAcquisition();
-	delete m_aqThread;
-	if (m_imageBuff)
-		delete[] m_imageBuff;
+   StopSequenceAcquisition();
+   delete m_aqThread;
+   // Shutdown should already have been called by the Core, but it should not hurt to do it again
+   Shutdown();
 }
 
 int SpinnakerCamera::Initialize()
@@ -455,20 +462,23 @@ int SpinnakerCamera::Initialize()
 
 int SpinnakerCamera::Shutdown()
 {
-	try
-	{
-		if (m_imageBuff)
-			delete[] m_imageBuff;
-		m_cam = NULL;
-		m_system->ReleaseInstance();
-	}
-	catch (SPKR::Exception ex)
-	{
-		SetErrorText(SPKR_ERROR, "Failed to clean up resources!");
-		return SPKR_ERROR;
-	}
+   try
+   {
+      if (m_imageBuff)
+         delete[] m_imageBuff;
+      m_imageBuff = NULL;
+      m_cam = NULL;
+      if (m_system != NULL)
+         m_system->ReleaseInstance();
+      m_system = NULL;
+   }
+   catch (SPKR::Exception ex)
+   {
+      SetErrorText(SPKR_ERROR, "Failed to clean up resources!");
+      return SPKR_ERROR;
+   }
 
-	return DEVICE_OK;
+   return DEVICE_OK;
 }
 
 void SpinnakerCamera::GetName(char * name) const
