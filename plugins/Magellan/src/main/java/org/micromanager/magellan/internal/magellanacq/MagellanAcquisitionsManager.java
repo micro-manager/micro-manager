@@ -25,6 +25,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import javax.swing.JOptionPane;
 import org.micromanager.acqj.api.Acquisition;
+import org.micromanager.acqj.internal.acqengj.AffineTransformUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.magellan.internal.gui.GUI;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.Log;
@@ -44,6 +46,7 @@ public class MagellanAcquisitionsManager {
    private volatile int currentAcqIndex_;
    private ExecutorService acqManageExecuterService_;
    ArrayList<Future> acqFutures_;
+   private ExploreAcquisition exploreAcq_;
 
    public MagellanAcquisitionsManager(GUI gui) {
       singleton_ = this;
@@ -135,6 +138,28 @@ public class MagellanAcquisitionsManager {
          currentAcq_.abort();
       }
 
+   }
+
+   public ExploreAcquisition createExploreAcquisition(double zStep, double overlap, String dir, String name, String cGroup) {
+      if (!AffineTransformUtils.isAffineTransformDefined()) {
+         ReportingUtils.showError("XY Stage and Camera are not calibrated to each other."
+                 + " \nOpen \"Devices--Pixel size calibration\" and set up Affine transform");
+         throw new RuntimeException();
+      }
+
+      ExploreAcqSettings settings = new ExploreAcqSettings(dir, name, cGroup, zStep, overlap);
+      //check for abort of existing explore acquisition
+      //abort existing explore acq if needed
+      if (exploreAcq_ != null && !exploreAcq_.isFinished()) {
+         int result = JOptionPane.showConfirmDialog(null, "Finish exisiting explore acquisition?", "Finish Current Explore Acquisition", JOptionPane.OK_CANCEL_OPTION);
+         if (result == JOptionPane.OK_OPTION) {
+            exploreAcq_.abort();
+         } else {
+            return null;
+         }
+      }
+      exploreAcq_ = new ExploreAcquisition(settings, new MagellanDataManager(settings.dir_, settings.name_, true));
+      return exploreAcq_;
    }
    
    public MagellanGUIAcquisition createAcquisition(int index) {
@@ -260,5 +285,6 @@ public class MagellanAcquisitionsManager {
 //           throw new Exception();
 //       }
    }
+
 
 }

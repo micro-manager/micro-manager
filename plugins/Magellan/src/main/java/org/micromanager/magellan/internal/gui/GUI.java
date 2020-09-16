@@ -49,6 +49,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import org.micromanager.acqj.internal.acqengj.Engine;
+import org.micromanager.acquisition.AcquisitionManager;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.magellan.internal.magellanacq.*;
 import org.micromanager.magellan.internal.channels.ColorEditor;
@@ -83,7 +84,6 @@ public class GUI extends javax.swing.JFrame {
    private int multiAcqSelectedIndex_ = 0;
    private LinkedList<JSpinner> offsetSpinners_ = new LinkedList<JSpinner>();
    private static GUI singleton_;
-   private ExploreAcquisition exploreAcq_;
    private volatile boolean acquisitionRunning_ = false;
    private volatile boolean ignoreUpdate_ = false;
    private Engine eng_;
@@ -533,7 +533,22 @@ public class GUI extends javax.swing.JFrame {
             s.setValue(Math.min(((Number) s.getValue()).intValue(), minOffset + 9));
          }
       }
+   }
 
+   public double getExploreZStep() {
+      return ((Number) exploreZStepSpinner_.getValue()).doubleValue();
+   }
+
+   public double getOverlap() {
+      return (Double) tileOverlapSpinner_.getValue();
+   }
+
+   public String getExploreSavingName() {
+      return exploreSavingNameTextField_.getText();
+   }
+
+   public String getExploreChannelGroup() {
+      return (String) exploreChannelGroupCombo_.getSelectedItem();
    }
 
    /**
@@ -1865,30 +1880,12 @@ public class GUI extends javax.swing.JFrame {
    }//GEN-LAST:event_runAcqButton_ActionPerformed
 
    private void newExploreWindowButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newExploreWindowButton_ActionPerformed
-      if (!AffineTransformUtils.isAffineTransformDefined()) {
-         ReportingUtils.showError("XY Stage and Camera are not calibrated to each other."
-                 + " \nOpen \"Devices--Pixel size calibration\" and set up Affine transform");
-         throw new RuntimeException();
-      }
       double zStep = ((Number) exploreZStepSpinner_.getValue()).doubleValue();
       double overlap = (Double) tileOverlapSpinner_.getValue();
       String dir = globalSavingDirTextField_.getText();
       String name = exploreSavingNameTextField_.getText();
       String cGroup = (String) exploreChannelGroupCombo_.getSelectedItem();
-
-      ExploreAcqSettings settings = new ExploreAcqSettings(dir, name, cGroup, zStep, overlap);
-      //check for abort of existing explore acquisition
-      //abort existing explore acq if needed
-      if (exploreAcq_ != null && !exploreAcq_.isFinished()) {
-         int result = JOptionPane.showConfirmDialog(null, "Finish exisiting explore acquisition?", "Finish Current Explore Acquisition", JOptionPane.OK_CANCEL_OPTION);
-         if (result == JOptionPane.OK_OPTION) {
-            exploreAcq_.abort();
-         } else {
-            return;
-         }
-      }
-      exploreAcq_ = new ExploreAcquisition(settings, new MagellanDataManager(settings.dir_, settings.name_, true));
-      exploreAcq_.start();
+      MagellanAcquisitionsManager.getInstance().createExploreAcquisition(zStep, overlap, dir, name, cGroup).start();
    }//GEN-LAST:event_newExploreWindowButton_ActionPerformed
 
    private void exploreZStepSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_exploreZStepSpinner_StateChanged
@@ -2274,6 +2271,7 @@ public class GUI extends javax.swing.JFrame {
    private javax.swing.JSpinner zStartSpinner_;
    private javax.swing.JLabel zStepLabel_;
    private javax.swing.JSpinner zStepSpinner_;
+
    // End of variables declaration//GEN-END:variables
 
 }

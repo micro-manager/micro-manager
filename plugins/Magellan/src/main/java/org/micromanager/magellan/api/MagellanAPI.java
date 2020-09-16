@@ -1,8 +1,7 @@
 package org.micromanager.magellan.api;
 
 import java.awt.geom.Point2D;
-import java.util.ArrayList;
-import java.util.List;
+
 import org.micromanager.acqj.api.Acquisition;
 import org.micromanager.magellan.internal.magellanacq.MagellanAcquisitionsManager;
 import org.micromanager.magellan.internal.gui.GUI;
@@ -28,6 +27,15 @@ public class MagellanAPI {
 
    public Acquisition createAcquisition(int index) {
       return acqManager_.createAcquisition(index);
+   }
+
+   public Acquisition createExploreAcquisition() {
+      double zStep = GUI.getInstance().getExploreZStep();
+      double overlap = GUI.getInstance().getOverlap();
+      String dir = GUI.getInstance().getSavingDir();
+      String name = GUI.getInstance().getExploreSavingName();
+      String cGroup = GUI.getInstance().getExploreChannelGroup();
+      return acqManager_.createExploreAcquisition(zStep, overlap, dir, name, cGroup);
    }
    
    public MagellanAcquisitionSettingsAPI getAcquisitionSettings(int index) {
