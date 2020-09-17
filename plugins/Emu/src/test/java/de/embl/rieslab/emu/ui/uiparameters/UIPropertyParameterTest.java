@@ -44,12 +44,12 @@ public class UIPropertyParameterTest {
 	public void testChangeValue() {
 		UIPropertyParamTestPanel cp = new UIPropertyParamTestPanel("My panel");
 
-		String s = "2fsdj*745+$£%$6(*&) {}~'";
+		String s = "2fsdj*745+$\u00A3%$6(*&) {}~'";
 		cp.parameter.setStringValue(s);
 		assertEquals(s, cp.parameter.getStringValue());	
 		assertEquals(s, cp.parameter.getValue());	
 
-		s = "£$sdjdsn";
+		s = "\u00A3$sdjdsn";
 		cp.parameter.setValue(s);
 		assertEquals(s, cp.parameter.getStringValue());	
 		assertEquals(s, cp.parameter.getValue());	
