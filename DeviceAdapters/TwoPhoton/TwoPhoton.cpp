@@ -1131,11 +1131,11 @@ void BitFlowCamera::GetCosineWarpLUT(vector<int> &new_pixel, int image_width, in
 
    /*
    Dec 2006
-   PixelsPerLine = 127.0 * FREQ – FREQ can be varied by the user 
+   PixelsPerLine = 127.0 * FREQ - FREQ can be varied by the user 
    127 = usecond for the line scan and FREQ = the acquisition H clock frequency. 
    Thus for the Raven and CRS mirror this = 127 x 12 = 1524 ppl
 
-   angle_factor= 360/PixelsPerline – this is what is used now 
+   angle_factor= 360/PixelsPerline - this is what is used now 
 
    1. First convert the image pixel location to a degree location
    This is done from the right side of the image as this is the
@@ -1177,7 +1177,7 @@ void BitFlowCamera::GetCosineWarpLUT(vector<int> &new_pixel, int image_width, in
    The pixel of the image where the distortion factor = 1 is at angle time 0 (or phase 0) and is 
 	= (FREQx127.0)/4  (pixels per line/4)
    However this must be expressed relative to position where the distortion is the greatest at time, T or Phase Pie/2)
-	Correct Image Center position = PPL/2 – FREQx127/4
+	Correct Image Center position = PPL/2 - FREQx127/4
    */
 
    //printf("\nCenter pixel = %d, correlation factor = %f",center_pixel,lowest_factor);
