@@ -1084,120 +1084,108 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
    }
 
    private void updateGUIFromSequenceSettings(final SequenceSettings sequenceSettings) {
-      if (disableGUItoSettings_)
-      {
+      if (disableGUItoSettings_) {
          return;
       }
       disableGUItoSettings_ = true;
 
-      numFrames_.setValue( sequenceSettings.numFrames() );
-      timeUnitCombo_.setSelectedIndex( sequenceSettings.displayTimeUnit() );
-      interval_.setText( numberFormat_.format( convertMsToTime(
+      numFrames_.setValue(sequenceSettings.numFrames());
+      timeUnitCombo_.setSelectedIndex(sequenceSettings.displayTimeUnit());
+      interval_.setText(numberFormat_.format(convertMsToTime(
               sequenceSettings.intervalMs(),
-              timeUnitCombo_.getSelectedIndex() ) ) );
+              timeUnitCombo_.getSelectedIndex())));
 
       boolean framesEnabled = sequenceSettings.useFrames();
-      framesPanel_.setSelected( framesEnabled );
-      defaultTimesPanel_.setVisible( !framesEnabled );
-      customTimesPanel_.setVisible( framesEnabled );
+      framesPanel_.setSelected(framesEnabled);
+      defaultTimesPanel_.setVisible(!framesEnabled);
+      customTimesPanel_.setVisible(framesEnabled);
 
       boolean isCustom = sequenceSettings.useCustomIntervals();
-      defaultTimesPanel_.setVisible( !isCustom );
-      customTimesPanel_.setVisible( isCustom );
+      defaultTimesPanel_.setVisible(!isCustom);
+      customTimesPanel_.setVisible(isCustom);
 
-      positionsPanel_.setSelected( sequenceSettings.usePositionList() );
+      positionsPanel_.setSelected(sequenceSettings.usePositionList());
 
-      zBottom_.setText( NumberUtils.doubleToDisplayString( sequenceSettings.sliceZBottomUm() ) );
-      zTop_.setText( NumberUtils.doubleToDisplayString( sequenceSettings.sliceZTopUm() ) );
-      zStep_.setText( NumberUtils.doubleToDisplayString( sequenceSettings.sliceZStepUm() ) );
-      zBottom_.setEnabled( sequenceSettings.useSlices() );
-      zTop_.setEnabled( sequenceSettings.useSlices() );
-      zStep_.setEnabled( sequenceSettings.useSlices() );
-      zValCombo_.setEnabled( sequenceSettings.useSlices() );
+      zBottom_.setText(NumberUtils.doubleToDisplayString(sequenceSettings.sliceZBottomUm()));
+      zTop_.setText(NumberUtils.doubleToDisplayString(sequenceSettings.sliceZTopUm()));
+      zStep_.setText(NumberUtils.doubleToDisplayString(sequenceSettings.sliceZStepUm()));
+      zBottom_.setEnabled(sequenceSettings.useSlices());
+      zTop_.setEnabled(sequenceSettings.useSlices());
+      zStep_.setEnabled(sequenceSettings.useSlices());
+      zValCombo_.setEnabled(sequenceSettings.useSlices());
       zRelativeAbsolute_ = sequenceSettings.relativeZSlice() ? 0 : 1;
-      zValCombo_.setSelectedIndex( zRelativeAbsolute_ );
-      stackKeepShutterOpenCheckBox_.setSelected( sequenceSettings.keepShutterOpenSlices() );
-      slicesPanel_.setSelected( sequenceSettings.useSlices() );
+      zValCombo_.setSelectedIndex(zRelativeAbsolute_);
+      stackKeepShutterOpenCheckBox_.setSelected(sequenceSettings.keepShutterOpenSlices());
+      slicesPanel_.setSelected(sequenceSettings.useSlices());
 
-      afPanel_.setSelected( sequenceSettings.useAutofocus() );
+      afPanel_.setSelected(sequenceSettings.useAutofocus());
 
-      channelsPanel_.setSelected( sequenceSettings.useChannels() );
-      channelGroupCombo_.setSelectedItem( sequenceSettings.channelGroup() );
-      acqEng_.setChannelGroup( sequenceSettings.channelGroup() );
-      model_.setChannels( sequenceSettings.channels() );
+      channelsPanel_.setSelected(sequenceSettings.useChannels());
+      channelGroupCombo_.setSelectedItem(sequenceSettings.channelGroup());
+      acqEng_.setChannelGroup(sequenceSettings.channelGroup());
+      model_.setChannels(sequenceSettings.channels());
       model_.fireTableStructureChanged();
-      chanKeepShutterOpenCheckBox_.setSelected( sequenceSettings.keepShutterOpenChannels() );
-      channelTable_.setAutoResizeMode( JTable.AUTO_RESIZE_ALL_COLUMNS );
+      chanKeepShutterOpenCheckBox_.setSelected(sequenceSettings.keepShutterOpenChannels());
+      channelTable_.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
       boolean selected = channelsPanel_.isSelected();
-      channelTable_.setEnabled( selected );
-      channelTable_.getTableHeader().setForeground( selected ? Color.black : Color.gray );
+      channelTable_.setEnabled(selected);
+      channelTable_.getTableHeader().setForeground(selected ? Color.black : Color.gray);
 
-      for ( AcqOrderMode mode : acqOrderModes_ )
-      {
-         mode.setEnabled( framesPanel_.isSelected(), positionsPanel_.isSelected(),
-                 slicesPanel_.isSelected(), channelsPanel_.isSelected() );
+      for (AcqOrderMode mode : acqOrderModes_) {
+         mode.setEnabled(framesPanel_.isSelected(), positionsPanel_.isSelected(),
+                 slicesPanel_.isSelected(), channelsPanel_.isSelected());
       }
       // add correct acquisition order options
       int selectedIndex = sequenceSettings.acqOrderMode();
       acqOrderBox_.removeAllItems();
-      if ( framesPanel_.isSelected() && positionsPanel_.isSelected()
-              && slicesPanel_.isSelected() && channelsPanel_.isSelected() )
-      {
-         acqOrderBox_.addItem( acqOrderModes_[ 0 ] );
-         acqOrderBox_.addItem( acqOrderModes_[ 1 ] );
-         acqOrderBox_.addItem( acqOrderModes_[ 2 ] );
-         acqOrderBox_.addItem( acqOrderModes_[ 3 ] );
+      if (framesPanel_.isSelected() && positionsPanel_.isSelected()
+              && slicesPanel_.isSelected() && channelsPanel_.isSelected()) {
+         acqOrderBox_.addItem(acqOrderModes_[0]);
+         acqOrderBox_.addItem(acqOrderModes_[1]);
+         acqOrderBox_.addItem(acqOrderModes_[2]);
+         acqOrderBox_.addItem(acqOrderModes_[3]);
       }
-      else if ( framesPanel_.isSelected() && positionsPanel_.isSelected() )
-      {
-         if ( selectedIndex == 0 || selectedIndex == 2 )
-         {
-            acqOrderBox_.addItem( acqOrderModes_[ 0 ] );
-            acqOrderBox_.addItem( acqOrderModes_[ 2 ] );
+      else if (framesPanel_.isSelected() && positionsPanel_.isSelected()) {
+         if (selectedIndex == 0 || selectedIndex == 2) {
+            acqOrderBox_.addItem(acqOrderModes_[0]);
+            acqOrderBox_.addItem(acqOrderModes_[2]);
          }
-         else
-         {
-            acqOrderBox_.addItem( acqOrderModes_[ 1 ] );
-            acqOrderBox_.addItem( acqOrderModes_[ 3 ] );
+         else {
+            acqOrderBox_.addItem(acqOrderModes_[1]);
+            acqOrderBox_.addItem(acqOrderModes_[3]);
          }
       }
-      else if ( channelsPanel_.isSelected() && slicesPanel_.isSelected() )
-      {
-         if ( selectedIndex == 0 || selectedIndex == 1 )
-         {
-            acqOrderBox_.addItem( acqOrderModes_[ 0 ] );
-            acqOrderBox_.addItem( acqOrderModes_[ 1 ] );
+      else if (channelsPanel_.isSelected() && slicesPanel_.isSelected()) {
+         if (selectedIndex == 0 || selectedIndex == 1) {
+            acqOrderBox_.addItem(acqOrderModes_[0]);
+            acqOrderBox_.addItem(acqOrderModes_[1]);
          }
-         else
-         {
-            acqOrderBox_.addItem( acqOrderModes_[ 2 ] );
-            acqOrderBox_.addItem( acqOrderModes_[ 3 ] );
+         else {
+            acqOrderBox_.addItem(acqOrderModes_[2]);
+            acqOrderBox_.addItem(acqOrderModes_[3]);
          }
       }
-      else
-      {
-         acqOrderBox_.addItem( acqOrderModes_[ selectedIndex ] );
+      else {
+         acqOrderBox_.addItem(acqOrderModes_[selectedIndex]);
       }
-      acqOrderBox_.setSelectedItem( acqOrderModes_[ sequenceSettings.acqOrderMode() ] );
+      acqOrderBox_.setSelectedItem(acqOrderModes_[sequenceSettings.acqOrderMode()]);
 
-      savePanel_.setSelected( sequenceSettings.save() );
-      nameField_.setText( sequenceSettings.prefix() );
-      rootField_.setText( sequenceSettings.root() );
+      savePanel_.setSelected(sequenceSettings.save());
+      nameField_.setText(sequenceSettings.prefix());
+      rootField_.setText(sequenceSettings.root());
 
-      commentTextArea_.setText( sequenceSettings.comment() );
+      commentTextArea_.setText(sequenceSettings.comment());
 
-      DefaultDatastore.setPreferredSaveMode( mmStudio_, sequenceSettings.saveMode() );
-      if ( sequenceSettings.saveMode() == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES )
-      {
-         singleButton_.setSelected( true );
+      DefaultDatastore.setPreferredSaveMode(mmStudio_, sequenceSettings.saveMode());
+      if (sequenceSettings.saveMode() == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
+         singleButton_.setSelected(true);
       }
-      else if ( sequenceSettings.saveMode() == Datastore.SaveMode.MULTIPAGE_TIFF )
-      {
-         multiButton_.setSelected( true );
+      else if (sequenceSettings.saveMode() == Datastore.SaveMode.MULTIPAGE_TIFF) {
+         multiButton_.setSelected(true);
       }
 
       // update summary
-      summaryTextArea_.setText( acqEng_.getVerboseSummary() );
+      summaryTextArea_.setText(acqEng_.getVerboseSummary());
 
       framesPanel_.repaint();
       positionsPanel_.repaint();
