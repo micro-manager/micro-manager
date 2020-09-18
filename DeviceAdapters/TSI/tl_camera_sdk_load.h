@@ -6,7 +6,7 @@ extern "C"
 #endif
 	
 /// <summary>
-/// Loads and initializes the SDK DLL.
+/// Loads and initializes the SDK DLL. MODIFIED FOR MICROMANAGER.
 /// </summary>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
 int tl_camera_sdk_dll_initialize(const char* sdk_path);
