@@ -1,4 +1,3 @@
-#pragma warning( disable : 4055)
 #include "tl_camera_sdk.h"
 
 #ifndef THORLABS_TSI_BUILD_DLL
@@ -92,6 +91,22 @@ TL_CAMERA_ARM tl_camera_arm;
 TL_CAMERA_ISSUE_SOFTWARE_TRIGGER tl_camera_issue_software_trigger;
 TL_CAMERA_DISARM tl_camera_disarm;
 TL_CAMERA_GET_POLAR_PHASE tl_camera_get_polar_phase;
+TL_CAMERA_GET_TAPS tl_camera_get_taps;
+TL_CAMERA_SET_TAPS tl_camera_set_taps;
+TL_CAMERA_GET_TAP_BALANCE_ENABLE tl_camera_get_tap_balance_enable;
+TL_CAMERA_SET_TAP_BALANCE_ENABLE tl_camera_set_tap_balance_enable;
+TL_CAMERA_GET_NIR_BOOST_ENABLE tl_camera_get_nir_boost_enable;
+TL_CAMERA_SET_NIR_BOOST_ENABLE tl_camera_set_nir_boost_enable;
+TL_CAMERA_GET_COOLING_ENABLE tl_camera_get_cooling_enable;
+TL_CAMERA_SET_COOLING_ENABLE tl_camera_set_cooling_enable;
+TL_CAMERA_GET_FRAME_RATE_CONTROL_VALUE_RANGE tl_camera_get_frame_rate_control_value_range;
+TL_CAMERA_GET_IS_FRAME_RATE_CONTROL_ENABLED tl_camera_get_is_frame_rate_control_enabled;
+TL_CAMERA_SET_FRAME_RATE_CONTROL_VALUE tl_camera_set_frame_rate_control_value;
+TL_CAMERA_SET_IS_FRAME_RATE_CONTROL_ENABLED tl_camera_set_is_frame_rate_control_enabled;
+TL_CAMERA_GET_FRAME_RATE_CONTROL_VALUE tl_camera_get_frame_rate_control_value;
+TL_CAMERA_GET_TIMESTAMP_CLOCK_FREQUENCY tl_camera_get_timestamp_clock_frequency;
+TL_CAMERA_CONVERT_GAIN_TO_DECIBELS tl_camera_convert_gain_to_decibels;
+TL_CAMERA_CONVERT_DECIBELS_TO_GAIN tl_camera_convert_decibels_to_gain;
 
 typedef void* (*TL_GET_FUNCTION) (char*);
 typedef void(*TL_MODULE_INITIALIZE)();
@@ -214,6 +229,21 @@ static void init_camera_sdk_function_pointers()
 	tl_camera_issue_software_trigger = 0;
 	tl_camera_disarm = 0;
 	tl_camera_get_polar_phase = 0;
+    tl_camera_get_taps = 0;
+    tl_camera_set_taps = 0;
+    tl_camera_get_tap_balance_enable = 0;
+    tl_camera_set_tap_balance_enable = 0;
+    tl_camera_get_nir_boost_enable = 0;
+    tl_camera_set_nir_boost_enable = 0;
+    tl_camera_get_cooling_enable = 0;
+    tl_camera_set_cooling_enable = 0;
+	tl_camera_get_frame_rate_control_value_range = 0;
+	tl_camera_get_is_frame_rate_control_enabled = 0;
+	tl_camera_set_frame_rate_control_value = 0;
+	tl_camera_set_is_frame_rate_control_enabled = 0;
+	tl_camera_get_frame_rate_control_value = 0;
+	tl_camera_get_timestamp_clock_frequency = 0;
+	tl_camera_convert_gain_to_decibels = 0;
 }
 
 static int init_error_cleanup()
@@ -262,7 +292,7 @@ int tl_camera_sdk_dll_initialize(const char* sdk_path)
 #ifdef _WIN32
 	// "thorlabs_unified_sdk_kernel.dll");
 	kernel_obj = LoadLibraryA(sdk_path);
-//	int lastError = GetLastError();
+	//	int lastError = GetLastError();
 	if (!kernel_obj)
 	{
 		return (init_error_cleanup());
@@ -398,7 +428,7 @@ int tl_camera_sdk_dll_initialize(const char* sdk_path)
 		return (init_error_cleanup());
 	}
 
-	tl_camera_get_exposure_time_range = (TL_CAMERA_GET_EXPOSURE_RANGE)get_module_function(sdk_handle, "tl_camera_get_exposure_time_range");
+	tl_camera_get_exposure_time_range = (TL_CAMERA_GET_EXPOSURE_TIME_RANGE)get_module_function(sdk_handle, "tl_camera_get_exposure_time_range");
 	if (!tl_camera_get_exposure_time_range)
 	{
 		return (init_error_cleanup());
@@ -865,6 +895,102 @@ int tl_camera_sdk_dll_initialize(const char* sdk_path)
 	{
 		return (init_error_cleanup());
 	}
+
+    tl_camera_get_taps = (TL_CAMERA_GET_TAPS)get_module_function(sdk_handle, "tl_camera_get_taps");
+    if (!tl_camera_get_taps)
+    {
+        return (init_error_cleanup());
+    }
+
+    tl_camera_set_taps = (TL_CAMERA_SET_TAPS)get_module_function(sdk_handle, "tl_camera_set_taps");
+    if (!tl_camera_set_taps)
+    {
+        return (init_error_cleanup());
+    }
+
+    tl_camera_get_tap_balance_enable = (TL_CAMERA_GET_TAP_BALANCE_ENABLE)get_module_function(sdk_handle, "tl_camera_get_tap_balance_enable");
+    if (!tl_camera_get_tap_balance_enable)
+    {
+        return (init_error_cleanup());
+    }
+
+    tl_camera_set_tap_balance_enable = (TL_CAMERA_SET_TAP_BALANCE_ENABLE)get_module_function(sdk_handle, "tl_camera_set_tap_balance_enable");
+    if (!tl_camera_set_tap_balance_enable)
+    {
+        return (init_error_cleanup());
+    }
+
+    tl_camera_get_nir_boost_enable = (TL_CAMERA_GET_NIR_BOOST_ENABLE)get_module_function(sdk_handle, "tl_camera_get_nir_boost_enable");
+    if (!tl_camera_get_nir_boost_enable)
+    {
+        return (init_error_cleanup());
+    }
+
+    tl_camera_set_nir_boost_enable = (TL_CAMERA_SET_NIR_BOOST_ENABLE)get_module_function(sdk_handle, "tl_camera_set_nir_boost_enable");
+    if (!tl_camera_set_nir_boost_enable)
+    {
+        return (init_error_cleanup());
+    }
+
+    tl_camera_get_cooling_enable = (TL_CAMERA_GET_COOLING_ENABLE)get_module_function(sdk_handle, "tl_camera_get_cooling_enable");
+    if (!tl_camera_get_cooling_enable)
+    {
+        return (init_error_cleanup());
+    }
+
+    tl_camera_set_cooling_enable = (TL_CAMERA_SET_COOLING_ENABLE)get_module_function(sdk_handle, "tl_camera_set_cooling_enable");
+    if (!tl_camera_set_cooling_enable)
+    {
+        return (init_error_cleanup());
+    }
+
+	tl_camera_get_frame_rate_control_value_range = (TL_CAMERA_GET_FRAME_RATE_CONTROL_VALUE_RANGE)get_module_function(sdk_handle, "tl_camera_get_frame_rate_control_value_range");
+	if (!tl_camera_get_frame_rate_control_value_range)
+    {
+        return (init_error_cleanup());
+    }
+	
+	tl_camera_get_is_frame_rate_control_enabled = (TL_CAMERA_GET_IS_FRAME_RATE_CONTROL_ENABLED)get_module_function(sdk_handle, "tl_camera_get_is_frame_rate_control_enabled");
+	if (!tl_camera_get_is_frame_rate_control_enabled)
+	{
+		return (init_error_cleanup());
+	}
+
+	tl_camera_set_frame_rate_control_value = (TL_CAMERA_SET_FRAME_RATE_CONTROL_VALUE)get_module_function(sdk_handle, "tl_camera_set_frame_rate_control_value");
+	if (!tl_camera_set_frame_rate_control_value)
+	{
+		return (init_error_cleanup());
+	}
+
+	tl_camera_set_is_frame_rate_control_enabled = (TL_CAMERA_SET_IS_FRAME_RATE_CONTROL_ENABLED)get_module_function(sdk_handle, "tl_camera_set_is_frame_rate_control_enabled");
+	if (!tl_camera_set_is_frame_rate_control_enabled)
+	{
+		return (init_error_cleanup());
+	}
+
+	tl_camera_get_frame_rate_control_value = (TL_CAMERA_GET_FRAME_RATE_CONTROL_VALUE)get_module_function(sdk_handle, "tl_camera_get_frame_rate_control_value");
+	if (!tl_camera_get_frame_rate_control_value)
+	{
+		return (init_error_cleanup());
+	}
+
+	tl_camera_get_timestamp_clock_frequency = (TL_CAMERA_GET_TIMESTAMP_CLOCK_FREQUENCY)get_module_function(sdk_handle, "tl_camera_get_timestamp_clock_frequency");
+	if (!tl_camera_get_timestamp_clock_frequency)
+	{
+		return (init_error_cleanup());
+	}
+
+	tl_camera_convert_gain_to_decibels = (TL_CAMERA_CONVERT_GAIN_TO_DECIBELS)get_module_function(sdk_handle, "tl_camera_convert_gain_to_decibels");
+	if (!tl_camera_convert_gain_to_decibels)
+	{
+		return (init_error_cleanup());
+	}
+
+    tl_camera_convert_decibels_to_gain = (TL_CAMERA_CONVERT_DECIBELS_TO_GAIN)get_module_function(sdk_handle, "tl_camera_convert_decibels_to_gain");
+    if (!tl_camera_convert_decibels_to_gain)
+    {
+        return (init_error_cleanup());
+    }
 
 	return (0);
 }
