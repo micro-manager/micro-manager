@@ -3572,12 +3572,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
             final Vector3D zeroPoint = new Vector3D(0.0, 0.0, 0.0);  // cache a zero point for efficiency
             
-            // explicit check that PI stage has arrived
-            if (devices_.isValidMMDevice(Devices.Keys.SUPPLEMENTAL_X) &&
-                  devices_.getMMDeviceLibrary(Devices.Keys.SUPPLEMENTAL_X) == Devices.Libraries.PI_GCS_2) {
-               core_.waitForDevice(devices_.getMMDevice(Devices.Keys.SUPPLEMENTAL_X));
-            }
-            
             // make sure all devices have arrived, e.g. a stage isn't still moving
             try {
                core_.waitForSystem();
@@ -3590,10 +3584,21 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                }
             }
             
-            // make sure the PI stage isn't busy still; if so then assume it's a hard error
+            // make sure the PI stage doesn't stay busy for more than 3 seconds; if so then assume it's a hard error
             if (devices_.isValidMMDevice(Devices.Keys.SUPPLEMENTAL_X) &&
                   devices_.getMMDeviceLibrary(Devices.Keys.SUPPLEMENTAL_X) == Devices.Libraries.PI_GCS_2) {
-               if (core_.deviceBusy(devices_.getMMDevice(Devices.Keys.SUPPLEMENTAL_X))) {
+               boolean busy = true;
+               int count = 0;
+               final int totalTimeMs = 3000;
+               final int sleepTimeMs = 25;
+               while (busy && (count < (totalTimeMs/sleepTimeMs))) {
+                  busy = core_.deviceBusy(devices_.getMMDevice(Devices.Keys.SUPPLEMENTAL_X));
+                  if (busy) {
+                     count++;
+                     Thread.sleep(sleepTimeMs);
+                  }
+               }
+               if (busy) {
                   acquisitionStatus_ = AcquisitionStatus.FATAL_ERROR;
                   throw new Exception("PI stage reporting busy; force-quit acquisition");
                }
