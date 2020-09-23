@@ -44,6 +44,8 @@ import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.BevelBorder;
 import javax.swing.table.TableColumn;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import net.miginfocom.swing.MigLayout;
@@ -275,6 +277,13 @@ public abstract class ConfigDialog extends MMDialog {
 
       add(topMidPanel, "flowx, split 2");
       add(topRightPanel, "gapleft push, flowx");
+
+      // Override x button to make it have same behavior as Cancel button
+      this.addWindowListener(new WindowAdapter()
+      {
+         @Override
+         public void windowClosing(WindowEvent e) { dispose(); }
+      });
    }
 
    public void initializePropertyTable() {
