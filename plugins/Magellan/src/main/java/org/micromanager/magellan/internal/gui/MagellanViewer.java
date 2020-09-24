@@ -17,6 +17,7 @@ import javax.swing.JPanel;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.acqj.api.AcqEngMetadata;
 import org.micromanager.magellan.internal.gui.ExploreControlsPanel;
+import org.micromanager.magellan.internal.magellanacq.ExploreAcquisition;
 import org.micromanager.magellan.internal.magellanacq.MagellanDataManager;
 import org.micromanager.magellan.internal.magellanacq.MagellanMD;
 import org.micromanager.magellan.internal.main.Magellan;
@@ -43,7 +44,7 @@ public class MagellanViewer implements ViewerInterface {
       viewer_ = new NDViewer(cache, acq, summmaryMD, MagellanMD.getPixelSizeUm(summmaryMD), MagellanMD.isRGB(summmaryMD)) {
             public void setImageEvent(HashMap<String, Integer> axes, boolean fromHuman) {
                super.setImageEvent(axes, fromHuman);
-               if (axes.containsKey(AcqEngMetadata.Z_AXIS)) {
+               if (axes.containsKey(AcqEngMetadata.Z_AXIS) && acq instanceof ExploreAcquisition) {
                   Integer i = axes.get(AcqEngMetadata.Z_AXIS);
                   cache.updateExploreZControls(i);
                }
