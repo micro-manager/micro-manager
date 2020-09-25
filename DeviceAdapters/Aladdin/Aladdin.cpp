@@ -132,17 +132,20 @@ int AladdinController::Initialize()
 {
    this->LogMessage("AladdinController::Initialize()");
 
-   GeneratePropertyVolume();
-   GeneratePropertyDiameter();
-   GeneratePropertyRate();
-   GeneratePropertyDirection();
-   GeneratePropertyRun();
-   
-   CreateDefaultProgram();
+   // Check if the device is connected. If not, return immediately without doing any initialization.
+   Purge();
+   if(error_ != DEVICE_SERIAL_COMMAND_FAILED) {
+      GeneratePropertyVolume();
+      GeneratePropertyDiameter();
+      GeneratePropertyRate();
+      GeneratePropertyDirection();
+      GeneratePropertyRun();
+      
+      CreateDefaultProgram();
 
-   initialized_ = true;
+      initialized_ = true;
+   }
    return HandleErrors();
-
 }
 
 /////////////////////////////////////////////
