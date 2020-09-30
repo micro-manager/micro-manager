@@ -93,6 +93,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.event.WindowFocusListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -312,6 +313,22 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), "MDA");
 
       mmStudio_.events().registerForEvents(this);
+
+      // when focus is lots, ensure that channel cell editors close
+      WindowFocusListener windowFocusListener = new WindowFocusListener() {
+         @Override
+         public void windowGainedFocus(WindowEvent e) {
+         }
+         @Override
+         public void windowLostFocus(WindowEvent e) {
+            // may need to run the full applySettingsFromGUI()
+            AbstractCellEditor ae = (AbstractCellEditor) channelTable_.getCellEditor();
+            if (ae != null) {
+               ae.stopCellEditing();
+            }
+         }
+      };
+      super.addWindowFocusListener(windowFocusListener);
    }
 
 
