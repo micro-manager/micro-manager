@@ -63,12 +63,12 @@ public final class ReportingUtils {
       }
 
       @Override
-      public void logError(Exception e, String msg) {
+      public void logError(Throwable e, String msg) {
          ReportingUtils.logError(e, msg);
       }
 
       @Override
-      public void logError(Exception e) {
+      public void logError(Throwable e) {
          ReportingUtils.logError(e);
       }
 
@@ -78,12 +78,12 @@ public final class ReportingUtils {
       }
 
       @Override
-      public void showError(Exception e, String msg) {
+      public void showError(Throwable e, String msg) {
          ReportingUtils.showError(e, msg);
       }
 
       @Override
-      public void showError(Exception e) {
+      public void showError(Throwable e) {
          ReportingUtils.showError(e);
       }
 
@@ -93,12 +93,12 @@ public final class ReportingUtils {
       }
 
       @Override
-      public void showError(Exception e, String msg, Component parent) {
+      public void showError(Throwable e, String msg, Component parent) {
          ReportingUtils.showError(e, msg, parent);
       }
 
       @Override
-      public void showError(Exception e, Component parent) {
+      public void showError(Throwable e, Component parent) {
          ReportingUtils.showError(e, parent);
       }
 

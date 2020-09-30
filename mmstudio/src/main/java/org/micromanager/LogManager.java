@@ -55,13 +55,13 @@ public interface LogManager {
     * @param e - Java exception to be logged
     * @param msg - message to be shown
     */
-   public void logError(Exception e, String msg);
+   public void logError(Throwable e, String msg);
 
    /**
     * Writes a stacktrace to the Micro-Manager log.
     * @param e - Java exception to be logged
     */
-   public void logError(Exception e);
+   public void logError(Throwable e);
 
    /**
     * Writes an error to the Micro-Manager log (same as logMessage).
@@ -74,13 +74,13 @@ public interface LogManager {
     * @param e - Java exception to be shown and logged
     * @param msg - Error message to be shown and logged
     */
-   public void showError(Exception e, String msg);
+   public void showError(Throwable e, String msg);
 
    /**
     * Shows and logs a Java exception.
-    * @param e - Java excpetion to be shown and logged
+    * @param e - Java exception to be shown and logged
     */
-   public void showError(Exception e);
+   public void showError(Throwable e);
 
    /**
     * Shows an error message in the UI and logs to the Micro-Manager log.
@@ -94,14 +94,14 @@ public interface LogManager {
     * @param msg - Error message to be shown and logged
     * @param parent - frame in which to show dialog, or null for caller
     */
-   public void showError(Exception e, String msg, Component parent);
+   public void showError(Throwable e, String msg, Component parent);
 
    /**
     * Shows and logs a Java exception.
     * @param e - Java exception to be shown and logged
     * @param parent - frame in which to show dialog, or null for caller
     */
-   public void showError(Exception e, Component parent);
+   public void showError(Throwable e, Component parent);
 
    /**
     * Shows an error message in the UI and logs to the Micro-Manager log.
