@@ -53,6 +53,7 @@ import org.micromanager.Studio;
 // maintainability. However, this plugin code is older than the current
 // MMStudio API, so it still uses internal classes and interfaces. New code
 // should not imitate this practice.
+import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultImage;
 
 /**
@@ -63,6 +64,8 @@ public class ShadingProcessor extends Processor {
 
    private final Studio studio_;
    private final String channelGroup_;
+   private SummaryMetadata summaryMetadata_;
+   private boolean match_ = true;
    private Boolean useOpenCL_;
    private final List<String> presets_;
    private final ImageCollection imageCollection_;
@@ -116,20 +119,54 @@ public class ShadingProcessor extends Processor {
    }
 
    // Classes used to classify alerts in the processImage function below
-   private class Not8or16BitClass {   }
+   private static class Not8or16BitClass {   }
 
-   private class NoBinningInfoClass {   }
+   private static class NoBinningInfoClass {   }
 
-   private class NoRoiClass {   }
+   private static class NoRoiClass {   }
 
-   private class NoBackgroundForThisBinModeClass {   }
+   private static class NoBackgroundForThisBinModeClass {   }
 
-   private class ErrorSubtractingClass {   }
+   private static class ErrorSubtractingClass {   }
+
+   private static class NotFlatFieldedClass {   }
    
-   private class ErrorInOpenCLClass {}
+   private static class ErrorInOpenCLClass {}
+
+   @Override
+   public SummaryMetadata processSummaryMetadata(SummaryMetadata source) {
+      summaryMetadata_ = source;
+      match_ = false;
+      if (channelGroup_.equals(summaryMetadata_.getChannelGroup()) ) {
+         for (String imagePreset : summaryMetadata_.getChannelNameList()) {
+            for (String preset : presets_) {
+               if (preset.equals(imagePreset)) {
+                  match_ = true;
+               }
+            }
+         }
+      }
+      if (!match_) {
+         StringBuilder presetB = new StringBuilder();
+         List<String> channelList = summaryMetadata_.getChannelNameList();
+         for (int i = 0; i < channelList.size() - 1; i++) {
+            presetB.append(channelList.get(i)).append(",");
+         }
+         if (channelList.size() > 0) {
+            presetB.append(channelList.get(channelList.size() - 1));
+         }
+         studio_.logs().showError("No matching channel and group found.  Add group " +
+                 summaryMetadata_.getChannelGroup() + " and preset(s): " + presetB.toString());
+      }
+      return source;
+   }
 
    @Override
    public void processImage(Image image, ProcessorContext context) {
+      if (!match_) {
+         context.outputImage(image);
+         return;
+      }
       int width = image.getWidth();
       int height = image.getHeight();
 
@@ -170,7 +207,7 @@ public class ShadingProcessor extends Processor {
       }
 
       ImagePlusInfo flatFieldImage = getMatchingFlatFieldImage(
-              metadata, binning, rect);
+              image, binning, rect);
 
       if (useOpenCL_) {
          try {
@@ -192,11 +229,13 @@ public class ShadingProcessor extends Processor {
             // and background:
             if (background != null && flatFieldImage == null) {
                clBackground = background.getCLBuffer(cclContext_);
-               // need to use different kernels for differe types
+               // need to use different kernels for different types
                ClearCLKernel lKernel = cclProgram_.createKernel("subtract" + suffix);
                lKernel.setArguments(clImg, clBackground);
                lKernel.setGlobalSizes(clImg);
                lKernel.run();
+               String msg = "MultiShadingPlugin: Only background subtracted (no flatfield found).";
+               studio_.alerts().postAlert(MultiChannelShading.MENUNAME, NotFlatFieldedClass.class, msg);
             } else if (background == null && flatFieldImage != null) {
                clFlatField = flatFieldImage.getCLBuffer(cclContext_);
                ClearCLKernel lKernel = cclProgram_.createKernel("multiply" + suffix + "F");
@@ -232,7 +271,7 @@ public class ShadingProcessor extends Processor {
          try {
             ip = ImageUtils.subtractImageProcessors(ip, ipBackground);
             if (userData != null) {
-               userData = userData.copy().putBoolean("Background-corrected", true).build();
+               userData = userData.copyBuilder().putBoolean("Background-corrected", true).build();
             }
          } catch (ShadingException e) {
             String msg = "Unable to subtract background: " + e.getMessage();
@@ -240,7 +279,10 @@ public class ShadingProcessor extends Processor {
                  ErrorSubtractingClass.class, msg);
          }
          bgSubtracted = studio_.data().ij().createImage(ip, image.getCoords(),
-                 metadata.copy().userData(userData).build());
+                 metadata.copyBuilderWithNewUUID().userData(userData).build());
+      } else {
+         String msg = "No background available...";
+         studio_.alerts().postAlert(MultiChannelShading.MENUNAME, NotFlatFieldedClass.class, msg);
       }
 
 
@@ -248,13 +290,15 @@ public class ShadingProcessor extends Processor {
       // just return the background-subtracted image (which is the unmodified
       // image if we also don't have a background subtraction file).
       if (flatFieldImage == null) {
+         String msg = "No flatfield found...";
+         studio_.alerts().postAlert(MultiChannelShading.MENUNAME, NotFlatFieldedClass.class, msg);
          context.outputImage(bgSubtracted);
          return;
       }
 
       if (userData != null) {
-         userData = userData.copy().putBoolean("Flatfield-corrected", true).build();
-         metadata = metadata.copy().userData(userData).build();
+         userData = userData.copyBuilder().putBoolean("Flatfield-corrected", true).build();
+         metadata = metadata.copyBuilderWithNewUUID().userData(userData).build();
       }
       
       
@@ -298,17 +342,47 @@ public class ShadingProcessor extends Processor {
 
 
    /**
-    * Given the metadata of the image currently being processed, find a matching
-    * preset from the channelgroup used by the tablemodel
+    * Given the metadata of the image currently being processed, find a match
+    * in channelgroup and channelname in our tablemodel
     *
-    * @param metadata Metadata of image being processed
+    * @param image image being processed
     * @return matching flat field image
     */
-   ImagePlusInfo getMatchingFlatFieldImage(Metadata metadata, int binning,
+   ImagePlusInfo getMatchingFlatFieldImage(Image image, int binning,
            Rectangle rect) {
-      PropertyMap scopeData = metadata.getScopeData();
+      //PropertyMap scopeData = metadata.getScopeData();
       for (String preset : presets_) {
-         try {
+         // summary metadata is set when using an existing datastore, but not for
+         // snap/live.
+         if (summaryMetadata_ != null) {
+            String imageChannelGroup = summaryMetadata_.getChannelGroup();
+            String imagePreset = summaryMetadata_.getSafeChannelName(image.getCoords().getChannel());
+            if (channelGroup_.equals(imageChannelGroup) && preset.equals(imagePreset)) {
+               try {
+                  return imageCollection_.getFlatField(preset, binning, rect);
+               } catch (ShadingException e) {
+                  studio_.logs().logError("Failed to find flatfield image for " +
+                          imageChannelGroup + "-" + imagePreset);
+               }
+            }
+         } else { // for snap/live we can rely on current settings
+            String channelGroup = studio_.core().getChannelGroup();
+            try {
+               String corePreset = studio_.core().getCurrentConfig(channelGroup);
+               if (corePreset.equals(preset)) {
+                  try {
+                     return imageCollection_.getFlatField(preset, binning, rect);
+                  } catch (ShadingException e) {
+                     studio_.logs().logError("Failed to find flatfield image for " +
+                             channelGroup + "-" + preset);
+                  }
+               }
+            } catch (Exception ex) {
+               studio_.logs().logError(ex.getMessage());
+            }
+
+         }
+/*
             Configuration config = studio_.getCMMCore().getConfigData(
                     channelGroup_, preset);
             boolean presetMatch = true;
@@ -331,6 +405,8 @@ public class ShadingProcessor extends Processor {
          } catch (Exception ex) {
             studio_.logs().logError(ex, "Exception in tag matching");
          }
+
+ */
       }
       return null;
    }
