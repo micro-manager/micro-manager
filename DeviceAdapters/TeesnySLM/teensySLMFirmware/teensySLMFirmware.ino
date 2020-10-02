@@ -10,23 +10,38 @@
 #define LINESYNC_PIN 7
 #define BAUD 57600
 
+//Define some constants for serial comm with device adapter
 const byte GLOBAL_HEADER[] = {148,169};
 const byte SHUTTER_HEADER[] = {19,119};
 const byte PATTERN_HEADER[] = {27,44};
 const byte COMMAND_SUCCESS[] = {176};
+
+// 203 of 256 lines in the scan are active, the others are for mirror flback
 const int NUM_ACTIVE_LINES = 203;
 const int MIN_ROW = 52;
 const int MAX_ROW = MIN_ROW + NUM_ACTIVE_LINES;
+
+// us per a row (which is actually 2 rows of image, since resonant scanner does forward and backward pass)
 const float TIME_PER_ROW_US = 126.206;
+
+//Look up table 
 const byte LUT_SIZE = 127;
+
+//Resolution of pattern. bilinear interpolation performed in between
 const byte PATTERN_ROWS = 8;
 const byte PATTERN_COLS = 8;
 float PHASE_SHIFT_US = 2.4;
+
+//Paramaeters of look up table, which allows the mapping of the cosine
+//function of time of the resonant scanner to be converted into a spatial position
+//It is precomputed once and stored for speed
 byte lowerBoundIndex[LUT_SIZE];
 byte weights[LUT_SIZE][2];
 byte pattern[PATTERN_ROWS * PATTERN_COLS] = {0};
 
 volatile int linescanIndex = 0;
+
+//use these for bilinear interpolation. Use ints for speed
 volatile int patternRowLowerIndex= 0;
 volatile int patternRowLowerIndexWeight = 0;
 volatile int patternRowUpperIndexWeight = 4;
