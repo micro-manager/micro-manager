@@ -1419,6 +1419,10 @@ int SpinnakerCamera::StartSequenceAcquisition(double interval)
    if (!m_aqThread->IsStopped())
       return DEVICE_CAMERA_BUSY_ACQUIRING;
 
+   int ret = GetCoreCallback()->PrepareForAcq(this);
+	if (ret != DEVICE_OK)
+		return ret;
+
    m_stopOnOverflow = false;
    m_aqThread->Start(-1, interval);
    return DEVICE_OK;
