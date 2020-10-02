@@ -49,6 +49,7 @@ import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
+import org.micromanager.events.ChannelGroupChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
@@ -67,6 +68,7 @@ import org.micromanager.internal.utils.MMDialog;
 public class MultiChannelShadingMigForm extends MMDialog implements ProcessorConfigurator {
    private  MMDialog mcsPluginWindow;
    private final Studio studio_;
+   private final PropertyMap settings_;
    private final MutablePropertyMapView profileSettings_;
    private final mmcorej.CMMCore mmc_;
    
@@ -79,6 +81,7 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
    private String groupName_;
    private String statusMessage_;
    private final Font arialSmallFont_;
+   private final JComboBox groupComboBox_;
    private final ShadingTableModel shadingTableModel_;
    private final Dimension buttonSize_;
    private final JLabel statusLabel_;
@@ -93,6 +96,7 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
    @SuppressWarnings("LeakingThisInConstructor")
    public MultiChannelShadingMigForm(PropertyMap settings, Studio studio) {
       studio_ = studio;
+      settings_ = settings;
       profileSettings_ = 
               studio_.profile().getSettings(MultiChannelShadingMigForm.class);
       imageCollection_ = new ImageCollection(studio_);
@@ -116,31 +120,35 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
       super.setTitle(MultiChannelShading.MENUNAME);
 
       super.loadAndRestorePosition(100, 100, 375, 275);
+
+      super.add(new JLabel("Uncheck and Recheck Use checkboxes in Pipeline after changing settings"),
+               "span 5, wrap");
       
       JLabel channelGroupLabel = new JLabel("Channel Group:");
       channelGroupLabel.setFont(arialSmallFont_);
       super.add(channelGroupLabel);
       
       //populate group ComboBox
-      final JComboBox groupComboBox = new JComboBox();
+      groupComboBox_ = new JComboBox();
       String[] channelGroups = mmc_.getAvailableConfigGroups().toArray();
-      groupComboBox.setModel(new javax.swing.DefaultComboBoxModel(
+      groupComboBox_.setModel(new javax.swing.DefaultComboBoxModel(
               channelGroups));
-      groupName_ = settings.getString(CHANNELGROUP,
+      groupName_ = settings_.getString(CHANNELGROUP,
             profileSettings_.getString(CHANNELGROUP, ""));
-      groupComboBox.setSelectedItem(groupName_);
-      groupComboBox.addActionListener(new java.awt.event.ActionListener() {
+      groupComboBox_.setSelectedItem(groupName_);
+      groupComboBox_.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            groupName_ = (String) groupComboBox.getSelectedItem();
+            groupName_ = (String) groupComboBox_.getSelectedItem();
             shadingTableModel_.setChannelGroup(groupName_);
             updateAddAndRemoveButtons(addButton, removeButton);
             profileSettings_.putString(CHANNELGROUP, groupName_);
             studio_.data().notifyPipelineChanged();
          }
       });
-      super.add(groupComboBox);
-      
+      super.add(groupComboBox_);
+
+
       JCheckBox useOpenCLCheckBox = new JCheckBox("Use GPU");
       useOpenCLCheckBox.setSelected(profileSettings_.getBoolean(USEOPENCL, false));
       useOpenCLCheckBox.addActionListener(new ActionListener() {
@@ -169,7 +177,7 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
       final JTextField darkFieldTextField = new JTextField(50);
       darkFieldTextField.setFont(arialSmallFont_);
       //populate darkFieldName from profile and process it.
-      darkFieldTextField.setText(settings.getString(DARKFIELDFILENAME,
+      darkFieldTextField.setText(settings_.getString(DARKFIELDFILENAME,
                profileSettings_.getString(DARKFIELDFILENAME, "")));
       darkFieldTextField.setHorizontalAlignment(JTextField.RIGHT);
       darkFieldTextField.addActionListener(new java.awt.event.ActionListener() {
@@ -384,6 +392,14 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
    @Subscribe
    public void closeRequested( ShutdownCommencingEvent sce){
       this.dispose();
+   }
+
+   @Subscribe
+   public void onChannelGroupChanged(ChannelGroupChangedEvent channelGroupChangedEvent) {
+      String[] channelGroups = mmc_.getAvailableConfigGroups().toArray();
+      groupComboBox_.setModel(new javax.swing.DefaultComboBoxModel(
+              channelGroups));
+      groupComboBox_.setSelectedItem(channelGroupChangedEvent.getNewChannelGroup());
    }
     
 }

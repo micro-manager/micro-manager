@@ -49,9 +49,9 @@ public class ImageCollection {
    
    public ImageCollection(Studio gui) {
       gui_ = gui;
-      background_ = new HashMap<String, ImagePlusInfo>();
-      flatFields_ = new HashMap<String, HashMap<String, ImagePlusInfo>>();
-      presetFiles_ = new HashMap<String, String>();
+      background_ = new HashMap<>();
+      flatFields_ = new HashMap<>();
+      presetFiles_ = new HashMap<>();
    }
    
    public void setBackground(String file) throws ShadingException {
@@ -62,11 +62,11 @@ public class ImageCollection {
          if (ip == null) {
             throw new ShadingException("Failed to open file: " + file);
          }
-         ImagePlusInfo bg = new ImagePlusInfo(ip); 
+         ImagePlusInfo bg = new ImagePlusInfo(ip);
          background_.put(BASEIMAGE, bg);
          background_.put(makeKey(1, bg.getOriginalRoi()), bg);
-         backgroundFilePath_ = file;
       }
+      backgroundFilePath_ = file;
    }
 
    public String getBackgroundFile() {
