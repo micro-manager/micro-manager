@@ -186,6 +186,7 @@ private:
    static void frame_available_callback(void* sender, unsigned short* image_buffer, int frame_count, unsigned char* metadata, int metadata_size_in_bytes, void* context);
 
    ImgBuffer img;
+   int frameNumber;
 	std::vector<unsigned short> demosaicBuffer;
    bool initialized;
    bool prepared;
@@ -214,4 +215,6 @@ private:
    TL_CAMERA_TRIGGER_POLARITY triggerPolarity;
 	TL_COLOR_FILTER_ARRAY_PHASE cfaPhase;
 	TL_POLARIZATION_PROCESSOR_POLAR_PHASE polarPhase;
+	int cachedImgWidth;
+	int cachedImgHeight;
 };

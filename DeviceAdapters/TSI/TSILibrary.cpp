@@ -26,6 +26,8 @@
 #endif
 
 #include <ModuleInterface.h>
+#include <tl_camera_sdk.h> // not necessary, but makes intellisense happy
+
 #include "TsiLibrary.h"
 #include "TsiCam.h"
 #include "Tsi3Cam.h"
