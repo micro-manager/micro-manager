@@ -530,8 +530,8 @@ int ZaberBase::GetFirmwareVersion(long device, double& version) const
 	if ((reply.size() > 5) && (reply[2] == "OK"))
 	{
 		double data;
-		string dataString = reply[5];
-		stringstream sstream = stringstream(dataString);
+		stringstream sstream;
+		sstream << reply[5];
 		sstream >> data;
 		if (!sstream.bad() && !sstream.fail())
 		{
