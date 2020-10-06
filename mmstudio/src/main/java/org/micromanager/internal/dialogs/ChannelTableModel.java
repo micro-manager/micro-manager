@@ -161,7 +161,7 @@ public final class ChannelTableModel extends AbstractTableModel  {
                     channel.channelGroup(), channel.config(), (Color) value));
          }
       }
-      channel = cb.build();
+      channel = cb.color((Color) value).build();
       channels_.set(row, channel);
 
       this.fireTableChanged(new TableModelEvent(this));
