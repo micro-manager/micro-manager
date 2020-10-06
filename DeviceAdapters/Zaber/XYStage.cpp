@@ -70,6 +70,8 @@ XYStage::XYStage() :
 	SetErrorText(ERR_NO_REFERENCE_POS, g_Msg_NO_REFERENCE_POS);
 	SetErrorText(ERR_SETTING_FAILED, g_Msg_SETTING_FAILED);
 	SetErrorText(ERR_INVALID_DEVICE_NUM, g_Msg_INVALID_DEVICE_NUM);
+	SetErrorText(ERR_PERIPHERAL_DISCONNECTED, g_Msg_PERIPHERAL_DISCONNECTED);
+	SetErrorText(ERR_PERIPHERAL_UNSUPPORTED, g_Msg_PERIPHERAL_UNSUPPORTED);
 
 	// Pre-initialization properties
 	CreateProperty(MM::g_Keyword_Name, g_XYStageName, MM::String, true);
@@ -146,6 +148,14 @@ int XYStage::Initialize()
 		return ret;
 	}
 
+	// Activate any recently changed peripherals.
+	ret = ActivatePeripheralsIfNeeded(deviceAddressX_);
+	if (ret != DEVICE_OK) 
+	{
+		LogMessage("Peripheral activation check failed.\n", true);
+		return ret;
+	}
+
 	// Disable alert messages.
 	ret = SetSetting(deviceAddressX_, 0, "comm.alert", 0);
 	if (ret != DEVICE_OK) 
@@ -158,6 +168,14 @@ int XYStage::Initialize()
 		ret = SetSetting(deviceAddressY_, 0, "comm.alert", 0);
 		if (ret != DEVICE_OK) 
 		{
+			return ret;
+		}
+
+		// Activate any recently changed peripherals.
+		ret = ActivatePeripheralsIfNeeded(deviceAddressY_);
+		if (ret != DEVICE_OK) 
+		{
+			LogMessage("Peripheral activation check failed.\n", true);
 			return ret;
 		}
 	}

@@ -33,6 +33,8 @@
 #include "FilterCubeTurret.h"
 #include "Illuminator.h"
 
+#include <algorithm>
+
 using namespace std;
 
 const char* g_Msg_PORT_CHANGE_FORBIDDEN = "The port cannot be changed once the device is initialized.";
@@ -45,6 +47,8 @@ const char* g_Msg_SETTING_FAILED = "The property could not be set. Is the value 
 const char* g_Msg_INVALID_DEVICE_NUM = "Device numbers must be in the range of 1 to 99.";
 const char* g_Msg_LAMP_DISCONNECTED= "Some of the illuminator lamps are disconnected.";
 const char* g_Msg_LAMP_OVERHEATED = "Some of the illuminator lamps are overheated.";
+const char* g_Msg_PERIPHERAL_DISCONNECTED = "A peripheral has been disconnected; please reconnect it or set its peripheral ID to zero and then restart the driver.";
+const char* g_Msg_PERIPHERAL_UNSUPPORTED = "Controller firmware does not support one of the connected peripherals; please update the firmware.";
 
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -165,19 +169,46 @@ int ZaberBase::QueryCommand(const string command, vector<string>& reply) const
 {
 	core_->LogMessage(device_, "ZaberBase::QueryCommand\n", true);
 
+	int ret = QueryCommandUnchecked(command, reply);
+	if (ret != DEVICE_OK)
+	{
+		return ret;
+	}
+
+	ret = CheckReplyFlags(reply[4]);
+	if (ret != DEVICE_OK)
+	{
+		return ret;
+	}
+	
+	if (reply[2] != "OK")
+	{
+		return ERR_COMMAND_REJECTED;
+	}
+
+	return DEVICE_OK;
+}
+
+
+// Send a command and return the next reply string without any parsing or warning
+// flag checking.
+int ZaberBase::QueryCommandUnchecked(const string command, std::vector<std::string>& reply) const
+{
+	core_->LogMessage(device_, "ZaberBase::QueryCommandUnchecked\n", true);
+
 	const char* msgFooter = "\r\n"; // required by Zaber ASCII protocol
 
 	const size_t BUFSIZE = 2048;
 	char buf[BUFSIZE] = {'\0'};
 
 	int ret = SendCommand(command);
-	if (ret != DEVICE_OK) 
+	if (ret != DEVICE_OK)
 	{
 		return ret;
 	}
 
 	ret = core_->GetSerialAnswer(device_, port_.c_str(), BUFSIZE, buf, msgFooter);
-	if (ret != DEVICE_OK) 
+	if (ret != DEVICE_OK)
 	{
 		return ret;
 	}
@@ -185,7 +216,7 @@ int ZaberBase::QueryCommand(const string command, vector<string>& reply) const
 	string resp = buf;
 	if (resp.length() < 1)
 	{
-		return  DEVICE_SERIAL_INVALID_RESPONSE;
+		return DEVICE_SERIAL_INVALID_RESPONSE;
 	}
 
 	// remove checksum before parsing
@@ -205,14 +236,32 @@ int ZaberBase::QueryCommand(const string command, vector<string>& reply) const
 		return DEVICE_SERIAL_INVALID_RESPONSE;
 	}
 
-	if (reply[4] == "FD")
+	return DEVICE_OK;
+}
+
+
+int ZaberBase::QueryCommandUnchecked(long device, long axis, const std::string command, std::vector<std::string>& reply) const
+{
+	ostringstream cmd;
+	cmd << cmdPrefix_ << device << " " << axis << " " << command;
+	return QueryCommandUnchecked(cmd.str().c_str(), reply);
+}
+
+
+
+int ZaberBase::CheckReplyFlags(const std::string reply) const
+{
+	if (reply == "FN")
+	{
+		return ERR_PERIPHERAL_UNSUPPORTED;
+	}
+	else if (reply == "FZ")
+	{
+		return ERR_PERIPHERAL_DISCONNECTED;
+	}
+	else if (reply[0] == 'F')
 	{
 		return ERR_DRIVER_DISABLED;
-	}
-
-	if (reply[2] == "RJ")
-	{
-		return ERR_COMMAND_REJECTED;
 	}
 
 	return DEVICE_OK;
@@ -459,5 +508,116 @@ int ZaberBase::GetRotaryIndexedDeviceInfo(long device, long axis, long& numIndic
    currentIndex = index;
 
    return ret;
+}
+
+
+// Attempts to get the device firmware version in major.minor floating
+// point representation (ie 7.01). This ignores reply flags but does
+// return error codes relating to the flags. If the command is rejected
+// or the version can otherwise not be determined, the version will
+// be 0.00. The build number is not included.
+int ZaberBase::GetFirmwareVersion(long device, double& version) const
+{
+	core_->LogMessage(device_, "ZaberBase::GetFirmwareVersion\n", true);
+
+	version = 0.0;
+	vector<string> reply;
+	ostringstream cmd;
+	cmd << cmdPrefix_ << device << " 0 get version";
+
+	int ret = QueryCommandUnchecked(cmd.str().c_str(), reply);
+
+	if ((reply.size() > 5) && (reply[2] == "OK"))
+	{
+		double data;
+		string dataString = reply[5];
+		stringstream sstream = stringstream(dataString);
+		sstream >> data;
+		if (!sstream.bad() && !sstream.fail())
+		{
+			version = data;
+		}
+	}
+
+	if (ret != DEVICE_OK)
+	{
+		return ret;
+	}
+
+	ret = CheckReplyFlags(reply[4]);
+	if (ret != DEVICE_OK)
+	{
+		return ret;
+	}
+	
+	if (reply[2] != "OK")
+	{
+		return ERR_COMMAND_REJECTED;
+	}
+
+	return DEVICE_OK;
+}
+
+
+int ZaberBase::ActivatePeripheralsIfNeeded(long device) const
+{
+	core_->LogMessage(device_, "ZaberBase::ActivatePeripheralsIfNeeded\n", true);
+
+	vector<string> reply;
+
+	int ret = QueryCommandUnchecked(device, 0, "warnings", reply);
+	if (ret != DEVICE_OK)
+	{
+		core_->LogMessage(device_, "Could not get device warning flags.\n", true);
+		return ret;
+	}
+
+	if (std::find(reply.begin(), reply.end(), "FZ") != reply.end())
+	{
+		core_->LogMessage(device_, "An axis needs activation.\n", false);
+
+		// If the activate command failed, it must mean that some axes were
+		// previous connected but now are unplugged or have different peripherals
+		// plugged in. Find them and reset their peripheral IDs.
+		reply.clear();
+		ret = QueryCommandUnchecked(device, 0, "get system.axiscount", reply);
+		if (ret != DEVICE_OK)
+		{
+			core_->LogMessage(device_, "Could not get axis count.\n", true);
+			return ret;
+		}
+
+		int axisCount = 0;
+		string dataString = reply[5];
+		stringstream(dataString) >> axisCount;
+
+		for (int axis = 1; axis <= axisCount; axis++)
+		{
+			ostringstream cmd;
+			cmd << cmdPrefix_ << device << " " << axis << " activate";
+			reply.clear();
+			ret = QueryCommand(cmd.str().c_str(), reply);
+			if (ret != DEVICE_OK)
+			{
+				core_->LogMessage(device_, "Activating a peripheral failed; resetting peripheral ID.\n", false);
+				reply.clear();
+				ret = QueryCommandUnchecked(device, axis, "get peripheral.id.pending", reply);
+				if ((reply[2] == "OK") && (reply[4] == "FZ"))
+				{
+					int id;
+					dataString = reply[5];
+					stringstream(dataString) >> id;
+					ret = SetSetting(device, axis, "peripheral.id", id);
+					if (ret != DEVICE_OK)
+					{
+						core_->LogMessage(device_, "Failed to reset the peripheral ID of a dis/re-connected axis. Please ensure all axes are either connected or have their peripheral IDs set to zero.\n", false);
+						return ret;
+					}
+				}
+			}
+		}
+	}
+
+	return DEVICE_OK;
 }
 
