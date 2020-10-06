@@ -66,7 +66,7 @@ private:
 	bool *lampExists_;
 
 	// Enables the optimization of using the device-scope lamp on command.
-	bool allLampsPresent_; 
+	bool canUseDeviceLampOnCommand_; 
 
 	// Enables the optimization of only turning on individual axes that
 	// have nonzero flux when the shutter opens.
