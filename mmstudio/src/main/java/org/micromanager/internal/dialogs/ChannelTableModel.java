@@ -163,6 +163,7 @@ public final class ChannelTableModel extends AbstractTableModel  {
       }
       channel = cb.color((Color) value).build();
       channels_.set(row, channel);
+      storeChannels();
 
       this.fireTableChanged(new TableModelEvent(this));
    }
