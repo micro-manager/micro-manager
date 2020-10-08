@@ -70,7 +70,7 @@ public class MagellanGUIAcquisition extends Acquisition implements MagellanAcqui
 
    public void start() {
          super.start();
-         if (finished_) {
+         if (eventsFinished_) {
             throw new RuntimeException("Cannot start acquistion since it has already been run");
          }
          Iterator<AcquisitionEvent> acqEventIterator = buildAcqEventGenerator();
