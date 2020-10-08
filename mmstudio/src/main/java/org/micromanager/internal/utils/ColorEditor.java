@@ -77,29 +77,21 @@ ActionListener {
     */
    @Override
    public void actionPerformed(ActionEvent e) {
+      // The user has clicked the cell, so bring up the dialog.
       if (EDIT.equals(e.getActionCommand())) {
-         //The user has clicked the cell, so
-         //bring up the dialog.
-         button.setBackground(currentColor);
          colorChooser.setColor(currentColor);
          dialog.setVisible(true);
-         // program flow is funky.  The dialog creates another actionevent, that
-         // is picked up by this same function, goes through the "else" below,
-         // and then continues here
-
+      }
+      // User pressed dialog's "OK" button.
+      else {
+         currentColor = colorChooser.getColor();
+         model_.setValueAt(currentColor, row_, column_);
+         button.setBackground(currentColor);
          // Make the renderer reappear.
          fireEditingStopped();
          // Fire an event to enable saving the new color in the colorprefs
          // Don't know how to fire just for this row:
          model_.fireTableCellUpdated(row_, column_);
-         /*
-         for (int row=0; row < model_.getRowCount(); row++) {
-            model_.fireTableCellUpdated(row, column_);
-         }
-         */
-
-      } else { //User pressed dialog's "OK" button.
-         currentColor = colorChooser.getColor();
       }
    }
 
