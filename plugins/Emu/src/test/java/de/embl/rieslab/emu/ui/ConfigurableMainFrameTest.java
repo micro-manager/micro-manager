@@ -674,10 +674,7 @@ public class ConfigurableMainFrameTest {
 
 		@Override
 		protected void initComponents() {}
-
-		@Override
-		protected void setUpMenu() {}
-
+		
 		@Override
 		public HashMap<String, Setting> getDefaultPluginSettings() {
 			return new HashMap<String, Setting>();

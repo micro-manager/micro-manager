@@ -197,6 +197,7 @@ public class RescaledUIProperty extends UIProperty{
 	/**
 	 * {@inheritDoc}
 	 */
+	@Override
 	public UIPropertyType getType() {
 		return UIPropertyType.RESCALED;
 	}

@@ -475,7 +475,7 @@ public abstract class MMProperty<T> {
 	 *
 	 */
 	public enum MMPropertyType { 
-		INTEGER("Integer"), STRING("String"), FLOAT("Float"), CONFIG("Config"), UNDEF("Undef"); 
+		INTEGER("Integer"), STRING("String"), FLOAT("Float"), CONFIG("Config"), UNDEF("Undef"), NONE("None"); 
 		
 		private String value; 
 		
