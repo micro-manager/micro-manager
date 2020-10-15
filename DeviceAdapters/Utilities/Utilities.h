@@ -86,7 +86,6 @@ public:
 private:
    std::vector<std::string> availableShutters_;
    std::vector<std::string> usedShutters_;
-   std::vector<MM::Shutter*> physicalShutters_;
    long nrPhysicalShutters_;
    bool open_;
    bool initialized_;
@@ -139,12 +138,12 @@ public:
    int SnapImage();
    const unsigned char* GetImageBuffer();
    const unsigned char* GetImageBuffer(unsigned channelNr);
-   unsigned GetImageWidth() const;
-   unsigned GetImageHeight() const;
-   unsigned GetImageBytesPerPixel() const;
-   unsigned GetBitDepth() const;
-   long GetImageBufferSize() const;
-   double GetExposure() const;
+   unsigned GetImageWidth();
+   unsigned GetImageHeight();
+   unsigned GetImageBytesPerPixel();
+   unsigned GetBitDepth();
+   long GetImageBufferSize();
+   double GetExposure();
    void SetExposure(double exp);
    int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize);
    int GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize);
@@ -153,7 +152,7 @@ public:
    int StartSequenceAcquisition(double interval);
    int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
    int StopSequenceAcquisition();
-   int GetBinning() const; 
+   int GetBinning(); 
    int SetBinning(int bS);                                    
    int IsExposureSequenceable(bool& isSequenceable) const;
    unsigned  GetNumberOfComponents() const;
@@ -175,7 +174,6 @@ private:
    std::vector<std::string> usedCameras_;
    std::vector<int> cameraWidths_;
    std::vector<int> cameraHeights_;
-   std::vector<MM::Camera*> physicalCameras_;
    unsigned int nrCamerasInUse_;
    bool initialized_;
    ImgBuffer img_;
@@ -211,8 +209,8 @@ public:
    virtual int GetLimits(double& lower, double& upper);
    virtual bool IsContinuousFocusDrive() const;
 
-   virtual int IsStageSequenceable(bool& isSequenceable) const;
-   virtual int GetStageSequenceMaxLength(long& nrEvents) const;
+   virtual int IsStageSequenceable(bool& isSequenceable);
+   virtual int GetStageSequenceMaxLength(long& nrEvents);
    virtual int StartStageSequence();
    virtual int StopStageSequence();
    virtual int ClearStageSequence();
@@ -235,7 +233,6 @@ private:
    // The following vectors should always have nrPhysicalStages_ elements while
    // initialized
    std::vector<std::string> usedStages_;
-   std::vector<MM::Stage*> physicalStages_;
    std::vector<double> stageScalings_;
    std::vector<double> stageTranslations_;
 };
@@ -272,8 +269,8 @@ public:
    virtual double GetStepSizeXUm() { return simulatedXStepSizeUm_; }
    virtual double GetStepSizeYUm() { return simulatedYStepSizeUm_; }
 
-   virtual int IsXYStageSequenceable(bool& isSequenceable) const;
-   virtual int GetXYStageSequenceMaxLength(long& nrEvents) const;
+   virtual int IsXYStageSequenceable(bool& isSequenceable);
+   virtual int GetXYStageSequenceMaxLength(long& nrEvents);
    virtual int StartXYStageSequence();
    virtual int StopXYStageSequence();
    virtual int ClearXYStageSequence();
@@ -295,7 +292,6 @@ private:
    // The following vectors should always have 2 elements (0 = X, 1 = Y) while
    // initialized.
    std::vector<std::string> usedStages_;
-   std::vector<MM::Stage*> physicalStages_;
    std::vector<double> stageScalings_;
    std::vector<double> stageTranslations_;
 };
@@ -330,8 +326,8 @@ public:
    virtual int GetLimits(double& lower, double& upper);
    virtual bool IsContinuousFocusDrive() const;
 
-   virtual int IsStageSequenceable(bool& isSequenceable) const;
-   virtual int GetStageSequenceMaxLength(long& nrEvents) const;
+   virtual int IsStageSequenceable(bool& isSequenceable);
+   virtual int GetStageSequenceMaxLength(long& nrEvents);
    virtual int StartStageSequence();
    virtual int StopStageSequence();
    virtual int ClearStageSequence();
@@ -348,7 +344,6 @@ private:
    double simulatedStepSizeUm_;
    bool initialized_;
    std::string usedStage_;
-   MM::XYStage* physicalStage_;
 };
 
 
@@ -390,7 +385,6 @@ public:
 
 private:
    std::vector<std::string> availableDAs_;
-   MM::SignalIO* DADevice_;
    std::string DADeviceName_;
    bool initialized_;
    bool open_;
@@ -431,7 +425,6 @@ public:
 
 private:
    std::vector<std::string> availableDAs_;
-   MM::SignalIO* DADevice_;
    std::string DADeviceName_;
    bool initialized_;
 };
@@ -475,8 +468,8 @@ public:
    int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    // Sequence functions
-   int IsStageSequenceable(bool& isSequenceable) const;
-   int GetStageSequenceMaxLength(long& nrEvents) const;
+   int IsStageSequenceable(bool& isSequenceable);
+   int GetStageSequenceMaxLength(long& nrEvents);
    int StartStageSequence();
    int StopStageSequence();
    int ClearStageSequence();
@@ -486,7 +479,6 @@ public:
 private:
    std::vector<std::string> availableDAs_;
    std::string DADeviceName_;
-   MM::SignalIO* DADevice_;
    bool initialized_;
    double minDAVolt_;
    double maxDAVolt_;
@@ -534,9 +526,9 @@ public:
   double GetStepSizeYUm() {return stepSizeYUm_;}
 
   // Sequence functions
-   int IsXYStageSequenceable(bool& isSequenceable) const;
+   int IsXYStageSequenceable(bool& isSequenceable);
    
-   int GetXYStageSequenceMaxLength(long& nrEvents) const;
+   int GetXYStageSequenceMaxLength(long& nrEvents);
    int StartXYStageSequence();
    int StopXYStageSequence();
    int ClearXYStageSequence();
@@ -566,8 +558,6 @@ private:
    std::vector<std::string> availableDAs_;
    std::string DADeviceNameX_;
    std::string DADeviceNameY_;
-   MM::SignalIO* DADeviceX_;
-   MM::SignalIO* DADeviceY_;
    bool initialized_;
    double minDAVoltX_;
    double maxDAVoltX_;
@@ -618,7 +608,6 @@ private:
    // numberOfDADevices_ once Initialize() returns.
    size_t numberOfDADevices_;
    std::vector<std::string> daDeviceLabels_;
-   std::vector<MM::SignalIO*> daDevices_;
 
    bool initialized_;
 
@@ -658,7 +647,6 @@ private:
    // numberOfDADevices_ once Initialize() returns.
    size_t numberOfDADevices_;
    std::vector<std::string> daDeviceLabels_;
-   std::vector<MM::SignalIO*> daDevices_;
 
    // Voltage range is common to all analog channels and is set before
    // initialization and remains constant.
@@ -702,7 +690,7 @@ public:
   int SetOrigin();
   int GetLimits(double& min, double& max);
 
-  int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+  int IsStageSequenceable(bool& isSequenceable) {isSequenceable = false; return DEVICE_OK;}
   bool IsContinuousFocusDrive() const {return true;}
 
    // action interface
@@ -712,7 +700,6 @@ public:
 private:
    std::vector<std::string> availableAutoFocusDevices_;
    std::string AutoFocusDeviceName_;
-   MM::AutoFocus* AutoFocusDevice_;
    bool initialized_;
 };
 
@@ -747,7 +734,6 @@ private:
    int WaitWhileBusy();
    std::vector<std::string> availableStateDevices_;
    std::string stateDeviceName_;
-   MM::State* stateDevice_;
    bool initialized_;
    MM::MMTime lastMoveStartTime_;
 };
@@ -783,7 +769,6 @@ public:
 private:
    int WaitWhileBusy();
    std::string port_;
-   MM::Device* portDevice_;
    bool invertedLogic_;
    bool initialized_;
    MM::MMTime lastMoveStartTime_;

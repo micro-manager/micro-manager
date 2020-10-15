@@ -159,7 +159,6 @@ MultiShutter::MultiShutter() :
 
    for (int i = 0; i < nrPhysicalShutters_; i++) {
       usedShutters_.push_back(g_Undefined);
-      physicalShutters_.push_back(0);
    }
 }
  
@@ -232,9 +231,10 @@ bool MultiShutter::Busy()
 {
    MMThreadGuard g(physicalShutterLock_);
 
-   std::vector<MM::Shutter*>::iterator iter;
-   for (iter = physicalShutters_.begin(); iter != physicalShutters_.end(); iter++ ) {
-      if ( (*iter != 0) && (*iter)->Busy())
+   std::vector<std::string>::iterator iter;
+   for (iter = usedShutters_.begin(); iter != usedShutters_.end(); iter++ ) {
+      MM::Shutter* shutter = (MM::Shutter*) GetDevice((*iter).c_str());
+      if ( (shutter != 0) && shutter->Busy())
          return true;
    }
 
@@ -248,10 +248,11 @@ int MultiShutter::SetOpen(bool open)
 {
    MMThreadGuard g(physicalShutterLock_);
 
-   std::vector<MM::Shutter*>::iterator iter;
-   for (iter = physicalShutters_.begin(); iter != physicalShutters_.end(); iter++ ) {
-      if (*iter != 0) {
-         int ret = (*iter)->SetOpen(open);
+   std::vector<std::string>::iterator iter;
+   for (iter = usedShutters_.begin(); iter != usedShutters_.end(); iter++ ) {
+      MM::Shutter* shutter = (MM::Shutter*) GetDevice((*iter).c_str());
+      if (shutter != 0) {
+         int ret = shutter->SetOpen(open);
          if (ret != DEVICE_OK)
             return ret;
       }
@@ -286,12 +287,10 @@ int MultiShutter::OnPhysicalShutter(MM::PropertyBase* pProp, MM::ActionType eAct
       pProp->Get(shutterName);
       if (shutterName == g_Undefined) {
          usedShutters_[i] = g_Undefined;
-         physicalShutters_[i] = 0;
       } else {
          MM::Shutter* shutter = (MM::Shutter*) GetDevice(shutterName.c_str());
          if (shutter != 0) {
             usedShutters_[i] = shutterName;
-            physicalShutters_[i] = shutter;
          } else
             return ERR_INVALID_DEVICE_NAME;
       }
@@ -348,7 +347,6 @@ MultiCamera::MultiCamera() :
 
    for (int i = 0; i < MAX_NUMBER_PHYSICAL_CAMERAS; i++) {
       usedCameras_.push_back(g_Undefined);
-      physicalCameras_.push_back(0);
    }
 }
 
@@ -428,11 +426,12 @@ int MultiCamera::SnapImage()
       return ERR_NO_EQUAL_SIZE;
 
    CameraSnapThread t[MAX_NUMBER_PHYSICAL_CAMERAS];
-   for (unsigned int i = 0; i < physicalCameras_.size(); i++)
+   for (unsigned int i = 0; i < usedCameras_.size(); i++)
    {
-      if (physicalCameras_[i] != 0) 
+      MM::Camera* camera = (MM::Camera*) GetDevice(usedCameras_[i].c_str());
+      if (camera != 0) 
       {
-         t[i].SetCamera(physicalCameras_[i]);
+         t[i].SetCamera(camera);
          t[i].Start();
       }
    }
@@ -461,28 +460,29 @@ const unsigned char* MultiCamera::GetImageBuffer(unsigned channelNr)
    unsigned height = GetImageHeight();
    unsigned width = GetImageWidth();
    unsigned pixDepth = GetImageBytesPerPixel();
-   for (unsigned int i = 0; i < physicalCameras_.size(); i++)
+   for (unsigned int i = 0; i < usedCameras_.size(); i++)
    {
+      MM::Camera* camera = (MM::Camera*) GetDevice(usedCameras_[i].c_str());
       if (usedCameras_[i] != g_Undefined)
          j++;
       if (j == (int) channelNr)
       {
-         unsigned thisHeight = physicalCameras_[i]->GetImageHeight();
-         unsigned thisWidth = physicalCameras_[i]->GetImageWidth();
+         unsigned thisHeight = camera->GetImageHeight();
+         unsigned thisWidth = camera->GetImageWidth();
          if (height == thisHeight && width == thisWidth)
-            return physicalCameras_[i]->GetImageBuffer();
+            return camera->GetImageBuffer();
          else
          {
             img_.Resize(width, height, pixDepth);
             img_.ResetPixels();
             if (width == thisWidth)
             {
-               memcpy(img_.GetPixelsRW(), physicalCameras_[i]->GetImageBuffer(), thisHeight * thisWidth * pixDepth);
+               memcpy(img_.GetPixelsRW(), camera->GetImageBuffer(), thisHeight * thisWidth * pixDepth);
             }
             else 
             {
                // we need to copy line by line
-               const unsigned char* pixels = physicalCameras_[i]->GetImageBuffer();
+               const unsigned char* pixels = camera->GetImageBuffer();
                for (unsigned i=0; i < thisHeight; i++)
                {
                   memcpy(img_.GetPixelsRW() + i * width, pixels + i * thisWidth, thisWidth);
@@ -497,9 +497,10 @@ const unsigned char* MultiCamera::GetImageBuffer(unsigned channelNr)
 
 bool MultiCamera::IsCapturing()
 {
-   std::vector<MM::Camera*>::iterator iter;
-   for (iter = physicalCameras_.begin(); iter != physicalCameras_.end(); iter++ ) {
-      if ( (*iter != 0) && (*iter)->IsCapturing())
+   std::vector<std::string>::iterator iter;
+   for (iter = usedCameras_.begin(); iter != usedCameras_.end(); iter++ ) {
+      MM::Camera* camera = (MM::Camera*) GetDevice((*iter).c_str());
+      if ( (camera != 0) && camera->IsCapturing())
          return true;
    }
 
@@ -509,17 +510,18 @@ bool MultiCamera::IsCapturing()
 /**
  * Returns the largest width of cameras used
  */
-unsigned MultiCamera::GetImageWidth() const
+unsigned MultiCamera::GetImageWidth()
 {
    // TODO: should we use cached width?
    // If so, when do we cache?
    // Since this function is const, we can not cache the width found
    unsigned width = 0;
    unsigned int j = 0;
-   while (j < physicalCameras_.size() ) 
+   while (j < usedCameras_.size() ) 
    {
-      if (physicalCameras_[j] != 0) {
-         unsigned tmp = physicalCameras_[j]->GetImageWidth();
+      MM::Camera* camera = (MM::Camera*) GetDevice(usedCameras_[j].c_str());
+      if (camera != 0) {
+         unsigned tmp = camera->GetImageWidth();
          if (tmp > width)
             width = tmp;
       }
@@ -532,15 +534,16 @@ unsigned MultiCamera::GetImageWidth() const
 /**
  * Returns the largest height of cameras used
  */
-unsigned MultiCamera::GetImageHeight() const
+unsigned MultiCamera::GetImageHeight()
 {
    unsigned height = 0;
    unsigned int j = 0;
-   while (j < physicalCameras_.size() ) 
+   while (j < usedCameras_.size() ) 
    {
-      if (physicalCameras_[j] != 0)
+      MM::Camera* camera = (MM::Camera*) GetDevice(usedCameras_[j].c_str());
+      if (camera != 0)
       {
-         unsigned tmp = physicalCameras_[j]->GetImageHeight();
+         unsigned tmp = camera->GetImageHeight();
          if (tmp > height)
             height = tmp;
       }
@@ -559,35 +562,39 @@ unsigned MultiCamera::GetImageHeight() const
 bool MultiCamera::ImageSizesAreEqual() {
    unsigned height = 0;
    unsigned width = 0;
-   for (unsigned int i = 0; i < physicalCameras_.size(); i++) {
-      if (physicalCameras_[i] != 0) 
+   for (unsigned int i = 0; i < usedCameras_.size(); i++) {
+      MM::Camera* camera = (MM::Camera*) GetDevice(usedCameras_[i].c_str());
+      if (camera != 0) 
       {
-         height = physicalCameras_[0]->GetImageHeight();
-         width = physicalCameras_[0]->GetImageWidth();
+         height = camera->GetImageHeight();
+         width = camera->GetImageWidth();
       }
    }
 
-   for (unsigned int i = 0; i < physicalCameras_.size(); i++) {
-      if (physicalCameras_[i] != 0) 
+   for (unsigned int i = 0; i < usedCameras_.size(); i++) {
+      MM::Camera* camera = (MM::Camera*) GetDevice(usedCameras_[i].c_str());
+      if (camera != 0) 
       {
-         if (height != physicalCameras_[i]->GetImageHeight())
+         if (height != camera->GetImageHeight())
             return false;
-         if (width != physicalCameras_[i]->GetImageWidth())
+         if (width != camera->GetImageWidth())
             return false;
       }
   }
   return true;
 }
 
-unsigned MultiCamera::GetImageBytesPerPixel() const
+unsigned MultiCamera::GetImageBytesPerPixel()
 {
-   if (physicalCameras_[0] != 0)
+   MM::Camera* camera0 = (MM::Camera*) GetDevice(usedCameras_[0].c_str());
+   if (camera0 != 0)
    {
-      unsigned bytes = physicalCameras_[0]->GetImageBytesPerPixel();
-      for (unsigned int i = 1; i < physicalCameras_.size(); i++)
+      unsigned bytes = camera0->GetImageBytesPerPixel();
+      for (unsigned int i = 1; i < usedCameras_.size(); i++)
       {
-         if (physicalCameras_[i] != 0) 
-            if (bytes != physicalCameras_[i]->GetImageBytesPerPixel())
+         MM::Camera* camera = (MM::Camera*) GetDevice(usedCameras_[i].c_str());
+         if (camera != 0) 
+            if (bytes != camera->GetImageBytesPerPixel())
                return 0;
       }
       return bytes;
@@ -595,17 +602,19 @@ unsigned MultiCamera::GetImageBytesPerPixel() const
    return 0;
 }
 
-unsigned MultiCamera::GetBitDepth() const
+unsigned MultiCamera::GetBitDepth()
 {
    // Return the maximum bit depth found in all channels.
-   if (physicalCameras_[0] != 0)
+   MM::Camera* camera0 = (MM::Camera*) GetDevice(usedCameras_[0].c_str());
+   if (camera0 != 0)
    {
       unsigned bitDepth = 0;
-      for (unsigned int i = 0; i < physicalCameras_.size(); i++)
+      for (unsigned int i = 0; i < usedCameras_.size(); i++)
       {
-         if (physicalCameras_[i] != 0)
+         MM::Camera* camera = (MM::Camera*) GetDevice(usedCameras_[i].c_str());
+         if (camera != 0)
          {
-            unsigned nextBitDepth = physicalCameras_[i]->GetBitDepth();
+            unsigned nextBitDepth = camera->GetBitDepth();
             if (nextBitDepth > bitDepth)
             {
                bitDepth = nextBitDepth;
@@ -617,16 +626,17 @@ unsigned MultiCamera::GetBitDepth() const
    return 0;
 }
 
-long MultiCamera::GetImageBufferSize() const
+long MultiCamera::GetImageBufferSize()
 {
    long maxSize = 0;
    int unsigned counter = 0;
-   for (unsigned int i = 0; i < physicalCameras_.size(); i++)
+   for (unsigned int i = 0; i < usedCameras_.size(); i++)
    {
-      if (physicalCameras_[i] != 0) 
+      MM::Camera* camera = (MM::Camera*) GetDevice(usedCameras_[i].c_str());
+      if (camera != 0) 
       {
          counter++;
-         long tmp = physicalCameras_[i]->GetImageBufferSize();
+         long tmp = camera->GetImageBufferSize();
          if (tmp > maxSize)
             maxSize = tmp;
       }
@@ -635,15 +645,17 @@ long MultiCamera::GetImageBufferSize() const
    return counter * maxSize;
 }
 
-double MultiCamera::GetExposure() const
+double MultiCamera::GetExposure()
 {
-   if (physicalCameras_[0] != 0)
+   MM::Camera* camera0 = (MM::Camera*) GetDevice(usedCameras_[0].c_str());
+   if (camera0 != 0)
    {
-      double exposure = physicalCameras_[0]->GetExposure();
-      for (unsigned int i = 1; i < physicalCameras_.size(); i++)
+      double exposure = camera0->GetExposure();
+      for (unsigned int i = 1; i < usedCameras_.size(); i++)
       {
-         if (physicalCameras_[i] != 0) 
-            if (exposure != physicalCameras_[i]->GetExposure())
+         MM::Camera* camera = (MM::Camera*) GetDevice(usedCameras_[i].c_str());
+         if (camera != 0) 
+            if (exposure != camera->GetExposure())
                return 0;
       }
       return exposure;
@@ -655,22 +667,24 @@ void MultiCamera::SetExposure(double exp)
 {
    if (exp > 0.0)
    {
-      for (unsigned int i = 0; i < physicalCameras_.size(); i++)
+      for (unsigned int i = 0; i < usedCameras_.size(); i++)
       {
-         if (physicalCameras_[i] != 0) 
-           physicalCameras_[i]->SetExposure(exp);
+         MM::Camera* camera = (MM::Camera*) GetDevice(usedCameras_[i].c_str());
+         if (camera != 0) 
+           camera->SetExposure(exp);
       }
    }
 }
 
 int MultiCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 {
-   for (unsigned int i = 0; i < physicalCameras_.size(); i++)
+   for (unsigned int i = 0; i < usedCameras_.size(); i++)
    {
+      MM::Camera* camera = (MM::Camera*) GetDevice(usedCameras_[i].c_str());
       // TODO: deal with case when CCD size are not identical
-      if (physicalCameras_[i] != 0) 
+      if (camera != 0) 
       {
-         int ret = physicalCameras_[i]->SetROI(x, y, xSize, ySize);
+         int ret = camera->SetROI(x, y, xSize, ySize);
          if (ret != DEVICE_OK)
             return ret;
       }
@@ -680,10 +694,11 @@ int MultiCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 
 int MultiCamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
 {
+   MM::Camera* camera0 = (MM::Camera*) GetDevice(usedCameras_[0].c_str());
    // TODO: check if ROI is same on all cameras
-   if (physicalCameras_[0] != 0)
+   if (camera0 != 0)
    {
-      int ret = physicalCameras_[0]->GetROI(x, y, xSize, ySize);
+      int ret = camera0->GetROI(x, y, xSize, ySize);
       if (ret != DEVICE_OK)
          return ret;
    }
@@ -693,11 +708,12 @@ int MultiCamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySi
 
 int MultiCamera::ClearROI()
 {
-   for (unsigned int i = 0; i < physicalCameras_.size(); i++)
+   for (unsigned int i = 0; i < usedCameras_.size(); i++)
    {
-      if (physicalCameras_[i] != 0)
+      MM::Camera* camera = (MM::Camera*) GetDevice(usedCameras_[i].c_str());
+      if (camera != 0)
       {
-         int ret = physicalCameras_[i]->ClearROI();
+         int ret = camera->ClearROI();
          if (ret != DEVICE_OK)
             return ret;
       }
@@ -711,11 +727,12 @@ int MultiCamera::PrepareSequenceAcqusition()
    if (nrCamerasInUse_ < 1)
       return ERR_NO_PHYSICAL_CAMERA;
 
-   for (unsigned int i = 0; i < physicalCameras_.size(); i++)
+   for (unsigned int i = 0; i < usedCameras_.size(); i++)
    {
-      if (physicalCameras_[i] != 0)
+      MM::Camera* camera = (MM::Camera*) GetDevice(usedCameras_[i].c_str());
+      if (camera != 0)
       {
-         int ret = physicalCameras_[i]->PrepareSequenceAcqusition();
+         int ret = camera->PrepareSequenceAcqusition();
          if (ret != DEVICE_OK)
             return ret;
       }
@@ -732,18 +749,19 @@ int MultiCamera::StartSequenceAcquisition(double interval)
    if (!ImageSizesAreEqual())
       return ERR_NO_EQUAL_SIZE;
 
-   for (unsigned int i = 0; i < physicalCameras_.size(); i++)
+   for (unsigned int i = 0; i < usedCameras_.size(); i++)
    {
-      if (physicalCameras_[i] != 0)
+      MM::Camera* camera = (MM::Camera*) GetDevice(usedCameras_[i].c_str());
+      if (camera != 0)
       {
          std::ostringstream os;
          os << i;
-         physicalCameras_[i]->AddTag(MM::g_Keyword_CameraChannelName, usedCameras_[i].c_str(),
+         camera->AddTag(MM::g_Keyword_CameraChannelName, usedCameras_[i].c_str(),
                  usedCameras_[i].c_str());
-         physicalCameras_[i]->AddTag(MM::g_Keyword_CameraChannelIndex, usedCameras_[i].c_str(),
+         camera->AddTag(MM::g_Keyword_CameraChannelIndex, usedCameras_[i].c_str(),
                  os.str().c_str());
          
-         int ret = physicalCameras_[i]->StartSequenceAcquisition(interval);
+         int ret = camera->StartSequenceAcquisition(interval);
          if (ret != DEVICE_OK)
             return ret;
       }
@@ -756,11 +774,12 @@ int MultiCamera::StartSequenceAcquisition(long numImages, double interval_ms, bo
    if (nrCamerasInUse_ < 1)
       return ERR_NO_PHYSICAL_CAMERA;
 
-   for (unsigned int i = 0; i < physicalCameras_.size(); i++)
+   for (unsigned int i = 0; i < usedCameras_.size(); i++)
    {
-      if (physicalCameras_[i] != 0)
+      MM::Camera* camera = (MM::Camera*) GetDevice(usedCameras_[i].c_str());
+      if (camera != 0)
       {
-         int ret = physicalCameras_[i]->StartSequenceAcquisition(numImages, interval_ms, stopOnOverflow);
+         int ret = camera->StartSequenceAcquisition(numImages, interval_ms, stopOnOverflow);
          if (ret != DEVICE_OK)
             return ret;
       }
@@ -770,36 +789,39 @@ int MultiCamera::StartSequenceAcquisition(long numImages, double interval_ms, bo
 
 int MultiCamera::StopSequenceAcquisition()
 {
-   for (unsigned int i = 0; i < physicalCameras_.size(); i++)
+   for (unsigned int i = 0; i < usedCameras_.size(); i++)
    {
-      if (physicalCameras_[i] != 0)
+      MM::Camera* camera = (MM::Camera*) GetDevice(usedCameras_[i].c_str());
+      if (camera != 0)
       {
-         int ret = physicalCameras_[i]->StopSequenceAcquisition();
+         int ret = camera->StopSequenceAcquisition();
 
          // 
          if (ret != DEVICE_OK)
             return ret;
          std::ostringstream os;
          os << i;
-         physicalCameras_[i]->AddTag(MM::g_Keyword_CameraChannelName, usedCameras_[i].c_str(),
+         camera->AddTag(MM::g_Keyword_CameraChannelName, usedCameras_[i].c_str(),
                  "");
-         physicalCameras_[i]->AddTag(MM::g_Keyword_CameraChannelIndex, usedCameras_[i].c_str(),
+         camera->AddTag(MM::g_Keyword_CameraChannelIndex, usedCameras_[i].c_str(),
                  os.str().c_str());
       }
    }
    return DEVICE_OK;
 }
 
-int MultiCamera::GetBinning() const
+int MultiCamera::GetBinning()
 {
+   MM::Camera* camera0 = (MM::Camera*) GetDevice(usedCameras_[0].c_str());
    int binning = 0;
-   if (physicalCameras_[0] != 0)
-      binning = physicalCameras_[0]->GetBinning();
-   for (unsigned int i = 0; i < physicalCameras_.size(); i++)
+   if (camera0 != 0)
+      binning = camera0->GetBinning();
+   for (unsigned int i = 0; i < usedCameras_.size(); i++)
    {
-      if (physicalCameras_[i] != 0)
+      MM::Camera* camera = (MM::Camera*) GetDevice(usedCameras_[i].c_str());
+      if (camera != 0)
       {
-         if (binning != physicalCameras_[i]->GetBinning())
+         if (binning != camera->GetBinning())
             return 0;
       }
    }
@@ -808,11 +830,12 @@ int MultiCamera::GetBinning() const
 
 int MultiCamera::SetBinning(int bS)
 {
-   for (unsigned int i = 0; i < physicalCameras_.size(); i++)
+   for (unsigned int i = 0; i < usedCameras_.size(); i++)
    {
-      if (physicalCameras_[i] != 0)
+      MM::Camera* camera = (MM::Camera*) GetDevice(usedCameras_[i].c_str());
+      if (camera != 0)
       {
-         int ret = physicalCameras_[i]->SetBinning(bS);
+         int ret = camera->SetBinning(bS);
          if (ret != DEVICE_OK)
             return ret;
       }
@@ -871,10 +894,11 @@ int MultiCamera::OnPhysicalCamera(MM::PropertyBase* pProp, MM::ActionType eAct, 
 
    else if (eAct == MM::AfterSet)
    {
-      if (physicalCameras_[i] != 0)
+      MM::Camera* camera = (MM::Camera*) GetDevice(usedCameras_[i].c_str());
+      if (camera != 0)
       {
-         physicalCameras_[i]->RemoveTag(MM::g_Keyword_CameraChannelName);
-         physicalCameras_[i]->RemoveTag(MM::g_Keyword_CameraChannelIndex);
+         camera->RemoveTag(MM::g_Keyword_CameraChannelName);
+         camera->RemoveTag(MM::g_Keyword_CameraChannelIndex);
       }
 
       std::string cameraName;
@@ -882,12 +906,10 @@ int MultiCamera::OnPhysicalCamera(MM::PropertyBase* pProp, MM::ActionType eAct, 
 
       if (cameraName == g_Undefined) {
          usedCameras_[i] = g_Undefined;
-         physicalCameras_[i] = 0;
       } else {
          MM::Camera* camera = (MM::Camera*) GetDevice(cameraName.c_str());
          if (camera != 0) {
             usedCameras_[i] = cameraName;
-            physicalCameras_[i] = camera;
             std::ostringstream os;
             os << i;
             char myName[MM::MaxStrLength];
@@ -905,14 +927,15 @@ int MultiCamera::OnPhysicalCamera(MM::PropertyBase* pProp, MM::ActionType eAct, 
       }
 
       // TODO: Set allowed binning values correctly
-      if (physicalCameras_[0] != 0)
+      MM::Camera* camera0 = (MM::Camera*) GetDevice(usedCameras_[0].c_str());
+      if (camera0 != 0)
       {
          ClearAllowedValues(MM::g_Keyword_Binning);
-         int nr = physicalCameras_[0]->GetNumberOfPropertyValues(MM::g_Keyword_Binning);
+         int nr = camera0->GetNumberOfPropertyValues(MM::g_Keyword_Binning);
          for (int j = 0; j < nr; j++)
          {
             char value[MM::MaxStrLength];
-            physicalCameras_[0]->GetPropertyValueAt(MM::g_Keyword_Binning, j, value);
+            camera0->GetPropertyValueAt(MM::g_Keyword_Binning, j, value);
             AddAllowedValue(MM::g_Keyword_Binning, value);
          }
       }
@@ -994,7 +1017,6 @@ int MultiStage::Initialize()
    for (unsigned i = 0; i < nrPhysicalStages_; ++i)
    {
       usedStages_.push_back(g_Undefined);
-      physicalStages_.push_back(0);
       stageScalings_.push_back(1.0);
       stageTranslations_.push_back(0.0);
    }
@@ -1050,7 +1072,6 @@ int MultiStage::Shutdown()
       return DEVICE_OK;
 
    usedStages_.clear();
-   physicalStages_.clear();
    stageScalings_.clear();
    stageTranslations_.clear();
 
@@ -1060,15 +1081,16 @@ int MultiStage::Shutdown()
 
 bool MultiStage::Busy()
 {
-   for (std::vector<MM::Stage*>::iterator it = physicalStages_.begin(),
-         end = physicalStages_.end();
+   for (std::vector<std::string>::iterator it = usedStages_.begin(),
+         end = usedStages_.end();
          it != end;
          ++it)
    {
-      if (!*it)
+      MM::Stage* stage = (MM::Stage*)GetDevice((*it).c_str());
+      if (!stage)
          continue;
 
-      if ((*it)->Busy())
+      if (stage->Busy())
          return true;
    }
    return false;
@@ -1081,15 +1103,16 @@ int MultiStage::Stop()
    // stages.
    int ret = DEVICE_OK;
 
-   for (std::vector<MM::Stage*>::iterator it = physicalStages_.begin(),
-         end = physicalStages_.end();
+   for (std::vector<std::string>::iterator it = usedStages_.begin(),
+         end = usedStages_.end();
          it != end;
          ++it)
    {
-      if (!*it)
+      MM::Stage* stage = (MM::Stage*)GetDevice((*it).c_str());
+      if (!stage)
          continue;
 
-      int err = (*it)->Stop();
+      int err = stage->Stop();
       if (err != DEVICE_OK)
          ret = err;
    }
@@ -1100,15 +1123,16 @@ int MultiStage::Stop()
 
 int MultiStage::Home()
 {
-   for (std::vector<MM::Stage*>::iterator it = physicalStages_.begin(),
-         end = physicalStages_.end();
+   for (std::vector<std::string>::iterator it = usedStages_.begin(),
+         end = usedStages_.end();
          it != end;
          ++it)
    {
-      if (!*it)
+      MM::Stage* stage = (MM::Stage*)GetDevice((*it).c_str());
+      if (!stage)
          continue;
 
-      int err = (*it)->Home();
+      int err = stage->Home();
       if (err != DEVICE_OK)
          return err;
    }
@@ -1120,11 +1144,12 @@ int MultiStage::SetPositionUm(double pos)
 {
    for (unsigned i = 0; i < nrPhysicalStages_; ++i)
    {
-      if (!physicalStages_[i])
+      MM::Stage* stage = (MM::Stage*)GetDevice(usedStages_[i].c_str());
+      if (!stage)
          continue;
 
       double physicalPos = stageScalings_[i] * pos + stageTranslations_[i];
-      int err = physicalStages_[i]->SetPositionUm(physicalPos);
+      int err = stage->SetPositionUm(physicalPos);
       if (err != DEVICE_OK)
          return err;
    }
@@ -1136,11 +1161,12 @@ int MultiStage::SetRelativePositionUm(double d)
 {
    for (unsigned i = 0; i < nrPhysicalStages_; ++i)
    {
-      if (!physicalStages_[i])
+      MM::Stage* stage = (MM::Stage*)GetDevice(usedStages_[i].c_str());
+      if (!stage)
          continue;
 
       double physicalRelPos = stageScalings_[i] * d;
-      int err = physicalStages_[i]->SetRelativePositionUm(physicalRelPos);
+      int err = stage->SetRelativePositionUm(physicalRelPos);
       if (err != DEVICE_OK)
          return err;
    }
@@ -1154,11 +1180,12 @@ int MultiStage::GetPositionUm(double& pos)
    // readout. For now, it is the first physical stage assigned.
    for (unsigned i = 0; i < nrPhysicalStages_; ++i)
    {
-      if (!physicalStages_[i])
+      MM::Stage* stage = (MM::Stage*)GetDevice(usedStages_[i].c_str());
+      if (!stage)
          continue;
 
       double physicalPos;
-      int err = physicalStages_[i]->GetPositionUm(physicalPos);
+      int err = stage->GetPositionUm(physicalPos);
       if (err != DEVICE_OK)
          return err;
 
@@ -1199,11 +1226,12 @@ int MultiStage::GetLimits(double& lower, double& upper)
    bool hasStage = false;
    for (unsigned i = 0; i < nrPhysicalStages_; ++i)
    {
-      if (!physicalStages_[i])
+      MM::Stage* stage = (MM::Stage*)GetDevice(usedStages_[i].c_str());
+      if (!stage)
          continue;
 
       double physicalLower, physicalUpper;
-      int err = physicalStages_[i]->GetLimits(physicalLower, physicalUpper);
+      int err = stage->GetLimits(physicalLower, physicalUpper);
       if (err != DEVICE_OK)
          return err;
 
@@ -1239,21 +1267,22 @@ bool MultiStage::IsContinuousFocusDrive() const
 }
 
 
-int MultiStage::IsStageSequenceable(bool& isSequenceable) const
+int MultiStage::IsStageSequenceable(bool& isSequenceable)
 {
    bool hasStage = false;
-   for (std::vector<MM::Stage*>::const_iterator it = physicalStages_.begin(),
-         end = physicalStages_.end();
+   for (std::vector<std::string>::const_iterator it = usedStages_.begin(),
+         end = usedStages_.end();
          it != end;
          ++it)
    {
-      if (!*it)
+      MM::Stage* stage = (MM::Stage*)GetDevice((*it).c_str());
+      if (!stage)
          continue;
 
       hasStage = true;
 
       bool flag;
-      int err = (*it)->IsStageSequenceable(flag);
+      int err = stage->IsStageSequenceable(flag);
       if (err != DEVICE_OK)
          return err;
 
@@ -1272,22 +1301,23 @@ int MultiStage::IsStageSequenceable(bool& isSequenceable) const
 }
 
 
-int MultiStage::GetStageSequenceMaxLength(long& nrEvents) const
+int MultiStage::GetStageSequenceMaxLength(long& nrEvents)
 {
    long minNrEvents = LONG_MAX;
    bool hasStage = false;
-   for (std::vector<MM::Stage*>::const_iterator it = physicalStages_.begin(),
-         end = physicalStages_.end();
+   for (std::vector<std::string>::const_iterator it = usedStages_.begin(),
+         end = usedStages_.end();
          it != end;
          ++it)
    {
-      if (!*it)
+      MM::Stage* stage = (MM::Stage*)GetDevice((*it).c_str());
+      if (!stage)
          continue;
 
       hasStage = true;
 
       long nr;
-      int err = (*it)->GetStageSequenceMaxLength(nr);
+      int err = stage->GetStageSequenceMaxLength(nr);
       if (err != DEVICE_OK)
          return err;
 
@@ -1308,19 +1338,20 @@ int MultiStage::StartStageSequence()
    std::vector<MM::Stage*> startedStages;
 
    int err;
-   for (std::vector<MM::Stage*>::iterator it = physicalStages_.begin(),
-         end = physicalStages_.end();
+   for (std::vector<std::string>::iterator it = usedStages_.begin(),
+         end = usedStages_.end();
          it != end;
          ++it)
    {
-      if (!*it)
+      MM::Stage* stage = (MM::Stage*)GetDevice((*it).c_str());
+      if (!stage)
          continue;
 
-      err = (*it)->StartStageSequence();
+      err = stage->StartStageSequence();
       if (err != DEVICE_OK)
          goto error;
 
-      startedStages.push_back(*it);
+      startedStages.push_back(stage);
    }
    return DEVICE_OK;
 
@@ -1337,15 +1368,16 @@ error:
 int MultiStage::StopStageSequence()
 {
    int lastErr = DEVICE_OK;
-   for (std::vector<MM::Stage*>::iterator it = physicalStages_.begin(),
-         end = physicalStages_.end();
+   for (std::vector<std::string>::iterator it = usedStages_.begin(),
+         end = usedStages_.end();
          it != end;
          ++it)
    {
-      if (!*it)
+      MM::Stage* stage = (MM::Stage*)GetDevice((*it).c_str());
+      if (!stage)
          continue;
 
-      int err = (*it)->StopStageSequence();
+      int err = stage->StopStageSequence();
       if (err != DEVICE_OK)
          lastErr = err;
       // Try to stop all even after error
@@ -1357,15 +1389,16 @@ int MultiStage::StopStageSequence()
 int MultiStage::ClearStageSequence()
 {
    int lastErr = DEVICE_OK;
-   for (std::vector<MM::Stage*>::iterator it = physicalStages_.begin(),
-         end = physicalStages_.end();
+   for (std::vector<std::string>::iterator it = usedStages_.begin(),
+         end = usedStages_.end();
          it != end;
          ++it)
    {
-      if (!*it)
+      MM::Stage* stage = (MM::Stage*)GetDevice((*it).c_str());
+      if (!stage)
          continue;
 
-      int err = (*it)->ClearStageSequence();
+      int err = stage->ClearStageSequence();
       if (err != DEVICE_OK)
          lastErr = err;
    }
@@ -1377,11 +1410,12 @@ int MultiStage::AddToStageSequence(double pos)
 {
    for (unsigned i = 0; i < nrPhysicalStages_; ++i)
    {
-      if (!physicalStages_[i])
+      MM::Stage* stage = (MM::Stage*)GetDevice(usedStages_[i].c_str());
+      if (!stage)
          continue;
 
       double physicalPos = stageScalings_[i] * pos + stageTranslations_[i];
-      int err = physicalStages_[i]->AddToStageSequence(physicalPos);
+      int err = stage->AddToStageSequence(physicalPos);
       if (err != DEVICE_OK)
          return err;
    }
@@ -1391,15 +1425,16 @@ int MultiStage::AddToStageSequence(double pos)
 
 int MultiStage::SendStageSequence()
 {
-   for (std::vector<MM::Stage*>::iterator it = physicalStages_.begin(),
-         end = physicalStages_.end();
+   for (std::vector<std::string>::iterator it = usedStages_.begin(),
+         end = usedStages_.end();
          it != end;
          ++it)
    {
-      if (!*it)
+      MM::Stage* stage = (MM::Stage*)GetDevice((*it).c_str());
+      if (!stage)
          continue;
 
-      int err = (*it)->SendStageSequence();
+      int err = stage->SendStageSequence();
       if (err != DEVICE_OK)
          return err;
    }
@@ -1451,7 +1486,6 @@ int MultiStage::OnPhysicalStage(MM::PropertyBase* pProp, MM::ActionType eAct, lo
       if (stageLabel == g_Undefined)
       {
          usedStages_[i] = g_Undefined;
-         physicalStages_[i] = 0;
       }
       else
       {
@@ -1459,17 +1493,14 @@ int MultiStage::OnPhysicalStage(MM::PropertyBase* pProp, MM::ActionType eAct, lo
          if (!stage)
          {
             pProp->Set(g_Undefined);
-            physicalStages_[i] = 0;
             return ERR_INVALID_DEVICE_NAME;
          }
          if (stage->IsContinuousFocusDrive())
          {
             pProp->Set(g_Undefined);
-            physicalStages_[i] = 0;
             return ERR_AUTOFOCUS_NOT_SUPPORTED;
          }
          usedStages_[i] = stageLabel;
-         physicalStages_[i] = stage;
       }
    }
    return DEVICE_OK;
@@ -1573,7 +1604,6 @@ int ComboXYStage::Initialize()
    for (int i = 0; i < 2; ++i)
    {
       usedStages_.push_back(g_Undefined);
-      physicalStages_.push_back(0);
       stageScalings_.push_back(1.0);
       stageTranslations_.push_back(0.0);
    }
@@ -1624,7 +1654,6 @@ int ComboXYStage::Shutdown()
       return DEVICE_OK;
 
    usedStages_.clear();
-   physicalStages_.clear();
    stageScalings_.clear();
    stageTranslations_.clear();
 
@@ -1634,15 +1663,16 @@ int ComboXYStage::Shutdown()
 
 bool ComboXYStage::Busy()
 {
-   for (std::vector<MM::Stage*>::iterator it = physicalStages_.begin(),
-         end = physicalStages_.end();
+   for (std::vector<std::string>::iterator it = usedStages_.begin(),
+         end = usedStages_.end();
          it != end;
          ++it)
    {
-      if (!*it)
+      MM::Stage* stage = (MM::Stage*)GetDevice((*it).c_str());
+      if (!stage)
          continue;
 
-      if ((*it)->Busy())
+      if (stage->Busy())
          return true;
    }
    return false;
@@ -1655,15 +1685,16 @@ int ComboXYStage::Stop()
    // axes.
    int ret = DEVICE_OK;
 
-   for (std::vector<MM::Stage*>::iterator it = physicalStages_.begin(),
-         end = physicalStages_.end();
+   for (std::vector<std::string>::iterator it = usedStages_.begin(),
+         end = usedStages_.end();
          it != end;
          ++it)
    {
-      if (!*it)
+      MM::Stage* stage = (MM::Stage*)GetDevice((*it).c_str());
+      if (!stage)
          continue;
 
-      int err = (*it)->Stop();
+      int err = stage->Stop();
       if (err != DEVICE_OK)
          ret = err;
    }
@@ -1674,15 +1705,16 @@ int ComboXYStage::Stop()
 
 int ComboXYStage::Home()
 {
-   for (std::vector<MM::Stage*>::iterator it = physicalStages_.begin(),
-         end = physicalStages_.end();
+   for (std::vector<std::string>::iterator it = usedStages_.begin(),
+         end = usedStages_.end();
          it != end;
          ++it)
    {
-      if (!*it)
+      MM::Stage* stage = (MM::Stage*)GetDevice((*it).c_str());
+      if (!stage)
          continue;
 
-      int err = (*it)->Home();
+      int err = stage->Home();
       if (err != DEVICE_OK)
          return err;
    }
@@ -1698,14 +1730,15 @@ int ComboXYStage::SetPositionSteps(long x, long y)
    {
       const long posSteps = (i == 0) ? x : y;
 
-      if (!physicalStages_[i])
+      MM::Stage* stage = (MM::Stage*)GetDevice(usedStages_[i].c_str());
+      if (!stage)
          continue;
 
       const double& simulatedStepSizeUm = (i == 0) ?
          simulatedXStepSizeUm_ : simulatedYStepSizeUm_;
       double logicalPosUm = static_cast<double>(posSteps) * simulatedStepSizeUm;
       double physicalPosUm = stageScalings_[i] * logicalPosUm + stageTranslations_[i];
-      int err = physicalStages_[i]->SetPositionUm(physicalPosUm);
+      int err = stage->SetPositionUm(physicalPosUm);
       if (err != DEVICE_OK)
          return err;
    }
@@ -1721,7 +1754,8 @@ int ComboXYStage::GetPositionSteps(long& x, long& y)
       const double& simulatedStepSizeUm = (i == 0) ?
          simulatedXStepSizeUm_ : simulatedYStepSizeUm_;
 
-      if (!physicalStages_[i])
+      MM::Stage* stage = (MM::Stage*)GetDevice(usedStages_[i].c_str());
+      if (!stage)
       {
          // We can't make this an error because stage position is frequently
          // requested before anybody has a chance to set the physical stages.
@@ -1730,7 +1764,7 @@ int ComboXYStage::GetPositionSteps(long& x, long& y)
       }
 
       double physicalPosUm;
-      int err = physicalStages_[i]->GetPositionUm(physicalPosUm);
+      int err = stage->GetPositionUm(physicalPosUm);
       if (err != DEVICE_OK)
          return err;
 
@@ -1752,11 +1786,12 @@ int ComboXYStage::GetLimitsUm(double& xMin, double& xMax, double& yMin, double& 
 
       // If client code cares about stage limits, it is probably dangerous to
       // give it fake values.
-      if (!physicalStages_[i])
+      MM::Stage* stage = (MM::Stage*)GetDevice(usedStages_[i].c_str());
+      if (!stage)
          return ERR_NO_PHYSICAL_STAGE;
 
       double physicalLower, physicalUpper;
-      int err = physicalStages_[i]->GetLimits(physicalLower, physicalUpper);
+      int err = stage->GetLimits(physicalLower, physicalUpper);
       if (err != DEVICE_OK)
          return err;
 
@@ -1786,15 +1821,16 @@ int ComboXYStage::GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax)
 }
 
 
-int ComboXYStage::IsXYStageSequenceable(bool& isSequenceable) const
+int ComboXYStage::IsXYStageSequenceable(bool& isSequenceable)
 {
    for (int i = 0; i < 2; ++i)
    {
-      if (!physicalStages_[i])
+      MM::Stage* stage = (MM::Stage*)GetDevice(usedStages_[i].c_str());
+      if (!stage)
          return ERR_NO_PHYSICAL_STAGE;
 
       bool flag;
-      int err = physicalStages_[i]->IsStageSequenceable(flag);
+      int err = stage->IsStageSequenceable(flag);
       if (err != DEVICE_OK)
          return err;
 
@@ -1809,16 +1845,17 @@ int ComboXYStage::IsXYStageSequenceable(bool& isSequenceable) const
 }
 
 
-int ComboXYStage::GetXYStageSequenceMaxLength(long& nrEvents) const
+int ComboXYStage::GetXYStageSequenceMaxLength(long& nrEvents)
 {
    long minNrEvents = LONG_MAX;
    for (int i = 0; i < 2; ++i)
    {
-      if (!physicalStages_[i])
+      MM::Stage* stage = (MM::Stage*)GetDevice(usedStages_[i].c_str());
+      if (!stage)
          return ERR_NO_PHYSICAL_STAGE;
 
       long nr;
-      int err = physicalStages_[i]->GetStageSequenceMaxLength(nr);
+      int err = stage->GetStageSequenceMaxLength(nr);
       if (err != DEVICE_OK)
          return err;
 
@@ -1836,13 +1873,14 @@ int ComboXYStage::StartXYStageSequence()
    int err;
    for (int i = 0; i < 2; ++i)
    {
-      if (!physicalStages_[i])
+      MM::Stage* stage = (MM::Stage*)GetDevice(usedStages_[i].c_str());
+      if (!stage)
       {
          err = ERR_NO_PHYSICAL_STAGE;
          goto error;
       }
 
-      err = physicalStages_[i]->StartStageSequence();
+      err = stage->StartStageSequence();
       if (err != DEVICE_OK)
          goto error;
       ++startedStages;
@@ -1852,7 +1890,8 @@ int ComboXYStage::StartXYStageSequence()
 error:
    while (startedStages > 0)
    {
-      physicalStages_[--startedStages]->StopStageSequence();
+      MM::Stage* stage = (MM::Stage*)GetDevice(usedStages_[--startedStages].c_str());
+      stage->StopStageSequence();
    }
    return err;
 }
@@ -1863,10 +1902,11 @@ int ComboXYStage::StopXYStageSequence()
    int lastErr = DEVICE_OK;
    for (int i = 0; i < 2; ++i)
    {
-      if (!physicalStages_[i])
+      MM::Stage* stage = (MM::Stage*)GetDevice(usedStages_[i].c_str());
+      if (!stage)
          continue;
 
-      int err = physicalStages_[i]->StopStageSequence();
+      int err = stage->StopStageSequence();
       if (err != DEVICE_OK)
          lastErr = err;
       // Try to stop all even after error or missing stage
@@ -1880,10 +1920,11 @@ int ComboXYStage::ClearXYStageSequence()
    int lastErr = DEVICE_OK;
    for (int i = 0; i < 2; ++i)
    {
-      if (!physicalStages_[i])
+      MM::Stage* stage = (MM::Stage*)GetDevice(usedStages_[i].c_str());
+      if (!stage)
          continue;
 
-      int err = physicalStages_[i]->ClearStageSequence();
+      int err = stage->ClearStageSequence();
       if (err != DEVICE_OK)
          lastErr = err;
    }
@@ -1895,14 +1936,16 @@ int ComboXYStage::AddToXYStageSequence(double positionX, double positionY)
 {
    for (int i = 0; i < 2; ++i)
    {
-      if (!physicalStages_[i])
+      MM::Stage* stage = (MM::Stage*)GetDevice(usedStages_[i].c_str());
+      if (!stage)
          return ERR_NO_PHYSICAL_STAGE;
    }
    for (int i = 0; i < 2; ++i)
    {
+      MM::Stage* stage = (MM::Stage*)GetDevice(usedStages_[i].c_str());
       const double& logicalPos = (i == 0) ? positionX : positionY;
       double physicalPos = stageScalings_[i] * logicalPos + stageTranslations_[i];
-      int err = physicalStages_[i]->AddToStageSequence(physicalPos);
+      int err = stage->AddToStageSequence(physicalPos);
       if (err != DEVICE_OK)
          return err;
    }
@@ -1914,12 +1957,14 @@ int ComboXYStage::SendXYStageSequence()
 {
    for (int i = 0; i < 2; ++i)
    {
-      if (!physicalStages_[i])
+      MM::Stage* stage = (MM::Stage*)GetDevice(usedStages_[i].c_str());
+      if (!stage)
          return ERR_NO_PHYSICAL_STAGE;
    }
    for (int i = 0; i < 2; ++i)
    {
-      int err = physicalStages_[i]->SendStageSequence();
+      MM::Stage* stage = (MM::Stage*)GetDevice(usedStages_[i].c_str());
+      int err = stage->SendStageSequence();
       if (err != DEVICE_OK)
          return err;
    }
@@ -1941,7 +1986,6 @@ int ComboXYStage::OnPhysicalStage(MM::PropertyBase* pProp, MM::ActionType eAct, 
       if (stageLabel == g_Undefined)
       {
          usedStages_[xy] = g_Undefined;
-         physicalStages_[xy] = 0;
       }
       else
       {
@@ -1949,17 +1993,14 @@ int ComboXYStage::OnPhysicalStage(MM::PropertyBase* pProp, MM::ActionType eAct, 
          if (!stage)
          {
             pProp->Set(g_Undefined);
-            physicalStages_[xy] = 0;
             return ERR_INVALID_DEVICE_NAME;
          }
          if (stage->IsContinuousFocusDrive())
          {
             pProp->Set(g_Undefined);
-            physicalStages_[xy] = 0;
             return ERR_AUTOFOCUS_NOT_SUPPORTED;
          }
          usedStages_[xy] = stageLabel;
-         physicalStages_[xy] = stage;
       }
    }
    return DEVICE_OK;
@@ -2019,8 +2060,7 @@ SingleAxisStage::SingleAxisStage() :
    useXaxis_(true),
    simulatedStepSizeUm_(0.1),
    initialized_(false),
-   usedStage_(g_Undefined),
-   physicalStage_(0)
+   usedStage_(g_Undefined)
 {
    InitializeDefaultErrorMessages();
    SetErrorText(ERR_INVALID_DEVICE_NAME, "Invalid stage device");
@@ -2098,54 +2138,58 @@ int SingleAxisStage::Shutdown()
 
 bool SingleAxisStage::Busy()
 {
-   if (!physicalStage_)
+   MM::XYStage* stage = (MM::XYStage*)GetDevice(usedStage_.c_str());
+   if (!stage)
       return DEVICE_OK;
 
-   return physicalStage_->Busy();
+   return stage->Busy();
 }
 
 
 int SingleAxisStage::Stop()
 {
-   if (!physicalStage_)
+   MM::XYStage* stage = (MM::XYStage*)GetDevice(usedStage_.c_str());
+   if (!stage)
       return DEVICE_OK;
 
-   return physicalStage_->Stop();
+   return stage->Stop();
 }
 
 
 int SingleAxisStage::SetPositionUm(double pos)
 {
-   if (!physicalStage_)
+   MM::XYStage* stage = (MM::XYStage*)GetDevice(usedStage_.c_str());
+   if (!stage)
       return ERR_NO_PHYSICAL_STAGE;
 
    double xpos, ypos;
-   int err = physicalStage_->GetPositionUm(xpos, ypos);
+   int err = stage->GetPositionUm(xpos, ypos);
    if (err != DEVICE_OK)
       return err;
    if (useXaxis_)
    {
-      return physicalStage_->SetPositionUm(pos, ypos);
+      return stage->SetPositionUm(pos, ypos);
    }
    else
    {
-      return physicalStage_->SetPositionUm(xpos, pos);
+      return stage->SetPositionUm(xpos, pos);
    }
 }
 
 
 int SingleAxisStage::SetRelativePositionUm(double d)
 {
-   if (!physicalStage_)
+   MM::XYStage* stage = (MM::XYStage*)GetDevice(usedStage_.c_str());
+   if (!stage)
       return ERR_NO_PHYSICAL_STAGE;
 
    if (useXaxis_)
    {
-      return physicalStage_->SetRelativePositionUm(d, 0.0);
+      return stage->SetRelativePositionUm(d, 0.0);
    }
    else
    {
-      return physicalStage_->SetRelativePositionUm(0.0, d);
+      return stage->SetRelativePositionUm(0.0, d);
    }
 }
 
@@ -2155,11 +2199,12 @@ int SingleAxisStage::GetPositionUm(double& pos)
    // not sure why this is called on startup but not the MultiStage version
    // for now just ignore situation where we don't have a physical stage defined
 
-   if (!physicalStage_)
+   MM::XYStage* stage = (MM::XYStage*)GetDevice(usedStage_.c_str());
+   if (!stage)
       return DEVICE_OK;
 
    double xpos, ypos;
-   int err = physicalStage_->GetPositionUm(xpos, ypos);
+   int err = stage->GetPositionUm(xpos, ypos);
    if (err != DEVICE_OK)
       return err;
    if (useXaxis_)
@@ -2194,11 +2239,12 @@ int SingleAxisStage::GetPositionSteps(long& steps)
 
 int SingleAxisStage::GetLimits(double& lower, double& upper)
 {
-   if (!physicalStage_)
+   MM::XYStage* stage = (MM::XYStage*)GetDevice(usedStage_.c_str());
+   if (!stage)
       return ERR_NO_PHYSICAL_STAGE;
 
    double xMin, xMax, yMin, yMax;
-   int err = physicalStage_->GetLimitsUm(xMin, xMax, yMin, yMax);
+   int err = stage->GetLimitsUm(xMin, xMax, yMin, yMax);
    if (err != DEVICE_OK)
       return err;
    if (useXaxis_)
@@ -2223,77 +2269,84 @@ bool SingleAxisStage::IsContinuousFocusDrive() const
 }
 
 
-int SingleAxisStage::IsStageSequenceable(bool& isSequenceable) const
+int SingleAxisStage::IsStageSequenceable(bool& isSequenceable)
 {
-   if (!physicalStage_)
+   MM::XYStage* stage = (MM::XYStage*)GetDevice(usedStage_.c_str());
+   if (!stage)
       return ERR_NO_PHYSICAL_STAGE;
 
-   return physicalStage_->IsXYStageSequenceable(isSequenceable);
+   return stage->IsXYStageSequenceable(isSequenceable);
 }
 
 
-int SingleAxisStage::GetStageSequenceMaxLength(long& nrEvents) const
+int SingleAxisStage::GetStageSequenceMaxLength(long& nrEvents)
 {
-   if (!physicalStage_)
+   MM::XYStage* stage = (MM::XYStage*)GetDevice(usedStage_.c_str());
+   if (!stage)
       return ERR_NO_PHYSICAL_STAGE;
 
-   return physicalStage_->GetXYStageSequenceMaxLength(nrEvents);
+   return stage->GetXYStageSequenceMaxLength(nrEvents);
 }
 
 
 int SingleAxisStage::StartStageSequence()
 {
-   if (!physicalStage_)
+   MM::XYStage* stage = (MM::XYStage*)GetDevice(usedStage_.c_str());
+   if (!stage)
       return ERR_NO_PHYSICAL_STAGE;
 
-   return physicalStage_->StartXYStageSequence();
+   return stage->StartXYStageSequence();
 }
 
 
 int SingleAxisStage::StopStageSequence()
 {
-   if (!physicalStage_)
+   MM::XYStage* stage = (MM::XYStage*)GetDevice(usedStage_.c_str());
+   if (!stage)
       return ERR_NO_PHYSICAL_STAGE;
 
-   return physicalStage_->StopXYStageSequence();
+   return stage->StopXYStageSequence();
 }
 
 
 int SingleAxisStage::ClearStageSequence()
 {
-   if (!physicalStage_)
+   MM::XYStage* stage = (MM::XYStage*)GetDevice(usedStage_.c_str());
+   if (!stage)
       return ERR_NO_PHYSICAL_STAGE;
 
-   return physicalStage_->ClearXYStageSequence();
+   return stage->ClearXYStageSequence();
 }
 
 
 int SingleAxisStage::AddToStageSequence(double pos)
 {
-   if (!physicalStage_)
+   MM::XYStage* stage = (MM::XYStage*)GetDevice(usedStage_.c_str());
+   if (!stage)
       return ERR_NO_PHYSICAL_STAGE;
 
    double xpos, ypos;
-   int err = physicalStage_->GetPositionUm(xpos, ypos);
+   int err = stage->GetPositionUm(xpos, ypos);
    if (err != DEVICE_OK)
       return err;
    if (useXaxis_)
    {
-      return physicalStage_->AddToXYStageSequence(pos, ypos);
+      return stage->AddToXYStageSequence(pos, ypos);
    }
    else
    {
-      return physicalStage_->AddToXYStageSequence(xpos, pos);
+      return stage->AddToXYStageSequence(xpos, pos);
    }
 }
 
 
 int SingleAxisStage::SendStageSequence()
 {
-   if (!physicalStage_)
+   MM::XYStage* stage = (MM::XYStage*)GetDevice(usedStage_.c_str());
+   if (!stage)
       return ERR_NO_PHYSICAL_STAGE;
 
-   return physicalStage_->SendXYStageSequence();
+   return stage->SendXYStageSequence();
 }
 
 
@@ -2348,7 +2401,6 @@ int SingleAxisStage::OnPhysicalStage(MM::PropertyBase* pProp, MM::ActionType eAc
       if (stageLabel == g_Undefined)
       {
          usedStage_ = g_Undefined;
-         physicalStage_ = 0;
       }
       else
       {
@@ -2356,11 +2408,9 @@ int SingleAxisStage::OnPhysicalStage(MM::PropertyBase* pProp, MM::ActionType eAc
          if (!stage)
          {
             pProp->Set(g_Undefined);
-            physicalStage_ = 0;
             return ERR_INVALID_DEVICE_NAME;
          }
          usedStage_ = stageLabel;
-         physicalStage_ = stage;
       }
    }
    return DEVICE_OK;
@@ -2372,7 +2422,6 @@ int SingleAxisStage::OnPhysicalStage(MM::PropertyBase* pProp, MM::ActionType eAc
  * DAShutter implementation
  */
 DAMonochromator::DAMonochromator() :
-   DADevice_(0),
    DADeviceName_ (""),
    initialized_ (false),
    open_(false),
@@ -2481,8 +2530,10 @@ int DAMonochromator::Initialize()
 
 bool DAMonochromator::Busy()
 {
-   if (DADevice_ != 0)
-      return DADevice_->Busy();
+   MM::SignalIO* da = (MM::SignalIO*) GetDevice(DADeviceName_.c_str());
+
+   if (da != 0)
+      return da->Busy();
 
    // If we are here, there is a problem.  No way to report it.
    return false;
@@ -2493,13 +2544,15 @@ bool DAMonochromator::Busy()
  */
 int DAMonochromator::SetOpen(bool open)
 {
-   if (DADevice_ == 0)
+   MM::SignalIO* da = (MM::SignalIO*) GetDevice(DADeviceName_.c_str());
+
+   if (da == 0)
       return ERR_NO_DA_DEVICE;
    int ret = DEVICE_ERR;
    double voltage = closedVoltage_;
    if(open) voltage = openVoltage_;
 
-   ret = DADevice_->SetSignal(voltage);
+   ret = da->SetSignal(voltage);
    if(ret == DEVICE_OK) open_ = open;
 
    return ret;
@@ -2527,9 +2580,8 @@ int DAMonochromator::OnDADevice(MM::PropertyBase* pProp, MM::ActionType eAct)
 
       std::string DADeviceName;
       pProp->Get(DADeviceName);
-      MM::SignalIO* DADevice = (MM::SignalIO*) GetDevice(DADeviceName.c_str());
-      if (DADevice != 0) {
-         DADevice_ = DADevice;
+      MM::SignalIO* da = (MM::SignalIO*) GetDevice(DADeviceName.c_str());
+      if (da != 0) {
          DADeviceName_ = DADeviceName;
       } else
          return ERR_INVALID_DEVICE_NAME;
@@ -2574,7 +2626,8 @@ int DAMonochromator::OnOpenWavelength(MM::PropertyBase* pProp, MM::ActionType eA
    }
    else if (eAct == MM::AfterSet)
    {
-      if (DADevice_ == 0)
+      MM::SignalIO* da = (MM::SignalIO*) GetDevice(DADeviceName_.c_str());
+      if (da == 0)
          return ERR_NO_DA_DEVICE;
 
       double val;
@@ -2588,7 +2641,7 @@ int DAMonochromator::OnOpenWavelength(MM::PropertyBase* pProp, MM::ActionType eA
       openVoltage_ = volt;
 
       if(open_){
-         int ret = DADevice_->SetSignal(openVoltage_);
+         int ret = da->SetSignal(openVoltage_);
          if(ret != DEVICE_OK) return ret;
       }
    }
@@ -2678,7 +2731,6 @@ int DAMonochromator::OnMaxVoltage(MM::PropertyBase* pProp, MM::ActionType eAct)
  * DAShutter implementation
  */
 DAShutter::DAShutter() :
-   DADevice_(0),
    DADeviceName_ (""),
    initialized_ (false)
 {
@@ -2755,8 +2807,9 @@ int DAShutter::Initialize()
 
 bool DAShutter::Busy()
 {
-   if (DADevice_ != 0)
-      return DADevice_->Busy();
+   MM::SignalIO* da = (MM::SignalIO*) GetDevice(DADeviceName_.c_str());
+   if (da != 0)
+      return da->Busy();
 
    // If we are here, there is a problem.  No way to report it.
    return false;
@@ -2767,18 +2820,20 @@ bool DAShutter::Busy()
  */
 int DAShutter::SetOpen(bool open)
 {
-   if (DADevice_ == 0)
-      return ERR_NO_DA_DEVICE;
+   MM::SignalIO* da = (MM::SignalIO*) GetDevice(DADeviceName_.c_str());
+   if (da == 0)
+     return ERR_NO_DA_DEVICE;
 
-   return DADevice_->SetGateOpen(open);
+   return da->SetGateOpen(open);
 }
 
 int DAShutter::GetOpen(bool& open)
 {
-   if (DADevice_ == 0)
-      return ERR_NO_DA_DEVICE;
+   MM::SignalIO* da = (MM::SignalIO*) GetDevice(DADeviceName_.c_str());
+   if (da == 0)
+     return ERR_NO_DA_DEVICE;
 
-   return DADevice_->GetGateOpen(open);
+   return da->GetGateOpen(open);
 }
 
 ///////////////////////////////////////
@@ -2797,9 +2852,8 @@ int DAShutter::OnDADevice(MM::PropertyBase* pProp, MM::ActionType eAct)
 
       std::string DADeviceName;
       pProp->Get(DADeviceName);
-      MM::SignalIO* DADevice = (MM::SignalIO*) GetDevice(DADeviceName.c_str());
-      if (DADevice != 0) {
-         DADevice_ = DADevice;
+      MM::SignalIO* da = (MM::SignalIO*) GetDevice(DADeviceName.c_str());
+      if (da != 0) {
          DADeviceName_ = DADeviceName;
       } else
          return ERR_INVALID_DEVICE_NAME;
@@ -2937,11 +2991,12 @@ int DAZStage::Initialize()
       return ret;
 
    std::ostringstream tmp;
-   tmp << DADevice_;
+   tmp << DADeviceName_;
    LogMessage(tmp.str().c_str());
 
-   if (DADevice_ != 0)
-      DADevice_->GetLimits(minDAVolt_, maxDAVolt_);
+   MM::SignalIO* da = (MM::SignalIO*) GetDevice(DADeviceName_.c_str());
+   if (da != 0)
+      da->GetLimits(minDAVolt_, maxDAVolt_);
 
    originPos_ = minStagePos_;
 
@@ -2960,8 +3015,9 @@ int DAZStage::Shutdown()
 
 bool DAZStage::Busy()
 {
-   if (DADevice_ != 0)
-      return DADevice_->Busy();
+   MM::SignalIO* da = (MM::SignalIO*) GetDevice(DADeviceName_.c_str());
+   if (da != 0)
+      return da->Busy();
 
    // If we are here, there is a problem.  No way to report it.
    return false;
@@ -2972,7 +3028,8 @@ bool DAZStage::Busy()
  */
 int DAZStage::SetPositionUm(double pos)
 {
-   if (DADevice_ == 0)
+   MM::SignalIO* da = (MM::SignalIO*) GetDevice(DADeviceName_.c_str());
+   if (da == 0)
       return ERR_NO_DA_DEVICE;
 
    double volt =  (pos - minStagePos_) / (maxStagePos_ - minStagePos_) * (maxStageVolt_ - minStageVolt_) + minStageVolt_;
@@ -2980,7 +3037,7 @@ int DAZStage::SetPositionUm(double pos)
       return ERR_POS_OUT_OF_RANGE;
 
    pos_ = pos;
-   return DADevice_->SetSignal(volt);
+   return da->SetSignal(volt);
 }
 
 /*
@@ -2988,11 +3045,12 @@ int DAZStage::SetPositionUm(double pos)
  */
 int DAZStage::GetPositionUm(double& pos)
 {
-   if (DADevice_ == 0)
+   MM::SignalIO* da = (MM::SignalIO*) GetDevice(DADeviceName_.c_str());
+   if (da == 0)
       return ERR_NO_DA_DEVICE;
 
    double volt;
-   int ret = DADevice_->GetSignal(volt);
+   int ret = da->GetSignal(volt);
    if (ret != DEVICE_OK) 
       // DA Device cannot read, set position from cache
       pos = pos_;
@@ -3011,13 +3069,14 @@ int DAZStage::GetPositionUm(double& pos)
  */
 int DAZStage::SetPositionSteps(long steps)
 {
-   if (DADevice_ == 0)
+   MM::SignalIO* da = (MM::SignalIO*) GetDevice(DADeviceName_.c_str());
+   if (da == 0)
       return ERR_NO_DA_DEVICE;
 
    // Interpret steps to be mV
    double volt = minStageVolt_  + (steps / 1000.0);
    if (volt < maxStageVolt_)
-      DADevice_->SetSignal(volt);
+      da->SetSignal(volt);
    else
       return ERR_VOLT_OUT_OF_RANGE;
 
@@ -3028,11 +3087,12 @@ int DAZStage::SetPositionSteps(long steps)
 
 int DAZStage::GetPositionSteps(long& steps)
 {
-   if (DADevice_ == 0)
+   MM::SignalIO* da = (MM::SignalIO*) GetDevice(DADeviceName_.c_str());
+   if (da == 0)
       return ERR_NO_DA_DEVICE;
 
    double volt;
-   int ret = DADevice_->GetSignal(volt);
+   int ret = da->GetSignal(volt);
    if (ret != DEVICE_OK)
       steps = (long) ((pos_ - minStagePos_)/(maxStagePos_ - minStagePos_) * (maxStageVolt_ - minStageVolt_) * 1000.0); 
    else
@@ -3046,7 +3106,8 @@ int DAZStage::GetPositionSteps(long& steps)
  */
 int DAZStage::SetOrigin()
 {
-   if (DADevice_ == 0)
+   MM::SignalIO* da = (MM::SignalIO*) GetDevice(DADeviceName_.c_str());
+   if (da == 0)
       return ERR_NO_DA_DEVICE;
    /*
    double volt;
@@ -3071,33 +3132,52 @@ int DAZStage::GetLimits(double& min, double& max)
    return DEVICE_OK;
 }
 
-int DAZStage::IsStageSequenceable(bool& isSequenceable) const 
+int DAZStage::IsStageSequenceable(bool& isSequenceable) 
 {
-   return DADevice_->IsDASequenceable(isSequenceable);
+   MM::SignalIO* da = (MM::SignalIO*) GetDevice(DADeviceName_.c_str());
+   if (da == 0)
+      return ERR_NO_DA_DEVICE;
+   return da->IsDASequenceable(isSequenceable);
 }
 
-int DAZStage::GetStageSequenceMaxLength(long& nrEvents) const  
+int DAZStage::GetStageSequenceMaxLength(long& nrEvents) 
 {
-   return DADevice_->GetDASequenceMaxLength(nrEvents);
+   MM::SignalIO* da = (MM::SignalIO*) GetDevice(DADeviceName_.c_str());
+   if (da == 0)
+     return ERR_NO_DA_DEVICE;
+   return da->GetDASequenceMaxLength(nrEvents);
 }
 
 int DAZStage::StartStageSequence()  
 {
-   return DADevice_->StartDASequence();
+   MM::SignalIO* da = (MM::SignalIO*) GetDevice(DADeviceName_.c_str());
+   if (da == 0)
+      return ERR_NO_DA_DEVICE;
+   return da->StartDASequence();
 }
 
 int DAZStage::StopStageSequence()  
 {
-   return DADevice_->StopDASequence();
+   MM::SignalIO* da = (MM::SignalIO*) GetDevice(DADeviceName_.c_str());
+   if (da == 0)
+      return ERR_NO_DA_DEVICE;
+   return da->StopDASequence();
 }
 
 int DAZStage::ClearStageSequence() 
 {
-   return DADevice_->ClearDASequence();
+   MM::SignalIO* da = (MM::SignalIO*) GetDevice(DADeviceName_.c_str());
+   if (da == 0)
+      return ERR_NO_DA_DEVICE;
+   return da->ClearDASequence();
 }
 
 int DAZStage::AddToStageSequence(double pos) 
 {
+   MM::SignalIO* da = (MM::SignalIO*) GetDevice(DADeviceName_.c_str());
+   if (da == 0)
+      return ERR_NO_DA_DEVICE;
+
    double voltage =  (pos - minStagePos_) / (maxStagePos_ - minStagePos_) * (maxStageVolt_ - minStageVolt_) + minStageVolt_;
 
    if (voltage > maxStageVolt_)
@@ -3105,12 +3185,15 @@ int DAZStage::AddToStageSequence(double pos)
    else if (voltage < minStageVolt_)
       voltage = minStageVolt_;
 
-   return DADevice_->AddToDASequence(voltage);
+   return da->AddToDASequence(voltage);
 }
 
 int DAZStage::SendStageSequence()
 {
-   return DADevice_->SendDASequence();
+   MM::SignalIO* da = (MM::SignalIO*) GetDevice(DADeviceName_.c_str());
+   if (da == 0)
+      return ERR_NO_DA_DEVICE;
+   return da->SendDASequence();
 }
 
 
@@ -3127,14 +3210,13 @@ int DAZStage::OnDADevice(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       std::string DADeviceName;
       pProp->Get(DADeviceName);
-      MM::SignalIO* DADevice = (MM::SignalIO*) GetDevice(DADeviceName.c_str());
-      if (DADevice != 0) {
-         DADevice_ = DADevice;
+      MM::SignalIO* da = (MM::SignalIO*) GetDevice(DADeviceName.c_str());
+      if (da != 0) {
          DADeviceName_ = DADeviceName;
       } else
          return ERR_INVALID_DEVICE_NAME;
       if (initialized_)
-         DADevice_->GetLimits(minDAVolt_, maxDAVolt_);
+         da->GetLimits(minDAVolt_, maxDAVolt_);
    }
    return DEVICE_OK;
 }
@@ -3309,14 +3391,16 @@ int DAXYStage::Initialize()
    SetProperty("Y DA Device", defaultYDA.c_str());
 
    std::ostringstream tmp;
-   tmp << DADeviceX_;
+   tmp << DADeviceNameX_;
    LogMessage(tmp.str().c_str());
 
-   if (DADeviceX_ != 0)
-      DADeviceX_->GetLimits(minDAVoltX_, maxDAVoltX_);
+   MM::SignalIO* da_x = (MM::SignalIO*) GetDevice(DADeviceNameX_.c_str());
+   if (da_x != 0)
+      da_x->GetLimits(minDAVoltX_, maxDAVoltX_);
 
-   if (DADeviceY_ != 0)
-      DADeviceY_->GetLimits(minDAVoltY_, maxDAVoltY_);
+   MM::SignalIO* da_y = (MM::SignalIO*) GetDevice(DADeviceNameY_.c_str());
+   if (da_y != 0)
+      da_y->GetLimits(minDAVoltY_, maxDAVoltY_);
 
    // Min volts
    pAct = new CPropertyAction (this, &DAXYStage::OnStageMinVoltX);      
@@ -3370,8 +3454,11 @@ int DAXYStage::Shutdown()
 
 bool DAXYStage::Busy()
 {
-   if ((DADeviceX_ != 0) && (DADeviceY_ != 0))
-	   return DADeviceX_->Busy() || DADeviceY_->Busy();
+   MM::SignalIO* da_x = (MM::SignalIO*) GetDevice(DADeviceNameX_.c_str());
+   MM::SignalIO* da_y = (MM::SignalIO*) GetDevice(DADeviceNameY_.c_str());
+
+   if ((da_x != 0) && (da_y != 0))
+	   return da_x->Busy() || da_y->Busy();
 
    // If we are here, there is a problem.  No way to report it.
    return false;
@@ -3396,19 +3483,22 @@ int DAXYStage::Stop()
  */
 int DAXYStage::SetPositionSteps(long stepsX, long stepsY)
 {
-   if (DADeviceX_ == 0 || DADeviceY_ == 0 )
+   MM::SignalIO* da_x = (MM::SignalIO*) GetDevice(DADeviceNameX_.c_str());
+   MM::SignalIO* da_y = (MM::SignalIO*) GetDevice(DADeviceNameY_.c_str());
+
+   if (da_x == 0 || da_y == 0 )
       return ERR_NO_DA_DEVICE;
 
    // Interpret steps to be mV
    double voltX = minStageVoltX_  + (stepsX / 1000.0);
    if (voltX >= minStageVoltX_ && voltX <= maxStageVoltX_  )
-      DADeviceX_->SetSignal(voltX);
+      da_x->SetSignal(voltX);
    else
       return ERR_VOLT_OUT_OF_RANGE;
 
    double voltY = minStageVoltY_  + (stepsY / 1000.0);
    if (voltY <= maxStageVoltY_ && voltY >= minStageVoltY_)
-      DADeviceY_->SetSignal(voltY);
+      da_y->SetSignal(voltY);
    else
       return ERR_VOLT_OUT_OF_RANGE;
 
@@ -3420,17 +3510,20 @@ int DAXYStage::SetPositionSteps(long stepsX, long stepsY)
 
 int DAXYStage::GetPositionSteps(long& stepsX, long& stepsY)
 {
-   if (DADeviceX_ == 0 || DADeviceY_ == 0 )
+   MM::SignalIO* da_x = (MM::SignalIO*) GetDevice(DADeviceNameX_.c_str());
+   MM::SignalIO* da_y = (MM::SignalIO*) GetDevice(DADeviceNameY_.c_str());
+
+   if (da_x == 0 || da_y == 0 )
       return ERR_NO_DA_DEVICE;
 
    double voltX = 0, voltY = 0;
-   int ret = DADeviceX_->GetSignal(voltX);
+   int ret = da_x->GetSignal(voltX);
    if (ret != DEVICE_OK) {
       stepsX = (long) ((posX_ + originPosX_)/(maxStagePosX_ - minStagePosX_) * (maxStageVoltX_ - minStageVoltX_) * 1000.0); 
    } else {
       stepsX = (long) ((voltX - minStageVoltX_) * 1000.0);
    }
-   ret = DADeviceY_->GetSignal(voltY);
+   ret = da_y->GetSignal(voltY);
    if (ret != DEVICE_OK) {
       stepsY = (long) ((posY_ + originPosY_)/(maxStagePosY_ - minStagePosY_) * (maxStageVoltY_ - minStageVoltY_) * 1000.0); 
    }
@@ -3450,7 +3543,10 @@ int DAXYStage::SetRelativePositionSteps(long x, long y)
 
 int DAXYStage::SetPositionUm(double x, double y)
 {
-   if (DADeviceX_ == 0 || DADeviceY_ == 0 )
+   MM::SignalIO* da_x = (MM::SignalIO*) GetDevice(DADeviceNameX_.c_str());
+   MM::SignalIO* da_y = (MM::SignalIO*) GetDevice(DADeviceNameY_.c_str());
+
+   if (da_x == 0 || da_y == 0 )
       return ERR_NO_DA_DEVICE;
 
    double voltX = ( (x - originPosX_) / (maxStagePosX_ - minStagePosX_)) * (maxStageVoltX_ - minStageVoltX_);
@@ -3463,9 +3559,9 @@ int DAXYStage::SetPositionUm(double x, double y)
    //posY_ = y;
 
 
-   int ret = DADeviceX_->SetSignal(voltX);
+   int ret = da_x->SetSignal(voltX);
    if(ret != DEVICE_OK) return ret;
-   ret = DADeviceY_->SetSignal(voltY);
+   ret = da_y->SetSignal(voltY);
    if(ret != DEVICE_OK) return ret;
 
    return ret;
@@ -3473,18 +3569,21 @@ int DAXYStage::SetPositionUm(double x, double y)
 
 int DAXYStage::GetPositionUm(double& x, double& y)
 {
-   if (DADeviceX_ == 0 || DADeviceY_ == 0 )
+   MM::SignalIO* da_x = (MM::SignalIO*) GetDevice(DADeviceNameX_.c_str());
+   MM::SignalIO* da_y = (MM::SignalIO*) GetDevice(DADeviceNameY_.c_str());
+
+   if (da_x == 0 || da_y == 0 )
       return ERR_NO_DA_DEVICE;
 
    double voltX, voltY;
-   int ret = DADeviceX_->GetSignal(voltX);
+   int ret = da_x->GetSignal(voltX);
    if (ret != DEVICE_OK) 
       // DA Device cannot read, set position from cache
       x = posX_;
    else
       x = voltX/(maxStageVoltX_ - minStageVoltX_) * (maxStagePosX_ - minStagePosX_) + originPosX_;
 
-   ret = DADeviceY_->GetSignal(voltY);
+   ret = da_y->GetSignal(voltY);
    if (ret != DEVICE_OK) 
       // DA Device cannot read, set position from cache
       y = posY_;
@@ -3500,14 +3599,17 @@ int DAXYStage::GetPositionUm(double& x, double& y)
  */
 int DAXYStage::SetOrigin()
 {
-   if (DADeviceX_ == 0 || DADeviceY_ == 0 )
+   MM::SignalIO* da_x = (MM::SignalIO*) GetDevice(DADeviceNameX_.c_str());
+   MM::SignalIO* da_y = (MM::SignalIO*) GetDevice(DADeviceNameY_.c_str());
+
+   if (da_x == 0 || da_y == 0 )
       return ERR_NO_DA_DEVICE;
 
    double voltX, voltY;
-   int ret = DADeviceX_->GetSignal(voltX);
+   int ret = da_x->GetSignal(voltX);
    if (ret != DEVICE_OK)
       return ret;
-   ret = DADeviceY_->GetSignal(voltY);
+   ret = da_y->GetSignal(voltY);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -3534,21 +3636,31 @@ int DAXYStage::GetStepLimits(long& /*xMin*/, long& /*xMax*/, long& /*yMin*/, lon
    return DEVICE_UNSUPPORTED_COMMAND;
 }
 
-int DAXYStage::IsXYStageSequenceable(bool& isSequenceable) const
+int DAXYStage::IsXYStageSequenceable(bool& isSequenceable)
 {
+   MM::SignalIO* da_x = (MM::SignalIO*) GetDevice(DADeviceNameX_.c_str());
+   MM::SignalIO* da_y = (MM::SignalIO*) GetDevice(DADeviceNameY_.c_str());
+   if (da_x == 0 || da_y == 0 )
+      return ERR_NO_DA_DEVICE;
+
 	bool x, y;
-   DADeviceX_->IsDASequenceable(x);
-	DADeviceY_->IsDASequenceable(y);
+   da_x->IsDASequenceable(x);
+	da_y->IsDASequenceable(y);
 	isSequenceable = x && y;
 	return DEVICE_OK ;
 }
 
-int DAXYStage::GetXYStageSequenceMaxLength(long& nrEvents) const  
+int DAXYStage::GetXYStageSequenceMaxLength(long& nrEvents)  
 {
+   MM::SignalIO* da_x = (MM::SignalIO*) GetDevice(DADeviceNameX_.c_str());
+   MM::SignalIO* da_y = (MM::SignalIO*) GetDevice(DADeviceNameY_.c_str());
+   if (da_x == 0 || da_y == 0 )
+      return ERR_NO_DA_DEVICE;
+
 	long x, y;
-	int ret = DADeviceX_->GetDASequenceMaxLength(x);
+	int ret = da_x->GetDASequenceMaxLength(x);
 	if(ret !=DEVICE_OK) return ret;
-	ret = DADeviceY_->GetDASequenceMaxLength(y);
+	ret = da_y->GetDASequenceMaxLength(y);
 	if(ret !=DEVICE_OK) return ret;
 	nrEvents = (std::min)(x,y);
     return ret;
@@ -3556,33 +3668,53 @@ int DAXYStage::GetXYStageSequenceMaxLength(long& nrEvents) const
 
 int DAXYStage::StartXYStageSequence()  
 {
-	int ret = DADeviceX_->StartDASequence();
+   MM::SignalIO* da_x = (MM::SignalIO*) GetDevice(DADeviceNameX_.c_str());
+   MM::SignalIO* da_y = (MM::SignalIO*) GetDevice(DADeviceNameY_.c_str());
+   if (da_x == 0 || da_y == 0 )
+      return ERR_NO_DA_DEVICE;
+
+	int ret = da_x->StartDASequence();
 	if(ret !=DEVICE_OK) return ret;
-	ret = DADeviceY_->StartDASequence();
+	ret = da_y->StartDASequence();
 	if(ret !=DEVICE_OK) return ret;
    return ret;
 }
 
 int DAXYStage::StopXYStageSequence()  
 {
-   int ret = DADeviceX_->StopDASequence();
+   MM::SignalIO* da_x = (MM::SignalIO*) GetDevice(DADeviceNameX_.c_str());
+   MM::SignalIO* da_y = (MM::SignalIO*) GetDevice(DADeviceNameY_.c_str());
+   if (da_x == 0 || da_y == 0 )
+      return ERR_NO_DA_DEVICE;
+
+   int ret = da_x->StopDASequence();
 	if(ret !=DEVICE_OK) return ret;
-	ret = DADeviceY_->StopDASequence();
+	ret = da_y->StopDASequence();
 	if(ret !=DEVICE_OK) return ret;
    return DEVICE_OK;
 }
 
 int DAXYStage::ClearXYStageSequence() 
 {
-    int ret = DADeviceX_->ClearDASequence();
+   MM::SignalIO* da_x = (MM::SignalIO*) GetDevice(DADeviceNameX_.c_str());
+   MM::SignalIO* da_y = (MM::SignalIO*) GetDevice(DADeviceNameY_.c_str());
+   if (da_x == 0 || da_y == 0 )
+      return ERR_NO_DA_DEVICE;
+
+   int ret = da_x->ClearDASequence();
 	if(ret !=DEVICE_OK) return ret;
-	ret = DADeviceY_->ClearDASequence();
+	ret = da_y->ClearDASequence();
 	if(ret !=DEVICE_OK) return ret;
    return DEVICE_OK;
 }
 
 int DAXYStage::AddToXYStageSequence(double positionX, double positionY) 
 {
+   MM::SignalIO* da_x = (MM::SignalIO*) GetDevice(DADeviceNameX_.c_str());
+   MM::SignalIO* da_y = (MM::SignalIO*) GetDevice(DADeviceNameY_.c_str());
+   if (da_x == 0 || da_y == 0 )
+      return ERR_NO_DA_DEVICE;
+
    double voltageX, voltageY;
 
       voltageX = ( (positionX + originPosX_) / (maxStagePosX_ - minStagePosX_)) * 
@@ -3599,10 +3731,10 @@ int DAXYStage::AddToXYStageSequence(double positionX, double positionY)
       else if (voltageY < minStageVoltY_)
          voltageY = minStageVoltY_;
    
-   int ret = DADeviceX_->AddToDASequence(voltageX);
+   int ret = da_x->AddToDASequence(voltageX);
    if(ret != DEVICE_OK) return ret;
 
-   ret = DADeviceY_->AddToDASequence(voltageY);
+   ret = da_y->AddToDASequence(voltageY);
    if(ret != DEVICE_OK) return ret;
 
    return DEVICE_OK;
@@ -3610,9 +3742,14 @@ int DAXYStage::AddToXYStageSequence(double positionX, double positionY)
 
 int DAXYStage::SendXYStageSequence()
 {
-   int ret = DADeviceX_->SendDASequence();
+   MM::SignalIO* da_x = (MM::SignalIO*) GetDevice(DADeviceNameX_.c_str());
+   MM::SignalIO* da_y = (MM::SignalIO*) GetDevice(DADeviceNameY_.c_str());
+   if (da_x == 0 || da_y == 0 )
+      return ERR_NO_DA_DEVICE;
+
+   int ret = da_x->SendDASequence();
    if(ret != DEVICE_OK) return ret;
-   ret = DADeviceY_->SendDASequence();
+   ret = da_y->SendDASequence();
    return ret;
 }
 
@@ -3640,15 +3777,14 @@ int DAXYStage::OnDADeviceX(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       std::string DADeviceName;
       pProp->Get(DADeviceName);
-      MM::SignalIO* DADevice = (MM::SignalIO*) GetDevice(DADeviceName.c_str());
-      if (DADevice != 0) {
-         DADeviceX_ = DADevice;
+      MM::SignalIO* da_x = (MM::SignalIO*) GetDevice(DADeviceName.c_str());
+      if (da_x != 0) {
          DADeviceNameX_ = DADeviceName;
       } else
          return ERR_INVALID_DEVICE_NAME;
       if (initialized_)
       {
-         DADeviceX_->GetLimits(minDAVoltX_, maxDAVoltX_);
+         da_x->GetLimits(minDAVoltX_, maxDAVoltX_);
          UpdateStepSize();
       }
    }
@@ -3665,15 +3801,14 @@ int DAXYStage::OnDADeviceY(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       std::string DADeviceName;
       pProp->Get(DADeviceName);
-      MM::SignalIO* DADevice = (MM::SignalIO*) GetDevice(DADeviceName.c_str());
-      if (DADevice != 0) {
-         DADeviceY_ = DADevice;
+      MM::SignalIO* da_y = (MM::SignalIO*) GetDevice(DADeviceName.c_str());
+      if (da_y != 0) {
          DADeviceNameY_ = DADeviceName;
       } else
          return ERR_INVALID_DEVICE_NAME;
       if (initialized_)
       {
-         DADeviceY_->GetLimits(minDAVoltY_, maxDAVoltY_);
+         da_y->GetLimits(minDAVoltY_, maxDAVoltY_);
          UpdateStepSize();
       }
    }
@@ -3856,11 +3991,9 @@ int DATTLStateDevice::Initialize()
       return DEVICE_OK;
 
    daDeviceLabels_.clear();
-   daDevices_.clear();
    for (unsigned int i = 0; i < numberOfDADevices_; ++i)
    {
       daDeviceLabels_.push_back("");
-      daDevices_.push_back(0);
    }
 
    // Get labels of DA (SignalIO) devices
@@ -3928,7 +4061,6 @@ int DATTLStateDevice::Shutdown()
       return DEVICE_OK;
 
    daDeviceLabels_.clear();
-   daDevices_.clear();
 
    initialized_ = false;
    return DEVICE_OK;
@@ -3948,7 +4080,7 @@ bool DATTLStateDevice::Busy()
 
    for (unsigned int i = 0; i < numberOfDADevices_; ++i)
    {
-      MM::SignalIO* da = daDevices_[i];
+      MM::SignalIO* da = static_cast<MM::SignalIO*>(GetDevice(daDeviceLabels_[i].c_str()));
       if (da && da->Busy())
          return true;
    }
@@ -3994,15 +4126,6 @@ int DATTLStateDevice::OnDADevice(MM::PropertyBase* pProp, MM::ActionType eAct, l
       std::string da;
       pProp->Get(da);
       daDeviceLabels_[index] = da;
-      if (!da.empty())
-      {
-         MM::Device* daDevice = GetDevice(da.c_str());
-         daDevices_[index] = static_cast<MM::SignalIO*>(daDevice);
-      }
-      else
-      {
-         daDevices_[index] = 0;
-      }
    }
    return DEVICE_OK;
 }
@@ -4024,10 +4147,13 @@ int DATTLStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
          long mask = 0;
          for (unsigned int i = 0; i < numberOfDADevices_; ++i)
          {
-            if (daDevices_[i])
+
+            MM::SignalIO* da = static_cast<MM::SignalIO*>(GetDevice(daDeviceLabels_[i].c_str()));
+
+            if (da)
             {
                double voltage = 0.0;
-               int ret = daDevices_[i]->GetSignal(voltage);
+               int ret = da->GetSignal(voltage);
                if (ret != DEVICE_OK)
                {
                   if (ret == DEVICE_UNSUPPORTED_COMMAND)
@@ -4062,9 +4188,11 @@ int DATTLStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 
       for (unsigned int i = 0; i < numberOfDADevices_; ++i)
       {
-         if (daDevices_[i])
+         MM::SignalIO* da = static_cast<MM::SignalIO*>(GetDevice(daDeviceLabels_[i].c_str()));
+
+         if (da)
          {
-            int ret = daDevices_[i]->SetSignal((mask & (1 << i)) ? 5.0 : 0.0);
+            int ret = da->SetSignal((mask & (1 << i)) ? 5.0 : 0.0);
             lastChangeTime_ = GetCurrentMMTime();
             if (ret != DEVICE_OK)
                return ret;
@@ -4078,16 +4206,18 @@ int DATTLStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       long maxSeqLen = LONG_MAX;
       for (unsigned int i = 0; i < numberOfDADevices_; ++i)
       {
-         if (daDevices_[i])
+         MM::SignalIO* da = static_cast<MM::SignalIO*>(GetDevice(daDeviceLabels_[i].c_str()));
+
+         if (da)
          {
             bool sequenceable = false;
-            int ret = daDevices_[i]->IsDASequenceable(sequenceable);
+            int ret = da->IsDASequenceable(sequenceable);
             if (ret != DEVICE_OK)
                return ret;
             if (sequenceable)
             {
                long daMaxLen = 0;
-               int ret = daDevices_[i]->GetDASequenceMaxLength(daMaxLen);
+               int ret = da->GetDASequenceMaxLength(daMaxLen);
                if (ret != DEVICE_OK)
                   return ret;
                if (daMaxLen < maxSeqLen)
@@ -4122,19 +4252,21 @@ int DATTLStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 
       for (unsigned int i = 0; i < numberOfDADevices_; ++i)
       {
-         if (daDevices_[i])
+         MM::SignalIO* da = static_cast<MM::SignalIO*>(GetDevice(daDeviceLabels_[i].c_str()));
+
+         if (da)
          {
-            int ret = daDevices_[i]->ClearDASequence();
+            int ret = da->ClearDASequence();
             if (ret != DEVICE_OK)
                return ret;
             for (std::vector<long>::const_iterator it = values.begin(),
                end = values.end(); it != end; ++it)
             {
-               int ret = daDevices_[i]->AddToDASequence(*it & (1 << i) ? 5.0 : 0.0);
+               int ret = da->AddToDASequence(*it & (1 << i) ? 5.0 : 0.0);
                if (ret != DEVICE_OK)
                   return ret;
             }
-            ret = daDevices_[i]->SendDASequence();
+            ret = da->SendDASequence();
             if (ret != DEVICE_OK)
                return ret;
          }
@@ -4144,9 +4276,11 @@ int DATTLStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       for (unsigned int i = 0; i < numberOfDADevices_; ++i)
       {
-         if (daDevices_[i])
+         MM::SignalIO* da = static_cast<MM::SignalIO*>(GetDevice(daDeviceLabels_[i].c_str()));
+
+         if (da)
          {
-            int ret = daDevices_[i]->StartDASequence();
+            int ret = da->StartDASequence();
             if (ret != DEVICE_OK)
                return ret;
          }
@@ -4156,9 +4290,11 @@ int DATTLStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       for (unsigned int i = 0; i < numberOfDADevices_; ++i)
       {
-         if (daDevices_[i])
+         MM::SignalIO* da = static_cast<MM::SignalIO*>(GetDevice(daDeviceLabels_[i].c_str()));
+
+         if (da)
          {
-            int ret = daDevices_[i]->StopDASequence();
+            int ret = da->StopDASequence();
             if (ret != DEVICE_OK)
                return ret;
          }
@@ -4207,12 +4343,10 @@ int MultiDAStateDevice::Initialize()
       return DEVICE_OK;
 
    daDeviceLabels_.clear();
-   daDevices_.clear();
    voltages_.clear();
    for (unsigned int i = 0; i < numberOfDADevices_; ++i)
    {
       daDeviceLabels_.push_back("");
-      daDevices_.push_back(0);
       voltages_.push_back(0.0);
    }
 
@@ -4302,7 +4436,6 @@ int MultiDAStateDevice::Shutdown()
       return DEVICE_OK;
 
    daDeviceLabels_.clear();
-   daDevices_.clear();
    voltages_.clear();
 
    initialized_ = false;
@@ -4323,7 +4456,7 @@ bool MultiDAStateDevice::Busy()
 
    for (unsigned int i = 0; i < numberOfDADevices_; ++i)
    {
-      MM::SignalIO* da = daDevices_[i];
+      MM::SignalIO* da = static_cast<MM::SignalIO*>(GetDevice(daDeviceLabels_[i].c_str()));
       if (da && da->Busy())
          return true;
    }
@@ -4397,15 +4530,6 @@ int MultiDAStateDevice::OnDADevice(MM::PropertyBase* pProp, MM::ActionType eAct,
       std::string da;
       pProp->Get(da);
       daDeviceLabels_[index] = da;
-      if (!da.empty())
-      {
-         MM::Device* daDevice = GetDevice(da.c_str());
-         daDevices_[index] = static_cast<MM::SignalIO*>(daDevice);
-      }
-      else
-      {
-         daDevices_[index] = 0;
-      }
    }
    return DEVICE_OK;
 }
@@ -4431,10 +4555,12 @@ int MultiDAStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 
       for (unsigned int i = 0; i < numberOfDADevices_; ++i)
       {
-         if (daDevices_[i])
+         MM::SignalIO* da = static_cast<MM::SignalIO*>(GetDevice(daDeviceLabels_[i].c_str()));
+
+         if (da)
          {
             double volts = voltages_[i];
-            int ret = daDevices_[i]->SetSignal((mask & (1 << i)) ? volts : 0.0);
+            int ret = da->SetSignal((mask & (1 << i)) ? volts : 0.0);
             lastChangeTime_ = GetCurrentMMTime();
             if (ret != DEVICE_OK)
                return ret;
@@ -4448,16 +4574,18 @@ int MultiDAStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       long maxSeqLen = LONG_MAX;
       for (unsigned int i = 0; i < numberOfDADevices_; ++i)
       {
-         if (daDevices_[i])
+         MM::SignalIO* da = static_cast<MM::SignalIO*>(GetDevice(daDeviceLabels_[i].c_str()));
+
+         if (da)
          {
             bool sequenceable = false;
-            int ret = daDevices_[i]->IsDASequenceable(sequenceable);
+            int ret = da->IsDASequenceable(sequenceable);
             if (ret != DEVICE_OK)
                return ret;
             if (sequenceable)
             {
                long daMaxLen = 0;
-               int ret = daDevices_[i]->GetDASequenceMaxLength(daMaxLen);
+               int ret = da->GetDASequenceMaxLength(daMaxLen);
                if (ret != DEVICE_OK)
                   return ret;
                if (daMaxLen < maxSeqLen)
@@ -4492,20 +4620,22 @@ int MultiDAStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 
       for (unsigned int i = 0; i < numberOfDADevices_; ++i)
       {
-         if (daDevices_[i])
+         MM::SignalIO* da = static_cast<MM::SignalIO*>(GetDevice(daDeviceLabels_[i].c_str()));
+
+         if (da)
          {
-            int ret = daDevices_[i]->ClearDASequence();
+            int ret = da->ClearDASequence();
             if (ret != DEVICE_OK)
                return ret;
             for (std::vector<long>::const_iterator it = values.begin(),
                end = values.end(); it != end; ++it)
             {
                double volts = voltages_[i];
-               int ret = daDevices_[i]->AddToDASequence(*it & (1 << i) ? volts : 0.0);
+               int ret = da->AddToDASequence(*it & (1 << i) ? volts : 0.0);
                if (ret != DEVICE_OK)
                   return ret;
             }
-            ret = daDevices_[i]->SendDASequence();
+            ret = da->SendDASequence();
             if (ret != DEVICE_OK)
                return ret;
          }
@@ -4515,9 +4645,11 @@ int MultiDAStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       for (unsigned int i = 0; i < numberOfDADevices_; ++i)
       {
-         if (daDevices_[i])
+         MM::SignalIO* da = static_cast<MM::SignalIO*>(GetDevice(daDeviceLabels_[i].c_str()));
+
+         if (da)
          {
-            int ret = daDevices_[i]->StartDASequence();
+            int ret = da->StartDASequence();
             if (ret != DEVICE_OK)
                return ret;
          }
@@ -4527,9 +4659,11 @@ int MultiDAStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       for (unsigned int i = 0; i < numberOfDADevices_; ++i)
       {
-         if (daDevices_[i])
+         MM::SignalIO* da = static_cast<MM::SignalIO*>(GetDevice(daDeviceLabels_[i].c_str()));
+
+         if (da)
          {
-            int ret = daDevices_[i]->StopDASequence();
+            int ret = da->StopDASequence();
             if (ret != DEVICE_OK)
                return ret;
          }
@@ -4551,9 +4685,12 @@ int MultiDAStateDevice::OnVoltage(MM::PropertyBase* pProp, MM::ActionType eAct, 
 
       bool gateOpen;
       GetGateOpen(gateOpen);
-      if (gateOpen && daDevices_[i] && (mask_ & (1 << i)))
+
+      MM::SignalIO* da = static_cast<MM::SignalIO*>(GetDevice(daDeviceLabels_[i].c_str()));
+
+      if (gateOpen && da && (mask_ & (1 << i)))
       {
-         int ret = daDevices_[i]->SetSignal(voltages_[i]);
+         int ret = da->SetSignal(voltages_[i]);
          lastChangeTime_ = GetCurrentMMTime();
          if (ret != DEVICE_OK)
             return ret;
@@ -4611,9 +4748,6 @@ int AutoFocusStage::Initialize()
          break;
    }
 
-
-
-
    CPropertyAction* pAct = new CPropertyAction (this, &AutoFocusStage::OnAutoFocusDevice);      
    std::string defaultAutoFocus = "Undefined";
    if (availableAutoFocusDevices_.size() >= 1)
@@ -4633,7 +4767,7 @@ int AutoFocusStage::Initialize()
       return ret;
 
    std::ostringstream tmp;
-   tmp << AutoFocusDevice_;
+   tmp << AutoFocusDeviceName_;
    LogMessage(tmp.str().c_str());
 
    initialized_ = true;
@@ -4651,8 +4785,9 @@ int AutoFocusStage::Shutdown()
 
 bool AutoFocusStage::Busy()
 {
-   if (AutoFocusDevice_ != 0)
-      return AutoFocusDevice_->Busy();
+   MM::AutoFocus* AutoFocusDevice = (MM::AutoFocus*) GetDevice(AutoFocusDeviceName_.c_str());
+   if (AutoFocusDevice != 0)
+      return AutoFocusDevice->Busy();
 
    // If we are here, there is a problem.  No way to report it.
    return false;
@@ -4663,10 +4798,11 @@ bool AutoFocusStage::Busy()
  */
 int AutoFocusStage::SetPositionUm(double pos)
 {
-   if (AutoFocusDevice_ == 0)
+   MM::AutoFocus* AutoFocusDevice = (MM::AutoFocus*) GetDevice(AutoFocusDeviceName_.c_str());
+   if (AutoFocusDevice == 0)
       return ERR_NO_AUTOFOCUS_DEVICE;
 
-   return AutoFocusDevice_->SetOffset(pos);
+   return AutoFocusDevice->SetOffset(pos);
 }
 
 /*
@@ -4674,10 +4810,11 @@ int AutoFocusStage::SetPositionUm(double pos)
  */
 int AutoFocusStage::GetPositionUm(double& pos)
 {
-   if (AutoFocusDevice_ == 0)
+   MM::AutoFocus* AutoFocusDevice = (MM::AutoFocus*) GetDevice(AutoFocusDeviceName_.c_str());
+   if (AutoFocusDevice == 0)
       return ERR_NO_AUTOFOCUS_DEVICE;
 
-   return  AutoFocusDevice_->GetOffset(pos);;
+   return  AutoFocusDevice->GetOffset(pos);;
 }
 
 /*
@@ -4686,7 +4823,8 @@ int AutoFocusStage::GetPositionUm(double& pos)
  */
 int AutoFocusStage::SetPositionSteps(long /* steps */)
 {
-   if (AutoFocusDevice_ == 0)
+   MM::AutoFocus* AutoFocusDevice = (MM::AutoFocus*) GetDevice(AutoFocusDeviceName_.c_str());
+   if (AutoFocusDevice == 0)
       return ERR_NO_AUTOFOCUS_DEVICE;
 
    return  DEVICE_UNSUPPORTED_COMMAND;
@@ -4694,7 +4832,8 @@ int AutoFocusStage::SetPositionSteps(long /* steps */)
 
 int AutoFocusStage::GetPositionSteps(long& /*steps */)
 {
-   if (AutoFocusDevice_ == 0)
+   MM::AutoFocus* AutoFocusDevice = (MM::AutoFocus*) GetDevice(AutoFocusDeviceName_.c_str());
+   if (AutoFocusDevice == 0)
       return ERR_NO_AUTOFOCUS_DEVICE;
 
    return  DEVICE_UNSUPPORTED_COMMAND;
@@ -4705,7 +4844,8 @@ int AutoFocusStage::GetPositionSteps(long& /*steps */)
  */
 int AutoFocusStage::SetOrigin()
 {
-   if (AutoFocusDevice_ == 0)
+   MM::AutoFocus* AutoFocusDevice = (MM::AutoFocus*) GetDevice(AutoFocusDeviceName_.c_str());
+   if (AutoFocusDevice == 0)
       return ERR_NO_AUTOFOCUS_DEVICE;
 
    return  DEVICE_UNSUPPORTED_COMMAND;
@@ -4713,7 +4853,8 @@ int AutoFocusStage::SetOrigin()
 
 int AutoFocusStage::GetLimits(double& /*min*/, double& /*max*/)
 {
-   if (AutoFocusDevice_ == 0)
+   MM::AutoFocus* AutoFocusDevice = (MM::AutoFocus*) GetDevice(AutoFocusDeviceName_.c_str());
+   if (AutoFocusDevice == 0)
       return ERR_NO_AUTOFOCUS_DEVICE;
 
    return  DEVICE_UNSUPPORTED_COMMAND;
@@ -4735,7 +4876,6 @@ int AutoFocusStage::OnAutoFocusDevice(MM::PropertyBase* pProp, MM::ActionType eA
       pProp->Get(AutoFocusDeviceName);
       MM::AutoFocus* AutoFocusDevice = (MM::AutoFocus*) GetDevice(AutoFocusDeviceName.c_str());
       if (AutoFocusDevice != 0) {
-         AutoFocusDevice_ = AutoFocusDevice;
          AutoFocusDeviceName_ = AutoFocusDeviceName;
       } else
          return ERR_INVALID_DEVICE_NAME;
@@ -4750,7 +4890,6 @@ int AutoFocusStage::OnAutoFocusDevice(MM::PropertyBase* pProp, MM::ActionType eA
  */
 StateDeviceShutter::StateDeviceShutter() :
    stateDeviceName_ (""),
-   stateDevice_ (0),
    initialized_ (false),
    lastMoveStartTime_(0, 0)
 {
@@ -4796,14 +4935,9 @@ int StateDeviceShutter::Initialize()
          break;
    }
 
-
-
-
-
    std::vector<std::string>::iterator it;
    it = availableStateDevices_.begin();
    availableStateDevices_.insert(it, g_NoDevice);
-
 
    CPropertyAction* pAct = new CPropertyAction (this, &StateDeviceShutter::OnStateDevice);      
    std::string defaultStateDevice = g_NoDevice;
@@ -4822,7 +4956,8 @@ int StateDeviceShutter::Initialize()
 
 bool StateDeviceShutter::Busy()
 {
-   if (stateDevice_ != 0 && stateDevice_->Busy())
+   MM::State* stateDevice = (MM::State*) GetDevice(stateDeviceName_.c_str());
+   if (stateDevice != 0 && stateDevice->Busy())
       return true;
 
    MM::MMTime delay(GetDelayMs() * 1000.0);
@@ -4837,7 +4972,8 @@ bool StateDeviceShutter::Busy()
  */
 int StateDeviceShutter::SetOpen(bool open)
 {
-   if (stateDevice_ == 0)
+   MM::State* stateDevice = (MM::State*) GetDevice(stateDeviceName_.c_str());
+   if (stateDevice == 0)
       return DEVICE_OK;
 
    int ret = WaitWhileBusy();
@@ -4845,24 +4981,26 @@ int StateDeviceShutter::SetOpen(bool open)
       return ret;
 
    lastMoveStartTime_ = GetCoreCallback()->GetCurrentMMTime();
-   return stateDevice_->SetGateOpen(open);
+   return stateDevice->SetGateOpen(open);
 }
 
 int StateDeviceShutter::GetOpen(bool& open)
 {
-   if (stateDevice_ == 0)
+   MM::State* stateDevice = (MM::State*) GetDevice(stateDeviceName_.c_str());
+   if (stateDevice == 0)
       return DEVICE_OK;
 
    int ret = WaitWhileBusy();
    if (ret != DEVICE_OK)
       return ret;
 
-   return stateDevice_->GetGateOpen(open);
+   return stateDevice->GetGateOpen(open);
 }
 
 int StateDeviceShutter::WaitWhileBusy()
 {
-   if (stateDevice_ == 0)
+   MM::State* stateDevice = (MM::State*) GetDevice(stateDeviceName_.c_str());
+   if (stateDevice == 0)
       return DEVICE_OK;
 
    bool busy = true;
@@ -4896,12 +5034,10 @@ int StateDeviceShutter::OnStateDevice(MM::PropertyBase* pProp, MM::ActionType eA
       std::string stateDeviceName;
       pProp->Get(stateDeviceName);
       if (stateDeviceName == g_NoDevice) {
-         stateDevice_ = 0;
          stateDeviceName_ = g_NoDevice;
       } else {
          MM::State* stateDevice = (MM::State*) GetDevice(stateDeviceName.c_str());
          if (stateDevice != 0) {
-            stateDevice_ = stateDevice;
             stateDeviceName_ = stateDeviceName;
          } else {
             return ERR_INVALID_DEVICE_NAME;
@@ -4919,7 +5055,6 @@ int StateDeviceShutter::OnStateDevice(MM::PropertyBase* pProp, MM::ActionType eA
  */
 SerialDTRShutter::SerialDTRShutter() :
    port_ (""),
-   portDevice_ (0),
    invertedLogic_(false),
    initialized_ (false),
    lastMoveStartTime_(0, 0)
@@ -4967,7 +5102,8 @@ int SerialDTRShutter::Initialize()
 
 bool SerialDTRShutter::Busy()
 {
-   if (portDevice_ != 0 && portDevice_->Busy())
+   MM::Device* portDevice = GetCoreCallback()->GetDevice(this, port_.c_str());
+   if (portDevice != 0 && portDevice->Busy())
       return true;
 
    MM::MMTime delay(GetDelayMs() * 1000.0);
@@ -4982,7 +5118,8 @@ bool SerialDTRShutter::Busy()
  */
 int SerialDTRShutter::SetOpen(bool open)
 {
-   if (portDevice_ == 0)
+   MM::Device* portDevice = GetCoreCallback()->GetDevice(this, port_.c_str());
+   if (portDevice == 0)
       return DEVICE_OK;
 
    std::string state = "Enable";
@@ -4992,16 +5129,17 @@ int SerialDTRShutter::SetOpen(bool open)
    }
 
    lastMoveStartTime_ = GetCoreCallback()->GetCurrentMMTime();
-   return portDevice_->SetProperty("DTR", state.c_str());
+   return portDevice->SetProperty("DTR", state.c_str());
 }
 
 int SerialDTRShutter::GetOpen(bool& open)
 {
-   if (portDevice_ == 0)
+   MM::Device* portDevice = GetCoreCallback()->GetDevice(this, port_.c_str());
+   if (portDevice == 0)
       return DEVICE_OK;
 
    char buf[MM::MaxStrLength];
-   int ret = portDevice_->GetProperty("DTR", buf);
+   int ret = portDevice->GetProperty("DTR", buf);
    if (ret != DEVICE_OK) 
    {
       return ret;
@@ -5017,7 +5155,8 @@ int SerialDTRShutter::GetOpen(bool& open)
 
 int SerialDTRShutter::WaitWhileBusy()
 {
-   if (portDevice_ == 0)
+   MM::Device* portDevice = GetCoreCallback()->GetDevice(this, port_.c_str());
+   if (portDevice == 0)
       return DEVICE_OK;
 
    bool busy = true;
@@ -5045,7 +5184,6 @@ int SerialDTRShutter::OnPort(MM::PropertyBase* pProp, MM::ActionType pAct)
    else if (pAct == MM::AfterSet)
    {
       pProp->Get(port_);
-      portDevice_ = GetCoreCallback()->GetDevice(this, port_.c_str());
    }
    return DEVICE_OK;
 }
