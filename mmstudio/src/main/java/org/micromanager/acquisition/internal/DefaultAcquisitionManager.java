@@ -218,16 +218,17 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
 
    @Override
    public SequenceSettings getAcquisitionSettings() {
-      if (engine_ == null)
-         return new SequenceSettings();
+      if (engine_ == null) {
+         return new SequenceSettings.Builder().build();
+      }
       return engine_.getSequenceSettings();
    }
 
    @Override
    public void setAcquisitionSettings(SequenceSettings ss) {
-      if (engine_ == null)
+      if (engine_ == null) {
          return;
-
+      }
       engine_.setSequenceSettings(ss);
       mdaDialog_.updateGUIContents();
    }
