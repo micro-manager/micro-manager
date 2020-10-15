@@ -36,7 +36,6 @@ import javax.swing.border.TitledBorder;
 
 import de.embl.rieslab.emu.controller.SystemController;
 import de.embl.rieslab.emu.controller.utils.SystemDialogs;
-import de.embl.rieslab.emu.ui.ConfigurablePanel;
 import de.embl.rieslab.emu.ui.internalproperties.InternalProperty;
 import de.embl.rieslab.emu.ui.uiparameters.UIParameter;
 import de.embl.rieslab.emu.ui.uiproperties.UIProperty;
