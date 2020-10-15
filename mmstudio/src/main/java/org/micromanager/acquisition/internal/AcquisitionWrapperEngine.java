@@ -55,6 +55,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    public void setSequenceSettings(SequenceSettings sequenceSettings) {
       sequenceSettings_ = sequenceSettings;
+      calculateSlices();
       settingsChanged();
    }
 

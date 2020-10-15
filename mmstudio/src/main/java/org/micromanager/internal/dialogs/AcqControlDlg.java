@@ -586,7 +586,7 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
             "skip 1, spanx, gaptop 0, alignx left");
 
       slicesPanel_.addActionListener((final ActionEvent e) -> {
-         // enable disable all related contrtols
+         // enable disable all related controls
          applySettingsFromGUI();
       });
       return slicesPanel_;
@@ -1508,14 +1508,12 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          ssb.useCustomIntervals(acqEng_.getSequenceSettings().useCustomIntervals());
          ssb.customIntervalsMs(acqEng_.getSequenceSettings().customIntervalsMs());
 
-         ssb.sliceZBottomUm (NumberUtils.displayStringToDouble(zBottom_.getText()));
-         ssb.sliceZTopUm(NumberUtils.displayStringToDouble(zTop_.getText()));
-         ssb.sliceZTopUm(NumberUtils.displayStringToDouble(zTop_.getText()));
          ssb.sliceZBottomUm(NumberUtils.displayStringToDouble(zBottom_.getText()));
+         ssb.sliceZTopUm(NumberUtils.displayStringToDouble(zTop_.getText()));
          ssb.sliceZStepUm(NumberUtils.displayStringToDouble(zStep_.getText()));
          ssb.relativeZSlice(zRelativeAbsolute_ == 0);  // 0 == relative, 1 == absolute
-
          ssb.useSlices(slicesPanel_.isSelected());
+
          ssb.usePositionList(positionsPanel_.isSelected());
 
          ssb.useChannels(channelsPanel_.isSelected());
