@@ -53,6 +53,8 @@ Stage::Stage() :
 	SetErrorText(ERR_BUSY_TIMEOUT, g_Msg_BUSY_TIMEOUT);
 	SetErrorText(ERR_COMMAND_REJECTED, g_Msg_COMMAND_REJECTED);
 	SetErrorText(ERR_SETTING_FAILED, g_Msg_SETTING_FAILED);
+	SetErrorText(ERR_PERIPHERAL_DISCONNECTED, g_Msg_PERIPHERAL_DISCONNECTED);
+	SetErrorText(ERR_PERIPHERAL_UNSUPPORTED, g_Msg_PERIPHERAL_UNSUPPORTED);
 
 	// Pre-initialization properties
 	CreateProperty(MM::g_Keyword_Name, g_StageName, MM::String, true);
@@ -107,6 +109,14 @@ int Stage::Initialize()
 	int ret = ClearPort();
 	if (ret != DEVICE_OK) 
 	{
+		return ret;
+	}
+
+	// Activate any recently changed peripherals.
+	ret = ActivatePeripheralsIfNeeded(deviceAddress_);
+	if (ret != DEVICE_OK) 
+	{
+		LogMessage("Peripheral activation check failed.\n", true);
 		return ret;
 	}
 
