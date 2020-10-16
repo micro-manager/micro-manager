@@ -7,8 +7,6 @@ import java.awt.Font;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -34,12 +32,10 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.JViewport;
 import javax.swing.border.TitledBorder;
 
 import de.embl.rieslab.emu.controller.SystemController;
 import de.embl.rieslab.emu.controller.utils.SystemDialogs;
-import de.embl.rieslab.emu.ui.ConfigurablePanel;
 import de.embl.rieslab.emu.ui.internalproperties.InternalProperty;
 import de.embl.rieslab.emu.ui.uiparameters.UIParameter;
 import de.embl.rieslab.emu.ui.uiproperties.UIProperty;
@@ -91,6 +87,7 @@ public abstract class ConfigurableMainFrame extends JFrame implements Configurab
 	 * @param controller EMU system controller
 	 * @param pluginSettings Plugin settings.
 	 */
+	@SuppressWarnings("rawtypes")
 	public ConfigurableMainFrame(String title, SystemController controller, TreeMap<String, String> pluginSettings){
 		
 		controller_ = controller;
@@ -185,7 +182,7 @@ public abstract class ConfigurableMainFrame extends JFrame implements Configurab
 	/**
 	 * Sets up the menu bar.
 	 */
-	protected void setUpMenu() {
+	private void setUpMenu() {
 		JMenuBar mb=new JMenuBar(); 
 
 		JMenu confMenu = new JMenu("Configuration");
@@ -485,6 +482,8 @@ public abstract class ConfigurableMainFrame extends JFrame implements Configurab
 			final int index = i;
 			JMenuItem item = new JMenuItem(new AbstractAction(plugins[index]) {
 
+				private static final long serialVersionUID = 1L;
+
 				public void actionPerformed(ActionEvent e) {
 					controller_.loadPlugin(plugins[index]);
 				}
@@ -497,6 +496,8 @@ public abstract class ConfigurableMainFrame extends JFrame implements Configurab
 		for (int i = 0; i < confs.length; i++) {
 			final int index = i;
 			JMenuItem item = new JMenuItem(new AbstractAction(confs[index]) {
+
+				private static final long serialVersionUID = 1L;
 
 				public void actionPerformed(ActionEvent e) {
 					controller_.loadConfiguration(confs[index]);

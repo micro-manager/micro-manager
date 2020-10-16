@@ -572,12 +572,12 @@ public class SystemController {
 	}
 	
 	/**
-	 * Updates all properties and parameters by calling {@link de.embl.rieslab.emu.ui.ConfigurableMainFrame#updateAllConfigurablePanels()}
+	 * Updates all properties by calling {@link de.embl.rieslab.emu.ui.ConfigurableMainFrame#updateAllProperties()}
 	 * 
 	 */
 	public void forceUpdate(){
 		if(mainframe_ != null){
-			mainframe_.updateAllConfigurablePanels();
+			mainframe_.updateAllProperties();
 		}
 	}
 

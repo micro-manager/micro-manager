@@ -1700,11 +1700,6 @@ public class SwingUIListenersTest {
 		public void updateMenu() {
 			// Do nothing
 		}
-		
-		@Override
-		protected void setUpMenu() {
-			// Do nothing
-		}
 	
 		@SuppressWarnings("rawtypes")
 		@Override

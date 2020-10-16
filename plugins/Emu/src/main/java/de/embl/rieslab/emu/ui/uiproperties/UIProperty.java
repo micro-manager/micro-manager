@@ -2,6 +2,7 @@ package de.embl.rieslab.emu.ui.uiproperties;
 
 import de.embl.rieslab.emu.micromanager.mmproperties.PresetGroupAsMMProperty;
 import de.embl.rieslab.emu.micromanager.mmproperties.MMProperty;
+import de.embl.rieslab.emu.micromanager.mmproperties.MMProperty.MMPropertyType;
 import de.embl.rieslab.emu.ui.ConfigurablePanel;
 import de.embl.rieslab.emu.ui.uiproperties.flag.NoFlag;
 import de.embl.rieslab.emu.ui.uiproperties.flag.PropertyFlag;
@@ -367,6 +368,13 @@ public class UIProperty {
 	 */
 	public UIPropertyType getType() {
 		return UIPropertyType.UIPROPERTY;
+	}
+	
+	public MMPropertyType getMMPropertyType() {
+		if(assigned_) {
+			return mmproperty_.getType();
+		}
+		return MMPropertyType.NONE;
 	}
 	
 }
