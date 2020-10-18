@@ -510,7 +510,7 @@ bool MultiCamera::IsCapturing()
 /**
  * Returns the largest width of cameras used
  */
-unsigned MultiCamera::GetImageWidth()
+unsigned MultiCamera::GetImageWidth() const
 {
    // TODO: should we use cached width?
    // If so, when do we cache?
@@ -534,7 +534,7 @@ unsigned MultiCamera::GetImageWidth()
 /**
  * Returns the largest height of cameras used
  */
-unsigned MultiCamera::GetImageHeight()
+unsigned MultiCamera::GetImageHeight() const
 {
    unsigned height = 0;
    unsigned int j = 0;
@@ -584,7 +584,7 @@ bool MultiCamera::ImageSizesAreEqual() {
   return true;
 }
 
-unsigned MultiCamera::GetImageBytesPerPixel()
+unsigned MultiCamera::GetImageBytesPerPixel() const
 {
    MM::Camera* camera0 = (MM::Camera*) GetDevice(usedCameras_[0].c_str());
    if (camera0 != 0)
@@ -602,7 +602,7 @@ unsigned MultiCamera::GetImageBytesPerPixel()
    return 0;
 }
 
-unsigned MultiCamera::GetBitDepth()
+unsigned MultiCamera::GetBitDepth() const
 {
    // Return the maximum bit depth found in all channels.
    MM::Camera* camera0 = (MM::Camera*) GetDevice(usedCameras_[0].c_str());
@@ -626,7 +626,7 @@ unsigned MultiCamera::GetBitDepth()
    return 0;
 }
 
-long MultiCamera::GetImageBufferSize()
+long MultiCamera::GetImageBufferSize() const
 {
    long maxSize = 0;
    int unsigned counter = 0;
@@ -645,7 +645,7 @@ long MultiCamera::GetImageBufferSize()
    return counter * maxSize;
 }
 
-double MultiCamera::GetExposure()
+double MultiCamera::GetExposure() const
 {
    MM::Camera* camera0 = (MM::Camera*) GetDevice(usedCameras_[0].c_str());
    if (camera0 != 0)
@@ -810,7 +810,7 @@ int MultiCamera::StopSequenceAcquisition()
    return DEVICE_OK;
 }
 
-int MultiCamera::GetBinning()
+int MultiCamera::GetBinning() const
 {
    MM::Camera* camera0 = (MM::Camera*) GetDevice(usedCameras_[0].c_str());
    int binning = 0;
@@ -1267,7 +1267,7 @@ bool MultiStage::IsContinuousFocusDrive() const
 }
 
 
-int MultiStage::IsStageSequenceable(bool& isSequenceable)
+int MultiStage::IsStageSequenceable(bool& isSequenceable) const
 {
    bool hasStage = false;
    for (std::vector<std::string>::const_iterator it = usedStages_.begin(),
@@ -1301,7 +1301,7 @@ int MultiStage::IsStageSequenceable(bool& isSequenceable)
 }
 
 
-int MultiStage::GetStageSequenceMaxLength(long& nrEvents)
+int MultiStage::GetStageSequenceMaxLength(long& nrEvents) const
 {
    long minNrEvents = LONG_MAX;
    bool hasStage = false;
@@ -1338,7 +1338,7 @@ int MultiStage::StartStageSequence()
    std::vector<MM::Stage*> startedStages;
 
    int err;
-   for (std::vector<std::string>::iterator it = usedStages_.begin(),
+   for (std::vector<std::string>::const_iterator it = usedStages_.begin(),
          end = usedStages_.end();
          it != end;
          ++it)
@@ -1368,7 +1368,7 @@ error:
 int MultiStage::StopStageSequence()
 {
    int lastErr = DEVICE_OK;
-   for (std::vector<std::string>::iterator it = usedStages_.begin(),
+   for (std::vector<std::string>::const_iterator it = usedStages_.begin(),
          end = usedStages_.end();
          it != end;
          ++it)
@@ -1821,7 +1821,7 @@ int ComboXYStage::GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax)
 }
 
 
-int ComboXYStage::IsXYStageSequenceable(bool& isSequenceable)
+int ComboXYStage::IsXYStageSequenceable(bool& isSequenceable) const
 {
    for (int i = 0; i < 2; ++i)
    {
@@ -1845,7 +1845,7 @@ int ComboXYStage::IsXYStageSequenceable(bool& isSequenceable)
 }
 
 
-int ComboXYStage::GetXYStageSequenceMaxLength(long& nrEvents)
+int ComboXYStage::GetXYStageSequenceMaxLength(long& nrEvents) const
 {
    long minNrEvents = LONG_MAX;
    for (int i = 0; i < 2; ++i)
@@ -2269,7 +2269,7 @@ bool SingleAxisStage::IsContinuousFocusDrive() const
 }
 
 
-int SingleAxisStage::IsStageSequenceable(bool& isSequenceable)
+int SingleAxisStage::IsStageSequenceable(bool& isSequenceable) const
 {
    MM::XYStage* stage = (MM::XYStage*)GetDevice(usedStage_.c_str());
    if (!stage)
@@ -2279,7 +2279,7 @@ int SingleAxisStage::IsStageSequenceable(bool& isSequenceable)
 }
 
 
-int SingleAxisStage::GetStageSequenceMaxLength(long& nrEvents)
+int SingleAxisStage::GetStageSequenceMaxLength(long& nrEvents) const
 {
    MM::XYStage* stage = (MM::XYStage*)GetDevice(usedStage_.c_str());
    if (!stage)
@@ -3132,7 +3132,7 @@ int DAZStage::GetLimits(double& min, double& max)
    return DEVICE_OK;
 }
 
-int DAZStage::IsStageSequenceable(bool& isSequenceable) 
+int DAZStage::IsStageSequenceable(bool& isSequenceable) const
 {
    MM::SignalIO* da = (MM::SignalIO*) GetDevice(DADeviceName_.c_str());
    if (da == 0)
@@ -3140,7 +3140,7 @@ int DAZStage::IsStageSequenceable(bool& isSequenceable)
    return da->IsDASequenceable(isSequenceable);
 }
 
-int DAZStage::GetStageSequenceMaxLength(long& nrEvents) 
+int DAZStage::GetStageSequenceMaxLength(long& nrEvents) const
 {
    MM::SignalIO* da = (MM::SignalIO*) GetDevice(DADeviceName_.c_str());
    if (da == 0)
@@ -3636,7 +3636,7 @@ int DAXYStage::GetStepLimits(long& /*xMin*/, long& /*xMax*/, long& /*yMin*/, lon
    return DEVICE_UNSUPPORTED_COMMAND;
 }
 
-int DAXYStage::IsXYStageSequenceable(bool& isSequenceable)
+int DAXYStage::IsXYStageSequenceable(bool& isSequenceable) const
 {
    MM::SignalIO* da_x = (MM::SignalIO*) GetDevice(DADeviceNameX_.c_str());
    MM::SignalIO* da_y = (MM::SignalIO*) GetDevice(DADeviceNameY_.c_str());
@@ -3650,7 +3650,7 @@ int DAXYStage::IsXYStageSequenceable(bool& isSequenceable)
 	return DEVICE_OK ;
 }
 
-int DAXYStage::GetXYStageSequenceMaxLength(long& nrEvents)  
+int DAXYStage::GetXYStageSequenceMaxLength(long& nrEvents) const
 {
    MM::SignalIO* da_x = (MM::SignalIO*) GetDevice(DADeviceNameX_.c_str());
    MM::SignalIO* da_y = (MM::SignalIO*) GetDevice(DADeviceNameY_.c_str());

@@ -138,12 +138,12 @@ public:
    int SnapImage();
    const unsigned char* GetImageBuffer();
    const unsigned char* GetImageBuffer(unsigned channelNr);
-   unsigned GetImageWidth();
-   unsigned GetImageHeight();
-   unsigned GetImageBytesPerPixel();
-   unsigned GetBitDepth();
-   long GetImageBufferSize();
-   double GetExposure();
+   unsigned GetImageWidth() const;
+   unsigned GetImageHeight() const;
+   unsigned GetImageBytesPerPixel() const;
+   unsigned GetBitDepth() const;
+   long GetImageBufferSize() const;
+   double GetExposure() const;
    void SetExposure(double exp);
    int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize);
    int GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize);
@@ -152,7 +152,7 @@ public:
    int StartSequenceAcquisition(double interval);
    int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
    int StopSequenceAcquisition();
-   int GetBinning(); 
+   int GetBinning() const; 
    int SetBinning(int bS);                                    
    int IsExposureSequenceable(bool& isSequenceable) const;
    unsigned  GetNumberOfComponents() const;
@@ -209,8 +209,8 @@ public:
    virtual int GetLimits(double& lower, double& upper);
    virtual bool IsContinuousFocusDrive() const;
 
-   virtual int IsStageSequenceable(bool& isSequenceable);
-   virtual int GetStageSequenceMaxLength(long& nrEvents);
+   virtual int IsStageSequenceable(bool& isSequenceable) const;
+   virtual int GetStageSequenceMaxLength(long& nrEvents) const;
    virtual int StartStageSequence();
    virtual int StopStageSequence();
    virtual int ClearStageSequence();
@@ -269,8 +269,8 @@ public:
    virtual double GetStepSizeXUm() { return simulatedXStepSizeUm_; }
    virtual double GetStepSizeYUm() { return simulatedYStepSizeUm_; }
 
-   virtual int IsXYStageSequenceable(bool& isSequenceable);
-   virtual int GetXYStageSequenceMaxLength(long& nrEvents);
+   virtual int IsXYStageSequenceable(bool& isSequenceable) const;
+   virtual int GetXYStageSequenceMaxLength(long& nrEvents) const;
    virtual int StartXYStageSequence();
    virtual int StopXYStageSequence();
    virtual int ClearXYStageSequence();
@@ -326,8 +326,8 @@ public:
    virtual int GetLimits(double& lower, double& upper);
    virtual bool IsContinuousFocusDrive() const;
 
-   virtual int IsStageSequenceable(bool& isSequenceable);
-   virtual int GetStageSequenceMaxLength(long& nrEvents);
+   virtual int IsStageSequenceable(bool& isSequenceable) const;
+   virtual int GetStageSequenceMaxLength(long& nrEvents) const;
    virtual int StartStageSequence();
    virtual int StopStageSequence();
    virtual int ClearStageSequence();
@@ -468,8 +468,8 @@ public:
    int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    // Sequence functions
-   int IsStageSequenceable(bool& isSequenceable);
-   int GetStageSequenceMaxLength(long& nrEvents);
+   int IsStageSequenceable(bool& isSequenceable) const;
+   int GetStageSequenceMaxLength(long& nrEvents) const;
    int StartStageSequence();
    int StopStageSequence();
    int ClearStageSequence();
@@ -526,9 +526,8 @@ public:
   double GetStepSizeYUm() {return stepSizeYUm_;}
 
   // Sequence functions
-   int IsXYStageSequenceable(bool& isSequenceable);
-   
-   int GetXYStageSequenceMaxLength(long& nrEvents);
+   int IsXYStageSequenceable(bool& isSequenceable) const;
+   int GetXYStageSequenceMaxLength(long& nrEvents) const;
    int StartXYStageSequence();
    int StopXYStageSequence();
    int ClearXYStageSequence();
@@ -690,7 +689,7 @@ public:
   int SetOrigin();
   int GetLimits(double& min, double& max);
 
-  int IsStageSequenceable(bool& isSequenceable) {isSequenceable = false; return DEVICE_OK;}
+  int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
   bool IsContinuousFocusDrive() const {return true;}
 
    // action interface

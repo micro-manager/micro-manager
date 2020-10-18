@@ -432,38 +432,38 @@ namespace MM {
        * Required by the MM::Camera API.
        * For multi-channel cameras, return the size of a single channel
        */
-      virtual long GetImageBufferSize() = 0;
+      virtual long GetImageBufferSize() const = 0;
       /**
        * Returns image buffer X-size in pixels.
        * Required by the MM::Camera API.
        */
-      virtual unsigned GetImageWidth() = 0;
+      virtual unsigned GetImageWidth() const = 0;
       /**
        * Returns image buffer Y-size in pixels.
        * Required by the MM::Camera API.
        */
-      virtual unsigned GetImageHeight() = 0;
+      virtual unsigned GetImageHeight() const = 0;
       /**
        * Returns image buffer pixel depth in bytes.
        * Required by the MM::Camera API.
        */
-      virtual unsigned GetImageBytesPerPixel() = 0;
+      virtual unsigned GetImageBytesPerPixel() const = 0;
       /**
        * Returns the bit depth (dynamic range) of the pixel.
        * This does not affect the buffer size, it just gives the client application
        * a guideline on how to interpret pixel values.
        * Required by the MM::Camera API.
        */
-      virtual unsigned GetBitDepth() = 0;
+      virtual unsigned GetBitDepth() const = 0;
       /**
        * Returns binnings factor.  Used to calculate current pixelsize
        * Not appropriately named.  Implemented in DeviceBase.h
        */
-      virtual double GetPixelSizeUm() = 0;
+      virtual double GetPixelSizeUm() const = 0;
       /**
        * Returns the current binning factor.
        */
-      virtual int GetBinning() = 0;
+      virtual int GetBinning() const = 0;
       /**
        * Sets binning factor.
        */
@@ -475,7 +475,7 @@ namespace MM {
       /**
        * Returns the current exposure setting in milliseconds.
        */
-      virtual double GetExposure() = 0;
+      virtual double GetExposure() const = 0;
       /**
        * Sets the camera Region Of Interest.
        * Required by the MM::Camera API.
@@ -650,7 +650,7 @@ namespace MM {
        * GetStageSequenceMaxLength(), StartStageSequence(), StopStageSequence(),
        * ClearStageSequence(), AddToStageSequence(), and SendStageSequence().
        */
-      virtual int IsStageSequenceable(bool& isSequenceable) = 0;
+      virtual int IsStageSequenceable(bool& isSequenceable) const = 0;
 
       /**
        * Indicates whether the stage can perform linear TTL sequencing.
@@ -674,7 +674,7 @@ namespace MM {
       // from the camera).  If the device is capable (and ready) to do so isSequenceable will
       // be true. If your device can not execute this (true for most stages)
       // simply set isSequenceable to false
-      virtual int GetStageSequenceMaxLength(long& nrEvents) = 0;
+      virtual int GetStageSequenceMaxLength(long& nrEvents) const = 0;
       virtual int StartStageSequence() = 0;
       virtual int StopStageSequence() = 0;
       /**
@@ -760,7 +760,7 @@ namespace MM {
        * If returning true, then an XYStage class should also inherit
        * the SequenceableXYStage class and implement its methods.
        */
-      virtual int IsXYStageSequenceable(bool& isSequenceable) = 0;
+      virtual int IsXYStageSequenceable(bool& isSequenceable) const = 0;
       // Sequence functions
       // Sequences can be used for fast acquisitions, synchronized by TTLs rather than
       // computer commands.

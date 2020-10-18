@@ -963,7 +963,7 @@ protected:
    * With this method we can get a handle to other devices loaded in the system,
    * if we know the device name.
    */
-   MM::Device* GetDevice(const char* deviceLabel)
+   MM::Device* GetDevice(const char* deviceLabel) const
    {
       if (callback_)
          return callback_->GetDevice(this, deviceLabel);
@@ -1308,9 +1308,9 @@ public:
    using CDeviceBase<MM::Camera, U>::SetProperty;
    using CDeviceBase<MM::Camera, U>::LogMessage;
    virtual const unsigned char* GetImageBuffer() = 0;
-   virtual unsigned GetImageWidth() = 0;
-   virtual unsigned GetImageHeight() = 0;
-   virtual unsigned GetImageBytesPerPixel() = 0;
+   virtual unsigned GetImageWidth() const = 0;
+   virtual unsigned GetImageHeight() const = 0;
+   virtual unsigned GetImageBytesPerPixel() const = 0;
    virtual int SnapImage() = 0;
 
    CCameraBase() : busy_(false), stopWhenCBOverflows_(false), thd_(0)
@@ -1367,7 +1367,7 @@ public:
    /**
    * Default implementation of the pixel size scaling.
    */
-   virtual double GetPixelSizeUm() {return GetBinning();}
+   virtual double GetPixelSizeUm() const {return GetBinning();}
 
    virtual unsigned GetNumberOfComponents() const
    {
@@ -1787,7 +1787,7 @@ class CStageBase : public CDeviceBase<MM::Stage, U>
       return DEVICE_OK;
    }
 
-   virtual int GetStageSequenceMaxLength(long& /*nrEvents*/)
+   virtual int GetStageSequenceMaxLength(long& /*nrEvents*/) const
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
