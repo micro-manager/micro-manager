@@ -253,6 +253,13 @@ public class PixelCalibratorDialog extends MMFrame {
          return;
       }
 
+      // Set translation part zero.
+      double[] m = new double[6];
+      result.getMatrix(m);
+      m[2] = 0;
+      m[5] = 0;
+      result = new AffineTransform(m);
+
       double pixelSize = AffineUtils.deducePixelSize(result);
       double[] measurements = AffineUtils.affineToMeasurements(result);
 //      xScale, yScale, rotationDeg, shear
