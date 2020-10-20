@@ -1,4 +1,4 @@
- <ivy-module version="2.0" xmlns:e="http://ant.apache.org/ivy/extra">
+<ivy-module version="2.0" xmlns:e="http://ant.apache.org/ivy/extra">
 	<!-- Dependencies for all of Micro-Manager (MMStudio and plugins) -->
 	<!-- TODO List dependencies for each project -->
 	<info organisation="org.micromanager" module="micromanager"/>
