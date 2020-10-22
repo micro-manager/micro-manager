@@ -143,6 +143,10 @@ const char* g_ReadTempWhileSeq = "CCDTemperature continuous update";
 const char* g_ReadTempWhileSeqOn = "On";
 const char* g_ReadTempWhileSeqOff = "Off";
 
+const char* g_forceRunTillAbort = "Force Run Till Abort";
+const char* g_forceRunTillAbortOn = "On";
+const char* g_forceRunTillAbortOff = "Off";
+
 const int NUMULTRA897CROPROIS = 9;
 AndorCamera::ROI g_Ultra897CropROIs[NUMULTRA897CROPROIS] = {
    // left  bot   ht    width
@@ -287,7 +291,8 @@ updateTemperatureWhileSequencing_(false),
 spuriousNoiseFilterControl_(nullptr),
 readModeControl_(nullptr),
 SRRFControl_(nullptr),
-SRRFAndorCamera_(nullptr)
+SRRFAndorCamera_(nullptr),
+forceRunTillAbort(false)
 { 
    InitializeDefaultErrorMessages();
 
@@ -1410,6 +1415,15 @@ int AndorCamera::GetListOfAvailableCameras()
          strCurrentTriggerMode_ = "Software";
          UpdateSnapTriggerMode();
       }
+
+      //force Run Till Abort
+      pAct = new CPropertyAction(this, &AndorCamera::OnForceRunTillAbort);
+      nRet = CreateProperty(g_forceRunTillAbort, g_forceRunTillAbortOff, MM::String, false, pAct);
+      if (DEVICE_OK != nRet) {
+        return nRet;
+      }
+      AddAllowedValue(g_forceRunTillAbort, g_forceRunTillAbortOn);
+      AddAllowedValue(g_forceRunTillAbort, g_forceRunTillAbortOff);
 
       initialiseMetaData();
 
@@ -3419,6 +3433,27 @@ int AndorCamera::GetListOfAvailableCameras()
       return DEVICE_OK;
    }
 
+   /**
+   * Force run till abort ON or OFF
+   */
+   int AndorCamera::OnForceRunTillAbort(MM::PropertyBase* pProp, MM::ActionType eAct)
+   {
+     string value;
+     pProp->Get(value);
+     if (value.compare(g_forceRunTillAbortOff) == 0)
+     {
+       forceRunTillAbort = false;
+     }
+     else if (value.compare(g_forceRunTillAbortOn) == 0)
+     {
+       forceRunTillAbort = true;
+     }
+     else
+     {
+       return DEVICE_INVALID_PROPERTY_VALUE;
+     }
+     return DEVICE_OK;
+   }
 
    /**
    * Frame transfer mode ON or OFF.
@@ -4050,7 +4085,7 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
 
       //Check here required to stop SDK blowing-up if was Live, and then change property, 
       // subtraction occurs and sets number of kinetics to extremely large value.
-      if (LONG_MAX == sequenceLength_)
+      if (LONG_MAX == sequenceLength_ || forceRunTillAbort)
       {
          numImages = LONG_MAX;
       }
