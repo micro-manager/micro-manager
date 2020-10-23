@@ -160,8 +160,10 @@ public final class ChannelTableModel extends AbstractTableModel  {
             studio_.events().post(new ChannelColorEvent(
                     channel.channelGroup(), channel.config(), (Color) value));
          }
+         cb.color((Color) value);
       }
-      channel = cb.color((Color) value).build();
+
+      channel = cb.build();
       channels_.set(row, channel);
       storeChannels();
 
