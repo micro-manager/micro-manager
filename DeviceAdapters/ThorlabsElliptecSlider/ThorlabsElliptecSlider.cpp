@@ -31,7 +31,7 @@ MODULE_API void InitializeModuleData()
 {
 	RegisterDevice(g_ELL9, MM::StateDevice, g_ELL9);
 	RegisterDevice(g_ELL6, MM::StateDevice, g_ELL6);
-	RegisterDevice(g_ELL6_shutter, MM::StateDevice, g_ELL6_shutter);
+	RegisterDevice(g_ELL6_shutter, MM::ShutterDevice, g_ELL6_shutter);
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -944,9 +944,9 @@ int ELL6_shutter::SetOpen(bool state){
 	
 	std::string pos;
 	if(!state){
-		pos = g_bw;
+		pos = g_bw; 
 	} else {
-		pos = g_fw;
+		pos = g_fw; 
 	}
 
 	command << pos;
