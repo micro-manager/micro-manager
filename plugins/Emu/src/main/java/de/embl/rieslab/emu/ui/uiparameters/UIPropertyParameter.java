@@ -24,7 +24,7 @@ public class UIPropertyParameter extends UIParameter<String>{
 	
 	public static String NO_PROPERTY = "None";
 	
-	private PropertyFlag propertyflag_;
+	private PropertyFlag propertyFlag_;
 
 	/**
 	 * Constructor with a PropertyFlag to select the relevant UIProperties. 
@@ -41,7 +41,7 @@ public class UIPropertyParameter extends UIParameter<String>{
 			throw new NullPointerException("The UIPropertyParameter's property flag cannot be null.");
 		}
 		
-		propertyflag_ = propertyflag;
+		propertyFlag_ = propertyflag;
 		
 		setValue(NO_PROPERTY);
 	}
@@ -82,6 +82,6 @@ public class UIPropertyParameter extends UIParameter<String>{
 	}
 	
 	public PropertyFlag getFlag(){
-		return propertyflag_;
+		return propertyFlag_;
 	}
 }

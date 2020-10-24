@@ -2498,6 +2498,11 @@ bool ZStage::Busy()
 
 int ZStage::SetPositionUm(double pos)
 {
+   if (runningFastSequence_)
+   {
+      return DEVICE_OK;
+   }
+
    // empty the Rx serial buffer before sending command
    ClearPort();
 
@@ -2563,6 +2568,11 @@ int ZStage::GetPositionUm(double& pos)
 
 int ZStage::SetRelativePositionUm(double d)
 {
+   if (runningFastSequence_)
+   {
+      return DEVICE_OK;
+   }
+
    // empty the Rx serial buffer before sending command
    ClearPort();
 
@@ -2593,6 +2603,11 @@ int ZStage::SetRelativePositionUm(double d)
 
 int ZStage::SetPositionSteps(long pos)
 {
+   if (runningFastSequence_)
+   {
+      return DEVICE_OK;
+   }
+
    ostringstream command;
    command << "M " << axis_ << "=" << pos; // in 10th of micros
 
@@ -6215,7 +6230,7 @@ ASI_TIRF::ASI_TIRF() :
     axis_("F"),//normaly the TIRF axis is the F axis.
     answerTimeoutMs_(1000),
     scaleFactor_(1),
-    unitFactor_(174.532925199433)  // 10000 controller units per mm times pi/180deg
+    unitFactor_(10000)
 {
     InitializeDefaultErrorMessages();
 
@@ -6337,13 +6352,13 @@ double ASI_TIRF::GetAngle()
     }
     else if (answer.length() > 0)
     {
-        double angle;
+        double position;
         char head[64];
         char iBuf[256];
         strcpy(iBuf, answer.c_str());
-        sscanf(iBuf, "%s %lf\r\n", head, &angle);
+        sscanf(iBuf, "%s %lf\r\n", head, &position);
 
-        return angle/(scaleFactor_*unitFactor_);
+        return asin(position/(scaleFactor_*unitFactor_))*180/3.141592653589793;
     }
 
     return 0.0;
@@ -6355,7 +6370,7 @@ int ASI_TIRF::SetAngle(double angle)
     ClearPort();
 
     ostringstream command;
-    command << fixed << "M " << axis_ << "=" << scaleFactor_*unitFactor_*angle;
+    command << fixed << "M " << axis_ << "=" << scaleFactor_*unitFactor_*sin(angle/180*3.141592653589793);
 
     string answer;
     // query the device

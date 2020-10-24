@@ -15,7 +15,7 @@ import de.embl.rieslab.emu.ui.uiparameters.UIParameter;
  */
 public class ComboUIParameter extends UIParameter<String> {
 
-	private String[] combovalues_;
+	private String[] comboValues_;
 	
 	/**
 	 * Constructor, a String array of allowed values must be passed as well as the index of the default
@@ -40,11 +40,11 @@ public class ComboUIParameter extends UIParameter<String> {
 			}
 		}
 
-		combovalues_ = allowedValues;
-		if(ind >= 0 && ind <combovalues_.length){
-			setValue(combovalues_[ind]);
+		comboValues_ = allowedValues;
+		if(ind >= 0 && ind <comboValues_.length){
+			setValue(comboValues_[ind]);
 		} else {
-			throw new IllegalArgumentException("["+ind+"] is not a valid index, it should obey: 0 <= ind < "+combovalues_.length+".");
+			throw new IllegalArgumentException("["+ind+"] is not a valid index, it should obey: 0 <= ind < "+comboValues_.length+".");
 		}
 	}
 	
@@ -65,8 +65,8 @@ public class ComboUIParameter extends UIParameter<String> {
 			return false;
 		}
 		
-		for(int i=0;i<combovalues_.length;i++){
-			if(combovalues_[i].equals(val)){
+		for(int i=0;i<comboValues_.length;i++){
+			if(comboValues_[i].equals(val)){
 				return true;
 			}
 		}
@@ -90,10 +90,12 @@ public class ComboUIParameter extends UIParameter<String> {
 	}
 	
 	/**
-	 * {@inheritDoc}
+	 * Returns an array of the ComboUIProperty values.
+	 * 
+	 * @return Array of the values.
 	 */
 	public String[] getComboValues(){
-		return combovalues_;
+		return comboValues_;
 	}
 	
 }

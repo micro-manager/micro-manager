@@ -1,7 +1,7 @@
 
 package org.micromanager.internal.dialogs;
 
-import java.awt.Component;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.geom.AffineTransform;
 import java.text.NumberFormat;
@@ -65,6 +65,7 @@ public class AffineEditorPanel extends JPanel {
       table.setModel(atm_);
       table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
       table.setCellSelectionEnabled(true);
+      table.setBorder(BorderFactory.createLineBorder(Color.GRAY,1));
       
       for (int col = 0; col < table.getColumnModel().getColumnCount(); col++) {
          table.getColumnModel().getColumn(col).setMaxWidth(75);
@@ -72,10 +73,9 @@ public class AffineEditorPanel extends JPanel {
       super.add( new JLabel("<html><center>Affine transforms define the relation between <br> " +
               "camera and stage movement</center></html>"), " span 2, center, wrap") ;
       table.setFillsViewportHeight(true);
-      
-      super.add(table.getTableHeader(), "flowy, split 2, shrink 100");
+
       super.add(table);
-      
+
       JButton calcButton = new JButton("Calculate");
       calcButton.addActionListener((ActionEvent e) -> {
          calculate();
@@ -190,12 +190,6 @@ public class AffineEditorPanel extends JPanel {
       
       public void setAffineTransform(DoubleVector aft) {
          affineTransform_ = copyDoubleVector(aft);
-         // ensure that there is no translation component in the affine transform
-         // setting this accidentally can lead to bad stuff.
-         // Not sure if this should be in the core instead
-         affineTransform_.set(2, 0.0);
-         affineTransform_.set(5, 0.0);
-         
          fireTableDataChanged();
       }
          
@@ -204,24 +198,26 @@ public class AffineEditorPanel extends JPanel {
       public String getColumnName(int colIndex) {
          return "col. " + (colIndex + 1);
       }
-      
-      @Override
-      public int getRowCount() {return 2;}
 
       @Override
-      public int getColumnCount() {return 2;}
+      public int getRowCount() {return 3;}
+
+      @Override
+      public int getColumnCount() {return 3;}
 
       @Override
       public Object getValueAt(int rowIndex, int columnIndex) {
          if (rowIndex < 2) {
             return affineTransform_.get(rowIndex * 3 + columnIndex);
          }
-         if (columnIndex == 2) {
+         else if (columnIndex == 0 || columnIndex == 1) {
+            return 0.0;
+         }
+         else {
             return 1.0;
          }
-         return 0.0;
       }
-      
+
       @Override
       public Class getColumnClass(int c) {
          return Double.class;

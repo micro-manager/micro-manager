@@ -176,6 +176,7 @@ public:
    int OnTimeOut(MM::PropertyBase* pProp, MM::ActionType eAct);  // kdb July-30-2009
    int OnCountConvert(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCountConvertWavelength(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnForceRunTillAbort(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    int OnOptAcquireMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnROI(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -425,6 +426,8 @@ private:
    ReadModeControl* readModeControl_;
    SRRFControl *SRRFControl_;
    SRRFAndorCamera *SRRFAndorCamera_;
+
+   bool forceRunTillAbort;
 };
 
 

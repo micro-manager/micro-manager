@@ -131,7 +131,7 @@ public class SwingComponentTests {
 	}
 	
 	/*
-	 * Tests that calling jslider.setValue(int) does not trigger (as expected) the mouse listener.
+	 * Tests that calling jslider.setValue(int) does not trigger the mouse listener.
 	 */
 	@Test
 	public void testJSlider() {

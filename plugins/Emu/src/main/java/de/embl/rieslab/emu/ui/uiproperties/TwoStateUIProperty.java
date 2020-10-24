@@ -176,6 +176,7 @@ public class TwoStateUIProperty extends UIProperty{
 	/**
 	 * {@inheritDoc}
 	 */
+	@Override
 	public UIPropertyType getType() {
 		return UIPropertyType.TWOSTATE;
 	}

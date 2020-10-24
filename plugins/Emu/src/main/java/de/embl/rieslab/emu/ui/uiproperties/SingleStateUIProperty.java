@@ -74,7 +74,7 @@ public class SingleStateUIProperty extends UIProperty{
 			return getMMProperty().setValue(state_, this);
 		}
 		return false;
-	}
+	}	
 	
 
 	/**
@@ -128,6 +128,7 @@ public class SingleStateUIProperty extends UIProperty{
 	 * 
 	 * @return UIProperty type
 	 */
+	@Override
 	public UIPropertyType getType() {
 		return UIPropertyType.SINGLESTATE;
 	}
