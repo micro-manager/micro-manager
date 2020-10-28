@@ -42,7 +42,7 @@
 		<!-- Magellan dependencies -->
 		<!-- https://mvnrepository.com/artifact/org.zeromq/jeromq -->
 		<dependency org="org.zeromq" name="jeromq" rev="0.5.1"/>
-		<dependency org="org.micro-manager.acqengj" name="AcqEngJ" rev="0.7.4">
+		<dependency org="org.micro-manager.acqengj" name="AcqEngJ" rev="0.7.8">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
 		<dependency org="org.micro-manager.ndviewer" name="NDViewer" rev="0.2.9">
@@ -51,7 +51,7 @@
 		<dependency org="org.micro-manager.ndtiffstorage" name="NDTiffStorage" rev="1.0.0">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
-		<dependency org="org.micro-manager.pycro-manager" name="PycroManagerJava" rev="0.9.3">
+		<dependency org="org.micro-manager.pycro-manager" name="PycroManagerJava" rev="0.10.0">
          <exclude org="org.micro-manager.mmcorej" name="MMCoreJ"/>
       </dependency>
 
