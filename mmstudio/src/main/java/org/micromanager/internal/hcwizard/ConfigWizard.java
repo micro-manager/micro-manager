@@ -314,11 +314,12 @@ public final class ConfigWizard extends MMDialog {
                returnValue = e.toString();
             }
 
-
-            // now delete the temporary file
-            if(!fileToSend.delete())
-               ReportingUtils.logError("Couldn't delete temporary file " +qualifiedConfigFileName );
-
+            finally {
+               // now delete the temporary file
+               if(!fileToSend.delete()) {
+                  ReportingUtils.logError("Couldn't delete temporary file " +qualifiedConfigFileName );
+               }
+            }
          }
       } catch (IOException e) {
          returnValue = e.toString();
