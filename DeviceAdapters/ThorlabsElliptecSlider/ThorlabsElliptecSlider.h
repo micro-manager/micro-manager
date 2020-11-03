@@ -117,3 +117,45 @@ private:
 	bool initialized_;
 	bool busy_;
 };
+
+
+class ELL6_shutter : public CShutterBase<ELL6_shutter>
+{
+public:
+	ELL6_shutter();
+	~ELL6_shutter();
+
+	// MMDevice API
+	// ------------
+	int Initialize();
+	int Shutdown();
+
+	void GetName(char* pszName) const;
+	bool Busy();
+	unsigned long GetNumberOfPositions()const {return numPos_;}
+	int getID(std::string* id);
+
+	// Shutter API
+    int SetOpen(bool open = true);
+    int GetOpen(bool& open);
+	int Fire(double d) { return DEVICE_UNSUPPORTED_COMMAND; };
+
+	// convenience functions
+	bool isError(std::string);
+	int getErrorCode(std::string message);
+	std::string removeLineFeed(std::string answer);
+	std::string removeCommandFlag(std::string message);
+
+	// action interface
+	// ----------------
+	int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnChannel(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+	std::string port_;
+	long numPos_;
+	std::string channel_;
+	bool initialized_;
+	bool busy_;
+};
