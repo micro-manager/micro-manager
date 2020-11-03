@@ -168,7 +168,7 @@ public class SettingsPanel extends ListeningJPanel {
 
       String firmwareBuild = props_.getPropValueString(Devices.Keys.GALVOA, Properties.Keys.FIRMWARE_BUILD);
       double maxFilterFreq= 1.0;
-      if (firmwareBuild.equals("GALVO_SPIM")) maxFilterFreq = 10.0;
+      if (firmwareBuild.equals("GALVO_SPIM") || firmwareBuild.equals("GALVO_SPIM_SLAVE")) maxFilterFreq = 10.0;
       
       scannerPanel.add(new JLabel("Filter freq, sheet axis [kHz]:"));
       final JSpinner scannerFilterX = pu.makeSpinnerFloat(0.1, maxFilterFreq, 0.1,
