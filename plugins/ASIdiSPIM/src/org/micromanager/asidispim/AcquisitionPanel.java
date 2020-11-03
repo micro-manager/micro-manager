@@ -891,7 +891,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       });
       
       positionPanel.add(new JLabel("Post-move delay [ms]:"));
-      positionDelay_ = pu.makeSpinnerFloat(0.0, 10000.0, 100.0,
+      positionDelay_ = pu.makeSpinnerFloat(0.0, 100000.0, 100.0,
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_POSITION_DELAY,
             0.0);
       positionPanel.add(positionDelay_, "wrap");
@@ -1502,9 +1502,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             retraceSpeed = 1;  // wild-guess default
          }
       } else {
-         float retraceRelativeSpeedPercent = props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_RETRACE_SPEED);
-         // this added in firmware v3.30; if not present then get will return 0.0 and we set to firmware default hardcoded previously
-         if (retraceRelativeSpeedPercent <= 0.001f) {
+         final float retraceRelativeSpeedPercent;
+         if (props_.hasProperty(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_RETRACE_SPEED)) {
+            // this added in firmware v3.30; if not present then we set to firmware default hardcoded previously
+            retraceRelativeSpeedPercent = props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_RETRACE_SPEED);
+         } else {
             retraceRelativeSpeedPercent = 67.f;
          }
          retraceSpeed = retraceRelativeSpeedPercent/100f*props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MAX_MOTOR_SPEED_X);
@@ -3743,14 +3745,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      // for stage scanning: restore speed and set up scan at new position 
                      // non-multi-position situation is handled in prepareControllerForAquisition instead
                      if (acqSettings.isStageScanning) {
-                        
-                        refreshXYZPositions();
-                        ReportingUtils.logError("Tried to go to position (" + nextPosition.getX() + ", " + nextPosition.getY() + ", " + nextPosition.getZ() + ")"
-                              + "and first try actually went to position (" + xPositionUm_ + ", " + yPositionUm_ + ", " + zPositionUm_ + ").");
-                        // for debugging: make call a second time
-                        // TODO remove
-                        // MultiStagePosition.goToPosition(nextPosition, core_);
-                        
                         StagePosition pos = nextPosition.get(devices_.getMMDevice(Devices.Keys.XYSTAGE));  // get ideal position from position list, not current position
                         controller_.prepareStageScanForAcquisition(pos.x, pos.y, acqSettings.spimMode);
                         props_.setPropValue(Devices.Keys.XYSTAGE,
@@ -3769,8 +3763,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         controller_.moveSupplementalToStartPosition();
                      }
                      
-                     refreshXYZPositions();
-                     ReportingUtils.logError("Tried to go to position (" + nextPosition.getX() + ", " + nextPosition.getY() + ", " + nextPosition.getZ() + ")"
+                     StagePosition posXY = nextPosition.get(devices_.getMMDevice(Devices.Keys.XYSTAGE)); 
+                     StagePosition posZ = nextPosition.get(devices_.getMMDevice(Devices.Keys.UPPERZDRIVE));
+                     ReportingUtils.logError("Tried to go to position (" + posXY.x + ", " + posXY.y + ", " + posZ.z + ")"
                            + "and actually went to position (" + xPositionUm_ + ", " + yPositionUm_ + ", " + zPositionUm_ + ").");
                      
                      // wait any extra time the user requests
