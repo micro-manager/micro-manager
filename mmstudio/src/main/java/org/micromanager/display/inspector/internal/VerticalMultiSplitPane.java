@@ -183,11 +183,15 @@ public class VerticalMultiSplitPane extends JPanel implements Scrollable {
    }
 
    public void setComponentAtIndex(int index, JComponent child) {
-      splitPanes_.get(index).setTopComponent(child);
+      if (splitPanes_.size() > index) {
+         splitPanes_.get(index).setTopComponent(child);
+      }
    }
 
    public void setComponentResizeEnabled(int index, boolean enabled) {
-      splitPanes_.get(index).setEnabled(enabled);
+      if (splitPanes_.size() > index) {
+         splitPanes_.get(index).setEnabled(enabled);
+      }
    }
 
    /**
