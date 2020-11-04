@@ -3765,7 +3765,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      
                      StagePosition posXY = nextPosition.get(devices_.getMMDevice(Devices.Keys.XYSTAGE)); 
                      StagePosition posZ = nextPosition.get(devices_.getMMDevice(Devices.Keys.UPPERZDRIVE));
-                     ReportingUtils.logError("Tried to go to position (" + posXY.x + ", " + posXY.y + ", " + posZ.z + ")"
+                     ReportingUtils.logMessage("Tried to go to position (" + posXY.x + ", " + posXY.y + ", " + posZ.z + ")"
                            + "and actually went to position (" + xPositionUm_ + ", " + yPositionUm_ + ", " + zPositionUm_ + ").");
                      
                      // wait any extra time the user requests
@@ -3959,7 +3959,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                               String msg = "Camera did not send first image within a reasonable time.\n";
                               if (acqSettings.isStageScanning) {
                                  msg += "Make sure jumpers are correct on XY card and also micro-micromirror card.";
-                                 ReportingUtils.logError("Stage speed is " + props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MOTOR_SPEED_X));
+                                 ReportingUtils.logMessage("Stage speed is " + props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MOTOR_SPEED_X));
                                  positions_.getUpdatedPosition(Devices.Keys.XYSTAGE, Directions.X);
                               } else {
                                  msg += "Make sure camera trigger cables are connected properly.";
@@ -4328,7 +4328,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                            for (int i=0; i<2*acqSettings.numChannels; ++i) {
                               msg += tpNumber[i] + ", ";
                            }
-                           ReportingUtils.logError(msg);
+                           ReportingUtils.logMessage(msg);
                         }// end finally cleanup statement
                      }// end loop over software channels
                   }// end outer loop of times we trigger controller
