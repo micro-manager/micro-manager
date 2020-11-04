@@ -781,8 +781,11 @@ public final class DisplayUIController implements Closeable, WindowListener,
       // redrawing the info line (which may be expensive), check if pixelsize
       // changed (which can happen for the snap/live window) and only redraw the 
       // info label if it changed.
-      if (!cachedPixelSize_.equals(images.getRequest().getImage(0).getMetadata().
-              getPixelSizeUm())) {
+      Double currentPixelSize = images.getRequest().getImage(0).getMetadata().getPixelSizeUm();
+      if (currentPixelSize == null) {
+         currentPixelSize = 0.0;
+      }
+      if (!currentPixelSize.equals(cachedPixelSize_)) {
          infoLabel_.setText(this.getInfoString(images));
          ijBridge_.mm2ijSetMetadata();
          cachedPixelSize_ = images.getRequest().getImage(0).getMetadata().
@@ -1832,11 +1835,13 @@ public final class DisplayUIController implements Closeable, WindowListener,
          return "Failed to find image";
       }
 
-      double widthUm = getImageWidth() * pixelSize;
-      double heightUm = getImageHeight() * pixelSize;
-      infoStringB.append(NumberUtils.doubleToDisplayString(widthUm)).append("x").
-              append(NumberUtils.doubleToDisplayString(heightUm)).
-              append("\u00B5").append("m  ");
+      if (pixelSize != null && pixelSize != 0.0) {
+         double widthUm = getImageWidth() * pixelSize;
+         double heightUm = getImageHeight() * pixelSize;
+         infoStringB.append(NumberUtils.doubleToDisplayString(widthUm)).append("x").
+                 append(NumberUtils.doubleToDisplayString(heightUm)).
+                 append("\u00B5").append("m  ");
+      }
 
       infoStringB.append(getImageWidth()).append("x").append(getImageHeight());
       infoStringB.append("px  ");
