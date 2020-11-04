@@ -44,7 +44,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
    private final int channelIndex_;
 
    private ImageStats stats_;
-   private int cameraBits_;
+   private Integer cameraBits_;
 
    private final JPanel channelPanel_ = new JPanel();
    private final JPanel histoPanel_ = new JPanel();
@@ -77,9 +77,14 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       }
 
       public ChannelDisplaySettings getBits(ChannelDisplaySettings settings, 
-              int cameraBits) {
+              Integer cameraBits) {
          int index = getIndexOf(getSelectedItem());
          if (index == 13) {
+            // in order to prevent null pointer exception when no cameraBits info is available
+            // I am not sure if this is the best default..
+            if (cameraBits == null) {
+               cameraBits = 16;
+            }
             return settings.copyBuilder().useCameraHistoRange(true).
                     histoRangeBits(cameraBits).build();
          }
@@ -427,9 +432,12 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          cameraBits_ = anyImage.getMetadata().getBitDepth(); // can throw IOException
          ChannelDisplaySettings cSettings = histoRangeComboBoxModel_.getBits(
                  viewer_.getDisplaySettings().getChannelSettings(0), cameraBits_);
-         int rangeBits = cameraBits_;
-         if (!cSettings.useCameraRange()) {
+
+         int rangeBits;
+         if (cameraBits_ == null || !cSettings.useCameraRange()) {
             rangeBits = cSettings.getHistoRangeBits();
+         } else {
+            rangeBits = cameraBits_;
          }
          long[] data = componentStats.getInRangeHistogram();
          int lengthToUse = Math.min(data.length, (1 << rangeBits) - 1);
