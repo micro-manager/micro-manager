@@ -89,20 +89,10 @@ import org.micromanager.display.internal.event.DataViewerMousePixelInfoChangedEv
 import org.micromanager.display.internal.gearmenu.GearButton;
 import org.micromanager.display.overlay.Overlay;
 import org.micromanager.events.internal.ChannelColorEvent;
-import org.micromanager.internal.utils.GUIUtils;
-import org.micromanager.internal.utils.Geometry;
-import org.micromanager.internal.utils.MMFrame;
-import org.micromanager.internal.utils.CoalescentEDTRunnablePool;
+import org.micromanager.internal.utils.*;
 import org.micromanager.internal.utils.CoalescentEDTRunnablePool.CoalescentRunnable;
-import org.micromanager.internal.utils.MustCallOnEDT;
-import org.micromanager.internal.utils.PopupButton;
-import org.micromanager.internal.utils.ThreadFactoryFactory;
 import org.micromanager.internal.utils.performance.PerformanceMonitor;
 import org.micromanager.internal.utils.performance.TimeIntervalRunningQuantile;
-import org.micromanager.internal.utils.JavaUtils;
-import org.micromanager.internal.utils.NumberUtils;
-import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.internal.utils.ColorMaps;
 
 /**
  * Manages the JFrame(s) for image displays.
@@ -266,10 +256,11 @@ public final class DisplayUIController implements Closeable, WindowListener,
    private JFrame makeFrame(boolean fullScreen) {
       JFrame frame;
       if (!fullScreen) {
-         // TODO LATER Eliminate MMFrame
-         frame = new MMFrame("image display window", false);
+         frame = new JFrame("image display window");
          frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-         ((MMFrame) frame).loadPosition(320, 320, 480, 320);
+         frame.setLocation(320, 320);
+         frame.setSize(480, 320);
+         WindowPositioning.setUpBoundsMemory(frame, frame.getClass(), null);
 
          // TODO Determine initial window bounds using a CascadingWindowPositioner:
          // - (Setting canvas zoom has been handled by DisplayController (ImageJLink))

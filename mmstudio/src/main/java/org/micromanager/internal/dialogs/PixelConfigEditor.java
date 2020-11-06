@@ -25,11 +25,7 @@ import java.awt.geom.AffineTransform;
 import java.text.ParseException;
 import mmcorej.StrVector;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.utils.AffineUtils;
-import org.micromanager.internal.utils.NumberUtils;
-import org.micromanager.internal.utils.PropertyItem;
-import org.micromanager.internal.utils.PropertyTableData;
-import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.*;
 
 /**
  *
@@ -68,7 +64,9 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
       affineEditorPanel_ = new AffineEditorPanel(parent.getStudio(), this, 
             AffineUtils.noTransform());
       super.initialize();
-      super.loadAndRestorePosition(100, 100, 550, 600);
+      super.setLocation(100, 100);
+      super.setSize(550, 600);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       super.setMinimumSize(new Dimension(500, 530));
    }
 

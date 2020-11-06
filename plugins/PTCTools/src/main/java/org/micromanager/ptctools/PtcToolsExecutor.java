@@ -42,9 +42,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
+
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import net.miginfocom.swing.MigLayout;
@@ -61,9 +60,9 @@ import org.micromanager.data.SummaryMetadata;
 // maintainability. However, this plugin code is older than the current
 // MMStudio API, so it still uses internal classes and interfaces. New code
 // should not imitate this practice.
-import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.WindowPositioning;
 
 public class PtcToolsExecutor extends Thread  {
    private final Studio studio_;
@@ -249,19 +248,20 @@ public class PtcToolsExecutor extends Thread  {
    
    
    private void showDialog(final String label, final PtcSequenceRunner sr) {
-      final MMFrame dialog = new MMFrame();
+      final JFrame dialog = new JFrame();
       dialog.setBounds(settings_.getInteger(PtcToolsTerms.WINDOWX, 100), 
               settings_.getInteger(PtcToolsTerms.WINDOWY, 100), 400, 100);
       dialog.addComponentListener(new ComponentAdapter() {
          @Override
          public void componentMoved(ComponentEvent e) {
-            dialog.savePosition();
+            WindowPositioning.setUpBoundsMemory(dialog, dialog.getClass(), null);
          }
       });
       dialog.setLayout(new MigLayout());
       dialog.setTitle("PTC Tools");
       dialog.add(new JLabel(label), "wrap");
       dialog.add(new JLabel("Press OK when ready"), "wrap");
+      WindowPositioning.setUpBoundsMemory(dialog, dialog.getClass(), null);
       JButton cancelButton = new JButton("Cancel");
       final JLabel resultLabel = new JLabel("Not started yet...");
       cancelButton.addActionListener((ActionEvent e) -> {

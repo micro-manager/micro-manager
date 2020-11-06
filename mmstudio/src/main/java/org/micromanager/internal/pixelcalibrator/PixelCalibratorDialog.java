@@ -26,28 +26,22 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JProgressBar;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
+
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.dialogs.PixelSizeProvider;
 import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.GUIUtils;
-import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.WindowPositioning;
 
 /**
  *
  * @author arthur, Nico
  */
-public class PixelCalibratorDialog extends MMFrame {
+public class PixelCalibratorDialog extends JFrame {
 
    private static final long serialVersionUID = 8504268289532100411L;
    
@@ -80,7 +74,8 @@ public class PixelCalibratorDialog extends MMFrame {
       studio_ = studio;
       pixelSizeProvider_ = psp;
       initComponents();
-      super.loadPosition(200, 200);
+      super.setLocation(200, 200);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       super.setVisible(true);
       
       studio_.events().registerForEvents(this);

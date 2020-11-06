@@ -26,15 +26,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
-import javax.swing.JScrollPane;
-import javax.swing.ListSelectionModel;
+import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import net.miginfocom.swing.MigLayout;
@@ -48,10 +40,10 @@ import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.events.StartupCompleteEvent;
 import org.micromanager.events.internal.NewPluginEvent;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.utils.MMFrame;
+import org.micromanager.internal.utils.WindowPositioning;
 
 
-final public class PipelineFrame extends MMFrame
+final public class PipelineFrame extends JFrame
       implements ListSelectionListener {
 
    private static final String TITLE = "On-The-Fly Processor Pipeline";
@@ -187,8 +179,9 @@ final public class PipelineFrame extends MMFrame
             minSize.height + heightDelta);
       setPreferredSize(frameSize);
       setMinimumSize(minFrameSize);
-      
-      super.loadAndRestorePosition(200, 200);
+
+      super.setLocation(200, 200);
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
       studio_.events().registerForEvents(this);
       reloadProcessors();

@@ -45,22 +45,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.BoxLayout;
-import javax.swing.InputMap;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.JTextPane;
-import javax.swing.KeyStroke;
-import javax.swing.ListSelectionModel;
-import javax.swing.SpringLayout;
-import javax.swing.SwingUtilities;
-import javax.swing.WindowConstants;
+import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
@@ -79,20 +64,13 @@ import org.fife.ui.rtextarea.SearchEngine;
 import org.fife.ui.rtextarea.SearchResult;
 import org.micromanager.ScriptController;
 import org.micromanager.Studio;
-import org.micromanager.UserProfile;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.utils.DaytimeNighttime;
-import org.micromanager.internal.utils.FileDialogs;
+import org.micromanager.internal.utils.*;
 import org.micromanager.internal.utils.FileDialogs.FileType;
-import org.micromanager.internal.utils.HotKeysDialog;
-import org.micromanager.internal.utils.MMFrame;
-import org.micromanager.internal.utils.MMScriptException;
-import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.internal.utils.TooltipTextMaker;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 
-public final class ScriptPanel extends MMFrame implements MouseListener, ScriptController {
+public final class ScriptPanel extends JFrame implements MouseListener, ScriptController {
    private static final long serialVersionUID = 1L;
    private static final int HISTORYSIZE = 100;
    private static final String STARTUP_SCRIPT = "path to the Beanshell script to run when the program starts up";
@@ -362,7 +340,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       super("script panel");
       studio_ = studio;
       settings_ = studio_.profile().getSettings(ScriptPanel.class);
-      final MMFrame scriptPanelFrame = this;
+      final JFrame scriptPanelFrame = this;
 
       // Beanshell REPL Console
       createBeanshellREPL();
@@ -398,7 +376,9 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       Dimension buttonSize = new Dimension(80, buttonHeight);
       int gap = 5; // determines gap between buttons
 
-      super.loadAndRestorePosition(100, 100, 550, 495);
+      super.setLocation(100, 100);
+      super.setSize(550, 495);
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
       final JPanel leftPanel = new JPanel();
       SpringLayout spLeft = new SpringLayout();
@@ -1144,7 +1124,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
    public void closePanel() {
       if (!promptToSave(-1))
          return;
-      savePosition();
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       saveScriptsToPrefs();
       dispose();
    }

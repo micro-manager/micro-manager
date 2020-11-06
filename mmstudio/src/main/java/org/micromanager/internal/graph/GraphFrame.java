@@ -22,6 +22,8 @@
 //
 
 package org.micromanager.internal.graph;
+import org.micromanager.internal.utils.WindowPositioning;
+
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
@@ -33,13 +35,12 @@ import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.SpringLayout;
 import javax.swing.border.LineBorder;
-import org.micromanager.internal.utils.MMFrame;
 
 /**
  * XY Graph window.
  *
  */
-public final class GraphFrame extends MMFrame {
+public final class GraphFrame extends JFrame {
 
    /**
     * 
@@ -125,7 +126,9 @@ public final class GraphFrame extends MMFrame {
       setTitle("Graph");
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
-      loadAndRestorePosition(100, 100, 542, 298);
+      super.setLocation(100, 100);
+      super.setSize(542, 298);
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
       panel_ = new GraphPanel();

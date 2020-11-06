@@ -47,7 +47,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
+
 import org.micromanager.LogManager;
 
 import org.micromanager.Studio;
@@ -87,7 +88,7 @@ import org.micromanager.display.internal.imagestats.ImageStatsRequest;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
 import org.micromanager.display.internal.imagestats.ImageStatsProcessor;
 import org.micromanager.display.internal.imagestats.IntegerComponentStats;
-import org.micromanager.internal.utils.MMFrame;
+import org.micromanager.internal.utils.WindowPositioning;
 
 import static org.micromanager.data.internal.BufferTools.NATIVE_ORDER;
 
@@ -117,10 +118,11 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
             Color.PINK, Color.CYAN, Color.YELLOW, Color.ORANGE};
    
    
-   private class CVFrame extends MMFrame {
+   private class CVFrame extends JFrame {
       public CVFrame() {
          super();
-         super.loadAndRestorePosition(100, 100);
+         super.setLocation(100, 100);
+         WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       }
    }
    

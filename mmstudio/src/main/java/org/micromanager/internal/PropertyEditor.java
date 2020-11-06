@@ -47,16 +47,7 @@ import org.micromanager.Studio;
 import org.micromanager.events.PropertiesChangedEvent;
 import org.micromanager.events.PropertyChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
-import org.micromanager.internal.utils.DaytimeNighttime;
-import org.micromanager.internal.utils.MMFrame;
-import org.micromanager.internal.utils.PropertyItem;
-import org.micromanager.internal.utils.PropertyNameCellRenderer;
-import org.micromanager.internal.utils.PropertyTableData;
-import org.micromanager.internal.utils.PropertyValueCellEditor;
-import org.micromanager.internal.utils.PropertyValueCellRenderer;
-import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.internal.utils.ShowFlags;
-import org.micromanager.internal.utils.ShowFlagsPanel;
+import org.micromanager.internal.utils.*;
 
 /**
  * JFrame based component for generic manipulation of device properties.
@@ -65,7 +56,7 @@ import org.micromanager.internal.utils.ShowFlagsPanel;
  *
  * aka the "Device/Property Browser"
  */
-public final class PropertyEditor extends MMFrame {
+public final class PropertyEditor extends JFrame {
    private static final long serialVersionUID = 1507097881635431043L;
 
    private JTable table_;
@@ -87,8 +78,10 @@ public final class PropertyEditor extends MMFrame {
 
       createTable();
       createComponents();
-      
-      loadAndRestorePosition(100, 100, 550, 600);
+
+      super.setLocation(100, 100);
+      super.setSize(550, 600);
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       setMinimumSize(new Dimension(420, 400));
    }
 
@@ -129,7 +122,9 @@ public final class PropertyEditor extends MMFrame {
       });
       setTitle("Device Property Browser");
 
-      loadAndRestorePosition(100, 100, 550, 600);
+      super.setLocation(100, 100);
+      super.setSize(550, 600);
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
       
       final JButton refreshButton = new JButton("Refresh",

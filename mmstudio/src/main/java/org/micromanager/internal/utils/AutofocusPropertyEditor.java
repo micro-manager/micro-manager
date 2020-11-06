@@ -36,16 +36,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.text.ParseException;
 import java.util.ArrayList;
-import javax.swing.AbstractCellEditor;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.SpringLayout;
+import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
@@ -60,7 +51,7 @@ import org.micromanager.internal.MMStudio;
  * Represents the entire system state as a list of triplets:
  * device - property - value
  */
-public final class AutofocusPropertyEditor extends MMDialog {
+public final class AutofocusPropertyEditor extends JDialog {
    private final Studio studio_;
    private final SpringLayout springLayout;
    private static final long serialVersionUID = 1507097881635431043L;
@@ -77,7 +68,7 @@ public final class AutofocusPropertyEditor extends MMDialog {
    private JComboBox methodCombo_;
    
    public AutofocusPropertyEditor(Studio studio, DefaultAutofocusManager afmgr) {
-      super("autofocus property editor");
+      super();
       studio_ = studio;
       afMgr_ = afmgr;
       setModal(false);
@@ -116,7 +107,9 @@ public final class AutofocusPropertyEditor extends MMDialog {
       });
       setTitle("Autofocus properties");
 
-      loadAndRestorePosition(100, 100, 400, 300);
+      super.setLocation(100, 100);
+      super.setSize(400, 300);
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
       scrollPane_ = new JScrollPane();
       scrollPane_.setFont(new Font("Arial", Font.PLAIN, 10));

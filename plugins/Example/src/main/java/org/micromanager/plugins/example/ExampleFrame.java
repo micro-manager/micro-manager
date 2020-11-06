@@ -27,9 +27,7 @@ import java.awt.event.ActionListener;
 import java.awt.Font;
 import java.util.List;
 
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JTextField;
+import javax.swing.*;
 
 
 import net.miginfocom.swing.MigLayout;
@@ -43,10 +41,9 @@ import org.micromanager.Studio;
 // maintainability. However, this plugin code is older than the current
 // MMStudio API, so it still uses internal classes and interfaces. New code
 // should not imitate this practice.
-import org.micromanager.internal.utils.MMFrame;
 
 
-public class ExampleFrame extends MMFrame {
+public class ExampleFrame extends JFrame {
 
    private Studio studio_;
    private JTextField userText_;

@@ -53,7 +53,6 @@ import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.display.internal.event.InspectorDidCloseEvent;
 import org.micromanager.internal.utils.EventBusExceptionLogger;
 import org.micromanager.internal.utils.GUIUtils;
-import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.scijava.plugin.Plugin;
 import org.micromanager.display.inspector.InspectorPanelController;
@@ -140,7 +139,7 @@ public final class InspectorController
    }
 
    private void makeUI() {
-      frame_ = new MMFrame(); // TODO
+      frame_ = new JFrame(); // TODO
       frame_.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
       frame_.addWindowListener(new WindowAdapter() {
          @Override

@@ -25,15 +25,10 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.text.DecimalFormat;
 import java.text.ParseException;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JTextField;
+import javax.swing.*;
+
 import mmcorej.CMMCore;
-import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
@@ -41,14 +36,14 @@ import org.micromanager.StagePosition;
 import org.micromanager.Studio;
 import org.micromanager.events.PixelSizeChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
-import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.positionlist.utils.TileCreator;
 import org.micromanager.internal.positionlist.utils.ZGenerator;
+import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
-public final class TileCreatorDlg extends MMDialog {
+public final class TileCreatorDlg extends JDialog {
    private static final long serialVersionUID = 1L;
    private final CMMCore core_;
    private final Studio studio_;
@@ -82,7 +77,7 @@ public final class TileCreatorDlg extends MMDialog {
     */
    public TileCreatorDlg(final CMMCore core, final Studio studio,
            final PositionListDlg positionListDlg) {
-      super("grid tile creator");
+      super();
       super.setResizable(false);
       super.setName("tileDialog");
       super.getContentPane().setLayout(null);
@@ -100,7 +95,8 @@ public final class TileCreatorDlg extends MMDialog {
 
       super.setTitle("Tile Creator");
 
-      super.loadAndRestorePosition(300, 300);
+      super.setLocation(300, 300);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       super.setSize(344, 280);
 
       final JButton goToLeftButton = new JButton();
@@ -362,7 +358,7 @@ public final class TileCreatorDlg extends MMDialog {
          }
       });
       cancelButton.setText("Cancel");
-      super.setDefaultCloseOperation(MMDialog.DISPOSE_ON_CLOSE);
+      super.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
       super.getContentPane().add(cancelButton);
 
       final JButton resetButton = new JButton();

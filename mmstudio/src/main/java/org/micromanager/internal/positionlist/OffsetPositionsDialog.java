@@ -23,24 +23,21 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
+import javax.swing.*;
+
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.WindowPositioning;
 
 /**
  * This class provides a dialog that allows the user to apply an offset to the
  * selected stage positions. Ultimately it calls
  * PositionListDlg.offsetSelectedSites to adjust positions.
  */
-class OffsetPositionsDialog extends MMDialog {
+class OffsetPositionsDialog extends JDialog {
    
    private PositionListDlg parent_;
    private final CMMCore core_;
@@ -62,9 +59,10 @@ class OffsetPositionsDialog extends MMDialog {
       // center dialog on the parent dialog
       int parentCenterX = (int) (parent.getX() + 0.5 * parent.getWidth());
       int parentCenterY = (int) (parent.getY() + 0.5 * parent.getHeight());
-      
-      this.loadAndRestorePosition(parentCenterX - 160,parentCenterY - 150,
-              320, 300);
+
+      this.setLocation(parentCenterX - 160,parentCenterY - 150);
+      this.setSize(320, 300);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       
       setTitle("Add offset to stage positions");
       setResizable(false);

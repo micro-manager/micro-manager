@@ -34,10 +34,7 @@ import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.utils.PropertyItem;
-import org.micromanager.internal.utils.PropertyTableData;
-import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.internal.utils.SortFunctionObjects;
+import org.micromanager.internal.utils.*;
 
 public final class GroupEditor extends ConfigDialog {
 
@@ -60,7 +57,9 @@ public final class GroupEditor extends ConfigDialog {
       initializeData();
       data_.setColumnNames("Property Name", "Use in Group?", "Current Property Value");
       initialize();
-      super.loadAndRestorePosition(100, 100, 550, 600);
+      super.setLocation(100, 100);
+      super.setSize(550, 600);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       super.setMinimumSize(new Dimension(520, 400));
    }
 

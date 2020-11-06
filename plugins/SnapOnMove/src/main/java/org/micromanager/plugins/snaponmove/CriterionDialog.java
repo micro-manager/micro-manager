@@ -43,19 +43,13 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.swing.BorderFactory;
-import javax.swing.ButtonGroup;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import javax.swing.JTextField;
+import javax.swing.*;
+
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import net.miginfocom.swing.MigLayout;
 
+import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.plugins.snaponmove.ChangeCriterion.XYDistanceCriterion;
 import org.micromanager.plugins.snaponmove.ChangeCriterion.ZDistanceCriterion;
 
@@ -65,12 +59,11 @@ import org.micromanager.plugins.snaponmove.ChangeCriterion.ZDistanceCriterion;
 // MMStudio API, so it still uses internal classes and interfaces. New code
 // should not imitate this practice.
 import org.micromanager.internal.dialogs.ComponentTitledBorder;
-import org.micromanager.internal.utils.MMDialog;
 
 
 
 
-final class CriterionDialog extends MMDialog {
+final class CriterionDialog extends JDialog {
    private final MainController controller_;
    private ChangeCriterion result_;
 
@@ -105,6 +98,8 @@ final class CriterionDialog extends MMDialog {
       setModal(true);
       setResizable(false);
       setLocationRelativeTo(owner);
+
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
       setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
       addWindowListener(new WindowAdapter() {

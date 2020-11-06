@@ -23,7 +23,6 @@ package org.micromanager.internal.hcwizard;
 
 import java.awt.Color;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
@@ -44,28 +43,23 @@ import java.util.List;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
-import javax.swing.WindowConstants;
+import javax.swing.*;
+
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.HttpUtils;
-import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.WindowPositioning;
 
 /**
  * Configuration Wizard main panel.
  * Based on the dialog frame to be activated as part of the
  * MMStudio
  */
-public final class ConfigWizard extends MMDialog {
+public final class ConfigWizard extends JDialog {
 
    private static final long serialVersionUID = 1L;
    private JPanel pagePanel_;
@@ -88,7 +82,7 @@ public final class ConfigWizard extends MMDialog {
     * @param defFile
     */
    public ConfigWizard(Studio studio, String defFile) {
-      super("hardware configuration wizard");
+      super();
       studio_ = studio;
       core_ = studio_.core();
       defaultPath_ = defFile;
@@ -111,7 +105,9 @@ public final class ConfigWizard extends MMDialog {
       });
       getContentPane().setLayout(new MigLayout());
       setTitle("Hardware Configuration Wizard");
-      loadPosition(50, 100);
+
+      super.setLocation(50, 100);
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
       titleLabel_ = new JLabel();
       titleLabel_.setText("Title");
@@ -332,7 +328,8 @@ public final class ConfigWizard extends MMDialog {
       for (int i = 0; i < pages_.length; i++) {
          pages_[i].saveSettings();
       }
-      savePosition();
+
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
       if (microModel_.isModified()) {
          String[] buttons = new String[] {"Save As...", "Discard", "Cancel"};

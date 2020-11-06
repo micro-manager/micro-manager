@@ -31,11 +31,7 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Map;
-import javax.swing.AbstractCellEditor;
-import javax.swing.DefaultCellEditor;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
+import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
@@ -45,7 +41,7 @@ import org.micromanager.internal.utils.FileDialogs.FileType;
  *
  * @author nico
  */
-public final class HotKeysDialog extends MMDialog {
+public final class HotKeysDialog extends JDialog {
    private final ShortCutTableModel sctModel_ = new ShortCutTableModel();
    private final JComboBox combo_ = new JComboBox();
    private Integer lastTypedKey_ = 0;
@@ -145,7 +141,9 @@ public final class HotKeysDialog extends MMDialog {
     public  HotKeysDialog() {
         initComponents();
 
-        super.loadAndRestorePosition(100, 100, 377, 378);
+        super.setLocation(100, 100);
+        super.setSize(377, 378);
+        WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
         readKeys();
 

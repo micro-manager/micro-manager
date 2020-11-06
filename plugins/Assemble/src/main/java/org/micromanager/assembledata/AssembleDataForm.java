@@ -37,19 +37,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.swing.ButtonGroup;
-import javax.swing.DefaultComboBoxModel;
+import javax.swing.*;
 
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JRadioButton;
-import javax.swing.JSeparator;
-import javax.swing.JSpinner;
-import javax.swing.JTextField;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.SwingUtilities;
-import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
@@ -60,14 +49,14 @@ import org.micromanager.display.internal.event.DataViewerAddedEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.utils.FileDialogs;
-import org.micromanager.internal.utils.MMDialog;
+import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  *
  * @author nico
  */
-public class AssembleDataForm extends MMDialog {
+public class AssembleDataForm extends JDialog {
    private final Studio studio_;
    private final MutablePropertyMapView profileSettings_;
    
@@ -114,7 +103,10 @@ public class AssembleDataForm extends MMDialog {
       
       super.setLayout(new MigLayout("flowx, fill, insets 8"));
       super.setTitle(AssembleData.MENUNAME);
-      super.loadAndRestorePosition(100, 100, 449, 327);
+
+      super.setLocation(100, 100);
+      super.setSize(449, 327);
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       
       JRadioButton chooseDir = new JRadioButton("Choose Directory");
       super.add(chooseDir, "span 2, wrap");

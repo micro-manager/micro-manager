@@ -34,11 +34,7 @@ import java.awt.event.ActionListener;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 
-import javax.swing.ButtonGroup;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
+import javax.swing.*;
 
 import mmcorej.CMMCore;
 
@@ -48,13 +44,13 @@ import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
+import org.micromanager.internal.utils.WindowPositioning;
 
 // Imports for MMStudio internal packages
 // Plugins should not access internal packages, to ensure modularity and
 // maintainability. However, this plugin code is older than the current
 // MMStudio API, so it still uses internal classes and interfaces. New code
 // should not imitate this practice.
-import org.micromanager.internal.utils.MMFrame;
 
 /**
  * Micro-Manager plugin that can split the acquired image top-down or left-right
@@ -62,7 +58,7 @@ import org.micromanager.internal.utils.MMFrame;
  *
  * @author nico, modified by Chris Weisiger
  */
-public class SplitViewFrame extends MMFrame implements ProcessorConfigurator {
+public class SplitViewFrame extends JFrame implements ProcessorConfigurator {
    private static final int DEFAULT_WIN_X = 100;
    private static final int DEFAULT_WIN_Y = 100;
    private static final String ORIENTATION = "Orientation";
@@ -90,7 +86,8 @@ public class SplitViewFrame extends MMFrame implements ProcessorConfigurator {
 
       initComponents();
 
-      super.loadAndRestorePosition(DEFAULT_WIN_X, DEFAULT_WIN_Y);
+      super.setLocation(DEFAULT_WIN_X, DEFAULT_WIN_Y);
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
       lrRadio_.setSelected(orientation_.equals(LR));
       tbRadio_.setSelected(orientation_.equals(TB));

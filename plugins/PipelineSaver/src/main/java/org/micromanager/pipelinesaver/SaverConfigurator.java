@@ -24,12 +24,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
+import javax.swing.*;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -44,9 +39,9 @@ import org.micromanager.Studio;
 // MMStudio API, so it still uses internal classes and interfaces. New code
 // should not imitate this practice.
 import org.micromanager.internal.utils.FileDialogs;
-import org.micromanager.internal.utils.MMFrame;
+import org.micromanager.internal.utils.WindowPositioning;
 
-public class SaverConfigurator extends MMFrame implements ProcessorConfigurator {
+public class SaverConfigurator extends JFrame implements ProcessorConfigurator {
    private static final String PREFERRED_FORMAT = "preferred format for saving mid-pipeline datasets";
    private static final String SHOULD_DISPLAY_PIPELINE_DATA = "whether or not to display mid-pipeline datasets";
    private static final String SAVE_PATH = "default save path for saving mid-pipeline datasets";
@@ -102,7 +97,8 @@ public class SaverConfigurator extends MMFrame implements ProcessorConfigurator 
       super.add(panel);
       updateControls();
 
-      super.loadAndRestorePosition(300, 300);
+      super.setLocation(300, 300);
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
    }
 
    private void updateControls() {
