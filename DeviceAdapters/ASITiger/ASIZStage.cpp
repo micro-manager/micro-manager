@@ -735,6 +735,16 @@ int CZStage::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
          CreateProperty(g_KDerivativePropertyName, "0", MM::Integer, false, pAct);
          UpdateProperty(g_KDerivativePropertyName);
 
+         // motor proportional term (KV)
+         pAct = new CPropertyAction (this, &CZStage::OnKDrive);
+         CreateProperty(g_KDrivePropertyName, "0", MM::Integer, false, pAct);
+         UpdateProperty(g_KDrivePropertyName);
+
+         // motor feedforward term (KA)
+         pAct = new CPropertyAction (this, &CZStage::OnKFeedforward);
+         CreateProperty(g_KFeedforwardPropertyName, "0", MM::Integer, false, pAct);
+         UpdateProperty(g_KFeedforwardPropertyName);
+
          // Align calibration/setting for pot in drive electronics (AA)
          pAct = new CPropertyAction (this, &CZStage::OnAAlign);
          CreateProperty(g_AAlignPropertyName, "0", MM::Integer, false, pAct);
@@ -1102,6 +1112,54 @@ int CZStage::OnKDerivative(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
       command << "KD " << axisLetter_ << "=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CZStage::OnKDrive(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << "KV " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << "KV " << axisLetter_ << "=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CZStage::OnKFeedforward(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << "KA " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << "KA " << axisLetter_ << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
