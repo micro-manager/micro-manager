@@ -164,7 +164,7 @@ public class IntensityInspectorPanelController
       histogramMenuMap_.put("0.5 Hz", 0.5);
       histogramMenuMap_.put("Never", 0.0);
       final String defaultUpdateFrequency = studio_.profile().getSettings(
-              IntensityInspectorPanelController.class).getString(HISTOGRAM_UPDATE_FREQUENCY, "5 Hz");
+              IntensityInspectorPanelController.class).getString(HISTOGRAM_UPDATE_FREQUENCY, "Every Displayed Image");
       final List<JCheckBoxMenuItem> histogramMenuItems = new LinkedList<>();
       for (final String hKey : histogramMenuMap_.keySet()) {
          final JCheckBoxMenuItem jcmi = new JCheckBoxMenuItem(hKey);
