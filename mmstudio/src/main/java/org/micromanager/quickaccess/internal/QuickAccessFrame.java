@@ -684,7 +684,7 @@ public final class QuickAccessFrame extends JFrame {
          // The OPEN_REMEMBER string is kinda large and blows out the size
          // of the combobox, so use the OPEN_ALWAYS string to set size.
          openSelect_.setPrototypeDisplayValue(OPEN_ALWAYS);
-         openSelect_.setSelectedItem(OPEN_NEVER);
+         openSelect_.setSelectedItem(OPEN_REMEMBER);
          subPanel.add(openSelect_, "wrap");
 
          subPanel.add(new JLabel("<html>Drag controls into the grid above to add them to the panel.<br>Click on grid lines to add or remove dividers. Right-click<br>on a control in the grid to customize its icon (when possible).</html>"),
