@@ -3,6 +3,7 @@ package org.micromanager.projector;
 import ij.gui.Roi;
 import ij.process.FloatPolygon;
 import org.micromanager.Studio;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.projector.internal.ProjectorControlForm;
 
 import java.awt.Polygon;
@@ -20,6 +21,11 @@ public class ProjectorAPI {
 
    ProjectorControlForm projectorControlForm_;
    Studio studio_;
+
+   public ProjectorAPI() {
+      studio_ = MMStudio.getInstance();
+      projectorControlForm_ = ProjectorControlForm.getSingleton();
+   }
 
    public ProjectorAPI(Studio studio) {
       studio_ = studio;
