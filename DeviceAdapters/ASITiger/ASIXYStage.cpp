@@ -877,6 +877,16 @@ int CXYStage::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
          CreateProperty(g_KDerivativePropertyName, "0", MM::Integer, false, pAct);
          UpdateProperty(g_KDerivativePropertyName);
 
+         // motor proportional term (KV)
+         pAct = new CPropertyAction (this, &CXYStage::OnKDrive);
+         CreateProperty(g_KDrivePropertyName, "0", MM::Integer, false, pAct);
+         UpdateProperty(g_KDrivePropertyName);
+
+         // motor feedforward term (KA)
+         pAct = new CPropertyAction (this, &CXYStage::OnKFeedforward);
+         CreateProperty(g_KFeedforwardPropertyName, "0", MM::Integer, false, pAct);
+         UpdateProperty(g_KFeedforwardPropertyName);
+
          // Align calibration/setting for pot in drive electronics (AA)
          pAct = new CPropertyAction (this, &CXYStage::OnAAlign);
          CreateProperty(g_AAlignPropertyName, "0", MM::Integer, false, pAct);
@@ -1277,6 +1287,54 @@ int CXYStage::OnKDerivative(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
       command << "KD " << axisLetterX_ << "=" << tmp << " " << axisLetterY_ << "=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CXYStage::OnKDrive(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << "KV " << axisLetterX_ << "?";
+      response << ":A " << axisLetterX_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << "KV " << axisLetterX_ << "=" << tmp << " " << axisLetterY_ << "=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CXYStage::OnKFeedforward(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << "KA " << axisLetterX_ << "?";
+      response << ":A " << axisLetterX_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << "KA " << axisLetterX_ << "=" << tmp << " " << axisLetterY_ << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;

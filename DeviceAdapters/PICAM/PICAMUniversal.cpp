@@ -440,9 +440,9 @@ bool Universal::InitializeCalculatedBufferSize()
    {
       if( circBuffer_ != NULL )
          delete[] circBuffer_;
-   }
-   circBufferSize_ = calculatedBufferSize;
-   circBuffer_ = new unsigned char[calculatedBufferSize];
+	   circBufferSize_ = calculatedBufferSize;
+	   circBuffer_ = new unsigned char[calculatedBufferSize];
+	}
 
    buffer.memory = circBuffer_;
    buffer.memory_size = circBufferSize_;
