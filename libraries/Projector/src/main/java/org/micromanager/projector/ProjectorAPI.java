@@ -77,5 +77,16 @@ public class ProjectorAPI {
       ProjectorActions.setExposure(dev, intervalUs);
    }
 
+   public void enablePointAndShootMode(boolean on) {
+      // expect Null Pointer Exceptions if the ProjectorControlForm is not open
+      projectorControlForm_.enablePointAndShootMode(on);
+   }
+
+   public void addPointToPointAndShootQueue(double x, double y) {
+      // expect Null Pointer Exceptions if the ProjectorControlForm is not open
+      Point2D p2D = new Point2D.Double(x, y);
+      projectorControlForm_.addPointToPointAndShootQueue(p2D);
+   }
+
 
 }

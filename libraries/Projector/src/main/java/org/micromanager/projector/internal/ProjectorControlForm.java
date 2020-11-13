@@ -462,31 +462,41 @@ public class ProjectorControlForm extends MMFrame {
          // System.out.println("" + dme.getEvent().getID()+ " " + dme.getEvent().paramString());
          if (studio_.acquisitions().isAcquisitionRunning() || studio_.live().getIsLiveModeOn()) {
             Point2D p2D = dme.getCenterLocation();
-            Point p = new Point ((int) Math.round(p2D.getX()), (int) Math.round(p2D.getY()));
-            // Is this needed?
-            p = mirrorIfNecessary(pointAndShootViewer_, p);
-            Integer binning = null;
-            Rectangle roi = null;
-            try {
-               binning = Utils.getBinning(core_);
-               roi = core_.getROI();
-            } catch (Exception ex) {
-               studio_.logs().logError(ex);
-            }
-            final Point2D.Double devP = ProjectorActions.transformPoint(
-                    MappingStorage.loadMapping(core_, dev_, settings_.toPropertyMap()),
-                    new Point2D.Double(p.getX(), p.getY()), roi, binning);
-            final Configuration originalConfig
-                    = projectorControlExecution_.prepareChannel(targetingChannel_);
-            PointAndShootInfo.Builder psiBuilder = new PointAndShootInfo.Builder();
-            PointAndShootInfo psi = psiBuilder.projectionDevice(dev_).
-                    devPoint(devP).
-                    originalConfig(originalConfig).
-                    canvasPoint(new Point((int) p2D.getX(), (int) p2D.getY())).
-                    build();
-            pointAndShootQueue_.add(psi);
+            addPointToPointAndShootQueue(p2D);
          }
       }
+   }
+
+   /**
+    * Adds a poingt in image space to the point and shoot queue
+    *
+    * @param p2D 2D point on an image produced with the current camera settings
+    *            Point will be mapped to corresponding point in Projector coordinates
+    */
+   public void addPointToPointAndShootQueue(Point2D p2D) {
+      Point p = new Point ((int) Math.round(p2D.getX()), (int) Math.round(p2D.getY()));
+      // Is this needed?
+      p = mirrorIfNecessary(pointAndShootViewer_, p);
+      Integer binning = null;
+      Rectangle roi = null;
+      try {
+         binning = Utils.getBinning(core_);
+         roi = core_.getROI();
+      } catch (Exception ex) {
+         studio_.logs().logError(ex);
+      }
+      final Point2D.Double devP = ProjectorActions.transformPoint(
+              MappingStorage.loadMapping(core_, dev_, settings_.toPropertyMap()),
+              new Point2D.Double(p.getX(), p.getY()), roi, binning);
+      final Configuration originalConfig
+              = projectorControlExecution_.prepareChannel(targetingChannel_);
+      PointAndShootInfo.Builder psiBuilder = new PointAndShootInfo.Builder();
+      PointAndShootInfo psi = psiBuilder.projectionDevice(dev_).
+              devPoint(devP).
+              originalConfig(originalConfig).
+              canvasPoint(new Point((int) p2D.getX(), (int) p2D.getY())).
+              build();
+      pointAndShootQueue_.add(psi);
    }
 
    
@@ -1341,7 +1351,7 @@ public class ProjectorControlForm extends MMFrame {
    /**
     * Illuminate the polygons ROIs that have been previously uploaded to
     * phototargeter.
-    * @deprecated Use {@link ProjectorControlExecution#exposeRois(org.micromanager.projector.ProjectionDevice, java.lang.String, java.lang.String) } instead
+    * @deprecated Use {@link ProjectorControlExecution#exposeRois(org.micromanager.projector.ProjectionDevice, java.lang.String, java.lang.String, Roi[]) } instead
     */
    @Deprecated
    public void runRois() {
