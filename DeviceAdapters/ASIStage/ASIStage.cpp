@@ -5722,7 +5722,7 @@ int LED::SetOpen (bool open)
    }
 
    open_ = open;
-   return DEVICE_OK;
+   return ERR_UNRECOGNIZED_ANSWER;
 }
 
 /**
@@ -5760,16 +5760,16 @@ int LED::IsOpen(bool *open)
 
 	   
 	   if ((answer.substr(0, 2).compare(":A") == 0) || (answer.substr(1, 2).compare(":A") == 0)) {
-		   
 		   if (answer.substr(2, 1) == "0")
 			   *open = false;
+		   return DEVICE_OK;
 	   }
 	   else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
 	   {
 		   int errNo = atoi(answer.substr(4).c_str());
 		   return ERR_OFFSET + errNo;
 	   }
-	   return DEVICE_OK;
+	   return ERR_UNRECOGNIZED_ANSWER;
 
    }
    else {
@@ -5848,13 +5848,14 @@ int LED::CurrentIntensity(long* intensity)
    is >> tok2;
    if ( (tok2.substr(0,2).compare(":A") == 0) || (tok2.substr(1,2).compare(":A") == 0) ) {
       *intensity = atoi(tok.substr(2).c_str());
+      return DEVICE_OK;
    }
    else if (tok.substr(0, 2).compare(":N") == 0 && tok.length() > 2)
    {
       int errNo = atoi(tok.substr(4).c_str());
       return ERR_OFFSET + errNo;
    }
-   return DEVICE_OK;
+   return ERR_UNRECOGNIZED_ANSWER;
 }
 
 int LED::Fire(double )
