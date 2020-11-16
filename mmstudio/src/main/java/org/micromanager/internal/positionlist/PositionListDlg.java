@@ -712,11 +712,20 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
    // The stage position changed; update curMsp_.
    @Subscribe
    public void onStagePositionChanged(StagePositionChangedEvent event) {
-      // Do the update on the EDT (1) to prevent data races and (2) to prevent
-      // deadlock by calling back into the stage device adapter.
+      // Do the update on the EDT (1) to prevent data races.
+      // Use info from the event, do not query hardware
       SwingUtilities.invokeLater(new Runnable() {
          @Override public void run() {
-            refreshCurrentPosition();
+            if (!axisList_.use(event.getDeviceName())) {
+               return; // this axis is not in the list, continue
+            }
+            MultiStagePosition msp = MultiStagePosition.newInstance(curMsp_);
+            StagePosition sp = msp.get(event.getDeviceName());
+            msp.remove(sp);
+            sp = StagePosition.create1D(event.getDeviceName(), event.getPos());
+            msp.add(sp);
+
+            updateCurrentMsp(msp);
          }
       });
    }
@@ -724,20 +733,29 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
    // The stage position changed; update curMsp_.
    @Subscribe
    public void onXYStagePositionChanged(XYStagePositionChangedEvent event) {
-      // Do the update on the EDT (1) to prevent data races and (2) to prevent
-      // deadlock by calling back into the stage device adapter.
+      // Do the update on the EDT (1) to prevent data races.
+      // Use info from the event and do not query hardware
       SwingUtilities.invokeLater(new Runnable() {
          @Override public void run() {
-            refreshCurrentPosition();
+            if (!axisList_.use(event.getDeviceName())) {
+               return; // this axis is not in the list, continue
+            }
+            MultiStagePosition msp = MultiStagePosition.newInstance(curMsp_);
+            StagePosition sp = msp.get(event.getDeviceName());
+            msp.remove(sp);
+            sp = StagePosition.create2D(event.getDeviceName(), event.getXPos(), event.getYPos());
+            msp.add(sp);
+
+            updateCurrentMsp(msp);
          }
       });
    }
 
    /**
     * Update display of the current stage position.
+    * Go out to the hardware to get new positions
     */
    private void refreshCurrentPosition() {
-      StringBuilder sb = new StringBuilder();
       MultiStagePosition msp = new MultiStagePosition();
       msp.setDefaultXYStage(core_.getXYStageDevice());
       msp.setDefaultZStage(core_.getFocusDevice());
@@ -750,7 +768,6 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
                StagePosition sp = StagePosition.create1D(stages.get(i),
                        core_.getPosition(stages.get(i)));
                msp.add(sp);
-               sb.append(sp.getVerbose()).append("\n");
             }
          }
 
@@ -763,15 +780,19 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
                        core_.getXPosition(stageName),
                        core_.getYPosition(stageName));
                msp.add(sp);
-               sb.append(sp.getVerbose()).append("\n");
             }
          }
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
+      updateCurrentMsp(msp);
+   }
 
-      curMsp_ = msp;
-      curMsp_.setLabel("Current");
+   private void updateCurrentMsp(MultiStagePosition newCurrentMsp) {
+      newCurrentMsp.setLabel("Current");
+      // it would be nice to check if all stage names in the msp are actually in
+      // use.  However, I do not see a safe way to do so. (NS: 20201116)
+      curMsp_ = newCurrentMsp;
       positionModel_.setCurrentMSP(curMsp_);
 
       positionModel_.fireTableCellUpdated(0, 1);
