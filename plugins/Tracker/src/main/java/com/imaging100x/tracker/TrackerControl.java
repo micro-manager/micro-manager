@@ -195,13 +195,13 @@ public class TrackerControl extends MMFrame {
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowOpened(WindowEvent e) {
-            resolutionPix_ = up.getInt(this.getClass(), RESOLUTION_PIX, resolutionPix_);
-            offsetPix_ = up.getInt(this.getClass(), OFFSET_PIX, offsetPix_);
-            intervalMs_ = up.getInt(this.getClass(), INTERVAL_MS, intervalMs_);
-            diskRadioButton_.setSelected(up.getBoolean(this.getClass(), 
+            resolutionPix_ = up.getInt(TrackerControl.this.getClass(), RESOLUTION_PIX, resolutionPix_);
+            offsetPix_ = up.getInt(TrackerControl.this.getClass(), OFFSET_PIX, offsetPix_);
+            intervalMs_ = up.getInt(TrackerControl.this.getClass(), INTERVAL_MS, intervalMs_);
+            diskRadioButton_.setSelected(up.getBoolean(TrackerControl.this.getClass(),
                     DISK_RECORDING, diskRadioButton_.isSelected()));
-            rootField_.setText(up.getString(this.getClass(), ROOT, ""));
-            nameField_.setText(up.getString(this.getClass(), NAME, ""));
+            rootField_.setText(up.getString(TrackerControl.this.getClass(), ROOT, ""));
+            nameField_.setText(up.getString(TrackerControl.this.getClass(), NAME, ""));
 
             resField_.setText(Integer.toString(resolutionPix_));
             offsetField_.setText(Integer.toString(offsetPix_));
@@ -211,13 +211,13 @@ public class TrackerControl extends MMFrame {
 
          @Override
          public void windowClosing(final WindowEvent e) {
-            up.setInt(this.getClass(), RESOLUTION_PIX, resolutionPix_);
-            up.setInt(this.getClass(), OFFSET_PIX, offsetPix_);
-            up.setInt(this.getClass(), INTERVAL_MS, intervalMs_);
-            up.setBoolean(this.getClass(), DISK_RECORDING, 
+            up.setInt(TrackerControl.this.getClass(), RESOLUTION_PIX, resolutionPix_);
+            up.setInt(TrackerControl.this.getClass(), OFFSET_PIX, offsetPix_);
+            up.setInt(TrackerControl.this.getClass(), INTERVAL_MS, intervalMs_);
+            up.setBoolean(TrackerControl.this.getClass(), DISK_RECORDING,
                     diskRadioButton_.isSelected());
-            up.setString(this.getClass(), ROOT, rootField_.getText());
-            up.setString(this.getClass(), NAME, nameField_.getText());
+            up.setString(TrackerControl.this.getClass(), ROOT, rootField_.getText());
+            up.setString(TrackerControl.this.getClass(), NAME, nameField_.getText());
          }
       });
 
