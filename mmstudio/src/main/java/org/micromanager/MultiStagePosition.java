@@ -242,11 +242,39 @@ public final class MultiStagePosition {
    }
 
    /**
+    * Moves all stages to the specified positions, and blocks until
+    * they are done moving
+    * @param core - microscope API
+    * @throws Exception If there is an error moving the stage.
+    */
+   public void goToPosition(CMMCore core) throws Exception {
+      for (int i=0; i<this.size(); i++) {
+         StagePosition sp = this.get(i);
+         if (sp.getNumberOfStageAxes() == 1) {
+            core.setPosition(sp.getStageDeviceLabel(), sp.get2DPositionX());
+         }
+         else if (sp.getNumberOfStageAxes() == 2) {
+            core.setXYPosition(sp.getStageDeviceLabel(),
+                    sp.get2DPositionX(), sp.get2DPositionY());
+         }
+      }
+
+      // wait for stages to stop moving
+      for (int i = 0; i < this.size(); i++) {
+         core.waitForDevice(this.get(i).getStageDeviceLabel());
+      }
+
+   }
+
+
+   /**
     * Moves all stages to the specified positions.
     * @param msp position to move to
     * @param core_ - microscope API
     * @throws Exception If there is an error moving the stage.
+    * @deprecate use {@link #goToPosition(CMMCore)} instead
     */
+   @Deprecated
    public static void goToPosition(MultiStagePosition msp, CMMCore core_) throws Exception {
       for (int i=0; i<msp.size(); i++) {
          StagePosition sp = msp.get(i);
