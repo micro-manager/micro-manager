@@ -540,7 +540,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       // automatic calculation of minimum size of bottom panel
       // can be misleading because no minimum size for the scrollbars is included.
       // So, help out a bit by setting a reasonable minimum
-      panel.setMinimumSize(new Dimension(345, 10));
+      panel.setMinimumSize(new Dimension(345, 55));
       
       return panel;
    }
