@@ -164,7 +164,7 @@ public final class SnapLiveManager extends DataViewerListener
    }
 
    @Override
-   public void setLiveMode(boolean isOn) {
+   public void setLiveModeOn(boolean isOn) {
       synchronized(liveModeLock_) {
          if (isLiveOn_ == isOn) {
             return;
@@ -238,7 +238,7 @@ public final class SnapLiveManager extends DataViewerListener
          ReportingUtils.showError(e, "Couldn't start live mode sequence acquisition");
          // Give up on starting live mode.
          amStartingSequenceAcquisition_ = false;
-         setLiveMode(false);
+         setLiveModeOn(false);
          return;
       }
 
@@ -869,7 +869,7 @@ public final class SnapLiveManager extends DataViewerListener
    @Subscribe
    public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
       if (!event.isCanceled()) {
-         setLiveMode(false);
+         setLiveModeOn(false);
       }
    }
 
@@ -884,7 +884,7 @@ public final class SnapLiveManager extends DataViewerListener
    public boolean canCloseViewer(DataViewer viewer) {
       if (viewer instanceof DisplayWindow && viewer.equals(display_)) {
          saveDisplaySettings();
-         setLiveMode(false);
+         setLiveModeOn(false);
       }
       return true;
    }

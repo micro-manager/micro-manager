@@ -45,7 +45,7 @@ public final class HotKeyAction {
                   studio_.live().snap(true);
                   return true;
                case TOGGLELIVE:
-                  snapLiveManager_.setLiveMode(!snapLiveManager_.isLiveModeOn());
+                  snapLiveManager_.setLiveModeOn(!snapLiveManager_.isLiveModeOn());
                   return true;
                case TOGGLESHUTTER:
                   try {

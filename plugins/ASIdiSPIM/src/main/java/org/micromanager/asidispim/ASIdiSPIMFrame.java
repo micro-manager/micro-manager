@@ -149,7 +149,7 @@ public class ASIdiSPIMFrame extends SPIMFrame  {
       controller_ = new ControllerUtils(gui_, props_, prefs_, devices_, positions_);
       
       // make sure Live mode is turned off 
-      gui_.live().setLiveMode(false);
+      gui_.live().setLiveModeOn(false);
  
       // create the panels themselves
       // in some cases dependencies create required ordering

@@ -68,10 +68,15 @@ public interface SnapLiveManager {
     * Turns live mode on or off. This will post an
     * org.micromanager.events.LiveModeEvent on the global application event
     * bus.
-    * @param isOn If true, then live mode will be activated; otherwise it will
+    * @param on If true, then live mode will be activated; otherwise it will
     *        be halted.
     */
-   public void setLiveMode(boolean isOn);
+   void setLiveModeOn(boolean on);
+
+   @Deprecated
+   default void setLiveMode(boolean on) {
+      setLiveModeOn(on);
+   }
 
    /**
     * Temporarily halt live mode, or re-start it after a temporary halt. This

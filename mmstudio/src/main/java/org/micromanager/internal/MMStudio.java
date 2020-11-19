@@ -545,7 +545,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    }
 
    private void handleError(String message) {
-      live().setLiveMode(false);
+      live().setLiveModeOn(false);
       JOptionPane.showMessageDialog(frame_, message);
       core_.logMessage(message);
    }
