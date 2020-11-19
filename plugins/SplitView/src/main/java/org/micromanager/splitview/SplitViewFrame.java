@@ -87,7 +87,7 @@ public class SplitViewFrame extends JFrame implements ProcessorConfigurator {
       initComponents();
 
       setLocation(DEFAULT_WIN_X, DEFAULT_WIN_Y);
-      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
       lrRadio_.setSelected(orientation_.equals(LR));
       tbRadio_.setSelected(orientation_.equals(TB));

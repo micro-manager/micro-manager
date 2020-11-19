@@ -1123,7 +1123,6 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
    public void closePanel() {
       if (!promptToSave(-1))
          return;
-      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       saveScriptsToPrefs();
       dispose();
    }

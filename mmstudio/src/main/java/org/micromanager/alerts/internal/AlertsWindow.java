@@ -55,7 +55,7 @@ public final class AlertsWindow extends JFrame {
       studio.events().registerForEvents(this);
 
       setLocation(300, 100);
-      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       
       super.setLayout(new MigLayout("fill, insets 2, gap 0"));
 

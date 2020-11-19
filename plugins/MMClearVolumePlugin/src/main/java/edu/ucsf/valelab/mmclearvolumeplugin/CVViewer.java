@@ -122,7 +122,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       public CVFrame() {
          super();
          setLocation(100, 100);
-         WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
+         WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       }
    }
    

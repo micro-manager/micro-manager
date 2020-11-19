@@ -55,7 +55,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * This dialog provides an interface for exporting (a portion of) a dataset
  * to an image sequence, complete with all MicroManager overlays.
  */
-public final class ExportMovieDlg extends JFrame {
+public final class ExportMovieDlg extends JDialog {
    private static final Icon ADD_ICON =
                IconLoader.getIcon("/org/micromanager/icons/plus_green.png");
    private static final Icon DELETE_ICON =
