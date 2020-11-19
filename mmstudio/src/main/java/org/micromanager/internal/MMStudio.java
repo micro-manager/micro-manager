@@ -1502,7 +1502,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       frame_.setConfigSaveButtonStatus(configChanged_);
    }
 
-   public boolean getIsConfigChanged() {
+   public boolean hasConfigChanged() {
       return configChanged_;
    }
 
