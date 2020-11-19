@@ -1258,7 +1258,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
       ShutdownCommencingEvent externalEvent = new ShutdownCommencingEvent();
       events().post(externalEvent);
-      if (externalEvent.getIsCancelled()) {
+      if (externalEvent.isCanceled()) {
          // Shutdown cancelled by user.
          return false;
       }
