@@ -985,7 +985,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       events().post(new MouseMovesStageStateChangeEvent(isEnabled));
    }
 
-   public boolean getIsClickToMoveEnabled() {
+   public boolean isClickToMoveEnabled() {
       return isClickToMoveEnabled_;
    }
    
