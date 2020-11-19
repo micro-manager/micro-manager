@@ -111,7 +111,7 @@ public final class SnapButton extends WidgetPlugin implements SciJavaPlugin {
       HierarchyListener subscriber = new HierarchyListener() {
          @Subscribe
          public void onLiveMode(LiveModeEvent event) {
-            result.setEnabled(!event.getIsOn());
+            result.setEnabled(!event.isOn());
          }
 
          @Override

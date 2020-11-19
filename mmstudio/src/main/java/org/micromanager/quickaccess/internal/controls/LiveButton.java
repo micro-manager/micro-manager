@@ -112,7 +112,7 @@ public final class LiveButton extends WidgetPlugin implements SciJavaPlugin {
       HierarchyListener wrapper = new HierarchyListener() {
          @Subscribe
          public void onLiveMode(LiveModeEvent event) {
-            boolean isOn = event.getIsOn();
+            boolean isOn = event.isOn();
             result.setIcon(IconLoader.getIcon(
                   isOn ? "/org/micromanager/icons/cancel.png" :
                   "/org/micromanager/icons/camera_go.png"));

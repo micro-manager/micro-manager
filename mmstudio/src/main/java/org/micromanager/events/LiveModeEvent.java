@@ -29,5 +29,10 @@ public interface LiveModeEvent {
     * @return True if live mode has been turned on, false if it has been turned
     *         off.
     */
-   public boolean getIsOn();
+   boolean isOn();
+
+   @Deprecated
+   default boolean getIsOn() {
+      return isOn();
+   }
 }

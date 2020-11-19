@@ -30,7 +30,7 @@ public final class DefaultLiveModeEvent implements LiveModeEvent {
    }
 
    @Override
-   public boolean getIsOn() {
+   public boolean isOn() {
       return isOn_;
    }
 }
