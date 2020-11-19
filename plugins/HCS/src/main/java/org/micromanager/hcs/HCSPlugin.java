@@ -86,7 +86,7 @@ public class HCSPlugin implements MenuPlugin, SciJavaPlugin {
    @Subscribe
    public void closeRequested( ShutdownCommencingEvent sce){
       if (frame_ != null) {
-         if (!sce.getIsCancelled()) {
+         if (!sce.isCanceled()) {
             frame_.dispose();
          }
       }
