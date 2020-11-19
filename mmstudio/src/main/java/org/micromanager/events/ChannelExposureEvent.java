@@ -65,7 +65,12 @@ public class ChannelExposureEvent {
     * one used for snaps and live mode, the one whose exposure time is
     * displayed in the main window).
     */
-   public boolean getIsMainExposureTime() {
+   public boolean isMainExposureTime() {
       return isMainExposureTime_;
+   }
+
+   @Deprecated
+   public boolean getIsMainExposureTime() {
+      return isMainExposureTime();
    }
 }
