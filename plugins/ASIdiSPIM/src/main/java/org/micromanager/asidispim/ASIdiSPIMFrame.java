@@ -429,7 +429,7 @@ public class ASIdiSPIMFrame extends SPIMFrame  {
   
    @Subscribe
    public void liveModeEnabled(LiveModeEvent liveEvent) {
-      if (liveEvent.getIsOn()) {
+      if (liveEvent.isOn()) {
          piezoSleepPreventer_.start();
       } else {
          piezoSleepPreventer_.stop();

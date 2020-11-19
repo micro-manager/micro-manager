@@ -235,7 +235,7 @@ public class RTIntensitiesFrame extends JFrame {
    	if (! autoStart_  || manager_ == null) {
    		return;
    	}
-   	if (!event.getIsOn()) {
+   	if (!event.isOn()) {
    		return;
    	}
       DataViewer viewer = studio_.displays().getActiveDataViewer();

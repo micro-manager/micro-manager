@@ -1158,7 +1158,7 @@ public final class SetupPanel extends ListeningJPanel {
    
    @Subscribe
    public void liveModeEnabled(LiveModeEvent liveEvent) {
-      cameraPanel_.liveModeEnabled(liveEvent.getIsOn());
+      cameraPanel_.liveModeEnabled(liveEvent.isOn());
    }
 
 }

@@ -2055,7 +2055,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
    @Subscribe
    public void onLiveModeEvent(LiveModeEvent liveModeEvent) {
       // Used to reset counters for camera fps measurements
-      if (liveModeEvent.getIsOn()) {
+      if (liveModeEvent.isOn()) {
          nrLiveFramesReceived_ = 0;
          lastImageNumber_ = 0;
          durationMs_ = 0.0;
