@@ -833,7 +833,7 @@ public final class StageControlFrame extends MMFrame {
       
    @Subscribe
    public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
-      if (!event.getIsCancelled()) {
+      if (!event.isCanceled()) {
          this.dispose();
       }
    }

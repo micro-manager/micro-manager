@@ -35,8 +35,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.function.Function;
@@ -1254,7 +1252,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // one that's accessible in the API.
       InternalShutdownCommencingEvent internalEvent = new InternalShutdownCommencingEvent();
       events().post(internalEvent);
-      if (internalEvent.getIsCancelled()) {
+      if (internalEvent.isCanceled()) {
          // Shutdown cancelled by user.
          return false;
       }

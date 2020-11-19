@@ -868,7 +868,7 @@ public final class SnapLiveManager extends DataViewerListener
 
    @Subscribe
    public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
-      if (!event.getIsCancelled()) {
+      if (!event.isCanceled()) {
          setLiveMode(false);
       }
    }
