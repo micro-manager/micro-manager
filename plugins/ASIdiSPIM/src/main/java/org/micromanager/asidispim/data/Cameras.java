@@ -170,14 +170,14 @@ public class Cameras {
          try {
             final boolean liveEnabled = gui_.live().isLiveModeOn();
             if (liveEnabled) {
-               gui_.live().setLiveMode(false);
+               gui_.live().setLiveModeOn(false);
             }
             currentCameraKey_ = key;
             core_.setCameraDevice(mmDevice);
             setShutterForCamera(key); 
             gui_.app().refreshGUIFromCache();
             if (liveEnabled) {
-               gui_.live().setLiveMode(true);
+               gui_.live().setLiveModeOn(true);
             }
          } catch (Exception ex) {
             MyDialogUtils.showError("Failed to set Core Camera property");
@@ -792,11 +792,11 @@ public class Cameras {
       try {
          final boolean liveEnabled = gui_.live().isLiveModeOn();
          if (liveEnabled) {
-            gui_.live().setLiveMode(false);
+            gui_.live().setLiveModeOn(false);
          }
          core_.setROI(devices_.getMMDevice(camKey), roi.x, roi.y, roi.width, roi.height);
          if (liveEnabled) {
-            gui_.live().setLiveMode(true);
+            gui_.live().setLiveModeOn(true);
          }
       }
       catch (Exception ex) {

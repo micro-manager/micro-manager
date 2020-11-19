@@ -101,7 +101,7 @@ public final class LiveButton extends WidgetPlugin implements SciJavaPlugin {
       result.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            studio_.live().setLiveMode(!studio_.live().isLiveModeOn());
+            studio_.live().setLiveModeOn(!studio_.live().isLiveModeOn());
          }
       });
       result.setFont(GUIUtils.buttonFont);
