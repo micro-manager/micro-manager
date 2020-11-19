@@ -416,7 +416,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
 
       // Profile may have been switched in Intro Dialog, so reflect its setting
-      core_.enableDebugLog(OptionsDlg.getIsDebugLogEnabled(studio_));
+      core_.enableDebugLog(OptionsDlg.isDebugLoggingEnabled(studio_));
 
       IJVersionCheckDlg.execute(studio_);
 
@@ -510,7 +510,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    private void initializeLogging(CMMCore core) {
       core.enableStderrLog(true);
-      core.enableDebugLog(OptionsDlg.getIsDebugLogEnabled(studio_));
+      core.enableDebugLog(OptionsDlg.isDebugLoggingEnabled(studio_));
       ReportingUtils.setCore(core);
 
       // Set up logging to CoreLog file
@@ -533,7 +533,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // Although our general rule is to perform identical logging regardless
       // of the current log level, we make an exception for UIMonitor, which we
       // enable only when debug logging is turned on (from the GUI).
-      UIMonitor.enable(OptionsDlg.getIsDebugLogEnabled(studio_));
+      UIMonitor.enable(OptionsDlg.isDebugLoggingEnabled(studio_));
    }
   
    public void showPipelineFrame() {
