@@ -26,19 +26,19 @@ package org.micromanager.events.internal;
  * API; it's only intended for internal use.
  */
 public final class InternalShutdownCommencingEvent {
-   private boolean isCancelled_ = false;
+   private boolean isCanceled_ = false;
 
    /**
     * Cancel shutdown.
     */
    public void cancelShutdown() {
-      isCancelled_ = true;
+      isCanceled_ = true;
    }
 
    /**
-    * Return whether or not shutdown has been cancelled.
+    * Return whether or not shutdown has been canceled.
     */
-   public boolean getIsCancelled() {
-      return isCancelled_;
+   public boolean isCanceled() {
+      return isCanceled_;
    }
 }

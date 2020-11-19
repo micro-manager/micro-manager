@@ -160,7 +160,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    @Subscribe
    public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
       // If shutdown is already cancelled, don't do anything.
-      if (!event.getIsCancelled() && !closeAllDisplayWindows(true)) {
+      if (!event.isCanceled() && !closeAllDisplayWindows(true)) {
          event.cancelShutdown();
       }
    }

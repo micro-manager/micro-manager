@@ -65,7 +65,7 @@ public final class MMPositionListDlg extends PositionListDlg {
     
     @Subscribe
    public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
-      if (!event.getIsCancelled()) {
+      if (!event.isCanceled()) {
          saveDims();
          dispose();
       }

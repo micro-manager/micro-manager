@@ -43,9 +43,6 @@ import java.util.HashSet;
 import javax.swing.BorderFactory;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.ImageIcon;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -55,12 +52,7 @@ import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+
 import net.miginfocom.swing.MigLayout;
 import mmcorej.org.json.JSONArray;
 import mmcorej.org.json.JSONException;
@@ -71,7 +63,6 @@ import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.quickaccess.QuickAccessPlugin;
 import org.micromanager.quickaccess.WidgetPlugin;
-import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 
 /**
  * This class shows the Quick Access Window for frequently-used controls.
@@ -862,7 +853,7 @@ public final class QuickAccessFrame extends JFrame {
 
    @Subscribe
    public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
-      if (!event.getIsCancelled()) {
+      if (!event.isCanceled()) {
          dispose();
       }
    }

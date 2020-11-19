@@ -802,7 +802,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    @Subscribe
    public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
-      if (!event.getIsCancelled() && isAcquisitionRunning()) {
+      if (!event.isCanceled() && isAcquisitionRunning()) {
          int result = JOptionPane.showConfirmDialog(null,
                "Acquisition in progress. Are you sure you want to exit and discard all data?",
                "Micro-Manager", JOptionPane.YES_NO_OPTION,
