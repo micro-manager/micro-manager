@@ -59,19 +59,19 @@ public final class ConfiguratorWrapper {
       return name_;
    }
 
-   public boolean getIsEnabled() {
+   public boolean isEnabled() {
       return isEnabled_;
    }
 
-   public boolean getIsEnabledInLive() {
+   public boolean isEnabledInLive() {
       return isEnabledInLive_;
    }
 
-   public void setIsEnabled(boolean isEnabled) {
+   public void setEnabled(boolean isEnabled) {
       isEnabled_ = isEnabled;
    }
 
-   public void setIsEnabledInLive(boolean isEnabled) {
+   public void setEnabledInLive(boolean isEnabled) {
       isEnabledInLive_ = isEnabled;
    }
 
@@ -112,13 +112,13 @@ public final class ConfiguratorWrapper {
          ProcessorConfigurator configurator = plugin.createConfigurator(settings);
          ConfiguratorWrapper result = new ConfiguratorWrapper(plugin,
                configurator, json.getString("name"));
-         result.setIsEnabled(json.getBoolean("isEnabled"));
+         result.setEnabled(json.getBoolean("isEnabled"));
          // This flag was added later.
          if (json.has("isEnabledInLive")) {
-            result.setIsEnabledInLive(json.getBoolean("isEnabledInLive"));
+            result.setEnabledInLive(json.getBoolean("isEnabledInLive"));
          }
          else {
-            result.setIsEnabledInLive(result.getIsEnabled());
+            result.setEnabledInLive(result.isEnabled());
          }
          return result;
       }
