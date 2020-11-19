@@ -1781,7 +1781,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             return false;
         }
 
-        boolean liveModeOriginally = gui_.live().getIsLiveModeOn();
+        boolean liveModeOriginally = gui_.live().isLiveModeOn();
 
         if (liveModeOriginally) {
             gui_.live().setLiveMode(false);

@@ -103,7 +103,7 @@ public final class SnapButton extends WidgetPlugin implements SciJavaPlugin {
             studio_.live().snap(true);
          }
       });
-      result.setEnabled(!studio_.live().getIsLiveModeOn());
+      result.setEnabled(!studio_.live().isLiveModeOn());
       // This is a little convoluted: we need to change the snap button's
       // state depending on if live mode is active or not, which requires an
       // event subscription. We need to clean up that subscription when the

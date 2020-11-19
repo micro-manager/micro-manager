@@ -447,7 +447,7 @@ public final class SnapLiveManager extends DataViewerListener
    }
 
    @Override
-   public boolean getIsLiveModeOn() {
+   public boolean isLiveModeOn() {
       return isLiveOn_;
    }
 

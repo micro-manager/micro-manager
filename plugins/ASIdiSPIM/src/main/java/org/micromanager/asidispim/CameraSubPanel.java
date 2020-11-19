@@ -153,12 +153,12 @@ public final class CameraSubPanel extends ListeningJPanel  {
       toggleButtonLive_.setMargin(new Insets(2, 15, 2, 15));
       toggleButtonLive_.setIconTextGap(6);
       toggleButtonLive_.setToolTipText("Continuous live view");
-      setLiveButtonAppearance(gui_.live().getIsLiveModeOn());
+      setLiveButtonAppearance(gui_.live().isLiveModeOn());
       toggleButtonLive_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            setLiveButtonAppearance(!gui_.live().getIsLiveModeOn());
-            gui_.live().setLiveMode(!gui_.live().getIsLiveModeOn());
+            setLiveButtonAppearance(!gui_.live().isLiveModeOn());
+            gui_.live().setLiveMode(!gui_.live().isLiveModeOn());
          }
       });
       super.add(toggleButtonLive_, "center, width " + columnWidth + "px, span 2");
