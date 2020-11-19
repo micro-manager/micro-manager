@@ -104,8 +104,7 @@ public class AssembleDataForm extends JDialog {
       super.setLayout(new MigLayout("flowx, fill, insets 8"));
       super.setTitle(AssembleData.MENUNAME);
 
-      super.setLocation(100, 100);
-      super.setSize(449, 327);
+      setBounds(100, 100, 449, 327);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       
       JRadioButton chooseDir = new JRadioButton("Choose Directory");

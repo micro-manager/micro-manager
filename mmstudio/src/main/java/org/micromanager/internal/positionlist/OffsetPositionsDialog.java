@@ -60,8 +60,7 @@ class OffsetPositionsDialog extends JDialog {
       int parentCenterX = (int) (parent.getX() + 0.5 * parent.getWidth());
       int parentCenterY = (int) (parent.getY() + 0.5 * parent.getHeight());
 
-      this.setLocation(parentCenterX - 160,parentCenterY - 150);
-      this.setSize(320, 300);
+      setBounds(parentCenterX - 160,parentCenterY - 150, 320, 300);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       
       setTitle("Add offset to stage positions");

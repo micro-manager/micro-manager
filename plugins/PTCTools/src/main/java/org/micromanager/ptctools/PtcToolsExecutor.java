@@ -251,12 +251,6 @@ public class PtcToolsExecutor extends Thread  {
       final JFrame dialog = new JFrame();
       dialog.setBounds(settings_.getInteger(PtcToolsTerms.WINDOWX, 100), 
               settings_.getInteger(PtcToolsTerms.WINDOWY, 100), 400, 100);
-      dialog.addComponentListener(new ComponentAdapter() {
-         @Override
-         public void componentMoved(ComponentEvent e) {
-            WindowPositioning.setUpBoundsMemory(dialog, dialog.getClass(), null);
-         }
-      });
       dialog.setLayout(new MigLayout());
       dialog.setTitle("PTC Tools");
       dialog.add(new JLabel(label), "wrap");

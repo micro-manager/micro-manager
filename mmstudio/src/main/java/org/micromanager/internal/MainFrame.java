@@ -162,7 +162,8 @@ public final class MainFrame extends JFrame {
       // pack().
       super.pack();
       super.setMinimumSize(super.getSize());
-      resetPosition();
+      setBounds(100, 100, 644, 220);
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       mmStudio_.events().registerForEvents(this);
    }
 
@@ -188,13 +189,6 @@ public final class MainFrame extends JFrame {
             mmStudio_.closeSequence(false);
          }
       });
-   }
-
-   public void resetPosition() {
-      // put frame back where it was last time if possible
-      super.setLocation(100, 100);
-      super.setSize(644, 220);
-      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
    }
 
    public void initializeConfigPad() {
@@ -777,7 +771,6 @@ public final class MainFrame extends JFrame {
     * Save our settings to the user profile.
     */
    public void savePrefs() {
-      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       mmStudio_.profile().getSettings(MainFrame.class).putString(
             MAIN_EXPOSURE, textFieldExp_.getText());
    }

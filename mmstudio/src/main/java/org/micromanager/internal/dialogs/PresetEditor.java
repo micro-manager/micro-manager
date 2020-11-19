@@ -52,9 +52,8 @@ public final class PresetEditor extends ConfigDialog {
       data_.setColumnNames("Property Name","Preset Value","");
       data_.setShowReadOnly(true);
       initialize();
-      super.setLocation(100, 100);
-      super.setSize(420, 300);
-      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
+      setBounds(100, 100, 420, 300);
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       super.setMinimumSize(new Dimension(400, 250));
    }
 

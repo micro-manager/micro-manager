@@ -57,9 +57,8 @@ public final class GroupEditor extends ConfigDialog {
       initializeData();
       data_.setColumnNames("Property Name", "Use in Group?", "Current Property Value");
       initialize();
-      super.setLocation(100, 100);
-      super.setSize(550, 600);
-      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
+      setBounds(100, 100, 550, 600);
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       super.setMinimumSize(new Dimension(520, 400));
    }
 

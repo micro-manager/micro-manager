@@ -46,8 +46,8 @@ public final class DeviceSetupDlg extends JDialog {
    public DeviceSetupDlg(MicroscopeModel mod, Studio studio, Device d) {
       super();
       setModal(true);
-      super.setLocation(100, 100);
-      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
+      setLocation(100, 100);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       model_ = mod;
       core_ = studio.core();
       studio_ = studio;
@@ -154,13 +154,11 @@ public final class DeviceSetupDlg extends JDialog {
    }
 
    protected void onCancel() {
-      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       dispose();
    }
 
    protected void onOK() {
       propTable_.editingStopped(null);
-      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       String oldName = device_.getName();
       String newName = devName_.getText();
 

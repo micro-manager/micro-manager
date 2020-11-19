@@ -250,12 +250,10 @@ public final class PeripheralSetupDlg extends JDialog {
 //      } finally {
 //         dispose();
 //      }
-      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       dispose();
    }
    
    public void onCancel() {
-      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       dispose();
    }
 

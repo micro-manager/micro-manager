@@ -220,8 +220,7 @@ public class TrackerControl extends JFrame {
       setResizable(false);
       getContentPane().setLayout(null);
 
-      super.setLocation(100, 100);
-      super.setSize(412, 346);
+      setBounds(100, 100, 412, 346);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
       final JLabel intervalmsLabel = new JLabel();

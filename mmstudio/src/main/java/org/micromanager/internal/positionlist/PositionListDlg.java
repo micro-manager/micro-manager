@@ -124,8 +124,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       setLayout(new MigLayout("flowy, filly, insets 8", "[grow][]", 
               "[top]"));
       setMinimumSize(new Dimension(275, 365));
-      super.setLocation(100, 100);
-      super.setSize(362, 595);
+      setBounds(100, 100, 362, 595);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
       arialSmallFont_ = new Font("Arial", Font.PLAIN, 10);

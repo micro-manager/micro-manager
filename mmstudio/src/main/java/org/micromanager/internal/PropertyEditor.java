@@ -79,8 +79,7 @@ public final class PropertyEditor extends JFrame {
       createTable();
       createComponents();
 
-      super.setLocation(100, 100);
-      super.setSize(550, 600);
+      setBounds(100, 100, 550, 600);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       setMinimumSize(new Dimension(420, 400));
    }
@@ -122,9 +121,6 @@ public final class PropertyEditor extends JFrame {
       });
       setTitle("Device Property Browser");
 
-      super.setLocation(100, 100);
-      super.setSize(550, 600);
-      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
       
       final JButton refreshButton = new JButton("Refresh",

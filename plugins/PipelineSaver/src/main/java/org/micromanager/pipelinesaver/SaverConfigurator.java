@@ -97,8 +97,8 @@ public class SaverConfigurator extends JFrame implements ProcessorConfigurator {
       super.add(panel);
       updateControls();
 
-      super.setLocation(300, 300);
-      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
+      setLocation(300, 300);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
    }
 
    private void updateControls() {

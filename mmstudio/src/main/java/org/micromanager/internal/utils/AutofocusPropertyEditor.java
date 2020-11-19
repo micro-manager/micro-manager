@@ -107,8 +107,7 @@ public final class AutofocusPropertyEditor extends JDialog {
       });
       setTitle("Autofocus properties");
 
-      super.setLocation(100, 100);
-      super.setSize(400, 300);
+      setBounds(100, 100, 400, 300);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
       scrollPane_ = new JScrollPane();

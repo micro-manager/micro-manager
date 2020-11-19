@@ -91,12 +91,27 @@ public final class CalibrationEditor extends JDialog {
       
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
-
+      addWindowListener(new WindowAdapter() {
+         @Override
+         public void windowClosing(WindowEvent e) {
+            flags_.save(CalibrationEditor.class);
+         }
+         @Override
+         public void windowOpened(WindowEvent e) {
+            // restore values from the previous session
+            data_.updateFlags();
+            data_.updateStatus();
+            data_.showOriginalSelection();
+         }
+         @Override
+         public void windowClosed(WindowEvent arg0) {
+            flags_.save(CalibrationEditor.class);
+         }
+      });
       setTitle("Calibration Group Editor");
 
       setMinimumSize(new Dimension(490, 280));
-      super.setLocation(100, 100);
-      super.setSize(551, 562);
+      setBounds(100, 100, 551, 562);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       // setResizable(false);
       setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);

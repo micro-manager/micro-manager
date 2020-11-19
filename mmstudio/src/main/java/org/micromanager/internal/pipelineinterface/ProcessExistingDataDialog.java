@@ -193,7 +193,7 @@ public final class ProcessExistingDataDialog extends JDialog {
 
       super.add(contents);
       super.pack();
-      super.setLocation(200, 200);
+      setLocation(200, 200);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       super.setVisible(true);
    }

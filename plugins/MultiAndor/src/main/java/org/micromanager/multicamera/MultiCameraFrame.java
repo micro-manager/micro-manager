@@ -110,8 +110,8 @@ public class MultiCameraFrame extends JFrame {
 
       initComponents();
 
-      super.setLocation(100, 100);
-      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
+      setLocation(100, 100);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
       cameraSelectComboBox.removeAllItems();
 

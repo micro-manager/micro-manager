@@ -149,8 +149,8 @@ public final class StageControlFrame extends JFrame {
 
       initComponents();
 
-      super.setLocation(FRAME_X_DEFAULT_POS, FRAME_Y_DEFAULT_POS);
-      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
+      setLocation(FRAME_X_DEFAULT_POS, FRAME_Y_DEFAULT_POS);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
    }
 
    /**

@@ -141,8 +141,7 @@ public final class HotKeysDialog extends JDialog {
     public  HotKeysDialog() {
         initComponents();
 
-        super.setLocation(100, 100);
-        super.setSize(377, 378);
+        setBounds(100, 100, 377, 378);
         WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
         readKeys();

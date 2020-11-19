@@ -126,8 +126,7 @@ public final class GraphFrame extends JFrame {
       setTitle("Graph");
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
-      super.setLocation(100, 100);
-      super.setSize(542, 298);
+      setBounds(100, 100, 542, 298);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 

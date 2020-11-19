@@ -376,8 +376,7 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       Dimension buttonSize = new Dimension(80, buttonHeight);
       int gap = 5; // determines gap between buttons
 
-      super.setLocation(100, 100);
-      super.setSize(550, 495);
+      setBounds(100, 100, 550, 495);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
       final JPanel leftPanel = new JPanel();

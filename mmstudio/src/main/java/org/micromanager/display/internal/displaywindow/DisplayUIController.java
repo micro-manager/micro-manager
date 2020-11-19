@@ -258,8 +258,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       if (!fullScreen) {
          frame = new JFrame("image display window");
          frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-         frame.setLocation(320, 320);
-         frame.setSize(480, 320);
+         frame.setBounds(320, 320, 480, 320);
          WindowPositioning.setUpBoundsMemory(frame, frame.getClass(), null);
 
          // TODO Determine initial window bounds using a CascadingWindowPositioner:

@@ -298,8 +298,6 @@ public abstract class ConfigDialog extends JDialog {
    public void dispose() {
       studio_.events().unregisterForEvents(this);
       super.dispose();
-      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
-
       studio_.app().refreshGUI();
    }
    

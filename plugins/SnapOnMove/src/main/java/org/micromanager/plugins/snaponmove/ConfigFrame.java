@@ -205,8 +205,8 @@ final class ConfigFrame extends JFrame {
       setMinimumSize(new Dimension(360, 210));
       pack();
 
-      super.setLocation(600, 200);
-      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
+      setLocation(600, 200);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
    }
 
    private void updateButtonStates() {

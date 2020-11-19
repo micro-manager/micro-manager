@@ -106,8 +106,8 @@ public final class ConfigWizard extends JDialog {
       getContentPane().setLayout(new MigLayout());
       setTitle("Hardware Configuration Wizard");
 
-      super.setLocation(50, 100);
-      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
+      setLocation(50, 100);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
       titleLabel_ = new JLabel();
       titleLabel_.setText("Title");
@@ -328,8 +328,6 @@ public final class ConfigWizard extends JDialog {
       for (int i = 0; i < pages_.length; i++) {
          pages_[i].saveSettings();
       }
-
-      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
       if (microModel_.isModified()) {
          String[] buttons = new String[] {"Save As...", "Discard", "Cancel"};

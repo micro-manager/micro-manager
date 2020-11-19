@@ -84,8 +84,8 @@ public class PointAndShootDialog extends JDialog {
       
       super.setLayout(new MigLayout());
 
-      super.setLocation(100, 100);
-      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
+      setLocation(100, 100);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       
       JLabel explanationLabel = new JLabel("Provide location of text file " +
              "containing Point and Shoot  timestamps and locations");

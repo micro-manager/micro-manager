@@ -97,7 +97,7 @@ public class FlipperConfigurator extends JFrame implements ProcessorConfigurator
          rotateComboBox_.addItem(item);
       }
       rotateComboBox_.setSelectedIndex(R_INTS.indexOf(rotation));
-      super.setLocation(frameXPos_, frameYPos_);
+      setLocation(frameXPos_, frameYPos_);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       updateCameras();
    }
