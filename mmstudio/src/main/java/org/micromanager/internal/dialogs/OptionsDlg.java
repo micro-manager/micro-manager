@@ -97,10 +97,10 @@ public final class OptionsDlg extends MMDialog {
       final JCheckBox debugLogEnabledCheckBox = new JCheckBox();
       debugLogEnabledCheckBox.setText("Enable debug logging");
       debugLogEnabledCheckBox.setToolTipText("Enable verbose logging for troubleshooting and debugging");
-      debugLogEnabledCheckBox.setSelected(getIsDebugLogEnabled(mmStudio_));
+      debugLogEnabledCheckBox.setSelected(isDebugLoggingEnabled(mmStudio_));
       debugLogEnabledCheckBox.addActionListener((final ActionEvent e) -> {
          boolean isEnabled = debugLogEnabledCheckBox.isSelected();
-         setIsDebugLogEnabled(mmStudio_, isEnabled);
+         setDebugLoggingEnabled(mmStudio_, isEnabled);
          core_.enableDebugLog(isEnabled);
          UIMonitor.enable(isEnabled);
       });
@@ -356,12 +356,12 @@ public final class OptionsDlg extends MMDialog {
       dispose();
    }
 
-   public static boolean getIsDebugLogEnabled(Studio studio) {
+   public static boolean isDebugLoggingEnabled(Studio studio) {
       return studio.profile().getSettings(OptionsDlg.class).getBoolean(
             IS_DEBUG_LOG_ENABLED, false);
    }
 
-   public static void setIsDebugLogEnabled(Studio studio, boolean isEnabled) {
+   public static void setDebugLoggingEnabled(Studio studio, boolean isEnabled) {
       studio.profile().getSettings(OptionsDlg.class).putBoolean(
             IS_DEBUG_LOG_ENABLED, isEnabled);
    }
