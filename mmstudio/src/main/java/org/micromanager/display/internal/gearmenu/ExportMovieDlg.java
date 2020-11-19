@@ -23,8 +23,7 @@
 package org.micromanager.display.internal.gearmenu;
 
 import com.bulenkov.iconloader.IconLoader;
-import ij.CompositeImage;
-import ij.ImagePlus;
+
 import java.awt.Color;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
@@ -264,7 +263,7 @@ public final class ExportMovieDlg extends MMDialog {
       JLabel help = new JLabel("<html><body>Export a series of images from your dataset. The images will be exactly as currently<br>drawn on your display, including histogram scaling, zoom, overlays, etc. Note that<br>this does not preserve the raw data, nor any metadata.</body></html>");
       contentsPanel_.add(help, "align center");
 
-      if (getIsComposite()) {
+      if (isComposite()) {
          contentsPanel_.add(new JLabel("<html><body>The \"channel\" axis is unavailable as the display is in composite mode.</body></html>"),
                "align center");
       }
@@ -488,7 +487,7 @@ public final class ExportMovieDlg extends MMDialog {
    /**
     * Returns true if the display mode is composite.
     */
-   private boolean getIsComposite() {
+   private boolean isComposite() {
       return display_.getDisplaySettings().getColorMode() ==
               DisplaySettings.ColorMode.COMPOSITE;
    }
@@ -503,7 +502,7 @@ public final class ExportMovieDlg extends MMDialog {
       for (String axis : provider_.getAxes()) {
          // Channel axis is only available when in non-composite display modes.
          if (provider_.getMaxIndices().getIndex(axis) > 0 &&
-               (!axis.equals(Coords.CHANNEL) || !getIsComposite())) {
+               (!axis.equals(Coords.CHANNEL) || !isComposite())) {
             result.add(axis);
          }
       }
