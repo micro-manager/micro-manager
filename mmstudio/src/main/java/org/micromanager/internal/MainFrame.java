@@ -678,7 +678,7 @@ public final class MainFrame extends MMFrame {
 
    @Subscribe
    public void onMouseMovesStage(MouseMovesStageStateChangeEvent event) {
-      setHandMovesButton(event.getIsEnabled());
+      setHandMovesButton(event.isEnabled());
    }
 
    private void setHandMovesButton(boolean state) {
@@ -690,7 +690,7 @@ public final class MainFrame extends MMFrame {
 
    @Subscribe
    public void onChannelExposure(ChannelExposureEvent event) {
-      if (event.getIsMainExposureTime()) {
+      if (event.isMainExposureTime()) {
          setDisplayedExposureTime(event.getNewExposureTime());
       }
    }

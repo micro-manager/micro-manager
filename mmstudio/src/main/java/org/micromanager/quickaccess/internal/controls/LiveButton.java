@@ -101,7 +101,7 @@ public final class LiveButton extends WidgetPlugin implements SciJavaPlugin {
       result.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            studio_.live().setLiveMode(!studio_.live().getIsLiveModeOn());
+            studio_.live().setLiveModeOn(!studio_.live().isLiveModeOn());
          }
       });
       result.setFont(GUIUtils.buttonFont);
@@ -112,7 +112,7 @@ public final class LiveButton extends WidgetPlugin implements SciJavaPlugin {
       HierarchyListener wrapper = new HierarchyListener() {
          @Subscribe
          public void onLiveMode(LiveModeEvent event) {
-            boolean isOn = event.getIsOn();
+            boolean isOn = event.isOn();
             result.setIcon(IconLoader.getIcon(
                   isOn ? "/org/micromanager/icons/cancel.png" :
                   "/org/micromanager/icons/camera_go.png"));
@@ -136,7 +136,7 @@ public final class LiveButton extends WidgetPlugin implements SciJavaPlugin {
             }
          }
       };
-      result.setIcon(studio_.live().getIsLiveModeOn() ?
+      result.setIcon(studio_.live().isLiveModeOn() ?
             IconLoader.getIcon("/org/micromanager/icons/cancel.png") :
             IconLoader.getIcon("/org/micromanager/icons/camera_go.png"));
       result.addHierarchyListener(wrapper);

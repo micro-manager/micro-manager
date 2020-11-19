@@ -130,7 +130,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    }
 
    @Override
-   public synchronized boolean getIsManaged(DataProvider provider) {
+   public synchronized boolean isManaged(DataProvider provider) {
       return providerToDisplays_.containsKey(provider);
    }
 
@@ -160,7 +160,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    @Subscribe
    public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
       // If shutdown is already cancelled, don't do anything.
-      if (!event.getIsCancelled() && !closeAllDisplayWindows(true)) {
+      if (!event.isCanceled() && !closeAllDisplayWindows(true)) {
          event.cancelShutdown();
       }
    }
@@ -309,7 +309,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
 
       DataProvider store = viewer.getDataProvider();
       synchronized (this) {
-         if (getIsManaged(store) && viewer instanceof DisplayWindow) {
+         if (isManaged(store) && viewer instanceof DisplayWindow) {
             DisplayWindow display = (DisplayWindow) viewer;
             providerToDisplays_.get(store).add(display);
             display.addListener(this, 100);

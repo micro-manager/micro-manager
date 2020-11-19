@@ -51,26 +51,39 @@ public interface SnapLiveManager {
    public List<Image> snap(boolean shouldDisplay);
 
    /**
-    * Indicates if live mode is currently running.
+    * Returns whether live mode is on.
+    *
+    * If live mode is on but suspended, this method returns <code>true</code>.
+    *
     * @return true iff live mode is on.
     */
-   public boolean getIsLiveModeOn();
+   boolean isLiveModeOn();
+
+   @Deprecated
+   default boolean getIsLiveModeOn() {
+      return isLiveModeOn();
+   }
 
    /**
     * Turns live mode on or off. This will post an
     * org.micromanager.events.LiveModeEvent on the global application event
     * bus.
-    * @param isOn If true, then live mode will be activated; otherwise it will
+    * @param on If true, then live mode will be activated; otherwise it will
     *        be halted.
     */
-   public void setLiveMode(boolean isOn);
+   void setLiveModeOn(boolean on);
+
+   @Deprecated
+   default void setLiveMode(boolean on) {
+      setLiveModeOn(on);
+   }
 
    /**
     * Temporarily halt live mode, or re-start it after a temporary halt. This
     * is useful for actions that cannot be performed while live mode is
     * running (such as changing many camera settings), so that live mode can
     * be re-started once the action is complete. Instead of calling
-    * getIsLiveModeOn(), stopping it if necessary, and then re-starting it if
+    * isLiveModeOn(), stopping it if necessary, and then re-starting it if
     * it was on, you can instead blindly do:
     * - setSuspended(true);
     * - do something that can't run when live mode is on;

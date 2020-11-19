@@ -26,19 +26,24 @@ package org.micromanager.events;
  * that data can be saved or other similarly-critical decisions).
  */
 public class ShutdownCommencingEvent {
-   private boolean isCancelled_ = false;
+   private boolean isCanceled_ = false;
 
    /**
     * Cancel shutdown.
     */
    public void cancelShutdown() {
-      isCancelled_ = true;
+      isCanceled_ = true;
    }
 
    /**
-    * Return whether or not shutdown has been cancelled.
+    * Return whether or not shutdown has been canceled.
     */
+   public boolean isCanceled() {
+      return isCanceled_;
+   }
+
+   @Deprecated
    public boolean getIsCancelled() {
-      return isCancelled_;
+      return isCanceled();
    }
 }

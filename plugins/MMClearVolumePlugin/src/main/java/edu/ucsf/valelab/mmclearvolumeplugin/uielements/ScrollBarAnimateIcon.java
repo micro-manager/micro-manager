@@ -79,7 +79,7 @@ public class ScrollBarAnimateIcon extends JButton {
          @Override
          public void mousePressed(MouseEvent e) {
             parent_.toggleAnimation(axis_);
-            setIsAnimated(!isAnimated_);
+            setAnimated(!isAnimated_);
          }
       });
    }
@@ -107,12 +107,12 @@ public class ScrollBarAnimateIcon extends JButton {
       g2d.drawString(label_, 20, 13);
    }
 
-   public void setIsAnimated(boolean isAnimated) {
+   public void setAnimated(boolean isAnimated) {
       isAnimated_ = isAnimated;
       curIcon_ = isAnimated_ ? PAUSE_ICON : PLAY_ICON;
    }
 
-   public boolean getIsAnimated() {
+   public boolean isAnimated() {
       return isAnimated_;
    }
 

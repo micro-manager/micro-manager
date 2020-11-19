@@ -41,7 +41,7 @@ import java.util.UUID;
 
 /**
  * This class tests that we properly transfer data between versions
- * (1.4 -> 2.0). It relies on an acquisition that was run immediately after
+ * (1.4 to 2.0). It relies on an acquisition that was run immediately after
  * startup using the 1.4.23 MDA interface with the following parameters:
  * - 64x64 DemoCamera
  * - 2 timepoints 5000ms apart

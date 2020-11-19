@@ -132,7 +132,7 @@ public final class ConfigMenu {
          return;
       }
       
-      if (mmStudio_.getIsConfigChanged()) {
+      if (mmStudio_.hasConfigChanged()) {
          Object[] options = {"Yes", "No"};
          int n = JOptionPane.showOptionDialog(null,
                  "Save Hardware Configuration?", "Micro-Manager",

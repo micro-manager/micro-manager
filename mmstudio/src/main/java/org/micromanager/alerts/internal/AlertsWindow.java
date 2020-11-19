@@ -256,7 +256,7 @@ public final class AlertsWindow extends MMFrame {
    
    @Subscribe
    public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
-      if (!event.getIsCancelled()) {
+      if (!event.isCanceled()) {
         dispose();
       }
    }

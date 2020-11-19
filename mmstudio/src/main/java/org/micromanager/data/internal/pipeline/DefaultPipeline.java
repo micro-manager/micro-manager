@@ -119,7 +119,7 @@ public final class DefaultPipeline implements Pipeline {
    }
 
    @Override
-   public boolean getIsSynchronous() {
+   public boolean isSynchronous() {
       return isSynchronous_;
    }
 

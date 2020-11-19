@@ -1781,10 +1781,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             return false;
         }
 
-        boolean liveModeOriginally = gui_.live().getIsLiveModeOn();
+        boolean liveModeOriginally = gui_.live().isLiveModeOn();
 
         if (liveModeOriginally) {
-            gui_.live().setLiveMode(false);
+            gui_.live().setLiveModeOn(false);
         }
 
         // make sure slice timings are up to date
@@ -3050,7 +3050,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
         } catch (Exception ex) {
             MyDialogUtils.showError("Could not restore camera after acquisition");
         }
-        gui_.live().setLiveMode(liveModeOriginally);
+        gui_.live().setLiveModeOn(liveModeOriginally);
 
         if (nonfatalError) {
             MyDialogUtils.showError("Missed some images during acquisition, see core log for details");

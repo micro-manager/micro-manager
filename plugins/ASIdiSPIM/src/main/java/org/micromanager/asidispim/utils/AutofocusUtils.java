@@ -313,9 +313,9 @@ public class AutofocusUtils {
             boolean focusSuccess = false; 
 
             try {
-               liveModeOriginally = gui_.live().getIsLiveModeOn();
+               liveModeOriginally = gui_.live().isLiveModeOn();
                if (liveModeOriginally) {
-                  gui_.live().setLiveMode(false);
+                  gui_.live().setLiveModeOn(false);
                   gui_.core().waitForDevice(originalCamera);
                }
                
@@ -587,7 +587,7 @@ public class AutofocusUtils {
                   if (liveModeOriginally) {
                      gui_.core().waitForDevice(camera);
                      gui_.core().waitForDevice(originalCamera);
-                     gui_.live().setLiveMode(true);
+                     gui_.live().setLiveModeOn(true);
                   }
 
                } catch (Exception ex) {

@@ -35,8 +35,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.function.Function;
@@ -418,7 +416,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
 
       // Profile may have been switched in Intro Dialog, so reflect its setting
-      core_.enableDebugLog(OptionsDlg.getIsDebugLogEnabled(studio_));
+      core_.enableDebugLog(OptionsDlg.isDebugLoggingEnabled(studio_));
 
       IJVersionCheckDlg.execute(studio_);
 
@@ -512,7 +510,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    private void initializeLogging(CMMCore core) {
       core.enableStderrLog(true);
-      core.enableDebugLog(OptionsDlg.getIsDebugLogEnabled(studio_));
+      core.enableDebugLog(OptionsDlg.isDebugLoggingEnabled(studio_));
       ReportingUtils.setCore(core);
 
       // Set up logging to CoreLog file
@@ -535,7 +533,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // Although our general rule is to perform identical logging regardless
       // of the current log level, we make an exception for UIMonitor, which we
       // enable only when debug logging is turned on (from the GUI).
-      UIMonitor.enable(OptionsDlg.getIsDebugLogEnabled(studio_));
+      UIMonitor.enable(OptionsDlg.isDebugLoggingEnabled(studio_));
    }
   
    public void showPipelineFrame() {
@@ -547,7 +545,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    }
 
    private void handleError(String message) {
-      live().setLiveMode(false);
+      live().setLiveModeOn(false);
       JOptionPane.showMessageDialog(frame_, message);
       core_.logMessage(message);
    }
@@ -987,7 +985,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       events().post(new MouseMovesStageStateChangeEvent(isEnabled));
    }
 
-   public boolean getIsClickToMoveEnabled() {
+   public boolean isClickToMoveEnabled() {
       return isClickToMoveEnabled_;
    }
    
@@ -1244,7 +1242,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    }
 
    public synchronized boolean closeSequence(boolean quitInitiatedByImageJ) {
-      if (!getIsProgramRunning()) {
+      if (!isProgramRunning()) {
          if (core_ != null) {
             core_.logMessage("MMStudio::closeSequence called while isProgramRunning_ is false");
          }
@@ -1254,13 +1252,13 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // one that's accessible in the API.
       InternalShutdownCommencingEvent internalEvent = new InternalShutdownCommencingEvent();
       events().post(internalEvent);
-      if (internalEvent.getIsCancelled()) {
+      if (internalEvent.isCanceled()) {
          // Shutdown cancelled by user.
          return false;
       }
       ShutdownCommencingEvent externalEvent = new ShutdownCommencingEvent();
       events().post(externalEvent);
-      if (externalEvent.getIsCancelled()) {
+      if (externalEvent.isCanceled()) {
          // Shutdown cancelled by user.
          return false;
       }
@@ -1320,7 +1318,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       return true;
    }
 
-   public boolean getIsProgramRunning() {
+   public boolean isProgramRunning() {
       return isProgramRunning_;
    }
 
@@ -1504,7 +1502,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       frame_.setConfigSaveButtonStatus(configChanged_);
    }
 
-   public boolean getIsConfigChanged() {
+   public boolean hasConfigChanged() {
       return configChanged_;
    }
 

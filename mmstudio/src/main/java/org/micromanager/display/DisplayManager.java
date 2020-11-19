@@ -279,10 +279,15 @@ public interface DisplayManager extends EventPublisher {
 
    /**
     * Returns true if the DataProvider is being managed by MicroManager.
-    * @param store The DataProvider whose management status is under question.
+    * @param provider The DataProvider whose management status is under question.
     * @return Whether or not Micro-Manager is managing the DataProvider.
     */
-   boolean getIsManaged(DataProvider store);
+   boolean isManaged(DataProvider provider);
+
+   @Deprecated
+   default boolean getIsManaged(DataProvider provider) {
+      return isManaged(provider);
+   }
 
    /**
     * Return all associated DisplayWindows for the Datastore. Returns null if

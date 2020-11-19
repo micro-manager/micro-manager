@@ -100,7 +100,12 @@ public interface Pipeline {
     * modes. See DataManager.createPipeline() for more information.
     * @return True if the Pipeline is synchronous, False otherwise.
     */
-   public boolean getIsSynchronous();
+   boolean isSynchronous();
+
+   @Deprecated
+   default boolean getIsSynchronous() {
+      return isSynchronous();
+   }
 
    /**
     * Halt image processing, so that the Pipeline will not produce any more
