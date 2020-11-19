@@ -536,7 +536,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
             return false;
          }
          // All arrays have same contents or are both null.
-         return (isVisible_ != alt.getIsVisible());
+         return (isVisible_ != alt.isVisible());
       }
 
       @Override
@@ -624,8 +624,8 @@ public final class DefaultDisplaySettings implements DisplaySettings {
             }
             channelBuilder.component(j, componentBuilder.build());
          }
-         if (legacySettings.getIsVisible() != null) {
-            channelBuilder.visible(legacySettings.getIsVisible());
+         if (legacySettings.isVisible() != null) {
+            channelBuilder.visible(legacySettings.isVisible());
          }
          channel(channelIndex, channelBuilder.build());
          return this;
