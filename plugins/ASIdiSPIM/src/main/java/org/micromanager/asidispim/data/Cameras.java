@@ -168,7 +168,7 @@ public class Cameras {
       String mmDevice = devices_.getMMDevice(key);
       if (mmDevice != null) {
          try {
-            final boolean liveEnabled = gui_.live().getIsLiveModeOn();
+            final boolean liveEnabled = gui_.live().isLiveModeOn();
             if (liveEnabled) {
                gui_.live().setLiveMode(false);
             }
@@ -790,7 +790,7 @@ public class Cameras {
     */
    public void setCameraROI(Devices.Keys camKey, Rectangle roi) {
       try {
-         final boolean liveEnabled = gui_.live().getIsLiveModeOn();
+         final boolean liveEnabled = gui_.live().isLiveModeOn();
          if (liveEnabled) {
             gui_.live().setLiveMode(false);
          }

@@ -67,7 +67,7 @@ public class FrameCombiner extends Processor {
          return;
       }
       // when live mode is on and user selected to do z proejct => do nothing
-      if (studio_.live().getIsLiveModeOn()
+      if (studio_.live().isLiveModeOn()
               && processorDimension_.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_Z)) {
          context.outputImage(image);
          return;
@@ -96,7 +96,7 @@ public class FrameCombiner extends Processor {
 
          // Check whether this combinations of coords are allowed to be processed
          boolean processCombinations = true;
-         if (channelsToAvoid_.contains(coords.getChannel()) && !studio_.live().getIsLiveModeOn()) {
+         if (channelsToAvoid_.contains(coords.getChannel()) && !studio_.live().isLiveModeOn()) {
             processCombinations = false;
          }
 

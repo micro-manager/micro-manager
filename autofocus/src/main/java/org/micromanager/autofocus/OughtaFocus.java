@@ -189,7 +189,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
       applySettings();
       Rectangle oldROI = studio_.core().getROI();
       CMMCore core = studio_.getCMMCore();
-      liveModeOn_ = studio_.live().getIsLiveModeOn();
+      liveModeOn_ = studio_.live().isLiveModeOn();
 
       //ReportingUtils.logMessage("Original ROI: " + oldROI);
       int w = (int) (oldROI.width * cropFactor);

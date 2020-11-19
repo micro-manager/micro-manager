@@ -564,14 +564,14 @@
      (when (and gui
                 (< 1000 delta)
                 (@state :live-mode-on)
-                (not (.getIsLiveModeOn (.live gui))))
+                (not (.isLiveModeOn (.live gui))))
       (.setLiveMode (.live gui) true))
     (when (pos? delta)
       (interruptible-sleep delta))
     (await-resume)
     (when gui
-      (swap! state assoc :live-mode-on (.getIsLiveModeOn (.live gui)))
-      (when (.getIsLiveModeOn (.live gui))
+      (swap! state assoc :live-mode-on (.isLiveModeOn (.live gui)))
+      (when (.isLiveModeOn (.live gui))
         (.setLiveMode (.live gui) false)))
     (let [now (jvm-time-ms)
           wake-time (if (> now (+ target-time 10)) now target-time)]

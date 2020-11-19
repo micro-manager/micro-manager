@@ -460,7 +460,7 @@ public class ProjectorControlForm extends MMFrame {
               dme.getEvent().isShiftDown() && 
               dme.getEvent().getButton() == 1) {
          // System.out.println("" + dme.getEvent().getID()+ " " + dme.getEvent().paramString());
-         if (studio_.acquisitions().isAcquisitionRunning() || studio_.live().getIsLiveModeOn()) {
+         if (studio_.acquisitions().isAcquisitionRunning() || studio_.live().isLiveModeOn()) {
             Point2D p2D = dme.getCenterLocation();
             addPointToPointAndShootQueue(p2D);
          }
