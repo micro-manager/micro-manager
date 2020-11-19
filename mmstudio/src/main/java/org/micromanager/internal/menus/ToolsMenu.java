@@ -181,10 +181,10 @@ public final class ToolsMenu {
 
    @Subscribe
    public void onMouseMovesStage(MouseMovesStageStateChangeEvent event) {
-      String icon = event.getIsEnabled() ? "move_hand_on.png" : "move_hand.png";
+      String icon = event.isEnabled() ? "move_hand_on.png" : "move_hand.png";
       centerAndDragMenuItem_.setIcon(IconLoader.getIcon(
               "/org/micromanager/icons/" + icon));
-      centerAndDragMenuItem_.setSelected(event.getIsEnabled());
+      centerAndDragMenuItem_.setSelected(event.isEnabled());
    }
 
    public boolean getMouseMovesStage() {

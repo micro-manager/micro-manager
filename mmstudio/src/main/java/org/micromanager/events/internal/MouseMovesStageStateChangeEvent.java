@@ -11,7 +11,7 @@ public final class MouseMovesStageStateChangeEvent {
       isEnabled_ = isEnabled;
    }
 
-   public boolean getIsEnabled() {
+   public boolean isEnabled() {
       return isEnabled_;
    }
 }

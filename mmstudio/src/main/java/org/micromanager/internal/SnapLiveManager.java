@@ -523,7 +523,7 @@ public final class SnapLiveManager extends DataViewerListener
    @Subscribe
    public void onMouseMovesStageStateChange(MouseMovesStageStateChangeEvent e) {
       if (display_ != null) {
-         if (e.getIsEnabled()) {
+         if (e.isEnabled()) {
             uiMovesStageManager_.activate(display_);
          } else {
             uiMovesStageManager_.deActivate(display_);
