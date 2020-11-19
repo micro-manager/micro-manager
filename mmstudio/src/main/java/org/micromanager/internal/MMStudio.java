@@ -1242,7 +1242,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    }
 
    public synchronized boolean closeSequence(boolean quitInitiatedByImageJ) {
-      if (!getIsProgramRunning()) {
+      if (!isProgramRunning()) {
          if (core_ != null) {
             core_.logMessage("MMStudio::closeSequence called while isProgramRunning_ is false");
          }
@@ -1318,7 +1318,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       return true;
    }
 
-   public boolean getIsProgramRunning() {
+   public boolean isProgramRunning() {
       return isProgramRunning_;
    }
 
