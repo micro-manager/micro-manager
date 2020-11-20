@@ -390,8 +390,10 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
     }
 
    @Subscribe
-   public void closeRequested( ShutdownCommencingEvent sce){
-      this.dispose();
+   public void closeRequested(ShutdownCommencingEvent sce) {
+      if (!sce.isCanceled()) {
+         dispose();
+      }
    }
 
    @Subscribe

@@ -390,6 +390,10 @@ public final class TileCreatorDlg extends MMDialog {
    
    @Subscribe
    public void shuttingDown(ShutdownCommencingEvent se) {
+      if (se.isCanceled()) {
+         return;
+      }
+
       studio_.profile().getSettings(TileCreatorDlg.class).putString(
                  OVERLAP_PREF, overlapField_.getText());
       dispose();

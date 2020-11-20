@@ -386,8 +386,10 @@ public class DataCollectionForm extends JFrame {
    }
    
    @Subscribe
-   public void closeRequested( ShutdownCommencingEvent sce){
-      formWindowClosing(null);
+   public void closeRequested(ShutdownCommencingEvent sce) {
+      if (!sce.isCanceled()) {
+         formWindowClosing(null);
+      }
    }
 
    

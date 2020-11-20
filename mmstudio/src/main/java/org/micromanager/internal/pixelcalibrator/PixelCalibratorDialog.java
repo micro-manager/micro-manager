@@ -210,7 +210,9 @@ public class PixelCalibratorDialog extends MMFrame {
     */
    @Subscribe
    public void onShutdownCommencing(ShutdownCommencingEvent event) {
-      this.dispose();
+      if (!event.isCanceled()) {
+         dispose();
+      }
    }
 
    
