@@ -185,7 +185,9 @@ public final class PropertyEditor extends MMFrame {
     */
    @Subscribe
    public void onShutdownCommencing(ShutdownCommencingEvent event) {
-      flags_.save(PropertyEditor.class);
+      if (!event.isCanceled()) {
+         flags_.save(PropertyEditor.class);
+      }
    }
 
     public final class PropertyEditorTableData extends PropertyTableData {

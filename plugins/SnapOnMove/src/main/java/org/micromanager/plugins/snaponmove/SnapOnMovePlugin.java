@@ -80,6 +80,10 @@ public class SnapOnMovePlugin implements SciJavaPlugin, MenuPlugin {
 
    @Subscribe
    public void onShutdown(ShutdownCommencingEvent e) {
+      if (e.isCanceled()) {
+         return;
+      }
+
       frame_.dispose();
       frame_ = null;
 

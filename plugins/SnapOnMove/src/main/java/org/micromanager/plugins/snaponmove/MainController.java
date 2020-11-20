@@ -446,7 +446,9 @@ class MainController {
 
    @Subscribe
    public void onShutdownCommencing(ShutdownCommencingEvent e) {
-      setEnabled(false);
+      if (!e.isCanceled()) {
+         setEnabled(false);
+      }
    }
 
    CMMCore getCore() {
