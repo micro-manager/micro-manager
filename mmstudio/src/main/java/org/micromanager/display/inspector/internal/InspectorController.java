@@ -212,8 +212,10 @@ public final class InspectorController
    }
    
    @Subscribe
-   public void closeRequested( ShutdownCommencingEvent sce) {
-      close();
+   public void closeRequested(ShutdownCommencingEvent sce) {
+      if (!sce.isCanceled()) {
+         close();
+      }
    }
 
    public void setVisible(boolean visible) {

@@ -380,7 +380,9 @@ public final class CalibrationListDlg extends MMDialog {
     */
    @Subscribe
    public void onShutdownCommencing(ShutdownCommencingEvent event) {
-      this.dispose();
+      if (!event.isCanceled()) {
+         dispose();
+      }
    }
 
    public void removeCalibration() {

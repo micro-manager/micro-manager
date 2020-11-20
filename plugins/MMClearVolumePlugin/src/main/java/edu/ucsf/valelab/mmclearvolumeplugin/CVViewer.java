@@ -773,7 +773,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
      
    @Subscribe
    public void onShutdownCommencing(ShutdownCommencingEvent sce) {
-      if (cvFrame_ != null) {
+      if (!sce.isCanceled() && cvFrame_ != null) {
          cleanup();
       }
    }

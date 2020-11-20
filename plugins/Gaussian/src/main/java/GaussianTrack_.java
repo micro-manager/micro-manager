@@ -84,8 +84,9 @@ public class GaussianTrack_ implements PlugIn, MenuPlugin, SciJavaPlugin {
    }
    
    @Subscribe
-   public void closeRequested( ShutdownCommencingEvent sce){
-      dispose();
+   public void closeRequested(ShutdownCommencingEvent sce) {
+      if (!sce.isCanceled()) {
+         dispose();
+      }
    }
-
 }

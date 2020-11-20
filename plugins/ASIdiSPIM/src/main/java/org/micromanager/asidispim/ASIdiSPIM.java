@@ -28,6 +28,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 
+import com.google.common.eventbus.Subscribe;
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
@@ -117,9 +118,10 @@ public class ASIdiSPIM implements MenuPlugin, SciJavaPlugin {
    public String getHelpText() {
       return TOOLTIPDESCRIPTION;
    }
-   
-   public void closeRequested( ShutdownCommencingEvent sce){
-      if (myFrame_ != null) {
+
+   @Subscribe
+   public void closeRequested(ShutdownCommencingEvent sce) {
+      if (!sce.isCanceled() && myFrame_ != null) {
          myFrame_.dispose();
       }
    }

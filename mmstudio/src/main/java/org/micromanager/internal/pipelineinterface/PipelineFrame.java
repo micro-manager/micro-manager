@@ -244,7 +244,9 @@ final public class PipelineFrame extends MMFrame
     */
    @Subscribe
    public void onShutdownCommencing(ShutdownCommencingEvent event) {
-      getTableModel().savePipelineToProfile(studio_);
+      if (!event.isCanceled()) {
+         getTableModel().savePipelineToProfile(studio_);
+      }
    }
 
    /**

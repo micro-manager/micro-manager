@@ -240,7 +240,9 @@ public class ProjectorControlForm extends MMFrame {
 
          @Subscribe
          public void onShutdownStarting(ShutdownCommencingEvent sce) {
-            dispose();
+            if (!sce.isCanceled()) {
+               dispose();
+            }
          }
 
          @Subscribe
