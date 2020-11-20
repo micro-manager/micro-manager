@@ -41,6 +41,8 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * ImageJ plugin wrapper for Micro-Manager.
+ *
+ * Note: This class is <i>not</i> part of the MMStudio API.
  */
 public class MMStudioPlugin implements PlugIn, CommandListener {
    volatile static MMStudio studio_;
