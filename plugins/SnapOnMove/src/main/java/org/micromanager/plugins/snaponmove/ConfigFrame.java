@@ -205,7 +205,7 @@ final class ConfigFrame extends JFrame {
       setMinimumSize(new Dimension(360, 210));
       pack();
 
-      setLocation(600, 200);
+      super.setLocation(600, 200);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
    }
 

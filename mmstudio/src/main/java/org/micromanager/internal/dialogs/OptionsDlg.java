@@ -75,7 +75,7 @@ public final class OptionsDlg extends JDialog {
       super.setAlwaysOnTop(true);
       super.setTitle("Micro-Manager Options");
 
-      setLocation(100, 100);
+      super.setLocation(100, 100);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
       super.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);

@@ -141,7 +141,7 @@ public final class PeripheralSetupDlg extends JDialog {
    public PeripheralSetupDlg(MicroscopeModel mod, CMMCore c, String hub, Vector<Device> per) {
       super();
       setTitle("Peripheral Devices Setup");
-      setBounds(100, 100, 479, 353);
+      super.setBounds(100, 100, 479, 353);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       //setModalityType(ModalityType.APPLICATION_MODAL);
       setModal(true);

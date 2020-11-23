@@ -46,7 +46,7 @@ public final class DeviceSetupDlg extends JDialog {
    public DeviceSetupDlg(MicroscopeModel mod, Studio studio, Device d) {
       super();
       setModal(true);
-      setLocation(100, 100);
+      super.setLocation(100, 100);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       model_ = mod;
       core_ = studio.core();

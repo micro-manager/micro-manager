@@ -111,7 +111,7 @@ public class MultiChannelShadingMigForm extends JDialog implements ProcessorConf
       super.setLayout(new MigLayout("flowx, fill, insets 8"));
       super.setTitle(MultiChannelShading.MENUNAME);
 
-      setBounds(100, 100, 375, 375);
+      super.setBounds(100, 100, 375, 375);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
       super.add(new JLabel("Uncheck and Recheck Use checkboxes in Pipeline after changing settings"),

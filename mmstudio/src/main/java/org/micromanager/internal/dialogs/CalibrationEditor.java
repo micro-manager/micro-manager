@@ -111,7 +111,7 @@ public final class CalibrationEditor extends JDialog {
       setTitle("Calibration Group Editor");
 
       setMinimumSize(new Dimension(490, 280));
-      setBounds(100, 100, 551, 562);
+      super.setBounds(100, 100, 551, 562);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       // setResizable(false);
       setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);

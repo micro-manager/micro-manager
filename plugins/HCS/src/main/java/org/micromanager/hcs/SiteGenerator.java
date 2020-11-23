@@ -200,7 +200,7 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
       super.setTitle("HCS Site Generator " + HCSPlugin.VERSION_INFO);
 
-      setBounds(100, 100, 1000, 640);
+      super.setBounds(100, 100, 1000, 640);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
       platePanel_ = new PlatePanel(plate_, null, this, app);

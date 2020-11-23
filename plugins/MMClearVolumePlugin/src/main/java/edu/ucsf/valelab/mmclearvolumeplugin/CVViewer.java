@@ -121,7 +121,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    private class CVFrame extends JFrame {
       public CVFrame() {
          super();
-         setLocation(100, 100);
+         super.setLocation(100, 100);
          WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       }
    }

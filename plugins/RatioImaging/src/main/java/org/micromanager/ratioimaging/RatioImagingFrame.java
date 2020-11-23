@@ -153,7 +153,7 @@ public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
       
       super.pack();
 
-      setLocation(DEFAULT_WIN_X, DEFAULT_WIN_Y);
+      super.setLocation(DEFAULT_WIN_X, DEFAULT_WIN_Y);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       
    }

@@ -106,7 +106,7 @@ public final class ConfigWizard extends JDialog {
       getContentPane().setLayout(new MigLayout());
       setTitle("Hardware Configuration Wizard");
 
-      setLocation(50, 100);
+      super.setLocation(50, 100);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
       titleLabel_ = new JLabel();

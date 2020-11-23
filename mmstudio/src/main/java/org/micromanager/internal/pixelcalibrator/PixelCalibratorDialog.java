@@ -74,7 +74,7 @@ public class PixelCalibratorDialog extends JFrame {
       studio_ = studio;
       pixelSizeProvider_ = psp;
       initComponents();
-      setLocation(200, 200);
+      super.setLocation(200, 200);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       super.setVisible(true);
       

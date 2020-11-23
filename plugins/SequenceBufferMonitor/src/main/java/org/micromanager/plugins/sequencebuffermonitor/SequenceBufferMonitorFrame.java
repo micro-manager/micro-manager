@@ -88,7 +88,7 @@ class SequenceBufferMonitorFrame extends JFrame {
 
       update();
 
-      setLocation(200, 200);
+      super.setLocation(200, 200);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
    }
 

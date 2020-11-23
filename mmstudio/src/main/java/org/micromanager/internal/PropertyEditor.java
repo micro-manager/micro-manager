@@ -79,7 +79,7 @@ public final class PropertyEditor extends JFrame {
       createTable();
       createComponents();
 
-      setBounds(100, 100, 550, 600);
+      super.setBounds(100, 100, 550, 600);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       setMinimumSize(new Dimension(420, 400));
    }

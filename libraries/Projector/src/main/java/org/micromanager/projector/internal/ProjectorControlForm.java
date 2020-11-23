@@ -267,7 +267,7 @@ public class ProjectorControlForm extends JFrame {
       delayField_.setText(settings_.getString(Terms.DELAY, "0"));
       logDirectoryTextField_.setText(settings_.getString(Terms.LOGDIRECTORY, ""));
 
-      setLocation(500, 300);
+      super.setLocation(500, 300);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       updateROISettings();
    }

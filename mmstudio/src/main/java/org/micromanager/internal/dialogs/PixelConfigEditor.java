@@ -64,7 +64,7 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
       affineEditorPanel_ = new AffineEditorPanel(parent.getStudio(), this, 
             AffineUtils.noTransform());
       super.initialize();
-      setBounds(100, 100, 550, 600);
+      super.setBounds(100, 100, 550, 600);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       super.setMinimumSize(new Dimension(500, 530));
    }

@@ -34,7 +34,7 @@ public class FrameCombinerConfigurator extends JFrame implements ProcessorConfig
       initComponents();
       loadSettingValue();
 
-      setLocation(200, 200);
+      super.setLocation(200, 200);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       
    }

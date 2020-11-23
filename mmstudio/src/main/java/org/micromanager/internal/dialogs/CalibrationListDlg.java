@@ -148,7 +148,7 @@ public final class CalibrationListDlg extends JDialog {
 
       super.setMinimumSize(new Dimension(263, 239));
 
-      setBounds(100, 100, 365, 495);
+      super.setBounds(100, 100, 365, 495);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
       Rectangle r = super.getBounds();

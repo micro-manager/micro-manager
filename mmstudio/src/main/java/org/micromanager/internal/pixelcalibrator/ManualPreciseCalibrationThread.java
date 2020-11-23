@@ -427,7 +427,7 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
          super.add(cancelButton, "tag cancel, wrap");
          super.pack();
 
-         setLocation(200, 200);
+         super.setLocation(200, 200);
          WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
          super.setVisible(true);
       }

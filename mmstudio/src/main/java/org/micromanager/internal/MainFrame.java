@@ -162,7 +162,7 @@ public final class MainFrame extends JFrame {
       // pack().
       super.pack();
       super.setMinimumSize(super.getSize());
-      setBounds(100, 100, 644, 220);
+      super.setBounds(100, 100, 644, 220);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       mmStudio_.events().registerForEvents(this);
    }

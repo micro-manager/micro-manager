@@ -180,7 +180,7 @@ final public class PipelineFrame extends JFrame
       setPreferredSize(frameSize);
       setMinimumSize(minFrameSize);
 
-      setLocation(200, 200);
+      super.setLocation(200, 200);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
       studio_.events().registerForEvents(this);

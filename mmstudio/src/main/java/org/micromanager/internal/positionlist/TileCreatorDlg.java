@@ -95,7 +95,7 @@ public final class TileCreatorDlg extends JDialog {
 
       super.setTitle("Tile Creator");
 
-      setLocation(300, 300);
+      super.setLocation(300, 300);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       super.setSize(344, 280);
 
