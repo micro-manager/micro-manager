@@ -4202,13 +4202,13 @@ CRISP::CRISP() :
    CPropertyAction* pAct = new CPropertyAction (this, &CRISP::OnPort);
    CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
 
-   // Axis
-   pAct = new CPropertyAction (this, &CRISP::OnAxis);
-   CreateProperty("Axis", "Z", MM::String, false, pAct, true);
-   AddAllowedValue("Axis", "Z");
-   AddAllowedValue("Axis", "P");
    AddAllowedValue("Axis", "F");
-
+   // Axis (changed to match Tiger in 11-24-2020)
+   pAct = new CPropertyAction(this, &CRISP::OnAxis);
+   CreateProperty("AxisLetter", "Z", MM::String, false, pAct, true);
+   AddAllowedValue("AxisLetter", "Z");
+   AddAllowedValue("AxisLetter", "P");
+   AddAllowedValue("AxisLetter", "F");
 }
 
 CRISP::~CRISP()
