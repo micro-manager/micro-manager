@@ -197,7 +197,6 @@ public final class MMImageCanvas extends ImageCanvas
             (int) Math.floor(parent_.getMMHeight() * getMagnification())));
       // Limit so that zoom indicator is not obscured, but no larger than the
       // scaled image
-      Dimension maxSize = getMaximumSize();
       setMinimumSize(new Dimension(Math.min(84, getMaximumSize().width),
             Math.min(84, getMaximumSize().height)));
       // By default, the preferred size is to show the entire image. The object
