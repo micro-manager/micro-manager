@@ -1306,12 +1306,13 @@ public final class DisplayUIController implements Closeable, WindowListener,
          Insets frameInsets = frame_.getInsets();
          int newCanvasWidth = Math.min(canvasMaxSize.width,
                screenBounds.width - frameInsets.left - frameInsets.right -
-                     2 * BORDER_THICKNESS);
+                     2 * BORDER_THICKNESS - frame_.getX());
          int newCanvasHeight = Math.min(canvasMaxSize.height,
                screenBounds.height - frameInsets.top - frameInsets.bottom -
                      2 * BORDER_THICKNESS -
                      topControlPanel_.getSize().height -
-                     bottomControlPanel_.getSize().height);
+                     bottomControlPanel_.getSize().height -
+                     frame_.getY());
          ijBridge_.getIJImageCanvas().setPreferredSize(
                new Dimension(newCanvasWidth, newCanvasHeight));
          ijBridge_.getIJImageCanvas().invalidate();

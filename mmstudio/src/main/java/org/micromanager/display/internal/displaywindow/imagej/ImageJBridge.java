@@ -839,7 +839,7 @@ public final class ImageJBridge {
       if (oldCanvasWidth < 0.95 * Math.floor(imageWidth * oldZoomRatio)) {
          ret.width = oldCanvasWidth;
       }
-      if (oldCanvasHeight < 0.95 * Math.floor(imageHeight* oldZoomRatio)) {
+      if (oldCanvasHeight < 0.95 * Math.floor(imageHeight * oldZoomRatio)) {
          ret.height = oldCanvasHeight;
       }
       return ret;
