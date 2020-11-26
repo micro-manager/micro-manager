@@ -459,11 +459,6 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    @Override
-   public int getCurrentFrameCount() {
-      return sequenceSettings_.numFrames();
-   }
-
-   @Override
    public double getFrameIntervalMs() {
       return sequenceSettings_.intervalMs();
    }

@@ -110,12 +110,6 @@ public interface AcquisitionEngine {
    public boolean isMultiFieldRunning();
 
    /**
-    * Returns the number of frames acquired so far
-    */
-   public int getCurrentFrameCount();
-
-
-   /**
     * Unconditional shutdown.  Will stop acuiqistion and multi-field acquisition
     */
    public void shutdown();
