@@ -16,14 +16,20 @@
 
 package com.asiimaging.crisp;
 
+import javax.swing.UIManager;
+import javax.swing.UIManager.LookAndFeelInfo;
+
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
+
+import com.asiimaging.crisp.utils.WindowUtils;
 
 /**
  * The original plugin was authored by Nico Stuurman, and then rewritten by Vikram Kopuri.
  * The current code is based on the work of the previous authors. 
  * 
  * [Changelog]
+ * v2.1.7 - you can plot focus curve data on MS2000 and you can view focus curve data in general
  * v2.1.6 - disable spinners during focus lock and set the polling rate correctly on startup
  * v2.1.5 - detects AxisLetter on Tiger, the property name differs between Whizkid and Tiger.
  * v2.1.4 - CRISP class now detects variations in property names: "LED Intensity" vs "LED Intensity(%)"
@@ -37,59 +43,82 @@ import org.micromanager.api.ScriptInterface;
  * v1.0.0 - initial plugin by Nico Stuurman
  */
 public class CRISPPlugin implements MMPlugin {
-	
-	public final static String copyright = "Applied Scientific Instrumentation (ASI), 2014-2020";
-	public final static String description = "Description: Interface for ASIs CRISP Autofocus. Written by ASI.";
-	public final static String menuName = "ASI CRISP Control";
-	public final static String version = "2.1.6";
-	
-	private ScriptInterface gui;
-	private CRISPFrame frame;
-	
-	@Override
-	public void setApp(final ScriptInterface app) {
-		gui = app;
-		
-		// only allow one instance of the application to be open
-		if (WindowUtils.isOpen(frame)) {
-			WindowUtils.close(frame);
-		}
-		
-		try {
-			frame = new CRISPFrame(gui);
-			frame.setVisible(true);
-		} catch (Exception e) {
-			gui.showError(e);
-		}
-	}
-
-	@Override
-	public void dispose() {
-		// the main app calls this method to remove the plugin window
-		WindowUtils.dispose(frame);
-	}
-	
-	@Override
-	public void show() {
-	}
+    
+    public final static String copyright = "Applied Scientific Instrumentation (ASI), 2014-2020";
+    public final static String description = "Interface to control ASIs CRISP Autofocus system.";
+    public final static String menuName = "ASI CRISP Control";
+    public final static String version = "2.1.7";
+    
+    private ScriptInterface gui;
+    private CRISPFrame frame;
+    
+    @Override
+    public void setApp(final ScriptInterface app) {
+        gui = app;
+        
+        setSystemLookAndFeel();
+        //setNimbusLookAndFeel();
+        
+        // only one instance of the plugin can be open
+        if (WindowUtils.isOpen(frame)) {
+            WindowUtils.close(frame);
+        }
+        
+        try {
+            frame = new CRISPFrame(gui);
+            frame.setVisible(true);
+        } catch (Exception e) {
+            gui.showError(e);
+        }
+    }
+    
+    @Override
+    public void dispose() {
+        // the main app calls this method to remove the plugin window
+        WindowUtils.dispose(frame);
+    }
+    
+    @Override
+    public void show() {
+    }
    
-	@Override
-	public String getInfo() {
-		return menuName;
-	}
-	
-	@Override
-	public String getVersion() {
-		return version;
-	}
+    @Override
+    public String getInfo() {
+        return menuName;
+    }
+    
+    @Override
+    public String getVersion() {
+        return version;
+    }
    
-	@Override
-	public String getCopyright() {
-		return copyright;
-	}
-	
-	@Override
-	public String getDescription() {
-		return description;
-	}
+    @Override
+    public String getCopyright() {
+        return copyright;
+    }
+    
+    @Override
+    public String getDescription() {
+        return description;
+    }
+    
+    private void setSystemLookAndFeel() {
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception ignore) {
+            // look and feel -> doesn't matter if we can't make the ui look nice
+        }
+    }
+    private void setNimbusLookAndFeel() {
+        try {
+            for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (Exception ignore) {
+            // if Nimbus is not available you can set the GUI to another look and feel
+        }
+    }
 }

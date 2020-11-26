@@ -14,10 +14,26 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package com.asiimaging.crisp.plot;
+package com.asiimaging.crisp.control;
 
-//https://www.javatpoint.com/jfreechart-key-classes
-	
-public class BasicPlot {
 
+/**
+ * The type of controller that CRISP is connected to.
+ *
+ */
+public enum ControllerType {
+    TIGER("TIGER"),
+    MS2000("MS2000"),
+    NONE("NONE");
+    
+    private final String name;
+    
+    private ControllerType(final String name) {
+        this.name = name;
+    }
+    
+    @Override
+    public String toString() {
+        return name;
+    }
 }
