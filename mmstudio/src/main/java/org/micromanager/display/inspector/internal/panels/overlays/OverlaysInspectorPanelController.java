@@ -14,9 +14,11 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 import org.micromanager.display.DataViewer;
@@ -26,6 +28,7 @@ import org.micromanager.display.internal.event.DisplayWindowDidAddOverlayEvent;
 import org.micromanager.display.internal.event.DisplayWindowDidRemoveOverlayEvent;
 import org.micromanager.display.overlay.Overlay;
 import org.micromanager.display.overlay.OverlayPlugin;
+import org.micromanager.internal.propertymap.DefaultPropertyMap;
 import org.micromanager.internal.utils.PopupButton;
 import org.scijava.plugin.Plugin;
 
@@ -60,7 +63,7 @@ public final class OverlaysInspectorPanelController
 
    private OverlaysInspectorPanelController(Studio studio) {
       profile_ = studio.profile();
-      List<OverlayPlugin> plugins = new ArrayList<>(
+      final List<OverlayPlugin> plugins = new ArrayList<>(
             studio.plugins().getOverlayPlugins().values());
       Collections.sort(plugins, (OverlayPlugin o1, OverlayPlugin o2) -> {
          Plugin p1 = o1.getClass().getAnnotation(Plugin.class);
@@ -96,8 +99,41 @@ public final class OverlaysInspectorPanelController
             new CC().gapBefore("push").gapAfter("rel").
                   gapY("rel", "rel").
                   height("pref:pref:pref"));
+      
+       SwingUtilities.invokeLater(() -> {
+           loadSettings(plugins); // This prevents a weird error due to loading before the UI is complete.
+       });
+
    }
 
+   private void loadSettings(Iterable<OverlayPlugin> plugins) {
+    //Load the overlays from the profile.
+    List<PropertyMap> settings = profile_.getSettings(this.getClass()).getPropertyMapList(PROPERTYMAPKEY, (PropertyMap[]) null);
+    if (settings == null) {
+        return;
+    }
+    for (PropertyMap pMap : settings) {
+       for (OverlayPlugin p : plugins) { // We must loop through overlay plugins to determine if they are a match for this setting.
+          Overlay o = p.createOverlay();
+          if (pMap.containsPropertyMap(o.getTitle())) {  // Checking against Overlay 'Title; is the best way we have to link settings with an overlay.
+              PropertyMap config = pMap.getPropertyMap(o.getTitle(), null);
+              o.setConfiguration(config);
+              viewer_.addOverlay(o);
+              break;
+          }
+       }
+    }
+   }
+   
+   private void saveSettings() {
+       List<PropertyMap> configList = new ArrayList<>();
+       for (Overlay o : this.overlays_) {
+           PropertyMap map = new DefaultPropertyMap.Builder().putPropertyMap(o.getTitle(), o.getConfiguration()).build();
+           configList.add(map);
+       }
+       profile_.getSettings(this.getClass()).putPropertyMapList(PROPERTYMAPKEY, configList);
+   }
+   
    private void handleAddOverlay(OverlayPlugin plugin) {
       Overlay overlay = plugin.createOverlay();
       if (profile_.getSettings(overlay.getClass()).containsPropertyMap(PROPERTYMAPKEY)) {
@@ -173,10 +209,7 @@ public final class OverlaysInspectorPanelController
       viewer_.unregisterForEvents(this);
       viewer_ = null;
       configsPanel_.removeAll();
-      for (Overlay overlay : overlays_) {
-         profile_.getSettings(overlay.getClass()).putPropertyMap(PROPERTYMAPKEY,
-              overlay.getConfiguration());
-      }
+      this.saveSettings();
       overlays_.clear();
       configPanelControllers_.clear();
    }
