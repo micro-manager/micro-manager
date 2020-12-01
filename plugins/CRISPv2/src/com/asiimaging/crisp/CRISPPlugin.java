@@ -46,7 +46,7 @@ public class CRISPPlugin implements MMPlugin {
     
     public final static String copyright = "Applied Scientific Instrumentation (ASI), 2014-2020";
     public final static String description = "Interface to control ASIs CRISP Autofocus system.";
-    public final static String menuName = "ASI CRISP Control";
+    public final static String menuName = "ASI CRISP Control Beta";
     public final static String version = "2.1.7";
     
     private ScriptInterface gui;
