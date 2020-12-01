@@ -23,232 +23,229 @@ import java.awt.event.WindowEvent;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.MMFrame;
 
-import com.asiimaging.crisp.ui.ButtonPanel;
-import com.asiimaging.crisp.ui.SpinnerPanel;
-import com.asiimaging.crisp.ui.StatusPanel;
+import com.asiimaging.crisp.control.CRISP;
+import com.asiimaging.crisp.control.CRISPTimer;
+import com.asiimaging.crisp.data.Icons;
+import com.asiimaging.crisp.panels.ButtonPanel;
+import com.asiimaging.crisp.panels.PlotPanel;
+import com.asiimaging.crisp.panels.SpinnerPanel;
+import com.asiimaging.crisp.panels.StatusPanel;
+import com.asiimaging.crisp.ui.Panel;
+import com.asiimaging.crisp.utils.ObjectUtils;
 
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 
 @SuppressWarnings("serial")
 public class CRISPFrame extends MMFrame {
-	
-	// flag to turn on debug mode when editing the user interface
-	private final static boolean DEBUG = false;
-	
-	@SuppressWarnings("unused")
-	private final CMMCore core;
-	private final ScriptInterface gui;
-	
-	private final CRISP crisp;
-	private final UserSettings settings;
-	
-	private JLabel title;
-	private JPanel leftPanel;
-	private JPanel rightPanel;
-	private ButtonPanel buttonPanel;
-	private StatusPanel statusPanel;
-	private SpinnerPanel spinnerPanel;
-	
-	public CRISPFrame(final ScriptInterface app) throws Exception {
-		gui = app;
-		core = gui.getMMCore();
-		
-		crisp = new CRISP(gui);
-		createUserInterface();
-		
-		// create the user settings after we create the ui
-		// we set spinner values in the constructor
-		settings = new UserSettings(crisp, spinnerPanel);
-		
-		// wait to find CRISP until after we create the ui
-		// CRISP needs to reference ui elements to update text
-		init();
-		
-		// load saved settings into the ui after we
-		// find CRISP to send the settings to the unit
-		settings.queryController();
-		settings.load();
-		
-		// crisp.printDeviceProperties();
-	}
+    
+    // flag to turn on debug mode when editing the ui
+    // use "debug" in MigLayout to see layout constraints
+    private final static boolean DEBUG = false;
+    
+    @SuppressWarnings("unused")
+    private final CMMCore core;
+    private final ScriptInterface gui;
+    
+    private final CRISP crisp;
+    private final CRISPTimer timer;
+    private UserSettings settings;
+    
+    private JLabel lblTitle;
+    private Panel leftPanel;
+    private Panel rightPanel;
+    
+    private PlotPanel plotPanel;
+    private ButtonPanel buttonPanel;
+    private StatusPanel statusPanel;
+    private SpinnerPanel spinnerPanel;
 
-	/**
-	 * Find CRISP and update spinners and status.
-	 * @throws Exception Autofocus device not found.
-	 */
-	private void init() throws Exception {
-		// set references to update swing components 
-		crisp.setStatusPanel(statusPanel);
-		crisp.setAxisLabel(spinnerPanel.getAxisLabel());
-		
-		final boolean found = crisp.findAutofocusDevices();
-		if (!found) {
-			throw new Exception("This plugin requires an ASI CRISP Autofocus device.");
-		}
-		
-		// get values from CRISP and update text
-		spinnerPanel.update();
-		statusPanel.update();
-		
-		// disable spinners if CRISP is already focus locked
-		if (crisp.getState().equals("In Focus")) {
-			spinnerPanel.setEnabledFocusLock(false);
-		}
-	}
+    private class DeviceNotFoundException extends Exception {
+        public DeviceNotFoundException() {
+            super("This plugin requires an ASI CRISP Autofocus device.\n"
+                + "Add CRISP from the ASIStage or ASITiger device adapter"
+                + " in the Hardware Configuration Wizard.");
+        }
+    }
+    
+    /**
+     * The main frame of the user interface.
+     * 
+     * @param app
+     * @throws Exception
+     */
+    public CRISPFrame(final ScriptInterface app) throws Exception {
+        core = app.getMMCore();
+        gui = app;
+        
+        crisp = new CRISP(gui);
+        timer = new CRISPTimer(crisp);
+        
+        // some ui panels require both crisp and timer
+        createUserInterface();
+        settings = new UserSettings(
+            timer,
+            spinnerPanel
+        );
+        
+        // only call after the required objects exist
+        // required objects: crisp, timer, and settings
+        detectDevice();
+        registerWindowEventHandlers();
+    }
 
-	/**
-	 * Stop polling values from CRISP and stop the Swing timer when the frame closes.
-	 */
-	private void createWindowEventHandlers() {
-		addWindowListener(new WindowAdapter() {
+    /**
+     * Detects the CRISP device, updates panels, and starts the timer.
+     * 
+     * @throws Exception no device found
+     */
+    private void detectDevice() throws Exception {
+        ObjectUtils.requireNonNull(crisp);
+        ObjectUtils.requireNonNull(timer);
+        ObjectUtils.requireNonNull(settings);
+        
+        // exit on no device
+        if (!crisp.detectDevice()) {
+            throw new DeviceNotFoundException();
+        }
+        
+        // query values from CRISP and update the ui
+        spinnerPanel.setAxisLabelText(crisp.getAxisString());
+        spinnerPanel.update();
+        statusPanel.update();
+        
+        // have the timer task update the status panel
+        timer.createTimerTask(statusPanel);
+        
+        // load settings before the polling check
+        settings.load();
+        
+        // start the timer if polling enabled
+        if (spinnerPanel.isPollingEnabled()) {
+            timer.start();
+        }
+        
+        // disable spinners if focus already locked
+        if (crisp.isFocusLocked()) {
+            spinnerPanel.setEnabledFocusLock(false);
+        }
+        
+        // TODO: enabled this feature on Tiger
+        plotPanel.disableFocusCurveButton();
+    }
+    
+    /**
+     * Create the user interface for the plugin.
+     */
+    private void createUserInterface() {
+        ObjectUtils.requireNonNull(crisp);
+        ObjectUtils.requireNonNull(timer);
+        
+        setTitle(CRISPPlugin.menuName);
+        loadAndRestorePosition(200, 200);
+        setResizable(false);
+
+        // use MigLayout as the layout manager
+        setLayout(new MigLayout(
+            "insets 20 10 10 10",
+            "",
+            ""
+        ));
+        
+        // draw the title in bold
+        lblTitle = new JLabel(CRISPPlugin.menuName);
+        lblTitle.setFont(new Font(Font.MONOSPACED, Font.BOLD, 20));
+        
+        Panel.setMigLayoutDefaults(
+            "",
+            "[]10[]",
+            "[]10[]"
+        );
+        
+        // create panels and layouts for ui elements
+        plotPanel = new PlotPanel(crisp, this);
+        spinnerPanel = new SpinnerPanel(crisp, timer);
+        buttonPanel = new ButtonPanel(crisp, timer, spinnerPanel);
+ 
+        statusPanel = new StatusPanel(crisp);
+        statusPanel.setMigLayout(
+            "",
+            "40[]10[]",
+            "[]10[]"
+        );
+        
+        // now that the layouts are setup
+        plotPanel.createComponents();
+        spinnerPanel.createComponents();
+        buttonPanel.createComponents();
+        statusPanel.createComponents();
+        
+        // main layout panels
+        leftPanel = new Panel();
+        rightPanel = new Panel();
+
+        // color the panels to make editing the ui easy
+        if (DEBUG) {
+            leftPanel.setBackground(Color.RED);
+            rightPanel.setBackground(Color.BLUE);
+            plotPanel.setBackground(Color.YELLOW);
+        }
+        
+        // set panel layouts
+        leftPanel.setMigLayout(
+            "",
+            "[]10[]",
+            "[]50[]"
+        );
+        rightPanel.setMigLayout(
+            "",
+            "",
+            ""
+        );
+        plotPanel.setMigLayout(
+            "",
+            "20[]20[]",
+            ""
+        );
+        
+        // add subpanels to the main layout panels
+        leftPanel.add(spinnerPanel, "wrap");
+        leftPanel.add(statusPanel, "center");
+        rightPanel.add(buttonPanel, "");
+        
+        // add swing components to the frame
+        add(lblTitle, "span, center, wrap");
+        add(leftPanel, "");
+        add(rightPanel, "wrap");
+        add(plotPanel, "span 2");
+        
+        pack(); // set the window size automatically
+        setIconImage(Icons.MICROSCOPE_ICON.getImage());
+        
+        // clean up resources when the frame is closed
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+    }
+    
+    /**
+     * Create a {@code windowClosing} event handler.
+     * <p>
+     * Stop the Swing timer from polling CRISP and 
+     * save the user's settings.
+     */
+    private void registerWindowEventHandlers() {
+        ObjectUtils.requireNonNull(timer);
+        ObjectUtils.requireNonNull(settings);
+        
+        addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(final WindowEvent event) {
-            	// stop CRISP polling
-            	if (!crisp.getDeviceName().isEmpty()) {
-            		if (crisp.getDeviceType() == ASIDeviceType.TIGER) {
-            			crisp.setRefreshPropertyValues(false);
-            		}
-	        		crisp.stopTimer();
-            	}
-            	// save user settings
-            	settings.save();
+                timer.stop();
+                settings.save();
             }
         });
-	}
-	
-	/**
-	 * Create the user interface for the plugin.
-	 */
-	private void createUserInterface() {
-		setTitle(CRISPPlugin.menuName);
-		loadAndRestorePosition(200, 200);
-		setResizable(false);
-		
-		// stop polling when the frame is closed
-		createWindowEventHandlers();
-
-		// use MigLayout as the layout manager
-		setLayout(new MigLayout(
-			"insets 10 10 10 10",
-			"",
-			""
-		));
-		
-		// draw the title in bold
-		title = new JLabel(CRISPPlugin.menuName + " v" + CRISPPlugin.version);
-		title.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
-		
-		// create panels for ui elements
-		spinnerPanel = new SpinnerPanel(crisp,
-			"",
-			"[]10[]",
-			"[]10[]"
-		);
-		
-		buttonPanel = new ButtonPanel(this, crisp,
-			"",
-			"[]10[]",
-			"[]10[]"
-		);
-		
-		statusPanel = new StatusPanel(crisp,
-			"",
-			"[]10[]",
-			"[]10[]"
-		);
-
-		// main layout panels
-		leftPanel = new JPanel();
-		rightPanel = new JPanel();
-
-		leftPanel.setLayout(new MigLayout(
-			"",
-			"[]10[]",
-			"[]50[]"
-		));
-		
-		rightPanel.setLayout(new MigLayout(
-			"",
-			"",
-			""
-		));
-		
-		// color the panels to make editing the ui easy
-		if (DEBUG) {
-			leftPanel.setBackground(Color.RED);
-			rightPanel.setBackground(Color.BLUE);		
-		}
-		
-		// add subpanels to the main layout panels
-		leftPanel.add(spinnerPanel, "wrap");
-		leftPanel.add(statusPanel, "center");
-		rightPanel.add(buttonPanel, "");
-		
-		// add swing components to the frame
-		add(title, "span, center, wrap");
-		add(leftPanel, "");
-		add(rightPanel, "");
-		
-		// set the window size automatically
-		pack();
-		
-		// set the window icon to be a microscope
-		setIconImage(WindowUtils.MICROSCOPE_ICON.getImage());
-		
-		// clean up resources when the frame is closed
-		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-	}
-	
-	// used to disable and enable spinner during focus lock
-	public SpinnerPanel getSpinnerPanel() {
-		return spinnerPanel;
-	}
-	
-	/**
-	 * TODO: implement this feature
-	 * code left here for future reference
-	 * this was MS2000 need to port focus curve to Tiger Device Adapter
-	 */
-	public void plotFocusCurve() {
-//		String device = crisp.getDeviceName();
-//		core.setProperty(device, "Obtain Focus Curve", "Do it");
-//		core.loadDevice("Port", "SerialManager", "COM1");
-//		core.setProperty("Port", "StopBits", "1");
-//		core.setProperty("Port", "Parity", "None");
-//		
-//		core.initializeDevice("Port");
-//		
-//		core.setSerialPortCommand("Port", "LK F=97", "\r");
-//		String answer = core.getSerialPortAnswer("Port", "\r");
-//		System.out.println("ANSWER = " + answer);
-		
-//		String device = crisp.getDeviceName();
-//		try {
-//			core.setProperty(device, "SerialCommand", "who"); // "LK F=97"
-//			String response = core.getProperty(device, "SerialResponse");
-//			System.out.println("RESPONSE = " + response);
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
-//		String p = null;
-//		try {
-//			p = core.getProperty(crisp.getDeviceName(), "Focus Curve Data0");
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
-//		System.out.println(p);
-		
-		// load graph
-//		final String filepath = "C:\\";
-//		final ArrayList<String> lines = FileUtils.loadTextFile(filepath);
-//		final PlotFrame plot = new PlotFrame("Focus Curve Plot");
-//		plot.create("Focus Curve", "Z Position", "Error", PlotFrame.createDataset(lines));
-//		plot.saveAsPNG("C:\\Users\\Brandon\\Desktop\\plot.png");
-	}
+    }
 }

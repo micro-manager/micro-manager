@@ -17,33 +17,42 @@
 package com.asiimaging.crisp.ui;
 
 import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.Font;
 
 import javax.swing.JButton;
 
 @SuppressWarnings("serial")
 public class Button extends JButton {
-	
-	public Button(final String text, final int width, final int height) {
-		super(text);
-		setAbsoluteSize(width, height);
-		setFocusPainted(false); // remove highlight when clicked
-	}
-	
-	public void setAbsoluteSize(final int width, final int height) {
-		final Dimension size = new Dimension(width, height);
-		setPreferredSize(size);
-		setMinimumSize(size);
-		setMaximumSize(size);
-	}
-	
-	public void registerListener(final Method method) {
-		addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent event) {
-				method.run(event);
-			}
-		});
-	}
+    
+    private static int defaultWidth = 100;
+    private static int defaultHeight = 100;
+    
+    public Button(final String text) {
+        super(text);
+        setAbsoluteSize(defaultWidth, defaultHeight);
+        setFocusPainted(false); // remove highlight when clicked
+    }
+    
+    public Button(final String text, final int width, final int height) {
+        super(text);
+        setAbsoluteSize(width, height);
+        setFocusPainted(false); // remove highlight when clicked
+    }
+    
+    public static void setDefaultSize(final int width, final int height) {
+        defaultWidth = width;
+        defaultHeight = height;
+    }
+    
+    public void setAbsoluteSize(final int width, final int height) {
+        final Dimension size = new Dimension(width, height);
+        setPreferredSize(size);
+        setMinimumSize(size);
+        setMaximumSize(size);
+    }
+    
+    public void setBoldFont(final int size) {
+        setFont(new Font(Font.SANS_SERIF, Font.BOLD, size));
+    }
+    
 }

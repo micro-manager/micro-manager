@@ -14,10 +14,22 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package com.asiimaging.crisp.plot;
+package com.asiimaging.crisp.data;
 
-//https://www.javatpoint.com/jfreechart-key-classes
-	
-public class BasicPlot {
-
+/**
+ * This class stores default values.
+ *
+ */
+public final class Defaults {
+    
+    public static final int GAIN = 10;
+    public static final int NUM_AVERAGES = 10;
+    public static final int POLL_RATE_MS = 250;
+    public static final int LED_INTENSITY = 50;
+    
+    public static final float LOCK_RANGE = 1.0f;
+    public static final float OBJECTIVE_NA = 0.65f;
+    
+    public static final boolean POLL_CHECKED = true;
+    
 }
