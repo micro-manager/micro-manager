@@ -4266,7 +4266,7 @@ int CRISP::Initialize()
       compileDay_ = ExtractCompileDay(compile_date);
 
    pAct = new CPropertyAction(this, &CRISP::OnWaitAfterLock);
-   CreateProperty("Wait ms after Lock", "3000", MM::Integer, false, pAct);
+   CreateProperty("Wait ms after Lock", "1000", MM::Integer, false, pAct);
 
    pAct = new CPropertyAction(this, &CRISP::OnNA);
    CreateProperty("Objective NA", "0.8", MM::Float, false, pAct);
