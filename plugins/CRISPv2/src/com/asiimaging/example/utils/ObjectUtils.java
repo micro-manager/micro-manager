@@ -1,4 +1,4 @@
-package com.asiimaging.crisp.utils;
+package com.asiimaging.example.utils;
 
 /**
  * Methods taken from the {@code Objects} class.

@@ -1,4 +1,4 @@
-package com.asiimaging.crisp.data;
+package com.asiimaging.example.data;
 
 import javax.swing.ImageIcon;
 
