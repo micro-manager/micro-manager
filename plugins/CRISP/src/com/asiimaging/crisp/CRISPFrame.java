@@ -167,10 +167,10 @@ public class CRISPFrame extends MMFrame {
         );
         
         // create panels and layouts for ui elements
-        plotPanel = new PlotPanel(crisp, this);
         spinnerPanel = new SpinnerPanel(crisp, timer);
+        plotPanel = new PlotPanel(crisp, spinnerPanel, this);
         buttonPanel = new ButtonPanel(crisp, timer, spinnerPanel);
- 
+        
         statusPanel = new StatusPanel(crisp);
         statusPanel.setMigLayout(
             "",

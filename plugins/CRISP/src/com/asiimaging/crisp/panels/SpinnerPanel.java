@@ -201,13 +201,16 @@ public class SpinnerPanel extends Panel {
         cbEnablePolling.addItemListener(new ItemListener() {
             @Override
             public void itemStateChanged(ItemEvent event) {
+                System.out.println("GERE");
                 timer.setPollState(cbEnablePolling.isSelected());
             }
         });
     }
     
     /**
-     * Updates the values of Spinner objects by querying CRISP.
+     * Updates the values of the Spinners by querying CRISP.
+     * <p>
+     * Note: Only happens once at application startup, no need for thread.
      */
     public void update() {
         spnGain.setInt(crisp.getGain());
@@ -224,10 +227,6 @@ public class SpinnerPanel extends Panel {
         lblObjectiveNA.setEnabled(state);
         spnObjectiveNA.setEnabled(state);
     }
-
-    public Spinner getPollRateSpinner() {
-        return spnPollRate;
-    }
     
     public void setAxisLabelText(final String text) {
         labelDeviceAxis.setText(text);
@@ -239,5 +238,9 @@ public class SpinnerPanel extends Panel {
     
     public boolean isPollingEnabled() {
         return cbEnablePolling.isSelected();
+    }
+    
+    public Spinner getPollRateSpinner() {
+        return spnPollRate;
     }
 }

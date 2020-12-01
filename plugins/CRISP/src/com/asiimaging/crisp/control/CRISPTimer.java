@@ -16,7 +16,6 @@
 
 package com.asiimaging.crisp.control;
 
-
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -126,10 +125,6 @@ public class CRISPTimer {
         return Float.toString((pollRateMs*skipCounter)/1000);
     }
     
-    public int getPollRateMs() {
-        return pollRateMs;
-    }
-    
     /**
      * Set the polling rate of the Swing timer.
      * 
@@ -139,5 +134,13 @@ public class CRISPTimer {
         timer.setDelay(rate);
         pollRateMs = rate;
     }
+    
+    public int getPollRateMs() {
+        return pollRateMs;
+    }
+    
+//    public boolean isRunning() {
+//        return timer.isRunning();
+//    }
 }
 

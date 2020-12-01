@@ -23,8 +23,6 @@ import javax.swing.JLabel;
 import com.asiimaging.crisp.control.CRISP;
 import com.asiimaging.crisp.ui.Panel;
 
-import net.miginfocom.swing.MigLayout;
-
 /**
  * This panel displays the values being queried from CRISP by the polling task.
  */
@@ -86,23 +84,13 @@ public class StatusPanel extends Panel {
         add(lblOffsetValue, "wrap");
     }
     
-    /**
-     * Set the layout using MigLayout.
-     * 
-     * @param layout the layout constraints
-     * @param columns the column constraints
-     * @param rows the row constraints
-     */
-    public void setMigLayout(final String layout, final String cols, final String rows) {
-        setLayout(new MigLayout(layout, cols, rows));
-    }
-    
+    // TODO: this method is slowing down the UI, fix it.
     /**
      * Updates the user interface with new values queried from CRISP.
      * This method is called every tick of the polling task, except 
      * after CRISP enters the Log Cal state for several ticks.
      */
-    public void update() {    
+    public void update() {
         setLabelText(lblStateValue, crisp.getState());
         setLabelText(lblErrorValue, crisp.getDitherError());
         setLabelText(lblSNRValue, crisp.getSNR());
@@ -111,6 +99,41 @@ public class StatusPanel extends Panel {
         setLabelText(lblOffsetValue, crisp.getOffsetString());
     }
 
+// TODO: something more efficient than launching a thread every call
+// Note: Maybe a dedicated thread in CRISPTimer?
+//    public void update2() {
+//        final SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+//            String state = "";
+//            String snr = "";
+//            String agc = "";
+//            String sum = "";
+//            String offset = "";
+//            String ditherError = "";
+//            
+//            @Override
+//            protected Void doInBackground() throws Exception {
+//                state = crisp.getState();
+//                ditherError = crisp.getDitherError();
+//                snr = crisp.getSNR();
+//                agc = crisp.getAGC();
+//                sum = crisp.getSum();
+//                offset = crisp.getOffsetString();
+//                return null;
+//            }
+//            
+//            @Override
+//            protected void done() {
+//                setLabelText(lblStateValue, state);
+//                setLabelText(lblErrorValue, ditherError);
+//                setLabelText(lblSNRValue, snr);
+//                setLabelText(lblAGCValue, agc);
+//                setLabelText(lblSumValue, sum);
+//                setLabelText(lblOffsetValue, offset);
+//            }
+//        };
+//        worker.execute();
+//    }
+    
     // TODO: finish docs
     /**
      * Sets the JLabel text if the String is not empty.

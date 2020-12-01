@@ -18,12 +18,9 @@ package com.asiimaging.crisp.control;
 
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
-import javax.swing.SwingWorker;
 
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ReportingUtils;
-
-import com.asiimaging.crisp.panels.PlotPanel;
 
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
@@ -151,32 +148,16 @@ public final class CRISP {
     }
     
     public boolean isFocusLocked() {
-        return getState().equals("In Focus"); // TODO: propValue?
+        return getState().equals("In Focus"); // TODO: make this a propValue?
     }
     
-    // TODO: prevent user from running this twice with done() method
-    public void getFocusCurve(final PlotPanel panel) {
-        // thread is mostly here to prevent edt hang logger from complaining
-        final SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
-            
-            @Override
-            protected Void doInBackground() throws Exception {
-                try {
-                    core.setProperty(deviceName, PropName.MS2000.OBTAIN_FOCUS_CURVE, PropValue.MS2000.DO_IT);
-                } catch (Exception e) {
-                    reportError("Failed to obtain the focus curve.");
-                }
-                return null;
-            }
-            
-            @Override
-            protected void done() {
-                panel.showPlotWindow();
-                panel.getPlotButton().setEnabled(true);
-            }
-            
-        };
-        worker.execute();
+    // NOTE: this is a long running task, use a separate thread when calling this
+    public void getFocusCurve() {
+        try {
+            core.setProperty(deviceName, PropName.MS2000.OBTAIN_FOCUS_CURVE, PropValue.MS2000.DO_IT);
+        } catch (Exception e) {
+            reportError("Failed to obtain the focus curve.");
+        }
     }
     
     /**
