@@ -135,7 +135,7 @@ public class CRISPFrame extends MMFrame {
         }
         
         // TODO: enabled this feature on Tiger
-        plotPanel.disableFocusCurveButton();
+        plotPanel.disableFocusCurveButtonTiger();
     }
     
     /**

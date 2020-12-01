@@ -73,7 +73,7 @@ public class PlotPanel extends Panel {
         add(lblVersion, "");
     }
     
-    public void disableFocusCurveButton() {
+    public void disableFocusCurveButtonTiger() {
         if (crisp.isTiger()) {
             btnPlot.setEnabled(false);
             btnPlot.setToolTipText("This feature is not available on Tiger yet.");
@@ -110,6 +110,7 @@ public class PlotPanel extends Panel {
         btnPlot.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent event) {
+                btnPlot.setEnabled(false);
                 crisp.getFocusCurve(pThis); // starts it's own thread
             }
         });
@@ -141,5 +142,9 @@ public class PlotPanel extends Panel {
                 );
             }
         });   
+    }
+    
+    public Button getPlotButton() {
+        return btnPlot;
     }
 }

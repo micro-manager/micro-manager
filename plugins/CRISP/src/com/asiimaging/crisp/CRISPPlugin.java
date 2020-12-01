@@ -46,7 +46,7 @@ public class CRISPPlugin implements MMPlugin {
     
     public final static String copyright = "Applied Scientific Instrumentation (ASI), 2014-2020";
     public final static String description = "Interface to control ASIs CRISP Autofocus system.";
-    public final static String menuName = "ASI CRISP Control Beta";
+    public final static String menuName = "ASI CRISP Control";
     public final static String version = "2.1.7";
     
     private ScriptInterface gui;
@@ -74,7 +74,7 @@ public class CRISPPlugin implements MMPlugin {
     
     @Override
     public void dispose() {
-        // the main app calls this method to remove the plugin window
+        // this method is called to remove the plugin window
         WindowUtils.dispose(frame);
     }
     
@@ -102,14 +102,15 @@ public class CRISPPlugin implements MMPlugin {
         return description;
     }
     
-    private void setSystemLookAndFeel() {
+    public void setSystemLookAndFeel() {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception ignore) {
-            // look and feel -> doesn't matter if we can't make the ui look nice
+            // not found => not too important, only look and feel
         }
     }
-    private void setNimbusLookAndFeel() {
+    
+    public void setNimbusLookAndFeel() {
         try {
             for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -118,7 +119,7 @@ public class CRISPPlugin implements MMPlugin {
                 }
             }
         } catch (Exception ignore) {
-            // if Nimbus is not available you can set the GUI to another look and feel
+            // not found => not too important, only look and feel
         }
     }
 }

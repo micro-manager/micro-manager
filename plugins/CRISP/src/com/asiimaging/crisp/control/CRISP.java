@@ -155,7 +155,7 @@ public final class CRISP {
     }
     
     // TODO: prevent user from running this twice with done() method
-    public void getFocusCurve(final PlotPanel plot) {
+    public void getFocusCurve(final PlotPanel panel) {
         // thread is mostly here to prevent edt hang logger from complaining
         final SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
             
@@ -171,7 +171,8 @@ public final class CRISP {
             
             @Override
             protected void done() {
-                plot.showPlotWindow();
+                panel.showPlotWindow();
+                panel.getPlotButton().setEnabled(true);
             }
             
         };

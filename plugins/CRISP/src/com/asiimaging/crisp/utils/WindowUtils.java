@@ -14,6 +14,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
+
 package com.asiimaging.crisp.utils;
 
 import java.awt.event.WindowEvent;
@@ -25,8 +26,8 @@ public final class WindowUtils {
     /**
      * Returns true if the window is displayable and not null.
      * 
-     * @param frame the frame to check
-     * @return true if the window is open
+     * @param frame the {@link JFrame} to check
+     * @return true if the frame is open
      */
     public static boolean isOpen(final JFrame frame) {
         if (frame != null && frame.isDisplayable()) {
@@ -37,19 +38,18 @@ public final class WindowUtils {
     }
     
     /**
-     * Creates a window event object and dispatches the close event.
+     * Close the frame by sending a window closing event.
      * 
-     * @param frame the frame to close
+     * @param frame the {@link JFrame} to close
      */
     public static void close(final JFrame frame) {
-        final WindowEvent windowEvent = new WindowEvent(frame, WindowEvent.WINDOW_CLOSING);
-        frame.dispatchEvent(windowEvent);
+        frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
     }
     
     /**
      * Calls dispose on the frame if not null.
      * 
-     * @param frame the frame to dispose
+     * @param frame the {@link JFrame} to dispose
      */
     public static void dispose(final JFrame frame) {
         if (frame != null) {
