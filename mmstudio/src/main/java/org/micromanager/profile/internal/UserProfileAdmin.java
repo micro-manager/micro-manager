@@ -150,7 +150,7 @@ public final class UserProfileAdmin {
      for (IndexEntry entry : getIndex().getEntries()) {
          if (entry.getUUID().equals(uuid)) {
             final String filename = entry.getFilename();
-            profile.toPropertyMap().saveJSON(getModernFile(filename), true, true); //Force write the file even thought the profile may be set to readonly.
+            profile.toPropertyMap().saveJSON(getModernFile(filename), true, true); //Force write the file even though the profile may be set to readonly.
             return;
          }
      }     

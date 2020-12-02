@@ -45,7 +45,10 @@ public final class OverlaysInspectorPanelController
    private final JPopupMenu addOverlayMenu_;
 
    private final UserProfile profile_;
-   private static final String PROPERTYMAPKEY = "overlay";
+   private static final String PROPERTYMAPKEY = "SavedOverlays";
+   private static final String CONFIGPMAPKEY = "OverlayConfig";
+   private static final String VISIBLEPMAPKEY = "OverlayVisible";
+   private static final String TITLEPMAPKEY = "OverlayTitle";
 
    
    private static boolean expanded_ = false;
@@ -115,9 +118,10 @@ public final class OverlaysInspectorPanelController
     for (PropertyMap pMap : settings) {
        for (OverlayPlugin p : plugins) { // We must loop through overlay plugins to determine if they are a match for this setting.
           Overlay o = p.createOverlay();
-          if (pMap.containsPropertyMap(o.getTitle())) {  // Checking against Overlay 'Title; is the best way we have to link settings with an overlay.
-              PropertyMap config = pMap.getPropertyMap(o.getTitle(), null);
+          if (pMap.getString(TITLEPMAPKEY, "loadFailed").equals(o.getTitle())) {  // Checking against Overlay 'Title; is the best way we have to link settings with an overlay.
+              PropertyMap config = pMap.getPropertyMap(CONFIGPMAPKEY, null);
               o.setConfiguration(config);
+              o.setVisible(pMap.getBoolean(VISIBLEPMAPKEY, false));
               viewer_.addOverlay(o);
               break;
           }
@@ -128,7 +132,11 @@ public final class OverlaysInspectorPanelController
    private void saveSettings() {
        List<PropertyMap> configList = new ArrayList<>();
        for (Overlay o : this.overlays_) {
-           PropertyMap map = new DefaultPropertyMap.Builder().putPropertyMap(o.getTitle(), o.getConfiguration()).build();
+           PropertyMap map = new DefaultPropertyMap.Builder()
+                   .putPropertyMap(CONFIGPMAPKEY, o.getConfiguration())
+                   .putBoolean(VISIBLEPMAPKEY, o.isVisible())
+                   .putString(TITLEPMAPKEY, o.getTitle())
+                   .build();
            configList.add(map);
        }
        profile_.getSettings(this.getClass()).putPropertyMapList(PROPERTYMAPKEY, configList);
@@ -136,16 +144,10 @@ public final class OverlaysInspectorPanelController
    
    private void handleAddOverlay(OverlayPlugin plugin) {
       Overlay overlay = plugin.createOverlay();
-      if (profile_.getSettings(overlay.getClass()).containsPropertyMap(PROPERTYMAPKEY)) {
-         overlay.setConfiguration(profile_.getSettings(overlay.getClass()).
-                 getPropertyMap(PROPERTYMAPKEY, null));
-      }
       viewer_.addOverlay(overlay);
    }
 
    void handleRemoveOverlay(Overlay overlay) {
-      profile_.getSettings(overlay.getClass()).putPropertyMap(PROPERTYMAPKEY,
-              overlay.getConfiguration());
       viewer_.removeOverlay(overlay);
    }
 
