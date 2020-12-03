@@ -110,36 +110,36 @@ public final class OverlaysInspectorPanelController
    }
 
    private void loadSettings(Iterable<OverlayPlugin> plugins) {
-    //Load the overlays from the profile.
-    List<PropertyMap> settings = profile_.getSettings(this.getClass()).getPropertyMapList(PROPERTYMAPKEY, (PropertyMap[]) null);
-    if (settings == null) {
-        return;
-    }
-    for (PropertyMap pMap : settings) {
-       for (OverlayPlugin p : plugins) { // We must loop through overlay plugins to determine if they are a match for this setting.
-          Overlay o = p.createOverlay();
-          if (pMap.getString(TITLEPMAPKEY, "loadFailed").equals(o.getTitle())) {  // Checking against Overlay 'Title; is the best way we have to link settings with an overlay.
-              PropertyMap config = pMap.getPropertyMap(CONFIGPMAPKEY, null);
-              o.setConfiguration(config);
-              o.setVisible(pMap.getBoolean(VISIBLEPMAPKEY, false));
-              viewer_.addOverlay(o);
-              break;
-          }
-       }
-    }
+      //Load the overlays from the profile.
+      List<PropertyMap> settings = profile_.getSettings(this.getClass()).getPropertyMapList(PROPERTYMAPKEY, (PropertyMap[]) null);
+      if (settings == null) {
+         return;
+      }
+      for (PropertyMap pMap : settings) {
+         for (OverlayPlugin p : plugins) { // We must loop through overlay plugins to determine if they are a match for this setting.
+            Overlay o = p.createOverlay();
+            if (pMap.getString(TITLEPMAPKEY, "loadFailed").equals(o.getTitle())) {  // Checking against Overlay 'Title; is the best way we have to link settings with an overlay.
+               PropertyMap config = pMap.getPropertyMap(CONFIGPMAPKEY, null);
+               o.setConfiguration(config);
+               o.setVisible(pMap.getBoolean(VISIBLEPMAPKEY, false));
+               viewer_.addOverlay(o);
+               break;
+            }
+         }
+      }
    }
    
    private void saveSettings() {
-       List<PropertyMap> configList = new ArrayList<>();
-       for (Overlay o : this.overlays_) {
-           PropertyMap map = new DefaultPropertyMap.Builder()
-                   .putPropertyMap(CONFIGPMAPKEY, o.getConfiguration())
-                   .putBoolean(VISIBLEPMAPKEY, o.isVisible())
-                   .putString(TITLEPMAPKEY, o.getTitle())
-                   .build();
-           configList.add(map);
-       }
-       profile_.getSettings(this.getClass()).putPropertyMapList(PROPERTYMAPKEY, configList);
+      List<PropertyMap> configList = new ArrayList<>();
+      for (Overlay o : this.overlays_) {
+         PropertyMap map = new DefaultPropertyMap.Builder()
+               .putPropertyMap(CONFIGPMAPKEY, o.getConfiguration())
+               .putBoolean(VISIBLEPMAPKEY, o.isVisible())
+               .putString(TITLEPMAPKEY, o.getTitle())
+               .build();
+         configList.add(map);
+      }
+      profile_.getSettings(this.getClass()).putPropertyMapList(PROPERTYMAPKEY, configList);
    }
    
    private void handleAddOverlay(OverlayPlugin plugin) {
