@@ -323,6 +323,11 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
               imageWidth, imageHeight);
    }
 
+   @Override
+   public Set<HashMap<String, Integer>> getStoredAxes() {
+      return storage_.getAxesSet();
+   }
+
    public boolean anythingAcquired() {
       return storage_ == null || !storage_.getAxesSet().isEmpty();
    }
