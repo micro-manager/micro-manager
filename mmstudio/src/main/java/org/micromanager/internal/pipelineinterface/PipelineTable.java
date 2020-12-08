@@ -94,7 +94,6 @@ public final class PipelineTable extends JTable {
       public Component getTableCellEditorComponent(JTable table,
             Object cellValue, boolean isSelected, int row, int column) {
 
-         @SuppressWarnings("unchecked")
          ConfiguratorWrapper configurator = (ConfiguratorWrapper) cellValue;
          configurator_ = configurator;
 
@@ -132,7 +131,6 @@ public final class PipelineTable extends JTable {
       if (i >= 0) {
          Object cellValue = getModel().getValueAt(i,
                PipelineTableModel.CONFIGURE_COLUMN);
-         @SuppressWarnings("unchecked")
          ConfiguratorWrapper processor = (ConfiguratorWrapper) cellValue;
          return processor;
       }
