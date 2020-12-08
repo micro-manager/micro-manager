@@ -58,7 +58,7 @@ public final class DefaultAnnotation implements Annotation {
                      PropertyMaps.builder().build());
             }
             // Load per-image annotations.
-            for (String key : data.getKeys()) {
+            for (String key : data.keySet()) {
                if (key.equals(GENERAL_KEY)) {
                   continue;
                }
@@ -70,7 +70,7 @@ public final class DefaultAnnotation implements Annotation {
                String def = key.substring(COORDS_KEY.length());
                try {
                   Coords coords = DefaultCoords.fromNormalizedString(def);
-                  imageAnnotations_.put(coords, data.getPropertyMap(key));
+                  imageAnnotations_.put(coords, data.getPropertyMap(key, null));
                }
                catch (IllegalArgumentException e) {
                   ReportingUtils.logError("Malformatted coordinate key \"" + def + "\"");
