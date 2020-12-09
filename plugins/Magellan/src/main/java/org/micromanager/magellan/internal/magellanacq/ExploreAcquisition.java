@@ -45,6 +45,8 @@ import org.micromanager.acqj.internal.acqengj.Engine;
 import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
 import org.micromanager.magellan.internal.channels.SingleChannelSetting;
 import org.micromanager.magellan.internal.gui.GUI;
+import org.micromanager.multiresstorage.MultiResMultipageTiffStorage;
+import org.micromanager.remote.RemoteViewerStorageAdapter;
 
 /**
  * A single time point acquisition that can dynamically expand in X,Y, and Z
@@ -127,6 +129,11 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
             callback.run(ex);
          }
       });
+   }
+
+   //Called by pycromanager
+   public MultiResMultipageTiffStorage getStorage() {
+      return dataSink_ == null ? null : ((RemoteViewerStorageAdapter) dataSink_).getStorage();
    }
 
    private void createXYPositions() {
