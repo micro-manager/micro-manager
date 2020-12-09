@@ -458,6 +458,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BDPathway", "DeviceAdapters
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SouthPort", "DeviceAdapters\SouthPort\SouthPort.vcxproj", "{9B71AD68-C43A-42C2-96E7-4113975D1C2A}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TeensySLM", "DeviceAdapters\TeesnySLM\TeensySLM.vcxproj", "{2289E020-8729-4785-8EEA-168303BF6A35}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -3167,6 +3169,18 @@ Global
 		{9B71AD68-C43A-42C2-96E7-4113975D1C2A}.Release|Win32.Build.0 = Release|Win32
 		{9B71AD68-C43A-42C2-96E7-4113975D1C2A}.Release|x64.ActiveCfg = Release|x64
 		{9B71AD68-C43A-42C2-96E7-4113975D1C2A}.Release|x64.Build.0 = Release|x64
+		{2289E020-8729-4785-8EEA-168303BF6A35}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{2289E020-8729-4785-8EEA-168303BF6A35}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{2289E020-8729-4785-8EEA-168303BF6A35}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2289E020-8729-4785-8EEA-168303BF6A35}.Debug|Win32.Build.0 = Debug|Win32
+		{2289E020-8729-4785-8EEA-168303BF6A35}.Debug|x64.ActiveCfg = Debug|x64
+		{2289E020-8729-4785-8EEA-168303BF6A35}.Debug|x64.Build.0 = Debug|x64
+		{2289E020-8729-4785-8EEA-168303BF6A35}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{2289E020-8729-4785-8EEA-168303BF6A35}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{2289E020-8729-4785-8EEA-168303BF6A35}.Release|Win32.ActiveCfg = Release|Win32
+		{2289E020-8729-4785-8EEA-168303BF6A35}.Release|Win32.Build.0 = Release|Win32
+		{2289E020-8729-4785-8EEA-168303BF6A35}.Release|x64.ActiveCfg = Release|x64
+		{2289E020-8729-4785-8EEA-168303BF6A35}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
