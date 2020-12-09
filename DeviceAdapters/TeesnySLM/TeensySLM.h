@@ -52,12 +52,12 @@ public:
       /**
        * Load the image into the SLM device adapter.
        */
-      int SetImage(unsigned char * pixels);
+      int SetImage(unsigned char * );
 
       /**
       * Load a 32-bit image into the SLM device adapter.
       */
-      int SetImage(unsigned int * pixels) {
+      int SetImage(unsigned int * ) {
 		return DEVICE_UNSUPPORTED_COMMAND;	
 	  }
 
@@ -69,19 +69,19 @@ public:
       /**
        * Command the SLM to display one 8-bit intensity.
        */
-      int SetPixelsTo(unsigned char intensity);
+      int SetPixelsTo(unsigned char );
 
       /**
        * Command the SLM to display one 32-bit color.
        */
-       int SetPixelsTo(unsigned char red, unsigned char green, unsigned char blue) {
+       int SetPixelsTo(unsigned char , unsigned char , unsigned char ) {
 	   		return DEVICE_UNSUPPORTED_COMMAND;	
 	   }
 
       /**
        * Command the SLM to turn off after a specified interval.
        */
-      int SetExposure(double interval_ms) {
+      int SetExposure(double ) {
 		  		return DEVICE_UNSUPPORTED_COMMAND;	
 	  }
 
@@ -139,7 +139,7 @@ public:
        * @param isSequenceable signals whether other sequence functions will work
        * @return errorcode (DEVICE_OK if no error)
        */
-      int IsSLMSequenceable(bool& isSequenceable) const {
+      int IsSLMSequenceable(bool& ) const {
 	   		return DEVICE_UNSUPPORTED_COMMAND;	
 	  }
 
@@ -148,7 +148,7 @@ public:
        * @param nrEvents max length of sequence
        * @return errorcode (DEVICE_OK if no error)
        */
-       int GetSLMSequenceMaxLength(long& nrEvents) {
+       int GetSLMSequenceMaxLength(long& ) {
 		   		return DEVICE_UNSUPPORTED_COMMAND;	
 	  }
 
@@ -189,7 +189,7 @@ public:
        * @param pixels An array of 8-bit pixels whose length matches that expected by the SLM.
        * @return errorcode (DEVICE_OK if no error)
        */
-       int AddToSLMSequence(const unsigned char * const pixels) {
+       int AddToSLMSequence(const unsigned char * const ) {
 		    		return DEVICE_UNSUPPORTED_COMMAND;	
 	   }
 
@@ -200,7 +200,7 @@ public:
        * @param pixels An array of 32-bit RGB pixels whose length matches that expected by the SLM.
        * @return errorcode (DEVICE_OK if no error)
        */
-       int AddToSLMSequence(const unsigned int * const pixels) {
+       int AddToSLMSequence(const unsigned int * const ) {
 	    		return DEVICE_UNSUPPORTED_COMMAND;	
 	   }
 
