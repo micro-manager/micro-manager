@@ -255,4 +255,11 @@ public final class CoreAutofocus implements AutofocusPlugin {
    public String getCopyright() {
       return "University of California, 2015";
    }
+
+   @Override
+   public void initialize() {
+      // not sure what needs to be done here.
+      // This call is mainly to inform software autofocus that the hardware changed,
+      // but we are hardware;)
+   }
 }

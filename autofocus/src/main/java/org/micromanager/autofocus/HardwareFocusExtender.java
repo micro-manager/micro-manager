@@ -22,7 +22,6 @@
 //
 package org.micromanager.autofocus;
 
-import com.google.common.eventbus.Subscribe;
 
 import ij.process.ImageProcessor;
 
@@ -32,7 +31,6 @@ import mmcorej.DeviceType;
 import org.micromanager.Studio;
 
 import org.micromanager.AutofocusPlugin;
-import org.micromanager.events.AutofocusPluginShouldInitializeEvent;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.PropertyItem;
@@ -132,11 +130,6 @@ public class HardwareFocusExtender extends AutofocusBase implements AutofocusPlu
       }
 
       return super.getProperties();
-   }
-
-   @Subscribe
-   public void onInitialize(AutofocusPluginShouldInitializeEvent event) {
-      loadSettings();
    }
 
    @Override
