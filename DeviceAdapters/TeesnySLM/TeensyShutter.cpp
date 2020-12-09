@@ -1,4 +1,3 @@
-//#include "TwoPhoton.h"
 #include <sstream>
 #include "../../MMDevice/DeviceUtils.h"
 #include "../../MMDevice/MMDevice.h"
@@ -81,7 +80,7 @@ int TeensyShutter::Initialize()
 }
 
 int TeensyShutter::SetOpen(bool open) {
-	if (deviceName1_ != "Undefined")
+	if (!strcmp(deviceName1_, "Undefined"))
    {
 	  const char* val = open ? "1" : "0";
 	  int ret = GetCoreCallback()->SetDeviceProperty(deviceName1_, MM::g_Keyword_State, val);
@@ -89,7 +88,7 @@ int TeensyShutter::SetOpen(bool open) {
          return ret;
    }
 
-   if (deviceName2_ != "Undefined")
+   if (!strcmp(deviceName2_, "Undefined"))
    {
       const char* val2 = open ? "1" : "0";
 	  int ret2 = GetCoreCallback()->SetDeviceProperty(deviceName2_, MM::g_Keyword_State, val2);
@@ -133,7 +132,7 @@ int TeensyShutter::OnDevice2Name(MM::PropertyBase* pProp, MM::ActionType pAct)
 int TeensyShutter::GetOpen(bool& open) {
    bool open1(false);
 
-   if (deviceName1_ != "Undefined")
+   if (!strcmp(deviceName1_, "Undefined"))
    {
 	   char value[MM::MaxStrLength];
        int ret = GetCoreCallback()->GetDeviceProperty(deviceName1_, MM::g_Keyword_State,value);
@@ -144,7 +143,7 @@ int TeensyShutter::GetOpen(bool& open) {
 
    bool open2;
 
-   if (deviceName2_ != "Undefined")
+   if (!strcmp(deviceName2_, "Undefined"))
    {
       char value2[MM::MaxStrLength];
        int ret2 = GetCoreCallback()->GetDeviceProperty(deviceName1_, MM::g_Keyword_State,value2);
