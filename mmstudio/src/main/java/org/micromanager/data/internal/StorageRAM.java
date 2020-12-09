@@ -121,7 +121,7 @@ public final class StorageRAM implements RewritableStorage {
    }
 
    @Override
-   public Integer getMaxIndex(String axis) {
+   public int getMaxIndex(String axis) {
       return maxIndex_.getIndex(axis);
    }
 
