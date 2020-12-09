@@ -205,7 +205,7 @@ public class GUI extends javax.swing.JFrame {
                @Override
                public void run() {
                   try {
-                     ij.plugin.BrowserLauncher.openURL("https://github.com/henrypinkard/micro-manager/issues");
+                     ij.plugin.BrowserLauncher.openURL("https://github.com/micro-manager/pycro-manager/issues");
                   } catch (IOException ex) {
                      Log.log("couldn't open citation link");
                   }

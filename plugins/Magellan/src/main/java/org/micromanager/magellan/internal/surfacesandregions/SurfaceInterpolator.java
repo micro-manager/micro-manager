@@ -216,6 +216,22 @@ public abstract class SurfaceInterpolator extends XYFootprint {
     */
    public boolean testPositionRelativeToSurface(Point2D.Double[] positionCorners,
            SurfaceInterpolator surface, double zPos, int mode, boolean extrapolate) {
+      boolean towardsSampleIsPositive;
+      try {
+         String zDevice = Magellan.getCore().getFocusDevice();
+         int dir = Magellan.getCore().getFocusDirection(zDevice);
+
+         if (dir > 0) {
+            towardsSampleIsPositive = true;
+         } else if (dir < 0) {
+            towardsSampleIsPositive = false;
+         } else {
+            throw new Exception();
+         }
+      } catch (Exception e) {
+         Log.log("Couldn't get focus direction of Z drive. Configre using Tools--Hardware Configuration Wizard");
+         throw new RuntimeException();
+      }
       //First check position corners before going into a more detailed set of test points
       for (Point2D.Double point : positionCorners) {
          float interpVal;
@@ -227,22 +243,6 @@ public abstract class SurfaceInterpolator extends XYFootprint {
             }
          } else {
             interpVal = surface.getCurentInterpolation().getInterpolatedValue(point.x, point.y);
-         }
-         boolean towardsSampleIsPositive;
-         try {
-            String zDevice = Magellan.getCore().getFocusDevice();
-            int dir = Magellan.getCore().getFocusDirection(zDevice);
-
-            if (dir > 0) {
-               towardsSampleIsPositive = true;
-            } else if (dir < 0) {
-               towardsSampleIsPositive = false;
-            } else {
-               throw new Exception();
-            }
-         } catch (Exception e) {
-            Log.log("Couldn't get focus direction of Z drive. Configre using Tools--Hardware Configuration Wizard");
-            throw new RuntimeException();
          }
          if ((towardsSampleIsPositive && mode == ABOVE_SURFACE && zPos >= interpVal)
                  || (towardsSampleIsPositive && mode == BELOW_SURFACE && zPos <= interpVal)
@@ -286,10 +286,10 @@ public abstract class SurfaceInterpolator extends XYFootprint {
             } else {
                interpVal = surface.getCurentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y);
             }
-            if (( mode == ABOVE_SURFACE && zPos >= interpVal)
-                    || (mode == BELOW_SURFACE && zPos <= interpVal)
-                    || ( mode == ABOVE_SURFACE && zPos <= interpVal)
-                    || ( mode == BELOW_SURFACE) && zPos >= interpVal) {
+            if ((towardsSampleIsPositive && mode == ABOVE_SURFACE && zPos >= interpVal)
+                    || (towardsSampleIsPositive && mode == BELOW_SURFACE && zPos <= interpVal)
+                    || (!towardsSampleIsPositive && mode == ABOVE_SURFACE && zPos <= interpVal)
+                    || (!towardsSampleIsPositive && mode == BELOW_SURFACE) && zPos >= interpVal) {
                return false;
             }
          }
