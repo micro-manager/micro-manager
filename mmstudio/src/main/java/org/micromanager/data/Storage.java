@@ -97,7 +97,7 @@ public interface Storage {
     * @return Largest stored position along the specified axis or -1 when no images
     * are found on the given axis
     */
-   public Integer getMaxIndex(String axis);
+   public int getMaxIndex(String axis);
 
    /**
     * Return a List of all axis names for Images we know about.
