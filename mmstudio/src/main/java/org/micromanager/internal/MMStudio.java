@@ -72,6 +72,7 @@ import org.micromanager.data.internal.DefaultDataManager;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.display.internal.DefaultDisplayManager;
+import org.micromanager.events.AutofocusPluginShouldInitializeEvent;
 import org.micromanager.events.ChannelExposureEvent;
 import org.micromanager.events.EventManager;
 import org.micromanager.events.ExposureChangedEvent;
@@ -1376,6 +1377,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
             coreCallback_.setIgnoring(false);
             GUIUtils.preventDisplayAdapterChangeExceptions();
             afMgr_.initialize();
+            // in case 3rdparties use this deprecated code:
+            events().post(new AutofocusPluginShouldInitializeEvent());
             FileDialogs.storePath(FileDialogs.MM_CONFIG_FILE, new File(sysConfigFile_));
          }
       } catch (final Exception err) {
