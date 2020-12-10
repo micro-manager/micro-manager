@@ -314,24 +314,6 @@ public final class InspectorController
       updateDataViewerChooserImpl(viewers);
    }
 
-   private void showPanelsForDataViewer(DataViewer viewer) {
-      //Detach all controllers from the current viewer.
-      for (SectionInfo sectionInfo : sections_) {
-         sectionInfo.inspectorPanelController_.detachDataViewer();
-      }
-      
-      if (viewer != null && !viewer.isClosed()) {
-         for (SectionInfo secInfo : sections_) {
-            if (secInfo.plugin_.isApplicableToDataViewer(viewer)) {
-               secInfo.inspectorSectionController_.setEnabled(true);
-               secInfo.inspectorPanelController_.attachDataViewer(viewer);
-            } else {
-               secInfo.inspectorSectionController_.setEnabled(false);
-            }
-         }
-      }
-   }
-
    void inspectorSectionWillChangeHeight(InspectorSectionController section) {
    }
 
@@ -452,14 +434,25 @@ public final class InspectorController
       }
       if (viewer != viewer_) {
          frame_.setTitle(String.format("Inspect \"%s\"", viewer.getName()));
-         showPanelsForDataViewer(viewer);
+         
+         for (SectionInfo secInfo : sections_) { // attach each individual section to the viewer.
+            if (secInfo.plugin_.isApplicableToDataViewer(viewer)) {
+               secInfo.inspectorSectionController_.setEnabled(true);
+               secInfo.inspectorPanelController_.attachDataViewer(viewer);
+            } else {
+               secInfo.inspectorSectionController_.setEnabled(false);
+            }
+         }
+         
          viewer_ = viewer;
       }
    }
 
    private void detachFromDataViewer() {
       frame_.setTitle(String.format("Inspector: No Image"));
-      showPanelsForDataViewer(null);
+      for (SectionInfo sectionInfo : sections_) { //Detach all controllers from the current viewer.
+         sectionInfo.inspectorPanelController_.detachDataViewer();
+      }
    }
 
    @Override
