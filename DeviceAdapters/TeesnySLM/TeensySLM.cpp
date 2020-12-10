@@ -312,8 +312,7 @@ int CTeensySLM::OnShutterOpen(MM::PropertyBase* pProp, MM::ActionType pAct)
    else if (pAct == MM::AfterSet)
    {
       pProp->Get(shutterOpen_);
-	  int ret = EnableShutter((bool) shutterOpen_);
-	  return ret;
+	   return EnableShutter(shutterOpen_ != 0);
    }
    return DEVICE_OK;
 }
