@@ -105,7 +105,6 @@ public final class OverlaysInspectorPanelController
 
    private void loadSettings(DisplayWindow viewer) {
       //Load the overlays from the profile.
-      System.out.println("Load");
       String providerName = viewer.getDataProvider().getName();
       List<PropertyMap> settings = profile_.getSettings(this.getClass()).getPropertyMapList(providerName, (PropertyMap[]) null);
       if (settings == null) {
@@ -126,7 +125,6 @@ public final class OverlaysInspectorPanelController
    }
    
    private void saveSettings(DisplayWindow viewer) {
-      System.out.println("Save");
       List<PropertyMap> configList = new ArrayList<>();
       for (Overlay o : this.overlays_) {
          PropertyMap map = new DefaultPropertyMap.Builder()
@@ -194,7 +192,6 @@ public final class OverlaysInspectorPanelController
 
    @Override
    public void attachDataViewer(DataViewer viewer) {
-      System.out.println("Attach");
       Preconditions.checkState(viewer_ == null);
       Preconditions.checkArgument(viewer instanceof DisplayWindow);
       viewer_ = (DisplayWindow) viewer;
@@ -204,15 +201,13 @@ public final class OverlaysInspectorPanelController
 
    @Override
    public void detachDataViewer() {
-      System.out.println("Detach");
       if (viewer_ != null) {
          saveSettings(viewer_);
-         viewer_.unregisterForEvents(this); // Do this before `handleRemoveOverlay` is called so that we don't get concurrent modification of the `overlays_` list due to events.
          List<Overlay> overlays = new ArrayList<>(overlays_);  // We iterate over a copy of the overlays_ list to avoid causing a ConcurrentModificationException by removing items from the list while iterating.
          for (Overlay o : overlays) { //We can't manually remove the overlays from `overlays_` we need to allow the `viewer_` to fire off the relevant events so that everything is properly handled.
-            this.handleRemoveOverlay(o);
-            this.removeConfigPanel(o);
+            this.handleRemoveOverlay(o);  // The viewer will fire an event that will also remove the UI components from the inspector.
          }
+         viewer_.unregisterForEvents(this);
          viewer_ = null;
       }
    }
