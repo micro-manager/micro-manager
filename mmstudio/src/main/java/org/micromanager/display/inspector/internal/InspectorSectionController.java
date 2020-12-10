@@ -44,6 +44,7 @@ final class InspectorSectionController implements InspectorPanelListener {
    private final JPanel headerPanel_;
    private final JLabel headerLabel_;
    private final PopupButton gearButton_;
+   private boolean mouseClickenabled_ = true;
 
    public static InspectorSectionController create(
          InspectorController inspectorController,
@@ -93,7 +94,9 @@ final class InspectorSectionController implements InspectorPanelListener {
       headerPanel_.addMouseListener(new MouseAdapter() {
          @Override
          public void mouseClicked(MouseEvent e) {
-            setExpanded(!isExpanded());
+            if (mouseClickenabled_) {
+               setExpanded(!isExpanded());
+            }
          }
       });
 
@@ -164,5 +167,21 @@ final class InspectorSectionController implements InspectorPanelListener {
    @Override
    public void inspectorPanelDidChangeTitle(InspectorPanelController controller) {
       headerLabel_.setText(controller.getTitle());
+   }
+   
+   public void setEnabled(boolean enabled) {
+      // When the section is disabled it will collapse and will not be able to be expanded.
+      if (enabled) {
+         mouseClickenabled_ = true;
+         headerLabel_.setEnabled(true);
+      } else {
+         this.setExpanded(false);
+         mouseClickenabled_ = false; 
+         headerLabel_.setEnabled(false);
+      }
+   }
+   
+   public boolean isEnabled() {
+      return this.headerPanel_.isEnabled();
    }
 }
