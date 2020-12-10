@@ -3,10 +3,10 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Controls the Elliptec sliders ELL6 and ELL9 from Thorlabs 
+// DESCRIPTION:   Controls the Elliptec sliders ELL6, ELL9 and ELL17_20
 // COPYRIGHT:     EMBL
 // LICENSE:       LGPL
-// AUTHOR:        Joran Deschamps and Anindita Dasgupta, EMBL 2018
+// AUTHOR:        Joran Deschamps and Anindita Dasgupta, EMBL
 //-----------------------------------------------------------------------------
 
 
@@ -25,23 +25,6 @@
 #define ERR_UNKNOWN_STATE 105
 
 // device specific errors
-// ELL17/20
-#define ERR_ST_COMMUNICATION_TIME_OUT 1
-#define ERR_ST_MECHANICAL_TIME_OUT 2
-#define ERR_ST_COMMAND_ERROR_OR_NOT_SUPPORTED 3
-#define ERR_ST_VALUE_OUT_OF_RANGE 4
-#define ERR_ST_MODULE_ISOLATED 5
-#define ERR_ST_MODULE_OUT_OF_ISOLATION 6
-#define ERR_ST_INITIALIZING_ERROR 7
-#define ERR_ST_THERMAL_ERROR 8
-#define ERR_ST_BUSY 9
-#define ERR_ST_SENSOR_ERROR 10
-#define ERR_ST_MOTOR_ERROR 11
-#define ERR_ST_OUT_OF_RANGE 12
-#define ERR_ST_OVER_CURRENT_ERROR 13
-#define ERR_ST_UNKNOWN_ERROR 14
-
-// ELL6/9
 #define ERR_COMMUNICATION_TIME_OUT 201
 #define ERR_MECHANICAL_TIME_OUT 202
 #define ERR_COMMAND_ERROR_OR_NOT_SUPPORTED 203
@@ -58,18 +41,18 @@
 #define ERR_UNKNOWN_ERROR 214
 
 
-class ELL20 : public CStageBase<ELL20>
+class ELL17_20 : public CStageBase<ELL17_20>
 {
 public:
-    ELL20();
-    ~ELL20();
+    ELL17_20();
+    ~ELL17_20();
 	
 	// convenience functions
 	bool isError(std::string);
 	int getErrorCode(std::string message);
 	std::string removeLineFeed(std::string answer);
 	std::string removeCommandFlag(std::string message);
-	int getID(std::string* id);
+	int getID(std::string* id, int* travelRange, double* pulsesPerMU);
 
 	std::string positionFromValue(int pos);
 	int positionFromHex(std::string pos);
@@ -112,6 +95,9 @@ private:
 	std::string channel_;
 	bool initialized_;
 	bool busy_;
+
+	int travelRange_;
+	double pulsesPerMU_;
 };
 
 class ELL9 : public CStateDeviceBase<ELL9>
