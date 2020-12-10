@@ -195,9 +195,6 @@ public final class OverlaysInspectorPanelController
       Preconditions.checkArgument(viewer instanceof DisplayWindow);
       viewer_ = (DisplayWindow) viewer;
       viewer_.registerForEvents(this);
-      for (Overlay overlay : viewer_.getOverlays()) {
-         addConfigPanel(overlay);
-      }
       loadSettings(plugins_);
    }
 
