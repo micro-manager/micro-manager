@@ -208,7 +208,8 @@ public final class OverlaysInspectorPanelController
       if (viewer_ != null) {
          saveSettings(viewer_);
          viewer_.unregisterForEvents(this); // Do this before `handleRemoveOverlay` is called so that we don't get concurrent modification of the `overlays_` list due to events.
-         for (Overlay o : overlays_) { //We can't manually remove the overlays from `overlays_` we need to allow the `viewer_` to fire off the relevant events so that everything is properly handled.
+         List<Overlay> overlays = new ArrayList<>(overlays_);  // We iterate over a copy of the overlays_ list to avoid causing a ConcurrentModificationException by removing items from the list while iterating.
+         for (Overlay o : overlays) { //We can't manually remove the overlays from `overlays_` we need to allow the `viewer_` to fire off the relevant events so that everything is properly handled.
             this.handleRemoveOverlay(o);
             this.removeConfigPanel(o);
          }
