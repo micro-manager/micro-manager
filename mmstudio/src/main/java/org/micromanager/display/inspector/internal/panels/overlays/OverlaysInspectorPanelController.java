@@ -208,12 +208,14 @@ public final class OverlaysInspectorPanelController
 
    @Override
    public void detachDataViewer() {
-      viewer_.unregisterForEvents(this);
-      for (Overlay o : overlays_) { //We can't manually remove the overlays from `overlays_` we need to allow the `viewer_` to fire off the relevant events so that everything is properly handled.
-         this.handleRemoveOverlay(o);
+      if (viewer_ != null) {
+         viewer_.unregisterForEvents(this);
+         for (Overlay o : overlays_) { //We can't manually remove the overlays from `overlays_` we need to allow the `viewer_` to fire off the relevant events so that everything is properly handled.
+            this.handleRemoveOverlay(o);
+         }
+         viewer_ = null;
+         this.saveSettings();
       }
-      viewer_ = null;
-      this.saveSettings();
    }
 
    @Override
