@@ -45,7 +45,6 @@ public final class OverlaysInspectorPanelController
    private final JPopupMenu addOverlayMenu_;
 
    private final UserProfile profile_;
-   private static final String PROPERTYMAPKEY = "SavedOverlays";
    private static final String CONFIGPMAPKEY = "OverlayConfig";
    private static final String VISIBLEPMAPKEY = "OverlayVisible";
    private static final String TITLEPMAPKEY = "OverlayTitle";
@@ -104,27 +103,30 @@ public final class OverlaysInspectorPanelController
                   height("pref:pref:pref"));
    }
 
-   private void loadSettings(Iterable<OverlayPlugin> plugins) {
+   private void loadSettings(DisplayWindow viewer) {
       //Load the overlays from the profile.
-      List<PropertyMap> settings = profile_.getSettings(this.getClass()).getPropertyMapList(PROPERTYMAPKEY, (PropertyMap[]) null);
+      System.out.println("Load");
+      String providerName = viewer.getDataProvider().getName();
+      List<PropertyMap> settings = profile_.getSettings(this.getClass()).getPropertyMapList(providerName, (PropertyMap[]) null);
       if (settings == null) {
          return;
       }
       for (PropertyMap pMap : settings) {
-         for (OverlayPlugin p : plugins) { // We must loop through overlay plugins to determine if they are a match for this setting.
+         for (OverlayPlugin p : plugins_) { // We must loop through overlay plugins to determine if they are a match for this setting.
             Overlay o = p.createOverlay();
             if (pMap.getString(TITLEPMAPKEY, "loadFailed").equals(o.getTitle())) {  // Checking against Overlay 'Title; is the best way we have to link settings with an overlay.
                PropertyMap config = pMap.getPropertyMap(CONFIGPMAPKEY, null);
                o.setConfiguration(config);
                o.setVisible(pMap.getBoolean(VISIBLEPMAPKEY, false));
-               viewer_.addOverlay(o);
+               viewer_.addOverlay(o); // The viewer will fire an event that will trigger adding the UI components to the inspector
                break;
             }
          }
       }
    }
    
-   private void saveSettings() {
+   private void saveSettings(DisplayWindow viewer) {
+      System.out.println("Save");
       List<PropertyMap> configList = new ArrayList<>();
       for (Overlay o : this.overlays_) {
          PropertyMap map = new DefaultPropertyMap.Builder()
@@ -134,7 +136,8 @@ public final class OverlaysInspectorPanelController
                .build();
          configList.add(map);
       }
-      profile_.getSettings(this.getClass()).putPropertyMapList(PROPERTYMAPKEY, configList);
+      String providerName = viewer.getDataProvider().getName();
+      profile_.getSettings(this.getClass()).putPropertyMapList(providerName, configList);
    }
    
    private void handleAddOverlay(OverlayPlugin plugin) {
@@ -191,22 +194,25 @@ public final class OverlaysInspectorPanelController
 
    @Override
    public void attachDataViewer(DataViewer viewer) {
+      System.out.println("Attach");
       Preconditions.checkState(viewer_ == null);
       Preconditions.checkArgument(viewer instanceof DisplayWindow);
       viewer_ = (DisplayWindow) viewer;
       viewer_.registerForEvents(this);
-      loadSettings(plugins_);
+      loadSettings(viewer_);
    }
 
    @Override
    public void detachDataViewer() {
+      System.out.println("Detach");
       if (viewer_ != null) {
-         viewer_.unregisterForEvents(this);
+         saveSettings(viewer_);
+         viewer_.unregisterForEvents(this); // Do this before `handleRemoveOverlay` is called so that we don't get concurrent modification of the `overlays_` list due to events.
          for (Overlay o : overlays_) { //We can't manually remove the overlays from `overlays_` we need to allow the `viewer_` to fire off the relevant events so that everything is properly handled.
             this.handleRemoveOverlay(o);
+            this.removeConfigPanel(o);
          }
          viewer_ = null;
-         this.saveSettings();
       }
    }
 
