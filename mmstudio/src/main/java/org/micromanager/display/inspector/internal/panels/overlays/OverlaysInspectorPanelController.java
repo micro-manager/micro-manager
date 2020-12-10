@@ -59,23 +59,23 @@ public final class OverlaysInspectorPanelController
          new ArrayList<>();
 
    private DisplayWindow viewer_;
-
+   private final List<OverlayPlugin> plugins_;
    public static OverlaysInspectorPanelController create(Studio studio) {
       return new OverlaysInspectorPanelController(studio);
    }
 
    private OverlaysInspectorPanelController(Studio studio) {
       profile_ = studio.profile();
-      final List<OverlayPlugin> plugins = new ArrayList<>(
+      plugins_ = new ArrayList<>(
             studio.plugins().getOverlayPlugins().values());
-      Collections.sort(plugins, (OverlayPlugin o1, OverlayPlugin o2) -> {
+      Collections.sort(plugins_, (OverlayPlugin o1, OverlayPlugin o2) -> {
          Plugin p1 = o1.getClass().getAnnotation(Plugin.class);
          Plugin p2 = o2.getClass().getAnnotation(Plugin.class);
          return -Double.compare(p1.priority(), p2.priority());
       });
 
       addOverlayMenu_ = new JPopupMenu();
-      for (final OverlayPlugin plugin : plugins) {
+      for (final OverlayPlugin plugin : plugins_) {
          String name = plugin.getClass().getAnnotation(Plugin.class).name();
          JMenuItem item = new JMenuItem(name);
          item.addActionListener((ActionEvent e) -> {
@@ -102,11 +102,6 @@ public final class OverlaysInspectorPanelController
             new CC().gapBefore("push").gapAfter("rel").
                   gapY("rel", "rel").
                   height("pref:pref:pref"));
-      
-       SwingUtilities.invokeLater(() -> {
-           loadSettings(plugins); // This prevents a weird error due to loading before the UI is complete.
-       });
-
    }
 
    private void loadSettings(Iterable<OverlayPlugin> plugins) {
@@ -200,10 +195,10 @@ public final class OverlaysInspectorPanelController
       Preconditions.checkArgument(viewer instanceof DisplayWindow);
       viewer_ = (DisplayWindow) viewer;
       viewer_.registerForEvents(this);
-
       for (Overlay overlay : viewer_.getOverlays()) {
          addConfigPanel(overlay);
       }
+      loadSettings(plugins_);
    }
 
    @Override

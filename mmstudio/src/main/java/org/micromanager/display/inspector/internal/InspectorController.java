@@ -52,7 +52,6 @@ import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.display.internal.event.InspectorDidCloseEvent;
 import org.micromanager.internal.utils.EventBusExceptionLogger;
-import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.scijava.plugin.Plugin;
