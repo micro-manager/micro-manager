@@ -130,21 +130,22 @@ public final class CommentsInspectorPanelController
 
    @Override
    public void detachDataViewer() {
-      Preconditions.checkState(viewer_ != null);
-      savePlaneComments();
-      saveSummaryComments();
-      viewer_.unregisterForEvents(this);
-      viewer_ = null;
-      programmaticallySettingText_ = true;
-      try {
-         summaryTextArea_.setText(null);
-         planeTextArea_.setText(null);
+      if (viewer_ != null) {
+         savePlaneComments();
+         saveSummaryComments();
+         viewer_.unregisterForEvents(this);
+         viewer_ = null;
+         programmaticallySettingText_ = true;
+         try {
+            summaryTextArea_.setText(null);
+            planeTextArea_.setText(null);
+         }
+         finally {
+            programmaticallySettingText_ = false;
+         }
+         summaryTextArea_.setEnabled(false);
+         planeTextArea_.setEnabled(false);
       }
-      finally {
-         programmaticallySettingText_ = false;
-      }
-      summaryTextArea_.setEnabled(false);
-      planeTextArea_.setEnabled(false);
    }
 
    @Override

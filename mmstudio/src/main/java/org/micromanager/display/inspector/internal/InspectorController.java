@@ -52,7 +52,6 @@ import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.display.internal.event.InspectorDidCloseEvent;
 import org.micromanager.internal.utils.EventBusExceptionLogger;
-import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.scijava.plugin.Plugin;
@@ -188,14 +187,49 @@ public final class InspectorController
             JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
       scrollPane_.setBorder(BorderFactory.createEmptyBorder());
 
+      // Initialize Sections
+      List<InspectorPanelPlugin> plugins = new ArrayList<InspectorPanelPlugin>(
+      studio_.plugins().getInspectorPlugins().values());
+      Collections.sort(plugins, new Comparator<InspectorPanelPlugin>() {
+         @Override
+         public int compare(InspectorPanelPlugin o1, InspectorPanelPlugin o2) {
+            Plugin p1 = o1.getClass().getAnnotation(Plugin.class);
+            Plugin p2 = o2.getClass().getAnnotation(Plugin.class);
+            return -Double.compare(p1.priority(), p2.priority());
+         }
+      });
+      for (InspectorPanelPlugin plugin : plugins) {
+         InspectorPanelController panelController = plugin.createPanelController(studio_);
+         InspectorSectionController section = InspectorSectionController.create(this, panelController);
+         panelController.addInspectorPanelListener(section);
+         SectionInfo secInfo = new SectionInfo(panelController, section, plugin);
+         sections_.add(secInfo);
+      }
+      
+      sectionsPane_ = VerticalMultiSplitPane.create(sections_.size(), true);
+      for (int i = 0; i < sections_.size(); ++i) {
+         InspectorSectionController sectionController = 
+                 sections_.get(i).inspectorSectionController_;
+         sectionsPane_.setComponentAtIndex(i,
+               sectionController.getSectionPanel());
+         sectionsPane_.setComponentResizeEnabled(i,
+               sectionController.isVerticallyResizableByUser() &&
+               sectionController.isExpanded());
+      }
+      scrollPane_.setViewportView(sectionsPane_);
+      
       frame_.add(headerPanel_, new CC().growX().pushX().wrap());
       frame_.add(scrollPane_, new CC().grow().push().wrap());
 
       frame_.pack();
 
-      // The frame's minimum size will need to be updated when there are panels
-      // inserted, but for now the packed size is the minimum.
-      frame_.setMinimumSize(frame_.getPreferredSize());
+      WindowPositioning.setUpBoundsMemory(frame_, InspectorController.class, null);
+
+      frame_.setMinimumSize(new Dimension(frame_.getPreferredSize().width + 16,
+            frame_.getMinimumSize().height));
+      frame_.setSize(
+            Math.max(frame_.getWidth(), frame_.getMinimumSize().width),
+            frame_.getHeight());
    }
 
    @Override
@@ -278,77 +312,6 @@ public final class InspectorController
       List<DataViewer> viewers = viewerCollection_.getAllDataViewers();
       viewers.remove(viewer);
       updateDataViewerChooserImpl(viewers);
-   }
-
-   private void showPanelsForDataViewer(DataViewer viewer) {
-      // TODO We need to store and reuse panels, because their height should
-      // not change when we reattach to another image.
-      // TODO Also each panel needs to detach from previous viewer
-
-
-      for (SectionInfo sectionInfo : sections_) {
-         sectionInfo.inspectorPanelController_.detachDataViewer();
-      }
-      sections_.clear();
-      
-      if (viewer != null && !viewer.isClosed()) {
-         List<InspectorPanelPlugin> plugins = new ArrayList<InspectorPanelPlugin>(
-               studio_.plugins().getInspectorPlugins().values());
-         Collections.sort(plugins, new Comparator<InspectorPanelPlugin>() {
-            @Override
-            public int compare(InspectorPanelPlugin o1, InspectorPanelPlugin o2) {
-               Plugin p1 = o1.getClass().getAnnotation(Plugin.class);
-               Plugin p2 = o2.getClass().getAnnotation(Plugin.class);
-               return -Double.compare(p1.priority(), p2.priority());
-            }
-         });
-
-         // This feels like a ball of tangled up wire:
-         for (InspectorPanelPlugin plugin : plugins) {
-            if (plugin.isApplicableToDataViewer(viewer)) {
-               SectionInfo locatedSection = null;
-               for (SectionInfo si : sections_) {
-                     if (si.plugin_.equals(plugin)) {
-                        locatedSection = si;
-                  }
-               }
-               if (locatedSection == null) {
-                  InspectorPanelController panelController
-                          = plugin.createPanelController(studio_);
-                  InspectorSectionController section
-                          = InspectorSectionController.create(this, panelController);
-                  panelController.addInspectorPanelListener(section);
-                  locatedSection = new SectionInfo(panelController, section, plugin);
-               }
-               locatedSection.inspectorPanelController_.attachDataViewer(viewer);
-               sections_.add(locatedSection);
-            }
-         }
-      }
-
-
-      sectionsPane_ = VerticalMultiSplitPane.create(sections_.size(), true);
-      for (int i = 0; i < sections_.size(); ++i) {
-         InspectorSectionController sectionController = 
-                 sections_.get(i).inspectorSectionController_;
-         sectionsPane_.setComponentAtIndex(i,
-               sectionController.getSectionPanel());
-         sectionsPane_.setComponentResizeEnabled(i,
-               sectionController.isVerticallyResizableByUser() &&
-               sectionController.isExpanded());
-      }
-      scrollPane_.setViewportView(sectionsPane_);
-
-      GraphicsConfiguration config = GUIUtils.getGraphicsConfigurationContaining(1, 1);
-      // TODO Set initial (factory default) position of frame
-      WindowPositioning.setUpBoundsMemory(frame_, InspectorController.class, null);
-      // TODO Attach MM menus to frame
-
-      frame_.setMinimumSize(new Dimension(frame_.getPreferredSize().width + 16,
-            frame_.getMinimumSize().height));
-      frame_.setSize(
-            Math.max(frame_.getWidth(), frame_.getMinimumSize().width),
-            frame_.getHeight());
    }
 
    void inspectorSectionWillChangeHeight(InspectorSectionController section) {
@@ -471,14 +434,25 @@ public final class InspectorController
       }
       if (viewer != viewer_) {
          frame_.setTitle(String.format("Inspect \"%s\"", viewer.getName()));
-         showPanelsForDataViewer(viewer);
+         
+         for (SectionInfo secInfo : sections_) { // attach each individual section to the viewer.
+            if (secInfo.plugin_.isApplicableToDataViewer(viewer)) {
+               secInfo.inspectorSectionController_.setEnabled(true);
+               secInfo.inspectorPanelController_.attachDataViewer(viewer);
+            } else {
+               secInfo.inspectorSectionController_.setEnabled(false);
+            }
+         }
+         
          viewer_ = viewer;
       }
    }
 
    private void detachFromDataViewer() {
       frame_.setTitle(String.format("Inspector: No Image"));
-      showPanelsForDataViewer(null);
+      for (SectionInfo sectionInfo : sections_) { //Detach all controllers from the current viewer.
+         sectionInfo.inspectorPanelController_.detachDataViewer();
+      }
    }
 
    @Override

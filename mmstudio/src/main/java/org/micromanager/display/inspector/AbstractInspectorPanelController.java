@@ -95,7 +95,7 @@ public abstract class AbstractInspectorPanelController
    public abstract void attachDataViewer(DataViewer viewer);
 
    /**
-    * Detach from any currently attached data viewer.
+    * Detach from any currently attached data viewer. This method should not throw an exception if a viewer is not yet attached.
     */
    @Override
    public abstract void detachDataViewer();
