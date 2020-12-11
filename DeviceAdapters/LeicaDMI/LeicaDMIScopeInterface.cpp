@@ -200,6 +200,15 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
       command.str("");
    }
 
+   // Suppress event reporting for T-House
+   if (scopeModel_->IsDeviceAvailable(g_T_House)) {
+	   command << g_T_House << "003 0";
+	   ret = GetAnswer(device, core, command.str().c_str(), answer);
+	   if (ret != DEVICE_OK)
+		   return ret;
+	   command.str("");
+   }
+
    // Suppress event reporting for DIC Turret
    if (scopeModel_->IsDeviceAvailable(g_DIC_Turret)) {
       command << g_DIC_Turret << "003 0";
@@ -313,6 +322,13 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
       ret = GetSidePortInfo(device, core);
       if( DEVICE_OK != ret)
          return ret;
+   }
+
+   if (scopeModel_->IsDeviceAvailable(g_T_House))
+   {
+	   ret = GetTHouseInfo(device, core);
+	   if (DEVICE_OK != ret)
+		   return ret;
    }
 
    if (scopeModel_->IsDeviceAvailable(g_TL_Polarizer)) {
@@ -434,6 +450,15 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
       if (ret != DEVICE_OK)
          return ret;
       command.str("");
+   }
+
+   // Start event reporting for T-House
+   if (scopeModel_->IsDeviceAvailable(g_T_House)) {
+	   command << g_T_House << "003 1";
+	   ret = GetAnswer(device, core, command.str().c_str(), answer);
+	   if (ret != DEVICE_OK)
+		   return ret;
+	   command.str("");
    }
 
    // Start event reporting for Polarizer
@@ -587,6 +612,14 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
       if (ret != DEVICE_OK)
          return ret;
       command.str("");
+   }
+
+   if (scopeModel_->IsDeviceAvailable(g_T_House)) {
+	   command << g_T_House << "023";
+	   ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
+	   if (ret != DEVICE_OK)
+		   return ret;
+	   command.str("");
    }
 
    if (scopeModel_->IsDeviceAvailable(g_DIC_Turret)) {
@@ -1683,6 +1716,49 @@ int LeicaScopeInterface::GetSidePortInfo(MM::Device& device, MM::Core& core)
 
 }
 
+int LeicaScopeInterface::GetTHouseInfo(MM::Device& device, MM::Core& core)
+{
+	std::ostringstream command;
+	std::string answer, token;
+
+	// Get minimum position
+	command << g_T_House << "025";
+	int ret = GetAnswer(device, core, command.str().c_str(), answer);
+	if (ret != DEVICE_OK)
+		return ret;
+	command.str("");
+
+	std::stringstream ts(answer);
+	int minPos;
+	ts >> minPos;
+	ts >> minPos;
+	if (0 < minPos)
+		scopeModel_->sidePort_.SetMinPosition(minPos);
+	ts.clear();
+	ts.str("");
+
+	// Get maximum position
+	command << g_T_House << "026";
+	ret = GetAnswer(device, core, command.str().c_str(), answer);
+	if (ret != DEVICE_OK)
+		return ret;
+	command.str("");
+
+	ts << answer;
+	int maxPos;
+	ts >> maxPos;
+	ts >> maxPos;
+	if (maxPos < 0 || maxPos >1)
+		maxPos = 1;
+	scopeModel_->tHouse_.SetMaxPosition(maxPos);
+	ts.clear();
+	ts.str("");
+
+
+	return DEVICE_OK;
+
+}
+
 
 /*
  * Sends commands to the scope enquiring about current position, speed and acceleration settings
@@ -1903,6 +1979,17 @@ int LeicaScopeInterface::SetSidePortPosition(MM::Device& device, MM::Core& core,
    std::ostringstream os;
 	os << ::g_Side_Port << "022" << " " << position;
    return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+}
+
+/**
+ * Sets Position of T HOUSE MIRROR
+ */
+int LeicaScopeInterface::SetTHousePosition(MM::Device& device, MM::Core& core, int position)
+{
+	scopeModel_->tHouse_.SetBusy(true);
+	std::ostringstream os;
+	os << g_T_House << "022" << " " << position;
+	return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
 }
 
 /**
@@ -2777,6 +2864,40 @@ int LeicaMonitoringThread::svc()
                         break;
                   }
                   break;
+			   case (g_T_House):
+				   switch (commandId) {
+				   case (4):
+				   {
+					   int status;
+					   os >> status;
+					   if (status == 1) {
+						   scopeModel_->tHouse_.SetBusy(false);
+					   }
+					   break;
+				   }
+				   case (22): // Acknowledge of set position
+					   scopeModel_->tHouse_.SetBusy(false);
+					   break;
+				   case (23): // Absolute position
+				   {
+					   int pos;
+					   os >> pos;
+					   scopeModel_->tHouse_.SetPosition(pos);
+					   scopeModel_->tHouse_.SetBusy(false);
+					   break;
+				   }
+				   case (28): // Absolute position
+				   {
+					   int pos;
+					   os >> pos;
+					   scopeModel_->tHouse_.SetPosition(pos);
+					   scopeModel_->tHouse_.SetBusy(false);
+					   break;
+				   }
+				   break;
+				   }
+				   break;
+
                case (g_TL_Polarizer) :
                   switch (commandId) {
                      case (4) :

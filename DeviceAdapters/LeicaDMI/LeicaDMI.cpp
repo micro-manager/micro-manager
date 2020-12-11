@@ -83,32 +83,36 @@ const char* g_LeicaCondensorTurret = "Condensor";
 const char* g_LeicaTransmittedLight = "Transmitted Light";
 const char* g_LeicaAFC = "Adaptive Focus Control";
 const char* g_LeicaAFCOffset = "Adaptive Focus Control Offset";
+const char* g_LeicaTHouse = "T-House Mirror";
 
 ///////////////////////////////////////////////////////////////////////////////
 
 MODULE_API void InitializeModuleData()
 {
-   RegisterDevice(g_LeicaDeviceName, MM::HubDevice, "Leica DMI microscope controlled through serial interface");
-   RegisterDevice(g_LeicaTransmittedLightShutter, MM::ShutterDevice, "Transmitted Light Shutter");
-   RegisterDevice(g_LeicaIncidentLightShutter, MM::ShutterDevice, "Incident Light Shutter");
-   RegisterDevice(g_LeicaReflector, MM::StateDevice, "Reflector Turret (dichroics)");
-   RegisterDevice(g_LeicaNosePiece, MM::StateDevice, "Objective Turret");
-   RegisterDevice(g_LeicaFastFilterWheel, MM::StateDevice, "Fast Filter Wheel");
-   RegisterDevice(g_LeicaFocusAxis, MM::StageDevice, "Z-drive");
-   RegisterDevice(g_LeicaXYStage, MM::XYStageDevice, "XYStage");
-   RegisterDevice(g_LeicaFieldDiaphragmTL, MM::GenericDevice, "Field Diaphragm (Trans)");
-   RegisterDevice(g_LeicaApertureDiaphragmTL, MM::GenericDevice, "Aperture Diaphragm (Condensor)");
-   RegisterDevice(g_LeicaFieldDiaphragmIL, MM::GenericDevice, "Field Diaphragm (Fluorescence)");
-   RegisterDevice(g_LeicaApertureDiaphragmIL, MM::GenericDevice, "Aperture Diaphragm (Fluorescence)");
-   RegisterDevice(g_LeicaMagChanger, MM::MagnifierDevice, "Tube Lens (magnification changer)");
-   RegisterDevice(g_LeicaTLPolarizer, MM::StateDevice, "Transmitted light Polarizer");
-   RegisterDevice(g_LeicaDICTurret, MM::StateDevice, "DIC Turret");
-   RegisterDevice(g_LeicaCondensorTurret, MM::StateDevice, "Condensor Turret");
-   RegisterDevice(g_LeicaTransmittedLight, MM::ShutterDevice, "Transmitted Light");
-   RegisterDevice(g_LeicaAFC, MM::AutoFocusDevice, "Adaptive Focus Control");
-   RegisterDevice(g_LeicaAFCOffset, MM::StageDevice, "Adaptive Focus Control Offset");
-   RegisterDevice(g_LeicaSidePort, MM::StateDevice, "Side Port");
+	RegisterDevice(g_LeicaDeviceName, MM::HubDevice, "Leica DMI microscope controlled through serial interface");
+	RegisterDevice(g_LeicaTransmittedLightShutter, MM::ShutterDevice, "Transmitted Light Shutter");
+	RegisterDevice(g_LeicaIncidentLightShutter, MM::ShutterDevice, "Incident Light Shutter");
+	RegisterDevice(g_LeicaReflector, MM::StateDevice, "Reflector Turret (dichroics)");
+	RegisterDevice(g_LeicaNosePiece, MM::StateDevice, "Objective Turret");
+	RegisterDevice(g_LeicaFastFilterWheel, MM::StateDevice, "Fast Filter Wheel");
+	RegisterDevice(g_LeicaFocusAxis, MM::StageDevice, "Z-drive");
+	RegisterDevice(g_LeicaXYStage, MM::XYStageDevice, "XYStage");
+	RegisterDevice(g_LeicaFieldDiaphragmTL, MM::GenericDevice, "Field Diaphragm (Trans)");
+	RegisterDevice(g_LeicaApertureDiaphragmTL, MM::GenericDevice, "Aperture Diaphragm (Condensor)");
+	RegisterDevice(g_LeicaFieldDiaphragmIL, MM::GenericDevice, "Field Diaphragm (Fluorescence)");
+	RegisterDevice(g_LeicaApertureDiaphragmIL, MM::GenericDevice, "Aperture Diaphragm (Fluorescence)");
+	RegisterDevice(g_LeicaMagChanger, MM::MagnifierDevice, "Tube Lens (magnification changer)");
+	RegisterDevice(g_LeicaTLPolarizer, MM::StateDevice, "Transmitted light Polarizer");
+	RegisterDevice(g_LeicaDICTurret, MM::StateDevice, "DIC Turret");
+	RegisterDevice(g_LeicaCondensorTurret, MM::StateDevice, "Condensor Turret");
+	RegisterDevice(g_LeicaTransmittedLight, MM::ShutterDevice, "Transmitted Light");
+	RegisterDevice(g_LeicaAFC, MM::AutoFocusDevice, "Adaptive Focus Control");
+	RegisterDevice(g_LeicaAFCOffset, MM::StageDevice, "Adaptive Focus Control Offset");
+	RegisterDevice(g_LeicaSidePort, MM::StateDevice, "Side Port");
+	RegisterDevice(g_LeicaTHouse, MM::StateDevice, "T-House Mirror");
+
 }
+
 using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -158,8 +162,10 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 	   return new AFC();
    else if (strcmp(deviceName, g_LeicaAFCOffset) == 0)
       return new AFCOffset();
-	else if (strcmp(deviceName, ::g_LeicaSidePort) ==0)
+   else if (strcmp(deviceName, ::g_LeicaSidePort) == 0)
 		return new SidePort();
+   else if (strcmp(deviceName, g_LeicaTHouse) == 0)
+	   return new THouse();
 
    return 0;
 }
@@ -286,6 +292,7 @@ int LeicaScope::GetNumberOfDiscoverableDevices()
       AttemptToDiscover(g_Lamp, g_LeicaTransmittedLight);
       AttemptToDiscover(g_AFC, g_LeicaAFC);
       AttemptToDiscover(g_AFC, g_LeicaAFCOffset);
+	  AttemptToDiscover(g_T_House, g_LeicaTHouse);
 
    return (int) discoveredDevices_.size();
 }
@@ -396,6 +403,7 @@ int LeicaScope::DetectInstalledDevices()
    AttemptToDiscover(g_Lamp, g_LeicaTransmittedLight);
    AttemptToDiscover(g_AFC, g_LeicaAFC);
    AttemptToDiscover(g_AFC, g_LeicaAFCOffset);
+   AttemptToDiscover(g_T_House, g_LeicaTHouse);
 
    for (size_t i=0; i<discoveredDevices_.size(); i++)
    {
@@ -3470,4 +3478,152 @@ int SidePort::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 
    }
    return ret;
+}
+
+//
+// T-House Mirror
+//
+
+THouse::THouse() :
+	numPos_(2),
+	initialized_(false),
+	name_("T House Mirror"),
+	description_("T House Mirror")
+{
+	InitializeDefaultErrorMessages();
+
+	// TODO provide error messages
+	SetErrorText(ERR_SCOPE_NOT_ACTIVE, "Leica Scope is not initialized.  It is needed for this port to work");
+	SetErrorText(ERR_INVALID_TURRET_POSITION, "The requested position is not available on this port");
+	SetErrorText(ERR_MODULE_NOT_FOUND, "This port is not installed in this Leica microscope");
+
+	// Create pre-initialization properties
+	// ------------------------------------
+
+	// Name
+	CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
+
+	// Description
+	CreateProperty(MM::g_Keyword_Description, description_.c_str(), MM::String, true);
+
+}
+
+THouse::~THouse()
+{
+	Shutdown();
+}
+
+void THouse::GetName(char* name) const
+{
+	CDeviceUtils::CopyLimitedString(name, g_LeicaTHouse);
+}
+
+int THouse::Initialize()
+{
+	if (!g_ScopeInterface.portInitialized_)
+		return ERR_SCOPE_NOT_ACTIVE;
+
+	int ret = DEVICE_OK;
+	if (!g_ScopeInterface.IsInitialized())
+		ret = g_ScopeInterface.Initialize(*this, *GetCoreCallback());
+	if (ret != DEVICE_OK)
+		return ret;
+
+	// check if this turret exists:
+	if (!g_ScopeModel.IsDeviceAvailable(g_T_House))
+		return ERR_MODULE_NOT_FOUND;
+	bool readOnly = g_ScopeModel.IsDeviceCoded(g_T_House);
+
+	// set property list
+	// ----------------
+
+	//state
+
+	// create property
+	int maxPos;
+	ret = g_ScopeModel.tHouse_.GetMaxPosition(maxPos);
+	if (ret != DEVICE_OK)
+		return ret;
+	int minPos;
+	g_ScopeModel.tHouse_.GetMinPosition(minPos);
+	numPos_ = maxPos - minPos + 1;
+
+
+	CPropertyAction* pAct = new CPropertyAction(this, &THouse::OnState);
+	(void)CreateProperty(MM::g_Keyword_State, "0", MM::Integer, readOnly, pAct);
+
+
+	// Label
+	// -----
+	pAct = new CPropertyAction(this, &CStateBase::OnLabel);
+	(void)CreateProperty(MM::g_Keyword_Label, "Undefined", MM::String, readOnly, pAct);
+
+
+	std::ostringstream dmess;
+	dmess << "minPos " << minPos << " numPos_ " << numPos_ << " labels: ";
+
+	for (unsigned i = 0; i < numPos_; ++i)
+	{
+		std::ostringstream os;
+		os << i + minPos;
+		// better name for this would be SetStateLabel
+		SetPositionLabel((long)i, os.str().c_str());
+		dmess << os.str();
+	}
+	LogMessage(dmess.str().c_str(), true);
+
+	ret = UpdateStatus();
+	if (ret != DEVICE_OK)
+		return ret;
+
+	initialized_ = true;
+	return DEVICE_OK;
+}
+
+int THouse::Shutdown()
+{
+	if (initialized_)
+		initialized_ = false;
+	return DEVICE_OK;
+}
+
+bool THouse::Busy()
+{
+	bool busy;
+	int ret = g_ScopeModel.tHouse_.GetBusy(busy);
+	if (ret != DEVICE_OK)  // This is bad and should not happen
+		return false;
+
+	return busy;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Action handlers                                                           
+///////////////////////////////////////////////////////////////////////////////
+int THouse::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	int ret = DEVICE_OK;
+	if (eAct == MM::BeforeGet)
+	{
+		int pos;
+		// 1 - based position
+		ret = g_ScopeModel.tHouse_.GetPosition(pos);
+		std::ostringstream o;
+		o << " in OnState BeforeGet " << pos;
+		LogMessage(o.str().c_str(), true);
+		ostringstream os;
+		// 0 - based 'state'
+		pProp->Set((long)(pos));
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		long pos;
+		pProp->Get(pos);
+		std::ostringstream o;
+		o << " in OnState AfterSet " << pos;
+		LogMessage(o.str().c_str(), true);
+		ret = g_ScopeInterface.SetTHousePosition(*this, *GetCoreCallback(), (int)(pos));
+
+	}
+	return ret;
 }
