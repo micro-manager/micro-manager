@@ -20,8 +20,8 @@
 #ifdef WIN32
    #define WIN32_LEAN_AND_MEAN
    #include <windows.h>
+   #define snprintf _snprintf 
 #endif
-#include "FixSnprintf.h"
 
 
 const char* g_DeviceNameTeensySLM = "Teensy-SLM";
@@ -312,8 +312,7 @@ int CTeensySLM::OnShutterOpen(MM::PropertyBase* pProp, MM::ActionType pAct)
    else if (pAct == MM::AfterSet)
    {
       pProp->Get(shutterOpen_);
-	  int ret = EnableShutter((bool) shutterOpen_);
-	  return ret;
+	   return EnableShutter(shutterOpen_ != 0);
    }
    return DEVICE_OK;
 }

@@ -3,10 +3,10 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Controls the Elliptec sliders ELL6 and ELL9 from Thorlabs 
+// DESCRIPTION:   Controls the Elliptec sliders ELL6, ELL9 and ELL17_20
 // COPYRIGHT:     EMBL
 // LICENSE:       LGPL
-// AUTHOR:        Joran Deschamps and Anindita Dasgupta, EMBL 2018
+// AUTHOR:        Joran Deschamps and Anindita Dasgupta, EMBL
 //-----------------------------------------------------------------------------
 
 
@@ -39,6 +39,66 @@
 #define ERR_OUT_OF_RANGE 212
 #define ERR_OVER_CURRENT_ERROR 213
 #define ERR_UNKNOWN_ERROR 214
+
+
+class ELL17_20 : public CStageBase<ELL17_20>
+{
+public:
+    ELL17_20();
+    ~ELL17_20();
+	
+	// convenience functions
+	bool isError(std::string);
+	int getErrorCode(std::string message);
+	std::string removeLineFeed(std::string answer);
+	std::string removeCommandFlag(std::string message);
+	int getID(std::string* id, int* travelRange, double* pulsesPerMU);
+
+	std::string positionFromValue(int pos);
+	int positionFromHex(std::string pos);
+
+    // Device API
+    // ----------
+    int Initialize();
+    int Shutdown();
+
+    void GetName(char* pszName) const;
+    bool Busy();
+
+    // Stage API
+    // ---------
+    int SetPositionUm(double posUm);
+    int GetPositionUm(double& pos);
+
+	// non available or implemented here
+    int SetPositionUmContinuous(double posUm) {return SetPositionUm(posUm);};
+	int GetLimits(double& min, double& max) {min = 0.; max = 63500.; return DEVICE_OK;};
+    
+	int SetPositionSteps(long steps) {return DEVICE_UNSUPPORTED_COMMAND;};
+    int GetPositionSteps(long& steps) {return DEVICE_UNSUPPORTED_COMMAND;};
+    
+	int SetOrigin() {return DEVICE_UNSUPPORTED_COMMAND;};
+	int SetLimits(double min, double max) {return DEVICE_UNSUPPORTED_COMMAND;};
+
+    int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+    bool IsContinuousFocusDrive() const {return false;}
+
+    // action interface
+    // ----------------
+	int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnChannel(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+    //Private variables
+	std::string port_;
+	std::string channel_;
+	bool initialized_;
+	bool busy_;
+
+	int travelRange_;
+	double pulsesPerMU_;
+};
 
 class ELL9 : public CStateDeviceBase<ELL9>
 {
