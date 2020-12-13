@@ -1,14 +1,18 @@
 package org.micromanager.internal;
 
 import org.micromanager.PositionList;
+import org.micromanager.PositionListManager;
+import org.micromanager.Studio;
+import org.micromanager.events.internal.DefaultNewPositionListEvent;
 
-import javax.swing.SwingUtilities;
 
-public final class PositionListManager implements org.micromanager.PositionListManager {
+public final class DefaultPositionListManager implements PositionListManager {
 
    private PositionList posList_;
+   private Studio studio_;
 
-   public PositionListManager() {
+   public DefaultPositionListManager(Studio studio) {
+      studio_ = studio;
       posList_ = new PositionList();
    }
 
@@ -21,6 +25,8 @@ public final class PositionListManager implements org.micromanager.PositionListM
     */
    public void setPositionList(PositionList pl) { // use serialization to clone the PositionList object
       posList_ = pl; // PositionList.newInstance(pl);
+      studio_.events().post(new DefaultNewPositionListEvent(posList_));
+      /*
       SwingUtilities.invokeLater(() -> {
          if (posListDlg_ != null) {
             posListDlg_.setPositionList(posList_);
@@ -32,6 +38,8 @@ public final class PositionListManager implements org.micromanager.PositionListM
             acqControlWin_.updateGUIContents();
          }
       });
+
+       */
    }
 
    /**
@@ -40,20 +48,15 @@ public final class PositionListManager implements org.micromanager.PositionListM
     * @return copy of the current PositionList
     */
    public PositionList getPositionList()  {
-      return posList_;
+      return PositionList.newInstance(posList_);
    }
 
    /**
-    * Opens the XYPositionList when it is not opened.
     * Adds the current position to the list (same as pressing the "Mark" button
-    * in the XYPositionList)
+    * in the XYPositionList with no position selected)
     */
    public void markCurrentPosition() {
-      if (posListDlg_ == null) {
-         showPositionList();
-      }
-      if (posListDlg_ != null) {
-         posListDlg_.markPosition(false);
-      }
+      MMStudio mm = (MMStudio) studio_;
+      mm.markCurrentPosition();
    }
 }

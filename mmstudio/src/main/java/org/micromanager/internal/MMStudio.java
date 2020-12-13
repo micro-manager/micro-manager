@@ -124,7 +124,7 @@ import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
  * Implements the Studio (i.e. primary API) and does various other
  * tasks that should probably be refactored out at some point.
  */
-public final class MMStudio implements Studio, CompatibilityInterface, PositionListManager, Application {
+public final class MMStudio implements Studio, CompatibilityInterface, Application {
 
    private static final long serialVersionUID = 3556500289598574541L;
    
@@ -162,12 +162,12 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private DefaultEventManager eventManager_;
    private ApplicationSkin daytimeNighttimeManager_;
    private UserProfileManager userProfileManager_;
+   private PositionListManager posListManager_;
    private UiMovesStageManager uiMovesStageManager_;
    
    // MMcore
    private CMMCore core_;
    private AcquisitionWrapperEngine acqEngine_;
-   private PositionList posList_;
    private MMPositionListDlg posListDlg_;
    private boolean isProgramRunning_;
    private boolean configChanged_ = false;
@@ -332,8 +332,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          afMgr_.setAutofocusMethodByName(afDevice);
       }
 
-      posList_ = new PositionList();
-      acqEngine_.setPositionList(posList_);
+      posListManager_ = new DefaultPositionListManager(this);
+      acqEngine_.setPositionList(posListManager_.getPositionList());
 
       
       // Tell Core to start logging
@@ -1004,7 +1004,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
     * Adds the current position to the list (same as pressing the "Mark"
     * button)
     */
-   @Override
+   // @Override
    public void markCurrentPosition() {
       if (posListDlg_ == null) {
          showPositionList();
@@ -1490,8 +1490,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    @Override
    public void showPositionList() {
       if (posListDlg_ == null) {
-         posListDlg_ = new MMPositionListDlg(studio_, posList_, 
-                 acqControlWin_);
+         posListDlg_ = new MMPositionListDlg(studio_, posListManager_.getPositionList());
          posListDlg_.addListeners();
       }
       posListDlg_.setVisible(true);
@@ -1558,28 +1557,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    public void enableRoiButtons(final boolean enabled) {
       frame_.enableRoiButtons(enabled);
-   }
-
-   @Override
-   public void setPositionList(PositionList pl) {
-      // use serialization to clone the PositionList object
-      posList_ = pl; // PositionList.newInstance(pl);
-      SwingUtilities.invokeLater(() -> {
-         if (posListDlg_ != null) {
-            posListDlg_.setPositionList(posList_);
-         }
-         if (acqEngine_ != null) {
-            acqEngine_.setPositionList(posList_);
-         }
-         if (acqControlWin_ != null) {
-            acqControlWin_.updateGUIContents();
-         }
-      });
-   }
-
-   @Override
-   public PositionList getPositionList() {
-      return posList_;
    }
 
    @Override
@@ -1783,7 +1760,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    @Override
    public PositionListManager positions() {
-      return this;
+      return posListManager_;
    }
 
    @Override

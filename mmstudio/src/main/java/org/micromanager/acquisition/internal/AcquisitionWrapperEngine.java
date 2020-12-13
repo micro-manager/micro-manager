@@ -16,6 +16,7 @@ import org.micromanager.data.Datastore;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.events.AcquisitionEndedEvent;
+import org.micromanager.events.NewPositionListEvent;
 import org.micromanager.events.internal.DefaultAcquisitionEndedEvent;
 import org.micromanager.events.internal.DefaultAcquisitionStartedEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
@@ -434,6 +435,11 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    @Override
    public void setPositionList(PositionList posList) {
       posList_ = posList;
+   }
+
+   @Subscribe
+   public void OnNewPositionListEvent(NewPositionListEvent newPositionListEvent) {
+      posList_ = newPositionListEvent.getPositionList();
    }
 
    @Override

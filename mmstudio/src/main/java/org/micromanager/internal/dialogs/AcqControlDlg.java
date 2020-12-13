@@ -34,6 +34,7 @@ import org.micromanager.display.internal.RememberedSettings;
 import org.micromanager.events.ChannelExposureEvent;
 import org.micromanager.events.ChannelGroupChangedEvent;
 import org.micromanager.events.GUIRefreshEvent;
+import org.micromanager.events.NewPositionListEvent;
 import org.micromanager.events.internal.ChannelColorEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
@@ -1212,6 +1213,20 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
          savePanel_.repaint();
 
          disableGUItoSettings_ = false;
+      }
+   }
+
+   @Subscribe
+   public void onNewPositionList(NewPositionListEvent newPositionListEvent) {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(() -> {
+            onNewPositionList(newPositionListEvent);
+         } );
+      }
+      else {
+         acqEng_.setPositionList(newPositionListEvent.getPositionList());
+         // update summary
+         summaryTextArea_.setText(acqEng_.getVerboseSummary());
       }
    }
 

@@ -349,7 +349,9 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
       removeAllButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            int ret = JOptionPane.showConfirmDialog(null, "Are you sure you want to erase\nall positions from the position list?", "Clear all positions?", JOptionPane.YES_NO_OPTION);
+            int ret = JOptionPane.showConfirmDialog(PositionListDlg.this,
+                    "Are you sure you want to erase\nall positions from the position list?",
+                    "Clear all positions?", JOptionPane.YES_NO_OPTION);
             if (ret == JOptionPane.YES_OPTION) {
                clearAllPositions();
             }
@@ -516,6 +518,7 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
 
    protected void updatePositionData() {
       positionModel_.fireTableDataChanged();
+      updateMarkButtonText();
    }
    
    public void rebuildAxisList() {

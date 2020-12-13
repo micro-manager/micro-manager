@@ -32,10 +32,8 @@ package org.micromanager;
 public interface PositionListManager {
    /**
     * Makes this the 'current' PositionList, i.e., the one used by the
-    * Acquisition Protocol.
-    * Replaces the list in the PositionList Window
-    * It will open a position list dialog if it was not already open.
-    * @param pl PosiionLIst to be made the current one
+    * Acquisition Protocol, and shown in the PositionListDlg.
+    * @param pl PositionList to be made the current one
     */
    public void setPositionList(PositionList pl);
 
@@ -47,9 +45,11 @@ public interface PositionListManager {
    public PositionList getPositionList();
 
    /**
-    * Opens the XYPositionList when it is not opened.
     * Adds the current position to the list (same as pressing the "Mark" button
-    * in the XYPositionList)
+    * in the XYPositionList with no position selected)
+    * @deprecated since this function completely depends on the PositionListDlg,
+    * at the very least, it will need to know which axes are selected
     */
+   @Deprecated
    public void markCurrentPosition();
 }
