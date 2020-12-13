@@ -35,21 +35,20 @@ public interface PositionListManager {
     * Acquisition Protocol, and shown in the PositionListDlg.
     * @param pl PositionList to be made the current one
     */
-   public void setPositionList(PositionList pl);
+   void setPositionList(PositionList pl);
 
    /**
     * Returns a copy of the current PositionList, the one used by the
     * Acquisition Protocol
     * @return copy of the current PositionList
     */
-   public PositionList getPositionList();
+   PositionList getPositionList();
 
    /**
     * Adds the current position to the list (same as pressing the "Mark" button
     * in the XYPositionList with no position selected)
-    * @deprecated since this function completely depends on the PositionListDlg,
-    * at the very least, it will need to know which axes are selected
+    * @deprecated since this function completely depends on the PositionListDlg.
     */
    @Deprecated
-   public void markCurrentPosition();
+   void markCurrentPosition();
 }
