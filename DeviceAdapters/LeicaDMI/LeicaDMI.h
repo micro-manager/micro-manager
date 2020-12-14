@@ -568,4 +568,30 @@ private:
    std::string description_;
 };
 
+class THouse : public CStateDeviceBase<THouse>
+{
+public:
+	THouse();
+	~THouse();
+
+	// MMDevice API
+	int Initialize();
+	int Shutdown();
+
+	void GetName(char* pszName) const;
+	bool Busy();
+	unsigned long GetNumberOfPositions()const { return numPos_; };
+
+	// action interface
+	int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+protected:
+	unsigned int numPos_;
+
+private:
+	bool initialized_;
+	std::string name_;
+	std::string description_;
+};
+
 #endif // _LeicaDMI_H_
