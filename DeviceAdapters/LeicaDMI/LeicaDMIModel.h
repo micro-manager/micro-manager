@@ -357,8 +357,8 @@ public:
    LeicaDeviceModel tlPolarizer_;
    LeicaMagChangerModel magChanger_;
    LeicaAFCModel afc_;
-
-	LeicaDeviceModel sidePort_;
+   LeicaDeviceModel sidePort_;
+   LeicaDeviceModel tHouse_;
 
 private:
    bool usesMethods_;
