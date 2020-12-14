@@ -272,7 +272,7 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    @Override
    public PositionList getPositionList() throws ASIdiSPIMException, RemoteException {
       try {
-         return getGui().getPositionList();
+         return getGui().positions().getPositionList();
       } catch (Exception ex) {
          throw new ASIdiSPIMException(ex);
       }
