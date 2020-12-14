@@ -31,7 +31,7 @@
 #else
 #include <netinet/in.h>
 #endif
-#include "FixSnprintf.h"
+//#include "FixSnprintf.h"
 
 #include "LeicaDMIScopeInterface.h"
 #include "LeicaDMIModel.h"
