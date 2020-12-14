@@ -26,20 +26,6 @@ public final class DefaultPositionListManager implements PositionListManager {
    public void setPositionList(PositionList pl) { // use serialization to clone the PositionList object
       posList_ = pl; // PositionList.newInstance(pl);
       studio_.events().post(new DefaultNewPositionListEvent(posList_));
-      /*
-      SwingUtilities.invokeLater(() -> {
-         if (posListDlg_ != null) {
-            posListDlg_.setPositionList(posList_);
-         }
-         if (acqEngine_ != null) {
-            acqEngine_.setPositionList(posList_);
-         }
-         if (acqControlWin_ != null) {
-            acqControlWin_.updateGUIContents();
-         }
-      });
-
-       */
    }
 
    /**
