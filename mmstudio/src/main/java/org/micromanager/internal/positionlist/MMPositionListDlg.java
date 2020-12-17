@@ -20,7 +20,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
-import org.micromanager.events.internal.DefaultNewPositionListEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 
 /**
@@ -46,8 +45,8 @@ public final class MMPositionListDlg extends PositionListDlg {
     
     @Override
     protected void updatePositionData() {
+        studio_.positions().setPositionList(getPositionList());
         super.updatePositionData();
-        studio_.events().post(new DefaultNewPositionListEvent(getPositionList()));
     }
     
     private void saveDims() {
