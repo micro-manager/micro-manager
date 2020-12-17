@@ -54,6 +54,7 @@ import org.micromanager.PositionList;
 import org.micromanager.StagePosition;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
+import org.micromanager.events.NewPositionListEvent;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
 import org.micromanager.internal.MMStudio;
@@ -517,7 +518,7 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
    }
 
    protected void updatePositionData() {
-      positionModel_.fireTableDataChanged();
+      // positionModel_.fireTableDataChanged();
       updateMarkButtonText();
    }
    
@@ -754,6 +755,12 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
       });
    }
 
+   @Subscribe
+   public void onNewPositionList(NewPositionListEvent nple) {
+      positionModel_.setData(nple.getPositionList());
+      positionModel_.fireTableDataChanged();
+   }
+
    /**
     * Update display of the current stage position.
     * Go out to the hardware to get new positions
@@ -854,7 +861,6 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
 
    public PositionList getPositionList() {
       return positionModel_.getPositionList();
-
    }
 
    /**
