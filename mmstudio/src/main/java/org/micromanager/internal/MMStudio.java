@@ -1102,30 +1102,26 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
          staticInfo_.refreshValues();
          afMgr_.refresh();
 
+         if (!fromCache) { // The rest of this function uses the cached property values. If `fromCache` is false, start by updating all properties in the cache.
+            core_.updateSystemStateCache();
+         }
+         
          // camera settings
          if (isCameraAvailable()) {
             double exp = core_.getExposure();
             frame_.setDisplayedExposureTime(exp);
             configureBinningCombo();
             String binSize;
-            if (fromCache) {
-               binSize = core_.getPropertyFromCache(StaticInfo.cameraLabel_, MMCoreJ.getG_Keyword_Binning());
-            } else {
-               binSize = core_.getProperty(StaticInfo.cameraLabel_, MMCoreJ.getG_Keyword_Binning());
-            }
+            binSize = core_.getPropertyFromCache(StaticInfo.cameraLabel_, MMCoreJ.getG_Keyword_Binning());
             frame_.setBinSize(binSize);
          }
 
          frame_.updateAutofocusButtons(afMgr_.getAutofocusMethod() != null);
-
+         
          ConfigGroupPad pad = frame_.getConfigPad();
          // state devices
          if (updateConfigPadStructure && (pad != null)) {
-            pad.refreshStructure(fromCache);
-            // Needed to update read-only properties.  May slow things down...
-            if (!fromCache) {
-               core_.updateSystemStateCache();
-            }
+            pad.refreshStructure(true);
          }
 
          // update Channel menus in Multi-dimensional acquisition dialog
@@ -1136,7 +1132,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
             calibrationListDlg_.refreshCalibrations();
          }
          if (propertyBrowser_ != null) {
-            propertyBrowser_.refresh(fromCache);
+            propertyBrowser_.refresh(true);
          }
 
          ReportingUtils.logMessage("Finished updating GUI");
