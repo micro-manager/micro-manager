@@ -1,6 +1,6 @@
 package org.micromanager.magellan.internal.magellanacq;
 
-import org.micromanager.acqj.api.AcquisitionInterface;
+import org.micromanager.acqj.api.AcquisitionAPI;
 import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
 import org.micromanager.ndviewer.api.ViewerAcquisitionInterface;
 
@@ -9,7 +9,7 @@ import org.micromanager.ndviewer.api.ViewerAcquisitionInterface;
  *
  * @author henrypinkard
  */
-public interface MagellanAcquisition extends ViewerAcquisitionInterface, AcquisitionInterface {
+public interface MagellanAcquisition extends ViewerAcquisitionInterface, AcquisitionAPI {
 
    /**
     * Get z coordinate corresponding to z index of 0
