@@ -178,8 +178,8 @@ public final class SnapLiveManager extends DataViewerListener
          else {
             stopLiveMode();
          }
-         mmStudio_.events().post(new DefaultLiveModeEvent(isLiveOn_));
       }
+      mmStudio_.events().post(new DefaultLiveModeEvent(isLiveOn_));
    }
 
    /**
