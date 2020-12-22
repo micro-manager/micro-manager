@@ -138,7 +138,6 @@ public final class MMStudio implements Studio, CompatibilityInterface {
    private static final String CIRCULAR_BUFFER_SIZE = "size, in megabytes of the circular buffer used to temporarily store images before they are written to disk";
    private static final String AFFINE_TRANSFORM_LEGACY = "affine transform for mapping camera coordinates to stage coordinates for a specific pixel size config: ";
    private static final String AFFINE_TRANSFORM = "affine transform parameters for mapping camera coordinates to stage coordinates for a specific pixel size config: ";
-   private static final String EXPOSURE_KEY = "Exposure_";
    
    // GUI components
    private boolean wasStartedAsImageJPlugin_;
