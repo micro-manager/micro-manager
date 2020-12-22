@@ -1847,6 +1847,15 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
       transform.getMatrix(params);
       profile().getSettings(MMStudio.class).putDoubleList(AFFINE_TRANSFORM + config, params);
    }
+   
+   
+   public MMCache cache() {
+      return cache_;
+   }
+   
+   public MMSettings settings() {
+      return settings_;
+   }
 
    public class MMCache {
       public double getCachedXPosition() {
@@ -1872,10 +1881,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
       public AffineTransform getCachedPixelSizeAffine() {
          return staticInfo_.getPixelSizeAffine();
       }
-   }
-
-   public MMCache cache() {
-      return cache_;
    }
 
    public class MMSettings {
@@ -1921,8 +1926,5 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
                CIRCULAR_BUFFER_SIZE, newSize);
       }
    }
-   
-   public MMSettings settings() {
-      return settings_;
-   }
+ 
 }
