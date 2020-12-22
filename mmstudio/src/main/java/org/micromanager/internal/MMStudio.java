@@ -124,7 +124,7 @@ import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
  * Implements the Studio (i.e. primary API) and does various other
  * tasks that should probably be refactored out at some point.
  */
-public final class MMStudio implements Studio, CompatibilityInterface {
+public final class MMStudio implements Studio {
 
    private static final long serialVersionUID = 3556500289598574541L;
    
@@ -136,9 +136,7 @@ public final class MMStudio implements Studio, CompatibilityInterface {
    private static final String SHOULD_RUN_ZMQ_SERVER = "run ZQM server";
    private static final String CORE_LOG_LIFETIME_DAYS = "how many days to keep MMCore log files, before they get deleted";
    private static final String CIRCULAR_BUFFER_SIZE = "size, in megabytes of the circular buffer used to temporarily store images before they are written to disk";
-   private static final String AFFINE_TRANSFORM_LEGACY = "affine transform for mapping camera coordinates to stage coordinates for a specific pixel size config: ";
-   private static final String AFFINE_TRANSFORM = "affine transform parameters for mapping camera coordinates to stage coordinates for a specific pixel size config: ";
-   
+
    // GUI components
    private boolean wasStartedAsImageJPlugin_;
    private PropertyEditor propertyBrowser_;
@@ -164,6 +162,7 @@ public final class MMStudio implements Studio, CompatibilityInterface {
    private PositionListManager posListManager_;
    private UiMovesStageManager uiMovesStageManager_;
    private DefaultApplication defaultApplication_;
+   private DefaultCompatibilityInterface compatibility_;
    
    // MMcore
    private CMMCore core_;
@@ -930,35 +929,6 @@ public final class MMStudio implements Studio, CompatibilityInterface {
       }
    }
 
-   @Override
-   public boolean versionLessThan(String version) throws NumberFormatException {
-      String[] v = MMVersion.VERSION_STRING.split(" ", 2);
-      String[] m = v[0].split("\\.", 3);
-      String[] v2 = version.split(" ", 2);
-      String[] m2 = v2[0].split("\\.", 3);
-      for (int i=0; i < 3; i++) {
-         if (Integer.parseInt(m[i]) < Integer.parseInt(m2[i])) {
-            ReportingUtils.showError("This code needs Micro-Manager version " + version + " or greater");
-            return true;
-         }
-         if (Integer.parseInt(m[i]) > Integer.parseInt(m2[i])) {
-            return false;
-         }
-      }
-      if (v2.length < 2 || v2[1].equals("") ) {
-         return false;
-      }
-      if (v.length < 2 ) {
-         ReportingUtils.showError("This code needs Micro-Manager version " + version + " or greater");
-         return true;
-      }
-      if (Integer.parseInt(v[1]) < Integer.parseInt(v2[1])) {
-         ReportingUtils.showError("This code needs Micro-Manager version " + version + " or greater");
-         return false;
-      }
-      return true;
-   }
-
    private void configureBinningCombo() throws Exception {
       if (StaticInfo.cameraLabel_.length() > 0) {
          frame_.configureBinningComboForCamera(StaticInfo.cameraLabel_);
@@ -1370,11 +1340,6 @@ public final class MMStudio implements Studio, CompatibilityInterface {
    // //////////////////////////////////////////////////////////////////////////
    // Script interface
    // //////////////////////////////////////////////////////////////////////////
-
-   @Override
-   public String getVersion() {
-      return MMVersion.VERSION_STRING;
-   }
    
    /**
     * Inserts version info for various components in the Corelog
@@ -1389,7 +1354,7 @@ public final class MMStudio implements Studio, CompatibilityInterface {
          hostname = "unknown";
       }
       core_.logMessage("Host: " + hostname);
-      core_.logMessage("MM Studio version: " + getVersion());
+      core_.logMessage("MM Studio version: " + compat().getVersion());
       core_.logMessage(core_.getVersionInfo());
       core_.logMessage(core_.getAPIVersionInfo());
       core_.logMessage("Operating System: " + System.getProperty("os.name") +
@@ -1497,15 +1462,14 @@ public final class MMStudio implements Studio, CompatibilityInterface {
       return logs();
    }
 
-   // TODO: split methods associated with this interface out to a separate
-   // object.
    @Override
    public CompatibilityInterface compat() {
-      return this;
+      return compatibility_;
    }
+   
    @Override
    public CompatibilityInterface getCompatibilityInterface() {
-      return this;
+      return compat();
    }
 
    @Override
@@ -1618,51 +1582,8 @@ public final class MMStudio implements Studio, CompatibilityInterface {
       return alerts();
    }
 
-
    public UiMovesStageManager getUiMovesStageManager () {
       return uiMovesStageManager_;
-   }
-
-   @Override
-   @Deprecated
-   public AffineTransform getCameraTransform(String config) {
-      // Try the modern way first
-      double[] defaultParams = new double[0];
-      double[] params = profile().getSettings(MMStudio.class).
-              getDoubleList(AFFINE_TRANSFORM + config, defaultParams);
-      if (params != null && params.length == 6) {
-         return new AffineTransform(params);
-      }
-
-      // The early 2.0-beta way of storing as a serialized object.
-      PropertyMap studioSettings = profile().
-            getSettings(MMStudio.class).toPropertyMap();
-      AffineTransform result = (AffineTransform)
-         ((DefaultPropertyMap) studioSettings).getLegacySerializedObject(
-               AFFINE_TRANSFORM_LEGACY + config, null);
-      if (result != null) {
-         // Save it the new way
-         setCameraTransform(result, config);
-         return result;
-      }
-
-      // For backwards compatibility, try retrieving it from the 1.4
-      // Preferences instead.
-      AffineTransform tfm = org.micromanager.internal.utils.UnpleasantLegacyCode.
-              legacyRetrieveTransformFromPrefs("affine_transform_" + config);
-      if (tfm != null) {
-         // Save it the new way.
-         setCameraTransform(tfm, config);
-      }
-      return tfm;
-   }
-
-   @Override
-   @Deprecated
-   public void setCameraTransform(AffineTransform transform, String config) {
-      double[] params = new double[6];
-      transform.getMatrix(params);
-      profile().getSettings(MMStudio.class).putDoubleList(AFFINE_TRANSFORM + config, params);
    }
 
    public double getCachedXPosition() {
