@@ -165,6 +165,11 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
    private PositionListManager posListManager_;
    private UiMovesStageManager uiMovesStageManager_;
    
+   // Local Classes
+   private final MMSettings settings_ = new MMSettings();
+   private final MMCache cache_ = new MMCache();
+   
+   
    // MMcore
    private CMMCore core_;
    private AcquisitionWrapperEngine acqEngine_;
@@ -446,7 +451,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
             acqControlWin_);
 
       try {
-         core_.setCircularBufferMemoryFootprint(getCircularBufferSize());
+         core_.setCircularBufferMemoryFootprint(settings().getCircularBufferSize());
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
       }
@@ -502,7 +507,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
       events().post(new StartupCompleteEvent());
       
       // start zmq server if so desired
-      if (getShouldRunZMQServer()) {
+      if (settings().getShouldRunZMQServer()) {
          runZMQServer();
       }
       
@@ -523,9 +528,9 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
          // The Core will have logged the error to stderr, so do nothing.
       }
 
-      if (getShouldDeleteOldCoreLogs()) {
+      if (settings().getShouldDeleteOldCoreLogs()) {
          LogFileManager.deleteLogFilesDaysOld(
-               getCoreLogLifetimeDays(), logFileName);
+               settings().getCoreLogLifetimeDays(), logFileName);
       }
 
       logStartupProperties();
@@ -1843,69 +1848,81 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
       profile().getSettings(MMStudio.class).putDoubleList(AFFINE_TRANSFORM + config, params);
    }
 
-   public double getCachedXPosition() {
-      return staticInfo_.getStageX();
+   public class MMCache {
+      public double getCachedXPosition() {
+         return staticInfo_.getStageX();
+      }
+
+      public double getCachedYPosition() {
+         return staticInfo_.getStageY();
+      }
+
+      public double getCachedZPosition() {
+         return staticInfo_.getStageZ();
+      }
+
+      public int getCachedBitDepth() {
+         return staticInfo_.getImageBitDepth();
+      }
+
+      public double getCachedPixelSizeUm() {
+         return staticInfo_.getPixelSizeUm();
+      }
+
+      public AffineTransform getCachedPixelSizeAffine() {
+         return staticInfo_.getPixelSizeAffine();
+      }
    }
 
-   public double getCachedYPosition() {
-      return staticInfo_.getStageY();
+   public MMCache cache() {
+      return cache_;
    }
 
-   public double getCachedZPosition() {
-      return staticInfo_.getStageZ();
-   }
+   public class MMSettings {
+      public boolean getShouldDeleteOldCoreLogs() {
+         return profile().getSettings(MMStudio.class).getBoolean(
+               SHOULD_DELETE_OLD_CORE_LOGS, false);
+      }
 
-   public int getCachedBitDepth() {
-      return staticInfo_.getImageBitDepth();
-   }
+      public void setShouldDeleteOldCoreLogs(boolean shouldDelete) {
+         profile().getSettings(MMStudio.class).putBoolean(
+               SHOULD_DELETE_OLD_CORE_LOGS, shouldDelete);
+      }
 
-   public double getCachedPixelSizeUm() {
-      return staticInfo_.getPixelSizeUm();
+      public boolean getShouldRunZMQServer() {
+         return profile().getSettings(MMStudio.class).getBoolean(
+                 SHOULD_RUN_ZMQ_SERVER, false);
+      }
+
+      public void setShouldRunZMQServer(boolean shouldRun) {
+         profile().getSettings(MMStudio.class).putBoolean(
+                 SHOULD_RUN_ZMQ_SERVER, shouldRun);
+      }
+
+      public int getCoreLogLifetimeDays() {
+         return profile().getSettings(MMStudio.class).getInteger(
+               CORE_LOG_LIFETIME_DAYS, 7);
+      }
+
+      public void setCoreLogLifetimeDays(int days) {
+         profile().getSettings(MMStudio.class).putInteger(
+               CORE_LOG_LIFETIME_DAYS, days);
+      }
+
+      public int getCircularBufferSize() {
+         // Default to more MB for 64-bit systems.
+         int defaultVal = System.getProperty("sun.arch.data.model", "32").equals("64") ? 250 : 25;
+         return profile().getSettings(MMStudio.class).getInteger(
+               CIRCULAR_BUFFER_SIZE, defaultVal);
+      }
+
+      public void setCircularBufferSize(int newSize) {
+         profile().getSettings(MMStudio.class).putInteger(
+               CIRCULAR_BUFFER_SIZE, newSize);
+      }
    }
    
-   public AffineTransform getCachedPixelSizeAffine() {
-      return staticInfo_.getPixelSizeAffine();
-   }
-
-   public boolean getShouldDeleteOldCoreLogs() {
-      return profile().getSettings(MMStudio.class).getBoolean(
-            SHOULD_DELETE_OLD_CORE_LOGS, false);
-   }
-
-   public void setShouldDeleteOldCoreLogs(boolean shouldDelete) {
-      profile().getSettings(MMStudio.class).putBoolean(
-            SHOULD_DELETE_OLD_CORE_LOGS, shouldDelete);
-   }
-   
-   public boolean getShouldRunZMQServer() {
-      return profile().getSettings(MMStudio.class).getBoolean(
-              SHOULD_RUN_ZMQ_SERVER, false);
-   }
-   
-   public void setShouldRunZMQServer(boolean shouldRun) {
-      profile().getSettings(MMStudio.class).putBoolean(
-              SHOULD_RUN_ZMQ_SERVER, shouldRun);
-   }
-
-   public int getCoreLogLifetimeDays() {
-      return profile().getSettings(MMStudio.class).getInteger(
-            CORE_LOG_LIFETIME_DAYS, 7);
-   }
-
-   public void setCoreLogLifetimeDays(int days) {
-      profile().getSettings(MMStudio.class).putInteger(
-            CORE_LOG_LIFETIME_DAYS, days);
-   }
-
-   public int getCircularBufferSize() {
-      // Default to more MB for 64-bit systems.
-      int defaultVal = System.getProperty("sun.arch.data.model", "32").equals("64") ? 250 : 25;
-      return profile().getSettings(MMStudio.class).getInteger(
-            CIRCULAR_BUFFER_SIZE, defaultVal);
-   }
-
-   public void setCircularBufferSize(int newSize) {
-      profile().getSettings(MMStudio.class).putInteger(
-            CIRCULAR_BUFFER_SIZE, newSize);
+   public MMSettings settings() {
+      return settings_;
    }
 }

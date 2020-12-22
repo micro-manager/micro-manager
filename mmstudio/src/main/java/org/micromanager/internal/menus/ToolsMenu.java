@@ -105,15 +105,15 @@ public final class ToolsMenu {
 
       GUIUtils.addMenuItem(toolsMenu_, "Options...",
               "Set a variety of Micro-Manager configuration options", () -> {
-                 final int oldBufsize = mmStudio_.getCircularBufferSize();
+                 final int oldBufsize = mmStudio_.settings().getCircularBufferSize();
 
                  OptionsDlg dlg = new OptionsDlg(core_, mmStudio_);
                  dlg.setVisible(true);
                  // adjust memory footprint if necessary
-                 if (oldBufsize != mmStudio_.getCircularBufferSize()) {
+                 if (oldBufsize != mmStudio_.settings().getCircularBufferSize()) {
                     try {
                        core_.setCircularBufferMemoryFootprint(
-                               mmStudio_.getCircularBufferSize());
+                               mmStudio_.settings().getCircularBufferSize());
                     } catch (Exception exc) {
                        ReportingUtils.showError(exc);
                     }
