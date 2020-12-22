@@ -167,7 +167,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
    
    // Local Classes
    private final MMSettings settings_ = new MMSettings();
-   private final MMCache cache_ = new MMCache();
+   private MMCache cache_;
    
    
    // MMcore
@@ -197,9 +197,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
 
    private Thread acquisitionEngine2010LoadingThread_ = null;
    private Class<?> acquisitionEngine2010Class_ = null;
-   private IAcquisitionEngine2010 acquisitionEngine2010_ = null;
-   private StaticInfo staticInfo_;
-   
+   private IAcquisitionEngine2010 acquisitionEngine2010_ = null;   
    
    /**
     * Main procedure for stand alone operation.
@@ -478,8 +476,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
       // Now create and show the main window
       mmMenuBar_ = MMMenuBar.createMenuBar(studio_);
       frame_ = new MainFrame(this, core_);
-      staticInfo_ = new StaticInfo(studio_, frame_);
-      events().registerForEvents(staticInfo_);
+      cache_ = new MMCache();
       frame_.toFront();
       frame_.setVisible(true);
       ReportingUtils.SetContainingFrame(frame_);
@@ -763,7 +760,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
       live().setSuspended(true);
       try {
          core_.clearROI();
-         staticInfo_.refreshValues();
+         cache().refreshValues();
 
       } catch (Exception e) {
          ReportingUtils.showError(e);
@@ -874,7 +871,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
             return;
          }
          core_.setProperty(StaticInfo.cameraLabel_, MMCoreJ.getG_Keyword_Binning(), mode);
-         staticInfo_.refreshValues();
+         cache().refreshValues();
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
@@ -963,24 +960,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
       return pipelineFrame_;
    }
 
-   public void updateXYPos(double x, double y) {
-      staticInfo_.updateXYPos(x, y);
-   }
-   public void updateXYPosRelative(double x, double y) {
-      staticInfo_.updateXYPosRelative(x, y);
-   }
-
-   public void updateZPos(double z) {
-      staticInfo_.updateZPos(z);
-   }
-   public void updateZPosRelative(double z) {
-      staticInfo_.updateZPosRelative(z);
-   }
-
-   public void updateXYStagePosition() {
-      staticInfo_.getNewXYStagePosition();
-   }
-
    public void updateCenterAndDragListener(boolean isEnabled) {
       isClickToMoveEnabled_ = isEnabled;
       if (isEnabled) {
@@ -1062,8 +1041,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
    // SystemConfigurationLoaded itself and handle its own updates.
    public void initializeGUI() {
       try {
-         if (staticInfo_ != null) {
-            staticInfo_.refreshValues();
+         if (cache() != null) {
+            cache().refreshValues();
             if (acqEngine_ != null) {
                acqEngine_.setZStageDevice(StaticInfo.zStageLabel_);  
             }
@@ -1104,7 +1083,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
       ReportingUtils.logMessage("Updating GUI; config pad = " +
             updateConfigPadStructure + "; from cache = " + fromCache);
       try {
-         staticInfo_.refreshValues();
+         cache().refreshValues();
          afMgr_.refresh();
 
          if (!fromCache) { // The rest of this function uses the cached property values. If `fromCache` is false, start by updating all properties in the cache.
@@ -1605,14 +1584,15 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
    public void setROI(Rectangle r) throws Exception {
       live().setSuspended(true);
       core_.setROI(r.x, r.y, r.width, r.height);
-      staticInfo_.refreshValues();
+      cache().refreshValues();
+      cache().refreshValues();
       live().setSuspended(false);
    }
 
    public void setMultiROI(List<Rectangle> rois) throws Exception {
       live().setSuspended(true);
       core_.setMultiROI(rois);
-      staticInfo_.refreshValues();
+      cache().refreshValues();
       live().setSuspended(false);
    }
 
@@ -1858,6 +1838,12 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
    }
 
    public class MMCache {
+      private final StaticInfo staticInfo_ = new StaticInfo(studio_, frame_);
+      
+      public MMCache() {
+               events().registerForEvents(staticInfo_);
+      }
+      
       public double getCachedXPosition() {
          return staticInfo_.getStageX();
       }
@@ -1880,6 +1866,29 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
 
       public AffineTransform getCachedPixelSizeAffine() {
          return staticInfo_.getPixelSizeAffine();
+      }
+      
+      public void refreshValues() {
+         staticInfo_.refreshValues();
+      }
+      
+      public void updateXYPos(double x, double y) {
+         staticInfo_.updateXYPos(x, y);
+      }
+      
+      public void updateXYPosRelative(double x, double y) {
+         staticInfo_.updateXYPosRelative(x, y);
+      }
+
+      public void updateZPos(double z) {
+         staticInfo_.updateZPos(z);
+      }
+      public void updateZPosRelative(double z) {
+         staticInfo_.updateZPosRelative(z);
+      }
+
+      public void updateXYStagePosition() {
+         staticInfo_.getNewXYStagePosition();
       }
    }
 
