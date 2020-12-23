@@ -46,6 +46,7 @@ import org.micromanager.magellan.internal.channels.ChannelGroupSettings;
 import org.micromanager.magellan.internal.channels.SingleChannelSetting;
 import org.micromanager.magellan.internal.gui.GUI;
 import org.micromanager.multiresstorage.MultiResMultipageTiffStorage;
+import org.micromanager.multiresstorage.StorageAPI;
 import org.micromanager.remote.RemoteViewerStorageAdapter;
 
 /**
@@ -132,7 +133,7 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
    }
 
    //Called by pycromanager
-   public MultiResMultipageTiffStorage getStorage() {
+   public StorageAPI getStorage() {
       return dataSink_ == null ? null : ((RemoteViewerStorageAdapter) dataSink_).getStorage();
    }
 
