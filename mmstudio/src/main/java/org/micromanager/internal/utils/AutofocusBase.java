@@ -167,5 +167,9 @@ public abstract class AutofocusBase implements AutofocusPlugin {
       return false;
    }
 
+   @Override
+   public void initialize() {
+      loadSettings();
+   }
 
 }

@@ -167,4 +167,10 @@ public final class DefaultAutofocusManager implements AutofocusManager {
       }
       return false;
    }
+
+   public void initialize() {
+      for (AutofocusPlugin afPlugin : afs_) {
+         afPlugin.initialize();
+      }
+   }
 }

@@ -29,8 +29,6 @@
 //CVS:            $Id: MetadataDlg.java 1275 2008-06-03 21:31:24Z nenad $
 package org.micromanager.autofocus;
 
-import com.google.common.eventbus.Subscribe;
-
 import ij.gui.OvalRoi;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
@@ -59,8 +57,6 @@ import mmcorej.org.json.JSONException;
 
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
-import org.micromanager.events.AutofocusPluginShouldInitializeEvent;
-
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 import org.micromanager.internal.utils.MDUtils;
@@ -974,11 +970,6 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    public void setContext(Studio app) {
       studio_ = app;
       studio_.events().registerForEvents(this);
-   }
-
-   @Subscribe
-   public void onInitialize(AutofocusPluginShouldInitializeEvent event) {
-      loadSettings();
    }
 
    @Override

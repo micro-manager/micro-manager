@@ -25,8 +25,6 @@
 //CVS:            $Id: MetadataDlg.java 1275 2008-06-03 21:31:24Z nenad $
 package org.micromanager.autofocus;
 
-import com.google.common.eventbus.Subscribe;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
@@ -43,7 +41,6 @@ import mmcorej.StrVector;
 
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
-import org.micromanager.events.AutofocusPluginShouldInitializeEvent;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.PropertyItem;
 
@@ -113,10 +110,6 @@ public class Autofocus extends AutofocusBase implements AutofocusPlugin, SciJava
       super.createProperty(KEY_CHANNEL, CHANNEL);
    }
 
-   @Subscribe
-   public void onInitialize(AutofocusPluginShouldInitializeEvent event) {
-      loadSettings();
-   }
 
    @Override
    public void applySettings() {

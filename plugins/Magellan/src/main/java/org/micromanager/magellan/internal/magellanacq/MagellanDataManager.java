@@ -57,7 +57,7 @@ import org.micromanager.magellan.internal.surfacesandregions.SurfaceGridManager;
 import org.micromanager.magellan.internal.surfacesandregions.SurfaceInterpolator;
 import org.micromanager.magellan.internal.surfacesandregions.XYFootprint;
 import org.micromanager.multiresstorage.MultiResMultipageTiffStorage;
-import org.micromanager.multiresstorage.StorageAPI;
+import org.micromanager.multiresstorage.MultiresStorageAPI;
 import org.micromanager.ndviewer.api.DataSourceInterface;
 import org.micromanager.ndviewer.api.OverlayerPlugin;
 import org.micromanager.ndviewer.overlay.Overlay;
@@ -71,7 +71,7 @@ import org.micromanager.ndviewer.api.ViewerAcquisitionInterface;
 public class MagellanDataManager implements DataSink, DataSourceInterface,
         SurfaceGridListener {
 
-   private StorageAPI storage_;
+   private MultiresStorageAPI storage_;
    private ExecutorService displayCommunicationExecutor_
            = Executors.newSingleThreadExecutor((Runnable r) -> new Thread(r, "Magellan viewer communication thread"));
    private final boolean loadedData_;

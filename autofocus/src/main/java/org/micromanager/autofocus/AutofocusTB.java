@@ -1,7 +1,5 @@
 package org.micromanager.autofocus;
 
-import com.google.common.eventbus.Subscribe;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
@@ -21,7 +19,6 @@ import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.PropertyItem;
 
 import mmcorej.CMMCore;
-import org.micromanager.events.AutofocusPluginShouldInitializeEvent;
 
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
@@ -121,10 +118,6 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
       super.createProperty(KEY_CHANNEL2, CHANNEL2);
    }
 
-   @Subscribe
-   public void onInitialize(AutofocusPluginShouldInitializeEvent event) {
-      loadSettings();
-   }
 
    @Override
    public void applySettings() {

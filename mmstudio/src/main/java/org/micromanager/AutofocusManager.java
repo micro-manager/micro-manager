@@ -31,7 +31,7 @@ public interface AutofocusManager {
     * Set the current AutofocusPlugin to use for performing autofocus actions.
     * @param plugin AutofocusPlugin to use for autofocus.
     */
-   public void setAutofocusMethod(AutofocusPlugin plugin);
+   void setAutofocusMethod(AutofocusPlugin plugin);
 
    /**
     * Set the current AutofocusPlugin by name. This will throw an
@@ -39,7 +39,7 @@ public interface AutofocusManager {
     * specified name (as per the value returned by its getName() method).
     * @param name Name of autofocus method to use.
     */
-   public void setAutofocusMethodByName(String name);
+   void setAutofocusMethodByName(String name);
 
    /**
     * Return the current AutofocusPlugin being used to run autofocus. It is
@@ -47,7 +47,7 @@ public interface AutofocusManager {
     * autofocus plugin is required, rather than storing its results.
     * @return AutofocusPlugin currently selected.
     */
-   public AutofocusPlugin getAutofocusMethod();
+   AutofocusPlugin getAutofocusMethod();
 
    /**
     * Return a list of the current valid autofocus names, suitable for use in
@@ -56,11 +56,17 @@ public interface AutofocusManager {
     * devices (which are not).
     * @return List of valid autofocus names.
     */
-   public List<String> getAllAutofocusMethods();
+   List<String> getAllAutofocusMethods();
 
    /**
     * Update the list of available autofocus devices by scanning the system
     * for autofocus device adapters and AutofocusPlugins.
     */
-   public void refresh();
+   void refresh();
+
+   /**
+    * Initializes all known autofocus plugins.
+    *
+    */
+    void initialize();
 }
