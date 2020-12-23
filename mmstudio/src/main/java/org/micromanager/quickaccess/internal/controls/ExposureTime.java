@@ -35,7 +35,6 @@ import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
 import org.micromanager.events.ExposureChangedEvent;
 import org.micromanager.events.GUIRefreshEvent;
-import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.quickaccess.WidgetPlugin;
@@ -109,7 +108,7 @@ public final class ExposureTime extends WidgetPlugin implements SciJavaPlugin {
    private void updateExposureTime(String text) {
       try {
          double time = NumberUtils.displayStringToDouble(text);
-         ((MMStudio) studio_).setExposure(time);
+         studio_.app().setExposure(time);
       }
       catch (ParseException e) {
          // Ignore it.

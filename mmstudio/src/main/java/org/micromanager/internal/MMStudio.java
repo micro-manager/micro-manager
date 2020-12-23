@@ -40,7 +40,6 @@ import java.util.*;
 import java.util.function.Function;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -53,9 +52,7 @@ import org.micromanager.AutofocusManager;
 import org.micromanager.CompatibilityInterface;
 import org.micromanager.LogManager;
 import org.micromanager.PluginManager;
-import org.micromanager.PositionList;
 import org.micromanager.PositionListManager;
-import org.micromanager.PropertyMap;
 import org.micromanager.ScriptController;
 import org.micromanager.ShutterManager;
 import org.micromanager.Studio;
@@ -73,7 +70,6 @@ import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.display.internal.DefaultDisplayManager;
 import org.micromanager.events.AutofocusPluginShouldInitializeEvent;
-import org.micromanager.events.ChannelExposureEvent;
 import org.micromanager.events.EventManager;
 import org.micromanager.events.ExposureChangedEvent;
 import org.micromanager.events.GUIRefreshEvent;
@@ -93,15 +89,12 @@ import org.micromanager.internal.dialogs.IJVersionCheckDlg;
 import org.micromanager.internal.dialogs.IntroDlg;
 import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.RegistrationDlg;
-import org.micromanager.internal.hcwizard.MMConfigFileException;
-import org.micromanager.internal.hcwizard.MicroscopeModel;
 import org.micromanager.internal.logging.LogFileManager;
 import org.micromanager.internal.menus.MMMenuBar;
 import org.micromanager.internal.navigation.UiMovesStageManager;
 import org.micromanager.internal.pipelineinterface.PipelineFrame;
 import org.micromanager.internal.pluginmanagement.DefaultPluginManager;
 import org.micromanager.internal.positionlist.MMPositionListDlg;
-import org.micromanager.internal.propertymap.DefaultPropertyMap;
 import org.micromanager.internal.script.ScriptPanel;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.DefaultAutofocusManager;
@@ -124,7 +117,7 @@ import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
  * Implements the Studio (i.e. primary API) and does various other
  * tasks that should probably be refactored out at some point.
  */
-public final class MMStudio implements Studio, CompatibilityInterface, Application {
+public final class MMStudio implements Studio {
 
    private static final long serialVersionUID = 3556500289598574541L;
    
@@ -136,10 +129,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
    private static final String SHOULD_RUN_ZMQ_SERVER = "run ZQM server";
    private static final String CORE_LOG_LIFETIME_DAYS = "how many days to keep MMCore log files, before they get deleted";
    private static final String CIRCULAR_BUFFER_SIZE = "size, in megabytes of the circular buffer used to temporarily store images before they are written to disk";
-   private static final String AFFINE_TRANSFORM_LEGACY = "affine transform for mapping camera coordinates to stage coordinates for a specific pixel size config: ";
-   private static final String AFFINE_TRANSFORM = "affine transform parameters for mapping camera coordinates to stage coordinates for a specific pixel size config: ";
-   private static final String EXPOSURE_KEY = "Exposure_";
-   
+
    // GUI components
    private boolean wasStartedAsImageJPlugin_;
    private PropertyEditor propertyBrowser_;
@@ -164,6 +154,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
    private UserProfileManager userProfileManager_;
    private PositionListManager posListManager_;
    private UiMovesStageManager uiMovesStageManager_;
+   private DefaultApplication defaultApplication_;
+   private DefaultCompatibilityInterface compatibility_;
    
    // MMcore
    private CMMCore core_;
@@ -282,9 +274,11 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
       // Start up multiple managers.  
       
       userProfileManager_ = new UserProfileManager();       
+      compatibility_ = new DefaultCompatibilityInterface(studio_);
       
       // Essential GUI settings in preparation of the intro dialog
       daytimeNighttimeManager_ = DaytimeNighttime.create(studio_);
+      defaultApplication_ = new DefaultApplication(studio_, daytimeNighttimeManager_);
       
       // Start loading plugins in the background
       // Note: plugin constructors should not expect a fully constructed Studio!
@@ -571,66 +565,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
       acquisitionEngine2010LoadingThread_.start();
    }
 
-   @Override
-   public void setExposure(final double exposureTime) {
-      // Avoid redundantly setting the exposure time.
-      boolean shouldSetInCore = true;
-      try {
-         if (core_ != null && core_.getExposure() == exposureTime) {
-            shouldSetInCore = false;
-         }
-      }
-      catch (Exception e) {
-         ReportingUtils.logError(e, "Error getting core exposure time");
-      }
-      // This is synchronized with the shutdown lock primarily so that
-      // the exposure-time field in MainFrame won't cause issues when it loses
-      // focus during shutdown.
-      synchronized(shutdownLock_) {
-         if (core_ == null) {
-            // Just give up.
-            return;
-         }
-         // Do this prior to updating the Core, so that if the Core posts a
-         // callback resulting in a GUI refresh, we don't have the old
-         // exposure time override the new one (since GUI refreshes result in
-         // resetting the exposure to the old, stored-in-profile exposure time).
-         String channelGroup = "";
-         String channel = "";
-         try {
-            channelGroup = core_.getChannelGroup();
-            channel = core_.getCurrentConfigFromCache(channelGroup);
-            storeChannelExposureTime(channelGroup, channel, exposureTime);
-         }
-         catch (Exception e) {
-            studio_.logs().logError("Unable to determine channel group");
-         }
-
-         if (!core_.getCameraDevice().equals("") && shouldSetInCore) {
-            live().setSuspended(true);
-            try {
-               core_.setExposure(exposureTime);
-               core_.waitForDevice(core_.getCameraDevice());
-            }
-            catch (Exception e) {
-               ReportingUtils.logError(e, "Failed to set core exposure time.");
-            }
-            live().setSuspended(false);
-         }
-
-         // Display the new exposure time
-         double exposure;
-         try {
-            exposure = core_.getExposure();
-            events().post(new ChannelExposureEvent(exposure,
-                     channelGroup, channel, true));
-         }
-         catch (Exception e) {
-            ReportingUtils.logError(e, "Couldn't set exposure time.");
-         }
-      } // End synchronization check
-   }
-
    public boolean getHideMDADisplayOption() {
       return AcqControlDlg.getShouldHideMDADisplay();
    }
@@ -650,7 +584,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
       curImage.setRoi(xOffset, yOffset, width, height);
       Roi roi = curImage.getRoi();
       try {
-         setROI(updateROI(roi));
+         app().setROI(updateROI(roi));
       }
       catch (Exception e) {
          // Core failed to set new ROI.
@@ -673,7 +607,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
       }
       if (roi.getType() == Roi.RECTANGLE) {
          try {
-            setROI(updateROI(roi));
+            app().setROI(updateROI(roi));
          }
          catch (Exception e) {
             // Core failed to set new ROI.
@@ -794,11 +728,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
    public static MainFrame getFrame() {
       return frame_;
    }
-
-   @Override
-   public JFrame getMainWindow() {
-      return frame_;
-   }
    
    public MMMenuBar getMMMenubar() {
       return mmMenuBar_;
@@ -809,32 +738,12 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
             "Save the configuration file", FileDialogs.MM_CONFIG_FILE);
       if (f != null) {
          try {
-            saveConfigPresets(f.getAbsolutePath(), true);
+            app().saveConfigPresets(f.getAbsolutePath(), true);
          }
          catch (IOException e) {
             // This should be impossible as we set shouldOverwrite to true.
             logs().logError(e, "Error saving config presets");
          }
-      }
-   }
-
-   @Override
-   public void saveConfigPresets(String path, boolean allowOverwrite) throws IOException {
-      if (!allowOverwrite && new File(path).exists()) {
-         throw new IOException("Cannot overwrite existing file at " + path);
-      }
-      MicroscopeModel model = new MicroscopeModel();
-      try {
-         model.loadFromFile(sysConfigFile_);
-         model.createSetupConfigsFromHardware(core_);
-         model.createResolutionsFromHardware(core_);
-         model.saveToFile(path);
-         sysConfigFile_ = path;
-         configChanged_ = false;
-         frame_.setConfigSaveButtonStatus(configChanged_);
-         frame_.setConfigText(sysConfigFile_);
-      } catch (MMConfigFileException e) {
-         ReportingUtils.showError(e);
       }
    }
 
@@ -1007,40 +916,11 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
    // @Override
    public void markCurrentPosition() {
       if (posListDlg_ == null) {
-         showPositionList();
+         app().showPositionList();
       }
       if (posListDlg_ != null) {
          posListDlg_.markPosition(false);
       }
-   }
-
-   @Override
-   public boolean versionLessThan(String version) throws NumberFormatException {
-      String[] v = MMVersion.VERSION_STRING.split(" ", 2);
-      String[] m = v[0].split("\\.", 3);
-      String[] v2 = version.split(" ", 2);
-      String[] m2 = v2[0].split("\\.", 3);
-      for (int i=0; i < 3; i++) {
-         if (Integer.parseInt(m[i]) < Integer.parseInt(m2[i])) {
-            ReportingUtils.showError("This code needs Micro-Manager version " + version + " or greater");
-            return true;
-         }
-         if (Integer.parseInt(m[i]) > Integer.parseInt(m2[i])) {
-            return false;
-         }
-      }
-      if (v2.length < 2 || v2[1].equals("") ) {
-         return false;
-      }
-      if (v.length < 2 ) {
-         ReportingUtils.showError("This code needs Micro-Manager version " + version + " or greater");
-         return true;
-      }
-      if (Integer.parseInt(v[1]) < Integer.parseInt(v2[1])) {
-         ReportingUtils.showError("This code needs Micro-Manager version " + version + " or greater");
-         return false;
-      }
-      return true;
    }
 
    private void configureBinningCombo() throws Exception {
@@ -1090,7 +970,11 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
          frame_.setDisplayedExposureTime(event.getNewExposureTime());
       }
    }
-
+   
+   public void refreshStaticValues() {
+      staticInfo_.refreshValues();
+   }
+   
    public void updateGUI(boolean updateConfigPadStructure) {
       updateGUI(updateConfigPadStructure, false);
    }
@@ -1448,11 +1332,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
    // //////////////////////////////////////////////////////////////////////////
    // Script interface
    // //////////////////////////////////////////////////////////////////////////
-
-   @Override
-   public String getVersion() {
-      return MMVersion.VERSION_STRING;
-   }
    
    /**
     * Inserts version info for various components in the Corelog
@@ -1467,7 +1346,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
          hostname = "unknown";
       }
       core_.logMessage("Host: " + hostname);
-      core_.logMessage("MM Studio version: " + getVersion());
+      core_.logMessage("MM Studio version: " + compat().getVersion());
       core_.logMessage(core_.getVersionInfo());
       core_.logMessage(core_.getAPIVersionInfo());
       core_.logMessage("Operating System: " + System.getProperty("os.name") +
@@ -1475,23 +1354,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
       core_.logMessage("JVM: " + System.getProperty("java.vm.name") +
               ", version " + System.getProperty("java.version") + ", " +
               System.getProperty("sun.arch.data.model") + "-bit");
-   }
-   
-   @Override
-   public void makeActive() {
-      frame_.toFront();
-   }
-   
-   /**
-    * Opens a dialog to record stage positions
-    */
-   @Override
-   public void showPositionList() {
-      if (posListDlg_ == null) {
-         posListDlg_ = new MMPositionListDlg(studio_, posListManager_.getPositionList());
-         posListDlg_.addListeners();
-      }
-      posListDlg_.setVisible(true);
    }
 
    public void setConfigChanged(boolean status) {
@@ -1503,68 +1365,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
       return configChanged_;
    }
 
-    /**
-    * Returns exposure time for the desired preset in the given channelgroup
-    * Acquires its info from the preferences
-    * Same thing is used in MDA window, but this class keeps its own copy
-    * 
-    * @param channelGroup
-    * @param channel - 
-    * @param defaultExp - default value
-    * @return exposure time
-    */
-   @Override
-   public double getChannelExposureTime(String channelGroup, String channel,
-           double defaultExp) {
-      return this.profile().getSettings(MMStudio.class).getDouble(
-              EXPOSURE_KEY + channelGroup + "_" + channel, defaultExp);
-   }
-
-   public void storeChannelExposureTime(String channelGroup, String channel,
-                                      double exposure) {
-      this.profile().getSettings(MMStudio.class).putDouble(
-              EXPOSURE_KEY + channelGroup + "_" + channel, exposure);
-   }
-
-   /**
-    * Updates the exposure time in the given preset 
-    * Will also update current exposure if it the given channel and channelgroup
-    * are the current one
-    * 
-    * @param channelGroup - 
-    * 
-    * @param channel - preset for which to change exposure time
-    * @param exposure - desired exposure time
-    */
-   @Override
-   public void setChannelExposureTime(String channelGroup, String channel,
-           double exposure) {
-      try {
-         storeChannelExposureTime(channelGroup, channel, exposure);
-         if (channelGroup != null && channelGroup.equals(core_.getChannelGroup())) {
-            if (channel != null && !channel.equals("") && 
-                    channel.equals(core_.getCurrentConfigFromCache(channelGroup))) {
-               setExposure(exposure);
-            }
-         }
-      } catch (Exception ex) {
-         ReportingUtils.logError("Failed to set exposure using Channelgroup: "
-                 + channelGroup + ", channel: " + channel + ", exposure: " + exposure);
-      }
-   }
-
    public void enableRoiButtons(final boolean enabled) {
       frame_.enableRoiButtons(enabled);
-   }
-
-   @Override
-   public void refreshGUI() {
-      updateGUI(true);
-   }
-   
-   @Override
-   public void refreshGUIFromCache() {
-      updateGUI(true, true);
    }
 
    public AcquisitionWrapperEngine getAcquisitionEngine() {
@@ -1596,14 +1398,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
       }
    }
 
-   @Override
-   public void setROI(Rectangle r) throws Exception {
-      live().setSuspended(true);
-      core_.setROI(r.x, r.y, r.width, r.height);
-      staticInfo_.refreshValues();
-      live().setSuspended(false);
-   }
-
    public void setMultiROI(List<Rectangle> rois) throws Exception {
       live().setSuspended(true);
       core_.setMultiROI(rois);
@@ -1613,11 +1407,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
 
    public void setAcquisitionEngine(AcquisitionWrapperEngine eng) {
       acqEngine_ = eng;
-   }
-
-   @Override
-   public void showAutofocusDialog() {
-      afMgr_.showOptionsDialog();
    }
 
    @Override
@@ -1665,15 +1454,14 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
       return logs();
    }
 
-   // TODO: split methods associated with this interface out to a separate
-   // object.
    @Override
    public CompatibilityInterface compat() {
-      return this;
+      return compatibility_;
    }
+   
    @Override
    public CompatibilityInterface getCompatibilityInterface() {
-      return this;
+      return compat();
    }
 
    @Override
@@ -1768,22 +1556,12 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
 
    @Override
    public Application app() {
-      return this;
+      return defaultApplication_;
    }
 
    @Override
    public Application getApplication() {
       return app();
-   }
-
-   @Override
-   public ApplicationSkin skin() {
-      return daytimeNighttimeManager_;
-   }
-
-   @Override
-   public ApplicationSkin getApplicationSkin() {
-      return skin();
    }
 
    @Override
@@ -1796,51 +1574,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
       return alerts();
    }
 
-
    public UiMovesStageManager getUiMovesStageManager () {
       return uiMovesStageManager_;
-   }
-
-   @Override
-   @Deprecated
-   public AffineTransform getCameraTransform(String config) {
-      // Try the modern way first
-      double[] defaultParams = new double[0];
-      double[] params = profile().getSettings(MMStudio.class).
-              getDoubleList(AFFINE_TRANSFORM + config, defaultParams);
-      if (params != null && params.length == 6) {
-         return new AffineTransform(params);
-      }
-
-      // The early 2.0-beta way of storing as a serialized object.
-      PropertyMap studioSettings = profile().
-            getSettings(MMStudio.class).toPropertyMap();
-      AffineTransform result = (AffineTransform)
-         ((DefaultPropertyMap) studioSettings).getLegacySerializedObject(
-               AFFINE_TRANSFORM_LEGACY + config, null);
-      if (result != null) {
-         // Save it the new way
-         setCameraTransform(result, config);
-         return result;
-      }
-
-      // For backwards compatibility, try retrieving it from the 1.4
-      // Preferences instead.
-      AffineTransform tfm = org.micromanager.internal.utils.UnpleasantLegacyCode.
-              legacyRetrieveTransformFromPrefs("affine_transform_" + config);
-      if (tfm != null) {
-         // Save it the new way.
-         setCameraTransform(tfm, config);
-      }
-      return tfm;
-   }
-
-   @Override
-   @Deprecated
-   public void setCameraTransform(AffineTransform transform, String config) {
-      double[] params = new double[6];
-      transform.getMatrix(params);
-      profile().getSettings(MMStudio.class).putDoubleList(AFFINE_TRANSFORM + config, params);
    }
 
    public double getCachedXPosition() {

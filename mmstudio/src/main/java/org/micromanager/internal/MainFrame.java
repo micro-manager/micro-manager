@@ -244,12 +244,12 @@ public final class MainFrame extends MMFrame {
       textFieldExp_.addFocusListener(new FocusAdapter() {
          @Override
          public void focusLost(FocusEvent fe) {
-            mmStudio_.setExposure(getDisplayedExposureTime());
+            mmStudio_.app().setExposure(getDisplayedExposureTime());
          }
       });
       textFieldExp_.setFont(defaultFont_);
       textFieldExp_.addActionListener((ActionEvent e) -> {
-         mmStudio_.setExposure(getDisplayedExposureTime());
+         mmStudio_.app().setExposure(getDisplayedExposureTime());
       });
       subPanel.add(textFieldExp_, "gapleft push, wrap");
 
@@ -557,7 +557,7 @@ public final class MainFrame extends MMFrame {
       // http://publicdomainvectors.org/en/free-clipart/Adjustable-wrench-icon-vector-image/23097.html
       autofocusConfigureButton_ = createButton(null,
             "wrench.png", "Set autofocus options", () -> {
-               mmStudio_.showAutofocusDialog();
+               mmStudio_.app().showAutofocusDialog();
       });
       autoPanel.add(autofocusConfigureButton_, SMALLBUTTON_SIZE);
 
