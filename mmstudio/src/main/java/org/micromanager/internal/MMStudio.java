@@ -423,14 +423,8 @@ public final class MMStudio implements Studio {
             ReportingUtils.showErrorOn(false);
          }
       }
-      
-      // Create Multi-D window here but do not show it.
-      // This window needs to be created in order to properly set the 
-      // "ChannelGroup" based on the Multi-D parameters
-      acqControlWin_ = new AcqControlDlg(acqEngine_, studio_);
 
-      acquisitionManager_ = new DefaultAcquisitionManager(this, acqEngine_,
-            acqControlWin_);
+      acquisitionManager_ = new DefaultAcquisitionManager(this, acqEngine_, uiManager_.getAcquisitionWindow());
 
       try {
          core_.setCircularBufferMemoryFootprint(getCircularBufferSize());
@@ -1540,6 +1534,9 @@ public final class MMStudio implements Studio {
             CIRCULAR_BUFFER_SIZE, newSize);
    }
    
+   public MMUIManager uiManager() {
+      return uiManager_;
+   }
    
    public static class MMUIManager {
       private PropertyEditor propertyBrowser_;
@@ -1547,9 +1544,9 @@ public final class MMStudio implements Studio {
       private AcqControlDlg acqControlWin_;
       private ScriptPanel scriptPanel_;
       private PipelineFrame pipelineFrame_;
-      private final Studio studio_;
+      private final MMStudio studio_;
       
-      public MMUIManager(Studio studio) {
+      public MMUIManager(MMStudio studio) {
          studio_ = studio;
       }
 
@@ -1583,7 +1580,7 @@ public final class MMStudio implements Studio {
       }
 
       private void createScriptPanel() {
-         scriptPanel_ = new ScriptPanel((MMStudio) studio_);
+         scriptPanel_ = new ScriptPanel(studio_);
       }
       
       public ScriptPanel getScriptPanel() {
@@ -1600,10 +1597,17 @@ public final class MMStudio implements Studio {
          return pipelineFrame_;
       }
       
+      public AcqControlDlg getAcquisitionWindow() {
+         if (acqControlWin_ == null) {
+            acqControlWin_ = new AcqControlDlg(studio_.getAcquisitionEngine(), studio_);
+         }
+         return acqControlWin_;
+      }
+      
       public void openAcqControlDialog() {
          try {
             if (acqControlWin_ == null) {
-               acqControlWin_ = new AcqControlDlg(((MMStudio) studio_).getAcquisitionEngine(), (MMStudio) studio_);
+               acqControlWin_ = new AcqControlDlg(studio_.getAcquisitionEngine(), studio_);
             }
             if (acqControlWin_.isActive()) {
                acqControlWin_.setTopPosition();
