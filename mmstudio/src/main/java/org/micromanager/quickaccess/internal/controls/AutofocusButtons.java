@@ -117,7 +117,7 @@ public final class AutofocusButtons extends WidgetPlugin implements SciJavaPlugi
       dialogButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            ((MMStudio) studio_).showAutofocusDialog();
+            studio_.app().showAutofocusDialog();
          }
       });
       dialogButton.setFont(GUIUtils.buttonFont);
