@@ -24,8 +24,8 @@
 
 #ifdef WIN32
    #include <windows.h>
-   #define snprintf _snprintf 
 #endif
+#include "FixSnprintf.h"
 
 #include "PI_GCS.h"
 #include <string>

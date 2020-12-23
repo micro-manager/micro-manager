@@ -36,8 +36,8 @@
 
 #ifdef WIN32
    #include <windows.h>
-   #define snprintf _snprintf 
 #endif
+#include "FixSnprintf.h"
 
 #include "Piezosystem_dDrive.h"
 #include "devicelist.h"

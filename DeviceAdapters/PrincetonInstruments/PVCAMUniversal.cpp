@@ -58,15 +58,14 @@
 #include <iomanip>
 #include <stdint.h>
 
+#include "FixSnprintf.h"
+
 using namespace std;
 unsigned Universal::refCount_ = 0;
 bool Universal::PVCAM_initialized_ = false;
 MMThreadLock g_pvcamLock;
 
 const int BUFSIZE = 60;
-#if WIN32
-#define snprintf _snprintf
-#endif
 
 // global constants
 extern const char* g_PixelType_8bit;

@@ -37,11 +37,7 @@
 
 // "st" gives 8bit value. bit 0 tells if ready to execute; busy if "1"
 
-
-#ifdef WIN32
-//   #include <windows.h>
-   #define snprintf _snprintf 
-#endif
+#include "FixSnprintf.h"
 
 #include <stdio.h>
 #include <string>

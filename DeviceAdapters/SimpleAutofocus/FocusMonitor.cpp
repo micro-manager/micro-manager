@@ -29,8 +29,8 @@
 #ifdef WIN32
    #define WIN32_LEAN_AND_MEAN
    #include <windows.h>
-   #define snprintf _snprintf 
 #endif
+#include "FixSnprintf.h"
 
 #include "SimpleAutofocus.h"
 #include "../../MMDevice/ModuleInterface.h"

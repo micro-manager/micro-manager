@@ -23,11 +23,7 @@
 // AUTHOR:        Vikram Kopuri, based on Code by Nenad Amodaj Nico Stuurman and Jizhen Zhao
 //
 
-
-#ifdef WIN32
-   //#include <windows.h>
-   #define snprintf _snprintf 
-#endif
+#include "FixSnprintf.h"
 
 #include "wptr.h"
 #include <string>

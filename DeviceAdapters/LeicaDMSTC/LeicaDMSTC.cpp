@@ -22,10 +22,7 @@
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-#ifdef WIN32
-   //#include <windows.h>
-   #define snprintf _snprintf 
-#endif
+#include "FixSnprintf.h"
 
 #include "LeicaDMSTC.h"
 #include "LeicaDMSTCHub.h"

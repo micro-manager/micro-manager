@@ -35,10 +35,7 @@
 
 //TODO: NEED TO MAKE SURE COMMENDS SEND IN CR + LFKE SURE COMMENDS SEND IN CR + LF
 
-#ifdef WIN32
-//   #include <windows.h>
-   #define snprintf _snprintf
-#endif
+#include "FixSnprintf.h"
 
 #include <stdio.h>
 #include <string>
