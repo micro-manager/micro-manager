@@ -35,9 +35,8 @@ import org.micromanager.internal.utils.TextUtils;
 
 /**
  * Simple class used to cache information that doesn't change very often.
- * TODO: rename this.
  */
-class StaticInfo {
+public class MMCache {
    static public long width_;
    static public long height_;
    static public long bytesPerPixel_;
@@ -57,9 +56,10 @@ class StaticInfo {
    static private MainFrame frame_;
 
    @SuppressWarnings("LeakingThisInConstructor")
-   public StaticInfo(Studio studio, MainFrame frame) {
+   public MMCache(Studio studio, MainFrame frame) {
       core_ = studio.core();
       frame_ = frame;
+      studio.events().registerForEvents(this);
    }
 
    public void updateXYPos(double x, double y) {
@@ -72,7 +72,7 @@ class StaticInfo {
       y_ += y;
       updateInfoDisplay();
    }
-   public void getNewXYStagePosition() {
+   public void updateXYStagePosition() {
       double[] x = new double[1];
       double[] y = new double[1];
       try {

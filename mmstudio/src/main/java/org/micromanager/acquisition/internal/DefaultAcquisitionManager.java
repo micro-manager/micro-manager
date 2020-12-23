@@ -277,12 +277,12 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
       Metadata.Builder result = image.getMetadata().copyBuilderWithNewUUID()
          .camera(camera)
          .receivedTime(DATE_FORMATTER.format(new Date()))
-         .pixelSizeUm(mmstudio.cache().getCachedPixelSizeUm())
-         .pixelSizeAffine(mmstudio.cache().getCachedPixelSizeAffine())
-         .xPositionUm(mmstudio.cache().getCachedXPosition())
-         .yPositionUm(mmstudio.cache().getCachedYPosition())
-         .zPositionUm(mmstudio.cache().getCachedZPosition())
-         .bitDepth(mmstudio.cache().getCachedBitDepth());
+         .pixelSizeUm(mmstudio.cache().getPixelSizeUm())
+         .pixelSizeAffine(mmstudio.cache().getPixelSizeAffine())
+         .xPositionUm(mmstudio.cache().getStageX())
+         .yPositionUm(mmstudio.cache().getStageY())
+         .zPositionUm(mmstudio.cache().getStageZ())
+         .bitDepth(mmstudio.cache().getImageBitDepth());
 
       try {
          String binning = studio_.core().getPropertyFromCache(
