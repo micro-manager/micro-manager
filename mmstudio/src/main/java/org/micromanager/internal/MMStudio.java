@@ -140,12 +140,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
    private static final String AFFINE_TRANSFORM = "affine transform parameters for mapping camera coordinates to stage coordinates for a specific pixel size config: ";
    private static final String EXPOSURE_KEY = "Exposure_";
    
-   // GUI components
    private boolean wasStartedAsImageJPlugin_;
-   private PropertyEditor propertyBrowser_;
-   private CalibrationListDlg calibrationListDlg_;
-   private AcqControlDlg acqControlWin_;
-   
+
    
    // Managers
    private AcquisitionManager acquisitionManager_;
@@ -164,6 +160,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
    private UserProfileManager userProfileManager_;
    private PositionListManager posListManager_;
    private UiMovesStageManager uiMovesStageManager_;
+   private MMUIManager uiManager_;
    
    // MMcore
    private CMMCore core_;
@@ -173,9 +170,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
    private boolean configChanged_ = false;
    private boolean isClickToMoveEnabled_ = false;
 
-   private ScriptPanel scriptPanel_;
    private ZMQServer zmqServer_;
-   private PipelineFrame pipelineFrame_;
    private org.micromanager.internal.utils.HotKeys hotKeys_;
 
    // Our instance
@@ -280,7 +275,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
       }
       
       // Start up multiple managers.  
-      
+      uiManager_ = new MMUIManager(this);
       userProfileManager_ = new UserProfileManager();       
       
       // Essential GUI settings in preparation of the intro dialog
@@ -318,9 +313,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
       // Note: pipelineFrame is used in the dataManager, however, pipelineFrame 
       // needs the dataManager.  Let's hope for the best....
       dataManager_ = new DefaultDataManager(studio_);
-      if (pipelineFrame_ == null) { //Create the pipelineframe if it hasn't already been done.
-         pipelineFrame_ = new PipelineFrame(studio_);
-      }
+      uiManager_.createPipelineFrame();
 
       alertManager_ = new DefaultAlertManager(studio_);
       
@@ -468,7 +461,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
       }
       
       // Load (but do no show) the scriptPanel
-      createScriptPanel();
+      uiManager_.createScriptPanel();
       
       // Now create and show the main window
       mmMenuBar_ = MMMenuBar.createMenuBar(studio_);
@@ -534,14 +527,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
       // of the current log level, we make an exception for UIMonitor, which we
       // enable only when debug logging is turned on (from the GUI).
       UIMonitor.enable(OptionsDlg.isDebugLoggingEnabled(studio_));
-   }
-  
-   public void showPipelineFrame() {
-      pipelineFrame_.setVisible(true);
-   }
-
-   public void showScriptPanel() {
-      scriptPanel_.setVisible(true);
    }
 
    private void handleError(String message) {
@@ -875,39 +860,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
       }
       live().setSuspended(false);
    }
-
-   public void createPropertyEditor() {
-      if (propertyBrowser_ != null) {
-         propertyBrowser_.dispose();
-      }
-
-      propertyBrowser_ = new PropertyEditor(studio_);
-      this.events().registerForEvents(propertyBrowser_);
-      propertyBrowser_.setVisible(true);
-      propertyBrowser_.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-   }
-
-   public void createCalibrationListDlg() {
-      if (calibrationListDlg_ != null) {
-         calibrationListDlg_.dispose();
-      }
-
-      calibrationListDlg_ = new CalibrationListDlg(core_);
-      calibrationListDlg_.setVisible(true);
-      calibrationListDlg_.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-      calibrationListDlg_.setParentGUI(studio_);
-   }
-
-   public CalibrationListDlg getCalibrationListDlg() {
-      if (calibrationListDlg_ == null) {
-         createCalibrationListDlg();
-      }
-      return calibrationListDlg_;
-   }
-
-   private void createScriptPanel() {
-      scriptPanel_ = new ScriptPanel(studio_);
-   }
    
   public void runZMQServer() {
       if (zmqServer_ == null) {
@@ -952,10 +904,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
          logs().logMessage("Stopped ZMQ Server");
          zmqServer_ = null;
       }
-   }
-
-   public PipelineFrame getPipelineFrame() {
-      return pipelineFrame_;
    }
 
    public void updateXYPos(double x, double y) {
@@ -1124,16 +1072,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
             pad.refreshStructure(true);
          }
 
-         // update Channel menus in Multi-dimensional acquisition dialog
-         updateChannelCombos();
-
-         // update list of pixel sizes in pixel size configuration window
-         if (calibrationListDlg_ != null) {
-            calibrationListDlg_.refreshCalibrations();
-         }
-         if (propertyBrowser_ != null) {
-            propertyBrowser_.refresh(true);
-         }
+         uiManager_.refresh();
 
          ReportingUtils.logMessage("Finished updating GUI");
       } catch (Exception e) {
@@ -1176,27 +1115,10 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
          }
       }
   
-      if (scriptPanel_ != null) {
-         scriptPanel_.closePanel();
-         scriptPanel_ = null;
-      }
+      uiManager_.close();
       
       if (zmqServer_ != null) {
          zmqServer_.close();
-      }
-
-      if (pipelineFrame_ != null) {
-         pipelineFrame_.dispose();
-      }
-
-      if (propertyBrowser_ != null) {
-         propertyBrowser_.getToolkit().getSystemEventQueue().postEvent(
-                 new WindowEvent(propertyBrowser_, WindowEvent.WINDOW_CLOSING));
-         propertyBrowser_.dispose();
-      }
-
-      if (acqControlWin_ != null) {
-         acqControlWin_.close();
       }
 
       if (afMgr_ != null) {
@@ -1338,7 +1260,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
             "Executing startup script, please wait...");
       waitDlg.showDialog();
       try {
-         scriptPanel_.runFile(f);
+         uiManager_.getScriptPanel().runFile(f);
       }
       finally {
          waitDlg.closeDialog();
@@ -1396,32 +1318,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
       initializeGUI();
 
       return result;
-   }
-
-   public void openAcqControlDialog() {
-      try {
-         if (acqControlWin_ == null) {
-            acqControlWin_ = new AcqControlDlg(acqEngine_, studio_);
-         }
-         if (acqControlWin_.isActive()) {
-            acqControlWin_.setTopPosition();
-         }
-
-         acqControlWin_.setVisible(true);
-         
-         acqControlWin_.repaint();
-
-      } catch (Exception exc) {
-         ReportingUtils.showError(exc,
-               "\nAcquisition window failed to open due to invalid or corrupted settings.\n"
-               + "Try resetting registry settings to factory defaults (Menu Tools|Options).");
-      }
-   }
-
-   public void updateChannelCombos() {
-      if (acqControlWin_ != null) {
-         acqControlWin_.updateChannelAndGroupCombo();
-      }
    }
 
    public void autofocusNow() {
@@ -1678,12 +1574,12 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
 
    @Override
    public ScriptController scripter() {
-      return scriptPanel_;
+      return uiManager_.getScriptPanel();
    }
 
    @Override
    public ScriptController getScriptController() {
-      return scriptPanel_;
+      return uiManager_.getScriptPanel();
    }
 
    @Override
@@ -1907,5 +1803,134 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
    public void setCircularBufferSize(int newSize) {
       profile().getSettings(MMStudio.class).putInteger(
             CIRCULAR_BUFFER_SIZE, newSize);
+   }
+   
+   
+   public static class MMUIManager {
+      private PropertyEditor propertyBrowser_;
+      private CalibrationListDlg calibrationListDlg_;
+      private AcqControlDlg acqControlWin_;
+      private ScriptPanel scriptPanel_;
+      private PipelineFrame pipelineFrame_;
+      private final Studio studio_;
+      
+      public MMUIManager(Studio studio) {
+         studio_ = studio;
+      }
+
+      public void createPropertyEditor() {
+         if (propertyBrowser_ != null) {
+            propertyBrowser_.dispose();
+         }
+
+         propertyBrowser_ = new PropertyEditor(studio_);
+         studio_.events().registerForEvents(propertyBrowser_);
+         propertyBrowser_.setVisible(true);
+         propertyBrowser_.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+      }
+
+      public void createCalibrationListDlg() {
+         if (calibrationListDlg_ != null) {
+            calibrationListDlg_.dispose();
+         }
+
+         calibrationListDlg_ = new CalibrationListDlg(studio_.core());
+         calibrationListDlg_.setVisible(true);
+         calibrationListDlg_.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+         calibrationListDlg_.setParentGUI(studio_);
+      }
+
+      public CalibrationListDlg getCalibrationListDlg() {
+         if (calibrationListDlg_ == null) {
+            createCalibrationListDlg();
+         }
+         return calibrationListDlg_;
+      }
+
+      private void createScriptPanel() {
+         scriptPanel_ = new ScriptPanel((MMStudio) studio_);
+      }
+      
+      public ScriptPanel getScriptPanel() {
+         return scriptPanel_;
+      }
+      
+      public void createPipelineFrame() {
+         if (pipelineFrame_ == null) { //Create the pipelineframe if it hasn't already been done.
+            pipelineFrame_ = new PipelineFrame(studio_);
+         }
+      }
+      
+      public PipelineFrame getPipelineFrame() {
+         return pipelineFrame_;
+      }
+      
+      public void openAcqControlDialog() {
+         try {
+            if (acqControlWin_ == null) {
+               acqControlWin_ = new AcqControlDlg(((MMStudio) studio_).getAcquisitionEngine(), (MMStudio) studio_);
+            }
+            if (acqControlWin_.isActive()) {
+               acqControlWin_.setTopPosition();
+            }
+
+            acqControlWin_.setVisible(true);
+
+            acqControlWin_.repaint();
+
+         } catch (Exception exc) {
+            ReportingUtils.showError(exc,
+                  "\nAcquisition window failed to open due to invalid or corrupted settings.\n"
+                  + "Try resetting registry settings to factory defaults (Menu Tools|Options).");
+         }
+      }
+
+      public void updateChannelCombos() {
+         if (acqControlWin_ != null) {
+            acqControlWin_.updateChannelAndGroupCombo();
+         }
+      }
+      
+      public void showPipelineFrame() {
+         pipelineFrame_.setVisible(true);
+      }
+
+      public void showScriptPanel() {
+         scriptPanel_.setVisible(true);
+      }
+      
+      public void close() {
+         if (scriptPanel_ != null) {
+            scriptPanel_.closePanel();
+            scriptPanel_ = null;
+         }
+         
+         if (pipelineFrame_ != null) {
+            pipelineFrame_.dispose();
+         }
+
+         if (propertyBrowser_ != null) {
+            propertyBrowser_.getToolkit().getSystemEventQueue().postEvent(
+                    new WindowEvent(propertyBrowser_, WindowEvent.WINDOW_CLOSING));
+            propertyBrowser_.dispose();
+         }
+
+         if (acqControlWin_ != null) {
+            acqControlWin_.close();
+         }
+      }
+      
+      public void refresh() {
+         // update Channel menus in Multi-dimensional acquisition dialog
+         updateChannelCombos();
+
+         // update list of pixel sizes in pixel size configuration window
+         if (calibrationListDlg_ != null) {
+            calibrationListDlg_.refreshCalibrations();
+         }
+         if (propertyBrowser_ != null) {
+            propertyBrowser_.refresh(true);
+         }
+      }
    }
 }
