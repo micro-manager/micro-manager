@@ -37,20 +37,20 @@ import org.micromanager.internal.utils.TextUtils;
  * Simple class used to cache information that doesn't change very often.
  */
 public class MMCache {
-   static public long width_;
-   static public long height_;
-   static public long bytesPerPixel_;
-   static public long imageBitDepth_;
-   static public double pixSizeUm_;
-   static public AffineTransform affineTransform_;
-   static public double zPos_;
-   static public double x_;
-   static public double y_;
+   private long width_;
+   private long height_;
+   private long bytesPerPixel_;
+   private long imageBitDepth_;
+   private double pixSizeUm_;
+   private AffineTransform affineTransform_;
+   private double zPos_;
+   private double x_;
+   private double y_;
 
-   static public String cameraLabel_ = "";
-   static public String shutterLabel_ = "";
-   static public String xyStageLabel_ = "";
-   static public String zStageLabel_ = "";
+   private String cameraLabel_ = "";
+   private String shutterLabel_ = "";
+   private String xyStageLabel_ = "";
+   private String zStageLabel_ = "";
 
    static private CMMCore core_;
    static private MainFrame frame_;
@@ -195,5 +195,21 @@ public class MMCache {
    
    public AffineTransform getPixelSizeAffine() {
       return affineTransform_;
+   }
+   
+   public String getCameraLabel() {
+      return cameraLabel_;
+   }
+   
+   public String getZStageLabel() {
+      return zStageLabel_;
+   }
+   
+   public String getXYStageLabel() {
+      return xyStageLabel_;
+   }
+   
+   public String getShutterLabel() {
+      return shutterLabel_;
    }
 }

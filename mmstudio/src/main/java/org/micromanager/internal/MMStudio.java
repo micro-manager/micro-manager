@@ -767,13 +767,13 @@ public final class MMStudio implements Studio {
             live().setSuspended(false);
             return;
          }
-         if (core_.getProperty(MMCache.cameraLabel_,
+         if (core_.getProperty(cache().getCameraLabel(),
                  MMCoreJ.getG_Keyword_Binning()).equals(mode)) {
             // No change in binning mode.
             live().setSuspended(false);
             return;
          }
-         core_.setProperty(MMCache.cameraLabel_, MMCoreJ.getG_Keyword_Binning(), mode);
+         core_.setProperty(cache().getCameraLabel(), MMCoreJ.getG_Keyword_Binning(), mode);
          cache().refreshValues();
       } catch (Exception e) {
          ReportingUtils.showError(e);
@@ -882,7 +882,7 @@ public final class MMStudio implements Studio {
    // //////////////////////////////////////////////////////////////////////////
 
    private boolean isCameraAvailable() {
-      return MMCache.cameraLabel_.length() > 0;
+      return cache().getCameraLabel().length() > 0;
    }
 
    /**
@@ -902,8 +902,8 @@ public final class MMStudio implements Studio {
    }
 
    private void configureBinningCombo() throws Exception {
-      if (MMCache.cameraLabel_.length() > 0) {
-         frame_.configureBinningComboForCamera(MMCache.cameraLabel_);
+      if (isCameraAvailable()) {
+         frame_.configureBinningComboForCamera(cache().getCameraLabel());
       }
    }
 
@@ -918,7 +918,7 @@ public final class MMStudio implements Studio {
          if (cache() != null) {
             cache().refreshValues();
             if (acqEngine_ != null) {
-               acqEngine_.setZStageDevice(MMCache.zStageLabel_);  
+               acqEngine_.setZStageDevice(cache().getZStageLabel());  
             }
          }
 
@@ -944,7 +944,7 @@ public final class MMStudio implements Studio {
 
    @Subscribe
    public void onExposureChanged(ExposureChangedEvent event) {
-      if (event.getCameraName().equals(MMCache.cameraLabel_)) {
+      if (event.getCameraName().equals(cache().getCameraLabel())) {
          frame_.setDisplayedExposureTime(event.getNewExposureTime());
       }
    }
@@ -969,7 +969,7 @@ public final class MMStudio implements Studio {
             double exp = core_.getExposure();
             frame_.setDisplayedExposureTime(exp);
             configureBinningCombo();
-            String binSize = core_.getPropertyFromCache(MMCache.cameraLabel_, MMCoreJ.getG_Keyword_Binning());
+            String binSize = core_.getPropertyFromCache(cache().getCameraLabel(), MMCoreJ.getG_Keyword_Binning());
             frame_.setBinSize(binSize);
          }
 
