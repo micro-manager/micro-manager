@@ -281,6 +281,7 @@ public final class MMStudio implements Studio {
       // Start up multiple managers.  
       
       userProfileManager_ = new UserProfileManager();       
+      compatibility_ = new DefaultCompatibilityInterface(studio_);
       
       // Essential GUI settings in preparation of the intro dialog
       daytimeNighttimeManager_ = DaytimeNighttime.create(studio_);
