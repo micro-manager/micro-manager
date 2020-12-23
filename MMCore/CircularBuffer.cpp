@@ -31,7 +31,11 @@
 
 const long long bytesInMB = 1 << 20;
 const long adjustThreshold = LONG_MAX / 2;
-const unsigned long maxCBSize = 100000;    //a reasonable limit to circular buffer size
+
+// Maximum number of images allowed in the buffer. This arbitrary limit is code
+// smell, but kept for now until careful checks for integer overflow and
+// division by zero can be added.
+const unsigned long maxCBSize = 10000000;
 
 CircularBuffer::CircularBuffer(unsigned int memorySizeMB) :
    width_(0), 
