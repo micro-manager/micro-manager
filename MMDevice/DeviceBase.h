@@ -963,7 +963,7 @@ protected:
    * With this method we can get a handle to other devices loaded in the system,
    * if we know the device name.
    */
-   MM::Device* GetDevice(const char* deviceLabel)
+   MM::Device* GetDevice(const char* deviceLabel) const
    {
       if (callback_)
          return callback_->GetDevice(this, deviceLabel);
