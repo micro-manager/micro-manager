@@ -123,11 +123,6 @@ public final class MMStudio implements Studio {
    private static final String AUTOFOCUS_DEVICE = "autofocus_device";
    private static final int TOOLTIP_DISPLAY_DURATION_MILLISECONDS = 15000;
    private static final int TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS = 2000;
-   // Note that this property is set by one of the launcher scripts.
-   private static final String SHOULD_DELETE_OLD_CORE_LOGS = "whether or not to delete old MMCore log files";
-   private static final String SHOULD_RUN_ZMQ_SERVER = "run ZQM server";
-   private static final String CORE_LOG_LIFETIME_DAYS = "how many days to keep MMCore log files, before they get deleted";
-   private static final String CIRCULAR_BUFFER_SIZE = "size, in megabytes of the circular buffer used to temporarily store images before they are written to disk";
 
    // GUI components
    private boolean wasStartedAsImageJPlugin_;
@@ -1566,6 +1561,11 @@ public final class MMStudio implements Studio {
    }
 
    public class MMSettings {
+      private static final String SHOULD_DELETE_OLD_CORE_LOGS = "whether or not to delete old MMCore log files";
+      private static final String SHOULD_RUN_ZMQ_SERVER = "run ZQM server";
+      private static final String CORE_LOG_LIFETIME_DAYS = "how many days to keep MMCore log files, before they get deleted";
+      private static final String CIRCULAR_BUFFER_SIZE = "size, in megabytes of the circular buffer used to temporarily store images before they are written to disk";
+
       public boolean getShouldDeleteOldCoreLogs() {
          return profile().getSettings(MMStudio.class).getBoolean(
                SHOULD_DELETE_OLD_CORE_LOGS, false);
