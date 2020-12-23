@@ -41,7 +41,7 @@ public final class ConfigMenu {
               new Runnable() {
                  @Override
                  public void run() {
-                    mmStudio_.createPropertyEditor();
+                    mmStudio_.uiManager().createPropertyEditor();
                  }
               });
 
@@ -95,7 +95,7 @@ public final class ConfigMenu {
                  @Override
                  public void run() {
                     mmStudio_.promptToSaveConfigPresets();
-                    mmStudio_.updateChannelCombos();
+                    mmStudio_.uiManager().updateChannelCombos();
                  }
               });
 
@@ -106,7 +106,7 @@ public final class ConfigMenu {
             new Runnable() {
                @Override
                public void run() {
-                  mmStudio_.createCalibrationListDlg();
+                  mmStudio_.uiManager().createCalibrationListDlg();
                }
             });
 

@@ -339,50 +339,50 @@ public final class DefaultDataManager implements DataManager {
    @Override
    public Pipeline copyApplicationPipeline(Datastore store,
          boolean isSynchronous) {
-      return createPipeline(studio_.getPipelineFrame().getPipelineFactories(),
+      return createPipeline(studio_.uiManager().getPipelineFrame().getPipelineFactories(),
             store, isSynchronous);
    }
 
    @Override
    public Pipeline copyLivePipeline(Datastore store, boolean isSynchronous) {
-      return createPipeline(studio_.getPipelineFrame().getLivePipelineFactories(),
+      return createPipeline(studio_.uiManager().getPipelineFrame().getLivePipelineFactories(),
             store, isSynchronous);
    }
 
    @Override
    public List<ProcessorConfigurator> getApplicationPipelineConfigurators(boolean includeDisabled) {
        if (includeDisabled) {
-        return studio_.getPipelineFrame().getPipelineConfigurators();
+        return studio_.uiManager().getPipelineFrame().getPipelineConfigurators();
        } else {
-           return studio_.getPipelineFrame().getEnabledPipelineConfigurators();
+           return studio_.uiManager().getPipelineFrame().getEnabledPipelineConfigurators();
        }
    }
    
      @Override
     public List<ProcessorConfigurator> getLivePipelineConfigurators(boolean includeDisabled) {
         if (includeDisabled) {
-            return studio_.getPipelineFrame().getPipelineConfigurators();
+            return studio_.uiManager().getPipelineFrame().getPipelineConfigurators();
         } else {
-           return studio_.getPipelineFrame().getEnabledLivePipelineConfigurators();
+           return studio_.uiManager().getPipelineFrame().getEnabledLivePipelineConfigurators();
         }
     }
     
 
    @Override
    public void clearPipeline() {
-      studio_.getPipelineFrame().clearPipeline();
+      studio_.uiManager().getPipelineFrame().clearPipeline();
    }
 
    @Override
    public void addAndConfigureProcessor(ProcessorPlugin plugin) {
-      studio_.getPipelineFrame().addAndConfigureProcessor(
+      studio_.uiManager().getPipelineFrame().addAndConfigureProcessor(
             plugin);
    }
 
    @Override
    public void addConfiguredProcessor(ProcessorConfigurator config,
          ProcessorPlugin plugin) {
-      studio_.getPipelineFrame().addConfiguredProcessor(config, plugin);
+      studio_.uiManager().getPipelineFrame().addConfiguredProcessor(config, plugin);
    }
 
    @Override
@@ -395,22 +395,22 @@ public final class DefaultDataManager implements DataManager {
 
     @Override
     public boolean isApplicationPipelineStepEnabled(int index) {
-        return studio_.getPipelineFrame().getConfiguratorEnabled(index);
+        return studio_.uiManager().getPipelineFrame().getConfiguratorEnabled(index);
     }
     
     @Override
     public void setApplicationPipelineStepEnabled(int index, boolean enabled) {
-        studio_.getPipelineFrame().setConfiguratorEnabled(index, enabled);
+        studio_.uiManager().getPipelineFrame().setConfiguratorEnabled(index, enabled);
     }
     
     @Override
     public boolean isLivePipelineStepEnabled(int index) {
-        return studio_.getPipelineFrame().getConfiguratorEnabledLive(index);
+        return studio_.uiManager().getPipelineFrame().getConfiguratorEnabledLive(index);
     }
     
     @Override
     public void setLivePipelineStepEnabled(int index, boolean enabled) {
-        studio_.getPipelineFrame().setConfiguratorEnabledLive(index, enabled);
+        studio_.uiManager().getPipelineFrame().setConfiguratorEnabledLive(index, enabled);
     }
 
    @Override

@@ -53,7 +53,7 @@ public final class ToolsMenu {
 
       GUIUtils.addMenuItem(toolsMenu_, "Script Panel...",
               "Open Micro-Manager script editor window",
-              mmStudio_::showScriptPanel);
+              mmStudio_.uiManager()::showScriptPanel);
 
       populateQuickAccessMenu();
       toolsMenu_.add(quickAccessMenu_);
@@ -98,7 +98,7 @@ public final class ToolsMenu {
 
       GUIUtils.addMenuItem(toolsMenu_, "Multi-Dimensional Acquisition...",
               "Open multi-dimensional acquisition setup window",
-              mmStudio_::openAcqControlDialog,
+              mmStudio_.uiManager()::openAcqControlDialog,
               "film.png");
 
       toolsMenu_.addSeparator();
