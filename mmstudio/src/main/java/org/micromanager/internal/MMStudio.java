@@ -1372,6 +1372,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, Applicati
                   loadHardwareConfiguration(sysConfigFile_);
             coreCallback_.setIgnoring(false);
             GUIUtils.preventDisplayAdapterChangeExceptions();
+            afMgr_.initialize();
+            // in case 3rdparties use this deprecated code:
             events().post(new AutofocusPluginShouldInitializeEvent());
             FileDialogs.storePath(FileDialogs.MM_CONFIG_FILE, new File(sysConfigFile_));
          }

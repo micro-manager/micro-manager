@@ -21,7 +21,6 @@
 //
 package org.micromanager.autofocus;
 
-import com.google.common.eventbus.Subscribe;
 
 import ij.IJ;
 import ij.process.ImageProcessor;
@@ -32,7 +31,6 @@ import mmcorej.CMMCore;
 
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
-import org.micromanager.events.AutofocusPluginShouldInitializeEvent;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.PropertyItem;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -67,11 +65,6 @@ public class AutofocusDuo extends AutofocusBase implements AutofocusPlugin, SciJ
    public AutofocusDuo() {
       super.createProperty(KEY_AUTOFOCUS1, autoFocus1_);
       super.createProperty(KEY_AUTOFOCUS2, autoFocus2_);
-   }
-
-   @Subscribe
-   public void onInitialize(AutofocusPluginShouldInitializeEvent event) {
-      loadSettings();
    }
 
    @Override

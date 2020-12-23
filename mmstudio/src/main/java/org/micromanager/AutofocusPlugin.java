@@ -33,14 +33,21 @@ import org.micromanager.internal.utils.PropertyItem;
 public interface AutofocusPlugin extends MMPlugin {
 
    /**
+    * Initializes the plugin.  Can be called multiple times, for instance
+    * after a change in hardware configuration. Conversely, the plugin
+    * can trust that the hardware never changes without a call to this function.
+    */
+   void initialize();
+
+   /**
     * Pushes setting to the hardware or software autofocus
     */
-   public void applySettings();
+   void applySettings();
    
    /**
     * Stores settings
     */
-   public void saveSettings();
+   void saveSettings();
 
    /**
     * Runs a full, one-shot autofocus protocol. Blocks until focusing is
@@ -48,38 +55,38 @@ public interface AutofocusPlugin extends MMPlugin {
     * @return focus score
     * @throws java.lang.Exception
     */
-   public double fullFocus() throws Exception;
+   double fullFocus() throws Exception;
 
    /**
     * Runs a single, incremental focusing step.
     * @return focus score
     * @throws java.lang.Exception
     */
-   public double incrementalFocus() throws Exception;
+    double incrementalFocus() throws Exception;
    
    /**
     * Returns the number of images acquired
     * @return number of images for autofocussing
     */
-   public int getNumberOfImages();
+   int getNumberOfImages();
 
    /**
     * Returns a detailed status of the autofocus plugin/device.
     * @return description of the autofocus Status
     */
-   public String getVerboseStatus();
+   String getVerboseStatus();
 
    /**
     * Returns an array of the properties for this autofocus plugin.
     * @return array with Property descriptors, representing MMCore data
     */
-   public PropertyItem[] getProperties();
+   PropertyItem[] getProperties();
 
    /**
     * Returns an array of the names of properties for this autofocus plugin.
     * @return array with the names of properties for this autofocus plugin
     */
-   public String[] getPropertyNames();
+   String[] getPropertyNames();
 
    /**
     * Returns the name and value of properties for the autofocus plugin.
@@ -87,14 +94,14 @@ public interface AutofocusPlugin extends MMPlugin {
     * @return value for given property
     * @throws java.lang.Exception thrown by MMCore when key is not found.  
     */
-   public PropertyItem getProperty(String key) throws Exception;
+   PropertyItem getProperty(String key) throws Exception;
 
    /**
     * Sets the value of a particular property.
     * @param p 
     * @throws java.lang.Exception
     */
-   public void setProperty(PropertyItem p) throws Exception;
+   void setProperty(PropertyItem p) throws Exception;
 
    /**
     * Gets the value of a named property.
@@ -102,7 +109,7 @@ public interface AutofocusPlugin extends MMPlugin {
     * @return value for the given property
     * @throws java.lang.Exception
     */
-   public String getPropertyValue(String name) throws Exception;
+   String getPropertyValue(String name) throws Exception;
 
    /**
     * Sets the value of a named property.
@@ -110,13 +117,13 @@ public interface AutofocusPlugin extends MMPlugin {
     * @param value PropertyValue
     * @throws java.lang.Exception by MMCore
     */
-   public void setPropertyValue(String name, String value) throws Exception;
+   void setPropertyValue(String name, String value) throws Exception;
 
    /**
     * Returns the current focus "score" (goodness of focus).
     * @return focus score (goodness of focus)
     */
-   public double getCurrentFocusScore();
+   double getCurrentFocusScore();
 
    /**
     * Turns on continuous autofocus. Typically used by hardware autofocus
@@ -124,7 +131,7 @@ public interface AutofocusPlugin extends MMPlugin {
     * @param enable
     * @throws java.lang.Exception
     */
-   public void enableContinuousFocus(boolean enable) throws Exception;
+   void enableContinuousFocus(boolean enable) throws Exception;
 
    /**
     * Returns true if continuous autofocus has been enabled. Typically used
@@ -132,7 +139,7 @@ public interface AutofocusPlugin extends MMPlugin {
     * @return true if enabled
     * @throws java.lang.Exception
     */
-   public boolean isContinuousFocusEnabled() throws Exception;
+   boolean isContinuousFocusEnabled() throws Exception;
 
    /**
     * Returns true if continuous autofocus is currently locked (successfully
@@ -141,12 +148,12 @@ public interface AutofocusPlugin extends MMPlugin {
     * @return true if locked
     * @throws java.lang.Exception thrown by MMCore
     */
-   public boolean isContinuousFocusLocked() throws Exception;
+   boolean isContinuousFocusLocked() throws Exception;
    
    /**
     * Computes a focus score for the given image
     * @param impro
     * @return calculated score
     */
-   public double computeScore(final ImageProcessor impro);
+   double computeScore(final ImageProcessor impro);
 }
