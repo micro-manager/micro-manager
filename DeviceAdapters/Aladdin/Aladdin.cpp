@@ -132,15 +132,18 @@ int AladdinController::Initialize()
 {
    this->LogMessage("AladdinController::Initialize()");
 
-   GeneratePropertyVolume();
-   GeneratePropertyDiameter();
-   GeneratePropertyRate();
-   GeneratePropertyDirection();
-   GeneratePropertyRun();
-   
-   CreateDefaultProgram();
+   Purge();
+   if (error_ != DEVICE_SERIAL_COMMAND_FAILED) {
+      GeneratePropertyVolume();
+      GeneratePropertyDiameter();
+      GeneratePropertyRate();
+      GeneratePropertyDirection();
+      GeneratePropertyRun();
+      
+      CreateDefaultProgram();
 
-   initialized_ = true;
+      initialized_ = true;
+   }
    return HandleErrors();
 
 }
