@@ -86,7 +86,6 @@ public:
 private:
    std::vector<std::string> availableShutters_;
    std::vector<std::string> usedShutters_;
-   std::vector<MM::Shutter*> physicalShutters_;
    long nrPhysicalShutters_;
    bool open_;
    bool initialized_;
@@ -175,7 +174,6 @@ private:
    std::vector<std::string> usedCameras_;
    std::vector<int> cameraWidths_;
    std::vector<int> cameraHeights_;
-   std::vector<MM::Camera*> physicalCameras_;
    unsigned int nrCamerasInUse_;
    bool initialized_;
    ImgBuffer img_;
@@ -235,7 +233,6 @@ private:
    // The following vectors should always have nrPhysicalStages_ elements while
    // initialized
    std::vector<std::string> usedStages_;
-   std::vector<MM::Stage*> physicalStages_;
    std::vector<double> stageScalings_;
    std::vector<double> stageTranslations_;
 };
@@ -295,7 +292,6 @@ private:
    // The following vectors should always have 2 elements (0 = X, 1 = Y) while
    // initialized.
    std::vector<std::string> usedStages_;
-   std::vector<MM::Stage*> physicalStages_;
    std::vector<double> stageScalings_;
    std::vector<double> stageTranslations_;
 };
@@ -348,7 +344,6 @@ private:
    double simulatedStepSizeUm_;
    bool initialized_;
    std::string usedStage_;
-   MM::XYStage* physicalStage_;
 };
 
 
@@ -390,7 +385,6 @@ public:
 
 private:
    std::vector<std::string> availableDAs_;
-   MM::SignalIO* DADevice_;
    std::string DADeviceName_;
    bool initialized_;
    bool open_;
@@ -431,7 +425,6 @@ public:
 
 private:
    std::vector<std::string> availableDAs_;
-   MM::SignalIO* DADevice_;
    std::string DADeviceName_;
    bool initialized_;
 };
@@ -486,7 +479,6 @@ public:
 private:
    std::vector<std::string> availableDAs_;
    std::string DADeviceName_;
-   MM::SignalIO* DADevice_;
    bool initialized_;
    double minDAVolt_;
    double maxDAVolt_;
@@ -535,7 +527,6 @@ public:
 
   // Sequence functions
    int IsXYStageSequenceable(bool& isSequenceable) const;
-   
    int GetXYStageSequenceMaxLength(long& nrEvents) const;
    int StartXYStageSequence();
    int StopXYStageSequence();
@@ -566,8 +557,6 @@ private:
    std::vector<std::string> availableDAs_;
    std::string DADeviceNameX_;
    std::string DADeviceNameY_;
-   MM::SignalIO* DADeviceX_;
-   MM::SignalIO* DADeviceY_;
    bool initialized_;
    double minDAVoltX_;
    double maxDAVoltX_;
@@ -618,7 +607,6 @@ private:
    // numberOfDADevices_ once Initialize() returns.
    size_t numberOfDADevices_;
    std::vector<std::string> daDeviceLabels_;
-   std::vector<MM::SignalIO*> daDevices_;
 
    bool initialized_;
 
@@ -658,7 +646,6 @@ private:
    // numberOfDADevices_ once Initialize() returns.
    size_t numberOfDADevices_;
    std::vector<std::string> daDeviceLabels_;
-   std::vector<MM::SignalIO*> daDevices_;
 
    // Voltage range is common to all analog channels and is set before
    // initialization and remains constant.
@@ -712,7 +699,6 @@ public:
 private:
    std::vector<std::string> availableAutoFocusDevices_;
    std::string AutoFocusDeviceName_;
-   MM::AutoFocus* AutoFocusDevice_;
    bool initialized_;
 };
 
@@ -747,7 +733,6 @@ private:
    int WaitWhileBusy();
    std::vector<std::string> availableStateDevices_;
    std::string stateDeviceName_;
-   MM::State* stateDevice_;
    bool initialized_;
    MM::MMTime lastMoveStartTime_;
 };
@@ -783,7 +768,6 @@ public:
 private:
    int WaitWhileBusy();
    std::string port_;
-   MM::Device* portDevice_;
    bool invertedLogic_;
    bool initialized_;
    MM::MMTime lastMoveStartTime_;

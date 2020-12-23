@@ -432,7 +432,7 @@ namespace MM {
        * Required by the MM::Camera API.
        * For multi-channel cameras, return the size of a single channel
        */
-      virtual long GetImageBufferSize()const = 0;
+      virtual long GetImageBufferSize() const = 0;
       /**
        * Returns image buffer X-size in pixels.
        * Required by the MM::Camera API.
