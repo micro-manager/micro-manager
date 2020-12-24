@@ -58,7 +58,7 @@ public final class UiMovesStageManager {
       CenterAndDragListener dragListener = null;
       ZWheelListener wheelListener = null;
       XYZKeyListener keyListener = null;
-      if (((MMStudio) studio_).getMMMenubar().getToolsMenu().getMouseMovesStage()) {
+      if (((MMStudio) studio_).uiManager().menubar().getToolsMenu().getMouseMovesStage()) {
          dragListener = new CenterAndDragListener(studio_, xyNavigator_);
          display.registerForEvents(dragListener);
          studio_.events().registerForEvents(dragListener);

@@ -530,7 +530,7 @@ public final class MainFrame extends MMFrame {
          boolean isSelected = handMovesButton_.isSelected();
          mmStudio_.updateCenterAndDragListener(isSelected);
       });
-      setHandMovesButton(mmStudio_.getMMMenubar().getToolsMenu().getMouseMovesStage());
+      setHandMovesButton(mmStudio_.uiManager().menubar().getToolsMenu().getMouseMovesStage());
       stagePanel.add(handMovesButton_, SMALLBUTTON_SIZE);
 
       AbstractButton listButton = createButton(null, "application_view_list.png",
