@@ -124,7 +124,7 @@ public final class FileMenu {
          public void run() {
             try {
                Datastore store = studio_.data().promptForDataToLoad(
-                       MMStudio.getFrame(), isVirtual);
+                       studio_.app().getMainWindow(), isVirtual);
                if (store == null) {
                   // User cancelled.
                   return;

@@ -44,7 +44,7 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
       duplicate_ = new DefaultDatastore(this.studio);
 
       if (mode_ == Datastore.SaveMode.MULTIPAGE_TIFF) {
-         saver_ = new StorageMultipageTiff(MMStudio.getFrame(),
+         saver_ = new StorageMultipageTiff(studio.app().getMainWindow(),
                  duplicate_,
                  path_, true, true,
                  StorageMultipageTiff.getShouldSplitPositions());
