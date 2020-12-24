@@ -489,18 +489,18 @@ public final class MainFrame extends MMFrame {
             "span 2, alignx center, growx, wrap");
       setRoiButton_ = createButton(null, "shape_handles.png",
          "Set Region Of Interest to selected rectangle", () -> {
-            mmStudio_.setROI();
+            mmStudio_.roiManager().setROI();
       });
       roiPanel.add(setRoiButton_, SMALLBUTTON_SIZE);
       centerQuadButton_ = createButton(null, "center_quad.png",
          "Set Region Of Interest to center quad of camera", () -> {
-            mmStudio_.setCenterQuad();
+            mmStudio_.roiManager().setCenterQuad();
       });
       roiPanel.add(centerQuadButton_, SMALLBUTTON_SIZE);
 
       clearRoiButton_ = createButton(null, "arrow_out.png",
          "Reset Region of Interest to full frame", () -> {
-            mmStudio_.clearROI();
+            mmStudio_.roiManager().clearROI();
       });
       roiPanel.add(clearRoiButton_, SMALLBUTTON_SIZE);
 
