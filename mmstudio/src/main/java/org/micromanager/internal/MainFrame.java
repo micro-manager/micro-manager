@@ -284,7 +284,7 @@ public final class MainFrame extends MMFrame {
       comboBinning_.setFont(defaultFont_);
       comboBinning_.setMaximumRowCount(4);
       comboBinning_.addActionListener((ActionEvent e) -> {
-         mmStudio_.changeBinning();
+         mmStudio_.changeBinning(getBinMode());
       });
       subPanel.add(comboBinning_, "gapleft push, width 60::, wrap");
 
