@@ -144,13 +144,13 @@ public final class MMStudio implements Studio {
    private UserProfileManager userProfileManager_;
    private PositionListManager posListManager_;
    private UiMovesStageManager uiMovesStageManager_;
-   private MMUIManager ui_;
    private DefaultApplication defaultApplication_;
    private DefaultCompatibilityInterface compatibility_;
    
    // Local Classes
    private final MMSettings settings_ = new MMSettings();
    private MMCache cache_;
+   private MMUIManager ui_;
    
    
    // MMcore
@@ -1366,8 +1366,8 @@ public final class MMStudio implements Studio {
       public void setCircularBufferSize(int newSize) {
          profile().getSettings(MMStudio.class).putInteger(
                CIRCULAR_BUFFER_SIZE, newSize);
+      }
    }
-}
    
    public MMUIManager uiManager() {
       return ui_;
