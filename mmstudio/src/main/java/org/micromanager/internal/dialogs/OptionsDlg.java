@@ -139,13 +139,13 @@ public final class OptionsDlg extends MMDialog {
 
       final JCheckBox deleteLogCheckBox = new JCheckBox();
       deleteLogCheckBox.setText("Delete log files after");
-      deleteLogCheckBox.setSelected(mmStudio_.getShouldDeleteOldCoreLogs());
+      deleteLogCheckBox.setSelected(mmStudio_.settings().getShouldDeleteOldCoreLogs());
       deleteLogCheckBox.addActionListener((ActionEvent e) -> {
-         mmStudio_.setShouldDeleteOldCoreLogs(deleteLogCheckBox.isSelected());
+         mmStudio_.settings().setShouldDeleteOldCoreLogs(deleteLogCheckBox.isSelected());
       });
 
       logDeleteDaysField_ =
-         new JTextField(Integer.toString(mmStudio_.getCoreLogLifetimeDays()), 2);
+         new JTextField(Integer.toString(mmStudio_.settings().getCoreLogLifetimeDays()), 2);
 
       final JButton deleteLogFilesButton = new JButton();
       deleteLogFilesButton.setText("Delete Log Files Now");
@@ -200,7 +200,7 @@ public final class OptionsDlg extends MMDialog {
       });
 
       bufSizeField_ = new JTextField(
-            Integer.toString(mmStudio_.getCircularBufferSize()), 5);
+            Integer.toString(mmStudio_.settings().getCircularBufferSize()), 5);
 
       String[] options = new String[SkinMode.values().length];
       for (int i = 0; i < SkinMode.values().length; ++i) {
@@ -257,14 +257,14 @@ public final class OptionsDlg extends MMDialog {
       
       final JCheckBox runServer = new JCheckBox();
       runServer.setText("Run server on port " + ZMQSocketWrapper.DEFAULT_MASTER_PORT_NUMBER);
-      runServer.setSelected(mmStudio.getShouldRunZMQServer());
+      runServer.setSelected(mmStudio.settings().getShouldRunZMQServer());
       runServer.addActionListener((ActionEvent arg0) ->  {
          if (runServer.isSelected()) {
             mmStudio_.runZMQServer();
          } else {
             mmStudio_.stopZMQServer();
          }
-         mmStudio_.setShouldRunZMQServer(runServer.isSelected());         
+         mmStudio_.settings().setShouldRunZMQServer(runServer.isSelected());         
       });
 
       final JButton closeButton = new JButton();
@@ -348,8 +348,8 @@ public final class OptionsDlg extends MMDialog {
          return;
       }
 
-      mmStudio_.setCircularBufferSize(seqBufSize);
-      mmStudio_.setCoreLogLifetimeDays(deleteLogDays);
+      mmStudio_.settings().setCircularBufferSize(seqBufSize);
+      mmStudio_.settings().setCoreLogLifetimeDays(deleteLogDays);
 
       ScriptPanel.setStartupScript(mmStudio_, startupScriptFile_.getText());
       mmStudio_.app().makeActive();

@@ -217,7 +217,7 @@ public class DefaultApplication implements Application {
    public void setROI(Rectangle r) throws Exception {
       studio_.live().setSuspended(true);
       studio_.core().setROI(r.x, r.y, r.width, r.height);
-      ((MMStudio) studio_).refreshStaticValues();
+      ((MMStudio) studio_).cache().refreshValues();
       studio_.live().setSuspended(false);
    }
 
