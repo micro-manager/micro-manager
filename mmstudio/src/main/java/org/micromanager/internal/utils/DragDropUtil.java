@@ -120,7 +120,7 @@ public final class DragDropUtil implements DropTargetListener {
          Datastore store = studio_.data().loadData(dir, false);
          studio_.displays().manage(store);
          studio_.displays().loadDisplays(store);
-         FileMenu fm = ((MMStudio) studio_).getMMMenubar().getFileMenu();
+         FileMenu fm = ((MMStudio) studio_).uiManager().menubar().getFileMenu();
          if (fm != null) {
             fm.updateFileHistory(store.getSavePath());
          }

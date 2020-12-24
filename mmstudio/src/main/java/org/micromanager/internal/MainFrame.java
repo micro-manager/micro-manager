@@ -159,7 +159,7 @@ public final class MainFrame extends MMFrame {
 
       setExitStrategy(OptionsDlg.getShouldCloseOnExit(mmStudio_));
 
-      super.setJMenuBar(mmStudio.getMMMenubar());
+      super.setJMenuBar(mmStudio.uiManager().menubar());
 
       setConfigText("");
       // Set minimum size so we can't resize smaller and hide some of our

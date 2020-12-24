@@ -690,10 +690,6 @@ public final class MMStudio implements Studio {
       return studio_;
    }
    
-   public MMMenuBar getMMMenubar() {
-      return ui_.menubar();
-   }
-
    public void promptToSaveConfigPresets() {
       File f = FileDialogs.save(ui_.frame(),
             "Save the configuration file", FileDialogs.MM_CONFIG_FILE);
