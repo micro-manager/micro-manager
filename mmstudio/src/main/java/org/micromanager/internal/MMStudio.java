@@ -697,8 +697,7 @@ public final class MMStudio implements Studio {
       loadSystemConfiguration();
    }
 
-   protected void changeBinning() {
-      String mode = ui_.frame().getBinMode();
+   protected void changeBinning(String mode) {
       live().setSuspended(true);
       try {
          if (!isCameraAvailable() || mode == null) {
