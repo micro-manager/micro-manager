@@ -467,7 +467,7 @@ public final class MMStudio implements Studio {
 
       executeStartupScript();
 
-      updateGUI(true);
+      ui_.updateGUI(true);
       
       // Give plugins a chance to initialize their state
       events().post(new StartupCompleteEvent());
@@ -840,7 +840,7 @@ public final class MMStudio implements Studio {
          if (ui_.frame() != null) {
             configureBinningCombo();
             ui_.frame().updateAutofocusButtons(afMgr_.getAutofocusMethod() != null);
-            updateGUI(true);
+            ui_.updateGUI(true);
          }
       } catch (Exception e) {
          ReportingUtils.showError(e);
@@ -849,7 +849,7 @@ public final class MMStudio implements Studio {
 
    @Subscribe
    public void onPropertiesChanged(PropertiesChangedEvent event) {
-      updateGUI(true);
+      ui_.updateGUI(true);
    }
 
    @Subscribe
@@ -857,48 +857,6 @@ public final class MMStudio implements Studio {
       if (event.getCameraName().equals(cache().getCameraLabel())) {
          ui_.frame().setDisplayedExposureTime(event.getNewExposureTime());
       }
-   }
-   
-   public void updateGUI(boolean updateConfigPadStructure) {
-      updateGUI(updateConfigPadStructure, false);
-   }
-
-   public void updateGUI(boolean updateConfigPadStructure, boolean fromCache) {
-      ReportingUtils.logMessage("Updating GUI; config pad = " +
-            updateConfigPadStructure + "; from cache = " + fromCache);
-      try {
-         cache().refreshValues();
-         afMgr_.refresh();
-
-         if (!fromCache) { // The rest of this function uses the cached property values. If `fromCache` is false, start by updating all properties in the cache.
-            core_.updateSystemStateCache();
-         }
-         
-         // camera settings
-         if (isCameraAvailable()) {
-            double exp = core_.getExposure();
-            ui_.frame().setDisplayedExposureTime(exp);
-            configureBinningCombo();
-            String binSize = core_.getPropertyFromCache(cache().getCameraLabel(), MMCoreJ.getG_Keyword_Binning());
-            ui_.frame().setBinSize(binSize);
-         }
-
-         ui_.frame().updateAutofocusButtons(afMgr_.getAutofocusMethod() != null);
-         
-         ConfigGroupPad pad = ui_.frame().getConfigPad();
-         // state devices
-         if (updateConfigPadStructure && (pad != null)) {
-            pad.refreshStructure(true);
-         }
-
-         ui_.refresh();
-
-         ReportingUtils.logMessage("Finished updating GUI");
-      } catch (Exception e) {
-         ReportingUtils.logError(e);
-      }
-      ui_.frame().setConfigText(sysConfigFile_);
-      events().post(new GUIRefreshEvent());
    }
 
    /**
@@ -1640,7 +1598,49 @@ public final class MMStudio implements Studio {
                // This should be impossible as we set shouldOverwrite to true.
                studio_.logs().logError(e, "Error saving config presets");
             }
+         }
       }
-   }
+      
+      public void updateGUI(boolean updateConfigPadStructure) {
+         updateGUI(updateConfigPadStructure, false);
+      }
+
+      public void updateGUI(boolean updateConfigPadStructure, boolean fromCache) {
+         ReportingUtils.logMessage("Updating GUI; config pad = " +
+               updateConfigPadStructure + "; from cache = " + fromCache);
+         try {
+            studio_.cache().refreshValues();
+            studio_.getAutofocusManager().refresh();
+
+            if (!fromCache) { // The rest of this function uses the cached property values. If `fromCache` is false, start by updating all properties in the cache.
+               studio_.core().updateSystemStateCache();
+            }
+
+            // camera settings
+            if (studio_.isCameraAvailable()) {
+               double exp = studio_.core().getExposure();
+               frame_.setDisplayedExposureTime(exp);
+               studio_.configureBinningCombo();
+               String binSize = studio_.core().getPropertyFromCache(studio_.cache().getCameraLabel(), MMCoreJ.getG_Keyword_Binning());
+               frame_.setBinSize(binSize);
+            }
+
+            frame_.updateAutofocusButtons(studio_.getAutofocusManager().getAutofocusMethod() != null);
+
+            ConfigGroupPad pad = frame_.getConfigPad();
+            // state devices
+            if (updateConfigPadStructure && (pad != null)) {
+               pad.refreshStructure(true);
+            }
+
+            refresh();
+
+            ReportingUtils.logMessage("Finished updating GUI");
+         } catch (Exception e) {
+            ReportingUtils.logError(e);
+         }
+         frame_.setConfigText(studio_.getSysConfigFile());
+         studio_.events().post(new GUIRefreshEvent());
+      }
    } 
 }

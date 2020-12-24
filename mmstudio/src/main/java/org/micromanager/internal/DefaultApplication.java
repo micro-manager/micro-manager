@@ -61,12 +61,12 @@ public class DefaultApplication implements Application {
 
    @Override
    public void refreshGUI() {
-      ((MMStudio) studio_).updateGUI(true, false);
+      ((MMStudio) studio_).uiManager().updateGUI(true, false);
    }
    
    @Override
    public void refreshGUIFromCache() {
-      ((MMStudio) studio_).updateGUI(true, true);
+      ((MMStudio) studio_).uiManager().updateGUI(true, true);
    }
    
    @Override

@@ -231,7 +231,7 @@ public final class ConfigGroupPad extends JScrollPane {
                         // equivalently, refreshGUI(), results in a system
                         // state cache update, which can be very slow.
                         MMStudio parentGUI = (MMStudio) studio_;
-                        parentGUI.updateGUI(false);
+                        parentGUI.uiManager().updateGUI(false);
                      } else {
                         studio_.app().refreshGUI();
                      }
