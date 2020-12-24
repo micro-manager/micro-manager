@@ -850,19 +850,6 @@ public final class MMStudio implements Studio {
       return true;
    }
 
-   private void saveSettings() {
-      // TODO All of the following should be taken care of by specific modules
-
-      if (ui_.frame() != null) {
-         ui_.frame().savePrefs();
-      }
-
-      // NOTE: do not save auto shutter state
-      if (afMgr_ != null && afMgr_.getAutofocusMethod() != null) {
-         profile().getSettings(MMStudio.class).putString(AUTOFOCUS_DEVICE, afMgr_.getAutofocusMethod().getName());
-      }
-   }
-
    public synchronized boolean closeSequence(boolean quitInitiatedByImageJ) {
       if (!isProgramRunning()) {
          if (core_ != null) {
@@ -890,8 +877,17 @@ public final class MMStudio implements Studio {
       }
 
       isProgramRunning_ = false;
+      
+      //Save settings
+      if (ui_.frame() != null) {
+         ui_.frame().savePrefs();
+      }
 
-      saveSettings();
+      // NOTE: do not save auto shutter state
+      if (afMgr_ != null && afMgr_.getAutofocusMethod() != null) {
+         profile().getSettings(MMStudio.class).putString(AUTOFOCUS_DEVICE, afMgr_.getAutofocusMethod().getName());
+      }
+      
       try {
          ui_.frame().getConfigPad().saveSettings();
          hotKeys_.saveSettings(userProfileManager_.getProfile());
