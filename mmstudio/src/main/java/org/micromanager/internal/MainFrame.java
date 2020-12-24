@@ -329,7 +329,7 @@ public final class MainFrame extends MMFrame {
 
       saveConfigButton_ = createButton("Save", null,
          "Save current presets to the configuration file", () -> {
-            mmStudio_.promptToSaveConfigPresets();
+            mmStudio_.uiManager().promptToSaveConfigPresets();
       });
       subPanel.add(saveConfigButton_,
             "pushy 0, gapleft push, alignx right, w 88!, h 20!");

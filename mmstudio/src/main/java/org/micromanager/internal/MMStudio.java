@@ -689,20 +689,6 @@ public final class MMStudio implements Studio {
    public static MMStudio getInstance() {
       return studio_;
    }
-   
-   public void promptToSaveConfigPresets() {
-      File f = FileDialogs.save(ui_.frame(),
-            "Save the configuration file", FileDialogs.MM_CONFIG_FILE);
-      if (f != null) {
-         try {
-            app().saveConfigPresets(f.getAbsolutePath(), true);
-         }
-         catch (IOException e) {
-            // This should be impossible as we set shouldOverwrite to true.
-            logs().logError(e, "Error saving config presets");
-         }
-      }
-   }
 
    /**
     * Get currently used configuration file
@@ -931,7 +917,7 @@ public final class MMStudio implements Studio {
                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
                null, options, options[0]);
          if (n == JOptionPane.YES_OPTION) {
-            promptToSaveConfigPresets();
+            ui_.promptToSaveConfigPresets();
             // if the configChanged_ flag did not become false, the user 
             // must have cancelled the configuration saving and we should cancel
             // quitting as well
@@ -1643,5 +1629,18 @@ public final class MMStudio implements Studio {
          return mmMenuBar_;
       }
     
+      public void promptToSaveConfigPresets() {
+         File f = FileDialogs.save(frame_,
+               "Save the configuration file", FileDialogs.MM_CONFIG_FILE);
+         if (f != null) {
+            try {
+               studio_.app().saveConfigPresets(f.getAbsolutePath(), true);
+            }
+            catch (IOException e) {
+               // This should be impossible as we set shouldOverwrite to true.
+               studio_.logs().logError(e, "Error saving config presets");
+            }
+      }
+   }
    } 
 }

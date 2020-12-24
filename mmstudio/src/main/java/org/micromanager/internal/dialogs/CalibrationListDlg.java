@@ -363,7 +363,7 @@ public final class CalibrationListDlg extends MMDialog {
                        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
                        null, options, options[0]);
                if (userFeedback == JOptionPane.YES_OPTION) {
-                  mmStudio.promptToSaveConfigPresets();
+                  mmStudio.uiManager().promptToSaveConfigPresets();
                }
             }
          }

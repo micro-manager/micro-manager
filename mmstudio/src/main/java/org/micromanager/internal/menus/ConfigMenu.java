@@ -94,7 +94,7 @@ public final class ConfigMenu {
               new Runnable() {
                  @Override
                  public void run() {
-                    mmStudio_.promptToSaveConfigPresets();
+                    mmStudio_.uiManager().promptToSaveConfigPresets();
                     mmStudio_.uiManager().updateChannelCombos();
                  }
               });
@@ -140,7 +140,7 @@ public final class ConfigMenu {
                  JOptionPane.QUESTION_MESSAGE, null, options,
                  options[0]);
          if (n == JOptionPane.YES_OPTION) {
-            mmStudio_.promptToSaveConfigPresets();
+            mmStudio_.uiManager().promptToSaveConfigPresets();
          }
          mmStudio_.setConfigChanged(false);
       }
