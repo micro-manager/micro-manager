@@ -689,10 +689,6 @@ public final class MMStudio implements Studio {
    public static MMStudio getInstance() {
       return studio_;
    }
-
-   public MainFrame getFrame() {
-      return ui_.frame();
-   }
    
    public MMMenuBar getMMMenubar() {
       return ui_.menubar();

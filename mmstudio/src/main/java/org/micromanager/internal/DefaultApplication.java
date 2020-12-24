@@ -228,7 +228,7 @@ public class DefaultApplication implements Application {
 
    @Override
    public JFrame getMainWindow() {
-      return ((MMStudio) studio_).getFrame();
+      return ((MMStudio) studio_).uiManager().frame();
    }
    
    @Override

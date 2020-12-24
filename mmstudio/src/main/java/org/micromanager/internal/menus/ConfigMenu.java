@@ -114,7 +114,7 @@ public final class ConfigMenu {
    }
 
    private void loadConfiguration() {
-      File configFile = FileDialogs.openFile(mmStudio_.getFrame(), 
+      File configFile = FileDialogs.openFile(mmStudio_.uiManager().frame(), 
             "Load a Configuration File", FileDialogs.MM_CONFIG_FILE);
       if (configFile != null) {
          mmStudio_.setSysConfigFile(configFile.getAbsolutePath());
@@ -159,7 +159,7 @@ public final class ConfigMenu {
 
          // run Configurator
          ConfigWizard cfg = null;
-         MainFrame frame = mmStudio_.getFrame();
+         MainFrame frame = mmStudio_.uiManager().frame();
          try {
             frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             cfg = new ConfigWizard(mmStudio_, mmStudio_.getSysConfigFile());
