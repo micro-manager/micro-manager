@@ -15,6 +15,7 @@ import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.dialogs.CalibrationListDlg;
 import org.micromanager.internal.menus.MMMenuBar;
 import org.micromanager.internal.pipelineinterface.PipelineFrame;
+import org.micromanager.internal.positionlist.MMPositionListDlg;
 import org.micromanager.internal.script.ScriptPanel;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -32,6 +33,8 @@ public class MMUIManager {
    private MMMenuBar mmMenuBar_;  // Our menubar
    private MainFrame frame_;// Our primary window.
    private final MMStudio studio_;
+   private MMPositionListDlg posListDlg_;
+
 
    public MMUIManager(MMStudio studio) {
       studio_ = studio;
@@ -241,4 +244,52 @@ public class MMUIManager {
          frame_.configureBinningComboForCamera(studio_.cache().getCameraLabel());
       }
    }
+   
+   // TODO: This method should be renamed!
+   // resetGUIForNewHardwareConfig or something like that.
+   // TODO: this method should be automatically invoked when
+   // SystemConfigurationLoaded event occurs, and in no other way.
+   // Better: each of these entities should listen for
+   // SystemConfigurationLoaded itself and handle its own updates.
+   public void initializeGUI() {
+      try {
+         if (studio_.cache() != null) {
+            studio_.cache().refreshValues();
+            if (studio_.getAcquisitionEngine() != null) {
+               studio_.getAcquisitionEngine().setZStageDevice(studio_.cache().getZStageLabel());  
+            }
+         }
+
+         // Rebuild stage list in XY PositinList
+         if (posListDlg_ != null) {
+            posListDlg_.rebuildAxisList();
+         }
+
+         if (frame_ != null) {
+            configureBinningCombo();
+            frame_.updateAutofocusButtons(studio_.getAutofocusManager().getAutofocusMethod() != null);
+            updateGUI(true);
+         }
+      } catch (Exception e) {
+         ReportingUtils.showError(e);
+      }
+   }
+   
+   public void markCurrentPosition() {
+      if (posListDlg_ == null) {
+         showPositionList();
+      }
+      if (posListDlg_ != null) {
+         posListDlg_.markPosition(false);
+      }
+   }
+   
+   public void showPositionList() {
+      if (posListDlg_ == null) {
+         posListDlg_ = new MMPositionListDlg(studio_, studio_.positions().getPositionList());
+         posListDlg_.addListeners();
+      }
+      posListDlg_.setVisible(true);
+   }
+
 } 

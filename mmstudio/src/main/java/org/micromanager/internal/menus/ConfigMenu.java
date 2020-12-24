@@ -63,7 +63,7 @@ public final class ConfigMenu {
                  public void run() {
                     loadConfiguration();
                     // TODO: this may be redundant.
-                    mmStudio_.initializeGUI();
+                    mmStudio_.uiManager().initializeGUI();
                  }
               });
 
@@ -74,7 +74,7 @@ public final class ConfigMenu {
                  public void run() {
                     mmStudio_.loadSystemConfiguration();
                     // TODO: this is redundant.
-                    mmStudio_.initializeGUI();
+                    mmStudio_.uiManager().initializeGUI();
                  }
               });
 

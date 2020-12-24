@@ -156,7 +156,6 @@ public final class MMStudio implements Studio {
    // MMcore
    private CMMCore core_;
    private AcquisitionWrapperEngine acqEngine_;
-   private MMPositionListDlg posListDlg_;
    private boolean isProgramRunning_;
    private boolean configChanged_ = false;
    private boolean isClickToMoveEnabled_ = false;
@@ -795,54 +794,6 @@ public final class MMStudio implements Studio {
       return cache().getCameraLabel().length() > 0;
    }
 
-   /**
-    * Part of Studio API
-    * Opens the XYPositionList when it is not opened
-    * Adds the current position to the list (same as pressing the "Mark"
-    * button)
-    */
-   // @Override
-   public void markCurrentPosition() {
-      if (posListDlg_ == null) {
-         app().showPositionList();
-      }
-      if (posListDlg_ != null) {
-         posListDlg_.markPosition(false);
-      }
-   }
-
-
-
-   // TODO: This method should be renamed!
-   // resetGUIForNewHardwareConfig or something like that.
-   // TODO: this method should be automatically invoked when
-   // SystemConfigurationLoaded event occurs, and in no other way.
-   // Better: each of these entities should listen for
-   // SystemConfigurationLoaded itself and handle its own updates.
-   public void initializeGUI() {
-      try {
-         if (cache() != null) {
-            cache().refreshValues();
-            if (acqEngine_ != null) {
-               acqEngine_.setZStageDevice(cache().getZStageLabel());  
-            }
-         }
-
-         // Rebuild stage list in XY PositinList
-         if (posListDlg_ != null) {
-            posListDlg_.rebuildAxisList();
-         }
-
-         if (ui_.frame() != null) {
-            ui_.configureBinningCombo();
-            ui_.frame().updateAutofocusButtons(afMgr_.getAutofocusMethod() != null);
-            ui_.updateGUI(true);
-         }
-      } catch (Exception e) {
-         ReportingUtils.showError(e);
-      }
-   }
-
    @Subscribe
    public void onPropertiesChanged(PropertiesChangedEvent event) {
       ui_.updateGUI(true);
@@ -1085,7 +1036,7 @@ public final class MMStudio implements Studio {
 
       }
 
-      initializeGUI();
+      ui_.initializeGUI();
 
       return result;
    }
