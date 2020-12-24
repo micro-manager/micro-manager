@@ -28,7 +28,6 @@ import ij.gui.ShapeRoi;
 import ij.gui.Toolbar;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -37,7 +36,6 @@ import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.function.Function;
-import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
@@ -71,7 +69,6 @@ import org.micromanager.display.internal.DefaultDisplayManager;
 import org.micromanager.events.AutofocusPluginShouldInitializeEvent;
 import org.micromanager.events.EventManager;
 import org.micromanager.events.ExposureChangedEvent;
-import org.micromanager.events.GUIRefreshEvent;
 import org.micromanager.events.PropertiesChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.events.StartupCompleteEvent;
@@ -83,17 +80,13 @@ import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 import org.micromanager.internal.diagnostics.EDTHangLogger;
 import org.micromanager.internal.diagnostics.ThreadExceptionLogger;
 import org.micromanager.internal.dialogs.AcqControlDlg;
-import org.micromanager.internal.dialogs.CalibrationListDlg;
 import org.micromanager.internal.dialogs.IJVersionCheckDlg;
 import org.micromanager.internal.dialogs.IntroDlg;
 import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.RegistrationDlg;
 import org.micromanager.internal.logging.LogFileManager;
-import org.micromanager.internal.menus.MMMenuBar;
 import org.micromanager.internal.navigation.UiMovesStageManager;
-import org.micromanager.internal.pipelineinterface.PipelineFrame;
 import org.micromanager.internal.pluginmanagement.DefaultPluginManager;
-import org.micromanager.internal.positionlist.MMPositionListDlg;
 import org.micromanager.internal.script.ScriptPanel;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.DefaultAutofocusManager;
@@ -1097,11 +1090,7 @@ public final class MMStudio implements Studio {
    public boolean hasConfigChanged() {
       return configChanged_;
    }
-
-   public void enableRoiButtons(final boolean enabled) {
-      ui_.frame().enableRoiButtons(enabled);
-   }
-
+   
    public AcquisitionWrapperEngine getAcquisitionEngine() {
       return acqEngine_;
    }
