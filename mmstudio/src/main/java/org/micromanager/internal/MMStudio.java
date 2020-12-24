@@ -1106,10 +1106,6 @@ public final class MMStudio implements Studio {
       return acqEngine_;
    }
 
-   public CMMCore getCore() {
-      return core_;
-   }
-
    public IAcquisitionEngine2010 getAcquisitionEngine2010() {
       try {
          acquisitionEngine2010LoadingThread_.join();
