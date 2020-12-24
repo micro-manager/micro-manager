@@ -29,7 +29,6 @@ import ij.gui.Toolbar;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.WindowEvent;
-import java.awt.geom.AffineTransform;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -124,11 +123,6 @@ public final class MMStudio implements Studio {
    private static final String AUTOFOCUS_DEVICE = "autofocus_device";
    private static final int TOOLTIP_DISPLAY_DURATION_MILLISECONDS = 15000;
    private static final int TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS = 2000;
-   // Note that this property is set by one of the launcher scripts.
-   private static final String SHOULD_DELETE_OLD_CORE_LOGS = "whether or not to delete old MMCore log files";
-   private static final String SHOULD_RUN_ZMQ_SERVER = "run ZQM server";
-   private static final String CORE_LOG_LIFETIME_DAYS = "how many days to keep MMCore log files, before they get deleted";
-   private static final String CIRCULAR_BUFFER_SIZE = "size, in megabytes of the circular buffer used to temporarily store images before they are written to disk";
 
    private boolean wasStartedAsImageJPlugin_;
 
@@ -153,6 +147,11 @@ public final class MMStudio implements Studio {
    private MMUIManager uiManager_;
    private DefaultApplication defaultApplication_;
    private DefaultCompatibilityInterface compatibility_;
+   
+   // Local Classes
+   private final MMSettings settings_ = new MMSettings();
+   private MMCache cache_;
+   
    
    // MMcore
    private CMMCore core_;
@@ -179,9 +178,7 @@ public final class MMStudio implements Studio {
 
    private Thread acquisitionEngine2010LoadingThread_ = null;
    private Class<?> acquisitionEngine2010Class_ = null;
-   private IAcquisitionEngine2010 acquisitionEngine2010_ = null;
-   private StaticInfo staticInfo_;
-   
+   private IAcquisitionEngine2010 acquisitionEngine2010_ = null;   
    
    /**
     * Main procedure for stand alone operation.
@@ -427,7 +424,7 @@ public final class MMStudio implements Studio {
       acquisitionManager_ = new DefaultAcquisitionManager(this, acqEngine_, uiManager_.getAcquisitionWindow());
 
       try {
-         core_.setCircularBufferMemoryFootprint(getCircularBufferSize());
+         core_.setCircularBufferMemoryFootprint(settings().getCircularBufferSize());
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
       }
@@ -454,8 +451,7 @@ public final class MMStudio implements Studio {
       // Now create and show the main window
       mmMenuBar_ = MMMenuBar.createMenuBar(studio_);
       frame_ = new MainFrame(this, core_);
-      staticInfo_ = new StaticInfo(studio_, frame_);
-      events().registerForEvents(staticInfo_);
+      cache_ = new MMCache(this, frame_);
       frame_.toFront();
       frame_.setVisible(true);
       ReportingUtils.SetContainingFrame(frame_);
@@ -483,7 +479,7 @@ public final class MMStudio implements Studio {
       events().post(new StartupCompleteEvent());
       
       // start zmq server if so desired
-      if (getShouldRunZMQServer()) {
+      if (settings().getShouldRunZMQServer()) {
          runZMQServer();
       }
       
@@ -504,9 +500,9 @@ public final class MMStudio implements Studio {
          // The Core will have logged the error to stderr, so do nothing.
       }
 
-      if (getShouldDeleteOldCoreLogs()) {
+      if (settings().getShouldDeleteOldCoreLogs()) {
          LogFileManager.deleteLogFilesDaysOld(
-               getCoreLogLifetimeDays(), logFileName);
+               settings().getCoreLogLifetimeDays(), logFileName);
       }
 
       logStartupProperties();
@@ -671,7 +667,7 @@ public final class MMStudio implements Studio {
       live().setSuspended(true);
       try {
          core_.clearROI();
-         staticInfo_.refreshValues();
+         cache().refreshValues();
 
       } catch (Exception e) {
          ReportingUtils.showError(e);
@@ -750,14 +746,14 @@ public final class MMStudio implements Studio {
             live().setSuspended(false);
             return;
          }
-         if (core_.getProperty(StaticInfo.cameraLabel_,
+         if (core_.getProperty(cache().getCameraLabel(),
                  MMCoreJ.getG_Keyword_Binning()).equals(mode)) {
             // No change in binning mode.
             live().setSuspended(false);
             return;
          }
-         core_.setProperty(StaticInfo.cameraLabel_, MMCoreJ.getG_Keyword_Binning(), mode);
-         staticInfo_.refreshValues();
+         core_.setProperty(cache().getCameraLabel(), MMCoreJ.getG_Keyword_Binning(), mode);
+         cache().refreshValues();
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
@@ -809,24 +805,6 @@ public final class MMStudio implements Studio {
       }
    }
 
-   public void updateXYPos(double x, double y) {
-      staticInfo_.updateXYPos(x, y);
-   }
-   public void updateXYPosRelative(double x, double y) {
-      staticInfo_.updateXYPosRelative(x, y);
-   }
-
-   public void updateZPos(double z) {
-      staticInfo_.updateZPos(z);
-   }
-   public void updateZPosRelative(double z) {
-      staticInfo_.updateZPosRelative(z);
-   }
-
-   public void updateXYStagePosition() {
-      staticInfo_.getNewXYStagePosition();
-   }
-
    public void updateCenterAndDragListener(boolean isEnabled) {
       isClickToMoveEnabled_ = isEnabled;
       if (isEnabled) {
@@ -846,7 +824,7 @@ public final class MMStudio implements Studio {
    // //////////////////////////////////////////////////////////////////////////
 
    private boolean isCameraAvailable() {
-      return StaticInfo.cameraLabel_.length() > 0;
+      return cache().getCameraLabel().length() > 0;
    }
 
    /**
@@ -866,8 +844,8 @@ public final class MMStudio implements Studio {
    }
 
    private void configureBinningCombo() throws Exception {
-      if (StaticInfo.cameraLabel_.length() > 0) {
-         frame_.configureBinningComboForCamera(StaticInfo.cameraLabel_);
+      if (isCameraAvailable()) {
+         frame_.configureBinningComboForCamera(cache().getCameraLabel());
       }
    }
 
@@ -879,10 +857,10 @@ public final class MMStudio implements Studio {
    // SystemConfigurationLoaded itself and handle its own updates.
    public void initializeGUI() {
       try {
-         if (staticInfo_ != null) {
-            staticInfo_.refreshValues();
+         if (cache() != null) {
+            cache().refreshValues();
             if (acqEngine_ != null) {
-               acqEngine_.setZStageDevice(StaticInfo.zStageLabel_);  
+               acqEngine_.setZStageDevice(cache().getZStageLabel());  
             }
          }
 
@@ -908,13 +886,9 @@ public final class MMStudio implements Studio {
 
    @Subscribe
    public void onExposureChanged(ExposureChangedEvent event) {
-      if (event.getCameraName().equals(StaticInfo.cameraLabel_)) {
+      if (event.getCameraName().equals(cache().getCameraLabel())) {
          frame_.setDisplayedExposureTime(event.getNewExposureTime());
       }
-   }
-   
-   public void refreshStaticValues() {
-      staticInfo_.refreshValues();
    }
    
    public void updateGUI(boolean updateConfigPadStructure) {
@@ -925,7 +899,7 @@ public final class MMStudio implements Studio {
       ReportingUtils.logMessage("Updating GUI; config pad = " +
             updateConfigPadStructure + "; from cache = " + fromCache);
       try {
-         staticInfo_.refreshValues();
+         cache().refreshValues();
          afMgr_.refresh();
 
          if (!fromCache) { // The rest of this function uses the cached property values. If `fromCache` is false, start by updating all properties in the cache.
@@ -937,8 +911,7 @@ public final class MMStudio implements Studio {
             double exp = core_.getExposure();
             frame_.setDisplayedExposureTime(exp);
             configureBinningCombo();
-            String binSize;
-            binSize = core_.getPropertyFromCache(StaticInfo.cameraLabel_, MMCoreJ.getG_Keyword_Binning());
+            String binSize = core_.getPropertyFromCache(cache().getCameraLabel(), MMCoreJ.getG_Keyword_Binning());
             frame_.setBinSize(binSize);
          }
 
@@ -1291,7 +1264,7 @@ public final class MMStudio implements Studio {
    public void setMultiROI(List<Rectangle> rois) throws Exception {
       live().setSuspended(true);
       core_.setMultiROI(rois);
-      staticInfo_.refreshValues();
+      cache().refreshValues();
       live().setSuspended(false);
    }
 
@@ -1468,70 +1441,61 @@ public final class MMStudio implements Studio {
       return uiMovesStageManager_;
    }
 
-   public double getCachedXPosition() {
-      return staticInfo_.getStageX();
-   }
-
-   public double getCachedYPosition() {
-      return staticInfo_.getStageY();
-   }
-
-   public double getCachedZPosition() {
-      return staticInfo_.getStageZ();
-   }
-
-   public int getCachedBitDepth() {
-      return staticInfo_.getImageBitDepth();
-   }
-
-   public double getCachedPixelSizeUm() {
-      return staticInfo_.getPixelSizeUm();
+   
+   public MMCache cache() {
+      return cache_;
    }
    
-   public AffineTransform getCachedPixelSizeAffine() {
-      return staticInfo_.getPixelSizeAffine();
+   public MMSettings settings() {
+      return settings_;
    }
 
-   public boolean getShouldDeleteOldCoreLogs() {
-      return profile().getSettings(MMStudio.class).getBoolean(
-            SHOULD_DELETE_OLD_CORE_LOGS, false);
-   }
+   public class MMSettings {
+      private static final String SHOULD_DELETE_OLD_CORE_LOGS = "whether or not to delete old MMCore log files";
+      private static final String SHOULD_RUN_ZMQ_SERVER = "run ZQM server";
+      private static final String CORE_LOG_LIFETIME_DAYS = "how many days to keep MMCore log files, before they get deleted";
+      private static final String CIRCULAR_BUFFER_SIZE = "size, in megabytes of the circular buffer used to temporarily store images before they are written to disk";
 
-   public void setShouldDeleteOldCoreLogs(boolean shouldDelete) {
-      profile().getSettings(MMStudio.class).putBoolean(
-            SHOULD_DELETE_OLD_CORE_LOGS, shouldDelete);
-   }
-   
-   public boolean getShouldRunZMQServer() {
-      return profile().getSettings(MMStudio.class).getBoolean(
-              SHOULD_RUN_ZMQ_SERVER, false);
-   }
-   
-   public void setShouldRunZMQServer(boolean shouldRun) {
-      profile().getSettings(MMStudio.class).putBoolean(
-              SHOULD_RUN_ZMQ_SERVER, shouldRun);
-   }
+      public boolean getShouldDeleteOldCoreLogs() {
+         return profile().getSettings(MMStudio.class).getBoolean(
+               SHOULD_DELETE_OLD_CORE_LOGS, false);
+      }
 
-   public int getCoreLogLifetimeDays() {
-      return profile().getSettings(MMStudio.class).getInteger(
-            CORE_LOG_LIFETIME_DAYS, 7);
-   }
+      public void setShouldDeleteOldCoreLogs(boolean shouldDelete) {
+         profile().getSettings(MMStudio.class).putBoolean(
+               SHOULD_DELETE_OLD_CORE_LOGS, shouldDelete);
+      }
 
-   public void setCoreLogLifetimeDays(int days) {
-      profile().getSettings(MMStudio.class).putInteger(
-            CORE_LOG_LIFETIME_DAYS, days);
-   }
+      public boolean getShouldRunZMQServer() {
+         return profile().getSettings(MMStudio.class).getBoolean(
+                 SHOULD_RUN_ZMQ_SERVER, false);
+      }
 
-   public int getCircularBufferSize() {
-      // Default to more MB for 64-bit systems.
-      int defaultVal = System.getProperty("sun.arch.data.model", "32").equals("64") ? 250 : 25;
-      return profile().getSettings(MMStudio.class).getInteger(
-            CIRCULAR_BUFFER_SIZE, defaultVal);
-   }
+      public void setShouldRunZMQServer(boolean shouldRun) {
+         profile().getSettings(MMStudio.class).putBoolean(
+                 SHOULD_RUN_ZMQ_SERVER, shouldRun);
+      }
 
-   public void setCircularBufferSize(int newSize) {
-      profile().getSettings(MMStudio.class).putInteger(
-            CIRCULAR_BUFFER_SIZE, newSize);
+      public int getCoreLogLifetimeDays() {
+         return profile().getSettings(MMStudio.class).getInteger(
+               CORE_LOG_LIFETIME_DAYS, 7);
+      }
+
+      public void setCoreLogLifetimeDays(int days) {
+         profile().getSettings(MMStudio.class).putInteger(
+               CORE_LOG_LIFETIME_DAYS, days);
+      }
+
+      public int getCircularBufferSize() {
+         // Default to more MB for 64-bit systems.
+         int defaultVal = System.getProperty("sun.arch.data.model", "32").equals("64") ? 250 : 25;
+         return profile().getSettings(MMStudio.class).getInteger(
+               CIRCULAR_BUFFER_SIZE, defaultVal);
+      }
+
+      public void setCircularBufferSize(int newSize) {
+         profile().getSettings(MMStudio.class).putInteger(
+               CIRCULAR_BUFFER_SIZE, newSize);
    }
    
    public MMUIManager uiManager() {
@@ -1671,5 +1635,7 @@ public final class MMStudio implements Studio {
             propertyBrowser_.refresh(true);
          }
       }
+      }
    }
+ 
 }

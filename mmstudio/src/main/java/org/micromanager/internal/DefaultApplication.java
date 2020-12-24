@@ -61,12 +61,12 @@ public class DefaultApplication implements Application {
 
    @Override
    public void refreshGUI() {
-      ((MMStudio) studio_).updateGUI(false);
+      ((MMStudio) studio_).updateGUI(true, false);
    }
    
    @Override
    public void refreshGUIFromCache() {
-      ((MMStudio) studio_).updateGUI(true);
+      ((MMStudio) studio_).updateGUI(true, true);
    }
    
    @Override
@@ -217,7 +217,7 @@ public class DefaultApplication implements Application {
    public void setROI(Rectangle r) throws Exception {
       studio_.live().setSuspended(true);
       studio_.core().setROI(r.x, r.y, r.width, r.height);
-      ((MMStudio) studio_).refreshStaticValues();
+      ((MMStudio) studio_).cache().refreshValues();
       studio_.live().setSuspended(false);
    }
 
