@@ -114,8 +114,6 @@ public final class MMStudio implements Studio {
    private static final long serialVersionUID = 3556500289598574541L;
    
    private static final String AUTOFOCUS_DEVICE = "autofocus_device";
-   private static final int TOOLTIP_DISPLAY_DURATION_MILLISECONDS = 15000;
-   private static final int TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS = 2000;
 
    private boolean wasStartedAsImageJPlugin_;
 
@@ -299,8 +297,7 @@ public final class MMStudio implements Studio {
       
       afMgr_ = new DefaultAutofocusManager(studio_);
       afMgr_.refresh();
-      String afDevice = profile().getSettings(MMStudio.class).
-              getString(AUTOFOCUS_DEVICE, "");
+      String afDevice = profile().getSettings(MMStudio.class).getString(AUTOFOCUS_DEVICE, "");
       if (afMgr_.hasDevice(afDevice)) {
          afMgr_.setAutofocusMethodByName(afDevice);
       }
@@ -339,10 +336,6 @@ public final class MMStudio implements Studio {
       else {
          ReportingUtils.logMessage("Finished waiting for plugins to load");
       }
-
-      ToolTipManager ttManager = ToolTipManager.sharedInstance();
-      ttManager.setDismissDelay(TOOLTIP_DISPLAY_DURATION_MILLISECONDS);
-      ttManager.setInitialDelay(TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS);
 
 
       UserProfileAdmin profileAdmin = userProfileManager_.getAdmin();
@@ -866,8 +859,7 @@ public final class MMStudio implements Studio {
 
       // NOTE: do not save auto shutter state
       if (afMgr_ != null && afMgr_.getAutofocusMethod() != null) {
-         profile().getSettings(MMStudio.class).putString(
-               AUTOFOCUS_DEVICE, afMgr_.getAutofocusMethod().getName());
+         profile().getSettings(MMStudio.class).putString(AUTOFOCUS_DEVICE, afMgr_.getAutofocusMethod().getName());
       }
    }
 
@@ -1291,7 +1283,8 @@ public final class MMStudio implements Studio {
       return uiMovesStageManager_;
    }
 
-   
+
+   //Internal manager objects
    public MMCache cache() {
       return cache_;
    }
@@ -1300,6 +1293,10 @@ public final class MMStudio implements Studio {
       return settings_;
    }
 
+   public MMUIManager uiManager() {
+      return ui_;
+   }
+      
    public class MMSettings {
       private static final String SHOULD_DELETE_OLD_CORE_LOGS = "whether or not to delete old MMCore log files";
       private static final String SHOULD_RUN_ZMQ_SERVER = "run ZQM server";
@@ -1347,9 +1344,5 @@ public final class MMStudio implements Studio {
          profile().getSettings(MMStudio.class).putInteger(
                CIRCULAR_BUFFER_SIZE, newSize);
       }
-   }
-   
-   public MMUIManager uiManager() {
-      return ui_;
    }
 }

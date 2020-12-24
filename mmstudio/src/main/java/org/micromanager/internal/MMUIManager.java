@@ -9,6 +9,7 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import javax.swing.JFrame;
+import javax.swing.ToolTipManager;
 import mmcorej.MMCoreJ;
 import org.micromanager.events.GUIRefreshEvent;
 import org.micromanager.internal.dialogs.AcqControlDlg;
@@ -34,10 +35,16 @@ public class MMUIManager {
    private MainFrame frame_;// Our primary window.
    private final MMStudio studio_;
    private MMPositionListDlg posListDlg_;
-
+   private static final int TOOLTIP_DISPLAY_DURATION_MILLISECONDS = 15000;
+   private static final int TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS = 2000;
 
    public MMUIManager(MMStudio studio) {
       studio_ = studio;
+      
+      //Initialize Tooltips
+      ToolTipManager ttManager = ToolTipManager.sharedInstance();
+      ttManager.setDismissDelay(TOOLTIP_DISPLAY_DURATION_MILLISECONDS);
+      ttManager.setInitialDelay(TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS);
    }
 
    public void createPropertyEditor() {
