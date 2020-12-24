@@ -956,7 +956,7 @@ public final class MMStudio implements Studio {
          }
       }
   
-      ui_.close();
+      ui_.cleanupOnClose();
       
       if (zmqServer_ != null) {
          zmqServer_.close();
@@ -1044,10 +1044,7 @@ public final class MMStudio implements Studio {
          Thread.currentThread().interrupt();
       }
 
-      if (ui_.frame() != null) {
-         ui_.frame().dispose();
-         ui_.frame() = null;
-      }
+      ui_.close();
 
       try {
          ((DefaultUserProfile) profile()).close();
@@ -1595,7 +1592,7 @@ public final class MMStudio implements Studio {
          scriptPanel_.setVisible(true);
       }
       
-      public void close() {
+      public void cleanupOnClose() {
          if (scriptPanel_ != null) {
             scriptPanel_.closePanel();
             scriptPanel_ = null;
@@ -1613,6 +1610,13 @@ public final class MMStudio implements Studio {
 
          if (acqControlWin_ != null) {
             acqControlWin_.close();
+         }
+      }
+      
+      public void close() {
+         if (frame_ != null) {
+            frame_.dispose();
+            frame_ = null;
          }
       }
       
@@ -1646,5 +1650,6 @@ public final class MMStudio implements Studio {
       public MMMenuBar menubar() {
          return mmMenuBar_;
       }
+    
    } 
 }
