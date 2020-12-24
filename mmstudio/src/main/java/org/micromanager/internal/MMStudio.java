@@ -148,8 +148,7 @@ public final class MMStudio implements Studio {
    private ZMQServer zmqServer_;
    private org.micromanager.internal.utils.HotKeys hotKeys_;
 
-   // Our instance
-   // TODO: make this non-static
+   // Our instance TODO: make this non-static
    private static MMStudio studio_;
 
    // Callback
@@ -237,11 +236,9 @@ public final class MMStudio implements Studio {
       try {
          core_ = new CMMCore();
       } catch(UnsatisfiedLinkError ex) {
-         ReportingUtils.showError(ex, 
-               "Failed to load the MMCoreJ_wrap native library");
+         ReportingUtils.showError(ex, "Failed to load the MMCoreJ_wrap native library");
       } catch(NoSuchMethodError ex) {
-         ReportingUtils.showError(ex, 
-               "Incompatible version of MMCoreJ_wrap native library");
+         ReportingUtils.showError(ex, "Incompatible version of MMCoreJ_wrap native library");
       }
       
       // Start up multiple managers.  
@@ -250,19 +247,16 @@ public final class MMStudio implements Studio {
       userProfileManager_ = new UserProfileManager();       
       compatibility_ = new DefaultCompatibilityInterface(studio_);
       
-      // Essential GUI settings in preparation of the intro dialog
-      daytimeNighttimeManager_ = DaytimeNighttime.create(studio_);
+      daytimeNighttimeManager_ = DaytimeNighttime.create(studio_); // Essential GUI settings in preparation of the intro dialog
       defaultApplication_ = new DefaultApplication(studio_, daytimeNighttimeManager_);
       
       // Start loading plugins in the background
       // Note: plugin constructors should not expect a fully constructed Studio!
       pluginManager_ = new DefaultPluginManager(studio_);
       
-      // Lots of places use this. instantiate it first.
-      eventManager_ = new DefaultEventManager();
+      eventManager_ = new DefaultEventManager(); // Lots of places use this. instantiate it first.
 
-      // used by Snap/Live Manager and StageControlFrame
-      uiMovesStageManager_ = new UiMovesStageManager(this);
+      uiMovesStageManager_ = new UiMovesStageManager(this); // used by Snap/Live Manager and StageControlFrame
       events().registerForEvents(uiMovesStageManager_);
       
       snapLiveManager_ = new SnapLiveManager(this, core_);
@@ -273,15 +267,12 @@ public final class MMStudio implements Studio {
       displayManager_ = new DefaultDisplayManager(this);
       albumInstance_ = new DefaultAlbum(studio_);
 
-      // The tools menu depends on the Quick-Access Manager.
-      quickAccess_ = new DefaultQuickAccessManager(studio_);    
+      quickAccess_ = new DefaultQuickAccessManager(studio_); // The tools menu depends on the Quick-Access Manager.
 
       acqEngine_ = new AcquisitionWrapperEngine();
       acqEngine_.setParentGUI(this);
       acqEngine_.setZStageDevice(core_.getFocusDevice());
 
-
-      
       // Load, but do not show, image pipeline panel.
       // Note: pipelineFrame is used in the dataManager, however, pipelineFrame 
       // needs the dataManager.  Let's hope for the best....
@@ -300,12 +291,9 @@ public final class MMStudio implements Studio {
       posListManager_ = new DefaultPositionListManager(this);
       acqEngine_.setPositionList(posListManager_.getPositionList());
 
-      
-      // Tell Core to start logging
-      initializeLogging(core_);
-      
-      // We need to be subscribed to the global event bus for plugin loading
-      events().registerForEvents(this);
+      initializeLogging(core_); // Tell Core to start logging
+ 
+      events().registerForEvents(this); // We need to be subscribed to the global event bus for plugin loading
 
       // Start loading acqEngine in the background
       prepAcquisitionEngine();
@@ -327,11 +315,9 @@ public final class MMStudio implements Studio {
       }
       if (!pluginManager_.isInitializationComplete()) {
          ReportingUtils.logMessage("Warning: Plugin loading did not finish within 15 seconds; continuing anyway");
-      }
-      else {
+      } else {
          ReportingUtils.logMessage("Finished waiting for plugins to load");
       }
-
 
       UserProfileAdmin profileAdmin = userProfileManager_.getAdmin();
       UUID profileUUID = profileAdmin.getUUIDOfDefaultProfile();
@@ -350,51 +336,39 @@ public final class MMStudio implements Studio {
             if (sysConfigFile_ == null) {
                 ReportingUtils.showMessage("A hardware configuration for a profile matching name: " + profileNameAutoStart + " could not be found");
             }
-          }
-          else if (StartupSettings.create(profileAdmin.getNonSavingProfile(profileUUID)).
+          } else if (StartupSettings.create(profileAdmin.getNonSavingProfile(profileUUID)).
                shouldSkipUserInteractionWithSplashScreen()) {
             List<String> recentConfigs = HardwareConfigurationManager.
                   getRecentlyUsedConfigFilesFromProfile(
                         profile());
             sysConfigFile_ = recentConfigs.isEmpty() ? null : recentConfigs.get(0);
-         }
-         else {
+         } else {
             IntroDlg introDlg = new IntroDlg(this, MMVersion.VERSION_STRING);
             if (!introDlg.okChosen()) {
                closeSequence(false);
                return;
             }
-
             profileUUID = introDlg.getSelectedProfileUUID();
             profileAdmin.setCurrentUserProfile(profileUUID);
-
             sysConfigFile_ = introDlg.getSelectedConfigFilePath();
          }
-      }
-      catch (IOException ex) {
-         // TODO We should fall back to virtual profile
-         ReportingUtils.showError(ex, "Error accessing user profiles");
+      } catch (IOException ex) {
+         ReportingUtils.showError(ex, "Error accessing user profiles"); // TODO We should fall back to virtual profile
       }
 
-      // Profile may have been switched in Intro Dialog, so reflect its setting
-      core_.enableDebugLog(OptionsDlg.isDebugLoggingEnabled(studio_));
+      core_.enableDebugLog(OptionsDlg.isDebugLoggingEnabled(studio_));  // Profile may have been switched in Intro Dialog, so reflect its setting
 
       IJVersionCheckDlg.execute(studio_);
 
       org.micromanager.internal.diagnostics.gui.ProblemReportController.startIfInterruptedOnExit();
 
-      // This entity is a class property to avoid garbage collection.
-      coreCallback_ = new CoreEventCallback(studio_, acqEngine_);
+      coreCallback_ = new CoreEventCallback(studio_, acqEngine_);  // This entity is a class property to avoid garbage collection.
 
       // Load hardware configuration
       // Note that this also initializes Autofocus plugins.
-      // TODO: This should probably be run on a background thread, while we set
-      // up GUI elements (but various managers will need to be aware of this)
-      if (sysConfigFile_ != null) {  // we do allow running Micro-Manager without 
-         // a config file!
+      if (sysConfigFile_ != null) {  // we do allow running Micro-Manager without a config file!
          if (!loadSystemConfiguration()) {
-            // TODO Do we still need to turn errors off to prevent spurious error messages?
-            ReportingUtils.showErrorOn(false);
+            ReportingUtils.showErrorOn(false);  // TODO Do we still need to turn errors off to prevent spurious error messages?
          }
       }
 
@@ -404,16 +378,14 @@ public final class MMStudio implements Studio {
          core_.setCircularBufferMemoryFootprint(settings().getCircularBufferSize());
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
-      }
-      
+      }    
       
       // Arrange to log stack traces when the EDT hangs.
       // Use parameters that ensure a stack trace dump within 10 seconds of an
       // EDT hang (and _no_ dump on hangs under 5.5 seconds)
       EDTHangLogger.startDefault(core_, 4500, 1000);
 
-      // Move ImageJ window to place where it last was if possible or else
-      // (150,150) if not
+      // Move ImageJ window to place where it last was if possible or else (150,150) if not
       if (IJ.getInstance() != null) {
          Point ijWinLoc = IJ.getInstance().getLocation();
          if (GUIUtils.getGraphicsConfigurationContaining(ijWinLoc.x, ijWinLoc.y) == null) {
@@ -422,41 +394,29 @@ public final class MMStudio implements Studio {
          }
       }
       
-      // Load (but do no show) the scriptPanel
-      ui_.createScriptPanel();
-      
+      ui_.createScriptPanel();  // Load (but do no show) the scriptPanel
       ui_.createMainWindow(); // Now create and show the main window
 
-      
       cache_ = new MMCache(this, ui_.frame());
 
-
-      // We wait until after showing the main window to enable hot keys
-      hotKeys_ = new HotKeys();
+      hotKeys_ = new HotKeys(); // We wait until after showing the main window to enable hot keys
       hotKeys_.loadSettings(userProfileManager_.getProfile());
 
-
-      // Switch error reporting back on TODO See above where it's turned off
-      ReportingUtils.showErrorOn(true);
+      ReportingUtils.showErrorOn(true); // Switch error reporting back on TODO See above where it's turned off
       
       events().registerForEvents(displayManager_);
       
       // Tell the GUI to reflect the hardware configuration. (The config was
       // loaded before creating the GUI, so we need to reissue the event.)
       events().post(new SystemConfigurationLoadedEvent());
-
       executeStartupScript();
-
       ui_.updateGUI(true);
       
-      // Give plugins a chance to initialize their state
-      events().post(new StartupCompleteEvent());
+      events().post(new StartupCompleteEvent()); // Give plugins a chance to initialize their state
       
-      // start zmq server if so desired
-      if (settings().getShouldRunZMQServer()) {
+      if (settings().getShouldRunZMQServer()) { // start zmq server if so desired
          runZMQServer();
-      }
-      
+      }      
    }
 
    private void initializeLogging(CMMCore core) {
@@ -489,8 +449,7 @@ public final class MMStudio implements Studio {
 
    /**
     * Spawn a new thread to load the acquisition engine jar, because this
-    * takes significant time (TODO: Does it really, not that it is
-    * AOT-compiled?).
+    * takes significant time. Measured as ~1.3 seconds.
     */
    private void prepAcquisitionEngine() {
       acquisitionEngine2010LoadingThread_ = new Thread("Pipeline Class loading thread") {
