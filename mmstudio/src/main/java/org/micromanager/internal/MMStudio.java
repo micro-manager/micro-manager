@@ -773,10 +773,6 @@ public final class MMStudio implements Studio {
       ui_.menubar().getToolsMenu().setMouseMovesStage(isEnabled);
       events().post(new MouseMovesStageStateChangeEvent(isEnabled));
    }
-
-   public boolean isClickToMoveEnabled() {
-      return isClickToMoveEnabled_;
-   }
    
 
    // //////////////////////////////////////////////////////////////////////////
