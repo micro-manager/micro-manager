@@ -158,6 +158,11 @@ int CZStage::Initialize()
    SetPropertyLimits(g_MotorSpeedPropertyName, minSpeed, maxSpeed);
    UpdateProperty(g_MotorSpeedPropertyName);
 
+   // Backlash (B)
+   pAct = new CPropertyAction (this, &CZStage::OnBacklash);
+   CreateProperty(g_BacklashPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_BacklashPropertyName);
+
    // drift error (E)
    pAct = new CPropertyAction (this, &CZStage::OnDriftError);
    CreateProperty(g_DriftErrorPropertyName, "0", MM::Float, false, pAct);
@@ -709,11 +714,6 @@ int CZStage::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
       {
          CPropertyAction* pAct;
          advancedPropsEnabled_ = true;
-
-         // Backlash (B)
-         pAct = new CPropertyAction (this, &CZStage::OnBacklash);
-         CreateProperty(g_BacklashPropertyName, "0", MM::Float, false, pAct);
-         UpdateProperty(g_BacklashPropertyName);
 
          // overshoot (OS)
          pAct = new CPropertyAction (this, &CZStage::OnOvershoot);
