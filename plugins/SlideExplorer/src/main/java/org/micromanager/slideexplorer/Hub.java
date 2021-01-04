@@ -118,7 +118,7 @@ public class Hub {
                  JOptionPane.YES_NO_OPTION);
          if (result == JOptionPane.YES_OPTION) {
             try {
-               ((MMStudio) studio_).createCalibrationListDlg();
+               ((MMStudio) studio_).uiManager().createCalibrationListDlg();
             } catch (Exception ex) {
                studio_.logs().showError("Unable to start Pixel Size Calibration.");
             }
