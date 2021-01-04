@@ -43,6 +43,6 @@ public final class DefaultPositionListManager implements PositionListManager {
     */
    public void markCurrentPosition() {
       MMStudio mm = (MMStudio) studio_;
-      mm.markCurrentPosition();
+      mm.uiManager().markCurrentPosition();
    }
 }

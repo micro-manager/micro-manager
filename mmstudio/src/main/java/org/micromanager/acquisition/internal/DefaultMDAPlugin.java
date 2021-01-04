@@ -42,7 +42,7 @@ public final class DefaultMDAPlugin implements AcquisitionDialogPlugin, SciJavaP
 
    @Override
    public void showAcquisitionDialog() {
-      ((MMStudio) studio_).openAcqControlDialog();
+      ((MMStudio) studio_).uiManager().openAcqControlDialog();
    }
 
    @Override

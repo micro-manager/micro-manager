@@ -159,7 +159,7 @@ public final class MainFrame extends MMFrame {
 
       setExitStrategy(OptionsDlg.getShouldCloseOnExit(mmStudio_));
 
-      super.setJMenuBar(mmStudio.getMMMenubar());
+      super.setJMenuBar(mmStudio.uiManager().menubar());
 
       setConfigText("");
       // Set minimum size so we can't resize smaller and hide some of our
@@ -284,7 +284,7 @@ public final class MainFrame extends MMFrame {
       comboBinning_.setFont(defaultFont_);
       comboBinning_.setMaximumRowCount(4);
       comboBinning_.addActionListener((ActionEvent e) -> {
-         mmStudio_.changeBinning();
+         mmStudio_.changeBinning(getBinMode());
       });
       subPanel.add(comboBinning_, "gapleft push, width 60::, wrap");
 
@@ -329,7 +329,7 @@ public final class MainFrame extends MMFrame {
 
       saveConfigButton_ = createButton("Save", null,
          "Save current presets to the configuration file", () -> {
-            mmStudio_.promptToSaveConfigPresets();
+            mmStudio_.uiManager().promptToSaveConfigPresets();
       });
       subPanel.add(saveConfigButton_,
             "pushy 0, gapleft push, alignx right, w 88!, h 20!");
@@ -379,7 +379,7 @@ public final class MainFrame extends MMFrame {
       JButton refreshButton = createButton("Refresh", "arrow_refresh.png",
          "Refresh all GUI controls directly from the hardware", () -> {
             core_.updateSystemStateCache();
-            mmStudio_.updateGUI(true);
+            mmStudio_.uiManager().updateGUI(true);
       });
       subPanel.add(refreshButton, BIGBUTTON_SIZE);
 
@@ -530,7 +530,7 @@ public final class MainFrame extends MMFrame {
          boolean isSelected = handMovesButton_.isSelected();
          mmStudio_.updateCenterAndDragListener(isSelected);
       });
-      setHandMovesButton(mmStudio_.getMMMenubar().getToolsMenu().getMouseMovesStage());
+      setHandMovesButton(mmStudio_.uiManager().menubar().getToolsMenu().getMouseMovesStage());
       stagePanel.add(handMovesButton_, SMALLBUTTON_SIZE);
 
       AbstractButton listButton = createButton(null, "application_view_list.png",

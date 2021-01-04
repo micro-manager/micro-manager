@@ -503,7 +503,7 @@ public final class MMAcquisition extends DataViewerListener {
             case SINGLEPLANE_TIFF_SERIES:
                return new StorageSinglePlaneTiffSeries(store, path, isNew);
             case MULTIPAGE_TIFF:
-               return new StorageMultipageTiff(MMStudio.getFrame(), store, path, isNew);
+               return new StorageMultipageTiff(studio.app().getMainWindow(), store, path, isNew);
          }
       }
       ReportingUtils.logError("Unrecognized save mode " + mode);

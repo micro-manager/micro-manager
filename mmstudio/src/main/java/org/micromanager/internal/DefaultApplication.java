@@ -49,7 +49,6 @@ import org.micromanager.internal.utils.ReportingUtils;
 public class DefaultApplication implements Application {
    private final Studio studio_;
    private static final String EXPOSURE_KEY = "Exposure_";
-   private PositionListDlg posListDlg_;
    private final ApplicationSkin daytimeNighttimeManager_;
    
    
@@ -61,12 +60,12 @@ public class DefaultApplication implements Application {
 
    @Override
    public void refreshGUI() {
-      ((MMStudio) studio_).updateGUI(true, false);
+      ((MMStudio) studio_).uiManager().updateGUI(true, false);
    }
    
    @Override
    public void refreshGUIFromCache() {
-      ((MMStudio) studio_).updateGUI(true, true);
+      ((MMStudio) studio_).uiManager().updateGUI(true, true);
    }
    
    @Override
@@ -206,11 +205,7 @@ public class DefaultApplication implements Application {
     */
    @Override
    public void showPositionList() {
-      if (posListDlg_ == null) {
-         posListDlg_ = new MMPositionListDlg(studio_, studio_.positions().getPositionList());
-         posListDlg_.addListeners();
-      }
-      posListDlg_.setVisible(true);
+      ((MMStudio) studio_).uiManager().showPositionList();
    }
 
    @Override
@@ -228,7 +223,7 @@ public class DefaultApplication implements Application {
 
    @Override
    public JFrame getMainWindow() {
-      return ((MMStudio) studio_).getFrame();
+      return ((MMStudio) studio_).uiManager().frame();
    }
    
    @Override

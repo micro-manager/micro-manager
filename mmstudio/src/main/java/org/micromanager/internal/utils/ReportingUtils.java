@@ -260,15 +260,15 @@ public final class ReportingUtils {
    }
 
    public static void showError(Throwable e) {
-      showError(e, "", MMStudio.getFrame());
+      showError(e, "", MMStudio.getInstance().app().getMainWindow());
    }
 
    public static void showError(String msg) {
-      showError(null, msg, MMStudio.getFrame());
+      showError(null, msg, MMStudio.getInstance().app().getMainWindow());
    }
 
    public static void showError(Throwable e, String msg) {
-      showError(e, msg, MMStudio.getFrame());
+      showError(e, msg, MMStudio.getInstance().app().getMainWindow());
    }
 
    public static void showError(Throwable e, Component parent) {

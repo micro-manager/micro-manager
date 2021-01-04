@@ -41,7 +41,7 @@ public final class ConfigMenu {
               new Runnable() {
                  @Override
                  public void run() {
-                    mmStudio_.createPropertyEditor();
+                    mmStudio_.uiManager().createPropertyEditor();
                  }
               });
 
@@ -63,7 +63,7 @@ public final class ConfigMenu {
                  public void run() {
                     loadConfiguration();
                     // TODO: this may be redundant.
-                    mmStudio_.initializeGUI();
+                    mmStudio_.uiManager().initializeGUI();
                  }
               });
 
@@ -74,7 +74,7 @@ public final class ConfigMenu {
                  public void run() {
                     mmStudio_.loadSystemConfiguration();
                     // TODO: this is redundant.
-                    mmStudio_.initializeGUI();
+                    mmStudio_.uiManager().initializeGUI();
                  }
               });
 
@@ -94,8 +94,8 @@ public final class ConfigMenu {
               new Runnable() {
                  @Override
                  public void run() {
-                    mmStudio_.promptToSaveConfigPresets();
-                    mmStudio_.updateChannelCombos();
+                    mmStudio_.uiManager().promptToSaveConfigPresets();
+                    mmStudio_.uiManager().updateChannelCombos();
                  }
               });
 
@@ -106,7 +106,7 @@ public final class ConfigMenu {
             new Runnable() {
                @Override
                public void run() {
-                  mmStudio_.createCalibrationListDlg();
+                  mmStudio_.uiManager().createCalibrationListDlg();
                }
             });
 
@@ -114,7 +114,7 @@ public final class ConfigMenu {
    }
 
    private void loadConfiguration() {
-      File configFile = FileDialogs.openFile(mmStudio_.getFrame(), 
+      File configFile = FileDialogs.openFile(mmStudio_.uiManager().frame(), 
             "Load a Configuration File", FileDialogs.MM_CONFIG_FILE);
       if (configFile != null) {
          mmStudio_.setSysConfigFile(configFile.getAbsolutePath());
@@ -140,7 +140,7 @@ public final class ConfigMenu {
                  JOptionPane.QUESTION_MESSAGE, null, options,
                  options[0]);
          if (n == JOptionPane.YES_OPTION) {
-            mmStudio_.promptToSaveConfigPresets();
+            mmStudio_.uiManager().promptToSaveConfigPresets();
          }
          mmStudio_.setConfigChanged(false);
       }
@@ -159,7 +159,7 @@ public final class ConfigMenu {
 
          // run Configurator
          ConfigWizard cfg = null;
-         MainFrame frame = mmStudio_.getFrame();
+         MainFrame frame = mmStudio_.uiManager().frame();
          try {
             frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             cfg = new ConfigWizard(mmStudio_, mmStudio_.getSysConfigFile());

@@ -39,6 +39,7 @@ import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.MainFrame;
 import org.micromanager.internal.StartupSettings;
 import org.micromanager.internal.logging.LogFileManager;
 import org.micromanager.internal.script.ScriptPanel;
@@ -222,7 +223,7 @@ public final class OptionsDlg extends MMDialog {
       closeOnExitCheckBox.addActionListener((ActionEvent arg0) -> {
          boolean shouldClose = closeOnExitCheckBox.isSelected();
          setShouldCloseOnExit(mmStudio_, shouldClose);
-         MMStudio.getFrame().setExitStrategy(shouldClose);
+         ((MainFrame) mmStudio_.app().getMainWindow()).setExitStrategy(shouldClose);
       });
 
       final JCheckBox metadataFileWithMultipageTiffCheckBox = new JCheckBox();

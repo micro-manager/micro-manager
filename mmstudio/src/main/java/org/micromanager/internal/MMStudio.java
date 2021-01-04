@@ -28,7 +28,6 @@ import ij.gui.ShapeRoi;
 import ij.gui.Toolbar;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -37,7 +36,6 @@ import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.function.Function;
-import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
@@ -71,7 +69,6 @@ import org.micromanager.display.internal.DefaultDisplayManager;
 import org.micromanager.events.AutofocusPluginShouldInitializeEvent;
 import org.micromanager.events.EventManager;
 import org.micromanager.events.ExposureChangedEvent;
-import org.micromanager.events.GUIRefreshEvent;
 import org.micromanager.events.PropertiesChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.events.StartupCompleteEvent;
@@ -83,17 +80,13 @@ import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 import org.micromanager.internal.diagnostics.EDTHangLogger;
 import org.micromanager.internal.diagnostics.ThreadExceptionLogger;
 import org.micromanager.internal.dialogs.AcqControlDlg;
-import org.micromanager.internal.dialogs.CalibrationListDlg;
 import org.micromanager.internal.dialogs.IJVersionCheckDlg;
 import org.micromanager.internal.dialogs.IntroDlg;
 import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.RegistrationDlg;
 import org.micromanager.internal.logging.LogFileManager;
-import org.micromanager.internal.menus.MMMenuBar;
 import org.micromanager.internal.navigation.UiMovesStageManager;
-import org.micromanager.internal.pipelineinterface.PipelineFrame;
 import org.micromanager.internal.pluginmanagement.DefaultPluginManager;
-import org.micromanager.internal.positionlist.MMPositionListDlg;
 import org.micromanager.internal.script.ScriptPanel;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.DefaultAutofocusManager;
@@ -121,15 +114,9 @@ public final class MMStudio implements Studio {
    private static final long serialVersionUID = 3556500289598574541L;
    
    private static final String AUTOFOCUS_DEVICE = "autofocus_device";
-   private static final int TOOLTIP_DISPLAY_DURATION_MILLISECONDS = 15000;
-   private static final int TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS = 2000;
 
-   // GUI components
    private boolean wasStartedAsImageJPlugin_;
-   private PropertyEditor propertyBrowser_;
-   private CalibrationListDlg calibrationListDlg_;
-   private AcqControlDlg acqControlWin_;
-   
+
    
    // Managers
    private AcquisitionManager acquisitionManager_;
@@ -154,28 +141,23 @@ public final class MMStudio implements Studio {
    // Local Classes
    private final MMSettings settings_ = new MMSettings();
    private MMCache cache_;
+   private MMUIManager ui_;
    
    
    // MMcore
    private CMMCore core_;
    private AcquisitionWrapperEngine acqEngine_;
-   private MMPositionListDlg posListDlg_;
    private boolean isProgramRunning_;
    private boolean configChanged_ = false;
    private boolean isClickToMoveEnabled_ = false;
 
-   private ScriptPanel scriptPanel_;
    private ZMQServer zmqServer_;
-   private PipelineFrame pipelineFrame_;
    private org.micromanager.internal.utils.HotKeys hotKeys_;
 
    // Our instance
    // TODO: make this non-static
    private static MMStudio studio_;
-   // Our menubar
-   private MMMenuBar mmMenuBar_;
-   // Our primary window.
-   private static MainFrame frame_;
+
    // Callback
    private CoreEventCallback coreCallback_;
    // Lock invoked while shutting down
@@ -269,7 +251,7 @@ public final class MMStudio implements Studio {
       }
       
       // Start up multiple managers.  
-      
+      ui_ = new MMUIManager(this);
       userProfileManager_ = new UserProfileManager();       
       compatibility_ = new DefaultCompatibilityInterface(studio_);
       
@@ -309,16 +291,13 @@ public final class MMStudio implements Studio {
       // Note: pipelineFrame is used in the dataManager, however, pipelineFrame 
       // needs the dataManager.  Let's hope for the best....
       dataManager_ = new DefaultDataManager(studio_);
-      if (pipelineFrame_ == null) { //Create the pipelineframe if it hasn't already been done.
-         pipelineFrame_ = new PipelineFrame(studio_);
-      }
+      ui_.createPipelineFrame();
 
       alertManager_ = new DefaultAlertManager(studio_);
       
       afMgr_ = new DefaultAutofocusManager(studio_);
       afMgr_.refresh();
-      String afDevice = profile().getSettings(MMStudio.class).
-              getString(AUTOFOCUS_DEVICE, "");
+      String afDevice = profile().getSettings(MMStudio.class).getString(AUTOFOCUS_DEVICE, "");
       if (afMgr_.hasDevice(afDevice)) {
          afMgr_.setAutofocusMethodByName(afDevice);
       }
@@ -357,10 +336,6 @@ public final class MMStudio implements Studio {
       else {
          ReportingUtils.logMessage("Finished waiting for plugins to load");
       }
-
-      ToolTipManager ttManager = ToolTipManager.sharedInstance();
-      ttManager.setDismissDelay(TOOLTIP_DISPLAY_DURATION_MILLISECONDS);
-      ttManager.setInitialDelay(TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS);
 
 
       UserProfileAdmin profileAdmin = userProfileManager_.getAdmin();
@@ -427,14 +402,8 @@ public final class MMStudio implements Studio {
             ReportingUtils.showErrorOn(false);
          }
       }
-      
-      // Create Multi-D window here but do not show it.
-      // This window needs to be created in order to properly set the 
-      // "ChannelGroup" based on the Multi-D parameters
-      acqControlWin_ = new AcqControlDlg(acqEngine_, studio_);
 
-      acquisitionManager_ = new DefaultAcquisitionManager(this, acqEngine_,
-            acqControlWin_);
+      acquisitionManager_ = new DefaultAcquisitionManager(this, acqEngine_, ui_.getAcquisitionWindow());
 
       try {
          core_.setCircularBufferMemoryFootprint(settings().getCircularBufferSize());
@@ -459,16 +428,13 @@ public final class MMStudio implements Studio {
       }
       
       // Load (but do no show) the scriptPanel
-      createScriptPanel();
+      ui_.createScriptPanel();
       
-      // Now create and show the main window
-      mmMenuBar_ = MMMenuBar.createMenuBar(studio_);
-      frame_ = new MainFrame(this, core_);
-      cache_ = new MMCache(this, frame_);
-      frame_.toFront();
-      frame_.setVisible(true);
-      ReportingUtils.SetContainingFrame(frame_);
-      frame_.initializeConfigPad();
+      ui_.createMainWindow(); // Now create and show the main window
+
+      
+      cache_ = new MMCache(this, ui_.frame());
+
 
       // We wait until after showing the main window to enable hot keys
       hotKeys_ = new HotKeys();
@@ -486,7 +452,7 @@ public final class MMStudio implements Studio {
 
       executeStartupScript();
 
-      updateGUI(true);
+      ui_.updateGUI(true);
       
       // Give plugins a chance to initialize their state
       events().post(new StartupCompleteEvent());
@@ -525,18 +491,10 @@ public final class MMStudio implements Studio {
       // enable only when debug logging is turned on (from the GUI).
       UIMonitor.enable(OptionsDlg.isDebugLoggingEnabled(studio_));
    }
-  
-   public void showPipelineFrame() {
-      pipelineFrame_.setVisible(true);
-   }
-
-   public void showScriptPanel() {
-      scriptPanel_.setVisible(true);
-   }
 
    private void handleError(String message) {
       live().setLiveModeOn(false);
-      JOptionPane.showMessageDialog(frame_, message);
+      JOptionPane.showMessageDialog(ui_.frame(), message);
       core_.logMessage(message);
    }
 
@@ -718,32 +676,6 @@ public final class MMStudio implements Studio {
    }
 
    /**
-    * Returns singleton instance of MainFrame.
-    * @return singleton instance of the mainFrame
-    */
-   public static MainFrame getFrame() {
-      return frame_;
-   }
-   
-   public MMMenuBar getMMMenubar() {
-      return mmMenuBar_;
-   }
-
-   public void promptToSaveConfigPresets() {
-      File f = FileDialogs.save(frame_,
-            "Save the configuration file", FileDialogs.MM_CONFIG_FILE);
-      if (f != null) {
-         try {
-            app().saveConfigPresets(f.getAbsolutePath(), true);
-         }
-         catch (IOException e) {
-            // This should be impossible as we set shouldOverwrite to true.
-            logs().logError(e, "Error saving config presets");
-         }
-      }
-   }
-
-   /**
     * Get currently used configuration file
     * @return - Path to currently used configuration file
     */
@@ -754,12 +686,11 @@ public final class MMStudio implements Studio {
    public void setSysConfigFile(String newFile) {
       sysConfigFile_ = newFile;
       configChanged_ = false;
-      frame_.setConfigSaveButtonStatus(configChanged_);
+      ui_.frame().setConfigSaveButtonStatus(configChanged_);
       loadSystemConfiguration();
    }
 
-   protected void changeBinning() {
-      String mode = frame_.getBinMode();
+   protected void changeBinning(String mode) {
       live().setSuspended(true);
       try {
          if (!isCameraAvailable() || mode == null) {
@@ -779,39 +710,6 @@ public final class MMStudio implements Studio {
          ReportingUtils.showError(e);
       }
       live().setSuspended(false);
-   }
-
-   public void createPropertyEditor() {
-      if (propertyBrowser_ != null) {
-         propertyBrowser_.dispose();
-      }
-
-      propertyBrowser_ = new PropertyEditor(studio_);
-      this.events().registerForEvents(propertyBrowser_);
-      propertyBrowser_.setVisible(true);
-      propertyBrowser_.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-   }
-
-   public void createCalibrationListDlg() {
-      if (calibrationListDlg_ != null) {
-         calibrationListDlg_.dispose();
-      }
-
-      calibrationListDlg_ = new CalibrationListDlg(core_);
-      calibrationListDlg_.setVisible(true);
-      calibrationListDlg_.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-      calibrationListDlg_.setParentGUI(studio_);
-   }
-
-   public CalibrationListDlg getCalibrationListDlg() {
-      if (calibrationListDlg_ == null) {
-         createCalibrationListDlg();
-      }
-      return calibrationListDlg_;
-   }
-
-   private void createScriptPanel() {
-      scriptPanel_ = new ScriptPanel(studio_);
    }
    
   public void runZMQServer() {
@@ -859,21 +757,13 @@ public final class MMStudio implements Studio {
       }
    }
 
-   public PipelineFrame getPipelineFrame() {
-      return pipelineFrame_;
-   }
-
    public void updateCenterAndDragListener(boolean isEnabled) {
       isClickToMoveEnabled_ = isEnabled;
       if (isEnabled) {
          IJ.setTool(Toolbar.HAND);
       }
-      mmMenuBar_.getToolsMenu().setMouseMovesStage(isEnabled);
+      ui_.menubar().getToolsMenu().setMouseMovesStage(isEnabled);
       events().post(new MouseMovesStageStateChangeEvent(isEnabled));
-   }
-
-   public boolean isClickToMoveEnabled() {
-      return isClickToMoveEnabled_;
    }
    
 
@@ -885,119 +775,16 @@ public final class MMStudio implements Studio {
       return cache().getCameraLabel().length() > 0;
    }
 
-   /**
-    * Part of Studio API
-    * Opens the XYPositionList when it is not opened
-    * Adds the current position to the list (same as pressing the "Mark"
-    * button)
-    */
-   // @Override
-   public void markCurrentPosition() {
-      if (posListDlg_ == null) {
-         app().showPositionList();
-      }
-      if (posListDlg_ != null) {
-         posListDlg_.markPosition(false);
-      }
-   }
-
-   private void configureBinningCombo() throws Exception {
-      if (isCameraAvailable()) {
-         frame_.configureBinningComboForCamera(cache().getCameraLabel());
-      }
-   }
-
-   // TODO: This method should be renamed!
-   // resetGUIForNewHardwareConfig or something like that.
-   // TODO: this method should be automatically invoked when
-   // SystemConfigurationLoaded event occurs, and in no other way.
-   // Better: each of these entities should listen for
-   // SystemConfigurationLoaded itself and handle its own updates.
-   public void initializeGUI() {
-      try {
-         if (cache() != null) {
-            cache().refreshValues();
-            if (acqEngine_ != null) {
-               acqEngine_.setZStageDevice(cache().getZStageLabel());  
-            }
-         }
-
-         // Rebuild stage list in XY PositinList
-         if (posListDlg_ != null) {
-            posListDlg_.rebuildAxisList();
-         }
-
-         if (frame_ != null) {
-            configureBinningCombo();
-            frame_.updateAutofocusButtons(afMgr_.getAutofocusMethod() != null);
-            updateGUI(true);
-         }
-      } catch (Exception e) {
-         ReportingUtils.showError(e);
-      }
-   }
-
    @Subscribe
    public void onPropertiesChanged(PropertiesChangedEvent event) {
-      updateGUI(true);
+      ui_.updateGUI(true);
    }
 
    @Subscribe
    public void onExposureChanged(ExposureChangedEvent event) {
       if (event.getCameraName().equals(cache().getCameraLabel())) {
-         frame_.setDisplayedExposureTime(event.getNewExposureTime());
+         ui_.frame().setDisplayedExposureTime(event.getNewExposureTime());
       }
-   }
-   
-   public void updateGUI(boolean updateConfigPadStructure) {
-      updateGUI(updateConfigPadStructure, false);
-   }
-
-   public void updateGUI(boolean updateConfigPadStructure, boolean fromCache) {
-      ReportingUtils.logMessage("Updating GUI; config pad = " +
-            updateConfigPadStructure + "; from cache = " + fromCache);
-      try {
-         cache().refreshValues();
-         afMgr_.refresh();
-
-         if (!fromCache) { // The rest of this function uses the cached property values. If `fromCache` is false, start by updating all properties in the cache.
-            core_.updateSystemStateCache();
-         }
-         
-         // camera settings
-         if (isCameraAvailable()) {
-            double exp = core_.getExposure();
-            frame_.setDisplayedExposureTime(exp);
-            configureBinningCombo();
-            String binSize = core_.getPropertyFromCache(cache().getCameraLabel(), MMCoreJ.getG_Keyword_Binning());
-            frame_.setBinSize(binSize);
-         }
-
-         frame_.updateAutofocusButtons(afMgr_.getAutofocusMethod() != null);
-         
-         ConfigGroupPad pad = frame_.getConfigPad();
-         // state devices
-         if (updateConfigPadStructure && (pad != null)) {
-            pad.refreshStructure(true);
-         }
-
-         // update Channel menus in Multi-dimensional acquisition dialog
-         updateChannelCombos();
-
-         // update list of pixel sizes in pixel size configuration window
-         if (calibrationListDlg_ != null) {
-            calibrationListDlg_.refreshCalibrations();
-         }
-         if (propertyBrowser_ != null) {
-            propertyBrowser_.refresh(true);
-         }
-
-         ReportingUtils.logMessage("Finished updating GUI");
-      } catch (Exception e) {
-         ReportingUtils.logError(e);
-      }
-      frame_.setConfigText(sysConfigFile_);
-      events().post(new GUIRefreshEvent());
    }
 
    /**
@@ -1016,7 +803,7 @@ public final class MMStudio implements Studio {
                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
                null, options, options[0]);
          if (n == JOptionPane.YES_OPTION) {
-            promptToSaveConfigPresets();
+            ui_.promptToSaveConfigPresets();
             // if the configChanged_ flag did not become false, the user 
             // must have cancelled the configuration saving and we should cancel
             // quitting as well
@@ -1033,27 +820,10 @@ public final class MMStudio implements Studio {
          }
       }
   
-      if (scriptPanel_ != null) {
-         scriptPanel_.closePanel();
-         scriptPanel_ = null;
-      }
+      ui_.cleanupOnClose();
       
       if (zmqServer_ != null) {
          zmqServer_.close();
-      }
-
-      if (pipelineFrame_ != null) {
-         pipelineFrame_.dispose();
-      }
-
-      if (propertyBrowser_ != null) {
-         propertyBrowser_.getToolkit().getSystemEventQueue().postEvent(
-                 new WindowEvent(propertyBrowser_, WindowEvent.WINDOW_CLOSING));
-         propertyBrowser_.dispose();
-      }
-
-      if (acqControlWin_ != null) {
-         acqControlWin_.close();
       }
 
       if (afMgr_ != null) {
@@ -1083,14 +853,13 @@ public final class MMStudio implements Studio {
    private void saveSettings() {
       // TODO All of the following should be taken care of by specific modules
 
-      if (frame_ != null) {
-         frame_.savePrefs();
+      if (ui_.frame() != null) {
+         ui_.frame().savePrefs();
       }
 
       // NOTE: do not save auto shutter state
       if (afMgr_ != null && afMgr_.getAutofocusMethod() != null) {
-         profile().getSettings(MMStudio.class).putString(
-               AUTOFOCUS_DEVICE, afMgr_.getAutofocusMethod().getName());
+         profile().getSettings(MMStudio.class).putString(AUTOFOCUS_DEVICE, afMgr_.getAutofocusMethod().getName());
       }
    }
 
@@ -1124,7 +893,7 @@ public final class MMStudio implements Studio {
 
       saveSettings();
       try {
-         frame_.getConfigPad().saveSettings();
+         ui_.frame().getConfigPad().saveSettings();
          hotKeys_.saveSettings(userProfileManager_.getProfile());
       } catch (NullPointerException e) {
          if (core_ != null) {
@@ -1138,10 +907,7 @@ public final class MMStudio implements Studio {
          Thread.currentThread().interrupt();
       }
 
-      if (frame_ != null) {
-         frame_.dispose();
-         frame_ = null;
-      }
+      ui_.close();
 
       try {
          ((DefaultUserProfile) profile()).close();
@@ -1195,7 +961,7 @@ public final class MMStudio implements Studio {
             "Executing startup script, please wait...");
       waitDlg.showDialog();
       try {
-         scriptPanel_.runFile(f);
+         ui_.getScriptPanel().runFile(f);
       }
       finally {
          waitDlg.closeDialog();
@@ -1215,8 +981,8 @@ public final class MMStudio implements Studio {
 
       waitDlg.setAlwaysOnTop(true);
       waitDlg.showDialog();
-      if (frame_ != null) {
-         frame_.setEnabled(false);
+      if (ui_.frame() != null) {
+         ui_.frame().setEnabled(false);
       }
 
       try {
@@ -1244,41 +1010,15 @@ public final class MMStudio implements Studio {
          result = false;
       } finally {
          waitDlg.closeDialog();
-         if (frame_ != null) {
-            frame_.setEnabled(true);
+         if (ui_.frame() != null) {
+            ui_.frame().setEnabled(true);
          }
 
       }
 
-      initializeGUI();
+      ui_.initializeGUI();
 
       return result;
-   }
-
-   public void openAcqControlDialog() {
-      try {
-         if (acqControlWin_ == null) {
-            acqControlWin_ = new AcqControlDlg(acqEngine_, studio_);
-         }
-         if (acqControlWin_.isActive()) {
-            acqControlWin_.setTopPosition();
-         }
-
-         acqControlWin_.setVisible(true);
-         
-         acqControlWin_.repaint();
-
-      } catch (Exception exc) {
-         ReportingUtils.showError(exc,
-               "\nAcquisition window failed to open due to invalid or corrupted settings.\n"
-               + "Try resetting registry settings to factory defaults (Menu Tools|Options).");
-      }
-   }
-
-   public void updateChannelCombos() {
-      if (acqControlWin_ != null) {
-         acqControlWin_.updateChannelAndGroupCombo();
-      }
    }
 
    public void autofocusNow() {
@@ -1331,23 +1071,15 @@ public final class MMStudio implements Studio {
 
    public void setConfigChanged(boolean status) {
       configChanged_ = status;
-      frame_.setConfigSaveButtonStatus(configChanged_);
+      ui_.frame().setConfigSaveButtonStatus(configChanged_);
    }
 
    public boolean hasConfigChanged() {
       return configChanged_;
    }
-
-   public void enableRoiButtons(final boolean enabled) {
-      frame_.enableRoiButtons(enabled);
-   }
-
+   
    public AcquisitionWrapperEngine getAcquisitionEngine() {
       return acqEngine_;
-   }
-
-   public CMMCore getCore() {
-      return core_;
    }
 
    public IAcquisitionEngine2010 getAcquisitionEngine2010() {
@@ -1439,12 +1171,12 @@ public final class MMStudio implements Studio {
 
    @Override
    public ScriptController scripter() {
-      return scriptPanel_;
+      return ui_.getScriptPanel();
    }
 
    @Override
    public ScriptController getScriptController() {
-      return scriptPanel_;
+      return ui_.getScriptPanel();
    }
 
    @Override
@@ -1551,7 +1283,8 @@ public final class MMStudio implements Studio {
       return uiMovesStageManager_;
    }
 
-   
+
+   //Internal manager objects
    public MMCache cache() {
       return cache_;
    }
@@ -1560,6 +1293,10 @@ public final class MMStudio implements Studio {
       return settings_;
    }
 
+   public MMUIManager uiManager() {
+      return ui_;
+   }
+      
    public class MMSettings {
       private static final String SHOULD_DELETE_OLD_CORE_LOGS = "whether or not to delete old MMCore log files";
       private static final String SHOULD_RUN_ZMQ_SERVER = "run ZQM server";
@@ -1608,5 +1345,4 @@ public final class MMStudio implements Studio {
                CIRCULAR_BUFFER_SIZE, newSize);
       }
    }
- 
 }

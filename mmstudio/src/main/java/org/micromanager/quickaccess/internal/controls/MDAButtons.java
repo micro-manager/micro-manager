@@ -99,7 +99,7 @@ public final class MDAButtons extends WidgetPlugin implements SciJavaPlugin {
       dialogButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            studio_.openAcqControlDialog();
+            studio_.uiManager().openAcqControlDialog();
          }
       });
       dialogButton.setFont(GUIUtils.buttonFont);

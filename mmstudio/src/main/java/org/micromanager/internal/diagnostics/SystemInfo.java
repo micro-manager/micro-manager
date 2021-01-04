@@ -18,7 +18,7 @@ public final class SystemInfo {
    public static void dumpAllToCoreLog(boolean includeUnchanging) {
       List<SystemInfoSection> sections = getAllSections(includeUnchanging);
       for (SystemInfoSection section : sections) {
-         mmcorej.CMMCore core = org.micromanager.internal.MMStudio.getInstance().getCore();
+         mmcorej.CMMCore core = org.micromanager.internal.MMStudio.getInstance().core();
          core.logMessage(section.getReport());
       }
    }
