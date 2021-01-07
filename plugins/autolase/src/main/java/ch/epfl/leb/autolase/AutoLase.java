@@ -93,7 +93,7 @@ public enum AutoLase {
      */
     public void show() {
         if (dlg==null) {
-            dlg = new AutoLaseDialog(gui.getFrame(), false, this);
+            dlg = new AutoLaseDialog(gui.uiManager().frame(), false, this);
         }
         dlg.setVisible(true);        
     }
