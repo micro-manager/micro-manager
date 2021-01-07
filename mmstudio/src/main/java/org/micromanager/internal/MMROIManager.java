@@ -156,7 +156,7 @@ public class MMROIManager {
       studio_.live().setSuspended(false);
    }
    
-   public void setMultiROI(List<Rectangle> rois) throws Exception {
+   private void setMultiROI(List<Rectangle> rois) throws Exception {
       studio_.live().setSuspended(true);
       studio_.core().setMultiROI(rois);
       studio_.cache().refreshValues();
