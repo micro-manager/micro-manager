@@ -607,7 +607,7 @@ public class Cameras {
          
          // Photometrics Prime 95B is very different from other cameras so handle it as special case
          if (camLibrary == Devices.Libraries.PVCAM 
-               && props_.getPropValueString(camKey, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.PRIME_95B_CHIPNAME)) {
+               && props_.getPropValueString(camKey, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.PRIME_95B_CHIPNAME.toString())) {
             int trigToGlobal = props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_POST_TIME)
                   + props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME);
             // it appears as of end-May 2017 that the clearing time is actually rolled into the post-trigger
@@ -645,6 +645,9 @@ public class Cameras {
                break;
             case DEMOCAM:
                resetTimeMs = camReadoutTime;
+               break;
+            case PVCAM:
+               resetTimeMs = 14.25f;  // strange number just to make it easy to find later; I think the original Prime needs to be added
                break;
             default:
                break;
@@ -758,7 +761,8 @@ public class Cameras {
             break;
          case PVCAM:
             int endGlobalToTrig = props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_PRE_TIME)
-               + props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME);
+               + 2 * props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME);
+            // this factor of 2 is empirical 08-Jan-2021; I'm not sure why it's needed but that is the missing piece it seems
             readoutTimeMs = (float) endGlobalToTrig / 1e6f;
             break;
          case DEMOCAM:

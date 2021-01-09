@@ -234,6 +234,9 @@ public class CameraPanel extends ListeningJPanel{
       final int prefCode = prefs_.getInt(roiPrefNode, roiPrefKey, 0);
       setSPIMCameraROI(getRoiPresetFromCode(prefCode));
       
+      // set the trigger mode to internal when plugin launched
+      setSPIMCameraInternalTrigger();
+      
    }//constructor
    
    
@@ -281,6 +284,15 @@ public class CameraPanel extends ListeningJPanel{
                   Devices.SPIM_CAMERAS_SIMULT : Devices.SPIM_CAMERAS;
       for (Devices.Keys devKey : camList) {
          cameras_.setCameraROI(devKey, roi);
+      }
+   }
+   
+   private void setSPIMCameraInternalTrigger() {
+      Set<Devices.Keys> camList = prefs_.getBoolean(MyStrings.PanelNames.CAMERAS.toString(),
+            Properties.Keys.PLUGIN_USE_SIMULT_CAMERAS, false) ?
+                  Devices.SPIM_CAMERAS_SIMULT : Devices.SPIM_CAMERAS;
+      for (Devices.Keys devKey : camList) {
+         cameras_.setCameraForAcquisition(devKey, false);
       }
    }
    
