@@ -162,15 +162,6 @@ public final class PropertyEditor extends MMFrame {
    }
 
    @Subscribe
-   public void onPropertiesChanged(PropertiesChangedEvent event) {
-      // avoid re-executing a refresh because of callbacks while we are
-      // updating
-      if (!data_.updating()) {
-         refresh(false);
-      }
-   }
-
-   @Subscribe
    public void onPropertyChanged(PropertyChangedEvent event) {
       String device = event.getDevice();
       String property = event.getProperty();
