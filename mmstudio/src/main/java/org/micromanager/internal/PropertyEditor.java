@@ -199,7 +199,6 @@ public final class PropertyEditor extends MMFrame {
             setValueInCore(item,value);
          }
          core_.updateSystemStateCache();
-         refresh(true);
          studio_.app().refreshGUIFromCache();
          fireTableCellUpdated(row, col);
       }
