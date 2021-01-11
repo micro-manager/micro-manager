@@ -217,7 +217,11 @@ public final class ConfigGroupPad extends JScrollPane {
                              studio_.app().getChannelExposureTime(
                                      item.group, value.toString(), core_.getExposure()));
                   }
-
+                  
+                  // By updating the system cache here we are able to use it in 
+                  // `refreshStatus` and when updating the GUI rather than needing 
+                  // repeatedly query the same properties in both operations.
+                  studio_.core().updateSystemStateCache(); 
                   refreshStatus();
                   table_.repaint();
                   if (studio_ != null) {
@@ -227,13 +231,11 @@ public final class ConfigGroupPad extends JScrollPane {
                      if (studio_ instanceof MMStudio) {
                         // But it appears to be important for performance that
                         // we use the non-config-pad-updating version of
-                        // MMStudio.refreshGUI(). Calling updateGUI(true) or,
-                        // equivalently, refreshGUI(), results in a system
-                        // state cache update, which can be very slow.
+                        // MMStudio.refreshGUI().
                         MMStudio parentGUI = (MMStudio) studio_;
-                        parentGUI.uiManager().updateGUI(false);
+                        parentGUI.uiManager().updateGUI(false, true);
                      } else {
-                        studio_.app().refreshGUI();
+                        studio_.app().refreshGUIFromCache();
                      }
                   }
 
@@ -318,15 +320,16 @@ public final class ConfigGroupPad extends JScrollPane {
       }
 
       // Update the current presets for each config group, without updating
-      // the list of config groups and presets.
-      public void refreshStatus() {
+      // the list of config groups and presets. Note: This method relies on the property cache. 
+      // If the cache is not up to date then it will not be accurate.
+      private void refreshStatus() {
          try {
             ReportingUtils.logMessage("Refreshing config group table");
             for (StateItem item : groupList_) {
                if (item.singleProp) {
                   item.config = core_.getProperty(item.device, item.name);
                } else {
-                  item.config = core_.getCurrentConfig(item.group);
+                  item.config = core_.getCurrentConfigFromCache(item.group);
                   // set descr to current situation so that Tooltips get updated
                   if (item.config.length() > 0) {
                      Configuration curCfg = core_.getConfigData(item.group, item.config);
