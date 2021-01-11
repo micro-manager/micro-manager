@@ -88,5 +88,9 @@ public class ProjectorAPI {
       projectorControlForm_.addPointToPointAndShootQueue(p2D);
    }
 
+   public void calibrate(boolean blocking) {
+      projectorControlForm_.runCalibration(blocking);
+   }
+
 
 }

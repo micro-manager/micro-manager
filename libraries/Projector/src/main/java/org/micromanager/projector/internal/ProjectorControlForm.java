@@ -135,19 +135,19 @@ public class ProjectorControlForm extends MMFrame {
    private String logFile_;
    private BufferedWriter mdaLogFileWriter_;
    private String mdaLogFile_;
-   
-   
-   private static final SimpleDateFormat LOGFILEDATE_FORMATTER = 
+
+
+   private static final SimpleDateFormat LOGFILEDATE_FORMATTER =
            new SimpleDateFormat("yyyyMMdd");
-   private static final SimpleDateFormat LOGTIME_FORMATTER = 
+   private static final SimpleDateFormat LOGTIME_FORMATTER =
            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-   
+
 
    public static final FileType PROJECTOR_LOG_FILE = new FileType("PROJECTOR_LOG_FILE",
-      "Projector Log File", "./MyProjector.log", true, "log");
-  
-   
-    // GUI element variables declaration 
+           "Projector Log File", "./MyProjector.log", true, "log");
+
+
+   // GUI element variables declaration
    private javax.swing.JButton allPixelsButton_;
    private javax.swing.JTabbedPane attachToMdaTabbedPane_;
    private javax.swing.JButton calibrateButton_;
@@ -182,8 +182,8 @@ public class ProjectorControlForm extends MMFrame {
    private javax.swing.JLabel startTimeUnitLabel_;
    private javax.swing.JPanel syncRoiPanel_;
    private javax.swing.JCheckBox useInMDAcheckBox;
-   
-    /**
+
+   /**
     * Constructor. Creates the main window for the Projector plugin.
     */
    private ProjectorControlForm(CMMCore core, Studio app) {
@@ -283,7 +283,7 @@ public class ProjectorControlForm extends MMFrame {
       super.loadAndRestorePosition(500, 300);
       updateROISettings();
    }
-   
+
    // Show the form, which is a singleton.
    public static ProjectorControlForm showSingleton(CMMCore core, Studio app) {
       if (formSingleton_ == null) {
@@ -292,18 +292,19 @@ public class ProjectorControlForm extends MMFrame {
       formSingleton_.setVisible(true);
       return formSingleton_;
    }
-   
+
    /**
-    * The ProjectorControlExecution object carries out the "business" side 
+    * The ProjectorControlExecution object carries out the "business" side
     * of the projector. Use it for scripting, etc..
-    * @return 
+    *
+    * @return
     */
    public ProjectorControlExecution exec() {
       return projectorControlExecution_;
    }
-   
+
    // ## Methods for handling targeting channel and shutter
-   
+
    /**
     * Reads the available channels from Micro-Manager Channel Group
     * and populates the targeting channel drop-down menu.
@@ -343,20 +344,20 @@ public class ProjectorControlForm extends MMFrame {
          shutterComboBox_.setSelectedItem(initialShutter);
       }
    }
-   
+
    /**
     * Sets the targeting channel. channelName should be
     * a channel from the current ChannelGroup.
     */
    void setTargetingChannel(String channelName) {
       targetingChannel_ = channelName;
-       if (channelName != null) {
-          settings_.putString("channel", channelName);
-       }
+      if (channelName != null) {
+         settings_.putString("channel", channelName);
+      }
    }
-   
+
    /**
-    * Sets the targeting shutter. 
+    * Sets the targeting shutter.
     * Should be the name of a loaded Shutter device.
     */
    void setTargetingShutter(String shutterName) {
@@ -364,8 +365,7 @@ public class ProjectorControlForm extends MMFrame {
       settings_.putString("shutter", shutterName);
       dev_.setExternalShutter(shutterName);
    }
-   
-  
+
    /**
     * Runs the full calibration. First
     * generates a linear mapping (a first approximation) and then generates
@@ -373,30 +373,45 @@ public class ProjectorControlForm extends MMFrame {
     * the mapping to Java Preferences.
     */
    public void runCalibration() {
+      runCalibration(false);
+   }
+  
+   /**
+    * Runs the full calibration. First
+    * generates a linear mapping (a first approximation) and then generates
+    * a second piece-wise "non-linear" mapping of affine transforms. Saves
+    * the mapping to Java Preferences.
+    */
+   public void runCalibration(boolean blocking) {
       settings_.putString(Terms.DELAY, delayField_.getText());
       if (calibrator_ != null && calibrator_.isCalibrating()) {
          return;
       }
       calibrator_ = new Calibrator(studio_, dev_, settings_);
       Future<Boolean> runCalibration = calibrator_.runCalibration();
-      new Thread() {
+      Thread t = new Thread() {
          @Override
          public void run() {
             Boolean success;
             try {
-                success = runCalibration.get();
+               success = runCalibration.get();
             } catch (InterruptedException | ExecutionException ex) {
                success = false;
             }
             if (success) {
                mapping_ = MappingStorage.loadMapping(core_, dev_, settings_.toPropertyMap());
             }
-            JOptionPane.showMessageDialog(IJ.getImage().getWindow(), "Calibration "
-                       + (success ? "finished." : "canceled."));
+            studio_.alerts().postAlert("Projector Calibration", this.getClass(),
+                    "Calibration " + (success ? "succeeded." : "failed."));
             calibrateButton_.setText("Calibrate");
             calibrator_ = null;
          }
-      }.start();
+      };
+      if (blocking) {
+         t.run();
+      } else {
+         t.start();
+      }
    }
    
    /**
