@@ -777,7 +777,7 @@ public final class MMStudio implements Studio {
 
    @Subscribe
    public void onPropertiesChanged(PropertiesChangedEvent event) {
-      ui_.updateGUI(true);
+      ui_.updateGUI(true, true);
    }
 
    @Subscribe
