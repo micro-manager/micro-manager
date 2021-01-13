@@ -21,13 +21,9 @@ package org.micromanager.internal;
 import com.google.common.eventbus.Subscribe;
 import ij.IJ;
 import ij.ImageJ;
-import ij.ImagePlus;
 import ij.WindowManager;
-import ij.gui.Roi;
-import ij.gui.ShapeRoi;
 import ij.gui.Toolbar;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -37,7 +33,6 @@ import java.net.UnknownHostException;
 import java.util.*;
 import java.util.function.Function;
 import javax.swing.JOptionPane;
-import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import mmcorej.CMMCore;
@@ -61,9 +56,7 @@ import org.micromanager.acquisition.internal.IAcquisitionEngine2010;
 import org.micromanager.alerts.AlertManager;
 import org.micromanager.alerts.internal.DefaultAlertManager;
 import org.micromanager.data.DataManager;
-import org.micromanager.data.Image;
 import org.micromanager.data.internal.DefaultDataManager;
-import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.display.internal.DefaultDisplayManager;
 import org.micromanager.events.AutofocusPluginShouldInitializeEvent;
@@ -142,6 +135,7 @@ public final class MMStudio implements Studio {
    private final MMSettings settings_ = new MMSettings();
    private MMCache cache_;
    private MMUIManager ui_;
+   private MMROIManager roi_;
    
    
    // MMcore
@@ -154,8 +148,7 @@ public final class MMStudio implements Studio {
    private ZMQServer zmqServer_;
    private org.micromanager.internal.utils.HotKeys hotKeys_;
 
-   // Our instance
-   // TODO: make this non-static
+   // Our instance TODO: make this non-static
    private static MMStudio studio_;
 
    // Callback
@@ -243,31 +236,27 @@ public final class MMStudio implements Studio {
       try {
          core_ = new CMMCore();
       } catch(UnsatisfiedLinkError ex) {
-         ReportingUtils.showError(ex, 
-               "Failed to load the MMCoreJ_wrap native library");
+         ReportingUtils.showError(ex, "Failed to load the MMCoreJ_wrap native library");
       } catch(NoSuchMethodError ex) {
-         ReportingUtils.showError(ex, 
-               "Incompatible version of MMCoreJ_wrap native library");
+         ReportingUtils.showError(ex, "Incompatible version of MMCoreJ_wrap native library");
       }
       
       // Start up multiple managers.  
+      roi_ = new MMROIManager(this);
       ui_ = new MMUIManager(this);
       userProfileManager_ = new UserProfileManager();       
       compatibility_ = new DefaultCompatibilityInterface(studio_);
       
-      // Essential GUI settings in preparation of the intro dialog
-      daytimeNighttimeManager_ = DaytimeNighttime.create(studio_);
+      daytimeNighttimeManager_ = DaytimeNighttime.create(studio_); // Essential GUI settings in preparation of the intro dialog
       defaultApplication_ = new DefaultApplication(studio_, daytimeNighttimeManager_);
       
       // Start loading plugins in the background
       // Note: plugin constructors should not expect a fully constructed Studio!
       pluginManager_ = new DefaultPluginManager(studio_);
       
-      // Lots of places use this. instantiate it first.
-      eventManager_ = new DefaultEventManager();
+      eventManager_ = new DefaultEventManager(); // Lots of places use this. instantiate it first.
 
-      // used by Snap/Live Manager and StageControlFrame
-      uiMovesStageManager_ = new UiMovesStageManager(this);
+      uiMovesStageManager_ = new UiMovesStageManager(this); // used by Snap/Live Manager and StageControlFrame
       events().registerForEvents(uiMovesStageManager_);
       
       snapLiveManager_ = new SnapLiveManager(this, core_);
@@ -278,15 +267,12 @@ public final class MMStudio implements Studio {
       displayManager_ = new DefaultDisplayManager(this);
       albumInstance_ = new DefaultAlbum(studio_);
 
-      // The tools menu depends on the Quick-Access Manager.
-      quickAccess_ = new DefaultQuickAccessManager(studio_);    
+      quickAccess_ = new DefaultQuickAccessManager(studio_); // The tools menu depends on the Quick-Access Manager.
 
       acqEngine_ = new AcquisitionWrapperEngine();
       acqEngine_.setParentGUI(this);
       acqEngine_.setZStageDevice(core_.getFocusDevice());
 
-
-      
       // Load, but do not show, image pipeline panel.
       // Note: pipelineFrame is used in the dataManager, however, pipelineFrame 
       // needs the dataManager.  Let's hope for the best....
@@ -305,12 +291,9 @@ public final class MMStudio implements Studio {
       posListManager_ = new DefaultPositionListManager(this);
       acqEngine_.setPositionList(posListManager_.getPositionList());
 
-      
-      // Tell Core to start logging
-      initializeLogging(core_);
-      
-      // We need to be subscribed to the global event bus for plugin loading
-      events().registerForEvents(this);
+      initializeLogging(core_); // Tell Core to start logging
+ 
+      events().registerForEvents(this); // We need to be subscribed to the global event bus for plugin loading
 
       // Start loading acqEngine in the background
       prepAcquisitionEngine();
@@ -332,11 +315,9 @@ public final class MMStudio implements Studio {
       }
       if (!pluginManager_.isInitializationComplete()) {
          ReportingUtils.logMessage("Warning: Plugin loading did not finish within 15 seconds; continuing anyway");
-      }
-      else {
+      } else {
          ReportingUtils.logMessage("Finished waiting for plugins to load");
       }
-
 
       UserProfileAdmin profileAdmin = userProfileManager_.getAdmin();
       UUID profileUUID = profileAdmin.getUUIDOfDefaultProfile();
@@ -355,51 +336,39 @@ public final class MMStudio implements Studio {
             if (sysConfigFile_ == null) {
                 ReportingUtils.showMessage("A hardware configuration for a profile matching name: " + profileNameAutoStart + " could not be found");
             }
-          }
-          else if (StartupSettings.create(profileAdmin.getNonSavingProfile(profileUUID)).
+          } else if (StartupSettings.create(profileAdmin.getNonSavingProfile(profileUUID)).
                shouldSkipUserInteractionWithSplashScreen()) {
             List<String> recentConfigs = HardwareConfigurationManager.
                   getRecentlyUsedConfigFilesFromProfile(
                         profile());
             sysConfigFile_ = recentConfigs.isEmpty() ? null : recentConfigs.get(0);
-         }
-         else {
+         } else {
             IntroDlg introDlg = new IntroDlg(this, MMVersion.VERSION_STRING);
             if (!introDlg.okChosen()) {
                closeSequence(false);
                return;
             }
-
             profileUUID = introDlg.getSelectedProfileUUID();
             profileAdmin.setCurrentUserProfile(profileUUID);
-
             sysConfigFile_ = introDlg.getSelectedConfigFilePath();
          }
-      }
-      catch (IOException ex) {
-         // TODO We should fall back to virtual profile
-         ReportingUtils.showError(ex, "Error accessing user profiles");
+      } catch (IOException ex) {
+         ReportingUtils.showError(ex, "Error accessing user profiles"); // TODO We should fall back to virtual profile
       }
 
-      // Profile may have been switched in Intro Dialog, so reflect its setting
-      core_.enableDebugLog(OptionsDlg.isDebugLoggingEnabled(studio_));
+      core_.enableDebugLog(OptionsDlg.isDebugLoggingEnabled(studio_));  // Profile may have been switched in Intro Dialog, so reflect its setting
 
       IJVersionCheckDlg.execute(studio_);
 
       org.micromanager.internal.diagnostics.gui.ProblemReportController.startIfInterruptedOnExit();
 
-      // This entity is a class property to avoid garbage collection.
-      coreCallback_ = new CoreEventCallback(studio_, acqEngine_);
+      coreCallback_ = new CoreEventCallback(studio_, acqEngine_);  // This entity is a class property to avoid garbage collection.
 
       // Load hardware configuration
       // Note that this also initializes Autofocus plugins.
-      // TODO: This should probably be run on a background thread, while we set
-      // up GUI elements (but various managers will need to be aware of this)
-      if (sysConfigFile_ != null) {  // we do allow running Micro-Manager without 
-         // a config file!
+      if (sysConfigFile_ != null) {  // we do allow running Micro-Manager without a config file!
          if (!loadSystemConfiguration()) {
-            // TODO Do we still need to turn errors off to prevent spurious error messages?
-            ReportingUtils.showErrorOn(false);
+            ReportingUtils.showErrorOn(false);  // TODO Do we still need to turn errors off to prevent spurious error messages?
          }
       }
 
@@ -409,16 +378,14 @@ public final class MMStudio implements Studio {
          core_.setCircularBufferMemoryFootprint(settings().getCircularBufferSize());
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
-      }
-      
+      }    
       
       // Arrange to log stack traces when the EDT hangs.
       // Use parameters that ensure a stack trace dump within 10 seconds of an
       // EDT hang (and _no_ dump on hangs under 5.5 seconds)
       EDTHangLogger.startDefault(core_, 4500, 1000);
 
-      // Move ImageJ window to place where it last was if possible or else
-      // (150,150) if not
+      // Move ImageJ window to place where it last was if possible or else (150,150) if not
       if (IJ.getInstance() != null) {
          Point ijWinLoc = IJ.getInstance().getLocation();
          if (GUIUtils.getGraphicsConfigurationContaining(ijWinLoc.x, ijWinLoc.y) == null) {
@@ -427,41 +394,29 @@ public final class MMStudio implements Studio {
          }
       }
       
-      // Load (but do no show) the scriptPanel
-      ui_.createScriptPanel();
-      
+      ui_.createScriptPanel();  // Load (but do no show) the scriptPanel
       ui_.createMainWindow(); // Now create and show the main window
 
-      
       cache_ = new MMCache(this, ui_.frame());
 
-
-      // We wait until after showing the main window to enable hot keys
-      hotKeys_ = new HotKeys();
+      hotKeys_ = new HotKeys(); // We wait until after showing the main window to enable hot keys
       hotKeys_.loadSettings(userProfileManager_.getProfile());
 
-
-      // Switch error reporting back on TODO See above where it's turned off
-      ReportingUtils.showErrorOn(true);
+      ReportingUtils.showErrorOn(true); // Switch error reporting back on TODO See above where it's turned off
       
       events().registerForEvents(displayManager_);
       
       // Tell the GUI to reflect the hardware configuration. (The config was
       // loaded before creating the GUI, so we need to reissue the event.)
       events().post(new SystemConfigurationLoadedEvent());
-
       executeStartupScript();
-
       ui_.updateGUI(true);
       
-      // Give plugins a chance to initialize their state
-      events().post(new StartupCompleteEvent());
+      events().post(new StartupCompleteEvent()); // Give plugins a chance to initialize their state
       
-      // start zmq server if so desired
-      if (settings().getShouldRunZMQServer()) {
+      if (settings().getShouldRunZMQServer()) { // start zmq server if so desired
          runZMQServer();
-      }
-      
+      }      
    }
 
    private void initializeLogging(CMMCore core) {
@@ -492,16 +447,9 @@ public final class MMStudio implements Studio {
       UIMonitor.enable(OptionsDlg.isDebugLoggingEnabled(studio_));
    }
 
-   private void handleError(String message) {
-      live().setLiveModeOn(false);
-      JOptionPane.showMessageDialog(ui_.frame(), message);
-      core_.logMessage(message);
-   }
-
    /**
     * Spawn a new thread to load the acquisition engine jar, because this
-    * takes significant time (TODO: Does it really, not that it is
-    * AOT-compiled?).
+    * takes significant time. Measured as ~1.3 seconds.
     */
    private void prepAcquisitionEngine() {
       acquisitionEngine2010LoadingThread_ = new Thread("Pipeline Class loading thread") {
@@ -522,138 +470,7 @@ public final class MMStudio implements Studio {
    public boolean getHideMDADisplayOption() {
       return AcqControlDlg.getShouldHideMDADisplay();
    }
-
-   public void setCenterQuad() {
-      ImagePlus curImage = WindowManager.getCurrentImage();
-      if (curImage == null) {
-         return;
-      }
-
-      Rectangle r = curImage.getProcessor().getRoi();
-      int width = r.width / 2;
-      int height = r.height / 2;
-      int xOffset = r.x + width / 2;
-      int yOffset = r.y + height / 2;
-
-      curImage.setRoi(xOffset, yOffset, width, height);
-      Roi roi = curImage.getRoi();
-      try {
-         app().setROI(updateROI(roi));
-      }
-      catch (Exception e) {
-         // Core failed to set new ROI.
-         logs().logError(e, "Unable to set new ROI");
-      }
-   }
-
-   public void setROI() {
-      ImagePlus curImage = WindowManager.getCurrentImage();
-      if (curImage == null) {
-         logs().showError("There is no open image window.");
-         return;
-      }
-
-      Roi roi = curImage.getRoi();
-      if (roi == null) {
-         // Nothing to be done.
-         logs().showError("There is no selection in the image window.\nUse the ImageJ rectangle tool to draw the ROI.");
-         return;
-      }
-      if (roi.getType() == Roi.RECTANGLE) {
-         try {
-            app().setROI(updateROI(roi));
-         }
-         catch (Exception e) {
-            // Core failed to set new ROI.
-            logs().logError(e, "Unable to set new ROI");
-         }
-         return;
-      }
-      // Dealing with multiple ROIs; this may not be supported.
-      try {
-         if (!(roi instanceof ShapeRoi && core_.isMultiROISupported())) {
-            handleError("ROI must be a rectangle.\nUse the ImageJ rectangle tool to draw the ROI.");
-            return;
-         }
-      }
-      catch (Exception e) {
-         handleError("Unable to determine if multiple ROIs is supported");
-         return;
-      }
-      // Generate list of rectangles for the ROIs.
-      ArrayList<Rectangle> rois = new ArrayList<>();
-      for (Roi subRoi : ((ShapeRoi) roi).getRois()) {
-         // HACK: just use the bounding box of each sub-ROI. Determining if
-         // sub-ROIs are rectangles is difficult (they "decompose" to Polygons
-         // once there's more than one at a time, so as far as I can tell we
-         // would have to test each angle of each polygon to see if it's
-         // 90 degrees and has the correct handedness), and this provides a
-         // good- enough solution for now.
-         rois.add(updateROI(subRoi));
-      }
-      try {
-         setMultiROI(rois);
-      }
-      catch (Exception e) {
-         // Core failed to set new ROI.
-         logs().logError(e, "Unable to set new ROI");
-      }
-   }
-
-   /**
-    * Adjust the provided rectangular ROI based on any current ROI that may be
-    * in use.
-    */
-   private Rectangle updateROI(Roi roi) {
-      Rectangle r = roi.getBounds();
-
-      // If the image has ROI info attached to it, correct for the offsets.
-      // Otherwise, assume the image was taken with the current camera ROI
-      // (which is a horrendously buggy way to do things, but that was the
-      // old behavior and I'm leaving it in case there are cases where it is
-      // necessary).
-      Rectangle originalROI = null;
-
-      DataViewer viewer = displays().getActiveDataViewer();
-      if (viewer != null) {
-         try {
-            List<Image> images = viewer.getDisplayedImages();
-            // Just take the first one.
-            originalROI = images.get(0).getMetadata().getROI();
-         }
-         catch (IOException e) {
-            ReportingUtils.showError(e, "There was an error determining the selected ROI");
-         }
-      }
-
-      if (originalROI == null) {
-         try {
-            originalROI = core().getROI();
-         }
-         catch (Exception e) {
-            // Core failed to provide an ROI.
-            logs().logError(e, "Unable to get core ROI");
-            return null;
-         }
-      }
-
-      r.x += originalROI.x;
-      r.y += originalROI.y;
-      return r;
-   }
-
-   public void clearROI() {
-      live().setSuspended(true);
-      try {
-         core_.clearROI();
-         cache().refreshValues();
-
-      } catch (Exception e) {
-         ReportingUtils.showError(e);
-      }
-      live().setSuspended(false);
-   }
-
+   
    @Override
    public CMMCore core() {
       return core_;
@@ -850,19 +667,6 @@ public final class MMStudio implements Studio {
       return true;
    }
 
-   private void saveSettings() {
-      // TODO All of the following should be taken care of by specific modules
-
-      if (ui_.frame() != null) {
-         ui_.frame().savePrefs();
-      }
-
-      // NOTE: do not save auto shutter state
-      if (afMgr_ != null && afMgr_.getAutofocusMethod() != null) {
-         profile().getSettings(MMStudio.class).putString(AUTOFOCUS_DEVICE, afMgr_.getAutofocusMethod().getName());
-      }
-   }
-
    public synchronized boolean closeSequence(boolean quitInitiatedByImageJ) {
       if (!isProgramRunning()) {
          if (core_ != null) {
@@ -890,8 +694,16 @@ public final class MMStudio implements Studio {
       }
 
       isProgramRunning_ = false;
-
-      saveSettings();
+      
+      //Save settings
+      if (ui_.frame() != null) {
+         ui_.frame().savePrefs();
+      }
+      // NOTE: do not save auto shutter state
+      if (afMgr_ != null && afMgr_.getAutofocusMethod() != null) {
+         profile().getSettings(MMStudio.class).putString(AUTOFOCUS_DEVICE, afMgr_.getAutofocusMethod().getName());
+      }
+      
       try {
          ui_.frame().getConfigPad().saveSettings();
          hotKeys_.saveSettings(userProfileManager_.getProfile());
@@ -1103,13 +915,6 @@ public final class MMStudio implements Studio {
       }
    }
 
-   public void setMultiROI(List<Rectangle> rois) throws Exception {
-      live().setSuspended(true);
-      core_.setMultiROI(rois);
-      cache().refreshValues();
-      live().setSuspended(false);
-   }
-
    public void setAcquisitionEngine(AcquisitionWrapperEngine eng) {
       acqEngine_ = eng;
    }
@@ -1295,6 +1100,10 @@ public final class MMStudio implements Studio {
 
    public MMUIManager uiManager() {
       return ui_;
+   }
+   
+   public MMROIManager roiManager() {
+      return roi_;
    }
       
    public class MMSettings {
