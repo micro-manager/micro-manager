@@ -94,21 +94,6 @@ public class RememberedSettings {
          return DefaultChannelDisplaySettings.fromPropertyMap(
                  settings.getPropertyMap(key, null), channelGroup, channelName);
       }
-      else {
-         // for backward compatibility
-         String rKey = RememberedChannelSettings.genKey(channelGroup, channelName);
-         settings = studio.profile().getSettings(RememberedChannelSettings.class);
-         if (settings.containsInteger(rKey + ":" + COLOR)) {
-            RememberedChannelSettings rcs = RememberedChannelSettings.loadSettings(
-                    channelGroup,
-                    channelName,
-                    Color.WHITE,
-                    null,
-                    null,
-                    true);
-            return rcs.toChannelDisplaySetting(channelGroup, channelName);
-         }
-      }
       ChannelDisplaySettings.Builder cdsBuilder =
               DefaultChannelDisplaySettings.builder().name(channelName).component(1);
       if (defaultColor != null) {
