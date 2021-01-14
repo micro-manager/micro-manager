@@ -52,21 +52,17 @@ public final class ChannelIntensityController implements HistogramView.Listener 
    private final ColorSwatch channelColorSwatch_ = new ColorSwatch();
    private final JLabel channelNameLabel_ = new JLabel();
    private final JToggleButton channelVisibleButton_ = new JToggleButton();
-   private final JToggleButton[] componentButtons_ = new JToggleButton[3];
-   private final JButton fullscaleButton_ = new JButton("Fullscale");
-   private final JButton autostretchOnceButton_ = new JButton("Auto Once");
 
    private final HistogramView histogram_ = HistogramView.create();
    private final JButton histoRangeDownButton_ = new JButton();
    private final JButton histoRangeUpButton_ = new JButton();
    private final HistoRangeComboBoxModel histoRangeComboBoxModel_ =
          new HistoRangeComboBoxModel();
-   private final JComboBox histoRangeComboBox_ =
-         new JComboBox(histoRangeComboBoxModel_);
+   private final JComboBox<String> histoRangeComboBox_ =
+         new JComboBox<>(histoRangeComboBoxModel_);
    private final StatsPanel intensityStatsPanel_ = new StatsPanel();
-   private final JToggleButton intensityLinkButton_ = new JToggleButton();
 
-   private static final class HistoRangeComboBoxModel extends DefaultComboBoxModel {
+   private static final class HistoRangeComboBoxModel extends DefaultComboBoxModel<String> {
       public HistoRangeComboBoxModel() {
          super(new String[] {
             "4-bit (0-15)", "5-bit (0-31)", "6-bit (0-63)",
@@ -153,13 +149,12 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                      keyFontMetrics.stringWidth("STD")) +
                keyFontMetrics.stringWidth(" ") +
                maxAvgStdWidth_;
-         int width = valueX2;
 
          y1 = keyFontMetrics.getMaxAscent();
          y2 = y1 + keyFontMetrics.getHeight();
          int height = y2 + keyFontMetrics.getMaxDescent();
 
-         Dimension size = new Dimension(width, height);
+         Dimension size = new Dimension(valueX2, height);
          super.setMinimumSize(size);
          super.setPreferredSize(size);
          super.setMaximumSize(size);
@@ -271,6 +266,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       viewer_ = viewer;
       channelIndex_ = channelIndex;
 
+      JToggleButton[] componentButtons_ = new JToggleButton[3];
       for (int i = 0; i < 3; ++i) {
          componentButtons_[i] = new JToggleButton(RGB_ICONS_INACTIVE[i]);
          componentButtons_[i].setSelectedIcon(RGB_ICONS_ACTIVE[i]);
@@ -291,7 +287,9 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       channelPanel_.add(componentButtons_[0], new CC().gapBefore("push").gapAfter("0").split(3));
       channelPanel_.add(componentButtons_[1], new CC().gapAfter("0"));
       channelPanel_.add(componentButtons_[2], new CC().gapAfter("push").wrap("rel"));
+      JButton fullscaleButton_ = new JButton("Fullscale");
       channelPanel_.add(fullscaleButton_, new CC().pushX().wrap());
+      JButton autostretchOnceButton_ = new JButton("Auto Once");
       channelPanel_.add(autostretchOnceButton_, new CC().pushX().wrap("rel"));
 
       histoPanel_.setLayout(new MigLayout(
@@ -304,6 +302,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       histoPanel_.add(histoRangeUpButton_, new CC().gapAfter("push"));
 
       histoPanel_.add(intensityStatsPanel_, new CC().gapAfter("push"));
+      JToggleButton intensityLinkButton_ = new JToggleButton();
       histoPanel_.add(intensityLinkButton_, new CC());
 
       Font labelFont = channelNameLabel_.getFont().
@@ -319,29 +318,21 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             IconLoader.getIcon("/org/micromanager/icons/eye-out.png"));
       channelVisibleButton_.setSelectedIcon(
             IconLoader.getIcon("/org/micromanager/icons/eye.png"));
-      channelVisibleButton_.addActionListener((ActionEvent e) -> {
-         handleVisible();
-      });
-
-      channelColorSwatch_.addActionListener((ActionEvent e) -> {
-         handleColor(channelColorSwatch_.getColor());
-      });
+      channelVisibleButton_.addActionListener((ActionEvent e) -> handleVisible() );
+      channelColorSwatch_.addActionListener((ActionEvent e) ->
+         handleColor(channelColorSwatch_.getColor()) );
 
       Font buttonFont = fullscaleButton_.getFont().deriveFont(9.0f);
       fullscaleButton_.setMargin(new Insets(0, 0, 0, 0));
       fullscaleButton_.setFont(buttonFont);
       fullscaleButton_.setPreferredSize(new Dimension(72, 23));
       fullscaleButton_.setMaximumSize(new Dimension(72, 23));
-      fullscaleButton_.addActionListener((ActionEvent e) -> {
-         handleFullscale();
-      });
+      fullscaleButton_.addActionListener((ActionEvent e) -> handleFullscale());
       autostretchOnceButton_.setMargin(new Insets(0, 0, 0, 0));
       autostretchOnceButton_.setFont(buttonFont);
       autostretchOnceButton_.setPreferredSize(new Dimension(72, 23));
       autostretchOnceButton_.setMaximumSize(new Dimension(72, 23));
-      autostretchOnceButton_.addActionListener((ActionEvent e) -> {
-         handleAutoscale();
-      });
+      autostretchOnceButton_.addActionListener((ActionEvent e) -> handleAutoscale());
 
       histoRangeDownButton_.setMaximumSize(new Dimension(20, 20));
       histoRangeDownButton_.setIcon(IconLoader.getIcon(
@@ -440,9 +431,11 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             rangeBits = cameraBits_;
          }
          long[] data = componentStats.getInRangeHistogram();
-         int lengthToUse = Math.min(data.length, (1 << rangeBits) - 1);
-         histogram_.setComponentGraph(component, data, lengthToUse, lengthToUse);
-         histogram_.setROIIndicator(componentStats.isROIStats());
+         if (data != null) {
+            int lengthToUse = Math.min(data.length, (1 << rangeBits) - 1);
+            histogram_.setComponentGraph(component, data, lengthToUse, lengthToUse);
+            histogram_.setROIIndicator(componentStats.isROIStats());
+         }
       
          updateScalingIndicators(settings, componentStats, component);
       } catch (IOException ioEx) {

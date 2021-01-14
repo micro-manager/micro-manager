@@ -40,8 +40,7 @@ import org.micromanager.propertymap.MutablePropertyMapView;
  * @author nico
  */
 public class RememberedSettings {
-   private static final String COLOR = "color to use for channels";
-   
+
    /**
     * Stores given ChannelDisplaySettings for given channel in the user profile
     * 
