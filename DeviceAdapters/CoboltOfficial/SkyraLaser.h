@@ -47,7 +47,12 @@ class SkyraLaser : public Laser
 {
 public:
     
-    SkyraLaser( LaserDriver* device );
+    SkyraLaser(
+        LaserDriver* driver,
+        const bool line1Enabled,
+        const bool line2Enabled,
+        const bool line3Enabled,
+        const bool line4Enabled );
 
 protected:
 
@@ -64,6 +69,8 @@ protected:
     void CreateRunModeProperty( const int line );
 
 private:
+
+    void CreateLineSpecificProperties( const int line );
 
     std::string MakeLineCommand( std::string command, const int line );
     std::string MakeLineName( const int line );

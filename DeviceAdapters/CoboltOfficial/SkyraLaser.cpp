@@ -49,7 +49,12 @@
 using namespace std;
 using namespace cobolt;
 
-SkyraLaser::SkyraLaser( LaserDriver* driver ) :
+SkyraLaser::SkyraLaser(
+    LaserDriver* driver,
+    const bool line1Enabled,
+    const bool line2Enabled,
+    const bool line3Enabled,
+    const bool line4Enabled ) :
     Laser( "Skyra", driver )
 {
     currentUnit_ = Milliamperes;
@@ -66,17 +71,10 @@ SkyraLaser::SkyraLaser( LaserDriver* driver ) :
     CreateLaserStateProperty();
     CreateShutterProperty();
 
-    const int linesCount = 4;
-    for ( int i = 1; i <= linesCount; i++ ) {
-
-        CreateLineActivationProperty( i );
-        CreateWavelengthProperty( i );
-        CreateRunModeProperty( i );
-        CreatePowerSetpointProperty( i );
-        CreatePowerReadingProperty( i );
-        CreateCurrentSetpointProperty( i );
-        CreateCurrentReadingProperty( i );
-    }
+    if ( line1Enabled ) { CreateLineSpecificProperties( 1 ); }
+    if ( line2Enabled ) { CreateLineSpecificProperties( 2 ); }
+    if ( line3Enabled ) { CreateLineSpecificProperties( 3 ); }
+    if ( line4Enabled ) { CreateLineSpecificProperties( 4 ); }
 }
 
 void SkyraLaser::CreateLineActivationProperty( const int line )
@@ -200,4 +198,15 @@ std::string SkyraLaser::MakeLineCommand( std::string command, const int line )
 std::string SkyraLaser::MakeLineName( const int line )
 {
     return ( "Line " + std::to_string( (long long) line ) );
+}
+
+void SkyraLaser::CreateLineSpecificProperties( const int line )
+{
+    CreateLineActivationProperty( line );
+    CreateWavelengthProperty( line );
+    CreateRunModeProperty( line );
+    CreatePowerSetpointProperty( line );
+    CreatePowerReadingProperty( line );
+    CreateCurrentSetpointProperty( line );
+    CreateCurrentReadingProperty( line );
 }
