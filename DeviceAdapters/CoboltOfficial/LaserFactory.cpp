@@ -92,7 +92,28 @@ Laser* LaserFactory::Create( LaserDriver* driver )
 
     } else if ( firmwareVersion.find( "9.001" ) != std::string::npos ) {
 
-        laser = new SkyraLaser( driver );
+        static const int numberOfLines = 4;
+        bool enabledLines[ numberOfLines ];
+        std::string submodelString;
+
+        for ( int i = 0; i < numberOfLines; i++ ) {
+
+            submodelString = "";
+
+            if ( driver->SendCommand( std::to_string( (long long) i + 1 ) + "glm?", &submodelString ) != return_code::ok ) {
+                return NULL;
+            }
+
+            enabledLines[ i ] = ( submodelString.find( "MLD" ) != std::string::npos ||
+                submodelString.find( "DPL" ) != std::string::npos );
+        }
+        
+        laser = new SkyraLaser(
+            driver,
+            enabledLines[ 0 ],
+            enabledLines[ 1 ],
+            enabledLines[ 2 ],
+            enabledLines[ 3 ] );
 
     } else {
 
