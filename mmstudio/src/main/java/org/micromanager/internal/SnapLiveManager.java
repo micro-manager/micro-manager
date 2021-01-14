@@ -16,6 +16,8 @@ package org.micromanager.internal;
 
 import com.bulenkov.iconloader.IconLoader;
 import com.google.common.eventbus.Subscribe;
+
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Insets;
@@ -482,7 +484,15 @@ public final class SnapLiveManager extends DataViewerListener
          ds = DefaultDisplaySettings.builder().colorMode(
                  DisplaySettings.ColorMode.GRAYSCALE).build();
       }
-      // NS 202-09-07: channeldisplaysettings remembered in SNAP/Live displaysetting
+      for (int ch = 0; ch < store_.getSummaryMetadata().getChannelNameList().size(); ch++) {
+         ds = ds.copyBuilderWithChannelSettings(ch,
+                 RememberedSettings.loadChannel(mmStudio_,
+                         store_.getSummaryMetadata().getChannelGroup(),
+                         store_.getSummaryMetadata().getSafeChannelName(ch),
+                         Color.white)).build();
+      }
+
+                 // NS 2020-09-07: channeldisplaysettings remembered in SNAP/Live displaysetting
       // are replaced by channel specific display settings.  It is a bit unclear
       // how this is supposed to work, but at the very least, these settings should
       // also be saved when closing the Snap/Live display.
