@@ -23,7 +23,7 @@ public class ImageStats {
 
    private ImageStats(int index, IntegerComponentStats... componentStats) {
       index_ = index;
-      componentStats_ = new ArrayList(Arrays.asList(componentStats));
+      componentStats_ = new ArrayList<>(Arrays.asList(componentStats));
    }
 
    public int getNumberOfComponents() {

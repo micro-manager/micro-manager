@@ -146,11 +146,11 @@ public final class PresetButton extends WidgetPlugin implements SciJavaPlugin {
                JOptionPane.ERROR_MESSAGE);
          return null;
       }
-      final JComboBox groupSelector = new JComboBox(groups);
+      final JComboBox<String> groupSelector = new JComboBox<>(groups);
       contents.add(groupSelector, "wrap");
 
       contents.add(new JLabel("Config preset: "));
-      final JComboBox presetSelector = new JComboBox();
+      final JComboBox<String> presetSelector = new JComboBox<>();
       contents.add(presetSelector, "wrap");
 
       groupSelector.addActionListener(new ActionListener() {

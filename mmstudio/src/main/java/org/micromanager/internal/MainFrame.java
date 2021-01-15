@@ -98,10 +98,10 @@ public final class MainFrame extends MMFrame {
    // GUI components
    private JLabel configFile_;
    private JLabel profileName_;
-   private JComboBox comboBinning_;
-   private JComboBox shutterComboBox_;
+   private JComboBox<String> comboBinning_;
+   private JComboBox<String> shutterComboBox_;
    private JTextField textFieldExp_;
-   private JComboBox chanGroupSelect_;
+   private JComboBox<String> chanGroupSelect_;
    // Toggles activity of chanGroupSelect_ on or off.
    private boolean shouldChangeChannelGroup_;
    private JLabel labelImageDimensions_;
@@ -258,7 +258,7 @@ public final class MainFrame extends MMFrame {
 
       // HACK: limit the width of this combo box, ignoring the width of the
       // entries inside of it.
-      chanGroupSelect_ = new JComboBox() {
+      chanGroupSelect_ = new JComboBox<String> () {
          @Override
          public Dimension getMinimumSize() {
             return new Dimension(110, super.getSize().height);
@@ -279,7 +279,7 @@ public final class MainFrame extends MMFrame {
       // Binning.
       subPanel.add(createLabel("Binning", false), "split 2");
 
-      comboBinning_ = new JComboBox();
+      comboBinning_ = new JComboBox<>();
       comboBinning_.setName("Binning");
       comboBinning_.setFont(defaultFont_);
       comboBinning_.setMaximumRowCount(4);
@@ -294,7 +294,7 @@ public final class MainFrame extends MMFrame {
       shutterPanel.setBorder(BorderFactory.createLoweredBevelBorder());
       shutterPanel.add(createLabel("Shutter", false), "split 2");
 
-      shutterComboBox_ = new JComboBox();
+      shutterComboBox_ = new JComboBox<>();
       shutterComboBox_.setName("Shutter");
       shutterComboBox_.setFont(defaultFont_);
       shutterComboBox_.addActionListener((ActionEvent arg0) -> {

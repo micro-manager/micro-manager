@@ -174,7 +174,7 @@ public class MDScrollBarPanel extends JPanel implements AdjustmentListener {
 
    @MustCallOnEDT
    List<String> getAxes() {
-      return new ArrayList(axes_);
+      return new ArrayList<>(axes_);
    }
 
    @MustCallOnEDT
