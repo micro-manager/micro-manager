@@ -511,18 +511,33 @@ public class IntensityInspectorPanelController
       if (displaySettingsUpdateSuspended_) {
          return;
       }
-      
-      if (autostretchCheckBox_.isSelected() && 
-              !settings.isAutostretchEnabled()) {
+
+      // Setting the autostretch box and changeSpinner, cause their
+      // action handlers to be activates, which will cause the displaysettings
+      // to be changed again.  It seems that the order in which we do things
+      // is important. Call the channels autoscale handlers after setting
+      // the autostrechkBox and percentileSpinner
+      autostretchCheckBox_.setSelected(settings.isAutostretchEnabled());
+
+      // A spinner's change listener, unlike an action listener, gets notified
+      // upon programmatic changes.  Previously, there was code here to remove
+      // ChangeListeners and add them back after setting the value.  As a
+      // side effect, this cause the spinner to not display its value
+      // There does not seem to be a problem setting the value with the
+      // ChangeListeners still attached, so do the easy thing:
+      changingSpinner_.set(true);
+      percentileSpinner_.setValue(settings.getAutoscaleIgnoredPercentile());
+      changingSpinner_.set(false);
+
+      if (autostretchCheckBox_.isSelected() && !settings.isAutostretchEnabled()) {
          displaySettingsUpdateSuspended_ = true;
          for (ChannelIntensityController ch : channelControllers_) {
             ch.handleAutoscale();
          }
          displaySettingsUpdateSuspended_ = false;
       }
-      
-      autostretchCheckBox_.setSelected(settings.isAutostretchEnabled());
-       
+
+
       gearMenuUseROIItem_.setSelected(settings.isROIAutoscaleEnabled());
 
       // TODO Disable color mode and show RGB if image is RGB
@@ -551,16 +566,7 @@ public class IntensityInspectorPanelController
             setChannelColors(settings.getAllChannelColors());
       colorModeComboBox_.repaint();
      
-      // A spinner's change listener, unlike an action listener, gets notified
-      // upon programmatic changes.  Previously, there was code here to remove 
-      // ChangeListeners and add them back after setting the value.  As a 
-      // side effect, this cause the spinner to not display its value
-      // There does not seem to be a problem setting the value with the 
-      // ChangeListeners still attached, so do the easy thing:
-      changingSpinner_.set(true);
-      percentileSpinner_.setValue(settings.getAutoscaleIgnoredPercentile());
-      changingSpinner_.set(false);
-  
+
       List<Color> allChannelColors = settings.getAllChannelColors();
       if (! (ColorPalettes.getColorblindFriendlyPalette().containsAll(allChannelColors) || 
               ColorPalettes.getPrimaryColorPalette().containsAll(allChannelColors)) ) {
