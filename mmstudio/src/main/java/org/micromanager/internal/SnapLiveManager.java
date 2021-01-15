@@ -72,7 +72,7 @@ import org.micromanager.internal.utils.performance.PerformanceMonitor;
 import org.micromanager.internal.utils.performance.gui.PerformanceMonitorUI;
 import org.micromanager.quickaccess.internal.QuickAccessFactory;
 import org.micromanager.display.DisplayWindowControlsFactory;
-import org.micromanager.display.internal.RememberedSettings;
+import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 import org.micromanager.internal.navigation.UiMovesStageManager;
 
@@ -486,7 +486,7 @@ public final class SnapLiveManager extends DataViewerListener
       }
       for (int ch = 0; ch < store_.getSummaryMetadata().getChannelNameList().size(); ch++) {
          ds = ds.copyBuilderWithChannelSettings(ch,
-                 RememberedSettings.loadChannel(mmStudio_,
+                 RememberedDisplaySettings.loadChannel(mmStudio_,
                          store_.getSummaryMetadata().getChannelGroup(),
                          store_.getSummaryMetadata().getSafeChannelName(ch),
                          Color.white)).build();
@@ -632,11 +632,11 @@ public final class SnapLiveManager extends DataViewerListener
             } else if (!name.equals(channelNames.get(camCh))) {
                // Channel name changed.
                if (display_ != null && !display_.isClosed()) {
-                  RememberedSettings.storeChannel(mmStudio_, 
+                  RememberedDisplaySettings.storeChannel(mmStudio_,
                           store_.getSummaryMetadata().getChannelGroup(), 
                           store_.getSummaryMetadata().getChannelNameList().get(camCh),
                           display_.getDisplaySettings().getChannelSettings(camCh));
-                  ChannelDisplaySettings newCD = RememberedSettings.loadChannel(
+                  ChannelDisplaySettings newCD = RememberedDisplaySettings.loadChannel(
                           mmStudio_, 
                           core_.getChannelGroup(),
                           name,

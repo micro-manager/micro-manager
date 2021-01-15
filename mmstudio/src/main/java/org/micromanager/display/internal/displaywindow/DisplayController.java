@@ -70,7 +70,7 @@ import org.micromanager.internal.utils.performance.gui.PerformanceMonitorUI;
 import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.data.DataProviderHasNewNameEvent;
 import org.micromanager.data.Datastore;
-import org.micromanager.display.internal.RememberedSettings;
+import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.display.internal.link.internal.DefaultLinkManager;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -209,7 +209,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    {
       DisplaySettings initialDisplaySettings = builder.displaySettings_;
       if (initialDisplaySettings == null) {
-         initialDisplaySettings = RememberedSettings.loadDefaultDisplaySettings(
+         initialDisplaySettings = RememberedDisplaySettings.loadDefaultDisplaySettings(
                  studio,
                  builder.dataProvider_.getSummaryMetadata());
       }

@@ -72,7 +72,7 @@ import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.internal.RememberedSettings;
+import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.display.internal.animate.AnimationController;
 import org.micromanager.display.internal.displaywindow.imagej.ImageJBridge;
 import org.micromanager.display.internal.event.DisplayKeyPressEvent;
@@ -960,7 +960,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
             // also when other things change
             // TODO: should all channeldisplaysetting changes be remembered?
             ChannelDisplaySettings rememberedSettings =
-                    RememberedSettings.loadChannel(studio_,
+                    RememberedDisplaySettings.loadChannel(studio_,
                             channelSettings.getGroupName(), channelSettings.getName(), null);
             if (!rememberedSettings.getColor().equals(channelSettings.getColor())) {
                // To ensure that we do not respond to the event posted by us
@@ -978,7 +978,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
                        channelSettings.getColor());
                studio_.events().post(channelColorEvent_);
             }
-            RememberedSettings.storeChannel(studio_, channelSettings.getGroupName(), channelSettings.getName(),
+            RememberedDisplaySettings.storeChannel(studio_, channelSettings.getGroupName(), channelSettings.getName(),
                     rememberedSettings.copyBuilder().color(channelSettings.getColor()).build());
 
             ComponentDisplaySettings componentSettings =

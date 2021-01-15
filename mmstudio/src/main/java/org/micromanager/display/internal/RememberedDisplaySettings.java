@@ -39,7 +39,7 @@ import org.micromanager.propertymap.MutablePropertyMapView;
  * 
  * @author nico
  */
-public class RememberedSettings {
+public class RememberedDisplaySettings {
 
    /**
     * Stores given ChannelDisplaySettings for given channel in the user profile
@@ -55,7 +55,7 @@ public class RememberedSettings {
            ChannelDisplaySettings cds) {
       String key = genKey(channelGroup, channelName);
       MutablePropertyMapView settings = 
-              studio.profile().getSettings(RememberedSettings.class);
+              studio.profile().getSettings(RememberedDisplaySettings.class);
       if (cds instanceof DefaultChannelDisplaySettings) {        
          DefaultChannelDisplaySettings dcds = (DefaultChannelDisplaySettings) cds;
          // for safety, ensure channelgroup and channelname are stored with ChannelDisplaySettings
@@ -88,7 +88,7 @@ public class RememberedSettings {
            String channelGroup, String channelName, Color defaultColor) {
       String key = genKey(channelGroup, channelName);
       MutablePropertyMapView settings =
-              studio.profile().getSettings(RememberedSettings.class);
+              studio.profile().getSettings(RememberedDisplaySettings.class);
       if (settings.containsPropertyMap(key)) {
          return DefaultChannelDisplaySettings.fromPropertyMap(
                  settings.getPropertyMap(key, null), channelGroup, channelName);
