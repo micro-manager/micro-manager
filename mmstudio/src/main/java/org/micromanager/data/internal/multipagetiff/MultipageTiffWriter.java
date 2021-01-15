@@ -57,7 +57,7 @@ import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.internal.DefaultDisplaySettings;
-import org.micromanager.display.internal.RememberedSettings;
+import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.propertymap.MM1JSONSerializer;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
@@ -807,7 +807,7 @@ public final class MultipageTiffWriter {
       if (ds == null) {
          for (int ch = 0; ch < numChannels; ch++) {
             String name = summary.getSafeChannelName(ch);
-            ChannelDisplaySettings cds = RememberedSettings.loadChannel(
+            ChannelDisplaySettings cds = RememberedDisplaySettings.loadChannel(
                     MMStudio.getInstance(), channelGroup, name, null);
             // Display Ranges: For each channel, write min then max
             // TODO: doesn't handle multi-component images.
@@ -835,7 +835,7 @@ public final class MultipageTiffWriter {
          Color color;
          if (ds == null) {
             String name = summary.getSafeChannelName(ch);
-            color = RememberedSettings.loadChannel(
+            color = RememberedDisplaySettings.loadChannel(
                     MMStudio.getInstance(), channelGroup, name, null).getColor();
          } else {
             color = ds.getChannelColor(ch);

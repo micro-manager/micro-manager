@@ -102,6 +102,7 @@ public enum PixelType {
 
    public static PixelType valueFor(int bytesPerPixel, int bytesPerComponent,
          int numberOfComponents) {
+      // TODO: this code looks very suspicious, but it may use these nasty fall throughs on purpose
       switch (numberOfComponents) {
          case 1:
             switch (bytesPerComponent) {

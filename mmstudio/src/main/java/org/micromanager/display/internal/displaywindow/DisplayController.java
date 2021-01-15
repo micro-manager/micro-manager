@@ -70,7 +70,7 @@ import org.micromanager.internal.utils.performance.gui.PerformanceMonitorUI;
 import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.data.DataProviderHasNewNameEvent;
 import org.micromanager.data.Datastore;
-import org.micromanager.display.internal.RememberedSettings;
+import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.display.internal.link.internal.DefaultLinkManager;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -209,7 +209,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    {
       DisplaySettings initialDisplaySettings = builder.displaySettings_;
       if (initialDisplaySettings == null) {
-         initialDisplaySettings = RememberedSettings.loadDefaultDisplaySettings(
+         initialDisplaySettings = RememberedDisplaySettings.loadDefaultDisplaySettings(
                  studio,
                  builder.dataProvider_.getSummaryMetadata());
       }
@@ -668,7 +668,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @Override
    public List<Overlay> getOverlays() {
       if (!SwingUtilities.isEventDispatchThread()) {
-         RunnableFuture<List<Overlay>> edtFuture = new FutureTask(
+         RunnableFuture<List<Overlay>> edtFuture = new FutureTask<>(
                () -> getOverlays());
          SwingUtilities.invokeLater(edtFuture);
          try {
@@ -737,7 +737,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          intervalNs = 0;
       }
       else {
-         intervalNs = (long) Math.round(1e9 / hz);
+         intervalNs = Math.round(1e9 / hz);
       }
       computeQueue_.setProcessIntervalNs(intervalNs);
    }
@@ -963,7 +963,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @Deprecated
    public ImagePlus getImagePlus() {
       if (!SwingUtilities.isEventDispatchThread()) {
-         RunnableFuture<ImagePlus> edtFuture = new FutureTask(
+         RunnableFuture<ImagePlus> edtFuture = new FutureTask<> (
                () -> getImagePlus());
          SwingUtilities.invokeLater(edtFuture);
          try {
@@ -984,7 +984,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @Override
    public boolean requestToClose() {
       if (!SwingUtilities.isEventDispatchThread()) {
-         RunnableFuture<Boolean> edtFuture = new FutureTask(
+         RunnableFuture<Boolean> edtFuture = new FutureTask<> (
                () -> requestToClose());
          SwingUtilities.invokeLater(edtFuture);
          try {
@@ -1104,7 +1104,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @Override
    public Window getWindow() throws IllegalStateException {
       if (!SwingUtilities.isEventDispatchThread()) {
-         RunnableFuture<Window> edtFuture = new FutureTask(
+         RunnableFuture<Window> edtFuture = new FutureTask<> (
                () -> getWindow());
          SwingUtilities.invokeLater(edtFuture);
          try {

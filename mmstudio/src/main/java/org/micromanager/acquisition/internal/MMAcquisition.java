@@ -53,12 +53,11 @@ import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.data.internal.StorageRAM;
 import org.micromanager.data.internal.StorageSinglePlaneTiffSeries;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
-import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.display.internal.RememberedSettings;
+import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.events.AcquisitionEndedEvent;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MDUtils;
@@ -69,7 +68,6 @@ import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.DisplaySettingsChangedEvent;
 import org.micromanager.display.internal.DefaultDisplaySettings;
-import org.micromanager.internal.MMStudio;
 
 /**
  * This class is used to execute most of the acquisition and image display
@@ -213,7 +211,7 @@ public final class MMAcquisition extends DataViewerListener {
                      displaySettingsBuilder.colorModeComposite();
                   }
                   for (int channelIndex = 0; channelIndex < nrChannels; channelIndex++) {
-                     displaySettingsBuilder.channel(channelIndex, RememberedSettings.loadChannel(studio_,
+                     displaySettingsBuilder.channel(channelIndex, RememberedDisplaySettings.loadChannel(studio_,
                              store_.getSummaryMetadata().getChannelGroup(),
                              store_.getSummaryMetadata().getChannelNameList().get(channelIndex),
                              null));  // TODO: use chColors as default Color?

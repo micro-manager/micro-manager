@@ -46,7 +46,7 @@ public final class ImagesAndStats {
       statsSequenceNumber_ = sequenceNumber;
       request_ = request;
       originalRequest_ = originalInput;
-      stats_ = new ArrayList(Arrays.asList(stats));
+      stats_ = new ArrayList<>(Arrays.asList(stats));
    }
 
    public ImagesAndStats copyForRequest(ImageStatsRequest request) {
@@ -65,7 +65,7 @@ public final class ImagesAndStats {
    }
 
    public List<ImageStats> getResult() {
-      return new ArrayList<ImageStats>(stats_);
+      return new ArrayList<>(stats_);
    }
 
    /**

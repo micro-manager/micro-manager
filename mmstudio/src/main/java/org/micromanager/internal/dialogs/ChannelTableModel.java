@@ -2,9 +2,8 @@ package org.micromanager.internal.dialogs;
 
 import org.micromanager.Studio;
 import org.micromanager.acquisition.ChannelSpec;
-import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
-import org.micromanager.display.internal.RememberedSettings;
+import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.events.internal.ChannelColorEvent;
 import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -189,7 +188,12 @@ public final class ChannelTableModel extends AbstractTableModel  {
          if (acqEng_.getChannelConfigs().length > 0) {
             for (String config : acqEng_.getChannelConfigs()) {
                if (config.equals(channel.config())) {
-                  channels_.add(channel);
+                  // Color information is a displaysetting. The ultimate authoraty
+                  // is in RememberedSettings, so look there now
+                  Color c = RememberedDisplaySettings.loadChannel(studio_, channel.channelGroup(),
+                          channel.config(), channel.color()).getColor();
+                  ChannelSpec ch = channel.copyBuilder().color(c).build();
+                  channels_.add(ch);
                   break;
                }
             }
@@ -222,7 +226,7 @@ public final class ChannelTableModel extends AbstractTableModel  {
             // Pick a non-white default color if possible.
             Color defaultColor = ColorPalettes.getFromDefaultPalette(channels_.size());
             cb.channelGroup(acqEng_.getSequenceSettings().channelGroup());
-            cb.color(RememberedSettings.loadChannel(studio_,
+            cb.color(RememberedDisplaySettings.loadChannel(studio_,
                     acqEng_.getSequenceSettings().channelGroup(), config, defaultColor).getColor());
             cb.exposure(this.getChannelExposureTime(
                   acqEng_.getSequenceSettings().channelGroup(), config, 10.0));
@@ -314,6 +318,9 @@ public final class ChannelTableModel extends AbstractTableModel  {
             ChannelSpec cs = ChannelSpec.fromJSONStream(
                     settings_.getString(channelProfileKey(newChannelGroup, newConfig), ""));
             if (cs != null) {
+               // Definite data about colors is in RememberedSettings
+               Color csColor = RememberedDisplaySettings.loadChannel(studio_, newChannelGroup, newConfig, cs.color()).getColor();
+               cs = cs.copyBuilder().color(csColor).build();
                channels_.add(cs);
             }
          }
@@ -407,6 +414,7 @@ public final class ChannelTableModel extends AbstractTableModel  {
          ChannelSpec cs = channels_.get(row);
          if (cs.config().equals(channelName)) {
             channels_.set(row, cs.copyBuilder().color(color).build());
+            // TODO: should this color also be stored in RememberedSettings?
             this.fireTableCellUpdated(row, 6);
             return;
          }

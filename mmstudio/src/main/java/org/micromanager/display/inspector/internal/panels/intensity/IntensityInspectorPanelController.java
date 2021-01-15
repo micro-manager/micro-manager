@@ -66,7 +66,7 @@ public class IntensityInspectorPanelController
    private final JPopupMenu gearMenu_ = new JPopupMenu();
    private final JMenu gearMenuPaletteSubMenu_ =
          new JMenu("Channel Color Palette");
-   private class colorMenuItem {
+   private static class colorMenuItem {
       private final JCheckBoxMenuItem checkBox_;
       private final List<Color> colorPalette_;
       public colorMenuItem(JCheckBoxMenuItem checkBox, List<Color> colorPalette) {
@@ -75,7 +75,7 @@ public class IntensityInspectorPanelController
       }
       public JCheckBoxMenuItem getCheckBox() { return checkBox_;}
       public List<Color> getColorPalette() { return colorPalette_;}
-   };
+   }
    private final Map<String, colorMenuItem> colorMenuMap_ = 
            new LinkedHashMap<>(3);
    private final JMenu gearMenuUpdateRateSubMenu_ =
@@ -88,7 +88,7 @@ public class IntensityInspectorPanelController
          new JCheckBoxMenuItem("Use ROI for Histograms and Autostretch");
 
    private final JPanel generalControlPanel_ = new JPanel();
-   private final JComboBox colorModeComboBox_ = new JComboBox();
+   private final JComboBox<ColorModeCell.Item> colorModeComboBox_ = new JComboBox<>();
    private final JCheckBox autostretchCheckBox_ = new JCheckBox();
    private final JSpinner percentileSpinner_ = new JSpinner();
    private final AtomicBoolean changingSpinner_ = new AtomicBoolean(false);
@@ -174,7 +174,7 @@ public class IntensityInspectorPanelController
          }
          histogramMenuItems.add(jcmi);
       }
-      final JCheckBoxMenuItem hmis[] = histogramMenuItems.toArray(new JCheckBoxMenuItem[6]);
+      final JCheckBoxMenuItem[] hmis = histogramMenuItems.toArray(new JCheckBoxMenuItem[6]);
       for (final JCheckBoxMenuItem jbmi : histogramMenuItems) {
          jbmi.addActionListener((ActionEvent e) -> {
             for ( JCheckBoxMenuItem mi : hmis) {
@@ -191,12 +191,10 @@ public class IntensityInspectorPanelController
 
       gearMenu_.add(gearMenuUseROIItem_);
 
-      gearMenuLogYAxisItem_.addActionListener((ActionEvent e) -> {
-         handleHistogramLogYAxis(gearMenuLogYAxisItem_.isSelected());
-      });
-      gearMenuUseROIItem_.addActionListener((ActionEvent e) -> {
-         handleHistogramUseROI(gearMenuUseROIItem_.isSelected());
-      });
+      gearMenuLogYAxisItem_.addActionListener((ActionEvent e) ->
+              handleHistogramLogYAxis(gearMenuLogYAxisItem_.isSelected()));
+      gearMenuUseROIItem_.addActionListener((ActionEvent e) ->
+              handleHistogramUseROI(gearMenuUseROIItem_.isSelected()));
    }
 
    private void setUpGeneralControlPanel() {
@@ -210,14 +208,10 @@ public class IntensityInspectorPanelController
       colorModeComboBox_.addItem(ColorModeCell.Item.RED_HOT_LUT);
       // Prevent "Composite" from slowly flashing
       colorModeComboBox_.getModel().setSelectedItem(null);
-      colorModeComboBox_.addActionListener((ActionEvent e) -> {
-         handleColorMode();
-      });
+      colorModeComboBox_.addActionListener((ActionEvent e) -> handleColorMode());
 
       autostretchCheckBox_.setText("Autostretch");
-      autostretchCheckBox_.addActionListener((ActionEvent e) -> {
-         handleAutostretch();
-      });
+      autostretchCheckBox_.addActionListener((ActionEvent e) -> handleAutostretch());
       percentileSpinner_.setModel(
             new SpinnerNumberModel(0.0, 0.0, 49.9, 0.1));
       percentileSpinner_.addChangeListener((ChangeEvent e) -> {
@@ -328,28 +322,30 @@ public class IntensityInspectorPanelController
    @MustCallOnEDT
    private void handleColorMode() {
       ColorModeCell.Item item = (ColorModeCell.Item) colorModeComboBox_.getSelectedItem();
-      DisplaySettings.ColorMode mode;
-      switch (item) {
-         case COMPOSITE:
-            mode = DisplaySettings.ColorMode.COMPOSITE;
-            break;
-         case COLOR:
-            mode = DisplaySettings.ColorMode.COLOR;
-            break;
-         case GRAYSCALE:
-            mode = DisplaySettings.ColorMode.GRAYSCALE;
-            break;
-         case HILIGHT_SAT:
-            mode = DisplaySettings.ColorMode.HIGHLIGHT_LIMITS;
-            break;
-         case FIRE_LUT:
-            mode = DisplaySettings.ColorMode.FIRE;
-            break;
-         case RED_HOT_LUT:
-            mode = DisplaySettings.ColorMode.RED_HOT;
-            break;
-         default:
-            throw new AssertionError(item.name());
+      DisplaySettings.ColorMode mode = DisplaySettings.ColorMode.GRAYSCALE;
+      if (item != null) {
+         switch (item) {
+            case COMPOSITE:
+               mode = DisplaySettings.ColorMode.COMPOSITE;
+               break;
+            case COLOR:
+               mode = DisplaySettings.ColorMode.COLOR;
+               break;
+            case GRAYSCALE:
+               mode = DisplaySettings.ColorMode.GRAYSCALE;
+               break;
+            case HILIGHT_SAT:
+               mode = DisplaySettings.ColorMode.HIGHLIGHT_LIMITS;
+               break;
+            case FIRE_LUT:
+               mode = DisplaySettings.ColorMode.FIRE;
+               break;
+            case RED_HOT_LUT:
+               mode = DisplaySettings.ColorMode.RED_HOT;
+               break;
+            default:
+               throw new AssertionError(item.name());
+         }
       }
 
       DisplaySettings oldSettings, newSettings;
@@ -515,18 +511,33 @@ public class IntensityInspectorPanelController
       if (displaySettingsUpdateSuspended_) {
          return;
       }
-      
-      if (autostretchCheckBox_.isSelected() && 
-              !settings.isAutostretchEnabled()) {
+
+      // Setting the autostretch box and changeSpinner, cause their
+      // action handlers to be activates, which will cause the displaysettings
+      // to be changed again.  It seems that the order in which we do things
+      // is important. Call the channels autoscale handlers after setting
+      // the autostrechkBox and percentileSpinner
+      autostretchCheckBox_.setSelected(settings.isAutostretchEnabled());
+
+      // A spinner's change listener, unlike an action listener, gets notified
+      // upon programmatic changes.  Previously, there was code here to remove
+      // ChangeListeners and add them back after setting the value.  As a
+      // side effect, this cause the spinner to not display its value
+      // There does not seem to be a problem setting the value with the
+      // ChangeListeners still attached, so do the easy thing:
+      changingSpinner_.set(true);
+      percentileSpinner_.setValue(settings.getAutoscaleIgnoredPercentile());
+      changingSpinner_.set(false);
+
+      if (autostretchCheckBox_.isSelected() && !settings.isAutostretchEnabled()) {
          displaySettingsUpdateSuspended_ = true;
          for (ChannelIntensityController ch : channelControllers_) {
-              ch.handleAutoscale();
+            ch.handleAutoscale();
          }
          displaySettingsUpdateSuspended_ = false;
       }
-      
-      autostretchCheckBox_.setSelected(settings.isAutostretchEnabled());
-       
+
+
       gearMenuUseROIItem_.setSelected(settings.isROIAutoscaleEnabled());
 
       // TODO Disable color mode and show RGB if image is RGB
@@ -555,16 +566,7 @@ public class IntensityInspectorPanelController
             setChannelColors(settings.getAllChannelColors());
       colorModeComboBox_.repaint();
      
-      // A spinner's change listener, unlike an action listener, gets notified
-      // upon programmatic changes.  Previously, there was code here to remove 
-      // ChangeListeners and add them back after setting the value.  As a 
-      // side effect, this cause the spinner to not display its value
-      // There does not seem to be a problem setting the value with the 
-      // ChangeListeners still attached, so do the easy thing:
-      changingSpinner_.set(true);
-      percentileSpinner_.setValue(settings.getAutoscaleIgnoredPercentile());
-      changingSpinner_.set(false);
-  
+
       List<Color> allChannelColors = settings.getAllChannelColors();
       if (! (ColorPalettes.getColorblindFriendlyPalette().containsAll(allChannelColors) || 
               ColorPalettes.getPrimaryColorPalette().containsAll(allChannelColors)) ) {
@@ -572,17 +574,15 @@ public class IntensityInspectorPanelController
          colorMenuMap_.get(CUSTOM).getCheckBox().setEnabled(true);
       }
 
-      for (int ch = 0; ch < channelControllers_.size(); ++ch) {
-         channelControllers_.get(ch).newDisplaySettings(settings);
+      for (ChannelIntensityController channelIntensityController : channelControllers_) {
+         channelIntensityController.newDisplaySettings(settings);
       }
    }
 
    @Subscribe
    public void onEvent(DisplaySettingsChangedEvent e) {
       final DisplaySettings settings = e.getDisplaySettings();
-      SwingUtilities.invokeLater(() -> {
-         newDisplaySettings(settings);
-      });
+      SwingUtilities.invokeLater(() -> newDisplaySettings(settings));
    }
 
    @Subscribe

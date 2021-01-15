@@ -42,7 +42,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
-import org.micromanager.display.internal.RememberedSettings;
+import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.quickaccess.QuickAccessPlugin;
 import org.micromanager.quickaccess.WidgetPlugin;
@@ -146,11 +146,11 @@ public final class PresetButton extends WidgetPlugin implements SciJavaPlugin {
                JOptionPane.ERROR_MESSAGE);
          return null;
       }
-      final JComboBox groupSelector = new JComboBox(groups);
+      final JComboBox<String> groupSelector = new JComboBox<>(groups);
       contents.add(groupSelector, "wrap");
 
       contents.add(new JLabel("Config preset: "));
-      final JComboBox presetSelector = new JComboBox();
+      final JComboBox<String> presetSelector = new JComboBox<>();
       contents.add(presetSelector, "wrap");
 
       groupSelector.addActionListener(new ActionListener() {
@@ -175,7 +175,7 @@ public final class PresetButton extends WidgetPlugin implements SciJavaPlugin {
             // anything useful when not dealing with channel groups, in which
             // case the color will remain the same.
             pickerLabel.setBackground(
-                    RememberedSettings.loadChannel(studio_, 
+                    RememberedDisplaySettings.loadChannel(studio_,
                             (String) groupSelector.getSelectedItem(), 
                             (String) presetSelector.getSelectedItem(),
                             null).getColor());
@@ -189,7 +189,7 @@ public final class PresetButton extends WidgetPlugin implements SciJavaPlugin {
             // anything useful when not dealing with channel groups, in which
             // case the color will remain the same.
             pickerLabel.setBackground(
-               RememberedSettings.loadChannel(studio_, 
+               RememberedDisplaySettings.loadChannel(studio_,
                        (String) groupSelector.getSelectedItem(),
                        (String) presetSelector.getSelectedItem(),
                        null).getColor());

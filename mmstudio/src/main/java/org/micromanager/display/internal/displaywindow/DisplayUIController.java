@@ -72,7 +72,7 @@ import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.internal.RememberedSettings;
+import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.display.internal.animate.AnimationController;
 import org.micromanager.display.internal.displaywindow.imagej.ImageJBridge;
 import org.micromanager.display.internal.event.DisplayKeyPressEvent;
@@ -121,7 +121,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
 {
    private final Studio studio_;
    private final DisplayController displayController_;
-   private final AnimationController animationController_;
+   private final AnimationController<Coords> animationController_;
 
    // All fields must only be accessed from the EDT unless otherwise noted.
 
@@ -232,7 +232,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
    static DisplayUIController create(Studio studio, 
          DisplayController parent,
          DisplayWindowControlsFactory controlsFactory,
-         AnimationController animationController)
+         AnimationController<Coords> animationController)
    {
       DisplayUIController instance = new DisplayUIController(studio, parent,
             controlsFactory, animationController);
@@ -246,7 +246,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
    private DisplayUIController(Studio studio, 
          DisplayController parent,
          DisplayWindowControlsFactory controlsFactory,
-         AnimationController animationController)
+         AnimationController<Coords> animationController)
    {
       studio_ = studio;
       displayController_ = parent;
@@ -580,7 +580,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          animateButton.addActionListener((ActionEvent e) -> {
             handleAxisAnimateButton(e);
          });
-         axisAnimationButtons_.add(new AbstractMap.SimpleEntry(
+         axisAnimationButtons_.add(new AbstractMap.SimpleEntry<>(
                axis, animateButton));
       }
       ret.add(animateButton, new CC());
@@ -616,7 +616,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          positionButton.setMaximumSize(size);
          positionButton.setPreferredSize(size);
          positionButton.setMargin(buttonInsets_);
-         axisPositionButtons_.add(new AbstractMap.SimpleEntry(
+         axisPositionButtons_.add(new AbstractMap.SimpleEntry<> (
                axis, positionButton));
       }
       ret.add(positionButton, new CC());
@@ -960,7 +960,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
             // also when other things change
             // TODO: should all channeldisplaysetting changes be remembered?
             ChannelDisplaySettings rememberedSettings =
-                    RememberedSettings.loadChannel(studio_,
+                    RememberedDisplaySettings.loadChannel(studio_,
                             channelSettings.getGroupName(), channelSettings.getName(), null);
             if (!rememberedSettings.getColor().equals(channelSettings.getColor())) {
                // To ensure that we do not respond to the event posted by us
@@ -978,7 +978,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
                        channelSettings.getColor());
                studio_.events().post(channelColorEvent_);
             }
-            RememberedSettings.storeChannel(studio_, channelSettings.getGroupName(), channelSettings.getName(),
+            RememberedDisplaySettings.storeChannel(studio_, channelSettings.getGroupName(), channelSettings.getName(),
                     rememberedSettings.copyBuilder().color(channelSettings.getColor()).build());
 
             ComponentDisplaySettings componentSettings =
