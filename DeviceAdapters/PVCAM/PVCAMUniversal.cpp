@@ -3639,14 +3639,29 @@ int Universal::ProcessNotification( const NotificationEntry& entry )
             break;
         }
         // Selected metadata from the frame header
-        md.PutImageTag<ulong64>( "PVCAM-FMD-ExposureTimeNs",
-            (ulong64)fHdr->exposureTime * fHdr->exposureTimeResNs );
         md.PutImageTag<uns32>( "PVCAM-FMD-FrameNr",   fHdr->frameNr );
         md.PutImageTag<uns16>( "PVCAM-FMD-RoiCount",  fHdr->roiCount );
-        md.PutImageTag<ulong64>( "PVCAM-FMD-TimestampBofNs",
-            (ulong64)fHdr->timestampBOF * fHdr->timestampResNs );
-        md.PutImageTag<ulong64>( "PVCAM-FMD-TimestampEofNs",
-            (ulong64)fHdr->timestampEOF * fHdr->timestampResNs );
+        if (fHdr->version <= 2)
+        {
+            md.PutImageTag<ulong64>( "PVCAM-FMD-ExposureTimeNs",
+                (ulong64)fHdr->exposureTime * fHdr->exposureTimeResNs );
+            md.PutImageTag<ulong64>( "PVCAM-FMD-TimestampBofNs",
+                (ulong64)fHdr->timestampBOF * fHdr->timestampResNs );
+            md.PutImageTag<ulong64>( "PVCAM-FMD-TimestampEofNs",
+                (ulong64)fHdr->timestampEOF * fHdr->timestampResNs );
+        }
+        else
+        {
+            const md_frame_header_v3* fHdr3 =
+                reinterpret_cast<const md_frame_header_v3*>(metaFrameStruct_->header);
+            // Version 3 of the metadata transfers the timestamps in pico-seconds.
+            md.PutImageTag<ulong64>( "PVCAM-FMD-ExposureTimePs",
+                (ulong64)fHdr3->exposureTime );
+            md.PutImageTag<ulong64>( "PVCAM-FMD-TimestampBofPs",
+                (ulong64)fHdr3->timestampBOF );
+            md.PutImageTag<ulong64>( "PVCAM-FMD-TimestampEofPs",
+                (ulong64)fHdr3->timestampEOF );
+        }
         // Implied ROI
         const rgn_type& iRoi = metaFrameStruct_->impliedRoi;
         snprintf(metaRoiStr_, sizeof(metaRoiStr_),
