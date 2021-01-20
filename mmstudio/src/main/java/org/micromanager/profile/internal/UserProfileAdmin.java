@@ -488,6 +488,15 @@ public final class UserProfileAdmin {
       catch (FileNotFoundException e) { // Not present is equivalent to empty
          return new Profile();
       }
+      catch (IOException e) { // Present but in a bad state.  Try to restore from backup
+         String backup = filename + "~";
+         try {
+            return Profile.fromFilePmap(PropertyMaps.loadJSON(getModernFile(backup)));
+         }
+         catch (IOException ex) { // Not present is equivalent to empty
+            return new Profile();
+         }
+      }
    }
 
    private void writeFile(String filename, Profile profile, boolean ignoreProfileReadOnly) throws IOException {
