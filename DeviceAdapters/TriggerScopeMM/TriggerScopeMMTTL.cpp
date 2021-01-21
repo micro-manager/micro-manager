@@ -234,7 +234,7 @@ int CTriggerScopeMMTTL::SetGateOpen(bool open)
 {  
    if (gateOpen_ != open) {
       gateOpen_ = open;
-      SetPosition((int)open);
+      SendStateCommand(open ? curPos_ : 0);
    }
    return DEVICE_OK;
 }
