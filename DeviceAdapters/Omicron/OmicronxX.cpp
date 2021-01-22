@@ -1,5 +1,17 @@
+//-----------------------------------------------------------------------------
+// FILE:          OmicronxX.cpp
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     DeviceAdapters
+//-----------------------------------------------------------------------------
+// DESCRIPTION:   Controls Omicron xX-laserseries modules through USB
+// COPYRIGHT:     Omicron Laserage Laserprodukte GmbH, 2021
+// LICENSE:       LGPL
+// AUTHOR:        Tim Mereien
+//-----------------------------------------------------------------------------
+
 #include "OmicronxX.h"
 #include "Omicron.h"
+#include "CoherentOBISDirect.h"
 
 #ifdef _WINDOWS
 #include "OmicronDeviceDriver.h"
@@ -14,7 +26,7 @@
 
 const char* g_DeviceOmicronName = "Omicron";
 const char* g_DeviceOmicronxXName = "Omicron USB";
-
+const char* g_ObisName = "OBIS";
 
 #ifdef OMICRON_XDEVICES
 BOOL APIENTRY DllMain(HANDLE /*hModule*/,
@@ -41,7 +53,7 @@ MODULE_API void InitializeModuleData()
 #ifdef OMICRON_XDEVICES
 	RegisterDevice(g_DeviceOmicronxXName, MM::ShutterDevice, "Omicron Device");
 #endif // OMICRON_XDEVICES
-	
+	RegisterDevice(g_ObisName, MM::ShutterDevice, "CoherentObis without Remote");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -58,7 +70,12 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 		return new OmicronDevice;
 	}
 #endif // OMICRON_XDEVICES
-	
+	if (strcmp(deviceName, g_ObisName) == 0)
+	{
+		// create Controller
+		CoherentObisDirect* pCoherentObis = new CoherentObisDirect(g_ObisName);
+		return pCoherentObis;
+	}
 	return 0;
 }
 

@@ -162,11 +162,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CoherentOBISDirect.cpp" />
     <ClCompile Include="Omicron.cpp" />
     <ClCompile Include="OmicronDeviceDriver.cpp" />
     <ClCompile Include="OmicronxX.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CoherentOBISDirect.h" />
     <ClInclude Include="Omicron.h" />
     <ClInclude Include="OmicronDeviceDriver.h" />
     <ClInclude Include="OmicronxX.h" />

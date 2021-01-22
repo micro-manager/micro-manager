@@ -24,6 +24,9 @@
     <ClCompile Include="OmicronxX.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CoherentOBISDirect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Omicron.h">
@@ -36,6 +39,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="OmicronxX.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CoherentOBISDirect.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
