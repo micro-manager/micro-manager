@@ -130,12 +130,35 @@ void XYStage::GetName(char* name) const
 //Speed and acceleration ranges does not refer to a meaningful unit but
 //the range that the hardware uses.
 int XYStage::Initialize()
-{
-   // Step size
-   CPropertyAction* pAct = new CPropertyAction (this, &XYStage::OnStepSizeX);
-   CreateProperty("StepSizeX_um", "0.1", MM::Float, true, pAct);
-   pAct = new CPropertyAction (this, &XYStage::OnStepSizeY);
-   CreateProperty("StepSizeY_um", "0.1", MM::Float, true, pAct);
+{   
+    char buf[MM::MaxStrLength];
+    int ret = GetCoreCallback()->GetDeviceProperty(port_.c_str(), MM::g_Keyword_BaudRate, buf);
+    if (ret != DEVICE_OK)
+        return ret;
+    long baud = atol(buf);
+
+    CPropertyAction* pAct;
+
+    if (baud == 9600)
+    {
+        stepSizeXUm_ = 0.1;
+        // Step size
+        pAct = new CPropertyAction(this, &XYStage::OnStepSizeX);
+        CreateProperty("StepSizeX_um", "0.1", MM::Float, true, pAct);
+        pAct = new CPropertyAction(this, &XYStage::OnStepSizeY);
+        CreateProperty("StepSizeY_um", "0.1", MM::Float, true, pAct); 
+        LogMessage("Scientifica Motion Card V1 (XY)");
+    }
+    else
+    {
+        stepSizeXUm_ = 0.01;
+        // Step size
+        pAct = new CPropertyAction(this, &XYStage::OnStepSizeX);
+        CreateProperty("StepSizeX_um", "0.01", MM::Float, true, pAct);
+        pAct = new CPropertyAction(this, &XYStage::OnStepSizeY);
+        CreateProperty("StepSizeY_um", "0.01", MM::Float, true, pAct);
+        LogMessage("Scientifica Motion Card V2 (XY)");
+    }
 
    // Max Speed
    pAct = new CPropertyAction (this, &XYStage::OnMaxSpeed);
@@ -147,7 +170,7 @@ int XYStage::Initialize()
    CreateProperty("Acceleration", "500", MM::Integer, false, pAct);
    SetPropertyLimits("Acceleration", 1, 1000);
    
-   int ret = UpdateStatus();
+   ret = UpdateStatus();
    if (ret != DEVICE_OK)
       return ret;
 
@@ -208,6 +231,7 @@ int XYStage::SetPositionSteps(long x, long y)
 
    std::ostringstream command;
    command << "abs " << x << " " << y;
+   LogMessage("abs " + x, +" " + y);
 
    ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
    if (ret != DEVICE_OK)
@@ -236,6 +260,7 @@ int XYStage::SetRelativePositionSteps(long x, long y)
 
    std::ostringstream command;
    command << "rel " << x << " " << y;
+   LogMessage("rel " + x, + " " + y);
 
    ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
    if (ret != DEVICE_OK)
@@ -598,9 +623,30 @@ int ZStage::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
-   CPropertyAction* pAct = new CPropertyAction (this, &ZStage::OnStepSizeUm);
-   CreateProperty("StepSizeUm", "0.1", MM::Float, false, pAct);
-   stepSizeUm_ = 0.1;
+   char buf[MM::MaxStrLength];
+   ret = GetCoreCallback()->GetDeviceProperty(port_.c_str(), MM::g_Keyword_BaudRate, buf);
+   if (ret != DEVICE_OK)
+       return ret;
+   long baud = atol(buf);
+
+   CPropertyAction* pAct;
+
+   if (baud == 9600)
+   {
+       pAct = new CPropertyAction(this, &ZStage::OnStepSizeUm);
+       CreateProperty("StepSizeUm", "0.1", MM::Float, false, pAct);
+       stepSizeUm_ = 0.1;
+       LogMessage("Scientifica Motion Card V1 (Z)");
+   }
+   else
+   {
+       CPropertyAction* pAct = new CPropertyAction(this, &ZStage::OnStepSizeUm);
+       CreateProperty("StepSizeUm", "0.01", MM::Float, false, pAct);
+       stepSizeUm_ = 0.01;
+       LogMessage("Scientifica Motion Card V2 (Z)");
+   }
+
+   
    
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
