@@ -1305,10 +1305,10 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
          Insets frameInsets = frame_.getInsets();
          int newCanvasWidth = Math.min(canvasMaxSize.width,
-               screenBounds.width - frameInsets.left - frameInsets.right -
+               screenBounds.x + screenBounds.width - frameInsets.left - frameInsets.right -
                      2 * BORDER_THICKNESS - frame_.getX());
          int newCanvasHeight = Math.min(canvasMaxSize.height,
-               screenBounds.height - frameInsets.top - frameInsets.bottom -
+               screenBounds.y + screenBounds.height - frameInsets.top - frameInsets.bottom -
                      2 * BORDER_THICKNESS -
                      topControlPanel_.getSize().height -
                      bottomControlPanel_.getSize().height -
