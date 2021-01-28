@@ -26,6 +26,7 @@ import java.io.IOException;
 import javax.swing.JFrame;
 import javax.swing.ToolTipManager;
 import mmcorej.MMCoreJ;
+import org.micromanager.PositionList;
 import org.micromanager.events.GUIRefreshEvent;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.dialogs.CalibrationListDlg;
@@ -309,5 +310,21 @@ public class MMUIManager {
          posListDlg_.addListeners();
       }
       posListDlg_.setVisible(true);
+   }
+
+   /**
+    * Hack: The API currently does not allow modifying positions in the current list
+    * See https://github.com/micro-manager/micro-manager/issues/1090
+    * This backdoor should be removed once a better solution has been implemented
+    * @return current PositionList.  Handle with care as dangerous things can happen
+    * @deprecated Direct access to the PositionList should not be allowed, but
+    * currently is the only way to modify the StagePositions in the current PositionList
+    */
+   @Deprecated
+   public PositionList getPositionList() {
+      if (posListDlg_ == null) {
+         showPositionList();
+      }
+      return posListDlg_.getPositionList();
    }
 } 
