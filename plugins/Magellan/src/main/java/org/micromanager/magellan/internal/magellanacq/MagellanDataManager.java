@@ -122,7 +122,8 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
               MagellanMD.getWidth(summaryMetadata),
               MagellanMD.getHeight(summaryMetadata),
               AcqEngMetadata.isRGB(summaryMetadata) ? 1 : MagellanMD.getBytesPerPixel(summaryMetadata),
-              true, null, AcqEngMetadata.isRGB(summaryMetadata));
+              true, null, AcqEngMetadata.isRGB(summaryMetadata),
+              null);
 
       if (showDisplay_) {
          createDisplay();
