@@ -150,7 +150,7 @@ public class MagellanAcquisitionsManager {
       ExploreAcqSettings settings = new ExploreAcqSettings(dir, name, cGroup, zStep, overlap);
       //check for abort of existing explore acquisition
       //abort existing explore acq if needed
-      if (exploreAcq_ != null && !exploreAcq_.isFinished()) {
+      if (exploreAcq_ != null && !exploreAcq_.areEventsFinished()) {
          int result = JOptionPane.showConfirmDialog(null, "Finish exisiting explore acquisition?", "Finish Current Explore Acquisition", JOptionPane.OK_CANCEL_OPTION);
          if (result == JOptionPane.OK_OPTION) {
             exploreAcq_.abort();

@@ -105,6 +105,14 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
    }
 
    @Override
+   public boolean isFinished() {
+      if (dataSink_ != null) {
+         return dataSink_.isFinished();
+      }
+      return true;
+   }
+
+   @Override
    public void abort() {
       super.abort();
       submittedSequenceMonitorExecutor_.shutdownNow();

@@ -115,6 +115,14 @@ public class MagellanGUIAcquisition extends Acquisition implements MagellanAcqui
       return dataSink_ == null ? null : ((RemoteViewerStorageAdapter) dataSink_).getStorage();
    }
 
+   @Override
+   public boolean isFinished() {
+      if (dataSink_ != null) {
+         return dataSink_.isFinished();
+      }
+      return true;
+   }
+
    private Iterator<AcquisitionEvent> buildAcqEventGenerator() {
       ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>> acqFunctions
               = new ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>>();
