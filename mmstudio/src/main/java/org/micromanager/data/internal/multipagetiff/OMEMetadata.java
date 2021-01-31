@@ -172,7 +172,7 @@ public final class OMEMetadata {
       }
       metadata_.setStageLabelName(positionName, seriesIndex);
 
-      String instrumentID = MetadataTools.createLSID("Microscope");
+      String instrumentID = MetadataTools.createLSID("Instrument", 0);
       metadata_.setInstrumentID(instrumentID, 0);
       // link Instrument and Image
       metadata_.setImageInstrumentRef(instrumentID, seriesIndex);
@@ -391,7 +391,7 @@ public final class OMEMetadata {
 
       for (int i = 0; i < cameras.size(); i++) {
          String camera = cameras.get(i);
-         String detectorID = MetadataTools.createLSID(camera);
+         String detectorID = MetadataTools.createLSID("Detector", i);
 
          //Instrument index, detector index
          metadata_.setDetectorID(detectorID, 0, i);
