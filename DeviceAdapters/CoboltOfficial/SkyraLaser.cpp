@@ -93,17 +93,8 @@ void SkyraLaser::CreateWavelengthProperty( const int line )
 
 void SkyraLaser::CreateCurrentSetpointProperty( const int line )
 {
-    std::string maxCurrentSetpointResponse;
-    if ( laserDriver_->SendCommand( MakeLineCommand( "gmlc?", line ), &maxCurrentSetpointResponse ) != return_code::ok ) {
-
-        Logger::Instance()->LogError( "SkyraLaser::CreateCurrentSetpointProperty(): Failed to retrieve max current sepoint" );
-        return;
-    }
-
-    const double maxCurrentSetpoint = atof( maxCurrentSetpointResponse.c_str() );
-
     MutableDeviceProperty* property = new NumericProperty<double>( MakeLineName( line ) + " Current Setpoint [" + currentUnit_ + "]",
-        laserDriver_, MakeLineCommand( "glc?", line ), MakeLineCommand( "slc", line ), 0.0f, maxCurrentSetpoint );
+        laserDriver_, MakeLineCommand( "glc?", line ), MakeLineCommand( "slc", line ), 0.0f, MaxCurrentSetpoint( line ) );
     
     RegisterPublicProperty( property );
 }
@@ -190,6 +181,22 @@ void SkyraLaser::CreateRunModeProperty( const int line )
     RegisterPublicProperty( property );
 }
 
+void SkyraLaser::CreateModulationCurrentLowSetpointProperty( const int line )
+{
+    MutableDeviceProperty* property = new NumericProperty<double>( MakeLineName( line ) + " Modulation Low Current Setpoint [" + currentUnit_ + "]",
+        laserDriver_, MakeLineCommand( "glth?", line ), MakeLineCommand( "slth", line ), 0.0f, MaxCurrentSetpoint( line ) );
+
+    RegisterPublicProperty( property );
+}
+
+void SkyraLaser::CreateModulationCurrentHighSetpointProperty( const int line )
+{
+    MutableDeviceProperty* property = new NumericProperty<double>( MakeLineName( line ) + " Modulation High Current Setpoint [" + currentUnit_ + "]",
+        laserDriver_, MakeLineCommand( "gmc?", line ), MakeLineCommand( "smc", line ), 0.0f, MaxCurrentSetpoint( line ) );
+
+    RegisterPublicProperty( property );
+}
+
 std::string SkyraLaser::MakeLineCommand( std::string command, const int line )
 {
     return std::to_string( (long long) line ) + command;
@@ -209,4 +216,19 @@ void SkyraLaser::CreateLineSpecificProperties( const int line )
     CreatePowerReadingProperty( line );
     CreateCurrentSetpointProperty( line );
     CreateCurrentReadingProperty( line );
+    CreateModulationCurrentHighSetpointProperty( line );
+    
+    if ( line == 1 ) { CreateModulationCurrentLowSetpointProperty( line ); }
+}
+
+double SkyraLaser::MaxCurrentSetpoint( const int line )
+{
+    std::string maxCurrentSetpointResponse;
+    if ( laserDriver_->SendCommand( MakeLineCommand( "gmlc?", line ), &maxCurrentSetpointResponse ) != return_code::ok ) {
+
+        Logger::Instance()->LogError( "SkyraLaser::MaxCurrentSetpoint(): Failed to retrieve max current sepoint" );
+        return 0.0f;
+    }
+
+    return atof( maxCurrentSetpointResponse.c_str() );
 }
