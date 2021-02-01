@@ -71,6 +71,9 @@ Dpl06Laser::Dpl06Laser( const std::string& wavelength, LaserDriver* driver ) :
     CreateCurrentReadingProperty();
     CreateDigitalModulationProperty();
     CreateAnalogModulationFlagProperty();
+
+    CreateModulationCurrentHighSetpointProperty();
+    CreateModulationCurrentLowSetpointProperty();
 }
 
 void Dpl06Laser::CreateLaserStateProperty()

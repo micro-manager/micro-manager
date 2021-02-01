@@ -108,6 +108,10 @@ protected:
 
     void CreateModulationPowerSetpointProperty();
     void CreateAnalogImpedanceProperty();
+
+    void CreateModulationCurrentLowSetpointProperty();
+    void CreateModulationCurrentHighSetpointProperty();
+    void CreateModulationHighPowerSetpointProperty();
     
     static const std::string Milliamperes;
     static const std::string Amperes;
@@ -127,6 +131,9 @@ protected:
     bool IsInCdrhMode() const;
 
     void RegisterPublicProperty( Property* );
+
+    double MaxCurrentSetpoint();
+    double MaxPowerSetpoint();
     
     std::map<std::string, cobolt::Property*> properties_;
     

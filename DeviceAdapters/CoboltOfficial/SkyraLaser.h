@@ -68,9 +68,13 @@ protected:
     void CreateShutterProperty();
     void CreateRunModeProperty( const int line );
 
+    void CreateModulationCurrentLowSetpointProperty( const int line );
+    void CreateModulationCurrentHighSetpointProperty( const int line );
+
 private:
 
     void CreateLineSpecificProperties( const int line );
+    double MaxCurrentSetpoint( const int line );
 
     std::string MakeLineCommand( std::string command, const int line );
     std::string MakeLineName( const int line );

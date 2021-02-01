@@ -227,21 +227,12 @@ void Laser::CreateOperatingHoursProperty()
 
 void Laser::CreateCurrentSetpointProperty()
 {
-    std::string maxCurrentSetpointResponse;
-    if ( laserDriver_->SendCommand( "gmlc?", &maxCurrentSetpointResponse ) != return_code::ok ) {
-
-        Logger::Instance()->LogError( "Laser::CreateCurrentSetpointProperty(): Failed to retrieve max current sepoint" );
-        return;
-    }
-
-    const double maxCurrentSetpoint = atof( maxCurrentSetpointResponse.c_str() );
-
     MutableDeviceProperty* property;
    
     if ( IsShutterCommandSupported() || !IsInCdrhMode() ) {
-        property = new NumericProperty<double>( "Current Setpoint [" + currentUnit_ + "]", laserDriver_, "glc?", "slc", 0.0f, maxCurrentSetpoint );
+        property = new NumericProperty<double>( "Current Setpoint [" + currentUnit_ + "]", laserDriver_, "glc?", "slc", 0.0f, MaxCurrentSetpoint() );
     } else {
-        property = new legacy::no_shutter_command::LaserCurrentProperty( "Current Setpoint [" + currentUnit_ + "]", laserDriver_, "glc?", "slc", 0.0f, maxCurrentSetpoint, this );
+        property = new legacy::no_shutter_command::LaserCurrentProperty( "Current Setpoint [" + currentUnit_ + "]", laserDriver_, "glc?", "slc", 0.0f, MaxCurrentSetpoint(), this );
     }
 
     RegisterPublicProperty( property );
@@ -256,16 +247,7 @@ void Laser::CreateCurrentReadingProperty()
 
 void Laser::CreatePowerSetpointProperty()
 {
-    std::string maxPowerSetpointResponse;
-    if ( laserDriver_->SendCommand( "gmlp?", &maxPowerSetpointResponse ) != return_code::ok ) {
-
-        Logger::Instance()->LogError( "Laser::CreatePowerSetpointProperty(): Failed to retrieve max power sepoint" );
-        return;
-    }
-
-    const double maxPowerSetpoint = atof( maxPowerSetpointResponse.c_str() );
-    
-    MutableDeviceProperty* property = new NumericProperty<double>( "Power Setpoint [" + powerUnit_ + "]", laserDriver_, "glp?", "slp", 0.0f, maxPowerSetpoint );
+    MutableDeviceProperty* property = new NumericProperty<double>( "Power Setpoint [" + powerUnit_ + "]", laserDriver_, "glp?", "slp", 0.0f, MaxPowerSetpoint() );
     RegisterPublicProperty( property );
 }
 
@@ -343,6 +325,26 @@ void Laser::CreateAnalogImpedanceProperty()
     RegisterPublicProperty( property );
 }
 
+void Laser::CreateModulationCurrentLowSetpointProperty()
+{
+    MutableDeviceProperty* property;
+    property = new NumericProperty<double>( "Modulation Low Current Setpoint [" + currentUnit_ + "]", laserDriver_, "glth?", "slth", 0.0f, MaxCurrentSetpoint() );
+    RegisterPublicProperty( property );
+}
+
+void Laser::CreateModulationCurrentHighSetpointProperty()
+{
+    MutableDeviceProperty* property;
+    property = new NumericProperty<double>( "Modulation Low Current Setpoint [" + currentUnit_ + "]", laserDriver_, "gmc?", "smc", 0.0f, MaxCurrentSetpoint() );
+    RegisterPublicProperty( property );
+}
+
+void Laser::CreateModulationHighPowerSetpointProperty()
+{
+    MutableDeviceProperty* property = new NumericProperty<double>( "Modulation Power Setpoint [" + powerUnit_ + "]", laserDriver_, "glmp?", "slmp", 0.0f, MaxPowerSetpoint() );
+    RegisterPublicProperty( property );
+}
+
 bool Laser::IsShutterCommandSupported() const // TODO: Split into IsShutterCommandSupported() and IsPauseCommandSupported()
 {
     std::string response;
@@ -363,4 +365,28 @@ void Laser::RegisterPublicProperty( Property* property )
 {
     assert( property != NULL );
     properties_[ property->GetName() ] = property;
+}
+
+double Laser::MaxCurrentSetpoint()
+{
+    std::string maxCurrentSetpointResponse;
+    if ( laserDriver_->SendCommand( "gmlc?", &maxCurrentSetpointResponse ) != return_code::ok ) {
+
+        Logger::Instance()->LogError( "Laser::MaxCurrentSetpoint(): Failed to retrieve max current sepoint" );
+        return 0.0f;
+    }
+    
+    return atof( maxCurrentSetpointResponse.c_str() );
+}
+
+double Laser::MaxPowerSetpoint()
+{
+    std::string maxPowerSetpointResponse;
+    if ( laserDriver_->SendCommand( "gmlp?", &maxPowerSetpointResponse ) != return_code::ok ) {
+
+        Logger::Instance()->LogError( "Laser::MaxPowerSetpoint(): Failed to retrieve max power sepoint" );
+        return 0.0f;
+    }
+
+    return atof( maxPowerSetpointResponse.c_str() );
 }
