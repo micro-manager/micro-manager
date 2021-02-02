@@ -61,6 +61,8 @@ import mmcorej.org.json.JSONException;
 
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
+import static org.micromanager.autofocus.OughtaFocus.getMonochromePixels;
+import static org.micromanager.autofocus.OughtaFocus.makeMonochromeProcessor;
 import org.micromanager.autofocus.internal.FHT_NoScaling;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.imageanalysis.ImageUtils;
@@ -148,7 +150,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    private long startTimeMs_;
    private double startZUm_;
    private boolean liveModeOn_;
-   private final List<String> arr = Arrays.asList(Score.Method.values()).stream().map((method) -> { return method.name(); }).collect(Collectors.toList());
+   private final String[] SCORINGMETHODS = (String[]) Arrays.asList(Score.Method.values()).stream().map((method) -> { return method.name(); }).collect(Collectors.toList()).toArray();
 
    public OughtaFocus() {
       super.createProperty(SEARCH_RANGE, NumberUtils.doubleToDisplayString(searchRange));
@@ -246,45 +248,6 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
      } 
  }
    
-   private double runAutofocusAlgorithm() throws Exception {
-      UnivariateFunction scoreFun = (double d) -> {
-         try {
-            return measureFocusScore(d);
-         } catch (Exception e) {
-            throw new LocalException(d, e);
-         }
-      };
-      
-      UnivariateObjectiveFunction uof = new UnivariateObjectiveFunction(scoreFun);
-
-      BrentOptimizer brentOptimizer =
-         new BrentOptimizer(BRENT_RELATIVE_TOLERANCE, absTolerance);
-
-      imageCount_ = 0;
-
-      CMMCore core = studio_.getCMMCore();
-      double z = core.getPosition(core.getFocusDevice());
-      startZUm_ = z;
-      
-      UnivariatePointValuePair result = brentOptimizer.optimize(uof, 
-              GoalType.MAXIMIZE,
-              new MaxEval(100),
-              new SearchInterval(z - searchRange / 2, z + searchRange / 2));
-      studio_.logs().logMessage("OughtaFocus Iterations: " + brentOptimizer.getIterations()
-              + ", z=" + TextUtils.FMT2.format(result.getPoint())
-              + ", dz=" + TextUtils.FMT2.format(result.getPoint() - startZUm_)
-              + ", t=" + (System.currentTimeMillis() - startTimeMs_));
-      return result.getPoint();
-   }
-
-   private void setZPosition(double z) throws Exception {
-      CMMCore core = studio_.getCMMCore();
-      String focusDevice = core.getFocusDevice();
-      core.setPosition(focusDevice, z);
-      core.waitForDevice(focusDevice);
-   }
-
-
    public static ImageProcessor makeMonochromeProcessor(CMMCore core, Object pixels) {
       int w = (int) core.getImageWidth();
       int h = (int) core.getImageHeight();
@@ -320,47 +283,6 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    }
 
 
-   public double measureFocusScore(double z) throws Exception {
-      CMMCore core = studio_.getCMMCore();
-      long start = System.currentTimeMillis();
-      try {
-         setZPosition(z);
-         long tZ = System.currentTimeMillis() - start;
-
-         TaggedImage img;
-         if (liveModeOn_) {
-            img = core.getLastTaggedImage();
-         } else {
-            core.waitForDevice(core.getCameraDevice());
-            core.snapImage();
-            final TaggedImage img1 = core.getTaggedImage();
-            img = img1;
-            if (show.contentEquals("Yes")) {
-               SwingUtilities.invokeLater(() -> {
-                  try {
-                     studio_.live().displayImage(studio_.data().convertTaggedImage(img1));
-                  }
-                  catch (JSONException | IllegalArgumentException e) {
-                     studio_.logs().showError(e);
-                  }
-               });
-            }
-         }
-         long tI = System.currentTimeMillis() - start - tZ;
-         ImageProcessor proc = makeMonochromeProcessor(core, getMonochromePixels(img));
-         double score = computeScore(proc);
-         long tC = System.currentTimeMillis() - start - tZ - tI;
-         studio_.logs().logMessage("OughtaFocus: image=" + imageCount_++
-                 + ", t=" + (System.currentTimeMillis() - startTimeMs_)
-                 + ", z=" + TextUtils.FMT2.format(z)
-                 + ", score=" + TextUtils.FMT2.format(score)
-                 + ", Tz=" + tZ + ", Ti=" + tI + ", Tc=" + tC);
-         return score;
-      } catch (Exception e) {
-         studio_.logs().logError(e);
-         throw e;
-      }
-   }
 
    @Override
    public double incrementalFocus() throws Exception {
@@ -398,36 +320,11 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
       }
       return score;
    }
-
-   
    
    @Override
    public double computeScore(final ImageProcessor proc) {
-      if (scoringMethod.contentEquals("Mean")) {
-         return computeMean(proc);
-      } else if (scoringMethod.contentEquals("StdDev")) {
-         return computeNormalizedStdDev(proc);
-      } else if (scoringMethod.contentEquals("NormalizedVariance")) {
-         return computeNormalizedVariance(proc);
-      } else if (scoringMethod.contentEquals("Edges")) {
-         return computeEdges(proc);
-      } else if (scoringMethod.contentEquals("SharpEdges")) {
-         return computeSharpEdges(proc);
-      } else if (scoringMethod.contentEquals("Redondo")) {
-         return computeRedondo(proc);
-      } else if (scoringMethod.contentEquals("Volath")) {
-         return computeVolath(proc);
-      } else if (scoringMethod.contentEquals("Volath5")) {
-         return computeVolath5(proc);
-      } else if (scoringMethod.contentEquals("MedianEdges")) {
-         return computeMedianEdges(proc);
-      } else if (scoringMethod.contentEquals("Tenengrad")) {
-         return computeTenengrad(proc);
-      } else if (scoringMethod.contentEquals("FFTBandpass")) {
-         return computeFFTBandpass(proc);
-      } else {
-         return 0;
-      }
+      Score.Method method = Score.Method.valueOf(scoringMethod);
+      return Score.compute(method, proc);
    }
    
    @Override
@@ -491,6 +388,94 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
 }
 
 
+class AutoFocusManager {
+   private final Studio studio_;
+   
+   public AutoFocusManager(Studio studio) {
+      studio_ = studio;
+   }
+   private double runAutofocusAlgorithm() throws Exception {
+      UnivariateFunction scoreFun = (double d) -> {
+         try {
+            return measureFocusScore(d);
+         } catch (Exception e) {
+            throw new OughtaFocus.LocalException(d, e);
+         }
+      };
+      
+      UnivariateObjectiveFunction uof = new UnivariateObjectiveFunction(scoreFun);
+
+      BrentOptimizer brentOptimizer =
+         new BrentOptimizer(BRENT_RELATIVE_TOLERANCE, absTolerance);
+
+      imageCount_ = 0;
+
+      CMMCore core = studio_.getCMMCore();
+      double z = core.getPosition(core.getFocusDevice());
+      startZUm_ = z;
+      
+      UnivariatePointValuePair result = brentOptimizer.optimize(uof, 
+              GoalType.MAXIMIZE,
+              new MaxEval(100),
+              new SearchInterval(z - searchRange / 2, z + searchRange / 2));
+      studio_.logs().logMessage("OughtaFocus Iterations: " + brentOptimizer.getIterations()
+              + ", z=" + TextUtils.FMT2.format(result.getPoint())
+              + ", dz=" + TextUtils.FMT2.format(result.getPoint() - startZUm_)
+              + ", t=" + (System.currentTimeMillis() - startTimeMs_));
+      return result.getPoint();
+   }
+
+   private void setZPosition(double z) throws Exception {
+      CMMCore core = studio_.getCMMCore();
+      String focusDevice = core.getFocusDevice();
+      core.setPosition(focusDevice, z);
+      core.waitForDevice(focusDevice);
+   }
+   
+      public double measureFocusScore(double z) throws Exception {
+      CMMCore core = studio_.getCMMCore();
+      long start = System.currentTimeMillis();
+      try {
+         setZPosition(z);
+         long tZ = System.currentTimeMillis() - start;
+
+         TaggedImage img;
+         if (liveModeOn_) {
+            img = core.getLastTaggedImage();
+         } else {
+            core.waitForDevice(core.getCameraDevice());
+            core.snapImage();
+            final TaggedImage img1 = core.getTaggedImage();
+            img = img1;
+            if (show.contentEquals("Yes")) {
+               SwingUtilities.invokeLater(() -> {
+                  try {
+                     studio_.live().displayImage(studio_.data().convertTaggedImage(img1));
+                  }
+                  catch (JSONException | IllegalArgumentException e) {
+                     studio_.logs().showError(e);
+                  }
+               });
+            }
+         }
+         long tI = System.currentTimeMillis() - start - tZ;
+         ImageProcessor proc = makeMonochromeProcessor(core, getMonochromePixels(img));
+         double score = computeScore(proc);
+         long tC = System.currentTimeMillis() - start - tZ - tI;
+         studio_.logs().logMessage("OughtaFocus: image=" + imageCount_++
+                 + ", t=" + (System.currentTimeMillis() - startTimeMs_)
+                 + ", z=" + TextUtils.FMT2.format(z)
+                 + ", score=" + TextUtils.FMT2.format(score)
+                 + ", Tz=" + tZ + ", Ti=" + tI + ", Tc=" + tC);
+         return score;
+      } catch (Exception e) {
+         studio_.logs().logError(e);
+         throw e;
+      }
+   }
+}
+
+
 class Score {
    public enum Method {
       Edges, StdDev, Mean, 
@@ -498,7 +483,7 @@ class Score {
       MedianEdges, Tenengrad, FFTBandpas;
    }
     
-   private double compute(Method method, ImageProcessor proc) {
+   private static double compute(Method method, ImageProcessor proc) {
       double score;
       switch (method) {
          case Edges:
