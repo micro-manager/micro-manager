@@ -14,55 +14,55 @@ import ij.process.ImageStatistics;
  * @author nick
  */
 public class FocusAnalysis {
+   private double fftLower_ = 2.5;
+   private double fftUpper_ = 14;
+   private Method method_ = Method.Edges;
+   
    public enum Method {
       Edges, StdDev, Mean, 
       NormalizedVariance, SharpEdges, Redondo, Volath, Volath5, 
       MedianEdges, Tenengrad, FFTBandpas;
    }
+   
+   public void setFFTCutoff(double fftLowerCutoff, double fftUpperCutoff) {
+      fftLower_ = fftLowerCutoff;
+      fftUpper_ = fftUpperCutoff;
+   }
+   
+   public void setComputationMethod(Method method) {
+      method_ = method;
+   }
     
-   private static double compute(Method method, ImageProcessor proc) {
-      double score;
-      switch (method) {
+   public double compute(ImageProcessor proc) {
+      switch (method_) {
          case Edges:
-            score = computeEdges(proc);
-            break;
+            return computeEdges(proc);
          case StdDev:
-            score = computeNormalizedStdDev(proc);
-            break;
+            return computeNormalizedStdDev(proc);
          case Mean:
-            score = computeMean(proc);
-            break;
+            return computeMean(proc);
          case NormalizedVariance:
-            score = computeNormalizedVariance(proc);
-            break;
+            return computeNormalizedVariance(proc);
          case SharpEdges:
-            score = computeSharpEdges(proc);
-            break;
+            return computeSharpEdges(proc);
          case Redondo:
-            score = computeRedondo(proc);
-            break;
+            return computeRedondo(proc);
          case Volath:
-            score = computeVolath(proc);
-            break;
+            return computeVolath(proc);
          case Volath5:
-            score = computeVolath5(proc);
-            break;
+            return computeVolath5(proc);
          case MedianEdges:
-            score = computeMedianEdges(proc);
-            break;
+            return computeMedianEdges(proc);
          case Tenengrad:
-            score = computeTenengrad(proc);
-            break;
+            return computeTenengrad(proc);
          case FFTBandpas:
-            score = computeFFTBandpass(proc);
-            break;
+            return computeFFTBandpass(proc, fftLower_, fftUpper_);
          default:
             throw new AssertionError(method.name());
       }
-      return score;
    }
     
-   private static double computeEdges(ImageProcessor proc) {
+   public static double computeEdges(ImageProcessor proc) {
       // mean intensity for the original image
       double meanIntensity = proc.getStatistics().mean;
       ImageProcessor proc1 = proc.duplicate();
@@ -73,7 +73,7 @@ public class FocusAnalysis {
       return meanEdge / meanIntensity;
    }
 
-   private static double computeSharpEdges(ImageProcessor proc) {
+   public static double computeSharpEdges(ImageProcessor proc) {
       // mean intensity for the original image
       double meanIntensity = proc.getStatistics().mean;
       ImageProcessor proc1 = proc.duplicate();
@@ -85,16 +85,16 @@ public class FocusAnalysis {
       return meanEdge / meanIntensity;
    }
 
-   private static double computeMean(ImageProcessor proc) {
+   public static double computeMean(ImageProcessor proc) {
       return proc.getStatistics().mean;
    }
 
-   private static double computeNormalizedStdDev(ImageProcessor proc) {
+   public static double computeNormalizedStdDev(ImageProcessor proc) {
       ImageStatistics stats = proc.getStatistics();
       return stats.stdDev / stats.mean;
    }
 
-   private static double computeNormalizedVariance(ImageProcessor proc) {
+   public static double computeNormalizedVariance(ImageProcessor proc) {
       ImageStatistics stats = proc.getStatistics();
       return (stats.stdDev * stats.stdDev) / stats.mean;
    }
@@ -113,7 +113,7 @@ public class FocusAnalysis {
    // Russel M, Douglas T.  "Evaluation of autofocus algorithms for
    // tuberculosis microscopy". Proc 29th International Conference of the
    // IEEE EMBS, Lyon, 3489-3492 (22-26 Aug 2007)
-   private static double computeRedondo(ImageProcessor proc) {
+   public static double computeRedondo(ImageProcessor proc) {
       int h = proc.getHeight();
       int w = proc.getWidth();
       double sum = 0.0;
@@ -140,7 +140,7 @@ public class FocusAnalysis {
     * non-spectral metric for their light sheet microscopy application
     * @author Jon
     */
-   private static double computeTenengrad(ImageProcessor proc) {
+   public static double computeTenengrad(ImageProcessor proc) {
       int h = proc.getHeight();
       int w = proc.getWidth();
       double sum = 0.0;
@@ -162,7 +162,7 @@ public class FocusAnalysis {
    // Volath  D., "The influence of the scene parameters and of noise on
    // the behavior of automatic focusing algorithms,"
    // J. Microsc. 151, (2), 133-146 (1988).
-   private static double computeVolath(ImageProcessor proc) {
+   public static double computeVolath(ImageProcessor proc) {
       int h = proc.getHeight();
       int w = proc.getWidth();
       double sum1 = 0.0;
@@ -187,7 +187,7 @@ public class FocusAnalysis {
    // Volath  D., "The influence of the scene parameters and of noise on
    // the behavior of automatic focusing algorithms,"
    // J. Microsc. 151, (2), 133-146 (1988).
-   private static double computeVolath5(ImageProcessor proc) {
+   public static double computeVolath5(ImageProcessor proc) {
       int h = proc.getHeight();
       int w = proc.getWidth();
       double sum = 0.0;
@@ -214,7 +214,7 @@ public class FocusAnalysis {
     * intensity and adds a median filter before edge detection.
     * @author Jon
     */
-   private static double computeMedianEdges(ImageProcessor proc) {
+   public static double computeMedianEdges(ImageProcessor proc) {
       int h = proc.getHeight();
       int w = proc.getWidth();
       double sum = 0.0;
@@ -239,29 +239,24 @@ public class FocusAnalysis {
     * to use an unscaled FFT, so this is provided using a modified ImageJ class.
     * @author Jon
     */
-   private static double computeFFTBandpass(ImageProcessor proc) {
-      try {
-         // gets power spectrum (FFT) without scaling result
-         FHT_NoScaling myFHT = new FHT_NoScaling(proc);
-         myFHT.transform();
-         ImageProcessor ps = myFHT.getPowerSpectrum_noScaling();
-         int midpoint = ps.getHeight()/2;
-         final int scaled_lower = (int) Math.round(fftLowerCutoff/100*midpoint);
-         final int start_lower = Math.round(midpoint-scaled_lower);
-         final int scaled_upper = (int) Math.round(fftUpperCutoff/100*midpoint);
-         final int start_upper = Math.round(midpoint-scaled_upper);
-         OvalRoi innerCutoff = new OvalRoi(start_lower, start_lower,
-               2*scaled_lower+1, 2*scaled_lower+1);
-         OvalRoi outerCutoff = new OvalRoi(start_upper, start_upper,
-               2*scaled_upper+1, 2*scaled_upper+1);
-         ps.setColor(0);
-         ps.fillOutside(outerCutoff);
-         ps.fill(innerCutoff);
-         ps.setRoi(outerCutoff);
-         return ps.getStatistics().mean;
-      } catch (Exception e) {
-         studio_.logs().logError(e);
-         return 0;
-      }
+   public static double computeFFTBandpass(ImageProcessor proc, double fftLowerCutoff, double fftUpperCutoff) {
+      // gets power spectrum (FFT) without scaling result
+      FHT_NoScaling myFHT = new FHT_NoScaling(proc);
+      myFHT.transform();
+      ImageProcessor ps = myFHT.getPowerSpectrum_noScaling();
+      int midpoint = ps.getHeight()/2;
+      final int scaled_lower = (int) Math.round(fftLowerCutoff/100*midpoint);
+      final int start_lower = Math.round(midpoint-scaled_lower);
+      final int scaled_upper = (int) Math.round(fftUpperCutoff/100*midpoint);
+      final int start_upper = Math.round(midpoint-scaled_upper);
+      OvalRoi innerCutoff = new OvalRoi(start_lower, start_lower,
+            2*scaled_lower+1, 2*scaled_lower+1);
+      OvalRoi outerCutoff = new OvalRoi(start_upper, start_upper,
+            2*scaled_upper+1, 2*scaled_upper+1);
+      ps.setColor(0);
+      ps.fillOutside(outerCutoff);
+      ps.fill(innerCutoff);
+      ps.setRoi(outerCutoff);
+      return ps.getStatistics().mean;
    }
 }
