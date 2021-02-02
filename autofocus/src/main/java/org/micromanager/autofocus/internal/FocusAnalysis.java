@@ -1,8 +1,33 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+///////////////////////////////////////////////////////////////////////////////
+//FILE:           OughtaFocus.java
+//PROJECT:        Micro-Manager
+//SUBSYSTEM:      Autofocusing plug-in for micro-manager and ImageJ
+//-----------------------------------------------------------------------------
+//
+//AUTHOR:         Arthur Edelstein, October 2010
+//                Based on SimpleAutofocus by Karl Hoover
+//                and the Autofocus "H&P" plugin
+//                by Pakpoom Subsoontorn & Hernan Garcia
+//                Contributions by Jon Daniels (ASI): FFTBandpass, MedianEdges 
+//                      and Tenengrad
+//                Chris Weisiger: 2.0 port
+//                Nico Stuurman: 2.0 port and Math3 port
+//                Nick Anthony: Refactoring
+//
+//COPYRIGHT:      University of California San Francisco
+//                
+//LICENSE:        This file is distributed under the BSD license.
+//                License text is included with the source distribution.
+//
+//                This file is distributed in the hope that it will be useful,
+//                but WITHOUT ANY WARRANTY; without even the implied warranty
+//                of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
+//CVS:            $Id: MetadataDlg.java 1275 2008-06-03 21:31:24Z nenad $
 package org.micromanager.autofocus.internal;
 
 import ij.gui.OvalRoi;
