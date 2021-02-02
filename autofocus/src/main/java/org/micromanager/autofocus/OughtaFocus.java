@@ -57,6 +57,7 @@ import mmcorej.org.json.JSONException;
 
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
+import org.micromanager.autofocus.OughtaFocusInternal.FHT_NoScaling;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 import org.micromanager.internal.utils.MDUtils;
