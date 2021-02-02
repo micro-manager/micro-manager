@@ -83,7 +83,7 @@ public class FHT_NoScaling extends FloatProcessor {
       transform(false);
    }
 
-   private void transform(boolean inverse) {
+   private void transform(boolean inverse) throws IllegalArgumentException {
       if (!powerOf2Size())
          throw new  IllegalArgumentException("Image not power of 2 size or not square: "+width+"x"+height);
       maxN_ = width;
@@ -94,7 +94,7 @@ public class FHT_NoScaling extends FloatProcessor {
       isFrequencyDomain_ = !inverse;
    }
 
-   private void initializeTables(int maxN) {
+   private void initializeTables(int maxN) throws IllegalArgumentException {
       if (maxN>0x40000000)
          throw new  IllegalArgumentException("Too large for FHT:  "+maxN+" >2^30");
       makeSinCosTables(maxN);
@@ -277,7 +277,7 @@ public class FHT_NoScaling extends FloatProcessor {
    /** Returns an 8-bit power spectrum, log-scaled to 1-254. The image in this
     FHT is assumed to be in the frequency domain.
     Modified to remove scaling per William Mohler's tweaks. */
-   public ImageProcessor getPowerSpectrum_noScaling () {
+   public ImageProcessor getPowerSpectrum_noScaling () throws IllegalArgumentException {
       if (!isFrequencyDomain_)
          throw new  IllegalArgumentException("Frequency domain image required");
       int base;
