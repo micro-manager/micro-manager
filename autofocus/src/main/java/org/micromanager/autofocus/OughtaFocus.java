@@ -64,6 +64,7 @@ import org.micromanager.Studio;
 import static org.micromanager.autofocus.OughtaFocus.getMonochromePixels;
 import static org.micromanager.autofocus.OughtaFocus.makeMonochromeProcessor;
 import org.micromanager.autofocus.internal.FHT_NoScaling;
+import org.micromanager.autofocus.internal.FocusAnalysis;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 import org.micromanager.internal.utils.MDUtils;
@@ -150,7 +151,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    private long startTimeMs_;
    private double startZUm_;
    private boolean liveModeOn_;
-   private final String[] SCORINGMETHODS = (String[]) Arrays.asList(Score.Method.values()).stream().map((method) -> { return method.name(); }).collect(Collectors.toList()).toArray();
+   private final String[] SCORINGMETHODS = (String[]) Arrays.asList(FocusAnalysis.Method.values()).stream().map((method) -> { return method.name(); }).collect(Collectors.toList()).toArray();
 
    public OughtaFocus() {
       super.createProperty(SEARCH_RANGE, NumberUtils.doubleToDisplayString(searchRange));
@@ -187,7 +188,6 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
 
    @Override
    public double fullFocus() throws Exception {
-      startTimeMs_ = System.currentTimeMillis();
       applySettings();
       Rectangle oldROI = studio_.core().getROI();
       CMMCore core = studio_.getCMMCore();
@@ -229,61 +229,6 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
       return z;
    }
 
-   private static class LocalException extends RuntimeException {
-     // The x value that caused the problem.
-     private final double x_;
-     private final Exception ex_;
-
-     public LocalException(double x, Exception ex) {
-         x_ = x;
-         ex_ = ex;
-     }
-
-     public double getX() {
-         return x_;
-     }
-     
-     public Exception getException() {
-        return ex_;
-     } 
- }
-   
-   public static ImageProcessor makeMonochromeProcessor(CMMCore core, Object pixels) {
-      int w = (int) core.getImageWidth();
-      int h = (int) core.getImageHeight();
-      if (pixels instanceof byte[]) {
-         return new ByteProcessor(w, h, (byte[]) pixels, null);
-      } else if (pixels instanceof short[]) {
-         return new ShortProcessor(w, h, (short[]) pixels, null);
-      } else {
-         return null;
-      }
-   }
-
-   public static Object getMonochromePixels(TaggedImage image) throws JSONException, Exception {
-      if (MDUtils.isRGB32(image)) {
-         final byte[][] planes = ImageUtils.getColorPlanesFromRGB32((byte[]) image.pix);
-         final int numPixels = planes[0].length;
-         byte[] monochrome = new byte[numPixels];
-         for (int j=0;j<numPixels;++j) {
-            monochrome[j] = (byte) ((planes[0][j] + planes[1][j] + planes[2][j]) / 3);
-         }
-         return monochrome;
-      } else if (MDUtils.isRGB64(image)) {
-         final short[][] planes = ImageUtils.getColorPlanesFromRGB64((short[]) image.pix);
-         final int numPixels = planes[0].length;
-         short[] monochrome = new short[numPixels];
-         for (int j=0;j<numPixels;++j) {
-            monochrome[j] = (short) ((planes[0][j] + planes[1][j] + planes[2][j]) / 3);
-         }
-         return monochrome;
-      } else {
-         return image.pix;  // Presumably already a gray image.
-      }
-   }
-
-
-
    @Override
    public double incrementalFocus() throws Exception {
       throw new UnsupportedOperationException("Not supported yet.");
@@ -323,8 +268,8 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    
    @Override
    public double computeScore(final ImageProcessor proc) {
-      Score.Method method = Score.Method.valueOf(scoringMethod);
-      return Score.compute(method, proc);
+      FocusAnalysis.Method method = FocusAnalysis.Method.valueOf(scoringMethod);
+      return FocusAnalysis.compute(method, proc);
    }
    
    @Override
@@ -389,17 +334,28 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
 
 
 class AutoFocusManager {
+   private static final double BRENT_RELATIVE_TOLERANCE = 1e-9;
+   private double absTolerance;
+   private int imageCount_;
    private final Studio studio_;
+   private long startTimeMs_;
    
    public AutoFocusManager(Studio studio) {
       studio_ = studio;
    }
+   
+   public int getImageCount() {
+      return imageCount_;
+   }
+   
    private double runAutofocusAlgorithm() throws Exception {
+      startTimeMs_ = System.currentTimeMillis();
+
       UnivariateFunction scoreFun = (double d) -> {
          try {
             return measureFocusScore(d);
          } catch (Exception e) {
-            throw new OughtaFocus.LocalException(d, e);
+            throw new LocalException(d, e);
          }
       };
       
@@ -412,7 +368,7 @@ class AutoFocusManager {
 
       CMMCore core = studio_.getCMMCore();
       double z = core.getPosition(core.getFocusDevice());
-      startZUm_ = z;
+      double startZUm = z;
       
       UnivariatePointValuePair result = brentOptimizer.optimize(uof, 
               GoalType.MAXIMIZE,
@@ -420,7 +376,7 @@ class AutoFocusManager {
               new SearchInterval(z - searchRange / 2, z + searchRange / 2));
       studio_.logs().logMessage("OughtaFocus Iterations: " + brentOptimizer.getIterations()
               + ", z=" + TextUtils.FMT2.format(result.getPoint())
-              + ", dz=" + TextUtils.FMT2.format(result.getPoint() - startZUm_)
+              + ", dz=" + TextUtils.FMT2.format(result.getPoint() - startZUm)
               + ", t=" + (System.currentTimeMillis() - startTimeMs_));
       return result.getPoint();
    }
@@ -432,7 +388,7 @@ class AutoFocusManager {
       core.waitForDevice(focusDevice);
    }
    
-      public double measureFocusScore(double z) throws Exception {
+   public double measureFocusScore(double z) throws Exception {
       CMMCore core = studio_.getCMMCore();
       long start = System.currentTimeMillis();
       try {
@@ -440,24 +396,21 @@ class AutoFocusManager {
          long tZ = System.currentTimeMillis() - start;
 
          TaggedImage img;
-         if (liveModeOn_) {
-            img = core.getLastTaggedImage();
-         } else {
-            core.waitForDevice(core.getCameraDevice());
-            core.snapImage();
-            final TaggedImage img1 = core.getTaggedImage();
-            img = img1;
-            if (show.contentEquals("Yes")) {
-               SwingUtilities.invokeLater(() -> {
-                  try {
-                     studio_.live().displayImage(studio_.data().convertTaggedImage(img1));
-                  }
-                  catch (JSONException | IllegalArgumentException e) {
-                     studio_.logs().showError(e);
-                  }
-               });
-            }
+         core.waitForDevice(core.getCameraDevice());
+         core.snapImage();
+         final TaggedImage img1 = core.getTaggedImage();
+         img = img1;
+         if (show.contentEquals("Yes")) {
+            SwingUtilities.invokeLater(() -> {
+               try {
+                  studio_.live().displayImage(studio_.data().convertTaggedImage(img1));
+               }
+               catch (JSONException | IllegalArgumentException e) {
+                  studio_.logs().showError(e);
+               }
+            });
          }
+
          long tI = System.currentTimeMillis() - start - tZ;
          ImageProcessor proc = makeMonochromeProcessor(core, getMonochromePixels(img));
          double score = computeScore(proc);
@@ -473,258 +426,57 @@ class AutoFocusManager {
          throw e;
       }
    }
-}
+      
+   private static class LocalException extends RuntimeException {
+      // The x value that caused the problem.
+      private final double x_;
+      private final Exception ex_;
 
-
-class Score {
-   public enum Method {
-      Edges, StdDev, Mean, 
-      NormalizedVariance, SharpEdges, Redondo, Volath, Volath5, 
-      MedianEdges, Tenengrad, FFTBandpas;
-   }
-    
-   private static double compute(Method method, ImageProcessor proc) {
-      double score;
-      switch (method) {
-         case Edges:
-            score = computeEdges(proc);
-            break;
-         case StdDev:
-            score = computeNormalizedStdDev(proc);
-            break;
-         case Mean:
-            score = computeMean(proc);
-            break;
-         case NormalizedVariance:
-            score = computeNormalizedVariance(proc);
-            break;
-         case SharpEdges:
-            score = computeSharpEdges(proc);
-            break;
-         case Redondo:
-            score = computeRedondo(proc);
-            break;
-         case Volath:
-            score = computeVolath(proc);
-            break;
-         case Volath5:
-            score = computeVolath5(proc);
-            break;
-         case MedianEdges:
-            score = computeMedianEdges(proc);
-            break;
-         case Tenengrad:
-            score = computeTenengrad(proc);
-            break;
-         case FFTBandpas:
-            score = computeFFTBandpass(proc);
-            break;
-         default:
-            throw new AssertionError(method.name());
-      }
-      return score;
-   }
-    
-   private static double computeEdges(ImageProcessor proc) {
-      // mean intensity for the original image
-      double meanIntensity = proc.getStatistics().mean;
-      ImageProcessor proc1 = proc.duplicate();
-      // mean intensity of the edge map
-      proc1.findEdges();
-      double meanEdge = proc1.getStatistics().mean;
-
-      return meanEdge / meanIntensity;
-   }
-
-   private static double computeSharpEdges(ImageProcessor proc) {
-      // mean intensity for the original image
-      double meanIntensity = proc.getStatistics().mean;
-      ImageProcessor proc1 = proc.duplicate();
-      // mean intensity of the edge map
-      proc1.sharpen();
-      proc1.findEdges();
-      double meanEdge = proc1.getStatistics().mean;
-
-      return meanEdge / meanIntensity;
-   }
-
-   private static double computeMean(ImageProcessor proc) {
-      return proc.getStatistics().mean;
-   }
-
-   private static double computeNormalizedStdDev(ImageProcessor proc) {
-      ImageStatistics stats = proc.getStatistics();
-      return stats.stdDev / stats.mean;
-   }
-
-   private static double computeNormalizedVariance(ImageProcessor proc) {
-      ImageStatistics stats = proc.getStatistics();
-      return (stats.stdDev * stats.stdDev) / stats.mean;
-   }
-
-   
-   // this is NOT a traditional Laplace filter; the "center" weight is
-   // actually the bottom-center cell of the 3x3 matrix.  AFAICT it's a
-   // typo in the source paper, but works better than the traditional
-   // Laplace filter.
-   //
-   // Redondo R, Bueno G, Valdiviezo J et al.  "Autofocus evaluation for
-   // brightfield microscopy pathology", J Biomed Opt 17(3) 036008 (2012)
-   //
-   // from
-   //
-   // Russel M, Douglas T.  "Evaluation of autofocus algorithms for
-   // tuberculosis microscopy". Proc 29th International Conference of the
-   // IEEE EMBS, Lyon, 3489-3492 (22-26 Aug 2007)
-   private static double computeRedondo(ImageProcessor proc) {
-      int h = proc.getHeight();
-      int w = proc.getWidth();
-      double sum = 0.0;
-
-      for (int i = 1; i < w - 1; ++i) {
-         for (int j = 1; j < h - 1; ++j) {
-            double p = proc.getPixel(i - 1, j)
-                    + proc.getPixel(i + 1, j)
-                    + proc.getPixel(i, j - 1)
-                    + proc.getPixel(i, j + 1)
-                    - 4 * (proc.getPixel(i - 1, j));
-            sum += (p * p);
-         }
+      public LocalException(double x, Exception ex) {
+         x_ = x;
+         ex_ = ex;
       }
 
-      return sum;
-   }
-
-     
-   /**
-    * From "Autofocusing Algorithm Selection in Computer Microscopy" 
-    * (doi: 10.1109/IROS.2005.1545017). 
-    * 2016 paper (doi:10.1038/nbt.3708) concludes this is best  most 
-    * non-spectral metric for their light sheet microscopy application
-    * @author Jon
-    */
-   private static double computeTenengrad(ImageProcessor proc) {
-      int h = proc.getHeight();
-      int w = proc.getWidth();
-      double sum = 0.0;
-      int[] ken1 = {-1, 0, 1, -2, 0, 2, -1, 0, 1};
-      int[] ken2 = {1, 2, 1, 0, 0, 0, -1, -2, -1};
-
-      ImageProcessor proc2 = proc.duplicate();
-      proc.convolve3x3(ken1);
-      proc2.convolve3x3(ken2);
-      for (int i=0; i<w; i++){
-         for (int j=0; j<h; j++){
-            sum += Math.pow(proc.getPixel(i,j),2) + Math.pow(proc2.getPixel(i, j), 2);
-         }
+      public double getX() {
+         return x_;
       }
-      return sum;
+
+      public Exception getException() {
+         return ex_;
+      } 
    }
    
-   // Volath's 1D autocorrelation
-   // Volath  D., "The influence of the scene parameters and of noise on
-   // the behavior of automatic focusing algorithms,"
-   // J. Microsc. 151, (2), 133-146 (1988).
-   private static double computeVolath(ImageProcessor proc) {
-      int h = proc.getHeight();
-      int w = proc.getWidth();
-      double sum1 = 0.0;
-      double sum2 = 0.0;
-
-      for (int i = 1; i < w - 1; ++i) {
-         for (int j = 0; j < h; ++j) {
-            sum1 += proc.getPixel(i, j) * proc.getPixel(i + 1, j);
-         }
+   public static ImageProcessor makeMonochromeProcessor(CMMCore core, Object pixels) {
+      int w = (int) core.getImageWidth();
+      int h = (int) core.getImageHeight();
+      if (pixels instanceof byte[]) {
+         return new ByteProcessor(w, h, (byte[]) pixels, null);
+      } else if (pixels instanceof short[]) {
+         return new ShortProcessor(w, h, (short[]) pixels, null);
+      } else {
+         return null;
       }
-
-      for (int i = 0; i < w - 2; ++i) {
-         for (int j = 0; j < h; ++j) {
-            sum2 += proc.getPixel(i, j) * proc.getPixel(i + 2, j);
-         }
-      }
-
-      return (sum1 - sum2);
    }
 
-   // Volath 5 - smooths out high-frequency (suppresses noise)
-   // Volath  D., "The influence of the scene parameters and of noise on
-   // the behavior of automatic focusing algorithms,"
-   // J. Microsc. 151, (2), 133-146 (1988).
-   private static double computeVolath5(ImageProcessor proc) {
-      int h = proc.getHeight();
-      int w = proc.getWidth();
-      double sum = 0.0;
-
-      for (int i = 0; i < w - 1; ++i) {
-         for (int j = 0; j < h; ++j) {
-            sum += proc.getPixel(i, j) * proc.getPixel(i + 1, j);
+   public static Object getMonochromePixels(TaggedImage image) throws JSONException, Exception {
+      if (MDUtils.isRGB32(image)) {
+         final byte[][] planes = ImageUtils.getColorPlanesFromRGB32((byte[]) image.pix);
+         final int numPixels = planes[0].length;
+         byte[] monochrome = new byte[numPixels];
+         for (int j=0;j<numPixels;++j) {
+            monochrome[j] = (byte) ((planes[0][j] + planes[1][j] + planes[2][j]) / 3);
          }
-      }
-
-      ImageStatistics stats = proc.getStatistics();
-
-      sum -= ((w - 1) * h * stats.mean * stats.mean);
-      return sum;
-   }
-   
-   
- /**
-    * Modified version of the algorithm used by the AutoFocus JAF(H&P) code
-    * in Micro-Manager's Autofocus.java by Pakpoom Subsoontorn & Hernan Garcia.
-    * Looks for diagonal edges in both directions, then combines them (RMS).
-    * (Original algorithm only looked for edges in one diagonal direction).
-    * Similar to Edges algorithm except it does no normalization by original
-    * intensity and adds a median filter before edge detection.
-    * @author Jon
-    */
-   private static double computeMedianEdges(ImageProcessor proc) {
-      int h = proc.getHeight();
-      int w = proc.getWidth();
-      double sum = 0.0;
-      int[] ken1 = {2, 1, 0, 1, 0, -1, 0, -1, -2};
-      int[] ken2 = {0, 1, 2, -1, 0, 1, -2, -1, 0};
-
-      proc.medianFilter();    // 3x3 median filter
-      ImageProcessor proc2 = proc.duplicate();
-      proc.convolve3x3(ken1);
-      proc2.convolve3x3(ken2);
-      for (int i=0; i<w; i++){
-         for (int j=0; j<h; j++){
-            sum += Math.sqrt(Math.pow(proc.getPixel(i,j),2) + Math.pow(proc2.getPixel(i, j), 2));
+         return monochrome;
+      } else if (MDUtils.isRGB64(image)) {
+         final short[][] planes = ImageUtils.getColorPlanesFromRGB64((short[]) image.pix);
+         final int numPixels = planes[0].length;
+         short[] monochrome = new short[numPixels];
+         for (int j=0;j<numPixels;++j) {
+            monochrome[j] = (short) ((planes[0][j] + planes[1][j] + planes[2][j]) / 3);
          }
-      }
-      return sum;
-   }
-
-   /**
-    * Per suggestion of William "Bill" Mohler @ UConn.  Returns the power in a
-    * specified band of spatial frequencies via the FFT.  Key according to Bill is
-    * to use an unscaled FFT, so this is provided using a modified ImageJ class.
-    * @author Jon
-    */
-   private static double computeFFTBandpass(ImageProcessor proc) {
-      try {
-         // gets power spectrum (FFT) without scaling result
-         FHT_NoScaling myFHT = new FHT_NoScaling(proc);
-         myFHT.transform();
-         ImageProcessor ps = myFHT.getPowerSpectrum_noScaling();
-         int midpoint = ps.getHeight()/2;
-         final int scaled_lower = (int) Math.round(fftLowerCutoff/100*midpoint);
-         final int start_lower = Math.round(midpoint-scaled_lower);
-         final int scaled_upper = (int) Math.round(fftUpperCutoff/100*midpoint);
-         final int start_upper = Math.round(midpoint-scaled_upper);
-         OvalRoi innerCutoff = new OvalRoi(start_lower, start_lower,
-               2*scaled_lower+1, 2*scaled_lower+1);
-         OvalRoi outerCutoff = new OvalRoi(start_upper, start_upper,
-               2*scaled_upper+1, 2*scaled_upper+1);
-         ps.setColor(0);
-         ps.fillOutside(outerCutoff);
-         ps.fill(innerCutoff);
-         ps.setRoi(outerCutoff);
-         return ps.getStatistics().mean;
-      } catch (Exception e) {
-         studio_.logs().logError(e);
-         return 0;
+         return monochrome;
+      } else {
+         return image.pix;  // Presumably already a gray image.
       }
    }
 }
