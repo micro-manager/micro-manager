@@ -29,19 +29,12 @@
 //CVS:            $Id: MetadataDlg.java 1275 2008-06-03 21:31:24Z nenad $
 package org.micromanager.autofocus;
 
-import ij.gui.OvalRoi;
 import ij.process.ByteProcessor;
-import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
-import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
 
 import java.awt.Rectangle;
 import java.text.ParseException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 import javax.swing.SwingUtilities;
 
 import mmcorej.CMMCore;
@@ -61,9 +54,6 @@ import mmcorej.org.json.JSONException;
 
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
-import static org.micromanager.autofocus.OughtaFocus.getMonochromePixels;
-import static org.micromanager.autofocus.OughtaFocus.makeMonochromeProcessor;
-import org.micromanager.autofocus.internal.FHT_NoScaling;
 import org.micromanager.autofocus.internal.FocusAnalysis;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.imageanalysis.ImageUtils;
@@ -138,6 +128,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    // correctly.
    private static final double BRENT_RELATIVE_TOLERANCE = 1e-9;
 
+   private final FocusAnalysis fcsAnalysis = new FocusAnalysis();
    private double searchRange = 10;
    private double absTolerance = 1.0;
    private double cropFactor = 1;
@@ -145,23 +136,23 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    private double exposure = 100;
    private String show = "No";
    private String scoringMethod = "Edges";
-   private double fftUpperCutoff = 14;
-   private double fftLowerCutoff = 2.5;
    private int imageCount_;
    private long startTimeMs_;
    private double startZUm_;
    private boolean liveModeOn_;
-   private final String[] SCORINGMETHODS = (String[]) Arrays.asList(FocusAnalysis.Method.values()).stream().map((method) -> { return method.name(); }).collect(Collectors.toList()).toArray();
 
    public OughtaFocus() {
       super.createProperty(SEARCH_RANGE, NumberUtils.doubleToDisplayString(searchRange));
       super.createProperty(TOLERANCE, NumberUtils.doubleToDisplayString(absTolerance));
       super.createProperty(CROP_FACTOR, NumberUtils.doubleToDisplayString(cropFactor));
       super.createProperty(EXPOSURE, NumberUtils.doubleToDisplayString(exposure));
-      super.createProperty(FFT_LOWER_CUTOFF, NumberUtils.doubleToDisplayString(fftLowerCutoff));
-      super.createProperty(FFT_UPPER_CUTOFF, NumberUtils.doubleToDisplayString(fftUpperCutoff));
+      super.createProperty(FFT_LOWER_CUTOFF, NumberUtils.doubleToDisplayString(fcsAnalysis.getFFTLowerCutoff()));
+      super.createProperty(FFT_UPPER_CUTOFF, NumberUtils.doubleToDisplayString(fcsAnalysis.getFFTUpperCutoff()));
       super.createProperty(SHOW_IMAGES, show, SHOWVALUES);
-      super.createProperty(SCORING_METHOD, scoringMethod, SCORINGMETHODS);
+      super.createProperty(SCORING_METHOD, 
+              fcsAnalysis.getComputationMethod().name(), 
+              FocusAnalysis.Method.getNames()
+      );
       super.createProperty(CHANNEL, "");
    }
 

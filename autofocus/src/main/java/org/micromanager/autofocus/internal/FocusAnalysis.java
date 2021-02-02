@@ -8,6 +8,7 @@ package org.micromanager.autofocus.internal;
 import ij.gui.OvalRoi;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
+import java.util.Arrays;
 
 /**
  *
@@ -22,6 +23,10 @@ public class FocusAnalysis {
       Edges, StdDev, Mean, 
       NormalizedVariance, SharpEdges, Redondo, Volath, Volath5, 
       MedianEdges, Tenengrad, FFTBandpas;
+      
+      public static String[] getNames() {
+         return Arrays.stream(Method.class.getEnumConstants()).map(Enum::name).toArray(String[]::new);
+      }
    }
    
    public void setFFTCutoff(double fftLowerCutoff, double fftUpperCutoff) {
@@ -29,8 +34,20 @@ public class FocusAnalysis {
       fftUpper_ = fftUpperCutoff;
    }
    
+   public double getFFTLowerCutoff() {
+      return fftLower_;
+   }
+   
+   public double getFFTUpperCutoff() {
+      return fftUpper_;
+   }
+   
    public void setComputationMethod(Method method) {
       method_ = method;
+   }
+   
+   public Method getComputationMethod() {
+      return method_;
    }
     
    public double compute(ImageProcessor proc) {
@@ -58,7 +75,7 @@ public class FocusAnalysis {
          case FFTBandpas:
             return computeFFTBandpass(proc, fftLower_, fftUpper_);
          default:
-            throw new AssertionError(method.name());
+            throw new AssertionError(method_.name());
       }
    }
     
