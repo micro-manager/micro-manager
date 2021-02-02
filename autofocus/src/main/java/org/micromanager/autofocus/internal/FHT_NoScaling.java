@@ -27,7 +27,7 @@
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 //CVS:            $Id: MetadataDlg.java 1275 2008-06-03 21:31:24Z nenad $
-package org.micromanager.autofocus.OughtaFocusInternal;
+package org.micromanager.autofocus.internal;
 
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
