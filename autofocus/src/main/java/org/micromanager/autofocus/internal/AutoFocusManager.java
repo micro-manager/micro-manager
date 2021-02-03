@@ -33,6 +33,7 @@ package org.micromanager.autofocus.internal;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import java.util.function.Function;
 import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
@@ -104,6 +105,11 @@ public class AutoFocusManager {
    private boolean displayImages_ = false;
    private double searchRange_ = 10;
    private double absoluteTolerance_ = 1.0;
+   private final Function<ImageProcessor, Double> evalFunc_;
+   
+   public AutoFocusManager(Function<ImageProcessor, Double> func) {
+      evalFunc_ = func;
+   }
    
    public void setContext(Studio studio) {
       studio_ = studio;
@@ -170,7 +176,7 @@ public class AutoFocusManager {
       return result.getPoint();
    }
 
-   public double measureFocusScore(double z) throws Exception {
+   private double measureFocusScore(double z) throws Exception {
       CMMCore core = studio_.getCMMCore();
       long start = System.currentTimeMillis();
       try {
@@ -196,7 +202,7 @@ public class AutoFocusManager {
 
          long tI = System.currentTimeMillis() - start - tZ;
          ImageProcessor proc = makeMonochromeProcessor(core, getMonochromePixels(img));
-         double score = computeScore(proc);
+         double score = evalFunc_.apply(proc);
          long tC = System.currentTimeMillis() - start - tZ - tI;
          studio_.logs().logMessage("OughtaFocus: image=" + imageCount_++
                  + ", t=" + (System.currentTimeMillis() - startTimeMs_)
@@ -229,7 +235,7 @@ public class AutoFocusManager {
       } 
    }
    
-   public static ImageProcessor makeMonochromeProcessor(CMMCore core, Object pixels) {
+   private static ImageProcessor makeMonochromeProcessor(CMMCore core, Object pixels) {
       int w = (int) core.getImageWidth();
       int h = (int) core.getImageHeight();
       if (pixels instanceof byte[]) {
@@ -241,7 +247,7 @@ public class AutoFocusManager {
       }
    }
 
-   public static Object getMonochromePixels(TaggedImage image) throws JSONException, Exception {
+   private static Object getMonochromePixels(TaggedImage image) throws JSONException, Exception {
       if (MDUtils.isRGB32(image)) {
          final byte[][] planes = ImageUtils.getColorPlanesFromRGB32((byte[]) image.pix);
          final int numPixels = planes[0].length;

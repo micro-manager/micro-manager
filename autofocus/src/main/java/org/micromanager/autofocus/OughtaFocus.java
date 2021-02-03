@@ -73,7 +73,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    private final static String FFT_LOWER_CUTOFF = "FFTLowerCutoff(%)";
 
    private final FocusAnalysis fcsAnalysis = new FocusAnalysis();
-   private final AutoFocusManager afOptimizer= new AutoFocusManager();
+   private final AutoFocusManager afOptimizer;
 
    private String channel = "";
    private double exposure = 100;
@@ -82,6 +82,10 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
 
 
    public OughtaFocus() {
+      afOptimizer = new AutoFocusManager(
+              (proc) -> { return fcsAnalysis.compute(proc); } 
+      );
+      
       super.createProperty(SEARCH_RANGE, NumberUtils.doubleToDisplayString(afOptimizer.getSearchRange()));
       super.createProperty(TOLERANCE, NumberUtils.doubleToDisplayString(afOptimizer.getAbsoluteTolerance()));
       super.createProperty(CROP_FACTOR, NumberUtils.doubleToDisplayString(cropFactor));
