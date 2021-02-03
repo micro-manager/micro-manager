@@ -38,7 +38,6 @@ import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONException;
-import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.optim.MaxEval;
 import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
 import org.apache.commons.math3.optim.univariate.BrentOptimizer;
@@ -51,11 +50,14 @@ import org.micromanager.internal.utils.TextUtils;
 import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 
 /**
- *
+ * This class uses the Brent Method alongside control of MMStudio's default camera
+ * and Z-stage to perform autofocusing. The Brent Method optimizer will try to maximize
+ * the value returned by the `imgScoringFunction` so this function should return
+ * larger values as the image sharpness increases.
+ * 
  * @author Nick Anthony
  */
-
-public class MMBrentOptimizer {
+public class BrentFocuser {
    // Note on the tolerance settings for the Brent optimizer:
    //
    // The reason BrentOptimizer needs both a relative and absolute tolerance
@@ -105,16 +107,26 @@ public class MMBrentOptimizer {
    private boolean displayImages_ = false;
    private double searchRange_ = 10;
    private double absoluteTolerance_ = 1.0;
-   private final Function<ImageProcessor, Double> evalFunc_;
+   private final Function<ImageProcessor, Double> imgScoringFunction_;
    
-   public MMBrentOptimizer(Function<ImageProcessor, Double> func) {
-      evalFunc_ = func;
+   /**
+    * 
+    * @param imgScoringFunction A function that takes an ImageJ `ImageProcessor`
+    *    and returns a double indicating a measure of the images sharpness. A larger
+    *    value indicates a sharper image.
+    */
+   public BrentFocuser(Function<ImageProcessor, Double> imgScoringFunction) {
+      imgScoringFunction_ = imgScoringFunction;
    }
    
    public void setContext(Studio studio) {
       studio_ = studio;
    }
    
+   /**
+    * 
+    * @param display If `true` then the images taken by the focuser will be displayed in real-time.
+    */
    public void setDisplayImages(boolean display) {
       displayImages_ = display;
    }
@@ -202,7 +214,7 @@ public class MMBrentOptimizer {
 
          long tI = System.currentTimeMillis() - start - tZ;
          ImageProcessor proc = makeMonochromeProcessor(core, getMonochromePixels(img));
-         double score = evalFunc_.apply(proc);
+         double score = imgScoringFunction_.apply(proc);
          long tC = System.currentTimeMillis() - start - tZ - tI;
          studio_.logs().logMessage("OughtaFocus: image=" + imageCount_++
                  + ", t=" + (System.currentTimeMillis() - startTimeMs_)

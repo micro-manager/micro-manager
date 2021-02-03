@@ -39,7 +39,7 @@ import mmcorej.StrVector;
 import mmcorej.TaggedImage;
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
-import org.micromanager.autofocus.internal.MMBrentOptimizer;
+import org.micromanager.autofocus.internal.BrentFocuser;
 import org.micromanager.autofocus.internal.ImgSharpnessAnalysis;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.imageanalysis.ImageUtils;
@@ -69,7 +69,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    private final static String FFT_LOWER_CUTOFF = "FFTLowerCutoff(%)";
 
    private final ImgSharpnessAnalysis fcsAnalysis_ = new ImgSharpnessAnalysis();
-   private final MMBrentOptimizer afOptimizer_;
+   private final BrentFocuser afOptimizer_;
 
    private String channel_ = "";
    private double exposure_ = 100;
@@ -78,7 +78,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
 
 
    public OughtaFocus() {
-      afOptimizer_ = new MMBrentOptimizer(
+      afOptimizer_ = new BrentFocuser(
               (proc) -> { return fcsAnalysis_.compute(proc); } 
       );
       
