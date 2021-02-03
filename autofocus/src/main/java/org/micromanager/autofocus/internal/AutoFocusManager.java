@@ -99,13 +99,13 @@ public class AutoFocusManager {
    // correctly.
    private static final double BRENT_RELATIVE_TOLERANCE = 1e-9;
    private int imageCount_;
-   private final Studio studio_;
+   private Studio studio_;
    private long startTimeMs_;
    private boolean displayImages_ = false;
    private double searchRange_ = 10;
    private double absoluteTolerance_ = 1.0;
    
-   public AutoFocusManager(Studio studio) {
+   public void setContext(Studio studio) {
       studio_ = studio;
    }
    

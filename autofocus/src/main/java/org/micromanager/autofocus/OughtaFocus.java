@@ -69,12 +69,11 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    private static final String SHOW_IMAGES = "ShowImages";
    private static final String SCORING_METHOD = "Maximize";
    private static final String[] SHOWVALUES = {"Yes", "No"};
-
    private final static String FFT_UPPER_CUTOFF = "FFTUpperCutoff(%)";
    private final static String FFT_LOWER_CUTOFF = "FFTLowerCutoff(%)";
 
    private final FocusAnalysis fcsAnalysis = new FocusAnalysis();
-   private AutoFocusManager afOptimizer;
+   private final AutoFocusManager afOptimizer= new AutoFocusManager();
 
    private String channel = "";
    private double exposure = 100;
@@ -208,7 +207,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    public void setContext(Studio app) {
       studio_ = app;
       studio_.events().registerForEvents(this);
-      afOptimizer = new AutoFocusManager(studio_);
+      afOptimizer.setContext(studio_);
    }
 
    @Override
