@@ -43,6 +43,7 @@ import mmcorej.TaggedImage;
 
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
+import org.micromanager.autofocus.internal.AutoFocusManager;
 import org.micromanager.autofocus.internal.FocusAnalysis;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.imageanalysis.ImageUtils;
@@ -73,22 +74,20 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    private final static String FFT_LOWER_CUTOFF = "FFTLowerCutoff(%)";
 
    private final FocusAnalysis fcsAnalysis = new FocusAnalysis();
-   private double searchRange = 10;
-   private double absTolerance = 1.0;
-   private double cropFactor = 1;
+   private AutoFocusManager afOptimizer;
+
    private String channel = "";
    private double exposure = 100;
-   private String show = "No";
-   private int imageCount_;
+   private boolean displayImages_ = false;
 
    public OughtaFocus() {
-      super.createProperty(SEARCH_RANGE, NumberUtils.doubleToDisplayString(searchRange));
-      super.createProperty(TOLERANCE, NumberUtils.doubleToDisplayString(absTolerance));
+      super.createProperty(SEARCH_RANGE, NumberUtils.doubleToDisplayString(afOptimizer.getSearchRange()));
+      super.createProperty(TOLERANCE, NumberUtils.doubleToDisplayString(afOptimizer.getAbsoluteTolerance()));
       super.createProperty(CROP_FACTOR, NumberUtils.doubleToDisplayString(cropFactor));
       super.createProperty(EXPOSURE, NumberUtils.doubleToDisplayString(exposure));
       super.createProperty(FFT_LOWER_CUTOFF, NumberUtils.doubleToDisplayString(fcsAnalysis.getFFTLowerCutoff()));
       super.createProperty(FFT_UPPER_CUTOFF, NumberUtils.doubleToDisplayString(fcsAnalysis.getFFTUpperCutoff()));
-      super.createProperty(SHOW_IMAGES, show, SHOWVALUES);
+      super.createProperty(SHOW_IMAGES, SHOWVALUES[1], SHOWVALUES);
       super.createProperty(SCORING_METHOD, 
               fcsAnalysis.getComputationMethod().name(), 
               FocusAnalysis.Method.getNames()
@@ -99,8 +98,8 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    @Override
    public void applySettings() {
       try {
-         searchRange = NumberUtils.displayStringToDouble(getPropertyValue(SEARCH_RANGE));
-         absTolerance = NumberUtils.displayStringToDouble(getPropertyValue(TOLERANCE));
+         afOptimizer.setSearchRange(NumberUtils.displayStringToDouble(getPropertyValue(SEARCH_RANGE)));
+         afOptimizer.setAbsoluteTolerance(NumberUtils.displayStringToDouble(getPropertyValue(TOLERANCE)));
          cropFactor = NumberUtils.displayStringToDouble(getPropertyValue(CROP_FACTOR));
          cropFactor = clip(0.01, cropFactor, 1.0);
          channel = getPropertyValue(CHANNEL);
@@ -110,8 +109,9 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
          double fftUpperCutoff = NumberUtils.displayStringToDouble(getPropertyValue(FFT_UPPER_CUTOFF));
          fftUpperCutoff = clip(0.0, fftUpperCutoff, 100.0);
          fcsAnalysis.setFFTCutoff(fftLowerCutoff, fftUpperCutoff);
-         show = getPropertyValue(SHOW_IMAGES);
          fcsAnalysis.setComputationMethod(FocusAnalysis.Method.valueOf(getPropertyValue(SCORING_METHOD)));
+         displayImages_ = getPropertyValue(SHOW_IMAGES).contentEquals("Yes");
+         afOptimizer.setDisplayImages(displayImages_);
       } catch (MMException | ParseException ex) {
          studio_.logs().logError(ex);
       }
@@ -166,7 +166,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
 
    @Override
    public int getNumberOfImages() {
-      return imageCount_;
+      return afOptimizer.getImageCount();
    }
 
    @Override
@@ -183,7 +183,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
          core.waitForDevice(core.getCameraDevice());
          core.snapImage();
          TaggedImage img = core.getTaggedImage();
-         if (show.contentEquals("Yes")) {
+         if (displayImages_) {
             studio_.live().displayImage(studio_.data().convertTaggedImage(img));
          }
          ImageProcessor proc = ImageUtils.makeProcessor(core, img);
@@ -205,6 +205,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    public void setContext(Studio app) {
       studio_ = app;
       studio_.events().registerForEvents(this);
+      afOptimizer = new AutoFocusManager(studio_);
    }
 
    @Override

@@ -54,7 +54,7 @@ import org.micromanager.internal.utils.imageanalysis.ImageUtils;
  * @author Nick Anthony
  */
 
-class AutoFocusManager {
+public class AutoFocusManager {
    // Note on the tolerance settings for the Brent optimizer:
    //
    // The reason BrentOptimizer needs both a relative and absolute tolerance
@@ -98,17 +98,44 @@ class AutoFocusManager {
    // relative tolerance in commons-math 2) and appeared to function
    // correctly.
    private static final double BRENT_RELATIVE_TOLERANCE = 1e-9;
-   private double absTolerance;
    private int imageCount_;
    private final Studio studio_;
    private long startTimeMs_;
+   private boolean displayImages_ = false;
+   private double searchRange_ = 10;
+   private double absoluteTolerance_ = 1.0;
+   private double cropFactor_ = 1;
    
    public AutoFocusManager(Studio studio) {
       studio_ = studio;
    }
    
+   public void setDisplayImages(boolean display) {
+      displayImages_ = display;
+   }
+   
+   public boolean getDisplayImages() {
+      return displayImages_;
+   }
+   
    public int getImageCount() {
       return imageCount_;
+   }
+   
+   public void setSearchRange(double searchRange) {
+      searchRange_ = searchRange;
+   }
+   
+   public double getSearchRange() {
+      return searchRange_;
+   }
+   
+   public void setAbsoluteTolerance(double tolerance) {
+      absoluteTolerance_ = tolerance;
+   }
+   
+   public double getAbsoluteTolerance() {
+      return absoluteTolerance_;
    }
    
    private double runAutofocusAlgorithm() throws Exception {
@@ -125,7 +152,7 @@ class AutoFocusManager {
       UnivariateObjectiveFunction uof = new UnivariateObjectiveFunction(scoreFun);
 
       BrentOptimizer brentOptimizer =
-         new BrentOptimizer(BRENT_RELATIVE_TOLERANCE, absTolerance);
+         new BrentOptimizer(BRENT_RELATIVE_TOLERANCE, absoluteTolerance_);
 
       imageCount_ = 0;
 
@@ -136,7 +163,7 @@ class AutoFocusManager {
       UnivariatePointValuePair result = brentOptimizer.optimize(uof, 
               GoalType.MAXIMIZE,
               new MaxEval(100),
-              new SearchInterval(z - searchRange / 2, z + searchRange / 2));
+              new SearchInterval(z - searchRange_ / 2, z + searchRange_ / 2));
       studio_.logs().logMessage("OughtaFocus Iterations: " + brentOptimizer.getIterations()
               + ", z=" + TextUtils.FMT2.format(result.getPoint())
               + ", dz=" + TextUtils.FMT2.format(result.getPoint() - startZUm)
@@ -163,7 +190,7 @@ class AutoFocusManager {
          core.snapImage();
          final TaggedImage img1 = core.getTaggedImage();
          img = img1;
-         if (show.contentEquals("Yes")) {
+         if (displayImages_) {
             SwingUtilities.invokeLater(() -> {
                try {
                   studio_.live().displayImage(studio_.data().convertTaggedImage(img1));
