@@ -30,35 +30,22 @@
 //CVS:            $Id: MetadataDlg.java 1275 2008-06-03 21:31:24Z nenad $
 package org.micromanager.autofocus;
 
-import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
-import ij.process.ShortProcessor;
 
 import java.awt.Rectangle;
 import java.text.ParseException;
-import javax.swing.SwingUtilities;
 
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.StrVector;
 import mmcorej.TaggedImage;
 
-import org.apache.commons.math3.analysis.UnivariateFunction;
-import org.apache.commons.math3.optim.MaxEval;
-import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
-import org.apache.commons.math3.optim.univariate.BrentOptimizer;
-import org.apache.commons.math3.optim.univariate.SearchInterval;
-import org.apache.commons.math3.optim.univariate.UnivariateObjectiveFunction;
-import org.apache.commons.math3.optim.univariate.UnivariatePointValuePair;
-
-import mmcorej.org.json.JSONException;
 
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
 import org.micromanager.autofocus.internal.FocusAnalysis;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.imageanalysis.ImageUtils;
-import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.PropertyItem;
@@ -92,11 +79,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    private String channel = "";
    private double exposure = 100;
    private String show = "No";
-   private String scoringMethod = "Edges";
    private int imageCount_;
-   private long startTimeMs_;
-   private double startZUm_;
-   private boolean liveModeOn_;
 
    public OughtaFocus() {
       super.createProperty(SEARCH_RANGE, NumberUtils.doubleToDisplayString(searchRange));
@@ -122,13 +105,13 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
          cropFactor = clip(0.01, cropFactor, 1.0);
          channel = getPropertyValue(CHANNEL);
          exposure = NumberUtils.displayStringToDouble(getPropertyValue(EXPOSURE));
-         fftLowerCutoff = NumberUtils.displayStringToDouble(getPropertyValue(FFT_LOWER_CUTOFF));
+         double fftLowerCutoff = NumberUtils.displayStringToDouble(getPropertyValue(FFT_LOWER_CUTOFF));
          fftLowerCutoff = clip(0.0, fftLowerCutoff, 100.0);
-         fftUpperCutoff = NumberUtils.displayStringToDouble(getPropertyValue(FFT_UPPER_CUTOFF));
+         double fftUpperCutoff = NumberUtils.displayStringToDouble(getPropertyValue(FFT_UPPER_CUTOFF));
          fftUpperCutoff = clip(0.0, fftUpperCutoff, 100.0);
+         fcsAnalysis.setFFTCutoff(fftLowerCutoff, fftUpperCutoff);
          show = getPropertyValue(SHOW_IMAGES);
-         scoringMethod = getPropertyValue(SCORING_METHOD);
-
+         fcsAnalysis.setComputationMethod(FocusAnalysis.Method.valueOf(getPropertyValue(SCORING_METHOD)));
       } catch (MMException | ParseException ex) {
          studio_.logs().logError(ex);
       }
@@ -139,7 +122,6 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
       applySettings();
       Rectangle oldROI = studio_.core().getROI();
       CMMCore core = studio_.getCMMCore();
-      liveModeOn_ = studio_.live().isLiveModeOn();
 
       //ReportingUtils.logMessage("Original ROI: " + oldROI);
       int w = (int) (oldROI.width * cropFactor);
@@ -216,8 +198,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    
    @Override
    public double computeScore(final ImageProcessor proc) {
-      FocusAnalysis.Method method = FocusAnalysis.Method.valueOf(scoringMethod);
-      return FocusAnalysis.compute(method, proc);
+      return fcsAnalysis.compute(proc);
    }
    
    @Override

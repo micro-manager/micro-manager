@@ -55,7 +55,7 @@ import org.micromanager.internal.utils.imageanalysis.ImageUtils;
  */
 
 class AutoFocusManager {
-      // Note on the tolerance settings for the Brent optimizer:
+   // Note on the tolerance settings for the Brent optimizer:
    //
    // The reason BrentOptimizer needs both a relative and absolute tolerance
    // (the _rel_ and _abs_ arguments to the constructor) is that it is
