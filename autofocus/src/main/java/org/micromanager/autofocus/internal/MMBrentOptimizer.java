@@ -55,7 +55,7 @@ import org.micromanager.internal.utils.imageanalysis.ImageUtils;
  * @author Nick Anthony
  */
 
-public class AutoFocusManager {
+public class MMBrentOptimizer {
    // Note on the tolerance settings for the Brent optimizer:
    //
    // The reason BrentOptimizer needs both a relative and absolute tolerance
@@ -107,7 +107,7 @@ public class AutoFocusManager {
    private double absoluteTolerance_ = 1.0;
    private final Function<ImageProcessor, Double> evalFunc_;
    
-   public AutoFocusManager(Function<ImageProcessor, Double> func) {
+   public MMBrentOptimizer(Function<ImageProcessor, Double> func) {
       evalFunc_ = func;
    }
    
@@ -145,16 +145,16 @@ public class AutoFocusManager {
    
    public double runAutofocusAlgorithm() throws Exception {
       startTimeMs_ = System.currentTimeMillis();
-
-      UnivariateFunction scoreFun = (double d) -> {
-         try {
-            return measureFocusScore(d);
-         } catch (Exception e) {
-            throw new LocalException(d, e);
-         }
-      };
       
-      UnivariateObjectiveFunction uof = new UnivariateObjectiveFunction(scoreFun);
+      UnivariateObjectiveFunction uof = new UnivariateObjectiveFunction(
+         (double d) -> {
+            try {
+               return measureFocusScore(d);
+            } catch (Exception e) {
+               throw new LocalException(d, e);
+            }
+         }
+      );
 
       BrentOptimizer brentOptimizer =
          new BrentOptimizer(BRENT_RELATIVE_TOLERANCE, absoluteTolerance_);

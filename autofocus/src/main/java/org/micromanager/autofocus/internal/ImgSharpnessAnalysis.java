@@ -37,11 +37,11 @@ import java.util.Arrays;
 
 /**
  *
- * @author nick
+ * @author Nick Anthony
  */
-public class FocusAnalysis {
-   private double fftLower_ = 2.5;
-   private double fftUpper_ = 14;
+public class ImgSharpnessAnalysis {
+   private double fftLowerCutoff_ = 2.5;
+   private double fftUpperCutoff_ = 14;
    private Method method_ = Method.Edges;
    
    public enum Method {
@@ -55,16 +55,16 @@ public class FocusAnalysis {
    }
    
    public void setFFTCutoff(double fftLowerCutoff, double fftUpperCutoff) {
-      fftLower_ = fftLowerCutoff;
-      fftUpper_ = fftUpperCutoff;
+      fftLowerCutoff_ = fftLowerCutoff;
+      fftUpperCutoff_ = fftUpperCutoff;
    }
    
    public double getFFTLowerCutoff() {
-      return fftLower_;
+      return fftLowerCutoff_;
    }
    
    public double getFFTUpperCutoff() {
-      return fftUpper_;
+      return fftUpperCutoff_;
    }
    
    public void setComputationMethod(Method method) {
@@ -98,7 +98,7 @@ public class FocusAnalysis {
          case Tenengrad:
             return computeTenengrad(proc);
          case FFTBandpas:
-            return computeFFTBandpass(proc, fftLower_, fftUpper_);
+            return computeFFTBandpass(proc, fftLowerCutoff_, fftUpperCutoff_);
          default:
             throw new AssertionError(method_.name());
       }

@@ -31,20 +31,16 @@
 package org.micromanager.autofocus;
 
 import ij.process.ImageProcessor;
-
 import java.awt.Rectangle;
 import java.text.ParseException;
-
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.StrVector;
 import mmcorej.TaggedImage;
-
-
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
-import org.micromanager.autofocus.internal.AutoFocusManager;
-import org.micromanager.autofocus.internal.FocusAnalysis;
+import org.micromanager.autofocus.internal.MMBrentOptimizer;
+import org.micromanager.autofocus.internal.ImgSharpnessAnalysis;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 import org.micromanager.internal.utils.MMException;
@@ -72,30 +68,30 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    private final static String FFT_UPPER_CUTOFF = "FFTUpperCutoff(%)";
    private final static String FFT_LOWER_CUTOFF = "FFTLowerCutoff(%)";
 
-   private final FocusAnalysis fcsAnalysis = new FocusAnalysis();
-   private final AutoFocusManager afOptimizer;
+   private final ImgSharpnessAnalysis fcsAnalysis_ = new ImgSharpnessAnalysis();
+   private final MMBrentOptimizer afOptimizer_;
 
-   private String channel = "";
-   private double exposure = 100;
+   private String channel_ = "";
+   private double exposure_ = 100;
    private boolean displayImages_ = false;
-   private double cropFactor = 1;
+   private double cropFactor_ = 1;
 
 
    public OughtaFocus() {
-      afOptimizer = new AutoFocusManager(
-              (proc) -> { return fcsAnalysis.compute(proc); } 
+      afOptimizer_ = new MMBrentOptimizer(
+              (proc) -> { return fcsAnalysis_.compute(proc); } 
       );
       
-      super.createProperty(SEARCH_RANGE, NumberUtils.doubleToDisplayString(afOptimizer.getSearchRange()));
-      super.createProperty(TOLERANCE, NumberUtils.doubleToDisplayString(afOptimizer.getAbsoluteTolerance()));
-      super.createProperty(CROP_FACTOR, NumberUtils.doubleToDisplayString(cropFactor));
-      super.createProperty(EXPOSURE, NumberUtils.doubleToDisplayString(exposure));
-      super.createProperty(FFT_LOWER_CUTOFF, NumberUtils.doubleToDisplayString(fcsAnalysis.getFFTLowerCutoff()));
-      super.createProperty(FFT_UPPER_CUTOFF, NumberUtils.doubleToDisplayString(fcsAnalysis.getFFTUpperCutoff()));
+      super.createProperty(SEARCH_RANGE, NumberUtils.doubleToDisplayString(afOptimizer_.getSearchRange()));
+      super.createProperty(TOLERANCE, NumberUtils.doubleToDisplayString(afOptimizer_.getAbsoluteTolerance()));
+      super.createProperty(CROP_FACTOR, NumberUtils.doubleToDisplayString(cropFactor_));
+      super.createProperty(EXPOSURE, NumberUtils.doubleToDisplayString(exposure_));
+      super.createProperty(FFT_LOWER_CUTOFF, NumberUtils.doubleToDisplayString(fcsAnalysis_.getFFTLowerCutoff()));
+      super.createProperty(FFT_UPPER_CUTOFF, NumberUtils.doubleToDisplayString(fcsAnalysis_.getFFTUpperCutoff()));
       super.createProperty(SHOW_IMAGES, SHOWVALUES[1], SHOWVALUES);
       super.createProperty(SCORING_METHOD, 
-              fcsAnalysis.getComputationMethod().name(), 
-              FocusAnalysis.Method.getNames()
+              fcsAnalysis_.getComputationMethod().name(), 
+              ImgSharpnessAnalysis.Method.getNames()
       );
       super.createProperty(CHANNEL, "");
    }
@@ -103,20 +99,20 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    @Override
    public void applySettings() {
       try {
-         afOptimizer.setSearchRange(NumberUtils.displayStringToDouble(getPropertyValue(SEARCH_RANGE)));
-         afOptimizer.setAbsoluteTolerance(NumberUtils.displayStringToDouble(getPropertyValue(TOLERANCE)));
-         cropFactor = NumberUtils.displayStringToDouble(getPropertyValue(CROP_FACTOR));
-         cropFactor = clip(0.01, cropFactor, 1.0);
-         channel = getPropertyValue(CHANNEL);
-         exposure = NumberUtils.displayStringToDouble(getPropertyValue(EXPOSURE));
+         afOptimizer_.setSearchRange(NumberUtils.displayStringToDouble(getPropertyValue(SEARCH_RANGE)));
+         afOptimizer_.setAbsoluteTolerance(NumberUtils.displayStringToDouble(getPropertyValue(TOLERANCE)));
+         cropFactor_ = NumberUtils.displayStringToDouble(getPropertyValue(CROP_FACTOR));
+         cropFactor_ = clip(0.01, cropFactor_, 1.0);
+         channel_ = getPropertyValue(CHANNEL);
+         exposure_ = NumberUtils.displayStringToDouble(getPropertyValue(EXPOSURE));
          double fftLowerCutoff = NumberUtils.displayStringToDouble(getPropertyValue(FFT_LOWER_CUTOFF));
          fftLowerCutoff = clip(0.0, fftLowerCutoff, 100.0);
          double fftUpperCutoff = NumberUtils.displayStringToDouble(getPropertyValue(FFT_UPPER_CUTOFF));
          fftUpperCutoff = clip(0.0, fftUpperCutoff, 100.0);
-         fcsAnalysis.setFFTCutoff(fftLowerCutoff, fftUpperCutoff);
-         fcsAnalysis.setComputationMethod(FocusAnalysis.Method.valueOf(getPropertyValue(SCORING_METHOD)));
+         fcsAnalysis_.setFFTCutoff(fftLowerCutoff, fftUpperCutoff);
+         fcsAnalysis_.setComputationMethod(ImgSharpnessAnalysis.Method.valueOf(getPropertyValue(SCORING_METHOD)));
          displayImages_ = getPropertyValue(SHOW_IMAGES).contentEquals("Yes");
-         afOptimizer.setDisplayImages(displayImages_);
+         afOptimizer_.setDisplayImages(displayImages_);
       } catch (MMException | ParseException ex) {
          studio_.logs().logError(ex);
       }
@@ -130,27 +126,27 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
 
 
       Configuration oldState = null;
-      if (channel.length() > 0) {
+      if (channel_.length() > 0) {
          String chanGroup = core.getChannelGroup();
          oldState = core.getConfigGroupState(chanGroup);
-         core.setConfig(chanGroup, channel);
+         core.setConfig(chanGroup, channel_);
       }
 
       // avoid wasting time on setting roi if it is the same
-      if (cropFactor < 1.0) {
-         int w = (int) (oldROI.width * cropFactor);
-         int h = (int) (oldROI.height * cropFactor);
+      if (cropFactor_ < 1.0) {
+         int w = (int) (oldROI.width * cropFactor_);
+         int h = (int) (oldROI.height * cropFactor_);
          int x = oldROI.x + (oldROI.width - w) / 2;
          int y = oldROI.y + (oldROI.height - h) / 2;
          studio_.app().setROI(new Rectangle(x, y, w, h));
          core.waitForDevice(core.getCameraDevice());
       }
       double oldExposure = core.getExposure();
-      core.setExposure(exposure);
+      core.setExposure(exposure_);
 
-      double z = afOptimizer.runAutofocusAlgorithm();
+      double z = afOptimizer_.runAutofocusAlgorithm();
 
-      if (cropFactor < 1.0) {
+      if (cropFactor_ < 1.0) {
          studio_.app().setROI(oldROI);
          core.waitForDevice(core.getCameraDevice());
       }
@@ -170,7 +166,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
 
    @Override
    public int getNumberOfImages() {
-      return afOptimizer.getImageCount();
+      return afOptimizer_.getImageCount();
    }
 
    @Override
@@ -202,14 +198,14 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    
    @Override
    public double computeScore(final ImageProcessor proc) {
-      return fcsAnalysis.compute(proc);
+      return fcsAnalysis_.compute(proc);
    }
    
    @Override
    public void setContext(Studio app) {
       studio_ = app;
       studio_.events().registerForEvents(this);
-      afOptimizer.setContext(studio_);
+      afOptimizer_.setContext(studio_);
    }
 
    @Override
