@@ -121,16 +121,10 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    @Override
    public double fullFocus() throws Exception {
       applySettings();
-      Rectangle oldROI = studio_.core().getROI();
       CMMCore core = studio_.getCMMCore();
+      Rectangle oldROI = core.getROI();
 
-      //ReportingUtils.logMessage("Original ROI: " + oldROI);
-      int w = (int) (oldROI.width * cropFactor);
-      int h = (int) (oldROI.height * cropFactor);
-      int x = oldROI.x + (oldROI.width - w) / 2;
-      int y = oldROI.y + (oldROI.height - h) / 2;
-      Rectangle newROI = new Rectangle(x, y, w, h);
-      //ReportingUtils.logMessage("Setting ROI to: " + newROI);
+
       Configuration oldState = null;
       if (channel.length() > 0) {
          String chanGroup = core.getChannelGroup();
@@ -140,7 +134,11 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
 
       // avoid wasting time on setting roi if it is the same
       if (cropFactor < 1.0) {
-         studio_.app().setROI(newROI);
+         int w = (int) (oldROI.width * cropFactor);
+         int h = (int) (oldROI.height * cropFactor);
+         int x = oldROI.x + (oldROI.width - w) / 2;
+         int y = oldROI.y + (oldROI.height - h) / 2;
+         studio_.app().setROI(new Rectangle(x, y, w, h));
          core.waitForDevice(core.getCameraDevice());
       }
       double oldExposure = core.getExposure();
