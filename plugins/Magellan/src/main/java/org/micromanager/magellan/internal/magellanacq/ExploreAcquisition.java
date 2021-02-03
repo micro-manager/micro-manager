@@ -289,11 +289,15 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
          } else {
             for (int index = 0; index < positions.size(); index++) {
                AcquisitionEvent posEvent = event.copy();
+               //These tell it what to acquire
                posEvent.setGridCol(positions.get(index).getGridCol());
                posEvent.setGridRow(positions.get(index).getGridRow());
+               //These tell how to store it
+               posEvent.setAxisPosition(MagellanMD.AXES_GRID_ROW, positions.get(index).getGridRow());
+               posEvent.setAxisPosition(MagellanMD.AXES_GRID_COL, positions.get(index).getGridCol());
                posEvent.setX(positions.get(index).getCenter().x);
                posEvent.setY(positions.get(index).getCenter().y);
-               posEvent.setAxisPosition(MagellanMD.POSITION_AXIS, posIndices[index]);
+//               posEvent.setAxisPosition(MagellanMD.POSITION_AXIS, posIndices[index]);
                builder.accept(posEvent);
             }
          }

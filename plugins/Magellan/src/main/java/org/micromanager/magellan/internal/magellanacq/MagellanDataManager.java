@@ -19,24 +19,19 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 package org.micromanager.magellan.internal.magellanacq;
 
-import org.micromanager.acqj.api.xystage.PixelStageTranslator;
 import org.micromanager.magellan.internal.gui.MagellanViewer;
 import java.awt.Color;
 import java.awt.Point;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
-import java.text.DecimalFormat;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONException;
@@ -71,6 +66,8 @@ import org.micromanager.ndviewer.api.ViewerAcquisitionInterface;
 public class MagellanDataManager implements DataSink, DataSourceInterface,
         SurfaceGridListener {
 
+   private static final int SAVING_QUEUE_SIZE = 30;
+
    private MultiresStorageAPI storage_;
    private ExecutorService displayCommunicationExecutor_
            = Executors.newSingleThreadExecutor((Runnable r) -> new Thread(r, "Magellan viewer communication thread"));
@@ -84,7 +81,7 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
    private CopyOnWriteArrayList<String> channelNames_ = new CopyOnWriteArrayList<String>();
    private MagellanMouseListener mouseListener_;
    private OverlayerPlugin overlayer_;
-   private double pixelSizeXY_, pixelSizeZ_;
+   private double pixelSizeZ_;
    private ExploreControlsPanel zExploreControls_;
    private SurfaceGridPanel surfaceGridControls_;
 
@@ -109,21 +106,16 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
    public void initialize(Acquisition acq, JSONObject summaryMetadata) {
       summaryMetadata_ = summaryMetadata;
       acq_ = (MagellanAcquisition) acq;
-      pixelSizeXY_ = MagellanMD.getPixelSizeUm(summaryMetadata);
       pixelSizeZ_ = acq_.getZStep();
 
+
       storage_ = new MultiResMultipageTiffStorage(dir_, name_,
-              summaryMetadata, AcqEngMetadata.getPixelOverlapX(summaryMetadata),
-              AcqEngMetadata.getPixelOverlapY(summaryMetadata),
-              //TODO: in the future may want to make multiple datasets if one
-              // of these parameters changes, or better yet implement
-              // in the storage class to output different imaged
-              // parameters to different files within the dataset
-              MagellanMD.getWidth(summaryMetadata),
-              MagellanMD.getHeight(summaryMetadata),
-              AcqEngMetadata.isRGB(summaryMetadata) ? 1 : MagellanMD.getBytesPerPixel(summaryMetadata),
-              true, null, AcqEngMetadata.isRGB(summaryMetadata),
-              null);
+                 summaryMetadata,
+                 AcqEngMetadata.getPixelOverlapX(summaryMetadata),
+                 AcqEngMetadata.getPixelOverlapY(summaryMetadata),
+                 (int) Magellan.getCore().getImageWidth(),
+                 (int) Magellan.getCore().getImageHeight(),
+                 true, SAVING_QUEUE_SIZE, null, null);
 
       if (showDisplay_) {
          createDisplay();
@@ -178,8 +170,9 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
       HashMap<String, Integer> axes = MagellanMD.getAxes(taggedImg.tags);
       axes.put(MagellanMD.CHANNEL_AXIS, channelNames_.indexOf(channelName));
 
-      storage_.putImage(taggedImg, axes, MagellanMD.getGridRow(taggedImg.tags),
-              MagellanMD.getGridCol(taggedImg.tags));
+      Future added = storage_.putImageMultiRes(taggedImg, axes,
+              AcqEngMetadata.isRGB(taggedImg.tags), AcqEngMetadata.getHeight(taggedImg.tags),
+              AcqEngMetadata.getWidth(taggedImg.tags));
 
       if (showDisplay_) {
          //put on different thread to not slow down acquisition
@@ -187,6 +180,7 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
             @Override
             public void run() {
                try {
+                  added.get();
                   if (newChannel) {
                      //Insert a preferred color. Make a copy just in case concurrency issues
                      String chName = MagellanMD.getChannelName(taggedImg.tags);
@@ -195,8 +189,11 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
                      int bitDepth = MagellanMD.getBitDepth(taggedImg.tags);
                      display_.setChannelDisplaySettings(chName, c, bitDepth);
                   }
+
                   HashMap<String, Integer> axes = MagellanMD.getAxes(taggedImg.tags);
-                  axes.remove(AcqEngMetadata.POSITION_AXIS); //Magellan doesn't have positions axis
+                  //Display doesn't know about these in tiled layout
+                  axes.remove(AcqEngMetadata.AXES_GRID_ROW);
+                  axes.remove(AcqEngMetadata.AXES_GRID_COL);
                   String channelName = MagellanMD.getChannelName(taggedImg.tags);
                   display_.newImageArrived(axes, channelName);
                   if (axes.containsKey(AcqEngMetadata.Z_AXIS) && axes.get(AcqEngMetadata.Z_AXIS) != null
@@ -317,7 +314,7 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
    public TaggedImage getImageForDisplay(HashMap<String, Integer> axes, int resolutionindex,
            double xOffset, double yOffset, int imageWidth, int imageHeight) {
 
-      return storage_.getStitchedImage(
+      return storage_.getDisplayImage(
               axes,
               resolutionindex,
               (int) xOffset, (int) yOffset,
@@ -326,7 +323,17 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
 
    @Override
    public Set<HashMap<String, Integer>> getStoredAxes() {
-      return storage_.getAxesSet();
+
+      return storage_.getAxesSet().stream().map(new Function<HashMap<String, Integer>, HashMap<String, Integer>>() {
+         @Override
+         public HashMap<String, Integer> apply(HashMap<String, Integer> axes) {
+            HashMap<String, Integer> copy = new HashMap<String, Integer>(axes);
+            //delete row and column so viewer doesn't use them
+            copy.remove(MultiResMultipageTiffStorage.ROW_AXIS);
+            copy.remove(MultiResMultipageTiffStorage.COL_AXIS);
+            return copy;
+         }
+      }).collect(Collectors.toSet());
    }
 
    public boolean anythingAcquired() {
@@ -421,10 +428,6 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
 
    public boolean isCurrentlyEditableSurfaceGridVisible() {
       return surfaceGridControls_.isCurrentlyEditableSurfaceGridVisible();
-   }
-
-   public double getPixelSize() {
-      return pixelSizeXY_;
    }
 
    public void acquireTiles(int y, int x, int y0, int x0) {

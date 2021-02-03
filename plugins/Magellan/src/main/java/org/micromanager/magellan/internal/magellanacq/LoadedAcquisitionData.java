@@ -39,8 +39,12 @@ public class LoadedAcquisitionData {
          for (HashMap<String, Integer> ax : axesList) {
             axesNames.addAll(ax.keySet());
          }
-         if (axesNames.contains(MagellanMD.POSITION_AXIS)) {
-            axesNames.remove(MagellanMD.POSITION_AXIS);
+         //Hide row and column axes form the viewer
+         if (axesNames.contains(MagellanMD.AXES_GRID_ROW)) {
+            axesNames.remove(MagellanMD.AXES_GRID_ROW);
+         }
+         if (axesNames.contains(MagellanMD.AXES_GRID_COL)) {
+            axesNames.remove(MagellanMD.AXES_GRID_COL);
          }
          HashMap<String, Integer> axisMins = new HashMap<String, Integer>();
          HashMap<String, Integer> axisMaxs = new HashMap<String, Integer>();
