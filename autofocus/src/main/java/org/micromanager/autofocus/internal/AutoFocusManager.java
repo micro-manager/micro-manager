@@ -104,7 +104,6 @@ public class AutoFocusManager {
    private boolean displayImages_ = false;
    private double searchRange_ = 10;
    private double absoluteTolerance_ = 1.0;
-   private double cropFactor_ = 1;
    
    public AutoFocusManager(Studio studio) {
       studio_ = studio;
@@ -138,7 +137,7 @@ public class AutoFocusManager {
       return absoluteTolerance_;
    }
    
-   private double runAutofocusAlgorithm() throws Exception {
+   public double runAutofocusAlgorithm() throws Exception {
       startTimeMs_ = System.currentTimeMillis();
 
       UnivariateFunction scoreFun = (double d) -> {
@@ -171,18 +170,12 @@ public class AutoFocusManager {
       return result.getPoint();
    }
 
-   private void setZPosition(double z) throws Exception {
-      CMMCore core = studio_.getCMMCore();
-      String focusDevice = core.getFocusDevice();
-      core.setPosition(focusDevice, z);
-      core.waitForDevice(focusDevice);
-   }
-   
    public double measureFocusScore(double z) throws Exception {
       CMMCore core = studio_.getCMMCore();
       long start = System.currentTimeMillis();
       try {
-         setZPosition(z);
+         core.setPosition(z);
+         core.waitForDevice(core.getFocusDevice());
          long tZ = System.currentTimeMillis() - start;
 
          TaggedImage img;

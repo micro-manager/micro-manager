@@ -79,6 +79,8 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    private String channel = "";
    private double exposure = 100;
    private boolean displayImages_ = false;
+   private double cropFactor = 1;
+
 
    public OughtaFocus() {
       super.createProperty(SEARCH_RANGE, NumberUtils.doubleToDisplayString(afOptimizer.getSearchRange()));
@@ -145,7 +147,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
       double oldExposure = core.getExposure();
       core.setExposure(exposure);
 
-      double z = runAutofocusAlgorithm();
+      double z = afOptimizer.runAutofocusAlgorithm();
 
       if (cropFactor < 1.0) {
          studio_.app().setROI(oldROI);
@@ -155,7 +157,8 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
          core.setSystemState(oldState);
       }
       core.setExposure(oldExposure);
-      setZPosition(z);
+      core.setPosition(z);
+      core.waitForDevice(core.getFocusDevice());
       return z;
    }
 
