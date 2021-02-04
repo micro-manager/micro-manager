@@ -47,13 +47,18 @@ public class ImgSharpnessAnalysis {
    public enum Method {
       Edges, StdDev, Mean, 
       NormalizedVariance, SharpEdges, Redondo, Volath, Volath5, 
-      MedianEdges, Tenengrad, FFTBandpas;
+      MedianEdges, Tenengrad, FFTBandpass;
       
       public static String[] getNames() {
          return Arrays.stream(Method.class.getEnumConstants()).map(Enum::name).toArray(String[]::new);
       }
    }
    
+   /**
+    * These parameters are only used for method: FFTBandpass
+    * @param fftLowerCutoff Frequencies below this will be filtered out
+    * @param fftUpperCutoff Frequencies above this will be filtered out
+    */
    public void setFFTCutoff(double fftLowerCutoff, double fftUpperCutoff) {
       fftLowerCutoff_ = fftLowerCutoff;
       fftUpperCutoff_ = fftUpperCutoff;
@@ -75,6 +80,11 @@ public class ImgSharpnessAnalysis {
       return method_;
    }
     
+   /**
+    * Compute the sharpness of `proc` using the current `Method` set with `setComputationMethod`.
+    * @param proc
+    * @return 
+    */
    public double compute(ImageProcessor proc) {
       switch (method_) {
          case Edges:
@@ -97,7 +107,7 @@ public class ImgSharpnessAnalysis {
             return computeMedianEdges(proc);
          case Tenengrad:
             return computeTenengrad(proc);
-         case FFTBandpas:
+         case FFTBandpass:
             return computeFFTBandpass(proc, fftLowerCutoff_, fftUpperCutoff_);
          default:
             throw new AssertionError(method_.name());

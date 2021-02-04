@@ -227,27 +227,10 @@ public class BrentFocuser {
          throw e;
       }
    }
-      
-   private static class LocalException extends RuntimeException {
-      // The x value that caused the problem.
-      private final double x_;
-      private final Exception ex_;
 
-      public LocalException(double x, Exception ex) {
-         x_ = x;
-         ex_ = ex;
-      }
-
-      public double getX() {
-         return x_;
-      }
-
-      public Exception getException() {
-         return ex_;
-      } 
-   }
    
    private static ImageProcessor makeMonochromeProcessor(CMMCore core, Object pixels) {
+      //TODO replace these methods with studio_.data().getImageJConverter().toProcessor()
       int w = (int) core.getImageWidth();
       int h = (int) core.getImageHeight();
       if (pixels instanceof byte[]) {
@@ -282,3 +265,26 @@ public class BrentFocuser {
    }
 }
 
+      
+/**
+ * A user-defined exception is needed for the `UnivariateObjectFunction`.
+ * 
+ */
+class LocalException extends RuntimeException {
+   // The x value that caused the problem.
+   private final double x_;
+   private final Exception ex_;
+
+   public LocalException(double x, Exception ex) {
+      x_ = x;
+      ex_ = ex;
+   }
+
+   public double getX() {
+      return x_;
+   }
+
+   public Exception getException() {
+      return ex_;
+   } 
+}
