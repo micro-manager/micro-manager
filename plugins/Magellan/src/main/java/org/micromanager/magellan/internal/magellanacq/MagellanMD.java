@@ -37,7 +37,8 @@ public class MagellanMD extends AcqEngMetadata {
       try {
          return smd.getBoolean(EXPLORE_ACQ);
       } catch (JSONException ex) {
-         throw new RuntimeException("find exploreAcq tag");
+//         System.err.println("Couldnt find explore tag");
+         return false;
 
       }
    }

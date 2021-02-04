@@ -172,7 +172,6 @@ public class MagellanGUIAcquisition extends Acquisition implements MagellanAcqui
          acqFunctions.add(MagellanZStack());
       }
       AcquisitionEvent baseEvent = new AcquisitionEvent(this);
-      baseEvent.setAxisPosition(MagellanMD.POSITION_AXIS, 0);
       return new AcquisitionEventIterator(baseEvent, acqFunctions, monitorSliceIndices());
    }
 
