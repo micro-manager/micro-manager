@@ -115,7 +115,7 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
                  AcqEngMetadata.getPixelOverlapY(summaryMetadata),
                  (int) Magellan.getCore().getImageWidth(),
                  (int) Magellan.getCore().getImageHeight(),
-                 true, SAVING_QUEUE_SIZE, null, null);
+                 true, null, SAVING_QUEUE_SIZE, null);
 
       if (showDisplay_) {
          createDisplay();
