@@ -19,6 +19,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 package org.micromanager.magellan.internal.magellanacq;
 
+import org.micromanager.acqj.internal.acqengj.Engine;
 import org.micromanager.magellan.internal.gui.MagellanViewer;
 import java.awt.Color;
 import java.awt.Point;
@@ -30,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.swing.SwingUtilities;
@@ -69,8 +71,7 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
    private static final int SAVING_QUEUE_SIZE = 30;
 
    private MultiresStorageAPI storage_;
-   private ExecutorService displayCommunicationExecutor_
-           = Executors.newSingleThreadExecutor((Runnable r) -> new Thread(r, "Magellan viewer communication thread"));
+   private ExecutorService displayCommunicationExecutor_;
    private final boolean loadedData_;
    private String dir_;
    private String name_;
@@ -86,6 +87,9 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
    private SurfaceGridPanel surfaceGridControls_;
 
    public MagellanDataManager(String dir, String name, boolean showDisplay) {
+      displayCommunicationExecutor_ = Executors.newSingleThreadExecutor((Runnable r)
+              -> new Thread(r, "Magellan viewer communication thread"));
+
       dir_ = dir;
       name_ = name;
       loadedData_ = false;
@@ -95,6 +99,8 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
 
    //Constructor for opening loaded data
    public MagellanDataManager(String dir) throws IOException {
+      displayCommunicationExecutor_ = Executors.newSingleThreadExecutor((Runnable r)
+              -> new Thread(r, "Magellan viewer communication thread"));
       storage_ = new MultiResMultipageTiffStorage(dir);
       dir_ = dir;
       loadedData_ = true;
@@ -108,14 +114,14 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
       acq_ = (MagellanAcquisition) acq;
       pixelSizeZ_ = acq_.getZStep();
 
-
       storage_ = new MultiResMultipageTiffStorage(dir_, name_,
                  summaryMetadata,
                  AcqEngMetadata.getPixelOverlapX(summaryMetadata),
                  AcqEngMetadata.getPixelOverlapY(summaryMetadata),
                  (int) Magellan.getCore().getImageWidth(),
                  (int) Magellan.getCore().getImageHeight(),
-                 true, null, SAVING_QUEUE_SIZE, null);
+                 true, null, SAVING_QUEUE_SIZE,
+                Engine.getCore().debugLogEnabled() ? (Consumer<String>) s -> Engine.getCore().logMessage(s) : null);
 
       if (showDisplay_) {
          createDisplay();
@@ -161,6 +167,7 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
    }
 
    public void putImage(final TaggedImage taggedImg) {
+
       String channelName = MagellanMD.getChannelName(taggedImg.tags);
       boolean newChannel = !channelNames_.contains(channelName);
       if (newChannel) {
@@ -176,11 +183,13 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
 
       if (showDisplay_) {
          //put on different thread to not slow down acquisition
+
          displayCommunicationExecutor_.submit(new Runnable() {
             @Override
             public void run() {
                try {
                   added.get();
+
                   if (newChannel) {
                      //Insert a preferred color. Make a copy just in case concurrency issues
                      String chName = MagellanMD.getChannelName(taggedImg.tags);
@@ -196,11 +205,13 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
                   axes.remove(AcqEngMetadata.AXES_GRID_COL);
                   String channelName = MagellanMD.getChannelName(taggedImg.tags);
                   display_.newImageArrived(axes, channelName);
+
                   if (axes.containsKey(AcqEngMetadata.Z_AXIS) && axes.get(AcqEngMetadata.Z_AXIS) != null
                           && zExploreControls_ != null) {
                      Integer i = axes.get(AcqEngMetadata.Z_AXIS);
                      zExploreControls_.updateExploreZControls(i);
                   }
+
                   surfaceGridControls_.enable(); //technically this only needs to happen once, but eh
                } catch (Exception e) {
                   e.printStackTrace();;
