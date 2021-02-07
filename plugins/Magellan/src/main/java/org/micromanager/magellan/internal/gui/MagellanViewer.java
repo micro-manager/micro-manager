@@ -8,11 +8,13 @@ package org.micromanager.magellan.internal.gui;
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.geom.Point2D;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToIntFunction;
+import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
 import javax.swing.JPanel;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.acqj.api.AcqEngMetadata;
@@ -65,6 +67,7 @@ public class MagellanViewer implements ViewerInterface {
       long currentX = (long) viewer_.getViewOffset().x;
       long currentY = (long) viewer_.getViewOffset().y;
 
+      //Check if any point is visible, if so return
       for (Point p : tiles) {
          //calclcate limits on margin of tile that must remain in view
          long tileX1 = (long) ((0.1 + p.x) * manager_.getDisplayTileWidth());
@@ -87,6 +90,33 @@ public class MagellanViewer implements ViewerInterface {
          if (intersection) {
             return; //at least one tile is in view, don't need to do anything
          }
+      }
+
+      //Go through all tiles and find minium move to reset visible criteria
+      ArrayList<Point2D.Double> newPos = new ArrayList<Point2D.Double>();
+      for (Point p : tiles) {
+         //do all calculations at full resolution
+         currentX = (long) viewer_.getViewOffset().x;
+         currentY = (long) viewer_.getViewOffset().y;
+
+         //calclcate limits on margin of tile that must remain in view
+         long tileX1 = (long) ((0.1 + p.x) * manager_.getDisplayTileWidth());
+         long tileX2 = (long) ((0.9 + p.x) * manager_.getDisplayTileWidth());
+         long tileY1 = (long) ((0.1 + p.y) * manager_.getDisplayTileHeight());
+         long tileY2 = (long) ((0.9 + p.y) * manager_.getDisplayTileHeight());
+//         long visibleWidth = (long) (0.8 * imageCache_.getTileWidth());
+//         long visibleHeight = (long) (0.8 * imageCache_.getTileHeight());
+         //get bounds of viewing area
+         long fovX1 = (long) viewer_.getViewOffset().x;
+         long fovY1 = (long) viewer_.getViewOffset().y;
+         long fovX2 = (long) (fovX1 + viewer_.getFullResSourceDataSize().x);
+         long fovY2 = (long) (fovY1 + viewer_.getFullResSourceDataSize().y);
+
+         //check if tile and fov intersect
+         boolean xInView = fovX1 < tileX2 && fovX2 > tileX1;
+         boolean yInView = fovY1 < tileY2 && fovY2 > tileY1;
+
+//         System.out.println(fovY1 + " " + fovY2 + " " + fovX1 + " " + fovX2);
          //tile to fov corner to corner distances
          double tl = ((tileX1 - fovX2) * (tileX1 - fovX2) + (tileY1 - fovY2) * (tileY1 - fovY2)); //top left tile, botom right fov
          double tr = ((tileX2 - fovX1) * (tileX2 - fovX1) + (tileY1 - fovY2) * (tileY1 - fovY2)); // top right tile, bottom left fov
@@ -96,22 +126,35 @@ public class MagellanViewer implements ViewerInterface {
          double closestCornerDistance = Math.min(Math.min(tl, tr), Math.min(bl, br));
          if (closestCornerDistance < minDistance) {
             minDistance = closestCornerDistance;
+            long newX, newY;
             if (tl <= tr && tl <= bl && tl <= br) { //top left tile, botom right fov
-               currentX = (long) (xInView ? currentX : tileX1 - viewer_.getFullResSourceDataSize().x);
-               currentY = (long) (yInView ? currentY : tileY1 - viewer_.getFullResSourceDataSize().y);
+               newX = (long) (xInView ? currentX : tileX1 - viewer_.getFullResSourceDataSize().x);
+               newY = (long) (yInView ? currentY : tileY1 - viewer_.getFullResSourceDataSize().y);
             } else if (tr <= tl && tr <= bl && tr <= br) { // top right tile, bottom left fov
-               currentX = xInView ? currentX : tileX2;
-               currentY = (long) (yInView ? currentY : tileY1 - viewer_.getFullResSourceDataSize().y);
+               newX = xInView ? currentX : tileX2;
+               newY = (long) (yInView ? currentY : tileY1 - viewer_.getFullResSourceDataSize().y);
             } else if (bl <= tl && bl <= tr && bl <= br) { // bottom left tile, top right fov
-               currentX = (long) (xInView ? currentX : tileX1 - viewer_.getFullResSourceDataSize().x);
-               currentY = yInView ? currentY : tileY2;
+               newX = (long) (xInView ? currentX : tileX1 - viewer_.getFullResSourceDataSize().x);
+               newY = yInView ? currentY : tileY2;
             } else { //bottom right tile, top left fov
-               currentX = xInView ? currentX : tileX2;
-               currentY = yInView ? currentY : tileY2;
+               newX = xInView ? currentX : tileX2;
+               newY = yInView ? currentY : tileY2;
             }
+            newPos.add(new Point2D.Double(newX, newY));
          }
       }
-      viewer_.setViewOffset(currentX, currentY);
+
+      long finalCurrentX = currentX;
+      long finalCurrentY = currentY;
+      DoubleStream dists = newPos.stream().mapToDouble(value -> Math.pow(value.x - finalCurrentX, 2)
+              + Math.pow(value.y - finalCurrentY, 2));
+
+      double minDist = dists.min().getAsDouble();
+      Point2D.Double newPoint =  newPos.stream().filter(
+              value -> (Math.pow(value.x - finalCurrentX, 2)
+              + Math.pow(value.y - finalCurrentY, 2)) == minDist).collect(Collectors.toList()).get(0);
+
+      viewer_.setViewOffset(newPoint.x, newPoint.y);
    }
 
    public Point getTileIndicesFromDisplayedPixel(int x, int y) {
