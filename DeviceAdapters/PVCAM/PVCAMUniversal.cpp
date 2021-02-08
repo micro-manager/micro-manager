@@ -5874,6 +5874,14 @@ int Universal::applyAcqConfig(bool forceSetup)
         bufferResizeRequired = true;
     }
 
+    // Port change triggers speed change, so this happens any time port and/or speed changes.
+    // Updating PP upon change in port/speed is needed for recent cameras. For example,
+    // Kinetix allows configuring separate DESPECKLE values per each port.
+    if (speedChanged)
+    {
+        refreshPostProcValues();
+    }
+
     // The new properties have been applied. Since we now reinitialize the buffers
     // immediately the acqCfgCur_ must already contain correct configuration.
     acqCfgCur_ = acqCfgNew_;
