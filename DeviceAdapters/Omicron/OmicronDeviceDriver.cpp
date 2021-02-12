@@ -60,12 +60,16 @@ bool openDriver() {
 }
 
 void closeDriver() {
-	if (DLLHandle) {
+	if (DLLHandle != NULL) {
 		alldevices.clear();
 		devNameToID.clear();
 		try {
-			if (ExXShutdownDLL)
-				ExXShutdownDLL();
+			if (ExXShutdownDLL) {
+            // NS, 20210212: This function call tries to access address 0 causing an access violation
+            // crashing MM on shutdown.
+            // Not sure what the consequences are of not calling this function.
+				// ExXShutdownDLL();
+         }
 		}
 		catch (...) {
 			MessageBox(NULL, "Fehler DeleteDevice", "Fehler", MB_OK | MB_TASKMODAL | MB_ICONWARNING);
