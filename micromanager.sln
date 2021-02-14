@@ -112,8 +112,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Marzhauser", "DeviceAdapter
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Corvus", "DeviceAdapters\Corvus\Corvus.vcxproj", "{2B522528-9660-4B78-8E2A-BC296C9BC0C0}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SimpleAutoFocus", "DeviceAdapters\SimpleAutofocus\SimpleAutoFocus.vcxproj", "{AF83E7A0-34A5-4304-8D88-148D933EAFAF}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SerialManager", "DeviceAdapters\SerialManager\SerialManager.vcxproj", "{2EF7ACDC-F742-4CB6-B301-A242F52BE5C3}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PrincetonInstruments", "DeviceAdapters\PrincetonInstruments\PrincetonInstruments.vcxproj", "{A28DEB4E-E645-4990-A91D-4A7FF6762240}"
@@ -1132,18 +1130,6 @@ Global
 		{2B522528-9660-4B78-8E2A-BC296C9BC0C0}.Release|Win32.Build.0 = Release|Win32
 		{2B522528-9660-4B78-8E2A-BC296C9BC0C0}.Release|x64.ActiveCfg = Release|x64
 		{2B522528-9660-4B78-8E2A-BC296C9BC0C0}.Release|x64.Build.0 = Release|x64
-		{AF83E7A0-34A5-4304-8D88-148D933EAFAF}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
-		{AF83E7A0-34A5-4304-8D88-148D933EAFAF}.Debug|Mixed Platforms.Build.0 = Debug|x64
-		{AF83E7A0-34A5-4304-8D88-148D933EAFAF}.Debug|Win32.ActiveCfg = Debug|Win32
-		{AF83E7A0-34A5-4304-8D88-148D933EAFAF}.Debug|Win32.Build.0 = Debug|Win32
-		{AF83E7A0-34A5-4304-8D88-148D933EAFAF}.Debug|x64.ActiveCfg = Debug|x64
-		{AF83E7A0-34A5-4304-8D88-148D933EAFAF}.Debug|x64.Build.0 = Debug|x64
-		{AF83E7A0-34A5-4304-8D88-148D933EAFAF}.Release|Mixed Platforms.ActiveCfg = Release|x64
-		{AF83E7A0-34A5-4304-8D88-148D933EAFAF}.Release|Mixed Platforms.Build.0 = Release|x64
-		{AF83E7A0-34A5-4304-8D88-148D933EAFAF}.Release|Win32.ActiveCfg = Release|Win32
-		{AF83E7A0-34A5-4304-8D88-148D933EAFAF}.Release|Win32.Build.0 = Release|Win32
-		{AF83E7A0-34A5-4304-8D88-148D933EAFAF}.Release|x64.ActiveCfg = Release|x64
-		{AF83E7A0-34A5-4304-8D88-148D933EAFAF}.Release|x64.Build.0 = Release|x64
 		{2EF7ACDC-F742-4CB6-B301-A242F52BE5C3}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
 		{2EF7ACDC-F742-4CB6-B301-A242F52BE5C3}.Debug|Mixed Platforms.Build.0 = Debug|x64
 		{2EF7ACDC-F742-4CB6-B301-A242F52BE5C3}.Debug|Win32.ActiveCfg = Debug|Win32
