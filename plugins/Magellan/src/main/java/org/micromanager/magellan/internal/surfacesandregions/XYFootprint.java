@@ -18,6 +18,8 @@
 package org.micromanager.magellan.internal.surfacesandregions;
 
 import java.awt.geom.Point2D;
+
+import org.micromanager.PositionList;
 import org.micromanager.acqj.api.xystage.XYStagePosition;
 
 import java.util.List;
@@ -48,14 +50,16 @@ public abstract class XYFootprint {
    
    public void exportToMicroManager() {
       List<XYStagePosition> list = getXYPositions();
+      PositionList posList = Magellan.getStudio().positions().getPositionList();
       for (XYStagePosition xy : list) {
          MultiStagePosition mPos = new MultiStagePosition();
          mPos.setLabel(name_ + "-" + xy.getName());
-         StagePosition pos = new StagePosition();
+         StagePosition pos = StagePosition.create2D(
+                 Magellan.getCore().getXYStageDevice(), xy.getCenter().x, xy.getCenter().y);
          mPos.add(pos);
-         pos.set2DPosition(Magellan.getCore().getXYStageDevice(), xy.getCenter().x, xy.getCenter().y);
-         Magellan.getStudio().positions().getPositionList().addPosition(mPos);
+         posList.addPosition(mPos);
       }
+      Magellan.getStudio().positions().setPositionList(posList);
    }
 
     public abstract List<XYStagePosition> getXYPositions();
