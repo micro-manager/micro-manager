@@ -27,7 +27,7 @@
 // Header version
 // If any of the class definitions changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 69
+#define DEVICE_INTERFACE_VERSION 70
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -324,14 +324,6 @@ namespace MM {
       virtual DeviceType GetType() const = 0;
       virtual void GetName(char* name) const = 0;
       virtual void SetCallback(Core* callback) = 0;
-
-      // acq context api
-      virtual int AcqBefore() = 0;
-      virtual int AcqAfter() = 0;
-      virtual int AcqBeforeFrame() = 0;
-      virtual int AcqAfterFrame() = 0;
-      virtual int AcqBeforeStack() = 0;
-      virtual int AcqAfterStack() = 0;
 
       //device discovery API
       virtual bool SupportsDeviceDetection(void) = 0;

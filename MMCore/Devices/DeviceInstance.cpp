@@ -354,44 +354,10 @@ DeviceInstance::GetName() const
 }
 
 void
-DeviceInstance::SetCallback(MM::Core* callback)
-{ pImpl_->SetCallback(callback); }
-
-void
-DeviceInstance::AcqBefore()
-{
-   ThrowIfError(pImpl_->AcqBefore());
+DeviceInstance::SetCallback(MM::Core* callback) { 
+   pImpl_->SetCallback(callback); 
 }
 
-void
-DeviceInstance::AcqAfter()
-{
-   ThrowIfError(pImpl_->AcqAfter());
-}
-
-void
-DeviceInstance::AcqBeforeFrame()
-{
-   ThrowIfError(pImpl_->AcqBeforeFrame());
-}
-
-void
-DeviceInstance::AcqAfterFrame()
-{
-   ThrowIfError(pImpl_->AcqAfterFrame());
-}
-
-void
-DeviceInstance::AcqBeforeStack()
-{
-   ThrowIfError(pImpl_->AcqBeforeStack());
-}
-
-void
-DeviceInstance::AcqAfterStack()
-{
-   ThrowIfError(pImpl_->AcqAfterStack());
-}
 
 bool
 DeviceInstance::SupportsDeviceDetection()
