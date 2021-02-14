@@ -204,12 +204,6 @@ public:
    MM::DeviceType GetType() const; // TODO Make private (can use RTTI)
    std::string GetName() const;
    void SetCallback(MM::Core* callback);
-   void AcqBefore();
-   void AcqAfter();
-   void AcqBeforeFrame();
-   void AcqAfterFrame();
-   void AcqBeforeStack();
-   void AcqAfterStack();
    bool SupportsDeviceDetection();
    MM::DeviceDetectionStatus DetectDevice();
    void SetParentID(const char* parentId); // TODO Remove
