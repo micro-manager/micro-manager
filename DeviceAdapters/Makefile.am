@@ -166,7 +166,6 @@ SUBDIRS = \
 	Sapphire \
 	Scientifica \
 	SerialManager \
-	SimpleAutofocus \
 	Skyra \
 	SmarActHCU-3D \
 	SouthPort \
