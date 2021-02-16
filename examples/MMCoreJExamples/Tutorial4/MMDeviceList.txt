@@ -1,0 +1,73 @@
+Andor,Ixon,Andor iXon camera adapter,2
+Andor,Ixon-Shutter,Andor iXon shutter adapter,3
+AOTF,AOTF-Switch,TLL digital out AOTF wavelength selector,4
+AOTF,AOTF-Shutter,TTL digital out AOTF shutter,3
+ASI,ZStage,Add-on Z-stage,5
+ASI,XYStage,XY Stage,6
+ASI,Controller,ASIFW1000 Controller,8
+ASI,FilterWheel,FilterWheel,4
+ASI,Shutter,Shutter,3
+ASIFW1000,Controller,ASIFW1000 Controller,8
+ASIFW1000,FilterWheel,FilterWheel,4
+ASIFW1000,Shutter,Shutter,3
+ASIStage,ZStage,Add-on Z-stage,5
+ASIStage,XYStage,XY Stage,6
+DemoCamera,DCam,Demo camera,2
+DemoCamera,DWheel,Demo filter wheel,4
+DemoCamera,DObjective,Demo objective turret,4
+DemoCamera,DStage,Demo stage,5
+DemoCamera,DXYStage,Demo XY stage,6
+DemoCamera,DLightPath,Demo light path,4
+DemoCamera,DAutoFocus,Demo auto focus,9
+DemoCamera,DShutter,Demo shutter,3
+DTOpenLayer,DTOL-Switch,Description N/A,4
+DTOpenLayer,DTOL-Shutter,Description N/A,3
+DTOpenLayer,DTOL-DAC-0,Description N/A,8
+DTOpenLayer,DTOL-DAC-1,Description N/A,8
+Hamamatsu,Hamamatsu_DCAM,Universal adapter using DCAM interface,2
+Ludl,Stage,Single axis stage,5
+Ludl,XYStage,XY stage,6
+Ludl,ASIController,Generalized serial adapter for all ASI devices,8
+Nikon,ZStage,Remote accessory Z-stage,5
+Nikon,TIRFShutter,TIRF Laser Shutter controller T-LUSU(2),3
+NikonTE2000,TE2000,TE2000 controller - required for all other devices,8
+NikonTE2000,Nosepiece,Nosepiece (objective turret),4
+NikonTE2000,Focus,Z-stage,5
+NikonTE2000,OpticalPath,Optical path switch - camera; eyepiece; etc.,4
+NikonTE2000,FilterBlock,Filter changer,4
+NikonTE2000,Lamp,Halogen lamp,3
+ParallelPort,LPT1,Printer port TTL digital output,4
+Prior,Shutter-1,Pro Scan shutter 1,3
+Prior,Shutter-2,Pro Scan shutter 2,3
+Prior,Shutter-3,Pro Scan shutter 3,3
+Prior,Wheel-1,Pro Scan filter wheel 1,4
+Prior,Wheel-2,Pro Scan filter wheel 2,4
+Prior,Wheel-3,Pro Scan filter wheel 3,4
+Prior,ZStage,Add-on Z-stage,5
+Prior,XYStage,XY Stage,6
+PVCAM,Micromax,Princeton Intruments Micromax,2
+PVCAM,Camera-1,Universal PVCAM interface - camera slot 1,2
+PVCAM,Camera-2,Universal PVCAM interface - camera slot 2,2
+Sensicam,Sensicam,PCO Sensicam camera adapter,2
+SutterLambda,Wheel-A,Lambda 10 filter wheel A,4
+SutterLambda,Wheel-B,Lambda 10 filter wheel B,4
+SutterLambda,Wheel-C,Lambda 10 wheel C (10-3 only),4
+SutterLambda,Shutter-A,Lambda 10 shutter A,3
+SutterLambda,Shutter-B,Lambda 10 shutter B,3
+SutterLambda,Shutter-DG4,DG4 shutter,3
+SutterLambda,Wheel-DG4,DG4 filter changer,4
+Vincent,Vincent-D1,Vincent controller VMM-D1/T1 and D122,3
+Vincent,Vincent-D3,Vincent controller VMM-D3/D4,3
+ZeissMTB,Reflector,Description N/A,4
+ZeissMTB,Objective,Description N/A,4
+ZeissMTB,Optovar,Description N/A,4
+ZeissMTB,Tubelens,Description N/A,4
+ZeissMTB,Condenser,Description N/A,4
+ZeissMTB,Shutter,Description N/A,3
+ZeissMTB,Focus,Description N/A,5
+ZeissMTB,Stand,Description N/A,8
+ZeissMTB,Baseport,Description N/A,4
+ZeissMTB,Sideport,Description N/A,4
+ZeissMTB,Halogen,Description N/A,3
+ZeissMTB,AttoArc2,Description N/A,3
+ZeissMTB,FluoArc,Description N/A,3
