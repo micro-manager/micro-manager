@@ -159,6 +159,7 @@
     <ClCompile Include="SimpleAutofocus.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Brent.h" />
     <ClInclude Include="SimpleAutofocus.h" />
   </ItemGroup>
   <ItemGroup>

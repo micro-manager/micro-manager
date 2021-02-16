@@ -173,7 +173,7 @@ private:
    float max2_;
 
    // this defines member functions that operate on evaluator DoubleFunctionOfDouble
-#include "../../Util/Brent.h"
+#include "Brent.h"
 
 
 };
