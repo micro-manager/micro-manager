@@ -8,6 +8,7 @@
  * When the bright pixel is less than 'lowFraction_' of the maximum, try again.
  *
  * Nico Stuurman, 9/1//2008.  Copyright UCSF
+ * 2/16/2021, updated for MM 2.0
  */
 
 
@@ -20,8 +21,6 @@ import ij.process.ImageStatistics;
 import ij.measure.Measurements;
 import java.lang.Math;
 import javax.swing.JOptionPane;
-
-
 
 // Percentage of pixels that will be ignored in analysis of bright pixels
 double cutoff_ = 0.002;
@@ -69,7 +68,8 @@ boolean testExposure () {
 
 	ImageStatistics stats = imp.getStatistics(ij.measure.Measurements.MIN_MAX);
 
-    if (img instanceof byte[]) {
+	maxValue = 0.0;
+    if (pixels instanceof byte[]) {
        int[] hist = stats.histogram;
        int j=255; 
        int pixelsFound = 0;
@@ -112,6 +112,6 @@ boolean testExposure () {
 boolean finished = false;
 while (!finished)
 	finished = testExposure();
-mm.refreshGUI();
+mm.app().refreshGUI();
 mm.live().snap(true);
 
