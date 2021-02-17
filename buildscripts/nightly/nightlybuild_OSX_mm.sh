@@ -236,7 +236,7 @@ fi
 cd $MM_BUILDDIR
 rm -f Micro-Manager.dmg Micro-Manager.sparseimage
 
-hdiutil convert $MM_SRCDIR/MacInstaller/Micro-Manager.dmg -format UDSP -o Micro-Manager.sparseimage
+hdiutil convert $MM_SRCDIR/buildscripts/MacInstaller/Micro-Manager.dmg -format UDSP -o Micro-Manager.sparseimage
 mkdir -p mm-mnt
 hdiutil attach Micro-Manager.sparseimage -mountpoint mm-mnt
 cp -R $MM_STAGEDIR/* mm-mnt/Micro-Manager
