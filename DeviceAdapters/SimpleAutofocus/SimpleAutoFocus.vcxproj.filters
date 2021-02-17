@@ -29,5 +29,8 @@
     <ClInclude Include="SimpleAutofocus.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Brent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
