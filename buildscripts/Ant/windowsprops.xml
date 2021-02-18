@@ -136,11 +136,15 @@
 			<property name="msbuild.params"
 				value="@{project} /t:@{target} /p:Configuration=${mm.configuration} /p:Platform=${mm.architecture} /v:@{verbosity} /flp:LogFile=${msbuild.log} ${msbuild.flag.parallel}"/>
 
-			<local name="vs.commontools.dir"/>
-			<property name="vs.commontools.dir" location="${mm.env.VS100COMNTOOLS}"/>
+			<exec dir="./buildscripts/Ant" executable="cmd" >
+				<arg line="/c initializeVS.bat"/>
+			</exec>
+
 			<local name="vsvars32"/>
-			<property name="vsvars32" location="${vs.commontools.dir}/vsvars32.bat"/>
-			<fail message="Cannot locate vsvars32.bat for Visual Studio 2010">
+			<property name="vsvars32" location="${mm.env.VsDevCmd_Path}"/>
+			<echo message="${env.VsDevCmd_Path}" />
+			<echo message="${vsvars32}" />
+			<fail message="Cannot locate vsvars32.bat for Visual Studio 2222">
 				<condition> <not> <available file="${vsvars32}"/> </not> </condition>
 			</fail>
 
