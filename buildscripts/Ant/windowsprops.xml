@@ -136,22 +136,38 @@
 			<property name="msbuild.params"
 				value="@{project} /t:@{target} /p:Configuration=${mm.configuration} /p:Platform=${mm.architecture} /v:@{verbosity} /flp:LogFile=${msbuild.log} ${msbuild.flag.parallel}"/>
 
-			<exec dir="./buildscripts/Ant" executable="cmd" >
-				<arg line="/c initializeVS.bat"/>
+			<!-- Find the bat file that activates the Visual Studio environment -->
+			<local name="modernVSDevCmdBat"/>
+			<!-- Use vswhere to find the location of the most recent VSDevCmd.bat installed -->
+			<echo file="temp.bat">
+				@echo off
+				for /f "usebackq delims=#" %%a in (`"%programfiles(x86)%\Microsoft Visual Studio\Installer\vswhere" -latest -property installationPath`) do set VsDevCmd_Path=%%a\Common7\Tools\VsDevCmd.bat
+				echo %VsDevCmd_Path%
+			</echo>
+			<exec executable="cmd" outputproperty="modernVSDevCmdBat">
+				<arg value="/c"/>
+				<arg value="temp.bat"/>
 			</exec>
+			<delete file="temp.bat"/>
+			
+			<!-- If the modern VS activation Bat wasn't found then try the 2010 version -->			
+			<local name="activateVSVarsBat"/>
+			<condition property="activateVSVarsBat" value="${modernVSDevCmdBat}" else="${mm.env.VS100COMNTOOLS}vsvars32.bat">
+				<available file="${modernVSDevCmdBat}"/>
+			</condition>
+			
+			<echo message="${modernVSDevCmdBat}"/>
+			<echo message="${activateVSVarsBat}"/>
 
-			<local name="vsvars32"/>
-			<property name="vsvars32" location="${mm.env.VsDevCmd_Path}"/>
-			<echo message="${env.VsDevCmd_Path}" />
-			<echo message="${vsvars32}" />
-			<fail message="Cannot locate vsvars32.bat for Visual Studio 2222">
-				<condition> <not> <available file="${vsvars32}"/> </not> </condition>
-			</fail>
-
+            <fail message="Cannot locate vsvars32.bat for Visual Studio 2010 or VSDevCmd.bat for VisualStudio >2010">
+                <condition> <not> <available file="${activateVSVarsBat}"/> </not> </condition>
+            </fail>	
+			
 			<local name="temp.bat"/>
 			<tempfile property="temp.bat" prefix="msbuild" suffix=".bat" destdir="${mm.intdir}"/>
-			<echo file="${temp.bat}">@echo off
-				call "${vsvars32}"
+			<echo file="${temp.bat}">
+				@echo off
+				call "${activateVSVarsBat}"
 				if errorlevel 1 exit /b
 				msbuild ${msbuild.params}
 			</echo>
