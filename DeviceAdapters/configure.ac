@@ -546,7 +546,6 @@ m4_define([device_adapter_dirs], [m4_strip([
    Sensicam
    SequenceTester
    SerialManager
-   SimpleAutofocus
    SimpleCam
    Skyra
    SmarActHCU-3D
