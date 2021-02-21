@@ -11,11 +11,11 @@
       <ibiblio name ="bintray-micro-manager" m2compatible="true" root="https://dl.bintray.com/micro-manager/micro-manager"/>
 
 		<filesystem name="thirdpartypublic">
-			<artifact pattern="${ivy.settings.dir}/../../3rdpartypublic/classext/[artifact].[ext]"/>
+			<artifact pattern="${mm.thirdpartypublic}/classext/[artifact].[ext]"/>
 		</filesystem>
 
       <filesystem name="thirdpartypublic3d"><!-- jogl/gluegen jars need separate handling-->
-			<artifact pattern="${ivy.settings.dir}/../../3rdpartypublic/javalib3d/[artifact]-[revision].[ext]"/>
+			<artifact pattern="${mm.thirdpartypublic}/javalib3d/[artifact]-[revision].[ext]"/>
 		</filesystem>
 
 		<filesystem name="thirdpartynonfree">
