@@ -58,7 +58,7 @@
 				<copy todir="${mm.dll.installdir}">
 					<fileset dir="${mm.cpp.outdir}" includes="mmgr_dal_*.dll"/>
 				</copy>
-				<ant antfile="DeviceAdapters/build.xml" useNativeBasedir="true" target="install">
+				<ant antfile="CMMCore/DeviceAdapters/build.xml" useNativeBasedir="true" target="install">
 					<property name="mm.dll.installdir" value="${mm.dll.installdir}"/>
 					<property name="mm.dll.helper.installdir" value="${mm.dll.helper.installdir}"/>
 				</ant>
