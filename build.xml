@@ -35,7 +35,7 @@
 	</target>
 
 	<target name="build-cpp" description="Build all C++ components">
-		<mm-msbuild project="micromanager.sln" target="Build" failonerror="${mm.build.failonerror}"
+		<mm-msbuild project="CMMCore/micromanager.sln" target="Build" failonerror="${mm.build.failonerror}"
 			logbasename="msbuild-micromanager${mm.build.logsuffix}"/>
 	</target>
 
