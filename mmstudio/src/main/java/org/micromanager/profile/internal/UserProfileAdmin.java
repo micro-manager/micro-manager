@@ -165,7 +165,7 @@ public final class UserProfileAdmin {
     * @return true if migration was necessary; false otherwise
     * @throws IOException
     */
-   public boolean migrateLegacyProfiles() throws IOException {
+   private boolean migrateLegacyProfiles() throws IOException {
       if (didMigrateLegacy_) {
          return false;
       }

@@ -46,11 +46,6 @@ public final class UserProfileManager {
       });
    }
 
-   public static void handleSaveError(Exception e) {
-      // TODO User should probably receive warning for the first error.
-      ReportingUtils.logError(e, "Error saving user profile");
-   }
-
    public UserProfileAdmin getAdmin() {
       return admin_;
    }
@@ -63,7 +58,8 @@ public final class UserProfileManager {
                      admin_.getUUIDOfCurrentProfile(), new ExceptionListener() {
                         @Override
                         public void exceptionThrown(Exception e) {
-                           handleSaveError(e);
+                           // TODO User should probably receive warning for the first error.
+                           ReportingUtils.logError(e, "Error saving user profile");
                         }
                      });
             }
