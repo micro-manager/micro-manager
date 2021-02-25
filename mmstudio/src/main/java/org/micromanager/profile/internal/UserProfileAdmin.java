@@ -78,6 +78,7 @@ public final class UserProfileAdmin {
    private final Map<String, Profile> virtualProfiles_ = new HashMap<>();
 
    private UUID currentProfileUUID_ = DEFAULT_PROFILE_UUID;
+   private DefaultUserProfile currentProfile_ = null;
 
    private final EventListenerSupport<ChangeListener> currentProfileListeners_ =
          EventListenerSupport.create(ChangeListener.class);
@@ -149,7 +150,7 @@ public final class UserProfileAdmin {
      for (IndexEntry entry : getIndex().getEntries()) {
          if (entry.getUUID().equals(uuid)) {
             final String filename = entry.getFilename();
-            profile.toPropertyMap().saveJSON(getModernFile(filename), true, true); //Force write the file even though the profile may be set to readonly.
+            writeFile(filename, profile, true); //Force write the file even though the profile may be set to readonly.
             return;
          }
      }     
@@ -179,8 +180,14 @@ public final class UserProfileAdmin {
     * Make sure to call {@code syncToDisk} on each autosaving profile before
     * calling this method.
     */
-   public void shutdownAutosaves() {
-      saverExecutor_.shutdown();
+   public void shutdown() throws InterruptedException {
+      synchronized (UserProfileAdmin.class) {
+         if (currentProfile_ != null) {
+            currentProfile_.close();
+            currentProfile_ = null;
+         }
+         saverExecutor_.shutdown();
+      }
    }
 
    /*
@@ -240,6 +247,17 @@ public final class UserProfileAdmin {
       if (currentProfileUUID_.equals(uuid)) {
          return;
       }
+      synchronized (UserProfileAdmin.class) {
+         if (currentProfile_ != null) {
+            try {
+               currentProfile_.close();
+            }
+            catch (InterruptedException ex) {
+               Thread.currentThread().interrupt();
+            }
+            currentProfile_ = null;
+         }
+      }
       for (IndexEntry entry : getIndex().getEntries()) {
          if (entry.getUUID().equals(uuid)) {
             currentProfileUUID_ = uuid;
@@ -248,6 +266,29 @@ public final class UserProfileAdmin {
          }
       }
       throw new IllegalArgumentException("No user profile matching UUID " + uuid);
+   }
+   
+   public UserProfile getProfile() {
+      synchronized (UserProfileAdmin.class) {
+         if (currentProfile_ == null) {
+            try {
+               currentProfile_ = (DefaultUserProfile) getAutosavingProfile(
+                     getUUIDOfCurrentProfile(), new ExceptionListener() {
+                        @Override
+                        public void exceptionThrown(Exception e) {
+                           // TODO User should probably receive warning for the first error.
+                           ReportingUtils.logError(e, "Error saving user profile");
+                        }
+                     });
+            }
+            catch (IOException ex) {
+               ex.printStackTrace();
+               // TODO Notify user of error
+               // TODO Virtual profile?
+            }
+         }
+         return currentProfile_;
+      }
    }
 
    /**
@@ -494,9 +535,11 @@ public final class UserProfileAdmin {
 
    private Profile readFile(String filename) throws IOException {
       // Try virtual first; if not found read actual
-      Profile ret = virtualProfiles_.get(filename);
-      if (ret != null) {
-         return ret;
+      if (isReadOnlyMode()) {
+         Profile ret = virtualProfiles_.get(filename);
+         if (ret != null) {
+            return ret;
+         }
       }
       try {
          return Profile.fromFilePmap(PropertyMaps.loadJSON(getModernFile(filename)));
@@ -709,7 +752,7 @@ public final class UserProfileAdmin {
          profile.getSettings(UserProfileAdmin.class).putColor("Test!", Color.RED);
          ((DefaultUserProfile) profile).close();
 
-         admin.shutdownAutosaves();
+         admin.shutdown();
       }
       catch (IOException | InterruptedException e) {
          System.err.println(e.getMessage());
