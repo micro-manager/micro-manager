@@ -709,16 +709,18 @@ public final class MMStudio implements Studio {
             ReportingUtils.logError(e);
          }
       }
+
+      ui_.close();
+
+      boolean shouldCloseWholeApp = OptionsDlg.getShouldCloseOnExit(studio_);
+      
       try {
          userProfileAdmin_.shutdown();
       }
       catch (InterruptedException notExpected) {
          Thread.currentThread().interrupt();
       }
-
-      ui_.close();
-
-      boolean shouldCloseWholeApp = OptionsDlg.getShouldCloseOnExit(studio_);
+      
       if (shouldCloseWholeApp && !quitInitiatedByImageJ) {
          if (wasStartedAsImageJPlugin_) {
             // Let ImageJ do the quitting
@@ -935,6 +937,7 @@ public final class MMStudio implements Studio {
    public UserProfile profile() {
       return userProfileAdmin_.getProfile();
    }
+   
    @Override
    public UserProfile getUserProfile() {
       return profile();
