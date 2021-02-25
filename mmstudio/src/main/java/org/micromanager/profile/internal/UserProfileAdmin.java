@@ -77,7 +77,7 @@ public final class UserProfileAdmin {
    private Index virtualIndex_ = new Index();
    private final Map<String, Profile> virtualProfiles_ = new HashMap<>();
 
-   private UUID currentProfileUUID_ = DEFAULT_PROFILE_UUID;
+   private UUID currentProfileUUID_ = null;
    private DefaultUserProfile currentProfile_ = null;
 
    private final EventListenerSupport<ChangeListener> currentProfileListeners_ =
@@ -92,6 +92,11 @@ public final class UserProfileAdmin {
 
    private UserProfileAdmin() {
       writeLock_ = acquireWriteLock();
+      try {
+         setCurrentUserProfile(DEFAULT_PROFILE_UUID);
+      } catch (IOException e) {
+         ReportingUtils.logError(e);
+      }
    }
 
    private ProfileWriteLock acquireWriteLock() {
@@ -132,28 +137,19 @@ public final class UserProfileAdmin {
    }
    
    public boolean isProfileReadOnly() {
-      UserProfile profile;
-      try {
-         profile = getNonSavingProfile(getUUIDOfCurrentProfile());
-      }
-      catch (IOException e) {
-         return true;
-      }
-      return profile.getSettings(UserProfileAdmin.class).getBoolean(READ_ONLY, false);
+      return currentProfile_.getSettings(UserProfileAdmin.class).getBoolean(READ_ONLY, false);
    }
    
    public void setProfileReadOnly(boolean readOnly) throws IOException {
-     UUID uuid = getUUIDOfCurrentProfile();
-     DefaultUserProfile uprofile = (DefaultUserProfile) getNonSavingProfile(uuid);
-     uprofile.getSettings(UserProfileAdmin.class).putBoolean(READ_ONLY, readOnly);
-     Profile profile = Profile.fromSettings(uprofile.toPropertyMap()); //This is confusing. `DefaultUserProfile` is the class that actually handles the profile in the code. `Profile` is just a file format.
+     currentProfile_.getSettings(UserProfileAdmin.class).putBoolean(READ_ONLY, readOnly);
+     Profile profile = Profile.fromSettings(currentProfile_.toPropertyMap()); //This is confusing. `DefaultUserProfile` is the class that actually handles the profile in the code. `Profile` is just a file format.
      for (IndexEntry entry : getIndex().getEntries()) {
-         if (entry.getUUID().equals(uuid)) {
+         if (entry.getUUID().equals(currentProfileUUID_)) {
             final String filename = entry.getFilename();
             writeFile(filename, profile, true); //Force write the file even though the profile may be set to readonly.
             return;
          }
-     }     
+      }     
    }
 
    /**
@@ -244,8 +240,10 @@ public final class UserProfileAdmin {
 
    public void setCurrentUserProfile(UUID uuid) throws IOException {
       Preconditions.checkNotNull(uuid);
-      if (currentProfileUUID_.equals(uuid)) {
-         return;
+      if (currentProfileUUID_ != null) {
+         if (currentProfileUUID_.equals(uuid)) {
+            return;
+         }
       }
       synchronized (UserProfileAdmin.class) {
          if (currentProfile_ != null) {
@@ -255,21 +253,20 @@ public final class UserProfileAdmin {
             catch (InterruptedException ex) {
                Thread.currentThread().interrupt();
             }
-            try {
-               currentProfile_ = (DefaultUserProfile) getAutosavingProfile(
-                     getUUIDOfCurrentProfile(), new ExceptionListener() {
-                        @Override
-                        public void exceptionThrown(Exception e) {
-                           // TODO User should probably receive warning for the first error.
-                           ReportingUtils.logError(e, "Error saving user profile");
-                        }
-                     });
-            }
-            catch (IOException ex) {
-               ex.printStackTrace();
-               // TODO Notify user of error
-               // TODO Virtual profile?
-            }
+         }
+         try {
+            currentProfile_ = (DefaultUserProfile) getAutosavingProfile(
+                  uuid, new ExceptionListener() {
+                     @Override
+                     public void exceptionThrown(Exception e) {
+                        // TODO User should probably receive warning for the first error.
+                        ReportingUtils.logError(e, "Error saving user profile");
+                     }
+                  });
+         } catch (IOException ex) {
+            ex.printStackTrace();
+            // TODO Notify user of error
+            // TODO Virtual profile?
          }
       }
       for (IndexEntry entry : getIndex().getEntries()) {
