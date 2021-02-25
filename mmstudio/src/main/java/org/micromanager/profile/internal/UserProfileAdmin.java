@@ -255,22 +255,6 @@ public final class UserProfileAdmin {
             catch (InterruptedException ex) {
                Thread.currentThread().interrupt();
             }
-            currentProfile_ = null;
-         }
-      }
-      for (IndexEntry entry : getIndex().getEntries()) {
-         if (entry.getUUID().equals(uuid)) {
-            currentProfileUUID_ = uuid;
-            currentProfileListeners_.fire().stateChanged(new ChangeEvent(this));
-            return;
-         }
-      }
-      throw new IllegalArgumentException("No user profile matching UUID " + uuid);
-   }
-   
-   public UserProfile getProfile() {
-      synchronized (UserProfileAdmin.class) {
-         if (currentProfile_ == null) {
             try {
                currentProfile_ = (DefaultUserProfile) getAutosavingProfile(
                      getUUIDOfCurrentProfile(), new ExceptionListener() {
@@ -287,8 +271,19 @@ public final class UserProfileAdmin {
                // TODO Virtual profile?
             }
          }
-         return currentProfile_;
       }
+      for (IndexEntry entry : getIndex().getEntries()) {
+         if (entry.getUUID().equals(uuid)) {
+            currentProfileUUID_ = uuid;
+            currentProfileListeners_.fire().stateChanged(new ChangeEvent(this));
+            return;
+         }
+      }
+      throw new IllegalArgumentException("No user profile matching UUID " + uuid);
+   }
+   
+   public UserProfile getProfile() {
+      return currentProfile_;
    }
 
    /**
@@ -359,7 +354,6 @@ public final class UserProfileAdmin {
       return new File(GLOBAL_PROFILE_FILE).isFile() ||
             new File(OLD_GLOBAL_PROFILE_FILE).isFile();
    }
-
 
    /**
     * Create a profile with the given name.
