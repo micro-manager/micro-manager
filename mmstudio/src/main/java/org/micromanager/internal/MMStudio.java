@@ -718,14 +718,6 @@ public final class MMStudio implements Studio {
 
       ui_.close();
 
-      try {
-         ((DefaultUserProfile) profile()).close();
-      }
-      catch (InterruptedException notUsedByUs) {
-         Thread.currentThread().interrupt();
-      }
-      userProfileManager_.getAdmin().shutdownAutosaves();
-
       boolean shouldCloseWholeApp = OptionsDlg.getShouldCloseOnExit(studio_);
       if (shouldCloseWholeApp && !quitInitiatedByImageJ) {
          if (wasStartedAsImageJPlugin_) {
