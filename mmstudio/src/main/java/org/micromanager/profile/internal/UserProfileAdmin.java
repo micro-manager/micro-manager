@@ -77,7 +77,8 @@ public final class UserProfileAdmin {
    private Index virtualIndex_ = new Index();
    private final Map<String, Profile> virtualProfiles_ = new HashMap<>();
 
-   private UUID currentProfileUUID_ = DEFAULT_PROFILE_UUID;
+   private UUID currentProfileUUID_ = null;
+   private DefaultUserProfile currentProfile_ = null;
 
    private final EventListenerSupport<ChangeListener> currentProfileListeners_ =
          EventListenerSupport.create(ChangeListener.class);
@@ -91,6 +92,11 @@ public final class UserProfileAdmin {
 
    private UserProfileAdmin() {
       writeLock_ = acquireWriteLock();
+      try {
+         setCurrentUserProfile(DEFAULT_PROFILE_UUID);
+      } catch (IOException e) {
+         ReportingUtils.logError(e);
+      }
    }
 
    private ProfileWriteLock acquireWriteLock() {
@@ -131,29 +137,19 @@ public final class UserProfileAdmin {
    }
    
    public boolean isProfileReadOnly() {
-      UserProfile profile;
-      try {
-         profile = getNonSavingProfile(getUUIDOfCurrentProfile());
-      }
-      catch (IOException e) {
-         return true;
-      }
-      return profile.getSettings(UserProfileAdmin.class).getBoolean(READ_ONLY, false);
+      return currentProfile_.getSettings(UserProfileAdmin.class).getBoolean(READ_ONLY, false);
    }
    
    public void setProfileReadOnly(boolean readOnly) throws IOException {
-     UUID uuid = getUUIDOfCurrentProfile();
-     DefaultUserProfile uprofile = (DefaultUserProfile) getNonSavingProfile(uuid);
-     MutablePropertyMapView settings = uprofile.getSettings(UserProfileAdmin.class);
-     settings.putBoolean(READ_ONLY, readOnly);
-     Profile profile = Profile.fromSettings(uprofile.toPropertyMap());
+     currentProfile_.getSettings(UserProfileAdmin.class).putBoolean(READ_ONLY, readOnly);
+     Profile profile = Profile.fromSettings(currentProfile_.toPropertyMap()); //This is confusing. `DefaultUserProfile` is the class that actually handles the profile in the code. `Profile` is just a file format.
      for (IndexEntry entry : getIndex().getEntries()) {
-         if (entry.getUUID().equals(uuid)) {
+         if (entry.getUUID().equals(currentProfileUUID_)) {
             final String filename = entry.getFilename();
-            profile.toPropertyMap().saveJSON(getModernFile(filename), true, true); //Force write the file even though the profile may be set to readonly.
+            writeFile(filename, profile, true); //Force write the file even though the profile may be set to readonly.
             return;
          }
-     }     
+      }     
    }
 
    /**
@@ -166,7 +162,7 @@ public final class UserProfileAdmin {
     * @return true if migration was necessary; false otherwise
     * @throws IOException
     */
-   public boolean migrateLegacyProfiles() throws IOException {
+   private boolean migrateLegacyProfiles() throws IOException {
       if (didMigrateLegacy_) {
          return false;
       }
@@ -180,8 +176,14 @@ public final class UserProfileAdmin {
     * Make sure to call {@code syncToDisk} on each autosaving profile before
     * calling this method.
     */
-   public void shutdownAutosaves() {
-      saverExecutor_.shutdown();
+   public void shutdown() throws InterruptedException {
+      synchronized (UserProfileAdmin.class) {
+         if (currentProfile_ != null) {
+            currentProfile_.close();
+            currentProfile_ = null;
+         }
+         saverExecutor_.shutdown();
+      }
    }
 
    /*
@@ -238,8 +240,34 @@ public final class UserProfileAdmin {
 
    public void setCurrentUserProfile(UUID uuid) throws IOException {
       Preconditions.checkNotNull(uuid);
-      if (currentProfileUUID_.equals(uuid)) {
-         return;
+      if (currentProfileUUID_ != null) {
+         if (currentProfileUUID_.equals(uuid)) {
+            return;
+         }
+      }
+      synchronized (UserProfileAdmin.class) {
+         if (currentProfile_ != null) {
+            try {
+               currentProfile_.close();
+            }
+            catch (InterruptedException ex) {
+               Thread.currentThread().interrupt();
+            }
+         }
+         try {
+            currentProfile_ = (DefaultUserProfile) getAutosavingProfile(
+                  uuid, new ExceptionListener() {
+                     @Override
+                     public void exceptionThrown(Exception e) {
+                        // TODO User should probably receive warning for the first error.
+                        ReportingUtils.logError(e, "Error saving user profile");
+                     }
+                  });
+         } catch (IOException ex) {
+            ex.printStackTrace();
+            // TODO Notify user of error
+            // TODO Virtual profile?
+         }
       }
       for (IndexEntry entry : getIndex().getEntries()) {
          if (entry.getUUID().equals(uuid)) {
@@ -250,11 +278,28 @@ public final class UserProfileAdmin {
       }
       throw new IllegalArgumentException("No user profile matching UUID " + uuid);
    }
+   
+   public UserProfile getProfile() {
+      return currentProfile_;
+   }
 
+   /**
+    * 
+    * @param uuid The unique ID number associated with the profile you want to get.
+    * @return A `User Profile` instance that will not save back to file at all.
+    * @throws IOException 
+    */
    public UserProfile getNonSavingProfile(UUID uuid) throws IOException {
       return getProfileImpl(uuid, false, null);
    }
 
+   /**
+    * 
+    * @param uuid The unique ID number associated with the profile you want to get.
+    * @param errorHandler If an exception occurs during the autosave process the exception will be passed to this object's `exceptionThrown` method.
+    * @return A `User Profile` instance that will routinely save to file in case the program crashes.
+    * @throws IOException 
+    */
    public UserProfile getAutosavingProfile(UUID uuid,
          final ExceptionListener errorHandler) throws IOException {
       return getProfileImpl(uuid, true, errorHandler);
@@ -266,27 +311,31 @@ public final class UserProfileAdmin {
          if (entry.getUUID().equals(uuid)) {
             final String filename = entry.getFilename();
             Profile profile = readFile(filename);
-            final DefaultUserProfile ret = DefaultUserProfile.create(this,
+            final DefaultUserProfile uProfile = DefaultUserProfile.create(this,
                   uuid, profile.getSettings());
-            MutablePropertyMapView settings = ret.getSettings(UserProfileAdmin.class);
+            MutablePropertyMapView settings = uProfile.getSettings(UserProfileAdmin.class);
             if (!settings.containsKey(READ_ONLY)) {
                settings.putBoolean(READ_ONLY, false);
             }
-            ret.setFallbackProfile(getNonSavingGlobalProfile());
+            uProfile.setFallbackProfile(getNonSavingGlobalProfile());
             if (autosaving) {
-               ret.setSaver(ProfileSaver.create(ret, () -> {
-                  Profile profile1;
-                  profile1 = Profile.fromSettings(ret.toPropertyMap());
-                  try {
-                     writeFile(filename, profile1, false);
-                  }catch (IOException e) {
-                     if (errorHandler != null) {
-                        errorHandler.exceptionThrown(e);
-                     }
-                  }
-               }, saverExecutor_));
+               uProfile.setSaver(
+                  ProfileSaver.create(
+                     uProfile, 
+                     () -> {
+                        Profile profile1;
+                        profile1 = Profile.fromSettings(uProfile.toPropertyMap());
+                        try {
+                           writeFile(filename, profile1, false);
+                        } catch (IOException e) {
+                           if (errorHandler != null) {
+                              errorHandler.exceptionThrown(e);
+                           }
+                        }
+                     }, 
+                     saverExecutor_));
             }
-            return ret;
+            return uProfile;
          }
       }
       throw new IllegalArgumentException("No user profile matching UUID " + uuid);
@@ -302,7 +351,6 @@ public final class UserProfileAdmin {
       return new File(GLOBAL_PROFILE_FILE).isFile() ||
             new File(OLD_GLOBAL_PROFILE_FILE).isFile();
    }
-
 
    /**
     * Create a profile with the given name.
@@ -478,9 +526,11 @@ public final class UserProfileAdmin {
 
    private Profile readFile(String filename) throws IOException {
       // Try virtual first; if not found read actual
-      Profile ret = virtualProfiles_.get(filename);
-      if (ret != null) {
-         return ret;
+      if (isReadOnlyMode()) {
+         Profile ret = virtualProfiles_.get(filename);
+         if (ret != null) {
+            return ret;
+         }
       }
       try {
          return Profile.fromFilePmap(PropertyMaps.loadJSON(getModernFile(filename)));
@@ -499,12 +549,20 @@ public final class UserProfileAdmin {
       }
    }
 
+   /**
+    * Saves a profile to a json file.
+    * @param filename The name of the file to save to.
+    * @param profile The profile to be saved.
+    * @param ignoreProfileReadOnly If the `READ_ONLY` setting of the profile is `true` then this method will do not save unless this argument is `true`.
+    * @throws IOException 
+    */
    private void writeFile(String filename, Profile profile, boolean ignoreProfileReadOnly) throws IOException {
-       boolean readOnly;
-       if (ignoreProfileReadOnly) {
-         readOnly = false;
-       } else
-         readOnly = isProfileReadOnly();
+      boolean readOnly;
+      if (ignoreProfileReadOnly) {
+        readOnly = false;
+      } else {
+        readOnly = isProfileReadOnly();
+      }
       if (isReadOnlyMode() || readOnly) {
          virtualProfiles_.put(filename, profile);
          return;
@@ -685,7 +743,7 @@ public final class UserProfileAdmin {
          profile.getSettings(UserProfileAdmin.class).putColor("Test!", Color.RED);
          ((DefaultUserProfile) profile).close();
 
-         admin.shutdownAutosaves();
+         admin.shutdown();
       }
       catch (IOException | InterruptedException e) {
          System.err.println(e.getMessage());

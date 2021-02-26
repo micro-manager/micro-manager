@@ -84,14 +84,12 @@ import org.micromanager.internal.script.ScriptPanel;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.DefaultAutofocusManager;
 import org.micromanager.internal.utils.HotKeys;
-import org.micromanager.internal.utils.UserProfileManager;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.UIMonitor;
 import org.micromanager.internal.utils.WaitDialog;
 import org.micromanager.internal.zmq.ZMQServer;
-import org.micromanager.profile.internal.DefaultUserProfile;
 import org.micromanager.profile.internal.UserProfileAdmin;
 import org.micromanager.profile.internal.gui.HardwareConfigurationManager;
 import org.micromanager.quickaccess.QuickAccessManager;
@@ -125,7 +123,7 @@ public final class MMStudio implements Studio {
    private DefaultAlertManager alertManager_;
    private DefaultEventManager eventManager_;
    private ApplicationSkin daytimeNighttimeManager_;
-   private UserProfileManager userProfileManager_;
+   private UserProfileAdmin userProfileAdmin_;
    private PositionListManager posListManager_;
    private UiMovesStageManager uiMovesStageManager_;
    private DefaultApplication defaultApplication_;
@@ -244,7 +242,7 @@ public final class MMStudio implements Studio {
       // Start up multiple managers.  
       roi_ = new MMROIManager(this);
       ui_ = new MMUIManager(this);
-      userProfileManager_ = new UserProfileManager();       
+      userProfileAdmin_ = UserProfileAdmin.create();
       compatibility_ = new DefaultCompatibilityInterface(studio_);
       
       daytimeNighttimeManager_ = DaytimeNighttime.create(studio_); // Essential GUI settings in preparation of the intro dialog
@@ -319,15 +317,14 @@ public final class MMStudio implements Studio {
          ReportingUtils.logMessage("Finished waiting for plugins to load");
       }
 
-      UserProfileAdmin profileAdmin = userProfileManager_.getAdmin();
-      UUID profileUUID = profileAdmin.getUUIDOfDefaultProfile();
+      UUID profileUUID = userProfileAdmin_.getUUIDOfDefaultProfile();
       try {
           if (profileNameAutoStart != null) {
-            for (Map.Entry<UUID,String> entry : profileAdmin.getProfileUUIDsAndNames().entrySet()){
+            for (Map.Entry<UUID,String> entry : userProfileAdmin_.getProfileUUIDsAndNames().entrySet()){
                 String name = entry.getValue();
                 if (name.equals(profileNameAutoStart)){
-                    UserProfile profile = profileAdmin.getNonSavingProfile(entry.getKey());
-                    profileAdmin.setCurrentUserProfile(entry.getKey());
+                    UserProfile profile = userProfileAdmin_.getNonSavingProfile(entry.getKey());
+                    userProfileAdmin_.setCurrentUserProfile(entry.getKey());
                     daytimeNighttimeManager_.setSkin(daytimeNighttimeManager_.getSkin());
                     sysConfigFile_ = HardwareConfigurationManager.getRecentlyUsedConfigFilesFromProfile(profile).get(0);
                     break;
@@ -336,7 +333,7 @@ public final class MMStudio implements Studio {
             if (sysConfigFile_ == null) {
                 ReportingUtils.showMessage("A hardware configuration for a profile matching name: " + profileNameAutoStart + " could not be found");
             }
-          } else if (StartupSettings.create(profileAdmin.getNonSavingProfile(profileUUID)).
+          } else if (StartupSettings.create(userProfileAdmin_.getNonSavingProfile(profileUUID)).
                shouldSkipUserInteractionWithSplashScreen()) {
             List<String> recentConfigs = HardwareConfigurationManager.
                   getRecentlyUsedConfigFilesFromProfile(
@@ -349,7 +346,7 @@ public final class MMStudio implements Studio {
                return;
             }
             profileUUID = introDlg.getSelectedProfileUUID();
-            profileAdmin.setCurrentUserProfile(profileUUID);
+            userProfileAdmin_.setCurrentUserProfile(profileUUID);
             sysConfigFile_ = introDlg.getSelectedConfigFilePath();
          }
       } catch (IOException ex) {
@@ -400,7 +397,7 @@ public final class MMStudio implements Studio {
       cache_ = new MMCache(this, ui_.frame());
 
       hotKeys_ = new HotKeys(); // We wait until after showing the main window to enable hot keys
-      hotKeys_.loadSettings(userProfileManager_.getProfile());
+      hotKeys_.loadSettings(userProfileAdmin_.getProfile());
 
       ReportingUtils.showErrorOn(true); // Switch error reporting back on TODO See above where it's turned off
       
@@ -706,30 +703,24 @@ public final class MMStudio implements Studio {
       
       try {
          ui_.frame().getConfigPad().saveSettings();
-         hotKeys_.saveSettings(userProfileManager_.getProfile());
+         hotKeys_.saveSettings(userProfileAdmin_.getProfile());
       } catch (NullPointerException e) {
          if (core_ != null) {
             ReportingUtils.logError(e);
          }
       }
+
+      ui_.close();
+
+      boolean shouldCloseWholeApp = OptionsDlg.getShouldCloseOnExit(studio_);
+      
       try {
-         userProfileManager_.shutdown();
+         userProfileAdmin_.shutdown();
       }
       catch (InterruptedException notExpected) {
          Thread.currentThread().interrupt();
       }
-
-      ui_.close();
-
-      try {
-         ((DefaultUserProfile) profile()).close();
-      }
-      catch (InterruptedException notUsedByUs) {
-         Thread.currentThread().interrupt();
-      }
-      userProfileManager_.getAdmin().shutdownAutosaves();
-
-      boolean shouldCloseWholeApp = OptionsDlg.getShouldCloseOnExit(studio_);
+      
       if (shouldCloseWholeApp && !quitInitiatedByImageJ) {
          if (wasStartedAsImageJPlugin_) {
             // Let ImageJ do the quitting
@@ -944,15 +935,16 @@ public final class MMStudio implements Studio {
 
    @Override
    public UserProfile profile() {
-      return userProfileManager_.getProfile();
+      return userProfileAdmin_.getProfile();
    }
+   
    @Override
    public UserProfile getUserProfile() {
       return profile();
    }
    
    public UserProfileAdmin profileAdmin() {
-       return userProfileManager_.getAdmin();
+       return userProfileAdmin_;
    }
 
    @Override
