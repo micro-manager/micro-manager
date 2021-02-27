@@ -289,6 +289,11 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       // load acquisition settings
       SequenceSettings sequenceSettings = loadAcqSettingsFromProfile();
 
+      // protect from bugs caused by zero z step
+      if (sequenceSettings.sliceZStepUm() < 0.000000001) {
+         sequenceSettings = sequenceSettings.copyBuilder().sliceZStepUm(0.1).build();
+      }
+
       // Restore Column Width and Column order
       int columnCount = 7;
       columnWidth_ = new int[columnCount];
@@ -1572,7 +1577,12 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       }
       ssb.saveMode(DefaultDatastore.getPreferredSaveMode(mmStudio_));
 
-      acqEng_.setSequenceSettings(ssb.build());
+      try {
+         acqEng_.setSequenceSettings(ssb.build());
+      } catch (UnsupportedOperationException uoex) {
+         mmStudio_.logs().showError("Zero Z step size is not supported, resetting to 1 micron", this);
+         acqEng_.setSequenceSettings(ssb.sliceZStepUm(1.0).build());
+      }
 
       disableGUItoSettings_ = false;
       updateGUIContents();
