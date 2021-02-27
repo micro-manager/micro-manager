@@ -19,15 +19,8 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
-import javax.swing.ButtonGroup;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import javax.swing.JTextField;
-import javax.swing.ProgressMonitor;
+import javax.swing.*;
+
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
@@ -40,13 +33,13 @@ import org.micromanager.data.PipelineErrorException;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.JavaUtils;
-import org.micromanager.internal.utils.MMDialog;
+import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  * This class allows users to process files that already exist on disk.
  */
-public final class ProcessExistingDataDialog extends MMDialog {
+public final class ProcessExistingDataDialog extends JDialog {
    private static final String LOAD_FROM_DISK = "Load From Disk...";
    private static final String OUTPUT_OPTION = "Output Option";
    private static final String OPTION_SINGLE_TIFF = "Option Single";
@@ -73,7 +66,7 @@ public final class ProcessExistingDataDialog extends MMDialog {
    final private MutablePropertyMapView settings_;
 
    private ProcessExistingDataDialog(Studio studio) {
-      super("Process Existing Data");
+      super();
       super.setTitle("Process Existing Data");
       studio_ = studio;
       settings_ = studio_.getUserProfile().getSettings(this.getClass());
@@ -200,7 +193,8 @@ public final class ProcessExistingDataDialog extends MMDialog {
 
       super.add(contents);
       super.pack();
-      super.loadAndRestorePosition(200, 200);
+      super.setLocation(200, 200);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       super.setVisible(true);
    }
 

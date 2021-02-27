@@ -46,9 +46,9 @@ import org.micromanager.events.XYStagePositionChangedEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.navigation.UiMovesStageManager;
-import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.TextUtils;
+import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 import javax.swing.BorderFactory;
@@ -74,7 +74,7 @@ import javax.swing.JRadioButton;
  * keypress should move each stage from this dialog.  The Dialog should also
  * show which keys do what, and possibly provide the option to change these keys.
  */
-public final class StageControlFrame extends MMFrame {
+public final class StageControlFrame extends JFrame {
    private final Studio studio_;
    private final CMMCore core_;
    private final UiMovesStageManager uiMovesStageManager_;
@@ -149,7 +149,8 @@ public final class StageControlFrame extends MMFrame {
 
       initComponents();
 
-      super.loadAndRestorePosition(FRAME_X_DEFAULT_POS, FRAME_Y_DEFAULT_POS);
+      super.setLocation(FRAME_X_DEFAULT_POS, FRAME_Y_DEFAULT_POS);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
    }
 
    /**

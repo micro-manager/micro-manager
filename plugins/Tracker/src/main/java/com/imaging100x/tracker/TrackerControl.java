@@ -39,12 +39,7 @@ import java.io.File;
 import java.util.GregorianCalendar;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.swing.ButtonGroup;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JRadioButton;
-import javax.swing.JTextField;
-import javax.swing.Timer;
+import javax.swing.*;
 import javax.swing.border.BevelBorder;
 
 import mmcorej.MMCoreJ;
@@ -65,11 +60,11 @@ import org.micromanager.UserProfile;
 // should not imitate this practice.
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.MDUtils;
-import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.TextUtils;
+import org.micromanager.internal.utils.WindowPositioning;
 
 
-public class TrackerControl extends MMFrame {
+public class TrackerControl extends JFrame {
    public static final String menuName = "Live Tracking";
    public static final String tooltipDescription =
       "Use image correlation based tracking to countersteer the XY stage";
@@ -224,7 +219,9 @@ public class TrackerControl extends MMFrame {
       setTitle("Live Tracking");
       setResizable(false);
       getContentPane().setLayout(null);
-      loadAndRestorePosition(100, 100, 412, 346);
+
+      super.setBounds(100, 100, 412, 346);
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
       final JLabel intervalmsLabel = new JLabel();
       intervalmsLabel.setText("Interval [ms]");

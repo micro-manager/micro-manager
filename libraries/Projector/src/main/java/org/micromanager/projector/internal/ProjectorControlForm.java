@@ -57,18 +57,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JSpinner;
-import javax.swing.JTabbedPane;
-import javax.swing.JTextField;
-import javax.swing.JToggleButton;
-import javax.swing.SpinnerNumberModel;
+import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.text.DefaultFormatter;
 
@@ -87,6 +76,7 @@ import org.micromanager.events.AcquisitionEndedEvent;
 import org.micromanager.events.AcquisitionStartedEvent;
 import org.micromanager.events.SLMExposureChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
+import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 import org.micromanager.projector.internal.devices.SLM;
@@ -99,7 +89,6 @@ import org.micromanager.projector.Mapping;
 // maintainability. However, this plugin code is older than the current
 // MMStudio API, so it still uses internal classes and interfaces. New code
 // should not imitate this practice.
-import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
 import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
@@ -109,7 +98,7 @@ import org.micromanager.display.internal.event.DisplayMouseEvent;
  * The main window for the Projector plugin. Contains logic for calibration,
  * and control for SLMs and Galvos.
 */
-public class ProjectorControlForm extends MMFrame {
+public class ProjectorControlForm extends JFrame {
    private static ProjectorControlForm formSingleton_;
    private final ProjectorControlExecution projectorControlExecution_;
    private final Object studioEventHandler_;
@@ -280,7 +269,8 @@ public class ProjectorControlForm extends MMFrame {
       delayField_.setText(settings_.getString(Terms.DELAY, "0"));
       logDirectoryTextField_.setText(settings_.getString(Terms.LOGDIRECTORY, ""));
 
-      super.loadAndRestorePosition(500, 300);
+      super.setLocation(500, 300);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       updateROISettings();
    }
 

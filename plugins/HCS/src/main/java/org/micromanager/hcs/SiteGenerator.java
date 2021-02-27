@@ -14,15 +14,7 @@ import java.awt.Component;
 import java.awt.geom.AffineTransform;
 import java.io.File;
 
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JOptionPane;
-import javax.swing.JTextField;
-import javax.swing.JToggleButton;
-import javax.swing.ButtonGroup;
+import javax.swing.*;
 import javax.swing.border.LineBorder;
 
 import net.miginfocom.swing.MigLayout;
@@ -41,14 +33,14 @@ import mmcorej.CMMCore;
 // MMStudio API, so it still uses internal classes and interfaces. New code
 // should not imitate this practice.
 import org.micromanager.internal.utils.NumberUtils;
-import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.TextUtils;
+import org.micromanager.internal.utils.WindowPositioning;
 
 /**
  * This is the primary user interface for the plugin.
  * @author nenad
  */
-public class SiteGenerator extends MMFrame implements ParentPlateGUI {
+public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
    private static final String EQUAL_SPACING = "Equal XY";
    private static final String DIFFERENT_SPACING = "Different XY";
@@ -207,7 +199,9 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       focusPlane_ = null;
 
       super.setTitle("HCS Site Generator " + HCSPlugin.VERSION_INFO);
-      super.loadAndRestorePosition(100, 100, 1000, 640);
+
+      super.setBounds(100, 100, 1000, 640);
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
       platePanel_ = new PlatePanel(plate_, null, this, app);
       contentsPanel.add(platePanel_, "grow, push");

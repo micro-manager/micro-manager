@@ -400,7 +400,7 @@ public class ASIdiSPIMFrame extends SPIMFrame  {
       acquisitionPanel_.saveSettings();
       settingsPanel_.saveSettings();
 
-      // save tab location in prefs (dialog location now handled by MMDialog)
+      // save tab location in prefs (dialog location now handled by SPIMFrame)
       prefs_.putInt(MAIN_PREF_NODE, Prefs.Keys.TAB_INDEX, tabbedPane_.getSelectedIndex());
    }
    

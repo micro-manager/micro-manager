@@ -15,17 +15,16 @@
 
 package org.micromanager.plugins.sequencebuffermonitor;
 
+import org.micromanager.internal.utils.WindowPositioning;
+
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import javax.swing.JLabel;
-import javax.swing.JProgressBar;
-import javax.swing.JTextField;
-import javax.swing.Timer;
-import org.micromanager.internal.utils.MMFrame;
+import javax.swing.*;
 
 
-class SequenceBufferMonitorFrame extends MMFrame {
+
+class SequenceBufferMonitorFrame extends JFrame {
    org.micromanager.Studio app_;
    JProgressBar usageBar_;
    Timer timer_;
@@ -88,7 +87,9 @@ class SequenceBufferMonitorFrame extends MMFrame {
       });
 
       update();
-      loadAndRestorePosition(200, 200);
+
+      super.setLocation(200, 200);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
    }
 
    private void update() {

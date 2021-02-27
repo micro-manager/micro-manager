@@ -34,16 +34,8 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.ArrayList;
 
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
-import javax.swing.WindowConstants;
+import javax.swing.*;
+
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.PropertyMap;
@@ -51,6 +43,7 @@ import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
 import org.micromanager.events.ChannelGroupChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
+import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 // Imports for MMStudio internal packages
@@ -59,14 +52,13 @@ import org.micromanager.propertymap.MutablePropertyMapView;
 // MMStudio API, so it still uses internal classes and interfaces. New code
 // should not imitate this practice.
 import org.micromanager.internal.utils.FileDialogs;
-import org.micromanager.internal.utils.MMDialog;
 
 /**
  *
  * @author nico
  */
-public class MultiChannelShadingMigForm extends MMDialog implements ProcessorConfigurator {
-   private  MMDialog mcsPluginWindow;
+public class MultiChannelShadingMigForm extends JDialog implements ProcessorConfigurator {
+   private  JDialog mcsPluginWindow;
    private final Studio studio_;
    private final PropertyMap settings_;
    private final MutablePropertyMapView profileSettings_;
@@ -119,7 +111,8 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
       super.setLayout(new MigLayout("flowx, fill, insets 8"));
       super.setTitle(MultiChannelShading.MENUNAME);
 
-      super.loadAndRestorePosition(100, 100, 375, 275);
+      super.setBounds(100, 100, 375, 375);
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
       super.add(new JLabel("Uncheck and Recheck Use checkboxes in Pipeline after changing settings"),
                "span 5, wrap");
