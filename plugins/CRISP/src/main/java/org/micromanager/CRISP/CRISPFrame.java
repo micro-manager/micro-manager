@@ -49,13 +49,7 @@ import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
 import org.micromanager.Studio;
-
-// Imports for MMStudio internal packages
-// Plugins should not access internal packages, to ensure modularity and
-// maintainability. However, this plugin code is older than the current
-// MMStudio API, so it still uses internal classes and interfaces. New code
-// should not imitate this practice.
-import org.micromanager.internal.utils.MMFrame;
+import org.micromanager.internal.utils.WindowPositioning;
 
 /**
  * Micro-Manager plugin for control of the ASI CRISP autofocus
@@ -63,7 +57,7 @@ import org.micromanager.internal.utils.MMFrame;
  * @author Nico Stuurman
  */
 @SuppressWarnings("serial")
-public class CRISPFrame extends MMFrame {
+public class CRISPFrame extends JFrame {
 
     private final Studio gui_;
     private final CMMCore core_;
@@ -115,25 +109,25 @@ public class CRISPFrame extends MMFrame {
                core_.getLoadedDevicesOfType(DeviceType.AutoFocusDevice);
        boolean found = false;
        for (String af : afs) {
-         try {
-            // takes 
-            if (core_.getDeviceLibrary(af).equals("ASITiger") &&
+          try {
+             // takes
+             if (core_.getDeviceLibrary(af).equals("ASITiger") &&
                   core_.hasProperty(af, "Description") &&
                   core_.getProperty(af, "Description").startsWith("ASI CRISP AutoFocus")) {
-               CRISP_ = af;
-               found = true;
-               break;
-            }
-            if (core_.getDeviceLibrary(af).equals("ASIStage") &&
+                CRISP_ = af;
+                found = true;
+                break;
+             }
+             if (core_.getDeviceLibrary(af).equals("ASIStage") &&
                   core_.hasProperty(af, "Description") &&
                   core_.getProperty(af, "Description").equals("ASI CRISP Autofocus adapter")) {
-               found = true;
-               CRISP_ = af;
-               break;
-            }
-         } catch (Exception ex) {
+                found = true;
+                CRISP_ = af;
+                break;
+             }
+          } catch (Exception ex) {
             gui_.logs().logError(ex);
-            }
+          }
        }
 
        if (!found) {
@@ -141,11 +135,12 @@ public class CRISPFrame extends MMFrame {
           throw new IllegalArgumentException("This plugin needs at least one camera");
        }
 
-      initComponents();
+       initComponents();
 
-      super.loadAndRestorePosition(frameXPos_, frameYPos_);
+       super.setLocation(frameXPos_, frameYPos_);
+       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
-      updateValues(true);
+       updateValues(true);
     }
 
     private void updateValues(boolean allValues) {
