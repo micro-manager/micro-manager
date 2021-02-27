@@ -13,7 +13,6 @@ import javax.swing.JPanel;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.WindowPositioning;
 
 /**

@@ -73,19 +73,14 @@ import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 import org.micromanager.events.internal.ShutterDevicesEvent;
 import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.StageControlFrame;
-import org.micromanager.internal.utils.DragDropUtil;
-import org.micromanager.internal.utils.GUIUtils;
-import org.micromanager.internal.utils.MMFrame;
-import org.micromanager.internal.utils.MMKeyDispatcher;
-import org.micromanager.internal.utils.NumberUtils;
-import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.*;
 import org.micromanager.quickaccess.internal.QuickAccessFactory;
 import org.micromanager.quickaccess.internal.controls.ShutterControl;
 
 /**
  * GUI code for the primary window of the program. And nothing else.
  */
-public final class MainFrame extends MMFrame {
+public final class MainFrame extends JFrame {
 
    private static final String MICRO_MANAGER_TITLE = "Micro-Manager";
    private static final String MAIN_EXPOSURE = "exposure";
@@ -167,7 +162,8 @@ public final class MainFrame extends MMFrame {
       // pack().
       super.pack();
       super.setMinimumSize(super.getSize());
-      resetPosition();
+      super.setBounds(100, 100, 644, 220);
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       mmStudio_.events().registerForEvents(this);
    }
 
@@ -193,11 +189,6 @@ public final class MainFrame extends MMFrame {
             mmStudio_.closeSequence(false);
          }
       });
-   }
-
-   public void resetPosition() {
-      // put frame back where it was last time if possible
-      loadAndRestorePosition(100, 100, 644, 220);
    }
 
    public void initializeConfigPad() {
@@ -780,7 +771,6 @@ public final class MainFrame extends MMFrame {
     * Save our settings to the user profile.
     */
    public void savePrefs() {
-      this.savePosition();
       mmStudio_.profile().getSettings(MainFrame.class).putString(
             MAIN_EXPOSURE, textFieldExp_.getText());
    }

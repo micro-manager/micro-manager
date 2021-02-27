@@ -28,20 +28,7 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import javax.swing.AbstractAction;
-import javax.swing.ActionMap;
-import javax.swing.InputMap;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.KeyStroke;
-import javax.swing.ListSelectionModel;
+import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import javax.swing.table.TableColumn;
 import java.awt.event.WindowAdapter;
@@ -53,22 +40,12 @@ import org.micromanager.Studio;
 import org.micromanager.events.PropertiesChangedEvent;
 import org.micromanager.events.PropertyChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
-import org.micromanager.internal.utils.DaytimeNighttime;
-import org.micromanager.internal.utils.MMDialog;
-import org.micromanager.internal.utils.PropertyNameCellRenderer;
-import org.micromanager.internal.utils.PropertyTableData;
-import org.micromanager.internal.utils.PropertyUsageCellEditor;
-import org.micromanager.internal.utils.PropertyUsageCellRenderer;
-import org.micromanager.internal.utils.PropertyValueCellEditor;
-import org.micromanager.internal.utils.PropertyValueCellRenderer;
-import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.internal.utils.ShowFlags;
-import org.micromanager.internal.utils.ShowFlagsPanel;
+import org.micromanager.internal.utils.*;
 
 /*
  * A base class from which GroupEditor and PresetEditor are derived.
  */
-public abstract class ConfigDialog extends MMDialog {
+public abstract class ConfigDialog extends JDialog {
 
    private static final long serialVersionUID = 5819669941239786807L;
 
@@ -114,7 +91,7 @@ public abstract class ConfigDialog extends MMDialog {
 
    public ConfigDialog(String groupName, String presetName, Studio studio, 
            boolean newItem) {
-      super("config editing for " + groupName);
+      super();
       groupName_ = groupName;
       presetName_ = presetName;
       newItem_ = newItem;
@@ -321,7 +298,6 @@ public abstract class ConfigDialog extends MMDialog {
    public void dispose() {
       studio_.events().unregisterForEvents(this);
       super.dispose();
-      savePosition();
       studio_.app().refreshGUI();
    }
    

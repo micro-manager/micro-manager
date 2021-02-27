@@ -17,7 +17,6 @@ package org.micromanager.display.inspector.internal;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Dimension;
-import java.awt.GraphicsConfiguration;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -52,7 +51,6 @@ import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.display.internal.event.InspectorDidCloseEvent;
 import org.micromanager.internal.utils.EventBusExceptionLogger;
-import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.scijava.plugin.Plugin;
 import org.micromanager.display.inspector.InspectorPanelController;
@@ -139,7 +137,7 @@ public final class InspectorController
    }
 
    private void makeUI() {
-      frame_ = new MMFrame(); // TODO
+      frame_ = new JFrame(); // TODO
       frame_.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
       frame_.addWindowListener(new WindowAdapter() {
          @Override
