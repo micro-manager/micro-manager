@@ -7,6 +7,8 @@
 
 	<include file="buildscripts/buildprops.xml"/>
 	<import file="buildscripts/version.xml"/>
+	
+	<property name="mm.cpp.srcdir" value="CMMCore"/>
 
 	<macrodef name="run-all-java-projects">
 		<attribute name="target"/>
@@ -18,7 +20,7 @@
 				<property name="mm.java.autofocus.installdir" value="${mm.java.autofocus.installdir}"/>
 				<filelist dir="${mm.basedir}">
 					<!-- Note: Order matters -->
-					<file name="MMCoreJ_wrap/build.xml"/>
+					<file name="buildscripts/mmcorej.xml"/>
 					<file name="mmstudio/build.xml"/>
 					<file name="acqEngine/build.xml"/>
 					<file name="libraries/build.xml"/>
@@ -35,7 +37,7 @@
 	</target>
 
 	<target name="build-cpp" description="Build all C++ components">
-		<mm-msbuild project="CMMCore/micromanager.sln" target="Build" failonerror="${mm.build.failonerror}"
+		<mm-msbuild project="${mm.cpp.srcdir}/micromanager.sln" target="Build" failonerror="${mm.build.failonerror}"
 			logbasename="msbuild-micromanager${mm.build.logsuffix}"/>
 	</target>
 
@@ -58,7 +60,7 @@
 				<copy todir="${mm.dll.installdir}">
 					<fileset dir="${mm.cpp.outdir}" includes="mmgr_dal_*.dll"/>
 				</copy>
-				<ant antfile="CMMCore/DeviceAdapters/build.xml" useNativeBasedir="true" target="install">
+				<ant antfile="${mm.cpp.srcdir}/DeviceAdapters/build.xml" useNativeBasedir="true" target="install">
 					<property name="mm.dll.installdir" value="${mm.dll.installdir}"/>
 					<property name="mm.dll.helper.installdir" value="${mm.dll.helper.installdir}"/>
 				</ant>
