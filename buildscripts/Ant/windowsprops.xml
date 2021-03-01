@@ -155,9 +155,6 @@
 			<condition property="activateVSVarsBat" value="${modernVSDevCmdBat}" else="${mm.env.VS100COMNTOOLS}vsvars32.bat">
 				<available file="${modernVSDevCmdBat}"/>
 			</condition>
-			
-			<echo message="${modernVSDevCmdBat}"/>
-			<echo message="${activateVSVarsBat}"/>
 
             <fail message="Cannot locate vsvars32.bat for Visual Studio 2010 or VSDevCmd.bat for VisualStudio >2010">
                 <condition> <not> <available file="${activateVSVarsBat}"/> </not> </condition>
