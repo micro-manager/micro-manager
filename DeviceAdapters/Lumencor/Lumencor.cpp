@@ -99,6 +99,7 @@ LightEngine::LightEngine() :
 	models.push_back("SPECTRA7");
 	models.push_back("SPECTRAX");
 	models.push_back("LUMA");
+	models.push_back("SOLA3");
 	model = models[0];
 
    pAct = new CPropertyAction(this, &LightEngine::OnModel);
