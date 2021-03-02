@@ -134,7 +134,7 @@
 
 			<local name="msbuild.params"/>
 			<property name="msbuild.params"
-				value="@{project} /t:@{target} /p:Configuration=${mm.configuration} /p:Platform=${mm.architecture} /p:OutDir=${mm.cpp.outdir}\ /p:IntDir=${mm.cpp.intdir}\ /v:@{verbosity} /flp:LogFile=${msbuild.log} ${msbuild.flag.parallel}"/>
+				value="@{project} /t:@{target} /p:Configuration=${mm.configuration} /p:Platform=${mm.architecture} /p:MM_BUILDDIR=${mm.cpp.outdir} /v:@{verbosity} /flp:LogFile=${msbuild.log} ${msbuild.flag.parallel}"/>
 
 			<!-- Find the bat file that activates the Visual Studio environment -->
 			<local name="modernVSDevCmdBat"/>
