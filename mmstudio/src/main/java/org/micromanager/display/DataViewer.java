@@ -53,7 +53,7 @@ public interface DataViewer extends EventPublisher {
     *
     * @param recipient the object to register
     *
-    * @see unregisterForEvents
+    * @see #unregisterForEvents(Object)
     */
    @Override
    void registerForEvents(Object recipient);
@@ -67,11 +67,11 @@ public interface DataViewer extends EventPublisher {
     * This method is a good way to set all of the display settings at once, for
     * example to restore a saved set of settings. For changing just part of the
     * settings (for example, in response to the user setting a UI control), see
-    * {@link compareAndSetDisplaySettings}.
+    * {@link #compareAndSetDisplaySettings(DisplaySettings, DisplaySettings)}.
     * <p>
     * This method can be called from any thread. There may be a delay before
     * the new settings are actually reflected in the viewer user interface.
-    * However, {@link getDisplaySettings} will always reflect the most recent
+    * However, {@link #getDisplaySettings()} will always reflect the most recent
     * settings, even if they have not yet been applied to the UI.
     *
     * @param settings the new display settings
@@ -82,7 +82,7 @@ public interface DataViewer extends EventPublisher {
     * Get the current display settings.
     * <p>
     * This method can be called from any thread. The return value will be
-    * consistent with the most recent call to {@link setDisplaySettings} or
+    * consistent with the most recent call to {@link #setDisplaySettings(DisplaySettings)} or
     * {@code compareAndSetDisplaySettings}.
     *
     * @return the current display settings
@@ -133,7 +133,7 @@ public interface DataViewer extends EventPublisher {
     *
     * @return the datastore backing this viewer, or {@code null} if this viewer
     * is backed by a data provider that is not a datastore
-    * @deprecated use {@link getDataProvider} instead
+    * @deprecated use {@link #getDataProvider()} instead
     */
    @Deprecated
    Datastore getDatastore();
@@ -150,21 +150,21 @@ public interface DataViewer extends EventPublisher {
     * <p>
     * This method can be called from any thread. There may be a delay before
     * the new position is actually reflected in the viewer user interface.
-    * However, {@link getDisplayPosition} will always reflect the most recent
+    * However, {@link #getDisplayPosition()} will always reflect the most recent
     * position, even if it has not been applied to the UI.
     *
     * @param position the coordinates of the images to display
     * @param forceRedisplay if true, assume the image(s) at the position may
     * have changed even if the position does not differ from the current one
     *
-    * @see compareAndSetDisplayPosition
+    * @see #compareAndSetDisplaySettings(DisplaySettings, DisplaySettings)
     */
    void setDisplayPosition(Coords position, boolean forceRedisplay);
 
    /**
     * Display the images at the specified coordinates in the data provider.
     * <p>
-    * See {@link setDisplayPosition(Coords, boolean)} for details. This method
+    * See {@link #setDisplayPosition(Coords, boolean)} for details. This method
     * does not force a redisplay if {@code position} is the same as the current
     * display position.
     *
@@ -176,7 +176,7 @@ public interface DataViewer extends EventPublisher {
     * Get the coordinates for the currently displayed images.
     * <p>
     * This method can be called from any thread. The return value will be
-    * consistent with the most recent call to {@link setDisplayPosition} or
+    * consistent with the most recent call to {@link #setDisplayPosition(Coords)} or
     * {@code compareAndSetDisplayPosition}.
     *
     * @return the current coordinates displayed
@@ -214,7 +214,7 @@ public interface DataViewer extends EventPublisher {
    /**
     * Set the display position only if the current position is the expected one.
     * <p>
-    * See {@link compareAndSetDisplayPosition(Coords, Coords, boolean)} for
+    * See {@link #compareAndSetDisplayPosition(Coords, Coords, boolean)} for
     * details.
     * <p>
     * This method will not force a redisplay if {@code newPosition} is the same
@@ -228,10 +228,10 @@ public interface DataViewer extends EventPublisher {
          Coords newPosition);
 
    /**
-    * Obsolete equivalent of {@link setDisplayPosition}.
+    * Obsolete equivalent of {@link #setDisplayPosition(Coords)}.
     *
     * @param position the coordinates of the images to display
-    * @deprecated use {@link setDisplayPosition} instead
+    * @deprecated use {@link #setDisplayPosition(Coords)} instead
     */
    @Deprecated
    void setDisplayedImageTo(Coords position);
