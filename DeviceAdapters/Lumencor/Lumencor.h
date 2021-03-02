@@ -8,7 +8,7 @@
 //
 // AUTHOR:        Nenad Amodaj
 //
-// COPYRIGHT:     Lumencor 2019         
+// COPYRIGHT:     Lumencor 2019 - 2021         
 //
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
