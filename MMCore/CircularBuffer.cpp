@@ -26,7 +26,11 @@
 #include "CircularBuffer.h"
 #include "CoreUtils.h"
 
+#include "TaskSet_CopyMemory.h"
+
 #include "../MMDevice/DeviceUtils.h"
+
+#include <boost/make_shared.hpp>
 
 
 const long long bytesInMB = 1 << 20;
@@ -45,7 +49,9 @@ CircularBuffer::CircularBuffer(unsigned int memorySizeMB) :
    insertIndex_(0), 
    saveIndex_(0), 
    memorySizeMB_(memorySizeMB), 
-   overflow_(false)
+   overflow_(false),
+   threadPool_(boost::make_shared<ThreadPool>()),
+   tasksMemCopy_(boost::make_shared<TaskSet_CopyMemory>(threadPool_))
 {
    facet = new boost::posix_time::time_facet("%Y-%m-%d %H:%M:%s");
    tStream.imbue(std::locale(tStream.getloc(), facet));
@@ -161,7 +167,7 @@ bool CircularBuffer::InsertImage(const unsigned char* pixArray, unsigned int wid
 /**
 * Inserts a single image, possibly with multiple channels, but with 1 component, in the buffer.
 */
-bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned numChannels, unsigned width, unsigned height, unsigned byteDepth, const Metadata* pMd) throw (CMMError)
+bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned int numChannels, unsigned int width, unsigned int height, unsigned int byteDepth, const Metadata* pMd) throw (CMMError)
 {
    return InsertMultiChannel(pixArray, numChannels, width, height, byteDepth, 1, pMd);
 }
@@ -177,7 +183,7 @@ bool CircularBuffer::InsertImage(const unsigned char* pixArray, unsigned int wid
 /**
 * Inserts a multi-channel frame in the buffer.
 */
-bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned numChannels, unsigned width, unsigned height, unsigned byteDepth, unsigned nComponents, const Metadata* pMd) throw (CMMError)
+bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned int numChannels, unsigned int width, unsigned int height, unsigned int byteDepth, unsigned int nComponents, const Metadata* pMd) throw (CMMError)
 {
     MMThreadGuard guard(g_insertLock);
  
@@ -257,7 +263,13 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
          md.PutImageTag("PixelType","Unknown"); 
 
       pImg->SetMetadata(md);
-      pImg->SetPixels(pixArray + i*singleChannelSize);
+      //pImg->SetPixels(pixArray + i * singleChannelSize);
+      // TODO: In MMCore the ImgBuffer::GetPixels() returns const pointer.
+      //       It would be better to have something like ImgBuffer::GetPixelsRW() in MMDevice.
+      //       Or even better - pass tasksMemCopy_ to ImgBuffer constructor
+      //       and utilize parallel copy also in single snap acquisitions.
+      tasksMemCopy_->MemCopy((void*)pImg->GetPixels(),
+            pixArray + i * singleChannelSize, singleChannelSize);
    }
 
    {
