@@ -63,8 +63,9 @@ size_t ThreadPool::GetSize() const
 
 void ThreadPool::Execute(Task* task) 
 {
+#ifdef _WINDOWS
     assert(task != nullptr);
-
+#endif
     {
         boost::lock_guard<boost::mutex> lock(mx_);
         if (abortFlag_)
@@ -84,7 +85,9 @@ void ThreadPool::Execute(const std::vector<Task*>& tasks)
             return;
         BOOST_FOREACH(Task* task, tasks)
         {
+#ifdef _WINDOWS
             assert(task != nullptr);
+#endif
             queue_.push_back(task);
         }
     }
@@ -95,7 +98,11 @@ void ThreadPool::ThreadFunc()
 {
     for (;;)
     {
+#ifdef _WINDOWS
         Task* task = nullptr;
+#else
+       Task* task;
+#endif
         {
             boost::unique_lock<boost::mutex> lock(mx_);
 #ifndef _WINDOWS
