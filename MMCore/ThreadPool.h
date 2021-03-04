@@ -48,7 +48,7 @@ private:
 
 private:
     // TODO: Should use boost::unique_ptr but that's available since boost 1.57
-    std::vector<boost::shared_ptr<boost::thread>> threads_;
+    std::vector<boost::shared_ptr<boost::thread> > threads_;
     bool abortFlag_;
     boost::mutex mx_;
     boost::condition_variable cv_;
