@@ -95,7 +95,17 @@ libMMCore_la_SOURCES = \
 	MMCore.cpp \
 	MMCore.h \
 	PluginManager.cpp \
-	PluginManager.h
+	PluginManager.h \
+	Semaphore.cpp \
+	Semaphore.h \
+	Task.cpp \
+	Task.h \
+	TaskSet.cpp \
+	TaskSet.h \
+	TaskSet_CopyMemory.cpp \
+	TaskSet_CopyMemory.h \
+	ThreadPool.cpp \
+	ThreadPool.h
 
 if BUILD_CPP_TESTS
 UNITTESTS = unittest

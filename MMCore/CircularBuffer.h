@@ -31,13 +31,18 @@
 #include "../MMDevice/DeviceThreads.h"
 #include "../MMDevice/MMDevice.h"
 
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/smart_ptr/shared_ptr.hpp>
+
 #include <vector>
-#include "boost/date_time/posix_time/posix_time.hpp"
 
 #ifdef _MSC_VER
 #pragma warning( disable : 4290 ) // exception declaration warning
 #endif
 
+
+class ThreadPool;
+class TaskSet_CopyMemory;
 
 class CircularBuffer
 {
@@ -58,7 +63,7 @@ public:
 
    bool InsertImage(const unsigned char* pixArray, unsigned int width, unsigned int height, unsigned int byteDepth, const Metadata* pMd) throw (CMMError);
    bool InsertMultiChannel(const unsigned char* pixArray, unsigned int numChannels, unsigned int width, unsigned int height, unsigned int byteDepth, const Metadata* pMd) throw (CMMError);
-    bool InsertImage(const unsigned char* pixArray, unsigned int width, unsigned int height, unsigned int byteDepth, unsigned int nComponents, const Metadata* pMd) throw (CMMError);
+   bool InsertImage(const unsigned char* pixArray, unsigned int width, unsigned int height, unsigned int byteDepth, unsigned int nComponents, const Metadata* pMd) throw (CMMError);
    bool InsertMultiChannel(const unsigned char* pixArray, unsigned int numChannels, unsigned int width, unsigned int height, unsigned int byteDepth, unsigned int nComponents, const Metadata* pMd) throw (CMMError);
    const unsigned char* GetTopImage() const;
    const unsigned char* GetNextImage();
@@ -91,6 +96,9 @@ private:
    unsigned int numChannels_;
    bool overflow_;
    std::vector<mm::FrameBuffer> frameArray_;
+
+   boost::shared_ptr<ThreadPool> threadPool_;
+   boost::shared_ptr<TaskSet_CopyMemory> tasksMemCopy_;
 
    boost::posix_time::time_facet * facet;
    std::ostringstream tStream;
