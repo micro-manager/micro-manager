@@ -32,7 +32,9 @@ TaskSet::TaskSet(boost::shared_ptr<ThreadPool> pool)
     tasks_(),
     usedTaskCount_(0)
 {
+#ifdef _WINDOWS
     assert(pool != nullptr);
+#endif
 }
 
 TaskSet::~TaskSet()
@@ -48,7 +50,11 @@ size_t TaskSet::GetUsedTaskCount() const
 
 void TaskSet::Execute()
 {
+#ifdef _WINDOWS
     pool_->Execute(std::vector<Task*>(tasks_.cbegin(), tasks_.cbegin() + usedTaskCount_));
+#else
+   pool_->Execute(std::vector<Task*>(tasks_.begin(), tasks_.begin() + usedTaskCount_));
+#endif
 }
 
 void TaskSet::Wait()
