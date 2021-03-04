@@ -24,6 +24,9 @@
 #include "Semaphore.h"
 
 #include <boost/thread/locks.hpp>
+#ifndef _WINDOWS
+#include <boost/phoenix.hpp>
+#endif
 
 Semaphore::Semaphore()
     : count_(0)
@@ -38,7 +41,12 @@ Semaphore::Semaphore(size_t initCount)
 void Semaphore::Wait(size_t count)
 {
     boost::unique_lock<boost::mutex> lock(mx_);
+#ifndef _WINDOWS
+    namespace phx = boost::phoenix;
+    cv_.wait(lock, phx::ref(count_) >= phx::cref(count));
+#else
     cv_.wait(lock, [&]() { return count_ >= count; });
+#endif
     count_ -= count;
 }
 

@@ -29,6 +29,9 @@
 #include <boost/foreach.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/thread/locks.hpp>
+#ifndef _WINDOWS
+#include <boost/phoenix.hpp>
+#endif
 
 #include <algorithm>
 #include <cassert>
@@ -95,7 +98,12 @@ void ThreadPool::ThreadFunc()
         Task* task = nullptr;
         {
             boost::unique_lock<boost::mutex> lock(mx_);
+#ifndef _WINDOWS
+            namespace phx = boost::phoenix;
+            cv_.wait(lock,  phx::ref(abortFlag_) || !phx::empty(phx::ref(queue_)));
+#else
             cv_.wait(lock, [&]() { return abortFlag_ || !queue_.empty(); });
+#endif
             if (abortFlag_)
                 break;
             task = queue_.front();
