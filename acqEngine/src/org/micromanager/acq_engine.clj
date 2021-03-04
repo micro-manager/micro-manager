@@ -372,8 +372,8 @@
             (throw-exception "Timed out waiting for image to arrive from camera."))
           (do
             (when (. mmc isBufferOverflowed)
-              (log "halting image collection due to circular buffer overflow")
-              (throw-exception "Circular buffer overflowed."))
+              (log "halting image collection due to sequence buffer overflow")
+              (throw-exception "Sequence buffer overflowed."))
             (Thread/sleep 1)
             (recur)))))))
 
