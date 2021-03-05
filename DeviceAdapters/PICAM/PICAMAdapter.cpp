@@ -40,7 +40,7 @@
 #define __mac_os_x
 #endif
 
-#ifdef linux
+#ifdef __linux__
 #endif
 
 #include <boost/lexical_cast.hpp>
