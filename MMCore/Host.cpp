@@ -37,7 +37,7 @@
 
 #endif //__APPLE__
 
-#ifdef linux
+#ifdef __linux__
 #include <stdio.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -46,7 +46,7 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
-#endif // linux
+#endif // __linux__
 
 
 Host::Host(void)
@@ -142,7 +142,7 @@ std::vector<MACValue > Host::getMACAddresses(long& status)
 
 #endif // __APPLE__
 
-#ifdef linux
+#ifdef __linux__
 
    int sock;
    sock = socket(PF_INET, SOCK_DGRAM, 0);
@@ -184,7 +184,7 @@ std::vector<MACValue > Host::getMACAddresses(long& status)
    }
 
 
-#endif // linux
+#endif // __linux__
 
 
 
