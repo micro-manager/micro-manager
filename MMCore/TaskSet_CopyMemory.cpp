@@ -30,13 +30,8 @@
 
 TaskSet_CopyMemory::ATask::ATask(boost::shared_ptr<Semaphore> semDone, size_t taskIndex, size_t totalTaskCount)
     : Task(semDone, taskIndex, totalTaskCount),
-#ifdef _WINDOWS
-    dst_(nullptr),
-    src_(nullptr),
-#else
-    dst_(),
-    src_(),
-#endif
+    dst_(NULL),
+    src_(NULL),
     bytes_(0)
 {
 }
@@ -73,10 +68,8 @@ TaskSet_CopyMemory::TaskSet_CopyMemory(boost::shared_ptr<ThreadPool> pool)
 
 void TaskSet_CopyMemory::SetUp(void* dst, const void* src, size_t bytes)
 {
-#ifdef _WINDOWS
-    assert(dst != nullptr);
-    assert(src != nullptr);
-#endif
+    assert(dst != NULL);
+    assert(src != NULL);
     assert(bytes > 0);
 
     // Call memcpy directly without threading for small frames up to 1MB

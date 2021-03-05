@@ -33,9 +33,7 @@ Task::Task(boost::shared_ptr<Semaphore> semaphore, size_t taskIndex, size_t tota
     totalTaskCount_(totalTaskCount),
     usedTaskCount_(totalTaskCount)
 {
-#ifdef _WINDOWS
-    assert(semaphore != nullptr);
-#endif
+    assert(semaphore != NULL);
     assert(totalTaskCount > 0);
     assert(taskIndex < totalTaskCount);
 }
