@@ -40,7 +40,7 @@ import mmcorej.TaggedImage;
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
 import org.micromanager.autofocus.internal.oughtafocus.BrentFocuser;
-import org.micromanager.autofocus.internal.oughtafocus.ImgSharpnessAnalysis;
+import org.micromanager.imageprocessing.ImgSharpnessAnalysis;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.imageanalysis.ImageUtils;
 import org.micromanager.internal.utils.MMException;
