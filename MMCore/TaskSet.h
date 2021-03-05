@@ -57,7 +57,7 @@ protected:
         tasks_.reserve(taskCount);
         for (size_t n = 0; n < taskCount; ++n)
         {
-            auto task = new(std::nothrow) T(semaphore_, n, taskCount);
+            Task* task = new(std::nothrow) T(semaphore_, n, taskCount);
             if (!task)
                 continue;
             tasks_.push_back(task);

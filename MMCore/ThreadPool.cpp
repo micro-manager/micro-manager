@@ -39,7 +39,7 @@
 ThreadPool::ThreadPool()
     : abortFlag_(false)
 {
-    const auto hwThreadCount = std::max<size_t>(1, boost::thread::hardware_concurrency());
+    const size_t hwThreadCount = std::max<size_t>(1, boost::thread::hardware_concurrency());
     for (size_t n = 0; n < hwThreadCount; ++n)
         threads_.push_back(boost::make_shared<boost::thread>(&ThreadPool::ThreadFunc, this));
 }
@@ -63,9 +63,7 @@ size_t ThreadPool::GetSize() const
 
 void ThreadPool::Execute(Task* task) 
 {
-#ifdef _WINDOWS
-    assert(task != nullptr);
-#endif
+    assert(task != NULL);
     {
         boost::lock_guard<boost::mutex> lock(mx_);
         if (abortFlag_)
@@ -85,9 +83,7 @@ void ThreadPool::Execute(const std::vector<Task*>& tasks)
             return;
         BOOST_FOREACH(Task* task, tasks)
         {
-#ifdef _WINDOWS
-            assert(task != nullptr);
-#endif
+            assert(task != NULL);
             queue_.push_back(task);
         }
     }
@@ -98,11 +94,7 @@ void ThreadPool::ThreadFunc()
 {
     for (;;)
     {
-#ifdef _WINDOWS
-        Task* task = nullptr;
-#else
-       Task* task;
-#endif
+        Task* task = NULL;
         {
             boost::unique_lock<boost::mutex> lock(mx_);
 #ifndef _WINDOWS
