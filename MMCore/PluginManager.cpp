@@ -53,7 +53,7 @@ const char* const LIB_NAME_PREFIX = "mmgr_dal_";
 const char* const LIB_NAME_PREFIX = "libmmgr_dal_";
 #endif
 
-#ifdef linux
+#ifdef __linux__
 const char* const LIB_NAME_SUFFIX = ".so.0";
 #else
 const char* const LIB_NAME_SUFFIX = "";
@@ -306,7 +306,7 @@ CPluginManager::GetModules(std::vector<std::string> &modules, const char* search
       {
          const char* dir_name = dirp->d_name;
          if (strncmp(dir_name, LIB_NAME_PREFIX, strlen(LIB_NAME_PREFIX)) == 0
-#ifdef linux
+#ifdef __linux__
              && strncmp(&dir_name[strlen(dir_name) - strlen(LIB_NAME_SUFFIX)], LIB_NAME_SUFFIX, strlen(LIB_NAME_SUFFIX)) == 0)
 #else // OS X
              && strchr(&dir_name[strlen(dir_name) - strlen(LIB_NAME_SUFFIX)], '.') == NULL)
