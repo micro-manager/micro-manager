@@ -34,7 +34,7 @@
 #ifdef __APPLE__
 #endif
 
-#ifdef linux
+#ifdef __linux__
 #endif
 
 #include <string>

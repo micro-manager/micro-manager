@@ -3708,7 +3708,7 @@ int Universal::ProcessNotification( const NotificationEntry& entry )
     return ret;
 }
 
-#ifndef linux
+#ifndef __linux__
 /*
 * Overrides a virtual function from the CCameraBase class
 * Do actual capture

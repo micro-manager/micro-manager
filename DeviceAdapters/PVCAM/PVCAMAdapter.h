@@ -209,7 +209,7 @@ public: // MMCamera API
 
     bool IsCapturing();
 
-#ifndef linux
+#ifndef __linux__
     /**
     * Micromanager calls the "live" acquisition a "sequence". PVCAM calls this "continous - circular buffer" mode.
     */
@@ -550,7 +550,7 @@ protected:
     */
     int ProcessNotification(const NotificationEntry& entry);
 
-#ifndef linux
+#ifndef __linux__
     int  PollingThreadRun(void);
     void PollingThreadExiting() throw();
 #endif

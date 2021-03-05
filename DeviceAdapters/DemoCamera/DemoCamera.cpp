@@ -2057,7 +2057,7 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
       cLinePhaseInc *= (((int) dPhase_ / 6) % 24) - 12;
    }
 
-   static bool debugRGB = false;
+   static bool debugRGB = true;
 #ifdef TIFFDEMO
 	debugRGB = true;
 #endif

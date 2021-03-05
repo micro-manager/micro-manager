@@ -43,7 +43,7 @@
 #include <PVCAM/pvcam.h>
 #endif
 
-#ifdef linux
+#ifdef __linux__
 #include <pvcam/master.h>
 #include <pvcam/pvcam.h>
 #endif
@@ -170,7 +170,7 @@ public:
    int ClearROI();
    int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
 
-#ifndef linux
+#ifndef __linux__
    // high-speed interface
    int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
    int StopSequenceAcquisition();
@@ -216,7 +216,7 @@ public:
                                       uns32_ptr length);
 
 protected:
-#ifndef linux
+#ifndef __linux__
    int ThreadRun(void);
    void OnThreadExiting() throw();
 #endif

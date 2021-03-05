@@ -14,7 +14,7 @@
 #include <PVCAM/pvcam.h>
 #endif
 
-#ifdef linux
+#ifdef __linux__
 #include <pvcam/master.h>
 #include <pvcam/pvcam.h>
 #endif
