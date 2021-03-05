@@ -57,7 +57,7 @@ public class SharpnessInspectorPanel extends JPanel {
     private final JFreeChart zChart = ChartFactory.createXYLineChart(
             null, //title
             "Z", // xlabel
-            "Gradient", // ylabel
+            "Sharpness (A.U.)", // ylabel
             new XYSeriesCollection(new XYSeries(SERIES_NAME, true, false)),
             PlotOrientation.VERTICAL,
             false, // legend
@@ -68,7 +68,7 @@ public class SharpnessInspectorPanel extends JPanel {
     private final JFreeChart tChart = ChartFactory.createXYLineChart(
                 null, //title
             "Time", // xlabel
-            "Gradient", // ylabel
+            "Sharpness (A.U.)", // ylabel
             new XYSeriesCollection(new XYSeries(SERIES_NAME, true, false)),
             PlotOrientation.VERTICAL,
             false, // legend

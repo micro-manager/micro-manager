@@ -33,7 +33,7 @@ import org.scijava.plugin.Plugin;
  * @author Nick Anthony
  */
 @Plugin(type = InspectorPanelPlugin.class,
-    priority = Priority.VERY_HIGH,
+    priority = Priority.NORMAL,
     name = "Focus Sharpness",
     description = "View quantitative image sharpness.")
 public class SharpnessInspectorPlugin implements InspectorPanelPlugin {
