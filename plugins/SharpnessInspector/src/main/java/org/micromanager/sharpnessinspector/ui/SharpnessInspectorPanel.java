@@ -18,7 +18,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package edu.bpl.imgSharpnessPlugin.ui;
+package org.micromanager.sharpnessinspector.ui;
 
 import edu.bpl.imgSharpnessPlugin.SharpnessInspectorController;
 import edu.bpl.imgSharpnessPlugin.SharpnessInspectorPlugin;
