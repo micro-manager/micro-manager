@@ -20,7 +20,7 @@
 //
 package org.micromanager.sharpnessinspector;
 
-import edu.bpl.imgSharpnessPlugin.ui.SharpnessInspectorPanel;
+import org.micromanager.sharpnessinspector.ui.SharpnessInspectorPanel;
 
 import com.google.common.base.Preconditions;
 import com.google.common.eventbus.Subscribe;
@@ -30,7 +30,7 @@ import java.awt.event.ActionEvent;
 import javax.swing.JPanel;
 import javax.swing.SwingWorker;
 import org.micromanager.Studio;
-import org.micromanager.autofocus.internal.oughtafocus.ImgSharpnessAnalysis;
+import org.micromanager.imageprocessing.ImgSharpnessAnalysis;
 import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.data.Image;
 import org.micromanager.data.internal.DefaultImage;

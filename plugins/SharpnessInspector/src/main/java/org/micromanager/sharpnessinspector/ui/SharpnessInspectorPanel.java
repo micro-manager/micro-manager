@@ -20,9 +20,8 @@
 //
 package org.micromanager.sharpnessinspector.ui;
 
-import edu.bpl.imgSharpnessPlugin.SharpnessInspectorController;
-import edu.bpl.imgSharpnessPlugin.SharpnessInspectorPlugin;
-import edu.bpl.pwsplugin.UI.utils.ImprovedComponents;
+import org.micromanager.sharpnessinspector.SharpnessInspectorController;
+import org.micromanager.sharpnessinspector.SharpnessInspectorPlugin;
 import java.awt.Color;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -33,6 +32,7 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
+import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -45,7 +45,7 @@ import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
-import org.micromanager.autofocus.internal.oughtafocus.ImgSharpnessAnalysis;
+import org.micromanager.imageprocessing.ImgSharpnessAnalysis;
 /**
  *
  * @author nick
@@ -243,8 +243,8 @@ public class SharpnessInspectorPanel extends JPanel {
     }
         
     private class ScanDialog extends JDialog {
-        private final ImprovedComponents.FormattedTextField interval = new ImprovedComponents.FormattedTextField(NumberFormat.getNumberInstance());
-        private final ImprovedComponents.FormattedTextField range = new ImprovedComponents.FormattedTextField(NumberFormat.getNumberInstance());
+        private final JFormattedTextField interval = new JFormattedTextField(NumberFormat.getNumberInstance());
+        private final JFormattedTextField range = new JFormattedTextField(NumberFormat.getNumberInstance());
         private final JButton startButton = new JButton("Start");
 
         public ScanDialog() {

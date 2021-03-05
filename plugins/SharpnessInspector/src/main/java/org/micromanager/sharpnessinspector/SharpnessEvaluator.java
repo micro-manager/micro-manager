@@ -22,7 +22,7 @@ package org.micromanager.sharpnessinspector;
 
 import ij.process.ImageProcessor;
 import java.awt.Rectangle;
-import org.micromanager.autofocus.internal.oughtafocus.ImgSharpnessAnalysis;
+import org.micromanager.imageprocessing.ImgSharpnessAnalysis;
 import org.micromanager.data.Image;
 import org.micromanager.internal.MMStudio;
 
