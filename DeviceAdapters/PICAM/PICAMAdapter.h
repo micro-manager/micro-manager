@@ -40,7 +40,7 @@
 
 #include <functional> // for mem_fn
 
-#ifdef linux
+#ifdef __linux__
 #include <pvcam/master.h>
 #include <pvcam/pvcam.h>
 #endif
@@ -232,7 +232,7 @@ class Universal : public CCameraBase<Universal>
       int IsExposureSequenceable(bool& isSequenceable) const { isSequenceable = false; return DEVICE_OK; }
       unsigned GetNumberOfComponents() const {return rgbaColor_ ? 4 : 1;}
 
-#ifndef linux
+#ifndef __linux__
       // micromanager calls the "live" acquisition a "sequence"
       //  don't get this confused with a PICAM sequence acquisition, it's actually circular buffer mode
       int PrepareSequenceAcqusition();
@@ -278,7 +278,7 @@ class Universal : public CCameraBase<Universal>
 
    protected:
 
-#ifndef linux
+#ifndef __linux__
       int ThreadRun(void);
       void OnThreadExiting() throw();
 #endif

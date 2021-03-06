@@ -48,7 +48,7 @@
 #include <PVCAM/pvcam.h>
 #endif
 
-#ifdef linux
+#ifdef __linux__
 #include <pvcam/master.h>
 #include <pvcam/pvcam.h>
 #endif
@@ -1901,7 +1901,7 @@ int Universal::ResizeImageBufferSingle()
 // Continuous acquisition
 //
 
-#ifndef linux
+#ifndef __linux__
 /*
 * Overrides a virtual function from the CCameraBase class
 * Do actual capture

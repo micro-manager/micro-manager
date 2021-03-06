@@ -167,6 +167,11 @@
     <ClCompile Include="LogManager.cpp" />
     <ClCompile Include="MMCore.cpp" />
     <ClCompile Include="PluginManager.cpp" />
+    <ClCompile Include="Semaphore.cpp" />
+    <ClCompile Include="Task.cpp" />
+    <ClCompile Include="TaskSet.cpp" />
+    <ClCompile Include="TaskSet_CopyMemory.cpp" />
+    <ClCompile Include="ThreadPool.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CircularBuffer.h" />
@@ -218,6 +223,11 @@
     <ClInclude Include="MMCore.h" />
     <ClInclude Include="MMEventCallback.h" />
     <ClInclude Include="PluginManager.h" />
+    <ClInclude Include="Semaphore.h" />
+    <ClInclude Include="Task.h" />
+    <ClInclude Include="TaskSet.h" />
+    <ClInclude Include="TaskSet_CopyMemory.h" />
+    <ClInclude Include="ThreadPool.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MMDevice\MMDevice-SharedRuntime.vcxproj">

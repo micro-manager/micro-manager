@@ -16,7 +16,7 @@
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
 
-#ifdef linux
+#ifdef __linux__
 #include "../../../3rdparty/ITC18-lib-linux/ITC18.h"
 #else 
 #include "ITC18.h"
