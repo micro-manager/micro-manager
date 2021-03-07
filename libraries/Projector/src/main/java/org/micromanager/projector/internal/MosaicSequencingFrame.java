@@ -36,6 +36,7 @@ import ij.plugin.frame.RoiManager;
 import ij.process.FloatPolygon;
 import java.awt.Polygon;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
@@ -811,7 +812,9 @@ public class MosaicSequencingFrame extends JFrame {
       // The mosaic executor service makes sure everything happens
       // in sequence, but off the GUI thread.
       mosaicExecutor_ = Executors.newFixedThreadPool(1);
-      
+
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(300, 400);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
