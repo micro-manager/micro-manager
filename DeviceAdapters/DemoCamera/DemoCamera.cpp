@@ -2057,7 +2057,7 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
       cLinePhaseInc *= (((int) dPhase_ / 6) % 24) - 12;
    }
 
-   static bool debugRGB = true;
+   static bool debugRGB = false;
 #ifdef TIFFDEMO
 	debugRGB = true;
 #endif
@@ -2223,22 +2223,23 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
          for (k=0; k<imgWidth; k++)
          {
             long lIndex = imgWidth*j + k;
-            unsigned char value0 =   (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase + (2.0 * lSinePeriod * k) / lPeriod)));
-            theBytes[3] = value0;
+            double factor = (2.0 * lSinePeriod * k) / lPeriod;
+            unsigned char value0 =   (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase + factor)));
+            theBytes[0] = value0;
             if( NULL != pTmpBuffer)
                pTmp2[1] = value0;
-            unsigned char value1 =   (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase*2 + (2.0 * lSinePeriod * k) / lPeriod)));
-            theBytes[2] = value1;
+            unsigned char value1 =   (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase*2 + factor)));
+            theBytes[1] = value1;
             if( NULL != pTmpBuffer)
                pTmp2[2] = value1;
-            unsigned char value2 = (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase*4 + (2.0 * lSinePeriod * k) / lPeriod)));
-            theBytes[1] = value2;
+            unsigned char value2 = (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase*4 + factor)));
+            theBytes[2] = value2;
 
             if( NULL != pTmpBuffer){
                pTmp2[3] = value2;
                pTmp2+=3;
             }
-            theBytes[0] = 0;
+            theBytes[3] = 0;
             unsigned long tvalue = *(unsigned long*)(&theBytes[0]);
             if (tvalue > maxDrawnVal) {
                 maxDrawnVal = tvalue;
@@ -2249,7 +2250,9 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
       }
 
 
-      // ImageJ's AWT images are loaded with a Direct Color processor which expects BGRA, that's why we swapped the Blue and Red components in the generator above.
+      // ImageJ's AWT images are loaded with a Direct Color processor which expects big endian ARGB,
+      // which on little endian architectures corresponds to BGRA (see: https://en.wikipedia.org/wiki/RGBA_color_model), 
+      // that's why we swapped the Blue and Red components in the generator above.
       if(NULL != pTmpBuffer)
       {
          // write the compact debug image...
