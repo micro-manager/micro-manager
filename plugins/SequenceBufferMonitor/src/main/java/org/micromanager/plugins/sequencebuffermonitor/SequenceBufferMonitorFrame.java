@@ -18,6 +18,7 @@ package org.micromanager.plugins.sequencebuffermonitor;
 import org.micromanager.internal.utils.WindowPositioning;
 
 import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.*;
@@ -88,6 +89,8 @@ class SequenceBufferMonitorFrame extends JFrame {
 
       update();
 
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(200, 200);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
    }

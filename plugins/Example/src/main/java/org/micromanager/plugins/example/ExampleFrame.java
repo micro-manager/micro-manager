@@ -22,6 +22,7 @@ package org.micromanager.plugins.example;
 
 import com.google.common.eventbus.Subscribe;
 
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.Font;
@@ -35,6 +36,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.data.Image;
 import org.micromanager.events.ExposureChangedEvent;
 import org.micromanager.Studio;
+import org.micromanager.internal.utils.WindowPositioning;
 
 // Imports for MMStudio internal packages
 // Plugins should not access internal packages, to ensure modularity and
@@ -117,6 +119,11 @@ public class ExampleFrame extends JFrame {
          }
       });
       super.add(acquireButton, "wrap");
+
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      super.setLocation(100, 100);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
       super.pack();
 

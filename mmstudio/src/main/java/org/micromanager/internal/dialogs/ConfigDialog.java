@@ -25,6 +25,7 @@ package org.micromanager.internal.dialogs;
 
 import com.google.common.eventbus.Subscribe;
 import java.awt.Font;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -98,6 +99,8 @@ public abstract class ConfigDialog extends JDialog {
       studio_ = studio;
       core_ = studio.core();
       super.setLayout(new MigLayout("fill, insets 2, gap 2, flowy"));
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       // call loadAndRestorePosition and setMinimumSize from concrete subclasses
    }
 

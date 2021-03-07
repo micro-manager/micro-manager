@@ -20,6 +20,7 @@
 package org.micromanager.internal.positionlist;
 
 import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -60,6 +61,8 @@ class OffsetPositionsDialog extends JDialog {
       int parentCenterX = (int) (parent.getX() + 0.5 * parent.getWidth());
       int parentCenterY = (int) (parent.getY() + 0.5 * parent.getHeight());
 
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setBounds(parentCenterX - 160,parentCenterY - 150, 320, 300);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       

@@ -21,6 +21,7 @@ package org.micromanager.internal.dialogs;
 import com.bulenkov.iconloader.IconLoader;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Font;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -149,6 +150,8 @@ public final class StageControlFrame extends JFrame {
 
       initComponents();
 
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(FRAME_X_DEFAULT_POS, FRAME_Y_DEFAULT_POS);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
    }

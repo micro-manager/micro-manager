@@ -26,6 +26,7 @@ import org.micromanager.internal.utils.WindowPositioning;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.DecimalFormat;
@@ -126,6 +127,8 @@ public final class GraphFrame extends JFrame {
       setTitle("Graph");
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setBounds(100, 100, 542, 298);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);

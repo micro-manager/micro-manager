@@ -28,6 +28,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
+import java.awt.Toolkit;
 import java.awt.dnd.DropTarget;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -161,6 +162,8 @@ public final class MainFrame extends JFrame {
       // contents. Our insets are only available after the first call to
       // pack().
       super.pack();
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setMinimumSize(super.getSize());
       super.setBounds(100, 100, 644, 220);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);

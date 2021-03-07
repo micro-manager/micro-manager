@@ -24,6 +24,7 @@ import com.bulenkov.iconloader.IconLoader;
 
 import ij.process.ByteProcessor;
 
+import java.awt.Toolkit;
 import java.util.Arrays;
 import java.util.List;
 
@@ -97,6 +98,9 @@ public class FlipperConfigurator extends JFrame implements ProcessorConfigurator
          rotateComboBox_.addItem(item);
       }
       rotateComboBox_.setSelectedIndex(R_INTS.indexOf(rotation));
+
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(frameXPos_, frameYPos_);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       updateCameras();

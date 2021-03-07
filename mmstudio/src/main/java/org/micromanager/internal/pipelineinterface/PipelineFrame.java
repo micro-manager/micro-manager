@@ -18,6 +18,7 @@ package org.micromanager.internal.pipelineinterface;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -180,6 +181,8 @@ final public class PipelineFrame extends JFrame
       setPreferredSize(frameSize);
       setMinimumSize(minFrameSize);
 
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(200, 200);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 

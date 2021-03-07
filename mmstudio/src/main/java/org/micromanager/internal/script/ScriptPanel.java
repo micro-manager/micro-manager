@@ -376,6 +376,8 @@ public final class ScriptPanel extends JFrame implements MouseListener, ScriptCo
       Dimension buttonSize = new Dimension(80, buttonHeight);
       int gap = 5; // determines gap between buttons
 
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setBounds(100, 100, 550, 495);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 

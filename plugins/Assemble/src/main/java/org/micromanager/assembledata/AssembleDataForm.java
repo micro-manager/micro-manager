@@ -25,6 +25,7 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
+import java.awt.Toolkit;
 import java.awt.dnd.DropTarget;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -104,6 +105,8 @@ public class AssembleDataForm extends JDialog {
       super.setLayout(new MigLayout("flowx, fill, insets 8"));
       super.setTitle(AssembleData.MENUNAME);
 
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setBounds(100, 100, 449, 327);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       

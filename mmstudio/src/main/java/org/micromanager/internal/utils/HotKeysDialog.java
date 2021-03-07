@@ -24,6 +24,7 @@ package org.micromanager.internal.utils;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
+import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
@@ -141,6 +142,8 @@ public final class HotKeysDialog extends JDialog {
     public  HotKeysDialog() {
         initComponents();
 
+       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+               getClass().getResource("/org/micromanager/icons/microscope.gif")));
         super.setBounds(100, 100, 377, 378);
         WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 

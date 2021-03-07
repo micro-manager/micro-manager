@@ -26,6 +26,7 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -146,8 +147,9 @@ public final class CalibrationListDlg extends JDialog {
       springLayout = new SpringLayout();
       super.getContentPane().setLayout(springLayout);
 
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setMinimumSize(new Dimension(263, 239));
-
       super.setBounds(100, 100, 365, 495);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 

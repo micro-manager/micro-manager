@@ -29,6 +29,7 @@ package org.micromanager.splitview;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.Graphics;
@@ -86,6 +87,8 @@ public class SplitViewFrame extends JFrame implements ProcessorConfigurator {
 
       initComponents();
 
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(DEFAULT_WIN_X, DEFAULT_WIN_Y);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 

@@ -1,5 +1,6 @@
 package org.micromanager.plugins.framecombiner;
 
+import java.awt.Toolkit;
 import java.text.NumberFormat;
 import javax.swing.*;
 import javax.swing.text.NumberFormatter;
@@ -34,6 +35,8 @@ public class FrameCombinerConfigurator extends JFrame implements ProcessorConfig
       initComponents();
       loadSettingValue();
 
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(200, 200);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       

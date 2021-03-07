@@ -27,6 +27,7 @@
 package org.micromanager.ptctools;
 
 
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import javax.swing.*;
 
@@ -65,6 +66,8 @@ public class PtcToolsFrame extends JFrame {
       
       initComponents();
 
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(DEFAULT_WIN_X, DEFAULT_WIN_Y);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 

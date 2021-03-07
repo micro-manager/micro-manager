@@ -2,6 +2,7 @@ package org.micromanager.hcs;
 
 import com.bulenkov.iconloader.IconLoader;
 
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -200,6 +201,8 @@ public class SiteGenerator extends JFrame implements ParentPlateGUI {
 
       super.setTitle("HCS Site Generator " + HCSPlugin.VERSION_INFO);
 
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setBounds(100, 100, 1000, 640);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 

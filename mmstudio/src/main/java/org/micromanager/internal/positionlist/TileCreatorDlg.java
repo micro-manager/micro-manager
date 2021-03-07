@@ -23,6 +23,7 @@ package org.micromanager.internal.positionlist;
 
 import com.google.common.eventbus.Subscribe;
 import java.awt.Font;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.ParseException;
@@ -95,6 +96,8 @@ public final class TileCreatorDlg extends JDialog {
 
       super.setTitle("Tile Creator");
 
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(300, 300);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       super.setSize(344, 280);

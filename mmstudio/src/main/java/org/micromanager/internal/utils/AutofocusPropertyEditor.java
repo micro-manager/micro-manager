@@ -28,6 +28,7 @@ package org.micromanager.internal.utils;
 
 import java.awt.Component;
 import java.awt.Font;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -107,6 +108,8 @@ public final class AutofocusPropertyEditor extends JDialog {
       });
       setTitle("Autofocus properties");
 
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setBounds(100, 100, 400, 300);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 

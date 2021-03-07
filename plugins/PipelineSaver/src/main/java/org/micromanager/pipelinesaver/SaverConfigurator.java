@@ -20,6 +20,7 @@
 
 package org.micromanager.pipelinesaver;
 
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -97,6 +98,8 @@ public class SaverConfigurator extends JFrame implements ProcessorConfigurator {
       super.add(panel);
       updateControls();
 
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(300, 300);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
    }

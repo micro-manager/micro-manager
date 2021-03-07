@@ -34,6 +34,7 @@ package org.micromanager.plugins.snaponmove;
 
 import java.awt.Component;
 import java.awt.Frame;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -99,6 +100,8 @@ final class CriterionDialog extends JDialog {
       setResizable(false);
       setLocationRelativeTo(owner);
 
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
       setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);

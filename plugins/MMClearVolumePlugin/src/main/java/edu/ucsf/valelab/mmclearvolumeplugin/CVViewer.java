@@ -36,6 +36,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
@@ -121,6 +122,8 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    private class CVFrame extends JFrame {
       public CVFrame() {
          super();
+         super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+                 getClass().getResource("/org/micromanager/icons/microscope.gif")));
          super.setLocation(100, 100);
          WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       }
