@@ -2594,6 +2594,15 @@ bool CMMCore::getShutterOpen() throw (CMMError)
  * channel in this function
  *
  * Designed specifically for the SWIG wrapping for Java and scripting languages.
+ *
+ * Supported data types are byte (8 bits per pixel, 1 component), short 
+ * (16 bits per pixel, 1 component), float (32 bits per pixel, 1 component, not
+ * supported by the UI yet), RGB_32 (8 bits per component, 4 components), RGB_64
+ * (16 bits per component, 4 components, not supported by UI yet).  
+ * RGB buffers are expected to be in big endian ARGB format (ARGB8888), which means that
+ * on little endian the format is BGRA888 
+ * (see: https://en.wikipedia.org/wiki/RGBA_color_model).
+ *
  * @return a pointer to the internal image buffer.
  * @throws CMMError   when the camera returns no data
  */
@@ -3010,6 +3019,14 @@ void* CMMCore::getLastImageMD(unsigned channel, unsigned slice, Metadata& md) co
 /**
  * Returns a pointer to the pixels of the image that was last inserted into the circular buffer
  * Also provides all metadata associated with that image
+ *
+ * Supported data types are byte (8 bits per pixel, 1 component), short 
+ * (16 bits per pixel, 1 component), float (32 bits per pixel, 1 component, not
+ * supported by the UI yet), RGB_32 (8 bits per component, 4 components), RGB_64
+ * (16 bits per component, 4 components, not supported by UI yet).  
+ * RGB buffers are expected to be in big endian ARGB format (ARGB8888), which means that
+ * on little endian the format is BGRA888 
+ * (see: https://en.wikipedia.org/wiki/RGBA_color_model).
  */
 void* CMMCore::getLastImageMD(Metadata& md) const throw (CMMError)
 {
@@ -3019,6 +3036,14 @@ void* CMMCore::getLastImageMD(Metadata& md) const throw (CMMError)
 /**
  * Returns a pointer to the pixels of the image that was inserted n images ago
  * Also provides all metadata associated with that image
+ *
+ * Supported data types are byte (8 bits per pixel, 1 component), short 
+ * (16 bits per pixel, 1 component), float (32 bits per pixel, 1 component, not
+ * supported by the UI yet), RGB_32 (8 bits per component, 4 components), RGB_64
+ * (16 bits per component, 4 components, not supported by UI yet).  
+ * RGB buffers are expected to be in big endian ARGB format (ARGB8888), which means that
+ * on little endian the format is BGRA888 
+ * (see: https://en.wikipedia.org/wiki/RGBA_color_model).
  */
 void* CMMCore::getNBeforeLastImageMD(unsigned long n, Metadata& md) const throw (CMMError)
 {
@@ -3035,6 +3060,14 @@ void* CMMCore::getNBeforeLastImageMD(unsigned long n, Metadata& md) const throw 
 /**
  * Gets and removes the next image from the circular buffer.
  * Returns 0 if the buffer is empty.
+ *
+ * Supported data types are byte (8 bits per pixel, 1 component), short 
+ * (16 bits per pixel, 1 component), float (32 bits per pixel, 1 component, not
+ * supported by the UI yet), RGB_32 (8 bits per component, 4 components), RGB_64
+ * (16 bits per component, 4 components, not supported by UI yet).  
+ * RGB buffers are expected to be in big endian ARGB format (ARGB8888), which means that
+ * on little endian the format is BGRA888 
+ * (see: https://en.wikipedia.org/wiki/RGBA_color_model).
  */
 void* CMMCore::popNextImage() throw (CMMError)
 {
