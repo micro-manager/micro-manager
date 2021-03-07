@@ -46,6 +46,8 @@ public final class DeviceSetupDlg extends JDialog {
    public DeviceSetupDlg(MicroscopeModel mod, Studio studio, Device d) {
       super();
       setModal(true);
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(100, 100);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       model_ = mod;

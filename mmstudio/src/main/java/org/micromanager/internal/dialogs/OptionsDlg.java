@@ -21,6 +21,7 @@
 
 package org.micromanager.internal.dialogs;
 
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -76,6 +77,8 @@ public final class OptionsDlg extends JDialog {
       super.setAlwaysOnTop(true);
       super.setTitle("Micro-Manager Options");
 
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(100, 100);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 

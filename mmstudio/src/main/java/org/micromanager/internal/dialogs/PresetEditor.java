@@ -22,6 +22,8 @@ package org.micromanager.internal.dialogs;
 
 
 import java.awt.Dimension;
+import java.awt.Toolkit;
+
 import mmcorej.Configuration;
 import mmcorej.StrVector;
 import org.micromanager.Studio;
@@ -52,6 +54,8 @@ public final class PresetEditor extends ConfigDialog {
       data_.setColumnNames("Property Name","Preset Value","");
       data_.setShowReadOnly(true);
       initialize();
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setBounds(100, 100, 420, 300);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       super.setMinimumSize(new Dimension(400, 250));

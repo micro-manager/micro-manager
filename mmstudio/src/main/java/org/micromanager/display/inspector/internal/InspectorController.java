@@ -17,6 +17,7 @@ package org.micromanager.display.inspector.internal;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -137,7 +138,9 @@ public final class InspectorController
    }
 
    private void makeUI() {
-      frame_ = new JFrame(); // TODO
+      frame_ = new JFrame();
+      frame_.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       frame_.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
       frame_.addWindowListener(new WindowAdapter() {
          @Override
@@ -145,7 +148,7 @@ public final class InspectorController
             close();
          }
       });
-      frame_.setAlwaysOnTop(false); // TODO
+      frame_.setAlwaysOnTop(false);
       frame_.getRootPane().putClientProperty("Window.style", "small");
       frame_.setLayout(new MigLayout(
             new LC().fill().insets("0").gridGap("0", "0")));

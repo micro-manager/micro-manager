@@ -14,6 +14,7 @@
 
 package org.micromanager.internal.pipelineinterface;
 
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -193,6 +194,8 @@ public final class ProcessExistingDataDialog extends JDialog {
 
       super.add(contents);
       super.pack();
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(200, 200);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       super.setVisible(true);

@@ -25,6 +25,7 @@ package org.micromanager.pointandshootanalysis;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
+import java.awt.Toolkit;
 import java.awt.dnd.DropTarget;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
@@ -84,6 +85,8 @@ public class PointAndShootDialog extends JDialog {
       
       super.setLayout(new MigLayout());
 
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(100, 100);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       

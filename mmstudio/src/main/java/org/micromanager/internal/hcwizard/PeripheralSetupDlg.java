@@ -2,6 +2,7 @@ package org.micromanager.internal.hcwizard;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Vector;
@@ -141,6 +142,8 @@ public final class PeripheralSetupDlg extends JDialog {
    public PeripheralSetupDlg(MicroscopeModel mod, CMMCore c, String hub, Vector<Device> per) {
       super();
       setTitle("Peripheral Devices Setup");
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setBounds(100, 100, 479, 353);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       //setModalityType(ModalityType.APPLICATION_MODAL);

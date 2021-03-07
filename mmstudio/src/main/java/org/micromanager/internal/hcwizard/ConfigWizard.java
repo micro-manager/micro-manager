@@ -22,6 +22,7 @@
 package org.micromanager.internal.hcwizard;
 
 import java.awt.Color;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -106,6 +107,8 @@ public final class ConfigWizard extends JDialog {
       getContentPane().setLayout(new MigLayout());
       setTitle("Hardware Configuration Wizard");
 
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(50, 100);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 

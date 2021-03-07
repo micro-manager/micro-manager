@@ -257,6 +257,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
       JFrame frame;
       if (!fullScreen) {
          frame = new JFrame("image display window");
+         frame.setIconImage(Toolkit.getDefaultToolkit().getImage(
+                 getClass().getResource("/org/micromanager/icons/microscope.gif")));
          frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
          frame.setBounds(320, 320, 480, 320);
          WindowPositioning.setUpBoundsMemory(frame, frame.getClass(), null);

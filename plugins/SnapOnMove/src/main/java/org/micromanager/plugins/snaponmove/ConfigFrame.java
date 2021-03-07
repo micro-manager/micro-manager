@@ -33,6 +33,7 @@
 package org.micromanager.plugins.snaponmove;
 
 import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
@@ -205,6 +206,8 @@ final class ConfigFrame extends JFrame {
       setMinimumSize(new Dimension(360, 210));
       pack();
 
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(600, 200);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
    }

@@ -54,6 +54,8 @@ public final class AlertsWindow extends JFrame {
       studio_ = studio;
       studio.events().registerForEvents(this);
 
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(300, 100);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       

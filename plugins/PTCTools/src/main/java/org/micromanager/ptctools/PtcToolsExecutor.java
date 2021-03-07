@@ -32,6 +32,8 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
+
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -255,6 +257,8 @@ public class PtcToolsExecutor extends Thread  {
       dialog.setTitle("PTC Tools");
       dialog.add(new JLabel(label), "wrap");
       dialog.add(new JLabel("Press OK when ready"), "wrap");
+      dialog.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       WindowPositioning.setUpBoundsMemory(dialog, dialog.getClass(), null);
       JButton cancelButton = new JButton("Cancel");
       final JLabel resultLabel = new JLabel("Not started yet...");

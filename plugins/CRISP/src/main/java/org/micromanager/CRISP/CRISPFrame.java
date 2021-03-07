@@ -17,6 +17,7 @@ package org.micromanager.CRISP;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Shape;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -137,6 +138,8 @@ public class CRISPFrame extends JFrame {
 
        initComponents();
 
+       super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+               getClass().getResource("/org/micromanager/icons/microscope.gif")));
        super.setLocation(frameXPos_, frameYPos_);
        WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 

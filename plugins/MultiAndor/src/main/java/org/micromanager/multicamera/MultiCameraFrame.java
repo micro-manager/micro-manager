@@ -12,6 +12,7 @@ package org.micromanager.multicamera;
 
 import com.google.common.eventbus.Subscribe;
 
+import java.awt.Toolkit;
 import java.text.ParseException;
 
 import javax.swing.*;
@@ -110,6 +111,8 @@ public class MultiCameraFrame extends JFrame {
 
       initComponents();
 
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(100, 100);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
