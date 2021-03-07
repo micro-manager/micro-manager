@@ -2250,7 +2250,9 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
       }
 
 
-      // ImageJ's AWT images are loaded with a Direct Color processor which expects BGRA, that's why we swapped the Blue and Red components in the generator above.
+      // ImageJ's AWT images are loaded with a Direct Color processor which expects big endian ARGB,
+      // which on little endian architectures corresponds to BGRA (see: https://en.wikipedia.org/wiki/RGBA_color_model), 
+      // that's why we swapped the Blue and Red components in the generator above.
       if(NULL != pTmpBuffer)
       {
          // write the compact debug image...
