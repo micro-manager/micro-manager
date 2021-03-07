@@ -470,7 +470,14 @@ public final class MultipageTiffReader {
                byte[] pixelsARGB = new byte[(int) (4 * data.bytesPerImage / 3)];
                int i = 0;
                for (byte b : pixelBuffer.array()) {
-                  pixelsARGB[i] = b;
+                  // need to swap byte 0 and 2: saved order is RGBA, but we want BGRA
+                  if (i % 4 == 0) {
+                     pixelsARGB[i + 2] = b;
+                  } else if (i % 2 == 0) {
+                     pixelsARGB[i - 2] = b;
+                  } else {
+                     pixelsARGB[i] = b;
+                  }
                   i++;
                   if ((i + 1) % 4 == 0) {
                      pixelsARGB[i] = 0;
