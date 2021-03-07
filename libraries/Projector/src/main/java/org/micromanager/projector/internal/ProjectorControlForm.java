@@ -33,6 +33,7 @@ import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -269,6 +270,8 @@ public class ProjectorControlForm extends JFrame {
       delayField_.setText(settings_.getString(Terms.DELAY, "0"));
       logDirectoryTextField_.setText(settings_.getString(Terms.LOGDIRECTORY, ""));
 
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setLocation(500, 300);
       WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       updateROISettings();
