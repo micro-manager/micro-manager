@@ -809,10 +809,9 @@ int SpinnakerCamera::OnLineBoolPropertyChanged(std::string name, MM::PropertyBas
 	return DEVICE_OK;
 }
 
-void SpinnakerCamera::Unpack12Bit( size_t width, size_t height, bool flip)
+void SpinnakerCamera::Unpack12Bit(uint8_t* packed, size_t width, size_t height, bool flip)
 {
 	uint16_t *unpacked = new uint16_t[width*height];
-	uint8_t *packed = m_imageBuff;
 
 	unsigned int u_idx;
 	int p_idx;
@@ -834,9 +833,31 @@ void SpinnakerCamera::Unpack12Bit( size_t width, size_t height, bool flip)
 		}
 	}
 
-	delete[] packed;
+	//delete[] packed;
 	m_imageBuff = (unsigned char*)unpacked;
 }
+
+void SpinnakerCamera::RGBtoBGRA(uint8_t* data, size_t imageBuffLength)
+{
+   long dest = 0;
+   for (long i = 0; i < imageBuffLength; i++)
+   {
+      if (i % 3 == 0)
+      {
+         m_imageBuff[dest+2] = data[i];
+      } else if (i % 3 == 2) 
+      {
+         m_imageBuff[dest - 2] = data[i];
+         dest++;
+         m_imageBuff[dest] = 0;
+      } else 
+      {
+         m_imageBuff[dest] = data[i];
+      }
+      dest++;
+   }
+}
+
 
 const unsigned char * SpinnakerCamera::GetImageBuffer()
 {
@@ -851,16 +872,32 @@ const unsigned char * SpinnakerCamera::GetImageBuffer()
 				m_imageBuff = NULL;
 			}
 
-			m_imageBuff = new unsigned char[m_imagePtr->GetWidth()*m_imagePtr->GetWidth()*this->GetImageBytesPerPixel()];
+			m_imageBuff = new unsigned char[this->GetImageBufferSize()];
 
 			if (m_imageBuff)
 			{
-				std::memcpy(m_imageBuff, m_imagePtr->GetData(), m_imagePtr->GetBufferSize());
-
-				if (m_imagePtr->GetPixelFormat() == SPKR::PixelFormat_Mono12p)
-					Unpack12Bit(m_imagePtr->GetWidth(), m_imagePtr->GetHeight(), false);
+            if (m_imagePtr->GetPixelFormat() == SPKR::PixelFormat_RGB8) {
+               size_t theirSizeD3 = m_imagePtr->GetBufferSize() / 3;
+               size_t ourSizeD4 = this->GetImageBufferSize() / 4;
+               size_t minSize = theirSizeD3 > ourSizeD4 ? ourSizeD4 : theirSizeD3;
+               size_t size = minSize * 3;
+               uint8_t* data = static_cast<uint8_t*> (m_imagePtr->GetData());
+               RGBtoBGRA(data, size);
+            }
+            else if (m_imagePtr->GetPixelFormat() == SPKR::PixelFormat_Mono12p)
+            {
+				   Unpack12Bit(static_cast<uint8_t*> (m_imagePtr->GetData()), m_imagePtr->GetWidth(), m_imagePtr->GetHeight(), false);
+            }
 				else if (m_imagePtr->GetPixelFormat() == SPKR::PixelFormat_Mono12Packed)
-					Unpack12Bit( m_imagePtr->GetWidth(), m_imagePtr->GetHeight(), true);
+            {
+					Unpack12Bit(static_cast<uint8_t*> (m_imagePtr->GetData()), m_imagePtr->GetWidth(), m_imagePtr->GetHeight(), true);
+            }
+            else // all other data types get memcpy'd
+            {
+               size_t length = m_imagePtr->GetBufferSize() > (size_t) this->GetImageBufferSize() ? 
+                        (size_t) this->GetImageBufferSize() : m_imagePtr->GetBufferSize();
+				   std::memcpy(m_imageBuff, m_imagePtr->GetData(), length);	   
+            } 
 			}
 			else
 			{
@@ -907,6 +944,9 @@ unsigned SpinnakerCamera::GetImageHeight() const
 
 unsigned SpinnakerCamera::GetImageBytesPerPixel() const
 {
+   if (m_cam->PixelFormat.GetValue() == SPKR::PixelFormat_RGB8)
+      return 4;
+
 	switch (m_cam->PixelSize.GetValue())
 	{
 	case SPKR::PixelSize_Bpp1:
@@ -935,8 +975,20 @@ unsigned SpinnakerCamera::GetImageBytesPerPixel() const
    return 0;
 }
 
+unsigned SpinnakerCamera::GetNumberOfComponents() const
+{
+   if (m_cam->PixelFormat.GetValue() == SPKR::PixelFormat_RGB8)
+      return 4;
+
+   return 1;
+}
+
 unsigned SpinnakerCamera::GetBitDepth() const
 {
+   if (m_cam->PixelFormat.GetValue() == SPKR::PixelFormat_RGB8)
+   {
+      return 8;
+   }
 	switch (m_cam->PixelSize.GetValue())
 	{
 	case SPKR::PixelSize_Bpp1:
@@ -1495,21 +1547,52 @@ int SpinnakerCamera::MoveImageToCircularBuffer()
 
 			MMThreadGuard g(m_pixelLock);
 
+         uint8_t* imageBuff;
+         uint8_t* data = static_cast<uint8_t*> (ip->GetData());
+
+         // We need an intermediate buffer in special cases, otherwise 
+         // use the camera buffer directly to copy into the circulat buffer
+         if (!(ip->GetPixelFormat() == SPKR::PixelFormat_RGB8) &&
+             !(m_imagePtr->GetPixelFormat() == SPKR::PixelFormat_Mono12p) &&
+             !(m_imagePtr->GetPixelFormat() == SPKR::PixelFormat_Mono12Packed) &&
+             ip->GetBufferSize() == (size_t) this->GetImageBufferSize())
+         {
+            imageBuff = data;
+         }
+
 			if (m_imageBuff)
 			{
 				delete[] m_imageBuff;
 				m_imageBuff = NULL;
 			}
 
-			m_imageBuff = new unsigned char[ip->GetWidth()*ip->GetWidth()*this->GetImageBytesPerPixel()];
+			m_imageBuff = new unsigned char[this->GetImageBufferSize()];
 
 			if (m_imageBuff)
 			{
-				std::memcpy(m_imageBuff, ip->GetData(), ip->GetBufferSize());
-				if (ip->GetPixelFormat() == SPKR::PixelFormat_Mono12p)
-					Unpack12Bit(ip->GetWidth(), ip->GetHeight(), false);
-				else if (ip->GetPixelFormat() == SPKR::PixelFormat_Mono12Packed)
-					Unpack12Bit(ip->GetWidth(), ip->GetHeight(), true);
+            if (ip->GetPixelFormat() == SPKR::PixelFormat_RGB8)
+            {     
+               size_t theirSizeD3 = m_imagePtr->GetBufferSize() / 3;
+               size_t ourSizeD4 = this->GetImageBufferSize() / 4;
+               size_t minSize = theirSizeD3 > ourSizeD4 ? ourSizeD4 : theirSizeD3;
+               size_t size = minSize * 3;
+               RGBtoBGRA(data, size);
+            }
+            else if (m_imagePtr->GetPixelFormat() == SPKR::PixelFormat_Mono12p)
+            {
+				   Unpack12Bit(data, ip->GetWidth(), ip->GetHeight(), false);
+            }
+				else if (m_imagePtr->GetPixelFormat() == SPKR::PixelFormat_Mono12Packed)
+            {
+					Unpack12Bit(data, ip->GetWidth(), ip->GetHeight(), true);
+            }
+            else // all other data types get memcpy'd
+            {
+               size_t length = ip->GetBufferSize() > (size_t) this->GetImageBufferSize() ? 
+                        (size_t) this->GetImageBufferSize() : ip->GetBufferSize();
+				   std::memcpy(m_imageBuff, ip->GetData(), length);	   
+            } 
+            imageBuff = m_imageBuff;
 			}
 			else
 			{
@@ -1521,7 +1604,7 @@ int SpinnakerCamera::MoveImageToCircularBuffer()
 			unsigned int h = GetImageHeight();
 			unsigned int b = GetImageBytesPerPixel();
 
-			int ret = GetCoreCallback()->InsertImage(this, m_imageBuff, w, h, b, md.Serialize().c_str());
+			int ret = GetCoreCallback()->InsertImage(this, imageBuff, w, h, b, md.Serialize().c_str());
 			if (!m_stopOnOverflow && ret == DEVICE_BUFFER_OVERFLOW)
 			{
 				// do not stop on overflow - just reset the buffer
