@@ -1,7 +1,7 @@
 #ifndef _SPINNAKER_CAMERA_H_
 #define _SPINNAKER_CAMERA_H_
 
-#include "../../../3rdparty/Point Grey Research/Spinnaker/1.20.0.15/include/Spinnaker.h"
+#include "Spinnaker.h"
 #include "../../MMDevice/DeviceBase.h"
 #include "../../MMDevice/ImgBuffer.h"
 #include "../../MMDevice/DeviceThreads.h"
@@ -26,6 +26,7 @@ public:
 	unsigned GetImageWidth() const;
 	unsigned GetImageHeight() const;
 	unsigned GetImageBytesPerPixel() const;
+   unsigned GetNumberOfComponents() const;
 	unsigned GetBitDepth() const;
 	long GetImageBufferSize() const;
 	double GetExposure() const;
@@ -150,7 +151,8 @@ private:
 		MM::ActionType eAct,
 		long lineNum);
 
-	void Unpack12Bit(size_t width, size_t height, bool flip);
+	void Unpack12Bit(uint8_t* packed, size_t width, size_t height, bool flip);
+   void RGBtoBGRA(uint8_t* data, size_t imageBuffLength);
 #pragma warning(push)
 #pragma warning(disable : 4482)
 	std::string EAccessName(GENAPI::EAccessMode accessMode) {
@@ -176,7 +178,7 @@ private:
 	SPKR::SystemPtr m_system;
 	SPKR::CameraPtr m_cam;
 	SPKR::ImagePtr m_imagePtr;
-	unsigned char *m_imageBuff;
+	uint8_t *m_imageBuff;
 
 	GENICAM::gcstring m_pixFormat;
 	std::vector<std::string> m_BinningModes;

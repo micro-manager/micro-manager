@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -79,19 +79,23 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <LibraryPath>"..\..\..\3rdparty\Point Grey Research\Spinnaker\1.20.0.15\lib\vs2010";$(LibraryPath)</LibraryPath>
+    <LibraryPath>"..\..\..\3rdparty\FLIR\Spinnaker\2.3.0.77\lib\vs2010";$(LibraryPath)</LibraryPath>
+    <IncludePath>..\..\..\3rdparty\FLIR\Spinnaker\2.3.0.77\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <LibraryPath>"..\..\..\3rdparty\Point Grey Research\Spinnaker\1.20.0.15\lib64\vs2010";$(LibraryPath)</LibraryPath>
+    <LibraryPath>"..\..\..\3rdparty\FLIR\Spinnaker\2.3.0.77\lib64\vs2010";$(LibraryPath)</LibraryPath>
+    <IncludePath>..\..\..\3rdparty\FLIR\Spinnaker\2.3.0.77\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <LibraryPath>"..\..\..\3rdparty\Point Grey Research\Spinnaker\1.20.0.15\lib\vs2010";$(LibraryPath)</LibraryPath>
+    <LibraryPath>"..\..\..\3rdparty\FLIR\Spinnaker\2.3.0.77\lib\vs2010";$(LibraryPath)</LibraryPath>
+    <IncludePath>..\..\..\3rdparty\FLIR\Spinnaker\2.3.0.77\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <LibraryPath>"..\..\..\3rdparty\Point Grey Research\Spinnaker\1.20.0.15\lib64\vs2010";$(LibraryPath)</LibraryPath>
+    <LibraryPath>"..\..\..\3rdparty\FLIR\Spinnaker\2.3.0.77\lib64\vs2010";$(LibraryPath)</LibraryPath>
+    <IncludePath>..\..\..\3rdparty\FLIR\Spinnaker\2.3.0.77\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -114,7 +118,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Spinnakerd_v100.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Spinnaker_v100.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
