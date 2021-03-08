@@ -220,14 +220,14 @@ class ExploreZSliders extends JPanel {
       } catch (Exception e) {
          throw new RuntimeException("problem creating z limit scrollbars");
       }
-      zTopTextField_ = new JTextField(zOrigin_ + "");
+      zTopTextField_ = new JTextField(TWO_DECIMAL_FORMAT.format(zOrigin_));
       zTopTextField_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent ae) {
             zTopTextFieldAction();
          }
       });
-      zBottomTextField_ = new JTextField(zOrigin_ + "");
+      zBottomTextField_ = new JTextField(TWO_DECIMAL_FORMAT.format(zOrigin_));
       zBottomTextField_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent ae) {
@@ -253,8 +253,8 @@ class ExploreZSliders extends JPanel {
       } catch (Exception ex) {
          throw new RuntimeException(ex);
       }
-      zTopTextField_.setText(zPos + "");
-      zBottomTextField_.setText(zPos + "");
+      zTopTextField_.setText(TWO_DECIMAL_FORMAT.format(zPos));
+      zBottomTextField_.setText(TWO_DECIMAL_FORMAT.format(zPos));
       zTopTextField_.getActionListeners()[0].actionPerformed(null);
       zBottomTextField_.getActionListeners()[0].actionPerformed(null);
 

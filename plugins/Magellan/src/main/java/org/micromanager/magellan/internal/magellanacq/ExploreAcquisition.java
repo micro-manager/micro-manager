@@ -231,7 +231,7 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
       }
       ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>> acqFunctions
               = new ArrayList<Function<AcquisitionEvent, Iterator<AcquisitionEvent>>>();
-      acqFunctions.add(positions(selectedXYPositions, posIndices));
+      acqFunctions.add(positions(selectedXYPositions));
       acqFunctions.add(AcqEventModules.zStack(minZIndex, maxZIndex + 1, zStep_, zOrigin_));
       if (settings_.channels_ != null) {
          ArrayList<ChannelSetting> channels = new ArrayList<ChannelSetting>();
@@ -280,8 +280,7 @@ public class ExploreAcquisition extends Acquisition implements MagellanAcquisiti
       });
    }
 
-   private Function<AcquisitionEvent, Iterator<AcquisitionEvent>> positions(
-           List<XYStagePosition> positions, int[] posIndices) {
+   private Function<AcquisitionEvent, Iterator<AcquisitionEvent>> positions(List<XYStagePosition> positions) {
       return (AcquisitionEvent event) -> {
          Stream.Builder<AcquisitionEvent> builder = Stream.builder();
          if (positions == null) {
