@@ -39,7 +39,7 @@ if BUILD_OPENCV
    FAKECAMERA = FakeCamera
 endif
 if BUILD_PVCAM
-   PVCAM = PVCAM PrincetonInstruments
+   PVCAM = PVCAM
 endif
 if BUILD_QCAM
    QCAM = QCam
@@ -175,6 +175,7 @@ SUBDIRS = \
 	SutterLambdaParallelArduino \
 	SutterStage \
 	Thorlabs \
+	ThorlabsDCxxxx \
 	ThorlabsElliptecSlider \
 	ThorlabsFilterWheel \
 	ThorlabsSC10 \
