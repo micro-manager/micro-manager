@@ -23,12 +23,14 @@
         <path refid="mm.compile.classpath"/>
 		<pathelement location="${mm.java.lib.mmcorej}"/>
 		<pathelement location="${mm.java.lib.mmstudio}"/>
+		<pathelement location="${mm.java.mmlibraries}"/>
 		<fileset dir="${mm.java.library.outdir}" includes="*.jar" />
 	</path>
 
 	<path id="project.linked.jars">
 		<pathelement location="${mm.java.lib.mmcorej}"/>
 		<pathelement location="${mm.java.lib.mmstudio}"/>
+		<pathelement location="${mm.java.mmlibraries}"/>
 		<fileset dir="${mm.java.library.outdir}" includes="*.jar" />
 	</path>
 
