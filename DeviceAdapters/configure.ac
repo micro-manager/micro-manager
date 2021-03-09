@@ -536,7 +536,6 @@ m4_define([device_adapter_dirs], [m4_strip([
    Piezosystem_NV40_3
    Piezosystem_dDrive
    PrecisExcite
-   PrincetonInstruments
    Prior
    PriorLegacy
    QCam
