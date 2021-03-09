@@ -1,7 +1,8 @@
 #include "PvRoiCollection.h"
 
+#include <cstring> // memset
+#include <limits>
 #include <stdexcept>
-
 #include <vector>
 
 //=============================================================================
