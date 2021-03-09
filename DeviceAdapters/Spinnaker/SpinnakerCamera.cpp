@@ -946,6 +946,8 @@ unsigned SpinnakerCamera::GetImageBytesPerPixel() const
 {
    if (m_cam->PixelFormat.GetValue() == SPKR::PixelFormat_RGB8)
       return 4;
+   if (m_cam->PixelFormat.GetValue() == SPKR::PixelFormat_BGRa8)
+      return 4;
 
 	switch (m_cam->PixelSize.GetValue())
 	{
@@ -978,6 +980,8 @@ unsigned SpinnakerCamera::GetImageBytesPerPixel() const
 unsigned SpinnakerCamera::GetNumberOfComponents() const
 {
    if (m_cam->PixelFormat.GetValue() == SPKR::PixelFormat_RGB8)
+      return 4;
+   if (m_cam->PixelFormat.GetValue() == SPKR::PixelFormat_BGRa8)
       return 4;
 
    return 1;
@@ -1547,11 +1551,11 @@ int SpinnakerCamera::MoveImageToCircularBuffer()
 
 			MMThreadGuard g(m_pixelLock);
 
-         uint8_t* imageBuff;
+         uint8_t* imageBuff = NULL;
          uint8_t* data = static_cast<uint8_t*> (ip->GetData());
 
          // We need an intermediate buffer in special cases, otherwise 
-         // use the camera buffer directly to copy into the circulat buffer
+         // use the camera buffer directly to copy into the sequence buffer
          if (!(ip->GetPixelFormat() == SPKR::PixelFormat_RGB8) &&
              !(m_imagePtr->GetPixelFormat() == SPKR::PixelFormat_Mono12p) &&
              !(m_imagePtr->GetPixelFormat() == SPKR::PixelFormat_Mono12Packed) &&
@@ -1559,46 +1563,53 @@ int SpinnakerCamera::MoveImageToCircularBuffer()
          {
             imageBuff = data;
          }
-
+         else {
 			if (m_imageBuff)
 			{
-				delete[] m_imageBuff;
-				m_imageBuff = NULL;
-			}
+				   delete[] m_imageBuff;
+				   m_imageBuff = NULL;
+			   }
 
-			m_imageBuff = new unsigned char[this->GetImageBufferSize()];
+			   m_imageBuff = new unsigned char[this->GetImageBufferSize()];
 
-			if (m_imageBuff)
-			{
-            if (ip->GetPixelFormat() == SPKR::PixelFormat_RGB8)
-            {     
-               size_t theirSizeD3 = m_imagePtr->GetBufferSize() / 3;
-               size_t ourSizeD4 = this->GetImageBufferSize() / 4;
-               size_t minSize = theirSizeD3 > ourSizeD4 ? ourSizeD4 : theirSizeD3;
-               size_t size = minSize * 3;
-               RGBtoBGRA(data, size);
-            }
-            else if (m_imagePtr->GetPixelFormat() == SPKR::PixelFormat_Mono12p)
-            {
-				   Unpack12Bit(data, ip->GetWidth(), ip->GetHeight(), false);
-            }
-				else if (m_imagePtr->GetPixelFormat() == SPKR::PixelFormat_Mono12Packed)
-            {
-					Unpack12Bit(data, ip->GetWidth(), ip->GetHeight(), true);
-            }
-            else // all other data types get memcpy'd
-            {
-               size_t length = ip->GetBufferSize() > (size_t) this->GetImageBufferSize() ? 
-                        (size_t) this->GetImageBufferSize() : ip->GetBufferSize();
-				   std::memcpy(m_imageBuff, ip->GetData(), length);	   
-            } 
-            imageBuff = m_imageBuff;
-			}
-			else
-			{
-				SetErrorText(SPKR_ERROR, "Could not allocate sufficient memory for image");
-				return SPKR_ERROR;
-			}
+			   if (m_imageBuff)
+			   {
+               if (ip->GetPixelFormat() == SPKR::PixelFormat_RGB8)
+               {     
+                  size_t theirSizeD3 = m_imagePtr->GetBufferSize() / 3;
+                  size_t ourSizeD4 = this->GetImageBufferSize() / 4;
+                  size_t minSize = theirSizeD3 > ourSizeD4 ? ourSizeD4 : theirSizeD3;
+                  size_t size = minSize * 3;
+                  RGBtoBGRA(data, size);
+               }
+               else if (m_imagePtr->GetPixelFormat() == SPKR::PixelFormat_Mono12p)
+               {
+				      Unpack12Bit(data, ip->GetWidth(), ip->GetHeight(), false);
+               }
+				   else if (m_imagePtr->GetPixelFormat() == SPKR::PixelFormat_Mono12Packed)
+               {
+					   Unpack12Bit(data, ip->GetWidth(), ip->GetHeight(), true);
+               }
+               else // all other data types get memcpy'd
+               {
+                  size_t length = ip->GetBufferSize() > (size_t) this->GetImageBufferSize() ? 
+                           (size_t) this->GetImageBufferSize() : ip->GetBufferSize();
+				      std::memcpy(m_imageBuff, ip->GetData(), length);	   
+               } 
+               imageBuff = m_imageBuff;
+			   }
+			   else
+			   {
+				   SetErrorText(SPKR_ERROR, "Could not allocate sufficient memory for image");
+				   return SPKR_ERROR;
+			   }
+         }
+
+         if (imageBuff == NULL)
+         {
+            SetErrorText(SPKR_ERROR, "Unexpected null pointer in Spinnaker, MoveImageToCircularBuffer");
+            return SPKR_ERROR;
+         }
 
 			unsigned int w = GetImageWidth();
 			unsigned int h = GetImageHeight();
