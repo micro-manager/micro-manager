@@ -54,18 +54,16 @@
 //===================================================================== DEFINES
 
 
-#ifdef WIN32
-// FRAME_INFO is currently supported on Windows only (PVCAM 2.9.5+)
+// FRAME_INFO support (on Windows since PVCAM 2.9.5, on Linux since 3.0.4)
 #define PVCAM_FRAME_INFO_SUPPORTED
-// Callbacks are not supported on Linux and Mac (as for 01/2014)
+// Callbacks ex3 support (on Windows since PVCAM 2.8.1, on Linux since 3.0.4)
 #define PVCAM_CALLBACKS_SUPPORTED
-// The new parameter is implemented in PVCAM for Windows only (PVCAM 3+)
+// The new parameter support (on Windows since PVCAM 3.0.0, on Linux since 3.0.4)
 #define PVCAM_PARAM_EXPOSE_OUT_DEFINED
-// The SMART streaming feature is currently only supported on Windows (PVCAM 2.8.0+)
+// The SMART streaming support (on Windows since PVCAM 2.8.0, on Linux since 3.0.4)
 #define PVCAM_SMART_STREAMING_SUPPORTED
-// Metadata, Multi-ROI, Centroids and other features that were added to PVCAM 3.0.12 (Win)
+// Metadata, Multi-ROI, Centroids and other features that were added to PVCAM 3.0.12
 #define PVCAM_3_0_12_SUPPORTED // TODO: Rename this once the PVCAM is officially out
-#endif
 
 // PVCAM 3.1+ has some additional PL_COLOR_MODES defined which we use across the code
 // even if we don't compile against that PVCAM. To make it easier we define them ourselves.
@@ -209,14 +207,12 @@ public: // MMCamera API
 
     bool IsCapturing();
 
-#ifndef __linux__
     /**
     * Micromanager calls the "live" acquisition a "sequence". PVCAM calls this "continous - circular buffer" mode.
     */
     int PrepareSequenceAcqusition();
     int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
     int StopSequenceAcquisition();
-#endif
 
 public: // Action handlers
     /**
@@ -433,7 +429,6 @@ public: // Action handlers
     int OnAcquisitionMethod(MM::PropertyBase* pProp, MM::ActionType eAct);
 #endif
 
-#ifdef WIN32
     /**
     * Post processing parameter handler. Post processing features and parameters are
     * read out from the camera dynamically. Based on the camera provided information
@@ -446,7 +441,6 @@ public: // Action handlers
     * to off.
     */
     int OnResetPostProcProperties(MM::PropertyBase* pProp, MM::ActionType eAct);
-#endif
 
 #ifdef PVCAM_SMART_STREAMING_SUPPORTED
     /**
@@ -550,10 +544,8 @@ protected:
     */
     int ProcessNotification(const NotificationEntry& entry);
 
-#ifndef __linux__
     int  PollingThreadRun(void);
     void PollingThreadExiting() throw();
-#endif
 
 private:
     /**

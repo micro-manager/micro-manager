@@ -41,13 +41,13 @@ class Universal;
 * cure for this. In such situations we always drop the oldest frame from the
 * queue. The MaxSize of the NotificationQueue should always be a couple of
 * frames less than the circular buffer size - this is to avoid a situation
-* where PVCAM starts overwritting a frame in the circular buffer that is
+* where PVCAM starts overwriting a frame in the circular buffer that is
 * currently being copied by the MMCore to its own "Sequence Buffer".
 *
 * For example, if we have CircularBuffer size of 16 frames and max Queue size
 * of 10 frames there is a 4 frames gap. This 4 frames gap should give us 
 * enough time to copy the oldest frame to MMCore (without a risk of being
-* overwriten by PVCAM) if the NotificationQueue is getting full.
+* overwritten by PVCAM) if the NotificationQueue is getting full.
 *
 * This entire class would not have to be used if PVCAM had its own callback
 * queue and deliver the callbacks more reliably.
@@ -78,11 +78,10 @@ public:
 
     /**
     * Pushes a new notification to the queue. If the queue is full the
-    * the oldes notification is thrown away.
+    * the oldest notification is thrown away.
     * @param entry Notification to be pushed to the queue.
     */
     bool PushNotification( const NotificationEntry& entry );
-    bool PushNotification( const NotificationEntry&& entry );
 
 public: // From MMDeviceThreadBase
     int svc();
@@ -95,8 +94,6 @@ private:
 
     boost::condition_variable frameReadyCondition_;
     boost::mutex              threadMutex_;
-
-    MMThreadLock              queueLock_;
 
     std::deque<NotificationEntry> deque_;
     int                       maxSize_;
