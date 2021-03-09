@@ -4,11 +4,6 @@
 #include "../../MMDevice/DeviceBase.h"
 #include "PVCAMAdapter.h"
 
-#ifndef WIN32
-typedef long long long64;
-typedef unsigned long long ulong64;
-#endif
-
 /**
 * The hardcoded maximum number of S.M.A.R.T exposures. This numbers is used to allocate
 * the exposure array for PVCAM.
