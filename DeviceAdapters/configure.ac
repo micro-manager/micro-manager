@@ -101,27 +101,23 @@ AS_IF([test "x$want_modbus" != xno],
 AM_CONDITIONAL([BUILD_MODBUS], [test "x$use_modbus" = xyes])
 
 
-# Only build PVCAM if SDK present.
-AC_MSG_CHECKING(for PVCAM)
-case $host in
-   *linux*) pvcam_arch="$host_cpu" ;;
-   *)       pvcam_arch="" ;;
-esac
-build_pvcam=no
-test "${PVCAM_SDK_PATH:+set}" = set && { test -n "$pvcam_arch" && build_pvcam=yes; }
-AM_CONDITIONAL([BUILD_PVCAM], [test "x$build_pvcam" = xyes])
+# Only build PVCAM if header files present.
+AC_MSG_CHECKING(for Pvcam)
+for dir in /usr/include/pvcam /Library/Frameworks/PVCAM.framework/Headers
+do
+   if test -f "$dir/pvcam.h"; then
+      PVCAMINCDIR="$dir"
+      break
+   fi
+done
+AM_CONDITIONAL([BUILD_PVCAM], [test -n "$PVCAMINCDIR"])
 AM_COND_IF([BUILD_PVCAM],
 [
    AC_MSG_RESULT([found])
-   PVCAM_INC_DIR="$PVCAM_SDK_PATH/include"
-   PVCAM_LIB_DIR="$PVCAM_SDK_PATH/library/$pvcam_arch"
-   AC_SUBST(PVCAM_INC_DIR)
-   AC_SUBST(PVCAM_LIB_DIR)
 ],
 [
    AC_MSG_RESULT([not found])
 ])
-
 
 # Same for QCam
 AC_MSG_CHECKING(for QCam)
@@ -419,7 +415,6 @@ case $host in
       PVCAMFRAMEWORKS="-lpvcam"
       ;;
 esac
-# PVCAMFRAMEWORKS left on place only for PrincetonInstruments adapter that relies on very old PVCAM version
 AC_SUBST(PVCAMFRAMEWORKS)
 AC_SUBST(SPOTFRAMEWORKS)
 AC_SUBST(SERIALFRAMEWORKS)
@@ -541,6 +536,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    Piezosystem_NV40_3
    Piezosystem_dDrive
    PrecisExcite
+   PrincetonInstruments
    Prior
    PriorLegacy
    QCam
