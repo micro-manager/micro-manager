@@ -95,13 +95,13 @@ public:
    const std::string& GetName() const {return name_;}
    const std::string GetQualifiedName() const
    {
-      std::stringstream os;
+      std::string str;
       if (deviceLabel_.compare("_") != 0)
       {
-         os << deviceLabel_ << "-";
+         str.append(deviceLabel_).append("-");
       }
-      os << name_;
-      return os.str();
+      str.append(name_);
+      return str;
    }
    const bool IsReadOnly() const  {return readOnly_;}
 
@@ -134,6 +134,14 @@ public:
    virtual MetadataTag* Clone() = 0;
    virtual std::string Serialize() = 0;
    virtual bool Restore(const char* stream) = 0;
+   virtual bool Restore(std::istringstream& is) = 0;
+
+   static std::string ReadLine(std::istringstream& is)
+   {
+      std::string ret;
+      std::getline(is, ret);
+      return ret;
+   }
 
 private:
    std::string name_;
@@ -161,28 +169,30 @@ public:
 
    std::string Serialize()
    {
-      std::ostringstream os;
-      os << GetName() << std::endl << GetDevice() << std::endl << IsReadOnly() << value_ << std::endl;
-      return os.str();
+      std::string str;
+
+      str.append(GetName()).append("\n");
+      str.append(GetDevice()).append("\n");
+      str.append(IsReadOnly() ? "1" : "0").append("\n");
+
+      str.append(value_).append("\n");
+
+      return str;
    }
 
    bool Restore(const char* stream)
    {
       std::istringstream is(stream);
+      return Restore(is);
+   }
 
-      std::string name;
-      is >> name;
-      SetName(name.c_str());
+   bool Restore(std::istringstream& is)
+   {
+      SetName(ReadLine(is).c_str());
+      SetDevice(ReadLine(is).c_str());
+      SetReadOnly(atoi(ReadLine(is).c_str()) != 0);
 
-      std::string device;
-      is >> device;
-      SetDevice(device.c_str());
-
-      bool ro;
-      is >> ro;
-      SetReadOnly(ro);
-
-      is >> value_;
+      value_ = ReadLine(is);
 
       return true;
    }
@@ -195,6 +205,8 @@ class MetadataArrayTag : public MetadataTag
 {
 public:
    MetadataArrayTag() {}
+   MetadataArrayTag(const char* name, const char* device, bool readOnly) :
+      MetadataTag(name, device, readOnly) {}
    ~MetadataArrayTag() {}
 
    virtual const MetadataArrayTag* ToArrayTag() const { return this; }
@@ -222,36 +234,40 @@ public:
 
    std::string Serialize()
    {
-      std::ostringstream os;
-      os << GetName() << std::endl << GetDevice() << std::endl << IsReadOnly() << values_.size();
-      for (size_t i=0; i<values_.size(); i++)
-         os << values_[i];
-      return os.str();
+      std::string str;
+
+      str.append(GetName()).append("\n");
+      str.append(GetDevice()).append("\n");
+      str.append(IsReadOnly() ? "1" : "0").append("\n");
+
+      std::stringstream os;
+      os << values_.size();
+      str.append(os.str()).append("\n");
+
+      for (size_t i = 0; i < values_.size(); i++)
+         str.append(values_[i]).append("\n");
+
+      return str;
    }
 
    bool Restore(const char* stream)
    {
       std::istringstream is(stream);
+      return Restore(is);
+   }
 
-      std::string name;
-      is >> name;
-      SetName(name.c_str());
+   bool Restore(std::istringstream& is)
+   {
+      SetName(ReadLine(is).c_str());
+      SetDevice(ReadLine(is).c_str());
+      SetReadOnly(atoi(ReadLine(is).c_str()) != 0);
 
-      std::string device;
-      is >> device;
-      SetDevice(device.c_str());
-
-      bool ro;
-      is >> ro;
-      SetReadOnly(ro);
-
-      size_t size;
-      is >> size;
+      size_t size = atol(ReadLine(is).c_str());
 
       values_.resize(size);
 
-      for (size_t i=0; i<values_.size(); i++)
-         is >> values_[i];
+      for (size_t i = 0; i < size; i++)
+         values_[i] = ReadLine(is);
 
       return true;
    }
@@ -276,14 +292,15 @@ public:
 
    Metadata(const Metadata& original) // copy constructor
    {
-      for (TagIterator it = original.tags_.begin(); it != original.tags_.end(); it++)
+      for (TagConstIter it = original.tags_.begin(); it != original.tags_.end(); it++)
       {
          SetTag(*it->second);
       }
    }
 
-   void Clear() {
-      for (TagIterator it=tags_.begin(); it != tags_.end(); it++)
+   void Clear()
+   {
+      for (TagConstIter it=tags_.begin(); it != tags_.end(); it++)
          delete it->second;
       tags_.clear();
    }
@@ -291,14 +308,14 @@ public:
    std::vector<std::string> GetKeys() const
    {
       std::vector<std::string> keyList;
-      for (TagIterator it = tags_.begin(), end = tags_.end(); it != end; ++it)
+      for (TagConstIter it = tags_.begin(), end = tags_.end(); it != end; ++it)
          keyList.push_back(it->first);
       return keyList;
    }
 
    bool HasTag(const char* key)
    {
-      TagIterator it = tags_.find(key);
+      TagConstIter it = tags_.find(key);
       if (it != tags_.end())
          return true;
       else
@@ -322,17 +339,18 @@ public:
    void SetTag(MetadataTag& tag)
    {
       MetadataTag* newTag = tag.Clone();
-      RemoveTag(tag.GetQualifiedName().c_str());
-      tags_.insert(std::make_pair(tag.GetQualifiedName(), newTag));
+      const std::string key(tag.GetQualifiedName());
+      RemoveTag(key.c_str());
+      tags_[key] = newTag;
    }
 
    void RemoveTag(const char* key)
    {
-      TagIterator it = tags_.find(key);
+      TagIter it = tags_.find(key);
       if (it != tags_.end())
       {
          delete it->second;
-         tags_.erase(key);
+         tags_.erase(it); // Non-const iterator needed in pre-C++11 code
       }
    }
 
@@ -344,9 +362,9 @@ public:
    {
       std::stringstream os;
       os << value;
-      MetadataSingleTag tag = MetadataSingleTag(key.c_str(), deviceLabel.c_str(), true);
-      tag.SetValue(os.str().c_str());
-      SetTag(tag);
+      MetadataSingleTag* newTag = new MetadataSingleTag(key.c_str(), deviceLabel.c_str(), true);
+      newTag->SetValue(os.str().c_str());
+      tags_[newTag->GetQualifiedName()] = newTag;
    }
 
    /*
@@ -372,7 +390,7 @@ public:
    {
       Clear();
       
-      for (TagIterator it=rhs.tags_.begin(); it != rhs.tags_.end(); it++)
+      for (TagConstIter it=rhs.tags_.begin(); it != rhs.tags_.end(); it++)
       {
          SetTag(*it->second);
       }
@@ -383,7 +401,7 @@ public:
 
    void Merge(const Metadata& newTags)
    {     
-      for (TagIterator it=newTags.tags_.begin(); it != newTags.tags_.end(); it++)
+      for (TagConstIter it=newTags.tags_.begin(); it != newTags.tags_.end(); it++)
       {
          SetTag(*it->second);
       }
@@ -391,43 +409,27 @@ public:
 
    std::string Serialize() const
    {
+      std::string str;
+
       std::ostringstream os;
-
       os << tags_.size();
-      for (TagIterator it = tags_.begin(); it != tags_.end(); it++)
+      str.append(os.str()).append("\n");
+
+      for (TagConstIter it = tags_.begin(); it != tags_.end(); it++)
       {
-         std::string id("s");
-         if (it->second->ToArrayTag())
-            id = "a";
+         const std::string id((it->second->ToArrayTag()) ? "a" : "s");
+         str.append(id).append("\n");
 
-         os << id << std::endl;
-         os << it->second->GetName() << std::endl << it->second->GetDevice() << std::endl;
-         os << (it->second->IsReadOnly() ? 1 : 0) << std::endl;
-
-         if (id.compare("s") == 0)
-         {
-            const MetadataSingleTag* st = it->second->ToSingleTag();
-				std::string  s1 = st->GetValue();
-            os << s1 << std::endl;
-         }
-         else
-         {
-            const MetadataArrayTag* at = it->second->ToArrayTag();
-
-            os << (long) at->GetSize() << std::endl;
-            for (size_t i=0; i<at->GetSize(); i++)
-               os << at->GetValue(i) << std::endl;
-         }
+         str.append(it->second->Serialize());
       }
 
-      return os.str();
+      return str;
    }
 
+   // TODO: Can this be removed?
    std::string readLine(std::istringstream &iss)
    {
-      std::string ret;
-      std::getline(iss, ret);
-      return ret;
+      return MetadataTag::ReadLine(iss);
    }
 
    bool Restore(const char* stream)
@@ -435,50 +437,29 @@ public:
       Clear();
 
       std::istringstream is(stream);
-      size_t sz;
-      is >> sz;
+
+      const size_t sz = atol(readLine(is).c_str());
 
       for (size_t i=0; i<sz; i++)
       {
-         std::string id;
-         is >> id;
+         const std::string id(readLine(is));
 
+         MetadataTag* newTag;
          if (id.compare("s") == 0)
          {
-
-            MetadataSingleTag ms;
-
-            readLine(is); // Read away empty line feed
-
-            ms.SetName(readLine(is).c_str());
-            ms.SetDevice(readLine(is).c_str());
-            ms.SetReadOnly(atoi(readLine(is).c_str()) == 1 ? true : false);
-            ms.SetValue(readLine(is).c_str());
-
-            MetadataTag* newTag = ms.Clone();
-            tags_.insert(std::make_pair(ms.GetQualifiedName(), newTag));
+            newTag = new MetadataSingleTag();
          }
          else if (id.compare("a") == 0)
          {
-            MetadataArrayTag as;
-
-            as.SetName(readLine(is).c_str());
-            as.SetDevice(readLine(is).c_str());
-            as.SetReadOnly(atoi(readLine(is).c_str()) == 1 ? true : false);
-
-            long sizea = atol(readLine(is).c_str());
-            for (long j=0; j<sizea; j++)
-            {
-               as.AddValue(readLine(is).c_str());
-            }
-
-            MetadataTag* newTag = as.Clone();
-            tags_.insert(std::make_pair(as.GetQualifiedName(), newTag));
+            newTag = new MetadataArrayTag();
          }
          else
          {
             return false;
          }
+
+         newTag->Restore(is);
+         tags_[newTag->GetQualifiedName()] = newTag;
       }
       return true;
    }
@@ -488,7 +469,7 @@ public:
       std::ostringstream os;
 
       os << tags_.size();
-      for (TagIterator it = tags_.begin(); it != tags_.end(); it++)
+      for (TagConstIter it = tags_.begin(); it != tags_.end(); it++)
       {
          std::string id("s");
          if (it->second->ToArrayTag())
@@ -503,7 +484,7 @@ public:
 private:
    MetadataTag* FindTag(const char* key) const
    {
-      TagIterator it = tags_.find(key);
+      TagConstIter it = tags_.find(key);
       if (it != tags_.end())
          return it->second;
       else
@@ -511,7 +492,8 @@ private:
    }
 
    std::map<std::string, MetadataTag*> tags_;
-   typedef std::map<std::string, MetadataTag*>::const_iterator TagIterator;
+   typedef std::map<std::string, MetadataTag*>::iterator TagIter;
+   typedef std::map<std::string, MetadataTag*>::const_iterator TagConstIter;
 };
 
 #endif //_IMAGE_METADATA_H_
