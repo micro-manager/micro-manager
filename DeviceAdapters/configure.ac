@@ -101,14 +101,14 @@ AS_IF([test "x$want_modbus" != xno],
 AM_CONDITIONAL([BUILD_MODBUS], [test "x$use_modbus" = xyes])
 
 
-# Only build PVCAM if header files present.
+# Only build PVCAM if SDK present.
 AC_MSG_CHECKING(for PVCAM)
 case $host in
    *linux*) pvcam_arch="$host_cpu" ;;
    *)       pvcam_arch="" ;;
 esac
 build_pvcam=no
-test "{PVCAM_SDK_PATH:+set}" = set && { test -n "$pvcam_arch" && build_pvcam=yes; }
+test "${PVCAM_SDK_PATH:+set}" = set && { test -n "$pvcam_arch" && build_pvcam=yes; }
 AM_CONDITIONAL([BUILD_PVCAM], [test "x$build_pvcam" = xyes])
 AM_COND_IF([BUILD_PVCAM],
 [
