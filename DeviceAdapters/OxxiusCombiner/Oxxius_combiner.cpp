@@ -326,7 +326,7 @@ int OxxiusCombinerHub::DetectInstalledDevices()
 			com << "IP" << convertable[j];
 
 			std::ostringstream InfoMessage4;   /////test in hub
-			InfoMessage4 << "test" << com;
+			InfoMessage4 << "test" << com.str();
 			LogError(DEVICE_OK, this, GetCoreCallback(), InfoMessage4.str().c_str());
 
 			RETURN_ON_MM_ERROR(QueryCommand(this, GetCoreCallback(), NO_SLOT, com.str().c_str(), true));
