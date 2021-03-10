@@ -1557,8 +1557,8 @@ int SpinnakerCamera::MoveImageToCircularBuffer()
          // We need an intermediate buffer in special cases, otherwise 
          // use the camera buffer directly to copy into the sequence buffer
          if (!(ip->GetPixelFormat() == SPKR::PixelFormat_RGB8) &&
-             !(m_imagePtr->GetPixelFormat() == SPKR::PixelFormat_Mono12p) &&
-             !(m_imagePtr->GetPixelFormat() == SPKR::PixelFormat_Mono12Packed) &&
+             !(ip->GetPixelFormat() == SPKR::PixelFormat_Mono12p) &&
+             !(ip->GetPixelFormat() == SPKR::PixelFormat_Mono12Packed) &&
              ip->GetBufferSize() == (size_t) this->GetImageBufferSize())
          {
             imageBuff = data;
@@ -1576,17 +1576,17 @@ int SpinnakerCamera::MoveImageToCircularBuffer()
             {
                if (ip->GetPixelFormat() == SPKR::PixelFormat_RGB8)
                {     
-                  size_t theirSizeD3 = m_imagePtr->GetBufferSize() / 3;
+                  size_t theirSizeD3 = ip->GetBufferSize() / 3;
                   size_t ourSizeD4 = this->GetImageBufferSize() / 4;
                   size_t minSize = theirSizeD3 > ourSizeD4 ? ourSizeD4 : theirSizeD3;
                   size_t size = minSize * 3;
                   RGBtoBGRA(data, size);
                }
-               else if (m_imagePtr->GetPixelFormat() == SPKR::PixelFormat_Mono12p)
+               else if (ip->GetPixelFormat() == SPKR::PixelFormat_Mono12p)
                {
                   Unpack12Bit(data, ip->GetWidth(), ip->GetHeight(), false);
                }
-               else if (m_imagePtr->GetPixelFormat() == SPKR::PixelFormat_Mono12Packed)
+               else if (ip->GetPixelFormat() == SPKR::PixelFormat_Mono12Packed)
                {
                   Unpack12Bit(data, ip->GetWidth(), ip->GetHeight(), true);
                }
