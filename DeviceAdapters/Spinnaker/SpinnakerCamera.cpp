@@ -1000,10 +1000,12 @@ unsigned SpinnakerCamera::GetNumberOfComponents() const
 
 unsigned SpinnakerCamera::GetBitDepth() const
 {
-   if (m_cam->PixelFormat.GetValue() == SPKR::PixelFormat_RGB8)
+   if (m_cam->PixelFormat.GetValue() == SPKR::PixelFormat_RGB8 ||
+      m_cam->PixelFormat.GetValue() == SPKR::PixelFormat_BGRa8)
    {
       return 8;
    }
+
    switch (m_cam->PixelSize.GetValue())
    {
    case SPKR::PixelSize_Bpp1:
