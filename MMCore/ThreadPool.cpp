@@ -87,7 +87,7 @@ void ThreadPool::Execute(const std::vector<Task*>& tasks)
             queue_.push_back(task);
         }
     }
-    cv_.notify_one();
+    cv_.notify_all();
 }
 
 void ThreadPool::ThreadFunc()
