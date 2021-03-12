@@ -46,8 +46,11 @@ public:
 
    int MoveImageToCircularBuffer();
 
+   // Device Properties
+   int OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct);
+
    // Acquisition Control
-   int OnPixelFormat(MM::PropertyBase* pProp, MM::ActionType eAct); 
+   int OnPixelFormat(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTestPattern(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFrameRateEnabled(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFrameRateAuto(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -56,6 +59,9 @@ public:
    int OnBinningEnum(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBinningInt(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBinningModeEnum(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnADCBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnReverseX(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnReverseY(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    // Gain Control
    int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -87,6 +93,7 @@ public:
    int OnLineSource(MM::PropertyBase* pProp, MM::ActionType eAct, long lineNum);*/
 
 private:
+   int allocateImageBuffer(const std::size_t size, const SPKR::PixelFormatEnums buffer_type);
    friend class SpinnakerAcquisitionThread;
 
 #pragma pack(push, 1)
@@ -151,7 +158,7 @@ private:
       MM::ActionType eAct,
       long lineNum);
 
-   void Unpack12Bit(uint8_t* packed, size_t width, size_t height, bool flip);
+   void Unpack12Bit(uint16_t* dst, const uint8_t* packed, size_t width, size_t height, bool flip);
    void RGBtoBGRA(uint8_t* data, size_t imageBuffLength);
 #pragma warning(push)
 #pragma warning(disable : 4482)
@@ -178,7 +185,7 @@ private:
    SPKR::SystemPtr m_system;
    SPKR::CameraPtr m_cam;
    SPKR::ImagePtr m_imagePtr;
-   uint8_t *m_imageBuff;
+   unsigned char* m_imageBuff;
 
    GENICAM::gcstring m_pixFormat;
    std::vector<std::string> m_BinningModes;
@@ -228,7 +235,7 @@ private:
 
 
 template<typename enumType>
-inline void SpinnakerCamera::CreatePropertyFromEnum(const std::string& name, GENAPI::IEnumerationT<enumType>& camProp, int(SpinnakerCamera::* fpt)(MM::PropertyBase *pProp, MM::ActionType eAct))
+inline void SpinnakerCamera::CreatePropertyFromEnum(const std::string& name, GENAPI::IEnumerationT<enumType>& camProp, int(SpinnakerCamera::* fpt)(MM::PropertyBase* pProp, MM::ActionType eAct))
 {
    auto accessMode = camProp.GetAccessMode();
 
@@ -267,7 +274,7 @@ inline void SpinnakerCamera::CreatePropertyFromEnum(const std::string& name, GEN
 }
 
 template<typename enumType>
-inline int SpinnakerCamera::OnEnumPropertyChanged(GENAPI::IEnumerationT<enumType>& camProp, MM::PropertyBase * pProp, MM::ActionType eAct)
+inline int SpinnakerCamera::OnEnumPropertyChanged(GENAPI::IEnumerationT<enumType>& camProp, MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (camProp.GetAccessMode() == GENAPI::EAccessMode::NA)
       return DEVICE_OK;
