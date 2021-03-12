@@ -6,6 +6,7 @@
 #include "../../MMDevice/ModuleInterface.h"
 #include <vector>
 #include <string>
+#include <algorithm>
 
 
 std::wstring StringToWString(const std::string& str)
@@ -262,12 +263,12 @@ int SpinnakerCamera::Initialize()
 
    try
    {
-      GENAPI::CBooleanPtr AFRCE = nm.GetNode("AcquisitionFrameRateEnabled");
+      GENAPI::CBooleanPtr AFRCE = nm.GetNode("AcquisitionFrameRateEnable");
       if (isNodeAvailable<NAM_READ>(AFRCE))
       {
          LogMessage("Creating frame rate enabled...");
          pAct = new CPropertyAction(this, &SpinnakerCamera::OnFrameRateEnabled);
-         CreateProperty("Frame Rate Control Enabled", "1", MM::Integer, false, pAct);
+         CreateProperty("Frame Rate Control Enabled", "0", MM::Integer, false, pAct);
          AddAllowedValue("Frame Rate Control Enabled", "1");
          AddAllowedValue("Frame Rate Control Enabled", "0");
          //CreatePropertyFromBool("Frame Rate Control Enabled", m_cam->AcquisitionFrameRateEnable, &SpinnakerCamera::OnFrameRateEnabled);
@@ -279,6 +280,25 @@ int SpinnakerCamera::Initialize()
       }
    }
    catch (SPKR::Exception &ex)
+   {
+      LogMessage(ex.what());
+   }
+
+   try
+   {
+      GENAPI::CEnumerationPtr ADC_enumeration = nm.GetNode("AdcBitDepth");
+      if (isNodeAvailable<NAM_READ>(ADC_enumeration))
+      {
+         pAct = new CPropertyAction(this, &SpinnakerCamera::OnADCBitDepth);
+         GENAPI::StringList_t symbolics;
+         ADC_enumeration->GetSymbolics(symbolics);
+
+         CreateProperty("ADC Bit Depth", symbolics[0].c_str(), MM::String, false, pAct);
+         for (unsigned int i = 0; i < symbolics.size(); i++)
+            AddAllowedValue("ADC Bit Depth", symbolics[i].c_str());
+      }
+   }
+   catch (SPKR::Exception& ex)
    {
       LogMessage(ex.what());
    }
@@ -481,7 +501,7 @@ int SpinnakerCamera::Shutdown()
    return DEVICE_OK;
 }
 
-void SpinnakerCamera::GetName(char * name) const
+void SpinnakerCamera::GetName(char* name) const
 {
    CDeviceUtils::CopyLimitedString(name, m_SN.c_str());
 }
@@ -511,7 +531,7 @@ int SpinnakerCamera::SnapImage()
 }
 
 
-void SpinnakerCamera::CreatePropertyFromFloat(const std::string& name, GENAPI::IFloat & camProp, int(SpinnakerCamera::* fpt)(MM::PropertyBase *pProp, MM::ActionType eAct))
+void SpinnakerCamera::CreatePropertyFromFloat(const std::string& name, GENAPI::IFloat& camProp, int(SpinnakerCamera::* fpt)(MM::PropertyBase* pProp, MM::ActionType eAct))
 {
    auto accessMode = camProp.GetAccessMode();
    if (accessMode == GENAPI::EAccessMode::RO || accessMode == GENAPI::EAccessMode::RW || accessMode == GENAPI::EAccessMode::NA)
@@ -536,7 +556,7 @@ void SpinnakerCamera::CreatePropertyFromFloat(const std::string& name, GENAPI::I
    }
 }
 
-void SpinnakerCamera::CreatePropertyFromBool(const std::string& name, GENAPI::IBoolean & camProp, int(SpinnakerCamera::* fpt)(MM::PropertyBase *pProp, MM::ActionType eAct))
+void SpinnakerCamera::CreatePropertyFromBool(const std::string& name, GENAPI::IBoolean& camProp, int(SpinnakerCamera::* fpt)(MM::PropertyBase* pProp, MM::ActionType eAct))
 {
    auto accessMode = camProp.GetAccessMode();
    
@@ -566,7 +586,7 @@ void SpinnakerCamera::CreatePropertyFromBool(const std::string& name, GENAPI::IB
    }
 }
 
-void SpinnakerCamera::CreatePropertyFromLineEnum(const std::string& nodeName, int lineNumber, int(SpinnakerCamera::* fpt)(MM::PropertyBase *pProp, MM::ActionType eAct, long data))
+void SpinnakerCamera::CreatePropertyFromLineEnum(const std::string& nodeName, int lineNumber, int(SpinnakerCamera::* fpt)(MM::PropertyBase* pProp, MM::ActionType eAct, long data))
 {
    GENAPI::CEnumerationPtr ePtr = m_cam->GetNodeMap().GetNode(nodeName.c_str());
    if (isNodeAvailable<NAM_READ>(ePtr))
@@ -584,7 +604,7 @@ void SpinnakerCamera::CreatePropertyFromLineEnum(const std::string& nodeName, in
    }
 }
 
-void SpinnakerCamera::CreatePropertyFromLineBool(const std::string& nodeName, int lineNumber, int(SpinnakerCamera::* fpt)(MM::PropertyBase *pProp, MM::ActionType eAct, long data))
+void SpinnakerCamera::CreatePropertyFromLineBool(const std::string& nodeName, int lineNumber, int(SpinnakerCamera::* fpt)(MM::PropertyBase* pProp, MM::ActionType eAct, long data))
 {
    GENAPI::CBooleanPtr bPtr = m_cam->GetNodeMap().GetNode(nodeName.c_str());
    if (isNodeAvailable<NAM_READ>(bPtr))
@@ -601,7 +621,7 @@ void SpinnakerCamera::CreatePropertyFromLineBool(const std::string& nodeName, in
    }
 }
 
-int SpinnakerCamera::OnFloatPropertyChanged(GENAPI::IFloat & camProp, MM::PropertyBase * pProp, MM::ActionType eAct)
+int SpinnakerCamera::OnFloatPropertyChanged(GENAPI::IFloat& camProp, MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (camProp.GetAccessMode() == GENAPI::EAccessMode::NA)
       return DEVICE_OK;
@@ -638,7 +658,7 @@ int SpinnakerCamera::OnFloatPropertyChanged(GENAPI::IFloat & camProp, MM::Proper
    return DEVICE_OK;
 }
 
-int SpinnakerCamera::OnBoolPropertyChanged(GENAPI::IBoolean & camProp, MM::PropertyBase * pProp, MM::ActionType eAct)
+int SpinnakerCamera::OnBoolPropertyChanged(GENAPI::IBoolean& camProp, MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (camProp.GetAccessMode() == GENAPI::EAccessMode::NA)
       return DEVICE_OK;
@@ -678,7 +698,7 @@ int SpinnakerCamera::OnBoolPropertyChanged(GENAPI::IBoolean & camProp, MM::Prope
 }
 
 
-int SpinnakerCamera::OnLineEnumPropertyChanged(std::string name, MM::PropertyBase * pProp, MM::ActionType eAct, long lineNum)
+int SpinnakerCamera::OnLineEnumPropertyChanged(std::string name, MM::PropertyBase* pProp, MM::ActionType eAct, long lineNum)
 {
    GENAPI::CEnumerationPtr LS;
    GENAPI::CEnumerationPtr ePtr;
@@ -744,7 +764,7 @@ int SpinnakerCamera::OnLineEnumPropertyChanged(std::string name, MM::PropertyBas
    return DEVICE_OK;
 }
 
-int SpinnakerCamera::OnLineBoolPropertyChanged(std::string name, MM::PropertyBase * pProp, MM::ActionType eAct, long lineNum)
+int SpinnakerCamera::OnLineBoolPropertyChanged(std::string name, MM::PropertyBase* pProp, MM::ActionType eAct, long lineNum)
 {
    GENAPI::CEnumerationPtr LS;
    GENAPI::CBooleanPtr bPtr;
@@ -809,13 +829,11 @@ int SpinnakerCamera::OnLineBoolPropertyChanged(std::string name, MM::PropertyBas
    return DEVICE_OK;
 }
 
-void SpinnakerCamera::Unpack12Bit(uint8_t* packed, size_t width, size_t height, bool flip)
+void SpinnakerCamera::Unpack12Bit(uint16_t* unpacked, const uint8_t* packed, size_t width, size_t height, bool flip)
 {
-   uint16_t *unpacked = new uint16_t[width*height];
-
    unsigned int u_idx;
    int p_idx;
-   for (u_idx = 0, p_idx = 0; u_idx < width*height; u_idx++)
+   for (u_idx = 0, p_idx = 0; u_idx < width * height; u_idx++)
    {
       if (u_idx % 2 == 0)
       {
@@ -832,9 +850,6 @@ void SpinnakerCamera::Unpack12Bit(uint8_t* packed, size_t width, size_t height, 
          p_idx += 3;
       }
    }
-
-   //delete[] packed;
-   m_imageBuff = (unsigned char*)unpacked;
 }
 
 void SpinnakerCamera::RGBtoBGRA(uint8_t* data, size_t imageBuffLength)
@@ -844,13 +859,15 @@ void SpinnakerCamera::RGBtoBGRA(uint8_t* data, size_t imageBuffLength)
    {
       if (i % 3 == 0)
       {
-         m_imageBuff[dest+2] = data[i];
-      } else if (i % 3 == 2) 
+         m_imageBuff[dest + 2] = data[i];
+      }
+      else if (i % 3 == 2)
       {
          m_imageBuff[dest - 2] = data[i];
          dest++;
          m_imageBuff[dest] = 0;
-      } else 
+      }
+      else
       {
          m_imageBuff[dest] = data[i];
       }
@@ -859,20 +876,14 @@ void SpinnakerCamera::RGBtoBGRA(uint8_t* data, size_t imageBuffLength)
 }
 
 
-const unsigned char * SpinnakerCamera::GetImageBuffer()
+const unsigned char* SpinnakerCamera::GetImageBuffer()
 {
    MMThreadGuard g(m_pixelLock);
    try
    {
       if (!m_imagePtr->IsIncomplete())
       {
-         if (m_imageBuff)
-         {
-            delete[] m_imageBuff;
-            m_imageBuff = NULL;
-         }
-
-         m_imageBuff = new unsigned char[this->GetImageBufferSize()];
+         allocateImageBuffer(GetImageBufferSize(), m_imagePtr->GetPixelFormat());
 
          if (m_imageBuff)
          {
@@ -886,18 +897,18 @@ const unsigned char * SpinnakerCamera::GetImageBuffer()
             }
             else if (m_imagePtr->GetPixelFormat() == SPKR::PixelFormat_Mono12p)
             {
-               Unpack12Bit(static_cast<uint8_t*> (m_imagePtr->GetData()), m_imagePtr->GetWidth(), m_imagePtr->GetHeight(), false);
+               Unpack12Bit(reinterpret_cast<uint16_t*>(m_imageBuff), static_cast<uint8_t*>(m_imagePtr->GetData()), m_imagePtr->GetWidth(), m_imagePtr->GetHeight(), false);
             }
             else if (m_imagePtr->GetPixelFormat() == SPKR::PixelFormat_Mono12Packed)
             {
-               Unpack12Bit(static_cast<uint8_t*> (m_imagePtr->GetData()), m_imagePtr->GetWidth(), m_imagePtr->GetHeight(), true);
+               Unpack12Bit(reinterpret_cast<uint16_t*>(m_imageBuff), static_cast<uint8_t*>(m_imagePtr->GetData()), m_imagePtr->GetWidth(), m_imagePtr->GetHeight(), true);
             }
             else // all other data types get memcpy'd
             {
-               size_t length = m_imagePtr->GetBufferSize() > (size_t) this->GetImageBufferSize() ? 
-                        (size_t) this->GetImageBufferSize() : m_imagePtr->GetBufferSize();
-               std::memcpy(m_imageBuff, m_imagePtr->GetData(), length);    
-            } 
+               size_t length = m_imagePtr->GetBufferSize() > (size_t)this->GetImageBufferSize() ?
+                  (size_t)this->GetImageBufferSize() : m_imagePtr->GetBufferSize();
+               std::memcpy(m_imageBuff, m_imagePtr->GetData(), length);
+            }
          }
          else
          {
@@ -1081,7 +1092,7 @@ int SpinnakerCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySi
    return DEVICE_OK;
 }
 
-int SpinnakerCamera::GetROI(unsigned & x, unsigned & y, unsigned & xSize, unsigned & ySize)
+int SpinnakerCamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
 {
    x = (unsigned) m_cam->OffsetX.GetValue();
    y = (unsigned) m_cam->OffsetY.GetValue();
@@ -1130,20 +1141,20 @@ int SpinnakerCamera::SetBinning(int /*binSize*/) //I don't think I actually use 
    return SetProperty(MM::g_Keyword_Binning, "No Binning");
 }
 
-int SpinnakerCamera::OnPixelFormat(MM::PropertyBase * pProp, MM::ActionType eAct)
+int SpinnakerCamera::OnPixelFormat(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    return OnEnumPropertyChanged(m_cam->PixelFormat, pProp, eAct);
 }
 
-int SpinnakerCamera::OnTestPattern(MM::PropertyBase * pProp, MM::ActionType eAct)
+int SpinnakerCamera::OnTestPattern(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    return OnEnumPropertyChanged(m_cam->TestPattern, pProp, eAct);
 }
 
-int SpinnakerCamera::OnFrameRateEnabled(MM::PropertyBase * pProp, MM::ActionType eAct)
+int SpinnakerCamera::OnFrameRateEnabled(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    //return OnBoolPropertyChanged(m_cam->AcquisitionFrameRateEnable, pProp, eAct);
-   GENAPI::CBooleanPtr AFRCE = m_cam->GetNodeMap().GetNode("AcquisitionFrameRateEnabled");
+   GENAPI::CBooleanPtr AFRCE = m_cam->GetNodeMap().GetNode("AcquisitionFrameRateEnable");
 
    if (eAct == MM::BeforeGet)
    {
@@ -1187,7 +1198,7 @@ int SpinnakerCamera::OnFrameRateEnabled(MM::PropertyBase * pProp, MM::ActionType
    return DEVICE_OK;
 }
 
-int SpinnakerCamera::OnFrameRateAuto(MM::PropertyBase * pProp, MM::ActionType eAct)
+int SpinnakerCamera::OnFrameRateAuto(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    GENAPI::CEnumerationPtr AFRA = m_cam->GetNodeMap().GetNode("AcquisitionFrameRateAuto");
 
@@ -1230,17 +1241,17 @@ int SpinnakerCamera::OnFrameRateAuto(MM::PropertyBase * pProp, MM::ActionType eA
    return DEVICE_OK;
 }
 
-int SpinnakerCamera::OnExposureAuto(MM::PropertyBase * pProp, MM::ActionType eAct)
+int SpinnakerCamera::OnExposureAuto(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    return OnEnumPropertyChanged(m_cam->ExposureAuto, pProp, eAct);
 }
 
-int SpinnakerCamera::OnFrameRate(MM::PropertyBase * pProp, MM::ActionType eAct)
+int SpinnakerCamera::OnFrameRate(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    return OnFloatPropertyChanged(m_cam->AcquisitionFrameRate, pProp, eAct);
 }
 
-int SpinnakerCamera::OnBinningEnum(MM::PropertyBase * pProp, MM::ActionType eAct)
+int SpinnakerCamera::OnBinningEnum(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    GENAPI::CEnumerationPtr VM = m_cam->GetNodeMap().GetNode("VideoMode");
    if (eAct == MM::BeforeGet)
@@ -1281,7 +1292,7 @@ int SpinnakerCamera::OnBinningEnum(MM::PropertyBase * pProp, MM::ActionType eAct
    return DEVICE_OK;
 }
 
-int SpinnakerCamera::OnBinningInt(MM::PropertyBase * pProp, MM::ActionType eAct)
+int SpinnakerCamera::OnBinningInt(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    GENAPI::CIntegerPtr BH = m_cam->GetNodeMap().GetNode("BinningHorizontal");
    GENAPI::CIntegerPtr BV = m_cam->GetNodeMap().GetNode("BinningVertical");
@@ -1321,7 +1332,7 @@ int SpinnakerCamera::OnBinningInt(MM::PropertyBase * pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int SpinnakerCamera::OnBinningModeEnum(MM::PropertyBase * pProp, MM::ActionType eAct)
+int SpinnakerCamera::OnBinningModeEnum(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    GENAPI::CEnumerationPtr BC = m_cam->GetNodeMap().GetNode("BinningControl");
    if (eAct == MM::BeforeGet)
@@ -1354,67 +1365,88 @@ int SpinnakerCamera::OnBinningModeEnum(MM::PropertyBase * pProp, MM::ActionType 
    return DEVICE_OK;
 }
 
-int SpinnakerCamera::OnGain(MM::PropertyBase * pProp, MM::ActionType eAct)
+int SpinnakerCamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    return OnFloatPropertyChanged(m_cam->Gain, pProp, eAct);
 }
 
-int SpinnakerCamera::OnGainAuto(MM::PropertyBase * pProp, MM::ActionType eAct)
+int SpinnakerCamera::OnGainAuto(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    return OnEnumPropertyChanged(m_cam->GainAuto, pProp, eAct);
 }
 
-int SpinnakerCamera::OnGamma(MM::PropertyBase * pProp, MM::ActionType eAct)
+int SpinnakerCamera::OnGamma(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    return OnFloatPropertyChanged(m_cam->Gamma, pProp, eAct);
 }
 
-int SpinnakerCamera::OnGammaEnabled(MM::PropertyBase * pProp, MM::ActionType eAct)
+int SpinnakerCamera::OnGammaEnabled(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    return OnBoolPropertyChanged(m_cam->GammaEnable, pProp, eAct);
 }
 
-int SpinnakerCamera::OnBlackLevel(MM::PropertyBase * pProp, MM::ActionType eAct)
+int SpinnakerCamera::OnBlackLevel(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    return OnFloatPropertyChanged(m_cam->BlackLevel, pProp, eAct);
 }
 
-int SpinnakerCamera::OnBlackLevelAuto(MM::PropertyBase * pProp, MM::ActionType eAct)
+int SpinnakerCamera::OnBlackLevelAuto(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    return OnEnumPropertyChanged(m_cam->BlackLevelAuto, pProp, eAct);
 }
 
-int SpinnakerCamera::OnTriggerSelector(MM::PropertyBase * pProp, MM::ActionType eAct)
+int SpinnakerCamera::OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   return OnFloatPropertyChanged(m_cam->DeviceTemperature, pProp, eAct);
+}
+
+int SpinnakerCamera::OnADCBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   return OnEnumPropertyChanged(m_cam->AdcBitDepth, pProp, eAct);
+}
+
+int SpinnakerCamera::OnReverseX(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   return OnBoolPropertyChanged(m_cam->ReverseX, pProp, eAct);
+}
+
+int SpinnakerCamera::OnReverseY(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   return OnBoolPropertyChanged(m_cam->ReverseY, pProp, eAct);
+}
+
+
+int SpinnakerCamera::OnTriggerSelector(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    return OnEnumPropertyChanged(m_cam->TriggerSelector, pProp, eAct);
 }
 
-int SpinnakerCamera::OnTriggerMode(MM::PropertyBase * pProp, MM::ActionType eAct)
+int SpinnakerCamera::OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    return OnEnumPropertyChanged(m_cam->TriggerMode, pProp, eAct);
 }
 
-int SpinnakerCamera::OnTriggerSource(MM::PropertyBase * pProp, MM::ActionType eAct)
+int SpinnakerCamera::OnTriggerSource(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    return OnEnumPropertyChanged(m_cam->TriggerSource, pProp, eAct);
 }
 
-int SpinnakerCamera::OnTriggerActivation(MM::PropertyBase * pProp, MM::ActionType eAct)
+int SpinnakerCamera::OnTriggerActivation(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    return OnEnumPropertyChanged(m_cam->TriggerActivation, pProp, eAct);
 }
 
-int SpinnakerCamera::OnTriggerOverlap(MM::PropertyBase * pProp, MM::ActionType eAct)
+int SpinnakerCamera::OnTriggerOverlap(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    return OnEnumPropertyChanged(m_cam->TriggerOverlap, pProp, eAct);
 }
 
-int SpinnakerCamera::OnTriggerDelay(MM::PropertyBase * pProp, MM::ActionType eAct)
+int SpinnakerCamera::OnTriggerDelay(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    return OnFloatPropertyChanged(m_cam->TriggerDelay, pProp, eAct);
 }
 
-int SpinnakerCamera::OnExposureMode(MM::PropertyBase * pProp, MM::ActionType eAct)
+int SpinnakerCamera::OnExposureMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    return OnEnumPropertyChanged(m_cam->ExposureMode, pProp, eAct);
 }
@@ -1434,34 +1466,56 @@ int SpinnakerCamera::OnLineSource(MM::PropertyBase * pProp, MM::ActionType eAct,
    return OnLineEnumPropertyChanged("LineSource", pProp, eAct, lineNum);
 }*/
 
-int SpinnakerCamera::OnUserOutputSelector(MM::PropertyBase * pProp, MM::ActionType eAct)
+int SpinnakerCamera::OnUserOutputSelector(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    return OnEnumPropertyChanged(m_cam->UserOutputSelector, pProp, eAct);
 }
 
-int SpinnakerCamera::OnUserOutputValue(MM::PropertyBase * pProp, MM::ActionType eAct)
+int SpinnakerCamera::OnUserOutputValue(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    return OnBoolPropertyChanged(m_cam->UserOutputValue, pProp, eAct);
 }
 
-int SpinnakerCamera::OnLineSelector(MM::PropertyBase * pProp, MM::ActionType eAct)
+int SpinnakerCamera::OnLineSelector(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    return OnEnumPropertyChanged(m_cam->LineSelector, pProp, eAct);
 }
 
-int SpinnakerCamera::OnLineMode(MM::PropertyBase * pProp, MM::ActionType eAct)
+int SpinnakerCamera::OnLineMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    return OnEnumPropertyChanged(m_cam->LineMode, pProp, eAct);
 }
 
-int SpinnakerCamera::OnLineInverter(MM::PropertyBase * pProp, MM::ActionType eAct)
+int SpinnakerCamera::OnLineInverter(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    return OnBoolPropertyChanged(m_cam->LineInverter, pProp, eAct);
 }
 
-int SpinnakerCamera::OnLineSource(MM::PropertyBase * pProp, MM::ActionType eAct)
+int SpinnakerCamera::OnLineSource(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    return OnEnumPropertyChanged(m_cam->LineSource, pProp, eAct);
+}
+
+int SpinnakerCamera::allocateImageBuffer(const std::size_t size, const SPKR::PixelFormatEnums format)
+{
+   if (m_imageBuff != NULL) {
+      delete[] m_imageBuff;
+      m_imageBuff = NULL;
+   }
+
+   if (format == SPKR::PixelFormat_Mono12Packed || format == SPKR::PixelFormat_Mono12p) {
+      m_imageBuff = reinterpret_cast<unsigned char*>(new uint16_t[(size + 1) / 2]);
+   }
+   else {
+      m_imageBuff = new unsigned char[size];
+   }
+
+   if (m_imageBuff == NULL) {
+      SetErrorText(SPKR_ERROR, "Could not allocate sufficient memory for image");
+      return SPKR_ERROR;
+   }
+
+   return DEVICE_OK;
 }
 
 
@@ -1551,77 +1605,47 @@ int SpinnakerCamera::MoveImageToCircularBuffer()
 
          MMThreadGuard g(m_pixelLock);
 
-         uint8_t* imageBuff = NULL;
-         uint8_t* data = static_cast<uint8_t*> (ip->GetData());
+         uint8_t* imageData = static_cast<uint8_t*>(ip->GetData());
 
-         // We need an intermediate buffer in special cases, otherwise 
-         // use the camera buffer directly to copy into the sequence buffer
-         if (!(ip->GetPixelFormat() == SPKR::PixelFormat_RGB8) &&
-             !(ip->GetPixelFormat() == SPKR::PixelFormat_Mono12p) &&
-             !(ip->GetPixelFormat() == SPKR::PixelFormat_Mono12Packed) &&
-             ip->GetBufferSize() == (size_t) this->GetImageBufferSize())
+         if (ip->GetPixelFormat() == SPKR::PixelFormat_Mono12p ||
+            ip->GetPixelFormat() == SPKR::PixelFormat_Mono12Packed ||
+            ip->GetPixelFormat() == SPKR::PixelFormat_RGB8)
          {
-            imageBuff = data;
-         }
-         else {
-            if (m_imageBuff)
+            if (m_imageBuff == NULL)
             {
-               delete[] m_imageBuff;
-               m_imageBuff = NULL;
+               int ret = allocateImageBuffer(GetImageBufferSize(), ip->GetPixelFormat());
+               if (ret != DEVICE_OK) return ret;
             }
 
-            m_imageBuff = new unsigned char[this->GetImageBufferSize()];
-
-            if (m_imageBuff)
+            if (ip->GetPixelFormat() == SPKR::PixelFormat_RGB8) 
             {
-               if (ip->GetPixelFormat() == SPKR::PixelFormat_RGB8)
-               {     
-                  size_t theirSizeD3 = ip->GetBufferSize() / 3;
-                  size_t ourSizeD4 = this->GetImageBufferSize() / 4;
-                  size_t minSize = theirSizeD3 > ourSizeD4 ? ourSizeD4 : theirSizeD3;
-                  size_t size = minSize * 3;
-                  RGBtoBGRA(data, size);
-               }
-               else if (ip->GetPixelFormat() == SPKR::PixelFormat_Mono12p)
-               {
-                  Unpack12Bit(data, ip->GetWidth(), ip->GetHeight(), false);
-               }
-               else if (ip->GetPixelFormat() == SPKR::PixelFormat_Mono12Packed)
-               {
-                  Unpack12Bit(data, ip->GetWidth(), ip->GetHeight(), true);
-               }
-               else // all other data types get memcpy'd
-               {
-                  size_t length = ip->GetBufferSize() > (size_t) this->GetImageBufferSize() ? 
-                           (size_t) this->GetImageBufferSize() : ip->GetBufferSize();
-                  std::memcpy(m_imageBuff, ip->GetData(), length);      
-               } 
-               imageBuff = m_imageBuff;
+               size_t theirSizeD3 = ip->GetBufferSize() / 3;
+               size_t ourSizeD4 = this->GetImageBufferSize() / 4;
+               size_t minSize = theirSizeD3 > ourSizeD4 ? ourSizeD4 : theirSizeD3;
+               size_t size = minSize * 3;
+               RGBtoBGRA(imageData, size);
             }
-            else
-            {
-               SetErrorText(SPKR_ERROR, "Could not allocate sufficient memory for image");
-               return SPKR_ERROR;
-            }
-         }
 
-         if (imageBuff == NULL)
-         {
-            SetErrorText(SPKR_ERROR, "Unexpected null pointer in Spinnaker, MoveImageToCircularBuffer");
-            return SPKR_ERROR;
+            if (ip->GetPixelFormat() == SPKR::PixelFormat_Mono12p)
+               Unpack12Bit(reinterpret_cast<uint16_t*>(m_imageBuff), imageData, ip->GetWidth(), ip->GetHeight(), false);
+            else if (ip->GetPixelFormat() == SPKR::PixelFormat_Mono12Packed)
+               Unpack12Bit(reinterpret_cast<uint16_t*>(m_imageBuff), imageData, ip->GetWidth(), ip->GetHeight(), true);
+
+
+            imageData = m_imageBuff;
          }
 
          unsigned int w = GetImageWidth();
          unsigned int h = GetImageHeight();
          unsigned int b = GetImageBytesPerPixel();
 
-         int ret = GetCoreCallback()->InsertImage(this, imageBuff, w, h, b, md.Serialize().c_str());
+         int ret = GetCoreCallback()->InsertImage(this, imageData, w, h, b, md.Serialize().c_str());
          if (!m_stopOnOverflow && ret == DEVICE_BUFFER_OVERFLOW)
          {
             // do not stop on overflow - just reset the buffer
             GetCoreCallback()->ClearImageBuffer(this);
             // don't process this same image again...
-            return GetCoreCallback()->InsertImage(this, m_imageBuff, w, h, b, md.Serialize().c_str(), false);
+            return GetCoreCallback()->InsertImage(this, imageData, w, h, b, md.Serialize().c_str(), false);
          }
          else
          {
@@ -1683,6 +1707,7 @@ void SpinnakerAcquisitionThread::Start(long numImages, double intervalMs)
    m_actualDuration = 0;
    m_startTime = m_spkrCam->GetCurrentMMTime();
    m_lastFrameTime = 0;
+   m_spkrCam->allocateImageBuffer(m_spkrCam->GetImageBufferSize(), m_spkrCam->m_cam->PixelFormat.GetValue());
 
    if (numImages == -1)
    {
