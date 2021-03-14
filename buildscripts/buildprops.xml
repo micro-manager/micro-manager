@@ -1,6 +1,7 @@
 <project name="mm.props">
 	<!-- Path of repository root, from the project basedir -->
 	<dirname property="mm.basedir" file="${ant.file.mm.props}/.."/>
+	<property name="mm.cpp.srcdir" value="${mm.basedir}/MM_CPP"/>
 
 	<!-- Get classpaths of retrieved JARs -->
 	<include file="fetchdeps.xml"/>
