@@ -3765,8 +3765,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      
                      StagePosition posXY = nextPosition.get(devices_.getMMDevice(Devices.Keys.XYSTAGE)); 
                      StagePosition posZ = nextPosition.get(devices_.getMMDevice(Devices.Keys.UPPERZDRIVE));
-                     ReportingUtils.logMessage("Tried to go to position (" + posXY.x + ", " + posXY.y + ", " + posZ.z + ")"
-                           + "and actually went to position (" + xPositionUm_ + ", " + yPositionUm_ + ", " + zPositionUm_ + ").");
+                     if ((posXY != null) && (posZ != null)) {
+                        ReportingUtils.logMessage("Tried to go to position (" + posXY.x + ", " + posXY.y + ", " + posZ.z + ")"
+                              + "and actually went to position (" + xPositionUm_ + ", " + yPositionUm_ + ", " + zPositionUm_ + ").");
+                     } else if (posXY != null) {
+                        ReportingUtils.logMessage("Tried to go to position (" + posXY.x + ", " + posXY.y + ")"
+                              + "and actually went to position (" + xPositionUm_ + ", " + yPositionUm_ + ").");
+                     } else if (posZ != null) {
+                        ReportingUtils.logMessage("Tried to go to position (" + posZ.z + ")"
+                              + "and actually went to position (" + zPositionUm_ + ").");
+                     }
                      
                      // wait any extra time the user requests
                      Thread.sleep(Math.round(PanelUtils.getSpinnerFloatValue(positionDelay_)));
