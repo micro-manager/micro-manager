@@ -5,6 +5,7 @@
       <not>
          <and>
             <available file="${mm.ivy.lib.dir}/optional/jxinput-0.8.jar"/>
+            <os family="windows" />
          </and>
       </not>
    </condition>
