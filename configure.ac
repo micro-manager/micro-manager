@@ -1,7 +1,11 @@
+
+m4_define([MM_CPP_DIR], [MM_CPP])  # Define a macro substitution to be used in this file.
+[MM_CPP_DIR]=MM_CPP_DIR  # Define a shell variable of the same value as the earlier macro definition
+AC_SUBST([MM_CPP_DIR], MM_CPP_DIR)
 AC_PREREQ([2.64])
 AC_INIT([Micro-Manager], [1.4], [info@micro-manager.org])
 AC_CONFIG_MACRO_DIR([m4])
-AC_CONFIG_SRCDIR([MMCore/MMCore.cpp])
+AC_CONFIG_SRCDIR(MM_CPP_DIR[/MMCore/MMCore.cpp])
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE([foreign 1.11])
@@ -351,14 +355,14 @@ AM_CONDITIONAL([INSTALL_MMDEVAPI], [test x$install_mmdevapi = xtrue])
 ##
 
 AC_MSG_CHECKING([for proprietary device adapter source])
-AS_IF([test -f "$srcdir/SecretDeviceAdapters/configure"],
+AS_IF([test -f "$srcdir/$MM_CPP_DIR/SecretDeviceAdapters/configure"],
    [build_secretdeviceadapters=yes], [build_secretdeviceadapters=no])
 AM_CONDITIONAL([BUILD_SECRETDEVICEADAPTERS],
    [test "x$build_secretdeviceadapters" = xyes])
 
-AC_CONFIG_SUBDIRS([DeviceAdapters])
+AC_CONFIG_SUBDIRS(MM_CPP_DIR[/DeviceAdapters])
 AS_IF([test "x$build_secretdeviceadapters" = xyes], [
-   AC_CONFIG_SUBDIRS([SecretDeviceAdapters])
+   AC_CONFIG_SUBDIRS(MM_CPP_DIR[/SecretDeviceAdapters])
 ])
 
 
@@ -370,12 +374,12 @@ AC_CONFIG_FILES(m4_strip([
    Makefile
    buildscripts/AntExtensions/Makefile
    testing/Makefile
-   MMDevice/Makefile
-   MMDevice/unittest/Makefile
-   MMCore/Makefile
-   MMCore/unittest/Makefile
-   MMCoreJ_wrap/Makefile
-   MMCorePy_wrap/Makefile
+   ]MM_CPP_DIR[/MMDevice/Makefile
+   ]MM_CPP_DIR[/MMDevice/unittest/Makefile
+   ]MM_CPP_DIR[/MMCore/Makefile
+   ]MM_CPP_DIR[/MMCore/unittest/Makefile
+   ]MM_CPP_DIR[/MMCoreJ_wrap/Makefile
+   ]MM_CPP_DIR[/MMCorePy_wrap/Makefile
    mmstudio/Makefile
    acqEngine/Makefile
    libraries/Makefile
