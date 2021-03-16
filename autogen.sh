@@ -4,7 +4,7 @@
 echo "Bootstrapping autoconf/automake build system for Micro-Manager..." 1>&2
 
 # Subdirectory must be present, even if empty, to prevent automake errors.
-mkdir -p SecretDeviceAdapters
+mkdir -p MM_CPP/SecretDeviceAdapters
 
 autoreconf --force --install --verbose
 

@@ -13,21 +13,22 @@ if BUILD_CPP_TESTS
 TESTING_DIR = testing
 endif
 
+
 if BUILD_MMCORE
-MMCORE_DIR = MMCore
+MMCORE_DIR = MM_CPP/MMCore
 endif
 
 if BUILD_MMCOREJ
 ANTEXTENSIONS = buildscripts/AntExtensions
-MMCOREJ_DIR = MMCoreJ_wrap
+MMCOREJ_DIR = MM_CPP/MMCoreJ_wrap
 endif
 
 if BUILD_MMCOREPY
-MMCOREPY_DIR = MMCorePy_wrap
+MMCOREPY_DIR = MM_CPP/MMCorePy_wrap
 endif
 
 if BUILD_SECRETDEVICEADAPTERS
-SECRETDEVICEADAPTERS = SecretDeviceAdapters
+SECRETDEVICEADAPTERS = MM_CPP/SecretDeviceAdapters
 endif
 
 
@@ -132,12 +133,12 @@ CLEANFILES = $(launcher_SCRIPTS)
 SUBDIRS = \
 	$(ANTEXTENSIONS) \
 	$(TESTING_DIR) \
-	MMDevice \
+	MM_CPP/MMDevice \
 	$(MMCORE_DIR) \
 	$(MMCOREJ_DIR) \
 	$(MMCOREPY_DIR) \
 	$(JAVA_APP_DIRS) \
-	DeviceAdapters \
+	MM_CPP/DeviceAdapters \
 	$(SECRETDEVICEADAPTERS) \
 	$(SYSTEMTEST_DIR)
 	bindist
