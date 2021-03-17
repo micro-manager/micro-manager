@@ -1123,10 +1123,17 @@ int SpinnakerCamera::ClearROI()
 int SpinnakerCamera::GetBinning() const
 {
    char buf[MM::MaxStrLength];
+
    int ret = GetProperty(MM::g_Keyword_Binning, buf);
    if (ret != DEVICE_OK)
-      return 1;
-   return DEVICE_OK;
+      return 0;
+
+   std::stringstream ss;
+   int out = 0;
+   ss << buf;
+   ss >> out; //If the binning is controlled by a video mode setting this will fail and out will remain 0
+   
+   return out; 
 }
 
 int SpinnakerCamera::SetBinning(int /*binSize*/) //I don't think I actually use this function...
