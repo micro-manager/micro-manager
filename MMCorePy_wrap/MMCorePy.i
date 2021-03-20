@@ -221,6 +221,8 @@ PyObject *setSLMImage_pywrap(const char* slmLabel, char *pixels, int receivedLen
 %}
 
 // Map Error codes to the appropriate python error type, and populate error message.
+// NOTE: direct use of the %exception directive will not work in most cases because
+// of the way SWIG parses a C++ method with a `throws` specification (used frequently in MM)
 %typemap(throws) CMMError %{
     CMMError e = $1;
     switch (e.getCode())
