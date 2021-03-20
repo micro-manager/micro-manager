@@ -34,12 +34,12 @@
 %feature("director") MMEventCallback;
 %feature("autodoc", "3");
 
+%include exception.i
 %include std_string.i
 %include std_vector.i
 %include std_map.i
 %include std_pair.i
 %include "typemaps.i"
-
 
 %{
 #define SWIG_FILE_WITH_INIT
@@ -220,39 +220,65 @@ PyObject *setSLMImage_pywrap(const char* slmLabel, char *pixels, int receivedLen
 #include "../MMCore/MMCore.h"
 %}
 
-// Extend exception objects to return the exception object message in python.
-// __str__ method gets printed in the traceback, so it should contain the core error message string.
+// Map Error codes to the appropriate python error type, and populate error message.
+%typemap(throws) CMMError %{
+    CMMError e = $1;
+    switch (e.getCode())
+    {
+        case MMERR_OK:
+            break;
+        case MMERR_BadAffineTransform:
+        case MMERR_BadConfigName:
+        case MMERR_DuplicateConfigGroup:
+        case MMERR_DuplicateLabel:
+        case MMERR_InvalidCFGEntry:
+        case MMERR_InvalidConfigurationFile:
+        case MMERR_InvalidContents:
+        case MMERR_InvalidCoreProperty:
+        case MMERR_InvalidCoreValue:
+        case MMERR_InvalidLabel:
+        case MMERR_InvalidPropertyBlock:
+        case MMERR_InvalidSerialDevice:
+        case MMERR_InvalidShutterDevice:
+        case MMERR_InvalidSpecificDevice:
+        case MMERR_InvalidStageDevice:
+        case MMERR_InvalidStateDevice:
+        case MMERR_InvalidXYStageDevice:
+        case MMERR_PropertyNotInCache:
+        case MMERR_SetPropertyFailed:
+        case MMERR_UnexpectedDevice:
+        case MMERR_UnknownModule:
+            SWIG_exception(SWIG_ValueError, e.what());
+        case MMERR_NoConfigGroup:
+        case MMERR_NoConfiguration:
+        case MMERR_NullPointerException:
+            SWIG_exception(SWIG_NullReferenceError, e.what());
+        case MMERR_FileOpenFailed:
+        case MMERR_LoadLibraryFailed:
+            SWIG_exception(SWIG_IOError, e.what());
+        case MMERR_InvalidConfigurationIndex:
+            SWIG_exception(SWIG_IndexError, e.what());
+        case MMERR_CameraBufferReadFailed:
+        case MMERR_CircularBufferEmpty:
+        case MMERR_CircularBufferFailedToInitialize:
+        case MMERR_CircularBufferIncompatibleImage:
+        case MMERR_OutOfMemory:
+            SWIG_exception(SWIG_MemoryError, e.what());
+        case MMERR_UnhandledException:
+            SWIG_exception(SWIG_SystemError, e.what());
+        default:
+            SWIG_exception(SWIG_RuntimeError, e.what());
+    }
+%}
 
-%extend CMMError {
-  std::string __getitem__(int n) {
-	return $self->getFullMsg();
-  }
-  
-  std::string __str__() {
-    return $self->getFullMsg();
-  }
-}
+%typemap(throws) MetadataKeyError %{
+    SWIG_exception(SWIG_ValueError, ($1).getMsg().c_str());
+%}
 
-%extend MetadataKeyError {
-  std::string __getitem__(int n) {
-	return $self->getMsg();
-  }
-  
-  std::string __str__() {
-    return $self->getMsg();
-  }
-}
+%typemap(throws) MetadataIndexError %{
+    SWIG_exception(SWIG_IndexError, ($1).getMsg().c_str());
+%}
 
-
-%extend MetadataIndexError {
-  std::string __getitem__(int n) {
-	return $self->getMsg();
-  }
-  
-  std::string __str__() {
-    return $self->getMsg();
-  }
-}
 
 
 // instantiate STL mappings
