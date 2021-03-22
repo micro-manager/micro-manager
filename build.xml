@@ -18,7 +18,7 @@
 				<property name="mm.java.autofocus.installdir" value="${mm.java.autofocus.installdir}"/>
 				<filelist dir="${mm.basedir}">
 					<!-- Note: Order matters -->
-					<file name="buildscripts/mmcorej.xml"/>
+					<file name="${mm.cpp.srcdir}/MMCoreJ_wrap/build.xml"/>
 					<file name="mmstudio/build.xml"/>
 					<file name="acqEngine/build.xml"/>
 					<file name="libraries/build.xml"/>
