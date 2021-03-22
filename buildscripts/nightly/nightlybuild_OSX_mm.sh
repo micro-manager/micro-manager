@@ -148,12 +148,12 @@ make $MAKEFLAGS
 # Remove x86_64 from device adapters that depend on 32-bit only frameworks.
 # Hamamatsu is 32-bit only even though dcamapi.framework contains an
 # unsupported 64-bit binary.
-for file in DeviceAdapters/PVCAM/.libs/libmmgr_dal_PVCAM \
-            DeviceAdapters/PrincetonInstruments/.libs/libmmgr_dal_PrincetonInstruments \
-            DeviceAdapters/QCam/.libs/libmmgr_dal_QCam \
-            DeviceAdapters/ScionCam/.libs/libmmgr_dal_ScionCam \
-            DeviceAdapters/Spot/.libs/libmmgr_dal_Spot \
-            SecretDeviceAdapters/HamamatsuMac/.libs/libmmgr_dal_Hamamatsu
+for file in $MM_CPP_DIR/DeviceAdapters/PVCAM/.libs/libmmgr_dal_PVCAM \
+            $MM_CPP_DIR/DeviceAdapters/PrincetonInstruments/.libs/libmmgr_dal_PrincetonInstruments \
+            $MM_CPP_DIR/DeviceAdapters/QCam/.libs/libmmgr_dal_QCam \
+            $MM_CPP_DIR/DeviceAdapters/ScionCam/.libs/libmmgr_dal_ScionCam \
+            $MM_CPP_DIR/DeviceAdapters/Spot/.libs/libmmgr_dal_Spot \
+            $MM_CPP_DIR/SecretDeviceAdapters/HamamatsuMac/.libs/libmmgr_dal_Hamamatsu
 do
    if [ -f $file ]; then
       lipo -extract i386 -output $file.i386 $file
