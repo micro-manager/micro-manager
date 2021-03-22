@@ -1,7 +1,5 @@
 
 m4_define([MM_CPP_DIR], [MM_CPP])  # Define a macro substitution to be used in this file.
-[MM_CPP_DIR]=MM_CPP_DIR  # Define a shell variable of the same value as the earlier macro definition
-AC_SUBST([MM_CPP_DIR], MM_CPP_DIR)
 AC_PREREQ([2.64])
 AC_INIT([Micro-Manager], [1.4], [info@micro-manager.org])
 AC_CONFIG_MACRO_DIR([m4])
@@ -46,6 +44,10 @@ can_build_mmcore=yes
 ##
 ## MMCoreJ and MMCorePy
 ##
+
+# Define a shell variable based on the earlier m4_define
+[MM_CPP_DIR]=MM_CPP_DIR
+AC_ARG_VAR([MM_CPP_DIR], [The directory containing the c++ code])
 
 # SWIG
 AC_ARG_VAR([SWIG], [Simple Wrapper and Interface Generator])
@@ -315,8 +317,6 @@ AC_CHECK_FILE([$srcdir/../3rdparty/classext/DT1.2.jar],
               [build_magellan=no])
 AM_CONDITIONAL([BUILD_MAGELLAN],
                [test "x$build_magellan" = xyes])
-#AM_CONDITIONAL([BUILD_MAGELLAN],
-#               [false])
 
 
 # Java dependencies.
