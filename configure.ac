@@ -1,5 +1,5 @@
 
-m4_define([MM_CPP_DIR], [MM_CPP])  # Define a macro substitution to be used in this file.
+m4_define([MM_CPP_DIR], [mmCoreAndDevices])  # Define a macro substitution to be used in this file.
 AC_PREREQ([2.64])
 AC_INIT([Micro-Manager], [1.4], [info@micro-manager.org])
 AC_CONFIG_MACRO_DIR([m4])
