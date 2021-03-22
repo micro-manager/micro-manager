@@ -246,13 +246,13 @@ PyObject *setSLMImage_pywrap(const char* slmLabel, char *pixels, int receivedLen
         case MMERR_InvalidStageDevice:
         case MMERR_InvalidStateDevice:
         case MMERR_InvalidXYStageDevice:
+        case MMERR_NoConfigGroup:
+        case MMERR_NoConfiguration:
         case MMERR_PropertyNotInCache:
         case MMERR_SetPropertyFailed:
         case MMERR_UnexpectedDevice:
         case MMERR_UnknownModule:
             SWIG_exception(SWIG_ValueError, e.what());
-        case MMERR_NoConfigGroup:
-        case MMERR_NoConfiguration:
         case MMERR_NullPointerException:
             SWIG_exception(SWIG_NullReferenceError, e.what());
         case MMERR_FileOpenFailed:
