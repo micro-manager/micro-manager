@@ -1264,10 +1264,16 @@ public class ControllerUtils {
    public float getSheetWidth(CameraModes.Keys cameraMode, Devices.Keys cameraDevice, Devices.Sides side) {
       float sheetWidth;
       final String cameraName = devices_.getMMDevice(cameraDevice);
+      
+      // start by assuming the base value, then modify below if needed
+      final Properties.Keys widthProp = (side == Devices.Sides.A) ?
+            Properties.Keys.PLUGIN_SHEET_WIDTH_EDGE_A : Properties.Keys.PLUGIN_SHEET_WIDTH_EDGE_B;
+      sheetWidth = props_.getPropValueFloat(Devices.Keys.PLUGIN, widthProp);
+      
       if (cameraName == null || cameraName == "") {
          ReportingUtils.logDebugMessage("Could get sheet width for invalid device " + cameraDevice.toString());
-         return 0f;
       }
+      
       if (cameraMode == CameraModes.Keys.LIGHT_SHEET) {
          final float sheetSlope = prefs_.getFloat(
                MyStrings.PanelNames.SETUP.toString() + side.toString(), 
@@ -1275,7 +1281,6 @@ public class ControllerUtils {
          Rectangle roi = cameras_.getCameraROI(cameraDevice);  // get binning-adjusted ROI so value can stay the same regardless of binning
          if (roi == null || roi.height == 0) {
             ReportingUtils.logDebugMessage("Could not get camera ROI for light sheet mode");
-            return 0f;
          }
          final float slopePolarity = (side == Devices.Sides.B) ? -1f : 1f;
          sheetWidth = roi.height * sheetSlope * slopePolarity / 1e6f;  // in microdegrees per pixel, convert to degrees
@@ -1287,7 +1292,6 @@ public class ControllerUtils {
             Rectangle roi = cameras_.getCameraROI(cameraDevice);  // get binning-adjusted ROI so value can stay the same regardless of binning
             if (roi == null || roi.height == 0) {
                ReportingUtils.logDebugMessage("Could not get camera ROI for auto sheet mode");
-               return 0f;
             }
             final float sheetSlope = prefs_.getFloat(MyStrings.PanelNames.SETUP.toString() + side.toString(),
                   Properties.Keys.PLUGIN_SLOPE_SHEET_WIDTH.toString(), 2);
@@ -1295,10 +1299,6 @@ public class ControllerUtils {
             // TODO add extra width to compensate for filter depending on sweep rate and filter freq
             // TODO calculation should account for sample exposure to make sure 0.25ms edges get appropriately compensated for
             sheetWidth *= 1.1f;  // 10% extra width just to be sure
-         } else {
-            final Properties.Keys widthProp = (side == Devices.Sides.A) ?
-                  Properties.Keys.PLUGIN_SHEET_WIDTH_EDGE_A : Properties.Keys.PLUGIN_SHEET_WIDTH_EDGE_B;
-            sheetWidth = props_.getPropValueFloat(Devices.Keys.PLUGIN, widthProp);
          }
       }
       return sheetWidth;
