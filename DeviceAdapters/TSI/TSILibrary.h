@@ -95,7 +95,8 @@ static const char* g_PolarImageType_Quad = "Quad";
 #define ERR_TEMPERATURE_FAILED            16020
 #define ERR_EEP_FAILED                    16021
 #define ERR_HOT_PIXEL_FAILED              16022
-#define ERR_UNSUPPORTED_SENSOR			  16023
+#define ERR_UNSUPPORTED_SENSOR            16023
+#define ERR_GAIN_FAILED                   16024
 
 //////////////////////////////////////////////////////////////////////////////
 // Region of Interest
