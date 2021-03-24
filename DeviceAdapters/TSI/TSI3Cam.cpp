@@ -259,7 +259,7 @@ int Tsi3Cam::Initialize()
 
 		vector<string> pixelTypeValues;
 		pixelTypeValues.push_back(g_PixelType_32bitRGB);
-		pixelTypeValues.push_back(g_PixelType_64bitRGB);
+		//pixelTypeValues.push_back(g_PixelType_64bitRGB); // 3/23/2021 - MM2.0 does not support RGB64
 
 		ret = SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);
 		if (ret != DEVICE_OK)
@@ -413,6 +413,57 @@ int Tsi3Cam::Initialize()
       AddAllowedValue(g_HotPix, g_Off);
       AddAllowedValue(g_HotPix, g_On);
   }
+
+   // GAIN property
+
+   int gainMin;
+   int gainMax;
+   if (tl_camera_get_gain_range(camHandle, &gainMin, &gainMax))
+	   return ERR_GAIN_FAILED;
+   if (gainMax > 0)
+   {
+	   // this camera supports gain
+	   pAct = new CPropertyAction(this, &Tsi3Cam::OnGain);
+	   if (gainMax == 3)
+	   {
+		   // this is a CS135 which has only 4 discrete gain settings
+		   ret = CreateProperty(g_Gain, "0", MM::String, false, pAct); // we want the ui to represent this as string input
+		   if (ret != DEVICE_OK)
+			   return ret;
+		   vector<string> gainStrings;
+
+		   for (int i = gainMin; i <= gainMax; i++)
+		   {
+			   double gainValue_dB = 0;
+			   if (tl_camera_convert_gain_to_decibels(camHandle, i, &gainValue_dB))
+				   return ERR_GAIN_FAILED;
+
+			   gainStrings.push_back(to_string((long double) gainValue_dB));
+		   }
+
+		   ret = SetAllowedValues(g_Gain, gainStrings);
+	   }
+	   else
+	   {
+		   // this is a normal camera with a continuous range of gain values
+		   ret = CreateProperty(g_Gain, "0", MM::Float, false, pAct); // we want the ui to give us a float slider bar
+		   if (ret != DEVICE_OK)
+			   return ret;
+		   double gainMin_dB = 0;
+		   double gainMax_dB = 0;
+
+		   if (tl_camera_convert_gain_to_decibels(camHandle, gainMin, &gainMin_dB))
+		      return ERR_GAIN_FAILED;
+		   if (tl_camera_convert_gain_to_decibels(camHandle, gainMax, &gainMax_dB))
+			   return ERR_GAIN_FAILED;
+		   if (tl_camera_get_gain_range(camHandle, &gainMin, &gainMax))
+			   return ERR_GAIN_FAILED;
+		   ret = SetPropertyLimits(g_Gain, gainMin_dB, gainMax_dB);
+	   }
+
+	   if (ret != DEVICE_OK)
+		   return ret;
+   }
 
    ret = ResizeImageBuffer();
    if (ret != DEVICE_OK)
@@ -967,11 +1018,19 @@ void Tsi3Cam::frame_available_callback(void* /*sender*/, unsigned short* image_b
 		// COLOR
 		instance->img.Resize(instance->cachedImgWidth, instance->cachedImgHeight, instance->pixelSize);
 		if (instance->pixelSize == 4)
+		{
 			instance->ColorProcess16to32(image_buffer, instance->img.GetPixelsRW(), instance->cachedImgWidth, instance->cachedImgHeight);
+		}
 		else if (instance->pixelSize == 8)
+		{
 			instance->ColorProcess16to64(image_buffer, instance->img.GetPixelsRW(), instance->cachedImgWidth, instance->cachedImgHeight);
+		}
 		else
-			assert(!"Unsupported pixel type");
+		{
+			instance->LogMessage("Unsupported pixelSize");
+			//assert(!"Unsupported pixel type");
+		}
+			
 
 	}
 	else if (instance->polarized)

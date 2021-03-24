@@ -321,9 +321,13 @@ int Tsi3Cam::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
       }
       else if ( pixelType.compare(g_PixelType_64bitRGB) == 0)
       {
-			pixelSize = 8;
-         bitDepth = 12;
-		}
+		pixelSize = 8;
+        if (tl_camera_get_bit_depth(camHandle, &bitDepth))
+        {
+            return ERR_INTERNAL_ERROR;
+        }
+        //bitDepth = 12;
+	  }
 		return ResizeImageBuffer();
 	}
 	else if (eAct == MM::BeforeGet)
@@ -336,6 +340,7 @@ int Tsi3Cam::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 			assert(!"Unsupported pixel type");
 
 	}
+
 	return DEVICE_OK;
 }
 
@@ -390,3 +395,31 @@ int Tsi3Cam::OnPolarImageType(MM::PropertyBase* pProp, MM::ActionType eAct)
 	}
 	return DEVICE_OK;
 }
+
+int Tsi3Cam::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    if (eAct == MM::AfterSet)
+    {
+        double val(0);
+        if (!pProp->Get(val))
+            return DEVICE_OK;
+        int gainIdx = 0;
+        if (tl_camera_convert_decibels_to_gain(camHandle, val, &gainIdx))
+            return ERR_GAIN_FAILED;
+        if (tl_camera_set_gain(camHandle, gainIdx))
+            return ERR_GAIN_FAILED;
+    }
+    else if (eAct == MM::BeforeGet)
+    {
+        int gainIdx(0);
+        if (tl_camera_get_gain(camHandle, &gainIdx))
+            return ERR_GAIN_FAILED;
+        double gain_dB(0);
+        if (tl_camera_convert_gain_to_decibels(camHandle, gainIdx, &gain_dB))
+            return ERR_GAIN_FAILED;
+        if (!pProp->Set(gain_dB))
+            return ERR_GAIN_FAILED;
+    }
+    return DEVICE_OK;
+}
+
