@@ -372,14 +372,12 @@ public interface ASIdiSPIMInterface extends Remote {
    /**
     * @return the channel change mode, VOLUME for (software) volume-by-volume,
     *   VOLUME_HW for PLogic-based volume-by-volume, and SLICE_HW for PLogic-based slice-by-slice
-    * @deprecated out of laziness, can add if needed
     */
    public org.micromanager.asidispim.Data.MultichannelModes.Keys getChannelChangeMode() throws ASIdiSPIMException, RemoteException;
    
    /**
     * Sets the switching mode between the channels.
     * @param mode
-    * @deprecated out of laziness, can add if needed
     */
    public void setChannelChangeMode(org.micromanager.asidispim.Data.MultichannelModes.Keys mode) throws ASIdiSPIMException, RemoteException;
    
