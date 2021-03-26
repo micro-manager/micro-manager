@@ -1040,7 +1040,7 @@ public class ControllerUtils {
       case 1:
          props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_PRESET,
                Properties.Values.PLOGIC_PRESET_COUNT_1);
-      break;
+         break;
       case 2:
          props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_PRESET,
                Properties.Values.PLOGIC_PRESET_COUNT_2);
@@ -1077,6 +1077,13 @@ public class ControllerUtils {
       if (props_.getPropValueString(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_MODE).
             equals(Properties.Values.SHUTTER_7CHANNEL.toString())) {
          // special 7-channel case
+         
+         if(props_.getPropValueInteger(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_NUMCLOGICELLS) < 24) {
+            // restore update setting
+            props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES, editCellUpdates);
+            MyDialogUtils.showError("Require 24-cell PLC firmware to use hardware channel swiching with 7-channel shutter");
+            return false;
+         }
          
          // make sure cells 17-24 are controlling BNCs 1-8
          props_.setPropValue(Devices.Keys.PLOGIC_LASER, Properties.Keys.PLOGIC_PRESET,

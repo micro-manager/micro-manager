@@ -122,6 +122,7 @@ public class Properties {
       HOME_POSITION("HomePosition(mm)"),
       AUTO_SLEEP_DELAY("AutoSleepDelay(min)"),
       PLOGIC_MODE("PLogicMode"),
+      PLOGIC_NUMCLOGICELLS("NumLogicCells"),
       PLOGIC_PRESET("SetCardPreset"),
       PLOGIC_TRIGGER_SOURCE("TriggerSource", false),
       PLOGIC_POINTER_POSITION("PointerPosition"),
