@@ -82,6 +82,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
    private final JCheckBox useChannelsCB_;
    private final ChannelTableModel channelTableModel_;
    private final JComboBox channelGroup_;
+   private final JComboBox channelMode_;
    private ChannelSpec[] usedChannels_ = new ChannelSpec[0];
    private int nextChannelIndex_ = 0;
    private final List<ListeningJPanel> panels_;
@@ -170,7 +171,6 @@ public class MultiChannelSubPanel extends ListeningJPanel {
          }
       };
       
-      final JComboBox channelMode;
       final JTable channelTable;
       final JScrollPane channelTablePane;
 
@@ -282,9 +282,9 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       MultichannelModes channelModes = new MultichannelModes(devices_, props_,
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICHANNEL_MODE,
             MultichannelModes.Keys.VOLUME);
-      channelMode = channelModes.getComboBox();
-      pu.addListenerLast(channelMode, recalculateTimingDisplayAL);
-      this.add(channelMode, "wrap");
+      channelMode_ = channelModes.getComboBox();
+      pu.addListenerLast(channelMode_, recalculateTimingDisplayAL);
+      this.add(channelMode_, "wrap");
       
       // enable/disable panel elements depending on checkbox state
       final Component[] channelPaneComponents = this.getComponents();
@@ -300,7 +300,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
             }
             channelGroup_.setEnabled(enabled);
             channelTable.setEnabled(enabled);
-            channelMode.setEnabled(enabled);
+            channelMode_.setEnabled(enabled);
          } 
       });
       // initialize GUI for muli-channel enabled checkbox
@@ -422,6 +422,10 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       } else {
          return MultichannelModes.Keys.NONE;
       }
+   }
+   
+   public void setChannelMode(MultichannelModes.Keys mode) {
+      channelMode_.setSelectedItem(mode);
    }
    
    // could in theory do this from preferences but so much easier to do using multiChanelPanel_ object

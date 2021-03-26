@@ -5178,6 +5178,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return 0.0;
       }
    }
+   
+   public org.micromanager.asidispim.Data.MultichannelModes.Keys getChannelChangeMode() {
+      return multiChannelPanel_.getChannelMode();
+   }
+   
+   public void setChannelChangeMode(org.micromanager.asidispim.Data.MultichannelModes.Keys mode) {
+      multiChannelPanel_.setChannelMode(mode);
+   }
 
    // getNumSides() already existed
    

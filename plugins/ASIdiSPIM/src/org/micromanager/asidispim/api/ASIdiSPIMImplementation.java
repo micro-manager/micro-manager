@@ -358,14 +358,12 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    
    @Override
    public org.micromanager.asidispim.Data.MultichannelModes.Keys getChannelChangeMode() throws ASIdiSPIMException, RemoteException {
-      // @deprecated out of laziness, can add if needed
-      throw new UnsupportedOperationException();
+      return getAcquisitionPanel().getChannelChangeMode();
    }
 
    @Override
    public void setChannelChangeMode(org.micromanager.asidispim.Data.MultichannelModes.Keys mode) throws ASIdiSPIMException, RemoteException {
-      // @deprecated out of laziness, can add if needed
-      throw new UnsupportedOperationException();
+      getAcquisitionPanel().setChannelChangeMode(mode);
    }
 
    @Override
