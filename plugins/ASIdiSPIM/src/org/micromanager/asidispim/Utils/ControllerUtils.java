@@ -1279,6 +1279,7 @@ public class ControllerUtils {
       
       if (cameraName == null || cameraName == "") {
          ReportingUtils.logDebugMessage("Could get sheet width for invalid device " + cameraDevice.toString());
+         return sheetWidth;
       }
       
       if (cameraMode == CameraModes.Keys.LIGHT_SHEET) {
