@@ -153,6 +153,7 @@ const char* const g_SerialTerminatorDefault = "\r\n";
 const char* const g_SerialTerminatorFW = "\n\r";
 const char* const g_SerialTerminatorLine = "\r";
 const char* const g_SerialTerminatorOverall = "\n";
+const char* const g_SerialTerminatorMultiLine = "\r";
 const string g_EmptyAxisLetterStr = " ";     // single char but like convenience of strings
 const string g_EmptyCardAddressCode = " ";   // ascii 0x31 for '1' through ascii 0x39 for '9', then 0x81 upward (extended ascii)
 const string g_EmptyCardAddressStr = "00";   // hex representation of the address, eg 31..39, 81 upward
