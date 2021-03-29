@@ -154,7 +154,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
          }
       };
       posTable_.setFont(arialSmallFont_);
-      positionModel_ = new PositionTableModel(studio_);
+      positionModel_ = new PositionTableModel();
       positionModel_.setData(posList);
       posTable_.setModel(positionModel_);
       scrollPane.setViewportView(posTable_);
