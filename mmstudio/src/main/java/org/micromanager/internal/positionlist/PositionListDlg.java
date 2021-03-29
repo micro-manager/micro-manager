@@ -154,7 +154,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
          }
       };
       posTable_.setFont(arialSmallFont_);
-      positionModel_ = new PositionTableModel(studio_);
+      positionModel_ = new PositionTableModel();
       positionModel_.setData(posList);
       posTable_.setModel(positionModel_);
       scrollPane.setViewportView(posTable_);
@@ -510,7 +510,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
    }
 
    protected void updatePositionData() {
-      // positionModel_.fireTableDataChanged();
+      positionModel_.fireTableDataChanged();
       updateMarkButtonText();
    }
    
@@ -747,11 +747,6 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       });
    }
 
-   @Subscribe
-   public void onNewPositionList(NewPositionListEvent nple) {
-      positionModel_.setData(nple.getPositionList());
-      positionModel_.fireTableDataChanged();
-   }
 
    /**
     * Update display of the current stage position.

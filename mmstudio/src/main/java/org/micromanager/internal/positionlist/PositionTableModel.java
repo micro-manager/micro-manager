@@ -24,8 +24,6 @@ import javax.swing.table.AbstractTableModel;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.StagePosition;
-import org.micromanager.Studio;
-import org.micromanager.events.internal.DefaultNewPositionListEvent;
 
 class PositionTableModel extends AbstractTableModel {
    private static final long serialVersionUID = 1L;
@@ -33,13 +31,8 @@ class PositionTableModel extends AbstractTableModel {
          "Label",
          "Position [um]"
    };
-   private Studio studio_;
    private PositionList posList_;
    private MultiStagePosition curMsp_;
-
-   public PositionTableModel(Studio studio) {
-      studio_ = studio;
-   }
 
    public void setData(PositionList pl) {
       posList_ = pl;
