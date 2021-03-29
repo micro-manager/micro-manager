@@ -510,7 +510,7 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
    }
 
    protected void updatePositionData() {
-      // positionModel_.fireTableDataChanged();
+      positionModel_.fireTableDataChanged();
       updateMarkButtonText();
    }
    
