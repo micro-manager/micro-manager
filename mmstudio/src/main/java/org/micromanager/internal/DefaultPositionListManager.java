@@ -23,8 +23,9 @@ public final class DefaultPositionListManager implements PositionListManager {
     * It will open a position list dialog if it was not already open.
     * @param pl PosiionLIst to be made the current one
     */
+   @Override
    public void setPositionList(PositionList pl) { // use serialization to clone the PositionList object
-      posList_ = pl; // PositionList.newInstance(pl);
+      posList_ = pl;
       studio_.events().post(new DefaultNewPositionListEvent(posList_));
    }
 
@@ -33,6 +34,7 @@ public final class DefaultPositionListManager implements PositionListManager {
     * Acquisition Protocol
     * @return copy of the current PositionList
     */
+   @Override
    public PositionList getPositionList()  {
       return PositionList.newInstance(posList_);
    }
@@ -41,6 +43,7 @@ public final class DefaultPositionListManager implements PositionListManager {
     * Adds the current position to the list (same as pressing the "Mark" button
     * in the XYPositionList with no position selected)
     */
+   @Override
    public void markCurrentPosition() {
       MMStudio mm = (MMStudio) studio_;
       mm.uiManager().markCurrentPosition();
