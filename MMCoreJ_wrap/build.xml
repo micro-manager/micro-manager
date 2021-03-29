@@ -11,6 +11,10 @@
 		<mkdir dir="${intdir}"/>
 
 		<copy todir="${srcdir}/${package}" file="TaggedImage.java"/>
+		<copy todir="${srcdir}/${package}" file="DeviceIOException.java"/>
+		<copy todir="${srcdir}/${package}" file="MetadataIndexError.java"/>
+		<copy todir="${srcdir}/${package}" file="MetadataKeyError.java"/>
+
 
 		<mm-javac destdir="${intdir}">
 			<src path="${json.srcdir}"/>
