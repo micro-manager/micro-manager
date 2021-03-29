@@ -747,11 +747,6 @@ public class PositionListDlg extends JFrame implements MouseListener, ChangeList
       });
    }
 
-   @Subscribe
-   public void onNewPositionList(NewPositionListEvent nple) {
-      positionModel_.setData(nple.getPositionList());
-      positionModel_.fireTableDataChanged();
-   }
 
    /**
     * Update display of the current stage position.
