@@ -160,8 +160,9 @@ public:
    int OnHotPixEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnHotPixThreshold(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnWhiteBalance(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnPolarImageType(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPolarImageType(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int ResizeImageBuffer();

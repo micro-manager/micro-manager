@@ -151,6 +151,8 @@ const double g_StageDefaultUnitMult = 10;  // in units of um
 const double g_ScannerDefaultUnitMult = 1000;  // units per degree
 const char* const g_SerialTerminatorDefault = "\r\n";
 const char* const g_SerialTerminatorFW = "\n\r";
+const char* const g_SerialTerminatorLine = "\r";
+const char* const g_SerialTerminatorOverall = "\n";
 const char* const g_SerialTerminatorMultiLine = "\r";
 const string g_EmptyAxisLetterStr = " ";     // single char but like convenience of strings
 const string g_EmptyCardAddressCode = " ";   // ascii 0x31 for '1' through ascii 0x39 for '9', then 0x81 upward (extended ascii)
@@ -529,6 +531,9 @@ const char* const g_PresetCode48 = "48 - BNC1/3/4 enabled of 7";
 const char* const g_PresetCode49 = "49 - BNC2/4/6 enabled of 7";
 const char* const g_PresetCode50 = "50 - None enabled of 7";
 const char* const g_PresetCode51 = "51 - cells 17-24 on BNC1-8";
+const char* const g_PresetCode52 = "52 - BNC3 source = TTL5";
+const char* const g_PresetCode53 = "53 - BNC1/6 enabled of 7";
+const char* const g_PresetCode54 = "54 - BNC1/4/6 enabled of 7";
 const char* const g_PLogicModeNone = "None";
 const char* const g_PLogicModediSPIMShutter = "diSPIM Shutter";
 const char* const g_PLogicMode4ChShutter = "Four-channel shutter";
@@ -554,6 +559,7 @@ const char* const g_Channel5And7 = "output 5 and 7";
 const char* const g_Channel1And3And5 = "output 1 and 3 and 5";
 const char* const g_Channel2And4And6 = "output 2 and 4 and 6";
 const char* const g_Channel1And6 = "output 1 and 6";
+const char* const g_Channel1And4And6 = "output 1 and 4 and 6";
 
 
 // SPIM enums

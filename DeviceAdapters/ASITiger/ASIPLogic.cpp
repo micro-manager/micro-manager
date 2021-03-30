@@ -227,6 +227,13 @@ int CPLogic::Initialize()
       AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode50, 50);
       AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode51, 51);
    }
+   if (FirmwareVersionAtLeast(3.31)) {
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode52, 52);
+   }
+   if (FirmwareVersionAtLeast(3.35) && useAs7ChShutter_) {
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode53, 53);
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode54, 54);
+   }
    UpdateProperty(g_SetCardPresetPropertyName);
 
 
@@ -338,7 +345,6 @@ int CPLogic::Initialize()
       pAct = new CPropertyAction (this, &CPLogic::OnSetShutterChannel);
       CreateProperty(g_SetChannelPropertyName, g_7ChannelNone, MM::String, false, pAct);
       // use (CCA X) card presets here, just under a different name
-      AddAllowedValue(g_SetChannelPropertyName, g_7ChannelNone, 50);
       AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly1, 37);
       AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly2, 38);
       AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly3, 39);
@@ -352,8 +358,10 @@ int CPLogic::Initialize()
       AddAllowedValue(g_SetChannelPropertyName, g_Channel5And7, 47);
       AddAllowedValue(g_SetChannelPropertyName, g_Channel1And3And5, 48);
       AddAllowedValue(g_SetChannelPropertyName, g_Channel2And4And6, 49);
-      if (FirmwareVersionAtLeast(3.33)) {
+      AddAllowedValue(g_SetChannelPropertyName, g_7ChannelNone, 50);
+      if (FirmwareVersionAtLeast(3.35)) {
          AddAllowedValue(g_SetChannelPropertyName, g_Channel1And6, 53);
+         AddAllowedValue(g_SetChannelPropertyName, g_Channel1And4And6, 54);
       }
       UpdateProperty(g_SetChannelPropertyName);               // doesn't do anything right now
       SetProperty(g_SetChannelPropertyName, g_7ChannelNone);  // makes sure card actually gets initialized
@@ -850,9 +858,9 @@ int CPLogic::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
             GetIOPropertyName(i, "_IOType", propName);
             pActEx = new CPropertyActionEx (this, &CPLogic::OnIOType, i);
             CreateProperty(propName, "0", MM::String, false, pActEx);
-            AddAllowedValue(propName, g_IOTypeCode0, 0);
-            AddAllowedValue(propName, g_IOTypeCode1, 1);
-            AddAllowedValue(propName, g_IOTypeCode2, 2);
+            AddAllowedValue(propName, g_IOTypeCode0, 100);
+            AddAllowedValue(propName, g_IOTypeCode1, 101);
+            AddAllowedValue(propName, g_IOTypeCode2, 102);
             UpdateProperty(propName);
 
             GetIOPropertyName(i, "_SourceAddress", propName);
