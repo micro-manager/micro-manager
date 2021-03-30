@@ -259,7 +259,15 @@ public class PositionList implements Iterable<MultiStagePosition> {
          return;
       }
       for (PropertyMap mspMap : map.getPropertyMapList(PropertyKey.STAGE_POSITIONS.key())) {
-         positions_.add(MultiStagePosition.fromPropertyMap(mspMap));
+         MultiStagePosition msp = MultiStagePosition.fromPropertyMap(mspMap);
+         if (mspMap.containsKey(PropertyKey.MULTI_STAGE_POSITION__PROPERTIES.key())) {
+            PropertyMap propertyMap = mspMap.getPropertyMap(PropertyKey.MULTI_STAGE_POSITION__PROPERTIES.key(), null);
+            for (String key: propertyMap.keySet()) {
+               String val = propertyMap.getString(key, "");
+               msp.setProperty(key, val);
+            }
+         }
+         positions_.add(msp);
       }
       notifyChangeListeners();
    }
