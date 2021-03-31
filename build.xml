@@ -7,7 +7,7 @@
 
 	<include file="buildscripts/buildprops.xml"/>
 	<import file="buildscripts/version.xml"/>
-
+	
 	<macrodef name="run-all-java-projects">
 		<attribute name="target"/>
 		<sequential>
@@ -18,13 +18,13 @@
 				<property name="mm.java.autofocus.installdir" value="${mm.java.autofocus.installdir}"/>
 				<filelist dir="${mm.basedir}">
 					<!-- Note: Order matters -->
-					<file name="MMCoreJ_wrap/build.xml"/>
+					<file name="${mm.cpp.srcdir}/MMCoreJ_wrap/build.xml"/>
 					<file name="mmstudio/build.xml"/>
 					<file name="acqEngine/build.xml"/>
 					<file name="libraries/build.xml"/>
 					<file name="plugins/build.xml"/>
 					<file name="autofocus/build.xml"/>
-               <file name="mmAsImageJMacros/build.xml"/>
+					<file name="mmAsImageJMacros/build.xml"/>
 				</filelist>
 			</subant>
 		</sequential>
@@ -35,7 +35,7 @@
 	</target>
 
 	<target name="build-cpp" description="Build all C++ components">
-		<mm-msbuild project="micromanager.sln" target="Build" failonerror="${mm.build.failonerror}"
+		<mm-msbuild project="${mm.cpp.srcdir}/micromanager.sln" target="Build" failonerror="${mm.build.failonerror}"
 			logbasename="msbuild-micromanager${mm.build.logsuffix}"/>
 	</target>
 
@@ -58,7 +58,7 @@
 				<copy todir="${mm.dll.installdir}">
 					<fileset dir="${mm.cpp.outdir}" includes="mmgr_dal_*.dll"/>
 				</copy>
-				<ant antfile="DeviceAdapters/build.xml" useNativeBasedir="true" target="install">
+				<ant antfile="${mm.cpp.srcdir}/DeviceAdapters/build.xml" useNativeBasedir="true" target="install">
 					<property name="mm.dll.installdir" value="${mm.dll.installdir}"/>
 					<property name="mm.dll.helper.installdir" value="${mm.dll.helper.installdir}"/>
 				</ant>
@@ -200,11 +200,11 @@
 		<!-- Delete SWIG-generated source
 		     Sorry for the hard-coding, but even running the Clean
 		     target using MSBuild doesn't seem to delete these. -->
-		<delete file="${mm.basedir}/MMCoreJ_wrap/MMCoreJ_wrap.cpp"/>
-		<delete file="${mm.basedir}/MMCoreJ_wrap/MMCoreJ_wrap.h"/>
-		<delete file="${mm.basedir}/MMCorePy_wrap/MMCorePy_wrap.cpp"/>
-		<delete file="${mm.basedir}/MMCorePy_wrap/MMCorePy_wrap.h"/>
-      <delete dir="${mm.basedir}/build/intermediates/Swig"/>
+		<delete file="${mm.cpp.srcdir}/MMCoreJ_wrap/MMCoreJ_wrap.cpp"/>
+		<delete file="${mm.cpp.srcdir}/MMCoreJ_wrap/MMCoreJ_wrap.h"/>
+		<delete file="${mm.cpp.srcdir}/MMCorePy_wrap/MMCorePy_wrap.cpp"/>
+		<delete file="${mm.cpp.srcdir}/MMCorePy_wrap/MMCorePy_wrap.h"/>
+		<delete dir="${mm.basedir}/build/intermediates/Swig"/>
 	</target>
 
 	<target name="clean-java" description="Clean only the Java components">

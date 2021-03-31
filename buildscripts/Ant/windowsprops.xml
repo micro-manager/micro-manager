@@ -134,7 +134,7 @@
 
 			<local name="msbuild.params"/>
 			<property name="msbuild.params"
-				value="@{project} /t:@{target} /p:Configuration=${mm.configuration} /p:Platform=${mm.architecture} /v:@{verbosity} /flp:LogFile=${msbuild.log} ${msbuild.flag.parallel}"/>
+				value="@{project} /t:@{target} /p:Configuration=${mm.configuration} /p:Platform=${mm.architecture} /p:MM_BUILDDIR=${mm.outdir} /v:@{verbosity} /flp:LogFile=${msbuild.log} ${msbuild.flag.parallel}"/>
 
 			<!-- Find the bat file that activates the Visual Studio environment -->
 			<local name="modernVSDevCmdBat"/>
@@ -155,9 +155,6 @@
 			<condition property="activateVSVarsBat" value="${modernVSDevCmdBat}" else="${mm.env.VS100COMNTOOLS}vsvars32.bat">
 				<available file="${modernVSDevCmdBat}"/>
 			</condition>
-			
-			<echo message="${modernVSDevCmdBat}"/>
-			<echo message="${activateVSVarsBat}"/>
 
             <fail message="Cannot locate vsvars32.bat for Visual Studio 2010 or VSDevCmd.bat for VisualStudio >2010">
                 <condition> <not> <available file="${activateVSVarsBat}"/> </not> </condition>

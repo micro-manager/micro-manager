@@ -1,7 +1,0 @@
-check_PROGRAMS = \
-	Valve-Tests
-AM_DEFAULT_SOURCE_EXT = .cpp
-AM_CPPFLAGS = $(GMOCK_CPPFLAGS) -I..
-AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS)
-LDADD = ../../../testing/libgmock.la $(MMDEVAPI_LIBADD)
-TESTS = $(check_PROGRAMS)

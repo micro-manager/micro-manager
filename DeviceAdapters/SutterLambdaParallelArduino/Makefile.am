@@ -1,5 +1,0 @@
-AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS)
-deviceadapter_LTLIBRARIES = libmmgr_dal_SutterLambdaParallelArduino.la
-libmmgr_dal_SutterLambdaParallelArduino_la_SOURCES = LambdaParallel.cpp
-libmmgr_dal_SutterLambdaParallelArduino_la_LIBADD = $(MMDEVAPI_LIBADD)
-libmmgr_dal_SutterLambdaParallelArduino_la_LDFLAGS = $(MMDEVAPI_LDFLAGS)
