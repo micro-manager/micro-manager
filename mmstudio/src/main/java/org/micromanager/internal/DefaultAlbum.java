@@ -225,8 +225,8 @@ public final class DefaultAlbum implements Album {
 
    @Subscribe
    public void onAlbumStoreClosing(DataViewerWillCloseEvent viewerWillCloseEvent) {
-      saveDisplaySettings();
       if (viewerWillCloseEvent.getDataViewer().getDataProvider().equals(store_)) {
+         saveDisplaySettings();
          store_ = null;
       }
    }
