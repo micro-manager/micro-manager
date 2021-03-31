@@ -94,7 +94,8 @@ public class RememberedDisplaySettings {
                  settings.getPropertyMap(key, null), channelGroup, channelName);
       }
       ChannelDisplaySettings.Builder cdsBuilder =
-              DefaultChannelDisplaySettings.builder().name(channelName).component(1);
+              DefaultChannelDisplaySettings.builder().groupName(channelGroup).
+                      name(channelName).component(1);
       if (defaultColor != null) {
          cdsBuilder.color(defaultColor);
       }

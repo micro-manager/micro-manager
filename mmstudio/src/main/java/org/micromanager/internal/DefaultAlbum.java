@@ -21,6 +21,7 @@
 
 package org.micromanager.internal;
 
+import java.awt.Color;
 import java.io.IOException;
 import java.util.Collection;
 
@@ -36,12 +37,17 @@ import org.micromanager.data.Image;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.PipelineErrorException;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.data.internal.PropertyKey;
+import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.internal.DefaultDisplaySettings;
+import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public final class DefaultAlbum implements Album {
    private final Studio studio_;
+   private DisplayWindow display_;
    private Datastore store_;
    private Integer curTime_ = null;
    private Pipeline pipeline_;
@@ -104,8 +110,9 @@ public final class DefaultAlbum implements Album {
          try {
             SummaryMetadata.Builder smb = studio_.acquisitions().
                     generateSummaryMetadata().copyBuilder();
+            smb.channelGroup(studio_.core().getChannelGroup());
             // TODO: can there be other axes than T?
-            smb.channelNames(new String[] {curChannel}).axisOrder(
+            smb.channelNames(curChannel).axisOrder(
                     Coords.T, Coords.C, Coords.Z, Coords.P);
             store_.setSummaryMetadata(smb.build());
          }
@@ -114,8 +121,24 @@ public final class DefaultAlbum implements Album {
             studio_.logs().logError(e, "Unable to set summary of newly-created datastore");
          }
          studio_.displays().manage(store_);
-         DisplayWindow display = studio_.displays().createDisplay(store_);
-         display.setCustomTitle("Album");
+         display_ = studio_.displays().createDisplay(store_);
+         display_.setCustomTitle("Album");
+         DisplaySettings ds = DefaultDisplaySettings.restoreFromProfile(
+                 studio_.profile(),
+                 PropertyKey.ALBUM_DISPLAY_SETTINGS.key() );
+         if (ds == null) {
+            ds = DefaultDisplaySettings.builder().colorMode(
+                    DisplaySettings.ColorMode.GRAYSCALE).build();
+         }
+         for (int ch = 0; ch < store_.getSummaryMetadata().getChannelNameList().size(); ch++) {
+            ds = ds.copyBuilderWithChannelSettings(ch,
+                    RememberedDisplaySettings.loadChannel(studio_,
+                            store_.getSummaryMetadata().getChannelGroup(),
+                            store_.getSummaryMetadata().getSafeChannelName(ch),
+                            Color.white)).build();
+         }
+         display_.setDisplaySettings(ds);
+
          curTime_ = null;
       }
       
@@ -202,8 +225,17 @@ public final class DefaultAlbum implements Album {
 
    @Subscribe
    public void onAlbumStoreClosing(DataViewerWillCloseEvent viewerWillCloseEvent) {
+      saveDisplaySettings();
       if (viewerWillCloseEvent.getDataViewer().getDataProvider().equals(store_)) {
          store_ = null;
+      }
+   }
+
+   private void saveDisplaySettings() {
+      if (display_.getDisplaySettings() instanceof DefaultDisplaySettings) {
+         ((DefaultDisplaySettings) display_.getDisplaySettings()).
+                 saveToProfile(studio_.profile(),
+                         PropertyKey.ALBUM_DISPLAY_SETTINGS.key());
       }
    }
 

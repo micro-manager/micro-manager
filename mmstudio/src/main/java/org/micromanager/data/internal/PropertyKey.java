@@ -23,6 +23,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.micromanager.Album;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.PropertyMap;
@@ -70,6 +72,8 @@ public enum PropertyKey {
             putDouble("AutoscaleIgnoredQuantile", extremaQuantile_).
             putPropertyMapList("ChannelSettings", channelSettings).
    */
+
+   ALBUM_DISPLAY_SETTINGS("AlbumDisplaySettings", Album.class),
    
    ACQUISITION_DISPLAY_SETTINGS("AcquisitionDisplaySettings", AcquisitionManager.class),
    
