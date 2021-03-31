@@ -380,7 +380,7 @@
           (do
             (when (. mmc isBufferOverflowed)
               (log "halting image collection due to circular buffer overflow")
-              (throw-exception "Circular buffer overflowed."))
+              (throw-exception "Sequence buffer overflowed."))
             (Thread/sleep 1)
             (recur)))))))
 

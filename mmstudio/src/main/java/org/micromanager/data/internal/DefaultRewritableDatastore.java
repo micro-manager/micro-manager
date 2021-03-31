@@ -118,6 +118,5 @@ public final class DefaultRewritableDatastore extends DefaultDatastore implement
    public void deleteAllImages() throws IOException {
       Coords blank = new DefaultCoords.Builder().build();
       deleteImagesMatching(blank);
-      bus_.post(new DefaultDatastoreClearedEvent(this));
    }
 }

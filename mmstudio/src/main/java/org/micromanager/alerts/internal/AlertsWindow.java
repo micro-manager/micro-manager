@@ -31,21 +31,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashSet;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
+
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
-import org.micromanager.internal.utils.MMFrame;
+import org.micromanager.internal.utils.WindowPositioning;
 
 
-
-public final class AlertsWindow extends MMFrame {
+public final class AlertsWindow extends JFrame {
    private static final String NO_ALERTS_MSG = "There are no messages at this time.";
    private static final String SHOULD_SHOW_WINDOW = "Show the Messages window when a message is received";
 
@@ -60,8 +54,10 @@ public final class AlertsWindow extends MMFrame {
       studio_ = studio;
       studio.events().registerForEvents(this);
 
-
-      super.loadAndRestorePosition(300, 100);
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      super.setLocation(300, 100);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       
       super.setLayout(new MigLayout("fill, insets 2, gap 0"));
 

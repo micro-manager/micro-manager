@@ -40,8 +40,6 @@ import org.micromanager.Studio;
 import org.micromanager.events.ChannelExposureEvent;
 import org.micromanager.internal.hcwizard.MMConfigFileException;
 import org.micromanager.internal.hcwizard.MicroscopeModel;
-import org.micromanager.internal.positionlist.MMPositionListDlg;
-import org.micromanager.internal.positionlist.PositionListDlg;
 import org.micromanager.internal.utils.DefaultAutofocusManager;
 import org.micromanager.internal.utils.ReportingUtils;
 

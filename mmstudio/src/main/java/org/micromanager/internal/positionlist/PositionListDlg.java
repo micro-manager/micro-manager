@@ -27,6 +27,7 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -34,14 +35,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
 import java.util.ArrayList;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.ListSelectionModel;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.TableCellRenderer;
@@ -58,18 +52,13 @@ import org.micromanager.events.NewPositionListEvent;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.utils.DaytimeNighttime;
-import org.micromanager.internal.utils.EventBusExceptionLogger;
-import org.micromanager.internal.utils.FileDialogs;
+import org.micromanager.internal.utils.*;
 import org.micromanager.internal.utils.FileDialogs.FileType;
-import org.micromanager.internal.utils.GUIUtils;
-import org.micromanager.internal.utils.MMFrame;
-import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * The PositionListDlg class provides a convenient UI to generate, edit, load, and save PositionList objects.
  */
-public class PositionListDlg extends MMFrame implements MouseListener, ChangeListener {
+public class PositionListDlg extends JFrame implements MouseListener, ChangeListener {
    protected static final long serialVersionUID = 1L;
    protected String posListDir_;
    protected File curFile_;
@@ -137,7 +126,10 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
       setLayout(new MigLayout("flowy, filly, insets 8", "[grow][]", 
               "[top]"));
       setMinimumSize(new Dimension(275, 365));
-      super.loadAndRestorePosition(100, 100, 362, 595);
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      super.setBounds(100, 100, 362, 595);
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
 
       arialSmallFont_ = new Font("Arial", Font.PLAIN, 10);
 
@@ -162,7 +154,7 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
          }
       };
       posTable_.setFont(arialSmallFont_);
-      positionModel_ = new PositionTableModel(studio_);
+      positionModel_ = new PositionTableModel();
       positionModel_.setData(posList);
       posTable_.setModel(positionModel_);
       scrollPane.setViewportView(posTable_);
@@ -518,7 +510,7 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
    }
 
    protected void updatePositionData() {
-      // positionModel_.fireTableDataChanged();
+      positionModel_.fireTableDataChanged();
       updateMarkButtonText();
    }
    
@@ -755,11 +747,6 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
       });
    }
 
-   @Subscribe
-   public void onNewPositionList(NewPositionListEvent nple) {
-      positionModel_.setData(nple.getPositionList());
-      positionModel_.fireTableDataChanged();
-   }
 
    /**
     * Update display of the current stage position.
@@ -909,10 +896,10 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
       double [] x1;
       double [] y1;
       String deviceName;
-      MMFrame d;
+      JFrame d;
       Thread otherThread;
 
-      public void setPara(Thread calThread, MMFrame d, String deviceName, double [] x1, double [] y1) {
+      public void setPara(Thread calThread, JFrame d, String deviceName, double [] x1, double [] y1) {
          this.otherThread = calThread;
          this.d = d;
          this.deviceName = deviceName;
@@ -1029,10 +1016,10 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
       double [] x1;
       double [] y1;
       String deviceName;
-      MMFrame d;
+      JFrame d;
       Thread stopThread;
 
-      public void setPara(Thread stopThread, MMFrame d, String deviceName, double [] x1, double [] y1) {
+      public void setPara(Thread stopThread, JFrame d, String deviceName, double [] x1, double [] y1) {
          this.stopThread = stopThread;
          this.d = d;
          this.deviceName = deviceName;
@@ -1099,9 +1086,9 @@ public class PositionListDlg extends MMFrame implements MouseListener, ChangeLis
    } // End CalThread class
 
    class BackThread extends Thread {
-      MMFrame d;
+      JFrame d;
 
-      public void setPara(MMFrame d) {
+      public void setPara(JFrame d) {
          this.d = d;
       }     
       @Override

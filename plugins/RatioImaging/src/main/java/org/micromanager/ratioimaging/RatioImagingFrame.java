@@ -31,16 +31,14 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.io.File;
 import java.text.ParseException;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JTextField;
+import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -53,6 +51,7 @@ import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.events.ChannelGroupChangedEvent;
+import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 // Imports for MMStudio internal packages
@@ -61,7 +60,6 @@ import org.micromanager.propertymap.MutablePropertyMapView;
 // MMStudio API, so it still uses internal classes and interfaces. New code
 // should not imitate this practice.
 import org.micromanager.internal.utils.FileDialogs;
-import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.NumberUtils;
 
 /**
@@ -69,7 +67,7 @@ import org.micromanager.internal.utils.NumberUtils;
  *
  * @author nico
  */
-public class RatioImagingFrame extends MMFrame implements ProcessorConfigurator {
+public class RatioImagingFrame extends JFrame implements ProcessorConfigurator {
    private static final int DEFAULT_WIN_X = 100;
    private static final int DEFAULT_WIN_Y = 100;
    static final String CHANNEL1 = "Channel1";
@@ -156,7 +154,10 @@ public class RatioImagingFrame extends MMFrame implements ProcessorConfigurator 
       
       super.pack();
 
-      super.loadAndRestorePosition(DEFAULT_WIN_X, DEFAULT_WIN_Y);
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      super.setLocation(DEFAULT_WIN_X, DEFAULT_WIN_Y);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       
    }
 

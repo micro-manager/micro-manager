@@ -22,14 +22,13 @@ package org.micromanager.plugins.example;
 
 import com.google.common.eventbus.Subscribe;
 
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.Font;
 import java.util.List;
 
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JTextField;
+import javax.swing.*;
 
 
 import net.miginfocom.swing.MigLayout;
@@ -37,16 +36,16 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.data.Image;
 import org.micromanager.events.ExposureChangedEvent;
 import org.micromanager.Studio;
+import org.micromanager.internal.utils.WindowPositioning;
 
 // Imports for MMStudio internal packages
 // Plugins should not access internal packages, to ensure modularity and
 // maintainability. However, this plugin code is older than the current
 // MMStudio API, so it still uses internal classes and interfaces. New code
 // should not imitate this practice.
-import org.micromanager.internal.utils.MMFrame;
 
 
-public class ExampleFrame extends MMFrame {
+public class ExampleFrame extends JFrame {
 
    private Studio studio_;
    private JTextField userText_;
@@ -120,6 +119,11 @@ public class ExampleFrame extends MMFrame {
          }
       });
       super.add(acquireButton, "wrap");
+
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      super.setLocation(100, 100);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
       super.pack();
 

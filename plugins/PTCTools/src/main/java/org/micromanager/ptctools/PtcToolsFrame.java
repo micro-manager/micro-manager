@@ -27,16 +27,14 @@
 package org.micromanager.ptctools;
 
 
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JSpinner;
-import javax.swing.JTextField;
-import javax.swing.SpinnerNumberModel;
+import javax.swing.*;
 
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.Studio;
+import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 // Imports for MMStudio internal packages
@@ -44,7 +42,6 @@ import org.micromanager.propertymap.MutablePropertyMapView;
 // maintainability. However, this plugin code is older than the current
 // MMStudio API, so it still uses internal classes and interfaces. New code
 // should not imitate this practice.
-import org.micromanager.internal.utils.MMFrame;
 
 /**
  * Micro-Manager plugin that can split the acquired image top-down or left-right
@@ -52,7 +49,7 @@ import org.micromanager.internal.utils.MMFrame;
  *
  * @author nico, modified by Chris Weisiger
  */
-public class PtcToolsFrame extends MMFrame {
+public class PtcToolsFrame extends JFrame {
    private static final int DEFAULT_WIN_X = 100;
    private static final int DEFAULT_WIN_Y = 100;
    public static Boolean WINDOWOPEN = false;
@@ -69,7 +66,10 @@ public class PtcToolsFrame extends MMFrame {
       
       initComponents();
 
-      super.loadAndRestorePosition(DEFAULT_WIN_X, DEFAULT_WIN_Y);
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      super.setLocation(DEFAULT_WIN_X, DEFAULT_WIN_Y);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
    }
 
@@ -99,7 +99,7 @@ public class PtcToolsFrame extends MMFrame {
               settings_.getInteger(PtcToolsTerms.NRFRAMES, 100), 1, null, 1));
       add(nrFramesSp_, "w 60, wrap");
       
-      MMFrame ptf = this;
+      JFrame ptf = this;
       JButton helpButton = new JButton("Help");
       helpButton.addActionListener((ActionEvent e) -> {
          new Thread(org.micromanager.internal.utils.GUIUtils.makeURLRunnable(

@@ -33,28 +33,21 @@
 package org.micromanager.plugins.snaponmove;
 
 import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSeparator;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.ListSelectionModel;
-import javax.swing.WindowConstants;
+import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.internal.utils.WindowPositioning;
 
 // Imports for MMStudio internal packages
 // Plugins should not access internal packages, to ensure modularity and
 // maintainability. However, this plugin code is older than the current
 // MMStudio API, so it still uses internal classes and interfaces. New code
 // should not imitate this practice.
-import org.micromanager.internal.utils.MMFrame;
 
 /**
  * Allow user to enable/disable Snap-on-Move.
@@ -62,7 +55,7 @@ import org.micromanager.internal.utils.MMFrame;
  * Shows a check box to enable/disable movement monitoring.
  * This is for testing and may be removed or replaced in the final version.
  */
-final class ConfigFrame extends MMFrame {
+final class ConfigFrame extends JFrame {
    private static final String ENABLE_BUTTON = "Start";
    private static final String DISABLE_BUTTON = "Stop";
    
@@ -212,7 +205,11 @@ final class ConfigFrame extends MMFrame {
 
       setMinimumSize(new Dimension(360, 210));
       pack();
-      loadPosition(600, 200);
+
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      super.setLocation(600, 200);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
    }
 
    private void updateButtonStates() {

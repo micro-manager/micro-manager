@@ -12,13 +12,13 @@ package org.micromanager.multicamera;
 
 import com.google.common.eventbus.Subscribe;
 
+import java.awt.Toolkit;
 import java.text.ParseException;
 
-import javax.swing.DefaultComboBoxModel;
+import javax.swing.*;
 
 import java.awt.event.ItemEvent;
 import java.util.ArrayList;
-import javax.swing.SwingUtilities;
 
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
@@ -33,14 +33,14 @@ import org.micromanager.Studio;
 // maintainability. However, this plugin code is older than the current
 // MMStudio API, so it still uses internal classes and interfaces. New code
 // should not imitate this practice.
-import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.WindowPositioning;
 
 /**
  *
  * @author Nico Stuurman
  */
-public class MultiCameraFrame extends MMFrame {
+public class MultiCameraFrame extends JFrame {
    private static final long serialVersionUID = 1L;
    private final Studio gui_;
    private final CMMCore core_;
@@ -111,7 +111,10 @@ public class MultiCameraFrame extends MMFrame {
 
       initComponents();
 
-      super.loadAndRestorePosition(100, 100);
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      super.setLocation(100, 100);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
       cameraSelectComboBox.removeAllItems();
 

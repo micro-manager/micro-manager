@@ -21,15 +21,12 @@
 package org.micromanager.internal.dialogs;
 
 import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.geom.AffineTransform;
 import java.text.ParseException;
 import mmcorej.StrVector;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.utils.AffineUtils;
-import org.micromanager.internal.utils.NumberUtils;
-import org.micromanager.internal.utils.PropertyItem;
-import org.micromanager.internal.utils.PropertyTableData;
-import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.*;
 
 /**
  *
@@ -68,7 +65,10 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
       affineEditorPanel_ = new AffineEditorPanel(parent.getStudio(), this, 
             AffineUtils.noTransform());
       super.initialize();
-      super.loadAndRestorePosition(100, 100, 550, 600);
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      super.setBounds(100, 100, 550, 600);
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       super.setMinimumSize(new Dimension(500, 530));
    }
 

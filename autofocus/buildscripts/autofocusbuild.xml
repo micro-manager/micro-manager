@@ -23,11 +23,15 @@
         <path refid="mm.compile.classpath"/>
 		<pathelement location="${mm.java.lib.mmcorej}"/>
 		<pathelement location="${mm.java.lib.mmstudio}"/>
+		<pathelement location="${mm.java.mmlibraries}"/>
+      <fileset dir="${mm.java.mmlibraries}" includes="*.jar" />
 	</path>
 
 	<path id="project.linked.jars">
 		<pathelement location="${mm.java.lib.mmcorej}"/>
 		<pathelement location="${mm.java.lib.mmstudio}"/>
+		<pathelement location="${mm.java.mmlibraries}"/>
+      <fileset dir="${mm.java.mmlibraries}" includes="*.jar" />
 	</path>
 
 	<target name="compile" depends="prepare" description="Compile Java source">

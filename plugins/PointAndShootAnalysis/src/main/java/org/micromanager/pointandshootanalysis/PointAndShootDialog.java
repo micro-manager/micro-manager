@@ -25,23 +25,18 @@ package org.micromanager.pointandshootanalysis;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
+import java.awt.Toolkit;
 import java.awt.dnd.DropTarget;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JLabel;
-import javax.swing.JSpinner;
-import javax.swing.JTextField;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.SwingUtilities;
-import javax.swing.WindowConstants;
+import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.display.DataViewer;
+import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.pointandshootanalysis.data.Terms;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
@@ -51,13 +46,12 @@ import org.micromanager.propertymap.MutablePropertyMapView;
 // MMStudio API, so it still uses internal classes and interfaces. New code
 // should not imitate this practice.
 import org.micromanager.internal.utils.FileDialogs;
-import org.micromanager.internal.utils.MMDialog;
 
 /**
  *
  * @author nico
  */
-public class PointAndShootDialog extends MMDialog {
+public class PointAndShootDialog extends JDialog {
    
 
    private final Studio studio_;
@@ -73,7 +67,7 @@ public class PointAndShootDialog extends MMDialog {
       profileSettings_ = 
               studio_.profile().getSettings(PointAndShootDialog.class);
       wasDisposed_ = false;
-      final MMDialog ourDialog = this;
+      final JDialog ourDialog = this;
       
       super.setTitle("Point and Shoot Analysis");
       super.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -90,7 +84,11 @@ public class PointAndShootDialog extends MMDialog {
       final Dimension spinnerSize = new Dimension(80, 21);
       
       super.setLayout(new MigLayout());
-      super.loadAndRestorePosition(100, 100);
+
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      super.setLocation(100, 100);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       
       JLabel explanationLabel = new JLabel("Provide location of text file " +
              "containing Point and Shoot  timestamps and locations");

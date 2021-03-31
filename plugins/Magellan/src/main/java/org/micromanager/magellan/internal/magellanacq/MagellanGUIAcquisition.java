@@ -36,9 +36,7 @@ import org.micromanager.magellan.internal.gui.GUI;
 import org.micromanager.magellan.internal.main.Magellan;
 import org.micromanager.magellan.internal.misc.Log;
 import org.micromanager.magellan.internal.surfacesandregions.Point3d;
-import org.micromanager.multiresstorage.MultiResMultipageTiffStorage;
 import org.micromanager.multiresstorage.StorageAPI;
-import org.micromanager.remote.RemoteViewerStorageAdapter;
 
 /**
  *
@@ -112,7 +110,7 @@ public class MagellanGUIAcquisition extends Acquisition implements MagellanAcqui
 
    //Called by pycromanager
    public StorageAPI getStorage() {
-      return dataSink_ == null ? null : ((RemoteViewerStorageAdapter) dataSink_).getStorage();
+      return dataSink_ == null ? null : ((MagellanDataManager) dataSink_).getStorage();
    }
 
    @Override

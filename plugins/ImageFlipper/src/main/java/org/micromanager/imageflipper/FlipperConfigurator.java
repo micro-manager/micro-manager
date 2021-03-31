@@ -24,11 +24,11 @@ import com.bulenkov.iconloader.IconLoader;
 
 import ij.process.ByteProcessor;
 
+import java.awt.Toolkit;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
+import javax.swing.*;
 
 import mmcorej.StrVector;
 
@@ -40,6 +40,7 @@ import org.micromanager.Studio;
 import org.micromanager.data.Image;
 import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.data.Coordinates;
+import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 // Imports for MMStudio internal packages
@@ -47,9 +48,8 @@ import org.micromanager.propertymap.MutablePropertyMapView;
 // maintainability. However, this plugin code is older than the current
 // MMStudio API, so it still uses internal classes and interfaces. New code
 // should not imitate this practice.
-import org.micromanager.internal.utils.MMFrame;
 
-public class FlipperConfigurator extends MMFrame implements ProcessorConfigurator {
+public class FlipperConfigurator extends JFrame implements ProcessorConfigurator {
 
    private static final String DEFAULT_CAMERA = "Default camera for image flipper";
    private static final String DEFAULT_MIRRORED = "Whether or not to mirror the image flipper";
@@ -98,7 +98,11 @@ public class FlipperConfigurator extends MMFrame implements ProcessorConfigurato
          rotateComboBox_.addItem(item);
       }
       rotateComboBox_.setSelectedIndex(R_INTS.indexOf(rotation));
-      super.loadAndRestorePosition(frameXPos_, frameYPos_);
+
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      super.setLocation(frameXPos_, frameYPos_);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       updateCameras();
    }
 

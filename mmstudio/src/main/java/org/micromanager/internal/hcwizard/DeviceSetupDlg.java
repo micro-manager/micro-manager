@@ -1,5 +1,6 @@
 package org.micromanager.internal.hcwizard;
 
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -9,14 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.ListSelectionModel;
+import javax.swing.*;
 import javax.swing.table.TableColumn;
 import mmcorej.CMMCore;
 import mmcorej.DeviceDetectionStatus;
@@ -25,15 +19,9 @@ import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
-import org.micromanager.internal.utils.DaytimeNighttime;
-import org.micromanager.internal.utils.MMDialog;
-import org.micromanager.internal.utils.PropertyItem;
-import org.micromanager.internal.utils.PropertyNameCellRenderer;
-import org.micromanager.internal.utils.PropertyValueCellEditor;
-import org.micromanager.internal.utils.PropertyValueCellRenderer;
-import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.*;
 
-public final class DeviceSetupDlg extends MMDialog {
+public final class DeviceSetupDlg extends JDialog {
    private static final long serialVersionUID = 1L;
    private static final String SCAN_PORTS = "Scan Ports";
 
@@ -56,9 +44,12 @@ public final class DeviceSetupDlg extends MMDialog {
     * Create the dialog.
     */
    public DeviceSetupDlg(MicroscopeModel mod, Studio studio, Device d) {
-      super("hardware config wizard: device setup dialog");
+      super();
       setModal(true);
-      loadPosition(100, 100);
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      super.setLocation(100, 100);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       model_ = mod;
       core_ = studio.core();
       studio_ = studio;
@@ -159,26 +150,17 @@ public final class DeviceSetupDlg extends MMDialog {
       buttonPane.add(cancelButton, "wrap");
       contents_.add(buttonPane, "spanx, growx, wrap");
 
-      addWindowListener(new WindowAdapter() {
-         @Override
-         public void windowClosing(final WindowEvent e) {
-            savePosition();
-         }
-      });
-
       pack();
       loadSettings();
       setVisible(true);
    }
 
    protected void onCancel() {
-      savePosition();
       dispose();
    }
 
    protected void onOK() {
       propTable_.editingStopped(null);
-      savePosition();
       String oldName = device_.getName();
       String newName = devName_.getText();
 

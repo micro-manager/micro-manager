@@ -26,6 +26,7 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -34,17 +35,13 @@ import mmcorej.Configuration;
 import org.micromanager.Studio;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.utils.Calibration;
-import org.micromanager.internal.utils.CalibrationList;
-import org.micromanager.internal.utils.DaytimeNighttime;
-import org.micromanager.internal.utils.MMDialog;
-import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.*;
 
 /*
  * Dialog for listing pixel size configuration presets and the corresponding
  * pixel size for each.
  */
-public final class CalibrationListDlg extends MMDialog {
+public final class CalibrationListDlg extends JDialog {
    private static final long serialVersionUID = 1L;
    private static final String TITLE = "Calibration Editor";
    public static final String PIXEL_SIZE_GROUP = "ConfigPixelSize";
@@ -144,14 +141,18 @@ public final class CalibrationListDlg extends MMDialog {
     * @param core - The Micro-Manager core object
     */
    public CalibrationListDlg(CMMCore core) {
-      super("calibration list");
+      super();
       core_ = core;
       super.setTitle("Pixel Size Calibration");
       springLayout = new SpringLayout();
       super.getContentPane().setLayout(springLayout);
 
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       super.setMinimumSize(new Dimension(263, 239));
-      super.loadAndRestorePosition(100, 100, 365, 495);
+      super.setBounds(100, 100, 365, 495);
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
+
       Rectangle r = super.getBounds();
       r.x +=1;
       

@@ -83,7 +83,7 @@ public class DefaultUserProfile implements UserProfile, EventPublisher {
     */
    public void close() throws InterruptedException {
       if (saver_ != null) {
-         saver_.stop();
+         saver_.stop(); // This will cause a final save to file.
       }
       UserProfileMigratorImpl.unregisterForEvents(this);
    }

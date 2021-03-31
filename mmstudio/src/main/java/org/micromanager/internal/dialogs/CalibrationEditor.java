@@ -25,6 +25,7 @@ package org.micromanager.internal.dialogs;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -34,19 +35,7 @@ import java.awt.event.WindowEvent;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import javax.swing.AbstractCellEditor;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.ListSelectionModel;
-import javax.swing.SpringLayout;
-import javax.swing.WindowConstants;
+import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
@@ -59,19 +48,12 @@ import mmcorej.PropertySetting;
 import mmcorej.PropertyType;
 import mmcorej.StrVector;
 import org.micromanager.Studio;
-import org.micromanager.internal.utils.DaytimeNighttime;
-import org.micromanager.internal.utils.MMDialog;
-import org.micromanager.internal.utils.NumberUtils;
-import org.micromanager.internal.utils.PropertyItem;
-import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.internal.utils.ShowFlags;
-import org.micromanager.internal.utils.SliderPanel;
-import org.micromanager.internal.utils.SortFunctionObjects;
+import org.micromanager.internal.utils.*;
 
 /**
  * Dialog for editing of a pixel size configuration preset.
  */
-public final class CalibrationEditor extends MMDialog {
+public final class CalibrationEditor extends JDialog {
    private static final long serialVersionUID = 1L;
    private final JTextArea textArea_;
    private final JTextField presetSizeField_;
@@ -97,7 +79,7 @@ public final class CalibrationEditor extends MMDialog {
    private boolean tableEditable_ = true;
     
    public CalibrationEditor(Studio studio, String label, String pixelSize) {
-      super("calibration editor");
+      super();
       setModal(true);
       studio_ = studio;
       label_ = label;
@@ -113,7 +95,6 @@ public final class CalibrationEditor extends MMDialog {
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent e) {
-            savePosition();
             flags_.save(CalibrationEditor.class);
          }
          @Override
@@ -122,17 +103,19 @@ public final class CalibrationEditor extends MMDialog {
             data_.updateFlags();
             data_.updateStatus();
             data_.showOriginalSelection();
-        }
+         }
          @Override
          public void windowClosed(WindowEvent arg0) {
-            savePosition();
             flags_.save(CalibrationEditor.class);
          }
       });
       setTitle("Calibration Group Editor");
 
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
       setMinimumSize(new Dimension(490, 280));
-      loadPosition(100, 100, 551, 562);
+      super.setBounds(100, 100, 551, 562);
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       // setResizable(false);
       setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 

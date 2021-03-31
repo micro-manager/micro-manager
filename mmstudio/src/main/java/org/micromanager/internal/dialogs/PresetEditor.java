@@ -22,6 +22,8 @@ package org.micromanager.internal.dialogs;
 
 
 import java.awt.Dimension;
+import java.awt.Toolkit;
+
 import mmcorej.Configuration;
 import mmcorej.StrVector;
 import org.micromanager.Studio;
@@ -29,6 +31,7 @@ import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.PropertyItem;
 import org.micromanager.internal.utils.PropertyTableData;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.WindowPositioning;
 
 public final class PresetEditor extends ConfigDialog {
 
@@ -51,7 +54,10 @@ public final class PresetEditor extends ConfigDialog {
       data_.setColumnNames("Property Name","Preset Value","");
       data_.setShowReadOnly(true);
       initialize();
-      super.loadAndRestorePosition(100, 100, 420, 300);
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      super.setBounds(100, 100, 420, 300);
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       super.setMinimumSize(new Dimension(400, 250));
    }
 

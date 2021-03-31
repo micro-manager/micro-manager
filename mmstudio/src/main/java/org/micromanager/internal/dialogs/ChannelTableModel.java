@@ -3,6 +3,7 @@ package org.micromanager.internal.dialogs;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
+import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.internal.RememberedDisplaySettings;
 import org.micromanager.events.internal.ChannelColorEvent;
 import org.micromanager.internal.utils.ColorPalettes;
@@ -129,7 +130,12 @@ public final class ChannelTableModel extends AbstractTableModel  {
          if (cs == null) {
             // Our fallback color is the colorblind-friendly color for our
             // current row index.
-            cb.color( new Color(ColorPalettes.getFromDefaultPalette(row).getRGB()));
+            ChannelDisplaySettings cds =
+                    RememberedDisplaySettings.loadChannel(studio_,
+                        acqEng_.getSequenceSettings().channelGroup(),
+                        value.toString(), new Color(
+                                ColorPalettes.getFromDefaultPalette(row).getRGB()));
+            cb.color(cds.getColor());
             cb.exposure(10.0);
          }
          else {

@@ -22,6 +22,7 @@ package org.micromanager.internal.dialogs;
 
 import java.awt.Dimension;
 import java.awt.HeadlessException;
+import java.awt.Toolkit;
 import java.awt.geom.AffineTransform;
 import java.text.ParseException;
 import javax.swing.JOptionPane;
@@ -79,7 +80,10 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
       affineEditorPanel_ = new AffineEditorPanel(parent_.getStudio(), this, affineTransform_);
 
       super.initialize();  // will call initializeWidgets, which overrides the base class
-      super.loadAndRestorePosition(100, 100, 450, 400);
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      super.setBounds(100, 100, 450, 400);
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       super.setMinimumSize(new Dimension(380, 350));
    }
 

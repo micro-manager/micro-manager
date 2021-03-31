@@ -20,6 +20,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
+import org.micromanager.events.NewPositionListEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 
 /**
@@ -58,11 +59,19 @@ public final class MMPositionListDlg extends PositionListDlg {
             axisCol0Width);
    }
     
-    @Subscribe
+   @Subscribe
    public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
       if (!event.isCanceled()) {
          saveDims();
          dispose();
       }
    }   
+   
+   @Subscribe
+   public void onNewPositionList(NewPositionListEvent nple) {
+       PositionList pl = nple.getPositionList();
+       if (this.getPositionList() != pl) { // Without this check we will enter an infinite loop.
+            this.setPositionList(nple.getPositionList());
+       }
+   }
 }

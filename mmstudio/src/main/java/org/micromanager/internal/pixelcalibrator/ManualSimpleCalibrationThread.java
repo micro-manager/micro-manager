@@ -21,6 +21,8 @@
 package org.micromanager.internal.pixelcalibrator;
 
 import com.google.common.eventbus.Subscribe;
+
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -28,10 +30,8 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
+
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
@@ -39,9 +39,9 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.display.internal.event.DisplayMouseEvent;
 import org.micromanager.internal.utils.AffineUtils;
-import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.WindowPositioning;
 
 /**
  *
@@ -231,7 +231,7 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
       return at;
    }
 
-   private class DialogFrame extends MMFrame {
+   private class DialogFrame extends JFrame {
 
       private static final long serialVersionUID = -7944616693940334489L;
       private final Object caller_;
@@ -278,7 +278,10 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
          });
          super.add(cancelButton, "tag cancel, wrap");
          super.pack();
-         super.loadAndRestorePosition(200, 200);
+         super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+                 getClass().getResource("/org/micromanager/icons/microscope.gif")));
+         super.setLocation(200, 200);
+         WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
          super.setVisible(true);
       }
       

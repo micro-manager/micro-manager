@@ -26,17 +26,17 @@
 
 package org.micromanager.projector.internal;
 
+import org.micromanager.internal.utils.WindowPositioning;
 import org.micromanager.projector.internal.devices.SLM;
 import ij.IJ;
 import ij.ImagePlus;
-import ij.gui.ImageWindow;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.plugin.frame.RoiManager;
 import ij.process.FloatPolygon;
 import java.awt.Polygon;
 import java.awt.Rectangle;
-import java.awt.geom.AffineTransform;
+import java.awt.Toolkit;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
@@ -50,6 +50,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
+import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -68,25 +69,24 @@ import mmcorej.org.json.JSONException;
 import mmcorej.org.json.JSONObject;
 import org.micromanager.Studio;
 
-
-import org.micromanager.internal.utils.FileDialogs;
-import org.micromanager.internal.utils.GUIUtils;
-import org.micromanager.internal.utils.MMFrame;
-import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.internal.utils.TextUtils;
-
 // Imports for MMStudio internal packages
 // Plugins should not access internal packages, to ensure modularity and
 // maintainability. However, this plugin code is older than the current
 // MMStudio API, so it still uses internal classes and interfaces. New code
 // should not imitate this practice.
+import org.micromanager.internal.utils.FileDialogs;
+import org.micromanager.internal.utils.GUIUtils;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.TextUtils;
+
+
 import org.micromanager.projector.Mapping;
 import org.micromanager.projector.ProjectorActions;
 
 // The Mosaic Sequencing Window is for use with Andor's Mosaic3 device adapter.
 // It allows the creation of complex phototargeting sequences, for use with
 // Micro-Manager's multi-dimensional acquisition.
-public class MosaicSequencingFrame extends MMFrame {
+public class MosaicSequencingFrame extends JFrame {
    private final CMMCore core_;
    private final Studio gui_;
    private final String mosaicName_;
@@ -812,8 +812,12 @@ public class MosaicSequencingFrame extends MMFrame {
       // The mosaic executor service makes sure everything happens
       // in sequence, but off the GUI thread.
       mosaicExecutor_ = Executors.newFixedThreadPool(1);
-      
-      loadAndRestorePosition(300, 400);
+
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      super.setLocation(300, 400);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
+
       GUIUtils.enforceIntegerTextField(onDurationTextField_, 0, 200000);
       GUIUtils.enforceIntegerTextField(offDurationTextField_, 0, 200000);
       GUIUtils.enforceIntegerTextField(loopCountTextField_, 0, 65535);

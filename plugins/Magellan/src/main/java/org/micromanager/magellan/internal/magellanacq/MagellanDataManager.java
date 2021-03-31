@@ -130,6 +130,10 @@ public class MagellanDataManager implements DataSink, DataSourceInterface,
       name_ = this.getUniqueAcqName();
    }
 
+   public MultiresStorageAPI getStorage() {
+      return storage_;
+   }
+
    private void createDisplay() {
       //create display
       try {

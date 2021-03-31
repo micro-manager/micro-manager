@@ -2,26 +2,19 @@ package org.micromanager.internal.hcwizard;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.Vector;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.ListSelectionModel;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.AbstractTableModel;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 import org.micromanager.internal.utils.DaytimeNighttime;
-import org.micromanager.internal.utils.MMDialog;
+import org.micromanager.internal.utils.WindowPositioning;
 
-public final class PeripheralSetupDlg extends MMDialog {
+public final class PeripheralSetupDlg extends JDialog {
 
    private static final long serialVersionUID = 1L;
    private static final int NAMECOLUMN = 0;
@@ -147,10 +140,12 @@ public final class PeripheralSetupDlg extends MMDialog {
    private Vector<Device> peripherals_;
 
    public PeripheralSetupDlg(MicroscopeModel mod, CMMCore c, String hub, Vector<Device> per) {
-      super("hardware config wizard: peripheral setup");
+      super();
       setTitle("Peripheral Devices Setup");
-      setBounds(100, 100, 479, 353);
-      loadPosition(100, 100);
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      super.setBounds(100, 100, 479, 353);
+      WindowPositioning.setUpBoundsMemory(this, this.getClass(), null);
       //setModalityType(ModalityType.APPLICATION_MODAL);
       setModal(true);
       setResizable(false);
@@ -207,12 +202,6 @@ public final class PeripheralSetupDlg extends MMDialog {
             buttonPane.add(cancelButton);
          }
       }
-      addWindowListener(new WindowAdapter() {
-         @Override
-         public void windowClosing(final WindowEvent e) {
-            savePosition();
-         }
-      });
       
       rebuildTable();
    }
@@ -264,12 +253,10 @@ public final class PeripheralSetupDlg extends MMDialog {
 //      } finally {
 //         dispose();
 //      }
-      savePosition();
       dispose();
    }
    
    public void onCancel() {
-      savePosition();
       dispose();
    }
 

@@ -3,6 +3,7 @@ package org.micromanager.internal.pixelcalibrator;
 
 import com.google.common.eventbus.Subscribe;
 import java.awt.Point;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -13,10 +14,8 @@ import java.awt.geom.Point2D;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
+
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import net.miginfocom.swing.MigLayout;
@@ -24,10 +23,7 @@ import org.micromanager.Studio;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.display.internal.event.DisplayMouseEvent;
-import org.micromanager.internal.utils.MMFrame;
-import org.micromanager.internal.utils.MathFunctions;
-import org.micromanager.internal.utils.NumberUtils;
-import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.*;
 
 /**
  * The idea is to calibrate the camera/stage spatial relation by displaying an 
@@ -383,13 +379,13 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
    }
    
    
-   private class DialogFrame extends MMFrame {
+   private class DialogFrame extends JFrame {
 
       private static final long serialVersionUID = -7944616693940334489L;
       private final Object caller_;
       private final JButton okButton_;
       private final JLabel explanationLabel_;
-      
+
       public DialogFrame(Object caller) {
          caller_ = caller;
          explanationLabel_ = new JLabel();
@@ -410,7 +406,7 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
                  + "on an object somehwere <br>near the center of the image.";
          explanationLabel_.setText(label1Text);
          super.add(explanationLabel_, "span 2, wrap");
-         
+
          okButton_ = new JButton("OK");
          okButton_.addActionListener(new ActionListener() {
             @Override
@@ -421,7 +417,7 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
          });
          okButton_.setVisible(false);
          super.add(okButton_, "tag ok");
-         
+
          JButton cancelButton = new JButton("Cancel");
          cancelButton.addActionListener(new ActionListener() {
             @Override
@@ -431,10 +427,14 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
          });
          super.add(cancelButton, "tag cancel, wrap");
          super.pack();
-         super.loadAndRestorePosition(200, 200);
+
+         super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+                 getClass().getResource("/org/micromanager/icons/microscope.gif")));
+         super.setLocation(200, 200);
+         WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
          super.setVisible(true);
       }
-      
+
       public void setLabelText(String newText) {
          if (!SwingUtilities.isEventDispatchThread()) {
             SwingUtilities.invokeLater(new Runnable() {
@@ -446,7 +446,7 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
          }
          explanationLabel_.setText(newText);
       }
-      
+
       @Override
       public void dispose() {
          super.dispose();
@@ -459,11 +459,11 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
          //running_.set(false);
          dialog_.calibrationFailed(true);
       }
-      
+
       public void setOKButtonVisible(boolean visible) {
          okButton_.setVisible(visible);
       }
    }
 
-   
+
 }

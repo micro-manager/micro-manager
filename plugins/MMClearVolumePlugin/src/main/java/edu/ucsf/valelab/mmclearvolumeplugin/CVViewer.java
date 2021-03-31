@@ -36,6 +36,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
@@ -47,7 +48,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
+
 import org.micromanager.LogManager;
 
 import org.micromanager.Studio;
@@ -87,7 +89,7 @@ import org.micromanager.display.internal.imagestats.ImageStatsRequest;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
 import org.micromanager.display.internal.imagestats.ImageStatsProcessor;
 import org.micromanager.display.internal.imagestats.IntegerComponentStats;
-import org.micromanager.internal.utils.MMFrame;
+import org.micromanager.internal.utils.WindowPositioning;
 
 import static org.micromanager.data.internal.BufferTools.NATIVE_ORDER;
 
@@ -117,10 +119,13 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
             Color.PINK, Color.CYAN, Color.YELLOW, Color.ORANGE};
    
    
-   private class CVFrame extends MMFrame {
+   private class CVFrame extends JFrame {
       public CVFrame() {
          super();
-         super.loadAndRestorePosition(100, 100);
+         super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+                 getClass().getResource("/org/micromanager/icons/microscope.gif")));
+         super.setLocation(100, 100);
+         WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       }
    }
    

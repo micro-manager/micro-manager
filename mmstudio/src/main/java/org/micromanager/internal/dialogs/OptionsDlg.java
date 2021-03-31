@@ -21,18 +21,13 @@
 
 package org.micromanager.internal.dialogs;
 
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.text.ParseException;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JSeparator;
-import javax.swing.JTextField;
-import javax.swing.WindowConstants;
+import javax.swing.*;
+
 import mmcorej.CMMCore;
 import org.micromanager.ApplicationSkin.SkinMode;
 import org.micromanager.Studio;
@@ -43,17 +38,14 @@ import org.micromanager.internal.MainFrame;
 import org.micromanager.internal.StartupSettings;
 import org.micromanager.internal.logging.LogFileManager;
 import org.micromanager.internal.script.ScriptPanel;
-import org.micromanager.internal.utils.MMDialog;
-import org.micromanager.internal.utils.NumberUtils;
-import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.internal.utils.UIMonitor;
+import org.micromanager.internal.utils.*;
 import org.micromanager.internal.zmq.ZMQSocketWrapper;
 
 /**
  * Options dialog for MMStudio.
  *
  */
-public final class OptionsDlg extends MMDialog {
+public final class OptionsDlg extends JDialog {
    private static final long serialVersionUID = 1L;
    private static final String IS_DEBUG_LOG_ENABLED = "is debug logging enabled";
    private static final String SHOULD_CLOSE_ON_EXIT = "should close the entire program when the Micro-Manager plugin is closed";
@@ -73,7 +65,7 @@ public final class OptionsDlg extends MMDialog {
     * @param mmStudio - MMStudio object (including Studio implementation) 
     */
    public OptionsDlg(CMMCore core, MMStudio mmStudio) {
-      super("global micro-manager options");
+      super();
       mmStudio_ = mmStudio;
       core_ = core;
 
@@ -85,7 +77,10 @@ public final class OptionsDlg extends MMDialog {
       super.setAlwaysOnTop(true);
       super.setTitle("Micro-Manager Options");
 
-      super.loadAndRestorePosition(100, 100);
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      super.setLocation(100, 100);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
 
       super.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       super.addWindowListener(new WindowAdapter() {

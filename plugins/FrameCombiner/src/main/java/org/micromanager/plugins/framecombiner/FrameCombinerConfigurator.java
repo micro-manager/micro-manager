@@ -1,6 +1,8 @@
 package org.micromanager.plugins.framecombiner;
 
+import java.awt.Toolkit;
 import java.text.NumberFormat;
+import javax.swing.*;
 import javax.swing.text.NumberFormatter;
 
 
@@ -8,15 +10,15 @@ import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
 import org.micromanager.data.ProcessorConfigurator;
+import org.micromanager.internal.utils.WindowPositioning;
 
 // Imports for MMStudio internal packages
 // Plugins should not access internal packages, to ensure modularity and
 // maintainability. However, this plugin code is older than the current
 // MMStudio API, so it still uses internal classes and interfaces. New code
 // should not imitate this practice.
-import org.micromanager.internal.utils.MMFrame;
 
-public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfigurator {
+public class FrameCombinerConfigurator extends JFrame implements ProcessorConfigurator {
 
    private static final String PROCESSOR_DIMENSION = "Dimension";
    private static final String PROCESSOR_ALGO = "Algorithm to apply on stack images";
@@ -32,7 +34,11 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
 
       initComponents();
       loadSettingValue();
-      super.loadAndRestorePosition(200, 200);
+
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("/org/micromanager/icons/microscope.gif")));
+      super.setLocation(200, 200);
+      WindowPositioning.setUpLocationMemory(this, this.getClass(), null);
       
    }
 
