@@ -372,8 +372,10 @@ public final class MainFrame extends JFrame {
 
       JButton refreshButton = createButton("Refresh", "arrow_refresh.png",
          "Refresh all GUI controls directly from the hardware", () -> {
+            mmStudio_.live().setSuspended(true);
             core_.updateSystemStateCache();
             mmStudio_.uiManager().updateGUI(true);
+            mmStudio_.live().setSuspended(false);
       });
       subPanel.add(refreshButton, BIGBUTTON_SIZE);
 
