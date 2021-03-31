@@ -307,8 +307,6 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       // create the table of channels
       createChannelTable();
 
-      acqEng_.setSequenceSettings(sequenceSettings); // listener will call updateGUIContent()
-
       createToolTips();
 
       super.pack();
@@ -317,6 +315,8 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       super.setMinimumSize(size);
       super.setBounds(100, 100, size.width, size.height);
       WindowPositioning.setUpBoundsMemory(this, this.getClass(), "MDA");
+
+      acqEng_.setSequenceSettings(sequenceSettings); // listener will call updateGUIContent()
 
       mmStudio_.events().registerForEvents(this);
 
@@ -1494,7 +1494,6 @@ public final class AcqControlDlg extends JFrame implements PropertyChangeListene
       }
       return -1;
    }
-
 
    @Override
    public void settingsChanged() {

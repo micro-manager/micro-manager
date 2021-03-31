@@ -94,11 +94,14 @@ public class RememberedDisplaySettings {
                  settings.getPropertyMap(key, null), channelGroup, channelName);
       }
       ChannelDisplaySettings.Builder cdsBuilder =
-              DefaultChannelDisplaySettings.builder().name(channelName).component(1);
+              DefaultChannelDisplaySettings.builder().groupName(channelGroup).
+                      name(channelName).component(1);
       if (defaultColor != null) {
          cdsBuilder.color(defaultColor);
       }
-      return cdsBuilder.build();
+      ChannelDisplaySettings cds = cdsBuilder.build();
+      storeChannel(studio, channelGroup, channelName, cds);
+      return cds;
    }
    
    /**
@@ -106,9 +109,9 @@ public class RememberedDisplaySettings {
     * object with the ChannelDisplaySettings appropriate for each channel
     * Note: the "overall" DisplaySettings (i.e. everything unrelated 
     * to channels) are not stored (yet).
-    * @param studio
-    * @param summary
-    * @return 
+    * @param studio The Studio object
+    * @param summary Summary metadata for the dataset used
+    * @return DisplaySettings apprpiate for each channel in the summary metadaya
     */
    public static DisplaySettings loadDefaultDisplaySettings(Studio studio, 
            SummaryMetadata summary) {
