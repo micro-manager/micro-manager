@@ -24,7 +24,7 @@ For more information about working with Git submodules click [here](https://git-
 
 For licensing information, please see [**doc/copyright.txt**](doc/copyright.txt).
 
-For build instructions, please see the [**doc/how-to-build.md**](doc/how-to-biuld.md).
+For build instructions, please see the [**doc/how-to-build.md**](doc/how-to-build.md).
 
 Additional information is available on the Micro-Manager website at
 https://micro-manager.org
