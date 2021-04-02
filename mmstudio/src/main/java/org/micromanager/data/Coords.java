@@ -42,38 +42,39 @@ import java.util.List;
  */
 public interface Coords {
    /** Axis label for the time point (frame) axis. */
-   public static final String TIME_POINT = "time";
+   String TIME_POINT = "time";
 
    /**
     * Same as {@code TIME_POINT} or {@code T}.
     * @deprecated Use discouraged because it reads like a physical time rather
     * than the time point index that it is.
     */
-   @Deprecated public static final String TIME = TIME_POINT;
+   @Deprecated
+   String TIME = TIME_POINT;
 
    /** Axis label for the time point (frame) axis (short form).
     * Same as {@code TIME_POINT}. */
-   public static final String T = TIME_POINT;
+   String T = TIME_POINT;
 
    /** Axis label for the stage position axis. */
-   public static final String STAGE_POSITION = "position";
+   String STAGE_POSITION = "position";
 
    /** Axis label for the stage position axis (short form).
     * Same as {@code STAGE_POSTITION}. */
-   public static final String P = STAGE_POSITION;
+   String P = STAGE_POSITION;
 
    /** Axis label for the Z slice axis. */
-   public static final String Z_SLICE = "z";
+   String Z_SLICE = "z";
 
    /** Axis label for the Z slice axis (short form).
     * Same as {@code Z_SLICE}. */
-   public static final String Z = Z_SLICE;
+   String Z = Z_SLICE;
 
    /** Axis label for the channel axis. */
-   public static final String CHANNEL = "channel";
+   String CHANNEL = "channel";
 
    /** Axis label for the channel axis (short form). Same as {@code CHANNEL}. */
-   public static final String C = CHANNEL;
+   String C = CHANNEL;
 
    interface Builder extends CoordsBuilder {
       @Override Coords build();
@@ -209,7 +210,7 @@ public interface Coords {
     * @return index along {@code axis}, or {@code -1} if {@code axis} does not
     * exist
     */
-   public int getIndex(String axis);
+   int getIndex(String axis);
 
    /**
     * Get the channel index.
@@ -219,14 +220,14 @@ public interface Coords {
     * @return channel index, or {@code -1} if this {@code Coords} doesn't
     * contain a channel index.
     */
-   public int getChannel();
+   int getChannel();
 
    /** 
     * Shorthand for {@link #getChannel() getChannel}.
     * @return channel index, or {@code -1} if this {@code Coords} doesn't
     * contain a channel index.
     */
-   public int getC();
+   int getC();
 
    /**
     * Get the time point (frame) index.
@@ -236,7 +237,7 @@ public interface Coords {
     * @return time point index, or {@code -1} if this {@code Coords} doesn't
     * contain a time point index.
     */
-   public int getTimePoint();
+   int getTimePoint();
 
    /** 
     * Same as {@link #getTimePoint() getTimePoint}.
@@ -244,7 +245,7 @@ public interface Coords {
     * @deprecated Due to looking like the physical time rather than an index. Use {@link #getTimePoint() getTmePoint}
     */
    @Deprecated
-   public int getTime();
+   int getTime();
 
    /** 
     * Shorthand for {@link #getTimePoint() getTimePoint}.
@@ -252,7 +253,7 @@ public interface Coords {
     * @return time point index, or {@code -1} if this {@code Coords} doesn't
     * contain a time point index.
     */
-   public int getT();
+   int getT();
 
    /**
     * Get the Z slice index.
@@ -262,14 +263,14 @@ public interface Coords {
     * @return Z slice index, or {@code -1} if this {@code Coords} doesn't
     * contain a Z slice index.
     */
-   public int getZSlice();
+   int getZSlice();
 
    /** Shorthand for {@link #getZSlice() getZSlice}
     * 
     * @return Z slice index, or {@code -1} if this {@code Coords} doesn't
     * contain a Z slice index.
     */
-   public int getZ();
+   int getZ();
 
    /**
     * Get the stage position index.
@@ -279,37 +280,37 @@ public interface Coords {
     * @return stage position index, or {@code -1} if this {@code Coords}
     * doesn't contain a stage position index.
     */
-   public int getStagePosition();
+   int getStagePosition();
 
    /** Shorthand for {@link #getStagePosition() getStagePosition}.
     * 
     * @return stage position index, or {@code -1} if this {@code Coords}
     * doesn't contain a stage position index.
     */
-   public int getP();
+   int getP();
 
    /**
     * Return all axes that this {@code Coords} has an index for.
     *
     * @return List of all axis
     */
-   public List<String> getAxes();
+   List<String> getAxes();
 
    /**
     * Returns whether this coords has the given axis.
     * @param axis the axis to test for presence
     * @return true if this coords includes {@code axis}
     */
-   public boolean hasAxis(String axis);
+   boolean hasAxis(String axis);
 
-   public boolean hasTimePointAxis();
-   public boolean hasT();
-   public boolean hasStagePositionAxis();
-   public boolean hasP();
-   public boolean hasZSliceAxis();
-   public boolean hasZ();
-   public boolean hasChannelAxis();
-   public boolean hasC();
+   boolean hasTimePointAxis();
+   boolean hasT();
+   boolean hasStagePositionAxis();
+   boolean hasP();
+   boolean hasZSliceAxis();
+   boolean hasZ();
+   boolean hasChannelAxis();
+   boolean hasC();
 
    /**
     * Return true if this instance contains equal indices for every axis in the
@@ -318,7 +319,7 @@ public interface Coords {
     * @param other the instance to compare with
     * @return whether this instance is a superspace coords of {@code other}
     */
-   public boolean isSuperspaceCoordsOf(Coords other);
+   boolean isSuperspaceCoordsOf(Coords other);
 
    /**
     * Return true if the given instance contains equal indices for every axis
@@ -327,7 +328,7 @@ public interface Coords {
     * @param other the instance to compare with
     * @return whether this instance is a subspace coords of {@code other}
     */
-   public boolean isSubspaceCoordsOf(Coords other);
+   boolean isSubspaceCoordsOf(Coords other);
 
    /**
     * @param alt the instance to compare with
@@ -335,20 +336,20 @@ public interface Coords {
     * @deprecated Use the equivalent {@link #isSubspaceCoordsOf(Coords) isSubspaceCoordsOf} instead.
     */
    @Deprecated
-   public boolean matches(Coords alt);
+   boolean matches(Coords alt);
 
    /**
     * Provides a Builder pre-loaded with a copy of this Coords
     * @return copyBuilder
     */
-   public Builder copyBuilder();
+   Builder copyBuilder();
 
    /**
     * @return Builder
     * @deprecated Use {@link #copyBuilder() copyBuilder} instead
     */
    @Deprecated
-   public CoordsBuilder copy();
+   CoordsBuilder copy();
 
 
    /**
