@@ -30,10 +30,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.data.Coords;
-import static org.micromanager.data.Coords.CHANNEL;
-import static org.micromanager.data.Coords.STAGE_POSITION;
-import static org.micromanager.data.Coords.TIME_POINT;
-import static org.micromanager.data.Coords.Z_SLICE;
 
 
 public final class DefaultCoords implements Coords {
@@ -45,13 +41,13 @@ public final class DefaultCoords implements Coords {
       private final List<Integer> indices_;
 
       public Builder() {
-         axes_ = new ArrayList<String>(5);
-         indices_ = new ArrayList<Integer>(5);
+         axes_ = new ArrayList<>(5);
+         indices_ = new ArrayList<>(5);
       }
 
       private Builder(List<String> axes, List<Integer> indices) {
-         axes_ = new ArrayList<String>(axes);
-         indices_ = new ArrayList<Integer>(indices);
+         axes_ = new ArrayList<>(axes);
+         indices_ = new ArrayList<>(indices);
       }
 
       @Override
@@ -84,35 +80,67 @@ public final class DefaultCoords implements Coords {
 
       @Override
       public Builder offset(String axis, int offset)
-            throws IllegalArgumentException, IndexOutOfBoundsException
-      {
+              throws IllegalArgumentException, IndexOutOfBoundsException {
          int i = axes_.indexOf(axis);
          if (i < 0) {
             throw new IllegalArgumentException(
-                  "Coords does not have index for axis \"" + axis + "\"");
+                    "Coords does not have index for axis \"" + axis + "\"");
          }
          int newIndex = indices_.get(i) + offset;
          if (newIndex < 0) {
             throw new IndexOutOfBoundsException(
-                  "Offset would make Coords have negative index for axis \"" +
-                        axis + "\"");
+                    "Offset would make Coords have negative index for axis \"" +
+                            axis + "\"");
          }
          indices_.set(i, newIndex);
          return this;
       }
 
-      @Override public Builder timePoint(int frame) { return index(TIME_POINT, frame); }
-      @Override @Deprecated public Builder time(int frame) { return timePoint(frame); }
-      @Override public Builder t(int frame) { return timePoint(frame); }
+      @Override
+      public Builder timePoint(int frame) {
+         return index(TIME_POINT, frame);
+      }
 
-      @Override public Builder stagePosition(int index) { return index(STAGE_POSITION, index); }
-      @Override public Builder p(int index) { return stagePosition(index); }
+      @Override
+      @Deprecated
+      public Builder time(int frame) {
+         return timePoint(frame);
+      }
 
-      @Override public Builder zSlice(int slice) { return index(Z_SLICE, slice); }
-      @Override public Builder z(int slice) { return zSlice(slice); }
+      @Override
+      public Builder t(int frame) {
+         return timePoint(frame);
+      }
 
-      @Override public Builder channel(int channel) { return index(CHANNEL, channel); }
-      @Override public Builder c(int channel) { return channel(channel); }
+      @Override
+      public Builder stagePosition(int index) {
+         return index(STAGE_POSITION, index);
+      }
+
+      @Override
+      public Builder p(int index) {
+         return stagePosition(index);
+      }
+
+      @Override
+      public Builder zSlice(int slice) {
+         return index(Z_SLICE, slice);
+      }
+
+      @Override
+      public Builder z(int slice) {
+         return zSlice(slice);
+      }
+
+      @Override
+      public Builder channel(int channel) {
+         return index(CHANNEL, channel);
+      }
+
+      @Override
+      public Builder c(int channel) {
+         return channel(channel);
+      }
    }
 
    // Since we only hold several axes, array lists are likely more efficient
@@ -134,19 +162,55 @@ public final class DefaultCoords implements Coords {
       return indices_.get(i);
    }
 
-   @Override public int getTimePoint() { return getIndex(TIME_POINT); }
-   @Override public int getT() { return getTimePoint(); }
-   @Override public int getStagePosition() { return getIndex(STAGE_POSITION); }
-   @Override public int getP() { return getStagePosition(); }
-   @Override public int getZSlice() { return getIndex(Z_SLICE); }
-   @Override public int getZ() { return getZSlice(); }
-   @Override public int getChannel() { return getIndex(Coords.CHANNEL); }
-   @Override public int getC() { return getChannel(); }
-   @Override @Deprecated public int getTime() { return getTimePoint(); }
+   @Override
+   public int getTimePoint() {
+      return getIndex(TIME_POINT);
+   }
+
+   @Override
+   public int getT() {
+      return getTimePoint();
+   }
+
+   @Override
+   public int getStagePosition() {
+      return getIndex(STAGE_POSITION);
+   }
+
+   @Override
+   public int getP() {
+      return getStagePosition();
+   }
+
+   @Override
+   public int getZSlice() {
+      return getIndex(Z_SLICE);
+   }
+
+   @Override
+   public int getZ() {
+      return getZSlice();
+   }
+
+   @Override
+   public int getChannel() {
+      return getIndex(Coords.CHANNEL);
+   }
+
+   @Override
+   public int getC() {
+      return getChannel();
+   }
+
+   @Override
+   @Deprecated
+   public int getTime() {
+      return getTimePoint();
+   }
 
    @Override
    public List<String> getAxes() {
-      return new ArrayList<String>(axes_);
+      return new ArrayList<>(axes_);
    }
 
    @Override
@@ -154,14 +218,45 @@ public final class DefaultCoords implements Coords {
       return axes_.contains(axis);
    }
 
-   @Override public boolean hasTimePointAxis() { return hasAxis(TIME_POINT); }
-   @Override public boolean hasT() { return hasTimePointAxis(); }
-   @Override public boolean hasStagePositionAxis() { return hasAxis(STAGE_POSITION); }
-   @Override public boolean hasP() { return hasStagePositionAxis(); }
-   @Override public boolean hasZSliceAxis() { return hasAxis(Z_SLICE); }
-   @Override public boolean hasZ() { return hasZSliceAxis(); }
-   @Override public boolean hasChannelAxis() { return hasAxis(Coords.CHANNEL); }
-   @Override public boolean hasC() { return hasChannelAxis(); }
+   @Override
+   public boolean hasTimePointAxis() {
+      return hasAxis(TIME_POINT);
+   }
+
+   @Override
+   public boolean hasT() {
+      return hasTimePointAxis();
+   }
+
+   @Override
+   public boolean hasStagePositionAxis() {
+      return hasAxis(STAGE_POSITION);
+   }
+
+   @Override
+   public boolean hasP() {
+      return hasStagePositionAxis();
+   }
+
+   @Override
+   public boolean hasZSliceAxis() {
+      return hasAxis(Z_SLICE);
+   }
+
+   @Override
+   public boolean hasZ() {
+      return hasZSliceAxis();
+   }
+
+   @Override
+   public boolean hasChannelAxis() {
+      return hasAxis(Coords.CHANNEL);
+   }
+
+   @Override
+   public boolean hasC() {
+      return hasChannelAxis();
+   }
 
    @Override
    public boolean isSuperspaceCoordsOf(Coords other) {
@@ -222,8 +317,12 @@ public final class DefaultCoords implements Coords {
          return false;
       }
       // Axis order is not considered for equality
-      List<String> thisAxes = getAxes();
-      List<String> otherAxes = ((Coords) other).getAxes();
+      // A zero index axis is the same as not having the axes, so remove for comparison
+      Coords nonZeroThis = copyRemovingZeroAxes(this);
+      Coords nonZeroOther = copyRemovingZeroAxes((Coords) other);
+
+      List<String> thisAxes = nonZeroThis.getAxes();
+      List<String> otherAxes = nonZeroOther.getAxes();
       if (thisAxes.size() != otherAxes.size()) {
          return false;
       }
@@ -231,19 +330,34 @@ public final class DefaultCoords implements Coords {
          if (!otherAxes.contains(axis)) {
             return false;
          }
-         if (((Coords) other).getIndex(axis) != getIndex(axis)) {
+         if (nonZeroOther.getIndex(axis) != nonZeroThis.getIndex(axis)) {
             return false;
          }
       }
       return true;
    }
-   
+
+   static Coords copyRemovingZeroAxes(Coords in) {
+      if (! (in instanceof DefaultCoords)) {
+         return in;
+      }
+      DefaultCoords dc = (DefaultCoords) in;
+      Coords.Builder b = in.copyBuilder();
+      for (String axis : in.getAxes()) {
+         if (dc.getIndex(axis) <= 0)
+            b.removeAxis(axis);
+      }
+      return b.build();
+   }
+
    @Override
    public int hashCode() {
+      // only consider non-zero axes
+      Coords nonZero = DefaultCoords.copyRemovingZeroAxes(this);
       // Axis order is not considered for equality
-      List<String> axes = getAxes();
+      List<String> axes = nonZero.getAxes();
       Collections.sort(axes);
-      List<Integer> indices = new ArrayList<Integer>(axes.size());
+      List<Integer> indices = new ArrayList<>(axes.size());
       for (String axis : axes) {
          indices.add(getIndex(axis));
       }
@@ -288,7 +402,6 @@ public final class DefaultCoords implements Coords {
     * Generate a normalized string representation of this Coords, that we can
     * later parse out using {@link #fromNormalizedString}.
     */
-   @Deprecated
    public String toNormalizedString() {
       StringBuilder sb = new StringBuilder();
       for (String axis : axes_) {
