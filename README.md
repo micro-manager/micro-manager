@@ -14,7 +14,7 @@ To get the complete source code follow these instructions:
 2. Move Git bash into the repository: `cd micro-manager`
 3. Make sure any submodules are also cloned: `git submodule update --init --recursive`
 
-If you are working only with the source code that is publicly available then that's all. Some vendors do not allow us to make public device adapters written for their equipment.  If you are part of the micro-manager group, you can get access to these "secret" device adpaters by:
+If you are working only with the source code that is publicly available then that's all. Some vendors do not allow us to make public device adapters written for their equipment.  If you are part of the micro-manager group, you can get access to these "secret" device adapters by:
 
 1. Move Git bash into the `mmCoreAndDevices` submodule: `cd mmCoreAndDevices`
 2. Change to the "privateMain" branch: `git checkout privateMain`
