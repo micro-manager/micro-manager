@@ -27,14 +27,20 @@ import java.util.List;
  *
  * This is typically used to represent the time point, stage position, z slice,
  * and channel indices of images.
- * <p>
- * The {@code Coords} object is a mapping from axes (represented by strings) to
- * non-negative integer indices.
- * <p>
- * Although methods are included to support any arbitrary axes, such usage is
+ *
+ * <p> The {@code Coords} object is a mapping from axes (represented by strings) to
+ * positive integer indices. Because an arbitrary number of axes may be included
+ * in the Coords, the index zero is meaningless and will be omitted.  Therefore,
+ * the axis index for any index not included in the Coords will be zero.  The
+ * Coords of an image that is zero for all axes is an empty Coords. </p>
+ *
+ * <p>The equals operator can be relied upon to establish whether two
+ * different Coords contain the same axes and the same indices to those axes.</p>
+ *
+ * <p>Although methods are included to support any arbitrary axes, such usage is
  * not yet fully supported. <strong>If you do use custom axes, give them names
  * that include upper case letters</strong> so that they do not clash with
- * standard axes added in the future.
+ * standard axes added in the future.</p>
  * <p>
  * {@code Coords} objects are immutable.
  *
@@ -207,7 +213,7 @@ public interface Coords {
     * Get the index for the given axis.
     * 
     * @param axis coordinate axis such as {@code Coords.CHANNEL}
-    * @return index along {@code axis}, or {@code -1} if {@code axis} does not
+    * @return index along {@code axis}, or {@code 0} if {@code axis} does not
     * exist
     */
    int getIndex(String axis);
@@ -217,14 +223,14 @@ public interface Coords {
     *
     * Equivalent to {@code getIndex(Coords.CHANNEL)}.
     * 
-    * @return channel index, or {@code -1} if this {@code Coords} doesn't
+    * @return channel index, or {@code 0} if this {@code Coords} doesn't
     * contain a channel index.
     */
    int getChannel();
 
    /** 
     * Shorthand for {@link #getChannel() getChannel}.
-    * @return channel index, or {@code -1} if this {@code Coords} doesn't
+    * @return channel index, or {@code 0} if this {@code Coords} doesn't
     * contain a channel index.
     */
    int getC();
@@ -234,7 +240,7 @@ public interface Coords {
     *
     * Equivalent to {@code getIndex(Coords.TIME_POINT)}.
     *
-    * @return time point index, or {@code -1} if this {@code Coords} doesn't
+    * @return time point index, or {@code 0} if this {@code Coords} doesn't
     * contain a time point index.
     */
    int getTimePoint();
@@ -250,7 +256,7 @@ public interface Coords {
    /** 
     * Shorthand for {@link #getTimePoint() getTimePoint}.
     *
-    * @return time point index, or {@code -1} if this {@code Coords} doesn't
+    * @return time point index, or {@code 0} if this {@code Coords} doesn't
     * contain a time point index.
     */
    int getT();
@@ -260,14 +266,14 @@ public interface Coords {
     * 
     * Equivalent to {@code getIndex(Coords.Z_SLICE)}.
     * 
-    * @return Z slice index, or {@code -1} if this {@code Coords} doesn't
+    * @return Z slice index, or {@code 0} if this {@code Coords} doesn't
     * contain a Z slice index.
     */
    int getZSlice();
 
    /** Shorthand for {@link #getZSlice() getZSlice}
     * 
-    * @return Z slice index, or {@code -1} if this {@code Coords} doesn't
+    * @return Z slice index, or {@code 0} if this {@code Coords} doesn't
     * contain a Z slice index.
     */
    int getZ();
@@ -277,14 +283,14 @@ public interface Coords {
     *
     * Equivalent to {@code getIndex(Coords.STAGE_POSITION)}.
     * 
-    * @return stage position index, or {@code -1} if this {@code Coords}
+    * @return stage position index, or {@code 0} if this {@code Coords}
     * doesn't contain a stage position index.
     */
    int getStagePosition();
 
    /** Shorthand for {@link #getStagePosition() getStagePosition}.
     * 
-    * @return stage position index, or {@code -1} if this {@code Coords}
+    * @return stage position index, or {@code 0} if this {@code Coords}
     * doesn't contain a stage position index.
     */
    int getP();
@@ -365,7 +371,8 @@ public interface Coords {
     * in the input strings.
     * A more useful name may be: copyProvidedAxes, or copyAxes
     * @param axes Names of axes to be represented in the output
-    * @return Copy of this Coords, but only with the subset of axes provided in the axes param
+    * @return Copy of this Coords, but only with the subset of axes provided in
+    *          the axes param
     */
    Coords copyRetainingAxes(String... axes);
 }

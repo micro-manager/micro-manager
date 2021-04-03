@@ -58,14 +58,15 @@ public final class DefaultCoords implements Coords {
       @Override
       public Builder index(String axis, int index) {
          Preconditions.checkArgument(isValidAxis(axis), "Invalid axis name");
-         if (index < 0) {
+         if (index <= 0) {
             return removeAxis(axis);
          }
-
-         removeAxis(axis);
-         if (index > 0) {
+         int i = axes_.indexOf(axis);
+         if (i < 0) {
             axes_.add(axis);
             indices_.add(index);
+         } else {
+            indices_.set(i, index);
          }
          return this;
       }
@@ -84,17 +85,17 @@ public final class DefaultCoords implements Coords {
       public Builder offset(String axis, int offset)
               throws IllegalArgumentException, IndexOutOfBoundsException {
          int i = axes_.indexOf(axis);
-         if (i < 0) {
-            throw new IllegalArgumentException(
-                    "Coords does not have index for axis \"" + axis + "\"");
+         int oldIndex = 0;
+         if (i >= 0) {
+            oldIndex = indices_.get(i);
          }
-         int newIndex = indices_.get(i) + offset;
+         int newIndex = oldIndex + offset;
          if (newIndex < 0) {
             throw new IndexOutOfBoundsException(
                     "Offset would make Coords have negative index for axis \"" +
                             axis + "\"");
          }
-         indices_.set(i, newIndex);
+         index(axis, newIndex);
          return this;
       }
 
