@@ -88,7 +88,21 @@ public interface Storage {
     * @param coords Coordinates specifying images to match
     * @return List with matching Images
     */
-   public List<Image> getImagesMatching(Coords coords) throws IOException;
+   List<Image> getImagesMatching(Coords coords) throws IOException;
+
+   /**
+    * Retrieve a list of images with Coords identical to the given Coords instance,
+    * except for the axes listed in the exception list.
+    * For intstance, given Coords <t=1,z=3> and axes "c", the following
+    * Coords would match: <t=1, z=3>, <t=1, z=3, c=1>, <t=1, z=3, c=2>
+    * @param coords coord looking for matching images
+    * @param ignoreTheseAxes Axes to be ignored in the images collection when
+    *                        looking for matches
+    * @return matchig images
+    * @throws IOException
+    */
+    List<Image> getImagesIgnoringAxes(Coords coords, String... ignoreTheseAxes) throws IOException;
+
 
    /**
     * Return the largest stored position along the specified axis. Will be -1

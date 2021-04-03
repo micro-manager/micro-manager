@@ -21,6 +21,8 @@
 package org.micromanager.data.internal;
 
 import com.google.common.eventbus.Subscribe;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -101,13 +103,30 @@ public final class StorageRAM implements RewritableStorage {
       if (coordsToImage_ == null) {
          return null;
       }
-      ArrayList<Image> results = new ArrayList<Image>();
+      List<Image> results = new ArrayList<>();
       for (Image image : coordsToImage_.values()) {
-         if (image.getCoords().isSubspaceCoordsOf(coords)) {
+         // TODO figure out why subSpace was used and fix problems by not doing it
+         //  if (image.getCoords().isSubspaceCoordsOf(coords)) {
+         if (image.getCoords().equals(coords)) {
             results.add(image);
          }
       }
       return results;
+   }
+
+   public synchronized List<Image> getImagesIgnoringAxes(Coords coords, String... ignoreTheseAxes)
+           throws IOException {
+      if (coordsToImage_ == null) {
+         return null;
+      }
+      List<Image> result = new ArrayList<>();
+      for (Image image : coordsToImage_.values()) {
+         Coords imCoord = image.getCoords().copyRemovingAxes(ignoreTheseAxes);
+         if (imCoord.equals(coords)) {
+            result.add (image);
+         }
+      }
+      return result;
    }
 
    @Override

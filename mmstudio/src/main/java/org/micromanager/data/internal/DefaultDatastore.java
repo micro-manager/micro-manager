@@ -188,6 +188,16 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
+   public List<Image> getImagesIgnoringAxes(Coords coords, String... ignoreTheseAxes)
+           throws IOException {
+      if (storage_ != null) {
+         return storage_.getImagesIgnoringAxes(coords, ignoreTheseAxes);
+      }
+      return null;
+   }
+
+
+   @Override
    public Iterable<Coords> getUnorderedImageCoords() {
       if (storage_ != null) {
          return storage_.getUnorderedImageCoords();

@@ -63,8 +63,10 @@ public final class DefaultCoords implements Coords {
          }
 
          removeAxis(axis);
-         axes_.add(axis);
-         indices_.add(index);
+         if (index > 0) {
+            axes_.add(axis);
+            indices_.add(index);
+         }
          return this;
       }
 
@@ -157,7 +159,7 @@ public final class DefaultCoords implements Coords {
    public int getIndex(String axis) {
       int i = axes_.indexOf(axis);
       if (i < 0) {
-         return -1;
+         return 0;
       }
       return indices_.get(i);
    }

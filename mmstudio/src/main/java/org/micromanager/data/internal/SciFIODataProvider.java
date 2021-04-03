@@ -368,6 +368,28 @@ public class SciFIODataProvider implements DataProvider {
    }
 
    @Override
+   public List<Image> getImagesIgnoringAxes(Coords coords, String... ignoreTheseAxes) throws IOException {
+      List<Image> result = new ArrayList<>();
+      ImageMetadata im = metadata_.get(IMAGEINDEX);
+      for (int i = 0; i < im.getPlaneCount(); i++) {
+         long[] rasterPosition = FormatTools.rasterToPosition(IMAGEINDEX, i, metadata_);
+         Coords tmpC = rasterPositionToCoords(im, rasterPosition);
+         if (coords.equals(tmpC.copyRemovingAxes(ignoreTheseAxes))) {
+            Plane plane = getPlane(coords);
+            if (im.isMultichannel() && channelAxisIndex_ == 0) {
+               for (int c = 0; c < im.getAxisLength(channelAxisIndex_); c++) {
+                  result.add(planeToImage(plane,
+                          coords.copyBuilder().c(c).build()));
+               }
+            } else {
+               result.add(planeToImage(plane, coords));
+            }
+         }
+      }
+      return result;
+   }
+
+      @Override
    public boolean isFrozen() {
       // for now, we are not writing, so always frozen
       return true;
