@@ -134,9 +134,20 @@ public class DataCoordsAnimationState implements AnimationStateDelegate<Coords> 
       return animationCoords_;
    }
 
+   /**
+    * It is unclear what the intent of this function was.  I guess that its goal
+    * is to "guess" which image to display when an image is missing from the
+    * dataset.  It relies on implementation of Coords, and with the change to
+    * no longer use zero in Coords, this function does not work as intended.
+    * @param partialPosition a partial data position
+    * @return 
+    */
    @Override
    public synchronized Coords getFullPosition(Coords partialPosition) {
       // Fill in missing coords with known current position, or else zero.
+      if (delegate_.coordsExist(partialPosition)) {
+         return partialPosition;
+      }
       Set<String> currentAxes = new HashSet<String>(animationCoords_.getAxes());
       Set<String> givenAxes = new HashSet<String>(partialPosition.getAxes());
       CoordsBuilder cb = new DefaultCoords.Builder();
