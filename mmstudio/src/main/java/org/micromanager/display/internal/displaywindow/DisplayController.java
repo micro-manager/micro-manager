@@ -529,12 +529,9 @@ public final class DisplayController extends DisplayWindowAPIAdapter
             new ExpandDisplayRangeCoalescentRunnable(position));
 
       // Always compute stats for all channels
-      Coords channellessPos = position.hasAxis(Coords.CHANNEL) ?
-            position.copyBuilder().removeAxis(Coords.CHANNEL).build() :
-            position;
       List<Image> images;
       try {
-         images = dataProvider_.getImagesMatching(channellessPos);
+         images = dataProvider_.getImagesIgnoringAxes(position, Coords.CHANNEL);
       }
       catch (IOException e) {
          // TODO Should display error
@@ -881,7 +878,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @Override
    public List<Image> getDisplayedImages() throws IOException {
       // TODO Make sure this is accurate for composite and single-channel
-      return dataProvider_.getImagesMatching(getDisplayPosition());
+      return dataProvider_.getImagesIgnoringAxes(getDisplayPosition(), Coords.CHANNEL);
    }
 
    @Override
