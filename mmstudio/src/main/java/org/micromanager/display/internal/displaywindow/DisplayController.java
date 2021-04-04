@@ -531,7 +531,9 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       // Always compute stats for all channels
       List<Image> images;
       try {
-         images = dataProvider_.getImagesIgnoringAxes(position, Coords.CHANNEL);
+         images = dataProvider_.getImagesIgnoringAxes(
+                 position.copyRemovingAxes(Coords.CHANNEL),
+                 Coords.CHANNEL);
       }
       catch (IOException e) {
          // TODO Should display error
