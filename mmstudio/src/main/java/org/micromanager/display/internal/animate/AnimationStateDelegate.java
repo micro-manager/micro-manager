@@ -39,16 +39,13 @@ public interface AnimationStateDelegate<P> {
    P getAnimationPosition();
 
    /**
-    * Set  the current data position.
+    * Set the current data position.
     *
-    * If {@code position} is a partial position, it will be converted to a full
-    * position based on the current data position (and default values, if
-    * necessary).
     * <p>
     * The current data position held by this object does not change other than
     * by this method and {@code advanceAnimationPosition}.
     *
-    * @param position
+    * @param position the new current data position
     */
    void setAnimationPosition(P position);
 
@@ -70,11 +67,4 @@ public interface AnimationStateDelegate<P> {
     */
    P advanceAnimationPosition(double frames);
 
-   /**
-    * Convert a potentially partial data position into a full one.
-    *
-    * @param partialPosition a partial data position
-    * @return the full data position
-    */
-   P getFullPosition(P partialPosition);
 }
