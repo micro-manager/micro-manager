@@ -27,7 +27,7 @@ import org.micromanager.data.Image;
  */
 public final class ImageStatsRequest {
    private final Coords nominalCoords_;
-   private final List<Image> images_ = new ArrayList<Image>();
+   private final List<Image> images_ = new ArrayList<>();
    private final BoundsRectAndMask roi_;
 
    public static ImageStatsRequest create(Coords nominalCoords,

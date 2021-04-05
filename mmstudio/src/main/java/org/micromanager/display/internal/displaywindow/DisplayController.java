@@ -540,17 +540,12 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          images = Collections.emptyList();
       }
 
-      // Images are sorted by channel here, since we don't (yet) have any other
-      // way to correctly recombine stats with newer images (when update rate
-      // is finite).
-      if (images.size() > 1) {
-         Collections.sort(images, (Image o1, Image o2) -> 
-                 new Integer(o1.getCoords().getChannel()).
-                        compareTo(o2.getCoords().getChannel()));
-      }
 
-      // TODO XXX We need to handle missing images if so requested. User should
-      // be able to enable "filling in Z slices" and "filling in time points".
+
+      // Handle missing images.
+      // TODO: provide user interface so that user can request to enable/disable
+      // "filling in Z slices" and "filling in time points".
+      //
       // If 'images' is empty, search first in Z, then in time, until at least
       // one channel has an image (Q: or just leave empty when no channel has
       // an image?). Then, for missing channels, first search for nearest Z in
@@ -565,6 +560,59 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       // During acquisition, do not search back in time if newest timepoint.
       // During acquisition, do not search in Z if newest timepoint.
 
+      try {
+         if (images.size() != dataProvider_.getAxisLength(Coords.CHANNEL) &&
+                 (!studio_.acquisitions().isAcquisitionRunning() ||
+                  position.getT() < dataProvider_.getMaxIndices().getT())) {
+
+            for (int c = 0; c < dataProvider_.getAxisLength(Coords.CHANNEL); c++) {
+               Coords.CoordsBuilder cb = position.copyBuilder();
+               Coords targetCoord = cb.channel(c).build();
+               CHANNEL_SEARCH: if (!dataProvider_.hasImage(targetCoord)) {
+                  // c is missing, first look in z
+                  int zOffset = 1;
+                  while (position.getZ() - zOffset > -1 ||
+                           position.getZ() + zOffset <= dataProvider_.getAxisLength(Coords.Z)) {
+                     Coords testPosition = cb.z(position.getZ() - zOffset).build();
+                     if (dataProvider_.hasImage(testPosition)) {
+                        images.add(dataProvider_.getImage(testPosition).copyAtCoords(targetCoord));
+                        break CHANNEL_SEARCH;
+                     }
+                     testPosition = cb.z(position.getZ() + zOffset).build();
+                     if (dataProvider_.hasImage(testPosition)) {
+                        images.add(dataProvider_.getImage(testPosition).copyAtCoords(targetCoord));
+                        break CHANNEL_SEARCH;
+                     }
+                     zOffset++;
+                  }
+                  // not found in z, now look backwards in time
+                  cb = targetCoord.copyBuilder();
+                  for (int t = position.getT(); t > -1; t--) {
+                     Coords testPosition = cb.time(t).build();
+                     if (dataProvider_.hasImage(testPosition)) {
+                        images.add(dataProvider_.getImage(testPosition).copyAtCoords(targetCoord));
+                        break;
+                     }
+                  }
+               }
+            }
+         }
+      } catch (IOException e) {
+            // TODO Should display error
+            images = Collections.emptyList();
+      }
+
+      // Images are sorted by channel here, since we don't (yet) have any other
+      // way to correctly recombine stats with newer images (when update rate
+      // is finite).
+      if (images.size() > 1) {
+         Collections.sort(images, (Image o1, Image o2) ->
+                 new Integer(o1.getCoords().getChannel()).
+                         compareTo(o2.getCoords().getChannel()));
+      }
+
+
+
       BoundsRectAndMask selection = BoundsRectAndMask.unselected();
       if (getDisplaySettings().isROIAutoscaleEnabled()) {
          synchronized (selectionLock_) {
@@ -573,8 +621,9 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       }
 
       perfMon_.sampleTimeInterval("Submitting compute request");
-      computeQueue_.submitRequest(ImageStatsRequest.create(position, images,
-            selection));
+      computeQueue_.submitRequest(ImageStatsRequest.create(position,
+              images,
+              selection));
 
       return position;
    }
