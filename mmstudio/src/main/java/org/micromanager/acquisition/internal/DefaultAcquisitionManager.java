@@ -38,6 +38,7 @@ import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.AcquisitionManager;
+import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
@@ -66,6 +67,16 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
       studio_ = studio;
       engine_ = engine;
       mdaDialog_ = mdaDialog;
+   }
+
+   @Override
+   public SequenceSettings.Builder getSequenceSettingsBuilder() {
+      return new SequenceSettings.Builder();
+   }
+
+   @Override
+   public ChannelSpec.Builder getChannelSpecBuilder() {
+      return new ChannelSpec.Builder();
    }
 
    @Override
