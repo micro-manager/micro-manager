@@ -22,14 +22,8 @@ package org.micromanager.events;
 
 import java.awt.geom.AffineTransform;
 
-public class PixelSizeAffineChangedEvent {
-   private final AffineTransform affine_;
-   
-   public PixelSizeAffineChangedEvent(AffineTransform affine) {
-      affine_ = affine;
-   }
-   
-   public AffineTransform getNewPixelSizeAffine() {
-      return affine_;
-   }
+public interface PixelSizeAffineChangedEvent {
+
+   AffineTransform getNewPixelSizeAffine();
+
 }

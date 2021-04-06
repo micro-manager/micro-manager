@@ -21,23 +21,13 @@
 
 package org.micromanager.events.internal;
 
-import java.awt.geom.AffineTransform;
-import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import mmcorej.MMEventCallback;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
-import org.micromanager.events.ChannelGroupChangedEvent;
-import org.micromanager.events.ConfigGroupChangedEvent;
-import org.micromanager.events.ExposureChangedEvent;
-import org.micromanager.events.PixelSizeAffineChangedEvent;
-import org.micromanager.events.PixelSizeChangedEvent;
-import org.micromanager.events.PropertiesChangedEvent;
-import org.micromanager.events.PropertyChangedEvent;
-import org.micromanager.events.SLMExposureChangedEvent;
-import org.micromanager.events.StagePositionChangedEvent;
-import org.micromanager.events.SystemConfigurationLoadedEvent;
-import org.micromanager.events.XYStagePositionChangedEvent;
+
+import javax.swing.SwingUtilities;
+import java.awt.geom.AffineTransform;
 
 /**
  * Callback to update Java layer when a change happens in the MMCore. This
@@ -72,7 +62,7 @@ public final class CoreEventCallback extends MMEventCallback {
          core_.updateSystemStateCache();
          // see OnPropertyChanged for reasons to run this on the EDT
          SwingUtilities.invokeLater(() ->  studio_.events().post(
-                    new PropertiesChangedEvent()));
+                    new DefaultPropertiesChangedEvent()));
       }
    }
 
@@ -88,7 +78,7 @@ public final class CoreEventCallback extends MMEventCallback {
       // in further callbacks, always run this through invokeLater,
       // (see https://github.com/micro-manager/micro-manager/issues/498)
       SwingUtilities.invokeLater(() -> studio_.events().post(
-              new PropertyChangedEvent(deviceName, propName, propValue)));
+              new DefaultPropertyChangedEvent(deviceName, propName, propValue)));
    }
 
    @Override
@@ -101,21 +91,21 @@ public final class CoreEventCallback extends MMEventCallback {
    public void onConfigGroupChanged(String groupName, String newConfig) {
       // see OnPropertyChanged for reasons to run this on the EDT
       SwingUtilities.invokeLater(() -> studio_.events().post(
-              new ConfigGroupChangedEvent(groupName, newConfig)));
+              new DefaultConfigGroupChangedEvent(groupName, newConfig)));
    }
 
    @Override
    public void onSystemConfigurationLoaded() {
       // see OnPropertyChanged for reasons to run this on the EDT
       SwingUtilities.invokeLater(() -> studio_.events().post(
-              new SystemConfigurationLoadedEvent()));
+              new DefaultSystemConfigurationLoadedEvent()));
    }
 
    @Override
    public void onPixelSizeChanged(double newPixelSizeUm) {
       // see OnPropertyChanged for reasons to run this on the EDT
       SwingUtilities.invokeLater(() -> studio_.events().post(
-              new PixelSizeChangedEvent(newPixelSizeUm)));
+              new DefaultPixelSizeChangedEvent(newPixelSizeUm)));
    }
    
    @Override
@@ -125,35 +115,35 @@ public final class CoreEventCallback extends MMEventCallback {
       AffineTransform newPixelSizeAffine = new AffineTransform(flatMatrix);
       // see OnPropertyChanged for reasons to run this on the EDT
       SwingUtilities.invokeLater(() -> studio_.events().post(
-              new PixelSizeAffineChangedEvent(newPixelSizeAffine)));
+              new DefaultPixelSizeAffineChangedEvent(newPixelSizeAffine)));
    }
 
    @Override
    public void onStagePositionChanged(String deviceName, double pos) {
       // see OnPropertyChanged for reasons to run this on the EDT
       SwingUtilities.invokeLater(() -> studio_.events().post(
-              new StagePositionChangedEvent(deviceName, pos)));
+              new DefaultStagePositionChangedEvent(deviceName, pos)));
    }
 
    @Override
    public void onXYStagePositionChanged(String deviceName, double xPos, double yPos) {
       // see OnPropertyChanged for reasons to run this on the EDT
       SwingUtilities.invokeLater(() -> studio_.events().post(
-              new XYStagePositionChangedEvent(deviceName, xPos, yPos)));
+              new DefaultXYStagePositionChangedEvent(deviceName, xPos, yPos)));
    }
 
    @Override
    public void onExposureChanged(String deviceName, double exposure) {
       // see OnPropertyChanged for reasons to run this on the EDT
       SwingUtilities.invokeLater(() -> studio_.events().post(
-              new ExposureChangedEvent(deviceName, exposure)));
+              new DefaultExposureChangedEvent(deviceName, exposure)));
    }
 
    @Override
    public void onSLMExposureChanged(String deviceName, double exposure) {
       // see OnPropertyChanged for reasons to run this on the EDT
       SwingUtilities.invokeLater(() -> studio_.events().post(
-              new SLMExposureChangedEvent(deviceName, exposure)));
+              new DefaultSLMExposureChangedEvent(deviceName, exposure)));
    }
 
    public void setIgnoring(boolean isIgnoring) {

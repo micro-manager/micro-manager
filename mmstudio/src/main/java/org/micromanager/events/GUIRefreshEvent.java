@@ -25,4 +25,4 @@ package org.micromanager.events;
  * (e.g. when a "Refresh" button is clicked or when the refreshGUI() method
  * is called in CompatibilityInterface).
  */
-public class GUIRefreshEvent {}
+public interface GUIRefreshEvent {}

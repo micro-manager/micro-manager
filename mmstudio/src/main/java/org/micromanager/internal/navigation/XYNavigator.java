@@ -6,7 +6,7 @@ import javax.swing.JOptionPane;
 import com.google.common.util.concurrent.AtomicDouble;
 import mmcorej.MMCoreJ;
 import org.micromanager.Studio;
-import org.micromanager.events.XYStagePositionChangedEvent;
+import org.micromanager.events.internal.DefaultXYStagePositionChangedEvent;
 import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -257,7 +257,7 @@ public class XYNavigator {
 					double[] ys = new double[1];
 					studio_.core().getXYPosition(xyStage_, xs, ys);
 					studio_.events().post(
-							new XYStagePositionChangedEvent(xyStage_, xs[0], ys[0]));
+							new DefaultXYStagePositionChangedEvent(xyStage_, xs[0], ys[0]));
 				}
 			} catch (Exception ex) {
 				ReportingUtils.logError(ex.getMessage());

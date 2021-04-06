@@ -23,24 +23,25 @@ package org.micromanager.events;
 /**
  * This class signals when any XY stage is moved.
  */
-public class XYStagePositionChangedEvent {
-   private final String deviceName_;
-   private final double xPos_;
-   private final double yPos_;
+public interface XYStagePositionChangedEvent {
 
-   public XYStagePositionChangedEvent(String deviceName, 
-         double xPos, double yPos) {
-      deviceName_ = deviceName;
-      xPos_ = xPos;
-      yPos_ = yPos;
-   }
-   public double getXPos() {
-      return xPos_;
-   }
-   public double getYPos() {
-      return yPos_;
-   }
-   public String getDeviceName() {
-      return deviceName_;
-   }
+
+   /**
+    * Name of the (XYStage) device that change position
+    * @return Name of the (XYStage) device that changed position
+    */
+   String getDeviceName();
+
+   /**
+    *
+    * @return New X position of the stage in microns
+    */
+   double getXPos();
+
+   /**
+    *
+    * @return New Y position of the stage in microns
+    */
+   double getYPos();
+
 }
