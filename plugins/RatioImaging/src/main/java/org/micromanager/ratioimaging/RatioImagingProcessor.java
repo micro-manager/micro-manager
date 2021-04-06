@@ -55,7 +55,7 @@ import org.micromanager.internal.utils.NumberUtils;
  *
  * @author nico, heavily updated by Chris Weisiger
  */
-public class RatioImagingProcessor extends Processor {
+public class RatioImagingProcessor implements Processor {
 
    private final Studio studio_;
    private final PropertyMap settings_;

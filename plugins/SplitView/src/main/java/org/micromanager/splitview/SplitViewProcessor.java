@@ -42,7 +42,7 @@ import org.micromanager.Studio;
  *
  * @author nico, heavily updated by Chris Weisiger
  */
-public class SplitViewProcessor extends Processor {
+public class SplitViewProcessor implements Processor {
 
    private final Studio studio_;
    private String orientation_ = SplitViewFrame.LR;

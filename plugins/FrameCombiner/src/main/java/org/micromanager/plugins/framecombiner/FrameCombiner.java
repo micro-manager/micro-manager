@@ -17,7 +17,7 @@ import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorContext;
 import org.micromanager.data.SummaryMetadata;
 
-public class FrameCombiner extends Processor {
+public class FrameCombiner implements Processor {
 
    private final Studio studio_;
    private final LogManager log_;
