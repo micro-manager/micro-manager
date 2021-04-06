@@ -52,7 +52,7 @@ import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.utils.MMException;
 
 /**
- * TODO: this class still depends on MMStudio for many things.
+ * TODO: this class still depends on MMStudio for access to its cache.
  */
 public final class DefaultAcquisitionManager implements AcquisitionManager {
    // NOTE: should match the format used by the acquisition engine.
