@@ -1,3 +1,4 @@
-[submodule "CMMCore"]
+[submodule "mmCoreAndDevices"]
 	path = mmCoreAndDevices
-url=https://github.com/micro-manager/mmCoreAndDevices.git
+	url=https://github.com/micro-manager/mmCoreAndDevices.git
+	branch = main
