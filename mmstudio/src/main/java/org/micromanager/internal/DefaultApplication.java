@@ -38,6 +38,7 @@ import org.micromanager.Application;
 import org.micromanager.ApplicationSkin;
 import org.micromanager.Studio;
 import org.micromanager.events.ChannelExposureEvent;
+import org.micromanager.events.internal.DefaultChannelExposureEvent;
 import org.micromanager.internal.hcwizard.MMConfigFileException;
 import org.micromanager.internal.hcwizard.MicroscopeModel;
 import org.micromanager.internal.utils.DefaultAutofocusManager;
@@ -116,7 +117,7 @@ public class DefaultApplication implements Application {
       double exposure;
       try {
          exposure = studio_.core().getExposure();
-         studio_.events().post(new ChannelExposureEvent(exposure,
+         studio_.events().post(new DefaultChannelExposureEvent(exposure,
                   channelGroup, channel, true));
       }
       catch (Exception e) {
@@ -156,9 +157,9 @@ public class DefaultApplication implements Application {
     * Acquires its info from the preferences
     * Same thing is used in MDA window, but this class keeps its own copy
     * 
-    * @param channelGroup
-    * @param channel - 
-    * @param defaultExp - default value
+    * @param channelGroup Core-channelgroup
+    * @param channel - specific channel of interest
+    * @param defaultExp - default exposure
     * @return exposure time
     */
    @Override

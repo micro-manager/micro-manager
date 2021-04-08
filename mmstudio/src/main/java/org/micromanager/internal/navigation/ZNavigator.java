@@ -3,7 +3,7 @@ package org.micromanager.internal.navigation;
 
 import com.google.common.util.concurrent.AtomicDouble;
 import org.micromanager.Studio;
-import org.micromanager.events.StagePositionChangedEvent;
+import org.micromanager.events.internal.DefaultStagePositionChangedEvent;
 import org.micromanager.internal.utils.ReportingUtils;
 
 import java.util.HashMap;
@@ -69,7 +69,7 @@ public class ZNavigator {
                studio_.core().waitForDevice(stage_);
                double z = studio_.core().getPosition(stage_);
                studio_.events().post(
-                       new StagePositionChangedEvent(stage_, z));
+                       new DefaultStagePositionChangedEvent(stage_, z));
             }
          } catch (Exception ex) {
             ReportingUtils.showError(ex);

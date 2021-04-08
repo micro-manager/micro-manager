@@ -23,5 +23,5 @@ package org.micromanager.events;
 /**
  * This event signifies that the system is done starting up.
  */
-public class StartupCompleteEvent {
+public interface StartupCompleteEvent {
 }

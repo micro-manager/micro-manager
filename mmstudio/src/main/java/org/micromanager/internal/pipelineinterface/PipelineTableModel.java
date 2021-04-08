@@ -22,6 +22,7 @@ import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.data.NewPipelineEvent;
 import org.micromanager.data.ProcessorFactory;
+import org.micromanager.data.internal.DefaultNewPipelineEvent;
 import org.micromanager.internal.MMStudio;
 
 // TODO: currently we redraw the entire table any time it changes, rather than
@@ -77,7 +78,7 @@ public final class PipelineTableModel extends AbstractTableModel {
    @Override
    public void fireTableDataChanged() {
       super.fireTableDataChanged();
-      MMStudio.getInstance().events().post(new NewPipelineEvent());
+      MMStudio.getInstance().events().post(new DefaultNewPipelineEvent());
    }
 
    /**

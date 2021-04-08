@@ -415,7 +415,7 @@ public final class DefaultDataManager implements DataManager {
 
    @Override
    public void notifyPipelineChanged() {
-      studio_.events().post(new NewPipelineEvent());
+      studio_.events().post(new DefaultNewPipelineEvent());
    }
 
    @Override

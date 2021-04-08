@@ -30,25 +30,24 @@ package org.micromanager.events;
  * calling {@link #isCanceled()}. If the shutdown has been canceled, the
  * event must be ignored.
  */
-public class ShutdownCommencingEvent {
-   private boolean isCanceled_ = false;
-
+public interface ShutdownCommencingEvent {
    /**
     * Cancel shutdown.
     */
-   public void cancelShutdown() {
-      isCanceled_ = true;
-   }
+   void cancelShutdown();
 
    /**
     * Return whether or not shutdown has been canceled.
+    * @return true when shutdown was canceled
     */
-   public boolean isCanceled() {
-      return isCanceled_;
-   }
+   boolean isCanceled();
 
+
+   /**
+    *
+    * @return true when shutdown was canceled
+    * @deprecated use {@link #isCanceled()} instead
+    */
    @Deprecated
-   public boolean getIsCancelled() {
-      return isCanceled();
-   }
+   boolean getIsCancelled();
 }

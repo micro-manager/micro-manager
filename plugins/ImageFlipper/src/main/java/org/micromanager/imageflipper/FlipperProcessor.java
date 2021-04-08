@@ -33,7 +33,7 @@ import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
 
 
-public class FlipperProcessor extends Processor {
+public class FlipperProcessor implements Processor {
 
    // Valid rotation values.
    public static final int R0 = 0;

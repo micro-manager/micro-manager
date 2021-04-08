@@ -30,10 +30,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.data.Coords;
-import static org.micromanager.data.Coords.CHANNEL;
-import static org.micromanager.data.Coords.STAGE_POSITION;
-import static org.micromanager.data.Coords.TIME_POINT;
-import static org.micromanager.data.Coords.Z_SLICE;
 
 
 public final class DefaultCoords implements Coords {
@@ -45,13 +41,13 @@ public final class DefaultCoords implements Coords {
       private final List<Integer> indices_;
 
       public Builder() {
-         axes_ = new ArrayList<String>(5);
-         indices_ = new ArrayList<Integer>(5);
+         axes_ = new ArrayList<>(5);
+         indices_ = new ArrayList<>(5);
       }
 
       private Builder(List<String> axes, List<Integer> indices) {
-         axes_ = new ArrayList<String>(axes);
-         indices_ = new ArrayList<Integer>(indices);
+         axes_ = new ArrayList<>(axes);
+         indices_ = new ArrayList<>(indices);
       }
 
       @Override
@@ -146,7 +142,7 @@ public final class DefaultCoords implements Coords {
 
    @Override
    public List<String> getAxes() {
-      return new ArrayList<String>(axes_);
+      return new ArrayList<>(axes_);
    }
 
    @Override
@@ -164,6 +160,7 @@ public final class DefaultCoords implements Coords {
    @Override public boolean hasC() { return hasChannelAxis(); }
 
    @Override
+   @Deprecated
    public boolean isSuperspaceCoordsOf(Coords other) {
       for (String axis : axes_) {
          // If other doesn't have axis, -1 != this.getIndex(axis)
@@ -175,6 +172,7 @@ public final class DefaultCoords implements Coords {
    }
 
    @Override
+   @Deprecated
    public boolean isSubspaceCoordsOf(Coords other) {
       return other.isSuperspaceCoordsOf(this);
    }
@@ -243,7 +241,7 @@ public final class DefaultCoords implements Coords {
       // Axis order is not considered for equality
       List<String> axes = getAxes();
       Collections.sort(axes);
-      List<Integer> indices = new ArrayList<Integer>(axes.size());
+      List<Integer> indices = new ArrayList<>(axes.size());
       for (String axis : axes) {
          indices.add(getIndex(axis));
       }
@@ -287,6 +285,7 @@ public final class DefaultCoords implements Coords {
    /**
     * Generate a normalized string representation of this Coords, that we can
     * later parse out using {@link #fromNormalizedString}.
+    * @deprecated
     */
    @Deprecated
    public String toNormalizedString() {

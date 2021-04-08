@@ -35,12 +35,16 @@ import java.util.ArrayList;
  * single acquisition. Various methods of the AcquisitionManager will consume
  * or generate SequenceSettings, and you can create your own to configure your
  * custom acquisitions.
+ *
+ * Maintainer note: This should be an interface, but kept as a class for backward
+ * compatibility.
+ *
  */
-public class SequenceSettings {
+public final class SequenceSettings {
    // version ID for the sequence settings
    public static final double Version = 1.3;
 
-   public static class Builder {
+   public static final class Builder {
       private int numFrames = 1;
       private double intervalMs = 0.0;
       private int displayTimeUnit = 0;  // default to ms to enable import of older settings
@@ -367,55 +371,19 @@ public class SequenceSettings {
     * Create a copy of this SequenceSettings. All parameters will be copied,
     * with new objects being created as necessary (i.e. this is a deep copy).
     * @return Copy of this SequenceSettings.
+    * @deprecated When used correctly, SequenceSettings are immutable.
+    * If you really need a copy, use copyBuilder().build();
     */
+   @Deprecated
    public SequenceSettings copy() {
-      return new SequenceSettings(this);
+      return copyBuilder().build();
    }
 
    /**
     * Default constructor needed since we have a copy constructor
     * @deprecated use Builder instead
     */
-   @Deprecated
-   public SequenceSettings() {
-   }
-
-   /**
-    * copy Constructor provides a deep copy
-    * @param input input that will b deep copied
-    */
-   private SequenceSettings(SequenceSettings input) {
-      cameraTimeout = input.cameraTimeout;
-      channelGroup = input.channelGroup;
-      channels = input.channels == null ? null : new ArrayList<>(input.channels);
-      comment = input.comment;
-      customIntervalsMs = input.customIntervalsMs == null ? null : new ArrayList<>(input.customIntervalsMs);
-      intervalMs = input.intervalMs;
-      displayTimeUnit = input.displayTimeUnit;
-      keepShutterOpenSlices = input.keepShutterOpenSlices;
-      keepShutterOpenChannels = input.keepShutterOpenChannels;
-      numFrames = input.numFrames;
-      prefix = input.prefix;
-      relativeZSlice = input.relativeZSlice;
-      root = input.root;
-      save = input.save;
-      saveMode = input.saveMode;
-      shouldDisplayImages = input.shouldDisplayImages;
-      skipAutofocusCount = input.skipAutofocusCount;
-      slices = input.slices == null ? null : new ArrayList<>(input.slices);
-      slicesFirst = input.slicesFirst;
-      timeFirst = input.timeFirst;
-      useAutofocus = input.useAutofocus;
-      useCustomIntervals = input.useCustomIntervals;
-      usePositionList = input.usePositionList;
-      zReference = input.zReference;
-      useSlices = input.useSlices;
-      useFrames = input.useFrames;
-      useChannels = input.useChannels;
-      sliceZStepUm = input.sliceZStepUm;
-      sliceZBottomUm = input.sliceZBottomUm;
-      sliceZTopUm = input.sliceZTopUm;
-      acqOrderMode = input.acqOrderMode;
+   private SequenceSettings() {
    }
 
    public SequenceSettings.Builder copyBuilder() {return new Builder(this);}

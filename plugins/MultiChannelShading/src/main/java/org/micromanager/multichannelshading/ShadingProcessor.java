@@ -60,7 +60,7 @@ import org.micromanager.data.internal.DefaultImage;
  *
  * @author nico, modified for MM2.0 by Chris Weisiger
  */
-public class ShadingProcessor extends Processor {
+public class ShadingProcessor implements Processor {
 
    private final Studio studio_;
    private final String channelGroup_;
