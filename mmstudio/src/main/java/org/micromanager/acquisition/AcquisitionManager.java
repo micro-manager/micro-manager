@@ -35,6 +35,19 @@ import org.micromanager.data.SummaryMetadata;
  * or Studio.getAcquisitionManager().
  */
 public interface AcquisitionManager {
+
+   /**
+    * Provides an empty Sequence Settings Builder
+    *
+    */
+   SequenceSettings.Builder getSequenceSettingsBuilder();
+
+   /**
+    * Provides and empty ChannelSpec Builder
+    *
+    */
+   ChannelSpec.Builder getChannelSpecBuilder();
+
    /**
     * Executes Acquisition with settings as in the MDA dialog.
     * Will open the Acquisition Dialog if it is not open yet.
@@ -45,7 +58,7 @@ public interface AcquisitionManager {
     * @return The Datastore containing the images from the acquisition.
     * @throws IllegalThreadStateException if the acquisition is started on the EDT
     */
-   public Datastore runAcquisition() throws IllegalThreadStateException;
+   Datastore runAcquisition() throws IllegalThreadStateException;
 
    /**
     * As runAcquisition, but will return as soon as the acquisition is set up
@@ -54,7 +67,7 @@ public interface AcquisitionManager {
     * @return The Datastore containing the images from the acquisition.
     * @throws IllegalThreadStateException if the acquisition is started on the EDT
     */
-   public Datastore runAcquisitionNonblocking() throws IllegalThreadStateException;
+   Datastore runAcquisitionNonblocking() throws IllegalThreadStateException;
 
    /**
     * Execute an acquisition using the provided SequenceSettings. This function
@@ -68,13 +81,13 @@ public interface AcquisitionManager {
     * @throws IllegalThreadStateException if the acquisition is started on the
     * EDT.
     */
-   public Datastore runAcquisitionWithSettings(SequenceSettings settings,
+   Datastore runAcquisitionWithSettings(SequenceSettings settings,
          boolean shouldBlock) throws IllegalThreadStateException;
 
    /**
     * Halt any ongoing acquisition as soon as possible.
     */
-   public void haltAcquisition();
+   void haltAcquisition();
 
    /**
     * Executes Acquisition with current settings but allows for changing the data path.
@@ -88,7 +101,7 @@ public interface AcquisitionManager {
     * @throws IllegalThreadStateException if the acquisition is started on the
     * EDT.
     */
-   public Datastore runAcquisition(String name, String root) throws IllegalThreadStateException;
+   Datastore runAcquisition(String name, String root) throws IllegalThreadStateException;
 
    /**
     * Load a file containing a SequenceSettings object, and apply the settings
@@ -97,7 +110,7 @@ public interface AcquisitionManager {
     * @param path File path to the SequenceSettings object.
     * @throws IOException if the sequence settings cannot be loaded.
     */
-   public void loadAcquisition(String path) throws IOException;
+   void loadAcquisition(String path) throws IOException;
 
    /**
     * Load a SequenceSettings file and return the SequenceSettings object. The
@@ -105,7 +118,7 @@ public interface AcquisitionManager {
     * @param path File path to the SequenceSettings object.
     * @throws IOException if there was an error reading the file.
     */
-   public SequenceSettings loadSequenceSettings(String path) throws IOException;
+   SequenceSettings loadSequenceSettings(String path) throws IOException;
 
    /**
     * Save the provided SequenceSettings object to disk at the specified path.
@@ -113,7 +126,7 @@ public interface AcquisitionManager {
     * @param path Path to save the SequenceSettings to.
     * @throws IOException if there was an error writing the file to disk.
     */
-   public void saveSequenceSettings(SequenceSettings settings, String path) throws IOException;
+   void saveSequenceSettings(SequenceSettings settings, String path) throws IOException;
 
    /**
     * Returns true when an acquisition is currently running (note: this
@@ -121,19 +134,19 @@ public interface AcquisitionManager {
     * Album" is currently running
     * @return true when an acquisition is currently running
     */
-   public boolean isAcquisitionRunning();
+   boolean isAcquisitionRunning();
 
    /**
     * Pause/Unpause a running acquisition
     * @param state true if paused, false if no longer paused
     */
-   public void setPause(boolean state);
+   void setPause(boolean state);
 
    /**
     * Returns true if the acquisition is currently paused.
     * @return true if paused, false if not paused
     */
-   public boolean isPaused();
+   boolean isPaused();
 
    /**
     * Attach a runnable to the acquisition engine. Each index (f, p, c, s) can
@@ -146,26 +159,26 @@ public interface AcquisitionManager {
     * @param slice 0-based (z) slice number
     * @param runnable code to be run
     */
-   public void attachRunnable(int frame, int position, int channel, int slice,
+   void attachRunnable(int frame, int position, int channel, int slice,
            Runnable runnable);
 
    /**
     * Remove runnables from the acquisition engine
     */
-   public void clearRunnables();
+   void clearRunnables();
 
    /**
     * Return current acquisition settings as shown in the Multi-D Acquisition
     * dialog.
     * @return acquisition settings instance
     */
-   public SequenceSettings getAcquisitionSettings();
+   SequenceSettings getAcquisitionSettings();
 
    /**
     * Apply new acquisition settings
     * @param settings acquisition settings
     */
-   public void setAcquisitionSettings(SequenceSettings settings);
+   void setAcquisitionSettings(SequenceSettings settings);
 
    /**
     * Snap images using the current camera(s) and return them. See also
@@ -176,7 +189,7 @@ public interface AcquisitionManager {
     * (for example, because Live mode is on), or if the current hardware
     * configuration contains no cameras.
     */
-   public List<Image> snap() throws Exception;
+   List<Image> snap() throws Exception;
 
    /**
     * Generate a new SummaryMetadata that contains pre-populated fields based
@@ -185,7 +198,7 @@ public interface AcquisitionManager {
     * computerName.
     * @return A pre-populated SummaryMetadata.
     */
-   public SummaryMetadata generateSummaryMetadata();
+   SummaryMetadata generateSummaryMetadata();
 
    /**
     * Generate a new Metadata that contains pre-populated fields based on the
@@ -210,7 +223,7 @@ public interface AcquisitionManager {
     * @throws Exception If there were any errors communicating with the Core to
     * get required values.
     */
-   public Metadata generateMetadata(Image image, boolean includeHardwareState) throws Exception;
+   Metadata generateMetadata(Image image, boolean includeHardwareState) throws Exception;
 
    /**
     * Test the provided Object, and return true if it corresponds to the
@@ -224,5 +237,5 @@ public interface AcquisitionManager {
     *         was started elsewhere (e.g. by a plugin or other third-party
     *         code).
     */
-   public boolean isOurAcquisition(Object source);
+   boolean isOurAcquisition(Object source);
 }

@@ -38,11 +38,9 @@ public interface DataManager {
    /**
     * Generate a "blank" CoordsBuilder for use in constructing new Coords
     * instances.
-    * @deprecated - Use Coordinates.builder() instead.
     * 
     * @return a CoordsBuilder used to construct new Coords instances.
     */
-   @Deprecated
    Coords.Builder getCoordsBuilder();
 
    /**
@@ -63,6 +61,7 @@ public interface DataManager {
     * @return Coords generated based on the definition string.
     * @throws IllegalArgumentException if the definition string is
     *         malformatted.
+    * @deprecated use of Strings for Coords is discouraged
     */
    @Deprecated
    Coords createCoords(String def) throws IllegalArgumentException;
@@ -347,6 +346,7 @@ public interface DataManager {
     * @return new PropertyMap based on data in the specified file.
     * @throws FileNotFoundException if the path does not point to a file.
     * @throws IOException if there was an error reading the file.
+    * @deprecated
     */
    @Deprecated
    PropertyMap loadPropertyMap(String path) throws FileNotFoundException, IOException;

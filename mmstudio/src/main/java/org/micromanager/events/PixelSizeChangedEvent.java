@@ -20,12 +20,8 @@
 
 package org.micromanager.events;
 
-public class PixelSizeChangedEvent {
-   private final double newPixelSizeUm_;
-   public PixelSizeChangedEvent(double newPixelSizeUm) {
-      newPixelSizeUm_ = newPixelSizeUm;
-   }
-   public double getNewPixelSizeUm() {
-      return newPixelSizeUm_;
-   }
+public interface PixelSizeChangedEvent {
+
+   double getNewPixelSizeUm();
+
 }

@@ -31,7 +31,7 @@ import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorContext;
 import org.micromanager.Studio;
 
-public class SaverProcessor extends Processor {
+public class SaverProcessor implements Processor {
    private Studio studio_;
    private Datastore store_;
    private final String format_;

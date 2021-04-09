@@ -262,6 +262,7 @@ public final class DefaultCoords implements Coords {
    }
 
    @Override
+   @Deprecated
    public boolean isSuperspaceCoordsOf(Coords other) {
       for (String axis : axes_) {
          // If other doesn't have axis, -1 != this.getIndex(axis)
@@ -273,6 +274,7 @@ public final class DefaultCoords implements Coords {
    }
 
    @Override
+   @Deprecated
    public boolean isSubspaceCoordsOf(Coords other) {
       return other.isSuperspaceCoordsOf(this);
    }
@@ -404,6 +406,7 @@ public final class DefaultCoords implements Coords {
    /**
     * Generate a normalized string representation of this Coords, that we can
     * later parse out using {@link #fromNormalizedString}.
+    * @deprecated
     */
    public String toNormalizedString() {
       StringBuilder sb = new StringBuilder();

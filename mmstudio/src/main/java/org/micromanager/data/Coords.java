@@ -55,8 +55,8 @@ public interface Coords {
     * @deprecated Use discouraged because it reads like a physical time rather
     * than the time point index that it is.
     */
-   @Deprecated
-   String TIME = TIME_POINT;
+
+   @Deprecated String TIME = TIME_POINT;
 
    /** Axis label for the time point (frame) axis (short form).
     * Same as {@code TIME_POINT}. */
@@ -73,7 +73,8 @@ public interface Coords {
    String Z_SLICE = "z";
 
    /** Axis label for the Z slice axis (short form).
-    * Same as {@code Z_SLICE}. */
+    * Same as {@code Z_SLICE}. 
+    */
    String Z = Z_SLICE;
 
    /** Axis label for the channel axis. */
@@ -324,7 +325,9 @@ public interface Coords {
     *
     * @param other the instance to compare with
     * @return whether this instance is a superspace coords of {@code other}
+    * @deprecated use equality after removing specific axes instead
     */
+   @Deprecated
    boolean isSuperspaceCoordsOf(Coords other);
 
    /**
@@ -333,13 +336,15 @@ public interface Coords {
     *
     * @param other the instance to compare with
     * @return whether this instance is a subspace coords of {@code other}
+    * @deprecated use equality after removing specific axes instead
     */
+   @Deprecated
    boolean isSubspaceCoordsOf(Coords other);
 
    /**
     * @param alt the instance to compare with
     * @return whether this instance is a superspace coords of {@code other}
-    * @deprecated Use the equivalent {@link #isSubspaceCoordsOf(Coords) isSubspaceCoordsOf} instead.
+    * @deprecated Use equality (after removing specific axes) instead
     */
    @Deprecated
    boolean matches(Coords alt);
@@ -361,7 +366,7 @@ public interface Coords {
    /**
     * Removes the axes provided as varargs from this Coord
     * @param axes One or more Strings naming the axes to be removed
-    * @return COpy of this Coords without the listed axes
+    * @return Copy of this Coords without the listed axes
     */
    Coords copyRemovingAxes(String... axes);
 

@@ -25,4 +25,4 @@ package org.micromanager.data;
  * has changed, giving entities that use that pipeline an opportunity to make
  * a new copy of it (by invoking DataManager.copyApplicationPipeline()).
  */
-public class NewPipelineEvent {}
+public interface NewPipelineEvent {}

@@ -21,20 +21,19 @@
 package org.micromanager.events;
 
 /**
- * This class signals when the exposure time for a given camera has changed.
+ * This interface signals when the exposure time for a given camera has changed.
  */
-public class SLMExposureChangedEvent {
-   private final String deviceName_;
-   private final double newExposureTime_;
+public interface SLMExposureChangedEvent {
 
-   public SLMExposureChangedEvent(String deviceName, double newExposureTime) {
-      deviceName_ = deviceName;
-      newExposureTime_ = newExposureTime;
-   }
-   public String getDeviceName() {
-      return deviceName_;
-   }
-   public double getNewExposureTime() {
-      return newExposureTime_;
-   }
+   /**
+    * Name of the (SLM) device for which exposure changed
+    * @return Name of the (SLM) device for which exposure changed
+    */
+   String getDeviceName();
+
+   /**
+    *
+    * @return new exposure time of thr (SLM) device
+    */
+   double getNewExposureTime();
 }

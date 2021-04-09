@@ -31,10 +31,14 @@ import java.awt.Color;
  * MDA (multi-dimensional acquisition). It contains fields corresponding to
  * each of the columns in the Channels section of the MDA dialog. ChannelSpecs
  * are used by the SequenceSettings object to set up channels for acquisitions.
+ *
+ * Maintainer note: This should be an interface, but kept as a class for backward
+ * compatibility.
+ *
  */
 @SuppressWarnings("unused")
-public class ChannelSpec {
-   public static class Builder{
+public final class ChannelSpec {
+   public static final class Builder{
 
       /** Channel group this channel config belongs to **/
       private String channelGroup_ = "";
