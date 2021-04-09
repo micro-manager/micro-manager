@@ -1,11 +1,13 @@
 name: Update privateMain
 
 on:
-  workflow_dispatch
+  push:
+    branches:
+      - master
 
 jobs:
   update-privateMain:
-    name: Merge master into release after a PR is merged
+    name: Merge master into privateMain after a new commit
     runs-on: ubuntu-latest
     steps:
       - name: checkout
