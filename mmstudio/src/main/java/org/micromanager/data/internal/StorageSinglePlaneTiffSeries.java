@@ -331,6 +331,9 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
 
    @Override
    public int getMaxIndex(String axis) {
+      if (!getAxes().contains(axis)) {
+         return -1;
+      }
       return maxIndices_.getIndex(axis);
    }
 

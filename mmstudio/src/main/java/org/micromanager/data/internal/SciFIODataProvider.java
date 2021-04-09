@@ -205,7 +205,7 @@ public class SciFIODataProvider implements DataProvider {
       int diff = rasterPosition.length - axes.size();
       if (diff != 0) {
          // this is bad, how can we ever translate one into the other???
-         // It looks like avis have only one rasterPostion
+         // It looks like axis have only one rasterPostion
          if (reader_.getFormatName().equals("Audio Video Interleave")) {
             cb.t((int) rasterPosition[0]);
             return cb.build();
@@ -327,7 +327,7 @@ public class SciFIODataProvider implements DataProvider {
          }
       }
       // Axis not found, I guess it is correct that the length i 0?
-      return 1;
+      return 0;
    }
 
    @Override
@@ -396,6 +396,7 @@ public class SciFIODataProvider implements DataProvider {
    }
 
    @Override
+   @Deprecated
    public Coords getMaxIndices() {
       ImageMetadata im = metadata_.get(IMAGEINDEX);
       // assume that there are always an X and a Y axis

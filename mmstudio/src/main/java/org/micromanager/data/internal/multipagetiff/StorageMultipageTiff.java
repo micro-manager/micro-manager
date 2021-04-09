@@ -829,7 +829,17 @@ public final class StorageMultipageTiff implements Storage {
 
    @Override
    public int getMaxIndex(String axis) {
-      return getMaxIndices().getIndex(axis);
+      if (!getAxes().contains(axis)) {
+         return -1;
+      }
+
+      int maxIndex = 0;
+      for (Coords coords : coordsToReader_.keySet()) {
+         if (coords.getIndex(axis) > maxIndex) {
+            maxIndex = coords.getIndex(axis);
+         }
+      }
+      return maxIndex;
    }
 
    // Convenience function.

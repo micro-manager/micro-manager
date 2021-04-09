@@ -106,7 +106,9 @@ public interface Storage {
 
    /**
     * Return the largest stored position along the specified axis. Will be -1
-    * if no images have a position along that axis.
+    * if no images have a position along that axis (or the axis is not present
+    * in the Storage)
+    *
     * @param axis axis of interest
     * @return Largest stored position along the specified axis or -1 when no images
     * are found on the given axis

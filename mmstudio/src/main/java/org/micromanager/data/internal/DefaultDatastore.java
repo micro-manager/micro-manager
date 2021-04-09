@@ -246,7 +246,11 @@ public class DefaultDatastore implements Datastore {
 
    @Override
    public int getAxisLength(String axis) {
-      return getMaxIndices().getIndex(axis) + 1;
+      if (storage_ != null) {
+         return storage_.getMaxIndex(axis) + 1;
+      }
+
+      return 0;
    }
 
    @Override
@@ -258,12 +262,14 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
+   @Deprecated
    public Coords getMaxIndices() {
       if (storage_ != null) {
          return storage_.getMaxIndices();
       }
       return null;
    }
+
 
    @Override
    public SummaryMetadata getSummaryMetadata() {
