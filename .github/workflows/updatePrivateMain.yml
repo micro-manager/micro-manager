@@ -1,0 +1,19 @@
+name: Update privateMain
+
+on:
+  workflow_dispatch
+
+jobs:
+  update-privateMain:
+    name: Merge master into release after a PR is merged
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: merge
+        uses: mtanzi/action-automerge@v1
+        id: merge
+        with:
+          github_token: ${{ GHA_TOKEN }}
+          source: 'master'
+          target: 'privateMain'
