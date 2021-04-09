@@ -152,8 +152,17 @@ public final class DefaultCoords implements Coords {
    private final List<Integer> indices_;
 
    public DefaultCoords(Builder builder) {
-      axes_ = ImmutableList.copyOf(builder.axes_);
-      indices_ = ImmutableList.copyOf(builder.indices_);
+      // sort by axes name
+      List<String> axes = new ArrayList<>(builder.axes_);
+      Collections.sort(axes);
+      List<Integer> indices = new ArrayList<>(axes.size());
+      for (String axis : axes) {
+         int index = builder.axes_.indexOf(axis);
+         indices.add(builder.indices_.get(index));
+      }
+
+      axes_ = ImmutableList.copyOf(axes);
+      indices_ = ImmutableList.copyOf(indices);
    }
 
    @Override
@@ -321,54 +330,32 @@ public final class DefaultCoords implements Coords {
       if (!(other instanceof Coords)) {
          return false;
       }
-      // Axis order is not considered for equality
-      // A zero index axis is the same as not having the axes, so remove for comparison
-      Coords nonZeroThis = copyRemovingZeroAxes(this);
-      Coords nonZeroOther = copyRemovingZeroAxes((Coords) other);
+      // Axis order is not considered for equality, but axes are sorted already
+      // A zero index axis is no longer possible, so no need to remove zero axes
+      Coords theOther = (Coords) other;
 
-      List<String> thisAxes = nonZeroThis.getAxes();
-      List<String> otherAxes = nonZeroOther.getAxes();
-      if (thisAxes.size() != otherAxes.size()) {
+      if (this.getAxes().size() != theOther.getAxes().size()) {
          return false;
       }
-      for (String axis : thisAxes) {
-         if (!otherAxes.contains(axis)) {
+      for (int i = 0; i < this.getAxes().size(); i++) {
+         String axis = this.getAxes().get(i);
+         if (!axis.equals(theOther.getAxes().get(i))) {
             return false;
          }
-         if (nonZeroOther.getIndex(axis) != nonZeroThis.getIndex(axis)) {
+         if (this.getIndex(axis) != theOther.getIndex(axis)) {
             return false;
          }
       }
-      return true;
-   }
 
-   static Coords copyRemovingZeroAxes(Coords in) {
-      if (! (in instanceof DefaultCoords)) {
-         return in;
-      }
-      DefaultCoords dc = (DefaultCoords) in;
-      Coords.Builder b = in.copyBuilder();
-      for (String axis : in.getAxes()) {
-         if (dc.getIndex(axis) <= 0)
-            b.removeAxis(axis);
-      }
-      return b.build();
+      return true;
    }
 
    @Override
    public int hashCode() {
-      // only consider non-zero axes
-      Coords nonZero = DefaultCoords.copyRemovingZeroAxes(this);
-      // Axis order is not considered for equality
-      List<String> axes = nonZero.getAxes();
-      Collections.sort(axes);
-      List<Integer> indices = new ArrayList<>(axes.size());
-      for (String axis : axes) {
-         indices.add(getIndex(axis));
-      }
+      // Axis order is not considered for equality, but axes are sorted already
       int hash = 3;
-      hash = 23 * hash + axes.hashCode();
-      hash = 23 * hash + indices.hashCode();
+      hash = 23 * hash + axes_.hashCode();
+      hash = 23 * hash + indices_.hashCode();
       return hash;
    }
 

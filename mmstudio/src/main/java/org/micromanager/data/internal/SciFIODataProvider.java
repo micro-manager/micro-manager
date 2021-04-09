@@ -352,7 +352,7 @@ public class SciFIODataProvider implements DataProvider {
       for (int i = 0; i < im.getPlaneCount(); i++) {
          long[] rasterPosition = FormatTools.rasterToPosition(IMAGEINDEX, i, metadata_);
          Coords tmpC = rasterPositionToCoords(im, rasterPosition);
-         if (tmpC.isSubspaceCoordsOf(coords)) {
+         if (tmpC.equals(coords)) {
             Plane plane = getPlane(coords);
             if (im.isMultichannel() && channelAxisIndex_ == 0) {
                for (int c = 0; c < im.getAxisLength(channelAxisIndex_); c++) {
@@ -437,7 +437,7 @@ public class SciFIODataProvider implements DataProvider {
       for (int i = 0; i < im.getPlaneCount(); i++) {
          long[] rasterPosition = FormatTools.rasterToPosition(IMAGEINDEX, i, metadata_);
          Coords tmpC = rasterPositionToCoords(im, rasterPosition);
-         if (tmpC.isSubspaceCoordsOf(coords)) {
+         if (tmpC.equals(coords)) {
             return true;
          }
       }

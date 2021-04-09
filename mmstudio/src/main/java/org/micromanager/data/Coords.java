@@ -325,7 +325,7 @@ public interface Coords {
     *
     * @param other the instance to compare with
     * @return whether this instance is a superspace coords of {@code other}
-    * @deprecated use equality after removing specific axes instead
+    * @deprecated Only use equality (optionally after dropping axes)
     */
    @Deprecated
    boolean isSuperspaceCoordsOf(Coords other);
@@ -336,7 +336,7 @@ public interface Coords {
     *
     * @param other the instance to compare with
     * @return whether this instance is a subspace coords of {@code other}
-    * @deprecated use equality after removing specific axes instead
+    * @deprecated Use equality (optionally after dropping axes)
     */
    @Deprecated
    boolean isSubspaceCoordsOf(Coords other);
