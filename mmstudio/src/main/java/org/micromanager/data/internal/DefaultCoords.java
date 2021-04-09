@@ -270,28 +270,11 @@ public final class DefaultCoords implements Coords {
       return hasChannelAxis();
    }
 
-   @Override
-   @Deprecated
-   public boolean isSuperspaceCoordsOf(Coords other) {
-      for (String axis : axes_) {
-         // If other doesn't have axis, -1 != this.getIndex(axis)
-         if (other.getIndex(axis) != getIndex(axis)) {
-            return false;
-         }
-      }
-      return true;
-   }
-
-   @Override
-   @Deprecated
-   public boolean isSubspaceCoordsOf(Coords other) {
-      return other.isSuperspaceCoordsOf(this);
-   }
 
    @Override
    @Deprecated
    public boolean matches(Coords other) {
-      return isSubspaceCoordsOf(other);
+      return this.equals(other);
    }
 
    @Override
@@ -393,8 +376,9 @@ public final class DefaultCoords implements Coords {
    /**
     * Generate a normalized string representation of this Coords, that we can
     * later parse out using {@link #fromNormalizedString}.
-    * @deprecated
+    * @deprecated TODO: why is this deprecated and how should this be replaced?
     */
+   @Deprecated
    public String toNormalizedString() {
       StringBuilder sb = new StringBuilder();
       for (String axis : axes_) {

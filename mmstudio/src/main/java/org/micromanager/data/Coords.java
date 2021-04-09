@@ -320,28 +320,6 @@ public interface Coords {
    boolean hasC();
 
    /**
-    * Return true if this instance contains equal indices for every axis in the
-    * given instance.
-    *
-    * @param other the instance to compare with
-    * @return whether this instance is a superspace coords of {@code other}
-    * @deprecated Only use equality (optionally after dropping axes)
-    */
-   @Deprecated
-   boolean isSuperspaceCoordsOf(Coords other);
-
-   /**
-    * Return true if the given instance contains equal indices for every axis
-    * in this instance.
-    *
-    * @param other the instance to compare with
-    * @return whether this instance is a subspace coords of {@code other}
-    * @deprecated Use equality (optionally after dropping axes)
-    */
-   @Deprecated
-   boolean isSubspaceCoordsOf(Coords other);
-
-   /**
     * @param alt the instance to compare with
     * @return whether this instance is a superspace coords of {@code other}
     * @deprecated Use equality (after removing specific axes) instead
