@@ -1,0 +1,21 @@
+name: Update privateMain
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  update-privateMain:
+    name: Merge master into privateMain after a new commit
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: merge
+        uses: mtanzi/action-automerge@v1
+        id: merge
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          source: 'master'
+          target: 'privateMain'
