@@ -59,7 +59,7 @@ public class RandomizePositionNames {
       
       try {
          DataProvider dp = window.getDataProvider();
-         int nrP = dp.getAxisLength(Coords.P);
+         int nrP = dp.getNextIndex(Coords.P);
          Coords coords = dp.getAnyImage().getCoords();
 
          Set<String> wellNames = new LinkedHashSet<>();
@@ -122,8 +122,8 @@ public class RandomizePositionNames {
                   String wellImg = posName.substring(0, posName.indexOf("-", 0));
                   if (wellImg.equals(well)) {                     
                      newPos++; 
-                     for (int c = 0; c < dp.getAxisLength(Coords.P); c++) {
-                        for (int t = 0; t < dp.getAxisLength(Coords.T); t++) {
+                     for (int c = 0; c < dp.getNextIndex(Coords.P); c++) {
+                        for (int t = 0; t < dp.getNextIndex(Coords.T); t++) {
                            oldCoords = coords.copyBuilder().p(pos).c(c).t(t).build();
                            img = dp.getImage(oldCoords);
                            if (img != null && img.getMetadata().hasPositionName()) {

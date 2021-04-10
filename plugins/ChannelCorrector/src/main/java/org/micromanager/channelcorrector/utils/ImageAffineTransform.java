@@ -63,7 +63,7 @@ public class ImageAffineTransform {
 
    public void apply(boolean allPositions) throws IOException, ImageAffineTransformException {
       final DataProvider dp = dataViewer_.getDataProvider();
-      final int maxChan = dp.getAxisLength(Coords.C) - 1;
+      final int maxChan = dp.getNextIndex(Coords.C) - 1;
       if (maxChan !=  affineTransformOps_.size()) {
          studio_.logs().showError("Unexpected difference between viewer and affine transform data");
          return;
@@ -84,7 +84,7 @@ public class ImageAffineTransform {
       String posString = "";
       Coords intendedDimensions = dp.getSummaryMetadata().getIntendedDimensions();
       if (allPositions) {
-         for (int p = 0; p < dp.getAxisLength(Coords.P); p++) {
+         for (int p = 0; p < dp.getNextIndex(Coords.P); p++) {
             positions.add(p);
          }
       } else {
@@ -100,8 +100,8 @@ public class ImageAffineTransform {
       studio_.displays().manage(outStore);
 
       for (Integer  p : positions) {
-         for (int t = 0; t < dp.getAxisLength(Coords.T); t++) {
-            for (int z = 0; z < dp.getAxisLength(Coords.Z); z++) {
+         for (int t = 0; t < dp.getNextIndex(Coords.T); t++) {
+            for (int z = 0; z < dp.getNextIndex(Coords.Z); z++) {
                // crop channel 0 image, and add to outStore
                int pos = p;
                if (!allPositions) {
@@ -109,7 +109,7 @@ public class ImageAffineTransform {
                }
                Image inImage = dp.getImage(builder.c(0).z(z).t(t).p(pos).build());
                outStore.putImage(crop(inImage, 0, 0, minWidth, minHeight));
-               for (int c = 1; c < dp.getAxisLength(Coords.C); c++) {
+               for (int c = 1; c < dp.getNextIndex(Coords.C); c++) {
                   // transform other channel to channel 0, crop to size and add to store
                   inImage = dp.getImage(builder.c(c).z(z).t(t).p(pos).build());
                   outStore.putImage(transformImage(inImage, affineTransformOps_.get(c-1), minWidth, minHeight));

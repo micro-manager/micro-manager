@@ -460,7 +460,7 @@ public class IntensityInspectorPanelController
             return;
          }
          setUpChannelHistogramsPanel(
-                 viewer_.getDataProvider().getAxisLength(Coords.CHANNEL));
+                 viewer_.getDataProvider().getNextIndex(Coords.CHANNEL));
          newDisplaySettings(viewer_.getDisplaySettings());
          updateImageStats(((ImageStatsPublisher) viewer_).getCurrentImagesAndStats());
          String updateRate = studio_.profile().

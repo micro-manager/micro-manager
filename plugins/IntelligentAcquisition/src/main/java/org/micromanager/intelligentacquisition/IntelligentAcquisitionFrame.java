@@ -769,7 +769,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                // results should be in results window
             } else { 
                int nrPositions = dw.getDataProvider().
-                       getAxisLength(Coords.STAGE_POSITION);
+                       getNextIndex(Coords.STAGE_POSITION);
 
                for (int p = 1; p <= nrPositions && !stop_.get(); p++) {
                   try {

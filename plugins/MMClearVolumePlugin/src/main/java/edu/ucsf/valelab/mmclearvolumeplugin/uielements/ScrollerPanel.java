@@ -132,7 +132,7 @@ public class ScrollerPanel extends JPanel {
       }
       for (String axis : axes) {
          // Don't bother creating scrollers for axes with a length of 1.
-         if (dataProvider_.getAxisLength(axis) > 1 && !axis.equals(Coords.Z)) {
+         if (dataProvider_.getNextIndex(axis) > 1 && !axis.equals(Coords.Z)) {
             addScroller(axis);
          }
       }
@@ -185,11 +185,11 @@ public class ScrollerPanel extends JPanel {
       });
       add(positionButton, "grow 0");
 
-      JLabel maxLabel = new JLabel("/ " + dataProvider_.getAxisLength(axis));
+      JLabel maxLabel = new JLabel("/ " + dataProvider_.getNextIndex(axis));
       add(maxLabel, "grow 0");
 
       final JScrollBar scrollbar = new JScrollBar(JScrollBar.HORIZONTAL, 0, 1,
-            0, dataProvider_.getAxisLength(axis));
+            0, dataProvider_.getNextIndex(axis));
 
       scrollbar.setMinimumSize(new Dimension(1, 1));
       scrollbar.addAdjustmentListener((AdjustmentEvent e) -> {
@@ -291,7 +291,7 @@ public class ScrollerPanel extends JPanel {
          scrollbar.setValue(pos);
       }
       // Add one so displayed values are 1-indexed.
-      String newText = String.valueOf(Math.min(dataProvider_.getAxisLength(axis), Math.max(0, pos + 1)));
+      String newText = String.valueOf(Math.min(dataProvider_.getNextIndex(axis), Math.max(0, pos + 1)));
       JButton button = axisToState_.get(axis).posButton_;
       if (!button.getText().contentEquals(newText)) {
          button.setText(newText);

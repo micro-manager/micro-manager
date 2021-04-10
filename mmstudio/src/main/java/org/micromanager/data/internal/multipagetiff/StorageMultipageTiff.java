@@ -729,7 +729,7 @@ public final class StorageMultipageTiff implements Storage {
             return false;
          }
          for (String axis : dp.getAxes() ) {
-            if (store_.getAxisLength(axis) != dp.getAxisLength(axis)) {
+            if (store_.getNextIndex(axis) != dp.getNextIndex(axis)) {
                return false;
             }
          }

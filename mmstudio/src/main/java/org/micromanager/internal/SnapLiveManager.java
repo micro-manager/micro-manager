@@ -575,7 +575,7 @@ public final class SnapLiveManager extends DataViewerListener
          // Send all images at current channel to the album.
          Coords.CoordsBuilder builder = Coordinates.builder();
          boolean hadChannels = false;
-         for (int i = 0; i < store_.getAxisLength(Coords.CHANNEL); ++i) {
+         for (int i = 0; i < store_.getNextIndex(Coords.CHANNEL); ++i) {
             builder.channel(i);
             try {
                mmStudio_.album().addImages(store_.getImagesMatching(

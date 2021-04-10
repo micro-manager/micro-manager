@@ -115,7 +115,7 @@ public class ZProjectorPluginExecutor {
 
             CoordsBuilder newSizeCoordsBuilder = studio_.data().getCoordsBuilder();
             for (String axis: oldStore_.getAxes()) {
-               newSizeCoordsBuilder.index(axis, oldStore_.getAxisLength(axis) - 1 );
+               newSizeCoordsBuilder.index(axis, oldStore_.getNextIndex(axis) - 1 );
             }
             SummaryMetadata metadata = oldStore_.getSummaryMetadata();
 
@@ -137,7 +137,7 @@ public class ZProjectorPluginExecutor {
                } else {
                   nrProjections_ = 1;
                   for (String axis : axes) {
-                     nrProjections_ *= oldStore_.getAxisLength(axis);
+                     nrProjections_ *= oldStore_.getNextIndex(axis);
                   }
                   progressBar_ = new ProgressBar (window_.getWindow(), 
                                        "Projection Progress", 1, nrProjections_);
@@ -202,7 +202,7 @@ public class ZProjectorPluginExecutor {
       String currentAxis = remainingAxes.get(0);
       List<String> rcAxes = new ArrayList<>(remainingAxes);
       rcAxes.remove(currentAxis);
-      for (int i = 0; i < oldStore_.getAxisLength(currentAxis); i++) {
+      for (int i = 0; i < oldStore_.getNextIndex(currentAxis); i++) {
          cbp.index(currentAxis, i);
          if (rcAxes.isEmpty()) {
             executeProjection(newStore, cbp, projectionAxis, min, max, projectionMethod);

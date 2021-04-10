@@ -246,11 +246,16 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
+   @Deprecated
    public int getAxisLength(String axis) {
+      return getNextIndex(axis);
+   }
+
+   @Override
+   public int getNextIndex(String axis) {
       if (storage_ != null) {
          return storage_.getMaxIndex(axis) + 1;
       }
-
       return 0;
    }
 

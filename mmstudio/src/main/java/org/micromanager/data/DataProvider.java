@@ -55,8 +55,27 @@ public interface DataProvider extends Closeable {
     *
     * @param axis Axis for which the next index is requested.
     * @return Next Index for the given axis.
+    * @deprecated Use {@link #getNextIndex(String)} instead.
     */
+   @Deprecated
    int getAxisLength(String axis);
+
+
+   /**
+    * Returns the highest index along the given axis plus 1.
+    * If the axis is not (yet) represented in the data set, it will return 0.
+    *
+    * If the axis is present in the data set, but no Coords with that axes
+    * are found (Coords for an axis can not be zero), it will return 1.
+    *
+    * Missing images for any given axis are ignored, e.g. if the DataProvider
+    * has images 0, 1, 3, 4 for a given axis, it will return 5. Do not expect
+    * all images along a given axis to be present in the DataProvider.
+    *
+    * @param axis Axis for which the next index is requested.
+    * @return Next Index for the given axis.
+    */
+   int getNextIndex(String axis);
 
    /**
     * Returns the image at the given postion 
@@ -99,7 +118,7 @@ public interface DataProvider extends Closeable {
    /**
     * Coords with highest possible index along each axis
     * @return Coords with highest possible index along each axis
-    * @deprecated Use {@link #getAxisLength(String axis)} instead
+    * @deprecated Use {@link #getNextIndex(String axis)} instead
     */
    @Deprecated
    Coords getMaxIndices();

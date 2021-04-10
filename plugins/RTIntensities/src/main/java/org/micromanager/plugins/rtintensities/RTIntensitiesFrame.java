@@ -147,7 +147,7 @@ public class RTIntensitiesFrame extends JFrame {
             return;
          }
          dataProvider_ = viewer.getDataProvider();
-         channels_ = dataProvider_.getAxisLength("channel");
+         channels_ = dataProvider_.getNextIndex("channel");
          // At least one ROI defined ?
          if (manager_ == null) {
             title_.setText("Please setup ROI(s).");
@@ -243,7 +243,7 @@ public class RTIntensitiesFrame extends JFrame {
       	return;
       }
       dataProvider_ = viewer.getDataProvider();
-      channels_ = dataProvider_.getAxisLength("channel");
+      channels_ = dataProvider_.getNextIndex("channel");
       ROIs_ = manager_.getCount();
       if (ROIs_ <= 0) {
       	return;

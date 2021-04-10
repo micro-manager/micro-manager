@@ -88,7 +88,7 @@ public class DuplicatorExecutor extends SwingWorker <Void, Void> {
       DataProvider oldStore = theWindow_.getDataProvider();
       Coords.CoordsBuilder newSizeCoordsBuilder = studio_.data().getCoordsBuilder();
       for (String axis: oldStore.getAxes()) {
-         newSizeCoordsBuilder.index(axis, oldStore.getAxisLength(axis) - 1 );
+         newSizeCoordsBuilder.index(axis, oldStore.getNextIndex(axis) - 1 );
       }
       SummaryMetadata metadata = oldStore.getSummaryMetadata();
       List<String> channelNames = metadata.getChannelNameList();

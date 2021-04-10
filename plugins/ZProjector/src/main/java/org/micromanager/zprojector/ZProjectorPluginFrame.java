@@ -89,7 +89,7 @@ public class ZProjectorPluginFrame extends JDialog {
          super.add(new JLabel("max"), "wrap");
 
          for (final String axis : axes) {
-            if (ourProvider_.getAxisLength(axis) > 1) {
+            if (ourProvider_.getNextIndex(axis) > 1) {
                
                // add radio buttons
                JRadioButton axisRB = new JRadioButton(axis);
@@ -98,10 +98,10 @@ public class ZProjectorPluginFrame extends JDialog {
                super.add(axisRB);
                
                mins.put(axis, 1);
-               maxes.put(axis, ourProvider_.getAxisLength(axis));
+               maxes.put(axis, ourProvider_.getNextIndex(axis));
 
                SpinnerNumberModel model = new SpinnerNumberModel(1, 1,
-                       (int) ourProvider_.getAxisLength(axis), 1);
+                       (int) ourProvider_.getNextIndex(axis), 1);
                mins.put(axis, 0);
                final JSpinner minSpinner = new JSpinner(model);
                JFormattedTextField field = (JFormattedTextField) minSpinner.getEditor().getComponent(0);
@@ -123,9 +123,9 @@ public class ZProjectorPluginFrame extends JDialog {
                });
                super.add(minSpinner, "wmin 60");
 
-               model = new SpinnerNumberModel((int) ourProvider_.getAxisLength(axis),
-                       1, (int) ourProvider_.getAxisLength(axis), 1);
-               maxes.put(axis, ourProvider_.getAxisLength(axis) - 1);
+               model = new SpinnerNumberModel((int) ourProvider_.getNextIndex(axis),
+                       1, (int) ourProvider_.getNextIndex(axis), 1);
+               maxes.put(axis, ourProvider_.getNextIndex(axis) - 1);
                final JSpinner maxSpinner = new JSpinner(model);
                field = (JFormattedTextField) maxSpinner.getEditor().getComponent(0);
                formatter = (DefaultFormatter) field.getFormatter();

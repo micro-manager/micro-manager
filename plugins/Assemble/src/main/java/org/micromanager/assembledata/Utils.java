@@ -23,18 +23,18 @@ public class Utils {
    }
    
    public static DataProvider singlePositionData(DataProvider dp1, DataProvider dp2) {
-      if (dp1.getAxisLength(Coords.P) <= 1 && dp2.getAxisLength(Coords.P) > 1) {
+      if (dp1.getNextIndex(Coords.P) <= 1 && dp2.getNextIndex(Coords.P) > 1) {
          return dp1;
-      } else if (dp2.getAxisLength(Coords.P) <= 1 && dp1.getAxisLength(Coords.P) > 1) {
+      } else if (dp2.getNextIndex(Coords.P) <= 1 && dp1.getNextIndex(Coords.P) > 1) {
          return dp2;
       }
       return null;
    }
    
    public static DataProvider multiPositionData(DataProvider dp1, DataProvider dp2) {
-      if (dp1.getAxisLength(Coords.P) <= 1 && dp2.getAxisLength(Coords.P) > 1) {
+      if (dp1.getNextIndex(Coords.P) <= 1 && dp2.getNextIndex(Coords.P) > 1) {
          return dp2;
-      } else if (dp2.getAxisLength(Coords.P) <= 1 && dp1.getAxisLength(Coords.P) > 1) {
+      } else if (dp2.getNextIndex(Coords.P) <= 1 && dp1.getNextIndex(Coords.P) > 1) {
          return dp1;
       }
       return null;

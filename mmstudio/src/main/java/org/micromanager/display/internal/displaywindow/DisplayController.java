@@ -464,7 +464,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    @Override
    public int getMaximumExtentOfAxis(String axis) {
-      return dataProvider_.getAxisLength(axis);
+      return dataProvider_.getNextIndex(axis);
    }
 
    @Override
@@ -564,18 +564,18 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       // During acquisition, do not search in Z if newest timepoint.
 
       try {
-         if (images.size() != dataProvider_.getAxisLength(Coords.CHANNEL) &&
+         if (images.size() != dataProvider_.getNextIndex(Coords.CHANNEL) &&
                  (!studio_.acquisitions().isAcquisitionRunning() ||
-                  position.getT() < dataProvider_.getAxisLength(Coords.T) - 1)) {
+                  position.getT() < dataProvider_.getNextIndex(Coords.T) - 1)) {
 
-            for (int c = 0; c < dataProvider_.getAxisLength(Coords.CHANNEL); c++) {
+            for (int c = 0; c < dataProvider_.getNextIndex(Coords.CHANNEL); c++) {
                Coords.CoordsBuilder cb = position.copyBuilder();
                Coords targetCoord = cb.channel(c).build();
                CHANNEL_SEARCH: if (!dataProvider_.hasImage(targetCoord)) {
                   // c is missing, first look in z
                   int zOffset = 1;
                   while (position.getZ() - zOffset > -1 ||
-                           position.getZ() + zOffset <= dataProvider_.getAxisLength(Coords.Z)) {
+                           position.getZ() + zOffset <= dataProvider_.getNextIndex(Coords.Z)) {
                      Coords testPosition = cb.z(position.getZ() - zOffset).build();
                      if (dataProvider_.hasImage(testPosition)) {
                         images.add(dataProvider_.getImage(testPosition).copyAtCoords(targetCoord));

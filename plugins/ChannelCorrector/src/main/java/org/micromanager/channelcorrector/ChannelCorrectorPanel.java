@@ -182,7 +182,7 @@ public class ChannelCorrectorPanel extends JPanel {
       int p = dataViewer_.getDisplayPosition().getP();
       List<Integer> ps = new ArrayList<>();
       if (useAllPositions_) {
-         for (p = 0; p < dataProvider.getAxisLength(Coords.P); p++) {
+         for (p = 0; p < dataProvider.getNextIndex(Coords.P); p++) {
             ps.add(p);
          }
       } else {
