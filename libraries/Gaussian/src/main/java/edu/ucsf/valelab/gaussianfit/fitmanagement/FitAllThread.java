@@ -172,10 +172,10 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       if (dw != null) {
 
          String[] parts = positionString_.split("-");
-         nrPositions = dw.getDataProvider().getAxisLength(Coords.STAGE_POSITION);
-         nrChannels = dw.getDataProvider().getAxisLength(Coords.CHANNEL);
-         nrFrames = dw.getDataProvider().getAxisLength(Coords.T);
-         nrSlices = dw.getDataProvider().getAxisLength(Coords.Z);
+         nrPositions = dw.getDataProvider().getNextIndex(Coords.STAGE_POSITION);
+         nrChannels = dw.getDataProvider().getNextIndex(Coords.CHANNEL);
+         nrFrames = dw.getDataProvider().getNextIndex(Coords.T);
+         nrSlices = dw.getDataProvider().getNextIndex(Coords.Z);
          int startPos = 1; int endPos = 1;
          if (parts.length > 0) {
             startPos = Integer.parseInt(parts[0]);
