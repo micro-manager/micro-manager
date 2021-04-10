@@ -34,7 +34,7 @@ public interface ImageJConverter {
     * @param image Micro-Manager Image object
     * @return ImageJ ImageProcessor with reference to input Image pixel data
     */
-   public ImageProcessor createProcessor(Image image);
+   ImageProcessor createProcessor(Image image);
 
    /**
     * Create an ImageProcessor whose image pixel data is derived from a
@@ -45,8 +45,8 @@ public interface ImageJConverter {
     * @return ImageJ ImageProcessor whose pixels are based on a single
     *         component of the input Image.
     */
-   public ImageProcessor createProcessorFromComponent(Image image,
-         int component);
+   ImageProcessor createProcessorFromComponent(Image image,
+                                               int component);
 
    /**
     * Create a new Image based on the provided ImageProcessor and metadata.
@@ -57,6 +57,6 @@ public interface ImageJConverter {
     * @return an Image based on the pixel data in the processor and the given
     *         coordinates and metadata.
     */
-   public Image createImage(ImageProcessor processor, Coords coords,
-         Metadata metadata);
+   Image createImage(ImageProcessor processor, Coords coords,
+                     Metadata metadata);
 }

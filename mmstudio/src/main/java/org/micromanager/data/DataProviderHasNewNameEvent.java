@@ -24,5 +24,9 @@ package org.micromanager.data;
  * @author nico
  */
 public interface DataProviderHasNewNameEvent {
-   public String getNewName();
+   /**
+    *
+    * @return The new name of the DataProvider.
+    */
+   String getNewName();
 }

@@ -32,5 +32,5 @@ public interface RewritableStorage extends Storage {
     * @param coords Coordinates of the image to remove.
     * @throws IllegalArgumentException if the coords do not match any image.
     */
-   public void deleteImage(Coords coords) throws IllegalArgumentException;
+   void deleteImage(Coords coords) throws IllegalArgumentException;
 }

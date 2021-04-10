@@ -33,12 +33,12 @@ public interface ProcessorConfigurator {
    /**
     * Display any GUI needed for performing configuration.
     */
-   public void showGUI();
+   void showGUI();
 
    /**
     * Remove any GUI resources currently in use.
     */
-   public void cleanup();
+   void cleanup();
 
    /**
     * Provide a PropertyMap fully encapsulating the settings needed to set up
@@ -46,5 +46,5 @@ public interface ProcessorConfigurator {
     * @return PropertyMap fully encapsulating the settings needed to set up
     * a new DataProcessor
     */
-   public PropertyMap getSettings();
+   PropertyMap getSettings();
 }

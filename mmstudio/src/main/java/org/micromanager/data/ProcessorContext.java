@@ -31,12 +31,12 @@ public interface ProcessorContext {
     * called from within the Processor's processImage() function.
     * @param image Image to be handed to the ProcessorContext
     */
-   public void outputImage(Image image);
+   void outputImage(Image image);
 
    /**
     * Access the SummaryMetadata of the Datastore that images will ultimately
     * be inserted into.
     * @return the SummaryMetadata of the Datastore of processed images.
     */
-   public SummaryMetadata getSummaryMetadata();
+   SummaryMetadata getSummaryMetadata();
 }

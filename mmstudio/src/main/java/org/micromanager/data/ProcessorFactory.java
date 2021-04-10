@@ -33,5 +33,5 @@ public interface ProcessorFactory {
     * Generate a new DataProcessor based on the configuration of the Factory.
     * @return new DataProcessor based on the configuration of the Factory
     */
-   public Processor createProcessor();
+   Processor createProcessor();
 }

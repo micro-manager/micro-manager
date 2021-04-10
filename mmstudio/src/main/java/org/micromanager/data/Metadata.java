@@ -84,6 +84,9 @@ public interface Metadata {
       Builder fileName(String filename);
    }
 
+   /**
+    * @deprecated Use {@link Metadata.Builder} instead
+    */
    @Deprecated
    interface MetadataBuilder {
       /**
@@ -317,7 +320,7 @@ public interface Metadata {
 
    /**
     * The name of the file from which the image was loaded, if applicable.
-    * @return
+    * @return filename.
     */
    String getFileName();
 }
