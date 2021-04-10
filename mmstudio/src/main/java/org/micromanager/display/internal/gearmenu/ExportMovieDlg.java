@@ -492,7 +492,7 @@ public final class ExportMovieDlg extends JDialog {
       ArrayList<String> result = new ArrayList<>();
       for (String axis : provider_.getAxes()) {
          // Channel axis is only available when in non-composite display modes.
-         if (provider_.getMaxIndices().getIndex(axis) > 0 &&
+         if (provider_.getAxisLength(axis) > 0 &&
                (!axis.equals(Coords.CHANNEL) || !isComposite())) {
             result.add(axis);
          }

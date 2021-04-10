@@ -113,19 +113,16 @@ public class ZProjectorPluginExecutor {
                newStore = studio_.data().createRAMDatastore();
             }
 
-            Coords oldSizeCoord = oldStore_.getMaxIndices();
-            CoordsBuilder newSizeCoordsBuilder = oldSizeCoord.copyBuilder();
-            newSizeCoordsBuilder.z(1);
+            CoordsBuilder newSizeCoordsBuilder = studio_.data().getCoordsBuilder();
+            for (String axis: oldStore_.getAxes()) {
+               newSizeCoordsBuilder.index(axis, oldStore_.getAxisLength(axis) - 1 );
+            }
             SummaryMetadata metadata = oldStore_.getSummaryMetadata();
 
             metadata = metadata.copyBuilder()
                     .intendedDimensions(newSizeCoordsBuilder.build())
                     .build();
             Coords.CoordsBuilder cb = Coordinates.builder();
-            // HACK: Micro-Manager deals very poorly with Coords that are 
-            // absent, so included axes lengths set to 0 (even though that is 
-            // physically impossible)
-            cb.time(1).channel(1).stagePosition(1).z(1);
             try {
                newStore.setSummaryMetadata(metadata);               
                List<String> axes = oldStore_.getAxes();

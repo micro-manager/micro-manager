@@ -97,24 +97,26 @@ public class AssembleDataAlgo {
          double yMaxUm = singlePositionImg.getMetadata().getYPositionUm() + (0.5 * singlePositionImg.getHeight() * singlePositionPixelSize);
 
          for (DataProvider data : datas) {
-            for (int p = 0; p <= data.getMaxIndices().getP(); p++) {
-               Image img = data.getImage(cb.p(p).build());
-               double pSize = img.getMetadata().getPixelSizeUm();
-               double tmp = img.getMetadata().getXPositionUm() - (0.5 * img.getWidth() * pSize);
-               if (tmp < xMinUm) {
-                  xMinUm = tmp;
-               }
-               tmp = img.getMetadata().getYPositionUm() - (0.5 * img.getHeight() * pSize);
-               if (tmp < yMinUm) {
-                  yMinUm = tmp;
-               }
-               tmp = img.getMetadata().getXPositionUm() + (0.5 * img.getWidth() * pSize);
-               if (tmp > xMaxUm) {
-                  xMaxUm = tmp;
-               }
-               tmp = img.getMetadata().getYPositionUm() + (0.5 * img.getHeight() * pSize);
-               if (tmp > yMaxUm) {
-                  yMaxUm = tmp;
+            for (int p = 0; p < data.getAxisLength(Coords.STAGE_POSITION); p++) {
+               if (data.hasImage(cb.p(p).build())) {
+                  Image img = data.getImage(cb.p(p).build());
+                  double pSize = img.getMetadata().getPixelSizeUm();
+                  double tmp = img.getMetadata().getXPositionUm() - (0.5 * img.getWidth() * pSize);
+                  if (tmp < xMinUm) {
+                     xMinUm = tmp;
+                  }
+                  tmp = img.getMetadata().getYPositionUm() - (0.5 * img.getHeight() * pSize);
+                  if (tmp < yMinUm) {
+                     yMinUm = tmp;
+                  }
+                  tmp = img.getMetadata().getXPositionUm() + (0.5 * img.getWidth() * pSize);
+                  if (tmp > xMaxUm) {
+                     xMaxUm = tmp;
+                  }
+                  tmp = img.getMetadata().getYPositionUm() + (0.5 * img.getHeight() * pSize);
+                  if (tmp > yMaxUm) {
+                     yMaxUm = tmp;
+                  }
                }
             }
          }
@@ -210,7 +212,7 @@ public class AssembleDataAlgo {
          for (int t = 0; t < mpdTLength; t++) {
             for (int c = 0; c < mpdCLenghth; c++) {
                newMetadataB = null;
-               for (int p = 0; p <= mpd.getMaxIndices().getP(); p++) {
+               for (int p = 0; p < mpd.getAxisLength(Coords.STAGE_POSITION); p++) {
                   Image img = mpd.getImage(cb.c(c).t(t).p(p).build());
                   if (img != null) {
                      newMetadataB = img.getMetadata().

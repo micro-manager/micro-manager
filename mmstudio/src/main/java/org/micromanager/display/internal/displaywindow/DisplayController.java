@@ -563,7 +563,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       try {
          if (images.size() != dataProvider_.getAxisLength(Coords.CHANNEL) &&
                  (!studio_.acquisitions().isAcquisitionRunning() ||
-                  position.getT() < dataProvider_.getMaxIndices().getT())) {
+                  position.getT() < dataProvider_.getAxisLength(Coords.T) - 1)) {
 
             for (int c = 0; c < dataProvider_.getAxisLength(Coords.CHANNEL); c++) {
                Coords.CoordsBuilder cb = position.copyBuilder();

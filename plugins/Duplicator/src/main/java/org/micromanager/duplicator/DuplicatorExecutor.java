@@ -88,8 +88,10 @@ public class DuplicatorExecutor extends SwingWorker <Void, Void> {
       Roi roi = theWindow_.getImagePlus().getRoi();
       
       DataProvider oldStore = theWindow_.getDataProvider();
-      Coords oldSizeCoord = oldStore.getMaxIndices();
-      Coords.CoordsBuilder newSizeCoordsBuilder = oldSizeCoord.copyBuilder();
+      Coords.CoordsBuilder newSizeCoordsBuilder = studio_.data().getCoordsBuilder();
+      for (String axis: oldStore.getAxes()) {
+         newSizeCoordsBuilder.index(axis, oldStore.getAxisLength(axis) - 1 );
+      }
       SummaryMetadata metadata = oldStore.getSummaryMetadata();
       List<String> channelNames = metadata.getChannelNameList();
       if (mins_.containsKey(Coords.CHANNEL)) {
@@ -106,7 +108,6 @@ public class DuplicatorExecutor extends SwingWorker <Void, Void> {
          channelNames = chNameList;
       }
       newSizeCoordsBuilder.channel(channelNames.size());
-      String[] axes = {Coords.P, Coords.T, Coords.Z};
       float  nrToBeCopied = 1;
       for (String axis : oldStore.getAxes()) {
          if (mins_.containsKey(axis)) {
@@ -149,6 +150,8 @@ public class DuplicatorExecutor extends SwingWorker <Void, Void> {
                Coords newCoords = newCoordBuilder.build();
                Image newImgShallow = img.copyAtCoords(newCoords);
                if (roi != null) {
+                  ImageProcessor ip = studio_.data().ij().createProcessor(img);
+                  /*
                   ImageProcessor ip = null;
                   if (img.getImageJPixelType() == ImagePlus.GRAY8) {
                      ip = new ByteProcessor(
@@ -159,6 +162,8 @@ public class DuplicatorExecutor extends SwingWorker <Void, Void> {
                         img.getWidth(), img.getHeight() );
                         ip.setPixels((short[]) img.getRawPixels());
                   }
+
+                   */
                   if (ip != null) {
                      ip.setRoi(roi);
                      ImageProcessor copyIp = ip.crop();
