@@ -233,7 +233,11 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          instance.setDisplayPosition(b.build());
 
          // TODO Cleaner
-         instance.animationAcknowledgeDataPosition(instance.getDataProvider().getMaxIndices());
+         // NS 20210410: I do not know what this is supposed to do.
+         // I do not see adverse effects when omitting this line, either
+         // in the normal display or in animations of the display.
+         // Leave this commented code until 20211010 in case bugs pop up.
+         // instance.animationAcknowledgeDataPosition(instance.getDataProvider().getMaxIndices());
       }
 
       return instance;
