@@ -101,8 +101,6 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    private long latestStatsSeqNr_ = -1;
 
    // Not final but set only upon creation
-   private DataCoordsAnimationState animationState_;
-   // Not final but set only upon creation
    private AnimationController<Coords> animationController_;
 
    private final Set<String> playbackAxes_ = new HashSet<>();
@@ -265,8 +263,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    private void initialize() {
       // Initialize some things that would leak 'this' if done in the
       // constructor
-      animationState_ = DataCoordsAnimationState.create(this);
-      animationController_ = AnimationController.create(animationState_);
+      DataCoordsAnimationState animationState = DataCoordsAnimationState.create(this);
+      animationController_ = AnimationController.create(animationState);
       animationController_.setPerformanceMonitor(perfMon_);
       animationController_.addListener(this);
 
@@ -395,8 +393,9 @@ public final class DisplayController extends DisplayWindowAPIAdapter
                imagesDiffer = false;
                for (int i = 0; i < images.getRequest().getNumberOfImages(); ++i) {
                   if (images.getRequest().getImage(i) !=
-                        displayedImages_.getRequest().getImage(i)) {
+                          displayedImages_.getRequest().getImage(i)) {
                      imagesDiffer = true;
+                     break;
                   }
                }
             }
@@ -686,9 +685,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @Override
    public void addOverlay(final Overlay overlay) {
       if (!SwingUtilities.isEventDispatchThread()) {
-         SwingUtilities.invokeLater(() -> {
-            addOverlay(overlay);
-         });
+         SwingUtilities.invokeLater(() -> addOverlay(overlay));
          return;
       }
 
@@ -703,9 +700,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @Override
    public void removeOverlay(final Overlay overlay) {
       if (!SwingUtilities.isEventDispatchThread()) {
-         SwingUtilities.invokeLater(() -> {
-            removeOverlay(overlay);
-         });
+         SwingUtilities.invokeLater(() -> removeOverlay(overlay));
          return;
       }
 
@@ -1143,9 +1138,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @Override
    public void toFront() {
       if (!SwingUtilities.isEventDispatchThread()) {
-         SwingUtilities.invokeLater(() -> {
-            toFront();
-         });
+         SwingUtilities.invokeLater(() -> toFront());
       }
 
       if (uiController_ == null) {
@@ -1186,11 +1179,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    public void setCustomTitle(String title) {
       // TODO: evaulate if this is as intended
       if (dataProvider_ instanceof Datastore) {
-         if (dataProvider_ != null) {
             ((Datastore) dataProvider_).setName(title);
-         } else {
-            // TODO: set default name, whatever that is and wherever that is decided
-         }
       }
    }
    
