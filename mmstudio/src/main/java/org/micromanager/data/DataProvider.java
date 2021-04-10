@@ -80,7 +80,7 @@ public interface DataProvider extends Closeable {
 
    /**
     * Returns a list of image in the DataProvider's collection that have
-    * identical coords after removing the given axes.
+    * identical coords after removing the given axes from both source and target.
     * @param coords Coords to look for in the provider's collection
     * @param ignoreTheseAxes Axes that will be removed from copy of Coords in the
     *                        collection before checking for identity

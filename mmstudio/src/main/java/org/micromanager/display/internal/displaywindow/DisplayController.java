@@ -929,7 +929,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @Override
    public List<Image> getDisplayedImages() throws IOException {
       // TODO Make sure this is accurate for composite and single-channel
-      return dataProvider_.getImagesIgnoringAxes(getDisplayPosition(), Coords.CHANNEL);
+      Coords displayPositionNoChannel = getDisplayPosition().copyRemovingAxes(Coords.CHANNEL);
+      return dataProvider_.getImagesIgnoringAxes(displayPositionNoChannel, Coords.CHANNEL);
    }
 
    @Override

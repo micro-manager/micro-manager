@@ -21,16 +21,8 @@
 
 package org.micromanager.duplicator;
 
-import ij.ImagePlus;
 import ij.gui.Roi;
-import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
-import ij.process.ShortProcessor;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import javax.swing.SwingWorker;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
@@ -40,6 +32,12 @@ import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplayWindow;
+
+import javax.swing.SwingWorker;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -129,7 +127,7 @@ public class DuplicatorExecutor extends SwingWorker <Void, Void> {
          int nrCopied = 0;
          for (Coords oldCoord : unorderedImageCoords) {
             boolean copy = true;
-            for (String axis : oldCoord.getAxes()) {
+            for (String axis : oldStore.getAxes()) {
                if (mins_.containsKey(axis) && maxes_.containsKey(axis)) {
                   if (oldCoord.getIndex(axis) < (mins_.get(axis))) {
                      copy = false;
@@ -178,7 +176,7 @@ public class DuplicatorExecutor extends SwingWorker <Void, Void> {
                newStore.putImage(newImgShallow);
                nrCopied++;
                try {
-               setProgress( (int) ( nrCopied / nrToBeCopied * 100.0) );
+                  setProgress( (int) ( nrCopied / nrToBeCopied * 100.0) );
                } catch (IllegalArgumentException iae) {
                   System.out.println ("Value was: " + (int) (nrCopied / nrToBeCopied * 100.0));
                }
@@ -189,7 +187,7 @@ public class DuplicatorExecutor extends SwingWorker <Void, Void> {
       } catch (DatastoreFrozenException ex) {
          studio_.logs().showError("Can not add data to frozen datastore");
       } catch (DatastoreRewriteException ex) {
-         studio_.logs().showError("Can not overwrite data");
+         studio_.logs().showError(ex, "Can not overwrite data");
       } catch (DuplicatorException ex) {
          studio_.logs().showError(ex.getMessage());
       } catch (IOException ioe) {
@@ -210,8 +208,5 @@ public class DuplicatorExecutor extends SwingWorker <Void, Void> {
       setProgress(100);
       studio_.alerts().postAlert("Finished duplicating", this.getClass(), newName_);
    }
-    
-         
-   
    
 }

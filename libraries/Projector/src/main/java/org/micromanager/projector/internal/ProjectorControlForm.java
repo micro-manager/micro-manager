@@ -430,7 +430,7 @@ public class ProjectorControlForm extends JFrame {
 
    /** Flips a point if the image was mirrored.
     *   TODO: also correct for rotation..
-   */
+   *
    private Point mirrorIfNecessary(DataViewer dv, Point pOffscreen) {
       boolean isImageMirrored = false;
       int imageWidth = 0;
@@ -458,6 +458,7 @@ public class ProjectorControlForm extends JFrame {
          return pOffscreen;
       }
    }
+    */
    
 
    @Subscribe
@@ -486,7 +487,7 @@ public class ProjectorControlForm extends JFrame {
    public void addPointToPointAndShootQueue(Point2D p2D) {
       Point p = new Point ((int) Math.round(p2D.getX()), (int) Math.round(p2D.getY()));
       // Is this needed?
-      p = mirrorIfNecessary(pointAndShootViewer_, p);
+      // p = mirrorIfNecessary(pointAndShootViewer_, p);
       Integer binning = null;
       Rectangle roi = null;
       try {

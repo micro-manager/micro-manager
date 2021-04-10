@@ -190,8 +190,9 @@ public class DefaultDatastore implements Datastore {
    @Override
    public List<Image> getImagesIgnoringAxes(Coords coords, String... ignoreTheseAxes)
            throws IOException {
+      Coords testCoords = coords.copyRemovingAxes(ignoreTheseAxes);
       if (storage_ != null) {
-         return storage_.getImagesIgnoringAxes(coords, ignoreTheseAxes);
+         return storage_.getImagesIgnoringAxes(testCoords, ignoreTheseAxes);
       }
       return null;
    }
