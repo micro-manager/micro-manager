@@ -304,7 +304,12 @@ public class SciFIODataProvider implements DataProvider {
 
    @Override
    public int getAxisLength(String mmAxis) {
-      ImageMetadata im = metadata_.get(IMAGEINDEX);
+      return getNextIndex(mmAxis);
+   }
+   
+   @Override
+    public int getNextIndex(String mmAxis) {
+       ImageMetadata im = metadata_.get(IMAGEINDEX);
       List<CalibratedAxis> axes = im.getAxes();
       String sciFioAxis = mmAxis;
       switch (mmAxis) {
@@ -328,7 +333,7 @@ public class SciFIODataProvider implements DataProvider {
       }
       // Axis not found, I guess it is correct that the length i 0?
       return 0;
-   }
+    }
 
    @Override
    public Image getImage(Coords coords) throws IOException {
@@ -465,5 +470,7 @@ public class SciFIODataProvider implements DataProvider {
    public void unregisterForEvents(Object obj) {
       bus_.unregister(obj);
    }
+
+
    
 }
