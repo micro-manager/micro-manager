@@ -309,7 +309,7 @@ public class PtcToolsExecutor extends Thread  {
    private void calculateAndAddToStack(ImageStack stack, Datastore store) 
             throws IOException, OutOfMemoryError {
       final Coords.Builder cb = Coordinates.builder().c(1).p(1).t(1).z(1);
-      int nrFrames = store.getAxisLength(Coords.T);
+      int nrFrames = store.getNextIndex(Coords.T);
       ImageStack tmpStack = new ImageStack(stack.getWidth(), stack.getHeight());
       List<ShortProcessor> lc = new ArrayList<>(nrFrames);
          for (int i = 0; i < nrFrames; i++) {
@@ -336,7 +336,7 @@ public class PtcToolsExecutor extends Thread  {
    private ExpMeanStdDev calcExpMeanStdDev(Datastore store) throws IOException {
       ExpMeanStdDev result = new ExpMeanStdDev();
       final Coords.Builder cb = Coordinates.builder().c(1).p(1).t(1).z(1);
-      final int nrFrames = store.getAxisLength(Coords.T);
+      final int nrFrames = store.getNextIndex(Coords.T);
       double[] means = new double[nrFrames];
       for (int i = 0; i < nrFrames; i++) {
          Image image = store.getImage(cb.t(i).build());

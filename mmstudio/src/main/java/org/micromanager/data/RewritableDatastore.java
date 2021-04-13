@@ -48,7 +48,7 @@ public interface RewritableDatastore extends Datastore {
     *         their Coords objects.
     */
    @Override
-   public void putImage(Image image) throws IOException;
+   void putImage(Image image) throws IOException;
 
    /**
     * Set the SummaryMetadata. Posts a NewSummaryMetadataEvent to the event
@@ -59,7 +59,7 @@ public interface RewritableDatastore extends Datastore {
     * @throws DatastoreFrozenException if the freeze() method has been called.
     */
    @Override
-   public void setSummaryMetadata(SummaryMetadata metadata) 
+   void setSummaryMetadata(SummaryMetadata metadata)
          throws IOException;
 
    /**
@@ -70,7 +70,7 @@ public interface RewritableDatastore extends Datastore {
     * @throws java.io.IOException
     * @throws IllegalArgumentException if the coords do not match any image.
     */
-   public void deleteImage(Coords coords) throws IOException;
+   void deleteImage(Coords coords) throws IOException;
 
    /**
     * Delete all images from the Datastore whose coordinates match the provided
@@ -86,7 +86,7 @@ public interface RewritableDatastore extends Datastore {
     *        remove.
     * @throws java.io.IOException
     */
-   public void deleteImagesMatching(Coords coords) throws IOException;
+   void deleteImagesMatching(Coords coords) throws IOException;
 
    /**
     * Delete all images from the Datastore. An ImageDeletedEvent will be
@@ -94,5 +94,5 @@ public interface RewritableDatastore extends Datastore {
     * DatastoreClearedEvent.
     * @throws java.io.IOException
     */
-   public void deleteAllImages() throws IOException;
+   void deleteAllImages() throws IOException;
 }

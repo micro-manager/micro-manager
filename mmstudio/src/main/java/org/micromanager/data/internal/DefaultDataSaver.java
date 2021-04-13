@@ -68,7 +68,7 @@ public class DefaultDataSaver extends SwingWorker<Void, Void> {
       if (summary.getIntendedDimensions() == null) {
          DefaultCoords.Builder builder = new DefaultCoords.Builder();
          for (String axis : store_.getAxes()) {
-            builder.index(axis, store_.getAxisLength(axis));
+            builder.index(axis, store_.getNextIndex(axis));
          }
          summary = summary.copyBuilder().intendedDimensions(builder.build()).build();
       }

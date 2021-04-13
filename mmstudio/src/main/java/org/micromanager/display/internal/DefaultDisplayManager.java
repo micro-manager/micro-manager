@@ -145,10 +145,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
       ArrayList<DisplayWindow> displays = null;
       Datastore store = event.getDatastore();
       synchronized (this) {
-         if (providerToDisplays_.containsKey(store)) {
-            displays = providerToDisplays_.get(store);
-            providerToDisplays_.remove(store);
-         }
+         providerToDisplays_.remove(store);
       }
    }
 
@@ -608,14 +605,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
             // Last display; check for saving now.
             if (provider instanceof Datastore) {
                Datastore store = (Datastore) provider;
-               if (store.getSavePath() != null) {
-                  // Data have been saved already
-                  return true;
-               }
-               else {
-                  // prompt needed
-                  return false;
-               }
+               return store.getSavePath() != null;
             }
          }
          return false;

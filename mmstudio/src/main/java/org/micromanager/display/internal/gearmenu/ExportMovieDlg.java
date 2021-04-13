@@ -162,7 +162,7 @@ public final class ExportMovieDlg extends JDialog {
       }
 
       public void setAxis(String axis) {
-         int axisLen = store_.getAxisLength(axis);
+         int axisLen = store_.getNextIndex(axis);
          String curAxis = (String) axisSelector_.getSelectedItem();
          if (curAxis.equals(axis) && minModel_ != null) {
             // Already set properly and spinner models exist.
@@ -492,7 +492,7 @@ public final class ExportMovieDlg extends JDialog {
       ArrayList<String> result = new ArrayList<>();
       for (String axis : provider_.getAxes()) {
          // Channel axis is only available when in non-composite display modes.
-         if (provider_.getMaxIndices().getIndex(axis) > 0 &&
+         if (provider_.getNextIndex(axis) > 0 &&
                (!axis.equals(Coords.CHANNEL) || !isComposite())) {
             result.add(axis);
          }

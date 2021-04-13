@@ -28,12 +28,12 @@ public interface ImageDeletedEvent {
     * Provides the Image that was deleted.
     * @return the Image that was just deleted from the Datastore.
     */
-   public Image getImage();
+   Image getImage();
 
    /**
     * Provides the Datastore this image was added to; potentially useful for
     * code that listens to events from multiple Datastores.
     * @return the Datastore this image was added to.
     */
-   public Datastore getDatastore();
+   Datastore getDatastore();
 }

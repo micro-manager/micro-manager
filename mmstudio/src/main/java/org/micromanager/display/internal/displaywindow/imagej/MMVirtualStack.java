@@ -26,6 +26,13 @@ import org.micromanager.data.internal.DefaultImageJConverter;
 /**
  * Proxy for ImageJ's {@code VirtualStack}.
  *
+ * Backs an ImageJ stack with Micro-Manager images provided by the "parent"
+ * (ImageJBridge in this case).
+ * Main logic concerns itself with translating bewteen ImageJ coordinates
+ * (i.e. flatIndex into the ImageJ stack, ImageJ c,z,t coordinates) and
+ * Micro-Manager Coords
+ *
+ *
  * @author Mark A. Tsuchida, based on older version by Chris Weisiger
  */
 public final class MMVirtualStack extends VirtualStack {

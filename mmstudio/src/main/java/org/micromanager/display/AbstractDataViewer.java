@@ -45,7 +45,7 @@ public abstract class AbstractDataViewer implements DataViewer {
    // Guarded by monitor on this
    private DisplaySettings displaySettings_;
    // Guarded by monitor on this
-   private Coords displayPosition_ = new DefaultCoords.Builder().build();
+   private Coords displayPosition_ = null;
 
    // When display settings or display position is changed, we need to post the
    // notification events in the correct order. One way to do that is to post

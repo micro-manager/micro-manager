@@ -729,7 +729,7 @@ public final class StorageMultipageTiff implements Storage {
             return false;
          }
          for (String axis : dp.getAxes() ) {
-            if (store_.getAxisLength(axis) != dp.getAxisLength(axis)) {
+            if (store_.getNextIndex(axis) != dp.getNextIndex(axis)) {
                return false;
             }
          }
@@ -829,7 +829,17 @@ public final class StorageMultipageTiff implements Storage {
 
    @Override
    public int getMaxIndex(String axis) {
-      return getMaxIndices().getIndex(axis);
+      if (!getAxes().contains(axis)) {
+         return -1;
+      }
+
+      int maxIndex = 0;
+      for (Coords coords : coordsToReader_.keySet()) {
+         if (coords.getIndex(axis) > maxIndex) {
+            maxIndex = coords.getIndex(axis);
+         }
+      }
+      return maxIndex;
    }
 
    // Convenience function.
@@ -857,13 +867,13 @@ public final class StorageMultipageTiff implements Storage {
       HashSet<Image> result = new HashSet<>();
       synchronized(coordsToPendingImage_) {
          for (Coords imageCoords : coordsToPendingImage_.keySet()) {
-            if (imageCoords.isSubspaceCoordsOf(coords)) {
+            if (imageCoords.equals(coords)) {
                result.add(coordsToPendingImage_.get(imageCoords));
             }
          }
       }
       for (Coords imageCoords : coordsToReader_.keySet()) {
-         if (imageCoords.isSubspaceCoordsOf(coords)) {
+         if (imageCoords.equals(coords)) {
             try {
                result.add(coordsToReader_.get(imageCoords).readImage(imageCoords));
             }
@@ -874,6 +884,30 @@ public final class StorageMultipageTiff implements Storage {
       }
       return new ArrayList<>(result);
    }
+
+   @Override
+   public List<Image> getImagesIgnoringAxes(Coords coords, String... ignoreTheseAxes) throws IOException {
+      HashSet<Image> result = new HashSet<>();
+      synchronized(coordsToPendingImage_) {
+         for (Coords imageCoords : coordsToPendingImage_.keySet()) {
+            if (coords.equals(imageCoords.copyRemovingAxes(ignoreTheseAxes))) {
+               result.add(coordsToPendingImage_.get(imageCoords));
+            }
+         }
+      }
+      for (Coords imageCoords : coordsToReader_.keySet()) {
+         if (coords.equals(imageCoords.copyRemovingAxes(ignoreTheseAxes))) {
+            try {
+               result.add(coordsToReader_.get(imageCoords).readImage(imageCoords));
+            }
+            catch (IOException ex) {
+               ReportingUtils.logError("Failed to read image at " + imageCoords);
+            }
+         }
+      }
+      return new ArrayList<>(result);
+   }
+
 
    @Override
    public Image getImage(Coords coords) {

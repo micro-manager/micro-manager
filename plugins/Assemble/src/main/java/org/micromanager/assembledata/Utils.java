@@ -23,24 +23,18 @@ public class Utils {
    }
    
    public static DataProvider singlePositionData(DataProvider dp1, DataProvider dp2) {
-      Coords maxCoords1 = dp1.getMaxIndices();
-      Coords maxCoords2 = dp2.getMaxIndices();
-      
-      if (maxCoords1.getP() <= 1 && maxCoords2.getP() > 1) {
+      if (dp1.getNextIndex(Coords.P) <= 1 && dp2.getNextIndex(Coords.P) > 1) {
          return dp1;
-      } else if (maxCoords2.getP() <= 1 && maxCoords1.getP() > 1) {
+      } else if (dp2.getNextIndex(Coords.P) <= 1 && dp1.getNextIndex(Coords.P) > 1) {
          return dp2;
       }
       return null;
    }
    
    public static DataProvider multiPositionData(DataProvider dp1, DataProvider dp2) {
-      Coords maxCoords1 = dp1.getMaxIndices();
-      Coords maxCoords2 = dp2.getMaxIndices();
-      
-      if (maxCoords1.getP() <= 1 && maxCoords2.getP() > 1) {
+      if (dp1.getNextIndex(Coords.P) <= 1 && dp2.getNextIndex(Coords.P) > 1) {
          return dp2;
-      } else if (maxCoords2.getP() <= 1 && maxCoords1.getP() > 1) {
+      } else if (dp2.getNextIndex(Coords.P) <= 1 && dp1.getNextIndex(Coords.P) > 1) {
          return dp1;
       }
       return null;

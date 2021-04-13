@@ -552,14 +552,14 @@ public class DataAnalysisPanel extends ListeningJPanel {
                 if (!store.getSummaryMetadata().getUserData().getString("NumberOfSides").equals("2")) {
                     throw new SaveTaskException("mipav export only works with two-sided data for now.");
                 }
-                if (store.getAxisLength(Coords.STAGE_POSITION) > 1) {
+                if (store.getNextIndex(Coords.STAGE_POSITION) > 1) {
                     throw new SaveTaskException("mipav export does not yet work with multiple positions");
                 }
 
-                boolean usesChannels = store.getAxisLength(Coords.CHANNEL) > 2;  // if have channels besides two cameras
-                String[] channelDirArray = new String[store.getAxisLength(Coords.CHANNEL)];
+                boolean usesChannels = store.getNextIndex(Coords.CHANNEL) > 2;  // if have channels besides two cameras
+                String[] channelDirArray = new String[store.getNextIndex(Coords.CHANNEL)];
                 if (usesChannels) {
-                    for (int c = 0; c < store.getAxisLength(Coords.CHANNEL); c++) {
+                    for (int c = 0; c < store.getNextIndex(Coords.CHANNEL); c++) {
                         String chName = store.getSummaryMetadata().getUserData().
                                 getStringArray("ChNames")[c];
                         String colorName = chName.substring(chName.indexOf("-") + 1);  // matches with AcquisitionPanel naming convention
@@ -583,16 +583,16 @@ public class DataAnalysisPanel extends ListeningJPanel {
                     new File(dir).mkdirs();
                 }
 
-                final int nrCh = store.getAxisLength(Coords.CHANNEL);
-                final int nrFr = store.getAxisLength(Coords.TIME);
-                final int nrZ = store.getAxisLength(Coords.Z);
+                final int nrCh = store.getNextIndex(Coords.CHANNEL);
+                final int nrFr = store.getNextIndex(Coords.T);
+                final int nrZ = store.getNextIndex(Coords.Z);
                 final int totalNr = nrCh * nrFr * nrZ;
                 int counter = 0;
 
                 for (int c = 0; c < nrCh; c++) {  // for each channel
                     for (int t = 0; t < nrFr; t++) {  // for each timepoint
                         ImageStack stack = new ImageStack(iProc.getWidth(), iProc.getHeight());
-                        for (int i = 0; i < store.getAxisLength(Coords.Z); i++) {
+                        for (int i = 0; i < store.getNextIndex(Coords.Z); i++) {
                             Coords coords = Coordinates.builder().channel(c).t(t).z(i).build();
                             // TODO make utility that converts Image into ImageProcessor
                             ImageProcessor iProc2 = ImageUtils.getImageProcessor(store.getImage(coords));

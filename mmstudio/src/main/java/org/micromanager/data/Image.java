@@ -111,9 +111,9 @@ public interface Image {
 
    /**
     *
-    * @param x
-    * @param y
-    * @return
+    * @param x Pixel location along x axis.
+    * @param y Pixel location along y axis.
+    * @return Intensity of the component.
     * @throws IndexOutOfBoundsException
     * @see #getComponentIntensityAt
     */
@@ -127,7 +127,7 @@ public interface Image {
     * @return ImageJ pixel type.
     * @throws UnsupportedOperationException if the image format is not
     * supported by ImageJ1
-    * @deprecated
+    * @deprecated Unclear what should be used instead. Do not delete until this is figure out.
     */
    @Deprecated
    int getImageJPixelType();

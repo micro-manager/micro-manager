@@ -197,7 +197,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       try {
          maxValue_ = 1 << dataProvider_.getAnyImage().getMetadata().getBitDepth();
 
-         final int nrCh = dataProvider_.getAxisLength(Coords.CHANNEL);
+         final int nrCh = dataProvider_.getNextIndex(Coords.CHANNEL);
 
          DisplaySettings.Builder dsb = ds.copyBuilder();
          for (int ch = 0; ch < ds.getNumberOfChannels(); ch++) {
@@ -328,7 +328,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    }
 
    private void setOneChannelVisible(int chToBeVisible) {
-      for (int ch = 0; ch < dataProvider_.getAxisLength(Coords.CHANNEL); ch++) {
+      for (int ch = 0; ch < dataProvider_.getNextIndex(Coords.CHANNEL); ch++) {
          boolean setVisible = false;
          if (ch == chToBeVisible) {
             setVisible = true;
@@ -338,7 +338,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    }
    
    private void setAllChannelsVisible() {
-      for (int ch = 0; ch < dataProvider_.getAxisLength(Coords.CHANNEL); ch++) {
+      for (int ch = 0; ch < dataProvider_.getNextIndex(Coords.CHANNEL); ch++) {
          clearVolumeRenderer_.setLayerVisible(ch, true);
       }
    }
@@ -358,7 +358,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
             setOneChannelVisible(activeChannel_); // todo: get the channel selected in the slider
          }
       }
-      for (int ch = 0; ch < dataProvider_.getAxisLength(Coords.CHANNEL); ch++ ) {
+      for (int ch = 0; ch < dataProvider_.getNextIndex(Coords.CHANNEL); ch++ ) {
          if ( displaySettings_.isChannelVisible(ch) != ds.isChannelVisible(ch)) {
             clearVolumeRenderer_.setLayerVisible(ch, ds.isChannelVisible(ch) );
          }
@@ -469,8 +469,8 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    @Override
    public List<Image> getDisplayedImages() throws IOException {
       List<Image> imageList = new ArrayList<>();
-      final int nrZ = dataProvider_.getAxisLength(Coords.Z);
-      final int nrCh = dataProvider_.getAxisLength(Coords.CHANNEL);
+      final int nrZ = dataProvider_.getNextIndex(Coords.Z);
+      final int nrCh = dataProvider_.getNextIndex(Coords.CHANNEL);
       for (int ch = 0; ch < nrCh; ch++) {
          /*
          // return the complete stack
@@ -510,8 +510,8 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       Image randomImage = dataProvider_.getAnyImage();
       final Metadata metadata = randomImage.getMetadata();
       final SummaryMetadata summary = dataProvider_.getSummaryMetadata();
-      final int nrZ = dataProvider_.getAxisLength(Coords.Z);
-      final int nrCh = dataProvider_.getAxisLength(Coords.CHANNEL);
+      final int nrZ = dataProvider_.getNextIndex(Coords.Z);
+      final int nrCh = dataProvider_.getNextIndex(Coords.CHANNEL);
 
       clearVolumeRenderer_.setVolumeDataUpdateAllowed(false);
 
@@ -749,7 +749,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       if (extremaPercentage < 0.0) {
          extremaPercentage = 0.0;
       }
-      for (int ch = 0; ch < dataProvider_.getAxisLength(Coords.CHANNEL); ++ch) {
+      for (int ch = 0; ch < dataProvider_.getNextIndex(Coords.CHANNEL); ++ch) {
          Image image = dataProvider_.getImage(baseCoords.copyBuilder().channel(ch).build());
          if (image != null) {
             ChannelDisplaySettings.Builder csCopyBuilder = 
@@ -921,7 +921,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       // Only compute the statistic for the middle coordinates, otherwise the 
       // computation is too slow
       // TODO: figure out how to compute the whole histogram in the background
-      int middleSlice = dataProvider_.getAxisLength(Coords.Z) / 2;
+      int middleSlice = dataProvider_.getNextIndex(Coords.Z) / 2;
       
       Coords position = lastDisplayedCoords_.copyBuilder().z(middleSlice).build();
       

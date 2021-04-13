@@ -188,6 +188,17 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
+   public List<Image> getImagesIgnoringAxes(Coords coords, String... ignoreTheseAxes)
+           throws IOException {
+      Coords testCoords = coords.copyRemovingAxes(ignoreTheseAxes);
+      if (storage_ != null) {
+         return storage_.getImagesIgnoringAxes(testCoords, ignoreTheseAxes);
+      }
+      return null;
+   }
+
+
+   @Override
    public Iterable<Coords> getUnorderedImageCoords() {
       if (storage_ != null) {
          return storage_.getUnorderedImageCoords();
@@ -235,8 +246,17 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
+   @Deprecated
    public int getAxisLength(String axis) {
-      return getMaxIndices().getIndex(axis) + 1;
+      return getNextIndex(axis);
+   }
+
+   @Override
+   public int getNextIndex(String axis) {
+      if (storage_ != null) {
+         return storage_.getMaxIndex(axis) + 1;
+      }
+      return 0;
    }
 
    @Override
@@ -248,12 +268,14 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
+   @Deprecated
    public Coords getMaxIndices() {
       if (storage_ != null) {
          return storage_.getMaxIndices();
       }
       return null;
    }
+
 
    @Override
    public SummaryMetadata getSummaryMetadata() {

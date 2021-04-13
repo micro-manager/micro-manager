@@ -25,5 +25,9 @@ package org.micromanager.data;
  * DataProvider.
  */
 public interface DataProviderHasNewSummaryMetadataEvent {
-   public SummaryMetadata getSummaryMetadata();
+   /**
+    *
+    * @return New summary metadata of the DataProvider.
+    */
+   SummaryMetadata getSummaryMetadata();
 }

@@ -88,9 +88,9 @@ public final class CopyToImageJItem implements DisplayGearMenuPlugin, SciJavaPlu
             ImageStack imgStack = new ImageStack(dp.getAnyImage().getWidth(), 
                     dp.getAnyImage().getHeight());
             Coords.Builder cb = Coordinates.builder().c(0).t(0).p(p).z(0);
-            for (int t = 0; t <= dp.getMaxIndices().getT(); t++) {
-               for (int z = 0; z <= dp.getMaxIndices().getZ(); z++) {
-                  for (int c = 0; c <= dp.getMaxIndices().getC(); c++) {
+            for (int t = 0; t < dp.getNextIndex(Coords.T); t++) {
+               for (int z = 0; z < dp.getNextIndex(Coords.Z); z++) {
+                  for (int c = 0; c < dp.getNextIndex(Coords.C); c++) {
                      image = dp.getImage(cb.c(c).t(t).z(z).build());
                      ImageProcessor iProc;
                      if (image != null) {
@@ -107,8 +107,8 @@ public final class CopyToImageJItem implements DisplayGearMenuPlugin, SciJavaPlu
             }
             iPlus = new ImagePlus(dp.getName() + "-ij");
             iPlus.setOpenAsHyperStack(true);
-            iPlus.setStack(imgStack, dp.getMaxIndices().getC() + 1, 
-                    dp.getMaxIndices().getZ() + 1, dp.getMaxIndices().getT() + 1);
+            iPlus.setStack(imgStack, dp.getNextIndex(Coords.C),
+                    dp.getNextIndex(Coords.Z), dp.getNextIndex(Coords.T));
             
             int displayMode;
             switch (display.getDisplaySettings().getColorMode()) {
@@ -120,7 +120,7 @@ public final class CopyToImageJItem implements DisplayGearMenuPlugin, SciJavaPlu
             iPlus.setDisplayMode(displayMode);  
             CompositeImage ci = new CompositeImage(iPlus, displayMode);
             ci.setTitle(dp.getName() + "-ij");
-            for (int c = 0; c <= dp.getMaxIndices().getC(); c++) {
+            for (int c = 0; c < dp.getNextIndex(Coords.C); c++) {
                ci.setChannelLut(
                        LUT.createLutFromColor(display.getDisplaySettings().getChannelColor(c)),
                        c + 1);

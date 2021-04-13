@@ -28,17 +28,17 @@ public interface DataProviderHasNewImageEvent {
     * Provides the newly-added image.
     * @return the Image that was just added to the DataProvider.
     */
-   public Image getImage();
+   Image getImage();
 
    /**
     * @return the Coords for the Image; identical to getImage().getCoords().
     */
-   public Coords getCoords();
+   Coords getCoords();
 
    /**
     * Provides the Datastore this image was added to; potentially useful for
     * code that listens to events from multiple Datastores.
     * @return the Datastore this image was added to.
     */
-   public DataProvider getDataProvider();
+   DataProvider getDataProvider();
 }

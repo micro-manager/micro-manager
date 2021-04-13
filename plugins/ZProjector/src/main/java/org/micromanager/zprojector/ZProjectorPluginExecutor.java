@@ -113,19 +113,16 @@ public class ZProjectorPluginExecutor {
                newStore = studio_.data().createRAMDatastore();
             }
 
-            Coords oldSizeCoord = oldStore_.getMaxIndices();
-            CoordsBuilder newSizeCoordsBuilder = oldSizeCoord.copyBuilder();
-            newSizeCoordsBuilder.z(1);
+            CoordsBuilder newSizeCoordsBuilder = studio_.data().getCoordsBuilder();
+            for (String axis: oldStore_.getAxes()) {
+               newSizeCoordsBuilder.index(axis, oldStore_.getNextIndex(axis) - 1 );
+            }
             SummaryMetadata metadata = oldStore_.getSummaryMetadata();
 
             metadata = metadata.copyBuilder()
                     .intendedDimensions(newSizeCoordsBuilder.build())
                     .build();
             Coords.CoordsBuilder cb = Coordinates.builder();
-            // HACK: Micro-Manager deals very poorly with Coords that are 
-            // absent, so included axes lengths set to 0 (even though that is 
-            // physically impossible)
-            cb.time(1).channel(1).stagePosition(1).z(1);
             try {
                newStore.setSummaryMetadata(metadata);               
                List<String> axes = oldStore_.getAxes();
@@ -140,7 +137,7 @@ public class ZProjectorPluginExecutor {
                } else {
                   nrProjections_ = 1;
                   for (String axis : axes) {
-                     nrProjections_ *= oldStore_.getAxisLength(axis);
+                     nrProjections_ *= oldStore_.getNextIndex(axis);
                   }
                   progressBar_ = new ProgressBar (window_.getWindow(), 
                                        "Projection Progress", 1, nrProjections_);
@@ -205,7 +202,7 @@ public class ZProjectorPluginExecutor {
       String currentAxis = remainingAxes.get(0);
       List<String> rcAxes = new ArrayList<>(remainingAxes);
       rcAxes.remove(currentAxis);
-      for (int i = 0; i < oldStore_.getAxisLength(currentAxis); i++) {
+      for (int i = 0; i < oldStore_.getNextIndex(currentAxis); i++) {
          cbp.index(currentAxis, i);
          if (rcAxes.isEmpty()) {
             executeProjection(newStore, cbp, projectionAxis, min, max, projectionMethod);

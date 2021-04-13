@@ -28,18 +28,18 @@ public interface ImageOverwrittenEvent {
     * Provides the newly-added image.
     * @return the Image that was just added to the Datastore.
     */
-   public Image getNewImage();
+   Image getNewImage();
 
    /**
     * Provides the image that was overwritten.
     * @return the Image that was just overwritten in the Datastore.
     */
-   public Image getOldImage();
+   Image getOldImage();
 
    /**
     * Provides the Datastore this image was added to; potentially useful for
     * code that listens to events from multiple Datastores.
     * @return the Datastore this image was added to.
     */
-   public Datastore getDatastore();
+   Datastore getDatastore();
 }

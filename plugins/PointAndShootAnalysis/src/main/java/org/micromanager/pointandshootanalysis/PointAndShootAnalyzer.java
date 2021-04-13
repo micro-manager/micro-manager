@@ -245,11 +245,11 @@ public class PointAndShootAnalyzer implements Runnable {
          
          // create a boofCV Planar that contains all of the MM data (no copy, backed by MM)
          Coords.Builder cbb = dataProvider.getAnyImage().getCoords().copyBuilder();
-         Planar bCVStack = new Planar(GrayU16.class, dataProvider.getAxisLength(Coords.T));
+         Planar bCVStack = new Planar(GrayU16.class, dataProvider.getNextIndex(Coords.T));
          bCVStack.setWidth(imgWidth);
          bCVStack.setHeight(imgHeight);
          bCVStack.setStride(imgWidth);
-         for (int frame = 0; frame < dataProvider.getAxisLength(Coords.T); frame++) {
+         for (int frame = 0; frame < dataProvider.getNextIndex(Coords.T); frame++) {
             bCVStack.setBand(frame, BoofCVImageConverter.mmToBoofCV(
                     dataProvider.getImage(cbb.t(frame).build()), false) );
          }
@@ -268,7 +268,7 @@ public class PointAndShootAnalyzer implements Runnable {
                     pasEntry.framePasClicked() - findMinFramesBefore,
                     pasEntry.framePasClicked(),
                     pasEntry.framePasClicked() + findMinFramesAfter_,
-                    dataProvider.getAxisLength(Coords.T));
+                    dataProvider.getNextIndex(Coords.T));
             /* Locate the bleach spot by dividing a minimum and average projection
               of n frames started at the recorded bleach time and reporting the 
               position of the minimum.  This fails when the particle moves too much
@@ -352,7 +352,7 @@ public class PointAndShootAnalyzer implements Runnable {
             ConvertImage.convert(preBleach, fPreBleach);
             ParticleData previousParticle = null;
             for (int frame = pasEntry.framePasClicked() + 2;
-                    frame < dataProvider.getAxisLength(Coords.T); frame++) {
+                    frame < dataProvider.getNextIndex(Coords.T); frame++) {
                ParticleData nextParticle = ParticleData.centralParticle(dataProvider, 
                        cb, frame, currentPoint, halfROISize_);
                if (nextParticle == null || ( 
@@ -378,7 +378,7 @@ public class PointAndShootAnalyzer implements Runnable {
                     nrFramesToMeasureBleachToParticleVector;
             Point2D_I32 offsetVector = null;
             for (int frame = pasEntry.framePasClicked() + 2;
-                    frame < dataProvider.getAxisLength(Coords.T); frame++) {
+                    frame < dataProvider.getNextIndex(Coords.T); frame++) {
                if (bleachSpotsMissed < 5 || continueBleachSpotTracking) {
                   ParticleData particle = track.get(frame);
                   ImageGray current = BoofCVImageConverter.subImage(dataProvider,
@@ -569,7 +569,7 @@ public class PointAndShootAnalyzer implements Runnable {
                Point2D_I32 currentPoint = centroid;
                int missing = 0;
                boolean bail = false;
-               for (int frame = 0; frame < dataProvider.getAxisLength(Coords.T) && !bail; frame++) {
+               for (int frame = 0; frame < dataProvider.getNextIndex(Coords.T) && !bail; frame++) {
                   ParticleData nextParticle = ParticleData.centralParticle(dataProvider,
                           cb, frame, currentPoint, halfROISize_);
                   if (nextParticle != null && (currentPoint.distance(nextParticle.getCentroid()) < maxDistance)) {
@@ -605,7 +605,7 @@ public class PointAndShootAnalyzer implements Runnable {
          if (controlTracks.size() > 0) {
             // get average intensity of control particles, indexed by frame 
             Map<Integer, Double> controlAvgIntensity = new HashMap<>();
-            for (int frame = 0; frame < dataProvider.getAxisLength(Coords.T); frame++) {
+            for (int frame = 0; frame < dataProvider.getNextIndex(Coords.T); frame++) {
                double sum = 0.0;
                int n = 0;
                for (Map<Integer, ParticleData> track : controlTracks) {

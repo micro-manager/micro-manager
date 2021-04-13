@@ -28,9 +28,9 @@ public class SciFIOTest {
          Assert.assertEquals("Image X Size is wrong", XSize_, sdp.getAnyImage().getWidth());
          Assert.assertEquals("Image Y Size is wrong", YSize_, sdp.getAnyImage().getHeight());
          Assert.assertEquals("Bytes Per Pixel is wrong", 1, sdp.getAnyImage().getBytesPerPixel());
-         Assert.assertEquals("Nr Zs is wrong" , nrZs_, sdp.getAxisLength(Coords.Z));
-         Assert.assertEquals("nrChannels is wrong", nrChannels_, sdp.getAxisLength(Coords.C));
-         Assert.assertEquals("nrTime Points is wrong", nrTimePoints_, sdp.getAxisLength(Coords.T));
+         Assert.assertEquals("Nr Zs is wrong" , nrZs_, sdp.getNextIndex(Coords.Z));
+         Assert.assertEquals("nrChannels is wrong", nrChannels_, sdp.getNextIndex(Coords.C));
+         Assert.assertEquals("nrTime Points is wrong", nrTimePoints_, sdp.getNextIndex(Coords.T));
       } catch (IOException ex) {
          Assert.fail("IOException while testing SciFIODataProvider");
       }
@@ -46,9 +46,9 @@ public class SciFIOTest {
          Assert.assertEquals("Image X Size is wrong", XSize_, sdp.getAnyImage().getWidth());
          Assert.assertEquals("Image Y Size is wrong", YSize_, sdp.getAnyImage().getHeight());
          Assert.assertEquals("Bytes Per Pixel is wrong", 2, sdp.getAnyImage().getBytesPerPixel());
-         Assert.assertEquals("Nr Zs is wrong" , nrZs_, sdp.getAxisLength(Coords.Z));
-         Assert.assertEquals("nrChannels is wrong", nrChannels_, sdp.getAxisLength(Coords.C));
-         Assert.assertEquals("nrTime Points is wrong", nrTimePoints_, sdp.getAxisLength(Coords.T));
+         Assert.assertEquals("Nr Zs is wrong" , nrZs_, sdp.getNextIndex(Coords.Z));
+         Assert.assertEquals("nrChannels is wrong", nrChannels_, sdp.getNextIndex(Coords.C));
+         Assert.assertEquals("nrTime Points is wrong", nrTimePoints_, sdp.getNextIndex(Coords.T));
       } catch (IOException ex) {
          Assert.fail("IOException while testing SciFIODataProvider");
       }

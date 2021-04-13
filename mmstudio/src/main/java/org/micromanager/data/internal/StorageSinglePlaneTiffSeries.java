@@ -313,12 +313,27 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
    }
 
    @Override
+   public List<Image> getImagesIgnoringAxes(Coords coords, String... ignoreTheseAxes) throws IOException {
+      ArrayList<Image> result = new ArrayList<Image>();
+      for (Coords altCoords : coordsToFilename_.keySet()) {
+         Coords strippedAltCoords = altCoords.copyRemovingAxes(ignoreTheseAxes);
+         if (coords.equals(strippedAltCoords)) {
+            result.add(getImage(altCoords));
+         }
+      }
+      return result;
+   }
+
+   @Override
    public boolean hasImage(Coords coords) {
       return coordsToFilename_.containsKey(coords);
    }
 
    @Override
    public int getMaxIndex(String axis) {
+      if (!getAxes().contains(axis)) {
+         return -1;
+      }
       return maxIndices_.getIndex(axis);
    }
 
@@ -640,12 +655,10 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
                Coords coords;
                if (key.startsWith("Coords-")) {
                   // 2.0 method. SummaryMetadata is already valid.
+                  File f = new File(key);
+                  fileName = f.getName();
                   coords = DefaultCoords.fromPropertyMap(
                      NonPropertyMapJSONFormats.coords().fromGson(entry.getValue()));
-                  
-                  // TODO Filename should be read from JSON key instead of
-                  // using fixed rule!
-                  fileName = createFileName(coords);
                }
                else if (key.startsWith("FrameKey-")) {
                   // 1.4 method. SummaryMetadata must be reconstructed.

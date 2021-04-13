@@ -36,7 +36,7 @@ public class ShowWorker {
          DisplayWindow disp = studio.displays().createDisplay(targetStore);
          DisplaySettings dispSettings = disp.getDisplaySettings();
          DisplaySettings.Builder dpb = dispSettings.copyBuilder();
-         for (int i=0; i < targetStore.getAxisLength(Coords.C); i++) {
+         for (int i=0; i < targetStore.getNextIndex(Coords.C); i++) {
             // this is scary stuff
             dpb.colorModeComposite().channel(i, 
                     dispSettings.getChannelSettings(0).copyBuilder().

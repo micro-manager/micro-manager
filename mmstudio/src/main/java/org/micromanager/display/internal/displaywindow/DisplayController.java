@@ -101,8 +101,6 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    private long latestStatsSeqNr_ = -1;
 
    // Not final but set only upon creation
-   private DataCoordsAnimationState animationState_;
-   // Not final but set only upon creation
    private AnimationController<Coords> animationController_;
 
    private final Set<String> playbackAxes_ = new HashSet<>();
@@ -233,7 +231,11 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          instance.setDisplayPosition(b.build());
 
          // TODO Cleaner
-         instance.animationAcknowledgeDataPosition(instance.getDataProvider().getMaxIndices());
+         // NS 20210410: I do not know what this is supposed to do.
+         // I do not see adverse effects when omitting this line, either
+         // in the normal display or in animations of the display.
+         // Leave this commented code until 20211010 in case bugs pop up.
+         // instance.animationAcknowledgeDataPosition(instance.getDataProvider().getMaxIndices());
       }
 
       return instance;
@@ -261,8 +263,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    private void initialize() {
       // Initialize some things that would leak 'this' if done in the
       // constructor
-      animationState_ = DataCoordsAnimationState.create(this);
-      animationController_ = AnimationController.create(animationState_);
+      DataCoordsAnimationState animationState = DataCoordsAnimationState.create(this);
+      animationController_ = AnimationController.create(animationState);
       animationController_.setPerformanceMonitor(perfMon_);
       animationController_.addListener(this);
 
@@ -391,8 +393,9 @@ public final class DisplayController extends DisplayWindowAPIAdapter
                imagesDiffer = false;
                for (int i = 0; i < images.getRequest().getNumberOfImages(); ++i) {
                   if (images.getRequest().getImage(i) !=
-                        displayedImages_.getRequest().getImage(i)) {
+                          displayedImages_.getRequest().getImage(i)) {
                      imagesDiffer = true;
+                     break;
                   }
                }
             }
@@ -461,7 +464,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    @Override
    public int getMaximumExtentOfAxis(String axis) {
-      return dataProvider_.getAxisLength(axis);
+      return dataProvider_.getNextIndex(axis);
    }
 
    @Override
@@ -529,29 +532,23 @@ public final class DisplayController extends DisplayWindowAPIAdapter
             new ExpandDisplayRangeCoalescentRunnable(position));
 
       // Always compute stats for all channels
-      Coords channellessPos = position.hasAxis(Coords.CHANNEL) ?
-            position.copyBuilder().removeAxis(Coords.CHANNEL).build() :
-            position;
       List<Image> images;
       try {
-         images = dataProvider_.getImagesMatching(channellessPos);
+         images = dataProvider_.getImagesIgnoringAxes(
+                 position.copyRemovingAxes(Coords.CHANNEL),
+                 Coords.CHANNEL);
       }
       catch (IOException e) {
          // TODO Should display error
          images = Collections.emptyList();
       }
 
-      // Images are sorted by channel here, since we don't (yet) have any other
-      // way to correctly recombine stats with newer images (when update rate
-      // is finite).
-      if (images.size() > 1) {
-         Collections.sort(images, (Image o1, Image o2) -> 
-                 new Integer(o1.getCoords().getChannel()).
-                        compareTo(o2.getCoords().getChannel()));
-      }
 
-      // TODO XXX We need to handle missing images if so requested. User should
-      // be able to enable "filling in Z slices" and "filling in time points".
+
+      // Handle missing images.
+      // TODO: provide user interface so that user can request to enable/disable
+      // "filling in Z slices" and "filling in time points".
+      //
       // If 'images' is empty, search first in Z, then in time, until at least
       // one channel has an image (Q: or just leave empty when no channel has
       // an image?). Then, for missing channels, first search for nearest Z in
@@ -566,6 +563,59 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       // During acquisition, do not search back in time if newest timepoint.
       // During acquisition, do not search in Z if newest timepoint.
 
+      try {
+         if (images.size() != dataProvider_.getNextIndex(Coords.CHANNEL) &&
+                 (!studio_.acquisitions().isAcquisitionRunning() ||
+                  position.getT() < dataProvider_.getNextIndex(Coords.T) - 1)) {
+
+            for (int c = 0; c < dataProvider_.getNextIndex(Coords.CHANNEL); c++) {
+               Coords.CoordsBuilder cb = position.copyBuilder();
+               Coords targetCoord = cb.channel(c).build();
+               CHANNEL_SEARCH: if (!dataProvider_.hasImage(targetCoord)) {
+                  // c is missing, first look in z
+                  int zOffset = 1;
+                  while (position.getZ() - zOffset > -1 ||
+                           position.getZ() + zOffset <= dataProvider_.getNextIndex(Coords.Z)) {
+                     Coords testPosition = cb.z(position.getZ() - zOffset).build();
+                     if (dataProvider_.hasImage(testPosition)) {
+                        images.add(dataProvider_.getImage(testPosition).copyAtCoords(targetCoord));
+                        break CHANNEL_SEARCH;
+                     }
+                     testPosition = cb.z(position.getZ() + zOffset).build();
+                     if (dataProvider_.hasImage(testPosition)) {
+                        images.add(dataProvider_.getImage(testPosition).copyAtCoords(targetCoord));
+                        break CHANNEL_SEARCH;
+                     }
+                     zOffset++;
+                  }
+                  // not found in z, now look backwards in time
+                  cb = targetCoord.copyBuilder();
+                  for (int t = position.getT(); t > -1; t--) {
+                     Coords testPosition = cb.time(t).build();
+                     if (dataProvider_.hasImage(testPosition)) {
+                        images.add(dataProvider_.getImage(testPosition).copyAtCoords(targetCoord));
+                        break;
+                     }
+                  }
+               }
+            }
+         }
+      } catch (IOException e) {
+            // TODO Should display error
+            images = Collections.emptyList();
+      }
+
+      // Images are sorted by channel here, since we don't (yet) have any other
+      // way to correctly recombine stats with newer images (when update rate
+      // is finite).
+      if (images.size() > 1) {
+         Collections.sort(images, (Image o1, Image o2) ->
+                 new Integer(o1.getCoords().getChannel()).
+                         compareTo(o2.getCoords().getChannel()));
+      }
+
+
+
       BoundsRectAndMask selection = BoundsRectAndMask.unselected();
       if (getDisplaySettings().isROIAutoscaleEnabled()) {
          synchronized (selectionLock_) {
@@ -574,8 +624,9 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       }
 
       perfMon_.sampleTimeInterval("Submitting compute request");
-      computeQueue_.submitRequest(ImageStatsRequest.create(position, images,
-            selection));
+      computeQueue_.submitRequest(ImageStatsRequest.create(position,
+              images,
+              selection));
 
       return position;
    }
@@ -634,9 +685,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @Override
    public void addOverlay(final Overlay overlay) {
       if (!SwingUtilities.isEventDispatchThread()) {
-         SwingUtilities.invokeLater(() -> {
-            addOverlay(overlay);
-         });
+         SwingUtilities.invokeLater(() -> addOverlay(overlay));
          return;
       }
 
@@ -651,9 +700,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @Override
    public void removeOverlay(final Overlay overlay) {
       if (!SwingUtilities.isEventDispatchThread()) {
-         SwingUtilities.invokeLater(() -> {
-            removeOverlay(overlay);
-         });
+         SwingUtilities.invokeLater(() -> removeOverlay(overlay));
          return;
       }
 
@@ -881,7 +928,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @Override
    public List<Image> getDisplayedImages() throws IOException {
       // TODO Make sure this is accurate for composite and single-channel
-      return dataProvider_.getImagesMatching(getDisplayPosition());
+      Coords displayPositionNoChannel = getDisplayPosition().copyRemovingAxes(Coords.CHANNEL);
+      return dataProvider_.getImagesIgnoringAxes(displayPositionNoChannel, Coords.CHANNEL);
    }
 
    @Override
@@ -1090,9 +1138,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @Override
    public void toFront() {
       if (!SwingUtilities.isEventDispatchThread()) {
-         SwingUtilities.invokeLater(() -> {
-            toFront();
-         });
+         SwingUtilities.invokeLater(() -> toFront());
       }
 
       if (uiController_ == null) {
@@ -1133,11 +1179,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    public void setCustomTitle(String title) {
       // TODO: evaulate if this is as intended
       if (dataProvider_ instanceof Datastore) {
-         if (dataProvider_ != null) {
             ((Datastore) dataProvider_).setName(title);
-         } else {
-            // TODO: set default name, whatever that is and wherever that is decided
-         }
       }
    }
    

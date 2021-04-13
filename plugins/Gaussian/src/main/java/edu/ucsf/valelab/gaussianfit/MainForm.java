@@ -987,7 +987,7 @@ public class MainForm extends JFrame {
          }
          emGainTextField_.setText(NumberUtils.doubleToDisplayString(emGain));
 
-         int nrFrames = dataStore.getAxisLength(Coords.T);
+         int nrFrames = dataStore.getNextIndex(Coords.T);
          Image img0 = dataStore.getImage(img.getCoords().copyBuilder().channel(0).t(0).build());
          Image imgLast = dataStore.getImage(img.getCoords().copyBuilder().channel(0).t(nrFrames - 1).build());
          double startTimeMs = img0.getMetadata().getElapsedTimeMs(0.0);
@@ -1096,7 +1096,7 @@ public class MainForm extends JFrame {
 
       int nrPos = 1;
       if (dw != null) {
-         nrPos = dw.getDataProvider().getAxisLength(Coords.STAGE_POSITION);
+         nrPos = dw.getDataProvider().getNextIndex(Coords.STAGE_POSITION);
       }
       if (nrPos > 1) {
          posTextField_.setText("1-" + nrPos);

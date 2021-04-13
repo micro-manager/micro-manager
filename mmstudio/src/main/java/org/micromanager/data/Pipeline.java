@@ -46,7 +46,7 @@ public interface Pipeline {
     * @throws PipelineErrorException if processing of images has already
     *         started at the time this method is called.
     */
-   public void insertSummaryMetadata(SummaryMetadata source) throws IOException, PipelineErrorException;
+   void insertSummaryMetadata(SummaryMetadata source) throws IOException, PipelineErrorException;
 
    /**
     * Insert an Image into the Pipeline. The Image will be processed by the
@@ -86,14 +86,14 @@ public interface Pipeline {
     *         in an error state; see the getExceptions() and clearExceptions()
     *         methods.
     */
-   public void insertImage(Image image) throws IOException, PipelineErrorException;
+   void insertImage(Image image) throws IOException, PipelineErrorException;
 
    /**
     * Get the output Datastore for this Pipeline. This Datastore is the
     * ultimate recipient of Images that have been processed by the Pipeline.
     * @return output Datastore for this Pipeline
     */
-   public Datastore getDatastore();
+   Datastore getDatastore();
 
    /**
     * Return whether the Pipeline is operating in synchronous or asynchronous
@@ -102,6 +102,9 @@ public interface Pipeline {
     */
    boolean isSynchronous();
 
+   /**
+    * @deprecated Use {@link #isSynchronous()} instead.
+    */
    @Deprecated
    default boolean getIsSynchronous() {
       return isSynchronous();
@@ -116,14 +119,14 @@ public interface Pipeline {
     * whole is synchronous. Consequently, once this method returns, it should
     * be safe to freeze the Datastore and save it to disk.
     */
-   public void halt();
+   void halt();
 
    /**
     * Returns true if the pipeline has been halted (that is, its halt() method
     * has been executed to completion), false otherwise. If this method
     * returns true, then the pipeline cannot generate any more images.
     */
-   public boolean isHalted();
+   boolean isHalted();
 
    /**
     * Return a list containing any exceptions that have occurred during
@@ -132,7 +135,7 @@ public interface Pipeline {
     * @return list containing any exceptions that have occurred during
     * processing of images
     */
-   public List<Exception> getExceptions();
+   List<Exception> getExceptions();
 
    /**
     * Clear the list of exceptions that the pipeline has encountered, allowing
@@ -140,10 +143,10 @@ public interface Pipeline {
     * then the pipeline may be in an inconsistent state, causing processed
     * image data to be incorrect.
     */
-   public void clearExceptions();
+   void clearExceptions();
 
    /**
     * Return the list of Processors used by this Pipeline.
     */
-   public List<Processor> getProcessors();
+   List<Processor> getProcessors();
 }

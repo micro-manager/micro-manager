@@ -14,13 +14,12 @@
 package org.micromanager.display.internal.animate;
 
 import com.google.common.collect.Lists;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Coords.CoordsBuilder;
 import org.micromanager.data.internal.DefaultCoords;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Manages the position within a dataset displayed during animated playback.
@@ -61,16 +60,12 @@ public class DataCoordsAnimationState implements AnimationStateDelegate<Coords> 
 
    @Override
    public synchronized Coords getAnimationPosition() {
-      // In the slightly pathological case where the CoordsProvider now has
-      // an axis that it previsouly didn't, we supply zeros for indices on
-      // those new axes.
-      animationCoords_ = getFullPosition(animationCoords_);
       return animationCoords_;
    }
 
    @Override
    public synchronized void setAnimationPosition(Coords position) {
-      animationCoords_ = getFullPosition(position);
+      animationCoords_ = position.copyBuilder().build();
       cumulativeFrameCountError_ = 0.0;
    }
 
@@ -82,7 +77,7 @@ public class DataCoordsAnimationState implements AnimationStateDelegate<Coords> 
    private Coords advanceAnimationPositionImpl(double frames,
          boolean skipNonExistent)
    {
-      final Coords prevPos = getFullPosition(animationCoords_);
+      final Coords prevPos = animationCoords_;
       final List<String> axes = delegate_.getOrderedAxes();
       // TODO: this is coming from the summarymetadata.  If the axes list was not
       // not set, bad thing will happen downstream.  At the very least log
@@ -134,23 +129,4 @@ public class DataCoordsAnimationState implements AnimationStateDelegate<Coords> 
       return animationCoords_;
    }
 
-   @Override
-   public synchronized Coords getFullPosition(Coords partialPosition) {
-      // Fill in missing coords with known current position, or else zero.
-      Set<String> currentAxes = new HashSet<String>(animationCoords_.getAxes());
-      Set<String> givenAxes = new HashSet<String>(partialPosition.getAxes());
-      CoordsBuilder cb = new DefaultCoords.Builder();
-      for (String axis : delegate_.getOrderedAxes()) {
-         if (givenAxes.contains(axis)) {
-            cb.index(axis, partialPosition.getIndex(axis));
-         }
-         else if (currentAxes.contains(axis)) {
-            cb.index(axis, animationCoords_.getIndex(axis));
-         }
-         else {
-            cb.index(axis, 0);
-         }
-      }
-      return cb.build();
-   }
 }

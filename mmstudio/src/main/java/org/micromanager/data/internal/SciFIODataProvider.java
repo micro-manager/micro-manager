@@ -205,7 +205,7 @@ public class SciFIODataProvider implements DataProvider {
       int diff = rasterPosition.length - axes.size();
       if (diff != 0) {
          // this is bad, how can we ever translate one into the other???
-         // It looks like avis have only one rasterPostion
+         // It looks like axis have only one rasterPostion
          if (reader_.getFormatName().equals("Audio Video Interleave")) {
             cb.t((int) rasterPosition[0]);
             return cb.build();
@@ -327,7 +327,7 @@ public class SciFIODataProvider implements DataProvider {
          }
       }
       // Axis not found, I guess it is correct that the length i 0?
-      return 1;
+      return 0;
    }
 
    @Override
@@ -352,7 +352,7 @@ public class SciFIODataProvider implements DataProvider {
       for (int i = 0; i < im.getPlaneCount(); i++) {
          long[] rasterPosition = FormatTools.rasterToPosition(IMAGEINDEX, i, metadata_);
          Coords tmpC = rasterPositionToCoords(im, rasterPosition);
-         if (tmpC.isSubspaceCoordsOf(coords)) {
+         if (tmpC.equals(coords)) {
             Plane plane = getPlane(coords);
             if (im.isMultichannel() && channelAxisIndex_ == 0) {
                for (int c = 0; c < im.getAxisLength(channelAxisIndex_); c++) {
@@ -368,12 +368,35 @@ public class SciFIODataProvider implements DataProvider {
    }
 
    @Override
+   public List<Image> getImagesIgnoringAxes(Coords coords, String... ignoreTheseAxes) throws IOException {
+      List<Image> result = new ArrayList<>();
+      ImageMetadata im = metadata_.get(IMAGEINDEX);
+      for (int i = 0; i < im.getPlaneCount(); i++) {
+         long[] rasterPosition = FormatTools.rasterToPosition(IMAGEINDEX, i, metadata_);
+         Coords tmpC = rasterPositionToCoords(im, rasterPosition);
+         if (coords.equals(tmpC.copyRemovingAxes(ignoreTheseAxes))) {
+            Plane plane = getPlane(coords);
+            if (im.isMultichannel() && channelAxisIndex_ == 0) {
+               for (int c = 0; c < im.getAxisLength(channelAxisIndex_); c++) {
+                  result.add(planeToImage(plane,
+                          coords.copyBuilder().c(c).build()));
+               }
+            } else {
+               result.add(planeToImage(plane, coords));
+            }
+         }
+      }
+      return result;
+   }
+
+      @Override
    public boolean isFrozen() {
       // for now, we are not writing, so always frozen
       return true;
    }
 
    @Override
+   @Deprecated
    public Coords getMaxIndices() {
       ImageMetadata im = metadata_.get(IMAGEINDEX);
       // assume that there are always an X and a Y axis
@@ -415,7 +438,7 @@ public class SciFIODataProvider implements DataProvider {
       for (int i = 0; i < im.getPlaneCount(); i++) {
          long[] rasterPosition = FormatTools.rasterToPosition(IMAGEINDEX, i, metadata_);
          Coords tmpC = rasterPositionToCoords(im, rasterPosition);
-         if (tmpC.isSubspaceCoordsOf(coords)) {
+         if (tmpC.equals(coords)) {
             return true;
          }
       }
