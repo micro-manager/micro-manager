@@ -1,12 +1,13 @@
 name: Update privateMain
 
-on:
+on:  # this defines which events trigger a run of this job. In this case a push to the master branch.
   push:
     branches:
       - master
 
 jobs:
   update-privateMain:
+    if: github.repository == 'micro-manager/micro-manager'  # Only run this job if we are on the main repo.
     name: Merge master into privateMain after a new commit
     runs-on: ubuntu-latest
     steps:
