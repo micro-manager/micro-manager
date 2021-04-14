@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.List;
 import org.micromanager.EventPublisher;
 import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
@@ -179,8 +180,8 @@ public interface DisplayManager extends EventPublisher {
    /**
     * Generate a "blank" PropertyMap.PropertyMapBuilder with empty mappings.
     * @return A PropertyMapBuilder with no pre-set values.
+    * @deprecated Use {@link org.micromanager.PropertyMaps#builder()} instead
     */
-   // TODO Why on earth is this in DisplayManager?
    @Deprecated
    PropertyMap.Builder getPropertyMapBuilder();
 
