@@ -25,6 +25,7 @@ AM_CONDITIONAL([BUILD_CPP_TESTS], [test "x$have_gmock" = xyes])
 # TODO Reflect results in configuration
 AX_BOOST_BASE([1.48.0])
 AX_BOOST_DATE_TIME
+AX_BOOST_FILESYSTEM
 AX_BOOST_SYSTEM
 AX_BOOST_THREAD
 
