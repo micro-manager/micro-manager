@@ -1,12 +1,11 @@
 name: Update privateMain
 
 on:
-  push:
-    branches:
-      - master
+  - workflow_dispatch
 
 jobs:
   update-privateMain:
+    if: github.repository == 'micro-manager/micro-manager'
     name: Merge master into privateMain after a new commit
     runs-on: ubuntu-latest
     steps:
