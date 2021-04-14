@@ -33,12 +33,12 @@ public interface ImageExporter {
     * be re-used for multiple displays, if desired.
     * @param display Display to use for exporting images.
     */
-   public void setDisplay(DisplayWindow display);
+   void setDisplay(DisplayWindow display);
 
    /**
     * Allowed export formats.
     */
-   public enum OutputFormat {
+   enum OutputFormat {
       /**
        * Output as a sequence of Portable Network Graphics (PNG) files.
        */
@@ -58,7 +58,7 @@ public interface ImageExporter {
     * Set the output format to use.
     * @param format The format to output in.
     */
-   public void setOutputFormat(OutputFormat format);
+   void setOutputFormat(OutputFormat format);
 
    /**
     * Set the image quality. This is currently only relevant if the output
@@ -66,7 +66,7 @@ public interface ImageExporter {
     * @param quality An integer quality ranging from 1 through 100. The default
     *        value is 90.
     */
-   public void setOutputQuality(int quality);
+   void setOutputQuality(int quality);
 
    /**
     * Set the path to save images to, and the filename prefix to use when
@@ -76,7 +76,7 @@ public interface ImageExporter {
     * @param prefix String to place at beginning of each output image's name.
     * @throws IllegalArgumentException if the directory does not exist.
     */
-   public void setSaveInfo(String path, String prefix) throws IOException;
+   void setSaveInfo(String path, String prefix) throws IOException;
 
    /**
     * Add a new "inner loop" to the export parameters. This determines what
@@ -91,12 +91,12 @@ public interface ImageExporter {
     *        than the index of the last image you want to export).
     * @return This instance, allowing calls to be chained together.
     */
-   public ImageExporter loop(String axis, int start, int stop);
+   ImageExporter loop(String axis, int start, int stop);
 
    /**
     * Reset the current export loop parameters to empty.
     */
-   public void resetLoops();
+   void resetLoops();
 
    /**
     * Run the export process. This will generate the image sequence as
@@ -125,12 +125,12 @@ public interface ImageExporter {
     *         has been set, or if no loops have been configured, or if no
     *         display has been set.
     */
-   public void export() throws IOException, IllegalArgumentException;
+   void export() throws IOException, IllegalArgumentException;
 
    /**
     * Block until a prior call to export() returns. Returns immediately if no
     * export is currently running.
     * @throws InterruptedException if the thread was interrupted while waiting.
     */
-   public void waitForExport() throws InterruptedException;
+   void waitForExport() throws InterruptedException;
 }

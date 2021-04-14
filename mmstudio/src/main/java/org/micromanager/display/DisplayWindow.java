@@ -47,7 +47,7 @@ public interface DisplayWindow extends DataViewer, Closeable {
     *
     * @param status String to display in the window.
     */
-   public void displayStatusString(String status);
+   void displayStatusString(String status);
 
    /**
     * Get the current zoom ratio of the display.
@@ -60,16 +60,16 @@ public interface DisplayWindow extends DataViewer, Closeable {
     *
     * @return the current zoom ratio (1.0 = actual size)
     */
-   public double getZoom();
+   double getZoom();
 
    /**
-    * Obsolete equivalent of {@link getZoom}.
+    * Obsolete equivalent of {@link #getZoom()}.
     *
     * @return the current zoom level
-    * @deprecated use {@link getZoom} instead
+    * @deprecated use {@link #getZoom()} instead
     */
    @Deprecated
-   public double getMagnification();
+   double getMagnification();
 
    /**
     * Set the zoom ratio for this display.
@@ -82,16 +82,16 @@ public interface DisplayWindow extends DataViewer, Closeable {
     *
     * @param ratio zoom ratio to set (1.0 = actual size)
     */
-   public void setZoom(double ratio);
+   void setZoom(double ratio);
 
    /**
-    * Obsolete equivalent of {@link setZoom}.
+    * Obsolete equivalent of {@link #setZoom}.
     *
     * @param ratio
-    * @deprecated use {@link setZoom} instead
+    * @deprecated use {@link #setZoom} instead
     */
    @Deprecated
-   public void setMagnification(double ratio);
+   void setMagnification(double ratio);
 
    /**
     * Multiply the current zoom ratio of the image canvas by the provided
@@ -108,7 +108,7 @@ public interface DisplayWindow extends DataViewer, Closeable {
     *
     * @param factor the factor to zoom in by
     */
-   public void adjustZoom(double factor);
+   void adjustZoom(double factor);
 
    /**
     * Perform a one-shot autoscaling of intensities.
@@ -123,7 +123,7 @@ public interface DisplayWindow extends DataViewer, Closeable {
     * from the Swing/AWT event dispatch thread if you want to correctly
     * synchronize with other user interface changes.
     */
-   public void autostretch();
+   void autostretch();
 
    /**
     * Add a graphical overlay.
@@ -184,7 +184,7 @@ public interface DisplayWindow extends DataViewer, Closeable {
     * overlay graphics, see {@link #addOverlay}.
     */
    @Deprecated
-   public ImagePlus getImagePlus();
+   ImagePlus getImagePlus();
 
    /**
     * Close this display window, giving its owner a chance to cancel closing.
@@ -197,7 +197,7 @@ public interface DisplayWindow extends DataViewer, Closeable {
     * @return true if the display is closed, or was already closed; false
     * if it remains open
     */
-   public boolean requestToClose();
+   boolean requestToClose();
 
    /**
     * Close this display window unconditionally.
@@ -214,7 +214,7 @@ public interface DisplayWindow extends DataViewer, Closeable {
     * another thread.
     */
    @Override
-   public void close();
+   void close();
 
    /**
     * Enable or disable full screen mode.
@@ -227,7 +227,7 @@ public interface DisplayWindow extends DataViewer, Closeable {
     *
     * @param enable whether to enable or disable full screen mode
     */
-   public void setFullScreen(boolean enable);
+   void setFullScreen(boolean enable);
 
    /**
     * Tell whether full screen mode is currently enabled.
@@ -240,17 +240,17 @@ public interface DisplayWindow extends DataViewer, Closeable {
     * @return whether full screen mode is enabled ({@code false} if the
     * display has closed
     */
-   public boolean isFullScreen();
+   boolean isFullScreen();
 
    /**
     * Enable or disable full screen mode.
     *
     * Calls are ignored if the display has closed.
     *
-    * @deprecated use {@link setFullScreen} instead
+    * @deprecated use {@link #setFullScreen} instead
     */
    @Deprecated
-   public void toggleFullScreen();
+   void toggleFullScreen();
 
    /**
     * Create a new display window for the same data provider as this one.
@@ -261,7 +261,7 @@ public interface DisplayWindow extends DataViewer, Closeable {
     *
     * @return the new display window
     */
-   public DisplayWindow duplicate();
+   DisplayWindow duplicate();
 
    /**
     * Raise this display window to the front.
@@ -272,7 +272,7 @@ public interface DisplayWindow extends DataViewer, Closeable {
     * from the Swing/AWT event dispatch thread if you want to correctly
     * synchronize with other user interface changes.
     */
-   public void toFront();
+   void toFront();
 
    /**
     * Get the {@code java.awt.Window} used for this image display.
@@ -291,7 +291,7 @@ public interface DisplayWindow extends DataViewer, Closeable {
     * @return the {@code java.awt.Window} used by this image display
     * @throws IllegalStateException if the display has closed
     */
-   public Window getWindow() throws IllegalStateException;
+   Window getWindow() throws IllegalStateException;
 
    /**
     * Get the {@code java.awt.Window} used for this image display.
@@ -299,10 +299,10 @@ public interface DisplayWindow extends DataViewer, Closeable {
     * @return the {@code java.awt.Window} used by this image display, or
     * {@code null} if the display has been closed
     *
-    * @deprecated use {@link getWindow} instead
+    * @deprecated use {@link #getWindow} instead
     */
    @Deprecated
-   public Window getAsWindow();
+   Window getAsWindow();
 
    /**
     * Add a custom extra string to the title of this display.
@@ -311,7 +311,7 @@ public interface DisplayWindow extends DataViewer, Closeable {
     * "#number: name (zoom ratio) (saved status)".
     * If you call this method, then the name part will be replaced by your
     * custom title. You can call this method with a null argument to revert to
-    * the default title, which is what {@link getName} returns.
+    * the default title, which is what {@link #getName} returns.
     *
     * Calls are ignored if the display has closed.
     *
@@ -320,7 +320,7 @@ public interface DisplayWindow extends DataViewer, Closeable {
     * @param title a custom window title, or {@code null} to revert to the
     * default
     */
-   public void setCustomTitle(String title);
+   void setCustomTitle(String title);
 
    /**
     * DisplayWindows are not shown by default.  Call this function after

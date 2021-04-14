@@ -6,7 +6,7 @@ package org.micromanager.display;
  * @author mark
  */
 public interface ComponentDisplaySettings {
-   public interface Builder {
+   interface Builder {
       Builder scalingMinimum(long minIntensity);
       Builder scalingMaximum(long maxIntensity);
       Builder scalingRange(long minIntensity, long maxIntensity);

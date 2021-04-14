@@ -160,6 +160,7 @@ public interface DisplaySettings {
     * multi-component (e.g. RGB) channels.
     * You can create a new ContrastSettings object via
     * DisplayManager.createContrastSettings().
+    * @deprecated TODO: explain
     */
    @Deprecated
    interface ContrastSettings {
@@ -170,7 +171,7 @@ public interface DisplaySettings {
        * be null.
        */
       @Deprecated
-      public Integer[] getContrastMins();
+      Integer[] getContrastMins();
 
       /**
        * Return the minimum contrast setting for this channel and the
@@ -185,7 +186,7 @@ public interface DisplaySettings {
        * @return The minimum contrast setting for the component
        */
       @Deprecated
-      public Integer getSafeContrastMin(int component, Integer defaultVal);
+      Integer getSafeContrastMin(int component, Integer defaultVal);
 
       /**
        * Return the array of maximum contrast settings for all components.
@@ -194,7 +195,7 @@ public interface DisplaySettings {
        * components. May be null.
        */
       @Deprecated
-      public Integer[] getContrastMaxes();
+      Integer[] getContrastMaxes();
 
       /**
        * Return the maximum contrast setting for this channel and the
@@ -209,7 +210,7 @@ public interface DisplaySettings {
        * @return The maximum contrast setting for the component
        */
       @Deprecated
-      public Integer getSafeContrastMax(int component, Integer defaultVal);
+      Integer getSafeContrastMax(int component, Integer defaultVal);
 
       /**
        * Return the array of gamma settings for all components. Note that
@@ -217,7 +218,7 @@ public interface DisplaySettings {
        * @return Array of gamma settings for all components. May be null.
        */
       @Deprecated
-      public Double[] getContrastGammas();
+      Double[] getContrastGammas();
 
       /**
        * Return the gamma setting for this channel and the specified component.
@@ -233,16 +234,16 @@ public interface DisplaySettings {
        *        is.
        */
       @Deprecated
-      public Double getSafeContrastGamma(int component, Double defaultVal);
+      Double getSafeContrastGamma(int component, Double defaultVal);
 
       /**
        * Nonstandard alias for {@code isVisible}.
        *
        * @return Flag indicating whether the channel is currently displayed
-       * @deprecated Use {@link isVisible}
+       * @deprecated Use {@link #isVisible()}
        */
       @Deprecated
-      public Boolean getIsVisible();
+      Boolean getIsVisible();
 
       /**
        * Return true if the channel is currently displayed, and false
@@ -264,7 +265,7 @@ public interface DisplaySettings {
        * @return The number of components this object has information for.
        */
       @Deprecated
-      public int getNumComponents();
+      int getNumComponents();
    }
 
    @Deprecated
@@ -346,7 +347,7 @@ public interface DisplaySettings {
     *         potentially be null or of inadequate length.
     */
    @Deprecated
-   public ContrastSettings[] getChannelContrastSettings();
+   ContrastSettings[] getChannelContrastSettings();
 
    /**
     * Safely retrieve the ContrastSettings object for the specified channel. If
@@ -359,7 +360,7 @@ public interface DisplaySettings {
     * @return Contrast settings for the specified channel
     */
    @Deprecated
-   public ContrastSettings getSafeContrastSettings(int index, ContrastSettings defaultVal);
+   ContrastSettings getSafeContrastSettings(int index, ContrastSettings defaultVal);
 
    /**
     * Safely extract the channel contrast min property from the contrast
@@ -375,7 +376,7 @@ public interface DisplaySettings {
     * @return Black point for the specified channel/component
     */
    @Deprecated
-   public Integer getSafeContrastMin(int index, int component, Integer defaultVal);
+   Integer getSafeContrastMin(int index, int component, Integer defaultVal);
 
    /**
     * Safely extract the channel contrast max property from the contrast
@@ -391,7 +392,7 @@ public interface DisplaySettings {
     * @return White point for the specified channel/component
     */
    @Deprecated
-   public Integer getSafeContrastMax(int index, int component, Integer defaultVal);
+   Integer getSafeContrastMax(int index, int component, Integer defaultVal);
 
    /**
     * Safely extract the channel contrast gamma property from the contrast
@@ -407,7 +408,7 @@ public interface DisplaySettings {
     * @return Gamma for the specified channel/component
     */
    @Deprecated
-   public Double getSafeContrastGamma(int index, int component, Double defaultVal);
+   Double getSafeContrastGamma(int index, int component, Double defaultVal);
 
    /**
     * Safely determine if the specified channel is visible when in composite
@@ -420,9 +421,9 @@ public interface DisplaySettings {
     * @return Flag indicating visibility of the specified channel
     */
    @Deprecated
-   public Boolean getSafeIsVisible(int index, Boolean defaultVal);
+   Boolean getSafeIsVisible(int index, Boolean defaultVal);
 
-   public enum ColorMode {
+   enum ColorMode {
       // TODO Integer indices should be implementation detail of file format
       COLOR(0), COMPOSITE(1), GRAYSCALE(2), HIGHLIGHT_LIMITS(3), FIRE(4),
          RED_HOT(5), @Deprecated SPECTRUM(6);
@@ -455,16 +456,16 @@ public interface DisplaySettings {
     * @deprecated - use getColorMode() instead
     */
    @Deprecated
-   public ColorMode getChannelColorMode();
+   ColorMode getChannelColorMode();
 
    /**
     * Whether histogram settings should be synced across channels
     * @return True if histograms should sync between channels
     */
    @Deprecated
-   public Boolean getShouldSyncChannels();
+   Boolean getShouldSyncChannels();
 
  
    @Deprecated
-   static final String FILENAME = "displaySettings.txt";
+   String FILENAME = "displaySettings.txt";
 }
