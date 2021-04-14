@@ -294,12 +294,12 @@ public interface DataViewer extends EventPublisher {
     * priority matches a previously added listener, the previously added listener
     * will be called first
     */
-   public void addListener(DataViewerListener listener, int priority);
+   void addListener(DataViewerListener listener, int priority);
    
    /**
     * No longer notify this listener
     * @param listener - that will no longer be notified
     */
-   public void removeListener(DataViewerListener listener);
+   void removeListener(DataViewerListener listener);
    
 }

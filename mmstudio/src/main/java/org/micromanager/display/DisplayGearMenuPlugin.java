@@ -33,12 +33,12 @@ public interface DisplayGearMenuPlugin extends MMPlugin {
     * gear menu, instead of into a sub-menu.
     * @return Sub-menu of the gear menu hosting this entry, or empty string.
     */
-   public String getSubMenu();
+   String getSubMenu();
 
    /**
     * This method will be called when the plugin is selected from the
     * gear menu.
     * @param display The display whose gear menu was interacted with.
     */
-   public void onPluginSelected(DisplayWindow display);
+   void onPluginSelected(DisplayWindow display);
 }
