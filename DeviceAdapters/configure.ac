@@ -21,6 +21,7 @@ AX_BOOST_ASIO
 AX_BOOST_SYSTEM
 AX_BOOST_CHRONO
 AX_BOOST_DATE_TIME
+AX_BOOST_FILESYSTEM
 
 # Find Micro-Manager headers
 micromanager_path=${ac_pwd}/..
