@@ -99,6 +99,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 
@@ -559,7 +560,13 @@ public final class MMStudio implements Studio {
             }
 
 
-            zmqServer_ = new ZMQServer(classLoaders, instanceGrabberFunction, new String[]{"org.micromanager.internal"});
+            zmqServer_ = new ZMQServer(classLoaders, instanceGrabberFunction,
+                    new String[]{"org.micromanager.internal"}, new Consumer<String>() {
+               @Override
+               public void accept(String s) {
+                  studio_.getCMMCore().logMessage(s);
+               }
+            });
             logs().logMessage("Initialized ZMQ Server on port: " + ZMQServer.DEFAULT_MASTER_PORT_NUMBER);
          } catch (URISyntaxException | UnsupportedEncodingException e) {
             studio_.logs().logError("Failed to initialize ZMQ Server");
