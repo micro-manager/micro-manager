@@ -275,22 +275,20 @@ public final class AnimationController<P> {
       Boolean foundAxisToBeIgnored = false;
       Boolean foundFlashBackAxis = false;
       if (oldPosition != null) {
-         for (String axis : newPosition.getAxes()) {
-            if (!oldPosition.hasAxis(axis)
-                    || oldPosition.getIndex(axis) != newPosition.getIndex(axis)) {
-               if (newPositionModes_.containsKey(axis)) {
-                  if (newPositionModes_.get(axis).equals(
+         for (String axis : newPositionModes_.keySet()) {
+         // for (String axis : newPosition.getAxes()) {
+             if (oldPosition.getIndex(axis) != newPosition.getIndex(axis)) {
+                if (newPositionModes_.get(axis).equals(
                                NewPositionHandlingMode.IGNORE)) {
                      newDisplayPositionBuilder.index(axis, oldPosition.getIndex(axis));
                      snapBackPositionBuilder.index(axis, oldPosition.getIndex(axis));
                      foundAxisToBeIgnored = true;
-                  } else if (newPositionModes_.get(axis).equals(
+                } else if (newPositionModes_.get(axis).equals(
                               NewPositionHandlingMode.FLASH_AND_SNAP_BACK)) {
                      snapBackPositionBuilder.index(axis, oldPosition.getIndex(axis));
                      foundFlashBackAxis = true; 
-                  }
-               }
-            }
+                }
+             }
          }
       }
       final Coords newDisplayPosition = newDisplayPositionBuilder.build();
