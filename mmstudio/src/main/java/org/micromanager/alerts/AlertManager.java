@@ -49,7 +49,7 @@ public interface AlertManager {
     * @return Either a newly-created Alert, or the Alert that already existed,
     *         to which this new alert text was added.
     */
-   public Alert postAlert(String title, Class<?> group, String text);
+   Alert postAlert(String title, Class<?> group, String text);
 
    /**
     * Create a UpdatableAlert. UpdatableAlerts can have their contents changed
@@ -61,7 +61,7 @@ public interface AlertManager {
     * @param text Initial text to display to the user.
     * @return Newly-created UpdatableAlert
     */
-   public UpdatableAlert postUpdatableAlert(String title, String text);
+   UpdatableAlert postUpdatableAlert(String title, String text);
 
    /**
     * Create an alert containing the provided special contents. If there is
@@ -79,5 +79,5 @@ public interface AlertManager {
     * @param contents Contents to be inserted into the alert dialog.
     * @return Newly-created Alert
     */
-   public UpdatableAlert postCustomAlert(String title, JComponent contents);
+   UpdatableAlert postCustomAlert(String title, JComponent contents);
 }
