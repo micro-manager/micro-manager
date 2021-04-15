@@ -383,6 +383,7 @@ public final class SequenceSettings {
     * Default constructor needed since we have a copy constructor
     * @deprecated use Builder instead
     */
+   @Deprecated
    private SequenceSettings() {
    }
 
@@ -414,7 +415,7 @@ public final class SequenceSettings {
    /**
     * Time intervals between the starts of time points in milliseconds
     */
-   public ArrayList<Double> customIntervalsMs() { return customIntervalsMs; };
+   public ArrayList<Double> customIntervalsMs() { return customIntervalsMs; }
    /**
     * LIst with channel definitions to be used in the acquisition
     * @return LIst with channel definitions to be used in the acquisition

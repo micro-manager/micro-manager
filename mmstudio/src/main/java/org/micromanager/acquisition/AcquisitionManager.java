@@ -40,13 +40,13 @@ public interface AcquisitionManager {
     * Provides an empty Sequence Settings Builder
     *
     */
-   SequenceSettings.Builder getSequenceSettingsBuilder();
+   SequenceSettings.Builder sequenceSettingsBuilder();
 
    /**
     * Provides and empty ChannelSpec Builder
     *
     */
-   ChannelSpec.Builder getChannelSpecBuilder();
+   ChannelSpec.Builder channelSpecBuilder();
 
    /**
     * Executes Acquisition with settings as in the MDA dialog.
