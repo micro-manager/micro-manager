@@ -58,12 +58,12 @@ public class MDScrollBarPanel extends JPanel implements AdjustmentListener {
    private final ControlsFactory leftControlsFactory_;
    private final ControlsFactory rightControlsFactory_;
 
-   private final List<String> axes_ = new ArrayList<String>();
-   private final List<JPanel> rowPanels_ = new ArrayList<JPanel>();
+   private final List<String> axes_ = new ArrayList<>();
+   private final List<JPanel> rowPanels_ = new ArrayList<>();
 
    // We need to independently keep track of the last known positions in order
    // to filter out undesired adjustment events.
-   private final List<Integer> scrollBarPositions_ = new ArrayList<Integer>();
+   private final List<Integer> scrollBarPositions_ = new ArrayList<>();
    private boolean shouldSuppressAdjustmentEvents_ = false;
 
    public static final int ROW_HEIGHT =
@@ -125,8 +125,8 @@ public class MDScrollBarPanel extends JPanel implements AdjustmentListener {
 
       shouldSuppressAdjustmentEvents_ = true;
       try {
-         List<JPanel> newPanels = new ArrayList<JPanel>(axes.size());
-         List<Integer> newScrollBarPositions = new ArrayList<Integer>(axes.size());
+         List<JPanel> newPanels = new ArrayList<>(axes.size());
+         List<Integer> newScrollBarPositions = new ArrayList<>(axes.size());
          for (String axis : axes) {
             int existingIndex = axes_.indexOf(axis);
             if (existingIndex >= 0) {
