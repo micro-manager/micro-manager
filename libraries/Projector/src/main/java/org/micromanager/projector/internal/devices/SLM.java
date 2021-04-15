@@ -127,7 +127,7 @@ public class SLM implements ProjectionDevice {
    @Override
    public long getExposure() {
       try {
-         return (long) (mmc_.getSLMExposure(slm_) * 1000.);
+         return (long) (mmc_.getSLMExposure(slm_));
       } catch (Exception ex) {
          app_.logs().showError(ex);
       }
@@ -197,7 +197,7 @@ public class SLM implements ProjectionDevice {
          mmc_.displaySLMImage(slm_);
          if (externalShutter_ != null) {
             mmc_.setShutterOpen(externalShutter_, true);
-            Thread.sleep(getExposure());            
+            Thread.sleep(getExposure() / 1000);            
             mmc_.setShutterOpen(externalShutter_, false);
          }
       } catch (Exception e) {

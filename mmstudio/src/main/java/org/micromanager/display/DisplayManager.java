@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.List;
 import org.micromanager.EventPublisher;
 import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
@@ -56,6 +57,7 @@ public interface DisplayManager extends EventPublisher {
     * @return A DisplaySettingsBuilder with no pre-set values.
     * @deprecated - use displaySettingsBuilder() instead
     */
+   @Deprecated
    DisplaySettings.Builder getDisplaySettingsBuilder();
    
    
@@ -90,6 +92,7 @@ public interface DisplayManager extends EventPublisher {
     *        when the display is showing multiple channels simultaneously.
     * @return a DisplaySettings.ContrastSettings object, whose properties are
     *         all length-1 arrays with the provided values.
+    * @deprecated
     */
    @Deprecated
    DisplaySettings.ContrastSettings getContrastSettings(
@@ -108,6 +111,8 @@ public interface DisplayManager extends EventPublisher {
     * @param isVisible Whether or not this channel is visible in the display
     *        when the display is showing multiple channels simultaneously.
     * @return a DisplaySettings.ContrastSettings object.
+    * @deprecated
+    *
     */
    @Deprecated
    DisplaySettings.ContrastSettings getContrastSettings(
@@ -139,9 +144,9 @@ public interface DisplayManager extends EventPublisher {
     *        calculated in the resulting HistogramData; otherwise it will be -1
     * @return a HistogramData derived from the pixels in the image.
     */
-//   public HistogramData calculateHistogram(Image image, int component,
-//         int binPower, int bitDepth, double extremaPercentage,
-//         boolean shouldCalcStdDev);
+   //   public HistogramData calculateHistogram(Image image, int component,
+   //         int binPower, int bitDepth, double extremaPercentage,
+   //         boolean shouldCalcStdDev);
 
    /**
     * Generate a HistogramData object based on the pixels in the provided
@@ -157,8 +162,8 @@ public interface DisplayManager extends EventPublisher {
     *        histogram calculation values.
     * @return a HistogramData derived from the pixels in the image.
     */
-//   public HistogramData calculateHistogramWithSettings(Image image,
-//         int component, DisplaySettings settings);
+   //   public HistogramData calculateHistogramWithSettings(Image image,
+   //         int component, DisplaySettings settings);
 
    /**
     * Send updated histogram information to anyone who is listening for it for
@@ -169,13 +174,14 @@ public interface DisplayManager extends EventPublisher {
     * @param images List of images to calculate histograms for.
     * @param viewer DataViewer that histogram information should be updated for
     */
-//   public void updateHistogramDisplays(List<Image> images, DataViewer viewer);
+   //   public void updateHistogramDisplays(List<Image> images, DataViewer viewer);
+
 
    /**
     * Generate a "blank" PropertyMap.PropertyMapBuilder with empty mappings.
     * @return A PropertyMapBuilder with no pre-set values.
+    * @deprecated Use {@link org.micromanager.PropertyMaps#builder()} instead
     */
-   // TODO Why on earth is this in DisplayManager?
    @Deprecated
    PropertyMap.Builder getPropertyMapBuilder();
 
@@ -284,6 +290,12 @@ public interface DisplayManager extends EventPublisher {
     */
    boolean isManaged(DataProvider provider);
 
+   /**
+    * Returns true if the DataProvider is being managed by MicroManager.
+    * @param provider The DataProvider whose management status is under question.
+    * @return Whether or not Micro-Manager is managing the DataProvider.
+    * @deprecated use {@link #isManaged(DataProvider)} instead
+    */
    @Deprecated
    default boolean getIsManaged(DataProvider provider) {
       return isManaged(provider);
@@ -315,8 +327,8 @@ public interface DisplayManager extends EventPublisher {
     * non-DisplayWindow windows on top of it. Returns null if there is no open
     * {@code DisplayWindow}.
     *
-    * @deprecated Use {@code getActiveDataViewer()} instead
     * @return The front-most {@code DisplayWindow}, or null.
+    * @deprecated Use {@code getActiveDataViewer()} instead
     */
    @Deprecated 
    DisplayWindow getCurrentWindow();

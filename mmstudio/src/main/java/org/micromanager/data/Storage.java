@@ -93,8 +93,8 @@ public interface Storage {
    /**
     * Retrieve a list of images with Coords identical to the given Coords instance,
     * except for the axes listed in the exception list.
-    * For intstance, given Coords <t=1,z=3> and axes "c", the following
-    * Coords would match: <t=1, z=3>, <t=1, z=3, c=1>, <t=1, z=3, c=2>
+    * For instance, given Coords {@code t=1,z=3>} and axes "c", the following
+    * Coords would match: {@code <t=1, z=3>}, {@code <t=1, z=3, c=1>}, {@code <t=1, z=3, c=2>}.
     * @param coords coord looking for matching images
     * @param ignoreTheseAxes Axes to be ignored in the images collection when
     *                        looking for matches
