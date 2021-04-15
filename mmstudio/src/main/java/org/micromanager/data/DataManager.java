@@ -22,25 +22,38 @@ package org.micromanager.data;
 
 import java.awt.Component;
 import java.awt.Window;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 import mmcorej.TaggedImage;
 import mmcorej.org.json.JSONException;
 import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 
 /**
  * This class provides general utility functions for working with
  * Micro-Manager data. You can access it via ScriptInterface's data() method
- * (for example, "mm.data().getCoordsBuilder()").
+ * (for example, "mm.data().cordsBuilder()").
  */
 public interface DataManager {
+
+   /**
+    * Generate a "blank" CoordsBuilder for use in constructing new Coords
+    * instances.
+    *
+    * @return a CoordsBuilder used to construct new Coords instances.
+    */
+   Coords.Builder coordsBuilder();
+
    /**
     * Generate a "blank" CoordsBuilder for use in constructing new Coords
     * instances.
     * 
     * @return a CoordsBuilder used to construct new Coords instances.
+    * @deprecated Use {@link #coordsBuilder()} instead
     */
+   @Deprecated
    Coords.Builder getCoordsBuilder();
 
    /**
@@ -57,6 +70,7 @@ public interface DataManager {
     * underscores. For example, "filter2_pos" is a valid axis, but
     * "1filter-pos" is not, because it starts with a number, and because it
     * contains a "-" which is not a legal character.
+    *
     * @param def Normalized coordinate definition string.
     * @return Coords generated based on the definition string.
     * @throws IllegalArgumentException if the definition string is
@@ -321,8 +335,27 @@ public interface DataManager {
     * Generate a "blank" MetadataBuilder for use in constructing new
     * Metadata instances.
     * @return a MetadataBuilder for creating new Metadata instances.
+    * @deprecated Use {@link #metadataBuilder()} instead
     */
+   @Deprecated
    Metadata.Builder getMetadataBuilder();
+
+   /**
+    * Generate a "blank" MetadataBuilder for use in constructing new
+    * Metadata instances.
+    * @return a MetadataBuilder for creating new Metadata instances.
+    */
+   Metadata.Builder metadataBuilder();
+
+   /**
+    * Generate a "blank" SummaryMetadataBuilder for use in constructing new
+    * SummaryMetadata instances.
+    * @return a SummaryMetadataBuilder for creating new SummaryMetadata
+    *         instances.
+    * @deprecated Use {@link #summaryMetadataBuilder()} instead
+    */
+   @Deprecated
+   SummaryMetadata.Builder getSummaryMetadataBuilder();
 
    /**
     * Generate a "blank" SummaryMetadataBuilder for use in constructing new
@@ -330,7 +363,7 @@ public interface DataManager {
     * @return a SummaryMetadataBuilder for creating new SummaryMetadata
     *         instances.
     */
-   SummaryMetadata.Builder getSummaryMetadataBuilder();
+   SummaryMetadata.Builder summaryMetadataBuilder();
 
    /**
     * Generate a "blank" PropertyMap.Builder with all null values.
@@ -346,7 +379,7 @@ public interface DataManager {
     * @return new PropertyMap based on data in the specified file.
     * @throws FileNotFoundException if the path does not point to a file.
     * @throws IOException if there was an error reading the file.
-    * @deprecated
+    * @deprecated use {@link PropertyMaps#loadJSON(File)} instead
     */
    @Deprecated
    PropertyMap loadPropertyMap(String path) throws FileNotFoundException, IOException;

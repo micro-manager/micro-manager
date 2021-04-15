@@ -42,7 +42,7 @@ public interface Datastore extends DataProvider {
     * bus.
     *
     * @param image Micro-Manager Image object
-    * @throws java.io.IOException
+    * @throws java.io.IOException if an IO error occurs
     * @throws DatastoreFrozenException if the freeze() method has been called.
     * @throws DatastoreRewriteException if an Image with the same coordinates
     *         already exists in the Datastore.
@@ -58,7 +58,7 @@ public interface Datastore extends DataProvider {
     * bus. This method may only be called once for a given Datastore.
     *
     * @param metadata Object representing the summary metadata
-    * @throws java.io.IOException
+    * @throws java.io.IOException if an IO error occurs
     * @throws DatastoreFrozenException if the freeze() method has been called.
     * @throws DatastoreRewriteException if the Datastore already has
     *         SummaryMetadata.
@@ -70,22 +70,22 @@ public interface Datastore extends DataProvider {
     *
     * @param tag the tag for the annotation
     * @return true if the annotation exists; false otherwise
-    * @throws java.io.IOException
+    * @throws java.io.IOException if an IO error occurs
     */
    boolean hasAnnotation(String tag) throws IOException;
 
    /**
     * Get an annotation, creating it if it doesn't exist
-    * @param tag
-    * @return
-    * @throws java.io.IOException
+    * @param tag tag for the annotation
+    * @return Annotation for th given tag
+    * @throws java.io.IOException if an IO error occurs
     */
    Annotation getAnnotation(String tag) throws IOException;
 
    /**
     * Freeze this Datastore so it cannot be further modified.
     * 
-    * @throws java.io.IOException
+    * @throws java.io.IOException if an IO error occurs
     */
    void freeze() throws IOException;
 
@@ -122,7 +122,8 @@ public interface Datastore extends DataProvider {
     * @param parent Window  on top of which to display the dialog prompt;
     *        may be null.
     * @return true if data was saved; false if user canceled
-    * @throws java.io.IOException
+    * @throws java.io.IOException if an IO error occurs
+    * @deprecated Use {@link #save(Component, boolean)} instead
     */
    @Deprecated
    boolean save(Component parent) throws IOException;
@@ -136,7 +137,7 @@ public interface Datastore extends DataProvider {
     * @param blocking if true will return after saving, otherwise will return quickly
     *       and continue saving on another thread
     * @return Path chosen by user to save the data, null if dialog was canceled
-    * @throws java.io.IOException
+    * @throws java.io.IOException if an IO error occurs
     */
    String save(Component parent, boolean blocking) throws IOException;
 
@@ -148,7 +149,7 @@ public interface Datastore extends DataProvider {
     * @param mode File format to save to
     * @param path File path used to save the data
     * 
-    * @throws java.io.IOException
+    * @throws java.io.IOException if an IO error occurs
     */
    void save(SaveMode mode, String path) throws IOException;
    
@@ -159,13 +160,13 @@ public interface Datastore extends DataProvider {
     * @param path File path used to save the data
     * @param blocking when true, will block while saving data, otherwise will return
     *                   immediately
-    * @throws java.io.IOException
+    * @throws java.io.IOException if an IO error occurs
     */
    void save(SaveMode mode, String path, boolean blocking) throws IOException;
    
    /**
     * Sets the name of the Datastore.  Posts a DatastoreNewNameEvent
-    * @param name 
+    * @param name new name of the Datastore
     */
    void setName(String name);
 }
