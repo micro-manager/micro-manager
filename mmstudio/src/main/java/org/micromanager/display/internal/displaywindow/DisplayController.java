@@ -224,18 +224,16 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       instance.computeQueue_.addListener(instance);
 
       if (instance.dataProvider_.getNumImages() > 0) {
-         Coords.Builder b = Coordinates.builder();
+         Coords.Builder startPosition = Coordinates.builder();
+         Coords.Builder endPosition = Coordinates.builder();
          for (String axis : instance.dataProvider_.getAxes()) {
-            b.index(axis, 0);
+            endPosition.index(axis, instance.dataProvider_.getNextIndex(axis) - 1);
          }
-         instance.setDisplayPosition(b.build());
+         instance.setDisplayPosition(startPosition.build());
 
-         // TODO Cleaner
-         // NS 20210410: I do not know what this is supposed to do.
-         // I do not see adverse effects when omitting this line, either
-         // in the normal display or in animations of the display.
-         // Leave this commented code until 20211010 in case bugs pop up.
-         // instance.animationAcknowledgeDataPosition(instance.getDataProvider().getMaxIndices());
+         // this is needed for the display to know the initial number of axis.
+         // important when reading data from disk
+         instance.animationAcknowledgeDataPosition(endPosition.build());
       }
 
       return instance;
