@@ -18,8 +18,9 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.events;
+package org.micromanager.acquisition;
 
+import org.micromanager.MMEvent;
 import org.micromanager.data.Datastore;
 
 /**
@@ -28,13 +29,16 @@ import org.micromanager.data.Datastore;
  * code may subclass this event to provide notifications of their own
  * acquisitions. If they do so, they should also publish AcquisitionEndedEvents
  * when their acquisitions cease.
+ *
+ * The default implementation of this event is posted on the Studio event bus,
+ * so subscribe to this event using {@link org.micromanager.events.EventManager}.
  */
-public interface AcquisitionStartedEvent {
+public interface AcquisitionStartedEvent extends MMEvent {
    /**
     * Return the Datastore into which images will be inserted during the
     * acquisition.
     */
-   public Datastore getDatastore();
+   Datastore getDatastore();
 
    /**
     * Return an Object used to identify the entity in charge of the
@@ -42,5 +46,5 @@ public interface AcquisitionStartedEvent {
     * types of acquisitions. You must re-use the same object for the
     * AcquisitionEndedEvent that you post.
     */
-   public Object getSource();
+   Object getSource();
 }

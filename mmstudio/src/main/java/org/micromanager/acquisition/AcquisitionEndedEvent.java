@@ -18,19 +18,23 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.events;
+package org.micromanager.acquisition;
 
+import org.micromanager.MMEvent;
 import org.micromanager.data.Datastore;
 
 /**
  * This event signifies that an acquisition has been ended.
+ *
+ * This default implementation of this event is posted on the studio event bus,
+ * i.e. subscribe to this event using {@link org.micromanager.events.EventManager}
  */
-public interface AcquisitionEndedEvent {
+public interface AcquisitionEndedEvent extends MMEvent {
    /**
     * Return the Datastore into which images were placed during the
     * acquisition.
     */
-   public Datastore getStore();
+   Datastore getStore();
 
    /**
     * Return an Object used to identify the entity in charge of the
@@ -38,5 +42,5 @@ public interface AcquisitionEndedEvent {
     * types of acquisitions. This object must be the same object that published
     * the corresponding AcquisitionStartedEvent to this acquisition.
     */
-   public Object getSource();
+   Object getSource();
 }

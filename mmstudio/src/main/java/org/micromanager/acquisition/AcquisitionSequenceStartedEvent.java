@@ -18,14 +18,15 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.events;
-
-import org.micromanager.acquisition.SequenceSettings;
+package org.micromanager.acquisition;
 
 /**
  * This variant of the AcquisitionStartedEvent is used for acquisitions that
- * can be described by a SequenceSettings; it provides access to those
- * SequenceSettings.
+ * can be described by a {@link SequenceSettings}, it provides access to those
+ * {@link SequenceSettings}.
+ *
+ *  * The default implementation of this event is posted on the Studio event bus,
+ *  * so subscribe to this event using {@link org.micromanager.events.EventManager}.
  */
 public interface AcquisitionSequenceStartedEvent extends AcquisitionStartedEvent {
    /**
@@ -34,5 +35,5 @@ public interface AcquisitionSequenceStartedEvent extends AcquisitionStartedEvent
     * match these parameters (with respect to number of Z-slices, etc.) due
     * to the actions of image processors in the data processing pipeline.
     */
-   public SequenceSettings getSettings();
+   SequenceSettings getSettings();
 }

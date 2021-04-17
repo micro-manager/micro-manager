@@ -18,10 +18,10 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.events.internal;
+package org.micromanager.acquisition.internal;
 
 import org.micromanager.data.Datastore;
-import org.micromanager.events.AcquisitionEndedEvent;
+import org.micromanager.acquisition.AcquisitionEndedEvent;
 
 public final class DefaultAcquisitionEndedEvent implements AcquisitionEndedEvent {
    private Datastore store_;

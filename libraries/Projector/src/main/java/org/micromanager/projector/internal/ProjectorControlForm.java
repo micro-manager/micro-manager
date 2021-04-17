@@ -67,14 +67,11 @@ import mmcorej.Configuration;
 import mmcorej.DeviceType;
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
-import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.Image;
 import org.micromanager.display.DataViewer;
-import org.micromanager.events.AcquisitionEndedEvent;
-import org.micromanager.events.AcquisitionStartedEvent;
+import org.micromanager.acquisition.AcquisitionEndedEvent;
+import org.micromanager.acquisition.AcquisitionStartedEvent;
 import org.micromanager.events.SLMExposureChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.utils.WindowPositioning;

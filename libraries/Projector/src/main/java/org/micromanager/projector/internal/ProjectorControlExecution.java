@@ -25,8 +25,8 @@ import org.micromanager.Studio;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.events.AcquisitionEndedEvent;
-import org.micromanager.events.AcquisitionStartedEvent;
+import org.micromanager.acquisition.AcquisitionEndedEvent;
+import org.micromanager.acquisition.AcquisitionStartedEvent;
 import org.micromanager.projector.ProjectionDevice;
 import org.micromanager.projector.internal.devices.Galvo;
 
