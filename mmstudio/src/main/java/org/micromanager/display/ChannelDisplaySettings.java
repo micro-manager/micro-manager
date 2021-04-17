@@ -12,7 +12,7 @@ import java.util.List;
  * @author mark
  */
 public interface ChannelDisplaySettings {
-   public interface Builder {
+   interface Builder {
       Builder color(Color color);
       Builder colorWhite();
       Builder colorColorBlindFriendly(int number);

@@ -41,11 +41,11 @@ public interface UpdatableAlert extends Alert {
     * directly.
     * @param text New text of alert.
     */
-   public void setText(String text);
+   void setText(String text);
 
    /**
     * Returns the current text of the alert.
     * @return Current text of the alert.
     */
-   public String getText();
+   String getText();
 }

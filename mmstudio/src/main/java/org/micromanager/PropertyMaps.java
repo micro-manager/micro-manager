@@ -48,8 +48,8 @@ public final class PropertyMaps {
 
    /**
     * Create a property map from its JSON-serialized form.
-    * @param json
-    * @return
+    * @param json json formatted String to be converted into a PropertyMap
+    * @return PropertyMap result from conversion
     * @throws IOException if {@code json} is invalid JSON or if it does not
     * represent a valid property map
     */

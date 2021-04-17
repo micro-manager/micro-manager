@@ -297,7 +297,7 @@ public class FlipperConfigurator extends JFrame implements ProcessorConfigurator
 
       Image testImage = studio_.data().ij().createImage(proc,
             Coordinates.builder().build(),
-            studio_.data().getMetadataBuilder().build());
+            studio_.data().metadataBuilder().build());
       testImage = FlipperProcessor.transformImage(studio_, testImage,
             getMirror(), getRotate());
       exampleImageTarget_.setIcon(
