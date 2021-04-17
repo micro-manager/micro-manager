@@ -282,4 +282,18 @@ public interface Studio {
     * @return Application instance.
     */
    Application getApplication();
+
+   /**
+    * Provides access to the PropertyManagerAPI.  Provides access to the
+    * PropertyMap.Builder
+    * @return PropertyManager instance
+    */
+   PropertyManager properties();
+
+   /**
+    * Provides access to the PropertyManagerAPI.  Provides access to the
+    * PropertyMap.Builder
+    * @return PropertyManager instance
+    */
+   PropertyManager getPropertyManager();
 }
