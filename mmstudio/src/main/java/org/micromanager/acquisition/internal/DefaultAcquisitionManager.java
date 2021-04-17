@@ -241,7 +241,7 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
          return;
       }
       engine_.setSequenceSettings(ss);
-      mdaDialog_.updateGUIContents();
+      mdaDialog_.updateGUIBlocking();
    }
 
    @Override
