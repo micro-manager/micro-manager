@@ -23,12 +23,18 @@ package org.micromanager.events;
 import org.micromanager.PositionList;
 
 /**
- * This event is published when the application's Stage Position List is
- * modified in any way (positions are added, removed, or moved).
+ * This event posts when the application's Stage Position List changes
+ * (positions added, removed, or moved).
+ *
+ * The default implementation of this event posts on the Studio event bus,
+ * so subscribe using {@link org.micromanager.events.EventManager}.
  */
 public interface NewPositionListEvent {
+
    /**
     * Returns the new stage position list.
+    * @return PositionList that is modified, usually the application's Stage
+    * Position List.
     */
-   public PositionList getPositionList();
+   PositionList getPositionList();
 }

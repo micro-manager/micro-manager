@@ -20,9 +20,14 @@
 
 package org.micromanager.events;
 
+import org.micromanager.MMEvent;
+
 /**
- * This event is posted whenever the GUI refreshes its state from the Core
- * (e.g. when a "Refresh" button is clicked or when the refreshGUI() method
- * is called in CompatibilityInterface).
+ * This event posts whenever the GUI refreshes its state from the Core
+ * (e.g. when the user clicks the "Refresh" button or when code calls the
+ * refreshGUI() method in CompatibilityInterface).
+ *
+ * The default implementation of this event is posted on the Studio event bus,
+ * so subscribe using {@link org.micromanager.events.EventManager}.
  */
-public interface GUIRefreshEvent {}
+public interface GUIRefreshEvent extends MMEvent {}
