@@ -1,5 +1,5 @@
 <project name="mm.deviceadapter">
-	<include file="../../buildscripts/buildprops.xml"/>
+   <include file="../buildscripts/buildprops.xml"/>
 
 	<condition property="mm.architecture.is_Win32">
 		<equals arg1="${mm.architecture}" arg2="Win32"/>

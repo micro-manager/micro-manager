@@ -41,7 +41,7 @@ public interface Application {
     * poll each device in the system for its current state, which may take
     * significant time. Compare refreshGUIFromCache().
     */
-   public void refreshGUI();
+   void refreshGUI();
 
    /**
     * Updates the GUI so that its state reflects the current state of the
@@ -49,14 +49,14 @@ public interface Application {
     * pull values from the Core's System State Cache, which is fast but may not
     * necessarily reflect the actual state of hardware.
     */
-   public void refreshGUIFromCache();
+   void refreshGUIFromCache();
 
    /**
     * Set the exposure time for the current channel (if any). Equivalent to
     * updating the exposure time field in the main window.
     * @param exposureMs Exposure time, in milliseconds.
     */
-   public void setExposure(double exposureMs);
+   void setExposure(double exposureMs);
 
    /**
     * Updates the exposure time associated with the given preset. If the
@@ -68,7 +68,7 @@ public interface Application {
     *        channel that should be updated.
     * @param exposure New exposure time to set.
     */
-   public void setChannelExposureTime(String channelGroup, String channel,
+   void setChannelExposureTime(String channelGroup, String channel,
            double exposure);
 
    /**
@@ -80,7 +80,7 @@ public interface Application {
     * @param defaultExp Default value to return if no exposure time is found.
     * @return Exposure time for the channel, or the provided default value.
     */
-   public double getChannelExposureTime(String channelGroup, String channel,
+   double getChannelExposureTime(String channelGroup, String channel,
            double defaultExp);
 
    /**
@@ -93,18 +93,18 @@ public interface Application {
     * @throws IOException If shouldOverwrite is false and there is already a
     *         file at the chosen path.
     */
-   public void saveConfigPresets(String path, boolean allowOverwrite) throws IOException;
+   void saveConfigPresets(String path, boolean allowOverwrite) throws IOException;
 
    /**
     * Pop up the dialog used to configure the autofocus settings for the
     * current autofocus device.
     */
-   public void showAutofocusDialog();
+   void showAutofocusDialog();
 
    /**
     * Display the position list dialog.
     */
-   public void showPositionList();
+   void showPositionList();
 
    /**
     * Set the default camera's ROI -- a convenience function. Will stop and
@@ -113,12 +113,12 @@ public interface Application {
     * @param rect Rectangle defining the ROI
     * @throws Exception if there is an error in the Core when setting the ROI
     */
-   public void setROI(Rectangle rect) throws Exception;
+   void setROI(Rectangle rect) throws Exception;
 
    /**
     * Move the main Micro-Manager window to the top of the user interface.
     */
-   public void makeActive();
+   void makeActive();
 
    /**
     * Provide access to the main window of the program. This is largely
@@ -126,19 +126,19 @@ public interface Application {
     * to the main window.
     * @return the main Window
     */
-   public JFrame getMainWindow();
+   JFrame getMainWindow();
 
    /**
     * Provides access to the application skin API for determining colors for
     * various GUI components.
     * @return ApplicationSkin instance.
     */
-   public ApplicationSkin skin();
+   ApplicationSkin skin();
 
    /**
     * Provides access to the application skin API for determining colors for
     * various GUI components. Identical to skin() except in name.
     * @return ApplicationSkin instance.
     */
-   public ApplicationSkin getApplicationSkin();
+   ApplicationSkin getApplicationSkin();
 }

@@ -83,7 +83,7 @@ public interface PropertyMap {
     * This is only used for interchange purposes, for example when performing
     * bulk operations on property maps.
     */
-   public interface OpaqueValue {
+   interface OpaqueValue {
       /**
        * 
        * @return 
