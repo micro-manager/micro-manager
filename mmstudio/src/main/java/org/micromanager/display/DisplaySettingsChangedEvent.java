@@ -14,6 +14,8 @@
 
 package org.micromanager.display;
 
+import org.micromanager.MMEvent;
+
 /**
  * Event used internally by a data viewer to respond to requests to update
  * the display settings.
@@ -49,9 +51,12 @@ package org.micromanager.display;
  * to this event, but they must obey the same rules regarding threading and
  * performance.
  *
+ * The default implementation of this event posts on the DataViewer event bus.
+ * Register using {@link DataViewer#registerForEvents(Object)}.
+ *
  * @author Chris Weisiger and Mark A. Tsuchida
  */
-public interface DisplaySettingsChangedEvent {
+public interface DisplaySettingsChangedEvent extends MMEvent {
 
    /**
     * Get the new display settings.
