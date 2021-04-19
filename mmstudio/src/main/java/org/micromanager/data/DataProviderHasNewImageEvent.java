@@ -20,10 +20,15 @@
 
 package org.micromanager.data;
 
+import org.micromanager.MMEvent;
+
 /**
  * This class signifies that an image has been added to a DataProvider.
+ *
+ * The default implementation of this Event posts on the DataProvider
+ * event bus.  Subscribe using {@link DataProvider#registerForEvents(Object)}.
  */
-public interface DataProviderHasNewImageEvent {
+public interface DataProviderHasNewImageEvent extends MMEvent {
    /**
     * Provides the newly-added image.
     * @return the Image that was just added to the DataProvider.
@@ -36,9 +41,9 @@ public interface DataProviderHasNewImageEvent {
    Coords getCoords();
 
    /**
-    * Provides the Datastore this image was added to; potentially useful for
-    * code that listens to events from multiple Datastores.
-    * @return the Datastore this image was added to.
+    * Provides the DataProvider this image was added to; potentially useful for
+    * code that listens to events from multiple DataProviders.
+    * @return the DataProvider this image was added to.
     */
    DataProvider getDataProvider();
 }

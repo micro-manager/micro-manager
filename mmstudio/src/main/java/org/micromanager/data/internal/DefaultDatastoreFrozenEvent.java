@@ -20,8 +20,14 @@
 
 package org.micromanager.data.internal;
 
+import org.micromanager.data.DataProvider;
+import org.micromanager.data.DatastoreFrozenEvent;
+
 /**
  * This class signifies that a Datastore has become locked and cannot be 
  * written to any more (but read actions can still occur).
+ *
+ * This Event posts on the DataProvider bus.
+ * Subscribe using {@link DataProvider#registerForEvents(Object)}.
  */
-public final class DefaultDatastoreFrozenEvent implements org.micromanager.data.DatastoreFrozenEvent {}
+public final class DefaultDatastoreFrozenEvent implements DatastoreFrozenEvent {}

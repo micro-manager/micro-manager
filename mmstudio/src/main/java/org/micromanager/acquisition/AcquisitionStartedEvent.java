@@ -30,7 +30,7 @@ import org.micromanager.data.Datastore;
  * acquisitions. If they do so, they should also publish AcquisitionEndedEvents
  * when their acquisitions cease.
  *
- * The default implementation of this event is posted on the Studio event bus,
+ * The default implementation of this event posts on the Studio event bus,
  * so subscribe to this event using {@link org.micromanager.events.EventManager}.
  */
 public interface AcquisitionStartedEvent extends MMEvent {
