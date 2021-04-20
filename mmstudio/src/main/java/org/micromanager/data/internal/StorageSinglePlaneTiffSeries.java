@@ -57,6 +57,7 @@ import org.micromanager.PropertyMap;
 import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
+import org.micromanager.data.ImagesDifferInSizeException;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
@@ -87,6 +88,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
    private ArrayList<String> orderedChannelNames_;
    private Coords maxIndices_;
    private boolean isMultiPosition_;
+   private Image firstImage_;
 
    public StorageSinglePlaneTiffSeries(DefaultDatastore store,
          String directory, boolean newDataSet) throws IOException {
@@ -456,8 +458,25 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       }
    }
 
+   private void checkImageSizes(Image image1, Image image2) {
+      if (image1.getHeight() != image2.getHeight()) {
+         throw new ImagesDifferInSizeException();
+      }
+      if (image1.getWidth() != image2.getWidth()) {
+         throw new ImagesDifferInSizeException();
+      }
+      if (image1.getBytesPerPixel() != image2.getBytesPerPixel()) {
+         throw new ImagesDifferInSizeException();
+      }
+   }
+
    private void saveImageFile(Image image, String path, String tiffFileName,
          String metadataJSON) {
+      if (firstImage_ == null) {
+         firstImage_ = image;
+      } else {
+         checkImageSizes(firstImage_, image);
+      }
       ImagePlus imp;
       try {
          ImageProcessor ip;

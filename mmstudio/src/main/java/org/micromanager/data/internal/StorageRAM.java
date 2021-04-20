@@ -29,6 +29,7 @@ import java.util.List;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
+import org.micromanager.data.ImagesDifferInSizeException;
 import org.micromanager.data.RewritableStorage;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
@@ -49,7 +50,7 @@ public final class StorageRAM implements RewritableStorage {
    private SummaryMetadata summaryMetadata_;
 
    public StorageRAM(Datastore store) {
-      coordsToImage_ = new HashMap<Coords, Image>();
+      coordsToImage_ = new HashMap<>();
       maxIndex_ = new DefaultCoords.Builder().build();
       summaryMetadata_ = (new DefaultSummaryMetadata.Builder()).build();
       // It is imperative that we be notified of new images before anyone who
@@ -57,11 +58,27 @@ public final class StorageRAM implements RewritableStorage {
       ((DefaultDatastore) store).registerForEvents(this, 0);
    }
 
+   private void checkImageSizes(Image image1, Image image2) {
+      if (image1.getHeight() != image2.getHeight()) {
+         throw new ImagesDifferInSizeException();
+      }
+      if (image1.getWidth() != image2.getWidth()) {
+         throw new ImagesDifferInSizeException();
+      }
+      if (image1.getBytesPerPixel() != image2.getBytesPerPixel()) {
+         throw new ImagesDifferInSizeException();
+      }
+   }
+
    /**
     * Add a new image to our storage, and update maxIndex_.
     */
    @Override
    public synchronized void putImage(Image image) {
+      Image imageExisting = getAnyImage();
+      if (imageExisting != null) {
+         checkImageSizes(image, imageExisting);
+      }
       Coords coords = image.getCoords();
       coordsToImage_.put(coords, image);
       for (String axis : coords.getAxes()) {
@@ -92,7 +109,7 @@ public final class StorageRAM implements RewritableStorage {
    @Override
    public synchronized Image getAnyImage() {
       if (coordsToImage_ != null && coordsToImage_.size() > 0) {
-         Coords coords = new ArrayList<Coords>(coordsToImage_.keySet()).get(0);
+         Coords coords = new ArrayList<>(coordsToImage_.keySet()).get(0);
          return coordsToImage_.get(coords);
       }
       return null;
