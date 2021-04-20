@@ -24,4 +24,11 @@ package org.micromanager.data;
  * An unchecked exception thrown when an attempt is made to modify a Datastore
  * that has been frozen.
  */
-public class DatastoreFrozenException extends UnsupportedOperationException {}
+public class DatastoreFrozenException extends UnsupportedOperationException {
+   public static final String ERROR_MESSAGE = "This Datastore can not be modified since it was frozen.";
+
+   public DatastoreFrozenException() {
+      super(ERROR_MESSAGE);
+   }
+}
+
