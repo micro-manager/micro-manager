@@ -52,6 +52,7 @@ import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
+import org.micromanager.data.internal.ImageSizeChecker;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.MMException;
@@ -308,18 +309,6 @@ public final class StorageMultipageTiff implements Storage {
       return reader;
    }
 
-   private void checkImageSizes(Image image1, Image image2) {
-      if (image1.getHeight() != image2.getHeight()) {
-         throw new ImagesDifferInSizeException();
-      }
-      if (image1.getWidth() != image2.getWidth()) {
-         throw new ImagesDifferInSizeException();
-      }
-      if (image1.getBytesPerPixel() != image2.getBytesPerPixel()) {
-         throw new ImagesDifferInSizeException();
-      }
-   }
-
    @Override
    public void putImage(Image newImage) {
       DefaultImage image = (DefaultImage) newImage;
@@ -333,7 +322,7 @@ public final class StorageMultipageTiff implements Storage {
       if (firstImage_ == null) {
          firstImage_ = image;
       } else {
-         checkImageSizes(firstImage_, image);
+         ImageSizeChecker.checkImageSizes(firstImage_, image);
       }
 
       try {

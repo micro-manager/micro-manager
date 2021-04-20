@@ -37,6 +37,19 @@ import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import org.micromanager.PropertyMap;
+import org.micromanager.data.Coordinates;
+import org.micromanager.data.Coords;
+import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
+import org.micromanager.data.Image;
+import org.micromanager.data.Metadata;
+import org.micromanager.data.Storage;
+import org.micromanager.data.SummaryMetadata;
+import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
+import org.micromanager.internal.utils.JavaUtils;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.TextUtils;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -53,19 +66,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.micromanager.PropertyMap;
-import org.micromanager.data.Coordinates;
-import org.micromanager.data.Coords;
-import org.micromanager.data.Image;
-import org.micromanager.data.ImagesDifferInSizeException;
-import org.micromanager.data.Metadata;
-import org.micromanager.data.Storage;
-import org.micromanager.data.SummaryMetadata;
-import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
-import org.micromanager.internal.utils.JavaUtils;
-import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.internal.utils.TextUtils;
-import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
 
 /**
  * This class provides Image storage backed by a file system in which each
@@ -73,7 +73,7 @@ import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
  * TaggedImageStorageDiskDefault class.
  */
 public final class StorageSinglePlaneTiffSeries implements Storage {
-   private static final HashSet<String> ALLOWED_AXES = new HashSet<String>(
+   private static final HashSet<String> ALLOWED_AXES = new HashSet<>(
          Arrays.asList(Coords.CHANNEL, Coords.T, Coords.Z,
             Coords.STAGE_POSITION));
    private final DefaultDatastore store_;
@@ -104,9 +104,9 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       // can provide images on request.
       store_.registerForEvents(this, 0);
       coordsToFilename_ = new ConcurrentHashMap<>();
-      metadataStreams_ = new HashMap<Integer, Writer>();
-      positionIndexToName_ = new HashMap<Integer, String>();
-      orderedChannelNames_ = new ArrayList<String>();
+      metadataStreams_ = new HashMap<>();
+      positionIndexToName_ = new HashMap<>();
+      orderedChannelNames_ = new ArrayList<>();
       maxIndices_ = new DefaultCoords.Builder().build();
       amLoading_ = false;
       isMultiPosition_ = true;
@@ -273,9 +273,8 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
             return null;
          }
          Object pixels = proc.getPixels();
-         DefaultImage result = new DefaultImage(pixels, width, height,
+         return new DefaultImage(pixels, width, height,
                bytesPerPixel, numComponents, coords, metadata);
-         return result;
       } catch (IllegalArgumentException ex) {
          ReportingUtils.logError(ex);
          return null;
@@ -287,7 +286,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       if (coordsToFilename_.isEmpty()) {
          return null;
       }
-      Coords coords = new ArrayList<Coords>(coordsToFilename_.keySet()).get(0);
+      Coords coords = new ArrayList<>(coordsToFilename_.keySet()).get(0);
       return getImage(coords);
    }
 
@@ -458,24 +457,13 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       }
    }
 
-   private void checkImageSizes(Image image1, Image image2) {
-      if (image1.getHeight() != image2.getHeight()) {
-         throw new ImagesDifferInSizeException();
-      }
-      if (image1.getWidth() != image2.getWidth()) {
-         throw new ImagesDifferInSizeException();
-      }
-      if (image1.getBytesPerPixel() != image2.getBytesPerPixel()) {
-         throw new ImagesDifferInSizeException();
-      }
-   }
 
    private void saveImageFile(Image image, String path, String tiffFileName,
          String metadataJSON) {
       if (firstImage_ == null) {
          firstImage_ = image;
       } else {
-         checkImageSizes(firstImage_, image);
+         ImageSizeChecker.checkImageSizes(firstImage_, image);
       }
       ImagePlus imp;
       try {
@@ -615,7 +603,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
 
    private void openExistingDataSet() throws IOException {
       amLoading_ = true;
-      ArrayList<String> positions = new ArrayList<String>();
+      ArrayList<String> positions = new ArrayList<>();
       if (new File(dir_ + "/metadata.txt").exists()) {
          // Our base directory is a valid "position", i.e. there are no
          // positions in this dataset.

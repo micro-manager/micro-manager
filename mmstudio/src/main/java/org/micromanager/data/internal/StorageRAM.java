@@ -21,18 +21,17 @@
 package org.micromanager.data.internal;
 
 import com.google.common.eventbus.Subscribe;
+import org.micromanager.data.Coords;
+import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
+import org.micromanager.data.Datastore;
+import org.micromanager.data.Image;
+import org.micromanager.data.RewritableStorage;
+import org.micromanager.data.SummaryMetadata;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import org.micromanager.data.Coords;
-import org.micromanager.data.Datastore;
-import org.micromanager.data.Image;
-import org.micromanager.data.ImagesDifferInSizeException;
-import org.micromanager.data.RewritableStorage;
-import org.micromanager.data.SummaryMetadata;
-import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
 
 /**
  * Simple RAM-based storage for Datastores. Methods that interact with the
@@ -58,18 +57,6 @@ public final class StorageRAM implements RewritableStorage {
       ((DefaultDatastore) store).registerForEvents(this, 0);
    }
 
-   private void checkImageSizes(Image image1, Image image2) {
-      if (image1.getHeight() != image2.getHeight()) {
-         throw new ImagesDifferInSizeException();
-      }
-      if (image1.getWidth() != image2.getWidth()) {
-         throw new ImagesDifferInSizeException();
-      }
-      if (image1.getBytesPerPixel() != image2.getBytesPerPixel()) {
-         throw new ImagesDifferInSizeException();
-      }
-   }
-
    /**
     * Add a new image to our storage, and update maxIndex_.
     */
@@ -77,7 +64,7 @@ public final class StorageRAM implements RewritableStorage {
    public synchronized void putImage(Image image) {
       Image imageExisting = getAnyImage();
       if (imageExisting != null) {
-         checkImageSizes(image, imageExisting);
+         ImageSizeChecker.checkImageSizes(image, imageExisting);
       }
       Coords coords = image.getCoords();
       coordsToImage_.put(coords, image);
