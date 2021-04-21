@@ -2,7 +2,12 @@ name: Lint Code Base
 
 # Start the job on all push #
 on:
-  workflow_dispatch
+  push:
+    branches-ignore: [master]
+    # Remove the line above to run when pushing to master
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
 
 
 jobs:
@@ -19,7 +24,7 @@ jobs:
       - name: Lint Code Base
         uses: github/super-linter@v3
         env:
-          VALIDATE_ALL_CODEBASE: true
+          VALIDATE_ALL_CODEBASE: ${{github.event_name}} == 'workflow_dispatch' # If triggered by workflow dispatch scan the whole repo, else just scan the new code.
           VALIDATE_JAVA: true
           DEFAULT_BRANCH: master
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
