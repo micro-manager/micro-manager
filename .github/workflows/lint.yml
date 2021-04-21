@@ -1,6 +1,8 @@
 name: Lint Code Base
 
-# Start the job on all push #
+# Start the job on all push except push to master #
+# Runs on pull requests to master #
+# Runs on manual request. If manually requested the entire codebase will be scanned. otherwise only new code is scanned.
 on:
   push:
     branches-ignore: [master]
@@ -8,6 +10,10 @@ on:
   pull_request:
     branches: [master]
   workflow_dispatch:
+    inputs:
+      dummy:  # couldn't figure out the syntax to have workflow_dispatch with no args while pull request did.
+        description: 'Dummy Variable'
+        required: false
 
 
 jobs:
